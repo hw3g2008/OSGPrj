@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # 学生端
+  student:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: osg-student
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./packages/shared/src:/app/packages/shared/src:ro
+      - ./packages/student/src:/app/packages/student/src:ro
+      - ./packages/student/index.html:/app/packages/student/index.html:ro
+      - ./packages/student/vite.config.ts:/app/packages/student/vite.config.ts:ro
+      - ./packages/student/tsconfig.json:/app/packages/student/tsconfig.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+    command: pnpm dev:student -- --host 0.0.0.0
+    environment:
+      - VITE_API_BASE_URL=http://host.docker.internal:8080/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # 导师端
+  mentor:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: osg-mentor
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./packages/shared/src:/app/packages/shared/src:ro
+      - ./packages/mentor/src:/app/packages/mentor/src:ro
+      - ./packages/mentor/index.html:/app/packages/mentor/index.html:ro
+      - ./packages/mentor/vite.config.ts:/app/packages/mentor/vite.config.ts:ro
+      - ./packages/mentor/tsconfig.json:/app/packages/mentor/tsconfig.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+    command: pnpm dev:mentor -- --host 0.0.0.0
+    environment:
+      - VITE_API_BASE_URL=http://host.docker.internal:8080/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # 班主任端
+  lead-mentor:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: osg-lead-mentor
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./packages/shared/src:/app/packages/shared/src:ro
+      - ./packages/lead-mentor/src:/app/packages/lead-mentor/src:ro
+      - ./packages/lead-mentor/index.html:/app/packages/lead-mentor/index.html:ro
+      - ./packages/lead-mentor/vite.config.ts:/app/packages/lead-mentor/vite.config.ts:ro
+      - ./packages/lead-mentor/tsconfig.json:/app/packages/lead-mentor/tsconfig.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+    command: pnpm dev:lead-mentor -- --host 0.0.0.0
+    environment:
+      - VITE_API_BASE_URL=http://host.docker.internal:8080/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # 助教端
+  assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: osg-assistant
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./packages/shared/src:/app/packages/shared/src:ro
+      - ./packages/assistant/src:/app/packages/assistant/src:ro
+      - ./packages/assistant/index.html:/app/packages/assistant/index.html:ro
+      - ./packages/assistant/vite.config.ts:/app/packages/assistant/vite.config.ts:ro
+      - ./packages/assistant/tsconfig.json:/app/packages/assistant/tsconfig.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+    command: pnpm dev:assistant -- --host 0.0.0.0
+    environment:
+      - VITE_API_BASE_URL=http://host.docker.internal:8080/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

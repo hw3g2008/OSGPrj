@@ -1,0 +1,22 @@
+# 开发环境 Dockerfile
+FROM node:20-alpine
+
+# 安装 pnpm
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# 先复制依赖文件
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/student/package.json ./packages/student/
+COPY packages/mentor/package.json ./packages/mentor/
+COPY packages/lead-mentor/package.json ./packages/lead-mentor/
+COPY packages/assistant/package.json ./packages/assistant/
+
+# 安装依赖
+RUN pnpm install
+
+# 源码通过 volume 挂载，不需要 COPY
+
+EXPOSE 3001 3002 3003 3004
