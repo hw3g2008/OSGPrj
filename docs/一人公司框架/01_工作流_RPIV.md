@@ -133,7 +133,7 @@ flowchart TD
 ## STATE.yaml 全局状态文件
 
 ```yaml
-# tasks/STATE.yaml
+# osg-spec-docs/tasks/STATE.yaml
 version: "1.0"
 last_updated: "2026-02-01T10:30:00Z"
 

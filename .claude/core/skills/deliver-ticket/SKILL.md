@@ -86,7 +86,7 @@ auto_execute: true
 ```python
 def deliver_ticket(ticket_id):
     # Step 1: 读取 Ticket
-    ticket = read_yaml(f"tasks/tickets/{ticket_id}.yaml")
+    ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
     
     # Step 2: 创建 Checkpoint
     checkpoint_id = create_checkpoint(ticket_id)
@@ -131,7 +131,7 @@ def deliver_ticket(ticket_id):
     # Step 6: 更新状态
     ticket.status = "completed"
     ticket.completed_at = now()
-    write_yaml(f"tasks/tickets/{ticket_id}.yaml", ticket)
+    write_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml", ticket)
     
     # Step 7: 更新 STATE.yaml
     update_state(ticket_id, "completed")

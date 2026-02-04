@@ -30,7 +30,7 @@ auto_execute: true
 ## Ticket 模板
 
 ```yaml
-# tasks/tickets/T-{number}.yaml
+# osg-spec-docs/tasks/tickets/T-{number}.yaml
 
 id: "T-001"
 story_id: "S-001"
@@ -62,7 +62,7 @@ completed_at: null
 
 ```
 [读取 Story]
-    │ - tasks/stories/S-xxx.yaml
+    │ - osg-spec-docs/tasks/stories/S-xxx.yaml
     │
     ▼
 [分析验收标准]
@@ -154,7 +154,7 @@ T-007:
 
 ```python
 def split_tickets(story_id):
-    story = read_yaml(f"tasks/stories/{story_id}.yaml")
+    story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
     config = read_yaml(".claude/project/config.yaml")
     
     tickets = []
@@ -186,17 +186,17 @@ def split_tickets(story_id):
     
     # 保存 Ticket 文件
     for ticket in tickets:
-        write_yaml(f"tasks/tickets/{ticket['id']}.yaml", ticket)
+        write_yaml(f"osg-spec-docs/tasks/tickets/{ticket['id']}.yaml", ticket)
     
     # 更新 Story
     story.tickets = [t['id'] for t in tickets]
-    write_yaml(f"tasks/stories/{story_id}.yaml", story)
+    write_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml", story)
     
     # 更新 STATE
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.tickets.extend([t['id'] for t in tickets])
     state.phase = "ticket_split_pending_approval"
-    write_yaml("tasks/STATE.yaml", state)
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
     
     return tickets
 ```

@@ -284,7 +284,7 @@ error:
 
 ```yaml
 # .claude/core/templates/state.yaml
-# 全局状态模板 - tasks/STATE.yaml
+# 全局状态模板 - osg-spec-docs/tasks/STATE.yaml
 
 version: "1.0"
 last_updated: ""                  # ISO 8601 时间戳
@@ -369,7 +369,7 @@ config:
 创建空的 STATE.yaml：
 
 ```yaml
-# tasks/STATE.yaml (初始状态)
+# osg-spec-docs/tasks/STATE.yaml (初始状态)
 version: "1.0"
 last_updated: "2026-02-01T00:00:00Z"
 
@@ -437,7 +437,7 @@ def create_story(story_id, req_id, title, description):
     story["description"] = description
     story["created_at"] = datetime.now().isoformat()
     
-    save_yaml(f"tasks/stories/{story_id}.yaml", story)
+    save_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml", story)
     return story
 ```
 
@@ -456,7 +456,7 @@ def create_ticket(ticket_id, story_id, title, type, agent, allowed_paths):
     ticket["allowed_paths"] = allowed_paths
     ticket["created_at"] = datetime.now().isoformat()
     
-    save_yaml(f"tasks/tickets/{ticket_id}.yaml", ticket)
+    save_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml", ticket)
     return ticket
 ```
 
@@ -472,7 +472,7 @@ def create_ticket(ticket_id, story_id, title, type, agent, allowed_paths):
 
 ```python
 # Step 1: 读取现有 STATE.yaml
-state = 读取yaml("tasks/STATE.yaml")
+state = 读取yaml("osg-spec-docs/tasks/STATE.yaml")
 
 # Step 2: 更新字段
 state["current"]["ticket"] = "T-003"
@@ -487,12 +487,12 @@ if "S-001" in state["stories"]:
             break
 
 # Step 4: 写回文件
-写入yaml("tasks/STATE.yaml", state)
+写入yaml("osg-spec-docs/tasks/STATE.yaml", state)
 ```
 
 **更新前**：
 ```yaml
-# tasks/STATE.yaml
+# osg-spec-docs/tasks/STATE.yaml
 version: "1.0"
 last_updated: "2026-02-03T10:00:00Z"
 phase: "implement"
@@ -516,7 +516,7 @@ stories:
 
 **更新后**：
 ```yaml
-# tasks/STATE.yaml
+# osg-spec-docs/tasks/STATE.yaml
 version: "1.0"
 last_updated: "2026-02-03T10:30:00Z"  # ← 更新
 phase: "implement"
@@ -547,7 +547,7 @@ stories:
 **完整 Ticket 文件内容**：
 
 ```yaml
-# tasks/tickets/T-003.yaml
+# osg-spec-docs/tasks/tickets/T-003.yaml
 # 由 ticket-splitter skill 自动生成
 
 id: "T-003"
@@ -654,7 +654,7 @@ steps:
   - step: 1
     name: "读取 Ticket"
     action: "read_file"
-    target: "tasks/tickets/T-003.yaml"
+    target: "osg-spec-docs/tasks/tickets/T-003.yaml"
     status: "success"
     timestamp: "2026-02-03T10:30:00Z"
     duration_ms: 100
@@ -810,7 +810,7 @@ context:
   
 # 状态快照
 state_snapshot:
-  file: "tasks/STATE.yaml"
+  file: "osg-spec-docs/tasks/STATE.yaml"
   hash: "sha256:abc123..."  # 文件哈希，用于验证
   
 # Git 信息
@@ -831,7 +831,7 @@ changes:
 # 恢复指令
 restore_instructions: |
   1. 执行: git checkout abc1234
-  2. 恢复 STATE.yaml: cp .claude/checkpoints/CP-20260203-103430/STATE.yaml tasks/STATE.yaml
+  2. 恢复 STATE.yaml: cp .claude/checkpoints/CP-20260203-103430/STATE.yaml osg-spec-docs/tasks/STATE.yaml
   3. 继续执行: /next
   
 # 可恢复性

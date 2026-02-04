@@ -60,7 +60,7 @@ working_memory:
     │
     ▼
 [读取当前状态]
-    │ - tasks/STATE.yaml
+    │ - osg-spec-docs/tasks/STATE.yaml
     │ - .claude/memory/decisions.yaml
     │
     ▼
@@ -107,7 +107,7 @@ def create_checkpoint(trigger="manual"):
     checkpoint_id = f"CP-{now_iso8601()}"
     
     # 读取当前状态
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     decisions = read_yaml(".claude/memory/decisions.yaml")
     
     # 构建 Checkpoint
@@ -136,7 +136,7 @@ def create_checkpoint(trigger="manual"):
     
     # 更新 STATE
     state.last_checkpoint = checkpoint_id
-    write_yaml("tasks/STATE.yaml", state)
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
     
     return checkpoint_id
 
@@ -150,11 +150,11 @@ def restore_checkpoint(checkpoint_id):
     checkpoint = read_yaml(f".claude/checkpoints/{checkpoint_id}.yaml")
     
     # 恢复状态
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.current_story = checkpoint.state_snapshot.current_story
     state.current_ticket = checkpoint.state_snapshot.current_ticket
     state.restored_from = checkpoint_id
-    write_yaml("tasks/STATE.yaml", state)
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
     
     return {
         "restored_from": checkpoint_id,

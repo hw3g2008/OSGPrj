@@ -15,7 +15,7 @@ Cursor IDE 没有原生 Hooks 机制，通过 CLAUDE.md 入口和约定实现。
 
 每次会话开始时，必须执行以下检查：
 
-1. 读取 tasks/STATE.yaml
+1. 读取 osg-spec-docs/tasks/STATE.yaml
 2. 读取 .claude/project/config.yaml
 3. 输出当前状态摘要
 ```

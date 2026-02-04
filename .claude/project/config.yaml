@@ -74,6 +74,11 @@ paths:
     api: "osg-spec-docs/docs/06-api/"
     database: "osg-spec-docs/docs/07-database/"
     requirements: "osg-spec-docs/docs/02-requirements/"
+  tasks:
+    root: "osg-spec-docs/tasks/"
+    state: "osg-spec-docs/tasks/STATE.yaml"
+    stories: "osg-spec-docs/tasks/stories/"
+    tickets: "osg-spec-docs/tasks/tickets/"
 
 # 启用的开发者角色
 developers:

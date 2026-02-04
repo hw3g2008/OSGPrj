@@ -69,7 +69,7 @@ compressed_context:
 ```python
 def compress_context():
     # 收集当前上下文
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     decisions = read_yaml(".claude/memory/decisions.yaml")
     
     # 按优先级压缩

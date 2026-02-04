@@ -1,5 +1,5 @@
 # Ticket 模板
-# 路径: tasks/tickets/T-{number}.yaml
+# 路径: osg-spec-docs/tasks/tickets/T-{number}.yaml
 
 id: "T-{number}"
 story_id: "S-{story_number}"

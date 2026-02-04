@@ -21,9 +21,9 @@
 ## 执行流程
 
 ```
-1. 创建 tasks/ 目录结构
+1. 创建 osg-spec-docs/tasks/ 目录结构
 2. 创建 .claude/project/config.yaml
-3. 创建 tasks/STATE.yaml
+3. 创建 osg-spec-docs/tasks/STATE.yaml
 4. 初始化 .claude/memory/
 5. 输出初始化报告
 ```
@@ -31,7 +31,7 @@
 ## 创建的文件
 
 ```
-tasks/
+osg-spec-docs/tasks/
 ├── STATE.yaml           # 项目状态
 ├── stories/             # Story 文件目录
 └── tickets/             # Ticket 文件目录
@@ -52,9 +52,9 @@ tasks/
 **技术栈**: java-vue
 
 ### 创建的文件
-- tasks/STATE.yaml ✅
-- tasks/stories/ ✅
-- tasks/tickets/ ✅
+- osg-spec-docs/tasks/STATE.yaml ✅
+- osg-spec-docs/tasks/stories/ ✅
+- osg-spec-docs/tasks/tickets/ ✅
 - .claude/project/config.yaml ✅
 - .claude/memory/decisions.yaml ✅
 

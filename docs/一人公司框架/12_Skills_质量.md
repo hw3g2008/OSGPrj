@@ -305,7 +305,7 @@ tdd:
 1. 在 Ticket 日志中标注 `tdd_skipped: true` 和原因
 2. 确保 lint 和 build 通过
 3. 提供手动测试步骤
-4. **记录技术债**：`tasks/tech-debt.yaml`
+4. **记录技术债**：`osg-spec-docs/tasks/tech-debt.yaml`
 
 ### TDD 流程
 

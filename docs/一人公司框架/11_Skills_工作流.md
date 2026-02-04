@@ -888,10 +888,10 @@ S-002 → S-001 (依赖 S-001 的用户数据)
 
 ## 输出文件
 为每个 Story 创建 YAML 文件：
-- `tasks/stories/S-001.yaml`
-- `tasks/stories/S-002.yaml`
+- `osg-spec-docs/tasks/stories/S-001.yaml`
+- `osg-spec-docs/tasks/stories/S-002.yaml`
 
-同时更新 `tasks/STATE.yaml`
+同时更新 `osg-spec-docs/tasks/STATE.yaml`
 ```
 
 ---
@@ -924,7 +924,7 @@ invoked_by: user
 ## 流程
 
 ### Step 1: 读取 Story
-读取 `tasks/stories/S-xxx.yaml`，理解范围。
+读取 `osg-spec-docs/tasks/stories/S-xxx.yaml`，理解范围。
 
 ### Step 2: 分析实现路径
 1. 确定涉及的文件
@@ -979,8 +979,8 @@ T-004 ∥ T-005 (可并行)
 
 ## 输出文件
 为每个 Ticket 创建 YAML 文件：
-- `tasks/tickets/T-001.yaml`
-- `tasks/tickets/T-002.yaml`
+- `osg-spec-docs/tasks/tickets/T-001.yaml`
+- `osg-spec-docs/tasks/tickets/T-002.yaml`
 
 ## 硬性约束
 1. 每个 Ticket 必须有明确的 allowed_paths
@@ -1004,7 +1004,7 @@ T-004 ∥ T-005 (可并行)
 ### 阻塞 Ticket 格式
 
 ```yaml
-# tasks/tickets/T-xxx.yaml
+# osg-spec-docs/tasks/tickets/T-xxx.yaml
 id: "T-003"
 title: "用户角色关联"
 status: blocked  # 标记为阻塞

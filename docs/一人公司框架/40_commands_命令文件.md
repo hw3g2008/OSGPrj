@@ -54,7 +54,7 @@ description: 初始化项目框架结构
    - `.claude/memory/` - 记忆管理
    - `.claude/checkpoints/` - 检查点
    - `.claude/commands/` - 快捷命令
-   - `tasks/` - 任务管理
+   - `osg-spec-docs/tasks/` - 任务管理
    - `workspace/logs/` - 执行日志
    - `artifacts/reviews/` - 评审记录
    - `docs/requirements/` - 需求文档
@@ -70,7 +70,7 @@ description: 初始化项目框架结构
    - 创建代码规范引用
 
 4. **初始化状态**:
-   - 创建空的 `tasks/STATE.yaml`
+   - 创建空的 `osg-spec-docs/tasks/STATE.yaml`
    - 创建 `CLAUDE.md` 入口文件
 
 ## 技术栈选项
@@ -97,13 +97,13 @@ description: 初始化项目框架结构
 - .claude/core/skills/ (16 个 Skills)
 - .claude/core/agents/ (6 个 Agent 模板)
 - .claude/project/agents/ (3 个项目 Agent)
-- tasks/ (任务管理)
+- osg-spec-docs/tasks/ (任务管理)
 - docs/requirements/ (需求文档)
 
 ### 已生成配置
 - .claude/project/config.yaml
 - .claude/CLAUDE.md
-- tasks/STATE.yaml
+- osg-spec-docs/tasks/STATE.yaml
 
 ### 下一步
 1. 将需求文档放到 `docs/requirements/REQ-001.md`
@@ -142,12 +142,12 @@ description: 注册新需求文档
 1. 在 `docs/requirements/` 目录查找匹配的文件
 2. 验证文件存在
 3. 解析需求内容
-4. 更新 `tasks/STATE.yaml`
+4. 更新 `osg-spec-docs/tasks/STATE.yaml`
 
 ### 按路径注册
 1. 验证文件存在
 2. 从文件名或首行提取 ID
-3. 更新 `tasks/STATE.yaml`
+3. 更新 `osg-spec-docs/tasks/STATE.yaml`
 
 ### 扫描模式
 1. 扫描 `docs/requirements/REQ-*.md`
@@ -322,8 +322,8 @@ description: 拆解需求为 Story 或 Ticket
    - 读取需求文档
    - 按 INVEST 原则拆解
    - 输出 Story 列表
-   - 创建 tasks/stories/S-xxx.yaml 文件
-   - 更新 tasks/STATE.yaml
+   - 创建 osg-spec-docs/tasks/stories/S-xxx.yaml 文件
+   - 更新 osg-spec-docs/tasks/STATE.yaml
    - 等待 `/approve stories`
 
 ### /split ticket S-xxx
@@ -334,19 +334,19 @@ description: 拆解需求为 Story 或 Ticket
    - 读取 Story 定义
    - 拆解为 2-5 分钟的 Tickets
    - 输出 Ticket 列表
-   - 创建 tasks/tickets/T-xxx.yaml 文件
-   - 更新 tasks/STATE.yaml
+   - 创建 osg-spec-docs/tasks/tickets/T-xxx.yaml 文件
+   - 更新 osg-spec-docs/tasks/STATE.yaml
    - 等待 `/approve tickets`
 
 ## 输出文件
 
 ```yaml
 # 自动创建的文件
-tasks/stories/S-001.yaml
-tasks/stories/S-002.yaml
-tasks/tickets/T-001.yaml
-tasks/tickets/T-002.yaml
-tasks/STATE.yaml  # 更新
+osg-spec-docs/tasks/stories/S-001.yaml
+osg-spec-docs/tasks/stories/S-002.yaml
+osg-spec-docs/tasks/tickets/T-001.yaml
+osg-spec-docs/tasks/tickets/T-002.yaml
+osg-spec-docs/tasks/STATE.yaml  # 更新
 ```
 
 ## 完成标志
@@ -374,7 +374,7 @@ description: 执行下一个待处理的 Ticket
 
 ## 执行流程
 
-1. **读取 tasks/STATE.yaml**
+1. **读取 osg-spec-docs/tasks/STATE.yaml**
 2. **找到下一个 pending 的 Ticket**
 3. **根据 Ticket 类型分派 Agent**:
    - `type: backend` → backend-java Agent
@@ -389,14 +389,14 @@ description: 执行下一个待处理的 Ticket
    - 输出完成报告
 6. **更新状态**:
    - 更新 Ticket 状态为 completed
-   - 更新 tasks/STATE.yaml
+   - 更新 osg-spec-docs/tasks/STATE.yaml
    - 创建 workspace/logs/T-xxx.yaml
 
 ## 分派逻辑
 
 ```python
 def get_next_ticket():
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     for story in state.stories:
         for ticket in story.tickets:
             if ticket.status == "pending":
@@ -467,9 +467,9 @@ description: 查看当前进度
 1. **加载 Coordinator Agent**
 2. **加载 progress-tracker Skill**
 3. **读取数据**:
-   - tasks/STATE.yaml
-   - tasks/stories/*.yaml
-   - tasks/tickets/*.yaml
+   - osg-spec-docs/tasks/STATE.yaml
+   - osg-spec-docs/tasks/stories/*.yaml
+   - osg-spec-docs/tasks/tickets/*.yaml
    - memory/session.yaml
 4. **生成报告**
 
@@ -1444,7 +1444,7 @@ description: 解除 Ticket 阻塞状态
 ## 执行流程
 
 1. **读取阻塞 Ticket**:
-   - `tasks/tickets/T-xxx.yaml`
+   - `osg-spec-docs/tasks/tickets/T-xxx.yaml`
 2. **确认阻塞原因已解决**
 3. **更新 Ticket 状态**:
    - `status: blocked` → `status: pending`
@@ -1454,7 +1454,7 @@ description: 解除 Ticket 阻塞状态
 ## 阻塞 Ticket 结构
 
 ```yaml
-# tasks/tickets/T-003.yaml
+# osg-spec-docs/tasks/tickets/T-003.yaml
 id: "T-003"
 title: "用户角色关联"
 status: blocked
@@ -1707,7 +1707,7 @@ git merge feature/feature-user        # 合并（手动）
    - 加载 `.claude/project/config.yaml`
 
 2. **恢复状态**
-   - 读取 `tasks/STATE.yaml`
+   - 读取 `osg-spec-docs/tasks/STATE.yaml`
    - 获取当前 phase、story、ticket
 
 3. **加载记忆**

@@ -30,8 +30,8 @@
 
 ### 输出
 
-- `tasks/stories/S-001.yaml`
-- `tasks/stories/S-002.yaml`
+- `osg-spec-docs/tasks/stories/S-001.yaml`
+- `osg-spec-docs/tasks/stories/S-002.yaml`
 - ...
 
 ### 下一步
@@ -64,8 +64,8 @@
 
 ### 输出
 
-- `tasks/tickets/T-001.yaml`
-- `tasks/tickets/T-002.yaml`
+- `osg-spec-docs/tasks/tickets/T-001.yaml`
+- `osg-spec-docs/tasks/tickets/T-002.yaml`
 - ...
 
 ### 下一步

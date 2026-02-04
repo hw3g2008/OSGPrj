@@ -9,7 +9,7 @@
 **每次会话开始时，必须执行以下检查：**
 
 ```
-1. 读取 tasks/STATE.yaml
+1. 读取 osg-spec-docs/tasks/STATE.yaml
    - 如果不存在 → 提示执行 /init-project
    - 如果存在 → 读取当前状态
 
@@ -49,7 +49,7 @@
    - 如果是 /verify → 命令完成后设置 workflow.current_step = "story_done"
    - 如果是 /approve → 根据审批类型设置 workflow.current_step = "story_approved" 或 "ticket_approved"
 
-1. 读取 tasks/STATE.yaml 的 workflow 字段
+1. 读取 osg-spec-docs/tasks/STATE.yaml 的 workflow 字段
    - 如果 workflow 不存在 → 创建 workflow 字段，设置初始状态
    - 如果存在 → 获取 current_step 和 next_step
 
@@ -180,7 +180,7 @@ else:
 ├── memory/                      # 工作记忆
 └── checkpoints/                 # 检查点
 
-tasks/
+osg-spec-docs/tasks/
 ├── STATE.yaml                   # 当前状态
 ├── stories/                     # Story 文件
 └── tickets/                     # Ticket 文件
@@ -230,7 +230,7 @@ tasks/
 
 - 核心框架: `.claude/core/`
 - 项目配置: `.claude/project/config.yaml`
-- 当前状态: `tasks/STATE.yaml`
+- 当前状态: `osg-spec-docs/tasks/STATE.yaml`
 
 ---
 

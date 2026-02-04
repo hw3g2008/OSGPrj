@@ -48,7 +48,7 @@ skills: story-splitter, ticket-splitter, progress-tracker
 2. 微任务拆解 → 每个 2-5 分钟
 3. 定义 allowed_paths → 限制修改范围
 4. 验收标准 → 可执行的检查命令
-5. 写入 Ticket 文件 → tasks/tickets/T-xxx.yaml
+5. 写入 Ticket 文件 → osg-spec-docs/tasks/tickets/T-xxx.yaml
 ```
 
 ## 拆分原则

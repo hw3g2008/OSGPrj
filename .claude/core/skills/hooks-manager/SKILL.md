@@ -31,14 +31,14 @@ def hook_session_start():
     """会话开始钩子"""
     
     # 1. 检查 STATE.yaml
-    if not file_exists("tasks/STATE.yaml"):
+    if not file_exists("osg-spec-docs/tasks/STATE.yaml"):
         return {
             "action": "prompt_init",
             "message": "请执行 /init-project 初始化项目"
         }
     
     # 2. 加载状态
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     
     # 3. 检查 config.yaml
     if not file_exists(".claude/project/config.yaml"):
@@ -79,10 +79,10 @@ def hook_session_end():
     compressed = compress_context()
     
     # 3. 更新 STATE.yaml
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.last_checkpoint = checkpoint_id
     state.last_session_end = now_iso8601()
-    write_yaml("tasks/STATE.yaml", state)
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
     
     return {
         "checkpoint": checkpoint_id,
@@ -100,10 +100,10 @@ def hook_ticket_complete(ticket_id):
     checkpoint_id = create_checkpoint(trigger="ticket_complete")
     
     # 2. 更新 STATE.yaml
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.completed_tickets.append(ticket_id)
     state.current_ticket = None
-    write_yaml("tasks/STATE.yaml", state)
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
     
     # 3. 触发代码审查
     review_result = code_review(get_ticket_changes(ticket_id))

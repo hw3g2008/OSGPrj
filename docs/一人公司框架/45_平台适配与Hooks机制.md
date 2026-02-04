@@ -519,8 +519,8 @@ def prepare_context(ticket_id: str) -> dict:
     """
     准备子代理执行所需的完整上下文
     """
-    ticket = load_yaml(f"tasks/tickets/{ticket_id}.yaml")
-    story = load_yaml(f"tasks/stories/{ticket['story_id']}.yaml")
+    ticket = load_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+    story = load_yaml(f"osg-spec-docs/tasks/stories/{ticket['story_id']}.yaml")
     
     return {
         "ticket": ticket,
@@ -681,7 +681,7 @@ def dispatch_subagent(platform: str, agent: str, context: dict) -> dict:
 set -e
 
 CLAUDE_ROOT="${CLAUDE_ROOT:-.claude}"
-STATE_FILE="tasks/STATE.yaml"
+STATE_FILE="osg-spec-docs/tasks/STATE.yaml"
 
 echo "## 🚀 一人公司框架初始化"
 echo ""
@@ -755,7 +755,7 @@ echo "**可用命令**: /brainstorm, /split, /next, /status, /checkpoint"
 
 在响应用户任何请求之前，**必须**先：
 
-1. 读取 `tasks/STATE.yaml` 获取当前状态
+1. 读取 `osg-spec-docs/tasks/STATE.yaml` 获取当前状态
 2. 输出状态报告（使用下方格式）
 3. 如有未完成任务，提示用户
 
@@ -821,7 +821,7 @@ Cursor IDE 目前**不支持**自动触发 Hooks。
 
 每次会话的**第一条响应**，必须：
 
-1. 读取 tasks/STATE.yaml
+1. 读取 osg-spec-docs/tasks/STATE.yaml
 2. 输出状态报告
 3. 如有未完成任务，提示用户
 
@@ -1014,12 +1014,12 @@ def session_start_hook():
     会话开始钩子
     """
     # 1. 检查 STATE.yaml 是否存在
-    if not file_exists("tasks/STATE.yaml"):
+    if not file_exists("osg-spec-docs/tasks/STATE.yaml"):
         output("⚠️ 项目未初始化，请先执行 /init-project")
         return
     
     # 2. 读取状态
-    state = load_yaml("tasks/STATE.yaml")
+    state = load_yaml("osg-spec-docs/tasks/STATE.yaml")
     
     # 3. 输出状态报告
     output_status_report(state)
@@ -1098,7 +1098,7 @@ def is_first_response() -> bool:
     2. 如果距离上次活跃超过 30 分钟，视为新会话
     3. 如果 session.id 为空，视为新会话
     """
-    state = load_yaml("tasks/STATE.yaml")
+    state = load_yaml("osg-spec-docs/tasks/STATE.yaml")
     
     if not state.get("session", {}).get("id"):
         return True
@@ -1326,12 +1326,12 @@ def 执行SessionStart_Hook():
     """
     
     # Step 1: 检查 STATE.yaml 是否存在
-    state文件 = "tasks/STATE.yaml"
+    state文件 = "osg-spec-docs/tasks/STATE.yaml"
     if not 文件存在(state文件):
         输出("""
 ## ⚠️ 项目未初始化
 
-未找到 tasks/STATE.yaml 文件。
+未找到 osg-spec-docs/tasks/STATE.yaml 文件。
 
 **请先执行**: `/init-project {项目名} --stack {技术栈}`
 """)
@@ -1445,7 +1445,7 @@ def 分派子代理_Cursor(agent_name: str, ticket_id: str, context: dict):
             skills_content.append(读取文件(skill_path))
     
     # Step 3: 读取 Ticket 定义
-    ticket_path = f"tasks/tickets/{ticket_id}.yaml"
+    ticket_path = f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml"
     ticket = 读取yaml(ticket_path)
     
     # Step 4: 输出角色切换 Prompt（精确格式）
@@ -1513,10 +1513,10 @@ def 是否需要执行SessionStart() -> bool:
         return True
     
     # 条件 2: 检查 STATE.yaml
-    if not 文件存在("tasks/STATE.yaml"):
+    if not 文件存在("osg-spec-docs/tasks/STATE.yaml"):
         return True  # 需要执行，会提示初始化
     
-    state = 读取yaml("tasks/STATE.yaml")
+    state = 读取yaml("osg-spec-docs/tasks/STATE.yaml")
     session = state.get("session", {})
     
     # 条件 3: last_active 为空

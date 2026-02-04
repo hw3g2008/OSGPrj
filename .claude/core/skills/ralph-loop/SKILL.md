@@ -92,7 +92,7 @@ def ralph_loop():
             return {"status": "context_full", "checkpoint": checkpoint_id}
         
         # 获取下一个 Ticket
-        state = read_yaml("tasks/STATE.yaml")
+        state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
         ticket = get_next_pending_ticket(state)
         
         if not ticket:

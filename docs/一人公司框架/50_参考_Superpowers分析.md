@@ -817,8 +817,8 @@ description: "Use when executing a Ticket - dispatches subagents with two-stage 
 ### Step 1: 分派 Implementer 子代理
 
 **在分派前**：
-1. 读取 Ticket 完整内容（`tasks/tickets/{ticket_id}.yaml`）
-2. 读取相关 Story 上下文（`tasks/stories/{story_id}.yaml`）
+1. 读取 Ticket 完整内容（`osg-spec-docs/tasks/tickets/{ticket_id}.yaml`）
+2. 读取相关 Story 上下文（`osg-spec-docs/tasks/stories/{story_id}.yaml`）
 3. 记录当前 Git commit（BASE_SHA）
 
 **分派方式**（在 Cursor 中使用 Prompt 模拟）：
@@ -1201,8 +1201,8 @@ flowchart TD
 ```python
 # 伪代码示例
 def prepare_context(ticket_id):
-    ticket = load_yaml(f"tasks/tickets/{ticket_id}.yaml")
-    story = load_yaml(f"tasks/stories/{ticket['story']}.yaml")
+    ticket = load_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+    story = load_yaml(f"osg-spec-docs/tasks/stories/{ticket['story']}.yaml")
     base_sha = run_command("git rev-parse HEAD")
     
     context = {

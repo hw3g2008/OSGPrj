@@ -27,10 +27,10 @@ def calculate_progress(state):
     completed_tickets = 0
     
     for story_id in stories:
-        story = read_yaml(f"tasks/stories/{story_id}.yaml")
+        story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
         for ticket_id in story.tickets:
             total_tickets += 1
-            ticket = read_yaml(f"tasks/tickets/{ticket_id}.yaml")
+            ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
             if ticket.status == "completed":
                 completed_tickets += 1
     

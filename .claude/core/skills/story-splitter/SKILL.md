@@ -31,7 +31,7 @@ auto_execute: true
 ## Story 模板
 
 ```yaml
-# tasks/stories/S-{number}.yaml
+# osg-spec-docs/tasks/stories/S-{number}.yaml
 
 id: "S-001"
 title: "用户可以登录系统"
@@ -128,13 +128,13 @@ def split_stories(requirement_doc):
     
     # 保存 Story 文件
     for story in stories:
-        write_yaml(f"tasks/stories/{story['id']}.yaml", story)
+        write_yaml(f"osg-spec-docs/tasks/stories/{story['id']}.yaml", story)
     
     # 更新 STATE.yaml
-    state = read_yaml("tasks/STATE.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.stories = [s['id'] for s in stories]
     state.phase = "story_split_pending_approval"
-    write_yaml("tasks/STATE.yaml", state)
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
     
     return stories
 ```

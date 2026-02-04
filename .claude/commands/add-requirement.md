@@ -16,7 +16,7 @@
 ```
 1. 验证需求文件存在
 2. 解析需求 ID
-3. 更新 tasks/STATE.yaml 的 requirements 列表
+3. 更新 osg-spec-docs/tasks/STATE.yaml 的 requirements 列表
 4. 设置为当前需求
 ```
 

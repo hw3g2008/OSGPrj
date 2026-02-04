@@ -15,7 +15,7 @@ hooks:
   # 会话开始
   on_session_start:
     - action: load_state
-      file: tasks/STATE.yaml
+      file: osg-spec-docs/tasks/STATE.yaml
     - action: inject_framework
       file: .claude/CLAUDE.md
     - action: output_status

@@ -237,9 +237,9 @@ Story S-001: 用户管理模块
 - Agent 需要报告进度时
 
 ## 数据来源
-1. 读取 `tasks/STATE.yaml`
-2. 读取 `tasks/stories/S-xxx.yaml`
-3. 读取 `tasks/tickets/T-xxx.yaml`
+1. 读取 `osg-spec-docs/tasks/STATE.yaml`
+2. 读取 `osg-spec-docs/tasks/stories/S-xxx.yaml`
+3. 读取 `osg-spec-docs/tasks/tickets/T-xxx.yaml`
 4. 读取 `memory/session.yaml`
 
 ## 输出格式
