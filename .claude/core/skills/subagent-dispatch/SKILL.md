@@ -1,0 +1,171 @@
+# Subagent-Dispatch Skill
+
+---
+name: subagent-dispatch
+description: "Use when needing to call a specific Agent - handles cross-platform subagent dispatch"
+invoked_by: agent
+auto_execute: true
+---
+
+## 概览
+
+子代理调度，自动检测平台并使用最优的子代理调用方式。
+
+## 平台检测
+
+```python
+def detect_platform():
+    """检测当前运行平台"""
+    
+    # 检查环境变量
+    if os.getenv("CURSOR_IDE"):
+        return "cursor"
+    
+    if os.getenv("CLAUDE_CLI"):
+        return "claude-cli"
+    
+    if os.getenv("MCP_SERVER"):
+        return "mcp"
+    
+    if os.getenv("OPENAI_API_KEY"):
+        return "openai"
+    
+    # 默认为 Cursor（Prompt 模拟）
+    return "cursor"
+```
+
+## 平台实现
+
+### Cursor（Prompt 模拟）
+
+```python
+def dispatch_cursor(agent_name, task_context):
+    """Cursor 平台使用 Prompt 模拟子代理"""
+    
+    # 1. 加载 Agent 定义
+    agent = load_agent(agent_name)
+    
+    # 2. 加载 Agent 的 Skills
+    skills = []
+    for skill_name in agent.skills:
+        skill = load_skill(skill_name)
+        skills.append(skill)
+    
+    # 3. 构建 Prompt
+    prompt = f"""
+    ## 角色切换
+    
+    你现在是 **{agent.name}**。
+    
+    ### 职责
+    {agent.description}
+    
+    ### 加载的 Skills
+    {format_skills(skills)}
+    
+    ### 任务
+    {task_context}
+    
+    ### 约束
+    - 只使用加载的 Skills
+    - 遵循 Skills 中定义的流程
+    - 完成后切换回 Coordinator
+    """
+    
+    # 4. 执行（实际是改变当前对话的上下文）
+    return {"prompt": prompt, "agent": agent_name}
+```
+
+### Claude CLI（原生子代理）
+
+```python
+def dispatch_claude_cli(agent_name, task_context):
+    """Claude CLI 使用原生子代理机制"""
+    
+    # 使用 Task 工具创建子代理
+    result = claude.task(
+        agent=agent_name,
+        context=task_context,
+        allowed_tools=get_agent_tools(agent_name)
+    )
+    
+    return result
+```
+
+### MCP（工具调用）
+
+```python
+def dispatch_mcp(agent_name, task_context):
+    """MCP 平台使用工具调用"""
+    
+    # 通过 MCP 协议调用
+    result = mcp.call_tool(
+        server="agent-server",
+        tool=f"run_{agent_name}",
+        params={"context": task_context}
+    )
+    
+    return result
+```
+
+## 统一接口
+
+```python
+def dispatch_agent(agent_name, task_context):
+    """统一的子代理调度接口"""
+    
+    platform = detect_platform()
+    
+    dispatchers = {
+        "cursor": dispatch_cursor,
+        "claude-cli": dispatch_claude_cli,
+        "mcp": dispatch_mcp,
+        "openai": dispatch_openai
+    }
+    
+    dispatcher = dispatchers.get(platform, dispatch_cursor)
+    
+    return dispatcher(agent_name, task_context)
+```
+
+## Agent 加载
+
+```python
+def load_agent(agent_name):
+    """加载 Agent 定义"""
+    
+    # 先检查项目特定 Agent
+    project_path = f".claude/project/agents/{agent_name}/AGENT.md"
+    if file_exists(project_path):
+        return parse_agent(read_file(project_path))
+    
+    # 再检查核心 Agent
+    core_path = f".claude/core/agents/{agent_name}/AGENT.md"
+    if file_exists(core_path):
+        return parse_agent(read_file(core_path))
+    
+    raise AgentNotFoundError(agent_name)
+```
+
+## 输出格式
+
+```markdown
+## 🔄 Agent 调度
+
+**平台**: Cursor
+**方式**: Prompt 模拟
+**Agent**: Developer
+
+### 切换上下文
+{prompt}
+
+### 任务
+{task_context}
+```
+
+## 硬约束
+
+- 必须先检测平台
+- 必须加载完整的 Agent 定义
+- 必须加载 Agent 的所有 Skills
+- 调度失败时必须有降级方案

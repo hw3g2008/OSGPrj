@@ -1,0 +1,54 @@
+# Log 模板
+# 路径: workspace/logs/{ticket_id}.yaml
+
+ticket_id: "T-{number}"
+started_at: "{ISO8601_UTC}"
+completed_at: "{ISO8601_UTC}"
+status: completed  # completed | failed | blocked
+
+# 执行日志
+execution_log:
+  - timestamp: "{ISO8601_UTC}"
+    phase: "start"
+    message: "开始执行 Ticket"
+  
+  - timestamp: "{ISO8601_UTC}"
+    phase: "tdd_red"
+    message: "编写失败测试"
+    files:
+      - "{test_file}"
+  
+  - timestamp: "{ISO8601_UTC}"
+    phase: "tdd_green"
+    message: "编写代码让测试通过"
+    files:
+      - "{impl_file}"
+  
+  - timestamp: "{ISO8601_UTC}"
+    phase: "tdd_refactor"
+    message: "重构代码"
+    files:
+      - "{impl_file}"
+  
+  - timestamp: "{ISO8601_UTC}"
+    phase: "test"
+    message: "运行测试"
+    command: "{test_command}"
+    exit_code: 0
+    output: "{test_output}"
+  
+  - timestamp: "{ISO8601_UTC}"
+    phase: "complete"
+    message: "Ticket 完成"
+
+# 错误记录（如果有）
+errors: []
+
+# 变更文件
+files_changed:
+  - path: "{file_path}"
+    added: 10
+    removed: 2
+
+# 检查点
+checkpoint_id: "CP-{timestamp}"

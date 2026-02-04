@@ -14,7 +14,7 @@
 ```yaml
 ---
 name: memory-bank
-description: 记忆管理。管理工作记忆和长期记忆的读写。
+description: "Use when making important decisions, at session start, or when saving state - manages working and long-term memory"
 invoked_by: agent
 ---
 ```
@@ -88,7 +88,7 @@ invoked_by: agent
 ```yaml
 ---
 name: context-compression
-description: 上下文压缩。当上下文接近限制时，压缩历史交互。
+description: "Use when context usage exceeds 70% or manually triggered with /compress - compresses conversation history to save tokens"
 invoked_by: agent, auto
 ---
 ```
@@ -179,7 +179,7 @@ invoked_by: agent, auto
 ```yaml
 ---
 name: checkpoint-manager
-description: 检查点管理。保存/恢复任务状态，支持长时任务。
+description: "Use after completing a Ticket, making important decisions, or when triggered with /checkpoint - saves and restores task state for long-running tasks"
 invoked_by: agent, user
 ---
 ```

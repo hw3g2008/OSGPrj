@@ -1,0 +1,30 @@
+# Checkpoint 模板
+# 路径: .claude/checkpoints/CP-{timestamp}.yaml
+
+id: "CP-{timestamp}"
+created_at: "{ISO8601_UTC}"
+trigger: manual  # manual | ticket_complete | context_full | session_end
+
+# 状态快照
+state_snapshot:
+  current_story: "{story_id}"
+  current_ticket: "{ticket_id}"
+  phase: "{phase}"
+  completed_stories: []
+  completed_tickets: []
+
+# 上下文摘要
+context_summary:
+  decisions:
+    - "{决策1}"
+    - "{决策2}"
+  current_task: "{当前任务描述}"
+  blockers: []
+
+# 工作记忆
+working_memory:
+  files_modified:
+    - "{file1}"
+    - "{file2}"
+  test_status: passed  # passed | failed | skipped
+  last_error: null

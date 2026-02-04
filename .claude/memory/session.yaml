@@ -1,0 +1,33 @@
+# ============================================
+# 当前会话状态
+# ============================================
+
+# 会话 ID
+session_id: null
+
+# 会话开始时间
+started_at: null
+
+# 最后活动时间
+last_activity: null
+
+# 当前上下文
+context:
+  # 当前任务
+  current_task: null
+  
+  # 加载的 Agent
+  current_agent: null
+  
+  # 加载的 Skills
+  loaded_skills: []
+  
+  # 临时决策（未持久化）
+  pending_decisions: []
+
+# 会话统计
+stats:
+  commands_executed: 0
+  tickets_completed: 0
+  errors_encountered: 0
+  context_compressions: 0

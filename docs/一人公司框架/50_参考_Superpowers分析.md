@@ -417,7 +417,7 @@ Superpowers 在多个 Skills 中精心设计了反合理化表格，这是其最
 | **检查点恢复** | ❓ 不明确 | ✅ 完整 checkpoint-manager | **保留** |
 | **RPIV 工作流** | ❌ 无 | ✅ 完整四阶段 | **保留** |
 | **记忆管理** | ❌ 无 | ✅ memory-bank, context-compression | **保留** |
-| **多角色分工** | 有 agents/ | ✅ 7 个角色 | **类似** |
+| **多角色分工** | 有 agents/ | ✅ 6 个角色 | **类似** |
 | **TDD 执行** | ✅ 非常严格 | ⚠️ 有但不够严格 | **改进** |
 | **调试流程** | ✅ 四阶段系统化 | ⚠️ 有但不够系统化 | **改进** |
 | **验证机制** | ✅ verification-before-completion | ⚠️ verification skill 较弱 | **改进** |
@@ -448,7 +448,7 @@ Superpowers 在多个 Skills 中精心设计了反合理化表格，这是其最
    - `checkpoint-manager` 检查点
 
 6. **多角色分工**
-   - 7 个角色：Coordinator, Architect, Planner, Developer, Reviewer, QA
+   - 6 个角色：Coordinator, Architect, Planner, Developer, Reviewer, QA
    - 清晰的职责划分
 
 ### 4.3 Superpowers 的优势

@@ -1,0 +1,57 @@
+# State 模板
+# 路径: tasks/STATE.yaml
+
+# 项目信息
+project: "{project_name}"
+initialized_at: "{ISO8601_UTC}"
+
+# 当前阶段
+# - not_started: 未开始
+# - brainstorming: 需求分析中
+# - story_split: Story 拆分中
+# - story_approved: Story 已审批
+# - ticket_split: Ticket 拆分中
+# - ticket_approved: Ticket 已审批
+# - implementing: 实现中
+# - completed: 已完成
+phase: not_started
+
+# 当前任务
+current_story: null
+current_ticket: null
+
+# 需求列表
+requirements: []
+
+# Stories 和 Tickets
+stories: []
+tickets: []
+
+# 已完成
+completed_stories: []
+completed_tickets: []
+
+# 阻塞的 Tickets
+blocked_tickets: []
+
+# 检查点
+last_checkpoint: null
+
+# 恢复信息
+restored_from: null
+
+# 会话信息
+last_session_start: null
+last_session_end: null
+
+# 阻塞项
+blockers: []
+
+# 统计
+stats:
+  total_stories: 0
+  completed_stories: 0
+  total_tickets: 0
+  completed_tickets: 0
+  blocked_tickets: 0
+  total_time_spent: "0m"

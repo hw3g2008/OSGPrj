@@ -100,7 +100,11 @@ rules: java                           # 加载 java.md 规范
 core/agents/developer.md
 
 ## 技术栈
-- Java 8 + Spring Boot 2.5 + MyBatis
+> ⚠️ 从 project/config.yaml 读取，不要硬编码
+
+- 语言: ${config.tech_stack.backend.language}
+- 运行时: ${config.tech_stack.backend.runtime}
+- 框架: ${config.tech_stack.backend.framework} ${config.tech_stack.backend.version}
 
 ## 代码规范
 引用阿里巴巴 Java 开发手册：
@@ -114,14 +118,17 @@ core/agents/developer.md
 - 禁止使用魔法数字
 
 ## 目录约定
-- Controller: ruoyi-admin/src/main/java/**/controller/
-- Service Interface: ruoyi-system/src/main/java/**/service/
-- Service Impl: ruoyi-system/src/main/java/**/service/impl/
-- Mapper: ruoyi-system/src/main/java/**/mapper/
-- Test: ruoyi-*/src/test/java/
+> 从 config.yaml paths.backend 读取
+
+- Controller: ${config.paths.backend.controllers}
+- Service: ${config.paths.backend.services}
+- Mapper: ${config.paths.backend.mappers}
+- Test: ${config.paths.backend.tests}
 
 ## 命令
-- 测试: mvn test -Dtest={TestClass}
+> 从 config.yaml commands 读取
+
+- 测试: ${config.commands.test}
 - Lint: mvn checkstyle:check
 ```
 
@@ -131,9 +138,9 @@ core/agents/developer.md
 ---
 name: frontend-vue
 extends: developer
-description: Vue 前端开发者，处理 Vue 2.x 相关的 Ticket
+description: Vue 前端开发者，处理 Vue 3.x + TypeScript 相关的 Ticket
 skills: deliver-ticket, checkpoint-manager
-# 注意：不加载 tdd skill，因为若依项目前端无测试基础设施
+# 注意：不加载 tdd skill，因为项目前端无单元测试基础设施
 rules: vue
 ---
 ```
@@ -145,7 +152,11 @@ rules: vue
 core/agents/developer.md
 
 ## 技术栈
-- Vue 2.6 + Element UI + Vuex
+> ⚠️ 从 project/config.yaml 读取，不要硬编码
+
+- 语言: ${config.tech_stack.frontend.language}
+- 框架: ${config.tech_stack.frontend.framework} ${config.tech_stack.frontend.version}
+- 包管理器: ${config.tech_stack.frontend.package_manager}
 
 ## 代码规范
 引用 Vue 官方风格指南：
@@ -153,18 +164,24 @@ core/agents/developer.md
 
 关键规范：
 - 组件名使用 PascalCase
-- Props 定义要详细
+- Props 定义要详细（使用 TypeScript 类型）
 - 避免 v-if 和 v-for 同时使用
+- 使用 Composition API + setup 语法
 
 ## 目录约定
-- Pages: ruoyi-ui/src/views/
-- API: ruoyi-ui/src/api/
-- Components: ruoyi-ui/src/components/
+> 从 config.yaml paths.frontend 读取
+
+- 源码: ${config.paths.frontend.source}
+- 组件: ${config.paths.frontend.components}
+- 页面: ${config.paths.frontend.pages}
 
 ## 命令
-- 开发: npm run dev
-- Lint: npm run lint || true  # 若无 lint 配置则跳过
-- 构建: npm run build:prod
+> 从 config.yaml commands.frontend 读取
+
+- 安装依赖: ${config.commands.frontend.install}
+- 开发: ${config.commands.frontend.dev}
+- Lint: ${config.commands.frontend.lint}
+- 构建: ${config.commands.frontend.build}
 
 ## 验证策略（替代 TDD）
 

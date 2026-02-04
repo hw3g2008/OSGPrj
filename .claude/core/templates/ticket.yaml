@@ -1,0 +1,27 @@
+# Ticket 模板
+# 路径: tasks/tickets/T-{number}.yaml
+
+id: "T-{number}"
+story_id: "S-{story_number}"
+title: "{标题}"
+type: backend  # backend | frontend | database | test | config
+
+status: pending  # pending | in_progress | completed | blocked
+estimate: "{n}m" # 2-5 分钟
+
+# 允许修改的文件路径（严格限制）
+allowed_paths:
+  - "{path/to/file}"
+
+# 验收标准
+acceptance_criteria:
+  - "{验收标准1}"
+  - "{验收标准2}"
+
+# 依赖的 Tickets
+dependencies: []
+
+# 时间戳
+created_at: "{ISO8601_UTC}"
+started_at: null
+completed_at: null

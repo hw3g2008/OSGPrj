@@ -4,6 +4,8 @@
 - ralph-loop
 - progress-tracker
 
+> **自动执行模式**：本文档中的 Skills 采用「自动执行模式」，一次触发后自动循环执行，直到完成或达到限制，不等待用户确认。
+
 ---
 
 ## 1. ralph-loop
@@ -13,10 +15,19 @@
 ```yaml
 ---
 name: ralph-loop
-description: 自主循环执行。持续工作直到完成承诺达成或迭代限制。
+description: "Use when executing multiple Tickets autonomously or when triggered with /ralph-loop - continuously works until completion promise is met or iteration limit reached"
 invoked_by: user
+auto_execute: true  # 自动执行模式，不等待用户确认
 ---
 ```
+
+### ⚠️ 执行模式 - 自动循环
+
+**这是一个自动执行的流程：**
+- 一次触发，持续执行直到完成承诺达成
+- 每次迭代自动执行，不等待用户确认
+- 只有达到完成承诺或迭代限制才停止
+- 连续失败 3 次触发安全停止
 
 ### 核心机制
 
@@ -193,7 +204,7 @@ flowchart TD
 ```yaml
 ---
 name: progress-tracker
-description: 进度追踪。追踪整体进度，生成状态报告。
+description: "Use when checking project status or when triggered with /status - tracks overall progress and generates status reports"
 invoked_by: user, agent
 ---
 ```

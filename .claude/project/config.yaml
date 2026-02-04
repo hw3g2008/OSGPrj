@@ -1,0 +1,111 @@
+# ============================================
+# OSG 职业培训平台 - 项目配置
+# ============================================
+
+# 项目基本信息
+name: "osg-platform"
+type: fullstack
+description: "金融行业求职培训 B2C 平台"
+
+# 技术栈
+tech_stack:
+  backend:
+    language: java
+    runtime: "Java 17"
+    framework: spring-boot
+    version: "3.x"
+    orm: mybatis-plus
+  frontend:
+    language: typescript
+    framework: vue
+    version: "3.x"
+    ui: ant-design-vue
+    state: pinia
+    package_manager: pnpm
+  database:
+    type: mysql
+    version: "8.0"
+  cache:
+    type: redis
+
+# 命令映射
+commands:
+  # 后端命令
+  test: "mvn test"
+  test-single: "mvn test -Dtest={class}"
+  build: "mvn -DskipTests package"
+  lint: "mvn checkstyle:check || true"
+  run: "mvn -pl ruoyi-admin -am spring-boot:run"
+  
+  # 前端命令
+  frontend:
+    install: "cd osg-frontend && pnpm install"
+    build: "cd osg-frontend && pnpm build"
+    lint: "cd osg-frontend && pnpm lint || true"
+    dev: "cd osg-frontend && pnpm dev:student"
+    dev-student: "cd osg-frontend && pnpm dev:student"
+    dev-mentor: "cd osg-frontend && pnpm dev:mentor"
+    dev-lead-mentor: "cd osg-frontend && pnpm dev:lead-mentor"
+    dev-assistant: "cd osg-frontend && pnpm dev:assistant"
+  
+  # 运维命令
+  ops:
+    docker_build: "docker-compose build"
+    docker_run: "docker-compose up -d"
+    logs: "docker-compose logs -f"
+    health: "curl -s http://localhost:8080/actuator/health"
+
+# 目录约定
+paths:
+  backend:
+    source: "ruoyi-*/src/main/java/"
+    tests: "ruoyi-*/src/test/java/"
+    controllers: "ruoyi-admin/src/main/java/**/controller/"
+    services: "ruoyi-system/src/main/java/**/service/"
+    mappers: "ruoyi-system/src/main/java/**/mapper/"
+  frontend:
+    source: "osg-frontend/packages/"
+    components: "osg-frontend/packages/shared/src/components/"
+    pages: "osg-frontend/packages/*/src/views/"
+    api: "osg-frontend/packages/shared/src/api/"
+    types: "osg-frontend/packages/shared/src/types/"
+  docs:
+    spec: "osg-spec-docs/docs/"
+    api: "osg-spec-docs/docs/06-api/"
+    database: "osg-spec-docs/docs/07-database/"
+    requirements: "osg-spec-docs/docs/02-requirements/"
+
+# 启用的开发者角色
+developers:
+  - backend-java
+  - frontend-vue
+  - dba-mysql
+
+# 业务角色
+roles:
+  - student      # 学生
+  - mentor       # 导师
+  - lead-mentor  # 班主任
+  - assistant    # 助教
+  - admin        # 管理员
+
+# 前端端口配置
+ports:
+  student: 3001
+  mentor: 3002
+  lead-mentor: 3003
+  assistant: 3004
+  admin: 8080  # 后台管理（ruoyi-ui）
+
+# 审批配置
+approval:
+  story_split: required      # Story 拆分后需要审批
+  ticket_split: required     # Ticket 拆分后需要审批
+  ticket_done: auto          # Ticket 完成后自动继续
+  story_done: required       # Story 完成需要人工审批
+
+# 自动执行限制
+limits:
+  max_iterations: 20         # 最大迭代次数
+  max_retries: 3             # 最大重试次数
+  ticket_timeout: 30         # Ticket 超时（分钟）

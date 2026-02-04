@@ -1,0 +1,34 @@
+# ============================================
+# 项目决策记录
+# ============================================
+
+# 决策列表
+decisions:
+  - id: DEC-001
+    date: "2026-02-04"
+    topic: "管理后台权限管理方案"
+    context: "需要为 OSG 平台后台实现基于角色的权限管理"
+    decision: "复用若依框架现有的 RBAC 模型，不新建表，通过配置实现 9 个业务角色的权限控制"
+    rationale:
+      - 若依已有成熟的角色/菜单/用户权限模型
+      - 复用可减少开发工作量和风险
+      - sys_role 的 roleKey 可直接映射 OSG 业务角色
+    alternatives:
+      - 新建 OSG 专属权限表（工作量大，无必要）
+      - 使用 ABAC 模型（过于复杂）
+    impact:
+      - 需要初始化 9 个角色记录
+      - 需要配置角色-菜单关联
+      - 前端菜单需与权限标识对齐
+    status: approved
+
+# 决策模板示例：
+# - id: "D-001"
+#   type: "decision"         # decision | architecture | convention | blocker
+#   timestamp: "2026-02-03T12:00:00Z"
+#   context: "决策背景"
+#   decision: "决策内容"
+#   rationale: "决策理由"
+#   impact:
+#     - "影响1"
+#     - "影响2"

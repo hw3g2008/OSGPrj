@@ -10,7 +10,7 @@
 | 01 | [工作流_RPIV](01_工作流_RPIV.md) | RPIV 四阶段、审批点、会话恢复 |
 | 02 | [错误处理](02_错误处理.md) | 错误分类、回滚机制、Agent 信息传递 |
 | 10 | [Skills_记忆管理](10_Skills_记忆管理.md) | memory-bank, context-compression, checkpoint-manager |
-| 11 | [Skills_工作流](11_Skills_工作流.md) | brainstorming, story-splitter, ticket-splitter, deliver-ticket |
+| 11 | [Skills_工作流](11_Skills_工作流.md) | brainstorming, story-splitter, ticket-splitter, deliver-ticket, using-git-worktrees |
 | 12 | [Skills_质量](12_Skills_质量.md) | verification, tdd, code-review, debugging |
 | 13 | [Skills_自动化](13_Skills_自动化.md) | ralph-loop, progress-tracker |
 | 20 | [Agent_Coordinator](20_Agent_Coordinator.md) | 协调员 |
@@ -22,10 +22,12 @@
 | 30 | [格式规范](30_格式规范.md) | Ticket、Story、日志 YAML 格式 |
 | 31 | [项目配置](31_项目配置.md) | config.yaml、目录结构、初始化流程 |
 | 32 | [命令体系](32_命令体系.md) | 所有 /xxx 命令说明 |
-| 40 | [commands_命令文件](40_commands_命令文件.md) | 9 个命令文件的具体内容 |
+| 40 | [commands_命令文件](40_commands_命令文件.md) | 17 个命令文件的具体内容 |
 | 41 | [templates_模板文件](41_templates_模板文件.md) | 5 个 YAML 模板文件 |
-| 42 | [实现细节](42_实现细节.md) | Subagent、上下文检测、Git 集成 |
+| 42 | [实现细节](42_实现细节.md) | Subagent、上下文检测、Git 集成、平台适配 |
 | 43 | [rules_代码规范](43_rules_代码规范.md) | Java、Vue、SQL 代码规范 |
+| 44 | [低智商模型执行指南](44_低智商模型执行指南.md) | **重要** - 便宜模型执行的精确步骤 |
+| 45 | [平台适配与Hooks机制](45_平台适配与Hooks机制.md) | subagent-dispatch, hooks-manager Skills，跨平台支持 |
 | 50 | [参考_Superpowers分析](50_参考_Superpowers分析.md) | Superpowers 框架对比分析、实现细节 |
 | 51 | [历史_实现计划](51_历史_实现计划.md) | 框架实现计划、Todos、详细设计（历史记录） |
 
