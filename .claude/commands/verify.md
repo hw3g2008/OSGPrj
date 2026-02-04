@@ -20,6 +20,9 @@
 4. 验证验收标准
 5. 运行测试
 6. 输出验证报告
+7. 更新 workflow:
+   - current_step = "story_done"
+   - next_step = "approve_story"
 ```
 
 ## 输出示例

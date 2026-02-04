@@ -55,3 +55,10 @@ stats:
   completed_tickets: 0
   blocked_tickets: 0
   total_time_spent: "0m"
+
+# 工作流状态机（用于自动继续执行）
+workflow:
+  current_step: not_started        # 最近完成的步骤（not_started 表示还未开始）
+  next_step: null                  # 下一步要执行的命令
+  next_requires_approval: false    # 下一步是否需要审批（从 config.yaml 读取）
+  auto_continue: true              # 是否自动继续（如果不需要审批则自动执行）

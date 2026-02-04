@@ -1,0 +1,43 @@
+# ============================================
+# Story: 初始化 OSG 业务角色
+# ============================================
+
+id: S-001
+title: "初始化 9 个 OSG 业务角色"
+requirement: REQ-001-admin-permission
+status: pending
+priority: P0
+estimated_hours: 2
+
+# 用户故事
+user_story: |
+  作为超级管理员，
+  我希望系统中有预定义的 9 个业务角色，
+  以便我可以将后台用户分配到相应的角色。
+
+# 验收标准
+acceptance_criteria:
+  - AC-001: sys_role 表中存在 super_admin 角色记录
+  - AC-002: sys_role 表中存在 clerk 角色记录
+  - AC-003: sys_role 表中存在 course_auditor 角色记录
+  - AC-004: sys_role 表中存在 accountant 角色记录
+  - AC-005: sys_role 表中存在 position_admin 角色记录
+  - AC-006: sys_role 表中存在 file_admin 角色记录
+  - AC-007: sys_role 表中存在 quiz_admin 角色记录
+  - AC-008: sys_role 表中存在 interview_admin 角色记录
+  - AC-009: sys_role 表中存在 expense_auditor 角色记录
+  - AC-010: 所有角色的 roleKey 与文档定义一致
+
+# 涉及文件
+files:
+  - sql/osg_permissions_init.sql
+  - ruoyi-system/src/main/java/com/ruoyi/system/domain/SysRole.java
+
+# 依赖
+dependencies: []
+
+# 备注
+notes: |
+  - 复用若依现有的 sys_role 表结构
+  - roleKey 必须与 OSG 规范文档一致
+  - 需要考虑与现有 admin 角色的关系

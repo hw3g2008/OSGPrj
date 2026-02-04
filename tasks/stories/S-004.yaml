@@ -1,0 +1,40 @@
+# ============================================
+# Story: 权限初始化脚本编写
+# ============================================
+
+id: S-004
+title: "权限初始化脚本编写"
+requirement: REQ-001-admin-permission
+status: pending
+priority: P0
+estimated_hours: 2
+
+# 用户故事
+user_story: |
+  作为运维人员，
+  我希望有一个可重复执行的 SQL 脚本来初始化权限配置，
+  以便在部署或重置环境时快速配置权限。
+
+# 验收标准
+acceptance_criteria:
+  - AC-001: 脚本位于 sql/osg_permissions_init.sql
+  - AC-002: 脚本可重复执行（INSERT 使用 ON DUPLICATE KEY UPDATE 或先 DELETE）
+  - AC-003: 脚本包含所有 9 个角色的 INSERT 语句
+  - AC-004: 脚本包含所有角色-菜单关联的 INSERT 语句
+  - AC-005: 脚本有清晰的注释（OSG-ROLE 前缀）
+  - AC-006: 脚本执行后，权限配置与需求文档一致
+
+# 涉及文件
+files:
+  - sql/osg_permissions_init.sql
+
+# 依赖
+dependencies:
+  - S-001  # 需要确定角色定义
+  - S-002  # 需要确定权限映射
+
+# 备注
+notes: |
+  - 脚本需要兼容若依原有数据
+  - 使用统一前缀注释便于追溯
+  - 考虑添加回滚脚本

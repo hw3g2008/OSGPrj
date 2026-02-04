@@ -462,8 +462,387 @@ def create_ticket(ticket_id, story_id, title, type, agent, allowed_paths):
 
 ---
 
+## 📐 完整 YAML 操作示例（低智商模型必读）
+
+### 示例 1：更新 STATE.yaml 的 current.ticket 字段
+
+**场景**：执行 `/next` 后，需要更新当前执行的 Ticket
+
+**操作步骤**：
+
+```python
+# Step 1: 读取现有 STATE.yaml
+state = 读取yaml("tasks/STATE.yaml")
+
+# Step 2: 更新字段
+state["current"]["ticket"] = "T-003"
+state["current"]["agent"] = "backend-java"
+state["last_updated"] = "2026-02-03T10:30:00Z"  # ISO 8601 格式
+
+# Step 3: 更新 Story 中的 Ticket 状态
+if "S-001" in state["stories"]:
+    for ticket in state["stories"]["S-001"]["tickets"]:
+        if ticket["id"] == "T-003":
+            ticket["status"] = "in_progress"
+            break
+
+# Step 4: 写回文件
+写入yaml("tasks/STATE.yaml", state)
+```
+
+**更新前**：
+```yaml
+# tasks/STATE.yaml
+version: "1.0"
+last_updated: "2026-02-03T10:00:00Z"
+phase: "implement"
+current:
+  requirement: "REQ-001"
+  story: "S-001"
+  ticket: null
+  agent: null
+stories:
+  S-001:
+    status: "in_progress"
+    progress: "2/5"
+    tickets:
+      - id: "T-001"
+        status: "completed"
+      - id: "T-002"
+        status: "completed"
+      - id: "T-003"
+        status: "pending"
+```
+
+**更新后**：
+```yaml
+# tasks/STATE.yaml
+version: "1.0"
+last_updated: "2026-02-03T10:30:00Z"  # ← 更新
+phase: "implement"
+current:
+  requirement: "REQ-001"
+  story: "S-001"
+  ticket: "T-003"   # ← 更新
+  agent: "backend-java"  # ← 更新
+stories:
+  S-001:
+    status: "in_progress"
+    progress: "2/5"
+    tickets:
+      - id: "T-001"
+        status: "completed"
+      - id: "T-002"
+        status: "completed"
+      - id: "T-003"
+        status: "in_progress"  # ← 更新
+```
+
+---
+
+### 示例 2：创建完整的 Ticket 文件
+
+**场景**：执行 `/split ticket S-001` 后创建 Ticket 文件
+
+**完整 Ticket 文件内容**：
+
+```yaml
+# tasks/tickets/T-003.yaml
+# 由 ticket-splitter skill 自动生成
+
+id: "T-003"
+story_id: "S-001"
+title: "用户编辑 API"
+description: |
+  实现用户信息编辑接口，允许管理员修改用户的基本信息。
+  
+  包括：
+  - 修改用户名
+  - 修改邮箱
+  - 修改状态（启用/禁用）
+
+# 执行配置
+type: "backend"
+agent: "backend-java"
+priority: 3
+estimated_minutes: 5
+
+# 文件边界（强制约束）
+allowed_paths:
+  modify:
+    - "ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysUserController.java"
+  create:
+    - "ruoyi-admin/src/test/java/com/ruoyi/web/controller/system/SysUserControllerTest.java"
+  read:
+    - "ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysDeptController.java"
+    - "ruoyi-system/src/main/java/com/ruoyi/system/service/ISysUserService.java"
+
+# TDD 配置
+tdd:
+  test_file: "ruoyi-admin/src/test/java/com/ruoyi/web/controller/system/SysUserControllerTest.java"
+  test_cases:
+    - name: "testEditUser_success"
+      description: "正常修改用户信息"
+      input: |
+        {
+          "userId": 1,
+          "userName": "新用户名",
+          "email": "new@example.com"
+        }
+      expected_output: "code: 200"
+      
+    - name: "testEditUser_notFound"
+      description: "用户不存在"
+      input: |
+        {
+          "userId": 99999,
+          "userName": "测试"
+        }
+      expected_output: "code: 500, msg: 用户不存在"
+
+# 验收标准
+acceptance:
+  - type: "command"
+    run: "mvn test -Dtest=SysUserControllerTest"
+    expect: "BUILD SUCCESS"
+  - type: "command"
+    run: "mvn checkstyle:check"
+    expect: "BUILD SUCCESS"
+
+# 状态
+status: "pending"
+started_at: null
+completed_at: null
+
+# 依赖
+dependencies:
+  tickets: ["T-001", "T-002"]
+
+# 元数据
+created_at: "2026-02-03T09:00:00Z"
+created_by: "planner"
+```
+
+---
+
+### 示例 3：创建执行日志
+
+**场景**：Ticket T-003 执行完成后创建日志
+
+**完整日志文件内容**：
+
+```yaml
+# workspace/logs/T-003.yaml
+# 由 deliver-ticket skill 自动生成
+
+ticket_id: "T-003"
+story_id: "S-001"
+agent: "backend-java"
+session_id: "2026-02-03-001"
+
+# 执行时间
+started_at: "2026-02-03T10:30:00Z"
+finished_at: "2026-02-03T10:35:00Z"
+duration_seconds: 300
+
+# 执行结果
+status: "success"  # success | failed | skipped
+exit_reason: "all_acceptance_passed"
+
+# 详细步骤记录
+steps:
+  - step: 1
+    name: "读取 Ticket"
+    action: "read_file"
+    target: "tasks/tickets/T-003.yaml"
+    status: "success"
+    timestamp: "2026-02-03T10:30:00Z"
+    duration_ms: 100
+    
+  - step: 2
+    name: "读取参考文件"
+    action: "read_file"
+    target: "ruoyi-admin/src/main/java/.../SysDeptController.java"
+    status: "success"
+    timestamp: "2026-02-03T10:30:01Z"
+    duration_ms: 500
+    
+  - step: 3
+    name: "编写测试"
+    action: "write_file"
+    target: "ruoyi-admin/src/test/java/.../SysUserControllerTest.java"
+    status: "success"
+    timestamp: "2026-02-03T10:31:00Z"
+    duration_ms: 30000
+    lines_added: 45
+    
+  - step: 4
+    name: "TDD 红灯"
+    action: "run_command"
+    command: "mvn test -Dtest=SysUserControllerTest"
+    status: "success"
+    timestamp: "2026-02-03T10:31:30Z"
+    duration_ms: 5000
+    output_summary: "Tests run: 2, Failures: 2"
+    expected_result: "test_failure"  # 红灯阶段预期失败
+    
+  - step: 5
+    name: "实现功能"
+    action: "modify_file"
+    target: "ruoyi-admin/src/main/java/.../SysUserController.java"
+    status: "success"
+    timestamp: "2026-02-03T10:32:00Z"
+    duration_ms: 60000
+    lines_modified: 25
+    
+  - step: 6
+    name: "TDD 绿灯"
+    action: "run_command"
+    command: "mvn test -Dtest=SysUserControllerTest"
+    status: "success"
+    timestamp: "2026-02-03T10:33:00Z"
+    duration_ms: 5000
+    output_summary: "Tests run: 2, Failures: 0"
+    attempt: 1
+    
+  - step: 7
+    name: "Lint 检查"
+    action: "run_command"
+    command: "mvn checkstyle:check"
+    status: "success"
+    timestamp: "2026-02-03T10:33:30Z"
+    duration_ms: 3000
+    output_summary: "BUILD SUCCESS"
+    
+  - step: 8
+    name: "自我审查"
+    action: "self_review"
+    status: "success"
+    timestamp: "2026-02-03T10:34:00Z"
+    duration_ms: 5000
+    checklist:
+      - name: "完整性"
+        passed: true
+        details: "所有 allowed_paths 文件都已处理"
+      - name: "质量"
+        passed: true
+        details: "代码符合规范，无冗余"
+      - name: "测试"
+        passed: true
+        details: "测试覆盖正向和反向场景"
+    
+  - step: 9
+    name: "创建检查点"
+    action: "create_checkpoint"
+    checkpoint_id: "CP-20260203-103430"
+    status: "success"
+    timestamp: "2026-02-03T10:34:30Z"
+    duration_ms: 2000
+
+# 验收证据
+evidence:
+  - type: "test_output"
+    name: "单元测试"
+    command: "mvn test -Dtest=SysUserControllerTest"
+    output: |
+      [INFO] Running com.ruoyi.web.controller.system.SysUserControllerTest
+      [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+      [INFO] BUILD SUCCESS
+    timestamp: "2026-02-03T10:33:00Z"
+    
+  - type: "lint_output"
+    name: "代码检查"
+    command: "mvn checkstyle:check"
+    output: |
+      [INFO] BUILD SUCCESS
+    timestamp: "2026-02-03T10:33:30Z"
+
+# 文件变更记录
+files_changed:
+  created:
+    - path: "ruoyi-admin/src/test/java/.../SysUserControllerTest.java"
+      lines: 45
+  modified:
+    - path: "ruoyi-admin/src/main/java/.../SysUserController.java"
+      lines_added: 25
+      lines_removed: 0
+  deleted: []
+
+# 检查点信息
+checkpoint:
+  id: "CP-20260203-103430"
+  git_commit: "abc1234"
+  can_rollback: true
+
+# 错误记录（如有）
+errors: []
+# 如果有错误:
+# errors:
+#   - step: 4
+#     type: "test_failed"
+#     message: "NullPointerException at line 45"
+#     retry_count: 2
+#     resolved: true
+#     resolution: "添加空值检查"
+```
+
+---
+
+### 示例 4：创建检查点
+
+**场景**：Ticket 完成后创建检查点
+
+**完整检查点文件内容**：
+
+```yaml
+# .claude/checkpoints/CP-20260203-103430.yaml
+# 由 checkpoint-manager skill 自动生成
+
+id: "CP-20260203-103430"
+created_at: "2026-02-03T10:34:30Z"
+trigger: "ticket_completed"  # ticket_completed | manual | context_compression
+
+# 触发时的上下文
+context:
+  ticket_id: "T-003"
+  story_id: "S-001"
+  phase: "implement"
+  
+# 状态快照
+state_snapshot:
+  file: "tasks/STATE.yaml"
+  hash: "sha256:abc123..."  # 文件哈希，用于验证
+  
+# Git 信息
+git:
+  commit: "abc1234"
+  branch: "feature/user-management"
+  message: "feat(user): 实现用户编辑 API (T-003)"
+  
+# 文件变更摘要
+changes:
+  - file: "ruoyi-admin/src/main/java/.../SysUserController.java"
+    action: "modified"
+    diff_lines: "+25/-0"
+  - file: "ruoyi-admin/src/test/java/.../SysUserControllerTest.java"
+    action: "created"
+    diff_lines: "+45/-0"
+
+# 恢复指令
+restore_instructions: |
+  1. 执行: git checkout abc1234
+  2. 恢复 STATE.yaml: cp .claude/checkpoints/CP-20260203-103430/STATE.yaml tasks/STATE.yaml
+  3. 继续执行: /next
+  
+# 可恢复性
+restorable: true
+```
+
+---
+
 ## 相关文档
 
 - [00_概览](00_概览.md) - 返回概览
 - [30_格式规范](30_格式规范.md) - 格式详细说明
 - [31_项目配置](31_项目配置.md) - 项目配置
+- [44_低智商模型执行指南](44_低智商模型执行指南.md) - 精确执行步骤

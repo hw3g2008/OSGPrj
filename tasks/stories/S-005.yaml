@@ -1,0 +1,41 @@
+# ============================================
+# Story: 测试用例执行与验收
+# ============================================
+
+id: S-005
+title: "测试用例执行与验收"
+requirement: REQ-001-admin-permission
+status: pending
+priority: P1
+estimated_hours: 4
+
+# 用户故事
+user_story: |
+  作为 QA 工程师，
+  我希望执行所有测试用例并验证权限配置正确，
+  以便确保系统符合需求规格。
+
+# 验收标准
+acceptance_criteria:
+  - AC-001: 16 条正向测试用例全部通过
+  - AC-002: 10 条反向测试用例全部通过
+  - AC-003: 5 条边界测试用例全部通过
+  - AC-004: 操作日志正确记录权限变更
+  - AC-005: 测试报告文档化
+
+# 涉及文件
+files:
+  - osg-spec-docs/docs/12-implementation/admin-permission/TEST-REPORT.md
+
+# 依赖
+dependencies:
+  - S-001
+  - S-002
+  - S-003
+  - S-004
+
+# 备注
+notes: |
+  - 需要创建测试账号（每个角色至少一个）
+  - 使用 Postman 或 curl 测试 API 权限
+  - 手工测试菜单可见性

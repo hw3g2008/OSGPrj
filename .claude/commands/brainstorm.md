@@ -21,6 +21,9 @@
 6. 循环反向校验（直到全部 ✅）
 7. 输出最终需求文档
 8. 记录决策到 memory-bank
+9. 更新 workflow:
+   - current_step = "brainstorm_done"
+   - next_step = "split_story"
 ```
 
 ## ⚠️ 执行模式

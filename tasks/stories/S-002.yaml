@@ -1,0 +1,44 @@
+# ============================================
+# Story: 配置角色-菜单权限映射
+# ============================================
+
+id: S-002
+title: "配置角色-菜单权限映射"
+requirement: REQ-001-admin-permission
+status: pending
+priority: P0
+estimated_hours: 4
+
+# 用户故事
+user_story: |
+  作为后台管理员，
+  我希望每个角色只能看到和操作其权限范围内的菜单，
+  以便实现职责分离和安全控制。
+
+# 验收标准
+acceptance_criteria:
+  - AC-001: super_admin 角色可访问所有菜单
+  - AC-002: clerk 角色只能访问学员列表、导师列表、合同管理菜单
+  - AC-003: course_auditor 角色只能访问课时记录、课时审核菜单
+  - AC-004: accountant 角色只能访问课时结算、报销管理菜单
+  - AC-005: position_admin 角色只能访问岗位信息菜单
+  - AC-006: file_admin 角色只能访问文件管理菜单
+  - AC-007: quiz_admin 角色只能访问在线题库菜单
+  - AC-008: interview_admin 角色只能访问面试题库、面试真题菜单
+  - AC-009: expense_auditor 角色只能访问报销审核菜单
+  - AC-010: sys_role_menu 表中的配置与权限矩阵文档一致
+
+# 涉及文件
+files:
+  - sql/osg_permissions_init.sql
+  - ruoyi-system/src/main/resources/mapper/system/SysRoleMenuMapper.xml
+
+# 依赖
+dependencies:
+  - S-001  # 需要先创建角色
+
+# 备注
+notes: |
+  - 需要先确定若依 sys_menu 表中的 menu_id
+  - 配置通过 sys_role_menu 关联表实现
+  - 权限配置必须可追溯（SQL 脚本有注释）

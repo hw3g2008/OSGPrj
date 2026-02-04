@@ -21,11 +21,15 @@
 1. 显示所有 Stories 摘要
 2. 等待用户确认
 3. 更新 STATE.yaml: phase = "stories_approved"
+4. 更新 workflow:
+   - current_step = "stories_approved"
+   - next_step = "split_ticket"
+5. 设置 current_story = 第一个 Story ID
 ```
 
 ### 下一步
 
-执行 `/split ticket S-001` 拆分第一个 Story
+自动执行 `/split ticket S-001` 拆分第一个 Story
 
 ---
 
@@ -42,11 +46,14 @@
 2. 显示依赖图
 3. 等待用户确认
 4. 更新 STATE.yaml: phase = "tickets_approved"
+5. 更新 workflow:
+   - current_step = "ticket_approved"
+   - next_step = "next"
 ```
 
 ### 下一步
 
-执行 `/next` 开始执行第一个 Ticket
+自动执行 `/next` 开始执行第一个 Ticket
 
 ---
 
@@ -68,7 +75,28 @@
 2. 显示验证报告
 3. 等待用户确认
 4. 更新 Story 状态为 completed
-5. 更新 STATE.yaml
+5. 检查是否是最后一个 Story:
+   - 如果还有 pending Stories → 设置 workflow.current_step = "story_approved"
+   - 如果是最后一个 → 设置 workflow.current_step = "all_stories_done"
+6. 更新 STATE.yaml
+```
+
+### 完成判断
+
+```python
+def check_story_completion(state):
+    pending_stories = [s for s in state.stories if s.status == "pending"]
+    
+    if len(pending_stories) == 0:
+        # 所有 Stories 完成
+        state.workflow.current_step = "all_stories_done"
+        state.workflow.next_step = None
+        return "all_done"
+    else:
+        # 还有待处理的 Story
+        state.workflow.current_step = "story_approved"
+        state.workflow.next_step = "next_story"
+        return "continue"
 ```
 
 ---

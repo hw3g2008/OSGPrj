@@ -15,14 +15,34 @@ initialized_at: "2026-02-03T23:00:00Z"
 # - ticket_approved: Ticket 已审批
 # - implementing: 实现中
 # - completed: 已完成
-phase: brainstorming
+phase: story_split
 
 # 当前任务
 current_story: null
 current_ticket: null
 
 # Stories 和 Tickets
-stories: []
+stories:
+  - id: S-001
+    title: "初始化 9 个 OSG 业务角色"
+    status: pending
+    priority: P0
+  - id: S-002
+    title: "配置角色-菜单权限映射"
+    status: pending
+    priority: P0
+  - id: S-003
+    title: "后台用户管理功能完善"
+    status: pending
+    priority: P1
+  - id: S-004
+    title: "权限初始化脚本编写"
+    status: pending
+    priority: P0
+  - id: S-005
+    title: "测试用例执行与验收"
+    status: pending
+    priority: P1
 tickets: []
 
 # 已完成
@@ -45,8 +65,15 @@ blockers: []
 
 # 统计
 stats:
-  total_stories: 0
+  total_stories: 5
   completed_stories: 0
   total_tickets: 0
   completed_tickets: 0
   total_time_spent: "0m"
+
+# 工作流状态机（用于自动继续执行）
+workflow:
+  current_step: story_split_done   # 最近完成的步骤
+  next_step: approve_stories       # 下一步要执行的命令
+  next_requires_approval: true     # 下一步需要审批（config.approval.story_split = required）
+  auto_continue: false             # 停止，等待审批

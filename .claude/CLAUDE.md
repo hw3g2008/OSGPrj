@@ -36,6 +36,131 @@
 
 ---
 
+## ⚡ 响应结束规则（自动继续）
+
+**每次响应结束前，必须执行以下检查：**
+
+```
+0. 判断当前执行的命令类型：
+   - 如果是 /brainstorm → 命令完成后设置 workflow.current_step = "brainstorm_done"
+   - 如果是 /split story → 命令完成后设置 workflow.current_step = "story_split_done"
+   - 如果是 /split ticket → 命令完成后设置 workflow.current_step = "ticket_split_done"
+   - 如果是 /next → 命令完成后设置 workflow.current_step = "ticket_done"
+   - 如果是 /verify → 命令完成后设置 workflow.current_step = "story_done"
+   - 如果是 /approve → 根据审批类型设置 workflow.current_step = "story_approved" 或 "ticket_approved"
+
+1. 读取 tasks/STATE.yaml 的 workflow 字段
+   - 如果 workflow 不存在 → 创建 workflow 字段，设置初始状态
+   - 如果存在 → 获取 current_step 和 next_step
+
+2. 如果 next_step 为空 → 停止（工作流结束）
+
+3. 根据 next_step 查找审批配置键（使用映射表）：
+   - next_step = "approve_stories" → config.approval.story_split
+   - next_step = "approve_tickets" → config.approval.ticket_split
+   - next_step = "approve_story" → config.approval.story_done
+   - next_step = "next" → config.approval.ticket_done
+   - next_step = "null" → 工作流结束，停止
+   - 其他（split_story, split_ticket, verify, next_story）→ 不需要审批（auto）
+
+4. 判断是否自动继续：
+   - 如果审批配置值为 "auto" 或不存在 → next_requires_approval = false
+   - 如果审批配置值为 "required" → next_requires_approval = true
+
+5. 如果 next_requires_approval == false：
+   a. **更新状态**（执行前）：
+      - 更新 STATE.yaml: workflow.current_step = next_step
+      - 根据工作流转换表确定新的 next_step
+      - 更新 STATE.yaml: workflow.next_step = 新值
+   
+   b. **执行命令**：
+      - 根据"步骤名称到命令映射表"找到对应的命令
+      - 如果是 `/split ticket`，需要从 STATE.current_story 获取 Story ID
+      - 执行命令（调用对应的 Agent 和 Skill）
+      - 等待命令执行完成
+   
+   c. **更新状态**（执行后）：
+      - 如果命令成功，更新 workflow.current_step = 新的步骤名
+      - 如果命令失败，停止并输出错误
+   
+   d. **继续循环**：
+      - 重复步骤 1-5，直到遇到需要审批的步骤或工作流结束
+
+6. 如果 next_requires_approval == true：
+   - 输出清晰的审批提示："等待审批: /approve {对应的审批命令}"
+   - 更新 STATE.yaml: workflow.current_step = 当前步骤
+   - 停止响应
+```
+
+**工作流转换表：**
+
+| 当前步骤 | 下一步 | 审批配置键 | 默认行为 | 说明 |
+|----------|--------|------------|----------|------|
+| `brainstorm_done` | `split_story` | - | auto | 需求分析完成后自动拆分 Stories |
+| `story_split_done` | `approve_stories` | `story_split` | required | Story 拆分后需要审批 |
+| `stories_approved` | `split_ticket` | - | auto | Stories 审批后自动拆第一个 Story 的 Tickets |
+| `ticket_split_done` | `approve_tickets` | `ticket_split` | required | Ticket 拆分后需要审批 |
+| `ticket_approved` | `next` | - | auto | 审批通过后自动执行第一个 Ticket |
+| `ticket_done` | `next` (循环) | `ticket_done` | auto | Ticket 完成后自动执行下一个 |
+| `all_tickets_done` | `verify` | - | auto | 所有 Tickets 完成后自动验收 |
+| `story_done` | `approve_story` | `story_done` | required | Story 完成后需要审批 |
+| `story_approved` | `next_story` | - | auto | Story 审批后检查是否有下一个 Story |
+| `all_stories_done` | `null` | - | - | 所有 Stories 完成，工作流结束 |
+
+**步骤名称到命令映射表：**
+
+| 步骤名称 | 实际命令 | 参数来源 |
+|----------|----------|----------|
+| `split_story` | `/split story` | - |
+| `approve_stories` | `/approve stories` | - |
+| `split_ticket` | `/split ticket {story_id}` | STATE.current_story |
+| `approve_tickets` | `/approve tickets` | - |
+| `next` | `/next` | - |
+| `verify` | `/verify {story_id}` | STATE.current_story |
+| `approve_story` | `/approve {story_id}` | STATE.current_story |
+| `next_story` | 检查下一个 Story（见下方逻辑） | STATE.stories |
+| `null` | 无（工作流结束） | - |
+
+**`next_story` 分支逻辑：**
+
+```
+if 存在 pending Story:
+    current_story = 下一个 pending Story ID
+    current_step = "stories_approved"  # 回到拆 Ticket 阶段
+    next_step = "split_ticket"
+    执行 /split ticket {story_id}
+else:
+    current_step = "all_stories_done"
+    next_step = null
+    输出 "所有 Stories 已完成"
+```
+
+**命令到步骤名称映射表：**
+
+| 命令 | 完成后的步骤名称 | 说明 |
+|------|----------------|------|
+| `/brainstorm` | `brainstorm_done` | 需求分析完成 |
+| `/split story` | `story_split_done` | Story 拆分完成 |
+| `/split ticket S-xxx` | `ticket_split_done` | Ticket 拆分完成 |
+| `/next` | `ticket_done` 或 `all_tickets_done` | Ticket 执行完成（如果是最后一个则为 all_tickets_done） |
+| `/verify S-xxx` | `story_done` | Story 验收完成 |
+| `/approve stories` | `stories_approved` | Stories 审批通过（开始拆 Tickets） |
+| `/approve tickets` | `ticket_approved` | Tickets 审批通过 |
+| `/approve S-xxx` | `story_approved` 或 `all_stories_done` | Story 审批通过（如果是最后一个则为 all_stories_done） |
+
+**边界情况处理：**
+
+| 情况 | 处理方式 |
+|------|----------|
+| workflow 字段不存在 | 创建 workflow 字段，设置 current_step = 当前命令对应的步骤名 |
+| next_step 为空 | 停止，输出"工作流已完成" |
+| 审批配置键不存在 | 视为 "auto"，自动继续 |
+| 转换表中找不到 next_step | 停止，输出"未知步骤: {next_step}" |
+| split_ticket 需要 Story ID 但不存在 | 停止，输出"需要先选择 Story" |
+| 命令执行失败 | 不更新 workflow，停止并输出错误 |
+
+---
+
 ## 📁 框架结构
 
 ```
