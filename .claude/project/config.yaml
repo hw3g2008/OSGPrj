@@ -11,10 +11,10 @@ description: "金融行业求职培训 B2C 平台"
 tech_stack:
   backend:
     language: java
-    runtime: "Java 17"
+    runtime: "Java 21"
     framework: spring-boot
     version: "3.x"
-    orm: mybatis-plus
+    orm: mybatis
   frontend:
     language: typescript
     framework: vue
@@ -47,6 +47,7 @@ commands:
     dev-mentor: "cd osg-frontend && pnpm dev:mentor"
     dev-lead-mentor: "cd osg-frontend && pnpm dev:lead-mentor"
     dev-assistant: "cd osg-frontend && pnpm dev:assistant"
+    dev-admin: "cd osg-frontend && pnpm dev:admin"
   
   # 运维命令
   ops:
@@ -65,12 +66,17 @@ paths:
     mappers: "ruoyi-system/src/main/java/**/mapper/"
   frontend:
     source: "osg-frontend/packages/"
+    admin: "osg-frontend/packages/admin/"              # 管理后台（Vue 3 + Ant Design Vue）
+    admin_legacy: "ruoyi-ui/"                           # 若依前端（保留做运维）
     components: "osg-frontend/packages/shared/src/components/"
     pages: "osg-frontend/packages/*/src/views/"
     api: "osg-frontend/packages/shared/src/api/"
     types: "osg-frontend/packages/shared/src/types/"
   docs:
     spec: "osg-spec-docs/docs/"
+    source: "osg-spec-docs/source/"                     # PRD 源文件（需求文档原始版）
+    prototypes: "osg-spec-docs/source/prototype/"       # UI 原型 HTML
+    prd: "osg-spec-docs/prd/"                            # PRD 需求文档（从 HTML 原型生成）
     api: "osg-spec-docs/docs/06-api/"
     database: "osg-spec-docs/docs/07-database/"
     requirements: "osg-spec-docs/docs/02-requirements/"
@@ -84,6 +90,7 @@ paths:
 developers:
   - backend-java
   - frontend-vue
+  - frontend-admin    # 管理后台前端（UI 还原 + 功能实现）
   - dba-mysql
 
 # 业务角色
@@ -100,7 +107,8 @@ ports:
   mentor: 3002
   lead-mentor: 3003
   assistant: 3004
-  admin: 8080  # 后台管理（ruoyi-ui）
+  admin: 3005          # 管理后台（osg-frontend/packages/admin）
+  admin_legacy: 8080   # 若依管理后台（ruoyi-ui，保留做运维）
 
 # 审批配置
 approval:
