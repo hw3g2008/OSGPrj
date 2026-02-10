@@ -18,7 +18,7 @@ auto_execute: true
 
 任何"完成"声明必须有：
 - 命令输出截图/日志
-- 测试通过记录
+- 验证通过记录（测试结果 / lint+build 结果，取决于 Ticket type）
 - 可复现的验证步骤
 ```
 
@@ -32,15 +32,29 @@ def can_claim_done(task):
     if not task.execution_log:
         return False, "缺少执行日志"
     
-    # 2. 必须有测试结果
-    if not task.test_result:
-        return False, "缺少测试结果"
+    # 2. 根据 type 选择验证策略
+    if task.type in ("backend", "database"):
+        # 后端/数据库：必须有测试结果且通过
+        if not task.test_result:
+            return False, "缺少测试结果"
+        if task.test_result.status != "passed":
+            return False, "测试未通过"
     
-    # 3. 测试必须通过
-    if task.test_result.status != "passed":
-        return False, "测试未通过"
+    elif task.type == "frontend-ui":
+        # UI 还原：必须有 lint + build 结果
+        if not task.lint_result or task.lint_result.status != "passed":
+            return False, "Lint 检查未通过"
+        if not task.build_result or task.build_result.status != "passed":
+            return False, "构建检查未通过"
     
-    # 4. 所有验收标准必须满足
+    elif task.type == "frontend":
+        # 前端功能：lint + build（测试可选）
+        if not task.lint_result or task.lint_result.status != "passed":
+            return False, "Lint 检查未通过"
+        if not task.build_result or task.build_result.status != "passed":
+            return False, "构建检查未通过"
+    
+    # 3. 所有验收标准必须满足（通用）
     for criteria in task.acceptance_criteria:
         if not criteria.verified:
             return False, f"验收标准未满足: {criteria}"
@@ -141,9 +155,16 @@ def verify(task):
 | 逻辑层 | ✅ | 4/4 通过 |
 
 ### 证据
-- 测试命令: `mvn test`
+{根据 Ticket type 不同，展示对应的验证证据}
+
+#### 后端/数据库 Ticket:
+- 测试命令: `{config.commands.test}`
 - 退出码: 0
 - 测试数量: 15 passed, 0 failed
+
+#### 前端/UI 还原 Ticket:
+- Lint 命令: `{config.commands.frontend.lint}` → 退出码: 0
+- Build 命令: `{config.commands.frontend.build}` → 退出码: 0
 
 ### 结论
 ✅ 验证通过，可以声明完成

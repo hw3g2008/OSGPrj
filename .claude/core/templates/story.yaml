@@ -1,5 +1,5 @@
 # Story 模板
-# 路径: osg-spec-docs/tasks/stories/S-{number}.yaml
+# 路径: ${config.paths.tasks.stories}S-{number}.yaml
 
 id: "S-{number}"
 title: "{标题}"

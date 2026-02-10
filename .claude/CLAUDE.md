@@ -188,6 +188,39 @@ osg-spec-docs/tasks/
 
 ---
 
+## 🔧 框架修改规则
+
+修改 `.claude/` 下的框架文件时，必须遵守：
+
+1. **core/ 禁止项目专属内容** -- core 层的 Skills、Agents、Templates 中不得出现项目名称、具体技术框架名、具体文件路径。使用 `${config.*}` 引用或通用描述代替。
+2. **新增概念必须全局传播** -- 新增 type / Agent / config 路径后，搜索全部 `.claude/` 和 `docs/一人公司框架/` 更新所有引用点（type 枚举、Agent 映射表、模板示例、验证逻辑、本文件角色表）。
+3. **模板与示例必须同步** -- 修改 `core/templates/*.yaml` 的字段结构后，同步更新 Skills 中引用该模板的内联示例代码。
+4. **兄弟文件风格统一** -- 同目录下的同类文件（如 `project/agents/*.md`）的 frontmatter 字段、变量引用方式、章节结构必须一致。新建文件前先读取已有文件作为模板。
+5. **Skill 描述与实现同步** -- 修改 Skill 内部流程（如新增分支）后，同步更新该 Skill 的 frontmatter `description`、概览段落、以及引用该 Skill 的文档描述。
+
+### 修改后必查清单
+
+**新增 type 时**（grep `type` 枚举，逐个确认）:
+- [ ] `core/templates/ticket.yaml` -- type 注释枚举
+- [ ] `core/skills/ticket-splitter/SKILL.md` -- type 枚举 + 流程图 + 拆分示例
+- [ ] `core/skills/deliver-ticket/SKILL.md` -- 概览 + frontmatter + 流程分支 + 铁律适用范围 + 伪代码
+- [ ] `core/skills/verification/SKILL.md` -- `can_claim_done` 门控分支
+- [ ] `core/templates/log.yaml` -- 阶段注释
+- [ ] `docs/一人公司框架/42_实现细节.md` -- type → Agent 映射表（4.5 节）
+- [ ] `CLAUDE.md` -- 角色表
+
+**修改模板字段结构时**（grep 字段名，逐个确认）:
+- [ ] 对应 Skill 中的内联模板和示例代码（如 `allowed_paths` 嵌套格式）
+- [ ] `docs/一人公司框架/42_实现细节.md` -- 引用该字段的伪代码
+
+**新增 Agent 时**:
+- [ ] 先读取同目录已有 Agent 文件，统一 frontmatter 格式（skills / rules / extends）
+- [ ] `project/config.yaml` -- developers 列表
+- [ ] `CLAUDE.md` -- 角色表
+- [ ] `docs/一人公司框架/42_实现细节.md` -- type → Agent 映射
+
+---
+
 ## 🎯 核心命令
 
 | 命令 | 说明 | 阶段 |
@@ -242,6 +275,7 @@ osg-spec-docs/tasks/
 |-------------|------------|----------|
 | backend | backend-java Agent | `project/agents/backend-java.md` |
 | frontend | frontend-vue Agent | `project/agents/frontend-vue.md` |
+| frontend-ui | frontend-admin Agent | `project/agents/frontend-admin.md` |
 | database | dba-mysql Agent | `project/agents/dba-mysql.md` |
 
 ---

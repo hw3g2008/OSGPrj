@@ -7,35 +7,62 @@ completed_at: "{ISO8601_UTC}"
 status: completed  # completed | failed | blocked
 
 # 执行日志
+# 根据 Ticket type 不同，阶段 (phase) 可选值不同：
+#   通用阶段: start, lint, build, review, complete
+#   TDD 阶段 (backend/database): tdd_red, tdd_green, tdd_refactor, test
+#   UI 还原阶段 (frontend-ui): read_prototype, component_mapping, implement
 execution_log:
   - timestamp: "{ISO8601_UTC}"
     phase: "start"
     message: "开始执行 Ticket"
   
-  - timestamp: "{ISO8601_UTC}"
-    phase: "tdd_red"
-    message: "编写失败测试"
-    files:
-      - "{test_file}"
+  # --- TDD 阶段（type: backend / database）---
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "tdd_red"
+  #   message: "编写失败测试"
+  #   files:
+  #     - "{test_file}"
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "tdd_green"
+  #   message: "编写代码让测试通过"
+  #   files:
+  #     - "{impl_file}"
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "tdd_refactor"
+  #   message: "重构代码"
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "test"
+  #   message: "运行测试"
+  #   command: "{test_command}"
+  #   exit_code: 0
+  #   output: "{test_output}"
   
-  - timestamp: "{ISO8601_UTC}"
-    phase: "tdd_green"
-    message: "编写代码让测试通过"
-    files:
-      - "{impl_file}"
+  # --- UI 还原阶段（type: frontend-ui）---
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "read_prototype"
+  #   message: "读取原型文件"
+  #   prototype_ref: "{prototype_file}#section"
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "component_mapping"
+  #   message: "组件映射完成"
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "implement"
+  #   message: "编写组件和样式"
+  #   files:
+  #     - "{component_file}"
   
+  # --- 通用阶段 ---
   - timestamp: "{ISO8601_UTC}"
-    phase: "tdd_refactor"
-    message: "重构代码"
-    files:
-      - "{impl_file}"
-  
-  - timestamp: "{ISO8601_UTC}"
-    phase: "test"
-    message: "运行测试"
-    command: "{test_command}"
+    phase: "lint"
+    message: "Lint 检查"
+    command: "{lint_command}"
     exit_code: 0
-    output: "{test_output}"
+
+  - timestamp: "{ISO8601_UTC}"
+    phase: "build"
+    message: "构建检查"
+    command: "{build_command}"
+    exit_code: 0
   
   - timestamp: "{ISO8601_UTC}"
     phase: "complete"

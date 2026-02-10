@@ -1,22 +1,30 @@
 # Ticket 模板
-# 路径: osg-spec-docs/tasks/tickets/T-{number}.yaml
+# 路径: ${config.paths.tasks.tickets}T-{number}.yaml
 
 id: "T-{number}"
 story_id: "S-{story_number}"
 title: "{标题}"
-type: backend  # backend | frontend | database | test | config
+type: backend  # backend | frontend | frontend-ui | database | test | config
+agent: null    # 可选：显式指定 Agent 名称（如不指定，由 type 自动映射）
 
 status: pending  # pending | in_progress | completed | blocked
 estimate: "{n}m" # 2-5 分钟
 
 # 允许修改的文件路径（严格限制）
 allowed_paths:
-  - "{path/to/file}"
+  modify:
+    - "{path/to/file}"
+  read:                    # 可选：允许读取但不修改的文件
+    - "{path/to/file}"
 
 # 验收标准
 acceptance_criteria:
   - "{验收标准1}"
   - "{验收标准2}"
+
+# UI 还原专属字段（type: frontend-ui 时使用）
+# prototype_ref: "${config.paths.docs.prototypes}{file}#section"
+# design_tokens_ref: ".claude/project/agents/{agent}.md#设计 Token"
 
 # 依赖的 Tickets
 dependencies: []

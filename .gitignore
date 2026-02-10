@@ -55,3 +55,8 @@ osg-spec-docs/
 .claude-mvp-demo/
 .playwright-mcp/
 .windsurfrules
+.DS_Store
+
+######################################################################
+# 根目录截图（原型参考图，不入库）
+/*.png

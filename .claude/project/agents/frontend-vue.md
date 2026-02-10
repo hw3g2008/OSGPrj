@@ -4,6 +4,8 @@
 name: frontend-vue
 extends: developer
 description: "Vue 前端开发者，负责前端代码实现"
+skills: deliver-ticket, tdd, debugging, checkpoint-manager
+rules: vue
 ---
 
 ## 继承自

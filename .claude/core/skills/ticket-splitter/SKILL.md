@@ -35,14 +35,17 @@ auto_execute: true
 id: "T-001"
 story_id: "S-001"
 title: "创建登录 API 接口定义"
-type: backend  # backend | frontend | database | test | config
+type: backend  # backend | frontend | frontend-ui | database | test | config
 
 status: pending  # pending | in_progress | completed | blocked
 estimate: 5m     # 2-5 分钟
 
 # 允许修改的文件路径（严格限制）
 allowed_paths:
-  - "ruoyi-admin/src/main/java/**/controller/LoginController.java"
+  modify:
+    - "{path/to/modify/file}"
+  read:                              # 可选
+    - "{path/to/read-only/file}"
 
 # 验收标准
 acceptance_criteria:
@@ -70,7 +73,7 @@ completed_at: null
     │
     ▼
 [识别工作类型]
-    │ - backend / frontend / database / test
+    │ - backend / frontend / frontend-ui / database / test / config
     │
     ▼
 [拆分为微任务]
@@ -101,7 +104,8 @@ T-001:
   type: backend
   estimate: 3m
   allowed_paths:
-    - "ruoyi-admin/src/main/java/**/controller/LoginController.java"
+    modify:
+      - "ruoyi-admin/src/main/java/**/controller/LoginController.java"
 
 T-002:
   title: "实现登录接口逻辑"
@@ -109,14 +113,16 @@ T-002:
   estimate: 5m
   dependencies: [T-001]
   allowed_paths:
-    - "ruoyi-admin/src/main/java/**/controller/LoginController.java"
+    modify:
+      - "ruoyi-admin/src/main/java/**/controller/LoginController.java"
 
 T-003:
   title: "创建 LoginService 接口"
   type: backend
   estimate: 3m
   allowed_paths:
-    - "ruoyi-system/src/main/java/**/service/ILoginService.java"
+    modify:
+      - "ruoyi-system/src/main/java/**/service/ILoginService.java"
 
 T-004:
   title: "实现 LoginService"
@@ -124,14 +130,16 @@ T-004:
   estimate: 5m
   dependencies: [T-003]
   allowed_paths:
-    - "ruoyi-system/src/main/java/**/service/impl/LoginServiceImpl.java"
+    modify:
+      - "ruoyi-system/src/main/java/**/service/impl/LoginServiceImpl.java"
 
 T-005:
   title: "创建登录页面组件"
   type: frontend
   estimate: 5m
   allowed_paths:
-    - "osg-frontend/packages/student/src/views/Login.vue"
+    modify:
+      - "osg-frontend/packages/student/src/views/Login.vue"
 
 T-006:
   title: "实现登录 API 调用"
@@ -139,7 +147,8 @@ T-006:
   estimate: 3m
   dependencies: [T-005]
   allowed_paths:
-    - "osg-frontend/packages/shared/src/api/auth.ts"
+    modify:
+      - "osg-frontend/packages/shared/src/api/auth.ts"
 
 T-007:
   title: "编写登录单元测试"
@@ -147,7 +156,8 @@ T-007:
   estimate: 5m
   dependencies: [T-002, T-004]
   allowed_paths:
-    - "ruoyi-admin/src/test/java/**/controller/LoginControllerTest.java"
+    modify:
+      - "ruoyi-admin/src/test/java/**/controller/LoginControllerTest.java"
 ```
 
 ## 执行伪代码

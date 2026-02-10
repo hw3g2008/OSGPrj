@@ -34,7 +34,9 @@ auto_execute: true
   ▼
 [收集输入]
   │ - 用户需求描述
-  │ - 相关规格文档
+  │ - 相关规格文档（${config.paths.docs.spec}）
+  │ - PRD 源文件（${config.paths.docs.source}，如已配置）
+  │ - UI 原型文件（${config.paths.docs.prototypes}，如已配置）
   │ - 已有代码参考
   │
   ▼
@@ -72,6 +74,28 @@ auto_execute: true
 | 重复检查 | 有重复的需求吗？ | 没有 | 有 |
 | 可复用性 | 有可复用的模块吗？ | 已标注 | 未考虑 |
 
+## UI 模块专项校验（当模块涉及 UI 还原时）
+
+当 `config.paths.docs.prototypes` 已配置，且 `/brainstorm` 的模块名匹配到该目录下的原型文件时，自动追加以下校验项：
+
+| 检查项 | 检查问题 | 通过条件 | 不通过条件 |
+|--------|----------|----------|------------|
+| 原型覆盖 | 原型中的所有页面是否都有对应需求？ | 是 | 有遗漏页面 |
+| 组件清单 | 是否列出了所有需要实现的 UI 组件？ | 是 | 有遗漏组件 |
+| 设计 Token | 是否定义了颜色、圆角、间距等设计变量？ | 是（引用 Agent 定义的 Token） | 否 |
+| 交互行为 | 原型中的 JS 交互是否都有对应描述？ | 是 | 有遗漏交互 |
+| 数据结构 | 表格列、表单字段是否与 PRD 数据字典一致？ | 是 | 有冲突 |
+
+### 输入来源匹配规则
+
+原型和 PRD 的查找基于 `config.paths.docs` 配置，按模块名自动匹配：
+
+1. **原型文件**：在 `${config.paths.docs.prototypes}` 下查找与模块名同名或相关的子目录/文件
+2. **PRD 文档**：在 `${config.paths.docs.source}` 下查找文件名包含模块关键词的 `.md` / `.docx` 文件
+3. **规格文档**：在 `${config.paths.docs.spec}` 下查找相关子目录
+
+> 具体的模块名到文件路径的映射关系由各项目在 `config.yaml` 中配置。如未配置映射，则按模块名模糊匹配文件名。
+
 ## 校验维度矩阵
 
 | 维度 | 检查内容 | 方法 |
@@ -86,9 +110,13 @@ auto_execute: true
 ```python
 def brainstorming(user_input):
     # Step 1: 收集输入
+    config = load_yaml(".claude/project/config.yaml")
+    
     context = {
         "user_request": user_input,
-        "spec_docs": read_spec_docs(),
+        "spec_docs": read_dir(config.paths.docs.spec),
+        "source_docs": read_matching_docs(config.paths.docs.source, user_input) if config.paths.docs.get("source") else [],
+        "prototypes": read_matching_files(config.paths.docs.prototypes, user_input) if config.paths.docs.get("prototypes") else [],
         "existing_code": search_related_code()
     }
     
