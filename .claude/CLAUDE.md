@@ -286,6 +286,7 @@ osg-spec-docs/tasks/
 - **检查点**: 每个 Ticket 完成后自动保存
 - **决策记录**: `.claude/memory/decisions.yaml`
 - **会话状态**: `.claude/memory/session.yaml`
+- **工程审计**: `.claude/memory/project-audit.yaml`
 
 ---
 

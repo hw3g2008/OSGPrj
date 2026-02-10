@@ -1,0 +1,266 @@
+# ============================================
+# 工程梳理记录 - 自动生成于 2026-02-10
+# ============================================
+
+audit_date: "2026-02-10"
+ruoyi_version: "3.9.1"
+
+# ============================================
+# 后端技术栈
+# ============================================
+backend:
+  framework: "Spring Boot 3.5.8"
+  java_version: "21"
+  namespace: "jakarta.*"
+  orm: "MyBatis (mybatis-spring-boot 3.0.5)"
+  api_docs: "springdoc-openapi 2.8.14"
+  security: "Spring Security 6.x (JWT + BCrypt)"
+  session: "Stateless (token-based)"
+  database:
+    type: "MySQL"
+    driver: "mysql-connector-j 8.2.0"
+    pool: "Druid 1.2.27"
+  cache: "Redis (Lettuce)"
+  json: "FastJSON2 2.0.60"
+  scheduler: "Quartz 2.5.2"
+  pagination: "PageHelper 2.1.1"
+  excel: "Apache POI 4.1.2"
+  template: "Velocity 2.3"
+  jwt: "jjwt 0.9.1"
+  captcha: "kaptcha 2.3.3"
+  useragent: "yauaa 7.32.0"
+  maven_compiler: "3.13.0"
+
+# ============================================
+# 后端模块清单
+# ============================================
+modules:
+  - name: "ruoyi-admin"
+    role: "主入口模块，包含所有 Controller 和启动类"
+    controllers: 21
+    api_endpoints: 129
+    packages:
+      - "controller/common"    # CaptchaController, CommonController
+      - "controller/monitor"   # CacheController, ServerController, SysLogininforController, SysOperlogController, SysUserOnlineController
+      - "controller/system"    # SysConfigController, SysDeptController, SysDictDataController, SysDictTypeController, SysIndexController, SysLoginController, SysMenuController, SysNoticeController, SysPostController, SysProfileController, SysRegisterController, SysRoleController, SysUserController
+      - "controller/tool"      # TestController
+    config_files:
+      - "application.yml"
+      - "application-druid.yml"
+      - "mybatis/mybatis-config.xml"
+
+  - name: "ruoyi-system"
+    role: "业务层，包含 Service、Mapper、Domain"
+    mappers: 15
+    services: 12
+    domains: 11
+    mapper_list:
+      - SysConfigMapper
+      - SysDeptMapper
+      - SysDictDataMapper
+      - SysDictTypeMapper
+      - SysLogininforMapper
+      - SysMenuMapper
+      - SysNoticeMapper
+      - SysOperLogMapper
+      - SysPostMapper
+      - SysRoleDeptMapper
+      - SysRoleMapper
+      - SysRoleMenuMapper
+      - SysUserMapper
+      - SysUserPostMapper
+      - SysUserRoleMapper
+    service_list:
+      - ISysConfigService
+      - ISysDeptService
+      - ISysDictDataService
+      - ISysDictTypeService
+      - ISysLogininforService
+      - ISysMenuService
+      - ISysNoticeService
+      - ISysOperLogService
+      - ISysPostService
+      - ISysRoleService
+      - ISysUserOnlineService
+      - ISysUserService
+
+  - name: "ruoyi-common"
+    role: "通用工具模块，包含注解、常量、异常、过滤器、工具类"
+    key_components:
+      - "annotation/ - 自定义注解（Excel, Log, RepeatSubmit 等）"
+      - "filter/ - 过滤器（XSS, Referer, Repeatable）"
+      - "utils/ - 工具类（Date, String, Servlet, IP, File, POI 等）"
+      - "core/domain/ - 基础实体（BaseEntity, SysUser, SysRole, SysMenu 等）"
+      - "xss/ - XSS 防护（Xss 注解 + XssValidator）"
+
+  - name: "ruoyi-framework"
+    role: "框架核心，包含安全、AOP、拦截器、异常处理"
+    key_components:
+      - "config/SecurityConfig - Spring Security 配置（JWT + CORS + 无状态会话）"
+      - "config/DruidConfig - 数据源配置"
+      - "config/RedisConfig - Redis 序列化配置"
+      - "config/FilterConfig - 过滤器注册"
+      - "security/filter/JwtAuthenticationTokenFilter - JWT 认证过滤器"
+      - "security/handle/ - 认证失败和登出处理"
+      - "web/service/TokenService - Token 生成和验证"
+      - "web/service/SysLoginService - 登录逻辑"
+      - "web/exception/GlobalExceptionHandler - 全局异常处理"
+      - "aspectj/LogAspect - 操作日志 AOP"
+      - "interceptor/RepeatSubmitInterceptor - 防重复提交"
+
+  - name: "ruoyi-quartz"
+    role: "定时任务模块"
+    key_components:
+      - "SysJobController - 任务管理"
+      - "SysJobLogController - 任务日志"
+      - "SysJob domain - 任务实体"
+
+  - name: "ruoyi-generator"
+    role: "代码生成器模块"
+    key_components:
+      - "GenController - 代码生成控制器"
+      - "GenTable/GenTableColumn - 代码生成表结构"
+      - "vm/ - Velocity 模板（Java/Vue/SQL/JS）"
+
+# ============================================
+# 数据库表统计
+# ============================================
+database_tables:
+  total: 30
+  system_tables:
+    count: 19
+    list:
+      - sys_dept          # 部门表
+      - sys_user          # 用户表
+      - sys_post          # 岗位表
+      - sys_role          # 角色表
+      - sys_menu          # 菜单表
+      - sys_user_role     # 用户-角色关联
+      - sys_role_menu     # 角色-菜单关联
+      - sys_role_dept     # 角色-部门关联
+      - sys_user_post     # 用户-岗位关联
+      - sys_oper_log      # 操作日志
+      - sys_dict_type     # 字典类型
+      - sys_dict_data     # 字典数据
+      - sys_config        # 系统配置
+      - sys_logininfor    # 登录日志
+      - sys_job           # 定时任务
+      - sys_job_log       # 任务日志
+      - sys_notice        # 通知公告
+      - gen_table         # 代码生成-表
+      - gen_table_column  # 代码生成-列
+  quartz_tables:
+    count: 11
+    list:
+      - QRTZ_JOB_DETAILS
+      - QRTZ_TRIGGERS
+      - QRTZ_SIMPLE_TRIGGERS
+      - QRTZ_CRON_TRIGGERS
+      - QRTZ_BLOB_TRIGGERS
+      - QRTZ_CALENDARS
+      - QRTZ_PAUSED_TRIGGER_GRPS
+      - QRTZ_FIRED_TRIGGERS
+      - QRTZ_SCHEDULER_STATE
+      - QRTZ_LOCKS
+      - QRTZ_SIMPROP_TRIGGERS
+
+# ============================================
+# 前端结构
+# ============================================
+frontend:
+  monorepo:
+    root: "osg-frontend/"
+    manager: "pnpm"
+    workspace: "packages/*"
+  packages:
+    - name: "@osg/student"
+      path: "osg-frontend/packages/student/"
+      port: 3001
+      status: "已创建骨架"
+    - name: "@osg/mentor"
+      path: "osg-frontend/packages/mentor/"
+      port: 3002
+      status: "已创建骨架"
+    - name: "@osg/lead-mentor"
+      path: "osg-frontend/packages/lead-mentor/"
+      port: 3003
+      status: "已创建骨架"
+    - name: "@osg/assistant"
+      path: "osg-frontend/packages/assistant/"
+      port: 3004
+      status: "已创建骨架"
+    - name: "@osg/shared"
+      path: "osg-frontend/packages/shared/"
+      port: null
+      status: "已创建骨架，定义了 exports"
+    - name: "@osg/admin"
+      path: "osg-frontend/packages/admin/"
+      port: 3005
+      status: "尚未创建"
+  legacy:
+    name: "ruoyi-ui"
+    path: "ruoyi-ui/"
+    tech: "Vue 2 + Element UI + Vue CLI"
+    port: 8080
+    status: "保留做运维"
+
+# ============================================
+# 安全配置摘要
+# ============================================
+security:
+  auth_type: "JWT (Bearer Token)"
+  password_hash: "BCrypt"
+  session: "Stateless"
+  cors: "CorsFilter (全局)"
+  xss: "XssFilter (enabled, 排除 /system/notice)"
+  referer: "RefererFilter (disabled)"
+  repeat_submit: "RepeatSubmitInterceptor"
+  permit_all_urls:
+    - "/login"
+    - "/register"
+    - "/captchaImage"
+    - "/swagger-ui.html"
+    - "/v3/api-docs/**"
+    - "/swagger-ui/**"
+    - "/druid/**"
+    - "静态资源 (*.html, *.css, *.js, /profile/**)"
+  server:
+    port: 8080
+    context_path: "/"
+  redis:
+    host: "localhost"
+    port: 6379
+    database: 0
+  token:
+    header: "Authorization"
+    expire_minutes: 30
+
+# ============================================
+# 技术债务和待优化项
+# ============================================
+tech_debt:
+  - id: TD-001
+    severity: medium
+    description: "application.yml 中 token.secret 使用明文弱密钥 (abcdefghijklmnopqrstuvwxyz)"
+    recommendation: "使用环境变量注入强密钥，至少 256 位"
+
+  - id: TD-002
+    severity: low
+    description: "ruoyi.profile 文件上传路径硬编码为 Windows 路径 (D:/ruoyi/uploadPath)"
+    recommendation: "改为 Linux 路径或使用环境变量，适配 Docker 部署"
+
+  - id: TD-003
+    severity: low
+    description: "druid-spring-boot-3-starter 连接池监控页面默认开放 (/druid/**)"
+    recommendation: "生产环境应限制访问或禁用"
+
+  - id: TD-004
+    severity: info
+    description: "jwt 版本 0.9.1 较旧，新版 jjwt 已到 0.12.x"
+    recommendation: "后续可考虑升级 jjwt 到 0.12.x（API 有变化）"
+
+  - id: TD-005
+    severity: info
+    description: "admin 前端包尚未创建"
+    recommendation: "按 frontend-admin agent 配置创建 osg-frontend/packages/admin/"
+
