@@ -17,8 +17,9 @@
 ---
 name: brainstorming
 description: "Use when refining requirements or when triggered with /brainstorm - automatically iterates through forward and backward validation until requirements are precise to code-line level"
-invoked_by: user
-auto_execute: true  # 自动执行模式，不等待用户确认
+metadata:
+  invoked-by: "user"
+  auto-execute: "true"
 ---
 ```
 
@@ -798,7 +799,9 @@ search_keywords = 模块名转关键词(模块名)  # 如 "学生登录" → ["s
 ---
 name: story-splitter
 description: "Use when splitting requirements into Stories or when triggered with /split story - decomposes requirements into User Stories following INVEST principles"
-invoked_by: user
+metadata:
+  invoked-by: "user"
+  auto-execute: "true"
 ---
 ```
 
@@ -902,7 +905,9 @@ S-002 → S-001 (依赖 S-001 的用户数据)
 ---
 name: ticket-splitter
 description: "Use when splitting a Story into Tickets or when triggered with /split ticket S-xxx - decomposes Story into 2-5 minute executable Tickets with clear file paths and TDD structure"
-invoked_by: user
+metadata:
+  invoked-by: "user"
+  auto-execute: "true"
 ---
 ```
 
@@ -1024,7 +1029,9 @@ next_action: "等待人工确认后执行 /unblock T-003"
 ---
 name: deliver-ticket
 description: "Use when executing a Ticket - enforces TDD, path constraints, and self-review before completion"
-invoked_by: user, agent
+metadata:
+  invoked-by: "agent"
+  auto-execute: "true"
 ---
 ```
 
@@ -1224,7 +1231,9 @@ invoked_by: user, agent
 ---
 name: using-git-worktrees
 description: "Use when starting feature work that needs isolation or when triggered with /worktree - creates isolated git worktrees with smart directory selection and safety verification"
-invoked_by: user, agent
+metadata:
+  invoked-by: "user"
+  auto-execute: "false"
 ---
 ```
 

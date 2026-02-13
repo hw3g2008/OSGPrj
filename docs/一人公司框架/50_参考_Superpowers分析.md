@@ -800,7 +800,7 @@ description: "Use when starting feature work that needs isolation - creates isol
 
 #### 6.1.1 修改 deliver-ticket Skill
 
-**文件路径**：`.claude/core/skills/deliver-ticket/SKILL.md`
+**文件路径**：`.claude/skills/deliver-ticket/SKILL.md`
 
 **修改内容**：
 
@@ -923,7 +923,7 @@ description: "Use when executing a Ticket - dispatches subagents with two-stage 
 
 #### 6.1.2 创建子代理 Prompt 模板文件
 
-**文件路径**：`.claude/core/skills/deliver-ticket/prompts/`
+**文件路径**：`.claude/skills/deliver-ticket/prompts/`
 
 **创建文件**：
 
@@ -1344,7 +1344,7 @@ def execute_next_ticket():
 
 #### 6.2.1 修改 tdd Skill
 
-**文件路径**：`.claude/core/skills/tdd/SKILL.md`
+**文件路径**：`.claude/skills/tdd/SKILL.md`
 
 **添加内容**：
 
@@ -1515,7 +1515,7 @@ npm test path/to/test.test.ts
 
 #### 6.2.2 修改 debugging Skill
 
-**文件路径**：`.claude/core/skills/debugging/SKILL.md`
+**文件路径**：`.claude/skills/debugging/SKILL.md`
 
 **添加内容**：
 
@@ -1716,7 +1716,7 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 #### 6.2.3 修改 verification Skill
 
-**文件路径**：`.claude/core/skills/verification/SKILL.md`
+**文件路径**：`.claude/skills/verification/SKILL.md`
 
 **添加内容**：
 
@@ -1844,7 +1844,7 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 
 #### 6.3.1 创建 using-git-worktrees Skill
 
-**文件路径**：`.claude/core/skills/using-git-worktrees/SKILL.md`
+**文件路径**：`.claude/skills/using-git-worktrees/SKILL.md`
 
 **创建文件**：
 
@@ -2090,7 +2090,7 @@ git worktree list | grep $(pwd)
 
 #### 6.4.1 标准化模板
 
-**创建模板文件**：`.claude/core/templates/skill-template.md`
+**创建模板文件**：`.claude/templates/skill-template.md`
 
 ```markdown
 ---

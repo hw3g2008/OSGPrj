@@ -18,7 +18,9 @@
 ---
 name: verification
 description: "Use when completing any task or making success claims - enforces evidence before assertions"
-invoked_by: agent
+metadata:
+  invoked-by: "agent"
+  auto-execute: "true"
 ---
 ```
 
@@ -218,7 +220,9 @@ acceptance:
 ---
 name: tdd
 description: "Use when implementing any feature - enforces test-first development with red-green-refactor cycle"
-invoked_by: agent
+metadata:
+  invoked-by: "agent"
+  auto-execute: "true"
 ---
 ```
 
@@ -444,7 +448,9 @@ BUILD SUCCESS
 ---
 name: code-review
 description: "Use when reviewing code changes after a Ticket is completed or when triggered with /review - performs technical evaluation focused on correctness, standards, performance, and security"
-invoked_by: agent
+metadata:
+  invoked-by: "agent"
+  auto-execute: "true"
 ---
 ```
 
@@ -539,7 +545,9 @@ invoked_by: agent
 ---
 name: debugging
 description: "Use when encountering errors or unexpected behavior - enforces systematic root cause investigation before any fixes"
-invoked_by: agent
+metadata:
+  invoked-by: "agent"
+  auto-execute: "true"
 ---
 ```
 

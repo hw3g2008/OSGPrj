@@ -97,7 +97,7 @@ rules: java                           # 加载 java.md 规范
 # Java 后端开发者
 
 ## 继承自
-core/agents/developer.md
+agents/developer.md
 
 ## 技术栈
 > ⚠️ 从 project/config.yaml 读取，不要硬编码
@@ -149,7 +149,7 @@ rules: vue
 # Vue 前端开发者
 
 ## 继承自
-core/agents/developer.md
+agents/developer.md
 
 ## 技术栈
 > ⚠️ 从 project/config.yaml 读取，不要硬编码
@@ -241,7 +241,7 @@ rules: sql
 # MySQL DBA
 
 ## 继承自
-core/agents/developer.md
+agents/developer.md
 
 ## 技术栈
 - MySQL 8.0

@@ -55,7 +55,7 @@
 ### 1.3 平台适配层接口定义
 
 ```yaml
-# .claude/core/platform/interface.yaml
+# .claude/platform/interface.yaml
 # 平台适配层接口定义
 
 interfaces:
@@ -179,7 +179,7 @@ flowchart TD
 #### 2.2.1 Cursor IDE 实现（Prompt 模拟）
 
 ```markdown
-# .claude/core/platform/cursor/subagent.md
+# .claude/platform/cursor/subagent.md
 
 ## Cursor 平台子代理实现
 
@@ -253,7 +253,7 @@ flowchart TD
 #### 2.2.2 Claude Code CLI 实现（原生 Subagent）
 
 ```markdown
-# .claude/core/platform/claude-cli/subagent.md
+# .claude/platform/claude-cli/subagent.md
 
 ## Claude Code CLI 平台子代理实现
 
@@ -330,7 +330,7 @@ fi
 #### 2.2.3 MCP Server 实现
 
 ```markdown
-# .claude/core/platform/mcp/subagent.md
+# .claude/platform/mcp/subagent.md
 
 ## MCP Server 平台子代理实现
 
@@ -457,14 +457,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 ### 2.3 统一的子代理调用 Skill
 
 ```yaml
-# .claude/core/skills/subagent-dispatch/SKILL.md
+# .claude/skills/subagent-dispatch/SKILL.md
 ---
 name: subagent-dispatch
 description: "Use when executing a Ticket that needs subagent isolation - automatically detects platform and uses appropriate dispatch method"
-invoked_by: agent
+metadata:
+  invoked-by: "agent"
+  auto-execute: "true"
 ---
 
-# Subagent Dispatch Skill
+# Subagent-Dispatch Skill
 
 ## 概述
 
@@ -801,7 +803,7 @@ echo "**可用命令**: /brainstorm, /split, /next, /status, /checkpoint"
 #### 3.4.1 Cursor IDE
 
 ```markdown
-# .claude/core/platform/cursor/hooks.md
+# .claude/platform/cursor/hooks.md
 
 ## Cursor 平台 Hooks 实现
 
@@ -863,7 +865,7 @@ IF 这是会话的第一条消息:
 #### 3.4.2 Claude Code CLI
 
 ```markdown
-# .claude/core/platform/claude-cli/hooks.md
+# .claude/platform/claude-cli/hooks.md
 
 ## Claude Code CLI 平台 Hooks 实现
 
@@ -905,7 +907,7 @@ Claude Code CLI 原生支持 Hooks 机制：
 #### 3.4.3 MCP Server
 
 ```markdown
-# .claude/core/platform/mcp/hooks.md
+# .claude/platform/mcp/hooks.md
 
 ## MCP Server 平台 Hooks 实现
 
@@ -975,14 +977,16 @@ server.setNotificationHandler('ticket/completed', async (notification) => {
 ### 3.5 Hooks Skill
 
 ```yaml
-# .claude/core/skills/hooks-manager/SKILL.md
+# .claude/skills/hooks-manager/SKILL.md
 ---
 name: hooks-manager
 description: "Use when managing session lifecycle events - handles SessionStart, SessionEnd, and other hooks across platforms"
-invoked_by: auto
+metadata:
+  invoked-by: "auto"
+  auto-execute: "true"
 ---
 
-# Hooks Manager Skill
+# Hooks-Manager Skill
 
 ## 概述
 
@@ -1125,7 +1129,7 @@ if is_first_response():
 
 ```bash
 #!/bin/bash
-# .claude/core/platform/detect.sh
+# .claude/platform/detect.sh
 # 检测当前运行的平台
 
 detect_platform() {
@@ -1428,7 +1432,7 @@ def 分派子代理_Cursor(agent_name: str, ticket_id: str, context: dict):
     # Step 1: 读取 Agent 配置
     agent_path = f".claude/project/agents/{agent_name}.md"
     if not 文件存在(agent_path):
-        agent_path = f".claude/core/agents/{agent_name}.md"
+        agent_path = f".claude/agents/{agent_name}.md"
     
     if not 文件存在(agent_path):
         报错(f"Agent 文件不存在: {agent_name}")
@@ -1440,7 +1444,7 @@ def 分派子代理_Cursor(agent_name: str, ticket_id: str, context: dict):
     # Step 2: 加载 Skills
     skills_content = []
     for skill_name in frontmatter.get("skills", []):
-        skill_path = f".claude/core/skills/{skill_name}/SKILL.md"
+        skill_path = f".claude/skills/{skill_name}/SKILL.md"
         if 文件存在(skill_path):
             skills_content.append(读取文件(skill_path))
     

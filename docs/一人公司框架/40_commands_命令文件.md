@@ -49,7 +49,7 @@ description: 初始化项目框架结构
 ## 执行流程
 
 1. **创建目录结构**:
-   - `.claude/core/` - 核心框架
+   - `.claude/` - 核心框架
    - `.claude/project/` - 项目配置
    - `.claude/memory/` - 记忆管理
    - `.claude/checkpoints/` - 检查点
@@ -60,9 +60,9 @@ description: 初始化项目框架结构
    - `docs/requirements/` - 需求文档
 
 2. **复制核心框架**:
-   - 从模板复制 `core/skills/`
-   - 从模板复制 `core/agents/`
-   - 从模板复制 `core/templates/`
+   - 从模板复制 `skills/`
+   - 从模板复制 `agents/`
+   - 从模板复制 `templates/`
 
 3. **生成项目配置**:
    - 根据技术栈生成 `project/config.yaml`
@@ -94,8 +94,8 @@ description: 初始化项目框架结构
 **技术栈**: java, vue, mysql
 
 ### 已创建目录
-- .claude/core/skills/ (16 个 Skills)
-- .claude/core/agents/ (6 个 Agent 模板)
+- .claude/skills/ (16 个 Skills)
+- .claude/agents/ (6 个 Agent 模板)
 - .claude/project/agents/ (3 个项目 Agent)
 - osg-spec-docs/tasks/ (任务管理)
 - docs/requirements/ (需求文档)
@@ -212,7 +212,8 @@ requirements:
 ---
 name: brainstorm
 description: 头脑风暴，自动多轮校验细化需求（正向+反向），确保需求精确到代码行级别
-auto_execute: true  # 自动执行模式
+metadata:
+  auto-execute: "true"
 ---
 
 # /brainstorm 命令

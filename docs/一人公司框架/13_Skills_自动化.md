@@ -16,8 +16,9 @@
 ---
 name: ralph-loop
 description: "Use when executing multiple Tickets autonomously or when triggered with /ralph-loop - continuously works until completion promise is met or iteration limit reached"
-invoked_by: user
-auto_execute: true  # 自动执行模式，不等待用户确认
+metadata:
+  invoked-by: "user"
+  auto-execute: "true"
 ---
 ```
 
@@ -205,7 +206,9 @@ flowchart TD
 ---
 name: progress-tracker
 description: "Use when checking project status or when triggered with /status - tracks overall progress and generates status reports"
-invoked_by: user, agent
+metadata:
+  invoked-by: "agent"
+  auto-execute: "true"
 ---
 ```
 

@@ -1,13 +1,13 @@
 # Templates 模板文件
 
-本文档定义 `.claude/core/templates/` 目录下所有模板文件的具体内容。
+本文档定义 `.claude/templates/` 目录下所有模板文件的具体内容。
 
 ---
 
 ## 目录结构
 
 ```
-.claude/core/templates/
+.claude/templates/
 ├── story.yaml         # Story 模板
 ├── ticket.yaml        # Ticket 模板
 ├── checkpoint.yaml    # 检查点模板
@@ -20,7 +20,7 @@
 ## 1. story.yaml
 
 ```yaml
-# .claude/core/templates/story.yaml
+# .claude/templates/story.yaml
 # Story 模板 - 由 story-splitter 使用
 
 id: "S-{序号}"                    # 格式: S-001, S-002, ...
@@ -71,7 +71,7 @@ completed_at: null
 ## 2. ticket.yaml
 
 ```yaml
-# .claude/core/templates/ticket.yaml
+# .claude/templates/ticket.yaml
 # Ticket 模板 - 由 ticket-splitter 使用
 
 id: "T-{序号}"                    # 格式: T-001, T-002, ...
@@ -143,7 +143,7 @@ checkpoint_id: null               # 完成后的检查点 ID
 ## 3. checkpoint.yaml
 
 ```yaml
-# .claude/core/templates/checkpoint.yaml
+# .claude/templates/checkpoint.yaml
 # 检查点模板 - 由 checkpoint-manager 使用
 
 id: "CP-{timestamp}"              # 格式: CP-20260201-103000
@@ -199,7 +199,7 @@ recovery:
 ## 4. log.yaml
 
 ```yaml
-# .claude/core/templates/log.yaml
+# .claude/templates/log.yaml
 # 执行日志模板 - 由 deliver-ticket 使用
 
 ticket_id: "T-{序号}"
@@ -283,7 +283,7 @@ error:
 ## 5. state.yaml
 
 ```yaml
-# .claude/core/templates/state.yaml
+# .claude/templates/state.yaml
 # 全局状态模板 - osg-spec-docs/tasks/STATE.yaml
 
 version: "1.0"
@@ -428,7 +428,7 @@ import yaml
 from datetime import datetime
 
 def create_story(story_id, req_id, title, description):
-    template = load_yaml(".claude/core/templates/story.yaml")
+    template = load_yaml(".claude/templates/story.yaml")
     
     story = template.copy()
     story["id"] = story_id
@@ -445,7 +445,7 @@ def create_story(story_id, req_id, title, description):
 
 ```python
 def create_ticket(ticket_id, story_id, title, type, agent, allowed_paths):
-    template = load_yaml(".claude/core/templates/ticket.yaml")
+    template = load_yaml(".claude/templates/ticket.yaml")
     
     ticket = template.copy()
     ticket["id"] = ticket_id

@@ -15,7 +15,9 @@
 ---
 name: memory-bank
 description: "Use when making important decisions, at session start, or when saving state - manages working and long-term memory"
-invoked_by: agent
+metadata:
+  invoked-by: "agent"
+  auto-execute: "true"
 ---
 ```
 
@@ -89,7 +91,9 @@ invoked_by: agent
 ---
 name: context-compression
 description: "Use when context usage exceeds 70% or manually triggered with /compress - compresses conversation history to save tokens"
-invoked_by: agent, auto
+metadata:
+  invoked-by: "auto"
+  auto-execute: "true"
 ---
 ```
 
@@ -180,7 +184,9 @@ invoked_by: agent, auto
 ---
 name: checkpoint-manager
 description: "Use after completing a Ticket, making important decisions, or when triggered with /checkpoint - saves and restores task state for long-running tasks"
-invoked_by: agent, user
+metadata:
+  invoked-by: "auto"
+  auto-execute: "true"
 ---
 ```
 
