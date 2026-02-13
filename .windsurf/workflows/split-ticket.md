@@ -1,0 +1,40 @@
+---
+description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 CC 命令 /split ticket S-xxx
+---
+
+# 拆分 Tickets
+
+## 使用方式
+
+```
+/split-ticket S-xxx
+```
+
+## 前置条件
+
+- Stories 已审批通过
+- 指定的 Story 状态为 `approved` 或 `pending`
+
+## 执行步骤
+
+1. **读取 Story**
+   - 读取 `osg-spec-docs/tasks/stories/S-xxx.yaml`
+   - 理解 Story 的功能需求和验收标准
+
+2. **拆分 Tickets**
+   - 调用 ticket-splitter skill
+   - 每个 Ticket 粒度为 2-5 分钟
+   - 包含：标题、类型（backend/frontend/frontend-ui/test/config）、allowed_paths、验收标准
+
+3. **创建 Ticket 文件**
+   - 在 `osg-spec-docs/tasks/tickets/` 下创建 `T-xxx.yaml`
+   - 更新 `STATE.yaml` 的 tickets 列表
+
+4. **输出摘要**
+   - 列出所有 Tickets 的编号、标题、类型、估时
+   - 等待用户审批
+
+5. **更新状态**
+   - 更新 `workflow.current_step` 为 `tickets_pending_approval`
+   - 用户审批后更新为 `implementing`
+   - 设置 `current_story` 为当前 Story
