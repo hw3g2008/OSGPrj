@@ -1,0 +1,182 @@
+# ============================================
+# RPIV 工作流状态机定义
+# 单一来源 - 所有状态转换逻辑从此文件读取
+# ============================================
+
+name: RPIV
+description: "一人公司 AI 开发工作流 (Research → Plan → Implement → Validate)"
+
+# ============================================
+# 术语说明
+# ============================================
+# - 状态 (state)：工作流当前所处的位置，用 _done/_approved 后缀
+# - 动作 (action)：下一步要执行的操作，用动词形式
+# - current_step：STATE.yaml 中存储的当前状态
+# - next_step：STATE.yaml 中存储的下一个动作
+
+# ============================================
+# 状态定义
+# key = 状态名，next_action = 下一个动作
+# ============================================
+states:
+  # --- 初始状态 ---
+  not_started:
+    phase: init
+    description: "项目已初始化，等待开始"
+    next_action: brainstorm
+    approval_required: false
+
+  # --- Research 阶段 ---
+  brainstorm_done:
+    phase: research
+    description: "需求分析完成"
+    next_action: split_story
+    approval_required: false
+
+  # --- Plan 阶段 ---
+  story_split_done:
+    phase: plan
+    description: "Story 拆分完成"
+    next_action: approve_stories
+    approval_required: true
+    approval_key: story_split
+
+  stories_approved:
+    phase: plan
+    description: "Stories 审批通过"
+    next_action: split_ticket
+    approval_required: false
+
+  ticket_split_done:
+    phase: plan
+    description: "Ticket 拆分完成"
+    next_action: approve_tickets
+    approval_required: true
+    approval_key: ticket_split
+
+  tickets_approved:
+    phase: plan
+    description: "Tickets 审批通过"
+    next_action: next
+    approval_required: false
+
+  # --- Implement 阶段 ---
+  ticket_done:
+    phase: implement
+    description: "Ticket 执行完成"
+    next_action: next
+    approval_required: false
+    approval_key: ticket_done  # 可配置为 required
+
+  all_tickets_done:
+    phase: implement
+    description: "所有 Tickets 完成"
+    next_action: verify
+    approval_required: false
+
+  # --- Validate 阶段 ---
+  story_done:
+    phase: validate
+    description: "Story 验收完成"
+    next_action: approve_story
+    approval_required: true
+    approval_key: story_done
+
+  story_approved:
+    phase: validate
+    description: "Story 审批通过"
+    next_action: next_story
+    approval_required: false
+
+  all_stories_done:
+    phase: validate
+    description: "所有 Stories 完成"
+    next_action: null
+    approval_required: false
+
+# ============================================
+# 命令到状态映射
+# 命令完成后，工作流进入对应的状态
+# ============================================
+command_to_state:
+  "/brainstorm": brainstorm_done
+  "/split story": story_split_done
+  "/split ticket": ticket_split_done
+  "/approve stories": stories_approved
+  "/approve tickets": tickets_approved
+  "/next": ticket_done  # 或 all_tickets_done（需判断是否还有 pending）
+  "/verify": story_done
+  "/approve story": story_approved  # 或 all_stories_done（需判断是否还有 pending）
+
+# ============================================
+# 动作到命令映射
+# 当 next_step 为某动作时，执行对应的命令
+# ============================================
+action_to_command:
+  brainstorm: "/brainstorm"
+  split_story: "/split story"
+  approve_stories: "/approve stories"
+  split_ticket: "/split ticket {current_story}"
+  approve_tickets: "/approve tickets"
+  next: "/next"
+  verify: "/verify {current_story}"
+  approve_story: "/approve {current_story}"
+  next_story: null  # 特殊处理：检查是否有下一个 Story
+
+# ============================================
+# 审批配置键映射
+# 动作 → config.approval 中的键名
+# ============================================
+approval_config_keys:
+  approve_stories: story_split
+  approve_tickets: ticket_split
+  approve_story: story_done
+  next: ticket_done
+
+# ============================================
+# 特殊分支逻辑
+# ============================================
+special_branches:
+  # /next 完成后的分支
+  next_completion:
+    condition: "no_pending_tickets(current_story)"
+    true_state: all_tickets_done
+    false_state: ticket_done
+
+  # /approve story 完成后的分支
+  approve_story_completion:
+    condition: "no_pending_stories()"
+    true_state: all_stories_done
+    false_state: story_approved
+
+  # next_story 动作的分支
+  next_story:
+    condition: "has_pending_stories()"
+    true_action:
+      - "current_story = next_pending_story()"
+      - "current_step = stories_approved"
+      - "next_step = split_ticket"
+      - "execute /split ticket {current_story}"
+    false_action:
+      - "current_step = all_stories_done"
+      - "next_step = null"
+      - "output '所有 Stories 已完成'"
+
+# ============================================
+# 回滚规则
+# ============================================
+rollback:
+  - from: [ticket_done, all_tickets_done]
+    to: tickets_approved
+    trigger: "/rollback"
+    condition: "测试持续失败"
+
+  - from: ticket_split_done
+    to: stories_approved
+    trigger: "/rollback"
+    condition: "Ticket 拆分有问题"
+
+  - from: story_done
+    to: all_tickets_done
+    trigger: "/rollback"
+    condition: "验收失败"
