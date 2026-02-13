@@ -20,11 +20,10 @@
 ```
 1. 显示所有 Stories 摘要
 2. 等待用户确认
-3. 更新 STATE.yaml: phase = "stories_approved"
-4. 更新 workflow:
+3. 更新 workflow:
    - current_step = "stories_approved"
    - next_step = "split_ticket"
-5. 设置 current_story = 第一个 Story ID
+4. 设置 current_story = 第一个 Story ID
 ```
 
 ### 下一步
@@ -45,8 +44,7 @@
 1. 显示所有 Tickets 摘要
 2. 显示依赖图
 3. 等待用户确认
-4. 更新 STATE.yaml: phase = "tickets_approved"
-5. 更新 workflow:
+4. 更新 workflow:
    - current_step = "ticket_approved"
    - next_step = "next"
 ```

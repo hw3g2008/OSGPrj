@@ -182,12 +182,21 @@ public interface ISysUserService
 
     /**
      * 重置用户密码
-     * 
+     *
      * @param userId 用户ID
      * @param password 密码
      * @return 结果
      */
     public int resetUserPwd(Long userId, String password);
+
+    /**
+     * 首次登录修改密码
+     *
+     * @param userId 用户ID
+     * @param password 新密码
+     * @return 结果
+     */
+    public int updateFirstLoginPwd(Long userId, String password);
 
     /**
      * 通过用户ID删除用户

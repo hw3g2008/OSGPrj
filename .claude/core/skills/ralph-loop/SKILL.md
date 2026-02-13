@@ -86,16 +86,25 @@ def ralph_loop():
     while iteration < max_iterations:
         iteration += 1
         
-        # 检查上下文
-        if context_usage() > 0.8:
+        # 检查上下文（Claude Code 会自动压缩上下文，此处通过迭代次数间接保护）
+        # 每完成 10 个 Ticket 自动保存一次 checkpoint 作为安全网
+        if iteration % 10 == 0:
             save_checkpoint()
-            return {"status": "context_full", "checkpoint": checkpoint_id}
         
         # 获取下一个 Ticket
         state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+
+        # 如果 deliver-ticket 已经判断所有 Tickets 完成并更新了 workflow，直接退出
+        if state.workflow.current_step == "all_tickets_done":
+            return {"status": "all_completed", "iterations": iteration}
+
         ticket = get_next_pending_ticket(state)
-        
+
         if not ticket:
+            # 兜底：如果 deliver-ticket 未正确更新 workflow，由 ralph-loop 补写
+            state.workflow.current_step = "all_tickets_done"
+            state.workflow.next_step = "verify"
+            write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
             return {"status": "all_completed", "iterations": iteration}
         
         # 执行 Ticket

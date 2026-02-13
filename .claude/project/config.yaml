@@ -34,14 +34,14 @@ commands:
   test: "mvn test"
   test-single: "mvn test -Dtest={class}"
   build: "mvn -DskipTests package"
-  lint: "mvn checkstyle:check || true"
+  lint: "mvn checkstyle:check"
   run: "mvn -pl ruoyi-admin -am spring-boot:run"
   
   # 前端命令
   frontend:
     install: "cd osg-frontend && pnpm install"
     build: "cd osg-frontend && pnpm build"
-    lint: "cd osg-frontend && pnpm lint || true"
+    lint: "cd osg-frontend && pnpm lint"
     dev: "cd osg-frontend && pnpm dev:student"
     dev-student: "cd osg-frontend && pnpm dev:student"
     dev-mentor: "cd osg-frontend && pnpm dev:mentor"
@@ -76,7 +76,7 @@ paths:
     spec: "osg-spec-docs/docs/"
     source: "osg-spec-docs/source/"                     # PRD 源文件（需求文档原始版）
     prototypes: "osg-spec-docs/source/prototype/"       # UI 原型 HTML
-    prd: "osg-spec-docs/prd/"                            # PRD 需求文档（从 HTML 原型生成）
+    prd: "osg-spec-docs/docs/01-product/prd/"              # PRD 需求文档（从 HTML 原型生成）
     api: "osg-spec-docs/docs/06-api/"
     database: "osg-spec-docs/docs/07-database/"
     requirements: "osg-spec-docs/docs/02-requirements/"
@@ -113,12 +113,80 @@ ports:
 # 审批配置
 approval:
   story_split: required      # Story 拆分后需要审批
-  ticket_split: required     # Ticket 拆分后需要审批
+  ticket_split: auto         # Ticket 拆分后自动继续
   ticket_done: auto          # Ticket 完成后自动继续
-  story_done: required       # Story 完成需要人工审批
+  story_done: auto           # Story 完成后自动继续下一个
 
 # 自动执行限制
 limits:
   max_iterations: 20         # 最大迭代次数
   max_retries: 3             # 最大重试次数
   ticket_timeout: 30         # Ticket 超时（分钟）
+
+# ============================================
+# 🚨 测试配置（重中之重）
+# ============================================
+testing:
+  # 覆盖率门槛
+  coverage:
+    enabled: true
+    # 后端/数据库/测试类型
+    backend:
+      branch: 100            # 分支覆盖率必须 100%
+      line: 90               # 行覆盖率 ≥ 90%
+      method: 90             # 方法覆盖率 ≥ 90%
+    # 前端功能类型
+    frontend:
+      branch: 90             # 分支覆盖率 ≥ 90%
+      line: 80               # 行覆盖率 ≥ 80%
+    # 前端 UI 还原类型
+    frontend_ui:
+      branch: 80             # 分支覆盖率 ≥ 80%
+      line: 70               # 行覆盖率 ≥ 70%
+
+  # 测试命令
+  commands:
+    backend:
+      test: "mvn test"
+      test_single: "mvn test -Dtest={TestClass}"
+      test_coverage: "mvn test jacoco:report"
+      coverage_check: "mvn jacoco:check"
+      coverage_report: "target/site/jacoco"
+    frontend:
+      test: "cd osg-frontend && pnpm test"
+      test_single: "cd osg-frontend && pnpm test {testFile}"
+      test_coverage: "cd osg-frontend && pnpm test:coverage"
+      coverage_report: "osg-frontend/coverage"
+
+  # 集成测试
+  integration:
+    enabled: true
+    command: "mvn verify -Pintegration-test"
+    timeout: 600             # 10 分钟
+
+  # 测试用例设计要求
+  design:
+    # 必须应用的设计方法
+    required_methods:
+      - equivalence_partitioning    # 等价类划分
+      - boundary_value_analysis     # 边界值分析
+      - decision_table              # 决策表测试
+    # 可选的设计方法
+    optional_methods:
+      - state_transition            # 状态转换测试
+      - cause_effect                # 因果图法
+    # 必须覆盖的测试类型
+    required_test_types:
+      - positive                    # 正向测试
+      - negative                    # 负向测试
+      - boundary                    # 边界测试
+      - exception                   # 异常测试
+      - null_empty                  # null/空值测试
+
+  # API 测试维度
+  api_test_dimensions:
+    - happy_path                    # 正向测试
+    - negative                      # 负向测试
+    - boundary                      # 边界测试
+    - security                      # 安全测试
+    - performance                   # 性能测试（可选）

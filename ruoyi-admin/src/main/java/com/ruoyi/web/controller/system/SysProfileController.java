@@ -119,6 +119,49 @@ public class SysProfileController extends BaseController
     }
 
     /**
+     * 首次登录修改密码
+     */
+    @Log(title = "首次登录改密", businessType = BusinessType.UPDATE)
+    @PutMapping("/updateFirstLoginPwd")
+    public AjaxResult updateFirstLoginPwd(@RequestBody Map<String, String> params)
+    {
+        String oldPassword = params.get("oldPassword");
+        String newPassword = params.get("newPassword");
+        // 校验新密码格式：8-20位，包含字母和数字
+        if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 20)
+        {
+            return error("新密码长度必须在8-20位之间");
+        }
+        if (!newPassword.matches(".*[a-zA-Z].*") || !newPassword.matches(".*\\d.*"))
+        {
+            return error("新密码必须包含字母和数字");
+        }
+        LoginUser loginUser = getLoginUser();
+        Long userId = loginUser.getUserId();
+        SysUser user = userService.selectUserById(userId);
+        String password = user.getPassword();
+        if (!SecurityUtils.matchesPassword(oldPassword, password))
+        {
+            return error("修改密码失败，旧密码错误");
+        }
+        if (SecurityUtils.matchesPassword(newPassword, password))
+        {
+            return error("新密码不能与旧密码相同");
+        }
+        String encryptedPassword = SecurityUtils.encryptPassword(newPassword);
+        if (userService.updateFirstLoginPwd(userId, encryptedPassword) > 0)
+        {
+            // 更新缓存用户信息
+            loginUser.getUser().setPwdUpdateDate(DateUtils.getNowDate());
+            loginUser.getUser().setPassword(encryptedPassword);
+            loginUser.getUser().setFirstLogin("0");
+            tokenService.setLoginUser(loginUser);
+            return success();
+        }
+        return error("修改密码异常，请联系管理员");
+    }
+
+    /**
      * 头像上传
      */
     @Log(title = "用户头像", businessType = BusinessType.UPDATE)

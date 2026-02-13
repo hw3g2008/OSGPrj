@@ -89,6 +89,7 @@ public class SysLoginController
         ajax.put("permissions", permissions);
         ajax.put("isDefaultModifyPwd", initPasswordIsModify(user.getPwdUpdateDate()));
         ajax.put("isPasswordExpired", passwordIsExpiration(user.getPwdUpdateDate()));
+        ajax.put("firstLogin", "1".equals(user.getFirstLogin()));
         return ajax;
     }
 

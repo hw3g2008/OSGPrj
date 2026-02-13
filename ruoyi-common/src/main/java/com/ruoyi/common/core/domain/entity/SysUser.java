@@ -75,6 +75,9 @@ public class SysUser extends BaseEntity
     /** 密码最后更新时间 */
     private Date pwdUpdateDate;
 
+    /** 是否首次登录（1是 0否） */
+    private String firstLogin;
+
     /** 部门对象 */
     @Excels({
         @Excel(name = "部门名称", targetAttr = "deptName", type = Type.EXPORT),
@@ -258,6 +261,16 @@ public class SysUser extends BaseEntity
         this.pwdUpdateDate = pwdUpdateDate;
     }
 
+    public String getFirstLogin()
+    {
+        return firstLogin;
+    }
+
+    public void setFirstLogin(String firstLogin)
+    {
+        this.firstLogin = firstLogin;
+    }
+
     public SysDept getDept()
     {
         return dept;
@@ -325,6 +338,7 @@ public class SysUser extends BaseEntity
             .append("loginIp", getLoginIp())
             .append("loginDate", getLoginDate())
             .append("pwdUpdateDate", getPwdUpdateDate())
+            .append("firstLogin", getFirstLogin())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

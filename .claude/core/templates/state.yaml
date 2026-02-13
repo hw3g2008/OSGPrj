@@ -5,16 +5,7 @@
 project: "{project_name}"
 initialized_at: "{ISO8601_UTC}"
 
-# 当前阶段
-# - not_started: 未开始
-# - brainstorming: 需求分析中
-# - story_split: Story 拆分中
-# - story_approved: Story 已审批
-# - ticket_split: Ticket 拆分中
-# - ticket_approved: Ticket 已审批
-# - implementing: 实现中
-# - completed: 已完成
-phase: not_started
+# 注意: 全局工作流状态统一由 workflow.current_step 管理
 
 # 当前任务
 current_story: null

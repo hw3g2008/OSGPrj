@@ -26,10 +26,7 @@ def detect_platform():
     
     if os.getenv("MCP_SERVER"):
         return "mcp"
-    
-    if os.getenv("OPENAI_API_KEY"):
-        return "openai"
-    
+
     # 默认为 Cursor（Prompt 模拟）
     return "cursor"
 ```
@@ -119,8 +116,7 @@ def dispatch_agent(agent_name, task_context):
     dispatchers = {
         "cursor": dispatch_cursor,
         "claude-cli": dispatch_claude_cli,
-        "mcp": dispatch_mcp,
-        "openai": dispatch_openai
+        "mcp": dispatch_mcp
     }
     
     dispatcher = dispatchers.get(platform, dispatch_cursor)

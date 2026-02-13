@@ -88,7 +88,15 @@ updated_at: "2026-02-03T12:00:00Z"
 [生成 Story YAML]         │
     │                     │
     ▼                     │
-[更新 STATE.yaml]         │
+[FR↔Story 覆盖率校验]     │
+    │ - 每个 FR 至少被 1 个 Story 覆盖
+    │ - 输出覆盖矩阵表
+    │ - 有遗漏则补充 Story 并重新校验
+    │                     │
+    ├── 有遗漏 ───────────┘
+    │
+    ▼ 全覆盖
+[更新 STATE.yaml]
 ```
 
 ## 执行伪代码
@@ -96,13 +104,13 @@ updated_at: "2026-02-03T12:00:00Z"
 ```python
 def split_stories(requirement_doc):
     stories = []
-    
+
     # 识别用户角色
     roles = extract_roles(requirement_doc)
-    
+
     # 按功能模块拆分
     modules = extract_modules(requirement_doc)
-    
+
     story_number = 1
     for module in modules:
         for feature in module.features:
@@ -116,28 +124,99 @@ def split_stories(requirement_doc):
                 "acceptance_criteria": feature.acceptance_criteria,
                 "requirements": feature.requirement_ids
             }
-            
+
             # INVEST 校验
             invest_result = validate_invest(story)
             if not invest_result.passed:
                 # 拆分或调整
                 story = adjust_story(story, invest_result.issues)
-            
+
             stories.append(story)
             story_number += 1
-    
-    # 保存 Story 文件
+
+    # ========== 校验循环 ==========
+    max_iterations = 5
+    iteration = 0
+
+    while iteration < max_iterations:
+        iteration += 1
+        print(f"🔄 校验迭代 {iteration}/{max_iterations}")
+
+        # --- INVEST 校验（所有 Stories）---
+        invest_issues = []
+        for story in stories:
+            result = validate_invest(story)
+            if not result.passed:
+                invest_issues.append((story["id"], result.issues))
+
+        if invest_issues:
+            print(f"  INVEST 校验: ❌ {len(invest_issues)} 个 Story 不符合")
+            for story_id, issues in invest_issues:
+                story = find_story(stories, story_id)
+                story = adjust_story(story, issues)
+            continue  # 重新校验
+
+        print("  INVEST 校验: ✅ 全部通过")
+
+        # --- FR↔Story 覆盖率校验 ---
+        all_fr_ids = extract_all_fr_ids(requirement_doc)
+        covered_frs = set()
+        for story in stories:
+            covered_frs.update(story["requirements"])
+
+        uncovered = all_fr_ids - covered_frs
+        if uncovered:
+            print(f"  覆盖率校验: ❌ {len(uncovered)} 个 FR 未覆盖")
+            # 补充 Story 覆盖遗漏的 FR
+            additional = create_stories_for_uncovered(uncovered, requirement_doc)
+            stories.extend(additional)
+            continue  # 回到 INVEST 校验
+
+        print("  覆盖率校验: ✅ 100%")
+
+        # 全部通过
+        break
+    else:
+        # 达到最大迭代次数仍未通过
+        print(f"❌ 达到最大迭代次数 ({max_iterations}/{max_iterations})")
+        print("请人工检查后重新执行 /split story")
+        return {"status": "failed", "reason": "max_iterations_exceeded"}
+
+    # 输出覆盖矩阵
+    print_coverage_matrix(all_fr_ids, stories)
+
+    # 保存 Story 文件（仅在全部校验通过后）
     for story in stories:
         write_yaml(f"osg-spec-docs/tasks/stories/{story['id']}.yaml", story)
-    
+
     # 更新 STATE.yaml
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.stories = [s['id'] for s in stories]
-    state.phase = "story_split_pending_approval"
+    state.workflow.current_step = "story_split_done"
+    state.workflow.next_step = "approve_stories"
     write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
-    
+
     return stories
 ```
+
+## FR↔Story 覆盖率矩阵
+
+拆分完成后必须输出覆盖率矩阵，确保每个功能需求都被至少一个 Story 覆盖：
+
+```markdown
+### FR↔Story 覆盖矩阵
+
+| FR ID | FR 标题 | 覆盖 Story | 状态 |
+|-------|---------|-----------|------|
+| FR-01.1 | 登录表单 | S-002 | ✅ |
+| FR-01.2 | 前端校验 | S-002 | ✅ |
+| FR-03.1 | 角色列表 | S-003 | ✅ |
+| FR-04.1 | 用户搜索 | S-004 | ✅ |
+
+覆盖率: 30/30 = 100% ✅
+```
+
+如果覆盖率不是 100%，必须补充 Story 直到全覆盖。
 
 ## 输出格式
 
@@ -167,3 +246,6 @@ def split_stories(requirement_doc):
 - 每个 Story 必须有验收标准
 - Story 不能超过 5 天工作量
 - 必须关联需求 ID
+- **禁止超过 max_iterations（5 次）迭代** - 达到上限必须失败退出
+- **每次迭代必须输出进度** - 格式：`🔄 校验迭�� N/5`
+- **禁止在校验未全部通过时保存 Story 文件或更新 STATE.yaml**

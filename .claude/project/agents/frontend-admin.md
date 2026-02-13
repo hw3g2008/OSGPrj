@@ -43,7 +43,7 @@ core/agents/developer.md
 
 ### 3. 业务功能实现
 
-根据 PRD 文档（`osg-spec-docs/source/*.md` / `*.docx`）实现管理后台业务逻辑。
+根据 PRD 文档（`osg-spec-docs/docs/01-product/prd/*.md`）实现管理后台业务逻辑。
 
 ## 设计 Token（从原型提取）
 

@@ -41,4 +41,14 @@ public class CacheConstants
      * 登录账户密码错误次数 redis key
      */
     public static final String PWD_ERR_CNT_KEY = "pwd_err_cnt:";
+
+    /**
+     * 密码重置验证码 redis key
+     */
+    public static final String PWD_RESET_CODE_KEY = "pwd_reset_code:";
+
+    /**
+     * 密码重置令牌 redis key
+     */
+    public static final String PWD_RESET_TOKEN_KEY = "pwd_reset_token:";
 }

@@ -33,3 +33,59 @@ dependencies: []
 created_at: "{ISO8601_UTC}"
 started_at: null
 completed_at: null
+
+# ============================================
+# 🚨 验证证据（完成时必填，由 deliver-ticket Skill 自动写入）
+# ============================================
+# verification_evidence:
+#   # 基本信息
+#   command: "{实际执行的验证命令}"
+#   exit_code: 0
+#   timestamp: "{ISO8601_UTC}"
+#   output_summary: "{关键输出摘要，如 'Tests run: 15, Failures: 0'}"
+#
+#   # 测试结果（backend/database/test/frontend 类型）
+#   test_result:
+#     total: 15              # 总测试数
+#     passed: 15             # 通过数
+#     failed: 0              # 失败数
+#     skipped: 0             # 跳过数
+#     duration_ms: 3500      # 执行时间（毫秒）
+#
+#   # 覆盖率结果（backend/database/test 类型必填）
+#   coverage:
+#     line:
+#       covered: 180         # 覆盖行数
+#       total: 200           # 总行数
+#       percentage: 90.0     # 覆盖率 %
+#     branch:
+#       covered: 50          # 覆盖分支数
+#       total: 50            # 总分支数
+#       percentage: 100.0    # 覆盖率 %（必须 100%）
+#     method:
+#       covered: 25          # 覆盖方法数
+#       total: 25            # 总方法数
+#       percentage: 100.0    # 覆盖率 %
+#
+#   # 未覆盖的代码（如有）
+#   uncovered_lines: []      # 未覆盖的行号列表
+#   uncovered_branches: []   # 未覆盖的分支列表
+
+# ============================================
+# 🧪 测试用例矩阵（由 test-design Skill 生成）
+# ============================================
+# test_cases:
+#   - id: "TC-001"
+#     category: "positive"   # positive | negative | boundary | exception | null_empty
+#     description: "{测试描述}"
+#     input: "{输入描述}"
+#     expected: "{预期输出}"
+#     covers_branches: ["B1", "B2"]  # 覆盖的分支 ID
+#     design_method: "equivalence_partitioning"  # 设计方法
+#
+# branch_coverage_matrix:
+#   - branch_id: "B1"
+#     condition: "user != null"
+#     line: 15
+#     covered_by: ["TC-001", "TC-003"]
+#     status: "covered"      # covered | uncovered

@@ -126,37 +126,69 @@ def brainstorming(user_input):
     # Step 3: 循环校验
     max_iterations = 10
     iteration = 0
-    
+
     while iteration < max_iterations:
         iteration += 1
-        
+        print(f"🔄 校验迭代 {iteration}/{max_iterations}")
+
         # 正向校验
         forward_issues = []
         for check in FORWARD_CHECKS:
             result = check.execute(requirement_doc)
             if not result.passed:
                 forward_issues.append(result.issue)
-        
+
         if forward_issues:
+            print(f"  正向校验: ❌ {len(forward_issues)} 个问题")
             requirement_doc = enhance_doc(requirement_doc, forward_issues)
             continue  # 重新校验
-        
+
+        print("  正向校验: ✅ 5/5 通过")
+
         # 反向校验
         backward_issues = []
         for check in BACKWARD_CHECKS:
             result = check.execute(requirement_doc)
             if not result.passed:
                 backward_issues.append(result.issue)
-        
+
         if backward_issues:
+            print(f"  反向校验: ❌ {len(backward_issues)} 个问题")
             requirement_doc = enhance_doc(requirement_doc, backward_issues)
             continue  # 重新正向校验
-        
+
+        print("  反向校验: ✅ 6/6 通过")
+
         # 全部通过
         break
-    
-    # Step 4: 输出结果
+    else:
+        # 达到最大迭代次数仍未通过校验 — 强制失败退出
+        remaining_issues = forward_issues + backward_issues
+        output_failure_report(iteration, remaining_issues)
+        # 不更新 workflow — 保持当前步骤，便于人工介入
+        raise BrainstormFailure(
+            f"经过 {max_iterations} 轮迭代仍有 {len(remaining_issues)} 项校验未通过，"
+            "请人工检查需求文档或补充输入信息后重新执行 /brainstorm"
+        )
+
+    # Step 4: 输出结果（仅在全部校验通过后才执行）
+    # 更新 workflow 状态
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+    state.workflow.current_step = "brainstorm_done"
+    state.workflow.next_step = "split_story"
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+
     return format_output(requirement_doc)
+```
+
+## 失败退出规则
+
+```
+⚠️ 当 max_iterations（默认 10）次迭代后仍有校验项未通过：
+1. 输出失败报告（列出所有未通过的校验项和具体问题）
+2. 不更新 workflow.current_step — 保持在执行前的状态
+3. 停止自动继续 — 提示用户人工介入
+4. 用户可以补充信息后重新执行 /brainstorm
 ```
 
 ## 输出格式
@@ -195,3 +227,21 @@ def brainstorming(user_input):
 - 禁止在校验未全部通过时输出
 - 禁止停下来等待用户确认
 - 必须循环直到全部 ✅
+- **禁止超过 max_iterations（10 次）迭代** - 达到上限必须失败退出
+- **每次迭代必须输出进度** - 格式：`🔄 校验迭代 N/10`
+
+---
+
+## 🚨 迭代计数强制规则
+
+**每次校验循环开始时，必须输出迭代进度：**
+
+```
+🔄 校验迭代 1/10
+  - 正向校验: 检查中...
+  - 反向校验: 检查中...
+
+🔄 校验迭代 2/10 (上轮发现 2 个问题，已补充)
+  - 正向校验: ✅ 5/5 通过
+  - 反向校验: 检查中...
+```

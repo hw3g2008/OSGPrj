@@ -53,6 +53,17 @@ def can_claim_done(task):
             return False, "Lint 检查未通过"
         if not task.build_result or task.build_result.status != "passed":
             return False, "构建检查未通过"
+
+    elif task.type == "test":
+        # 测试类：必须有测试结果且通过
+        if not task.test_result:
+            return False, "缺少测试结果"
+        if task.test_result.status != "passed":
+            return False, "测试未通过"
+
+    elif task.type == "config":
+        # 配置类：必须有执行证据（通用检查已在上方完成），无额外专属验证
+        pass
     
     # 3. 所有验收标准必须满足（通用）
     for criteria in task.acceptance_criteria:
@@ -105,39 +116,97 @@ def can_claim_done(task):
 - ❌ 跳过验证因为"太简单了"
 - ❌ 使用"根据我的理解"而非实际证据
 
+---
+
+## 🚨 Story 验收前置检查（不可跳过）
+
+**在执行 `/verify S-xxx` 时，必须先检查所有 Tickets 的验证证据：**
+
+```python
+def pre_verify_check(story_id):
+    story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
+    missing_evidence = []
+
+    for ticket_id in story.tickets:
+        ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+
+        # 检查 1: verification_evidence 字段必须存在
+        if "verification_evidence" not in ticket:
+            missing_evidence.append(f"{ticket_id}: 缺少 verification_evidence 字段")
+            continue
+
+        # 检查 2: exit_code 必须为 0
+        if ticket.verification_evidence.get("exit_code") != 0:
+            missing_evidence.append(f"{ticket_id}: 验证失败 (exit_code={ticket.verification_evidence.exit_code})")
+
+    if missing_evidence:
+        print("❌ 无法验收，以下 Tickets 缺少验证证据：")
+        for msg in missing_evidence:
+            print(f"  - {msg}")
+        print("\n请先为这些 Tickets 补充验证证据（执行验证命令并记录结果）")
+        return False
+
+    return True
+```
+
+**如果前置检查失败：**
+1. 停止验收流程
+2. 输出缺少证据的 Tickets 列表
+3. 提示用户补充证据（重新执行验证命令）
+4. 不更新 workflow 状态
+
 ## 执行伪代码
 
 ```python
 def verify(task):
     issues = []
-    
+
+    # 0. 前置检查：验证证据必须存在
+    if task.type == "story":
+        # Story 验收：检查所有 Tickets 的证据
+        for ticket_id in task.tickets:
+            ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+            if not ticket.get("verification_evidence"):
+                issues.append(("evidence", ticket_id, "缺少 verification_evidence 字段"))
+            elif ticket.verification_evidence.get("exit_code") != 0:
+                issues.append(("evidence", ticket_id, f"验证命令失败: exit_code={ticket.verification_evidence.exit_code}"))
+
+        if issues:
+            return {"passed": False, "issues": issues, "reason": "Tickets 缺少验证证据，无法验收"}
+
     # 结构层校验
     for check in STRUCTURE_CHECKS:
         result = check.execute(task)
         if not result.passed:
             issues.append(("structure", check.name, result.issue))
-    
+
     # 格式层校验
     for check in FORMAT_CHECKS:
         result = check.execute(task)
         if not result.passed:
             issues.append(("format", check.name, result.issue))
-    
+
     # 语义层校验
     for check in SEMANTIC_CHECKS:
         result = check.execute(task)
         if not result.passed:
             issues.append(("semantic", check.name, result.issue))
-    
+
     # 逻辑层校验
     for check in LOGIC_CHECKS:
         result = check.execute(task)
         if not result.passed:
             issues.append(("logic", check.name, result.issue))
-    
+
     if issues:
         return {"passed": False, "issues": issues}
-    
+
+    # 验收通过 — 更新 workflow 触发审批
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+    state.workflow.current_step = "story_done"
+    state.workflow.next_step = "approve_story"
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+
     return {"passed": True}
 ```
 

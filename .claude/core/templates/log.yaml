@@ -10,7 +10,10 @@ status: completed  # completed | failed | blocked
 # 根据 Ticket type 不同，阶段 (phase) 可选值不同：
 #   通用阶段: start, lint, build, review, complete
 #   TDD 阶段 (backend/database): tdd_red, tdd_green, tdd_refactor, test
+#   前端功能阶段 (frontend): implement, lint, build
 #   UI 还原阶段 (frontend-ui): read_prototype, component_mapping, implement
+#   测试阶段 (test): tdd_red, tdd_green, test
+#   配置阶段 (config): implement, review
 execution_log:
   - timestamp: "{ISO8601_UTC}"
     phase: "start"
@@ -51,6 +54,38 @@ execution_log:
   #   files:
   #     - "{component_file}"
   
+  # --- 前端功能阶段（type: frontend）---
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "implement"
+  #   message: "编写前端功能代码"
+  #   files:
+  #     - "{component_file}"
+
+  # --- 测试阶段（type: test）---
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "tdd_red"
+  #   message: "编写失败测试"
+  #   files:
+  #     - "{test_file}"
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "tdd_green"
+  #   message: "编写代码让测试通过"
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "test"
+  #   message: "运行测试"
+  #   command: "{test_command}"
+  #   exit_code: 0
+
+  # --- 配置阶段（type: config）---
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "implement"
+  #   message: "修改配置文件"
+  #   files:
+  #     - "{config_file}"
+  # - timestamp: "{ISO8601_UTC}"
+  #   phase: "review"
+  #   message: "检查配置正确性"
+
   # --- 通用阶段 ---
   - timestamp: "{ISO8601_UTC}"
     phase: "lint"

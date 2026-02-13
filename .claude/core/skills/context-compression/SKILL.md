@@ -38,7 +38,7 @@ compressed_context:
   current_state:
     story: "S-001"
     ticket: "T-003"
-    phase: "implement"
+    workflow_step: "ticket_approved"
   
   # 未完成任务（完整保留）
   pending_tasks:
@@ -77,7 +77,7 @@ def compress_context():
         "current_state": {
             "story": state.current_story,
             "ticket": state.current_ticket,
-            "phase": state.phase
+            "workflow_step": state.workflow.current_step
         },
         "pending_tasks": get_pending_tickets(state),
         "key_decisions": decisions.decisions[-5:],  # 最近 5 条
@@ -107,16 +107,13 @@ def summarize_changes():
 
 ```python
 def should_compress():
-    # 检查上下文使用率
-    usage = estimate_context_usage()
-    
-    if usage > 0.8:
-        return True, "context_threshold"
-    
+    # Claude Code 自动管理上下文压缩（context compaction）
+    # 此函数仅在会话时长较长时建议主动保存 checkpoint
+
     # 检查会话时长
     if session_duration() > 30 * 60:  # 30 分钟
         return True, "session_duration"
-    
+
     return False, None
 ```
 

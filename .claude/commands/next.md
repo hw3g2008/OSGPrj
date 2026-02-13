@@ -39,6 +39,7 @@ def select_agent(ticket):
     agent_map = {
         "backend": "backend-java",   # 或从 config.developers 获取
         "frontend": "frontend-vue",
+        "frontend-ui": "frontend-admin",
         "database": "dba-mysql",
         "test": "developer",
         "config": "developer"

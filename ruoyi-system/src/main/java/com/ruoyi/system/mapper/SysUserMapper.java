@@ -98,12 +98,21 @@ public interface SysUserMapper
 
     /**
      * 重置用户密码
-     * 
+     *
      * @param userId 用户ID
      * @param password 密码
      * @return 结果
      */
     public int resetUserPwd(@Param("userId") Long userId, @Param("password") String password);
+
+    /**
+     * 首次登录修改密码（同时更新 first_login 为 0）
+     *
+     * @param userId 用户ID
+     * @param password 新密码
+     * @return 结果
+     */
+    public int updateFirstLoginPwd(@Param("userId") Long userId, @Param("password") String password);
 
     /**
      * 通过用户ID删除用户

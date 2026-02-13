@@ -382,7 +382,7 @@ public class SysUserServiceImpl implements ISysUserService
 
     /**
      * 重置用户密码
-     * 
+     *
      * @param userId 用户ID
      * @param password 密码
      * @return 结果
@@ -391,6 +391,19 @@ public class SysUserServiceImpl implements ISysUserService
     public int resetUserPwd(Long userId, String password)
     {
         return userMapper.resetUserPwd(userId, password);
+    }
+
+    /**
+     * 首次登录修改密码
+     *
+     * @param userId 用户ID
+     * @param password 新密码
+     * @return 结果
+     */
+    @Override
+    public int updateFirstLoginPwd(Long userId, String password)
+    {
+        return userMapper.updateFirstLoginPwd(userId, password);
     }
 
     /**

@@ -9,7 +9,9 @@ trigger: manual  # manual | ticket_complete | context_full | session_end
 state_snapshot:
   current_story: "{story_id}"
   current_ticket: "{ticket_id}"
-  phase: "{phase}"
+  workflow:
+    current_step: "{workflow.current_step}"
+    next_step: "{workflow.next_step}"
   completed_stories: []
   completed_tickets: []
 
