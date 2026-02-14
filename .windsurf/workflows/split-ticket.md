@@ -25,6 +25,7 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
    - 调用 ticket-splitter skill
    - 每个 Ticket 粒度为 2-5 分钟
    - 包含：标题、类型（backend/frontend/frontend-ui/test/config）、allowed_paths、验收标准
+   - 该 skill 会自动进行多轮质量/覆盖率校验（Phase 2）+ 增强全局终审（Phase 3：三维度终审 + A~I 多维度旋转校验，参见 quality-gate/SKILL.md）
 
 3. **创建 Ticket 文件**
    - 在 `osg-spec-docs/tasks/tickets/` 下创建 `T-xxx.yaml`
@@ -35,6 +36,5 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
    - 等待用户审批
 
 5. **更新状态**
-   - 更新 `workflow.current_step` 为 `tickets_pending_approval`
-   - 用户审批后更新为 `implementing`
-   - 设置 `current_story` 为当前 Story
+   - 更新 `workflow.current_step` 为 `ticket_split_done`
+   - 等待用户审批（`/approve`）

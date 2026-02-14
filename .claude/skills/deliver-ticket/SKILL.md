@@ -297,13 +297,85 @@ def deliver_ticket(ticket_id):
             "errors": result.errors
         }
 
-    # Step 4: 自我审查（根据 type 选择对应清单）
-    review_result = self_review(ticket, result.code)
-    if not review_result.passed:
-        fix_review_issues(review_result.issues)
+    # Step 4 + Step 4.5 包裹在重试循环中
+    # Step 4.5 增强为：三维度终审 + 多维度旋转校验
+    # 参见 quality-gate/SKILL.md 的 enhanced_global_review()
+    # 本环节维度优先级: E → I → H → B → C → D → G → A → F
+    # 本环节三维度检查:
+    #   上游一致性: Ticket AC 全满足？
+    #   下游可行性: 全量测试通过？不破坏其他 Ticket？
+    #   全局完整性: 修改都在 allowed_paths 内？
+
+    dim_priority = ["E", "I", "H", "B", "C", "D", "G", "A", "F"]
+    max_review_retries = 9
+    no_change_rounds = 0
+    dim_index = 0
+    last_had_changes = False
+
+    for review_retry in range(max_review_retries + 1):
+        # Step 4: 自我审查
+        review_result = self_review(ticket, result.code)
+        if not review_result.passed:
+            fix_review_issues(review_result.issues)
+
+        # Step 4.5: 增强全局终审
+        all_issues = []
+
+        # --- 3a. 三维度终审（每轮都做） ---
+        # 上游一致性：Ticket AC 全满足？
+        for ac in ticket.acceptance_criteria:
+            if not is_criteria_met(ac, result.code):
+                all_issues.append(f"上游一致性: 验收标准未满足 '{ac}'")
+
+        # 下游可行性：不破坏其他 Ticket 的代码？
+        full_test = bash(config.commands.test)
+        if full_test.exit_code != 0:
+            all_issues.append(f"下游可行性: 全量测试失败")
+
+        # 全局完整性：修改都在 allowed_paths 内？
+        changed_files = get_changed_files()
+        allowed = ticket.get("allowed_paths", {}).get("modify", [])
+        for f in changed_files:
+            if not matches_any_pattern(f, allowed):
+                all_issues.append(f"全局完整性: 修改了 allowed_paths 之外的文件 {f}")
+
+        # --- 3b. 多维度旋转校验（每轮选一个维度） ---
+        if last_had_changes:
+            dim = "H"  # 上轮有修改，优先检查交叉影响
+        else:
+            dim = dim_priority[dim_index % len(dim_priority)]
+            dim_index += 1
+
+        dim_issues = check_dimension(result.code, dim, DIMENSION_MEANINGS["code"][dim])
+        all_issues += dim_issues
+
+        # --- 输出进度 ---
+        print(f"🔍 终审轮次 {review_retry+1}/{max_review_retries+1} (维度 {dim})")
+
+        # --- 判断 ---
+        if not all_issues:
+            no_change_rounds += 1
+            last_had_changes = False
+            print(f"  ✅ 无问题 (连续无修改: {no_change_rounds})")
+            if no_change_rounds >= 2:
+                print(f"🎉 连续 {no_change_rounds} 轮无修改，终审通过")
+                break
+        else:
+            print(f"  ❌ {len(all_issues)} 个问题")
+            for issue in all_issues:
+                print(f"    - {issue}")
+            fix_final_review_issues(all_issues)
+            no_change_rounds = 0
+            last_had_changes = True
+    else:
+        return {
+            "status": "final_review_failed",
+            "errors": all_issues,
+            "hint": f"增强终审经过 {max_review_retries+1} 次重试仍未通过"
+        }
 
     # ========================================
-    # Step 5: 强制验证（不可跳过）
+    # Step 5: 强制验证 — Level 1 单元验证（不可跳过）
     # ========================================
     verification = run_verification(ticket, config)
 
@@ -315,31 +387,68 @@ def deliver_ticket(ticket_id):
             "hint": "修复问题后重新执行 /next"
         }
 
-    # Step 6: 写入验证证据（必须在更新状态之前）
+    # ========================================
+    # Step 6: Level 2 回归验证（全量测试，必须在写证据之前）
+    # ========================================
+    regression_result = run_regression_test(ticket, config)
+    if not regression_result.passed:
+        # 回归失败：不写证据、不更新状态
+        return {
+            "status": "regression_detected",
+            "error": regression_result.failures,
+            "hint": "当前 Ticket 引入了回归，全量测试失败，请修复后重新执行 /next"
+        }
+
+    # Step 7: 写入验证证据（Level 1 + Level 2 都通过后才写）
     ticket.verification_evidence = {
         "command": verification.command,
         "exit_code": verification.exit_code,
+        "regression_test": "passed",
         "output_summary": extract_summary(verification.stdout),
         "timestamp": now()
     }
 
-    # Step 7: 更新状态（证据已写入后才能执行）
+    # Step 8: 更新 Ticket 状态（证据已写入后才能执行）
     ticket.status = "done"
     ticket.completed_at = now()
     write_yaml(ticket_path, ticket)
 
-    # Step 8: 更新 STATE.yaml 和 workflow
+    # ========================================
+    # Step 9: 更新 STATE.yaml + Level 3/4 验证
+    # ========================================
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     update_state(ticket_id, "completed")
 
+    # --- Level 3: 增量 Story 验证 ---
+    story = read_yaml(f"osg-spec-docs/tasks/stories/{ticket.story_id}.yaml")
+    incremental_verify(ticket, story, state)
+
     # 判断是否所有 Tickets 都完成了
-    pending_tickets = [t for t in state.tickets if get_ticket_status(t) == "pending"]
+    pending_tickets = [t for t in story.tickets
+                       if get_ticket_status(t) != "done"]
+
     if len(pending_tickets) == 0:
-        state.workflow.current_step = "all_tickets_done"
-        state.workflow.next_step = "verify"
+        # --- Level 4: 完整 Story 验收（自动调用 verification skill）---
+        print("🎉 所有 Tickets 已完成，自动执行 Story 验收...")
+        verify_result = verify_story(ticket.story_id)
+
+        if verify_result["passed"]:
+            state.workflow.current_step = "story_verified"
+            state.workflow.next_step = None  # 用户选择 /cc-review 或 /approve
+            print("✅ Story 验收通过")
+            print("⏭️ 下一步:")
+            print("  - /cc-review — CC 交叉验证（二次校验）")
+            print("  - /approve — 跳过 CC，直接审批")
+        else:
+            state.workflow.current_step = "verification_failed"
+            state.workflow.next_step = None  # 暂停等用户修复，不自动重试
+            print(f"❌ Story 验收失败: {verify_result['reason']}")
+            print("请修复问题后执行 /verify 重新验收")
     else:
-        state.workflow.current_step = "ticket_done"
+        state.workflow.current_step = "implementing"
         state.workflow.next_step = "next"
+        print(f"⏭️ 还有 {len(pending_tickets)} 个 Ticket 待完成")
+
     write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
 
     return {
@@ -358,7 +467,7 @@ def run_verification(ticket, config):
         if ticket.type == "database":
             cmd = "mvn compile -pl ruoyi-admin -am -q"
         else:
-            cmd = config.commands.test  # 或指定测试类
+            cmd = config.commands.test  # 优先使用指定测试类: mvn test -Dtest={TestClass}
 
     elif ticket.type in ("frontend", "frontend-ui"):
         # 前端：lint + build
@@ -376,6 +485,74 @@ def run_verification(ticket, config):
         "stdout": result.stdout,
         "stderr": result.stderr
     }
+
+
+def run_regression_test(ticket, config):
+    """Level 2: 回归验证 — 每个 Ticket 完成后跑全量测试，早发现回归"""
+
+    print("🔄 Level 2 回归验证: 全量测试...")
+    failures = []
+
+    # 后端全量测试
+    if ticket.type in ("backend", "database", "test"):
+        backend_test = bash(config.commands.test)  # mvn test
+        if backend_test.exit_code != 0:
+            failures.append(f"后端全量测试失败: {extract_failure_summary(backend_test)}")
+
+    # 前端全量测试（如果当前 Ticket 是前端类型）
+    if ticket.type in ("frontend", "frontend-ui"):
+        frontend_test = bash(config.commands.frontend.test)  # pnpm test
+        if frontend_test.exit_code != 0:
+            failures.append(f"前端全量测试失败: {extract_failure_summary(frontend_test)}")
+
+    if failures:
+        print(f"  Level 2: ❌ 回归检测到 {len(failures)} 个问题")
+        for f in failures:
+            print(f"    - {f}")
+        return {"passed": False, "failures": failures}
+
+    print("  Level 2 回归验证: ✅ 全量测试通过")
+    return {"passed": True}
+
+
+def incremental_verify(ticket, story, state):
+    """Level 3: 增量 Story 验证 — AC 进度跟踪 + 偏差检测"""
+
+    print("🔄 Level 3 增量 Story 验证...")
+
+    done_tickets = []
+    for tid in story.tickets:
+        t = read_yaml(f"osg-spec-docs/tasks/tickets/{tid}.yaml")
+        if t.status == "done":
+            done_tickets.append(t)
+
+    # AC 进度跟踪
+    covered_acs = []
+    uncovered_acs = []
+    for ac in story.acceptance_criteria:
+        if any(ticket_covers_criteria(t, ac) for t in done_tickets):
+            covered_acs.append(ac)
+        else:
+            uncovered_acs.append(ac)
+
+    total = len(story.acceptance_criteria)
+    progress = len(covered_acs) / total * 100 if total > 0 else 0
+    print(f"  Story AC 进度: {len(covered_acs)}/{total} = {progress:.0f}%")
+
+    if uncovered_acs:
+        print(f"  待覆盖 AC ({len(uncovered_acs)}):")
+        for ac in uncovered_acs:
+            print(f"    - {ac}")
+
+    # 偏差检测：当前 Ticket 是否覆盖了至少 1 个 Story AC？
+    current_covers = [ac for ac in story.acceptance_criteria
+                      if ticket_covers_criteria(ticket, ac)]
+    if not current_covers:
+        print(f"  ⚠️ 偏差警告: {ticket.id} 未覆盖任何 Story AC，请检查是否偏离需求")
+    else:
+        print(f"  当前 Ticket 覆盖 AC: {len(current_covers)} 个")
+
+    print(f"  Level 3 增量验证: ✅ 完成")
 ```
 
 ## 输出格式
@@ -390,9 +567,17 @@ def run_verification(ticket, config):
 - `path/to/file1.java` (+15, -3)
 - `path/to/file2.vue` (+42, -0)
 
-### 测试结果
-- 新增测试: 3
-- 测试通过: ✅ 全部
+### Level 1: 单元验证
+- 测试结果: ✅ 全部通过 (新增 3, 通过 3)
+- 覆盖率: ✅ 分支 100%, 行 92%
+
+### Level 2: 回归验证
+- 全量测试: ✅ 通过 (mvn test → exit_code=0)
+
+### Level 3: 增量 Story 验证
+- Story AC 进度: 3/8 = 37%
+- 当前 Ticket 覆盖 AC: 1 个
+- 偏差检测: ✅ 无偏差
 
 ### 自我审查
 - 完整性: ✅
@@ -400,11 +585,14 @@ def run_verification(ticket, config):
 - 测试: ✅
 
 ### ⏭️ 下一步
-{如果 approval.ticket_done == "auto"}
-自动执行下一个 Ticket...
+{还有未完成 Tickets}
+继续执行 /next
 
-{如果需要审批}
-等待审批: /approve {ticket_id}
+{所有 Tickets 完成 → 自动执行 Story 验收}
+✅ Story 验收通过:
+  - /cc-review — CC 交叉验证（二次校验）
+  - /approve — 跳过 CC，直接审批
+❌ Story 验收失败 → 修复后执行 /verify 重新验收
 ```
 
 ## 硬约束

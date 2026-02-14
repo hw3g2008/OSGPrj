@@ -18,6 +18,7 @@
 | 6 | verification/SKILL.md | Story AC 覆盖率校验 | 🔴 高 | 新增代码块 |
 | 7 | verification/SKILL.md | 多轮迭代 + 自动修复循环 | 🔴 高 | 重写 verify 函数 |
 | 8 | verification/SKILL.md | 明确失败退出逻辑 | 🟡 中 | 新增代码块 |
+| 9 | verification/SKILL.md | Phase 3 全局终审（独立展开） | 🟡 中 | 新增代码块 |
 
 ---
 
@@ -83,83 +84,117 @@
 
 ### 位置
 
-在 while 循环的 `break` 之后、`# Step 4: 输出结果` 之前插入。
+将现有的 while 循环包裹在外层循环中。Phase 2（逐项校验）通过后执行 Phase 3（全局终审），Phase 3 不通过则回到 Phase 2。
 
-### 当前代码（第 164-176 行附近）
+### 当前代码结构
 
 ```python
-        # 全部通过
+    max_iterations = 10
+    iteration = 0
+    while iteration < max_iterations:
+        # ... 正向校验 + 反向校验 + PRD 覆盖率校验（修复 #1）...
         break
     else:
-        # 达到最大迭代次数...
-        ...
+        raise BrainstormFailure(...)
 
-    # Step 4: 输出结果（仅在全部校验通过后才执行）
+    # Step 4: 输出结果
 ```
 
 ### 修改为
 
 ```python
-        # 全部通过
-        break
-    else:
-        # 达到最大迭代次数...
-        ...
+    # ========== 外层循环：Phase 2 + Phase 3 ==========
+    max_global_retries = 3
+    for global_retry in range(max_global_retries):
+        print(f"🔄 全局校验轮次 {global_retry + 1}/{max_global_retries}")
 
-    # ========== Phase 3: 全局终审（新增）==========
-    final_review_issues = []
+        # ========== Phase 2: 逐项校验循环 ==========
+        max_iterations = 10
+        iteration = 0
+        phase2_passed = False
 
-    # 上游一致性：PRD 功能点 100% 覆盖？
-    prd_features = extract_prd_features(context["source_docs"])
-    req_features = extract_requirement_features(requirement_doc)
-    if prd_features - req_features:
-        final_review_issues.append("上游一致性: PRD 功能点未 100% 覆盖")
+        while iteration < max_iterations:
+            iteration += 1
+            print(f"  🔄 校验迭代 {iteration}/{max_iterations}")
 
-    # 下游可行性：需求可拆分为 Stories？
-    for req in requirement_doc.requirements:
-        if not is_splittable_to_story(req):
-            final_review_issues.append(f"下游可行性: {req.id} 无法拆分为 Story")
+            # 正向校验（5 项）
+            forward_issues = []
+            for check in FORWARD_CHECKS:
+                result = check.execute(requirement_doc)
+                if not result.passed:
+                    forward_issues.append(result.issue)
+            if forward_issues:
+                print(f"    正向校验: ❌ {len(forward_issues)} 个问题")
+                requirement_doc = enhance_doc(requirement_doc, forward_issues)
+                continue
 
-    # 全局完整性：需求之间无矛盾？
-    contradictions = find_contradictions(requirement_doc.requirements)
-    if contradictions:
-        for c in contradictions:
-            final_review_issues.append(f"全局完整性: 需求矛盾 {c}")
+            print("    正向校验: ✅ 5/5 通过")
 
-    if final_review_issues:
+            # 反向校验（6 项）
+            backward_issues = []
+            for check in BACKWARD_CHECKS:
+                result = check.execute(requirement_doc)
+                if not result.passed:
+                    backward_issues.append(result.issue)
+            if backward_issues:
+                print(f"    反向校验: ❌ {len(backward_issues)} 个问题")
+                requirement_doc = enhance_doc(requirement_doc, backward_issues)
+                continue
+
+            print("    反向校验: ✅ 6/6 通过")
+
+            # PRD 覆盖率校验（修复 #1）
+            prd_features = extract_prd_features(context["source_docs"])
+            req_features = extract_requirement_features(requirement_doc)
+            uncovered_prd = prd_features - req_features
+            if uncovered_prd:
+                print(f"    PRD 覆盖率: ❌ {len(uncovered_prd)} 个功能点未覆盖")
+                requirement_doc = enhance_doc(requirement_doc, [f"PRD 未覆盖: {f}" for f in uncovered_prd])
+                continue
+
+            print(f"    PRD 覆盖率: ✅ {len(prd_features)}/{len(prd_features)} = 100%")
+
+            phase2_passed = True
+            break
+        else:
+            raise BrainstormFailure(f"Phase 2 经过 {max_iterations} 轮迭代仍未通过")
+
+        if not phase2_passed:
+            continue
+
+        # ========== Phase 3: 全局终审 ==========
+        final_review_issues = []
+
+        # 上游一致性：PRD 功能点 100% 覆盖？（再次确认）
+        prd_features = extract_prd_features(context["source_docs"])
+        req_features = extract_requirement_features(requirement_doc)
+        if prd_features - req_features:
+            final_review_issues.append("上游一致性: PRD 功能点未 100% 覆盖")
+
+        # 下游可行性：需求可拆分为 Stories？
+        for req in requirement_doc.requirements:
+            if not is_splittable_to_story(req):
+                final_review_issues.append(f"下游可行性: {req.id} 无法拆分为 Story")
+
+        # 全局完整性：需求之间无矛盾？
+        contradictions = find_contradictions(requirement_doc.requirements)
+        if contradictions:
+            for c in contradictions:
+                final_review_issues.append(f"全局完整性: 需求矛盾 {c}")
+
+        if not final_review_issues:
+            print("  全局终审: ✅ 通过")
+            break  # 全局终审通过，退出外层循环
+
         print(f"  全局终审: ❌ {len(final_review_issues)} 个问题")
         for issue in final_review_issues:
             print(f"    - {issue}")
-        # 回到 Phase 2 重新修复
         requirement_doc = enhance_doc(requirement_doc, final_review_issues)
-        # 重新执行整个校验循环（重置 iteration 计数器的剩余次数）
-        # 注意：这里需要一个外层循环来支持 Phase 3 → Phase 2 的回退
-        raise NeedRevalidation("全局终审未通过，需要重新校验")
-
-    print("  全局终审: ✅ 通过")
-
-    # Step 4: 输出结果（仅在全部校验通过后才执行）
-```
-
-### 注意
-
-Phase 3 → Phase 2 的回退需要一个外层循环。建议将整个流程包装为：
-
-```python
-max_global_retries = 3
-for global_retry in range(max_global_retries):
-    # Phase 2: 逐项校验循环
-    ...（现有 while 循环）...
-
-    # Phase 3: 全局终审
-    final_issues = global_final_review(requirement_doc, context)
-    if not final_issues:
-        break  # 全局终审通过
-    else:
-        requirement_doc = enhance_doc(requirement_doc, final_issues)
         continue  # 回到 Phase 2
-else:
-    raise BrainstormFailure("全局终审经过 3 次重试仍未通过")
+    else:
+        raise BrainstormFailure(f"全局终审经过 {max_global_retries} 次重试仍未通过")
+
+    # Step 4: 输出结果（仅在 Phase 3 通过后才执行）
 ```
 
 ---
@@ -168,15 +203,18 @@ else:
 
 ### 位置
 
-在 while 循环的 `break` 之后、`# 输出覆盖矩阵` 之前插入。
+将现有的 while 循环包裹在外层循环中（与修复 #2 模式一致）。
 
-### 当前代码（第 179-187 行附近）
+### 当前代码结构
 
 ```python
-        # 全部通过
+    max_iterations = 5
+    iteration = 0
+    while iteration < max_iterations:
+        # ... INVEST 校验 + FR↔Story 覆盖率校验 ...
         break
     else:
-        ...
+        return {"status": "failed", ...}
 
     # 输出覆盖矩阵
     print_coverage_matrix(all_fr_ids, stories)
@@ -185,48 +223,65 @@ else:
 ### 修改为
 
 ```python
-        # 全部通过
-        break
-    else:
-        ...
+    # ========== 外层循环：Phase 2 + Phase 3 ==========
+    max_global_retries = 3
+    for global_retry in range(max_global_retries):
+        print(f"🔄 全局校验轮次 {global_retry + 1}/{max_global_retries}")
 
-    # ========== Phase 3: 全局终审（新增）==========
-    final_review_issues = []
+        # ========== Phase 2: 逐项校验循环（现有逻辑）==========
+        max_iterations = 5
+        iteration = 0
+        phase2_passed = False
 
-    # 上游一致性：需求文档 FR 100% 覆盖？
-    # （Phase 2 已检查，这里再次确认修复后没有引入新遗漏）
-    all_fr_ids = extract_all_fr_ids(requirement_doc)
-    covered_frs = set()
-    for story in stories:
-        covered_frs.update(story["requirements"])
-    if all_fr_ids - covered_frs:
-        final_review_issues.append(f"上游一致性: {len(all_fr_ids - covered_frs)} 个 FR 未覆盖")
+        while iteration < max_iterations:
+            iteration += 1
+            # ... INVEST 校验 + FR↔Story 覆盖率校验（现有代码不变）...
+            phase2_passed = True
+            break
+        else:
+            return {"status": "failed", "reason": "Phase 2 max_iterations_exceeded"}
 
-    # 下游可行性：每个 Story 可拆为 Tickets？
-    for story in stories:
-        if not story.get("acceptance_criteria"):
-            final_review_issues.append(f"下游可行性: {story['id']} 缺少验收标准，无法拆 Tickets")
-        if estimate_days(story.get("estimate", "0d")) > 5:
-            final_review_issues.append(f"下游可行性: {story['id']} 估算超过 5 天")
+        if not phase2_passed:
+            continue
 
-    # 全局完整性：Stories 之间无重叠？
-    for i, s1 in enumerate(stories):
-        for s2 in stories[i+1:]:
-            overlap = set(s1["requirements"]) & set(s2["requirements"])
-            if overlap:
-                final_review_issues.append(f"全局完整性: {s1['id']} 和 {s2['id']} 覆盖了相同的 FR: {overlap}")
+        # ========== Phase 3: 全局终审 ==========
+        final_review_issues = []
 
-    if final_review_issues:
+        # 上游一致性：需求文档 FR 100% 覆盖？（再次确认）
+        all_fr_ids = extract_all_fr_ids(requirement_doc)
+        covered_frs = set()
+        for story in stories:
+            covered_frs.update(story["requirements"])
+        if all_fr_ids - covered_frs:
+            final_review_issues.append(f"上游一致性: {len(all_fr_ids - covered_frs)} 个 FR 未覆盖")
+
+        # 下游可行性：每个 Story 可拆为 Tickets？
+        for story in stories:
+            if not story.get("acceptance_criteria"):
+                final_review_issues.append(f"下游可行性: {story['id']} 缺少验收标准")
+            if estimate_days(story.get("estimate", "0d")) > 5:
+                final_review_issues.append(f"下游可行性: {story['id']} 估算超过 5 天")
+
+        # 全局完整性：Stories 之间无重叠？
+        for i, s1 in enumerate(stories):
+            for s2 in stories[i+1:]:
+                overlap = set(s1["requirements"]) & set(s2["requirements"])
+                if overlap:
+                    final_review_issues.append(f"全局完整性: {s1['id']} 和 {s2['id']} 覆盖相同 FR: {overlap}")
+
+        if not final_review_issues:
+            print("  全局终审: ✅ 通过")
+            break
+
         print(f"  全局终审: ❌ {len(final_review_issues)} 个问题")
         for issue in final_review_issues:
             print(f"    - {issue}")
         stories = fix_stories(stories, final_review_issues)
-        # 回到 Phase 2 重新校验（需要外层循环支持）
-        raise NeedRevalidation("全局终审未通过")
+        continue  # 回到 Phase 2
+    else:
+        return {"status": "failed", "reason": f"全局终审经过 {max_global_retries} 次重试仍未通过"}
 
-    print("  全局终审: ✅ 通过")
-
-    # 输出覆盖矩阵
+    # 输出覆盖矩阵（仅 Phase 3 通过后）
     print_coverage_matrix(all_fr_ids, stories)
 ```
 
@@ -236,70 +291,92 @@ else:
 
 ### 位置
 
-在 while 循环的 `break` 之后、`# 输出校验报告` 之前插入。
+将现有的 while 循环包裹在外层循环中（与修复 #2、#3 模式一致）。
 
-### 当前代码（第 287-296 行附近）
+### 当前代码结构
 
 ```python
-        # 全部通过
+    max_iterations = 5
+    iteration = 0
+    while iteration < max_iterations:
+        # ... 质量校验（6项）+ 覆盖率校验 ...
         break
     else:
-        ...
+        raise SplitFailure(...)
 
-    # ========== 输出校验报告 ==========
+    # 输出校验报告
     print_quality_report(tickets, iteration)
 ```
 
 ### 修改为
 
 ```python
-        # 全部通过
-        break
-    else:
-        ...
+    # ========== 外层循环：Phase 2 + Phase 3 ==========
+    max_global_retries = 3
+    for global_retry in range(max_global_retries):
+        print(f"🔄 全局校验轮次 {global_retry + 1}/{max_global_retries}")
 
-    # ========== Phase 3: 全局终审（新增）==========
-    final_review_issues = []
+        # ========== Phase 2: 逐项校验循环（现有逻辑）==========
+        max_iterations = 5
+        iteration = 0
+        phase2_passed = False
 
-    # 上游一致性：Story AC 100% 覆盖？（再次确认）
-    for ac in story.acceptance_criteria:
-        covered = any(ticket_covers_criteria(t, ac) for t in tickets)
-        if not covered:
-            final_review_issues.append(f"上游一致性: 验收标准未覆盖 '{ac}'")
+        while iteration < max_iterations:
+            iteration += 1
+            # ... 质量校验（6项）+ 覆盖率校验（现有代码不变）...
+            phase2_passed = True
+            break
+        else:
+            raise SplitFailure(f"Phase 2 经过 {max_iterations} 轮迭代仍未通过")
 
-    # 下游可行性：每个 Ticket 可独立执行？
-    for ticket in tickets:
-        deps = ticket.get("dependencies", [])
-        for dep in deps:
-            dep_ticket = find_ticket(tickets, dep)
-            if not dep_ticket:
-                final_review_issues.append(f"下游可行性: {ticket['id']} 依赖 {dep} 不存在")
+        if not phase2_passed:
+            continue
 
-    # 全局完整性：Tickets 依赖链完整无环？（再次确认）
-    if has_cycle(tickets):
-        final_review_issues.append("全局完整性: 依赖关系存在环")
+        # ========== Phase 3: 全局终审 ==========
+        final_review_issues = []
 
-    # 全局完整性：allowed_paths 无冲突？
-    for i, t1 in enumerate(tickets):
-        for t2 in tickets[i+1:]:
-            overlap = set(t1.get("allowed_paths", {}).get("modify", [])) & \
-                      set(t2.get("allowed_paths", {}).get("modify", []))
-            if overlap and t1["id"] not in t2.get("dependencies", []) and \
-               t2["id"] not in t1.get("dependencies", []):
-                final_review_issues.append(
-                    f"全局完整性: {t1['id']} 和 {t2['id']} 修改相同文件 {overlap} 但无依赖关系"
-                )
+        # 上游一致性：Story AC 100% 覆盖？（再次确认）
+        for ac in story.acceptance_criteria:
+            covered = any(ticket_covers_criteria(t, ac) for t in tickets)
+            if not covered:
+                final_review_issues.append(f"上游一致性: 验收标准未覆盖 '{ac}'")
 
-    if final_review_issues:
+        # 下游可行性：每个 Ticket 可独立执行？
+        for ticket in tickets:
+            deps = ticket.get("dependencies", [])
+            for dep in deps:
+                dep_ticket = find_ticket(tickets, dep)
+                if not dep_ticket:
+                    final_review_issues.append(f"下游可行性: {ticket['id']} 依赖 {dep} 不存在")
+
+        # 全局完整性：Tickets 依赖链完整无环？
+        if has_cycle(tickets):
+            final_review_issues.append("全局完整性: 依赖关系存在环")
+
+        # 全局完整性：allowed_paths 无冲突？
+        for i, t1 in enumerate(tickets):
+            for t2 in tickets[i+1:]:
+                overlap = set(t1.get("allowed_paths", {}).get("modify", [])) & \
+                          set(t2.get("allowed_paths", {}).get("modify", []))
+                if overlap and t1["id"] not in t2.get("dependencies", []) and \
+                   t2["id"] not in t1.get("dependencies", []):
+                    final_review_issues.append(
+                        f"全局完整性: {t1['id']} 和 {t2['id']} 修改相同文件但无依赖关系"
+                    )
+
+        if not final_review_issues:
+            print("  全局终审: ✅ 通过")
+            break
+
         print(f"  全局终审: ❌ {len(final_review_issues)} 个问题")
         for issue in final_review_issues:
             print(f"    - {issue}")
         tickets = fix_tickets(tickets, final_review_issues)
-        raise NeedRevalidation("全局终审未通过")
+        continue  # 回到 Phase 2
+    else:
+        raise SplitFailure(f"全局终审经过 {max_global_retries} 次重试仍未通过")
 
-    print("  全局终审: ✅ 通过")
-
-    # ========== 输出校验报告 ==========
+    # 输出校验报告（仅 Phase 3 通过后）
     print_quality_report(tickets, iteration)
 ```
 
@@ -327,43 +404,48 @@ else:
 ### 修改为
 
 ```python
-    # Step 4: 自我审查（根据 type 选择对应清单）
-    review_result = self_review(ticket, result.code)
-    if not review_result.passed:
-        fix_review_issues(review_result.issues)
+    # Step 4 + Step 4.5 包裹在重试循环中
+    max_review_retries = 2
+    for review_retry in range(max_review_retries + 1):
+        # Step 4: 自我审查
+        review_result = self_review(ticket, result.code)
+        if not review_result.passed:
+            fix_review_issues(review_result.issues)
 
-    # ========================================
-    # Step 4.5: 全局终审（新增，不可跳过）
-    # ========================================
-    final_review_issues = []
+        # Step 4.5: 全局终审
+        final_review_issues = []
 
-    # 上游一致性：Ticket AC 全满足？
-    for ac in ticket.acceptance_criteria:
-        if not is_criteria_met(ac, result.code):
-            final_review_issues.append(f"上游一致性: 验收标准未满足 '{ac}'")
+        # 上游一致性：Ticket AC 全满足？
+        for ac in ticket.acceptance_criteria:
+            if not is_criteria_met(ac, result.code):
+                final_review_issues.append(f"上游一致性: 验收标准未满足 '{ac}'")
 
-    # 下游可行性：不破坏其他 Ticket 的代码？
-    # 运行全量测试（不仅是当前 Ticket 的测试）
-    full_test = bash(config.commands.test)
-    if full_test.exit_code != 0:
-        final_review_issues.append(f"下游可行性: 全量测试失败，可能破坏了其他代码")
+        # 下游可行性：不破坏其他 Ticket 的代码？
+        full_test = bash(config.commands.test)
+        if full_test.exit_code != 0:
+            final_review_issues.append(f"下游可行性: 全量测试失败")
 
-    # 全局完整性：修改都在 allowed_paths 内？
-    changed_files = get_changed_files()
-    allowed = ticket.get("allowed_paths", {}).get("modify", [])
-    for f in changed_files:
-        if not matches_any_pattern(f, allowed):
-            final_review_issues.append(f"全局完整性: 修改了 allowed_paths 之外的文件 {f}")
+        # 全局完整性：修改都在 allowed_paths 内？
+        changed_files = get_changed_files()
+        allowed = ticket.get("allowed_paths", {}).get("modify", [])
+        for f in changed_files:
+            if not matches_any_pattern(f, allowed):
+                final_review_issues.append(f"全局完整性: 修改了 allowed_paths 之外的文件 {f}")
 
-    if final_review_issues:
-        print(f"  全局终审: ❌ {len(final_review_issues)} 个问题")
+        if not final_review_issues:
+            print("  全局终审: ✅ 通过")
+            break
+
+        print(f"  全局终审: ❌ {len(final_review_issues)} 个问题 (重试 {review_retry+1}/{max_review_retries+1})")
         for issue in final_review_issues:
             print(f"    - {issue}")
-        # 修复后需要重新执行自审和全局终审
         fix_final_review_issues(final_review_issues)
-        # 重新执行 Step 4 + Step 4.5（最多重试 2 次）
-
-    print("  全局终审: ✅ 通过")
+    else:
+        return {
+            "status": "final_review_failed",
+            "errors": final_review_issues,
+            "hint": "全局终审经过 3 次重试仍未通过"
+        }
 
     # ========================================
     # Step 5: 强制验证（不可跳过）
@@ -492,12 +574,27 @@ def verify(task):
 
         print("  校验结果: ✅ 全部通过")
 
-        # Phase 3: 全局终审
+        # Phase 3: 全局终审（具体检查逻辑见修复 #9）
         final_issues = []
+
         # 上游一致性：所有 Tickets 有证据？（再次确认）
-        # 下游可行性：和其他 Stories 集成无冲突？
+        for ticket_id in story.tickets:
+            ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+            if not ticket.get("verification_evidence"):
+                final_issues.append(f"上游一致性: {ticket_id} 缺少 verification_evidence")
+            elif ticket.verification_evidence.get("exit_code") != 0:
+                final_issues.append(f"上游一致性: {ticket_id} 验证失败")
+
+        # 下游可行性：和其他已完成 Stories 集成无冲突？
+        completed_stories = get_completed_stories(state)
+        for other_story in completed_stories:
+            if has_integration_conflict(story, other_story):
+                final_issues.append(f"下游可行性: 与 {other_story.id} 集成冲突")
+
         # 全局完整性：所有 AC 满足？
-        final_issues = global_final_review_verify(task, story)
+        for ac in story.acceptance_criteria:
+            if not is_ac_satisfied(ac, story.tickets):
+                final_issues.append(f"全局完整性: 验收标准未满足 '{ac}'")
 
         if final_issues:
             print(f"  全局终审: ❌ {len(final_issues)} 个问题")
@@ -545,18 +642,77 @@ def verify(task):
 
 ---
 
+## 修复 #9：verification/SKILL.md — Phase 3 全局终审（独立展开）
+
+### 说明
+
+修复 #7 的重写 verify 函数中已包含 Phase 3 的调用（`global_final_review_verify(task, story)`），此修复项展开该函数的具体实现。
+
+### 位置
+
+在 verification/SKILL.md 的 `执行伪代码` 部分，新增 `global_final_review_verify` 函数定义。
+
+### 新增代码
+
+```python
+def global_final_review_verify(task, story):
+    """Phase 3: 全局终审 — /verify 环节"""
+    issues = []
+
+    # 上游一致性：所有 Tickets 有 verification_evidence？（再次确认）
+    for ticket_id in story.tickets:
+        ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+        if not ticket.get("verification_evidence"):
+            issues.append(f"上游一致性: {ticket_id} 缺少 verification_evidence")
+        elif ticket.verification_evidence.get("exit_code") != 0:
+            issues.append(f"上游一致性: {ticket_id} 验证命令失败 (exit_code={ticket.verification_evidence.exit_code})")
+
+    # 下游可行性：和其他已完成 Stories 集成无冲突？
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+    completed_stories = [s for s in state.stories if get_story_status(s) == "completed" and s != story.id]
+    for other_id in completed_stories:
+        other_story = read_yaml(f"osg-spec-docs/tasks/stories/{other_id}.yaml")
+        # 检查是否有文件修改冲突
+        my_files = get_all_modified_files(story)
+        other_files = get_all_modified_files(other_story)
+        conflict_files = my_files & other_files
+        if conflict_files:
+            issues.append(f"下游可行性: 与 {other_id} 修改了相同文件 {conflict_files}")
+
+    # 全局完整性：所有 acceptance_criteria 满足？
+    for ac in story.acceptance_criteria:
+        ac_satisfied = False
+        for ticket_id in story.tickets:
+            ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+            if ticket.status == "done" and ticket_covers_criteria(ticket, ac):
+                ac_satisfied = True
+                break
+        if not ac_satisfied:
+            issues.append(f"全局完整性: 验收标准未满足 '{ac}'")
+
+    # 全局完整性：全量测试通过？
+    full_test = bash(config.commands.test)
+    if full_test.exit_code != 0:
+        issues.append("全局完整性: 全量测试失败")
+
+    return issues
+```
+
+---
+
 ## 实施顺序
 
 建议按以下顺序修改（先高优先级，后中优先级）：
 
 1. **修复 #7** — verification/SKILL.md 多轮迭代（最大变更，重写 verify 函数）
 2. **修复 #6** — verification/SKILL.md AC 覆盖率校验
-3. **修复 #8** — verification/SKILL.md 失败退出逻辑
-4. **修复 #1** — brainstorming/SKILL.md PRD 覆盖率校验
-5. **修复 #2** — brainstorming/SKILL.md Phase 3 全局终审
-6. **修复 #3** — story-splitter/SKILL.md Phase 3 全局终审
-7. **修复 #4** — ticket-splitter/SKILL.md Phase 3 全局终审
-8. **修复 #5** — deliver-ticket/SKILL.md Phase 3 全局终审
+3. **修复 #9** — verification/SKILL.md Phase 3 全局终审（展开具体逻辑）
+4. **修复 #8** — verification/SKILL.md 失败退出逻辑
+5. **修复 #1** — brainstorming/SKILL.md PRD 覆盖率校验
+6. **修复 #2** — brainstorming/SKILL.md Phase 3 全局终审（外层循环）
+7. **修复 #3** — story-splitter/SKILL.md Phase 3 全局终审（外层循环）
+8. **修复 #4** — ticket-splitter/SKILL.md Phase 3 全局终审（外层循环）
+9. **修复 #5** — deliver-ticket/SKILL.md Phase 3 全局终审（重试循环）
 
 ---
 
@@ -564,8 +720,23 @@ def verify(task):
 
 | 文件 | 修改量（估） | 风险 |
 |------|------------|------|
-| verification/SKILL.md | ~80 行新增/重写 | 中（重写核心函数） |
-| brainstorming/SKILL.md | ~50 行新增 | 低（追加代码块） |
-| story-splitter/SKILL.md | ~30 行新增 | 低（追加代码块） |
-| ticket-splitter/SKILL.md | ~35 行新增 | 低（追加代码块） |
-| deliver-ticket/SKILL.md | ~25 行新增 | 低（追加代码块） |
+| verification/SKILL.md | ~120 行新增/重写 | 中（重写核心函数 + Phase 3） |
+| brainstorming/SKILL.md | ~80 行新增 | 低（外层循环 + PRD 覆盖率） |
+| story-splitter/SKILL.md | ~50 行新增 | 低（外层循环） |
+| ticket-splitter/SKILL.md | ~55 行新增 | 低（外层循环） |
+| deliver-ticket/SKILL.md | ~40 行新增 | 低（重试循环） |
+
+## 统一模式总结
+
+所有 Phase 3 全局终审遵循相同的三维检查模式：
+
+| 维度 | 检查内容 | 适用环节 |
+|------|---------|---------|
+| **上游一致性** | 和上一环节的产物对齐？ | 全部 |
+| **下游可行性** | 下一环节能顺利执行？ | 全部 |
+| **全局完整性** | 有没有遗漏或冲突？ | 全部 |
+
+回退机制统一为：
+- **修复 #2~#4**（brainstorm/split-story/split-ticket）：外层 `for global_retry` 循环，Phase 3 失败 → `continue` 回到 Phase 2
+- **修复 #5**（deliver-ticket）：`for review_retry` 循环，Phase 3 失败 → 重新执行自审 + 全局终审
+- **修复 #7**（verify）：Phase 3 嵌入在 `for iteration` 循环内，失败 → `continue` 回到 4 维度校验

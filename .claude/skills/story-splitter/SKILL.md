@@ -80,23 +80,21 @@ updated_at: "2026-02-03T12:00:00Z"
     │ - 每个模块 1-3 个 Stories
     │
     ▼
-[INVEST 校验] ◄──────────┐
-    │                     │
-    ├── 不符合 ───────────┤
-    │   拆分/合并         │
-    │                     │
-    ▼ 符合                │
-[生成 Story YAML]         │
-    │                     │
-    ▼                     │
-[FR↔Story 覆盖率校验]     │
-    │ - 每个 FR 至少被 1 个 Story 覆盖
-    │ - 输出覆盖矩阵表
-    │ - 有遗漏则补充 Story 并重新校验
-    │                     │
-    ├── 有遗漏 ───────────┘
-    │
-    ▼ 全覆盖
+┌─ Phase 2: 领域专项校验（max 5 轮）──┐
+│ [INVEST 校验] ── 不符合？────────┐│
+│  ✅                                ││
+│ [FR↔Story 覆盖率] ─ 有遗漏？────┘│
+│  ✅                                 │
+└─────────────────────────────────────┘
+    │ ✅ 全部通过（或达到上限 → 失败退出）
+    ▼
+┌─ Phase 3: 增强全局终审（参见 quality-gate/SKILL.md）──┐
+│ 每轮 = 三维度终审 + 多维度旋转校验（A~I）             │
+│ 退出条件：连续两轮无修改                               │
+│ 上限：max 10 轮（达到上限 → 失败退出）                │
+└────────────────────────────────────────────────────────┘
+    │ ✅ 连续两轮无修改
+    ▼
 [更新 STATE.yaml]
 ```
 
@@ -135,7 +133,7 @@ def split_stories(requirement_doc):
             stories.append(story)
             story_number += 1
 
-    # ========== 校验循环 ==========
+    # ========== Phase 2: 领域专项校验 ==========
     max_iterations = 5
     iteration = 0
 
@@ -168,22 +166,89 @@ def split_stories(requirement_doc):
         uncovered = all_fr_ids - covered_frs
         if uncovered:
             print(f"  覆盖率校验: ❌ {len(uncovered)} 个 FR 未覆盖")
-            # 补充 Story 覆盖遗漏的 FR
             additional = create_stories_for_uncovered(uncovered, requirement_doc)
             stories.extend(additional)
             continue  # 回到 INVEST 校验
 
         print("  覆盖率校验: ✅ 100%")
-
-        # 全部通过
-        break
+        break  # Phase 2 通过
     else:
-        # 达到最大迭代次数仍未通过
-        print(f"❌ 达到最大迭代次数 ({max_iterations}/{max_iterations})")
+        print(f"❌ Phase 2 达到最大迭代次数 ({max_iterations}/{max_iterations})")
         print("请人工检查后重新执行 /split story")
-        return {"status": "failed", "reason": "max_iterations_exceeded"}
+        return {"status": "failed", "reason": "Phase 2 max_iterations_exceeded"}
 
-    # 输出覆盖矩阵
+    # ========== Phase 3: 增强全局终审 ==========
+    # 参见 quality-gate/SKILL.md 的 enhanced_global_review()
+    # 本环节维度优先级: A → G → H → C → B → D → F → E → I
+    # 本环节三维度检查:
+    #   上游一致性: 需求文档 FR 100% 覆盖？
+    #   下游可行性: 每个 Story 有 AC 且可拆为 Tickets？估算 ≤5 天？
+    #   全局完整性: Stories 之间无重叠？
+
+    dim_priority = ["A", "G", "H", "C", "B", "D", "F", "E", "I"]
+    max_enhanced_rounds = 10
+    no_change_rounds = 0
+    dim_index = 0
+    last_had_changes = False
+
+    for round_num in range(1, max_enhanced_rounds + 1):
+        all_issues = []
+
+        # --- 3a. 三维度终审（每轮都做） ---
+        # 上游一致性
+        all_fr_ids = extract_all_fr_ids(requirement_doc)
+        covered_frs = set()
+        for story in stories:
+            covered_frs.update(story["requirements"])
+        if all_fr_ids - covered_frs:
+            all_issues.append(f"上游一致性: {len(all_fr_ids - covered_frs)} 个 FR 未覆盖")
+
+        # 下游可行性
+        for story in stories:
+            if not story.get("acceptance_criteria"):
+                all_issues.append(f"下游可行性: {story['id']} 缺少验收标准")
+            if estimate_days(story.get("estimate", "0d")) > 5:
+                all_issues.append(f"下游可行性: {story['id']} 估算超过 5 天")
+
+        # 全局完整性
+        for i, s1 in enumerate(stories):
+            for s2 in stories[i+1:]:
+                overlap = set(s1["requirements"]) & set(s2["requirements"])
+                if overlap:
+                    all_issues.append(f"全局完整性: {s1['id']} 和 {s2['id']} 覆盖相同 FR: {overlap}")
+
+        # --- 3b. 多维度旋转校验（每轮选一个维度） ---
+        if last_had_changes:
+            dim = "H"  # 上轮有修改，优先检查交叉影响
+        else:
+            dim = dim_priority[dim_index % len(dim_priority)]
+            dim_index += 1
+
+        dim_issues = check_dimension(stories, dim, DIMENSION_MEANINGS["story"][dim])
+        all_issues += dim_issues
+
+        # --- 输出进度 ---
+        print(f"🔍 终审轮次 {round_num}/{max_enhanced_rounds} (维度 {dim})")
+
+        # --- 判断 ---
+        if all_issues:
+            print(f"  ❌ {len(all_issues)} 个问题")
+            for issue in all_issues:
+                print(f"    - {issue}")
+            stories = fix_stories(stories, all_issues)
+            no_change_rounds = 0
+            last_had_changes = True
+        else:
+            print(f"  ✅ 无问题")
+            no_change_rounds += 1
+            last_had_changes = False
+            if no_change_rounds >= 2:
+                print(f"🎉 连续 {no_change_rounds} 轮无修改，终审通过")
+                break
+    else:
+        return {"status": "failed", "reason": f"增强终审经过 {max_enhanced_rounds} 轮仍未通过，请人工介入"}
+
+    # 输出覆盖矩阵（仅 Phase 3 通过后）
     print_coverage_matrix(all_fr_ids, stories)
 
     # 保存 Story 文件（仅在全部校验通过后）
@@ -247,6 +312,9 @@ def split_stories(requirement_doc):
 - 每个 Story 必须有验收标准
 - Story 不能超过 5 天工作量
 - 必须关联需求 ID
-- **禁止超过 max_iterations（5 次）迭代** - 达到上限必须失败退出
-- **每次迭代必须输出进度** - 格式：`🔄 校验迭�� N/5`
+- **禁止超过 max_iterations（5 次）迭代** - Phase 2 达到上限必须失败退出
+- **禁止超过 max_enhanced_rounds（10 轮）增强终审** - Phase 3 达到上限必须失败退出
+- **连续两轮无修改才算通过** - 不是一轮无修改就通过
+- **上轮有修改 → 维度 H** - 任何修改后必须优先检查交叉影响
+- **每次迭代必须输出进度** - Phase 2：`🔄 校验迭代 N/5`，Phase 3：`� 终审轮次 N/10 (维度 X)`
 - **禁止在校验未全部通过时保存 Story 文件或更新 STATE.yaml**

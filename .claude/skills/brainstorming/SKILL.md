@@ -41,15 +41,26 @@ metadata:
   │ - 已有代码参考
   │
   ▼
-[生成初稿] ◄────────────────────┐
-  │                              │
-  ▼                              │
-[正向校验] ──── 有问题？──────────┤
-  │ ✅ 全部通过                  │ 补充需求
-  ▼                              │
-[反向校验] ──── 有问题？──────────┘
-  │ ✅ 全部通过
+[生成初稿]
   │
+  ▼
+┌─ Phase 2: 领域专项校验（max 10 轮）─┐
+│ [正向校验] ── 有问题？───┼── 补充 ──┐
+│  ✅                      │           │
+│ [反向校验] ── 有问题？───┼── 补充 ──┤
+│  ✅                      │           │
+│ [PRD覆盖率] ─ 有遗漏？───┼── 补充 ──┘
+│  ✅                      │
+└──────────────────────────┘
+  │ ✅ 全部通过（或达到上限 → 失败退出）
+  ▼
+┌─ Phase 3: 增强全局终审（参见 quality-gate/SKILL.md）──┐
+│ 每轮 = 三维度终审 + 多维度旋转校验（A~I）             │
+│ 上轮有修改 → 维度 H；无修改 → 按优先级轮换            │
+│ 退出条件：连续两轮无修改                               │
+│ 上限：max 10 轮（达到上限 → 失败退出）                │
+└────────────────────────────────────────────────────────┘
+  │ ✅ 连续两轮无修改
   ▼
 [输出结果]
 ```
@@ -74,6 +85,12 @@ metadata:
 | 代码必要 | 需求都需要开发吗？ | 是 | 有冗余 |
 | 重复检查 | 有重复的需求吗？ | 没有 | 有 |
 | 可复用性 | 有可复用的模块吗？ | 已标注 | 未考虑 |
+
+## PRD 覆盖率校验
+
+| 检查项 | 检查问题 | 通过条件 | 不通过条件 |
+|--------|----------|----------|------------|
+| PRD 功能点覆盖 | PRD 中的每个功能点是否都有对应需求？ | 100% 覆盖 | 有遗漏功能点 |
 
 ## UI 模块专项校验（当模块涉及 UI 还原时）
 
@@ -124,7 +141,7 @@ def brainstorming(user_input):
     # Step 2: 生成初稿
     requirement_doc = generate_requirement(context)
     
-    # Step 3: 循环校验
+    # ========== Phase 2: 领域专项校验 ==========
     max_iterations = 10
     iteration = 0
 
@@ -132,47 +149,113 @@ def brainstorming(user_input):
         iteration += 1
         print(f"🔄 校验迭代 {iteration}/{max_iterations}")
 
-        # 正向校验
+        # 正向校验（5 项）
         forward_issues = []
         for check in FORWARD_CHECKS:
             result = check.execute(requirement_doc)
             if not result.passed:
                 forward_issues.append(result.issue)
-
         if forward_issues:
             print(f"  正向校验: ❌ {len(forward_issues)} 个问题")
             requirement_doc = enhance_doc(requirement_doc, forward_issues)
-            continue  # 重新校验
+            continue
 
         print("  正向校验: ✅ 5/5 通过")
 
-        # 反向校验
+        # 反向校验（6 项）
         backward_issues = []
         for check in BACKWARD_CHECKS:
             result = check.execute(requirement_doc)
             if not result.passed:
                 backward_issues.append(result.issue)
-
         if backward_issues:
             print(f"  反向校验: ❌ {len(backward_issues)} 个问题")
             requirement_doc = enhance_doc(requirement_doc, backward_issues)
-            continue  # 重新正向校验
+            continue
 
         print("  反向校验: ✅ 6/6 通过")
 
-        # 全部通过
-        break
-    else:
-        # 达到最大迭代次数仍未通过校验 — 强制失败退出
-        remaining_issues = forward_issues + backward_issues
-        output_failure_report(iteration, remaining_issues)
-        # 不更新 workflow — 保持当前步骤，便于人工介入
-        raise BrainstormFailure(
-            f"经过 {max_iterations} 轮迭代仍有 {len(remaining_issues)} 项校验未通过，"
-            "请人工检查需求文档或补充输入信息后重新执行 /brainstorm"
-        )
+        # PRD 覆盖率校验
+        prd_features = extract_prd_features(context["source_docs"])
+        req_features = extract_requirement_features(requirement_doc)
+        uncovered_prd = prd_features - req_features
+        if uncovered_prd:
+            print(f"  PRD 覆盖率: ❌ {len(uncovered_prd)} 个功能点未覆盖")
+            requirement_doc = enhance_doc(requirement_doc, [f"PRD 未覆盖: {f}" for f in uncovered_prd])
+            continue
 
-    # Step 4: 输出结果（仅在全部校验通过后才执行）
+        print(f"  PRD 覆盖率: ✅ {len(prd_features)}/{len(prd_features)} = 100%")
+        break  # Phase 2 通过
+    else:
+        return {"status": "failed", "reason": f"Phase 2 经过 {max_iterations} 轮迭代仍未通过"}
+
+    # ========== Phase 3: 增强全局终审 ==========
+    # 参见 quality-gate/SKILL.md 的 enhanced_global_review()
+    # 本环节维度优先级: B → C → E → H → A → D → G → F → I
+    # 本环节三维度检查:
+    #   上游一致性: PRD 功能点 100% 覆盖？
+    #   下游可行性: 每个 REQ 可拆分为 Story？
+    #   全局完整性: REQ 之间无矛盾？
+
+    dim_priority = ["B", "C", "E", "H", "A", "D", "G", "F", "I"]
+    max_enhanced_rounds = 10
+    no_change_rounds = 0
+    dim_index = 0
+    last_had_changes = False
+
+    for round_num in range(1, max_enhanced_rounds + 1):
+        all_issues = []
+
+        # --- 3a. 三维度终审（每轮都做） ---
+        # 上游一致性
+        prd_features = extract_prd_features(context["source_docs"])
+        req_features = extract_requirement_features(requirement_doc)
+        if prd_features - req_features:
+            all_issues.append("上游一致性: PRD 功能点未 100% 覆盖")
+
+        # 下游可行性
+        for req in requirement_doc.requirements:
+            if not is_splittable_to_story(req):
+                all_issues.append(f"下游可行性: {req.id} 无法拆分为 Story")
+
+        # 全局完整性
+        contradictions = find_contradictions(requirement_doc.requirements)
+        if contradictions:
+            for c in contradictions:
+                all_issues.append(f"全局完整性: 需求矛盾 {c}")
+
+        # --- 3b. 多维度旋转校验（每轮选一个维度） ---
+        if last_had_changes:
+            dim = "H"  # 上轮有修改，优先检查交叉影响
+        else:
+            dim = dim_priority[dim_index % len(dim_priority)]
+            dim_index += 1
+
+        dim_issues = check_dimension(requirement_doc, dim, DIMENSION_MEANINGS["brainstorm"][dim])
+        all_issues += dim_issues
+
+        # --- 输出进度 ---
+        print(f"🔍 终审轮次 {round_num}/{max_enhanced_rounds} (维度 {dim})")
+
+        # --- 判断 ---
+        if all_issues:
+            print(f"  ❌ {len(all_issues)} 个问题")
+            for issue in all_issues:
+                print(f"    - {issue}")
+            requirement_doc = enhance_doc(requirement_doc, all_issues)
+            no_change_rounds = 0
+            last_had_changes = True
+        else:
+            print(f"  ✅ 无问题")
+            no_change_rounds += 1
+            last_had_changes = False
+            if no_change_rounds >= 2:
+                print(f"🎉 连续 {no_change_rounds} 轮无修改，终审通过")
+                break
+    else:
+        return {"status": "failed", "reason": f"增强终审经过 {max_enhanced_rounds} 轮仍未通过，请人工介入"}
+
+    # Step 4: 输出结果（仅在 Phase 3 通过后才执行）
     # 更新 workflow 状态
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.workflow.current_step = "brainstorm_done"
@@ -185,8 +268,14 @@ def brainstorming(user_input):
 ## 失败退出规则
 
 ```
-⚠️ 当 max_iterations（默认 10）次迭代后仍有校验项未通过：
+⚠️ Phase 2 失败：当 max_iterations（默认 10）次迭代后仍有校验项未通过：
 1. 输出失败报告（列出所有未通过的校验项和具体问题）
+2. 不更新 workflow.current_step — 保持在执行前的状态
+3. 停止自动继续 — 提示用户人工介入
+4. 用户可以补充信息后重新执行 /brainstorm
+
+⚠️ Phase 3 失败：当增强终审经过 max_enhanced_rounds（默认 10）轮后仍有问题：
+1. 输出失败报告（列出最后一轮的所有未通过项，包括三维度终审和多维度旋转校验）
 2. 不更新 workflow.current_step — 保持在执行前的状态
 3. 停止自动继续 — 提示用户人工介入
 4. 用户可以补充信息后重新执行 /brainstorm
@@ -201,6 +290,7 @@ def brainstorming(user_input):
 - 总轮次: {iteration}
 - 正向校验: ✅ 全部通过
 - 反向校验: ✅ 全部通过
+- PRD 覆盖率: ✅ 全部覆盖
 
 ### 需求规格
 
@@ -228,8 +318,11 @@ def brainstorming(user_input):
 - 禁止在校验未全部通过时输出
 - 禁止停下来等待用户确认
 - 必须循环直到全部 ✅
-- **禁止超过 max_iterations（10 次）迭代** - 达到上限必须失败退出
-- **每次迭代必须输出进度** - 格式：`🔄 校验迭代 N/10`
+- **禁止超过 max_iterations（10 次）迭代** - Phase 2 达到上限必须失败退出
+- **禁止超过 max_enhanced_rounds（10 轮）增强终审** - Phase 3 达到上限必须失败退出
+- **连续两轮无修改才算通过** - 不是一轮无修改就通过
+- **上轮有修改 → 维度 H** - 任何修改后必须优先检查交叉影响
+- **每次迭代必须输出进度** - Phase 2：`🔄 校验迭代 N/10`，Phase 3：`� 终审轮次 N/10 (维度 X)`
 
 ---
 
@@ -238,11 +331,31 @@ def brainstorming(user_input):
 **每次校验循环开始时，必须输出迭代进度：**
 
 ```
+=== Phase 2: 领域专项校验 ===
 🔄 校验迭代 1/10
   - 正向校验: 检查中...
   - 反向校验: 检查中...
+  - PRD 覆盖率: 检查中...
 
 🔄 校验迭代 2/10 (上轮发现 2 个问题，已补充)
   - 正向校验: ✅ 5/5 通过
-  - 反向校验: 检查中...
+  - 反向校验: ✅ 6/6 通过
+  - PRD 覆盖率: ✅ 100%
+
+=== Phase 3: 增强全局终审 ===
+🔍 终审轮次 1/10 (维度 B — 边界场景)
+  三维度终审: ✅ 3/3
+  多维度校验 (B): ❌ 2 个问题
+    - 缺少空列表场景
+    - 缺少超大输入校验
+
+🔍 终审轮次 2/10 (维度 H — 交叉影响)
+  三维度终审: ✅ 3/3
+  多维度校验 (H): ✅ 无问题
+
+🔍 终审轮次 3/10 (维度 C — 数据流)
+  三维度终审: ✅ 3/3
+  多维度校验 (C): ✅ 无问题
+
+🎉 连续 2 轮无修改，终审通过
 ```

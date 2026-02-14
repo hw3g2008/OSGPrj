@@ -1,6 +1,6 @@
 ---
 name: verification
-description: "Use when validating any output - ensures all claims are backed by evidence"
+description: "Use when verifying a Story - runs full tests, checks AC coverage, validates code coverage thresholds, and performs global final review"
 metadata:
   invoked-by: "agent"
   auto-execute: "true"
@@ -10,7 +10,7 @@ metadata:
 
 ## 概览
 
-验证技能，确保所有声明都有证据支撑。
+Story 级别统一验收引擎。定义 `verify_story()` 函数，被 I 阶段（WS 自动验收）、手动 `/verify`、V 阶段（CC 二次校验）共用。核心价值：全量测试发现跨 Ticket 回归。
 
 ## ⚠️ 铁律
 
@@ -74,23 +74,18 @@ def can_claim_done(task):
     return True, "可以声明完成"
 ```
 
-## 校验维度矩阵
+## Story 验收检查项
 
-| 维度 | 检查项 | 检查方法 |
-|------|--------|----------|
-| **结构层** | 编号连续 | 逐个计数，N 开始到 N+k |
-| | 导航完整 | 所有链接可点击 |
-| | 目录匹配 | 目录结构与文件对应 |
-| **格式层** | ID 格式 | 正则：`[A-Z]+-\d{3}` |
-| | 时间格式 | ISO 8601 UTC |
-| | 路径格式 | 相对路径，存在性检查 |
-| | 代码块 | 开闭标签匹配 |
-| **语义层** | 技术版本 | 与 config.yaml 一致 |
-| | 配置值 | 与实际配置一致 |
-| | 业务术语 | 使用项目定义的术语 |
-| **逻辑层** | 流程完整 | 有明确的开始和结束 |
-| | 依赖正确 | 依赖项存在且正确 |
-| | 边界处理 | 错误/异常场景覆盖 |
+| 阶段 | 检查项 | 检查方法 | 通过条件 |
+|------|--------|----------|----------|
+| **Phase 1 前置检查** | Ticket 状态 | 读取 YAML status 字段 | 所有 Tickets status=done |
+| | 验证证据 | 检查 verification_evidence 字段 | 所有 Tickets 有证据且 exit_code=0 |
+| **Phase 2 功能验收** | 全量测试 🔴 | 执行 mvn test / pnpm test | exit_code=0 |
+| | AC 覆盖率 | 逐条检查 Story AC | 每个 AC 被至少 1 个已完成 Ticket 覆盖 |
+| | 覆盖率汇总 | 解析 JaCoCo/Vitest 报告 | 达到 config 中定义的门槛 |
+| **Phase 3 增强全局终审** | 三维度终审 | 上游一致性+下游可行性+全局完整性 | 全部通过 |
+| | 多维度旋转校验 | A~I 维度按优先级轮换（参见 quality-gate） | 连续两轮无修改 |
+| | 退出条件 | 连续 2 轮无修改，或达到 max 10 轮 | 连续 2 轮无修改 |
 
 ## 常见失败对照表
 
@@ -119,130 +114,348 @@ def can_claim_done(task):
 
 ---
 
-## 🚨 Story 验收前置检查（不可跳过）
+## 🚨 调用场景
 
-**在执行 `/verify S-xxx` 时，必须先检查所有 Tickets 的验证证据：**
+本 Skill 定义的 `verify_story()` 是统一验收引擎，被以下场景调用：
 
-```python
-def pre_verify_check(story_id):
-    story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
-    missing_evidence = []
+| 调用者 | 触发时机 | 说明 |
+|--------|---------|------|
+| **deliver-ticket** (I阶段) | 所有 Tickets 完成后自动调用 | WS 主力执行，首次验收 |
+| **/verify** (手动重试) | 验收失败后用户手动触发 | 修复问题后重新验收 |
+| **/cc-review** (V阶段，可选) | I阶段验收通过后用户选择执行 | CC 执行相同逻辑，二次校验防止自我欺骗 |
 
-    for ticket_id in story.tickets:
-        ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
-
-        # 检查 1: verification_evidence 字段必须存在
-        if "verification_evidence" not in ticket:
-            missing_evidence.append(f"{ticket_id}: 缺少 verification_evidence 字段")
-            continue
-
-        # 检查 2: exit_code 必须为 0
-        if ticket.verification_evidence.get("exit_code") != 0:
-            missing_evidence.append(f"{ticket_id}: 验证失败 (exit_code={ticket.verification_evidence.exit_code})")
-
-    if missing_evidence:
-        print("❌ 无法验收，以下 Tickets 缺少验证证据：")
-        for msg in missing_evidence:
-            print(f"  - {msg}")
-        print("\n请先为这些 Tickets 补充验证证据（执行验证命令并记录结果）")
-        return False
-
-    return True
-```
-
-**如果前置检查失败：**
-1. 停止验收流程
-2. 输出缺少证据的 Tickets 列表
-3. 提示用户补充证据（重新执行验证命令）
-4. 不更新 workflow 状态
+> **纯函数设计**：`verify_story()` 只做验收判断，返回 passed/failed，**不更新 STATE.yaml**。状态更新由调用方负责。
 
 ## 执行伪代码
 
 ```python
-def verify(task):
-    issues = []
+def verify_story(story_id):
+    """统一验收引擎 — I阶段(WS)和V阶段(CC)共用"""
 
-    # 0. 前置检查：验证证据必须存在
-    if task.type == "story":
-        # Story 验收：检查所有 Tickets 的证据
-        for ticket_id in task.tickets:
+    story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
+    config = read_yaml(".claude/project/config.yaml")
+
+    # ============================================
+    # Phase 1: 前置检查（不可跳过，不在循环内）
+    # ============================================
+    pre_issues = []
+
+    for ticket_id in story.tickets:
+        ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+
+        # 1.1 Ticket 状态必须为 done
+        if ticket.status != "done":
+            pre_issues.append(f"{ticket_id}: 状态为 {ticket.status}，非 done")
+
+        # 1.2 必须有 verification_evidence
+        if not ticket.get("verification_evidence"):
+            pre_issues.append(f"{ticket_id}: 缺少 verification_evidence")
+            continue
+
+        # 1.3 exit_code 必须为 0
+        if ticket.verification_evidence.get("exit_code") != 0:
+            pre_issues.append(
+                f"{ticket_id}: exit_code={ticket.verification_evidence.exit_code}")
+
+    if pre_issues:
+        print("Phase 1 前置检查: ❌ 失败")
+        for issue in pre_issues:
+            print(f"  - {issue}")
+        return {
+            "passed": False,
+            "phase": "pre_check",
+            "issues": pre_issues,
+            "reason": "前置检查失败，无法进入验收"
+        }
+
+    print("Phase 1 前置检查: ✅ 通过")
+
+    # ============================================
+    # Phase 2: 功能验收（独立循环）
+    # ============================================
+    max_iterations = 5
+
+    for iteration in range(1, max_iterations + 1):
+        print(f"🔄 验收迭代 {iteration}/{max_iterations}")
+        issues = []
+
+        # ------------------------------------------
+        # 2.1 🔴 全量测试 + 覆盖率（合并执行，避免重复跑测试）
+        # ------------------------------------------
+        # 后端：mvn test jacoco:report（一次执行同时完成测试和覆盖率报告）
+        if has_backend_tickets(story):
+            backend_result = bash(config.commands.test_coverage)  # mvn test jacoco:report
+            if backend_result.exit_code != 0:
+                issues.append(("full_test", "backend",
+                    f"后端全量测试失败: {extract_failure_summary(backend_result)}"))
+            else:
+                # 测试通过，检查覆盖率
+                coverage = parse_jacoco_report(config.commands.coverage_report)
+                thresholds = get_coverage_thresholds("backend")  # {branch: 100, line: 90}
+                if coverage["branch"]["percentage"] < thresholds["branch"]:
+                    issues.append(("coverage", "backend_branch",
+                        f"后端分支覆盖率 {coverage['branch']['percentage']}% < {thresholds['branch']}%"))
+                if coverage["line"]["percentage"] < thresholds["line"]:
+                    issues.append(("coverage", "backend_line",
+                        f"后端行覆盖率 {coverage['line']['percentage']}% < {thresholds['line']}%"))
+
+        # 前端：pnpm test:coverage（一次执行同时完成测试和覆盖率报告）
+        if has_frontend_tickets(story):
+            frontend_result = bash(config.commands.frontend.test_coverage)  # pnpm test:coverage
+            if frontend_result.exit_code != 0:
+                issues.append(("full_test", "frontend",
+                    f"前端全量测试失败: {extract_failure_summary(frontend_result)}"))
+            else:
+                # 测试通过，检查覆盖率
+                coverage = parse_vitest_report(config.commands.frontend.coverage_report)
+                thresholds = get_coverage_thresholds("frontend")  # {branch: 90, line: 80}
+                if coverage["branch"]["percentage"] < thresholds["branch"]:
+                    issues.append(("coverage", "frontend_branch",
+                        f"前端分支覆盖率 {coverage['branch']['percentage']}% < {thresholds['branch']}%"))
+                if coverage["line"]["percentage"] < thresholds["line"]:
+                    issues.append(("coverage", "frontend_line",
+                        f"前端行覆盖率 {coverage['line']['percentage']}% < {thresholds['line']}%"))
+
+        # ------------------------------------------
+        # 2.2 Story AC 覆盖率检查
+        # ------------------------------------------
+        for ac in story.acceptance_criteria:
+            ac_covered = False
+            for ticket_id in story.tickets:
+                ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+                if ticket.status == "done" and ticket_covers_criteria(ticket, ac):
+                    ac_covered = True
+                    break
+            if not ac_covered:
+                issues.append(("ac_coverage", ac,
+                    f"验收标准未被任何已完成 Ticket 覆盖: '{ac}'"))
+
+        # ------------------------------------------
+        # 2.3 判断 Phase 2 结果
+        # ------------------------------------------
+        if issues:
+            print(f"  Phase 2 功能验收: ❌ {len(issues)} 个问题")
+            for category, name, desc in issues:
+                print(f"    [{category}] {name}: {desc}")
+            fix_verification_issues(story, issues)
+            continue  # 回到迭代开头
+
+        print("  Phase 2 功能验收: ✅ 全部通过")
+        break  # Phase 2 通过
+    else:
+        print(f"❌ Phase 2 达到最大迭代次数 ({max_iterations}/{max_iterations})")
+        print("验收失败，请人工检查后重新执行 /verify")
+        return {
+            "passed": False,
+            "phase": "phase2_max_iterations",
+            "issues": issues,
+            "reason": f"Phase 2 经过 {max_iterations} 轮迭代仍未通过"
+        }
+
+    # ============================================
+    # Phase 3: 增强全局终审（独立循环）
+    # ============================================
+    # 参见 quality-gate/SKILL.md 的 enhanced_global_review()
+    # 本环节维度优先级: I → H → C → D → B → E → G → A → F
+    # 本环节三维度检查:
+    #   上游一致性: 所有 Tickets 证据有效？
+    #   下游可行性: 与其他已完成 Stories 无文件冲突？
+    #   全局完整性: 所有 AC 满足？
+
+    dim_priority = ["I", "H", "C", "D", "B", "E", "G", "A", "F"]
+    max_enhanced_rounds = 10
+    no_change_rounds = 0
+    dim_index = 0
+    last_had_changes = False
+
+    for round_num in range(1, max_enhanced_rounds + 1):
+        all_issues = []
+
+        # --- 3a. 三维度终审（每轮都做） ---
+        # 上游一致性：所有 Tickets 证据仍然有效？
+        for ticket_id in story.tickets:
             ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
             if not ticket.get("verification_evidence"):
-                issues.append(("evidence", ticket_id, "缺少 verification_evidence 字段"))
+                all_issues.append(f"上游一致性: {ticket_id} 缺少证据")
             elif ticket.verification_evidence.get("exit_code") != 0:
-                issues.append(("evidence", ticket_id, f"验证命令失败: exit_code={ticket.verification_evidence.exit_code}"))
+                all_issues.append(f"上游一致性: {ticket_id} 验证失败")
 
-        if issues:
-            return {"passed": False, "issues": issues, "reason": "Tickets 缺少验证证据，无法验收"}
+        # 下游可行性：与其他已完成 Stories 集成无冲突？
+        state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+        completed_stories = [s for s in state.get("completed_stories", [])
+                             if s != story_id]
+        for other_id in completed_stories:
+            other = read_yaml(f"osg-spec-docs/tasks/stories/{other_id}.yaml")
+            my_files = get_all_modified_files(story)
+            other_files = get_all_modified_files(other)
+            conflict = my_files & other_files
+            if conflict:
+                all_issues.append(
+                    f"下游可行性: 与 {other_id} 修改了相同文件 {conflict}")
 
-    # 结构层校验
-    for check in STRUCTURE_CHECKS:
-        result = check.execute(task)
-        if not result.passed:
-            issues.append(("structure", check.name, result.issue))
+        # 全局完整性：所有 AC 满足？（再次确认）
+        for ac in story.acceptance_criteria:
+            if not any(
+                ticket_covers_criteria(
+                    read_yaml(f"osg-spec-docs/tasks/tickets/{tid}.yaml"), ac
+                ) for tid in story.tickets
+            ):
+                all_issues.append(f"全局完整性: AC 未满足 '{ac}'")
 
-    # 格式层校验
-    for check in FORMAT_CHECKS:
-        result = check.execute(task)
-        if not result.passed:
-            issues.append(("format", check.name, result.issue))
+        # --- 3b. 多维度旋转校验（每轮选一个维度） ---
+        if last_had_changes:
+            dim = "H"  # 上轮有修改，优先检查交叉影响
+        else:
+            dim = dim_priority[dim_index % len(dim_priority)]
+            dim_index += 1
 
-    # 语义层校验
-    for check in SEMANTIC_CHECKS:
-        result = check.execute(task)
-        if not result.passed:
-            issues.append(("semantic", check.name, result.issue))
+        dim_issues = check_dimension(story, dim, DIMENSION_MEANINGS["verification"][dim])
+        all_issues += dim_issues
 
-    # 逻辑层校验
-    for check in LOGIC_CHECKS:
-        result = check.execute(task)
-        if not result.passed:
-            issues.append(("logic", check.name, result.issue))
+        # --- 输出进度 ---
+        print(f"🔍 终审轮次 {round_num}/{max_enhanced_rounds} (维度 {dim})")
 
-    if issues:
-        return {"passed": False, "issues": issues}
+        # --- 判断 ---
+        if all_issues:
+            print(f"  ❌ {len(all_issues)} 个问题")
+            for issue in all_issues:
+                print(f"    - {issue}")
+            fix_verification_issues(story, all_issues)
+            no_change_rounds = 0
+            last_had_changes = True
+        else:
+            print(f"  ✅ 无问题")
+            no_change_rounds += 1
+            last_had_changes = False
+            if no_change_rounds >= 2:
+                print(f"🎉 连续 {no_change_rounds} 轮无修改，终审通过")
+                break
+    else:
+        print(f"❌ Phase 3 增强终审经过 {max_enhanced_rounds} 轮仍未通过")
+        print("验收失败，请人工检查后重新执行 /verify")
+        return {
+            "passed": False,
+            "phase": "phase3_enhanced_review",
+            "issues": all_issues,
+            "reason": f"增强终审经过 {max_enhanced_rounds} 轮仍未通过"
+        }
 
-    # 验收通过 — 更新 workflow 触发审批
-    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
-    state.workflow.current_step = "story_done"
-    state.workflow.next_step = "approve_story"
-    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+    # ============================================
+    # 验收通过 — 返回结果（不更新 STATE，由调用方负责）
+    # ============================================
+    return {
+        "passed": True,
+        "full_test_result": "all_passed",
+        "ac_coverage": "100%"
+    }
 
-    return {"passed": True}
+
+def has_backend_tickets(story):
+    """检查 Story 是否包含后端类型的 Tickets"""
+    for ticket_id in story.tickets:
+        ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+        if ticket.type in ("backend", "database", "test"):
+            return True
+    return False
+
+
+def has_frontend_tickets(story):
+    """检查 Story 是否包含前端类型的 Tickets"""
+    for ticket_id in story.tickets:
+        ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
+        if ticket.type in ("frontend", "frontend-ui"):
+            return True
+    return False
 ```
 
 ## 输出格式
 
+### Story 验收通过
+
 ```markdown
-## 🔍 验证结果
+## ✅ Story 验收报告
 
-### 校验维度
-| 维度 | 结果 | 详情 |
-|------|------|------|
-| 结构层 | ✅ | 3/3 通过 |
-| 格式层 | ✅ | 4/4 通过 |
-| 语义层 | ✅ | 3/3 通过 |
-| 逻辑层 | ✅ | 4/4 通过 |
+**Story**: {story_id} - {story_title}
+**验收迭代**: {iteration} 轮
 
-### 证据
-{根据 Ticket type 不同，展示对应的验证证据}
+### Phase 1: 前置检查
+- Tickets 状态: ✅ 全部 done ({ticket_count}/{ticket_count})
+- 验证证据: ✅ 全部有效
 
-#### 后端/数据库 Ticket:
-- 测试命令: `{config.commands.test}`
-- 退出码: 0
-- 测试数量: 15 passed, 0 failed
+### Phase 2: 功能验收
 
-#### 前端/UI 还原 Ticket:
-- Lint 命令: `{config.commands.frontend.lint}` → 退出码: 0
-- Build 命令: `{config.commands.frontend.build}` → 退出码: 0
+#### 全量测试 🔴
+- 后端: `mvn test` → exit_code=0, Tests: {n} passed, 0 failed
+- 前端: `pnpm test` → exit_code=0, Tests: {n} passed, 0 failed
 
-### 结论
-✅ 验证通过，可以声明完成
+#### AC 覆盖率
+| # | 验收标准 | 覆盖 Ticket | 状态 |
+|---|----------|------------|------|
+| 1 | {ac_1} | T-001, T-002 | ✅ |
+| 2 | {ac_2} | T-003 | ✅ |
+覆盖率: {n}/{n} = 100% ✅
+
+#### 覆盖率汇总
+| 类型 | 分支覆盖 | 行覆盖 | 门槛 | 状态 |
+|------|---------|--------|------|------|
+| 后端 | 100% | 92% | 100%/90% | ✅ |
+| 前端 | 93% | 85% | 90%/80% | ✅ |
+
+### Phase 3: 全局终审
+- 上游一致性: ✅
+- 下游可行性: ✅
+- 全局完整性: ✅
+
+### ⏭️ 下一步
+- `/cc-review` — CC 交叉验证（二次校验）
+- `/approve` — 跳过 CC，直接审批
+```
+
+### Story 验收失败
+
+```markdown
+## ❌ Story 验收报告
+
+**Story**: {story_id} - {story_title}
+**验收迭代**: {iteration}/{max_iterations} 轮
+**失败阶段**: Phase {n}
+
+### 未通过项
+| # | 类别 | 问题 |
+|---|------|------|
+| 1 | full_test | 后端全量测试失败: XxxTest.testYyy |
+| 2 | ac_coverage | 验收标准未覆盖: '...' |
+
+### ⏭️ 下一步
+修复以上问题后执行 `/verify` 重新验收
+```
+
+## 失败退出规则
+
+```
+⚠️ Phase 2 失败：当 max_iterations（默认 5）次迭代后仍有校验项未通过：
+1. 输出失败报告（列出所有未通过的校验项和具体问题）
+2. 返回 {"passed": False, ...} — 不更新任何状态（纯函数）
+3. 调用方负责状态处理
+4. 用户可以修复后重新执行 /verify
+
+⚠️ Phase 3 失败：当增强终审经过 max_enhanced_rounds（默认 10）轮后仍有问题：
+1. 输出失败报告（列出最后一轮的所有未通过项，包括三维度终审和多维度旋转校验）
+2. 返回 {"passed": False, ...} — 不更新任何状态（纯函数）
+3. 调用方负责状态处理
+4. 用户可以修复后重新执行 /verify
 ```
 
 ## 硬约束
 
-- 禁止跳过任何校验维度
-- 禁止没有证据就声明完成
+- 禁止跳过任何验收阶段（Phase 1/2/3）
+- 禁止没有全量测试通过就声明验收
+- 禁止 AC 覆盖率不是 100% 就声明验收
 - 禁止用假设替代验证
+- 禁止伪造测试结果或覆盖率数据
 - 必须记录验证过程
+- **全量测试是重中之重** — Phase 2 的核心价值在于发现跨 Ticket 回归
+- **禁止超过 max_iterations（5 次）迭代** - Phase 2 达到上限必须失败退出
+- **禁止超过 max_enhanced_rounds（10 轮）增强终审** - Phase 3 达到上限必须失败退出
+- **连续两轮无修改才算通过** - 不是一轮无修改就通过
+- **上轮有修改 → 维度 H** - 任何修改后必须优先检查交叉影响

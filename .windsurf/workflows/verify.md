@@ -1,39 +1,39 @@
 ---
-description: 验收当前 Story - 检查所有 Tickets 完成情况和集成质量
+description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
 ---
 
-# 验收 Story
+# 手动重试 Story 验收
 
-## 前置条件
+## 使用场景
 
-- 当前 Story 的所有 Tickets 状态为 `done`
+- `workflow.current_step = verification_failed`
+- 已修复验收失败的问题，需要手动重试
 
 ## 执行步骤
 
-1. **读取 Story 和 Tickets**
-   - 读取 `osg-spec-docs/tasks/STATE.yaml` 获取 `current_story`
-   - 读取 Story 定义和所有关联 Tickets
+1. **读取状态与目标 Story**
+   - 读取 `osg-spec-docs/tasks/STATE.yaml`
+   - 获取 `current_story`
 
-2. **执行验收检查**
-   - 调用 verification skill
-   - 检查项：
-     - 所有 acceptance_criteria 是否满足
-     - Tickets 之间的集成是否正确
-     - 代码质量（无明显 bug、安全问题）
-     - 测试覆盖率是否达标
+2. **调用统一验收引擎**
+   - 调用 verification skill 的 `verify_story(story_id)`
+   - 验收逻辑包含：
+     - Phase 1：前置检查（Tickets done + evidence + exit_code=0）
+     - Phase 2：功能验收（全量测试 + AC 覆盖率 + 覆盖率门槛）
+     - Phase 3：增强全局终审（三维度终审 + A~I 多维度旋转校验，参见 quality-gate/SKILL.md）
 
-3. **输出验收报告**
-   - 通过/不通过
-   - 每个验收标准的检查结果
-   - 发现的问题列表（如有）
+3. **处理结果**
+   - 如果 `passed = true`：
+     - 设置 `workflow.current_step = story_verified`
+     - 设置 `workflow.next_step = null`（用户自行选择）
+     - 输出两个选项：
+       - `/cc-review` — CC 交叉验证（二次校验）
+       - `/approve` — 跳过 CC，直接审批
+   - 如果 `passed = false`：
+     - 设置 `workflow.current_step = verification_failed`
+     - 设置 `workflow.next_step = null`（暂停等用户修复）
+     - 输出失败原因和问题列表
+     - 提示修复后手动执行 `/verify` 重新验收
 
-4. **如果需要 CC 审核**
-   - 对于关键 Story（P0 优先级），建议执行 `/cc-review`
-   - CC 审核是可选的，用户可以跳过
-
-5. **更新状态**
-   - 验收通过：更新 Story 状态为 `done`，加入 `completed_stories`
-   - 验收不通过：列出需要修复的问题，保持 `implementing` 状态
-   - 检查是否还有下一个 Story
-     - 有 → 设置 `current_story` 为下一个，提示 `/split-tickets`
-     - 没有 → 更新 `workflow.current_step` 为 `all_stories_done`
+4. **写回状态**
+   - 将更新后的 `STATE.yaml` 写回磁盘
