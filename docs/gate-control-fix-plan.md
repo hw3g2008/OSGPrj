@@ -19,6 +19,7 @@
 | 7 | verification/SKILL.md | 多轮迭代 + 自动修复循环 | 🔴 高 | 重写 verify 函数 |
 | 8 | verification/SKILL.md | 明确失败退出逻辑 | 🟡 中 | 新增代码块 |
 | 9 | verification/SKILL.md | Phase 3 全局终审（独立展开） | 🟡 中 | 新增代码块 |
+| 35 | implement-fix-plan.md | 增加"交叉影响"校验维度 H | 🔴 高 | 新增维度+规则 |
 
 ---
 
@@ -740,3 +741,744 @@ def global_final_review_verify(task, story):
 - **修复 #2~#4**（brainstorm/split-story/split-ticket）：外层 `for global_retry` 循环，Phase 3 失败 → `continue` 回到 Phase 2
 - **修复 #5**（deliver-ticket）：`for review_retry` 循环，Phase 3 失败 → 重新执行自审 + 全局终审
 - **修复 #7**（verify）：Phase 3 嵌入在 `for iteration` 循环内，失败 → `continue` 回到 4 维度校验
+
+---
+
+## Workflow 层问题（全环节校验发现）
+
+> 以下问题来自 Workflow ↔ Skill ↔ 状态流转的逐环节交叉校验。
+
+### 修复 #10：/brainstorm Workflow 下一步提示错误
+
+**文件**：`.windsurf/workflows/brainstorm.md` 第 35 行
+
+**问题**：下一步提示写成 `/split-stories`，实际命令是 `/split-story`（无 s）
+
+**修改**：
+```diff
+-   - 审阅通过后可执行 `/split-stories`
++   - 审阅通过后可执行 `/split-story`
+```
+
+**优先级**：🟡 低
+
+---
+
+### 修复 #11：/brainstorm Workflow 缺少 UI 原型输入说明
+
+**文件**：`.windsurf/workflows/brainstorm.md` 第 19-21 行
+
+**问题**：Workflow 只提到"读取 PRD 文档"，但 brainstorming Skill 实际还会读取 UI 原型和已有代码。Workflow 描述不完整。
+
+**修改**：在步骤 2 中补充：
+```markdown
+2. **读取输入文档**
+   - 读取 `current_requirement_path` 指向的目录下所有 PRD 文档
+   - 读取 UI 原型文档（如有）
+   - 扫描已有代码结构（如有）
+   - 理解业务需求、用户角色、功能点
+```
+
+**优先级**：🟡 低
+
+---
+
+### 修复 #12：/approve Workflow 与 config.yaml 审批配置不一致
+
+**文件**：`.windsurf/workflows/approve.md` 第 27-31 行
+
+**问题**：Tickets 审批部分要求用户确认，但 `config.yaml` 中 `ticket_split: auto`。如果是 auto，应该跳过审批直接进入 implementing。
+
+**修改方案**：approve.md 应该读取 config.yaml 的审批配置，根据配置决定是否需要用户确认：
+```markdown
+### Tickets 审批
+- 条件：`current_step` 为 `tickets_pending_approval`
+- 读取 `config.yaml` 的 `approval.ticket_split` 配置
+  - 如果 `required`：列出 Tickets 摘要，等待用户确认
+  - 如果 `auto`：自动审批，直接更新状态
+- 更新每个 Ticket 状态为 `pending`（可执行）
+- 更新 `workflow.current_step` 为 `implementing`
+```
+
+**优先级**：🟡 中
+
+---
+
+### 修复 #13：/verify Skill 校验内容与 Workflow 承诺不一致 🔴
+
+**文件**：
+- `.windsurf/workflows/verify.md` 第 19-23 行
+- `.claude/skills/verification/SKILL.md` 第 78-93 行
+
+**问题**：
+- Workflow 承诺检查：`AC 满足 + 集成正确 + 代码质量 + 覆盖率达标`
+- Skill 实际做的：`结构层/格式层/语义层/逻辑层` 文档格式校验
+
+Skill 的 4 维度校验是检查 YAML 编号连续、ID 格式正则、时间 ISO 8601 等**文档规范**，而不是验收 Story 的**功能是否实现**。
+
+**修改方案**：重写 verification/SKILL.md 的 Story 验收逻辑（与修复 #7 合并）：
+
+Phase 1（前置检查）：所有 Tickets done + evidence + exit_code=0
+Phase 2（功能验收，多轮迭代）：
+- AC 覆盖率：每个 Story AC 被至少 1 个已完成 Ticket 覆盖
+- 全量测试：运行 `config.commands.test`，exit_code=0（**重中之重**，发现跨 Ticket 回归）
+- 覆盖率达标：检查是否达到门槛
+Phase 3（全局终审）：上游一致性 + 下游可行性 + 全局完整性
+
+删除原有的 4 维度文档格式校验（结构/格式/语义/逻辑），这些应在 P 阶段生成时保证。
+
+**优先级**：🔴 高（与修复 #7 合并处理）
+
+---
+
+### 修复 #14：/next → /verify 状态流转断裂 🔴
+
+**文件**：
+- `.windsurf/workflows/next.md` 第 30-35 行
+- `.windsurf/workflows/rpiv.md` 第 39-41 行
+
+**问题**：
+- `rpiv.md` 用 `story_tickets_done` 触发 V 阶段
+- `next.md` 完成所有 Tickets 后只是"提示执行 /verify"，**没有更新 `current_step` 为 `story_tickets_done`**
+- 导致 `/rpiv` 无法自动判断应该进入 V 阶段
+
+**修改方案**：在 `next.md` 步骤 5 中增加状态更新：
+```markdown
+5. **更新状态**
+   - 更新 Ticket 状态为 `done`
+   - 更新 `STATE.yaml` 的 `completed_tickets` 列表
+   - 检查当前 Story 是否所有 Tickets 都已完成
+     - 是 → 更新 `workflow.current_step` 为 `all_tickets_done`，提示执行 `/verify`
+     - 否 → 提示继续执行 `/next`
+```
+
+同时 `rpiv.md` 的 V 阶段触发条件改为：
+```markdown
+**触发条件**：`current_step` 为 `all_tickets_done`
+```
+
+**优先级**：🔴 高
+
+---
+
+### 更新后的修复总览
+
+| # | 文件 | 缺失项 | 优先级 | 类型 |
+|---|------|--------|--------|------|
+| 1-9 | Skills | 门控缺失（见上方） | 🔴/🟡 | Skill 层 |
+| 10 | brainstorm.md | 下一步提示错误 | 🟡 低 | Workflow 层 |
+| 11 | brainstorm.md | 缺少 UI 原型输入说明 | 🟡 低 | Workflow 层 |
+| 12 | approve.md | 与 config 审批配置不一致 | 🟡 中 | Workflow 层 |
+| 13 | verification/SKILL.md | 校验内容与 Workflow 不一致 | 🔴 高 | Skill + Workflow 层 |
+| 14 | next.md + rpiv.md | 状态流转断裂 | 🔴 高 | Workflow 层 |
+| 15 | state-machine.yaml | 缺少 `implementing` 状态定义 | 🔴 高 | 状态机层 |
+| 16 | state-machine.yaml | 缺少 `story_verified` 状态定义 | 🔴 高 | 状态机层 |
+| 17 | state-machine.yaml | 缺少 `verification_failed` 状态定义 | 🔴 高 | 状态机层 |
+| 18 | state-machine.yaml + workflow-engine | deliver-ticket 绕过 workflow-engine 直接管理状态 | 🔴 高 | 状态机层 |
+| 19 | approve.md | story_verified → /approve → story_done → approve_story 循环 | 🔴 高 | Workflow 层 |
+| 20 | split-story.md | 状态名 `stories_pending_approval` 与 state-machine 不一致 | 🟡 中 | Workflow 层 |
+| 21 | split-ticket.md | 状态名 `tickets_pending_approval` 与 state-machine 不一致 | 🟡 中 | Workflow 层 |
+| 22 | approve.md | Stories 审批条件 `stories_pending_approval` 与实际状态不匹配 | 🟡 中 | Workflow 层 |
+| 23 | rpiv.md | R 阶段触发条件漏了 `not_started` | 🟢 低 | Workflow 层 |
+| 24 | verify.md | 与重写后的 verification Skill 不一致 | 🔴 高 | Workflow 层 |
+| 25 | next.md | 与 deliver-ticket 实际行为不一致 | 🔴 高 | Workflow 层 |
+| 26 | state-machine.yaml | `/verify` 映射 + rollback 规则未覆盖新状态 | 🟡 中 | 状态机层 |
+| 27 | cc-review.md | 缺少状态更新语义 | 🟡 中 | Workflow 层 |
+| 28 | rpiv.md | V 阶段描述需更新为 story_verified/verification_failed 分支 | 🟡 中 | Workflow 层 |
+| 29 | approve.md | Stories 审批后缺少设置 `current_story` | 🔴 高 | Workflow 层 |
+| 30 | approve.md / #12 | Tickets 审批后状态应为 `tickets_approved` 而非 `implementing` | 🟡 中 | Workflow 层 |
+| 31 | state-machine.yaml | `verification_failed` 不应自动重试，应暂停等用户修复 | 🔴 高 | 状态机层 |
+| 32 | workflow-engine/SKILL.md | `update_workflow` 需处理 `/next` 和 `/verify` 绕过逻辑 | 🟡 中 | 状态机层 |
+| 33 | #27 cc-review.md | CC 不通过时 `next_step` 应为 `null`（与 #31 暂停设计一致） | 🔴 高 | Workflow 层 |
+| 34 | #24 verify.md | 验收失败时 `next_step` 应为 `null`（与 #31 暂停设计一致） | 🔴 高 | Workflow 层 |
+
+---
+
+## 修复 #15~#23：全流程模拟校验发现（2026-02-14）
+
+> 来源：以"权限管理模块"为样例，从 not_started 到 all_stories_done 端到端模拟校验
+
+---
+
+### 修复 #15：state-machine.yaml — 缺少 `implementing` 状态
+
+**文件**：`.claude/skills/workflow-engine/state-machine.yaml`
+
+**问题**：deliver-ticket/SKILL.md（第376行）、approve.md（第31行）、rpiv.md（第35行）、split-ticket.md（第39行）都引用 `implementing`，但 state-machine.yaml 没有定义。
+
+**修改**：在 `tickets_approved` 之后、`ticket_done` 之前新增：
+
+```yaml
+  implementing:
+    phase: implement
+    description: "正在实现 Tickets"
+    next_action: next
+    approval_required: false
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #16：state-machine.yaml — 缺少 `story_verified` 状态
+
+**文件**：`.claude/skills/workflow-engine/state-machine.yaml`
+
+**问题**：deliver-ticket/SKILL.md（第364行）设置 `story_verified`，但 state-machine.yaml 没有定义。
+
+**修改**：在 `all_tickets_done` 之后、`story_done` 之前新增：
+
+```yaml
+  story_verified:
+    phase: validate
+    description: "Story 验收通过，等待用户选择 /cc-review 或 /approve"
+    next_action: null  # 用户自行选择
+    approval_required: false
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #17：state-machine.yaml — 缺少 `verification_failed` 状态
+
+**文件**：`.claude/skills/workflow-engine/state-machine.yaml`
+
+**问题**：deliver-ticket/SKILL.md（第371行）设置 `verification_failed`，但 state-machine.yaml 没有定义。
+
+**修改**：在 `story_verified` 之后新增：
+
+```yaml
+  verification_failed:
+    phase: validate
+    description: "Story 验收失败，需修复后重试 /verify"
+    next_action: verify
+    approval_required: false
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #18：state-machine.yaml + workflow-engine — deliver-ticket 绕过 workflow-engine
+
+**文件**：
+- `.claude/skills/workflow-engine/state-machine.yaml`（command_to_state + special_branches）
+- `.claude/skills/workflow-engine/SKILL.md`（update_workflow 函数）
+
+**问题**：deliver-ticket/SKILL.md 直接写 STATE.yaml 设置 `implementing`/`story_verified`/`verification_failed`，绕过了 workflow-engine 的 `update_workflow()` 函数。state-machine.yaml 的 `command_to_state["/next"] = ticket_done` 和 `special_branches.next_completion` 与 Skill 实际行为不一致。
+
+**设计决策**：保持 deliver-ticket 自己管理状态（因为它有复杂的分支逻辑：implementing/story_verified/verification_failed），但 state-machine.yaml 和 workflow-engine 需要同步更新以反映实际行为。
+
+**修改 state-machine.yaml**：
+
+1. 更新 `command_to_state`：
+```yaml
+  "/next": implementing  # 默认进入 implementing（还有 pending tickets）
+```
+
+2. 更新 `special_branches.next_completion`：
+```yaml
+  next_completion:
+    condition: "no_pending_tickets(current_story)"
+    true_branch:
+      condition: "verify_story_passed(current_story)"
+      true_state: story_verified
+      false_state: verification_failed
+    false_state: implementing
+```
+
+3. 新增 `special_branches.verify_completion`：
+```yaml
+  verify_completion:
+    condition: "verify_story_passed(current_story)"
+    true_state: story_verified
+    false_state: verification_failed
+```
+
+**修改 workflow-engine/SKILL.md** 的 `update_workflow` 函数：
+
+在 `/next` 的特殊处理中更新：
+```python
+if command_completed == "/next":
+    if no_pending_tickets(state):
+        # deliver-ticket 会自动调用 verify_story()
+        # 状态由 deliver-ticket 直接设置（implementing/story_verified/verification_failed）
+        # workflow-engine 不需要额外处理
+        return  # deliver-ticket 已经更新了 STATE.yaml
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #19：approve.md — story_verified → /approve 循环问题
+
+**文件**：`.windsurf/workflows/approve.md`
+
+**问题**：当用户从 `story_verified` 执行 `/approve`（跳过 CC），如果 approve.md 设置 `story_done`，workflow-engine 会自动执行 `approve_story`（`/approve story`），又回到 approve.md，形成循环。
+
+**修改方案**：approve.md 新增 Story 审批分支时，从 `story_verified` 直接设置 `story_approved`（跳过 `story_done`）：
+
+```markdown
+### Story 验收审批
+- 条件：`current_step` 为 `story_verified`
+- 列出 Story 验收报告摘要
+- 用户确认后：
+  - 更新 Story 状态为 `done`
+  - 更新 `workflow.current_step` 为 `story_approved`（直接跳到 approved，不经过 story_done）
+  - 检查是否有下一个 Story
+```
+
+同时保留 `story_done` 状态用于 CC 审核通过后的路径：
+```markdown
+### Story 完成审批（CC 审核后）
+- 条件：`current_step` 为 `story_done`
+- 读取 `config.yaml` 的 `approval.story_done` 配置
+  - `required`：等待用户确认
+  - `auto`：自动审批
+- 更新 `workflow.current_step` 为 `story_approved`
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #20：split-story.md — 状态名不一致
+
+**文件**：`.windsurf/workflows/split-story.md` 第32行
+
+**问题**：Workflow 写 `stories_pending_approval`，但 story-splitter/SKILL.md 实际设置 `story_split_done`，state-machine.yaml 定义的也是 `story_split_done`。
+
+**修改**：
+```diff
+- 更新 `workflow.current_step` 为 `stories_pending_approval`
+- 用户审批后更新为 `stories_approved`
++ 更新 `workflow.current_step` 为 `story_split_done`
++ 等待用户审批（`/approve`）
+```
+
+**优先级**：🟡 中
+
+---
+
+### 修复 #21：split-ticket.md — 状态名不一致
+
+**文件**：`.windsurf/workflows/split-ticket.md` 第38-39行
+
+**问题**：Workflow 写 `tickets_pending_approval`，但 ticket-splitter/SKILL.md 实际设置 `ticket_split_done`。
+
+**修改**：
+```diff
+- 更新 `workflow.current_step` 为 `tickets_pending_approval`
+- 用户审批后更新为 `implementing`
++ 更新 `workflow.current_step` 为 `ticket_split_done`
++ 等待用户审批（`/approve`），审批后进入 `implementing`
+```
+
+**优先级**：🟡 中
+
+---
+
+### 修复 #22：approve.md — Stories 审批条件不匹配
+
+**文件**：`.windsurf/workflows/approve.md` 第22行
+
+**问题**：条件写 `stories_pending_approval`，但实际到达审批时 current_step 是 `story_split_done`。Cascade 按 Workflow 文字执行，条件不匹配会导致审批逻辑不触发。
+
+**修改**：
+```diff
+  ### Stories 审批
+- - 条件：`current_step` 为 `stories_pending_approval`
++ - 条件：`current_step` 为 `story_split_done`
+```
+
+同时修改 Tickets 审批条件：
+```diff
+  ### Tickets 审批
+- - 条件：`current_step` 为 `tickets_pending_approval`
++ - 条件：`current_step` 为 `ticket_split_done`
+```
+
+**优先级**：🟡 中
+
+---
+
+### 修复 #23：rpiv.md — R 阶段触发条件漏了 `not_started`
+
+**文件**：`.windsurf/workflows/rpiv.md` 第20行
+
+**问题**：R 阶段触发条件写 `idle` 或 `requirement_analysis`，但 state-machine.yaml 的初始状态是 `not_started`。
+
+**修改**：
+```diff
+- **触发条件**：`current_step` 为 `idle` 或 `requirement_analysis` 且没有 Stories
++ **触发条件**：`current_step` 为 `not_started`、`idle` 或 `requirement_analysis` 且没有 Stories
+```
+
+**优先级**：🟢 低
+
+---
+
+### 修复 #24：verify.md — 与重写后的 verification Skill 不一致（补充 #13）
+
+**文件**：`.windsurf/workflows/verify.md`
+
+**问题**：verify.md 的检查项描述（"AC 满足 + 集成正确 + 代码质量 + 覆盖率达标"）与重写后的 verification/SKILL.md（Phase 1 前置检查 + Phase 2 全量测试/AC/覆盖率 + Phase 3 全局终审）不一致。且 verify.md 的状态更新逻辑（"验收通过更新为 done，不通过保持 implementing"）与 deliver-ticket 的 story_verified/verification_failed 设计不一致。
+
+**修改**：重写 verify.md
+
+```markdown
+---
+description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
+---
+
+# 手动重试 Story 验收
+
+## 使用场景
+
+- `workflow.current_step = verification_failed`
+- 已修复验收失败的问题，需要手动重试
+
+## 执行步骤
+
+1. **读取状态与目标 Story**
+   - 读取 `osg-spec-docs/tasks/STATE.yaml`
+   - 获取 `current_story`
+
+2. **调用统一验收引擎**
+   - 调用 verification skill 的 `verify_story(story_id)`
+   - 验收逻辑包含：
+     - Phase 1：前置检查（Tickets done + evidence + exit_code=0）
+     - Phase 2：功能验收（全量测试 + AC 覆盖率 + 覆盖率门槛）
+     - Phase 3：全局终审（上游一致性 + 下游可行性 + 全局完整性）
+
+3. **处理结果**
+   - 如果 `passed = true`：
+     - 设置 `workflow.current_step = story_verified`
+     - 设置 `workflow.next_step = null`（用户自行选择）
+     - 输出两个选项：
+       - `/cc-review` — CC 交叉验证（二次校验）
+       - `/approve` — 跳过 CC，直接审批
+   - 如果 `passed = false`：
+     - 设置 `workflow.current_step = verification_failed`
+     - 设置 `workflow.next_step = verify`
+     - 输出失败原因和问题列表
+
+4. **写回状态**
+   - 将更新后的 `STATE.yaml` 写回磁盘
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #25：next.md — 与 deliver-ticket 实际行为对齐（补充 #14）
+
+**文件**：`.windsurf/workflows/next.md`
+
+**问题**：next.md 步骤5 说"是 → 提示执行 /verify"，但 deliver-ticket/SKILL.md 实际行为是自动调用 verify_story()，直接设置 story_verified/verification_failed。Workflow 描述与 Skill 行为不一致。
+
+**修改**：重写 next.md 步骤4~5
+
+```markdown
+4. **分层验证**
+   - deliver-ticket skill 自动执行：
+     - **Level 1 单元验证**：当前 Ticket 的验证命令
+     - **Level 2 回归验证**：全量测试，确保不破坏已完成功能
+   - 确认 verification_evidence 存在且 exit_code = 0
+
+5. **更新状态**
+   - 更新 Ticket 状态为 `done`
+   - 更新 `STATE.yaml` 的 `completed_tickets` 列表
+   - 检查当前 Story 是否所有 Tickets 都已完成
+     - 否 → 设置 `current_step = implementing`，提示继续执行 `/next`
+     - 是 → **自动执行 Story 验收**（Level 4，调用 verification skill 的 verify_story）
+       - 验收通过：设置 `current_step = story_verified`，用户选择 `/cc-review` 或 `/approve`
+       - 验收失败：设置 `current_step = verification_failed`，提示执行 `/verify` 重试
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #26：state-machine.yaml — `/verify` 映射 + rollback 规则（补充 #18）
+
+**文件**：`.claude/skills/workflow-engine/state-machine.yaml`
+
+**问题 1**：`command_to_state["/verify"]` 仍为 `story_done`，但 verify Workflow 自己管理状态（设置 story_verified 或 verification_failed），与 deliver-ticket 绕过 workflow-engine 的模式一致。
+
+**修改 1**：
+```yaml
+  "/verify": story_verified  # 默认；verify Workflow 自己管理分支（story_verified/verification_failed）
+```
+
+**问题 2**：rollback 规则未覆盖新增的 implementing/story_verified/verification_failed 状态。
+
+**修改 2**：在 rollback 部分补充：
+```yaml
+  - from: [implementing]
+    to: tickets_approved
+    trigger: "/rollback"
+    condition: "实现过程中需要重新拆分 Tickets"
+
+  - from: [story_verified, verification_failed]
+    to: implementing
+    trigger: "/rollback"
+    condition: "验收后需要重新实现"
+```
+
+**优先级**：🟡 中
+
+---
+
+### 修复 #27：cc-review.md — 缺少状态更新语义
+
+**文件**：`.windsurf/workflows/cc-review.md`
+
+**问题**：cc-review.md 只有 CLI Prompt 模板，没有定义 CC 审核通过/不通过后的状态更新逻辑。在 story_verified → /cc-review → ? 的路径中，缺少状态流转。
+
+**修改**：在 cc-review.md 的"Story 完成审核"部分末尾新增：
+
+```markdown
+3. 处理 CC 审核结果：
+   - **CC 审核通过**：
+     - 设置 `workflow.current_step = story_done`
+     - 设置 `workflow.next_step = approve_story`
+     - 提示执行 `/approve` 完成 Story 审批
+   - **CC 审核不通过**：
+     - 设置 `workflow.current_step = verification_failed`
+     - 设置 `workflow.next_step = verify`
+     - 输出 CC 发现的问题列表
+     - 提示修复后执行 `/verify` 重新验收
+```
+
+**优先级**：🟡 中
+
+---
+
+### 修复 #28：rpiv.md — V 阶段描述更新（补充 #14）
+
+**文件**：`.windsurf/workflows/rpiv.md`
+
+**问题**：rpiv.md 的 V 阶段写的是"当前 Story 的所有 Tickets 都已完成 → 执行 /verify"，但实际流程是 deliver-ticket 自动调用 verify_story()，结果为 story_verified 或 verification_failed。rpiv.md 需要描述这两个状态的处理分支。
+
+**修改**：将现有 V 阶段替换为：
+
+```markdown
+### 阶段 V-1（Verify Retry）— 验收重试
+
+**触发条件**：`current_step` 为 `verification_failed`
+
+执行 `/verify` 手动重试当前 Story 验收
+
+### 阶段 V-2（Verify Optional）— 可选二次校验
+
+**触发条件**：`current_step` 为 `story_verified`
+
+当前 Story 已通过 I 阶段自动验收，用户可选择：
+1. 执行 `/cc-review` 进行 CC 二次校验
+2. 执行 `/approve` 跳过 CC，直接进入审批
+
+### 阶段 A（Approval）— Story 审批
+
+**触发条件**：`current_step` 为 `story_done`
+
+1. 执行 `/approve`
+2. 审批通过后检查是否还有下一个 Story
+   - 有 → 回到阶段 I
+   - 没有 → 所有 Stories 完成，执行最终交付审核
+```
+
+**优先级**：🟡 中
+
+---
+
+## 修复 #29~#32：端到端模拟实测发现（2026-02-14）
+
+> 来源：假设 #1~#28 全部应用后，以"权限管理模块"（2 Stories, 3 Tickets/Story）端到端模拟
+
+---
+
+### 修复 #29：approve.md — Stories 审批后缺少设置 `current_story`
+
+**文件**：`.windsurf/workflows/approve.md`
+
+**问题**：Stories 审批通过后，`current_step` 更新为 `stories_approved`，`next_action = split_ticket`，但 `current_story` 仍为 `null`。导致 `/split ticket {current_story}` 变成 `/split ticket null`。
+
+simulation.py 第79行已正确处理（`self.current_story = self.pending_stories[0]`），但 approve.md Workflow 文档没有写这个逻辑。
+
+**修改**：在 approve.md Stories 审批步骤中补充：
+
+```markdown
+### Stories 审批
+- 条件：`current_step` 为 `story_split_done`
+- 列出所有待审批 Stories 的摘要
+- 用户确认后：
+  - 更新每个 Story 状态为 `approved`
+  - **设置 `current_story` 为第一个 Story（按优先级排序）**
+  - 更新 `workflow.current_step` 为 `stories_approved`
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #30：approve.md — Tickets 审批后状态应为 `tickets_approved`（修正 #12）
+
+**文件**：`.windsurf/workflows/approve.md`
+
+**问题**：#12 方案写的是 Tickets 审批后更新为 `implementing`，但 state-machine.yaml 的 `command_to_state["/approve tickets"] = tickets_approved`。应该统一为 `tickets_approved`，让 workflow-engine 自动流转到 `implementing`。
+
+**修改**：修正 #12 方案中的状态名：
+
+```markdown
+### Tickets 审批
+- 条件：`current_step` 为 `ticket_split_done`
+- 读取 `config.yaml` 的 `approval.ticket_split` 配置
+  - 如果 `required`：列出 Tickets 摘要，等待用户确认
+  - 如果 `auto`：自动审批，直接更新状态
+- 更新每个 Ticket 状态为 `pending`（可执行）
+- 更新 `workflow.current_step` 为 `tickets_approved`（由 workflow-engine 自动流转到 implementing）
+```
+
+**优先级**：🟡 中
+
+---
+
+### 修复 #31：state-machine.yaml — `verification_failed` 应暂停等待用户修复
+
+**文件**：`.claude/skills/workflow-engine/state-machine.yaml`
+
+**问题**：`verification_failed.next_action = verify`，`approval_required = false`。workflow-engine 会自动执行 `/verify`，但用户可能还没修复验收失败的问题。应该暂停等待用户手动修复后再执行 `/verify`。
+
+**修改**：
+
+```yaml
+  verification_failed:
+    phase: validate
+    description: "Story 验收失败，需修复后重试 /verify"
+    next_action: null  # 暂停，等待用户修复后手动执行 /verify
+    approval_required: false
+```
+
+同时更新 deliver-ticket/SKILL.md 第371-374行的输出提示：
+```python
+        state.workflow.current_step = "verification_failed"
+        state.workflow.next_step = None  # 改为 None，不自动重试
+        print(f"❌ Story 验收失败: {verify_result['reason']}")
+        print("请修复问题后手动执行 /verify 重新验收")
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #32：workflow-engine/SKILL.md — `update_workflow` 处理 `/next` 和 `/verify` 绕过
+
+**文件**：`.claude/skills/workflow-engine/SKILL.md` 第130-156行
+
+**问题**：deliver-ticket 和 verify Workflow 直接写 STATE.yaml，绕过 `update_workflow()`。但 workflow-engine 的"供其他 Skill 调用的接口"部分（第219-228行）仍然建议 deliver-ticket 调用 `update_workflow("/next", state)`。需要更新文档说明。
+
+**修改**：
+
+1. 在 `update_workflow` 函数中增加 `/next` 和 `/verify` 的跳过逻辑：
+```python
+def update_workflow(command_completed, state):
+    sm = load_yaml(".claude/skills/workflow-engine/state-machine.yaml")
+
+    # deliver-ticket 和 verify 自己管理状态，不需要 update_workflow
+    if command_completed in ("/next", "/verify"):
+        return  # 状态已由对应 Skill/Workflow 直接写入 STATE.yaml
+
+    new_state = sm.command_to_state[command_completed]
+    # ... 后续逻辑不变
+```
+
+2. 更新"供其他 Skill 调用的接口"文档：
+```python
+# 在 brainstorming skill 完成时
+update_workflow("/brainstorm", state)
+
+# 在 story-splitter skill 完成时
+update_workflow("/split story", state)
+
+# ⚠️ deliver-ticket 和 verify 不调用 update_workflow
+# 它们直接写 STATE.yaml（因为有复杂的分支逻辑）
+```
+
+**优先级**：🟡 中
+
+---
+
+## 修复 #33~#34：第3轮端到端模拟发现（2026-02-14）
+
+> 来源：覆盖 CC 不通过路径和 verify 失败路径时发现 next_step 与 #31 暂停设计矛盾
+
+---
+
+### 修复 #33：cc-review.md — CC 不通过时 `next_step` 应为 `null`（修正 #27）
+
+**文件**：`.windsurf/workflows/cc-review.md`
+
+**问题**：#27 方案中 CC 不通过时设置 `next_step = verify`，但 #31 修复后 `verification_failed` 的设计是暂停等用户修复（`next_action = null`）。如果 cc-review.md 直接写 `next_step = verify`，workflow-engine 会读到非 null 的 next_step 并自动执行 `/verify`，绕过了 #31 的暂停设计。
+
+**修改**：修正 #27 方案中 CC 不通过的状态更新：
+
+```markdown
+   - **CC 审核不通过**：
+     - 设置 `workflow.current_step = verification_failed`
+     - 设置 `workflow.next_step = null`  ← 修正：暂停等用户修复
+     - 输出 CC 发现的问题列表
+     - 提示修复后执行 `/verify` 重新验收
+```
+
+**优先级**：🔴 高
+
+---
+
+### 修复 #34：verify.md — 验收失败时 `next_step` 应为 `null`（修正 #24）
+
+**文件**：`.windsurf/workflows/verify.md`
+
+**问题**：#24 方案中验收失败时设置 `next_step = verify`，与 #31 暂停设计矛盾。
+
+**修改**：修正 #24 方案中验收失败的状态更新：
+
+```markdown
+   - 如果 `passed = false`：
+     - 设置 `workflow.current_step = verification_failed`
+     - 设置 `workflow.next_step = null`  ← 修正：暂停等用户修复
+     - 输出失败原因和问题列表
+     - 提示修复后手动执行 `/verify` 重新验收
+```
+
+**优先级**：🔴 高
+
+---
+
+## 修复 #35：implement-fix-plan.md — 增加"交叉影响"校验维度（2026-02-14）
+
+> 来源：分析 #33/#34 延迟发现的根因，发现 implement-fix-plan 校验维度缺少交叉影响检查
+
+---
+
+### 修复 #35：implement-fix-plan.md — 校验维度表增加维度 H + 强制交叉检查规则
+
+**文件**：`.windsurf/workflows/implement-fix-plan.md`
+
+**问题**：校验维度表（A~G）缺少"交叉影响"维度。当新增或修改某个修复项时，没有强制检查所有引用/依赖该修复项的其他项是否仍然一致。这是导致 #33/#34 延迟发现的直接原因——添加 #31（`verification_failed` 暂停）后，没有立即用交叉影响维度检查所有写入 `verification_failed` 的地方（#24 verify.md、#27 cc-review.md）。
+
+**修改 1**：在校验维度表中增加维度 H
+
+```markdown
+| **H 交叉影响** | 修改项与其他修改项/现有组件的交互 | 修改了状态 X，是否检查了所有读写 X 的地方？ |
+```
+
+**修改 2**：在"关键规则"中增加强制交叉检查规则
+
+```markdown
+- 当某轮校验新增或修改了修复项时，下一轮必须优先使用**维度 H（交叉影响）**检查所有受影响的关联项
+```
+
+**优先级**：🔴 高

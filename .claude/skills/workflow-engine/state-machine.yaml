@@ -61,6 +61,12 @@ states:
     approval_required: false
 
   # --- Implement 阶段 ---
+  implementing:
+    phase: implement
+    description: "正在实现 Tickets"
+    next_action: next
+    approval_required: false
+
   ticket_done:
     phase: implement
     description: "Ticket 执行完成"
@@ -75,6 +81,18 @@ states:
     approval_required: false
 
   # --- Validate 阶段 ---
+  story_verified:
+    phase: validate
+    description: "Story 验收通过，等待用户选择 /cc-review 或 /approve"
+    next_action: null  # 用户自行选择
+    approval_required: false
+
+  verification_failed:
+    phase: validate
+    description: "Story 验收失败，暂停等用户修复后重试 /verify"
+    next_action: null  # 暂停等用户修复，不自动重试
+    approval_required: false
+
   story_done:
     phase: validate
     description: "Story 验收完成"
@@ -104,8 +122,8 @@ command_to_state:
   "/split ticket": ticket_split_done
   "/approve stories": stories_approved
   "/approve tickets": tickets_approved
-  "/next": ticket_done  # 或 all_tickets_done（需判断是否还有 pending）
-  "/verify": story_done
+  "/next": implementing  # 默认；deliver-ticket 自己管理分支（implementing/story_verified/verification_failed）
+  "/verify": story_verified  # 默认；verify_completion 分支处理 story_verified/verification_failed
   "/approve story": story_approved  # 或 all_stories_done（需判断是否还有 pending）
 
 # ============================================
@@ -137,11 +155,21 @@ approval_config_keys:
 # 特殊分支逻辑
 # ============================================
 special_branches:
-  # /next 完成后的分支
+  # /next 完成后的分支（deliver-ticket 自己管理状态，此处作文档说明）
   next_completion:
+    note: "deliver-ticket 完成后直接写 STATE.yaml，不经过 update_workflow()"
     condition: "no_pending_tickets(current_story)"
-    true_state: all_tickets_done
-    false_state: ticket_done
+    true_branch:
+      condition: "verify_story_passed(current_story)"
+      true_state: story_verified
+      false_state: verification_failed
+    false_state: implementing
+
+  # /verify 手动重试后的分支
+  verify_completion:
+    condition: "verify_story_passed(current_story)"
+    true_state: story_verified
+    false_state: verification_failed
 
   # /approve story 完成后的分支
   approve_story_completion:
@@ -180,3 +208,13 @@ rollback:
     to: all_tickets_done
     trigger: "/rollback"
     condition: "验收失败"
+
+  - from: [implementing]
+    to: tickets_approved
+    trigger: "/rollback"
+    condition: "实现过程中发现 Ticket 拆分有问题"
+
+  - from: [story_verified, verification_failed]
+    to: all_tickets_done
+    trigger: "/rollback"
+    condition: "验收结果有问题，需要重新验收"

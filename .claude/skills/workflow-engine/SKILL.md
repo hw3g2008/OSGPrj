@@ -134,14 +134,15 @@ def update_workflow(command_completed, state):
     """
     sm = load_yaml(".claude/skills/workflow-engine/state-machine.yaml")
 
+    # ⚠️ deliver-ticket 和 verify 自己管理状态，不需要 update_workflow
+    # 它们直接写 STATE.yaml（因为有复杂的分支逻辑）
+    if command_completed in ("/next", "/verify"):
+        return  # 状态已由对应 Skill/Workflow 直接写入 STATE.yaml
+
     # 根据完成的命令查找新状态
     new_state = sm.command_to_state[command_completed]
 
     # 特殊处理：判断是否是最后一个
-    if command_completed == "/next":
-        if no_pending_tickets(state):
-            new_state = "all_tickets_done"
-
     if command_completed.startswith("/approve S-"):
         if no_pending_stories(state):
             new_state = "all_stories_done"
@@ -223,8 +224,11 @@ update_workflow("/brainstorm", state)
 # 在 story-splitter skill 完成时
 update_workflow("/split story", state)
 
-# 在 deliver-ticket skill 完成时
-update_workflow("/next", state)
+# ⚠️ deliver-ticket 和 verify 不调用 update_workflow
+# 它们直接写 STATE.yaml（因为有复杂的分支逻辑：
+#   /next → implementing / story_verified / verification_failed
+#   /verify → story_verified / verification_failed
+# ）
 ```
 
 ### 获取当前状态

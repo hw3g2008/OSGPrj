@@ -85,6 +85,21 @@ $(cat osg-spec-docs/tasks/STATE.yaml)
 输出：通过/不通过 + 问题列表"
 ```
 
+## 状态更新
+
+Story 完成审核（类型 1）执行后，根据 CC 审核结果更新状态：
+
+- **CC 审核通过**：
+  - 设置 `workflow.current_step = story_done`
+  - 设置 `workflow.next_step = approve_story`
+  - 提示执行 `/approve` 完成 Story 审批
+
+- **CC 审核不通过**：
+  - 设置 `workflow.current_step = verification_failed`
+  - 设置 `workflow.next_step = null`（暂停等用户修复）
+  - 输出 CC 发现的问题列表
+  - 提示修复后执行 `/verify` 重新验收
+
 ## 注意事项
 
 - CC 审核是**可选的**，不是必须步骤

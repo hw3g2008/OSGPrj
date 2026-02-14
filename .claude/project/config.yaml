@@ -74,9 +74,9 @@ paths:
     types: "osg-frontend/packages/shared/src/types/"
   docs:
     spec: "osg-spec-docs/docs/"
-    source: "osg-spec-docs/source/"                     # PRD 源文件（需求文档原始版）
-    prototypes: "osg-spec-docs/source/prototype/"       # UI 原型 HTML
-    prd: "osg-spec-docs/docs/01-product/prd/"              # PRD 需求文档（从 HTML 原型生成）
+    source: "osg-spec-docs/source/"                     # 原始文档（md/docx 仅作参考，不作为需求来源）
+    prototypes: "osg-spec-docs/source/prototype/"       # UI 原型 HTML（SSOT 唯一真实来源）
+    prd: "osg-spec-docs/docs/01-product/prd/"           # PRD 文档（从 HTML 原型生成，按模块子目录）
     api: "osg-spec-docs/docs/06-api/"
     database: "osg-spec-docs/docs/07-database/"
     requirements: "osg-spec-docs/docs/02-requirements/"
@@ -85,6 +85,41 @@ paths:
     state: "osg-spec-docs/tasks/STATE.yaml"
     stories: "osg-spec-docs/tasks/stories/"
     tickets: "osg-spec-docs/tasks/tickets/"
+
+# ============================================
+# PRD 生成流程（IEEE 830 + BABOK 行业标准）
+# ============================================
+prd_process:
+  # 唯一真实来源（Single Source of Truth）
+  ssot: "HTML 原型文件（${paths.docs.prototypes}）"
+  
+  # 需求工程流水线
+  # HTML 原型 → PRD（页面级）→ SRS（IEEE 830）→ Stories → Tickets
+  pipeline:
+    - step: "PRD 生成"
+      input: "${paths.docs.prototypes}/*.html"
+      output: "${paths.docs.prd}/{module}/"
+      format: "页面级 PRD（字段定义、交互规则、业务规则、决策记录）"
+      trigger: "/brainstorm 自动检测并生成"
+    - step: "SRS 生成（brainstorm 产物）"
+      input: "${paths.docs.prd}/{module}/"
+      output: "${paths.tasks.root}/brainstorm-{module}.md"
+      format: "IEEE 830（FR/NFR/AC/接口定义/数据模型/PRD溯源）"
+  
+  # 强制规则
+  rules:
+    - "HTML 原型是唯一真实来源，md/docx 文档仅作业务背景参考"
+    - "PRD 按模块子目录存放（如 prd/admin/, prd/career/）"
+    - "每个 FR 必须标注 PRD 来源（文件名 + 章节号）"
+    - "SRS 必须包含接口定义（已有接口 + 新增接口）和数据库变更"
+    - "PRD 不存在时，brainstorm 流程自动从 HTML 原型生成 PRD"
+  
+  # 原型到模块的映射
+  module_prototype_map:
+    admin: ["admin.html", "admin/"]           # 管理后台
+    career: ["index.html", "lead-mentor.html", "assistant.html", "admin.html"]  # 求职中心（跨端）
+    student: ["index.html", "PRD_Student.html"]
+    mentor: ["mentor.html", "PRD_Mentor.html"]
 
 # 启用的开发者角色
 developers:

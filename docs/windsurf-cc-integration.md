@@ -394,3 +394,8 @@ Phase 5: 审批门控（根据 config.approval 决定 auto 或 required）
 | 7 | 为 `/split ticket` 添加 Phase 3 全局终审 | fix-plan #4 | 🟡 中 |
 | 8 | 为 `/next` 添加 Phase 3 全局终审 | fix-plan #5 | 🟡 中 |
 | 9 | 为 `/verify` 添加 Phase 3 全局终审 | fix-plan #9 | 🟡 中 |
+| 10 | `/brainstorm` Workflow 下一步提示错误（`/split-stories` → `/split-story`） | fix-plan #10 | 🟡 低 |
+| 11 | `/brainstorm` Workflow 缺少 UI 原型输入说明 | fix-plan #11 | 🟡 低 |
+| 12 | `/approve` Workflow 与 config.yaml 审批配置不一致 | fix-plan #12 | 🟡 中 |
+| 13 | `/verify` Skill 校验内容与 Workflow 承诺不一致（重写，与 #7 合并） | fix-plan #13 | 🔴 高 |
+| 14 | `/next` → `/verify` 状态流转断裂（缺 `all_tickets_done` 状态） | fix-plan #14 | 🔴 高 |

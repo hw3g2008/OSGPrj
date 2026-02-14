@@ -17,34 +17,47 @@ description: RPIV 主流程调度 - 读取 STATE.yaml 判断当前阶段并执�
 
 ### 阶段 R（Requirement）— 需求分析
 
-**触发条件**：`current_step` 为 `idle` 或 `requirement_analysis` 且没有 Stories
+**触发条件**：`current_step` 为 `not_started`、`idle` 或 `requirement_analysis` 且没有 Stories
 
 执行 `/brainstorm`
 
 ### 阶段 P（Plan）— 拆分计划
 
-**触发条件**：`current_step` 为 `brainstorm_done` 或 `planning`
+**触发条件**：`current_step` 为 `brainstorm_done`
 
-1. 先执行 `/split-story` 拆分 Stories
+1. 执行 `/split story` 拆分 Stories
 2. 等待用户审批 Stories（`/approve`）
-3. 对每个 Story 执行 `/split-ticket S-xxx` 拆分 Tickets
+3. 对当前 Story 执行 `/split ticket S-xxx` 拆分 Tickets
 4. 等待用户审批 Tickets（`/approve`）
 
 ### 阶段 I（Implement）— 实现
 
-**触发条件**：`current_step` 为 `stories_approved` 或 `implementing`，且有未完成的 Tickets
+**触发条件**：`current_step` 为 `tickets_approved` 或 `implementing`，且有未完成的 Tickets
 
-执行 `/next` 实现下一个 Ticket
+执行 `/next` 实现下一个 Ticket（deliver-ticket 会自动执行分层验证 + Story 验收）
 
-### 阶段 V（Verify）— 验收
+### 阶段 V-1（Verify Retry）— 验收重试
 
-**触发条件**：当前 Story 的所有 Tickets 都已完成
+**触发条件**：`current_step` 为 `verification_failed`
 
-1. 执行 `/verify` 验收当前 Story
-2. 如果需要 CC 交叉审核，执行 `/cc-review`
-3. 验收通过后，检查是否还有下一个 Story
-   - 有 → 回到阶段 I
-   - 没有 → 所有 Stories 完成，执行最终交付审核
+执行 `/verify` 手动重试当前 Story 验收
+
+### 阶段 V-2（Verify Optional）— 可选二次校验
+
+**触发条件**：`current_step` 为 `story_verified`
+
+当前 Story 已通过 I 阶段自动验收，用户可选择：
+1. 执行 `/cc-review` 进行 CC 二次校验
+2. 执行 `/approve` 跳过 CC，直接进入审批
+
+### 阶段 A（Approval）— Story 审批
+
+**触发条件**：`current_step` 为 `story_done`
+
+1. 执行 `/approve`
+2. 审批通过后检查是否还有下一个 Story
+   - 有 → 回到阶段 P（拆分下一个 Story 的 Tickets）
+   - 没有 → 所有 Stories 完成
 
 ### 全部完成
 

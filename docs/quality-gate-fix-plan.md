@@ -23,14 +23,14 @@
 
 ### 当前各环节校验体系
 
-| 环节 | 领域专项校验（Phase 2） | 全局终审（Phase 3） | 多维度旋转 |
-|------|----------------------|-------------------|-----------|
-| brainstorming | 正向5项 + 反向6项 + PRD覆盖率 | 三维度终审 × max 3 轮 | ❌ 无 |
-| story-splitter | INVEST校验 + FR覆盖率 | 三维度终审 × max 3 轮 | ❌ 无 |
-| ticket-splitter | 质量6项 + AC覆盖率 | 三维度终审 × max 3 轮 | ❌ 无 |
-| deliver-ticket | 自我审查 + 测试 | 三维度终审 × max 3 轮 | ❌ 无 |
-| verification | 前置检查 + 功能验收 | 三维度终审 × max 5 轮 | ❌ 无 |
-| implement-fix-plan | 逐项校验 | 三维度终审 | ✅ A~I 维度 |
+| 环节　　　　　　　 | 领域专项校验（Phase 2）　　　 | 全局终审（Phase 3）　 | 多维度旋转 |
+| --------------------| -------------------------------| -----------------------| ------------|
+| brainstorming　　　| 正向5项 + 反向6项 + PRD覆盖率 | 三维度终审 × max 3 轮 | ❌ 无　　　 |
+| story-splitter　　 | INVEST校验 + FR覆盖率　　　　 | 三维度终审 × max 3 轮 | ❌ 无　　　 |
+| ticket-splitter　　| 质量6项 + AC覆盖率　　　　　　| 三维度终审 × max 3 轮 | ❌ 无　　　 |
+| deliver-ticket　　 | 自我审查 + 测试　　　　　　　 | 三维度终审 × max 3 轮 | ❌ 无　　　 |
+| verification　　　 | 前置检查 + 功能验收　　　　　 | 三维度终审 × max 5 轮 | ❌ 无　　　 |
+| implement-fix-plan | 逐项校验　　　　　　　　　　　| 三维度终审　　　　　　| ✅ A~I 维度 |
 
 ---
 
