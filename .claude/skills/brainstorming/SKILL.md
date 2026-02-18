@@ -33,21 +33,23 @@ metadata:
 开始
   │
   ▼
-┌─ Phase 0: PRD 生成/验证 ───────────────────────┐
-│ [1] 检查 ${config.paths.docs.prd}/{module}/ 是否存在  │
-│      │                                              │
-│      ├─ 存在 → 读取已有 PRD 文档                  │
-│      │                                              │
-│      └─ 不存在 → 调用 prototype-extraction Skill  │
-│         (标准化5步流程，详见                       │
-│          prototype-extraction/SKILL.md):           │
-│         Step 1: 建立端×页面全量矩阵              │
-│         Step 2: 逐端逐页面双通道提取              │
-│                 (浏览器实测 + HTML源码分析)        │
-│         Step 3: 跨端差异分析(10维度)              │
-│         Step 4: 生成页面级PRD + DECISIONS + MATRIX│
-│         Step 5: 完整性校验(6项,max 3次重试)       │
-│         md/docx 文档仅作业务背景参考              │
+┌─ Phase 0: PRD 生成（闭环，max 3 轮）────────────┐
+│ [1] PRD 存在？                                     │
+│      ├─ 不存在 → 需要生成                        │
+│      └─ 已存在 → 询问用户: 重新生成 or 使用已有 │
+│                                                      │
+│ [2] 闭环（round 1..3）:                           │
+│      调用 prototype-extraction 完整5步             │
+│      ↓                                              │
+│      检查 html_issues                               │
+│      ├─ 无问题 → ✅ 退出闭环 → Phase 1          │
+│      └─ 有问题:                                    │
+│           ├─ 未达安全阀 → 同步询问PM裁决         │
+│           │   → 更新PRD → 回到闭环顶部重跑       │
+│           └─ 达到安全阀 → 输出 open-questions.md │
+│               → brainstorm_pending_confirm → 停止 │
+│                                                      │
+│ md/docx 文档仅作业务背景参考                      │
 └───────────────────────────────────────────────┘
   │
   ▼
@@ -69,7 +71,7 @@ metadata:
 │ [PRD覆盖率] ─ 有遗漏？───┼── 补充 ──┤
 │  ✅                      │           │
 │ [UI专项校验] ─ 有问题？──┼── 补充 ──┘
-│  ✅ (仅 UI 模块)         │
+│  ✅                      │
 └──────────────────────────┘
   │ ✅ 全部通过（或达到上限 → 失败退出）
   ▼
@@ -81,10 +83,24 @@ metadata:
 └────────────────────────────────────────────────────────┘
   │ ✅ 连续两轮无修改
   ▼
-[输出结果]
+┌─ Phase 4: HTML↔PRD↔SRS 全量校验 ────────────────┐
+│ [1] 按 module_prototype_map 逐端浏览 HTML 原型     │
+│ [2] 逐页面截图 + snapshot 对比 PRD/SRS             │
+│ [3] 差异处理（HTML 是 SSOT）:                      │
+│     A类: HTML有PRD/SRS无 → 直接补充PRD+SRS        │
+│     B类: PRD/SRS有HTML无 → 问题确认清单           │
+│     C类: HTML自身内部矛盾 → 问题确认清单          │
+│     D类: HTML明显Bug → PRD标注+问题确认清单       │
+│ [4] 有 A 类补充 → 回到 Phase 2 重新校验            │
+│     （max 1 次回退，防死循环）                      │
+└────────────────────────────────────────────────────┘
+  │
+  ├─ 无 B/C/D 类 → [输出结果] → brainstorm_done
+  │
+  └─ 有 B/C/D 类 → [输出结果 + 疑问清单] → brainstorm_pending_confirm
 ```
 
-## 正向校验项（5 项）
+## 正向校验项（6 项）
 
 | 检查项 | 检查问题 | 通过条件 | 不通过条件 |
 |--------|----------|----------|------------|
@@ -93,6 +109,7 @@ metadata:
 | 影响分析 | 是否分析了对其他模块的影响？ | 是 | 否 |
 | 错误处理 | 每个操作的异常情况是否定义？ | 是 | 否 |
 | 标准合规 | 是否符合 IEEE 830 要素？ | 是 | 否 |
+| 业务入口闭环 | 用户从进入系统到完成目标的完整旅程是否覆盖？独立于 PRD 覆盖率检查，直接对照原型 HTML 验证。必须回答：用户如何进入系统？（登录/注册）用户如何离开系统？（退出/超时）是否有错误兜底页面？（403/404/500） | 全部覆盖 | 任一缺失 |
 
 ## 反向校验项（6 项）
 
@@ -111,9 +128,9 @@ metadata:
 |--------|----------|----------|------------|
 | PRD 功能点覆盖 | PRD 中的每个功能点是否都有对应需求？ | 100% 覆盖 | 有遗漏功能点 |
 
-## UI 模块专项校验（当模块涉及 UI 还原时）
+## UI 专项校验
 
-当 `config.paths.docs.prototypes` 已配置，且 `/brainstorm` 的模块名匹配到该目录下的原型文件时，自动追加以下校验项：
+Phase 2 中必须执行的 UI 相关校验项：
 
 | 检查项 | 检查问题 | 通过条件 | 不通过条件 |
 |--------|----------|----------|------------|
@@ -122,6 +139,8 @@ metadata:
 | 设计 Token | 是否定义了颜色、圆角、间距等设计变量？ | 是（引用 Agent 定义的 Token） | 否 |
 | 交互行为 | 原型中的 JS 交互是否都有对应描述？ | 是 | 有遗漏交互 |
 | 数据结构 | 表格列、表单字段是否与 PRD 数据字典一致？ | 是 | 有冲突 |
+| 设计 Token 精确度 | SRS §8 每个设计变量值是否与 HTML :root 完全一致？ | 是（逐个对比） | 有偏差 |
+| 跨区块一致性 | 同一业务概念在 HTML 不同位置（JS变量、下拉选项、表格预置数据、弹窗字段）的数据是否一致？例如：登录选择器角色列表 vs roleMenus key 列表；权限 checkbox 列表 vs 侧边栏页面列表；新增弹窗字段控件 vs 编辑弹窗字段控件。 | 全部一致 | 有矛盾（标记为原型问题） |
 
 ### 输入来源优先级（SSOT 原则）
 
@@ -156,23 +175,57 @@ def brainstorming(user_input):
     config = load_yaml(".claude/project/config.yaml")
     module_name = extract_module_name(user_input)
     
-    # ========== Phase 0: PRD 生成/验证 ==========
+    # ========== Phase 0: PRD 生成（闭环，max 3 轮）==========
     prd_dir = f"{config.paths.docs.prd}/{module_name}/"
+    MAX_PHASE0_ROUNDS = 3
+    need_extraction = False
     
     if not exists(prd_dir) or is_empty(prd_dir):
-        print(f"⚠️ PRD 不存在，调用 prototype-extraction Skill: {prd_dir}")
-        
-        # 调用 prototype-extraction Skill（标准化5步流程）
-        # 详见 .claude/skills/prototype-extraction/SKILL.md
-        result = invoke_skill("prototype-extraction", module_name, config)
-        
-        if result["status"] == "failed":
-            return {"status": "failed", "reason": f"PRD 生成失败: {result['reason']}"}
-        
-        print(f"✅ PRD 生成完成: {result['prd_count']} 个文件")
+        print(f"⚠️ PRD 不存在，从 HTML 全量生成: {prd_dir}")
+        need_extraction = True
     else:
-        print(f"✅ PRD 已存在: {prd_dir}")
+        user_choice = ask_user("PRD 已存在，请选择:", ["重新生成", "使用已有"])
+        if user_choice == "重新生成":
+            need_extraction = True
+        else:
+            print(f"✅ 使用已有 PRD: {prd_dir}")
     
+    if need_extraction:
+        for round_num in range(1, MAX_PHASE0_ROUNDS + 1):
+            print(f"🔄 Phase 0 第 {round_num}/{MAX_PHASE0_ROUNDS} 轮")
+            
+            result = invoke_skill("prototype-extraction", module_name, config)
+            if result["status"] == "failed":
+                return {"status": "failed", "reason": f"PRD 生成失败: {result['reason']}"}
+            
+            html_issues = result.get("html_issues", [])
+            if not html_issues:
+                print(f"✅ Phase 0 通过（第 {round_num} 轮无问题）")
+                break  # 进入 Phase 1
+            
+            # 安全阀：直接阻塞，不继续走 Phase 1~4
+            if round_num >= MAX_PHASE0_ROUNDS:
+                questions_path = f"{config.paths.docs.srs}{module_name}-open-questions.md"
+                write_open_questions(questions_path, html_issues)
+                state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+                state.workflow.current_step = "brainstorm_pending_confirm"
+                state.workflow.next_step = "approve_brainstorm"
+                state.workflow.auto_continue = False
+                write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+                print(f"⛔ Phase 0 安全阀：{len(html_issues)} 个问题写入 {questions_path}")
+                return  # 停在这里，等 /approve brainstorm
+            
+            # 同步询问 PM 裁决（不 return，不需要恢复）
+            print(f"⚠️ 发现 {len(html_issues)} 个 HTML 内部问题，请 PM 裁决：")
+            decisions = ask_user_resolve_issues(html_issues)  # C类选值 / D类处理方式
+            apply_decisions_to_prd(decisions, prd_dir)
+            # 回到循环顶部重跑 prototype-extraction
+    
+    # ⛔ 门控点 1: 检查 prototype-extraction 产物完整性
+    gate_result = run_command(f"bash bin/check-skill-artifacts.sh prototype-extraction {module_name} {prd_dir}")
+    if gate_result.exit_code != 0:
+        return failed("prototype-extraction 门控未通过，请补充缺失产物后重试")
+
     # ========== Phase 1: 收集输入 + 生成 SRS 初稿 ==========
     context = {
         "user_request": user_input,
@@ -183,7 +236,7 @@ def brainstorming(user_input):
     }
     
     # 增量更新：如果 SRS 已存在，对比 PRD 差异后增量更新
-    existing_srs_path = f"{config.paths.tasks.root}brainstorm-{module_name}.md"
+    existing_srs_path = f"{config.paths.docs.srs}{module_name}.md"
     if exists(existing_srs_path):
         existing_srs = read_file(existing_srs_path)
         prd_diff = compare_prd_vs_srs(context["prd_docs"], existing_srs)
@@ -205,7 +258,7 @@ def brainstorming(user_input):
         iteration += 1
         print(f"🔄 校验迭代 {iteration}/{max_iterations}")
 
-        # 正向校验（5 项）
+        # 正向校验（6 项）
         forward_issues = []
         for check in FORWARD_CHECKS:
             result = check.execute(requirement_doc)
@@ -216,7 +269,7 @@ def brainstorming(user_input):
             requirement_doc = enhance_doc(requirement_doc, forward_issues)
             continue
 
-        print("  正向校验: ✅ 5/5 通过")
+        print("  正向校验: ✅ 6/6 通过")
 
         # 反向校验（6 项）
         backward_issues = []
@@ -242,47 +295,66 @@ def brainstorming(user_input):
 
         print(f"  PRD 覆盖率: ✅ {len(prd_features)}/{len(prd_features)} = 100%")
 
-        # --- UI 专项校验（当模块涉及 UI 还原时，基于 PRD 文档校验）---
-        # 数据来源: PRD 文档（Phase 0 已保证 PRD 完整性，无需重新解析 HTML 原型）
-        module_prototypes = config.prd_process.module_prototype_map.get(module_name, [])
-        if prd_dir and module_prototypes:
-            ui_issues = []
+        # --- UI 专项校验 ---
+        module_prototypes = config.prd_process.module_prototype_map.get(module_name)
+        ui_issues = []
 
-            # 原型覆盖：PRD 中的所有页面是否都有对应需求？
-            prototype_pages = extract_prd_pages(prd_dir, module_prototypes)
-            req_pages = extract_requirement_pages(requirement_doc)
-            uncovered_pages = prototype_pages - req_pages
-            if uncovered_pages:
-                ui_issues.append(f"原型覆盖: {len(uncovered_pages)} 个页面未有对应需求")
+        # 原型覆盖：PRD 中的所有页面是否都有对应需求？
+        prototype_pages = extract_prd_pages(prd_dir, module_prototypes)
+        req_pages = extract_requirement_pages(requirement_doc)
+        uncovered_pages = prototype_pages - req_pages
+        if uncovered_pages:
+            ui_issues.append(f"原型覆盖: {len(uncovered_pages)} 个页面未有对应需求")
 
-            # 组件清单：是否列出了所有需要实现的 UI 组件？
-            if not has_component_list(requirement_doc):
-                ui_issues.append("组件清单: 未列出需要实现的 UI 组件")
+        # 组件清单：是否列出了所有需要实现的 UI 组件？
+        if not has_component_list(requirement_doc):
+            ui_issues.append("组件清单: 未列出需要实现的 UI 组件")
 
-            # 设计 Token：是否定义了设计变量？
-            if not has_design_tokens(requirement_doc):
-                ui_issues.append("设计 Token: 未定义颜色/圆角/间距等设计变量")
+        # 设计 Token：是否定义了设计变量？
+        if not has_design_tokens(requirement_doc):
+            ui_issues.append("设计 Token: 未定义颜色/圆角/间距等设计变量")
 
-            # 交互行为：PRD 中的交互规则是否都有对应描述？
-            prototype_interactions = extract_prd_interactions(prd_dir, module_prototypes)
-            req_interactions = extract_requirement_interactions(requirement_doc)
-            uncovered_interactions = prototype_interactions - req_interactions
-            if uncovered_interactions:
-                ui_issues.append(f"交互行为: {len(uncovered_interactions)} 个交互未有对应描述")
+        # 交互行为：PRD 中的交互规则是否都有对应描述？
+        prototype_interactions = extract_prd_interactions(prd_dir, module_prototypes)
+        req_interactions = extract_requirement_interactions(requirement_doc)
+        uncovered_interactions = prototype_interactions - req_interactions
+        if uncovered_interactions:
+            ui_issues.append(f"交互行为: {len(uncovered_interactions)} 个交互未有对应描述")
 
-            # 数据结构：表格列、表单字段是否与 PRD 数据字典一致？
-            data_mismatches = check_data_structure_consistency(requirement_doc, context["prd_docs"])
-            if data_mismatches:
-                ui_issues.append(f"数据结构: {len(data_mismatches)} 个字段与 PRD 数据字典不一致")
+        # 数据结构：表格列、表单字段是否与 PRD 数据字典一致？
+        data_mismatches = check_data_structure_consistency(requirement_doc, context["prd_docs"])
+        if data_mismatches:
+            ui_issues.append(f"数据结构: {len(data_mismatches)} 个字段与 PRD 数据字典不一致")
 
-            if ui_issues:
-                print(f"  UI 专项校验: ❌ {len(ui_issues)} 个问题")
-                for issue in ui_issues:
-                    print(f"    - {issue}")
-                requirement_doc = enhance_doc(requirement_doc, ui_issues)
-                continue  # 回到正向校验
+        # 设计 Token 精确度：SRS §8 每个值 vs HTML :root 对应值，必须完全一致
+        design_system_prd = find_file(prd_dir, "DESIGN-SYSTEM.md")
+        if design_system_prd:
+            prd_tokens = extract_design_tokens(design_system_prd)  # 从 PRD 提取的真实值
+            srs_tokens = extract_srs_design_tokens(requirement_doc)  # SRS §8 中的值
+            token_mismatches = []
+            for token_name, prd_value in prd_tokens.items():
+                srs_value = srs_tokens.get(token_name)
+                if srs_value and srs_value != prd_value:
+                    token_mismatches.append(f"{token_name}: SRS={srs_value} vs PRD={prd_value}")
+            if token_mismatches:
+                ui_issues.append(f"设计 Token 精确度: {len(token_mismatches)} 个值与 PRD/HTML 不一致")
 
-            print(f"  UI 专项校验: ✅ 5/5 通过")
+        # 跨区块一致性：同一业务概念在 HTML 不同位置的数据是否一致？
+        cross_block_issues = check_cross_block_consistency(module_prototypes)
+        # 检查项：登录选择器角色 vs roleMenus keys vs roleNames keys
+        #         权限 checkbox 列表 vs 侧边栏 showPage() 页面列表
+        #         新增弹窗字段控件类型 vs 编辑弹窗字段控件类型
+        if cross_block_issues:
+            ui_issues.append(f"跨区块一致性: {len(cross_block_issues)} 处矛盾")
+
+        if ui_issues:
+            print(f"  UI 专项校验: ❌ {len(ui_issues)} 个问题")
+            for issue in ui_issues:
+                print(f"    - {issue}")
+            requirement_doc = enhance_doc(requirement_doc, ui_issues)
+            continue  # 回到正向校验
+
+        print(f"  UI 专项校验: ✅ 7/7 通过")
 
         break  # Phase 2 通过
     else:
@@ -354,10 +426,92 @@ def brainstorming(user_input):
     else:
         return {"status": "failed", "reason": f"增强终审经过 {max_enhanced_rounds} 轮仍未通过，请人工介入"}
 
-    # Step 4: 输出结果（仅在 Phase 3 通过后才执行）
-    # 更新 workflow 状态（通过 workflow-engine 统一管理）
+    # ========== Phase 4: HTML↔PRD↔SRS 全量校验（含回退重校验）==========
+    MAX_PHASE4_RETRIES = 1
+    phase4_retry = 0
+
+    while True:
+        module_prototypes_p4 = config.prd_process.module_prototype_map.get(module_name)
+        open_questions = []
+        has_a_type_fixes = False
+
+        print(f"=== Phase 4: HTML↔PRD↔SRS 全量校验{f'（回退第 {phase4_retry} 次后）' if phase4_retry > 0 else ''} ===")
+        server = start_http_server(config.paths.docs.prototypes)
+
+        for prototype_file in module_prototypes_p4:
+            pages = get_module_pages(prototype_file, module_name)
+            for page in pages:
+                print(f"🔍 校验: {prototype_file} → {page.name}")
+                screenshot = take_screenshot(page)
+                snapshot = take_snapshot(page)
+                prd_diff = compare_with_prd(snapshot, context["prd_docs"])
+                srs_diff = compare_with_srs(snapshot, requirement_doc)
+
+                for diff in prd_diff + srs_diff:
+                    if diff.type == "html_has_doc_missing":  # A类: HTML有PRD/SRS无
+                        print(f"  ✅ A类: {diff.description} → 补充到 PRD + SRS")
+                        update_prd(diff, context["prd_docs"])
+                        requirement_doc = enhance_doc(requirement_doc, [diff.description])
+                        has_a_type_fixes = True
+                    elif diff.type == "doc_has_html_missing":  # B类: PRD/SRS有HTML无
+                        print(f"  ❓ B类: {diff.description} → 待确认")
+                        open_questions.append({"type": "B", "desc": diff.description})
+                    elif diff.type == "html_internal_conflict":  # C类: HTML自身矛盾
+                        print(f"  ❓ C类: {diff.description} → 待产品裁决")
+                        open_questions.append({"type": "C", "desc": diff.description})
+                    elif diff.type == "html_bug":  # D类: HTML明显Bug
+                        print(f"  🐛 D类: {diff.description} → 标注+待确认")
+                        open_questions.append({"type": "D", "desc": diff.description})
+
+        server.stop()
+        print(f"Phase 4 完成: A类补充={has_a_type_fixes}, B/C/D类={len(open_questions)} 个")
+
+        # A 类补充后回到 Phase 2 重新校验（max 1 次回退）
+        if has_a_type_fixes and phase4_retry < MAX_PHASE4_RETRIES:
+            phase4_retry += 1
+            print(f"⚠️ Phase 4 有 A 类补充，回到 Phase 2 重新校验（第 {phase4_retry} 次回退）")
+            # 回到 Phase 2 完整重跑
+            # （复用上面的 Phase 2 循环逻辑，此处省略展开，实际执行时完整重跑）
+            iteration = 0
+            while iteration < max_iterations:
+                iteration += 1
+                # ... Phase 2 完整校验逻辑（正向+反向+PRD覆盖率+UI专项）...
+                pass  # 同上面 Phase 2 代码
+            # 回到 Phase 3 完整重跑
+            no_change_rounds = 0
+            dim_index = 0
+            for round_num in range(1, max_enhanced_rounds + 1):
+                # ... Phase 3 完整终审逻辑 ...
+                pass  # 同上面 Phase 3 代码
+            # 回到 while 顶部重新执行 Phase 4
+            continue
+        else:
+            break  # 无 A 类补充，或已达回退上限
+
+    # ⛔ 门控点 2: 检查 brainstorming 产物完整性
+    gate_result = run_command(f"bash bin/check-skill-artifacts.sh brainstorming {module_name} {prd_dir}")
+    if gate_result.exit_code != 0:
+        return failed("brainstorming 门控未通过，请补充缺失产物后重试")
+
+    # ========== 输出结果 ==========
+    # 注意：只有 B/C/D 类才算"有问题"，A 类（auto_fixed）不算
+    if open_questions:
+        questions_path = f"{config.paths.docs.srs}{module_name}-open-questions.md"
+        write_open_questions(questions_path, open_questions)
+        print(f"📋 需求疑问清单: {questions_path}")
+
+    # 更新 workflow 状态
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
-    update_workflow("/brainstorm", state)
+    if open_questions:  # 只有 B/C/D 类
+        state.workflow.current_step = "brainstorm_pending_confirm"
+        state.workflow.next_step = "approve_brainstorm"
+        state.workflow.auto_continue = False
+        print("⚠️ 有待确认项，阻塞自动继续。请产品确认后执行 /approve brainstorm")
+    else:
+        state.workflow.current_step = "brainstorm_done"
+        state.workflow.next_step = "split_story"
+        state.workflow.auto_continue = True
+    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
 
     return format_output(requirement_doc)
 ```
@@ -365,6 +519,12 @@ def brainstorming(user_input):
 ## 失败退出规则
 
 ```
+⚠️ Phase 0 安全阀：当闭环经过 3 轮后仍有 html_issues：
+1. 输出 {module}-open-questions.md
+2. 设置 workflow.current_step = brainstorm_pending_confirm
+3. 停止 — 不继续走 Phase 1~4（上游有问题不往下跑）
+4. 等 /approve brainstorm 确认后 → brainstorm_done → 自动 split story
+
 ⚠️ Phase 2 失败：当 max_iterations（默认 10）次迭代后仍有校验项未通过：
 1. 输出失败报告（列出所有未通过的校验项和具体问题）
 2. 不更新 workflow.current_step — 保持在执行前的状态
@@ -376,6 +536,12 @@ def brainstorming(user_input):
 2. 不更新 workflow.current_step — 保持在执行前的状态
 3. 停止自动继续 — 提示用户人工介入
 4. 用户可以补充信息后重新执行 /brainstorm
+
+⚠️ Phase 4 阻塞：当存在不确定差异时：
+1. 输出需求疑问清单（{module}-open-questions.md）
+2. 设置 workflow.current_step = brainstorm_pending_confirm
+3. 停止自动继续 — 等待产品确认
+4. 产品确认后重新执行 /brainstorm（增量更新路径）或 /approve brainstorm
 ```
 
 ## 输出格式
@@ -388,7 +554,7 @@ def brainstorming(user_input):
 - 正向校验: ✅ 全部通过
 - 反向校验: ✅ 全部通过
 - PRD 覆盖率: ✅ 全部覆盖
-- UI 专项校验: ✅ 全部通过（仅 UI 模块）
+- UI 专项校验: ✅ 全部通过
 
 ### 需求规格
 
@@ -416,8 +582,15 @@ def brainstorming(user_input):
 - 安全要求: ...
 - 兼容性: ...
 
+### Phase 4 校验结果
+- 浏览页面数: {page_count}
+- 确定差异: {certain_count}（已补充）
+- 待确认项: {question_count}
+- 疑问清单: {module}-open-questions.md（仅在有待确认项时）
+
 ### ⏭️ 下一步
-执行 `/split story` 将需求拆解为 Stories
+- 无待确认项: 执行 `/split story` 将需求拆解为 Stories
+- 有待确认项: 请产品确认疑问清单后重新执行 `/brainstorm {module}`
 ```
 
 ## 硬约束
@@ -426,12 +599,26 @@ def brainstorming(user_input):
 - 禁止在校验未全部通过时输出
 - 禁止停下来等待用户确认
 - 必须循环直到全部 ✅
-- **UI 模块必须执行 UI 专项校验** - 当 config 中有原型映射时自动触发
+- **必须执行 UI 专项校验**
 - **禁止超过 max_iterations（10 次）迭代** - Phase 2 达到上限必须失败退出
 - **禁止超过 max_enhanced_rounds（10 轮）增强终审** - Phase 3 达到上限必须失败退出
 - **连续两轮无修改才算通过** - 不是一轮无修改就通过
 - **上轮有修改 → 维度 H** - 任何修改后必须优先检查交叉影响
-- **每次迭代必须输出进度** - Phase 2：`🔄 校验迭代 N/10`，Phase 3：`� 终审轮次 N/10 (维度 X)`
+- **每次迭代必须输出进度** - Phase 2：`🔄 校验迭代 N/10`，Phase 3：`🔍 终审轮次 N/10 (维度 X)`
+- **Phase 4 必须执行 HTML↔PRD↔SRS 全量校验** - 保证最终结果正确性
+- **Phase 4 必须逐端逐页面浏览** - 不能只看 PRD 文档，必须打开浏览器实测
+- **A类差异（HTML有PRD/SRS无）直接补充** - HTML 是 SSOT，无需确认
+- **B/C/D类差异必须输出问题确认清单** - 不能自作主张决定以谁为准
+- **有问题确认清单时必须阻塞** - 不能自动继续 split story
+- **禁止 AI 自行裁决 HTML 内部矛盾** - C类必须等产品确认
+- **Phase 0 PRD 已存在时必须询问用户** - 由用户决定重新生成还是使用已有
+- **Phase 0 闭环必须完整重跑** - PM 裁决后必须重跑 prototype-extraction 完整 5 步
+- **Phase 0 max 3 轮** - 安全阀到了直接阻塞（输出 open-questions.md），不带着错误往下跑
+- **Phase 0 每轮必须输出进度** - `🔄 Phase 0 第 N/3 轮`
+- **Phase 0 完成后必须运行门控脚本** - `bash bin/check-skill-artifacts.sh prototype-extraction` 检查产物完整性
+- **门控脚本失败时禁止继续 Phase 1** - 必须回到 prototype-extraction 补充缺失产物
+- **Phase 4 发现 B/C/D 类问题时，必须写入 {module}-open-questions.md** — 禁止跳过此步骤
+- **Phase 4 有 open_questions 时，必须设置 brainstorm_pending_confirm** — 禁止自动继续 split story
 
 ---
 
@@ -440,6 +627,17 @@ def brainstorming(user_input):
 **每次校验循环开始时，必须输出迭代进度：**
 
 ```
+=== Phase 0: PRD 生成 ===
+🔄 Phase 0 第 1/3 轮
+  - prototype-extraction: 完成 (7 个 PRD 文件)
+  - html_issues: ❌ 2 个问题 (1 个 C类, 1 个 D类)
+  → 同步询问 PM 裁决...
+
+🔄 Phase 0 第 2/3 轮 (PM 已裁决 2 个问题)
+  - prototype-extraction: 完成 (7 个 PRD 文件)
+  - html_issues: ✅ 无问题
+  ✅ Phase 0 通过
+
 === Phase 2: 领域专项校验 ===
 🔄 校验迭代 1/10
   - 正向校验: 检查中...
@@ -447,10 +645,10 @@ def brainstorming(user_input):
   - PRD 覆盖率: 检查中...
 
 🔄 校验迭代 2/10 (上轮发现 2 个问题，已补充)
-  - 正向校验: ✅ 5/5 通过
+  - 正向校验: ✅ 6/6 通过
   - 反向校验: ✅ 6/6 通过
   - PRD 覆盖率: ✅ 100%
-  - UI 专项校验: ✅ 5/5 通过（仅 UI 模块）
+  - UI 专项校验: ✅ 7/7 通过
 
 === Phase 3: 增强全局终审 ===
 🔍 终审轮次 1/10 (维度 B — 边界场景)

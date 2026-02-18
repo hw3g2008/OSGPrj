@@ -42,8 +42,11 @@ metadata:
 │       获取模块对应的所有 HTML 原型文件              │
 │ [1.2] 对每个 HTML 文件，grep 提取侧边栏菜单:      │
 │       grep "showPage\(" {file} → 提取所有页面 ID   │
-│ [1.3] 按模块关键词过滤，生成矩阵:                 │
-│       端(行) × 页面(列) = 是否存在                 │
+│ [1.2b] 扫描前置/全局页面（非菜单页面）:           │
+│       grep 登录页/错误页/全局组件等独立区块        │
+│       扫描结果为空是正常情况，不报错               │
+│ [1.3] 合并 [1.2]+[1.2b]，按模块关键词过滤生成矩阵│
+│       前置页面标注 🔑，端(行) × 页面(列) = 是否存在│
 │ [1.4] 输出矩阵，人工确认无遗漏                    │
 │ [1.5] 空矩阵检查: 如果无匹配页面 → 失败退出      │
 └─────────────────────────────────────────────────┘
@@ -95,8 +98,9 @@ metadata:
 ┌─ Step 4: 生成 PRD 文档 ──────────────────────────┐
 │ [4.1] 为每个端的每个页面生成独立 PRD 文件:        │
 │       命名规则: {NN}-{role}-{page}.md             │
-│       如: 01-student-positions.md                  │
-│           06-mentor-job-overview.md                │
+│       前置页面(🔑)用 00 编号: 00-admin-login.md   │
+│       菜单页面从 01 开始: 01-student-positions.md  │
+│       如: 06-mentor-job-overview.md                │
 │           07-assistant-job-overview.md             │
 │ [4.2] 相似页面不合并，但在 PRD 中标注差异来源    │
 │ [4.3] 生成 DECISIONS.md 记录产品决策              │
@@ -146,6 +150,24 @@ prototype_files = config.prd_process.module_prototype_map[module_name]
 grep -n "showPage(" {file} | grep -i "{module_keyword}"
 ```
 
+### 1.2b 扫描前置/全局页面
+
+除侧边栏菜单外，还需扫描不在菜单中但属于模块业务流程的页面：
+
+```bash
+# 登录页
+grep -n 'class="login' {file}
+# 错误页
+grep -n 'id="page-403\|id="page-404\|id="error-' {file}
+# 其他独立区块（不在 showPage 中的 div.page）
+grep -n 'class="page"' {file} | grep -v 'showPage'
+```
+
+**规则**：
+- 扫描结果为空是正常情况（多数模块无独立前置页面），不报错
+- 发现的前置页面在矩阵中标注 🔑（前置），与菜单页面区分
+- 前置页面同样需要经过 Step 2 双通道提取
+
 ### 1.3 生成矩阵
 
 输出格式（Markdown 表格）:
@@ -163,6 +185,11 @@ grep -n "showPage(" {file} | grep -i "{module_keyword}"
 - 矩阵必须包含模块相关的**所有**页面 ID
 - 快捷入口（如首页的快捷按钮）也要纳入矩阵
 - 如果某端有该页面但不在侧边栏菜单中（如仅在快捷入口），标注 ⚡
+- **前置页面检查清单**（每次建立矩阵后必须逐项确认）：
+  - [ ] 该模块是否有独立的登录/注册页面？
+  - [ ] 该模块是否有错误兜底页面（403/404/500）？
+  - [ ] 该模块是否有全局组件（侧边栏、顶部导航）需要单独提取？
+  - [ ] 前置页面是否已标注 🔑 并纳入矩阵？
 
 ### 1.5 空矩阵检查
 
@@ -195,7 +222,7 @@ grep -n "showPage(" {file} | grep -i "{module_keyword}"
 
 | # | 检查项 | grep 命令 | 目的 |
 |---|--------|-----------|------|
-| B1 | 页面区块 | `id="page-{pageId}"` | 定位页面 HTML |
+| B1 | 页面区块 | `id="page-{pageId}"` | 定位页面 HTML（菜单页面）；前置页面（🔑）按实际结构定位，如 `class="login-container"` |
 | B2 | 表格列 | `<th>` 在页面区块内 | 提取表格结构 |
 | B3 | 表单字段 | `<input\|<select\|<textarea` | 提取表单 |
 | B4 | 弹窗 | `id="modal-"` | 提取弹窗内容 |
@@ -210,6 +237,10 @@ grep -n "showPage(" {file} | grep -i "{module_keyword}"
 | B13 | 表单验证 | `required\|pattern=\|maxlength` | 提取验证规则 |
 | B14 | 分页 | `pagination\|page-size\|total` | 提取分页配置 |
 | B15 | 默认值+联动 | `selected\|checked\|value=` + onchange | 提取默认值和联动关系 |
+| B16 | 全局 CSS 变量 | `:root` 在 `<style>` 标签内 | 提取所有 CSS 自定义属性（颜色/间距/阴影等） |
+| B17 | 通用组件样式 | `.btn\|.card\|.table\|.modal\|.form-input\|.tag\|.stat-card\|.tabs` | 提取通用组件的完整 CSS 参数（圆角/padding/字体等） |
+| B18 | 全局布局 | `.sidebar\|.main-content\|.app\|body\|.login-page` | 提取布局参数（宽度/padding/flex方向/字体族） |
+| B19 | 侧边栏结构 | `sidebar-nav\|nav-section\|nav-item\|nav-group` | 提取菜单分组/图标/Badge/权限映射 |
 
 ---
 
@@ -312,10 +343,114 @@ page: 页面名（如 positions, job-overview, applications）
 - 错误状态：请求失败时的展示（错误提示/重试按钮）
 ```
 
+### DESIGN-SYSTEM.md 模板
+
+从 B16~B18 提取的全局设计系统信息，生成独立文件：
+
+```markdown
+# {端名} - 全局设计系统 (Design System)
+
+> 来源：{html文件名} → `<style>` 标签（HTML 源码提取）
+
+## 1. CSS 变量（:root）
+| 变量名 | 值 | 用途 |
+|--------|---|------|
+| --primary | #xxx | 主色调 |
+| ... | ... | ... |
+
+## 2. 通用组件样式
+### 2.1 按钮 (.btn)
+- border-radius / padding / font-size / font-weight
+- 变体：btn-primary / btn-outline / btn-text / btn-sm
+
+### 2.2 表单输入 (.form-input)
+- border / border-radius / padding / font-size / focus 样式
+
+### 2.3 表格 (.table)
+- th 样式 / td 样式 / 行高 / 斑马纹
+
+### 2.4 卡片 (.card)
+- border-radius / padding / box-shadow / background
+
+### 2.5 弹窗 (.modal)
+- 宽度 / border-radius / padding / overlay 颜色
+
+### 2.6 标签 (.tag)
+- 变体及颜色映射：success/warning/danger/info/purple
+- border-radius / padding / font-size
+
+### 2.7 统计卡片 (.stat-card)
+- 布局 / 数字字体大小 / 标签字体大小
+
+### 2.8 Tab (.tabs)
+- 激活态样式 / 非激活态样式 / 切换动画
+
+## 3. 全局布局
+| 区域 | 参数 | 值 |
+|------|------|---|
+| 侧边栏 | width | xxxpx |
+| 主内容区 | padding | xxxpx |
+| 页面容器 | max-width | xxxpx |
+| body | font-family | xxx |
+| body | font-size | xxxpx |
+| body | line-height | xxx |
+
+## 4. 间距体系
+| 级别 | 值 | 使用场景 |
+|------|---|---------|
+
+## 5. 圆角体系
+| 级别 | 值 | 使用场景 |
+|------|---|---------|
+
+## 6. 动画/过渡
+| 名称 | 定义 | 使用场景 |
+|------|------|---------|
+```
+
+### SIDEBAR-NAV.md 模板
+
+从 B19 提取的侧边栏导航结构，生成独立文件：
+
+```markdown
+# {端名} - 侧边栏导航结构 (Sidebar Navigation)
+
+> 来源：{html文件名} → 侧边栏 HTML 结构（HTML 源码提取）
+
+## 1. 整体布局
+- 宽度 / 背景色 / 位置（fixed/sticky）
+- 顶部 Logo 区域
+- 底部用户卡片区域
+
+## 2. 菜单分组
+| 分组名 | 菜单项 | 图标 | Badge | showPage ID |
+|--------|--------|------|-------|-------------|
+| 分组1 | 菜单项1 | mdi-xxx | — | page-id |
+| ... | ... | ... | ... | ... |
+
+## 3. 权限映射
+| 角色 | 可见菜单项 |
+|------|-----------|
+| super-admin | 全部 |
+| ... | ... |
+
+## 4. 交互规则
+- 菜单项点击行为
+- 分组展开/折叠
+- 激活态样式
+- Badge 更新逻辑
+
+## 5. 用户卡片
+- 头像 / 用户名 / 角色标签
+- 下拉菜单项（个人设置/退出登录）
+```
+
 ### 特殊文件
 
 - `DECISIONS.md` — 产品决策记录（每个决策标注来源）
 - `MATRIX.md` — 端×页面全量矩阵 + 差异摘要
+- `DESIGN-SYSTEM.md` — 全局设计系统（CSS 变量 + 组件样式 + 布局规范）
+- `SIDEBAR-NAV.md` — 侧边栏导航结构（菜单分组 + 图标 + Badge + 权限映射）
 
 ---
 
@@ -336,6 +471,10 @@ page: 页面名（如 positions, job-overview, applications）
 | V9 | 表单验证覆盖率 | 所有表单字段都有验证规则描述 | 回到 Step 2 补充 |
 | V10 | 分页覆盖率 | 所有列表页面都有分页配置 | 回到 Step 2 补充 |
 | V11 | 空状态覆盖率 | 所有列表页面都有空状态描述 | 回到 Step 2 补充 |
+| V12 | HTML 内部一致性 | 同一 HTML 文件内不同位置对同一实体的命名/分组一致 | 记录到 html_issues（不阻塞，返回给调用方处理） |
+| V13 | HTML Bug 检测 | JS 引用的页面 ID 都存在对应的页面定义 | 记录到 html_issues（不阻塞，返回给调用方处理） |
+| V14 | 设计系统覆盖率 | DESIGN-SYSTEM.md 包含所有 :root 变量和通用组件样式 | 回到 Step 2 补充（B16~B18） |
+| V15 | 侧边栏覆盖率 | SIDEBAR-NAV.md 包含所有 nav-item 和权限映射 | 回到 Step 2 补充（B19） |
 
 ---
 
@@ -410,7 +549,22 @@ def extract_prototypes(module_name, config):
     # 生成 MATRIX.md
     write_file(f"{output_dir}/MATRIX.md", generate_matrix_doc(matrix, prd_docs))
     
+    # 生成 DESIGN-SYSTEM.md（从 B16~B18 提取的全局设计系统）
+    for html_file in prototype_files:
+        design_system = extract_design_system(html_file)  # B16: CSS变量, B17: 组件样式, B18: 布局
+        write_file(f"{output_dir}/DESIGN-SYSTEM.md", design_system.to_markdown())
+    
+    # 生成 SIDEBAR-NAV.md（从 B19 提取的侧边栏结构）
+    for html_file in prototype_files:
+        sidebar_nav = extract_sidebar_nav(html_file)  # B19: 菜单分组/图标/Badge/权限
+        write_file(f"{output_dir}/SIDEBAR-NAV.md", sidebar_nav.to_markdown())
+    
     # ========== Step 5: 完整性校验 ==========
+    # ⛔ 门控前置检查: 检查 Step 1~4 产物完整性
+    gate_result = run_command(f"bash bin/check-skill-artifacts.sh prototype-extraction {module_name} {output_dir}")
+    if gate_result.exit_code != 0:
+        return failed("Step 1~4 产物不完整，请补充后重试")
+
     max_retries = 3
     for retry in range(max_retries):
         issues = validate_completeness(matrix, prd_docs, output_dir)
@@ -425,7 +579,48 @@ def extract_prototypes(module_name, config):
     else:
         return {"status": "failed", "reason": f"完整性校验经过 {max_retries} 次重试仍未通过"}
     
-    return {"status": "success", "prd_count": len(prd_docs), "output_dir": output_dir}
+    # ========== Step 5b: HTML 内部一致性检测 (V12/V13) ==========
+    # 注意: 不阻塞，仅收集问题返回给调用方处理
+    html_issues = []
+    
+    # V12: 同一 HTML 文件内命名/分组一致性
+    for html_file in prototype_files:
+        # 检查侧边栏菜单名 vs 弹窗/权限配置中的模块名是否一致
+        sidebar_names = extract_sidebar_names(html_file)
+        modal_names = extract_modal_module_names(html_file)
+        for page_id in matrix.get(html_file, []):
+            if sidebar_names.get(page_id) != modal_names.get(page_id):
+                html_issues.append({
+                    "type": "C",  # C类: HTML 内部矛盾
+                    "desc": f"{html_file}: 侧边栏名'{sidebar_names[page_id]}' vs 弹窗名'{modal_names[page_id]}' (page: {page_id})",
+                    "file": html_file,
+                    "page_id": page_id
+                })
+    
+    # V13: JS 引用的页面 ID 是否都存在
+    for html_file in prototype_files:
+        referenced_ids = extract_js_referenced_page_ids(html_file)
+        defined_ids = extract_defined_page_ids(html_file)
+        for ref_id in referenced_ids:
+            if ref_id not in defined_ids:
+                html_issues.append({
+                    "type": "D",  # D类: HTML Bug
+                    "desc": f"{html_file}: JS 引用了不存在的页面 ID '{ref_id}'",
+                    "file": html_file,
+                    "ref_id": ref_id
+                })
+    
+    if html_issues:
+        print(f"⚠️ 发现 {len(html_issues)} 个 HTML 内部问题（返回给调用方处理）")
+        for issue in html_issues:
+            print(f"  - [{issue['type']}类] {issue['desc']}")
+    
+    return {
+        "status": "success",
+        "prd_count": len(prd_docs),
+        "output_dir": output_dir,
+        "html_issues": html_issues  # 新增: HTML 内部矛盾/Bug 列表
+    }
 ```
 
 ---
@@ -456,7 +651,11 @@ def extract_prototypes(module_name, config):
         # ...
     },
     "diff_pages": ["job-overview", "positions", "mock-practice"],
-    "special_files": ["DECISIONS.md", "MATRIX.md"]
+    "special_files": ["DECISIONS.md", "MATRIX.md"],
+    "html_issues": [          # 新增: HTML 内部矛盾/Bug
+        {"type": "C", "desc": "admin.html: 侧边栏名'课程记录' vs 弹窗名'全部课程'", ...},
+        {"type": "D", "desc": "admin.html: JS 引用了不存在的页面 ID 'resumes'", ...}
+    ]
 }
 ```
 
@@ -478,6 +677,10 @@ def extract_prototypes(module_name, config):
 - **Tab 必须全部展开** — 每个 Tab 的内容都必须被提取
 - **禁止超过 max_retries（3 次）重试** — Step 5 达到上限必须失败退出
 - **每次重试必须输出进度** — `🔄 完整性校验 N/3` + 每项校验结果
+- **HTML 内部矛盾不阻塞提取** — V12/V13 发现的问题记录到 html_issues 返回给调用方，不在本 Skill 内阻塞
+- **禁止自行裁决 HTML 矛盾** — C类问题必须原样返回，不能在 PRD 中自行选择一个版本
+- **设计系统必须提取** — 每个 HTML 原型的 `<style>` 中的 `:root` 变量和通用组件样式必须提取到 DESIGN-SYSTEM.md
+- **侧边栏必须提取** — 每个 HTML 原型的侧边栏结构（菜单分组/图标/Badge/权限映射）必须提取到 SIDEBAR-NAV.md
 
 ---
 
