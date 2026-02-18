@@ -64,18 +64,25 @@ audit_files:
 
 ### 维度 2：工作流链路完整性
 
-验证 10 个转换节点是否形成无断裂的状态机：
+验证 15 个状态节点（含 2 个分支状态）是否形成无断裂的状态机：
 
 ```
+主链路:
 brainstorm_done → split_story → story_split_done → approve_stories →
 stories_approved → split_ticket → ticket_split_done → approve_tickets →
-ticket_approved → next → ticket_done/all_tickets_done → verify →
-story_done → approve_story → story_approved → next_story → [循环或结束]
+tickets_approved → next → implementing → ticket_done → next → ...
+  → all_tickets_done → verify → story_verified → [/cc-review 或 /approve]
+  → story_done → approve_story → story_approved → next_story → [循环或结束]
+
+分支:
+  brainstorm → brainstorm_pending_confirm → approve_brainstorm → brainstorm_done
+  verify → verification_failed → /verify → story_verified
+  story_verified → /approve（跳过CC）→ story_approved
 ```
 
 | 检查项 | 通过条件 | 检查方法 |
 |--------|----------|----------|
-| 每个节点有写入方 | 10 个节点各有明确的 Skill/Command 负责写入 | 逐节点追踪 |
+| 每个节点有写入方 | 15 个状态节点各有明确的 Skill/Command 负责写入 | 逐节点追踪 |
 | 写入值精确匹配 | 每个 Skill 写入的 current_step 和 next_step 与 CLAUDE.md 转换表精确匹配 | 字符串对比 |
 | 无重复写入冲突 | 同一节点不被多个 Skill 无条件写入（兜底逻辑除外） | 逻辑分析 |
 

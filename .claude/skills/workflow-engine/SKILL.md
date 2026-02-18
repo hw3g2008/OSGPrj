@@ -57,6 +57,7 @@ def requires_approval(next_step, config):
     """
     # 从 state-machine.yaml 读取映射
     approval_config_keys = {
+        "approve_brainstorm": "brainstorm_confirm",
         "approve_stories": "story_split",
         "approve_tickets": "ticket_split",
         "approve_story": "story_done",
@@ -83,6 +84,7 @@ def get_next_command(next_step, state):
     # 从 state-machine.yaml 读取映射
     action_to_command = {
         "brainstorm": "/brainstorm",
+        "approve_brainstorm": "/approve brainstorm",
         "split_story": "/split story",
         "approve_stories": "/approve stories",
         "split_ticket": f"/split ticket {state.current_story}",
@@ -175,6 +177,12 @@ def update_workflow(command_completed, state):
 │  └──────┬───────┘                                           │
 │         │ 否                                                │
 │         ▼                                                   │
+│  ┌──────────────┐     否                                    │
+│  │auto_continue ├────────────► 停止，输出"自动继续已禁用"   │
+│  │ 为 true？    │             + 下一步命令提示              │
+│  └──────┬───────┘                                           │
+│         │ 是                                                │
+│         ▼                                                   │
 │  ┌──────────────┐     是                                    │
 │  │ 需要审批？   ├────────────► 停止，输出审批提示            │
 │  └──────┬───────┘                                           │
@@ -210,6 +218,7 @@ def update_workflow(command_completed, state):
 | Ticket 的 allowed_paths 为空 | 停止，输出"Ticket 缺少 allowed_paths 配置" |
 | Ticket 完成时缺少 verification_evidence | 停止，不更新状态，提示执行验证命令 |
 | /verify 时 Ticket 缺少 verification_evidence | 停止验收，列出缺少证据的 Tickets |
+| auto_continue 为 False | 停止，输出"自动继续已禁用"和下一步命令提示 |
 
 ## 供其他 Skill 调用的接口
 

@@ -153,6 +153,7 @@ ports:
 
 # 审批配置
 approval:
+  brainstorm_confirm: required # 需求确认必须人工审批
   story_split: required      # Story 拆分后需要审批
   ticket_split: auto         # Ticket 拆分后自动继续
   ticket_done: auto          # Ticket 完成后自动继续
