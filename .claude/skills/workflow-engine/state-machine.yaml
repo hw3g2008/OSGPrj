@@ -74,6 +74,7 @@ states:
     next_action: next
     approval_required: false
 
+  # 理论节点：正常流程中 deliver-ticket 直接写 implementing/story_verified，绕过此状态。唯一合法用途：回滚目标（规则 1）
   ticket_done:
     phase: implement
     description: "Ticket 执行完成"
@@ -81,6 +82,7 @@ states:
     approval_required: false
     approval_key: ticket_done  # 可配置为 required
 
+  # 理论节点：正常流程中 deliver-ticket 直接调用 verify_story()，绕过此状态。唯一合法用途：回滚目标（规则 3/5）
   all_tickets_done:
     phase: implement
     description: "所有 Tickets 完成"

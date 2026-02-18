@@ -25,7 +25,8 @@ MOCK_CONFIG = {
         "story_split": "required",
         "ticket_split": "auto",
         "ticket_done": "auto",
-        "story_done": "auto"
+        "story_done": "auto",
+        "brainstorm_confirm": "required"
     }
 }
 
@@ -68,6 +69,11 @@ class WorkflowEngine:
 
         # 模拟命令完成后的状态更新
         if command == "/brainstorm":
+            if not hasattr(self, '_brainstorm_done'):
+                self._brainstorm_done = True
+                return "brainstorm_pending_confirm"
+            return "brainstorm_done"
+        elif command == "/approve brainstorm":
             return "brainstorm_done"
         elif command == "/split story":
             return "story_split_done"
@@ -208,12 +214,16 @@ def test_state_transitions():
     expected_transitions = [
         ("not_started", "brainstorm"),
         ("brainstorm_done", "split_story"),
+        ("brainstorm_pending_confirm", "approve_brainstorm"),
         ("story_split_done", "approve_stories"),
         ("stories_approved", "split_ticket"),
         ("ticket_split_done", "approve_tickets"),
         ("tickets_approved", "next"),
+        ("implementing", "next"),
         ("ticket_done", "next"),
         ("all_tickets_done", "verify"),
+        ("story_verified", None),
+        ("verification_failed", None),
         ("story_done", "approve_story"),
         ("story_approved", "next_story"),
         ("all_stories_done", None),
@@ -240,6 +250,7 @@ def test_approval_config():
         "approve_tickets": "ticket_split",
         "approve_story": "story_done",
         "next": "ticket_done",
+        "approve_brainstorm": "brainstorm_confirm",
     }
 
     for action, expected_key in expected_mappings.items():
@@ -268,6 +279,7 @@ def test_command_mapping():
         "verify": "/verify {current_story}",
         "approve_story": "/approve {current_story}",
         "next_story": None,
+        "approve_brainstorm": "/approve brainstorm",
     }
 
     for action, expected_cmd in expected_commands.items():

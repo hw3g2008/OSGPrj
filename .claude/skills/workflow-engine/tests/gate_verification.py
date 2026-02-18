@@ -101,6 +101,11 @@ class WorkflowSimulator:
     def execute_command(self, command):
         """模拟执行命令，返回新状态"""
         if command == "/brainstorm":
+            if not hasattr(self, '_brainstorm_done'):
+                self._brainstorm_done = True
+                return "brainstorm_pending_confirm"
+            return "brainstorm_done"
+        elif command == "/approve brainstorm":
             return "brainstorm_done"
         elif command == "/split story":
             return "story_split_done"
@@ -304,7 +309,8 @@ def main():
             "story_split": "required",
             "ticket_split": "auto",
             "ticket_done": "auto",
-            "story_done": "auto"
+            "story_done": "auto",
+            "brainstorm_confirm": "required"
         }
     }
 
