@@ -33,6 +33,13 @@ states:
     next_action: split_story
     approval_required: false
 
+  brainstorm_pending_confirm:
+    phase: research
+    description: "需求分析完成但有待产品确认的疑问项"
+    next_action: approve_brainstorm
+    approval_required: true
+    approval_key: brainstorm_confirm
+
   # --- Plan 阶段 ---
   story_split_done:
     phase: plan
@@ -117,7 +124,8 @@ states:
 # 命令完成后，工作流进入对应的状态
 # ============================================
 command_to_state:
-  "/brainstorm": brainstorm_done
+  "/brainstorm": brainstorm_done  # 默认；brainstorming Skill 自己管理分支（done 或 pending_confirm）
+  "/approve brainstorm": brainstorm_done
   "/split story": story_split_done
   "/split ticket": ticket_split_done
   "/approve stories": stories_approved
@@ -132,6 +140,7 @@ command_to_state:
 # ============================================
 action_to_command:
   brainstorm: "/brainstorm"
+  approve_brainstorm: "/approve brainstorm"
   split_story: "/split story"
   approve_stories: "/approve stories"
   split_ticket: "/split ticket {current_story}"
@@ -146,6 +155,7 @@ action_to_command:
 # 动作 → config.approval 中的键名
 # ============================================
 approval_config_keys:
+  approve_brainstorm: brainstorm_confirm
   approve_stories: story_split
   approve_tickets: ticket_split
   approve_story: story_done
@@ -155,6 +165,13 @@ approval_config_keys:
 # 特殊分支逻辑
 # ============================================
 special_branches:
+  # /brainstorm 完成后的分支（brainstorming Skill 直接写 STATE.yaml）
+  brainstorm_completion:
+    note: "brainstorming Skill 完成后直接写 STATE.yaml，不经过 update_workflow()"
+    condition: "has_open_questions(module)"
+    true_state: brainstorm_pending_confirm
+    false_state: brainstorm_done
+
   # /next 完成后的分支（deliver-ticket 自己管理状态，此处作文档说明）
   next_completion:
     note: "deliver-ticket 完成后直接写 STATE.yaml，不经过 update_workflow()"
@@ -218,3 +235,8 @@ rollback:
     to: all_tickets_done
     trigger: "/rollback"
     condition: "验收结果有问题，需要重新验收"
+
+  - from: [brainstorm_pending_confirm]
+    to: not_started
+    trigger: "/rollback"
+    condition: "需求分析需要重新开始"

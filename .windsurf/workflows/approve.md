@@ -19,6 +19,14 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
 
 2. **根据阶段审批**
 
+   ### Brainstorm 需求确认
+   - 条件：`current_step` 为 `brainstorm_pending_confirm`
+   - 读取 `{module}-open-questions.md`，逐项展示
+   - PM 逐项裁决（C/D/B 类按类型处理）
+   - 更新 `workflow.current_step` 为 `brainstorm_done`
+   - 更新 `workflow.next_step` 为 `split_story`
+   - 更新 `workflow.auto_continue` 为 `true`
+
    ### Stories 审批
    - 条件：`current_step` 为 `story_split_done`
    - 读取 `config.yaml` 的 `approval.story_split` 配置
