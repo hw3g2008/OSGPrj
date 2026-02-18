@@ -25,11 +25,11 @@ metadata:
 
 ## 🎯 覆盖率门槛
 
-| 类型 | 后端 (backend) | 前端 (frontend) | 数据库 (database) |
-|------|---------------|-----------------|-------------------|
-| 分支覆盖率 | **100%** | 90% | N/A |
-| 行覆盖率 | 90% | 80% | N/A |
-| 测试通过率 | **100%** | **100%** | **100%** |
+| 类型 | backend | database | test | frontend | frontend-ui | config |
+|------|---------|----------|------|----------|-------------|--------|
+| 分支覆盖率 | **100%** | **100%** | **100%** | 90% | 80% | — |
+| 行覆盖率 | 90% | 90% | 90% | 80% | 70% | — |
+| 测试通过率 | **100%** | **100%** | **100%** | **100%** | **100%** | — |
 
 ---
 
@@ -330,6 +330,19 @@ def execute_tests(ticket, config):
                 }
 
         print("✅ 测试全部通过")
+
+        # Step 2.5: 断言密度检查（每个测试方法必须有 ≥1 个断言）
+        for test_class in get_test_classes():
+            for test_method in get_test_methods(test_class):
+                assertion_count = count_assertions(test_method)
+                # 断言关键词: assertEquals, assertTrue, assertFalse, assertThrows,
+                #            assertNotNull, assertThat, verify, expect
+                if assertion_count == 0:
+                    return {
+                        "status": "failed",
+                        "reason": f"{test_class}.{test_method} 没有断言，测试无效"
+                    }
+        print("✅ 断言密度检查通过")
 
         # Step 3: 解析覆盖率报告
         if ticket.type in ("backend", "database", "test"):

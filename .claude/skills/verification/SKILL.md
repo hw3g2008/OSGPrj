@@ -83,6 +83,7 @@ def can_claim_done(task):
 | **Phase 2 功能验收** | 全量测试 🔴 | 执行 mvn test / pnpm test | exit_code=0 |
 | | AC 覆盖率 | 逐条检查 Story AC | 每个 AC 被至少 1 个已完成 Ticket 覆盖 |
 | | 覆盖率汇总 | 解析 JaCoCo/Vitest 报告 | 达到 config 中定义的门槛 |
+| | 集成测试 | 执行 `mvn verify -Pintegration-test` | exit_code=0（仅当 config.testing.integration.enabled） |
 | **Phase 3 增强全局终审** | 三维度终审 | 上游一致性+下游可行性+全局完整性 | 全部通过 |
 | | 多维度旋转校验 | A~I 维度按优先级轮换（参见 quality-gate） | 连续两轮无修改 |
 | | 退出条件 | 连续 2 轮无修改，或达到 max 10 轮 | 连续 2 轮无修改 |
@@ -215,6 +216,15 @@ def verify_story(story_id):
                 if coverage["line"]["percentage"] < thresholds["line"]:
                     issues.append(("coverage", "frontend_line",
                         f"前端行覆盖率 {coverage['line']['percentage']}% < {thresholds['line']}%"))
+
+        # ------------------------------------------
+        # 2.1b 集成测试（如果启用）
+        # ------------------------------------------
+        if config.get("testing", {}).get("integration", {}).get("enabled"):
+            integration_result = bash(config.testing.integration.command)
+            if integration_result.exit_code != 0:
+                issues.append(("integration_test", "all",
+                    f"集成测试失败: {extract_failure_summary(integration_result)}"))
 
         # ------------------------------------------
         # 2.2 Story AC 覆盖率检查

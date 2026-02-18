@@ -733,13 +733,41 @@ def design_test_cases(ticket):
         additional_cases = generate_cases_for_branches(uncovered)
         test_cases.extend(additional_cases)
 
+    # Step 5.5: 测试用例关联 AC（E-12）
+    for tc in test_cases:
+        if not tc.get("ac_ref"):
+            print(f"⚠️ TC {tc['id']} 没有关联 Ticket AC，请添加 ac_ref 字段")
+            tc["ac_ref"] = infer_ac_ref(tc, ticket.acceptance_criteria)
+
+    # Step 5.6: AC 测试覆盖率检查（E-13）
+    for ac in ticket.acceptance_criteria:
+        ac_tests = [tc for tc in test_cases if tc.get("ac_ref") == ac.get("id")]
+        if len(ac_tests) == 0:
+            print(f"❌ AC '{ac['description']}' 没有对应的测试用例，补充中...")
+            additional = generate_cases_for_ac(ac)
+            test_cases.extend(additional)
+
     # Step 6: 生成测试用例矩阵
     matrix = generate_test_matrix(test_cases, branches)
+
+    # Step 7: 持久化矩阵文件（E-8b）
+    matrix_path = f"{config.paths.tasks.test_matrices}{ticket.id}.yaml"
+    write_yaml(matrix_path, {
+        "ticket_id": ticket.id,
+        "ticket_type": ticket.type,
+        "branches": branches,
+        "test_cases": test_cases,
+        "coverage_target": get_coverage_thresholds(ticket.type),
+        "design_methods_applied": ["equivalence_partitioning", "boundary_value_analysis", "decision_table"],
+        "created_at": now()
+    })
+    print(f"✅ 测试矩阵已写入: {matrix_path}")
 
     return {
         "test_cases": test_cases,
         "branch_coverage": 100,
-        "matrix": matrix
+        "matrix": matrix,
+        "matrix_path": matrix_path
     }
 
 

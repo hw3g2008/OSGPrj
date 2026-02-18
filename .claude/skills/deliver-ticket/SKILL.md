@@ -90,8 +90,12 @@ metadata:
 └─────────────────────────────────────────────────────────────┘
   │
   ▼
+[读取测试矩阵文件] ─→ 从 {config.paths.tasks.test_matrices}/{ticket_id}.yaml 读取
+  │                     （文件不存在则先调用 test-design 生成）
+  ▼
 [TDD: RED] ─→ 根据测试用例矩阵编写失败测试
-  │
+  │              ⚠️ 运行测试必须失败（exit_code ≠ 0），否则拒绝进入 GREEN
+  │              （测试不失败说明：无断言、断言条件错误、或未依赖被测代码）
   ▼
 [TDD: GREEN] ─→ 写最少的代码让测试通过
   │
@@ -197,6 +201,8 @@ metadata:
 [输出结果]
 ```
 
+> ❗ **注意**：流程 B 完成后，仍需经过增强终审（Step 4.5）+ Level 1/2 验证（Step 5~6）+ 写入 evidence（Step 7）+ 更新状态（Step 8），与流程 A 的 Step 4~8 相同。
+
 ### 流程 C：前端功能流程（type: frontend）
 
 与流程 A 类似，但验收标准为 lint + build 通过，无强制单元测试要求。详见 `42_实现细节.md` 的前端测试策略。
@@ -235,6 +241,8 @@ metadata:
   ▼
 [输出结果]
 ```
+
+> ❗ **注意**：流程 E 完成后，仍需经过增强终审（Step 4.5）+ Level 1/2 验证（Step 5~6）+ 写入 evidence（Step 7）+ 更新状态（Step 8），与流程 A 的 Step 4~8 相同。
 
 ## 自我审查清单
 
@@ -489,7 +497,7 @@ def run_verification(ticket, config):
     if ticket.type in ("backend", "database", "test"):
         # 后端/数据库/测试：运行测试或编译
         if ticket.type == "database":
-            cmd = "mvn compile -pl ruoyi-admin -am -q"
+            cmd = "mvn test -Dtest='*Mapper*,*Repository*'"
         else:
             cmd = config.commands.test  # 优先使用指定测试类: mvn test -Dtest={TestClass}
 

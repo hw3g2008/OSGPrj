@@ -21,6 +21,12 @@ description: RPIV 主流程调度 - 读取 STATE.yaml 判断当前阶段并执�
 
 执行 `/brainstorm`
 
+### 阶段 R-2（Requirement Confirm）— 需求确认
+
+**触发条件**：`current_step` 为 `brainstorm_pending_confirm`
+
+执行 `/approve brainstorm`（审阅并确认待确认疑问项）
+
 ### 阶段 P（Plan）— 拆分计划
 
 **触发条件**：`current_step` 为 `brainstorm_done`
@@ -63,7 +69,9 @@ description: RPIV 主流程调度 - 读取 STATE.yaml 判断当前阶段并执�
 
 **触发条件**：`current_step` 为 `all_stories_done`
 
-输出完成摘要，提示用户是否需要开始新的需求模块。
+输出完成摘要，提示用户：
+1. 执行 E2E 测试：`cd osg-frontend && npx playwright test`（配置：`config.yaml` → `testing.e2e`）
+2. 是否需要开始新的需求模块
 
 ## 第三步：更新状态
 

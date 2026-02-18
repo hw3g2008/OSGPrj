@@ -65,3 +65,22 @@ mvn test jacoco:report
 cd osg-frontend && pnpm test:coverage
 # 覆盖率报告: osg-frontend/coverage/index.html
 ```
+
+## 集成测试
+
+在 Story 验收（verification Phase 2）时自动执行：
+```bash
+mvn verify -Pintegration-test
+```
+
+配置：`config.yaml` → `testing.integration`
+
+## E2E 测试
+
+使用 Playwright，在所有 Stories 完成后手动执行：
+```bash
+cd osg-frontend && npx playwright test
+# 报告: osg-frontend/playwright-report/index.html
+```
+
+配置：`config.yaml` → `testing.e2e`
