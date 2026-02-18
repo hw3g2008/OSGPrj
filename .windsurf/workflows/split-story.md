@@ -7,13 +7,13 @@ description: 将需求文档拆分为 User Stories（INVEST 原则）- 对应 CC
 ## 前置条件
 
 - 需求分析已完成（`workflow.current_step` 为 `brainstorm_done`）
-- `osg-spec-docs/tasks/` 下存在 brainstorm 文档
+- `osg-spec-docs/docs/02-requirements/srs/{module}.md` SRS 文档已存在（brainstorm 产物）
 
 ## 执行步骤
 
-1. **读取需求文档**
-   - 读取 `osg-spec-docs/tasks/STATE.yaml` 获取当前需求
-   - 读取对应的 brainstorm 文档
+1. **读取 SRS 文档**
+   - 读取 `osg-spec-docs/tasks/STATE.yaml` 获取当前需求模块
+   - 读取对应的 SRS 文档（`osg-spec-docs/docs/02-requirements/srs/{module}.md`，brainstorm 产物，SSOT）
 
 2. **拆分 Stories**
    - 调用 story-splitter skill
