@@ -80,6 +80,7 @@ paths:
     api: "osg-spec-docs/docs/06-api/"
     database: "osg-spec-docs/docs/07-database/"
     requirements: "osg-spec-docs/docs/02-requirements/"
+    srs: "osg-spec-docs/docs/02-requirements/srs/"
   tasks:
     root: "osg-spec-docs/tasks/"
     state: "osg-spec-docs/tasks/STATE.yaml"
@@ -103,7 +104,7 @@ prd_process:
       trigger: "/brainstorm 自动检测并生成"
     - step: "SRS 生成（brainstorm 产物）"
       input: "${paths.docs.prd}/{module}/"
-      output: "${paths.tasks.root}/brainstorm-{module}.md"
+      output: "${paths.docs.srs}/{module}.md"
       format: "IEEE 830（FR/NFR/AC/接口定义/数据模型/PRD溯源）"
   
   # 强制规则
@@ -114,9 +115,14 @@ prd_process:
     - "SRS 必须包含接口定义（已有接口 + 新增接口）和数据库变更"
     - "PRD 不存在时，brainstorm 流程自动从 HTML 原型生成 PRD"
   
-  # 原型到模块的映射
+  # 原型到模块的映射（按业务功能划分，每个模块独立目录）
   module_prototype_map:
-    admin: ["admin.html", "admin/"]           # 管理后台
+    permission: ["admin.html"]              # 权限管理（home + roles + admins + base-data）
+    user-center: ["admin.html"]             # 用户中心（students + contracts + staff + mentor-schedule）
+    teaching: ["admin.html"]                # 教学中心（class-records + communication）
+    finance: ["admin.html"]                 # 财务中心（finance + expense）
+    resource: ["admin.html"]                # 资源中心（files + test-bank + interview-bank + questions）
+    notification: ["admin.html"]            # 个人中心/系统（mailjob + notice + complaints + logs）
     career: ["index.html", "lead-mentor.html", "assistant.html", "admin.html"]  # 求职中心（跨端）
     student: ["index.html", "PRD_Student.html"]
     mentor: ["mentor.html", "PRD_Mentor.html"]
