@@ -77,6 +77,12 @@ completed_at: null
 ## 执行流程
 
 ```
+[Phase 1: 输入收集]
+    │ - 读取 config.yaml + STATE.yaml
+    │ - 检查 Story 文件是否存在（不存在 → 失败退出）
+    │ - 检查 Story 状态（非 approved/pending → 失败退出）
+    │
+    ▼
 [读取 Story]
     │ - osg-spec-docs/tasks/stories/S-xxx.yaml
     │
@@ -210,6 +216,25 @@ T-007:
 ## 执行伪代码
 
 ```python
+def split_tickets_main(story_id):
+    # ========== Phase 1: 输入收集 ==========
+    config = load_yaml(".claude/project/config.yaml")
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+
+    # 读取 Story（上游产物，SSOT）
+    story_path = f"osg-spec-docs/tasks/stories/{story_id}.yaml"
+    if not exists(story_path):
+        return failed(f"Story 文件不存在: {story_path}")
+    story = read_yaml(story_path)
+
+    # 检查 Story 状态
+    if story.status not in ["approved", "pending"]:
+        return failed(f"Story {story_id} 状态为 {story.status}，需要 approved 或 pending")
+
+    # ========== Phase 2~3: 拆分 + 校验 ==========
+    return split_tickets(story_id)
+
+
 def split_tickets(story_id):
     story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
     config = read_yaml(".claude/project/config.yaml")
@@ -393,17 +418,24 @@ def split_tickets(story_id):
 ## 失败退出规则
 
 ```
+⚠️ Phase 1 失败：Story 文件不存在或状态不对：
+1. 输出错误信息（提示 Story 路径或状态问题）
+2. 不更新 workflow.current_step — 保持在执行前的状态
+3. 停止 — 上游有问题不往下跑
+
 ⚠️ Phase 2 失败：当 max_iterations（默认 5）次迭代后仍有校验项未通过：
 1. 输出失败报告（列出所有未通过的校验项和具体问题）
 2. 不更新 workflow.current_step — 保持在执行前的状态
-3. 停止自动继续 — 提示用户人工介入
-4. 用户可以调整 Story 后重新执行 /split ticket S-xxx
+3. 不保存 Ticket 文件 — 禁止写入不完整的产物
+4. 停止自动继续 — 提示用户人工介入
+5. 用户可以调整 Story 后重新执行 /split ticket S-xxx
 
 ⚠️ Phase 3 失败：当增强终审经过 max_enhanced_rounds（默认 10）轮后仍有问题：
 1. 输出失败报告（列出最后一轮的所有未通过项，包括三维度终审和多维度旋转校验）
 2. 不更新 workflow.current_step — 保持在执行前的状态
-3. 停止自动继续 — 提示用户人工介入
-4. 用户可以调整 Story 后重新执行 /split ticket S-xxx
+3. 不保存 Ticket 文件 — 禁止写入不完整的产物
+4. 停止自动继续 — 提示用户人工介入
+5. 用户可以调整 Story 后重新执行 /split ticket S-xxx
 ```
 
 ## 覆盖率矩阵
@@ -512,9 +544,9 @@ T-005 ──→ T-006
   三维度终审: ✅ 3/3
   多维度校验 (H): ✅ 无问题
 
-🔍 终审轮次 3/10 (维度 H — 交叉影响)
+🔍 终审轮次 3/10 (维度 B — 边界完整性)
   三维度终审: ✅ 3/3
-  多维度校验 (H): ✅ 无问题
+  多维度校验 (B): ✅ 无问题
 
 🎉 连续 2 轮无修改，终审通过
 ```
