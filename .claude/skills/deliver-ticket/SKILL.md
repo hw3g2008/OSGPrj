@@ -122,15 +122,32 @@ metadata:
   ├── 测试失败或覆盖率不达标 ──→ 修复（最多重试 3 次）
   │
   ▼ 通过
-[自我审查清单]
+┌─ 增强全局终审（max 10 轮）──────────────────────┐
+│ [自我审查清单] ── 有问题？──→ 修复                    │
+│  ✅                                                   │
+│ [三维度终审 + 多维度旋转校验（A~I）]                   │
+│  退出条件：连续两轮无修改                              │
+│  达到上限 → 失败退出                                   │
+└────────────────────────────────────────────────────────┘
+  │ ✅ 连续两轮无修改
+  ▼
+[Level 1 单元验证] ─→ 验证命令 exit_code = 0
   │
-  ├── 有问题 ──→ 修复
+  ├── 失败 ──→ 修复（最多重试 3 次）
   │
-  ▼ 全部通过
+  ▼ 通过
+[Level 2 回归验证] ─→ 全量测试
+  │
+  ├── 失败 ──→ 停止（回归检测）
+  │
+  ▼ 通过
 [记录验证证据] ─→ 写入 verification_evidence
   │
   ▼
 [更新状态] ─→ ticket.status = completed
+  │
+  ▼
+[Level 3 增量 Story 验证]
   │
   ▼
 [输出结果]
@@ -267,8 +284,15 @@ def deliver_ticket(ticket_id):
     config = load_yaml(".claude/project/config.yaml")
     ticket_path = f"{config.paths.tasks.tickets}{ticket_id}.yaml"
 
+    # Step 0: 前置检查
+    if not exists(ticket_path):
+        return failed(f"Ticket 文件不存在: {ticket_path}")
+
     # Step 1: 读取 Ticket
     ticket = read_yaml(ticket_path)
+
+    if ticket.status not in ["pending", "in_progress"]:
+        return failed(f"Ticket {ticket_id} 状态为 {ticket.status}，需要 pending 或 in_progress")
 
     # Step 2: 创建 Checkpoint
     checkpoint_id = create_checkpoint(ticket_id)
@@ -593,6 +617,78 @@ def incremental_verify(ticket, story, state):
   - /cc-review — CC 交叉验证（二次校验）
   - /approve — 跳过 CC，直接审批
 ❌ Story 验收失败 → 修复后执行 /verify 重新验收
+```
+
+## 失败退出规则
+
+```
+⚠️ 前置检查失败：Ticket 文件不存在或状态不对：
+1. 输出错误信息（提示 Ticket 路径或状态问题）
+2. 不更新 workflow.current_step — 保持在执行前的状态
+3. 停止 — 上游有问题不往下跑
+
+⚠️ 增强终审失败：当增强全局终审经过 max_review_retries+1（默认 10）轮后仍有问题：
+1. 输出失败报告（列出最后一轮的所有未通过项，包括三维度终审和多维度旋转校验）
+2. 不更新 Ticket 状态 — 保持 in_progress
+3. 不写入 verification_evidence
+4. 停止自动继续 — 提示用户人工介入
+5. 用户可以修复后重新执行 /next
+
+⚠️ Level 1 验证失败：验证命令 exit_code != 0：
+1. 输出错误信息（验证命令 + stderr）
+2. 不更新 Ticket 状态 — 保持 in_progress
+3. 不写入 verification_evidence
+4. 停止 — 提示修复后重新执行 /next
+
+⚠️ Level 2 回归失败：全量测试发现回归：
+1. 输出回归报告（列出失败的测试用例）
+2. 不更新 Ticket 状态 — 保持 in_progress
+3. 不写入 verification_evidence — 禁止写入不完整的证据
+4. 停止 — 当前 Ticket 引入了回归，需修复
+
+⚠️ Level 4 Story 验收失败：所有 Tickets 完成但 Story 验收未通过：
+1. 输出验收失败报告
+2. 设置 current_step = verification_failed
+3. 停止自动继续 — 暂停等用户修复后执行 /verify
+```
+
+## 迭代计数强制规则
+
+每轮增强终审和验证步骤必须输出进度，格式如下：
+
+```
+=== 增强全局终审 ===
+🔍 终审轮次 1/10 (维度 E — 异常路径)
+  三维度终审:
+    上游一致性: ✅ Ticket AC 全满足
+    下游可行性: ✅ 全量测试通过
+    全局完整性: ❌ 修改了 allowed_paths 之外的文件
+  多维度校验 (E): ✅ 无问题
+
+🔍 终审轮次 2/10 (维度 H — 交叉影响)
+  三维度终审: ✅ 3/3
+  多维度校验 (H): ✅ 无问题
+
+🔍 终审轮次 3/10 (维度 I — 命名一致性)
+  三维度终审: ✅ 3/3
+  多维度校验 (I): ✅ 无问题
+
+🎉 连续 2 轮无修改，终审通过
+
+=== Level 1 单元验证 ===
+🔄 验证命令: mvn test -Dtest=SysLoginControllerTest
+  exit_code: 0
+  结果: Tests run: 5, Failures: 0
+
+=== Level 2 回归验证 ===
+🔄 全量测试: mvn test
+  exit_code: 0
+  结果: ✅ 全量测试通过
+
+=== Level 3 增量 Story 验证 ===
+  Story AC 进度: 3/8 = 37%
+  当前 Ticket 覆盖 AC: 1 个
+  偏差检测: ✅ 无偏差
 ```
 
 ## 硬约束
