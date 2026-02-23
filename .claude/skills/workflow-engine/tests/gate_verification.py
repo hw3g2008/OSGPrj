@@ -93,6 +93,10 @@ class WorkflowSimulator:
         # 日志
         self.execution_log = []
 
+    def _get_decisions_source(self):
+        """读取 {module}-DECISIONS.md 中的 source 字段（模拟实现，默认 phase4）"""
+        return getattr(self, '_decisions_source', 'phase4')
+
     def get_next_action(self):
         """获取当前状态的下一个动作"""
         state_def = self.sm["states"].get(self.current_step, {})
@@ -106,7 +110,14 @@ class WorkflowSimulator:
                 return "brainstorm_pending_confirm"
             return "brainstorm_done"
         elif command == "/approve brainstorm":
-            return "brainstorm_done"
+            # 根据 DECISIONS.md source 区分处理路径
+            source = self._get_decisions_source()  # 读取 {module}-DECISIONS.md 中的 source
+            if source == "phase0":
+                # phase0: 更新 PRD 后重新执行 /brainstorm（由 brainstorm 管理最终状态）
+                return self.execute_command("/brainstorm")
+            else:
+                # phase4: 跳过语义，直接 brainstorm_done
+                return "brainstorm_done"
         elif command == "/split story":
             return "story_split_done"
         elif command.startswith("/split ticket"):
@@ -122,9 +133,10 @@ class WorkflowSimulator:
                 self.pending_tickets[self.current_story].pop(0)
                 if not self.pending_tickets[self.current_story]:
                     return "all_tickets_done"
-            return "ticket_done"
+                return "implementing"
+            return "ticket_done"  # 理论回退节点，仅用于兼容测试场景
         elif command.startswith("/verify"):
-            return "story_done"
+            return "story_verified"
         elif command.startswith("/approve S-"):
             if self.current_story in self.pending_stories:
                 self.pending_stories.remove(self.current_story)
@@ -151,6 +163,23 @@ class WorkflowSimulator:
             next_action = self.next_step
 
             if next_action is None:
+                # story_verified 是用户选择节点，模拟用户执行 /approve
+                if self.current_step == "story_verified":
+                    command = f"/approve {self.current_story}"
+                    new_state = self.execute_command(command)
+                    self.current_step = new_state
+                    state_def = self.sm["states"].get(new_state, {})
+                    self.next_step = state_def.get("next_action")
+                    self.execution_log.append({
+                        "iteration": iteration,
+                        "state": "story_verified",
+                        "action": "approve (user choice)",
+                        "command": command,
+                        "new_state": new_state,
+                        "gate_check": self.gate_checker.check_gate("story_verified", "approve_story"),
+                        "result": f"用户选择 /approve → {new_state}"
+                    })
+                    continue
                 self.execution_log.append({
                     "iteration": iteration,
                     "state": self.current_step,

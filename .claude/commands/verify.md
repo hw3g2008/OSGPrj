@@ -21,8 +21,11 @@
 5. 运行测试
 6. 输出验证报告
 7. 更新 workflow:
-   - current_step = "story_done"
-   - next_step = "approve_story"
+   - current_step = "story_verified" 或 "verification_failed"
+   - next_step = null  # 用户自行选择 /cc-review 或 /approve
+8. 事件审计（W6a）:
+   - 调用 append_workflow_event(build_event(command="/verify", state_from=old_step, state_to=new_step))
+   - 写入失败时回滚 STATE.yaml 并终止（见 workflow-engine/SKILL.md §6）
 ```
 
 ## 输出示例
@@ -53,5 +56,6 @@
 ✅ 验证通过
 
 ### ⏭️ 下一步
-执行 `/approve S-001` 完成 Story
+- `/cc-review` — 调用 Claude Code 交叉审核（推荐）
+- `/approve S-001` — 跳过 CC 审核，直接审批完成 Story
 ```

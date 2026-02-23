@@ -293,6 +293,9 @@ def deliver_ticket(ticket_id):
     ticket_path = f"{config.paths.tasks.tickets}{ticket_id}.yaml"
 
     # Step 0: 前置检查
+    if not ticket_id:
+        return failed("当前 Story 无 pending Ticket，请执行 /verify 或 /approve")
+
     if not exists(ticket_path):
         return failed(f"Ticket 文件不存在: {ticket_path}")
 
@@ -464,9 +467,13 @@ def deliver_ticket(ticket_id):
         print("🎉 所有 Tickets 已完成，自动执行 Story 验收...")
         verify_result = verify_story(ticket.story_id)
 
+        state_before = deep_copy(state)  # 事件写入失败时回滚用
         if verify_result["passed"]:
             state.workflow.current_step = "story_verified"
             state.workflow.next_step = None  # 用户选择 /cc-review 或 /approve
+            write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+            # 事件审计（W4）
+            append_workflow_event(build_event(command="/next", state_from="implementing", state_to="story_verified"))
             print("✅ Story 验收通过")
             print("⏭️ 下一步:")
             print("  - /cc-review — CC 交叉验证（二次校验）")
@@ -474,14 +481,19 @@ def deliver_ticket(ticket_id):
         else:
             state.workflow.current_step = "verification_failed"
             state.workflow.next_step = None  # 暂停等用户修复，不自动重试
+            write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+            # 事件审计（W5）
+            append_workflow_event(build_event(command="/next", state_from="implementing", state_to="verification_failed", result="failure"))
             print(f"❌ Story 验收失败: {verify_result['reason']}")
             print("请修复问题后执行 /verify 重新验收")
     else:
+        state_before = deep_copy(state)
         state.workflow.current_step = "implementing"
         state.workflow.next_step = "next"
+        write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+        # 事件审计（W3）
+        append_workflow_event(build_event(command="/next", state_from="implementing", state_to="implementing"))
         print(f"⏭️ 还有 {len(pending_tickets)} 个 Ticket 待完成")
-
-    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
 
     return {
         "status": "completed",

@@ -126,6 +126,8 @@ def can_claim_done(task):
 | **/cc-review** (V阶段，可选) | I阶段验收通过后用户选择执行 | CC 执行相同逻辑，二次校验防止自我欺骗 |
 
 > **纯函数设计**：`verify_story()` 只做验收判断，返回 passed/failed，**不更新 STATE.yaml**。状态更新由调用方负责。
+>
+> **事件审计**：`verify_story()` 不写事件。调用方在更新 STATE.yaml 后必须调用 `append_workflow_event()`（见 workflow-engine/SKILL.md §6）。
 
 ## 执行伪代码
 

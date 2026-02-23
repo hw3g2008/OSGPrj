@@ -12,9 +12,11 @@
 │         │                                                                   │
 │         │ /brainstorm                                                       │
 │         ▼                                                                   │
-│  ┌─────────────────┐                                                        │
-│  │ brainstorm_done │  ← 需求分析完成                                         │
-│  └────────┬────────┘                                                        │
+│  ┌─────────────────┐    有 pending_decisions    ┌────────────────────────┐   │
+│  │ brainstorm_done │  ←─────────────────────── │brainstorm_pending_confirm│  │
+│  └────────┬────────┘    /approve brainstorm     └────────────────────────┘   │
+│           │             (phase4→done /            ↑ Phase 0 安全阀           │
+│           │              phase0→重新/brainstorm)  ↑ Phase 4 B/C/D           │
 │           │                                                                 │
 │           │ auto: /split story                                              │
 │           ▼                                                                 │
@@ -63,11 +65,11 @@
 │           │ auto: /verify {story_id}                                        │
 │           ▼                                                                 │
 │  ┌─────────────────┐                                                        │
-│  │   story_done    │  ← Story 验收完成                                       │
+│  │ story_verified  │  ← Story 验收通过，用户选择 /cc-review 或 /approve      │
 │  └────────┬────────┘                                                        │
 │           │                                                                 │
-│           │ ⚠️ 需要审批 (config.approval.story_done)                         │
-│           │ /approve {story_id}                                             │
+│           │ /approve {story_id}（或 /cc-review → story_done → /approve）     │
+│           │                                                                 │
 │           ▼                                                                 │
 │  ┌─────────────────┐                                                        │
 │  │  story_approved │  ← Story 审批通过                                       │
@@ -110,10 +112,12 @@
 | 阶段 | 状态 | 触发命令 |
 |------|------|----------|
 | Init | not_started | /init-project |
-| Research | brainstorm_done | /brainstorm |
+| Research | brainstorm_done, brainstorm_pending_confirm | /brainstorm |
 | Plan | story_split_done, stories_approved, ticket_split_done, tickets_approved | /split, /approve |
-| Implement | ticket_done, all_tickets_done | /next |
-| Validate | story_done, story_approved, all_stories_done | /verify, /approve |
+| Implement | implementing, ticket_done*, all_tickets_done* | /next |
+| Validate | story_verified, verification_failed, story_done, story_approved, all_stories_done | /verify, /cc-review, /approve |
+
+> `*` = 理论节点：正常流程中由 deliver-ticket 跳过（最后一个 Ticket 完成后直接调用 `verify_story()` 写入 `story_verified` 或 `verification_failed`）。模拟器保留这些节点以简化测试逻辑。
 
 ## 术语说明
 

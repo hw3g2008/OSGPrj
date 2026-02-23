@@ -37,3 +37,7 @@ description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
 
 4. **写回状态**
    - 将更新后的 `STATE.yaml` 写回磁盘
+
+5. **事件审计（W6b）**
+   - 调用 `append_workflow_event(build_event(command="/verify", state_from=old_step, state_to=new_step))`
+   - 写入失败时回滚 STATE.yaml 并终止（见 workflow-engine/SKILL.md §6）

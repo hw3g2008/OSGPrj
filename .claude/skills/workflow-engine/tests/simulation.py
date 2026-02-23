@@ -56,6 +56,10 @@ class WorkflowEngine:
         approval_value = self.config["approval"].get(config_key, "auto")
         return approval_value == "required"
 
+    def _get_decisions_source(self):
+        """读取 {module}-DECISIONS.md 中的 source 字段（模拟实现，默认 phase4）"""
+        return getattr(self, '_decisions_source', 'phase4')
+
     def get_command(self, action):
         """获取动作对应的命令"""
         cmd = self.sm["action_to_command"].get(action)
@@ -74,7 +78,14 @@ class WorkflowEngine:
                 return "brainstorm_pending_confirm"
             return "brainstorm_done"
         elif command == "/approve brainstorm":
-            return "brainstorm_done"
+            # 根据 DECISIONS.md source 区分处理路径
+            source = self._get_decisions_source()  # 读取 {module}-DECISIONS.md 中的 source
+            if source == "phase0":
+                # phase0: 更新 PRD 后重新执行 /brainstorm（由 brainstorm 管理最终状态）
+                return self.execute_command("/brainstorm")
+            else:
+                # phase4: 跳过语义，直接 brainstorm_done
+                return "brainstorm_done"
         elif command == "/split story":
             return "story_split_done"
         elif command.startswith("/split ticket"):
@@ -92,9 +103,10 @@ class WorkflowEngine:
                 self.pending_tickets[self.current_story].pop(0)
                 if not self.pending_tickets[self.current_story]:
                     return "all_tickets_done"
-            return "ticket_done"
+                return "implementing"
+            return "ticket_done"  # 理论回退节点，仅用于兼容测试场景
         elif command.startswith("/verify"):
-            return "story_done"
+            return "story_verified"
         elif command.startswith("/approve S-"):
             # 完成当前 story
             if self.current_story in self.pending_stories:
@@ -137,6 +149,14 @@ class WorkflowEngine:
 
             # 检查是否结束
             if self.next_step is None:
+                # story_verified 是用户选择节点，模拟用户执行 /approve
+                if self.current_step == "story_verified":
+                    self.log.append("用户选择 /approve（跳过 CC review）")
+                    command = f"/approve {self.current_story}"
+                    new_state = self.execute_command(command)
+                    if new_state:
+                        self.update_workflow(new_state)
+                    continue
                 self.log.append("工作流结束")
                 break
 

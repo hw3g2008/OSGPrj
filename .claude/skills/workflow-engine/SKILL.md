@@ -112,17 +112,27 @@ def handle_next_story(state):
 
     if pending_stories:
         next_story = pending_stories[0]
+        state_before = deep_copy(state)  # 事件写入失败时回滚用
         # 更新状态
         state.current_story = next_story
         state.workflow.current_step = "stories_approved"
         state.workflow.next_step = "split_ticket"
         write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+        # 事件审计（W9a）
+        if not append_workflow_event(build_event(command="next_story", state_from="story_approved", state_to="stories_approved")):
+            write_yaml("osg-spec-docs/tasks/STATE.yaml", state_before)  # 回滚
+            raise EventWriteError("事件写入失败，已回滚状态")
         return f"/split ticket {next_story}"
     else:
         # 所有 Stories 完成
+        state_before = deep_copy(state)
         state.workflow.current_step = "all_stories_done"
         state.workflow.next_step = None
         write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+        # 事件审计（W9b）
+        if not append_workflow_event(build_event(command="next_story", state_from="story_approved", state_to="all_stories_done")):
+            write_yaml("osg-spec-docs/tasks/STATE.yaml", state_before)
+            raise EventWriteError("事件写入失败，已回滚状态")
         return None  # 工作流结束
 ```
 
@@ -136,10 +146,13 @@ def update_workflow(command_completed, state):
     """
     sm = load_yaml(".claude/skills/workflow-engine/state-machine.yaml")
 
-    # ⚠️ deliver-ticket 和 verify 自己管理状态，不需要 update_workflow
+    # ⚠️ 以下命令自己管理状态，不需要 update_workflow
     # 它们直接写 STATE.yaml（因为有复杂的分支逻辑）
-    if command_completed in ("/next", "/verify"):
+    if command_completed in ("/brainstorm", "/next", "/verify", "/approve brainstorm"):
         return  # 状态已由对应 Skill/Workflow 直接写入 STATE.yaml
+
+    # 记录迁移前状态（事件审计用）
+    old_state = state.workflow.current_step
 
     # 根据完成的命令查找新状态
     new_state = sm.command_to_state[command_completed]
@@ -153,10 +166,76 @@ def update_workflow(command_completed, state):
     next_action = sm.states[new_state].next_action
 
     # 写入状态
+    state_before = deep_copy(state)  # 事件写入失败时回滚用
     state.workflow.current_step = new_state
     state.workflow.next_step = next_action
     write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+
+    # 事件审计（统一拦截走 update_workflow 的命令：W1, W2 等）
+    if not append_workflow_event(build_event(command=command_completed, state_from=old_state, state_to=new_state)):
+        write_yaml("osg-spec-docs/tasks/STATE.yaml", state_before)  # 回滚
+        raise EventWriteError("事件写入失败，已回滚状态")
 ```
+
+### 6. 事件审计接口
+
+> Story 主链路所有状态写入点都必须写事件。写入顺序：先 `write_yaml(STATE.yaml)` → 再 `append_workflow_event()`。事件写入失败时回滚 STATE.yaml 并终止流程。
+
+```python
+def append_workflow_event(event):
+    """
+    追加一条工作流事件到 workflow-events.jsonl
+    返回 True 成功 / False 失败
+    """
+    import json, uuid
+    from datetime import datetime, timezone
+
+    event_path = "osg-spec-docs/tasks/workflow-events.jsonl"
+    try:
+        with open(event_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event, ensure_ascii=False) + "\n")
+        return True
+    except Exception as e:
+        print(f"⚠️ 事件写入失败: {e}")
+        return False
+
+def build_event(command, state_from, state_to, actor="system", gate_result=None, evidence_ref=None, result="success"):
+    """
+    构建事件对象
+    """
+    import uuid
+    from datetime import datetime, timezone
+
+    return {
+        "event_id": str(uuid.uuid4()),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "module": get_current_module(),  # 从 STATE.yaml.current_requirement 读取
+        "schema_version": "1.0",
+        "actor": actor,
+        "command": command,
+        "state_from": state_from,
+        "state_to": state_to,
+        "gate_result": gate_result,
+        "evidence_ref": evidence_ref,
+        "result": result,
+    }
+```
+
+#### Story 主链路状态写入点清单（11 个）
+
+| # | 触发命令 | 写入位置 | 走 update_workflow？ | 事件写入方式 |
+|---|----------|----------|---------------------|-------------|
+| W1 | `/split ticket` | `update_workflow()` | ✅ 是 | 统一拦截 |
+| W2 | `/approve tickets` | `update_workflow()` | ✅ 是 | 统一拦截 |
+| W3 | `/next`（中间 Ticket） | deliver-ticket 直接写 → `implementing` | ❌ 否 | 手动调用 |
+| W4 | `/next`（最后 Ticket，验收通过） | deliver-ticket 直接写 → `story_verified` | ❌ 否 | 手动调用 |
+| W5 | `/next`（最后 Ticket，验收失败） | deliver-ticket 直接写 → `verification_failed` | ❌ 否 | 手动调用 |
+| W6a | `/verify`（CC 路径） | verify.md 写 → `story_verified` / `verification_failed` | ❌ 否 | 手动调用 |
+| W6b | `/verify`（WS 路径） | verify.md(WS) 写 → `story_verified` / `verification_failed` | ❌ 否 | 手动调用 |
+| W7 | `/cc-review` | cc-review.md 写 → `story_done` / `verification_failed` | ❌ 否 | 手动调用 |
+| W8a | `/approve S-xxx`（CC） | approve.md 写 → `story_approved` / `all_stories_done` | ❌ 否 | 手动调用 |
+| W8b | `/approve`（WS） | approve.md(WS) 写 → `story_approved` / `stories_approved` / `all_stories_done` | ❌ 否 | 手动调用 |
+| W9 | `next_story` 分支 | `handle_next_story()` 直接写 → `stories_approved` / `all_stories_done` | ❌ 否 | 手动调用 |
 
 ## 自动继续循环
 

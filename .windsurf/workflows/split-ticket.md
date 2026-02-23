@@ -7,8 +7,10 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
 ## 使用方式
 
 ```
-/split-ticket S-xxx
+/split ticket S-xxx
 ```
+
+> 兼容说明：Windsurf 工作流别名 `/split-ticket S-xxx` 仍可触发本流程，但主命令统一为 `/split ticket S-xxx`，与 CC 命令一致。
 
 ## 前置条件
 
