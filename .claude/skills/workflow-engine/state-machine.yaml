@@ -74,7 +74,7 @@ states:
     next_action: next
     approval_required: false
 
-  # 理论节点：正常流程中 deliver-ticket 直接写 implementing/story_verified，绕过此状态。唯一合法用途：回滚目标（规则 1）
+  # 理论节点：正常流程中 deliver-ticket 经 transition() 推进到 implementing/story_verified，绕过此状态。唯一合法用途：回滚目标（规则 1）
   ticket_done:
     phase: implement
     description: "Ticket 执行完成"
@@ -82,7 +82,7 @@ states:
     approval_required: false
     approval_key: ticket_done  # 可配置为 required
 
-  # 理论节点：正常流程中 deliver-ticket 直接调用 verify_story()，绕过此状态。唯一合法用途：回滚目标（规则 3/5）
+  # 理论节点：正常流程中 deliver-ticket 经 transition() 调用 verify_story()，绕过此状态。唯一合法用途：回滚目标（规则 3/5）
   all_tickets_done:
     phase: implement
     description: "所有 Tickets 完成"
@@ -127,7 +127,7 @@ states:
 # ============================================
 command_to_state:
   "/brainstorm": brainstorm_done  # 默认；brainstorming Skill 自己管理分支（done 或 pending_confirm）
-  "/approve brainstorm": brainstorm_done
+  # "/approve brainstorm" 已移除：approve 流程自管理状态（phase0 同步调用 /brainstorm，phase4 直接写 STATE.yaml）
   "/split story": story_split_done
   "/split ticket": ticket_split_done
   "/approve stories": stories_approved
@@ -167,16 +167,16 @@ approval_config_keys:
 # 特殊分支逻辑
 # ============================================
 special_branches:
-  # /brainstorm 完成后的分支（brainstorming Skill 直接写 STATE.yaml）
+  # /brainstorm 完成后的分支（brainstorming Skill 经 transition() 写 STATE.yaml）
   brainstorm_completion:
-    note: "brainstorming Skill 完成后直接写 STATE.yaml，不经过 update_workflow()"
-    condition: "has_open_questions(module)"
+    note: "brainstorming Skill 完成后经 transition() 写 STATE.yaml"
+    condition: "has_pending_decisions(module)"
     true_state: brainstorm_pending_confirm
     false_state: brainstorm_done
 
-  # /next 完成后的分支（deliver-ticket 自己管理状态，此处作文档说明）
+  # /next 完成后的分支（deliver-ticket 经 transition() 管理状态，此处作文档说明）
   next_completion:
-    note: "deliver-ticket 完成后直接写 STATE.yaml，不经过 update_workflow()"
+    note: "deliver-ticket 完成后经 transition() 写 STATE.yaml"
     condition: "no_pending_tickets(current_story)"
     true_branch:
       condition: "verify_story_passed(current_story)"

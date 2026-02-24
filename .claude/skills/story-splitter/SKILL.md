@@ -41,7 +41,7 @@ description: |
   我想要 使用手机号登录系统
   以便于 访问我的课程和学习资料
 
-status: pending  # pending | in_progress | completed | blocked
+status: pending  # pending | approved | done | blocked
 priority: P0     # P0 | P1 | P2
 estimate: 3d     # 估算工时
 
