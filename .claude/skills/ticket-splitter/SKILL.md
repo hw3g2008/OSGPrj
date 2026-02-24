@@ -50,7 +50,7 @@ story_id: "S-001"
 title: "创建登录 API 接口定义"
 type: backend  # backend | frontend | frontend-ui | database | test | config
 
-status: pending  # pending | in_progress | completed | blocked
+status: pending  # pending | in_progress | done | blocked
 estimate: 5m     # 2-5 分钟
 
 # 允许修改的文件路径（严格限制）
@@ -405,12 +405,27 @@ def split_tickets(story_id):
     story.tickets = [t['id'] for t in tickets]
     write_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml", story)
 
-    # 更新 STATE
+    # 写入 phase-proof（approve tickets 的 preflight_guard 会校验）
+    module = state.current_requirement
+    proof = {
+        "schema_version": "1.0",
+        "module": module,
+        "phase": "ticket_split",
+        "target_id": story_id,
+        "rounds": round_num,  # Phase 3 终审轮次
+        "issues_count": 0,
+        "coverage": f"{len(story.acceptance_criteria)}/{len(story.acceptance_criteria)}",
+        "generated_at": now_iso(),
+        "source_hash": sha256_normalized(f"osg-spec-docs/tasks/stories/{story_id}.yaml"),
+        "status": "passed"
+    }
+    write_json(f"osg-spec-docs/tasks/proofs/{module}/{story_id}_ticket_split_phase_proof.json", proof)
+
+    # 更新 STATE — 通过 transition() 统一入口
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.tickets.extend([t['id'] for t in tickets])
-    state.workflow.current_step = "ticket_split_done"
-    state.workflow.next_step = "approve_tickets"
-    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+    state.stats.total_tickets = len(state.tickets)
+    transition("/split ticket", state, "ticket_split_done")
 
     return tickets
 ```

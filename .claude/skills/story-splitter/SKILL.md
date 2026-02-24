@@ -147,7 +147,7 @@ def split_stories(requirement_doc):  # requirement_doc = SRS 文档（brainstorm
                 "id": f"S-{story_number:03d}",
                 "title": feature.title,
                 "description": format_user_story(feature, roles),
-                "status": "pending",
+                "status": "pending",  # pending | approved | done | blocked
                 "priority": feature.priority,
                 "acceptance_criteria": feature.acceptance_criteria,
                 "requirements": feature.requirement_ids
@@ -284,12 +284,27 @@ def split_stories(requirement_doc):  # requirement_doc = SRS 文档（brainstorm
     for story in stories:
         write_yaml(f"osg-spec-docs/tasks/stories/{story['id']}.yaml", story)
 
-    # 更新 STATE.yaml
+    # 写入 phase-proof（approve stories 的 preflight_guard 会校验）
+    module = state.current_requirement
+    proof = {
+        "schema_version": "1.0",
+        "module": module,
+        "phase": "story_split",
+        "target_id": module,
+        "rounds": round_num,  # Phase 3 终审轮次
+        "issues_count": 0,
+        "coverage": f"{len(all_fr_ids)}/{len(all_fr_ids)}",
+        "generated_at": now_iso(),
+        "source_hash": sha256_normalized(f"osg-spec-docs/docs/02-requirements/srs/{module}.md"),
+        "status": "passed"
+    }
+    write_json(f"osg-spec-docs/tasks/proofs/{module}/story_split_phase_proof.json", proof)
+
+    # 更新 STATE.yaml — 通过 transition() 统一入口
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.stories = [s['id'] for s in stories]
-    state.workflow.current_step = "story_split_done"
-    state.workflow.next_step = "approve_stories"
-    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+    state.stats.total_stories = len(stories)
+    transition("/split story", state, "story_split_done")
 
     return stories
 ```

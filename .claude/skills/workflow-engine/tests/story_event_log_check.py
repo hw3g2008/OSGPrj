@@ -133,16 +133,40 @@ def main():
     print("Story 事件日志校验")
     print("=" * 60)
 
-    # 检查文件是否存在
+    # 检查文件是否存在（§5.4 bootstrap 边界判断）
+    allow_bootstrap = "--allow-bootstrap" in sys.argv
     if not EVENT_LOG_PATH.exists():
-        print(f"\n⚠️ 事件日志文件不存在: {EVENT_LOG_PATH.relative_to(PROJECT_ROOT)}")
-        print("事件日志在首次执行 Story 流程后才会生成。")
-        print("⚠️ 审计证据为空 — 字段完整率和状态覆盖率均未校验。")
-        print("\n" + "=" * 60)
-        print("SKIPPED: 事件日志文件不存在，无法校验审计证据")
-        print("首次 Story 流程执行后，请重新运行本脚本验证。")
-        print("=" * 60)
-        return 0  # 不阻塞 CI，但明确标注 SKIPPED 而非 PASSED
+        # 读取 STATE.yaml 判断是否在 bootstrap 边界内
+        state_path = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "STATE.yaml"
+        tickets_dir = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "tickets"
+        bootstrap_allowed = False
+
+        if allow_bootstrap and state_path.exists():
+            import yaml
+            with open(state_path, "r", encoding="utf-8") as f:
+                state = yaml.safe_load(f)
+            current_step = (state.get("workflow") or {}).get("current_step", "")
+            has_tickets = tickets_dir.exists() and any(tickets_dir.glob("T-*.yaml"))
+            # 仅当 current_step 在 {story_split_done, stories_approved} 且无 Ticket 文件时允许
+            if current_step in ("story_split_done", "stories_approved") and not has_tickets:
+                bootstrap_allowed = True
+
+        if bootstrap_allowed:
+            print(f"\n⚠️ 事件日志文件不存在: {EVENT_LOG_PATH.relative_to(PROJECT_ROOT)}")
+            print("Bootstrap 模式：当前处于首轮拆分阶段，允许跳过。")
+            print("=" * 60)
+            print("BOOTSTRAP: 事件日志文件不存在，首轮允许跳过")
+            print("=" * 60)
+            return 0
+        else:
+            print(f"\n❌ 事件日志文件不存在: {EVENT_LOG_PATH.relative_to(PROJECT_ROOT)}")
+            print("审计证据为空 — 字段完整率和状态覆盖率均未校验。")
+            print("=" * 60)
+            print("FAIL: 事件日志文件不存在，审计门不通过")
+            if not allow_bootstrap:
+                print("提示：如果是首次引导阶段，可使用 --allow-bootstrap 参数")
+            print("=" * 60)
+            return 1  # 硬阻断
 
     # 加载事件
     events = load_events(EVENT_LOG_PATH)
@@ -217,4 +241,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

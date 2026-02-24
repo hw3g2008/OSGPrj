@@ -45,7 +45,7 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
    - 用户确认后：
      - 更新每个 Story 状态为 `approved`
      - **设置 `current_story` 为第一个 Story（按优先级排序）**
-     - 更新 `workflow.current_step` 为 `stories_approved`
+     - 调用 `transition("/approve stories", state, "stories_approved")`
 
    ### Tickets 审批
    - 条件：`current_step` 为 `ticket_split_done`
@@ -53,31 +53,30 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
      - 如果 `required`：列出所有待审批 Tickets 的摘要，等待用户确认
      - 如果 `auto`：自动审批，直接更新状态
    - 更新每个 Ticket 状态为 `pending`（可执行）
-   - 更新 `workflow.current_step` 为 `tickets_approved`
+   - 调用 `transition("/approve tickets", state, "tickets_approved")`
 
    ### Story 验收审批（跳过 CC）
    - 条件：`current_step` 为 `story_verified`
    - 列出 Story 验收报告摘要
    - 用户确认后：
      - 更新 Story 状态为 `done`
-     - 更新 `workflow.current_step` 为 `story_approved`（直接跳到 approved，不经过 story_done）
      - 检查是否有下一个 pending Story
-       - 有 → 设置 `current_story` 为下一个 Story，设置 `current_step` 为 `stories_approved`
-       - 没有 → 设置 `current_step` 为 `all_stories_done`
+       - 有 → 调用 `transition("/approve story", state, "story_approved")`，然后 `handle_next_story()`
+       - 没有 → 调用 `transition("/approve story", state, "all_stories_done")`
 
    ### Story 完成审批（CC 审核后）
    - 条件：`current_step` 为 `story_done`
    - 读取 `config.yaml` 的 `approval.story_done` 配置
      - 如果 `required`：等待用户确认
      - 如果 `auto`：自动审批
-   - 更新 `workflow.current_step` 为 `story_approved`
    - 检查是否有下一个 pending Story
-     - 有 → 设置 `current_story` 为下一个 Story，设置 `current_step` 为 `stories_approved`
-     - 没有 → 设置 `current_step` 为 `all_stories_done`
+     - 有 → 调用 `transition("/approve story", state, "story_approved")`，然后 `handle_next_story()`
+     - 没有 → 调用 `transition("/approve story", state, "all_stories_done")`
 
-3. **事件审计（W8b）**
-   - 状态更新后，调用 `append_workflow_event(build_event(command="/approve", state_from=old_step, state_to=new_step))`
-   - 写入失败时回滚 STATE.yaml 并终止（见 workflow-engine/SKILL.md §6）
+3. **状态推进（统一入口）**
+   - 所有审批分支通过 `transition()` 推进状态（含 preflight_guard → 写状态 → 写事件 → postcheck_guard）
+   - `transition()` 内部自动推导 `next_requires_approval`，自动写入事件
+   - 失败时自动回滚 STATE.yaml 并终止（见 workflow-engine/SKILL.md §5a）
 
 4. **输出确认**
    - 显示审批结果

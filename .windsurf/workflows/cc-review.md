@@ -85,24 +85,20 @@ $(cat osg-spec-docs/tasks/STATE.yaml)
 输出：通过/不通过 + 问题列表"
 ```
 
-## 状态更新
+## 状态更新（必须经 transition() 统一入口）
 
 Story 完成审核（类型 1）执行后，根据 CC 审核结果更新状态：
 
 - **CC 审核通过**：
-  - 设置 `workflow.current_step = story_done`
-  - 设置 `workflow.next_step = approve_story`
+  - 调用 `transition("/cc-review", state, "story_done")`（W9）
   - 提示执行 `/approve` 完成 Story 审批
 
 - **CC 审核不通过**：
-  - 设置 `workflow.current_step = verification_failed`
-  - 设置 `workflow.next_step = null`（暂停等用户修复）
+  - 调用 `transition("/cc-review", state, "verification_failed", meta={"result":"failure"})`（W9）
   - 输出 CC 发现的问题列表
   - 提示修复后执行 `/verify` 重新验收
 
-### 事件审计（W7）
-
-状态更新后，调用 `append_workflow_event(build_event(command="/cc-review", state_from=old_step, state_to=new_step))`。写入失败时回滚 STATE.yaml 并终止（见 workflow-engine/SKILL.md §6）。
+`transition()` 内部自动：写状态 → 推导审批标记 → 写事件 → postcheck。事件写入失败时自动回滚 STATE.yaml 并终止（见 workflow-engine/SKILL.md §5a）。
 
 ## 注意事项
 

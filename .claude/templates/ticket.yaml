@@ -7,7 +7,7 @@ title: "{标题}"
 type: backend  # backend | frontend | frontend-ui | database | test | config
 agent: null    # 可选：显式指定 Agent 名称（如不指定，由 type 自动映射）
 
-status: pending  # pending | in_progress | completed | blocked
+status: pending  # pending | in_progress | done | blocked
 estimate: "{n}m" # 2-5 分钟
 
 # 允许修改的文件路径（严格限制）

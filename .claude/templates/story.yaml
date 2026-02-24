@@ -8,7 +8,7 @@ description: |
   我想要 {功能描述}
   以便于 {价值说明}
 
-status: pending  # pending | in_progress | completed | blocked
+status: pending  # pending | approved | done | blocked
 priority: P0     # P0 | P1 | P2
 estimate: "{n}d" # 估算工时
 

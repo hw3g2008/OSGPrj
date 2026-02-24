@@ -27,18 +27,22 @@ STORY_TEST_SCRIPTS = [
     "story_regression.py",
     "story_command_alias_check.py",
     "story_event_log_check.py",
+    "story_runtime_guard.py",
+    "ticket_status_enum_check.py",
+    "normalize_status_enum.py",
 ]
 
 # 事件写入点：文件中应包含 append_workflow_event 调用或说明
 EVENT_WRITE_POINT_FILES = [
     # (文件路径相对于 PROJECT_ROOT, 预期包含的关键词)
-    (".claude/skills/workflow-engine/SKILL.md", "append_workflow_event"),
-    (".claude/skills/deliver-ticket/SKILL.md", "append_workflow_event"),
-    (".claude/commands/verify.md", "append_workflow_event"),
-    (".windsurf/workflows/verify.md", "append_workflow_event"),
-    (".windsurf/workflows/cc-review.md", "append_workflow_event"),
-    (".claude/commands/approve.md", "append_workflow_event"),
-    (".windsurf/workflows/approve.md", "append_workflow_event"),
+    (".claude/skills/workflow-engine/SKILL.md", "transition"),
+    (".claude/skills/deliver-ticket/SKILL.md", "transition"),
+    (".claude/skills/story-splitter/SKILL.md", "transition"),
+    (".claude/skills/ticket-splitter/SKILL.md", "transition"),
+    (".windsurf/workflows/verify.md", "transition"),
+    (".windsurf/workflows/cc-review.md", "transition"),
+    (".windsurf/workflows/approve.md", "transition"),
+    (".windsurf/workflows/next.md", "transition"),
 ]
 
 
@@ -60,13 +64,20 @@ def check_scripts_runnable():
     """检查所有测试脚本可执行（exit_code=0）"""
     print("\n--- 2. 测试脚本可执行性 ---")
     issues = []
+    # 透传 --allow-bootstrap 参数
+    extra_args = ["--allow-bootstrap"] if "--allow-bootstrap" in sys.argv else []
+    # 特殊参数映射（某些脚本需要特定参数才能正常运行）
+    script_args = {
+        "normalize_status_enum.py": ["--check"],
+    }
     for script in STORY_TEST_SCRIPTS:
         path = TESTS_DIR / script
         if not path.exists():
             continue
         try:
+            cmd = ["python3", str(path)] + script_args.get(script, []) + extra_args
             result = subprocess.run(
-                ["python3", str(path)],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -131,36 +142,56 @@ def check_event_count_equals_transitions():
     issues = []
 
     EVENT_LOG_PATH = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "workflow-events.jsonl"
+    allow_bootstrap = "--allow-bootstrap" in sys.argv
     if not EVENT_LOG_PATH.exists():
-        print("  SKIPPED: 事件日志文件不存在（首次 Story 流程后才生成）")
-        print("  模拟验证：使用 simulation.py 引擎计算预期状态转换数...")
+        # §5.4 bootstrap 边界判断
+        state_path = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "STATE.yaml"
+        tickets_dir = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "tickets"
+        bootstrap_ok = False
 
-        # 使用模拟器计算预期转换数
-        try:
-            import importlib.util
-            sim_path = TESTS_DIR / "simulation.py"
-            spec = importlib.util.spec_from_file_location("simulation", sim_path)
-            sim = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(sim)
+        if allow_bootstrap and state_path.exists():
+            import yaml
+            with open(state_path, "r", encoding="utf-8") as f:
+                state_data = yaml.safe_load(f)
+            current_step = (state_data.get("workflow") or {}).get("current_step", "")
+            has_tickets = tickets_dir.exists() and any(tickets_dir.glob("T-*.yaml"))
+            if current_step in ("story_split_done", "stories_approved") and not has_tickets:
+                bootstrap_ok = True
 
-            sm = sim.load_state_machine()
-            engine = sim.WorkflowEngine(sm, sim.MOCK_CONFIG)
-            engine.run_loop()
+        if bootstrap_ok:
+            print("  BOOTSTRAP: 事件日志不存在，首轮拆分阶段允许跳过")
+            print("  模拟验证：使用 simulation.py 引擎计算预期状态转换数...")
+            # 使用模拟器计算预期转换数
+            try:
+                import importlib.util
+                sim_path = TESTS_DIR / "simulation.py"
+                spec = importlib.util.spec_from_file_location("simulation", sim_path)
+                sim = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(sim)
 
-            # 排除理论节点
-            THEORETICAL = {"all_tickets_done", "ticket_done"}
-            real_transitions = [
-                entry for entry in engine.log
-                if entry.startswith("状态更新:") and
-                not any(t in entry for t in THEORETICAL)
-            ]
-            expected_count = len(real_transitions)
-            print(f"  预期状态转换数（排除理论节点）: {expected_count}")
-            print(f"  ✅ 模拟验证通过 — 首次 Story 流程后事件数应 = {expected_count}")
-        except Exception as e:
-            print(f"  ⚠️ 模拟验证失败: {e}")
-            issues.append(f"模拟验证失败: {e}")
-        return issues
+                sm = sim.load_state_machine()
+                engine = sim.WorkflowEngine(sm, sim.MOCK_CONFIG)
+                engine.run_loop()
+
+                THEORETICAL = {"all_tickets_done", "ticket_done"}
+                real_transitions = [
+                    entry for entry in engine.log
+                    if entry.startswith("状态更新:") and
+                    not any(t in entry for t in THEORETICAL)
+                ]
+                expected_count = len(real_transitions)
+                print(f"  预期状态转换数（排除理论节点）: {expected_count}")
+                print(f"  ✅ 模拟验证通过 — 首次 Story 流程后事件数应 = {expected_count}")
+            except Exception as e:
+                print(f"  ⚠️ 模拟验证失败: {e}")
+                issues.append(f"模拟验证失败: {e}")
+            return issues
+        else:
+            print("  ❌ FAIL: 事件日志文件不存在，审计门不通过")
+            if not allow_bootstrap:
+                print("  提示：首次引导阶段可使用 --allow-bootstrap 参数")
+            issues.append("事件日志文件不存在，无法校验事件数=状态转换数")
+            return issues
 
     # 事件文件存在时：实际校验
     import json
