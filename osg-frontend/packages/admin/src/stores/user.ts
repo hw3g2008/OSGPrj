@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { setToken, removeToken, setUser, removeUser, getToken } from '@osg/shared/utils'
+import { getToken, setToken, removeToken, setUser, removeUser } from '@osg/shared/utils'
+import { login as loginApi, getInfo as getInfoApi, logout as logoutApi } from '@osg/shared/api/auth'
 import type { LoginParams, UserInfo } from '@osg/shared/types'
-import { http } from '@osg/shared/utils'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(getToken())
@@ -11,25 +11,15 @@ export const useUserStore = defineStore('user', () => {
   const permissions = ref<string[]>([])
   const firstLogin = ref(false)
 
-  // 登录
   async function login(params: LoginParams) {
-    const res = await http.post<{ token: string }>('/login', params)
+    const res = await loginApi(params)
     token.value = res.token
     setToken(res.token)
-
-    // 获取用户信息
-    await getInfo()
+    await fetchInfo()
   }
 
-  // 获取用户信息
-  async function getInfo() {
-    const res = await http.get<{
-      user: UserInfo
-      roles: string[]
-      permissions: string[]
-      firstLogin: boolean
-    }>('/getInfo')
-
+  async function fetchInfo() {
+    const res = await getInfoApi()
     userInfo.value = res.user
     roles.value = res.roles
     permissions.value = res.permissions
@@ -37,10 +27,9 @@ export const useUserStore = defineStore('user', () => {
     setUser(res.user)
   }
 
-  // 登出
   async function logout() {
     try {
-      await http.post('/logout')
+      await logoutApi()
     } finally {
       token.value = null
       userInfo.value = null
@@ -52,7 +41,6 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  // 更新首次登录状态
   function setFirstLogin(value: boolean) {
     firstLogin.value = value
   }
@@ -64,7 +52,7 @@ export const useUserStore = defineStore('user', () => {
     permissions,
     firstLogin,
     login,
-    getInfo,
+    fetchInfo,
     logout,
     setFirstLogin
   }

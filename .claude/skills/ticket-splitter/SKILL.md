@@ -232,10 +232,10 @@ def split_tickets_main(story_id):
         return failed(f"Story {story_id} 状态为 {story.status}，需要 approved 或 pending")
 
     # ========== Phase 2~3: 拆分 + 校验 ==========
-    return split_tickets(story_id)
+    return split_tickets(story_id, state)
 
 
-def split_tickets(story_id):
+def split_tickets(story_id, state):
     story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
     config = read_yaml(".claude/project/config.yaml")
 

@@ -80,6 +80,7 @@ def can_claim_done(task):
 |------|--------|----------|----------|
 | **Phase 1 前置检查** | Ticket 状态 | 读取 YAML status 字段 | 所有 Tickets status=done |
 | | 验证证据 | 检查 verification_evidence 字段 | 所有 Tickets 有证据且 exit_code=0 |
+| | 🆕 证据强度 | `validate_evidence_command(command)` | command 必须是可执行 shell 命令（禁止 "code review" 等） |
 | **Phase 2 功能验收** | 全量测试 🔴 | 执行 mvn test / pnpm test | exit_code=0 |
 | | AC 覆盖率 | 逐条检查 Story AC | 每个 AC 被至少 1 个已完成 Ticket 覆盖 |
 | | 覆盖率汇总 | 解析 JaCoCo/Vitest 报告 | 达到 config 中定义的门槛 |
@@ -160,6 +161,12 @@ def verify_story(story_id):
             pre_issues.append(
                 f"{ticket_id}: exit_code={ticket.verification_evidence.exit_code}")
 
+        # 1.4 🆕 证据强度校验：command 必须是可执行的 shell 命令
+        cmd = ticket.verification_evidence.get("command", "")
+        if not validate_evidence_command(cmd):
+            pre_issues.append(
+                f"{ticket_id}: 证据命令 '{cmd}' 不是可执行的 shell 命令（禁止 code review/UI review 等）")
+
     if pre_issues:
         print("Phase 1 前置检查: ❌ 失败")
         for issue in pre_issues:
@@ -181,19 +188,20 @@ def verify_story(story_id):
     for iteration in range(1, max_iterations + 1):
         print(f"🔄 验收迭代 {iteration}/{max_iterations}")
         issues = []
+        warnings = []
 
         # ------------------------------------------
         # 2.1 🔴 全量测试 + 覆盖率（合并执行，避免重复跑测试）
         # ------------------------------------------
         # 后端：mvn test jacoco:report（一次执行同时完成测试和覆盖率报告）
         if has_backend_tickets(story):
-            backend_result = bash(config.commands.test_coverage)  # mvn test jacoco:report
+            backend_result = bash(config.testing.commands.backend.test_coverage)  # mvn test jacoco:report
             if backend_result.exit_code != 0:
                 issues.append(("full_test", "backend",
                     f"后端全量测试失败: {extract_failure_summary(backend_result)}"))
             else:
                 # 测试通过，检查覆盖率
-                coverage = parse_jacoco_report(config.commands.coverage_report)
+                coverage = parse_jacoco_report(config.testing.commands.backend.coverage_report)
                 thresholds = get_coverage_thresholds("backend")  # {branch: 100, line: 90}
                 if coverage["branch"]["percentage"] < thresholds["branch"]:
                     issues.append(("coverage", "backend_branch",
@@ -202,22 +210,33 @@ def verify_story(story_id):
                     issues.append(("coverage", "backend_line",
                         f"后端行覆盖率 {coverage['line']['percentage']}% < {thresholds['line']}%"))
 
-        # 前端：pnpm test:coverage（一次执行同时完成测试和覆盖率报告）
+        # 前端：pnpm test --coverage（从 testing.commands.frontend 读取命令）
         if has_frontend_tickets(story):
-            frontend_result = bash(config.commands.frontend.test_coverage)  # pnpm test:coverage
+            # 使用 testing.commands.frontend.test_coverage（已修正为子包直接调用）
+            frontend_cmd = config.testing.commands.frontend.test_coverage
+            # 或直接: pnpm --dir osg-frontend/packages/admin test --coverage
+            frontend_result = bash(frontend_cmd)
             if frontend_result.exit_code != 0:
                 issues.append(("full_test", "frontend",
                     f"前端全量测试失败: {extract_failure_summary(frontend_result)}"))
             else:
                 # 测试通过，检查覆盖率
-                coverage = parse_vitest_report(config.commands.frontend.coverage_report)
-                thresholds = get_coverage_thresholds("frontend")  # {branch: 90, line: 80}
+                coverage = parse_vitest_report(config.testing.commands.frontend.coverage_report)
+                ticket_type = get_ticket_type(story)  # "frontend" or "frontend_ui"
+                thresholds = get_coverage_thresholds(ticket_type)  # {branch: 90, line: 80}
+                enforcement = config.testing.coverage.get(ticket_type, {}).get("enforcement", "hard")
                 if coverage["branch"]["percentage"] < thresholds["branch"]:
-                    issues.append(("coverage", "frontend_branch",
-                        f"前端分支覆盖率 {coverage['branch']['percentage']}% < {thresholds['branch']}%"))
+                    msg = f"前端分支覆盖率 {coverage['branch']['percentage']}% < {thresholds['branch']}%"
+                    if enforcement == "soft":
+                        warnings.append(("coverage_warn", "frontend_branch", f"[SOFT] {msg}"))
+                    else:
+                        issues.append(("coverage", "frontend_branch", msg))
                 if coverage["line"]["percentage"] < thresholds["line"]:
-                    issues.append(("coverage", "frontend_line",
-                        f"前端行覆盖率 {coverage['line']['percentage']}% < {thresholds['line']}%"))
+                    msg = f"前端行覆盖率 {coverage['line']['percentage']}% < {thresholds['line']}%"
+                    if enforcement == "soft":
+                        warnings.append(("coverage_warn", "frontend_line", f"[SOFT] {msg}"))
+                    else:
+                        issues.append(("coverage", "frontend_line", msg))
 
         # ------------------------------------------
         # 2.1b 集成测试（如果启用）
@@ -252,6 +271,10 @@ def verify_story(story_id):
             fix_verification_issues(story, issues)
             continue  # 回到迭代开头
 
+        if warnings:
+            print(f"  ⚠️ {len(warnings)} 个软告警（不阻塞）:")
+            for category, name, desc in warnings:
+                print(f"    [{category}] {name}: {desc}")
         print("  Phase 2 功能验收: ✅ 全部通过")
         break  # Phase 2 通过
     else:
@@ -510,3 +533,27 @@ Phase 2 功能验收: ✅ 全部通过
 - **禁止超过 max_enhanced_rounds（10 轮）增强终审** - Phase 3 达到上限必须失败退出
 - **连续两轮无修改才算通过** - 不是一轮无修改就通过
 - **上轮有修改 → 维度 H** - 任何修改后必须优先检查交叉影响
+- **🆕 证据命令必须可执行** - Phase 1 检查 `validate_evidence_command(command)` 不通过则拒绝进入 Phase 2（参见 deliver-ticket/SKILL.md §验证命令速查表）
+
+## 🛡️ validate_evidence_command()
+
+> 与 deliver-ticket/SKILL.md 中的定义保持一致，此处复制一份供本文件 Phase 1.4 调用。
+
+```python
+def validate_evidence_command(command: str) -> bool:
+    """验证 verification_evidence.command 是否为可执行的 shell 命令。
+    Phase 1 前置检查调用，不通过则拒绝进入 Phase 2。"""
+
+    FORBIDDEN_PREFIXES = ["code review", "ui review", "manual", "visual", "review"]
+    REQUIRED_PREFIXES = ["mvn", "pnpm", "npm", "npx", "bash", "sh", "java", "node", "python"]
+
+    cmd_lower = command.strip().lower()
+
+    # 禁止非自动化命令
+    for prefix in FORBIDDEN_PREFIXES:
+        if cmd_lower.startswith(prefix):
+            return False
+
+    # 必须以可执行工具开头
+    return any(cmd_lower.startswith(p) for p in REQUIRED_PREFIXES)
+```

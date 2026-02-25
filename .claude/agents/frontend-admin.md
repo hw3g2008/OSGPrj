@@ -193,16 +193,17 @@ ${config.paths.frontend.admin}
 
 ### Step 4: 验收标准
 UI 类 Ticket 的验收标准：
-- **lint 通过**: `cd osg-frontend && pnpm lint` 无错误
-- **构建通过**: `cd osg-frontend && pnpm build` 成功
+- **测试通过**: `pnpm --dir osg-frontend/packages/admin test` 无失败
+- **构建通过**: `pnpm --dir osg-frontend/packages/admin build` 成功
 - **视觉比对**: 页面整体布局、颜色、间距与原型 HTML 一致（允许 Ant Design Vue 默认交互差异）
 
 ## 命令
 
-- 安装: ${config.commands.frontend.install}
-- 开发: ${config.commands.frontend.dev-admin}
-- 构建: ${config.commands.frontend.build}
-- Lint: ${config.commands.frontend.lint}
+- 安装: `cd osg-frontend && pnpm install`
+- 开发: `pnpm --dir osg-frontend/packages/admin dev`
+- 构建: `pnpm --dir osg-frontend/packages/admin build`
+- 测试: `pnpm --dir osg-frontend/packages/admin test`
+- Lint: `cd osg-frontend && pnpm lint`（根级 eslint）
 
 ## 代码规范
 

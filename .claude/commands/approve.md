@@ -59,9 +59,7 @@
 ```
 1. 显示所有 Stories 摘要
 2. 等待用户确认
-3. 更新 workflow:
-   - current_step = "stories_approved"
-   - next_step = "split_ticket"
+3. 调用 transition("/approve stories", state, "stories_approved")
 4. 设置 current_story = 第一个 Story ID
 ```
 
@@ -83,9 +81,7 @@
 1. 显示所有 Tickets 摘要
 2. 显示依赖图
 3. 等待用户确认
-4. 更新 workflow:
-   - current_step = "tickets_approved"
-   - next_step = "next"
+4. 调用 transition("/approve tickets", state, "tickets_approved")
 ```
 
 ### 下一步
@@ -111,11 +107,10 @@
 ```
 1. 显示 Story 验收报告摘要（来自 /verify 或 /cc-review 的结果）
 2. 等待用户确认
-3. 更新 Story 状态为 completed
-4. 检查是否是最后一个 Story:
-   - 如果还有 pending Stories → 设置 workflow.current_step = "story_approved"
-   - 如果是最后一个 → 设置 workflow.current_step = "all_stories_done"
-5. 更新 STATE.yaml
+3. 更新 Story 状态为 done
+4. 检查是否是最后一个 Story，通过 transition() 推进:
+   - 如果还有 pending Stories → transition() 推进到 "story_approved"
+   - 如果是最后一个 → transition() 推进到 "all_stories_done"
 ```
 
 ### 完成判断
@@ -126,20 +121,12 @@ def check_story_completion(state):
     pending_stories = [s for s in state.stories if s.status == "pending"]
     
     if len(pending_stories) == 0:
-        # 所有 Stories 完成
-        state.workflow.current_step = "all_stories_done"
-        state.workflow.next_step = None
-        write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
-        # 事件审计（W8a）
-        append_workflow_event(build_event(command="/approve", state_from="story_verified", state_to="all_stories_done"))
+        # 所有 Stories 完成 — 通过 transition() 推进
+        transition("/approve story", state, "all_stories_done")
         return "all_done"
     else:
-        # 还有待处理的 Story
-        state.workflow.current_step = "story_approved"
-        state.workflow.next_step = "next_story"
-        write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
-        # 事件审计（W8a）
-        append_workflow_event(build_event(command="/approve", state_from="story_verified", state_to="story_approved"))
+        # 还有待处理的 Story — 通过 transition() 推进
+        transition("/approve story", state, "story_approved")
         return "continue"
 ```
 
@@ -159,7 +146,7 @@ def check_story_completion(state):
 1. 显示 Ticket 完成摘要
 2. 显示代码审查结果
 3. 等待用户确认
-4. 更新 Ticket 状态为 completed
+4. 更新 Ticket 状态为 done
 5. 更新 STATE.yaml
 ```
 

@@ -38,5 +38,5 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
    - 等待用户审批
 
 5. **更新状态**
-   - 更新 `workflow.current_step` 为 `ticket_split_done`
+   - 由 ticket-splitter 内部调用 `transition()` 推进到 `ticket_split_done`
    - 等待用户审批（`/approve`）

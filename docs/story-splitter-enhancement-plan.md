@@ -6,7 +6,7 @@
 ## 一、目标
 - 将 story-splitter/SKILL.md 的严谨性对齐 brainstorming/SKILL.md，补充缺失的 3 个结构性段落
 - 验收标准：story-splitter 具备完整的输入收集、失败退出规则、迭代计数示例，与 brainstorming 结构对齐
-
+en
 ## 二、前置条件与假设
 - 假设 1: brainstorming/SKILL.md 是成熟参考基准，其结构模式值得对齐
 - 假设 2: story-splitter 的 Phase 2/3 伪代码逻辑本身正确，只需补充说明性段落

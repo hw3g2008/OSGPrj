@@ -23,9 +23,7 @@
 5. INVEST 原则校验
 6. 生成 Story YAML 文件
 7. 更新 STATE.yaml
-8. 更新 workflow:
-   - current_step = "story_split_done"
-   - next_step = "approve_stories"
+8. 由 story-splitter 内部调用 transition() 推进到 story_split_done
 ```
 
 ### 输出
@@ -57,9 +55,7 @@
 6. 分析依赖关系
 7. 生成 Ticket YAML 文件
 8. 更新 STATE.yaml
-9. 更新 workflow:
-   - current_step = "ticket_split_done"
-   - next_step = "approve_tickets"
+9. 由 ticket-splitter 内部调用 transition() 推进到 ticket_split_done
 ```
 
 ### 输出

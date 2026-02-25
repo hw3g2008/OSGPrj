@@ -27,6 +27,11 @@ public class LoginBody
      */
     private String uuid;
 
+    /**
+     * 记住我
+     */
+    private Boolean rememberMe;
+
     public String getUsername()
     {
         return username;
@@ -65,5 +70,15 @@ public class LoginBody
     public void setUuid(String uuid)
     {
         this.uuid = uuid;
+    }
+
+    public Boolean getRememberMe()
+    {
+        return rememberMe;
+    }
+
+    public void setRememberMe(Boolean rememberMe)
+    {
+        this.rememberMe = rememberMe;
     }
 }

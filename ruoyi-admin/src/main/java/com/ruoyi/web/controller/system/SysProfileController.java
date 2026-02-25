@@ -125,7 +125,6 @@ public class SysProfileController extends BaseController
     @PutMapping("/updateFirstLoginPwd")
     public AjaxResult updateFirstLoginPwd(@RequestBody Map<String, String> params)
     {
-        String oldPassword = params.get("oldPassword");
         String newPassword = params.get("newPassword");
         // 校验新密码格式：8-20位，包含字母和数字
         if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 20)
@@ -138,16 +137,6 @@ public class SysProfileController extends BaseController
         }
         LoginUser loginUser = getLoginUser();
         Long userId = loginUser.getUserId();
-        SysUser user = userService.selectUserById(userId);
-        String password = user.getPassword();
-        if (!SecurityUtils.matchesPassword(oldPassword, password))
-        {
-            return error("修改密码失败，旧密码错误");
-        }
-        if (SecurityUtils.matchesPassword(newPassword, password))
-        {
-            return error("新密码不能与旧密码相同");
-        }
         String encryptedPassword = SecurityUtils.encryptPassword(newPassword);
         if (userService.updateFirstLoginPwd(userId, encryptedPassword) > 0)
         {

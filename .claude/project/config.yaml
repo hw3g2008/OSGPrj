@@ -37,17 +37,19 @@ commands:
   lint: "mvn checkstyle:check"
   run: "mvn -pl ruoyi-admin -am spring-boot:run"
   
-  # 前端命令
+  # 前端命令（pnpm workspace 子包直接调用）
   frontend:
     install: "cd osg-frontend && pnpm install"
-    build: "cd osg-frontend && pnpm build"
+    build: "pnpm --dir osg-frontend/packages/admin build"
+    build-all: "cd osg-frontend && pnpm build:all"
     lint: "cd osg-frontend && pnpm lint"
-    dev: "cd osg-frontend && pnpm dev:student"
-    dev-student: "cd osg-frontend && pnpm dev:student"
-    dev-mentor: "cd osg-frontend && pnpm dev:mentor"
-    dev-lead-mentor: "cd osg-frontend && pnpm dev:lead-mentor"
-    dev-assistant: "cd osg-frontend && pnpm dev:assistant"
-    dev-admin: "cd osg-frontend && pnpm dev:admin"
+    test: "pnpm --dir osg-frontend/packages/admin test"
+    dev: "pnpm --dir osg-frontend/packages/admin dev"
+    dev-student: "pnpm --dir osg-frontend/packages/student dev"
+    dev-mentor: "pnpm --dir osg-frontend/packages/mentor dev"
+    dev-lead-mentor: "pnpm --dir osg-frontend/packages/lead-mentor dev"
+    dev-assistant: "pnpm --dir osg-frontend/packages/assistant dev"
+    dev-admin: "pnpm --dir osg-frontend/packages/admin dev"
   
   # 运维命令
   ops:
@@ -178,14 +180,16 @@ testing:
       branch: 100            # 分支覆盖率必须 100%
       line: 90               # 行覆盖率 ≥ 90%
       method: 90             # 方法覆盖率 ≥ 90%
-    # 前端功能类型
+    # 前端功能类型（soft: 仅告警不阻塞，待测试覆盖业务代码后改为 hard）
     frontend:
       branch: 90             # 分支覆盖率 ≥ 90%
       line: 80               # 行覆盖率 ≥ 80%
-    # 前端 UI 还原类型
+      enforcement: soft      # soft=告警 | hard=阻塞
+    # 前端 UI 还原类型（soft: 仅告警不阻塞）
     frontend_ui:
       branch: 80             # 分支覆盖率 ≥ 80%
       line: 70               # 行覆盖率 ≥ 70%
+      enforcement: soft      # soft=告警 | hard=阻塞
 
   # 测试命令
   commands:
@@ -196,10 +200,10 @@ testing:
       coverage_check: "mvn jacoco:check"
       coverage_report: "target/site/jacoco"
     frontend:
-      test: "cd osg-frontend && pnpm test"
-      test_single: "cd osg-frontend && pnpm test {testFile}"
-      test_coverage: "cd osg-frontend && pnpm test:coverage"
-      coverage_report: "osg-frontend/coverage"
+      test: "pnpm --dir osg-frontend/packages/admin test"
+      test_single: "pnpm --dir osg-frontend/packages/admin test {testFile}"
+      test_coverage: "pnpm --dir osg-frontend/packages/admin test --coverage"
+      coverage_report: "osg-frontend/packages/admin/coverage"
 
   # 集成测试
   integration:

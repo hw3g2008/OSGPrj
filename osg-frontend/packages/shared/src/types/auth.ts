@@ -4,10 +4,5 @@ export interface LoginParams {
   password: string
   code?: string
   uuid?: string
-}
-
-// 登录结果
-export interface LoginResult {
-  token: string
-  expires_in?: number
+  rememberMe?: boolean
 }

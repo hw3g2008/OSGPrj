@@ -80,7 +80,6 @@ const formState = reactive({
   confirmPassword: ''
 })
 
-// 密码规则校验
 const rules8to20 = computed(() => {
   const len = formState.newPassword.length
   return len >= 8 && len <= 20
@@ -90,28 +89,16 @@ const hasLetter = computed(() => /[a-zA-Z]/.test(formState.newPassword))
 const hasNumber = computed(() => /\d/.test(formState.newPassword))
 
 const validatePassword = (_rule: any, value: string) => {
-  if (!value) {
-    return Promise.reject('请输入新密码')
-  }
-  if (value.length < 8 || value.length > 20) {
-    return Promise.reject('密码长度需为8-20位')
-  }
-  if (!/[a-zA-Z]/.test(value)) {
-    return Promise.reject('密码需包含字母')
-  }
-  if (!/\d/.test(value)) {
-    return Promise.reject('密码需包含数字')
-  }
+  if (!value) return Promise.reject('请输入新密码')
+  if (value.length < 8 || value.length > 20) return Promise.reject('密码长度需为8-20位')
+  if (!/[a-zA-Z]/.test(value)) return Promise.reject('密码需包含字母')
+  if (!/\d/.test(value)) return Promise.reject('密码需包含数字')
   return Promise.resolve()
 }
 
 const validateConfirm = (_rule: any, value: string) => {
-  if (!value) {
-    return Promise.reject('请确认新密码')
-  }
-  if (value !== formState.newPassword) {
-    return Promise.reject('两次输入的密码不一致')
-  }
+  if (!value) return Promise.reject('请确认新密码')
+  if (value !== formState.newPassword) return Promise.reject('两次输入的密码不一致')
   return Promise.resolve()
 }
 
@@ -123,11 +110,9 @@ const rules = {
 const handleSubmit = async () => {
   try {
     loading.value = true
-
     await http.put('/system/user/profile/updateFirstLoginPwd', {
       newPassword: formState.newPassword
     })
-
     message.success('密码修改成功')
     emit('success')
   } catch (error: any) {

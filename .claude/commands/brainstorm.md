@@ -18,13 +18,13 @@
 3. Phase 0: PRD 生成（闭环，max 3 轮）
    - PRD 不存在 → 从 HTML 全量生成
    - PRD 已存在 → 询问用户: 重新生成 or 使用已有
-   - 有 html_issues → 同步询问 PM 裁决 → 更新 PRD → 重跑
-   - 安全阀: 3轮仍有问题 → 输出 open-questions.md → 阻塞
+   - 有 html_issues → 写入 {module}-DECISIONS.md → PM 文件裁决 → 更新 PRD → 重跑
+   - 安全阀: 3轮仍有问题 → 输出 {module}-DECISIONS.md → 阻塞
 4. Phase 1: 收集输入 + 生成 SRS 初稿
 5. Phase 2: 循环正向/反向/PRD覆盖率/UI专项校验（直到全部 ✅）
 6. Phase 3: 增强全局终审（连续两轮无修改通过）
 7. Phase 4: HTML 原型全量校验（差异分 A/B/C/D 四类）
-8. 输出最终需求文档 + 问题确认清单（如有）
+8. 输出最终需求文档 + 决策日志 {module}-DECISIONS.md（如有 B/C/D 类）
 9. 更新 workflow:
    - 无问题: current_step = "brainstorm_done", next_step = "split_story"
    - 有问题: current_step = "brainstorm_pending_confirm", 阻塞
@@ -35,7 +35,8 @@
 ```
 Phase 1~3: 自动迭代执行，不等待用户确认
 Phase 0: PRD 已存在时询问用户选择路径
-Phase 0/4: 有问题确认清单时阻塞等待产品确认
+Phase 0: 有 html_issues 时写入 DECISIONS.md，PM 文件裁决
+Phase 4: 有 B/C/D 类时写入 DECISIONS.md，阻塞等待产品确认
 ```
 
 ## 示例
@@ -54,4 +55,5 @@ Phase 0/4: 有问题确认清单时阻塞等待产品确认
 
 ## 下一步
 
-执行 `/split story` 将需求拆解为 Stories
+- **无待确认项**: 执行 `/split story` 将需求拆解为 Stories
+- **有待确认项**: 请在 `{srs_dir}/{module}-DECISIONS.md` 中裁决后执行 `/approve brainstorm` 或重新执行 `/brainstorm {module}`

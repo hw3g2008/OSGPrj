@@ -16,6 +16,7 @@
 ```
 1. 读取 STATE.yaml
 2. 查找下一个 pending Ticket（考虑依赖）
+   - 如果找不到 pending Ticket → 停止，输出："当前 Story 所有 Tickets 已完成。请执行 /verify {story_id} 或 /approve {story_id}"
 3. 根据 Ticket.type 选择 Agent
    - backend → backend-java Agent
    - frontend → frontend-vue Agent
@@ -52,7 +53,7 @@ def select_agent(ticket):
 
 如果 `config.approval.ticket_done == "auto"`，完成一个 Ticket 后会自动执行下一个，直到：
 
-- 所有 Tickets 完成 → 设置 `workflow.current_step = "all_tickets_done"`，自动执行 `/verify`
+- 所有 Tickets 完成 → 由 deliver-ticket 内部调用 `transition()` 推进到 `all_tickets_done`，自动执行 `/verify`
 - 遇到错误需要人工介入
 - 上下文接近满
 
@@ -63,14 +64,12 @@ def check_completion(state):
     pending_tickets = [t for t in state.tickets if t.status == "pending"]
     
     if len(pending_tickets) == 0:
-        # 所有 Tickets 完成
-        state.workflow.current_step = "all_tickets_done"
-        state.workflow.next_step = "verify"
+        # 所有 Tickets 完成 — 由 deliver-ticket 内部调用 transition()
+        # 参见 deliver-ticket/SKILL.md Step 9 (W6/W7)
         return "all_done"
     else:
-        # 还有待处理的 Ticket
-        state.workflow.current_step = "ticket_done"
-        state.workflow.next_step = "next"
+        # 还有待处理的 Ticket — 由 deliver-ticket 内部调用 transition()
+        # 参见 deliver-ticket/SKILL.md Step 9 (W5)
         return "continue"
 ```
 

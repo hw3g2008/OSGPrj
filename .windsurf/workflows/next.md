@@ -40,3 +40,12 @@ description: 执行下一个待办 Ticket - 自动选取并实现
        - 验收通过：`transition("/next", state, "story_verified")`（W6），用户选择 `/cc-review` 或 `/approve`
        - 验收失败：`transition("/next", state, "verification_failed", meta={"result":"failure"})`（W7），暂停等用户修复后执行 `/verify`
    - ⚠️ 禁止直接写 `STATE.yaml` 的 `workflow.current_step`，必须经 `transition()` 推进（含事件写入+回滚保障）
+
+## ⛔ 禁止行为（硬约束）
+
+| # | 禁止行为 | 正确做法 | 根因 |
+|---|---------|---------|------|
+| F1 | 用 "code review" / "UI review" / "manual check" 作为 `verification_evidence.command` | 必须是可执行的 shell 命令（mvn/pnpm/npm/npx 等） | CC-Review S-001 发现此类证据无法复现验证 |
+| F2 | 直接写 `STATE.yaml` 的 `workflow.current_step` | 必须经 `transition()` 推进 | 直接写会跳过事件审计，导致 workflow-events.jsonl 链路断裂 |
+| F3 | 声明 Ticket done 时不运行验证命令 | 必须先执行验证命令且 exit_code=0，再写证据，最后更新状态 | 证据先于断言 |
+| F4 | 在前端项目中使用 `pnpm lint`（无 lint 脚本时） | 检查 package.json scripts，使用实际存在的命令（如 `pnpm test && pnpm build`） | 不存在的脚本会导致验证卡死 |

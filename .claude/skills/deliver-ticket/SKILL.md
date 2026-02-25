@@ -148,7 +148,7 @@ metadata:
 [记录验证证据] ─→ 写入 verification_evidence
   │
   ▼
-[更新状态] ─→ ticket.status = completed
+[更新状态] ─→ ticket.status = done
   │
   ▼
 [Level 3 增量 Story 验证]
@@ -195,7 +195,7 @@ metadata:
   ├── 有问题 ──→ 修复
   │
   ▼ 全部通过
-[更新状态] ─→ ticket.status = completed
+[更新状态] ─→ ticket.status = done
   │
   ▼
 [输出结果]
@@ -236,7 +236,7 @@ metadata:
   ├── 有问题 ──→ 修复
   │
   ▼ 全部通过
-[更新状态] ─→ ticket.status = completed
+[更新状态] ─→ ticket.status = done
   │
   ▼
 [输出结果]
@@ -434,6 +434,14 @@ def deliver_ticket(ticket_id):
             "hint": "当前 Ticket 引入了回归，全量测试失败，请修复后重新执行 /next"
         }
 
+    # Step 6.5: 验证证据命令强度校验（防止 "code review" 等非自动化命令）
+    if not validate_evidence_command(verification.command):
+        return {
+            "status": "invalid_evidence_command",
+            "error": f"证据命令 '{verification.command}' 不是可执行的 shell 命令",
+            "hint": "请参考验证命令速查表选择正确的命令"
+        }
+
     # Step 7: 写入验证证据（Level 1 + Level 2 都通过后才写）
     ticket.verification_evidence = {
         "command": verification.command,
@@ -452,7 +460,7 @@ def deliver_ticket(ticket_id):
     # Step 9: 更新 STATE.yaml + Level 3/4 验证
     # ========================================
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
-    update_state(ticket_id, "completed")
+    update_state(ticket_id, "done")
 
     # --- Level 3: 增量 Story 验证 ---
     story = read_yaml(f"osg-spec-docs/tasks/stories/{ticket.story_id}.yaml")
@@ -485,7 +493,7 @@ def deliver_ticket(ticket_id):
         print(f"⏭️ 还有 {len(pending_tickets)} 个 Ticket 待完成")
 
     return {
-        "status": "completed",
+        "status": "done",
         "ticket_id": ticket_id,
         "files_changed": get_changed_files(),
         "verification_evidence": ticket.verification_evidence
@@ -503,8 +511,9 @@ def run_verification(ticket, config):
             cmd = config.commands.test  # 优先使用指定测试类: mvn test -Dtest={TestClass}
 
     elif ticket.type in ("frontend", "frontend-ui"):
-        # 前端：lint + build
-        cmd = f"{config.commands.frontend.lint} && {config.commands.frontend.build}"
+        # 前端：test + build（从 ticket.allowed_paths 推导 pkg_dir）
+        pkg_dir = resolve_frontend_pkg_dir(ticket)  # e.g. "osg-frontend/packages/admin"
+        cmd = f"pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build"
 
     elif ticket.type == "config":
         # 配置：语法检查
@@ -534,7 +543,8 @@ def run_regression_test(ticket, config):
 
     # 前端全量测试（如果当前 Ticket 是前端类型）
     if ticket.type in ("frontend", "frontend-ui"):
-        frontend_test = bash(config.commands.frontend.test)  # pnpm test
+        pkg_dir = resolve_frontend_pkg_dir(ticket)  # e.g. "osg-frontend/packages/admin"
+        frontend_test = bash(f"pnpm --dir {pkg_dir} test")  # vitest run
         if frontend_test.exit_code != 0:
             failures.append(f"前端全量测试失败: {extract_failure_summary(frontend_test)}")
 
@@ -657,7 +667,7 @@ def incremental_verify(ticket, story, state):
 
 ⚠️ Level 4 Story 验收失败：所有 Tickets 完成但 Story 验收未通过：
 1. 输出验收失败报告
-2. 设置 current_step = verification_failed
+2. 通过 transition() 推进到 verification_failed
 3. 停止自动继续 — 暂停等用户修复后执行 /verify
 ```
 
@@ -712,9 +722,47 @@ def incremental_verify(ticket, story, state):
 
 ---
 
-## 🚨 强制验证步骤（不可跳过）
+## � 验证命令速查表
 
-**在将 Ticket 状态更新为 `done/completed` 之前，必须执行以下步骤：**
+在写入 `verification_evidence.command` 之前，**必须参考此表选择正确的验证命令**：
+
+| Ticket Type | 必须运行的验证命令 | 禁止替代 |
+|---|---|---|
+| `backend` | `mvn compile -pl {module} -am` 或 `mvn test -Dtest={TestClass}` | "code review" |
+| `database` | `mvn compile -pl ruoyi-common -am`（至少编译通过） | "code review" |
+| `test` | `mvn test -pl {module} -am`（**必须是 test，不是 compile**） | "mvn compile" |
+| `frontend-ui` | `pnpm --dir {pkg_dir} build` | "UI review" |
+| `frontend` | `pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build` | "code review" |
+| `config` | 具体语法检查命令（如 `yamllint`、`jsonlint`） | "code review" |
+
+> ⚠️ **注意**：使用前先检查目标项目的 `package.json` scripts，确认命令存在。例如若无 `lint` 脚本，则不可使用 `pnpm lint`。
+
+## 🛡️ validate_evidence_command()
+
+```python
+def validate_evidence_command(command: str) -> bool:
+    """验证 verification_evidence.command 是否为可执行的 shell 命令。
+    在 Step 7 写入证据前调用，不通过则拒绝写入。"""
+
+    FORBIDDEN_PREFIXES = ["code review", "ui review", "manual", "visual", "review"]
+    REQUIRED_PREFIXES = ["mvn", "pnpm", "npm", "npx", "bash", "sh", "java", "node", "python"]
+
+    cmd_lower = command.strip().lower()
+
+    # 禁止非自动化命令
+    for prefix in FORBIDDEN_PREFIXES:
+        if cmd_lower.startswith(prefix):
+            return False
+
+    # 必须以可执行工具开头
+    return any(cmd_lower.startswith(p) for p in REQUIRED_PREFIXES)
+```
+
+---
+
+## �� 强制验证步骤（不可跳过）
+
+**在将 Ticket 状态更新为 `done` 之前，必须执行以下步骤：**
 
 ### Step 1: 根据 Ticket.type 执行验证命令
 
@@ -723,8 +771,8 @@ def incremental_verify(ticket, story, state):
 | backend | `${config.commands.test}` 或 `mvn test -Dtest={TestClass}` | exit_code = 0 |
 | database | `mvn compile -pl ruoyi-admin -am` (至少编译通过) | exit_code = 0 |
 | test | `${config.commands.test}` 或指定测试类 | exit_code = 0 且测试通过 |
-| frontend | `${config.commands.frontend.lint} && ${config.commands.frontend.build}` | 两个命令 exit_code = 0 |
-| frontend-ui | `${config.commands.frontend.lint} && ${config.commands.frontend.build}` | 两个命令 exit_code = 0 |
+| frontend | `pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build` | 两个命令 exit_code = 0 |
+| frontend-ui | `pnpm --dir {pkg_dir} build` | exit_code = 0 |
 | config | 语法检查或启动验证（视具体配置而定） | exit_code = 0 |
 
 ### Step 2: 检查退出码

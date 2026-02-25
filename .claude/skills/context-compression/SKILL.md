@@ -39,7 +39,7 @@ compressed_context:
   current_state:
     story: "S-001"
     ticket: "T-003"
-    workflow_step: "ticket_approved"
+    workflow_step: "tickets_approved"
   
   # 未完成任务（完整保留）
   pending_tasks:

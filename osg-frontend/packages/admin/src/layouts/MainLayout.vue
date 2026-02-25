@@ -10,15 +10,19 @@
         theme="dark"
         mode="inline"
       >
-        <a-menu-item key="dashboard" @click="$router.push('/dashboard')">
+        <a-menu-item
+          v-for="route in filteredRoutes"
+          :key="route.path"
+          @click="$router.push(route.path)"
+        >
           <template #icon><DashboardOutlined /></template>
-          <span>首页</span>
+          <span>{{ route.meta?.title || route.name }}</span>
         </a-menu-item>
       </a-menu>
       <div class="sidebar-footer">
         <a-button type="text" block @click="showProfileModal = true">
           <template #icon><UserOutlined /></template>
-          <span v-if="!collapsed">{{ userStore.userInfo?.nickName || '个人设置' }}</span>
+          <span v-if="!collapsed">个人设置</span>
         </a-button>
       </div>
     </a-layout-sider>
@@ -26,7 +30,7 @@
       <a-layout-header class="header">
         <div class="header-right">
           <span class="user-name">{{ userStore.userInfo?.nickName }}</span>
-          <a-button type="link" @click="handleLogout">退出</a-button>
+          <a-button type="link" danger @click="handleLogout">退出登录</a-button>
         </div>
       </a-layout-header>
       <a-layout-content class="content">
@@ -49,30 +53,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { Modal, message } from 'ant-design-vue'
 import { DashboardOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import FirstLoginModal from '@/components/FirstLoginModal.vue'
 import ProfileModal from '@/components/ProfileModal.vue'
+import router from '@/router'
 
-const router = useRouter()
 const userStore = useUserStore()
+const vueRouter = useRouter()
 
 const collapsed = ref(false)
 const selectedKeys = ref(['dashboard'])
 const showProfileModal = ref(false)
 
-const handleLogout = async () => {
-  await userStore.logout()
-  message.success('已退出登录')
-  router.push('/login')
+const filteredRoutes = computed(() => {
+  const mainRoute = router.getRoutes().find(r => r.path === '/')
+  if (!mainRoute || !mainRoute.children) return []
+  const perms = userStore.permissions
+  const isAdmin = perms.includes('*:*:*')
+  return mainRoute.children
+    .filter(child => child.meta?.title)
+    .filter(child => {
+      if (isAdmin) return true
+      const perm = child.meta?.permission as string | undefined
+      return !perm || perms.includes(perm)
+    })
+    .map(child => ({
+      path: '/' + child.path,
+      name: child.name as string,
+      meta: child.meta
+    }))
+})
+
+const handleLogout = () => {
+  Modal.confirm({
+    title: '确认退出',
+    content: '确定要退出登录吗？',
+    okText: '确定',
+    cancelText: '取消',
+    async onOk() {
+      await userStore.logout()
+      message.success('已退出登录')
+      vueRouter.push('/login')
+    }
+  })
 }
 
 onMounted(async () => {
   if (!userStore.userInfo) {
-    await userStore.getInfo()
+    await userStore.fetchInfo()
   }
 })
 </script>

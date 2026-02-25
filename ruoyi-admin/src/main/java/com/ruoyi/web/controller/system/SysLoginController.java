@@ -58,8 +58,9 @@ public class SysLoginController
     {
         AjaxResult ajax = AjaxResult.success();
         // 生成令牌
+        boolean rememberMe = loginBody.getRememberMe() != null && loginBody.getRememberMe();
         String token = loginService.login(loginBody.getUsername(), loginBody.getPassword(), loginBody.getCode(),
-                loginBody.getUuid());
+                loginBody.getUuid(), rememberMe);
         ajax.put(Constants.TOKEN, token);
         return ajax;
     }

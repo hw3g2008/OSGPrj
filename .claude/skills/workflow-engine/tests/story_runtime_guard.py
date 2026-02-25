@@ -12,6 +12,7 @@ Story 运行态守护脚本
 import sys
 import yaml
 import json
+import argparse
 from pathlib import Path
 
 # ============================================
@@ -190,7 +191,36 @@ def check_file_count_consistency(state):
     return issues
 
 
+def parse_args():
+    """解析 CLI 参数，覆盖硬编码默认路径"""
+    parser = argparse.ArgumentParser(description="Story 运行态守护校验")
+    parser.add_argument("--state", type=Path, default=STATE_PATH,
+                        help=f"STATE.yaml 路径 (默认: {STATE_PATH})")
+    parser.add_argument("--config", type=Path, default=CONFIG_PATH,
+                        help=f"config.yaml 路径 (默认: {CONFIG_PATH})")
+    parser.add_argument("--state-machine", type=Path, default=SM_PATH,
+                        help=f"state-machine.yaml 路径 (默认: {SM_PATH})")
+    parser.add_argument("--stories-dir", type=Path, default=STORIES_DIR,
+                        help=f"Stories 目录 (默认: {STORIES_DIR})")
+    parser.add_argument("--tickets-dir", type=Path, default=TICKETS_DIR,
+                        help=f"Tickets 目录 (默认: {TICKETS_DIR})")
+    parser.add_argument("--proofs-dir", type=Path, default=PROOFS_DIR,
+                        help=f"Proofs 目录 (默认: {PROOFS_DIR})")
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+
+    # 用 CLI 参数覆盖全局变量
+    global STATE_PATH, CONFIG_PATH, SM_PATH, STORIES_DIR, TICKETS_DIR, PROOFS_DIR
+    STATE_PATH = args.state
+    CONFIG_PATH = args.config
+    SM_PATH = args.state_machine
+    STORIES_DIR = args.stories_dir
+    TICKETS_DIR = args.tickets_dir
+    PROOFS_DIR = args.proofs_dir
+
     print("=" * 60)
     print("Story 运行态守护校验")
     print("=" * 60)
@@ -198,12 +228,12 @@ def main():
     # 加载文件
     state = load_yaml_file(STATE_PATH)
     if not state:
-        print("\n❌ STATE.yaml 不存在或为空")
+        print(f"\n❌ STATE.yaml 不存在或为空: {STATE_PATH}")
         return 1
 
     sm = load_yaml_file(SM_PATH)
     if not sm:
-        print("\n❌ state-machine.yaml 不存在或为空")
+        print(f"\n❌ state-machine.yaml 不存在或为空: {SM_PATH}")
         return 1
 
     config = load_yaml_file(CONFIG_PATH)

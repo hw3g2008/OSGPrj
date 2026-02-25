@@ -20,8 +20,8 @@ description: 需求分析流程 - 对指定模块执行需求头脑风暴和多�
    - PRD 不存在 → 需要生成；已存在 → 询问用户（重新生成 or 使用已有）
    - **闭环**：调用 prototype-extraction → 检查 `html_issues`
      - 无问题 → ✅ 进入 Phase 1
-     - 有问题且未达安全阀 → 同步询问 PM 裁决 → 更新 PRD → 重跑
-     - 有问题且达到安全阀(3轮) → 输出 `open-questions.md` → `brainstorm_pending_confirm` → 停止
+     - 有问题且未达安全阀 → 写入 `{module}-DECISIONS.md` → PM 文件裁决 → 更新 PRD → 重跑
+     - 有问题且达到安全阀(3轮) → 输出 `{module}-DECISIONS.md` → `brainstorm_pending_confirm` → 停止
    - **门控检查**：Phase 0 完成后运行 `bash bin/check-skill-artifacts.sh prototype-extraction {module} {prd_dir}` 验证产物完整性，失败则回到 prototype-extraction 补充
    - ℹ️ md/docx 文档仅作业务背景参考，不作为需求来源
 
@@ -41,22 +41,21 @@ description: 需求分析流程 - 对指定模块执行需求头脑风暴和多�
    - 校验维度：页面结构、表格列、筛选栏选项、操作按钮、交互行为、状态展示、Badge/Tag 颜色、样式精确度（CSS 变量值/组件样式参数/布局参数是否与 HTML 一致）
    - 差异处理规则（HTML 是 SSOT）：
      - **A类：HTML 有但 PRD/SRS 遗漏** → 直接补充到 PRD + SRS
-     - **B类：PRD/SRS 有但 HTML 无** → 输出到问题确认清单（待确认）
-     - **C类：HTML 自身内部矛盾** → 输出到问题确认清单（待产品裁决）
-     - **D类：HTML 明显 Bug** → 在 PRD 中标注 + 输出到问题确认清单（待确认修复方向）
+     - **B类：PRD/SRS 有但 HTML 无** → 写入决策日志（待确认）
+     - **C类：HTML 自身内部矛盾** → 写入决策日志（待产品裁决）
+     - **D类：HTML 明显 Bug** → 在 PRD 中标注 + 写入决策日志（待确认修复方向）
    - **有 A 类补充 → 回到 Phase 2 重新校验**（补充改变了 SRS，必须重新校验，max 1 次回退）
    - 只有 B/C/D 类才算"有问题"，A 类（auto_fixed）不触发阻塞
 
 6. **输出产物**（保存到 `osg-spec-docs/docs/02-requirements/srs/`）
    - `{module}.md` — SRS 文档（FR/NFR/AC/接口/数据库/技术约束）
-   - `{module}-open-questions.md` — 问题确认清单（有待确认项时生成），分 4 类：
-     - **A类**：HTML 有但 PRD/SRS 遗漏（已自动补充，记录备查）
+   - `{module}-DECISIONS.md` — 决策日志（有待确认项时生成），记录 B/C/D 类问题：
      - **B类**：PRD/SRS 有但 HTML 无（待确认）
      - **C类**：HTML 自身内部矛盾（待产品裁决）
      - **D类**：HTML 明显 Bug（待确认修复方向）
 
 7. **更新状态**
-   - **无问题确认清单**: `workflow.current_step` → `brainstorm_done`，自动继续 `/split story`
-   - **有问题确认清单**: `workflow.current_step` → `brainstorm_pending_confirm`，阻塞等待产品确认
+   - **无待确认项**: `workflow.current_step` → `brainstorm_done`，自动继续 `/split story`
+   - **有待确认项**: `workflow.current_step` → `brainstorm_pending_confirm`，阻塞等待产品确认
      - 产品确认后重新执行 `/brainstorm {module}`（增量更新路径）
-     - 或执行 `/approve brainstorm` 跳过确认 → `brainstorm_done`
+     - 或执行 `/approve brainstorm`：phase0 来源 → 更新 PRD → 重新 /brainstorm；phase4 来源 → 跳过 → `brainstorm_done`

@@ -10,6 +10,7 @@ Story 事件日志校验脚本
 
 import json
 import sys
+import argparse
 from pathlib import Path
 
 # ============================================
@@ -17,6 +18,14 @@ from pathlib import Path
 # ============================================
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 EVENT_LOG_PATH = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "workflow-events.jsonl"
+
+
+def safe_display_path(path):
+    """安全地显示路径：优先 relative_to(PROJECT_ROOT)，失败则返回绝对路径"""
+    try:
+        return path.resolve().relative_to(PROJECT_ROOT)
+    except ValueError:
+        return path.resolve()
 
 REQUIRED_FIELDS = [
     "event_id",
@@ -128,16 +137,34 @@ def check_optional_field_coverage(events):
     return warnings
 
 
+def parse_args():
+    """解析 CLI 参数，覆盖硬编码默认路径"""
+    parser = argparse.ArgumentParser(description="Story 事件日志校验")
+    parser.add_argument("--events", type=Path, default=EVENT_LOG_PATH,
+                        help=f"workflow-events.jsonl 路径 (默认: {EVENT_LOG_PATH})")
+    parser.add_argument("--state", type=Path, default=None,
+                        help="STATE.yaml 路径（仅 bootstrap 模式使用）")
+    parser.add_argument("--allow-bootstrap", action="store_true",
+                        help="允许首次引导阶段跳过事件日志校验")
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+
+    # 用 CLI 参数覆盖全局变量
+    global EVENT_LOG_PATH
+    EVENT_LOG_PATH = args.events
+
     print("=" * 60)
     print("Story 事件日志校验")
     print("=" * 60)
 
     # 检查文件是否存在（§5.4 bootstrap 边界判断）
-    allow_bootstrap = "--allow-bootstrap" in sys.argv
+    allow_bootstrap = args.allow_bootstrap
     if not EVENT_LOG_PATH.exists():
         # 读取 STATE.yaml 判断是否在 bootstrap 边界内
-        state_path = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "STATE.yaml"
+        state_path = args.state or (PROJECT_ROOT / "osg-spec-docs" / "tasks" / "STATE.yaml")
         tickets_dir = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "tickets"
         bootstrap_allowed = False
 
@@ -152,14 +179,14 @@ def main():
                 bootstrap_allowed = True
 
         if bootstrap_allowed:
-            print(f"\n⚠️ 事件日志文件不存在: {EVENT_LOG_PATH.relative_to(PROJECT_ROOT)}")
+            print(f"\n⚠️ 事件日志文件不存在: {safe_display_path(EVENT_LOG_PATH)}")
             print("Bootstrap 模式：当前处于首轮拆分阶段，允许跳过。")
             print("=" * 60)
             print("BOOTSTRAP: 事件日志文件不存在，首轮允许跳过")
             print("=" * 60)
             return 0
         else:
-            print(f"\n❌ 事件日志文件不存在: {EVENT_LOG_PATH.relative_to(PROJECT_ROOT)}")
+            print(f"\n❌ 事件日志文件不存在: {safe_display_path(EVENT_LOG_PATH)}")
             print("审计证据为空 — 字段完整率和状态覆盖率均未校验。")
             print("=" * 60)
             print("FAIL: 事件日志文件不存在，审计门不通过")
@@ -170,7 +197,7 @@ def main():
 
     # 加载事件
     events = load_events(EVENT_LOG_PATH)
-    print(f"\n📄 事件日志: {EVENT_LOG_PATH.relative_to(PROJECT_ROOT)}")
+    print(f"\n📄 事件日志: {safe_display_path(EVENT_LOG_PATH)}")
     print(f"📊 事件总数: {len(events)}")
 
     all_issues = []

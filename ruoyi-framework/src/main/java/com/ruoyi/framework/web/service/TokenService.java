@@ -51,6 +51,8 @@ public class TokenService
 
     private static final Long MILLIS_MINUTE_TWENTY = 20 * 60 * 1000L;
 
+    private static final int REMEMBER_ME_EXPIRE_TIME = 7 * 24 * 60; // 7天（分钟）
+
     @Autowired
     private RedisCache redisCache;
 
@@ -113,10 +115,23 @@ public class TokenService
      */
     public String createToken(LoginUser loginUser)
     {
+        return createToken(loginUser, false);
+    }
+
+    /**
+     * 创建令牌（支持记住我）
+     *
+     * @param loginUser 用户信息
+     * @param rememberMe 是否记住我
+     * @return 令牌
+     */
+    public String createToken(LoginUser loginUser, boolean rememberMe)
+    {
         String token = IdUtils.fastUUID();
         loginUser.setToken(token);
         setUserAgent(loginUser);
-        refreshToken(loginUser);
+        int tokenExpireTime = rememberMe ? REMEMBER_ME_EXPIRE_TIME : expireTime;
+        refreshToken(loginUser, tokenExpireTime);
 
         Map<String, Object> claims = new HashMap<>();
         claims.put(Constants.LOGIN_USER_KEY, token);
@@ -147,11 +162,22 @@ public class TokenService
      */
     public void refreshToken(LoginUser loginUser)
     {
+        refreshToken(loginUser, expireTime);
+    }
+
+    /**
+     * 刷新令牌有效期（指定过期时间）
+     *
+     * @param loginUser 登录信息
+     * @param tokenExpireTime 过期时间（分钟）
+     */
+    public void refreshToken(LoginUser loginUser, int tokenExpireTime)
+    {
         loginUser.setLoginTime(System.currentTimeMillis());
-        loginUser.setExpireTime(loginUser.getLoginTime() + expireTime * MILLIS_MINUTE);
+        loginUser.setExpireTime(loginUser.getLoginTime() + tokenExpireTime * MILLIS_MINUTE);
         // 根据uuid将loginUser缓存
         String userKey = getTokenKey(loginUser.getToken());
-        redisCache.setCacheObject(userKey, loginUser, expireTime, TimeUnit.MINUTES);
+        redisCache.setCacheObject(userKey, loginUser, tokenExpireTime, TimeUnit.MINUTES);
     }
 
     /**

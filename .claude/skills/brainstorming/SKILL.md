@@ -22,7 +22,7 @@ metadata:
 
 ```
 ⚠️ 铁律：
-1. 不等待用户确认 - 自动继续执行
+1. Phase 2/3/4 不等待用户确认（Phase 0 文件裁决除外）
 2. 必须循环迭代 - 直到所有检查项都是 ✅
 3. 有任何问题就补充，然后重新校验
 ```
@@ -44,10 +44,10 @@ metadata:
 │      检查 html_issues                               │
 │      ├─ 无问题 → ✅ 退出闭环 → Phase 1          │
 │      └─ 有问题:                                    │
-│           ├─ 未达安全阀 → 同步询问PM裁决         │
-│           │   → 更新PRD → 回到闭环顶部重跑       │
-│           └─ 达到安全阀 → 输出 open-questions.md │
-│               → brainstorm_pending_confirm → 停止 │
+│           ├─ 未达安全阀 → 写入 {module}-DECISIONS.md │
+│           │   → PM 文件裁决 → 更新PRD → 重跑      │
+│           └─ 达到安全阀 → 输出 {module}-DECISIONS.md │
+│               → brainstorm_pending_confirm → 停止   │
 │                                                      │
 │ md/docx 文档仅作业务背景参考                      │
 └───────────────────────────────────────────────┘
@@ -88,16 +88,16 @@ metadata:
 │ [2] 逐页面截图 + snapshot 对比 PRD/SRS             │
 │ [3] 差异处理（HTML 是 SSOT）:                      │
 │     A类: HTML有PRD/SRS无 → 直接补充PRD+SRS        │
-│     B类: PRD/SRS有HTML无 → 问题确认清单           │
-│     C类: HTML自身内部矛盾 → 问题确认清单          │
-│     D类: HTML明显Bug → PRD标注+问题确认清单       │
+│     B类: PRD/SRS有HTML无 → 决策日志               │
+│     C类: HTML自身内部矛盾 → 决策日志              │
+│     D类: HTML明显Bug → PRD标注+决策日志           │
 │ [4] 有 A 类补充 → 回到 Phase 2 重新校验            │
 │     （max 1 次回退，防死循环）                      │
 └────────────────────────────────────────────────────┘
   │
   ├─ 无 B/C/D 类 → [输出结果] → brainstorm_done
   │
-  └─ 有 B/C/D 类 → [输出结果 + 疑问清单] → brainstorm_pending_confirm
+  └─ 有 B/C/D 类 → [输出结果 + {module}-DECISIONS.md] → brainstorm_pending_confirm
 ```
 
 ## 正向校验项（6 项）
@@ -177,6 +177,9 @@ def brainstorming(user_input):
     
     # ========== Phase 0: PRD 生成（闭环，max 3 轮）==========
     prd_dir = f"{config.paths.docs.prd}/{module_name}/"
+    srs_dir = config.paths.docs.srs
+    decisions_path = f"{srs_dir}{module_name}-DECISIONS.md"
+    ensure_decisions_file_exists(decisions_path)  # 不存在时创建空文件含表头，已存在则跳过
     MAX_PHASE0_ROUNDS = 3
     need_extraction = False
     
@@ -205,20 +208,25 @@ def brainstorming(user_input):
             
             # 安全阀：直接阻塞，不继续走 Phase 1~4
             if round_num >= MAX_PHASE0_ROUNDS:
-                questions_path = f"{config.paths.docs.srs}{module_name}-open-questions.md"
-                write_open_questions(questions_path, html_issues)
+                append_decisions(decisions_path, html_issues, source="phase0")
                 state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
                 state.workflow.current_step = "brainstorm_pending_confirm"
                 state.workflow.next_step = "approve_brainstorm"
                 state.workflow.auto_continue = False
+                state.workflow.decisions_path = decisions_path
                 write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
-                print(f"⛔ Phase 0 安全阀：{len(html_issues)} 个问题写入 {questions_path}")
+                print(f"⛔ Phase 0 安全阀：{len(html_issues)} 个问题写入 {decisions_path}")
+                print(f"请 PM 在 {decisions_path} 中裁决后执行 /approve brainstorm")
                 return  # 停在这里，等 /approve brainstorm
             
-            # 同步询问 PM 裁决（不 return，不需要恢复）
-            print(f"⚠️ 发现 {len(html_issues)} 个 HTML 内部问题，请 PM 裁决：")
-            decisions = ask_user_resolve_issues(html_issues)  # C类选值 / D类处理方式
-            apply_decisions_to_prd(decisions, prd_dir)
+            # 文件裁决：写入 DECISIONS.md → PM 编辑文件裁决 → 读取 resolved 记录
+            append_decisions(decisions_path, html_issues, source="phase0")
+            print(f"⚠️ 发现 {len(html_issues)} 个 HTML 内部问题，已写入 {decisions_path}")
+            print(f"请在 {decisions_path} 中裁决后回复'继续'")
+            wait_for_user_reply("继续")  # 等待 PM 编辑文件并回复
+            resolved_decisions = read_resolved_decisions(decisions_path)  # status=resolved && 已应用=false
+            apply_decisions_to_prd(resolved_decisions, prd_dir)
+            mark_decisions_applied(decisions_path, resolved_decisions)  # 标记 已应用=true
             # 回到循环顶部重跑 prototype-extraction
     
     # ⛔ 门控点 1: 检查 prototype-extraction 产物完整性
@@ -248,6 +256,7 @@ def brainstorming(user_input):
             requirement_doc = existing_srs
     else:
         # 全新生成 SRS 初稿（每个 FR 必须标注 PRD 来源）
+        # SRS §9 开放问题节改为引用 {module}-DECISIONS.md，不再内联问题表格
         requirement_doc = generate_srs(context)
     
     # ========== Phase 2: 领域专项校验 ==========
@@ -432,7 +441,7 @@ def brainstorming(user_input):
 
     while True:
         module_prototypes_p4 = config.prd_process.module_prototype_map.get(module_name)
-        open_questions = []
+        pending_decisions = []
         has_a_type_fixes = False
 
         print(f"=== Phase 4: HTML↔PRD↔SRS 全量校验{f'（回退第 {phase4_retry} 次后）' if phase4_retry > 0 else ''} ===")
@@ -455,16 +464,16 @@ def brainstorming(user_input):
                         has_a_type_fixes = True
                     elif diff.type == "doc_has_html_missing":  # B类: PRD/SRS有HTML无
                         print(f"  ❓ B类: {diff.description} → 待确认")
-                        open_questions.append({"type": "B", "desc": diff.description})
+                        pending_decisions.append({"type": "B", "desc": diff.description})
                     elif diff.type == "html_internal_conflict":  # C类: HTML自身矛盾
                         print(f"  ❓ C类: {diff.description} → 待产品裁决")
-                        open_questions.append({"type": "C", "desc": diff.description})
+                        pending_decisions.append({"type": "C", "desc": diff.description})
                     elif diff.type == "html_bug":  # D类: HTML明显Bug
                         print(f"  🐛 D类: {diff.description} → 标注+待确认")
-                        open_questions.append({"type": "D", "desc": diff.description})
+                        pending_decisions.append({"type": "D", "desc": diff.description})
 
         server.stop()
-        print(f"Phase 4 完成: A类补充={has_a_type_fixes}, B/C/D类={len(open_questions)} 个")
+        print(f"Phase 4 完成: A类补充={has_a_type_fixes}, B/C/D类={len(pending_decisions)} 个")
 
         # A 类补充后回到 Phase 2 重新校验（max 1 次回退）
         if has_a_type_fixes and phase4_retry < MAX_PHASE4_RETRIES:
@@ -495,18 +504,18 @@ def brainstorming(user_input):
 
     # ========== 输出结果 ==========
     # 注意：只有 B/C/D 类才算"有问题"，A 类（auto_fixed）不算
-    if open_questions:
-        questions_path = f"{config.paths.docs.srs}{module_name}-open-questions.md"
-        write_open_questions(questions_path, open_questions)
-        print(f"📋 需求疑问清单: {questions_path}")
+    if pending_decisions:
+        append_decisions(decisions_path, pending_decisions, source="phase4")
+        print(f"📋 决策日志: {decisions_path}")
 
     # 更新 workflow 状态
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
-    if open_questions:  # 只有 B/C/D 类
+    if pending_decisions:  # 只有 B/C/D 类
         state.workflow.current_step = "brainstorm_pending_confirm"
         state.workflow.next_step = "approve_brainstorm"
         state.workflow.auto_continue = False
-        print("⚠️ 有待确认项，阻塞自动继续。请产品确认后执行 /approve brainstorm")
+        state.workflow.decisions_path = decisions_path
+        print(f"⚠️ 有待确认项，阻塞自动继续。请在 {decisions_path} 中裁决后执行 /approve brainstorm 或重新执行 /brainstorm {module_name}")
     else:
         state.workflow.current_step = "brainstorm_done"
         state.workflow.next_step = "split_story"
@@ -520,10 +529,10 @@ def brainstorming(user_input):
 
 ```
 ⚠️ Phase 0 安全阀：当闭环经过 3 轮后仍有 html_issues：
-1. 输出 {module}-open-questions.md
+1. 输出 {module}-DECISIONS.md（source=phase0）
 2. 设置 workflow.current_step = brainstorm_pending_confirm
 3. 停止 — 不继续走 Phase 1~4（上游有问题不往下跑）
-4. 等 /approve brainstorm 确认后 → brainstorm_done → 自动 split story
+4. PM 在 {srs_dir}/{module}-DECISIONS.md 中裁决后执行 /approve brainstorm → 更新 PRD → 重新执行 /brainstorm
 
 ⚠️ Phase 2 失败：当 max_iterations（默认 10）次迭代后仍有校验项未通过：
 1. 输出失败报告（列出所有未通过的校验项和具体问题）
@@ -537,11 +546,11 @@ def brainstorming(user_input):
 3. 停止自动继续 — 提示用户人工介入
 4. 用户可以补充信息后重新执行 /brainstorm
 
-⚠️ Phase 4 阻塞：当存在不确定差异时：
-1. 输出需求疑问清单（{module}-open-questions.md）
+⚠️ Phase 4 阻塞：当存在 B/C/D 类不确定差异时：
+1. 输出决策日志（{module}-DECISIONS.md，source=phase4）
 2. 设置 workflow.current_step = brainstorm_pending_confirm
 3. 停止自动继续 — 等待产品确认
-4. 产品确认后重新执行 /brainstorm（增量更新路径）或 /approve brainstorm
+4. 产品确认后重新执行 /brainstorm（增量更新路径）或 /approve brainstorm（跳过语义）
 ```
 
 ## 输出格式
@@ -586,18 +595,65 @@ def brainstorming(user_input):
 - 浏览页面数: {page_count}
 - 确定差异: {certain_count}（已补充）
 - 待确认项: {question_count}
-- 疑问清单: {module}-open-questions.md（仅在有待确认项时）
+- 决策日志: {srs_dir}/{module}-DECISIONS.md（仅在有待确认项时）
 
 ### ⏭️ 下一步
 - 无待确认项: 执行 `/split story` 将需求拆解为 Stories
-- 有待确认项: 请产品确认疑问清单后重新执行 `/brainstorm {module}`
+- 有待确认项: 请在 {srs_dir}/{module}-DECISIONS.md 中裁决后执行 `/approve brainstorm` 或重新执行 `/brainstorm {module}`
+```
+
+## DECISIONS.md 格式规范
+
+```markdown
+# {module} 模块 — 决策日志
+
+> 模块: {module}
+
+---
+
+## DEC-001
+
+- **状态**: pending
+- **已应用**: false
+- **来源**: phase0
+- **类型**: C
+
+**问题**: （描述）
+
+**裁决**: （PM 填写）
+
+**影响**: （AI 应用后填写）
+
+---
+```
+
+**字段说明**：
+- **状态**: `pending`（待裁决）/ `resolved`（已裁决）/ `rejected`（跳过，仅 phase4 允许；phase0 禁止 rejected）
+- **已应用**: `false` / `true`——防止重复 apply
+- **来源**: `phase0` / `phase4`
+- **类型**: `B` / `C` / `D`
+
+**函数签名**：
+```python
+def append_decisions(decisions_path, issues, source):
+    """Append new decision records to DECISIONS.md.
+    Auto-generates DEC-NNN IDs. Sets status=pending, 已应用=false."""
+
+def ensure_decisions_file_exists(decisions_path):
+    """文件不存在时创建空文件含表头，已存在则跳过不覆盖。"""
+
+def read_resolved_decisions(decisions_path):
+    """读取 status=resolved && 已应用=false 的记录。"""
+
+def mark_decisions_applied(decisions_path, decisions):
+    """将已处理的记录标记为 已应用=true。"""
 ```
 
 ## 硬约束
 
 - 禁止跳过任何校验项
 - 禁止在校验未全部通过时输出
-- 禁止停下来等待用户确认
+- 禁止在 Phase 2/3/4 校验循环中停下来等待用户确认（Phase 0 文件裁决除外）
 - 必须循环直到全部 ✅
 - **必须执行 UI 专项校验**
 - **禁止超过 max_iterations（10 次）迭代** - Phase 2 达到上限必须失败退出
@@ -608,17 +664,18 @@ def brainstorming(user_input):
 - **Phase 4 必须执行 HTML↔PRD↔SRS 全量校验** - 保证最终结果正确性
 - **Phase 4 必须逐端逐页面浏览** - 不能只看 PRD 文档，必须打开浏览器实测
 - **A类差异（HTML有PRD/SRS无）直接补充** - HTML 是 SSOT，无需确认
-- **B/C/D类差异必须输出问题确认清单** - 不能自作主张决定以谁为准
-- **有问题确认清单时必须阻塞** - 不能自动继续 split story
+- **B/C/D类差异必须写入 {module}-DECISIONS.md** - 不能自作主张决定以谁为准
+- **有 pending_decisions 时必须阻塞** - 不能自动继续 split story
 - **禁止 AI 自行裁决 HTML 内部矛盾** - C类必须等产品确认
 - **Phase 0 PRD 已存在时必须询问用户** - 由用户决定重新生成还是使用已有
 - **Phase 0 闭环必须完整重跑** - PM 裁决后必须重跑 prototype-extraction 完整 5 步
-- **Phase 0 max 3 轮** - 安全阀到了直接阻塞（输出 open-questions.md），不带着错误往下跑
+- **Phase 0 max 3 轮** - 安全阀到了直接阻塞（输出 {module}-DECISIONS.md），不带着错误往下跑
 - **Phase 0 每轮必须输出进度** - `🔄 Phase 0 第 N/3 轮`
 - **Phase 0 完成后必须运行门控脚本** - `bash bin/check-skill-artifacts.sh prototype-extraction` 检查产物完整性
 - **门控脚本失败时禁止继续 Phase 1** - 必须回到 prototype-extraction 补充缺失产物
-- **Phase 4 发现 B/C/D 类问题时，必须写入 {module}-open-questions.md** — 禁止跳过此步骤
-- **Phase 4 有 open_questions 时，必须设置 brainstorm_pending_confirm** — 禁止自动继续 split story
+- **Phase 4 发现 B/C/D 类问题时，必须写入 {module}-DECISIONS.md** — 禁止跳过此步骤
+- **Phase 4 有 pending_decisions 时，必须设置 brainstorm_pending_confirm** — 禁止自动继续 split story
+- **用户提示中必须输出完整路径**（含 SRS 目录前缀）— 对应命名规则(b)，避免与 PRD 目录下的 DECISIONS.md 混淆
 
 ---
 
@@ -631,7 +688,7 @@ def brainstorming(user_input):
 🔄 Phase 0 第 1/3 轮
   - prototype-extraction: 完成 (7 个 PRD 文件)
   - html_issues: ❌ 2 个问题 (1 个 C类, 1 个 D类)
-  → 同步询问 PM 裁决...
+  → 写入 {srs_dir}/{module}-DECISIONS.md，等待 PM 文件裁决并回复"继续"
 
 🔄 Phase 0 第 2/3 轮 (PM 已裁决 2 个问题)
   - prototype-extraction: 完成 (7 个 PRD 文件)

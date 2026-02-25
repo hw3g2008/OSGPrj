@@ -59,10 +59,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import { http } from '@osg/shared/utils'
-import { useUserStore } from '@/stores/user'
 
 const props = defineProps<{
   visible: boolean
@@ -71,8 +70,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [value: boolean]
 }>()
-
-const userStore = useUserStore()
 
 const activeTab = ref('profile')
 const profileLoading = ref(false)
@@ -89,15 +86,6 @@ const passwordForm = reactive({
   oldPassword: '',
   newPassword: '',
   confirmPassword: ''
-})
-
-// 监听弹窗打开，初始化表单
-watch(() => props.visible, (val) => {
-  if (val && userStore.userInfo) {
-    profileForm.nickName = userStore.userInfo.nickName || ''
-    profileForm.email = userStore.userInfo.email || ''
-    profileForm.phonenumber = userStore.userInfo.phonenumber || ''
-  }
 })
 
 const validatePassword = (_rule: any, value: string) => {
@@ -125,7 +113,6 @@ const handleUpdateProfile = async () => {
     profileLoading.value = true
     await http.put('/system/user/profile', profileForm)
     message.success('修改成功')
-    await userStore.getInfo()
   } catch (error: any) {
     message.error(error.message || '修改失败')
   } finally {

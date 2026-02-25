@@ -7,27 +7,35 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.core.domain.model.LoginBody;
 import com.ruoyi.common.core.domain.model.LoginUser;
-import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.framework.web.service.SysLoginService;
 import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.service.ISysConfigService;
-import org.mockito.MockedStatic;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.junit.jupiter.api.AfterEach;
 
 /**
- * SysLoginController 单元测试
+ * SysLoginController 单元测试 (T-016)
  */
 @ExtendWith(MockitoExtension.class)
 class SysLoginControllerTest {
 
     @InjectMocks
     private SysLoginController sysLoginController;
+
+    @Mock
+    private SysLoginService loginService;
 
     @Mock
     private SysPermissionService permissionService;
@@ -38,12 +46,58 @@ class SysLoginControllerTest {
     @Mock
     private ISysConfigService configService;
 
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
     /**
-     * 测试 getInfo 接口返回的 JSON 中包含 firstLogin 字段
+     * 测试登录成功返回 token
      */
     @Test
-    void testGetInfoContainsFirstLogin() {
-        // 准备测试数据
+    void testLoginSuccess() {
+        when(loginService.login("admin", "admin123", "ABCD", "uuid-1", false))
+                .thenReturn("jwt-token-123");
+
+        LoginBody loginBody = new LoginBody();
+        loginBody.setUsername("admin");
+        loginBody.setPassword("admin123");
+        loginBody.setCode("ABCD");
+        loginBody.setUuid("uuid-1");
+        loginBody.setRememberMe(false);
+
+        AjaxResult result = sysLoginController.login(loginBody);
+
+        assertEquals(200, result.get("code"));
+        assertEquals("jwt-token-123", result.get("token"));
+    }
+
+    /**
+     * 测试登录带 rememberMe=true
+     */
+    @Test
+    void testLoginWithRememberMe() {
+        when(loginService.login("admin", "admin123", "ABCD", "uuid-1", true))
+                .thenReturn("jwt-token-remember");
+
+        LoginBody loginBody = new LoginBody();
+        loginBody.setUsername("admin");
+        loginBody.setPassword("admin123");
+        loginBody.setCode("ABCD");
+        loginBody.setUuid("uuid-1");
+        loginBody.setRememberMe(true);
+
+        AjaxResult result = sysLoginController.login(loginBody);
+
+        assertEquals(200, result.get("code"));
+        verify(loginService).login("admin", "admin123", "ABCD", "uuid-1", true);
+    }
+
+    /**
+     * 测试 getInfo 返回 firstLogin=true
+     */
+    @Test
+    void testGetInfoFirstLoginTrue() {
         SysUser user = new SysUser();
         user.setUserId(1L);
         user.setUserName("admin");
@@ -58,35 +112,27 @@ class SysLoginControllerTest {
         Set<String> permissions = new HashSet<>();
         permissions.add("*:*:*");
 
-        // Mock configService
         when(configService.selectConfigByKey("sys.account.initPasswordModify")).thenReturn("0");
         when(configService.selectConfigByKey("sys.account.passwordValidateDays")).thenReturn("0");
 
-        // Mock 静态方法
-        try (MockedStatic<SecurityUtils> securityUtilsMock = mockStatic(SecurityUtils.class)) {
-            securityUtilsMock.when(SecurityUtils::getLoginUser).thenReturn(loginUser);
-            when(permissionService.getRolePermission(user)).thenReturn(roles);
-            when(permissionService.getMenuPermission(user)).thenReturn(permissions);
+        setLoginUser(loginUser);
+        when(permissionService.getRolePermission(user)).thenReturn(roles);
+        when(permissionService.getMenuPermission(user)).thenReturn(permissions);
 
-            // 执行测试
-            AjaxResult result = sysLoginController.getInfo();
+        AjaxResult result = sysLoginController.getInfo();
 
-            // 验证结果
-            assertNotNull(result);
-            assertTrue(result.containsKey("firstLogin"));
-            assertEquals(true, result.get("firstLogin"));
-        }
+        assertNotNull(result);
+        assertTrue(result.containsKey("firstLogin"));
+        assertEquals(true, result.get("firstLogin"));
     }
 
     /**
-     * 测试 getInfo 接口 - firstLogin 为 '0' 时返回 false
+     * 测试 getInfo 返回 firstLogin=false
      */
     @Test
     void testGetInfoFirstLoginFalse() {
-        // 准备测试数据
         SysUser user = new SysUser();
         user.setUserId(1L);
-        user.setUserName("admin");
         user.setFirstLogin("0");
 
         LoginUser loginUser = new LoginUser();
@@ -96,23 +142,49 @@ class SysLoginControllerTest {
         Set<String> roles = new HashSet<>();
         Set<String> permissions = new HashSet<>();
 
-        // Mock configService
         when(configService.selectConfigByKey("sys.account.initPasswordModify")).thenReturn("0");
         when(configService.selectConfigByKey("sys.account.passwordValidateDays")).thenReturn("0");
 
-        // Mock 静态方法
-        try (MockedStatic<SecurityUtils> securityUtilsMock = mockStatic(SecurityUtils.class)) {
-            securityUtilsMock.when(SecurityUtils::getLoginUser).thenReturn(loginUser);
-            when(permissionService.getRolePermission(user)).thenReturn(roles);
-            when(permissionService.getMenuPermission(user)).thenReturn(permissions);
+        setLoginUser(loginUser);
+        when(permissionService.getRolePermission(user)).thenReturn(roles);
+        when(permissionService.getMenuPermission(user)).thenReturn(permissions);
 
-            // 执行测试
-            AjaxResult result = sysLoginController.getInfo();
+        AjaxResult result = sysLoginController.getInfo();
 
-            // 验证结果
-            assertNotNull(result);
-            assertTrue(result.containsKey("firstLogin"));
-            assertEquals(false, result.get("firstLogin"));
-        }
+        assertEquals(false, result.get("firstLogin"));
+    }
+
+    /**
+     * 测试 getInfo 返回 firstLogin=false 当字段为 null
+     */
+    @Test
+    void testGetInfoFirstLoginNull() {
+        SysUser user = new SysUser();
+        user.setUserId(1L);
+        user.setFirstLogin(null);
+
+        LoginUser loginUser = new LoginUser();
+        loginUser.setUser(user);
+        loginUser.setPermissions(new HashSet<>());
+
+        when(configService.selectConfigByKey("sys.account.initPasswordModify")).thenReturn("0");
+        when(configService.selectConfigByKey("sys.account.passwordValidateDays")).thenReturn("0");
+
+        setLoginUser(loginUser);
+        when(permissionService.getRolePermission(user)).thenReturn(new HashSet<>());
+        when(permissionService.getMenuPermission(user)).thenReturn(new HashSet<>());
+
+        AjaxResult result = sysLoginController.getInfo();
+
+        assertEquals(false, result.get("firstLogin"));
+    }
+
+    private void setLoginUser(LoginUser loginUser) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                loginUser,
+                null,
+                Collections.emptyList()
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }

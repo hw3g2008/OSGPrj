@@ -25,7 +25,7 @@ description: RPIV 主流程调度 - 读取 STATE.yaml 判断当前阶段并执�
 
 **触发条件**：`current_step` 为 `brainstorm_pending_confirm`
 
-执行 `/approve brainstorm`（审阅并确认待确认疑问项）
+确保 PM 已在 `{module}-DECISIONS.md` 中裁决完所有 pending 记录，然后执行 `/approve brainstorm`
 
 ### 阶段 P（Plan）— 拆分计划
 

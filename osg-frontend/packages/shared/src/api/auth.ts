@@ -1,22 +1,36 @@
 import { http } from '../utils/request'
-import type { LoginParams, LoginResult, UserInfo } from '../types'
+import type { LoginParams, UserInfo } from '../types'
 
 // 登录
-export function login(data: LoginParams): Promise<LoginResult> {
-  return http.post('/auth/login', data)
+export function login(data: LoginParams): Promise<{ token: string }> {
+  return http.post('/login', data)
 }
 
 // 登出
 export function logout(): Promise<void> {
-  return http.post('/auth/logout')
+  return http.post('/logout')
 }
 
 // 获取当前用户信息
-export function getUserInfo(): Promise<UserInfo> {
-  return http.get('/auth/info')
+export function getInfo(): Promise<{
+  user: UserInfo
+  roles: string[]
+  permissions: string[]
+  firstLogin: boolean
+}> {
+  return http.get('/getInfo')
 }
 
-// 刷新 Token
-export function refreshToken(): Promise<LoginResult> {
-  return http.post('/auth/refresh')
+// 获取路由信息
+export function getRouters(): Promise<any[]> {
+  return http.get('/getRouters')
+}
+
+// 获取验证码
+export function getCaptchaImage(): Promise<{
+  captchaEnabled: boolean
+  uuid?: string
+  img?: string
+}> {
+  return http.get('/captchaImage')
 }

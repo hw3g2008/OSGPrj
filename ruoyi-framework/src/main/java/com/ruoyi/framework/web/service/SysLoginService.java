@@ -58,9 +58,10 @@ public class SysLoginService
      * @param password 密码
      * @param code 验证码
      * @param uuid 唯一标识
-     * @return 结果
+     * @param rememberMe 是否记住我
+     * @return 令牌
      */
-    public String login(String username, String password, String code, String uuid)
+    public String login(String username, String password, String code, String uuid, boolean rememberMe)
     {
         // 验证码校验
         validateCaptcha(username, code, uuid);
@@ -96,7 +97,7 @@ public class SysLoginService
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
         recordLoginInfo(loginUser.getUserId());
         // 生成token
-        return tokenService.createToken(loginUser);
+        return tokenService.createToken(loginUser, rememberMe);
     }
 
     /**
