@@ -84,6 +84,7 @@
           <a-form-item>
             <div class="login-links">
               <a-checkbox v-model:checked="formState.rememberMe">记住我（7天）</a-checkbox>
+              <a class="forgot-link" @click="forgotPasswordVisible = true">忘记密码？</a>
             </div>
           </a-form-item>
 
@@ -103,6 +104,8 @@
         </a-form>
       </div>
     </div>
+
+    <ForgotPasswordModal v-model:visible="forgotPasswordVisible" />
   </div>
 </template>
 
@@ -119,6 +122,7 @@ import {
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getCaptchaImage } from '@osg/shared/api/auth'
+import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -128,6 +132,7 @@ const formRef = ref()
 const loading = ref(false)
 const captchaImg = ref('')
 const captchaEnabled = ref(true)
+const forgotPasswordVisible = ref(false)
 
 const formState = reactive({
   username: '',
@@ -297,6 +302,22 @@ onMounted(() => {
     color: #4F46E5;
     cursor: pointer;
     user-select: none;
+  }
+}
+
+.login-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .forgot-link {
+    color: #4F46E5;
+    cursor: pointer;
+    font-size: 13px;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
