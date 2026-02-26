@@ -456,6 +456,11 @@ def deliver_ticket(ticket_id):
     ticket.completed_at = now()
     write_yaml(ticket_path, ticket)
 
+    # Step 8.5: 回读断言（写后校验，防止 evidence 丢失）
+    saved = read_yaml(ticket_path)
+    assert saved.verification_evidence is not None, "FATAL: verification_evidence 未写入"
+    assert saved.verification_evidence.exit_code == 0, "FATAL: exit_code != 0"
+
     # ========================================
     # Step 9: 更新 STATE.yaml + Level 3/4 验证
     # ========================================

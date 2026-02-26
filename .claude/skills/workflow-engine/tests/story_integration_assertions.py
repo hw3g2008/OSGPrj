@@ -28,6 +28,7 @@ STORY_TEST_SCRIPTS = [
     "story_command_alias_check.py",
     "story_event_log_check.py",
     "story_runtime_guard.py",
+    "done_ticket_evidence_guard.py",
     "ticket_status_enum_check.py",
     "normalize_status_enum.py",
 ]

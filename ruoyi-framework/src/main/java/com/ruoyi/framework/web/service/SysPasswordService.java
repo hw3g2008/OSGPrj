@@ -40,6 +40,9 @@ public class SysPasswordService
     @Value(value = "${user.password.lockTime}")
     private int lockTime;
 
+    @Value(value = "${user.password.resetCodeTtlMinutes:5}")
+    private int resetCodeTtlMinutes;
+
     /**
      * 登录账户密码错误次数缓存键名
      * 
@@ -150,7 +153,7 @@ public class SysPasswordService
             throw new ServiceException("该邮箱未注册");
         }
         String code = generateCode();
-        redisCache.setCacheObject(RESET_CODE_KEY + email, code, 5, TimeUnit.MINUTES);
+        redisCache.setCacheObject(RESET_CODE_KEY + email, code, resetCodeTtlMinutes, TimeUnit.MINUTES);
         // 实际发送邮件逻辑（当前阶段仅缓存验证码，邮件发送待集成邮件服务）
     }
 

@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getToken } from '@osg/shared/utils'
+import { message } from 'ant-design-vue'
+import { useUserStore } from '@/stores/user'
 import MainLayout from '@/layouts/MainLayout.vue'
 
 const routes: RouteRecordRaw[] = [
@@ -25,13 +27,13 @@ const routes: RouteRecordRaw[] = [
         path: 'permission/roles',
         name: 'Roles',
         component: () => import('@/views/permission/roles/index.vue'),
-        meta: { title: '权限配置' }
+        meta: { title: '权限配置', permission: 'system:role:list' }
       },
       {
         path: 'permission/users',
         name: 'Users',
         component: () => import('@/views/permission/users/index.vue'),
-        meta: { title: '后台用户管理' }
+        meta: { title: '后台用户管理', permission: 'system:user:list' }
       }
     ]
   }
@@ -60,6 +62,17 @@ router.beforeEach((to, _from, next) => {
     // 未登录，跳转登录页
     next({ name: 'Login', query: { redirect: to.fullPath } })
   } else {
+    // 已登录，检查页面级权限
+    const permission = to.meta.permission as string | undefined
+    if (permission) {
+      const userStore = useUserStore()
+      const isAdmin = userStore.permissions.includes('*:*:*')
+      if (!isAdmin && !userStore.permissions.includes(permission)) {
+        message.warning('您没有权限访问此页面')
+        next(false)
+        return
+      }
+    }
     next()
   }
 })

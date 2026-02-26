@@ -25,7 +25,13 @@ if [ "$STORY" = "null" ] || [ -z "$STORY" ]; then
 fi
 ```
 
-2. 执行 CC 审核：
+2. 运行前置守卫（必须通过）：
+```bash
+python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py --state osg-spec-docs/tasks/STATE.yaml --config .claude/project/config.yaml --state-machine .claude/skills/workflow-engine/state-machine.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets --proofs-dir osg-spec-docs/tasks/proofs
+python3 .claude/skills/workflow-engine/tests/done_ticket_evidence_guard.py --state osg-spec-docs/tasks/STATE.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets --story-id "$STORY"
+```
+
+3. 执行 CC 审核：
 ```bash
 claude -p "审核 Story $STORY：
 

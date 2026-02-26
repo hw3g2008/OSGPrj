@@ -17,7 +17,7 @@
 
 ## 二、前置条件与假设
 
-- 假设 1: config.yaml 是测试配置的 SSOT
+- 假设 1: config.yaml 是测试配置的 SSOTbrainstorming
 - 假设 2: 当前项目尚未有实际的集成测试代码和 E2E 测试代码，本次只做框架定义
 - 假设 3: E2E 测试使用 Playwright（与 MCP 工具链一致）
 - 假设 4: 遵循"最短路径"原则——先定义框架，实际测试代码在开发 Ticket 时编写

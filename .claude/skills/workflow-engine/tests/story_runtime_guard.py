@@ -214,12 +214,12 @@ def main():
 
     # 用 CLI 参数覆盖全局变量
     global STATE_PATH, CONFIG_PATH, SM_PATH, STORIES_DIR, TICKETS_DIR, PROOFS_DIR
-    STATE_PATH = args.state
-    CONFIG_PATH = args.config
-    SM_PATH = args.state_machine
-    STORIES_DIR = args.stories_dir
-    TICKETS_DIR = args.tickets_dir
-    PROOFS_DIR = args.proofs_dir
+    STATE_PATH = args.state.resolve()
+    CONFIG_PATH = args.config.resolve()
+    SM_PATH = args.state_machine.resolve()
+    STORIES_DIR = args.stories_dir.resolve()
+    TICKETS_DIR = args.tickets_dir.resolve()
+    PROOFS_DIR = args.proofs_dir.resolve()
 
     print("=" * 60)
     print("Story 运行态守护校验")

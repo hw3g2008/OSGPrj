@@ -7,17 +7,29 @@
       </div>
       <a-menu
         v-model:selectedKeys="selectedKeys"
+        v-model:openKeys="openKeys"
         theme="dark"
         mode="inline"
       >
-        <a-menu-item
-          v-for="route in filteredRoutes"
-          :key="route.path"
-          @click="$router.push(route.path)"
-        >
+        <!-- 首页（无分组） -->
+        <a-menu-item key="/dashboard" @click="$router.push('/dashboard')">
           <template #icon><DashboardOutlined /></template>
-          <span>{{ route.meta?.title || route.name }}</span>
+          <span>首页</span>
         </a-menu-item>
+        <!-- 分组菜单 -->
+        <template v-for="group in filteredMenuGroups" :key="group.key">
+          <a-sub-menu>
+            <template #icon><AppstoreOutlined /></template>
+            <template #title>{{ group.title }}</template>
+            <a-menu-item
+              v-for="item in group.children"
+              :key="item.path"
+              @click="$router.push(item.path)"
+            >
+              <span>{{ item.title }}</span>
+            </a-menu-item>
+          </a-sub-menu>
+        </template>
       </a-menu>
       <div class="sidebar-footer">
         <a-button type="text" block @click="showProfileModal = true">
@@ -56,36 +68,114 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
-import { DashboardOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { DashboardOutlined, UserOutlined, AppstoreOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import FirstLoginModal from '@/components/FirstLoginModal.vue'
 import ProfileModal from '@/components/ProfileModal.vue'
-import router from '@/router'
 
 const userStore = useUserStore()
 const vueRouter = useRouter()
 
+interface MenuItem {
+  path: string
+  title: string
+  permission?: string
+}
+
+interface MenuGroup {
+  key: string
+  title: string
+  children: MenuItem[]
+}
+
 const collapsed = ref(false)
-const selectedKeys = ref(['dashboard'])
+const selectedKeys = ref(['/dashboard'])
+const openKeys = ref<string[]>([])
 const showProfileModal = ref(false)
 
-const filteredRoutes = computed(() => {
-  const mainRoute = router.getRoutes().find(r => r.path === '/')
-  if (!mainRoute || !mainRoute.children) return []
+// 菜单分组定义（与 SRS §7 / §8 一致）
+const menuGroups: MenuGroup[] = [
+  {
+    key: 'permission',
+    title: '权限管理',
+    children: [
+      { path: '/permission/roles', title: '权限配置', permission: 'system:role:list' },
+      { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list' },
+      { path: '/permission/base-data', title: '基础数据管理', permission: 'system:baseData:list' },
+    ]
+  },
+  {
+    key: 'user-center',
+    title: '用户中心',
+    children: [
+      { path: '/users/students', title: '学生列表', permission: 'users:student:list' },
+      { path: '/users/contracts', title: '合同管理', permission: 'users:contract:list' },
+      { path: '/users/staff', title: '导师列表', permission: 'users:staff:list' },
+      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'users:mentorSchedule:list' },
+    ]
+  },
+  {
+    key: 'career',
+    title: '求职中心',
+    children: [
+      { path: '/career/positions', title: '岗位信息', permission: 'career:position:list' },
+      { path: '/career/student-positions', title: '学生自添岗位', permission: 'career:studentPosition:list' },
+      { path: '/career/job-overview', title: '学员求职总览', permission: 'career:jobOverview:list' },
+      { path: '/career/mock-practice', title: '模拟应聘管理', permission: 'career:mockPractice:list' },
+    ]
+  },
+  {
+    key: 'teaching',
+    title: '教学中心',
+    children: [
+      { path: '/teaching/class-records', title: '课程记录', permission: 'teaching:classRecord:list' },
+      { path: '/teaching/communication', title: '人际关系沟通记录', permission: 'teaching:communication:list' },
+    ]
+  },
+  {
+    key: 'finance',
+    title: '财务中心',
+    children: [
+      { path: '/finance/settlement', title: '课时结算', permission: 'finance:settlement:list' },
+      { path: '/finance/expense', title: '报销管理', permission: 'finance:expense:list' },
+    ]
+  },
+  {
+    key: 'resource',
+    title: '资源中心',
+    children: [
+      { path: '/resource/files', title: '文件', permission: 'resource:file:list' },
+      { path: '/resource/online-test-bank', title: '在线测试题库', permission: 'resource:onlineTestBank:list' },
+      { path: '/resource/interview-bank', title: '真人面试题库', permission: 'resource:interviewBank:list' },
+      { path: '/resource/questions', title: '面试真题', permission: 'resource:question:list' },
+    ]
+  },
+  {
+    key: 'profile',
+    title: '个人中心',
+    children: [
+      { path: '/profile/mailjob', title: '邮件', permission: 'profile:mailjob:list' },
+      { path: '/profile/notice', title: '消息管理', permission: 'profile:notice:list' },
+      { path: '/profile/complaints', title: '投诉建议', permission: 'profile:complaint:list' },
+      { path: '/profile/logs', title: '操作日志', permission: 'profile:log:list' },
+    ]
+  },
+]
+
+// 权限过滤后的菜单分组（T-026 将增强此逻辑）
+const filteredMenuGroups = computed(() => {
   const perms = userStore.permissions
   const isAdmin = perms.includes('*:*:*')
-  return mainRoute.children
-    .filter(child => child.meta?.title)
-    .filter(child => {
-      if (isAdmin) return true
-      const perm = child.meta?.permission as string | undefined
-      return !perm || perms.includes(perm)
-    })
-    .map(child => ({
-      path: '/' + child.path,
-      name: child.name as string,
-      meta: child.meta
+
+  return menuGroups
+    .map(group => ({
+      ...group,
+      children: group.children.filter(item => {
+        if (isAdmin) return true
+        return !item.permission || perms.includes(item.permission)
+      })
     }))
+    .filter(group => group.children.length > 0)
 })
 
 const handleLogout = () => {

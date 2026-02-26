@@ -49,3 +49,4 @@ description: 执行下一个待办 Ticket - 自动选取并实现
 | F2 | 直接写 `STATE.yaml` 的 `workflow.current_step` | 必须经 `transition()` 推进 | 直接写会跳过事件审计，导致 workflow-events.jsonl 链路断裂 |
 | F3 | 声明 Ticket done 时不运行验证命令 | 必须先执行验证命令且 exit_code=0，再写证据，最后更新状态 | 证据先于断言 |
 | F4 | 在前端项目中使用 `pnpm lint`（无 lint 脚本时） | 检查 package.json scripts，使用实际存在的命令（如 `pnpm test && pnpm build`） | 不存在的脚本会导致验证卡死 |
+| F5 | 批量修改 Ticket status 为 done 时不写 verification_evidence | 每个 Ticket 必须单独走 deliver-ticket 流程，逐个写入 evidence 后再标记 done | CC-Review S-002 发现批量脚本遗漏 evidence 导致验收失败 |
