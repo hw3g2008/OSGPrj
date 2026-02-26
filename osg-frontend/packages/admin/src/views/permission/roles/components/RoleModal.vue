@@ -114,7 +114,7 @@ const handleSubmit = async () => {
     }
 
     if (isEdit.value) {
-      await updateRole(data)
+      await updateRole(data as any)
       message.success('角色修改成功')
     } else {
       await addRole(data)
