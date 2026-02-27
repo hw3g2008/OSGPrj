@@ -2,21 +2,13 @@
   <a-modal
     :open="visible"
     title="重置密码"
-    :confirm-loading="loading"
-    @ok="handleSubmit"
-    @cancel="handleCancel"
-    width="400px"
+    width="480px"
+    @cancel="handleClose"
+    :footer="null"
   >
-    <template #footer>
-      <a-button @click="handleCancel">取消</a-button>
-      <a-button type="primary" danger :loading="loading" @click="handleSubmit">
-        确认重置
-      </a-button>
-    </template>
-
     <a-alert
-      message="重置后该用户需使用新密码登录"
       type="warning"
+      message="重置后该用户需使用新密码登录"
       show-icon
       style="margin-bottom: 16px"
     />
@@ -25,8 +17,7 @@
       ref="formRef"
       :model="formState"
       :rules="rules"
-      :label-col="{ span: 6 }"
-      :wrapper-col="{ span: 17 }"
+      layout="vertical"
     >
       <a-form-item label="新密码" name="password">
         <a-input-password
@@ -41,6 +32,18 @@
           placeholder="请再次输入新密码"
         />
       </a-form-item>
+
+      <div class="modal-footer">
+        <a-button @click="handleClose">取消</a-button>
+        <a-button
+          type="primary"
+          :loading="loading"
+          style="background-color: #faad14; border-color: #faad14"
+          @click="handleSubmit"
+        >
+          确认重置
+        </a-button>
+      </div>
     </a-form>
   </a-modal>
 </template>
@@ -48,18 +51,19 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import type { FormInstance, Rule } from 'ant-design-vue/es/form'
 import { resetUserPwd } from '@/api/user'
 
-interface Props {
+const props = defineProps<{
   visible: boolean
-  userId: number | null
-}
+  user: any
+}>()
 
-const props = defineProps<Props>()
-const emit = defineEmits(['update:visible', 'success'])
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  success: []
+}>()
 
-const formRef = ref<FormInstance>()
+const formRef = ref()
 const loading = ref(false)
 
 const formState = reactive({
@@ -67,67 +71,63 @@ const formState = reactive({
   confirmPassword: ''
 })
 
-// 密码校验：8-20位，包含字母和数字
-const validatePassword = (_rule: Rule, value: string) => {
-  if (!value) {
-    return Promise.reject('请输入新密码')
-  }
-  if (value.length < 8 || value.length > 20) {
-    return Promise.reject('密码长度需为8-20字符')
-  }
-  if (!/[a-zA-Z]/.test(value) || !/[0-9]/.test(value)) {
-    return Promise.reject('密码需包含字母和数字')
-  }
+const validatePassword = (_rule: any, value: string) => {
+  if (!value) return Promise.reject('请输入新密码')
+  if (value.length < 8 || value.length > 20) return Promise.reject('密码长度8-20字符')
+  if (!/[a-zA-Z]/.test(value)) return Promise.reject('密码必须包含字母')
+  if (!/[0-9]/.test(value)) return Promise.reject('密码必须包含数字')
   return Promise.resolve()
 }
 
-const validateConfirmPassword = (_rule: Rule, value: string) => {
-  if (!value) {
-    return Promise.reject('请再次输入新密码')
-  }
-  if (value !== formState.password) {
-    return Promise.reject('两次输入的密码不一致')
-  }
+const validateConfirmPassword = (_rule: any, value: string) => {
+  if (!value) return Promise.reject('请再次输入新密码')
+  if (value !== formState.password) return Promise.reject('两次输入的密码不一致')
   return Promise.resolve()
 }
 
-const rules: Record<string, Rule[]> = {
-  password: [{ validator: validatePassword, trigger: 'blur' }],
-  confirmPassword: [{ validator: validateConfirmPassword, trigger: 'blur' }]
+const rules = {
+  password: [{ required: true, validator: validatePassword, trigger: 'blur' }],
+  confirmPassword: [{ required: true, validator: validateConfirmPassword, trigger: 'blur' }]
 }
 
-watch(
-  () => props.visible,
-  (val) => {
-    if (val) {
-      formState.password = ''
-      formState.confirmPassword = ''
-      formRef.value?.resetFields()
-    }
+watch(() => props.visible, (val) => {
+  if (val) {
+    formState.password = ''
+    formState.confirmPassword = ''
   }
-)
+})
+
+const handleClose = () => {
+  emit('update:visible', false)
+}
 
 const handleSubmit = async () => {
-  if (!props.userId) return
-
   try {
-    await formRef.value?.validate()
+    await formRef.value.validate()
     loading.value = true
 
-    await resetUserPwd(props.userId, formState.password)
-    message.success('密码重置成功')
+    await resetUserPwd({
+      userId: props.user.userId,
+      password: formState.password
+    })
 
-    emit('update:visible', false)
+    message.success('密码重置成功')
     emit('success')
+    handleClose()
   } catch (error: any) {
-    if (error?.errorFields) return
-    message.error('重置密码失败')
+    if (error.errorFields) return
+    message.error(error.message || '操作失败')
   } finally {
     loading.value = false
   }
 }
-
-const handleCancel = () => {
-  emit('update:visible', false)
-}
 </script>
+
+<style scoped lang="scss">
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+</style>

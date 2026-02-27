@@ -141,18 +141,18 @@ def validate_evidence_command(command: str) -> bool:
 
 #### 修改清单
 
-| # | 文件 | 位置 | 当前值 | 目标值 | 严重度 |
-|---|------|------|--------|--------|--------|
-| D1 | `T-016.yaml` | line 20-26 `acceptance_criteria` | 6 个 AC 含未覆盖的子项 | 降级为当前实际覆盖：登录成功+rememberMe、firstLogin 三值、mvn test=0；未覆盖项标注为 "TODO: 后续迭代补充" | High |
-| D2 | `T-007.yaml` | line 24 | `"lint+build 通过"` | `"test+build 通过"` | Medium |
-| D3 | `T-008.yaml` | AC 中 lint+build | 同上 | `"test+build 通过"` | Medium |
-| D4 | `T-009.yaml` | AC 中 lint+build | 同上 | `"test+build 通过"` | Medium |
-| D5 | `T-010.yaml` | AC 中 lint+build | 同上 | `"test+build 通过"` | Medium |
-| D6 | `T-011.yaml` | AC 中 lint+build | 同上 | `"test+build 通过"` | Medium |
-| D7 | `T-012.yaml` | AC 中 lint+build | 同上 | `"test+build 通过"` | Medium |
-| D8 | `T-013.yaml` | AC 中 lint+build | 同上 | `"test+build 通过"` | Medium |
-| D9 | `T-014.yaml` | AC 中 lint+build | 同上 | `"test+build 通过"` | Medium |
-| D10 | `T-015.yaml` | AC 中 lint+build | 同上 | `"test+build 通过"` | Medium |
+| #   | 文件　　　　 | 位置　　　　　　　　　　　　　　 | 当前值　　　　　　　　 | 目标值　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　| 严重度 |
+| -----| --------------| ----------------------------------| ------------------------| -----------------------------------------------------------------------------------------------------------| --------|
+| D1  | `T-016.yaml` | line 20-26 `acceptance_criteria` | 6 个 AC 含未覆盖的子项 | 降级为当前实际覆盖：登录成功+rememberMe、firstLogin 三值、mvn test=0；未覆盖项标注为 "TODO: 后续迭代补充" | High　 |
+| D2  | `T-007.yaml` | line 24　　　　　　　　　　　　　| `"lint+build 通过"`　　| `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
+| D3  | `T-008.yaml` | AC 中 lint+build　　　　　　　　 | 同上　　　　　　　　　 | `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
+| D4  | `T-009.yaml` | AC 中 lint+build　　　　　　　　 | 同上　　　　　　　　　 | `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
+| D5  | `T-010.yaml` | AC 中 lint+build　　　　　　　　 | 同上　　　　　　　　　 | `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
+| D6  | `T-011.yaml` | AC 中 lint+build　　　　　　　　 | 同上　　　　　　　　　 | `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
+| D7  | `T-012.yaml` | AC 中 lint+build　　　　　　　　 | 同上　　　　　　　　　 | `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
+| D8  | `T-013.yaml` | AC 中 lint+build　　　　　　　　 | 同上　　　　　　　　　 | `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
+| D9  | `T-014.yaml` | AC 中 lint+build　　　　　　　　 | 同上　　　　　　　　　 | `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
+| D10 | `T-015.yaml` | AC 中 lint+build　　　　　　　　 | 同上　　　　　　　　　 | `"test+build 通过"`　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 | Medium |
 
 ## 七、自校验结果（v4 — 修正 CC-Review 第四轮 2 个 findings）
 
@@ -271,16 +271,16 @@ def validate_evidence_command(command: str) -> bool:
 
 ### CC-Review 第十一轮 Findings 处置
 
-| Finding | 严重度 | 对应修复项 |
-|---------|--------|-----------|
-| soft 覆盖率告警静默丢弃 | Low | ✅ I1 |
+| Finding　　　　　　　　 | 严重度 | 对应修复项 |
+| -------------------------| --------| ------------|
+| soft 覆盖率告警静默丢弃 | Low　　| ✅ I1　　　 |
 
 ### ~~批次 J: 构建告警消除~~ ✅ 已完成
 
 > 根因1: vite.config.ts 无 manualChunks 配置，所有依赖打进单个 1578kB chunk。
 > 根因2: logback.xml 硬编码 `/home/ruoyi/logs`，macOS 上无此目录导致 ERROR。采用新建 test 专用 logback 的方式修复，不影响生产配置。
 
-| # | 文件 | 修改 | 严重度 |
-|---|------|------|--------|
-| J1 | `osg-frontend/packages/admin/vite.config.ts` | 添加 `build.rollupOptions.output.manualChunks` 拆分大型依赖 | Low |
-| J2 | `ruoyi-admin/src/test/resources/logback-test.xml` | 新建测试专用 logback，log.path 用相对路径 `./logs` | Low |
+| #   | 文件　　　　　　　　　　　　　　　　　　　　　　　| 修改　　　　　　　　　　　　　　　　　　　　　　　　　　　　| 严重度 |
+| -----| ---------------------------------------------------| -------------------------------------------------------------| --------|
+| J1  | `osg-frontend/packages/admin/vite.config.ts`　　　| 添加 `build.rollupOptions.output.manualChunks` 拆分大型依赖 | Low　　|
+| J2  | `ruoyi-admin/src/test/resources/logback-test.xml` | 新建测试专用 logback，log.path 用相对路径 `./logs`　　　　　| Low　　|

@@ -11,16 +11,16 @@
       </a-button>
     </div>
 
-    <!-- 搜索栏 -->
-    <div class="search-bar">
+    <div class="filter-bar">
       <a-input
-        v-model:value="searchForm.keyword"
-        placeholder="搜索用户名 / 姓名"
+        v-model:value="searchParams.userName"
+        placeholder="搜索用户名/姓名"
         style="width: 200px"
         allow-clear
+        @pressEnter="handleSearch"
       />
       <a-select
-        v-model:value="searchForm.roleId"
+        v-model:value="searchParams.roleId"
         placeholder="全部角色"
         style="width: 150px"
         allow-clear
@@ -30,7 +30,7 @@
         </a-select-option>
       </a-select>
       <a-select
-        v-model:value="searchForm.status"
+        v-model:value="searchParams.status"
         placeholder="全部状态"
         style="width: 120px"
         allow-clear
@@ -41,15 +41,13 @@
       <a-button type="primary" @click="handleSearch">搜索</a-button>
     </div>
 
-    <!-- 用户列表表格 -->
     <a-table
       :columns="columns"
       :data-source="userList"
       :loading="loading"
-      :pagination="pagination"
-      :row-class-name="getRowClassName"
+      :pagination="false"
       row-key="userId"
-      @change="handleTableChange"
+      :row-class-name="rowClassName"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'nickName'">
@@ -60,7 +58,7 @@
           <a-tag
             v-for="role in record.roles"
             :key="role.roleId"
-            :color="getRoleColor(role.roleKey)"
+            :color="getRoleTagColor(role.roleKey)"
           >
             {{ role.roleName }}
           </a-tag>
@@ -73,11 +71,11 @@
         </template>
 
         <template v-if="column.key === 'loginDate'">
-          {{ formatDateTime(record.loginDate) }}
+          {{ record.loginDate ? dayjs(record.loginDate).format('MM/DD/YYYY HH:mm') : '-' }}
         </template>
 
         <template v-if="column.key === 'updateTime'">
-          {{ formatDate(record.updateTime) }}
+          {{ record.updateTime ? dayjs(record.updateTime).format('MM/DD/YYYY') : '-' }}
         </template>
 
         <template v-if="column.key === 'action'">
@@ -86,12 +84,12 @@
             v-if="record.status === '0'"
             type="link"
             size="small"
-            @click="handleResetPassword(record)"
+            @click="handleResetPwd(record)"
           >
             重置密码
           </a-button>
           <a-button
-            v-if="record.status === '0' && !isSuperAdmin(record)"
+            v-if="record.status === '0' && !record.admin"
             type="link"
             size="small"
             danger
@@ -111,12 +109,17 @@
       </template>
     </a-table>
 
-    <!-- 分页信息 -->
-    <div class="pagination-info">
-      共 {{ pagination.total }} 条记录
+    <div class="pagination-bar">
+      <span class="total">共 {{ pagination.total }} 条记录</span>
+      <a-pagination
+        v-model:current="pagination.current"
+        v-model:pageSize="pagination.pageSize"
+        :total="pagination.total"
+        show-size-changer
+        @change="handlePageChange"
+      />
     </div>
 
-    <!-- 用户弹窗 -->
     <UserModal
       v-model:visible="userModalVisible"
       :user="currentUser"
@@ -124,10 +127,9 @@
       @success="loadUserList"
     />
 
-    <!-- 重置密码弹窗 -->
     <ResetPwdModal
       v-model:visible="resetPwdModalVisible"
-      :user-id="resetPwdUserId"
+      :user="currentUser"
       @success="loadUserList"
     />
   </div>
@@ -137,24 +139,22 @@
 import { ref, reactive, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
-import { getUserList, changeUserStatus, getAllRoles } from '@/api/user'
-import type { UserInfo } from '@/api/user'
+import { getUserList, changeUserStatus, getRoleOptions as fetchRoleOptions } from '@/api/user'
 import UserModal from './components/UserModal.vue'
 import ResetPwdModal from './components/ResetPwdModal.vue'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
-const userList = ref<UserInfo[]>([])
+const userList = ref<any[]>([])
 const roleOptions = ref<any[]>([])
 const userModalVisible = ref(false)
-const currentUser = ref<UserInfo | null>(null)
 const resetPwdModalVisible = ref(false)
-const resetPwdUserId = ref<number | null>(null)
+const currentUser = ref<any>(null)
 
-const searchForm = reactive({
-  keyword: '',
-  roleId: undefined as number | undefined,
-  status: undefined as string | undefined
+const searchParams = reactive({
+  userName: '',
+  status: undefined as string | undefined,
+  roleId: undefined as number | undefined
 })
 
 const pagination = reactive({
@@ -166,7 +166,7 @@ const pagination = reactive({
 const columns = [
   { title: 'ID', dataIndex: 'userId', key: 'userId', width: 80 },
   { title: '用户名', dataIndex: 'userName', key: 'userName', width: 120 },
-  { title: '姓名', dataIndex: 'nickName', key: 'nickName', width: 100 },
+  { title: '姓名', dataIndex: 'nickName', key: 'nickName', width: 120 },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
   { title: '角色', key: 'roles', width: 200 },
   { title: '状态', key: 'status', width: 100 },
@@ -175,33 +175,19 @@ const columns = [
   { title: '操作', key: 'action', width: 200 }
 ]
 
-// 角色颜色映射
-const getRoleColor = (roleKey: string): string => {
-  const colorMap: Record<string, string> = {
-    super_admin: 'purple',
-    clerk: 'blue',
-    hour_auditor: 'orange',
-    accountant: 'green'
-  }
-  return colorMap[roleKey] || 'default'
+const roleTagColorMap: Record<string, string> = {
+  super_admin: 'purple',
+  clerk: 'blue',
+  course_auditor: 'orange',
+  accountant: 'green'
 }
 
-// 判断是否超级管理员
-const isSuperAdmin = (record: any): boolean => {
-  return record.roles?.some((r: any) => r.roleKey === 'super_admin')
+const getRoleTagColor = (roleKey: string) => {
+  return roleTagColorMap[roleKey] || 'default'
 }
 
-// Disabled 行样式
-const getRowClassName = (record: any): string => {
+const rowClassName = (record: any) => {
   return record.status === '1' ? 'disabled-row' : ''
-}
-
-const formatDate = (date: string) => {
-  return date ? dayjs(date).format('MM/DD/YYYY') : '-'
-}
-
-const formatDateTime = (date: string) => {
-  return date ? dayjs(date).format('MM/DD/YYYY HH:mm') : '-'
 }
 
 const loadUserList = async () => {
@@ -210,10 +196,9 @@ const loadUserList = async () => {
     const res = await getUserList({
       pageNum: pagination.current,
       pageSize: pagination.pageSize,
-      userName: searchForm.keyword || undefined,
-      nickName: searchForm.keyword || undefined,
-      status: searchForm.status,
-      roleId: searchForm.roleId
+      userName: searchParams.userName || undefined,
+      status: searchParams.status,
+      roleId: searchParams.roleId
     })
     userList.value = res.rows || []
     pagination.total = res.total || 0
@@ -226,21 +211,19 @@ const loadUserList = async () => {
 
 const loadRoleOptions = async () => {
   try {
-    const res = await getAllRoles()
-    roleOptions.value = res.roles || []
+    const res = await fetchRoleOptions()
+    roleOptions.value = res || []
   } catch (error) {
-    console.error('加载角色列表失败', error)
+    console.error('加载角色选项失败', error)
   }
-}
-
-const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
-  pagination.pageSize = pag.pageSize
-  loadUserList()
 }
 
 const handleSearch = () => {
   pagination.current = 1
+  loadUserList()
+}
+
+const handlePageChange = () => {
   loadUserList()
 }
 
@@ -249,17 +232,17 @@ const handleAdd = () => {
   userModalVisible.value = true
 }
 
-const handleEdit = (record: UserInfo) => {
+const handleEdit = (record: any) => {
   currentUser.value = record
   userModalVisible.value = true
 }
 
-const handleResetPassword = (record: UserInfo) => {
-  resetPwdUserId.value = record.userId
+const handleResetPwd = (record: any) => {
+  currentUser.value = record
   resetPwdModalVisible.value = true
 }
 
-const handleDisable = (record: UserInfo) => {
+const handleDisable = (record: any) => {
   Modal.confirm({
     title: '确认禁用',
     content: '确定要禁用该用户吗？禁用后该用户将无法登录系统。',
@@ -267,23 +250,23 @@ const handleDisable = (record: UserInfo) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        await changeUserStatus(record.userId, '1')
+        await changeUserStatus({ userId: record.userId, status: '1' })
         message.success('用户已禁用')
         loadUserList()
       } catch (error) {
-        message.error('禁用失败')
+        message.error('操作失败')
       }
     }
   })
 }
 
-const handleEnable = async (record: UserInfo) => {
+const handleEnable = async (record: any) => {
   try {
-    await changeUserStatus(record.userId, '0')
+    await changeUserStatus({ userId: record.userId, status: '0' })
     message.success('用户已启用')
     loadUserList()
   } catch (error) {
-    message.error('启用失败')
+    message.error('操作失败')
   }
 }
 
@@ -299,7 +282,7 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 
     h2 {
       margin: 0 0 4px;
@@ -313,7 +296,7 @@ onMounted(() => {
     }
   }
 
-  .search-bar {
+  .filter-bar {
     display: flex;
     gap: 12px;
     margin-bottom: 16px;
@@ -323,10 +306,16 @@ onMounted(() => {
     font-weight: 600;
   }
 
-  .pagination-info {
+  .pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 16px;
-    color: #666;
-    font-size: 14px;
+
+    .total {
+      color: #666;
+      font-size: 14px;
+    }
   }
 
   :deep(.disabled-row) {

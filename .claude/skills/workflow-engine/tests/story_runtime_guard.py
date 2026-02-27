@@ -25,6 +25,7 @@ SM_PATH = PROJECT_ROOT / ".claude" / "skills" / "workflow-engine" / "state-machi
 STORIES_DIR = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "stories"
 TICKETS_DIR = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "tickets"
 PROOFS_DIR = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "proofs"
+EVENT_LOG_PATH = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "workflow-events.jsonl"
 
 # 审批配置键映射（与 SKILL.md §2 一致）
 APPROVAL_CONFIG_KEYS = {
@@ -170,15 +171,23 @@ def check_file_count_consistency(state):
     else:
         print(f"  ✅ Stories 计数一致: {len(stories_in_state)}")
 
-    # Tickets
+    # Tickets — 检查 STATE.tickets 中的每个 ticket 是否在磁盘上存在
+    # 注意：磁盘上可能有历史 Story 的 ticket 文件，所以不能简单比较总数
+    current_step = (state.get("workflow") or {}).get("current_step")
+    pre_split_steps = ("stories_approved", "story_split_done")
     tickets_in_state = state.get("tickets") or []
-    tickets_on_disk = list(TICKETS_DIR.glob("T-*.yaml")) if TICKETS_DIR.exists() else []
-    if len(tickets_in_state) != len(tickets_on_disk):
-        msg = f"Tickets 计数不一致: STATE={len(tickets_in_state)}, disk={len(tickets_on_disk)}"
-        issues.append(msg)
-        print(f"  ❌ {msg}")
+    if current_step in pre_split_steps and len(tickets_in_state) == 0:
+        print(f"  ⚠️ 当前阶段 '{current_step}'，STATE.tickets 为空（待拆分），跳过 Tickets 计数检查")
+    elif tickets_in_state:
+        missing = [t for t in tickets_in_state if not (TICKETS_DIR / f"{t}.yaml").exists()]
+        if missing:
+            msg = f"Tickets 文件缺失: {missing}"
+            issues.append(msg)
+            print(f"  ❌ {msg}")
+        else:
+            print(f"  ✅ Tickets 文件完整: {len(tickets_in_state)} 个全部存在")
     else:
-        print(f"  ✅ Tickets 计数一致: {len(tickets_in_state)}")
+        print(f"  ✅ Tickets 列表为空")
 
     # Stats 一致性
     stats = state.get("stats") or {}
@@ -187,6 +196,57 @@ def check_file_count_consistency(state):
         msg = f"stats.total_stories ({total_stories}) != stories 列表长度 ({len(stories_in_state)})"
         issues.append(msg)
         print(f"  ❌ {msg}")
+
+    return issues
+
+
+def check_events_state_consistency(state, allow_bootstrap=False):
+    """检查 workflow-events.jsonl 最后一条 state_to 是否等于 STATE.yaml current_step"""
+    print("\n--- 4. events↔STATE 一致性 ---")
+    issues = []
+
+    events_path = EVENT_LOG_PATH
+    current_step = (state.get("workflow") or {}).get("current_step")
+
+    if not events_path.exists():
+        # bootstrap 边界：与 story_event_log_check.py 一致
+        if allow_bootstrap:
+            has_tickets = TICKETS_DIR.exists() and any(TICKETS_DIR.glob("T-*.yaml"))
+            if current_step in ("story_split_done", "stories_approved") and not has_tickets:
+                print("  ⚠️ Bootstrap 模式：事件日志不存在，允许跳过")
+                return issues
+        msg = f"workflow-events.jsonl 不存在: {events_path}"
+        issues.append(msg)
+        print(f"  ❌ {msg}")
+        return issues
+
+    # 读取最后一行
+    last_event = None
+    with open(events_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    last_event = json.loads(line)
+                except json.JSONDecodeError:
+                    pass
+
+    if not last_event:
+        msg = "workflow-events.jsonl 为空或无有效事件"
+        issues.append(msg)
+        print(f"  ❌ {msg}")
+        return issues
+
+    last_state_to = last_event.get("state_to")
+    if last_state_to != current_step:
+        msg = (
+            f"events↔STATE 不一致: events 最后一条 state_to='{last_state_to}', "
+            f"但 STATE.yaml current_step='{current_step}'"
+        )
+        issues.append(msg)
+        print(f"  ❌ {msg}")
+    else:
+        print(f"  ✅ events 最后 state_to = STATE current_step = '{current_step}'")
 
     return issues
 
@@ -206,6 +266,10 @@ def parse_args():
                         help=f"Tickets 目录 (默认: {TICKETS_DIR})")
     parser.add_argument("--proofs-dir", type=Path, default=PROOFS_DIR,
                         help=f"Proofs 目录 (默认: {PROOFS_DIR})")
+    parser.add_argument("--events", type=Path, default=EVENT_LOG_PATH,
+                        help=f"workflow-events.jsonl 路径 (默认: {EVENT_LOG_PATH})")
+    parser.add_argument("--allow-bootstrap", action="store_true",
+                        help="允许首次引导阶段跳过事件日志校验")
     return parser.parse_args()
 
 
@@ -213,13 +277,14 @@ def main():
     args = parse_args()
 
     # 用 CLI 参数覆盖全局变量
-    global STATE_PATH, CONFIG_PATH, SM_PATH, STORIES_DIR, TICKETS_DIR, PROOFS_DIR
+    global STATE_PATH, CONFIG_PATH, SM_PATH, STORIES_DIR, TICKETS_DIR, PROOFS_DIR, EVENT_LOG_PATH
     STATE_PATH = args.state.resolve()
     CONFIG_PATH = args.config.resolve()
     SM_PATH = args.state_machine.resolve()
     STORIES_DIR = args.stories_dir.resolve()
     TICKETS_DIR = args.tickets_dir.resolve()
     PROOFS_DIR = args.proofs_dir.resolve()
+    EVENT_LOG_PATH = args.events.resolve()
 
     print("=" * 60)
     print("Story 运行态守护校验")
@@ -248,6 +313,9 @@ def main():
 
     # 3. 文件计数一致性
     all_issues.extend(check_file_count_consistency(state))
+
+    # 4. events↔STATE 一致性
+    all_issues.extend(check_events_state_consistency(state, allow_bootstrap=args.allow_bootstrap))
 
     # 汇总
     print("\n" + "=" * 60)

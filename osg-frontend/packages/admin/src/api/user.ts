@@ -1,63 +1,53 @@
 import { http } from '@osg/shared/utils'
 
-export interface UserListParams {
+// 获取用户列表（分页+搜索+筛选）
+export function getUserList(params: {
   pageNum: number
   pageSize: number
   userName?: string
-  nickName?: string
+  phonenumber?: string
   status?: string
   roleId?: number
+}) {
+  return http.get<{ rows: any[]; total: number }>('/system/user/list', { params })
 }
 
-export interface UserInfo {
-  userId: number
+// 新增用户
+export function addUser(data: {
   userName: string
   nickName: string
   email: string
   phonenumber?: string
-  status: string
-  loginDate?: string
-  updateTime?: string
+  roleIds: number[]
   remark?: string
-  roles?: { roleId: number; roleName: string; roleKey: string }[]
-}
-
-// 获取用户列表
-export function getUserList(params: UserListParams) {
-  return http.get<{ rows: UserInfo[]; total: number }>('/system/user/list', { params })
-}
-
-// 获取用户详情
-export function getUser(userId: number) {
-  return http.get<{ data: UserInfo; roles: any[] }>(`/system/user/${userId}`)
-}
-
-// 新增用户
-export function addUser(data: Partial<UserInfo> & { roleIds: number[] }) {
+  password?: string
+}) {
   return http.post('/system/user', data)
 }
 
 // 修改用户
-export function updateUser(data: Partial<UserInfo> & { roleIds: number[] }) {
+export function updateUser(data: {
+  userId: number
+  nickName: string
+  email: string
+  phonenumber?: string
+  roleIds: number[]
+  remark?: string
+}) {
   return http.put('/system/user', data)
 }
 
-// 删除用户
-export function deleteUser(userId: number) {
-  return http.delete(`/system/user/${userId}`)
+// 重置用户密码
+export function resetUserPwd(data: { userId: number; password: string }) {
+  return http.put('/system/user/resetPwd', data)
 }
 
-// 重置密码
-export function resetUserPwd(userId: number, password: string) {
-  return http.put('/system/user/resetPwd', { userId, password })
+// 修改用户状态（启用/禁用）
+export function changeUserStatus(data: { userId: number; status: string }) {
+  return http.put('/system/user/changeStatus', data)
 }
 
-// 修改用户状态
-export function changeUserStatus(userId: number, status: string) {
-  return http.put('/system/user/changeStatus', { userId, status })
-}
-
-// 获取所有角色（用于下拉选择）
-export function getAllRoles() {
-  return http.get<{ roles: any[] }>('/system/user/')
+// 获取角色选项列表（用于新增/编辑用户的角色选择）
+export function getRoleOptions() {
+  return http.get<any[]>('/system/role/optionselect')
 }

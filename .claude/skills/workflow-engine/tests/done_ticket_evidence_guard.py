@@ -8,8 +8,10 @@ Done Ticket 证据守卫
 """
 
 import argparse
+import re
 import sys
 from pathlib import Path
+from typing import Optional
 
 import yaml
 
@@ -27,6 +29,34 @@ REQUIRE_ALL_DONE_STEPS = {
     "story_approved",
     "all_stories_done",
 }
+
+# type → (必须包含的关键词列表, 描述)
+# command 必须同时包含列表中所有关键词（正则词边界匹配，大小写不敏感）
+COMMAND_PATTERNS = {
+    "backend":     (["mvn"],               "必须包含 mvn"),
+    "database":    (["mvn", "compile"],     "必须包含 mvn compile"),
+    "test":        (["test"],              "必须包含 test"),
+    "frontend-ui": (["build"],             "必须包含 build"),
+    "frontend":    (["test", "build"],     "必须同时包含 test 和 build"),
+    "config":      ([],                   "须为可执行命令，不可为空（由上层非空检查保证）"),
+}
+
+
+def check_command_pattern(ticket_type: str, command: str) -> Optional[str]:
+    """校验 command 是否匹配 ticket type 的命令模式。返回 None 表示通过，否则返回错误信息。
+
+    注意: 要求 Python >= 3.9（项目当前环境 3.12）。
+    """
+    pattern = COMMAND_PATTERNS.get(ticket_type)
+    if not pattern:
+        return None
+    keywords, desc = pattern
+    if not keywords:
+        return None
+    missing = [kw for kw in keywords if not re.search(r'\b' + re.escape(kw) + r'\b', command, re.IGNORECASE)]
+    if missing:
+        return f"type={ticket_type} 的 command 不符合规则（{desc}），缺少: {missing}"
+    return None
 
 
 def load_yaml(path: Path):
@@ -108,6 +138,11 @@ def main():
             command = evidence.get("command")
             if not isinstance(command, str) or not command.strip():
                 issues.append(f"{ticket_id}: verification_evidence.command 缺失或为空")
+            else:
+                ticket_type = ticket.get("type", "")
+                pattern_err = check_command_pattern(ticket_type, command)
+                if pattern_err:
+                    issues.append(f"{ticket_id}: {pattern_err}")
 
             exit_code = evidence.get("exit_code")
             if exit_code != 0:
