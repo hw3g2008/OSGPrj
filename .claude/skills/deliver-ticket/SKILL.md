@@ -454,6 +454,7 @@ def deliver_ticket(ticket_id):
     # Step 7.5: TC 回填（D6 挂点）
     # 更新对应 TC 的 automation.command 和 latest_result
     # 规则：tc_id 匹配 upsert，不覆盖 status != pending 的已有结果
+    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")  # 提前读取，后续 Step 9 也用
     module = state.current_requirement
     tc_cases_path = f"osg-spec-docs/tasks/testing/{module}-test-cases.yaml"
     tc_cases = read_yaml(tc_cases_path) or []
@@ -480,6 +481,7 @@ def deliver_ticket(ticket_id):
     # ========================================
     # Step 9: 更新 STATE.yaml + Level 3/4 验证
     # ========================================
+    # state 已在 Step 7.5 读取，此处重新读取以获取最新状态
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     update_state(ticket_id, "done")
 

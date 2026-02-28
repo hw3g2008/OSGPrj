@@ -189,3 +189,5 @@ python3 .claude/skills/workflow-engine/tests/story_integration_assertions.py
 | **CC-R3 失败也落盘** | ✅ | api-smoke 用 trap 收口 |
 | **CC-R4 幂等/去重** | ✅ | tc_id 唯一键 upsert，不覆盖非 pending |
 | **CC-R5 验证命令清单** | ✅ | §七 列出 5 条可执行命令 |
+| **CC-R6 变量先用后定义（ticket-splitter）** | ✅ 已实施 | `module = state.current_requirement` 前移到 TC 骨架生成块首行，原 L431 定义改为注释 |
+| **CC-R7 变量先用后定义（deliver-ticket）** | ✅ 已实施 | `state = read_yaml(...)` 前移到 Step 7.5 TC 回填块首行，Step 9 重读加注释 |

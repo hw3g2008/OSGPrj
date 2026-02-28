@@ -400,6 +400,7 @@ def split_tickets(story_id, state):
     # ========== TC 骨架生成（D6 挂点）==========
     # 为当前 Story 的每个 AC 生成 TC 条目到 {module}-test-cases.yaml
     # 规则：tc_id 唯一键 upsert（已有同 ID 不覆盖），新增 TC 初始 status=pending
+    module = state.current_requirement  # 提前读取，后续 phase-proof 也用
     tc_cases_path = f"osg-spec-docs/tasks/testing/{module}-test-cases.yaml"
     existing_cases = read_yaml(tc_cases_path) or []
     existing_ids = {tc["tc_id"] for tc in existing_cases}
@@ -428,7 +429,7 @@ def split_tickets(story_id, state):
     write_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml", story)
 
     # 写入 phase-proof（approve tickets 的 preflight_guard 会校验）
-    module = state.current_requirement
+    # module 已在 TC 骨架生成步骤中定义
     proof = {
         "schema_version": "1.0",
         "module": module,
