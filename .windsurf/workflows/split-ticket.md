@@ -37,6 +37,11 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
    - 列出所有 Tickets 的编号、标题、类型、估时
    - 等待用户审批
 
-5. **更新状态**
+5. **TC 资产更新（D6 挂点）**
+   - 为当前 Story 的每个 AC 生成/更新 TC 骨架到 `{module}-test-cases.yaml`
+   - 初始写入 `latest_result.status: pending`
+   - 若 AC 未映射 TC，直接 FAIL
+
+6. **更新状态**
    - 由 ticket-splitter 内部调用 `transition()` 推进到 `ticket_split_done`
    - 等待用户审批（`/approve`）

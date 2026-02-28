@@ -91,6 +91,13 @@ $(cat osg-spec-docs/tasks/STATE.yaml)
 输出：通过/不通过 + 问题列表"
 ```
 
+## TC 资产校验（D6 挂点 — `/cc-review final` 专用）
+
+当执行 `/cc-review final` 时，必须：
+- 强制读取追踪矩阵与最终审计报告
+- 运行 `traceability_guard.py` 校验追踪链完整性
+- 任一 Story 缺少 `ticket/story/final` 三层证据即 FAIL
+
 ## 状态更新（必须经 transition() 统一入口）
 
 Story 完成审核（类型 1）执行后，根据 CC 审核结果更新状态：

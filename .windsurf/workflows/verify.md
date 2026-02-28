@@ -28,7 +28,12 @@ description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
      - Phase 2：功能验收（全量测试 + AC 覆盖率 + 覆盖率门槛）
      - Phase 3：增强全局终审（三维度终审 + A~I 多维度旋转校验，参见 quality-gate/SKILL.md）
 
-4. **处理结果（必须经 transition() 统一入口）**
+4. **TC 资产回填（D6 挂点）**
+   - 回填 Story 级集成验证结果到追踪矩阵 `Latest Result`
+   - 对 API Story 强制执行 `@SpringBootTest` 集成命令并写入 evidence
+   - 若矩阵未更新，直接 FAIL
+
+5. **处理结果（必须经 transition() 统一入口）**
    - 如果 `passed = true`：
      - 调用 `transition("/verify", state, "story_verified")`（W8）
      - 输出两个选项：

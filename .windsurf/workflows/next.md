@@ -31,7 +31,12 @@ description: 执行下一个待办 Ticket - 自动选取并实现
      - **Level 2 回归验证**：全量测试，确保不破坏已完成功能
    - 确认 verification_evidence 存在且 exit_code = 0
 
-5. **更新状态（必须经 transition() 统一入口）**
+5. **TC 资产更新（D6 挂点）**
+   - 完成对应 TC 的 `automation.script` 与 `automation.command`
+   - 执行结果回填 `latest_result`（`status` + `evidence_ref`）
+   - 若仅写"code review/manual check"，直接 FAIL
+
+6. **更新状态（必须经 transition() 统一入口）**
    - 更新 Ticket 状态为 `done`
    - 更新 `STATE.yaml` 的 `completed_tickets` 列表
    - 检查当前 Story 是否所有 Tickets 都已完成
