@@ -16,9 +16,15 @@
     "build:admin": "pnpm --filter @osg/admin build",
     "build:all": "pnpm -r build",
     "lint": "eslint packages --ext .vue,.ts,.tsx --fix",
-    "format": "prettier --write \"packages/**/*.{vue,ts,tsx,js,json,css,scss}\""
+    "format": "prettier --write \"packages/**/*.{vue,ts,tsx,js,json,css,scss}\"",
+    "test:e2e": "playwright test",
+    "test:e2e:ui-only": "playwright test --grep @ui-only",
+    "test:e2e:api": "playwright test --grep @api",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
