@@ -45,13 +45,18 @@ for sid in stories:
 print("PASS: 全 Story done_ticket_evidence_guard 通过")
 PY
 
-echo "--- 4. 前端单测 ---"
+echo "--- 4. traceability_guard ---"
+python3 .claude/skills/workflow-engine/tests/traceability_guard.py \
+  --cases osg-spec-docs/tasks/testing/permission-test-cases.yaml \
+  --matrix osg-spec-docs/tasks/testing/permission-traceability-matrix.md
+
+echo "--- 5. 前端单测 ---"
 pnpm --dir osg-frontend/packages/admin test
 
-echo "--- 5. 前端构建 ---"
+echo "--- 6. 前端构建 ---"
 pnpm --dir osg-frontend/packages/admin build
 
-echo "--- 6. 后端测试 ---"
+echo "--- 7. 后端测试 ---"
 mvn test -pl ruoyi-admin -am
 
 echo "=== Final Gate: 全部通过 ==="
