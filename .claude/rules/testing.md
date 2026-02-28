@@ -79,7 +79,7 @@ mvn verify -Pintegration-test
 
 使用 Playwright，在所有 Stories 完成后手动执行：
 ```bash
-cd osg-frontend && npx playwright test
+pnpm --dir osg-frontend test:e2e
 # 报告: osg-frontend/playwright-report/index.html
 ```
 

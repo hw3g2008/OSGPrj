@@ -230,6 +230,51 @@ def check_event_count_equals_transitions():
     return issues
 
 
+def check_terminal_event_closure():
+    """检查终态事件闭合：最后一条事件 state_to 必须与 STATE.current_step 一致"""
+    print("\n--- 6. 终态事件闭合 ---")
+    issues = []
+
+    import yaml
+    state_path = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "STATE.yaml"
+    events_path = PROJECT_ROOT / "osg-spec-docs" / "tasks" / "workflow-events.jsonl"
+
+    if not state_path.exists() or not events_path.exists():
+        print("  ⚠️ STATE.yaml 或 events 不存在，跳过")
+        return issues
+
+    with open(state_path, "r", encoding="utf-8") as f:
+        state = yaml.safe_load(f)
+    current_step = (state.get("workflow") or {}).get("current_step")
+
+    import json as _json
+    last_event = None
+    with open(events_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    last_event = _json.loads(line)
+                except _json.JSONDecodeError:
+                    pass
+
+    if not last_event:
+        msg = "事件日志为空，终态事件闭合失败"
+        issues.append(msg)
+        print(f"  ❌ {msg}")
+        return issues
+
+    last_state_to = last_event.get("state_to")
+    if last_state_to != current_step:
+        msg = f"终态事件未闭合: events 最后 state_to='{last_state_to}' ≠ STATE current_step='{current_step}'"
+        issues.append(msg)
+        print(f"  ❌ {msg}")
+    else:
+        print(f"  ✅ 终态事件闭合: last event state_to = STATE current_step = '{current_step}'")
+
+    return issues
+
+
 def main():
     print("=" * 60)
     print("Story 集成断言")
@@ -242,6 +287,7 @@ def main():
     all_issues.extend(check_event_write_points())
     all_issues.extend(check_scan_directories())
     all_issues.extend(check_event_count_equals_transitions())
+    all_issues.extend(check_terminal_event_closure())
 
     print("\n" + "=" * 60)
     print(f"结果: {len(all_issues)} 个错误")

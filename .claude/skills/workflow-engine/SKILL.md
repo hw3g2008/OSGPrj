@@ -127,6 +127,7 @@ def handle_next_story(state):
 
 > ⚠️ **唯一规则**：任何会推进 `workflow.current_step` 的动作都必须经过 `transition()`。
 > 禁止出现第二套能独立推进 `current_step` 的写入逻辑。
+> **终态硬约束**：`current_step == all_stories_done` 时，`next_step` 必须为 `null`，且 `workflow-events.jsonl` 最后一条事件 `state_to` 必须为 `all_stories_done`。不满足即 FAIL。
 
 #### 5a. transition()（唯一推进入口）
 

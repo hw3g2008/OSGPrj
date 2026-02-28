@@ -251,6 +251,28 @@ def check_events_state_consistency(state, allow_bootstrap=False):
     return issues
 
 
+def check_terminal_state_postcheck(state):
+    """检查终态硬断言：all_stories_done 时 next_step 必须为 null"""
+    print("\n--- 5. 终态硬断言 ---")
+    issues = []
+
+    workflow = state.get("workflow") or {}
+    current_step = workflow.get("current_step")
+    next_step = workflow.get("next_step")
+
+    if current_step == "all_stories_done":
+        if next_step is not None:
+            msg = f"终态违规: current_step=all_stories_done 但 next_step={next_step}（必须为 null）"
+            issues.append(msg)
+            print(f"  ❌ {msg}")
+        else:
+            print("  ✅ all_stories_done 时 next_step = null")
+    else:
+        print(f"  ✅ 当前状态 '{current_step}' 非终态，跳过终态检查")
+
+    return issues
+
+
 def parse_args():
     """解析 CLI 参数，覆盖硬编码默认路径"""
     parser = argparse.ArgumentParser(description="Story 运行态守护校验")
@@ -316,6 +338,9 @@ def main():
 
     # 4. events↔STATE 一致性
     all_issues.extend(check_events_state_consistency(state, allow_bootstrap=args.allow_bootstrap))
+
+    # 5. 终态硬断言
+    all_issues.extend(check_terminal_state_postcheck(state))
 
     # 汇总
     print("\n" + "=" * 60)

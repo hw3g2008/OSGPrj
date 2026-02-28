@@ -242,6 +242,6 @@ testing:
   e2e:
     enabled: true
     framework: playwright
-    command: "cd osg-frontend && npx playwright test"
+    command: "pnpm --dir osg-frontend test:e2e"
     report: "osg-frontend/playwright-report"
     trigger: "manual"              # manual = 手动触发, auto = all_stories_done 时自动
