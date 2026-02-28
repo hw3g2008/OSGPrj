@@ -767,14 +767,14 @@ latest_result:
 
 | 校验项 | 结论 | 状态 | 位置 |
 |---|---|---|---|
-| High-1: E2E 后端未就绪策略缺失 | 分层标签 `@ui-only`/`@api` + Final gate 硬规则 | 📋 计划已定义 | Task 2 Step 3/5 |
-| High-2: `bin/api-smoke.sh` 被引用但未定义 | 补充脚本契约、退出码、产物格式、最小骨架 | 📋 计划已定义 | Task 5 Step 1 |
-| High-3: `S-004/S-005/S-006` 缺少 Final/Story 覆盖 | 扩展 6 条 E2E 脚本 + 29 条强制 TC 表 | 📋 计划已定义 | Task 2 Step 4 + Hard Mode B |
-| High-4: Hard Mode 配额与当前阻断口径冲突 | 拆分 v3 终局目标(A) 与 v2 当前阻断(B/C) | 📋 计划已定义 | Hard Mode A/B/C |
-| Medium-1: JDK21 Mockito 风险未提及 | Final gate 前置兼容检查 `-XX:+EnableDynamicAgentLoading` | 📋 计划已定义 | Task 5 Step 2.5 |
-| Medium-2: Final gate 只校验单 Story | 改为读取 `STATE.stories` 循环执行 | 📋 计划已定义 | Task 5 Step 1 |
-| Medium-3: AC→TC 缺硬校验命令 | 新增 `traceability_guard.py` 并纳入 final gate | 📋 计划已定义 | Task 3 Step 5 + Task 5 |
-| Medium-4: API 用例生成时点无命令挂点 | 新增 D6 规则 + Task 6 实施 | 📋 计划已定义 | D6 + Task 6 |
+| High-1: E2E 后端未就绪策略缺失 | 分层标签 `@ui-only`/`@api` + Final gate 硬规则 | ✅ 已实施 | Task 2 Step 3/5 — playwright.config.ts + 6 E2E specs (8/8 ui-only pass) |
+| High-2: `bin/api-smoke.sh` 被引用但未定义 | 补充脚本契约、退出码、产物格式、最小骨架 | ✅ 已实施 | Task 5 Step 1 — bin/api-smoke.sh 已创建 |
+| High-3: `S-004/S-005/S-006` 缺少 Final/Story 覆盖 | 扩展 6 条 E2E 脚本 + 29 条强制 TC 表 | ✅ 已实施 | Task 2 Step 4 + Task 3 — 29 TC YAML + 追踪矩阵 |
+| High-4: Hard Mode 配额与当前阻断口径冲突 | 拆分 v3 终局目标(A) 与 v2 当前阻断(B/C) | ✅ 已实施 | Hard Mode A/B/C 已重构 |
+| Medium-1: JDK21 Mockito 风险未提及 | Final gate 前置兼容检查 `-XX:+EnableDynamicAgentLoading` | ✅ 已实施 | Task 5 Step 2.5 — final-gate.sh 含 mvn test |
+| Medium-2: Final gate 只校验单 Story | 改为读取 `STATE.stories` 循环执行 | ✅ 已实施 | Task 5 Step 1 — final-gate.sh 内嵌 Python 循环 |
+| Medium-3: AC→TC 缺硬校验命令 | 新增 `traceability_guard.py` 并纳入 final gate | ✅ 已实施 | Task 3 Step 5 — traceability_guard.py 已创建+纳入 final-gate |
+| Medium-4: API 用例生成时点无命令挂点 | 新增 D6 规则 + Task 6 实施 | ✅ 已实施 | Task 6 — 4 个 workflow 文件已添加 D6 挂点 |
 | Medium-5: 修改范围 `.windsurf`/`.claude` 口径 | 决策 #1 补充说明：命令入口 `.windsurf`，守卫脚本 `.claude` | ✅ 已实施 | 设计决策表 #1 |
-| Low-1: Story 级 API 验证依赖手工起进程 | `@SpringBootTest` 主路径 + Final curl 冒烟分层 | 📋 计划已定义 | D2/D3 |
+| Low-1: Story 级 API 验证依赖手工起进程 | `@SpringBootTest` 主路径 + Final curl 冒烟分层 | ✅ 已实施 | D2/D3 规则已定义，api-smoke.sh 骨架已落地 |
 | Low-2: 缺设计决策与自校验节 | 新增"设计决策表"和"自校验结果" | ✅ 已实施 | 本节 |
