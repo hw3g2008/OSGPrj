@@ -59,4 +59,21 @@ pnpm --dir osg-frontend/packages/admin build
 echo "--- 7. 后端测试 ---"
 mvn test -pl ruoyi-admin -am
 
-echo "=== Final Gate: 全部通过 ==="
+echo "--- 8. API 冒烟 ---"
+if curl -sS --max-time 5 http://127.0.0.1:8080/health >/dev/null 2>&1; then
+  bash bin/api-smoke.sh permission
+else
+  echo "⚠️ WARNING: 后端未启动（127.0.0.1:8080 不可达），跳过 api-smoke"
+  echo "⚠️ 此步骤为 SKIP，非 PASS — Final gate 未完整通过"
+fi
+
+echo "--- 9. E2E 全量 ---"
+if curl -sS --max-time 5 http://127.0.0.1:8080/health >/dev/null 2>&1; then
+  pnpm --dir osg-frontend test:e2e
+else
+  echo "⚠️ WARNING: 后端未启动，仅运行 @ui-only E2E"
+  pnpm --dir osg-frontend test:e2e:ui-only
+  echo "⚠️ @api E2E 已跳过 — Final gate 未完整通过"
+fi
+
+echo "=== Final Gate: 完成（检查上方是否有 WARNING 标记） ==="

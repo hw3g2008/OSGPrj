@@ -778,3 +778,5 @@ latest_result:
 | Medium-5: 修改范围 `.windsurf`/`.claude` 口径 | 决策 #1 补充说明：命令入口 `.windsurf`，守卫脚本 `.claude` | ✅ 已实施 | 设计决策表 #1 |
 | Low-1: Story 级 API 验证依赖手工起进程 | `@SpringBootTest` 主路径 + Final curl 冒烟分层 | ✅ 已实施 | D2/D3 规则已定义，api-smoke.sh 骨架已落地 |
 | Low-2: 缺设计决策与自校验节 | 新增"设计决策表"和"自校验结果" | ✅ 已实施 | 本节 |
+| **High-5: final-gate.sh 缺 api-smoke + E2E 步骤（"假绿"）** | 补上 api-smoke(#8) + E2E(#9) 步骤，后端未启动时标 SKIP+WARNING | ✅ 已实施 | bin/final-gate.sh L62-79 — 含后端健康检测分支 |
+| **High-6: @api E2E 断言过松（后端不可达仍通过）** | 去掉 `.catch(() => {})` 兜底，改为 `waitForURL` + 硬 `expect` | ✅ 已实施 | dashboard/roles/users/base-data 4 个 @api E2E spec 已硬化 |

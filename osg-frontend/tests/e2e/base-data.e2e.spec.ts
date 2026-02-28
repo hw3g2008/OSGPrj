@@ -12,16 +12,15 @@ test.describe('Base Data Management @ui-only', () => {
 test.describe('Base Data Management @api', () => {
   test('base data list to detail flow @perm-s006-base-data-flow', async ({ page }) => {
     await page.goto('/permission/base-data')
+    await page.waitForURL('**/permission/base-data', { timeout: 10000 })
     const table = page.locator('.ant-table, table').first()
-    await expect(table).toBeVisible({ timeout: 10000 }).catch(() => {
-      // May be on login page
-    })
+    await expect(table).toBeVisible({ timeout: 10000 })
   })
 
   test('base data search and filter @perm-s006-base-data-search', async ({ page }) => {
     await page.goto('/permission/base-data')
-    // Check search input exists
+    await page.waitForURL('**/permission/base-data', { timeout: 10000 })
     const searchInput = page.locator('input[placeholder*="搜索"], input[placeholder*="查询"]').first()
-    await expect(searchInput).toBeVisible({ timeout: 5000 }).catch(() => {})
+    await expect(searchInput).toBeVisible({ timeout: 5000 })
   })
 })

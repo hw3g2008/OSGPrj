@@ -12,15 +12,15 @@ test.describe('User Management @ui-only', () => {
 test.describe('User Management @api', () => {
   test('user CRUD flow: create user with role, verify access @perm-s005-user-flow', async ({ page }) => {
     await page.goto('/permission/users')
+    await page.waitForURL('**/permission/users', { timeout: 10000 })
     const table = page.locator('.ant-table, table').first()
-    await expect(table).toBeVisible({ timeout: 10000 }).catch(() => {
-      // May be on login page
-    })
+    await expect(table).toBeVisible({ timeout: 10000 })
   })
 
   test('username field is readonly on edit @perm-s005-user-readonly-name', async ({ page }) => {
     await page.goto('/permission/users')
-    // Would need to click edit on an existing user
-    // Requires specific test data and auth
+    await page.waitForURL('**/permission/users', { timeout: 10000 })
+    const table = page.locator('.ant-table, table').first()
+    await expect(table).toBeVisible({ timeout: 10000 })
   })
 })
