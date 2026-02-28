@@ -451,6 +451,22 @@ def deliver_ticket(ticket_id):
         "timestamp": now()
     }
 
+    # Step 7.5: TC 回填（D6 挂点）
+    # 更新对应 TC 的 automation.command 和 latest_result
+    # 规则：tc_id 匹配 upsert，不覆盖 status != pending 的已有结果
+    module = state.current_requirement
+    tc_cases_path = f"osg-spec-docs/tasks/testing/{module}-test-cases.yaml"
+    tc_cases = read_yaml(tc_cases_path) or []
+    for tc in tc_cases:
+        if tc.get("story_id") == ticket.story_id and tc.get("level") == "ticket":
+            if (tc.get("latest_result", {}) or {}).get("status") == "pending":
+                tc["automation"]["command"] = verification.command
+                tc["latest_result"] = {
+                    "status": "pass" if verification.exit_code == 0 else "fail",
+                    "evidence_ref": ticket_path,
+                }
+    write_yaml(tc_cases_path, tc_cases)
+
     # Step 8: 更新 Ticket 状态（证据已写入后才能执行）
     ticket.status = "done"
     ticket.completed_at = now()

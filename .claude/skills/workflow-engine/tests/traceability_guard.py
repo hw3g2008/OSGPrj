@@ -87,28 +87,66 @@ def check_automation_command(cases):
     return issues
 
 
+VALID_STATUSES = {"pass", "fail", "skip_no_backend", "pending"}
+
+
 def check_evidence_ref(cases):
-    """检查已执行 TC 必须有 evidence_ref"""
-    print("\n--- 3. 执行证据完整性 ---")
+    """检查 TC 状态合法性 + 已执行 TC 必须有 evidence_ref + pending 必须 FAIL"""
+    print("\n--- 3. 执行证据完整性 + 状态校验 ---")
     issues = []
-    missing = []
+    missing_ref = []
+    pending_tcs = []
+    unknown_status = []
+    skip_no_ref = []
     executed = 0
+
     for tc in cases:
         tc_id = tc.get("tc_id", "?")
         result = tc.get("latest_result", {}) or {}
         status = result.get("status", "pending")
-        if status != "pending":
-            executed += 1
-            ref = result.get("evidence_ref")
-            if not ref:
-                missing.append(tc_id)
+        ref = result.get("evidence_ref")
 
-    if missing:
-        msg = f"{len(missing)} 条已执行 TC 缺少 evidence_ref: {missing[:5]}"
+        # 1. 未知状态 → FAIL
+        if status not in VALID_STATUSES:
+            unknown_status.append(f"{tc_id}({status})")
+            continue
+
+        # 2. pending → FAIL（必须先执行或标记 skip_no_backend）
+        if status == "pending":
+            pending_tcs.append(tc_id)
+            continue
+
+        # 3. skip_no_backend 必须带 evidence_ref
+        if status == "skip_no_backend" and not ref:
+            skip_no_ref.append(tc_id)
+
+        # 4. 已执行（pass/fail/skip_no_backend）必须有 evidence_ref
+        executed += 1
+        if not ref:
+            missing_ref.append(tc_id)
+
+    if unknown_status:
+        msg = f"{len(unknown_status)} 条 TC 状态非法（必须为 {VALID_STATUSES}）: {unknown_status[:5]}"
         issues.append(msg)
         print(f"  ❌ {msg}")
-    else:
-        print(f"  ✅ {executed} 条已执行 TC 全部有 evidence_ref")
+
+    if pending_tcs:
+        msg = f"{len(pending_tcs)} 条 TC 仍为 pending（不可进入 final gate）: {pending_tcs[:5]}"
+        issues.append(msg)
+        print(f"  ❌ {msg}")
+
+    if skip_no_ref:
+        msg = f"{len(skip_no_ref)} 条 skip_no_backend TC 缺少 evidence_ref: {skip_no_ref[:5]}"
+        issues.append(msg)
+        print(f"  ❌ {msg}")
+
+    if missing_ref:
+        msg = f"{len(missing_ref)} 条已执行 TC 缺少 evidence_ref: {missing_ref[:5]}"
+        issues.append(msg)
+        print(f"  ❌ {msg}")
+
+    if not issues:
+        print(f"  ✅ {executed} 条已执行 TC 全部有 evidence_ref，0 pending，0 unknown")
 
     return issues
 

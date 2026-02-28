@@ -397,6 +397,28 @@ def split_tickets(story_id, state):
     print_quality_report(tickets, iteration)
     print_coverage_matrix(story.acceptance_criteria, tickets)
 
+    # ========== TC 骨架生成（D6 挂点）==========
+    # 为当前 Story 的每个 AC 生成 TC 条目到 {module}-test-cases.yaml
+    # 规则：tc_id 唯一键 upsert（已有同 ID 不覆盖），新增 TC 初始 status=pending
+    tc_cases_path = f"osg-spec-docs/tasks/testing/{module}-test-cases.yaml"
+    existing_cases = read_yaml(tc_cases_path) or []
+    existing_ids = {tc["tc_id"] for tc in existing_cases}
+
+    for ac_idx, ac in enumerate(story.acceptance_criteria, 1):
+        for level in ["ticket", "story", "final"]:
+            tc_id = f"TC-{module.upper()}-{story_id}-{level.upper()}-{ac_idx:03d}"
+            if tc_id not in existing_ids:
+                existing_cases.append({
+                    "tc_id": tc_id,
+                    "level": level,
+                    "story_id": story_id,
+                    "ac_ref": f"AC-{story_id}-{ac_idx:02d}",
+                    "priority": "P1",
+                    "automation": {"script": None, "command": None},
+                    "latest_result": {"status": "pending", "evidence_ref": None},
+                })
+    write_yaml(tc_cases_path, existing_cases)
+
     # ========== 保存（仅在全部校验通过后）==========
     for ticket in tickets:
         write_yaml(f"osg-spec-docs/tasks/tickets/{ticket['id']}.yaml", ticket)
