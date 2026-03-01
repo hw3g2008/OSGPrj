@@ -7,6 +7,7 @@ set -uo pipefail
 MODULE="${1:-}"
 STORY="${2:-all}"
 BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
+HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 AUTH_TOKEN="${AUTH_TOKEN:-}"
 SMOKE_EXIT=0
 SMOKE_DETAIL=""
@@ -30,6 +31,7 @@ finalize_report() {
 - module: ${MODULE:-unknown}
 - story: ${STORY}
 - base_url: ${BASE_URL}
+- health_path: ${HEALTH_PATH}
 
 ## 详情
 ${SMOKE_DETAIL}
@@ -53,19 +55,19 @@ command -v jq >/dev/null || { SMOKE_DETAIL="依赖缺失: jq"; SMOKE_EXIT=3; exi
 echo "=== API Smoke: module=${MODULE}, story=${STORY}, base=${BASE_URL} ==="
 
 # --- 健康检查 ---
-resp="$(curl -sS -w '\n%{http_code}' "${BASE_URL}/health" 2>/dev/null || true)"
+resp="$(curl -sS -w '\n%{http_code}' "${BASE_URL}${HEALTH_PATH}" 2>/dev/null || true)"
 body="$(echo "${resp}" | head -n1)"
 code="$(echo "${resp}" | tail -n1)"
 
 if [[ "${code}" != "200" ]]; then
-  SMOKE_DETAIL="$(printf "健康检查失败\n- endpoint: /health\n- expected: 200\n- actual: ${code}\n- body: ${body}")"
+  SMOKE_DETAIL="$(printf "健康检查失败\n- endpoint: ${HEALTH_PATH}\n- expected: 200\n- actual: ${code}\n- body: ${body}")"
   SMOKE_EXIT=4
-  echo "FAIL: /health 返回 ${code}（期望 200）"
+  echo "FAIL: ${HEALTH_PATH} 返回 ${code}（期望 200）"
   exit 4
 fi
 
-SMOKE_DETAIL="$(printf "健康检查通过\n- /health = 200")"
-echo "PASS: /health = 200"
+SMOKE_DETAIL="$(printf "健康检查通过\n- ${HEALTH_PATH} = 200")"
+echo "PASS: ${HEALTH_PATH} = 200"
 
 # TODO: 按 module/story 分发具体 API 检查项（后续扩展为用例清单驱动）
 

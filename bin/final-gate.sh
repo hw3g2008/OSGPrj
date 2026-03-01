@@ -1,10 +1,56 @@
 #!/usr/bin/env bash
 # Final Gate — 统一门禁脚本（严格顺序执行）
-# 用法: bash bin/final-gate.sh
+# 用法: bash bin/final-gate.sh [module]
 # 任一步骤失败即整体 FAIL（set -euo pipefail）
 set -euo pipefail
 
-echo "=== Final Gate: 开始 ==="
+MODULE="${1:-}"
+if [[ -z "${MODULE}" ]]; then
+  MODULE="$(python3 - <<'PY'
+import yaml
+from pathlib import Path
+p = Path("osg-spec-docs/tasks/STATE.yaml")
+if p.exists():
+    data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    print(data.get("current_requirement", "") or "")
+else:
+    print("")
+PY
+)"
+fi
+if [[ -z "${MODULE}" ]]; then
+  MODULE="permission"
+fi
+
+HEALTH_URL="${BASE_HEALTH_URL:-http://127.0.0.1:8080/actuator/health}"
+
+require_cmd() {
+  local cmd="$1"
+  if ! command -v "${cmd}" >/dev/null 2>&1; then
+    echo "FAIL: 缺少依赖命令 '${cmd}'（请先安装后重试）"
+    exit 21
+  fi
+}
+
+echo "=== Final Gate: 开始（module=${MODULE}） ==="
+
+echo "--- 0. toolchain_preflight ---"
+require_cmd python3
+require_cmd node
+require_cmd pnpm
+require_cmd mvn
+
+if [[ ! -f "osg-frontend/playwright.config.ts" ]]; then
+  echo "FAIL: 缺少 Playwright 配置文件 osg-frontend/playwright.config.ts"
+  exit 22
+fi
+
+if ! grep -Eq "webServer\\s*:" "osg-frontend/playwright.config.ts"; then
+  echo "FAIL: Playwright webServer 未配置，无法自动拉起前端执行 E2E"
+  exit 22
+fi
+
+echo "INFO: E2E 前端启动策略=Playwright webServer（Option B），不依赖 Docker frontends(3001-3005)"
 
 echo "--- 1. story_runtime_guard ---"
 python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py \
@@ -47,8 +93,8 @@ PY
 
 echo "--- 4. traceability_guard ---"
 python3 .claude/skills/workflow-engine/tests/traceability_guard.py \
-  --cases osg-spec-docs/tasks/testing/permission-test-cases.yaml \
-  --matrix osg-spec-docs/tasks/testing/permission-traceability-matrix.md
+  --cases "osg-spec-docs/tasks/testing/${MODULE}-test-cases.yaml" \
+  --matrix "osg-spec-docs/tasks/testing/${MODULE}-traceability-matrix.md"
 
 echo "--- 5. 前端单测 ---"
 pnpm --dir osg-frontend/packages/admin test
@@ -60,15 +106,15 @@ echo "--- 7. 后端测试 ---"
 mvn test -pl ruoyi-admin -am
 
 echo "--- 8. API 冒烟 ---"
-if curl -sS --max-time 5 http://127.0.0.1:8080/health >/dev/null 2>&1; then
-  bash bin/api-smoke.sh permission
+if curl -sS --max-time 5 "${HEALTH_URL}" >/dev/null 2>&1; then
+  bash bin/api-smoke.sh "${MODULE}"
 else
-  echo "⚠️ WARNING: 后端未启动（127.0.0.1:8080 不可达），跳过 api-smoke"
+  echo "⚠️ WARNING: 后端未启动（${HEALTH_URL} 不可达），跳过 api-smoke"
   echo "⚠️ 此步骤为 SKIP，非 PASS — Final gate 未完整通过"
 fi
 
 echo "--- 9. E2E 全量 ---"
-if curl -sS --max-time 5 http://127.0.0.1:8080/health >/dev/null 2>&1; then
+if curl -sS --max-time 5 "${HEALTH_URL}" >/dev/null 2>&1; then
   pnpm --dir osg-frontend test:e2e
 else
   echo "⚠️ WARNING: 后端未启动，仅运行 @ui-only E2E"
