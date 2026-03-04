@@ -4,7 +4,7 @@
 > **目标类型:** 需求生成框架进化（HTML SSOT -> 可执行视觉验收契约）
 
 Date: 2026-03-02  
-Status: Implemented & Verified (A1/A2/B1/C2/DoD#6 全部落地；updated 2026-03-03)  
+Status: Partial (框架能力已落地；运行态需按 2026-03-04 最新环境复验)  
 Owner: workflow-framework
 Design Doc: `docs/plans/2026-03-02-prd-visual-contract-evolution-design.md`
 Standard Baseline: `docs/plans/FOUR-PACK-STANDARD.md`
@@ -52,7 +52,15 @@ Standard Baseline: `docs/plans/FOUR-PACK-STANDARD.md`
 
 1. C2 已收口：受保护路由 `@ui-only` 已移除 `isOnX || isOnLogin` 宽松断言，改为登录后强断言目标路由与稳定锚点。
 2. DoD#6 已收口：`ui-visual-gate` 已输出逐页结构化证据（`baseline_ref/actual_ref/diff_ref/diff_threshold/result`）。
-3. 所有条目已满足状态推进规则，可标记 `Implemented & Verified`。
+3. 以上结论是 2026-03-03 快照结果；后续若运行态复验失败，文档总状态应回落为 `Partial` 直至复验通过。
+
+### 0.5a 最新复验快照（2026-03-04）
+
+1. 框架侧：`check-skill-artifacts` 可通过，说明契约产物链路完整。
+2. 运行态：`ui-visual-baseline --mode verify --source app` 当前失败，主要受两类因素影响：
+   - 后端不可达（`127.0.0.1:8080` 拒绝连接）；
+   - 登录页验证码样式断言不一致（例如 captcha chip 圆角断言）。
+3. 因此文档总状态维持 `Partial`，待运行态复验通过后再恢复 `Implemented & Verified`。
 
 ### 0.6 条目落地追踪表（强制，唯一状态源）
 
@@ -214,13 +222,15 @@ pages:
     viewport: { width: 1440, height: 900 }
     auth_mode: public
     snapshot_name: login-main
-    baseline_ref: osg-frontend/tests/e2e/visual-baseline/permission/login/1440x900.png
-    diff_threshold: 0.01
+    baseline_ref: osg-frontend/tests/e2e/visual-baseline/permission-login-page-1440x900.png
+    diff_threshold: 0.03
     stable_wait_ms: 300
-    required_anchors: ["#role-selector", ".captcha-row", ".demo-account-hint"]
-    mask_selectors: [".time-now", ".random-id"]
-    capture_mode: clip
-    clip_selector: "#login-page"
+    required_anchors: [".login-title", ".login-btn", ".login-logo"]
+    required_anchors_any_of:
+      - [".captcha-row"]
+      - [".login-links", ".forgot-link"]
+    mask_selectors: [".captcha-code"]
+    capture_mode: fullpage
     device_scale_factor: 1
 ```
 
@@ -287,8 +297,8 @@ Files:
 2. Create: `osg-frontend/tests/e2e/support/visual-contract.ts`
 
 变更：
-1. `ui-visual-baseline.sh --mode generate`：按 contract 批量生成基线图。
-2. `ui-visual-baseline.sh --mode verify`：执行基线对比并输出 diff 产物。
+1. `ui-visual-baseline.sh --mode generate --source prototype`：按 contract 批量生成基线图。
+2. `ui-visual-baseline.sh --mode verify --source app`：执行基线对比并输出 diff 产物。
 3. 统一读取 `UI-VISUAL-CONTRACT.yaml`，禁止手工硬编码页面列表。
 4. 统一按 schema v1 校验 contract，不满足直接失败。
 
@@ -339,9 +349,9 @@ Files:
 2. 新页面未进入 contract 时，不允许进入 PASS。
 3. 所有“允许偏差”必须落 `UI-VISUAL-DECISIONS.md`，否则视为失败。
 4. `@ui-visual` 失败不能降级为 warning+0。
-5. 视觉基线更新只能通过 `--mode generate` 入口，不允许手工替换图片作为验收依据。
+5. 视觉基线更新只能通过 `--mode generate --source prototype` 入口，不允许手工替换图片作为验收依据。
 6. 基线更新必须附带变更原因（需求变更/设计裁决/误差修正）并关联到 DECISIONS 记录。
-7. 未完成 Batch D 前，任何“通过结论”都必须附 `ui-visual-baseline --mode verify` 产物；裸 `playwright test` 仅可用于本地调试。
+7. 未完成 Batch D 前，任何“通过结论”都必须附 `ui-visual-baseline --mode verify --source app` 产物；裸 `playwright test` 仅可用于本地调试。
 
 ---
 
@@ -418,12 +428,13 @@ Files:
 
 ## 10.1 E2E UI 基线执行协议（新增，建议直接采纳）
 
-1. 环境归一化（截图前强制）：
-   - 时区固定：`TZ=Asia/Shanghai`
-   - 语言固定：`zh-CN`
-   - 动画禁用：全局注入 `* { animation: none !important; transition: none !important; }`
-   - 字体固定：按 DESIGN-SYSTEM 指定字体，CI 镜像预装
-   - 渲染参数固定：`device_scale_factor=1`，浏览器版本固定，禁用随机 UA
+1. 环境归一化（目标约束，分阶段落地）：
+   - 已实现：时区固定 `TZ=Asia/Shanghai`（由 `ui-visual-baseline.sh` 注入）。
+   - 待落地：语言固定 `zh-CN`。
+   - 待落地：动画禁用（全局注入 `* { animation: none !important; transition: none !important; }`）。
+   - 待落地：字体固定（按 DESIGN-SYSTEM 指定字体，CI 镜像预装）。
+   - 待落地：渲染参数固定（`device_scale_factor=1`、浏览器版本固定、禁用随机 UA）。
+   - 执行口径：待落地项未完成前，视觉失败需先做“环境噪声排查”，再做业务回归判定。
 
 1a. 测试数据稳定协议（必须）：
    - 受保护页面仅使用固定 E2E 账号（不使用实时生产数据）
@@ -432,10 +443,10 @@ Files:
    - 禁止把随机 ID、当前时间、动态消息区域纳入非 mask 区域截图
 
 2. 基线生成命令（唯一入口）：
-   - `bash bin/ui-visual-baseline.sh <module> --mode generate`
+   - `bash bin/ui-visual-baseline.sh <module> --mode generate --source prototype`
 
 3. 基线校验命令（唯一入口）：
-   - `bash bin/ui-visual-baseline.sh <module> --mode verify`
+   - `bash bin/ui-visual-baseline.sh <module> --mode verify --source app`
 
 4. 失败判定：
    - 任一页面 diff 超过 `diff_threshold` -> visual gate FAIL（EXIT 12）
@@ -463,7 +474,7 @@ Files:
 
 1. 过渡期内允许保留 `.claude/project/config.yaml` 现有 `testing.e2e.command`，但不得作为验收依据。
 2. 任何“通过”结论必须同时附：
-   - `ui-visual-baseline --mode verify` 日志
+   - `ui-visual-baseline --mode verify --source app` 日志
    - `ui-visual-gate` 日志
 3. 缺任一日志，结论自动降为无效验收。
 
@@ -510,7 +521,7 @@ Files:
 ### 12.4 禁止项（模块无关）
 
 1. 禁止将裸 `playwright test` 作为验收结论。
-2. 禁止手工替换 baseline 图片绕过 `--mode generate`。
+2. 禁止手工替换 baseline 图片绕过 `--mode generate --source prototype`。
 3. 禁止在无 `UI-VISUAL-DECISIONS.md` 记录时上调阈值或放行偏差。
 
 ### 12.5 建议新增（提升跨模块稳定性）
@@ -518,3 +529,58 @@ Files:
 1. 在 `UI-VISUAL-CONTRACT.yaml` 引入 `style_contracts` 字段（关键样式断言）。
 2. 在 `visual-contract.e2e.spec.ts` 统一执行 `style_contracts` 的 `getComputedStyle` 断言。
 3. 在 `ui-visual-gate` 报告增加 `style_assertions_failed` 统计字段，减少“看图口水战”。
+
+### 12.6 “一步到位”能力边界（通用判定）
+
+> 结论先行：框架可实现“结构+尺寸+静态样式”的一步到位；交互态与动态数据态需要场景化测试补充，不能仅靠静态视觉基线一次覆盖。
+
+| 层级 | 能力项 | 当前框架 | 加入 `style_contracts` 后 | 一步到位结论 |
+|---|---|---|---|---|
+| L1 结构还原 | 布局方向、组件层级、锚点存在 | `required_anchors` + `required_anchors_any_of` | 增加结构样式断言（display/flex/grid） | 可 |
+| L2 尺寸还原 | 宽高、间距、圆角、边框 | 局部用例已手写断言 | 升级为 contract 驱动统一断言 | 可 |
+| L3 颜色还原 | 背景色、文字色、渐变 | 视觉 diff 可覆盖大部分 | 可加 computed color/image 断言 | 基本可（渐变需容忍度） |
+| L4 字体还原 | 字号、字重、字族 | 主要靠视觉 diff | 可加 computed font 断言 | 基本可（依赖环境字体） |
+| L5 交互状态 | hover/focus/loading/disabled | 目前未统一 | 需新增状态用例驱动（hover/focus 后断言） | 不可仅一次覆盖 |
+| L6 动态内容 | 空态/错误态/接口返回态 | 主要用 mask 规避波动 | 需 fixture/mock 场景分层验证 | 不可仅一次覆盖 |
+
+### 12.7 通用增强落地项（跨模块）
+
+> 独立落地计划：`docs/plans/2026-03-04-ui-visual-contract-12-7-enhancements-implementation-plan.md`
+
+1. Schema 扩展：
+   - `UI-VISUAL-CONTRACT.yaml` 增加 `style_contracts`（每页关键节点 computed-style 断言）。
+2. Guard 扩展：
+   - `ui_visual_contract_guard.py` 校验 `style_contracts` 结构完整性与最小条目数。
+3. 执行器扩展：
+   - `visual-contract.e2e.spec.ts` 按 contract 执行 `getComputedStyle` 断言。
+4. 报告扩展：
+   - `ui-visual-gate` 报告增加 `style_assertions_passed/style_assertions_failed`。
+5. 状态覆盖扩展：
+   - 新增 `ui-state-contract`（或在现有 contract 增加 `state_cases`）覆盖 hover/focus/loading/empty/error。
+6. 数据稳定协议：
+   - 固定 fixture、冻结时间、固定账号；禁止在未固定数据下把动态区域作为强断言目标。
+
+### 12.8 验收口径（跨模块统一）
+
+1. “视觉通过”必须同时满足：
+   - `visual diff` 通过
+   - `style_contracts` 全通过
+   - `state_cases`（若定义）全通过
+2. 仅 `visual diff` 通过，不得宣称“UI 全量还原通过”。
+3. 任一模块接入时，默认至少覆盖：
+   - P0/P1 页面的 L1-L4；
+   - 登录/关键表单页面的 L5；
+   - 至少 1 条空态或错误态 L6。
+
+### 12.9 Superpowers 执行顺序（强制）
+
+1. `brainstorming`：
+   - 明确视觉真源（prototype）、差异范围（仅结构/样式，不含业务逻辑改写）、模块边界。
+2. `writing-plans`：
+   - 输出批次化计划（Schema/Guard/Executor/Report/State），每批含输入、修改文件、验收命令、回滚点。
+3. `executing-plans`：
+   - 严格按批次执行；每批完成后必须立即跑对应验收，不允许“全部改完再一次性验证”。
+4. `verification-before-completion`：
+   - 必跑并留证：`check-skill-artifacts`、`ui-visual-baseline --mode verify --source app`、`ui-visual-gate`、`final-gate`、`final-closure`。
+5. 结论口径：
+   - 未经过第 4 步完整证据链，不得标记“已完成/已对齐/可发布”。

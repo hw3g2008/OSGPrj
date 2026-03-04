@@ -77,6 +77,13 @@ deploy/.env.prod
 .playwright-mcp/
 .windsurfrules
 .DS_Store
+.cleanup-trash/
+
+# E2E/视觉校验运行产物（不入库）
+osg-frontend/playwright-report/
+osg-frontend/test-results/
+osg-frontend/tmp-capture-login.js
+screenshots/live-login-captcha-ok.png
 
 ######################################################################
 # 根目录截图（原型参考图，不入库）
