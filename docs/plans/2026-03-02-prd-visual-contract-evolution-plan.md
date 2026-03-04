@@ -524,11 +524,13 @@ Files:
 2. 禁止手工替换 baseline 图片绕过 `--mode generate --source prototype`。
 3. 禁止在无 `UI-VISUAL-DECISIONS.md` 记录时上调阈值或放行偏差。
 
-### 12.5 建议新增（提升跨模块稳定性）
+### 12.5 已接入项（提升跨模块稳定性）
 
-1. 在 `UI-VISUAL-CONTRACT.yaml` 引入 `style_contracts` 字段（关键样式断言）。
-2. 在 `visual-contract.e2e.spec.ts` 统一执行 `style_contracts` 的 `getComputedStyle` 断言。
-3. 在 `ui-visual-gate` 报告增加 `style_assertions_failed` 统计字段，减少“看图口水战”。
+1. `UI-VISUAL-CONTRACT.yaml` 已支持 `style_contracts` 与 `state_cases` 字段（schema + guard 生效）。
+2. `visual-contract.e2e.spec.ts` 已统一执行 `style_contracts` 的 `getComputedStyle` 断言。
+3. `ui-visual-gate` 与 `ui-visual-page-report` 已输出样式与状态统计：
+   - `style_assertions_passed/style_assertions_failed`
+   - `state_cases_executed/state_cases_failed`
 
 ### 12.6 “一步到位”能力边界（通用判定）
 
@@ -546,6 +548,7 @@ Files:
 ### 12.7 通用增强落地项（跨模块）
 
 > 独立落地计划：`docs/plans/2026-03-04-ui-visual-contract-12-7-enhancements-implementation-plan.md`
+> 状态（2026-03-04）：框架代码已接入；运行态门禁仍需在健康后端环境中复验。
 
 1. Schema 扩展：
    - `UI-VISUAL-CONTRACT.yaml` 增加 `style_contracts`（每页关键节点 computed-style 断言）。

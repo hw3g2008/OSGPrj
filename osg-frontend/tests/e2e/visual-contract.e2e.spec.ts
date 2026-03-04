@@ -2,7 +2,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import { loginAsAdmin } from './support/auth'
-import { baselineRefToSnapshotArg, loadVisualContract, type VisualPageContract, type VisualStyleContractRule } from './support/visual-contract'
+import { assertStyleContracts } from './support/style-contract'
+import { applyStabilityToPage, resolveStabilityConfigFromEnv } from './support/test-stability'
+import { baselineRefToSnapshotArg, loadVisualContract, type VisualPageContract } from './support/visual-contract'
 
 const contractJson = process.env.UI_VISUAL_CONTRACT_JSON
 const contract = contractJson ? loadVisualContract() : null
@@ -11,6 +13,7 @@ const visualSource = process.env.UI_VISUAL_SOURCE || 'app'
 const prototypeBaseUrl = process.env.UI_VISUAL_PROTOTYPE_BASE_URL || 'http://127.0.0.1:18090'
 const visualEvidenceDir = process.env.UI_VISUAL_EVIDENCE_DIR
 const visualPageResultsFile = process.env.UI_VISUAL_PAGE_RESULTS_FILE
+const stabilityConfig = resolveStabilityConfigFromEnv()
 
 if (visualSource !== 'app' && visualSource !== 'prototype') {
   throw new Error(`UI_VISUAL_SOURCE must be app|prototype, got '${visualSource}'`)
@@ -68,7 +71,13 @@ function inferDiffRefFromArtifacts(testInfo: TestInfo, snapshotArg: string): str
   return 'none'
 }
 
-function appendPageResult(pageContract: VisualPageContract, result: 'PASS' | 'FAIL', actualRef: string, diffRef: string): void {
+function appendPageResult(
+  pageContract: VisualPageContract,
+  result: 'PASS' | 'FAIL',
+  actualRef: string,
+  diffRef: string,
+  styleStats: { passed: number; failed: number } = { passed: 0, failed: 0 },
+): void {
   if (!visualPageResultsFile) {
     return
   }
@@ -80,6 +89,8 @@ function appendPageResult(pageContract: VisualPageContract, result: 'PASS' | 'FA
     actual_ref: actualRef,
     diff_ref: diffRef,
     diff_threshold: pageContract.diff_threshold,
+    style_assertions_passed: styleStats.passed,
+    style_assertions_failed: styleStats.failed,
     result,
   }
   fs.mkdirSync(path.dirname(visualPageResultsFile), { recursive: true })
@@ -117,66 +128,6 @@ async function assertAnyOfAnchorGroups(page: Page, groups: string[][], pageId: s
   throw new Error(
     `required_anchors_any_of not satisfied for page '${pageId}', candidate groups: ${failedGroups.join(' || ')}`,
   )
-}
-
-
-function tryParseNumericCss(value: string): { num: number; unit: string } | null {
-  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)([a-z%]*)$/i)
-  if (!match) {
-    return null
-  }
-  return { num: Number(match[1]), unit: (match[2] || '').toLowerCase() }
-}
-
-export async function assertStyleContracts(
-  page: Page,
-  rules: VisualStyleContractRule[],
-  pageId: string,
-): Promise<{ passed: number; failed: number }> {
-  if (!Array.isArray(rules) || rules.length === 0) {
-    return { passed: 0, failed: 0 }
-  }
-
-  let passed = 0
-  for (const rule of rules) {
-    const selector = rule.selector.trim()
-    const property = rule.property.trim()
-    const expected = rule.expected.trim()
-
-    const locator = page.locator(selector).first()
-    if ((await locator.count()) === 0) {
-      throw new Error(`style contract failed: page=${pageId} selector=${selector} property=${property} reason=not_found`)
-    }
-
-    const actual = await locator.evaluate(
-      (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
-      property,
-    )
-
-    if (typeof rule.tolerance === 'number') {
-      const expectedParsed = tryParseNumericCss(expected)
-      const actualParsed = tryParseNumericCss(actual)
-      if (!expectedParsed || !actualParsed || expectedParsed.unit !== actualParsed.unit) {
-        throw new Error(
-          `style contract failed: page=${pageId} selector=${selector} property=${property} expected=${expected} actual=${actual} reason=unparsable_or_unit_mismatch`,
-        )
-      }
-      const diff = Math.abs(actualParsed.num - expectedParsed.num)
-      if (diff > rule.tolerance) {
-        throw new Error(
-          `style contract failed: page=${pageId} selector=${selector} property=${property} expected=${expected} actual=${actual} tolerance=${rule.tolerance}`,
-        )
-      }
-    } else if (actual !== expected) {
-      throw new Error(
-        `style contract failed: page=${pageId} selector=${selector} property=${property} expected=${expected} actual=${actual}`,
-      )
-    }
-
-    passed += 1
-  }
-
-  return { passed, failed: 0 }
 }
 
 function resolvePrototypeUrl(prototypeFile: string): string {
@@ -235,6 +186,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
     test(`${pageContract.page_id} visual compare @ui-visual`, async ({ page }, testInfo) => {
       await page.setViewportSize(pageContract.viewport)
       await page.emulateMedia({ reducedMotion: 'reduce' })
+      await applyStabilityToPage(page, stabilityConfig)
 
       if (visualSource === 'app' && pageContract.auth_mode === 'protected') {
         await loginAsAdmin(page)
@@ -277,7 +229,6 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           await expect(page.locator(anchor).first(), `anchor should exist: ${anchor}`).toBeVisible()
         }
         await assertAnyOfAnchorGroups(page, pageContract.required_anchors_any_of || [], pageContract.page_id)
-        await assertStyleContracts(page, pageContract.style_contracts || [], pageContract.page_id)
 
         // Login captcha block has dynamic image content, but layout must stay stable.
         // Guard against captcha image squeezing the input area.
@@ -371,6 +322,19 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
       const maxDiffPixelRatio = pageContract.diff_threshold
       const actualPath = buildActualPath(pageContract)
       const actualRef = actualPath ? toRepoRelative(actualPath) : 'none'
+      let styleStats: { passed: number; failed: number } = { passed: 0, failed: 0 }
+
+      if (visualSource === 'app') {
+        try {
+          styleStats = await assertStyleContracts(page, pageContract.style_contracts || [], pageContract.page_id)
+        } catch (error) {
+          appendPageResult(pageContract, 'FAIL', actualRef, 'none', {
+            passed: styleStats.passed,
+            failed: styleStats.failed + 1,
+          })
+          throw error
+        }
+      }
 
       const captureMode = pageContract.capture_mode || 'clip'
       if (captureMode === 'fullpage') {
@@ -389,10 +353,16 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
             mask,
             maxDiffPixelRatio,
           })
-          appendPageResult(pageContract, 'PASS', actualRef, 'none')
+          appendPageResult(pageContract, 'PASS', actualRef, 'none', styleStats)
         } catch (error) {
           const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
-          appendPageResult(pageContract, 'FAIL', actualRef, diffRef !== 'none' ? diffRef : extractDiffRefFromError(error))
+          appendPageResult(
+            pageContract,
+            'FAIL',
+            actualRef,
+            diffRef !== 'none' ? diffRef : extractDiffRefFromError(error),
+            styleStats,
+          )
           throw error
         }
         return
@@ -416,10 +386,16 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           mask,
           maxDiffPixelRatio,
         })
-        appendPageResult(pageContract, 'PASS', actualRef, 'none')
+        appendPageResult(pageContract, 'PASS', actualRef, 'none', styleStats)
       } catch (error) {
         const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
-        appendPageResult(pageContract, 'FAIL', actualRef, diffRef !== 'none' ? diffRef : extractDiffRefFromError(error))
+        appendPageResult(
+          pageContract,
+          'FAIL',
+          actualRef,
+          diffRef !== 'none' ? diffRef : extractDiffRefFromError(error),
+          styleStats,
+        )
         throw error
       }
     })

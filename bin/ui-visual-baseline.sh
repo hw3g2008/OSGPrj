@@ -78,16 +78,19 @@ CONTRACT_PATH="osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.ya
 SUMMARY_JSON="${AUDIT_DIR}/ui-visual-contract-summary-${MODULE}-${DATE_STR}.json"
 CONTRACT_JSON="${AUDIT_DIR}/ui-visual-contract-${MODULE}-${DATE_STR}.json"
 PAGE_RESULTS_JSONL="${AUDIT_DIR}/ui-visual-page-results-${MODULE}-${DATE_STR}.jsonl"
+STATE_RESULTS_JSONL="${AUDIT_DIR}/ui-state-results-${MODULE}-${DATE_STR}.jsonl"
 PAGE_REPORT_JSON="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
 EVIDENCE_DIR="${AUDIT_DIR}/ui-visual-actual-${MODULE}-${DATE_STR}"
 MANIFEST_JSON="${AUDIT_DIR}/ui-visual-baseline-manifest-${MODULE}-${RUN_ID}.json"
 REPO_ROOT="$(pwd)"
 PAGE_RESULTS_JSONL_ABS="${REPO_ROOT}/${PAGE_RESULTS_JSONL}"
+STATE_RESULTS_JSONL_ABS="${REPO_ROOT}/${STATE_RESULTS_JSONL}"
 EVIDENCE_DIR_ABS="${REPO_ROOT}/${EVIDENCE_DIR}"
 
 mkdir -p "${AUDIT_DIR}"
 mkdir -p "${EVIDENCE_DIR}"
 rm -f "${PAGE_RESULTS_JSONL}" "${PAGE_REPORT_JSON}"
+rm -f "${STATE_RESULTS_JSONL}"
 
 if [[ "${MODE}" == "generate" ]]; then
   python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
@@ -107,9 +110,43 @@ contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) 
 Path("${CONTRACT_JSON}").write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
 PY
 
+HAS_STATE_CASES="$(python3 - <<PY
+import json
+from pathlib import Path
+contract = json.loads(Path("${CONTRACT_JSON}").read_text(encoding="utf-8"))
+pages = contract.get("pages", []) if isinstance(contract.get("pages"), list) else []
+has_cases = any(bool((page or {}).get("state_cases")) for page in pages)
+print("1" if has_cases else "0")
+PY
+)"
+
 echo "INFO: module=${MODULE} mode=${MODE} source=${SOURCE} contract=${CONTRACT_PATH}"
 echo "INFO: summary=${SUMMARY_JSON}"
 echo "INFO: contract_json=${CONTRACT_JSON}"
+echo "INFO: has_state_cases=${HAS_STATE_CASES}"
+
+STABILITY_TZ="${UI_VISUAL_STABILITY_TZ:-Asia/Shanghai}"
+STABILITY_LOCALE="${UI_VISUAL_STABILITY_LOCALE:-zh-CN}"
+STABILITY_REQUIRE_FIXED="${UI_VISUAL_REQUIRE_FIXED_TIME:-0}"
+STABILITY_FIXED_TIME="${E2E_FIXED_TIME:-}"
+if [[ -z "${STABILITY_TZ}" ]]; then
+  echo "FAIL: UI_VISUAL_STABILITY_TZ must not be empty"
+  exit 19
+fi
+if [[ -z "${STABILITY_LOCALE}" ]]; then
+  echo "FAIL: UI_VISUAL_STABILITY_LOCALE must not be empty"
+  exit 19
+fi
+if [[ "${STABILITY_REQUIRE_FIXED}" == "1" && -z "${STABILITY_FIXED_TIME}" ]]; then
+  echo "FAIL: UI_VISUAL_REQUIRE_FIXED_TIME=1 but E2E_FIXED_TIME is missing"
+  exit 19
+fi
+echo "INFO: stability_tz=${STABILITY_TZ}"
+echo "INFO: stability_locale=${STABILITY_LOCALE}"
+echo "INFO: stability_require_fixed_time=${STABILITY_REQUIRE_FIXED}"
+if [[ -n "${STABILITY_FIXED_TIME}" ]]; then
+  echo "INFO: stability_fixed_time=${STABILITY_FIXED_TIME}"
+fi
 
 if [[ "${MODE}" == "generate" && "${SOURCE}" == "prototype" ]]; then
   if ! bash bin/prototype-server.sh status >/dev/null 2>&1; then
@@ -141,28 +178,70 @@ pick_api_proxy_target() {
 API_PROXY_TARGET="$(pick_api_proxy_target)"
 echo "INFO: api_proxy_target=${API_PROXY_TARGET}"
 
-PLAYWRIGHT_ARGS=(--grep "@ui-visual" --workers=1)
+run_playwright_suite() {
+  local grep_tag="$1"
+  shift || true
+  (
+    cd osg-frontend
+    UI_VISUAL_MODE="${MODE}" \
+    UI_VISUAL_SOURCE="${SOURCE}" \
+    UI_VISUAL_CONTRACT_JSON="../${CONTRACT_JSON}" \
+    UI_VISUAL_EVIDENCE_DIR="${EVIDENCE_DIR_ABS}" \
+    UI_VISUAL_PAGE_RESULTS_FILE="${PAGE_RESULTS_JSONL_ABS}" \
+    UI_STATE_RESULTS_FILE="${STATE_RESULTS_JSONL_ABS}" \
+    UI_VISUAL_MODULE="${MODULE}" \
+    UI_VISUAL_PROTOTYPE_BASE_URL="${PROTOTYPE_BASE_URL:-}" \
+    UI_VISUAL_STABILITY_TZ="${STABILITY_TZ}" \
+    UI_VISUAL_STABILITY_LOCALE="${STABILITY_LOCALE}" \
+    UI_VISUAL_REQUIRE_FIXED_TIME="${STABILITY_REQUIRE_FIXED}" \
+    E2E_FIXED_TIME="${STABILITY_FIXED_TIME}" \
+    E2E_API_PROXY_TARGET="${API_PROXY_TARGET}" \
+    PW_VISUAL_SNAPSHOT_TEMPLATE="{testDir}/visual-baseline/{arg}{ext}" \
+    TZ="${STABILITY_TZ}" \
+    LANG="${LANG:-zh_CN.UTF-8}" \
+    pnpm test:e2e --grep "${grep_tag}" --workers=1 "$@"
+  )
+}
+
+PLAYWRIGHT_RC=0
+set +e
 if [[ "${MODE}" == "generate" ]]; then
-  PLAYWRIGHT_ARGS+=(--update-snapshots=all)
+  run_playwright_suite "@ui-visual" --update-snapshots=all
+else
+  run_playwright_suite "@ui-visual"
+fi
+VISUAL_RC=$?
+if (( VISUAL_RC != 0 )); then
+  PLAYWRIGHT_RC=${VISUAL_RC}
 fi
 
-set +e
-(
-  cd osg-frontend
-  UI_VISUAL_MODE="${MODE}" \
-  UI_VISUAL_SOURCE="${SOURCE}" \
-  UI_VISUAL_CONTRACT_JSON="../${CONTRACT_JSON}" \
-  UI_VISUAL_EVIDENCE_DIR="${EVIDENCE_DIR_ABS}" \
-  UI_VISUAL_PAGE_RESULTS_FILE="${PAGE_RESULTS_JSONL_ABS}" \
-  UI_VISUAL_MODULE="${MODULE}" \
-  UI_VISUAL_PROTOTYPE_BASE_URL="${PROTOTYPE_BASE_URL:-}" \
-  E2E_API_PROXY_TARGET="${API_PROXY_TARGET}" \
-  PW_VISUAL_SNAPSHOT_TEMPLATE="{testDir}/visual-baseline/{arg}{ext}" \
-  TZ="${TZ:-Asia/Shanghai}" \
-  pnpm test:e2e "${PLAYWRIGHT_ARGS[@]}"
-)
-PLAYWRIGHT_RC=$?
+STATE_RC=0
+if [[ "${HAS_STATE_CASES}" == "1" ]]; then
+  run_playwright_suite "@ui-state"
+  STATE_RC=$?
+  if (( STATE_RC != 0 && PLAYWRIGHT_RC == 0 )); then
+    PLAYWRIGHT_RC=${STATE_RC}
+  fi
+fi
 set -e
+
+if [[ "${HAS_STATE_CASES}" == "1" ]]; then
+  STATE_EXECUTED_COUNT="$(python3 - <<PY
+from pathlib import Path
+path = Path("${STATE_RESULTS_JSONL}")
+if not path.exists():
+    print(0)
+else:
+    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    print(len(lines))
+PY
+)"
+  echo "INFO: state_cases_executed=${STATE_EXECUTED_COUNT}"
+  if [[ "${STATE_EXECUTED_COUNT}" == "0" ]]; then
+    echo "FAIL: state_cases declared but none executed (@ui-state)"
+    exit 18
+  fi
+fi
 
 python3 - <<PY
 import json
@@ -183,16 +262,41 @@ if result_path.exists():
         if page_id:
             result_map[page_id] = record
 
+state_result_path = Path("${STATE_RESULTS_JSONL}")
+state_map = {}
+state_total = 0
+state_failed = 0
+if state_result_path.exists():
+    for line in state_result_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        record = json.loads(line)
+        page_id = record.get("page_id")
+        if page_id:
+            bucket = state_map.setdefault(page_id, {"executed": 0, "failed": 0})
+            bucket["executed"] += 1
+            if record.get("result") == "FAIL":
+                bucket["failed"] += 1
+        state_total += 1
+        if record.get("result") == "FAIL":
+            state_failed += 1
+
 page_rows = []
 for page in pages:
     page_id = page.get("page_id", "")
     result = result_map.get(page_id, {})
+    state_bucket = state_map.get(page_id, {"executed": 0, "failed": 0})
     row = {
         "page_id": page_id,
         "baseline_ref": page.get("baseline_ref", "none"),
         "actual_ref": result.get("actual_ref", "none"),
         "diff_ref": result.get("diff_ref", "none"),
         "diff_threshold": page.get("diff_threshold"),
+        "style_assertions_passed": result.get("style_assertions_passed", 0),
+        "style_assertions_failed": result.get("style_assertions_failed", 0),
+        "state_cases_executed": state_bucket.get("executed", 0),
+        "state_cases_failed": state_bucket.get("failed", 0),
         "result": result.get("result", "NOT_RUN"),
     }
     page_rows.append(row)
@@ -204,6 +308,10 @@ summary = {
     "pass_pages": sum(1 for x in page_rows if x.get("result") == "PASS"),
     "fail_pages": sum(1 for x in page_rows if x.get("result") == "FAIL"),
     "not_run_pages": sum(1 for x in page_rows if x.get("result") == "NOT_RUN"),
+    "style_assertions_passed": sum(int(x.get("style_assertions_passed", 0) or 0) for x in page_rows),
+    "style_assertions_failed": sum(int(x.get("style_assertions_failed", 0) or 0) for x in page_rows),
+    "state_cases_executed": state_total,
+    "state_cases_failed": state_failed,
     "pages": page_rows,
 }
 page_report_path = Path("${PAGE_REPORT_JSON}")
@@ -217,6 +325,10 @@ for row in page_rows:
         f"actual_ref={row['actual_ref']} "
         f"diff_ref={row['diff_ref']} "
         f"diff_threshold={row['diff_threshold']} "
+        f"style_assertions_passed={row['style_assertions_passed']} "
+        f"style_assertions_failed={row['style_assertions_failed']} "
+        f"state_cases_executed={row['state_cases_executed']} "
+        f"state_cases_failed={row['state_cases_failed']} "
         f"result={row['result']}"
     )
 PY

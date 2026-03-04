@@ -15,6 +15,39 @@ LOG_FILE="${UI_VISUAL_GATE_LOG:-${AUDIT_DIR}/ui-visual-gate-${MODULE}-${DATE_STR
 
 mkdir -p "${AUDIT_DIR}"
 
+print_page_report_summary() {
+  python3 - <<PY
+import json
+from pathlib import Path
+report = json.loads(Path("${PAGE_REPORT_JSON}").read_text(encoding="utf-8"))
+print(
+    "INFO: page_report_summary "
+    f"total={report.get('total_pages', 0)} "
+    f"pass={report.get('pass_pages', 0)} "
+    f"fail={report.get('fail_pages', 0)} "
+    f"not_run={report.get('not_run_pages', 0)} "
+    f"style_passed={report.get('style_assertions_passed', 0)} "
+    f"style_failed={report.get('style_assertions_failed', 0)} "
+    f"state_executed={report.get('state_cases_executed', 0)} "
+    f"state_failed={report.get('state_cases_failed', 0)}"
+)
+for page in report.get("pages", []):
+    print(
+        "INFO: page_structured "
+        f"page_id={page.get('page_id')} "
+        f"baseline_ref={page.get('baseline_ref')} "
+        f"actual_ref={page.get('actual_ref')} "
+        f"diff_ref={page.get('diff_ref')} "
+        f"diff_threshold={page.get('diff_threshold')} "
+        f"style_assertions_passed={page.get('style_assertions_passed', 0)} "
+        f"style_assertions_failed={page.get('style_assertions_failed', 0)} "
+        f"state_cases_executed={page.get('state_cases_executed', 0)} "
+        f"state_cases_failed={page.get('state_cases_failed', 0)} "
+        f"result={page.get('result')}"
+    )
+PY
+}
+
 {
   echo "=== UI Visual Gate: module=${MODULE} ==="
   echo "INFO: contract=${CONTRACT_PATH}"
@@ -85,6 +118,7 @@ EOF
   if ! bash bin/ui-visual-baseline.sh "${MODULE}" --mode verify --source app; then
     if [[ -f "${PAGE_REPORT_JSON}" ]]; then
       echo "INFO: page_report=${PAGE_REPORT_JSON}"
+      print_page_report_summary
     fi
     echo "VISUAL_FAIL: ui-visual-baseline verify failed"
     exit 12
@@ -96,28 +130,7 @@ EOF
   fi
 
   echo "INFO: page_report=${PAGE_REPORT_JSON}"
-  python3 - <<PY
-import json
-from pathlib import Path
-report = json.loads(Path("${PAGE_REPORT_JSON}").read_text(encoding="utf-8"))
-print(
-    "INFO: page_report_summary "
-    f"total={report.get('total_pages', 0)} "
-    f"pass={report.get('pass_pages', 0)} "
-    f"fail={report.get('fail_pages', 0)} "
-    f"not_run={report.get('not_run_pages', 0)}"
-)
-for page in report.get("pages", []):
-    print(
-        "INFO: page_structured "
-        f"page_id={page.get('page_id')} "
-        f"baseline_ref={page.get('baseline_ref')} "
-        f"actual_ref={page.get('actual_ref')} "
-        f"diff_ref={page.get('diff_ref')} "
-        f"diff_threshold={page.get('diff_threshold')} "
-        f"result={page.get('result')}"
-    )
-PY
+  print_page_report_summary
 
   echo "PASS: ui-visual-gate"
 } 2>&1 | tee "${LOG_FILE}"

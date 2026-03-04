@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import type { VisualStyleContractRule } from './support/visual-contract'
-import { assertStyleContracts } from './visual-contract.e2e.spec'
+import { assertStyleContracts } from './support/style-contract'
 
 test.describe('Visual Style Contracts', () => {
   test('passes when computed style matches', async ({ page }) => {
