@@ -31,7 +31,18 @@ STORY_TEST_SCRIPTS = [
     "done_ticket_evidence_guard.py",
     "ticket_status_enum_check.py",
     "normalize_status_enum.py",
+    "security_contract_schema_test.py",
+    "security_contract_init_test.py",
+    "security_contract_guard_selftest.py",
+    "security_contract_guard.py",
+    "plan_standard_guard_selftest.py",
+    "plan_standard_guard.py",
 ]
+
+# 仅做存在性校验，不做无参可执行校验（需要业务参数）
+NON_RUNNABLE_SCRIPTS = {
+    "security_contract_guard.py",
+}
 
 # 事件写入点：文件中应包含 append_workflow_event 调用或说明
 EVENT_WRITE_POINT_FILES = [
@@ -74,6 +85,9 @@ def check_scripts_runnable():
     for script in STORY_TEST_SCRIPTS:
         path = TESTS_DIR / script
         if not path.exists():
+            continue
+        if script in NON_RUNNABLE_SCRIPTS:
+            print(f"  ⚠️ {script} — 仅校验存在性（需要业务参数，跳过无参执行）")
             continue
         try:
             cmd = ["python3", str(path)] + script_args.get(script, []) + extra_args

@@ -6,11 +6,24 @@ set -uo pipefail
 
 MODULE="${1:-}"
 STORY="${2:-all}"
-BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
+BACKEND_PORT="${BACKEND_PORT:-8080}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
+BASE_URL="${BASE_URL:-}"
+BASE_HEALTH_URL="${BASE_HEALTH_URL:-}"
 AUTH_TOKEN="${AUTH_TOKEN:-}"
 SMOKE_EXIT=0
 SMOKE_DETAIL=""
+
+if [[ -z "${BASE_URL}" ]]; then
+  if [[ -n "${BASE_HEALTH_URL}" ]]; then
+    case "${BASE_HEALTH_URL}" in
+      */actuator/health) BASE_URL="${BASE_HEALTH_URL%/actuator/health}" ;;
+      *) BASE_URL="http://127.0.0.1:${BACKEND_PORT}" ;;
+    esac
+  else
+    BASE_URL="http://127.0.0.1:${BACKEND_PORT}"
+  fi
+fi
 
 # --- 审计报告 trap（成功/失败都落盘）---
 REPORT_DIR="osg-spec-docs/tasks/audit"

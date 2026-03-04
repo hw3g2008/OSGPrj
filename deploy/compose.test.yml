@@ -1,0 +1,41 @@
+services:
+  mysql:
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:-app123456}
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
+
+  backend:
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      MYSQL_APP_PASSWORD: ${MYSQL_APP_PASSWORD:-app123456}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
+      JWT_SECRET: ${JWT_SECRET:-test-jwt-secret-change-me}
+
+  admin:
+    ports:
+      - "${ADMIN_PORT:-3005}:3005"
+
+  student:
+    ports:
+      - "${STUDENT_PORT:-3001}:3001"
+
+  mentor:
+    ports:
+      - "${MENTOR_PORT:-3002}:3002"
+
+  lead-mentor:
+    ports:
+      - "${LEAD_MENTOR_PORT:-3003}:3003"
+
+  assistant:
+    ports:
+      - "${ASSISTANT_PORT:-3004}:3004"

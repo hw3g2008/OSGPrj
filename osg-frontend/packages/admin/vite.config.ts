@@ -2,6 +2,19 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
+const apiProxyTarget =
+  process.env.E2E_API_PROXY_TARGET ||
+  process.env.VITE_API_PROXY_TARGET ||
+  'http://127.0.0.1:28080'
+
+const apiProxy = {
+  '/api': {
+    target: apiProxyTarget,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/api/, ''),
+  },
+}
+
 export default defineConfig({
   plugins: [vue()],
   resolve: {
@@ -18,13 +31,12 @@ export default defineConfig({
   server: {
     port: 3005,
     host: '0.0.0.0',
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
+    proxy: apiProxy,
+  },
+  preview: {
+    port: 4173,
+    host: '0.0.0.0',
+    proxy: apiProxy,
   },
   build: {
     outDir: 'dist',

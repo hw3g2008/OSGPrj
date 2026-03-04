@@ -312,7 +312,7 @@ command -v curl >/dev/null || exit 3
 command -v jq >/dev/null || exit 3
 
 # 示例：按 module/story 分发检查项（后续扩展为用例清单驱动）
-resp="$(curl -sS -w '\n%{http_code}' "${BASE_URL}/health")"
+resp="$(curl -sS -w '\n%{http_code}' "${BASE_URL}/actuator/health")"
 body="$(echo "${resp}" | head -n1)"
 code="$(echo "${resp}" | tail -n1)"
 

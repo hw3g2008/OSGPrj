@@ -63,6 +63,7 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
      - 检查是否有下一个 pending Story
        - 有 → 调用 `transition("/approve story", state, "story_approved")`，然后 `handle_next_story()`
        - 没有 → 调用 `transition("/approve story", state, "all_stories_done")`
+         - ⏭️ 输出提示："所有 Stories 已完成。请执行 `/final-closure {module}` 启动后端并运行最终门禁。"
 
    ### Story 完成审批（CC 审核后）
    - 条件：`current_step` 为 `story_done`
@@ -72,6 +73,7 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
    - 检查是否有下一个 pending Story
      - 有 → 调用 `transition("/approve story", state, "story_approved")`，然后 `handle_next_story()`
      - 没有 → 调用 `transition("/approve story", state, "all_stories_done")`
+         - ⏭️ 输出提示："所有 Stories 已完成。请执行 `/final-closure {module}` 启动后端并运行最终门禁。"
 
 3. **状态推进（统一入口）**
    - 所有审批分支通过 `transition()` 推进状态（含 preflight_guard → 写状态 → 写事件 → postcheck_guard）

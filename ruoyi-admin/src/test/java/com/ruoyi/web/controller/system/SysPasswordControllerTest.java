@@ -5,10 +5,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.ruoyi.common.annotation.Anonymous;
+import com.ruoyi.common.annotation.RateLimiter;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.enums.LimitType;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.framework.web.service.SysPasswordService;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +31,27 @@ class SysPasswordControllerTest {
 
     @Mock
     private SysPasswordService passwordService;
+
+    @Test
+    void testPasswordResetEndpointsShouldBeAnonymous() throws Exception {
+        Method sendCode = SysPasswordController.class.getMethod("sendCode", Map.class);
+        Method verify = SysPasswordController.class.getMethod("verify", Map.class);
+        Method reset = SysPasswordController.class.getMethod("reset", Map.class);
+
+        assertNotNull(sendCode.getAnnotation(Anonymous.class), "sendCode 必须支持匿名访问");
+        assertNotNull(verify.getAnnotation(Anonymous.class), "verify 必须支持匿名访问");
+        assertNotNull(reset.getAnnotation(Anonymous.class), "reset 必须支持匿名访问");
+    }
+
+    @Test
+    void testSendCodeShouldHaveRateLimiter() throws Exception {
+        Method sendCode = SysPasswordController.class.getMethod("sendCode", Map.class);
+        RateLimiter limiter = sendCode.getAnnotation(RateLimiter.class);
+        assertNotNull(limiter, "sendCode 必须配置限流");
+        assertEquals(300, limiter.time(), "限流窗口应为 300 秒");
+        assertEquals(5, limiter.count(), "限流次数应为 5");
+        assertEquals(LimitType.IP, limiter.limitType(), "限流应按 IP 生效");
+    }
 
     // ========== sendCode 测试 ==========
 

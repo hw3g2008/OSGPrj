@@ -1,4 +1,7 @@
 version: '3.8'
+# DEPRECATED: 该文件仅保留给前端独立开发场景。
+# 新的同构部署入口为仓库根目录 deploy/compose.base.yml + deploy/compose.{test,prod}.yml
+# 收尾自动化请使用 bin/docker-env-*.sh 与 bin/final-closure.sh
 
 services:
   # 学生端

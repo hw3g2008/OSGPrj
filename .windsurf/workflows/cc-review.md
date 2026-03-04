@@ -29,6 +29,7 @@ fi
 ```bash
 python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py --state osg-spec-docs/tasks/STATE.yaml --config .claude/project/config.yaml --state-machine .claude/skills/workflow-engine/state-machine.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets --proofs-dir osg-spec-docs/tasks/proofs
 python3 .claude/skills/workflow-engine/tests/done_ticket_evidence_guard.py --state osg-spec-docs/tasks/STATE.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets --story-id "$STORY"
+python3 .claude/skills/workflow-engine/tests/e2e_api_guard.py --tests-dir osg-frontend/tests/e2e
 ```
 
 3. 执行 CC 审核：
@@ -75,80 +76,21 @@ claude -p "问题分析：
 
 ### 4. 最终交付审核（`/cc-review final`）
 
-前置条件：`STATE.current_step == all_stories_done`
+该类型已并入模块收尾编排器，不再在 `cc-review` 内执行重型门禁流程。
 
-#### Step 1: 前置守卫（必须全通过）
+执行方式：
 
-```bash
-python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py \
-  --state osg-spec-docs/tasks/STATE.yaml \
-  --config .claude/project/config.yaml \
-  --state-machine .claude/skills/workflow-engine/state-machine.yaml \
-  --stories-dir osg-spec-docs/tasks/stories \
-  --tickets-dir osg-spec-docs/tasks/tickets \
-  --proofs-dir osg-spec-docs/tasks/proofs \
-  --events osg-spec-docs/tasks/workflow-events.jsonl
-python3 .claude/skills/workflow-engine/tests/story_event_log_check.py \
-  --events osg-spec-docs/tasks/workflow-events.jsonl \
-  --state osg-spec-docs/tasks/STATE.yaml
-```
-任一失败即停止，不进入后续步骤。
-
-#### Step 2: 执行 Final Gate（一键脚本）
+1. 读取 `STATE.current_requirement` 作为 `module`（若为空则让用户显式传入模块名）。
+2. 输出并执行唯一入口：
 
 ```bash
-bash bin/final-gate.sh
-```
-包含 9 步：guard → event check → evidence guard(全 Story) → traceability → 前端 test → build → 后端 test → api-smoke → E2E。
-后端未启动时 api-smoke 和 @api E2E 标 WARNING/SKIP（非 PASS）。
-
-#### Step 3: TC 追踪链校验
-
-```bash
-python3 .claude/skills/workflow-engine/tests/traceability_guard.py \
-  --cases osg-spec-docs/tasks/testing/{module}-test-cases.yaml \
-  --matrix osg-spec-docs/tasks/testing/{module}-traceability-matrix.md
-```
-- 每个 AC 至少映射 1 条 TC
-- 每条 TC 必须有 `automation.command`
-- 已执行 TC 必须有 `latest_result.evidence_ref`
-- `pending` 状态 TC = FAIL（`skip_no_backend` 允许但需标注原因）
-
-#### Step 4: 集成断言
-
-```bash
-python3 .claude/skills/workflow-engine/tests/story_integration_assertions.py
+/final-closure {module}
 ```
 
-#### Step 5: CC 整体审核（可选，推荐 P0 模块执行）
+说明：
 
-```bash
-claude -p "整体审核：
-
-项目状态：
-$(cat osg-spec-docs/tasks/STATE.yaml)
-
-Final Gate 结果：
-$(cat osg-spec-docs/tasks/audit/final-gate-validation-*.md | tail -40)
-
-检查项：
-1. 所有 Stories 是否都已完成
-2. Stories 之间的集成是否正确
-3. Final Gate 是否有 WARNING/SKIP
-4. 追踪矩阵 AC→TC 覆盖率是否 100%
-5. 是否有遗漏的功能点
-
-输出：通过/不通过 + 问题列表"
-```
-
-#### Step 6: 产出审计文档
-
-创建 `osg-spec-docs/tasks/audit/cc-review-final-{date}.md`，包含：
-- 每步命令 + exit_code + 结果
-- 关键统计（tests/E2E pass 数、TC 覆盖率）
-- WARNING/SKIP 项明细
-- CC 审核结论（如执行）
-- 最终判定：PASS / PARTIAL PASS / FAIL
+- `/final-closure` 负责：环境准备 → final-gate → 审计校验 → 可选 CC 复核 → 产物收集 → 清理与结论。
+- `cc-review` 保留 `story/decision/issue` 三类轻量审核语义。
 
 ## 状态更新（必须经 transition() 统一入口）
 

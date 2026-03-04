@@ -1,0 +1,105 @@
+schema_version: 1
+project_type: springboot-vue
+contract_version: 2026-03-03.1
+generated_by: security_contract_init
+generated_at: '2026-03-03T06:40:58.793954Z'
+endpoints:
+- id: get_captchaImage
+  method: GET
+  path: /captchaImage
+  auth_mode: anonymous
+  rate_limit:
+    required: false
+  anti_enumeration:
+    required: false
+    response_policy: generic_msg
+  source:
+    backend_controller: ruoyi-admin/src/main/java/com/ruoyi/web/controller/common/CaptchaController.java
+    detected_auth_mode: anonymous
+    detected_rate_limit: false
+    frontend_referenced: false
+  status: active
+  decision_required: false
+- id: post_login
+  method: POST
+  path: /login
+  auth_mode: anonymous
+  rate_limit:
+    required: false
+  anti_enumeration:
+    required: false
+    response_policy: generic_msg
+  source:
+    backend_controller: ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysLoginController.java
+    detected_auth_mode: anonymous
+    detected_rate_limit: false
+    frontend_referenced: false
+  status: active
+  decision_required: false
+- id: post_register
+  method: POST
+  path: /register
+  auth_mode: anonymous
+  rate_limit:
+    required: false
+  anti_enumeration:
+    required: false
+    response_policy: generic_msg
+  source:
+    backend_controller: ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysRegisterController.java
+    detected_auth_mode: anonymous
+    detected_rate_limit: false
+    frontend_referenced: false
+  status: active
+  decision_required: false
+- id: password_reset
+  method: POST
+  path: /system/password/reset
+  auth_mode: anonymous
+  rate_limit:
+    required: false
+  anti_enumeration:
+    required: false
+    response_policy: generic_msg
+  source:
+    backend_controller: ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysPasswordController.java
+    detected_auth_mode: anonymous
+    detected_rate_limit: false
+    frontend_referenced: false
+  status: active
+  decision_required: false
+- id: password_send_code
+  method: POST
+  path: /system/password/sendCode
+  auth_mode: anonymous
+  rate_limit:
+    required: true
+    key: pwd_reset_send:${ip}:${email_hash}
+    window_sec: 300
+    max_requests: 5
+  anti_enumeration:
+    required: true
+    response_policy: generic_msg
+  source:
+    backend_controller: ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysPasswordController.java
+    detected_auth_mode: anonymous
+    detected_rate_limit: true
+    frontend_referenced: false
+  status: active
+  decision_required: false
+- id: password_verify_code
+  method: POST
+  path: /system/password/verify
+  auth_mode: anonymous
+  rate_limit:
+    required: false
+  anti_enumeration:
+    required: false
+    response_policy: generic_msg
+  source:
+    backend_controller: ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysPasswordController.java
+    detected_auth_mode: anonymous
+    detected_rate_limit: false
+    frontend_referenced: false
+  status: active
+  decision_required: false

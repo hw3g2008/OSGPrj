@@ -1,0 +1,302 @@
+#!/usr/bin/env bash
+# UI Visual baseline tool
+# Usage:
+#   bash bin/ui-visual-baseline.sh [module] --mode generate|verify --source prototype|app
+set -euo pipefail
+
+MODULE="${1:-permission}"
+MODE="verify"
+SOURCE=""
+if [[ "${MODULE}" == "--mode" ]]; then
+  MODULE="permission"
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --mode)
+      MODE="${2:-}"
+      shift 2
+      ;;
+    --mode=*)
+      MODE="${1#*=}"
+      shift
+      ;;
+    --source)
+      SOURCE="${2:-}"
+      shift 2
+      ;;
+    --source=*)
+      SOURCE="${1#*=}"
+      shift
+      ;;
+    *)
+      MODULE="$1"
+      shift
+      ;;
+  esac
+done
+
+case "${MODE}" in
+  generate|verify) ;;
+  *)
+    echo "FAIL: --mode must be generate|verify, got '${MODE}'"
+    exit 16
+    ;;
+esac
+
+case "${SOURCE}" in
+  ""|prototype|app) ;;
+  *)
+    echo "FAIL: --source must be prototype|app, got '${SOURCE}'"
+    exit 16
+    ;;
+esac
+
+if [[ -z "${SOURCE}" ]]; then
+  if [[ "${MODE}" == "verify" ]]; then
+    SOURCE="app"
+  else
+    echo "FAIL: mode=generate requires explicit --source prototype (app source forbidden)"
+    exit 16
+  fi
+fi
+
+if [[ "${MODE}" == "generate" && "${SOURCE}" != "prototype" ]]; then
+  echo "FAIL: mode=generate only allows --source prototype (forbid self-baseline from app)"
+  exit 16
+fi
+
+if [[ "${MODE}" == "verify" && "${SOURCE}" != "app" ]]; then
+  echo "FAIL: mode=verify only allows --source app"
+  exit 16
+fi
+
+DATE_STR="$(date +%Y-%m-%d)"
+RUN_ID="$(date +%Y%m%d-%H%M%S)"
+AUDIT_DIR="osg-spec-docs/tasks/audit"
+CONTRACT_PATH="osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.yaml"
+SUMMARY_JSON="${AUDIT_DIR}/ui-visual-contract-summary-${MODULE}-${DATE_STR}.json"
+CONTRACT_JSON="${AUDIT_DIR}/ui-visual-contract-${MODULE}-${DATE_STR}.json"
+PAGE_RESULTS_JSONL="${AUDIT_DIR}/ui-visual-page-results-${MODULE}-${DATE_STR}.jsonl"
+PAGE_REPORT_JSON="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
+EVIDENCE_DIR="${AUDIT_DIR}/ui-visual-actual-${MODULE}-${DATE_STR}"
+MANIFEST_JSON="${AUDIT_DIR}/ui-visual-baseline-manifest-${MODULE}-${RUN_ID}.json"
+REPO_ROOT="$(pwd)"
+PAGE_RESULTS_JSONL_ABS="${REPO_ROOT}/${PAGE_RESULTS_JSONL}"
+EVIDENCE_DIR_ABS="${REPO_ROOT}/${EVIDENCE_DIR}"
+
+mkdir -p "${AUDIT_DIR}"
+mkdir -p "${EVIDENCE_DIR}"
+rm -f "${PAGE_RESULTS_JSONL}" "${PAGE_REPORT_JSON}"
+
+if [[ "${MODE}" == "generate" ]]; then
+  python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
+    --contract "${CONTRACT_PATH}" \
+    --allow-missing-baseline \
+    --output-json "${SUMMARY_JSON}"
+else
+  python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
+    --contract "${CONTRACT_PATH}" \
+    --output-json "${SUMMARY_JSON}"
+fi
+
+python3 - <<PY
+import json, yaml
+from pathlib import Path
+contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) or {}
+Path("${CONTRACT_JSON}").write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
+PY
+
+echo "INFO: module=${MODULE} mode=${MODE} source=${SOURCE} contract=${CONTRACT_PATH}"
+echo "INFO: summary=${SUMMARY_JSON}"
+echo "INFO: contract_json=${CONTRACT_JSON}"
+
+if [[ "${MODE}" == "generate" && "${SOURCE}" == "prototype" ]]; then
+  if ! bash bin/prototype-server.sh status >/dev/null 2>&1; then
+    if ! bash bin/prototype-server.sh start; then
+      echo "FAIL: cannot start prototype server"
+      exit 17
+    fi
+  fi
+  PROTOTYPE_BASE_URL="${UI_VISUAL_PROTOTYPE_BASE_URL:-http://127.0.0.1:${PROTOTYPE_PORT:-18090}}"
+  echo "INFO: prototype_base_url=${PROTOTYPE_BASE_URL}"
+fi
+
+pick_api_proxy_target() {
+  if [[ -n "${E2E_API_PROXY_TARGET:-}" ]]; then
+    printf '%s' "${E2E_API_PROXY_TARGET}"
+    return 0
+  fi
+  if [[ -n "${E2E_BACKEND_URL:-}" ]]; then
+    printf '%s' "${E2E_BACKEND_URL}"
+    return 0
+  fi
+  if curl -fsS --max-time 2 "http://127.0.0.1:28080/actuator/health" >/dev/null 2>&1; then
+    printf '%s' "http://127.0.0.1:28080"
+    return 0
+  fi
+  printf '%s' "http://127.0.0.1:8080"
+}
+
+API_PROXY_TARGET="$(pick_api_proxy_target)"
+echo "INFO: api_proxy_target=${API_PROXY_TARGET}"
+
+PLAYWRIGHT_ARGS=(--grep "@ui-visual" --workers=1)
+if [[ "${MODE}" == "generate" ]]; then
+  PLAYWRIGHT_ARGS+=(--update-snapshots=all)
+fi
+
+set +e
+(
+  cd osg-frontend
+  UI_VISUAL_MODE="${MODE}" \
+  UI_VISUAL_SOURCE="${SOURCE}" \
+  UI_VISUAL_CONTRACT_JSON="../${CONTRACT_JSON}" \
+  UI_VISUAL_EVIDENCE_DIR="${EVIDENCE_DIR_ABS}" \
+  UI_VISUAL_PAGE_RESULTS_FILE="${PAGE_RESULTS_JSONL_ABS}" \
+  UI_VISUAL_MODULE="${MODULE}" \
+  UI_VISUAL_PROTOTYPE_BASE_URL="${PROTOTYPE_BASE_URL:-}" \
+  E2E_API_PROXY_TARGET="${API_PROXY_TARGET}" \
+  PW_VISUAL_SNAPSHOT_TEMPLATE="{testDir}/visual-baseline/{arg}{ext}" \
+  TZ="${TZ:-Asia/Shanghai}" \
+  pnpm test:e2e "${PLAYWRIGHT_ARGS[@]}"
+)
+PLAYWRIGHT_RC=$?
+set -e
+
+python3 - <<PY
+import json
+import yaml
+from pathlib import Path
+
+contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) or {}
+pages = contract.get("pages", []) if isinstance(contract.get("pages"), list) else []
+result_path = Path("${PAGE_RESULTS_JSONL}")
+result_map = {}
+if result_path.exists():
+    for line in result_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        record = json.loads(line)
+        page_id = record.get("page_id")
+        if page_id:
+            result_map[page_id] = record
+
+page_rows = []
+for page in pages:
+    page_id = page.get("page_id", "")
+    result = result_map.get(page_id, {})
+    row = {
+        "page_id": page_id,
+        "baseline_ref": page.get("baseline_ref", "none"),
+        "actual_ref": result.get("actual_ref", "none"),
+        "diff_ref": result.get("diff_ref", "none"),
+        "diff_threshold": page.get("diff_threshold"),
+        "result": result.get("result", "NOT_RUN"),
+    }
+    page_rows.append(row)
+
+summary = {
+    "module": contract.get("module", "${MODULE}"),
+    "mode": "${MODE}",
+    "total_pages": len(page_rows),
+    "pass_pages": sum(1 for x in page_rows if x.get("result") == "PASS"),
+    "fail_pages": sum(1 for x in page_rows if x.get("result") == "FAIL"),
+    "not_run_pages": sum(1 for x in page_rows if x.get("result") == "NOT_RUN"),
+    "pages": page_rows,
+}
+page_report_path = Path("${PAGE_REPORT_JSON}")
+page_report_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+print(f"INFO: page_report={page_report_path}")
+for row in page_rows:
+    print(
+        "INFO: page_result "
+        f"page_id={row['page_id']} "
+        f"baseline_ref={row['baseline_ref']} "
+        f"actual_ref={row['actual_ref']} "
+        f"diff_ref={row['diff_ref']} "
+        f"diff_threshold={row['diff_threshold']} "
+        f"result={row['result']}"
+    )
+PY
+
+if (( PLAYWRIGHT_RC != 0 )); then
+  echo "FAIL: ui-visual-baseline (${MODE}) exit=${PLAYWRIGHT_RC}"
+  exit "${PLAYWRIGHT_RC}"
+fi
+
+if [[ "${MODE}" == "generate" && "${SOURCE}" == "prototype" ]]; then
+  python3 - <<PY
+import hashlib
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+import yaml
+
+contract_path = Path("${CONTRACT_PATH}")
+contract = yaml.safe_load(contract_path.read_text(encoding="utf-8")) or {}
+pages = contract.get("pages", []) if isinstance(contract.get("pages"), list) else []
+prototype_root = Path("osg-spec-docs/source/prototype")
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+prototype_files = sorted({
+    page.get("prototype_file")
+    for page in pages
+    if isinstance(page, dict) and isinstance(page.get("prototype_file"), str) and page.get("prototype_file")
+})
+
+manifest_pages = []
+for page in pages:
+    if not isinstance(page, dict):
+        continue
+    manifest_pages.append(
+        {
+            "page_id": page.get("page_id"),
+            "prototype_file": page.get("prototype_file"),
+            "baseline_ref": page.get("baseline_ref"),
+        }
+    )
+
+prototype_hashes = []
+for file_name in prototype_files:
+    file_path = prototype_root / file_name
+    if not file_path.exists():
+        raise SystemExit(f"FAIL: prototype file missing for manifest: {file_path}")
+    prototype_hashes.append(
+        {
+            "file": file_name,
+            "sha256": sha256_file(file_path),
+        }
+    )
+
+prototype_fingerprint = "\n".join(
+    f"{item['file']}:{item['sha256']}" for item in prototype_hashes
+)
+prototype_sha256 = hashlib.sha256(prototype_fingerprint.encode("utf-8")).hexdigest() if prototype_fingerprint else ""
+
+manifest = {
+    "module": contract.get("module", "${MODULE}"),
+    "source": "prototype",
+    "contract_path": "${CONTRACT_PATH}",
+    "contract_sha256": sha256_file(contract_path),
+    "prototype_sha256": prototype_sha256,
+    "generated_at": datetime.now(timezone.utc).isoformat(),
+    "generated_by": "bin/ui-visual-baseline.sh",
+    "prototype_base_url": "${PROTOTYPE_BASE_URL:-http://127.0.0.1:${PROTOTYPE_PORT:-18090}}",
+    "prototype_files": prototype_hashes,
+    "pages": manifest_pages,
+}
+
+manifest_path = Path("${MANIFEST_JSON}")
+manifest_path.parent.mkdir(parents=True, exist_ok=True)
+manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+print(f"INFO: manifest_ref={manifest_path}")
+print(f"INFO: contract_sha256={manifest['contract_sha256']}")
+print(f"INFO: prototype_sha256={manifest['prototype_sha256']}")
+PY
+fi
+
+echo "PASS: ui-visual-baseline (${MODE})"

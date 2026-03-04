@@ -64,6 +64,13 @@ coverage/
 # 日志
 logs/
 
+# Docker deploy secrets（仅保留模板与说明）
+deploy/secrets/*
+!deploy/secrets/README.md
+!deploy/secrets/.gitignore
+deploy/.env.test
+deploy/.env.prod
+
 ######################################################################
 # 临时文件/工具生成
 .claude-mvp-demo/

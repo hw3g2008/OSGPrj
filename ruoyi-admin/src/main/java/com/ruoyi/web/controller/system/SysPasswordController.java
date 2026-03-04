@@ -7,7 +7,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.ruoyi.common.annotation.Anonymous;
+import com.ruoyi.common.annotation.RateLimiter;
+import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.enums.LimitType;
 import com.ruoyi.framework.web.service.SysPasswordService;
 
 /**
@@ -28,6 +32,8 @@ public class SysPasswordController
      * @param params 包含 email 字段
      * @return 结果
      */
+    @Anonymous
+    @RateLimiter(key = CacheConstants.PWD_RESET_CODE_KEY, time = 300, count = 5, limitType = LimitType.IP)
     @PostMapping("/sendCode")
     public AjaxResult sendCode(@RequestBody Map<String, String> params)
     {
@@ -46,6 +52,7 @@ public class SysPasswordController
      * @param params 包含 email 和 code 字段
      * @return 结果（包含 resetToken）
      */
+    @Anonymous
     @PostMapping("/verify")
     public AjaxResult verify(@RequestBody Map<String, String> params)
     {
@@ -71,6 +78,7 @@ public class SysPasswordController
      * @param params 包含 email、password 和 resetToken 字段
      * @return 结果
      */
+    @Anonymous
     @PostMapping("/reset")
     public AjaxResult reset(@RequestBody Map<String, String> params)
     {

@@ -6,10 +6,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.redis.RedisCache;
+import com.ruoyi.system.mapper.SysUserMapper;
 import com.ruoyi.system.service.ISysUserService;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * SysPasswordService 单元测试 — TTL 配置化验证
@@ -28,6 +31,9 @@ class SysPasswordServiceTest {
 
     @Mock
     private ISysUserService userService;
+
+    @Mock
+    private SysUserMapper userMapper;
 
     @Test
     void testResetCodeTtlFieldExists() {
@@ -51,5 +57,24 @@ class SysPasswordServiceTest {
         ReflectionTestUtils.setField(sysPasswordService, "resetCodeTtlMinutes", 10);
         int ttl = (int) ReflectionTestUtils.getField(sysPasswordService, "resetCodeTtlMinutes");
         assertEquals(10, ttl, "resetCodeTtlMinutes 应可配置为其他值");
+    }
+
+    @Test
+    void testFindUserByEmailUsesMapperWithoutDataScope() {
+        SysUser expected = new SysUser();
+        expected.setUserId(100L);
+        expected.setEmail("test@example.com");
+        when(userMapper.checkEmailUnique("test@example.com")).thenReturn(expected);
+
+        SysUser actual = ReflectionTestUtils.invokeMethod(
+            sysPasswordService,
+            "findUserByEmail",
+            "test@example.com"
+        );
+
+        assertNotNull(actual);
+        assertEquals(100L, actual.getUserId());
+        verify(userMapper, times(1)).checkEmailUnique("test@example.com");
+        verifyNoInteractions(userService);
     }
 }

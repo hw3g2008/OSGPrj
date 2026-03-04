@@ -1,0 +1,30 @@
+.git
+.gitignore
+.DS_Store
+
+# IDE / caches
+.idea
+.vscode
+__pycache__
+.pytest_cache
+
+# Large non-build assets
+artifacts
+screenshots
+*.png
+
+# Docs and runtime outputs not required for backend jar build
+osg-spec-docs
+docs
+workspace
+
+# Frontend runtime outputs
+osg-frontend/node_modules
+osg-frontend/playwright-report
+osg-frontend/test-results
+osg-frontend/packages/**/node_modules
+
+# Maven outputs
+**/target
+!ruoyi-admin/target/
+!ruoyi-admin/target/ruoyi-admin.jar

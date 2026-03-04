@@ -34,6 +34,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Users',
         component: () => import('@/views/permission/users/index.vue'),
         meta: { title: '后台用户管理', permission: 'system:user:list' }
+      },
+      {
+        path: 'permission/base-data',
+        name: 'BaseData',
+        component: () => import('@/views/permission/base-data/index.vue'),
+        meta: { title: '基础数据管理', permission: 'system:baseData:list' }
       }
     ]
   }
@@ -45,8 +51,9 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to) => {
   const token = getToken()
+  const userStore = useUserStore()
 
   // 设置页面标题
   document.title = `${to.meta.title || 'OSG Admin'} - OSG 后台管理系统`
@@ -54,27 +61,37 @@ router.beforeEach((to, _from, next) => {
   if (to.meta.public) {
     // 公开页面，已登录则跳转首页
     if (token && to.name === 'Login') {
-      next({ path: '/dashboard' })
+      return { path: '/dashboard' }
     } else {
-      next()
+      return true
     }
-  } else if (!token) {
-    // 未登录，跳转登录页
-    next({ name: 'Login', query: { redirect: to.fullPath } })
-  } else {
-    // 已登录，检查页面级权限
-    const permission = to.meta.permission as string | undefined
-    if (permission) {
-      const userStore = useUserStore()
-      const isAdmin = userStore.permissions.includes('*:*:*')
-      if (!isAdmin && !userStore.permissions.includes(permission)) {
-        message.warning('您没有权限访问此页面')
-        next(false)
-        return
-      }
-    }
-    next()
   }
+
+  if (!token) {
+    // 未登录，跳转登录页
+    return { name: 'Login', query: { redirect: to.fullPath } }
+  }
+
+  // 页面刷新/直达场景：先恢复用户与权限，再做页面级权限判断
+  if (!userStore.userInfo || userStore.permissions.length === 0) {
+    try {
+      await userStore.fetchInfo()
+    } catch (_error) {
+      return { name: 'Login', query: { redirect: to.fullPath } }
+    }
+  }
+
+  // 已登录，检查页面级权限
+  const permission = to.meta.permission as string | undefined
+  if (permission) {
+    const isAdmin = userStore.permissions.includes('*:*:*')
+    if (!isAdmin && !userStore.permissions.includes(permission)) {
+      message.warning('您没有权限访问此页面')
+      return false
+    }
+  }
+
+  return true
 })
 
 export default router

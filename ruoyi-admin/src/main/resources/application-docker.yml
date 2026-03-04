@@ -1,0 +1,38 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    druid:
+      master:
+        url: ${SPRING_DATASOURCE_DRUID_MASTER_URL:jdbc:mysql://mysql:3306/ry-vue?useUnicode=true&characterEncoding=utf8mb4&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B8}
+        username: ${SPRING_DATASOURCE_DRUID_MASTER_USERNAME:ruoyi}
+        password: ${SPRING_DATASOURCE_DRUID_MASTER_PASSWORD:password}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+token:
+  secret: ${TOKEN_SECRET:abcdefghijklmnopqrstuvwxyz}
+
+ruoyi:
+  profile: ${RUOYI_PROFILE:/data/ruoyi/uploadPath}
+  # Docker 测试环境显式指定验证码类型，避免 profile 叠加时漂移
+  captchaType: ${RUOYI_CAPTCHA_TYPE:math}
+
+user:
+  password:
+    # Docker/门禁环境固定验证码，确保 E2E 可重复；生产环境请通过环境变量覆盖为空
+    resetCodeFixed: ${USER_PASSWORD_RESET_CODE_FIXED:123456}
+
+management:
+  endpoint:
+    health:
+      enabled: true
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health

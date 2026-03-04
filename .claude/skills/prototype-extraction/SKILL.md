@@ -105,6 +105,7 @@ metadata:
 │ [4.2] 相似页面不合并，但在 PRD 中标注差异来源    │
 │ [4.3] 生成 DECISIONS.md 记录产品决策              │
 │ [4.4] 生成 MATRIX.md 记录端×页面全量矩阵         │
+│ [4.5] 生成 UI-VISUAL-CONTRACT.yaml 记录页面视觉契约│
 └─────────────────────────────────────────────────────┘
   │
   ▼
@@ -341,6 +342,14 @@ page: 页面名（如 positions, job-overview, applications）
 - 空状态：列表为空时的展示（占位图/提示文案/操作引导）
 - 加载状态：数据加载中的展示（骨架屏/spinner）
 - 错误状态：请求失败时的展示（错误提示/重试按钮）
+
+## 12. 视觉验收锚点（必须）
+- 页面关键锚点（required_anchors）：至少 3 个稳定 selector（禁止只用通用弱锚点）
+- 条件锚点组（required_anchors_any_of，可选）：用于验证码等可开关区域，要求“至少命中一组”
+- 登录页（login-page）必须至少覆盖以下锚点组之一：角色选择 / 演示账号文案 / 验证码区
+- 截图区域锚点（clip_selector，可选）：仅在 capture_mode=clip 时提供
+- 动态区域掩码（mask_selectors，可选）：时间、随机 ID、轮播等不稳定元素
+- 视觉契约引用：本页对应 `UI-VISUAL-CONTRACT.yaml` 的 page_id 与 snapshot_name
 ```
 
 ### DESIGN-SYSTEM.md 模板
@@ -451,6 +460,7 @@ page: 页面名（如 positions, job-overview, applications）
 - `MATRIX.md` — 端×页面全量矩阵 + 差异摘要
 - `DESIGN-SYSTEM.md` — 全局设计系统（CSS 变量 + 组件样式 + 布局规范）
 - `SIDEBAR-NAV.md` — 侧边栏导航结构（菜单分组 + 图标 + Badge + 权限映射）
+- `UI-VISUAL-CONTRACT.yaml` — 页面级视觉验收契约（schema v1）
 
 ---
 
@@ -475,6 +485,7 @@ page: 页面名（如 positions, job-overview, applications）
 | V13 | HTML Bug 检测 | JS 引用的页面 ID 都存在对应的页面定义 | 记录到 html_issues（不阻塞，返回给调用方处理） |
 | V14 | 设计系统覆盖率 | DESIGN-SYSTEM.md 包含所有 :root 变量和通用组件样式 | 回到 Step 2 补充（B16~B18） |
 | V15 | 侧边栏覆盖率 | SIDEBAR-NAV.md 包含所有 nav-item 和权限映射 | 回到 Step 2 补充（B19） |
+| V16 | 视觉契约覆盖率 | UI-VISUAL-CONTRACT.yaml schema 合法且 pages 数量 >= 页面 PRD 数量 | 回到 Step 4 重新生成 |
 
 ---
 
@@ -558,6 +569,20 @@ def extract_prototypes(module_name, config):
     for html_file in prototype_files:
         sidebar_nav = extract_sidebar_nav(html_file)  # B19: 菜单分组/图标/Badge/权限
         write_file(f"{output_dir}/SIDEBAR-NAV.md", sidebar_nav.to_markdown())
+
+    # 生成 UI-VISUAL-CONTRACT.yaml（每页视觉验收契约，schema v1）
+    visual_contract = generate_ui_visual_contract(
+        module_name=module_name,
+        matrix=matrix,
+        prd_docs=prd_docs,
+        default_viewport={"width": 1440, "height": 900},
+        default_diff_threshold=0.01,
+        default_stable_wait_ms=300,
+    )
+    write_file(
+        f"{output_dir}/UI-VISUAL-CONTRACT.yaml",
+        visual_contract.to_yaml(),
+    )
     
     # ========== Step 5: 完整性校验 ==========
     # ⛔ 门控前置检查: 检查 Step 1~4 产物完整性
@@ -651,7 +676,7 @@ def extract_prototypes(module_name, config):
         # ...
     },
     "diff_pages": ["job-overview", "positions", "mock-practice"],
-    "special_files": ["DECISIONS.md", "MATRIX.md"],
+    "special_files": ["DECISIONS.md", "MATRIX.md", "DESIGN-SYSTEM.md", "SIDEBAR-NAV.md", "UI-VISUAL-CONTRACT.yaml"],
     "html_issues": [          # 新增: HTML 内部矛盾/Bug
         {"type": "C", "desc": "admin.html: 侧边栏名'课程记录' vs 弹窗名'全部课程'", ...},
         {"type": "D", "desc": "admin.html: JS 引用了不存在的页面 ID 'resumes'", ...}
@@ -681,6 +706,7 @@ def extract_prototypes(module_name, config):
 - **禁止自行裁决 HTML 矛盾** — C类问题必须原样返回，不能在 PRD 中自行选择一个版本
 - **设计系统必须提取** — 每个 HTML 原型的 `<style>` 中的 `:root` 变量和通用组件样式必须提取到 DESIGN-SYSTEM.md
 - **侧边栏必须提取** — 每个 HTML 原型的侧边栏结构（菜单分组/图标/Badge/权限映射）必须提取到 SIDEBAR-NAV.md
+- **视觉契约必须产出** — 每次提取必须生成 UI-VISUAL-CONTRACT.yaml，并通过 PE-6/PE-7/PE-8 门控
 
 ---
 

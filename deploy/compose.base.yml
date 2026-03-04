@@ -1,0 +1,168 @@
+name: osg-runtime
+
+services:
+  mysql:
+    image: mysql:8.0.41
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ry-vue}
+      MYSQL_USER: ${MYSQL_APP_USER:-ruoyi}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    profiles: ["deps", "core"]
+    networks: [osg-net]
+
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    profiles: ["deps", "core"]
+    networks: [osg-net]
+
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-druid,docker}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ry-vue}
+      MYSQL_APP_USER: ${MYSQL_APP_USER:-ruoyi}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RUOYI_PROFILE: ${RUOYI_PROFILE:-/data/ruoyi/uploadPath}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - backend_uploads:/data/ruoyi/uploadPath
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    profiles: ["core"]
+    networks: [osg-net]
+
+  admin:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.test
+    command: ["pnpm", "dev:admin", "--", "--host", "0.0.0.0", "--port", "3005"]
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
+      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles: ["frontends"]
+    networks: [osg-net]
+
+  student:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.test
+    command: ["pnpm", "dev:student", "--", "--host", "0.0.0.0", "--port", "3001"]
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
+      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles: ["frontends"]
+    networks: [osg-net]
+
+  mentor:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.test
+    command: ["pnpm", "dev:mentor", "--", "--host", "0.0.0.0", "--port", "3002"]
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
+      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles: ["frontends"]
+    networks: [osg-net]
+
+  lead-mentor:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.test
+    command: ["pnpm", "dev:lead-mentor", "--", "--host", "0.0.0.0", "--port", "3003"]
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
+      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles: ["frontends"]
+    networks: [osg-net]
+
+  assistant:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.test
+    command: ["pnpm", "dev:assistant", "--", "--host", "0.0.0.0", "--port", "3004"]
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
+      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles: ["frontends"]
+    networks: [osg-net]
+
+volumes:
+  mysql_data:
+    name: ${COMPOSE_PROJECT_NAME:-osg}_mysql_data
+  redis_data:
+    name: ${COMPOSE_PROJECT_NAME:-osg}_redis_data
+  backend_uploads:
+    name: ${COMPOSE_PROJECT_NAME:-osg}_backend_uploads
+
+networks:
+  osg-net:
+    name: ${COMPOSE_PROJECT_NAME:-osg}_net

@@ -91,13 +91,14 @@ metadata:
 │     B类: PRD/SRS有HTML无 → 决策日志               │
 │     C类: HTML自身内部矛盾 → 决策日志              │
 │     D类: HTML明显Bug → PRD标注+决策日志           │
+│     V类: visual contract drift → 决策日志         │
 │ [4] 有 A 类补充 → 回到 Phase 2 重新校验            │
 │     （max 1 次回退，防死循环）                      │
 └────────────────────────────────────────────────────┘
   │
-  ├─ 无 B/C/D 类 → [输出结果] → brainstorm_done
+  ├─ 无 B/C/D/V 类 → [输出结果] → brainstorm_done
   │
-  └─ 有 B/C/D 类 → [输出结果 + {module}-DECISIONS.md] → brainstorm_pending_confirm
+  └─ 有 B/C/D/V 类 → [输出结果 + {module}-DECISIONS.md] → brainstorm_pending_confirm
 ```
 
 ## 正向校验项（6 项）
@@ -233,6 +234,17 @@ def brainstorming(user_input):
     gate_result = run_command(f"bash bin/check-skill-artifacts.sh prototype-extraction {module_name} {prd_dir}")
     if gate_result.exit_code != 0:
         return failed("prototype-extraction 门控未通过，请补充缺失产物后重试")
+
+    # ⛔ 门控点 1.5: 安全契约同步 + fail-closed 守卫
+    sync_result = run_command("python3 .claude/skills/workflow-engine/tests/security_contract_init.py --mode sync")
+    if sync_result.exit_code != 0:
+        return failed("security_contract_init 同步失败")
+
+    security_result = run_command(
+        "python3 .claude/skills/workflow-engine/tests/security_contract_guard.py --stage brainstorm"
+    )
+    if security_result.exit_code != 0:
+        return failed("security_contract_guard 未通过（存在 unresolved 或 drift）")
 
     # ========== Phase 1: 收集输入 + 生成 SRS 初稿 ==========
     context = {
@@ -443,6 +455,8 @@ def brainstorming(user_input):
         module_prototypes_p4 = config.prd_process.module_prototype_map.get(module_name)
         pending_decisions = []
         has_a_type_fixes = False
+        visual_decisions_path = f"{config.paths.docs.prd}/{module_name}/UI-VISUAL-DECISIONS.md"
+        visual_contract = read_yaml(f"{config.paths.docs.prd}/{module_name}/UI-VISUAL-CONTRACT.yaml")
 
         print(f"=== Phase 4: HTML↔PRD↔SRS 全量校验{f'（回退第 {phase4_retry} 次后）' if phase4_retry > 0 else ''} ===")
         server = start_http_server(config.paths.docs.prototypes)
@@ -455,12 +469,14 @@ def brainstorming(user_input):
                 snapshot = take_snapshot(page)
                 prd_diff = compare_with_prd(snapshot, context["prd_docs"])
                 srs_diff = compare_with_srs(snapshot, requirement_doc)
+                visual_diff = compare_with_visual_contract(snapshot, visual_contract)
 
-                for diff in prd_diff + srs_diff:
+                for diff in prd_diff + srs_diff + visual_diff:
                     if diff.type == "html_has_doc_missing":  # A类: HTML有PRD/SRS无
                         print(f"  ✅ A类: {diff.description} → 补充到 PRD + SRS")
                         update_prd(diff, context["prd_docs"])
                         requirement_doc = enhance_doc(requirement_doc, [diff.description])
+                        sync_visual_contract_for_a_fix(diff, visual_contract)  # A类自动补充时同步修复 contract
                         has_a_type_fixes = True
                     elif diff.type == "doc_has_html_missing":  # B类: PRD/SRS有HTML无
                         print(f"  ❓ B类: {diff.description} → 待确认")
@@ -471,9 +487,12 @@ def brainstorming(user_input):
                     elif diff.type == "html_bug":  # D类: HTML明显Bug
                         print(f"  🐛 D类: {diff.description} → 标注+待确认")
                         pending_decisions.append({"type": "D", "desc": diff.description})
+                    elif diff.type == "visual_contract_drift":  # V类: 视觉契约漂移
+                        print(f"  🎯 V类: {diff.description} → 待确认")
+                        pending_decisions.append({"type": "V", "desc": diff.description})
 
         server.stop()
-        print(f"Phase 4 完成: A类补充={has_a_type_fixes}, B/C/D类={len(pending_decisions)} 个")
+        print(f"Phase 4 完成: A类补充={has_a_type_fixes}, B/C/D/V类={len(pending_decisions)} 个")
 
         # A 类补充后回到 Phase 2 重新校验（max 1 次回退）
         if has_a_type_fixes and phase4_retry < MAX_PHASE4_RETRIES:
@@ -503,14 +522,16 @@ def brainstorming(user_input):
         return failed("brainstorming 门控未通过，请补充缺失产物后重试")
 
     # ========== 输出结果 ==========
-    # 注意：只有 B/C/D 类才算"有问题"，A 类（auto_fixed）不算
+    # 注意：只有 B/C/D/V 类才算"有问题"，A 类（auto_fixed）不算
     if pending_decisions:
         append_decisions(decisions_path, pending_decisions, source="phase4")
+        sync_ui_visual_decisions_projection(visual_decisions_path, pending_decisions, source="phase4")
         print(f"📋 决策日志: {decisions_path}")
+        print(f"📋 视觉决策投影: {visual_decisions_path}")
 
     # 更新 workflow 状态
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
-    if pending_decisions:  # 只有 B/C/D 类
+    if pending_decisions:  # 只有 B/C/D/V 类
         state.workflow.current_step = "brainstorm_pending_confirm"
         state.workflow.next_step = "approve_brainstorm"
         state.workflow.auto_continue = False
@@ -546,11 +567,12 @@ def brainstorming(user_input):
 3. 停止自动继续 — 提示用户人工介入
 4. 用户可以补充信息后重新执行 /brainstorm
 
-⚠️ Phase 4 阻塞：当存在 B/C/D 类不确定差异时：
+⚠️ Phase 4 阻塞：当存在 B/C/D/V 类不确定差异时：
 1. 输出决策日志（{module}-DECISIONS.md，source=phase4）
-2. 设置 workflow.current_step = brainstorm_pending_confirm
-3. 停止自动继续 — 等待产品确认
-4. 产品确认后重新执行 /brainstorm（增量更新路径）或 /approve brainstorm（跳过语义）
+2. 同步输出视觉决策投影（{prd_dir}/UI-VISUAL-DECISIONS.md，source=phase4）
+3. 设置 workflow.current_step = brainstorm_pending_confirm
+4. 停止自动继续 — 等待产品确认
+5. 产品确认后重新执行 /brainstorm（增量更新路径）或 /approve brainstorm（跳过语义）
 ```
 
 ## 输出格式
@@ -596,6 +618,7 @@ def brainstorming(user_input):
 - 确定差异: {certain_count}（已补充）
 - 待确认项: {question_count}
 - 决策日志: {srs_dir}/{module}-DECISIONS.md（仅在有待确认项时）
+- 视觉决策投影: {prd_dir}/UI-VISUAL-DECISIONS.md（仅在存在 V 类或视觉相关裁决时）
 
 ### ⏭️ 下一步
 - 无待确认项: 执行 `/split story` 将需求拆解为 Stories
@@ -631,7 +654,7 @@ def brainstorming(user_input):
 - **状态**: `pending`（待裁决）/ `resolved`（已裁决）/ `rejected`（跳过，仅 phase4 允许；phase0 禁止 rejected）
 - **已应用**: `false` / `true`——防止重复 apply
 - **来源**: `phase0` / `phase4`
-- **类型**: `B` / `C` / `D`
+- **类型**: `B` / `C` / `D` / `V`（visual contract drift）
 
 **函数签名**：
 ```python
@@ -647,6 +670,9 @@ def read_resolved_decisions(decisions_path):
 
 def mark_decisions_applied(decisions_path, decisions):
     """将已处理的记录标记为 已应用=true。"""
+
+def sync_ui_visual_decisions_projection(visual_decisions_path, decisions, source):
+    """把视觉相关裁决（主要是 V 类）同步投影到 UI-VISUAL-DECISIONS.md（只读投影，不作为审批入口）。"""
 ```
 
 ## 硬约束
@@ -664,7 +690,9 @@ def mark_decisions_applied(decisions_path, decisions):
 - **Phase 4 必须执行 HTML↔PRD↔SRS 全量校验** - 保证最终结果正确性
 - **Phase 4 必须逐端逐页面浏览** - 不能只看 PRD 文档，必须打开浏览器实测
 - **A类差异（HTML有PRD/SRS无）直接补充** - HTML 是 SSOT，无需确认
-- **B/C/D类差异必须写入 {module}-DECISIONS.md** - 不能自作主张决定以谁为准
+- **B/C/D/V类差异必须写入 {module}-DECISIONS.md** - 不能自作主张决定以谁为准
+- **V类差异必须双写** - 主审批记录写 `{module}-DECISIONS.md`，可读投影写 `UI-VISUAL-DECISIONS.md`
+- **UI-VISUAL-CONTRACT.required_anchors 必须满足质量规则** - 每页至少 3 个，且不能全是弱锚点（如仅密码框+提交按钮）
 - **有 pending_decisions 时必须阻塞** - 不能自动继续 split story
 - **禁止 AI 自行裁决 HTML 内部矛盾** - C类必须等产品确认
 - **Phase 0 PRD 已存在时必须询问用户** - 由用户决定重新生成还是使用已有
@@ -673,7 +701,11 @@ def mark_decisions_applied(decisions_path, decisions):
 - **Phase 0 每轮必须输出进度** - `🔄 Phase 0 第 N/3 轮`
 - **Phase 0 完成后必须运行门控脚本** - `bash bin/check-skill-artifacts.sh prototype-extraction` 检查产物完整性
 - **门控脚本失败时禁止继续 Phase 1** - 必须回到 prototype-extraction 补充缺失产物
-- **Phase 4 发现 B/C/D 类问题时，必须写入 {module}-DECISIONS.md** — 禁止跳过此步骤
+- **Phase 0 完成后必须先执行安全契约同步** - `security_contract_init.py --mode sync`
+- **brainstorm 阶段必须执行 fail-closed 安全守卫** - `security_contract_guard.py --stage brainstorm`
+- **安全守卫命中 unresolved/drift 必须阻断** - 禁止继续 Phase 1
+- **Phase 4 发现 B/C/D/V 类问题时，必须写入 {module}-DECISIONS.md** — 禁止跳过此步骤
+- **/approve brainstorm 只读取 {module}-DECISIONS.md** — 禁止直接读取 UI-VISUAL-DECISIONS.md 作为审批源
 - **Phase 4 有 pending_decisions 时，必须设置 brainstorm_pending_confirm** — 禁止自动继续 split story
 - **用户提示中必须输出完整路径**（含 SRS 目录前缀）— 对应命名规则(b)，避免与 PRD 目录下的 DECISIONS.md 混淆
 

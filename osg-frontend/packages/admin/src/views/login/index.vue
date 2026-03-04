@@ -5,15 +5,15 @@
       <p>后台管理系统</p>
       <div class="features">
         <div class="feature-item">
-          <CheckCircleOutlined />
+          <CheckCircleFilled />
           <span>学员与导师管理</span>
         </div>
         <div class="feature-item">
-          <CheckCircleOutlined />
+          <CheckCircleFilled />
           <span>课程与财务结算</span>
         </div>
         <div class="feature-item">
-          <CheckCircleOutlined />
+          <CheckCircleFilled />
           <span>岗位与资源管理</span>
         </div>
       </div>
@@ -22,7 +22,9 @@
       <div class="login-box">
         <div class="login-logo">
           <div class="login-logo-icon">
-            <SafetyCertificateOutlined />
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+              <path d="M12 8L15 13.2L18 10.5L17.3 14H6.7L6 10.5L9 13.2L12 8M12 4L8.5 10L3 5L5 16H19L21 5L15.5 10L12 4M19 18H5V19C5 19.6 5.4 20 6 20H18C18.6 20 19 19.6 19 19V18Z" />
+            </svg>
           </div>
           <span>OSG Admin</span>
         </div>
@@ -61,20 +63,20 @@
             </a-input-password>
           </a-form-item>
 
-          <a-form-item name="code">
+          <a-form-item v-if="captchaEnabled" name="code">
             <div class="captcha-row">
               <a-input
+                class="captcha-input"
                 v-model:value="formState.code"
                 placeholder="请输入验证码"
                 size="large"
                 :maxlength="4"
-                style="flex: 1"
               >
                 <template #prefix>
                   <SafetyOutlined />
                 </template>
               </a-input>
-              <div class="captcha-code" @click="refreshCaptcha" title="点击刷新">
+              <div class="captcha-code" :class="{ 'has-image': !!captchaImg }" @click="refreshCaptcha" title="点击刷新">
                 <img v-if="captchaImg" :src="'data:image/jpg;base64,' + captchaImg" alt="验证码" />
                 <span v-else>----</span>
               </div>
@@ -98,7 +100,7 @@
               :loading="loading"
               :disabled="loading"
             >
-              {{ loading ? '登录中...' : '登录' }}
+              <span>{{ loading ? '登录中...' : '登录' }}</span>
             </a-button>
           </a-form-item>
         </a-form>
@@ -110,15 +112,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
   UserOutlined,
   LockOutlined,
   SafetyOutlined,
-  CheckCircleOutlined,
-  SafetyCertificateOutlined
+  CheckCircleFilled
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getCaptchaImage } from '@osg/shared/api/auth'
@@ -142,11 +143,11 @@ const formState = reactive({
   rememberMe: false
 })
 
-const rules = {
+const rules = computed(() => ({
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  code: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
-}
+  code: [{ required: captchaEnabled.value, message: '请输入验证码', trigger: 'blur' }]
+}))
 
 const handleSubmit = async () => {
   try {
@@ -235,11 +236,15 @@ onMounted(() => {
 
 .login-right {
   width: 480px;
+  margin-left: -44px;
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 24px 0 0 24px;
+  border-radius: 44px 0 0 44px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .login-box {
@@ -283,12 +288,49 @@ onMounted(() => {
   margin-bottom: 28px;
 }
 
+.login-box :deep(.ant-input-affix-wrapper) {
+  height: 52px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.login-box :deep(.ant-input-affix-wrapper:hover) {
+  border-color: #cbd5e1;
+}
+
+.login-box :deep(.ant-input-affix-wrapper-focused),
+.login-box :deep(.ant-input-affix-wrapper:focus-within) {
+  border-color: #6366f1;
+  box-shadow: none;
+}
+
+.login-box :deep(.ant-input),
+.login-box :deep(.ant-input-password input) {
+  background: transparent;
+  font-size: 15px;
+}
+
 .captcha-row {
   display: flex;
+  align-items: center;
   gap: 12px;
 
+  .captcha-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .captcha-input :deep(.ant-input-affix-wrapper) {
+    width: 100%;
+  }
+
   .captcha-code {
-    height: 40px;
+    position: relative;
+    flex: 0 0 120px;
+    width: 120px;
+    height: 52px;
     padding: 0 20px;
     background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
     border-radius: 12px;
@@ -302,6 +344,29 @@ onMounted(() => {
     color: #4F46E5;
     cursor: pointer;
     user-select: none;
+    overflow: hidden;
+  }
+
+  .captcha-code.has-image {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  }
+
+  .captcha-code img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    clip-path: inset(2px 8px 2px 8px round 8px);
+    mix-blend-mode: normal;
+    opacity: 1;
+    background: transparent;
+  }
+
+  .captcha-code span {
+    display: inline-block;
+    width: 100%;
+    text-align: center;
   }
 }
 

@@ -15,7 +15,10 @@ set -euo pipefail
 
 STATE_FILE="osg-spec-docs/tasks/STATE.yaml"
 AUDIT_DIR="osg-spec-docs/tasks/audit"
-BASE_HEALTH_URL="${BASE_HEALTH_URL:-http://127.0.0.1:8080/actuator/health}"
+BACKEND_PORT="${BACKEND_PORT:-8080}"
+HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
+BASE_URL="${BASE_URL:-}"
+BASE_HEALTH_URL="${BASE_HEALTH_URL:-}"
 BACKEND_READY_TIMEOUT_SECONDS="${BACKEND_READY_TIMEOUT_SECONDS:-120}"
 MYSQL_INIT_DIR="${MYSQL_INIT_DIR:-deploy/mysql-init}"
 
@@ -98,6 +101,10 @@ BACK_PID=""
 CLEANUP_WARN=""
 CC_STATUS="skipped"
 FINAL_GATE_LOG=""
+E2E_API_GATE_LOG=""
+SECURITY_CONTRACT_LOG=""
+UI_VISUAL_GATE_LOG=""
+SECURITY_FIRST_FAILURE_EVIDENCE="none"
 FINAL_CLOSURE_REPORT=""
 DATE_STR="$(date +%Y-%m-%d)"
 MODULE=""
@@ -115,10 +122,86 @@ cleanup_backend() {
   fi
 }
 
+write_failure_report() {
+  local code="$1"
+  local msg="$2"
+
+  if [[ -z "${FINAL_CLOSURE_REPORT}" ]]; then
+    return 0
+  fi
+
+  local failure_conclusion="FAIL"
+  if [[ "${code}" == "10" || "${code}" == "11" ]]; then
+    failure_conclusion="BLOCKED"
+  fi
+
+  local first_failure="none"
+  local first_proxy="none"
+  local security_first="none"
+  local visual_first="none"
+  if [[ -n "${FINAL_GATE_LOG}" && -f "${FINAL_GATE_LOG}" ]]; then
+    first_failure="$(grep -m1 -E '^FAIL:' "${FINAL_GATE_LOG}" || true)"
+    first_proxy="$(grep -m1 -Ei 'proxy error|connect ECONNREFUSED|ECONNREFUSED' "${FINAL_GATE_LOG}" || true)"
+  fi
+  if [[ -z "${first_failure}" && -n "${E2E_API_GATE_LOG}" && -f "${E2E_API_GATE_LOG}" ]]; then
+    first_failure="$(grep -m1 -E '^FAIL:' "${E2E_API_GATE_LOG}" || true)"
+  fi
+  if [[ -z "${first_proxy}" && -n "${E2E_API_GATE_LOG}" && -f "${E2E_API_GATE_LOG}" ]]; then
+    first_proxy="$(grep -m1 -Ei 'proxy error|connect ECONNREFUSED|ECONNREFUSED' "${E2E_API_GATE_LOG}" || true)"
+  fi
+  if [[ -z "${first_failure}" ]]; then
+    first_failure="none"
+  fi
+  if [[ -z "${first_proxy}" ]]; then
+    first_proxy="none"
+  fi
+  if [[ -n "${SECURITY_CONTRACT_LOG}" && -f "${SECURITY_CONTRACT_LOG}" ]]; then
+    security_first="$(grep -m1 -E '^\d+\. \[(HIGH|MEDIUM|LOW)\]|^FAIL:' "${SECURITY_CONTRACT_LOG}" || true)"
+    if [[ -z "${security_first}" ]]; then
+      security_first="none"
+    fi
+  fi
+  if [[ -n "${UI_VISUAL_GATE_LOG}" && -f "${UI_VISUAL_GATE_LOG}" ]]; then
+    visual_first="$(grep -m1 -E '^VISUAL_FAIL:|^FAIL:' "${UI_VISUAL_GATE_LOG}" || true)"
+    if [[ -z "${visual_first}" ]]; then
+      visual_first="none"
+    fi
+  fi
+
+  {
+    echo "# Final Closure — ${MODULE:-unknown} ${DATE_STR}"
+    echo
+    echo "## 结论: ${failure_conclusion}"
+    echo
+    echo "## 失败原因"
+    echo "- exit_code: ${code}"
+    echo "- message: ${msg}"
+    echo
+    echo "## 审计字段"
+    if [[ -n "${FINAL_GATE_LOG}" ]]; then
+      echo "- final_gate_log: ${FINAL_GATE_LOG}"
+    fi
+    if [[ -n "${E2E_API_GATE_LOG}" ]]; then
+      echo "- e2e_api_gate_log: ${E2E_API_GATE_LOG}"
+    fi
+    if [[ -n "${SECURITY_CONTRACT_LOG}" ]]; then
+      echo "- security_contract_log: ${SECURITY_CONTRACT_LOG}"
+      echo "- security_first_failure_evidence: ${security_first}"
+    fi
+    if [[ -n "${UI_VISUAL_GATE_LOG}" ]]; then
+      echo "- ui_visual_gate_log: ${UI_VISUAL_GATE_LOG}"
+      echo "- ui_visual_first_failure_evidence: ${visual_first}"
+    fi
+    echo "- first_failure_evidence: ${first_failure}"
+    echo "- first_proxy_error_evidence: ${first_proxy}"
+  } > "${FINAL_CLOSURE_REPORT}" 2>/dev/null || true
+}
+
 fail_exit() {
   local code="$1"
   local msg="$2"
   echo "FAIL: ${msg}"
+  write_failure_report "${code}" "${msg}"
   cleanup_backend
   exit "${code}"
 }
@@ -140,6 +223,37 @@ else:
 PY
 }
 
+docker_backend_healthy() {
+  local env_file="deploy/.env.test"
+  if [[ ! -f "${env_file}" ]]; then
+    env_file="deploy/.env.test.example"
+  fi
+  if [[ ! -f "${env_file}" ]]; then
+    return 1
+  fi
+
+  local cid
+  cid="$(docker compose \
+    -f deploy/compose.base.yml \
+    -f deploy/compose.test.yml \
+    --env-file "${env_file}" \
+    ps -q backend 2>/dev/null || true)"
+  if [[ -z "${cid}" ]]; then
+    return 1
+  fi
+
+  local status health
+  status="$(docker inspect -f '{{.State.Status}}' "${cid}" 2>/dev/null || true)"
+  health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "${cid}" 2>/dev/null || true)"
+  if [[ "${status}" != "running" ]]; then
+    return 1
+  fi
+  if [[ -n "${health}" && "${health}" != "healthy" ]]; then
+    return 1
+  fi
+  return 0
+}
+
 check_mysql_init_dir() {
   if [[ ! -d "${MYSQL_INIT_DIR}" ]]; then
     echo "mysql-init 目录不存在: ${MYSQL_INIT_DIR}"
@@ -149,6 +263,41 @@ check_mysql_init_dir() {
   if [[ -z "$(find "${MYSQL_INIT_DIR}" -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
     echo "mysql-init 目录为空: ${MYSQL_INIT_DIR}"
     return 1
+  fi
+}
+
+resolve_backend_urls() {
+  local base_url_default="http://127.0.0.1:${BACKEND_PORT}"
+  if [[ -n "${BASE_HEALTH_URL}" ]]; then
+    if [[ -z "${BASE_URL}" ]]; then
+      case "${BASE_HEALTH_URL}" in
+        */actuator/health) BASE_URL="${BASE_HEALTH_URL%/actuator/health}" ;;
+      esac
+    fi
+  elif [[ -n "${BASE_URL}" ]]; then
+    BASE_HEALTH_URL="${BASE_URL}${HEALTH_PATH}"
+  else
+    local candidate_urls=(
+      "http://127.0.0.1:28080${HEALTH_PATH}"
+      "${base_url_default}${HEALTH_PATH}"
+    )
+    local candidate
+    for candidate in "${candidate_urls[@]}"; do
+      if curl -fsS --max-time 2 "${candidate}" >/dev/null 2>&1; then
+        BASE_HEALTH_URL="${candidate}"
+        break
+      fi
+    done
+    if [[ -z "${BASE_HEALTH_URL}" ]]; then
+      BASE_HEALTH_URL="${base_url_default}${HEALTH_PATH}"
+    fi
+    case "${BASE_HEALTH_URL}" in
+      */actuator/health) BASE_URL="${BASE_HEALTH_URL%/actuator/health}" ;;
+    esac
+  fi
+
+  if [[ -z "${BASE_URL}" ]]; then
+    BASE_URL="${base_url_default}"
   fi
 }
 
@@ -191,68 +340,91 @@ fi
 
 mkdir -p "${AUDIT_DIR}"
 FINAL_GATE_LOG="${AUDIT_DIR}/final-gate-${MODULE}-${DATE_STR}.log"
+E2E_API_GATE_LOG="${AUDIT_DIR}/e2e-api-gate-${MODULE}-${DATE_STR}.log"
+SECURITY_CONTRACT_LOG="${AUDIT_DIR}/security-contract-${MODULE}-${DATE_STR}.md"
+UI_VISUAL_GATE_LOG="${AUDIT_DIR}/ui-visual-gate-${MODULE}-${DATE_STR}.log"
 FINAL_CLOSURE_REPORT="${AUDIT_DIR}/final-closure-${MODULE}-${DATE_STR}.md"
+resolve_backend_urls
 
 echo "=== Final Closure: module=${MODULE}, cc_mode=${CC_MODE} ==="
+echo "INFO: backend base=${BASE_URL}, health=${BASE_HEALTH_URL}"
 
 # Step 1: 环境准备
+EXTERNAL_HEALTHY="no"
 if curl -fsS --max-time 5 "${BASE_HEALTH_URL}" >/dev/null 2>&1; then
+  EXTERNAL_HEALTHY="yes"
+fi
+
+if [[ "${BACKEND_POLICY}" != "docker_only" && "${EXTERNAL_HEALTHY}" == "yes" ]]; then
   BACKEND_MODE="external"
   echo "INFO: 复用外部后端 (${BASE_HEALTH_URL})"
 else
-  DOCKER_CMD="$(resolve_docker_run_cmd)"
-  DOCKER_AVAILABLE="yes"
-  DOCKER_BLOCK_REASON=""
-  if [[ -z "${DOCKER_CMD}" ]]; then
-    DOCKER_AVAILABLE="no"
-    DOCKER_BLOCK_REASON="未配置 Docker 启动命令（DOCKER_RUN_CMD 或 config.commands.ops.docker_run）"
-  elif ! command -v docker >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
-    DOCKER_AVAILABLE="no"
-    DOCKER_BLOCK_REASON="未检测到 docker/docker-compose 命令"
-  fi
-
-  if [[ "${DOCKER_AVAILABLE}" == "yes" ]]; then
-    MYSQL_INIT_PRECHECK_ERR=""
-    if ! MYSQL_INIT_PRECHECK_ERR="$(check_mysql_init_dir)"; then
-      if [[ "${BACKEND_POLICY}" == "docker_only" ]]; then
-        fail_exit 11 "Docker preflight 失败（${MYSQL_INIT_PRECHECK_ERR}）"
-      fi
-      DOCKER_AVAILABLE="no"
-      DOCKER_BLOCK_REASON="Docker preflight 未通过（${MYSQL_INIT_PRECHECK_ERR}）"
+  if [[ "${BACKEND_POLICY}" == "docker_only" && "${EXTERNAL_HEALTHY}" == "yes" ]]; then
+    if docker_backend_healthy; then
+      BACKEND_MODE="docker"
+      echo "INFO: backend-policy=docker_only，检测到 Docker backend 已健康，复用现有 Docker 环境"
+    else
+      echo "INFO: backend-policy=docker_only，忽略外部后端探测结果，强制执行 Docker 启动路径"
     fi
   fi
+  if [[ "${BACKEND_MODE}" != "docker" ]]; then
+    DOCKER_CMD="$(resolve_docker_run_cmd)"
+    DOCKER_AVAILABLE="yes"
+    DOCKER_BLOCK_REASON=""
+    if [[ -z "${DOCKER_CMD}" ]]; then
+      DOCKER_AVAILABLE="no"
+      DOCKER_BLOCK_REASON="未配置 Docker 启动命令（DOCKER_RUN_CMD 或 config.commands.ops.docker_run）"
+    elif ! command -v docker >/dev/null 2>&1; then
+      DOCKER_AVAILABLE="no"
+      DOCKER_BLOCK_REASON="未检测到 docker 命令（要求 docker compose v2）"
+    elif ! docker compose version >/dev/null 2>&1; then
+      DOCKER_AVAILABLE="no"
+      DOCKER_BLOCK_REASON="未检测到 Docker Compose Plugin v2（docker compose）"
+    fi
 
-  if [[ "${DOCKER_AVAILABLE}" == "yes" ]]; then
-    echo "INFO: 后端不可达，执行 Docker 启动命令: ${DOCKER_CMD}"
-    DOCKER_BOOT_LOG="${AUDIT_DIR}/final-closure-docker-boot-${MODULE}-${DATE_STR}.log"
-    set +e
-    bash -lc "${DOCKER_CMD}" > "${DOCKER_BOOT_LOG}" 2>&1
-    docker_rc=$?
-    set -e
-    if (( docker_rc != 0 )); then
-      if [[ "${BACKEND_POLICY}" == "docker_only" ]]; then
-        fail_exit 11 "Docker 启动命令失败（exit=${docker_rc}），日志: ${DOCKER_BOOT_LOG}"
+    if [[ "${DOCKER_AVAILABLE}" == "yes" ]]; then
+      MYSQL_INIT_PRECHECK_ERR=""
+      if ! MYSQL_INIT_PRECHECK_ERR="$(check_mysql_init_dir)"; then
+        if [[ "${BACKEND_POLICY}" == "docker_only" ]]; then
+          fail_exit 11 "Docker preflight 失败（${MYSQL_INIT_PRECHECK_ERR}）"
+        fi
+        DOCKER_AVAILABLE="no"
+        DOCKER_BLOCK_REASON="Docker preflight 未通过（${MYSQL_INIT_PRECHECK_ERR}）"
       fi
-      echo "WARNING: Docker 启动失败（exit=${docker_rc}），回退本地托管后端，日志: ${DOCKER_BOOT_LOG}"
+    fi
+
+    if [[ "${DOCKER_AVAILABLE}" == "yes" ]]; then
+      echo "INFO: 后端不可达，执行 Docker 启动命令: ${DOCKER_CMD}"
+      DOCKER_BOOT_LOG="${AUDIT_DIR}/final-closure-docker-boot-${MODULE}-${DATE_STR}.log"
+      set +e
+      bash -lc "${DOCKER_CMD}" > "${DOCKER_BOOT_LOG}" 2>&1
+      docker_rc=$?
+      set -e
+      if (( docker_rc != 0 )); then
+        if [[ "${BACKEND_POLICY}" == "docker_only" ]]; then
+          fail_exit 11 "Docker 启动命令失败（exit=${docker_rc}），日志: ${DOCKER_BOOT_LOG}"
+        fi
+        echo "WARNING: Docker 启动失败（exit=${docker_rc}），回退本地托管后端，日志: ${DOCKER_BOOT_LOG}"
+        BACKEND_MODE="managed"
+        echo "INFO: 启动托管后端..."
+        mvn -pl ruoyi-admin -am spring-boot:run >/tmp/osg-backend.log 2>&1 &
+        BACK_PID=$!
+        echo "INFO: 后端 PID=${BACK_PID}，日志=/tmp/osg-backend.log"
+      else
+        BACKEND_MODE="docker"
+        echo "INFO: Docker 启动命令执行成功，继续等待健康检查"
+      fi
+    else
+      if [[ "${BACKEND_POLICY}" == "docker_only" ]]; then
+        fail_exit 11 "backend-policy=docker_only 且 ${DOCKER_BLOCK_REASON}"
+      fi
+      echo "INFO: Docker 路径不可用（${DOCKER_BLOCK_REASON}），回退本地托管后端"
       BACKEND_MODE="managed"
       echo "INFO: 启动托管后端..."
       mvn -pl ruoyi-admin -am spring-boot:run >/tmp/osg-backend.log 2>&1 &
       BACK_PID=$!
       echo "INFO: 后端 PID=${BACK_PID}，日志=/tmp/osg-backend.log"
-    else
-      BACKEND_MODE="external"
-      echo "INFO: Docker 启动命令执行成功，继续等待健康检查"
     fi
-  else
-    if [[ "${BACKEND_POLICY}" == "docker_only" ]]; then
-      fail_exit 11 "backend-policy=docker_only 且 ${DOCKER_BLOCK_REASON}"
-    fi
-    echo "INFO: Docker 路径不可用（${DOCKER_BLOCK_REASON}），回退本地托管后端"
-    BACKEND_MODE="managed"
-    echo "INFO: 启动托管后端..."
-    mvn -pl ruoyi-admin -am spring-boot:run >/tmp/osg-backend.log 2>&1 &
-    BACK_PID=$!
-    echo "INFO: 后端 PID=${BACK_PID}，日志=/tmp/osg-backend.log"
   fi
 fi
 
@@ -268,7 +440,11 @@ echo "INFO: 后端健康检查通过"
 
 # Step 2: 门禁执行 + WARNING 兜底
 set +e
-bash bin/final-gate.sh "${MODULE}" 2>&1 | tee "${FINAL_GATE_LOG}"
+BASE_URL="${BASE_URL}" HEALTH_PATH="${HEALTH_PATH}" BASE_HEALTH_URL="${BASE_HEALTH_URL}" \
+  E2E_API_GATE_LOG="${E2E_API_GATE_LOG}" \
+  UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG}" \
+  CAPTCHA_EXPECTED="${CAPTCHA_EXPECTED:-}" \
+  bash bin/final-gate.sh "${MODULE}" 2>&1 | tee "${FINAL_GATE_LOG}"
 gate_rc=${PIPESTATUS[0]}
 set -e
 
@@ -280,7 +456,35 @@ if grep -Eq '⚠️ WARNING: 后端未启动|⚠️ @api E2E 已跳过' "${FINAL
   fail_exit 12 "命中 final-gate 业务 WARNING（后端未启动或 @api E2E 跳过）"
 fi
 
+if grep -Eiq 'http proxy error|connect ECONNREFUSED|ECONNREFUSED|proxy error' "${FINAL_GATE_LOG}"; then
+  fail_exit 12 "命中 final-gate 代理/后端连通性错误（proxy error / ECONNREFUSED）"
+fi
+
 echo "INFO: final-gate 通过且无业务 WARNING"
+
+CAPTCHA_EVIDENCE="$(grep -E 'PASS: 验证码基线通过|INFO: captchaEnabled=.*CAPTCHA_EXPECTED|FAIL: 验证码基线不匹配|FAIL: /captchaImage 请求失败|FAIL: 无法从 /captchaImage 解析 captchaEnabled|WARNING: /captchaImage 请求失败|WARNING: 无法解析 /captchaImage.captchaEnabled' "${FINAL_GATE_LOG}" | tail -n 1 || true)"
+if [[ -z "${CAPTCHA_EVIDENCE}" ]]; then
+  CAPTCHA_EVIDENCE="none"
+fi
+
+FIRST_FAILURE_EVIDENCE="none"
+FIRST_PROXY_ERROR_EVIDENCE="none"
+if [[ -f "${FINAL_GATE_LOG}" ]]; then
+  FIRST_FAILURE_EVIDENCE="$(grep -m1 -E '^FAIL:' "${FINAL_GATE_LOG}" || true)"
+  FIRST_PROXY_ERROR_EVIDENCE="$(grep -m1 -Ei 'proxy error|connect ECONNREFUSED|ECONNREFUSED' "${FINAL_GATE_LOG}" || true)"
+fi
+if [[ -z "${FIRST_FAILURE_EVIDENCE}" && -f "${E2E_API_GATE_LOG}" ]]; then
+  FIRST_FAILURE_EVIDENCE="$(grep -m1 -E '^FAIL:' "${E2E_API_GATE_LOG}" || true)"
+fi
+if [[ -z "${FIRST_PROXY_ERROR_EVIDENCE}" && -f "${E2E_API_GATE_LOG}" ]]; then
+  FIRST_PROXY_ERROR_EVIDENCE="$(grep -m1 -Ei 'proxy error|connect ECONNREFUSED|ECONNREFUSED' "${E2E_API_GATE_LOG}" || true)"
+fi
+if [[ -z "${FIRST_FAILURE_EVIDENCE}" ]]; then
+  FIRST_FAILURE_EVIDENCE="none"
+fi
+if [[ -z "${FIRST_PROXY_ERROR_EVIDENCE}" ]]; then
+  FIRST_PROXY_ERROR_EVIDENCE="none"
+fi
 
 # Step 3: 审计校验
 if ! python3 .claude/skills/workflow-engine/tests/traceability_guard.py \
@@ -346,6 +550,18 @@ if [[ ! -f "${FINAL_GATE_LOG}" ]]; then
   fail_exit 15 "缺少 final-gate 日志产物: ${FINAL_GATE_LOG}"
 fi
 
+if [[ ! -f "${E2E_API_GATE_LOG}" ]]; then
+  fail_exit 15 "缺少 e2e-api-gate 日志产物: ${E2E_API_GATE_LOG}"
+fi
+
+if [[ ! -f "${SECURITY_CONTRACT_LOG}" ]]; then
+  fail_exit 15 "缺少 security-contract 审计产物: ${SECURITY_CONTRACT_LOG}"
+fi
+
+if [[ ! -f "${UI_VISUAL_GATE_LOG}" ]]; then
+  fail_exit 15 "缺少 ui-visual-gate 审计产物: ${UI_VISUAL_GATE_LOG}"
+fi
+
 API_SMOKE_REPORT="$(ls -t ${AUDIT_DIR}/api-smoke-${MODULE}-*.md 2>/dev/null | head -n1 || true)"
 if [[ -z "${API_SMOKE_REPORT}" ]]; then
   fail_exit 15 "缺少 api-smoke 审计产物（模块=${MODULE}）"
@@ -379,9 +595,14 @@ fi
   echo "- cc_mode: ${CC_MODE}"
   echo "- backend_policy: ${BACKEND_POLICY}"
   echo "- backend_mode: ${BACKEND_MODE}"
+  echo "- base_url: ${BASE_URL}"
+  echo "- base_health_url: ${BASE_HEALTH_URL}"
   echo
   echo "## 关键产物"
   echo "- final_gate_log: ${FINAL_GATE_LOG}"
+  echo "- e2e_api_gate_log: ${E2E_API_GATE_LOG}"
+  echo "- security_contract_log: ${SECURITY_CONTRACT_LOG}"
+  echo "- ui_visual_gate_log: ${UI_VISUAL_GATE_LOG}"
   echo "- api_smoke_report: ${API_SMOKE_REPORT}"
   echo "- playwright_report_dir: ${PLAYWRIGHT_REPORT_DIR}"
   if [[ -n "${DOCKER_BOOT_LOG}" ]]; then
@@ -393,6 +614,25 @@ fi
   echo
   echo "## 状态"
   echo "- cc_status: ${CC_STATUS}"
+  echo "- captcha_expected: ${CAPTCHA_EXPECTED:-none}"
+  echo "- captcha_evidence: ${CAPTCHA_EVIDENCE}"
+  if [[ -f "${SECURITY_CONTRACT_LOG}" ]]; then
+    SECURITY_FIRST_FAILURE_EVIDENCE="$(grep -m1 -E '^\d+\. \[(HIGH|MEDIUM|LOW)\]|^FAIL:' "${SECURITY_CONTRACT_LOG}" || true)"
+    if [[ -z "${SECURITY_FIRST_FAILURE_EVIDENCE}" ]]; then
+      SECURITY_FIRST_FAILURE_EVIDENCE="none"
+    fi
+  fi
+  UI_VISUAL_FIRST_FAILURE_EVIDENCE="none"
+  if [[ -f "${UI_VISUAL_GATE_LOG}" ]]; then
+    UI_VISUAL_FIRST_FAILURE_EVIDENCE="$(grep -m1 -E '^VISUAL_FAIL:|^FAIL:' "${UI_VISUAL_GATE_LOG}" || true)"
+    if [[ -z "${UI_VISUAL_FIRST_FAILURE_EVIDENCE}" ]]; then
+      UI_VISUAL_FIRST_FAILURE_EVIDENCE="none"
+    fi
+  fi
+  echo "- security_first_failure_evidence: ${SECURITY_FIRST_FAILURE_EVIDENCE}"
+  echo "- ui_visual_first_failure_evidence: ${UI_VISUAL_FIRST_FAILURE_EVIDENCE}"
+  echo "- first_failure_evidence: ${FIRST_FAILURE_EVIDENCE}"
+  echo "- first_proxy_error_evidence: ${FIRST_PROXY_ERROR_EVIDENCE}"
   if [[ -n "${CLEANUP_WARN}" ]]; then
     echo "- cleanup_warning: ${CLEANUP_WARN}"
   else

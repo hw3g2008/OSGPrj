@@ -32,7 +32,8 @@ request.interceptors.response.use(
 
     // 若依标准响应格式
     if (code === 200) {
-      return data
+      const hasDataField = Object.prototype.hasOwnProperty.call(response.data, 'data')
+      return hasDataField ? data : response.data
     }
 
     // Token 过期

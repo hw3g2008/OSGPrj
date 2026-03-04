@@ -1,0 +1,87 @@
+services:
+  mysql:
+    ports: []
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_app_password
+    secrets:
+      - mysql_root_password
+      - mysql_app_password
+
+  redis:
+    ports: []
+    command: ["sh", "-c", "redis-server --appendonly yes --requirepass \"$$(cat /run/secrets/redis_password)\""]
+    secrets:
+      - redis_password
+
+  backend:
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      MYSQL_APP_PASSWORD_FILE: /run/secrets/mysql_app_password
+      REDIS_PASSWORD_FILE: /run/secrets/redis_password
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+    secrets:
+      - mysql_app_password
+      - redis_password
+      - jwt_secret
+
+  admin:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: admin
+    command: ["nginx", "-g", "daemon off;"]
+    ports:
+      - "${ADMIN_PORT:-3005}:80"
+
+  student:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: student
+    command: ["nginx", "-g", "daemon off;"]
+    ports:
+      - "${STUDENT_PORT:-3001}:80"
+
+  mentor:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: mentor
+    command: ["nginx", "-g", "daemon off;"]
+    ports:
+      - "${MENTOR_PORT:-3002}:80"
+
+  lead-mentor:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: lead-mentor
+    command: ["nginx", "-g", "daemon off;"]
+    ports:
+      - "${LEAD_MENTOR_PORT:-3003}:80"
+
+  assistant:
+    build:
+      context: ..
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: assistant
+    command: ["nginx", "-g", "daemon off;"]
+    ports:
+      - "${ASSISTANT_PORT:-3004}:80"
+
+secrets:
+  mysql_root_password:
+    file: ./secrets/mysql_root_password
+  mysql_app_password:
+    file: ./secrets/mysql_app_password
+  redis_password:
+    file: ./secrets/redis_password
+  jwt_secret:
+    file: ./secrets/jwt_secret

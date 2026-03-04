@@ -111,6 +111,7 @@
 4. 检查是否是最后一个 Story，通过 transition() 推进:
    - 如果还有 pending Stories → transition() 推进到 "story_approved"
    - 如果是最后一个 → transition() 推进到 "all_stories_done"
+     - 输出提示："所有 Stories 已完成。请执行 `/final-closure {module}` 运行最终收尾流程。"
 ```
 
 ### 完成判断

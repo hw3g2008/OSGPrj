@@ -1,12 +1,12 @@
 package com.ruoyi.framework.web.service;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.redis.RedisCache;
@@ -14,6 +14,7 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.exception.user.UserPasswordNotMatchException;
 import com.ruoyi.common.exception.user.UserPasswordRetryLimitExceedException;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.system.mapper.SysUserMapper;
 import com.ruoyi.framework.security.context.AuthenticationContextHolder;
 import com.ruoyi.system.service.ISysUserService;
 
@@ -31,6 +32,9 @@ public class SysPasswordService
     @Autowired
     private ISysUserService userService;
 
+    @Autowired
+    private SysUserMapper userMapper;
+
     private static final String RESET_CODE_KEY = "pwd_reset_code:";
     private static final String RESET_TOKEN_KEY = "pwd_reset_token:";
 
@@ -42,6 +46,9 @@ public class SysPasswordService
 
     @Value(value = "${user.password.resetCodeTtlMinutes:5}")
     private int resetCodeTtlMinutes;
+
+    @Value(value = "${user.password.resetCodeFixed:}")
+    private String resetCodeFixed;
 
     /**
      * 登录账户密码错误次数缓存键名
@@ -102,14 +109,8 @@ public class SysPasswordService
      */
     private SysUser findUserByEmail(String email)
     {
-        SysUser query = new SysUser();
-        query.setEmail(email);
-        List<SysUser> users = userService.selectUserList(query);
-        if (users == null || users.isEmpty())
-        {
-            return null;
-        }
-        return users.get(0);
+        // 避免走 selectUserList 的 @DataScope（会依赖登录态），改为直接按邮箱精确查找
+        return userMapper.checkEmailUnique(email);
     }
 
     /**
@@ -117,6 +118,10 @@ public class SysPasswordService
      */
     private String generateCode()
     {
+        if (StringUtils.hasText(resetCodeFixed))
+        {
+            return resetCodeFixed;
+        }
         int code = (int) ((Math.random() * 900000) + 100000);
         return String.valueOf(code);
     }

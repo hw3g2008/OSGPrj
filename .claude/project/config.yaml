@@ -53,10 +53,12 @@ commands:
   
   # 运维命令
   ops:
-    docker_build: "docker-compose build"
-    docker_run: "docker-compose up -d"
-    logs: "docker-compose logs -f"
-    health: "curl -s http://localhost:8080/actuator/health"
+    docker_build: "bash bin/docker-env-build.sh test --profile core"
+    docker_run: "bash bin/docker-env-up.sh test --profile core"
+    logs: "bash bin/docker-env-logs.sh test --profile core"
+    health: "curl -sS --max-time 5 \"${BASE_HEALTH_URL:-http://127.0.0.1:28080/actuator/health}\""
+    e2e_api_gate: "bash bin/e2e-api-gate.sh {module} full"
+    ui_visual_gate: "bash bin/ui-visual-gate.sh {module}"
 
 # 目录约定
 paths:
@@ -242,6 +244,7 @@ testing:
   e2e:
     enabled: true
     framework: playwright
-    command: "pnpm --dir osg-frontend test:e2e"
+    command: "bash bin/e2e-api-gate.sh {module} full"
+    visual_gate_command: "bash bin/ui-visual-gate.sh {module}"
     report: "osg-frontend/playwright-report"
     trigger: "manual"              # manual = 手动触发, auto = all_stories_done 时自动
