@@ -78,16 +78,18 @@ CONTRACT_PATH="osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.ya
 SUMMARY_JSON="${AUDIT_DIR}/ui-visual-contract-summary-${MODULE}-${DATE_STR}.json"
 CONTRACT_JSON="${AUDIT_DIR}/ui-visual-contract-${MODULE}-${DATE_STR}.json"
 PAGE_RESULTS_JSONL="${AUDIT_DIR}/ui-visual-page-results-${MODULE}-${DATE_STR}.jsonl"
+STATE_RESULTS_JSONL="${AUDIT_DIR}/ui-visual-state-results-${MODULE}-${DATE_STR}.jsonl"
 PAGE_REPORT_JSON="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
 EVIDENCE_DIR="${AUDIT_DIR}/ui-visual-actual-${MODULE}-${DATE_STR}"
 MANIFEST_JSON="${AUDIT_DIR}/ui-visual-baseline-manifest-${MODULE}-${RUN_ID}.json"
 REPO_ROOT="$(pwd)"
 PAGE_RESULTS_JSONL_ABS="${REPO_ROOT}/${PAGE_RESULTS_JSONL}"
+STATE_RESULTS_JSONL_ABS="${REPO_ROOT}/${STATE_RESULTS_JSONL}"
 EVIDENCE_DIR_ABS="${REPO_ROOT}/${EVIDENCE_DIR}"
 
 mkdir -p "${AUDIT_DIR}"
 mkdir -p "${EVIDENCE_DIR}"
-rm -f "${PAGE_RESULTS_JSONL}" "${PAGE_REPORT_JSON}"
+rm -f "${PAGE_RESULTS_JSONL}" "${STATE_RESULTS_JSONL}" "${PAGE_REPORT_JSON}"
 
 if [[ "${MODE}" == "generate" ]]; then
   python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
@@ -110,6 +112,27 @@ PY
 echo "INFO: module=${MODULE} mode=${MODE} source=${SOURCE} contract=${CONTRACT_PATH}"
 echo "INFO: summary=${SUMMARY_JSON}"
 echo "INFO: contract_json=${CONTRACT_JSON}"
+
+UI_VISUAL_STABILITY_TIMEZONE="${UI_VISUAL_STABILITY_TIMEZONE:-Asia/Shanghai}"
+UI_VISUAL_STABILITY_LOCALE="${UI_VISUAL_STABILITY_LOCALE:-zh-CN}"
+E2E_FIXED_TIME="${E2E_FIXED_TIME:-2026-03-01T00:00:00.000Z}"
+
+if [[ -z "${UI_VISUAL_STABILITY_TIMEZONE}" || -z "${UI_VISUAL_STABILITY_LOCALE}" ]]; then
+  echo "FAIL: missing UI visual stability prerequisites (timezone/locale)"
+  exit 18
+fi
+
+echo "INFO: stability timezone=${UI_VISUAL_STABILITY_TIMEZONE} locale=${UI_VISUAL_STABILITY_LOCALE} fixed_time=${E2E_FIXED_TIME}"
+
+HAS_STATE_CASES="$(python3 - <<PY
+import yaml
+from pathlib import Path
+contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) or {}
+pages = contract.get("pages") if isinstance(contract.get("pages"), list) else []
+print("1" if any(isinstance(page, dict) and isinstance(page.get("state_cases"), list) and page.get("state_cases") for page in pages) else "0")
+PY
+)"
+echo "INFO: has_state_cases=${HAS_STATE_CASES}"
 
 if [[ "${MODE}" == "generate" && "${SOURCE}" == "prototype" ]]; then
   if ! bash bin/prototype-server.sh status >/dev/null 2>&1; then
@@ -146,6 +169,11 @@ if [[ "${MODE}" == "generate" ]]; then
   PLAYWRIGHT_ARGS+=(--update-snapshots=all)
 fi
 
+STATE_PLAYWRIGHT_ARGS=(--grep "@ui-state" --workers=1)
+
+PLAYWRIGHT_VISUAL_RC=0
+PLAYWRIGHT_STATE_RC=0
+
 set +e
 (
   cd osg-frontend
@@ -154,14 +182,44 @@ set +e
   UI_VISUAL_CONTRACT_JSON="../${CONTRACT_JSON}" \
   UI_VISUAL_EVIDENCE_DIR="${EVIDENCE_DIR_ABS}" \
   UI_VISUAL_PAGE_RESULTS_FILE="${PAGE_RESULTS_JSONL_ABS}" \
+  UI_VISUAL_STATE_RESULTS_FILE="${STATE_RESULTS_JSONL_ABS}" \
   UI_VISUAL_MODULE="${MODULE}" \
   UI_VISUAL_PROTOTYPE_BASE_URL="${PROTOTYPE_BASE_URL:-}" \
   E2E_API_PROXY_TARGET="${API_PROXY_TARGET}" \
+  UI_VISUAL_STABILITY_TIMEZONE="${UI_VISUAL_STABILITY_TIMEZONE}" \
+  UI_VISUAL_STABILITY_LOCALE="${UI_VISUAL_STABILITY_LOCALE}" \
+  E2E_FIXED_TIME="${E2E_FIXED_TIME}" \
   PW_VISUAL_SNAPSHOT_TEMPLATE="{testDir}/visual-baseline/{arg}{ext}" \
-  TZ="${TZ:-Asia/Shanghai}" \
+  TZ="${UI_VISUAL_STABILITY_TIMEZONE}" \
+  LANG="${LANG:-en_US.UTF-8}" \
+  LC_ALL="${LC_ALL:-en_US.UTF-8}" \
   pnpm test:e2e "${PLAYWRIGHT_ARGS[@]}"
 )
-PLAYWRIGHT_RC=$?
+PLAYWRIGHT_VISUAL_RC=$?
+
+if [[ "${MODE}" == "verify" && "${HAS_STATE_CASES}" == "1" ]]; then
+  (
+    cd osg-frontend
+    UI_VISUAL_MODE="${MODE}" \
+    UI_VISUAL_SOURCE="${SOURCE}" \
+    UI_VISUAL_CONTRACT_JSON="../${CONTRACT_JSON}" \
+    UI_VISUAL_EVIDENCE_DIR="${EVIDENCE_DIR_ABS}" \
+    UI_VISUAL_PAGE_RESULTS_FILE="${PAGE_RESULTS_JSONL_ABS}" \
+    UI_VISUAL_STATE_RESULTS_FILE="${STATE_RESULTS_JSONL_ABS}" \
+    UI_VISUAL_MODULE="${MODULE}" \
+    UI_VISUAL_PROTOTYPE_BASE_URL="${PROTOTYPE_BASE_URL:-}" \
+    E2E_API_PROXY_TARGET="${API_PROXY_TARGET}" \
+    UI_VISUAL_STABILITY_TIMEZONE="${UI_VISUAL_STABILITY_TIMEZONE}" \
+    UI_VISUAL_STABILITY_LOCALE="${UI_VISUAL_STABILITY_LOCALE}" \
+    E2E_FIXED_TIME="${E2E_FIXED_TIME}" \
+    PW_VISUAL_SNAPSHOT_TEMPLATE="{testDir}/visual-baseline/{arg}{ext}" \
+    TZ="${UI_VISUAL_STABILITY_TIMEZONE}" \
+    LANG="${LANG:-en_US.UTF-8}" \
+    LC_ALL="${LC_ALL:-en_US.UTF-8}" \
+    pnpm test:e2e "${STATE_PLAYWRIGHT_ARGS[@]}"
+  )
+  PLAYWRIGHT_STATE_RC=$?
+fi
 set -e
 
 python3 - <<PY
@@ -183,6 +241,18 @@ if result_path.exists():
         if page_id:
             result_map[page_id] = record
 
+state_result_path = Path("${STATE_RESULTS_JSONL}")
+state_result_map = {}
+if state_result_path.exists():
+    for line in state_result_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        record = json.loads(line)
+        page_id = record.get("page_id")
+        if page_id:
+            state_result_map[page_id] = record
+
 page_rows = []
 for page in pages:
     page_id = page.get("page_id", "")
@@ -194,6 +264,10 @@ for page in pages:
         "diff_ref": result.get("diff_ref", "none"),
         "diff_threshold": page.get("diff_threshold"),
         "result": result.get("result", "NOT_RUN"),
+        "style_assertions_passed": int(result.get("style_assertions_passed", 0) or 0),
+        "style_assertions_failed": int(result.get("style_assertions_failed", 0) or 0),
+        "state_cases_executed": int(state_result_map.get(page_id, {}).get("state_cases_executed", 0) or 0),
+        "state_cases_failed": int(state_result_map.get(page_id, {}).get("state_cases_failed", 0) or 0),
     }
     page_rows.append(row)
 
@@ -204,6 +278,10 @@ summary = {
     "pass_pages": sum(1 for x in page_rows if x.get("result") == "PASS"),
     "fail_pages": sum(1 for x in page_rows if x.get("result") == "FAIL"),
     "not_run_pages": sum(1 for x in page_rows if x.get("result") == "NOT_RUN"),
+    "style_assertions_passed": sum(int(x.get("style_assertions_passed", 0) or 0) for x in page_rows),
+    "style_assertions_failed": sum(int(x.get("style_assertions_failed", 0) or 0) for x in page_rows),
+    "state_cases_executed": sum(int(x.get("state_cases_executed", 0) or 0) for x in page_rows),
+    "state_cases_failed": sum(int(x.get("state_cases_failed", 0) or 0) for x in page_rows),
     "pages": page_rows,
 }
 page_report_path = Path("${PAGE_REPORT_JSON}")
@@ -217,13 +295,27 @@ for row in page_rows:
         f"actual_ref={row['actual_ref']} "
         f"diff_ref={row['diff_ref']} "
         f"diff_threshold={row['diff_threshold']} "
-        f"result={row['result']}"
+        f"result={row['result']} "
+        f"style_assertions_passed={row['style_assertions_passed']} "
+        f"style_assertions_failed={row['style_assertions_failed']} "
+        f"state_cases_executed={row['state_cases_executed']} "
+        f"state_cases_failed={row['state_cases_failed']}"
     )
 PY
 
-if (( PLAYWRIGHT_RC != 0 )); then
-  echo "FAIL: ui-visual-baseline (${MODE}) exit=${PLAYWRIGHT_RC}"
-  exit "${PLAYWRIGHT_RC}"
+if (( PLAYWRIGHT_VISUAL_RC != 0 )); then
+  echo "FAIL: ui-visual-baseline visual suite (${MODE}) exit=${PLAYWRIGHT_VISUAL_RC}"
+  exit "${PLAYWRIGHT_VISUAL_RC}"
+fi
+
+if (( PLAYWRIGHT_STATE_RC != 0 )); then
+  echo "FAIL: ui-visual-baseline state suite (${MODE}) exit=${PLAYWRIGHT_STATE_RC}"
+  exit "${PLAYWRIGHT_STATE_RC}"
+fi
+
+if [[ "${MODE}" == "verify" && "${HAS_STATE_CASES}" == "1" && ! -f "${STATE_RESULTS_JSONL}" ]]; then
+  echo "FAIL: state_cases declared but no state result produced (${STATE_RESULTS_JSONL})"
+  exit 19
 fi
 
 if [[ "${MODE}" == "generate" && "${SOURCE}" == "prototype" ]]; then

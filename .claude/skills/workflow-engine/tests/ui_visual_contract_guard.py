@@ -29,6 +29,8 @@ REQUIRED_PAGE_FIELDS = {
 }
 ALLOWED_AUTH_MODES = {"public", "protected"}
 ALLOWED_CAPTURE_MODES = {"clip", "fullpage"}
+ALLOWED_STATE_CASES = {"focus", "hover", "loading", "empty", "error"}
+ALLOWED_STATE_ASSERTIONS = {"visible", "text", "css"}
 MIN_REQUIRED_ANCHORS = 3
 
 # Generic selectors are too weak to serve as the only structural anchors.
@@ -204,6 +206,77 @@ def validate_contract(contract: dict[str, Any], errors: list[str]) -> None:
         mask_selectors = page.get("mask_selectors", [])
         if not isinstance(mask_selectors, list):
             _err(errors, f"{tag}.mask_selectors must be list")
+
+        style_contracts = page.get("style_contracts", [])
+        if style_contracts is None:
+            style_contracts = []
+        if not isinstance(style_contracts, list):
+            _err(errors, f"{tag}.style_contracts must be list when provided")
+            style_contracts = []
+        for s, rule in enumerate(style_contracts):
+            style_tag = f"{tag}.style_contracts[{s}]"
+            if not isinstance(rule, dict):
+                _err(errors, f"{style_tag} must be object")
+                continue
+            selector = rule.get("selector")
+            prop = rule.get("property")
+            expected = rule.get("expected")
+            tolerance = rule.get("tolerance")
+            if not isinstance(selector, str) or not selector.strip():
+                _err(errors, f"{style_tag}.selector must be non-empty string")
+            if not isinstance(prop, str) or not prop.strip():
+                _err(errors, f"{style_tag}.property must be non-empty string")
+            if not isinstance(expected, str) or not expected.strip():
+                _err(errors, f"{style_tag}.expected must be non-empty string")
+            if tolerance is not None and (
+                not isinstance(tolerance, (int, float)) or float(tolerance) < 0
+            ):
+                _err(errors, f"{style_tag}.tolerance must be number >= 0 when provided")
+
+        state_cases = page.get("state_cases", [])
+        if state_cases is None:
+            state_cases = []
+        if not isinstance(state_cases, list):
+            _err(errors, f"{tag}.state_cases must be list when provided")
+            state_cases = []
+        for c, case in enumerate(state_cases):
+            case_tag = f"{tag}.state_cases[{c}]"
+            if not isinstance(case, dict):
+                _err(errors, f"{case_tag} must be object")
+                continue
+            state = case.get("state")
+            target = case.get("target")
+            assertion = case.get("assertion")
+            if state not in ALLOWED_STATE_CASES:
+                _err(errors, f"{case_tag}.state must be one of {sorted(ALLOWED_STATE_CASES)}")
+            if not isinstance(target, str) or not target.strip():
+                _err(errors, f"{case_tag}.target must be non-empty string")
+            if not isinstance(assertion, dict):
+                _err(errors, f"{case_tag}.assertion must be object")
+                continue
+            assertion_type = assertion.get("type")
+            if assertion_type not in ALLOWED_STATE_ASSERTIONS:
+                _err(
+                    errors,
+                    f"{case_tag}.assertion.type must be one of {sorted(ALLOWED_STATE_ASSERTIONS)}",
+                )
+                continue
+            if assertion_type == "text":
+                value = assertion.get("value")
+                if not isinstance(value, str) or not value.strip():
+                    _err(errors, f"{case_tag}.assertion.value must be non-empty string for text")
+            elif assertion_type == "css":
+                prop = assertion.get("property")
+                value = assertion.get("value")
+                if not isinstance(prop, str) or not prop.strip():
+                    _err(errors, f"{case_tag}.assertion.property must be non-empty string for css")
+                if not isinstance(value, str) or not value.strip():
+                    _err(errors, f"{case_tag}.assertion.value must be non-empty string for css")
+            else:
+                if "value" in assertion and (
+                    not isinstance(assertion.get("value"), str) or not assertion.get("value").strip()
+                ):
+                    _err(errors, f"{case_tag}.assertion.value must be non-empty string when provided")
 
 
 def main() -> int:

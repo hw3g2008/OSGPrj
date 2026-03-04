@@ -3,6 +3,27 @@ import path from 'node:path'
 
 export type VisualAuthMode = 'public' | 'protected'
 export type CaptureMode = 'clip' | 'fullpage'
+export type StateCaseName = 'focus' | 'hover' | 'loading' | 'empty' | 'error'
+export type StateAssertionType = 'visible' | 'text' | 'css'
+
+export interface VisualStyleContract {
+  selector: string
+  property: string
+  expected: string
+  tolerance?: number
+}
+
+export interface VisualStateAssertion {
+  type: StateAssertionType
+  value?: string
+  property?: string
+}
+
+export interface VisualStateCase {
+  state: StateCaseName
+  target: string
+  assertion: VisualStateAssertion
+}
 
 export interface VisualPageContract {
   page_id: string
@@ -18,6 +39,8 @@ export interface VisualPageContract {
   required_anchors: string[]
   required_anchors_any_of?: string[][]
   mask_selectors?: string[]
+  style_contracts?: VisualStyleContract[]
+  state_cases?: VisualStateCase[]
   scroll_to?: 'top' | 'center' | 'bottom'
   capture_mode?: CaptureMode
   clip_selector?: string
