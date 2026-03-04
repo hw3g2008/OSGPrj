@@ -1,84 +1,66 @@
 import { expect, type Page } from '@playwright/test'
-import { type VisualStateCase } from './visual-contract'
+import type { VisualStateCase } from './visual-contract'
 
-export interface StateCaseResult {
-  executed: number
-  failed: number
-  errors: string[]
-}
-
-async function applyStateAction(page: Page, stateCase: VisualStateCase): Promise<void> {
-  const target = page.locator(stateCase.target).first()
-  switch (stateCase.state) {
-    case 'focus':
-      await target.focus()
-      break
-    case 'hover':
-      await target.hover({ force: true })
-      break
-    case 'loading':
-    case 'empty':
-    case 'error':
-      // These states are asserted by contract selectors/values only.
-      break
-    default:
-      throw new Error(`unsupported state case: ${stateCase.state}`)
+function invariant(condition: boolean, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message)
   }
 }
 
-async function assertStateCase(page: Page, stateCase: VisualStateCase): Promise<void> {
-  const assertion = stateCase.assertion
-  if (assertion.type === 'visible') {
-    const selector = assertion.value || stateCase.target
-    await expect(page.locator(selector).first(), `visible assertion selector=${selector}`).toBeVisible()
-    return
-  }
-
-  if (assertion.type === 'text') {
-    const value = assertion.value || ''
-    await expect(
-      page.locator(stateCase.target).first(),
-      `text assertion target=${stateCase.target} expected=${value}`,
-    ).toContainText(value)
-    return
-  }
-
-  const property = assertion.property || ''
-  const expected = assertion.value || ''
-  const actual = await page.locator(stateCase.target).first().evaluate((el, p) => {
-    return getComputedStyle(el).getPropertyValue(p).trim()
-  }, property)
-  expect(
-    actual,
-    `css assertion target=${stateCase.target} property=${property} expected=${expected}`,
-  ).toBe(expected)
-}
-
-export async function runStateCases(
+export async function executeStateCase(
   page: Page,
   pageId: string,
-  stateCases: VisualStateCase[] | undefined,
-): Promise<StateCaseResult> {
-  const cases = stateCases || []
-  const result: StateCaseResult = {
-    executed: 0,
-    failed: 0,
-    errors: [],
+  stateCase: VisualStateCase,
+): Promise<void> {
+  const locator = page.locator(stateCase.target).first()
+  if ((await locator.count()) === 0) {
+    throw new Error(`state case target not found: page=${pageId} state=${stateCase.state} target=${stateCase.target}`)
   }
 
-  for (const stateCase of cases) {
-    result.executed += 1
-    try {
-      await applyStateAction(page, stateCase)
-      await assertStateCase(page, stateCase)
-    } catch (error) {
-      result.failed += 1
-      const reason = error instanceof Error ? error.message : String(error)
-      result.errors.push(
-        `page=${pageId} state=${stateCase.state} target=${stateCase.target} assertion=${stateCase.assertion.type} reason=${reason}`,
+  if (stateCase.state === 'focus') {
+    await locator.focus()
+  } else if (stateCase.state === 'hover') {
+    await locator.hover()
+  }
+
+  if (stateCase.assertion.type === 'visible') {
+    await expect(locator).toBeVisible()
+    return
+  }
+
+  if (stateCase.assertion.type === 'text') {
+    invariant(
+      typeof stateCase.assertion.value === 'string' && stateCase.assertion.value.trim().length > 0,
+      `state case assertion.value is required for text assertion: page=${pageId} state=${stateCase.state} target=${stateCase.target}`,
+    )
+    await expect(locator).toContainText(stateCase.assertion.value)
+    return
+  }
+
+  if (stateCase.assertion.type === 'css') {
+    invariant(
+      typeof stateCase.assertion.property === 'string' && stateCase.assertion.property.trim().length > 0,
+      `state case assertion.property is required for css assertion: page=${pageId} state=${stateCase.state} target=${stateCase.target}`,
+    )
+    invariant(
+      typeof stateCase.assertion.value === 'string' && stateCase.assertion.value.trim().length > 0,
+      `state case assertion.value is required for css assertion: page=${pageId} state=${stateCase.state} target=${stateCase.target}`,
+    )
+    const property = stateCase.assertion.property.trim()
+    const expected = stateCase.assertion.value.trim()
+    const actual = await locator.evaluate(
+      (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
+      property,
+    )
+    if (actual !== expected) {
+      throw new Error(
+        `state css assertion failed: page=${pageId} state=${stateCase.state} target=${stateCase.target} property=${property} expected=${expected} actual=${actual}`,
       )
     }
+    return
   }
 
-  return result
+  throw new Error(
+    `unsupported state assertion type: page=${pageId} state=${stateCase.state} type=${stateCase.assertion.type}`,
+  )
 }

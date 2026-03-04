@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { resolveStabilityConfigFromEnv } from './tests/e2e/support/test-stability'
 
 const reuseExistingServer =
   process.env.PW_E2E_REUSE_SERVER === undefined
@@ -6,8 +7,7 @@ const reuseExistingServer =
     : process.env.PW_E2E_REUSE_SERVER === '1'
 
 const snapshotPathTemplate = process.env.PW_VISUAL_SNAPSHOT_TEMPLATE
-const timezoneId = process.env.UI_VISUAL_STABILITY_TIMEZONE || 'Asia/Shanghai'
-const locale = process.env.UI_VISUAL_STABILITY_LOCALE || 'zh-CN'
+const stability = resolveStabilityConfigFromEnv()
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -21,8 +21,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'on-first-retry',
-    timezoneId,
-    locale,
+    locale: stability.locale,
+    timezoneId: stability.timezoneId,
   },
 
   projects: [

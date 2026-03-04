@@ -111,6 +111,14 @@ DATE_STR="$(date +%Y-%m-%d)"
 MODULE=""
 DOCKER_RUN_CMD="${DOCKER_RUN_CMD:-}"
 DOCKER_BOOT_LOG=""
+UI_VISUAL_TOTAL_PAGES="0"
+UI_VISUAL_PASS_PAGES="0"
+UI_VISUAL_FAIL_PAGES="0"
+UI_VISUAL_NOT_RUN_PAGES="0"
+UI_VISUAL_STYLE_PASSED="0"
+UI_VISUAL_STYLE_FAILED="0"
+UI_VISUAL_STATE_EXECUTED="0"
+UI_VISUAL_STATE_FAILED="0"
 
 cleanup_backend() {
   if [[ "${BACKEND_MODE}" == "managed" && -n "${BACK_PID}" ]]; then
@@ -194,13 +202,16 @@ write_failure_report() {
       echo "- ui_visual_first_failure_evidence: ${visual_first}"
     fi
     if [[ -n "${UI_VISUAL_PAGE_REPORT}" && -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
-      echo "- ui_visual_page_report: ${UI_VISUAL_PAGE_REPORT}"
-      read -r style_passed style_failed state_exec state_failed <<EOF
+      read -r v_total v_pass v_fail v_not_run v_style_pass v_style_fail v_state_exec v_state_fail <<EOF
 $(python3 - <<PY
 import json
 from pathlib import Path
 report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
 print(
+    report.get("total_pages", 0),
+    report.get("pass_pages", 0),
+    report.get("fail_pages", 0),
+    report.get("not_run_pages", 0),
     report.get("style_assertions_passed", 0),
     report.get("style_assertions_failed", 0),
     report.get("state_cases_executed", 0),
@@ -209,10 +220,10 @@ print(
 PY
 )
 EOF
-      echo "- ui_visual_style_assertions_passed: ${style_passed}"
-      echo "- ui_visual_style_assertions_failed: ${style_failed}"
-      echo "- ui_visual_state_cases_executed: ${state_exec}"
-      echo "- ui_visual_state_cases_failed: ${state_failed}"
+      echo "- ui_visual_page_report: ${UI_VISUAL_PAGE_REPORT}"
+      echo "- ui_visual_summary: total=${v_total} pass=${v_pass} fail=${v_fail} not_run=${v_not_run}"
+      echo "- ui_visual_style_summary: passed=${v_style_pass} failed=${v_style_fail}"
+      echo "- ui_visual_state_summary: executed=${v_state_exec} failed=${v_state_fail}"
     fi
     echo "- first_failure_evidence: ${first_failure}"
     echo "- first_proxy_error_evidence: ${first_proxy}"
@@ -589,6 +600,25 @@ if [[ ! -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
   fail_exit 15 "缺少 ui-visual-page-report 审计产物: ${UI_VISUAL_PAGE_REPORT}"
 fi
 
+read -r UI_VISUAL_TOTAL_PAGES UI_VISUAL_PASS_PAGES UI_VISUAL_FAIL_PAGES UI_VISUAL_NOT_RUN_PAGES UI_VISUAL_STYLE_PASSED UI_VISUAL_STYLE_FAILED UI_VISUAL_STATE_EXECUTED UI_VISUAL_STATE_FAILED <<EOF
+$(python3 - <<PY
+import json
+from pathlib import Path
+report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
+print(
+    report.get("total_pages", 0),
+    report.get("pass_pages", 0),
+    report.get("fail_pages", 0),
+    report.get("not_run_pages", 0),
+    report.get("style_assertions_passed", 0),
+    report.get("style_assertions_failed", 0),
+    report.get("state_cases_executed", 0),
+    report.get("state_cases_failed", 0),
+)
+PY
+)
+EOF
+
 API_SMOKE_REPORT="$(ls -t ${AUDIT_DIR}/api-smoke-${MODULE}-*.md 2>/dev/null | head -n1 || true)"
 if [[ -z "${API_SMOKE_REPORT}" ]]; then
   fail_exit 15 "缺少 api-smoke 审计产物（模块=${MODULE}）"
@@ -611,21 +641,6 @@ CONCLUSION="PASS"
 if [[ "${CC_STATUS}" == optional_failed* || -n "${CLEANUP_WARN}" ]]; then
   CONCLUSION="PARTIAL"
 fi
-
-read -r UI_VISUAL_STYLE_ASSERTIONS_PASSED UI_VISUAL_STYLE_ASSERTIONS_FAILED UI_VISUAL_STATE_CASES_EXECUTED UI_VISUAL_STATE_CASES_FAILED <<EOF
-$(python3 - <<PY
-import json
-from pathlib import Path
-report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
-print(
-    report.get("style_assertions_passed", 0),
-    report.get("style_assertions_failed", 0),
-    report.get("state_cases_executed", 0),
-    report.get("state_cases_failed", 0),
-)
-PY
-)
-EOF
 
 {
   echo "# Final Closure — ${MODULE} ${DATE_STR}"
@@ -659,10 +674,9 @@ EOF
   echo "- cc_status: ${CC_STATUS}"
   echo "- captcha_expected: ${CAPTCHA_EXPECTED:-none}"
   echo "- captcha_evidence: ${CAPTCHA_EVIDENCE}"
-  echo "- ui_visual_style_assertions_passed: ${UI_VISUAL_STYLE_ASSERTIONS_PASSED}"
-  echo "- ui_visual_style_assertions_failed: ${UI_VISUAL_STYLE_ASSERTIONS_FAILED}"
-  echo "- ui_visual_state_cases_executed: ${UI_VISUAL_STATE_CASES_EXECUTED}"
-  echo "- ui_visual_state_cases_failed: ${UI_VISUAL_STATE_CASES_FAILED}"
+  echo "- ui_visual_summary: total=${UI_VISUAL_TOTAL_PAGES} pass=${UI_VISUAL_PASS_PAGES} fail=${UI_VISUAL_FAIL_PAGES} not_run=${UI_VISUAL_NOT_RUN_PAGES}"
+  echo "- ui_visual_style_summary: passed=${UI_VISUAL_STYLE_PASSED} failed=${UI_VISUAL_STYLE_FAILED}"
+  echo "- ui_visual_state_summary: executed=${UI_VISUAL_STATE_EXECUTED} failed=${UI_VISUAL_STATE_FAILED}"
   if [[ -f "${SECURITY_CONTRACT_LOG}" ]]; then
     SECURITY_FIRST_FAILURE_EVIDENCE="$(grep -m1 -E '^\d+\. \[(HIGH|MEDIUM|LOW)\]|^FAIL:' "${SECURITY_CONTRACT_LOG}" || true)"
     if [[ -z "${SECURITY_FIRST_FAILURE_EVIDENCE}" ]]; then

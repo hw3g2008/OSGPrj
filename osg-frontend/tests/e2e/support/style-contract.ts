@@ -1,85 +1,61 @@
-import { type Page } from '@playwright/test'
-import { type VisualStyleContract } from './visual-contract'
+import type { Page } from '@playwright/test'
+import type { VisualStyleContractRule } from './visual-contract'
 
-export interface StyleContractResult {
-  passed: number
-  failed: number
-  errors: string[]
-}
-
-function parseNumericCssValue(value: string): number | null {
-  const match = value.trim().match(/^-?\d+(?:\.\d+)?/)
+function tryParseNumericCss(value: string): { num: number; unit: string } | null {
+  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)([a-z%]*)$/i)
   if (!match) {
     return null
   }
-  const parsed = Number.parseFloat(match[0])
-  return Number.isFinite(parsed) ? parsed : null
+  return { num: Number(match[1]), unit: (match[2] || '').toLowerCase() }
 }
 
-function stringifyTolerance(tolerance: number | undefined): string {
-  if (typeof tolerance !== 'number') {
-    return 'none'
-  }
-  return String(tolerance)
-}
-
-export async function runStyleContracts(
+export async function assertStyleContracts(
   page: Page,
+  rules: VisualStyleContractRule[],
   pageId: string,
-  contracts: VisualStyleContract[] | undefined,
-): Promise<StyleContractResult> {
-  const rules = contracts || []
-  const result: StyleContractResult = {
-    passed: 0,
-    failed: 0,
-    errors: [],
+): Promise<{ passed: number; failed: number }> {
+  if (!Array.isArray(rules) || rules.length === 0) {
+    return { passed: 0, failed: 0 }
   }
 
+  let passed = 0
   for (const rule of rules) {
-    const locator = page.locator(rule.selector).first()
-    const count = await locator.count()
-    if (count === 0) {
-      result.failed += 1
-      result.errors.push(
-        `page=${pageId} selector=${rule.selector} property=${rule.property} expected=${rule.expected} actual=<missing-node> tolerance=${stringifyTolerance(rule.tolerance)}`,
-      )
-      continue
+    const selector = rule.selector.trim()
+    const property = rule.property.trim()
+    const expected = rule.expected.trim()
+
+    const locator = page.locator(selector).first()
+    if ((await locator.count()) === 0) {
+      throw new Error(`style contract failed: page=${pageId} selector=${selector} property=${property} reason=not_found`)
     }
 
-    const actual = await locator.evaluate((el, property) => {
-      return getComputedStyle(el).getPropertyValue(property).trim()
-    }, rule.property)
+    const actual = await locator.evaluate(
+      (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
+      property,
+    )
 
     if (typeof rule.tolerance === 'number') {
-      const expectedNum = parseNumericCssValue(rule.expected)
-      const actualNum = parseNumericCssValue(actual)
-      if (expectedNum === null || actualNum === null) {
-        result.failed += 1
-        result.errors.push(
-          `page=${pageId} selector=${rule.selector} property=${rule.property} expected=${rule.expected} actual=${actual} tolerance=${rule.tolerance} reason=non-numeric-value`,
-        )
-        continue
-      }
-      if (Math.abs(expectedNum - actualNum) <= rule.tolerance) {
-        result.passed += 1
-      } else {
-        result.failed += 1
-        result.errors.push(
-          `page=${pageId} selector=${rule.selector} property=${rule.property} expected=${rule.expected} actual=${actual} tolerance=${rule.tolerance}`,
+      const expectedParsed = tryParseNumericCss(expected)
+      const actualParsed = tryParseNumericCss(actual)
+      if (!expectedParsed || !actualParsed || expectedParsed.unit !== actualParsed.unit) {
+        throw new Error(
+          `style contract failed: page=${pageId} selector=${selector} property=${property} expected=${expected} actual=${actual} reason=unparsable_or_unit_mismatch`,
         )
       }
-      continue
-    }
-
-    if (actual === rule.expected) {
-      result.passed += 1
-    } else {
-      result.failed += 1
-      result.errors.push(
-        `page=${pageId} selector=${rule.selector} property=${rule.property} expected=${rule.expected} actual=${actual} tolerance=none`,
+      const diff = Math.abs(actualParsed.num - expectedParsed.num)
+      if (diff > rule.tolerance) {
+        throw new Error(
+          `style contract failed: page=${pageId} selector=${selector} property=${property} expected=${expected} actual=${actual} tolerance=${rule.tolerance}`,
+        )
+      }
+    } else if (actual !== expected) {
+      throw new Error(
+        `style contract failed: page=${pageId} selector=${selector} property=${property} expected=${expected} actual=${actual}`,
       )
     }
+
+    passed += 1
   }
 
-  return result
+  return { passed, failed: 0 }
 }

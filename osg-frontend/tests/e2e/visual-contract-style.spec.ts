@@ -1,30 +1,30 @@
 import { test, expect } from '@playwright/test'
-import { runStyleContracts } from './support/style-contract'
+import type { VisualStyleContractRule } from './support/visual-contract'
+import { assertStyleContracts } from './support/style-contract'
 
-test.describe('visual style contract helper', () => {
-  test('passes when style rule matches', async ({ page }) => {
-    await page.setContent('<div class="target" style="height: 52px; border-radius: 12px;"></div>')
+test.describe('Visual Style Contracts', () => {
+  test('passes when computed style matches', async ({ page }) => {
+    await page.setContent(
+      '<div class="title" style="font-size: 40px; border-radius: 12px; color: rgb(29, 41, 57)">OSG</div>',
+    )
 
-    const result = await runStyleContracts(page, 'dummy-page', [
-      { selector: '.target', property: 'height', expected: '52px' },
-      { selector: '.target', property: 'border-radius', expected: '12px', tolerance: 0.1 },
-    ])
+    const rules: VisualStyleContractRule[] = [
+      { selector: '.title', property: 'font-size', expected: '40px' },
+      { selector: '.title', property: 'border-radius', expected: '12px' },
+    ]
 
-    expect(result.failed).toBe(0)
-    expect(result.passed).toBe(2)
+    await expect(assertStyleContracts(page, rules, 'style-pass')).resolves.toEqual({ passed: 2, failed: 0 })
   })
 
-  test('fails with readable context on mismatch', async ({ page }) => {
-    await page.setContent('<button class="btn" style="height: 40px;">OK</button>')
+  test('fails with clear selector/property context on mismatch', async ({ page }) => {
+    await page.setContent(
+      '<div class="title" style="font-size: 40px; border-radius: 12px; color: rgb(29, 41, 57)">OSG</div>',
+    )
 
-    const result = await runStyleContracts(page, 'dummy-page', [
-      { selector: '.btn', property: 'height', expected: '52px' },
-    ])
+    const rules: VisualStyleContractRule[] = [
+      { selector: '.title', property: 'font-size', expected: '41px' },
+    ]
 
-    expect(result.passed).toBe(0)
-    expect(result.failed).toBe(1)
-    expect(result.errors[0]).toContain('page=dummy-page')
-    expect(result.errors[0]).toContain('selector=.btn')
-    expect(result.errors[0]).toContain('property=height')
+    await expect(assertStyleContracts(page, rules, 'style-fail')).rejects.toThrow(/style-fail|font-size|selector=\.title/)
   })
 })

@@ -2,9 +2,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import { loginAsAdmin } from './support/auth'
+import { assertStyleContracts } from './support/style-contract'
+import { applyStabilityToPage, resolveStabilityConfigFromEnv } from './support/test-stability'
 import { baselineRefToSnapshotArg, loadVisualContract, type VisualPageContract } from './support/visual-contract'
-import { runStyleContracts } from './support/style-contract'
-import { applyDeterministicRuntime } from './support/test-stability'
 
 const contractJson = process.env.UI_VISUAL_CONTRACT_JSON
 const contract = contractJson ? loadVisualContract() : null
@@ -13,6 +13,7 @@ const visualSource = process.env.UI_VISUAL_SOURCE || 'app'
 const prototypeBaseUrl = process.env.UI_VISUAL_PROTOTYPE_BASE_URL || 'http://127.0.0.1:18090'
 const visualEvidenceDir = process.env.UI_VISUAL_EVIDENCE_DIR
 const visualPageResultsFile = process.env.UI_VISUAL_PAGE_RESULTS_FILE
+const stabilityConfig = resolveStabilityConfigFromEnv()
 
 if (visualSource !== 'app' && visualSource !== 'prototype') {
   throw new Error(`UI_VISUAL_SOURCE must be app|prototype, got '${visualSource}'`)
@@ -75,12 +76,7 @@ function appendPageResult(
   result: 'PASS' | 'FAIL',
   actualRef: string,
   diffRef: string,
-  metrics: {
-    style_assertions_passed: number
-    style_assertions_failed: number
-    state_cases_executed: number
-    state_cases_failed: number
-  },
+  styleStats: { passed: number; failed: number } = { passed: 0, failed: 0 },
 ): void {
   if (!visualPageResultsFile) {
     return
@@ -93,11 +89,9 @@ function appendPageResult(
     actual_ref: actualRef,
     diff_ref: diffRef,
     diff_threshold: pageContract.diff_threshold,
+    style_assertions_passed: styleStats.passed,
+    style_assertions_failed: styleStats.failed,
     result,
-    style_assertions_passed: metrics.style_assertions_passed,
-    style_assertions_failed: metrics.style_assertions_failed,
-    state_cases_executed: metrics.state_cases_executed,
-    state_cases_failed: metrics.state_cases_failed,
   }
   fs.mkdirSync(path.dirname(visualPageResultsFile), { recursive: true })
   fs.appendFileSync(visualPageResultsFile, `${JSON.stringify(record)}\n`, 'utf-8')
@@ -190,16 +184,9 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
 
   for (const pageContract of contract.pages) {
     test(`${pageContract.page_id} visual compare @ui-visual`, async ({ page }, testInfo) => {
-      const metrics = {
-        style_assertions_passed: 0,
-        style_assertions_failed: 0,
-        state_cases_executed: 0,
-        state_cases_failed: 0,
-      }
-
       await page.setViewportSize(pageContract.viewport)
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await applyDeterministicRuntime(page)
+      await applyStabilityToPage(page, stabilityConfig)
 
       if (visualSource === 'app' && pageContract.auth_mode === 'protected') {
         await loginAsAdmin(page)
@@ -237,64 +224,88 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
       await page.waitForLoadState('networkidle')
       await page.waitForTimeout(pageContract.stable_wait_ms || 300)
 
-      const snapshotArg = baselineRefToSnapshotArg(pageContract.baseline_ref)
-      const mask = toMaskLocators(pageContract, page)
-      const maxDiffPixelRatio = pageContract.diff_threshold
-      const actualPath = buildActualPath(pageContract)
-      const actualRef = actualPath ? toRepoRelative(actualPath) : 'none'
-      let diffRef = 'none'
-      let caughtError: unknown = null
-
       if (visualSource === 'app') {
-        try {
-          for (const anchor of pageContract.required_anchors) {
-            await expect(page.locator(anchor).first(), `anchor should exist: ${anchor}`).toBeVisible()
-          }
-          await assertAnyOfAnchorGroups(page, pageContract.required_anchors_any_of || [], pageContract.page_id)
+        for (const anchor of pageContract.required_anchors) {
+          await expect(page.locator(anchor).first(), `anchor should exist: ${anchor}`).toBeVisible()
+        }
+        await assertAnyOfAnchorGroups(page, pageContract.required_anchors_any_of || [], pageContract.page_id)
 
-          const styleResult = await runStyleContracts(page, pageContract.page_id, pageContract.style_contracts)
-          metrics.style_assertions_passed = styleResult.passed
-          metrics.style_assertions_failed = styleResult.failed
-          if (styleResult.failed > 0) {
-            throw new Error(
-              `style_contracts failed for page=${pageContract.page_id}: ${styleResult.errors.join(' | ')}`,
-            )
-          }
-
-          // Login captcha block has dynamic image content, but layout must stay stable.
-          // Guard against captcha image squeezing the input area.
-          if (pageContract.page_id === 'login-page') {
-            const captchaLayout = await page.evaluate(() => {
-              const row = document.querySelector('.captcha-row')
-              if (!row) return null
-              const inputWrap = row.querySelector('.ant-input-affix-wrapper')
-              const code = row.querySelector('.captcha-code')
-              if (!inputWrap || !code) return null
-              const rowRect = row.getBoundingClientRect()
-              const inputRect = inputWrap.getBoundingClientRect()
-              const codeRect = code.getBoundingClientRect()
-              return {
-                rowWidth: rowRect.width,
-                inputWidth: inputRect.width,
-                codeWidth: codeRect.width,
-                inputRatio: inputRect.width / rowRect.width,
-                codeRatio: codeRect.width / rowRect.width,
-              }
-            })
-
-            if (captchaLayout) {
-              expect(
-                captchaLayout.inputRatio,
-                `captcha input too narrow: row=${captchaLayout.rowWidth}, input=${captchaLayout.inputWidth}, code=${captchaLayout.codeWidth}`,
-              ).toBeGreaterThanOrEqual(0.5)
-              expect(
-                captchaLayout.codeRatio,
-                `captcha image too wide: row=${captchaLayout.rowWidth}, input=${captchaLayout.inputWidth}, code=${captchaLayout.codeWidth}`,
-              ).toBeLessThanOrEqual(0.45)
+        // Login captcha block has dynamic image content, but layout must stay stable.
+        // Guard against captcha image squeezing the input area.
+        if (pageContract.page_id === 'login-page') {
+          const captchaLayout = await page.evaluate(() => {
+            const row = document.querySelector('.captcha-row')
+            if (!row) return null
+            const inputWrap = row.querySelector('.ant-input-affix-wrapper')
+            const code = row.querySelector('.captcha-code')
+            if (!inputWrap || !code) return null
+            const rowRect = row.getBoundingClientRect()
+            const inputRect = inputWrap.getBoundingClientRect()
+            const codeRect = code.getBoundingClientRect()
+            return {
+              rowWidth: rowRect.width,
+              inputWidth: inputRect.width,
+              codeWidth: codeRect.width,
+              inputRatio: inputRect.width / rowRect.width,
+              codeRatio: codeRect.width / rowRect.width,
             }
+          })
+
+          if (captchaLayout) {
+            expect(
+              captchaLayout.inputRatio,
+              `captcha input too narrow: row=${captchaLayout.rowWidth}, input=${captchaLayout.inputWidth}, code=${captchaLayout.codeWidth}`,
+            ).toBeGreaterThanOrEqual(0.5)
+            expect(
+              captchaLayout.codeRatio,
+              `captcha image too wide: row=${captchaLayout.rowWidth}, input=${captchaLayout.inputWidth}, code=${captchaLayout.codeWidth}`,
+            ).toBeLessThanOrEqual(0.45)
           }
-        } catch (error) {
-          caughtError = error
+
+          const inputShellStyle = await page.evaluate(() => {
+            const inputWrap = document.querySelector('.captcha-row .ant-input-affix-wrapper')
+            if (!inputWrap) return null
+            const style = getComputedStyle(inputWrap)
+            return {
+              borderRadius: style.borderRadius,
+              borderTopWidth: style.borderTopWidth,
+              backgroundColor: style.backgroundColor,
+            }
+          })
+          expect(inputShellStyle, 'login input shell should exist').not.toBeNull()
+          expect(inputShellStyle!.borderRadius, 'login input shell radius should match prototype').toBe('12px')
+          expect(inputShellStyle!.borderTopWidth, 'login input shell border width should be 2px').toBe('2px')
+          expect(inputShellStyle!.backgroundColor, 'login input shell should be white').toBe('rgb(255, 255, 255)')
+
+          const captchaChipStyle = await page.evaluate(() => {
+            const chip = document.querySelector('.captcha-code')
+            if (!chip) return null
+            const style = getComputedStyle(chip)
+            return {
+              borderRadius: style.borderRadius,
+              backgroundImage: style.backgroundImage,
+            }
+          })
+          expect(captchaChipStyle, 'captcha chip should exist').not.toBeNull()
+          expect(captchaChipStyle!.borderRadius, 'captcha chip radius should match decision').toBe('10px')
+          expect(captchaChipStyle!.backgroundImage, 'captcha chip should keep gradient shell').toContain('linear-gradient')
+
+          const captchaImageCoverage = await page.evaluate(() => {
+            const chip = document.querySelector('.captcha-code')
+            const img = document.querySelector('.captcha-code img')
+            if (!chip || !img) return null
+            const chipRect = chip.getBoundingClientRect()
+            const imgRect = img.getBoundingClientRect()
+            return {
+              chipWidth: chipRect.width,
+              chipHeight: chipRect.height,
+              imgWidth: imgRect.width,
+              imgHeight: imgRect.height,
+            }
+          })
+          expect(captchaImageCoverage, 'captcha image should render').not.toBeNull()
+          expect(captchaImageCoverage!.imgWidth, 'captcha image should cover chip width').toBeGreaterThanOrEqual(captchaImageCoverage!.chipWidth)
+          expect(captchaImageCoverage!.imgHeight, 'captcha image should cover chip height').toBeGreaterThanOrEqual(captchaImageCoverage!.chipHeight)
         }
       } else {
         const selectorCandidates = buildPrototypeSelectorCandidates(pageContract.prototype_selector)
@@ -306,63 +317,86 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         await expect(prototypeTarget!, `prototype target should be visible: ${selectorCandidates.join(',')}`).toBeVisible()
       }
 
-      if (!caughtError) {
+      const snapshotArg = baselineRefToSnapshotArg(pageContract.baseline_ref)
+      const mask = toMaskLocators(pageContract, page)
+      const maxDiffPixelRatio = pageContract.diff_threshold
+      const actualPath = buildActualPath(pageContract)
+      const actualRef = actualPath ? toRepoRelative(actualPath) : 'none'
+      let styleStats: { passed: number; failed: number } = { passed: 0, failed: 0 }
+
+      if (visualSource === 'app') {
         try {
-          const captureMode = pageContract.capture_mode || 'clip'
-          if (captureMode === 'fullpage') {
-            if (actualPath) {
-              await page.screenshot({
-                path: actualPath,
-                fullPage: true,
-                animations: 'disabled',
-                mask,
-              })
-            }
-            await expect(page).toHaveScreenshot(snapshotArg, {
-              fullPage: true,
-              animations: 'disabled',
-              mask,
-              maxDiffPixelRatio,
-            })
-          } else {
-            const clipTarget =
-              visualSource === 'prototype'
-                ? await findVisibleLocatorByCandidates(page, buildPrototypeSelectorCandidates(pageContract.prototype_selector))
-                : page.locator(pageContract.clip_selector || pageContract.prototype_selector).first()
-            expect(clipTarget, 'clip target should exist').not.toBeNull()
-            await expect(clipTarget!, 'clip target should be visible').toBeVisible()
-            if (actualPath) {
-              await clipTarget!.screenshot({
-                path: actualPath,
-                animations: 'disabled',
-              })
-            }
-            await expect(clipTarget!).toHaveScreenshot(snapshotArg, {
-              animations: 'disabled',
-              mask,
-              maxDiffPixelRatio,
-            })
-          }
+          styleStats = await assertStyleContracts(page, pageContract.style_contracts || [], pageContract.page_id)
         } catch (error) {
-          caughtError = error
+          appendPageResult(pageContract, 'FAIL', actualRef, 'none', {
+            passed: styleStats.passed,
+            failed: styleStats.failed + 1,
+          })
+          throw error
         }
       }
 
-      if (caughtError) {
-        const artifactDiffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
-        diffRef = artifactDiffRef !== 'none' ? artifactDiffRef : extractDiffRefFromError(caughtError)
+      const captureMode = pageContract.capture_mode || 'clip'
+      if (captureMode === 'fullpage') {
+        if (actualPath) {
+          await page.screenshot({
+            path: actualPath,
+            fullPage: true,
+            animations: 'disabled',
+            mask,
+          })
+        }
+        try {
+          await expect(page).toHaveScreenshot(snapshotArg, {
+            fullPage: true,
+            animations: 'disabled',
+            mask,
+            maxDiffPixelRatio,
+          })
+          appendPageResult(pageContract, 'PASS', actualRef, 'none', styleStats)
+        } catch (error) {
+          const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
+          appendPageResult(
+            pageContract,
+            'FAIL',
+            actualRef,
+            diffRef !== 'none' ? diffRef : extractDiffRefFromError(error),
+            styleStats,
+          )
+          throw error
+        }
+        return
       }
 
-      appendPageResult(
-        pageContract,
-        caughtError ? 'FAIL' : 'PASS',
-        actualRef,
-        diffRef,
-        metrics,
-      )
-
-      if (caughtError) {
-        throw caughtError
+      const clipTarget =
+        visualSource === 'prototype'
+          ? await findVisibleLocatorByCandidates(page, buildPrototypeSelectorCandidates(pageContract.prototype_selector))
+          : page.locator(pageContract.clip_selector || pageContract.prototype_selector).first()
+      expect(clipTarget, 'clip target should exist').not.toBeNull()
+      await expect(clipTarget!, 'clip target should be visible').toBeVisible()
+      if (actualPath) {
+        await clipTarget!.screenshot({
+          path: actualPath,
+          animations: 'disabled',
+        })
+      }
+      try {
+        await expect(clipTarget!).toHaveScreenshot(snapshotArg, {
+          animations: 'disabled',
+          mask,
+          maxDiffPixelRatio,
+        })
+        appendPageResult(pageContract, 'PASS', actualRef, 'none', styleStats)
+      } catch (error) {
+        const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
+        appendPageResult(
+          pageContract,
+          'FAIL',
+          actualRef,
+          diffRef !== 'none' ? diffRef : extractDiffRefFromError(error),
+          styleStats,
+        )
+        throw error
       }
     })
   }

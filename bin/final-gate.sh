@@ -41,7 +41,7 @@ REDIS_PASSWORD="${REDIS_PASSWORD:-}"
 E2E_API_GATE_LOG="${E2E_API_GATE_LOG:-${AUDIT_DIR}/e2e-api-gate-${MODULE}-${DATE_STR}.log}"
 SECURITY_CONTRACT_LOG="${SECURITY_CONTRACT_LOG:-${AUDIT_DIR}/security-contract-${MODULE}-${DATE_STR}.md}"
 UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG:-${AUDIT_DIR}/ui-visual-gate-${MODULE}-${DATE_STR}.log}"
-UI_VISUAL_PAGE_REPORT="${UI_VISUAL_PAGE_REPORT:-${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json}"
+UI_VISUAL_PAGE_REPORT="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
 
 require_cmd() {
   local cmd="$1"
@@ -177,9 +177,44 @@ echo "--- 4.5 ui_visual_gate ---"
 pre_visual_fp="$(mktemp)"
 post_visual_fp="$(mktemp)"
 write_visual_baseline_fingerprint "${pre_visual_fp}"
+set +e
 UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG}" \
   bash bin/ui-visual-gate.sh "${MODULE}"
+ui_visual_gate_rc=$?
+set -e
 write_visual_baseline_fingerprint "${post_visual_fp}"
+
+if [[ ! -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
+  echo "FAIL: 缺少 ui-visual 页面报告产物: ${UI_VISUAL_PAGE_REPORT}"
+  rm -f "${pre_visual_fp}" "${post_visual_fp}"
+  exit 12
+fi
+
+read -r visual_total visual_pass visual_fail visual_not_run style_passed style_failed state_executed state_failed <<EOF
+$(python3 - <<PY
+import json
+from pathlib import Path
+report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
+print(
+    report.get("total_pages", 0),
+    report.get("pass_pages", 0),
+    report.get("fail_pages", 0),
+    report.get("not_run_pages", 0),
+    report.get("style_assertions_passed", 0),
+    report.get("style_assertions_failed", 0),
+    report.get("state_cases_executed", 0),
+    report.get("state_cases_failed", 0),
+)
+PY
+)
+EOF
+echo "INFO: ui_visual_summary total=${visual_total} pass=${visual_pass} fail=${visual_fail} not_run=${visual_not_run} style_passed=${style_passed} style_failed=${style_failed} state_executed=${state_executed} state_failed=${state_failed}"
+
+if (( ui_visual_gate_rc != 0 )); then
+  echo "FAIL: ui-visual-gate failed (exit=${ui_visual_gate_rc})"
+  rm -f "${pre_visual_fp}" "${post_visual_fp}"
+  exit 12
+fi
 
 if ! diff -q "${pre_visual_fp}" "${post_visual_fp}" >/dev/null 2>&1; then
   echo "FAIL: visual baseline mutated during final-gate run (rule=BASELINE_MUTATED_DURING_GATE)"
@@ -189,26 +224,6 @@ if ! diff -q "${pre_visual_fp}" "${post_visual_fp}" >/dev/null 2>&1; then
   exit 12
 fi
 rm -f "${pre_visual_fp}" "${post_visual_fp}"
-
-if [[ -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
-  python3 - <<PY
-import json
-from pathlib import Path
-report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
-print(
-    "INFO: ui_visual_summary "
-    f"total={report.get('total_pages', 0)} "
-    f"pass={report.get('pass_pages', 0)} "
-    f"fail={report.get('fail_pages', 0)} "
-    f"style_assertions_passed={report.get('style_assertions_passed', 0)} "
-    f"style_assertions_failed={report.get('style_assertions_failed', 0)} "
-    f"state_cases_executed={report.get('state_cases_executed', 0)} "
-    f"state_cases_failed={report.get('state_cases_failed', 0)}"
-)
-PY
-else
-  echo "WARNING: missing ui visual page report: ${UI_VISUAL_PAGE_REPORT}"
-fi
 
 echo "--- 5. 前端单测 ---"
 pnpm --dir osg-frontend/packages/admin test
