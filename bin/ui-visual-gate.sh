@@ -105,7 +105,11 @@ print(
     f"total={report.get('total_pages', 0)} "
     f"pass={report.get('pass_pages', 0)} "
     f"fail={report.get('fail_pages', 0)} "
-    f"not_run={report.get('not_run_pages', 0)}"
+    f"not_run={report.get('not_run_pages', 0)} "
+    f"style_assertions_passed={report.get('style_assertions_passed', 0)} "
+    f"style_assertions_failed={report.get('style_assertions_failed', 0)} "
+    f"state_cases_executed={report.get('state_cases_executed', 0)} "
+    f"state_cases_failed={report.get('state_cases_failed', 0)}"
 )
 for page in report.get("pages", []):
     print(
@@ -115,7 +119,11 @@ for page in report.get("pages", []):
         f"actual_ref={page.get('actual_ref')} "
         f"diff_ref={page.get('diff_ref')} "
         f"diff_threshold={page.get('diff_threshold')} "
-        f"result={page.get('result')}"
+        f"result={page.get('result')} "
+        f"style_assertions_passed={page.get('style_assertions_passed', 0)} "
+        f"style_assertions_failed={page.get('style_assertions_failed', 0)} "
+        f"state_cases_executed={page.get('state_cases_executed', 0)} "
+        f"state_cases_failed={page.get('state_cases_failed', 0)}"
     )
 PY
 

@@ -104,6 +104,7 @@ FINAL_GATE_LOG=""
 E2E_API_GATE_LOG=""
 SECURITY_CONTRACT_LOG=""
 UI_VISUAL_GATE_LOG=""
+UI_VISUAL_PAGE_REPORT=""
 SECURITY_FIRST_FAILURE_EVIDENCE="none"
 FINAL_CLOSURE_REPORT=""
 DATE_STR="$(date +%Y-%m-%d)"
@@ -191,6 +192,27 @@ write_failure_report() {
     if [[ -n "${UI_VISUAL_GATE_LOG}" ]]; then
       echo "- ui_visual_gate_log: ${UI_VISUAL_GATE_LOG}"
       echo "- ui_visual_first_failure_evidence: ${visual_first}"
+    fi
+    if [[ -n "${UI_VISUAL_PAGE_REPORT}" && -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
+      echo "- ui_visual_page_report: ${UI_VISUAL_PAGE_REPORT}"
+      read -r style_passed style_failed state_exec state_failed <<EOF
+$(python3 - <<PY
+import json
+from pathlib import Path
+report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
+print(
+    report.get("style_assertions_passed", 0),
+    report.get("style_assertions_failed", 0),
+    report.get("state_cases_executed", 0),
+    report.get("state_cases_failed", 0),
+)
+PY
+)
+EOF
+      echo "- ui_visual_style_assertions_passed: ${style_passed}"
+      echo "- ui_visual_style_assertions_failed: ${style_failed}"
+      echo "- ui_visual_state_cases_executed: ${state_exec}"
+      echo "- ui_visual_state_cases_failed: ${state_failed}"
     fi
     echo "- first_failure_evidence: ${first_failure}"
     echo "- first_proxy_error_evidence: ${first_proxy}"
@@ -343,6 +365,7 @@ FINAL_GATE_LOG="${AUDIT_DIR}/final-gate-${MODULE}-${DATE_STR}.log"
 E2E_API_GATE_LOG="${AUDIT_DIR}/e2e-api-gate-${MODULE}-${DATE_STR}.log"
 SECURITY_CONTRACT_LOG="${AUDIT_DIR}/security-contract-${MODULE}-${DATE_STR}.md"
 UI_VISUAL_GATE_LOG="${AUDIT_DIR}/ui-visual-gate-${MODULE}-${DATE_STR}.log"
+UI_VISUAL_PAGE_REPORT="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
 FINAL_CLOSURE_REPORT="${AUDIT_DIR}/final-closure-${MODULE}-${DATE_STR}.md"
 resolve_backend_urls
 
@@ -562,6 +585,10 @@ if [[ ! -f "${UI_VISUAL_GATE_LOG}" ]]; then
   fail_exit 15 "缺少 ui-visual-gate 审计产物: ${UI_VISUAL_GATE_LOG}"
 fi
 
+if [[ ! -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
+  fail_exit 15 "缺少 ui-visual-page-report 审计产物: ${UI_VISUAL_PAGE_REPORT}"
+fi
+
 API_SMOKE_REPORT="$(ls -t ${AUDIT_DIR}/api-smoke-${MODULE}-*.md 2>/dev/null | head -n1 || true)"
 if [[ -z "${API_SMOKE_REPORT}" ]]; then
   fail_exit 15 "缺少 api-smoke 审计产物（模块=${MODULE}）"
@@ -585,6 +612,21 @@ if [[ "${CC_STATUS}" == optional_failed* || -n "${CLEANUP_WARN}" ]]; then
   CONCLUSION="PARTIAL"
 fi
 
+read -r UI_VISUAL_STYLE_ASSERTIONS_PASSED UI_VISUAL_STYLE_ASSERTIONS_FAILED UI_VISUAL_STATE_CASES_EXECUTED UI_VISUAL_STATE_CASES_FAILED <<EOF
+$(python3 - <<PY
+import json
+from pathlib import Path
+report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
+print(
+    report.get("style_assertions_passed", 0),
+    report.get("style_assertions_failed", 0),
+    report.get("state_cases_executed", 0),
+    report.get("state_cases_failed", 0),
+)
+PY
+)
+EOF
+
 {
   echo "# Final Closure — ${MODULE} ${DATE_STR}"
   echo
@@ -603,6 +645,7 @@ fi
   echo "- e2e_api_gate_log: ${E2E_API_GATE_LOG}"
   echo "- security_contract_log: ${SECURITY_CONTRACT_LOG}"
   echo "- ui_visual_gate_log: ${UI_VISUAL_GATE_LOG}"
+  echo "- ui_visual_page_report: ${UI_VISUAL_PAGE_REPORT}"
   echo "- api_smoke_report: ${API_SMOKE_REPORT}"
   echo "- playwright_report_dir: ${PLAYWRIGHT_REPORT_DIR}"
   if [[ -n "${DOCKER_BOOT_LOG}" ]]; then
@@ -616,6 +659,10 @@ fi
   echo "- cc_status: ${CC_STATUS}"
   echo "- captcha_expected: ${CAPTCHA_EXPECTED:-none}"
   echo "- captcha_evidence: ${CAPTCHA_EVIDENCE}"
+  echo "- ui_visual_style_assertions_passed: ${UI_VISUAL_STYLE_ASSERTIONS_PASSED}"
+  echo "- ui_visual_style_assertions_failed: ${UI_VISUAL_STYLE_ASSERTIONS_FAILED}"
+  echo "- ui_visual_state_cases_executed: ${UI_VISUAL_STATE_CASES_EXECUTED}"
+  echo "- ui_visual_state_cases_failed: ${UI_VISUAL_STATE_CASES_FAILED}"
   if [[ -f "${SECURITY_CONTRACT_LOG}" ]]; then
     SECURITY_FIRST_FAILURE_EVIDENCE="$(grep -m1 -E '^\d+\. \[(HIGH|MEDIUM|LOW)\]|^FAIL:' "${SECURITY_CONTRACT_LOG}" || true)"
     if [[ -z "${SECURITY_FIRST_FAILURE_EVIDENCE}" ]]; then

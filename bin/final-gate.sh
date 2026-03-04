@@ -41,6 +41,7 @@ REDIS_PASSWORD="${REDIS_PASSWORD:-}"
 E2E_API_GATE_LOG="${E2E_API_GATE_LOG:-${AUDIT_DIR}/e2e-api-gate-${MODULE}-${DATE_STR}.log}"
 SECURITY_CONTRACT_LOG="${SECURITY_CONTRACT_LOG:-${AUDIT_DIR}/security-contract-${MODULE}-${DATE_STR}.md}"
 UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG:-${AUDIT_DIR}/ui-visual-gate-${MODULE}-${DATE_STR}.log}"
+UI_VISUAL_PAGE_REPORT="${UI_VISUAL_PAGE_REPORT:-${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json}"
 
 require_cmd() {
   local cmd="$1"
@@ -188,6 +189,26 @@ if ! diff -q "${pre_visual_fp}" "${post_visual_fp}" >/dev/null 2>&1; then
   exit 12
 fi
 rm -f "${pre_visual_fp}" "${post_visual_fp}"
+
+if [[ -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
+  python3 - <<PY
+import json
+from pathlib import Path
+report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
+print(
+    "INFO: ui_visual_summary "
+    f"total={report.get('total_pages', 0)} "
+    f"pass={report.get('pass_pages', 0)} "
+    f"fail={report.get('fail_pages', 0)} "
+    f"style_assertions_passed={report.get('style_assertions_passed', 0)} "
+    f"style_assertions_failed={report.get('style_assertions_failed', 0)} "
+    f"state_cases_executed={report.get('state_cases_executed', 0)} "
+    f"state_cases_failed={report.get('state_cases_failed', 0)}"
+)
+PY
+else
+  echo "WARNING: missing ui visual page report: ${UI_VISUAL_PAGE_REPORT}"
+fi
 
 echo "--- 5. 前端单测 ---"
 pnpm --dir osg-frontend/packages/admin test

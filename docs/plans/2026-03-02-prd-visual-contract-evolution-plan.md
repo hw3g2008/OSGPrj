@@ -524,11 +524,11 @@ Files:
 2. 禁止手工替换 baseline 图片绕过 `--mode generate --source prototype`。
 3. 禁止在无 `UI-VISUAL-DECISIONS.md` 记录时上调阈值或放行偏差。
 
-### 12.5 建议新增（提升跨模块稳定性）
+### 12.5 已落地（提升跨模块稳定性，2026-03-05）
 
-1. 在 `UI-VISUAL-CONTRACT.yaml` 引入 `style_contracts` 字段（关键样式断言）。
-2. 在 `visual-contract.e2e.spec.ts` 统一执行 `style_contracts` 的 `getComputedStyle` 断言。
-3. 在 `ui-visual-gate` 报告增加 `style_assertions_failed` 统计字段，减少“看图口水战”。
+1. `UI-VISUAL-CONTRACT.yaml` 已支持 `style_contracts`、`state_cases` 字段（向后兼容，未声明则跳过）。
+2. `visual-contract.e2e.spec.ts` 已接入 `style_contracts` 的 `getComputedStyle` 断言执行。
+3. `ui-visual-baseline` / `ui-visual-gate` / `final-gate` / `final-closure` 已接入 style/state 统计字段并输出审计信息。
 
 ### 12.6 “一步到位”能力边界（通用判定）
 
@@ -543,22 +543,16 @@ Files:
 | L5 交互状态 | hover/focus/loading/disabled | 目前未统一 | 需新增状态用例驱动（hover/focus 后断言） | 不可仅一次覆盖 |
 | L6 动态内容 | 空态/错误态/接口返回态 | 主要用 mask 规避波动 | 需 fixture/mock 场景分层验证 | 不可仅一次覆盖 |
 
-### 12.7 通用增强落地项（跨模块）
+### 12.7 通用增强落地项（跨模块，已落地）
 
 > 独立落地计划：`docs/plans/2026-03-04-ui-visual-contract-12-7-enhancements-implementation-plan.md`
 
-1. Schema 扩展：
-   - `UI-VISUAL-CONTRACT.yaml` 增加 `style_contracts`（每页关键节点 computed-style 断言）。
-2. Guard 扩展：
-   - `ui_visual_contract_guard.py` 校验 `style_contracts` 结构完整性与最小条目数。
-3. 执行器扩展：
-   - `visual-contract.e2e.spec.ts` 按 contract 执行 `getComputedStyle` 断言。
-4. 报告扩展：
-   - `ui-visual-gate` 报告增加 `style_assertions_passed/style_assertions_failed`。
-5. 状态覆盖扩展：
-   - 新增 `ui-state-contract`（或在现有 contract 增加 `state_cases`）覆盖 hover/focus/loading/empty/error。
-6. 数据稳定协议：
-   - 固定 fixture、冻结时间、固定账号；禁止在未固定数据下把动态区域作为强断言目标。
+1. Schema 扩展：`UI-VISUAL-CONTRACT.yaml` 支持 `style_contracts` / `state_cases`（`osg-frontend/tests/e2e/support/visual-contract.ts`）。
+2. Guard 扩展：`ui_visual_contract_guard.py` 已校验 `style_contracts` / `state_cases` 结构，异常即 FAIL。
+3. 执行器扩展：`visual-contract.e2e.spec.ts` 已按 contract 执行 `style_contracts` 并输出计数。
+4. 报告扩展：`ui-visual-gate` / `final-gate` / `final-closure` 已输出 `style_assertions_*` 和 `state_cases_*` 统计。
+5. 状态覆盖扩展：新增 `ui-state-contract.e2e.spec.ts`（`@ui-state`）执行 `focus/hover/loading/empty/error`。
+6. 数据稳定协议：`bin/ui-visual-baseline.sh`、`playwright.config.ts`、`test-stability.ts` 已固化时区/语言/时间冻结参数。
 
 ### 12.8 验收口径（跨模块统一）
 
