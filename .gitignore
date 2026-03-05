@@ -68,10 +68,6 @@ logs/
 deploy/secrets/*
 !deploy/secrets/README.md
 !deploy/secrets/.gitignore
-deploy/.env.test
-deploy/.env.prod
-deploy/.env.dev
-deploy/.env.*.local
 
 ######################################################################
 # 临时文件/工具生成
