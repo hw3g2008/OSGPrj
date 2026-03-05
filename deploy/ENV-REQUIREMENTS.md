@@ -73,11 +73,15 @@ Prod secrets（必须存在且非空）：
 - test：远程服务器全容器部署（含 mysql/redis）。
 - prod：远程服务器全容器部署（含 mysql/redis + secrets 文件）。
 
-## Local Remote Deploy Config (Optional)
+## Remote Deploy Config (Tracked)
 
-可选本地文件：`deploy/.env.remote.local`（已在 `.gitignore` 规则内匹配）
+项目文件：`deploy/.env.remote.local`（纳入版本控制）
 
 示例模板：
 - `deploy/.env.remote.local.example`
 
-用于给 `bin/deploy-test-remote.sh` 提供默认 `REMOTE_HOST/REMOTE_USER/REMOTE_DIR`，避免把服务器信息硬编码进脚本。
+用于给 `bin/deploy-test-remote.sh` 提供默认：
+- `REMOTE_HOST`
+- `REMOTE_USER`
+- `REMOTE_DIR`
+- 可选 `SSH_KEY` 或 `SSH_PASSWORD`

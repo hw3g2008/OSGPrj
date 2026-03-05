@@ -16,6 +16,8 @@ bash bin/run-dev-shared.sh
 bash bin/deploy-test-remote.sh
 ```
 
+说明：`deploy/.env.remote.local` 可包含 `REMOTE_HOST/REMOTE_USER/REMOTE_DIR`，以及可选 `SSH_PASSWORD`（自动化）或 `SSH_KEY`（推荐）。
+
 ## 1. Host 基线
 
 - [ ] Docker Engine >= 24.0.0
