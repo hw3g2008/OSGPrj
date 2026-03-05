@@ -26,6 +26,7 @@ AUDIT_DIR="osg-spec-docs/tasks/audit"
 mkdir -p "${AUDIT_DIR}"
 
 BACKEND_PORT="${BACKEND_PORT:-8080}"
+BACKEND_BASE_URL="${BACKEND_BASE_URL:-}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 BASE_URL_DEFAULT="http://127.0.0.1:${BACKEND_PORT}"
 BASE_URL="${BASE_URL:-}"
@@ -69,6 +70,10 @@ PY
 }
 
 resolve_backend_urls() {
+  if [[ -z "${BASE_URL}" && -n "${BACKEND_BASE_URL}" ]]; then
+    BASE_URL="${BACKEND_BASE_URL}"
+  fi
+
   if [[ -n "${HEALTH_URL}" ]]; then
     if [[ -z "${BASE_URL}" ]]; then
       case "${HEALTH_URL}" in
@@ -80,8 +85,12 @@ resolve_backend_urls() {
   else
     local candidate_urls=(
       "http://127.0.0.1:28080${HEALTH_PATH}"
-      "${BASE_URL_DEFAULT}${HEALTH_PATH}"
+      "http://127.0.0.1:8080${HEALTH_PATH}"
     )
+    case "${BACKEND_PORT}" in
+      28080|8080) ;;
+      *) candidate_urls+=("${BASE_URL_DEFAULT}${HEALTH_PATH}") ;;
+    esac
     local candidate
     for candidate in "${candidate_urls[@]}"; do
       if curl -fsS --max-time 2 "${candidate}" >/dev/null 2>&1; then
@@ -128,6 +137,15 @@ echo "INFO: E2E 前端启动策略=Playwright webServer（Option B），不依�
 
 echo "--- 0.1 plan_standard_guard ---"
 python3 .claude/skills/workflow-engine/tests/plan_standard_guard.py
+
+echo "--- 0.2 srs_guard ---"
+python3 .claude/skills/workflow-engine/tests/srs_guard.py \
+  --module "${MODULE}"
+
+echo "--- 0.3 decisions_guard ---"
+python3 .claude/skills/workflow-engine/tests/decisions_guard.py \
+  --module "${MODULE}" \
+  --allow-missing
 
 echo "--- 1. story_runtime_guard ---"
 python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py \
@@ -179,6 +197,11 @@ post_visual_fp="$(mktemp)"
 write_visual_baseline_fingerprint "${pre_visual_fp}"
 set +e
 UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG}" \
+  E2E_API_PROXY_TARGET="${BASE_URL}" \
+  E2E_BACKEND_URL="${BASE_URL}" \
+  BACKEND_BASE_URL="${BASE_URL}" \
+  BASE_URL="${BASE_URL}" \
+  BASE_HEALTH_URL="${HEALTH_URL}" \
   bash bin/ui-visual-gate.sh "${MODULE}"
 ui_visual_gate_rc=$?
 set -e
