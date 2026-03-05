@@ -428,13 +428,13 @@ Files:
 
 ## 10.1 E2E UI 基线执行协议（新增，建议直接采纳）
 
-1. 环境归一化（目标约束，分阶段落地）：
-   - 已实现：时区固定 `TZ=Asia/Shanghai`（由 `ui-visual-baseline.sh` 注入）。
-   - 待落地：语言固定 `zh-CN`。
-   - 待落地：动画禁用（全局注入 `* { animation: none !important; transition: none !important; }`）。
-   - 待落地：字体固定（按 DESIGN-SYSTEM 指定字体，CI 镜像预装）。
-   - 待落地：渲染参数固定（`device_scale_factor=1`、浏览器版本固定、禁用随机 UA）。
-   - 执行口径：待落地项未完成前，视觉失败需先做“环境噪声排查”，再做业务回归判定。
+1. 环境归一化（已落地，框架默认强制）：
+   - 已实现：时区固定 `TZ=Asia/Shanghai`（`ui-visual-baseline.sh` 注入）。
+   - 已实现：语言固定 `zh-CN`（默认强制，`UI_VISUAL_ENFORCE_ZH_LOCALE=1`）。
+   - 已实现：动画禁用（E2E 初始化阶段全局注入 `* { animation: none !important; transition: none !important; }`）。
+   - 已实现：字体固定（E2E 初始化阶段注入 DESIGN-SYSTEM 字体栈，默认 `'Inter', -apple-system, BlinkMacSystemFont, sans-serif`）。
+   - 已实现：渲染参数固定（`device_scale_factor=1`、固定 UA、固定 locale/timezone；浏览器版本由 Playwright 受控版本提供）。
+   - 执行口径：视觉失败优先按“业务偏差”处理；仅在显式修改稳定参数时才进入“环境噪声排查”分支。
 
 1a. 测试数据稳定协议（必须）：
    - 受保护页面仅使用固定 E2E 账号（不使用实时生产数据）

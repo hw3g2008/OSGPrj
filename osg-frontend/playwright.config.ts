@@ -23,6 +23,8 @@ export default defineConfig({
     trace: 'on-first-retry',
     locale: stability.locale,
     timezoneId: stability.timezoneId,
+    deviceScaleFactor: stability.deviceScaleFactor,
+    userAgent: stability.userAgent,
   },
 
   projects: [

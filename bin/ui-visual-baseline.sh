@@ -127,8 +127,13 @@ echo "INFO: has_state_cases=${HAS_STATE_CASES}"
 
 STABILITY_TZ="${UI_VISUAL_STABILITY_TZ:-Asia/Shanghai}"
 STABILITY_LOCALE="${UI_VISUAL_STABILITY_LOCALE:-zh-CN}"
+STABILITY_ENFORCE_ZH="${UI_VISUAL_ENFORCE_ZH_LOCALE:-1}"
 STABILITY_REQUIRE_FIXED="${UI_VISUAL_REQUIRE_FIXED_TIME:-0}"
 STABILITY_FIXED_TIME="${E2E_FIXED_TIME:-}"
+STABILITY_DEVICE_SCALE_FACTOR="${UI_VISUAL_STABILITY_DEVICE_SCALE_FACTOR:-1}"
+STABILITY_USER_AGENT="${UI_VISUAL_STABILITY_USER_AGENT:-Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36}"
+STABILITY_FONT_FAMILY="${UI_VISUAL_STABILITY_FONT_FAMILY:-'Inter', -apple-system, BlinkMacSystemFont, sans-serif}"
+STABILITY_DISABLE_ANIMATION="${UI_VISUAL_DISABLE_ANIMATION:-1}"
 if [[ -z "${STABILITY_TZ}" ]]; then
   echo "FAIL: UI_VISUAL_STABILITY_TZ must not be empty"
   exit 19
@@ -137,12 +142,41 @@ if [[ -z "${STABILITY_LOCALE}" ]]; then
   echo "FAIL: UI_VISUAL_STABILITY_LOCALE must not be empty"
   exit 19
 fi
+if [[ "${STABILITY_ENFORCE_ZH}" != "0" && "${STABILITY_LOCALE}" != "zh-CN" ]]; then
+  echo "FAIL: locale must be zh-CN when UI_VISUAL_ENFORCE_ZH_LOCALE!=0, got '${STABILITY_LOCALE}'"
+  exit 19
+fi
+if ! python3 - <<PY >/dev/null 2>&1
+value = "${STABILITY_DEVICE_SCALE_FACTOR}".strip()
+try:
+    num = float(value)
+except ValueError:
+    raise SystemExit(1)
+raise SystemExit(0 if num > 0 else 1)
+PY
+then
+  echo "FAIL: UI_VISUAL_STABILITY_DEVICE_SCALE_FACTOR must be > 0, got '${STABILITY_DEVICE_SCALE_FACTOR}'"
+  exit 19
+fi
+if [[ -z "${STABILITY_USER_AGENT}" ]]; then
+  echo "FAIL: UI_VISUAL_STABILITY_USER_AGENT must not be empty"
+  exit 19
+fi
+if [[ -z "${STABILITY_FONT_FAMILY}" ]]; then
+  echo "FAIL: UI_VISUAL_STABILITY_FONT_FAMILY must not be empty"
+  exit 19
+fi
 if [[ "${STABILITY_REQUIRE_FIXED}" == "1" && -z "${STABILITY_FIXED_TIME}" ]]; then
   echo "FAIL: UI_VISUAL_REQUIRE_FIXED_TIME=1 but E2E_FIXED_TIME is missing"
   exit 19
 fi
 echo "INFO: stability_tz=${STABILITY_TZ}"
 echo "INFO: stability_locale=${STABILITY_LOCALE}"
+echo "INFO: stability_enforce_zh_locale=${STABILITY_ENFORCE_ZH}"
+echo "INFO: stability_device_scale_factor=${STABILITY_DEVICE_SCALE_FACTOR}"
+echo "INFO: stability_disable_animation=${STABILITY_DISABLE_ANIMATION}"
+echo "INFO: stability_user_agent=${STABILITY_USER_AGENT}"
+echo "INFO: stability_font_family=${STABILITY_FONT_FAMILY}"
 echo "INFO: stability_require_fixed_time=${STABILITY_REQUIRE_FIXED}"
 if [[ -n "${STABILITY_FIXED_TIME}" ]]; then
   echo "INFO: stability_fixed_time=${STABILITY_FIXED_TIME}"
@@ -193,6 +227,11 @@ run_playwright_suite() {
     UI_VISUAL_PROTOTYPE_BASE_URL="${PROTOTYPE_BASE_URL:-}" \
     UI_VISUAL_STABILITY_TZ="${STABILITY_TZ}" \
     UI_VISUAL_STABILITY_LOCALE="${STABILITY_LOCALE}" \
+    UI_VISUAL_ENFORCE_ZH_LOCALE="${STABILITY_ENFORCE_ZH}" \
+    UI_VISUAL_STABILITY_DEVICE_SCALE_FACTOR="${STABILITY_DEVICE_SCALE_FACTOR}" \
+    UI_VISUAL_STABILITY_USER_AGENT="${STABILITY_USER_AGENT}" \
+    UI_VISUAL_STABILITY_FONT_FAMILY="${STABILITY_FONT_FAMILY}" \
+    UI_VISUAL_DISABLE_ANIMATION="${STABILITY_DISABLE_ANIMATION}" \
     UI_VISUAL_REQUIRE_FIXED_TIME="${STABILITY_REQUIRE_FIXED}" \
     E2E_FIXED_TIME="${STABILITY_FIXED_TIME}" \
     E2E_API_PROXY_TARGET="${API_PROXY_TARGET}" \

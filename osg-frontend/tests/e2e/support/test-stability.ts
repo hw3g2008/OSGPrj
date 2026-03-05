@@ -4,6 +4,10 @@ export interface StabilityConfig {
   timezoneId: string
   locale: string
   fixedTimeMs?: number
+  deviceScaleFactor: number
+  userAgent: string
+  fontFamily: string
+  disableAnimation: boolean
 }
 
 function parseFixedTime(value?: string): number | undefined {
@@ -21,14 +25,46 @@ function parseFixedTime(value?: string): number | undefined {
   throw new Error(`E2E_FIXED_TIME is invalid: '${value}'`)
 }
 
+function parsePositiveNumber(value: string, field: string): number {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`${field} must be a positive number, got '${value}'`)
+  }
+  return parsed
+}
+
 export function resolveStabilityConfigFromEnv(): StabilityConfig {
   const timezoneId = (process.env.UI_VISUAL_STABILITY_TZ || 'Asia/Shanghai').trim()
   const locale = (process.env.UI_VISUAL_STABILITY_LOCALE || 'zh-CN').trim()
+  const enforceZhLocale = (process.env.UI_VISUAL_ENFORCE_ZH_LOCALE || '1').trim() !== '0'
+  const deviceScaleFactor = parsePositiveNumber(
+    (process.env.UI_VISUAL_STABILITY_DEVICE_SCALE_FACTOR || '1').trim(),
+    'UI_VISUAL_STABILITY_DEVICE_SCALE_FACTOR',
+  )
+  const userAgent = (
+    process.env.UI_VISUAL_STABILITY_USER_AGENT ||
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+  ).trim()
+  const fontFamily = (
+    process.env.UI_VISUAL_STABILITY_FONT_FAMILY ||
+    "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+  ).trim()
+  const disableAnimation = (process.env.UI_VISUAL_DISABLE_ANIMATION || '1').trim() !== '0'
+
   if (!timezoneId) {
     throw new Error('UI_VISUAL_STABILITY_TZ must not be empty')
   }
   if (!locale) {
     throw new Error('UI_VISUAL_STABILITY_LOCALE must not be empty')
+  }
+  if (enforceZhLocale && locale !== 'zh-CN') {
+    throw new Error(`UI visual baseline locale must stay zh-CN, got '${locale}'`)
+  }
+  if (!userAgent) {
+    throw new Error('UI_VISUAL_STABILITY_USER_AGENT must not be empty')
+  }
+  if (!fontFamily) {
+    throw new Error('UI_VISUAL_STABILITY_FONT_FAMILY must not be empty')
   }
 
   const requireFixed = process.env.UI_VISUAL_REQUIRE_FIXED_TIME === '1'
@@ -41,31 +77,68 @@ export function resolveStabilityConfigFromEnv(): StabilityConfig {
     timezoneId,
     locale,
     fixedTimeMs,
+    deviceScaleFactor,
+    userAgent,
+    fontFamily,
+    disableAnimation,
   }
 }
 
 export async function applyStabilityToPage(page: Page, config: StabilityConfig): Promise<void> {
-  if (typeof config.fixedTimeMs !== 'number') {
-    return
-  }
   await page.addInitScript(
-    ({ fixedTimeMs }) => {
-      const OriginalDate = Date
-      class FixedDate extends OriginalDate {
-        constructor(...args: any[]) {
-          if (args.length === 0) {
-            super(fixedTimeMs)
-            return
-          }
-          super(...args)
+    ({ fixedTimeMs, fontFamily, locale, disableAnimation }) => {
+      const applyStyleGuards = () => {
+        document.documentElement.setAttribute('lang', locale)
+        const styleId = '__ui_visual_stability_style__'
+        let style = document.getElementById(styleId) as HTMLStyleElement | null
+        if (!style) {
+          style = document.createElement('style')
+          style.id = styleId
+          document.head.appendChild(style)
         }
 
-        static now() {
-          return fixedTimeMs
+        const rules = [
+          `html, body, input, button, textarea, select { font-family: ${fontFamily} !important; }`,
+        ]
+        if (disableAnimation) {
+          rules.push(
+            '* { animation: none !important; transition: none !important; }',
+            '*::before { animation: none !important; transition: none !important; }',
+            '*::after { animation: none !important; transition: none !important; }',
+          )
         }
+        style.textContent = rules.join('\n')
       }
-      ;(window as unknown as { Date: DateConstructor }).Date = FixedDate as unknown as DateConstructor
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyStyleGuards, { once: true })
+      } else {
+        applyStyleGuards()
+      }
+
+      if (typeof fixedTimeMs === 'number') {
+        const OriginalDate = Date
+        class FixedDate extends OriginalDate {
+          constructor(...args: any[]) {
+            if (args.length === 0) {
+              super(fixedTimeMs)
+              return
+            }
+            super(...args)
+          }
+
+          static now() {
+            return fixedTimeMs
+          }
+        }
+        ;(window as unknown as { Date: DateConstructor }).Date = FixedDate as unknown as DateConstructor
+      }
     },
-    { fixedTimeMs: config.fixedTimeMs },
+    {
+      fixedTimeMs: config.fixedTimeMs,
+      fontFamily: config.fontFamily,
+      locale: config.locale,
+      disableAnimation: config.disableAnimation,
+    },
   )
 }
