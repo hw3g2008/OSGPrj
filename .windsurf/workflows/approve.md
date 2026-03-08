@@ -39,6 +39,12 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
 
    ### Stories 审批
    - 条件：`current_step` 为 `story_split_done`
+   - **硬门禁（必须先过）**：
+     - `python3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py --module {module} --mode requirements_to_stories`
+   - 若以下任一不完整，禁止审批：
+     - requirements 与 Stories 覆盖
+     - `delivery_contract.capabilities` -> Stories 覆盖
+     - `UI-VISUAL-CONTRACT.critical_surfaces` -> Stories 覆盖
    - 读取 `config.yaml` 的 `approval.story_split` 配置
      - 如果 `required`：列出所有待审批 Stories 的摘要，等待用户确认
      - 如果 `auto`：自动审批，直接更新状态
@@ -49,6 +55,14 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
 
    ### Tickets 审批
    - 条件：`current_step` 为 `ticket_split_done`
+   - **硬门禁（必须先过）**：
+     - `python3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py --story-id {current_story}`
+     - `python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py --module {module} --story-id {current_story}`
+   - 若以下任一不完整，禁止审批：
+     - Story 没有完整映射到 Tickets
+     - external capability 缺少实现 Ticket 或验证 Ticket
+     - critical surface 缺少 `frontend-ui` Ticket
+     - Story/Ticket/TestCase/Traceability 资产不同步
    - 读取 `config.yaml` 的 `approval.ticket_split` 配置
      - 如果 `required`：列出所有待审批 Tickets 的摘要，等待用户确认
      - 如果 `auto`：自动审批，直接更新状态

@@ -35,7 +35,7 @@ commands:
   test-single: "mvn test -Dtest={class}"
   build: "mvn -DskipTests package"
   lint: "mvn checkstyle:check"
-  run: "mvn -pl ruoyi-admin -am spring-boot:run"
+  run: "bash bin/run-backend-dev.sh deploy/.env.dev"
   
   # 前端命令（pnpm workspace 子包直接调用）
   frontend:

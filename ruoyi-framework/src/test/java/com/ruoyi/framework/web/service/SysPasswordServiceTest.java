@@ -2,6 +2,7 @@ package com.ruoyi.framework.web.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,6 +35,9 @@ class SysPasswordServiceTest {
 
     @Mock
     private SysUserMapper userMapper;
+
+    @Mock
+    private PasswordResetMailSender passwordResetMailSender;
 
     @Test
     void testResetCodeTtlFieldExists() {
@@ -76,5 +80,39 @@ class SysPasswordServiceTest {
         assertEquals(100L, actual.getUserId());
         verify(userMapper, times(1)).checkEmailUnique("test@example.com");
         verifyNoInteractions(userService);
+    }
+
+    @Test
+    void sendResetCodeShouldPersistCodeAndDelegateToMailSender() {
+        ReflectionTestUtils.setField(sysPasswordService, "resetCodeTtlMinutes", 5);
+
+        SysUser user = new SysUser();
+        user.setUserId(100L);
+        user.setEmail("test@example.com");
+        when(userMapper.checkEmailUnique("test@example.com")).thenReturn(user);
+
+        sysPasswordService.sendResetCode("test@example.com");
+
+        verify(redisCache, times(1)).setCacheObject(
+            eq("pwd_reset_code:test@example.com"),
+            ArgumentMatchers.argThat((String code) -> code != null && code.matches("\\d{6}")),
+            eq(5),
+            eq(java.util.concurrent.TimeUnit.MINUTES)
+        );
+        verify(passwordResetMailSender, times(1)).sendResetCode(
+            eq("test@example.com"),
+            ArgumentMatchers.argThat((String code) -> code != null && code.matches("\\d{6}")),
+            same(user)
+        );
+    }
+
+    @Test
+    void sendResetCodeShouldIgnoreUnknownEmailWithoutPersistingOrSending() {
+        when(userMapper.checkEmailUnique("unknown@example.com")).thenReturn(null);
+
+        assertDoesNotThrow(() -> sysPasswordService.sendResetCode("unknown@example.com"));
+
+        verify(redisCache, never()).setCacheObject(anyString(), any(), anyInt(), any());
+        verify(passwordResetMailSender, never()).sendResetCode(anyString(), anyString(), any(SysUser.class));
     }
 }

@@ -42,9 +42,11 @@ metadata:
 ⚠️ UI / 前端铁律（type: frontend-ui / frontend）：
 9. lint + build 必须通过才能完成
 10. 前端功能类建议编写单元测试（分支覆盖率 ≥ 90%）
+11. 含真实副作用 / 关键状态变更的能力必须通过 `delivery_truth_guard.py --stage next`
+12. 含 critical_surfaces 的页面必须通过 `ui_critical_evidence_guard.py --stage next`
 
 ⚠️ 配置铁律（type: config）：
-11. 修改后必须验证配置正确性（语法检查、启动验证等）
+13. 修改后必须验证配置正确性（语法检查、启动验证等）
 ```
 
 ## 执行流程
@@ -304,6 +306,23 @@ def deliver_ticket(ticket_id):
 
     if ticket.status not in ["pending", "in_progress"]:
         return failed(f"Ticket {ticket_id} 状态为 {ticket.status}，需要 pending 或 in_progress")
+
+    module = read_yaml("osg-spec-docs/tasks/STATE.yaml").workflow.current_requirement
+    truth_guard = bash(
+        "python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py "
+        f"--module {module} --stage next"
+    )
+    if truth_guard.exit_code != 0:
+        return failed("delivery_truth_guard 未通过：存在降级实现、缺失 provider/runtime 声明或缺失真实性证据路径")
+
+    critical_ui_guard = bash(
+        "python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py "
+        f"--contract osg-spec-docs/docs/01-product/prd/{module}/UI-VISUAL-CONTRACT.yaml "
+        f"--page-report osg-spec-docs/tasks/audit/ui-visual-page-report-{module}-{today()}.json "
+        "--stage next"
+    )
+    if critical_ui_guard.exit_code != 0:
+        return failed("ui_critical_evidence_guard 未通过：关键 surface 被 mask 或关键 UI 证据包缺失")
 
     # Step 2: 创建 Checkpoint
     checkpoint_id = create_checkpoint(ticket_id)

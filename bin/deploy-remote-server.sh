@@ -11,6 +11,7 @@ SSH_PASSWORD="${SSH_PASSWORD:-}"
 SSH_KEY="${SSH_KEY:-}"
 SKIP_HEALTH_CHECK=0
 UPDATE_CODE=0
+SYNC_LOCAL=0
 GIT_REF="${GIT_REF:-}"
 NO_STRICT_HOST_KEY_CHECK=1
 
@@ -29,6 +30,7 @@ Options:
   --password <password>     SSH password (or set SSH_PASSWORD)
   --key <path>              SSH private key path (or set SSH_KEY)
   --update-code             Run git pull (and optional checkout) before deploy
+  --sync-local             Sync current workspace to remote dir before deploy
   --git-ref <ref>           Git branch/tag/commit to checkout when --update-code
   --skip-health-check       Pass through to remote deploy script
   --strict-host-key-check   Enable strict host key checking (default: disabled)
@@ -37,6 +39,7 @@ Options:
 Examples:
   bash bin/deploy-remote-server.sh --host 172.17.119.10 --user root --password '***'
   bash bin/deploy-remote-server.sh --host 172.17.119.10 --key ~/.ssh/id_rsa --update-code --git-ref main
+  bash bin/deploy-remote-server.sh --host 172.17.119.10 --user root --password '***' --sync-local
 EOF
 }
 
@@ -78,6 +81,10 @@ while [[ $# -gt 0 ]]; do
       UPDATE_CODE=1
       shift
       ;;
+    --sync-local)
+      SYNC_LOCAL=1
+      shift
+      ;;
     --git-ref)
       GIT_REF="${2:-}"
       shift 2
@@ -104,6 +111,11 @@ done
 
 if [[ -z "${REMOTE_HOST}" ]]; then
   echo "FAIL: --host is required (or set REMOTE_HOST)" >&2
+  exit 1
+fi
+
+if (( UPDATE_CODE == 1 && SYNC_LOCAL == 1 )); then
+  echo "FAIL: --update-code and --sync-local cannot be used together" >&2
   exit 1
 fi
 
@@ -138,7 +150,63 @@ fi
 echo "=== deploy-remote-server ==="
 echo "INFO: target=${SSH_TARGET}:${REMOTE_PORT}"
 echo "INFO: remote_dir=${REMOTE_DIR}"
-echo "INFO: env=${ENV_NAME} profile=${PROFILE_CSV} update_code=${UPDATE_CODE}"
+echo "INFO: env=${ENV_NAME} profile=${PROFILE_CSV} update_code=${UPDATE_CODE} sync_local=${SYNC_LOCAL}"
+
+if (( SYNC_LOCAL == 1 )); then
+  SYNC_ITEMS=(
+    .claude
+    .windsurf
+    bin
+    deploy
+    docs
+    osg-frontend
+    osg-spec-docs
+    ruoyi-admin
+    ruoyi-common
+    ruoyi-framework
+    ruoyi-generator
+    ruoyi-quartz
+    ruoyi-system
+    pom.xml
+    README.md
+    ry.sh
+    ry.bat
+    .dockerignore
+    .gitignore
+    .windsurfrules
+  )
+
+  if [[ ! -f "ruoyi-admin/target/ruoyi-admin.jar" ]]; then
+    echo "FAIL: ruoyi-admin/target/ruoyi-admin.jar not found; build backend jar before --sync-local deploy" >&2
+    exit 1
+  fi
+
+  "${SSH_CMD[@]}" "mkdir -p '${REMOTE_DIR}'"
+
+  REMOTE_SYNC_CMD="set -euo pipefail; mkdir -p $(printf '%q' "${REMOTE_DIR}");"
+  for item in "${SYNC_ITEMS[@]}"; do
+    REMOTE_SYNC_CMD+=" rm -rf $(printf '%q' "${REMOTE_DIR}/${item}");"
+  done
+  REMOTE_SYNC_CMD+=" tar -xzf - -C $(printf '%q' "${REMOTE_DIR}")"
+
+  COPYFILE_DISABLE=1 COPY_EXTENDED_ATTRIBUTES_DISABLE=1 tar \
+    --disable-copyfile \
+    --no-xattrs \
+    --no-mac-metadata \
+    --exclude='.git' \
+    --exclude='.worktrees' \
+    --exclude='.pnpm-store' \
+    --exclude='.pytest_cache' \
+    --exclude='.local' \
+    --exclude='artifacts' \
+    --exclude='screenshots' \
+    --exclude='logs' \
+    --exclude='osg-frontend/node_modules' \
+    --exclude='osg-frontend/playwright-report' \
+    --exclude='osg-frontend/test-results' \
+    -czf - "${SYNC_ITEMS[@]}" \
+    | "${SSH_CMD[@]}" "${REMOTE_SYNC_CMD}"
+fi
 
 "${SSH_CMD[@]}" bash -s -- \
   "${REMOTE_DIR}" \

@@ -1,0 +1,11 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "newStudents": 8,
+    "newContracts": 42500,
+    "approvedClassHours": 156,
+    "classHoursConsumed": 234.5,
+    "settledAmount": 18720
+  }
+}

@@ -25,6 +25,14 @@ dependencies: []
 requirements:
   - "REQ-{number}"
 
+# 契约映射（split-story 时必填）
+contract_refs:
+  capabilities: []
+  critical_surfaces: []
+
+# Story 级测试骨架（split-story 时生成，implement 阶段不得补造）
+story_cases: []
+
 # Tickets（拆分后填充）
 tickets: []
 

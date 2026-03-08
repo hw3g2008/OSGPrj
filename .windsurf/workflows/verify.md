@@ -19,13 +19,17 @@ description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
    - 运行：
      - `python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py --state osg-spec-docs/tasks/STATE.yaml --config .claude/project/config.yaml --state-machine .claude/skills/workflow-engine/state-machine.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets --proofs-dir osg-spec-docs/tasks/proofs`
      - `python3 .claude/skills/workflow-engine/tests/done_ticket_evidence_guard.py --state osg-spec-docs/tasks/STATE.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets`
-   - 任一失败即停止 `/verify`，先修复状态/证据再重试
+     - `python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py --module {current_requirement} --story-id {current_story}`
+     - `python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py --module {current_requirement} --stage verify`
+     - `python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py --contract osg-spec-docs/docs/01-product/prd/{current_requirement}/DELIVERY-CONTRACT.yaml --runtime-contract deploy/runtime-contract.dev.yaml --stage verify`
+     - `python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py --contract osg-spec-docs/docs/01-product/prd/{current_requirement}/UI-VISUAL-CONTRACT.yaml --page-report osg-spec-docs/tasks/audit/ui-visual-page-report-{current_requirement}-{today}.json --stage verify`
+   - 任一失败即停止 `/verify`，先修复状态/测试资产/真实性/内容质量证据再重试
 
 3. **调用统一验收引擎**
    - 调用 verification skill 的 `verify_story(story_id)`
    - 验收逻辑包含：
-     - Phase 1：前置检查（Tickets done + evidence + exit_code=0）
-     - Phase 2：功能验收（全量测试 + AC 覆盖率 + 覆盖率门槛）
+     - Phase 1：前置检查（Tickets done + evidence + exit_code=0 + delivery truth + delivery content + critical UI evidence）
+     - Phase 2：功能验收（全量测试 + behavior contract + AC 覆盖率 + 覆盖率门槛）
      - Phase 3：增强全局终审（三维度终审 + A~I 多维度旋转校验，参见 quality-gate/SKILL.md）
 
 4. **TC 资产回填（D6 挂点）**

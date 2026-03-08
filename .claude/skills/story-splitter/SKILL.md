@@ -280,6 +280,15 @@ def split_stories(requirement_doc):  # requirement_doc = SRS 文档（brainstorm
     # 输出覆盖矩阵（仅 Phase 3 通过后）
     print_coverage_matrix(all_fr_ids, stories)
 
+    # 生成 story 级测试骨架（split-story 阶段必须产出，implement 阶段不得补造）
+    for story in stories:
+        story["story_cases"] = []
+        for ac_idx, _ac in enumerate(story.get("acceptance_criteria", []), 1):
+            story["story_cases"].append({
+                "story_case_id": f"SC-{story['id']}-{ac_idx:03d}",
+                "ac_ref": f"AC-{story['id']}-{ac_idx:02d}",
+            })
+
     # 保存 Story 文件（仅在全部校验通过后）
     for story in stories:
         write_yaml(f"osg-spec-docs/tasks/stories/{story['id']}.yaml", story)

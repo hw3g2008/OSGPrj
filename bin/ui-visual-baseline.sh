@@ -7,6 +7,7 @@ set -euo pipefail
 MODULE="${1:-permission}"
 MODE="verify"
 SOURCE=""
+DEV_ENV_FILE="${DEV_ENV_FILE:-deploy/.env.dev}"
 if [[ "${MODULE}" == "--mode" ]]; then
   MODULE="permission"
 fi
@@ -91,6 +92,17 @@ mkdir -p "${AUDIT_DIR}"
 mkdir -p "${EVIDENCE_DIR}"
 rm -f "${PAGE_RESULTS_JSONL}" "${PAGE_REPORT_JSON}"
 rm -f "${STATE_RESULTS_JSONL}"
+
+if [[ -f "${DEV_ENV_FILE}" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "${DEV_ENV_FILE}"
+  set +a
+fi
+
+REDIS_HOST="${REDIS_HOST:-${SPRING_DATA_REDIS_HOST:-}}"
+REDIS_PORT="${REDIS_PORT:-${SPRING_DATA_REDIS_PORT:-}}"
+REDIS_PASSWORD="${REDIS_PASSWORD:-${SPRING_DATA_REDIS_PASSWORD:-}}"
 
 if [[ "${MODE}" == "generate" ]]; then
   python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
@@ -194,19 +206,12 @@ if [[ "${MODE}" == "generate" && "${SOURCE}" == "prototype" ]]; then
 fi
 
 pick_api_proxy_target() {
-  if [[ -n "${E2E_API_PROXY_TARGET:-}" ]]; then
-    printf '%s' "${E2E_API_PROXY_TARGET}"
-    return 0
+  if [[ -n "${E2E_BACKEND_URL:-}" && -z "${E2E_API_PROXY_TARGET:-}" ]]; then
+    export BASE_URL="${E2E_BACKEND_URL}"
+    export E2E_API_PROXY_TARGET="${E2E_BACKEND_URL}"
   fi
-  if [[ -n "${E2E_BACKEND_URL:-}" ]]; then
-    printf '%s' "${E2E_BACKEND_URL}"
-    return 0
-  fi
-  if curl -fsS --max-time 2 "http://127.0.0.1:28080/actuator/health" >/dev/null 2>&1; then
-    printf '%s' "http://127.0.0.1:28080"
-    return 0
-  fi
-  printf '%s' "http://127.0.0.1:8080"
+  eval "$(bash bin/resolve-runtime-contract.sh)"
+  printf '%s' "${RESOLVED_E2E_API_PROXY_TARGET}"
 }
 
 API_PROXY_TARGET="$(pick_api_proxy_target)"
@@ -235,6 +240,11 @@ run_playwright_suite() {
     UI_VISUAL_REQUIRE_FIXED_TIME="${STABILITY_REQUIRE_FIXED}" \
     E2E_FIXED_TIME="${STABILITY_FIXED_TIME}" \
     E2E_API_PROXY_TARGET="${API_PROXY_TARGET}" \
+    E2E_ADMIN_USERNAME="${E2E_ADMIN_USERNAME:-}" \
+    E2E_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-}" \
+    E2E_REDIS_HOST="${E2E_REDIS_HOST:-${REDIS_HOST:-}}" \
+    E2E_REDIS_PORT="${E2E_REDIS_PORT:-${REDIS_PORT:-}}" \
+    E2E_REDIS_PASSWORD="${E2E_REDIS_PASSWORD:-${REDIS_PASSWORD:-}}" \
     PW_VISUAL_SNAPSHOT_TEMPLATE="{testDir}/visual-baseline/{arg}{ext}" \
     TZ="${STABILITY_TZ}" \
     LANG="${LANG:-zh_CN.UTF-8}" \
@@ -332,13 +342,31 @@ for page in pages:
         "actual_ref": result.get("actual_ref", "none"),
         "diff_ref": result.get("diff_ref", "none"),
         "diff_threshold": page.get("diff_threshold"),
+        "data_mode": result.get("data_mode", page.get("data_mode", "live")),
+        "fixture_route_count": result.get("fixture_route_count", len(page.get("fixture_routes", []) or [])),
+        "dynamic_region_count": result.get("dynamic_region_count", len(page.get("dynamic_regions", []) or [])),
         "style_assertions_passed": result.get("style_assertions_passed", 0),
         "style_assertions_failed": result.get("style_assertions_failed", 0),
         "state_cases_executed": state_bucket.get("executed", 0),
         "state_cases_failed": state_bucket.get("failed", 0),
+        "critical_surface_results": result.get("critical_surface_results", []),
         "result": result.get("result", "NOT_RUN"),
     }
     page_rows.append(row)
+
+critical_total = sum(len(x.get("critical_surface_results", []) or []) for x in page_rows)
+critical_pass = sum(
+    1
+    for page in page_rows
+    for surface in (page.get("critical_surface_results", []) or [])
+    if isinstance(surface, dict) and surface.get("result") == "PASS"
+)
+critical_fail = sum(
+    1
+    for page in page_rows
+    for surface in (page.get("critical_surface_results", []) or [])
+    if isinstance(surface, dict) and surface.get("result") == "FAIL"
+)
 
 summary = {
     "module": contract.get("module", "${MODULE}"),
@@ -351,6 +379,9 @@ summary = {
     "style_assertions_failed": sum(int(x.get("style_assertions_failed", 0) or 0) for x in page_rows),
     "state_cases_executed": state_total,
     "state_cases_failed": state_failed,
+    "critical_surfaces_total": critical_total,
+    "critical_surfaces_passed": critical_pass,
+    "critical_surfaces_failed": critical_fail,
     "pages": page_rows,
 }
 page_report_path = Path("${PAGE_REPORT_JSON}")
@@ -364,10 +395,15 @@ for row in page_rows:
         f"actual_ref={row['actual_ref']} "
         f"diff_ref={row['diff_ref']} "
         f"diff_threshold={row['diff_threshold']} "
+        f"data_mode={row['data_mode']} "
+        f"fixture_route_count={row['fixture_route_count']} "
+        f"dynamic_region_count={row['dynamic_region_count']} "
         f"style_assertions_passed={row['style_assertions_passed']} "
         f"style_assertions_failed={row['style_assertions_failed']} "
         f"state_cases_executed={row['state_cases_executed']} "
         f"state_cases_failed={row['state_cases_failed']} "
+        f"critical_surfaces_total={len(row.get('critical_surface_results', []) or [])} "
+        f"critical_surfaces_failed={sum(1 for s in (row.get('critical_surface_results', []) or []) if isinstance(s, dict) and s.get('result') == 'FAIL')} "
         f"result={row['result']}"
     )
 PY

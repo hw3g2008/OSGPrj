@@ -21,6 +21,11 @@ services:
       MYSQL_APP_PASSWORD_FILE: /run/secrets/mysql_app_password
       REDIS_PASSWORD_FILE: /run/secrets/redis_password
       JWT_SECRET_FILE: /run/secrets/jwt_secret
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     secrets:
       - mysql_app_password
       - redis_password

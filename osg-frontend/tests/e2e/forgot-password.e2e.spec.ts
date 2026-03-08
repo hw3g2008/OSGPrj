@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { waitForApi } from './support/auth'
+import fs from 'node:fs'
+import { ensureAdminProfileEmail, waitForApi } from './support/auth'
+import { recordBehaviorScenario } from './support/behavior-report'
+import { normalizeRuntimeEnvValue } from './support/runtime-env'
+import { buildIpRateLimitKey, deleteRedisKeys } from './support/redis-runtime'
 
 test.describe('Forgot Password @ui-smoke @ui-only', () => {
   test('forgot password modal can be opened from login page @perm-s002-forgot-entry', async ({ page }) => {
@@ -20,52 +24,59 @@ test.describe('Forgot Password @ui-smoke @ui-only', () => {
 })
 
 test.describe('Forgot Password @api', () => {
+  async function waitForResetCodeFromProviderLog(email: string, notBeforeMs: number): Promise<string> {
+    const providerLogPath = process.env.PASSWORD_RESET_PROVIDER_LOG_PATH
+    expect(providerLogPath, 'PASSWORD_RESET_PROVIDER_LOG_PATH must be configured for real delivery evidence').toBeTruthy()
+
+    const deadline = Date.now() + 10000
+    while (Date.now() < deadline) {
+      if (providerLogPath && fs.existsSync(providerLogPath)) {
+        const lines = fs.readFileSync(providerLogPath, 'utf-8').trim().split(/\r?\n/).filter(Boolean)
+        for (const line of lines.reverse()) {
+          try {
+            const entry = JSON.parse(line)
+            const sentAtMs = Date.parse(entry?.sentAt || '')
+            if (
+              entry?.email === email &&
+              typeof entry?.code === 'string' &&
+              /^\d{6}$/.test(entry.code) &&
+              Number.isFinite(sentAtMs) &&
+              sentAtMs >= notBeforeMs
+            ) {
+              return entry.code
+            }
+          } catch {
+            // ignore malformed lines and keep polling
+          }
+        }
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    throw new Error(`Reset code evidence not found in provider log for ${email}`)
+  }
+
   async function ensureResetEmailReady(page: import('@playwright/test').Page, email: string) {
-    const loginResp = await page.request.post('/api/login', {
-      data: {
-        username: process.env.E2E_ADMIN_USERNAME || 'admin',
-        password: process.env.E2E_ADMIN_PASSWORD || 'admin123',
-        code: process.env.E2E_CAPTCHA_CODE || '1234',
-        uuid: '',
-      },
+    await ensureAdminProfileEmail(page.request, email)
+  }
+
+  async function resetIpRateLimiterBucket(): Promise<void> {
+    const rateLimitKey = buildIpRateLimitKey({
+      keyPrefix: 'pwd_reset_code:',
+      targetClass: 'com.ruoyi.web.controller.system.SysPasswordController',
+      methodName: 'sendCode',
     })
-    expect(loginResp.ok(), '/api/login should return HTTP 2xx').toBeTruthy()
-    const loginBody = await loginResp.json()
-    expect(loginBody.code, '/api/login should return code=200').toBe(200)
-    const token = loginBody.token
-    expect(token, '/api/login should include token').toBeTruthy()
-
-    const headers = { Authorization: `Bearer ${token}` }
-
-    const infoResp = await page.request.get('/api/getInfo', { headers })
-    expect(infoResp.ok(), '/api/getInfo should return HTTP 2xx').toBeTruthy()
-    const infoBody = await infoResp.json()
-    expect(infoBody.code, '/api/getInfo should return code=200').toBe(200)
-
-    const user = infoBody.user || {}
-    const profileResp = await page.request.put('/api/system/user/profile', {
-      headers,
-      data: {
-        nickName: user.nickName || '管理员',
-        email,
-        phonenumber: user.phonenumber || '',
-        sex: user.sex || '0',
-      },
-    })
-    expect(profileResp.ok(), '/api/system/user/profile should return HTTP 2xx').toBeTruthy()
-    const profileBody = await profileResp.json()
-    expect(profileBody.code, '/api/system/user/profile should return code=200').toBe(200)
+    deleteRedisKeys([rateLimitKey])
   }
 
   test('4-step forgot password flow completes @perm-s002-forgot-flow', async ({ page }) => {
     test.setTimeout(120000)
 
-    const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123'
-    const e2eEmail = process.env.E2E_RESET_EMAIL || 'test@example.com'
-    const e2eCode = process.env.E2E_RESET_CODE || '123456'
-    const newPassword = process.env.E2E_RESET_PASSWORD || adminPassword
+    const adminPassword = normalizeRuntimeEnvValue(process.env.E2E_ADMIN_PASSWORD) || 'Osg@2025'
+    const e2eEmail = normalizeRuntimeEnvValue(process.env.E2E_RESET_EMAIL) || 'test@example.com'
+    const newPassword = normalizeRuntimeEnvValue(process.env.E2E_RESET_PASSWORD) || adminPassword
 
     await ensureResetEmailReady(page, e2eEmail)
+    await resetIpRateLimiterBucket()
 
     await page.goto('/login')
     const forgotLink = page.locator('a:has-text("忘记密码"), button:has-text("忘记密码"), [class*="forgot"]').first()
@@ -76,22 +87,193 @@ test.describe('Forgot Password @api', () => {
     await emailInput.fill(e2eEmail)
 
     const sendCodePromise = waitForApi(page, '/api/system/password/sendCode', 'POST')
+    const requestStartedAt = Date.now()
     await modal.locator('button:has-text("发送验证码")').click()
     const sendCodeResponse = await sendCodePromise
     expect(sendCodeResponse.ok(), '/api/system/password/sendCode should return HTTP 2xx').toBeTruthy()
     expect(sendCodeResponse.status(), '/api/system/password/sendCode should return HTTP 200').toBe(200)
+    const sendCodeBody = await sendCodeResponse.json()
+    expect(sendCodeBody.code, '/api/system/password/sendCode should return business code=200').toBe(200)
+
+    await recordBehaviorScenario({
+      capabilityId: 'forgot-password-send-code',
+      scenarioId: 'known-identity',
+      inputClass: 'known_identity',
+      expectedResult: 'accepted',
+      observedResult: 'accepted',
+      observableResponse: {
+        http_status: sendCodeResponse.status(),
+        business_code: sendCodeBody.code,
+        message: sendCodeBody.msg ?? null,
+      },
+      evidenceRef: 'osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-forgot-flow-send-code',
+    })
 
     await expect(modal.getByText('验证码已发送至')).toBeVisible({ timeout: 10000 })
 
+    const e2eCode = await waitForResetCodeFromProviderLog(e2eEmail, requestStartedAt)
     await modal.locator('input[placeholder*="6位验证码"]').fill(e2eCode)
+    const verifyPromise = waitForApi(page, '/api/system/password/verify', 'POST')
     await modal.getByRole('button', { name: /验\s*证/ }).click()
+    const verifyResponse = await verifyPromise
+    const verifyBody = await verifyResponse.json()
+    expect(verifyBody.code, '/api/system/password/verify should return business code=200').toBe(200)
+    const resetToken = verifyBody?.data?.resetToken
+    expect(resetToken, '/api/system/password/verify should return resetToken').toBeTruthy()
+
+    await recordBehaviorScenario({
+      capabilityId: 'forgot-password-verify-code',
+      scenarioId: 'valid-code',
+      inputClass: 'valid_code',
+      expectedResult: 'accepted',
+      observedResult: 'accepted',
+      observableResponse: {
+        http_status: verifyResponse.status(),
+        business_code: verifyBody.code,
+        message: verifyBody.msg ?? null,
+        reset_token_present: Boolean(resetToken),
+      },
+      evidenceRef: 'osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-forgot-flow-verify',
+    })
+
     // verify 成功后 UI 必须进入 Step 3（即出现新密码输入框）
     await expect(modal.locator('input[placeholder*="8-20位，包含字母和数字"]')).toBeVisible({ timeout: 10000 })
 
     await modal.locator('input[placeholder*="8-20位，包含字母和数字"]').fill(newPassword)
     await modal.locator('input[placeholder*="请再次输入新密码"]').fill(newPassword)
+    const resetPromise = waitForApi(page, '/api/system/password/reset', 'POST')
     await modal.getByRole('button', { name: /重\s*置\s*密\s*码/ }).click()
+    const resetResponse = await resetPromise
+    const resetBody = await resetResponse.json()
+    expect(resetBody.code, '/api/system/password/reset should return business code=200').toBe(200)
+
+    await recordBehaviorScenario({
+      capabilityId: 'forgot-password-reset-password',
+      scenarioId: 'valid-reset-token',
+      inputClass: 'valid_reset_token',
+      expectedResult: 'accepted',
+      observedResult: 'accepted',
+      observableResponse: {
+        http_status: resetResponse.status(),
+        business_code: resetBody.code,
+        message: resetBody.msg ?? null,
+      },
+      evidenceRef: 'osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-forgot-flow-reset',
+    })
+
     // reset 成功后 UI 必须进入完成态
     await expect(modal.getByText('密码重置成功')).toBeVisible({ timeout: 10000 })
+  })
+
+  test('unknown identity keeps same observable send-code response @perm-s002-forgot-unknown-identity', async ({ page }) => {
+    const unknownEmail = 'unknown-behavior-check@example.com'
+    await resetIpRateLimiterBucket()
+    const response = await page.request.post('/api/system/password/sendCode', {
+      data: { email: unknownEmail },
+    })
+    expect(response.ok(), '/api/system/password/sendCode unknown-identity should return HTTP 2xx').toBeTruthy()
+    const body = await response.json()
+    const observedResult = response.ok() && body?.code === 200 ? 'accepted' : 'rejected'
+
+    await recordBehaviorScenario({
+      capabilityId: 'forgot-password-send-code',
+      scenarioId: 'unknown-identity',
+      inputClass: 'unknown_identity',
+      expectedResult: 'accepted',
+      observedResult,
+      observableResponse: {
+        http_status: response.status(),
+        business_code: body?.code ?? null,
+        message: body?.msg ?? null,
+      },
+      evidenceRef: 'osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-forgot-unknown-identity',
+    })
+  })
+
+  test('invalid reset code is rejected @perm-s002-verify-invalid-code', async ({ page }) => {
+    const email = normalizeRuntimeEnvValue(process.env.E2E_RESET_EMAIL) || 'test@example.com'
+    await ensureResetEmailReady(page, email)
+    await resetIpRateLimiterBucket()
+    await page.request.post('/api/system/password/sendCode', {
+      data: { email },
+    })
+    const response = await page.request.post('/api/system/password/verify', {
+      data: {
+        email,
+        code: '000000',
+      },
+    })
+    expect(response.ok(), '/api/system/password/verify invalid-code should return HTTP 2xx').toBeTruthy()
+    const body = await response.json()
+    const observedResult = response.ok() && body?.code === 200 ? 'accepted' : 'rejected'
+
+    await recordBehaviorScenario({
+      capabilityId: 'forgot-password-verify-code',
+      scenarioId: 'invalid-code',
+      inputClass: 'invalid_code',
+      expectedResult: 'rejected',
+      observedResult,
+      observableResponse: {
+        http_status: response.status(),
+        business_code: body?.code ?? null,
+        message: body?.msg ?? null,
+      },
+      evidenceRef: 'osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-verify-invalid-code',
+    })
+  })
+
+  test('expired reset code is rejected @perm-s002-verify-expired-code', async ({ page }) => {
+    const response = await page.request.post('/api/system/password/verify', {
+      data: {
+        email: 'expired-code-check@example.com',
+        code: '123456',
+      },
+    })
+    expect(response.ok(), '/api/system/password/verify expired-code should return HTTP 2xx').toBeTruthy()
+    const body = await response.json()
+    const observedResult = response.ok() && body?.code === 200 ? 'accepted' : 'rejected'
+
+    await recordBehaviorScenario({
+      capabilityId: 'forgot-password-verify-code',
+      scenarioId: 'expired-code',
+      inputClass: 'expired_code',
+      expectedResult: 'rejected',
+      observedResult,
+      observableResponse: {
+        http_status: response.status(),
+        business_code: body?.code ?? null,
+        message: body?.msg ?? null,
+      },
+      evidenceRef: 'osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-verify-expired-code',
+    })
+  })
+
+  test('invalid reset token is rejected @perm-s002-reset-invalid-token', async ({ page }) => {
+    const email = normalizeRuntimeEnvValue(process.env.E2E_RESET_EMAIL) || 'test@example.com'
+    await ensureResetEmailReady(page, email)
+    const response = await page.request.post('/api/system/password/reset', {
+      data: {
+        email,
+        password: normalizeRuntimeEnvValue(process.env.E2E_RESET_PASSWORD) || 'Osg@2025',
+        resetToken: 'invalid-reset-token',
+      },
+    })
+    expect(response.ok(), '/api/system/password/reset invalid-reset-token should return HTTP 2xx').toBeTruthy()
+    const body = await response.json()
+    const observedResult = response.ok() && body?.code === 200 ? 'accepted' : 'rejected'
+
+    await recordBehaviorScenario({
+      capabilityId: 'forgot-password-reset-password',
+      scenarioId: 'invalid-reset-token',
+      inputClass: 'invalid_reset_token',
+      expectedResult: 'rejected',
+      observedResult,
+      observableResponse: {
+        http_status: response.status(),
+        business_code: body?.code ?? null,
+        message: body?.msg ?? null,
+      },
+      evidenceRef: 'osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-reset-invalid-token',
+    })
   })
 })

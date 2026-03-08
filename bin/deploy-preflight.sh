@@ -119,14 +119,53 @@ check_prod_plaintext_secrets() {
 
 check_port_free() {
   local port="$1"
-  if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "FAIL: 端口被占用 ${port}" >&2
-    lsof -nP -iTCP:"${port}" -sTCP:LISTEN || true
-    exit 1
+  if command -v lsof >/dev/null 2>&1; then
+    if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
+      echo "FAIL: 端口被占用 ${port}" >&2
+      lsof -nP -iTCP:"${port}" -sTCP:LISTEN || true
+      exit 1
+    fi
+    return 0
   fi
+  if command -v ss >/dev/null 2>&1; then
+    if ss -lnt "( sport = :${port} )" | tail -n +2 | grep -q .; then
+      echo "FAIL: 端口被占用 ${port}" >&2
+      ss -lntp "( sport = :${port} )" || true
+      exit 1
+    fi
+    return 0
+  fi
+  echo "FAIL: 缺少端口检测工具（需要 lsof 或 ss）" >&2
+  exit 1
 }
 
+check_port_listening() {
+  local port="$1"
+  local label="$2"
+  if command -v lsof >/dev/null 2>&1; then
+    if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
+      return 0
+    fi
+    echo "FAIL: ${label} 未监听端口 ${port}" >&2
+    exit 1
+  fi
+  if command -v ss >/dev/null 2>&1; then
+    if ss -lnt "( sport = :${port} )" | tail -n +2 | grep -q .; then
+      return 0
+    fi
+    echo "FAIL: ${label} 未监听端口 ${port}" >&2
+    exit 1
+  fi
+  echo "FAIL: 缺少端口检测工具（需要 lsof 或 ss）" >&2
+  exit 1
+}
+
+
 check_topology_services() {
+  local manage_deps="$1"
+  local need_core="$2"
+  local need_frontends="$3"
+  shift 3
   local actual_file expected_file
   actual_file="$(mktemp)"
   expected_file="$(mktemp)"
@@ -135,24 +174,28 @@ check_topology_services() {
     -f deploy/compose.base.yml \
     -f "deploy/compose.${ENV_NAME}.yml" \
     --env-file "${ENV_FILE}" \
-    --profile deps \
-    --profile core \
-    --profile frontends \
+    "$@" \
     config --services | sed '/^$/d' | sort > "${actual_file}"
 
-  cat > "${expected_file}" <<'EOF'
-admin
-assistant
-backend
-lead-mentor
-mentor
-mysql
-redis
-student
-EOF
+  {
+    if [[ "${manage_deps}" == "true" ]]; then
+      echo mysql
+      echo redis
+    fi
+    if [[ "${need_core}" == "true" || "${need_frontends}" == "true" ]]; then
+      echo backend
+    fi
+    if [[ "${need_frontends}" == "true" ]]; then
+      echo admin
+      echo assistant
+      echo lead-mentor
+      echo mentor
+      echo student
+    fi
+  } | sed '/^$/d' | sort > "${expected_file}"
 
   if ! cmp -s "${actual_file}" "${expected_file}"; then
-    echo "FAIL: 服务拓扑漂移，实际服务列表与固定 8 服务不一致" >&2
+    echo "FAIL: 服务拓扑漂移，实际服务列表与当前环境/依赖模式不一致" >&2
     echo "--- expected ---" >&2
     cat "${expected_file}" >&2
     echo "--- actual ---" >&2
@@ -218,7 +261,6 @@ if ! docker compose \
   echo "FAIL: docker compose 配置渲染失败（请检查 compose 文件与环境变量）" >&2
   exit 1
 fi
-check_topology_services
 
 for sql in \
   deploy/mysql-init/00_ry_20250522.sql \
@@ -248,6 +290,11 @@ fi
 need_deps=false
 need_core=false
 need_frontends=false
+shared_test_mode=false
+if [[ "${ENV_NAME}" == "test" && "${TEST_DEPENDENCY_MODE:-isolated}" == "shared" ]]; then
+  shared_test_mode=true
+fi
+
 IFS=',' read -r -a profiles <<< "${PROFILE_CSV}"
 for p in "${profiles[@]}"; do
   p_trim="$(echo "${p}" | xargs)"
@@ -263,15 +310,31 @@ for p in "${profiles[@]}"; do
   esac
 done
 
-if [[ "${need_deps}" == true ]]; then
+manage_deps=true
+if [[ "${shared_test_mode}" == "true" ]]; then
+  manage_deps=false
+fi
+
+PROFILE_ARGS=()
+while IFS= read -r profile; do
+  [[ -z "${profile}" ]] && continue
+  PROFILE_ARGS+=(--profile "${profile}")
+done < <(bash bin/resolve-compose-profiles.sh "${ENV_NAME}" "${PROFILE_CSV}" "${ENV_FILE}")
+
+check_topology_services "${manage_deps}" "${need_core}" "${need_frontends}" "${PROFILE_ARGS[@]}"
+
+if [[ "${manage_deps}" == true && "${need_deps}" == true ]]; then
   if [[ "${ENV_NAME}" == "prod" ]]; then
     echo "INFO: prod 环境 mysql/redis 端口默认不暴露，跳过端口占用检查"
   else
     check_port_free "${MYSQL_PORT:-3306}"
     check_port_free "${REDIS_PORT:-6379}"
   fi
+elif [[ "${shared_test_mode}" == "true" && "${need_core}" == "true" ]]; then
+  check_port_listening "${MYSQL_SHARED_PORT:-23306}" "shared mysql"
+  check_port_listening "${REDIS_SHARED_PORT:-26379}" "shared redis"
 fi
-if [[ "${need_core}" == true ]]; then
+if [[ "${need_core}" == true || "${need_frontends}" == true ]]; then
   check_port_free "${BACKEND_PORT:-8080}"
 fi
 if [[ "${need_frontends}" == true ]]; then

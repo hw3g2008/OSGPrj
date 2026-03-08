@@ -30,10 +30,10 @@
 - 默认 `--backend-policy auto`：
   - 先复用外部后端；
   - 不可达时优先尝试 Docker 启动；
-  - Docker 启动不可用时回退本地托管 `mvn spring-boot:run`。
+  - Docker 启动不可用时回退本地托管 `bash bin/run-backend-dev.sh deploy/.env.dev`。
 - 推荐 `--backend-policy docker_only`（Docker 场景）：
   - 不可达时必须走 Docker；
-  - 不允许回退本地 `mvn`，失败即 `EXIT 11`。
+  - 不允许回退本地托管 backend，失败即 `EXIT 11`。
 
 Docker 启动命令来源优先级：
 1. `DOCKER_RUN_CMD`
@@ -51,7 +51,7 @@ Docker 启动命令来源优先级：
 bash bin/final-closure.sh [module] --cc-mode optional
 ```
 
-Docker 严格模式（不允许回退本地 `mvn`）：
+Docker 严格模式（不允许回退本地托管 backend）：
 
 ```bash
 bash bin/final-closure.sh [module] --cc-mode optional --backend-policy docker_only

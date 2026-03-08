@@ -17,6 +17,10 @@ metadata:
 3. 决定是否需要审批
 4. 自动执行下一个命令（如果配置为 auto）
 
+上游真源约束：
+- `prototype-extraction` 必须生成 `UI-VISUAL-CONTRACT.yaml` 与 `DELIVERY-CONTRACT.yaml`
+- 下游 coverage/truth/critical-ui guards 必须把这两个 contract 当作 fail-closed 真源，而不是可选附件
+
 ## 术语说明
 
 - **状态 (state)**：工作流当前所处的位置，如 `brainstorm_done`、`story_split_done`
@@ -200,6 +204,11 @@ def preflight_guard(command, state, sm, config):
             raise GuardError(f"缺少 phase-proof: {proof_path}，请先执行 /split story")
         # 校验 source_hash
         verify_source_hash(proof_path, f"osg-spec-docs/docs/02-requirements/srs/{module}.md")
+        # 校验 requirements -> stories 覆盖完整
+        run_guard(
+            "python3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py "
+            f"--module {module} --mode requirements_to_stories"
+        )
 
     if command == "/approve tickets":
         story_id = state.current_story
@@ -208,6 +217,11 @@ def preflight_guard(command, state, sm, config):
         if not exists(proof_path):
             raise GuardError(f"缺少 phase-proof: {proof_path}，请先执行 /split ticket {story_id}")
         verify_source_hash(proof_path, f"osg-spec-docs/tasks/stories/{story_id}.yaml")
+        # 校验 story -> tickets 覆盖完整
+        run_guard(
+            "python3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py "
+            f"--story-id {story_id}"
+        )
 
     # 3. 审批门是否满足
     #    从 state-machine.yaml 的 states[current_step].approval_required + approval_key

@@ -99,11 +99,13 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .dashboard {
+  padding-bottom: 1px;
+
   &__welcome {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
 
   &__title {
@@ -127,9 +129,8 @@ onMounted(() => {
 
   &__two-col {
     display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 16px;
-    margin-top: 16px;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
   }
 
   &__left {

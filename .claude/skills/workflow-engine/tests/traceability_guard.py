@@ -13,6 +13,7 @@ import sys
 import argparse
 import yaml
 from pathlib import Path
+import re
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
@@ -33,13 +34,16 @@ def load_matrix_tc_ids(path):
         print(f"  ❌ 矩阵文件不存在: {path}")
         return None
     tc_ids = []
+    tc_pattern = re.compile(r"^TC-[A-Z0-9-]+$")
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if line.startswith("|") and "TC-PERM-" in line:
+            if line.startswith("|") and "TC-" in line:
                 cols = [c.strip() for c in line.split("|")]
                 for col in cols:
-                    if col.startswith("TC-PERM-"):
+                    if col == "TC-ID":
+                        continue
+                    if tc_pattern.match(col):
                         tc_ids.append(col)
                         break
     return tc_ids

@@ -1,0 +1,18 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "studentCount": 156,
+    "mentorCount": 28,
+    "pendingClassHours": 12,
+    "pendingSettlement": 8520,
+    "pendingExpense": 5,
+    "newStudentsThisMonth": 8,
+    "leadMentorCount": 6,
+    "mentorOnlyCount": 22,
+    "earliestPendingDays": 3,
+    "settlementReport": 6800,
+    "settlementOther": 1720,
+    "expenseTotal": 380
+  }
+}

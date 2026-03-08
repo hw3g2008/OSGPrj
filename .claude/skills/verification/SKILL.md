@@ -81,7 +81,12 @@ def can_claim_done(task):
 | **Phase 1 前置检查** | Ticket 状态 | 读取 YAML status 字段 | 所有 Tickets status=done |
 | | 验证证据 | 检查 verification_evidence 字段 | 所有 Tickets 有证据且 exit_code=0 |
 | | 🆕 证据强度 | `validate_evidence_command(command)` | command 必须是可执行 shell 命令（禁止 "code review" 等） |
+| | 🆕 测试资产完整性 | `test_asset_completeness_guard.py --story-id {story_id}` | Story/Ticket/TestCase/Traceability 同步完整 |
+| | 🆕 真实性守卫 | `delivery_truth_guard.py --stage verify` | 不允许降级实现，外部副作用必须声明真实 provider 与 evidence path |
+| | 🆕 内容契约守卫 | `delivery_content_guard.py --stage verify` | 外部输出内容不得命中 forbidden literals，且必须包含 required tokens |
+| | 🆕 关键 UI 证据守卫 | `ui_critical_evidence_guard.py --stage verify` | 关键 surface 不允许整体 mask，style/state/relation evidence 必须完整且通过 |
 | **Phase 2 功能验收** | 全量测试 🔴 | 执行 mvn test / pnpm test | exit_code=0 |
+| | 🆕 行为契约守卫 | `behavior_contract_guard.py --stage verify` | 全量测试生成的场景证据存在，same/distinct 不变量成立 |
 | | AC 覆盖率 | 逐条检查 Story AC | 每个 AC 被至少 1 个已完成 Ticket 覆盖 |
 | | 覆盖率汇总 | 解析 JaCoCo/Vitest 报告 | 达到 config 中定义的门槛 |
 | | 集成测试 | 执行 `mvn verify -Pintegration-test` | exit_code=0（仅当 config.testing.integration.enabled） |
@@ -143,6 +148,39 @@ def verify_story(story_id):
     # Phase 1: 前置检查（不可跳过，不在循环内）
     # ============================================
     pre_issues = []
+
+    module = read_yaml("osg-spec-docs/tasks/STATE.yaml").workflow.current_requirement
+    asset_guard = bash(
+        "python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py "
+        f"--module {module} --story-id {story_id}"
+    )
+    if asset_guard.exit_code != 0:
+        pre_issues.append("test_asset_completeness_guard 未通过：Story/Ticket/TestCase/Traceability 资产不同步")
+
+    truth_guard = bash(
+        "python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py "
+        f"--module {module} --stage verify"
+    )
+    if truth_guard.exit_code != 0:
+        pre_issues.append("delivery_truth_guard 未通过：存在降级实现、缺失真实 provider/evidence 声明或缺失真实副作用证据")
+
+    content_guard = bash(
+        "python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py "
+        f"--contract osg-spec-docs/docs/01-product/prd/{module}/DELIVERY-CONTRACT.yaml "
+        "--runtime-contract deploy/runtime-contract.dev.yaml "
+        "--stage verify"
+    )
+    if content_guard.exit_code != 0:
+        pre_issues.append("delivery_content_guard 未通过：外部输出内容命中 forbidden literals，或缺少 required tokens")
+
+    critical_ui_guard = bash(
+        "python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py "
+        f"--contract osg-spec-docs/docs/01-product/prd/{module}/UI-VISUAL-CONTRACT.yaml "
+        f"--page-report osg-spec-docs/tasks/audit/ui-visual-page-report-{module}-{today()}.json "
+        "--stage verify"
+    )
+    if critical_ui_guard.exit_code != 0:
+        pre_issues.append("ui_critical_evidence_guard 未通过：关键 surface 被 mask，或 style/state/relation 证据包缺失/失败")
 
     for ticket_id in story.tickets:
         ticket = read_yaml(f"osg-spec-docs/tasks/tickets/{ticket_id}.yaml")
@@ -246,6 +284,19 @@ def verify_story(story_id):
             if integration_result.exit_code != 0:
                 issues.append(("integration_test", "all",
                     f"集成测试失败: {extract_failure_summary(integration_result)}"))
+
+        # ------------------------------------------
+        # 2.1c behavior contract（依赖测试阶段产出的场景报告）
+        # ------------------------------------------
+        behavior_result = bash(
+            "python3 .claude/skills/workflow-engine/tests/behavior_contract_guard.py "
+            f"--contract osg-spec-docs/docs/01-product/prd/{module}/DELIVERY-CONTRACT.yaml "
+            f"--report osg-spec-docs/tasks/audit/behavior-contract-{module}-{today()}.json "
+            "--stage verify"
+        )
+        if behavior_result.exit_code != 0:
+            issues.append(("behavior_contract", "all",
+                "行为场景证据缺失，或 same/distinct 不变量不成立"))
 
         # ------------------------------------------
         # 2.2 Story AC 覆盖率检查

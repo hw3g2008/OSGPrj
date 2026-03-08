@@ -2,6 +2,15 @@ spring:
   config:
     activate:
       on-profile: docker
+  mail:
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:25}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${SPRING_MAIL_SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:true}
+      mail.smtp.ssl.enable: ${SPRING_MAIL_SMTP_SSL_ENABLE:false}
   datasource:
     druid:
       master:
@@ -24,8 +33,10 @@ ruoyi:
 
 user:
   password:
-    # Docker/门禁环境固定验证码，确保 E2E 可重复；生产环境请通过环境变量覆盖为空
-    resetCodeFixed: ${USER_PASSWORD_RESET_CODE_FIXED:123456}
+    mail:
+      from: ${SPRING_MAIL_FROM:}
+      mailbox: ${PASSWORD_RESET_MAILBOX:}
+      providerLogPath: ${PASSWORD_RESET_PROVIDER_LOG_PATH:}
 
 management:
   endpoint:

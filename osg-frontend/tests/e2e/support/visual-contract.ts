@@ -5,6 +5,8 @@ export type VisualAuthMode = 'public' | 'protected'
 export type CaptureMode = 'clip' | 'fullpage'
 export type StateCaseKind = 'focus' | 'hover' | 'loading' | 'empty' | 'error'
 export type StateAssertionType = 'visible' | 'text' | 'css'
+export type VisualDataMode = 'live' | 'mock' | 'mask'
+export type CriticalStateContractKind = 'focus' | 'hover' | 'loading' | 'empty' | 'error' | 'loaded'
 
 export interface VisualStyleContractRule {
   selector: string
@@ -25,11 +27,55 @@ export interface VisualStateCase {
   assertion: VisualStateAssertion
 }
 
+export interface VisualFixtureRoute {
+  url: string
+  method?: string
+  response_ref: string
+  status?: number
+  headers?: Record<string, string>
+}
+
+export interface VisualCriticalSurfaceStyleContract {
+  target?: string
+  property: string
+  expected: string
+  tolerance?: number
+}
+
+export interface VisualCriticalSurfaceStateAssertion {
+  target?: string
+  property: string
+  expected: string
+}
+
+export interface VisualCriticalSurfaceStateContract {
+  state: CriticalStateContractKind
+  target?: string
+  assertions: VisualCriticalSurfaceStateAssertion[]
+}
+
+export interface VisualCriticalSurfaceRelationContract {
+  type: string
+  target: string
+  expected?: string
+}
+
+export interface VisualCriticalSurfaceContract {
+  surface_id: string
+  selector: string
+  mask_allowed: boolean
+  required_anchors: string[]
+  style_contracts: VisualCriticalSurfaceStyleContract[]
+  state_contracts: VisualCriticalSurfaceStateContract[]
+  relation_contracts?: VisualCriticalSurfaceRelationContract[]
+}
+
 export interface VisualPageContract {
   page_id: string
   route: string
   prototype_file: string
   prototype_selector: string
+  prototype_page_key?: string
   viewport: { width: number; height: number }
   auth_mode: VisualAuthMode
   snapshot_name: string
@@ -45,6 +91,10 @@ export interface VisualPageContract {
   device_scale_factor?: number
   style_contracts?: VisualStyleContractRule[]
   state_cases?: VisualStateCase[]
+  data_mode?: VisualDataMode
+  fixture_routes?: VisualFixtureRoute[]
+  dynamic_regions?: string[]
+  critical_surfaces?: VisualCriticalSurfaceContract[]
 }
 
 export interface VisualContract {

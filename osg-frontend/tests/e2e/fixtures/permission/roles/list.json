@@ -1,0 +1,17 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "rows": [
+      {"roleId": 1, "roleName": "文员", "roleKey": "clerk", "remark": "负责学员和导师信息管理", "menuNames": ["学生列表", "导师列表", "合同管理"], "userCount": 1, "updateTime": "2021-03-01 00:00:00"},
+      {"roleId": 2, "roleName": "课时审核员", "roleKey": "course_auditor", "remark": "负责课程审核", "menuNames": ["全部课程", "课程反馈"], "userCount": 1, "updateTime": "2021-03-01 00:00:00"},
+      {"roleId": 3, "roleName": "会计", "roleKey": "accountant", "remark": "负责财务结算", "menuNames": ["结算中心", "报销管理"], "userCount": 1, "updateTime": "2023-03-15 00:00:00"},
+      {"roleId": 4, "roleName": "岗位管理员", "roleKey": "job_manager", "remark": "负责岗位信息维护", "menuNames": ["岗位管理"], "userCount": 0, "updateTime": "2021-03-01 00:00:00"},
+      {"roleId": 5, "roleName": "文件管理员", "roleKey": "file_manager", "remark": "负责文件资源管理", "menuNames": ["文件管理"], "userCount": 0, "updateTime": "2024-07-31 00:00:00"},
+      {"roleId": 6, "roleName": "题库管理员", "roleKey": "question_manager", "remark": "负责题库内容管理", "menuNames": ["题库管理", "面试真题"], "userCount": 0, "updateTime": "2025-08-14 00:00:00"},
+      {"roleId": 7, "roleName": "报销审核员", "roleKey": "expense_auditor", "remark": "负责报销审核", "menuNames": ["报销管理"], "userCount": 0, "updateTime": "2025-05-31 00:00:00"},
+      {"roleId": 8, "roleName": "超级管理员", "roleKey": "super_admin", "remark": "系统内置，拥有全部权限", "menuNames": [], "userCount": 1, "updateTime": "2021-03-01 00:00:00"}
+    ],
+    "total": 8
+  }
+}

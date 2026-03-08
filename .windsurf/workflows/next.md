@@ -29,7 +29,11 @@ description: 执行下一个待办 Ticket - 自动选取并实现
      - **自我审查 + 增强全局终审**（三维度终审 + A~I 多维度旋转校验，重试循环最多 10 次，参见 quality-gate/SKILL.md）
      - **Level 1 单元验证**：当前 Ticket 的验证命令
      - **Level 2 回归验证**：全量测试，确保不破坏已完成功能
+     - **真实性守卫**：`python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py --module {current_requirement} --stage next`
+     - **关键 UI 证据守卫**：`python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py --contract osg-spec-docs/docs/01-product/prd/{current_requirement}/UI-VISUAL-CONTRACT.yaml --page-report osg-spec-docs/tasks/audit/ui-visual-page-report-{current_requirement}-{today}.json --stage next`
    - 确认 verification_evidence 存在且 exit_code = 0
+   - 若 `delivery_truth_guard` 失败（降级实现 / 缺失 provider 声明 / 缺失 evidence runtime 声明），禁止将 Ticket 标记为 `done`
+   - 若 `ui_critical_evidence_guard` 失败（关键 surface 被 mask / 关键 UI 证据包缺失），禁止将 Ticket 标记为 `done`
 
 5. **TC 资产更新（D6 挂点）**
    - 完成对应 TC 的 `automation.script` 与 `automation.command`

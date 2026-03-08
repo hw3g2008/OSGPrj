@@ -32,16 +32,30 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
 3. **创建 Ticket 文件**
    - 在 `osg-spec-docs/tasks/tickets/` 下创建 `T-xxx.yaml`
    - 更新 `STATE.yaml` 的 tickets 列表
+   - 每个 Ticket 若承接契约项，必须显式写出 `contract_refs.capabilities` / `contract_refs.critical_surfaces`
+   - 每个 Ticket 必须显式写出 `covers_ac_refs`
 
 4. **输出摘要**
    - 列出所有 Tickets 的编号、标题、类型、估时
    - 等待用户审批
 
 5. **TC 资产更新（D6 挂点）**
-   - 为当前 Story 的每个 AC 生成/更新 TC 骨架到 `{module}-test-cases.yaml`
+   - 为当前 Story 生成/更新三层测试资产：
+     - ticket 级：`ticket_id + ac_ref`
+     - story 级：`story_id + ac_ref`
+     - final 级：`story_id + ac_ref`
+   - 同步更新 `{module}-traceability-matrix.md`
    - 初始写入 `latest_result.status: pending`
-   - 若 AC 未映射 TC，直接 FAIL
+   - 若 `covers_ac_refs` 缺失、TC 未绑定 `ticket_id`、或 matrix 未同步，直接 FAIL
 
 6. **更新状态**
    - 由 ticket-splitter 内部调用 `transition()` 推进到 `ticket_split_done`
    - 等待用户审批（`/approve`）
+   - 输出门禁（硬门禁）：
+     - `python3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py --story-id {story_id}`
+     - `python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py --module {module} --story-id {story_id}`
+   - 上述 guard 现在同时校验：
+     - Story 的 `contract_refs` 是否全部拆到 Tickets
+     - `external` capability 是否同时具备实现 Ticket 和验证 Ticket
+     - `critical_surface` 是否具备 `frontend-ui` Ticket
+     - Story/Ticket/TestCase/Traceability 是否同步完整

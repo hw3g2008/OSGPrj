@@ -1,0 +1,14 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": [
+    {"roleId": 1, "roleName": "文员", "roleKey": "clerk"},
+    {"roleId": 2, "roleName": "课时审核员", "roleKey": "course_auditor"},
+    {"roleId": 3, "roleName": "会计", "roleKey": "accountant"},
+    {"roleId": 4, "roleName": "岗位管理员", "roleKey": "job_manager"},
+    {"roleId": 5, "roleName": "文件管理员", "roleKey": "file_manager"},
+    {"roleId": 6, "roleName": "题库管理员", "roleKey": "question_manager"},
+    {"roleId": 7, "roleName": "报销审核员", "roleKey": "expense_auditor"},
+    {"roleId": 8, "roleName": "超级管理员", "roleKey": "super_admin"}
+  ]
+}

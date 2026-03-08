@@ -20,6 +20,7 @@ HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 BASE_URL="${BASE_URL:-}"
 BASE_HEALTH_URL="${BASE_HEALTH_URL:-}"
 BACKEND_READY_TIMEOUT_SECONDS="${BACKEND_READY_TIMEOUT_SECONDS:-120}"
+BACKEND_HEALTH_TIMEOUT_SECONDS="${BACKEND_HEALTH_TIMEOUT_SECONDS:-15}"
 MYSQL_INIT_DIR="${MYSQL_INIT_DIR:-deploy/mysql-init}"
 
 MODULE_INPUT=""
@@ -300,38 +301,10 @@ check_mysql_init_dir() {
 }
 
 resolve_backend_urls() {
-  local base_url_default="http://127.0.0.1:${BACKEND_PORT}"
-  if [[ -n "${BASE_HEALTH_URL}" ]]; then
-    if [[ -z "${BASE_URL}" ]]; then
-      case "${BASE_HEALTH_URL}" in
-        */actuator/health) BASE_URL="${BASE_HEALTH_URL%/actuator/health}" ;;
-      esac
-    fi
-  elif [[ -n "${BASE_URL}" ]]; then
-    BASE_HEALTH_URL="${BASE_URL}${HEALTH_PATH}"
-  else
-    local candidate_urls=(
-      "http://127.0.0.1:28080${HEALTH_PATH}"
-      "${base_url_default}${HEALTH_PATH}"
-    )
-    local candidate
-    for candidate in "${candidate_urls[@]}"; do
-      if curl -fsS --max-time 2 "${candidate}" >/dev/null 2>&1; then
-        BASE_HEALTH_URL="${candidate}"
-        break
-      fi
-    done
-    if [[ -z "${BASE_HEALTH_URL}" ]]; then
-      BASE_HEALTH_URL="${base_url_default}${HEALTH_PATH}"
-    fi
-    case "${BASE_HEALTH_URL}" in
-      */actuator/health) BASE_URL="${BASE_HEALTH_URL%/actuator/health}" ;;
-    esac
-  fi
-
-  if [[ -z "${BASE_URL}" ]]; then
-    BASE_URL="${base_url_default}"
-  fi
+  eval "$(bash bin/resolve-runtime-contract.sh)"
+  BACKEND_PORT="${RESOLVED_BACKEND_PORT}"
+  BASE_URL="${RESOLVED_BASE_URL}"
+  BASE_HEALTH_URL="${RESOLVED_BASE_HEALTH_URL}"
 }
 
 if [[ ! -f "${STATE_FILE}" ]]; then
@@ -385,9 +358,16 @@ echo "INFO: backend base=${BASE_URL}, health=${BASE_HEALTH_URL}"
 
 # Step 1: 环境准备
 EXTERNAL_HEALTHY="no"
-if curl -fsS --max-time 5 "${BASE_HEALTH_URL}" >/dev/null 2>&1; then
+if curl -fsS --max-time "${BACKEND_HEALTH_TIMEOUT_SECONDS}" "${BASE_HEALTH_URL}" >/dev/null 2>&1; then
   EXTERNAL_HEALTHY="yes"
 fi
+
+ensure_managed_backend_startable() {
+  if bash bin/runtime-port-guard.sh --mode require-free --port "${BACKEND_PORT}" --context final-closure-managed-backend; then
+    return 0
+  fi
+  fail_exit 11 "本地托管后端目标端口 ${BACKEND_PORT} 已被占用且健康检查未通过；请先清理占用进程"
+}
 
 if [[ "${BACKEND_POLICY}" != "docker_only" && "${EXTERNAL_HEALTHY}" == "yes" ]]; then
   BACKEND_MODE="external"
@@ -441,7 +421,8 @@ else
         echo "WARNING: Docker 启动失败（exit=${docker_rc}），回退本地托管后端，日志: ${DOCKER_BOOT_LOG}"
         BACKEND_MODE="managed"
         echo "INFO: 启动托管后端..."
-        mvn -pl ruoyi-admin -am spring-boot:run >/tmp/osg-backend.log 2>&1 &
+        ensure_managed_backend_startable
+        bash bin/run-backend-dev.sh deploy/.env.dev >/tmp/osg-backend.log 2>&1 &
         BACK_PID=$!
         echo "INFO: 后端 PID=${BACK_PID}，日志=/tmp/osg-backend.log"
       else
@@ -455,7 +436,8 @@ else
       echo "INFO: Docker 路径不可用（${DOCKER_BLOCK_REASON}），回退本地托管后端"
       BACKEND_MODE="managed"
       echo "INFO: 启动托管后端..."
-      mvn -pl ruoyi-admin -am spring-boot:run >/tmp/osg-backend.log 2>&1 &
+      ensure_managed_backend_startable
+      bash bin/run-backend-dev.sh deploy/.env.dev >/tmp/osg-backend.log 2>&1 &
       BACK_PID=$!
       echo "INFO: 后端 PID=${BACK_PID}，日志=/tmp/osg-backend.log"
     fi
@@ -463,7 +445,7 @@ else
 fi
 
 start_ts="$(date +%s)"
-while ! curl -fsS --max-time 5 "${BASE_HEALTH_URL}" >/dev/null 2>&1; do
+while ! curl -fsS --max-time "${BACKEND_HEALTH_TIMEOUT_SECONDS}" "${BASE_HEALTH_URL}" >/dev/null 2>&1; do
   now_ts="$(date +%s)"
   if (( now_ts - start_ts >= BACKEND_READY_TIMEOUT_SECONDS )); then
     fail_exit 11 "后端健康检查超时（${BACKEND_READY_TIMEOUT_SECONDS}s）"

@@ -15,12 +15,14 @@ ENV_NAME="${ENV_NAME:-test}"
 PROFILE_CSV="${PROFILE_CSV:-core,frontends}"
 SSH_PASSWORD="${SSH_PASSWORD:-}"
 SSH_KEY="${SSH_KEY:-}"
+SYNC_LOCAL="${SYNC_LOCAL:-1}"
+UPDATE_CODE_REQUESTED=0
 EXTRA_ARGS=()
 
 usage() {
   cat <<'EOF'
 Usage:
-  bash bin/deploy-test-remote.sh [--host <ip_or_domain>] [--user <user>] [--key <path>] [--update-code] [--git-ref <ref>] [--skip-health-check]
+  bash bin/deploy-test-remote.sh [--host <ip_or_domain>] [--user <user>] [--key <path>] [--sync-local] [--update-code] [--git-ref <ref>] [--skip-health-check]
 
 Env overrides:
   LOCAL_REMOTE_ENV_FILE (default: deploy/.env.remote.local)
@@ -29,6 +31,7 @@ Env overrides:
   REMOTE_DIR    (default: /opt/OSGPrj)
   ENV_NAME      (default: test)
   PROFILE_CSV   (default: core,frontends)
+  SYNC_LOCAL    (default: 1; sync current workspace to remote)
   SSH_PASSWORD  (optional; if empty and no SSH_KEY, will prompt securely)
   SSH_KEY       (optional; use ssh key instead of password)
 
@@ -55,7 +58,19 @@ while [[ $# -gt 0 ]]; do
       SSH_KEY="${2:-}"
       shift 2
       ;;
+    --sync-local)
+      SYNC_LOCAL=1
+      EXTRA_ARGS+=("$1")
+      shift
+      ;;
+    --no-sync-local)
+      SYNC_LOCAL=0
+      shift
+      ;;
     --update-code|--skip-health-check)
+      if [[ "$1" == "--update-code" ]]; then
+        UPDATE_CODE_REQUESTED=1
+      fi
       EXTRA_ARGS+=("$1")
       shift
       ;;
@@ -84,6 +99,10 @@ if [[ -z "${REMOTE_HOST}" ]]; then
   exit 1
 fi
 
+if (( UPDATE_CODE_REQUESTED == 1 )) && (( SYNC_LOCAL == 1 )); then
+  SYNC_LOCAL=0
+fi
+
 if [[ -z "${SSH_KEY}" && -z "${SSH_PASSWORD}" ]]; then
   read -rsp "SSH password for ${REMOTE_USER}@${REMOTE_HOST}: " SSH_PASSWORD
   echo
@@ -91,6 +110,7 @@ fi
 
 echo "=== deploy-test-remote ==="
 echo "INFO: ${REMOTE_USER}@${REMOTE_HOST} env=${ENV_NAME} profile=${PROFILE_CSV} remote_dir=${REMOTE_DIR}"
+echo "INFO: sync_local=${SYNC_LOCAL}"
 if [[ -n "${SSH_KEY}" ]]; then
   echo "INFO: auth=ssh-key (${SSH_KEY})"
 else
@@ -105,6 +125,10 @@ CMD=(bash bin/deploy-remote-server.sh \
 
 if [[ -n "${SSH_KEY}" ]]; then
   CMD+=(--key "${SSH_KEY}")
+fi
+
+if (( SYNC_LOCAL == 1 )); then
+  CMD+=(--sync-local)
 fi
 
 if (( ${#EXTRA_ARGS[@]} > 0 )); then

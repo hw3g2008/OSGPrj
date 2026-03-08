@@ -347,6 +347,7 @@ page: 页面名（如 positions, job-overview, applications）
 - 页面关键锚点（required_anchors）：至少 3 个稳定 selector（禁止只用通用弱锚点）
 - 条件锚点组（required_anchors_any_of，可选）：用于验证码等可开关区域，要求“至少命中一组”
 - 登录页（login-page）必须至少覆盖以下锚点组之一：角色选择 / 演示账号文案 / 验证码区
+- 关键界面区域（critical_surfaces，必须）：凡是不能靠 page-level mask 掩盖的关键 UI 区块，必须声明 `surface_id / selector / mask_allowed / style_contracts / state_contracts`
 - 截图区域锚点（clip_selector，可选）：仅在 capture_mode=clip 时提供
 - 动态区域掩码（mask_selectors，可选）：时间、随机 ID、轮播等不稳定元素
 - 视觉契约引用：本页对应 `UI-VISUAL-CONTRACT.yaml` 的 page_id 与 snapshot_name
@@ -570,7 +571,7 @@ def extract_prototypes(module_name, config):
         sidebar_nav = extract_sidebar_nav(html_file)  # B19: 菜单分组/图标/Badge/权限
         write_file(f"{output_dir}/SIDEBAR-NAV.md", sidebar_nav.to_markdown())
 
-    # 生成 UI-VISUAL-CONTRACT.yaml（每页视觉验收契约，schema v1）
+    # 生成 UI-VISUAL-CONTRACT.yaml（每页视觉验收契约，schema v1，初始化 critical_surfaces）
     visual_contract = generate_ui_visual_contract(
         module_name=module_name,
         matrix=matrix,
@@ -582,6 +583,17 @@ def extract_prototypes(module_name, config):
     write_file(
         f"{output_dir}/UI-VISUAL-CONTRACT.yaml",
         visual_contract.to_yaml(),
+    )
+
+    # 生成 DELIVERY-CONTRACT.yaml（模块级交付真实性契约，schema v1）
+    delivery_contract = generate_delivery_contract(
+        module_name=module_name,
+        matrix=matrix,
+        prd_docs=prd_docs,
+    )
+    write_file(
+        f"{output_dir}/DELIVERY-CONTRACT.yaml",
+        delivery_contract.to_yaml(),
     )
     
     # ========== Step 5: 完整性校验 ==========
@@ -676,7 +688,7 @@ def extract_prototypes(module_name, config):
         # ...
     },
     "diff_pages": ["job-overview", "positions", "mock-practice"],
-    "special_files": ["DECISIONS.md", "MATRIX.md", "DESIGN-SYSTEM.md", "SIDEBAR-NAV.md", "UI-VISUAL-CONTRACT.yaml"],
+    "special_files": ["DECISIONS.md", "MATRIX.md", "DESIGN-SYSTEM.md", "SIDEBAR-NAV.md", "UI-VISUAL-CONTRACT.yaml", "DELIVERY-CONTRACT.yaml"],
     "html_issues": [          # 新增: HTML 内部矛盾/Bug
         {"type": "C", "desc": "admin.html: 侧边栏名'课程记录' vs 弹窗名'全部课程'", ...},
         {"type": "D", "desc": "admin.html: JS 引用了不存在的页面 ID 'resumes'", ...}
@@ -707,6 +719,8 @@ def extract_prototypes(module_name, config):
 - **设计系统必须提取** — 每个 HTML 原型的 `<style>` 中的 `:root` 变量和通用组件样式必须提取到 DESIGN-SYSTEM.md
 - **侧边栏必须提取** — 每个 HTML 原型的侧边栏结构（菜单分组/图标/Badge/权限映射）必须提取到 SIDEBAR-NAV.md
 - **视觉契约必须产出** — 每次提取必须生成 UI-VISUAL-CONTRACT.yaml，并通过 PE-6/PE-7/PE-8 门控
+- **交付真实性契约必须产出** — 每次提取必须生成 DELIVERY-CONTRACT.yaml，缺失时 `prototype-extraction` 产物门控必须失败
+- **关键界面区域必须初始化** — `UI-VISUAL-CONTRACT.yaml` 生成时必须初始化 `critical_surfaces`，不能留空后让后续阶段猜测
 
 ---
 

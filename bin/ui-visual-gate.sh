@@ -11,6 +11,7 @@ CONTRACT_PATH="osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.ya
 SUMMARY_JSON="${AUDIT_DIR}/ui-visual-contract-summary-${MODULE}-${DATE_STR}.json"
 PAGE_REPORT_JSON="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
 TRUTH_SUMMARY_JSON="${AUDIT_DIR}/ui-visual-truth-source-summary-${MODULE}-${DATE_STR}.json"
+CRITICAL_EVIDENCE_SUMMARY_JSON="${AUDIT_DIR}/ui-critical-evidence-summary-${MODULE}-${DATE_STR}.json"
 LOG_FILE="${UI_VISUAL_GATE_LOG:-${AUDIT_DIR}/ui-visual-gate-${MODULE}-${DATE_STR}.log}"
 
 mkdir -p "${AUDIT_DIR}"
@@ -29,7 +30,9 @@ print(
     f"style_passed={report.get('style_assertions_passed', 0)} "
     f"style_failed={report.get('style_assertions_failed', 0)} "
     f"state_executed={report.get('state_cases_executed', 0)} "
-    f"state_failed={report.get('state_cases_failed', 0)}"
+    f"state_failed={report.get('state_cases_failed', 0)} "
+    f"critical_total={report.get('critical_surfaces_total', 0)} "
+    f"critical_failed={report.get('critical_surfaces_failed', 0)}"
 )
 for page in report.get("pages", []):
     print(
@@ -39,10 +42,15 @@ for page in report.get("pages", []):
         f"actual_ref={page.get('actual_ref')} "
         f"diff_ref={page.get('diff_ref')} "
         f"diff_threshold={page.get('diff_threshold')} "
+        f"data_mode={page.get('data_mode', 'live')} "
+        f"fixture_route_count={page.get('fixture_route_count', 0)} "
+        f"dynamic_region_count={page.get('dynamic_region_count', 0)} "
         f"style_assertions_passed={page.get('style_assertions_passed', 0)} "
         f"style_assertions_failed={page.get('style_assertions_failed', 0)} "
         f"state_cases_executed={page.get('state_cases_executed', 0)} "
         f"state_cases_failed={page.get('state_cases_failed', 0)} "
+        f"critical_surfaces_total={len(page.get('critical_surface_results', []) or [])} "
+        f"critical_surfaces_failed={sum(1 for s in (page.get('critical_surface_results', []) or []) if isinstance(s, dict) and s.get('result') == 'FAIL')} "
         f"result={page.get('result')}"
     )
 PY
@@ -126,6 +134,15 @@ EOF
 
   if [[ ! -f "${PAGE_REPORT_JSON}" ]]; then
     echo "VISUAL_FAIL: missing page report (${PAGE_REPORT_JSON})"
+    exit 12
+  fi
+
+  if ! python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
+    --contract "${CONTRACT_PATH}" \
+    --page-report "${PAGE_REPORT_JSON}" \
+    --stage ui-visual-gate \
+    --output-json "${CRITICAL_EVIDENCE_SUMMARY_JSON}"; then
+    echo "VISUAL_FAIL: ui_critical_evidence_guard failed"
     exit 12
   fi
 

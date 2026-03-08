@@ -2,7 +2,10 @@
   <a-card class="recent-activity">
     <template #title>
       <div class="recent-activity__header">
-        <span>最近活动</span>
+        <span class="recent-activity__title-wrap">
+          <span class="mdi mdi-history recent-activity__header-icon" />
+          <span>最近活动</span>
+        </span>
         <a class="recent-activity__link" @click="router.push('/logs')">查看全部</a>
       </div>
     </template>
@@ -11,14 +14,17 @@
         v-for="(item, idx) in activities"
         :key="idx"
         class="recent-activity__item"
+        :class="{ 'recent-activity__item--last': idx === activities.length - 1 }"
       >
         <div class="recent-activity__icon" :style="{ background: item.iconBg }">
           <span class="mdi" :class="item.icon" :style="{ color: item.iconColor }" />
         </div>
         <div class="recent-activity__content">
           <div class="recent-activity__row">
-            <span class="recent-activity__title">{{ item.title }}</span>
-            <span class="recent-activity__time">{{ item.time }}</span>
+            <span>
+              <span class="recent-activity__title">{{ item.title }}</span>
+              <span class="recent-activity__time">· {{ item.time }}</span>
+            </span>
           </div>
           <p class="recent-activity__detail">{{ item.detail }}</p>
         </div>
@@ -43,10 +49,25 @@ const router = useRouter()
 
 <style scoped lang="scss">
 .recent-activity {
+  :deep(.ant-card-body) {
+    padding: 0;
+  }
+
   &__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+
+  &__title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__header-icon {
+    color: var(--text2, #64748B);
+    font-size: 18px;
   }
 
   &__link {
@@ -63,19 +84,24 @@ const router = useRouter()
   &__list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
   }
 
   &__item {
     display: flex;
-    gap: 14px;
-    align-items: flex-start;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+  }
+
+  &__item--last {
+    border-bottom: none;
   }
 
   &__icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -93,7 +119,6 @@ const router = useRouter()
 
   &__row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
   }

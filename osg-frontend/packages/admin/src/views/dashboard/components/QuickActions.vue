@@ -1,5 +1,11 @@
 <template>
-  <a-card title="快捷操作" class="quick-actions">
+  <a-card class="quick-actions">
+    <template #title>
+      <span class="quick-actions__title-wrap">
+        <span class="mdi mdi-lightning-bolt quick-actions__title-icon" />
+        <span>快捷操作</span>
+      </span>
+    </template>
     <div class="quick-actions__grid">
       <button
         v-for="action in actions"
@@ -29,6 +35,17 @@ const actions = [
 
 <style scoped lang="scss">
 .quick-actions {
+  &__title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__title-icon {
+    color: var(--text2, #64748B);
+    font-size: 18px;
+  }
+
   &__grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -38,6 +55,7 @@ const actions = [
   &__btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 12px 16px;
     background: var(--bg, #F8FAFC);

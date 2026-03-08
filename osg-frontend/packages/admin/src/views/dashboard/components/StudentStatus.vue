@@ -1,5 +1,11 @@
 <template>
-  <a-card title="学员状态分布" class="student-status">
+  <a-card class="student-status">
+    <template #title>
+      <span class="student-status__title-wrap">
+        <span class="mdi mdi-chart-pie student-status__title-icon" />
+        <span>学员状态</span>
+      </span>
+    </template>
     <div class="student-status__list" v-if="data">
       <div
         v-for="item in items"
@@ -9,7 +15,6 @@
         <div class="student-status__row">
           <span class="student-status__label">{{ item.label }}</span>
           <span class="student-status__count">{{ item.count }}</span>
-          <span class="student-status__pct">{{ item.pct }}%</span>
         </div>
         <div class="student-status__bar">
           <div
@@ -59,10 +64,21 @@ const items = computed(() => {
 
 <style scoped lang="scss">
 .student-status {
+  &__title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__title-icon {
+    color: var(--text2, #64748B);
+    font-size: 18px;
+  }
+
   &__list {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
   }
 
   &__item {
@@ -74,7 +90,7 @@ const items = computed(() => {
   &__row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    margin-bottom: 12px;
   }
 
   &__label {
@@ -90,15 +106,8 @@ const items = computed(() => {
     color: var(--text, #1E293B);
   }
 
-  &__pct {
-    font-size: 12px;
-    color: var(--muted, #94A3B8);
-    width: 36px;
-    text-align: right;
-  }
-
   &__bar {
-    height: 6px;
+    height: 8px;
     background: var(--bg, #F8FAFC);
     border-radius: 3px;
     overflow: hidden;

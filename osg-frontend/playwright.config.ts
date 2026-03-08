@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 import { resolveStabilityConfigFromEnv } from './tests/e2e/support/test-stability'
+import { loadPlaywrightRuntimeEnv } from './tests/e2e/support/runtime-env'
+
+loadPlaywrightRuntimeEnv()
 
 const reuseExistingServer =
   process.env.PW_E2E_REUSE_SERVER === undefined

@@ -457,6 +457,7 @@ def brainstorming(user_input):
         has_a_type_fixes = False
         visual_decisions_path = f"{config.paths.docs.prd}/{module_name}/UI-VISUAL-DECISIONS.md"
         visual_contract = read_yaml(f"{config.paths.docs.prd}/{module_name}/UI-VISUAL-CONTRACT.yaml")
+        delivery_contract = read_yaml(f"{config.paths.docs.prd}/{module_name}/DELIVERY-CONTRACT.yaml")
 
         print(f"=== Phase 4: HTML↔PRD↔SRS 全量校验{f'（回退第 {phase4_retry} 次后）' if phase4_retry > 0 else ''} ===")
         server = start_http_server(config.paths.docs.prototypes)
@@ -689,10 +690,12 @@ def sync_ui_visual_decisions_projection(visual_decisions_path, decisions, source
 - **每次迭代必须输出进度** - Phase 2：`🔄 校验迭代 N/10`，Phase 3：`🔍 终审轮次 N/10 (维度 X)`
 - **Phase 4 必须执行 HTML↔PRD↔SRS 全量校验** - 保证最终结果正确性
 - **Phase 4 必须逐端逐页面浏览** - 不能只看 PRD 文档，必须打开浏览器实测
+- **Phase 0/1/4 必须把 DELIVERY-CONTRACT.yaml 视为硬前置** - 缺失或结构不合法时禁止继续 split-story
 - **A类差异（HTML有PRD/SRS无）直接补充** - HTML 是 SSOT，无需确认
 - **B/C/D/V类差异必须写入 {module}-DECISIONS.md** - 不能自作主张决定以谁为准
 - **V类差异必须双写** - 主审批记录写 `{module}-DECISIONS.md`，可读投影写 `UI-VISUAL-DECISIONS.md`
 - **UI-VISUAL-CONTRACT.required_anchors 必须满足质量规则** - 每页至少 3 个，且不能全是弱锚点（如仅密码框+提交按钮）
+- **UI-VISUAL-CONTRACT.critical_surfaces 必须存在且可追溯到 PRD 页面** - 关键 UI 区域未声明时，brainstorm 不能放行
 - **有 pending_decisions 时必须阻塞** - 不能自动继续 split story
 - **禁止 AI 自行裁决 HTML 内部矛盾** - C类必须等产品确认
 - **Phase 0 PRD 已存在时必须询问用户** - 由用户决定重新生成还是使用已有

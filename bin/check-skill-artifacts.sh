@@ -123,6 +123,25 @@ check_ui_visual_contract_schema() {
   fi
 }
 
+# 校验 delivery contract schema
+check_delivery_contract_schema() {
+  local file="$1"
+  local label="$2"
+  if [ ! -f "$file" ]; then
+    echo "[FAIL] $label — $file 不存在"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    FAIL_LIST="$FAIL_LIST\n  - $label: $file 不存在"
+    return
+  fi
+  if python3 .claude/skills/workflow-engine/tests/delivery_contract_guard.py --contract "$file" >/dev/null 2>&1; then
+    echo "[PASS] $label — schema 校验通过"
+  else
+    echo "[FAIL] $label — schema 校验失败"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    FAIL_LIST="$FAIL_LIST\n  - $label: $file schema 校验失败"
+  fi
+}
+
 # 校验 contract pages 数量 >= PRD 页面数
 check_ui_visual_page_coverage() {
   local contract_file="$1"
@@ -238,6 +257,12 @@ case "$SKILL" in
 
     # PE-9: truth-source manifest（若存在则必须通过）
     check_ui_visual_truth_source_latest_manifest "$MODULE" "$PRD_DIR/UI-VISUAL-CONTRACT.yaml" "$AUDIT_DIR" "PE-9 UI visual truth source"
+
+    # PE-10: DELIVERY-CONTRACT.yaml 存在
+    check_file "$PRD_DIR/DELIVERY-CONTRACT.yaml" "PE-10 DELIVERY-CONTRACT.yaml"
+
+    # PE-11: delivery contract schema 合法
+    check_delivery_contract_schema "$PRD_DIR/DELIVERY-CONTRACT.yaml" "PE-11 delivery contract schema"
     ;;
 
   brainstorming)

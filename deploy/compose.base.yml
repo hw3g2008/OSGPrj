@@ -21,7 +21,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
-    profiles: ["deps", "core"]
+    profiles: ["deps"]
     networks: [osg-net]
 
   redis:
@@ -36,7 +36,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 15s
-    profiles: ["deps", "core"]
+    profiles: ["deps"]
     networks: [osg-net]
 
   backend:
@@ -54,11 +54,16 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       RUOYI_PROFILE: ${RUOYI_PROFILE:-/data/ruoyi/uploadPath}
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-25}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      SPRING_MAIL_FROM: ${SPRING_MAIL_FROM:-}
+      SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-true}
+      SPRING_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:-true}
+      SPRING_MAIL_SMTP_SSL_ENABLE: ${SPRING_MAIL_SMTP_SSL_ENABLE:-false}
+      PASSWORD_RESET_MAILBOX: ${PASSWORD_RESET_MAILBOX:-}
+      PASSWORD_RESET_PROVIDER_LOG_PATH: ${PASSWORD_RESET_PROVIDER_LOG_PATH:-}
     volumes:
       - backend_uploads:/data/ruoyi/uploadPath
     healthcheck:

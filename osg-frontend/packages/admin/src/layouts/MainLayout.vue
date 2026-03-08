@@ -1,85 +1,118 @@
 <template>
-  <a-layout class="main-layout">
-    <a-layout-sider v-model:collapsed="collapsed" collapsible>
-      <div class="logo">
-        <span v-if="!collapsed">OSG Admin</span>
-        <span v-else>OSG</span>
+  <div class="main-shell">
+    <aside class="sidebar" data-testid="main-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="logo-icon">
+            <SafetyCertificateFilled />
+          </div>
+          <span class="logo-text">OSG Admin</span>
+        </div>
       </div>
-      <a-menu
-        v-model:selectedKeys="selectedKeys"
-        v-model:openKeys="openKeys"
-        theme="dark"
-        mode="inline"
-      >
-        <!-- 首页（无分组） -->
-        <a-menu-item key="/dashboard" @click="$router.push('/dashboard')">
-          <template #icon><DashboardOutlined /></template>
+
+      <nav class="sidebar-nav">
+        <button
+          type="button"
+          class="nav-item"
+          :class="{ active: isActive('/dashboard') }"
+          @click="navigate('/dashboard')"
+        >
+          <HomeFilled />
           <span>首页</span>
-        </a-menu-item>
-        <!-- 分组菜单 -->
+        </button>
+
         <template v-for="group in filteredMenuGroups" :key="group.key">
-          <a-sub-menu>
-            <template #icon><AppstoreOutlined /></template>
-            <template #title>{{ group.title }}</template>
-            <a-menu-item
-              v-for="item in group.children"
-              :key="item.path"
-              @click="$router.push(item.path)"
-            >
-              <span>{{ item.title }}</span>
-            </a-menu-item>
-          </a-sub-menu>
+          <div class="nav-section">{{ group.title }}</div>
+          <button
+            v-for="item in group.children"
+            :key="item.path"
+            type="button"
+            class="nav-item"
+            :class="{ active: isActive(item.path) }"
+            @click="navigate(item.path)"
+          >
+            <component :is="item.icon" />
+            <span>{{ item.title }}</span>
+            <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+          </button>
         </template>
-      </a-menu>
+      </nav>
+
       <div class="sidebar-footer">
-        <a-button type="text" block @click="showProfileModal = true">
-          <template #icon><UserOutlined /></template>
-          <span v-if="!collapsed">个人设置</span>
-        </a-button>
+        <button type="button" class="user-card" @click="showProfileModal = true">
+          <div class="user-avatar">{{ userInitials }}</div>
+          <div class="user-info">
+            <h4>{{ displayName }}</h4>
+            <p>点击展开</p>
+          </div>
+        </button>
       </div>
-    </a-layout-sider>
-    <a-layout>
-      <a-layout-header class="header">
-        <div class="header-right">
-          <span class="user-name">{{ userStore.userInfo?.nickName }}</span>
+    </aside>
+
+    <div class="main-panel">
+      <header class="topbar">
+        <div class="topbar-right">
+          <span class="user-name">{{ displayName }}</span>
           <a-button type="link" danger @click="handleLogout">退出登录</a-button>
         </div>
-      </a-layout-header>
-      <a-layout-content class="content">
-        <router-view />
-      </a-layout-content>
-    </a-layout>
+      </header>
 
-    <!-- 首次登录改密弹窗 -->
+      <main class="content">
+        <router-view />
+      </main>
+    </div>
+
     <FirstLoginModal
       v-if="userStore.firstLogin"
       :visible="userStore.firstLogin"
       @success="userStore.setFirstLogin(false)"
     />
 
-    <!-- 个人设置弹窗 -->
     <ProfileModal
       v-model:visible="showProfileModal"
     />
-  </a-layout>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
-import { DashboardOutlined, UserOutlined, AppstoreOutlined } from '@ant-design/icons-vue'
+import {
+  HomeFilled,
+  KeyOutlined,
+  SafetyCertificateOutlined,
+  DatabaseOutlined,
+  TeamOutlined,
+  FileTextOutlined,
+  UserOutlined,
+  CalendarOutlined,
+  SearchOutlined,
+  AppstoreOutlined,
+  ReadOutlined,
+  MessageOutlined,
+  DollarOutlined,
+  FolderOutlined,
+  MailOutlined,
+  BellOutlined,
+  HistoryOutlined,
+  SafetyCertificateFilled,
+} from '@ant-design/icons-vue'
+import type { Component } from 'vue'
 import { useUserStore } from '@/stores/user'
 import FirstLoginModal from '@/components/FirstLoginModal.vue'
 import ProfileModal from '@/components/ProfileModal.vue'
 
 const userStore = useUserStore()
 const vueRouter = useRouter()
+const route = useRoute()
 
 interface MenuItem {
   path: string
   title: string
   permission?: string
+  icon: Component
+  badge?: number
 }
 
 interface MenuGroup {
@@ -88,95 +121,107 @@ interface MenuGroup {
   children: MenuItem[]
 }
 
-const collapsed = ref(false)
-const selectedKeys = ref(['/dashboard'])
-const openKeys = ref<string[]>([])
 const showProfileModal = ref(false)
 
-// 菜单分组定义（与 SRS §7 / §8 一致）
 const menuGroups: MenuGroup[] = [
   {
     key: 'permission',
-    title: '权限管理',
+    title: '权限管理 Permission',
     children: [
-      { path: '/permission/roles', title: '权限配置', permission: 'system:role:list' },
-      { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list' },
-      { path: '/permission/base-data', title: '基础数据管理', permission: 'system:baseData:list' },
-    ]
+      { path: '/permission/roles', title: '权限配置', permission: 'system:role:list', icon: KeyOutlined },
+      { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list', icon: SafetyCertificateOutlined },
+      { path: '/permission/base-data', title: '基础数据管理', permission: 'system:baseData:list', icon: DatabaseOutlined },
+    ],
   },
   {
     key: 'user-center',
-    title: '用户中心',
+    title: '用户中心 Users',
     children: [
-      { path: '/users/students', title: '学生列表', permission: 'users:student:list' },
-      { path: '/users/contracts', title: '合同管理', permission: 'users:contract:list' },
-      { path: '/users/staff', title: '导师列表', permission: 'users:staff:list' },
-      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'users:mentorSchedule:list' },
-    ]
+      { path: '/users/students', title: '学生列表', permission: 'users:student:list', icon: TeamOutlined, badge: 2 },
+      { path: '/users/contracts', title: '合同管理', permission: 'users:contract:list', icon: FileTextOutlined },
+      { path: '/users/staff', title: '导师列表', permission: 'users:staff:list', icon: UserOutlined },
+      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'users:mentorSchedule:list', icon: CalendarOutlined },
+    ],
   },
   {
     key: 'career',
-    title: '求职中心',
+    title: '求职中心 Career',
     children: [
-      { path: '/career/positions', title: '岗位信息', permission: 'career:position:list' },
-      { path: '/career/student-positions', title: '学生自添岗位', permission: 'career:studentPosition:list' },
-      { path: '/career/job-overview', title: '学员求职总览', permission: 'career:jobOverview:list' },
-      { path: '/career/mock-practice', title: '模拟应聘管理', permission: 'career:mockPractice:list' },
-    ]
+      { path: '/career/positions', title: '岗位信息', permission: 'career:position:list', icon: SearchOutlined },
+      { path: '/career/student-positions', title: '学生自添岗位', permission: 'career:studentPosition:list', icon: AppstoreOutlined, badge: 3 },
+      { path: '/career/job-overview', title: '学员求职总览', permission: 'career:jobOverview:list', icon: SearchOutlined, badge: 8 },
+      { path: '/career/mock-practice', title: '模拟应聘管理', permission: 'career:mockPractice:list', icon: MessageOutlined, badge: 3 },
+    ],
   },
   {
     key: 'teaching',
-    title: '教学中心',
+    title: '教学中心 Teaching',
     children: [
-      { path: '/teaching/class-records', title: '课程记录', permission: 'teaching:classRecord:list' },
-      { path: '/teaching/communication', title: '人际关系沟通记录', permission: 'teaching:communication:list' },
-    ]
+      { path: '/teaching/class-records', title: '课程记录', permission: 'teaching:classRecord:list', icon: ReadOutlined },
+      { path: '/teaching/communication', title: '人际关系沟通记录', permission: 'teaching:communication:list', icon: MessageOutlined },
+    ],
   },
   {
     key: 'finance',
-    title: '财务中心',
+    title: '财务中心 Finance',
     children: [
-      { path: '/finance/settlement', title: '课时结算', permission: 'finance:settlement:list' },
-      { path: '/finance/expense', title: '报销管理', permission: 'finance:expense:list' },
-    ]
+      { path: '/finance/settlement', title: '课时结算', permission: 'finance:settlement:list', icon: DollarOutlined },
+      { path: '/finance/expense', title: '报销管理', permission: 'finance:expense:list', icon: FileTextOutlined },
+    ],
   },
   {
     key: 'resource',
-    title: '资源中心',
+    title: '资源中心 Resources',
     children: [
-      { path: '/resource/files', title: '文件', permission: 'resource:file:list' },
-      { path: '/resource/online-test-bank', title: '在线测试题库', permission: 'resource:onlineTestBank:list' },
-      { path: '/resource/interview-bank', title: '真人面试题库', permission: 'resource:interviewBank:list' },
-      { path: '/resource/questions', title: '面试真题', permission: 'resource:question:list' },
-    ]
+      { path: '/resource/files', title: '文件', permission: 'resource:file:list', icon: FolderOutlined },
+      { path: '/resource/online-test-bank', title: '在线测试题库', permission: 'resource:onlineTestBank:list', icon: AppstoreOutlined, badge: 5 },
+      { path: '/resource/interview-bank', title: '真人面试题库', permission: 'resource:interviewBank:list', icon: UserOutlined, badge: 3 },
+      { path: '/resource/questions', title: '面试真题', permission: 'resource:question:list', icon: FileTextOutlined, badge: 5 },
+    ],
   },
   {
     key: 'profile',
-    title: '个人中心',
+    title: '个人中心 Profile',
     children: [
-      { path: '/profile/mailjob', title: '邮件', permission: 'profile:mailjob:list' },
-      { path: '/profile/notice', title: '消息管理', permission: 'profile:notice:list' },
-      { path: '/profile/complaints', title: '投诉建议', permission: 'profile:complaint:list' },
-      { path: '/profile/logs', title: '操作日志', permission: 'profile:log:list' },
-    ]
+      { path: '/profile/mailjob', title: '邮件', permission: 'profile:mailjob:list', icon: MailOutlined },
+      { path: '/profile/notice', title: '消息管理', permission: 'profile:notice:list', icon: BellOutlined },
+      { path: '/profile/complaints', title: '投诉建议', permission: 'profile:complaint:list', icon: MessageOutlined },
+      { path: '/profile/logs', title: '操作日志', permission: 'profile:log:list', icon: HistoryOutlined },
+    ],
   },
 ]
 
-// 权限过滤后的菜单分组（T-026 将增强此逻辑）
 const filteredMenuGroups = computed(() => {
   const perms = userStore.permissions
   const isAdmin = perms.includes('*:*:*')
 
   return menuGroups
-    .map(group => ({
+    .map((group) => ({
       ...group,
-      children: group.children.filter(item => {
+      children: group.children.filter((item) => {
         if (isAdmin) return true
         return !item.permission || perms.includes(item.permission)
-      })
+      }),
     }))
-    .filter(group => group.children.length > 0)
+    .filter((group) => group.children.length > 0)
 })
+
+const displayName = computed(() => userStore.userInfo?.nickName || userStore.userInfo?.userName || '超级管理员')
+const userInitials = computed(() => {
+  const name = displayName.value.trim()
+  if (!name) return 'SA'
+  return name.slice(0, 2).toUpperCase()
+})
+
+const isActive = (path: string) => {
+  return route.path === path || route.path.startsWith(`${path}/`)
+}
+
+const navigate = (path: string) => {
+  if (route.path !== path) {
+    vueRouter.push(path)
+  }
+}
 
 const handleLogout = () => {
   Modal.confirm({
@@ -188,7 +233,7 @@ const handleLogout = () => {
       await userStore.logout()
       message.success('已退出登录')
       vueRouter.push('/login')
-    }
+    },
   })
 }
 
@@ -200,61 +245,188 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.main-layout {
+.main-shell {
+  display: flex;
   min-height: 100vh;
+  background: #f8fafc;
 }
 
-.logo {
-  height: 64px;
+.sidebar {
+  width: 220px;
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
+  font-size: 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.logo-text {
   font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.nav-section {
+  padding: 16px 20px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.nav-item {
+  width: calc(100% - 24px);
+  margin: 2px 12px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-item :deep(svg) {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nav-item:hover {
+  background: #f8fafc;
+  color: #6366f1;
+}
+
+.nav-item.active {
+  background: #eef2ff;
+  color: #6366f1;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
 }
 
 .sidebar-footer {
-  position: absolute;
-  bottom: 48px;
-  left: 0;
-  right: 0;
-  padding: 8px;
-
-  .ant-btn {
-    color: rgba(255, 255, 255, 0.65);
-
-    &:hover {
-      color: #fff;
-    }
-  }
+  padding: 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
-.header {
-  background: #fff;
-  padding: 0 24px;
+.user-card {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #eef2ff;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  gap: 12px;
+  cursor: pointer;
+  text-align: left;
+}
 
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  flex-shrink: 0;
+}
 
-    .user-name {
-      color: #333;
-    }
-  }
+.user-info h4 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.user-info p {
+  margin: 2px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.main-panel {
+  min-width: 0;
+  flex: 1;
+}
+
+.topbar {
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 24px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-name {
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .content {
-  margin: 24px;
-  padding: 24px;
-  background: #fff;
-  min-height: 280px;
-  border-radius: 8px;
+  padding: 20px 24px 24px;
 }
 </style>

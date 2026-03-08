@@ -1,22 +1,26 @@
 services:
   mysql:
-    ports:
-      - "${MYSQL_PORT:-3306}:3306"
+    profiles: ["isolated-deps"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
       MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:-app123456}
 
   redis:
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
+    profiles: ["isolated-deps"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
 
   backend:
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      MYSQL_HOST: ${MYSQL_SHARED_HOST:-host.docker.internal}
+      MYSQL_PORT: ${MYSQL_SHARED_PORT:-23306}
       MYSQL_APP_PASSWORD: ${MYSQL_APP_PASSWORD:-app123456}
+      REDIS_HOST: ${REDIS_SHARED_HOST:-host.docker.internal}
+      REDIS_PORT: ${REDIS_SHARED_PORT:-26379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
       JWT_SECRET: ${JWT_SECRET:-test-jwt-secret-change-me}
 

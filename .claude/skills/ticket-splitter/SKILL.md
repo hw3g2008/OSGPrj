@@ -66,6 +66,10 @@ acceptance_criteria:
   - "请求体包含 phone, password"
   - "返回 token 或错误信息"
 
+# Ticket 承接哪些 Story AC（split-ticket 阶段必须写出）
+covers_ac_refs:
+  - "AC-S-001-01"
+
 # 依赖的 Tickets
 dependencies: []
 
@@ -256,6 +260,7 @@ def split_tickets(story_id, state):
                 "estimate": estimate_time(item),
                 "allowed_paths": item.paths,
                 "acceptance_criteria": item.criteria,
+                "covers_ac_refs": item.ac_refs,
                 "dependencies": item.dependencies
             }
 
@@ -398,27 +403,50 @@ def split_tickets(story_id, state):
     print_coverage_matrix(story.acceptance_criteria, tickets)
 
     # ========== TC 骨架生成（D6 挂点）==========
-    # 为当前 Story 的每个 AC 生成 TC 条目到 {module}-test-cases.yaml
-    # 规则：tc_id 唯一键 upsert（已有同 ID 不覆盖），新增 TC 初始 status=pending
+    # 为当前 Story 生成 ticket/story/final 三层测试资产
+    # 规则：
+    #   - ticket 级 TC 必须绑定 ticket_id + ac_ref
+    #   - story/final 级 TC 必须绑定 story_id + ac_ref
+    #   - traceability matrix 必须同步新增对应行
+    #   - verification stub 通过 ticket.yaml 中的 covers_ac_refs + verification_evidence 字段承接
     module = state.current_requirement  # 提前读取，后续 phase-proof 也用
     tc_cases_path = f"osg-spec-docs/tasks/testing/{module}-test-cases.yaml"
+    matrix_path = f"osg-spec-docs/tasks/testing/{module}-traceability-matrix.md"
     existing_cases = read_yaml(tc_cases_path) or []
-    existing_ids = {tc["tc_id"] for tc in existing_cases}
+    existing_ids = {tc["tc_id"] for tc in existing_cases if tc.get("tc_id")}
 
-    for ac_idx, ac in enumerate(story.acceptance_criteria, 1):
-        for level in ["ticket", "story", "final"]:
+    for ticket in tickets:
+        for ref_idx, ac_ref in enumerate(ticket.get("covers_ac_refs", []), 1):
+            tc_id = f"TC-{module.upper()}-{ticket['id']}-TICKET-{ref_idx:03d}"
+            if tc_id not in existing_ids:
+                existing_cases.append({
+                    "tc_id": tc_id,
+                    "level": "ticket",
+                    "story_id": story_id,
+                    "ticket_id": ticket["id"],
+                    "ac_ref": ac_ref,
+                    "priority": "P1",
+                    "automation": {"script": None, "command": None},
+                    "latest_result": {"status": "pending", "evidence_ref": None},
+                })
+
+    for ac_idx, _ac in enumerate(story.acceptance_criteria, 1):
+        ac_ref = f"AC-{story_id}-{ac_idx:02d}"
+        for level in ["story", "final"]:
             tc_id = f"TC-{module.upper()}-{story_id}-{level.upper()}-{ac_idx:03d}"
             if tc_id not in existing_ids:
                 existing_cases.append({
                     "tc_id": tc_id,
                     "level": level,
                     "story_id": story_id,
-                    "ac_ref": f"AC-{story_id}-{ac_idx:02d}",
+                    "ticket_id": None,
+                    "ac_ref": ac_ref,
                     "priority": "P1",
                     "automation": {"script": None, "command": None},
                     "latest_result": {"status": "pending", "evidence_ref": None},
                 })
     write_yaml(tc_cases_path, existing_cases)
+    ensure_traceability_rows(matrix_path, existing_cases, story_id)
 
     # ========== 保存（仅在全部校验通过后）==========
     for ticket in tickets:

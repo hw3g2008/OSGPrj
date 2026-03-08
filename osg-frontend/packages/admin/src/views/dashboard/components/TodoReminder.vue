@@ -2,17 +2,20 @@
   <div class="todo-reminder" v-if="todos && todos.length > 0">
     <div class="todo-reminder__header">
       <span class="mdi mdi-bell-ring todo-reminder__bell" />
-      <strong class="todo-reminder__title">待处理事项</strong>
     </div>
-    <div class="todo-reminder__list">
-      <a
-        v-for="item in todos"
-        :key="item.route"
-        class="todo-reminder__item"
-        @click="handleClick(item.route)"
-      >
-        <span>{{ item.count }}条{{ item.label }}</span>
-      </a>
+    <div class="todo-reminder__content">
+      <strong class="todo-reminder__title">待处理事项</strong>
+      <div class="todo-reminder__list">
+        <a
+          v-for="item in todos"
+          :key="item.route"
+          class="todo-reminder__item"
+          @click="handleClick(item.route)"
+        >
+          <span class="mdi" :class="routeIconMap[item.route] || 'mdi-circle-small'" />
+          <span>{{ item.count }}条{{ item.label }}</span>
+        </a>
+      </div>
     </div>
     <button class="todo-reminder__btn" @click="handleViewAll">查看全部</button>
   </div>
@@ -28,6 +31,12 @@ defineProps<{
 
 const router = useRouter()
 
+const routeIconMap: Record<string, string> = {
+  '/reports': 'mdi-clipboard-clock',
+  '/expense': 'mdi-receipt-text-clock',
+  '/students': 'mdi-account-alert',
+}
+
 function handleClick(route: string) {
   router.push(route)
 }
@@ -40,15 +49,18 @@ function handleViewAll() {
 <style scoped lang="scss">
 .todo-reminder {
   background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-  border-radius: 16px;
-  padding: 20px 22px;
-  margin-bottom: 16px;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 
   &__header {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 12px;
+    flex-shrink: 0;
   }
 
   &__bell {
@@ -61,24 +73,29 @@ function handleViewAll() {
     font-size: 16px;
   }
 
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
   &__list {
     display: flex;
+    gap: 24px;
+    margin-top: 6px;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 14px;
   }
 
   &__item {
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 8px;
-    padding: 6px 12px;
     font-size: 13px;
     color: #92400E;
     cursor: pointer;
-    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.2s;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.9);
+      opacity: 0.8;
     }
   }
 
@@ -92,6 +109,7 @@ function handleViewAll() {
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s;
+    flex-shrink: 0;
 
     &:hover {
       background: #B45309;

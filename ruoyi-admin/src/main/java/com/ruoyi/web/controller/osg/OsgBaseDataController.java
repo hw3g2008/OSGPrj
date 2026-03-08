@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +23,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
 @RequestMapping("/system/basedata")
 public class OsgBaseDataController extends BaseController
 {
+    @PreAuthorize("@ss.hasPermi('system:baseData:list')")
     @GetMapping("/list")
     public TableDataInfo list(String name, String category, String tab)
     {
@@ -53,6 +55,7 @@ public class OsgBaseDataController extends BaseController
         return getDataTable(rows);
     }
 
+    @PreAuthorize("@ss.hasPermi('system:baseData:list')")
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(@RequestBody Map<String, Object> body)
     {

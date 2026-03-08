@@ -1,5 +1,11 @@
 <template>
-  <a-card title="本月统计" class="monthly-stats">
+  <a-card class="monthly-stats">
+    <template #title>
+      <span class="monthly-stats__title-wrap">
+        <span class="mdi mdi-calendar-month monthly-stats__title-icon" />
+        <span>本月统计</span>
+      </span>
+    </template>
     <div class="monthly-stats__list" v-if="data">
       <div
         v-for="item in items"
@@ -37,22 +43,28 @@ const items = computed(() => {
 
 <style scoped lang="scss">
 .monthly-stats {
+  &__title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__title-icon {
+    color: var(--text2, #64748B);
+    font-size: 18px;
+  }
+
   &__list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    font-size: 13px;
   }
 
   &__item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border, #E2E8F0);
-
-    &:last-child {
-      border-bottom: none;
-    }
+    margin-bottom: 10px;
   }
 
   &__label {

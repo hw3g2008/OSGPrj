@@ -1,0 +1,12 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": [
+    {"id": 1, "title": "权限管理", "key": "1", "children": [{"id": 11, "title": "权限配置", "key": "11"}, {"id": 12, "title": "后台用户管理", "key": "12"}, {"id": 13, "title": "基础数据管理", "key": "13"}]},
+    {"id": 2, "title": "用户中心", "key": "2", "children": [{"id": 21, "title": "学生列表", "key": "21"}, {"id": 22, "title": "合同管理", "key": "22"}, {"id": 23, "title": "导师列表", "key": "23"}, {"id": 24, "title": "导师排期管理", "key": "24"}]},
+    {"id": 3, "title": "课程管理", "key": "3", "children": [{"id": 31, "title": "全部课程", "key": "31"}, {"id": 32, "title": "课程反馈", "key": "32"}]},
+    {"id": 4, "title": "求职中心", "key": "4", "children": [{"id": 41, "title": "岗位管理", "key": "41"}, {"id": 42, "title": "学员岗位追踪", "key": "42"}, {"id": 43, "title": "沟通记录", "key": "43"}]},
+    {"id": 5, "title": "财务中心", "key": "5", "children": [{"id": 51, "title": "结算中心", "key": "51"}, {"id": 52, "title": "报销管理", "key": "52"}]},
+    {"id": 6, "title": "资源中心", "key": "6", "children": [{"id": 61, "title": "文件管理", "key": "61"}, {"id": 62, "title": "题库管理", "key": "62"}, {"id": 63, "title": "面试真题", "key": "63"}]}
+  ]
+}

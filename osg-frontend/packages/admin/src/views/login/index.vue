@@ -242,7 +242,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   border-radius: 44px 0 0 44px;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   z-index: 1;
 }
@@ -333,7 +333,7 @@ onMounted(() => {
     height: 52px;
     padding: 0 20px;
     background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -348,7 +348,8 @@ onMounted(() => {
   }
 
   .captcha-code.has-image {
-    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    background: transparent;
+    padding: 0;
   }
 
   .captcha-code img {
@@ -357,7 +358,7 @@ onMounted(() => {
     height: 100%;
     object-fit: cover;
     border-radius: inherit;
-    clip-path: inset(2px 8px 2px 8px round 8px);
+    clip-path: none;
     mix-blend-mode: normal;
     opacity: 1;
     background: transparent;

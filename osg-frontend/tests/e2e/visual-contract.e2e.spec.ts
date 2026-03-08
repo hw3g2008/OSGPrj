@@ -2,9 +2,16 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import { loginAsAdmin } from './support/auth'
+import { resolvePrototypePageKey } from './support/prototype-contract'
 import { assertStyleContracts } from './support/style-contract'
 import { applyStabilityToPage, resolveStabilityConfigFromEnv } from './support/test-stability'
-import { baselineRefToSnapshotArg, loadVisualContract, type VisualPageContract } from './support/visual-contract'
+import {
+  baselineRefToSnapshotArg,
+  loadVisualContract,
+  type VisualCriticalSurfaceContract,
+  type VisualPageContract,
+} from './support/visual-contract'
+import { registerVisualFixtureRoutes } from './support/visual-fixture'
 
 const contractJson = process.env.UI_VISUAL_CONTRACT_JSON
 const contract = contractJson ? loadVisualContract() : null
@@ -20,8 +27,15 @@ if (visualSource !== 'app' && visualSource !== 'prototype') {
 }
 
 function toMaskLocators(pageContract: VisualPageContract, page: Page): Locator[] {
-  const selectors = pageContract.mask_selectors || []
-  return selectors.map((selector) => page.locator(selector))
+  return toMaskSelectors(pageContract).map((selector) => page.locator(selector))
+}
+
+function toMaskSelectors(pageContract: VisualPageContract): string[] {
+  const selectors = [...(pageContract.mask_selectors || [])]
+  if (pageContract.data_mode === 'mask') {
+    selectors.push(...(pageContract.dynamic_regions || []))
+  }
+  return selectors
 }
 
 function toRepoRelative(filePath: string): string {
@@ -77,6 +91,7 @@ function appendPageResult(
   actualRef: string,
   diffRef: string,
   styleStats: { passed: number; failed: number } = { passed: 0, failed: 0 },
+  criticalSurfaceResults: Record<string, unknown>[] = [],
 ): void {
   if (!visualPageResultsFile) {
     return
@@ -89,12 +104,271 @@ function appendPageResult(
     actual_ref: actualRef,
     diff_ref: diffRef,
     diff_threshold: pageContract.diff_threshold,
+    data_mode: pageContract.data_mode || 'live',
+    fixture_route_count: pageContract.fixture_routes?.length || 0,
+    dynamic_region_count: pageContract.dynamic_regions?.length || 0,
     style_assertions_passed: styleStats.passed,
     style_assertions_failed: styleStats.failed,
+    critical_surface_results: criticalSurfaceResults,
     result,
   }
   fs.mkdirSync(path.dirname(visualPageResultsFile), { recursive: true })
   fs.appendFileSync(visualPageResultsFile, `${JSON.stringify(record)}\n`, 'utf-8')
+}
+
+function normalizeSelector(selector: string): string {
+  return selector.trim().replace(/\s+/g, ' ')
+}
+
+function selectorsOverlap(left: string, right: string): boolean {
+  const normalizedLeft = normalizeSelector(left)
+  const normalizedRight = normalizeSelector(right)
+  if (!normalizedLeft || !normalizedRight) {
+    return false
+  }
+  return (
+    normalizedLeft === normalizedRight ||
+    normalizedLeft.includes(normalizedRight) ||
+    normalizedRight.includes(normalizedLeft)
+  )
+}
+
+function tryParseNumericCss(value: string): { num: number; unit: string } | null {
+  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)([a-z%]*)$/i)
+  if (!match) {
+    return null
+  }
+  return { num: Number(match[1]), unit: (match[2] || '').toLowerCase() }
+}
+
+async function resolveCriticalSurfaceTarget(
+  page: Page,
+  surfaceRoot: Locator,
+  target?: string,
+): Promise<Locator> {
+  if (!target || !target.trim()) {
+    return surfaceRoot
+  }
+  const relative = surfaceRoot.locator(target).first()
+  if ((await relative.count()) > 0) {
+    return relative
+  }
+  return page.locator(target).first()
+}
+
+async function evaluateCriticalSurfaceStyles(
+  page: Page,
+  surface: VisualCriticalSurfaceContract,
+  surfaceRoot: Locator,
+): Promise<{ total: number; passed: number; failed: number }> {
+  let passed = 0
+  let failed = 0
+  for (const rule of surface.style_contracts || []) {
+    const locator = await resolveCriticalSurfaceTarget(page, surfaceRoot, rule.target)
+    if ((await locator.count()) === 0) {
+      failed += 1
+      continue
+    }
+    const actual = await locator.evaluate(
+      (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
+      rule.property,
+    )
+    if (typeof rule.tolerance === 'number') {
+      const expectedParsed = tryParseNumericCss(rule.expected)
+      const actualParsed = tryParseNumericCss(actual)
+      if (!expectedParsed || !actualParsed || expectedParsed.unit !== actualParsed.unit) {
+        failed += 1
+        continue
+      }
+      const diff = Math.abs(actualParsed.num - expectedParsed.num)
+      if (diff > rule.tolerance) {
+        failed += 1
+        continue
+      }
+      passed += 1
+      continue
+    }
+    if (actual !== rule.expected.trim()) {
+      failed += 1
+      continue
+    }
+    passed += 1
+  }
+  return {
+    total: surface.style_contracts?.length || 0,
+    passed,
+    failed,
+  }
+}
+
+async function executeCriticalSurfaceStateContracts(
+  page: Page,
+  surface: VisualCriticalSurfaceContract,
+  surfaceRoot: Locator,
+): Promise<{ total: number; executed: number; passed: number; failed: number }> {
+  let executed = 0
+  let passed = 0
+  let failed = 0
+
+  for (const contract of surface.state_contracts || []) {
+    const primaryTarget = await resolveCriticalSurfaceTarget(page, surfaceRoot, contract.target)
+    if ((await primaryTarget.count()) === 0) {
+      executed += 1
+      failed += 1
+      continue
+    }
+
+    if (contract.state === 'focus') {
+      await primaryTarget.focus()
+    } else if (contract.state === 'hover') {
+      await primaryTarget.hover()
+    }
+
+    let contractPassed = true
+    for (const assertion of contract.assertions || []) {
+      const assertionTarget = await resolveCriticalSurfaceTarget(page, surfaceRoot, assertion.target || contract.target)
+      if ((await assertionTarget.count()) === 0) {
+        contractPassed = false
+        break
+      }
+      const actual = await assertionTarget.evaluate(
+        (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
+        assertion.property,
+      )
+      if (actual !== assertion.expected.trim()) {
+        contractPassed = false
+        break
+      }
+    }
+
+    executed += 1
+    if (contractPassed) {
+      passed += 1
+    } else {
+      failed += 1
+    }
+  }
+
+  return {
+    total: surface.state_contracts?.length || 0,
+    executed,
+    passed,
+    failed,
+  }
+}
+
+async function executeCriticalSurfaceRelationContracts(
+  page: Page,
+  surface: VisualCriticalSurfaceContract,
+  surfaceRoot: Locator,
+): Promise<{ total: number; executed: number; passed: number; failed: number }> {
+  let executed = 0
+  let passed = 0
+  let failed = 0
+
+  for (const relation of surface.relation_contracts || []) {
+    const target = await resolveCriticalSurfaceTarget(page, surfaceRoot, relation.target)
+    if ((await target.count()) === 0) {
+      executed += 1
+      failed += 1
+      continue
+    }
+
+    let relationPassed = false
+    if (relation.type === 'cover-container') {
+      const [surfaceBox, targetBox] = await Promise.all([surfaceRoot.boundingBox(), target.boundingBox()])
+      if (surfaceBox && targetBox) {
+        const tolerance = 1.5
+        relationPassed =
+          Math.abs(surfaceBox.x - targetBox.x) <= tolerance &&
+          Math.abs(surfaceBox.y - targetBox.y) <= tolerance &&
+          Math.abs(surfaceBox.width - targetBox.width) <= tolerance &&
+          Math.abs(surfaceBox.height - targetBox.height) <= tolerance
+      }
+    }
+
+    executed += 1
+    if (relationPassed) {
+      passed += 1
+    } else {
+      failed += 1
+    }
+  }
+
+  return {
+    total: surface.relation_contracts?.length || 0,
+    executed,
+    passed,
+    failed,
+  }
+}
+
+async function collectCriticalSurfaceResults(
+  pageContract: VisualPageContract,
+  page: Page,
+  actualRef: string,
+  diffRef: string,
+): Promise<Record<string, unknown>[]> {
+  const results: Record<string, unknown>[] = []
+  const maskSelectors = toMaskSelectors(pageContract)
+  for (const surface of pageContract.critical_surfaces || []) {
+    const surfaceRoot = page.locator(surface.selector).first()
+    const maskPolicyApplied = maskSelectors.some((selector) => selectorsOverlap(selector, surface.selector))
+    if ((await surfaceRoot.count()) === 0) {
+      results.push({
+        surface_id: surface.surface_id,
+        selector: surface.selector,
+        mask_allowed: surface.mask_allowed,
+        mask_policy_applied: maskPolicyApplied,
+        baseline_ref: pageContract.baseline_ref,
+        actual_ref: actualRef,
+        diff_ref: diffRef,
+        style_contracts_total: surface.style_contracts?.length || 0,
+        style_contracts_passed: 0,
+        style_contracts_failed: surface.style_contracts?.length || 0,
+        state_contracts_total: surface.state_contracts?.length || 0,
+        state_contracts_executed: surface.state_contracts?.length || 0,
+        state_contracts_passed: 0,
+        state_contracts_failed: surface.state_contracts?.length || 0,
+        relation_contracts_total: surface.relation_contracts?.length || 0,
+        relation_contracts_executed: surface.relation_contracts?.length || 0,
+        relation_contracts_passed: 0,
+        relation_contracts_failed: surface.relation_contracts?.length || 0,
+        result: 'FAIL',
+      })
+      continue
+    }
+    const styleStats = await evaluateCriticalSurfaceStyles(page, surface, surfaceRoot)
+    const stateStats = await executeCriticalSurfaceStateContracts(page, surface, surfaceRoot)
+    const relationStats = await executeCriticalSurfaceRelationContracts(page, surface, surfaceRoot)
+    const surfacePassed =
+      !maskPolicyApplied &&
+      styleStats.failed === 0 &&
+      stateStats.failed === 0 &&
+      relationStats.failed === 0
+    results.push({
+      surface_id: surface.surface_id,
+      selector: surface.selector,
+      mask_allowed: surface.mask_allowed,
+      mask_policy_applied: maskPolicyApplied,
+      baseline_ref: pageContract.baseline_ref,
+      actual_ref: actualRef,
+      diff_ref: diffRef,
+      style_contracts_total: styleStats.total,
+      style_contracts_passed: styleStats.passed,
+      style_contracts_failed: styleStats.failed,
+      state_contracts_total: stateStats.total,
+      state_contracts_executed: stateStats.executed,
+      state_contracts_passed: stateStats.passed,
+      state_contracts_failed: stateStats.failed,
+      relation_contracts_total: relationStats.total,
+      relation_contracts_executed: relationStats.executed,
+      relation_contracts_passed: relationStats.passed,
+      relation_contracts_failed: relationStats.failed,
+      result: surfacePassed ? 'PASS' : 'FAIL',
+    })
+  }
+  return results
 }
 
 async function isAnchorVisible(page: Page, anchor: string): Promise<boolean> {
@@ -136,23 +410,6 @@ function resolvePrototypeUrl(prototypeFile: string): string {
   return `${normalizedBase}/${normalizedPath}`
 }
 
-function resolvePrototypePageKey(pageContract: VisualPageContract): string {
-  const route = pageContract.route || ''
-  const routeMap: Record<string, string> = {
-    '/dashboard': 'home',
-  }
-  if (routeMap[route]) {
-    return routeMap[route]
-  }
-  const pageMap: Record<string, string> = {
-    dashboard: 'home',
-  }
-  if (pageMap[pageContract.page_id]) {
-    return pageMap[pageContract.page_id]
-  }
-  return pageContract.page_id
-}
-
 function buildPrototypeSelectorCandidates(prototypeSelector: string): string[] {
   const candidates = [prototypeSelector]
   const matchA = prototypeSelector.match(/^#([a-z0-9-]+)-page$/i)
@@ -187,6 +444,10 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
       await page.setViewportSize(pageContract.viewport)
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await applyStabilityToPage(page, stabilityConfig)
+
+      if (visualSource === 'app' && pageContract.data_mode === 'mock' && pageContract.fixture_routes?.length) {
+        await registerVisualFixtureRoutes(page, pageContract.fixture_routes)
+      }
 
       if (visualSource === 'app' && pageContract.auth_mode === 'protected') {
         await loginAsAdmin(page)
@@ -230,83 +491,6 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         }
         await assertAnyOfAnchorGroups(page, pageContract.required_anchors_any_of || [], pageContract.page_id)
 
-        // Login captcha block has dynamic image content, but layout must stay stable.
-        // Guard against captcha image squeezing the input area.
-        if (pageContract.page_id === 'login-page') {
-          const captchaLayout = await page.evaluate(() => {
-            const row = document.querySelector('.captcha-row')
-            if (!row) return null
-            const inputWrap = row.querySelector('.ant-input-affix-wrapper')
-            const code = row.querySelector('.captcha-code')
-            if (!inputWrap || !code) return null
-            const rowRect = row.getBoundingClientRect()
-            const inputRect = inputWrap.getBoundingClientRect()
-            const codeRect = code.getBoundingClientRect()
-            return {
-              rowWidth: rowRect.width,
-              inputWidth: inputRect.width,
-              codeWidth: codeRect.width,
-              inputRatio: inputRect.width / rowRect.width,
-              codeRatio: codeRect.width / rowRect.width,
-            }
-          })
-
-          if (captchaLayout) {
-            expect(
-              captchaLayout.inputRatio,
-              `captcha input too narrow: row=${captchaLayout.rowWidth}, input=${captchaLayout.inputWidth}, code=${captchaLayout.codeWidth}`,
-            ).toBeGreaterThanOrEqual(0.5)
-            expect(
-              captchaLayout.codeRatio,
-              `captcha image too wide: row=${captchaLayout.rowWidth}, input=${captchaLayout.inputWidth}, code=${captchaLayout.codeWidth}`,
-            ).toBeLessThanOrEqual(0.45)
-          }
-
-          const inputShellStyle = await page.evaluate(() => {
-            const inputWrap = document.querySelector('.captcha-row .ant-input-affix-wrapper')
-            if (!inputWrap) return null
-            const style = getComputedStyle(inputWrap)
-            return {
-              borderRadius: style.borderRadius,
-              borderTopWidth: style.borderTopWidth,
-              backgroundColor: style.backgroundColor,
-            }
-          })
-          expect(inputShellStyle, 'login input shell should exist').not.toBeNull()
-          expect(inputShellStyle!.borderRadius, 'login input shell radius should match prototype').toBe('12px')
-          expect(inputShellStyle!.borderTopWidth, 'login input shell border width should be 2px').toBe('2px')
-          expect(inputShellStyle!.backgroundColor, 'login input shell should be white').toBe('rgb(255, 255, 255)')
-
-          const captchaChipStyle = await page.evaluate(() => {
-            const chip = document.querySelector('.captcha-code')
-            if (!chip) return null
-            const style = getComputedStyle(chip)
-            return {
-              borderRadius: style.borderRadius,
-              backgroundImage: style.backgroundImage,
-            }
-          })
-          expect(captchaChipStyle, 'captcha chip should exist').not.toBeNull()
-          expect(captchaChipStyle!.borderRadius, 'captcha chip radius should match decision').toBe('10px')
-          expect(captchaChipStyle!.backgroundImage, 'captcha chip should keep gradient shell').toContain('linear-gradient')
-
-          const captchaImageCoverage = await page.evaluate(() => {
-            const chip = document.querySelector('.captcha-code')
-            const img = document.querySelector('.captcha-code img')
-            if (!chip || !img) return null
-            const chipRect = chip.getBoundingClientRect()
-            const imgRect = img.getBoundingClientRect()
-            return {
-              chipWidth: chipRect.width,
-              chipHeight: chipRect.height,
-              imgWidth: imgRect.width,
-              imgHeight: imgRect.height,
-            }
-          })
-          expect(captchaImageCoverage, 'captcha image should render').not.toBeNull()
-          expect(captchaImageCoverage!.imgWidth, 'captcha image should cover chip width').toBeGreaterThanOrEqual(captchaImageCoverage!.chipWidth)
-          expect(captchaImageCoverage!.imgHeight, 'captcha image should cover chip height').toBeGreaterThanOrEqual(captchaImageCoverage!.chipHeight)
-        }
       } else {
         const selectorCandidates = buildPrototypeSelectorCandidates(pageContract.prototype_selector)
         const prototypeTarget = await findVisibleLocatorByCandidates(page, selectorCandidates)
@@ -328,10 +512,11 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         try {
           styleStats = await assertStyleContracts(page, pageContract.style_contracts || [], pageContract.page_id)
         } catch (error) {
+          const criticalSurfaceResults = await collectCriticalSurfaceResults(pageContract, page, actualRef, 'none')
           appendPageResult(pageContract, 'FAIL', actualRef, 'none', {
             passed: styleStats.passed,
             failed: styleStats.failed + 1,
-          })
+          }, criticalSurfaceResults)
           throw error
         }
       }
@@ -346,6 +531,9 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
             mask,
           })
         }
+        let capturedResult: 'PASS' | 'FAIL' = 'PASS'
+        let capturedDiffRef = 'none'
+        let capturedError: unknown = null
         try {
           await expect(page).toHaveScreenshot(snapshotArg, {
             fullPage: true,
@@ -353,17 +541,16 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
             mask,
             maxDiffPixelRatio,
           })
-          appendPageResult(pageContract, 'PASS', actualRef, 'none', styleStats)
         } catch (error) {
+          capturedResult = 'FAIL'
           const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
-          appendPageResult(
-            pageContract,
-            'FAIL',
-            actualRef,
-            diffRef !== 'none' ? diffRef : extractDiffRefFromError(error),
-            styleStats,
-          )
-          throw error
+          capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
+          capturedError = error
+        }
+        const criticalSurfaceResults = await collectCriticalSurfaceResults(pageContract, page, actualRef, capturedDiffRef)
+        appendPageResult(pageContract, capturedResult, actualRef, capturedDiffRef, styleStats, criticalSurfaceResults)
+        if (capturedError) {
+          throw capturedError
         }
         return
       }
@@ -380,23 +567,25 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           animations: 'disabled',
         })
       }
+      let capturedResult: 'PASS' | 'FAIL' = 'PASS'
+      let capturedDiffRef = 'none'
+      let capturedError: unknown = null
       try {
         await expect(clipTarget!).toHaveScreenshot(snapshotArg, {
           animations: 'disabled',
           mask,
           maxDiffPixelRatio,
         })
-        appendPageResult(pageContract, 'PASS', actualRef, 'none', styleStats)
       } catch (error) {
+        capturedResult = 'FAIL'
         const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
-        appendPageResult(
-          pageContract,
-          'FAIL',
-          actualRef,
-          diffRef !== 'none' ? diffRef : extractDiffRefFromError(error),
-          styleStats,
-        )
-        throw error
+        capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
+        capturedError = error
+      }
+      const criticalSurfaceResults = await collectCriticalSurfaceResults(pageContract, page, actualRef, capturedDiffRef)
+      appendPageResult(pageContract, capturedResult, actualRef, capturedDiffRef, styleStats, criticalSurfaceResults)
+      if (capturedError) {
+        throw capturedError
       }
     })
   }

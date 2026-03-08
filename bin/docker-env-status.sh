@@ -28,12 +28,10 @@ if [[ ! -f "${ENV_FILE}" ]]; then
 fi
 
 PROFILE_ARGS=()
-IFS=',' read -r -a profiles <<< "${PROFILE_CSV}"
-for p in "${profiles[@]}"; do
-  p_trim="$(echo "${p}" | xargs)"
-  [[ -z "${p_trim}" ]] && continue
-  PROFILE_ARGS+=(--profile "${p_trim}")
-done
+while IFS= read -r profile; do
+  [[ -z "${profile}" ]] && continue
+  PROFILE_ARGS+=(--profile "${profile}")
+done < <(bash bin/resolve-compose-profiles.sh "${ENV_NAME}" "${PROFILE_CSV}" "${ENV_FILE}")
 
 docker compose \
   -f deploy/compose.base.yml \

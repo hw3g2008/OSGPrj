@@ -35,6 +35,9 @@ public class SysPasswordService
     @Autowired
     private SysUserMapper userMapper;
 
+    @Autowired
+    private PasswordResetMailSender passwordResetMailSender;
+
     private static final String RESET_CODE_KEY = "pwd_reset_code:";
     private static final String RESET_TOKEN_KEY = "pwd_reset_token:";
 
@@ -46,9 +49,6 @@ public class SysPasswordService
 
     @Value(value = "${user.password.resetCodeTtlMinutes:5}")
     private int resetCodeTtlMinutes;
-
-    @Value(value = "${user.password.resetCodeFixed:}")
-    private String resetCodeFixed;
 
     /**
      * 登录账户密码错误次数缓存键名
@@ -118,10 +118,6 @@ public class SysPasswordService
      */
     private String generateCode()
     {
-        if (StringUtils.hasText(resetCodeFixed))
-        {
-            return resetCodeFixed;
-        }
         int code = (int) ((Math.random() * 900000) + 100000);
         return String.valueOf(code);
     }
@@ -155,11 +151,20 @@ public class SysPasswordService
         SysUser user = findUserByEmail(email);
         if (user == null)
         {
-            throw new ServiceException("该邮箱未注册");
+            return;
         }
         String code = generateCode();
-        redisCache.setCacheObject(RESET_CODE_KEY + email, code, resetCodeTtlMinutes, TimeUnit.MINUTES);
-        // 实际发送邮件逻辑（当前阶段仅缓存验证码，邮件发送待集成邮件服务）
+        String cacheKey = RESET_CODE_KEY + email;
+        redisCache.setCacheObject(cacheKey, code, resetCodeTtlMinutes, TimeUnit.MINUTES);
+        try
+        {
+            passwordResetMailSender.sendResetCode(email, code, user);
+        }
+        catch (RuntimeException ex)
+        {
+            redisCache.deleteObject(cacheKey);
+            throw ex;
+        }
     }
 
     /**

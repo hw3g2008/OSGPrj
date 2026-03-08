@@ -10,7 +10,6 @@ set -euo pipefail
 
 MODULE="${1:-permission}"
 MODE="${2:-full}"
-BACKEND_PORT="${BACKEND_PORT:-28080}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 BASE_URL="${BASE_URL:-}"
 BASE_HEALTH_URL="${BASE_HEALTH_URL:-}"
@@ -18,46 +17,17 @@ DATE_STR="$(date +%Y-%m-%d)"
 AUDIT_DIR="osg-spec-docs/tasks/audit"
 DEFAULT_LOG="${AUDIT_DIR}/e2e-api-gate-${MODULE}-${DATE_STR}.log"
 E2E_API_GATE_LOG="${E2E_API_GATE_LOG:-${DEFAULT_LOG}}"
+BEHAVIOR_CONTRACT_REPORT="${BEHAVIOR_CONTRACT_REPORT:-${AUDIT_DIR}/behavior-contract-${MODULE}-${DATE_STR}.json}"
 
 mkdir -p "${AUDIT_DIR}"
 
-resolve_backend_urls() {
-  local base_url_default="http://127.0.0.1:${BACKEND_PORT}"
-  if [[ -n "${BASE_HEALTH_URL}" ]]; then
-    if [[ -z "${BASE_URL}" ]]; then
-      case "${BASE_HEALTH_URL}" in
-        */actuator/health) BASE_URL="${BASE_HEALTH_URL%/actuator/health}" ;;
-      esac
-    fi
-  elif [[ -n "${BASE_URL}" ]]; then
-    BASE_HEALTH_URL="${BASE_URL}${HEALTH_PATH}"
-  else
-    local candidate_urls=(
-      "http://127.0.0.1:28080${HEALTH_PATH}"
-      "${base_url_default}${HEALTH_PATH}"
-      "http://127.0.0.1:8080${HEALTH_PATH}"
-    )
-    local candidate
-    for candidate in "${candidate_urls[@]}"; do
-      if curl -fsS --max-time 2 "${candidate}" >/dev/null 2>&1; then
-        BASE_HEALTH_URL="${candidate}"
-        break
-      fi
-    done
-    if [[ -z "${BASE_HEALTH_URL}" ]]; then
-      BASE_HEALTH_URL="${base_url_default}${HEALTH_PATH}"
-    fi
-    case "${BASE_HEALTH_URL}" in
-      */actuator/health) BASE_URL="${BASE_HEALTH_URL%/actuator/health}" ;;
-    esac
-  fi
-
-  if [[ -z "${BASE_URL}" ]]; then
-    BASE_URL="${base_url_default}"
-  fi
+load_runtime_contract() {
+  eval "$(bash bin/resolve-runtime-contract.sh)"
+  BASE_URL="${RESOLVED_BASE_URL}"
+  BASE_HEALTH_URL="${RESOLVED_BASE_HEALTH_URL}"
 }
 
-resolve_backend_urls
+load_runtime_contract
 
 case "${MODE}" in
   full)
@@ -82,6 +52,7 @@ python3 .claude/skills/workflow-engine/tests/e2e_api_guard.py \
   --tests-dir osg-frontend/tests/e2e
 
 : > "${E2E_API_GATE_LOG}"
+rm -f "${BEHAVIOR_CONTRACT_REPORT}"
 echo "INFO: module=${MODULE} mode=${MODE} worker_policy=${WORKER_POLICY} base_url=${BASE_URL} health_url=${BASE_HEALTH_URL}" | tee -a "${E2E_API_GATE_LOG}"
 
 E2E_CMD=(pnpm --dir osg-frontend "${E2E_SCRIPT}")
@@ -90,7 +61,11 @@ if [[ "${WORKER_POLICY}" == "serial" ]]; then
 fi
 
 set +e
-E2E_API_PROXY_TARGET="${BASE_URL}" PW_E2E_REUSE_SERVER=0 "${E2E_CMD[@]}" 2>&1 | tee -a "${E2E_API_GATE_LOG}"
+E2E_MODULE="${MODULE}" \
+E2E_API_PROXY_TARGET="${BASE_URL}" \
+BEHAVIOR_CONTRACT_REPORT="${BEHAVIOR_CONTRACT_REPORT}" \
+PW_E2E_REUSE_SERVER=0 \
+"${E2E_CMD[@]}" 2>&1 | tee -a "${E2E_API_GATE_LOG}"
 e2e_rc=${PIPESTATUS[0]}
 set -e
 

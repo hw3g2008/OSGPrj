@@ -1,0 +1,9 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": [
+    {"label": "课时待审核", "count": 12, "route": "/reports"},
+    {"label": "报销待审核", "count": 5, "route": "/expense"},
+    {"label": "学员课时不足", "count": 3, "route": "/students"}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": [
+    {"icon": "mdi-check", "iconColor": "#059669", "iconBg": "#D1FAE5", "title": "课时审核通过", "time": "10分钟前", "detail": "李审核 审核通过了 Test Lead Mentor 的课时记录 #231775"},
+    {"icon": "mdi-account-plus", "iconColor": "#2563EB", "iconBg": "#DBEAFE", "title": "新增学员", "time": "1小时前", "detail": "张文员 创建了新学员 Emily Zhang (2025Spring)"},
+    {"icon": "mdi-file-sign", "iconColor": "#D97706", "iconBg": "#FEF3C7", "title": "合同续费", "time": "2小时前", "detail": "张文员 为 Alice Wang 添加续费合同 $5,000 / 20h"},
+    {"icon": "mdi-close", "iconColor": "#DC2626", "iconBg": "#FEE2E2", "title": "课时审核驳回", "time": "3小时前", "detail": "李审核 驳回了 Jerry Li 的课时记录 #231770，原因：信息不完整"},
+    {"icon": "mdi-cash", "iconColor": "#6366F1", "iconBg": "#EEF2FF", "title": "财务结算", "time": "昨天 16:30", "detail": "王会计 执行周结算，共计 $12,350（23条Report + 5条Non-class）"}
+  ]
+}

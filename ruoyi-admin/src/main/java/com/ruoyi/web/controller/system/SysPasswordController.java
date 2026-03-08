@@ -23,6 +23,8 @@ import com.ruoyi.framework.web.service.SysPasswordService;
 @RequestMapping("/system/password")
 public class SysPasswordController
 {
+    private static final String SEND_CODE_ACK_MESSAGE = "我们会往您的注册邮箱发送验证码，请查收";
+
     @Autowired
     private SysPasswordService passwordService;
 
@@ -43,7 +45,7 @@ public class SysPasswordController
             return AjaxResult.error("邮箱地址不能为空");
         }
         passwordService.sendResetCode(email);
-        return AjaxResult.success("验证码已发送");
+        return AjaxResult.success(SEND_CODE_ACK_MESSAGE);
     }
 
     /**

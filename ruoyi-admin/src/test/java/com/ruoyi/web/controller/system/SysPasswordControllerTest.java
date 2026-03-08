@@ -65,6 +65,7 @@ class SysPasswordControllerTest {
         AjaxResult result = sysPasswordController.sendCode(params);
 
         assertEquals(200, result.get("code"));
+        assertEquals("我们会往您的注册邮箱发送验证码，请查收", result.get("msg"));
         verify(passwordService).sendResetCode("test@example.com");
     }
 
@@ -92,13 +93,15 @@ class SysPasswordControllerTest {
 
     @Test
     void testSendCodeUnregisteredEmail() {
-        doThrow(new ServiceException("该邮箱未注册"))
-                .when(passwordService).sendResetCode("unknown@example.com");
+        doNothing().when(passwordService).sendResetCode("unknown@example.com");
 
         Map<String, String> params = new HashMap<>();
         params.put("email", "unknown@example.com");
 
-        assertThrows(ServiceException.class, () -> sysPasswordController.sendCode(params));
+        AjaxResult result = sysPasswordController.sendCode(params);
+
+        assertEquals(200, result.get("code"));
+        assertEquals("我们会往您的注册邮箱发送验证码，请查收", result.get("msg"));
     }
 
     // ========== verify 测试 ==========

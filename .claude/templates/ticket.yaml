@@ -22,6 +22,9 @@ acceptance_criteria:
   - "{验收标准1}"
   - "{验收标准2}"
 
+# Story AC 覆盖映射（split-ticket 时必须生成）
+covers_ac_refs: []  # 例如 ["AC-S-001-01"]
+
 # UI 还原专属字段（type: frontend-ui 时使用）
 # prototype_ref: "${config.paths.docs.prototypes}{file}#section"
 # design_tokens_ref: ".claude/project/agents/{agent}.md#设计 Token"
