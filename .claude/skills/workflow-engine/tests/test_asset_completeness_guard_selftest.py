@@ -32,17 +32,42 @@ def _story(story_id: str, *, ticket_ids: list[str], story_case_refs: list[str]) 
         "id": story_id,
         "tickets": ticket_ids,
         "story_cases": [
-            {"story_case_id": f"SC-{story_id}-{idx:03d}", "ac_ref": ac_ref}
+            {"story_case_id": f"SC-{story_id}-{idx:03d}", "ac_ref": ac_ref, "case_kind": "ac"}
             for idx, ac_ref in enumerate(story_case_refs, 1)
         ],
     }
 
 
-def _ticket(ticket_id: str, story_id: str) -> dict:
-    return {"id": ticket_id, "story_id": story_id, "type": "backend"}
+def _ticket(ticket_id: str, story_id: str, *, ac_refs: list[str] | None = None) -> dict:
+    ac_refs = ac_refs or ["AC-S-001-01"]
+    return {
+        "id": ticket_id,
+        "story_id": story_id,
+        "type": "backend",
+        "test_cases": [
+            {
+                "test_case_id": f"TCS-{ticket_id}-{idx:03d}",
+                "ac_ref": ac_ref,
+                "case_kind": "ac",
+                "surface_id": None,
+                "state_variant": None,
+                "viewport_variant": None,
+            }
+            for idx, ac_ref in enumerate(ac_refs, 1)
+        ],
+    }
 
 
-def _case(tc_id: str, *, level: str, story_id: str, ac_ref: str, ticket_id: str | None = None) -> dict:
+def _case(
+    tc_id: str,
+    *,
+    level: str,
+    story_id: str,
+    ac_ref: str,
+    ticket_id: str | None = None,
+    story_case_id: str | None = None,
+    test_case_id: str | None = None,
+) -> dict:
     payload = {
         "tc_id": tc_id,
         "level": level,
@@ -50,6 +75,10 @@ def _case(tc_id: str, *, level: str, story_id: str, ac_ref: str, ticket_id: str 
         "ticket_id": ticket_id,
         "ac_ref": ac_ref,
     }
+    if level in {"story", "final"}:
+        payload["story_case_id"] = story_case_id or "SC-S-001-001"
+    if level == "ticket":
+        payload["test_case_id"] = test_case_id or f"TCS-{ticket_id}-001"
     return payload
 
 
@@ -57,7 +86,7 @@ def test_missing_story_test_assets_fail() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         _write_yaml(root / "stories/S-001.yaml", _story("S-001", ticket_ids=["T-001"], story_case_refs=["AC-S-001-01"]))
-        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001"))
+        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001", ac_refs=["AC-S-001-01"]))
         _write_yaml(
             root / "cases.yaml",
             [
@@ -79,7 +108,7 @@ def test_case_without_matrix_row_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         _write_yaml(root / "stories/S-001.yaml", _story("S-001", ticket_ids=["T-001"], story_case_refs=["AC-S-001-01"]))
-        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001"))
+        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001", ac_refs=["AC-S-001-01"]))
         _write_yaml(
             root / "cases.yaml",
             [
@@ -102,7 +131,7 @@ def test_story_ticket_ref_divergence_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         _write_yaml(root / "stories/S-001.yaml", _story("S-001", ticket_ids=["T-001"], story_case_refs=["AC-S-001-01"]))
-        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001"))
+        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001", ac_refs=["AC-S-001-01"]))
         _write_yaml(
             root / "cases.yaml",
             [
@@ -128,17 +157,17 @@ def test_fully_synchronized_assets_pass() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         _write_yaml(root / "stories/S-001.yaml", _story("S-001", ticket_ids=["T-001", "T-002"], story_case_refs=["AC-S-001-01", "AC-S-001-02"]))
-        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001"))
-        _write_yaml(root / "tickets/T-002.yaml", _ticket("T-002", "S-001"))
+        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001", ac_refs=["AC-S-001-01"]))
+        _write_yaml(root / "tickets/T-002.yaml", _ticket("T-002", "S-001", ac_refs=["AC-S-001-02"]))
         _write_yaml(
             root / "cases.yaml",
             [
-                _case("TC-001", level="ticket", story_id="S-001", ticket_id="T-001", ac_ref="AC-S-001-01"),
-                _case("TC-002", level="ticket", story_id="S-001", ticket_id="T-002", ac_ref="AC-S-001-02"),
-                _case("TC-003", level="story", story_id="S-001", ac_ref="AC-S-001-01"),
-                _case("TC-004", level="story", story_id="S-001", ac_ref="AC-S-001-02"),
-                _case("TC-005", level="final", story_id="S-001", ac_ref="AC-S-001-01"),
-                _case("TC-006", level="final", story_id="S-001", ac_ref="AC-S-001-02"),
+                _case("TC-001", level="ticket", story_id="S-001", ticket_id="T-001", ac_ref="AC-S-001-01", test_case_id="TCS-T-001-001"),
+                _case("TC-002", level="ticket", story_id="S-001", ticket_id="T-002", ac_ref="AC-S-001-02", test_case_id="TCS-T-002-001"),
+                _case("TC-003", level="story", story_id="S-001", ac_ref="AC-S-001-01", story_case_id="SC-S-001-001"),
+                _case("TC-004", level="story", story_id="S-001", ac_ref="AC-S-001-02", story_case_id="SC-S-001-002"),
+                _case("TC-005", level="final", story_id="S-001", ac_ref="AC-S-001-01", story_case_id="SC-S-001-001"),
+                _case("TC-006", level="final", story_id="S-001", ac_ref="AC-S-001-02", story_case_id="SC-S-001-002"),
             ],
         )
         _write_matrix(
@@ -161,12 +190,64 @@ def test_fully_synchronized_assets_pass() -> None:
         assert not findings, findings
 
 
+def test_declared_ticket_test_case_without_generated_tc_fails() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_yaml(root / "stories/S-001.yaml", _story("S-001", ticket_ids=["T-001"], story_case_refs=["AC-S-001-01"]))
+        _write_yaml(
+            root / "tickets/T-001.yaml",
+            {
+                "id": "T-001",
+                "story_id": "S-001",
+                "type": "frontend-ui",
+                "test_cases": [
+                    {
+                        "test_case_id": "TCS-T-001-001",
+                        "ac_ref": "AC-S-001-01",
+                        "case_kind": "critical_surface",
+                        "surface_id": "modal-forgot-password",
+                        "state_variant": "default",
+                        "viewport_variant": "desktop",
+                    },
+                    {
+                        "test_case_id": "TCS-T-001-002",
+                        "ac_ref": "AC-S-001-01",
+                        "case_kind": "critical_surface",
+                        "surface_id": "modal-forgot-password",
+                        "state_variant": "success",
+                        "viewport_variant": "desktop",
+                    },
+                ],
+            },
+        )
+        _write_yaml(
+            root / "cases.yaml",
+            [
+                _case("TC-001", level="ticket", story_id="S-001", ticket_id="T-001", ac_ref="AC-S-001-01"),
+                _case("TC-002", level="story", story_id="S-001", ac_ref="AC-S-001-01"),
+                _case("TC-003", level="final", story_id="S-001", ac_ref="AC-S-001-01"),
+            ],
+        )
+        _write_matrix(
+            root / "matrix.md",
+            [("AC-S-001-01", "TC-001"), ("AC-S-001-01", "TC-002"), ("AC-S-001-01", "TC-003")],
+        )
+        findings = evaluate_test_asset_completeness(
+            stories_dir=root / "stories",
+            tickets_dir=root / "tickets",
+            cases_doc=root / "cases.yaml",
+            matrix_doc=root / "matrix.md",
+        )
+        assert any("missing declared test_cases coverage" in item for item in findings), findings
+
+
 def main() -> int:
     tests = [
         test_missing_story_test_assets_fail,
         test_case_without_matrix_row_fails,
         test_story_ticket_ref_divergence_fails,
         test_fully_synchronized_assets_pass,
+        test_declared_ticket_test_case_without_generated_tc_fails,
     ]
     for fn in tests:
         fn()

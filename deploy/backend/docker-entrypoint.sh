@@ -28,11 +28,12 @@ MYSQL_PORT="${MYSQL_PORT:-3306}"
 MYSQL_DATABASE="${MYSQL_DATABASE:-ry-vue}"
 MYSQL_APP_USER="${MYSQL_APP_USER:-ruoyi}"
 MYSQL_APP_PASSWORD="${MYSQL_APP_PASSWORD:-password}"
+MYSQL_CHARACTER_ENCODING="${MYSQL_CHARACTER_ENCODING:-utf8}"
 REDIS_HOST="${REDIS_HOST:-redis}"
 REDIS_PORT="${REDIS_PORT:-6379}"
 RUOYI_PROFILE="${RUOYI_PROFILE:-/data/ruoyi/uploadPath}"
 
-MYSQL_URL="jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useUnicode=true&characterEncoding=utf8mb4&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B8"
+MYSQL_URL="jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useUnicode=true&characterEncoding=${MYSQL_CHARACTER_ENCODING}&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B8"
 
 export SPRING_DATASOURCE_DRUID_MASTER_URL="$MYSQL_URL"
 export SPRING_DATASOURCE_DRUID_MASTER_USERNAME="$MYSQL_APP_USER"

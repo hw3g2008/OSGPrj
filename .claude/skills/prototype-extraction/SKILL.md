@@ -585,6 +585,21 @@ def extract_prototypes(module_name, config):
         visual_contract.to_yaml(),
     )
 
+    # 基于 MATRIX / DESIGN-SYSTEM / PRD overlay section 生成 first-pass overlay surface skeleton
+    run_command(
+        f"python3 bin/generate-overlay-surface-skeleton.py "
+        f"--config .claude/project/config.yaml "
+        f"--module-dir {output_dir} "
+        f"--write"
+    )
+
+    # 生成 repo-wide overlay surface inventory artifact（框架级 proof）
+    run_command(
+        "python3 bin/overlay-surface-inventory.py "
+        "--config .claude/project/config.yaml "
+        "--output osg-spec-docs/tasks/audit/overlay-surface-inventory-latest.md"
+    )
+
     # 生成 DELIVERY-CONTRACT.yaml（模块级交付真实性契约，schema v1）
     delivery_contract = generate_delivery_contract(
         module_name=module_name,
@@ -721,6 +736,9 @@ def extract_prototypes(module_name, config):
 - **视觉契约必须产出** — 每次提取必须生成 UI-VISUAL-CONTRACT.yaml，并通过 PE-6/PE-7/PE-8 门控
 - **交付真实性契约必须产出** — 每次提取必须生成 DELIVERY-CONTRACT.yaml，缺失时 `prototype-extraction` 产物门控必须失败
 - **关键界面区域必须初始化** — `UI-VISUAL-CONTRACT.yaml` 生成时必须初始化 `critical_surfaces`，不能留空后让后续阶段猜测
+- **overlay surface inventory 必须产出** — 每次提取都必须生成 `osg-spec-docs/tasks/audit/overlay-surface-inventory-latest.md`，缺失时 `prototype-extraction` 门控必须失败
+- **source-stage 必须读取 truth_source 配置** — `overlay-surface-inventory.py` 和 `generate-overlay-surface-skeleton.py` 必须从 `.claude/project/config.yaml.prd_process.truth_source` 解析 HTML 真源，配置缺失或自相矛盾时立即失败
+- **first-pass skeleton 只能追溯到 HTML 真源** — `UI-VISUAL-CONTRACT.yaml.surfaces` 属于派生产物；若生成结果包含 source-absent surface，`prototype-extraction` 必须 fail-closed
 
 ---
 

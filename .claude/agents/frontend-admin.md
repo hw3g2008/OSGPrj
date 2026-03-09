@@ -28,6 +28,12 @@ agents/developer.md
 
 以 `osg-spec-docs/source/prototype/admin/` 下的 HTML 原型为**唯一视觉标准**，将原型中的页面和组件用 Vue 3 + Ant Design Vue 实现。
 
+补充硬规则：
+- HTML 原型是 UI 的唯一真源
+- `PRD / MATRIX / UI-VISUAL-CONTRACT` 都是派生产物，不得超前于 HTML 真源
+- 如果派生产物声明了 HTML 中不存在的页面或 surface，必须视为真源链错误并先修正派生产物
+- 不允许把当前实现结果、视觉基线或手工补写的契约当作第二真源
+
 **原型文件清单**：
 - `admin/index.html` — 管理后台主界面（含侧边栏、仪表盘、所有业务页面）
 - `admin/login.html` — 登录页

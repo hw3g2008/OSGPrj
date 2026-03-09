@@ -32,7 +32,9 @@ print(
     f"state_executed={report.get('state_cases_executed', 0)} "
     f"state_failed={report.get('state_cases_failed', 0)} "
     f"critical_total={report.get('critical_surfaces_total', 0)} "
-    f"critical_failed={report.get('critical_surfaces_failed', 0)}"
+    f"critical_failed={report.get('critical_surfaces_failed', 0)} "
+    f"surfaces_total={report.get('surfaces_total', 0)} "
+    f"surfaces_failed={report.get('surfaces_failed', 0)}"
 )
 for page in report.get("pages", []):
     print(
@@ -52,6 +54,18 @@ for page in report.get("pages", []):
         f"critical_surfaces_total={len(page.get('critical_surface_results', []) or [])} "
         f"critical_surfaces_failed={sum(1 for s in (page.get('critical_surface_results', []) or []) if isinstance(s, dict) and s.get('result') == 'FAIL')} "
         f"result={page.get('result')}"
+    )
+for surface in report.get("surfaces", []):
+    print(
+        "INFO: surface_structured "
+        f"surface_id={surface.get('surface_id')} "
+        f"host_page_id={surface.get('host_page_id')} "
+        f"surface_type={surface.get('surface_type')} "
+        f"trigger_action_type={surface.get('trigger_action_type')} "
+        f"viewport_variants_total={surface.get('viewport_variants_total', 0)} "
+        f"viewport_variants_executed={surface.get('viewport_variants_executed', 0)} "
+        f"viewport_variants_failed={surface.get('viewport_variants_failed', 0)} "
+        f"result={surface.get('result')}"
     )
 PY
 }

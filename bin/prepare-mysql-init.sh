@@ -5,6 +5,7 @@ SRC_DIR="sql"
 OUT_DIR="deploy/mysql-init"
 MODE="${1:-generate}"
 MANIFEST_PATH="${OUT_DIR}/manifest.sha256"
+CHARSET_PREAMBLE='SET NAMES utf8mb4;'
 
 if [[ "${MODE}" != "generate" && "${MODE}" != "--check" ]]; then
   echo "FAIL: 未识别参数 ${MODE}（仅支持: generate | --check）" >&2
@@ -33,6 +34,28 @@ hash_file() {
   fi
 }
 
+write_wrapped_sql() {
+  local src_file="$1"
+  local out_file="$2"
+  printf '%s\n\n' "${CHARSET_PREAMBLE}" > "${out_file}"
+  cat "${src_file}" >> "${out_file}"
+}
+
+verify_wrapped_sql() {
+  local src_file="$1"
+  local out_file="$2"
+  local expected_file
+  expected_file="$(mktemp)"
+  printf '%s\n\n' "${CHARSET_PREAMBLE}" > "${expected_file}"
+  cat "${src_file}" >> "${expected_file}"
+  if ! cmp -s "${expected_file}" "${out_file}"; then
+    rm -f "${expected_file}"
+    return 1
+  fi
+  rm -f "${expected_file}"
+  return 0
+}
+
 for mapping in "${MAPPINGS[@]}"; do
   prefix="${mapping%%:*}"
   src_file="${mapping##*:}"
@@ -57,7 +80,7 @@ for mapping in "${MAPPINGS[@]}"; do
       echo "FAIL: 生成文件为空 ${out_path}" >&2
       exit 1
     fi
-    if ! cmp -s "${src_path}" "${out_path}"; then
+    if ! verify_wrapped_sql "${src_path}" "${out_path}"; then
       echo "FAIL: 生成文件与源文件不一致，请先执行: bash bin/prepare-mysql-init.sh" >&2
       echo "      src=${src_path}" >&2
       echo "      out=${out_path}" >&2
@@ -75,7 +98,7 @@ if [[ "${MODE}" != "--check" ]]; then
     src_file="${mapping##*:}"
     src_path="${SRC_DIR}/${src_file}"
     out_path="${OUT_DIR}/${prefix}_${src_file}"
-    cp "${src_path}" "${out_path}"
+    write_wrapped_sql "${src_path}" "${out_path}"
     echo "generated: ${out_path}"
   done
 

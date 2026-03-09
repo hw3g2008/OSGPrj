@@ -211,6 +211,177 @@ def test_critical_surface_required_structure_fails() -> None:
     assert any("critical_surfaces" in issue for issue in issues), issues
 
 
+def test_valid_overlay_surface_schema_passes() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["surfaces"] = [
+        {
+            "surface_id": "modal-forgot-password",
+            "surface_type": "modal",
+            "host_page_id": "dashboard",
+            "prototype_selector": "#forgot-password-modal",
+            "app_selector": ".forgot-password-modal",
+            "surface_root_selector": ".ant-modal-root .forgot-password-modal",
+            "backdrop_selector": ".ant-modal-mask",
+            "portal_host": "body",
+            "source_ref": "00-admin-login.md#modal-forgot-password",
+            "trigger_action": {
+                "type": "click",
+                "selector": ".forgot-password-link",
+            },
+            "required_anchors": [
+                ".forgot-password-modal__header",
+                ".forgot-password-modal__steps",
+                ".forgot-password-modal__content",
+            ],
+            "viewport_variants": [
+                {"viewport_id": "desktop", "width": 1440, "height": 900},
+                {"viewport_id": "tablet", "width": 1024, "height": 900},
+            ],
+            "state_variants": [
+                {"state_id": "step-email"},
+                {"state_id": "step-success"},
+            ],
+            "surface_parts": [
+                {"part_id": "backdrop", "selector": ".ant-modal-mask", "mask_allowed": False},
+                {"part_id": "shell", "selector": ".forgot-password-modal", "mask_allowed": False},
+                {"part_id": "header", "selector": ".forgot-password-modal__header", "mask_allowed": False},
+                {"part_id": "body", "selector": ".forgot-password-modal__body", "mask_allowed": False},
+                {"part_id": "footer", "selector": ".forgot-password-modal__footer", "mask_allowed": False},
+                {"part_id": "close-control", "selector": ".forgot-password-modal__close", "mask_allowed": False},
+            ],
+            "style_contracts": [
+                {
+                    "selector": ".forgot-password-modal",
+                    "css": {
+                        "border-radius": "20px",
+                        "background-color": "rgb(255, 255, 255)",
+                    },
+                }
+            ],
+            "state_contracts": [
+                {
+                    "state_id": "step-email",
+                    "required_anchors": [
+                        ".forgot-password-modal__email-input",
+                        ".forgot-password-modal__send-code",
+                    ],
+                    "style_contracts": [
+                        {
+                            "selector": ".forgot-password-modal__steps .is-active",
+                            "css": {"background-color": "rgb(99, 102, 241)"},
+                        }
+                    ],
+                },
+                {
+                    "state_id": "step-success",
+                    "required_anchors": [
+                        ".forgot-password-modal__success-badge",
+                        ".forgot-password-modal__done",
+                    ],
+                    "style_contracts": [
+                        {
+                            "selector": ".forgot-password-modal__success-badge",
+                            "css": {"background-color": "rgb(34, 197, 94)"},
+                        }
+                    ],
+                },
+            ],
+        }
+    ]
+
+    issues = collect_issues(contract)
+    assert not issues, issues
+
+
+def test_overlay_surface_schema_missing_required_blocks_fails() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["surfaces"] = [
+        {
+            "surface_id": "modal-forgot-password",
+            "surface_type": "modal",
+            "host_page_id": "dashboard",
+            "prototype_selector": "#forgot-password-modal",
+            "app_selector": ".forgot-password-modal",
+            "surface_root_selector": ".forgot-password-modal",
+            "backdrop_selector": ".ant-modal-mask",
+            "source_ref": "00-admin-login.md#modal-forgot-password",
+            "trigger_action": {"type": "click", "selector": ".forgot-password-link"},
+            "required_anchors": [".forgot-password-modal__header"],
+            "state_variants": [{"state_id": "step-email"}],
+            "style_contracts": [
+                {
+                    "selector": ".forgot-password-modal",
+                    "css": {"border-radius": "20px"},
+                }
+            ],
+        }
+    ]
+
+    issues = collect_issues(contract)
+    assert any("surfaces[0].viewport_variants" in issue for issue in issues), issues
+    assert any("surfaces[0].surface_parts" in issue for issue in issues), issues
+    assert any("surfaces[0].state_contracts" in issue for issue in issues), issues
+
+
+def test_declared_overlay_surface_missing_from_contract_fails() -> None:
+    contract = deepcopy(build_base_contract())
+
+    issues: list[str] = []
+    validate_contract(contract, issues, declared_surface_ids={"modal-forgot-password"})
+    assert any("declared overlay surface missing from contract.surfaces" in issue for issue in issues), issues
+
+
+def test_declared_overlay_surface_present_in_contract_passes() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["surfaces"] = [
+        {
+            "surface_id": "modal-forgot-password",
+            "surface_type": "modal",
+            "host_page_id": "dashboard",
+            "prototype_selector": "#forgot-password-modal",
+            "app_selector": ".forgot-password-modal",
+            "surface_root_selector": ".ant-modal-root .forgot-password-modal",
+            "backdrop_selector": ".ant-modal-mask",
+            "portal_host": "body",
+            "source_ref": "00-admin-login.md#modal-forgot-password",
+            "trigger_action": {"type": "click", "selector": ".forgot-password-link"},
+            "required_anchors": [
+                ".forgot-password-modal__header",
+                ".forgot-password-modal__steps",
+                ".forgot-password-modal__content",
+            ],
+            "viewport_variants": [
+                {"viewport_id": "desktop", "width": 1440, "height": 900},
+            ],
+            "state_variants": [{"state_id": "default"}],
+            "surface_parts": [
+                {"part_id": "backdrop", "selector": ".ant-modal-mask", "mask_allowed": False},
+                {"part_id": "shell", "selector": ".forgot-password-modal", "mask_allowed": False},
+                {"part_id": "header", "selector": ".forgot-password-modal__header", "mask_allowed": False},
+                {"part_id": "body", "selector": ".forgot-password-modal__body", "mask_allowed": False},
+                {"part_id": "footer", "selector": ".forgot-password-modal__footer", "mask_allowed": False},
+                {"part_id": "close-control", "selector": ".forgot-password-modal__close", "mask_allowed": False},
+            ],
+            "style_contracts": [
+                {"selector": ".forgot-password-modal", "css": {"border-radius": "20px"}},
+            ],
+            "state_contracts": [
+                {
+                    "state_id": "default",
+                    "required_anchors": [".forgot-password-modal__content"],
+                    "style_contracts": [
+                        {"selector": ".forgot-password-modal", "css": {"background-color": "rgb(255, 255, 255)"}},
+                    ],
+                }
+            ],
+        }
+    ]
+
+    issues: list[str] = []
+    validate_contract(contract, issues, declared_surface_ids={"modal-forgot-password"})
+    assert not issues, issues
+
+
 def main() -> int:
     tests = [
         test_valid_style_and_state_clauses_pass,
@@ -223,6 +394,10 @@ def main() -> int:
         test_critical_surface_overlap_with_mask_fails,
         test_critical_surface_requires_style_and_state_contracts,
         test_critical_surface_required_structure_fails,
+        test_valid_overlay_surface_schema_passes,
+        test_overlay_surface_schema_missing_required_blocks_fails,
+        test_declared_overlay_surface_missing_from_contract_fails,
+        test_declared_overlay_surface_present_in_contract_passes,
     ]
     for fn in tests:
         fn()

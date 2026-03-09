@@ -316,6 +316,115 @@ def test_story_with_empty_contract_refs_passes_when_other_story_maps_contract_it
         assert not findings, findings
 
 
+def test_overlay_surface_requires_story_and_ticket_surface_skeletons() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_yaml(
+            root / "stories/S-001.yaml",
+            {
+                "id": "S-001",
+                "tickets": ["T-001"],
+                "contract_refs": {"critical_surfaces": ["modal-forgot-password"]},
+            },
+        )
+        _write_yaml(
+            root / "tickets/T-001.yaml",
+            {
+                "id": "T-001",
+                "story_id": "S-001",
+                "type": "frontend-ui",
+                "contract_refs": {"critical_surfaces": ["modal-forgot-password"]},
+                "test_cases": [],
+            },
+        )
+        _write_yaml(root / "DELIVERY-CONTRACT.yaml", {"schema_version": 1, "module": "permission", "capabilities": []})
+        _write_yaml(
+            root / "UI-VISUAL-CONTRACT.yaml",
+            {
+                "surfaces": [
+                    {
+                        "surface_id": "modal-forgot-password",
+                        "surface_type": "modal",
+                        "viewport_variants": [{"viewport_id": "desktop"}],
+                        "state_variants": [{"state_id": "default"}],
+                    }
+                ],
+                "pages": [],
+            },
+        )
+        findings = evaluate_story_ticket_coverage(
+            stories_dir=root / "stories",
+            tickets_dir=root / "tickets",
+            delivery_contract_doc=root / "DELIVERY-CONTRACT.yaml",
+            ui_contract_doc=root / "UI-VISUAL-CONTRACT.yaml",
+        )
+        assert any("missing story_cases skeleton" in item for item in findings), findings
+        assert any("missing ticket test_cases skeleton" in item for item in findings), findings
+
+
+def test_overlay_surface_requires_state_and_viewport_coverage() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_yaml(
+            root / "stories/S-001.yaml",
+            {
+                "id": "S-001",
+                "tickets": ["T-001"],
+                "contract_refs": {"critical_surfaces": ["modal-forgot-password"]},
+                "story_cases": [
+                    {
+                        "story_case_id": "SC-S-001-001",
+                        "ac_ref": "AC-S-001-01",
+                        "case_kind": "critical_surface",
+                        "surface_id": "modal-forgot-password",
+                    }
+                ],
+            },
+        )
+        _write_yaml(
+            root / "tickets/T-001.yaml",
+            {
+                "id": "T-001",
+                "story_id": "S-001",
+                "type": "frontend-ui",
+                "contract_refs": {"critical_surfaces": ["modal-forgot-password"]},
+                "test_cases": [
+                    {
+                        "test_case_id": "TCS-T-001-001",
+                        "ac_ref": "AC-S-001-01",
+                        "case_kind": "critical_surface",
+                        "surface_id": "modal-forgot-password",
+                        "state_variant": "default",
+                        "viewport_variant": "desktop",
+                    }
+                ],
+            },
+        )
+        _write_yaml(root / "DELIVERY-CONTRACT.yaml", {"schema_version": 1, "module": "permission", "capabilities": []})
+        _write_yaml(
+            root / "UI-VISUAL-CONTRACT.yaml",
+            {
+                "surfaces": [
+                    {
+                        "surface_id": "modal-forgot-password",
+                        "surface_type": "modal",
+                        "viewport_variants": [{"viewport_id": "desktop"}, {"viewport_id": "tablet"}],
+                        "state_variants": [{"state_id": "default"}, {"state_id": "success"}],
+                    }
+                ],
+                "pages": [],
+            },
+        )
+        findings = evaluate_story_ticket_coverage(
+            stories_dir=root / "stories",
+            tickets_dir=root / "tickets",
+            delivery_contract_doc=root / "DELIVERY-CONTRACT.yaml",
+            ui_contract_doc=root / "UI-VISUAL-CONTRACT.yaml",
+        )
+        assert any("missing state_variant coverage" in item for item in findings), findings
+        assert any("missing viewport_variant coverage" in item for item in findings), findings
+
+
 def main() -> int:
     tests = [
         test_story_without_tickets_fails,
@@ -328,6 +437,8 @@ def main() -> int:
         test_critical_surface_requires_frontend_ui_ticket,
         test_story_missing_contract_refs_fails_when_contracts_exist,
         test_story_with_empty_contract_refs_passes_when_other_story_maps_contract_items,
+        test_overlay_surface_requires_story_and_ticket_surface_skeletons,
+        test_overlay_surface_requires_state_and_viewport_coverage,
     ]
     for fn in tests:
         fn()

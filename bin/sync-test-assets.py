@@ -39,6 +39,10 @@ def story_case_id(story_id: str, index: int) -> str:
     return f"SC-{story_id}-{index:03d}"
 
 
+def ticket_test_case_id(ticket_id: str, index: int) -> str:
+    return f"TCS-{ticket_id}-{index:03d}"
+
+
 def now_utc() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -57,12 +61,16 @@ class ExistingCaseIndex:
     by_id: dict[str, dict[str, Any]]
     by_level_story_ac: dict[tuple[str, str, str], dict[str, Any]]
     by_ticket_story_ac: dict[tuple[str, str, str], dict[str, Any]]
+    by_level_story_case: dict[tuple[str, str, str], dict[str, Any]]
+    by_ticket_test_case: dict[tuple[str, str], dict[str, Any]]
 
 
 def index_cases(cases: list[dict[str, Any]]) -> ExistingCaseIndex:
     by_id: dict[str, dict[str, Any]] = {}
     by_level_story_ac: dict[tuple[str, str, str], dict[str, Any]] = {}
     by_ticket_story_ac: dict[tuple[str, str, str], dict[str, Any]] = {}
+    by_level_story_case: dict[tuple[str, str, str], dict[str, Any]] = {}
+    by_ticket_test_case: dict[tuple[str, str], dict[str, Any]] = {}
 
     for case in cases:
         if not isinstance(case, dict):
@@ -77,11 +85,300 @@ def index_cases(cases: list[dict[str, Any]]) -> ExistingCaseIndex:
             continue
         if level in {"story", "final"}:
             by_level_story_ac[(level, story_id, ac_ref)] = case
+            story_case_ref = case.get("story_case_id")
+            if isinstance(story_case_ref, str) and story_case_ref:
+                by_level_story_case[(level, story_id, story_case_ref)] = case
         elif level == "ticket":
             ticket_id = case.get("ticket_id")
             if isinstance(ticket_id, str) and ticket_id:
                 by_ticket_story_ac[(ticket_id, story_id, ac_ref)] = case
-    return ExistingCaseIndex(by_id=by_id, by_level_story_ac=by_level_story_ac, by_ticket_story_ac=by_ticket_story_ac)
+                ticket_case_ref = case.get("test_case_id")
+                if isinstance(ticket_case_ref, str) and ticket_case_ref:
+                    by_ticket_test_case[(ticket_id, ticket_case_ref)] = case
+    return ExistingCaseIndex(
+        by_id=by_id,
+        by_level_story_ac=by_level_story_ac,
+        by_ticket_story_ac=by_ticket_story_ac,
+        by_level_story_case=by_level_story_case,
+        by_ticket_test_case=by_ticket_test_case,
+    )
+
+
+def _normalize_case_kind(value: Any) -> str:
+    if isinstance(value, str) and value in {"ac", "critical_surface"}:
+        return value
+    return "ac"
+
+
+def _normalize_optional_string(value: Any) -> str | None:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _extract_surface_specs(contract_doc: Path) -> dict[str, dict[str, Any]]:
+    data = load_yaml(contract_doc) or {}
+    specs: dict[str, dict[str, Any]] = {}
+    for surface in data.get("surfaces") or []:
+        if not isinstance(surface, dict):
+            continue
+        surface_id = surface.get("surface_id")
+        if isinstance(surface_id, str) and surface_id:
+            specs[surface_id] = surface
+    return specs
+
+
+def _variant_ids(surface_spec: dict[str, Any], key: str, variant_key: str) -> list[str]:
+    values: list[str] = []
+    for item in surface_spec.get(key) or []:
+        if not isinstance(item, dict):
+            continue
+        variant_id = item.get(variant_key)
+        if isinstance(variant_id, str) and variant_id and variant_id not in values:
+            values.append(variant_id)
+    return values
+
+
+def _next_story_case_id(story_id_value: str, normalized: list[dict[str, Any]], used_ids: set[str]) -> str:
+    candidate = story_case_id(story_id_value, len(normalized) + 1)
+    while candidate in used_ids:
+        candidate = story_case_id(story_id_value, len(normalized) + 2)
+    used_ids.add(candidate)
+    return candidate
+
+
+def _next_ticket_case_id(ticket_id_value: str, normalized: list[dict[str, Any]], used_ids: set[str]) -> str:
+    candidate = ticket_test_case_id(ticket_id_value, len(normalized) + 1)
+    while candidate in used_ids:
+        candidate = ticket_test_case_id(ticket_id_value, len(normalized) + 2)
+    used_ids.add(candidate)
+    return candidate
+
+
+def _story_primary_ac_ref(story: dict[str, Any], story_surface_ac_refs: dict[str, list[str]], surface_id: str) -> str:
+    story_id_value = story["id"]
+    candidates = story_surface_ac_refs.get(surface_id) or []
+    if candidates:
+        return candidates[0]
+    acceptance_criteria = story.get("acceptance_criteria") or []
+    if acceptance_criteria:
+        return story_ac_ref(story_id_value, 1)
+    return ""
+
+
+def normalize_story_cases(story: dict[str, Any]) -> list[dict[str, Any]]:
+    story_id_value = story["id"]
+    acceptance_criteria = story.get("acceptance_criteria") or []
+    existing = story.get("story_cases")
+    normalized: list[dict[str, Any]] = []
+    covered_ac_refs: set[str] = set()
+    used_ids: set[str] = set()
+
+    if isinstance(existing, list):
+        for index, item in enumerate(existing, 1):
+            if not isinstance(item, dict):
+                continue
+            case_id = item.get("story_case_id")
+            if not isinstance(case_id, str) or not case_id.strip() or case_id in used_ids:
+                case_id = story_case_id(story_id_value, len(normalized) + 1)
+            used_ids.add(case_id)
+
+            ac_ref = item.get("ac_ref")
+            if not isinstance(ac_ref, str) or not ac_ref.strip():
+                fallback_index = min(index, max(len(acceptance_criteria), 1))
+                ac_ref = story_ac_ref(story_id_value, fallback_index)
+
+            case_kind = _normalize_case_kind(item.get("case_kind"))
+            if case_kind == "ac":
+                covered_ac_refs.add(ac_ref)
+
+            normalized.append(
+                {
+                    "story_case_id": case_id,
+                    "ac_ref": ac_ref,
+                    "case_kind": case_kind,
+                    "surface_id": _normalize_optional_string(item.get("surface_id")),
+                    "state_variant": _normalize_optional_string(item.get("state_variant")),
+                    "viewport_variant": _normalize_optional_string(item.get("viewport_variant")),
+                }
+            )
+
+    for index, _criterion in enumerate(acceptance_criteria, 1):
+        ac_ref = story_ac_ref(story_id_value, index)
+        if ac_ref in covered_ac_refs:
+            continue
+        case_id = story_case_id(story_id_value, len(normalized) + 1)
+        while case_id in used_ids:
+            case_id = story_case_id(story_id_value, len(normalized) + 2)
+        used_ids.add(case_id)
+        normalized.append(
+            {
+                "story_case_id": case_id,
+                "ac_ref": ac_ref,
+                "case_kind": "ac",
+                "surface_id": None,
+                "state_variant": None,
+                "viewport_variant": None,
+            }
+        )
+
+    return normalized
+
+
+def normalize_ticket_test_cases(ticket: dict[str, Any]) -> list[dict[str, Any]]:
+    ticket_id_value = ticket["id"]
+    covers_ac_refs = ticket.get("covers_ac_refs") or []
+    existing = ticket.get("test_cases")
+    normalized: list[dict[str, Any]] = []
+    covered_ac_refs: set[str] = set()
+    used_ids: set[str] = set()
+
+    if isinstance(existing, list):
+        for index, item in enumerate(existing, 1):
+            if not isinstance(item, dict):
+                continue
+            case_id = item.get("test_case_id")
+            if not isinstance(case_id, str) or not case_id.strip() or case_id in used_ids:
+                case_id = ticket_test_case_id(ticket_id_value, len(normalized) + 1)
+            used_ids.add(case_id)
+
+            ac_ref = item.get("ac_ref")
+            if not isinstance(ac_ref, str) or not ac_ref.strip():
+                fallback = covers_ac_refs[min(index - 1, max(len(covers_ac_refs) - 1, 0))] if covers_ac_refs else None
+                ac_ref = fallback or ""
+
+            case_kind = _normalize_case_kind(item.get("case_kind"))
+            if case_kind == "ac" and isinstance(ac_ref, str) and ac_ref:
+                covered_ac_refs.add(ac_ref)
+
+            normalized.append(
+                {
+                    "test_case_id": case_id,
+                    "ac_ref": ac_ref,
+                    "case_kind": case_kind,
+                    "surface_id": _normalize_optional_string(item.get("surface_id")),
+                    "state_variant": _normalize_optional_string(item.get("state_variant")),
+                    "viewport_variant": _normalize_optional_string(item.get("viewport_variant")),
+                }
+            )
+
+    for ac_ref in covers_ac_refs:
+        if ac_ref in covered_ac_refs:
+            continue
+        case_id = ticket_test_case_id(ticket_id_value, len(normalized) + 1)
+        while case_id in used_ids:
+            case_id = ticket_test_case_id(ticket_id_value, len(normalized) + 2)
+        used_ids.add(case_id)
+        normalized.append(
+            {
+                "test_case_id": case_id,
+                "ac_ref": ac_ref,
+                "case_kind": "ac",
+                "surface_id": None,
+                "state_variant": None,
+                "viewport_variant": None,
+            }
+        )
+
+    return [item for item in normalized if item.get("ac_ref")]
+
+
+def augment_story_surface_cases(
+    story: dict[str, Any],
+    surface_specs: dict[str, dict[str, Any]],
+    story_surface_ac_refs: dict[str, list[str]],
+) -> list[dict[str, Any]]:
+    normalized = normalize_story_cases(story)
+    contract_refs = story.get("contract_refs") or {}
+    critical_surfaces = [
+        item for item in contract_refs.get("critical_surfaces") or [] if isinstance(item, str) and item
+    ]
+    existing_keys = {
+        (
+            item.get("case_kind") or "ac",
+            item.get("surface_id"),
+            item.get("state_variant"),
+            item.get("viewport_variant"),
+        )
+        for item in normalized
+        if isinstance(item, dict)
+    }
+    used_ids = {
+        item["story_case_id"]
+        for item in normalized
+        if isinstance(item, dict) and isinstance(item.get("story_case_id"), str) and item.get("story_case_id")
+    }
+
+    for surface_id in critical_surfaces:
+        surface_spec = surface_specs.get(surface_id)
+        if not surface_spec:
+            continue
+        default_state = (_variant_ids(surface_spec, "state_variants", "state_id") or [None])[0]
+        default_viewport = (_variant_ids(surface_spec, "viewport_variants", "viewport_id") or [None])[0]
+        key = ("critical_surface", surface_id, default_state, default_viewport)
+        if key in existing_keys:
+            continue
+        normalized.append(
+            {
+                "story_case_id": _next_story_case_id(story["id"], normalized, used_ids),
+                "ac_ref": _story_primary_ac_ref(story, story_surface_ac_refs, surface_id),
+                "case_kind": "critical_surface",
+                "surface_id": surface_id,
+                "state_variant": default_state,
+                "viewport_variant": default_viewport,
+            }
+        )
+        existing_keys.add(key)
+    return normalized
+
+
+def augment_ticket_surface_cases(ticket: dict[str, Any], surface_specs: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized = normalize_ticket_test_cases(ticket)
+    contract_refs = ticket.get("contract_refs") or {}
+    critical_surfaces = [
+        item for item in contract_refs.get("critical_surfaces") or [] if isinstance(item, str) and item
+    ]
+    covers_ac_refs = ticket.get("covers_ac_refs") or []
+    primary_ac_ref = next((item for item in covers_ac_refs if isinstance(item, str) and item), "")
+    existing_keys = {
+        (
+            item.get("case_kind") or "ac",
+            item.get("surface_id"),
+            item.get("state_variant"),
+            item.get("viewport_variant"),
+        )
+        for item in normalized
+        if isinstance(item, dict)
+    }
+    used_ids = {
+        item["test_case_id"]
+        for item in normalized
+        if isinstance(item, dict) and isinstance(item.get("test_case_id"), str) and item.get("test_case_id")
+    }
+
+    for surface_id in critical_surfaces:
+        surface_spec = surface_specs.get(surface_id)
+        if not surface_spec:
+            continue
+        states = _variant_ids(surface_spec, "state_variants", "state_id") or [None]
+        viewports = _variant_ids(surface_spec, "viewport_variants", "viewport_id") or [None]
+        for state_variant in states:
+            for viewport_variant in viewports:
+                key = ("critical_surface", surface_id, state_variant, viewport_variant)
+                if key in existing_keys:
+                    continue
+                normalized.append(
+                    {
+                        "test_case_id": _next_ticket_case_id(ticket["id"], normalized, used_ids),
+                        "ac_ref": primary_ac_ref,
+                        "case_kind": "critical_surface",
+                        "surface_id": surface_id,
+                        "state_variant": state_variant,
+                        "viewport_variant": viewport_variant,
+                    }
+                )
+                existing_keys.add(key)
+    return [item for item in normalized if item.get("ac_ref")]
 
 
 def ensure_story_shape(story: dict[str, Any]) -> dict[str, Any]:
@@ -97,13 +394,7 @@ def ensure_story_shape(story: dict[str, Any]) -> dict[str, Any]:
     contract_refs.setdefault("critical_surfaces", [])
     story["contract_refs"] = contract_refs
 
-    story["story_cases"] = [
-        {
-            "story_case_id": story_case_id(story["id"], idx),
-            "ac_ref": story_ac_ref(story["id"], idx),
-        }
-        for idx, _ in enumerate(acceptance_criteria, 1)
-    ]
+    story["story_cases"] = normalize_story_cases(story)
     return story
 
 
@@ -119,29 +410,46 @@ def ensure_ticket_shape(ticket: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(covers_ac_refs, list):
         covers_ac_refs = []
     ticket["covers_ac_refs"] = [ac for ac in covers_ac_refs if isinstance(ac, str) and ac]
+    ticket["test_cases"] = normalize_ticket_test_cases(ticket)
     return ticket
 
 
-def create_ticket_case(module: str, ticket: dict[str, Any], ac_ref: str, position: int) -> dict[str, Any]:
+def create_ticket_case(module: str, ticket: dict[str, Any], skeleton: dict[str, Any], position: int) -> dict[str, Any]:
     return {
         "tc_id": f"TC-{module.upper()}-{ticket['id']}-TICKET-{position:03d}",
         "level": "ticket",
         "story_id": ticket["story_id"],
         "ticket_id": ticket["id"],
-        "ac_ref": ac_ref,
+        "ac_ref": skeleton["ac_ref"],
+        "test_case_id": skeleton["test_case_id"],
+        "case_kind": skeleton.get("case_kind") or "ac",
+        "surface_id": skeleton.get("surface_id"),
+        "state_variant": skeleton.get("state_variant"),
+        "viewport_variant": skeleton.get("viewport_variant"),
         "priority": "P1",
         "automation": {"script": None, "command": None},
         "latest_result": {"status": "pending", "evidence_ref": None},
     }
 
 
-def create_story_or_final_case(module: str, story_id: str, ac_ref: str, position: int, level: str) -> dict[str, Any]:
+def create_story_or_final_case(
+    module: str,
+    story_id: str,
+    skeleton: dict[str, Any],
+    position: int,
+    level: str,
+) -> dict[str, Any]:
     return {
         "tc_id": f"TC-{module.upper()}-{story_id}-{level.upper()}-{position:03d}",
         "level": level,
         "story_id": story_id,
         "ticket_id": None,
-        "ac_ref": ac_ref,
+        "ac_ref": skeleton["ac_ref"],
+        "story_case_id": skeleton["story_case_id"],
+        "case_kind": skeleton.get("case_kind") or "ac",
+        "surface_id": skeleton.get("surface_id"),
+        "state_variant": skeleton.get("state_variant"),
+        "viewport_variant": skeleton.get("viewport_variant"),
         "priority": "P1",
         "automation": {"script": None, "command": None},
         "latest_result": {"status": "pending", "evidence_ref": None},
@@ -242,6 +550,13 @@ def normalize_existing_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]
                 result["ticket_id"] = inferred
         if level in {"story", "final"}:
             result["ticket_id"] = None
+            result["story_case_id"] = _normalize_optional_string(result.get("story_case_id"))
+        else:
+            result["test_case_id"] = _normalize_optional_string(result.get("test_case_id"))
+        result["case_kind"] = _normalize_case_kind(result.get("case_kind"))
+        result["surface_id"] = _normalize_optional_string(result.get("surface_id"))
+        result["state_variant"] = _normalize_optional_string(result.get("state_variant"))
+        result["viewport_variant"] = _normalize_optional_string(result.get("viewport_variant"))
         automation = result.get("automation")
         if not isinstance(automation, dict):
             result["automation"] = {"script": None, "command": None}
@@ -344,25 +659,50 @@ def sync_module_assets(
     tickets_dir: Path,
     cases_doc: Path,
     matrix_doc: Path,
+    ui_contract_doc: Path,
     story_id: str | None = None,
 ) -> dict[str, int]:
+    surface_specs = _extract_surface_specs(ui_contract_doc)
     story_entries = load_stories(stories_dir, story_id)
     story_ids = {story.get("id") or path.stem for path, story in story_entries}
     ticket_entries = load_tickets(tickets_dir, story_ids, story_id)
     ticket_by_id = {}
+    tickets_by_story: dict[str, list[dict[str, Any]]] = {}
 
     for path, story in story_entries:
         story_id_value = story.get("id") or path.stem
         story["id"] = story_id_value
         ensure_story_shape(story)
-        write_yaml(path, story)
+        # Write after overlay surface augmentation.
 
     for path, ticket in ticket_entries:
         ticket_id = ticket.get("id") or path.stem
         ticket["id"] = ticket_id
         ensure_ticket_shape(ticket)
         ticket_by_id[ticket_id] = ticket
+        tickets_by_story.setdefault(ticket["story_id"], []).append(ticket)
+        ticket["test_cases"] = augment_ticket_surface_cases(ticket, surface_specs)
         write_yaml(path, ticket)
+
+    for path, story in story_entries:
+        story_surface_ac_refs: dict[str, list[str]] = {}
+        for ticket in tickets_by_story.get(story["id"], []):
+            critical_surfaces = (
+                (ticket.get("contract_refs") or {}).get("critical_surfaces") or []
+                if isinstance(ticket.get("contract_refs"), dict)
+                else []
+            )
+            ac_refs = [
+                ac_ref for ac_ref in (ticket.get("covers_ac_refs") or []) if isinstance(ac_ref, str) and ac_ref
+            ]
+            for surface_id in critical_surfaces:
+                if isinstance(surface_id, str) and surface_id:
+                    story_surface_ac_refs.setdefault(surface_id, [])
+                    for ac_ref in ac_refs:
+                        if ac_ref not in story_surface_ac_refs[surface_id]:
+                            story_surface_ac_refs[surface_id].append(ac_ref)
+        story["story_cases"] = augment_story_surface_cases(story, surface_specs, story_surface_ac_refs)
+        write_yaml(path, story)
 
     existing_cases = normalize_existing_cases(load_yaml(cases_doc) or [])
     index = index_cases(existing_cases)
@@ -373,13 +713,23 @@ def sync_module_assets(
         sid = story["id"]
         for idx, case in enumerate(story.get("story_cases") or [], 1):
             ac_ref = case["ac_ref"]
+            story_case_ref = case["story_case_id"]
+            case_kind = case.get("case_kind") or "ac"
             for level in ("story", "final"):
-                existing_case = index.by_level_story_ac.get((level, sid, ac_ref))
+                existing_case = index.by_level_story_case.get((level, sid, story_case_ref))
+                if existing_case is None and case_kind == "ac":
+                    existing_case = index.by_level_story_ac.get((level, sid, ac_ref))
                 if existing_case is None:
-                    existing_case = create_story_or_final_case(module, sid, ac_ref, idx, level)
+                    existing_case = create_story_or_final_case(module, sid, case, idx, level)
                     merged_cases.append(existing_case)
+                    index.by_level_story_case[(level, sid, story_case_ref)] = existing_case
                     index.by_level_story_ac[(level, sid, ac_ref)] = existing_case
                     created_cases += 1
+                existing_case["story_case_id"] = story_case_ref
+                existing_case["case_kind"] = case.get("case_kind") or "ac"
+                existing_case["surface_id"] = case.get("surface_id")
+                existing_case["state_variant"] = case.get("state_variant")
+                existing_case["viewport_variant"] = case.get("viewport_variant")
                 hydrate_story_or_final_case_from_story_evidence(
                     existing_case,
                     story,
@@ -389,13 +739,24 @@ def sync_module_assets(
 
     for _ticket_path, ticket in ticket_entries:
         sid = ticket["story_id"]
-        for position, ac_ref in enumerate(ticket.get("covers_ac_refs") or [], 1):
-            existing_case = index.by_ticket_story_ac.get((ticket["id"], sid, ac_ref))
+        for position, skeleton in enumerate(ticket.get("test_cases") or [], 1):
+            ac_ref = skeleton["ac_ref"]
+            test_case_ref = skeleton["test_case_id"]
+            case_kind = skeleton.get("case_kind") or "ac"
+            existing_case = index.by_ticket_test_case.get((ticket["id"], test_case_ref))
+            if existing_case is None and case_kind == "ac":
+                existing_case = index.by_ticket_story_ac.get((ticket["id"], sid, ac_ref))
             if existing_case is None:
-                existing_case = create_ticket_case(module, ticket, ac_ref, position)
+                existing_case = create_ticket_case(module, ticket, skeleton, position)
                 merged_cases.append(existing_case)
+                index.by_ticket_test_case[(ticket["id"], test_case_ref)] = existing_case
                 index.by_ticket_story_ac[(ticket["id"], sid, ac_ref)] = existing_case
                 created_cases += 1
+            existing_case["test_case_id"] = test_case_ref
+            existing_case["case_kind"] = skeleton.get("case_kind") or "ac"
+            existing_case["surface_id"] = skeleton.get("surface_id")
+            existing_case["state_variant"] = skeleton.get("state_variant")
+            existing_case["viewport_variant"] = skeleton.get("viewport_variant")
             hydrate_ticket_case_from_verification_evidence(
                 existing_case,
                 ticket,
@@ -422,6 +783,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tickets-dir", default="osg-spec-docs/tasks/tickets")
     parser.add_argument("--cases")
     parser.add_argument("--matrix")
+    parser.add_argument("--ui-contract")
     return parser.parse_args()
 
 
@@ -432,6 +794,7 @@ def main() -> int:
     tickets_dir = Path(args.tickets_dir)
     cases_doc = Path(args.cases or f"osg-spec-docs/tasks/testing/{module}-test-cases.yaml")
     matrix_doc = Path(args.matrix or f"osg-spec-docs/tasks/testing/{module}-traceability-matrix.md")
+    ui_contract_doc = Path(args.ui_contract or f"osg-spec-docs/docs/01-product/prd/{module}/UI-VISUAL-CONTRACT.yaml")
 
     summary = sync_module_assets(
         module=module,
@@ -439,6 +802,7 @@ def main() -> int:
         tickets_dir=tickets_dir,
         cases_doc=cases_doc,
         matrix_doc=matrix_doc,
+        ui_contract_doc=ui_contract_doc,
         story_id=args.story_id,
     )
     print(

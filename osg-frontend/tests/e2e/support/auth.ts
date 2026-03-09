@@ -149,33 +149,7 @@ export async function assertRuoyiSuccess(
   return body
 }
 
-async function dismissFirstLoginModalIfNeeded(page: Page): Promise<void> {
-  const modalTitle = page.getByText('首次登录 - 请修改密码').first()
-  const visible = await modalTitle.isVisible().catch(() => false)
-  if (!visible) {
-    return
-  }
-
-  const newPasswordInput = page.locator('input[placeholder*="8-20位，包含字母和数字"]').first()
-  const confirmPasswordInput = page.locator('input[placeholder*="请再次输入新密码"]').first()
-  await expect(newPasswordInput).toBeVisible({ timeout: E2E_TIMEOUT_MS })
-  await expect(confirmPasswordInput).toBeVisible({ timeout: E2E_TIMEOUT_MS })
-
-  // 使用固定 E2E 密码消除首登弹窗干扰，不改变后续登录口径
-  await newPasswordInput.fill(authConfig.password)
-  await confirmPasswordInput.fill(authConfig.password)
-
-  const submitPromise = waitForApi(page, '/api/system/user/profile/updateFirstLoginPwd', 'PUT')
-  await page.getByRole('button', { name: '确认修改' }).click()
-  await assertRuoyiSuccess(submitPromise, '/api/system/user/profile/updateFirstLoginPwd')
-  await expect(modalTitle).toBeHidden({ timeout: E2E_TIMEOUT_MS })
-}
-
 export async function loginAsAdmin(page: Page): Promise<void> {
-  const captchaResponsePromise = waitForApi(page, '/api/captchaImage', 'GET')
-  await page.goto(authConfig.loginPath)
-  await expect(page).toHaveURL(asRegExpPath(authConfig.loginPath))
-
   const usernameInput = page.locator(
     'input[placeholder*="用户名"], input[placeholder*="账号"], input[type="text"]'
   ).first()
@@ -183,7 +157,31 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   const captchaInput = page.locator('input[placeholder*="验证码"]').first()
   const submitButton = page.locator('button[type="submit"], button:has-text("登录")').first()
 
-  await expect(usernameInput).toBeVisible({ timeout: E2E_TIMEOUT_MS })
+  await page.goto(authConfig.loginPath)
+  await page.waitForLoadState('domcontentloaded')
+
+  const deadline = Date.now() + E2E_TIMEOUT_MS
+  let needsInteractiveLogin = false
+  while (Date.now() < deadline) {
+    if (asRegExpPath(authConfig.postLoginPath).test(page.url())) {
+      await page.waitForLoadState('networkidle')
+      return
+    }
+    if ((await usernameInput.count()) > 0 && await usernameInput.isVisible()) {
+      needsInteractiveLogin = true
+      break
+    }
+    await page.waitForTimeout(200)
+  }
+
+  if (!needsInteractiveLogin) {
+    throw new Error(
+      `loginAsAdmin could not reach login form or authenticated route within ${E2E_TIMEOUT_MS}ms; currentUrl=${page.url()}`,
+    )
+  }
+
+  await expect(page).toHaveURL(asRegExpPath(authConfig.loginPath))
+  const captchaResponsePromise = waitForApi(page, '/api/captchaImage', 'GET')
   await expect(passwordInput).toBeVisible({ timeout: E2E_TIMEOUT_MS })
 
   await usernameInput.fill(authConfig.username)
@@ -200,7 +198,16 @@ export async function loginAsAdmin(page: Page): Promise<void> {
 
   await page.waitForTimeout(1000)
   if (await captchaInput.isVisible()) {
-    const resolvedCaptchaCode = captchaUuid ? readCaptchaFromRedis(captchaUuid) : null
+    let resolvedCaptchaCode = captchaUuid ? readCaptchaFromRedis(captchaUuid) : null
+    if (!resolvedCaptchaCode) {
+      try {
+        const challenge = await requestCaptchaChallenge(page.request)
+        captchaUuid = challenge.uuid
+        resolvedCaptchaCode = challenge.code
+      } catch {
+        // ignore; fallback to static captcha code
+      }
+    }
     const fallbackCaptchaCode = authConfig.captchaCode.trim()
     const finalCaptchaCode = resolvedCaptchaCode || fallbackCaptchaCode
     if (!finalCaptchaCode) {
@@ -219,5 +226,4 @@ export async function loginAsAdmin(page: Page): Promise<void> {
 
   await assertRuoyiSuccess(infoPromise, authConfig.infoPath)
   await page.waitForURL(asRegExpPath(authConfig.postLoginPath), { timeout: E2E_TIMEOUT_MS })
-  await dismissFirstLoginModalIfNeeded(page)
 }

@@ -79,15 +79,15 @@ def parse_matrix_rows(matrix_doc: Path) -> list[dict[str, str]]:
     return rows
 
 
-def _extract_story_case_refs(stories: dict[str, dict]) -> tuple[dict[str, set[str]], list[str]]:
+def _extract_story_case_entries(stories: dict[str, dict]) -> tuple[dict[str, dict[str, dict]], list[str]]:
     findings: list[str] = []
-    result: dict[str, set[str]] = {}
+    result: dict[str, dict[str, dict]] = {}
     for sid, story in stories.items():
         story_cases = story.get("story_cases")
         if not isinstance(story_cases, list) or not story_cases:
             findings.append(f"story missing story_cases: {sid}")
             continue
-        refs: set[str] = set()
+        entries: dict[str, dict] = {}
         for idx, case in enumerate(story_cases):
             prefix = f"{sid}.story_cases[{idx}]"
             if not isinstance(case, dict):
@@ -97,11 +97,51 @@ def _extract_story_case_refs(stories: dict[str, dict]) -> tuple[dict[str, set[st
             story_case_id = case.get("story_case_id")
             if not isinstance(story_case_id, str) or not story_case_id.strip():
                 findings.append(f"{prefix}.story_case_id must be a non-empty string")
+                continue
             if not isinstance(ac_ref, str) or not ac_ref.strip():
                 findings.append(f"{prefix}.ac_ref must be a non-empty string")
                 continue
-            refs.add(ac_ref)
-        result[sid] = refs
+            entries[story_case_id] = case
+        result[sid] = entries
+    return result, findings
+
+
+def _extract_ticket_test_case_entries(tickets: dict[str, dict]) -> tuple[dict[str, dict[str, dict]], list[str]]:
+    findings: list[str] = []
+    result: dict[str, dict[str, dict]] = {}
+    for tid, ticket in tickets.items():
+        test_cases = ticket.get("test_cases")
+        if test_cases is None:
+            test_cases = [
+                {
+                    "test_case_id": f"AUTO:{ac_ref}",
+                    "ac_ref": ac_ref,
+                    "case_kind": "ac",
+                    "surface_id": None,
+                    "state_variant": None,
+                    "viewport_variant": None,
+                }
+                for ac_ref in ticket.get("covers_ac_refs") or []
+            ]
+        if not isinstance(test_cases, list) or not test_cases:
+            findings.append(f"ticket missing test_cases: {tid}")
+            continue
+        entries: dict[str, dict] = {}
+        for idx, case in enumerate(test_cases):
+            prefix = f"{tid}.test_cases[{idx}]"
+            if not isinstance(case, dict):
+                findings.append(f"{prefix} must be a mapping")
+                continue
+            ac_ref = case.get("ac_ref")
+            test_case_id = case.get("test_case_id")
+            if not isinstance(test_case_id, str) or not test_case_id.strip():
+                findings.append(f"{prefix}.test_case_id must be a non-empty string")
+                continue
+            if not isinstance(ac_ref, str) or not ac_ref.strip():
+                findings.append(f"{prefix}.ac_ref must be a non-empty string")
+                continue
+            entries[test_case_id] = case
+        result[tid] = entries
     return result, findings
 
 
@@ -122,13 +162,16 @@ def evaluate_test_asset_completeness(
     if story_id and story_id not in stories:
         return [f"story not found: {story_id}"]
 
-    story_case_refs, story_case_findings = _extract_story_case_refs(stories)
+    story_case_entries, story_case_findings = _extract_story_case_entries(stories)
     findings.extend(story_case_findings)
+    ticket_test_case_entries, ticket_test_case_findings = _extract_ticket_test_case_entries(tickets)
+    findings.extend(ticket_test_case_findings)
 
     case_ids: set[str] = set()
     case_ids_by_story: dict[str, set[str]] = {}
     ticket_case_ids_by_ticket: dict[str, set[str]] = {}
-    non_ticket_case_levels_by_story_ac: dict[tuple[str, str], set[str]] = {}
+    non_ticket_case_levels_by_story_case: dict[tuple[str, str], set[str]] = {}
+    ticket_case_ids_by_ticket_case: dict[tuple[str, str], str] = {}
     case_by_id: dict[str, dict] = {}
 
     for idx, case in enumerate(cases):
@@ -138,6 +181,8 @@ def evaluate_test_asset_completeness(
         sid = case.get("story_id")
         tid = case.get("ticket_id")
         ac_ref = case.get("ac_ref")
+        story_case_id = case.get("story_case_id")
+        test_case_id = case.get("test_case_id")
 
         if not isinstance(tc_id, str) or not tc_id.strip():
             findings.append(f"{prefix}.tc_id must be a non-empty string")
@@ -162,11 +207,6 @@ def evaluate_test_asset_completeness(
         if not isinstance(ac_ref, str) or not ac_ref.strip():
             findings.append(f"{prefix}.ac_ref must be a non-empty string")
             continue
-        declared_story_refs = story_case_refs.get(sid)
-        if declared_story_refs:
-            if ac_ref not in declared_story_refs:
-                findings.append(f"test case ac_ref not declared by story_cases: {tc_id} -> {ac_ref}")
-
         if level == "ticket":
             if not isinstance(tid, str) or not tid.strip():
                 findings.append(f"ticket-level test case missing ticket_id: {tc_id}")
@@ -180,10 +220,13 @@ def evaluate_test_asset_completeness(
                 findings.append(f"ticket/story mismatch in test case: {tc_id} -> {tid} story_id={sid} actual_story_id={actual_story_id}")
                 continue
             ticket_case_ids_by_ticket.setdefault(tid, set()).add(tc_id)
+            if isinstance(test_case_id, str) and test_case_id.strip():
+                ticket_case_ids_by_ticket_case[(tid, test_case_id)] = tc_id
         else:
             if tid not in (None, ""):
                 findings.append(f"non-ticket test case should not declare ticket_id: {tc_id}")
-            non_ticket_case_levels_by_story_ac.setdefault((sid, ac_ref), set()).add(level)
+            if isinstance(story_case_id, str) and story_case_id.strip():
+                non_ticket_case_levels_by_story_case.setdefault((sid, story_case_id), set()).add(level)
 
     matrix_tc_ids: set[str] = set()
     matrix_story_ids: set[str] = set()
@@ -201,13 +244,21 @@ def evaluate_test_asset_completeness(
             findings.append(f"traceability matrix ac_ref mismatch: {tc_id} matrix={ac_ref} case={case_ac_ref}")
 
     for sid, story in stories.items():
-        story_refs = set(story_case_refs.get(sid, set()))
-        if not story_refs:
+        story_entries = story_case_entries.get(sid, {})
+        if not story_entries:
             continue
-        missing_story_tests = sorted(ac_ref for ac_ref in story_refs if "story" not in non_ticket_case_levels_by_story_ac.get((sid, ac_ref), set()))
+        missing_story_tests = sorted(
+            story_case_id
+            for story_case_id in story_entries
+            if "story" not in non_ticket_case_levels_by_story_case.get((sid, story_case_id), set())
+        )
         if missing_story_tests:
             findings.append(f"story missing story-level test cases: {sid} -> {missing_story_tests}")
-        missing_final_tests = sorted(ac_ref for ac_ref in story_refs if "final" not in non_ticket_case_levels_by_story_ac.get((sid, ac_ref), set()))
+        missing_final_tests = sorted(
+            story_case_id
+            for story_case_id in story_entries
+            if "final" not in non_ticket_case_levels_by_story_case.get((sid, story_case_id), set())
+        )
         if missing_final_tests:
             findings.append(f"story missing final-level test cases: {sid} -> {missing_final_tests}")
         if sid not in case_ids_by_story:
@@ -218,6 +269,12 @@ def evaluate_test_asset_completeness(
     for tid, _ticket in tickets.items():
         if tid not in ticket_case_ids_by_ticket:
             findings.append(f"ticket missing ticket-level test case coverage: {tid}")
+        expected_ticket_cases = ticket_test_case_entries.get(tid, {})
+        missing_ticket_cases = sorted(
+            test_case_id for test_case_id in expected_ticket_cases if (tid, test_case_id) not in ticket_case_ids_by_ticket_case
+        )
+        if missing_ticket_cases:
+            findings.append(f"ticket missing declared test_cases coverage: {tid} -> {missing_ticket_cases}")
 
     for tc_id in sorted(case_ids):
         if tc_id not in matrix_tc_ids:

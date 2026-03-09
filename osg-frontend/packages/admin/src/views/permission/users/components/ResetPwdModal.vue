@@ -1,57 +1,72 @@
 <template>
-  <a-modal
+  <OverlaySurfaceModal
+    surface-id="modal-reset-password"
     :open="visible"
-    title="重置密码"
-    width="480px"
+    width="400px"
     @cancel="handleClose"
-    :footer="null"
   >
-    <a-alert
-      type="warning"
-      message="重置后该用户需使用新密码登录"
-      show-icon
-      style="margin-bottom: 16px"
-    />
+    <template #title>
+      <span class="reset-pwd-modal__title">
+        <span class="mdi mdi-lock-reset reset-pwd-modal__title-icon" aria-hidden="true" />
+        <span>重置密码</span>
+      </span>
+    </template>
+
+    <div class="reset-pwd-modal__warning">
+      <span class="mdi mdi-alert" aria-hidden="true" />
+      <p>重置后该用户需使用新密码登录</p>
+    </div>
 
     <a-form
       ref="formRef"
       :model="formState"
       :rules="rules"
       layout="vertical"
+      :required-mark="false"
     >
-      <a-form-item label="新密码" name="password">
+      <a-form-item name="password">
+        <template #label>
+          <span class="reset-pwd-modal__label">新密码<span class="reset-pwd-modal__required">*</span></span>
+        </template>
         <a-input-password
           v-model:value="formState.password"
           placeholder="8-20字符，包含字母和数字"
+          :visibility-toggle="false"
         />
       </a-form-item>
 
-      <a-form-item label="确认密码" name="confirmPassword">
+      <a-form-item name="confirmPassword">
+        <template #label>
+          <span class="reset-pwd-modal__label">确认密码<span class="reset-pwd-modal__required">*</span></span>
+        </template>
         <a-input-password
           v-model:value="formState.confirmPassword"
           placeholder="请再次输入新密码"
+          :visibility-toggle="false"
         />
       </a-form-item>
-
-      <div class="modal-footer">
-        <a-button @click="handleClose">取消</a-button>
-        <a-button
-          type="primary"
-          :loading="loading"
-          style="background-color: #faad14; border-color: #faad14"
-          @click="handleSubmit"
-        >
-          确认重置
-        </a-button>
-      </div>
     </a-form>
-  </a-modal>
+
+    <template #footer>
+      <a-button class="reset-pwd-modal__cancel-btn" @click="handleClose">取消</a-button>
+      <a-button
+        type="primary"
+        :loading="loading"
+        class="reset-pwd-modal__confirm-btn"
+        @click="handleSubmit"
+      >
+        <span class="mdi mdi-check" aria-hidden="true" />
+        <span>确认重置</span>
+      </a-button>
+    </template>
+  </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { resetUserPwd } from '@/api/user'
+import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -68,7 +83,7 @@ const loading = ref(false)
 
 const formState = reactive({
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
 })
 
 const validatePassword = (_rule: any, value: string) => {
@@ -87,15 +102,17 @@ const validateConfirmPassword = (_rule: any, value: string) => {
 
 const rules = {
   password: [{ required: true, validator: validatePassword, trigger: 'blur' }],
-  confirmPassword: [{ required: true, validator: validateConfirmPassword, trigger: 'blur' }]
+  confirmPassword: [{ required: true, validator: validateConfirmPassword, trigger: 'blur' }],
 }
 
-watch(() => props.visible, (val) => {
-  if (val) {
+watch(
+  () => props.visible,
+  (visible) => {
+    if (!visible) return
     formState.password = ''
     formState.confirmPassword = ''
-  }
-})
+  },
+)
 
 const handleClose = () => {
   emit('update:visible', false)
@@ -108,15 +125,15 @@ const handleSubmit = async () => {
 
     await resetUserPwd({
       userId: props.user.userId,
-      password: formState.password
+      password: formState.password,
     })
 
     message.success('密码重置成功')
     emit('success')
     handleClose()
   } catch (error: any) {
-    if (error.errorFields) return
-    message.error(error.message || '操作失败')
+    if (error?.errorFields) return
+    message.error(error?.message || '操作失败')
   } finally {
     loading.value = false
   }
@@ -124,10 +141,71 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped lang="scss">
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
+.reset-pwd-modal__title {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  margin-top: 16px;
+}
+
+.reset-pwd-modal__title-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.reset-pwd-modal__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text, #1e293b);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.reset-pwd-modal__required {
+  color: #ef4444;
+}
+
+.reset-pwd-modal__warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: #fef3c7;
+
+  .anticon,
+  p {
+    color: #92400e;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+  }
+}
+
+.reset-pwd-modal__cancel-btn {
+  border-color: var(--border, #d0d7e2);
+  border-radius: 10px;
+  color: var(--text-secondary, #64748b);
+  font-weight: 500;
+  min-width: 88px;
+}
+
+.reset-pwd-modal__confirm-btn {
+  background-color: var(--warning, #f59e0b);
+  border-color: var(--warning, #f59e0b);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &:hover,
+  &:focus {
+    background-color: var(--warning, #f59e0b);
+    border-color: var(--warning, #f59e0b);
+    opacity: 0.96;
+  }
 }
 </style>

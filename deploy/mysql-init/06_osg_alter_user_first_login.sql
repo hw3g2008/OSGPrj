@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 -- ============================================
 -- OSG sys_user 表新增 first_login 字段
 -- Ticket: T-001

@@ -78,7 +78,12 @@ completed_at: null
 # 🧪 测试用例矩阵（由 test-design Skill 生成）
 # ============================================
 # test_cases:
-#   - id: "TC-001"
+#   - test_case_id: "TCS-T-001-001"
+#     ac_ref: "AC-S-001-01"
+#     case_kind: "ac"  # ac | critical_surface
+#     surface_id: null
+#     state_variant: null
+#     viewport_variant: null
 #     category: "positive"   # positive | negative | boundary | exception | null_empty
 #     description: "{测试描述}"
 #     input: "{输入描述}"

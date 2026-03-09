@@ -8,6 +8,7 @@ from pathlib import Path
 
 import yaml
 
+OVERLAY_SURFACE_TYPES = {"modal", "drawer", "popover", "panel", "wizard-step"}
 
 def load_yaml(path: Path):
     if not path.exists():
@@ -28,9 +29,15 @@ def extract_delivery_capability_scopes(contract_doc: Path) -> dict[str, str]:
     return result
 
 
-def extract_critical_surface_ids(contract_doc: Path) -> set[str]:
+def extract_surface_specs(contract_doc: Path) -> dict[str, dict]:
     data = load_yaml(contract_doc) or {}
-    surface_ids: set[str] = set()
+    specs: dict[str, dict] = {}
+    for surface in data.get("surfaces") or []:
+        if not isinstance(surface, dict):
+            continue
+        surface_id = surface.get("surface_id")
+        if isinstance(surface_id, str) and surface_id:
+            specs[surface_id] = surface
     for page in data.get("pages") or []:
         if not isinstance(page, dict):
             continue
@@ -39,8 +46,8 @@ def extract_critical_surface_ids(contract_doc: Path) -> set[str]:
                 continue
             surface_id = surface.get("surface_id")
             if isinstance(surface_id, str) and surface_id:
-                surface_ids.add(surface_id)
-    return surface_ids
+                specs.setdefault(surface_id, surface)
+    return specs
 
 
 def extract_contract_refs(node: dict | None) -> tuple[set[str], set[str]]:
@@ -63,6 +70,49 @@ def has_contract_refs(node: dict | None) -> bool:
     return isinstance(contract_refs, dict)
 
 
+def extract_story_surface_cases(node: dict | None) -> dict[str, list[dict]]:
+    if not isinstance(node, dict):
+        return {}
+    story_cases = node.get("story_cases") or []
+    if not isinstance(story_cases, list):
+        return {}
+    result: dict[str, list[dict]] = {}
+    for case in story_cases:
+        if not isinstance(case, dict):
+            continue
+        surface_id = case.get("surface_id")
+        if isinstance(surface_id, str) and surface_id:
+            result.setdefault(surface_id, []).append(case)
+    return result
+
+
+def extract_ticket_surface_cases(node: dict | None) -> dict[str, list[dict]]:
+    if not isinstance(node, dict):
+        return {}
+    test_cases = node.get("test_cases") or []
+    if not isinstance(test_cases, list):
+        return {}
+    result: dict[str, list[dict]] = {}
+    for case in test_cases:
+        if not isinstance(case, dict):
+            continue
+        surface_id = case.get("surface_id")
+        if isinstance(surface_id, str) and surface_id:
+            result.setdefault(surface_id, []).append(case)
+    return result
+
+
+def _variant_ids(surface_spec: dict, key: str, variant_key: str) -> set[str]:
+    values: set[str] = set()
+    for item in surface_spec.get(key) or []:
+        if not isinstance(item, dict):
+            continue
+        variant_id = item.get(variant_key)
+        if isinstance(variant_id, str) and variant_id:
+            values.add(variant_id)
+    return values
+
+
 def evaluate_story_ticket_coverage(
     *,
     stories_dir: Path,
@@ -73,7 +123,8 @@ def evaluate_story_ticket_coverage(
 ) -> list[str]:
     findings: list[str] = []
     capability_scopes = extract_delivery_capability_scopes(delivery_contract_doc)
-    valid_surface_ids = extract_critical_surface_ids(ui_contract_doc)
+    surface_specs = extract_surface_specs(ui_contract_doc)
+    valid_surface_ids = set(surface_specs)
     stories: dict[str, dict] = {}
     for path in sorted(stories_dir.glob("S-*.yaml")):
         data = load_yaml(path) or {}
@@ -102,6 +153,7 @@ def evaluate_story_ticket_coverage(
         declared_ids = [item for item in declared if isinstance(item, str)]
         declared_set = set(declared_ids)
         story_capabilities, story_surfaces = extract_contract_refs(story)
+        story_surface_cases = extract_story_surface_cases(story)
         if not declared_ids:
             findings.append(f"story missing tickets: {sid}")
             continue
@@ -148,6 +200,7 @@ def evaluate_story_ticket_coverage(
             if surface_id not in valid_surface_ids:
                 findings.append(f"story references unknown critical surface: {sid} -> {surface_id}")
                 continue
+            surface_spec = surface_specs.get(surface_id) or {}
             mapped_tickets: list[dict] = []
             for tid in declared_ids:
                 ticket_path = tickets_dir / f"{tid}.yaml"
@@ -162,6 +215,38 @@ def evaluate_story_ticket_coverage(
                 continue
             if not any((ticket.get("type") or "") == "frontend-ui" for ticket in mapped_tickets):
                 findings.append(f"critical surface missing frontend-ui ticket coverage: {sid} -> {surface_id}")
+            if surface_spec.get("surface_type") in OVERLAY_SURFACE_TYPES:
+                if not story_surface_cases.get(surface_id):
+                    findings.append(f"overlay critical surface missing story_cases skeleton: {sid} -> {surface_id}")
+                ui_tickets = [ticket for ticket in mapped_tickets if (ticket.get("type") or "") == "frontend-ui"]
+                ticket_surface_cases: list[dict] = []
+                for ticket in ui_tickets:
+                    ticket_surface_cases.extend(extract_ticket_surface_cases(ticket).get(surface_id, []))
+                if not ticket_surface_cases:
+                    findings.append(f"overlay critical surface missing ticket test_cases skeleton: {sid} -> {surface_id}")
+                    continue
+                required_states = _variant_ids(surface_spec, "state_variants", "state_id")
+                covered_states = {
+                    case.get("state_variant")
+                    for case in ticket_surface_cases
+                    if isinstance(case.get("state_variant"), str) and case.get("state_variant")
+                }
+                missing_states = sorted(state for state in required_states if state not in covered_states)
+                if missing_states:
+                    findings.append(
+                        f"overlay critical surface missing state_variant coverage: {sid} -> {surface_id} -> {missing_states}"
+                    )
+                required_viewports = _variant_ids(surface_spec, "viewport_variants", "viewport_id")
+                covered_viewports = {
+                    case.get("viewport_variant")
+                    for case in ticket_surface_cases
+                    if isinstance(case.get("viewport_variant"), str) and case.get("viewport_variant")
+                }
+                missing_viewports = sorted(view for view in required_viewports if view not in covered_viewports)
+                if missing_viewports:
+                    findings.append(
+                        f"overlay critical surface missing viewport_variant coverage: {sid} -> {surface_id} -> {missing_viewports}"
+                    )
 
         disk_ids = disk_tickets_by_story.get(sid, set())
         missing_from_story = sorted(tid for tid in disk_ids if tid not in declared_set)

@@ -7,6 +7,8 @@ export type StateCaseKind = 'focus' | 'hover' | 'loading' | 'empty' | 'error'
 export type StateAssertionType = 'visible' | 'text' | 'css'
 export type VisualDataMode = 'live' | 'mock' | 'mask'
 export type CriticalStateContractKind = 'focus' | 'hover' | 'loading' | 'empty' | 'error' | 'loaded'
+export type VisualSurfaceType = 'modal' | 'drawer' | 'popover' | 'panel' | 'wizard-step'
+export type VisualSurfaceTriggerType = 'click' | 'keyboard' | 'route-param' | 'auto-open'
 
 export interface VisualStyleContractRule {
   selector: string
@@ -97,10 +99,75 @@ export interface VisualPageContract {
   critical_surfaces?: VisualCriticalSurfaceContract[]
 }
 
+export interface VisualSurfaceCssContract {
+  selector: string
+  prototype_selector?: string
+  css: Record<string, string>
+}
+
+export interface VisualSurfaceTriggerAction {
+  type: VisualSurfaceTriggerType
+  selector?: string
+  prototype_selector?: string
+  script?: string
+  prototype_script?: string
+  key?: string
+  param?: string
+  value?: string
+  route?: string
+}
+
+export interface VisualSurfaceViewportVariant {
+  viewport_id: string
+  width: number
+  height: number
+}
+
+export interface VisualSurfaceStateVariant {
+  state_id: string
+}
+
+export interface VisualSurfacePartContract {
+  part_id: string
+  selector: string
+  prototype_selector?: string
+  mask_allowed: boolean
+}
+
+export interface VisualSurfaceStateContract {
+  state_id: string
+  required_anchors?: string[]
+  prototype_required_anchors?: string[]
+  style_contracts?: VisualSurfaceCssContract[]
+}
+
+export interface VisualSurfaceContract {
+  surface_id: string
+  surface_type: VisualSurfaceType
+  host_page_id: string
+  prototype_selector: string
+  app_selector: string
+  surface_root_selector: string
+  backdrop_selector?: string
+  portal_host?: string
+  source_ref?: string
+  trigger_action: VisualSurfaceTriggerAction
+  fixture_routes?: VisualFixtureRoute[]
+  required_anchors: string[]
+  prototype_required_anchors?: string[]
+  viewport_variants: VisualSurfaceViewportVariant[]
+  state_variants?: VisualSurfaceStateVariant[]
+  surface_parts: VisualSurfacePartContract[]
+  style_contracts?: VisualSurfaceCssContract[]
+  state_contracts?: VisualSurfaceStateContract[]
+  _generated_note?: string
+}
+
 export interface VisualContract {
   schema_version: number
   module: string
   pages: VisualPageContract[]
+  surfaces?: VisualSurfaceContract[]
 }
 
 const BASELINE_PREFIX = 'osg-frontend/tests/e2e/visual-baseline/'
@@ -119,6 +186,9 @@ export function loadVisualContract(): VisualContract {
   if (!parsed || !Array.isArray(parsed.pages)) {
     throw new Error('invalid visual contract: pages missing')
   }
+  if (parsed.surfaces !== undefined && !Array.isArray(parsed.surfaces)) {
+    throw new Error('invalid visual contract: surfaces must be an array when present')
+  }
   return parsed
 }
 
@@ -129,4 +199,13 @@ export function baselineRefToSnapshotArg(baselineRef: string): string {
   }
   const relative = normalized.slice(BASELINE_PREFIX.length)
   return relative
+}
+
+export function buildSurfaceBaselineRef(
+  moduleName: string,
+  surfaceId: string,
+  viewport: VisualSurfaceViewportVariant,
+): string {
+  const safeSurfaceId = surfaceId.replace(/[^a-zA-Z0-9_-]+/g, '-')
+  return `${BASELINE_PREFIX}${moduleName}-surface-${safeSurfaceId}-${viewport.width}x${viewport.height}.png`
 }

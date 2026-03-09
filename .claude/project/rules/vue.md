@@ -152,6 +152,14 @@ $shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1);
 
 UI 原型 HTML 文件位于 `${config.paths.docs.prototypes}`（本项目为 `osg-spec-docs/source/prototype/`），是 UI 还原的**唯一视觉标准**。
 
+### 真源链规则
+
+- HTML 原型是 UI 的**唯一真源**
+- `PRD / MATRIX / UI-VISUAL-CONTRACT / stories / tickets / testing` 都是派生产物
+- 派生产物不得引入 HTML 原型中不存在的页面、surface、modal、drawer、popover、step
+- 如果派生产物与 HTML 原型冲突，以 HTML 原型为准，并回退修正派生产物
+- 不允许把当前实现、测试截图或人工补写的 contract 当作第二真源
+
 ### 还原流程
 
 1. **读取原型**：找到对应模块的原型 HTML 文件

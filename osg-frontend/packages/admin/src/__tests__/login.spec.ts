@@ -1,6 +1,8 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 
-// 密码规则校验函数（与 FirstLoginModal 中的逻辑一致）
+// 密码规则校验函数（与找回密码流程中的密码规则一致）
 function validatePassword(password: string): { valid: boolean; errors: string[] } {
   const errors: string[] = []
   if (password.length < 8 || password.length > 20) {
@@ -17,6 +19,10 @@ function validatePassword(password: string): { valid: boolean; errors: string[] 
 
 // 验证码字符集（与 CaptchaConfig 和前端一致）
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+const loginViewSource = fs.readFileSync(
+  path.resolve(__dirname, '../views/login/index.vue'),
+  'utf-8'
+)
 
 describe('登录模块测试', () => {
   describe('密码规则校验', () => {
@@ -124,6 +130,28 @@ describe('登录模块测试', () => {
 
     it('验证码为必填', () => {
       expect(rules.code[0].required).toBe(true)
+    })
+  })
+
+  describe('验证码视觉回归', () => {
+    it('验证码图片应渲染在独立视口容器中', () => {
+      expect(loginViewSource).toContain('class="captcha-code-frame"')
+    })
+
+    it('验证码图片应裁掉上下边缘像素，避免露出异常边线', () => {
+      expect(loginViewSource).toContain('clip-path: inset(4px 0 4px 0 round 10px)')
+      expect(loginViewSource).toContain('.captcha-code-frame')
+    })
+
+    it('验证码有图片时不应保留常驻灰底', () => {
+      expect(loginViewSource).toContain('.captcha-code.has-image {')
+      expect(loginViewSource).toContain('.captcha-code.has-image .captcha-code-frame {')
+      expect(loginViewSource).toContain('background: transparent;')
+    })
+
+    it('验证码有图片时应去掉外层内边距，保持与视觉契约一致', () => {
+      expect(loginViewSource).toContain('.captcha-code.has-image {')
+      expect(loginViewSource).toContain('padding: 0;')
     })
   })
 })

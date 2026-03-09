@@ -82,6 +82,7 @@ def can_claim_done(task):
 | | 验证证据 | 检查 verification_evidence 字段 | 所有 Tickets 有证据且 exit_code=0 |
 | | 🆕 证据强度 | `validate_evidence_command(command)` | command 必须是可执行 shell 命令（禁止 "code review" 等） |
 | | 🆕 测试资产完整性 | `test_asset_completeness_guard.py --story-id {story_id}` | Story/Ticket/TestCase/Traceability 同步完整 |
+| | 🆕 HTML 真源派生一致性 | `prototype_derivation_consistency_guard.py --module-dir ...` | PRD/MATRIX/UI-VISUAL-CONTRACT 不得引入 HTML 真源不存在的页面/弹层 |
 | | 🆕 真实性守卫 | `delivery_truth_guard.py --stage verify` | 不允许降级实现，外部副作用必须声明真实 provider 与 evidence path |
 | | 🆕 内容契约守卫 | `delivery_content_guard.py --stage verify` | 外部输出内容不得命中 forbidden literals，且必须包含 required tokens |
 | | 🆕 关键 UI 证据守卫 | `ui_critical_evidence_guard.py --stage verify` | 关键 surface 不允许整体 mask，style/state/relation evidence 必须完整且通过 |
@@ -156,6 +157,13 @@ def verify_story(story_id):
     )
     if asset_guard.exit_code != 0:
         pre_issues.append("test_asset_completeness_guard 未通过：Story/Ticket/TestCase/Traceability 资产不同步")
+
+    derivation_guard = bash(
+        "python3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py "
+        f"--module-dir osg-spec-docs/docs/01-product/prd/{module}"
+    )
+    if derivation_guard.exit_code != 0:
+        pre_issues.append("prototype_derivation_consistency_guard 未通过：派生产物引入了 HTML 真源不存在的页面/弹层")
 
     truth_guard = bash(
         "python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py "

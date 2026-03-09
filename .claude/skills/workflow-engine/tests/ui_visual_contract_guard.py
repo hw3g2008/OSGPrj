@@ -33,7 +33,14 @@ ALLOWED_STATE_CASES = {"focus", "hover", "loading", "empty", "error"}
 ALLOWED_STATE_ASSERTIONS = {"visible", "text", "css"}
 ALLOWED_CRITICAL_STATE_CONTRACTS = {"focus", "hover", "loading", "empty", "error", "loaded"}
 ALLOWED_DATA_MODES = {"live", "mock", "mask"}
+ALLOWED_SURFACE_TYPES = {"page", "modal", "drawer", "popover", "panel", "wizard-step"}
+ALLOWED_TRIGGER_TYPES = {"click", "keyboard", "route-param", "auto-open"}
+ALLOWED_SURFACE_PART_IDS = {"backdrop", "shell", "header", "body", "footer", "close-control"}
 MIN_REQUIRED_ANCHORS = 3
+SURFACE_ID_PATTERN = re.compile(
+    r"^\|\s*((?:modal|drawer|popover|panel|wizard-step)-[^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$",
+    re.M,
+)
 
 # Generic selectors are too weak to serve as the only structural anchors.
 WEAK_ANCHOR_PATTERNS = (
@@ -272,6 +279,239 @@ def _validate_relation_contracts(
             _err(errors, f"{rtag}.expected must be non-empty string when provided")
 
 
+def _validate_surface_schema_style_contracts(style_contracts: Any, tag: str, errors: list[str]) -> None:
+    if not isinstance(style_contracts, list) or len(style_contracts) == 0:
+        _err(errors, f"{tag}.style_contracts must be non-empty list")
+        return
+    for i, rule in enumerate(style_contracts):
+        rtag = f"{tag}.style_contracts[{i}]"
+        if not isinstance(rule, dict):
+            _err(errors, f"{rtag} must be object")
+            continue
+        selector = rule.get("selector")
+        if not isinstance(selector, str) or not selector.strip():
+            _err(errors, f"{rtag}.selector must be non-empty string")
+        prototype_selector = rule.get("prototype_selector")
+        if prototype_selector is not None and (
+            not isinstance(prototype_selector, str) or not prototype_selector.strip()
+        ):
+            _err(errors, f"{rtag}.prototype_selector must be non-empty string when provided")
+        css = rule.get("css")
+        if not isinstance(css, dict) or len(css) == 0:
+            _err(errors, f"{rtag}.css must be non-empty object")
+            continue
+        for key, value in css.items():
+            if not isinstance(key, str) or not key.strip():
+                _err(errors, f"{rtag}.css keys must be non-empty strings")
+            if not isinstance(value, str) or not value.strip():
+                _err(errors, f"{rtag}.css[{key!r}] must be non-empty string")
+
+
+def _validate_surface_schema_state_contracts(state_contracts: Any, tag: str, errors: list[str]) -> None:
+    if not isinstance(state_contracts, list) or len(state_contracts) == 0:
+        _err(errors, f"{tag}.state_contracts must be non-empty list")
+        return
+    for i, contract in enumerate(state_contracts):
+        ctag = f"{tag}.state_contracts[{i}]"
+        if not isinstance(contract, dict):
+            _err(errors, f"{ctag} must be object")
+            continue
+        state_id = contract.get("state_id")
+        if not isinstance(state_id, str) or not state_id.strip():
+            _err(errors, f"{ctag}.state_id must be non-empty string")
+        anchors = contract.get("required_anchors")
+        if not isinstance(anchors, list) or len(anchors) == 0:
+            _err(errors, f"{ctag}.required_anchors must be non-empty list")
+        else:
+            for j, anchor in enumerate(anchors):
+                if not isinstance(anchor, str) or not anchor.strip():
+                    _err(errors, f"{ctag}.required_anchors[{j}] must be non-empty string")
+        prototype_anchors = contract.get("prototype_required_anchors")
+        if prototype_anchors is not None:
+            if not isinstance(prototype_anchors, list) or len(prototype_anchors) == 0:
+                _err(errors, f"{ctag}.prototype_required_anchors must be non-empty list when provided")
+            else:
+                for j, anchor in enumerate(prototype_anchors):
+                    if not isinstance(anchor, str) or not anchor.strip():
+                        _err(errors, f"{ctag}.prototype_required_anchors[{j}] must be non-empty string")
+        _validate_surface_schema_style_contracts(contract.get("style_contracts"), ctag, errors)
+
+
+def _validate_surface_schema(contract: dict[str, Any], page_ids: set[str], errors: list[str]) -> None:
+    surfaces = contract.get("surfaces")
+    if surfaces is None:
+        return
+    if not isinstance(surfaces, list):
+        _err(errors, "surfaces must be list when provided")
+        return
+
+    seen_surface_ids: set[str] = set()
+    for i, surface in enumerate(surfaces):
+        stag = f"surfaces[{i}]"
+        if not isinstance(surface, dict):
+            _err(errors, f"{stag} must be object")
+            continue
+
+        surface_id = surface.get("surface_id")
+        if not isinstance(surface_id, str) or not surface_id.strip():
+            _err(errors, f"{stag}.surface_id must be non-empty string")
+        elif surface_id in seen_surface_ids:
+            _err(errors, f"{stag}.surface_id duplicated: {surface_id}")
+        else:
+            seen_surface_ids.add(surface_id)
+
+        surface_type = surface.get("surface_type")
+        if surface_type not in ALLOWED_SURFACE_TYPES:
+            _err(errors, f"{stag}.surface_type must be one of {sorted(ALLOWED_SURFACE_TYPES)}")
+
+        host_page_id = surface.get("host_page_id")
+        if not isinstance(host_page_id, str) or not host_page_id.strip():
+            _err(errors, f"{stag}.host_page_id must be non-empty string")
+        elif host_page_id not in page_ids:
+            _err(errors, f"{stag}.host_page_id references unknown page_id: {host_page_id}")
+
+        for field in ("prototype_selector", "app_selector", "surface_root_selector", "backdrop_selector"):
+            value = surface.get(field)
+            if not isinstance(value, str) or not value.strip():
+                _err(errors, f"{stag}.{field} must be non-empty string")
+
+        source_ref = surface.get("source_ref")
+        if not isinstance(source_ref, str) or not source_ref.strip():
+            _err(errors, f"{stag}.source_ref must be non-empty string")
+
+        portal_host = surface.get("portal_host")
+        if portal_host is not None and (not isinstance(portal_host, str) or not portal_host.strip()):
+            _err(errors, f"{stag}.portal_host must be non-empty string when provided")
+
+        trigger_action = surface.get("trigger_action")
+        if not isinstance(trigger_action, dict):
+            _err(errors, f"{stag}.trigger_action must be object")
+        else:
+            trigger_type = trigger_action.get("type")
+            if trigger_type not in ALLOWED_TRIGGER_TYPES:
+                _err(errors, f"{stag}.trigger_action.type must be one of {sorted(ALLOWED_TRIGGER_TYPES)}")
+            trigger_selector = trigger_action.get("selector")
+            prototype_trigger_selector = trigger_action.get("prototype_selector")
+            trigger_script = trigger_action.get("script")
+            prototype_trigger_script = trigger_action.get("prototype_script")
+            if trigger_type in {"click", "keyboard"} and (
+                not isinstance(trigger_selector, str) or not trigger_selector.strip()
+            ):
+                _err(errors, f"{stag}.trigger_action.selector must be non-empty string for interactive triggers")
+            if prototype_trigger_selector is not None and (
+                not isinstance(prototype_trigger_selector, str) or not prototype_trigger_selector.strip()
+            ):
+                _err(errors, f"{stag}.trigger_action.prototype_selector must be non-empty string when provided")
+            if trigger_script is not None and (
+                not isinstance(trigger_script, str) or not trigger_script.strip()
+            ):
+                _err(errors, f"{stag}.trigger_action.script must be non-empty string when provided")
+            if prototype_trigger_script is not None and (
+                not isinstance(prototype_trigger_script, str) or not prototype_trigger_script.strip()
+            ):
+                _err(errors, f"{stag}.trigger_action.prototype_script must be non-empty string when provided")
+
+        anchors = surface.get("required_anchors")
+        if not isinstance(anchors, list) or len(anchors) == 0:
+            _err(errors, f"{stag}.required_anchors must be non-empty list")
+        else:
+            for j, anchor in enumerate(anchors):
+                if not isinstance(anchor, str) or not anchor.strip():
+                    _err(errors, f"{stag}.required_anchors[{j}] must be non-empty string")
+        prototype_anchors = surface.get("prototype_required_anchors")
+        if prototype_anchors is not None:
+            if not isinstance(prototype_anchors, list) or len(prototype_anchors) == 0:
+                _err(errors, f"{stag}.prototype_required_anchors must be non-empty list when provided")
+            else:
+                for j, anchor in enumerate(prototype_anchors):
+                    if not isinstance(anchor, str) or not anchor.strip():
+                        _err(errors, f"{stag}.prototype_required_anchors[{j}] must be non-empty string")
+
+        viewport_variants = surface.get("viewport_variants")
+        if not isinstance(viewport_variants, list) or len(viewport_variants) == 0:
+            _err(errors, f"{stag}.viewport_variants must be non-empty list")
+        else:
+            for j, viewport in enumerate(viewport_variants):
+                vtag = f"{stag}.viewport_variants[{j}]"
+                if not isinstance(viewport, dict):
+                    _err(errors, f"{vtag} must be object")
+                    continue
+                viewport_id = viewport.get("viewport_id")
+                if not isinstance(viewport_id, str) or not viewport_id.strip():
+                    _err(errors, f"{vtag}.viewport_id must be non-empty string")
+                for dim in ("width", "height"):
+                    value = viewport.get(dim)
+                    if not isinstance(value, int) or value <= 0:
+                        _err(errors, f"{vtag}.{dim} must be positive int")
+
+        state_variants = surface.get("state_variants")
+        if not isinstance(state_variants, list) or len(state_variants) == 0:
+            _err(errors, f"{stag}.state_variants must be non-empty list")
+        else:
+            for j, variant in enumerate(state_variants):
+                vtag = f"{stag}.state_variants[{j}]"
+                if not isinstance(variant, dict):
+                    _err(errors, f"{vtag} must be object")
+                    continue
+                state_id = variant.get("state_id")
+                if not isinstance(state_id, str) or not state_id.strip():
+                    _err(errors, f"{vtag}.state_id must be non-empty string")
+
+        surface_parts = surface.get("surface_parts")
+        if not isinstance(surface_parts, list) or len(surface_parts) == 0:
+            _err(errors, f"{stag}.surface_parts must be non-empty list")
+        else:
+            seen_parts: set[str] = set()
+            for j, part in enumerate(surface_parts):
+                ptag = f"{stag}.surface_parts[{j}]"
+                if not isinstance(part, dict):
+                    _err(errors, f"{ptag} must be object")
+                    continue
+                part_id = part.get("part_id")
+                if part_id not in ALLOWED_SURFACE_PART_IDS:
+                    _err(errors, f"{ptag}.part_id must be one of {sorted(ALLOWED_SURFACE_PART_IDS)}")
+                elif part_id in seen_parts:
+                    _err(errors, f"{ptag}.part_id duplicated: {part_id}")
+                else:
+                    seen_parts.add(part_id)
+                selector = part.get("selector")
+                if not isinstance(selector, str) or not selector.strip():
+                    _err(errors, f"{ptag}.selector must be non-empty string")
+                prototype_selector = part.get("prototype_selector")
+                if prototype_selector is not None and (
+                    not isinstance(prototype_selector, str) or not prototype_selector.strip()
+                ):
+                    _err(errors, f"{ptag}.prototype_selector must be non-empty string when provided")
+                mask_allowed = part.get("mask_allowed")
+                if not isinstance(mask_allowed, bool):
+                    _err(errors, f"{ptag}.mask_allowed must be boolean")
+
+        _validate_surface_schema_style_contracts(surface.get("style_contracts"), stag, errors)
+        _validate_surface_schema_state_contracts(surface.get("state_contracts"), stag, errors)
+
+
+def _collect_surface_ids(contract: dict[str, Any]) -> set[str]:
+    surfaces = contract.get("surfaces")
+    if not isinstance(surfaces, list):
+        return set()
+    result: set[str] = set()
+    for surface in surfaces:
+        if isinstance(surface, dict):
+            surface_id = surface.get("surface_id")
+            if isinstance(surface_id, str) and surface_id.strip():
+                result.add(surface_id.strip())
+    return result
+
+
+def _load_declared_surface_ids(contract_path: Path) -> set[str]:
+    matrix_path = contract_path.with_name("MATRIX.md")
+    if not matrix_path.exists():
+        return set()
+
+    text = matrix_path.read_text(encoding="utf-8")
+    return {match.group(1).strip() for match in SURFACE_ID_PATTERN.finditer(text)}
+
+
 def _validate_critical_surfaces(
     page: dict[str, Any],
     tag: str,
@@ -410,7 +650,11 @@ def _validate_data_strategy(page: dict[str, Any], tag: str, errors: list[str]) -
         _err(errors, f"{tag}.dynamic_regions must be non-empty when data_mode=mask")
 
 
-def validate_contract(contract: dict[str, Any], errors: list[str]) -> None:
+def validate_contract(
+    contract: dict[str, Any],
+    errors: list[str],
+    declared_surface_ids: set[str] | None = None,
+) -> None:
     missing_root = REQUIRED_ROOT - set(contract.keys())
     if missing_root:
         _err(errors, f"missing root fields: {sorted(missing_root)}")
@@ -562,6 +806,20 @@ def validate_contract(contract: dict[str, Any], errors: list[str]) -> None:
         _validate_critical_surfaces(page, tag, mask_selectors, errors)
         _validate_data_strategy(page, tag, errors)
 
+    _validate_surface_schema(contract, seen_page_ids, errors)
+
+    declared_surface_ids = declared_surface_ids or set()
+    contract_surface_ids = _collect_surface_ids(contract)
+    missing_declared_surfaces = sorted(declared_surface_ids - contract_surface_ids)
+    for surface_id in missing_declared_surfaces:
+        _err(
+            errors,
+            (
+                "declared overlay surface missing from contract.surfaces: "
+                f"{surface_id}"
+            ),
+        )
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="UI visual contract guard")
@@ -586,7 +844,8 @@ def main() -> int:
         return 1
 
     errors: list[str] = []
-    validate_contract(contract, errors)
+    declared_surface_ids = _load_declared_surface_ids(contract_path)
+    validate_contract(contract, errors, declared_surface_ids=declared_surface_ids)
 
     repo_root = Path.cwd()
     pages: list[dict[str, Any]] = contract.get("pages", []) if isinstance(contract.get("pages"), list) else []

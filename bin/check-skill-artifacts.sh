@@ -25,6 +25,8 @@ PRD_DIR="$3"
 SRS_DIR="osg-spec-docs/docs/02-requirements/srs"
 SECURITY_CONTRACT_PATH="contracts/security-contract.yaml"
 AUDIT_DIR="osg-spec-docs/tasks/audit"
+OVERLAY_INVENTORY_ARTIFACT="${AUDIT_DIR}/overlay-surface-inventory-latest.md"
+PROJECT_CONFIG_PATH=".claude/project/config.yaml"
 
 FAIL_COUNT=0
 FAIL_LIST=""
@@ -214,6 +216,81 @@ PY
   fi
 }
 
+# 校验 overlay surface inventory artifact
+check_overlay_surface_inventory_artifact() {
+  local file="$1"
+  local label="$2"
+  if [ ! -f "$file" ]; then
+    echo "[FAIL] $label — $file 不存在"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    FAIL_LIST="$FAIL_LIST\n  - $label: $file 不存在"
+    return
+  fi
+  if grep -q "## Entries" "$file" && grep -q "surface_type" "$file"; then
+    local hard_fail_markers=""
+    if grep -q "missing_prototype_root" "$file"; then
+      hard_fail_markers="${hard_fail_markers} missing_prototype_root"
+    fi
+    if grep -q "requires_model_extension" "$file"; then
+      hard_fail_markers="${hard_fail_markers} requires_model_extension"
+    fi
+
+    if [ -n "$hard_fail_markers" ]; then
+      local normalized_markers
+      normalized_markers="$(echo "$hard_fail_markers" | xargs)"
+      echo "[FAIL] $label — $file 存在，但包含未收口的 overlay inventory 缺口: ${normalized_markers}"
+      FAIL_COUNT=$((FAIL_COUNT + 1))
+      FAIL_LIST="$FAIL_LIST\n  - $label: 存在未收口的 overlay inventory 缺口 (${normalized_markers})"
+    else
+      echo "[PASS] $label — $file 存在且包含 overlay inventory 内容"
+    fi
+  else
+    echo "[FAIL] $label — $file 缺少 overlay inventory 内容"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    FAIL_LIST="$FAIL_LIST\n  - $label: $file 缺少 overlay inventory 内容"
+  fi
+}
+
+check_truth_source_config() {
+  local config_file="$1"
+  local label="$2"
+  if [ ! -f "$config_file" ]; then
+    echo "[FAIL] $label — $config_file 不存在"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    FAIL_LIST="$FAIL_LIST\n  - $label: $config_file 不存在"
+    return
+  fi
+  if python3 - <<PY >/dev/null 2>&1
+from pathlib import Path
+import yaml
+config = yaml.safe_load(Path("$config_file").read_text(encoding="utf-8")) or {}
+truth = config["prd_process"]["truth_source"]
+assert truth["type"] == "html_prototype"
+assert truth["single_source_of_truth"] is True
+assert truth["forbid_source_absent_derivation"] is True
+PY
+  then
+    echo "[PASS] $label — truth_source 配置有效"
+  else
+    echo "[FAIL] $label — truth_source 配置缺失或无效"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    FAIL_LIST="$FAIL_LIST\n  - $label: truth_source 配置缺失或无效"
+  fi
+}
+
+check_prototype_derivation_consistency() {
+  local prd_dir="$1"
+  local label="$2"
+  if python3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py \
+    --module-dir "$prd_dir" >/dev/null 2>&1; then
+    echo "[PASS] $label — HTML 真源派生一致性通过"
+  else
+    echo "[FAIL] $label — HTML 真源派生一致性失败"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    FAIL_LIST="$FAIL_LIST\n  - $label: HTML 真源派生一致性失败"
+  fi
+}
+
 # ---------- 目录校验 ----------
 if [ ! -d "$PRD_DIR" ]; then
   echo "[ERROR] PRD 目录不存在: $PRD_DIR"
@@ -231,6 +308,9 @@ echo ""
 case "$SKILL" in
 
   prototype-extraction)
+    # PE-0: project truth_source 配置必须有效
+    check_truth_source_config "$PROJECT_CONFIG_PATH" "PE-0 truth source config"
+
     # PE-1: MATRIX.md 存在且>=5行
     check_min_lines "$PRD_DIR/MATRIX.md" 5 "PE-1 MATRIX.md"
 
@@ -263,9 +343,18 @@ case "$SKILL" in
 
     # PE-11: delivery contract schema 合法
     check_delivery_contract_schema "$PRD_DIR/DELIVERY-CONTRACT.yaml" "PE-11 delivery contract schema"
+
+    # PE-12: repo-wide overlay inventory artifact 存在
+    check_overlay_surface_inventory_artifact "$OVERLAY_INVENTORY_ARTIFACT" "PE-12 overlay surface inventory artifact"
+
+    # PE-13: first-order derived UI artifacts must trace back to HTML truth source
+    check_prototype_derivation_consistency "$PRD_DIR" "PE-13 prototype derivation consistency"
     ;;
 
   brainstorming)
+    # BS-0: project truth_source 配置必须有效
+    check_truth_source_config "$PROJECT_CONFIG_PATH" "BS-0 truth source config"
+
     # BS-1: MATRIX.md 存在
     check_file "$PRD_DIR/MATRIX.md" "BS-1 MATRIX.md"
 
@@ -283,6 +372,12 @@ case "$SKILL" in
 
     # BS-6: security-contract schema 必须合法
     check_security_contract_schema "$SECURITY_CONTRACT_PATH" "BS-6 security-contract schema"
+
+    # BS-7: repo-wide overlay inventory artifact 存在
+    check_overlay_surface_inventory_artifact "$OVERLAY_INVENTORY_ARTIFACT" "BS-7 overlay surface inventory artifact"
+
+    # BS-8: first-order derived UI artifacts must trace back to HTML truth source
+    check_prototype_derivation_consistency "$PRD_DIR" "BS-8 prototype derivation consistency"
     ;;
 
   *)

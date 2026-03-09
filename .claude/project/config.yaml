@@ -98,6 +98,18 @@ paths:
 prd_process:
   # 唯一真实来源（Single Source of Truth）
   ssot: "HTML 原型文件（${paths.docs.prototypes}）"
+  truth_source:
+    type: html_prototype
+    root: "${paths.docs.prototypes}"
+    single_source_of_truth: true
+    derived_artifacts:
+      - "${paths.docs.prd}**"
+      - "${paths.docs.srs}**"
+      - "${paths.tasks.stories}**"
+      - "${paths.tasks.tickets}**"
+      - "${paths.tasks.root}testing/**"
+    forbid_source_absent_derivation: true
+    require_source_backtrace_for_ui: true
   
   # 需求工程流水线
   # HTML 原型 → PRD（页面级）→ SRS（IEEE 830）→ Stories → Tickets

@@ -11,15 +11,14 @@ test.describe('Forgot Password @ui-smoke @ui-only', () => {
     const forgotLink = page.locator('a:has-text("忘记密码"), button:has-text("忘记密码"), [class*="forgot"]').first()
     await expect(forgotLink).toBeVisible()
     await forgotLink.click()
-    // Modal content should appear (title "找回密码")
-    await expect(page.locator('.ant-modal-content, .ant-modal-title:has-text("找回密码")').first()).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('[data-surface-id="modal-forgot-password"]').first()).toBeVisible({ timeout: 5000 })
   })
 
   test('forgot password form shows email input @perm-s002-forgot-form', async ({ page }) => {
     await page.goto('/login')
     const forgotLink = page.locator('a:has-text("忘记密码"), button:has-text("忘记密码"), [class*="forgot"]').first()
     await forgotLink.click()
-    await expect(page.locator('.ant-modal-content input').first()).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('[data-surface-id="modal-forgot-password"] input').first()).toBeVisible({ timeout: 5000 })
   })
 })
 
@@ -82,7 +81,7 @@ test.describe('Forgot Password @api', () => {
     const forgotLink = page.locator('a:has-text("忘记密码"), button:has-text("忘记密码"), [class*="forgot"]').first()
     await forgotLink.click()
 
-    const modal = page.locator('.ant-modal-content').first()
+    const modal = page.locator('[data-surface-id="modal-forgot-password"]').first()
     const emailInput = modal.locator('input[placeholder*="邮箱"]').first()
     await emailInput.fill(e2eEmail)
 

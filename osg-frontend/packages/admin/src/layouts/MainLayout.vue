@@ -62,12 +62,6 @@
       </main>
     </div>
 
-    <FirstLoginModal
-      v-if="userStore.firstLogin"
-      :visible="userStore.firstLogin"
-      @success="userStore.setFirstLogin(false)"
-    />
-
     <ProfileModal
       v-model:visible="showProfileModal"
     />
@@ -100,7 +94,6 @@ import {
 } from '@ant-design/icons-vue'
 import type { Component } from 'vue'
 import { useUserStore } from '@/stores/user'
-import FirstLoginModal from '@/components/FirstLoginModal.vue'
 import ProfileModal from '@/components/ProfileModal.vue'
 
 const userStore = useUserStore()

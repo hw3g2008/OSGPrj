@@ -73,7 +73,12 @@ fi
 
 echo "=== deploy-server-docker: env=${ENV_NAME} profile=${PROFILE_CSV} env_file=${ENV_FILE} ==="
 
-# 1) preflight + compose up (复用已有脚本)
+# 1) replace existing stack first (同环境重部署不应被旧容器端口占用阻断)
+echo "INFO: stop existing ${ENV_NAME} stack before rebuild"
+bash bin/docker-env-down.sh "${ENV_NAME}" --profile "${PROFILE_CSV}" || true
+
+# 2) preflight + compose build + up (部署必须消费最新同步代码)
+bash bin/docker-env-build.sh "${ENV_NAME}" --profile "${PROFILE_CSV}"
 bash bin/docker-env-up.sh "${ENV_NAME}" --profile "${PROFILE_CSV}"
 
 if (( SKIP_HEALTH_CHECK == 1 )); then

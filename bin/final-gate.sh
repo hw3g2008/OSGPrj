@@ -203,6 +203,10 @@ python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py \
   --runtime-contract deploy/runtime-contract.dev.yaml \
   --stage final-gate
 
+echo "--- 0.16c prototype_derivation_consistency_guard ---"
+python3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py \
+  --module-dir "osg-spec-docs/docs/01-product/prd/${MODULE}"
+
 echo "--- 0.2 srs_guard ---"
 python3 .claude/skills/workflow-engine/tests/srs_guard.py \
   --module "${MODULE}"

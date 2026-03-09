@@ -67,6 +67,54 @@ def _expect_int(record: dict[str, Any], key: str, tag: str, errors: list[str]) -
     return value
 
 
+def _surface_style_contract_total(surface_contract: dict[str, Any]) -> int:
+    total = 0
+    for rule in surface_contract.get("style_contracts") or []:
+        if not isinstance(rule, dict):
+            continue
+        css = rule.get("css")
+        if isinstance(css, dict):
+            total += len(css)
+    return total
+
+
+def _surface_state_style_contract_total(surface_contract: dict[str, Any]) -> int:
+    total = 0
+    for contract in surface_contract.get("state_contracts") or []:
+        if not isinstance(contract, dict):
+            continue
+        for rule in contract.get("style_contracts") or []:
+            if not isinstance(rule, dict):
+                continue
+            css = rule.get("css")
+            if isinstance(css, dict):
+                total += len(css)
+    return total
+
+
+def _to_surface_map(report: dict[str, Any], errors: list[str]) -> dict[str, dict[str, Any]]:
+    surfaces = report.get("surfaces")
+    if not isinstance(surfaces, list):
+        _err(errors, "page_report.surfaces must be a list")
+        return {}
+
+    surface_map: dict[str, dict[str, Any]] = {}
+    for index, surface in enumerate(surfaces):
+        tag = f"page_report.surfaces[{index}]"
+        if not isinstance(surface, dict):
+            _err(errors, f"{tag} must be object")
+            continue
+        surface_id = surface.get("surface_id")
+        if not _is_non_empty_string(surface_id):
+            _err(errors, f"{tag}.surface_id must be non-empty string")
+            continue
+        if surface_id in surface_map:
+            _err(errors, f"{tag}.surface_id duplicated: {surface_id}")
+            continue
+        surface_map[surface_id] = surface
+    return surface_map
+
+
 def _validate_surface_result(
     surface_contract: dict[str, Any],
     surface_result: dict[str, Any],
@@ -146,6 +194,233 @@ def _validate_surface_result(
         _err(errors, f"{stag}.result must be PASS in {stage}")
 
 
+def _validate_overlay_surface_result(
+    surface_contract: dict[str, Any],
+    surface_result: dict[str, Any],
+    stage: str,
+    errors: list[str],
+) -> None:
+    surface_id = surface_contract.get("surface_id", "unknown")
+    stag = f"page_report.surfaces[{surface_id}]"
+
+    for key in ("surface_type", "host_page_id", "surface_root_selector"):
+        if not _is_non_empty_string(surface_result.get(key)):
+            _err(errors, f"{stag}.{key} must be non-empty string")
+
+    if surface_result.get("surface_type") != surface_contract.get("surface_type"):
+        _err(errors, f"{stag}.surface_type must match contract ({surface_contract.get('surface_type')})")
+    if surface_result.get("host_page_id") != surface_contract.get("host_page_id"):
+        _err(errors, f"{stag}.host_page_id must match contract ({surface_contract.get('host_page_id')})")
+    if surface_result.get("surface_root_selector") != surface_contract.get("surface_root_selector"):
+        _err(errors, f"{stag}.surface_root_selector must match contract")
+    if (surface_result.get("backdrop_selector") or "") != (surface_contract.get("backdrop_selector") or ""):
+        _err(errors, f"{stag}.backdrop_selector must match contract")
+    if (surface_result.get("portal_host") or "") != (surface_contract.get("portal_host") or ""):
+        _err(errors, f"{stag}.portal_host must match contract")
+
+    viewport_total = _expect_int(surface_result, "viewport_variants_total", stag, errors)
+    viewport_executed = _expect_int(surface_result, "viewport_variants_executed", stag, errors)
+    viewport_failed = _expect_int(surface_result, "viewport_variants_failed", stag, errors)
+    expected_viewport_total = len(surface_contract.get("viewport_variants") or [])
+    if viewport_total is not None and viewport_total != expected_viewport_total:
+        _err(errors, f"{stag}.viewport_variants_total must equal contract count ({expected_viewport_total})")
+    if None not in (viewport_total, viewport_executed) and viewport_executed != viewport_total:
+        _err(errors, f"{stag}.viewport_variants_executed must equal total")
+
+    viewport_results = surface_result.get("viewport_results")
+    if not isinstance(viewport_results, list):
+        _err(errors, f"{stag}.viewport_results must be list")
+        return
+
+    viewport_map: dict[str, dict[str, Any]] = {}
+    for index, viewport in enumerate(viewport_results):
+        vtag = f"{stag}.viewport_results[{index}]"
+        if not isinstance(viewport, dict):
+            _err(errors, f"{vtag} must be object")
+            continue
+        viewport_id = viewport.get("viewport_id")
+        if not _is_non_empty_string(viewport_id):
+            _err(errors, f"{vtag}.viewport_id must be non-empty string")
+            continue
+        if viewport_id in viewport_map:
+            _err(errors, f"{vtag}.viewport_id duplicated: {viewport_id}")
+            continue
+        viewport_map[viewport_id] = viewport
+
+    expected_style_total = _surface_style_contract_total(surface_contract)
+    expected_state_total = len(surface_contract.get("state_contracts") or [])
+    expected_state_style_total = _surface_state_style_contract_total(surface_contract)
+    expected_parts = surface_contract.get("surface_parts") or []
+    expected_state_contracts = surface_contract.get("state_contracts") or []
+
+    for viewport_contract in surface_contract.get("viewport_variants") or []:
+        if not isinstance(viewport_contract, dict):
+            continue
+        viewport_id = viewport_contract.get("viewport_id")
+        if not _is_non_empty_string(viewport_id):
+            continue
+        viewport_result = viewport_map.get(viewport_id)
+        if viewport_result is None:
+            _err(errors, f"{stag} missing viewport result for {viewport_id}")
+            continue
+
+        vtag = f"{stag}.viewport_results[{viewport_id}]"
+        for key in ("baseline_ref", "actual_ref", "diff_ref"):
+            if not _is_non_empty_string(viewport_result.get(key)):
+                _err(errors, f"{vtag}.{key} must be non-empty string")
+        if viewport_result.get("width") != viewport_contract.get("width"):
+            _err(errors, f"{vtag}.width must match contract ({viewport_contract.get('width')})")
+        if viewport_result.get("height") != viewport_contract.get("height"):
+            _err(errors, f"{vtag}.height must match contract ({viewport_contract.get('height')})")
+
+        style_total = _expect_int(viewport_result, "style_contracts_total", vtag, errors)
+        style_passed = _expect_int(viewport_result, "style_contracts_passed", vtag, errors)
+        style_failed = _expect_int(viewport_result, "style_contracts_failed", vtag, errors)
+        if style_total is not None and style_total != expected_style_total:
+            _err(errors, f"{vtag}.style_contracts_total must equal contract count ({expected_style_total})")
+        if None not in (style_total, style_passed, style_failed):
+            if style_passed + style_failed != style_total:
+                _err(errors, f"{vtag}.style passed+failed must equal total")
+            if stage in VERIFY_LIKE_STAGES and style_failed != 0:
+                _err(errors, f"{vtag}.style_contracts_failed must be 0")
+
+        state_total = _expect_int(viewport_result, "state_contracts_total", vtag, errors)
+        state_executed = _expect_int(viewport_result, "state_contracts_executed", vtag, errors)
+        state_passed = _expect_int(viewport_result, "state_contracts_passed", vtag, errors)
+        state_failed = _expect_int(viewport_result, "state_contracts_failed", vtag, errors)
+        if state_total is not None and state_total != expected_state_total:
+            _err(errors, f"{vtag}.state_contracts_total must equal contract count ({expected_state_total})")
+        if None not in (state_total, state_executed) and state_executed != state_total:
+            _err(errors, f"{vtag}.state_contracts_executed must equal total")
+        if None not in (state_total, state_passed, state_failed):
+            if state_passed + state_failed != state_total:
+                _err(errors, f"{vtag}.state passed+failed must equal total")
+            if stage in VERIFY_LIKE_STAGES and state_failed != 0:
+                _err(errors, f"{vtag}.state_contracts_failed must be 0")
+
+        state_style_total = _expect_int(viewport_result, "state_style_contracts_total", vtag, errors)
+        state_style_executed = _expect_int(viewport_result, "state_style_contracts_executed", vtag, errors)
+        state_style_passed = _expect_int(viewport_result, "state_style_contracts_passed", vtag, errors)
+        state_style_failed = _expect_int(viewport_result, "state_style_contracts_failed", vtag, errors)
+        if state_style_total is not None and state_style_total != expected_state_style_total:
+            _err(
+                errors,
+                f"{vtag}.state_style_contracts_total must equal contract count ({expected_state_style_total})",
+            )
+        if None not in (state_style_total, state_style_executed) and state_style_executed != state_style_total:
+            _err(errors, f"{vtag}.state_style_contracts_executed must equal total")
+        if None not in (state_style_total, state_style_passed, state_style_failed):
+            if state_style_passed + state_style_failed != state_style_total:
+                _err(errors, f"{vtag}.state-style passed+failed must equal total")
+            if stage in VERIFY_LIKE_STAGES and state_style_failed != 0:
+                _err(errors, f"{vtag}.state_style_contracts_failed must be 0")
+
+        part_results = viewport_result.get("surface_part_results")
+        if not isinstance(part_results, list):
+            _err(errors, f"{vtag}.surface_part_results must be list")
+        else:
+            part_map: dict[str, dict[str, Any]] = {}
+            for index, part_result in enumerate(part_results):
+                ptag = f"{vtag}.surface_part_results[{index}]"
+                if not isinstance(part_result, dict):
+                    _err(errors, f"{ptag} must be object")
+                    continue
+                part_id = part_result.get("part_id")
+                if not _is_non_empty_string(part_id):
+                    _err(errors, f"{ptag}.part_id must be non-empty string")
+                    continue
+                if part_id in part_map:
+                    _err(errors, f"{ptag}.part_id duplicated: {part_id}")
+                    continue
+                part_map[part_id] = part_result
+
+            for part_contract in expected_parts:
+                if not isinstance(part_contract, dict):
+                    continue
+                part_id = part_contract.get("part_id")
+                if not _is_non_empty_string(part_id):
+                    continue
+                part_result = part_map.get(part_id)
+                if part_result is None:
+                    _err(errors, f"{vtag} missing surface_part_result for {part_id}")
+                    continue
+                ptag = f"{vtag}.surface_part_results[{part_id}]"
+                if part_result.get("selector") != part_contract.get("selector"):
+                    _err(errors, f"{ptag}.selector must match contract")
+                if part_result.get("mask_allowed") != part_contract.get("mask_allowed"):
+                    _err(errors, f"{ptag}.mask_allowed must match contract")
+                for key in ("exists", "visible"):
+                    if not isinstance(part_result.get(key), bool):
+                        _err(errors, f"{ptag}.{key} must be boolean")
+                if stage in VERIFY_LIKE_STAGES and part_result.get("result") != "PASS":
+                    _err(errors, f"{ptag}.result must be PASS in {stage}")
+
+        state_results = viewport_result.get("state_results")
+        if not isinstance(state_results, list):
+            _err(errors, f"{vtag}.state_results must be list")
+        else:
+            state_map: dict[str, dict[str, Any]] = {}
+            for index, state_result in enumerate(state_results):
+                stag2 = f"{vtag}.state_results[{index}]"
+                if not isinstance(state_result, dict):
+                    _err(errors, f"{stag2} must be object")
+                    continue
+                state_id = state_result.get("state_id")
+                if not _is_non_empty_string(state_id):
+                    _err(errors, f"{stag2}.state_id must be non-empty string")
+                    continue
+                if state_id in state_map:
+                    _err(errors, f"{stag2}.state_id duplicated: {state_id}")
+                    continue
+                state_map[state_id] = state_result
+
+            for state_contract in expected_state_contracts:
+                if not isinstance(state_contract, dict):
+                    continue
+                state_id = state_contract.get("state_id")
+                if not _is_non_empty_string(state_id):
+                    continue
+                state_result = state_map.get(state_id)
+                if state_result is None:
+                    _err(errors, f"{vtag} missing state_result for {state_id}")
+                    continue
+                stag2 = f"{vtag}.state_results[{state_id}]"
+                expected_anchor_total = len(state_contract.get("required_anchors") or [])
+                expected_state_style = 0
+                for rule in state_contract.get("style_contracts") or []:
+                    if isinstance(rule, dict) and isinstance(rule.get("css"), dict):
+                        expected_state_style += len(rule["css"])
+                anchor_total = _expect_int(state_result, "required_anchors_total", stag2, errors)
+                anchor_passed = _expect_int(state_result, "required_anchors_passed", stag2, errors)
+                if anchor_total is not None and anchor_total != expected_anchor_total:
+                    _err(errors, f"{stag2}.required_anchors_total must equal contract count ({expected_anchor_total})")
+                if None not in (anchor_total, anchor_passed) and anchor_passed > anchor_total:
+                    _err(errors, f"{stag2}.required_anchors_passed cannot exceed total")
+                sc_total = _expect_int(state_result, "style_contracts_total", stag2, errors)
+                sc_exec = _expect_int(state_result, "style_contracts_executed", stag2, errors)
+                sc_pass = _expect_int(state_result, "style_contracts_passed", stag2, errors)
+                sc_fail = _expect_int(state_result, "style_contracts_failed", stag2, errors)
+                if sc_total is not None and sc_total != expected_state_style:
+                    _err(errors, f"{stag2}.style_contracts_total must equal contract count ({expected_state_style})")
+                if None not in (sc_total, sc_exec) and sc_exec != sc_total:
+                    _err(errors, f"{stag2}.style_contracts_executed must equal total")
+                if None not in (sc_total, sc_pass, sc_fail):
+                    if sc_pass + sc_fail != sc_total:
+                        _err(errors, f"{stag2}.style passed+failed must equal total")
+                    if stage in VERIFY_LIKE_STAGES and sc_fail != 0:
+                        _err(errors, f"{stag2}.style_contracts_failed must be 0")
+                if stage in VERIFY_LIKE_STAGES and state_result.get("result") != "PASS":
+                    _err(errors, f"{stag2}.result must be PASS in {stage}")
+
+        if stage in VERIFY_LIKE_STAGES and viewport_result.get("result") != "PASS":
+            _err(errors, f"{vtag}.result must be PASS in {stage}")
+
+    if None not in (viewport_total, viewport_failed) and stage in VERIFY_LIKE_STAGES and viewport_failed != 0:
+        _err(errors, f"{stag}.viewport_variants_failed must be 0")
+    if stage in VERIFY_LIKE_STAGES and surface_result.get("result") != "PASS":
+        _err(errors, f"{stag}.result must be PASS in {stage}")
+
+
 def validate_page_report(
     contract: dict[str, Any],
     report: dict[str, Any],
@@ -210,6 +485,22 @@ def validate_page_report(
                 _err(errors, f"page_report.pages[{page_id}] missing critical_surface_result for {surface_id}")
                 continue
             _validate_surface_result(surface, surface_result, f"page_report.pages[{page_id}]", stage, errors)
+
+    surfaces = contract.get("surfaces") or []
+    if surfaces:
+        surface_map = _to_surface_map(report, errors)
+        for index, surface in enumerate(surfaces):
+            tag = f"contract.surfaces[{index}]"
+            if not isinstance(surface, dict):
+                continue
+            surface_id = surface.get("surface_id")
+            if not _is_non_empty_string(surface_id):
+                continue
+            surface_result = surface_map.get(surface_id)
+            if surface_result is None:
+                _err(errors, f"{tag} surface_id={surface_id} missing from page report")
+                continue
+            _validate_overlay_surface_result(surface, surface_result, stage, errors)
 
 
 def parse_args() -> argparse.Namespace:

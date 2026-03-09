@@ -300,16 +300,6 @@ from pathlib import Path
 contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) or {}
 pages = contract.get("pages", []) if isinstance(contract.get("pages"), list) else []
 result_path = Path("${PAGE_RESULTS_JSONL}")
-result_map = {}
-if result_path.exists():
-    for line in result_path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        record = json.loads(line)
-        page_id = record.get("page_id")
-        if page_id:
-            result_map[page_id] = record
 
 state_result_path = Path("${STATE_RESULTS_JSONL}")
 state_map = {}
@@ -331,10 +321,28 @@ if state_result_path.exists():
         if record.get("result") == "FAIL":
             state_failed += 1
 
+page_records = {}
+surface_records = {}
+if result_path.exists():
+    for line in result_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        record = json.loads(line)
+        record_type = record.get("record_type", "page")
+        if record_type == "surface":
+            surface_id = record.get("surface_id")
+            if surface_id:
+                surface_records[surface_id] = record
+            continue
+        page_id = record.get("page_id")
+        if page_id:
+            page_records[page_id] = record
+
 page_rows = []
 for page in pages:
     page_id = page.get("page_id", "")
-    result = result_map.get(page_id, {})
+    result = page_records.get(page_id, {})
     state_bucket = state_map.get(page_id, {"executed": 0, "failed": 0})
     row = {
         "page_id": page_id,
@@ -354,6 +362,30 @@ for page in pages:
     }
     page_rows.append(row)
 
+surface_rows = []
+for surface in contract.get("surfaces", []) if isinstance(contract.get("surfaces"), list) else []:
+    if not isinstance(surface, dict):
+        continue
+    surface_id = surface.get("surface_id", "")
+    result = surface_records.get(surface_id, {})
+    viewport_results = result.get("viewport_results", []) if isinstance(result.get("viewport_results"), list) else []
+    row = {
+        "surface_id": surface_id,
+        "surface_type": surface.get("surface_type", "unknown"),
+        "host_page_id": surface.get("host_page_id", ""),
+        "trigger_action_type": result.get("trigger_action_type", surface.get("trigger_action", {}).get("type", "")),
+        "trigger_selector": result.get("trigger_selector", surface.get("trigger_action", {}).get("selector", "")),
+        "portal_host": result.get("portal_host", surface.get("portal_host", "")),
+        "surface_root_selector": result.get("surface_root_selector", surface.get("surface_root_selector", "")),
+        "backdrop_selector": result.get("backdrop_selector", surface.get("backdrop_selector", "")),
+        "viewport_variants_total": result.get("viewport_variants_total", len(surface.get("viewport_variants", []) or [])),
+        "viewport_variants_executed": result.get("viewport_variants_executed", 0),
+        "viewport_variants_failed": result.get("viewport_variants_failed", 0),
+        "viewport_results": viewport_results,
+        "result": result.get("result", "NOT_RUN"),
+    }
+    surface_rows.append(row)
+
 critical_total = sum(len(x.get("critical_surface_results", []) or []) for x in page_rows)
 critical_pass = sum(
     1
@@ -367,6 +399,10 @@ critical_fail = sum(
     for surface in (page.get("critical_surface_results", []) or [])
     if isinstance(surface, dict) and surface.get("result") == "FAIL"
 )
+surface_total = len(surface_rows)
+surface_pass = sum(1 for x in surface_rows if x.get("result") == "PASS")
+surface_fail = sum(1 for x in surface_rows if x.get("result") == "FAIL")
+surface_not_run = sum(1 for x in surface_rows if x.get("result") == "NOT_RUN")
 
 summary = {
     "module": contract.get("module", "${MODULE}"),
@@ -382,7 +418,12 @@ summary = {
     "critical_surfaces_total": critical_total,
     "critical_surfaces_passed": critical_pass,
     "critical_surfaces_failed": critical_fail,
+    "surfaces_total": surface_total,
+    "surfaces_passed": surface_pass,
+    "surfaces_failed": surface_fail,
+    "surfaces_not_run": surface_not_run,
     "pages": page_rows,
+    "surfaces": surface_rows,
 }
 page_report_path = Path("${PAGE_REPORT_JSON}")
 page_report_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -404,6 +445,18 @@ for row in page_rows:
         f"state_cases_failed={row['state_cases_failed']} "
         f"critical_surfaces_total={len(row.get('critical_surface_results', []) or [])} "
         f"critical_surfaces_failed={sum(1 for s in (row.get('critical_surface_results', []) or []) if isinstance(s, dict) and s.get('result') == 'FAIL')} "
+        f"result={row['result']}"
+    )
+for row in surface_rows:
+    print(
+        "INFO: surface_result "
+        f"surface_id={row['surface_id']} "
+        f"host_page_id={row['host_page_id']} "
+        f"surface_type={row['surface_type']} "
+        f"trigger_action_type={row['trigger_action_type']} "
+        f"viewport_variants_total={row['viewport_variants_total']} "
+        f"viewport_variants_executed={row['viewport_variants_executed']} "
+        f"viewport_variants_failed={row['viewport_variants_failed']} "
         f"result={row['result']}"
     )
 PY

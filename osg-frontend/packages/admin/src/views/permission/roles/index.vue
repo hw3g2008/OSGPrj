@@ -5,7 +5,7 @@
         <h2>权限配置</h2>
         <p class="subtitle">配置后台角色能访问的功能模块</p>
       </div>
-      <a-button type="primary" @click="handleAdd">
+      <a-button type="primary" data-surface-trigger="modal-new-role" @click="handleAdd">
         <template #icon><PlusOutlined /></template>
         新增角色
       </a-button>
@@ -53,7 +53,12 @@
             <span class="system-role">系统角色</span>
           </template>
           <template v-else>
-            <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
+            <a-button
+              type="link"
+              size="small"
+              data-surface-trigger="modal-edit-role"
+              @click="handleEdit(record)"
+            >编辑</a-button>
             <a-button
               v-if="!record.userCount"
               type="link"
@@ -83,6 +88,7 @@ import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { getRoleList, getMenuTree, deleteRole } from '@/api/role'
 import RoleModal from './components/RoleModal.vue'
+import { normalizeMenuTree } from './menuTree'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
@@ -130,7 +136,7 @@ const loadRoleList = async () => {
 const loadMenuTree = async () => {
   try {
     const res = await getMenuTree()
-    menuTree.value = res || []
+    menuTree.value = normalizeMenuTree(res || [])
   } catch (error) {
     console.error('加载菜单树失败', error)
   }

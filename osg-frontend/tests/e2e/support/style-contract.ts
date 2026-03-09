@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { isCssSemanticallyEqual } from './css-value'
 import type { VisualStyleContractRule } from './visual-contract'
 
 function tryParseNumericCss(value: string): { num: number; unit: string } | null {
@@ -48,7 +49,7 @@ export async function assertStyleContracts(
           `style contract failed: page=${pageId} selector=${selector} property=${property} expected=${expected} actual=${actual} tolerance=${rule.tolerance}`,
         )
       }
-    } else if (actual !== expected) {
+    } else if (!isCssSemanticallyEqual(property, expected, actual)) {
       throw new Error(
         `style contract failed: page=${pageId} selector=${selector} property=${property} expected=${expected} actual=${actual}`,
       )

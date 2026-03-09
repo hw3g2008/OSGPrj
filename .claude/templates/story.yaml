@@ -31,6 +31,8 @@ contract_refs:
   critical_surfaces: []
 
 # Story 级测试骨架（split-story 时生成，implement 阶段不得补造）
+# - case_kind=ac: 常规 AC 覆盖
+# - case_kind=critical_surface: overlay / critical surface 验证骨架
 story_cases: []
 
 # Tickets（拆分后填充）

@@ -44,9 +44,20 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
      - ticket 级：`ticket_id + ac_ref`
      - story 级：`story_id + ac_ref`
      - final 级：`story_id + ac_ref`
+   - 每个 Ticket 必须同步生成 `test_cases` skeleton；至少包含：
+     - `test_case_id`
+     - `ac_ref`
+     - `case_kind`
+     - `surface_id`（overlay / critical surface 场景时必填）
+     - `state_variant`
+     - `viewport_variant`
+   - 若 Ticket 承接 overlay / critical surface：
+     - 至少生成 1 条 `case_kind=critical_surface` 的 ticket test skeleton
+     - 若 surface 声明 `state_variants`，ticket `test_cases` 必须覆盖全部 `state_variant`
+     - 若 surface 声明 `viewport_variants`，ticket `test_cases` 必须覆盖全部 `viewport_variant`
    - 同步更新 `{module}-traceability-matrix.md`
    - 初始写入 `latest_result.status: pending`
-   - 若 `covers_ac_refs` 缺失、TC 未绑定 `ticket_id`、或 matrix 未同步，直接 FAIL
+   - 若 `covers_ac_refs` 缺失、TC 未绑定 `ticket_id`、matrix 未同步、或 overlay ticket 缺少 `test_cases` / state / viewport skeleton，直接 FAIL
 
 6. **更新状态**
    - 由 ticket-splitter 内部调用 `transition()` 推进到 `ticket_split_done`
@@ -58,4 +69,7 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
      - Story 的 `contract_refs` 是否全部拆到 Tickets
      - `external` capability 是否同时具备实现 Ticket 和验证 Ticket
      - `critical_surface` 是否具备 `frontend-ui` Ticket
+     - overlay / critical surface 是否具备 story-level `critical_surface` skeleton
+     - overlay `frontend-ui` Ticket 是否具备 `test_cases` skeleton
+     - overlay surface 的 `state_variant` / `viewport_variant` 是否已拆到 ticket-level skeleton
      - Story/Ticket/TestCase/Traceability 是否同步完整

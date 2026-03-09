@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { normalizeMenuTree } from '../views/permission/roles/menuTree'
 
 // 操作按钮显示逻辑（与 index.vue 模板逻辑一致）
 function getActionButtons(role: { roleKey: string; userCount: number }) {
@@ -169,6 +170,40 @@ describe('角色管理模块测试', () => {
       const role = { roleId: 3, roleName: '新角色', roleKey: 'new', remark: '描述' }
       const result = prefillEditForm(role, [])
       expect(result.menuIds).toEqual([])
+    })
+  })
+
+  describe('菜单树归一化', () => {
+    it('兼容 treeselect 返回的 title 字段并归一化为 label', () => {
+      const result = normalizeMenuTree([
+        {
+          id: 1,
+          title: '权限管理',
+          children: [{ id: 11, title: '权限配置' }],
+        },
+      ])
+
+      expect(result).toEqual([
+        {
+          id: 1,
+          label: '权限管理',
+          children: [{ id: 11, label: '权限配置', children: undefined }],
+        },
+      ])
+    })
+
+    it('优先保留已有 label 字段', () => {
+      const result = normalizeMenuTree([
+        {
+          id: 2,
+          label: '用户中心',
+          title: '不会覆盖现有标签',
+          children: [{ id: 21, label: '学生列表' }],
+        },
+      ])
+
+      expect(result[0].label).toBe('用户中心')
+      expect(result[0].children?.[0].label).toBe('学生列表')
     })
   })
 })

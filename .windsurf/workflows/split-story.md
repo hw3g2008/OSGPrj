@@ -38,10 +38,15 @@ description: 将需求文档拆分为 User Stories（INVEST 原则）- 对应 CC
    - 每个 Story 必须同步生成 `story_cases`（也就是 story 级测试骨架），至少包含：
      - `story_case_id`
      - `ac_ref`
+     - `case_kind`
+     - `surface_id`（overlay / critical surface 场景时必填）
+     - `state_variant`
+     - `viewport_variant`
+   - 若 Story 声明了 overlay / critical surface，必须至少为每个 surface 生成 1 条 `case_kind=critical_surface` 的 `story_cases`
    - 未生成 `story_cases` 时，不得写入 `story_split_done`
    - 输出门禁（硬门禁）：
      - `python3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py --module {module} --mode requirements_to_stories`
-   - 若 `delivery_contract` / `critical_surfaces` 中任一项未映射到 Story，或 Story 缺少 `story_cases`，立即失败，不得写入 `story_split_done`
+   - 若 `delivery_contract` / `critical_surfaces` 中任一项未映射到 Story，或 Story 缺少 `story_cases`，或 overlay surface 未生成 `critical_surface` story skeleton，立即失败，不得写入 `story_split_done`
 
 5. **输出摘要**
    - 列出所有 Stories 的编号、标题、优先级
@@ -58,3 +63,4 @@ description: 将需求文档拆分为 User Stories（INVEST 原则）- 对应 CC
      - `delivery_contract.capabilities` 不得漏映射
      - `UI-VISUAL-CONTRACT.critical_surfaces` 不得漏映射
      - `Story.story_cases` 不得缺失
+     - overlay / critical surface 不得缺失 `critical_surface` 级 story skeleton

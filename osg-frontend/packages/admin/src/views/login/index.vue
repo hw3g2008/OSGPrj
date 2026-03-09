@@ -77,7 +77,9 @@
                 </template>
               </a-input>
               <div class="captcha-code" :class="{ 'has-image': !!captchaImg }" @click="refreshCaptcha" title="点击刷新">
-                <img v-if="captchaImg" :src="'data:image/jpg;base64,' + captchaImg" alt="验证码" />
+                <div v-if="captchaImg" class="captcha-code-frame">
+                  <img :src="'data:image/jpg;base64,' + captchaImg" alt="验证码" />
+                </div>
                 <span v-else>----</span>
               </div>
             </div>
@@ -86,7 +88,11 @@
           <a-form-item>
             <div class="login-links">
               <a-checkbox v-model:checked="formState.rememberMe">记住我（7天）</a-checkbox>
-              <a class="forgot-link" @click="forgotPasswordVisible = true">忘记密码？</a>
+              <a
+                class="forgot-link"
+                data-surface-trigger="modal-forgot-password"
+                @click="forgotPasswordVisible = true"
+              >忘记密码？</a>
             </div>
           </a-form-item>
 
@@ -331,8 +337,8 @@ onMounted(() => {
     flex: 0 0 120px;
     width: 120px;
     height: 52px;
-    padding: 0 20px;
-    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    padding: 4px;
+    background: #e2e8f0;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -352,13 +358,29 @@ onMounted(() => {
     padding: 0;
   }
 
+  .captcha-code.has-image .captcha-code-frame {
+    background: transparent;
+    border-radius: 10px;
+  }
+
+  .captcha-code-frame {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    background: #e2e8f0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .captcha-code img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: inherit;
-    clip-path: none;
+    border-radius: 10px;
+    clip-path: inset(4px 0 4px 0 round 10px);
     mix-blend-mode: normal;
     opacity: 1;
     background: transparent;

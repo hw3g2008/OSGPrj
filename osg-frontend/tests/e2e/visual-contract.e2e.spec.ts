@@ -2,14 +2,21 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import { loginAsAdmin } from './support/auth'
+import { isCssSemanticallyEqual } from './support/css-value'
 import { resolvePrototypePageKey } from './support/prototype-contract'
 import { assertStyleContracts } from './support/style-contract'
 import { applyStabilityToPage, resolveStabilityConfigFromEnv } from './support/test-stability'
 import {
   baselineRefToSnapshotArg,
+  buildSurfaceBaselineRef,
   loadVisualContract,
   type VisualCriticalSurfaceContract,
+  type VisualFixtureRoute,
   type VisualPageContract,
+  type VisualSurfaceContract,
+  type VisualSurfaceCssContract,
+  type VisualSurfaceStateContract,
+  type VisualSurfaceViewportVariant,
 } from './support/visual-contract'
 import { registerVisualFixtureRoutes } from './support/visual-fixture'
 
@@ -60,6 +67,19 @@ function buildActualPath(pageContract: VisualPageContract): string | null {
   return outputPath
 }
 
+function buildSurfaceActualPath(
+  surfaceContract: VisualSurfaceContract,
+  viewport: VisualSurfaceViewportVariant,
+): string | null {
+  if (!visualEvidenceDir) {
+    return null
+  }
+  const viewportLabel = `${viewport.viewport_id}-${viewport.width}x${viewport.height}`
+  const outputPath = path.resolve(visualEvidenceDir, 'surfaces', surfaceContract.surface_id, `${viewportLabel}.png`)
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true })
+  return outputPath
+}
+
 function extractDiffRefFromError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)
   const diffMatch = message.match(/Diff:\s*([^\n]+)/)
@@ -97,6 +117,7 @@ function appendPageResult(
     return
   }
   const record = {
+    record_type: 'page',
     module: contract?.module || 'unknown',
     page_id: pageContract.page_id,
     route: pageContract.route,
@@ -111,6 +132,19 @@ function appendPageResult(
     style_assertions_failed: styleStats.failed,
     critical_surface_results: criticalSurfaceResults,
     result,
+  }
+  fs.mkdirSync(path.dirname(visualPageResultsFile), { recursive: true })
+  fs.appendFileSync(visualPageResultsFile, `${JSON.stringify(record)}\n`, 'utf-8')
+}
+
+function appendSurfaceResult(surfaceRecord: Record<string, unknown>): void {
+  if (!visualPageResultsFile) {
+    return
+  }
+  const record = {
+    record_type: 'surface',
+    module: contract?.module || 'unknown',
+    ...surfaceRecord,
   }
   fs.mkdirSync(path.dirname(visualPageResultsFile), { recursive: true })
   fs.appendFileSync(visualPageResultsFile, `${JSON.stringify(record)}\n`, 'utf-8')
@@ -188,7 +222,7 @@ async function evaluateCriticalSurfaceStyles(
       passed += 1
       continue
     }
-    if (actual !== rule.expected.trim()) {
+    if (!isCssSemanticallyEqual(rule.property, rule.expected.trim(), actual)) {
       failed += 1
       continue
     }
@@ -235,7 +269,7 @@ async function executeCriticalSurfaceStateContracts(
         (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
         assertion.property,
       )
-      if (actual !== assertion.expected.trim()) {
+      if (!isCssSemanticallyEqual(assertion.property, assertion.expected.trim(), actual)) {
         contractPassed = false
         break
       }
@@ -404,6 +438,388 @@ async function assertAnyOfAnchorGroups(page: Page, groups: string[][], pageId: s
   )
 }
 
+async function assertRequiredAnchors(page: Page, anchors: string[], contextId: string): Promise<void> {
+  for (const anchor of anchors) {
+    await expect(page.locator(anchor).first(), `anchor should exist: ${contextId} -> ${anchor}`).toBeVisible()
+  }
+}
+
+const SURFACE_ROOT_SELECTOR_PATTERN = /^\[data-surface-id="([^"]+)"\]$/
+const SURFACE_PART_SELECTOR_PATTERN = /^\[data-surface-id="([^"]+)"\]\s+\[data-surface-part="([^"]+)"\]$/
+
+function buildPrototypeSurfacePartSelector(surface: VisualSurfaceContract, partId: string): string | null {
+  if (surface.surface_type !== 'modal' && surface.surface_type !== 'wizard-step') {
+    return null
+  }
+  switch (partId) {
+    case 'backdrop':
+      return surface.prototype_selector
+    case 'shell':
+      return `${surface.prototype_selector} .modal-content`
+    case 'header':
+      return `${surface.prototype_selector} .modal-header`
+    case 'body':
+      return `${surface.prototype_selector} .modal-body`
+    case 'footer':
+      return `${surface.prototype_selector} .modal-footer`
+    case 'close-control':
+      return `${surface.prototype_selector} .modal-close`
+    default:
+      return null
+  }
+}
+
+function resolveSurfaceSelectorForSource(
+  surface: VisualSurfaceContract,
+  selector: string,
+  prototypeSelector?: string,
+): string {
+  if (visualSource !== 'prototype') {
+    return selector
+  }
+  if (prototypeSelector?.trim()) {
+    return prototypeSelector.trim()
+  }
+
+  const normalizedSelector = selector.trim()
+  const partMatch = normalizedSelector.match(SURFACE_PART_SELECTOR_PATTERN)
+  if (partMatch) {
+    const [, surfaceId, partId] = partMatch
+    if (surfaceId === surface.surface_id) {
+      const mapped = buildPrototypeSurfacePartSelector(surface, partId)
+      if (mapped) {
+        return mapped
+      }
+    }
+  }
+
+  const rootMatch = normalizedSelector.match(SURFACE_ROOT_SELECTOR_PATTERN)
+  if (rootMatch) {
+    const [, surfaceId] = rootMatch
+    if (surfaceId === surface.surface_id) {
+      return `${surface.prototype_selector} .modal-content`
+    }
+  }
+
+  return normalizedSelector
+}
+
+function resolveSurfaceAnchorsForSource(
+  surface: VisualSurfaceContract | VisualSurfaceStateContract,
+  owner: VisualSurfaceContract,
+): string[] {
+  const anchors =
+    visualSource === 'prototype'
+      ? surface.prototype_required_anchors || surface.required_anchors || []
+      : surface.required_anchors || []
+
+  return anchors.map((anchor) => resolveSurfaceSelectorForSource(owner, anchor))
+}
+
+function flattenSurfaceCssContracts(
+  surface: VisualSurfaceContract,
+  rules: VisualSurfaceCssContract[] | undefined,
+): Array<{
+  selector: string
+  property: string
+  expected: string
+}> {
+  const flattened: Array<{ selector: string; property: string; expected: string }> = []
+  for (const rule of rules || []) {
+    if (!rule || typeof rule.selector !== 'string' || typeof rule.css !== 'object' || rule.css === null) {
+      continue
+    }
+    const effectiveSelector = resolveSurfaceSelectorForSource(surface, rule.selector, rule.prototype_selector)
+    for (const [property, expected] of Object.entries(rule.css)) {
+      flattened.push({
+        selector: effectiveSelector,
+        property,
+        expected: String(expected),
+      })
+    }
+  }
+  return flattened
+}
+
+async function evaluateGenericCssRules(
+  page: Page,
+  contextId: string,
+  rules: Array<{ selector: string; property: string; expected: string }>,
+): Promise<{ total: number; passed: number; failed: number }> {
+  let passed = 0
+  let failed = 0
+
+  for (const rule of rules) {
+    const locator = page.locator(rule.selector).first()
+    if ((await locator.count()) === 0) {
+      failed += 1
+      continue
+    }
+    const actual = await locator.evaluate(
+      (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
+      rule.property,
+    )
+    if (!isCssSemanticallyEqual(rule.property, rule.expected.trim(), actual)) {
+      failed += 1
+      continue
+    }
+    passed += 1
+  }
+
+  return {
+    total: rules.length,
+    passed,
+    failed,
+  }
+}
+
+async function navigateToVisualTarget(
+  page: Page,
+  pageContract: VisualPageContract,
+  fixtureRoutes: VisualFixtureRoute[] = pageContract.fixture_routes || [],
+): Promise<void> {
+  if (visualSource === 'app' && pageContract.data_mode === 'mock' && fixtureRoutes.length) {
+    await registerVisualFixtureRoutes(page, fixtureRoutes)
+  }
+
+  if (visualSource === 'app' && pageContract.auth_mode === 'protected') {
+    await loginAsAdmin(page)
+  }
+
+  if (visualSource === 'prototype') {
+    await page.goto(resolvePrototypeUrl(pageContract.prototype_file))
+    const prototypePageKey = resolvePrototypePageKey(pageContract)
+    await page.evaluate(({ pageKey, isLoginPage }) => {
+      const loginPage = document.getElementById('login-page')
+      const mainApp = document.getElementById('main-app')
+      if (isLoginPage) {
+        if (loginPage) {
+          ;(loginPage as HTMLElement).style.display = 'flex'
+        }
+        if (mainApp) {
+          mainApp.classList.remove('active')
+        }
+        return
+      }
+      if (loginPage) {
+        ;(loginPage as HTMLElement).style.display = 'none'
+      }
+      if (mainApp) {
+        mainApp.classList.add('active')
+      }
+      const maybeShowPage = (window as Window & { showPage?: (key: string) => void }).showPage
+      if (typeof maybeShowPage === 'function') {
+        maybeShowPage(pageKey)
+      }
+    }, { pageKey: prototypePageKey, isLoginPage: pageContract.page_id === 'login-page' })
+  } else {
+    await page.goto(pageContract.route)
+  }
+
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(pageContract.stable_wait_ms || 300)
+}
+
+function mergeFixtureRoutes(
+  primary: VisualFixtureRoute[] | undefined,
+  fallback: VisualFixtureRoute[] | undefined,
+): VisualFixtureRoute[] {
+  const merged: VisualFixtureRoute[] = []
+  const seen = new Set<string>()
+  for (const route of [...(primary || []), ...(fallback || [])]) {
+    const key = `${(route.method || 'GET').toUpperCase()} ${route.url}`
+    if (seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+    merged.push(route)
+  }
+  return merged
+}
+
+function findHostPageContract(surfaceContract: VisualSurfaceContract): VisualPageContract {
+  const pageContract = contract?.pages.find((page) => page.page_id === surfaceContract.host_page_id)
+  if (!pageContract) {
+    throw new Error(`host page missing for surface '${surfaceContract.surface_id}': ${surfaceContract.host_page_id}`)
+  }
+  return pageContract
+}
+
+async function performSurfaceTrigger(page: Page, hostPage: VisualPageContract, surface: VisualSurfaceContract): Promise<void> {
+  const trigger = surface.trigger_action || { type: 'auto-open' }
+  const selector =
+    visualSource === 'prototype'
+      ? trigger.prototype_selector?.trim() || trigger.selector?.trim()
+      : trigger.selector?.trim()
+  const script =
+    visualSource === 'prototype'
+      ? trigger.prototype_script?.trim()
+      : trigger.script?.trim()
+  switch (trigger.type) {
+    case 'click': {
+      if (script) {
+        await page.evaluate(scriptText => {
+          // eslint-disable-next-line no-new-func
+          const fn = new Function(scriptText)
+          return fn()
+        }, script)
+        break
+      }
+      if (!selector) {
+        throw new Error(`surface '${surface.surface_id}' click trigger missing selector`)
+      }
+      const locator = page.locator(selector).first()
+      await expect(locator, `surface trigger should exist: ${selector}`).toBeVisible()
+      await locator.click()
+      break
+    }
+    case 'keyboard': {
+      const key = trigger.key?.trim()
+      if (!key) {
+        throw new Error(`surface '${surface.surface_id}' keyboard trigger missing key`)
+      }
+      if (selector) {
+        const target = page.locator(selector).first()
+        await expect(target, `surface keyboard trigger target should exist: ${selector}`).toBeVisible()
+        await target.focus()
+      }
+      await page.keyboard.press(key)
+      break
+    }
+    case 'route-param': {
+      if (visualSource !== 'app') {
+        throw new Error(`surface '${surface.surface_id}' route-param trigger is only supported for app source`)
+      }
+      const param = trigger.param?.trim()
+      const value = trigger.value?.trim()
+      if (!param || !value) {
+        throw new Error(`surface '${surface.surface_id}' route-param trigger requires param and value`)
+      }
+      const url = new URL(hostPage.route, 'http://127.0.0.1')
+      url.searchParams.set(param, value)
+      await page.goto(`${url.pathname}${url.search}`)
+      break
+    }
+    case 'auto-open':
+      if (script) {
+        await page.evaluate(scriptText => {
+          // eslint-disable-next-line no-new-func
+          const fn = new Function(scriptText)
+          return fn()
+        }, script)
+      }
+      break
+    default:
+      throw new Error(`unsupported trigger type for surface '${surface.surface_id}': ${trigger.type}`)
+  }
+
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(hostPage.stable_wait_ms || 300)
+}
+
+async function resolveSurfaceRoot(page: Page, surface: VisualSurfaceContract): Promise<Locator> {
+  const selector = visualSource === 'prototype'
+    ? resolveSurfaceSelectorForSource(
+        surface,
+        surface.surface_root_selector || surface.app_selector || surface.prototype_selector,
+      )
+    : surface.surface_root_selector || surface.app_selector
+  return page.locator(selector).first()
+}
+
+function buildSurfaceMaskLocators(surface: VisualSurfaceContract, page: Page): Locator[] {
+  return (surface.surface_parts || [])
+    .filter((part) => part.mask_allowed)
+    .map((part) => page.locator(resolveSurfaceSelectorForSource(surface, part.selector, part.prototype_selector)).first())
+}
+
+async function collectSurfacePartResults(page: Page, surface: VisualSurfaceContract): Promise<Record<string, unknown>[]> {
+  const results: Record<string, unknown>[] = []
+  for (const part of surface.surface_parts || []) {
+    const effectiveSelector = resolveSurfaceSelectorForSource(surface, part.selector, part.prototype_selector)
+    const locator = page.locator(effectiveSelector).first()
+    const exists = (await locator.count()) > 0
+    const visible = exists ? await locator.isVisible() : false
+    results.push({
+      part_id: part.part_id,
+      selector: effectiveSelector,
+      mask_allowed: part.mask_allowed,
+      exists,
+      visible,
+      result: exists && visible ? 'PASS' : 'FAIL',
+    })
+  }
+  return results
+}
+
+async function collectSurfaceStateResults(
+  page: Page,
+  surface: VisualSurfaceContract,
+): Promise<{
+  total: number
+  executed: number
+  passed: number
+  failed: number
+  styleTotal: number
+  styleExecuted: number
+  stylePassed: number
+  styleFailed: number
+  results: Record<string, unknown>[]
+}> {
+  const stateContracts = surface.state_contracts || []
+  const results: Record<string, unknown>[] = []
+  let passed = 0
+  let failed = 0
+  let styleTotal = 0
+  let styleExecuted = 0
+  let stylePassed = 0
+  let styleFailed = 0
+
+  for (const contract of stateContracts) {
+    const anchors = resolveSurfaceAnchorsForSource(contract, surface)
+    let anchorPassed = 0
+    for (const anchor of anchors) {
+      if (await isAnchorVisible(page, anchor)) {
+        anchorPassed += 1
+      }
+    }
+    const flattened = flattenSurfaceCssContracts(surface, contract.style_contracts)
+    const styleStats = await evaluateGenericCssRules(page, `${surface.surface_id}:${contract.state_id}`, flattened)
+    styleTotal += flattened.length
+    styleExecuted += flattened.length
+    stylePassed += styleStats.passed
+    styleFailed += styleStats.failed
+    const result = anchorPassed === anchors.length && styleStats.failed === 0 ? 'PASS' : 'FAIL'
+    if (result === 'PASS') {
+      passed += 1
+    } else {
+      failed += 1
+    }
+    results.push({
+      state_id: contract.state_id,
+      required_anchors_total: anchors.length,
+      required_anchors_passed: anchorPassed,
+      style_contracts_total: flattened.length,
+      style_contracts_executed: flattened.length,
+      style_contracts_passed: styleStats.passed,
+      style_contracts_failed: styleStats.failed,
+      result,
+    })
+  }
+
+  return {
+    total: stateContracts.length,
+    executed: stateContracts.length,
+    passed,
+    failed,
+    styleTotal,
+    styleExecuted,
+    stylePassed,
+    styleFailed,
+    results,
+  }
+}
+
 function resolvePrototypeUrl(prototypeFile: string): string {
   const normalizedBase = prototypeBaseUrl.replace(/\/+$/, '')
   const normalizedPath = prototypeFile.replace(/^\/+/, '')
@@ -444,51 +860,10 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
       await page.setViewportSize(pageContract.viewport)
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await applyStabilityToPage(page, stabilityConfig)
-
-      if (visualSource === 'app' && pageContract.data_mode === 'mock' && pageContract.fixture_routes?.length) {
-        await registerVisualFixtureRoutes(page, pageContract.fixture_routes)
-      }
-
-      if (visualSource === 'app' && pageContract.auth_mode === 'protected') {
-        await loginAsAdmin(page)
-      }
-
-      if (visualSource === 'prototype') {
-        await page.goto(resolvePrototypeUrl(pageContract.prototype_file))
-        const prototypePageKey = resolvePrototypePageKey(pageContract)
-        await page.evaluate(({ pageKey, isLoginPage }) => {
-          const loginPage = document.getElementById('login-page')
-          const mainApp = document.getElementById('main-app')
-          if (isLoginPage) {
-            if (loginPage) {
-              ;(loginPage as HTMLElement).style.display = 'flex'
-            }
-            if (mainApp) {
-              mainApp.classList.remove('active')
-            }
-            return
-          }
-          if (loginPage) {
-            ;(loginPage as HTMLElement).style.display = 'none'
-          }
-          if (mainApp) {
-            mainApp.classList.add('active')
-          }
-          const maybeShowPage = (window as Window & { showPage?: (key: string) => void }).showPage
-          if (typeof maybeShowPage === 'function') {
-            maybeShowPage(pageKey)
-          }
-        }, { pageKey: prototypePageKey, isLoginPage: pageContract.page_id === 'login-page' })
-      } else {
-        await page.goto(pageContract.route)
-      }
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(pageContract.stable_wait_ms || 300)
+      await navigateToVisualTarget(page, pageContract)
 
       if (visualSource === 'app') {
-        for (const anchor of pageContract.required_anchors) {
-          await expect(page.locator(anchor).first(), `anchor should exist: ${anchor}`).toBeVisible()
-        }
+        await assertRequiredAnchors(page, pageContract.required_anchors, pageContract.page_id)
         await assertAnyOfAnchorGroups(page, pageContract.required_anchors_any_of || [], pageContract.page_id)
 
       } else {
@@ -587,6 +962,146 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
       if (capturedError) {
         throw capturedError
       }
+    })
+  }
+
+  for (const surfaceContract of contract.surfaces || []) {
+    test(`${surfaceContract.surface_id} visual compare @ui-visual`, async ({ page }, testInfo) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await applyStabilityToPage(page, stabilityConfig)
+
+      const hostPage = findHostPageContract(surfaceContract)
+      const trigger = surfaceContract.trigger_action || { type: 'auto-open' as const }
+      const viewportResults: Record<string, unknown>[] = []
+      let overallResult: 'PASS' | 'FAIL' = 'PASS'
+
+      for (const viewport of surfaceContract.viewport_variants || []) {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        const mergedFixtureRoutes = mergeFixtureRoutes(surfaceContract.fixture_routes, hostPage.fixture_routes)
+        await navigateToVisualTarget(page, hostPage, mergedFixtureRoutes)
+        await performSurfaceTrigger(page, hostPage, surfaceContract)
+
+      const surfaceRoot = await resolveSurfaceRoot(page, surfaceContract)
+      await expect(
+        surfaceRoot,
+          `surface root should be visible: ${surfaceContract.surface_id} -> ${
+            visualSource === 'prototype' ? surfaceContract.prototype_selector : surfaceContract.surface_root_selector
+          }`,
+      ).toBeVisible()
+
+        await assertRequiredAnchors(
+          page,
+          resolveSurfaceAnchorsForSource(surfaceContract, surfaceContract),
+          surfaceContract.surface_id,
+        )
+
+        const baselineRef = buildSurfaceBaselineRef(contract.module, surfaceContract.surface_id, viewport)
+        const snapshotArg = baselineRefToSnapshotArg(baselineRef)
+        const actualPath = buildSurfaceActualPath(surfaceContract, viewport)
+        const actualRef = actualPath ? toRepoRelative(actualPath) : 'none'
+        const mask = buildSurfaceMaskLocators(surfaceContract, page)
+
+        const actualBuffer = await surfaceRoot.screenshot({
+          animations: 'disabled',
+          mask,
+        })
+        if (actualPath) {
+          fs.writeFileSync(actualPath, actualBuffer)
+        }
+        let capturedResult: 'PASS' | 'FAIL' = 'PASS'
+        let capturedDiffRef = 'none'
+        let capturedError: unknown = null
+        try {
+          await expect(actualBuffer).toMatchSnapshot(snapshotArg, {
+            maxDiffPixelRatio: hostPage.diff_threshold,
+          })
+        } catch (error) {
+          capturedResult = 'FAIL'
+          const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
+          capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
+          capturedError = error
+        }
+
+        const surfacePartResults = await collectSurfacePartResults(page, surfaceContract)
+        const styleStats =
+          visualSource === 'app'
+            ? await evaluateGenericCssRules(
+                page,
+                surfaceContract.surface_id,
+                flattenSurfaceCssContracts(surfaceContract, surfaceContract.style_contracts),
+              )
+            : { total: 0, passed: 0, failed: 0 }
+        const stateStats =
+          visualSource === 'app'
+            ? await collectSurfaceStateResults(page, surfaceContract)
+            : {
+                total: 0,
+                executed: 0,
+                passed: 0,
+                failed: 0,
+                styleTotal: 0,
+                styleExecuted: 0,
+                stylePassed: 0,
+                styleFailed: 0,
+                results: [] as Record<string, unknown>[],
+              }
+
+        const viewportPassed =
+          capturedResult === 'PASS' &&
+          styleStats.failed === 0 &&
+          stateStats.failed === 0 &&
+          stateStats.styleFailed === 0 &&
+          surfacePartResults.every((entry) => entry.result === 'PASS')
+
+        viewportResults.push({
+          viewport_id: viewport.viewport_id,
+          width: viewport.width,
+          height: viewport.height,
+          baseline_ref: baselineRef,
+          actual_ref: actualRef,
+          diff_ref: capturedDiffRef,
+          diff_threshold: hostPage.diff_threshold,
+          surface_part_results: surfacePartResults,
+          style_contracts_total: styleStats.total,
+          style_contracts_passed: styleStats.passed,
+          style_contracts_failed: styleStats.failed,
+          state_contracts_total: stateStats.total,
+          state_contracts_executed: stateStats.executed,
+          state_contracts_passed: stateStats.passed,
+          state_contracts_failed: stateStats.failed,
+          state_style_contracts_total: stateStats.styleTotal,
+          state_style_contracts_executed: stateStats.styleExecuted,
+          state_style_contracts_passed: stateStats.stylePassed,
+          state_style_contracts_failed: stateStats.styleFailed,
+          state_results: stateStats.results,
+          result: viewportPassed ? 'PASS' : 'FAIL',
+        })
+
+        if (!viewportPassed) {
+          overallResult = 'FAIL'
+        }
+        if (capturedError) {
+          overallResult = 'FAIL'
+        }
+      }
+
+      appendSurfaceResult({
+        surface_id: surfaceContract.surface_id,
+        surface_type: surfaceContract.surface_type,
+        host_page_id: surfaceContract.host_page_id,
+        trigger_action_type: trigger.type,
+        trigger_selector: trigger.selector || '',
+        portal_host: surfaceContract.portal_host || '',
+        surface_root_selector: surfaceContract.surface_root_selector,
+        backdrop_selector: surfaceContract.backdrop_selector || '',
+        viewport_variants_total: (surfaceContract.viewport_variants || []).length,
+        viewport_variants_executed: viewportResults.length,
+        viewport_variants_failed: viewportResults.filter((entry) => entry.result === 'FAIL').length,
+        viewport_results: viewportResults,
+        result: overallResult,
+      })
+
+      expect(overallResult, `surface should pass across all viewports: ${surfaceContract.surface_id}`).toBe('PASS')
     })
   }
 })
