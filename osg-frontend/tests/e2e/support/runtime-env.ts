@@ -64,6 +64,40 @@ function parseShellAssignments(output: string): Record<string, string> {
   return result
 }
 
+function parseToolEnvJson(value: string | undefined): Record<string, string> {
+  const normalized = normalizeRuntimeEnvValue(value)
+  if (!normalized) {
+    return {}
+  }
+  try {
+    const parsed = JSON.parse(normalized) as Record<string, unknown>
+    return Object.fromEntries(
+      Object.entries(parsed)
+        .map(([key, raw]) => [key, normalizeRuntimeEnvValue(typeof raw === 'string' ? raw : String(raw))] as const)
+        .filter((entry): entry is [string, string] => Boolean(entry[0]) && entry[1] !== undefined),
+    )
+  } catch {
+    return {}
+  }
+}
+
+function applyDefaults(
+  env: NodeJS.ProcessEnv,
+  repoRoot: string,
+  values: Record<string, string>,
+): void {
+  for (const [key, value] of Object.entries(values)) {
+    if (env[key] != null) {
+      continue
+    }
+    if (key.endsWith('_PATH')) {
+      env[key] = resolveFromRepoRoot(value, repoRoot)
+      continue
+    }
+    env[key] = value
+  }
+}
+
 function resolveFromRepoRoot(pathValue: string, repoRoot: string): string {
   return isAbsolute(pathValue) ? pathValue : resolve(repoRoot, pathValue)
 }
@@ -79,6 +113,7 @@ export function loadPlaywrightRuntimeEnv(
 ): void {
   const repoRoot = options.repoRoot || resolve(__dirname, '../../../..')
   const defaultEnvFile = resolve(repoRoot, 'deploy/.env.dev')
+  const explicitApiProxyTarget = normalizeRuntimeEnvValue(env.E2E_API_PROXY_TARGET)
   let runtimeContractVars: Record<string, string> = options.runtimeContractVars || {}
 
   if (!options.runtimeContractVars) {
@@ -97,24 +132,24 @@ export function loadPlaywrightRuntimeEnv(
   const envFilePath = runtimeContractVars.RESOLVED_RUNTIME_ENV_FILE
     ? resolveFromRepoRoot(runtimeContractVars.RESOLVED_RUNTIME_ENV_FILE, repoRoot)
     : defaultEnvFile
+  const preconfiguredProviderLogPath = normalizeRuntimeEnvValue(env.PASSWORD_RESET_PROVIDER_LOG_PATH)
+  if (preconfiguredProviderLogPath) {
+    env.PASSWORD_RESET_PROVIDER_LOG_PATH = resolveFromRepoRoot(preconfiguredProviderLogPath, repoRoot)
+  }
   if (existsSync(envFilePath)) {
     const dotenvVars = parseDotEnvFile(readFileSync(envFilePath, 'utf-8'))
-    env.SPRING_DATA_REDIS_HOST ||= dotenvVars.SPRING_DATA_REDIS_HOST
-    env.SPRING_DATA_REDIS_PORT ||= dotenvVars.SPRING_DATA_REDIS_PORT
-    env.SPRING_DATA_REDIS_PASSWORD ||= dotenvVars.SPRING_DATA_REDIS_PASSWORD
-    const providerLogPath =
-      normalizeRuntimeEnvValue(env.PASSWORD_RESET_PROVIDER_LOG_PATH) ||
-      dotenvVars.PASSWORD_RESET_PROVIDER_LOG_PATH
-    if (providerLogPath) {
-      env.PASSWORD_RESET_PROVIDER_LOG_PATH = resolveFromRepoRoot(providerLogPath, repoRoot)
-    }
-    env.E2E_RESET_EMAIL ||= dotenvVars.E2E_RESET_EMAIL
-    env.E2E_ADMIN_USERNAME ||= dotenvVars.E2E_ADMIN_USERNAME
-    env.E2E_ADMIN_PASSWORD ||= dotenvVars.E2E_ADMIN_PASSWORD
-    env.E2E_RESET_PASSWORD ||= dotenvVars.E2E_RESET_PASSWORD
+    applyDefaults(env, repoRoot, dotenvVars)
   }
 
-  env.E2E_API_PROXY_TARGET ||= runtimeContractVars.RESOLVED_E2E_API_PROXY_TARGET
+  const toolEnv = parseToolEnvJson(runtimeContractVars.RESOLVED_RUNTIME_TOOL_ENV_JSON)
+  applyDefaults(env, repoRoot, toolEnv)
+
+  const resolvedApiProxyTarget = normalizeRuntimeEnvValue(runtimeContractVars.RESOLVED_E2E_API_PROXY_TARGET)
+  if (explicitApiProxyTarget) {
+    env.E2E_API_PROXY_TARGET = explicitApiProxyTarget
+  } else if (resolvedApiProxyTarget) {
+    env.E2E_API_PROXY_TARGET = resolvedApiProxyTarget
+  }
   env.E2E_REDIS_HOST ||= env.SPRING_DATA_REDIS_HOST
   env.E2E_REDIS_PORT ||= env.SPRING_DATA_REDIS_PORT
   env.E2E_REDIS_PASSWORD ||= env.SPRING_DATA_REDIS_PASSWORD

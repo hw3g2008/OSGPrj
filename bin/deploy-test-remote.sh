@@ -99,6 +99,12 @@ if [[ -z "${REMOTE_HOST}" ]]; then
   exit 1
 fi
 
+bash bin/context-preflight.sh test \
+  --entrypoint deploy-test-remote \
+  --env-file deploy/.env.test \
+  --runtime-contract deploy/runtime-contract.test.yaml \
+  --remote-host "${REMOTE_HOST}"
+
 if (( UPDATE_CODE_REQUESTED == 1 )) && (( SYNC_LOCAL == 1 )); then
   SYNC_LOCAL=0
 fi

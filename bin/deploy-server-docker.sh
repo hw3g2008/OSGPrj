@@ -73,6 +73,17 @@ fi
 
 echo "=== deploy-server-docker: env=${ENV_NAME} profile=${PROFILE_CSV} env_file=${ENV_FILE} ==="
 
+if [[ "${ENV_NAME}" == "test" ]]; then
+  bash bin/context-preflight.sh test \
+    --entrypoint deploy-server-docker \
+    --env-file "${ENV_FILE}" \
+    --runtime-contract deploy/runtime-contract.test.yaml
+else
+  bash bin/context-preflight.sh prod \
+    --entrypoint deploy-server-docker \
+    --env-file "${ENV_FILE}"
+fi
+
 # 1) replace existing stack first (同环境重部署不应被旧容器端口占用阻断)
 echo "INFO: stop existing ${ENV_NAME} stack before rebuild"
 bash bin/docker-env-down.sh "${ENV_NAME}" --profile "${PROFILE_CSV}" || true

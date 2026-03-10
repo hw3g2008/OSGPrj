@@ -155,10 +155,13 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   ).first()
   const passwordInput = page.locator('input[type="password"]').first()
   const captchaInput = page.locator('input[placeholder*="验证码"]').first()
+  const captchaRefreshTrigger = page.locator('.captcha-code').first()
   const submitButton = page.locator('button[type="submit"], button:has-text("登录")').first()
 
-  await page.goto(authConfig.loginPath)
-  await page.waitForLoadState('domcontentloaded')
+  await page.goto(authConfig.loginPath, {
+    waitUntil: 'domcontentloaded',
+    timeout: E2E_TIMEOUT_MS,
+  })
 
   const deadline = Date.now() + E2E_TIMEOUT_MS
   let needsInteractiveLogin = false
@@ -181,33 +184,38 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   }
 
   await expect(page).toHaveURL(asRegExpPath(authConfig.loginPath))
-  const captchaResponsePromise = waitForApi(page, '/api/captchaImage', 'GET')
   await expect(passwordInput).toBeVisible({ timeout: E2E_TIMEOUT_MS })
 
   await usernameInput.fill(authConfig.username)
   await passwordInput.fill(authConfig.password)
 
-  let captchaUuid: string | undefined
-  try {
-    const captchaResponse = await captchaResponsePromise
-    const captchaBody = await captchaResponse.json()
-    captchaUuid = typeof captchaBody?.uuid === 'string' ? captchaBody.uuid : undefined
-  } catch {
-    // ignore; fallback to static captcha code
-  }
-
-  await page.waitForTimeout(1000)
   if (await captchaInput.isVisible()) {
-    let resolvedCaptchaCode = captchaUuid ? readCaptchaFromRedis(captchaUuid) : null
+    let captchaUuid: string | undefined
+    let resolvedCaptchaCode: string | null = null
+    try {
+      const captchaResponsePromise = waitForApi(page, '/api/captchaImage', 'GET')
+      await expect(captchaRefreshTrigger, 'captcha refresh trigger should exist on login page').toBeVisible({
+        timeout: E2E_TIMEOUT_MS,
+      })
+      await captchaRefreshTrigger.click()
+      const captchaResponse = await captchaResponsePromise
+      const captchaBody = await captchaResponse.json()
+      captchaUuid = typeof captchaBody?.uuid === 'string' ? captchaBody.uuid : undefined
+      resolvedCaptchaCode = captchaUuid ? readCaptchaFromRedis(captchaUuid) : null
+    } catch {
+      resolvedCaptchaCode = null
+    }
+
     if (!resolvedCaptchaCode) {
       try {
         const challenge = await requestCaptchaChallenge(page.request)
         captchaUuid = challenge.uuid
         resolvedCaptchaCode = challenge.code
       } catch {
-        // ignore; fallback to static captcha code
+        resolvedCaptchaCode = null
       }
     }
+
     const fallbackCaptchaCode = authConfig.captchaCode.trim()
     const finalCaptchaCode = resolvedCaptchaCode || fallbackCaptchaCode
     if (!finalCaptchaCode) {

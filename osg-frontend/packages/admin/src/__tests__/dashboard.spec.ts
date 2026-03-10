@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 
 // ========== Dashboard API 类型验证 ==========
@@ -414,5 +416,47 @@ describe('Dashboard page integration', () => {
 
     const allRejected = results.every(r => r.status === 'rejected')
     expect(allRejected).toBe(true)
+  })
+
+  it('uses an admin dashboard fixture so the sidebar matches the prototype truth source', () => {
+    const fixturePath = path.resolve(
+      __dirname,
+      '../../../../tests/e2e/fixtures/permission/dashboard/getInfo.json',
+    )
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf-8'))
+
+    expect(fixture.permissions).toContain('*:*:*')
+    expect(fixture.roles).toContain('admin')
+    expect(fixture.user.userName).toBe('admin')
+  })
+
+  it('keeps the shared sidebar width aligned with the design system token', () => {
+    const layoutPath = path.resolve(__dirname, '../layouts/MainLayout.vue')
+    const source = fs.readFileSync(layoutPath, 'utf-8')
+
+    expect(source).toContain('width: 260px;')
+  })
+
+  it('keeps the dashboard two-column layout in stretch mode so the recent activity rail matches the right stack height', () => {
+    const dashboardPath = path.resolve(__dirname, '../views/dashboard/index.vue')
+    const source = fs.readFileSync(dashboardPath, 'utf-8')
+
+    expect(source).toContain('align-items: stretch;')
+    expect(source).toContain('&__left {')
+    expect(source).toContain('display: flex;')
+    expect(source).toContain('> * {')
+    expect(source).toContain('flex: 1;')
+  })
+
+  it('keeps recent activity stretched through the shared card body instead of collapsing to list height', () => {
+    const recentActivityPath = path.resolve(__dirname, '../views/dashboard/components/RecentActivity.vue')
+    const source = fs.readFileSync(recentActivityPath, 'utf-8')
+
+    expect(source).toContain('height: 100%;')
+    expect(source).toContain(':deep(.ant-card) {')
+    expect(source).toContain(':deep(.ant-card-body) {')
+    expect(source).toContain('display: flex;')
+    expect(source).toContain('flex-direction: column;')
+    expect(source).toContain('flex: 1;')
   })
 })

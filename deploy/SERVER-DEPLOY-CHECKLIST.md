@@ -1,5 +1,11 @@
 # Server Deploy Checklist (Shared-Deps Test / All-In-Docker Prod)
 
+机器真值入口：
+- `/.claude/project/config.yaml`
+
+本文件是部署操作清单，不是规则真源。
+环境身份、真源策略、流程边界以 `config.yaml` 为准。
+
 ## 0. 环境策略
 
 - 开发环境（dev）：后端本地运行，连接测试环境 mysql/redis（共库）。
@@ -15,9 +21,11 @@
 
 ```bash
 # 本地开发后端（共用测试库）
+bash bin/context-preflight.sh dev
 bash bin/run-dev-shared.sh
 
 # 一键远程测试部署（REMOTE_HOST 从 deploy/.env.remote.local 或 --host 传入）
+bash bin/context-preflight.sh test --remote-host 47.94.213.128
 bash bin/deploy-test-remote.sh
 ```
 
@@ -59,6 +67,7 @@ bash bin/deploy-test-remote.sh
 ## 4. 启动前校验
 
 ```bash
+bash bin/context-preflight.sh test --remote-host 47.94.213.128
 bash bin/deploy-preflight.sh test --profile core,frontends
 ```
 

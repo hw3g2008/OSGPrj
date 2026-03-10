@@ -1,6 +1,9 @@
 mode: local-backend-remote-deps
 stack: springboot-vue
 classpath_mode: workspace-reactor
+selection:
+  priority: 100
+  default: true
 env_file: deploy/.env.dev
 run_command: bash bin/run-backend-dev.sh deploy/.env.dev
 port: 28080

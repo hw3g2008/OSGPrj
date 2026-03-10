@@ -49,8 +49,17 @@ const router = useRouter()
 
 <style scoped lang="scss">
 .recent-activity {
+  height: 100%;
+
+  :deep(.ant-card) {
+    height: 100%;
+  }
+
   :deep(.ant-card-body) {
     padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   &__header {
@@ -84,6 +93,7 @@ const router = useRouter()
   &__list {
     display: flex;
     flex-direction: column;
+    flex: 1;
   }
 
   &__item {

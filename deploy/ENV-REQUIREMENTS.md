@@ -1,5 +1,11 @@
 # Docker ENV Requirements
 
+机器真值入口：
+- `/.claude/project/config.yaml`
+
+本文件是运行环境说明和操作投影，不是第二规则源。
+如与 `config.yaml` 冲突，以 `config.yaml` 为准。
+
 ## Dev (`deploy/.env.dev`)
 
 适用场景：后端在本地运行，开发与测试共用同一套测试数据库/Redis 服务。
@@ -24,6 +30,7 @@
 启动命令：
 
 ```bash
+bash bin/context-preflight.sh dev
 bash bin/run-backend-dev.sh deploy/.env.dev
 # or shortcut
 bash bin/run-dev-shared.sh
@@ -32,6 +39,7 @@ bash bin/run-dev-shared.sh
 约束：
 - 本地只启动 backend，不启动本地 Docker MySQL/Redis
 - 依赖 backend 的 E2E / visual gate / final gate 必须复用 `deploy/runtime-contract.dev.yaml`
+- `dev` 相关命令执行前必须先通过 `bin/context-preflight.sh dev`
 
 ## Test (`deploy/.env.test`)
 
@@ -59,6 +67,11 @@ bash bin/run-dev-shared.sh
 - test 环境默认不再拉起 mysql/redis 容器
 - backend 通过 `host.docker.internal` 连接远端服务器上已存在的开发态 mysql/redis
 - `deploy-preflight.sh test --profile core,frontends` 会要求共享依赖端口处于监听状态，而不是要求这些端口空闲
+- 远端测试相关命令执行前必须先通过：
+
+```bash
+bash bin/context-preflight.sh test --remote-host 47.94.213.128
+```
 
 ## Prod (`deploy/.env.prod`)
 

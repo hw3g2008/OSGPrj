@@ -1,0 +1,50 @@
+mode: docker-backend-shared-deps
+stack: springboot-vue
+classpath_mode: container-image
+selection:
+  priority: 200
+  probes:
+    - type: env_equals
+      name: RUNTIME_STACK_TEST_MODE
+      value: "1"
+env_file: deploy/.env.test
+run_command: bash bin/deploy-server-docker.sh test
+port: 28080
+base_url: http://127.0.0.1:28080
+health_url: http://127.0.0.1:28080/actuator/health
+proxy_target: http://127.0.0.1:28080
+tool_env:
+  SPRING_DATA_REDIS_HOST: "127.0.0.1"
+  SPRING_DATA_REDIS_PORT: "26379"
+  SPRING_DATA_REDIS_PASSWORD: "redis123456"
+  E2E_REDIS_HOST: "127.0.0.1"
+  E2E_REDIS_PORT: "26379"
+  E2E_REDIS_PASSWORD: "redis123456"
+  E2E_REDIS_CONTAINER: "osg_test-redis-1"
+  E2E_PROVIDER_LOG_CONTAINER: "osg_test-backend-1"
+  PASSWORD_RESET_PROVIDER_LOG_PATH: "/data/ruoyi/uploadPath/audit/password-reset-mailbox.log"
+deps:
+  mysql: remote
+  redis: remote
+providers:
+  smtp:
+    provider_class: smtp
+    truth_mode: real
+    config_env:
+      host: SPRING_MAIL_HOST
+      port: SPRING_MAIL_PORT
+      username: SPRING_MAIL_USERNAME
+      password: SPRING_MAIL_PASSWORD
+      from: SPRING_MAIL_FROM
+      auth: SPRING_MAIL_SMTP_AUTH
+      starttls: SPRING_MAIL_SMTP_STARTTLS_ENABLE
+      ssl: SPRING_MAIL_SMTP_SSL_ENABLE
+evidence_sinks:
+  mailbox:
+    sink_type: mailbox
+    provider: smtp
+evidence_paths:
+  mailbox:
+    mailbox_target_env: PASSWORD_RESET_MAILBOX
+    provider_log_path_env: PASSWORD_RESET_PROVIDER_LOG_PATH
+    provider_log_container_env: E2E_PROVIDER_LOG_CONTAINER

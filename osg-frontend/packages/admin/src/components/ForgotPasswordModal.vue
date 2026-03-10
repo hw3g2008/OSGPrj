@@ -17,7 +17,7 @@
     </template>
 
     <div class="forgot-modal">
-      <div v-if="currentStep < 4" class="forgot-modal__dots">
+      <div v-if="currentStep < 4" class="forgot-modal__dots" data-content-part="progress-indicator">
         <span
           v-for="dot in 3"
           :key="dot"
@@ -27,8 +27,15 @@
       </div>
 
       <div v-if="currentStep === 1" class="forgot-modal__step">
-        <p class="forgot-modal__hint">请输入您的注册邮箱，我们将发送验证码</p>
-        <a-form ref="emailFormRef" :model="formState" :rules="emailRules" layout="vertical" :required-mark="false">
+        <p class="forgot-modal__hint" data-content-part="supporting-text">请输入您的注册邮箱，我们将发送验证码</p>
+        <a-form
+          ref="emailFormRef"
+          data-content-part="field-group"
+          :model="formState"
+          :rules="emailRules"
+          layout="vertical"
+          :required-mark="false"
+        >
           <a-form-item name="email">
             <template #label>
               <span class="forgot-modal__label">邮箱地址<span class="forgot-modal__required">*</span></span>
@@ -41,6 +48,7 @@
           </a-form-item>
         </a-form>
         <a-button
+          data-content-part="action-row"
           type="primary"
           size="large"
           block
@@ -54,9 +62,16 @@
       </div>
 
       <div v-else-if="currentStep === 2" class="forgot-modal__step">
-        <p class="forgot-modal__hint forgot-modal__hint--compact">验证码已发送至</p>
-        <p class="forgot-modal__masked-email">{{ maskedEmail }}</p>
-        <a-form ref="codeFormRef" :model="formState" :rules="codeRules" layout="vertical" :required-mark="false">
+        <p class="forgot-modal__hint forgot-modal__hint--compact" data-content-part="supporting-text">验证码已发送至</p>
+        <p class="forgot-modal__masked-email" data-content-part="supporting-text">{{ maskedEmail }}</p>
+        <a-form
+          ref="codeFormRef"
+          data-content-part="field-group"
+          :model="formState"
+          :rules="codeRules"
+          layout="vertical"
+          :required-mark="false"
+        >
           <a-form-item name="code">
             <template #label>
               <span class="forgot-modal__label">验证码<span class="forgot-modal__required">*</span></span>
@@ -80,6 +95,7 @@
           </a-form-item>
         </a-form>
         <a-button
+          data-content-part="action-row"
           type="primary"
           size="large"
           block
@@ -93,8 +109,15 @@
       </div>
 
       <div v-else-if="currentStep === 3" class="forgot-modal__step">
-        <p class="forgot-modal__hint">请设置您的新密码</p>
-        <a-form ref="passwordFormRef" :model="formState" :rules="passwordRules" layout="vertical" :required-mark="false">
+        <p class="forgot-modal__hint" data-content-part="supporting-text">请设置您的新密码</p>
+        <a-form
+          ref="passwordFormRef"
+          data-content-part="field-group"
+          :model="formState"
+          :rules="passwordRules"
+          layout="vertical"
+          :required-mark="false"
+        >
           <a-form-item name="password">
             <template #label>
               <span class="forgot-modal__label">新密码<span class="forgot-modal__required">*</span></span>
@@ -135,6 +158,7 @@
         </div>
 
         <a-button
+          data-content-part="action-row"
           type="primary"
           size="large"
           block
@@ -152,8 +176,9 @@
           <CheckCircleFilled />
         </div>
         <h3>密码重置成功</h3>
-        <p>您的密码已成功重置，请使用新密码登录</p>
+        <p data-content-part="supporting-text">您的密码已成功重置，请使用新密码登录</p>
         <a-button
+          data-content-part="action-row"
           type="primary"
           size="large"
           block
@@ -346,6 +371,10 @@ watch(
 
 <style scoped lang="scss">
 .forgot-modal {
+  &__step {
+    padding-bottom: 6px;
+  }
+
   &__title {
     display: inline-flex;
     align-items: center;
@@ -376,23 +405,6 @@ watch(
     }
   }
 
-  &__step {
-    :deep(.ant-form-item) {
-      margin-bottom: 16px;
-    }
-
-    :deep(.ant-form-item-label > label) {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text, #1E293B);
-    }
-
-    :deep(.ant-input-affix-wrapper),
-    :deep(.ant-input) {
-      border-radius: 12px;
-    }
-  }
-
   &__hint {
     margin: 0 0 20px;
     text-align: center;
@@ -407,7 +419,6 @@ watch(
   &__label {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
     color: var(--text, #1e293b);
     font-size: 14px;
     font-weight: 600;
@@ -438,7 +449,7 @@ watch(
   &__resend-btn {
     min-width: 88px;
     white-space: nowrap;
-    border-radius: 12px;
+    border-radius: 10px;
     border-color: var(--border, #E2E8F0);
     color: var(--text2, #64748B);
   }
@@ -474,16 +485,18 @@ watch(
   }
 
   &__primary-btn {
-    height: 44px;
+    min-height: 40px;
+    padding: 10px 20px;
     border: none;
-    border-radius: 12px;
-    font-weight: 600;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     background: var(--primary-gradient, linear-gradient(135deg, #4F46E5, #8B5CF6));
-    box-shadow: 0 10px 24px rgba(99, 102, 241, 0.24);
+    box-shadow: none;
 
     &:hover,
     &:focus {

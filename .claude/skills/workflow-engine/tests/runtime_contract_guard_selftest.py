@@ -21,17 +21,44 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _write_project_config(path: Path) -> None:
+    _write_yaml(
+        path,
+        {
+            "runtime_model": {
+                "dev": {},
+                "test": {
+                    "selection": {
+                        "explicit_activation_env": "RUNTIME_STACK_TEST_MODE",
+                        "explicit_activation_value": "1",
+                        "forbid_probe_types": ["docker_container_running"],
+                    }
+                },
+            }
+        },
+    )
+
+
 def valid_contract() -> dict:
     return {
         "mode": "local-backend-remote-deps",
         "stack": "springboot-vue",
         "classpath_mode": "workspace-reactor",
+        "selection": {
+            "priority": 100,
+            "default": True,
+        },
         "env_file": "deploy/.env.dev",
         "run_command": "bash bin/run-backend-dev.sh deploy/.env.dev",
         "port": 28080,
         "base_url": "http://127.0.0.1:28080",
         "health_url": "http://127.0.0.1:28080/actuator/health",
         "proxy_target": "http://127.0.0.1:28080",
+        "tool_env": {
+            "SPRING_DATA_REDIS_HOST": "127.0.0.1",
+            "SPRING_DATA_REDIS_PORT": "26379",
+            "E2E_REDIS_CONTAINER": "osg_test-redis-1",
+        },
         "deps": {"mysql": "remote", "redis": "remote"},
         "providers": {
             "smtp": {
@@ -56,6 +83,7 @@ def valid_contract() -> dict:
             "mailbox": {
                 "mailbox_target_env": "PASSWORD_RESET_MAILBOX",
                 "provider_log_path_env": "PASSWORD_RESET_PROVIDER_LOG_PATH",
+                "provider_log_container_env": "E2E_PROVIDER_LOG_CONTAINER",
             }
         },
     }
@@ -71,12 +99,14 @@ SPRING_MAIL_PASSWORD=secret123
 SPRING_MAIL_FROM=noreply@example.com
 PASSWORD_RESET_MAILBOX=qa@example.com
 PASSWORD_RESET_PROVIDER_LOG_PATH=/tmp/password-reset-mail.log
+E2E_PROVIDER_LOG_CONTAINER=osg_test-backend-1
 """
 
 
 def test_missing_required_key_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         contract = valid_contract()
         del contract["run_command"]
         _write_yaml(root / "deploy/runtime-contract.dev.yaml", contract)
@@ -88,6 +118,7 @@ def test_missing_required_key_fails() -> None:
 def test_missing_env_file_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         _write_yaml(root / "deploy/runtime-contract.dev.yaml", valid_contract())
         findings = evaluate_contract(root / "deploy/runtime-contract.dev.yaml", root)
         assert any("env_file not found" in item for item in findings), findings
@@ -96,6 +127,7 @@ def test_missing_env_file_fails() -> None:
 def test_port_mismatch_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         contract = valid_contract()
         contract["base_url"] = "http://127.0.0.1:8080"
         _write_yaml(root / "deploy/runtime-contract.dev.yaml", contract)
@@ -107,6 +139,7 @@ def test_port_mismatch_fails() -> None:
 def test_invalid_deps_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         contract = valid_contract()
         contract["deps"] = {"mysql": "wrong", "redis": "remote"}
         _write_yaml(root / "deploy/runtime-contract.dev.yaml", contract)
@@ -118,6 +151,7 @@ def test_invalid_deps_fails() -> None:
 def test_invalid_classpath_mode_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         contract = valid_contract()
         contract["classpath_mode"] = "installed-artifacts"
         _write_yaml(root / "deploy/runtime-contract.dev.yaml", contract)
@@ -126,9 +160,37 @@ def test_invalid_classpath_mode_fails() -> None:
         assert any("classpath_mode=workspace-reactor" in item for item in findings), findings
 
 
+def test_invalid_selection_probe_fails() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
+        contract = valid_contract()
+        contract["selection"] = {
+            "priority": 100,
+            "probes": [{"type": "docker_container_running"}],
+        }
+        _write_yaml(root / "deploy/runtime-contract.dev.yaml", contract)
+        _write(root / "deploy/.env.dev", valid_env_content())
+        findings = evaluate_contract(root / "deploy/runtime-contract.dev.yaml", root)
+        assert any("selection.probes[0].container" in item for item in findings), findings
+
+
+def test_invalid_tool_env_shape_fails() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
+        contract = valid_contract()
+        contract["tool_env"] = {"": "value", "SPRING_DATA_REDIS_PORT": ""}
+        _write_yaml(root / "deploy/runtime-contract.dev.yaml", contract)
+        _write(root / "deploy/.env.dev", valid_env_content())
+        findings = evaluate_contract(root / "deploy/runtime-contract.dev.yaml", root)
+        assert any("tool_env" in item for item in findings), findings
+
+
 def test_missing_truth_source_keys_fail() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         contract = valid_contract()
         del contract["providers"]
         del contract["evidence_sinks"]
@@ -144,6 +206,7 @@ def test_missing_truth_source_keys_fail() -> None:
 def test_invalid_provider_shape_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         contract = valid_contract()
         contract["providers"]["smtp"]["config_env"] = {"host": "", "port": "SPRING_MAIL_PORT"}
         _write_yaml(root / "deploy/runtime-contract.dev.yaml", contract)
@@ -155,6 +218,7 @@ def test_invalid_provider_shape_fails() -> None:
 def test_missing_evidence_env_reference_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         contract = valid_contract()
         _write_yaml(root / "deploy/runtime-contract.dev.yaml", contract)
         _write(
@@ -173,10 +237,56 @@ def test_missing_evidence_env_reference_fails() -> None:
 def test_valid_contract_passes() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
         _write_yaml(root / "deploy/runtime-contract.dev.yaml", valid_contract())
         _write(root / "deploy/.env.dev", valid_env_content())
         findings = evaluate_contract(root / "deploy/runtime-contract.dev.yaml", root)
         assert not findings, findings
+
+
+def test_container_image_contract_can_reference_matching_deploy_env_name() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
+        contract = valid_contract()
+        contract["mode"] = "docker-backend-shared-deps"
+        contract["classpath_mode"] = "container-image"
+        contract["env_file"] = "deploy/.env.test"
+        contract["run_command"] = "bash bin/deploy-server-docker.sh test"
+        contract["selection"] = {
+            "priority": 200,
+            "probes": [
+                {
+                    "type": "env_equals",
+                    "name": "RUNTIME_STACK_TEST_MODE",
+                    "value": "1",
+                }
+            ],
+        }
+        _write_yaml(root / "deploy/runtime-contract.test.yaml", contract)
+        _write(root / "deploy/.env.test", valid_env_content())
+        findings = evaluate_contract(root / "deploy/runtime-contract.test.yaml", root)
+        assert not findings, findings
+
+
+def test_container_image_contract_without_explicit_test_activation_fails() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_project_config(root / ".claude/project/config.yaml")
+        contract = valid_contract()
+        contract["mode"] = "docker-backend-shared-deps"
+        contract["classpath_mode"] = "container-image"
+        contract["env_file"] = "deploy/.env.test"
+        contract["run_command"] = "bash bin/deploy-server-docker.sh test"
+        contract["selection"] = {
+            "priority": 200,
+            "probes": [{"type": "docker_container_running", "container": "osg_test-backend-1"}],
+        }
+        _write_yaml(root / "deploy/runtime-contract.test.yaml", contract)
+        _write(root / "deploy/.env.test", valid_env_content())
+        findings = evaluate_contract(root / "deploy/runtime-contract.test.yaml", root)
+        assert any("forbidden by project config" in item for item in findings), findings
+        assert any("must include env_equals RUNTIME_STACK_TEST_MODE=1" in item for item in findings), findings
 
 
 def main() -> int:
@@ -186,10 +296,14 @@ def main() -> int:
         test_port_mismatch_fails,
         test_invalid_deps_fails,
         test_invalid_classpath_mode_fails,
+        test_invalid_selection_probe_fails,
+        test_invalid_tool_env_shape_fails,
         test_missing_truth_source_keys_fail,
         test_invalid_provider_shape_fails,
         test_missing_evidence_env_reference_fails,
         test_valid_contract_passes,
+        test_container_image_contract_can_reference_matching_deploy_env_name,
+        test_container_image_contract_without_explicit_test_activation_fails,
     ]
     for fn in tests:
         fn()

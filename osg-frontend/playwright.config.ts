@@ -8,6 +8,11 @@ const reuseExistingServer =
   process.env.PW_E2E_REUSE_SERVER === undefined
     ? !process.env.CI
     : process.env.PW_E2E_REUSE_SERVER === '1'
+const parsedWebServerTimeout = Number.parseInt(process.env.PW_WEBSERVER_TIMEOUT_MS ?? '', 10)
+const webServerTimeoutMs =
+  Number.isFinite(parsedWebServerTimeout) && parsedWebServerTimeout > 0
+    ? parsedWebServerTimeout
+    : 300_000
 
 const snapshotPathTemplate = process.env.PW_VISUAL_SNAPSHOT_TEMPLATE
 const stability = resolveStabilityConfigFromEnv()
@@ -41,6 +46,6 @@ export default defineConfig({
     command: 'pnpm --dir packages/admin build && pnpm --dir packages/admin preview --port 4173',
     port: 4173,
     reuseExistingServer,
-    timeout: 120_000,
+    timeout: webServerTimeoutMs,
   },
 })

@@ -20,6 +20,7 @@
 
     <a-form
       ref="formRef"
+      data-content-part="field-group"
       :model="formState"
       :rules="rules"
       layout="vertical"
@@ -48,7 +49,7 @@
         <template #label>
           <span class="role-modal__label">权限模块<span class="role-modal__required">*</span></span>
         </template>
-        <p class="role-modal__tip">勾选该角色可访问的功能模块，点击分组名称可全选/取消该分组</p>
+        <p class="role-modal__tip" data-content-part="supporting-text">勾选该角色可访问的功能模块，点击分组名称可全选/取消该分组</p>
         <div class="role-modal__perm-panel">
           <section
             v-for="group in permissionGroups"
@@ -277,19 +278,23 @@ const handleSubmit = async () => {
 }
 
 .role-modal__body {
-  max-height: 500px;
+  max-height: 434px;
+  padding-bottom: 18px;
+
+  :deep(.ant-form-item) {
+    margin-bottom: 4px;
+  }
 }
 
 .role-modal__tip {
   font-size: 12px;
   color: var(--text-secondary, #64748b);
-  margin: 0 0 12px;
+  margin: 0 0 6px;
 }
 
 .role-modal__label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
   font-size: 14px;
   font-weight: 600;
   color: var(--text, #1e293b);
@@ -302,12 +307,12 @@ const handleSubmit = async () => {
 .role-modal__perm-panel {
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 8px;
-  padding: 16px;
+  padding: 8px;
   background: #fff;
 }
 
 .role-modal__perm-group {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 
   &:last-child {
     margin-bottom: 0;
@@ -317,10 +322,10 @@ const handleSubmit = async () => {
 .role-modal__perm-group-label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
   color: var(--text, #1e293b);
 }
 
@@ -335,9 +340,10 @@ const handleSubmit = async () => {
 
 .role-modal__perm-items {
   display: flex;
-  gap: 16px;
+  column-gap: 10px;
+  row-gap: 4px;
   flex-wrap: wrap;
-  padding-left: 28px;
+  padding-left: 20px;
 }
 
 .role-modal__perm-item {
@@ -353,7 +359,7 @@ const handleSubmit = async () => {
   border-radius: 10px;
   color: var(--text-secondary, #64748b);
   font-weight: 500;
-  min-width: 88px;
+  min-width: 80px;
 }
 
 .role-modal__confirm-btn {
@@ -361,7 +367,7 @@ const handleSubmit = async () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-width: 112px;
+  min-width: 96px;
   border: none;
   border-radius: 10px;
   color: #fff;

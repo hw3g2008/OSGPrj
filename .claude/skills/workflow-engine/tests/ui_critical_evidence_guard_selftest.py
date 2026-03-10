@@ -105,6 +105,18 @@ def build_contract() -> dict:
                         "mask_allowed": False,
                     },
                 ],
+                "content_parts": [
+                    {
+                        "part_id": "title",
+                        "selector": "[data-content-part='title']",
+                        "required": True,
+                    },
+                    {
+                        "part_id": "action-row",
+                        "selector": "[data-content-part='action-row']",
+                        "required": True,
+                    },
+                ],
                 "style_contracts": [
                     {
                         "selector": "[data-surface-part='shell']",
@@ -235,6 +247,24 @@ def build_page_report() -> dict:
                                 "result": "PASS",
                             },
                         ],
+                        "content_part_results": [
+                            {
+                                "part_id": "title",
+                                "selector": "[data-content-part='title']",
+                                "required": True,
+                                "exists": True,
+                                "visible": True,
+                                "result": "PASS",
+                            },
+                            {
+                                "part_id": "action-row",
+                                "selector": "[data-content-part='action-row']",
+                                "required": True,
+                                "exists": True,
+                                "visible": True,
+                                "result": "PASS",
+                            },
+                        ],
                         "style_contracts_total": 2,
                         "style_contracts_passed": 2,
                         "style_contracts_failed": 0,
@@ -316,6 +346,14 @@ def test_missing_surface_viewport_evidence_fails(module) -> None:
     assert any("missing viewport result" in issue for issue in issues), issues
 
 
+def test_missing_content_part_evidence_fails(module) -> None:
+    contract = build_contract()
+    report = build_page_report()
+    del report["surfaces"][0]["viewport_results"][0]["content_part_results"]
+    issues = collect_issues(module, contract, report)
+    assert any("content_part_results" in issue or "content part" in issue for issue in issues), issues
+
+
 def test_overlay_surface_evidence_passes(module) -> None:
     contract = build_contract()
     report = build_page_report()
@@ -331,6 +369,7 @@ def main() -> int:
         test_complete_evidence_package_passes,
         test_next_stage_accepts_structure_but_blocks_mask,
         test_missing_surface_viewport_evidence_fails,
+        test_missing_content_part_evidence_fails,
         test_overlay_surface_evidence_passes,
     ]
     for fn in tests:

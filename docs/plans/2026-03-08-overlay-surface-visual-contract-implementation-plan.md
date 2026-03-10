@@ -59,6 +59,7 @@ Prove that the generic overlay surface model covers every currently declared ove
    - `surface_type`
    - `trigger_action`
    - `surface_parts`
+   - `content_parts`
    - `viewport_variants`
    - `state_contracts`
 3. Persist the audit result into `osg-spec-docs/tasks/audit/overlay-surface-inventory-latest.md`, including:
@@ -101,19 +102,29 @@ Make source-stage generation create overlay surface skeletons automatically.
    - PRD sections for overlays
    - prototype HTML IDs/selectors
 2. It must generate `surfaces:` skeletons in `UI-VISUAL-CONTRACT.yaml`.
-3. It must prefill shell-level surface parts using design-system defaults:
+3. It must annotate generated content-part roles in a generic, reusable way rather than copying business copy into contract fields.
+4. It must prefill shell-level surface parts using design-system defaults:
    - `backdrop`
    - `shell`
    - `header`
    - `body`
    - `footer`
    - `close-control`
-4. It must prefill `viewport_variants` for desktop/tablet at minimum.
-5. `.claude/skills/brainstorming/SKILL.md` must treat `surface inventory + first-pass surface contract skeleton` as required source-stage inputs for framework/UI work.
-6. `.windsurf/workflows/brainstorm.md` must fail before approval if either `surface inventory` or generated overlay skeletons are missing.
-7. `check-skill-artifacts.sh` must fail if declared surfaces are missing from generated artifacts.
-8. Source-stage validation must fail if generated overlay skeletons exist but omit required shell defaults:
+4. It must prefill generic `content_parts` skeletons using prototype structure and design-system tokens for:
+   - `title`
+   - `supporting-text`
+   - `progress-indicator`
+   - `field-group`
+   - `action-row`
+   - `status-banner`
+   - `helper-text`
+5. It must prefill `viewport_variants` for desktop/tablet at minimum.
+6. `.claude/skills/brainstorming/SKILL.md` must treat `surface inventory + first-pass surface contract skeleton` as required source-stage inputs for framework/UI work.
+7. `.windsurf/workflows/brainstorm.md` must fail before approval if either `surface inventory` or generated overlay skeletons are missing.
+8. `check-skill-artifacts.sh` must fail if declared surfaces are missing from generated artifacts.
+9. Source-stage validation must fail if generated overlay skeletons exist but omit required defaults:
    - `surface_parts`
+   - `content_parts`
    - `viewport_variants`
 
 ### Verification
@@ -144,6 +155,7 @@ Add generic `surfaces` support to the visual contract model and fail when declar
    - `trigger_action`
    - `required_anchors`
    - `surface_parts`
+   - `content_parts`
    - `viewport_variants`
    - `surface_root_selector`
    - `backdrop_selector`
@@ -151,7 +163,8 @@ Add generic `surfaces` support to the visual contract model and fail when declar
 3. Extend guard to compare PRD/MATRIX-declared surface IDs with contract surface IDs.
 4. Reject contracts where declared overlay surfaces are missing.
 5. Reject contracts missing shell-level style contracts for required parts.
-6. Reject contracts where declared `state_contracts` omit state-specific `style_contracts`.
+6. Reject contracts missing content-level style coverage for declared `content_parts`.
+7. Reject contracts where declared `state_contracts` omit state-specific `style_contracts`.
 
 ### Verification
 
@@ -187,9 +200,10 @@ Make `ui-visual-gate` and Playwright evidence emitters capture overlay surfaces 
    - route-param-triggered surfaces
    - initially auto-open surfaces
 2. Page report must include surface-level evidence metadata.
-3. Page report must include part-level evidence metadata.
-4. Page report must include viewport-variant evidence metadata.
-5. Overlay execution must support:
+3. Page report must include surface-part evidence metadata.
+4. Page report must include content-part evidence metadata.
+5. Page report must include viewport-variant evidence metadata.
+6. Overlay execution must support:
    - scroll-locked shell states
    - nested or stacked surfaces when explicitly declared
    - animation-stable capture after transition completion
@@ -230,6 +244,7 @@ Ensure overlay UI tests are generated during normal workflow stages, not manuall
    - ticket-level verification stubs
    - traceability rows for surface states
    - traceability rows for viewport variants when declared
+   - traceability rows for content-part critical checks when declared
 3. `approve` and coverage guards must fail if declared surfaces have no generated test skeletons.
 
 ### Verification
@@ -261,8 +276,9 @@ Use the framework outputs to bring `permission` into alignment. This is validati
    - `modal-reset-password`
    - `modal-force-change-pwd`
 3. Prove the framework catches omissions before implementation completion.
-4. Prove shell-level style parts and state-specific style contracts are generated for these surfaces.
+4. Prove shell-level style parts and generic content parts are generated for these surfaces.
 5. Prove state-style evidence is emitted for every declared surface state.
+6. Prove content-part evidence is emitted for every declared surface that declares `content_parts`.
 
 ### Verification
 
@@ -290,6 +306,7 @@ Ensure overlay omissions are process failures and final-gate only backstops.
    - declared surfaces have generated tests
    - declared surfaces have evidence
    - declared surface parts have evidence
+   - declared content parts have evidence
    - declared viewport variants have evidence
 
 ### Verification
@@ -307,9 +324,10 @@ The implementation is complete only when:
 4. Verify fails on missing overlay evidence before final-gate.
 5. Final-gate passes only when page and overlay evidence are both complete.
 6. Overlay shell styles are generated from design-system defaults and validated as contract parts.
-7. State-specific style drift and viewport-specific drift are both detectable.
-8. Repository-wide overlay inventory passes before any module proof case is accepted as framework closure.
-9. Repository-wide inventory emits a persistent audit artifact that can be re-read and diffed in later validation rounds.
+7. Generic content-layer styles are generated and validated as contract parts.
+8. State-specific style drift and viewport-specific drift are both detectable.
+9. Repository-wide overlay inventory passes before any module proof case is accepted as framework closure.
+10. Repository-wide inventory emits a persistent audit artifact that can be re-read and diffed in later validation rounds.
 
 ## 12. Regression Checklist
 
@@ -324,7 +342,13 @@ Run after implementation:
 7. `python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard_selftest.py`
 8. `python3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard_selftest.py`
 9. `bash bin/ui-visual-gate.sh permission`
-10. `bash bin/final-gate.sh permission`
+10. `python3 - <<'PY'
+from pathlib import Path
+text=Path('osg-spec-docs/docs/01-product/prd/permission/UI-VISUAL-CONTRACT.yaml').read_text()
+assert 'content_parts:' in text
+print('PASS: content_parts present in permission contract')
+PY`
+11. `bash bin/final-gate.sh permission`
 
 ## 13. Commit Boundary
 

@@ -113,6 +113,11 @@ onMounted(() => {
     font-weight: 700;
     color: var(--text, #1E293B);
     margin: 0 0 4px 0;
+    display: inline-block;
+    text-decoration: none;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
   }
 
   &__date {
@@ -131,10 +136,17 @@ onMounted(() => {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 20px;
+    align-items: stretch;
   }
 
   &__left {
+    display: flex;
     min-width: 0;
+
+    > * {
+      flex: 1;
+      min-width: 0;
+    }
   }
 
   &__right {

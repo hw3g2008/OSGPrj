@@ -38,25 +38,26 @@
         </template>
       </nav>
 
-      <div class="sidebar-footer">
-        <button type="button" class="user-card" @click="showProfileModal = true">
+      <div ref="footerMenuRef" class="sidebar-footer">
+        <button type="button" class="user-card" @click="toggleUserMenu">
           <div class="user-avatar">{{ userInitials }}</div>
           <div class="user-info">
             <h4>{{ displayName }}</h4>
             <p>点击展开</p>
           </div>
         </button>
+        <div v-if="showUserMenu" class="user-menu" role="menu" aria-label="用户菜单">
+          <button type="button" class="user-menu-item" @click="openProfileSettings">
+            个人设置
+          </button>
+          <button type="button" class="user-menu-item danger" @click="handleLogout">
+            退出登录
+          </button>
+        </div>
       </div>
     </aside>
 
     <div class="main-panel">
-      <header class="topbar">
-        <div class="topbar-right">
-          <span class="user-name">{{ displayName }}</span>
-          <a-button type="link" danger @click="handleLogout">退出登录</a-button>
-        </div>
-      </header>
-
       <main class="content">
         <router-view />
       </main>
@@ -69,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
 import {
@@ -115,6 +116,8 @@ interface MenuGroup {
 }
 
 const showProfileModal = ref(false)
+const showUserMenu = ref(false)
+const footerMenuRef = ref<HTMLElement | null>(null)
 
 const menuGroups: MenuGroup[] = [
   {
@@ -216,7 +219,17 @@ const navigate = (path: string) => {
   }
 }
 
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
+const openProfileSettings = () => {
+  showUserMenu.value = false
+  showProfileModal.value = true
+}
+
 const handleLogout = () => {
+  showUserMenu.value = false
   Modal.confirm({
     title: '确认退出',
     content: '确定要退出登录吗？',
@@ -230,10 +243,22 @@ const handleLogout = () => {
   })
 }
 
+const handleDocumentClick = (event: MouseEvent) => {
+  const target = event.target as Node | null
+  if (!target) return
+  if (footerMenuRef.value?.contains(target)) return
+  showUserMenu.value = false
+}
+
 onMounted(async () => {
+  document.addEventListener('click', handleDocumentClick)
   if (!userStore.userInfo) {
     await userStore.fetchInfo()
   }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
 })
 </script>
 
@@ -245,7 +270,7 @@ onMounted(async () => {
 }
 
 .sidebar {
-  width: 220px;
+  width: 260px;
   height: 100vh;
   background: #fff;
   border-right: 1px solid #e2e8f0;
@@ -351,6 +376,7 @@ onMounted(async () => {
 .sidebar-footer {
   padding: 16px;
   border-top: 1px solid #e2e8f0;
+  position: relative;
 }
 
 .user-card {
@@ -364,6 +390,50 @@ onMounted(async () => {
   gap: 12px;
   cursor: pointer;
   text-align: left;
+}
+
+.user-menu {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(100% + 8px);
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 30;
+}
+
+.user-menu-item {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.user-menu-item:hover {
+  background: #f8fafc;
+  color: #4f46e5;
+}
+
+.user-menu-item.danger {
+  color: #dc2626;
+}
+
+.user-menu-item.danger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .user-avatar {
@@ -395,28 +465,6 @@ onMounted(async () => {
 .main-panel {
   min-width: 0;
   flex: 1;
-}
-
-.topbar {
-  height: 56px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 24px;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.user-name {
-  color: #1e293b;
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .content {

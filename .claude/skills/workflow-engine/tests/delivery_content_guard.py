@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import json
 from pathlib import Path
 from typing import Iterable
 
-from runtime_contract_guard import load_env_vars, load_yaml
+from runtime_contract_guard import load_yaml, resolve_runtime_env_vars
 
 VERIFY_LIKE_STAGES = {"verify", "final-gate", "final-closure"}
 CONTENT_FIELDS = ("body", "content", "payload", "message", "text", "subject")
@@ -18,15 +19,25 @@ def _is_non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _resolve_env_file(runtime_contract: dict, repo_root: Path) -> tuple[dict[str, str], list[str]]:
+def _read_evidence_text(*, host_path: Path, container_name: str | None) -> tuple[str | None, list[str]]:
     findings: list[str] = []
-    env_file_value = runtime_contract.get("env_file")
-    if not _is_non_empty_string(env_file_value):
-        return {}, ["runtime contract missing env_file"]
-    env_path = repo_root / str(env_file_value)
-    if not env_path.exists():
-        return {}, [f"runtime env file not found: {env_file_value}"]
-    return load_env_vars(env_path), findings
+    if host_path.exists():
+        return host_path.read_text(encoding="utf-8", errors="ignore"), findings
+    if container_name:
+        try:
+            output = subprocess.check_output(
+                ["docker", "exec", container_name, "cat", str(host_path)],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            )
+            return output, findings
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            findings.append(
+                f"missing content evidence path: {host_path} (host missing; docker exec {container_name} cat failed)"
+            )
+            return None, findings
+    findings.append(f"missing content evidence path: {host_path}")
+    return None, findings
 
 
 def _resolve_evidence_paths(
@@ -35,7 +46,7 @@ def _resolve_evidence_paths(
     runtime_contract: dict,
     env_vars: dict[str, str],
     repo_root: Path,
-) -> tuple[list[Path], list[str]]:
+) -> tuple[list[tuple[Path, str | None]], list[str]]:
     findings: list[str] = []
     evidence_mode = capability.get("evidence_mode")
     capability_id = capability.get("capability_id", "<unknown>")
@@ -47,7 +58,11 @@ def _resolve_evidence_paths(
     if not isinstance(path_decl, dict):
         return [], [f"capability {capability_id} missing runtime evidence_paths entry={evidence_mode}"]
 
-    resolved: list[Path] = []
+    resolved: list[tuple[Path, str | None]] = []
+    container_env_name = path_decl.get("provider_log_container_env")
+    container_name = None
+    if _is_non_empty_string(container_env_name):
+        container_name = env_vars.get(str(container_env_name), "").strip() or None
     for field, env_name in path_decl.items():
         if not (isinstance(field, str) and field.endswith("_path_env")):
             continue
@@ -61,7 +76,7 @@ def _resolve_evidence_paths(
         candidate = Path(raw_path)
         if not candidate.is_absolute():
             candidate = (repo_root / candidate).resolve()
-        resolved.append(candidate)
+        resolved.append((candidate, container_name))
 
     if not resolved:
         findings.append(f"capability {capability_id} has no *_path_env evidence declarations")
@@ -159,7 +174,7 @@ def evaluate_delivery_content(
 
     contract = load_yaml(contract_path)
     runtime_contract = load_yaml(runtime_contract_path)
-    env_vars, env_findings = _resolve_env_file(runtime_contract, repo_root)
+    env_vars, env_findings = resolve_runtime_env_vars(runtime_contract, repo_root)
     findings.extend(env_findings)
 
     for capability in contract.get("capabilities") or []:
@@ -182,11 +197,11 @@ def evaluate_delivery_content(
             continue
 
         selected_contents: list[str] = []
-        for path in evidence_paths:
-            if not path.exists():
-                findings.append(f"capability {capability_id} missing content evidence path: {path}")
+        for path, container_name in evidence_paths:
+            text, evidence_findings = _read_evidence_text(host_path=path, container_name=container_name)
+            findings.extend(f"capability {capability_id} {item}" for item in evidence_findings)
+            if text is None:
                 continue
-            text = path.read_text(encoding="utf-8", errors="ignore")
             records = list(_iter_jsonl_objects(text))
             selected_records = _select_records(capability_id, records)
             if not selected_records:

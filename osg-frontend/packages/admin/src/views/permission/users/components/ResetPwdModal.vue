@@ -3,6 +3,7 @@
     surface-id="modal-reset-password"
     :open="visible"
     width="400px"
+    body-class="reset-pwd-modal__body"
     @cancel="handleClose"
   >
     <template #title>
@@ -12,13 +13,14 @@
       </span>
     </template>
 
-    <div class="reset-pwd-modal__warning">
+    <div class="reset-pwd-modal__warning" data-content-part="status-banner">
       <span class="mdi mdi-alert" aria-hidden="true" />
       <p>重置后该用户需使用新密码登录</p>
     </div>
 
     <a-form
       ref="formRef"
+      data-content-part="field-group"
       :model="formState"
       :rules="rules"
       layout="vertical"
@@ -48,16 +50,18 @@
     </a-form>
 
     <template #footer>
-      <a-button class="reset-pwd-modal__cancel-btn" @click="handleClose">取消</a-button>
-      <a-button
-        type="primary"
-        :loading="loading"
-        class="reset-pwd-modal__confirm-btn"
-        @click="handleSubmit"
-      >
-        <span class="mdi mdi-check" aria-hidden="true" />
-        <span>确认重置</span>
-      </a-button>
+      <div data-content-part="action-row" class="reset-pwd-modal__actions">
+        <a-button class="reset-pwd-modal__cancel-btn" @click="handleClose">取消</a-button>
+        <a-button
+          type="primary"
+          :loading="loading"
+          class="reset-pwd-modal__confirm-btn"
+          @click="handleSubmit"
+        >
+          <span class="mdi mdi-check" aria-hidden="true" />
+          <span>确认重置</span>
+        </a-button>
+      </div>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -155,7 +159,6 @@ const handleSubmit = async () => {
 .reset-pwd-modal__label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
   color: var(--text, #1e293b);
   font-size: 14px;
   font-weight: 600;
@@ -169,8 +172,8 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
   border-radius: 8px;
   background: #fef3c7;
 
@@ -185,12 +188,24 @@ const handleSubmit = async () => {
   }
 }
 
+.reset-pwd-modal__body {
+  :deep(.ant-form-item) {
+    margin-bottom: 12px;
+  }
+}
+
 .reset-pwd-modal__cancel-btn {
   border-color: var(--border, #d0d7e2);
   border-radius: 10px;
   color: var(--text-secondary, #64748b);
   font-weight: 500;
-  min-width: 88px;
+  min-width: 80px;
+}
+
+.reset-pwd-modal__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .reset-pwd-modal__confirm-btn {

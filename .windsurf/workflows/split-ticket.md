@@ -16,12 +16,16 @@ description: 将 Story 拆分为微任务 Tickets（2-5 分钟粒度）- 对应 
 
 - Stories 已审批通过
 - 指定的 Story 状态为 `approved` 或 `pending`
+- 必须先通过单一真源同步守卫：
+  - `python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py --module {module}`
+  - 若存在已确认 UI 真源变更但 `prototype_synced=false`，立即停止拆分，先回补 HTML 原型
 
 ## 执行步骤
 
 1. **读取 Story**
    - 读取 `osg-spec-docs/tasks/stories/S-xxx.yaml`
    - 理解 Story 的功能需求和验收标准
+   - 运行 `truth_sync_guard.py`；失败时不得进入 ticket/test skeleton 扩展
 
 2. **拆分 Tickets**
    - 调用 ticket-splitter skill

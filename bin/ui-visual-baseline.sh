@@ -122,6 +122,16 @@ contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) 
 Path("${CONTRACT_JSON}").write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
 PY
 
+CONTRACT_FIXED_TIME="$(python3 - <<PY
+import json
+from pathlib import Path
+contract = json.loads(Path("${CONTRACT_JSON}").read_text(encoding="utf-8"))
+stability = contract.get("stability") or {}
+value = stability.get("fixed_time") if isinstance(stability, dict) else ""
+print(value or "")
+PY
+)"
+
 HAS_STATE_CASES="$(python3 - <<PY
 import json
 from pathlib import Path
@@ -140,8 +150,17 @@ echo "INFO: has_state_cases=${HAS_STATE_CASES}"
 STABILITY_TZ="${UI_VISUAL_STABILITY_TZ:-Asia/Shanghai}"
 STABILITY_LOCALE="${UI_VISUAL_STABILITY_LOCALE:-zh-CN}"
 STABILITY_ENFORCE_ZH="${UI_VISUAL_ENFORCE_ZH_LOCALE:-1}"
-STABILITY_REQUIRE_FIXED="${UI_VISUAL_REQUIRE_FIXED_TIME:-0}"
-STABILITY_FIXED_TIME="${E2E_FIXED_TIME:-}"
+STABILITY_REQUIRE_FIXED_RAW="${UI_VISUAL_REQUIRE_FIXED_TIME:-}"
+if [[ -z "${STABILITY_REQUIRE_FIXED_RAW}" ]]; then
+  if [[ -n "${CONTRACT_FIXED_TIME}" ]]; then
+    STABILITY_REQUIRE_FIXED="1"
+  else
+    STABILITY_REQUIRE_FIXED="0"
+  fi
+else
+  STABILITY_REQUIRE_FIXED="${STABILITY_REQUIRE_FIXED_RAW}"
+fi
+STABILITY_FIXED_TIME="${E2E_FIXED_TIME:-${CONTRACT_FIXED_TIME:-}}"
 STABILITY_DEVICE_SCALE_FACTOR="${UI_VISUAL_STABILITY_DEVICE_SCALE_FACTOR:-1}"
 STABILITY_USER_AGENT="${UI_VISUAL_STABILITY_USER_AGENT:-Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36}"
 STABILITY_FONT_FAMILY="${UI_VISUAL_STABILITY_FONT_FAMILY:-'Inter', -apple-system, BlinkMacSystemFont, sans-serif}"
@@ -189,6 +208,9 @@ echo "INFO: stability_device_scale_factor=${STABILITY_DEVICE_SCALE_FACTOR}"
 echo "INFO: stability_disable_animation=${STABILITY_DISABLE_ANIMATION}"
 echo "INFO: stability_user_agent=${STABILITY_USER_AGENT}"
 echo "INFO: stability_font_family=${STABILITY_FONT_FAMILY}"
+if [[ -n "${CONTRACT_FIXED_TIME}" ]]; then
+  echo "INFO: contract_fixed_time=${CONTRACT_FIXED_TIME}"
+fi
 echo "INFO: stability_require_fixed_time=${STABILITY_REQUIRE_FIXED}"
 if [[ -n "${STABILITY_FIXED_TIME}" ]]; then
   echo "INFO: stability_fixed_time=${STABILITY_FIXED_TIME}"

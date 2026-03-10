@@ -17,14 +17,15 @@ description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
 
 2. **前置守卫（必须通过）**
    - 运行：
+     - `python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py --module {current_requirement}`
      - `python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py --state osg-spec-docs/tasks/STATE.yaml --config .claude/project/config.yaml --state-machine .claude/skills/workflow-engine/state-machine.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets --proofs-dir osg-spec-docs/tasks/proofs`
      - `python3 .claude/skills/workflow-engine/tests/done_ticket_evidence_guard.py --state osg-spec-docs/tasks/STATE.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets`
      - `python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py --module {current_requirement} --story-id {current_story}`
      - `python3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py --module-dir osg-spec-docs/docs/01-product/prd/{current_requirement}`
-     - `python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py --module {current_requirement} --stage verify`
-     - `python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py --contract osg-spec-docs/docs/01-product/prd/{current_requirement}/DELIVERY-CONTRACT.yaml --runtime-contract deploy/runtime-contract.dev.yaml --stage verify`
+   - `python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py --module {current_requirement} --runtime-contract {resolved_runtime_contract_file} --stage verify`
+   - `python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py --contract osg-spec-docs/docs/01-product/prd/{current_requirement}/DELIVERY-CONTRACT.yaml --runtime-contract {resolved_runtime_contract_file} --stage verify`
      - `python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py --contract osg-spec-docs/docs/01-product/prd/{current_requirement}/UI-VISUAL-CONTRACT.yaml --page-report osg-spec-docs/tasks/audit/ui-visual-page-report-{current_requirement}-{today}.json --stage verify`
-   - 任一失败即停止 `/verify`，先修复状态/测试资产/HTML 真源派生缺口/真实性/内容质量证据再重试
+   - 任一失败即停止 `/verify`，先修复状态/测试资产/HTML 真源同步/HTML 真源派生缺口/真实性/内容质量证据再重试
 
 3. **调用统一验收引擎**
    - 调用 verification skill 的 `verify_story(story_id)`

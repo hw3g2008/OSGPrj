@@ -251,6 +251,7 @@ def _validate_overlay_surface_result(
     expected_state_total = len(surface_contract.get("state_contracts") or [])
     expected_state_style_total = _surface_state_style_contract_total(surface_contract)
     expected_parts = surface_contract.get("surface_parts") or []
+    expected_content_parts = surface_contract.get("content_parts") or []
     expected_state_contracts = surface_contract.get("state_contracts") or []
 
     for viewport_contract in surface_contract.get("viewport_variants") or []:
@@ -354,6 +355,48 @@ def _validate_overlay_surface_result(
                         _err(errors, f"{ptag}.{key} must be boolean")
                 if stage in VERIFY_LIKE_STAGES and part_result.get("result") != "PASS":
                     _err(errors, f"{ptag}.result must be PASS in {stage}")
+
+        content_part_results = viewport_result.get("content_part_results")
+        if expected_content_parts:
+            if not isinstance(content_part_results, list):
+                _err(errors, f"{vtag}.content_part_results must be list")
+            else:
+                content_part_map: dict[str, dict[str, Any]] = {}
+                for index, part_result in enumerate(content_part_results):
+                    ptag = f"{vtag}.content_part_results[{index}]"
+                    if not isinstance(part_result, dict):
+                        _err(errors, f"{ptag} must be object")
+                        continue
+                    part_id = part_result.get("part_id")
+                    if not _is_non_empty_string(part_id):
+                        _err(errors, f"{ptag}.part_id must be non-empty string")
+                        continue
+                    if part_id in content_part_map:
+                        _err(errors, f"{ptag}.part_id duplicated: {part_id}")
+                        continue
+                    content_part_map[part_id] = part_result
+
+                for part_contract in expected_content_parts:
+                    if not isinstance(part_contract, dict):
+                        continue
+                    part_id = part_contract.get("part_id")
+                    if not _is_non_empty_string(part_id):
+                        continue
+                    part_result = content_part_map.get(part_id)
+                    if part_result is None:
+                        _err(errors, f"{vtag} missing content_part_result for {part_id}")
+                        continue
+                    ptag = f"{vtag}.content_part_results[{part_id}]"
+                    if part_result.get("selector") != part_contract.get("selector"):
+                        _err(errors, f"{ptag}.selector must match contract")
+                    expected_required = part_contract.get("required", True)
+                    if part_result.get("required") != expected_required:
+                        _err(errors, f"{ptag}.required must match contract")
+                    for key in ("exists", "visible"):
+                        if not isinstance(part_result.get(key), bool):
+                            _err(errors, f"{ptag}.{key} must be boolean")
+                    if stage in VERIFY_LIKE_STAGES and expected_required and part_result.get("result") != "PASS":
+                        _err(errors, f"{ptag}.result must be PASS in {stage}")
 
         state_results = viewport_result.get("state_results")
         if not isinstance(state_results, list):

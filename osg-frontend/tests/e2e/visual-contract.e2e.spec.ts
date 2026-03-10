@@ -5,6 +5,7 @@ import { loginAsAdmin } from './support/auth'
 import { isCssSemanticallyEqual } from './support/css-value'
 import { resolvePrototypePageKey } from './support/prototype-contract'
 import { assertStyleContracts } from './support/style-contract'
+import { performSurfaceTrigger, waitForVisualSettle } from './support/surface-trigger'
 import { applyStabilityToPage, resolveStabilityConfigFromEnv } from './support/test-stability'
 import {
   baselineRefToSnapshotArg,
@@ -616,8 +617,7 @@ async function navigateToVisualTarget(
     await page.goto(pageContract.route)
   }
 
-  await page.waitForLoadState('networkidle')
-  await page.waitForTimeout(pageContract.stable_wait_ms || 300)
+  await waitForVisualSettle(page, pageContract.stable_wait_ms || 300)
 }
 
 function mergeFixtureRoutes(
@@ -643,78 +643,6 @@ function findHostPageContract(surfaceContract: VisualSurfaceContract): VisualPag
     throw new Error(`host page missing for surface '${surfaceContract.surface_id}': ${surfaceContract.host_page_id}`)
   }
   return pageContract
-}
-
-async function performSurfaceTrigger(page: Page, hostPage: VisualPageContract, surface: VisualSurfaceContract): Promise<void> {
-  const trigger = surface.trigger_action || { type: 'auto-open' }
-  const selector =
-    visualSource === 'prototype'
-      ? trigger.prototype_selector?.trim() || trigger.selector?.trim()
-      : trigger.selector?.trim()
-  const script =
-    visualSource === 'prototype'
-      ? trigger.prototype_script?.trim()
-      : trigger.script?.trim()
-  switch (trigger.type) {
-    case 'click': {
-      if (script) {
-        await page.evaluate(scriptText => {
-          // eslint-disable-next-line no-new-func
-          const fn = new Function(scriptText)
-          return fn()
-        }, script)
-        break
-      }
-      if (!selector) {
-        throw new Error(`surface '${surface.surface_id}' click trigger missing selector`)
-      }
-      const locator = page.locator(selector).first()
-      await expect(locator, `surface trigger should exist: ${selector}`).toBeVisible()
-      await locator.click()
-      break
-    }
-    case 'keyboard': {
-      const key = trigger.key?.trim()
-      if (!key) {
-        throw new Error(`surface '${surface.surface_id}' keyboard trigger missing key`)
-      }
-      if (selector) {
-        const target = page.locator(selector).first()
-        await expect(target, `surface keyboard trigger target should exist: ${selector}`).toBeVisible()
-        await target.focus()
-      }
-      await page.keyboard.press(key)
-      break
-    }
-    case 'route-param': {
-      if (visualSource !== 'app') {
-        throw new Error(`surface '${surface.surface_id}' route-param trigger is only supported for app source`)
-      }
-      const param = trigger.param?.trim()
-      const value = trigger.value?.trim()
-      if (!param || !value) {
-        throw new Error(`surface '${surface.surface_id}' route-param trigger requires param and value`)
-      }
-      const url = new URL(hostPage.route, 'http://127.0.0.1')
-      url.searchParams.set(param, value)
-      await page.goto(`${url.pathname}${url.search}`)
-      break
-    }
-    case 'auto-open':
-      if (script) {
-        await page.evaluate(scriptText => {
-          // eslint-disable-next-line no-new-func
-          const fn = new Function(scriptText)
-          return fn()
-        }, script)
-      }
-      break
-    default:
-      throw new Error(`unsupported trigger type for surface '${surface.surface_id}': ${trigger.type}`)
-  }
-
-  await page.waitForLoadState('networkidle')
-  await page.waitForTimeout(hostPage.stable_wait_ms || 300)
 }
 
 async function resolveSurfaceRoot(page: Page, surface: VisualSurfaceContract): Promise<Locator> {
@@ -747,6 +675,26 @@ async function collectSurfacePartResults(page: Page, surface: VisualSurfaceContr
       exists,
       visible,
       result: exists && visible ? 'PASS' : 'FAIL',
+    })
+  }
+  return results
+}
+
+async function collectContentPartResults(page: Page, surface: VisualSurfaceContract): Promise<Record<string, unknown>[]> {
+  const results: Record<string, unknown>[] = []
+  for (const part of surface.content_parts || []) {
+    const effectiveSelector = resolveSurfaceSelectorForSource(surface, part.selector, part.prototype_selector)
+    const locator = page.locator(effectiveSelector).first()
+    const exists = (await locator.count()) > 0
+    const visible = exists ? await locator.isVisible() : false
+    const required = part.required !== false
+    results.push({
+      part_id: part.part_id,
+      selector: effectiveSelector,
+      required,
+      exists,
+      visible,
+      result: !required || (exists && visible) ? 'PASS' : 'FAIL',
     })
   }
   return results
@@ -979,7 +927,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         await page.setViewportSize({ width: viewport.width, height: viewport.height })
         const mergedFixtureRoutes = mergeFixtureRoutes(surfaceContract.fixture_routes, hostPage.fixture_routes)
         await navigateToVisualTarget(page, hostPage, mergedFixtureRoutes)
-        await performSurfaceTrigger(page, hostPage, surfaceContract)
+        await performSurfaceTrigger(page, hostPage, surfaceContract, visualSource)
 
       const surfaceRoot = await resolveSurfaceRoot(page, surfaceContract)
       await expect(
@@ -1023,6 +971,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         }
 
         const surfacePartResults = await collectSurfacePartResults(page, surfaceContract)
+        const contentPartResults = await collectContentPartResults(page, surfaceContract)
         const styleStats =
           visualSource === 'app'
             ? await evaluateGenericCssRules(
@@ -1051,7 +1000,8 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           styleStats.failed === 0 &&
           stateStats.failed === 0 &&
           stateStats.styleFailed === 0 &&
-          surfacePartResults.every((entry) => entry.result === 'PASS')
+          surfacePartResults.every((entry) => entry.result === 'PASS') &&
+          contentPartResults.every((entry) => entry.result === 'PASS')
 
         viewportResults.push({
           viewport_id: viewport.viewport_id,
@@ -1062,6 +1012,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           diff_ref: capturedDiffRef,
           diff_threshold: hostPage.diff_threshold,
           surface_part_results: surfacePartResults,
+          content_part_results: contentPartResults,
           style_contracts_total: styleStats.total,
           style_contracts_passed: styleStats.passed,
           style_contracts_failed: styleStats.failed,

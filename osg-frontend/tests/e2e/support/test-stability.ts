@@ -86,9 +86,42 @@ export function resolveStabilityConfigFromEnv(): StabilityConfig {
 
 export async function applyStabilityToPage(page: Page, config: StabilityConfig): Promise<void> {
   await page.addInitScript(
-    ({ fixedTimeMs, fontFamily, locale, disableAnimation }) => {
+    ({ fontFamily, locale, disableAnimation, fixedTimeMs }) => {
+      const applyFixedTime = () => {
+        if (typeof fixedTimeMs !== 'number') {
+          return
+        }
+
+        const OriginalDate = Date
+        class FixedDate extends OriginalDate {
+          constructor(...args: ConstructorParameters<typeof Date>) {
+            if (args.length === 0) {
+              super(fixedTimeMs)
+              return
+            }
+            super(...args)
+          }
+
+          static now() {
+            return fixedTimeMs
+          }
+        }
+
+        Object.setPrototypeOf(FixedDate, OriginalDate)
+        Object.defineProperty(FixedDate, 'name', { value: 'Date' })
+        FixedDate.parse = OriginalDate.parse.bind(OriginalDate)
+        FixedDate.UTC = OriginalDate.UTC.bind(OriginalDate)
+        ;(globalThis as typeof window).Date = FixedDate as typeof Date
+      }
+
       const applyStyleGuards = () => {
+        applyFixedTime()
         document.documentElement.setAttribute('lang', locale)
+        if (typeof fixedTimeMs === 'number') {
+          document.documentElement.setAttribute('data-ui-visual-fixed-time', String(fixedTimeMs))
+        } else {
+          document.documentElement.removeAttribute('data-ui-visual-fixed-time')
+        }
         const styleId = '__ui_visual_stability_style__'
         let style = document.getElementById(styleId) as HTMLStyleElement | null
         if (!style) {
@@ -115,30 +148,12 @@ export async function applyStabilityToPage(page: Page, config: StabilityConfig):
       } else {
         applyStyleGuards()
       }
-
-      if (typeof fixedTimeMs === 'number') {
-        const OriginalDate = Date
-        class FixedDate extends OriginalDate {
-          constructor(...args: any[]) {
-            if (args.length === 0) {
-              super(fixedTimeMs)
-              return
-            }
-            super(...args)
-          }
-
-          static now() {
-            return fixedTimeMs
-          }
-        }
-        ;(window as unknown as { Date: DateConstructor }).Date = FixedDate as unknown as DateConstructor
-      }
     },
     {
-      fixedTimeMs: config.fixedTimeMs,
       fontFamily: config.fontFamily,
       locale: config.locale,
       disableAnimation: config.disableAnimation,
+      fixedTimeMs: config.fixedTimeMs,
     },
   )
 }

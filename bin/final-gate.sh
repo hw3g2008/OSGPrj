@@ -190,17 +190,18 @@ python3 .claude/skills/workflow-engine/tests/plan_standard_guard.py
 
 echo "--- 0.15 runtime_contract_guard ---"
 python3 .claude/skills/workflow-engine/tests/runtime_contract_guard.py \
-  --contract deploy/runtime-contract.dev.yaml
+  --contract "${RESOLVED_RUNTIME_CONTRACT_FILE}"
 
 echo "--- 0.16 delivery_truth_guard ---"
 python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py \
   --module "${MODULE}" \
+  --runtime-contract "${RESOLVED_RUNTIME_CONTRACT_FILE}" \
   --stage final-gate
 
 echo "--- 0.16b delivery_content_guard ---"
 python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py \
   --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/DELIVERY-CONTRACT.yaml" \
-  --runtime-contract deploy/runtime-contract.dev.yaml \
+  --runtime-contract "${RESOLVED_RUNTIME_CONTRACT_FILE}" \
   --stage final-gate
 
 echo "--- 0.16c prototype_derivation_consistency_guard ---"
@@ -215,6 +216,10 @@ echo "--- 0.3 decisions_guard ---"
 python3 .claude/skills/workflow-engine/tests/decisions_guard.py \
   --module "${MODULE}" \
   --allow-missing
+
+echo "--- 0.3b truth_sync_guard ---"
+python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py \
+  --module "${MODULE}"
 
 echo "--- 0.4 requirements_coverage_guard ---"
 python3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py \

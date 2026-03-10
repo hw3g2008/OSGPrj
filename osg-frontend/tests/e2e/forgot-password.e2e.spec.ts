@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
-import fs from 'node:fs'
 import { ensureAdminProfileEmail, waitForApi } from './support/auth'
 import { recordBehaviorScenario } from './support/behavior-report'
+import { readProviderEvidenceText } from './support/provider-evidence'
 import { normalizeRuntimeEnvValue } from './support/runtime-env'
 import { buildIpRateLimitKey, deleteRedisKeys } from './support/redis-runtime'
 
@@ -29,8 +29,9 @@ test.describe('Forgot Password @api', () => {
 
     const deadline = Date.now() + 10000
     while (Date.now() < deadline) {
-      if (providerLogPath && fs.existsSync(providerLogPath)) {
-        const lines = fs.readFileSync(providerLogPath, 'utf-8').trim().split(/\r?\n/).filter(Boolean)
+      const evidenceText = readProviderEvidenceText(process.env)
+      if (evidenceText) {
+        const lines = evidenceText.trim().split(/\r?\n/).filter(Boolean)
         for (const line of lines.reverse()) {
           try {
             const entry = JSON.parse(line)

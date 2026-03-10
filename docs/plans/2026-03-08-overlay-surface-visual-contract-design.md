@@ -151,6 +151,27 @@ surfaces:
       - part_id: "close-control"
         selector: ".forgot-password-modal .modal-close"
         mask_allowed: false
+    content_parts:
+      - part_id: "title-text"
+        part_role: "title"
+        selector: ".forgot-password-modal .modal-title"
+        mask_allowed: false
+      - part_id: "subtitle-text"
+        part_role: "supporting-text"
+        selector: ".forgot-password-modal .modal-subtitle"
+        mask_allowed: false
+      - part_id: "progress-indicator"
+        part_role: "progress-indicator"
+        selector: ".forgot-password-modal .step-indicator"
+        mask_allowed: false
+      - part_id: "form-stack"
+        part_role: "field-group"
+        selector: ".forgot-password-modal form"
+        mask_allowed: false
+      - part_id: "action-row"
+        part_role: "action-row"
+        selector: ".forgot-password-modal .modal-footer"
+        mask_allowed: false
     style_contracts:
       - selector: ".forgot-password-modal-backdrop"
         css:
@@ -175,6 +196,20 @@ surfaces:
           width: "36px"
           height: "36px"
           border-radius: "10px"
+      - selector: ".forgot-password-modal .modal-title"
+        css:
+          font-size: "18px"
+          font-weight: "700"
+      - selector: ".forgot-password-modal .modal-subtitle"
+        css:
+          font-size: "14px"
+          color: "var(--text-secondary)"
+      - selector: ".forgot-password-modal form"
+        css:
+          gap: "16px"
+      - selector: ".forgot-password-modal .modal-footer"
+        css:
+          justify-content: "flex-end"
     state_contracts:
       - state_id: "step-1"
         required_anchors:
@@ -205,6 +240,28 @@ The framework must support at least:
 
 No business-specific surface names are allowed in the framework.
 
+### 6.3 Content-Layer Contract
+
+Shell coverage is necessary but not sufficient. Overlay drift often survives shell-level checks while content-level blocks still differ materially.
+
+Every first-class overlay surface must also declare a generic content layer so the framework can verify stable visual semantics inside the shell without hard-coding business meaning.
+
+Required generic content model:
+
+- `content_parts` for stable interior regions such as:
+  - `title`
+  - `supporting-text`
+  - `progress-indicator`
+  - `field-group`
+  - `action-row`
+  - `status-banner`
+  - `helper-text`
+- `content_parts` must use generic `part_role` values, never business names.
+- `style_contracts` must include content-level contracts for any declared `content_parts`.
+- `state_contracts` must be able to add or override content-level style assertions per state.
+
+The framework should treat missing content-layer coverage the same way it treats missing shell-level coverage: fail closed before implementation completion claims.
+
 ## 7. Source-Stage Generation Rules
 
 ### 7.1 Prototype/PRD Extraction
@@ -213,6 +270,7 @@ No business-specific surface names are allowed in the framework.
 
 - `MATRIX.md` surface inventory
 - `DESIGN-SYSTEM.md` default modal/drawer/popover tokens
+- `DESIGN-SYSTEM.md` content-level tokens for title/subtitle/form/help/action styling
 - PRD sections named like:
   - `弹窗`
   - `抽屉`
@@ -280,6 +338,7 @@ New responsibilities:
    - `trigger_action`
    - `required_anchors`
    - `surface_parts`
+   - `content_parts`
    - `viewport_variants`
 3. Reject surfaces where all critical regions are masked.
 4. Reject overlay contracts missing shell-level style coverage for:
@@ -289,6 +348,7 @@ New responsibilities:
    - `body`
    - `footer`
    - `close-control`
+5. Reject overlay contracts missing content-layer coverage for declared `content_parts`.
 
 ## 8.2 `ui_critical_evidence_guard.py`
 
@@ -298,7 +358,8 @@ Extend the existing evidence guard to validate overlay evidence:
 2. each required state variant generated evidence
 3. critical regions are evaluated for overlay surfaces, not only top-level pages
 4. each `surface_part` emits evidence for shell-level style checks
-5. each `viewport_variant` emits separate evidence when declared
+5. each `content_part` emits evidence for content-layer style checks
+6. each `viewport_variant` emits separate evidence when declared
 
 ## 8.3 Test Asset Completeness
 
@@ -322,6 +383,7 @@ If a surface exists in contract but no test skeleton was generated, the process 
    - critical region evidence
    - state variant evidence
    - surface-part evidence
+   - content-part evidence
    - viewport-specific evidence
 
 This must work generically for any surface type that can be reached by:
@@ -380,6 +442,7 @@ Must validate:
 - overlay evidence exists
 - critical regions and state variants are covered
 - shell parts are covered
+- content parts are covered
 - viewport variants are covered
 - portal/backdrop selectors are stable and reachable
 
@@ -401,8 +464,9 @@ The framework is considered fixed only when all of the following are true:
 4. verify can fail on missing overlay evidence before final-gate
 5. final-gate only backstops, rather than discovering overlay omissions for the first time
 6. design-system-defined shell styles are automatically enforced at the surface-part level
-7. state-specific style drift is detectable without manual review
-8. a repository-wide overlay inventory audit proves that all currently declared overlay surface types can be represented without business-specific special casing
+7. generic content-layer styles are automatically enforced at the content-part level
+8. state-specific shell and content style drift are detectable without manual review
+9. a repository-wide overlay inventory audit proves that all currently declared overlay surface types can be represented without business-specific special casing
 
 ## 12. Repository Inventory Proof
 

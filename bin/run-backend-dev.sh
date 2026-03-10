@@ -48,7 +48,15 @@ done
 
 ENV_FILE="${ENV_FILE:-deploy/.env.dev}"
 
-eval "$(bash bin/resolve-runtime-contract.sh)"
+if [[ "${CONTEXT_PREFLIGHT_DONE:-0}" != "1" ]]; then
+  bash bin/context-preflight.sh dev \
+    --entrypoint run-backend-dev \
+    --env-file "${ENV_FILE}" \
+    --runtime-contract deploy/runtime-contract.dev.yaml
+  export CONTEXT_PREFLIGHT_DONE=1
+fi
+
+eval "$(bash bin/resolve-runtime-contract.sh deploy/runtime-contract.dev.yaml)"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo "FAIL: env file not found: ${ENV_FILE}" >&2

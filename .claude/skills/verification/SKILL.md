@@ -82,6 +82,7 @@ def can_claim_done(task):
 | | 验证证据 | 检查 verification_evidence 字段 | 所有 Tickets 有证据且 exit_code=0 |
 | | 🆕 证据强度 | `validate_evidence_command(command)` | command 必须是可执行 shell 命令（禁止 "code review" 等） |
 | | 🆕 测试资产完整性 | `test_asset_completeness_guard.py --story-id {story_id}` | Story/Ticket/TestCase/Traceability 同步完整 |
+| | 🆕 单一真源同步 | `truth_sync_guard.py --module {module}` | 已确认 UI 真源变更若未同步 HTML，则立即阻断 |
 | | 🆕 HTML 真源派生一致性 | `prototype_derivation_consistency_guard.py --module-dir ...` | PRD/MATRIX/UI-VISUAL-CONTRACT 不得引入 HTML 真源不存在的页面/弹层 |
 | | 🆕 真实性守卫 | `delivery_truth_guard.py --stage verify` | 不允许降级实现，外部副作用必须声明真实 provider 与 evidence path |
 | | 🆕 内容契约守卫 | `delivery_content_guard.py --stage verify` | 外部输出内容不得命中 forbidden literals，且必须包含 required tokens |
@@ -151,6 +152,13 @@ def verify_story(story_id):
     pre_issues = []
 
     module = read_yaml("osg-spec-docs/tasks/STATE.yaml").workflow.current_requirement
+    truth_sync_guard = bash(
+        "python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py "
+        f"--module {module}"
+    )
+    if truth_sync_guard.exit_code != 0:
+        pre_issues.append("truth_sync_guard 未通过：存在已确认但尚未同步回 HTML 真源的 UI 变更")
+
     asset_guard = bash(
         "python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py "
         f"--module {module} --story-id {story_id}"
@@ -167,7 +175,7 @@ def verify_story(story_id):
 
     truth_guard = bash(
         "python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py "
-        f"--module {module} --stage verify"
+        f"--module {module} --runtime-contract {resolved_runtime_contract_file} --stage verify"
     )
     if truth_guard.exit_code != 0:
         pre_issues.append("delivery_truth_guard 未通过：存在降级实现、缺失真实 provider/evidence 声明或缺失真实副作用证据")
@@ -175,7 +183,7 @@ def verify_story(story_id):
     content_guard = bash(
         "python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py "
         f"--contract osg-spec-docs/docs/01-product/prd/{module}/DELIVERY-CONTRACT.yaml "
-        "--runtime-contract deploy/runtime-contract.dev.yaml "
+        f"--runtime-contract {resolved_runtime_contract_file} "
         "--stage verify"
     )
     if content_guard.exit_code != 0:

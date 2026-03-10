@@ -76,6 +76,7 @@ def valid_runtime_contract() -> dict:
             "mailbox": {
                 "mailbox_target_env": "PASSWORD_RESET_MAILBOX",
                 "provider_log_path_env": "PASSWORD_RESET_PROVIDER_LOG_PATH",
+                "provider_log_container_env": "E2E_PROVIDER_LOG_CONTAINER",
             }
         },
     }
@@ -90,6 +91,7 @@ SPRING_MAIL_PASSWORD=secret123
 SPRING_MAIL_FROM=noreply@example.com
 PASSWORD_RESET_MAILBOX=qa@example.com
 PASSWORD_RESET_PROVIDER_LOG_PATH={log_path}
+E2E_PROVIDER_LOG_CONTAINER=osg_test-backend-1
 """
 
 
@@ -152,11 +154,39 @@ def test_valid_content_passes() -> None:
         assert not findings, findings
 
 
+def test_tool_env_supplies_container_only_evidence_path() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        contract = valid_contract()
+        runtime = valid_runtime_contract()
+        runtime["env_file"] = "deploy/.env.test"
+        runtime["tool_env"] = {
+            "PASSWORD_RESET_PROVIDER_LOG_PATH": "/data/ruoyi/uploadPath/audit/password-reset-mailbox.log",
+            "E2E_PROVIDER_LOG_CONTAINER": "missing-container",
+        }
+        contract_path = root / "osg-spec-docs/docs/01-product/prd/permission/DELIVERY-CONTRACT.yaml"
+        runtime_path = root / "deploy/runtime-contract.test.yaml"
+        _write_yaml(contract_path, contract)
+        _write_yaml(runtime_path, runtime)
+        _write(
+            root / "deploy/.env.test",
+            "SPRING_MAIL_HOST=smtp.example.com\nSPRING_MAIL_PORT=587\nSPRING_MAIL_USERNAME=mailer@example.com\nSPRING_MAIL_PASSWORD=secret123\nSPRING_MAIL_FROM=noreply@example.com\nPASSWORD_RESET_MAILBOX=qa@example.com\n",
+        )
+        findings = evaluate_delivery_content(
+            contract_path=contract_path,
+            runtime_contract_path=runtime_path,
+            repo_root=root,
+            stage="verify",
+        )
+        assert any("missing content evidence" in item for item in findings), findings
+
+
 def main() -> int:
     tests = [
         test_forbidden_literals_in_provider_evidence_fail,
         test_missing_required_tokens_fail,
         test_valid_content_passes,
+        test_tool_env_supplies_container_only_evidence_path,
     ]
     for fn in tests:
         fn()

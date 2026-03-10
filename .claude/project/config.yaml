@@ -93,6 +93,116 @@ paths:
     test_matrices: "osg-spec-docs/tasks/test-matrices/"
 
 # ============================================
+# 机器真值：运行时模型 / 环境身份 / 流程策略
+# ============================================
+runtime_model:
+  dev:
+    description: "本机运行 app/backend，连接阿里云测试服务器 Docker MySQL/Redis"
+    backend:
+      execution: local
+      entrypoint: "bash bin/run-backend-dev.sh deploy/.env.dev"
+      port: 28080
+      base_url: "http://127.0.0.1:28080"
+    frontends:
+      execution: local
+      admin_port: 3005
+    dependencies:
+      mysql: shared_remote
+      redis: shared_remote
+      runtime_contract: "deploy/runtime-contract.dev.yaml"
+      env_file: "deploy/.env.dev"
+  test:
+    description: "阿里云 Docker 运行 backend/frontends，复用阿里云共享 MySQL/Redis"
+    selection:
+      explicit_activation_env: RUNTIME_STACK_TEST_MODE
+      explicit_activation_value: "1"
+      forbid_probe_types:
+        - docker_container_running
+    backend:
+      execution: remote_docker
+      entrypoint: "bash bin/deploy-server-docker.sh test"
+      port: 28080
+      base_url: "http://47.94.213.128:28080"
+    frontends:
+      execution: remote_docker
+      ports:
+        student: 3001
+        mentor: 3002
+        lead_mentor: 3003
+        assistant: 3004
+        admin: 3005
+    dependencies:
+      mysql: shared_remote
+      redis: shared_remote
+      runtime_contract: "deploy/runtime-contract.test.yaml"
+      env_file: "deploy/.env.test"
+  prod:
+    description: "生产环境预留结构；部署时必须由独立 prod runtime contract 驱动"
+    backend:
+      execution: remote_docker
+    frontends:
+      execution: remote_docker
+    dependencies:
+      mysql: dedicated_container
+      redis: dedicated_container
+
+environment_identity:
+  local_host:
+    loopback_backend: "127.0.0.1:28080"
+    docker_context_must_not_be_remote_test_truth: true
+  shared_remote_deps:
+    host: "47.94.213.128"
+    mysql:
+      port: 23306
+      container_location: aliyun_docker
+    redis:
+      port: 26379
+      container_location: aliyun_docker
+  remote_test_stack:
+    host: "47.94.213.128"
+    ports:
+      backend: 28080
+      student: 3001
+      mentor: 3002
+      lead_mentor: 3003
+      assistant: 3004
+      admin: 3005
+    compose_project: "osg_test"
+
+workflow_policy:
+  default_delivery_flow:
+    - brainstorm
+    - split_story
+    - split_ticket
+    - implement
+    - verify
+    - final_gate
+    - final_closure
+  project_framework_is_primary: true
+  superpowers_usage: framework_or_process_correction_only
+  superpowers_not_for_normal_feature_delivery: true
+  enforced_gate_entrypoints:
+    - brainstorm
+    - approve_brainstorm
+    - split_story
+    - split_ticket
+    - verify
+    - final_gate
+
+context_preflight:
+  script: "bin/context-preflight.sh"
+  required_modes:
+    - dev
+    - test
+  optional_modes:
+    - prod
+  enforced_entrypoints:
+    - run-backend-dev
+    - run-dev-shared
+    - deploy-test-remote
+    - deploy-server-docker
+
+# ============================================
 # PRD 生成流程（IEEE 830 + BABOK 行业标准）
 # ============================================
 prd_process:
@@ -110,6 +220,18 @@ prd_process:
       - "${paths.tasks.root}testing/**"
     forbid_source_absent_derivation: true
     require_source_backtrace_for_ui: true
+  truth_sync:
+    enabled: true
+    required_decision_fields:
+      - ui_truth_change
+      - prototype_synced
+    enforced_entrypoints:
+      - brainstorm
+      - approve_brainstorm
+      - split_story
+      - split_ticket
+      - verify
+      - final_gate
   
   # 需求工程流水线
   # HTML 原型 → PRD（页面级）→ SRS（IEEE 830）→ Stories → Tickets

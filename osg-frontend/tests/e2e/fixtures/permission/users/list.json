@@ -4,7 +4,7 @@
   "data": {
     "rows": [
       {"userId": 10001, "userName": "admin123", "nickName": "系统管理员", "email": "admin@osg.com", "roles": [{"roleId": 8, "roleName": "超级管理员", "roleKey": "super_admin"}], "status": "0", "loginDate": "2026-01-03 17:30:00", "updateTime": "2021-03-01 00:00:00", "admin": true},
-      {"userId": 10002, "userName": "clerk001", "nickName": "张文员", "email": "zhangwen@osg.com", "roles": [{"roleId": 1, "roleName": "文员", "roleKey": "clerk"}], "status": "0", "loginDate": "2026-01-03 16:45:00", "updateTime": "2023-06-15 00:00:00", "admin": false},
+      {"userId": 10002, "userName": "clerk001", "nickName": "张文员", "email": "zhangwen@osg.com", "phonenumber": "13800138000", "remark": "负责日常学员信息录入", "roles": [{"roleId": 1, "roleName": "文员", "roleKey": "clerk"}], "status": "0", "loginDate": "2026-01-03 16:45:00", "updateTime": "2023-06-15 00:00:00", "admin": false},
       {"userId": 10003, "userName": "auditor001", "nickName": "李审核", "email": "lishenhe@osg.com", "roles": [{"roleId": 2, "roleName": "课时审核员", "roleKey": "course_auditor"}], "status": "0", "loginDate": "2026-01-02 16:20:00", "updateTime": "2023-09-01 00:00:00", "admin": false},
       {"userId": 10004, "userName": "accountant001", "nickName": "王会计", "email": "wangkuaiji@osg.com", "roles": [{"roleId": 3, "roleName": "会计", "roleKey": "accountant"}], "status": "0", "loginDate": "2026-01-02 09:00:00", "updateTime": "2023-03-15 00:00:00", "admin": false},
       {"userId": 10005, "userName": "old_admin", "nickName": "已离职员工", "email": "old@osg.com", "roles": [{"roleId": 1, "roleName": "文员", "roleKey": "clerk"}], "status": "1", "loginDate": "2024-08-20 14:30:00", "updateTime": "2022-01-10 00:00:00", "admin": false}

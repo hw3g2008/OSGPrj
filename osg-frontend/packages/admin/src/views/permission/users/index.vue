@@ -5,7 +5,12 @@
         <h2>后台用户管理</h2>
         <p class="subtitle">管理后台系统用户账号</p>
       </div>
-      <a-button type="primary" data-surface-trigger="modal-add-admin" @click="handleAdd">
+      <a-button
+        type="primary"
+        class="surface-trigger surface-trigger--primary"
+        data-surface-trigger="modal-add-admin"
+        @click="handleAdd"
+      >
         <template #icon><PlusOutlined /></template>
         新增用户
       </a-button>
@@ -82,15 +87,19 @@
           <a-button
             type="link"
             size="small"
+            class="surface-trigger surface-trigger--inline"
             data-surface-trigger="modal-edit-admin"
             data-surface-sample="modal-edit-admin"
             :data-surface-sample-key="record.userName"
             @click="handleEdit(record)"
-          >编辑</a-button>
+          >
+            编辑
+          </a-button>
           <a-button
             v-if="record.status === '0'"
             type="link"
             size="small"
+            class="surface-trigger surface-trigger--inline"
             data-surface-trigger="modal-reset-password"
             data-surface-sample="modal-reset-password"
             :data-surface-sample-key="record.userName"
@@ -288,6 +297,14 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .users-page {
+  .surface-trigger {
+    display: inline-flex;
+
+    &--inline {
+      align-items: center;
+    }
+  }
+
   .page-header {
     display: flex;
     justify-content: space-between;

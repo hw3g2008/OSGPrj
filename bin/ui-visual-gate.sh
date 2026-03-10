@@ -16,6 +16,18 @@ LOG_FILE="${UI_VISUAL_GATE_LOG:-${AUDIT_DIR}/ui-visual-gate-${MODULE}-${DATE_STR
 
 mkdir -p "${AUDIT_DIR}"
 
+# Visual gate must always verify against a freshly built preview server, but
+# the preview lifecycle is managed here rather than delegated to Playwright's
+# webServer. That removes 4173 start/reuse races that can produce false
+# connection failures.
+export PW_E2E_REUSE_SERVER=1
+
+cleanup_preview() {
+  bash bin/admin-preview-server.sh stop >/dev/null 2>&1 || true
+}
+
+trap cleanup_preview EXIT
+
 print_page_report_summary() {
   python3 - <<PY
 import json
@@ -134,6 +146,11 @@ EOF
   echo "INFO: baseline_missing=${baseline_missing}"
   if [[ "${baseline_missing}" != "0" ]]; then
     echo "VISUAL_FAIL: missing baseline files (${baseline_missing})"
+    exit 12
+  fi
+
+  if ! bash bin/admin-preview-server.sh restart; then
+    echo "VISUAL_FAIL: admin preview server restart failed"
     exit 12
   fi
 

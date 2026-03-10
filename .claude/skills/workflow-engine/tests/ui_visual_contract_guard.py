@@ -486,6 +486,36 @@ def _validate_surface_schema(contract: dict[str, Any], page_ids: set[str], error
                 if not isinstance(mask_allowed, bool):
                     _err(errors, f"{ptag}.mask_allowed must be boolean")
 
+        content_parts = surface.get("content_parts")
+        if content_parts is not None:
+            if not isinstance(content_parts, list) or len(content_parts) == 0:
+                _err(errors, f"{stag}.content_parts must be non-empty list when provided")
+            else:
+                seen_content_parts: set[str] = set()
+                for j, part in enumerate(content_parts):
+                    ptag = f"{stag}.content_parts[{j}]"
+                    if not isinstance(part, dict):
+                        _err(errors, f"{ptag} must be object")
+                        continue
+                    part_id = part.get("part_id")
+                    if not isinstance(part_id, str) or not part_id.strip():
+                        _err(errors, f"{ptag}.part_id must be non-empty string")
+                    elif part_id in seen_content_parts:
+                        _err(errors, f"{ptag}.part_id duplicated: {part_id}")
+                    else:
+                        seen_content_parts.add(part_id)
+                    selector = part.get("selector")
+                    if not isinstance(selector, str) or not selector.strip():
+                        _err(errors, f"{ptag}.selector must be non-empty string")
+                    prototype_selector = part.get("prototype_selector")
+                    if prototype_selector is not None and (
+                        not isinstance(prototype_selector, str) or not prototype_selector.strip()
+                    ):
+                        _err(errors, f"{ptag}.prototype_selector must be non-empty string when provided")
+                    required = part.get("required")
+                    if required is not None and not isinstance(required, bool):
+                        _err(errors, f"{ptag}.required must be boolean when provided")
+
         _validate_surface_schema_style_contracts(surface.get("style_contracts"), stag, errors)
         _validate_surface_schema_state_contracts(surface.get("state_contracts"), stag, errors)
 

@@ -74,6 +74,7 @@ test.describe('Auth Login @api', () => {
     await loginAsAdmin(page)
 
     const logoutPromise = waitForApi(page, '/api/logout', 'POST')
+    await page.locator('.user-card').click()
     await page.getByRole('button', { name: '退出登录' }).click()
     await page.getByRole('button', { name: /确\s*定/ }).click()
 

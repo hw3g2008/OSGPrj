@@ -32,6 +32,20 @@ DEFAULT_MODAL_TOKENS = {
     "close_radius": "10px",
     "close_background": "var(--bg)",
 }
+SURFACE_TOKEN_DEFAULTS = {
+    "modal": DEFAULT_MODAL_TOKENS,
+    "drawer": DEFAULT_MODAL_TOKENS,
+    "popover": DEFAULT_MODAL_TOKENS,
+    "panel": DEFAULT_MODAL_TOKENS,
+    "wizard-step": DEFAULT_MODAL_TOKENS,
+}
+SURFACE_SECTION_TITLES = {
+    "modal": ["弹窗 Modal", "Modal"],
+    "drawer": ["抽屉 Drawer", "Drawer"],
+    "popover": ["浮层 Popover", "Popover"],
+    "panel": ["面板 Panel", "Panel"],
+    "wizard-step": ["步骤 Step", "Wizard"],
+}
 SURFACE_PART_ORDER = ["backdrop", "shell", "header", "body", "footer", "close-control"]
 SURFACE_PART_CLASS_MAP = {
     "shell": "modal-content",
@@ -123,8 +137,23 @@ def load_truth_source_config(config_path: Path) -> tuple[dict[str, Any], dict[st
     return config, truth
 
 
-def parse_design_system_tokens(design_system_text: str) -> dict[str, str]:
-    tokens = dict(DEFAULT_MODAL_TOKENS)
+def _extract_markdown_section(markdown_text: str, heading_titles: list[str]) -> str:
+    headings = list(re.finditer(r"^(#{2,6})\s+(.+?)\s*$", markdown_text, re.M))
+    for index, match in enumerate(headings):
+        title = match.group(2).strip()
+        if not any(candidate in title for candidate in heading_titles):
+            continue
+        start = match.end()
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(markdown_text)
+        return markdown_text[start:end]
+    return markdown_text
+
+
+def parse_design_system_tokens(design_system_text: str, surface_type: str = "modal") -> dict[str, str]:
+    defaults = SURFACE_TOKEN_DEFAULTS.get(surface_type, DEFAULT_MODAL_TOKENS)
+    titles = SURFACE_SECTION_TITLES.get(surface_type, SURFACE_SECTION_TITLES["modal"])
+    section_text = _extract_markdown_section(design_system_text, titles)
+    tokens = dict(defaults)
     table_re = re.compile(r"^\|\s*(?P<key>[^|]+?)\s*\|\s*(?P<value>[^|]+?)\s*\|$", re.M)
     mapping = {
         "遮罩": "mask",
@@ -134,7 +163,7 @@ def parse_design_system_tokens(design_system_text: str) -> dict[str, str]:
         "内容 padding": "body_padding",
         "底部 padding": "footer_padding",
     }
-    for match in table_re.finditer(design_system_text):
+    for match in table_re.finditer(section_text):
         key = match.group("key").strip()
         value = match.group("value").strip()
         mapped = mapping.get(key)
@@ -143,7 +172,7 @@ def parse_design_system_tokens(design_system_text: str) -> dict[str, str]:
 
     close_match = re.search(
         r"关闭按钮\s*\|\s*(?P<size>\d+px)\s*正方形,\s*border-radius:(?P<radius>[^,|]+),\s*background:(?P<bg>[^\n|]+)",
-        design_system_text,
+        section_text,
     )
     if close_match:
         tokens["close_size"] = close_match.group("size").strip()
@@ -202,6 +231,23 @@ def _load_prototype_texts(prototype_root: Path) -> list[tuple[Path, str]]:
     return texts
 
 
+def _extract_balanced_div(text: str, start: int) -> str:
+    tag_pattern = re.compile(r"</?div\b", re.IGNORECASE)
+    depth = 0
+    end = len(text)
+    for match in tag_pattern.finditer(text, start):
+        token = match.group(0).lower()
+        if token.startswith("</"):
+            depth -= 1
+            if depth == 0:
+                close = text.find(">", match.start())
+                end = len(text) if close == -1 else close + 1
+                break
+        else:
+            depth += 1
+    return text[start:end]
+
+
 def _find_surface_block(surface_id: str, prototype_texts: list[tuple[Path, str]]) -> tuple[Path | None, str | None]:
     marker = f'id="{surface_id}"'
     for path, text in prototype_texts:
@@ -211,10 +257,7 @@ def _find_surface_block(surface_id: str, prototype_texts: list[tuple[Path, str]]
         start = text.rfind("<div", 0, index)
         if start == -1:
             start = index
-        next_modal = text.find('<div class="modal" id="', index + len(marker))
-        if next_modal == -1:
-            next_modal = len(text)
-        return path, text[start:next_modal]
+        return path, _extract_balanced_div(text, start)
     return None, None
 
 
@@ -245,13 +288,87 @@ def _build_prototype_part_selector(surface_selector: str, part_id: str) -> str:
     return surface_selector
 
 
+def _build_app_content_selector(surface_id: str, part_id: str) -> str:
+    return f'[data-surface-id="{surface_id}"] [data-content-part="{part_id}"]'
+
+
+def _build_prototype_content_selector(surface_selector: str, part_id: str) -> str:
+    content_map = {
+        "title": f"{surface_selector} .modal-title",
+        "supporting-text": f"{surface_selector} .modal-body > p, {surface_selector} .modal-body p",
+        "field-group": f"{surface_selector} .form-group",
+        "action-row": (
+            f"{surface_selector} .modal-footer, "
+            f"{surface_selector} .modal-body > div:has(button.btn-primary), "
+            f"{surface_selector} .modal-body > div:has(.btn-primary)"
+        ),
+        "progress-indicator": (
+            f"{surface_selector} .step-progress, "
+            f"{surface_selector} .modal-body [id*=\"dot-\"]"
+        ),
+        "status-banner": (
+            f"{surface_selector} .alert, "
+            f"{surface_selector} .status-banner, "
+            f"{surface_selector} .warning-banner, "
+            f"{surface_selector} .modal-body > div:has(.mdi-alert), "
+            f"{surface_selector} .modal-body > div[style*=\"background:#FEF3C7\"], "
+            f"{surface_selector} .modal-body > div[style*=\"background: #FEF3C7\"], "
+            f"{surface_selector} .modal-body > div[style*=\"background:#ECFDF5\"], "
+            f"{surface_selector} .modal-body > div[style*=\"background: #ECFDF5\"]"
+        ),
+    }
+    return content_map.get(part_id, surface_selector)
+
+
+CONTENT_PART_ORDER = [
+    "title",
+    "progress-indicator",
+    "supporting-text",
+    "status-banner",
+    "field-group",
+    "action-row",
+]
+
+
+def _infer_content_parts(block: str | None, prototype_parts: set[str]) -> list[str]:
+    inferred = ["title"]
+    if block is None:
+        return ["title", "field-group", "action-row"]
+
+    if 'step-progress' in block or re.search(r'id="[^"]*dot-\d+"', block):
+        inferred.append("progress-indicator")
+    if '<p' in block:
+        inferred.append("supporting-text")
+    if any(
+        token in block
+        for token in (
+            '.alert',
+            'status-banner',
+            'warning-banner',
+            'mdi-alert',
+            'background:#FEF3C7',
+            'background: #FEF3C7',
+            'background:#ECFDF5',
+            'background: #ECFDF5',
+        )
+    ):
+        inferred.append("status-banner")
+    if 'form-group' in block:
+        inferred.append("field-group")
+    if "footer" in prototype_parts or any(token in block for token in ('btn-primary', 'btn-secondary', 'btn-outline')):
+        inferred.append("action-row")
+
+    return [part_id for part_id in CONTENT_PART_ORDER if part_id in set(inferred)]
+
+
 def build_surface_entry(
     surface: dict[str, str],
-    tokens: dict[str, str],
+    design_system_text: str,
     prototype_texts: list[tuple[Path, str]],
 ) -> dict[str, Any]:
     surface_id = surface["surface_id"]
     surface_type = infer_surface_type(surface_id)
+    tokens = parse_design_system_tokens(design_system_text, surface_type)
     root_selector = build_surface_selector(surface_id)
     shell_selector = build_surface_selector(surface_id, "shell")
     header_selector = build_surface_selector(surface_id, "header")
@@ -357,6 +474,17 @@ def build_surface_entry(
             }
         )
 
+    content_parts = []
+    for part_id in _infer_content_parts(prototype_block, prototype_parts):
+        content_parts.append(
+            {
+                "part_id": part_id,
+                "selector": _build_app_content_selector(surface_id, part_id),
+                "prototype_selector": _build_prototype_content_selector(prototype_selector, part_id),
+                "required": True,
+            }
+        )
+
     return {
         "surface_id": surface_id,
         "surface_type": surface_type,
@@ -376,6 +504,7 @@ def build_surface_entry(
         "viewport_variants": list(DEFAULT_VIEWPORTS),
         "state_variants": [{"state_id": "default"}],
         "surface_parts": surface_parts,
+        "content_parts": content_parts,
         "style_contracts": style_contracts,
         "state_contracts": [
             {
@@ -392,7 +521,7 @@ def build_surface_entry(
 def merge_surfaces(
     contract: dict[str, Any],
     matrix_surfaces: list[dict[str, str]],
-    tokens: dict[str, str],
+    design_system_text: str,
     prototype_texts: list[tuple[Path, str]],
     refresh_generated: bool,
 ) -> tuple[dict[str, Any], int, int]:
@@ -421,7 +550,7 @@ def merge_surfaces(
             and surface_id in matrix_by_id
             and str(item.get("_generated_note", "")).startswith("first-pass skeleton for ")
         ):
-            rebuilt = build_surface_entry(matrix_by_id[surface_id], tokens, prototype_texts)
+            rebuilt = build_surface_entry(matrix_by_id[surface_id], design_system_text, prototype_texts)
             existing_trigger = item.get("trigger_action")
             if isinstance(existing_trigger, dict):
                 rebuilt_trigger = rebuilt.get("trigger_action", {})
@@ -444,7 +573,7 @@ def merge_surfaces(
         surface_id = surface["surface_id"]
         if surface_id in existing_by_id:
             continue
-        merged.append(build_surface_entry(surface, tokens, prototype_texts))
+        merged.append(build_surface_entry(surface, design_system_text, prototype_texts))
         added += 1
 
     contract["surfaces"] = merged
@@ -471,13 +600,13 @@ def main() -> int:
         raise SystemExit(f"missing required files: {missing}")
 
     matrix_surfaces = parse_matrix_surfaces(load_text(matrix_path))
-    tokens = parse_design_system_tokens(load_text(design_system_path))
+    design_system_text = load_text(design_system_path)
     prototype_texts = _load_prototype_texts(prototype_root)
     contract = load_yaml(contract_path)
     contract, added, refreshed = merge_surfaces(
         contract,
         matrix_surfaces,
-        tokens,
+        design_system_text,
         prototype_texts,
         args.refresh_generated,
     )

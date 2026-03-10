@@ -24,7 +24,7 @@
         :style="shellStyle"
       >
         <div data-surface-part="header" class="overlay-surface-modal__header">
-          <div class="overlay-surface-modal__title">
+          <div data-content-part="title" class="overlay-surface-modal__title">
             <slot name="title">
               <span>{{ title }}</span>
             </slot>
@@ -53,6 +53,7 @@
         <div
           v-if="showFooter && hasFooter"
           data-surface-part="footer"
+          data-content-part="action-row"
           class="overlay-surface-modal__footer"
           :class="footerClass"
         >
@@ -222,6 +223,99 @@ onBeforeUnmount(() => {
     padding: 26px;
     background: #fff;
     overflow-y: auto;
+
+    :deep(.ant-form) {
+      width: 100%;
+    }
+
+    :deep(.ant-form-item) {
+      margin-bottom: 8px;
+    }
+
+    :deep(.ant-form-item:last-child) {
+      margin-bottom: 0;
+    }
+
+    :deep(.ant-form-item-label) {
+      padding-bottom: 0;
+    }
+
+    :deep(.ant-form-item-label > label) {
+      min-height: 0;
+      color: var(--text, #1E293B);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 20px;
+    }
+
+    :deep(.ant-input),
+    :deep(.ant-input-affix-wrapper),
+    :deep(.ant-input-number),
+    :deep(textarea.ant-input) {
+      padding: 12px 14px;
+      border: 2px solid var(--border, #E2E8F0);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: none;
+      color: var(--text, #1E293B);
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    :deep(.ant-input:hover),
+    :deep(.ant-input:focus),
+    :deep(.ant-input-affix-wrapper:hover),
+    :deep(.ant-input-affix-wrapper:focus),
+    :deep(.ant-input-affix-wrapper-focused),
+    :deep(.ant-input-number:hover),
+    :deep(.ant-input-number-focused),
+    :deep(textarea.ant-input:hover),
+    :deep(textarea.ant-input:focus) {
+      border-color: var(--primary, #6366F1);
+      box-shadow: none;
+    }
+
+    :deep(.ant-input-affix-wrapper) {
+      min-height: 44px;
+    }
+
+    :deep(.ant-input-affix-wrapper > input.ant-input) {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    :deep(.ant-input-prefix),
+    :deep(.ant-input-password-icon),
+    :deep(.ant-input-suffix) {
+      color: var(--text-secondary, #64748B);
+    }
+
+    :deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector),
+    :deep(.ant-picker),
+    :deep(.ant-input-number) {
+      min-height: 44px;
+      padding: 12px 14px;
+      border: 2px solid var(--border, #E2E8F0);
+      border-radius: 10px;
+      box-shadow: none;
+      align-items: center;
+    }
+
+    :deep(.ant-select-selector) {
+      padding: 12px 14px;
+    }
+
+    :deep(.ant-select-single .ant-select-selection-item),
+    :deep(.ant-select-single .ant-select-selection-placeholder) {
+      line-height: 20px;
+    }
+
+    :deep(.ant-select-arrow) {
+      color: var(--text-secondary, #64748B);
+    }
   }
 
   &__footer {
@@ -232,11 +326,39 @@ onBeforeUnmount(() => {
     border-top: 1px solid var(--border, #E2E8F0);
     background: #fff;
     flex-shrink: 0;
+
+    :deep(.overlay-surface-modal__footer .ant-btn) {
+      min-width: 80px;
+      height: 40px;
+      padding: 0 16px;
+      border-radius: 10px;
+      box-shadow: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    :deep(.overlay-surface-modal__footer .ant-btn-default) {
+      border: 1px solid var(--border, #E2E8F0);
+      background: #fff;
+      color: var(--text-secondary, #64748B);
+    }
+
+    :deep(.overlay-surface-modal__footer .ant-btn-primary) {
+      border: none;
+      background: var(
+        --primary-gradient,
+        linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%)
+      );
+      color: #fff;
+    }
   }
 
   &--accent {
     .overlay-surface-modal__shell {
-      border-radius: 16px;
+      border-radius: 20px;
     }
 
     .overlay-surface-modal__header {

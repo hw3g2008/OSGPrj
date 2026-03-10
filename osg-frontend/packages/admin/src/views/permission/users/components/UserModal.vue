@@ -3,6 +3,7 @@
     :surface-id="surfaceId"
     :open="visible"
     width="500px"
+    body-class="user-modal__body"
     @cancel="handleClose"
   >
     <template #title>
@@ -18,6 +19,7 @@
 
     <a-form
       ref="formRef"
+      data-content-part="field-group"
       :model="formState"
       :rules="rules"
       layout="vertical"
@@ -26,7 +28,10 @@
     >
       <a-form-item name="userName">
         <template #label>
-          <span class="user-modal__label">用户名<span class="user-modal__required">*</span></span>
+          <span class="user-modal__label">
+            用户名
+            <span v-if="!isEdit" class="user-modal__required">*</span>
+          </span>
         </template>
         <a-input
           v-model:value="formState.userName"
@@ -34,7 +39,7 @@
           :disabled="isEdit"
           :class="{ 'user-modal__input--disabled': isEdit }"
         />
-        <p class="user-modal__help">用户名创建后不可修改</p>
+        <p class="user-modal__help" data-content-part="supporting-text">{{ isEdit ? '用户名不可修改' : '用户名创建后不可修改' }}</p>
       </a-form-item>
 
       <a-form-item name="nickName">
@@ -61,7 +66,7 @@
       <a-form-item name="roleIds">
         <template #label>
           <span class="user-modal__label">
-            {{ isEdit ? '角色' : '角色（可多选）' }}<span class="user-modal__required">*</span>
+            角色<span class="user-modal__required">*</span><span v-if="!isEdit">（可多选）</span>
           </span>
         </template>
         <a-select
@@ -99,7 +104,7 @@
           <span class="user-modal__default-password-text">Osg@2025</span>
           <span class="user-modal__default-password-tag">系统默认</span>
         </div>
-        <p class="user-modal__help">用户首次登录后需修改密码</p>
+        <p class="user-modal__help" data-content-part="supporting-text">用户首次登录后需修改密码</p>
       </a-form-item>
 
       <a-form-item name="remark">
@@ -109,7 +114,7 @@
         <a-textarea
           v-model:value="formState.remark"
           placeholder="选填，最多200字"
-          :rows="3"
+          :rows="2"
           :maxlength="200"
         />
       </a-form-item>
@@ -277,7 +282,6 @@ const handleSubmit = async () => {
 .user-modal__label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
   color: var(--text, #1e293b);
   font-size: 14px;
   font-weight: 600;
@@ -292,22 +296,29 @@ const handleSubmit = async () => {
   grid-template-columns: 1fr;
 }
 
+.user-modal__body {
+  :deep(.ant-form-item) {
+    margin-bottom: 2px;
+  }
+}
+
 .user-modal__input--disabled {
   background-color: var(--bg, #f8fafc);
 }
 
 .user-modal__help {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 11px;
+  line-height: 16px;
   color: var(--text-secondary, #94a3b8);
 }
 
 .user-modal__role-panel {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 8px;
-  padding: 12px;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 6px 8px;
   background: #f8fafc;
   border-radius: 8px;
   border: 1px solid var(--border, #e2e8f0);
@@ -325,8 +336,8 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 4px 10px;
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 12px;
   background: var(--bg, #f8fafc);
@@ -341,9 +352,9 @@ const handleSubmit = async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 68px;
-  height: 26px;
-  padding: 0 10px;
+  min-width: 56px;
+  height: 22px;
+  padding: 0 8px;
   border-radius: 999px;
   background: rgba(99, 102, 241, 0.12);
   color: var(--primary, #6366f1);
@@ -356,7 +367,7 @@ const handleSubmit = async () => {
   border-radius: 10px;
   color: var(--text-secondary, #64748b);
   font-weight: 500;
-  min-width: 88px;
+  min-width: 80px;
 }
 
 .user-modal__confirm-btn {
@@ -364,7 +375,7 @@ const handleSubmit = async () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-width: 112px;
+  min-width: 96px;
   border: none;
   border-radius: 10px;
   color: #fff;

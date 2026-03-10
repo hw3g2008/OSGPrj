@@ -22,6 +22,12 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
    ### Brainstorm 需求确认
    - 条件：`current_step` 为 `brainstorm_pending_confirm`
    - 读取 STATE.yaml 获取 `decisions_path`，读取 config.yaml 获取 `srs_dir`
+   - **Truth Sync Guard（必须先过）**：
+     - 运行 `python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py --module {module}`
+     - 若存在 `ui_truth_change=true && prototype_synced=false` 的已确认决策：
+       - 允许确认决策本身
+       - 但**不允许**推进到正常下游派生/实现阶段
+       - 唯一恢复路径：先回补 HTML 原型，再将决策标记为 `prototype_synced=true`
    - 读取 `{module}-DECISIONS.md` 中 `status=pending` 或 `(status=resolved && 已应用=false)` 的记录
    - **Guard 1（空集）**：若无记录 → 失败（含 phase0 rejected 诊断）
    - **Guard 2（source 必填）**：缺失 → 失败，提示重新 /brainstorm
@@ -31,6 +37,7 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
      - 读取 resolved 裁决 → 更新 PRD → 标记已应用
      - **不写 STATE.yaml** → 同步调用 `/brainstorm {module}`（由 brainstorm 管理最终状态）
    - **source: phase4 路径**：
+     - Guard：若 `truth_sync_guard.py` 失败 → 报错（产品已确认，但 HTML 真源尚未回补，不得继续）
      - Guard：若存在 resolved&&未应用 → 报错（应走重新 /brainstorm）
      - "跳过"语义：标记 pending 为 rejected
      - 更新 `workflow.current_step` 为 `brainstorm_done`

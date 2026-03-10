@@ -9,9 +9,10 @@ description: 将需求文档拆分为 User Stories（INVEST 原则）- 对应 CC
 - 需求分析已完成（`workflow.current_step` 为 `brainstorm_done`）
 - `osg-spec-docs/docs/02-requirements/srs/{module}.md` SRS 文档已存在（brainstorm 产物）
 - 必须先通过独立守卫（硬门禁）：
+  - `python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py --module {module}`
   - `python3 .claude/skills/workflow-engine/tests/srs_guard.py --module {module}`
   - `python3 .claude/skills/workflow-engine/tests/decisions_guard.py --module {module} --allow-missing`
-  - 任一失败即停止拆分（先修复 SRS/DECISIONS）
+  - 任一失败即停止拆分（先修复 HTML 真源同步 / SRS / DECISIONS）
 
 ## 执行步骤
 
@@ -20,6 +21,7 @@ description: 将需求文档拆分为 User Stories（INVEST 原则）- 对应 CC
    - 读取对应的 SRS 文档（`osg-spec-docs/docs/02-requirements/srs/{module}.md`，brainstorm 产物，SSOT）
 
 2. **执行前置守卫**
+   - 执行 `truth_sync_guard.py` 校验：若已确认 UI 真源变更但 `prototype_synced=false`，立即停止，先回补 HTML 原型
    - 执行 `srs_guard.py` 校验 SRS 结构与关键章节
    - 执行 `decisions_guard.py` 校验无未裁决决策
    - 读取 `MATRIX.md` 与 SRS 范围说明，确认模块实现范围与权限分配目标范围不冲突

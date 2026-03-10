@@ -134,6 +134,13 @@ export interface VisualSurfacePartContract {
   mask_allowed: boolean
 }
 
+export interface VisualSurfaceContentPartContract {
+  part_id: string
+  selector: string
+  prototype_selector?: string
+  required?: boolean
+}
+
 export interface VisualSurfaceStateContract {
   state_id: string
   required_anchors?: string[]
@@ -158,6 +165,7 @@ export interface VisualSurfaceContract {
   viewport_variants: VisualSurfaceViewportVariant[]
   state_variants?: VisualSurfaceStateVariant[]
   surface_parts: VisualSurfacePartContract[]
+  content_parts?: VisualSurfaceContentPartContract[]
   style_contracts?: VisualSurfaceCssContract[]
   state_contracts?: VisualSurfaceStateContract[]
   _generated_note?: string

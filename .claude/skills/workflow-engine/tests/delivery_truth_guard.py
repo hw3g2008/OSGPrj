@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
-from runtime_contract_guard import load_env_vars, load_yaml
+from runtime_contract_guard import load_yaml, resolve_runtime_env_vars
 
 VERIFY_LIKE_STAGES = {"verify", "final-gate", "final-closure"}
 DEFAULT_SCAN_ROOTS = ["ruoyi-admin", "ruoyi-framework", "osg-frontend", "deploy"]
@@ -113,15 +114,23 @@ def scan_forbidden_patterns(repo_root: Path, scan_roots: list[Path]) -> list[str
     return findings
 
 
-def _resolve_env_file(runtime_contract: dict, repo_root: Path) -> tuple[Path | None, dict[str, str], list[str]]:
-    findings: list[str] = []
-    env_file_value = runtime_contract.get("env_file")
-    if not _is_non_empty_string(env_file_value):
-        return None, {}, ["runtime contract missing env_file"]
-    env_file_path = repo_root / str(env_file_value)
-    if not env_file_path.exists():
-        return env_file_path, {}, [f"runtime env file not found: {env_file_value}"]
-    return env_file_path, load_env_vars(env_file_path), findings
+def _evidence_exists(path_value: str, repo_root: Path, container_name: str | None) -> bool:
+    candidate = Path(path_value)
+    if not candidate.is_absolute():
+        candidate = repo_root / candidate
+    if candidate.exists():
+        return True
+    if container_name:
+        try:
+            subprocess.check_call(
+                ["docker", "exec", container_name, "test", "-f", str(candidate)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            return True
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            return False
+    return False
 
 
 def _provider_matches(runtime_contract: dict, provider_class: str) -> list[str]:
@@ -209,16 +218,20 @@ def _validate_external_capability(
             for field, env_name in env_refs.items()
             if field.endswith("_path_env")
         }
+        container_name = None
+        container_env_name = path_decl.get("provider_log_container_env")
+        if _is_non_empty_string(container_env_name):
+            container_name = env_vars.get(str(container_env_name), "").strip() or None
         if not path_env_refs:
             findings.append(f"capability {capability_id} missing *_path_env for send_evidence")
         for field, env_name in path_env_refs.items():
             path_value = env_vars.get(env_name, "")
             if not path_value:
                 continue
-            candidate = Path(path_value)
-            if not candidate.is_absolute():
-                candidate = repo_root / candidate
-            if not candidate.exists():
+            if not _evidence_exists(path_value, repo_root, container_name):
+                candidate = Path(path_value)
+                if not candidate.is_absolute():
+                    candidate = repo_root / candidate
                 findings.append(
                     f"capability {capability_id} missing send evidence path: {candidate}"
                 )
@@ -238,7 +251,7 @@ def evaluate_delivery_truth(
 
     contract = load_yaml(contract_path)
     runtime_contract = load_yaml(runtime_contract_path)
-    _, env_vars, env_findings = _resolve_env_file(runtime_contract, repo_root)
+    env_vars, env_findings = resolve_runtime_env_vars(runtime_contract, repo_root)
     findings.extend(env_findings)
 
     capabilities = contract.get("capabilities") or []

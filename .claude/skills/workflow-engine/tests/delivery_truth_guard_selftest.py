@@ -75,6 +75,7 @@ def valid_runtime_contract() -> dict:
             "mailbox": {
                 "mailbox_target_env": "PASSWORD_RESET_MAILBOX",
                 "provider_log_path_env": "PASSWORD_RESET_PROVIDER_LOG_PATH",
+                "provider_log_container_env": "E2E_PROVIDER_LOG_CONTAINER",
             }
         },
     }
@@ -90,6 +91,7 @@ SPRING_MAIL_PASSWORD=secret123
 SPRING_MAIL_FROM=noreply@example.com
 PASSWORD_RESET_MAILBOX=qa@example.com
 PASSWORD_RESET_PROVIDER_LOG_PATH={log_path}
+E2E_PROVIDER_LOG_CONTAINER=osg_test-backend-1
 """
 
 
@@ -163,12 +165,36 @@ def test_valid_real_implementation_passes() -> None:
         assert not findings, findings
 
 
+def test_tool_env_container_evidence_path_is_considered() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        contract_path, runtime_path = _prepare_runtime(root)
+        runtime = valid_runtime_contract()
+        runtime["tool_env"] = {
+            "PASSWORD_RESET_PROVIDER_LOG_PATH": "/data/ruoyi/uploadPath/audit/password-reset-mailbox.log",
+            "E2E_PROVIDER_LOG_CONTAINER": "missing-container",
+        }
+        _write_yaml(runtime_path, runtime)
+        _write(
+            root / "deploy/.env.dev",
+            "SERVER_PORT=28080\nSPRING_MAIL_HOST=smtp.example.com\nSPRING_MAIL_PORT=587\nSPRING_MAIL_USERNAME=mailer@example.com\nSPRING_MAIL_PASSWORD=secret123\nSPRING_MAIL_FROM=noreply@example.com\nPASSWORD_RESET_MAILBOX=qa@example.com\n",
+        )
+        findings = evaluate_delivery_truth(
+            contract_path=contract_path,
+            runtime_contract_path=runtime_path,
+            repo_root=root,
+            stage="verify",
+        )
+        assert any("missing send evidence path" in item for item in findings), findings
+
+
 def main() -> int:
     tests = [
         test_config_with_reset_code_fixed_fails,
         test_noop_or_fake_sender_pattern_fails,
         test_declared_provider_evidence_missing_fails,
         test_valid_real_implementation_passes,
+        test_tool_env_container_evidence_path_is_considered,
     ]
     for fn in tests:
         fn()
