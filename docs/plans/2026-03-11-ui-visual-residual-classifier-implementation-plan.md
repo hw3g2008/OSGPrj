@@ -215,7 +215,7 @@ git commit -m "feat: add residual region schema and guard enforcement"
 
 **Files:**
 - Create: `osg-frontend/tests/e2e/support/visual-residual-classifier.ts`
-- Create: `osg-frontend/tests/e2e/support/__tests__/visual-residual-classifier.spec.ts`
+- Create: `osg-frontend/packages/admin/src/__tests__/visual-residual-classifier.spec.ts`
 
 **Step 1: Write the failing tests**
 
@@ -231,7 +231,7 @@ git commit -m "feat: add residual region schema and guard enforcement"
 Run:
 
 ```bash
-pnpm --dir osg-frontend test --run tests/e2e/support/__tests__/visual-residual-classifier.spec.ts
+pnpm --dir osg-frontend/packages/admin test --run src/__tests__/visual-residual-classifier.spec.ts
 ```
 
 Expected:
@@ -251,7 +251,7 @@ Expected:
 Run:
 
 ```bash
-pnpm --dir osg-frontend test --run tests/e2e/support/__tests__/visual-residual-classifier.spec.ts
+pnpm --dir osg-frontend/packages/admin test --run src/__tests__/visual-residual-classifier.spec.ts
 ```
 
 Expected:
@@ -262,7 +262,7 @@ Expected:
 
 ```bash
 git add osg-frontend/tests/e2e/support/visual-residual-classifier.ts \
-  osg-frontend/tests/e2e/support/__tests__/visual-residual-classifier.spec.ts
+  osg-frontend/packages/admin/src/__tests__/visual-residual-classifier.spec.ts
 git commit -m "feat: add page-level visual residual classifier helper"
 ```
 
@@ -398,7 +398,7 @@ Run:
 python3 .claude/skills/workflow-engine/tests/ui_delivery_policy_config_selftest.py
 python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard_style_state_test.py
 python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard_selftest.py
-pnpm --dir osg-frontend test --run tests/e2e/support/__tests__/visual-residual-classifier.spec.ts
+pnpm --dir osg-frontend/packages/admin test --run src/__tests__/visual-residual-classifier.spec.ts
 ```
 
 Expected:
