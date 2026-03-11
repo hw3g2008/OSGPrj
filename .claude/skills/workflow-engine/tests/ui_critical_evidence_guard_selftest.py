@@ -303,6 +303,22 @@ def collect_issues(module, contract: dict, report: dict, stage: str = "verify") 
     return issues
 
 
+def collect_issues_with_policy(
+    module,
+    contract: dict,
+    report: dict,
+    policy: dict,
+    stage: str = "verify",
+) -> list[str]:
+    issues: list[str] = []
+    module.validate_page_report(contract, report, issues, stage=stage, policy=policy)
+    return issues
+
+
+def strict_evidence_policy() -> dict:
+    return {"require_failure_evidence": True}
+
+
 def test_masked_critical_surface_fails(module) -> None:
     contract = build_contract()
     report = build_page_report()
@@ -361,6 +377,29 @@ def test_overlay_surface_evidence_passes(module) -> None:
     assert not issues, issues
 
 
+def test_verify_failure_page_missing_diff_evidence_fails(module) -> None:
+    contract = build_contract()
+    report = build_page_report()
+    report["pass_pages"] = 0
+    report["fail_pages"] = 1
+    report["pages"][0]["result"] = "FAIL"
+    report["pages"][0]["diff_ref"] = "none"
+    issues = collect_issues_with_policy(module, contract, report, strict_evidence_policy())
+    assert any("diff_ref" in issue for issue in issues), issues
+
+
+def test_verify_failure_page_missing_actual_evidence_fails(module) -> None:
+    contract = build_contract()
+    report = build_page_report()
+    report["pass_pages"] = 0
+    report["fail_pages"] = 1
+    report["pages"][0]["result"] = "FAIL"
+    report["pages"][0]["actual_ref"] = ""
+    report["pages"][0]["diff_ref"] = "osg-spec-docs/tasks/audit/ui-visual-diff-permission/login-page/1440x900.png"
+    issues = collect_issues_with_policy(module, contract, report, strict_evidence_policy())
+    assert any("actual_ref" in issue for issue in issues), issues
+
+
 def main() -> int:
     module = load_guard_module()
     tests = [
@@ -371,6 +410,8 @@ def main() -> int:
         test_missing_surface_viewport_evidence_fails,
         test_missing_content_part_evidence_fails,
         test_overlay_surface_evidence_passes,
+        test_verify_failure_page_missing_diff_evidence_fails,
+        test_verify_failure_page_missing_actual_evidence_fails,
     ]
     for fn in tests:
         fn(module)

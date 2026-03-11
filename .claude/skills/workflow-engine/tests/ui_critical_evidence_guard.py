@@ -32,8 +32,51 @@ def _load_json(path: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def _load_ui_delivery_policy(config_path: Path, errors: list[str]) -> dict[str, Any]:
+    data = _load_yaml(config_path) if config_path.exists() else {}
+    if not config_path.exists():
+        _err(errors, f"project config not found: {config_path}")
+        return {}
+    workflow_policy = data.get("workflow_policy")
+    if not isinstance(workflow_policy, dict):
+        _err(errors, "project config workflow_policy must be mapping")
+    ui_delivery_policy = data.get("ui_delivery_policy")
+    if not isinstance(ui_delivery_policy, dict):
+        _err(errors, "project config ui_delivery_policy must be mapping")
+        return {}
+    return ui_delivery_policy
+
+
 def _is_non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and value.strip() != ""
+
+
+def _is_concrete_artifact_ref(value: Any) -> bool:
+    return _is_non_empty_string(value) and str(value).strip().lower() != "none"
+
+
+def _require_failure_evidence(
+    result: dict[str, Any],
+    tag: str,
+    stage: str,
+    policy: dict[str, Any] | None,
+    errors: list[str],
+) -> None:
+    if not isinstance(policy, dict) or policy.get("require_failure_evidence") is not True:
+        return
+    if stage not in VERIFY_LIKE_STAGES:
+        return
+    if result.get("result") == "PASS":
+        return
+    for key in ("baseline_ref", "actual_ref", "diff_ref"):
+        if not _is_concrete_artifact_ref(result.get(key)):
+            _err(
+                errors,
+                (
+                    f"{tag}.{key} must be concrete artifact path when "
+                    f"result!=PASS in {stage}"
+                ),
+            )
 
 
 def _to_page_map(report: dict[str, Any], errors: list[str]) -> dict[str, dict[str, Any]]:
@@ -120,6 +163,7 @@ def _validate_surface_result(
     surface_result: dict[str, Any],
     page_tag: str,
     stage: str,
+    policy: dict[str, Any] | None,
     errors: list[str],
 ) -> None:
     surface_id = surface_contract.get("surface_id", "unknown")
@@ -142,6 +186,8 @@ def _validate_surface_result(
         _err(errors, f"{stag}.mask_policy_applied must be boolean")
     elif mask_allowed is False and mask_policy_applied:
         _err(errors, f"{stag}.mask_policy_applied must remain false when contract mask_allowed=false")
+
+    _require_failure_evidence(surface_result, stag, stage, policy, errors)
 
     if stage not in VERIFY_LIKE_STAGES:
         return
@@ -198,6 +244,7 @@ def _validate_overlay_surface_result(
     surface_contract: dict[str, Any],
     surface_result: dict[str, Any],
     stage: str,
+    policy: dict[str, Any] | None,
     errors: list[str],
 ) -> None:
     surface_id = surface_contract.get("surface_id", "unknown")
@@ -269,6 +316,7 @@ def _validate_overlay_surface_result(
         for key in ("baseline_ref", "actual_ref", "diff_ref"):
             if not _is_non_empty_string(viewport_result.get(key)):
                 _err(errors, f"{vtag}.{key} must be non-empty string")
+        _require_failure_evidence(viewport_result, vtag, stage, policy, errors)
         if viewport_result.get("width") != viewport_contract.get("width"):
             _err(errors, f"{vtag}.width must match contract ({viewport_contract.get('width')})")
         if viewport_result.get("height") != viewport_contract.get("height"):
@@ -470,6 +518,7 @@ def validate_page_report(
     errors: list[str],
     *,
     stage: str,
+    policy: dict[str, Any] | None = None,
 ) -> None:
     if stage not in ALLOWED_STAGES:
         _err(errors, f"stage must be one of {sorted(ALLOWED_STAGES)}")
@@ -497,6 +546,9 @@ def validate_page_report(
         if page_result is None:
             _err(errors, f"{tag} page_id={page_id} missing from page report")
             continue
+
+        if isinstance(page_result, dict):
+            _require_failure_evidence(page_result, f"page_report.pages[{page_id}]", stage, policy, errors)
 
         surface_results = page_result.get("critical_surface_results")
         if not isinstance(surface_results, list):
@@ -527,7 +579,14 @@ def validate_page_report(
             if surface_result is None:
                 _err(errors, f"page_report.pages[{page_id}] missing critical_surface_result for {surface_id}")
                 continue
-            _validate_surface_result(surface, surface_result, f"page_report.pages[{page_id}]", stage, errors)
+            _validate_surface_result(
+                surface,
+                surface_result,
+                f"page_report.pages[{page_id}]",
+                stage,
+                policy,
+                errors,
+            )
 
     surfaces = contract.get("surfaces") or []
     if surfaces:
@@ -543,7 +602,7 @@ def validate_page_report(
             if surface_result is None:
                 _err(errors, f"{tag} surface_id={surface_id} missing from page report")
                 continue
-            _validate_overlay_surface_result(surface, surface_result, stage, errors)
+            _validate_overlay_surface_result(surface, surface_result, stage, policy, errors)
 
 
 def parse_args() -> argparse.Namespace:
@@ -560,8 +619,9 @@ def main() -> int:
     contract = _load_yaml(Path(args.contract))
     report = _load_json(Path(args.page_report))
     errors: list[str] = []
-    validate_contract(contract, errors)
-    validate_page_report(contract, report, errors, stage=args.stage)
+    policy = _load_ui_delivery_policy(Path.cwd() / ".claude/project/config.yaml", errors)
+    validate_contract(contract, errors, policy=policy)
+    validate_page_report(contract, report, errors, stage=args.stage, policy=policy)
 
     summary = {
         "contract": args.contract,
