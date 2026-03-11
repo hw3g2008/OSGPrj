@@ -38,13 +38,9 @@
         >
           <a-form-item name="email">
             <template #label>
-              <span class="forgot-modal__label">邮箱地址<span class="forgot-modal__required">*</span></span>
+              <label class="forgot-modal__label">邮箱地址 <span class="forgot-modal__required">*</span></label>
             </template>
-            <a-input
-              v-model:value="formState.email"
-              placeholder="请输入注册邮箱"
-              size="large"
-            />
+            <a-input v-model:value="formState.email" placeholder="请输入注册邮箱" />
           </a-form-item>
         </a-form>
         <a-button
@@ -74,7 +70,7 @@
         >
           <a-form-item name="code">
             <template #label>
-              <span class="forgot-modal__label">验证码<span class="forgot-modal__required">*</span></span>
+              <label class="forgot-modal__label">验证码 <span class="forgot-modal__required">*</span></label>
             </template>
             <div class="forgot-modal__code-row">
               <a-input
@@ -120,7 +116,7 @@
         >
           <a-form-item name="password">
             <template #label>
-              <span class="forgot-modal__label">新密码<span class="forgot-modal__required">*</span></span>
+              <label class="forgot-modal__label">新密码 <span class="forgot-modal__required">*</span></label>
             </template>
             <a-input-password
               v-model:value="formState.password"
@@ -131,7 +127,7 @@
           </a-form-item>
           <a-form-item name="confirmPassword">
             <template #label>
-              <span class="forgot-modal__label">确认密码<span class="forgot-modal__required">*</span></span>
+              <label class="forgot-modal__label">确认密码 <span class="forgot-modal__required">*</span></label>
             </template>
             <a-input-password
               v-model:value="formState.confirmPassword"
@@ -371,19 +367,15 @@ watch(
 
 <style scoped lang="scss">
 .forgot-modal {
-  &__step {
-    padding-bottom: 6px;
-  }
-
   &__title {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    display: block;
+    line-height: normal;
   }
 
   &__title-icon {
-    font-size: 18px;
-    line-height: 1;
+    margin-right: 8px;
+    font-size: inherit;
+    line-height: normal;
   }
 
   &__dots {
@@ -410,6 +402,7 @@ watch(
     text-align: center;
     color: var(--text2, #64748B);
     font-size: 14px;
+    line-height: 20px;
 
     &--compact {
       margin-bottom: 8px;
@@ -417,11 +410,11 @@ watch(
   }
 
   &__label {
-    display: inline-flex;
-    align-items: center;
+    display: inline;
     color: var(--text, #1e293b);
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: normal;
   }
 
   &__required {
@@ -433,6 +426,7 @@ watch(
     text-align: center;
     font-weight: 600;
     color: var(--text, #1E293B);
+    line-height: normal;
   }
 
   &__code-row {
@@ -493,7 +487,7 @@ watch(
     font-weight: 500;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 6px;
     background: var(--primary-gradient, linear-gradient(135deg, #4F46E5, #8B5CF6));
     box-shadow: none;
@@ -538,5 +532,22 @@ watch(
       color: #059669;
     }
   }
+}
+</style>
+
+<style lang="scss">
+[data-surface-id="modal-forgot-password"] .ant-input,
+[data-surface-id="modal-forgot-password"] .ant-input-affix-wrapper {
+  height: 44px;
+  line-height: normal !important;
+}
+
+[data-surface-id="modal-forgot-password"] .ant-btn.forgot-modal__primary-btn {
+  justify-content: flex-start !important;
+  line-height: normal !important;
+}
+
+[data-surface-id="modal-forgot-password"] .ant-btn.forgot-modal__primary-btn > span {
+  line-height: normal !important;
 }
 </style>

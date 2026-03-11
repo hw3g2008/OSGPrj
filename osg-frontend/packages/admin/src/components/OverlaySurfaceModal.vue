@@ -327,12 +327,13 @@ onBeforeUnmount(() => {
     background: #fff;
     flex-shrink: 0;
 
-    :deep(.overlay-surface-modal__footer .ant-btn) {
+    :deep(.ant-btn) {
       min-width: 80px;
-      height: 40px;
+      height: 41px;
       padding: 0 16px;
       border-radius: 10px;
       box-shadow: none;
+      font-size: 14px;
       font-weight: 500;
       display: inline-flex;
       align-items: center;
@@ -340,13 +341,13 @@ onBeforeUnmount(() => {
       gap: 8px;
     }
 
-    :deep(.overlay-surface-modal__footer .ant-btn-default) {
+    :deep(.ant-btn-default) {
       border: 1px solid var(--border, #E2E8F0);
       background: #fff;
       color: var(--text-secondary, #64748B);
     }
 
-    :deep(.overlay-surface-modal__footer .ant-btn-primary) {
+    :deep(.ant-btn-primary) {
       border: none;
       background: var(
         --primary-gradient,

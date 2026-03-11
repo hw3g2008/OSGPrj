@@ -15,7 +15,7 @@
 
     <div class="reset-pwd-modal__warning" data-content-part="status-banner">
       <span class="mdi mdi-alert" aria-hidden="true" />
-      <p>重置后该用户需使用新密码登录</p>
+      <p data-content-part="supporting-text">重置后该用户需使用新密码登录</p>
     </div>
 
     <a-form
@@ -172,8 +172,8 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  margin-bottom: 14px;
+  padding: 9px 12px;
+  margin-bottom: 16px;
   border-radius: 8px;
   background: #fef3c7;
 
@@ -185,12 +185,6 @@ const handleSubmit = async () => {
   p {
     margin: 0;
     font-size: 13px;
-  }
-}
-
-.reset-pwd-modal__body {
-  :deep(.ant-form-item) {
-    margin-bottom: 12px;
   }
 }
 
@@ -222,5 +216,26 @@ const handleSubmit = async () => {
     border-color: var(--warning, #f59e0b);
     opacity: 0.96;
   }
+}
+</style>
+
+<style lang="scss">
+.overlay-surface-modal__body.reset-pwd-modal__body .ant-form-item {
+  margin-bottom: 0;
+}
+
+.overlay-surface-modal__footer .reset-pwd-modal__confirm-btn {
+  background-color: var(--warning, #f59e0b) !important;
+  background-image: none !important;
+  border-color: var(--warning, #f59e0b) !important;
+  color: #fff !important;
+}
+
+.overlay-surface-modal__footer .reset-pwd-modal__confirm-btn:hover,
+.overlay-surface-modal__footer .reset-pwd-modal__confirm-btn:focus {
+  background-color: var(--warning, #f59e0b) !important;
+  background-image: none !important;
+  border-color: var(--warning, #f59e0b) !important;
+  color: #fff !important;
 }
 </style>

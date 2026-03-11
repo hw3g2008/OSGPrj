@@ -96,6 +96,7 @@ function handleClick(route: string) {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 16px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
@@ -105,9 +106,7 @@ function handleClick(route: string) {
   box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
+  display: block;
 
   &:hover {
     transform: translateY(-2px);
@@ -122,6 +121,7 @@ function handleClick(route: string) {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    margin-bottom: 14px;
 
     .mdi {
       font-size: 22px;
@@ -149,11 +149,10 @@ function handleClick(route: string) {
   }
 
   &__sub {
+    display: block;
+    margin-top: 4px;
     font-size: 12px;
     color: var(--text2, #64748B);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 </style>

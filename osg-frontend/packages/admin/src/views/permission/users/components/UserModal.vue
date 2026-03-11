@@ -3,7 +3,7 @@
     :surface-id="surfaceId"
     :open="visible"
     width="500px"
-    body-class="user-modal__body"
+    :body-class="bodyClass"
     @cancel="handleClose"
   >
     <template #title>
@@ -29,8 +29,7 @@
       <a-form-item name="userName">
         <template #label>
           <span class="user-modal__label">
-            用户名
-            <span v-if="!isEdit" class="user-modal__required">*</span>
+            用户名<span v-if="!isEdit" class="user-modal__required">*</span>
           </span>
         </template>
         <a-input
@@ -66,7 +65,8 @@
       <a-form-item name="roleIds">
         <template #label>
           <span class="user-modal__label">
-            角色<span class="user-modal__required">*</span><span v-if="!isEdit">（可多选）</span>
+            角色<span class="user-modal__required">*</span>
+            <span v-if="!isEdit" class="user-modal__meta">（可多选）</span>
           </span>
         </template>
         <a-select
@@ -101,7 +101,7 @@
           <span class="user-modal__label">初始密码</span>
         </template>
         <div class="user-modal__default-password">
-          <span class="user-modal__default-password-text">Osg@2025</span>
+          <div class="user-modal__default-password-input">Osg@2025</div>
           <span class="user-modal__default-password-tag">系统默认</span>
         </div>
         <p class="user-modal__help" data-content-part="supporting-text">用户首次登录后需修改密码</p>
@@ -122,7 +122,7 @@
 
     <template #footer>
       <a-button class="user-modal__cancel-btn" @click="handleClose">取消</a-button>
-      <a-button class="user-modal__confirm-btn" :loading="loading" @click="handleSubmit">
+      <a-button type="primary" class="user-modal__confirm-btn" :loading="loading" @click="handleSubmit">
         <span class="mdi mdi-check" aria-hidden="true" />
         <span>保存</span>
       </a-button>
@@ -152,6 +152,9 @@ const loading = ref(false)
 
 const isEdit = computed(() => Boolean(props.user))
 const surfaceId = computed(() => (isEdit.value ? 'modal-edit-admin' : 'modal-add-admin'))
+const bodyClass = computed(() =>
+  isEdit.value ? 'user-modal__body user-modal__body--edit' : 'user-modal__body user-modal__body--create',
+)
 
 const formState = reactive({
   userId: undefined as number | undefined,
@@ -269,26 +272,32 @@ const handleSubmit = async () => {
 
 <style scoped lang="scss">
 .user-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
+  line-height: normal;
 }
 
 .user-modal__title-icon {
-  font-size: 18px;
-  line-height: 1;
+  margin-right: 8px;
+  font-size: inherit;
+  line-height: normal;
 }
 
 .user-modal__label {
-  display: inline-flex;
-  align-items: center;
+  display: inline;
   color: var(--text, #1e293b);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .user-modal__required {
   color: #ef4444;
+}
+
+.user-modal__meta {
+  color: var(--text-secondary, #94a3b8);
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .user-modal__grid {
@@ -296,18 +305,12 @@ const handleSubmit = async () => {
   grid-template-columns: 1fr;
 }
 
-.user-modal__body {
-  :deep(.ant-form-item) {
-    margin-bottom: 2px;
-  }
-}
-
 .user-modal__input--disabled {
   background-color: var(--bg, #f8fafc);
 }
 
 .user-modal__help {
-  margin: 0;
+  margin-top: 4px;
   font-size: 11px;
   line-height: 16px;
   color: var(--text-secondary, #94a3b8);
@@ -316,9 +319,9 @@ const handleSubmit = async () => {
 .user-modal__role-panel {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 2px;
-  padding: 6px 8px;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 12px;
   background: #f8fafc;
   border-radius: 8px;
   border: 1px solid var(--border, #e2e8f0);
@@ -335,15 +338,16 @@ const handleSubmit = async () => {
 .user-modal__default-password {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 4px 10px;
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 12px;
-  background: var(--bg, #f8fafc);
+  gap: 12px;
 }
 
-.user-modal__default-password-text {
+.user-modal__default-password-input {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  background: #f3f4f6;
   font-weight: 600;
   color: var(--text, #1e293b);
 }
@@ -352,12 +356,12 @@ const handleSubmit = async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 56px;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: rgba(99, 102, 241, 0.12);
-  color: var(--primary, #6366f1);
+  min-width: 68px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 20px;
+  background: #dbeafe;
+  color: #1e40af;
   font-size: 12px;
   font-weight: 600;
 }
@@ -374,20 +378,61 @@ const handleSubmit = async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 96px;
-  border: none;
+  gap: 6px;
+  border: none !important;
   border-radius: 10px;
-  color: #fff;
-  font-weight: 600;
-  background: var(--primary-gradient, linear-gradient(135deg, #4f46e5, #8b5cf6));
+  color: #fff !important;
+  font-weight: 500;
+  background: var(--primary-gradient, linear-gradient(135deg, #4f46e5, #8b5cf6)) !important;
   box-shadow: none;
 
   &:hover,
   &:focus {
-    color: #fff;
-    background: var(--primary-gradient, linear-gradient(135deg, #4f46e5, #8b5cf6));
+    color: #fff !important;
+    background: var(--primary-gradient, linear-gradient(135deg, #4f46e5, #8b5cf6)) !important;
     opacity: 0.96;
   }
+}
+</style>
+
+<style lang="scss">
+.overlay-surface-modal__body.user-modal__body.user-modal__body--create .ant-form-item {
+  margin-bottom: 0;
+}
+
+.overlay-surface-modal__body.user-modal__body.user-modal__body--create .ant-form-item:last-child {
+  margin-bottom: 1px;
+}
+
+.overlay-surface-modal__body.user-modal__body.user-modal__body--create .user-modal__help {
+  margin-bottom: 6px;
+}
+
+.overlay-surface-modal__body.user-modal__body.user-modal__body--edit .ant-form-item {
+  margin-bottom: 2px;
+}
+
+.overlay-surface-modal__body.user-modal__body.user-modal__body--edit .ant-form-item:last-child {
+  margin-bottom: 2px;
+}
+
+.overlay-surface-modal__body.user-modal__body .ant-input,
+.overlay-surface-modal__body.user-modal__body .ant-input-affix-wrapper {
+  height: 44px;
+  line-height: normal !important;
+}
+
+.overlay-surface-modal__body.user-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  min-height: 44px;
+  line-height: normal !important;
+  padding: 12px 14px;
+}
+
+.overlay-surface-modal__footer .user-modal__cancel-btn,
+.overlay-surface-modal__footer .user-modal__confirm-btn {
+  min-width: auto;
+  height: 41px;
+  padding: 0 20px;
+  gap: 6px;
 }
 </style>

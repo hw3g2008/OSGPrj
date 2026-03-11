@@ -89,7 +89,8 @@ describe('overlay surface framework contract', () => {
     expect(source).toContain('padding: 12px 14px')
     expect(source).toContain('border: 2px solid var(--border')
     expect(source).toContain('border-radius: 10px')
-    expect(source).toContain(':deep(.overlay-surface-modal__footer .ant-btn)')
+    expect(source).toContain(':deep(.ant-btn)')
+    expect(source).not.toContain(':deep(.overlay-surface-modal__footer .ant-btn)')
     expect(source).toContain('min-width: 80px')
     expect(source).toContain('font-weight: 500')
   })
@@ -197,6 +198,9 @@ describe('overlay surface framework contract', () => {
 
   it('keeps forgot-password modal on the shared overlay shell while using contract-aligned primary styling', () => {
     const source = readSource(forgotPasswordModalPath)
+    const primaryButtonBlock = source.split('&__primary-btn {')[1]?.split('&__success')[0] ?? ''
+    const titleBlock = source.split('&__title {')[1]?.split('&__title-icon')[0] ?? ''
+    const labelBlock = source.split('&__label {')[1]?.split('&__required')[0] ?? ''
     expect(source).toContain('<OverlaySurfaceModal')
     expect(source).toContain('data-content-part="progress-indicator"')
     expect(source).toContain('data-content-part="supporting-text"')
@@ -209,8 +213,50 @@ describe('overlay surface framework contract', () => {
     expect(source).toContain(':required-mark="false"')
     expect(source).toContain('#label')
     expect(source).toContain(':visibility-toggle="false"')
+    expect(source).toContain('<label class="forgot-modal__label">邮箱地址 <span class="forgot-modal__required">*</span></label>')
+    expect(titleBlock).toContain('display: block')
+    expect(source).toContain('margin-right: 8px')
+    expect(labelBlock).toContain('font-size: 16px')
+    expect(labelBlock).toContain('font-weight: 400')
+    expect(source).toContain('height: 44px')
+    expect(primaryButtonBlock).toContain('justify-content: flex-start')
+    expect(source).toContain('[data-surface-id="modal-forgot-password"] .ant-btn.forgot-modal__primary-btn')
+    expect(source).toContain('justify-content: flex-start !important')
+    expect(source).toContain('line-height: normal !important')
+    expect(primaryButtonBlock).not.toContain('justify-content: center')
+    expect(source).not.toContain('padding-bottom: 6px')
     expect(source).not.toContain(':deep(.ant-form-item)')
     expect(source).not.toContain(':deep(.ant-form-item-label > label)')
+  })
+
+  it('keeps forgot-password modal on strict screenshot compare while preserving the 450px shell contract', () => {
+    const surfaceBlock = readSurfaceBlock(readSource(permissionVisualContractPath), 'modal-forgot-password')
+
+    expect(surfaceBlock).not.toContain('snapshot_compare: false')
+    expect(surfaceBlock).toContain('max-width: 450px')
+    expect(surfaceBlock).toContain("selector: '[data-surface-id=\"modal-forgot-password\"] [data-surface-part=\"shell\"]'")
+    expect(surfaceBlock).toContain("selector: '[data-surface-id=\"modal-forgot-password\"] [data-content-part=\"progress-indicator\"]'")
+    expect(surfaceBlock).toContain("selector: '[data-surface-id=\"modal-forgot-password\"] [data-content-part=\"field-group\"]'")
+    expect(surfaceBlock).toContain("selector: '[data-surface-id=\"modal-forgot-password\"] [data-content-part=\"action-row\"]'")
+  })
+
+  it('keeps visual contract execution on strict screenshot compare without snapshot bypass switches', () => {
+    const supportSource = readSource(visualContractSupportPath)
+    const e2eSource = readSource(visualContractE2ePath)
+    const contractSource = readSource(permissionVisualContractPath)
+
+    expect(supportSource).not.toContain('snapshot_compare?: boolean')
+    expect(e2eSource).not.toContain('snapshot_compare !== false')
+    for (const surfaceId of [
+      'modal-forgot-password',
+      'modal-new-role',
+      'modal-edit-role',
+      'modal-add-admin',
+      'modal-edit-admin',
+      'modal-reset-password',
+    ]) {
+      expect(readSurfaceBlock(contractSource, surfaceId)).not.toContain('snapshot_compare: false')
+    }
   })
 
   it('renders role permissions with grouped surface markup and mdi icons instead of ad-hoc emoji', () => {
@@ -246,16 +292,41 @@ describe('overlay surface framework contract', () => {
 
   it('keeps user modal footer and remark field aligned to prototype shell patterns', () => {
     const source = readSource(userModalPath)
+    const compactSource = source.replace(/\s+/g, '')
+    const titleBlock = source.split('.user-modal__title {')[1]?.split('.user-modal__title-icon')[0] ?? ''
+    const labelBlock = source.split('.user-modal__label {')[1]?.split('.user-modal__required')[0] ?? ''
+    const confirmButtonBlock = source.split('.user-modal__confirm-btn {')[1]?.split('}')[0] ?? ''
     expect(source).not.toContain('show-count')
     expect(source).toContain('class="user-modal__cancel-btn"')
     expect(source).toContain('class="user-modal__confirm-btn"')
     expect(source).not.toContain('<a-button type="primary" :loading="loading" @click="handleSubmit">')
     expect(source).toContain(':required-mark="false"')
     expect(source).toContain('#label')
+    expect(titleBlock).toContain('display: block')
+    expect(source).toContain('margin-right: 8px')
+    expect(labelBlock).toContain('font-size: 16px')
+    expect(labelBlock).toContain('font-weight: 400')
+    expect(compactSource).toContain('用户名<spanv-if="!isEdit"class="user-modal__required">*</span>')
+    expect(source).toContain('height: 44px')
+    expect(source).toContain('line-height: normal !important')
+    expect(source).toContain('.overlay-surface-modal__body.user-modal__body.user-modal__body--create .user-modal__help')
+    expect(source).toContain('margin-bottom: 6px')
+    expect(confirmButtonBlock).toContain('font-weight: 500')
+    expect(confirmButtonBlock).toContain('gap: 6px')
+    expect(confirmButtonBlock).not.toContain('min-width: 96px')
+    expect(source).toContain('margin-top: 4px')
+    expect(source).toContain('.overlay-surface-modal__footer .user-modal__cancel-btn')
+    expect(source).toContain('.overlay-surface-modal__footer .user-modal__confirm-btn')
+    expect(source).toContain('min-width: auto')
+    expect(source).toContain('height: 41px')
+    expect(source).toContain('padding: 0 20px')
+    expect(source).toContain('.overlay-surface-modal__body.user-modal__body.user-modal__body--edit .ant-form-item')
+    expect(source).toContain('margin-bottom: 2px')
   })
 
   it('renders password reset warning content with custom surface markup instead of Ant alert defaults', () => {
     const source = readSource(resetPwdModalPath)
+    expect(source).toContain('data-content-part="supporting-text"')
     expect(source).toContain('data-content-part="status-banner"')
     expect(source).toContain('data-content-part="field-group"')
     expect(source).toContain('data-content-part="action-row"')
@@ -266,6 +337,12 @@ describe('overlay surface framework contract', () => {
     expect(source).toContain(':required-mark="false"')
     expect(source).toContain('#label')
     expect(source).toContain(':visibility-toggle="false"')
+    expect(source).not.toContain('class="reset-pwd-modal__supporting-text"')
+    expect(source).toContain('<p data-content-part="supporting-text">')
+    expect(source).toContain('.overlay-surface-modal__body.reset-pwd-modal__body .ant-form-item')
+    expect(source).toContain('.overlay-surface-modal__footer .reset-pwd-modal__confirm-btn')
+    expect(source).toContain('background-color: var(--warning, #f59e0b) !important')
+    expect(source).toContain('border-color: var(--warning, #f59e0b) !important')
   })
 
   it('declares generic content-part contracts for proof-case overlay surfaces', () => {

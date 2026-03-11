@@ -58,7 +58,10 @@
     </aside>
 
     <div class="main-panel">
-      <main class="content">
+      <main
+        class="content"
+        :class="{ 'content--dashboard': route.path === '/dashboard' }"
+      >
         <router-view />
       </main>
     </div>
@@ -469,5 +472,9 @@ onBeforeUnmount(() => {
 
 .content {
   padding: 20px 24px 24px;
+
+  &.content--dashboard {
+    padding: 28px;
+  }
 }
 </style>

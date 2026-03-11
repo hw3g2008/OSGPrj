@@ -71,6 +71,7 @@ function handleViewAll() {
   &__title {
     color: #92400E;
     font-size: 16px;
+    line-height: 24px;
   }
 
   &__content {
@@ -81,7 +82,7 @@ function handleViewAll() {
   &__list {
     display: flex;
     gap: 24px;
-    margin-top: 6px;
+    margin-top: 8px;
     flex-wrap: wrap;
   }
 
@@ -104,7 +105,7 @@ function handleViewAll() {
     color: #fff;
     border: none;
     border-radius: 10px;
-    padding: 8px 18px;
+    padding: 9px 18px;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;

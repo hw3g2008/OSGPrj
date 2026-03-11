@@ -64,6 +64,25 @@ const items = computed(() => {
 
 <style scoped lang="scss">
 .student-status {
+  :deep(.ant-card) {
+    border-radius: 16px;
+    box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
+  }
+
+  :deep(.ant-card-head) {
+    min-height: auto;
+    padding: 15px 22px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+  }
+
+  :deep(.ant-card-head-title) {
+    padding: 0;
+  }
+
+  :deep(.ant-card-body) {
+    padding: 22px;
+  }
+
   &__title-wrap {
     display: inline-flex;
     align-items: center;
@@ -76,15 +95,15 @@ const items = computed(() => {
   }
 
   &__list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    display: block;
   }
 
   &__item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  &__item:last-child {
+    margin-bottom: 0;
   }
 
   &__row {
@@ -101,7 +120,7 @@ const items = computed(() => {
   }
 
   &__count {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text, #1E293B);
   }

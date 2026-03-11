@@ -49,17 +49,23 @@ const router = useRouter()
 
 <style scoped lang="scss">
 .recent-activity {
-  height: 100%;
-
   :deep(.ant-card) {
-    height: 100%;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
+  }
+
+  :deep(.ant-card-head) {
+    min-height: auto;
+    padding: 15px 22px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+  }
+
+  :deep(.ant-card-head-title) {
+    padding: 0;
   }
 
   :deep(.ant-card-body) {
     padding: 0;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
   }
 
   &__header {
@@ -91,9 +97,7 @@ const router = useRouter()
   }
 
   &__list {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+    display: block;
   }
 
   &__item {

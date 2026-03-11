@@ -43,6 +43,25 @@ const items = computed(() => {
 
 <style scoped lang="scss">
 .monthly-stats {
+  :deep(.ant-card) {
+    border-radius: 16px;
+    box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
+  }
+
+  :deep(.ant-card-head) {
+    min-height: auto;
+    padding: 15px 22px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+  }
+
+  :deep(.ant-card-head-title) {
+    padding: 0;
+  }
+
+  :deep(.ant-card-body) {
+    padding: 22px;
+  }
+
   &__title-wrap {
     display: inline-flex;
     align-items: center;
@@ -67,13 +86,17 @@ const items = computed(() => {
     margin-bottom: 10px;
   }
 
+  &__item:last-child {
+    margin-bottom: 0;
+  }
+
   &__label {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text2, #64748B);
   }
 
   &__value {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text, #1E293B);
   }

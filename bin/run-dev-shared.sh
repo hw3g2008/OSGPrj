@@ -9,4 +9,6 @@ if [[ "${CONTEXT_PREFLIGHT_DONE:-0}" != "1" ]]; then
   export CONTEXT_PREFLIGHT_DONE=1
 fi
 
+bash bin/runtime-port-guard.sh --mode converge-runtime --target dev-local --context run-dev-shared >/dev/null
+
 exec bash bin/run-backend-dev.sh deploy/.env.dev

@@ -13,12 +13,14 @@ const webServerTimeoutMs =
   Number.isFinite(parsedWebServerTimeout) && parsedWebServerTimeout > 0
     ? parsedWebServerTimeout
     : 300_000
+const disableWebServerForPrototypeVisualSource = process.env.UI_VISUAL_SOURCE === 'prototype'
 
 const snapshotPathTemplate = process.env.PW_VISUAL_SNAPSHOT_TEMPLATE
 const stability = resolveStabilityConfigFromEnv()
 
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: ['**/tmp-*.spec.ts'],
   fullyParallel: true,
   snapshotPathTemplate: snapshotPathTemplate || undefined,
   forbidOnly: !!process.env.CI,
@@ -42,10 +44,12 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'pnpm --dir packages/admin build && pnpm --dir packages/admin preview --port 4173',
-    port: 4173,
-    reuseExistingServer,
-    timeout: webServerTimeoutMs,
-  },
+  webServer: disableWebServerForPrototypeVisualSource
+    ? undefined
+    : {
+        command: 'pnpm --dir packages/admin build && pnpm --dir packages/admin preview --port 4173',
+        port: 4173,
+        reuseExistingServer,
+        timeout: webServerTimeoutMs,
+      },
 })

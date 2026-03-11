@@ -5,9 +5,12 @@ import { registerVisualFixtureRoutes } from './support/visual-fixture'
 import { applyStabilityToPage, type StabilityConfig } from './support/test-stability'
 import { performSurfaceTrigger, waitForVisualSettle } from './support/surface-trigger'
 
-const contract = loadVisualContract(process.env.UI_VISUAL_CONTRACT_JSON)
-const rolesPage = contract.pages.find((page) => page.page_id === 'roles') as VisualPageContract
-const newRoleSurface = contract.surfaces?.find((surface) => surface.surface_id === 'modal-new-role') as VisualSurfaceContract
+const contractJson = process.env.UI_VISUAL_CONTRACT_JSON
+const contract = contractJson ? loadVisualContract() : null
+const rolesPage = contract?.pages.find((page) => page.page_id === 'roles') as VisualPageContract | undefined
+const newRoleSurface = contract?.surfaces?.find((surface) => surface.surface_id === 'modal-new-role') as
+  | VisualSurfaceContract
+  | undefined
 
 const fixedTimeStability: StabilityConfig = {
   timezoneId: 'Asia/Shanghai',
@@ -21,6 +24,9 @@ const fixedTimeStability: StabilityConfig = {
 }
 
 async function openProtectedMockPage(page) {
+  if (!rolesPage) {
+    throw new Error('roles page contract is required')
+  }
   await registerVisualFixtureRoutes(page, rolesPage.fixture_routes || [])
   await loginAsAdmin(page)
   await page.goto(rolesPage.route)
@@ -28,6 +34,11 @@ async function openProtectedMockPage(page) {
 }
 
 test('fixed-time stability must not break overlay trigger interactions', async ({ page }) => {
+  test.skip(!contract || !rolesPage || !newRoleSurface, 'UI_VISUAL_CONTRACT_JSON is required for stability overlay tests')
+  if (!rolesPage || !newRoleSurface) {
+    return
+  }
+
   await applyStabilityToPage(page, fixedTimeStability)
   await openProtectedMockPage(page)
   await performSurfaceTrigger(page, rolesPage, newRoleSurface, 'app')

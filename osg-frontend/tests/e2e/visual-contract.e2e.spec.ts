@@ -809,7 +809,6 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await applyStabilityToPage(page, stabilityConfig)
       await navigateToVisualTarget(page, pageContract)
-
       if (visualSource === 'app') {
         await assertRequiredAnchors(page, pageContract.required_anchors, pageContract.page_id)
         await assertAnyOfAnchorGroups(page, pageContract.required_anchors_any_of || [], pageContract.page_id)
@@ -922,7 +921,6 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
       const trigger = surfaceContract.trigger_action || { type: 'auto-open' as const }
       const viewportResults: Record<string, unknown>[] = []
       let overallResult: 'PASS' | 'FAIL' = 'PASS'
-
       for (const viewport of surfaceContract.viewport_variants || []) {
         await page.setViewportSize({ width: viewport.width, height: viewport.height })
         const mergedFixtureRoutes = mergeFixtureRoutes(surfaceContract.fixture_routes, hostPage.fixture_routes)

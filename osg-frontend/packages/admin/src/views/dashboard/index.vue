@@ -99,7 +99,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .dashboard {
-  padding-bottom: 1px;
+  padding-bottom: 2px;
 
   &__welcome {
     display: flex;
@@ -111,6 +111,7 @@ onMounted(() => {
   &__title {
     font-size: 24px;
     font-weight: 700;
+    line-height: 1.5;
     color: var(--text, #1E293B);
     margin: 0 0 4px 0;
     display: inline-block;
@@ -140,13 +141,7 @@ onMounted(() => {
   }
 
   &__left {
-    display: flex;
     min-width: 0;
-
-    > * {
-      flex: 1;
-      min-width: 0;
-    }
   }
 
   &__right {

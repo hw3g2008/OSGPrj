@@ -2,6 +2,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 
+const permissionVisualContractPath = path.resolve(
+  __dirname,
+  '../../../../../osg-spec-docs/docs/01-product/prd/permission/UI-VISUAL-CONTRACT.yaml',
+)
+
 // ========== Dashboard API 类型验证 ==========
 
 interface DashboardStats {
@@ -437,26 +442,56 @@ describe('Dashboard page integration', () => {
     expect(source).toContain('width: 260px;')
   })
 
-  it('keeps the dashboard two-column layout in stretch mode so the recent activity rail matches the right stack height', () => {
+  it('keeps the dashboard two-column grid gap aligned with the prototype without forcing the left rail card to fill the full stack height', () => {
     const dashboardPath = path.resolve(__dirname, '../views/dashboard/index.vue')
     const source = fs.readFileSync(dashboardPath, 'utf-8')
+    const leftBlockStart = source.indexOf('&__left {')
+    const rightBlockStart = source.indexOf('&__right {', leftBlockStart)
+    const leftBlock = source.slice(leftBlockStart, rightBlockStart)
 
+    expect(source).toContain('padding-bottom: 2px;')
     expect(source).toContain('align-items: stretch;')
     expect(source).toContain('&__left {')
-    expect(source).toContain('display: flex;')
-    expect(source).toContain('> * {')
-    expect(source).toContain('flex: 1;')
+    expect(leftBlock).not.toContain('display: flex;')
+    expect(leftBlock).not.toContain('flex: 1;')
   })
 
-  it('keeps recent activity stretched through the shared card body instead of collapsing to list height', () => {
+  it('keeps dashboard page content on the prototype 28px frame via layout-scoped content padding', () => {
+    const layoutPath = path.resolve(__dirname, '../layouts/MainLayout.vue')
+    const source = fs.readFileSync(layoutPath, 'utf-8')
+
+    expect(source).toContain("'content--dashboard': route.path === '/dashboard'")
+    expect(source).toContain('&.content--dashboard {')
+    expect(source).toContain('padding: 28px;')
+  })
+
+  it('keeps recent activity on intrinsic prototype height instead of stretching through the shared card body', () => {
     const recentActivityPath = path.resolve(__dirname, '../views/dashboard/components/RecentActivity.vue')
     const source = fs.readFileSync(recentActivityPath, 'utf-8')
 
-    expect(source).toContain('height: 100%;')
-    expect(source).toContain(':deep(.ant-card) {')
-    expect(source).toContain(':deep(.ant-card-body) {')
-    expect(source).toContain('display: flex;')
-    expect(source).toContain('flex-direction: column;')
-    expect(source).toContain('flex: 1;')
+    expect(source).not.toContain('height: 100%;')
+    expect(source).not.toContain(':deep(.ant-card) {\n    height: 100%;')
+    expect(source).not.toContain(':deep(.ant-card-body) {\n    padding: 0;\n    height: 100%;')
+  })
+
+  it('keeps dashboard stat cards in the prototype vertical stack instead of the compressed horizontal media layout', () => {
+    const statCardsPath = path.resolve(__dirname, '../views/dashboard/components/StatCards.vue')
+    const source = fs.readFileSync(statCardsPath, 'utf-8')
+
+    expect(source).toContain('margin-bottom: 14px;')
+    expect(source).not.toContain('align-items: flex-start;')
+  })
+
+  it('keeps dashboard visual compare fully strict without date masking or screenshot bypasses', () => {
+    const source = fs.readFileSync(permissionVisualContractPath, 'utf-8')
+    const dashboardBlockStart = source.indexOf('- page_id: dashboard')
+    const rolesBlockStart = source.indexOf('\n- page_id: roles', dashboardBlockStart)
+    const dashboardBlock = rolesBlockStart === -1 ? source.slice(dashboardBlockStart) : source.slice(dashboardBlockStart, rolesBlockStart)
+
+    expect(dashboardBlock).not.toContain('mask_selectors:')
+    expect(dashboardBlock).not.toContain('snapshot_compare: false')
+    expect(dashboardBlock).toContain('selector: .dashboard__two-col')
+    expect(dashboardBlock).toContain('property: align-items')
+    expect(dashboardBlock).toContain('expected: stretch')
   })
 })
