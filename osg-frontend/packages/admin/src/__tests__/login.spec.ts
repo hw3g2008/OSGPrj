@@ -23,6 +23,10 @@ const loginViewSource = fs.readFileSync(
   path.resolve(__dirname, '../views/login/index.vue'),
   'utf-8'
 )
+const visualContractSource = fs.readFileSync(
+  path.resolve(__dirname, '../../../../../osg-spec-docs/docs/01-product/prd/permission/UI-VISUAL-CONTRACT.yaml'),
+  'utf-8'
+)
 
 describe('登录模块测试', () => {
   describe('密码规则校验', () => {
@@ -134,6 +138,37 @@ describe('登录模块测试', () => {
   })
 
   describe('验证码视觉回归', () => {
+    it('登录页右侧白色壳层应使用 24px 左侧圆角', () => {
+      expect(loginViewSource).toContain('.login-right {')
+      expect(loginViewSource).toContain('border-radius: 24px 0 0 24px;')
+      expect(loginViewSource).not.toContain('border-radius: 44px 0 0 44px;')
+    })
+
+    it('login-page 视觉契约应绑定当前 ant affix wrapper 输入壳层，而不是旧的原生 login-input 选择器', () => {
+      expect(visualContractSource).toContain('selector: .login-box .ant-input-affix-wrapper')
+      expect(visualContractSource).toContain('expected: 52px')
+      expect(visualContractSource).not.toContain('selector: .login-form .login-input')
+      expect(visualContractSource).not.toContain('expected: 49px')
+    })
+
+    it('login-page 验证码视觉契约应匹配当前图片壳层尺寸和 cover 渲染', () => {
+      expect(visualContractSource).toContain('selector: .captcha-row .captcha-code')
+      expect(visualContractSource).toContain('expected: 10px')
+      expect(visualContractSource).toContain('selector: .captcha-row .captcha-code.has-image')
+      expect(visualContractSource).toContain('expected: 0px')
+      expect(visualContractSource).toContain('selector: .captcha-row .captcha-code img')
+      expect(visualContractSource).toContain('expected: 120px')
+      expect(visualContractSource).toContain('expected: cover')
+      expect(visualContractSource).not.toContain('expected: contain')
+    })
+
+    it('验证码数据若已经是完整 data uri，应直接使用而不是再次拼接 jpg 前缀', () => {
+      expect(loginViewSource).toContain("captchaImg.value.startsWith('data:image/')")
+      expect(loginViewSource).toContain("return `data:image/jpg;base64,${captchaImg.value}`")
+      expect(loginViewSource).toContain(':src=\"captchaSrc\"')
+      expect(loginViewSource).not.toContain(":src=\"'data:image/jpg;base64,' + captchaImg\"")
+    })
+
     it('验证码图片应渲染在独立视口容器中', () => {
       expect(loginViewSource).toContain('class="captcha-code-frame"')
     })
@@ -152,6 +187,32 @@ describe('登录模块测试', () => {
     it('验证码有图片时应去掉外层内边距，保持与视觉契约一致', () => {
       expect(loginViewSource).toContain('.captcha-code.has-image {')
       expect(loginViewSource).toContain('padding: 0;')
+    })
+
+    it('登录页品牌图标应回到 prototype 的 crown-outline，而不是自定义 svg 冠冕', () => {
+      expect(loginViewSource).toContain('<i class="mdi mdi-crown-outline" aria-hidden="true"></i>')
+      expect(loginViewSource).not.toContain('<svg viewBox="0 0 24 24"')
+    })
+
+    it('密码可见性图标应使用 prototype 同系的 mdi eye 渲染', () => {
+      expect(loginViewSource).toContain(':icon-render="renderPasswordIcon"')
+      expect(loginViewSource).toContain("visible ? 'mdi-eye-off' : 'mdi-eye'")
+      expect(loginViewSource).toContain('.login-box :deep(.login-password-eye)')
+    })
+
+    it('左侧文案与品牌标题应只在文本节点上切回 Inter，而不扩散到整张表单', () => {
+      expect(loginViewSource).toContain(".login-left {")
+      expect(loginViewSource).toContain(".login-title {")
+      expect(loginViewSource).toContain(".login-subtitle {")
+      expect(loginViewSource).toContain("font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;")
+    })
+
+    it('左侧 feature 与输入 prefix 应回到 prototype 使用的 mdi 图标族', () => {
+      expect(loginViewSource).toContain('class="mdi mdi-check-circle"')
+      expect(loginViewSource).toContain('class="mdi mdi-account-outline login-input-icon"')
+      expect(loginViewSource).toContain('class="mdi mdi-lock-outline login-input-icon"')
+      expect(loginViewSource).toContain('class="mdi mdi-shield-check-outline login-input-icon"')
+      expect(loginViewSource).toContain('.login-box :deep(.login-input-icon)')
     })
   })
 })

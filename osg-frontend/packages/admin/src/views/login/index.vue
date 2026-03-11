@@ -5,15 +5,15 @@
       <p>后台管理系统</p>
       <div class="features">
         <div class="feature-item">
-          <CheckCircleFilled />
+          <i class="mdi mdi-check-circle" aria-hidden="true"></i>
           <span>学员与导师管理</span>
         </div>
         <div class="feature-item">
-          <CheckCircleFilled />
+          <i class="mdi mdi-check-circle" aria-hidden="true"></i>
           <span>课程与财务结算</span>
         </div>
         <div class="feature-item">
-          <CheckCircleFilled />
+          <i class="mdi mdi-check-circle" aria-hidden="true"></i>
           <span>岗位与资源管理</span>
         </div>
       </div>
@@ -22,9 +22,7 @@
       <div class="login-box">
         <div class="login-logo">
           <div class="login-logo-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
-              <path d="M12 8L15 13.2L18 10.5L17.3 14H6.7L6 10.5L9 13.2L12 8M12 4L8.5 10L3 5L5 16H19L21 5L15.5 10L12 4M19 18H5V19C5 19.6 5.4 20 6 20H18C18.6 20 19 19.6 19 19V18Z" />
-            </svg>
+            <i class="mdi mdi-crown-outline" aria-hidden="true"></i>
           </div>
           <span>OSG Admin</span>
         </div>
@@ -45,7 +43,7 @@
               :maxlength="50"
             >
               <template #prefix>
-                <UserOutlined />
+                <i class="mdi mdi-account-outline login-input-icon" aria-hidden="true"></i>
               </template>
             </a-input>
           </a-form-item>
@@ -56,9 +54,10 @@
               placeholder="请输入密码"
               size="large"
               :maxlength="20"
+              :icon-render="renderPasswordIcon"
             >
               <template #prefix>
-                <LockOutlined />
+                <i class="mdi mdi-lock-outline login-input-icon" aria-hidden="true"></i>
               </template>
             </a-input-password>
           </a-form-item>
@@ -73,12 +72,12 @@
                 :maxlength="4"
               >
                 <template #prefix>
-                  <SafetyOutlined />
+                  <i class="mdi mdi-shield-check-outline login-input-icon" aria-hidden="true"></i>
                 </template>
               </a-input>
               <div class="captcha-code" :class="{ 'has-image': !!captchaImg }" @click="refreshCaptcha" title="点击刷新">
                 <div v-if="captchaImg" class="captcha-code-frame">
-                  <img :src="'data:image/jpg;base64,' + captchaImg" alt="验证码" />
+                  <img :src="captchaSrc" alt="验证码" />
                 </div>
                 <span v-else>----</span>
               </div>
@@ -118,15 +117,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
-import {
-  UserOutlined,
-  LockOutlined,
-  SafetyOutlined,
-  CheckCircleFilled
-} from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getCaptchaImage } from '@osg/shared/api/auth'
 import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
@@ -140,6 +133,20 @@ const loading = ref(false)
 const captchaImg = ref('')
 const captchaEnabled = ref(true)
 const forgotPasswordVisible = ref(false)
+const renderPasswordIcon = (visible: boolean) =>
+  h('i', {
+    class: ['mdi', visible ? 'mdi-eye-off' : 'mdi-eye', 'login-password-eye'],
+    'aria-hidden': 'true'
+  })
+const captchaSrc = computed(() => {
+  if (!captchaImg.value) {
+    return ''
+  }
+  if (captchaImg.value.startsWith('data:image/')) {
+    return captchaImg.value
+  }
+  return `data:image/jpg;base64,${captchaImg.value}`
+})
 
 const formState = reactive({
   username: '',
@@ -208,6 +215,7 @@ onMounted(() => {
   padding: 60px;
   background: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #8B5CF6 100%);
   color: #fff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   h1 {
     font-size: 48px;
@@ -233,8 +241,9 @@ onMounted(() => {
       font-size: 14px;
       opacity: 0.9;
 
-      :deep(.anticon) {
+      .mdi {
         font-size: 20px;
+        line-height: 1;
       }
     }
   }
@@ -247,7 +256,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 44px 0 0 44px;
+  border-radius: 24px 0 0 24px;
   overflow: visible;
   position: relative;
   z-index: 1;
@@ -277,9 +286,15 @@ onMounted(() => {
     font-size: 24px;
   }
 
+  .login-logo-icon .mdi {
+    font-size: 24px;
+    line-height: 1;
+  }
+
   span {
     font-size: 22px;
     font-weight: 700;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 }
 
@@ -287,11 +302,13 @@ onMounted(() => {
   font-size: 26px;
   font-weight: 700;
   margin-bottom: 8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .login-subtitle {
   color: #6b7280;
   margin-bottom: 28px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .login-box :deep(.ant-input-affix-wrapper) {
@@ -316,6 +333,18 @@ onMounted(() => {
 .login-box :deep(.ant-input-password input) {
   background: transparent;
   font-size: 15px;
+}
+
+.login-box :deep(.login-input-icon) {
+  color: #94a3b8;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.login-box :deep(.login-password-eye) {
+  color: #94a3b8;
+  font-size: 18px;
+  line-height: 18px;
 }
 
 .captcha-row {
