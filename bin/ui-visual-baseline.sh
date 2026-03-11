@@ -8,6 +8,9 @@ MODULE="${1:-permission}"
 MODE="verify"
 SOURCE=""
 DEV_ENV_FILE="${DEV_ENV_FILE:-deploy/.env.dev}"
+UI_VISUAL_GREP_TAG="${UI_VISUAL_GREP_TAG:-@ui-visual}"
+UI_STATE_GREP_TAG="${UI_STATE_GREP_TAG:-@ui-state}"
+UI_VISUAL_SKIP_STATE="${UI_VISUAL_SKIP_STATE:-0}"
 if [[ "${MODULE}" == "--mode" ]]; then
   MODULE="permission"
 fi
@@ -71,6 +74,14 @@ if [[ "${MODE}" == "verify" && "${SOURCE}" != "app" ]]; then
   echo "FAIL: mode=verify only allows --source app"
   exit 16
 fi
+
+case "${UI_VISUAL_SKIP_STATE}" in
+  0|1) ;;
+  *)
+    echo "FAIL: UI_VISUAL_SKIP_STATE must be 0|1, got '${UI_VISUAL_SKIP_STATE}'"
+    exit 16
+    ;;
+esac
 
 DATE_STR="$(date +%Y-%m-%d)"
 RUN_ID="$(date +%Y%m%d-%H%M%S)"
@@ -146,6 +157,9 @@ echo "INFO: module=${MODULE} mode=${MODE} source=${SOURCE} contract=${CONTRACT_P
 echo "INFO: summary=${SUMMARY_JSON}"
 echo "INFO: contract_json=${CONTRACT_JSON}"
 echo "INFO: has_state_cases=${HAS_STATE_CASES}"
+echo "INFO: visual_grep_tag=${UI_VISUAL_GREP_TAG}"
+echo "INFO: state_grep_tag=${UI_STATE_GREP_TAG}"
+echo "INFO: skip_state_cases=${UI_VISUAL_SKIP_STATE}"
 
 STABILITY_TZ="${UI_VISUAL_STABILITY_TZ:-Asia/Shanghai}"
 STABILITY_LOCALE="${UI_VISUAL_STABILITY_LOCALE:-zh-CN}"
@@ -217,6 +231,10 @@ if [[ -n "${STABILITY_FIXED_TIME}" ]]; then
 fi
 
 if [[ "${MODE}" == "generate" && "${SOURCE}" == "prototype" ]]; then
+  if ! bash bin/runtime-port-guard.sh --mode converge-runtime --target prototype-only --context ui-visual-baseline-generate; then
+    echo "FAIL: single runtime convergence failed for prototype baseline"
+    exit 17
+  fi
   if ! bash bin/prototype-server.sh status >/dev/null 2>&1; then
     if ! bash bin/prototype-server.sh start; then
       echo "FAIL: cannot start prototype server"
@@ -277,9 +295,9 @@ run_playwright_suite() {
 PLAYWRIGHT_RC=0
 set +e
 if [[ "${MODE}" == "generate" ]]; then
-  run_playwright_suite "@ui-visual" --update-snapshots=all
+  run_playwright_suite "${UI_VISUAL_GREP_TAG}" --update-snapshots=all
 else
-  run_playwright_suite "@ui-visual"
+  run_playwright_suite "${UI_VISUAL_GREP_TAG}"
 fi
 VISUAL_RC=$?
 if (( VISUAL_RC != 0 )); then
@@ -287,8 +305,8 @@ if (( VISUAL_RC != 0 )); then
 fi
 
 STATE_RC=0
-if [[ "${HAS_STATE_CASES}" == "1" ]]; then
-  run_playwright_suite "@ui-state"
+if [[ "${HAS_STATE_CASES}" == "1" && "${UI_VISUAL_SKIP_STATE}" != "1" ]]; then
+  run_playwright_suite "${UI_STATE_GREP_TAG}"
   STATE_RC=$?
   if (( STATE_RC != 0 && PLAYWRIGHT_RC == 0 )); then
     PLAYWRIGHT_RC=${STATE_RC}
@@ -296,7 +314,7 @@ if [[ "${HAS_STATE_CASES}" == "1" ]]; then
 fi
 set -e
 
-if [[ "${HAS_STATE_CASES}" == "1" ]]; then
+if [[ "${HAS_STATE_CASES}" == "1" && "${UI_VISUAL_SKIP_STATE}" != "1" ]]; then
   STATE_EXECUTED_COUNT="$(python3 - <<PY
 from pathlib import Path
 path = Path("${STATE_RESULTS_JSONL}")
@@ -312,6 +330,8 @@ PY
     echo "FAIL: state_cases declared but none executed (@ui-state)"
     exit 18
   fi
+elif [[ "${HAS_STATE_CASES}" == "1" ]]; then
+  echo "INFO: state_cases_skipped=1"
 fi
 
 python3 - <<PY
