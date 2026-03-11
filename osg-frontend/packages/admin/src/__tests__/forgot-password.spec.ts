@@ -14,6 +14,12 @@ const requestUtilSource = fs.readFileSync(
   path.resolve(__dirname, '../../../shared/src/utils/request.ts'),
   'utf-8'
 )
+const forgotPasswordVisualContractSource = fs.readFileSync(
+  path.resolve(__dirname, '../../../../../osg-spec-docs/docs/01-product/prd/permission/UI-VISUAL-CONTRACT.yaml'),
+  'utf-8'
+)
+const forgotPasswordSurfaceContractBlock =
+  forgotPasswordVisualContractSource.split('- surface_id: modal-forgot-password')[1]?.split('- surface_id: modal-new-role')[0] ?? ''
 
 // 步骤切换逻辑测试
 describe('Forgot Password - Step Navigation', () => {
@@ -50,6 +56,12 @@ describe('Forgot Password - Step Navigation', () => {
     expect(forgotPasswordModalSource).toContain('background: #22C55E;')
     expect(forgotPasswordModalSource).toContain('&--active {')
     expect(forgotPasswordModalSource).not.toContain("'forgot-modal__dot--active': currentStep >= dot")
+  })
+
+  it('should declare non-default visual state coverage for forgot-password progress indicator in the contract', () => {
+    expect(forgotPasswordSurfaceContractBlock).toContain('- part_id: progress-indicator')
+    expect(forgotPasswordSurfaceContractBlock).toContain('- state_id: step-email')
+    expect(forgotPasswordSurfaceContractBlock).not.toContain("state_variants:\n  - state_id: default")
   })
 })
 
