@@ -195,8 +195,9 @@ describe('登录模块测试', () => {
     })
 
     it('密码可见性图标应使用 prototype 同系的 mdi eye 渲染', () => {
+      expect(loginViewSource).toContain("import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons-vue'")
       expect(loginViewSource).toContain(':icon-render="renderPasswordIcon"')
-      expect(loginViewSource).toContain("visible ? 'mdi-eye-off' : 'mdi-eye'")
+      expect(loginViewSource).toContain("h(visible ? EyeInvisibleOutlined : EyeOutlined, {")
       expect(loginViewSource).toContain('.login-box :deep(.login-password-eye)')
     })
 
@@ -214,5 +215,27 @@ describe('登录模块测试', () => {
       expect(loginViewSource).toContain('class="mdi mdi-shield-check-outline login-input-icon"')
       expect(loginViewSource).toContain('.login-box :deep(.login-input-icon)')
     })
+
+    it('登录表单项间距应对齐 prototype 的 18/20/0 节奏，而不是沿用 ant 默认 24px', () => {
+      expect(loginViewSource).toContain('<a-form-item name="username" class="login-form-item">')
+      expect(loginViewSource).toContain('<a-form-item name="password" class="login-form-item">')
+      expect(loginViewSource).toContain('<a-form-item v-if="captchaEnabled" name="code" class="login-form-item">')
+      expect(loginViewSource).toContain('<a-form-item class="login-links-item">')
+      expect(loginViewSource).toContain('<a-form-item class="login-submit-item">')
+      expect(loginViewSource).toContain('.login-box :deep(.login-form-item) {')
+      expect(loginViewSource).toContain('margin-bottom: 18px;')
+      expect(loginViewSource).toContain('.login-box :deep(.login-links-item) {')
+      expect(loginViewSource).toContain('margin-bottom: 20px;')
+      expect(loginViewSource).toContain('.login-box :deep(.login-submit-item) {')
+      expect(loginViewSource).toContain('margin-bottom: 0;')
+    })
+
+    it('记住我这一行应收成 prototype 的 13px 灰色文本节奏', () => {
+      expect(loginViewSource).toContain('.login-links {')
+      expect(loginViewSource).toContain(':deep(.ant-checkbox-wrapper) {')
+      expect(loginViewSource).toContain('color: #64748b;')
+      expect(loginViewSource).toContain('font-size: 13px;')
+    })
+
   })
 })

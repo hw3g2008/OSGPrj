@@ -35,7 +35,7 @@
           :rules="rules"
           @finish="handleSubmit"
         >
-          <a-form-item name="username">
+          <a-form-item name="username" class="login-form-item">
             <a-input
               v-model:value="formState.username"
               placeholder="请输入用户名"
@@ -48,7 +48,7 @@
             </a-input>
           </a-form-item>
 
-          <a-form-item name="password">
+          <a-form-item name="password" class="login-form-item">
             <a-input-password
               v-model:value="formState.password"
               placeholder="请输入密码"
@@ -62,7 +62,7 @@
             </a-input-password>
           </a-form-item>
 
-          <a-form-item v-if="captchaEnabled" name="code">
+          <a-form-item v-if="captchaEnabled" name="code" class="login-form-item">
             <div class="captcha-row">
               <a-input
                 class="captcha-input"
@@ -84,7 +84,7 @@
             </div>
           </a-form-item>
 
-          <a-form-item>
+          <a-form-item class="login-links-item">
             <div class="login-links">
               <a-checkbox v-model:checked="formState.rememberMe">记住我（7天）</a-checkbox>
               <a
@@ -95,7 +95,7 @@
             </div>
           </a-form-item>
 
-          <a-form-item>
+          <a-form-item class="login-submit-item">
             <a-button
               type="primary"
               html-type="submit"
@@ -120,6 +120,7 @@
 import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getCaptchaImage } from '@osg/shared/api/auth'
 import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
@@ -134,8 +135,8 @@ const captchaImg = ref('')
 const captchaEnabled = ref(true)
 const forgotPasswordVisible = ref(false)
 const renderPasswordIcon = (visible: boolean) =>
-  h('i', {
-    class: ['mdi', visible ? 'mdi-eye-off' : 'mdi-eye', 'login-password-eye'],
+  h(visible ? EyeInvisibleOutlined : EyeOutlined, {
+    class: 'login-password-eye',
     'aria-hidden': 'true'
   })
 const captchaSrc = computed(() => {
@@ -212,7 +213,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 60px;
+  padding: 63px 60px 57px;
   background: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #8B5CF6 100%);
   color: #fff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -317,6 +318,18 @@ onMounted(() => {
   border-radius: 12px;
   background: #fff;
   box-shadow: none;
+}
+
+.login-box :deep(.login-form-item) {
+  margin-bottom: 18px;
+}
+
+.login-box :deep(.login-links-item) {
+  margin-bottom: 20px;
+}
+
+.login-box :deep(.login-submit-item) {
+  margin-bottom: 0;
 }
 
 .login-box :deep(.ant-input-affix-wrapper:hover) {
@@ -426,6 +439,12 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 13px;
+
+  :deep(.ant-checkbox-wrapper) {
+    color: #64748b;
+    font-size: 13px;
+  }
 
   .forgot-link {
     color: #4F46E5;
