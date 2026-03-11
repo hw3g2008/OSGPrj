@@ -43,6 +43,11 @@ def _base_contract() -> dict:
                                 "known-identity",
                                 "unknown-identity",
                             ]
+                        },
+                        {
+                            "single_observable_error_message_for": [
+                                "known-identity",
+                            ]
                         }
                     ],
                 },
@@ -115,6 +120,19 @@ def test_unknown_scenario_reference_fails() -> None:
     assert any("unknown scenario_id" in item for item in findings), findings
 
 
+def test_unknown_invariant_name_fails() -> None:
+    data = _base_contract()
+    data["capabilities"][0]["behavior_contract"]["invariants"] = [
+        {
+            "not_a_supported_invariant": [
+                "known-identity",
+            ]
+        }
+    ]
+    findings = validate_contract(data)
+    assert any("unsupported invariant" in item for item in findings), findings
+
+
 def test_optional_invariants_and_must_not_exist_for_can_be_omitted() -> None:
     data = _base_contract()
     del data["capabilities"][0]["behavior_contract"]["invariants"]
@@ -139,6 +157,7 @@ def main() -> int:
         test_missing_content_contract_fails,
         test_missing_evidence_contract_fails,
         test_unknown_scenario_reference_fails,
+        test_unknown_invariant_name_fails,
         test_optional_invariants_and_must_not_exist_for_can_be_omitted,
         test_valid_contract_passes,
     ]

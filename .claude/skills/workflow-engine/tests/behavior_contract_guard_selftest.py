@@ -111,6 +111,46 @@ def valid_contract() -> dict:
                     "must_not_exist_for": ["invalid-credentials"],
                 },
             },
+            {
+                "capability_id": "forgot-password-verify-code",
+                "source_refs": [{"prd": "00-admin-login.md#5.1"}],
+                "effect_scope": "internal",
+                "effect_kind": "password_reset_code_verification",
+                "truth_mode": "real",
+                "evidence_mode": "cache_record",
+                "verification_stage": "verify",
+                "required_artifacts": ["cache_record", "audit_event"],
+                "behavior_contract": {
+                    "scenarios": [
+                        {
+                            "scenario_id": "invalid-code",
+                            "input_class": "invalid_code",
+                            "expected_result": "rejected",
+                        },
+                        {
+                            "scenario_id": "expired-code",
+                            "input_class": "expired_code",
+                            "expected_result": "rejected",
+                        },
+                    ],
+                    "invariants": [
+                        {
+                            "single_observable_error_message_for": [
+                                "invalid-code",
+                                "expired-code",
+                            ]
+                        }
+                    ],
+                },
+                "content_contract": {
+                    "forbidden_literals": ["null", "undefined"],
+                    "required_tokens": ["验证码"],
+                },
+                "evidence_contract": {
+                    "must_not_exist_for": ["invalid-code", "expired-code"],
+                    "must_exist_for": ["invalid-code"],
+                },
+            },
         ],
     }
 
@@ -180,6 +220,37 @@ def valid_report() -> dict:
                     },
                 ],
             },
+            {
+                "capability_id": "forgot-password-verify-code",
+                "scenario_results": [
+                    {
+                        "scenario_id": "invalid-code",
+                        "input_class": "invalid_code",
+                        "expected_result": "rejected",
+                        "observed_result": "rejected",
+                        "observable_response": {
+                            "http_status": 200,
+                            "business_code": 500,
+                            "message": "验证码错误",
+                            "visible_error_message_count": 1,
+                        },
+                        "evidence_ref": "osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-verify-invalid-code",
+                    },
+                    {
+                        "scenario_id": "expired-code",
+                        "input_class": "expired_code",
+                        "expected_result": "rejected",
+                        "observed_result": "rejected",
+                        "observable_response": {
+                            "http_status": 200,
+                            "business_code": 500,
+                            "message": "验证码错误",
+                            "visible_error_message_count": 1,
+                        },
+                        "evidence_ref": "osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-verify-expired-code",
+                    },
+                ],
+            },
         ],
     }
 
@@ -242,6 +313,21 @@ def test_distinct_outcome_invariant_fails() -> None:
         assert any("distinct_outcome_for violated" in item for item in findings), findings
 
 
+def test_single_observable_error_message_invariant_fails() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        contract_path, report_path = _prepare_paths(root)
+        report = valid_report()
+        report["capabilities"][2]["scenario_results"][1]["observable_response"]["visible_error_message_count"] = 2
+        _write_json(report_path, report)
+        findings = evaluate_behavior_contract(
+            contract_path=contract_path,
+            report_path=report_path,
+            stage="verify",
+        )
+        assert any("single_observable_error_message_for violated" in item for item in findings), findings
+
+
 def test_valid_behavior_report_passes() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -259,6 +345,7 @@ def main() -> int:
         test_missing_scenario_result_fails,
         test_same_observable_response_invariant_fails,
         test_distinct_outcome_invariant_fails,
+        test_single_observable_error_message_invariant_fails,
         test_valid_behavior_report_passes,
     ]
     for fn in tests:

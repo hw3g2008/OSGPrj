@@ -10,6 +10,11 @@ from pathlib import Path
 import yaml
 
 ALLOWED_EFFECT_SCOPES = {"none", "internal", "external"}
+ALLOWED_BEHAVIOR_INVARIANTS = {
+    "same_observable_response_for",
+    "distinct_outcome_for",
+    "single_observable_error_message_for",
+}
 
 
 def load_yaml(path: Path):
@@ -78,6 +83,9 @@ def _validate_behavior_contract(
             for key, value in invariant.items():
                 if not _is_non_empty_string(key):
                     findings.append(f"{invariant_prefix} keys must be non-empty strings")
+                    continue
+                if key not in ALLOWED_BEHAVIOR_INVARIANTS:
+                    findings.append(f"{invariant_prefix}.{key} uses unsupported invariant")
                 if isinstance(value, list):
                     for ref in value:
                         if _is_non_empty_string(ref) and ref not in known_ids:

@@ -29,6 +29,17 @@ def _normalize_observable_response(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+def _extract_visible_error_message_count(value: Any) -> int | None:
+    if not isinstance(value, dict):
+        return None
+    count = value.get("visible_error_message_count")
+    if isinstance(count, bool):
+        return None
+    if isinstance(count, int):
+        return count
+    return None
+
+
 def _build_report_capability_map(
     report: dict[str, Any],
     errors: list[str],
@@ -158,6 +169,19 @@ def _validate_invariants(
                 if len(set(normalized_responses)) != len(refs):
                     errors.append(
                         f"capabilities[{capability_id}].behavior_contract.invariant.distinct_outcome_for violated: {refs}"
+                    )
+            elif name == "single_observable_error_message_for":
+                bad_refs = [
+                    ref
+                    for ref in refs
+                    if _extract_visible_error_message_count(scenario_map[ref].get("observable_response")) != 1
+                ]
+                if bad_refs:
+                    errors.append(
+                        "capabilities["
+                        f"{capability_id}"
+                        "].behavior_contract.invariant.single_observable_error_message_for violated: "
+                        f"{bad_refs}"
                     )
             else:
                 errors.append(
