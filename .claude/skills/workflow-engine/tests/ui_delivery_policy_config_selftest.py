@@ -78,6 +78,32 @@ def test_ui_delivery_policy_exists_with_required_keys() -> None:
             f"ui_delivery_policy.multistate_widget_part_ids must include {required}"
         )
 
+    assert policy.get("enable_visual_residual_classifier") is True, (
+        "ui_delivery_policy.enable_visual_residual_classifier must be true"
+    )
+    allowed = policy.get("allowed_visual_residual_classes")
+    assert allowed == ["micro_spacing", "low_salience_text_icon_rasterization"], (
+        "ui_delivery_policy.allowed_visual_residual_classes must be "
+        "['micro_spacing', 'low_salience_text_icon_rasterization']"
+    )
+    forbidden = policy.get("forbidden_visual_residual_classes")
+    assert forbidden == [
+        "image_like",
+        "captcha_like",
+        "color_state",
+        "geometry_change",
+        "structure_change",
+        "unknown",
+    ], (
+        "ui_delivery_policy.forbidden_visual_residual_classes must match the "
+        "default forbidden classifier set"
+    )
+    micro_spacing = policy.get("micro_spacing")
+    assert isinstance(micro_spacing, dict), "ui_delivery_policy.micro_spacing must be mapping"
+    assert micro_spacing.get("max_edge_band_px") == 4, (
+        "ui_delivery_policy.micro_spacing.max_edge_band_px must equal 4"
+    )
+
 
 def test_frontend_feedback_policy_exists_with_required_keys() -> None:
     config = _load_yaml(CONFIG_PATH)
@@ -108,6 +134,11 @@ def test_machine_truth_doc_explains_boundary_and_single_truth() -> None:
     _assert_contains(MACHINE_TRUTH_DOC, "frontend_feedback_policy")
     _assert_contains(MACHINE_TRUTH_DOC, "single_error_owner")
     _assert_contains(MACHINE_TRUTH_DOC, "single_case_verify")
+    _assert_contains(MACHINE_TRUTH_DOC, "enable_visual_residual_classifier")
+    _assert_contains(MACHINE_TRUTH_DOC, "allowed_visual_residual_classes")
+    _assert_contains(MACHINE_TRUTH_DOC, "micro_spacing")
+    _assert_contains(MACHINE_TRUTH_DOC, "captcha/image")
+    _assert_contains(MACHINE_TRUTH_DOC, "默认零容忍")
     _assert_contains(MACHINE_TRUTH_DOC, "说明性文档只负责解释")
 
 
@@ -120,6 +151,11 @@ def test_project_config_doc_explains_boundary_and_single_truth() -> None:
     _assert_contains(PROJECT_CONFIG_DOC, "single_error_owner")
     _assert_contains(PROJECT_CONFIG_DOC, "不得进入任何正常业务交付主链")
     _assert_contains(PROJECT_CONFIG_DOC, "single_case_verify")
+    _assert_contains(PROJECT_CONFIG_DOC, "enable_visual_residual_classifier")
+    _assert_contains(PROJECT_CONFIG_DOC, "allowed_visual_residual_classes")
+    _assert_contains(PROJECT_CONFIG_DOC, "micro_spacing")
+    _assert_contains(PROJECT_CONFIG_DOC, "captcha/image")
+    _assert_contains(PROJECT_CONFIG_DOC, "默认零容忍")
     _assert_contains(PROJECT_CONFIG_DOC, "本文件是说明文档，不是第二规则源")
 
 

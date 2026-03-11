@@ -197,6 +197,19 @@ ui_delivery_policy:
   forbid_mask_waiver: true
   require_failure_evidence: true
   require_single_runtime_before_visual_gate: true
+  enable_visual_residual_classifier: true
+  allowed_visual_residual_classes:
+    - micro_spacing
+    - low_salience_text_icon_rasterization
+  forbidden_visual_residual_classes:
+    - image_like
+    - captcha_like
+    - color_state
+    - geometry_change
+    - structure_change
+    - unknown
+  micro_spacing:
+    max_edge_band_px: 4
   require_state_coverage_for_multistate_widgets: true
   multistate_widget_part_ids:
     - progress-indicator
