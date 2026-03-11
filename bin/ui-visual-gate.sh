@@ -28,6 +28,30 @@ cleanup_preview() {
 
 trap cleanup_preview EXIT
 
+read_ui_delivery_required_repair_chain() {
+  python3 - <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+config_path = Path(".claude/project/config.yaml")
+if not config_path.exists():
+    print("FAIL: machine truth config missing: .claude/project/config.yaml", file=sys.stderr)
+    raise SystemExit(1)
+
+data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+policy = data.get("ui_delivery_policy") or {}
+chain = policy.get("required_repair_chain")
+if not isinstance(chain, list) or not chain or not all(isinstance(item, str) and item for item in chain):
+    print("FAIL: ui_delivery_policy.required_repair_chain missing or invalid", file=sys.stderr)
+    raise SystemExit(1)
+
+print(" -> ".join(chain))
+PY
+}
+
+UI_DELIVERY_REQUIRED_REPAIR_CHAIN="$(read_ui_delivery_required_repair_chain)"
+
 print_page_report_summary() {
   python3 - <<PY
 import json
@@ -86,6 +110,7 @@ PY
   echo "=== UI Visual Gate: module=${MODULE} ==="
   echo "INFO: contract=${CONTRACT_PATH}"
   echo "INFO: source=app (verify)"
+  echo "INFO: ui_delivery_required_repair_chain=${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
 
   MANIFEST_JSON="$(python3 - <<PY
 from pathlib import Path
@@ -146,6 +171,11 @@ EOF
   echo "INFO: baseline_missing=${baseline_missing}"
   if [[ "${baseline_missing}" != "0" ]]; then
     echo "VISUAL_FAIL: missing baseline files (${baseline_missing})"
+    exit 12
+  fi
+
+  if ! bash bin/runtime-port-guard.sh --mode converge-runtime --target dev-local --context ui-visual-gate; then
+    echo "VISUAL_FAIL: single runtime convergence failed"
     exit 12
   fi
 

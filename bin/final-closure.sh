@@ -121,12 +121,43 @@ UI_VISUAL_STYLE_FAILED="0"
 UI_VISUAL_STATE_EXECUTED="0"
 UI_VISUAL_STATE_FAILED="0"
 
+read_ui_delivery_required_repair_chain() {
+  python3 - <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+config_path = Path(".claude/project/config.yaml")
+if not config_path.exists():
+    print("FAIL: machine truth config missing: .claude/project/config.yaml", file=sys.stderr)
+    raise SystemExit(1)
+
+data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+policy = data.get("ui_delivery_policy") or {}
+chain = policy.get("required_repair_chain")
+if not isinstance(chain, list) or not chain or not all(isinstance(item, str) and item for item in chain):
+    print("FAIL: ui_delivery_policy.required_repair_chain missing or invalid", file=sys.stderr)
+    raise SystemExit(1)
+
+print(" -> ".join(chain))
+PY
+}
+
+UI_DELIVERY_REQUIRED_REPAIR_CHAIN="$(read_ui_delivery_required_repair_chain)"
+
 cleanup_backend() {
-  if [[ "${BACKEND_MODE}" == "managed" && -n "${BACK_PID}" ]]; then
-    if kill "${BACK_PID}" >/dev/null 2>&1; then
-      echo "INFO: 已停止托管后端进程 PID=${BACK_PID}"
+  if [[ "${BACKEND_MODE}" == "managed" ]]; then
+    local cleanup_pid
+    cleanup_pid="$(cat "/tmp/osg-backend-dev-${BACKEND_PORT}.pid" 2>/dev/null || true)"
+    if BACKEND_DEV_SERVER_LOG_FILE="/tmp/osg-backend.log" \
+      bash bin/backend-dev-server.sh stop deploy/.env.dev >/dev/null 2>&1; then
+      if [[ -n "${cleanup_pid}" ]]; then
+        echo "INFO: 已停止托管后端进程 PID=${cleanup_pid}"
+      else
+        echo "INFO: 已停止托管后端进程"
+      fi
     else
-      CLEANUP_WARN="后端托管进程清理失败（PID=${BACK_PID}）"
+      CLEANUP_WARN="后端托管进程清理失败（PID=${cleanup_pid:-unknown}）"
       echo "WARNING: ${CLEANUP_WARN}"
     fi
   fi
@@ -188,6 +219,7 @@ write_failure_report() {
     echo "- message: ${msg}"
     echo
     echo "## 审计字段"
+    echo "- ui_delivery_required_repair_chain: ${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
     if [[ -n "${FINAL_GATE_LOG}" ]]; then
       echo "- final_gate_log: ${FINAL_GATE_LOG}"
     fi
@@ -355,6 +387,7 @@ resolve_backend_urls
 
 echo "=== Final Closure: module=${MODULE}, cc_mode=${CC_MODE} ==="
 echo "INFO: backend base=${BASE_URL}, health=${BASE_HEALTH_URL}"
+echo "INFO: ui_delivery_required_repair_chain=${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
 
 # Step 1: 环境准备
 EXTERNAL_HEALTHY="no"
@@ -363,10 +396,17 @@ if curl -fsS --max-time "${BACKEND_HEALTH_TIMEOUT_SECONDS}" "${BASE_HEALTH_URL}"
 fi
 
 ensure_managed_backend_startable() {
-  if bash bin/runtime-port-guard.sh --mode require-free --port "${BACKEND_PORT}" --context final-closure-managed-backend; then
+  if BACKEND_DEV_SERVER_LOG_FILE="/tmp/osg-backend.log" \
+    bash bin/backend-dev-server.sh restart deploy/.env.dev; then
+    BACK_PID="$(cat "/tmp/osg-backend-dev-${BACKEND_PORT}.pid" 2>/dev/null || true)"
+    if [[ -n "${BACK_PID}" ]]; then
+      echo "INFO: 后端 PID=${BACK_PID}，日志=/tmp/osg-backend.log"
+    else
+      echo "INFO: 托管后端已启动，日志=/tmp/osg-backend.log"
+    fi
     return 0
   fi
-  fail_exit 11 "本地托管后端目标端口 ${BACKEND_PORT} 已被占用且健康检查未通过；请先清理占用进程"
+  fail_exit 11 "本地托管后端启动失败；请检查 /tmp/osg-backend.log"
 }
 
 if [[ "${BACKEND_POLICY}" != "docker_only" && "${EXTERNAL_HEALTHY}" == "yes" ]]; then
@@ -422,9 +462,6 @@ else
         BACKEND_MODE="managed"
         echo "INFO: 启动托管后端..."
         ensure_managed_backend_startable
-        bash bin/run-backend-dev.sh deploy/.env.dev >/tmp/osg-backend.log 2>&1 &
-        BACK_PID=$!
-        echo "INFO: 后端 PID=${BACK_PID}，日志=/tmp/osg-backend.log"
       else
         BACKEND_MODE="docker"
         echo "INFO: Docker 启动命令执行成功，继续等待健康检查"
@@ -437,9 +474,6 @@ else
       BACKEND_MODE="managed"
       echo "INFO: 启动托管后端..."
       ensure_managed_backend_startable
-      bash bin/run-backend-dev.sh deploy/.env.dev >/tmp/osg-backend.log 2>&1 &
-      BACK_PID=$!
-      echo "INFO: 后端 PID=${BACK_PID}，日志=/tmp/osg-backend.log"
     fi
   fi
 fi
@@ -634,6 +668,7 @@ fi
   echo "- cc_mode: ${CC_MODE}"
   echo "- backend_policy: ${BACKEND_POLICY}"
   echo "- backend_mode: ${BACKEND_MODE}"
+  echo "- ui_delivery_required_repair_chain: ${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
   echo "- base_url: ${BASE_URL}"
   echo "- base_health_url: ${BASE_HEALTH_URL}"
   echo

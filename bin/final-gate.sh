@@ -57,6 +57,30 @@ BACKEND_HEALTH_TIMEOUT_SECONDS="${BACKEND_HEALTH_TIMEOUT_SECONDS:-15}"
 BACKEND_BOOT_LOG="${BACKEND_BOOT_LOG:-${AUDIT_DIR}/final-gate-backend-boot-${MODULE}-${DATE_STR}.log}"
 BACK_PID="${BACK_PID:-}"
 
+read_ui_delivery_required_repair_chain() {
+  python3 - <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+config_path = Path(".claude/project/config.yaml")
+if not config_path.exists():
+    print("FAIL: machine truth config missing: .claude/project/config.yaml", file=sys.stderr)
+    raise SystemExit(1)
+
+data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+policy = data.get("ui_delivery_policy") or {}
+chain = policy.get("required_repair_chain")
+if not isinstance(chain, list) or not chain or not all(isinstance(item, str) and item for item in chain):
+    print("FAIL: ui_delivery_policy.required_repair_chain missing or invalid", file=sys.stderr)
+    raise SystemExit(1)
+
+print(" -> ".join(chain))
+PY
+}
+
+UI_DELIVERY_REQUIRED_REPAIR_CHAIN="$(read_ui_delivery_required_repair_chain)"
+
 require_cmd() {
   local cmd="$1"
   if ! command -v "${cmd}" >/dev/null 2>&1; then
@@ -100,24 +124,26 @@ backend_healthy() {
   curl -fsS --max-time "${BACKEND_HEALTH_TIMEOUT_SECONDS}" "${HEALTH_URL}" >/dev/null 2>&1
 }
 
-ensure_backend_startable() {
-  if bash bin/runtime-port-guard.sh --mode require-free --port "${BACKEND_PORT}" --context final-gate-backend-start; then
-    return 0
-  fi
-  echo "FAIL: 后端端口 ${BACKEND_PORT} 已被占用，但健康检查未通过。请先处理占用进程，再重试 final-gate。"
-  echo "INFO: target base=${BASE_URL} health=${HEALTH_URL} log=${BACKEND_BOOT_LOG}"
-  return 1
+managed_backend_pid() {
+  cat "/tmp/osg-backend-dev-${BACKEND_PORT}.pid" 2>/dev/null || true
 }
 
 ensure_backend_ready() {
   if backend_healthy; then
     return 0
   fi
-  ensure_backend_startable
   echo "INFO: 后端不可达，按 runtime contract 启动本地托管后端"
-  nohup bash bin/run-backend-dev.sh "${DEV_ENV_FILE}" > "${BACKEND_BOOT_LOG}" 2>&1 &
-  BACK_PID=$!
-  echo "INFO: 后端 PID=${BACK_PID}，日志=${BACKEND_BOOT_LOG}"
+  if ! BACKEND_DEV_SERVER_LOG_FILE="${BACKEND_BOOT_LOG}" \
+    bash bin/backend-dev-server.sh restart "${DEV_ENV_FILE}"; then
+    echo "FAIL: 托管后端启动失败，日志=${BACKEND_BOOT_LOG}"
+    return 1
+  fi
+  BACK_PID="$(managed_backend_pid)"
+  if [[ -n "${BACK_PID}" ]]; then
+    echo "INFO: 后端 PID=${BACK_PID}，日志=${BACKEND_BOOT_LOG}"
+  else
+    echo "INFO: 托管后端已启动，日志=${BACKEND_BOOT_LOG}"
+  fi
   local start_ts now_ts
   start_ts="$(date +%s)"
   while ! backend_healthy; do
@@ -162,6 +188,7 @@ normalize_redis_value() {
 }
 
 echo "=== Final Gate: 开始（module=${MODULE}） ==="
+echo "INFO: ui_delivery_required_repair_chain=${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
 
 echo "--- 0. toolchain_preflight ---"
 require_cmd python3
