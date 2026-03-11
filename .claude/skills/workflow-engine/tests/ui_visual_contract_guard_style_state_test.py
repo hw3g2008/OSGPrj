@@ -48,6 +48,12 @@ def collect_issues(contract: dict) -> list[str]:
     return issues
 
 
+def collect_issues_with_policy(contract: dict, policy: dict) -> list[str]:
+    issues: list[str] = []
+    validate_contract(contract, issues, policy=policy)
+    return issues
+
+
 def test_valid_style_and_state_clauses_pass() -> None:
     contract = build_base_contract()
     contract["pages"][0]["style_contracts"] = [
@@ -382,6 +388,87 @@ def test_declared_overlay_surface_present_in_contract_passes() -> None:
     assert not issues, issues
 
 
+def strict_policy() -> dict:
+    return {
+        "strict_visual_contract": True,
+        "forbid_diff_threshold_relaxation": True,
+        "forbid_snapshot_bypass": True,
+        "forbid_mask_waiver": True,
+    }
+
+
+def test_strict_policy_rejects_non_zero_diff_threshold() -> None:
+    contract = deepcopy(build_base_contract())
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any("diff_threshold" in issue for issue in issues), issues
+
+
+def test_strict_policy_rejects_snapshot_compare_false() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["pages"][0]["snapshot_compare"] = False
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any("snapshot_compare" in issue for issue in issues), issues
+
+
+def test_strict_policy_rejects_mask_selectors_and_mask_mode() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["pages"][0]["mask_selectors"] = [".dashboard__hero"]
+    contract["pages"][0]["data_mode"] = "mask"
+    contract["pages"][0]["dynamic_regions"] = [".dashboard__date"]
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any("mask_selectors" in issue for issue in issues), issues
+    assert any("data_mode=mask" in issue for issue in issues), issues
+
+
+def test_strict_policy_rejects_mask_allowed_true_on_surface_parts() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["surfaces"] = [
+        {
+            "surface_id": "modal-forgot-password",
+            "surface_type": "modal",
+            "host_page_id": "dashboard",
+            "prototype_selector": "#forgot-password-modal",
+            "app_selector": ".forgot-password-modal",
+            "surface_root_selector": ".ant-modal-root .forgot-password-modal",
+            "backdrop_selector": ".ant-modal-mask",
+            "portal_host": "body",
+            "source_ref": "00-admin-login.md#modal-forgot-password",
+            "trigger_action": {"type": "click", "selector": ".forgot-password-link"},
+            "required_anchors": [
+                ".forgot-password-modal__header",
+                ".forgot-password-modal__steps",
+                ".forgot-password-modal__content",
+            ],
+            "viewport_variants": [
+                {"viewport_id": "desktop", "width": 1440, "height": 900},
+            ],
+            "state_variants": [{"state_id": "default"}],
+            "surface_parts": [
+                {"part_id": "backdrop", "selector": ".ant-modal-mask", "mask_allowed": False},
+                {"part_id": "shell", "selector": ".forgot-password-modal", "mask_allowed": True},
+                {"part_id": "header", "selector": ".forgot-password-modal__header", "mask_allowed": False},
+                {"part_id": "body", "selector": ".forgot-password-modal__body", "mask_allowed": False},
+                {"part_id": "footer", "selector": ".forgot-password-modal__footer", "mask_allowed": False},
+                {"part_id": "close-control", "selector": ".forgot-password-modal__close", "mask_allowed": False},
+            ],
+            "style_contracts": [
+                {"selector": ".forgot-password-modal", "css": {"border-radius": "20px"}},
+            ],
+            "state_contracts": [
+                {
+                    "state_id": "default",
+                    "required_anchors": [".forgot-password-modal__content"],
+                    "style_contracts": [
+                        {"selector": ".forgot-password-modal", "css": {"background-color": "rgb(255, 255, 255)"}},
+                    ],
+                }
+            ],
+        }
+    ]
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any("mask_allowed" in issue for issue in issues), issues
+
+
 def main() -> int:
     tests = [
         test_valid_style_and_state_clauses_pass,
@@ -398,6 +485,10 @@ def main() -> int:
         test_overlay_surface_schema_missing_required_blocks_fails,
         test_declared_overlay_surface_missing_from_contract_fails,
         test_declared_overlay_surface_present_in_contract_passes,
+        test_strict_policy_rejects_non_zero_diff_threshold,
+        test_strict_policy_rejects_snapshot_compare_false,
+        test_strict_policy_rejects_mask_selectors_and_mask_mode,
+        test_strict_policy_rejects_mask_allowed_true_on_surface_parts,
     ]
     for fn in tests:
         fn()

@@ -64,6 +64,28 @@ def _err(errors: list[str], msg: str) -> None:
     errors.append(msg)
 
 
+def _load_ui_delivery_policy(config_path: Path, errors: list[str]) -> dict[str, Any]:
+    if not config_path.exists():
+        _err(errors, f"project config not found: {config_path}")
+        return {}
+    try:
+        data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:  # noqa: BLE001
+        _err(errors, f"cannot parse project config: {exc}")
+        return {}
+    if not isinstance(data, dict):
+        _err(errors, "project config must parse to mapping")
+        return {}
+    workflow_policy = data.get("workflow_policy")
+    if not isinstance(workflow_policy, dict):
+        _err(errors, "project config workflow_policy must be mapping")
+    ui_delivery_policy = data.get("ui_delivery_policy")
+    if not isinstance(ui_delivery_policy, dict):
+        _err(errors, "project config ui_delivery_policy must be mapping")
+        return {}
+    return ui_delivery_policy
+
+
 def _normalize_selector(selector: str) -> str:
     return re.sub(r"\s+", " ", selector.strip())
 
@@ -520,6 +542,111 @@ def _validate_surface_schema(contract: dict[str, Any], page_ids: set[str], error
         _validate_surface_schema_state_contracts(surface.get("state_contracts"), stag, errors)
 
 
+def _apply_strict_policy_to_page(
+    page: dict[str, Any],
+    tag: str,
+    policy: dict[str, Any] | None,
+    errors: list[str],
+) -> None:
+    if not isinstance(policy, dict) or policy.get("strict_visual_contract") is not True:
+        return
+
+    if policy.get("forbid_diff_threshold_relaxation") is True:
+        diff_threshold = page.get("diff_threshold")
+        if isinstance(diff_threshold, (int, float)) and float(diff_threshold) != 0:
+            _err(
+                errors,
+                (
+                    f"{tag}.diff_threshold must be 0 when "
+                    "ui_delivery_policy.forbid_diff_threshold_relaxation=true"
+                ),
+            )
+
+    if policy.get("forbid_snapshot_bypass") is True and page.get("snapshot_compare") is False:
+        _err(
+            errors,
+            (
+                f"{tag}.snapshot_compare=false is forbidden when "
+                "ui_delivery_policy.forbid_snapshot_bypass=true"
+            ),
+        )
+
+    if policy.get("forbid_mask_waiver") is not True:
+        return
+
+    mask_selectors = page.get("mask_selectors")
+    if isinstance(mask_selectors, list) and len(mask_selectors) > 0:
+        _err(
+            errors,
+            (
+                f"{tag}.mask_selectors must be empty when "
+                "ui_delivery_policy.forbid_mask_waiver=true"
+            ),
+        )
+
+    dynamic_regions = page.get("dynamic_regions")
+    if isinstance(dynamic_regions, list) and len(dynamic_regions) > 0:
+        _err(
+            errors,
+            (
+                f"{tag}.dynamic_regions must be empty when "
+                "ui_delivery_policy.forbid_mask_waiver=true"
+            ),
+        )
+
+    if page.get("data_mode") == "mask":
+        _err(
+            errors,
+            (
+                f"{tag}.data_mode=mask is forbidden when "
+                "ui_delivery_policy.forbid_mask_waiver=true"
+            ),
+        )
+
+    critical_surfaces = page.get("critical_surfaces")
+    if isinstance(critical_surfaces, list):
+        for i, surface in enumerate(critical_surfaces):
+            if isinstance(surface, dict) and surface.get("mask_allowed") is True:
+                _err(
+                    errors,
+                    (
+                        f"{tag}.critical_surfaces[{i}].mask_allowed=true is forbidden when "
+                        "ui_delivery_policy.forbid_mask_waiver=true"
+                    ),
+                )
+
+
+def _apply_strict_policy_to_surfaces(
+    contract: dict[str, Any],
+    policy: dict[str, Any] | None,
+    errors: list[str],
+) -> None:
+    if not isinstance(policy, dict) or policy.get("strict_visual_contract") is not True:
+        return
+    if policy.get("forbid_mask_waiver") is not True:
+        return
+
+    surfaces = contract.get("surfaces")
+    if not isinstance(surfaces, list):
+        return
+
+    for i, surface in enumerate(surfaces):
+        if not isinstance(surface, dict):
+            continue
+        surface_parts = surface.get("surface_parts")
+        if not isinstance(surface_parts, list):
+            continue
+        for j, part in enumerate(surface_parts):
+            if isinstance(part, dict) and part.get("mask_allowed") is True:
+                _err(
+                    errors,
+                    (
+                        f"surfaces[{i}].surface_parts[{j}].mask_allowed=true is forbidden when "
+                        "ui_delivery_policy.forbid_mask_waiver=true"
+                    ),
+                )
+
+
 def _collect_surface_ids(contract: dict[str, Any]) -> set[str]:
     surfaces = contract.get("surfaces")
     if not isinstance(surfaces, list):
@@ -684,6 +811,7 @@ def validate_contract(
     contract: dict[str, Any],
     errors: list[str],
     declared_surface_ids: set[str] | None = None,
+    policy: dict[str, Any] | None = None,
 ) -> None:
     missing_root = REQUIRED_ROOT - set(contract.keys())
     if missing_root:
@@ -835,8 +963,10 @@ def validate_contract(
         _validate_state_cases(page, tag, errors)
         _validate_critical_surfaces(page, tag, mask_selectors, errors)
         _validate_data_strategy(page, tag, errors)
+        _apply_strict_policy_to_page(page, tag, policy, errors)
 
     _validate_surface_schema(contract, seen_page_ids, errors)
+    _apply_strict_policy_to_surfaces(contract, policy, errors)
 
     declared_surface_ids = declared_surface_ids or set()
     contract_surface_ids = _collect_surface_ids(contract)
@@ -875,7 +1005,8 @@ def main() -> int:
 
     errors: list[str] = []
     declared_surface_ids = _load_declared_surface_ids(contract_path)
-    validate_contract(contract, errors, declared_surface_ids=declared_surface_ids)
+    policy = _load_ui_delivery_policy(Path.cwd() / ".claude/project/config.yaml", errors)
+    validate_contract(contract, errors, declared_surface_ids=declared_surface_ids, policy=policy)
 
     repo_root = Path.cwd()
     pages: list[dict[str, Any]] = contract.get("pages", []) if isinstance(contract.get("pages"), list) else []
