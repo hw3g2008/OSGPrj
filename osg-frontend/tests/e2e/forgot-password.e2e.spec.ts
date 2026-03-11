@@ -194,18 +194,32 @@ test.describe('Forgot Password @api', () => {
     const email = normalizeRuntimeEnvValue(process.env.E2E_RESET_EMAIL) || 'test@example.com'
     await ensureResetEmailReady(page, email)
     await resetIpRateLimiterBucket()
-    await page.request.post('/api/system/password/sendCode', {
-      data: { email },
-    })
-    const response = await page.request.post('/api/system/password/verify', {
-      data: {
-        email,
-        code: '000000',
-      },
-    })
+    await page.goto('/login')
+    const forgotLink = page.locator('a:has-text("忘记密码"), button:has-text("忘记密码"), [class*="forgot"]').first()
+    await forgotLink.click()
+
+    const modal = page.locator('[data-surface-id="modal-forgot-password"]').first()
+    await modal.locator('input[placeholder*="邮箱"]').fill(email)
+
+    const sendCodePromise = waitForApi(page, '/api/system/password/sendCode', 'POST')
+    await modal.locator('button:has-text("发送验证码")').click()
+    const sendCodeResponse = await sendCodePromise
+    expect(sendCodeResponse.ok(), '/api/system/password/sendCode invalid-code setup should return HTTP 2xx').toBeTruthy()
+    const sendCodeBody = await sendCodeResponse.json()
+    expect(sendCodeBody.code, '/api/system/password/sendCode invalid-code setup should return business code=200').toBe(200)
+    await expect(modal.getByText('验证码已发送至')).toBeVisible({ timeout: 10000 })
+
+    await modal.locator('input[placeholder*="6位验证码"]').fill('000000')
+    const responsePromise = waitForApi(page, '/api/system/password/verify', 'POST')
+    await modal.getByRole('button', { name: /验\s*证/ }).click()
+    const response = await responsePromise
     expect(response.ok(), '/api/system/password/verify invalid-code should return HTTP 2xx').toBeTruthy()
     const body = await response.json()
     const observedResult = response.ok() && body?.code === 200 ? 'accepted' : 'rejected'
+
+    const errorMessages = page.locator('.ant-message-notice').filter({ hasText: body?.msg ?? '验证码错误' })
+    await expect(errorMessages).toHaveCount(1, { timeout: 5000 })
+    const visibleErrorMessageCount = await errorMessages.count()
 
     await recordBehaviorScenario({
       capabilityId: 'forgot-password-verify-code',
@@ -217,6 +231,8 @@ test.describe('Forgot Password @api', () => {
         http_status: response.status(),
         business_code: body?.code ?? null,
         message: body?.msg ?? null,
+        error_owner: 'component_local',
+        visible_error_message_count: visibleErrorMessageCount,
       },
       evidenceRef: 'osg-frontend/tests/e2e/forgot-password.e2e.spec.ts#perm-s002-verify-invalid-code',
     })
