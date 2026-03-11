@@ -74,6 +74,16 @@ describe('Forgot Password - Error Message Ownership', () => {
     expect(requestUtilSource).toContain('skipErrorMessage?: boolean')
     expect(requestUtilSource).toContain('if (!requestConfig?.skipErrorMessage)')
   })
+
+  it('should reuse keyed local toasts so repeated forgot-password errors do not stack duplicate notices', () => {
+    expect(forgotPasswordModalSource).toContain('const FORGOT_PASSWORD_MESSAGE_KEYS = {')
+    expect(forgotPasswordModalSource).toContain("sendCode: 'forgot-password-send-code'")
+    expect(forgotPasswordModalSource).toContain("verifyCode: 'forgot-password-verify-code'")
+    expect(forgotPasswordModalSource).toContain("resetPassword: 'forgot-password-reset-password'")
+    expect(forgotPasswordModalSource).toContain('message.open({')
+    expect(forgotPasswordModalSource).toContain('key,')
+    expect(forgotPasswordModalSource).not.toContain("message.error(error?.message || '验证失败')")
+  })
 })
 
 // 邮箱格式校验测试

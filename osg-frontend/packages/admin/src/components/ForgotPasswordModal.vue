@@ -216,6 +216,12 @@ const countdown = ref(0)
 const resetToken = ref('')
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
+const FORGOT_PASSWORD_MESSAGE_KEYS = {
+  sendCode: 'forgot-password-send-code',
+  verifyCode: 'forgot-password-verify-code',
+  resetPassword: 'forgot-password-reset-password',
+} as const
+
 const formState = reactive({
   email: '',
   code: '',
@@ -281,16 +287,30 @@ const startCountdown = () => {
   }, 1000)
 }
 
+const showForgotPasswordMessage = (
+  type: 'success' | 'error',
+  content: string,
+  key: (typeof FORGOT_PASSWORD_MESSAGE_KEYS)[keyof typeof FORGOT_PASSWORD_MESSAGE_KEYS],
+) => {
+  message.open({
+    type,
+    content,
+    key,
+  })
+}
+
 const handleSendCode = async () => {
   try {
     await emailFormRef.value?.validate()
     loading.value = true
     await sendResetCode({ email: formState.email })
-    message.success('我们会往您的注册邮箱发送验证码，请查收')
+    showForgotPasswordMessage('success', '我们会往您的注册邮箱发送验证码，请查收', FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
     currentStep.value = 2
     startCountdown()
   } catch (error: any) {
-    if (!error?.errorFields) message.error(error?.message || '发送失败')
+    if (!error?.errorFields) {
+      showForgotPasswordMessage('error', error?.message || '发送失败', FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
+    }
   } finally {
     loading.value = false
   }
@@ -300,10 +320,10 @@ const handleResendCode = async () => {
   loading.value = true
   try {
     await sendResetCode({ email: formState.email })
-    message.success('我们会往您的注册邮箱发送验证码，请查收')
+    showForgotPasswordMessage('success', '我们会往您的注册邮箱发送验证码，请查收', FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
     startCountdown()
   } catch (error: any) {
-    message.error(error?.message || '发送失败')
+    showForgotPasswordMessage('error', error?.message || '发送失败', FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
   } finally {
     loading.value = false
   }
@@ -317,7 +337,9 @@ const handleVerifyCode = async () => {
     resetToken.value = res.resetToken
     currentStep.value = 3
   } catch (error: any) {
-    if (!error?.errorFields) message.error(error?.message || '验证失败')
+    if (!error?.errorFields) {
+      showForgotPasswordMessage('error', error?.message || '验证失败', FORGOT_PASSWORD_MESSAGE_KEYS.verifyCode)
+    }
   } finally {
     loading.value = false
   }
@@ -334,7 +356,9 @@ const handleResetPassword = async () => {
     })
     currentStep.value = 4
   } catch (error: any) {
-    if (!error?.errorFields) message.error(error?.message || '重置失败')
+    if (!error?.errorFields) {
+      showForgotPasswordMessage('error', error?.message || '重置失败', FORGOT_PASSWORD_MESSAGE_KEYS.resetPassword)
+    }
   } finally {
     loading.value = false
   }

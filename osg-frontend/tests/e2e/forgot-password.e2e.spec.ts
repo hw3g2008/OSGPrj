@@ -238,6 +238,46 @@ test.describe('Forgot Password @api', () => {
     })
   })
 
+  test('repeated invalid reset-code submissions reuse a single visible error toast @perm-s002-verify-invalid-code-dedupe', async ({ page }) => {
+    const email = normalizeRuntimeEnvValue(process.env.E2E_RESET_EMAIL) || 'test@example.com'
+    await ensureResetEmailReady(page, email)
+    await resetIpRateLimiterBucket()
+    await page.goto('/login')
+    const forgotLink = page.locator('a:has-text("忘记密码"), button:has-text("忘记密码"), [class*="forgot"]').first()
+    await forgotLink.click()
+
+    const modal = page.locator('[data-surface-id="modal-forgot-password"]').first()
+    await modal.locator('input[placeholder*="邮箱"]').fill(email)
+
+    const sendCodePromise = waitForApi(page, '/api/system/password/sendCode', 'POST')
+    await modal.locator('button:has-text("发送验证码")').click()
+    const sendCodeResponse = await sendCodePromise
+    expect(sendCodeResponse.ok(), '/api/system/password/sendCode invalid-code dedupe setup should return HTTP 2xx').toBeTruthy()
+    const sendCodeBody = await sendCodeResponse.json()
+    expect(sendCodeBody.code, '/api/system/password/sendCode invalid-code dedupe setup should return business code=200').toBe(200)
+    await expect(modal.getByText('验证码已发送至')).toBeVisible({ timeout: 10000 })
+
+    await modal.locator('input[placeholder*="6位验证码"]').fill('000000')
+    const verifyButton = modal.getByRole('button', { name: /验\s*证/ })
+
+    let responsePromise = waitForApi(page, '/api/system/password/verify', 'POST')
+    await verifyButton.click()
+    let response = await responsePromise
+    expect(response.ok(), '/api/system/password/verify invalid-code first submission should return HTTP 2xx').toBeTruthy()
+
+    await page.waitForTimeout(800)
+
+    responsePromise = waitForApi(page, '/api/system/password/verify', 'POST')
+    await verifyButton.click()
+    response = await responsePromise
+    expect(response.ok(), '/api/system/password/verify invalid-code repeated submission should return HTTP 2xx').toBeTruthy()
+
+    const body = await response.json()
+    const dedupedErrorMessages = page.locator('.ant-message-notice').filter({ hasText: body?.msg ?? '验证码错误' })
+    await page.waitForTimeout(300)
+    expect(await dedupedErrorMessages.count()).toBe(1)
+  })
+
   test('expired reset code is rejected @perm-s002-verify-expired-code', async ({ page }) => {
     const response = await page.request.post('/api/system/password/verify', {
       data: {
