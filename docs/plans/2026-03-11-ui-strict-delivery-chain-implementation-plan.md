@@ -7,8 +7,22 @@
 > **Architecture:** 以 `.claude/project/config.yaml` 作为唯一机器真值，新增 `workflow_policy.normal_business_delivery_forbid_superpowers` 与 `ui_delivery_policy`。复用现有 `ui_visual_contract_guard.py`、`ui_critical_evidence_guard.py`、`ui-visual-gate.sh`、`final-gate.sh`、`final-closure.sh`，并补一个正式的单项 UI 验证入口 `bin/ui-visual-case-verify.sh`。规则在最早 choke point 触发，最终仍以模块 gate 和 final closure 收口。
 >
 > **Tech Stack:** Bash, Python 3, YAML, Playwright E2E, framework guards under `.claude/skills/workflow-engine/tests/`
+>
+> **Design Doc:** `docs/plans/2026-03-11-ui-strict-delivery-chain-design.md`
+>
+> **Execution Order:** Config and docs truth -> contract guard -> critical evidence guard -> single-case entrypoint -> gate wiring -> stage-regression verification -> framework-audit
+>
+> **DoD:** 新 policy 存在于 `config.yaml` 且文档解释一致；strict contract 在最早 guard 拦截宽豁免；失败证据缺失会被 evidence guard 拦截；存在正式单项 UI verify 入口；`ui-visual-gate`、`final-gate`、`final-closure` 按严格链路通过；框架审计通过。
+>
+> Standard Baseline: `docs/plans/FOUR-PACK-STANDARD.md`
 
 ---
+
+## 0.1 与上位标准关系（2026-03-11）
+
+1. 本计划遵循 `docs/plans/FOUR-PACK-STANDARD.md` 的四件套治理与执行门禁要求。
+2. 本计划对应 `docs/plans/2026-03-11-ui-strict-delivery-chain-design.md` 的唯一实现计划，不与其他 UI 或运行态计划竞争真源。
+3. 如本计划与上位标准冲突，以上位标准为准，并先更新上位标准再回改本计划。
 
 ## Existing-Entrypoint Inventory
 
@@ -414,4 +428,3 @@ git add .claude/CLAUDE.md .claude/project/config.yaml docs/一人公司框架 \
   .claude/skills/workflow-engine/tests bin docs/plans
 git commit -m "feat: harden ui strict delivery chain"
 ```
-

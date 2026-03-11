@@ -3,10 +3,17 @@
 > Date: 2026-03-11
 > Status: Approved
 > Owner: workflow-framework
+> Standard Baseline: `docs/plans/FOUR-PACK-STANDARD.md`
 > Scope: 将 UI 严格修复与收口规则补进项目全链路机器真值、现有 guard 与 gate 入口，避免通过宽豁免、绕过单项证据或跳过正式门禁来“修复” UI 问题
 > Non-goals: 不新增第二真源；不重写现有 workflow state machine；不把 `superpowers` 引入任何正常业务开发主链；不改业务页面实现
 
 ---
+
+## 0.1 与上位标准关系（2026-03-11）
+
+1. 本设计遵循 `docs/plans/FOUR-PACK-STANDARD.md` 的四件套治理与执行门禁要求。
+2. 本设计只定义 UI 严格交付链路的框架层规则，不重写现有运行态同构、真源同步、视觉契约演进等上位设计。
+3. 如本设计与上位标准冲突，以上位标准为准，并先更新上位标准再回改本文。
 
 ## 1. Problem Statement
 
@@ -435,4 +442,3 @@ ui_delivery_policy:
 5. 存在正式单项 UI 回归入口
 6. `ui-visual-gate -> final-gate -> final-closure` 继续保持正式收口角色
 7. `.claude/` 改动后的 `framework-audit` 通过
-
