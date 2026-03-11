@@ -153,10 +153,29 @@ print("1" if has_cases else "0")
 PY
 )"
 
+VISUAL_RESIDUAL_EDGE_BAND_PX="$(python3 - <<PY
+from pathlib import Path
+import yaml
+config = Path(".claude/project/config.yaml")
+if not config.exists():
+    print("4")
+    raise SystemExit(0)
+data = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
+policy = data.get("ui_delivery_policy") if isinstance(data, dict) else {}
+micro_spacing = policy.get("micro_spacing") if isinstance(policy, dict) else {}
+value = micro_spacing.get("max_edge_band_px") if isinstance(micro_spacing, dict) else 4
+try:
+    print(int(value))
+except Exception:
+    print("4")
+PY
+)"
+
 echo "INFO: module=${MODULE} mode=${MODE} source=${SOURCE} contract=${CONTRACT_PATH}"
 echo "INFO: summary=${SUMMARY_JSON}"
 echo "INFO: contract_json=${CONTRACT_JSON}"
 echo "INFO: has_state_cases=${HAS_STATE_CASES}"
+echo "INFO: visual_residual_edge_band_px=${VISUAL_RESIDUAL_EDGE_BAND_PX}"
 echo "INFO: visual_grep_tag=${UI_VISUAL_GREP_TAG}"
 echo "INFO: state_grep_tag=${UI_STATE_GREP_TAG}"
 echo "INFO: skip_state_cases=${UI_VISUAL_SKIP_STATE}"
@@ -277,6 +296,7 @@ run_playwright_suite() {
     UI_VISUAL_STABILITY_USER_AGENT="${STABILITY_USER_AGENT}" \
     UI_VISUAL_STABILITY_FONT_FAMILY="${STABILITY_FONT_FAMILY}" \
     UI_VISUAL_DISABLE_ANIMATION="${STABILITY_DISABLE_ANIMATION}" \
+    UI_VISUAL_MICRO_SPACING_EDGE_BAND_PX="${VISUAL_RESIDUAL_EDGE_BAND_PX}" \
     UI_VISUAL_REQUIRE_FIXED_TIME="${STABILITY_REQUIRE_FIXED}" \
     E2E_FIXED_TIME="${STABILITY_FIXED_TIME}" \
     E2E_API_PROXY_TARGET="${API_PROXY_TARGET}" \
@@ -402,6 +422,11 @@ for page in pages:
         "critical_surface_results": result.get("critical_surface_results", []),
         "result": result.get("result", "NOT_RUN"),
     }
+    if "residual_classifier_applied" in result:
+        row["residual_classifier_applied"] = result.get("residual_classifier_applied")
+        row["residual_classifier_result"] = result.get("residual_classifier_result")
+        row["residual_class_breakdown"] = result.get("residual_class_breakdown")
+        row["forbidden_residual_detected"] = result.get("forbidden_residual_detected")
     page_rows.append(row)
 
 surface_rows = []

@@ -400,6 +400,15 @@ def test_verify_failure_page_missing_actual_evidence_fails(module) -> None:
     assert any("actual_ref" in issue for issue in issues), issues
 
 
+def test_classifier_applied_page_requires_classifier_evidence_fields(module) -> None:
+    contract = build_contract()
+    report = build_page_report()
+    report["pages"][0]["residual_classifier_applied"] = True
+    report["pages"][0]["residual_classifier_result"] = "FAIL"
+    issues = collect_issues(module, contract, report)
+    assert any("residual_class_breakdown" in issue or "forbidden_residual_detected" in issue for issue in issues), issues
+
+
 def main() -> int:
     module = load_guard_module()
     tests = [
@@ -412,6 +421,7 @@ def main() -> int:
         test_overlay_surface_evidence_passes,
         test_verify_failure_page_missing_diff_evidence_fails,
         test_verify_failure_page_missing_actual_evidence_fails,
+        test_classifier_applied_page_requires_classifier_evidence_fields,
     ]
     for fn in tests:
         fn(module)

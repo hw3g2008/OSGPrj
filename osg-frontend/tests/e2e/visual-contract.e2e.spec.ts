@@ -8,12 +8,21 @@ import { assertStyleContracts } from './support/style-contract'
 import { performSurfaceTrigger, waitForVisualSettle } from './support/surface-trigger'
 import { applyStabilityToPage, resolveStabilityConfigFromEnv } from './support/test-stability'
 import {
+  classifyVisualResiduals,
+  type AllowedVisualResidualRegion,
+  type ForbiddenVisualResidualRegion,
+  type VisualResidualBox,
+  type VisualResidualClassifierResult,
+  type VisualResidualPixel,
+} from './support/visual-residual-classifier'
+import {
   baselineRefToSnapshotArg,
   buildSurfaceBaselineRef,
   loadVisualContract,
   type VisualCriticalSurfaceContract,
   type VisualFixtureRoute,
   type VisualPageContract,
+  type VisualResidualRegion,
   type VisualSurfaceContract,
   type VisualSurfaceCssContract,
   type VisualSurfaceStateContract,
@@ -29,6 +38,8 @@ const prototypeBaseUrl = process.env.UI_VISUAL_PROTOTYPE_BASE_URL || 'http://127
 const visualEvidenceDir = process.env.UI_VISUAL_EVIDENCE_DIR
 const visualPageResultsFile = process.env.UI_VISUAL_PAGE_RESULTS_FILE
 const stabilityConfig = resolveStabilityConfigFromEnv()
+const repoRoot = path.resolve(process.cwd(), '..')
+const microSpacingEdgeBandPx = Number(process.env.UI_VISUAL_MICRO_SPACING_EDGE_BAND_PX || '4')
 
 if (visualSource !== 'app' && visualSource !== 'prototype') {
   throw new Error(`UI_VISUAL_SOURCE must be app|prototype, got '${visualSource}'`)
@@ -54,8 +65,18 @@ function toRepoRelative(filePath: string): string {
   if (!path.isAbsolute(normalized)) {
     return normalized.replace(/\\/g, '/')
   }
-  const repoRoot = path.resolve(process.cwd(), '..')
   return path.relative(repoRoot, normalized).replace(/\\/g, '/')
+}
+
+function toRepoAbsolute(fileRef: string): string | null {
+  const normalized = fileRef.trim()
+  if (!normalized || normalized.toLowerCase() === 'none') {
+    return null
+  }
+  if (path.isAbsolute(normalized)) {
+    return normalized
+  }
+  return path.resolve(repoRoot, normalized)
 }
 
 function buildActualPath(pageContract: VisualPageContract): string | null {
@@ -106,6 +127,161 @@ function inferDiffRefFromArtifacts(testInfo: TestInfo, snapshotArg: string): str
   return 'none'
 }
 
+interface CaptureOrigin {
+  x: number
+  y: number
+}
+
+async function readDiffPixelsFromPng(page: Page, diffAbsolutePath: string): Promise<VisualResidualPixel[]> {
+  const imageBase64 = fs.readFileSync(diffAbsolutePath).toString('base64')
+  return await page.evaluate(async ({ pngBase64 }) => {
+    const loadImage = async (): Promise<HTMLImageElement> =>
+      await new Promise((resolve, reject) => {
+        const image = new Image()
+        image.onload = () => resolve(image)
+        image.onerror = () => reject(new Error('failed to decode residual diff png'))
+        image.src = `data:image/png;base64,${pngBase64}`
+      })
+
+    const image = await loadImage()
+    const canvas = document.createElement('canvas')
+    canvas.width = image.width
+    canvas.height = image.height
+    const context = canvas.getContext('2d')
+    if (!context) {
+      throw new Error('2d canvas context unavailable for residual classifier')
+    }
+    context.drawImage(image, 0, 0)
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height).data
+    const diffPixels: Array<{ x: number; y: number }> = []
+
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
+        const index = (y * canvas.width + x) * 4
+        const red = imageData[index]
+        const green = imageData[index + 1]
+        const blue = imageData[index + 2]
+        const alpha = imageData[index + 3]
+        if (alpha > 0 && !(red === green && green === blue)) {
+          diffPixels.push({ x, y })
+        }
+      }
+    }
+
+    return diffPixels
+  }, { pngBase64: imageBase64 })
+}
+
+async function collectSelectorBoxes(
+  page: Page,
+  selectors: string[],
+  captureOrigin: CaptureOrigin,
+): Promise<VisualResidualBox[]> {
+  return await page.evaluate(({ selectors: selectorList, captureOrigin: origin }) => {
+    const boxes: Array<{ x: number; y: number; width: number; height: number }> = []
+    for (const selector of selectorList) {
+      for (const element of Array.from(document.querySelectorAll(selector))) {
+        const rect = element.getBoundingClientRect()
+        if (rect.width <= 0 || rect.height <= 0) {
+          continue
+        }
+        boxes.push({
+          x: Math.round(rect.left + window.scrollX - origin.x),
+          y: Math.round(rect.top + window.scrollY - origin.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        })
+      }
+    }
+    return boxes
+  }, { selectors, captureOrigin })
+}
+
+async function resolveCaptureOriginFromLocator(locator: Locator): Promise<CaptureOrigin | null> {
+  if ((await locator.count()) === 0) {
+    return null
+  }
+  return await locator.evaluate((element) => {
+    const rect = (element as Element).getBoundingClientRect()
+    return {
+      x: Math.round(rect.left + window.scrollX),
+      y: Math.round(rect.top + window.scrollY),
+    }
+  })
+}
+
+async function buildAllowedResidualRegions(
+  page: Page,
+  regions: VisualResidualRegion[],
+  captureOrigin: CaptureOrigin,
+): Promise<AllowedVisualResidualRegion[]> {
+  const allowedRegions: AllowedVisualResidualRegion[] = []
+  for (const region of regions) {
+    const boxes = await collectSelectorBoxes(page, region.selectors, captureOrigin)
+    if (boxes.length === 0) {
+      continue
+    }
+    allowedRegions.push({
+      class: region.class,
+      selector: region.selectors.join(', '),
+      boxes,
+    })
+  }
+  return allowedRegions
+}
+
+async function buildForbiddenResidualRegions(
+  page: Page,
+  captureOrigin: CaptureOrigin,
+): Promise<ForbiddenVisualResidualRegion[]> {
+  const forbiddenSelectors: Array<{ class: ForbiddenVisualResidualRegion['class']; selectors: string[] }> = [
+    { class: 'captcha_like', selectors: ['.captcha-code'] },
+    { class: 'image_like', selectors: ['img', 'canvas', 'video'] },
+  ]
+  const forbiddenRegions: ForbiddenVisualResidualRegion[] = []
+  for (const region of forbiddenSelectors) {
+    const boxes = await collectSelectorBoxes(page, region.selectors, captureOrigin)
+    if (boxes.length === 0) {
+      continue
+    }
+    forbiddenRegions.push({
+      class: region.class,
+      selector: region.selectors.join(', '),
+      boxes,
+    })
+  }
+  return forbiddenRegions
+}
+
+async function classifyPageResiduals(
+  page: Page,
+  pageContract: VisualPageContract,
+  diffRef: string,
+  captureOrigin: CaptureOrigin,
+): Promise<VisualResidualClassifierResult | null> {
+  const residualRegions = pageContract.residual_regions || []
+  if (residualRegions.length === 0) {
+    return null
+  }
+  const diffAbsolutePath = toRepoAbsolute(diffRef)
+  if (!diffAbsolutePath || !fs.existsSync(diffAbsolutePath)) {
+    return null
+  }
+
+  const [diffPixels, allowedRegions, forbiddenRegions] = await Promise.all([
+    readDiffPixelsFromPng(page, diffAbsolutePath),
+    buildAllowedResidualRegions(page, residualRegions, captureOrigin),
+    buildForbiddenResidualRegions(page, captureOrigin),
+  ])
+
+  return classifyVisualResiduals({
+    diffPixels,
+    allowedRegions,
+    forbiddenRegions,
+    microSpacingEdgeBandPx: microSpacingEdgeBandPx > 0 ? microSpacingEdgeBandPx : 4,
+  })
+}
+
 function appendPageResult(
   pageContract: VisualPageContract,
   result: 'PASS' | 'FAIL',
@@ -113,11 +289,12 @@ function appendPageResult(
   diffRef: string,
   styleStats: { passed: number; failed: number } = { passed: 0, failed: 0 },
   criticalSurfaceResults: Record<string, unknown>[] = [],
+  residualClassifierResult: VisualResidualClassifierResult | null = null,
 ): void {
   if (!visualPageResultsFile) {
     return
   }
-  const record = {
+  const record: Record<string, unknown> = {
     record_type: 'page',
     module: contract?.module || 'unknown',
     page_id: pageContract.page_id,
@@ -133,6 +310,12 @@ function appendPageResult(
     style_assertions_failed: styleStats.failed,
     critical_surface_results: criticalSurfaceResults,
     result,
+  }
+  if (residualClassifierResult) {
+    record.residual_classifier_applied = residualClassifierResult.applied
+    record.residual_classifier_result = residualClassifierResult.pass ? 'PASS' : 'FAIL'
+    record.residual_class_breakdown = residualClassifierResult.classBreakdown
+    record.forbidden_residual_detected = residualClassifierResult.forbiddenResidualDetected
   }
   fs.mkdirSync(path.dirname(visualPageResultsFile), { recursive: true })
   fs.appendFileSync(visualPageResultsFile, `${JSON.stringify(record)}\n`, 'utf-8')
@@ -805,6 +988,9 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
 
   for (const pageContract of contract.pages) {
     test(`${pageContract.page_id} visual compare @ui-visual`, async ({ page }, testInfo) => {
+      if ((pageContract.residual_regions?.length || 0) > 0) {
+        test.setTimeout(90000)
+      }
       await page.setViewportSize(pageContract.viewport)
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await applyStabilityToPage(page, stabilityConfig)
@@ -856,6 +1042,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         let capturedResult: 'PASS' | 'FAIL' = 'PASS'
         let capturedDiffRef = 'none'
         let capturedError: unknown = null
+        let residualClassifierResult: VisualResidualClassifierResult | null = null
         try {
           await expect(page).toHaveScreenshot(snapshotArg, {
             fullPage: true,
@@ -867,10 +1054,23 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           capturedResult = 'FAIL'
           const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
           capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
-          capturedError = error
+          residualClassifierResult = await classifyPageResiduals(page, pageContract, capturedDiffRef, { x: 0, y: 0 })
+          if (residualClassifierResult?.pass) {
+            capturedResult = 'PASS'
+          } else {
+            capturedError = error
+          }
         }
         const criticalSurfaceResults = await collectCriticalSurfaceResults(pageContract, page, actualRef, capturedDiffRef)
-        appendPageResult(pageContract, capturedResult, actualRef, capturedDiffRef, styleStats, criticalSurfaceResults)
+        appendPageResult(
+          pageContract,
+          capturedResult,
+          actualRef,
+          capturedDiffRef,
+          styleStats,
+          criticalSurfaceResults,
+          residualClassifierResult,
+        )
         if (capturedError) {
           throw capturedError
         }
@@ -883,6 +1083,8 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           : page.locator(pageContract.clip_selector || pageContract.prototype_selector).first()
       expect(clipTarget, 'clip target should exist').not.toBeNull()
       await expect(clipTarget!, 'clip target should be visible').toBeVisible()
+      const captureOrigin = await resolveCaptureOriginFromLocator(clipTarget!)
+      expect(captureOrigin, 'clip capture origin should resolve').not.toBeNull()
       if (actualPath) {
         await clipTarget!.screenshot({
           path: actualPath,
@@ -892,6 +1094,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
       let capturedResult: 'PASS' | 'FAIL' = 'PASS'
       let capturedDiffRef = 'none'
       let capturedError: unknown = null
+      let residualClassifierResult: VisualResidualClassifierResult | null = null
       try {
         await expect(clipTarget!).toHaveScreenshot(snapshotArg, {
           animations: 'disabled',
@@ -902,10 +1105,23 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         capturedResult = 'FAIL'
         const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
         capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
-        capturedError = error
+        residualClassifierResult = await classifyPageResiduals(page, pageContract, capturedDiffRef, captureOrigin!)
+        if (residualClassifierResult?.pass) {
+          capturedResult = 'PASS'
+        } else {
+          capturedError = error
+        }
       }
       const criticalSurfaceResults = await collectCriticalSurfaceResults(pageContract, page, actualRef, capturedDiffRef)
-      appendPageResult(pageContract, capturedResult, actualRef, capturedDiffRef, styleStats, criticalSurfaceResults)
+      appendPageResult(
+        pageContract,
+        capturedResult,
+        actualRef,
+        capturedDiffRef,
+        styleStats,
+        criticalSurfaceResults,
+        residualClassifierResult,
+      )
       if (capturedError) {
         throw capturedError
       }

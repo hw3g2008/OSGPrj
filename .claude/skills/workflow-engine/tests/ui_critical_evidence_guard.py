@@ -121,6 +121,27 @@ def _surface_style_contract_total(surface_contract: dict[str, Any]) -> int:
     return total
 
 
+def _validate_page_residual_classifier_evidence(
+    page_result: dict[str, Any],
+    page_tag: str,
+    errors: list[str],
+) -> None:
+    if page_result.get("residual_classifier_applied") is not True:
+        return
+
+    classifier_result = page_result.get("residual_classifier_result")
+    if classifier_result not in {"PASS", "FAIL"}:
+        _err(errors, f"{page_tag}.residual_classifier_result must be PASS|FAIL when classifier is applied")
+
+    class_breakdown = page_result.get("residual_class_breakdown")
+    if not isinstance(class_breakdown, dict) or len(class_breakdown) == 0:
+        _err(errors, f"{page_tag}.residual_class_breakdown must be non-empty object when classifier is applied")
+
+    forbidden_detected = page_result.get("forbidden_residual_detected")
+    if not isinstance(forbidden_detected, bool):
+        _err(errors, f"{page_tag}.forbidden_residual_detected must be boolean when classifier is applied")
+
+
 def _surface_state_style_contract_total(surface_contract: dict[str, Any]) -> int:
     total = 0
     for contract in surface_contract.get("state_contracts") or []:
@@ -538,9 +559,6 @@ def validate_page_report(
         tag = f"contract.pages[{index}]"
         if not isinstance(page, dict):
             continue
-        critical_surfaces = page.get("critical_surfaces") or []
-        if not critical_surfaces:
-            continue
         page_id = page.get("page_id")
         page_result = page_map.get(page_id)
         if page_result is None:
@@ -548,7 +566,13 @@ def validate_page_report(
             continue
 
         if isinstance(page_result, dict):
-            _require_failure_evidence(page_result, f"page_report.pages[{page_id}]", stage, policy, errors)
+            page_tag = f"page_report.pages[{page_id}]"
+            _require_failure_evidence(page_result, page_tag, stage, policy, errors)
+            _validate_page_residual_classifier_evidence(page_result, page_tag, errors)
+
+        critical_surfaces = page.get("critical_surfaces") or []
+        if not critical_surfaces:
+            continue
 
         surface_results = page_result.get("critical_surface_results")
         if not isinstance(surface_results, list):
