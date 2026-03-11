@@ -187,14 +187,18 @@ git commit -m "feat: add framework post-failure allowance module"
 - Modify: `osg-frontend/tests/e2e/visual-contract.e2e.spec.ts`
 - Read: `osg-frontend/tests/e2e/support/post-failure-allowance.ts`
 
-**Step 1: Add a failing regression expectation**
+**Step 1: Define runtime wiring acceptance criteria**
 
 Define the target behavior:
 
 1. page fullpage catch uses the new allowance module
 2. page clip catch uses the new allowance module
 3. surface viewport catch uses the new allowance module
-4. surface viewport results emit residual classifier evidence when applied
+4. surface viewport results emit the exact same residual evidence field names already used by page results:
+   - `residual_classifier_applied`
+   - `residual_classifier_result`
+   - `residual_class_breakdown`
+   - `forbidden_residual_detected`
 
 **Step 2: Run the focused unit tests again**
 
@@ -217,7 +221,7 @@ Rules:
 2. Keep strict compare first
 3. Keep explicit `residual_regions` priority
 4. In surface catch, resolve `surfaceRoot` and call the same allowance entrypoint
-5. Add residual classifier evidence to each failing or allowed surface viewport result
+5. Add residual classifier evidence to each failing or allowed surface viewport result using the exact existing page field names
 
 Minimal shape:
 
@@ -264,6 +268,7 @@ Add coverage for:
 2. missing `residual_classifier_result` must fail
 3. missing `residual_class_breakdown` must fail
 4. missing `forbidden_residual_detected` must fail
+5. surface evidence field names must stay aligned with page evidence field names
 
 **Step 2: Run the selftest to verify it fails**
 
@@ -279,7 +284,7 @@ Expected:
 
 **Step 3: Implement the minimal guard extension**
 
-Extend surface viewport validation to mirror the existing page residual evidence checks.
+Extend surface viewport validation to mirror the existing page residual evidence checks, using the exact same field names and semantics.
 
 **Step 4: Re-run the selftest**
 
