@@ -17,15 +17,15 @@ export interface ResetPasswordRequest {
 
 // 发送验证码
 export function sendResetCode(data: SendCodeRequest) {
-  return http.post<{ msg: string }>('/system/password/sendCode', data)
+  return http.post<{ msg: string }>('/system/password/sendCode', data, { skipErrorMessage: true })
 }
 
 // 验证验证码
 export function verifyResetCode(data: VerifyCodeRequest) {
-  return http.post<{ msg: string; resetToken: string }>('/system/password/verify', data)
+  return http.post<{ msg: string; resetToken: string }>('/system/password/verify', data, { skipErrorMessage: true })
 }
 
 // 重置密码
 export function resetPassword(data: ResetPasswordRequest) {
-  return http.post<{ msg: string }>('/system/password/reset', data)
+  return http.post<{ msg: string }>('/system/password/reset', data, { skipErrorMessage: true })
 }

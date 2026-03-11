@@ -1,4 +1,19 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+const forgotPasswordModalSource = fs.readFileSync(
+  path.resolve(__dirname, '../components/ForgotPasswordModal.vue'),
+  'utf-8'
+)
+const passwordApiSource = fs.readFileSync(
+  path.resolve(__dirname, '../api/password.ts'),
+  'utf-8'
+)
+const requestUtilSource = fs.readFileSync(
+  path.resolve(__dirname, '../../../shared/src/utils/request.ts'),
+  'utf-8'
+)
 
 // 步骤切换逻辑测试
 describe('Forgot Password - Step Navigation', () => {
@@ -26,6 +41,26 @@ describe('Forgot Password - Step Navigation', () => {
     // 模拟重置成功
     currentStep = 4
     expect(currentStep).toBe(4)
+  })
+
+  it('should keep completed dots green and current dot primary on step 3, matching prototype', () => {
+    expect(forgotPasswordModalSource).toContain("'forgot-modal__dot--completed': currentStep > dot")
+    expect(forgotPasswordModalSource).toContain("'forgot-modal__dot--active': currentStep === dot")
+    expect(forgotPasswordModalSource).toContain('&--completed {')
+    expect(forgotPasswordModalSource).toContain('background: #22C55E;')
+    expect(forgotPasswordModalSource).toContain('&--active {')
+    expect(forgotPasswordModalSource).not.toContain("'forgot-modal__dot--active': currentStep >= dot")
+  })
+})
+
+describe('Forgot Password - Error Message Ownership', () => {
+  it('should let forgot-password APIs opt out of shared request toasts so the modal remains the single error-message owner', () => {
+    expect(passwordApiSource).toContain("skipErrorMessage: true")
+    expect(passwordApiSource).toContain("'/system/password/sendCode'")
+    expect(passwordApiSource).toContain("'/system/password/verify'")
+    expect(passwordApiSource).toContain("'/system/password/reset'")
+    expect(requestUtilSource).toContain('skipErrorMessage?: boolean')
+    expect(requestUtilSource).toContain('if (!requestConfig?.skipErrorMessage)')
   })
 })
 

@@ -22,7 +22,10 @@
           v-for="dot in 3"
           :key="dot"
           class="forgot-modal__dot"
-          :class="{ 'forgot-modal__dot--active': currentStep >= dot }"
+          :class="{
+            'forgot-modal__dot--completed': currentStep > dot,
+            'forgot-modal__dot--active': currentStep === dot,
+          }"
         />
       </div>
 
@@ -391,6 +394,10 @@ watch(
     border-radius: 50%;
     background: var(--border, #E2E8F0);
     transition: background-color 0.2s ease;
+
+    &--completed {
+      background: #22C55E;
+    }
 
     &--active {
       background: var(--primary, #6366F1);
