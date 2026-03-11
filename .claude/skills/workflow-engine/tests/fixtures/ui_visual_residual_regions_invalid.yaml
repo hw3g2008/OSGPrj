@@ -1,0 +1,30 @@
+schema_version: 1
+module: permission
+pages:
+  - page_id: login-page
+    route: /login
+    prototype_file: admin.html
+    prototype_selector: "#login-page"
+    viewport:
+      width: 1440
+      height: 900
+    auth_mode: public
+    snapshot_name: permission-login-page
+    baseline_ref: osg-frontend/tests/e2e/visual-baseline/permission-login-page-1440x900.png
+    diff_threshold: 0
+    stable_wait_ms: 300
+    required_anchors:
+      - .login-page
+      - .login-left
+      - .login-right
+      - .captcha-code
+    capture_mode: fullpage
+    data_mode: mock
+    fixture_routes:
+      - url: /captchaImage
+        method: GET
+        response_ref: osg-frontend/tests/e2e/fixtures/permission/login/captchaImage.json
+    residual_regions:
+      - class: visual_noise
+        selectors:
+          - .login-title

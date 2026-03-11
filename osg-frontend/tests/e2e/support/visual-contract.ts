@@ -6,6 +6,7 @@ export type CaptureMode = 'clip' | 'fullpage'
 export type StateCaseKind = 'focus' | 'hover' | 'loading' | 'empty' | 'error'
 export type StateAssertionType = 'visible' | 'text' | 'css'
 export type VisualDataMode = 'live' | 'mock' | 'mask'
+export type VisualResidualClass = 'micro_spacing' | 'low_salience_text_icon_rasterization'
 export type CriticalStateContractKind = 'focus' | 'hover' | 'loading' | 'empty' | 'error' | 'loaded'
 export type VisualSurfaceType = 'modal' | 'drawer' | 'popover' | 'panel' | 'wizard-step'
 export type VisualSurfaceTriggerType = 'click' | 'keyboard' | 'route-param' | 'auto-open'
@@ -72,6 +73,11 @@ export interface VisualCriticalSurfaceContract {
   relation_contracts?: VisualCriticalSurfaceRelationContract[]
 }
 
+export interface VisualResidualRegion {
+  class: VisualResidualClass
+  selectors: string[]
+}
+
 export interface VisualPageContract {
   page_id: string
   route: string
@@ -97,6 +103,7 @@ export interface VisualPageContract {
   fixture_routes?: VisualFixtureRoute[]
   dynamic_regions?: string[]
   critical_surfaces?: VisualCriticalSurfaceContract[]
+  residual_regions?: VisualResidualRegion[]
 }
 
 export interface VisualSurfaceCssContract {

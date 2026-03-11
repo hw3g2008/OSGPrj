@@ -33,6 +33,7 @@ ALLOWED_STATE_CASES = {"focus", "hover", "loading", "empty", "error"}
 ALLOWED_STATE_ASSERTIONS = {"visible", "text", "css"}
 ALLOWED_CRITICAL_STATE_CONTRACTS = {"focus", "hover", "loading", "empty", "error", "loaded"}
 ALLOWED_DATA_MODES = {"live", "mock", "mask"}
+ALLOWED_VISUAL_RESIDUAL_CLASSES = {"micro_spacing", "low_salience_text_icon_rasterization"}
 ALLOWED_SURFACE_TYPES = {"page", "modal", "drawer", "popover", "panel", "wizard-step"}
 ALLOWED_TRIGGER_TYPES = {"click", "keyboard", "route-param", "auto-open"}
 ALLOWED_SURFACE_PART_IDS = {"backdrop", "shell", "header", "body", "footer", "close-control"}
@@ -58,6 +59,12 @@ LOGIN_ANCHOR_GROUP_PATTERNS = {
     "demo_hint": (r"demo", r"演示", r"示例账号", r"admin\\s*/\\s*", r"display-account"),
     "captcha_zone": (r"captcha", r"验证码", r"安全码", r"\\bcode\\b"),
 }
+FORBIDDEN_RESIDUAL_SELECTOR_PATTERNS = (
+    r"(^|[\s>+~])img(\b|$)",
+    r"(^|[\s>+~])canvas(\b|$)",
+    r"(^|[\s>+~])video(\b|$)",
+    r"\.captcha-code\b",
+)
 
 
 def _err(errors: list[str], msg: str) -> None:
@@ -177,6 +184,13 @@ def _selectors_overlap(left: str, right: str) -> bool:
     )
 
 
+def _targets_forbidden_residual_area(selector: str) -> bool:
+    text = selector.strip().lower()
+    if not text:
+        return False
+    return any(re.search(pattern, text) for pattern in FORBIDDEN_RESIDUAL_SELECTOR_PATTERNS)
+
+
 def _validate_style_contracts(page: dict[str, Any], tag: str, errors: list[str]) -> None:
     style_contracts = page.get("style_contracts", [])
     if style_contracts is None:
@@ -251,6 +265,34 @@ def _validate_state_cases(page: dict[str, Any], tag: str, errors: list[str]) -> 
                 _err(errors, f"{ctag}.assertion.property must be non-empty string for css assertion")
             if not isinstance(value, str) or not value.strip():
                 _err(errors, f"{ctag}.assertion.value must be non-empty string for css assertion")
+
+
+def _validate_residual_regions(page: dict[str, Any], tag: str, errors: list[str]) -> None:
+    residual_regions = page.get("residual_regions")
+    if residual_regions is None:
+        return
+    if not isinstance(residual_regions, list):
+        _err(errors, f"{tag}.residual_regions must be list when provided")
+        return
+
+    for i, region in enumerate(residual_regions):
+        rtag = f"{tag}.residual_regions[{i}]"
+        if not isinstance(region, dict):
+            _err(errors, f"{rtag} must be object")
+            continue
+
+        residual_class = region.get("class")
+        if not isinstance(residual_class, str) or not residual_class.strip():
+            _err(errors, f"{rtag}.class must be non-empty string")
+
+        selectors = region.get("selectors")
+        if not isinstance(selectors, list) or len(selectors) == 0:
+            _err(errors, f"{rtag}.selectors must be non-empty list")
+            continue
+
+        for j, selector in enumerate(selectors):
+            if not isinstance(selector, str) or not selector.strip():
+                _err(errors, f"{rtag}.selectors[{j}] must be non-empty string")
 
 
 def _validate_surface_style_contracts(
@@ -690,6 +732,62 @@ def _apply_strict_policy_to_page(
                     ),
                 )
 
+    if policy.get("enable_visual_residual_classifier") is not True:
+        return
+
+    allowed_classes = _normalize_policy_string_list(policy.get("allowed_visual_residual_classes"))
+    forbidden_classes = _normalize_policy_string_list(policy.get("forbidden_visual_residual_classes"))
+    residual_regions = page.get("residual_regions")
+    if residual_regions is None:
+        return
+    if not isinstance(residual_regions, list):
+        return
+
+    for i, region in enumerate(residual_regions):
+        if not isinstance(region, dict):
+            continue
+        rtag = f"{tag}.residual_regions[{i}]"
+        residual_class = region.get("class")
+        normalized_class = residual_class.strip().lower() if isinstance(residual_class, str) and residual_class.strip() else ""
+        if normalized_class not in ALLOWED_VISUAL_RESIDUAL_CLASSES:
+            _err(
+                errors,
+                (
+                    f"{rtag}.class must be one of {sorted(ALLOWED_VISUAL_RESIDUAL_CLASSES)} when "
+                    "ui_delivery_policy.enable_visual_residual_classifier=true"
+                ),
+            )
+        elif allowed_classes and normalized_class not in allowed_classes:
+            _err(
+                errors,
+                (
+                    f"{rtag}.class={normalized_class} is not allowed by "
+                    "ui_delivery_policy.allowed_visual_residual_classes"
+                ),
+            )
+        if normalized_class and normalized_class in forbidden_classes:
+            _err(
+                errors,
+                (
+                    f"{rtag}.class={normalized_class} is forbidden by "
+                    "ui_delivery_policy.forbidden_visual_residual_classes"
+                ),
+            )
+
+        selectors = region.get("selectors")
+        if not isinstance(selectors, list):
+            continue
+        for selector in selectors:
+            if not isinstance(selector, str) or not selector.strip():
+                continue
+            if _targets_forbidden_residual_area(selector):
+                _err(
+                    errors,
+                    (
+                        f"{rtag}.selectors cannot target forbidden residual area: {selector}"
+                    ),
+                )
+
 
 def _apply_strict_policy_to_surfaces(
     contract: dict[str, Any],
@@ -1073,6 +1171,7 @@ def validate_contract(
 
         _validate_style_contracts(page, tag, errors)
         _validate_state_cases(page, tag, errors)
+        _validate_residual_regions(page, tag, errors)
         _validate_critical_surfaces(page, tag, mask_selectors, errors)
         _validate_data_strategy(page, tag, errors)
         _apply_strict_policy_to_page(page, tag, policy, errors)

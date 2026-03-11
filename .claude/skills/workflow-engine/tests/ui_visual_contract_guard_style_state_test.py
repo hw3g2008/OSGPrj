@@ -6,8 +6,14 @@ Self-check for style_contracts/state_cases validation in ui_visual_contract_guar
 from __future__ import annotations
 
 from copy import deepcopy
+from pathlib import Path
+
+import yaml
 
 from ui_visual_contract_guard import validate_contract
+
+
+FIXTURES_DIR = Path(__file__).with_name("fixtures")
 
 
 def build_base_contract() -> dict:
@@ -394,6 +400,19 @@ def strict_policy() -> dict:
         "forbid_diff_threshold_relaxation": True,
         "forbid_snapshot_bypass": True,
         "forbid_mask_waiver": True,
+        "enable_visual_residual_classifier": True,
+        "allowed_visual_residual_classes": [
+            "micro_spacing",
+            "low_salience_text_icon_rasterization",
+        ],
+        "forbidden_visual_residual_classes": [
+            "image_like",
+            "captcha_like",
+            "color_state",
+            "geometry_change",
+            "structure_change",
+            "unknown",
+        ],
         "require_state_coverage_for_multistate_widgets": True,
         "multistate_widget_part_ids": [
             "progress-indicator",
@@ -560,6 +579,39 @@ def test_strict_policy_requires_surface_non_default_state_coverage_for_multistat
     assert any("state_contracts" in issue and "multistate" in issue for issue in issues), issues
 
 
+def test_strict_policy_rejects_invalid_residual_region_class() -> None:
+    fixture_path = FIXTURES_DIR / "ui_visual_residual_regions_invalid.yaml"
+    contract = yaml.safe_load(fixture_path.read_text(encoding="utf-8"))
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any("residual_regions" in issue and "class" in issue for issue in issues), issues
+
+
+def test_strict_policy_rejects_empty_residual_region_selectors() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["pages"][0]["diff_threshold"] = 0
+    contract["pages"][0]["residual_regions"] = [
+        {
+            "class": "micro_spacing",
+            "selectors": [],
+        }
+    ]
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any("residual_regions" in issue and "selectors" in issue for issue in issues), issues
+
+
+def test_strict_policy_rejects_captcha_residual_region_selectors() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["pages"][0]["diff_threshold"] = 0
+    contract["pages"][0]["residual_regions"] = [
+        {
+            "class": "low_salience_text_icon_rasterization",
+            "selectors": [".captcha-code img"],
+        }
+    ]
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any(".captcha-code img" in issue and "residual_regions" in issue for issue in issues), issues
+
+
 def main() -> int:
     tests = [
         test_valid_style_and_state_clauses_pass,
@@ -582,6 +634,9 @@ def main() -> int:
         test_strict_policy_rejects_mask_allowed_true_on_surface_parts,
         test_strict_policy_requires_page_state_cases_for_multistate_widget,
         test_strict_policy_requires_surface_non_default_state_coverage_for_multistate_part,
+        test_strict_policy_rejects_invalid_residual_region_class,
+        test_strict_policy_rejects_empty_residual_region_selectors,
+        test_strict_policy_rejects_captcha_residual_region_selectors,
     ]
     for fn in tests:
         fn()
