@@ -181,6 +181,7 @@ workflow_policy:
   project_framework_is_primary: true
   superpowers_usage: framework_or_process_correction_only
   superpowers_not_for_normal_feature_delivery: true
+  normal_business_delivery_forbid_superpowers: true
   enforced_gate_entrypoints:
     - brainstorm
     - approve_brainstorm
@@ -188,6 +189,20 @@ workflow_policy:
     - split_ticket
     - verify
     - final_gate
+
+ui_delivery_policy:
+  strict_visual_contract: true
+  forbid_diff_threshold_relaxation: true
+  forbid_snapshot_bypass: true
+  forbid_mask_waiver: true
+  require_failure_evidence: true
+  require_single_runtime_before_visual_gate: true
+  required_repair_chain:
+    - single_case_verify
+    - module_verify
+    - ui_visual_gate
+    - final_gate
+    - final_closure
 
 context_preflight:
   script: "bin/context-preflight.sh"
