@@ -60,12 +60,53 @@ def test_ui_delivery_policy_exists_with_required_keys() -> None:
         "ui_delivery_policy.required_repair_chain must match strict repair chain"
     )
 
+    assert policy.get("require_state_coverage_for_multistate_widgets") is True, (
+        "ui_delivery_policy.require_state_coverage_for_multistate_widgets must be true"
+    )
+    widget_ids = policy.get("multistate_widget_part_ids")
+    assert isinstance(widget_ids, list) and widget_ids, (
+        "ui_delivery_policy.multistate_widget_part_ids must be a non-empty list"
+    )
+    for required in [
+        "progress-indicator",
+        "stepper",
+        "tab-strip",
+        "status-indicator",
+        "wizard-step-indicator",
+    ]:
+        assert required in widget_ids, (
+            f"ui_delivery_policy.multistate_widget_part_ids must include {required}"
+        )
+
+
+def test_frontend_feedback_policy_exists_with_required_keys() -> None:
+    config = _load_yaml(CONFIG_PATH)
+    policy = config.get("frontend_feedback_policy")
+    assert isinstance(policy, dict), "frontend_feedback_policy must be mapping"
+    assert policy.get("single_error_owner") is True, (
+        "frontend_feedback_policy.single_error_owner must be true"
+    )
+    assert policy.get("forbid_duplicate_user_visible_errors") is True, (
+        "frontend_feedback_policy.forbid_duplicate_user_visible_errors must be true"
+    )
+    assert policy.get("require_visible_error_message_count_in_behavior_report") is True, (
+        "frontend_feedback_policy.require_visible_error_message_count_in_behavior_report must be true"
+    )
+    owners = policy.get("allowed_error_owners")
+    assert owners == ["shared_request_layer", "component_local"], (
+        "frontend_feedback_policy.allowed_error_owners must be "
+        "['shared_request_layer', 'component_local']"
+    )
+
 
 def test_machine_truth_doc_explains_boundary_and_single_truth() -> None:
     _assert_contains(MACHINE_TRUTH_DOC, "config.yaml")
     _assert_contains(MACHINE_TRUTH_DOC, "superpowers")
     _assert_contains(MACHINE_TRUTH_DOC, "不得进入任何正常业务交付主链")
     _assert_contains(MACHINE_TRUTH_DOC, "ui_delivery_policy")
+    _assert_contains(MACHINE_TRUTH_DOC, "require_state_coverage_for_multistate_widgets")
+    _assert_contains(MACHINE_TRUTH_DOC, "frontend_feedback_policy")
+    _assert_contains(MACHINE_TRUTH_DOC, "single_error_owner")
     _assert_contains(MACHINE_TRUTH_DOC, "single_case_verify")
     _assert_contains(MACHINE_TRUTH_DOC, "说明性文档只负责解释")
 
@@ -74,6 +115,9 @@ def test_project_config_doc_explains_boundary_and_single_truth() -> None:
     _assert_contains(PROJECT_CONFIG_DOC, "config.yaml")
     _assert_contains(PROJECT_CONFIG_DOC, "normal_business_delivery_forbid_superpowers")
     _assert_contains(PROJECT_CONFIG_DOC, "ui_delivery_policy")
+    _assert_contains(PROJECT_CONFIG_DOC, "require_state_coverage_for_multistate_widgets")
+    _assert_contains(PROJECT_CONFIG_DOC, "frontend_feedback_policy")
+    _assert_contains(PROJECT_CONFIG_DOC, "single_error_owner")
     _assert_contains(PROJECT_CONFIG_DOC, "不得进入任何正常业务交付主链")
     _assert_contains(PROJECT_CONFIG_DOC, "single_case_verify")
     _assert_contains(PROJECT_CONFIG_DOC, "本文件是说明文档，不是第二规则源")
@@ -83,6 +127,7 @@ def main() -> int:
     tests = [
         test_workflow_policy_blocks_superpowers_for_business_delivery,
         test_ui_delivery_policy_exists_with_required_keys,
+        test_frontend_feedback_policy_exists_with_required_keys,
         test_machine_truth_doc_explains_boundary_and_single_truth,
         test_project_config_doc_explains_boundary_and_single_truth,
     ]

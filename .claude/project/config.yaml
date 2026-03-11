@@ -197,12 +197,27 @@ ui_delivery_policy:
   forbid_mask_waiver: true
   require_failure_evidence: true
   require_single_runtime_before_visual_gate: true
+  require_state_coverage_for_multistate_widgets: true
+  multistate_widget_part_ids:
+    - progress-indicator
+    - stepper
+    - tab-strip
+    - status-indicator
+    - wizard-step-indicator
   required_repair_chain:
     - single_case_verify
     - module_verify
     - ui_visual_gate
     - final_gate
     - final_closure
+
+frontend_feedback_policy:
+  single_error_owner: true
+  forbid_duplicate_user_visible_errors: true
+  allowed_error_owners:
+    - shared_request_layer
+    - component_local
+  require_visible_error_message_count_in_behavior_report: true
 
 context_preflight:
   script: "bin/context-preflight.sh"
