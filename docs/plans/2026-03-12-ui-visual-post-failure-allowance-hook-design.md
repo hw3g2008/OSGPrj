@@ -1,429 +1,392 @@
-# UI Visual Post-Failure Allowance Hook Design
+# UI Visual Post-Failure Allowance Framework Design
 
 > Date: 2026-03-12
 > Status: Approved
 > Owner: workflow-framework
-> Standard Baseline: `docs/plans/FOUR-PACK-STANDARD.md`
-> Scope: 在不改动现有 UI 严格交付主链的前提下，为视觉 compare 的失败分支增加一个“红后放行判断”钩子；钩子只在 strict screenshot compare 失败后执行，并读取 `UI-VISUAL-CONTRACT.yaml` 与现有机器真值中的放行标准决定当前 case 是否可转绿
-> Non-goals: 不重排 `single_case_verify -> module_verify -> ui_visual_gate -> final_gate -> final_closure`；不引入第二真源文件；不新增人工审批产物；不把正常通过的 case 额外送入复杂判断；不新增独立 UI orchestrator
+> Scope: 将 strict UI visual compare 失败后的 allowance judgement 收敛为框架级通用能力，覆盖所有模块的 page 与 surface；`permission` 仅作为首个 proving ground
+> Non-goals: 不改 gate 顺序；不放宽 `diff_threshold`；不引入记忆豁免；不新增 contract 顶层 schema；不要求模块自己发明 red-branch 流程；不默认放过 `low_salience_text_icon_rasterization`
 
 ---
 
-## 0.1 与上位标准关系（2026-03-12）
+## 0.1 与机器真值关系
 
-1. 本设计遵循 `docs/plans/FOUR-PACK-STANDARD.md` 的四件套治理与执行门禁要求。
-2. 本设计不改写项目既有 UI 严格交付主链，只在 strict screenshot failure 后增加一个可重复进入的判定条件。
-3. 如本设计与 `.claude/project/config.yaml` 或上位真源策略冲突，以机器真值为准，并先回改上位规则。
+1. 允许/禁止 residual class 继续由 `.claude/project/config.yaml` 统一定义。
+2. 现有 `UI-VISUAL-CONTRACT.yaml` 中显式 `residual_regions` 继续保留最高优先级。
+3. 本设计不引入第二真源，不新增独立 waiver 文件。
+4. 若无显式 `residual_regions`，才进入框架级 fallback region derivation。
 
 ## 1. Problem Statement
 
-当前项目已经具备：
+当前项目已有：
 
-1. 严格 UI compare 主链
-   - `single_case_verify -> module_verify -> ui_visual_gate -> final_gate -> final_closure`
-2. 机器真值中的允许/禁止 residual class
-   - `micro_spacing`
-   - `low_salience_text_icon_rasterization`
-   - 禁止 `image_like / captcha_like / color_state / geometry_change / structure_change / unknown`
-3. 现有 residual classifier 与报告字段
+1. strict screenshot compare 主链
+2. page red branch 的 residual classifier
+3. `config.yaml` 中的 allowed / forbidden residual class 机器真值
 
-但当前接入方式过重：
+但现状只解决了局部问题：
 
-1. 只有页面显式声明 `residual_regions` 时，failure 后才会进入 classifier。
-2. 这要求页面或生成阶段显式展开大量 selector，维护成本高。
-3. 用户需求并不是增加一条新流程，而是在“已经红了”的地方再插一个简单判断条件。
+1. page 有 classifier 路径，surface 没有。
+2. 无显式 `residual_regions` 的 case 无法进入 classifier。
+3. 依赖 page-level `style_contracts` 的 fallback 只适用于少数模块页面，不具备未来模块通用性。
+4. 将框架级能力藏在 spec 私有函数里，不利于稳定测试与后续复用。
 
-本次要解决的不是“重新定义放过标准”，而是把既有放过标准接到一个更轻的失败分支上：
+因此本次目标不是给 `permission` 打补丁，而是把 red-branch allowance 提升成一项框架能力：
 
-- strict compare 仍然先跑
-- 只有红了以后才进入放行判断
-- 每次扫描、每次复审、每次重新失败时都可以再次进入
-- 放行标准仍然来自现有机器真值与 `UI-VISUAL-CONTRACT.yaml`
+1. 所有模块的 page case 可复用
+2. 所有模块的 surface case 可复用
+3. 模块只提供 contract 真值，不再各自发明 allowance 流程
 
 ## 2. Goals
 
 ### 2.1 必须达到
 
-1. 现有 UI 主链顺序完全不变。
-2. 只有 strict screenshot compare 失败后，才执行放行判断。
-3. 放行判断可在同一轮扫描的多个失败 case 上重复执行。
-4. 再次复审、再次扫描时，如果同一 case 再次失败，必须重新判定，不能记忆上一次“已放过”。
-5. 放行标准继续复用现有 `config.yaml` 中的 allowed / forbidden residual classes。
-6. 判断所需的可读策略继续收敛到 `UI-VISUAL-CONTRACT.yaml`，不新增第二文件。
-7. 报告中必须明确区分：
-   - strict compare 直接通过
-   - strict compare 失败后被放行
-   - strict compare 失败且未放行
+1. 不改变 `single_case_verify -> module_verify -> ui_visual_gate -> final_gate -> final_closure` 的顺序。
+2. strict compare 必须始终先跑，allowance 只存在于 red branch。
+3. page 与 surface 使用同一 allowance 模块，不允许 page / surface 语义分叉。
+4. 有显式 `residual_regions` 时继续优先使用显式声明。
+5. 没有显式 `residual_regions` 时，框架可从 `page root` / `surface root` 自动派生 fallback allowed regions。
+6. fallback 不依赖 page-level `style_contracts`，避免未来模块无法接入。
+7. 通用 fallback 默认只服务 `micro_spacing`。
+8. page 与 surface 的 evidence 都必须可审计。
 
 ### 2.2 明确不做
 
-1. 不把正常通过的 case 额外送入第二阶段判断。
-2. 不把“放行”做成一次性豁免或人工审批状态。
-3. 不新增独立 gate、独立 orchestrator、独立 waiver 文件。
-4. 不要求每个页面维护一大段 page-level `residual_regions`。
-5. 不重新讨论“允许哪些 residual class”这一全局标准。
+1. 不新增 contract 顶层 `post_failure_allowance` block。
+2. 不扩 `ui_visual_contract_guard.py` 的 schema 责任。
+3. 不新增独立 gate 或 orchestrator。
+4. 不默认放过文字/图标栅格化差异。
+5. 不把整页或整 surface 单个大框直接当作 fallback allowed region。
 
-## 3. Approaches Considered
+## 3. Existing-Entrypoint Inventory
 
-### 方案 A：维持当前 page-level `residual_regions`
+### 3.1 Source Truth
+
+1. `.claude/project/config.yaml`
+   - `allowed_visual_residual_classes`
+   - `forbidden_visual_residual_classes`
+   - `micro_spacing.max_edge_band_px`
+2. `osg-spec-docs/docs/01-product/prd/{module}/UI-VISUAL-CONTRACT.yaml`
+   - page / surface 真值
+   - page `residual_regions`
+   - surface/page 结构与 anchors
+
+### 3.2 Runtime Entrypoints
+
+1. `bin/ui-visual-case-verify.sh`
+2. `bin/ui-visual-gate.sh`
+3. `bin/final-gate.sh`
+4. `osg-frontend/tests/e2e/visual-contract.e2e.spec.ts`
+
+### 3.3 Existing Guards
+
+1. `.claude/skills/workflow-engine/tests/ui_visual_contract_guard.py`
+2. `.claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py`
+3. `.claude/skills/workflow-engine/tests/ui_critical_evidence_guard_selftest.py`
+
+### 3.4 Existing Support Modules
+
+1. `osg-frontend/tests/e2e/support/visual-contract.ts`
+2. `osg-frontend/tests/e2e/support/visual-residual-classifier.ts`
+3. `osg-frontend/tests/e2e/support/style-contract.ts`
+4. `osg-frontend/tests/e2e/support/surface-trigger.ts`
+
+## 4. Approaches Considered
+
+### 方案 A：继续使用 contract-explicit 提示
 
 做法：
 
-- 继续要求页面显式声明 `residual_regions`
-- strict compare failure 后只有声明过的页面才能进入 classifier
+- 每个 page / surface 自己声明 allowance hint
+- 框架只负责统一 red-branch 调用
 
 优点：
 
-- 语义最显式
+- 可控性最强
 
 缺点：
 
-- 页面维护成本高
-- 自动化率低
-- 与“只想在红后插一个判断条件”的目标不一致
+- 维护成本最高
+- 与“未来模块通用能力”目标冲突
 
 结论：
 
 - 不采用
 
-### 方案 B：生成阶段自动给每页展开默认 `residual_regions`
+### 方案 B：单个 root 大框 fallback
 
 做法：
 
-- 在 `prototype-extraction` 生成 `UI-VISUAL-CONTRACT.yaml` 时，为每页自动灌默认 selector
+- red case 直接把 page root / surface root 的完整 bounding box 作为 `micro_spacing` allowed region
 
 优点：
 
-- 自动化率更高
+- 实现最简单
 
 缺点：
 
-- 生成逻辑复杂
-- 需要 archetype 和 selector 模板
-- 仍然会把复杂显式展开产物灌进每页
+- 与当前 `micro_spacing` edge-band classifier 语义不匹配
+- 内部布局的微间距残差无法被稳定识别
 
 结论：
 
-- 本轮不采用
+- 不采用
 
-### 方案 C：在 strict compare failure 分支插入 module-level allowance hook
+### 方案 C：root-aware safe boxes framework module
 
 做法：
 
-- strict compare 仍然先跑
-- 只有 red case 才进入 allowance hook
-- hook 读取：
-  - `.claude/project/config.yaml` 的 allowed / forbidden residual classes
-  - `UI-VISUAL-CONTRACT.yaml` 中的 module-level allowance policy
-- 判断当前 case 是否可放行
+- 新增框架级 `post-failure-allowance.ts`
+- 优先使用显式 `residual_regions`
+- 若无显式 regions，则从 page / surface root 自动派生 safe boxes
+- 将 safe boxes 统一转成 `micro_spacing` allowed regions 输入现有 classifier
 
 优点：
 
-- 不改主链顺序
-- 不要求每页维护大量 selector
-- 与用户想要的“红了以后再判一次”完全一致
+- 不依赖 `style_contracts`
+- 适用于所有未来模块
+- 可抽成独立纯函数，便于 focused tests
+- page / surface 可共用
 
 缺点：
 
-- 需要在 contract 顶层引入一段轻量 allowance policy
-- 需要扩展报告字段与 guard 校验
+- 需要设计 DOM safe-box 筛选规则
 
 结论：
 
 - **推荐**
 
-## 4. Design Decision
+## 5. Design Decision
 
-采用 **方案 C：在 strict screenshot compare failure 分支加入可重复进入的 allowance hook**。
+采用 **方案 C：将 post-failure allowance 实现为框架级 support 模块**。
 
-执行语义固定为：
+### 5.1 模块边界
 
-1. 先执行当前 strict compare
-2. 若通过，当前 case 直接结束
-3. 若失败，立即进入 allowance hook
-4. 若 allowance hook 判定可放行，则当前 case 转为 `PASS`
-5. 若 allowance hook 判定不可放行，则当前 case 维持 `FAIL`
-6. 进入下一个 case
+新增：
 
-该语义在以下情况下重复成立：
+- `osg-frontend/tests/e2e/support/post-failure-allowance.ts`
 
-1. 同一轮扫描中多个 case 分别失败
-2. 同一 case 在下一次复审中再次失败
-3. module verify / ui visual gate / final gate 在不同阶段再次遇到失败 case
+该模块负责三件事：
 
-本设计不引入记忆豁免；每次 red 都重新按同一标准判定一次。
+1. 接收 red case 上下文
+2. 构造允许区域：
+   - `explicit_residual_regions`
+   - `derived_safe_boxes`
+3. 调用现有 classifier 并返回统一结果
 
-## 5. Existing-Entrypoint Inventory
+### 5.2 核心函数
 
-### 5.1 真值与派生产物
+建议收敛成以下边界：
 
-- `.claude/project/config.yaml`
-  - UI residual allowed / forbidden policy 机器真值
-- `osg-spec-docs/docs/01-product/prd/{module}/UI-VISUAL-CONTRACT.yaml`
-  - 模块级 visual contract 派生产物
+1. `collectAllowanceNodeSnapshots(rootLocator)`
+   - 运行时函数
+   - 从 page / surface root 收集可见 DOM 节点快照
 
-### 5.2 现有执行入口
+2. `deriveSafeMicroSpacingRegions(rootBox, nodeSnapshots)`
+   - 纯函数
+   - 从节点快照中筛选并构造 `micro_spacing` allowed regions
 
-- `bin/ui-visual-case-verify.sh`
-- `bin/ui-visual-baseline.sh`
-- `bin/ui-visual-gate.sh`
-- `bin/final-gate.sh`
-- `bin/final-closure.sh`
+3. `evaluatePostFailureAllowance(input)`
+   - 统一入口
+   - 优先走显式 `residual_regions`
+   - 否则走 `derived_safe_boxes`
+   - 最终返回 classifier evidence
 
-### 5.3 现有 compare 与分类实现
+### 5.3 Page / Surface 数据流
 
-- `osg-frontend/tests/e2e/visual-contract.e2e.spec.ts`
-- `osg-frontend/tests/e2e/support/visual-contract.ts`
-- `osg-frontend/tests/e2e/support/visual-residual-classifier.ts`
+固定执行语义：
 
-### 5.4 现有 guard
+1. strict compare 先执行
+2. green case 直接结束
+3. red case 调 `evaluatePostFailureAllowance(...)`
+4. allowance pass 则当前 case 转 `PASS`
+5. allowance fail 则当前 case 维持 `FAIL`
 
-- `.claude/skills/workflow-engine/tests/ui_visual_contract_guard.py`
-- `.claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py`
+接入点：
 
-## 6. Guard Reuse / Collision Audit
+1. page fullpage catch
+2. page clip catch
+3. surface viewport catch
 
-### 6.1 为什么复用 `ui_visual_contract_guard.py`
+## 6. Safe-Box Derivation
+
+fallback 只在无显式 `residual_regions` 时触发，并且只生成 `micro_spacing` allowed regions。
+
+### 6.1 节点快照字段
+
+节点快照至少包含：
+
+1. `tagName`
+2. `boundingBox`
+3. `display`
+4. `visibility`
+5. `opacity`
+6. `backgroundColor`
+7. `borderWidth`
+8. `borderRadius`
+9. `overflow`
+10. `childCount`
+11. `className`
+12. `role`
+
+### 6.2 安全壳层候选
+
+只保留满足至少一类的节点：
+
+1. 交互壳
+   - `button`
+   - `input`
+   - `textarea`
+   - `select`
+   - `[role=button]`
+2. 布局壳
+   - `display=block|flex|grid|inline-flex|table|table-row|table-cell`
+3. 样式壳
+   - 非透明背景
+   - 边框
+   - 圆角
+   - overflow 裁切
+   - 明显 padding / shell 风格
+
+### 6.3 风险排除
+
+一律排除：
+
+1. `img / canvas / video / iframe / object / embed`
+2. `svg / path`
+3. `body / html`
+4. surface `backdrop`
+5. captcha / chart / qr / barcode / avatar / badge-count 等高风险语义区域
+6. 纯文本 inline 节点，除非本身命中壳层样式
+
+### 6.4 几何收紧
+
+1. 太小的框直接排除
+2. 覆盖 root 绝大部分面积的近整页大框直接排除
+3. 强重叠框做去重
+4. 候选总数设上限
+5. 若最终没有稳定候选，则 fail-closed
+
+## 7. Evidence Semantics
+
+### 7.1 Page
+
+继续复用现有字段：
+
+1. `result`
+2. `residual_classifier_applied`
+3. `residual_classifier_result`
+4. `residual_class_breakdown`
+5. `forbidden_residual_detected`
+
+### 7.2 Surface
+
+surface 需要补齐与 page 对齐的 classifier evidence，但不新增新的 reason 字段。
+
+建议在 `viewport_results[]` 中沿用同名字段：
+
+1. `residual_classifier_applied`
+2. `residual_classifier_result`
+3. `residual_class_breakdown`
+4. `forbidden_residual_detected`
+
+## 8. Guard Reuse / Collision Audit
+
+### 8.1 Contract Guard
+
+不扩 `ui_visual_contract_guard.py` 的 schema。
 
 原因：
 
-1. allowance policy 仍属于 visual contract schema 的一部分。
-2. 它最适合在最早 choke point 拦住：
-   - 顶层字段缺失
-   - 非法 class
-   - 与 `config.yaml` allowed / forbidden policy 冲突
+1. 本设计不新增 contract 字段
+2. 允许/禁止 residual class 仍由现有 `config.yaml` 约束
+3. fallback 完全属于运行时派生逻辑
 
-因此不新建：
+### 8.2 Evidence Guard
 
-- `ui_visual_allowance_guard.py`
-- `ui_visual_red_branch_guard.py`
+复用并扩展 `ui_critical_evidence_guard.py`。
 
-### 6.2 为什么不新建独立 allowance gate
+扩展点仅限：
 
-原因：
+1. surface `viewport_results[]` 若应用 classifier，必须带齐 residual evidence
+2. page 与 surface 使用同一 tri-state evidence 语义
 
-1. 用户要求只是“插入流程中的一个判断条件”。
-2. 现有真实 compare 执行点已经在 `visual-contract.e2e.spec.ts`。
-3. 若新增独立 gate，会改变主链心理模型并增加维护面。
+不新建：
 
-### 6.3 `ui_critical_evidence_guard.py` 的角色
+1. `ui_visual_allowance_guard.py`
+2. `ui_visual_allowance_gate.sh`
 
-继续复用，用于审计 failure / allowance evidence 是否完整，至少要能区分：
+## 9. Source-Stage Integration Path
 
-1. strict pass
-2. strict fail but allowed
-3. strict fail and rejected
+本设计不新增任何新 artifact。
 
-## 7. Source-Stage Integration Path
+继续复用：
 
-### 7.1 唯一策略真值
+1. `.claude/project/config.yaml`
+   - allowed / forbidden residual class 真值
+2. `UI-VISUAL-CONTRACT.yaml`
+   - page / surface 真值
+   - 显式 `residual_regions`
 
-- `.claude/project/config.yaml`
-  - 继续定义 allowed / forbidden residual classes
+因此：
 
-### 7.2 模块级 contract 接入点
+1. 不需要 prototype-extraction 生成新字段
+2. 不需要新增 source-stage contract block
+3. 运行时 fallback 是纯派生，不回写 contract
 
-最早接入文件：
+## 10. Error Handling / Fail-Closed
 
-- `osg-spec-docs/docs/01-product/prd/{module}/UI-VISUAL-CONTRACT.yaml`
+以下情况一律不放行：
 
-本轮不要求页面级显式 `residual_regions`；改为在 contract 顶层新增轻量 policy，例如：
+1. `diffRef` 无法解析
+2. diff 图片不存在
+3. root box 无法解析
+4. 节点快照采集失败
+5. 无显式 regions 且派生不出 safe boxes
+6. classifier 结果包含 `geometry_change`
+7. classifier 结果包含 `unknown`
+8. classifier 结果命中任何 forbidden class
 
-- `post_failure_allowance`
-  - `enabled`
-  - `repeat_on_each_failure`
-  - `scope`
-  - 轻量 selector / matching policy
+## 11. Testing and Stage Regression
 
-该顶层 block 仍属于同一 visual contract 文件，不形成第二真源。
+### 11.1 Focused Tests
 
-### 7.3 真源链不变
+必须覆盖：
 
-- `prototype-extraction` 继续生成 `UI-VISUAL-CONTRACT.yaml`
-- 只是扩展生成结果或后续维护结果中的顶层 allowance policy
-- 不允许 final gate 第一次“发明” allowance policy
+1. `deriveSafeMicroSpacingRegions(...)`
+2. `evaluatePostFailureAllowance(...)`
+3. 显式 `residual_regions` 优先级
+4. `derived_safe_boxes` fallback
+5. page / surface 共用语义
+6. forbidden residual 继续 fail
 
-## 8. Architecture
+### 11.2 Proving Ground
 
-### 8.1 Contract 结构
+`permission` 作为第一个全量 proving ground：
 
-`UI-VISUAL-CONTRACT.yaml` 顶层增加轻量 policy，页面与 surface 结构尽量不变：
+1. 5 个 page
+2. 6 个 surface
 
-1. `post_failure_allowance.enabled`
-2. `post_failure_allowance.repeat_on_each_failure`
-3. `post_failure_allowance.mode = strict_red_branch_only`
-4. `post_failure_allowance` 中仅保存这次 hook 需要读取的轻量标准
+### 11.3 Gate Verification
 
-不再要求：
+至少验证：
 
-1. 每个页面重复维护大段 `residual_regions`
-2. 生成阶段把复杂 selector 全量展开到所有页面
+1. `bash bin/ui-visual-case-verify.sh permission dashboard`
+2. `bash bin/ui-visual-case-verify.sh permission roles`
+3. `bash bin/ui-visual-case-verify.sh permission admins`
+4. `bash bin/ui-visual-case-verify.sh permission base-data`
+5. 6 个 surface case verify
+6. `bash bin/ui-visual-gate.sh permission`
+7. 必要时 `bash bin/final-gate.sh permission`
 
-### 8.2 Compare 失败分支
+## 12. Acceptance
 
-在 `visual-contract.e2e.spec.ts` 的 strict compare `catch` 分支中追加 allowance hook：
+框架级完成标准：
 
-1. 读取当前 module contract
-2. 检查 `post_failure_allowance.enabled`
-3. 若未启用，维持当前失败行为
-4. 若启用，按现有 classifier 标准对本次 diff 做一次 allowance judgement
-5. 根据 judgement 结果决定当前 case 的最终结果
-
-### 8.3 可重复进入语义
-
-allowance hook 没有记忆状态：
-
-1. 本轮扫描中每个 red case 独立判断
-2. 下一轮复审若再次 red，则再次判断
-3. 不保存“上次已放过”的缓存文件
-
-## 9. Data Flow
-
-### 9.1 正常通过路径
-
-1. 读取 contract
-2. strict compare pass
-3. 直接写入 pass report
-
-### 9.2 红后放行路径
-
-1. 读取 contract
-2. strict compare fail
-3. 读取 `post_failure_allowance`
-4. 复用现有 residual classifier 标准做 allowance judgement
-5. 若通过，写入 `strict_failed_but_allowed`
-6. 当前 case 返回 pass
-
-### 9.3 红后不放行路径
-
-1. 读取 contract
-2. strict compare fail
-3. allowance judgement fail
-4. 写入 `strict_failed_and_rejected`
-5. 当前 case 保持 fail
-
-## 10. Error Handling
-
-### 10.1 Contract 缺失或非法
-
-行为：
-
-- 直接 fail-closed
-- 不允许因为 allowance policy 缺失而默认放行
-
-### 10.2 Allowance judgement 自身报错
-
-行为：
-
-- 当前 case 维持 strict failure
-- 报告记录 allowance hook error
-- 不允许“判断器坏了就默认放过”
-
-### 10.3 配置与 contract 冲突
-
-行为：
-
-- 由 `ui_visual_contract_guard.py` 最早阻断
-- 例如 contract 试图允许 `unknown` 或 `captcha_like`
-
-## 11. Testing Strategy
-
-### 11.1 单元测试
-
-新增或扩展：
-
-1. `visual-residual-classifier` 现有分类测试
-2. 新增 allowance policy 解析测试
-3. 新增 strict failure -> allowance pass / reject 分支测试
-
-### 11.2 Guard 自测
-
-扩展：
-
-1. `ui_visual_contract_guard.py` fixture
-2. 非法顶层 allowance policy schema
-3. allowance policy 与 config policy 冲突
-
-### 11.3 运行链回归
-
-必须验证：
-
-1. `single_case_verify` 中 red case 能进入 allowance hook
-2. `module_verify` 中多个 red case 可分别进入 allowance hook
-3. `ui_visual_gate` / `final_gate` 不需要重新编排也能保留此行为
-4. 正常 strict pass case 不会额外进入 allowance hook
-
-## 12. Stage-Regression Verification
-
-### 12.1 最早 choke point
-
-必须先证明 schema / policy 在 contract guard 就能被拦住：
-
-```bash
-python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
-  --contract osg-spec-docs/docs/01-product/prd/permission/UI-VISUAL-CONTRACT.yaml \
-  --output-json osg-spec-docs/tasks/audit/ui-visual-contract-summary-permission-$(date +%F).json
-```
-
-### 12.2 单项 red-branch proving ground
-
-```bash
-bash bin/ui-visual-case-verify.sh permission dashboard
-```
-
-要求看到：
-
-1. strict compare 先失败
-2. allowance hook 被调用
-3. 最终结果有明确 evidence
-
-### 12.3 模块级重复进入验证
-
-```bash
-bash bin/ui-visual-gate.sh permission
-```
-
-要求看到：
-
-1. 多个 red case 可分别进入 allowance judgement
-2. 报告字段能区分 allowed / rejected
-
-### 12.4 最终 gate 回归
-
-```bash
-bash bin/final-gate.sh permission
-```
-
-要求看到：
-
-1. 主链顺序无变化
-2. allowance 只存在于 strict failure 分支
-3. final evidence 仍完整可审计
-
-## 13. Open Risks
-
-1. 若 contract 顶层 allowance policy 过宽，可能让 red-branch 判断吞掉真实问题。
-2. 若 allowance report 字段不够清晰，会让“严格通过”和“失败后放过”混在一起。
-3. 若 failure 分支的 hook 写得过深，后续 page / surface 行为可能出现不一致。
-
-因此本轮必须坚持：
-
-1. fail-closed
-2. 主链顺序不变
-3. 只在 red branch 生效
-4. 每次 red 重新判定
-
-## 14. Decision Summary
-
-最终方案：
-
-1. 不改变现有 UI 严格交付主链
-2. 不要求每页维护大段 `residual_regions`
-3. 不新增第二真源文件
-4. 在 strict screenshot failure 后插入一个 allowance judgement hook
-5. hook 每次 red 都重新执行
-6. 标准继续复用 `config.yaml` 与 `UI-VISUAL-CONTRACT.yaml`
-7. evidence 必须能区分：
-   - strict pass
-   - strict fail but allowed
-   - strict fail and rejected
+1. page 与 surface 都进入统一 allowance 模块
+2. 未来模块无需新增 schema 即可复用这套能力
+3. 显式 `residual_regions` 继续优先于通用 fallback
+4. 无显式 regions 的 case 仍可进入 fallback
+5. fallback 不依赖 `style_contracts`
+6. forbidden residual 仍严格失败
+7. surface evidence 与 page evidence 语义统一
+8. `permission` 作为首个 proving ground 完整通过
