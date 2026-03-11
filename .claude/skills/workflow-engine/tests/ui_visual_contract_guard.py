@@ -86,6 +86,69 @@ def _load_ui_delivery_policy(config_path: Path, errors: list[str]) -> dict[str, 
     return ui_delivery_policy
 
 
+def _normalize_policy_string_list(value: Any) -> set[str]:
+    if not isinstance(value, list):
+        return set()
+    normalized: set[str] = set()
+    for item in value:
+        if isinstance(item, str) and item.strip():
+            normalized.add(item.strip().lower())
+    return normalized
+
+
+def _page_multistate_widget_hits(page: dict[str, Any], widget_ids: set[str]) -> set[str]:
+    hits: set[str] = set()
+    critical_surfaces = page.get("critical_surfaces")
+    if not isinstance(critical_surfaces, list):
+        return hits
+    for surface in critical_surfaces:
+        if not isinstance(surface, dict):
+            continue
+        surface_id = surface.get("surface_id")
+        if isinstance(surface_id, str) and surface_id.strip().lower() in widget_ids:
+            hits.add(surface_id.strip().lower())
+    return hits
+
+
+def _surface_multistate_widget_hits(surface: dict[str, Any], widget_ids: set[str]) -> set[str]:
+    hits: set[str] = set()
+    content_parts = surface.get("content_parts")
+    if not isinstance(content_parts, list):
+        return hits
+    for part in content_parts:
+        if not isinstance(part, dict):
+            continue
+        part_id = part.get("part_id")
+        if isinstance(part_id, str) and part_id.strip().lower() in widget_ids:
+            hits.add(part_id.strip().lower())
+    return hits
+
+
+def _has_non_default_state_id(items: Any) -> bool:
+    if not isinstance(items, list):
+        return False
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        state_id = item.get("state_id")
+        if isinstance(state_id, str) and state_id.strip() and state_id.strip().lower() != "default":
+            return True
+    return False
+
+
+def _state_ids(items: Any) -> set[str]:
+    if not isinstance(items, list):
+        return set()
+    result: set[str] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        state_id = item.get("state_id")
+        if isinstance(state_id, str) and state_id.strip():
+            result.add(state_id.strip())
+    return result
+
+
 def _normalize_selector(selector: str) -> str:
     return re.sub(r"\s+", " ", selector.strip())
 
@@ -571,47 +634,59 @@ def _apply_strict_policy_to_page(
             ),
         )
 
-    if policy.get("forbid_mask_waiver") is not True:
-        return
+    if policy.get("forbid_mask_waiver") is True:
+        mask_selectors = page.get("mask_selectors")
+        if isinstance(mask_selectors, list) and len(mask_selectors) > 0:
+            _err(
+                errors,
+                (
+                    f"{tag}.mask_selectors must be empty when "
+                    "ui_delivery_policy.forbid_mask_waiver=true"
+                ),
+            )
 
-    mask_selectors = page.get("mask_selectors")
-    if isinstance(mask_selectors, list) and len(mask_selectors) > 0:
-        _err(
-            errors,
-            (
-                f"{tag}.mask_selectors must be empty when "
-                "ui_delivery_policy.forbid_mask_waiver=true"
-            ),
-        )
+        dynamic_regions = page.get("dynamic_regions")
+        if isinstance(dynamic_regions, list) and len(dynamic_regions) > 0:
+            _err(
+                errors,
+                (
+                    f"{tag}.dynamic_regions must be empty when "
+                    "ui_delivery_policy.forbid_mask_waiver=true"
+                ),
+            )
 
-    dynamic_regions = page.get("dynamic_regions")
-    if isinstance(dynamic_regions, list) and len(dynamic_regions) > 0:
-        _err(
-            errors,
-            (
-                f"{tag}.dynamic_regions must be empty when "
-                "ui_delivery_policy.forbid_mask_waiver=true"
-            ),
-        )
+        if page.get("data_mode") == "mask":
+            _err(
+                errors,
+                (
+                    f"{tag}.data_mode=mask is forbidden when "
+                    "ui_delivery_policy.forbid_mask_waiver=true"
+                ),
+            )
 
-    if page.get("data_mode") == "mask":
-        _err(
-            errors,
-            (
-                f"{tag}.data_mode=mask is forbidden when "
-                "ui_delivery_policy.forbid_mask_waiver=true"
-            ),
-        )
+        critical_surfaces = page.get("critical_surfaces")
+        if isinstance(critical_surfaces, list):
+            for i, surface in enumerate(critical_surfaces):
+                if isinstance(surface, dict) and surface.get("mask_allowed") is True:
+                    _err(
+                        errors,
+                        (
+                            f"{tag}.critical_surfaces[{i}].mask_allowed=true is forbidden when "
+                            "ui_delivery_policy.forbid_mask_waiver=true"
+                        ),
+                    )
 
-    critical_surfaces = page.get("critical_surfaces")
-    if isinstance(critical_surfaces, list):
-        for i, surface in enumerate(critical_surfaces):
-            if isinstance(surface, dict) and surface.get("mask_allowed") is True:
+    if policy.get("require_state_coverage_for_multistate_widgets") is True:
+        widget_ids = _normalize_policy_string_list(policy.get("multistate_widget_part_ids"))
+        hits = sorted(_page_multistate_widget_hits(page, widget_ids))
+        if hits:
+            state_cases = page.get("state_cases")
+            if not isinstance(state_cases, list) or len(state_cases) == 0:
                 _err(
                     errors,
                     (
-                        f"{tag}.critical_surfaces[{i}].mask_allowed=true is forbidden when "
-                        "ui_delivery_policy.forbid_mask_waiver=true"
+                        f"{tag}.state_cases must be non-empty for multistate widgets {hits} when "
+                        "ui_delivery_policy.require_state_coverage_for_multistate_widgets=true"
                     ),
                 )
 
@@ -623,8 +698,6 @@ def _apply_strict_policy_to_surfaces(
 ) -> None:
     if not isinstance(policy, dict) or policy.get("strict_visual_contract") is not True:
         return
-    if policy.get("forbid_mask_waiver") is not True:
-        return
 
     surfaces = contract.get("surfaces")
     if not isinstance(surfaces, list):
@@ -633,18 +706,57 @@ def _apply_strict_policy_to_surfaces(
     for i, surface in enumerate(surfaces):
         if not isinstance(surface, dict):
             continue
-        surface_parts = surface.get("surface_parts")
-        if not isinstance(surface_parts, list):
+        if policy.get("forbid_mask_waiver") is True:
+            surface_parts = surface.get("surface_parts")
+            if isinstance(surface_parts, list):
+                for j, part in enumerate(surface_parts):
+                    if isinstance(part, dict) and part.get("mask_allowed") is True:
+                        _err(
+                            errors,
+                            (
+                                f"surfaces[{i}].surface_parts[{j}].mask_allowed=true is forbidden when "
+                                "ui_delivery_policy.forbid_mask_waiver=true"
+                            ),
+                        )
+
+        if policy.get("require_state_coverage_for_multistate_widgets") is not True:
             continue
-        for j, part in enumerate(surface_parts):
-            if isinstance(part, dict) and part.get("mask_allowed") is True:
-                _err(
-                    errors,
-                    (
-                        f"surfaces[{i}].surface_parts[{j}].mask_allowed=true is forbidden when "
-                        "ui_delivery_policy.forbid_mask_waiver=true"
-                    ),
-                )
+
+        widget_ids = _normalize_policy_string_list(policy.get("multistate_widget_part_ids"))
+        hits = sorted(_surface_multistate_widget_hits(surface, widget_ids))
+        if not hits:
+            continue
+
+        state_variants = surface.get("state_variants")
+        state_contracts = surface.get("state_contracts")
+        tag = f"surfaces[{i}]"
+        if not isinstance(state_variants, list) or len(state_variants) == 0 or not _has_non_default_state_id(state_variants):
+            _err(
+                errors,
+                (
+                    f"{tag}.state_variants must include at least one non-default state for multistate widgets {hits} when "
+                    "ui_delivery_policy.require_state_coverage_for_multistate_widgets=true"
+                ),
+            )
+        if not isinstance(state_contracts, list) or len(state_contracts) == 0 or not _has_non_default_state_id(state_contracts):
+            _err(
+                errors,
+                (
+                    f"{tag}.state_contracts must include at least one non-default state for multistate widgets {hits} when "
+                    "ui_delivery_policy.require_state_coverage_for_multistate_widgets=true"
+                ),
+            )
+        variant_ids = _state_ids(state_variants)
+        contract_ids = _state_ids(state_contracts)
+        if variant_ids and contract_ids and not variant_ids.issubset(contract_ids):
+            missing_ids = sorted(variant_ids - contract_ids)
+            _err(
+                errors,
+                (
+                    f"{tag}.state_contracts missing state ids {missing_ids} for multistate widgets {hits} when "
+                    "ui_delivery_policy.require_state_coverage_for_multistate_widgets=true"
+                ),
+            )
 
 
 def _collect_surface_ids(contract: dict[str, Any]) -> set[str]:

@@ -394,6 +394,14 @@ def strict_policy() -> dict:
         "forbid_diff_threshold_relaxation": True,
         "forbid_snapshot_bypass": True,
         "forbid_mask_waiver": True,
+        "require_state_coverage_for_multistate_widgets": True,
+        "multistate_widget_part_ids": [
+            "progress-indicator",
+            "stepper",
+            "tab-strip",
+            "status-indicator",
+            "wizard-step-indicator",
+        ],
     }
 
 
@@ -469,6 +477,89 @@ def test_strict_policy_rejects_mask_allowed_true_on_surface_parts() -> None:
     assert any("mask_allowed" in issue for issue in issues), issues
 
 
+def test_strict_policy_requires_page_state_cases_for_multistate_widget() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["pages"][0]["diff_threshold"] = 0
+    contract["pages"][0]["critical_surfaces"] = [
+        {
+            "surface_id": "stepper",
+            "selector": ".dashboard__wizard-steps",
+            "mask_allowed": False,
+            "required_anchors": [".dashboard__wizard-step-1", ".dashboard__wizard-step-2"],
+            "style_contracts": [
+                {"property": "gap", "expected": "8px"},
+            ],
+            "state_contracts": [
+                {
+                    "state": "loaded",
+                    "assertions": [
+                        {"property": "opacity", "expected": "1"},
+                    ],
+                }
+            ],
+        }
+    ]
+    contract["pages"][0]["state_cases"] = []
+
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any("state_cases" in issue and "multistate" in issue for issue in issues), issues
+
+
+def test_strict_policy_requires_surface_non_default_state_coverage_for_multistate_part() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["pages"][0]["diff_threshold"] = 0
+    contract["surfaces"] = [
+        {
+            "surface_id": "modal-forgot-password",
+            "surface_type": "modal",
+            "host_page_id": "dashboard",
+            "prototype_selector": "#forgot-password-modal",
+            "app_selector": ".forgot-password-modal",
+            "surface_root_selector": ".ant-modal-root .forgot-password-modal",
+            "backdrop_selector": ".ant-modal-mask",
+            "portal_host": "body",
+            "source_ref": "00-admin-login.md#modal-forgot-password",
+            "trigger_action": {"type": "click", "selector": ".forgot-password-link"},
+            "required_anchors": [
+                ".forgot-password-modal__header",
+                ".forgot-password-modal__steps",
+                ".forgot-password-modal__content",
+            ],
+            "viewport_variants": [
+                {"viewport_id": "desktop", "width": 1440, "height": 900},
+            ],
+            "state_variants": [{"state_id": "default"}],
+            "surface_parts": [
+                {"part_id": "backdrop", "selector": ".ant-modal-mask", "mask_allowed": False},
+                {"part_id": "shell", "selector": ".forgot-password-modal", "mask_allowed": False},
+                {"part_id": "header", "selector": ".forgot-password-modal__header", "mask_allowed": False},
+                {"part_id": "body", "selector": ".forgot-password-modal__body", "mask_allowed": False},
+                {"part_id": "close-control", "selector": ".forgot-password-modal__close", "mask_allowed": False},
+            ],
+            "content_parts": [
+                {"part_id": "title", "selector": ".forgot-password-modal__title", "required": True},
+                {"part_id": "progress-indicator", "selector": ".forgot-password-modal__steps", "required": True},
+            ],
+            "style_contracts": [
+                {"selector": ".forgot-password-modal", "css": {"border-radius": "20px"}},
+            ],
+            "state_contracts": [
+                {
+                    "state_id": "default",
+                    "required_anchors": [".forgot-password-modal__content"],
+                    "style_contracts": [
+                        {"selector": ".forgot-password-modal", "css": {"background-color": "rgb(255, 255, 255)"}},
+                    ],
+                }
+            ],
+        }
+    ]
+
+    issues = collect_issues_with_policy(contract, strict_policy())
+    assert any("state_variants" in issue and "multistate" in issue for issue in issues), issues
+    assert any("state_contracts" in issue and "multistate" in issue for issue in issues), issues
+
+
 def main() -> int:
     tests = [
         test_valid_style_and_state_clauses_pass,
@@ -489,6 +580,8 @@ def main() -> int:
         test_strict_policy_rejects_snapshot_compare_false,
         test_strict_policy_rejects_mask_selectors_and_mask_mode,
         test_strict_policy_rejects_mask_allowed_true_on_surface_parts,
+        test_strict_policy_requires_page_state_cases_for_multistate_widget,
+        test_strict_policy_requires_surface_non_default_state_coverage_for_multistate_part,
     ]
     for fn in tests:
         fn()
