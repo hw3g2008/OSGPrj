@@ -14,6 +14,38 @@ import yaml
 
 
 VALID_LEVELS = {"ticket", "story", "final"}
+VALID_CATEGORIES = {"positive", "negative", "boundary", "exception", "null_empty"}
+DEFAULT_SCENARIO_DESIGN = {
+    "allowed": [
+        "display",
+        "state_change",
+        "business_rule_reject",
+        "auth_or_data_boundary",
+        "persist_effect",
+    ],
+    "profiles": {
+        "crud": {
+            "required": [
+                "display",
+                "state_change",
+                "business_rule_reject",
+                "auth_or_data_boundary",
+                "persist_effect",
+            ]
+        },
+        "display_only": {"required": ["display", "persist_effect"]},
+    },
+    "obligation_to_category": {
+        "display": "positive",
+        "state_change": "positive",
+        "business_rule_reject": "negative",
+        "auth_or_data_boundary": "boundary",
+        "persist_effect": "positive",
+    },
+}
+LABEL_RE = re.compile(
+    r"^\[(?P<category>[^\]]+)\]\[(?P<obligation>[^\]]+)\]\s*(?P<plain_text>.*)$"
+)
 
 
 def load_yaml(path: Path) -> Any:
@@ -29,6 +61,277 @@ def write_yaml(path: Path, data: Any) -> None:
         yaml.safe_dump(data, allow_unicode=True, sort_keys=False),
         encoding="utf-8",
     )
+
+
+def load_scenario_design(config_doc: Path | None) -> dict[str, Any]:
+    if config_doc is None or not config_doc.exists():
+        return {
+            "allowed": list(DEFAULT_SCENARIO_DESIGN["allowed"]),
+            "profiles": {
+                key: {"required": list(value["required"])}
+                for key, value in DEFAULT_SCENARIO_DESIGN["profiles"].items()
+            },
+            "obligation_to_category": dict(DEFAULT_SCENARIO_DESIGN["obligation_to_category"]),
+        }
+    data = load_yaml(config_doc) or {}
+    testing = data.get("testing") if isinstance(data, dict) else {}
+    design = testing.get("design") if isinstance(testing, dict) else {}
+    configured = design.get("scenario_obligations") if isinstance(design, dict) else {}
+    if not isinstance(configured, dict):
+        configured = {}
+
+    profiles = configured.get("profiles")
+    if not isinstance(profiles, dict) or not profiles:
+        profiles = DEFAULT_SCENARIO_DESIGN["profiles"]
+
+    normalized_profiles: dict[str, dict[str, list[str]]] = {}
+    for key, value in profiles.items():
+        required = value.get("required") if isinstance(value, dict) else None
+        if not isinstance(required, list) or not required:
+            default_required = DEFAULT_SCENARIO_DESIGN["profiles"].get(key, {}).get("required", [])
+            required = list(default_required)
+        normalized_profiles[key] = {
+            "required": [item for item in required if isinstance(item, str) and item]
+        }
+
+    allowed = configured.get("allowed")
+    if not isinstance(allowed, list) or not allowed:
+        allowed = list(DEFAULT_SCENARIO_DESIGN["allowed"])
+    else:
+        allowed = [item for item in allowed if isinstance(item, str) and item]
+
+    obligation_to_category = configured.get("obligation_to_category")
+    if not isinstance(obligation_to_category, dict) or not obligation_to_category:
+        obligation_to_category = dict(DEFAULT_SCENARIO_DESIGN["obligation_to_category"])
+    else:
+        obligation_to_category = {
+            key: value
+            for key, value in obligation_to_category.items()
+            if isinstance(key, str) and isinstance(value, str)
+        }
+
+    return {
+        "allowed": allowed,
+        "profiles": normalized_profiles,
+        "obligation_to_category": obligation_to_category,
+    }
+
+
+def parse_ac_labels(text: Any, allowed_obligations: set[str]) -> dict[str, str | None]:
+    if not isinstance(text, str):
+        return {"category": None, "scenario_obligation": None, "plain_text": ""}
+    stripped = text.strip()
+    match = LABEL_RE.match(stripped)
+    if not match:
+        return {"category": None, "scenario_obligation": None, "plain_text": stripped}
+    category = match.group("category").strip()
+    obligation = match.group("obligation").strip()
+    if category not in VALID_CATEGORIES:
+        category = None
+    if obligation not in allowed_obligations:
+        obligation = None
+    return {
+        "category": category,
+        "scenario_obligation": obligation,
+        "plain_text": match.group("plain_text").strip(),
+    }
+
+
+def infer_required_test_obligations(
+    story: dict[str, Any],
+    profiles: dict[str, dict[str, list[str]]],
+) -> dict[str, Any]:
+    acs = story.get("acceptance_criteria") or []
+    text = " ".join(str(ac) for ac in acs).lower()
+    mutation_keywords = (
+        "新增",
+        "编辑",
+        "删除",
+        "修改",
+        "保存",
+        "创建",
+        "启用",
+        "禁用",
+        "重置",
+        "create",
+        "update",
+        "delete",
+        "save",
+    )
+    permission_keywords = ("权限", "角色", "访问", "授权", "permission", "role", "auth")
+    if any(keyword in text for keyword in mutation_keywords) or any(keyword in text for keyword in permission_keywords):
+        profile = "crud"
+    else:
+        profile = "display_only"
+    selected = profiles.get(profile) or DEFAULT_SCENARIO_DESIGN["profiles"][profile]
+    return {"profile": profile, "required": list(selected.get("required", []))}
+
+
+def ensure_required_test_obligations(
+    story: dict[str, Any],
+    profiles: dict[str, dict[str, list[str]]],
+    allowed_obligations: set[str],
+) -> dict[str, Any]:
+    current = story.get("required_test_obligations")
+    if isinstance(current, dict):
+        required = current.get("required")
+        if isinstance(required, list):
+            normalized = [item for item in required if isinstance(item, str) and item in allowed_obligations]
+            if normalized:
+                profile = current.get("profile")
+                if not isinstance(profile, str) or not profile:
+                    profile = "custom"
+                story["required_test_obligations"] = {"profile": profile, "required": normalized}
+                return story["required_test_obligations"]
+    story["required_test_obligations"] = infer_required_test_obligations(story, profiles)
+    return story["required_test_obligations"]
+
+
+def infer_obligation_from_text(text: str, allowed_obligations: set[str]) -> str | None:
+    lowered = text.lower().strip()
+    if not lowered:
+        return None
+
+    auth_boundary_keywords = (
+        "无权限",
+        "没有权限",
+        "阻止访问",
+        "过滤侧边栏",
+        "按角色过滤",
+        "超级管理员",
+        "数据范围",
+        "访问范围",
+        "隐藏菜单",
+    )
+    reject_keywords = (
+        "唯一",
+        "至少选一个",
+        "至少",
+        "不可",
+        "不允许",
+        "失败",
+        "拒绝",
+        "隐藏删除按钮",
+        "不显示操作按钮",
+        "不可禁用",
+        "disabled不可编辑",
+        "创建后不可改",
+    )
+    persist_keywords = (
+        "有效期",
+        "清除token",
+        "返回登录页",
+        "即时生效",
+        "再次进入",
+        "二次进入",
+        "刷新后",
+        "仍成立",
+        "跳转对应页面",
+        "状态→",
+        "状态->",
+    )
+    state_change_keywords = (
+        "新增",
+        "编辑",
+        "更新",
+        "创建",
+        "提交",
+        "发送",
+        "重置",
+        "启用",
+        "禁用",
+        "删除",
+        "打开",
+        "勾选",
+        "confirm确认",
+    )
+    display_keywords = (
+        "展示",
+        "显示",
+        "包含",
+        "渲染",
+        "列表",
+        "卡片",
+        "提醒",
+        "日志",
+        "快捷操作",
+        "表格",
+        "统计",
+        "导航",
+        "tag",
+        "checkbox",
+    )
+
+    checks = [
+        ("auth_or_data_boundary", auth_boundary_keywords),
+        ("business_rule_reject", reject_keywords),
+        ("persist_effect", persist_keywords),
+        ("display", display_keywords),
+        ("state_change", state_change_keywords),
+    ]
+    for obligation, keywords in checks:
+        if obligation not in allowed_obligations:
+            continue
+        if any(keyword in lowered for keyword in keywords):
+            return obligation
+    return None
+
+
+def resolve_case_metadata(
+    *,
+    texts: list[str],
+    required_obligations: list[str],
+    fallback_index: int,
+    allowed_obligations: set[str],
+    obligation_to_category: dict[str, str],
+) -> tuple[str | None, str | None]:
+    category: str | None = None
+    obligation: str | None = None
+
+    for text in texts:
+        labels = parse_ac_labels(text, allowed_obligations)
+        if labels["category"]:
+            category = labels["category"]
+        if labels["scenario_obligation"]:
+            obligation = labels["scenario_obligation"]
+            break
+        inferred = infer_obligation_from_text(labels["plain_text"], allowed_obligations)
+        if inferred:
+            obligation = inferred
+            break
+
+    if not obligation and required_obligations:
+        obligation = required_obligations[min(fallback_index, len(required_obligations) - 1)]
+
+    if obligation and not category:
+        category = obligation_to_category.get(obligation)
+
+    if category not in VALID_CATEGORIES:
+        category = None
+    if obligation not in allowed_obligations:
+        obligation = None
+    return category, obligation
+
+
+def category_from_tc_id(tc_id: str | None) -> str | None:
+    if not isinstance(tc_id, str):
+        return None
+    if "-NEG-" in tc_id:
+        return "negative"
+    if "-POS-" in tc_id:
+        return "positive"
+    if "-BND-" in tc_id:
+        return "boundary"
+    return None
+
+
+def fallback_index_from_ac_ref(ac_ref: Any) -> int:
+    if not isinstance(ac_ref, str):
+        return 0
+    match = re.search(r"-(\d{2})$", ac_ref)
+    if not match:
+        return 0
+    return max(int(match.group(1)) - 1, 0)
 
 
 def story_ac_ref(story_id: str, index: int) -> str:
@@ -117,6 +420,8 @@ def _normalize_optional_string(value: Any) -> str | None:
 
 
 def _extract_surface_specs(contract_doc: Path) -> dict[str, dict[str, Any]]:
+    if not contract_doc.exists():
+        return {}
     data = load_yaml(contract_doc) or {}
     specs: dict[str, dict[str, Any]] = {}
     for surface in data.get("surfaces") or []:
@@ -414,6 +719,64 @@ def ensure_ticket_shape(ticket: dict[str, Any]) -> dict[str, Any]:
     return ticket
 
 
+def enrich_ticket_test_cases(
+    ticket: dict[str, Any],
+    story: dict[str, Any],
+    *,
+    allowed_obligations: set[str],
+    obligation_to_category: dict[str, str],
+) -> list[dict[str, Any]]:
+    required = (story.get("required_test_obligations") or {}).get("required") or []
+    story_ac_text_by_ref = {
+        story_ac_ref(story["id"], index): str(text)
+        for index, text in enumerate(story.get("acceptance_criteria") or [], 1)
+    }
+    ticket_criteria = [str(item) for item in (ticket.get("acceptance_criteria") or [])]
+    for index, test_case in enumerate(ticket.get("test_cases") or []):
+        texts: list[str] = []
+        if index < len(ticket_criteria):
+            texts.append(ticket_criteria[index])
+        story_text = story_ac_text_by_ref.get(test_case.get("ac_ref"))
+        if story_text:
+            texts.append(story_text)
+        category, obligation = resolve_case_metadata(
+            texts=texts,
+            required_obligations=required,
+            fallback_index=index,
+            allowed_obligations=allowed_obligations,
+            obligation_to_category=obligation_to_category,
+        )
+        test_case["category"] = category
+        test_case["scenario_obligation"] = obligation
+    return ticket.get("test_cases") or []
+
+
+def resolve_story_case_metadata(
+    story: dict[str, Any],
+    skeleton: dict[str, Any],
+    *,
+    position: int,
+    allowed_obligations: set[str],
+    obligation_to_category: dict[str, str],
+) -> tuple[str | None, str | None]:
+    story_ac_text_by_ref = {
+        story_ac_ref(story["id"], index): str(text)
+        for index, text in enumerate(story.get("acceptance_criteria") or [], 1)
+    }
+    required = (story.get("required_test_obligations") or {}).get("required") or []
+    texts: list[str] = []
+    story_text = story_ac_text_by_ref.get(skeleton.get("ac_ref"))
+    if story_text:
+        texts.append(story_text)
+    return resolve_case_metadata(
+        texts=texts,
+        required_obligations=required,
+        fallback_index=position,
+        allowed_obligations=allowed_obligations,
+        obligation_to_category=obligation_to_category,
+    )
+
+
 def create_ticket_case(module: str, ticket: dict[str, Any], skeleton: dict[str, Any], position: int) -> dict[str, Any]:
     return {
         "tc_id": f"TC-{module.upper()}-{ticket['id']}-TICKET-{position:03d}",
@@ -421,6 +784,8 @@ def create_ticket_case(module: str, ticket: dict[str, Any], skeleton: dict[str, 
         "story_id": ticket["story_id"],
         "ticket_id": ticket["id"],
         "ac_ref": skeleton["ac_ref"],
+        "category": skeleton.get("category"),
+        "scenario_obligation": skeleton.get("scenario_obligation"),
         "test_case_id": skeleton["test_case_id"],
         "case_kind": skeleton.get("case_kind") or "ac",
         "surface_id": skeleton.get("surface_id"),
@@ -445,6 +810,8 @@ def create_story_or_final_case(
         "story_id": story_id,
         "ticket_id": None,
         "ac_ref": skeleton["ac_ref"],
+        "category": skeleton.get("category"),
+        "scenario_obligation": skeleton.get("scenario_obligation"),
         "story_case_id": skeleton["story_case_id"],
         "case_kind": skeleton.get("case_kind") or "ac",
         "surface_id": skeleton.get("surface_id"),
@@ -557,6 +924,10 @@ def normalize_existing_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]
         result["surface_id"] = _normalize_optional_string(result.get("surface_id"))
         result["state_variant"] = _normalize_optional_string(result.get("state_variant"))
         result["viewport_variant"] = _normalize_optional_string(result.get("viewport_variant"))
+        category = result.get("category")
+        result["category"] = category if isinstance(category, str) and category in VALID_CATEGORIES else None
+        obligation = result.get("scenario_obligation")
+        result["scenario_obligation"] = obligation if isinstance(obligation, str) and obligation else None
         automation = result.get("automation")
         if not isinstance(automation, dict):
             result["automation"] = {"script": None, "command": None}
@@ -660,8 +1031,19 @@ def sync_module_assets(
     cases_doc: Path,
     matrix_doc: Path,
     ui_contract_doc: Path,
+    config_doc: Path | None = None,
     story_id: str | None = None,
 ) -> dict[str, int]:
+    scenario_design = load_scenario_design(config_doc)
+    allowed_obligations = {
+        item for item in scenario_design.get("allowed", []) if isinstance(item, str) and item
+    }
+    obligation_to_category = {
+        key: value
+        for key, value in (scenario_design.get("obligation_to_category") or {}).items()
+        if isinstance(key, str) and isinstance(value, str)
+    }
+    profiles = scenario_design.get("profiles") or DEFAULT_SCENARIO_DESIGN["profiles"]
     surface_specs = _extract_surface_specs(ui_contract_doc)
     story_entries = load_stories(stories_dir, story_id)
     story_ids = {story.get("id") or path.stem for path, story in story_entries}
@@ -673,6 +1055,7 @@ def sync_module_assets(
         story_id_value = story.get("id") or path.stem
         story["id"] = story_id_value
         ensure_story_shape(story)
+        ensure_required_test_obligations(story, profiles, allowed_obligations)
         # Write after overlay surface augmentation.
 
     for path, ticket in ticket_entries:
@@ -687,6 +1070,13 @@ def sync_module_assets(
     for path, story in story_entries:
         story_surface_ac_refs: dict[str, list[str]] = {}
         for ticket in tickets_by_story.get(story["id"], []):
+            enrich_ticket_test_cases(
+                ticket,
+                story,
+                allowed_obligations=allowed_obligations,
+                obligation_to_category=obligation_to_category,
+            )
+            write_yaml(tickets_dir / f"{ticket['id']}.yaml", ticket)
             critical_surfaces = (
                 (ticket.get("contract_refs") or {}).get("critical_surfaces") or []
                 if isinstance(ticket.get("contract_refs"), dict)
@@ -704,7 +1094,8 @@ def sync_module_assets(
         story["story_cases"] = augment_story_surface_cases(story, surface_specs, story_surface_ac_refs)
         write_yaml(path, story)
 
-    existing_cases = normalize_existing_cases(load_yaml(cases_doc) or [])
+    existing_cases_raw = load_yaml(cases_doc) if cases_doc.exists() else []
+    existing_cases = normalize_existing_cases(existing_cases_raw or [])
     index = index_cases(existing_cases)
     merged_cases = list(existing_cases)
     created_cases = 0
@@ -715,21 +1106,35 @@ def sync_module_assets(
             ac_ref = case["ac_ref"]
             story_case_ref = case["story_case_id"]
             case_kind = case.get("case_kind") or "ac"
+            category, obligation = resolve_story_case_metadata(
+                story,
+                case,
+                position=idx - 1,
+                allowed_obligations=allowed_obligations,
+                obligation_to_category=obligation_to_category,
+            )
+            case["category"] = category
+            case["scenario_obligation"] = obligation
             for level in ("story", "final"):
-                existing_case = index.by_level_story_case.get((level, sid, story_case_ref))
-                if existing_case is None and case_kind == "ac":
-                    existing_case = index.by_level_story_ac.get((level, sid, ac_ref))
+                tc_id = f"TC-{module.upper()}-{sid}-{level.upper()}-{idx:03d}"
+                existing_case = index.by_id.get(tc_id)
+                if existing_case is None:
+                    existing_case = index.by_level_story_case.get((level, sid, story_case_ref))
                 if existing_case is None:
                     existing_case = create_story_or_final_case(module, sid, case, idx, level)
                     merged_cases.append(existing_case)
+                    index.by_id[tc_id] = existing_case
                     index.by_level_story_case[(level, sid, story_case_ref)] = existing_case
                     index.by_level_story_ac[(level, sid, ac_ref)] = existing_case
                     created_cases += 1
+                existing_case["tc_id"] = tc_id
                 existing_case["story_case_id"] = story_case_ref
                 existing_case["case_kind"] = case.get("case_kind") or "ac"
                 existing_case["surface_id"] = case.get("surface_id")
                 existing_case["state_variant"] = case.get("state_variant")
                 existing_case["viewport_variant"] = case.get("viewport_variant")
+                existing_case["category"] = category
+                existing_case["scenario_obligation"] = obligation
                 hydrate_story_or_final_case_from_story_evidence(
                     existing_case,
                     story,
@@ -742,26 +1147,82 @@ def sync_module_assets(
         for position, skeleton in enumerate(ticket.get("test_cases") or [], 1):
             ac_ref = skeleton["ac_ref"]
             test_case_ref = skeleton["test_case_id"]
-            case_kind = skeleton.get("case_kind") or "ac"
-            existing_case = index.by_ticket_test_case.get((ticket["id"], test_case_ref))
-            if existing_case is None and case_kind == "ac":
-                existing_case = index.by_ticket_story_ac.get((ticket["id"], sid, ac_ref))
+            tc_id = f"TC-{module.upper()}-{ticket['id']}-TICKET-{position:03d}"
+            existing_case = index.by_id.get(tc_id)
+            if existing_case is None:
+                existing_case = index.by_ticket_test_case.get((ticket["id"], test_case_ref))
             if existing_case is None:
                 existing_case = create_ticket_case(module, ticket, skeleton, position)
                 merged_cases.append(existing_case)
+                index.by_id[tc_id] = existing_case
                 index.by_ticket_test_case[(ticket["id"], test_case_ref)] = existing_case
                 index.by_ticket_story_ac[(ticket["id"], sid, ac_ref)] = existing_case
                 created_cases += 1
+            existing_case["tc_id"] = tc_id
             existing_case["test_case_id"] = test_case_ref
             existing_case["case_kind"] = skeleton.get("case_kind") or "ac"
             existing_case["surface_id"] = skeleton.get("surface_id")
             existing_case["state_variant"] = skeleton.get("state_variant")
             existing_case["viewport_variant"] = skeleton.get("viewport_variant")
+            existing_case["category"] = skeleton.get("category")
+            existing_case["scenario_obligation"] = skeleton.get("scenario_obligation")
             hydrate_ticket_case_from_verification_evidence(
                 existing_case,
                 ticket,
                 evidence_ref=str(tickets_dir / f"{ticket['id']}.yaml"),
             )
+
+    story_by_id = {story["id"]: story for _, story in story_entries}
+    for existing_case in merged_cases:
+        if existing_case.get("category") and existing_case.get("scenario_obligation"):
+            continue
+        story = story_by_id.get(existing_case.get("story_id"))
+        if story is None:
+            continue
+        ticket = ticket_by_id.get(existing_case.get("ticket_id")) if existing_case.get("ticket_id") else None
+
+        texts: list[str] = []
+        for field in ("expected", "steps", "preconditions"):
+            value = existing_case.get(field)
+            if isinstance(value, list):
+                texts.append(" ".join(str(item) for item in value))
+            elif isinstance(value, str) and value.strip():
+                texts.append(value.strip())
+        if ticket is not None:
+            texts.extend(str(item) for item in (ticket.get("acceptance_criteria") or []))
+        story_index = fallback_index_from_ac_ref(existing_case.get("ac_ref"))
+        story_text = next(
+            (
+                str(text)
+                for index, text in enumerate(story.get("acceptance_criteria") or [], 1)
+                if story_ac_ref(story["id"], index) == existing_case.get("ac_ref")
+            ),
+            None,
+        )
+        if story_text:
+            texts.append(story_text)
+
+        required = (story.get("required_test_obligations") or {}).get("required") or []
+        category, obligation = resolve_case_metadata(
+            texts=texts,
+            required_obligations=required,
+            fallback_index=story_index,
+            allowed_obligations=allowed_obligations,
+            obligation_to_category=obligation_to_category,
+        )
+        if not category:
+            category = category_from_tc_id(existing_case.get("tc_id"))
+        if not obligation:
+            if category == "negative":
+                obligation = "business_rule_reject"
+            elif category == "boundary":
+                obligation = "auth_or_data_boundary"
+            elif category == "positive" and required:
+                obligation = required[min(story_index, len(required) - 1)]
+        if obligation and not category:
+            category = obligation_to_category.get(obligation)
+        existing_case["category"] = category
+        existing_case["scenario_obligation"] = obligation
 
     merged_cases = sort_cases(merged_cases)
     write_yaml(cases_doc, merged_cases)
@@ -784,6 +1245,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cases")
     parser.add_argument("--matrix")
     parser.add_argument("--ui-contract")
+    parser.add_argument("--config", default=".claude/project/config.yaml")
     return parser.parse_args()
 
 
@@ -795,6 +1257,7 @@ def main() -> int:
     cases_doc = Path(args.cases or f"osg-spec-docs/tasks/testing/{module}-test-cases.yaml")
     matrix_doc = Path(args.matrix or f"osg-spec-docs/tasks/testing/{module}-traceability-matrix.md")
     ui_contract_doc = Path(args.ui_contract or f"osg-spec-docs/docs/01-product/prd/{module}/UI-VISUAL-CONTRACT.yaml")
+    config_doc = Path(args.config) if args.config else None
 
     summary = sync_module_assets(
         module=module,
@@ -803,6 +1266,7 @@ def main() -> int:
         cases_doc=cases_doc,
         matrix_doc=matrix_doc,
         ui_contract_doc=ui_contract_doc,
+        config_doc=config_doc,
         story_id=args.story_id,
     )
     print(
