@@ -496,7 +496,16 @@ def test_sync_upserts_existing_canonical_tc_ids_without_creating_duplicates() ->
                 "covers_ac_refs": ["AC-S-903-01"],
                 "acceptance_criteria": ["列表展示"],
                 "contract_refs": {"capabilities": [], "critical_surfaces": []},
-                "test_cases": [{"test_case_id": "TCS-T-903-001", "ac_ref": "AC-S-903-01", "case_kind": "ac"}],
+                "test_cases": [
+                    {
+                        "test_case_id": "TCS-T-903-001",
+                        "ac_ref": "AC-S-903-01",
+                        "case_kind": "ac",
+                        "category": "positive",
+                        "scenario_obligation": "display",
+                        "operation": "list",
+                    }
+                ],
             },
         )
         write_yaml(
@@ -544,8 +553,207 @@ def test_sync_upserts_existing_canonical_tc_ids_without_creating_duplicates() ->
         story_case = next(tc for tc in synced_cases if tc["tc_id"] == "TC-SAMPLE-S-903-STORY-001")
         final_case = next(tc for tc in synced_cases if tc["tc_id"] == "TC-SAMPLE-S-903-FINAL-001")
         assert ticket_case["test_case_id"] == "TCS-T-903-001"
+        assert ticket_case["category"] == "positive"
+        assert ticket_case["scenario_obligation"] == "display"
+        assert ticket_case["operation"] == "list"
         assert story_case["story_case_id"] == "SC-S-903-001"
         assert final_case["story_case_id"] == "SC-S-903-001"
+
+
+def test_sync_propagates_operation_field() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        stories = root / "stories"
+        tickets = root / "tickets"
+        cases = root / "cases.yaml"
+        matrix = root / "matrix.md"
+        ui_contract = root / "UI-VISUAL-CONTRACT.yaml"
+        config = root / "config.yaml"
+
+        write_minimal_ui_contract(ui_contract)
+        write_minimal_config(config)
+
+        write_yaml(
+            stories / "S-910.yaml",
+            {
+                "id": "S-910",
+                "title": "crud-ops",
+                "acceptance_criteria": [
+                    "[positive][display] 列表展示正确",
+                    "[positive][state_change] 新增成功",
+                    "[positive][state_change] 编辑成功",
+                ],
+                "tickets": ["T-910", "T-911"],
+                "contract_refs": {"capabilities": [], "critical_surfaces": []},
+                "story_cases": [
+                    {"story_case_id": "SC-S-910-001", "ac_ref": "AC-S-910-01"},
+                    {"story_case_id": "SC-S-910-002", "ac_ref": "AC-S-910-02"},
+                    {"story_case_id": "SC-S-910-003", "ac_ref": "AC-S-910-03"},
+                ],
+                "required_test_operations": {
+                    "profile": "crud_minimal",
+                    "operations": {
+                        "create": {"required": ["state_change", "persist_effect"]},
+                        "edit": {"required": ["state_change", "persist_effect"]},
+                    },
+                },
+            },
+        )
+        write_yaml(
+            tickets / "T-910.yaml",
+            {
+                "id": "T-910",
+                "story_id": "S-910",
+                "covers_ac_refs": ["AC-S-910-01", "AC-S-910-02"],
+                "acceptance_criteria": [
+                    "[positive][display] 列表展示正确",
+                    "[positive][state_change] 新增成功",
+                ],
+                "contract_refs": {"capabilities": [], "critical_surfaces": []},
+                "test_cases": [
+                    {"test_case_id": "TCS-T-910-001", "ac_ref": "AC-S-910-01", "case_kind": "ac"},
+                    {"test_case_id": "TCS-T-910-002", "ac_ref": "AC-S-910-02", "case_kind": "ac"},
+                ],
+            },
+        )
+        write_yaml(
+            tickets / "T-911.yaml",
+            {
+                "id": "T-911",
+                "story_id": "S-910",
+                "covers_ac_refs": ["AC-S-910-03"],
+                "acceptance_criteria": [
+                    "[positive][state_change] 编辑成功",
+                ],
+                "contract_refs": {"capabilities": [], "critical_surfaces": []},
+                "test_cases": [
+                    {"test_case_id": "TCS-T-911-001", "ac_ref": "AC-S-910-03", "case_kind": "ac", "operation": "edit"},
+                ],
+            },
+        )
+        write_yaml(cases, [])
+        matrix.write_text("", encoding="utf-8")
+
+        run_sync(stories, tickets, cases, matrix, ui_contract, config)
+
+        synced_ticket_910 = yaml.safe_load((tickets / "T-910.yaml").read_text(encoding="utf-8"))
+        tc_910_1 = synced_ticket_910["test_cases"][0]
+        tc_910_2 = synced_ticket_910["test_cases"][1]
+        assert tc_910_1.get("operation") == "list", f"expected list, got {tc_910_1.get('operation')}"
+        assert tc_910_2.get("operation") == "create", f"expected create, got {tc_910_2.get('operation')}"
+
+        synced_ticket_911 = yaml.safe_load((tickets / "T-911.yaml").read_text(encoding="utf-8"))
+        tc_911_1 = synced_ticket_911["test_cases"][0]
+        assert tc_911_1.get("operation") == "edit", f"expected edit, got {tc_911_1.get('operation')}"
+
+        synced_cases = yaml.safe_load(cases.read_text(encoding="utf-8"))
+        ticket_cases = [tc for tc in synced_cases if tc["level"] == "ticket"]
+        assert any(tc.get("operation") == "create" for tc in ticket_cases), "no ticket case with operation=create"
+        assert any(tc.get("operation") == "edit" for tc in ticket_cases), "no ticket case with operation=edit"
+
+        story_cases = [tc for tc in synced_cases if tc["level"] == "story"]
+        assert any(tc.get("operation") == "create" for tc in story_cases), "no story case with operation=create"
+
+        matrix_text = matrix.read_text(encoding="utf-8")
+        assert "| Operation |" in matrix_text, "matrix missing Operation column header"
+        assert "| edit |" in matrix_text or "edit" in matrix_text, "matrix missing edit operation value"
+
+
+def test_sync_preserves_explicit_ticket_metadata_over_inference() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        stories = root / "stories"
+        tickets = root / "tickets"
+        cases = root / "cases.yaml"
+        matrix = root / "matrix.md"
+        ui_contract = root / "UI-VISUAL-CONTRACT.yaml"
+        config = root / "config.yaml"
+
+        write_minimal_ui_contract(ui_contract)
+        write_minimal_config(config)
+
+        write_yaml(
+            stories / "S-920.yaml",
+            {
+                "id": "S-920",
+                "title": "base-data-crud",
+                "acceptance_criteria": [
+                    "禁用/启用: 被引用的基础数据不可禁用",
+                    "新增/编辑基础数据: 名称(必填)、排序(数字)、状态(switch)",
+                ],
+                "tickets": ["T-920"],
+                "contract_refs": {"capabilities": [], "critical_surfaces": []},
+                "story_cases": [
+                    {"story_case_id": "SC-S-920-001", "ac_ref": "AC-S-920-01"},
+                    {"story_case_id": "SC-S-920-002", "ac_ref": "AC-S-920-02"},
+                ],
+                "required_test_operations": {
+                    "profile": "crud_minimal",
+                    "operations": {
+                        "edit": {"required": ["state_change", "persist_effect"]},
+                        "status_toggle": {"required": ["state_change", "persist_effect"]},
+                        "reject_disable": {"required": ["business_rule_reject"]},
+                    },
+                },
+                "required_test_obligations": {
+                    "profile": "custom",
+                    "required": ["display", "state_change", "business_rule_reject", "persist_effect"],
+                },
+            },
+        )
+        write_yaml(
+            tickets / "T-920.yaml",
+            {
+                "id": "T-920",
+                "story_id": "S-920",
+                "covers_ac_refs": ["AC-S-920-01", "AC-S-920-02"],
+                "acceptance_criteria": [
+                    "测试禁用/启用逻辑: 被引用基础数据不可禁用",
+                    "测试编辑回填: 重新加载后状态即时反映",
+                ],
+                "contract_refs": {"capabilities": [], "critical_surfaces": []},
+                "test_cases": [
+                    {
+                        "test_case_id": "TCS-T-920-001",
+                        "ac_ref": "AC-S-920-01",
+                        "case_kind": "ac",
+                        "category": "negative",
+                        "scenario_obligation": "business_rule_reject",
+                        "operation": "reject_disable",
+                    },
+                    {
+                        "test_case_id": "TCS-T-920-002",
+                        "ac_ref": "AC-S-920-02",
+                        "case_kind": "ac",
+                        "category": "positive",
+                        "scenario_obligation": "persist_effect",
+                        "operation": "edit",
+                    },
+                ],
+            },
+        )
+        write_yaml(cases, [])
+        matrix.write_text("", encoding="utf-8")
+
+        run_sync(stories, tickets, cases, matrix, ui_contract, config)
+
+        synced_ticket = yaml.safe_load((tickets / "T-920.yaml").read_text(encoding="utf-8"))
+        tc_920_1 = next(tc for tc in synced_ticket["test_cases"] if tc["test_case_id"] == "TCS-T-920-001")
+        tc_920_2 = next(tc for tc in synced_ticket["test_cases"] if tc["test_case_id"] == "TCS-T-920-002")
+        assert tc_920_1["category"] == "negative"
+        assert tc_920_1["scenario_obligation"] == "business_rule_reject"
+        assert tc_920_1["operation"] == "reject_disable"
+        assert tc_920_2["category"] == "positive"
+        assert tc_920_2["scenario_obligation"] == "persist_effect"
+        assert tc_920_2["operation"] == "edit"
+
+        synced_cases = yaml.safe_load(cases.read_text(encoding="utf-8"))
+        mod_920_1 = next(tc for tc in synced_cases if tc.get("test_case_id") == "TCS-T-920-001")
+        mod_920_2 = next(tc for tc in synced_cases if tc.get("test_case_id") == "TCS-T-920-002")
+        assert mod_920_1["scenario_obligation"] == "business_rule_reject"
+        assert mod_920_1["operation"] == "reject_disable"
+        assert mod_920_2["scenario_obligation"] == "persist_effect"
+        assert mod_920_2["operation"] == "edit"
 
 
 def main() -> int:
@@ -556,6 +764,8 @@ def main() -> int:
         test_sync_infers_metadata_for_legacy_custom_cases_without_declared_ids,
         test_sync_mixed_permission_wording_keeps_display_unless_boundary_phrase_is_explicit,
         test_sync_upserts_existing_canonical_tc_ids_without_creating_duplicates,
+        test_sync_propagates_operation_field,
+        test_sync_preserves_explicit_ticket_metadata_over_inference,
     ]
     for test in tests:
         test()

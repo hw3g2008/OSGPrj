@@ -375,6 +375,64 @@ def evaluate_test_asset_completeness(
                 f"{pending_obligations}"
             )
 
+    # ========== 操作级完整性校验（operation × obligation 二维覆盖矩阵）==========
+    for sid, story in stories.items():
+        required_operations = story.get("required_test_operations", {}).get("operations")
+        if not isinstance(required_operations, dict) or not required_operations:
+            continue
+
+        # 构建二维覆盖矩阵: {operation: set(obligations)}
+        covered_op_obligations: dict[str, set[str]] = {}
+        pending_op_obligations: dict[str, list[str]] = {}
+
+        for tc_id in case_ids_by_story.get(sid, set()):
+            case = case_by_id.get(tc_id, {})
+            operation = case.get("operation")
+            obligation = case.get("scenario_obligation")
+            if not isinstance(operation, str) or not operation.strip():
+                continue
+            if not isinstance(obligation, str) or not obligation.strip():
+                continue
+            covered_op_obligations.setdefault(operation, set()).add(obligation)
+
+            if stage == "verify":
+                latest_result = case.get("latest_result", {})
+                status = latest_result.get("status") if isinstance(latest_result, dict) else None
+                if status == "pending":
+                    pending_op_obligations.setdefault(operation, []).append(
+                        f"{tc_id}({operation}+{obligation})"
+                    )
+
+        # 回退路径：从 Ticket test_cases 推导
+        if not covered_op_obligations:
+            for tid, ticket in tickets.items():
+                if ticket.get("story_id") != sid:
+                    continue
+                for tc_entry in ticket.get("test_cases", []):
+                    operation = tc_entry.get("operation")
+                    obligation = tc_entry.get("scenario_obligation")
+                    if isinstance(operation, str) and operation.strip() and isinstance(obligation, str) and obligation.strip():
+                        covered_op_obligations.setdefault(operation, set()).add(obligation)
+
+        # 检查每个 required operation 的 obligation 覆盖
+        for op_name, op_spec in required_operations.items():
+            required_for_op = op_spec.get("required", []) if isinstance(op_spec, dict) else []
+            covered_for_op = covered_op_obligations.get(op_name, set())
+            missing_for_op = [o for o in required_for_op if o not in covered_for_op]
+            if missing_for_op:
+                findings.append(
+                    f"operation obligation gap: {sid} operation '{op_name}' requires {required_for_op}, "
+                    f"covered={sorted(covered_for_op)}, missing={missing_for_op}"
+                )
+
+        # 检查已覆盖但未执行（仅 verify 阶段）
+        for op_name, pending_list in pending_op_obligations.items():
+            if op_name in required_operations:
+                findings.append(
+                    f"operation obligation pending: {sid} operation '{op_name}' has TCs mapped but not executed: "
+                    f"{pending_list}"
+                )
+
     return findings
 
 

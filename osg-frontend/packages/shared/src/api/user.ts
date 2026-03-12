@@ -18,5 +18,5 @@ export function updateUser(data: Partial<UserInfo>): Promise<void> {
 
 // 更新密码
 export function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
-  return http.put('/system/user/password', { oldPassword, newPassword })
+  return http.put('/system/user/profile/updatePwd', { oldPassword, newPassword })
 }

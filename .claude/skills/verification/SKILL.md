@@ -81,7 +81,7 @@ def can_claim_done(task):
 | **Phase 1 前置检查** | Ticket 状态 | 读取 YAML status 字段 | 所有 Tickets status=done |
 | | 验证证据 | 检查 verification_evidence 字段 | 所有 Tickets 有证据且 exit_code=0 |
 | | 🆕 证据强度 | `validate_evidence_command(command)` | command 必须是可执行 shell 命令（禁止 "code review" 等） |
-| | 🆕 测试资产完整性 | `test_asset_completeness_guard.py --story-id {story_id} --stage verify` | Story/Ticket/TestCase/Traceability 同步完整 + 场景义务逐条必填 + pending 阻断 |
+| | 🆕 测试资产完整性 | `test_asset_completeness_guard.py --story-id {story_id} --stage verify` | Story/Ticket/TestCase/Traceability 同步完整 + 场景义务逐条必填 + 操作级覆盖矩阵(operation×obligation) + pending 阻断 |
 | | 🆕 单一真源同步 | `truth_sync_guard.py --module {module}` | 已确认 UI 真源变更若未同步 HTML，则立即阻断 |
 | | 🆕 HTML 真源派生一致性 | `prototype_derivation_consistency_guard.py --module-dir ...` | PRD/MATRIX/UI-VISUAL-CONTRACT 不得引入 HTML 真源不存在的页面/弹层 |
 | | 🆕 真实性守卫 | `delivery_truth_guard.py --stage verify` | 不允许降级实现，外部副作用必须声明真实 provider 与 evidence path |
