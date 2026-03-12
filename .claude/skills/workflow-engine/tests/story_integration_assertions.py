@@ -45,6 +45,8 @@ STORY_TEST_SCRIPTS = [
 NON_RUNNABLE_SCRIPTS = {
     "security_contract_guard.py",
     "module_readiness_guard.py",
+    "done_ticket_evidence_guard.py",
+    "test_asset_completeness_guard.py",
 }
 
 # 事件写入点：文件中应包含 append_workflow_event 调用或说明
@@ -79,8 +81,13 @@ def check_scripts_runnable():
     """检查所有测试脚本可执行（exit_code=0）"""
     print("\n--- 2. 测试脚本可执行性 ---")
     issues = []
-    # 透传 --allow-bootstrap 参数
-    extra_args = ["--allow-bootstrap"] if "--allow-bootstrap" in sys.argv else []
+    # 透传 --allow-bootstrap 参数（仅对接受该参数的脚本）
+    has_bootstrap = "--allow-bootstrap" in sys.argv
+    # 接受 --allow-bootstrap 的脚本白名单
+    bootstrap_aware_scripts = {
+        "simulation.py",
+        "story_event_log_check.py",
+    }
     # 特殊参数映射（某些脚本需要特定参数才能正常运行）
     script_args = {
         "normalize_status_enum.py": ["--check"],
@@ -93,6 +100,7 @@ def check_scripts_runnable():
             print(f"  ⚠️ {script} — 仅校验存在性（需要业务参数，跳过无参执行）")
             continue
         try:
+            extra_args = ["--allow-bootstrap"] if has_bootstrap and script in bootstrap_aware_scripts else []
             cmd = ["python3", str(path)] + script_args.get(script, []) + extra_args
             result = subprocess.run(
                 cmd,

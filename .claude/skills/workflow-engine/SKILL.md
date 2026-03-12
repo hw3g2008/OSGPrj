@@ -178,6 +178,9 @@ def transition(command, state, state_to, meta=None):
 
     # --- 5. postcheck_guard ---
     postcheck_guard(state, event, sm, config)
+
+    # --- 6. module-readiness projection（生命周期同步）---
+    sync_module_readiness(state, state_to, config)
 ```
 
 #### 5b. preflight_guard()

@@ -3,6 +3,13 @@
 Date: 2026-03-12
 Status: Draft
 Owner: workflow-framework
+Standard Baseline: `docs/plans/FOUR-PACK-STANDARD.md`
+
+### 与上位标准关系
+
+1. 本设计文档遵循 `docs/plans/FOUR-PACK-STANDARD.md` 的 design/plan 分离要求。
+2. 本设计对应的唯一 plan 为 `docs/plans/2026-03-12-upstream-dependency-check-fix-plan.md`。
+3. 若本设计与上位标准冲突，以上位标准为准。
 
 ## Scope
 

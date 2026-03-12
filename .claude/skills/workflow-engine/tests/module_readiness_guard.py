@@ -18,7 +18,7 @@ VALID_DELIVERY_STATES = {
     "story_approved", "all_stories_done",
 }
 
-TERMINAL_STATES = {"all_stories_done", "story_approved"}
+TERMINAL_STATES = {"all_stories_done"}
 
 
 def load_yaml(path: Path) -> Any:
