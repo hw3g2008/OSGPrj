@@ -188,3 +188,19 @@ UI 原型 HTML 文件位于 `${config.paths.docs.prototypes}`（本项目为 `os
 - ❌ 直接复制原型 HTML 结构（必须转换为 Vue 组件）
 - ❌ 使用 `!important` 覆盖 Ant Design Vue 样式（除非无其他方案）
 - ❌ 在组件中内联 `style` 绑定颜色值
+
+### 前端质量规范
+
+#### CR-API-01: 必填字段同步
+
+每个 PUT/POST API 函数的 TypeScript 参数类型必须与后端 Controller 的 `@NotBlank/@NotNull` 注解一一对应。新增/修改 API 时必须检查后端源码确认必填字段。
+
+#### CR-ERR-01: customErrorMessage
+
+所有 API 调用（PUT/POST/DELETE）必须传入 `customErrorMessage` 参数。组件内禁止对 API 错误调用 `message.error()`，错误提示统一由响应拦截器处理。
+
+#### CR-UI-01: 全局常量引用
+
+- 状态文字必须引用全局常量（如 `STATUS_TEXT`），禁止硬编码中英文
+- 颜色必须引用标准配置（如 `permissionColors`），禁止硬编码色值
+- 列表页展示字段必须与 Story AC 中的"必显字段"一致

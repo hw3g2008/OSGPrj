@@ -15,6 +15,8 @@ fail() {
 grep -q "context-preflight.sh dev" "${SCRIPT}" || fail "missing context-preflight dev wiring"
 grep -q "runtime-port-guard.sh --mode converge-runtime --target dev-local --context ui-visual-case-verify" "${SCRIPT}" \
   || fail "missing runtime convergence wiring"
+grep -q 'bash bin/backend-dev-server.sh start "${DEV_ENV_FILE}"' "${SCRIPT}" \
+  || fail "missing backend start wiring"
 grep -q "UI_VISUAL_GREP_TAG=" "${SCRIPT}" || fail "missing visual grep override wiring"
 grep -q "UI_VISUAL_SKIP_STATE=1" "${SCRIPT}" || fail "missing state skip wiring"
 grep -q "bin/ui-visual-baseline.sh" "${SCRIPT}" || fail "missing baseline wrapper call"

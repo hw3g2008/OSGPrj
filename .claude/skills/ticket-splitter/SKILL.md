@@ -131,7 +131,7 @@ completed_at: null
 [更新 Story 和 STATE]
 ```
 
-## 质量校验项（6 项）
+## 质量校验项（7 项）
 
 | 检查项 | 检查问题 | 通过条件 | 不通过条件 |
 |--------|----------|----------|------------|
@@ -141,6 +141,7 @@ completed_at: null
 | 路径存在性 | allowed_paths 中的路径是否为合法路径（已存在或将要创建）？ | 是 | 否 → 修正 |
 | 依赖无环 | 依赖关系是否形成 DAG（无环图）？ | 是 | 否 → 调整依赖 |
 | 验收可测 | 每个 Ticket 的 acceptance_criteria 是否可客观验证？ | 是 | 否 → 改写为可验证语句 |
+| 展示验证 | type=frontend/frontend-ui 的 Ticket AC 是否包含"页面展示验证"步骤？ | 是 | 否 → 补充展示类 AC |
 
 ## 覆盖率校验
 
@@ -275,7 +276,7 @@ def split_tickets(story_id, state):
         iteration += 1
         print(f"🔄 校验迭代 {iteration}/{max_iterations}")
 
-        # --- 质量校验（6 项）---
+        # --- 质量校验（7 项）---
         quality_issues = []
         for ticket in tickets:
             # 1. 微任务粒度
@@ -295,8 +296,16 @@ def split_tickets(story_id, state):
             for ac in ticket.get("acceptance_criteria", []):
                 if not is_verifiable(ac):
                     quality_issues.append(f"{ticket['id']}: 验收标准不可测 '{ac}'")
+            # 6. 展示验证（type=frontend/frontend-ui 的 Ticket AC 必须包含页面展示验证）
+            if ticket.get("type") in ("frontend", "frontend-ui"):
+                has_display_ac = any(
+                    is_display_acceptance(ac)
+                    for ac in ticket.get("acceptance_criteria", [])
+                )
+                if not has_display_ac:
+                    quality_issues.append(f"{ticket['id']}: type={ticket['type']} 但 AC 缺少页面展示验证步骤")
 
-        # 依赖无环（全局检查）
+        # 7. 依赖无环（全局检查）
         if has_cycle(tickets):
             quality_issues.append("依赖关系存在环，需要调整")
 

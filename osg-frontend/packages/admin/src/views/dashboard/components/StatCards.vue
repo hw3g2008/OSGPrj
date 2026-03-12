@@ -12,7 +12,10 @@
       <div class="stat-card__info">
         <span class="stat-card__label">{{ card.label }}</span>
         <span class="stat-card__value">{{ card.value }}</span>
-        <span class="stat-card__sub" :style="card.subStyle">{{ card.sub }}</span>
+        <span class="stat-card__sub" :style="card.subStyle">
+          <span v-if="card.subIcon" class="mdi stat-card__sub-icon" :class="card.subIcon" />
+          <span>{{ card.sub }}</span>
+        </span>
       </div>
     </div>
   </div>
@@ -39,7 +42,8 @@ const cards = computed(() => {
       iconBg: '#EEF2FF',
       label: '学员总数',
       value: String(s.studentCount),
-      sub: `↑ 本月新增 ${s.newStudentsThisMonth}`,
+      sub: `本月新增 ${s.newStudentsThisMonth}`,
+      subIcon: 'mdi-trending-up',
       subStyle: { color: '#22C55E' },
       route: '/students',
     },
@@ -59,7 +63,8 @@ const cards = computed(() => {
       iconBg: '#FEF3C7',
       label: '待审课时',
       value: String(s.pendingClassHours),
-      sub: `⏰ 最早 ${s.earliestPendingDays}天前`,
+      sub: `最早 ${s.earliestPendingDays}天前`,
+      subIcon: 'mdi-clock',
       subStyle: { color: '#F59E0B' },
       route: '/reports',
     },
@@ -149,10 +154,17 @@ function handleClick(route: string) {
   }
 
   &__sub {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     margin-top: 4px;
     font-size: 12px;
     color: var(--text2, #64748B);
+  }
+
+  &__sub-icon {
+    font-size: 14px;
+    line-height: 1;
   }
 }
 </style>

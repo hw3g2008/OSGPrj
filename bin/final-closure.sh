@@ -15,6 +15,7 @@ set -euo pipefail
 
 STATE_FILE="osg-spec-docs/tasks/STATE.yaml"
 AUDIT_DIR="osg-spec-docs/tasks/audit"
+DEV_ENV_FILE="${DEV_ENV_FILE:-deploy/.env.dev}"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 BASE_URL="${BASE_URL:-}"
@@ -22,6 +23,13 @@ BASE_HEALTH_URL="${BASE_HEALTH_URL:-}"
 BACKEND_READY_TIMEOUT_SECONDS="${BACKEND_READY_TIMEOUT_SECONDS:-120}"
 BACKEND_HEALTH_TIMEOUT_SECONDS="${BACKEND_HEALTH_TIMEOUT_SECONDS:-15}"
 MYSQL_INIT_DIR="${MYSQL_INIT_DIR:-deploy/mysql-init}"
+
+if [[ -f "${DEV_ENV_FILE}" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "${DEV_ENV_FILE}"
+  set +a
+fi
 
 MODULE_INPUT=""
 CC_MODE="optional"
@@ -36,6 +44,7 @@ usage() {
   - module 为空时回退 STATE.current_requirement
   - 默认 cc-mode=optional
   - 默认 backend-policy=auto（后端不可达时优先 Docker，失败再回退本地启动）
+  - UI 手动放行可在 deploy/.env.dev 里设置 UI_VISUAL_ALLOW_DOWNSTREAM=1
 EOF
 }
 
@@ -106,6 +115,10 @@ E2E_API_GATE_LOG=""
 SECURITY_CONTRACT_LOG=""
 UI_VISUAL_GATE_LOG=""
 UI_VISUAL_PAGE_REPORT=""
+UI_VISUAL_ALLOW_DOWNSTREAM="${UI_VISUAL_ALLOW_DOWNSTREAM:-0}"
+UI_VISUAL_ADJUDICATION_REASON="${UI_VISUAL_ADJUDICATION_REASON:-}"
+UI_VISUAL_GATE_STATUS="UNKNOWN"
+UI_VISUAL_GATE_ADJUDICATION_REASON="none"
 SECURITY_FIRST_FAILURE_EVIDENCE="none"
 FINAL_CLOSURE_REPORT=""
 DATE_STR="$(date +%Y-%m-%d)"
@@ -180,9 +193,13 @@ write_failure_report() {
   local first_proxy="none"
   local security_first="none"
   local visual_first="none"
+  local visual_gate_status="unknown"
+  local visual_adjudication_reason="none"
   if [[ -n "${FINAL_GATE_LOG}" && -f "${FINAL_GATE_LOG}" ]]; then
     first_failure="$(grep -m1 -E '^FAIL:' "${FINAL_GATE_LOG}" || true)"
     first_proxy="$(grep -m1 -Ei 'proxy error|connect ECONNREFUSED|ECONNREFUSED' "${FINAL_GATE_LOG}" || true)"
+    visual_gate_status="$(grep -m1 '^INFO: ui_visual_adjudication_status=' "${FINAL_GATE_LOG}" | sed 's/^INFO: ui_visual_adjudication_status=//' || true)"
+    visual_adjudication_reason="$(grep -m1 '^INFO: ui_visual_adjudication_reason=' "${FINAL_GATE_LOG}" | sed 's/^INFO: ui_visual_adjudication_reason=//' || true)"
   fi
   if [[ -z "${first_failure}" && -n "${E2E_API_GATE_LOG}" && -f "${E2E_API_GATE_LOG}" ]]; then
     first_failure="$(grep -m1 -E '^FAIL:' "${E2E_API_GATE_LOG}" || true)"
@@ -208,6 +225,12 @@ write_failure_report() {
       visual_first="none"
     fi
   fi
+  if [[ -z "${visual_gate_status}" ]]; then
+    visual_gate_status="unknown"
+  fi
+  if [[ -z "${visual_adjudication_reason}" ]]; then
+    visual_adjudication_reason="none"
+  fi
 
   {
     echo "# Final Closure — ${MODULE:-unknown} ${DATE_STR}"
@@ -232,6 +255,8 @@ write_failure_report() {
     fi
     if [[ -n "${UI_VISUAL_GATE_LOG}" ]]; then
       echo "- ui_visual_gate_log: ${UI_VISUAL_GATE_LOG}"
+      echo "- ui_visual_gate_status: ${visual_gate_status}"
+      echo "- ui_visual_adjudication_reason: ${visual_adjudication_reason}"
       echo "- ui_visual_first_failure_evidence: ${visual_first}"
     fi
     if [[ -n "${UI_VISUAL_PAGE_REPORT}" && -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
@@ -493,6 +518,8 @@ set +e
 BASE_URL="${BASE_URL}" HEALTH_PATH="${HEALTH_PATH}" BASE_HEALTH_URL="${BASE_HEALTH_URL}" \
   E2E_API_GATE_LOG="${E2E_API_GATE_LOG}" \
   UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG}" \
+  UI_VISUAL_ALLOW_DOWNSTREAM="${UI_VISUAL_ALLOW_DOWNSTREAM}" \
+  UI_VISUAL_ADJUDICATION_REASON="${UI_VISUAL_ADJUDICATION_REASON}" \
   CAPTCHA_EXPECTED="${CAPTCHA_EXPECTED:-}" \
   bash bin/final-gate.sh "${MODULE}" 2>&1 | tee "${FINAL_GATE_LOG}"
 gate_rc=${PIPESTATUS[0]}
@@ -511,6 +538,15 @@ if grep -Eiq 'http proxy error|connect ECONNREFUSED|ECONNREFUSED|proxy error' "$
 fi
 
 echo "INFO: final-gate 通过且无业务 WARNING"
+
+UI_VISUAL_GATE_STATUS="$(grep -m1 '^INFO: ui_visual_adjudication_status=' "${FINAL_GATE_LOG}" | sed 's/^INFO: ui_visual_adjudication_status=//' || true)"
+if [[ -z "${UI_VISUAL_GATE_STATUS}" ]]; then
+  UI_VISUAL_GATE_STATUS="UNKNOWN"
+fi
+UI_VISUAL_GATE_ADJUDICATION_REASON="$(grep -m1 '^INFO: ui_visual_adjudication_reason=' "${FINAL_GATE_LOG}" | sed 's/^INFO: ui_visual_adjudication_reason=//' || true)"
+if [[ -z "${UI_VISUAL_GATE_ADJUDICATION_REASON}" ]]; then
+  UI_VISUAL_GATE_ADJUDICATION_REASON="none"
+fi
 
 CAPTCHA_EVIDENCE="$(grep -E 'PASS: 验证码基线通过|INFO: captchaEnabled=.*CAPTCHA_EXPECTED|FAIL: 验证码基线不匹配|FAIL: /captchaImage 请求失败|FAIL: 无法从 /captchaImage 解析 captchaEnabled|WARNING: /captchaImage 请求失败|WARNING: 无法解析 /captchaImage.captchaEnabled' "${FINAL_GATE_LOG}" | tail -n 1 || true)"
 if [[ -z "${CAPTCHA_EVIDENCE}" ]]; then
@@ -654,7 +690,7 @@ cleanup_backend
 
 # Step 7: 输出结论与收尾报告
 CONCLUSION="PASS"
-if [[ "${CC_STATUS}" == optional_failed* || -n "${CLEANUP_WARN}" ]]; then
+if [[ "${CC_STATUS}" == optional_failed* || -n "${CLEANUP_WARN}" || "${UI_VISUAL_GATE_STATUS}" == "HUMAN_WAIVED" ]]; then
   CONCLUSION="PARTIAL"
 fi
 
@@ -691,6 +727,8 @@ fi
   echo "- cc_status: ${CC_STATUS}"
   echo "- captcha_expected: ${CAPTCHA_EXPECTED:-none}"
   echo "- captcha_evidence: ${CAPTCHA_EVIDENCE}"
+  echo "- ui_visual_gate_status: ${UI_VISUAL_GATE_STATUS}"
+  echo "- ui_visual_adjudication_reason: ${UI_VISUAL_GATE_ADJUDICATION_REASON}"
   echo "- ui_visual_summary: total=${UI_VISUAL_TOTAL_PAGES} pass=${UI_VISUAL_PASS_PAGES} fail=${UI_VISUAL_FAIL_PAGES} not_run=${UI_VISUAL_NOT_RUN_PAGES}"
   echo "- ui_visual_style_summary: passed=${UI_VISUAL_STYLE_PASSED} failed=${UI_VISUAL_STYLE_FAILED}"
   echo "- ui_visual_state_summary: executed=${UI_VISUAL_STATE_EXECUTED} failed=${UI_VISUAL_STATE_FAILED}"

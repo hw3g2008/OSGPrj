@@ -158,6 +158,8 @@ const handleSubmit = async () => {
         sort: formState.sort,
         status: formState.status,
         parentId: formState.parentId
+      }, {
+        customErrorMessage: '基础数据修改失败，请检查输入信息'
       })
       message.success('修改成功')
     } else {
@@ -168,6 +170,8 @@ const handleSubmit = async () => {
         sort: formState.sort,
         status: formState.status,
         parentId: formState.parentId
+      }, {
+        customErrorMessage: '基础数据新增失败，请检查输入信息'
       })
       message.success('新增成功')
     }
@@ -176,7 +180,7 @@ const handleSubmit = async () => {
     handleClose()
   } catch (error: any) {
     if (error.errorFields) return
-    message.error(error.message || '操作失败')
+    // 移除组件内的错误提示，让拦截器处理
   } finally {
     loading.value = false
   }

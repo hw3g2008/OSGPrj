@@ -141,6 +141,7 @@ const formState = reactive({
   roleId: undefined as number | undefined,
   roleName: '',
   roleKey: '',
+  roleSort: 1,
   remark: '',
   menuIds: [] as number[],
 })
@@ -214,6 +215,7 @@ watch(
       formState.roleId = props.role.roleId
       formState.roleName = props.role.roleName
       formState.roleKey = props.role.roleKey
+      formState.roleSort = props.role.roleSort
       formState.remark = props.role.remark || ''
       try {
         const res = await getRoleMenuIds(props.role.roleId)
@@ -227,6 +229,7 @@ watch(
     formState.roleId = undefined
     formState.roleName = ''
     formState.roleKey = ''
+    formState.roleSort = 1
     formState.remark = ''
     formState.menuIds = []
   },
@@ -247,10 +250,14 @@ const handleSubmit = async () => {
     }
 
     if (isEdit.value) {
-      await updateRole(payload as any)
+      await updateRole(payload as any, { 
+        customErrorMessage: '角色修改失败，请检查输入信息' 
+      })
       message.success('角色修改成功')
     } else {
-      await addRole(payload)
+      await addRole(payload, { 
+        customErrorMessage: '角色新增失败，请检查输入信息' 
+      })
       message.success('角色新增成功')
     }
 
@@ -258,7 +265,7 @@ const handleSubmit = async () => {
     handleClose()
   } catch (error: any) {
     if (error?.errorFields) return
-    message.error(error?.message || '操作失败')
+    // 移除组件内的错误提示，让拦截器处理
   } finally {
     loading.value = false
   }

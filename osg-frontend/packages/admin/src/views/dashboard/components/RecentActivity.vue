@@ -1,15 +1,13 @@
 <template>
-  <a-card class="recent-activity">
-    <template #title>
-      <div class="recent-activity__header">
-        <span class="recent-activity__title-wrap">
-          <span class="mdi mdi-history recent-activity__header-icon" />
-          <span>最近活动</span>
-        </span>
-        <a class="recent-activity__link" @click="router.push('/logs')">查看全部</a>
-      </div>
-    </template>
-    <div class="recent-activity__list">
+  <div class="dashboard-card recent-activity">
+    <div class="dashboard-card__header recent-activity__header">
+      <span class="dashboard-card__title recent-activity__title-wrap">
+        <span class="mdi mdi-history recent-activity__header-icon" />
+        <span>最近活动</span>
+      </span>
+      <a class="recent-activity__link" @click="router.push('/logs')">查看全部</a>
+    </div>
+    <div class="dashboard-card__body recent-activity__body">
       <div
         v-for="(item, idx) in activities"
         :key="idx"
@@ -33,7 +31,7 @@
         暂无活动记录
       </div>
     </div>
-  </a-card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -49,40 +47,14 @@ const router = useRouter()
 
 <style scoped lang="scss">
 .recent-activity {
-  :deep(.ant-card) {
-    border-radius: 16px;
-    box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
-  }
-
-  :deep(.ant-card-head) {
-    min-height: auto;
-    padding: 15px 22px;
-    border-bottom: 1px solid var(--border, #E2E8F0);
-  }
-
-  :deep(.ant-card-head-title) {
-    padding: 0;
-  }
-
-  :deep(.ant-card-body) {
-    padding: 0;
-  }
-
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
   &__title-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    gap: 0;
   }
 
   &__header-icon {
     color: var(--text2, #64748B);
     font-size: 18px;
+    margin-right: 6px;
   }
 
   &__link {
@@ -94,10 +66,6 @@ const router = useRouter()
     &:hover {
       text-decoration: underline;
     }
-  }
-
-  &__list {
-    display: block;
   }
 
   &__item {
@@ -161,6 +129,32 @@ const router = useRouter()
     color: var(--muted, #94A3B8);
     padding: 24px 0;
     font-size: 14px;
+  }
+}
+
+.dashboard-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
+
+  &__header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text, #1E293B);
+  }
+
+  &__body {
+    padding: 0;
   }
 }
 </style>

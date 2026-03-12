@@ -119,13 +119,13 @@ describe('overlay surface framework contract', () => {
     expectNoPassiveSurfaceTriggerWrappers(source)
   })
 
-  it('keeps proof-case surface triggers on actionable controls instead of wrapper spans', () => {
+  it('keeps proof-case surface triggers on actionable button controls instead of wrapper spans', () => {
     const rolesSource = readSource(rolesViewPath)
     const usersSource = readSource(usersViewPath)
 
-    expect(rolesSource).toContain('<a-button')
+    expect(rolesSource).toContain('<button')
     expect(rolesSource).toContain('data-surface-trigger="modal-new-role"')
-    expect(usersSource).toContain('<a-button')
+    expect(usersSource).toContain('<button')
     expect(usersSource).toContain('data-surface-trigger="modal-add-admin"')
     expect(usersSource).toContain('data-surface-trigger="modal-edit-admin"')
     expect(usersSource).toContain('data-surface-trigger="modal-reset-password"')

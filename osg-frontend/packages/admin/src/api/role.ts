@@ -11,8 +11,8 @@ export function addRole(data: {
   roleKey: string
   remark?: string
   menuIds: number[]
-}) {
-  return http.post('/system/role', data)
+}, config?: import('@osg/shared/utils').AppRequestConfig) {
+  return http.post('/system/role', data, config)
 }
 
 // 修改角色（含 menuIds）
@@ -22,8 +22,8 @@ export function updateRole(data: {
   roleKey: string
   remark?: string
   menuIds: number[]
-}) {
-  return http.put('/system/role', data)
+}, config?: import('@osg/shared/utils').AppRequestConfig) {
+  return http.put('/system/role', data, config)
 }
 
 // 删除角色

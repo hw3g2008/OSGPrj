@@ -111,10 +111,12 @@ const passwordRules = {
 const handleUpdateProfile = async () => {
   try {
     profileLoading.value = true
-    await http.put('/system/user/profile', profileForm)
+    await http.put('/system/user/profile', profileForm, {
+      customErrorMessage: '个人资料修改失败，请检查输入信息'
+    })
     message.success('修改成功')
   } catch (error: any) {
-    message.error(error.message || '修改失败')
+    // 移除组件内的错误提示，让拦截器处理
   } finally {
     profileLoading.value = false
   }
@@ -126,13 +128,15 @@ const handleUpdatePassword = async () => {
     await http.put('/system/user/profile/updatePwd', {
       oldPassword: passwordForm.oldPassword,
       newPassword: passwordForm.newPassword
+    }, {
+      customErrorMessage: '密码修改失败，请检查输入信息'
     })
     message.success('密码修改成功')
     passwordForm.oldPassword = ''
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
   } catch (error: any) {
-    message.error(error.message || '修改失败')
+    // 移除组件内的错误提示，让拦截器处理
   } finally {
     passwordLoading.value = false
   }

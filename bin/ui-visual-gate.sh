@@ -7,6 +7,7 @@ set -euo pipefail
 MODULE="${1:-permission}"
 DATE_STR="$(date +%Y-%m-%d)"
 AUDIT_DIR="osg-spec-docs/tasks/audit"
+DEV_ENV_FILE="${DEV_ENV_FILE:-deploy/.env.dev}"
 CONTRACT_PATH="osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.yaml"
 SUMMARY_JSON="${AUDIT_DIR}/ui-visual-contract-summary-${MODULE}-${DATE_STR}.json"
 PAGE_REPORT_JSON="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
@@ -176,6 +177,11 @@ EOF
 
   if ! bash bin/runtime-port-guard.sh --mode converge-runtime --target dev-local --context ui-visual-gate; then
     echo "VISUAL_FAIL: single runtime convergence failed"
+    exit 12
+  fi
+
+  if ! bash bin/backend-dev-server.sh start "${DEV_ENV_FILE}"; then
+    echo "VISUAL_FAIL: backend dev server start failed"
     exit 12
   fi
 

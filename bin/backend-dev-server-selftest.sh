@@ -19,6 +19,7 @@ PROTOTYPE_PORT="$(free_port)"
 ENV_FILE="${TMP_DIR}/backend.env"
 RUNTIME_CONTRACT="${TMP_DIR}/runtime-contract.dev.yaml"
 SERVER_SCRIPT="${TMP_DIR}/backend-selftest-managed.py"
+WARM_SERVER_SCRIPT="${TMP_DIR}/backend-selftest-managed-warm.py"
 UNKNOWN_LOG="${TMP_DIR}/unknown.log"
 PID_FILE="/tmp/osg-backend-dev-${PORT}.pid"
 MANAGED_SUBSTRING="backend-selftest-managed"
@@ -78,6 +79,50 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.path == "/actuator/health":
             body = json.dumps({"status": "UP"}).encode("utf-8")
             self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        body = b"backend-selftest-managed"
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, _format, *_args):
+        return
+
+
+class ReusableTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True
+
+
+with ReusableTCPServer(("127.0.0.1", PORT), Handler) as httpd:
+    httpd.serve_forever()
+PY
+
+cat > "${WARM_SERVER_SCRIPT}" <<'PY'
+import http.server
+import json
+import socketserver
+import sys
+import time
+
+PORT = int(sys.argv[1])
+READY_AFTER = time.time() + 2.5
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/actuator/health":
+            if time.time() < READY_AFTER:
+                body = json.dumps({"status": "STARTING"}).encode("utf-8")
+                self.send_response(503)
+            else:
+                body = json.dumps({"status": "UP"}).encode("utf-8")
+                self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
@@ -323,6 +368,26 @@ if [[ "${unknown_stop_output}" != *"http.server"* ]]; then
 fi
 if ! curl -fsS --max-time 1 "http://127.0.0.1:${PORT}/" >/dev/null 2>&1; then
   echo "FAIL: unknown listener should remain reachable after rejected stop"
+  exit 1
+fi
+
+kill "${UNKNOWN_PID}" >/dev/null 2>&1 || true
+wait "${UNKNOWN_PID}" 2>/dev/null || true
+UNKNOWN_PID=""
+
+warm_start_output="$(
+  RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
+  BACKEND_DEV_SERVER_START_CMD="exec python3 '${WARM_SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
+  bash "${ROOT_DIR}/bin/backend-dev-server.sh" start "${ENV_FILE}" 2>&1
+)" || {
+  echo "FAIL: start should wait for managed listener health before failing unknown-listener checks"
+  echo "${warm_start_output}"
+  exit 1
+}
+
+if ! curl -fsS --max-time 1 "http://127.0.0.1:${PORT}/actuator/health" >/dev/null 2>&1; then
+  echo "FAIL: warm listener should eventually become healthy after managed start"
   exit 1
 fi
 

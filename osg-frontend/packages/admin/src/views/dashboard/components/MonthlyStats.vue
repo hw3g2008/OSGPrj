@@ -1,12 +1,12 @@
 <template>
-  <a-card class="monthly-stats">
-    <template #title>
-      <span class="monthly-stats__title-wrap">
+  <div class="dashboard-card monthly-stats">
+    <div class="dashboard-card__header">
+      <span class="dashboard-card__title monthly-stats__title-wrap">
         <span class="mdi mdi-calendar-month monthly-stats__title-icon" />
         <span>本月统计</span>
       </span>
-    </template>
-    <div class="monthly-stats__list" v-if="data">
+    </div>
+    <div v-if="data" class="dashboard-card__body monthly-stats__body">
       <div
         v-for="item in items"
         :key="item.label"
@@ -16,8 +16,8 @@
         <span class="monthly-stats__value" :style="item.style">{{ item.value }}</span>
       </div>
     </div>
-    <div v-else class="monthly-stats__empty">暂无数据</div>
-  </a-card>
+    <div v-else class="dashboard-card__body monthly-stats__empty">暂无数据</div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -43,40 +43,21 @@ const items = computed(() => {
 
 <style scoped lang="scss">
 .monthly-stats {
-  :deep(.ant-card) {
-    border-radius: 16px;
-    box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
-  }
-
-  :deep(.ant-card-head) {
-    min-height: auto;
-    padding: 15px 22px;
-    border-bottom: 1px solid var(--border, #E2E8F0);
-  }
-
-  :deep(.ant-card-head-title) {
-    padding: 0;
-  }
-
-  :deep(.ant-card-body) {
-    padding: 22px;
-  }
-
   &__title-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    gap: 0;
   }
 
   &__title-icon {
     color: var(--text2, #64748B);
     font-size: 18px;
+    margin-right: 6px;
   }
 
-  &__list {
+  &__body {
     display: flex;
     flex-direction: column;
     font-size: 13px;
+    padding: 22px;
   }
 
   &__item {
@@ -91,14 +72,15 @@ const items = computed(() => {
   }
 
   &__label {
-    font-size: 13px;
-    color: var(--text2, #64748B);
+    color: var(--text, #1E293B);
+    line-height: 18px;
   }
 
   &__value {
     font-size: 13px;
     font-weight: 600;
     color: var(--text, #1E293B);
+    line-height: 18px;
   }
 
   &__empty {
@@ -106,6 +88,29 @@ const items = computed(() => {
     color: var(--muted, #94A3B8);
     padding: 24px 0;
     font-size: 14px;
+  }
+}
+
+.dashboard-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
+  margin-bottom: 20px;
+
+  &__header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text, #1E293B);
   }
 }
 </style>

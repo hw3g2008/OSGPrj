@@ -71,6 +71,29 @@ adopt_existing_listener() {
   return 0
 }
 
+wait_for_managed_listener_health() {
+  local pid
+  pid="$(managed_listener_pid || true)"
+  if [[ -z "${pid}" ]]; then
+    return 1
+  fi
+
+  for _ in {1..30}; do
+    if adopt_existing_listener; then
+      return 0
+    fi
+    if [[ -z "$(listener_pids || true)" ]]; then
+      return 1
+    fi
+    if [[ -z "$(managed_listener_pid || true)" ]]; then
+      return 1
+    fi
+    sleep 1
+  done
+
+  return 1
+}
+
 is_running() {
   local pid
   pid="$(tracked_pid)"
@@ -90,6 +113,11 @@ start_server() {
   local start_cmd launcher_pid
   if is_running; then
     echo "INFO: backend already running at ${BACKEND_BASE_URL} (pid=$(tracked_pid))"
+    return 0
+  fi
+
+  if wait_for_managed_listener_health; then
+    echo "INFO: backend adopted existing warming listener at ${BACKEND_BASE_URL} (pid=$(tracked_pid))"
     return 0
   fi
 

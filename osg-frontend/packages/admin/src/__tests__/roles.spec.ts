@@ -1,5 +1,12 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 import { normalizeMenuTree } from '../views/permission/roles/menuTree'
+
+const rolesViewSource = fs.readFileSync(
+  path.resolve(__dirname, '../views/permission/roles/index.vue'),
+  'utf-8'
+)
 
 // 操作按钮显示逻辑（与 index.vue 模板逻辑一致）
 function getActionButtons(role: { roleKey: string; userCount: number }) {
@@ -204,6 +211,19 @@ describe('角色管理模块测试', () => {
 
       expect(result[0].label).toBe('用户中心')
       expect(result[0].children?.[0].label).toBe('学生列表')
+    })
+  })
+
+  describe('visual shell alignment', () => {
+    it('uses the prototype bilingual header and custom table shell', () => {
+      expect(rolesViewSource).toContain('Roles &amp; Permissions')
+      expect(rolesViewSource).toContain('permission-card')
+      expect(rolesViewSource).toContain('permission-table')
+    })
+
+    it('uses mdi affordances for the add action instead of ant icon slots', () => {
+      expect(rolesViewSource).toContain('mdi mdi-plus')
+      expect(rolesViewSource).not.toContain('<PlusOutlined />')
     })
   })
 })

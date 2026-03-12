@@ -4,6 +4,7 @@ import { getToken, removeToken } from './storage'
 
 export interface AppRequestConfig extends AxiosRequestConfig {
   skipErrorMessage?: boolean
+  customErrorMessage?: string
 }
 
 // 创建 axios 实例
@@ -49,16 +50,31 @@ request.interceptors.response.use(
       return Promise.reject(new Error(msg || '未授权'))
     }
 
+    // 智能错误提示逻辑
     if (!requestConfig?.skipErrorMessage) {
-      message.error(msg || '请求失败')
+      // 如果有自定义错误消息，使用自定义消息
+      if (requestConfig?.customErrorMessage) {
+        message.error(requestConfig.customErrorMessage)
+      } else {
+        // 默认使用后端返回的消息
+        message.error(msg || '请求失败')
+      }
     }
     return Promise.reject(new Error(msg || '请求失败'))
   },
   (error) => {
     const requestConfig = error.config as AppRequestConfig | undefined
     const msg = error.response?.data?.msg || error.message || '网络错误'
+    
+    // 智能错误提示逻辑
     if (!requestConfig?.skipErrorMessage) {
-      message.error(msg)
+      // 如果有自定义错误消息，使用自定义消息
+      if (requestConfig?.customErrorMessage) {
+        message.error(requestConfig.customErrorMessage)
+      } else {
+        // 默认使用错误消息
+        message.error(msg)
+      }
     }
     return Promise.reject(error)
   }

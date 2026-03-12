@@ -1,4 +1,11 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, it, expect } from 'vitest'
+
+const baseDataViewSource = fs.readFileSync(
+  path.resolve(__dirname, '../views/permission/base-data/index.vue'),
+  'utf-8'
+)
 
 // 分类卡片与Tab映射（与 index.vue 一致）
 const categories = [
@@ -191,6 +198,19 @@ describe('基础数据管理模块测试', () => {
 
     it('排序默认值为100', () => {
       expect(getDefaultSort()).toBe(100)
+    })
+  })
+
+  describe('visual shell alignment', () => {
+    it('uses the prototype category cards and custom tabs instead of ant tabs', () => {
+      expect(baseDataViewSource).toContain('岗位分类、公司、地区、招聘周期')
+      expect(baseDataViewSource).toContain('base-data-tabs')
+      expect(baseDataViewSource).not.toContain('<a-tabs')
+    })
+
+    it('moves the add action into the content toolbar instead of the page header', () => {
+      expect(baseDataViewSource).not.toContain('新增{{ currentTabLabel }}')
+      expect(baseDataViewSource).toContain('mdi mdi-plus')
     })
   })
 })

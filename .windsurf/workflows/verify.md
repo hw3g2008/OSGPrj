@@ -31,7 +31,7 @@ description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
    - 调用 verification skill 的 `verify_story(story_id)`
    - 验收逻辑包含：
      - Phase 1：前置检查（Tickets done + evidence + exit_code=0 + delivery truth + delivery content + critical UI evidence）
-     - Phase 2：功能验收（全量测试 + behavior contract + AC 覆盖率 + 覆盖率门槛）
+     - Phase 2：功能验收（全量测试 + E2E 测试（含 frontend Ticket 时） + behavior contract + AC 覆盖率 + 覆盖率门槛）
      - Phase 3：增强全局终审（三维度终审 + A~I 多维度旋转校验，参见 quality-gate/SKILL.md）
 
 4. **TC 资产回填（D6 挂点）**

@@ -157,6 +157,7 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   const captchaInput = page.locator('input[placeholder*="验证码"]').first()
   const captchaRefreshTrigger = page.locator('.captcha-code').first()
   const submitButton = page.locator('button[type="submit"], button:has-text("登录")').first()
+  const initialCaptchaResponsePromise = waitForApi(page, '/api/captchaImage', 'GET').catch(() => null)
 
   await page.goto(authConfig.loginPath, {
     waitUntil: 'domcontentloaded',
@@ -193,24 +194,28 @@ export async function loginAsAdmin(page: Page): Promise<void> {
     let captchaUuid: string | undefined
     let resolvedCaptchaCode: string | null = null
     try {
-      const captchaResponsePromise = waitForApi(page, '/api/captchaImage', 'GET')
-      await expect(captchaRefreshTrigger, 'captcha refresh trigger should exist on login page').toBeVisible({
-        timeout: E2E_TIMEOUT_MS,
-      })
-      await captchaRefreshTrigger.click()
-      const captchaResponse = await captchaResponsePromise
-      const captchaBody = await captchaResponse.json()
-      captchaUuid = typeof captchaBody?.uuid === 'string' ? captchaBody.uuid : undefined
-      resolvedCaptchaCode = captchaUuid ? readCaptchaFromRedis(captchaUuid) : null
+      const captchaResponse = await initialCaptchaResponsePromise
+      if (captchaResponse) {
+        const captchaBody = await captchaResponse.json()
+        captchaUuid = typeof captchaBody?.uuid === 'string' ? captchaBody.uuid : undefined
+        resolvedCaptchaCode = captchaUuid ? readCaptchaFromRedis(captchaUuid) : null
+      }
     } catch {
       resolvedCaptchaCode = null
     }
 
     if (!resolvedCaptchaCode) {
       try {
-        const challenge = await requestCaptchaChallenge(page.request)
-        captchaUuid = challenge.uuid
-        resolvedCaptchaCode = challenge.code
+        const captchaResponsePromise = waitForApi(page, '/api/captchaImage', 'GET')
+        await expect(captchaRefreshTrigger, 'captcha refresh trigger should exist on login page').toBeVisible({
+          timeout: E2E_TIMEOUT_MS,
+        })
+        await captchaRefreshTrigger.click()
+        const captchaResponse = await captchaResponsePromise
+        const captchaBody = await captchaResponse.json()
+        captchaUuid = typeof captchaBody?.uuid === 'string' ? captchaBody.uuid : undefined
+        resolvedCaptchaCode = captchaUuid ? readCaptchaFromRedis(captchaUuid) : null
+        await page.waitForTimeout(100)
       } catch {
         resolvedCaptchaCode = null
       }

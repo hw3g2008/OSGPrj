@@ -78,6 +78,10 @@ esac
 bash bin/context-preflight.sh dev --entrypoint ui-visual-case-verify --env-file "${DEV_ENV_FILE}"
 bash bin/runtime-port-guard.sh --mode converge-runtime --target dev-local --context ui-visual-case-verify
 
+if ! bash bin/backend-dev-server.sh start "${DEV_ENV_FILE}"; then
+  fail "backend dev server start failed"
+fi
+
 export PW_E2E_REUSE_SERVER=1
 if ! bash bin/admin-preview-server.sh restart; then
   fail "admin preview server restart failed"

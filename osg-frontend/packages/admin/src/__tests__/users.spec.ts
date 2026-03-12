@@ -1,4 +1,11 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, it, expect } from 'vitest'
+
+const usersViewSource = fs.readFileSync(
+  path.resolve(__dirname, '../views/permission/users/index.vue'),
+  'utf-8'
+)
 
 // 操作按钮显示逻辑（与 index.vue 模板逻辑一致）
 function getUserActionButtons(user: { status: string; admin: boolean }) {
@@ -223,6 +230,15 @@ describe('用户管理模块测试', () => {
 
     it('其他角色为默认色', () => {
       expect(getRoleTagColor('position_admin')).toBe('default')
+    })
+  })
+
+  describe('visual shell alignment', () => {
+    it('matches the prototype header, filter affordance, and simple pager shell', () => {
+      expect(usersViewSource).toContain('Admin Users')
+      expect(usersViewSource).toContain('mdi mdi-magnify')
+      expect(usersViewSource).toContain('users-pagination')
+      expect(usersViewSource).not.toContain('<a-pagination')
     })
   })
 })

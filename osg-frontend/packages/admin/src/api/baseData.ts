@@ -20,8 +20,8 @@ export function addBaseData(data: {
   sort?: number
   status?: string
   parentId?: number
-}) {
-  return http.post('/system/basedata', data)
+}, config?: import('@osg/shared/utils').AppRequestConfig) {
+  return http.post('/system/basedata', data, config)
 }
 
 // 修改基础数据
@@ -31,13 +31,13 @@ export function updateBaseData(data: {
   sort?: number
   status?: string
   parentId?: number
-}) {
-  return http.put('/system/basedata', data)
+}, config?: import('@osg/shared/utils').AppRequestConfig) {
+  return http.put('/system/basedata', data, config)
 }
 
 // 修改基础数据状态（启用/禁用）
-export function changeBaseDataStatus(data: { id: number; status: string }) {
-  return http.put('/system/basedata/changeStatus', data)
+export function changeBaseDataStatus(data: { id: number; status: string }, config?: import('@osg/shared/utils').AppRequestConfig) {
+  return http.put('/system/basedata/changeStatus', data, config)
 }
 
 // 获取分类及Tab列表

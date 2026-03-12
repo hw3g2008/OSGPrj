@@ -524,6 +524,8 @@ def _validate_overlay_surface_result(
                 if stage in VERIFY_LIKE_STAGES and state_result.get("result") != "PASS":
                     _err(errors, f"{stag2}.result must be PASS in {stage}")
 
+        _validate_page_residual_classifier_evidence(viewport_result, vtag, errors)
+
         if stage in VERIFY_LIKE_STAGES and viewport_result.get("result") != "PASS":
             _err(errors, f"{vtag}.result must be PASS in {stage}")
 

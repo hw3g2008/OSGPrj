@@ -409,6 +409,27 @@ def test_classifier_applied_page_requires_classifier_evidence_fields(module) -> 
     assert any("residual_class_breakdown" in issue or "forbidden_residual_detected" in issue for issue in issues), issues
 
 
+def test_classifier_applied_surface_viewport_requires_classifier_evidence_fields(module) -> None:
+    contract = build_contract()
+    report = build_page_report()
+    report["surfaces"][0]["viewport_results"][0]["residual_classifier_applied"] = True
+    report["surfaces"][0]["viewport_results"][0]["residual_classifier_result"] = "FAIL"
+    issues = collect_issues(module, contract, report)
+    assert any("residual_class_breakdown" in issue or "forbidden_residual_detected" in issue for issue in issues), issues
+
+
+def test_classifier_applied_surface_viewport_complete_evidence_passes(module) -> None:
+    contract = build_contract()
+    report = build_page_report()
+    vr = report["surfaces"][0]["viewport_results"][0]
+    vr["residual_classifier_applied"] = True
+    vr["residual_classifier_result"] = "PASS"
+    vr["residual_class_breakdown"] = {"micro_spacing": 5, "low_salience_text_icon_rasterization": 0, "image_like": 0, "captcha_like": 0, "color_state": 0, "geometry_change": 0, "structure_change": 0, "unknown": 0}
+    vr["forbidden_residual_detected"] = False
+    issues = collect_issues(module, contract, report)
+    assert not issues, issues
+
+
 def main() -> int:
     module = load_guard_module()
     tests = [
@@ -422,6 +443,8 @@ def main() -> int:
         test_verify_failure_page_missing_diff_evidence_fails,
         test_verify_failure_page_missing_actual_evidence_fails,
         test_classifier_applied_page_requires_classifier_evidence_fields,
+        test_classifier_applied_surface_viewport_requires_classifier_evidence_fields,
+        test_classifier_applied_surface_viewport_complete_evidence_passes,
     ]
     for fn in tests:
         fn(module)

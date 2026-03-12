@@ -21,7 +21,7 @@ description: 执行下一个待办 Ticket - 自动选取并实现
    - 该 skill 会根据 Ticket type 选择对应流程：
      - `backend` / `database` / `test` → TDD 流程（先写测试再写代码）
      - `frontend-ui` → UI 还原流程
-     - `frontend` → 前端功能流程
+     - `frontend` → 前端功能流程（含 E2E 验证: bash bin/e2e-api-gate.sh {module} full）
      - `config` → 配置变更流程
 
 4. **分层验证**

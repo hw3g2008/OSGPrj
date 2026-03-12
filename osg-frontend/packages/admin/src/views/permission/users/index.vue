@@ -2,32 +2,35 @@
   <div class="users-page">
     <div class="page-header">
       <div>
-        <h2>后台用户管理</h2>
-        <p class="subtitle">管理后台系统用户账号</p>
+        <h2 class="page-title">
+          后台用户管理
+          <span class="page-title-en">Admin Users</span>
+        </h2>
+        <p class="page-sub subtitle">管理后台系统用户账号</p>
       </div>
-      <a-button
-        type="primary"
-        class="surface-trigger surface-trigger--primary"
+      <button
+        type="button"
+        class="permission-button permission-button--primary surface-trigger surface-trigger--primary"
         data-surface-trigger="modal-add-admin"
         @click="handleAdd"
       >
-        <template #icon><PlusOutlined /></template>
-        新增用户
-      </a-button>
+        <i class="mdi mdi-plus" aria-hidden="true"></i>
+        <span>新增用户</span>
+      </button>
     </div>
 
     <div class="filter-bar">
       <a-input
         v-model:value="searchParams.userName"
-        placeholder="搜索用户名/姓名"
-        style="width: 200px"
+        class="filter-bar__control filter-bar__control--search"
+        placeholder="搜索用户名 / 姓名"
         allow-clear
         @pressEnter="handleSearch"
       />
       <a-select
         v-model:value="searchParams.roleId"
+        class="filter-bar__control filter-bar__control--role"
         placeholder="全部角色"
-        style="width: 150px"
         allow-clear
       >
         <a-select-option v-for="role in roleOptions" :key="role.roleId" :value="role.roleId">
@@ -36,107 +39,141 @@
       </a-select>
       <a-select
         v-model:value="searchParams.status"
+        class="filter-bar__control filter-bar__control--status"
         placeholder="全部状态"
-        style="width: 120px"
         allow-clear
       >
-        <a-select-option value="0">Active</a-select-option>
-        <a-select-option value="1">Disabled</a-select-option>
+        <a-select-option value="0">启用</a-select-option>
+        <a-select-option value="1">禁用</a-select-option>
       </a-select>
-      <a-button type="primary" @click="handleSearch">搜索</a-button>
+      <button type="button" class="permission-button permission-button--outline" @click="handleSearch">
+        <i class="mdi mdi-magnify" aria-hidden="true"></i>
+        <span>搜索</span>
+      </button>
     </div>
 
-    <a-table
-      :columns="columns"
-      :data-source="userList"
-      :loading="loading"
-      :pagination="false"
-      row-key="userId"
-      :row-class-name="rowClassName"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'nickName'">
-          <span class="user-name">{{ record.nickName }}</span>
-        </template>
+    <div class="permission-card">
+      <div class="permission-card__body permission-card__body--flush">
+        <table class="permission-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>用户名</th>
+              <th>姓名</th>
+              <th>邮箱</th>
+              <th>角色</th>
+              <th>状态</th>
+              <th>最后登录</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="record in userList"
+              :key="record.userId"
+              :class="{ 'permission-table__row--disabled': record.status === '1' }"
+            >
+              <td>{{ record.userId }}</td>
+              <td>{{ record.userName }}</td>
+              <td><strong>{{ record.nickName }}</strong></td>
+              <td>{{ record.email }}</td>
+              <td>
+                <div class="permission-pill-group">
+                  <span
+                    v-for="role in record.roles"
+                    :key="role.roleId"
+                    :class="['permission-pill', `permission-pill--${getRoleTagTone(role.roleKey)}`]"
+                  >
+                    {{ role.roleName }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span
+                  :class="[
+                    'permission-pill',
+                    record.status === '0' ? 'permission-pill--success' : 'permission-pill--danger'
+                  ]"
+                >
+                  {{ record.status === '0' ? '启用' : '禁用' }}
+                </span>
+              </td>
+              <td>{{ record.loginDate ? dayjs(record.loginDate).format('MM/DD/YYYY HH:mm') : '-' }}</td>
+              <td>{{ record.updateTime ? dayjs(record.updateTime).format('MM/DD/YYYY') : '-' }}</td>
+              <td>
+                <div class="permission-actions">
+                  <button
+                    type="button"
+                    class="permission-action surface-trigger surface-trigger--inline"
+                    data-surface-trigger="modal-edit-admin"
+                    data-surface-sample="modal-edit-admin"
+                    :data-surface-sample-key="record.userName"
+                    @click="handleEdit(record)"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    v-if="record.status === '0'"
+                    type="button"
+                    class="permission-action surface-trigger surface-trigger--inline"
+                    data-surface-trigger="modal-reset-password"
+                    data-surface-sample="modal-reset-password"
+                    :data-surface-sample-key="record.userName"
+                    @click="handleResetPwd(record)"
+                  >
+                    重置密码
+                  </button>
+                  <button
+                    v-if="record.status === '0' && !record.admin"
+                    type="button"
+                    class="permission-action permission-action--danger"
+                    @click="handleDisable(record)"
+                  >
+                    禁用
+                  </button>
+                  <button
+                    v-if="record.status === '1'"
+                    type="button"
+                    class="permission-action permission-action--success"
+                    @click="handleEnable(record)"
+                  >
+                    启用
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-        <template v-if="column.key === 'roles'">
-          <a-tag
-            v-for="role in record.roles"
-            :key="role.roleId"
-            :color="getRoleTagColor(role.roleKey)"
-          >
-            {{ role.roleName }}
-          </a-tag>
-        </template>
-
-        <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === '0' ? 'success' : 'error'">
-            {{ record.status === '0' ? 'Active' : 'Disabled' }}
-          </a-tag>
-        </template>
-
-        <template v-if="column.key === 'loginDate'">
-          {{ record.loginDate ? dayjs(record.loginDate).format('MM/DD/YYYY HH:mm') : '-' }}
-        </template>
-
-        <template v-if="column.key === 'updateTime'">
-          {{ record.updateTime ? dayjs(record.updateTime).format('MM/DD/YYYY') : '-' }}
-        </template>
-
-        <template v-if="column.key === 'action'">
-          <a-button
-            type="link"
-            size="small"
-            class="surface-trigger surface-trigger--inline"
-            data-surface-trigger="modal-edit-admin"
-            data-surface-sample="modal-edit-admin"
-            :data-surface-sample-key="record.userName"
-            @click="handleEdit(record)"
-          >
-            编辑
-          </a-button>
-          <a-button
-            v-if="record.status === '0'"
-            type="link"
-            size="small"
-            class="surface-trigger surface-trigger--inline"
-            data-surface-trigger="modal-reset-password"
-            data-surface-sample="modal-reset-password"
-            :data-surface-sample-key="record.userName"
-            @click="handleResetPwd(record)"
-          >
-            重置密码
-          </a-button>
-          <a-button
-            v-if="record.status === '0' && !record.admin"
-            type="link"
-            size="small"
-            danger
-            @click="handleDisable(record)"
-          >
-            禁用
-          </a-button>
-          <a-button
-            v-if="record.status === '1'"
-            type="link"
-            size="small"
-            @click="handleEnable(record)"
-          >
-            启用
-          </a-button>
-        </template>
-      </template>
-    </a-table>
-
-    <div class="pagination-bar">
-      <span class="total">共 {{ pagination.total }} 条记录</span>
-      <a-pagination
-        v-model:current="pagination.current"
-        v-model:pageSize="pagination.pageSize"
-        :total="pagination.total"
-        show-size-changer
-        @change="handlePageChange"
-      />
+    <div class="users-pagination">
+      <span class="users-pagination__total">共 {{ pagination.total }} 条记录</span>
+      <div class="users-pagination__controls">
+        <button
+          type="button"
+          class="permission-button permission-button--outline permission-button--small"
+          :disabled="!hasPrev"
+          @click="goPrev"
+        >
+          上一页
+        </button>
+        <button
+          type="button"
+          class="permission-button permission-button--primary permission-button--small"
+        >
+          {{ pagination.current }}
+        </button>
+        <button
+          type="button"
+          class="permission-button permission-button--outline permission-button--small"
+          :disabled="!hasNext"
+          @click="goNext"
+        >
+          下一页
+        </button>
+      </div>
     </div>
 
     <UserModal
@@ -155,15 +192,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { PlusOutlined } from '@ant-design/icons-vue'
-import { getUserList, changeUserStatus, getRoleOptions as fetchRoleOptions } from '@/api/user'
+import { getUserList, getUserDetail, changeUserStatus, getRoleOptions as fetchRoleOptions } from '@/api/user'
 import UserModal from './components/UserModal.vue'
 import ResetPwdModal from './components/ResetPwdModal.vue'
 import dayjs from 'dayjs'
 
-const loading = ref(false)
 const userList = ref<any[]>([])
 const roleOptions = ref<any[]>([])
 const userModalVisible = ref(false)
@@ -182,36 +217,23 @@ const pagination = reactive({
   total: 0
 })
 
-const columns = [
-  { title: 'ID', dataIndex: 'userId', key: 'userId', width: 80 },
-  { title: '用户名', dataIndex: 'userName', key: 'userName', width: 120 },
-  { title: '姓名', dataIndex: 'nickName', key: 'nickName', width: 120 },
-  { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
-  { title: '角色', key: 'roles', width: 200 },
-  { title: '状态', key: 'status', width: 100 },
-  { title: '最后登录', key: 'loginDate', width: 150 },
-  { title: '更新时间', key: 'updateTime', width: 120 },
-  { title: '操作', key: 'action', width: 200 }
-]
+const totalPages = computed(() => Math.max(1, Math.ceil((pagination.total || 0) / pagination.pageSize)))
+const hasPrev = computed(() => pagination.current > 1)
+const hasNext = computed(() => pagination.current < totalPages.value)
 
 const roleTagColorMap: Record<string, string> = {
   super_admin: 'purple',
-  clerk: 'blue',
-  course_auditor: 'orange',
-  accountant: 'green'
+  clerk: 'info',
+  course_auditor: 'warning',
+  accountant: 'success'
 }
 
-const getRoleTagColor = (roleKey: string) => {
-  return roleTagColorMap[roleKey] || 'default'
-}
-
-const rowClassName = (record: any) => {
-  return record.status === '1' ? 'disabled-row' : ''
+const getRoleTagTone = (roleKey: string) => {
+  return roleTagColorMap[roleKey] || 'info'
 }
 
 const loadUserList = async () => {
   try {
-    loading.value = true
     const res = await getUserList({
       pageNum: pagination.current,
       pageSize: pagination.pageSize,
@@ -219,12 +241,27 @@ const loadUserList = async () => {
       status: searchParams.status,
       roleId: searchParams.roleId
     })
-    userList.value = res.rows || []
+    const users = res.rows || []
     pagination.total = res.total || 0
+    
+    // 为每个用户补充角色信息（list 接口不返回角色）
+    const usersWithRoles = await Promise.all(
+      users.map(async (user) => {
+        try {
+          const detail = await getUserDetail(user.userId)
+          return {
+            ...user,
+            roles: detail.roles || detail.data?.roles || []
+          }
+        } catch {
+          return { ...user, roles: [] }
+        }
+      })
+    )
+    
+    userList.value = usersWithRoles
   } catch (error) {
     message.error('加载用户列表失败')
-  } finally {
-    loading.value = false
   }
 }
 
@@ -242,7 +279,15 @@ const handleSearch = () => {
   loadUserList()
 }
 
-const handlePageChange = () => {
+const goPrev = () => {
+  if (!hasPrev.value) return
+  pagination.current -= 1
+  loadUserList()
+}
+
+const goNext = () => {
+  if (!hasNext.value) return
+  pagination.current += 1
   loadUserList()
 }
 
@@ -269,11 +314,13 @@ const handleDisable = (record: any) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        await changeUserStatus({ userId: record.userId, status: '1' })
+        await changeUserStatus({ userId: record.userId, status: '1' }, {
+          customErrorMessage: '用户禁用失败，请重试'
+        })
         message.success('用户已禁用')
         loadUserList()
       } catch (error) {
-        message.error('操作失败')
+        // 移除组件内的错误提示，让拦截器处理
       }
     }
   })
@@ -281,11 +328,13 @@ const handleDisable = (record: any) => {
 
 const handleEnable = async (record: any) => {
   try {
-    await changeUserStatus({ userId: record.userId, status: '0' })
+    await changeUserStatus({ userId: record.userId, status: '0' }, {
+      customErrorMessage: '用户启用失败，请重试'
+    })
     message.success('用户已启用')
     loadUserList()
   } catch (error) {
-    message.error('操作失败')
+    // 移除组件内的错误提示，让拦截器处理
   }
 }
 
@@ -297,56 +346,225 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .users-page {
-  .surface-trigger {
-    display: inline-flex;
-
-    &--inline {
-      align-items: center;
-    }
-  }
+  padding: 8px 4px 0;
 
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
+  }
 
-    h2 {
-      margin: 0 0 4px;
-      font-size: 20px;
-    }
+  .page-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: normal;
+    color: #1e293b;
+  }
 
-    .subtitle {
-      margin: 0;
-      color: #666;
-      font-size: 14px;
-    }
+  .page-title-en {
+    margin-left: 8px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #94a3b8;
+  }
+
+  .page-sub {
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: normal;
+    color: #64748b;
   }
 
   .filter-bar {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 16px;
   }
 
-  .user-name {
-    font-weight: 600;
+  .filter-bar__control {
+    :deep(.ant-select-selector),
+    :deep(.ant-input) {
+      border-color: #d1d5db;
+      border-radius: 10px;
+      min-height: 42px;
+      box-shadow: none;
+    }
+
+    :deep(.ant-input) {
+      padding-inline: 14px;
+    }
+
+    &--search {
+      width: 200px;
+    }
+
+    &--role {
+      width: 140px;
+    }
+
+    &--status {
+      width: 120px;
+    }
   }
 
-  .pagination-bar {
+  .permission-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    cursor: pointer;
+    border: none;
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    &--primary {
+      color: #fff;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    &--outline {
+      color: #64748b;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+    }
+
+    &--small {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+  }
+
+  .permission-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
+  }
+
+  .permission-card__body--flush {
+    padding: 0;
+  }
+
+  .permission-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: 14px;
+      line-height: normal;
+      color: #1e293b;
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      background: #f8fafc;
+      letter-spacing: 0.02em;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+  }
+
+  .permission-table__row--disabled {
+    opacity: 0.6;
+  }
+
+  .permission-pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .permission-pill {
+    display: inline-flex;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+
+    &--info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    &--warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    &--success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    &--danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    &--purple {
+      background: #e0e7ff;
+      color: #4f46e5;
+    }
+  }
+
+  .permission-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .permission-action {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: #6366f1;
+    font-size: 13px;
+    cursor: pointer;
+
+    &--danger {
+      color: #ef4444;
+    }
+
+    &--success {
+      color: #22c55e;
+    }
+  }
+
+  .users-pagination {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 16px;
-
-    .total {
-      color: #666;
-      font-size: 14px;
-    }
   }
 
-  :deep(.disabled-row) {
-    opacity: 0.6;
+  .users-pagination__total {
+    color: #94a3b8;
+    font-size: 13px;
+  }
+
+  .users-pagination__controls {
+    display: flex;
+    gap: 8px;
   }
 }
 </style>

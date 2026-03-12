@@ -18,7 +18,7 @@
 2. 加载 verification Skill
 3. 检查所有 Tickets 完成状态
 4. 验证验收标准
-5. 运行测试
+5. 运行测试（含 frontend Ticket 时追加 E2E: bash bin/e2e-api-gate.sh {module} full）
 6. 输出验证报告
 7. 更新 workflow:
    - current_step = "story_verified" 或 "verification_failed"

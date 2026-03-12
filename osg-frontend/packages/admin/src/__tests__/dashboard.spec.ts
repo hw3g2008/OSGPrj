@@ -449,7 +449,7 @@ describe('Dashboard page integration', () => {
     const rightBlockStart = source.indexOf('&__right {', leftBlockStart)
     const leftBlock = source.slice(leftBlockStart, rightBlockStart)
 
-    expect(source).toContain('padding-bottom: 2px;')
+    expect(source).toContain('padding-bottom: 1px;')
     expect(source).toContain('align-items: stretch;')
     expect(source).toContain('&__left {')
     expect(leftBlock).not.toContain('display: flex;')
@@ -463,6 +463,39 @@ describe('Dashboard page integration', () => {
     expect(source).toContain("'content--dashboard': route.path === '/dashboard'")
     expect(source).toContain('&.content--dashboard {')
     expect(source).toContain('padding: 28px;')
+  })
+
+  it('keeps the dashboard right-rail container free of synthetic flex gaps so card margins control the prototype rhythm', () => {
+    const dashboardPath = path.resolve(__dirname, '../views/dashboard/index.vue')
+    const source = fs.readFileSync(dashboardPath, 'utf-8')
+    const rightBlockStart = source.indexOf('&__right {')
+    const rightBlockEnd = source.indexOf('}', rightBlockStart)
+    const rightBlock = source.slice(rightBlockStart, rightBlockEnd)
+
+    expect(rightBlock).toContain('gap: 0;')
+  })
+
+  it('keeps prototype 20px bottom margins on each right-rail dashboard card', () => {
+    const componentPaths = [
+      path.resolve(__dirname, '../views/dashboard/components/QuickActions.vue'),
+      path.resolve(__dirname, '../views/dashboard/components/StudentStatus.vue'),
+      path.resolve(__dirname, '../views/dashboard/components/MonthlyStats.vue'),
+    ]
+
+    for (const componentPath of componentPaths) {
+      const source = fs.readFileSync(componentPath, 'utf-8')
+      expect(source).toContain('margin-bottom: 20px;')
+    }
+  })
+
+  it('keeps dashboard status and monthly rows on the prototype 18px text rhythm', () => {
+    const studentStatusPath = path.resolve(__dirname, '../views/dashboard/components/StudentStatus.vue')
+    const studentStatusSource = fs.readFileSync(studentStatusPath, 'utf-8')
+    const monthlyStatsPath = path.resolve(__dirname, '../views/dashboard/components/MonthlyStats.vue')
+    const monthlyStatsSource = fs.readFileSync(monthlyStatsPath, 'utf-8')
+
+    expect(studentStatusSource).toContain('line-height: 18px;')
+    expect(monthlyStatsSource).toContain('line-height: 18px;')
   })
 
   it('keeps recent activity on intrinsic prototype height instead of stretching through the shared card body', () => {
@@ -482,6 +515,34 @@ describe('Dashboard page integration', () => {
     expect(source).not.toContain('align-items: flex-start;')
   })
 
+  it('keeps dashboard secondary panels on the prototype card shell instead of Ant card wrappers', () => {
+    const componentPaths = [
+      path.resolve(__dirname, '../views/dashboard/components/RecentActivity.vue'),
+      path.resolve(__dirname, '../views/dashboard/components/QuickActions.vue'),
+      path.resolve(__dirname, '../views/dashboard/components/StudentStatus.vue'),
+      path.resolve(__dirname, '../views/dashboard/components/MonthlyStats.vue'),
+    ]
+
+    for (const componentPath of componentPaths) {
+      const source = fs.readFileSync(componentPath, 'utf-8')
+
+      expect(source).not.toContain('<a-card')
+      expect(source).toContain('dashboard-card')
+      expect(source).toContain('dashboard-card__header')
+      expect(source).toContain('dashboard-card__title')
+    }
+  })
+
+  it('keeps dashboard stat-card sublines on the prototype mdi affordances instead of unicode symbols', () => {
+    const statCardsPath = path.resolve(__dirname, '../views/dashboard/components/StatCards.vue')
+    const source = fs.readFileSync(statCardsPath, 'utf-8')
+
+    expect(source).toContain('mdi-trending-up')
+    expect(source).toContain('mdi-clock')
+    expect(source).not.toContain('↑ 本月新增')
+    expect(source).not.toContain('⏰ 最早')
+  })
+
   it('keeps dashboard visual compare fully strict without date masking or screenshot bypasses', () => {
     const source = fs.readFileSync(permissionVisualContractPath, 'utf-8')
     const dashboardBlockStart = source.indexOf('- page_id: dashboard')
@@ -493,5 +554,25 @@ describe('Dashboard page integration', () => {
     expect(dashboardBlock).toContain('selector: .dashboard__two-col')
     expect(dashboardBlock).toContain('property: align-items')
     expect(dashboardBlock).toContain('expected: stretch')
+  })
+
+  it('keeps the dashboard refresh affordance on the prototype mdi icon shell', () => {
+    const dashboardPath = path.resolve(__dirname, '../views/dashboard/index.vue')
+    const source = fs.readFileSync(dashboardPath, 'utf-8')
+
+    expect(source).toContain('mdi mdi-refresh')
+    expect(source).not.toContain('ReloadOutlined')
+  })
+
+  it('keeps the fixed dashboard date truth aligned to Friday for 2025-12-19 across prototype and PRD', () => {
+    const prototypePath = path.resolve(__dirname, '../../../../../osg-spec-docs/source/prototype/admin.html')
+    const prototypeSource = fs.readFileSync(prototypePath, 'utf-8')
+    const prdPath = path.resolve(__dirname, '../../../../../osg-spec-docs/docs/01-product/prd/permission/01-admin-home.md')
+    const prdSource = fs.readFileSync(prdPath, 'utf-8')
+
+    expect(prototypeSource).toContain('今天是 2025年12月19日 周五')
+    expect(prdSource).toContain('今天是 2025年12月19日 周五')
+    expect(prototypeSource).not.toContain('今天是 2025年12月19日 周四')
+    expect(prdSource).not.toContain('今天是 2025年12月19日 周四')
   })
 })

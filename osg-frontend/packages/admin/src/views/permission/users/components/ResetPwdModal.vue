@@ -130,6 +130,8 @@ const handleSubmit = async () => {
     await resetUserPwd({
       userId: props.user.userId,
       password: formState.password,
+    }, {
+      customErrorMessage: '密码重置失败，请检查输入'
     })
 
     message.success('密码重置成功')
@@ -137,7 +139,7 @@ const handleSubmit = async () => {
     handleClose()
   } catch (error: any) {
     if (error?.errorFields) return
-    message.error(error?.message || '操作失败')
+    // 移除组件内的错误提示，让拦截器处理
   } finally {
     loading.value = false
   }

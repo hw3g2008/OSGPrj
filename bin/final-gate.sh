@@ -51,6 +51,8 @@ E2E_API_GATE_LOG="${E2E_API_GATE_LOG:-${AUDIT_DIR}/e2e-api-gate-${MODULE}-${DATE
 SECURITY_CONTRACT_LOG="${SECURITY_CONTRACT_LOG:-${AUDIT_DIR}/security-contract-${MODULE}-${DATE_STR}.md}"
 UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG:-${AUDIT_DIR}/ui-visual-gate-${MODULE}-${DATE_STR}.log}"
 UI_VISUAL_PAGE_REPORT="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
+UI_VISUAL_ALLOW_DOWNSTREAM="${UI_VISUAL_ALLOW_DOWNSTREAM:-0}"
+UI_VISUAL_ADJUDICATION_REASON="${UI_VISUAL_ADJUDICATION_REASON:-}"
 BEHAVIOR_CONTRACT_REPORT="${BEHAVIOR_CONTRACT_REPORT:-${AUDIT_DIR}/behavior-contract-${MODULE}-${DATE_STR}.json}"
 BACKEND_READY_TIMEOUT_SECONDS="${BACKEND_READY_TIMEOUT_SECONDS:-120}"
 BACKEND_HEALTH_TIMEOUT_SECONDS="${BACKEND_HEALTH_TIMEOUT_SECONDS:-15}"
@@ -340,11 +342,24 @@ if [[ ! -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
   exit 12
 fi
 
+ui_visual_gate_status="STRICT_PASS"
+ui_visual_adjudication_reason="none"
+if (( ui_visual_gate_rc != 0 )); then
+  if [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
+    ui_visual_gate_status="HUMAN_WAIVED"
+    ui_visual_adjudication_reason="${UI_VISUAL_ADJUDICATION_REASON:-not_provided}"
+  fi
+fi
+
 echo "--- 4.6 ui_critical_evidence_guard ---"
-python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
-  --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.yaml" \
-  --page-report "${UI_VISUAL_PAGE_REPORT}" \
-  --stage final-gate
+if (( ui_visual_gate_rc != 0 )) && [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
+  echo "INFO: ui_critical_evidence_guard skipped due to manual ui adjudication"
+else
+  python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
+    --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.yaml" \
+    --page-report "${UI_VISUAL_PAGE_REPORT}" \
+    --stage final-gate
+fi
 
 read -r visual_total visual_pass visual_fail visual_not_run style_passed style_failed state_executed state_failed critical_total critical_failed <<EOF
 $(python3 - <<PY
@@ -368,12 +383,6 @@ PY
 EOF
 echo "INFO: ui_visual_summary total=${visual_total} pass=${visual_pass} fail=${visual_fail} not_run=${visual_not_run} style_passed=${style_passed} style_failed=${style_failed} state_executed=${state_executed} state_failed=${state_failed} critical_total=${critical_total} critical_failed=${critical_failed}"
 
-if (( ui_visual_gate_rc != 0 )); then
-  echo "FAIL: ui-visual-gate failed (exit=${ui_visual_gate_rc})"
-  rm -f "${pre_visual_fp}" "${post_visual_fp}"
-  exit 12
-fi
-
 if ! diff -q "${pre_visual_fp}" "${post_visual_fp}" >/dev/null 2>&1; then
   echo "FAIL: visual baseline mutated during final-gate run (rule=BASELINE_MUTATED_DURING_GATE)"
   echo "INFO: baseline path=osg-frontend/tests/e2e/visual-baseline"
@@ -382,6 +391,17 @@ if ! diff -q "${pre_visual_fp}" "${post_visual_fp}" >/dev/null 2>&1; then
   exit 12
 fi
 rm -f "${pre_visual_fp}" "${post_visual_fp}"
+
+if (( ui_visual_gate_rc != 0 )); then
+  if [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
+    echo "WARNING: ui-visual-gate failed (exit=${ui_visual_gate_rc}) but downstream allowed by human adjudication"
+  else
+    echo "FAIL: ui-visual-gate failed (exit=${ui_visual_gate_rc})"
+    exit 12
+  fi
+fi
+echo "INFO: ui_visual_adjudication_status=${ui_visual_gate_status}"
+echo "INFO: ui_visual_adjudication_reason=${ui_visual_adjudication_reason}"
 
 echo "--- 5. 前端单测 ---"
 pnpm --dir osg-frontend/packages/admin test

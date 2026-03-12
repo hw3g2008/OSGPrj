@@ -4,7 +4,7 @@
       <div class="sidebar-header">
         <div class="sidebar-logo">
           <div class="logo-icon">
-            <SafetyCertificateFilled />
+            <span class="mdi mdi-shield-crown" aria-hidden="true" />
           </div>
           <span class="logo-text">OSG Admin</span>
         </div>
@@ -17,7 +17,7 @@
           :class="{ active: isActive('/dashboard') }"
           @click="navigate('/dashboard')"
         >
-          <HomeFilled />
+          <span class="mdi mdi-home" aria-hidden="true" />
           <span>首页</span>
         </button>
 
@@ -31,7 +31,7 @@
             :class="{ active: isActive(item.path) }"
             @click="navigate(item.path)"
           >
-            <component :is="item.icon" />
+            <span class="mdi" :class="item.iconClass" aria-hidden="true" />
             <span>{{ item.title }}</span>
             <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
           </button>
@@ -76,27 +76,6 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
-import {
-  HomeFilled,
-  KeyOutlined,
-  SafetyCertificateOutlined,
-  DatabaseOutlined,
-  TeamOutlined,
-  FileTextOutlined,
-  UserOutlined,
-  CalendarOutlined,
-  SearchOutlined,
-  AppstoreOutlined,
-  ReadOutlined,
-  MessageOutlined,
-  DollarOutlined,
-  FolderOutlined,
-  MailOutlined,
-  BellOutlined,
-  HistoryOutlined,
-  SafetyCertificateFilled,
-} from '@ant-design/icons-vue'
-import type { Component } from 'vue'
 import { useUserStore } from '@/stores/user'
 import ProfileModal from '@/components/ProfileModal.vue'
 
@@ -108,7 +87,7 @@ interface MenuItem {
   path: string
   title: string
   permission?: string
-  icon: Component
+  iconClass: string
   badge?: number
 }
 
@@ -127,65 +106,65 @@ const menuGroups: MenuGroup[] = [
     key: 'permission',
     title: '权限管理 Permission',
     children: [
-      { path: '/permission/roles', title: '权限配置', permission: 'system:role:list', icon: KeyOutlined },
-      { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list', icon: SafetyCertificateOutlined },
-      { path: '/permission/base-data', title: '基础数据管理', permission: 'system:baseData:list', icon: DatabaseOutlined },
+      { path: '/permission/roles', title: '权限配置', permission: 'system:role:list', iconClass: 'mdi-key' },
+      { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list', iconClass: 'mdi-shield-account' },
+      { path: '/permission/base-data', title: '基础数据管理', permission: 'system:baseData:list', iconClass: 'mdi-database-cog' },
     ],
   },
   {
     key: 'user-center',
     title: '用户中心 Users',
     children: [
-      { path: '/users/students', title: '学生列表', permission: 'users:student:list', icon: TeamOutlined, badge: 2 },
-      { path: '/users/contracts', title: '合同管理', permission: 'users:contract:list', icon: FileTextOutlined },
-      { path: '/users/staff', title: '导师列表', permission: 'users:staff:list', icon: UserOutlined },
-      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'users:mentorSchedule:list', icon: CalendarOutlined },
+      { path: '/users/students', title: '学生列表', permission: 'users:student:list', iconClass: 'mdi-account-school', badge: 2 },
+      { path: '/users/contracts', title: '合同管理', permission: 'users:contract:list', iconClass: 'mdi-file-sign' },
+      { path: '/users/staff', title: '导师列表', permission: 'users:staff:list', iconClass: 'mdi-account-tie' },
+      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'users:mentorSchedule:list', iconClass: 'mdi-calendar-clock' },
     ],
   },
   {
     key: 'career',
     title: '求职中心 Career',
     children: [
-      { path: '/career/positions', title: '岗位信息', permission: 'career:position:list', icon: SearchOutlined },
-      { path: '/career/student-positions', title: '学生自添岗位', permission: 'career:studentPosition:list', icon: AppstoreOutlined, badge: 3 },
-      { path: '/career/job-overview', title: '学员求职总览', permission: 'career:jobOverview:list', icon: SearchOutlined, badge: 8 },
-      { path: '/career/mock-practice', title: '模拟应聘管理', permission: 'career:mockPractice:list', icon: MessageOutlined, badge: 3 },
+      { path: '/career/positions', title: '岗位信息', permission: 'career:position:list', iconClass: 'mdi-briefcase-search' },
+      { path: '/career/student-positions', title: '学生自添岗位', permission: 'career:studentPosition:list', iconClass: 'mdi-briefcase-plus', badge: 3 },
+      { path: '/career/job-overview', title: '学员求职总览', permission: 'career:jobOverview:list', iconClass: 'mdi-briefcase-eye', badge: 8 },
+      { path: '/career/mock-practice', title: '模拟应聘管理', permission: 'career:mockPractice:list', iconClass: 'mdi-account-voice', badge: 3 },
     ],
   },
   {
     key: 'teaching',
     title: '教学中心 Teaching',
     children: [
-      { path: '/teaching/class-records', title: '课程记录', permission: 'teaching:classRecord:list', icon: ReadOutlined },
-      { path: '/teaching/communication', title: '人际关系沟通记录', permission: 'teaching:communication:list', icon: MessageOutlined },
+      { path: '/teaching/class-records', title: '课程记录', permission: 'teaching:classRecord:list', iconClass: 'mdi-book-open-variant' },
+      { path: '/teaching/communication', title: '人际关系沟通记录', permission: 'teaching:communication:list', iconClass: 'mdi-message-text-clock' },
     ],
   },
   {
     key: 'finance',
     title: '财务中心 Finance',
     children: [
-      { path: '/finance/settlement', title: '课时结算', permission: 'finance:settlement:list', icon: DollarOutlined },
-      { path: '/finance/expense', title: '报销管理', permission: 'finance:expense:list', icon: FileTextOutlined },
+      { path: '/finance/settlement', title: '课时结算', permission: 'finance:settlement:list', iconClass: 'mdi-cash-check' },
+      { path: '/finance/expense', title: '报销管理', permission: 'finance:expense:list', iconClass: 'mdi-receipt' },
     ],
   },
   {
     key: 'resource',
     title: '资源中心 Resources',
     children: [
-      { path: '/resource/files', title: '文件', permission: 'resource:file:list', icon: FolderOutlined },
-      { path: '/resource/online-test-bank', title: '在线测试题库', permission: 'resource:onlineTestBank:list', icon: AppstoreOutlined, badge: 5 },
-      { path: '/resource/interview-bank', title: '真人面试题库', permission: 'resource:interviewBank:list', icon: UserOutlined, badge: 3 },
-      { path: '/resource/questions', title: '面试真题', permission: 'resource:question:list', icon: FileTextOutlined, badge: 5 },
+      { path: '/resource/files', title: '文件', permission: 'resource:file:list', iconClass: 'mdi-folder' },
+      { path: '/resource/online-test-bank', title: '在线测试题库', permission: 'resource:onlineTestBank:list', iconClass: 'mdi-monitor-cellphone', badge: 5 },
+      { path: '/resource/interview-bank', title: '真人面试题库', permission: 'resource:interviewBank:list', iconClass: 'mdi-account-tie-voice', badge: 3 },
+      { path: '/resource/questions', title: '面试真题', permission: 'resource:question:list', iconClass: 'mdi-file-document-edit', badge: 5 },
     ],
   },
   {
     key: 'profile',
     title: '个人中心 Profile',
     children: [
-      { path: '/profile/mailjob', title: '邮件', permission: 'profile:mailjob:list', icon: MailOutlined },
-      { path: '/profile/notice', title: '消息管理', permission: 'profile:notice:list', icon: BellOutlined },
-      { path: '/profile/complaints', title: '投诉建议', permission: 'profile:complaint:list', icon: MessageOutlined },
-      { path: '/profile/logs', title: '操作日志', permission: 'profile:log:list', icon: HistoryOutlined },
+      { path: '/profile/mailjob', title: '邮件', permission: 'profile:mailjob:list', iconClass: 'mdi-email-outline' },
+      { path: '/profile/notice', title: '消息管理', permission: 'profile:notice:list', iconClass: 'mdi-bell' },
+      { path: '/profile/complaints', title: '投诉建议', permission: 'profile:complaint:list', iconClass: 'mdi-message-alert' },
+      { path: '/profile/logs', title: '操作日志', permission: 'profile:log:list', iconClass: 'mdi-history' },
     ],
   },
 ]
@@ -207,6 +186,7 @@ const filteredMenuGroups = computed(() => {
 
 const displayName = computed(() => userStore.userInfo?.nickName || userStore.userInfo?.userName || '超级管理员')
 const userInitials = computed(() => {
+  if (userStore.permissions.includes('*:*:*')) return 'SA'
   const name = displayName.value.trim()
   if (!name) return 'SA'
   return name.slice(0, 2).toUpperCase()
@@ -306,6 +286,11 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
 }
 
+.logo-icon .mdi {
+  font-size: 20px;
+  line-height: 1;
+}
+
 .logo-text {
   font-size: 18px;
   font-weight: 700;
@@ -346,9 +331,10 @@ onBeforeUnmount(() => {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.nav-item :deep(svg) {
-  width: 18px;
-  height: 18px;
+.nav-item .mdi {
+  width: 24px;
+  font-size: 20px;
+  line-height: 1;
   flex-shrink: 0;
 }
 

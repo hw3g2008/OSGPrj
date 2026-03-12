@@ -200,6 +200,27 @@ def split_stories(requirement_doc):  # requirement_doc = SRS 文档（brainstorm
             continue  # 回到 INVEST 校验
 
         print("  覆盖率校验: ✅ 100%")
+
+        # --- 展示类 AC 校验 ---
+        display_issues = []
+        for story in stories:
+            has_display_ac = any(
+                is_display_acceptance(ac)  # 匹配"页面显示""列表列非空""展示""可见"等关键词
+                for ac in story.get("acceptance_criteria", [])
+            )
+            if not has_display_ac:
+                display_issues.append(f"{story['id']}: AC 缺少展示类验收（如'页面显示 XX'、'列表列非空'）")
+
+        if display_issues:
+            print(f"  展示类 AC 校验: ❌ {len(display_issues)} 个 Story 缺少展示类验收")
+            for issue in display_issues:
+                print(f"    - {issue}")
+            for story in stories:
+                if not any(is_display_acceptance(ac) for ac in story.get("acceptance_criteria", [])):
+                    story["acceptance_criteria"].append(f"页面正确展示{story['title']}相关数据，关键列非空")
+            continue  # 回到 INVEST 校验
+
+        print("  展示类 AC 校验: ✅ 全部通过")
         break  # Phase 2 通过
     else:
         print(f"❌ Phase 2 达到最大迭代次数 ({max_iterations}/{max_iterations})")

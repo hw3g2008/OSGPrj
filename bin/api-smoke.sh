@@ -4,15 +4,36 @@
 # 退出码: 0=全通过, 2=参数错误, 3=依赖缺失, 4=HTTP状态码失败, 5=业务字段失败
 set -uo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODULE="${1:-}"
 STORY="${2:-all}"
-BACKEND_PORT="${BACKEND_PORT:-8080}"
+BACKEND_PORT="${BACKEND_PORT:-}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 BASE_URL="${BASE_URL:-}"
 BASE_HEALTH_URL="${BASE_HEALTH_URL:-}"
 AUTH_TOKEN="${AUTH_TOKEN:-}"
 SMOKE_EXIT=0
 SMOKE_DETAIL=""
+
+load_runtime_contract() {
+  local resolved_contract_file="${RUNTIME_CONTRACT_FILE:-}"
+  local resolved_scan_dir="${RUNTIME_CONTRACT_SCAN_DIR:-deploy}"
+  local resolved_output
+
+  resolved_output="$(
+    RUNTIME_CONTRACT_SCAN_DIR="${resolved_scan_dir}" \
+    bash "${SCRIPT_DIR}/resolve-runtime-contract.sh" "${resolved_contract_file}" 2>/dev/null
+  )" || return 1
+
+  eval "${resolved_output}"
+
+  BACKEND_PORT="${BACKEND_PORT:-${RESOLVED_BACKEND_PORT:-}}"
+  BASE_URL="${BASE_URL:-${RESOLVED_BASE_URL:-}}"
+  BASE_HEALTH_URL="${BASE_HEALTH_URL:-${RESOLVED_BASE_HEALTH_URL:-}}"
+}
+
+load_runtime_contract || true
+BACKEND_PORT="${BACKEND_PORT:-8080}"
 
 if [[ -z "${BASE_URL}" ]]; then
   if [[ -n "${BASE_HEALTH_URL}" ]]; then
@@ -24,6 +45,8 @@ if [[ -z "${BASE_URL}" ]]; then
     BASE_URL="http://127.0.0.1:${BACKEND_PORT}"
   fi
 fi
+
+HEALTH_URL="${BASE_HEALTH_URL:-${BASE_URL}${HEALTH_PATH}}"
 
 # --- 审计报告 trap（成功/失败都落盘）---
 REPORT_DIR="osg-spec-docs/tasks/audit"
@@ -68,7 +91,7 @@ command -v jq >/dev/null || { SMOKE_DETAIL="依赖缺失: jq"; SMOKE_EXIT=3; exi
 echo "=== API Smoke: module=${MODULE}, story=${STORY}, base=${BASE_URL} ==="
 
 # --- 健康检查 ---
-resp="$(curl -sS -w '\n%{http_code}' "${BASE_URL}${HEALTH_PATH}" 2>/dev/null || true)"
+resp="$(curl -sS -w '\n%{http_code}' "${HEALTH_URL}" 2>/dev/null || true)"
 body="$(echo "${resp}" | head -n1)"
 code="$(echo "${resp}" | tail -n1)"
 

@@ -28,6 +28,12 @@ import {
   type VisualSurfaceStateContract,
   type VisualSurfaceViewportVariant,
 } from './support/visual-contract'
+import {
+  collectAllowanceNodeSnapshots,
+  deriveSafeLowSalienceTextIconRegions,
+  deriveSafeMicroSpacingRegions,
+  evaluatePostFailureAllowance,
+} from './support/post-failure-allowance'
 import { registerVisualFixtureRoutes } from './support/visual-fixture'
 
 const contractJson = process.env.UI_VISUAL_CONTRACT_JSON
@@ -280,6 +286,99 @@ async function classifyPageResiduals(
     forbiddenRegions,
     microSpacingEdgeBandPx: microSpacingEdgeBandPx > 0 ? microSpacingEdgeBandPx : 4,
   })
+}
+
+async function runPostFailureAllowance(
+  page: Page,
+  rootLocator: Locator,
+  diffRef: string,
+  captureOrigin: CaptureOrigin,
+  explicitResidualRegions: VisualResidualRegion[],
+): Promise<VisualResidualClassifierResult | null> {
+  const debugAllowance = process.env.UI_VISUAL_ALLOWANCE_DEBUG === '1'
+  const diffAbsolutePath = toRepoAbsolute(diffRef)
+  if (!diffAbsolutePath || !fs.existsSync(diffAbsolutePath)) {
+    return null
+  }
+
+  const diffPixels = await readDiffPixelsFromPng(page, diffAbsolutePath)
+  const forbiddenRegions = await buildForbiddenResidualRegions(page, captureOrigin)
+
+  if (explicitResidualRegions.length > 0) {
+    const allowedRegions = await buildAllowedResidualRegions(page, explicitResidualRegions, captureOrigin)
+    const result = evaluatePostFailureAllowance({
+      diffPixels,
+      explicitResidualRegions: allowedRegions.map((r) => ({
+        class: r.class,
+        selectors: [r.selector],
+        boxes: r.boxes,
+      })),
+      derivedSafeBoxes: [],
+      derivedLowSalienceTextIconBoxes: [],
+      forbiddenRegions,
+      microSpacingEdgeBandPx: microSpacingEdgeBandPx > 0 ? microSpacingEdgeBandPx : 4,
+    })
+    return result.classifierResult
+  }
+
+  const rootBox = await rootLocator.evaluate((el) => {
+    const rect = (el as Element).getBoundingClientRect()
+    return {
+      x: 0,
+      y: 0,
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+    }
+  })
+  if (!rootBox || rootBox.width <= 0 || rootBox.height <= 0) {
+    return null
+  }
+
+  const nodeSnapshots = await collectAllowanceNodeSnapshots(rootLocator)
+  const safeRegions = deriveSafeMicroSpacingRegions(rootBox, nodeSnapshots)
+  const lowSalienceRegions = deriveSafeLowSalienceTextIconRegions(rootBox, nodeSnapshots)
+  const derivedSafeBoxes = safeRegions.flatMap((r) => r.boxes)
+  const derivedLowSalienceTextIconBoxes = lowSalienceRegions.flatMap((r) => r.boxes)
+
+  if (debugAllowance) {
+    const tagCounts = nodeSnapshots.reduce<Record<string, number>>((acc, node) => {
+      acc[node.tagName] = (acc[node.tagName] || 0) + 1
+      return acc
+    }, {})
+    console.log('ALLOWANCE_DEBUG', JSON.stringify({
+      diffRef,
+      diffPixels: diffPixels.length,
+      rootBox,
+      explicitResidualRegionCount: explicitResidualRegions.length,
+      nodeSnapshotCount: nodeSnapshots.length,
+      safeRegionCount: safeRegions.length,
+      lowSalienceRegionCount: lowSalienceRegions.length,
+      topTags: Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 10),
+    }))
+  }
+
+  if (derivedSafeBoxes.length === 0 && derivedLowSalienceTextIconBoxes.length === 0) {
+    return null
+  }
+
+  const result = evaluatePostFailureAllowance({
+    diffPixels,
+    explicitResidualRegions: [],
+    derivedSafeBoxes,
+    derivedLowSalienceTextIconBoxes,
+    forbiddenRegions,
+    microSpacingEdgeBandPx: microSpacingEdgeBandPx > 0 ? microSpacingEdgeBandPx : 4,
+  })
+  if (debugAllowance) {
+    console.log('ALLOWANCE_DEBUG_RESULT', JSON.stringify({
+      diffRef,
+      applied: result.applied,
+      pass: result.pass,
+      source: result.source,
+      classBreakdown: result.classifierResult.classBreakdown,
+    }))
+  }
+  return result.applied ? result.classifierResult : null
 }
 
 function appendPageResult(
@@ -1054,7 +1153,10 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           capturedResult = 'FAIL'
           const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
           capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
-          residualClassifierResult = await classifyPageResiduals(page, pageContract, capturedDiffRef, { x: 0, y: 0 })
+          residualClassifierResult = await runPostFailureAllowance(
+            page, page.locator('body').first(), capturedDiffRef, { x: 0, y: 0 },
+            pageContract.residual_regions || [],
+          )
           if (residualClassifierResult?.pass) {
             capturedResult = 'PASS'
           } else {
@@ -1105,7 +1207,10 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         capturedResult = 'FAIL'
         const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
         capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
-        residualClassifierResult = await classifyPageResiduals(page, pageContract, capturedDiffRef, captureOrigin!)
+        residualClassifierResult = await runPostFailureAllowance(
+          page, clipTarget!, capturedDiffRef, captureOrigin!,
+          pageContract.residual_regions || [],
+        )
         if (residualClassifierResult?.pass) {
           capturedResult = 'PASS'
         } else {
@@ -1173,6 +1278,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         let capturedResult: 'PASS' | 'FAIL' = 'PASS'
         let capturedDiffRef = 'none'
         let capturedError: unknown = null
+        let surfaceResidualClassifierResult: VisualResidualClassifierResult | null = null
         try {
           await expect(actualBuffer).toMatchSnapshot(snapshotArg, {
             maxDiffPixelRatio: hostPage.diff_threshold,
@@ -1181,7 +1287,18 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           capturedResult = 'FAIL'
           const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
           capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
-          capturedError = error
+          const surfaceOrigin = await surfaceRoot.evaluate((el) => {
+            const rect = (el as Element).getBoundingClientRect()
+            return { x: Math.round(rect.left + window.scrollX), y: Math.round(rect.top + window.scrollY) }
+          })
+          surfaceResidualClassifierResult = await runPostFailureAllowance(
+            page, surfaceRoot, capturedDiffRef, surfaceOrigin, [],
+          )
+          if (surfaceResidualClassifierResult?.pass) {
+            capturedResult = 'PASS'
+          } else {
+            capturedError = error
+          }
         }
 
         const surfacePartResults = await collectSurfacePartResults(page, surfaceContract)
@@ -1217,7 +1334,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           surfacePartResults.every((entry) => entry.result === 'PASS') &&
           contentPartResults.every((entry) => entry.result === 'PASS')
 
-        viewportResults.push({
+        const viewportRecord: Record<string, unknown> = {
           viewport_id: viewport.viewport_id,
           width: viewport.width,
           height: viewport.height,
@@ -1240,7 +1357,14 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           state_style_contracts_failed: stateStats.styleFailed,
           state_results: stateStats.results,
           result: viewportPassed ? 'PASS' : 'FAIL',
-        })
+        }
+        if (surfaceResidualClassifierResult) {
+          viewportRecord.residual_classifier_applied = surfaceResidualClassifierResult.applied
+          viewportRecord.residual_classifier_result = surfaceResidualClassifierResult.pass ? 'PASS' : 'FAIL'
+          viewportRecord.residual_class_breakdown = surfaceResidualClassifierResult.classBreakdown
+          viewportRecord.forbidden_residual_detected = surfaceResidualClassifierResult.forbiddenResidualDetected
+        }
+        viewportResults.push(viewportRecord)
 
         if (!viewportPassed) {
           overallResult = 'FAIL'

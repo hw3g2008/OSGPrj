@@ -2,85 +2,98 @@
   <div class="roles-page">
     <div class="page-header">
       <div>
-        <h2>权限配置</h2>
-        <p class="subtitle">配置后台角色能访问的功能模块</p>
+        <h2 class="page-title">
+          权限配置
+          <span class="page-title-en">Roles &amp; Permissions</span>
+        </h2>
+        <p class="page-sub subtitle">配置后台角色能访问的功能模块</p>
       </div>
-      <a-button
-        type="primary"
-        class="surface-trigger surface-trigger--primary"
+      <button
+        type="button"
+        class="permission-button permission-button--primary surface-trigger surface-trigger--primary"
         data-surface-trigger="modal-new-role"
         @click="handleAdd"
       >
-        <template #icon><PlusOutlined /></template>
-        新增角色
-      </a-button>
+        <i class="mdi mdi-plus" aria-hidden="true"></i>
+        <span>新增角色</span>
+      </button>
     </div>
 
-    <a-table
-      :columns="columns"
-      :data-source="roleList"
-      :loading="loading"
-      :pagination="pagination"
-      row-key="roleId"
-      @change="handleTableChange"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'roleName'">
-          <span class="role-name">{{ record.roleName }}</span>
-        </template>
-
-        <template v-if="column.key === 'remark'">
-          <span class="role-desc">{{ record.remark || '-' }}</span>
-        </template>
-
-        <template v-if="column.key === 'menus'">
-          <template v-if="record.roleKey === 'super_admin'">
-            <a-tag color="gold">全部权限</a-tag>
-          </template>
-          <template v-else>
-            <a-tag v-for="menu in record.menuNames?.slice(0, 5)" :key="menu" color="blue">
-              {{ menu }}
-            </a-tag>
-            <a-tag v-if="record.menuNames?.length > 5">+{{ record.menuNames.length - 5 }}</a-tag>
-          </template>
-        </template>
-
-        <template v-if="column.key === 'userCount'">
-          {{ record.userCount || 0 }}人
-        </template>
-
-        <template v-if="column.key === 'updateTime'">
-          {{ formatDate(record.updateTime) }}
-        </template>
-
-        <template v-if="column.key === 'action'">
-          <template v-if="record.roleKey === 'super_admin'">
-            <span class="system-role">系统角色</span>
-          </template>
-          <template v-else>
-            <button
-              type="button"
-              class="surface-trigger surface-trigger--inline surface-trigger-button"
-              data-surface-trigger="modal-edit-role"
-              data-surface-sample="modal-edit-role"
-              :data-surface-sample-key="record.roleKey"
-              @click="handleEdit(record)"
-            >
-              编辑
-            </button>
-            <a-button
-              v-if="!record.userCount"
-              type="link"
-              size="small"
-              danger
-              @click="handleDelete(record)"
-            >
-              删除
-            </a-button>
-          </template>
-        </template>
-      </template>
-    </a-table>
+    <div class="permission-card">
+      <div class="permission-card__body permission-card__body--flush">
+        <table class="permission-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>角色名称</th>
+              <th>角色描述</th>
+              <th>权限模块</th>
+              <th>员工数</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="record in roleList" :key="record.roleId">
+              <td>{{ record.roleId }}</td>
+              <td><strong>{{ record.roleName }}</strong></td>
+              <td class="muted-copy">{{ record.remark || '-' }}</td>
+              <td>
+                <div class="permission-pill-group">
+                  <template v-if="record.roleKey === 'super_admin'">
+                    <span class="permission-pill permission-pill--purple">全部权限</span>
+                  </template>
+                  <template v-else>
+                    <span
+                      v-for="menu in record.menuNames?.slice(0, 5)"
+                      :key="menu"
+                      :class="['permission-pill', getPermissionClassName(menu)]"
+                    >
+                      {{ menu }}
+                    </span>
+                    <span
+                      v-if="record.menuNames?.length > 5"
+                      class="permission-pill permission-pill--default"
+                    >
+                      +{{ record.menuNames.length - 5 }}
+                    </span>
+                  </template>
+                </div>
+              </td>
+              <td>{{ record.userCount || 0 }}人</td>
+              <td>{{ formatDate(record.updateTime) }}</td>
+              <td>
+                <template v-if="record.roleKey === 'super_admin'">
+                  <span class="system-role">系统角色</span>
+                </template>
+                <template v-else>
+                  <div class="permission-actions">
+                    <button
+                      type="button"
+                      class="permission-action surface-trigger surface-trigger--inline"
+                      data-surface-trigger="modal-edit-role"
+                      data-surface-sample="modal-edit-role"
+                      :data-surface-sample-key="record.roleKey"
+                      @click="handleEdit(record)"
+                    >
+                      编辑
+                    </button>
+                    <button
+                      v-if="!record.userCount"
+                      type="button"
+                      class="permission-action permission-action--danger"
+                      @click="handleDelete(record)"
+                    >
+                      删除
+                    </button>
+                  </div>
+                </template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <RoleModal
       v-model:visible="modalVisible"
@@ -92,10 +105,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { PlusOutlined } from '@ant-design/icons-vue'
-import { getRoleList, getMenuTree, deleteRole } from '@/api/role'
+import { getRoleList, getMenuTree, deleteRole, getRoleMenuIds } from '@/api/role'
+import { getPermissionClassName } from '@osg/shared/utils/permissionColors'
 import RoleModal from './components/RoleModal.vue'
 import { normalizeMenuTree } from './menuTree'
 import dayjs from 'dayjs'
@@ -106,22 +119,6 @@ const menuTree = ref<any[]>([])
 const modalVisible = ref(false)
 const currentRole = ref<any>(null)
 
-const pagination = reactive({
-  current: 1,
-  pageSize: 10,
-  total: 0
-})
-
-const columns = [
-  { title: 'ID', dataIndex: 'roleId', key: 'roleId', width: 80 },
-  { title: '角色名称', dataIndex: 'roleName', key: 'roleName', width: 150 },
-  { title: '角色描述', dataIndex: 'remark', key: 'remark', width: 200 },
-  { title: '权限模块', key: 'menus', width: 300 },
-  { title: '员工数', key: 'userCount', width: 100 },
-  { title: '更新时间', key: 'updateTime', width: 120 },
-  { title: '操作', key: 'action', width: 150 }
-]
-
 const formatDate = (date: string) => {
   return date ? dayjs(date).format('MM/DD/YYYY') : '-'
 }
@@ -130,11 +127,56 @@ const loadRoleList = async () => {
   try {
     loading.value = true
     const res = await getRoleList({
-      pageNum: pagination.current,
-      pageSize: pagination.pageSize
+      pageNum: 1,
+      pageSize: 10
     })
-    roleList.value = res.rows || []
-    pagination.total = res.total || 0
+    const roles = res.rows || []
+    
+    // 为每个角色加载权限信息
+    const rolesWithMenus = await Promise.all(
+      roles.map(async (role) => {
+        if (role.roleKey === 'super_admin') {
+          // 超级管理员显示全部权限
+          return {
+            ...role,
+            menuNames: ['全部权限']
+          }
+        }
+        
+        try {
+          const menuRes = await getRoleMenuIds(role.roleId)
+          const menuMap = new Map()
+          
+          // 构建菜单映射
+          const buildMenuMap = (menus: any[]) => {
+            menus.forEach(menu => {
+              menuMap.set(menu.id, menu.label)
+              if (menu.children) {
+                buildMenuMap(menu.children)
+              }
+            })
+          }
+          buildMenuMap(menuRes.menus || [])
+          
+          // 获取已选权限的名称
+          const menuNames = (menuRes.checkedKeys || [])
+            .map(id => menuMap.get(id))
+            .filter(Boolean)
+          
+          return {
+            ...role,
+            menuNames: menuNames.length > 0 ? menuNames : ['未分配权限']
+          }
+        } catch {
+          return {
+            ...role,
+            menuNames: ['权限加载失败']
+          }
+        }
+      })
+    )
+    
+    roleList.value = rolesWithMenus
   } catch (error) {
     message.error('加载角色列表失败')
   } finally {
@@ -149,12 +191,6 @@ const loadMenuTree = async () => {
   } catch (error) {
     console.error('加载菜单树失败', error)
   }
-}
-
-const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
-  pagination.pageSize = pag.pageSize
-  loadRoleList()
 }
 
 const handleAdd = () => {
@@ -193,56 +229,174 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .roles-page {
+  padding: 8px 4px 0;
+
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 24px;
-
-    h2 {
-      margin: 0 0 4px;
-      font-size: 20px;
-    }
-
-    .subtitle {
-      margin: 0;
-      color: #666;
-      font-size: 14px;
-    }
   }
 
-  .surface-trigger {
-    display: inline-flex;
-
-    &--inline {
-      align-items: center;
-    }
+  .page-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: normal;
+    color: #1e293b;
   }
 
-  .surface-trigger-button {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--primary);
+  .page-title-en {
+    margin-left: 8px;
     font-size: 14px;
-    line-height: 1.5714285714;
+    font-weight: 400;
+    color: #94a3b8;
+  }
+
+  .page-sub {
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: normal;
+    color: #64748b;
+  }
+
+  .permission-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
     cursor: pointer;
 
-    &:hover {
-      color: var(--primary-dark, #4f46e5);
+    &--primary {
+      color: #fff;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     }
   }
 
-  .role-name {
-    font-weight: 600;
+  .permission-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
   }
 
-  .role-desc {
-    color: #999;
+  .permission-card__body {
+    padding: 22px;
+  }
+
+  .permission-card__body--flush {
+    padding: 0;
+  }
+
+  .permission-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: 14px;
+      line-height: normal;
+      color: #1e293b;
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      background: #f8fafc;
+      letter-spacing: 0.02em;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+  }
+
+  .muted-copy {
+    color: #94a3b8;
+    font-size: 13px;
+  }
+
+  .permission-pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .permission-pill {
+    display: inline-flex;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+
+    &--info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    &--warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    &--success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    &--danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    &--purple {
+      background: #e0e7ff;
+      color: #4f46e5;
+    }
+
+    &--teal {
+      background: #ccfbf1;
+      color: #115e59;
+    }
+
+    &--default {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+  }
+
+  .permission-actions {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .permission-action {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: #6366f1;
+    font-size: 13px;
+    cursor: pointer;
+
+    &--danger {
+      color: #ef4444;
+    }
   }
 
   .system-role {
-    color: #999;
+    font-size: 12px;
+    color: #94a3b8;
   }
 }
 </style>

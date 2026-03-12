@@ -87,7 +87,7 @@ def can_claim_done(task):
 | | 🆕 真实性守卫 | `delivery_truth_guard.py --stage verify` | 不允许降级实现，外部副作用必须声明真实 provider 与 evidence path |
 | | 🆕 内容契约守卫 | `delivery_content_guard.py --stage verify` | 外部输出内容不得命中 forbidden literals，且必须包含 required tokens |
 | | 🆕 关键 UI 证据守卫 | `ui_critical_evidence_guard.py --stage verify` | 关键 surface 不允许整体 mask，style/state/relation evidence 必须完整且通过 |
-| **Phase 2 功能验收** | 全量测试 🔴 | 执行 mvn test / pnpm test | exit_code=0 |
+| **Phase 2 功能验收** | 全量测试 🔴 | 执行 mvn test / pnpm test；含 frontend Ticket 时追加 `bash bin/e2e-api-gate.sh {module} full` | exit_code=0 |
 | | 🆕 行为契约守卫 | `behavior_contract_guard.py --stage verify` | 全量测试生成的场景证据存在，same/distinct 不变量成立 |
 | | AC 覆盖率 | 逐条检查 Story AC | 每个 AC 被至少 1 个已完成 Ticket 覆盖 |
 | | 覆盖率汇总 | 解析 JaCoCo/Vitest 报告 | 达到 config 中定义的门槛 |
@@ -291,6 +291,14 @@ def verify_story(story_id):
                         warnings.append(("coverage_warn", "frontend_line", f"[SOFT] {msg}"))
                     else:
                         issues.append(("coverage", "frontend_line", msg))
+
+            # 前端 E2E 测试（全量集成验证）
+            if not any(i[0] == "full_test" and i[1] == "frontend" for i in issues):
+                module = state.current_requirement
+                e2e_result = bash(f"bash bin/e2e-api-gate.sh {module} full")
+                if e2e_result.exit_code != 0:
+                    issues.append(("e2e_test", "frontend",
+                        f"前端 E2E 测试失败: {extract_failure_summary(e2e_result)}"))
 
         # ------------------------------------------
         # 2.1b 集成测试（如果启用）

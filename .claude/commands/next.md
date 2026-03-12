@@ -9,7 +9,7 @@
 
 ## 说明
 
-执行下一个待处理的 Ticket，遵循 TDD 流程。
+执行下一个待处理的 Ticket，根据 Ticket.type 选择流程（TDD / UI 还原 / 前端功能含 E2E / 配置）。
 
 ## 执行流程
 

@@ -41,7 +41,7 @@ metadata:
 
 ⚠️ UI / 前端铁律（type: frontend-ui / frontend）：
 9. lint + build 必须通过才能完成
-10. 前端功能类建议编写单元测试（分支覆盖率 ≥ 90%）
+10. frontend-ui / frontend 必须通过 E2E 测试（bash bin/e2e-api-gate.sh {module} full）
 11. 含真实副作用 / 关键状态变更的能力必须通过 `delivery_truth_guard.py --stage next`
 12. 含 critical_surfaces 的页面必须通过 `ui_critical_evidence_guard.py --stage next`
 
@@ -192,6 +192,11 @@ metadata:
   ├── 失败 ──→ 修复（最多重试 3 次）
   │
   ▼ 通过
+[E2E 验证] ─→ bash bin/e2e-api-gate.sh {module} full
+  │
+  ├── 失败 ──→ 修复（最多重试 3 次）
+  │
+  ▼ 通过
 [UI 自我审查清单]
   │
   ├── 有问题 ──→ 修复
@@ -207,7 +212,49 @@ metadata:
 
 ### 流程 C：前端功能流程（type: frontend）
 
-与流程 A 类似，但验收标准为 lint + build 通过，无强制单元测试要求。详见 `42_实现细节.md` 的前端测试策略。
+```
+开始
+  │
+  ▼
+[读取 Ticket] ─→ 获取 ticket_id, allowed_paths, acceptance_criteria
+  │
+  ▼
+[创建 Checkpoint] ─→ 保存当前状态
+  │
+  ▼
+[实现代码] ─→ 编写前端功能代码
+  │
+  ▼
+[Lint 检查] ─→ 运行 lint 命令
+  │
+  ├── 失败 ──→ 修复（最多重试 3 次）
+  │
+  ▼ 通过
+[构建检查] ─→ 运行 build 命令
+  │
+  ├── 失败 ──→ 修复（最多重试 3 次）
+  │
+  ▼ 通过
+[单元测试] ─→ pnpm --dir {pkg_dir} test（建议覆盖关键逻辑）
+  │
+  ▼
+[E2E 验证] ─→ bash bin/e2e-api-gate.sh {module} full
+  │
+  ├── 失败 ──→ 修复（最多重试 3 次）
+  │
+  ▼ 通过
+[前端功能审查清单]
+  │
+  ├── 有问题 ──→ 修复
+  │
+  ▼ 全部通过
+[更新状态] ─→ ticket.status = done
+  │
+  ▼
+[输出结果]
+```
+
+> ❗ **注意**：流程 C 完成后，仍需经过增强终审（Step 4.5）+ Level 1/2 验证（Step 5~6）+ 写入 evidence（Step 7）+ 更新状态（Step 8），与流程 A 的 Step 4~8 相同。
 
 ### 流程 D：测试流程（type: test）
 
@@ -286,6 +333,29 @@ metadata:
 - [ ] build 命令通过？
 - [ ] 无编译 / 类型错误？
 - [ ] 样式作用域隔离，无全局污染？
+
+### 前端功能审查（type: frontend）
+
+#### API 字段完整性
+- [ ] PUT/POST API 的 TypeScript 参数包含后端所有 `@NotBlank/@NotNull` 必填字段？
+- [ ] 编辑表单的 `formState` 初始化时包含所有必填字段？
+- [ ] 保存前拼装的请求体没有遗漏字段？
+
+#### UI 一致性
+- [ ] 状态文字引用全局常量（如 STATUS_TEXT），未硬编码中英文？
+- [ ] 颜色使用标准配置（如 permissionColors），未硬编码色值？
+- [ ] 列表页展示字段与 Story AC 中的"必显字段"一致？
+
+#### 错误处理
+- [ ] API 调用（PUT/POST/DELETE）传入了 `customErrorMessage` 参数？
+- [ ] 组件内未直接调用 `message.error()`（错误提示统一由拦截器处理）？
+- [ ] 网络异常和业务异常有区分处理？
+
+#### E2E 验证
+- [ ] `bash bin/e2e-api-gate.sh {module} full` 通过？
+- [ ] 列表页关键列（角色、权限、状态等）非空？
+- [ ] 编辑弹窗打开后已有数据正确预填？
+- [ ] 保存操作成功且列表刷新后数据已更新？
 
 ## 执行伪代码
 
@@ -553,9 +623,13 @@ def run_verification(ticket, config):
             cmd = config.commands.test  # 优先使用指定测试类: mvn test -Dtest={TestClass}
 
     elif ticket.type in ("frontend", "frontend-ui"):
-        # 前端：test + build（从 ticket.allowed_paths 推导 pkg_dir）
+        # 前端：test + build + E2E（从 ticket.allowed_paths 推导 pkg_dir）
         pkg_dir = resolve_frontend_pkg_dir(ticket)  # e.g. "osg-frontend/packages/admin"
-        cmd = f"pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build"
+        module = resolve_module_name(ticket)  # e.g. "permission"
+        if ticket.type == "frontend":
+            cmd = f"pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full"
+        else:  # frontend-ui
+            cmd = f"pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full"
 
     elif ticket.type == "config":
         # 配置：语法检查
@@ -773,8 +847,8 @@ def incremental_verify(ticket, story, state):
 | `backend` | `mvn compile -pl {module} -am` 或 `mvn test -Dtest={TestClass}` | "code review" |
 | `database` | `mvn compile -pl ruoyi-common -am`（至少编译通过） | "code review" |
 | `test` | `mvn test -pl {module} -am`（**必须是 test，不是 compile**） | "mvn compile" |
-| `frontend-ui` | `pnpm --dir {pkg_dir} build` | "UI review" |
-| `frontend` | `pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build` | "code review" |
+| `frontend-ui` | `pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full` | "UI review" |
+| `frontend` | `pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full` | "code review" |
 | `config` | 具体语法检查命令（如 `yamllint`、`jsonlint`） | "code review" |
 
 > ⚠️ **注意**：使用前先检查目标项目的 `package.json` scripts，确认命令存在。例如若无 `lint` 脚本，则不可使用 `pnpm lint`。
@@ -813,8 +887,8 @@ def validate_evidence_command(command: str) -> bool:
 | backend | `${config.commands.test}` 或 `mvn test -Dtest={TestClass}` | exit_code = 0 |
 | database | `mvn compile -pl ruoyi-admin -am` (至少编译通过) | exit_code = 0 |
 | test | `${config.commands.test}` 或指定测试类 | exit_code = 0 且测试通过 |
-| frontend | `pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build` | 两个命令 exit_code = 0 |
-| frontend-ui | `pnpm --dir {pkg_dir} build` | exit_code = 0 |
+| frontend | `pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full` | 三个命令 exit_code = 0 |
+| frontend-ui | `pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full` | 两个命令 exit_code = 0 |
 | config | 语法检查或启动验证（视具体配置而定） | exit_code = 0 |
 
 ### Step 2: 检查退出码

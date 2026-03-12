@@ -36,8 +36,8 @@ COMMAND_PATTERNS = {
     "backend":     (["mvn"],               "必须包含 mvn"),
     "database":    (["mvn", "compile"],     "必须包含 mvn compile"),
     "test":        (["test"],              "必须包含 test"),
-    "frontend-ui": (["build"],             "必须包含 build"),
-    "frontend":    (["test", "build"],     "必须同时包含 test 和 build"),
+    "frontend-ui": (["build", "e2e"],      "必须同时包含 build 和 e2e"),
+    "frontend":    (["test", "build", "e2e"], "必须同时包含 test、build 和 e2e"),
     "config":      ([],                   "须为可执行命令，不可为空（由上层非空检查保证）"),
 }
 

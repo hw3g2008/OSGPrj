@@ -6,10 +6,10 @@
         <h1 class="dashboard__title">欢迎回来，管理员</h1>
         <p class="dashboard__date">今天是 {{ todayStr }}</p>
       </div>
-      <a-button class="dashboard__refresh" @click="fetchAll">
-        <template #icon><ReloadOutlined /></template>
-        刷新数据
-      </a-button>
+      <button type="button" class="dashboard__refresh" @click="fetchAll">
+        <span class="mdi mdi-refresh" aria-hidden="true" />
+        <span>刷新数据</span>
+      </button>
     </div>
 
     <!-- 待处理事项提醒 -->
@@ -34,7 +34,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { ReloadOutlined } from '@ant-design/icons-vue'
 import {
   getDashboardStats,
   getDashboardTodos,
@@ -99,7 +98,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .dashboard {
-  padding-bottom: 2px;
+  padding-bottom: 1px;
 
   &__welcome {
     display: flex;
@@ -131,6 +130,19 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 6px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border, #E2E8F0);
+    background: #fff;
+    color: var(--text2, #64748B);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+
+    .mdi {
+      font-size: 16px;
+      line-height: 1;
+    }
   }
 
   &__two-col {
@@ -147,7 +159,7 @@ onMounted(() => {
   &__right {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 0;
   }
 }
 </style>

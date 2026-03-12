@@ -1,12 +1,12 @@
 <template>
-  <a-card class="quick-actions">
-    <template #title>
-      <span class="quick-actions__title-wrap">
+  <div class="dashboard-card quick-actions">
+    <div class="dashboard-card__header">
+      <span class="dashboard-card__title quick-actions__title-wrap">
         <span class="mdi mdi-lightning-bolt quick-actions__title-icon" />
         <span>快捷操作</span>
       </span>
-    </template>
-    <div class="quick-actions__grid">
+    </div>
+    <div class="dashboard-card__body quick-actions__body">
       <button
         v-for="action in actions"
         :key="action.label"
@@ -17,7 +17,7 @@
         <span>{{ action.label }}</span>
       </button>
     </div>
-  </a-card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -35,40 +35,21 @@ const actions = [
 
 <style scoped lang="scss">
 .quick-actions {
-  :deep(.ant-card) {
-    border-radius: 16px;
-    box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
-  }
-
-  :deep(.ant-card-head) {
-    min-height: auto;
-    padding: 15px 22px;
-    border-bottom: 1px solid var(--border, #E2E8F0);
-  }
-
-  :deep(.ant-card-head-title) {
-    padding: 0;
-  }
-
-  :deep(.ant-card-body) {
-    padding: 22px;
-  }
-
   &__title-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    gap: 0;
   }
 
   &__title-icon {
     color: var(--text2, #64748B);
     font-size: 18px;
+    margin-right: 6px;
   }
 
-  &__grid {
+  &__body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    padding: 22px;
   }
 
   &__btn {
@@ -78,7 +59,7 @@ const actions = [
     height: 42px;
     gap: 6px;
     padding: 0 20px;
-    background: var(--bg, #F8FAFC);
+    background: #fff;
     border: 1px solid var(--border, #E2E8F0);
     border-radius: 10px;
     font-size: 14px;
@@ -97,6 +78,29 @@ const actions = [
       background: var(--primary-light, #EEF2FF);
       border-color: var(--primary, #6366F1);
     }
+  }
+}
+
+.dashboard-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
+  margin-bottom: 20px;
+
+  &__header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text, #1E293B);
   }
 }
 </style>
