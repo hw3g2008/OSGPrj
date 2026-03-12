@@ -37,11 +37,14 @@ STORY_TEST_SCRIPTS = [
     "security_contract_guard.py",
     "plan_standard_guard_selftest.py",
     "plan_standard_guard.py",
+    "module_readiness_guard.py",
+    "module_readiness_guard_selftest.py",
 ]
 
 # 仅做存在性校验，不做无参可执行校验（需要业务参数）
 NON_RUNNABLE_SCRIPTS = {
     "security_contract_guard.py",
+    "module_readiness_guard.py",
 }
 
 # 事件写入点：文件中应包含 append_workflow_event 调用或说明

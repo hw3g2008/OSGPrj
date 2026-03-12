@@ -20,12 +20,16 @@
    - PRD 已存在 → 询问用户: 重新生成 or 使用已有
    - 有 html_issues → 写入 {module}-DECISIONS.md → PM 文件裁决 → 更新 PRD → 重跑
    - 安全阀: 3轮仍有问题 → 输出 {module}-DECISIONS.md → 阻塞
-4. Phase 1: 收集输入 + 生成 SRS 初稿
-5. Phase 2: 循环正向/反向/PRD覆盖率/UI专项校验（直到全部 ✅）
-6. Phase 3: 增强全局终审（连续两轮无修改通过）
-7. Phase 4: HTML 原型全量校验（差异分 A/B/C/D 四类）
-8. 输出最终需求文档 + 决策日志 {module}-DECISIONS.md（如有 B/C/D 类）
-9. 更新 workflow:
+4. 🆕 上游依赖检查（读取 module-readiness.yaml，检查 provider 是否 ready）
+   - 无外部依赖 → 继续
+   - 有未就绪依赖 → 写入 {module}-DECISIONS.md (source=phase1_dependency) → 阻塞
+   - 全部就绪 → 将上游 SRS/接口定义加入 context
+5. Phase 1: 收集输入 + 生成 SRS 初稿
+6. Phase 2: 循环正向/反向/PRD覆盖率/UI专项校验（直到全部 ✅）
+7. Phase 3: 增强全局终审（连续两轮无修改通过）
+8. Phase 4: HTML 原型全量校验（差异分 A/B/C/D 四类）
+9. 输出最终需求文档 + 决策日志 {module}-DECISIONS.md（如有 B/C/D 类）
+10. 更新 workflow:
    - 无问题: current_step = "brainstorm_done", next_step = "split_story"
    - 有问题: current_step = "brainstorm_pending_confirm", 阻塞
 ```

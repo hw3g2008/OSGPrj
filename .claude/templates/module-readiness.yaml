@@ -1,0 +1,27 @@
+# Module Readiness Registry Template
+# 路径: ${config.paths.tasks.module_readiness}
+# 职责: 表达"某模块当前是否能被下游作为硬依赖消费"
+# 维护: 由 workflow lifecycle 自动投影，不独立手工维护
+#
+# 写入点:
+#   1. /brainstorm 成功结束 → research projection (hard_dependency_ready=false)
+#   2. /approve story 推进到 all_stories_done → hard_dependency_ready=true
+#   3. /rollback 或任何让模块离开完成态的入口 → 降级 hard_dependency_ready
+#
+# 读点:
+#   /brainstorm Phase 1 dependency gate 读取此文件判断上游是否 ready
+#
+# hard_dependency_ready 判定规则:
+#   delivery_state == all_stories_done AND srs_path 存在 → true
+#   其他状态 → false
+#   未注册 → fail-closed（视为未就绪）
+
+modules:
+  # 示例:
+  # permission:
+  #   delivery_state: all_stories_done
+  #   hard_dependency_ready: true
+  #   prd_path: osg-spec-docs/docs/01-product/prd/permission/
+  #   srs_path: osg-spec-docs/docs/02-requirements/srs/permission.md
+  #   updated_from_event: "/approve story"
+  #   last_updated_at: "2026-03-12T00:00:00Z"
