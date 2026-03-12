@@ -8,6 +8,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'windows-dev-common.ps1')
 
 $repo = Get-RepoRoot
+$pnpmLaunch = Resolve-PnpmLaunchSpec
 $stdoutLog = Join-Path (Get-LogDir) 'admin-dev.windows.out.log'
 $stderrLog = Join-Path (Get-LogDir) 'admin-dev.windows.err.log'
 
@@ -17,6 +18,7 @@ if (Test-Path $stdoutLog) { Remove-Item $stdoutLog -Force }
 if (Test-Path $stderrLog) { Remove-Item $stderrLog -Force }
 
 $args = @(
+    $pnpmLaunch.ArgumentsPrefix
     '--dir'
     'osg-frontend/packages/admin'
     'dev'
@@ -24,9 +26,9 @@ $args = @(
     '0.0.0.0'
     '--port'
     $Port
-)
+) | ForEach-Object { $_ }
 
-$proc = Start-Process -FilePath 'pnpm.cmd' `
+$proc = Start-Process -FilePath $pnpmLaunch.FilePath `
     -ArgumentList $args `
     -WorkingDirectory $repo `
     -RedirectStandardOutput $stdoutLog `

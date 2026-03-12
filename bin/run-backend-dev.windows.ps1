@@ -10,13 +10,21 @@ $ErrorActionPreference = 'Stop'
 
 $repo = Get-RepoRoot
 $jdkHome = Use-Jdk21
+$mavenCmd = Resolve-MavenCommand
 $envPath = Join-Path $repo $EnvFile
 
 Import-DotEnv -Path $envPath
 
 $port = if ($env:SERVER_PORT) { [int]$env:SERVER_PORT } else { 28080 }
 $profile = if ($env:SPRING_PROFILES_ACTIVE) { $env:SPRING_PROFILES_ACTIVE } else { 'druid,docker' }
-$uploadPath = if ($env:RUOYI_PROFILE) { Join-Path $repo $env:RUOYI_PROFILE } else { Join-Path $repo '.local\uploadPath' }
+$defaultLocalProfiles = @('./.local/uploadPath', '.\.local\uploadPath', '.local/uploadPath', '.local\uploadPath')
+$uploadPath = if (-not $env:RUOYI_PROFILE -or $defaultLocalProfiles -contains $env:RUOYI_PROFILE) {
+    Join-Path (Get-UserLocalDevRoot) 'uploadPath'
+} elseif ([System.IO.Path]::IsPathRooted($env:RUOYI_PROFILE)) {
+    $env:RUOYI_PROFILE
+} else {
+    Join-Path $repo $env:RUOYI_PROFILE
+}
 $jarPath = Join-Path $repo 'ruoyi-admin\target\ruoyi-admin.jar'
 $logDir = Get-LogDir
 $stdoutLog = Join-Path $logDir 'backend-dev.windows.out.log'
@@ -28,7 +36,7 @@ Ensure-PortFree -Port $port
 if (-not $SkipBuild) {
     Push-Location $repo
     try {
-        mvn -f pom.xml -pl ruoyi-admin -am -DskipTests package
+        & $mavenCmd -f pom.xml -pl ruoyi-admin -am -DskipTests package
     } finally {
         Pop-Location
     }

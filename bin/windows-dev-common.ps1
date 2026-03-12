@@ -5,6 +5,21 @@ function Get-RepoRoot {
     return (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 }
 
+function Get-WorkspaceLocalRoot {
+    return (Join-Path (Get-RepoRoot) '.local')
+}
+
+function Get-UserLocalDevRoot {
+    $root = if ($env:LOCALAPPDATA) {
+        Join-Path $env:LOCALAPPDATA 'OSGPrj'
+    } else {
+        Get-WorkspaceLocalRoot
+    }
+
+    New-Item -ItemType Directory -Force -Path $root | Out-Null
+    return $root
+}
+
 function Import-DotEnv {
     param(
         [Parameter(Mandatory = $true)]
@@ -36,28 +51,81 @@ function Import-DotEnv {
     }
 }
 
-function Get-Jdk21Home {
-    if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME 'bin\java.exe'))) {
-        $leaf = Split-Path $env:JAVA_HOME -Leaf
-        if ($leaf -match '(^|[-._])21([-.].*)?' -or $leaf -like 'jdk-21*') {
-            return $env:JAVA_HOME
+function Resolve-CommandPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Names
+    )
+
+    foreach ($name in $Names) {
+        $cmd = Get-Command $name -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($cmd) {
+            return $cmd.Source
         }
     }
 
-    $candidates = @(
+    return $null
+}
+
+function Get-JavaMajorVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$JavaExe
+    )
+
+    if (-not (Test-Path $JavaExe)) {
+        return $null
+    }
+
+    try {
+        $output = & $JavaExe --version | Out-String
+    } catch {
+        return $null
+    }
+
+    $match = [regex]::Match($output, '(?m)^(?:openjdk|java)\s+(?<major>\d+)')
+    if (-not $match.Success) {
+        return $null
+    }
+
+    return [int]$match.Groups['major'].Value
+}
+
+function Get-Jdk21Home {
+    $userToolsRoot = Join-Path (Get-UserLocalDevRoot) 'tools'
+    $workspaceToolsRoot = Join-Path (Get-WorkspaceLocalRoot) 'tools'
+
+    if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME 'bin\java.exe'))) {
+        $javaMajor = Get-JavaMajorVersion -JavaExe (Join-Path $env:JAVA_HOME 'bin\java.exe')
+        if ($javaMajor -eq 21) {
+            return (Resolve-Path $env:JAVA_HOME).Path
+        }
+    }
+
+    $javaHomeParent = if ($env:JAVA_HOME) { Split-Path -Parent $env:JAVA_HOME } else { $null }
+    $candidateRoots = @(
+        $javaHomeParent,
         'C:\Program Files\Eclipse Adoptium',
+        'D:\Program Files\Eclipse Adoptium',
         'C:\Program Files\Microsoft',
+        'D:\Program Files\Microsoft',
+        'C:\Program Files\java',
+        'D:\Program Files\java',
         'C:\Program Files\Java',
+        'D:\Program Files\Java',
+        $userToolsRoot,
+        $workspaceToolsRoot,
         (Join-Path $env:USERPROFILE '.jdks')
     ) | Where-Object { Test-Path $_ }
 
-    foreach ($base in $candidates) {
-        $match = Get-ChildItem $base -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -match '(^|[-._])21([-.].*)?' -or $_.Name -like 'jdk-21*' } |
-            Where-Object { Test-Path (Join-Path $_.FullName 'bin\java.exe') } |
-            Select-Object -First 1
-        if ($match) {
-            return $match.FullName
+    foreach ($base in $candidateRoots) {
+        $matches = Get-ChildItem $base -Directory -ErrorAction SilentlyContinue |
+            Where-Object { Test-Path (Join-Path $_.FullName 'bin\java.exe') }
+        foreach ($match in $matches) {
+            $javaMajor = Get-JavaMajorVersion -JavaExe (Join-Path $match.FullName 'bin\java.exe')
+            if ($javaMajor -eq 21) {
+                return $match.FullName
+            }
         }
     }
 
@@ -108,8 +176,7 @@ function Wait-HttpOk {
 }
 
 function Get-RunStateDir {
-    $repo = Get-RepoRoot
-    $dir = Join-Path $repo '.local\run'
+    $dir = Join-Path (Get-UserLocalDevRoot) 'run'
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
     return $dir
 }
@@ -162,4 +229,79 @@ function Remove-PidFile {
     if (Test-Path $path) {
         Remove-Item $path -Force
     }
+}
+
+function Resolve-MavenCommand {
+    $pathCommand = Resolve-CommandPath -Names @('mvn.cmd', 'mvn')
+    if ($pathCommand) {
+        return $pathCommand
+    }
+
+    $repo = Get-RepoRoot
+    $wrapper = Join-Path $repo 'mvnw.cmd'
+    if (Test-Path $wrapper) {
+        return $wrapper
+    }
+
+    $envCandidates = @(
+        $env:MAVEN_HOME,
+        $env:M2_HOME
+    ) | Where-Object { $_ }
+    foreach ($home in $envCandidates) {
+        $candidate = Join-Path $home 'bin\mvn.cmd'
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    $searchRoots = @(
+        (Join-Path (Get-UserLocalDevRoot) 'tools'),
+        (Join-Path (Get-WorkspaceLocalRoot) 'tools'),
+        'C:\Program Files',
+        'D:\Program Files',
+        'C:\Program Files\JetBrains',
+        (Join-Path $env:USERPROFILE 'AppData\Local\Programs')
+    ) | Where-Object { Test-Path $_ }
+
+    foreach ($root in $searchRoots) {
+        $dirs = Get-ChildItem $root -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match 'maven|apache-maven|IntelliJ|IDEA' }
+        foreach ($dir in $dirs) {
+            $direct = Join-Path $dir.FullName 'bin\mvn.cmd'
+            if (Test-Path $direct) {
+                return $direct
+            }
+
+            $jetbrainsBundled = Join-Path $dir.FullName 'plugins\maven\lib\maven3\bin\mvn.cmd'
+            if (Test-Path $jetbrainsBundled) {
+                return $jetbrainsBundled
+            }
+        }
+    }
+
+    throw 'Maven not found. Install Apache Maven 3.9+ or add mvnw.cmd to the repo.'
+}
+
+function Resolve-PnpmLaunchSpec {
+    $pnpmCommand = Resolve-CommandPath -Names @('pnpm.cmd', 'pnpm')
+    if ($pnpmCommand) {
+        return [pscustomobject]@{
+            FilePath        = $pnpmCommand
+            ArgumentsPrefix = @()
+        }
+    }
+
+    $corepackCommand = Resolve-CommandPath -Names @('corepack.cmd', 'corepack')
+    if ($corepackCommand) {
+        $corepackHome = Join-Path (Get-UserLocalDevRoot) 'corepack'
+        New-Item -ItemType Directory -Force -Path $corepackHome | Out-Null
+        $env:COREPACK_HOME = $corepackHome
+
+        return [pscustomobject]@{
+            FilePath        = $corepackCommand
+            ArgumentsPrefix = @('pnpm@9.15.9')
+        }
+    }
+
+    throw 'pnpm not found. Install pnpm or enable Corepack with a writable COREPACK_HOME.'
 }
