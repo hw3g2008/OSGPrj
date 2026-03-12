@@ -131,7 +131,7 @@ completed_at: null
 [更新 Story 和 STATE]
 ```
 
-## 质量校验项（7 项）
+## 质量校验项（9 项）
 
 | 检查项 | 检查问题 | 通过条件 | 不通过条件 |
 |--------|----------|----------|------------|
@@ -142,6 +142,8 @@ completed_at: null
 | 依赖无环 | 依赖关系是否形成 DAG（无环图）？ | 是 | 否 → 调整依赖 |
 | 验收可测 | 每个 Ticket 的 acceptance_criteria 是否可客观验证？ | 是 | 否 → 改写为可验证语句 |
 | 展示验证 | type=frontend/frontend-ui 的 Ticket AC 是否包含"页面展示验证"步骤？ | 是 | 否 → 补充展示类 AC |
+| 场景类别标签 | 每个 Ticket AC 是否声明 `[category][scenario_obligation]` 双标签？ | 全部有 | 否 → 由 `parse_ac_labels()` 补充或提示补写 |
+| 场景义务完整性 | 同一 Story 下的 Ticket 集合是否覆盖 Story 的全部 `required_test_obligations`？ | 全部覆盖 | 否 → 补充缺失义务类别的 Ticket |
 
 ## 覆盖率校验
 
@@ -240,6 +242,30 @@ def split_tickets_main(story_id):
     return split_tickets(story_id, state)
 
 
+# ========== Helper 契约定义 ==========
+
+def parse_ac_labels(ac_text: str) -> dict:
+    """解析 AC 文本中的双标签 [category][scenario_obligation]，返回结构化字段。
+    输入: "[positive][display] 角色列表页权限模块列非空"
+    输出: {"category": "positive", "scenario_obligation": "display", "plain_text": "角色列表页权限模块列非空"}
+    无标签时返回: {"category": None, "scenario_obligation": None, "plain_text": ac_text}
+    """
+
+def strip_ac_labels(ac_text: str) -> str:
+    """去除 AC 文本中的双标签，返回纯文本部分。"""
+
+def ensure_test_case_fields(ticket: dict, labels: dict):
+    """将解析出的 category + scenario_obligation 写入 ticket.test_cases 对应条目。
+    如果 test_cases 不存在则初始化；如果已存在但缺字段则补充。"""
+
+def find_ac_by_ref(ticket: dict, ac_ref: str) -> str | None:
+    """根据 ac_ref 在 ticket.acceptance_criteria 中找到对应的 AC 文本。
+    匹配逻辑：ac_ref 对应 covers_ac_refs 的索引位置。"""
+
+# ensure_required_test_obligations 定义在 story-splitter/SKILL.md 中，内部包装 infer_required_test_obligations
+# 调用方式: ensure_required_test_obligations(story, config.testing.design.scenario_obligations.profiles)
+
+
 def split_tickets(story_id, state):
     story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
     config = read_yaml(".claude/project/config.yaml")
@@ -276,7 +302,7 @@ def split_tickets(story_id, state):
         iteration += 1
         print(f"🔄 校验迭代 {iteration}/{max_iterations}")
 
-        # --- 质量校验（7 项）---
+        # --- 质量校验（9 项）---
         quality_issues = []
         for ticket in tickets:
             # 1. 微任务粒度
@@ -304,10 +330,37 @@ def split_tickets(story_id, state):
                 )
                 if not has_display_ac:
                     quality_issues.append(f"{ticket['id']}: type={ticket['type']} 但 AC 缺少页面展示验证步骤")
+            # 8. 场景类别标签（每个 AC 必须有 [category][scenario_obligation] 双标签）
+            for ac in ticket.get("acceptance_criteria", []):
+                labels = parse_ac_labels(ac)  # -> {category, scenario_obligation, plain_text}
+                if not labels.get("category") or not labels.get("scenario_obligation"):
+                    quality_issues.append(f"{ticket['id']}: AC 缺少场景类别标签: '{ac}'")
+                else:
+                    # 写入结构化字段供 TC 骨架和 guard 消费
+                    ensure_test_case_fields(ticket, labels)
 
         # 7. 依赖无环（全局检查）
         if has_cycle(tickets):
             quality_issues.append("依赖关系存在环，需要调整")
+
+        # 9. 场景义务完整性（Story required obligations 必须被 Ticket 集合覆盖）
+        story_obligations = story.get("required_test_obligations", {}).get("required", [])
+        if not story_obligations:
+            story["required_test_obligations"] = infer_required_test_obligations(story, config.testing.design.scenario_obligations.profiles)
+            story_obligations = story["required_test_obligations"]["required"]
+        covered_obligations = set()
+        for ticket in tickets:
+            for ac in ticket.get("acceptance_criteria", []):
+                labels = parse_ac_labels(ac)
+                if labels.get("scenario_obligation"):
+                    covered_obligations.add(labels["scenario_obligation"])
+        missing_obligations = [o for o in story_obligations if o not in covered_obligations]
+        if missing_obligations:
+            quality_issues.append(
+                f"场景义务缺失: Story {story_id} 要求 {story_obligations}，"
+                f"但 Ticket 集合只覆盖了 {sorted(covered_obligations)}，"
+                f"缺少: {missing_obligations}"
+            )
 
         if quality_issues:
             tickets = fix_quality_issues(tickets, quality_issues)
@@ -422,40 +475,71 @@ def split_tickets(story_id, state):
     tc_cases_path = f"osg-spec-docs/tasks/testing/{module}-test-cases.yaml"
     matrix_path = f"osg-spec-docs/tasks/testing/{module}-traceability-matrix.md"
     existing_cases = read_yaml(tc_cases_path) or []
-    existing_ids = {tc["tc_id"] for tc in existing_cases if tc.get("tc_id")}
+    existing_by_id = {tc["tc_id"]: tc for tc in existing_cases if tc.get("tc_id")}
+
+    obligation_map = config.testing.design.scenario_obligations.obligation_to_category
+    story_obligations = story.get("required_test_obligations", {}).get("required", [])
 
     for ticket in tickets:
         for ref_idx, ac_ref in enumerate(ticket.get("covers_ac_refs", []), 1):
             tc_id = f"TC-{module.upper()}-{ticket['id']}-TICKET-{ref_idx:03d}"
-            if tc_id not in existing_ids:
+            # 从 Ticket AC 标签解析 category + scenario_obligation
+            matching_ac = find_ac_by_ref(ticket, ac_ref)
+            labels = parse_ac_labels(matching_ac) if matching_ac else {}
+            desired_case = {
+                "tc_id": tc_id,
+                "level": "ticket",
+                "story_id": story_id,
+                "ticket_id": ticket["id"],
+                "ac_ref": ac_ref,
+                "category": labels.get("category") or obligation_map.get(labels.get("scenario_obligation"), "positive"),
+                "scenario_obligation": labels.get("scenario_obligation"),
+                "priority": "P1",
+            }
+            if tc_id in existing_by_id:
+                # upsert 结构字段；保留 automation/latest_result/evidence 等执行证据
+                existing_by_id[tc_id].update(desired_case)
+            else:
                 existing_cases.append({
-                    "tc_id": tc_id,
-                    "level": "ticket",
-                    "story_id": story_id,
-                    "ticket_id": ticket["id"],
-                    "ac_ref": ac_ref,
-                    "priority": "P1",
+                    **desired_case,
                     "automation": {"script": None, "command": None},
                     "latest_result": {"status": "pending", "evidence_ref": None},
                 })
 
     for ac_idx, _ac in enumerate(story.acceptance_criteria, 1):
         ac_ref = f"AC-{story_id}-{ac_idx:02d}"
+        # 从 Story AC 推导 category + scenario_obligation（story/final 级 TC 也必须有这两个字段）
+        ac_labels = parse_ac_labels(str(_ac)) if _ac else {}
+        ac_obligation = ac_labels.get("scenario_obligation")
+        # fallback：无标签 AC 从 Story obligation profile 推导默认 obligation（取第一个未被前面 AC 占用的）
+        if not ac_obligation and story_obligations:
+            ac_obligation = story_obligations[min(ac_idx - 1, len(story_obligations) - 1)]
+        ac_category = ac_labels.get("category") or obligation_map.get(ac_obligation, "positive")
         for level in ["story", "final"]:
             tc_id = f"TC-{module.upper()}-{story_id}-{level.upper()}-{ac_idx:03d}"
-            if tc_id not in existing_ids:
+            desired_case = {
+                "tc_id": tc_id,
+                "level": level,
+                "story_id": story_id,
+                "ticket_id": None,
+                "ac_ref": ac_ref,
+                "category": ac_category,
+                "scenario_obligation": ac_obligation,
+                "priority": "P1",
+            }
+            if tc_id in existing_by_id:
+                existing_by_id[tc_id].update(desired_case)
+            else:
                 existing_cases.append({
-                    "tc_id": tc_id,
-                    "level": level,
-                    "story_id": story_id,
-                    "ticket_id": None,
-                    "ac_ref": ac_ref,
-                    "priority": "P1",
+                    **desired_case,
                     "automation": {"script": None, "command": None},
                     "latest_result": {"status": "pending", "evidence_ref": None},
                 })
     write_yaml(tc_cases_path, existing_cases)
     ensure_traceability_rows(matrix_path, existing_cases, story_id)
+
+    # 历史资产迁移不重用 /split ticket 的状态推进；
+    # 统一通过独立命令 `/migrate test-assets {module}` 调用 bin/sync-test-assets.py 做无状态 upsert。
 
     # ========== 保存（仅在全部校验通过后）==========
     for ticket in tickets:

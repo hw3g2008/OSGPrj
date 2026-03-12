@@ -141,6 +141,24 @@ def _extract_ticket_test_case_entries(tickets: dict[str, dict]) -> tuple[dict[st
                 findings.append(f"{prefix}.ac_ref must be a non-empty string")
                 continue
             entries[test_case_id] = case
+
+        # Ticket YAML test_cases 字段校验（仅当至少有一个条目带新字段时才检查 — 说明是新管道生成的）
+        # 如果全部条目都没有 category/scenario_obligation，则认为是旧资产，静默跳过（向后兼容）
+        has_any_new_field = any(
+            e.get("category") or e.get("scenario_obligation") for e in entries.values()
+        )
+        if has_any_new_field:
+            for tc_id_key, tc_entry in entries.items():
+                tc_category = tc_entry.get("category")
+                tc_obligation = tc_entry.get("scenario_obligation")
+                entry_prefix = f"{tid}.test_cases[{tc_id_key}]"
+                if not tc_category and not tc_obligation:
+                    findings.append(f"{entry_prefix} missing both category and scenario_obligation")
+                elif tc_obligation and not tc_category:
+                    findings.append(f"{entry_prefix} has scenario_obligation='{tc_obligation}' but missing category")
+                elif tc_category and not tc_obligation:
+                    findings.append(f"{entry_prefix} has category='{tc_category}' but missing scenario_obligation")
+
         result[tid] = entries
     return result, findings
 
@@ -152,6 +170,7 @@ def evaluate_test_asset_completeness(
     cases_doc: Path,
     matrix_doc: Path,
     story_id: str | None = None,
+    stage: str = "split",  # "split" | "approve" | "verify" — pending 阻断仅在 verify 阶段
 ) -> list[str]:
     findings: list[str] = []
     stories = load_stories(stories_dir, story_id)
@@ -233,11 +252,17 @@ def evaluate_test_asset_completeness(
     for row in matrix_rows:
         tc_id = row["tc_id"]
         ac_ref = row["ac_ref"]
-        matrix_tc_ids.add(tc_id)
         case = case_by_id.get(tc_id)
         if not case:
+            # 当 story_id 指定时，跳过不属于当前过滤范围的矩阵行
+            if story_id and tc_id not in case_ids:
+                continue
             findings.append(f"traceability matrix references unknown test case: {tc_id}")
             continue
+        # 当 story_id 指定时，只校验属于该 Story 的 TC 行
+        if story_id and case.get("story_id") != story_id:
+            continue
+        matrix_tc_ids.add(tc_id)
         matrix_story_ids.add(case["story_id"])
         case_ac_ref = case.get("ac_ref")
         if case_ac_ref != ac_ref:
@@ -280,7 +305,91 @@ def evaluate_test_asset_completeness(
         if tc_id not in matrix_tc_ids:
             findings.append(f"test case missing traceability matrix row: {tc_id}")
 
+    # ========== 场景义务完整性校验（scenario_obligation + category + latest_result）==========
+    # 对每个 Story，检查 required_test_obligations 是否被 TC 资产覆盖并已执行
+    VALID_CATEGORIES = {"positive", "negative", "boundary", "exception", "null_empty"}
+    VALID_OBLIGATIONS = {"display", "state_change", "business_rule_reject", "auth_or_data_boundary", "persist_effect"}
+
+    for sid, story in stories.items():
+        required_obligations = story.get("required_test_obligations", {}).get("required")
+        if not required_obligations:
+            required_obligations = _infer_obligations(story)
+            if not required_obligations:
+                continue
+
+        # 收集该 Story 下所有 TC 的 scenario_obligation + category + latest_result
+        covered_obligations: set[str] = set()
+        pending_obligations: list[str] = []
+        for tc_id in case_ids_by_story.get(sid, set()):
+            case = case_by_id.get(tc_id, {})
+            obligation = case.get("scenario_obligation")
+            category = case.get("category")
+
+            # 校验 category 合法性
+            if category and category not in VALID_CATEGORIES:
+                findings.append(f"invalid category '{category}' in TC {tc_id}")
+            # 校验 scenario_obligation 合法性
+            if obligation and obligation not in VALID_OBLIGATIONS:
+                findings.append(f"invalid scenario_obligation '{obligation}' in TC {tc_id}")
+            # 逐条必填：两个字段都缺 → 报错
+            if not obligation and not category:
+                findings.append(f"TC {tc_id} missing both category and scenario_obligation")
+            # 有 scenario_obligation 但缺 category → 报错
+            elif obligation and not category:
+                findings.append(f"TC {tc_id} has scenario_obligation='{obligation}' but missing category")
+            # 有 category 但缺 scenario_obligation → 报错
+            elif category and not obligation:
+                findings.append(f"TC {tc_id} has category='{category}' but missing scenario_obligation")
+
+            if isinstance(obligation, str) and obligation.strip():
+                covered_obligations.add(obligation)
+                # 校验 latest_result：义务对应的 TC 不得为 pending（仅 verify 阶段）
+                if stage == "verify":
+                    latest_result = case.get("latest_result", {})
+                    status = latest_result.get("status") if isinstance(latest_result, dict) else None
+                    if status == "pending":
+                        pending_obligations.append(f"{tc_id}({obligation})")
+
+        # 回退路径：从 Ticket test_cases 推导
+        if not covered_obligations:
+            for tid, ticket in tickets.items():
+                if ticket.get("story_id") != sid:
+                    continue
+                for tc_entry in ticket.get("test_cases", []):
+                    obligation = tc_entry.get("scenario_obligation")
+                    if isinstance(obligation, str) and obligation.strip():
+                        covered_obligations.add(obligation)
+
+        # 检查覆盖缺失
+        missing = [o for o in required_obligations if o not in covered_obligations]
+        if missing:
+            findings.append(
+                f"scenario obligation gap: {sid} requires {required_obligations}, "
+                f"covered={sorted(covered_obligations)}, missing={missing}"
+            )
+
+        # 检查已覆盖但未执行（latest_result.status == pending）
+        if pending_obligations:
+            findings.append(
+                f"scenario obligation pending: {sid} has obligations mapped but not executed: "
+                f"{pending_obligations}"
+            )
+
     return findings
+
+
+def _infer_obligations(story: dict) -> list[str] | None:
+    """旧 Story 缺少 required_test_obligations 时的兼容推导"""
+    acs = story.get("acceptance_criteria", [])
+    if not acs:
+        return None
+    mutation_keywords = ("新增", "编辑", "删除", "修改", "保存", "创建", "启用", "禁用",
+                         "分配", "变更", "create", "update", "delete", "save")
+    permission_keywords = ("权限", "角色", "访问", "授权", "permission", "role", "auth")
+    text = " ".join(str(ac) for ac in acs).lower()
+    if any(kw in text for kw in mutation_keywords) or any(kw in text for kw in permission_keywords):
+        return ["display", "state_change", "business_rule_reject", "auth_or_data_boundary", "persist_effect"]
+    return ["display", "persist_effect"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -291,6 +400,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tickets-dir", default="osg-spec-docs/tasks/tickets")
     parser.add_argument("--cases")
     parser.add_argument("--matrix")
+    parser.add_argument("--stage", default="split", choices=["split", "approve", "verify"],
+                        help="Guard invocation stage: split/approve only check structure, verify also checks pending")
     return parser.parse_args()
 
 
@@ -314,6 +425,7 @@ def main() -> int:
         cases_doc=cases_doc,
         matrix_doc=matrix_doc,
         story_id=args.story_id,
+        stage=args.stage,
     )
     if findings:
         print(

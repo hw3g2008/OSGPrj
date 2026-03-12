@@ -81,7 +81,7 @@ def can_claim_done(task):
 | **Phase 1 前置检查** | Ticket 状态 | 读取 YAML status 字段 | 所有 Tickets status=done |
 | | 验证证据 | 检查 verification_evidence 字段 | 所有 Tickets 有证据且 exit_code=0 |
 | | 🆕 证据强度 | `validate_evidence_command(command)` | command 必须是可执行 shell 命令（禁止 "code review" 等） |
-| | 🆕 测试资产完整性 | `test_asset_completeness_guard.py --story-id {story_id}` | Story/Ticket/TestCase/Traceability 同步完整 |
+| | 🆕 测试资产完整性 | `test_asset_completeness_guard.py --story-id {story_id} --stage verify` | Story/Ticket/TestCase/Traceability 同步完整 + 场景义务逐条必填 + pending 阻断 |
 | | 🆕 单一真源同步 | `truth_sync_guard.py --module {module}` | 已确认 UI 真源变更若未同步 HTML，则立即阻断 |
 | | 🆕 HTML 真源派生一致性 | `prototype_derivation_consistency_guard.py --module-dir ...` | PRD/MATRIX/UI-VISUAL-CONTRACT 不得引入 HTML 真源不存在的页面/弹层 |
 | | 🆕 真实性守卫 | `delivery_truth_guard.py --stage verify` | 不允许降级实现，外部副作用必须声明真实 provider 与 evidence path |
@@ -90,6 +90,7 @@ def can_claim_done(task):
 | **Phase 2 功能验收** | 全量测试 🔴 | 执行 mvn test / pnpm test；含 frontend Ticket 时追加 `bash bin/e2e-api-gate.sh {module} full` | exit_code=0 |
 | | 🆕 行为契约守卫 | `behavior_contract_guard.py --stage verify` | 全量测试生成的场景证据存在，same/distinct 不变量成立 |
 | | AC 覆盖率 | 逐条检查 Story AC | 每个 AC 被至少 1 个已完成 Ticket 覆盖 |
+| | 🆕 场景义务完整性 | 复用 `test_asset_completeness_guard.py` 扩展能力 | Story 的 `required_test_obligations` 全部被 TC 资产覆盖（旧 Story 缺字段时兼容推导） |
 | | 覆盖率汇总 | 解析 JaCoCo/Vitest 报告 | 达到 config 中定义的门槛 |
 | | 集成测试 | 执行 `mvn verify -Pintegration-test` | exit_code=0（仅当 config.testing.integration.enabled） |
 | **Phase 3 增强全局终审** | 三维度终审 | 上游一致性+下游可行性+全局完整性 | 全部通过 |
@@ -161,7 +162,7 @@ def verify_story(story_id):
 
     asset_guard = bash(
         "python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py "
-        f"--module {module} --story-id {story_id}"
+        f"--module {module} --story-id {story_id} --stage verify"
     )
     if asset_guard.exit_code != 0:
         pre_issues.append("test_asset_completeness_guard 未通过：Story/Ticket/TestCase/Traceability 资产不同步")

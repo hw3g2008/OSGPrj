@@ -241,6 +241,125 @@ def test_declared_ticket_test_case_without_generated_tc_fails() -> None:
         assert any("missing declared test_cases coverage" in item for item in findings), findings
 
 
+def test_pending_obligation_blocked_only_in_verify_stage() -> None:
+    """pending TC should only be flagged in verify stage, not split/approve."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        story = _story("S-001", ticket_ids=["T-001"], story_case_refs=["AC-S-001-01"])
+        story["required_test_obligations"] = {"profile": "display_only", "required": ["display"]}
+        story["acceptance_criteria"] = ["页面展示"]
+        _write_yaml(root / "stories/S-001.yaml", story)
+        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001", ac_refs=["AC-S-001-01"]))
+        cases = [
+            {**_case("TC-001", level="ticket", story_id="S-001", ticket_id="T-001", ac_ref="AC-S-001-01"),
+             "category": "positive", "scenario_obligation": "display",
+             "latest_result": {"status": "pending", "evidence_ref": None}},
+            {**_case("TC-002", level="story", story_id="S-001", ac_ref="AC-S-001-01"),
+             "category": "positive", "scenario_obligation": "display",
+             "latest_result": {"status": "pending", "evidence_ref": None}},
+            {**_case("TC-003", level="final", story_id="S-001", ac_ref="AC-S-001-01"),
+             "category": "positive", "scenario_obligation": "display",
+             "latest_result": {"status": "pending", "evidence_ref": None}},
+        ]
+        _write_yaml(root / "cases.yaml", cases)
+        _write_matrix(root / "matrix.md", [("AC-S-001-01", "TC-001"), ("AC-S-001-01", "TC-002"), ("AC-S-001-01", "TC-003")])
+
+        # split stage: pending should NOT be flagged
+        findings_split = evaluate_test_asset_completeness(
+            stories_dir=root / "stories", tickets_dir=root / "tickets",
+            cases_doc=root / "cases.yaml", matrix_doc=root / "matrix.md", stage="split",
+        )
+        assert not any("obligation pending" in f for f in findings_split), f"split should not flag pending: {findings_split}"
+
+        # verify stage: pending SHOULD be flagged
+        findings_verify = evaluate_test_asset_completeness(
+            stories_dir=root / "stories", tickets_dir=root / "tickets",
+            cases_doc=root / "cases.yaml", matrix_doc=root / "matrix.md", stage="verify",
+        )
+        assert any("obligation pending" in f for f in findings_verify), f"verify should flag pending: {findings_verify}"
+
+
+def test_missing_category_with_obligation_fails() -> None:
+    """TC with scenario_obligation but no category should be flagged."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        story = _story("S-001", ticket_ids=["T-001"], story_case_refs=["AC-S-001-01"])
+        story["required_test_obligations"] = {"profile": "display_only", "required": ["display"]}
+        story["acceptance_criteria"] = ["页面展示"]
+        _write_yaml(root / "stories/S-001.yaml", story)
+        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001", ac_refs=["AC-S-001-01"]))
+        cases = [
+            {**_case("TC-001", level="ticket", story_id="S-001", ticket_id="T-001", ac_ref="AC-S-001-01"),
+             "scenario_obligation": "display",  # category intentionally missing
+             "latest_result": {"status": "pass", "evidence_ref": "x"}},
+            _case("TC-002", level="story", story_id="S-001", ac_ref="AC-S-001-01"),
+            _case("TC-003", level="final", story_id="S-001", ac_ref="AC-S-001-01"),
+        ]
+        _write_yaml(root / "cases.yaml", cases)
+        _write_matrix(root / "matrix.md", [("AC-S-001-01", "TC-001"), ("AC-S-001-01", "TC-002"), ("AC-S-001-01", "TC-003")])
+        findings = evaluate_test_asset_completeness(
+            stories_dir=root / "stories", tickets_dir=root / "tickets",
+            cases_doc=root / "cases.yaml", matrix_doc=root / "matrix.md",
+        )
+        assert any("missing category" in f for f in findings), f"should flag missing category: {findings}"
+
+
+def test_both_category_and_obligation_missing_fails() -> None:
+    """TC missing both category and scenario_obligation should be flagged."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        story = _story("S-001", ticket_ids=["T-001"], story_case_refs=["AC-S-001-01"])
+        story["required_test_obligations"] = {"profile": "display_only", "required": ["display"]}
+        story["acceptance_criteria"] = ["页面展示"]
+        _write_yaml(root / "stories/S-001.yaml", story)
+        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001", ac_refs=["AC-S-001-01"]))
+        # TC-001 has both fields, TC-002 has neither (the bad data)
+        cases = [
+            {**_case("TC-001", level="ticket", story_id="S-001", ticket_id="T-001", ac_ref="AC-S-001-01"),
+             "category": "positive", "scenario_obligation": "display",
+             "latest_result": {"status": "pass", "evidence_ref": "x"}},
+            {**_case("TC-002", level="story", story_id="S-001", ac_ref="AC-S-001-01")},
+            {**_case("TC-003", level="final", story_id="S-001", ac_ref="AC-S-001-01")},
+        ]
+        _write_yaml(root / "cases.yaml", cases)
+        _write_matrix(root / "matrix.md", [("AC-S-001-01", "TC-001"), ("AC-S-001-01", "TC-002"), ("AC-S-001-01", "TC-003")])
+        findings = evaluate_test_asset_completeness(
+            stories_dir=root / "stories", tickets_dir=root / "tickets",
+            cases_doc=root / "cases.yaml", matrix_doc=root / "matrix.md",
+        )
+        assert any("missing both" in f for f in findings), f"should flag both missing: {findings}"
+
+
+def test_story_id_filter_does_not_cross_contaminate() -> None:
+    """When --story-id is specified, matrix rows from other stories should not cause false positives."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_yaml(root / "stories/S-001.yaml", _story("S-001", ticket_ids=["T-001"], story_case_refs=["AC-S-001-01"]))
+        _write_yaml(root / "stories/S-002.yaml", _story("S-002", ticket_ids=["T-002"], story_case_refs=["AC-S-002-01"]))
+        _write_yaml(root / "tickets/T-001.yaml", _ticket("T-001", "S-001", ac_refs=["AC-S-001-01"]))
+        _write_yaml(root / "tickets/T-002.yaml", _ticket("T-002", "S-002", ac_refs=["AC-S-002-01"]))
+        cases = [
+            _case("TC-001", level="ticket", story_id="S-001", ticket_id="T-001", ac_ref="AC-S-001-01", test_case_id="TCS-T-001-001"),
+            _case("TC-002", level="story", story_id="S-001", ac_ref="AC-S-001-01", story_case_id="SC-S-001-001"),
+            _case("TC-003", level="final", story_id="S-001", ac_ref="AC-S-001-01", story_case_id="SC-S-001-001"),
+            _case("TC-004", level="ticket", story_id="S-002", ticket_id="T-002", ac_ref="AC-S-002-01", test_case_id="TCS-T-002-001"),
+            _case("TC-005", level="story", story_id="S-002", ac_ref="AC-S-002-01", story_case_id="SC-S-002-001"),
+            _case("TC-006", level="final", story_id="S-002", ac_ref="AC-S-002-01", story_case_id="SC-S-002-001"),
+        ]
+        _write_yaml(root / "cases.yaml", cases)
+        _write_matrix(root / "matrix.md", [
+            ("AC-S-001-01", "TC-001"), ("AC-S-001-01", "TC-002"), ("AC-S-001-01", "TC-003"),
+            ("AC-S-002-01", "TC-004"), ("AC-S-002-01", "TC-005"), ("AC-S-002-01", "TC-006"),
+        ])
+        # Filter to S-001 only — should not see S-002's matrix rows as errors
+        findings = evaluate_test_asset_completeness(
+            stories_dir=root / "stories", tickets_dir=root / "tickets",
+            cases_doc=root / "cases.yaml", matrix_doc=root / "matrix.md",
+            story_id="S-001",
+        )
+        assert not any("unknown test case" in f for f in findings), f"should not cross-contaminate: {findings}"
+
+
 def main() -> int:
     tests = [
         test_missing_story_test_assets_fail,
@@ -248,6 +367,10 @@ def main() -> int:
         test_story_ticket_ref_divergence_fails,
         test_fully_synchronized_assets_pass,
         test_declared_ticket_test_case_without_generated_tc_fails,
+        test_pending_obligation_blocked_only_in_verify_stage,
+        test_missing_category_with_obligation_fails,
+        test_both_category_and_obligation_missing_fails,
+        test_story_id_filter_does_not_cross_contaminate,
     ]
     for fn in tests:
         fn()

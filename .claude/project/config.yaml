@@ -409,6 +409,36 @@ testing:
       - exception                   # 异常测试
       - null_empty                  # null/空值测试
 
+    # 🆕 测试场景义务（前置到 Story/Ticket 阶段的必覆盖场景类别）
+    scenario_obligations:
+      # 允许的场景义务枚举
+      allowed:
+        - display                   # 页面/列表/关键列展示正确
+        - state_change              # 新增/编辑/启用/禁用等成功路径
+        - business_rule_reject      # 被业务规则拒绝（非系统异常）
+        - auth_or_data_boundary     # 权限边界/数据范围边界/角色边界
+        - persist_effect            # 结果持久化/即时生效/二次进入仍成立
+      # 预设 profile（Story 按类型选择）
+      profiles:
+        crud:
+          required:
+            - display
+            - state_change
+            - business_rule_reject
+            - auth_or_data_boundary
+            - persist_effect
+        display_only:
+          required:
+            - display
+            - persist_effect
+      # obligation → category 默认映射
+      obligation_to_category:
+        display: positive
+        state_change: positive
+        business_rule_reject: negative
+        auth_or_data_boundary: boundary
+        persist_effect: positive
+
   # API 测试维度
   api_test_dimensions:
     - happy_path                    # 正向测试

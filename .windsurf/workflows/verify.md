@@ -20,7 +20,7 @@ description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
      - `python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py --module {current_requirement}`
      - `python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py --state osg-spec-docs/tasks/STATE.yaml --config .claude/project/config.yaml --state-machine .claude/skills/workflow-engine/state-machine.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets --proofs-dir osg-spec-docs/tasks/proofs`
      - `python3 .claude/skills/workflow-engine/tests/done_ticket_evidence_guard.py --state osg-spec-docs/tasks/STATE.yaml --stories-dir osg-spec-docs/tasks/stories --tickets-dir osg-spec-docs/tasks/tickets`
-     - `python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py --module {current_requirement} --story-id {current_story}`
+     - `python3 .claude/skills/workflow-engine/tests/test_asset_completeness_guard.py --module {current_requirement} --story-id {current_story} --stage verify`
      - `python3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py --module-dir osg-spec-docs/docs/01-product/prd/{current_requirement}`
    - `python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py --module {current_requirement} --runtime-contract {resolved_runtime_contract_file} --stage verify`
    - `python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py --contract osg-spec-docs/docs/01-product/prd/{current_requirement}/DELIVERY-CONTRACT.yaml --runtime-contract {resolved_runtime_contract_file} --stage verify`
@@ -31,7 +31,7 @@ description: 手动重试 Story 验收 - 调用统一验收引擎 verify_story()
    - 调用 verification skill 的 `verify_story(story_id)`
    - 验收逻辑包含：
      - Phase 1：前置检查（Tickets done + evidence + exit_code=0 + delivery truth + delivery content + critical UI evidence）
-     - Phase 2：功能验收（全量测试 + E2E 测试（含 frontend Ticket 时） + behavior contract + AC 覆盖率 + 覆盖率门槛）
+     - Phase 2：功能验收（全量测试 + E2E 测试（含 frontend Ticket 时） + behavior contract + AC 覆盖率 + 场景义务完整性（覆盖+执行） + 覆盖率门槛）
      - Phase 3：增强全局终审（三维度终审 + A~I 多维度旋转校验，参见 quality-gate/SKILL.md）
 
 4. **TC 资产回填（D6 挂点）**

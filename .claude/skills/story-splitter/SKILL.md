@@ -130,6 +130,44 @@ def split_stories_main():
     return split_stories(requirement_doc)
 
 
+def infer_required_test_obligations(story, profiles):
+    """旧 Story 缺少 required_test_obligations 时的兼容推导。
+    签名: (story: dict, profiles: dict) -> dict
+    profiles 来自 config.testing.design.scenario_obligations.profiles
+    返回: {"profile": "crud"|"display_only", "required": [...]}
+    """
+    if any(matches_mutation_or_permission_ac(ac) for ac in story.get("acceptance_criteria", [])):
+        return profiles["crud"]
+    return profiles["display_only"]
+
+
+def ensure_required_test_obligations(story, profiles):
+    """对 Story 做 obligation 包装层。
+    - 已有 required_test_obligations: 保留并做最小规范化
+    - 缺字段: 调用 infer_required_test_obligations(story, profiles) 回填
+    该 helper 既供 /split story 使用，也供历史资产迁移命令复用。"""
+
+
+def matches_mutation_or_permission_ac(ac: str) -> bool:
+    """判断 AC 是否涉及数据变更或权限操作。
+    匹配关键词：新增/编辑/删除/修改/保存/创建/启用/禁用/分配/变更/权限/角色/访问/授权"""
+
+def matches_obligation(ac: str, obligation: str) -> bool:
+    """判断 AC 文本是否语义匹配指定的 scenario_obligation。
+    匹配规则：
+      display → "展示"/"显示"/"可见"/"列表"/"非空"
+      state_change → "新增"/"编辑"/"成功"/"保存"/"创建"
+      business_rule_reject → "拒绝"/"不允许"/"禁止"/"失败"/"被阻止"
+      auth_or_data_boundary → "权限"/"无法访问"/"未授权"/"角色限制"
+      persist_effect → "持久化"/"生效"/"刷新后仍"/"立即更新"/"二次进入"
+    """
+
+def generate_obligation_ac(story: dict, obligation: str) -> str:
+    """为缺失的 obligation 自动生成带双标签的 AC 文本。
+    返回格式: "[category][obligation] 描述文本"
+    """
+
+
 def split_stories(requirement_doc):  # requirement_doc = SRS 文档（brainstorm 产物，SSOT）
     stories = []
 
@@ -201,31 +239,52 @@ def split_stories(requirement_doc):  # requirement_doc = SRS 文档（brainstorm
 
         print("  覆盖率校验: ✅ 100%")
 
-        # --- 展示类 AC 校验 ---
-        display_issues = []
-        for story in stories:
-            has_display_ac = any(
-                is_display_acceptance(ac)  # 匹配"页面显示""列表列非空""展示""可见"等关键词
-                for ac in story.get("acceptance_criteria", [])
-            )
-            if not has_display_ac:
-                display_issues.append(f"{story['id']}: AC 缺少展示类验收（如'页面显示 XX'、'列表列非空'）")
+        # --- 场景义务校验（required_test_obligations）---
+        # 读取 config 中定义的 scenario_obligations profiles
+        obligation_profiles = config.testing.design.scenario_obligations.profiles
+        obligation_issues = []
 
-        if display_issues:
-            print(f"  展示类 AC 校验: ❌ {len(display_issues)} 个 Story 缺少展示类验收")
-            for issue in display_issues:
+        for story in stories:
+            # 统一走 ensure 包装层，供 split / migrate 共用
+            story["required_test_obligations"] = ensure_required_test_obligations(story, obligation_profiles)
+            required = story["required_test_obligations"]["required"]
+            acs = story.get("acceptance_criteria", [])
+
+            # 检查每个 required obligation 是否至少有一条 AC 覆盖
+            for obligation in required:
+                has_matching_ac = any(
+                    matches_obligation(ac, obligation)  # 语义匹配：display→展示/可见, state_change→新增/编辑/成功, etc.
+                    for ac in acs
+                )
+                if not has_matching_ac:
+                    obligation_issues.append(
+                        f"{story['id']}: 缺少 '{obligation}' 类场景义务的 AC"
+                    )
+
+        if obligation_issues:
+            print(f"  场景义务校验: ❌ {len(obligation_issues)} 个缺失")
+            for issue in obligation_issues:
                 print(f"    - {issue}")
+            # 自动补充缺失的 AC
             for story in stories:
-                if not any(is_display_acceptance(ac) for ac in story.get("acceptance_criteria", [])):
-                    story["acceptance_criteria"].append(f"页面正确展示{story['title']}相关数据，关键列非空")
+                required = story["required_test_obligations"]["required"]
+                acs = story.get("acceptance_criteria", [])
+                for obligation in required:
+                    if not any(matches_obligation(ac, obligation) for ac in acs):
+                        story["acceptance_criteria"].append(
+                            generate_obligation_ac(story, obligation)
+                            # e.g. "[positive][display] 页面正确展示角色列表，关键列非空"
+                            # e.g. "[negative][business_rule_reject] 有员工绑定的角色删除被业务规则拒绝"
+                        )
             continue  # 回到 INVEST 校验
 
-        print("  展示类 AC 校验: ✅ 全部通过")
+        print("  场景义务校验: ✅ 全部通过")
         break  # Phase 2 通过
     else:
         print(f"❌ Phase 2 达到最大迭代次数 ({max_iterations}/{max_iterations})")
         print("请人工检查后重新执行 /split story")
         return {"status": "failed", "reason": "Phase 2 max_iterations_exceeded"}
+
 
     # ========== Phase 3: 增强全局终审 ==========
     # 参见 quality-gate/SKILL.md 的 enhanced_global_review()

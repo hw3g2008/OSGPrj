@@ -85,6 +85,7 @@ completed_at: null
 #     state_variant: null
 #     viewport_variant: null
 #     category: "positive"   # positive | negative | boundary | exception | null_empty
+#     scenario_obligation: "display"  # display | state_change | business_rule_reject | auth_or_data_boundary | persist_effect
 #     description: "{测试描述}"
 #     input: "{输入描述}"
 #     expected: "{预期输出}"
