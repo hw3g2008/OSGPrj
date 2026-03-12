@@ -335,6 +335,58 @@ def verify_all_transitions_gated(gate_checker, execution_log):
     return all_passed
 
 # ============================================
+# phase1_dependency 分支回归测试
+# ============================================
+def test_phase1_dependency_include_in_scope():
+    """phase1_dependency + include_in_scope → 重新 brainstorm → brainstorm_done"""
+    sm = load_state_machine()
+    config = {
+        "approval": {
+            "story_split": "required",
+            "ticket_split": "auto",
+            "ticket_done": "auto",
+            "story_done": "auto",
+            "brainstorm_confirm": "required"
+        }
+    }
+    sim = WorkflowSimulator(sm, config)
+    # First brainstorm → pending_confirm
+    result1 = sim.execute_command("/brainstorm")
+    assert result1 == "brainstorm_pending_confirm", f"Expected brainstorm_pending_confirm, got {result1}"
+
+    # Set source to phase1_dependency + decision=include_in_scope
+    sim._decisions_source = "phase1_dependency"
+    sim._dependency_decision = "include_in_scope"
+    result2 = sim.execute_command("/approve brainstorm")
+    # include_in_scope → re-brainstorm → brainstorm_done (second call)
+    assert result2 == "brainstorm_done", f"Expected brainstorm_done after include_in_scope, got {result2}"
+    print("✅ phase1_dependency + include_in_scope → brainstorm_done")
+
+
+def test_phase1_dependency_do_upstream_first():
+    """phase1_dependency + do_upstream_first → not_started (terminate)"""
+    sm = load_state_machine()
+    config = {
+        "approval": {
+            "story_split": "required",
+            "ticket_split": "auto",
+            "ticket_done": "auto",
+            "story_done": "auto",
+            "brainstorm_confirm": "required"
+        }
+    }
+    sim = WorkflowSimulator(sm, config)
+    result1 = sim.execute_command("/brainstorm")
+    assert result1 == "brainstorm_pending_confirm"
+
+    sim._decisions_source = "phase1_dependency"
+    sim._dependency_decision = "do_upstream_first"
+    result2 = sim.execute_command("/approve brainstorm")
+    assert result2 == "not_started", f"Expected not_started after do_upstream_first, got {result2}"
+    print("✅ phase1_dependency + do_upstream_first → not_started (terminate)")
+
+
+# ============================================
 # 主测试
 # ============================================
 def main():
@@ -404,9 +456,21 @@ def main():
     for key, stats in key_stats.items():
         print(f"  {key}: 总计 {stats['total']} 次 (审批 {stats['required']}, 自动 {stats['auto']})")
 
+    # phase1_dependency 分支测试
+    print("\n" + "=" * 80)
+    print("phase1_dependency 分支回归测试")
+    print("=" * 80)
+    try:
+        test_phase1_dependency_include_in_scope()
+        test_phase1_dependency_do_upstream_first()
+        dep_ok = True
+    except AssertionError as e:
+        print(f"❌ phase1_dependency 分支测试失败: {e}")
+        dep_ok = False
+
     # 最终结果
     print("\n" + "=" * 80)
-    if coverage_ok and transitions_ok:
+    if coverage_ok and transitions_ok and dep_ok:
         print("🎉 门控验证通过！每个环节都正确触发了门控检查。")
     else:
         print("❌ 门控验证失败！存在遗漏。")

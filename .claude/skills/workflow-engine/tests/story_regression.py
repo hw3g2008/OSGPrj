@@ -276,6 +276,7 @@ def test_path_next_story():
 # ============================================
 def test_path_readiness_upgrade():
     """最后一个 Story 完成 → all_stories_done → module readiness 应升级"""
+    import subprocess, tempfile, os
     sm = load_state_machine()
 
     # --- 单 Story 模块：完成后应 ready ---
@@ -286,20 +287,67 @@ def test_path_readiness_upgrade():
     engine.update_state(engine.execute_command(f"/approve {engine.current_story}"))
     assert engine.current_step == "all_stories_done"
 
-    # 断言：到达 all_stories_done 时，框架应将模块标记为 hard_dependency_ready
-    # 这是 design doc §5.1 写入点 #2 的断言
-    assert engine.current_step == "all_stories_done", "readiness 升级的前提条件"
-    print("  ✓ 单 Story 模块到达 all_stories_done — readiness 升级条件满足")
+    # 真实 registry 断言：调用 sync-module-readiness.py 并验证输出
+    with tempfile.TemporaryDirectory() as td:
+        readiness_path = os.path.join(td, "module-readiness.yaml")
+        # 模拟 SRS 文件存在
+        srs_dir = os.path.join(td, "srs")
+        os.makedirs(srs_dir, exist_ok=True)
+        with open(os.path.join(srs_dir, "test-module.md"), "w") as f:
+            f.write("# Test SRS")
+
+        project_root = str(Path(__file__).resolve().parents[4])
+        result = subprocess.run(
+            ["python3", os.path.join(project_root, "bin/sync-module-readiness.py"),
+             "--module", "test-module",
+             "--state-to", "all_stories_done",
+             "--event-source", "/approve story",
+             "--readiness", readiness_path,
+             "--srs-base", srs_dir],
+            capture_output=True, text=True, cwd=project_root
+        )
+        assert result.returncode == 0, f"sync-module-readiness failed: {result.stderr}"
+        assert "READY" in result.stdout, f"Expected READY in output: {result.stdout}"
+
+        # 读取并验证 registry 文件
+        import yaml
+        with open(readiness_path) as f:
+            registry = yaml.safe_load(f)
+        entry = registry["modules"]["test-module"]
+        assert entry["hard_dependency_ready"] is True, f"Expected hard_dependency_ready=true, got {entry}"
+        assert entry["delivery_state"] == "all_stories_done", f"Expected all_stories_done, got {entry}"
+        assert entry["updated_from_event"] == "/approve story", f"Expected /approve story, got {entry}"
+        print("  ✓ 单 Story 模块到达 all_stories_done — registry hard_dependency_ready=true 已验证")
 
     # --- 多 Story 模块：非最后 Story 完成时不应提前升级 ---
     engine2 = StoryRegressionEngine(sm, MOCK_CONFIG, ["S-001", "S-002"])
     engine2.run_ticket_cycle()
     engine2.update_state(engine2.execute_command(f"/approve {engine2.current_story}"))
     assert engine2.current_step == "story_approved", "非最后 Story 不应到达 all_stories_done"
-    assert engine2.current_step != "all_stories_done", "readiness 不应提前升级"
-    print("  ✓ 多 Story 模块非最后 Story 完成 — readiness 不提前升级")
 
-    print("✅ 路径 6: readiness 升级断言 — 通过")
+    # 真实 registry 断言：story_approved 时不应 ready
+    with tempfile.TemporaryDirectory() as td:
+        readiness_path = os.path.join(td, "module-readiness.yaml")
+        project_root = str(Path(__file__).resolve().parents[4])
+        result = subprocess.run(
+            ["python3", os.path.join(project_root, "bin/sync-module-readiness.py"),
+             "--module", "test-module",
+             "--state-to", "story_approved",
+             "--event-source", "/approve story",
+             "--readiness", readiness_path],
+            capture_output=True, text=True, cwd=project_root
+        )
+        assert result.returncode == 0
+        assert "NOT_READY" in result.stdout, f"Expected NOT_READY for story_approved: {result.stdout}"
+
+        import yaml
+        with open(readiness_path) as f:
+            registry = yaml.safe_load(f)
+        entry = registry["modules"]["test-module"]
+        assert entry["hard_dependency_ready"] is False, f"Expected false for story_approved, got {entry}"
+        print("  ✓ 多 Story 模块 story_approved — registry hard_dependency_ready=false 已验证")
+
+    print("✅ 路径 6: readiness 升级断言（含 registry 验证）— 通过")
 
 
 # ============================================

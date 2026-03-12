@@ -78,8 +78,9 @@ def sync_module_readiness(
         entry["hard_dependency_ready"] = False
         entry["updated_from_event"] = event_source
     else:
-        # Other states: update delivery_state but don't change readiness
+        # Other states: explicitly not ready
         entry["delivery_state"] = state_to
+        entry["hard_dependency_ready"] = False
         entry["updated_from_event"] = event_source
 
     entry["last_updated_at"] = now_iso()
