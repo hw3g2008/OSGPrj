@@ -298,17 +298,15 @@ prd_process:
     - "SRS 必须包含接口定义（已有接口 + 新增接口）和数据库变更"
     - "PRD 不存在时，brainstorm 流程自动从 HTML 原型生成 PRD"
   
-  # 原型到模块的映射（按业务功能划分，每个模块独立目录）
+  # 原型到模块的映射（按端划分，每端一个完整 RPIV 周期）
+  # 交互原型 = SSOT 真源；PRD_*.html = 参考文档（brainstorm 时自动利用）
+  # 废弃文件：admin/index.html(简化版), mentor/index.html(简化版), index_old.html(旧风格), PRD_V1.0~V1.3(版本规划)
   module_prototype_map:
-    permission: ["admin.html"]              # 权限管理（home + roles + admins + base-data）
-    user-center: ["admin.html"]             # 用户中心（students + contracts + staff + mentor-schedule）
-    teaching: ["admin.html"]                # 教学中心（class-records + communication）
-    finance: ["admin.html"]                 # 财务中心（finance + expense）
-    resource: ["admin.html"]                # 资源中心（files + test-bank + interview-bank + questions）
-    notification: ["admin.html"]            # 个人中心/系统（mailjob + notice + complaints + logs）
-    career: ["index.html", "lead-mentor.html", "assistant.html", "admin.html"]  # 求职中心（跨端）
-    student: ["index.html", "PRD_Student.html"]
-    mentor: ["mentor.html", "PRD_Mentor.html"]
+    admin: ["admin.html", "admin/login.html", "admin/forgot-password.html"]           # 管理后台（10121行，8角色20+页面）— PRD参考: PRD_Admin.html
+    student: ["index.html", "login.html", "forgot-password.html"]                     # 学生端（5855行，17+页面）— PRD参考: PRD_Student.html, PRD_Student_Business.html
+    mentor: ["mentor.html"]                                                           # 导师端（3365行，14+页面）— PRD参考: PRD_Mentor.html, PRD_Mentor_Business.html
+    lead-mentor: ["lead-mentor.html"]                                                 # 班主任端（6170行，含排课/岗位申请/题库审核特有功能）— PRD参考: PRD_LeadMentor.html
+    assistant: ["assistant.html"]                                                     # 助教端（4640行，班主任子集-无岗位申请/题库审核）— PRD参考: PRD_Assistant.html
 
 # 启用的开发者角色
 developers:
