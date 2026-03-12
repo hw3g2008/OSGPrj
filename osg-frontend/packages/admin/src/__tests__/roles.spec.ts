@@ -226,4 +226,13 @@ describe('角色管理模块测试', () => {
       expect(rolesViewSource).not.toContain('<PlusOutlined />')
     })
   })
+
+  describe('persist effect wiring', () => {
+    it('reloads the role list after successful modal submit and delete confirmation', () => {
+      expect(rolesViewSource).toContain('@success="loadRoleList"')
+      expect(rolesViewSource).toContain("await deleteRole(record.roleId)")
+      expect(rolesViewSource).toContain("message.success('角色删除成功')")
+      expect(rolesViewSource).toContain('loadRoleList()')
+    })
+  })
 })

@@ -213,4 +213,15 @@ describe('基础数据管理模块测试', () => {
       expect(baseDataViewSource).toContain('mdi mdi-plus')
     })
   })
+
+  describe('persist effect wiring', () => {
+    it('reloads the base-data list after successful modal submit and status toggle', () => {
+      expect(baseDataViewSource).toContain('@success="loadDataList"')
+      expect(baseDataViewSource).toContain("message.success('已禁用')")
+      expect(baseDataViewSource).toContain("message.success('已启用')")
+      expect(baseDataViewSource).toContain("await changeBaseDataStatus({ id: record.id, status: '1' }")
+      expect(baseDataViewSource).toContain("await changeBaseDataStatus({ id: record.id, status: '0' }")
+      expect(baseDataViewSource).toContain('loadDataList()')
+    })
+  })
 })

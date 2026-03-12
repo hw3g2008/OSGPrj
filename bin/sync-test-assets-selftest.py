@@ -405,6 +405,65 @@ def test_sync_infers_metadata_for_legacy_custom_cases_without_declared_ids() -> 
         assert legacy["scenario_obligation"] == "auth_or_data_boundary"
 
 
+def test_sync_mixed_permission_wording_keeps_display_unless_boundary_phrase_is_explicit() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        stories = root / "stories"
+        tickets = root / "tickets"
+        cases = root / "cases.yaml"
+        matrix = root / "matrix.md"
+        ui_contract = root / "UI-VISUAL-CONTRACT.yaml"
+        config = root / "config.yaml"
+
+        write_minimal_ui_contract(ui_contract)
+        write_minimal_config(config)
+
+        write_yaml(
+            stories / "S-904.yaml",
+            {
+                "id": "S-904",
+                "title": "mixed-permission-wording",
+                "acceptance_criteria": [
+                    "角色列表展示: 权限模块(tag列表) 正确显示",
+                    "无权限菜单项隐藏且列表展示正确",
+                ],
+                "tickets": ["T-904"],
+                "contract_refs": {"capabilities": [], "critical_surfaces": []},
+                "story_cases": [
+                    {"story_case_id": "SC-S-904-001", "ac_ref": "AC-S-904-01"},
+                    {"story_case_id": "SC-S-904-002", "ac_ref": "AC-S-904-02"},
+                ],
+            },
+        )
+        write_yaml(
+            tickets / "T-904.yaml",
+            {
+                "id": "T-904",
+                "story_id": "S-904",
+                "covers_ac_refs": ["AC-S-904-01", "AC-S-904-02"],
+                "acceptance_criteria": [
+                    "角色列表展示: 权限模块(tag列表) 正确显示",
+                    "无权限菜单项隐藏且列表展示正确",
+                ],
+                "contract_refs": {"capabilities": [], "critical_surfaces": []},
+                "test_cases": [
+                    {"test_case_id": "TCS-T-904-001", "ac_ref": "AC-S-904-01", "case_kind": "ac"},
+                    {"test_case_id": "TCS-T-904-002", "ac_ref": "AC-S-904-02", "case_kind": "ac"},
+                ],
+            },
+        )
+        write_yaml(cases, [])
+        matrix.write_text("", encoding="utf-8")
+
+        run_sync(stories, tickets, cases, matrix, ui_contract, config)
+
+        synced_ticket = yaml.safe_load((tickets / "T-904.yaml").read_text(encoding="utf-8"))
+        assert synced_ticket["test_cases"][0]["category"] == "positive"
+        assert synced_ticket["test_cases"][0]["scenario_obligation"] == "display"
+        assert synced_ticket["test_cases"][1]["category"] == "boundary"
+        assert synced_ticket["test_cases"][1]["scenario_obligation"] == "auth_or_data_boundary"
+
+
 def test_sync_upserts_existing_canonical_tc_ids_without_creating_duplicates() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -495,6 +554,7 @@ def main() -> int:
         test_migration_backfills_story_ticket_and_module_schema_fields,
         test_sync_creates_declared_ids_even_when_legacy_case_shares_same_ac_ref,
         test_sync_infers_metadata_for_legacy_custom_cases_without_declared_ids,
+        test_sync_mixed_permission_wording_keeps_display_unless_boundary_phrase_is_explicit,
         test_sync_upserts_existing_canonical_tc_ids_without_creating_duplicates,
     ]
     for test in tests:

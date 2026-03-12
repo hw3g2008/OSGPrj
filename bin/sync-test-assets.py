@@ -261,18 +261,26 @@ def infer_obligation_from_text(text: str, allowed_obligations: set[str]) -> str 
         "tag",
         "checkbox",
     )
+    matches = {
+        "auth_or_data_boundary": any(keyword in lowered for keyword in auth_boundary_keywords),
+        "business_rule_reject": any(keyword in lowered for keyword in reject_keywords),
+        "persist_effect": any(keyword in lowered for keyword in persist_keywords),
+        "display": any(keyword in lowered for keyword in display_keywords),
+        "state_change": any(keyword in lowered for keyword in state_change_keywords),
+    }
 
-    checks = [
-        ("auth_or_data_boundary", auth_boundary_keywords),
-        ("business_rule_reject", reject_keywords),
-        ("persist_effect", persist_keywords),
-        ("display", display_keywords),
-        ("state_change", state_change_keywords),
-    ]
-    for obligation, keywords in checks:
-        if obligation not in allowed_obligations:
-            continue
-        if any(keyword in lowered for keyword in keywords):
+    # Make the precedence explicit instead of relying on tuple order:
+    # clear auth/data-boundary phrases still outrank display language, while
+    # generic "permission module" nouns remain governed by the keyword set.
+    priority = (
+        "auth_or_data_boundary",
+        "business_rule_reject",
+        "persist_effect",
+        "display",
+        "state_change",
+    )
+    for obligation in priority:
+        if obligation in allowed_obligations and matches[obligation]:
             return obligation
     return None
 

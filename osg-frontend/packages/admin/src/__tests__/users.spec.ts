@@ -241,4 +241,15 @@ describe('用户管理模块测试', () => {
       expect(usersViewSource).not.toContain('<a-pagination')
     })
   })
+
+  describe('persist effect wiring', () => {
+    it('reloads the user list after successful add/edit/reset and status changes', () => {
+      expect(usersViewSource).toContain('@success="loadUserList"')
+      expect(usersViewSource).toContain("message.success('用户已禁用')")
+      expect(usersViewSource).toContain("message.success('用户已启用')")
+      expect(usersViewSource).toContain('await changeUserStatus({ userId: record.userId, status: \'1\' }')
+      expect(usersViewSource).toContain('await changeUserStatus({ userId: record.userId, status: \'0\' }')
+      expect(usersViewSource).toContain('loadUserList()')
+    })
+  })
 })
