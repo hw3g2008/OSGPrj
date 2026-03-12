@@ -115,6 +115,14 @@ class WorkflowSimulator:
             if source == "phase0":
                 # phase0: 更新 PRD 后重新执行 /brainstorm（由 brainstorm 管理最终状态）
                 return self.execute_command("/brainstorm")
+            elif source == "phase1_dependency":
+                # phase1_dependency: 按裁决结果处理（模拟"纳入范围"→重新 brainstorm）
+                decision = getattr(self, '_dependency_decision', 'include_in_scope')
+                if decision == "do_upstream_first":
+                    return "not_started"  # 终止，切换模块
+                else:
+                    # 纳入范围 或 降级处理 → 重新 brainstorm
+                    return self.execute_command("/brainstorm")
             else:
                 # phase4: 跳过语义，直接 brainstorm_done
                 return "brainstorm_done"
