@@ -596,6 +596,11 @@ else
   fi
 fi
 
+echo "--- 8.9 api_operation_parity_guard ---"
+python3 .claude/skills/workflow-engine/tests/api_operation_parity_guard.py \
+  --module "${MODULE}" \
+  --config .claude/project/config.yaml
+
 echo "--- 9. E2E 全量 ---"
 ensure_backend_ready
 BASE_URL="${BASE_URL}" E2E_API_GATE_LOG="${E2E_API_GATE_LOG}" \

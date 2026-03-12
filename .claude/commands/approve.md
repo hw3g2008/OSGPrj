@@ -14,7 +14,7 @@
 
 ### 说明
 
-根据 DECISIONS.md 中的来源（phase0/phase4）区分处理路径。
+根据 DECISIONS.md 中的来源（phase0/phase4/phase1_dependency）区分处理路径。
 
 ### 前提条件
 
@@ -39,12 +39,20 @@
    - Guard: resolved&&未应用 存在 → 报错（应走重新 /brainstorm）
    - 标记 pending 为 rejected（跳过语义）
    - 更新 workflow: brainstorm_done / split_story / auto_continue=true
+5c. source=phase1_dependency:
+   - 隔离约束: 不读取 phase0/phase4 裁决，不触发 PRD 更新
+   - 裁决类型:
+     - "先做上游" → 终止本次 brainstorm，提示用户切换模块
+     - "纳入本轮范围" → 标记已应用，重新调用 /brainstorm {module}
+     - "降级处理" → 标记已应用（降级标记），重新调用 /brainstorm {module}
+   - Guard: pending 存在 → 报错（用户未裁决完）
 ```
 
 ### 下一步
 
 - **phase0**: 同步执行 `/brainstorm {module}`（由 brainstorm 管理最终状态）
 - **phase4**: 自动继续执行 `/split story`
+- **phase1_dependency**: 按裁决结果执行（终止/重新 brainstorm）
 
 ---
 

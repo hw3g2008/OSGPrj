@@ -285,6 +285,33 @@ def infer_obligation_from_text(text: str, allowed_obligations: set[str]) -> str 
     return None
 
 
+OPERATION_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "reject_disable": ("拒绝", "不可", "不允许", "reject", "cannot", "forbidden"),
+    "delete": ("删除", "移除", "delete", "remove"),
+    "create": ("新增", "创建", "添加", "create", "add", "new"),
+    "edit": ("编辑", "修改", "更新", "update", "edit", "modify"),
+    "status_toggle": ("启用", "禁用", "状态", "enable", "disable", "status", "toggle"),
+    "search": ("搜索", "筛选", "过滤", "search", "filter"),
+    "list": ("列表", "展示", "渲染", "list", "table", "render", "display"),
+}
+
+
+def infer_operation_from_text(text: str, allowed_operations: set[str]) -> str | None:
+    """Infer operation from free text using keyword matching."""
+    lowered = text.lower().strip()
+    if not lowered:
+        return None
+    for op, keywords in OPERATION_KEYWORDS.items():
+        if op in allowed_operations and any(kw in lowered for kw in keywords):
+            return op
+    # fallback for list/search even when not in allowed_operations
+    for op in ("search", "list"):
+        keywords = OPERATION_KEYWORDS.get(op, ())
+        if any(kw in lowered for kw in keywords):
+            return op
+    return None
+
+
 def resolve_case_metadata(
     *,
     texts: list[str],
@@ -292,9 +319,11 @@ def resolve_case_metadata(
     fallback_index: int,
     allowed_obligations: set[str],
     obligation_to_category: dict[str, str],
-) -> tuple[str | None, str | None]:
+    allowed_operations: set[str] | None = None,
+) -> tuple[str | None, str | None, str | None]:
     category: str | None = None
     obligation: str | None = None
+    operation: str | None = None
 
     for text in texts:
         labels = parse_ac_labels(text, allowed_obligations)
@@ -318,7 +347,17 @@ def resolve_case_metadata(
         category = None
     if obligation not in allowed_obligations:
         obligation = None
-    return category, obligation
+
+    # infer operation from same texts
+    if allowed_operations:
+        for text in texts:
+            labels = parse_ac_labels(text, allowed_obligations)
+            op = infer_operation_from_text(labels.get("plain_text") or text, allowed_operations)
+            if op:
+                operation = op
+                break
+
+    return category, obligation, operation
 
 
 def category_from_tc_id(tc_id: str | None) -> str | None:
@@ -572,6 +611,9 @@ def normalize_ticket_test_cases(ticket: dict[str, Any]) -> list[dict[str, Any]]:
                     "surface_id": _normalize_optional_string(item.get("surface_id")),
                     "state_variant": _normalize_optional_string(item.get("state_variant")),
                     "viewport_variant": _normalize_optional_string(item.get("viewport_variant")),
+                    "category": item.get("category") if item.get("category") in VALID_CATEGORIES else None,
+                    "scenario_obligation": _normalize_optional_string(item.get("scenario_obligation")),
+                    "operation": _normalize_optional_string(item.get("operation")),
                 }
             )
 
@@ -590,6 +632,9 @@ def normalize_ticket_test_cases(ticket: dict[str, Any]) -> list[dict[str, Any]]:
                 "surface_id": None,
                 "state_variant": None,
                 "viewport_variant": None,
+                "category": None,
+                "scenario_obligation": None,
+                "operation": None,
             }
         )
 
@@ -740,6 +785,8 @@ def enrich_ticket_test_cases(
         for index, text in enumerate(story.get("acceptance_criteria") or [], 1)
     }
     ticket_criteria = [str(item) for item in (ticket.get("acceptance_criteria") or [])]
+    story_operations = (story.get("required_test_operations") or {}).get("operations") or {}
+    allowed_ops = set(story_operations.keys()) if story_operations else set()
     for index, test_case in enumerate(ticket.get("test_cases") or []):
         texts: list[str] = []
         if index < len(ticket_criteria):
@@ -747,15 +794,20 @@ def enrich_ticket_test_cases(
         story_text = story_ac_text_by_ref.get(test_case.get("ac_ref"))
         if story_text:
             texts.append(story_text)
-        category, obligation = resolve_case_metadata(
+        category, obligation, operation = resolve_case_metadata(
             texts=texts,
             required_obligations=required,
             fallback_index=index,
             allowed_obligations=allowed_obligations,
             obligation_to_category=obligation_to_category,
+            allowed_operations=allowed_ops,
         )
-        test_case["category"] = category
-        test_case["scenario_obligation"] = obligation
+        if not test_case.get("category"):
+            test_case["category"] = category
+        if not test_case.get("scenario_obligation"):
+            test_case["scenario_obligation"] = obligation
+        if not test_case.get("operation"):
+            test_case["operation"] = operation
     return ticket.get("test_cases") or []
 
 
@@ -766,12 +818,14 @@ def resolve_story_case_metadata(
     position: int,
     allowed_obligations: set[str],
     obligation_to_category: dict[str, str],
-) -> tuple[str | None, str | None]:
+) -> tuple[str | None, str | None, str | None]:
     story_ac_text_by_ref = {
         story_ac_ref(story["id"], index): str(text)
         for index, text in enumerate(story.get("acceptance_criteria") or [], 1)
     }
     required = (story.get("required_test_obligations") or {}).get("required") or []
+    story_operations = (story.get("required_test_operations") or {}).get("operations") or {}
+    allowed_ops = set(story_operations.keys()) if story_operations else set()
     texts: list[str] = []
     story_text = story_ac_text_by_ref.get(skeleton.get("ac_ref"))
     if story_text:
@@ -782,6 +836,7 @@ def resolve_story_case_metadata(
         fallback_index=position,
         allowed_obligations=allowed_obligations,
         obligation_to_category=obligation_to_category,
+        allowed_operations=allowed_ops,
     )
 
 
@@ -794,6 +849,7 @@ def create_ticket_case(module: str, ticket: dict[str, Any], skeleton: dict[str, 
         "ac_ref": skeleton["ac_ref"],
         "category": skeleton.get("category"),
         "scenario_obligation": skeleton.get("scenario_obligation"),
+        "operation": skeleton.get("operation"),
         "test_case_id": skeleton["test_case_id"],
         "case_kind": skeleton.get("case_kind") or "ac",
         "surface_id": skeleton.get("surface_id"),
@@ -820,6 +876,7 @@ def create_story_or_final_case(
         "ac_ref": skeleton["ac_ref"],
         "category": skeleton.get("category"),
         "scenario_obligation": skeleton.get("scenario_obligation"),
+        "operation": skeleton.get("operation"),
         "story_case_id": skeleton["story_case_id"],
         "case_kind": skeleton.get("case_kind") or "ac",
         "surface_id": skeleton.get("surface_id"),
@@ -936,6 +993,8 @@ def normalize_existing_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]
         result["category"] = category if isinstance(category, str) and category in VALID_CATEGORIES else None
         obligation = result.get("scenario_obligation")
         result["scenario_obligation"] = obligation if isinstance(obligation, str) and obligation else None
+        op = result.get("operation")
+        result["operation"] = op if isinstance(op, str) and op else None
         automation = result.get("automation")
         if not isinstance(automation, dict):
             result["automation"] = {"script": None, "command": None}
@@ -966,7 +1025,7 @@ def sort_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
     )
 
 
-def matrix_rows_from_cases(cases: list[dict[str, Any]]) -> list[tuple[str, str, str, str, str, str, str]]:
+def matrix_rows_from_cases(cases: list[dict[str, Any]]) -> list[tuple[str, str, str, str, str, str, str, str]]:
     rows = []
     for case in sort_cases(cases):
         automation = case.get("automation") or {}
@@ -979,6 +1038,7 @@ def matrix_rows_from_cases(cases: list[dict[str, Any]]) -> list[tuple[str, str, 
                 case.get("ac_ref") or "—",
                 case.get("tc_id") or "—",
                 case.get("level") or "—",
+                case.get("operation") or "—",
                 script,
                 f"`{command}`" if command != "—" else "—",
                 latest_result.get("status") or "pending",
@@ -997,12 +1057,12 @@ def render_matrix(module: str, cases: list[dict[str, Any]]) -> str:
         "",
         "## AC → TC → Script → Result 追踪表",
         "",
-        "| FR/AC | TC-ID | Level | Script | Command | Latest Result | Evidence Ref |",
-        "|-------|-------|-------|--------|---------|---------------|-------------|",
+        "| FR/AC | TC-ID | Level | Operation | Script | Command | Latest Result | Evidence Ref |",
+        "|-------|-------|-------|-----------|--------|---------|---------------|-------------|",
     ]
     lines = header + [
-        f"| {ac_ref} | {tc_id} | {level} | {script} | {command} | {status} | {evidence_ref} |"
-        for ac_ref, tc_id, level, script, command, status, evidence_ref in rows
+        f"| {ac_ref} | {tc_id} | {level} | {operation} | {script} | {command} | {status} | {evidence_ref} |"
+        for ac_ref, tc_id, level, operation, script, command, status, evidence_ref in rows
     ]
     return "\n".join(lines) + "\n"
 
@@ -1114,7 +1174,7 @@ def sync_module_assets(
             ac_ref = case["ac_ref"]
             story_case_ref = case["story_case_id"]
             case_kind = case.get("case_kind") or "ac"
-            category, obligation = resolve_story_case_metadata(
+            category, obligation, operation = resolve_story_case_metadata(
                 story,
                 case,
                 position=idx - 1,
@@ -1123,6 +1183,7 @@ def sync_module_assets(
             )
             case["category"] = category
             case["scenario_obligation"] = obligation
+            case["operation"] = operation
             for level in ("story", "final"):
                 tc_id = f"TC-{module.upper()}-{sid}-{level.upper()}-{idx:03d}"
                 existing_case = index.by_id.get(tc_id)
@@ -1174,6 +1235,7 @@ def sync_module_assets(
             existing_case["viewport_variant"] = skeleton.get("viewport_variant")
             existing_case["category"] = skeleton.get("category")
             existing_case["scenario_obligation"] = skeleton.get("scenario_obligation")
+            existing_case["operation"] = skeleton.get("operation")
             hydrate_ticket_case_from_verification_evidence(
                 existing_case,
                 ticket,
@@ -1211,7 +1273,7 @@ def sync_module_assets(
             texts.append(story_text)
 
         required = (story.get("required_test_obligations") or {}).get("required") or []
-        category, obligation = resolve_case_metadata(
+        category, obligation, operation = resolve_case_metadata(
             texts=texts,
             required_obligations=required,
             fallback_index=story_index,
@@ -1231,6 +1293,8 @@ def sync_module_assets(
             category = obligation_to_category.get(obligation)
         existing_case["category"] = category
         existing_case["scenario_obligation"] = obligation
+        if not existing_case.get("operation") and operation:
+            existing_case["operation"] = operation
 
     merged_cases = sort_cases(merged_cases)
     write_yaml(cases_doc, merged_cases)

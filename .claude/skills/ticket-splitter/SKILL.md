@@ -265,6 +265,46 @@ def find_ac_by_ref(ticket: dict, ac_ref: str) -> str | None:
 # ensure_required_test_obligations 定义在 story-splitter/SKILL.md 中，内部包装 infer_required_test_obligations
 # 调用方式: ensure_required_test_obligations(story, config.testing.design.scenario_obligations.profiles)
 
+# ensure_required_test_operations 定义在 story-splitter/SKILL.md 中，内部包装 infer_required_test_operations
+# 调用方式: ensure_required_test_operations(story, config.testing.design.operation_obligations.profiles, set(config.testing.design.scenario_obligations.allowed))
+
+def infer_operation_from_ac(ac_text: str, story_operations: dict) -> str | None:
+    """从 AC 文本推断操作类型。
+    story_operations 来自 story.required_test_operations.operations
+    返回: operation 字符串或 None
+    """
+    text = ac_text.lower() if isinstance(ac_text, str) else ""
+    create_keywords = ("新增", "创建", "添加", "create", "add", "new")
+    edit_keywords = ("编辑", "修改", "更新", "update", "edit", "modify")
+    toggle_keywords = ("启用", "禁用", "状态", "enable", "disable", "status", "toggle")
+    reject_keywords = ("拒绝", "不可", "不允许", "reject", "cannot", "forbidden")
+    list_keywords = ("列表", "展示", "渲染", "list", "table", "render", "display")
+    search_keywords = ("搜索", "筛选", "过滤", "search", "filter")
+    delete_keywords = ("删除", "移除", "delete", "remove")
+
+    for kw in reject_keywords:
+        if kw in text and "reject_disable" in story_operations:
+            return "reject_disable"
+    for kw in delete_keywords:
+        if kw in text and "delete" in story_operations:
+            return "delete"
+    for kw in create_keywords:
+        if kw in text and "create" in story_operations:
+            return "create"
+    for kw in edit_keywords:
+        if kw in text and "edit" in story_operations:
+            return "edit"
+    for kw in toggle_keywords:
+        if kw in text and "status_toggle" in story_operations:
+            return "status_toggle"
+    for kw in search_keywords:
+        if kw in text:
+            return "search"
+    for kw in list_keywords:
+        if kw in text:
+            return "list"
+    return None
+
 
 def split_tickets(story_id, state):
     story = read_yaml(f"osg-spec-docs/tasks/stories/{story_id}.yaml")
@@ -361,6 +401,24 @@ def split_tickets(story_id, state):
                 f"但 Ticket 集合只覆盖了 {sorted(covered_obligations)}，"
                 f"缺少: {missing_obligations}"
             )
+
+        # 10. 操作完整性（shift-left: Story required_test_operations 必须被 Ticket 集合覆盖）
+        story_operations = story.get("required_test_operations", {}).get("operations", {})
+        if story_operations:
+            covered_operations = set()
+            for ticket in tickets:
+                for ac in ticket.get("acceptance_criteria", []):
+                    op = infer_operation_from_ac(
+                        parse_ac_labels(ac).get("plain_text", ac), story_operations
+                    )
+                    if op:
+                        covered_operations.add(op)
+            missing_operations = [op for op in story_operations.keys() if op not in covered_operations]
+            if missing_operations:
+                quality_issues.append(
+                    f"操作完整性缺失: Story {story_id} 要求操作 {sorted(story_operations.keys())}，"
+                    f"但 Ticket 集合只覆盖了 {sorted(covered_operations)}，缺少: {missing_operations}"
+                )
 
         if quality_issues:
             tickets = fix_quality_issues(tickets, quality_issues)
@@ -486,6 +544,7 @@ def split_tickets(story_id, state):
             # 从 Ticket AC 标签解析 category + scenario_obligation
             matching_ac = find_ac_by_ref(ticket, ac_ref)
             labels = parse_ac_labels(matching_ac) if matching_ac else {}
+            story_operations = story.get("required_test_operations", {}).get("operations", {})
             desired_case = {
                 "tc_id": tc_id,
                 "level": "ticket",
@@ -494,6 +553,7 @@ def split_tickets(story_id, state):
                 "ac_ref": ac_ref,
                 "category": labels.get("category") or obligation_map.get(labels.get("scenario_obligation"), "positive"),
                 "scenario_obligation": labels.get("scenario_obligation"),
+                "operation": infer_operation_from_ac(matching_ac, story_operations),
                 "priority": "P1",
             }
             if tc_id in existing_by_id:
@@ -515,6 +575,8 @@ def split_tickets(story_id, state):
         if not ac_obligation and story_obligations:
             ac_obligation = story_obligations[min(ac_idx - 1, len(story_obligations) - 1)]
         ac_category = ac_labels.get("category") or obligation_map.get(ac_obligation, "positive")
+        story_operations = story.get("required_test_operations", {}).get("operations", {})
+        ac_operation = infer_operation_from_ac(str(_ac), story_operations)
         for level in ["story", "final"]:
             tc_id = f"TC-{module.upper()}-{story_id}-{level.upper()}-{ac_idx:03d}"
             desired_case = {
@@ -525,6 +587,7 @@ def split_tickets(story_id, state):
                 "ac_ref": ac_ref,
                 "category": ac_category,
                 "scenario_obligation": ac_obligation,
+                "operation": ac_operation,
                 "priority": "P1",
             }
             if tc_id in existing_by_id:

@@ -250,6 +250,25 @@ def brainstorming(user_input):
     if security_result.exit_code != 0:
         return failed("security_contract_guard 未通过（存在 unresolved 或 drift）")
 
+    # ⛔ 门控点 1.6: 上游依赖检查（module readiness projection）
+    readiness_path = config.paths.tasks.module_readiness  # osg-spec-docs/tasks/module-readiness.yaml
+    dep_result = check_upstream_dependencies(prd_dir, readiness_path, config, module_name)
+    if dep_result["status"] == "pending_decision":
+        # 写入 DECISIONS.md（source=phase1_dependency），进入 brainstorm_pending_confirm
+        decisions_path = f"{config.paths.docs.srs}{module_name}-DECISIONS.md"
+        append_decisions(decisions_path, dep_result["missing_deps"], source="phase1_dependency")
+        state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+        state.workflow.current_step = "brainstorm_pending_confirm"
+        state.workflow.next_step = "approve_brainstorm"
+        state.workflow.auto_continue = False
+        state.workflow.decisions_path = decisions_path
+        write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+        print("⚠️ 上游依赖未就绪，已写入决策日志。请执行 /approve brainstorm 裁决后继续。")
+        return {"status": "pending_decision", "decisions_path": decisions_path}
+
+    # 依赖检查通过 → 将已就绪的上游模块 SRS/接口定义加入 context
+    upstream_context = dep_result.get("upstream_assets", {})
+
     # ========== Phase 1: 收集输入 + 生成 SRS 初稿 ==========
     context = {
         "user_request": user_input,
@@ -686,6 +705,52 @@ def brainstorming(user_input):
 
 **函数签名**：
 ```python
+def check_upstream_dependencies(prd_dir, readiness_path, config, module_name):
+    """在 Phase 1 前检查目标模块的上游依赖是否就绪。
+    
+    1. 从 PRD 提取引用的外部概念（角色/API/表/共享组件）
+    2. 读取 module-readiness.yaml，查找每个概念的 provider 模块
+    3. 分类：ready / missing / unknown
+    4. 无外部依赖 → 返回 {"status": "ready"}
+    5. 有 missing/unknown → 返回 {"status": "pending_decision", "missing_deps": [...]}
+    6. 全部 ready → 返回 {"status": "ready", "upstream_assets": {provider: srs_path}}
+    """
+    registry = read_yaml(readiness_path) if exists(readiness_path) else {"modules": {}}
+    modules = registry.get("modules", {})
+    
+    # AI 语义分析：从 PRD 提取外部引用
+    external_refs = extract_external_references(prd_dir)
+    if not external_refs:
+        return {"status": "ready"}  # 无外部依赖（如第一个模块）
+    
+    missing_deps = []
+    upstream_assets = {}
+    for ref in external_refs:
+        provider = ref.get("source_hint")
+        if not provider or provider not in modules:
+            missing_deps.append({"concept": ref["concept"], "provider": provider or "unknown", "reason": "未注册"})
+            continue
+        entry = modules[provider]
+        if not entry.get("hard_dependency_ready"):
+            missing_deps.append({"concept": ref["concept"], "provider": provider, 
+                                "reason": f"未就绪 (delivery_state={entry.get('delivery_state')})"})
+            continue
+        # ready → 收集上游 SRS 路径
+        srs = entry.get("srs_path")
+        if srs and exists(srs):
+            upstream_assets[provider] = srs
+    
+    if missing_deps:
+        return {"status": "pending_decision", "missing_deps": missing_deps}
+    return {"status": "ready", "upstream_assets": upstream_assets}
+
+
+def extract_external_references(prd_dir):
+    """AI 语义分析：从 PRD 文档提取引用的外部概念。
+    返回: [{"concept": "角色管理", "type": "role_system", "source_hint": "permission"}, ...]
+    识别关键词：角色/权限/认证/token/API接口引用/数据库表引用/共享组件引用"""
+
+
 def append_decisions(decisions_path, issues, source):
     """Append new decision records to DECISIONS.md.
     Auto-generates DEC-NNN IDs. Sets status=pending, 已应用=false."""

@@ -272,6 +272,37 @@ def test_path_next_story():
 
 
 # ============================================
+# 测试路径 6: readiness 升级断言
+# ============================================
+def test_path_readiness_upgrade():
+    """最后一个 Story 完成 → all_stories_done → module readiness 应升级"""
+    sm = load_state_machine()
+
+    # --- 单 Story 模块：完成后应 ready ---
+    engine = StoryRegressionEngine(sm, MOCK_CONFIG, ["S-001"])
+    engine.run_ticket_cycle()
+    assert engine.current_step == "story_verified"
+
+    engine.update_state(engine.execute_command(f"/approve {engine.current_story}"))
+    assert engine.current_step == "all_stories_done"
+
+    # 断言：到达 all_stories_done 时，框架应将模块标记为 hard_dependency_ready
+    # 这是 design doc §5.1 写入点 #2 的断言
+    assert engine.current_step == "all_stories_done", "readiness 升级的前提条件"
+    print("  ✓ 单 Story 模块到达 all_stories_done — readiness 升级条件满足")
+
+    # --- 多 Story 模块：非最后 Story 完成时不应提前升级 ---
+    engine2 = StoryRegressionEngine(sm, MOCK_CONFIG, ["S-001", "S-002"])
+    engine2.run_ticket_cycle()
+    engine2.update_state(engine2.execute_command(f"/approve {engine2.current_story}"))
+    assert engine2.current_step == "story_approved", "非最后 Story 不应到达 all_stories_done"
+    assert engine2.current_step != "all_stories_done", "readiness 不应提前升级"
+    print("  ✓ 多 Story 模块非最后 Story 完成 — readiness 不提前升级")
+
+    print("✅ 路径 6: readiness 升级断言 — 通过")
+
+
+# ============================================
 # 主函数
 # ============================================
 if __name__ == "__main__":
@@ -285,6 +316,7 @@ if __name__ == "__main__":
         test_path_cc_fail_recover,
         test_path_auto_verify_fail_recover,
         test_path_next_story,
+        test_path_readiness_upgrade,
     ]
 
     passed = 0

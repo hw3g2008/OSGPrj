@@ -178,6 +178,11 @@ def transition(command, state, state_to, meta=None):
 
     # --- 5. postcheck_guard ---
     postcheck_guard(state, event, sm, config)
+
+    # --- 6. module-readiness projection（生命周期同步）---
+    module = state.current_requirement
+    if module:
+        bash(f"python3 bin/sync-module-readiness.py --module {module} --state-to {state_to} --event-source {command}")
 ```
 
 #### 5b. preflight_guard()

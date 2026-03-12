@@ -148,6 +148,43 @@ def ensure_required_test_obligations(story, profiles):
     该 helper 既供 /split story 使用，也供历史资产迁移命令复用。"""
 
 
+def infer_required_test_operations(story, operation_profiles, allowed_obligations):
+    """旧 Story 缺少 required_test_operations 时的兼容推导。
+    签名: (story: dict, operation_profiles: dict, allowed_obligations: set) -> dict | None
+    operation_profiles 来自 config.testing.design.operation_obligations.profiles
+    allowed_obligations 来自 config.testing.design.scenario_obligations.allowed
+    返回: {"profile": "crud_minimal", "operations": {...}} 或 None（display-only）
+    约束: 每个 operations.*.required[] 的值必须是 allowed_obligations 的成员
+    """
+    acs = story.get("acceptance_criteria", [])
+    text = " ".join(str(ac) for ac in acs).lower()
+    mutation_keywords = ("新增", "编辑", "删除", "修改", "保存", "创建", "启用", "禁用",
+                         "重置", "create", "update", "delete", "save", "enable", "disable")
+    if any(kw in text for kw in mutation_keywords):
+        profile = operation_profiles.get("crud_minimal")
+        if profile:
+            return {"profile": "crud_minimal", "operations": profile["operations"]}
+    return None
+
+
+def ensure_required_test_operations(story, operation_profiles, allowed_obligations):
+    """对 Story 做 operation 包装层。
+    - 已有 required_test_operations: 保留并做最小规范化（校验 required[] ⊆ allowed_obligations）
+    - 缺字段: 调用 infer_required_test_operations(story, operation_profiles, allowed_obligations) 回填
+    - display-only Story: 不设置该字段（返回 None）
+    该 helper 既供 /split story 使用，也供历史资产迁移命令复用。"""
+    current = story.get("required_test_operations")
+    if isinstance(current, dict) and current.get("operations"):
+        for op_name, op_spec in current["operations"].items():
+            required = op_spec.get("required", [])
+            op_spec["required"] = [r for r in required if r in allowed_obligations]
+        return current
+    inferred = infer_required_test_operations(story, operation_profiles, allowed_obligations)
+    if inferred:
+        story["required_test_operations"] = inferred
+    return inferred
+
+
 def matches_mutation_or_permission_ac(ac: str) -> bool:
     """判断 AC 是否涉及数据变更或权限操作。
     匹配关键词：新增/编辑/删除/修改/保存/创建/启用/禁用/分配/变更/权限/角色/访问/授权"""
@@ -247,6 +284,12 @@ def split_stories(requirement_doc):  # requirement_doc = SRS 文档（brainstorm
         for story in stories:
             # 统一走 ensure 包装层，供 split / migrate 共用
             story["required_test_obligations"] = ensure_required_test_obligations(story, obligation_profiles)
+            # 🆕 操作级义务推导（在 obligation 之后）
+            operation_profiles = config.testing.design.operation_obligations.profiles
+            allowed_obligations_set = set(config.testing.design.scenario_obligations.allowed)
+            story["required_test_operations"] = ensure_required_test_operations(
+                story, operation_profiles, allowed_obligations_set
+            )
             required = story["required_test_obligations"]["required"]
             acs = story.get("acceptance_criteria", [])
 

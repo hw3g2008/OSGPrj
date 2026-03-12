@@ -91,6 +91,7 @@ paths:
     stories: "osg-spec-docs/tasks/stories/"
     tickets: "osg-spec-docs/tasks/tickets/"
     test_matrices: "osg-spec-docs/tasks/test-matrices/"
+    module_readiness: "osg-spec-docs/tasks/module-readiness.yaml"
 
 # ============================================
 # 机器真值：运行时模型 / 环境身份 / 流程策略
@@ -438,6 +439,32 @@ testing:
         business_rule_reject: negative
         auth_or_data_boundary: boundary
         persist_effect: positive
+
+    # 🆕 操作级测试义务（CRUD 操作粒度的必覆盖声明）
+    operation_obligations:
+      # 允许的操作枚举
+      allowed:
+        - list
+        - search
+        - create
+        - edit
+        - status_toggle
+        - delete
+        - reject_disable
+        - auth_filter
+      # 预设 profile（Story 按类型选择）
+      # 约束: 每个 operations.*.required[] 的值必须是 scenario_obligations.allowed 的成员
+      profiles:
+        crud_minimal:
+          operations:
+            create:
+              required: [state_change, persist_effect]
+            edit:
+              required: [state_change, persist_effect]
+            status_toggle:
+              required: [state_change, persist_effect]
+            reject_disable:
+              required: [business_rule_reject]
 
   # API 测试维度
   api_test_dimensions:
