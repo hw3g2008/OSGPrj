@@ -93,7 +93,7 @@ Prod secrets（必须存在且非空）：
 
 约束：
 - prod 禁止在 `.env.prod` 中配置明文密码。
-- `bin/deploy-preflight.sh prod --profile core,frontends` 会强校验 secrets 非空。
+- `bin/deploy-preflight.sh prod --profile core,frontends` 会强校验 secrets 非空。直接调用前需先执行 `bash bin/prepare-mysql-init.sh` 同步派生产物。
 - 服务器部署默认采用全容器拓扑（mysql/redis/backend/frontends），不使用外置 MySQL。
 
 ## Environment Strategy
