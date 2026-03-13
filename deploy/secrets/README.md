@@ -15,4 +15,4 @@ printf '%s' 'strong-password' > deploy/secrets/mysql_root_password
 
 注意：
 - 不要添加换行之外的额外字符。
-- `bin/deploy-preflight.sh prod --profile core,frontends` 会校验这些文件非空。
+- `bin/deploy-preflight.sh prod --profile core,frontends` 会校验这些文件非空。注意：直接调用 deploy-preflight.sh 前需先执行 `bash bin/prepare-mysql-init.sh` 同步派生产物。

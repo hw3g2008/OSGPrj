@@ -66,7 +66,7 @@ bash bin/run-dev-shared.sh
 约束：
 - test 环境默认不再拉起 mysql/redis 容器
 - backend 通过 `host.docker.internal` 连接远端服务器上已存在的开发态 mysql/redis
-- `deploy-preflight.sh test --profile core,frontends` 会要求共享依赖端口处于监听状态，而不是要求这些端口空闲
+- `deploy-preflight.sh test --profile core,frontends` 会要求共享依赖端口处于监听状态，而不是要求这些端口空闲。注意：直接调用 deploy-preflight.sh 前需先执行 `bash bin/prepare-mysql-init.sh` 同步派生产物
 - 远端测试相关命令执行前必须先通过：
 
 ```bash

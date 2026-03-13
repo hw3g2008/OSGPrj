@@ -68,6 +68,7 @@ bash bin/deploy-test-remote.sh
 
 ```bash
 bash bin/context-preflight.sh test --remote-host 47.94.213.128
+bash bin/prepare-mysql-init.sh  # 先同步 deploy/mysql-init 派生产物
 bash bin/deploy-preflight.sh test --profile core,frontends
 ```
 
