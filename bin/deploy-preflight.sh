@@ -262,17 +262,6 @@ if ! docker compose \
   exit 1
 fi
 
-for sql in \
-  deploy/mysql-init/00_ry_20250522.sql \
-  deploy/mysql-init/01_quartz.sql \
-  deploy/mysql-init/02_osg_menu_init.sql \
-  deploy/mysql-init/03_osg_role_init.sql \
-  deploy/mysql-init/04_osg_role_menu_init.sql \
-  deploy/mysql-init/05_osg_user_init.sql \
-  deploy/mysql-init/06_osg_alter_user_first_login.sql; do
-  require_file_nonempty "${sql}"
-done
-
 if [[ "${ENV_NAME}" == "prod" ]]; then
   require_env_keys deploy/requirements-prod.txt
   check_prod_plaintext_secrets

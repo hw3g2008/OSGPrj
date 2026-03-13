@@ -20,6 +20,26 @@ declare -a MAPPINGS=(
   "04:osg_role_menu_init.sql"
   "05:osg_user_init.sql"
   "06:osg_alter_user_first_login.sql"
+  # === admin 端业务表 ===
+  "07:osg_student_init.sql"
+  "08:osg_contract_init.sql"
+  "09:osg_student_change_request_init.sql"
+  "10:osg_staff_init.sql"
+  "11:osg_staff_schedule_init.sql"
+  "12:osg_position_init.sql"
+  "13:osg_student_position_init.sql"
+  "14:osg_job_application_init.sql"
+  "15:osg_mock_practice_init.sql"
+  "16:osg_class_record_init.sql"
+  "17:osg_finance_settlement_init.sql"
+  "18:osg_expense_init.sql"
+  "19:osg_file_init.sql"
+  "20:osg_test_bank_init.sql"
+  "21:osg_interview_bank_init.sql"
+  "22:osg_interview_question_init.sql"
+  "23:osg_notice_init.sql"
+  "24:osg_mailjob_init.sql"
+  "25:osg_complaint_init.sql"
 )
 
 hash_file() {
@@ -91,7 +111,7 @@ done
 
 if [[ "${MODE}" != "--check" ]]; then
   mkdir -p "${OUT_DIR}"
-  rm -f "${OUT_DIR}"/0[0-6]_*.sql
+  rm -f "${OUT_DIR}"/[0-9][0-9]_*.sql
 
   for mapping in "${MAPPINGS[@]}"; do
     prefix="${mapping%%:*}"
@@ -113,9 +133,10 @@ if [[ "${MODE}" != "--check" ]]; then
   echo "generated: ${MANIFEST_PATH}"
 fi
 
-count="$(find "${OUT_DIR}" -maxdepth 1 -type f -name '0[0-6]_*.sql' | wc -l | tr -d ' ')"
-if [[ "${count}" != "7" ]]; then
-  echo "FAIL: 生成数量异常，期望 7，实际 ${count}" >&2
+expected_count="${#MAPPINGS[@]}"
+count="$(find "${OUT_DIR}" -maxdepth 1 -type f -name '[0-9][0-9]_*.sql' | wc -l | tr -d ' ')"
+if [[ "${count}" != "${expected_count}" ]]; then
+  echo "FAIL: 生成数量异常，期望 ${expected_count}，实际 ${count}" >&2
   exit 1
 fi
 
@@ -148,7 +169,7 @@ if [[ "${MODE}" == "--check" ]]; then
 fi
 
 if [[ "${MODE}" == "--check" ]]; then
-  echo "PASS: deploy/mysql-init 与 sql/ 源文件一致（7 个），manifest 校验通过"
+  echo "PASS: deploy/mysql-init 与 sql/ 源文件一致（${#MAPPINGS[@]} 个），manifest 校验通过"
 else
-  echo "PASS: deploy/mysql-init 已生成 7 个初始化 SQL + manifest"
+  echo "PASS: deploy/mysql-init 已生成 ${#MAPPINGS[@]} 个初始化 SQL + manifest"
 fi
