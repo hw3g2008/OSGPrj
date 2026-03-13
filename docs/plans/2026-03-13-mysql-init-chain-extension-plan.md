@@ -1,137 +1,164 @@
-# MySQL-init 真源链扩展方案
+# MySQL-init 真源链扩展方案 v2（定稿）
 
 > 设计原则：一看就懂、每个节点只做一件事、出口统一、上游有问题就停、
 > 最少概念、最短路径、改动自洽、简约不等于省略。
 
+> **v2 说明**：v1（同目录 `-plan.md`）的 §1-7 已失效（全量声明模式无法兼容 Ticket 逐个交付）。
+> 本文档是收敛后的唯一可执行版本，包含三个必做步骤。
+
+---
+
 ## 一、目标
 
-- **做什么**: 扩展 `bin/prepare-mysql-init.sh` 的 MAPPINGS 数组，纳入 admin 端 19 个业务表 SQL，使 database 类型 Ticket 可以通过正规真源链（`sql/ → prepare-mysql-init.sh → deploy/mysql-init/`）落地
-- **验收标准**:
-  1. `bash bin/prepare-mysql-init.sh` 生成 26 个 SQL 文件（原 7 + 新 19）
-  2. `bash bin/prepare-mysql-init.sh --check` 校验通过
-  3. `bash bin/deploy-preflight.sh test` 中 mysql-init 相关检查通过（需要先有 ruoyi-admin.jar，此项为设计验证，运行时才完整校验）
-  4. 所有 database Ticket 的 `allowed_paths` 只引用 `sql/` 真源，不引用 `deploy/mysql-init/` 生成产物
+扩展 `bin/prepare-mysql-init.sh`，使其支持 admin 端 19 个业务表 SQL 的**渐进式纳入**：
+
+- 基础架构 SQL（00~06）：必须存在，缺失即 FAIL
+- 业务表 SQL（07~25）：源文件存在才参与 generate/check，不存在则跳过
+- Ticket 交付时：只写真源 `sql/xxx.sql`，不负责同步派生产物（由部署入口统一 generate）
+
+**验收标准**：
+1. `bash bin/prepare-mysql-init.sh` 输出 `PASS: ... 7/26 个 ...`（初始状态，无业务 SQL）
+2. `bash bin/prepare-mysql-init.sh --check` 输出 `PASS: ... 7/26 个 ...`
+3. 创建 `sql/osg_student_init.sql` 后，generate → PASS 8/26，--check → PASS 8/26
+4. 所有 database Ticket 的 `allowed_paths.modify` 只包含 `sql/` 真源（不包含 `deploy/mysql-init/`）
+5. `bin/docker-env-build.sh` 和 `bin/docker-env-up.sh` 在 `deploy-preflight.sh` 之前执行 generate
 
 ## 二、前置条件与假设
 
-- 假设 1: 新的业务表 SQL 文件尚未创建（`sql/osg_student_init.sql` 等不存在），本方案只修改基础设施链，不创建 SQL 内容
-- 假设 2: 新 SQL 文件的编号从 07 开始，不与现有 00~06 冲突
-- 假设 3: MySQL `docker-entrypoint-initdb.d` 按文件名字母序执行 `.sql` 文件，两位数字前缀保证顺序
-- 假设 4: `deploy-preflight.sh` 的 line 254 `bash bin/prepare-mysql-init.sh --check` 已完整覆盖文件存在性+内容一致性+manifest 校验，line 265-273 的逐文件硬编码检查是冗余的
+- 假设 1: `deploy-preflight.sh` 硬编码逐文件检查已删除（commit `8914f7c3`），只保留 `--check` 调用
+- 假设 2: `deliver-ticket` SKILL 不直接调用 `--check` 或 generate（grep 验证），Ticket 只负责写 sql/ 真源
+- 假设 3: `prepare-mysql-init.sh` 的 generate 模式是"全量重建"——先 `rm -f [0-9][0-9]_*.sql`，再重建所有 ACTIVE 映射
 
-## 三、现状分析
+## 三、当前仓库状态
 
-### 真源链拓扑
+| 文件 | 状态 |
+|------|------|
+| bin/prepare-mysql-init.sh | MAPPINGS 已扩展到 26 条，但仍是全量强校验模式（无 ACTIVE_MAPPINGS）|
+| bin/deploy-preflight.sh | 硬编码逐文件检查已删除，只调用 `--check` |
+| 6 个 database Ticket YAML | `deploy/mysql-init/` 路径已删除（只剩 `sql/` 真源）|
 
-```
-sql/*.sql (SSOT 真源，7个文件)
-    │
-    ▼ bin/prepare-mysql-init.sh generate
-    │   MAPPINGS 数组定义 "前缀:源文件名" 映射
-    │   生成: deploy/mysql-init/XX_源文件名.sql + manifest.sha256
-    │
-deploy/mysql-init/ (生成产物，7个 SQL + manifest)
-    │
-    ├─ bin/prepare-mysql-init.sh --check (校验：文件存在+内容一致+manifest匹配)
-    │     └─ 被 deploy-preflight.sh line 254 调用
-    │
-    ├─ bin/deploy-preflight.sh line 265-273 (冗余：硬编码逐文件 require_file_nonempty)
-    │
-    ├─ bin/final-closure.sh line 348-357 (只检查目录非空，不依赖文件名/数量)
-    │
-    └─ deploy/compose.base.yml line 17 (volume mount → MySQL initdb.d，按字母序执行)
-```
+**当前 `bash bin/prepare-mysql-init.sh --check` 结果**：FAIL（缺少 sql/osg_student_init.sql）
 
-### 存在的问题
+## 四、执行计划（三步，必须按序执行）
 
-1. `MAPPINGS` 数组固定 7 条，无法纳入新业务表
-2. `rm -f` 清理用 `0[0-6]_*.sql` glob，只覆盖 00~06 前缀
-3. 文件数量检查硬编码 `count != "7"`
-4. `deploy-preflight.sh` 硬编码 7 个文件名
-5. 6 个 Ticket YAML 的 `allowed_paths` 直接引用生成产物路径
+### Step 1: 渐进式纳入（ACTIVE_MAPPINGS）
 
-## 四、设计决策
+**目标**：让 prepare-mysql-init.sh 在业务表 SQL 不存在时跳过而非 FAIL。
 
-| # | 决策点 | 选项 | 推荐 | 理由 |
-|---|--------|------|------|------|
-| 1 | 新 SQL 前缀范围 | A: 07~25 两位数 / B: 动态编号 | A | 两位数字前缀简单明确，26 个文件足够 admin 端，后续端再扩展 |
-| 2 | deploy-preflight.sh 硬编码检查 | A: 删除冗余段 / B: 改为动态 | A | line 254 的 --check 已完整覆盖，硬编码段是纯冗余，删除最简单 |
-| 3 | rm 清理 glob | A: `[0-9][0-9]_*.sql` / B: `[0-2][0-9]_*.sql` | A | 两位数字通配，简洁且支持未来扩展到 99 |
-| 4 | 文件数量检查 | A: `${#MAPPINGS[@]}` 动态 / B: 硬编码 26 | A | 动态更健壮，后续加表不用再改这行 |
-| 5 | Ticket allowed_paths | A: 只保留 sql/ 真源 / B: 保留两个 | A | Ticket 只负责写真源，生成产物由 CI/deploy 链路自动产出 |
+**修改文件**：`bin/prepare-mysql-init.sh`（1 个文件，8 处变更）
 
-## 五、目标状态
+| # | 位置 | 变更 |
+|---|------|------|
+| S1-1 | line 79 前 | 新增 `REQUIRED_PREFIX_MAX=6` + `declare -a ACTIVE_MAPPINGS=()` |
+| S1-2 | line 85-88 | 源文件不存在时：prefix ≤ 6 → FAIL，prefix > 6 → `continue`（跳过）|
+| S1-3 | line 92 后 | 新增 `ACTIVE_MAPPINGS+=("${mapping}")` |
+| S1-4 | line 116 (generate 循环) | `"${MAPPINGS[@]}"` → `"${ACTIVE_MAPPINGS[@]}"` |
+| S1-5 | line 126 (manifest 循环) | `"${MAPPINGS[@]}"` → `"${ACTIVE_MAPPINGS[@]}"` |
+| S1-6 | line 136 (count check) | `"${#MAPPINGS[@]}"` → `"${#ACTIVE_MAPPINGS[@]}"` |
+| S1-7 | line 157 (--check manifest 循环) | `"${MAPPINGS[@]}"` → `"${ACTIVE_MAPPINGS[@]}"` |
+| S1-8 | line 172/174 (PASS 输出) | `${#MAPPINGS[@]}` → `${#ACTIVE_MAPPINGS[@]}/${#MAPPINGS[@]}` |
 
-### 修改后的 prepare-mysql-init.sh 关键逻辑
-
+**验证命令**：
 ```bash
-declare -a MAPPINGS=(
-  "00:ry_20250522.sql"
-  ...
-  "06:osg_alter_user_first_login.sql"
-  # admin 端业务表
-  "07:osg_student_init.sql"
-  ...
-  "25:osg_complaint_init.sql"
-)
-
-# 清理时用通用两位数匹配
-rm -f "${OUT_DIR}"/[0-9][0-9]_*.sql
-
-# 数量检查动态计算
-expected_count="${#MAPPINGS[@]}"
-count="$(find ... -name '[0-9][0-9]_*.sql' | wc -l)"
-if [[ "${count}" != "${expected_count}" ]]; then ...
-
-# 输出文本动态
-echo "PASS: ... ${#MAPPINGS[@]} 个 ..."
+bash bin/prepare-mysql-init.sh           # → PASS 7/26
+bash bin/prepare-mysql-init.sh --check   # → PASS 7/26
 ```
 
-### 修改后的 deploy-preflight.sh
+### Step 2: Ticket 交付边界策略（开发/部署分离）
 
+**目标**：database Ticket 只负责写真源 `sql/*.sql`，不负责同步派生产物。
+
+**核心策略**（经 3 轮 Codex review 收敛）：
+
+1. **Ticket 只写真源** — `allowed_paths.modify` 只包含 `sql/xxx_init.sql`，不包含任何 `deploy/mysql-init/` 路径
+2. **generate 延迟到部署前** — `bash bin/prepare-mysql-init.sh` 在部署流程中由 `deploy-preflight.sh` 的上游步骤或 CI 触发，不在 Ticket 交付流程中执行
+3. **Ticket 验证不依赖 `--check`** — Ticket 的 AC 验证是"SQL 语法正确+表结构符合 SRS"，不是"deploy 链路通过"
+4. **不改框架** — deliver-ticket SKILL 的路径守卫保持原样
+
+**为什么这是最简方案**（vs 之前的方案）：
+
+| 被否决的方案 | 失败原因 |
+|-------------|---------|
+| 兼容版 D（每 Ticket 加 deploy/ 路径） | generate 全量重建，T-069 会重写 T-052 的派生产物 → 越界 |
+| derived 字段 | 框架路径守卫只认 modify，derived 被忽略 |
+| 每 Ticket 覆盖所有 active 派生产物 | Ticket 边界越来越宽，拆票隔离被破坏 |
+
+**职责分离**：
+
+```
+开发阶段（/next → deliver-ticket）：
+  Ticket 写 sql/xxx_init.sql → allowed_paths.modify 只有 sql/
+  验证：SQL 语法检查（如 mysql --syntax-check 或简单 grep）
+
+部署阶段（deploy-preflight.sh 之前）：
+  bash bin/prepare-mysql-init.sh  → 全量重建 deploy/mysql-init/
+  bash bin/prepare-mysql-init.sh --check  → 校验一致性
+  deploy-preflight.sh → 完整预检
+```
+
+**修改文件**：6 个 database Ticket YAML
+
+| # | Ticket | 修改内容 |
+|---|--------|---------|
+| S2-1~S2-6 | T-052/T-069/T-084/T-096/T-105/T-111 | 确认 `allowed_paths.modify` 只有 `sql/*.sql`（当前状态已满足，无需改动）|
+
+**实际上 Step 2 不需要改任何 Ticket 文件**——上次修复已经删除了 `deploy/mysql-init/` 路径（commit `5bec6ca`），当前 6 个 Ticket 的 `allowed_paths.modify` 已经只有 `sql/` 真源。
+
+**Ticket AC 不追加 generate 步骤**——generate 不是 Ticket 的职责。
+
+**补充说明**：database 类型 Ticket 仍走 deliver-ticket SKILL 的 TDD 流程（SKILL.md line 401）。
+上述验证命令仅为真源链相关的补充检查，不替代 Ticket 的完整交付标准。
+
+### Step 3: 部署入口补 generate 调用
+
+**目标**：在部署脚本调用 `deploy-preflight.sh`（含 `--check`）之前，先执行 `bash bin/prepare-mysql-init.sh`（generate）同步派生产物。
+
+**修改文件**：2 个 deploy 入口脚本
+
+| # | 文件 | 位置 | 变更 |
+|---|------|------|------|
+| S3-1 | bin/docker-env-build.sh | line 30 之前 | 新增 `bash bin/prepare-mysql-init.sh` |
+| S3-2 | bin/docker-env-up.sh | line 30 之前 | 新增 `bash bin/prepare-mysql-init.sh` |
+
+**目标代码**（以 docker-env-build.sh 为例）：
 ```bash
-# line 254 保留不动
-bash bin/prepare-mysql-init.sh --check >/dev/null
-
-# line 265-274 删除（冗余的硬编码逐文件检查）
+# line 30 之前新增：
+bash bin/prepare-mysql-init.sh
+bash bin/deploy-preflight.sh "${ENV_NAME}" --profile "${PROFILE_CSV}"
 ```
 
-## 六、执行清单
+**验证命令**：
+```bash
+bash -n bin/docker-env-build.sh && echo "SYNTAX OK"
+bash -n bin/docker-env-up.sh && echo "SYNTAX OK"
+```
 
-| # | 文件 | 位置 | 当前值 | 目标值 | 优先级 |
-|---|------|------|--------|--------|--------|
-| 1 | bin/prepare-mysql-init.sh | line 15-23 (MAPPINGS) | 7 条映射 | 26 条映射（追加 19 条业务表） | 🔴高 |
-| 2 | bin/prepare-mysql-init.sh | line 94 (rm glob) | `0[0-6]_*.sql` | `[0-9][0-9]_*.sql` | 🔴高 |
-| 3 | bin/prepare-mysql-init.sh | line 116-118 (count check) | `count != "7"` | `count != "${expected_count}"` + `expected_count="${#MAPPINGS[@]}"` | 🔴高 |
-| 4 | bin/prepare-mysql-init.sh | line 151 (PASS text) | `（7 个）` | `（${#MAPPINGS[@]} 个）` | 🟡中 |
-| 5 | bin/prepare-mysql-init.sh | line 153 (PASS text) | `7 个初始化 SQL` | `${#MAPPINGS[@]} 个初始化 SQL` | 🟡中 |
-| 6 | bin/deploy-preflight.sh | line 265-274 | 7 个硬编码文件检查 | 删除整段 | 🔴高 |
-| 7 | osg-spec-docs/tasks/tickets/T-052.yaml | allowed_paths.modify | `deploy/mysql-init/03_osg_student.sql` | 删除此行 | 🟡中 |
-| 8 | osg-spec-docs/tasks/tickets/T-069.yaml | allowed_paths.modify | `deploy/mysql-init/04_osg_contract.sql` | 删除此行 | 🟡中 |
-| 9 | osg-spec-docs/tasks/tickets/T-084.yaml | allowed_paths.modify | `deploy/mysql-init/05_osg_student_change_request.sql` | 删除此行 | 🟡中 |
-| 10 | osg-spec-docs/tasks/tickets/T-096.yaml | allowed_paths.modify | `deploy/mysql-init/06_osg_staff.sql` | 删除此行 | 🟡中 |
-| 11 | osg-spec-docs/tasks/tickets/T-105.yaml | allowed_paths.modify | `deploy/mysql-init/07_osg_staff_schedule.sql` | 删除此行 | 🟡中 |
-| 12 | osg-spec-docs/tasks/tickets/T-111.yaml | allowed_paths.modify | `deploy/mysql-init/08_osg_position.sql` | 删除此行 | 🟡中 |
+## 五、设计决策汇总
 
-## 七、自校验结果
+| # | 决策点 | 选择 | 理由 |
+|---|--------|------|------|
+| 1 | 业务表 SQL 缺失处理 | 渐进式纳入（skip） | 兼容 Ticket 逐个交付 |
+| 2 | 开发 vs 部署校验 | Ticket 不执行 generate；generate + --check 在部署前执行 | 职责分离 |
+| 3 | 派生产物边界 | Ticket 只写 sql/ 真源，deploy/ 派生产物延迟到部署前 generate | 开发/部署职责分离，避免全量重建越界 |
+| 4 | 框架修改 | 不改 deliver-ticket SKILL | 项目级问题，开发/部署分离即可 |
+| 5 | REQUIRED_PREFIX_MAX | 硬编码 6（00~06 必需）| 简单明确，后续扩展时同步修改 |
 
-### 第 1 轮
+## 六、自校验
 
 | 校验项 | 通过？ | 说明 |
 |--------|--------|------|
-| G1 一看就懂 | ✅ | 拓扑图清晰，执行清单 12 项，每项一目了然 |
+| G1 一看就懂 | ✅ | 三步计划：Step 1 脚本改造 + Step 2 Ticket 边界确认 + Step 3 部署入口补 generate |
 | G2 目标明确 | ✅ | 4 个可度量验收标准 |
-| G3 假设显式 | ✅ | 4 个假设均已列出 |
-| G4 设计决策完整 | ✅ | 5 个决策点，每个有选项+理由 |
-| G5 执行清单可操作 | ✅ | 每项有精确文件+行号+当前值+目标值 |
-| G6 正向流程走读 | ✅ | generate → --check → deploy-preflight → compose.base.yml → MySQL initdb.d，每步有效 |
-| G7 改动自洽 | ✅ | 改了 MAPPINGS → 检查了 rm glob / count check / PASS text / deploy-preflight / Tickets |
-| G8 简约不等于省略 | ✅ | manifest.sha256 自动覆盖新文件，final-closure.sh 不用改，compose.base.yml 不用改 |
-| G9 场景模拟 | ✅ | 场景1: generate 26个→count=26→PASS; 场景2: --check 缺少 sql/osg_student_init.sql→FAIL（正确行为，因为 SQL 尚未创建） |
-| G10 数值回验 | ✅ | 执行清单 12 项 = 6 shell 变更 + 6 ticket 变更，与详细分析一致 |
-| G11 引用回读 | ✅ | 所有行号从 read_file 实际输出确认：MAPPINGS=L15-23, rm=L94, count=L116, PASS=L151/153, preflight=L265-274 |
-| G12 反向推导 | ✅ | 目标"所有引用 mysql-init 的地方都兼容新文件"→ 反向查 grep 结果 10 个文件全覆盖 |
-| C1 根因定位 | ✅ | 根因是 MAPPINGS 硬编码，不是 Ticket 路径问题 |
-| C2 接口兼容 | ✅ | prepare-mysql-init.sh 的 generate/--check 接口不变 |
-| C3 回归风险 | ✅ | 现有 7 个 SQL 的映射不变，只是追加新映射 |
-| C4 测试覆盖 | ✅ | `bash bin/prepare-mysql-init.sh --check` 即为集成测试 |
+| G7 改动自洽 | ✅ | Step 1: 7 个消费 MAPPINGS 的位置全部覆盖。Step 2: Ticket 只写 sql/ 真源，deploy/ 延迟到部署前 |
+| G9 场景模拟 | ✅ | 初始(7/26) → T-052完成(8/26) → 全部完成(26/26) |
+| G10 数值回验 | ✅ | Step 1: 8 处变更，Step 2: 0 处（已满足），Step 3: 2 处（docker-env-build.sh + docker-env-up.sh）|
+| G11 引用回读 | ✅ | 仓库 deploy-preflight.sh 已确认无硬编码检查段 |
+| G12 反向推导 | ✅ | 目标"T-052 能安全完成" → 需要 ACTIVE_MAPPINGS 跳过缺失源(Step 1) + Ticket 只写 sql/(Step 2，当前已满足) |
+| C2 接口兼容 | ✅ | generate/--check 外部接口不变 |
+| C3 回归风险 | ✅ | 00~06 走 REQUIRED 路径，行为与旧代码一致 |
+
+## 七、维护约束
+
+1. `REQUIRED_PREFIX_MAX=6` 是硬编码边界。新增"必需基础 SQL"时必须同步修改 MAPPINGS + 此值。
+2. 新增业务表时，需要同时更新 MAPPINGS + 创建对应 database Ticket。
+3. 部署前必须执行 `bash bin/prepare-mysql-init.sh` 同步派生产物。Step 3 已在 `docker-env-build.sh` 和 `docker-env-up.sh` 中补上。**但如果直接手动执行 `bash bin/deploy-preflight.sh`（绕过部署入口），必须先手动执行 `bash bin/prepare-mysql-init.sh`，否则 `--check` 会因派生产物缺失而 FAIL。**

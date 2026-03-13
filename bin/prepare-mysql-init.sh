@@ -76,6 +76,10 @@ verify_wrapped_sql() {
   return 0
 }
 
+# 00~06 是基础架构 SQL（必需），07+ 是业务表 SQL（渐进交付，源文件不存在则跳过）
+REQUIRED_PREFIX_MAX=6
+declare -a ACTIVE_MAPPINGS=()
+
 for mapping in "${MAPPINGS[@]}"; do
   prefix="${mapping%%:*}"
   src_file="${mapping##*:}"
@@ -83,13 +87,19 @@ for mapping in "${MAPPINGS[@]}"; do
   out_path="${OUT_DIR}/${prefix}_${src_file}"
 
   if [[ ! -f "${src_path}" ]]; then
-    echo "FAIL: 缺少 SQL 文件 ${src_path}" >&2
-    exit 1
+    if (( 10#${prefix} <= REQUIRED_PREFIX_MAX )); then
+      echo "FAIL: 缺少必需 SQL 文件 ${src_path}" >&2
+      exit 1
+    else
+      continue
+    fi
   fi
   if [[ ! -s "${src_path}" ]]; then
     echo "FAIL: SQL 文件为空 ${src_path}" >&2
     exit 1
   fi
+
+  ACTIVE_MAPPINGS+=("${mapping}")
 
   if [[ "${MODE}" == "--check" ]]; then
     if [[ ! -f "${out_path}" ]]; then
@@ -113,7 +123,7 @@ if [[ "${MODE}" != "--check" ]]; then
   mkdir -p "${OUT_DIR}"
   rm -f "${OUT_DIR}"/[0-9][0-9]_*.sql
 
-  for mapping in "${MAPPINGS[@]}"; do
+  for mapping in "${ACTIVE_MAPPINGS[@]}"; do
     prefix="${mapping%%:*}"
     src_file="${mapping##*:}"
     src_path="${SRC_DIR}/${src_file}"
@@ -123,7 +133,7 @@ if [[ "${MODE}" != "--check" ]]; then
   done
 
   : > "${MANIFEST_PATH}"
-  for mapping in "${MAPPINGS[@]}"; do
+  for mapping in "${ACTIVE_MAPPINGS[@]}"; do
     prefix="${mapping%%:*}"
     src_file="${mapping##*:}"
     out_file="${prefix}_${src_file}"
@@ -133,7 +143,7 @@ if [[ "${MODE}" != "--check" ]]; then
   echo "generated: ${MANIFEST_PATH}"
 fi
 
-expected_count="${#MAPPINGS[@]}"
+expected_count="${#ACTIVE_MAPPINGS[@]}"
 count="$(find "${OUT_DIR}" -maxdepth 1 -type f -name '[0-9][0-9]_*.sql' | wc -l | tr -d ' ')"
 if [[ "${count}" != "${expected_count}" ]]; then
   echo "FAIL: 生成数量异常，期望 ${expected_count}，实际 ${count}" >&2
@@ -154,7 +164,7 @@ if [[ "${MODE}" == "--check" ]]; then
   cleanup() { rm -f "${expected_manifest}"; }
   trap cleanup EXIT
   : > "${expected_manifest}"
-  for mapping in "${MAPPINGS[@]}"; do
+  for mapping in "${ACTIVE_MAPPINGS[@]}"; do
     prefix="${mapping%%:*}"
     src_file="${mapping##*:}"
     out_file="${prefix}_${src_file}"
@@ -169,7 +179,7 @@ if [[ "${MODE}" == "--check" ]]; then
 fi
 
 if [[ "${MODE}" == "--check" ]]; then
-  echo "PASS: deploy/mysql-init 与 sql/ 源文件一致（${#MAPPINGS[@]} 个），manifest 校验通过"
+  echo "PASS: deploy/mysql-init 与 sql/ 源文件一致（${#ACTIVE_MAPPINGS[@]}/${#MAPPINGS[@]} 个），manifest 校验通过"
 else
-  echo "PASS: deploy/mysql-init 已生成 ${#MAPPINGS[@]} 个初始化 SQL + manifest"
+  echo "PASS: deploy/mysql-init 已生成 ${#ACTIVE_MAPPINGS[@]}/${#MAPPINGS[@]} 个初始化 SQL + manifest"
 fi

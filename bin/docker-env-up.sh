@@ -27,6 +27,7 @@ if [[ ! -f "${ENV_FILE}" ]]; then
   ENV_FILE="deploy/.env.${ENV_NAME}.example"
 fi
 
+bash bin/prepare-mysql-init.sh
 bash bin/deploy-preflight.sh "${ENV_NAME}" --profile "${PROFILE_CSV}"
 
 PROFILE_ARGS=()
