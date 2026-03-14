@@ -44,11 +44,17 @@ description: 执行下一个待办 Ticket - 自动选取并实现
    - 更新 Ticket 状态为 `done`
    - 更新 `STATE.yaml` 的 `completed_tickets` 列表
    - 检查当前 Story 是否所有 Tickets 都已完成
-     - 否 → `transition("/next", state, "implementing")`（W5），提示继续执行 `/next`
+     - 否 → `transition("/next", state, "implementing")`（W5），**自动回到步骤 1 继续执行下一个 Ticket**（无需手动触发）
      - 是 → **自动执行 Story 验收**（Level 4，调用 verification skill 的 verify_story）
        - 验收通过：`transition("/next", state, "story_verified")`（W6），用户选择 `/cc-review` 或 `/approve`
        - 验收失败：`transition("/next", state, "verification_failed", meta={"result":"failure"})`（W7），暂停等用户修复后执行 `/verify`
    - ⚠️ 禁止直接写 `STATE.yaml` 的 `workflow.current_step`，必须经 `transition()` 推进（含事件写入+回滚保障）
+
+7. **自动循环安全保护**
+   - 单次 `/next` 调用最多执行 **20 个 Tickets**（`config.limits.max_iterations`）
+   - 连续失败 **3 次** → 停止，等待人工介入
+   - 检测到**相同错误**连续出现 2 次 → 停止，避免无限循环
+   - 每完成 10 个 Ticket 自动保存一次 checkpoint
 
 ## ⛔ 禁止行为（硬约束）
 
