@@ -51,8 +51,8 @@ public class OsgContractServiceImpl implements IOsgContractService
         Map<String, Object> normalized = new LinkedHashMap<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
         int totalHours = 0;
-        BigDecimal usedHours = BigDecimal.ZERO;
-        BigDecimal remainingHours = BigDecimal.ZERO;
+        int usedHours = 0;
+        int remainingHours = 0;
         int activeContracts = 0;
         int expiringContracts = 0;
         int endedContracts = 0;
@@ -61,8 +61,8 @@ public class OsgContractServiceImpl implements IOsgContractService
         {
             totalAmount = totalAmount.add(defaultAmount(row.getContractAmount()));
             totalHours += defaultHours(row.getTotalHours(), null);
-            usedHours = usedHours.add(normalizeHours(row.getUsedHours()));
-            remainingHours = remainingHours.add(normalizeHours(row.getRemainingHours()));
+            usedHours += defaultHours(row.getUsedHours(), null);
+            remainingHours += defaultHours(row.getRemainingHours(), null);
 
             String resolvedStatus = resolveStatsStatus(row);
             if ("expiring".equals(resolvedStatus))
@@ -85,8 +85,8 @@ public class OsgContractServiceImpl implements IOsgContractService
         normalized.put("endedContracts", endedContracts);
         normalized.put("totalAmount", totalAmount);
         normalized.put("totalHours", totalHours);
-        normalized.put("usedHours", normalizeHours(usedHours));
-        normalized.put("remainingHours", normalizeHours(remainingHours));
+        normalized.put("usedHours", usedHours);
+        normalized.put("remainingHours", remainingHours);
         return normalized;
     }
 
@@ -133,8 +133,8 @@ public class OsgContractServiceImpl implements IOsgContractService
         contract.setContractType("renew");
         contract.setContractAmount(defaultAmount(payload.get("contractAmount")));
         contract.setTotalHours(defaultHours(payload.get("totalHours"), payload.get("studyHours")));
-        contract.setUsedHours(BigDecimal.ZERO);
-        contract.setRemainingHours(BigDecimal.valueOf(contract.getTotalHours()));
+        contract.setUsedHours(0);
+        contract.setRemainingHours(contract.getTotalHours());
         contract.setStartDate(Date.valueOf(startDate));
         contract.setEndDate(Date.valueOf(endDate));
         contract.setRenewalReason(resolveRenewalReason(renewalReason, asText(payload.get("otherReason"))));
@@ -207,8 +207,8 @@ public class OsgContractServiceImpl implements IOsgContractService
         {
             if (row.getStudentId() == null)
             {
-                row.setUsedHours(BigDecimal.ZERO);
-                row.setRemainingHours(BigDecimal.valueOf(row.getTotalHours() == null ? 0 : row.getTotalHours()));
+                row.setUsedHours(0);
+                row.setRemainingHours(row.getTotalHours() == null ? 0 : row.getTotalHours());
                 continue;
             }
             grouped.computeIfAbsent(row.getStudentId(), ignored -> new ArrayList<>()).add(row);
@@ -228,8 +228,8 @@ public class OsgContractServiceImpl implements IOsgContractService
                 BigDecimal total = BigDecimal.valueOf(contract.getTotalHours() == null ? 0 : contract.getTotalHours());
                 BigDecimal used = min(nonNegative(remainingToAllocate), total);
                 BigDecimal remaining = nonNegative(total.subtract(used));
-                contract.setUsedHours(normalizeHours(used));
-                contract.setRemainingHours(normalizeHours(remaining));
+                contract.setUsedHours(used.intValue());
+                contract.setRemainingHours(remaining.intValue());
                 remainingToAllocate = nonNegative(remainingToAllocate.subtract(used));
             }
         }

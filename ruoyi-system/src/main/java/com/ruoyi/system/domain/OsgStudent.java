@@ -1,5 +1,6 @@
 package com.ruoyi.system.domain;
 
+import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.core.domain.BaseEntity;
@@ -28,11 +29,15 @@ public class OsgStudent extends BaseEntity
 
     private String targetRegion;
 
+    private String targetPosition;
+
     private String recruitmentCycle;
 
     private Long leadMentorId;
 
     private Long assistantId;
+
+    private Date lastLoginTime;
 
     private String accountStatus;
 
@@ -136,6 +141,16 @@ public class OsgStudent extends BaseEntity
         this.targetRegion = targetRegion;
     }
 
+    public String getTargetPosition()
+    {
+        return targetPosition;
+    }
+
+    public void setTargetPosition(String targetPosition)
+    {
+        this.targetPosition = targetPosition;
+    }
+
     public String getRecruitmentCycle()
     {
         return recruitmentCycle;
@@ -164,6 +179,16 @@ public class OsgStudent extends BaseEntity
     public void setAssistantId(Long assistantId)
     {
         this.assistantId = assistantId;
+    }
+
+    public Date getLastLoginTime()
+    {
+        return lastLoginTime;
+    }
+
+    public void setLastLoginTime(Date lastLoginTime)
+    {
+        this.lastLoginTime = lastLoginTime;
     }
 
     public String getAccountStatus()

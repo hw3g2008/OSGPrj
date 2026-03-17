@@ -15,9 +15,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="majorDirection" column="major_direction"/>
         <result property="subDirection" column="sub_direction"/>
         <result property="targetRegion" column="target_region"/>
+        <result property="targetPosition" column="target_position"/>
         <result property="recruitmentCycle" column="recruitment_cycle"/>
         <result property="leadMentorId" column="lead_mentor_id"/>
         <result property="assistantId" column="assistant_id"/>
+        <result property="lastLoginTime" column="last_login_time"/>
         <result property="accountStatus" column="account_status"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
@@ -28,8 +30,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectStudentColumns">
         select student_id, student_name, email, gender, school, major, graduation_year,
-               major_direction, sub_direction, target_region, recruitment_cycle,
-               lead_mentor_id, assistant_id, account_status, create_by, create_time,
+               major_direction, sub_direction, target_region, target_position, recruitment_cycle,
+               lead_mentor_id, assistant_id, last_login_time, account_status, create_by, create_time,
                update_by, update_time, remark
         from osg_student
     </sql>
