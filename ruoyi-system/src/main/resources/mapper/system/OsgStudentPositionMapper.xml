@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgStudentPositionMapper">
+
+    <resultMap id="OsgStudentPositionResult" type="OsgStudentPosition">
+        <id property="studentPositionId" column="student_position_id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="positionCategory" column="position_category"/>
+        <result property="industry" column="industry"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyType" column="company_type"/>
+        <result property="companyWebsite" column="company_website"/>
+        <result property="positionName" column="position_name"/>
+        <result property="department" column="department"/>
+        <result property="region" column="region"/>
+        <result property="city" column="city"/>
+        <result property="recruitmentCycle" column="recruitment_cycle"/>
+        <result property="projectYear" column="project_year"/>
+        <result property="deadline" column="deadline"/>
+        <result property="positionUrl" column="position_url"/>
+        <result property="status" column="status"/>
+        <result property="hasCoachingRequest" column="has_coaching_request"/>
+        <result property="rejectReason" column="reject_reason"/>
+        <result property="rejectNote" column="reject_note"/>
+        <result property="reviewer" column="reviewer"/>
+        <result property="reviewedAt" column="reviewed_at"/>
+        <result property="publicPositionId" column="public_position_id"/>
+        <result property="flowStatus" column="flow_status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectStudentPositionColumns">
+        sp.student_position_id,
+        sp.student_id,
+        coalesce(sp.student_name, s.student_name) as student_name,
+        sp.position_category,
+        sp.industry,
+        sp.company_name,
+        sp.company_type,
+        sp.company_website,
+        sp.position_name,
+        sp.department,
+        sp.region,
+        sp.city,
+        sp.recruitment_cycle,
+        sp.project_year,
+        sp.deadline,
+        sp.position_url,
+        sp.status,
+        sp.has_coaching_request,
+        sp.reject_reason,
+        sp.reject_note,
+        sp.reviewer,
+        sp.reviewed_at,
+        sp.public_position_id,
+        sp.flow_status,
+        sp.create_by,
+        sp.create_time,
+        sp.update_by,
+        sp.update_time,
+        sp.remark
+    </sql>
+
+    <select id="selectStudentPositionById" parameterType="Long" resultMap="OsgStudentPositionResult">
+        select
+        <include refid="selectStudentPositionColumns"/>
+        from osg_student_position sp
+        left join osg_student s on s.student_id = sp.student_id
+        where sp.student_position_id = #{studentPositionId}
+    </select>
+
+    <select id="selectStudentPositionList" parameterType="OsgStudentPosition" resultMap="OsgStudentPositionResult">
+        select
+        <include refid="selectStudentPositionColumns"/>
+        from osg_student_position sp
+        left join osg_student s on s.student_id = sp.student_id
+        <where>
+            <if test="status != null and status != ''">
+                and sp.status = #{status}
+            </if>
+            <if test="positionCategory != null and positionCategory != ''">
+                and sp.position_category = #{positionCategory}
+            </if>
+            <if test="hasCoachingRequest != null and hasCoachingRequest != ''">
+                and sp.has_coaching_request = #{hasCoachingRequest}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    sp.company_name like concat('%', #{keyword}, '%')
+                    or sp.position_name like concat('%', #{keyword}, '%')
+                    or coalesce(sp.student_name, s.student_name) like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        order by
+            case when sp.status = 'pending' then 0 else 1 end,
+            sp.create_time desc,
+            sp.student_position_id desc
+    </select>
+
+    <insert id="insertStudentPosition" parameterType="OsgStudentPosition" useGeneratedKeys="true" keyProperty="studentPositionId">
+        insert into osg_student_position
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            student_id,
+            <if test="studentName != null and studentName != ''">student_name,</if>
+            position_category,
+            industry,
+            company_name,
+            <if test="companyType != null and companyType != ''">company_type,</if>
+            <if test="companyWebsite != null and companyWebsite != ''">company_website,</if>
+            position_name,
+            <if test="department != null and department != ''">department,</if>
+            region,
+            city,
+            recruitment_cycle,
+            project_year,
+            <if test="deadline != null">deadline,</if>
+            <if test="positionUrl != null and positionUrl != ''">position_url,</if>
+            status,
+            has_coaching_request,
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            update_time,
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{studentId},
+            <if test="studentName != null and studentName != ''">#{studentName},</if>
+            #{positionCategory},
+            #{industry},
+            #{companyName},
+            <if test="companyType != null and companyType != ''">#{companyType},</if>
+            <if test="companyWebsite != null and companyWebsite != ''">#{companyWebsite},</if>
+            #{positionName},
+            <if test="department != null and department != ''">#{department},</if>
+            #{region},
+            #{city},
+            #{recruitmentCycle},
+            #{projectYear},
+            <if test="deadline != null">#{deadline},</if>
+            <if test="positionUrl != null and positionUrl != ''">#{positionUrl},</if>
+            #{status},
+            #{hasCoachingRequest},
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            sysdate(),
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateStudentPositionReview" parameterType="OsgStudentPosition">
+        update osg_student_position
+        <set>
+            <if test="positionCategory != null and positionCategory != ''">position_category = #{positionCategory},</if>
+            <if test="industry != null and industry != ''">industry = #{industry},</if>
+            <if test="companyName != null and companyName != ''">company_name = #{companyName},</if>
+            <if test="companyType != null">company_type = #{companyType},</if>
+            <if test="companyWebsite != null">company_website = #{companyWebsite},</if>
+            <if test="positionName != null and positionName != ''">position_name = #{positionName},</if>
+            <if test="department != null">department = #{department},</if>
+            <if test="region != null and region != ''">region = #{region},</if>
+            <if test="city != null and city != ''">city = #{city},</if>
+            <if test="recruitmentCycle != null and recruitmentCycle != ''">recruitment_cycle = #{recruitmentCycle},</if>
+            <if test="projectYear != null and projectYear != ''">project_year = #{projectYear},</if>
+            <if test="deadline != null">deadline = #{deadline},</if>
+            <if test="positionUrl != null">position_url = #{positionUrl},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="rejectReason != null">reject_reason = #{rejectReason},</if>
+            <if test="rejectNote != null">reject_note = #{rejectNote},</if>
+            <if test="reviewer != null">reviewer = #{reviewer},</if>
+            <if test="reviewedAt != null">reviewed_at = #{reviewedAt},</if>
+            <if test="publicPositionId != null">public_position_id = #{publicPositionId},</if>
+            <if test="flowStatus != null">flow_status = #{flowStatus},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where student_position_id = #{studentPositionId}
+    </update>
+
+</mapper>

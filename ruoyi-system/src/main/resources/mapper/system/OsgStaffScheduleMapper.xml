@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgStaffScheduleMapper">
+
+    <resultMap id="OsgStaffScheduleResult" type="OsgStaffSchedule">
+        <id property="scheduleId" column="schedule_id"/>
+        <result property="staffId" column="staff_id"/>
+        <result property="weekScope" column="week_scope"/>
+        <result property="weekday" column="weekday"/>
+        <result property="timeSlot" column="time_slot"/>
+        <result property="isAvailable" column="is_available"/>
+        <result property="availableHours" column="available_hours"/>
+        <result property="adjustReason" column="adjust_reason"/>
+        <result property="notifyStaff" column="notify_staff"/>
+        <result property="operatorId" column="operator_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="selectStaffScheduleList" resultMap="OsgStaffScheduleResult">
+        select schedule_id, staff_id, week_scope, weekday, time_slot, is_available,
+               available_hours, adjust_reason, notify_staff, operator_id,
+               create_by, create_time, update_by, update_time, remark
+        from osg_staff_schedule
+        <where>
+            <if test="staffId != null">
+                and staff_id = #{staffId}
+            </if>
+            <if test="weekScope != null and weekScope != ''">
+                and week_scope = #{weekScope}
+            </if>
+        </where>
+        order by staff_id asc,
+                 weekday asc,
+                 case time_slot
+                     when 'morning' then 1
+                     when 'afternoon' then 2
+                     when 'evening' then 3
+                     else 4
+                 end asc
+    </select>
+
+    <delete id="deleteByStaffAndWeekScope">
+        delete from osg_staff_schedule
+        where staff_id = #{staffId}
+          and week_scope = #{weekScope}
+    </delete>
+
+    <insert id="upsertSchedule" parameterType="OsgStaffSchedule" useGeneratedKeys="true" keyProperty="scheduleId">
+        insert into osg_staff_schedule (
+            staff_id,
+            week_scope,
+            weekday,
+            time_slot,
+            is_available,
+            available_hours,
+            adjust_reason,
+            notify_staff,
+            operator_id,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        )
+        values (
+            #{staffId},
+            #{weekScope},
+            #{weekday},
+            #{timeSlot},
+            #{isAvailable},
+            #{availableHours},
+            #{adjustReason},
+            #{notifyStaff},
+            #{operatorId},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            #{remark}
+        )
+        on duplicate key update
+            is_available = values(is_available),
+            available_hours = values(available_hours),
+            adjust_reason = values(adjust_reason),
+            notify_staff = values(notify_staff),
+            operator_id = values(operator_id),
+            update_by = values(update_by),
+            update_time = sysdate(),
+            remark = values(remark)
+    </insert>
+
+</mapper>

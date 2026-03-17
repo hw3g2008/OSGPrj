@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgStaffChangeRequestMapper">
+
+    <resultMap id="OsgStaffChangeRequestResult" type="OsgStaffChangeRequest">
+        <id property="requestId" column="request_id"/>
+        <result property="staffId" column="staff_id"/>
+        <result property="fieldKey" column="field_key"/>
+        <result property="fieldLabel" column="field_label"/>
+        <result property="beforeValue" column="before_value"/>
+        <result property="afterValue" column="after_value"/>
+        <result property="status" column="status"/>
+        <result property="requestedBy" column="requested_by"/>
+        <result property="reviewer" column="reviewer"/>
+        <result property="reviewedAt" column="reviewed_at"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <insert id="insertChangeRequest" parameterType="OsgStaffChangeRequest" useGeneratedKeys="true" keyProperty="requestId">
+        insert into osg_staff_change_request
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="staffId != null">staff_id,</if>
+            <if test="fieldKey != null and fieldKey != ''">field_key,</if>
+            <if test="fieldLabel != null and fieldLabel != ''">field_label,</if>
+            <if test="beforeValue != null">before_value,</if>
+            <if test="afterValue != null">after_value,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="requestedBy != null and requestedBy != ''">requested_by,</if>
+            <if test="reviewer != null and reviewer != ''">reviewer,</if>
+            <if test="reviewedAt != null">reviewed_at,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            update_time,
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="staffId != null">#{staffId},</if>
+            <if test="fieldKey != null and fieldKey != ''">#{fieldKey},</if>
+            <if test="fieldLabel != null and fieldLabel != ''">#{fieldLabel},</if>
+            <if test="beforeValue != null">#{beforeValue},</if>
+            <if test="afterValue != null">#{afterValue},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="requestedBy != null and requestedBy != ''">#{requestedBy},</if>
+            <if test="reviewer != null and reviewer != ''">#{reviewer},</if>
+            <if test="reviewedAt != null">#{reviewedAt},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            sysdate(),
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <select id="selectPendingReviewCount" resultType="int">
+        select count(distinct staff_id)
+        from osg_staff_change_request
+        where status = 'pending'
+    </select>
+</mapper>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgFinanceSettlementMapper">
+
+    <resultMap id="OsgFinanceSettlementResult" type="OsgFinanceSettlement">
+        <id property="settlementId" column="settlement_id"/>
+        <result property="recordId" column="record_id"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="dueAmount" column="due_amount"/>
+        <result property="paidAmount" column="paid_amount"/>
+        <result property="paymentDate" column="payment_date"/>
+        <result property="bankReferenceNo" column="bank_reference_no"/>
+        <result property="paymentRemark" column="payment_remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectFinanceSettlementColumns">
+        settlement_id,
+        record_id,
+        payment_status,
+        due_amount,
+        paid_amount,
+        payment_date,
+        bank_reference_no,
+        payment_remark,
+        create_by,
+        create_time,
+        update_by,
+        update_time,
+        remark
+    </sql>
+
+    <select id="selectFinanceSettlementBySettlementId" parameterType="Long" resultMap="OsgFinanceSettlementResult">
+        select
+        <include refid="selectFinanceSettlementColumns"/>
+        from osg_finance_settlement
+        where settlement_id = #{settlementId}
+    </select>
+
+    <select id="selectFinanceSettlementByRecordId" parameterType="Long" resultMap="OsgFinanceSettlementResult">
+        select
+        <include refid="selectFinanceSettlementColumns"/>
+        from osg_finance_settlement
+        where record_id = #{recordId}
+        limit 1
+    </select>
+
+    <insert id="insertFinanceSettlement" parameterType="OsgFinanceSettlement" useGeneratedKeys="true" keyProperty="settlementId">
+        insert into osg_finance_settlement (
+            record_id,
+            payment_status,
+            due_amount,
+            paid_amount,
+            payment_date,
+            bank_reference_no,
+            payment_remark,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        ) values (
+            #{recordId},
+            #{paymentStatus},
+            #{dueAmount},
+            #{paidAmount},
+            #{paymentDate},
+            #{bankReferenceNo},
+            #{paymentRemark},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            #{remark}
+        )
+    </insert>
+
+    <update id="updateFinanceSettlement" parameterType="OsgFinanceSettlement">
+        update osg_finance_settlement
+        <set>
+            <if test="paymentStatus != null and paymentStatus != ''">payment_status = #{paymentStatus},</if>
+            <if test="dueAmount != null">due_amount = #{dueAmount},</if>
+            <if test="paidAmount != null">paid_amount = #{paidAmount},</if>
+            <if test="paymentDate != null">payment_date = #{paymentDate},</if>
+            <if test="bankReferenceNo != null">bank_reference_no = #{bankReferenceNo},</if>
+            <if test="paymentRemark != null">payment_remark = #{paymentRemark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where settlement_id = #{settlementId}
+    </update>
+
+</mapper>

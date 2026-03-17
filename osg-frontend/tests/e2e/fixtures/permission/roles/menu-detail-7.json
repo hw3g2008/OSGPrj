@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "checkedKeys": [52],
+    "menus": [
+      { "id": 52, "label": "报销管理" }
+    ]
+  }
+}

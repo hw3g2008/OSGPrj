@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgClassFeedbackMapper">
+
+    <sql id="feedbackUnionRows">
+        select
+            record_id as feedbackId,
+            'prep' as feedbackType,
+            mentor_name as mentorName,
+            student_name as studentName,
+            case class_status
+                when 'mock_interview' then '模拟面试'
+                when 'case_prep' then 'Case Study'
+                when 'resume_revision' then '简历修改'
+                when 'behavioral' then '行为面试'
+                when 'written_test' then '笔试辅导'
+                else '岗位辅导'
+            end as courseLabel,
+            case
+                when cast(coalesce(nullif(rate, ''), '0') as decimal(10, 2)) >= 4.5 then '优秀'
+                when cast(coalesce(nullif(rate, ''), '0') as decimal(10, 2)) >= 4.0 then '良好'
+                when cast(coalesce(nullif(rate, ''), '0') as decimal(10, 2)) >= 3.0 then '一般'
+                else '需改进'
+            end as performanceLabel,
+            case course_source
+                when 'mentor' then '导师端'
+                when 'assistant' then '助教端'
+                else '班主任端'
+            end as sourceLabel,
+            date_format(coalesce(class_date, submitted_at), '%Y-%m-%d') as feedbackDate,
+            date_format(coalesce(update_time, submitted_at, class_date), '%Y-%m-%d %H:%i:%s') as updatedAt,
+            null as emailQuality,
+            null as etiquetteScore,
+            null as callQuality,
+            null as recommendedLabel,
+            null as score,
+            null as assessmentTopic
+        from osg_class_record
+        where feedback_content is not null
+          and feedback_content != ''
+          and coalesce(class_status, '') not in ('networking_midterm', 'mock_midterm')
+
+        union all
+
+        select
+            record_id as feedbackId,
+            'networking' as feedbackType,
+            mentor_name as mentorName,
+            student_name as studentName,
+            '人际关系期中' as courseLabel,
+            null as performanceLabel,
+            case course_source
+                when 'mentor' then '导师端'
+                when 'assistant' then '助教端'
+                else '班主任端'
+            end as sourceLabel,
+            date_format(coalesce(class_date, submitted_at), '%Y-%m-%d') as feedbackDate,
+            date_format(coalesce(update_time, submitted_at, class_date), '%Y-%m-%d %H:%i:%s') as updatedAt,
+            least(5, greatest(1, round(cast(coalesce(nullif(rate, ''), '3') as decimal(10, 2))))) as emailQuality,
+            least(5, greatest(1, round(cast(coalesce(nullif(rate, ''), '3') as decimal(10, 2))))) as etiquetteScore,
+            least(10, greatest(2, round(cast(coalesce(nullif(rate, ''), '3') as decimal(10, 2)) * 2))) as callQuality,
+            case
+                when cast(coalesce(nullif(rate, ''), '0') as decimal(10, 2)) >= 4.0 then '是'
+                else '待定'
+            end as recommendedLabel,
+            null as score,
+            null as assessmentTopic
+        from osg_class_record
+        where feedback_content is not null
+          and feedback_content != ''
+          and class_status = 'networking_midterm'
+
+        union all
+
+        select
+            record_id as feedbackId,
+            'mock_midterm' as feedbackType,
+            mentor_name as mentorName,
+            student_name as studentName,
+            '模拟期中考试' as courseLabel,
+            case
+                when cast(coalesce(nullif(rate, ''), '0') as decimal(10, 2)) >= 4.5 then '优秀'
+                when cast(coalesce(nullif(rate, ''), '0') as decimal(10, 2)) >= 4.0 then '良好'
+                when cast(coalesce(nullif(rate, ''), '0') as decimal(10, 2)) >= 3.0 then '一般'
+                else '需改进'
+            end as performanceLabel,
+            case course_source
+                when 'mentor' then '导师端'
+                when 'assistant' then '助教端'
+                else '班主任端'
+            end as sourceLabel,
+            date_format(coalesce(class_date, submitted_at), '%Y-%m-%d') as feedbackDate,
+            date_format(coalesce(update_time, submitted_at, class_date), '%Y-%m-%d %H:%i:%s') as updatedAt,
+            null as emailQuality,
+            null as etiquetteScore,
+            null as callQuality,
+            null as recommendedLabel,
+            least(100, greatest(0, round(cast(coalesce(nullif(rate, ''), '0') as decimal(10, 2)) * 20))) as score,
+            coalesce(nullif(topics, ''), '未填写') as assessmentTopic
+        from osg_class_record
+        where feedback_content is not null
+          and feedback_content != ''
+          and class_status = 'mock_midterm'
+    </sql>
+
+    <select id="selectFeedbackList" parameterType="OsgClassFeedback" resultType="map">
+        select *
+        from (
+            <include refid="feedbackUnionRows"/>
+        ) feedback
+        <where>
+            <if test="type != null and type != ''">
+                and feedbackType = #{type}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    mentorName like concat('%', #{keyword}, '%')
+                    or studentName like concat('%', #{keyword}, '%')
+                    or courseLabel like concat('%', #{keyword}, '%')
+                    or coalesce(assessmentTopic, '') like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        order by updatedAt desc, feedbackId desc
+    </select>
+
+    <select id="selectFeedbackStats" resultType="map">
+        select
+            count(*) as totalCount,
+            sum(case when feedbackType = 'prep' then 1 else 0 end) as prepCount,
+            sum(case when feedbackType = 'networking' then 1 else 0 end) as networkingCount,
+            sum(case when feedbackType = 'mock_midterm' then 1 else 0 end) as mockMidtermCount
+        from (
+            <include refid="feedbackUnionRows"/>
+        ) feedback
+    </select>
+</mapper>

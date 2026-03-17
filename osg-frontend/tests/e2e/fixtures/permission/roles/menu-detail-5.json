@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "checkedKeys": [61],
+    "menus": [
+      { "id": 61, "label": "文件管理" }
+    ]
+  }
+}

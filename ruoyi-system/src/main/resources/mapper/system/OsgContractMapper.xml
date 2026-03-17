@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgContractMapper">
+
+    <resultMap id="OsgContractResult" type="OsgContract">
+        <id property="contractId" column="contract_id"/>
+        <result property="contractNo" column="contract_no"/>
+        <result property="studentId" column="student_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="leadMentorId" column="lead_mentor_id"/>
+        <result property="leadMentorName" column="lead_mentor_name"/>
+        <result property="contractType" column="contract_type"/>
+        <result property="contractAmount" column="contract_amount"/>
+        <result property="totalHours" column="total_hours"/>
+        <result property="usedHours" column="used_hours"/>
+        <result property="remainingHours" column="remaining_hours"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="renewalReason" column="renewal_reason"/>
+        <result property="contractStatus" column="contract_status"/>
+        <result property="attachmentPath" column="attachment_path"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectContractColumns">
+        c.contract_id,
+        c.contract_no,
+        c.student_id,
+        s.student_name,
+        s.lead_mentor_id,
+        coalesce(u.nick_name, cast(s.lead_mentor_id as char)) as lead_mentor_name,
+        c.contract_type,
+        c.contract_amount,
+        c.total_hours,
+        0 as used_hours,
+        c.total_hours as remaining_hours,
+        c.start_date,
+        c.end_date,
+        c.renewal_reason,
+        c.contract_status,
+        c.attachment_path,
+        c.create_by,
+        c.create_time,
+        c.update_by,
+        c.update_time,
+        c.remark
+    </sql>
+
+    <sql id="contractFilterWhere">
+        <where>
+            <if test="studentId != null">
+                and c.student_id = #{studentId}
+            </if>
+            <if test="leadMentorId != null">
+                and s.lead_mentor_id = #{leadMentorId}
+            </if>
+            <if test="contractType != null and contractType != ''">
+                and c.contract_type = #{contractType}
+            </if>
+            <if test="contractStatus != null and contractStatus != ''">
+                and c.contract_status = #{contractStatus}
+            </if>
+            <if test="studentName != null and studentName != ''">
+                and (
+                    s.student_name like concat('%', #{studentName}, '%')
+                    or cast(c.student_id as char) like concat('%', #{studentName}, '%')
+                )
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectContractList" parameterType="OsgContract" resultMap="OsgContractResult">
+        select
+        <include refid="selectContractColumns"/>
+        from osg_contract c
+        left join osg_student s on c.student_id = s.student_id
+        left join sys_user u on s.lead_mentor_id = u.user_id
+        <include refid="contractFilterWhere"/>
+        order by c.contract_id desc
+    </select>
+
+    <select id="selectContractStats" parameterType="OsgContract" resultType="map">
+        select
+            count(*) as totalContracts,
+            sum(case when c.contract_status = 'active' then 1 else 0 end) as activeContracts,
+            sum(case when c.contract_status = 'active' and c.end_date between curdate() and date_add(curdate(), interval 30 day) then 1 else 0 end) as expiringContracts,
+            sum(case when c.contract_status in ('expired', 'cancelled') or c.end_date &lt; curdate() then 1 else 0 end) as endedContracts,
+            coalesce(sum(c.contract_amount), 0) as totalAmount,
+            coalesce(sum(c.total_hours), 0) as totalHours,
+            0 as usedHours,
+            coalesce(sum(c.total_hours), 0) as remainingHours
+        from osg_contract c
+        left join osg_student s on c.student_id = s.student_id
+        <include refid="contractFilterWhere"/>
+    </select>
+
+    <insert id="insertContract" parameterType="OsgContract" useGeneratedKeys="true" keyProperty="contractId">
+        insert into osg_contract
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            contract_no,
+            student_id,
+            contract_type,
+            contract_amount,
+            total_hours,
+            start_date,
+            end_date,
+            <if test="renewalReason != null and renewalReason != ''">renewal_reason,</if>
+            contract_status,
+            <if test="attachmentPath != null and attachmentPath != ''">attachment_path,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            update_time,
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{contractNo},
+            #{studentId},
+            #{contractType},
+            #{contractAmount},
+            #{totalHours},
+            #{startDate},
+            #{endDate},
+            <if test="renewalReason != null and renewalReason != ''">#{renewalReason},</if>
+            #{contractStatus},
+            <if test="attachmentPath != null and attachmentPath != ''">#{attachmentPath},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            sysdate(),
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateContractAttachment" parameterType="OsgContract">
+        update osg_contract
+        set attachment_path = #{attachmentPath},
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        where contract_id = #{contractId}
+    </update>
+
+</mapper>

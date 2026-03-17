@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "checkedKeys": [41],
+    "menus": [
+      { "id": 41, "label": "岗位管理" }
+    ]
+  }
+}

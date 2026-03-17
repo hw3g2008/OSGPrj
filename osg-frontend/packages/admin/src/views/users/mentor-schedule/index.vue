@@ -1,0 +1,755 @@
+<template>
+  <div class="mentor-schedule-page">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">
+          导师排期管理
+          <span class="page-title-en">Mentor Schedule</span>
+        </h2>
+        <p class="page-subtitle">监控排期填写情况，协调导师资源</p>
+      </div>
+      <div class="page-header__actions">
+        <button
+          type="button"
+          class="permission-button permission-button--primary"
+          :disabled="exporting"
+          @click="handleExport"
+        >
+          <i class="mdi mdi-download" aria-hidden="true"></i>
+          <span>{{ exporting ? '导出中...' : '导出排期表' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="unfilledCount > 0" class="schedule-banner">
+      <div class="schedule-banner__icon">
+        <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
+      </div>
+      <div class="schedule-banner__copy">
+        <strong>{{ unfilledCount }} 位导师排期未填写</strong>
+        <span>{{ selectedWeek === 'next' ? '请尽快补齐下周排期' : '距离本周排期截止还有 2 天' }}</span>
+      </div>
+      <button type="button" class="schedule-banner__action" @click="handleRemindAll">
+        一键催促全部
+      </button>
+    </div>
+
+    <section class="permission-card">
+      <div class="schedule-toolbar">
+        <div class="schedule-week-switch">
+          <button
+            v-for="option in weekOptions"
+            :key="option.value"
+            type="button"
+            :class="['schedule-week-switch__button', { 'schedule-week-switch__button--active': selectedWeek === option.value }]"
+            @click="handleWeekChange(option.value)"
+          >
+            <span>{{ option.label }}</span>
+            <small>{{ option.range }}</small>
+          </button>
+        </div>
+
+        <div class="schedule-filters">
+          <label class="schedule-field">
+            <span class="schedule-field__label">导师姓名 / ID</span>
+            <input v-model="filters.keyword" type="text" class="schedule-input" placeholder="搜索导师姓名或 ID" />
+          </label>
+          <label class="schedule-field">
+            <span class="schedule-field__label">类型</span>
+            <select v-model="filters.staffType" class="schedule-select">
+              <option value="">全部</option>
+              <option value="lead_mentor">班主任</option>
+              <option value="mentor">专业导师</option>
+            </select>
+          </label>
+          <label class="schedule-field">
+            <span class="schedule-field__label">日期</span>
+            <select v-model="filters.weekday" class="schedule-select">
+              <option value="">全部</option>
+              <option v-for="day in weekdays" :key="day.value" :value="String(day.value)">{{ day.label }}</option>
+            </select>
+          </label>
+          <label class="schedule-field">
+            <span class="schedule-field__label">时段</span>
+            <select v-model="filters.timeSlot" class="schedule-select">
+              <option value="">全部</option>
+              <option v-for="slot in timeSlots" :key="slot.value" :value="slot.value">{{ slot.label }}</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="permission-card__body permission-card__body--flush">
+        <table class="permission-table schedule-table">
+          <thead>
+            <tr>
+              <th>导师信息</th>
+              <th>排期状态</th>
+              <th>可用时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="record in visibleRows"
+              :key="record.staffId"
+              :class="{ 'schedule-row--unfilled': !record.filled }"
+            >
+              <td>
+                <div class="schedule-cell-block">
+                  <div class="schedule-staff-row">
+                    <div class="schedule-staff__avatar">{{ getAvatarText(record.staffName) }}</div>
+                    <div class="schedule-staff-info">
+                      <div class="schedule-staff-primary">
+                        <strong class="schedule-staff-name">{{ record.staffName }}</strong>
+                        <span class="schedule-staff-id">ID {{ record.staffId }}</span>
+                      </div>
+                      <div class="schedule-staff-meta">
+                        <span :class="['schedule-tag', `schedule-tag--${getTypeTone(record.staffType)}`]">
+                          {{ formatType(record.staffType) }}
+                        </span>
+                        <span v-if="record.majorDirection" class="schedule-direction">{{ record.majorDirection }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="schedule-cell-block">
+                  <div class="schedule-status-row">
+                    <span class="schedule-status-label">可用时长</span>
+                    <strong class="schedule-hours-value">{{ formatHours(record.availableHours) }}</strong>
+                  </div>
+                  <div class="schedule-status-row">
+                    <span class="schedule-status-label">填写状态</span>
+                    <span :class="['schedule-fill-badge', { 'schedule-fill-badge--filled': record.filled }]">
+                      {{ record.filled ? '已填写' : '未填写' }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="schedule-slot-list">
+                  <span
+                    v-for="label in record.availableSlotLabels.length ? record.availableSlotLabels : ['未填写']"
+                    :key="label"
+                    :class="['schedule-slot-chip', { 'schedule-slot-chip--empty': label === '未填写' }]"
+                  >
+                    {{ label }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div class="schedule-actions">
+                  <button type="button" class="schedule-action" @click="openEditModal(record)">
+                    {{ record.filled ? '调整' : '代填' }}
+                  </button>
+                  <button
+                    v-if="!record.filled"
+                    type="button"
+                    class="schedule-action schedule-action--warn"
+                    @click="handleRemindAll"
+                  >
+                    催促
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!visibleRows.length">
+              <td colspan="4" class="schedule-empty">当前筛选条件下暂无排期数据</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <EditScheduleModal
+      v-model:visible="editVisible"
+      :record="selectedRecord"
+      :week-scope="selectedWeek"
+      @submit="handleEditSubmit"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue'
+import { message } from 'ant-design-vue'
+import { getToken } from '@osg/shared/utils'
+import {
+  getStaffScheduleList,
+  remindAllStaff,
+  saveStaffSchedule,
+  type StaffScheduleListItem,
+  type TimeSlot,
+  type WeekScope,
+} from '@osg/shared/api/admin/schedule'
+import EditScheduleModal from './components/EditScheduleModal.vue'
+
+const rows = ref<StaffScheduleListItem[]>([])
+const exporting = ref(false)
+const reminding = ref(false)
+const editVisible = ref(false)
+const selectedRecord = ref<StaffScheduleListItem | null>(null)
+const selectedWeek = ref<WeekScope>('current')
+
+const weekOptions: { value: WeekScope; label: string; range: string }[] = [
+  { value: 'current', label: '本周', range: '03/09 - 03/15' },
+  { value: 'next', label: '下周', range: '03/16 - 03/22' },
+]
+
+const weekdays = [
+  { value: 1, label: '周一' },
+  { value: 2, label: '周二' },
+  { value: 3, label: '周三' },
+  { value: 4, label: '周四' },
+  { value: 5, label: '周五' },
+  { value: 6, label: '周六' },
+  { value: 7, label: '周日' },
+]
+
+const timeSlots: { value: TimeSlot; label: string }[] = [
+  { value: 'morning', label: '上午' },
+  { value: 'afternoon', label: '下午' },
+  { value: 'evening', label: '晚上' },
+]
+
+const filters = reactive({
+  keyword: '',
+  staffType: '',
+  weekday: '',
+  timeSlot: '',
+})
+
+const unfilledCount = computed(() => rows.value.filter((item) => !item.filled).length)
+
+const visibleRows = computed(() => {
+  return rows.value.filter((record) => {
+    const keyword = filters.keyword.trim().toLowerCase()
+    const matchesKeyword = !keyword
+      || String(record.staffId).includes(keyword)
+      || record.staffName.toLowerCase().includes(keyword)
+    const matchesType = !filters.staffType || record.staffType === filters.staffType
+    const matchesWeekday = !filters.weekday
+      || record.selectedSlotKeys.some((key) => key.startsWith(`${filters.weekday}-`))
+    const matchesTimeSlot = !filters.timeSlot
+      || record.selectedSlotKeys.some((key) => key.endsWith(`-${filters.timeSlot}`))
+    return matchesKeyword && matchesType && matchesWeekday && matchesTimeSlot
+  })
+})
+
+const loadScheduleList = async () => {
+  const response = await getStaffScheduleList({
+    pageNum: 1,
+    pageSize: 100,
+    week: selectedWeek.value,
+  })
+  rows.value = response.rows || []
+}
+
+const handleWeekChange = async (week: WeekScope) => {
+  if (selectedWeek.value === week) {
+    return
+  }
+  selectedWeek.value = week
+  await loadScheduleList()
+}
+
+const handleRemindAll = async () => {
+  try {
+    reminding.value = true
+    const result = await remindAllStaff({ week: selectedWeek.value })
+    if (result.recipientCount > 0) {
+      message.success(`已提醒 ${result.recipientCount} 位导师补齐排期`)
+    } else {
+      message.info('当前无可提醒导师')
+    }
+  } catch (_error) {
+    message.error('催促导师失败')
+  } finally {
+    reminding.value = false
+  }
+}
+
+const handleExport = async () => {
+  try {
+    exporting.value = true
+    const token = getToken()
+    const response = await fetch(`/api/admin/schedule/export?week=${selectedWeek.value}`, {
+      method: 'GET',
+      headers: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : undefined,
+    })
+
+    if (!response.ok) {
+      throw new Error('导出请求失败')
+    }
+
+    const blob = await response.blob()
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = getExportFilename(response.headers.get('content-disposition'))
+    link.click()
+    window.URL.revokeObjectURL(downloadUrl)
+    message.success('导师排期导出成功')
+  } catch (_error) {
+    message.error('导师排期导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
+const openEditModal = (record: StaffScheduleListItem) => {
+  selectedRecord.value = record
+  editVisible.value = true
+}
+
+const handleEditSubmit = async (payload: {
+  staffId: number
+  week: WeekScope
+  availableHours: number
+  reason: string
+  notifyStaff: boolean
+  selectedSlotKeys: string[]
+}) => {
+  try {
+    await saveStaffSchedule(payload)
+    message.success('导师排期已保存')
+    editVisible.value = false
+    await loadScheduleList()
+  } catch (_error) {
+    message.error('导师排期保存失败')
+  }
+}
+
+const getAvatarText = (staffName: string) =>
+  staffName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('')
+
+const formatType = (staffType?: string) => {
+  if (staffType === 'lead_mentor') {
+    return '班主任'
+  }
+  return '专业导师'
+}
+
+const getTypeTone = (staffType?: string) => (staffType === 'lead_mentor' ? 'lead' : 'mentor')
+
+const formatHours = (value?: number) => `${value ?? 0}h`
+
+const getExportFilename = (contentDisposition: string | null) => {
+  if (!contentDisposition) {
+    return '导师排期表.xlsx'
+  }
+  const match = contentDisposition.match(/filename\\*=UTF-8''([^;]+)|filename="?([^"]+)"?/)
+  const encoded = match?.[1] || match?.[2]
+  return encoded ? decodeURIComponent(encoded) : '导师排期表.xlsx'
+}
+
+onMounted(() => {
+  void loadScheduleList()
+})
+</script>
+
+<style scoped lang="scss">
+.mentor-schedule-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.schedule-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 20px;
+  padding: 18px 22px;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+}
+
+.schedule-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.12);
+  font-size: 22px;
+}
+
+.schedule-banner__copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.schedule-banner__copy strong {
+  font-size: 16px;
+}
+
+.schedule-banner__copy span {
+  font-size: 13px;
+}
+
+.schedule-banner__action {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: #dc2626;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.schedule-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+}
+
+.schedule-week-switch {
+  display: inline-flex;
+  gap: 12px;
+}
+
+.schedule-week-switch__button {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  border: 1px solid #cbd5e1;
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.schedule-week-switch__button span {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.schedule-week-switch__button small {
+  color: var(--text2);
+  font-size: 12px;
+}
+
+.schedule-week-switch__button--active {
+  border-color: #0f766e;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, rgba(20, 184, 166, 0.16) 100%);
+}
+
+.schedule-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.schedule-field {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.schedule-field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.schedule-input,
+.schedule-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.schedule-input {
+  width: 220px;
+}
+
+.schedule-select {
+  width: 112px;
+}
+
+.schedule-table {
+  min-width: 1100px;
+}
+
+.schedule-row--unfilled {
+  background: #fef2f2;
+}
+
+.schedule-cell-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-staff-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.schedule-staff__avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #7399c6 0%, #5a7ba3 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.schedule-staff-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.schedule-staff-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-staff-name {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.schedule-staff-id {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: var(--text2);
+  font-size: 11px;
+}
+
+.schedule-staff-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-direction {
+  color: var(--text2);
+  font-size: 12px;
+}
+
+.schedule-status-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.schedule-status-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.schedule-hours-value {
+  color: #0f766e;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.schedule-fill-badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.schedule-fill-badge--filled {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.schedule-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.schedule-tag--lead {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.schedule-tag--mentor {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.schedule-hours strong {
+  display: block;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.schedule-hours span {
+  color: var(--text2);
+  font-size: 12px;
+}
+
+.schedule-slot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.schedule-slot-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #e8f0f8;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.schedule-slot-chip--empty {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.schedule-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.schedule-action {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #0f766e;
+  color: #fff;
+  cursor: pointer;
+}
+
+.schedule-action--warn {
+  background: #dc2626;
+}
+
+.schedule-empty {
+  padding: 28px 0;
+  color: var(--text2);
+  text-align: center;
+}
+
+// 翻页按钮样式
+.permission-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  background: #ffffff;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: var(--muted);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.permission-button--primary {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  border-color: #7c3aed;
+  color: #ffffff;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #6d28d9, #7c3aed);
+    border-color: #6d28d9;
+  }
+}
+
+.permission-button--outline {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: var(--text);
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: var(--muted);
+    color: #111827;
+  }
+}
+
+.permission-button--small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+@media (max-width: 1024px) {
+  .schedule-input {
+    width: 200px;
+  }
+}
+
+@media (max-width: 720px) {
+  .schedule-banner,
+  .schedule-week-switch {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .schedule-field {
+    width: 100%;
+  }
+
+  .schedule-input,
+  .schedule-select {
+    width: 100%;
+  }
+}
+</style>

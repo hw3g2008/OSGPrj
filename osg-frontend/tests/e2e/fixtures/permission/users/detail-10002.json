@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "userId": 10002,
+    "roles": [
+      { "roleId": 1, "roleName": "文员", "roleKey": "clerk" }
+    ]
+  }
+}

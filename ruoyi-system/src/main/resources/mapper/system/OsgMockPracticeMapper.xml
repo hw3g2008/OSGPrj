@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgMockPracticeMapper">
+
+    <resultMap id="OsgMockPracticeResult" type="OsgMockPractice">
+        <id property="practiceId" column="practice_id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="practiceType" column="practice_type"/>
+        <result property="requestContent" column="request_content"/>
+        <result property="requestedMentorCount" column="requested_mentor_count"/>
+        <result property="preferredMentorNames" column="preferred_mentor_names"/>
+        <result property="status" column="status"/>
+        <result property="mentorIds" column="mentor_ids"/>
+        <result property="mentorNames" column="mentor_names"/>
+        <result property="mentorBackgrounds" column="mentor_backgrounds"/>
+        <result property="scheduledAt" column="scheduled_at"/>
+        <result property="completedHours" column="completed_hours"/>
+        <result property="feedbackRating" column="feedback_rating"/>
+        <result property="feedbackSummary" column="feedback_summary"/>
+        <result property="submittedAt" column="submitted_at"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectMockPracticeColumns">
+        practice_id,
+        student_id,
+        student_name,
+        practice_type,
+        request_content,
+        requested_mentor_count,
+        preferred_mentor_names,
+        status,
+        mentor_ids,
+        mentor_names,
+        mentor_backgrounds,
+        scheduled_at,
+        completed_hours,
+        feedback_rating,
+        feedback_summary,
+        submitted_at,
+        create_by,
+        create_time,
+        update_by,
+        update_time,
+        remark
+    </sql>
+
+    <select id="selectMockPracticeByPracticeId" parameterType="Long" resultMap="OsgMockPracticeResult">
+        select
+        <include refid="selectMockPracticeColumns"/>
+        from osg_mock_practice
+        where practice_id = #{practiceId}
+    </select>
+
+    <select id="selectMockPracticeList" parameterType="OsgMockPractice" resultMap="OsgMockPracticeResult">
+        select
+        <include refid="selectMockPracticeColumns"/>
+        from osg_mock_practice
+        <where>
+            <if test="practiceType != null and practiceType != ''">
+                and practice_type = #{practiceType}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    student_name like concat('%', #{keyword}, '%')
+                    or request_content like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="tab != null and tab == 'pending'">
+                and status = 'pending'
+            </if>
+        </where>
+        order by submitted_at desc, practice_id desc
+    </select>
+
+    <insert id="insertMockPractice" parameterType="OsgMockPractice" useGeneratedKeys="true" keyProperty="practiceId">
+        insert into osg_mock_practice (
+            student_id,
+            student_name,
+            practice_type,
+            request_content,
+            requested_mentor_count,
+            preferred_mentor_names,
+            status,
+            mentor_ids,
+            mentor_names,
+            mentor_backgrounds,
+            scheduled_at,
+            completed_hours,
+            feedback_rating,
+            feedback_summary,
+            submitted_at,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        ) values (
+            #{studentId},
+            #{studentName},
+            #{practiceType},
+            #{requestContent},
+            #{requestedMentorCount},
+            #{preferredMentorNames},
+            #{status},
+            #{mentorIds},
+            #{mentorNames},
+            #{mentorBackgrounds},
+            #{scheduledAt},
+            #{completedHours},
+            #{feedbackRating},
+            #{feedbackSummary},
+            #{submittedAt},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            #{remark}
+        )
+    </insert>
+
+    <update id="updateMockPracticeAssignment" parameterType="OsgMockPractice">
+        update osg_mock_practice
+        <set>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="mentorIds != null">mentor_ids = #{mentorIds},</if>
+            <if test="mentorNames != null">mentor_names = #{mentorNames},</if>
+            <if test="mentorBackgrounds != null">mentor_backgrounds = #{mentorBackgrounds},</if>
+            <if test="scheduledAt != null">scheduled_at = #{scheduledAt},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where practice_id = #{practiceId}
+    </update>
+
+</mapper>

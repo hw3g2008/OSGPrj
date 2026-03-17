@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgExpenseMapper">
+
+    <resultMap id="OsgExpenseResult" type="OsgExpense">
+        <id property="expenseId" column="expense_id"/>
+        <result property="mentorId" column="mentor_id"/>
+        <result property="mentorName" column="mentor_name"/>
+        <result property="expenseType" column="expense_type"/>
+        <result property="expenseAmount" column="expense_amount"/>
+        <result property="expenseDate" column="expense_date"/>
+        <result property="description" column="description"/>
+        <result property="attachmentUrl" column="attachment_url"/>
+        <result property="status" column="status"/>
+        <result property="reviewComment" column="review_comment"/>
+        <result property="reviewedBy" column="reviewed_by"/>
+        <result property="reviewedAt" column="reviewed_at"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectExpenseColumns">
+        expense_id,
+        mentor_id,
+        mentor_name,
+        expense_type,
+        expense_amount,
+        expense_date,
+        description,
+        attachment_url,
+        status,
+        review_comment,
+        reviewed_by,
+        reviewed_at,
+        create_by,
+        create_time,
+        update_by,
+        update_time,
+        remark
+    </sql>
+
+    <select id="selectExpenseList" parameterType="OsgExpense" resultMap="OsgExpenseResult">
+        select
+        <include refid="selectExpenseColumns"/>
+        from osg_expense
+        <where>
+            <if test="status != null and status != '' and status != 'all'">
+                and status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    mentor_name like concat('%', #{keyword}, '%')
+                    or description like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        order by expense_id asc
+    </select>
+
+    <select id="selectExpenseByExpenseId" parameterType="Long" resultMap="OsgExpenseResult">
+        select
+        <include refid="selectExpenseColumns"/>
+        from osg_expense
+        where expense_id = #{expenseId}
+    </select>
+
+    <insert id="insertExpense" parameterType="OsgExpense" useGeneratedKeys="true" keyProperty="expenseId">
+        insert into osg_expense (
+            mentor_id,
+            mentor_name,
+            expense_type,
+            expense_amount,
+            expense_date,
+            description,
+            attachment_url,
+            status,
+            review_comment,
+            reviewed_by,
+            reviewed_at,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        ) values (
+            #{mentorId},
+            #{mentorName},
+            #{expenseType},
+            #{expenseAmount},
+            #{expenseDate},
+            #{description},
+            #{attachmentUrl},
+            #{status},
+            #{reviewComment},
+            #{reviewedBy},
+            #{reviewedAt},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            #{remark}
+        )
+    </insert>
+
+    <update id="updateExpense" parameterType="OsgExpense">
+        update osg_expense
+        <set>
+            <if test="mentorId != null">mentor_id = #{mentorId},</if>
+            <if test="mentorName != null and mentorName != ''">mentor_name = #{mentorName},</if>
+            <if test="expenseType != null and expenseType != ''">expense_type = #{expenseType},</if>
+            <if test="expenseAmount != null">expense_amount = #{expenseAmount},</if>
+            <if test="expenseDate != null">expense_date = #{expenseDate},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="attachmentUrl != null">attachment_url = #{attachmentUrl},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="reviewComment != null">review_comment = #{reviewComment},</if>
+            <if test="reviewedBy != null">reviewed_by = #{reviewedBy},</if>
+            <if test="reviewedAt != null">reviewed_at = #{reviewedAt},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where expense_id = #{expenseId}
+    </update>
+
+</mapper>

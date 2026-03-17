@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgJobApplicationMapper">
+
+    <resultMap id="OsgJobApplicationResult" type="OsgJobApplication">
+        <id property="applicationId" column="application_id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="positionId" column="position_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="companyName" column="company_name"/>
+        <result property="positionName" column="position_name"/>
+        <result property="region" column="region"/>
+        <result property="city" column="city"/>
+        <result property="currentStage" column="current_stage"/>
+        <result property="interviewTime" column="interview_time"/>
+        <result property="coachingStatus" column="coaching_status"/>
+        <result property="leadMentorId" column="lead_mentor_id"/>
+        <result property="leadMentorName" column="lead_mentor_name"/>
+        <result property="assignStatus" column="assign_status"/>
+        <result property="requestedMentorCount" column="requested_mentor_count"/>
+        <result property="preferredMentorNames" column="preferred_mentor_names"/>
+        <result property="stageUpdated" column="stage_updated"/>
+        <result property="submittedAt" column="submitted_at"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectJobApplicationColumns">
+        application_id,
+        student_id,
+        position_id,
+        student_name,
+        company_name,
+        position_name,
+        region,
+        city,
+        current_stage,
+        interview_time,
+        coaching_status,
+        lead_mentor_id,
+        lead_mentor_name,
+        assign_status,
+        requested_mentor_count,
+        preferred_mentor_names,
+        stage_updated,
+        submitted_at,
+        create_by,
+        create_time,
+        update_by,
+        update_time,
+        remark
+    </sql>
+
+    <select id="selectJobApplicationByApplicationId" parameterType="Long" resultMap="OsgJobApplicationResult">
+        select
+        <include refid="selectJobApplicationColumns"/>
+        from osg_job_application
+        where application_id = #{applicationId}
+    </select>
+
+    <select id="selectJobApplicationList" parameterType="OsgJobApplication" resultMap="OsgJobApplicationResult">
+        select
+        <include refid="selectJobApplicationColumns"/>
+        from osg_job_application
+        <where>
+            <if test="studentName != null and studentName != ''">
+                and student_name like concat('%', #{studentName}, '%')
+            </if>
+            <if test="companyName != null and companyName != ''">
+                and company_name = #{companyName}
+            </if>
+            <if test="currentStage != null and currentStage != ''">
+                and current_stage = #{currentStage}
+            </if>
+            <if test="leadMentorId != null">
+                and lead_mentor_id = #{leadMentorId}
+            </if>
+            <if test="assignStatus != null and assignStatus != ''">
+                and assign_status = #{assignStatus}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    student_name like concat('%', #{keyword}, '%')
+                    or company_name like concat('%', #{keyword}, '%')
+                    or position_name like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        order by submitted_at desc, application_id desc
+    </select>
+
+    <insert id="insertJobApplication" parameterType="OsgJobApplication" useGeneratedKeys="true" keyProperty="applicationId">
+        insert into osg_job_application (
+            student_id,
+            position_id,
+            student_name,
+            company_name,
+            position_name,
+            region,
+            city,
+            current_stage,
+            interview_time,
+            coaching_status,
+            lead_mentor_id,
+            lead_mentor_name,
+            assign_status,
+            requested_mentor_count,
+            preferred_mentor_names,
+            stage_updated,
+            submitted_at,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        ) values (
+            #{studentId},
+            #{positionId},
+            #{studentName},
+            #{companyName},
+            #{positionName},
+            #{region},
+            #{city},
+            #{currentStage},
+            #{interviewTime},
+            #{coachingStatus},
+            #{leadMentorId},
+            #{leadMentorName},
+            #{assignStatus},
+            #{requestedMentorCount},
+            #{preferredMentorNames},
+            #{stageUpdated},
+            #{submittedAt},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            #{remark}
+        )
+    </insert>
+
+    <update id="updateJobApplicationAssignment" parameterType="OsgJobApplication">
+        update osg_job_application
+        <set>
+            <if test="assignStatus != null and assignStatus != ''">assign_status = #{assignStatus},</if>
+            <if test="coachingStatus != null">coaching_status = #{coachingStatus},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where application_id = #{applicationId}
+    </update>
+
+    <update id="updateJobApplicationStage" parameterType="OsgJobApplication">
+        update osg_job_application
+        <set>
+            <if test="currentStage != null and currentStage != ''">current_stage = #{currentStage},</if>
+            <if test="interviewTime != null">interview_time = #{interviewTime},</if>
+            <if test="stageUpdated != null">stage_updated = #{stageUpdated},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where application_id = #{applicationId}
+    </update>
+
+</mapper>

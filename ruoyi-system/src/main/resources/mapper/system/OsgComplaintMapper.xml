@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgComplaintMapper">
+
+    <select id="selectComplaintList" parameterType="com.ruoyi.system.domain.OsgComplaint" resultType="com.ruoyi.system.domain.OsgComplaint">
+        select
+            complaint_id as complaintId,
+            student_name as studentName,
+            complaint_type as complaintType,
+            complaint_title as complaintTitle,
+            complaint_content as complaintContent,
+            process_status as processStatus,
+            submit_time as submitTime,
+            handle_time as handleTime,
+            update_time as updateTime
+        from osg_complaint
+        order by submit_time desc, complaint_id desc
+    </select>
+
+    <select id="selectComplaintById" parameterType="long" resultType="com.ruoyi.system.domain.OsgComplaint">
+        select
+            complaint_id as complaintId,
+            student_name as studentName,
+            complaint_type as complaintType,
+            complaint_title as complaintTitle,
+            complaint_content as complaintContent,
+            process_status as processStatus,
+            submit_time as submitTime,
+            handle_time as handleTime,
+            update_time as updateTime
+        from osg_complaint
+        where complaint_id = #{complaintId}
+        limit 1
+    </select>
+
+    <update id="updateComplaintStatus" parameterType="com.ruoyi.system.domain.OsgComplaint">
+        update osg_complaint
+        set
+            process_status = #{processStatus},
+            handle_time = #{handleTime},
+            update_time = now()
+        where complaint_id = #{complaintId}
+    </update>
+</mapper>

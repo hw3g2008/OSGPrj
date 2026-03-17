@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgInterviewQuestionMapper">
+
+    <resultMap id="OsgInterviewQuestionResult" type="OsgInterviewQuestion">
+        <id property="questionId" column="question_id"/>
+        <result property="questionCode" column="question_code"/>
+        <result property="studentId" column="student_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="companyName" column="company_name"/>
+        <result property="departmentName" column="department_name"/>
+        <result property="officeLocation" column="office_location"/>
+        <result property="interviewRound" column="interview_round"/>
+        <result property="interviewStatus" column="interview_status"/>
+        <result property="interviewDate" column="interview_date"/>
+        <result property="interviewerName" column="interviewer_name"/>
+        <result property="questionCount" column="question_count"/>
+        <result property="questionItemsJson" column="question_items_json"/>
+        <result property="supplementalNote" column="supplemental_note"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="submittedAt" column="submitted_at"/>
+        <result property="reviewStatus" column="review_status"/>
+        <result property="eligibleStudentCount" column="eligible_student_count"/>
+        <result property="sharePreview" column="share_preview"/>
+        <result property="reviewedBy" column="reviewed_by"/>
+        <result property="reviewedAt" column="reviewed_at"/>
+        <result property="reviewComment" column="review_comment"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectQuestionColumns">
+        question_id,
+        question_code,
+        student_id,
+        student_name,
+        company_name,
+        department_name,
+        office_location,
+        interview_round,
+        interview_status,
+        interview_date,
+        interviewer_name,
+        question_count,
+        question_items_json,
+        supplemental_note,
+        source_type,
+        submitted_at,
+        review_status,
+        eligible_student_count,
+        share_preview,
+        reviewed_by,
+        reviewed_at,
+        review_comment,
+        create_by,
+        create_time,
+        update_by,
+        update_time,
+        remark
+    </sql>
+
+    <select id="selectQuestionList" parameterType="OsgInterviewQuestion" resultMap="OsgInterviewQuestionResult">
+        select
+        <include refid="selectQuestionColumns"/>
+        from osg_interview_question
+        <where>
+            <choose>
+                <when test="tab != null and tab != '' and tab != 'pending'">
+                    review_status = #{tab}
+                </when>
+                <otherwise>
+                    review_status = 'pending'
+                </otherwise>
+            </choose>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    question_code like concat('%', #{keyword}, '%')
+                    or student_name like concat('%', #{keyword}, '%')
+                    or company_name like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="companyName != null and companyName != ''">
+                and company_name = #{companyName}
+            </if>
+            <if test="interviewRound != null and interviewRound != ''">
+                and interview_round = #{interviewRound}
+            </if>
+            <if test="beginDate != null and beginDate != ''">
+                and date(submitted_at) &gt;= date(#{beginDate})
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and date(submitted_at) &lt;= date(#{endDate})
+            </if>
+        </where>
+        order by question_id asc
+    </select>
+
+    <select id="selectQuestionById" parameterType="Long" resultMap="OsgInterviewQuestionResult">
+        select
+        <include refid="selectQuestionColumns"/>
+        from osg_interview_question
+        where question_id = #{questionId}
+    </select>
+
+    <update id="updateQuestionReview" parameterType="OsgInterviewQuestion">
+        update osg_interview_question
+        <set>
+            <if test="reviewStatus != null and reviewStatus != ''">review_status = #{reviewStatus},</if>
+            <if test="eligibleStudentCount != null">eligible_student_count = #{eligibleStudentCount},</if>
+            <if test="sharePreview != null and sharePreview != ''">share_preview = #{sharePreview},</if>
+            <if test="reviewedBy != null and reviewedBy != ''">reviewed_by = #{reviewedBy},</if>
+            <if test="reviewedAt != null">reviewed_at = #{reviewedAt},</if>
+            <if test="reviewComment != null">review_comment = #{reviewComment},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where question_id = #{questionId}
+    </update>
+
+    <select id="selectPendingQuestionCount" resultType="int">
+        select count(1)
+        from osg_interview_question
+        where review_status = 'pending'
+    </select>
+
+</mapper>

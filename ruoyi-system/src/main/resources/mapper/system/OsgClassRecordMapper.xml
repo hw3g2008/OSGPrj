@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgClassRecordMapper">
+
+    <resultMap id="OsgClassRecordResult" type="OsgClassRecord">
+        <id property="recordId" column="record_id"/>
+        <result property="classId" column="class_id"/>
+        <result property="mentorId" column="mentor_id"/>
+        <result property="mentorName" column="mentor_name"/>
+        <result property="studentId" column="student_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="courseType" column="course_type"/>
+        <result property="courseSource" column="course_source"/>
+        <result property="classDate" column="class_date"/>
+        <result property="durationHours" column="duration_hours"/>
+        <result property="weeklyHours" column="weekly_hours"/>
+        <result property="status" column="status"/>
+        <result property="classStatus" column="class_status"/>
+        <result property="rate" column="rate"/>
+        <result property="topics" column="topics"/>
+        <result property="comments" column="comments"/>
+        <result property="feedbackContent" column="feedback_content"/>
+        <result property="reviewRemark" column="review_remark"/>
+        <result property="reviewedAt" column="reviewed_at"/>
+        <result property="submittedAt" column="submitted_at"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectClassRecordColumns">
+        record_id,
+        class_id,
+        mentor_id,
+        mentor_name,
+        student_id,
+        student_name,
+        course_type,
+        course_source,
+        class_date,
+        duration_hours,
+        weekly_hours,
+        status,
+        class_status,
+        rate,
+        topics,
+        comments,
+        feedback_content,
+        review_remark,
+        reviewed_at,
+        submitted_at,
+        create_by,
+        create_time,
+        update_by,
+        update_time,
+        remark
+    </sql>
+
+    <select id="selectClassRecordByRecordId" parameterType="Long" resultMap="OsgClassRecordResult">
+        select
+        <include refid="selectClassRecordColumns"/>
+        from osg_class_record
+        where record_id = #{recordId}
+    </select>
+
+    <select id="selectClassRecordList" parameterType="OsgClassRecord" resultMap="OsgClassRecordResult">
+        select
+        <include refid="selectClassRecordColumns"/>
+        from osg_class_record
+        <where>
+            <if test="courseType != null and courseType != ''">
+                and course_type = #{courseType}
+            </if>
+            <if test="courseSource != null and courseSource != ''">
+                and course_source = #{courseSource}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="tab != null and tab != '' and tab != 'all'">
+                and status = #{tab}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    mentor_name like concat('%', #{keyword}, '%')
+                    or student_name like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        order by submitted_at asc, record_id asc
+    </select>
+
+    <insert id="insertClassRecord" parameterType="OsgClassRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into osg_class_record (
+            class_id,
+            mentor_id,
+            mentor_name,
+            student_id,
+            student_name,
+            course_type,
+            course_source,
+            class_date,
+            duration_hours,
+            weekly_hours,
+            status,
+            class_status,
+            rate,
+            topics,
+            comments,
+            feedback_content,
+            review_remark,
+            reviewed_at,
+            submitted_at,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        ) values (
+            #{classId},
+            #{mentorId},
+            #{mentorName},
+            #{studentId},
+            #{studentName},
+            #{courseType},
+            #{courseSource},
+            #{classDate},
+            #{durationHours},
+            #{weeklyHours},
+            #{status},
+            #{classStatus},
+            #{rate},
+            #{topics},
+            #{comments},
+            #{feedbackContent},
+            #{reviewRemark},
+            #{reviewedAt},
+            #{submittedAt},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            #{remark}
+        )
+    </insert>
+
+    <update id="updateClassRecordReview" parameterType="OsgClassRecord">
+        update osg_class_record
+        <set>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="reviewRemark != null">review_remark = #{reviewRemark},</if>
+            <if test="reviewedAt != null">reviewed_at = #{reviewedAt},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where record_id = #{recordId}
+    </update>
+
+</mapper>

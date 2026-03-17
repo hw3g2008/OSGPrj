@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgMailJobMapper">
+
+    <select id="selectMailJobList" parameterType="com.ruoyi.system.domain.OsgMailJob" resultType="java.util.LinkedHashMap">
+        select
+            job_id as jobId,
+            job_title as jobTitle,
+            recipient_group as recipientGroup,
+            email_subject as emailSubject,
+            smtp_server_name as smtpServerName,
+            total_count as totalCount,
+            pending_count as pendingCount,
+            success_count as successCount,
+            fail_count as failCount,
+            create_time as createTime,
+            update_time as updateTime
+        from osg_mailjob
+        order by create_time desc, job_id desc
+    </select>
+
+    <insert id="insertMailJob" parameterType="com.ruoyi.system.domain.OsgMailJob" useGeneratedKeys="true" keyProperty="jobId">
+        insert into osg_mailjob (
+            job_title,
+            recipient_group,
+            email_subject,
+            email_content,
+            smtp_server_name,
+            total_count,
+            pending_count,
+            success_count,
+            fail_count,
+            create_time,
+            update_time
+        ) values (
+            #{jobTitle},
+            #{recipientGroup},
+            #{emailSubject},
+            #{emailContent},
+            #{smtpServerName},
+            #{totalCount},
+            #{pendingCount},
+            #{successCount},
+            #{failCount},
+            #{createTime},
+            now()
+        )
+    </insert>
+</mapper>

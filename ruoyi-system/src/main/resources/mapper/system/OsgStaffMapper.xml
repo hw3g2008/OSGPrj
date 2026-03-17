@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgStaffMapper">
+
+    <resultMap id="OsgStaffResult" type="OsgStaff">
+        <id property="staffId" column="staff_id"/>
+        <result property="staffName" column="staff_name"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="staffType" column="staff_type"/>
+        <result property="majorDirection" column="major_direction"/>
+        <result property="subDirection" column="sub_direction"/>
+        <result property="region" column="region"/>
+        <result property="city" column="city"/>
+        <result property="hourlyRate" column="hourly_rate"/>
+        <result property="studentCount" column="student_count"/>
+        <result property="accountStatus" column="account_status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectStaffColumns">
+        s.staff_id,
+        s.staff_name,
+        s.email,
+        s.phone,
+        s.staff_type,
+        s.major_direction,
+        s.sub_direction,
+        s.region,
+        s.city,
+        s.hourly_rate,
+        (
+            select count(1)
+            from osg_student stu
+            where stu.lead_mentor_id = s.staff_id or stu.assistant_id = s.staff_id
+        ) as student_count,
+        s.account_status,
+        s.create_by,
+        s.create_time,
+        s.update_by,
+        s.update_time,
+        s.remark
+    </sql>
+
+    <select id="selectStaffByStaffId" parameterType="Long" resultMap="OsgStaffResult">
+        select
+        <include refid="selectStaffColumns"/>
+        from osg_staff s
+        where s.staff_id = #{staffId}
+    </select>
+
+    <select id="selectStaffList" parameterType="OsgStaff" resultMap="OsgStaffResult">
+        select
+        <include refid="selectStaffColumns"/>
+        from osg_staff s
+        <where>
+            <if test="staffName != null and staffName != ''">
+                and (s.staff_name like concat('%', #{staffName}, '%') or cast(s.staff_id as char) like concat('%', #{staffName}, '%'))
+            </if>
+            <if test="staffType != null and staffType != ''">
+                and s.staff_type = #{staffType}
+            </if>
+            <if test="majorDirection != null and majorDirection != ''">
+                and s.major_direction = #{majorDirection}
+            </if>
+            <if test="accountStatus != null and accountStatus != ''">
+                and s.account_status = #{accountStatus}
+            </if>
+        </where>
+        order by s.staff_id desc
+    </select>
+
+    <insert id="insertStaff" parameterType="OsgStaff" useGeneratedKeys="true" keyProperty="staffId">
+        insert into osg_staff
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            staff_name,
+            email,
+            <if test="phone != null and phone != ''">phone,</if>
+            staff_type,
+            <if test="majorDirection != null and majorDirection != ''">major_direction,</if>
+            <if test="subDirection != null and subDirection != ''">sub_direction,</if>
+            <if test="region != null and region != ''">region,</if>
+            <if test="city != null and city != ''">city,</if>
+            hourly_rate,
+            account_status,
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            update_time,
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{staffName},
+            #{email},
+            <if test="phone != null and phone != ''">#{phone},</if>
+            #{staffType},
+            <if test="majorDirection != null and majorDirection != ''">#{majorDirection},</if>
+            <if test="subDirection != null and subDirection != ''">#{subDirection},</if>
+            <if test="region != null and region != ''">#{region},</if>
+            <if test="city != null and city != ''">#{city},</if>
+            #{hourlyRate},
+            #{accountStatus},
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            sysdate(),
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateStaff" parameterType="OsgStaff">
+        update osg_staff
+        <set>
+            <if test="staffName != null and staffName != ''">staff_name = #{staffName},</if>
+            <if test="email != null and email != ''">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="staffType != null and staffType != ''">staff_type = #{staffType},</if>
+            <if test="majorDirection != null">major_direction = #{majorDirection},</if>
+            <if test="subDirection != null">sub_direction = #{subDirection},</if>
+            <if test="region != null">region = #{region},</if>
+            <if test="city != null">city = #{city},</if>
+            <if test="hourlyRate != null">hourly_rate = #{hourlyRate},</if>
+            <if test="accountStatus != null and accountStatus != ''">account_status = #{accountStatus},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where staff_id = #{staffId}
+    </update>
+
+    <update id="updateStaffStatus" parameterType="OsgStaff">
+        update osg_staff
+        set account_status = #{accountStatus},
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        where staff_id = #{staffId}
+    </update>
+
+    <delete id="deleteStaffByStaffId" parameterType="Long">
+        delete from osg_staff where staff_id = #{staffId}
+    </delete>
+
+</mapper>

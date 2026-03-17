@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgTestBankMapper">
+
+    <resultMap id="OsgTestBankResult" type="OsgTestBank">
+        <id property="bankId" column="bank_id"/>
+        <result property="recordType" column="record_type"/>
+        <result property="testBankName" column="test_bank_name"/>
+        <result property="companyName" column="company_name"/>
+        <result property="testType" column="test_type"/>
+        <result property="questionCount" column="question_count"/>
+        <result property="status" column="status"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="applicationCode" column="application_code"/>
+        <result property="studentName" column="student_name"/>
+        <result property="appliedPosition" column="applied_position"/>
+        <result property="applicationTime" column="application_time"/>
+        <result property="applicationSource" column="application_source"/>
+        <result property="pendingFlag" column="pending_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectTestBankColumns">
+        bank_id,
+        record_type,
+        test_bank_name,
+        company_name,
+        test_type,
+        question_count,
+        status,
+        updated_at,
+        application_code,
+        student_name,
+        applied_position,
+        application_time,
+        application_source,
+        pending_flag,
+        create_by,
+        create_time,
+        update_by,
+        update_time,
+        remark
+    </sql>
+
+    <select id="selectTestBankList" parameterType="OsgTestBank" resultMap="OsgTestBankResult">
+        select
+        <include refid="selectTestBankColumns"/>
+        from osg_test_bank
+        <where>
+            record_type = 'bank'
+            <if test="keyword != null and keyword != ''">
+                and (
+                    test_bank_name like concat('%', #{keyword}, '%')
+                    or company_name like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="companyName != null and companyName != ''">
+                and company_name = #{companyName}
+            </if>
+            <if test="testType != null and testType != ''">
+                and test_type = #{testType}
+            </if>
+        </where>
+        order by bank_id asc
+    </select>
+
+    <select id="selectTestBankApplicationList" parameterType="OsgTestBank" resultMap="OsgTestBankResult">
+        select
+        <include refid="selectTestBankColumns"/>
+        from osg_test_bank
+        <where>
+            record_type = 'application'
+            <if test="keyword != null and keyword != ''">
+                and (
+                    student_name like concat('%', #{keyword}, '%')
+                    or applied_position like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        order by bank_id asc
+    </select>
+
+    <select id="selectTestBankPendingCount" resultType="int">
+        select count(1)
+        from osg_test_bank
+        where record_type = 'application'
+          and pending_flag = '1'
+    </select>
+
+    <select id="selectTestBankByBankId" parameterType="Long" resultMap="OsgTestBankResult">
+        select
+        <include refid="selectTestBankColumns"/>
+        from osg_test_bank
+        where bank_id = #{bankId}
+    </select>
+
+    <insert id="insertTestBank" parameterType="OsgTestBank" useGeneratedKeys="true" keyProperty="bankId">
+        insert into osg_test_bank (
+            record_type,
+            test_bank_name,
+            company_name,
+            test_type,
+            question_count,
+            status,
+            updated_at,
+            pending_flag,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        ) values (
+            #{recordType},
+            #{testBankName},
+            #{companyName},
+            #{testType},
+            #{questionCount},
+            #{status},
+            sysdate(),
+            #{pendingFlag},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            #{remark}
+        )
+    </insert>
+
+    <update id="updateTestBank" parameterType="OsgTestBank">
+        update osg_test_bank
+        <set>
+            <if test="testBankName != null and testBankName != ''">test_bank_name = #{testBankName},</if>
+            <if test="companyName != null and companyName != ''">company_name = #{companyName},</if>
+            <if test="testType != null and testType != ''">test_type = #{testType},</if>
+            <if test="questionCount != null">question_count = #{questionCount},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            updated_at = sysdate(),
+            update_time = sysdate()
+        </set>
+        where bank_id = #{bankId}
+    </update>
+
+</mapper>

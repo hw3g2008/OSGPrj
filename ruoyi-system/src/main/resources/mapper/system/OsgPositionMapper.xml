@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgPositionMapper">
+
+    <resultMap id="OsgPositionResult" type="OsgPosition">
+        <id property="positionId" column="position_id"/>
+        <result property="positionCategory" column="position_category"/>
+        <result property="industry" column="industry"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyType" column="company_type"/>
+        <result property="companyWebsite" column="company_website"/>
+        <result property="positionName" column="position_name"/>
+        <result property="department" column="department"/>
+        <result property="region" column="region"/>
+        <result property="city" column="city"/>
+        <result property="recruitmentCycle" column="recruitment_cycle"/>
+        <result property="projectYear" column="project_year"/>
+        <result property="publishTime" column="publish_time"/>
+        <result property="deadline" column="deadline"/>
+        <result property="displayStatus" column="display_status"/>
+        <result property="displayStartTime" column="display_start_time"/>
+        <result property="displayEndTime" column="display_end_time"/>
+        <result property="positionUrl" column="position_url"/>
+        <result property="applicationNote" column="application_note"/>
+        <result property="studentCount" column="student_count"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectPositionColumns">
+        p.position_id,
+        p.position_category,
+        p.industry,
+        p.company_name,
+        p.company_type,
+        p.company_website,
+        p.position_name,
+        p.department,
+        p.region,
+        p.city,
+        p.recruitment_cycle,
+        p.project_year,
+        p.publish_time,
+        p.deadline,
+        p.display_status,
+        p.display_start_time,
+        p.display_end_time,
+        p.position_url,
+        p.application_note,
+        0 as student_count,
+        p.create_by,
+        p.create_time,
+        p.update_by,
+        p.update_time,
+        p.remark
+    </sql>
+
+    <select id="selectPositionByPositionId" parameterType="Long" resultMap="OsgPositionResult">
+        select
+        <include refid="selectPositionColumns"/>
+        from osg_position p
+        where p.position_id = #{positionId}
+    </select>
+
+    <select id="selectPositionList" parameterType="OsgPosition" resultMap="OsgPositionResult">
+        select
+        <include refid="selectPositionColumns"/>
+        from osg_position p
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    p.position_name like concat('%', #{keyword}, '%')
+                    or p.company_name like concat('%', #{keyword}, '%')
+                    or p.department like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="positionCategory != null and positionCategory != ''">
+                and p.position_category = #{positionCategory}
+            </if>
+            <if test="industry != null and industry != ''">
+                and p.industry = #{industry}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                and p.company_name = #{companyName}
+            </if>
+            <if test="region != null and region != ''">
+                and p.region = #{region}
+            </if>
+            <if test="city != null and city != ''">
+                and p.city = #{city}
+            </if>
+            <if test="displayStatus != null and displayStatus != ''">
+                and p.display_status = #{displayStatus}
+            </if>
+            <if test="recruitmentCycle != null and recruitmentCycle != ''">
+                and p.recruitment_cycle like concat('%', #{recruitmentCycle}, '%')
+            </if>
+            <if test="projectYear != null and projectYear != ''">
+                and p.project_year = #{projectYear}
+            </if>
+            <if test="params != null and params.beginPublishTime != null and params.beginPublishTime != ''">
+                and p.publish_time <![CDATA[>=]]> #{params.beginPublishTime}
+            </if>
+            <if test="params != null and params.endPublishTime != null and params.endPublishTime != ''">
+                and p.publish_time <![CDATA[<=]]> #{params.endPublishTime}
+            </if>
+        </where>
+        order by p.publish_time desc, p.position_id desc
+    </select>
+
+    <insert id="insertPosition" parameterType="OsgPosition" useGeneratedKeys="true" keyProperty="positionId">
+        insert into osg_position
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            position_category,
+            industry,
+            company_name,
+            company_type,
+            <if test="companyWebsite != null and companyWebsite != ''">company_website,</if>
+            position_name,
+            <if test="department != null and department != ''">department,</if>
+            region,
+            city,
+            recruitment_cycle,
+            project_year,
+            publish_time,
+            <if test="deadline != null">deadline,</if>
+            display_status,
+            display_start_time,
+            display_end_time,
+            <if test="positionUrl != null and positionUrl != ''">position_url,</if>
+            <if test="applicationNote != null and applicationNote != ''">application_note,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            update_time,
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{positionCategory},
+            #{industry},
+            #{companyName},
+            #{companyType},
+            <if test="companyWebsite != null and companyWebsite != ''">#{companyWebsite},</if>
+            #{positionName},
+            <if test="department != null and department != ''">#{department},</if>
+            #{region},
+            #{city},
+            #{recruitmentCycle},
+            #{projectYear},
+            #{publishTime},
+            <if test="deadline != null">#{deadline},</if>
+            #{displayStatus},
+            #{displayStartTime},
+            #{displayEndTime},
+            <if test="positionUrl != null and positionUrl != ''">#{positionUrl},</if>
+            <if test="applicationNote != null and applicationNote != ''">#{applicationNote},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            sysdate(),
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updatePosition" parameterType="OsgPosition">
+        update osg_position
+        <set>
+            <if test="positionCategory != null and positionCategory != ''">position_category = #{positionCategory},</if>
+            <if test="industry != null and industry != ''">industry = #{industry},</if>
+            <if test="companyName != null and companyName != ''">company_name = #{companyName},</if>
+            <if test="companyType != null and companyType != ''">company_type = #{companyType},</if>
+            <if test="companyWebsite != null">company_website = #{companyWebsite},</if>
+            <if test="positionName != null and positionName != ''">position_name = #{positionName},</if>
+            <if test="department != null">department = #{department},</if>
+            <if test="region != null and region != ''">region = #{region},</if>
+            <if test="city != null and city != ''">city = #{city},</if>
+            <if test="recruitmentCycle != null and recruitmentCycle != ''">recruitment_cycle = #{recruitmentCycle},</if>
+            <if test="projectYear != null and projectYear != ''">project_year = #{projectYear},</if>
+            <if test="publishTime != null">publish_time = #{publishTime},</if>
+            <if test="deadline != null">deadline = #{deadline},</if>
+            <if test="displayStatus != null and displayStatus != ''">display_status = #{displayStatus},</if>
+            <if test="displayStartTime != null">display_start_time = #{displayStartTime},</if>
+            <if test="displayEndTime != null">display_end_time = #{displayEndTime},</if>
+            <if test="positionUrl != null">position_url = #{positionUrl},</if>
+            <if test="applicationNote != null">application_note = #{applicationNote},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where position_id = #{positionId}
+    </update>
+
+</mapper>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgCommunicationMapper">
+
+    <sql id="recordRows">
+        select
+            record.id as communicationId,
+            'record' as tabType,
+            coalesce(student.student_name, concat('学员#', record.student_id)) as studentName,
+            coalesce(record.contact_person, '系统记录') as recorderName,
+            case lower(record.communication_method)
+                when 'phone' then '电话'
+                when 'wechat' then '微信'
+                when 'email' then '邮件'
+                when 'meeting' then '面谈'
+                when 'in_person' then '面谈'
+                else record.communication_method
+            end as communicationMethod,
+            date_format(record.communication_time, '%Y-%m-%d %H:%i') as communicationTime,
+            left(record.content, 60) as contentPreview,
+            case record.status
+                when 'completed' then '已完成'
+                else '待跟进'
+            end as followUpStatus,
+            null as contactName,
+            null as contactCompany,
+            null as contactPosition,
+            null as networkingType,
+            null as statusLabel
+        from networking_records record
+        left join osg_student student on student.student_id = record.student_id
+        where lower(record.communication_method) not in ('coffee chat', 'info session', 'referral', 'follow-up', 'follow_up')
+    </sql>
+
+    <sql id="networkingRows">
+        select
+            record.id as communicationId,
+            'networking' as tabType,
+            coalesce(student.student_name, concat('学员#', record.student_id)) as studentName,
+            null as recorderName,
+            null as communicationMethod,
+            date_format(record.communication_time, '%Y-%m-%d %H:%i') as communicationTime,
+            left(record.content, 60) as contentPreview,
+            null as followUpStatus,
+            record.contact_person as contactName,
+            record.company as contactCompany,
+            record.contact_level as contactPosition,
+            case lower(record.communication_method)
+                when 'coffee chat' then 'Coffee Chat'
+                when 'info session' then 'Info Session'
+                when 'follow_up' then 'Follow-up'
+                when 'follow-up' then 'Follow-up'
+                when 'referral' then 'Referral'
+                else record.communication_method
+            end as networkingType,
+            case record.status
+                when 'completed' then '已完成'
+                else '跟进中'
+            end as statusLabel
+        from networking_records record
+        left join osg_student student on student.student_id = record.student_id
+        where lower(record.communication_method) in ('coffee chat', 'info session', 'referral', 'follow-up', 'follow_up')
+    </sql>
+
+    <select id="selectCommunicationList" parameterType="OsgCommunication" resultType="map">
+        select *
+        from (
+            <choose>
+                <when test="tab == 'networking'">
+                    <include refid="networkingRows"/>
+                </when>
+                <otherwise>
+                    <include refid="recordRows"/>
+                </otherwise>
+            </choose>
+        ) communication
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    coalesce(studentName, '') like concat('%', #{keyword}, '%')
+                    or coalesce(recorderName, '') like concat('%', #{keyword}, '%')
+                    or coalesce(contactName, '') like concat('%', #{keyword}, '%')
+                    or coalesce(contactCompany, '') like concat('%', #{keyword}, '%')
+                    or coalesce(contactPosition, '') like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        order by communicationTime desc, communicationId desc
+    </select>
+</mapper>

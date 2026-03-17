@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "userId": 10003,
+    "roles": [
+      { "roleId": 2, "roleName": "课时审核员", "roleKey": "course_auditor" }
+    ]
+  }
+}

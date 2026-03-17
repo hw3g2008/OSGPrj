@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "userId": 10004,
+    "roles": [
+      { "roleId": 3, "roleName": "会计", "roleKey": "accountant" }
+    ]
+  }
+}

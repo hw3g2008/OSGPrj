@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgFileMapper">
+
+    <resultMap id="OsgFileResult" type="OsgFile">
+        <id property="fileId" column="file_id"/>
+        <result property="fileName" column="file_name"/>
+        <result property="fileType" column="file_type"/>
+        <result property="className" column="class_name"/>
+        <result property="fileSize" column="file_size"/>
+        <result property="authType" column="auth_type"/>
+        <result property="authorizedTo" column="authorized_to"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <resultMap id="OsgFileAuthResult" type="OsgFileAuth">
+        <id property="authId" column="auth_id"/>
+        <result property="fileId" column="file_id"/>
+        <result property="authType" column="auth_type"/>
+        <result property="targetValue" column="target_value"/>
+        <result property="targetLabel" column="target_label"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="selectFileColumns">
+        f.file_id,
+        f.file_name,
+        f.file_type,
+        f.class_name,
+        f.file_size,
+        f.auth_type,
+        case
+            when f.auth_type = 'all' then '全部用户'
+            else coalesce((
+                select group_concat(a.target_label order by a.auth_id separator ', ')
+                from osg_file_auth a
+                where a.file_id = f.file_id
+            ), '未授权')
+        end as authorized_to,
+        f.create_by,
+        f.create_time,
+        f.update_by,
+        f.update_time,
+        f.remark
+    </sql>
+
+    <select id="selectFileList" parameterType="OsgFile" resultMap="OsgFileResult">
+        select
+        <include refid="selectFileColumns"/>
+        from osg_file f
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    f.file_name like concat('%', #{keyword}, '%')
+                    or f.class_name like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        order by f.file_id asc
+    </select>
+
+    <select id="selectFileByFileId" parameterType="Long" resultMap="OsgFileResult">
+        select
+        <include refid="selectFileColumns"/>
+        from osg_file f
+        where f.file_id = #{fileId}
+    </select>
+
+    <insert id="insertFile" parameterType="OsgFile" useGeneratedKeys="true" keyProperty="fileId">
+        insert into osg_file (
+            file_name,
+            file_type,
+            class_name,
+            file_size,
+            auth_type,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        ) values (
+            #{fileName},
+            #{fileType},
+            #{className},
+            #{fileSize},
+            #{authType},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            #{remark}
+        )
+    </insert>
+
+    <update id="updateFile" parameterType="OsgFile">
+        update osg_file
+        <set>
+            <if test="fileName != null and fileName != ''">file_name = #{fileName},</if>
+            <if test="fileType != null and fileType != ''">file_type = #{fileType},</if>
+            <if test="className != null">class_name = #{className},</if>
+            <if test="fileSize != null and fileSize != ''">file_size = #{fileSize},</if>
+            <if test="authType != null and authType != ''">auth_type = #{authType},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where file_id = #{fileId}
+    </update>
+
+    <delete id="deleteFileAuthByFileId" parameterType="Long">
+        delete from osg_file_auth where file_id = #{fileId}
+    </delete>
+
+    <insert id="batchInsertFileAuth" parameterType="java.util.List">
+        insert into osg_file_auth (
+            file_id,
+            auth_type,
+            target_value,
+            target_label,
+            create_time
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.fileId},
+                #{item.authType},
+                #{item.targetValue},
+                #{item.targetLabel},
+                sysdate()
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectFileAuthListByFileId" parameterType="Long" resultMap="OsgFileAuthResult">
+        select
+            auth_id,
+            file_id,
+            auth_type,
+            target_value,
+            target_label,
+            create_time
+        from osg_file_auth
+        where file_id = #{fileId}
+        order by auth_id asc
+    </select>
+
+</mapper>

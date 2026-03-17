@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgNoticeMapper">
+
+    <select id="selectNoticeList" parameterType="com.ruoyi.system.domain.OsgNotice" resultType="java.util.LinkedHashMap">
+        select
+            notice_id as noticeId,
+            receiver_type as receiverType,
+            receiver_label as receiverLabel,
+            notice_title as noticeTitle,
+            notice_content as noticeContent,
+            create_time as createTime,
+            update_time as updateTime
+        from osg_notice
+        <where>
+            <if test="receiverType != null and receiverType != ''">
+                and receiver_type = #{receiverType}
+            </if>
+            <if test="noticeTitle != null and noticeTitle != ''">
+                and notice_title like concat('%', #{noticeTitle}, '%')
+            </if>
+        </where>
+        order by create_time desc, notice_id desc
+    </select>
+
+    <insert id="insertNotice" parameterType="com.ruoyi.system.domain.OsgNotice" useGeneratedKeys="true" keyProperty="noticeId">
+        insert into osg_notice (
+            receiver_type,
+            receiver_label,
+            notice_title,
+            notice_content,
+            create_time,
+            update_time
+        ) values (
+            #{receiverType},
+            #{receiverLabel},
+            #{noticeTitle},
+            #{noticeContent},
+            #{createTime},
+            now()
+        )
+    </insert>
+</mapper>

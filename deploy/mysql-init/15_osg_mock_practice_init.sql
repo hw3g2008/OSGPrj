@@ -1,0 +1,29 @@
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS osg_mock_practice (
+  practice_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  student_id BIGINT NOT NULL,
+  student_name VARCHAR(64) NOT NULL,
+  practice_type VARCHAR(32) NOT NULL,
+  request_content VARCHAR(255) NOT NULL,
+  requested_mentor_count INT NOT NULL DEFAULT 1,
+  preferred_mentor_names VARCHAR(255) DEFAULT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'pending',
+  mentor_ids VARCHAR(255) DEFAULT NULL,
+  mentor_names VARCHAR(255) DEFAULT NULL,
+  mentor_backgrounds VARCHAR(255) DEFAULT NULL,
+  scheduled_at DATETIME DEFAULT NULL,
+  completed_hours INT NOT NULL DEFAULT 0,
+  feedback_rating INT DEFAULT NULL,
+  feedback_summary VARCHAR(255) DEFAULT NULL,
+  submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  create_by VARCHAR(64) DEFAULT '',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_by VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  remark VARCHAR(500) DEFAULT NULL,
+  INDEX idx_mock_practice_status (status),
+  INDEX idx_mock_practice_type (practice_type),
+  INDEX idx_mock_practice_student (student_id),
+  INDEX idx_mock_practice_submitted_at (submitted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
