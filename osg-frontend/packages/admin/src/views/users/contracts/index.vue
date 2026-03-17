@@ -85,49 +85,40 @@
           </thead>
           <tbody>
             <tr v-for="record in filteredContracts" :key="record.contractId">
+              <!-- 合同编号 -->
+              <td>{{ record.contractNo }}</td>
+
+              <!-- 学员 -->
               <td>
-                <div class="contract-cell-block">
-                  <div class="contract-primary-row">
-                    <span class="contract-no">{{ record.contractNo }}</span>
-                    <span :class="['contract-pill', `contract-pill--${getTypeTone(record.contractType)}`]">
-                      {{ formatContractType(record.contractType) }}
-                    </span>
-                  </div>
-                  <div v-if="record.renewalReason" class="contract-meta-row">
-                    <span class="contract-meta-label">续签原因</span>
-                    <span class="contract-meta-value">{{ record.renewalReason }}</span>
-                  </div>
+                <button type="button" class="contract-link" @click="handleDetailEntry(record)">
+                  {{ record.studentName || '-' }}
+                </button>
+              </td>
+
+              <!-- 班主任 -->
+              <td>{{ record.leadMentorName || '-' }}</td>
+
+              <!-- 合同类型 -->
+              <td>
+                <span :class="['contract-pill', `contract-pill--${getTypeTone(record.contractType)}`]">
+                  {{ formatContractType(record.contractType) }}
+                </span>
+              </td>
+
+              <!-- 金额 -->
+              <td>
+                <strong class="contract-amount-value">{{ formatCurrency(record.contractAmount) }}</strong>
+              </td>
+
+              <!-- 课时 -->
+              <td>
+                <div class="contract-hours-value">
+                  <strong>{{ record.remainingHours ?? record.totalHours }}</strong>
+                  <span>/ {{ record.totalHours }}h</span>
                 </div>
               </td>
-              <td>
-                <div class="contract-cell-block">
-                  <div class="contract-primary-row">
-                    <button type="button" class="contract-link" @click="handleDetailEntry(record)">
-                      {{ record.studentName || '-' }}
-                    </button>
-                    <span class="contract-id-badge">ID {{ record.studentId }}</span>
-                  </div>
-                  <div class="contract-meta-row">
-                    <span class="contract-meta-label">班主任</span>
-                    <span class="contract-meta-value">{{ record.leadMentorName || '-' }}</span>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <div class="contract-cell-block">
-                  <div class="contract-amount-row">
-                    <span class="contract-amount-label">金额</span>
-                    <strong class="contract-amount-value">{{ formatCurrency(record.contractAmount) }}</strong>
-                  </div>
-                  <div class="contract-hours-row">
-                    <span class="contract-hours-label">课时</span>
-                    <div class="contract-hours-value">
-                      <strong>{{ record.remainingHours ?? record.totalHours }}</strong>
-                      <span>/ {{ record.totalHours }}h</span>
-                    </div>
-                  </div>
-                </div>
-              </td>
+
+              <!-- 有效期 -->
               <td>
                 <div class="contract-cell-block contract-cell-block--period">
                   <span class="contract-date">{{ formatDate(record.startDate) }}</span>
@@ -135,11 +126,18 @@
                   <span class="contract-date">{{ formatDate(record.endDate) }}</span>
                 </div>
               </td>
+
+              <!-- 续签原因 -->
+              <td>{{ record.renewalReason || '-' }}</td>
+
+              <!-- 状态 -->
               <td>
                 <span :class="['contract-status-tag', `contract-status-tag--${getStatusTone(resolveStatus(record))}`]">
                   {{ formatContractStatus(resolveStatus(record)) }}
                 </span>
               </td>
+
+              <!-- 操作 -->
               <td>
                 <div class="contract-actions">
                   <button type="button" class="contract-action" @click="handleDetailEntry(record)">详情</button>
