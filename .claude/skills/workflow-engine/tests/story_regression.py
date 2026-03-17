@@ -298,7 +298,7 @@ def test_path_readiness_upgrade():
 
         project_root = str(Path(__file__).resolve().parents[4])
         result = subprocess.run(
-            ["python3", os.path.join(project_root, "bin/sync-module-readiness.py"),
+            [sys.executable, os.path.join(project_root, "bin/sync-module-readiness.py"),
              "--module", "test-module",
              "--state-to", "all_stories_done",
              "--event-source", "/approve story",
@@ -330,7 +330,7 @@ def test_path_readiness_upgrade():
         readiness_path = os.path.join(td, "module-readiness.yaml")
         project_root = str(Path(__file__).resolve().parents[4])
         result = subprocess.run(
-            ["python3", os.path.join(project_root, "bin/sync-module-readiness.py"),
+            [sys.executable, os.path.join(project_root, "bin/sync-module-readiness.py"),
              "--module", "test-module",
              "--state-to", "story_approved",
              "--event-source", "/approve story",

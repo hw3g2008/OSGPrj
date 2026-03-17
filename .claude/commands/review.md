@@ -5,6 +5,7 @@
 ```
 /review T-xxx             # 代码评审指定 Ticket
 /review                   # 评审当前 Ticket
+/review framework         # 执行框架全局一致性审计（framework-audit）
 ```
 
 ## 说明

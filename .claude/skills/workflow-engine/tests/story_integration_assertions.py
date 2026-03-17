@@ -101,7 +101,7 @@ def check_scripts_runnable():
             continue
         try:
             extra_args = ["--allow-bootstrap"] if has_bootstrap and script in bootstrap_aware_scripts else []
-            cmd = ["python3", str(path)] + script_args.get(script, []) + extra_args
+            cmd = [sys.executable, str(path)] + script_args.get(script, []) + extra_args
             result = subprocess.run(
                 cmd,
                 capture_output=True,

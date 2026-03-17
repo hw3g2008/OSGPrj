@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 ACTION="${1:-status}"
 ENV_FILE="${2:-}"
 
@@ -30,8 +34,55 @@ health_ok() {
   curl -fsS --max-time 2 "${BACKEND_HEALTH_URL}" >/dev/null 2>&1
 }
 
+pid_alive_any() {
+  local pid="${1:-}"
+  [[ -z "${pid}" ]] && return 1
+
+  if kill -0 "${pid}" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local ps_bin=""
+  if command -v powershell.exe >/dev/null 2>&1; then
+    ps_bin="powershell.exe"
+  elif command -v pwsh >/dev/null 2>&1; then
+    ps_bin="pwsh"
+  fi
+  [[ -z "${ps_bin}" ]] && return 1
+
+  "${ps_bin}" -NoProfile -Command "if (Get-Process -Id ${pid} -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }" >/dev/null 2>&1
+}
+
+kill_pid_any() {
+  local pid="${1:-}"
+  [[ -z "${pid}" ]] && return 0
+
+  # Prefer taskkill on Windows; disable MSYS path conversion.
+  if command -v taskkill.exe >/dev/null 2>&1; then
+    MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1 taskkill.exe /F /T /PID "${pid}" >/dev/null 2>&1 || true
+    sleep 0.4
+    return 0
+  fi
+
+  kill "${pid}" >/dev/null 2>&1 || true
+  sleep 0.4
+}
+
 listener_pids() {
-  lsof -tiTCP:"${BACKEND_PORT}" -sTCP:LISTEN -n -P 2>/dev/null | sort -u
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -tiTCP:"${BACKEND_PORT}" -sTCP:LISTEN -n -P 2>/dev/null | sort -u
+    return 0
+  fi
+
+  if command -v netstat >/dev/null 2>&1; then
+    netstat -ano -p tcp 2>/dev/null \
+      | tr -d '\r' \
+      | awk -v p=":${BACKEND_PORT}" '$1=="TCP" && $4=="LISTENING" && $2 ~ (p"$") {print $5}' \
+      | sort -u
+    return 0
+  fi
+
+  return 0
 }
 
 listener_pid() {
@@ -50,6 +101,17 @@ managed_listener_pid() {
   while IFS= read -r pid; do
     [[ -z "${pid}" ]] && continue
     command="$(ps -o command= -p "${pid}" 2>/dev/null || true)"
+    if [[ -z "${command}" ]]; then
+      ps_bin=""
+      if command -v powershell.exe >/dev/null 2>&1; then
+        ps_bin="powershell.exe"
+      elif command -v pwsh >/dev/null 2>&1; then
+        ps_bin="pwsh"
+      fi
+      if [[ -n "${ps_bin}" ]]; then
+        command="$(${ps_bin} -NoProfile -Command "(Get-CimInstance Win32_Process -Filter \"ProcessId=${pid}\" | Select-Object -ExpandProperty CommandLine)" 2>/dev/null | tr -d '\r' | head -n 1)"
+      fi
+    fi
     if [[ "${command}" == *"${MANAGED_COMMAND_SUBSTRING}"* ]]; then
       printf '%s\n' "${pid}"
       return 0
@@ -97,7 +159,7 @@ wait_for_managed_listener_health() {
 is_running() {
   local pid
   pid="$(tracked_pid)"
-  if [[ -n "${pid}" ]] && kill -0 "${pid}" >/dev/null 2>&1 && health_ok; then
+  if [[ -n "${pid}" ]] && pid_alive_any "${pid}" && health_ok; then
     return 0
   fi
   adopt_existing_listener
@@ -136,7 +198,7 @@ start_server() {
   launcher_pid="$(
     BACKEND_DEV_SERVER_START_CMD_EFFECTIVE="${start_cmd}" \
     BACKEND_DEV_SERVER_START_LOG_FILE="${LOG_FILE}" \
-    python3 - <<'PY'
+    py3 - <<'PY'
 import os
 import subprocess
 
@@ -160,15 +222,21 @@ PY
       echo "PASS: backend started at ${BACKEND_BASE_URL} (pid=$(tracked_pid))"
       return 0
     fi
-    if ! kill -0 "${launcher_pid}" >/dev/null 2>&1 && [[ -z "$(listener_pids || true)" ]]; then
+    if ! pid_alive_any "${launcher_pid}" && [[ -z "$(listener_pids || true)" ]]; then
       break
     fi
     sleep 1
   done
 
-  if kill -0 "${launcher_pid}" >/dev/null 2>&1; then
-    kill "${launcher_pid}" >/dev/null 2>&1 || true
-    wait "${launcher_pid}" 2>/dev/null || true
+  if pid_alive_any "${launcher_pid}"; then
+    kill_pid_any "${launcher_pid}"
+  fi
+
+  # If a managed listener exists, try to stop it before failing (Windows PIDs).
+  managed_pid="$(managed_listener_pid || true)"
+  if [[ -n "${managed_pid}" ]]; then
+    MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1 taskkill.exe /F /T /PID "${managed_pid}" >/dev/null 2>&1 || kill "${managed_pid}" >/dev/null 2>&1 || true
+    sleep 0.6
   fi
   echo "FAIL: backend failed to start at ${BACKEND_BASE_URL}" >&2
   echo "INFO: log=${LOG_FILE}" >&2
@@ -178,24 +246,15 @@ PY
 
 stop_server() {
   local pid managed_pid
+
   pid="$(tracked_pid)"
-  if [[ -n "${pid}" ]] && kill -0 "${pid}" >/dev/null 2>&1; then
-    kill "${pid}" >/dev/null 2>&1 || true
-    sleep 1
-    if kill -0 "${pid}" >/dev/null 2>&1; then
-      kill -9 "${pid}" >/dev/null 2>&1 || true
-    fi
-  else
-    managed_pid="$(managed_listener_pid || true)"
-    if [[ -n "${managed_pid}" ]]; then
-      kill "${managed_pid}" >/dev/null 2>&1 || true
-      sleep 1
-      if kill -0 "${managed_pid}" >/dev/null 2>&1; then
-        kill -9 "${managed_pid}" >/dev/null 2>&1 || true
-      fi
-    elif [[ -n "$(listener_pids || true)" ]]; then
-      fail_unknown_listener
-    fi
+  if [[ -n "${pid}" ]]; then
+    kill_pid_any "${pid}"
+  fi
+
+  managed_pid="$(managed_listener_pid || true)"
+  if [[ -n "${managed_pid}" ]]; then
+    kill_pid_any "${managed_pid}"
   fi
 
   rm -f "${PID_FILE}"

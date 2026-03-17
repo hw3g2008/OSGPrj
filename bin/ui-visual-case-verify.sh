@@ -4,6 +4,10 @@
 #   bash bin/ui-visual-case-verify.sh <module> <page_id|surface_id>
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 MODULE="${1:-}"
 CASE_ID="${2:-}"
 DEV_ENV_FILE="${DEV_ENV_FILE:-deploy/.env.dev}"
@@ -33,7 +37,7 @@ CONTRACT_PATH="osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.ya
 [[ -f "${CONTRACT_PATH}" ]] || fail "contract not found: ${CONTRACT_PATH}"
 
 CASE_KIND="$(
-  python3 - "${CONTRACT_PATH}" "${CASE_ID}" <<'PY'
+  py3 - "${CONTRACT_PATH}" "${CASE_ID}" <<'PY'
 import sys
 from pathlib import Path
 import yaml

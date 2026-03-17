@@ -4,6 +4,10 @@
 #   bash bin/ui-visual-gate.sh [module]
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 MODULE="${1:-permission}"
 DATE_STR="$(date +%Y-%m-%d)"
 AUDIT_DIR="osg-spec-docs/tasks/audit"
@@ -30,7 +34,7 @@ cleanup_preview() {
 trap cleanup_preview EXIT
 
 read_ui_delivery_required_repair_chain() {
-  python3 - <<'PY'
+  py3 - <<'PY'
 import sys
 from pathlib import Path
 import yaml
@@ -54,7 +58,7 @@ PY
 UI_DELIVERY_REQUIRED_REPAIR_CHAIN="$(read_ui_delivery_required_repair_chain)"
 
 print_page_report_summary() {
-  python3 - <<PY
+  py3 - <<PY
 import json
 from pathlib import Path
 report = json.loads(Path("${PAGE_REPORT_JSON}").read_text(encoding="utf-8"))
@@ -113,7 +117,7 @@ PY
   echo "INFO: source=app (verify)"
   echo "INFO: ui_delivery_required_repair_chain=${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
 
-  MANIFEST_JSON="$(python3 - <<PY
+  MANIFEST_JSON="$(py3 - <<PY
 from pathlib import Path
 audit = Path("${AUDIT_DIR}")
 files = sorted(
@@ -130,7 +134,7 @@ PY
   fi
   echo "INFO: manifest_ref=${MANIFEST_JSON}"
 
-  if ! python3 .claude/skills/workflow-engine/tests/ui_visual_truth_source_guard.py \
+  if ! py3 .claude/skills/workflow-engine/tests/ui_visual_truth_source_guard.py \
     --manifest "${MANIFEST_JSON}" \
     --contract "${CONTRACT_PATH}" \
     --output-json "${TRUTH_SUMMARY_JSON}"; then
@@ -139,7 +143,7 @@ PY
   fi
 
   read -r manifest_source contract_sha256 prototype_sha256 <<EOF
-$(python3 - <<PY
+$(py3 - <<PY
 import json
 from pathlib import Path
 data = json.loads(Path("${TRUTH_SUMMARY_JSON}").read_text(encoding="utf-8"))
@@ -151,7 +155,7 @@ EOF
   echo "INFO: contract_sha256=${contract_sha256}"
   echo "INFO: prototype_sha256=${prototype_sha256}"
 
-  if ! python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
+  if ! py3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
     --contract "${CONTRACT_PATH}" \
     --output-json "${SUMMARY_JSON}"; then
     echo "VISUAL_FAIL: ui_visual_contract_guard failed"
@@ -159,7 +163,7 @@ EOF
   fi
 
   read -r total_pages baseline_existing baseline_missing <<EOF
-$(python3 - <<PY
+$(py3 - <<PY
 import json
 from pathlib import Path
 data = json.loads(Path("${SUMMARY_JSON}").read_text(encoding="utf-8"))
@@ -204,7 +208,7 @@ EOF
     exit 12
   fi
 
-  if ! python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
+  if ! py3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
     --contract "${CONTRACT_PATH}" \
     --page-report "${PAGE_REPORT_JSON}" \
     --stage ui-visual-gate \

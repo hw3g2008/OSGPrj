@@ -4,9 +4,13 @@
 # 任一步骤失败即整体 FAIL（set -euo pipefail）
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 MODULE="${1:-}"
 if [[ -z "${MODULE}" ]]; then
-  MODULE="$(python3 - <<'PY'
+  MODULE="$(py3 - <<'PY'
 import yaml
 from pathlib import Path
 p = Path("osg-spec-docs/tasks/STATE.yaml")
@@ -60,7 +64,7 @@ BACKEND_BOOT_LOG="${BACKEND_BOOT_LOG:-${AUDIT_DIR}/final-gate-backend-boot-${MOD
 BACK_PID="${BACK_PID:-}"
 
 read_ui_delivery_required_repair_chain() {
-  python3 - <<'PY'
+  py3 - <<'PY'
 import sys
 from pathlib import Path
 import yaml
@@ -93,7 +97,7 @@ require_cmd() {
 
 write_visual_baseline_fingerprint() {
   local outfile="$1"
-  python3 - <<PY > "${outfile}"
+  py3 - <<PY > "${outfile}"
 import hashlib
 from pathlib import Path
 
@@ -193,7 +197,7 @@ echo "=== Final Gate: 开始（module=${MODULE}） ==="
 echo "INFO: ui_delivery_required_repair_chain=${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
 
 echo "--- 0. toolchain_preflight ---"
-require_cmd python3
+require_py3
 require_cmd node
 require_cmd pnpm
 require_cmd mvn
@@ -215,60 +219,60 @@ fi
 echo "INFO: E2E 前端启动策略=Playwright webServer（Option B），不依赖 Docker frontends(3001-3005)"
 
 echo "--- 0.1 plan_standard_guard ---"
-python3 .claude/skills/workflow-engine/tests/plan_standard_guard.py
+py3 .claude/skills/workflow-engine/tests/plan_standard_guard.py
 
 echo "--- 0.15 runtime_contract_guard ---"
-python3 .claude/skills/workflow-engine/tests/runtime_contract_guard.py \
+py3 .claude/skills/workflow-engine/tests/runtime_contract_guard.py \
   --contract "${RESOLVED_RUNTIME_CONTRACT_FILE}"
 
 echo "--- 0.16 delivery_truth_guard ---"
-python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py \
+py3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py \
   --module "${MODULE}" \
   --runtime-contract "${RESOLVED_RUNTIME_CONTRACT_FILE}" \
   --stage final-gate
 
 echo "--- 0.16b delivery_content_guard ---"
-python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py \
+py3 .claude/skills/workflow-engine/tests/delivery_content_guard.py \
   --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/DELIVERY-CONTRACT.yaml" \
   --runtime-contract "${RESOLVED_RUNTIME_CONTRACT_FILE}" \
   --stage final-gate
 
 echo "--- 0.16c prototype_derivation_consistency_guard ---"
-python3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py \
+py3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py \
   --module-dir "osg-spec-docs/docs/01-product/prd/${MODULE}"
 
 echo "--- 0.2 srs_guard ---"
-python3 .claude/skills/workflow-engine/tests/srs_guard.py \
+py3 .claude/skills/workflow-engine/tests/srs_guard.py \
   --module "${MODULE}"
 
 echo "--- 0.3 decisions_guard ---"
-python3 .claude/skills/workflow-engine/tests/decisions_guard.py \
+py3 .claude/skills/workflow-engine/tests/decisions_guard.py \
   --module "${MODULE}" \
   --allow-missing
 
 echo "--- 0.3b truth_sync_guard ---"
-python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py \
+py3 .claude/skills/workflow-engine/tests/truth_sync_guard.py \
   --module "${MODULE}"
 
 echo "--- 0.4 requirements_coverage_guard ---"
-python3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py \
+py3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py \
   --module "${MODULE}" \
   --mode requirements_to_story_tests
 
 echo "--- 0.4b story_ticket_coverage_guard ---"
-python3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py \
+py3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py \
   --module "${MODULE}"
 
 echo "--- 0.5 menu_route_view_guard ---"
-python3 .claude/skills/workflow-engine/tests/menu_route_view_guard.py \
+py3 .claude/skills/workflow-engine/tests/menu_route_view_guard.py \
   --module "${MODULE}"
 
 echo "--- 0.6 permission_code_consistency_guard ---"
-python3 .claude/skills/workflow-engine/tests/permission_code_consistency_guard.py \
+py3 .claude/skills/workflow-engine/tests/permission_code_consistency_guard.py \
   --module "${MODULE}"
 
 echo "--- 1. story_runtime_guard ---"
-python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py \
+py3 .claude/skills/workflow-engine/tests/story_runtime_guard.py \
   --state osg-spec-docs/tasks/STATE.yaml \
   --config .claude/project/config.yaml \
   --state-machine .claude/skills/workflow-engine/state-machine.yaml \
@@ -278,36 +282,45 @@ python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py \
   --events osg-spec-docs/tasks/workflow-events.jsonl
 
 echo "--- 2. story_event_log_check ---"
-python3 .claude/skills/workflow-engine/tests/story_event_log_check.py \
+py3 .claude/skills/workflow-engine/tests/story_event_log_check.py \
   --events osg-spec-docs/tasks/workflow-events.jsonl \
   --state osg-spec-docs/tasks/STATE.yaml
 
 echo "--- 3. done_ticket_evidence_guard (全 Story 循环) ---"
-python3 - <<'PY'
-import subprocess, sys, yaml
+py3 - <<'PY'
+import subprocess
+import sys
+import yaml
+
 state = yaml.safe_load(open("osg-spec-docs/tasks/STATE.yaml", "r", encoding="utf-8"))
 stories = state.get("stories", [])
 if not stories:
     print("FAIL: STATE.stories 为空，无法执行全量证据校验")
     sys.exit(1)
+
 for sid in stories:
     cmd = [
-        "python3",
+        sys.executable,
         ".claude/skills/workflow-engine/tests/done_ticket_evidence_guard.py",
-        "--state", "osg-spec-docs/tasks/STATE.yaml",
-        "--stories-dir", "osg-spec-docs/tasks/stories",
-        "--tickets-dir", "osg-spec-docs/tasks/tickets",
-        "--story-id", sid,
+        "--state",
+        "osg-spec-docs/tasks/STATE.yaml",
+        "--stories-dir",
+        "osg-spec-docs/tasks/stories",
+        "--tickets-dir",
+        "osg-spec-docs/tasks/tickets",
+        "--story-id",
+        sid,
     ]
     rc = subprocess.run(cmd).returncode
     if rc != 0:
         print(f"FAIL: done_ticket_evidence_guard 未通过，story={sid}")
         sys.exit(rc)
+
 print("PASS: 全 Story done_ticket_evidence_guard 通过")
 PY
 
 echo "--- 4. traceability_guard ---"
-python3 .claude/skills/workflow-engine/tests/traceability_guard.py \
+py3 .claude/skills/workflow-engine/tests/traceability_guard.py \
   --cases "osg-spec-docs/tasks/testing/${MODULE}-test-cases.yaml" \
   --matrix "osg-spec-docs/tasks/testing/${MODULE}-traceability-matrix.md"
 
@@ -355,14 +368,14 @@ echo "--- 4.6 ui_critical_evidence_guard ---"
 if (( ui_visual_gate_rc != 0 )) && [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
   echo "INFO: ui_critical_evidence_guard skipped due to manual ui adjudication"
 else
-  python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
+  py3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
     --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.yaml" \
     --page-report "${UI_VISUAL_PAGE_REPORT}" \
     --stage final-gate
 fi
 
 read -r visual_total visual_pass visual_fail visual_not_run style_passed style_failed state_executed state_failed critical_total critical_failed <<EOF
-$(python3 - <<PY
+$(py3 - <<PY
 import json
 from pathlib import Path
 report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
@@ -544,7 +557,7 @@ echo "PASS: 登录锁预检通过（key=${lock_key} value=${lock_value}）"
 
 echo "--- 8.25 安全契约守卫 ---"
 set +e
-security_guard_output="$(python3 .claude/skills/workflow-engine/tests/security_contract_guard.py \
+security_guard_output="$(py3 .claude/skills/workflow-engine/tests/security_contract_guard.py \
   --contract contracts/security-contract.yaml \
   --stage final-gate \
   --audit "${SECURITY_CONTRACT_LOG}" 2>&1)"
@@ -597,7 +610,7 @@ else
 fi
 
 echo "--- 8.9 api_operation_parity_guard ---"
-python3 .claude/skills/workflow-engine/tests/api_operation_parity_guard.py \
+py3 .claude/skills/workflow-engine/tests/api_operation_parity_guard.py \
   --module "${MODULE}" \
   --config .claude/project/config.yaml
 
@@ -607,7 +620,7 @@ BASE_URL="${BASE_URL}" E2E_API_GATE_LOG="${E2E_API_GATE_LOG}" \
   bash bin/e2e-api-gate.sh "${MODULE}" "full"
 
 echo "--- 9.1 behavior_contract_guard ---"
-python3 .claude/skills/workflow-engine/tests/behavior_contract_guard.py \
+py3 .claude/skills/workflow-engine/tests/behavior_contract_guard.py \
   --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/DELIVERY-CONTRACT.yaml" \
   --report "${BEHAVIOR_CONTRACT_REPORT}" \
   --stage final-gate

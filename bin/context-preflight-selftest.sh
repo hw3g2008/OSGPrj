@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 TMP_DIR="$(mktemp -d)"
 cleanup() {
   rm -rf "${TMP_DIR}"
@@ -45,7 +49,7 @@ environment_identity:
       admin: 3005
 YAML
 
-python3 - "${CONFIG_FILE}" "${DEV_CONTRACT}" "${TEST_CONTRACT}" "${DEV_ENV}" "${TEST_ENV}" <<'PY'
+py3 - "${CONFIG_FILE}" "${DEV_CONTRACT}" "${TEST_CONTRACT}" "${DEV_ENV}" "${TEST_ENV}" <<'PY'
 import pathlib
 import sys
 
@@ -130,7 +134,7 @@ evidence_paths:
     provider_log_path_env: PASSWORD_RESET_PROVIDER_LOG_PATH
 YAML
 
-python3 - "${DEV_CONTRACT}" "${TEST_CONTRACT}" "${DEV_ENV}" "${TEST_ENV}" <<'PY'
+py3 - "${DEV_CONTRACT}" "${TEST_CONTRACT}" "${DEV_ENV}" "${TEST_ENV}" <<'PY'
 import pathlib
 import sys
 for path, env in [(sys.argv[1], sys.argv[3]), (sys.argv[2], sys.argv[4])]:
@@ -205,7 +209,7 @@ fi
 
 BAD_DEV_ENV="${TMP_DIR}/dev-bad.env"
 cp "${DEV_ENV}" "${BAD_DEV_ENV}"
-python3 - "${BAD_DEV_ENV}" <<'PY'
+py3 - "${BAD_DEV_ENV}" <<'PY'
 import pathlib
 import sys
 

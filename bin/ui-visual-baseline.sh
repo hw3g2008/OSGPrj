@@ -4,6 +4,10 @@
 #   bash bin/ui-visual-baseline.sh [module] --mode generate|verify --source prototype|app
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 MODULE="${1:-permission}"
 MODE="verify"
 SOURCE=""
@@ -116,24 +120,24 @@ REDIS_PORT="${REDIS_PORT:-${SPRING_DATA_REDIS_PORT:-}}"
 REDIS_PASSWORD="${REDIS_PASSWORD:-${SPRING_DATA_REDIS_PASSWORD:-}}"
 
 if [[ "${MODE}" == "generate" ]]; then
-  python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
+  py3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
     --contract "${CONTRACT_PATH}" \
     --allow-missing-baseline \
     --output-json "${SUMMARY_JSON}"
 else
-  python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
+  py3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py \
     --contract "${CONTRACT_PATH}" \
     --output-json "${SUMMARY_JSON}"
 fi
 
-python3 - <<PY
+py3 - <<PY
 import json, yaml
 from pathlib import Path
 contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) or {}
 Path("${CONTRACT_JSON}").write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
 PY
 
-CONTRACT_FIXED_TIME="$(python3 - <<PY
+CONTRACT_FIXED_TIME="$(py3 - <<PY
 import json
 from pathlib import Path
 contract = json.loads(Path("${CONTRACT_JSON}").read_text(encoding="utf-8"))
@@ -143,7 +147,7 @@ print(value or "")
 PY
 )"
 
-HAS_STATE_CASES="$(python3 - <<PY
+HAS_STATE_CASES="$(py3 - <<PY
 import json
 from pathlib import Path
 contract = json.loads(Path("${CONTRACT_JSON}").read_text(encoding="utf-8"))
@@ -153,7 +157,7 @@ print("1" if has_cases else "0")
 PY
 )"
 
-VISUAL_RESIDUAL_EDGE_BAND_PX="$(python3 - <<PY
+VISUAL_RESIDUAL_EDGE_BAND_PX="$(py3 - <<PY
 from pathlib import Path
 import yaml
 config = Path(".claude/project/config.yaml")
@@ -210,7 +214,7 @@ if [[ "${STABILITY_ENFORCE_ZH}" != "0" && "${STABILITY_LOCALE}" != "zh-CN" ]]; t
   echo "FAIL: locale must be zh-CN when UI_VISUAL_ENFORCE_ZH_LOCALE!=0, got '${STABILITY_LOCALE}'"
   exit 19
 fi
-if ! python3 - <<PY >/dev/null 2>&1
+if ! py3 - <<PY >/dev/null 2>&1
 value = "${STABILITY_DEVICE_SCALE_FACTOR}".strip()
 try:
     num = float(value)
@@ -335,7 +339,7 @@ fi
 set -e
 
 if [[ "${HAS_STATE_CASES}" == "1" && "${UI_VISUAL_SKIP_STATE}" != "1" ]]; then
-  STATE_EXECUTED_COUNT="$(python3 - <<PY
+  STATE_EXECUTED_COUNT="$(py3 - <<PY
 from pathlib import Path
 path = Path("${STATE_RESULTS_JSONL}")
 if not path.exists():
@@ -354,7 +358,7 @@ elif [[ "${HAS_STATE_CASES}" == "1" ]]; then
   echo "INFO: state_cases_skipped=1"
 fi
 
-python3 - <<PY
+py3 - <<PY
 import json
 import yaml
 from pathlib import Path
@@ -534,7 +538,7 @@ if (( PLAYWRIGHT_RC != 0 )); then
 fi
 
 if [[ "${MODE}" == "generate" && "${SOURCE}" == "prototype" ]]; then
-  python3 - <<PY
+  py3 - <<PY
 import hashlib
 import json
 from datetime import datetime, timezone

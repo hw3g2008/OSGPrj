@@ -12,6 +12,11 @@ state_snapshot:
   workflow:
     current_step: "{workflow.current_step}"
     next_step: "{workflow.next_step}"
+    next_requires_approval: "{workflow.next_requires_approval}"
+    auto_continue: "{workflow.auto_continue}"
+    brainstorm_version: "{workflow.brainstorm_version}"
+    srs_path: "{workflow.srs_path}"
+    decisions_path: "{workflow.decisions_path}"
   completed_stories: []
   completed_tickets: []
 

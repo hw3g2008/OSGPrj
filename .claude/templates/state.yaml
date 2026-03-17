@@ -53,3 +53,6 @@ workflow:
   next_step: null                  # 下一步要执行的命令
   next_requires_approval: false    # 下一步是否需要审批（从 config.yaml 读取）
   auto_continue: true              # 是否自动继续（如果不需要审批则自动执行）
+  brainstorm_version: null         # brainstorming/工作流版本标签
+  srs_path: null                   # 当前需求 SRS 路径
+  decisions_path: null             # 当前需求决策记录路径

@@ -124,7 +124,7 @@ tickets_approved → next → implementing → ticket_done → next → ...
 |--------|----------|----------|
 | Skills 数量 | CLAUDE.md 声称的数量与实际 `skills/*/SKILL.md` 文件数一致 | glob 计数 |
 | Agents 数量 | CLAUDE.md 声称的数量与实际 `agents/*.md` 文件数一致 | glob 计数 |
-| approval 配置键 | config.yaml 的 4 个键与 CLAUDE.md 审批映射表一致 | 逐项对比 |
+| approval 配置键 | config.yaml 的 5 个键与 state-machine.yaml / workflow-engine 映射表一致（brainstorm_confirm, story_split, ticket_split, ticket_done, story_done） | 逐项对比 |
 | checkpoint 恢复能力 | checkpoint.yaml 能完整恢复 STATE.yaml 的关键字段 | 字段覆盖检查 |
 
 ### 维度 7：代码块格式完整性

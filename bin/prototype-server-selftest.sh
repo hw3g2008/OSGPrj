@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 free_port() {
-  python3 - <<'PY'
+  py3 - <<'PY'
 import socket
 s = socket.socket()
 s.bind(("127.0.0.1", 0))
@@ -83,7 +87,7 @@ if curl -fsS --max-time 1 "${BASE_URL}/admin.html" >/dev/null 2>&1; then
 fi
 
 LAUNCHER_PID="$(
-  python3 - <<PY
+  py3 - <<PY
 import subprocess
 
 cmd = """set -euo pipefail

@@ -56,10 +56,22 @@ done
 
 listener_pids_for_port() {
   local port="$1"
-  if ! command -v lsof >/dev/null 2>&1; then
+
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -tiTCP:"${port}" -sTCP:LISTEN 2>/dev/null | sort -u
     return 0
   fi
-  lsof -tiTCP:"${port}" -sTCP:LISTEN 2>/dev/null | sort -u
+
+  # Windows / Git Bash fallback
+  if command -v netstat >/dev/null 2>&1; then
+    netstat -ano -p tcp 2>/dev/null \
+      | tr -d '\r' \
+      | awk -v p=":${port}" '$1=="TCP" && $4=="LISTENING" && $2 ~ (p"$") {print $5}' \
+      | sort -u
+    return 0
+  fi
+
+  return 0
 }
 
 listener_pids() {
@@ -81,7 +93,30 @@ tracked_pid_from_file() {
 
 pid_command() {
   local pid="$1"
-  ps -o command= -p "${pid}" 2>/dev/null || true
+
+  # Prefer POSIX ps when available and PID space matches.
+  local out
+  out="$(ps -o command= -p "${pid}" 2>/dev/null || true)"
+  if [[ -n "${out}" ]]; then
+    printf '%s\n' "${out}"
+    return 0
+  fi
+
+  # Windows PID fallback: use PowerShell to fetch command line.
+  local ps_bin=""
+  if command -v powershell.exe >/dev/null 2>&1; then
+    ps_bin="powershell.exe"
+  elif command -v pwsh >/dev/null 2>&1; then
+    ps_bin="pwsh"
+  fi
+  if [[ -z "${ps_bin}" ]]; then
+    return 0
+  fi
+
+  out="$(${ps_bin} -NoProfile -Command "(Get-CimInstance Win32_Process -Filter \"ProcessId=${pid}\" | Select-Object -ExpandProperty CommandLine)" 2>/dev/null | tr -d '\r' | head -n 1)"
+  if [[ -n "${out}" ]]; then
+    printf '%s\n' "${out}"
+  fi
 }
 
 print_listener_details_for_port() {
@@ -95,6 +130,9 @@ print_listener_details_for_port() {
   if command -v lsof >/dev/null 2>&1; then
     echo "INFO: lsof listeners for port ${port}:"
     lsof -nP -iTCP:"${port}" -sTCP:LISTEN || true
+  elif command -v netstat >/dev/null 2>&1; then
+    echo "INFO: netstat listeners for port ${port}:"
+    netstat -ano -p tcp 2>/dev/null | tr -d '\r' | awk -v p=":${port}" '$1=="TCP" && $4=="LISTENING" && $2 ~ (p"$")'
   fi
 
   while IFS= read -r pid; do

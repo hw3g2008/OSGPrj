@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 free_port() {
-  python3 - <<'PY'
+  py3 - <<'PY'
 import socket
 s = socket.socket()
 s.bind(("127.0.0.1", 0))
@@ -150,7 +154,7 @@ PY
 set +e
 status_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" status "${ENV_FILE}" 2>&1
 )"
@@ -165,7 +169,7 @@ fi
 
 start_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" start "${ENV_FILE}" 2>&1
 )" || {
@@ -182,7 +186,7 @@ fi
 rm -f "${PID_FILE}"
 adopt_status_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" status "${ENV_FILE}" 2>&1
 )" || {
@@ -198,7 +202,7 @@ adopt_status_output="$(
 
 stop_after_adopt_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" stop "${ENV_FILE}" 2>&1
 )" || {
@@ -208,12 +212,12 @@ stop_after_adopt_output="$(
 }
 
 LAUNCHER_PID="$(
-  python3 - <<PY
+  py3 - <<PY
 import subprocess
 
 cmd = """set -euo pipefail
 RUNTIME_CONTRACT_FILE='${RUNTIME_CONTRACT}' \\
-BACKEND_DEV_SERVER_START_CMD=\\"exec python3 '${SERVER_SCRIPT}' '${PORT}'\\" \\
+BACKEND_DEV_SERVER_START_CMD=\\"exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'\\" \\
 BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING='${MANAGED_SUBSTRING}' \\
 bash '${ROOT_DIR}/bin/backend-dev-server.sh' start '${ENV_FILE}'
 sleep 300
@@ -248,7 +252,7 @@ sleep 1
 
 detach_status_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" status "${ENV_FILE}" 2>&1
 )" || {
@@ -259,7 +263,7 @@ detach_status_output="$(
 
 converge_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   ADMIN_PREVIEW_PORT="${ADMIN_PREVIEW_PORT}" \
   PROTOTYPE_PORT="${PROTOTYPE_PORT}" \
@@ -276,7 +280,7 @@ converge_output="$(
 set +e
 post_converge_status="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" status "${ENV_FILE}" 2>&1
 )"
@@ -290,7 +294,7 @@ fi
 
 start_again_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" start "${ENV_FILE}" 2>&1
 )" || {
@@ -302,7 +306,7 @@ start_again_output="$(
 OLD_PID="$(cat "${PID_FILE}")"
 restart_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" restart "${ENV_FILE}" 2>&1
 )" || {
@@ -318,7 +322,7 @@ fi
 
 stop_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" stop "${ENV_FILE}" 2>&1
 )" || {
@@ -332,10 +336,26 @@ if curl -fsS --max-time 1 "http://127.0.0.1:${PORT}/actuator/health" >/dev/null 
   exit 1
 fi
 
-python3 -m http.server "${PORT}" --bind 127.0.0.1 --directory "${TMP_DIR}" >"${UNKNOWN_LOG}" 2>&1 &
-UNKNOWN_PID=$!
-for _ in {1..20}; do
-  if lsof -nP -iTCP:"${PORT}" -sTCP:LISTEN >/dev/null 2>&1; then
+UNKNOWN_PID="$(
+  py3 - "${PORT}" "${TMP_DIR}" <<'PY'
+import subprocess
+import sys
+
+port = sys.argv[1]
+root = sys.argv[2]
+proc = subprocess.Popen(
+    [sys.executable, "-m", "http.server", port, "--bind", "127.0.0.1", "--directory", root],
+    stdin=subprocess.DEVNULL,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    start_new_session=True,
+)
+print(proc.pid)
+PY
+)"
+
+for _ in {1..40}; do
+  if curl -fsS --max-time 1 "http://127.0.0.1:${PORT}/" >/dev/null 2>&1; then
     break
   fi
   sleep 0.1
@@ -344,7 +364,7 @@ done
 set +e
 unknown_stop_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" stop "${ENV_FILE}" 2>&1
 )"
@@ -371,13 +391,13 @@ if ! curl -fsS --max-time 1 "http://127.0.0.1:${PORT}/" >/dev/null 2>&1; then
   exit 1
 fi
 
-kill "${UNKNOWN_PID}" >/dev/null 2>&1 || true
-wait "${UNKNOWN_PID}" 2>/dev/null || true
+MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1 taskkill.exe /F /T /PID "${UNKNOWN_PID}" >/dev/null 2>&1 || kill "${UNKNOWN_PID}" >/dev/null 2>&1 || true
+sleep 0.4
 UNKNOWN_PID=""
 
 warm_start_output="$(
   RUNTIME_CONTRACT_FILE="${RUNTIME_CONTRACT}" \
-  BACKEND_DEV_SERVER_START_CMD="exec python3 '${WARM_SERVER_SCRIPT}' '${PORT}'" \
+  BACKEND_DEV_SERVER_START_CMD="exec $(py3_shell) '${WARM_SERVER_SCRIPT}' '${PORT}'" \
   BACKEND_DEV_SERVER_MANAGED_COMMAND_SUBSTRING="${MANAGED_SUBSTRING}" \
   bash "${ROOT_DIR}/bin/backend-dev-server.sh" start "${ENV_FILE}" 2>&1
 )" || {

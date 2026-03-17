@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/api-smoke-selftest.XXXXXX")"
 PORT=38123
@@ -35,7 +39,7 @@ proxy_target: http://127.0.0.1:${PORT}
 tool_env: {}
 YAML
 
-python3 - <<'PY' > "${SERVER_LOG}" 2>&1 &
+py3 - <<'PY' > "${SERVER_LOG}" 2>&1 &
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 

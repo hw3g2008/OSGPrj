@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import subprocess
 import tempfile
+import sys
 from pathlib import Path
 
 import yaml
@@ -23,7 +24,7 @@ def run_sync(
 ) -> None:
     subprocess.run(
         [
-            "python3",
+            sys.executable,
             str(SCRIPT),
             "--module",
             "sample",

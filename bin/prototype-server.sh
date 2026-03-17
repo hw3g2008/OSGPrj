@@ -4,6 +4,13 @@
 #   bash bin/prototype-server.sh start|stop|status
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
+# Cross-platform process helpers
+source "$(dirname "${BASH_SOURCE[0]}")/lib-process.sh"
+
 ACTION="${1:-status}"
 PORT="${PROTOTYPE_PORT:-18090}"
 ROOT_DIR="${PROTOTYPE_ROOT_DIR:-osg-spec-docs/source/prototype}"
@@ -20,7 +27,7 @@ is_running() {
   if [[ -z "${pid}" ]]; then
     return 1
   fi
-  if ! kill -0 "${pid}" >/dev/null 2>&1; then
+  if ! pid_alive "${pid}"; then
     return 1
   fi
   if ! curl -fsS --max-time 2 "${BASE_URL}/" >/dev/null 2>&1; then
@@ -44,9 +51,10 @@ start_server() {
     PROTOTYPE_SERVER_PORT="${PORT}" \
     PROTOTYPE_SERVER_ROOT_DIR="${ROOT_DIR}" \
     PROTOTYPE_SERVER_LOG_FILE="${LOG_FILE}" \
-    python3 - <<'PY'
+    py3 - <<'PY'
 import os
 import subprocess
+import sys
 
 port = os.environ["PROTOTYPE_SERVER_PORT"]
 root_dir = os.environ["PROTOTYPE_SERVER_ROOT_DIR"]
@@ -54,7 +62,7 @@ log_file = os.environ["PROTOTYPE_SERVER_LOG_FILE"]
 
 with open(log_file, "ab", buffering=0) as stream:
     proc = subprocess.Popen(
-        ["python3", "-m", "http.server", port, "--directory", root_dir],
+        [sys.executable, "-m", "http.server", port, "--directory", root_dir],
         stdin=subprocess.DEVNULL,
         stdout=stream,
         stderr=subprocess.STDOUT,
@@ -69,7 +77,7 @@ PY
       echo "PASS: prototype server started at ${BASE_URL} (pid=${launcher_pid})"
       return 0
     fi
-    if ! kill -0 "${launcher_pid}" >/dev/null 2>&1; then
+    if ! pid_alive "${launcher_pid}"; then
       break
     fi
     sleep 0.2
@@ -80,21 +88,34 @@ PY
 }
 
 stop_server() {
-  if [[ ! -f "${PID_FILE}" ]]; then
-    echo "INFO: prototype server not running (pid file missing)"
+  # Cross-platform stop: use tracked PID if possible; otherwise fall back to port-based termination.
+  local pid=""
+  if [[ -f "${PID_FILE}" ]]; then
+    pid="$(cat "${PID_FILE}" 2>/dev/null || true)"
+  fi
+
+  if [[ -n "${pid}" ]]; then
+    # Prefer Windows-friendly termination.
+    MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1 taskkill.exe /F /T /PID "${pid}" >/dev/null 2>&1 || kill "${pid}" >/dev/null 2>&1 || true
+    sleep 0.4
+  fi
+
+  # If still listening, use runtime-port-guard to surface/stop managed listeners.
+  if ! bash bin/runtime-port-guard.sh --mode require-free --port "${PORT}" --context prototype-server-stop >/dev/null 2>&1; then
+    # Best-effort: if it is a managed listener, stop_runtime_if_managed will clear it.
+    bash bin/runtime-port-guard.sh --mode converge-runtime --target dev-local --context prototype-server-stop >/dev/null 2>&1 || true
+    bash bin/runtime-port-guard.sh --mode converge-runtime --target prototype-only --context prototype-server-stop >/dev/null 2>&1 || true
+  fi
+
+  rm -f "${PID_FILE}"
+  if bash bin/runtime-port-guard.sh --mode require-free --port "${PORT}" --context prototype-server-stop >/dev/null 2>&1; then
+    echo "PASS: prototype server stopped"
     return 0
   fi
-  local pid
-  pid="$(cat "${PID_FILE}" 2>/dev/null || true)"
-  if [[ -n "${pid}" ]] && kill -0 "${pid}" >/dev/null 2>&1; then
-    kill "${pid}" >/dev/null 2>&1 || true
-    sleep 0.2
-    if kill -0 "${pid}" >/dev/null 2>&1; then
-      kill -9 "${pid}" >/dev/null 2>&1 || true
-    fi
-  fi
-  rm -f "${PID_FILE}"
-  echo "PASS: prototype server stopped"
+
+  echo "FAIL: prototype server stop did not free port ${PORT}" >&2
+  bash bin/runtime-port-guard.sh --mode describe --port "${PORT}" >&2 || true
+  exit 1
 }
 
 status_server() {

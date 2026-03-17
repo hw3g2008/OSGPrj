@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 MODE=""
 CONFIG_PATH=".claude/project/config.yaml"
 RUNTIME_CONTRACT=""
@@ -88,7 +92,7 @@ fi
 
 read_config_value() {
   local python_expr="$1"
-  python3 - "${CONFIG_PATH}" "${python_expr}" <<'PY'
+  py3 - "${CONFIG_PATH}" "${python_expr}" <<'PY'
 import pathlib
 import sys
 import yaml
@@ -175,12 +179,12 @@ if [[ -n "${RUNTIME_CONTRACT}" ]]; then
     echo "FAIL: runtime contract not found: ${RUNTIME_CONTRACT}" >&2
     exit 1
   fi
-  python3 .claude/skills/workflow-engine/tests/runtime_contract_guard.py --contract "${RUNTIME_CONTRACT}"
+  py3 .claude/skills/workflow-engine/tests/runtime_contract_guard.py --contract "${RUNTIME_CONTRACT}"
 fi
 
 extract_jdbc_host_port() {
   local url="$1"
-  python3 - "$url" <<'PY'
+  py3 - "$url" <<'PY'
 import re
 import sys
 url = sys.argv[1]
@@ -206,12 +210,18 @@ case "${MODE}" in
     while IFS= read -r part; do
       jdbc_parts+=("${part}")
     done < <(extract_jdbc_host_port "${SPRING_DATASOURCE_DRUID_MASTER_URL}")
-    if [[ "${jdbc_parts[0]}" != "${EXPECTED_MYSQL_HOST}" || "${jdbc_parts[1]}" != "${EXPECTED_MYSQL_PORT}" ]]; then
-      echo "FAIL: dev MySQL target mismatch: actual=${jdbc_parts[0]}:${jdbc_parts[1]} expected=${EXPECTED_MYSQL_HOST}:${EXPECTED_MYSQL_PORT}" >&2
+    jdbc_host="$(printf '%s' "${jdbc_parts[0]}" | tr -d '\r')"
+    jdbc_port="$(printf '%s' "${jdbc_parts[1]}" | tr -d '\r')"
+    if [[ "${jdbc_host}" != "${EXPECTED_MYSQL_HOST}" || "${jdbc_port}" != "${EXPECTED_MYSQL_PORT}" ]]; then
+      echo "FAIL: dev MySQL target mismatch: actual=${jdbc_host}:${jdbc_port} expected=${EXPECTED_MYSQL_HOST}:${EXPECTED_MYSQL_PORT}" >&2
       exit 1
     fi
-    if [[ "${SPRING_DATA_REDIS_HOST:-}" != "${EXPECTED_REDIS_HOST}" || "${SPRING_DATA_REDIS_PORT:-}" != "${EXPECTED_REDIS_PORT}" ]]; then
-      echo "FAIL: dev Redis target mismatch: actual=${SPRING_DATA_REDIS_HOST:-<unset>}:${SPRING_DATA_REDIS_PORT:-<unset>} expected=${EXPECTED_REDIS_HOST}:${EXPECTED_REDIS_PORT}" >&2
+    redis_host_raw="${SPRING_DATA_REDIS_HOST:-}"
+    redis_port_raw="${SPRING_DATA_REDIS_PORT:-}"
+    redis_host="$(printf '%s' "${redis_host_raw}" | tr -d '\r')"
+    redis_port="$(printf '%s' "${redis_port_raw}" | tr -d '\r')"
+    if [[ "${redis_host}" != "${EXPECTED_REDIS_HOST}" || "${redis_port}" != "${EXPECTED_REDIS_PORT}" ]]; then
+      echo "FAIL: dev Redis target mismatch: actual=${redis_host:-<unset>}:${redis_port:-<unset>} expected=${EXPECTED_REDIS_HOST}:${EXPECTED_REDIS_PORT}" >&2
       exit 1
     fi
     ;;

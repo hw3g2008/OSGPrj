@@ -13,6 +13,10 @@
 #   16 = module 参数无效或模块测试资产缺失
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 STATE_FILE="osg-spec-docs/tasks/STATE.yaml"
 AUDIT_DIR="osg-spec-docs/tasks/audit"
 DEV_ENV_FILE="${DEV_ENV_FILE:-deploy/.env.dev}"
@@ -135,7 +139,7 @@ UI_VISUAL_STATE_EXECUTED="0"
 UI_VISUAL_STATE_FAILED="0"
 
 read_ui_delivery_required_repair_chain() {
-  python3 - <<'PY'
+  py3 - <<'PY'
 import sys
 from pathlib import Path
 import yaml
@@ -261,7 +265,7 @@ write_failure_report() {
     fi
     if [[ -n "${UI_VISUAL_PAGE_REPORT}" && -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
       read -r v_total v_pass v_fail v_not_run v_style_pass v_style_fail v_state_exec v_state_fail <<EOF
-$(python3 - <<PY
+$(py3 - <<PY
 import json
 from pathlib import Path
 report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
@@ -302,7 +306,7 @@ resolve_docker_run_cmd() {
     echo "${DOCKER_RUN_CMD}"
     return 0
   fi
-  python3 - <<'PY'
+  py3 - <<'PY'
 import yaml
 from pathlib import Path
 p = Path(".claude/project/config.yaml")
@@ -368,7 +372,7 @@ if [[ ! -f "${STATE_FILE}" ]]; then
   fail_exit 10 "STATE 文件不存在: ${STATE_FILE}"
 fi
 
-CURRENT_STEP="$(python3 - <<'PY'
+CURRENT_STEP="$(py3 - <<'PY'
 import yaml
 from pathlib import Path
 p = Path("osg-spec-docs/tasks/STATE.yaml")
@@ -377,7 +381,7 @@ print((data.get("workflow", {}) or {}).get("current_step", ""))
 PY
 )"
 
-CURRENT_REQUIREMENT="$(python3 - <<'PY'
+CURRENT_REQUIREMENT="$(py3 - <<'PY'
 import yaml
 from pathlib import Path
 p = Path("osg-spec-docs/tasks/STATE.yaml")
@@ -573,13 +577,13 @@ if [[ -z "${FIRST_PROXY_ERROR_EVIDENCE}" ]]; then
 fi
 
 # Step 3: 审计校验
-if ! python3 .claude/skills/workflow-engine/tests/traceability_guard.py \
+if ! py3 .claude/skills/workflow-engine/tests/traceability_guard.py \
   --cases "${CASES_FILE}" \
   --matrix "${MATRIX_FILE}"; then
   fail_exit 13 "traceability_guard 失败"
 fi
 
-if ! python3 .claude/skills/workflow-engine/tests/story_integration_assertions.py; then
+if ! py3 .claude/skills/workflow-engine/tests/story_integration_assertions.py; then
   fail_exit 13 "story_integration_assertions 失败"
 fi
 
@@ -653,7 +657,7 @@ if [[ ! -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
 fi
 
 read -r UI_VISUAL_TOTAL_PAGES UI_VISUAL_PASS_PAGES UI_VISUAL_FAIL_PAGES UI_VISUAL_NOT_RUN_PAGES UI_VISUAL_STYLE_PASSED UI_VISUAL_STYLE_FAILED UI_VISUAL_STATE_EXECUTED UI_VISUAL_STATE_FAILED <<EOF
-$(python3 - <<PY
+$(py3 - <<PY
 import json
 from pathlib import Path
 report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))

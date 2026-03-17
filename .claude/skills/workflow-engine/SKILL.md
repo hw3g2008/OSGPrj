@@ -182,7 +182,7 @@ def transition(command, state, state_to, meta=None):
     # --- 6. module-readiness projection（生命周期同步）---
     module = state.current_requirement
     if module:
-        bash(f"python3 bin/sync-module-readiness.py --module {module} --state-to {state_to} --event-source {command}")
+        bash(f"py -3 bin/sync-module-readiness.py --module {module} --state-to {state_to} --event-source {command}")
 ```
 
 #### 5b. preflight_guard()
@@ -192,6 +192,13 @@ def preflight_guard(command, state, sm, config):
     """
     状态推进前的硬性检查。任一项不通过则终止流程。
     """
+
+    # 0. Framework context stamp guard (fail-closed)
+    # Any framework change must pass framework-audit then update the stamp.
+    run_guard(
+        "py -3 .claude/skills/workflow-engine/tests/framework_context_stamp_guard.py --mode check"
+    )
+
     current_step = state.workflow.current_step
 
     # 1. 当前 current_step 是否允许执行该命令
@@ -211,7 +218,7 @@ def preflight_guard(command, state, sm, config):
         verify_source_hash(proof_path, f"osg-spec-docs/docs/02-requirements/srs/{module}.md")
         # 校验 requirements -> stories 覆盖完整
         run_guard(
-            "python3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py "
+            "py -3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py "
             f"--module {module} --mode requirements_to_stories"
         )
 
@@ -224,7 +231,7 @@ def preflight_guard(command, state, sm, config):
         verify_source_hash(proof_path, f"osg-spec-docs/tasks/stories/{story_id}.yaml")
         # 校验 story -> tickets 覆盖完整
         run_guard(
-            "python3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py "
+            "py -3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py "
             f"--story-id {story_id}"
         )
 

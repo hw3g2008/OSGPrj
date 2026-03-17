@@ -8,6 +8,10 @@
 #   ui-only -> pnpm test:e2e:ui-only
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 MODULE="${1:-permission}"
 MODE="${2:-full}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
@@ -48,7 +52,7 @@ case "${MODE}" in
     ;;
 esac
 
-python3 .claude/skills/workflow-engine/tests/e2e_api_guard.py \
+py3 .claude/skills/workflow-engine/tests/e2e_api_guard.py \
   --tests-dir osg-frontend/tests/e2e
 
 : > "${E2E_API_GATE_LOG}"

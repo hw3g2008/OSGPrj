@@ -10,6 +10,10 @@
 
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 # ---------- 参数校验 ----------
 if [ $# -lt 3 ]; then
   echo "[ERROR] 用法: bash bin/check-skill-artifacts.sh <skill> <module> <prd_dir>"
@@ -97,7 +101,7 @@ check_security_contract_schema() {
     FAIL_LIST="$FAIL_LIST\n  - $label: $file 不存在"
     return
   fi
-  if python3 .claude/skills/workflow-engine/tests/security_contract_schema.py --contract "$file" >/dev/null 2>&1; then
+  if py3 .claude/skills/workflow-engine/tests/security_contract_schema.py --contract "$file" >/dev/null 2>&1; then
     echo "[PASS] $label — schema 校验通过"
   else
     echo "[FAIL] $label — schema 校验失败"
@@ -116,7 +120,7 @@ check_ui_visual_contract_schema() {
     FAIL_LIST="$FAIL_LIST\n  - $label: $file 不存在"
     return
   fi
-  if python3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py --contract "$file" --allow-missing-baseline >/dev/null 2>&1; then
+  if py3 .claude/skills/workflow-engine/tests/ui_visual_contract_guard.py --contract "$file" --allow-missing-baseline >/dev/null 2>&1; then
     echo "[PASS] $label — schema 校验通过"
   else
     echo "[FAIL] $label — schema 校验失败"
@@ -135,7 +139,7 @@ check_delivery_contract_schema() {
     FAIL_LIST="$FAIL_LIST\n  - $label: $file 不存在"
     return
   fi
-  if python3 .claude/skills/workflow-engine/tests/delivery_contract_guard.py --contract "$file" >/dev/null 2>&1; then
+  if py3 .claude/skills/workflow-engine/tests/delivery_contract_guard.py --contract "$file" >/dev/null 2>&1; then
     echo "[PASS] $label — schema 校验通过"
   else
     echo "[FAIL] $label — schema 校验失败"
@@ -156,7 +160,7 @@ check_ui_visual_page_coverage() {
     return
   fi
   local result
-  result="$(python3 - <<PY
+  result="$(py3 - <<PY
 from pathlib import Path
 import yaml
 prd_dir = Path("$prd_dir")
@@ -186,7 +190,7 @@ check_ui_visual_truth_source_latest_manifest() {
   local label="$4"
 
   local manifest
-  manifest="$(python3 - <<PY
+  manifest="$(py3 - <<PY
 from pathlib import Path
 audit = Path("${audit_dir}")
 files = sorted(
@@ -204,7 +208,7 @@ PY
   fi
 
   local summary_file="${audit_dir}/ui-visual-truth-source-summary-${module}-$(date +%Y-%m-%d).json"
-  if python3 .claude/skills/workflow-engine/tests/ui_visual_truth_source_guard.py \
+  if py3 .claude/skills/workflow-engine/tests/ui_visual_truth_source_guard.py \
     --manifest "$manifest" \
     --contract "$contract_file" \
     --output-json "$summary_file" >/dev/null 2>&1; then
@@ -260,7 +264,7 @@ check_truth_source_config() {
     FAIL_LIST="$FAIL_LIST\n  - $label: $config_file 不存在"
     return
   fi
-  if python3 - <<PY >/dev/null 2>&1
+  if py3 - <<PY >/dev/null 2>&1
 from pathlib import Path
 import yaml
 config = yaml.safe_load(Path("$config_file").read_text(encoding="utf-8")) or {}
@@ -281,7 +285,7 @@ PY
 check_prototype_derivation_consistency() {
   local prd_dir="$1"
   local label="$2"
-  if python3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py \
+  if py3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py \
     --module-dir "$prd_dir" >/dev/null 2>&1; then
     echo "[PASS] $label — HTML 真源派生一致性通过"
   else

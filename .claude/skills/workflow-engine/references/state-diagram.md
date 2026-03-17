@@ -102,10 +102,11 @@
 
 | 动作 (next_step) | config.approval 键 | 默认值 | 说明 |
 |------------------|-------------------|--------|------|
-| `approve_stories` | `story_split` | required | Story 拆分后需要审批才能继续 |
-| `approve_tickets` | `ticket_split` | required | Ticket 拆分后需要审批才能继续 |
-| `approve_story` | `story_done` | required | Story 验收后需要审批才能继续 |
-| `next` | `ticket_done` | auto | Ticket 完成后是否自动执行下一个 |
+| `approve_brainstorm` | `brainstorm_confirm` | 以 `.claude/project/config.yaml` 为准 | 需求确认是否需要审批 |
+| `approve_stories` | `story_split` | 以 `.claude/project/config.yaml` 为准 | Story 拆分后需要审批才能继续 |
+| `approve_tickets` | `ticket_split` | 以 `.claude/project/config.yaml` 为准 | Ticket 拆分后需要审批才能继续 |
+| `approve_story` | `story_done` | 以 `.claude/project/config.yaml` 为准 | Story 验收后需要审批才能继续 |
+| `next` | `ticket_done` | 以 `.claude/project/config.yaml` 为准 | Ticket 完成后是否自动执行下一个 |
 
 ## 阶段划分
 

@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Cross-platform process helpers
+source "${ROOT_DIR}/bin/lib-process.sh"
+
 free_port() {
-  python3 - <<'PY'
+  py3 - <<'PY'
 import socket
 s = socket.socket()
 s.bind(("127.0.0.1", 0))
@@ -12,7 +20,7 @@ s.close()
 PY
 }
 
-PORT="${ADMIN_PREVIEW_SELFTEST_PORT:-41731}"
+PORT="${ADMIN_PREVIEW_SELFTEST_PORT:-$(free_port)}"
 BASE_URL="http://127.0.0.1:${PORT}"
 PID_FILE="/tmp/osg-admin-preview-${PORT}.pid"
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/admin-preview-selftest.XXXXXX")"
@@ -28,12 +36,12 @@ LAUNCHER_PID=""
 
 cleanup() {
   if [[ -n "${LAUNCHER_PID}" ]]; then
-    kill "${LAUNCHER_PID}" >/dev/null 2>&1 || true
-    wait "${LAUNCHER_PID}" 2>/dev/null || true
+    kill_tree_pid "${LAUNCHER_PID}" >/dev/null 2>&1 || true
+    LAUNCHER_PID=""
   fi
-  if [[ -n "${SERVER_PID}" ]] && kill -0 "${SERVER_PID}" >/dev/null 2>&1; then
-    kill "${SERVER_PID}" >/dev/null 2>&1 || true
-    wait "${SERVER_PID}" >/dev/null 2>&1 || true
+  if [[ -n "${SERVER_PID}" ]]; then
+    kill_pid "${SERVER_PID}" >/dev/null 2>&1 || true
+    SERVER_PID=""
   fi
   rm -f "${PID_FILE}"
   ADMIN_PREVIEW_PORT="${PREVIEW_PORT}" bash "${ROOT_DIR}/bin/admin-preview-server.sh" stop >/dev/null 2>&1 || true
@@ -55,8 +63,23 @@ cat > "${PREVIEW_ROOT}/login" <<'EOF'
 preview
 EOF
 
-python3 -m http.server "${PORT}" --bind 127.0.0.1 --directory "${TMP_DIR}" >/dev/null 2>&1 &
-SERVER_PID=$!
+SERVER_PID="$(
+  py3 - "${PORT}" "${TMP_DIR}" <<'PY'
+import subprocess
+import sys
+
+port = sys.argv[1]
+root = sys.argv[2]
+proc = subprocess.Popen(
+    [sys.executable, "-m", "http.server", port, "--bind", "127.0.0.1", "--directory", root],
+    stdin=subprocess.DEVNULL,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    start_new_session=True,
+)
+print(proc.pid)
+PY
+)"
 
 for _ in {1..50}; do
   if curl -fsS --max-time 1 "${BASE_URL}/login" >/dev/null 2>&1; then
@@ -118,7 +141,7 @@ restart_output="$(
   ADMIN_PREVIEW_PORT="${PREVIEW_PORT}" \
   ADMIN_PREVIEW_APP_DIR="${PREVIEW_ROOT}" \
   ADMIN_PREVIEW_BUILD_CMD="true" \
-  ADMIN_PREVIEW_START_CMD="cd '${PREVIEW_ROOT}' && exec python3 -m http.server '${PREVIEW_PORT}' --bind 127.0.0.1 --directory '${PREVIEW_ROOT}'" \
+  ADMIN_PREVIEW_START_CMD="cd '${PREVIEW_ROOT}' && exec $(py3_shell) -m http.server '${PREVIEW_PORT}' --bind 127.0.0.1 --directory '${PREVIEW_ROOT}'" \
   PROTOTYPE_PORT="${PROTOTYPE_PORT}" \
   PROTOTYPE_ROOT_DIR="${PROTOTYPE_ROOT}" \
   BACKEND_PORT="${BACKEND_PORT}" \
@@ -145,14 +168,14 @@ fi
 ADMIN_PREVIEW_PORT="${PREVIEW_PORT}" bash "${ROOT_DIR}/bin/admin-preview-server.sh" stop >/dev/null 2>&1 || true
 
 LAUNCHER_PID="$(
-  python3 - <<PY
+  py3 - <<PY
 import subprocess
 
 cmd = """set -euo pipefail
 ADMIN_PREVIEW_PORT='${PREVIEW_PORT}' \\
 ADMIN_PREVIEW_APP_DIR='${PREVIEW_ROOT}' \\
 ADMIN_PREVIEW_BUILD_CMD='true' \\
-ADMIN_PREVIEW_START_CMD=\\"cd '${PREVIEW_ROOT}' && exec python3 -m http.server '${PREVIEW_PORT}' --bind 127.0.0.1 --directory '${PREVIEW_ROOT}'\\" \\
+ADMIN_PREVIEW_START_CMD=\\"cd '${PREVIEW_ROOT}' && exec $(py3_shell) -m http.server '${PREVIEW_PORT}' --bind 127.0.0.1 --directory '${PREVIEW_ROOT}'\\" \\
 PROTOTYPE_PORT='${PROTOTYPE_PORT}' \\
 PROTOTYPE_ROOT_DIR='${PROTOTYPE_ROOT}' \\
 BACKEND_PORT='${BACKEND_PORT}' \\
@@ -194,7 +217,7 @@ detach_status_output="$(
   ADMIN_PREVIEW_PORT="${PREVIEW_PORT}" \
   ADMIN_PREVIEW_APP_DIR="${PREVIEW_ROOT}" \
   ADMIN_PREVIEW_BUILD_CMD="true" \
-  ADMIN_PREVIEW_START_CMD="cd '${PREVIEW_ROOT}' && exec python3 -m http.server '${PREVIEW_PORT}' --bind 127.0.0.1 --directory '${PREVIEW_ROOT}'" \
+  ADMIN_PREVIEW_START_CMD="cd '${PREVIEW_ROOT}' && exec $(py3_shell) -m http.server '${PREVIEW_PORT}' --bind 127.0.0.1 --directory '${PREVIEW_ROOT}'" \
   bash "${ROOT_DIR}/bin/admin-preview-server.sh" status 2>&1
 )" || {
   echo "FAIL: admin preview should survive parent shell termination once started"

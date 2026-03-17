@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 CONTRACT_FILE="${1:-${RUNTIME_CONTRACT_FILE:-}}"
 CONTRACT_SCAN_DIR="${RUNTIME_CONTRACT_SCAN_DIR:-deploy}"
 ALLOW_FALLBACK="${RUNTIME_CONTRACT_ALLOW_FALLBACK:-0}"
@@ -13,10 +17,10 @@ require_cmd() {
   fi
 }
 
-require_cmd python3
+require_py3
 
 eval "$({
-python3 - "${CONTRACT_FILE}" "${CONTRACT_SCAN_DIR}" "${ALLOW_FALLBACK}" <<'PY'
+py3 - "${CONTRACT_FILE}" "${CONTRACT_SCAN_DIR}" "${ALLOW_FALLBACK}" <<'PY'
 import json
 import os
 import shlex

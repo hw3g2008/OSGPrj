@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cross-platform Python 3 (python3 | py -3 | python)
+source "$(dirname "${BASH_SOURCE[0]}")/lib-python.sh"
+require_py3
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 free_port() {
-  python3 - <<'PY'
+  py3 - <<'PY'
 import socket
 s = socket.socket()
 s.bind(("127.0.0.1", 0))
@@ -12,7 +16,7 @@ s.close()
 PY
 }
 
-PORT="$(python3 - <<'PY'
+PORT="$(py3 - <<'PY'
 import socket
 s = socket.socket()
 s.bind(("127.0.0.1", 0))
@@ -31,26 +35,41 @@ BACKEND_BASE_URL="http://127.0.0.1:${BACKEND_PORT}"
 BACKEND_HEALTH_URL="${BACKEND_BASE_URL}/actuator/health"
 UNKNOWN_SERVER_PID=""
 
+# Cross-platform process helpers
+source "${ROOT_DIR}/bin/lib-process.sh"
+
 cleanup() {
   PROTOTYPE_PORT="${PROTOTYPE_PORT}" PROTOTYPE_ROOT_DIR="${PROTOTYPE_ROOT}" \
     bash "${ROOT_DIR}/bin/prototype-server.sh" stop >/dev/null 2>&1 || true
   if [[ -n "${SERVER_PID:-}" ]]; then
-    kill "${SERVER_PID}" >/dev/null 2>&1 || true
-    wait "${SERVER_PID}" 2>/dev/null || true
+    kill_pid "${SERVER_PID}" || true
   fi
   if [[ -n "${UNKNOWN_SERVER_PID}" ]]; then
-    kill "${UNKNOWN_SERVER_PID}" >/dev/null 2>&1 || true
-    wait "${UNKNOWN_SERVER_PID}" 2>/dev/null || true
+    kill_pid "${UNKNOWN_SERVER_PID}" || true
   fi
   rm -rf "${TMP_DIR}"
 }
 trap cleanup EXIT
 
-python3 -m http.server "${PORT}" --bind 127.0.0.1 >"${SERVER_LOG}" 2>&1 &
-SERVER_PID=$!
+SERVER_PID="$(
+  py3 - "${PORT}" <<'PY'
+import subprocess
+import sys
+
+port = sys.argv[1]
+proc = subprocess.Popen(
+    [sys.executable, "-m", "http.server", port, "--bind", "127.0.0.1"],
+    stdin=subprocess.DEVNULL,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    start_new_session=True,
+)
+print(proc.pid)
+PY
+)"
 
 for _ in {1..20}; do
-  if lsof -nP -iTCP:"${PORT}" -sTCP:LISTEN >/dev/null 2>&1; then
+  if curl -fsS --max-time 1 "http://127.0.0.1:${PORT}/" >/dev/null 2>&1; then
     break
   fi
   sleep 0.2
@@ -78,8 +97,7 @@ if [[ "${occupied_output}" != *"http.server"* ]]; then
   exit 1
 fi
 
-kill "${SERVER_PID}" >/dev/null 2>&1 || true
-wait "${SERVER_PID}" 2>/dev/null || true
+kill_pid "${SERVER_PID}" || true
 SERVER_PID=""
 
 free_output="$(bash "${ROOT_DIR}/bin/runtime-port-guard.sh" --mode require-free --port "${PORT}" --context selftest 2>&1)"
@@ -132,7 +150,7 @@ if PROTOTYPE_PORT="${PROTOTYPE_PORT}" PROTOTYPE_ROOT_DIR="${PROTOTYPE_ROOT}" \
   exit 1
 fi
 
-python3 -m http.server "${PROTOTYPE_PORT}" --bind 127.0.0.1 --directory "${TMP_DIR}" >"${TMP_DIR}/unknown.log" 2>&1 &
+py3 -m http.server "${PROTOTYPE_PORT}" --bind 127.0.0.1 --directory "${TMP_DIR}" >"${TMP_DIR}/unknown.log" 2>&1 &
 UNKNOWN_SERVER_PID=$!
 rm -f "/tmp/osg-prototype-server-${PROTOTYPE_PORT}.pid"
 for _ in {1..20}; do
