@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.StudentJobPositionMapper">
+
+    <select id="selectPositionList" parameterType="Long" resultType="java.util.LinkedHashMap">
+        select
+            p.position_id as id,
+            p.title as title,
+            coalesce(p.position_url, '#') as url,
+            p.category as category,
+            case p.category
+                when 'summer' then '暑期实习'
+                when 'fulltime' then '全职招聘'
+                when 'offcycle' then '非常规周期'
+                when 'spring' then '春季实习'
+                when 'events' then '招聘活动'
+                else p.category
+            end as categoryText,
+            p.department as department,
+            p.location as location,
+            p.recruit_cycle as recruitCycle,
+            coalesce(date_format(p.publish_date, '%m-%d'), '--') as publishDate,
+            coalesce(date_format(p.deadline, '%m-%d'), '--') as deadline,
+            p.company as company,
+            p.company_key as companyKey,
+            p.company_code as companyCode,
+            coalesce(p.career_url, '#') as careerUrl,
+            p.industry as industry,
+            p.source_type as sourceType,
+            case when coalesce(s.favorited, '0') = '1' then true else false end as favorited,
+            case when coalesce(s.applied, '0') = '1' then true else false end as applied,
+            coalesce(s.progress_stage, 'applied') as progressStage,
+            coalesce(s.progress_note, '') as progressNote,
+            coalesce(p.requirements, '') as requirements
+        from osg_student_job_position p
+        left join osg_student_job_position_state s
+          on s.position_id = p.position_id
+         and s.user_id = #{userId}
+        where p.source_type = 'global'
+           or p.owner_user_id = #{userId}
+        order by
+            case when p.owner_user_id = #{userId} then 0 else 1 end,
+            case p.company_key
+                when 'gs' then 1
+                when 'jpm' then 2
+                when 'mck' then 3
+                else 99
+            end,
+            p.position_id asc
+    </select>
+
+    <select id="selectApplicationList" parameterType="Long" resultType="java.util.LinkedHashMap">
+        select
+            p.position_id as id,
+            p.company as company,
+            p.title as position,
+            p.location as location,
+            p.industry as companyType,
+            coalesce(s.progress_stage, 'applied') as stage,
+            case coalesce(s.progress_stage, 'applied')
+                when 'applied' then '已投递'
+                when 'hirevue' then 'HireVue / OT'
+                when 'first' then 'First Round'
+                when 'second' then 'Second Round'
+                when 'case' then 'Case Study'
+                when 'offer' then 'Offer'
+                when 'rejected' then '已拒绝'
+                else coalesce(s.progress_stage, 'applied')
+            end as stageLabel,
+            case coalesce(s.progress_stage, 'applied')
+                when 'applied' then 'blue'
+                when 'hirevue' then 'blue'
+                when 'first' then 'orange'
+                when 'second' then 'orange'
+                when 'case' then 'gold'
+                when 'offer' then 'green'
+                when 'rejected' then 'red'
+                else 'default'
+            end as stageColor,
+            coalesce(date_format(s.interview_at, '%m/%d %H:%i'), '-') as interviewTime,
+            case
+                when s.interview_at is not null then date_format(s.interview_at, '%Y-%m-%d %H:%i:%s')
+                when coalesce(s.apply_method, '') &lt;&gt; '' then s.apply_method
+                else '-'
+            end as interviewHint,
+            coalesce(s.coaching_status, 'none') as coachingStatus,
+            case coalesce(s.coaching_status, 'none')
+                when 'coaching' then '辅导中'
+                when 'pending' then '待审批'
+                else '无辅导'
+            end as coachingStatusLabel,
+            case coalesce(s.coaching_status, 'none')
+                when 'coaching' then 'purple'
+                when 'pending' then 'warning'
+                else 'default'
+            end as coachingColor,
+            coalesce(s.mentor_name, '-') as mentor,
+            coalesce(s.mentor_meta, '-') as mentorMeta,
+            coalesce(s.hours_feedback, '-') as hoursFeedback,
+            coalesce(s.feedback_summary, '-') as feedback,
+            coalesce(date_format(s.interview_at, '%Y-%m-%d %H:%i:%s'), '') as interviewAt,
+            coalesce(date_format(s.applied_at, '%Y-%m-%d'), '') as appliedDate,
+            coalesce(s.apply_method, '') as applyMethod,
+            coalesce(s.progress_note, '') as progressNote
+        from osg_student_job_position p
+        inner join osg_student_job_position_state s
+           on s.position_id = p.position_id
+          and s.user_id = #{userId}
+        where (p.source_type = 'global' or p.owner_user_id = #{userId})
+          and coalesce(s.applied, '0') = '1'
+        order by
+            case coalesce(s.progress_stage, 'applied')
+                when 'offer' then 3
+                when 'rejected' then 3
+                when 'hirevue' then 2
+                when 'first' then 2
+                when 'second' then 2
+                when 'case' then 2
+                else 1
+            end asc,
+            case when s.interview_at is null then 1 else 0 end asc,
+            s.interview_at asc,
+            p.position_id asc
+    </select>
+
+    <select id="countVisiblePosition" resultType="int">
+        select count(1)
+        from osg_student_job_position
+        where position_id = #{positionId}
+          and (source_type = 'global' or owner_user_id = #{userId})
+    </select>
+
+    <insert id="upsertFavoriteState">
+        insert into osg_student_job_position_state (
+            user_id,
+            position_id,
+            favorited
+        ) values (
+            #{userId},
+            #{positionId},
+            #{favorited}
+        )
+        on duplicate key update
+            favorited = values(favorited)
+    </insert>
+
+    <insert id="upsertApplyState">
+        insert into osg_student_job_position_state (
+            user_id,
+            position_id,
+            favorited,
+            applied,
+            applied_at,
+            apply_method,
+            apply_note,
+            progress_stage,
+            progress_note
+        ) values (
+            #{userId},
+            #{positionId},
+            '0',
+            #{applied},
+            #{appliedDate},
+            #{applyMethod},
+            #{applyNote},
+            #{progressStage},
+            #{progressNote}
+        )
+        on duplicate key update
+            applied = values(applied),
+            applied_at = values(applied_at),
+            apply_method = values(apply_method),
+            apply_note = values(apply_note),
+            progress_stage = values(progress_stage),
+            progress_note = values(progress_note)
+    </insert>
+
+    <insert id="upsertProgressState">
+        insert into osg_student_job_position_state (
+            user_id,
+            position_id,
+            favorited,
+            applied,
+            progress_stage,
+            progress_note
+        ) values (
+            #{userId},
+            #{positionId},
+            '0',
+            '1',
+            #{progressStage},
+            #{progressNote}
+        )
+        on duplicate key update
+            applied = '1',
+            progress_stage = values(progress_stage),
+            progress_note = values(progress_note)
+    </insert>
+
+    <insert id="upsertCoachingState">
+        insert into osg_student_job_position_state (
+            user_id,
+            position_id,
+            favorited,
+            applied,
+            progress_stage,
+            progress_note,
+            coaching_requested,
+            coaching_status,
+            coaching_stage,
+            coaching_mentor_count,
+            coaching_note
+        ) values (
+            #{userId},
+            #{positionId},
+            '0',
+            '0',
+            'applied',
+            '',
+            '1',
+            #{coachingStatus},
+            #{coachingStage},
+            #{coachingMentorCount},
+            #{coachingNote}
+        )
+        on duplicate key update
+            coaching_requested = '1',
+            coaching_status = values(coaching_status),
+            coaching_stage = values(coaching_stage),
+            coaching_mentor_count = values(coaching_mentor_count),
+            coaching_note = values(coaching_note)
+    </insert>
+
+    <insert id="insertManualPosition" parameterType="java.util.Map" useGeneratedKeys="true" keyProperty="positionId" keyColumn="position_id">
+        insert into osg_student_job_position (
+            business_key,
+            title,
+            company,
+            category,
+            department,
+            location,
+            recruit_cycle,
+            publish_date,
+            deadline,
+            position_url,
+            career_url,
+            company_key,
+            company_code,
+            industry,
+            requirements,
+            source_type,
+            owner_user_id,
+            create_time,
+            update_time
+        ) values (
+            #{businessKey},
+            #{title},
+            #{company},
+            #{category},
+            #{department},
+            #{location},
+            #{recruitCycle},
+            #{publishDate},
+            #{deadline},
+            #{positionUrl},
+            #{careerUrl},
+            #{companyKey},
+            #{companyCode},
+            #{industry},
+            #{requirements},
+            'manual',
+            #{ownerUserId},
+            sysdate(),
+            sysdate()
+        )
+    </insert>
+
+</mapper>

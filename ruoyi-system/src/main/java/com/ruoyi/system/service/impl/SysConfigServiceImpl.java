@@ -3,6 +3,8 @@ package com.ruoyi.system.service.impl;
 import java.util.Collection;
 import java.util.List;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.annotation.DataSource;
@@ -25,6 +27,8 @@ import com.ruoyi.system.service.ISysConfigService;
 @Service
 public class SysConfigServiceImpl implements ISysConfigService
 {
+    private static final Logger log = LoggerFactory.getLogger(SysConfigServiceImpl.class);
+
     @Autowired
     private SysConfigMapper configMapper;
 
@@ -64,7 +68,16 @@ public class SysConfigServiceImpl implements ISysConfigService
     @Override
     public String selectConfigByKey(String configKey)
     {
-        String configValue = Convert.toStr(redisCache.getCacheObject(getCacheKey(configKey)));
+        String cacheKey = getCacheKey(configKey);
+        String configValue = StringUtils.EMPTY;
+        try
+        {
+            configValue = Convert.toStr(redisCache.getCacheObject(cacheKey));
+        }
+        catch (Exception exception)
+        {
+            log.warn("读取配置缓存失败，回退数据库，configKey={}", configKey, exception);
+        }
         if (StringUtils.isNotEmpty(configValue))
         {
             return configValue;
@@ -74,7 +87,14 @@ public class SysConfigServiceImpl implements ISysConfigService
         SysConfig retConfig = configMapper.selectConfig(config);
         if (StringUtils.isNotNull(retConfig))
         {
-            redisCache.setCacheObject(getCacheKey(configKey), retConfig.getConfigValue());
+            try
+            {
+                redisCache.setCacheObject(cacheKey, retConfig.getConfigValue());
+            }
+            catch (Exception exception)
+            {
+                log.warn("写入配置缓存失败，继续返回数据库值，configKey={}", configKey, exception);
+            }
             return retConfig.getConfigValue();
         }
         return StringUtils.EMPTY;

@@ -1,0 +1,42 @@
+create table if not exists osg_student_profile (
+  student_profile_id bigint not null auto_increment,
+  user_id bigint not null,
+  student_code varchar(32) not null,
+  full_name varchar(64) not null,
+  english_name varchar(64) not null,
+  email varchar(128) not null,
+  sex_label varchar(32) not null,
+  lead_mentor varchar(64) not null,
+  assistant_name varchar(64) not null,
+  school varchar(128) not null,
+  major varchar(128) not null,
+  graduation_year varchar(16) not null,
+  high_school varchar(128) not null,
+  postgraduate_plan varchar(32) not null,
+  visa_status varchar(32) not null,
+  target_region varchar(128) not null,
+  recruitment_cycle varchar(64) not null,
+  primary_direction varchar(128) not null,
+  secondary_direction varchar(128) not null,
+  phone varchar(64) not null,
+  wechat_id varchar(128) not null,
+  create_time datetime not null default current_timestamp,
+  update_time datetime not null default current_timestamp on update current_timestamp,
+  primary key (student_profile_id),
+  unique key uk_osg_student_profile_user (user_id)
+) engine=InnoDB default charset=utf8mb4;
+
+create table if not exists osg_student_profile_change (
+  change_id bigint not null auto_increment,
+  user_id bigint not null,
+  field_key varchar(64) not null,
+  field_label varchar(64) not null,
+  old_value varchar(255) not null,
+  new_value varchar(255) not null,
+  status varchar(32) not null default 'pending',
+  submitted_at datetime not null default current_timestamp,
+  create_time datetime not null default current_timestamp,
+  update_time datetime not null default current_timestamp on update current_timestamp,
+  primary key (change_id),
+  key idx_osg_student_profile_change_user (user_id, status, submitted_at)
+) engine=InnoDB default charset=utf8mb4;

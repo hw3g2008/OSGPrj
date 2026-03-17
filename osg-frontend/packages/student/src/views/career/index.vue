@@ -1,22 +1,28 @@
 <template>
   <div class="career-page">
-    <OsgPageContainer title="求职中心">
+    <OsgPageContainer title="岗位信息 / Job Tracker">
+      <div class="job-intent-section">
+        <span class="intent-label">求职意向：</span>
+        <a-tag color="blue">Java开发</a-tag>
+        <a-tag color="green">北京</a-tag>
+        <a-tag color="orange">15K-25K</a-tag>
+        <a class="modify-link" @click="$router.push('/profile')">修改求职意向</a>
+      </div>
+
       <a-row :gutter="24">
         <a-col :span="16">
-          <a-card title="求职进度" style="margin-bottom: 24px">
-            <a-steps :current="careerStep" size="small">
-              <a-step title="简历准备" />
-              <a-step title="投递中" />
-              <a-step title="面试中" />
-              <a-step title="已入职" />
-            </a-steps>
-          </a-card>
-          
           <a-card title="投递记录">
             <a-table :columns="columns" :data-source="applications" :loading="loading" row-key="id">
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'status'">
                   <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
+                </template>
+                <template v-if="column.key === 'actions'">
+                  <a-space>
+                    <a-button size="small" type="primary" ghost>已投递</a-button>
+                    <a-button size="small" :icon="h(StarOutlined)">收藏</a-button>
+                    <a-button size="small">记录进度</a-button>
+                  </a-space>
                 </template>
               </template>
             </a-table>
@@ -35,17 +41,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, h } from 'vue'
+import { StarOutlined } from '@ant-design/icons-vue'
 import { OsgPageContainer } from '@osg/shared/components'
 
 const loading = ref(false)
-const careerStep = ref(2)
 
 const columns = [
   { title: '公司', dataIndex: 'company', key: 'company' },
   { title: '岗位', dataIndex: 'position', key: 'position' },
   { title: '投递时间', dataIndex: 'applyTime', key: 'applyTime' },
-  { title: '状态', key: 'status' }
+  { title: '状态', key: 'status' },
+  { title: '操作', key: 'actions' }
 ]
 
 const applications = ref([
@@ -64,3 +71,29 @@ const getStatusColor = (status: string) => {
   return colors[status] || 'default'
 }
 </script>
+
+<style scoped lang="scss">
+.career-page {
+  .job-intent-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 8px;
+  }
+
+  .intent-label {
+    font-weight: 600;
+    margin-right: 8px;
+  }
+
+  .modify-link {
+    margin-left: 16px;
+    color: #1890ff;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+</style>

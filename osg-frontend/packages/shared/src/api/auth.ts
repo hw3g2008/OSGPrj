@@ -6,6 +6,11 @@ export function login(data: LoginParams): Promise<{ token: string }> {
   return http.post('/login', data)
 }
 
+// Student 登录
+export function studentLogin(data: LoginParams): Promise<{ token: string }> {
+  return http.post('/student/login', data)
+}
+
 // 登出
 export function logout(): Promise<void> {
   return http.post('/logout')

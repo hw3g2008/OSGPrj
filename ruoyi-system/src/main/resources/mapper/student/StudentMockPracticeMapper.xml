@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.StudentMockPracticeMapper">
+
+    <select id="selectPracticeList" parameterType="Long" resultType="java.util.LinkedHashMap">
+        select
+            concat('MP', lpad(cast(request_id as char), 3, '0')) as id,
+            request_type as type,
+            coalesce(course_type, '') as typeValue,
+            coalesce(request_content, '') as content,
+            date_format(submitted_at, '%m/%d %H:%i') as appliedAt,
+            date_format(submitted_at, '%Y-%m-%d %H:%i:%s') as submittedAtValue,
+            coalesce(nullif(mentor_name, ''), '待分配') as mentor,
+            coalesce(nullif(mentor_meta, ''), '班主任分配中') as mentorMeta,
+            coalesce(nullif(hours_feedback, ''), '-') as hours,
+            coalesce(nullif(feedback_summary, ''), '-') as feedback,
+            coalesce(nullif(feedback_hint, ''), '-') as feedbackHint,
+            request_status as status
+        from osg_student_mock_request
+        where user_id = #{userId}
+          and request_group = 'practice'
+        order by submitted_at desc, request_id desc
+    </select>
+
+    <select id="selectClassRequestList" parameterType="Long" resultType="java.util.LinkedHashMap">
+        select
+            concat('#R', date_format(submitted_at, '%Y'), lpad(cast(request_id as char), 3, '0')) as id,
+            request_type as type,
+            coalesce(company, '') as company,
+            request_status as status,
+            date_format(submitted_at, '%m/%d/%Y') as submittedAt,
+            date_format(submitted_at, '%Y-%m-%d %H:%i:%s') as submittedAtValue,
+            coalesce(course_type, '') as courseType,
+            coalesce(job_status, '') as jobStatus,
+            coalesce(remark, '') as remark
+        from osg_student_mock_request
+        where user_id = #{userId}
+          and request_group = 'course'
+        order by submitted_at desc, request_id desc
+    </select>
+
+    <insert id="insertRequest" parameterType="java.util.Map" useGeneratedKeys="true" keyProperty="requestId" keyColumn="request_id">
+        insert into osg_student_mock_request (
+            user_id,
+            request_group,
+            request_type,
+            course_type,
+            company,
+            job_status,
+            request_status,
+            request_content,
+            request_reason,
+            mentor_count,
+            preferred_mentor,
+            excluded_mentor,
+            mentor_name,
+            mentor_meta,
+            hours_feedback,
+            feedback_summary,
+            feedback_hint,
+            remark,
+            submitted_at,
+            completed_at,
+            create_time,
+            update_time
+        ) values (
+            #{userId},
+            #{requestGroup},
+            #{requestType},
+            #{courseType},
+            #{company},
+            #{jobStatus},
+            #{requestStatus},
+            #{requestContent},
+            #{requestReason},
+            #{mentorCount},
+            #{preferredMentor},
+            #{excludedMentor},
+            #{mentorName},
+            #{mentorMeta},
+            #{hoursFeedback},
+            #{feedbackSummary},
+            #{feedbackHint},
+            #{remark},
+            sysdate(),
+            null,
+            sysdate(),
+            sysdate()
+        )
+    </insert>
+
+</mapper>

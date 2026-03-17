@@ -100,7 +100,7 @@ public class SecurityConfig
             .authorizeHttpRequests((requests) -> {
                 permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
                 // 对于登录login 注册register 验证码captchaImage 允许匿名访问
-                requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
+                requests.requestMatchers("/login", "/student/login", "/register", "/captchaImage").permitAll()
                     // 密码找回流程允许匿名访问（发送验证码、校验验证码、重置密码）
                     .requestMatchers("/system/password/sendCode", "/system/password/verify", "/system/password/reset").permitAll()
                     // 健康检查接口，供自动化门禁与运维探活调用
