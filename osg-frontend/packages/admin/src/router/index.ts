@@ -40,6 +40,24 @@ const routes: RouteRecordRaw[] = [
         name: 'BaseData',
         component: () => import('@/views/permission/base-data/index.vue'),
         meta: { title: '基础数据管理', permission: 'system:baseData:list' }
+      },
+      {
+        path: 'users/students',
+        name: 'Students',
+        component: () => import('@/views/users/students/index.vue'),
+        meta: { title: '学员管理', permission: 'system:student:list' }
+      },
+      {
+        path: 'users/staff',
+        name: 'Staff',
+        component: () => import('@/views/users/staff/index.vue'),
+        meta: { title: '导师管理', permission: 'system:staff:list' }
+      },
+      {
+        path: 'users/contracts',
+        name: 'Contracts',
+        component: () => import('@/views/users/contracts/index.vue'),
+        meta: { title: '合同管理', permission: 'system:contract:list' }
       }
     ]
   }

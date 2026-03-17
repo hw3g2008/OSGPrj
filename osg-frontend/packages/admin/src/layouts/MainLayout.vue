@@ -115,10 +115,10 @@ const menuGroups: MenuGroup[] = [
     key: 'user-center',
     title: '用户中心 Users',
     children: [
-      { path: '/users/students', title: '学生列表', permission: 'users:student:list', iconClass: 'mdi-account-school', badge: 2 },
-      { path: '/users/contracts', title: '合同管理', permission: 'users:contract:list', iconClass: 'mdi-file-sign' },
-      { path: '/users/staff', title: '导师列表', permission: 'users:staff:list', iconClass: 'mdi-account-tie' },
-      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'users:mentorSchedule:list', iconClass: 'mdi-calendar-clock' },
+      { path: '/users/students', title: '学生列表', permission: 'system:student:list', iconClass: 'mdi-account-school', badge: 2 },
+      { path: '/users/contracts', title: '合同管理', permission: 'system:contract:list', iconClass: 'mdi-file-sign' },
+      { path: '/users/staff', title: '导师列表', permission: 'system:staff:list', iconClass: 'mdi-account-tie' },
+      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'system:mentorSchedule:list', iconClass: 'mdi-calendar-clock' },
     ],
   },
   {
