@@ -95,11 +95,11 @@ function feedbackLabel(l: string) { return { excellent: '优秀', good: '良好'
 function formatDate(d: string) { return d ? new Date(d).toLocaleDateString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '' }
 
 async function confirmMock(r: any) {
-  try { await http.put(`/api/mentor/mock-practice/${r.id}/confirm`); r.status = 'pending' } catch {}
+  try { await http.put(`/api/mentor/sim-practice/${r.id}/confirm`); r.status = 'pending' } catch {}
 }
 
 async function fetchList() {
-  try { const res = await http.get('/api/mentor/mock-practice/list'); list.value = res.rows || [] } catch {}
+  try { const res = await http.get('/api/mentor/sim-practice/list'); list.value = res.rows || [] } catch {}
 }
 
 onMounted(fetchList)

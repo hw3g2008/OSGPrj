@@ -6,31 +6,31 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.ruoyi.system.domain.OsgMockPractice;
-import com.ruoyi.system.mapper.OsgMockPracticeMapper;
+import com.ruoyi.system.domain.OsgSimPractice;
+import com.ruoyi.system.mapper.OsgSimPracticeMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class OsgMockPracticeServiceImplTest {
+class OsgSimPracticeServiceImplTest {
 
     @InjectMocks
-    private OsgMockPracticeServiceImpl service;
+    private OsgSimPracticeServiceImpl service;
 
     @Mock
-    private OsgMockPracticeMapper mapper;
+    private OsgSimPracticeMapper mapper;
 
     @Test
     void testSelectListDelegates() {
-        OsgMockPractice q = new OsgMockPractice();
-        when(mapper.selectList(q)).thenReturn(Collections.singletonList(new OsgMockPractice()));
+        OsgSimPractice q = new OsgSimPractice();
+        when(mapper.selectList(q)).thenReturn(Collections.singletonList(new OsgSimPractice()));
         assertEquals(1, service.selectList(q).size());
     }
 
     @Test
     void testSelectByIdDelegates() {
-        OsgMockPractice r = new OsgMockPractice();
+        OsgSimPractice r = new OsgSimPractice();
         r.setPracticeId(1L);
         when(mapper.selectById(1L)).thenReturn(r);
         assertEquals(1L, service.selectById(1L).getPracticeId());
@@ -38,7 +38,7 @@ class OsgMockPracticeServiceImplTest {
 
     @Test
     void testUpdateDelegates() {
-        OsgMockPractice r = new OsgMockPractice();
+        OsgSimPractice r = new OsgSimPractice();
         when(mapper.update(r)).thenReturn(1);
         assertEquals(1, service.update(r));
     }

@@ -6,21 +6,21 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.system.domain.OsgMockPractice;
-import com.ruoyi.system.service.IOsgMockPracticeService;
+import com.ruoyi.system.domain.OsgSimPractice;
+import com.ruoyi.system.service.IOsgSimPracticeService;
 @RestController
-@RequestMapping("/api/mentor/mock-practice")
-public class OsgMockPracticeController extends BaseController {
-    @Autowired private IOsgMockPracticeService service;
+@RequestMapping("/api/mentor/sim-practice")
+public class OsgSimPracticeController extends BaseController {
+    @Autowired private IOsgSimPracticeService service;
     @GetMapping("/list")
-    public TableDataInfo list(OsgMockPractice q) {
+    public TableDataInfo list(OsgSimPractice q) {
         startPage();
         q.setCurrentMentorId(SecurityUtils.getUserId());
         return getDataTable(service.selectList(q));
     }
     @PutMapping("/{id}/confirm")
     public AjaxResult confirm(@PathVariable Long id) {
-        OsgMockPractice r = new OsgMockPractice();
+        OsgSimPractice r = new OsgSimPractice();
         r.setPracticeId(id);
         r.setStatus("confirmed");
         return toAjax(service.update(r));

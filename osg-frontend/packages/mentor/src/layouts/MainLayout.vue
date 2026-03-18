@@ -28,7 +28,7 @@
           <i class="mdi mdi-briefcase-search" /><span>学员求职总览 Job Overview</span>
           <span v-if="jobBadge > 0" class="nav-badge">{{ jobBadge }}</span>
         </a>
-        <a class="nav-item" :class="{ active: currentPath === '/mock-practice' }" @click="navigate('/mock-practice')">
+        <a class="nav-item" :class="{ active: currentPath === '/sim-practice' }" @click="navigate('/sim-practice')">
           <i class="mdi mdi-account-voice" /><span>模拟应聘管理 Mock Practice</span>
           <span v-if="mockBadge > 0" class="nav-badge">{{ mockBadge }}</span>
         </a>

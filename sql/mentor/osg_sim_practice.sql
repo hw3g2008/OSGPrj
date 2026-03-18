@@ -1,10 +1,10 @@
 -- =============================================
--- osg_mock_practice - 模拟应聘分配
+-- osg_sim_practice - 模拟应聘分配
 -- Module: mentor
 -- SRS: §5.4
 -- =============================================
 
-CREATE TABLE IF NOT EXISTS `osg_mock_practice` (
+CREATE TABLE IF NOT EXISTS `osg_sim_practice` (
   `id`                bigint       NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `student_id`        bigint       NOT NULL                COMMENT '学员 ID',
   `mentor_id`         bigint       NOT NULL                COMMENT '导师 ID',

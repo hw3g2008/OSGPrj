@@ -4,7 +4,7 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.core.domain.BaseEntity;
 
-public class OsgMockPractice extends BaseEntity
+public class OsgSimPractice extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
     private Long practiceId;

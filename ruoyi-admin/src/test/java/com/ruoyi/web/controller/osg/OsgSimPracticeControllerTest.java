@@ -11,21 +11,21 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.system.domain.OsgMockPractice;
-import com.ruoyi.system.service.IOsgMockPracticeService;
+import com.ruoyi.system.domain.OsgSimPractice;
+import com.ruoyi.system.service.IOsgSimPracticeService;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class OsgMockPracticeControllerTest {
+class OsgSimPracticeControllerTest {
 
     @InjectMocks
-    private OsgMockPracticeController controller;
+    private OsgSimPracticeController controller;
 
     @Mock
-    private IOsgMockPracticeService service;
+    private IOsgSimPracticeService service;
 
     private MockedStatic<SecurityUtils> securityMock;
 

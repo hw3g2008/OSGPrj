@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.ruoyi.system.mapper.OsgMockPracticeMapper">
-    <resultMap type="com.ruoyi.system.domain.OsgMockPractice" id="Result">
+<mapper namespace="com.ruoyi.system.mapper.OsgSimPracticeMapper">
+    <resultMap type="com.ruoyi.system.domain.OsgSimPractice" id="Result">
         <id property="practiceId" column="practice_id"/>
         <result property="studentId" column="student_id"/>
         <result property="studentName" column="student_name"/>
@@ -20,7 +20,7 @@
     </resultMap>
 
     <select id="selectList" resultMap="Result">
-        select * from osg_mock_practice where del_flag='0'
+        select * from osg_sim_practice where del_flag='0'
         <if test="currentMentorId != null">and FIND_IN_SET(#{currentMentorId}, mentor_ids)</if>
         <if test="practiceType != null and practiceType != ''">and practice_type=#{practiceType}</if>
         <if test="status != null and status != ''">and status=#{status}</if>
@@ -28,11 +28,11 @@
     </select>
 
     <select id="selectById" resultMap="Result">
-        select * from osg_mock_practice where practice_id=#{practiceId} and del_flag='0'
+        select * from osg_sim_practice where practice_id=#{practiceId} and del_flag='0'
     </select>
 
     <update id="update">
-        update osg_mock_practice
+        update osg_sim_practice
         <set>
             <if test="status != null">status=#{status},</if>
             update_time=sysdate()
