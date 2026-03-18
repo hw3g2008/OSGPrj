@@ -2,6 +2,7 @@ package com.ruoyi.system.service;
 
 import java.util.List;
 import java.util.Map;
+import com.ruoyi.system.domain.OsgClassRecord;
 
 public interface IOsgClassRecordService
 {
@@ -18,4 +19,12 @@ public interface IOsgClassRecordService
     Map<String, Object> batchApprove(Map<String, Object> payload, String operator);
 
     Map<String, Object> batchReject(Map<String, Object> payload, String operator);
+
+    List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord record);
+
+    OsgClassRecord selectMentorClassRecordById(Long id);
+
+    int createMentorClassRecord(OsgClassRecord record);
+
+    int updateMentorClassRecord(OsgClassRecord record);
 }

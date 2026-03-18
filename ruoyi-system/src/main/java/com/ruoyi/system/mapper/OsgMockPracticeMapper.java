@@ -9,7 +9,13 @@ public interface OsgMockPracticeMapper
 
     List<OsgMockPractice> selectMockPracticeList(OsgMockPractice mockPractice);
 
+    List<OsgMockPractice> selectMentorMockPracticeList(OsgMockPractice mockPractice);
+
+    OsgMockPractice selectMentorMockPracticeById(Long practiceId);
+
     int insertMockPractice(OsgMockPractice mockPractice);
 
     int updateMockPracticeAssignment(OsgMockPractice mockPractice);
+
+    int updateMentorMockPracticeStatus(OsgMockPractice mockPractice);
 }

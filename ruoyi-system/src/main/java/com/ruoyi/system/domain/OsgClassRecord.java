@@ -29,12 +29,15 @@ public class OsgClassRecord extends BaseEntity
     private String reviewRemark;
     private Date reviewedAt;
     private Date submittedAt;
+    private String delFlag;
     private String keyword;
     private String tab;
     private String overtimeFlag;
     private String overdueFlag;
     private Integer pendingDays;
     private Integer pendingReviewCount;
+    private Date classDateStart;
+    private Date classDateEnd;
 
     public Long getRecordId()
     {
@@ -236,6 +239,16 @@ public class OsgClassRecord extends BaseEntity
         this.submittedAt = submittedAt;
     }
 
+    public String getDelFlag()
+    {
+        return delFlag;
+    }
+
+    public void setDelFlag(String delFlag)
+    {
+        this.delFlag = delFlag;
+    }
+
     public String getKeyword()
     {
         return keyword;
@@ -296,6 +309,26 @@ public class OsgClassRecord extends BaseEntity
         this.pendingReviewCount = pendingReviewCount;
     }
 
+    public Date getClassDateStart()
+    {
+        return classDateStart;
+    }
+
+    public void setClassDateStart(Date classDateStart)
+    {
+        this.classDateStart = classDateStart;
+    }
+
+    public Date getClassDateEnd()
+    {
+        return classDateEnd;
+    }
+
+    public void setClassDateEnd(Date classDateEnd)
+    {
+        this.classDateEnd = classDateEnd;
+    }
+
     @Override
     public String toString()
     {
@@ -316,6 +349,7 @@ public class OsgClassRecord extends BaseEntity
             .append("rate", getRate())
             .append("reviewRemark", getReviewRemark())
             .append("submittedAt", getSubmittedAt())
+            .append("delFlag", getDelFlag())
             .append("pendingDays", getPendingDays())
             .append("overtimeFlag", getOvertimeFlag())
             .append("overdueFlag", getOverdueFlag())

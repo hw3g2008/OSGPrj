@@ -41,9 +41,13 @@ public class OsgMockPractice extends BaseEntity
 
     private Date submittedAt;
 
+    private String delFlag;
+
     private String keyword;
 
     private String tab;
+
+    private Long currentMentorId;
 
     public Long getPracticeId()
     {
@@ -205,6 +209,16 @@ public class OsgMockPractice extends BaseEntity
         this.submittedAt = submittedAt;
     }
 
+    public String getDelFlag()
+    {
+        return delFlag;
+    }
+
+    public void setDelFlag(String delFlag)
+    {
+        this.delFlag = delFlag;
+    }
+
     public String getKeyword()
     {
         return keyword;
@@ -223,6 +237,16 @@ public class OsgMockPractice extends BaseEntity
     public void setTab(String tab)
     {
         this.tab = tab;
+    }
+
+    public Long getCurrentMentorId()
+    {
+        return currentMentorId;
+    }
+
+    public void setCurrentMentorId(Long currentMentorId)
+    {
+        this.currentMentorId = currentMentorId;
     }
 
     @Override
@@ -245,6 +269,8 @@ public class OsgMockPractice extends BaseEntity
             .append("feedbackRating", getFeedbackRating())
             .append("feedbackSummary", getFeedbackSummary())
             .append("submittedAt", getSubmittedAt())
+            .append("delFlag", getDelFlag())
+            .append("currentMentorId", getCurrentMentorId())
             .append("remark", getRemark())
             .toString();
     }

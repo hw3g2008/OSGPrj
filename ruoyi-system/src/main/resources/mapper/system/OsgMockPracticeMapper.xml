@@ -21,6 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="feedbackRating" column="feedback_rating"/>
         <result property="feedbackSummary" column="feedback_summary"/>
         <result property="submittedAt" column="submitted_at"/>
+        <result property="delFlag" column="del_flag"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -45,6 +46,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         feedback_rating,
         feedback_summary,
         submitted_at,
+        del_flag,
         create_by,
         create_time,
         update_by,
@@ -81,6 +83,33 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
         </where>
         order by submitted_at desc, practice_id desc
+    </select>
+
+    <select id="selectMentorMockPracticeList" parameterType="OsgMockPractice" resultMap="OsgMockPracticeResult">
+        select
+        <include refid="selectMockPracticeColumns"/>
+        from osg_mock_practice
+        <where>
+            del_flag = '0'
+            <if test="currentMentorId != null">
+                and FIND_IN_SET(#{currentMentorId}, mentor_ids)
+            </if>
+            <if test="practiceType != null and practiceType != ''">
+                and practice_type = #{practiceType}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectMentorMockPracticeById" parameterType="Long" resultMap="OsgMockPracticeResult">
+        select
+        <include refid="selectMockPracticeColumns"/>
+        from osg_mock_practice
+        where practice_id = #{practiceId}
+          and del_flag = '0'
     </select>
 
     <insert id="insertMockPractice" parameterType="OsgMockPractice" useGeneratedKeys="true" keyProperty="practiceId">
@@ -140,6 +169,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate(),
             <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where practice_id = #{practiceId}
+    </update>
+
+    <update id="updateMentorMockPracticeStatus" parameterType="OsgMockPractice">
+        update osg_mock_practice
+        <set>
+            <if test="status != null and status != ''">status = #{status},</if>
+            update_time = sysdate()
         </set>
         where practice_id = #{practiceId}
     </update>

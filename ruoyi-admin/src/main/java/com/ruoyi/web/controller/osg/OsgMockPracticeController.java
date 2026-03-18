@@ -5,18 +5,21 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.service.impl.OsgMockPracticeServiceImpl;
 
 @RestController
-@RequestMapping("/admin/mock-practice")
 public class OsgMockPracticeController extends BaseController
 {
     private static final String MOCK_PRACTICE_ACCESS = "@ss.hasPermi('admin:mock-practice:list')";
@@ -25,7 +28,7 @@ public class OsgMockPracticeController extends BaseController
     private OsgMockPracticeServiceImpl mockPracticeService;
 
     @PreAuthorize(MOCK_PRACTICE_ACCESS)
-    @GetMapping("/stats")
+    @GetMapping("/admin/mock-practice/stats")
     public AjaxResult stats(@RequestParam(required = false) String keyword,
                             @RequestParam(required = false) String practiceType,
                             @RequestParam(required = false) String status)
@@ -34,7 +37,7 @@ public class OsgMockPracticeController extends BaseController
     }
 
     @PreAuthorize(MOCK_PRACTICE_ACCESS)
-    @GetMapping("/list")
+    @GetMapping("/admin/mock-practice/list")
     public AjaxResult list(@RequestParam(required = false) String keyword,
                            @RequestParam(required = false) String practiceType,
                            @RequestParam(required = false) String status,
@@ -47,7 +50,7 @@ public class OsgMockPracticeController extends BaseController
     }
 
     @PreAuthorize(MOCK_PRACTICE_ACCESS)
-    @PostMapping("/assign")
+    @PostMapping("/admin/mock-practice/assign")
     public AjaxResult assign(@RequestBody Map<String, Object> body)
     {
         try
@@ -61,6 +64,23 @@ public class OsgMockPracticeController extends BaseController
         {
             return AjaxResult.error(ex.getMessage());
         }
+    }
+
+    @GetMapping("/api/mentor/mock-practice/list")
+    public TableDataInfo mentorList(OsgMockPractice query)
+    {
+        startPage();
+        query.setCurrentMentorId(SecurityUtils.getUserId());
+        return getDataTable(mockPracticeService.selectMentorMockPracticeList(query));
+    }
+
+    @PutMapping("/api/mentor/mock-practice/{id}/confirm")
+    public AjaxResult confirm(@PathVariable Long id)
+    {
+        OsgMockPractice record = new OsgMockPractice();
+        record.setPracticeId(id);
+        record.setStatus("confirmed");
+        return toAjax(mockPracticeService.confirmMentorMockPractice(record));
     }
 
     private String resolveOperator()

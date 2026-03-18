@@ -33,6 +33,41 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     @Autowired
     private OsgStaffMapper staffMapper;
 
+    @Override
+    public List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord record)
+    {
+        List<OsgClassRecord> rows = classRecordMapper.selectMentorClassRecordList(record);
+        return rows == null ? Collections.emptyList() : rows;
+    }
+
+    @Override
+    public OsgClassRecord selectMentorClassRecordById(Long id)
+    {
+        return classRecordMapper.selectMentorClassRecordById(id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int createMentorClassRecord(OsgClassRecord record)
+    {
+        if (record.getStatus() == null || record.getStatus().isBlank())
+        {
+            record.setStatus(STATUS_PENDING);
+        }
+        if (record.getSubmittedAt() == null)
+        {
+            record.setSubmittedAt(new Timestamp(System.currentTimeMillis()));
+        }
+        return classRecordMapper.insertMentorClassRecord(record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int updateMentorClassRecord(OsgClassRecord record)
+    {
+        return classRecordMapper.updateMentorClassRecord(record);
+    }
+
     public List<Map<String, Object>> selectClassRecordList(String keyword)
     {
         List<OsgClassRecord> rows = selectRows(keyword, null, null, null);

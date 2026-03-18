@@ -9,7 +9,15 @@ public interface OsgClassRecordMapper
 
     List<OsgClassRecord> selectClassRecordList(OsgClassRecord classRecord);
 
+    List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord classRecord);
+
+    OsgClassRecord selectMentorClassRecordById(Long recordId);
+
     int insertClassRecord(OsgClassRecord classRecord);
 
+    int insertMentorClassRecord(OsgClassRecord classRecord);
+
     int updateClassRecordReview(OsgClassRecord classRecord);
+
+    int updateMentorClassRecord(OsgClassRecord classRecord);
 }

@@ -25,6 +25,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="reviewRemark" column="review_remark"/>
         <result property="reviewedAt" column="reviewed_at"/>
         <result property="submittedAt" column="submitted_at"/>
+        <result property="delFlag" column="del_flag"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -53,6 +54,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         review_remark,
         reviewed_at,
         submitted_at,
+        del_flag,
         create_by,
         create_time,
         update_by,
@@ -92,6 +94,45 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
         </where>
         order by submitted_at asc, record_id asc
+    </select>
+
+    <select id="selectMentorClassRecordList" parameterType="OsgClassRecord" resultMap="OsgClassRecordResult">
+        select
+        <include refid="selectClassRecordColumns"/>
+        from osg_class_record
+        <where>
+            del_flag = '0'
+            <if test="mentorId != null">
+                and mentor_id = #{mentorId}
+            </if>
+            <if test="studentId != null">
+                and student_id = #{studentId}
+            </if>
+            <if test="courseType != null and courseType != ''">
+                and course_type = #{courseType}
+            </if>
+            <if test="courseSource != null and courseSource != ''">
+                and course_source = #{courseSource}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="classDateStart != null">
+                and class_date &gt;= #{classDateStart}
+            </if>
+            <if test="classDateEnd != null">
+                and class_date &lt;= #{classDateEnd}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectMentorClassRecordById" parameterType="Long" resultMap="OsgClassRecordResult">
+        select
+        <include refid="selectClassRecordColumns"/>
+        from osg_class_record
+        where record_id = #{recordId}
+          and del_flag = '0'
     </select>
 
     <insert id="insertClassRecord" parameterType="OsgClassRecord" useGeneratedKeys="true" keyProperty="recordId">
@@ -148,7 +189,69 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         )
     </insert>
 
+    <insert id="insertMentorClassRecord" parameterType="OsgClassRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into osg_class_record (
+            class_id,
+            mentor_id,
+            mentor_name,
+            student_id,
+            student_name,
+            course_type,
+            course_source,
+            class_date,
+            duration_hours,
+            weekly_hours,
+            status,
+            class_status,
+            rate,
+            topics,
+            comments,
+            feedback_content,
+            submitted_at,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            del_flag
+        ) values (
+            #{classId},
+            #{mentorId},
+            #{mentorName},
+            #{studentId},
+            #{studentName},
+            #{courseType},
+            #{courseSource},
+            #{classDate},
+            #{durationHours},
+            #{weeklyHours},
+            #{status},
+            #{classStatus},
+            #{rate},
+            #{topics},
+            #{comments},
+            #{feedbackContent},
+            #{submittedAt},
+            #{createBy},
+            sysdate(),
+            #{updateBy},
+            sysdate(),
+            '0'
+        )
+    </insert>
+
     <update id="updateClassRecordReview" parameterType="OsgClassRecord">
+        update osg_class_record
+        <set>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="reviewRemark != null">review_remark = #{reviewRemark},</if>
+            <if test="reviewedAt != null">reviewed_at = #{reviewedAt},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where record_id = #{recordId}
+    </update>
+
+    <update id="updateMentorClassRecord" parameterType="OsgClassRecord">
         update osg_class_record
         <set>
             <if test="status != null and status != ''">status = #{status},</if>

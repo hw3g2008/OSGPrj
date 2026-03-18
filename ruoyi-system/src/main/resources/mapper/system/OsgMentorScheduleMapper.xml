@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgMentorScheduleMapper">
+    <resultMap type="com.ruoyi.system.domain.OsgMentorSchedule" id="Result">
+        <id property="id" column="id"/>
+        <result property="mentorId" column="mentor_id"/>
+        <result property="weekStartDate" column="week_start_date"/>
+        <result property="totalHours" column="total_hours"/>
+        <result property="monday" column="monday"/>
+        <result property="tuesday" column="tuesday"/>
+        <result property="wednesday" column="wednesday"/>
+        <result property="thursday" column="thursday"/>
+        <result property="friday" column="friday"/>
+        <result property="saturday" column="saturday"/>
+        <result property="sunday" column="sunday"/>
+    </resultMap>
+    <select id="selectByMentorAndWeek" resultMap="Result">
+        select * from osg_mentor_schedule where del_flag='0' and mentor_id=#{mentorId} and week_start_date=#{weekStartDate}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into osg_mentor_schedule(mentor_id,week_start_date,total_hours,monday,tuesday,wednesday,thursday,friday,saturday,sunday,create_by,create_time)
+        values(#{mentorId},#{weekStartDate},#{totalHours},#{monday},#{tuesday},#{wednesday},#{thursday},#{friday},#{saturday},#{sunday},#{createBy},sysdate())
+    </insert>
+    <update id="update">
+        update osg_mentor_schedule set total_hours=#{totalHours},monday=#{monday},tuesday=#{tuesday},wednesday=#{wednesday},
+        thursday=#{thursday},friday=#{friday},saturday=#{saturday},sunday=#{sunday},update_by=#{updateBy},update_time=sysdate()
+        where id=#{id}
+    </update>
+</mapper>

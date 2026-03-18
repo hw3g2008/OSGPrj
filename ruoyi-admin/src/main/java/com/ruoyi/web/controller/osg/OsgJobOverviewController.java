@@ -5,19 +5,22 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.system.domain.OsgJobCoaching;
+import com.ruoyi.system.service.IOsgJobCoachingService;
 import com.ruoyi.system.service.impl.OsgJobOverviewServiceImpl;
 
 @RestController
-@RequestMapping("/admin/job-overview")
 public class OsgJobOverviewController extends BaseController
 {
     private static final String JOB_OVERVIEW_ACCESS = "@ss.hasPermi('admin:job-overview:list')";
@@ -25,8 +28,11 @@ public class OsgJobOverviewController extends BaseController
     @Autowired
     private OsgJobOverviewServiceImpl jobOverviewService;
 
+    @Autowired
+    private IOsgJobCoachingService jobCoachingService;
+
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
-    @GetMapping("/stats")
+    @GetMapping("/admin/job-overview/stats")
     public AjaxResult stats(@RequestParam(required = false) String studentName,
                             @RequestParam(required = false) String companyName,
                             @RequestParam(required = false) String currentStage,
@@ -37,7 +43,7 @@ public class OsgJobOverviewController extends BaseController
     }
 
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
-    @GetMapping("/funnel")
+    @GetMapping("/admin/job-overview/funnel")
     public AjaxResult funnel(@RequestParam(required = false) String studentName,
                              @RequestParam(required = false) String companyName,
                              @RequestParam(required = false) String currentStage,
@@ -48,7 +54,7 @@ public class OsgJobOverviewController extends BaseController
     }
 
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
-    @GetMapping("/hot-companies")
+    @GetMapping("/admin/job-overview/hot-companies")
     public AjaxResult hotCompanies(@RequestParam(required = false) String studentName,
                                    @RequestParam(required = false) String companyName,
                                    @RequestParam(required = false) String currentStage,
@@ -59,7 +65,7 @@ public class OsgJobOverviewController extends BaseController
     }
 
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
-    @GetMapping("/list")
+    @GetMapping("/admin/job-overview/list")
     public AjaxResult list(@RequestParam(required = false) String studentName,
                            @RequestParam(required = false) String companyName,
                            @RequestParam(required = false) String currentStage,
@@ -71,7 +77,7 @@ public class OsgJobOverviewController extends BaseController
     }
 
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
-    @GetMapping("/unassigned")
+    @GetMapping("/admin/job-overview/unassigned")
     public AjaxResult unassigned(@RequestParam(required = false) String studentName,
                                  @RequestParam(required = false) String companyName,
                                  @RequestParam(required = false) String currentStage,
@@ -82,7 +88,7 @@ public class OsgJobOverviewController extends BaseController
     }
 
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
-    @PostMapping("/assign-mentor")
+    @PostMapping("/admin/job-overview/assign-mentor")
     public AjaxResult assignMentor(@RequestBody Map<String, Object> body)
     {
         try
@@ -100,7 +106,7 @@ public class OsgJobOverviewController extends BaseController
     }
 
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
-    @PutMapping("/stage-update")
+    @PutMapping("/admin/job-overview/stage-update")
     public AjaxResult stageUpdate(@RequestBody Map<String, Object> body)
     {
         try
@@ -114,6 +120,31 @@ public class OsgJobOverviewController extends BaseController
         {
             return AjaxResult.error(ex.getMessage());
         }
+    }
+
+    @GetMapping("/api/mentor/job-overview/list")
+    public TableDataInfo mentorList(OsgJobCoaching query)
+    {
+        startPage();
+        query.setMentorId(SecurityUtils.getUserId());
+        return getDataTable(jobCoachingService.selectList(query));
+    }
+
+    @PutMapping("/api/mentor/job-overview/{id}/confirm")
+    public AjaxResult confirm(@PathVariable Long id)
+    {
+        OsgJobCoaching record = new OsgJobCoaching();
+        record.setId(id);
+        record.setCoachingStatus("coaching");
+        return toAjax(jobCoachingService.update(record));
+    }
+
+    @GetMapping("/api/mentor/job-overview/calendar")
+    public AjaxResult calendar()
+    {
+        OsgJobCoaching query = new OsgJobCoaching();
+        query.setMentorId(SecurityUtils.getUserId());
+        return success(jobCoachingService.selectCalendar(query));
     }
 
     private String resolveOperator()

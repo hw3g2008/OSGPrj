@@ -29,6 +29,27 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
     private OsgMockPracticeMapper mockPracticeMapper;
 
     @Override
+    public List<OsgMockPractice> selectMentorMockPracticeList(OsgMockPractice query)
+    {
+        List<OsgMockPractice> rows = mockPracticeMapper.selectMentorMockPracticeList(query);
+        return rows == null ? Collections.emptyList() : rows;
+    }
+
+    @Override
+    public OsgMockPractice selectMentorMockPracticeById(Long id)
+    {
+        return mockPracticeMapper.selectMentorMockPracticeById(id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int confirmMentorMockPractice(OsgMockPractice record)
+    {
+        record.setUpdateTime(new Date());
+        return mockPracticeMapper.updateMentorMockPracticeStatus(record);
+    }
+
+    @Override
     public Map<String, Object> selectMockPracticeStats(String keyword, String practiceType, String status)
     {
         List<OsgMockPractice> rows = selectPractices(keyword, practiceType, status, null);
