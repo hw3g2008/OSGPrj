@@ -101,6 +101,12 @@
 
 ---
 
+## SOP 索引
+
+- `/.claude/docs/sop-parallel-srs.md` — 三端并行到 SRS（只做 /brainstorm 产物；禁止并行生成 Story/Ticket）
+
+---
+
 ## 框架修改规则
 
 修改 `.claude/` 下的框架文件时，必须遵守：

@@ -56,7 +56,7 @@ audit_files:
 
 | 检查项 | 通过条件 | 检查方法 |
 |--------|----------|----------|
-| phase 字段清理 | `.claude/` 目录中 `state.phase` 出现 0 次（log.yaml execution_log.phase 除外） | grep 搜索 |
+| phase 字段清理 | `.claude/` 目录中不应出现旧的 state→phase 点路径引用（log.yaml execution_log.phase 除外） | grep 搜索 |
 | workflow 写入统一 | 所有写入 STATE.yaml 的伪代码统一使用 `workflow.current_step` 和 `workflow.next_step` | 逐文件检查 |
 | state 模板无 phase | state.yaml 模板不定义 phase 字段 | 读取模板 |
 | checkpoint 结构一致 | checkpoint.yaml 的 state_snapshot.workflow 结构与 STATE.yaml 一致 | 字段对比 |
@@ -112,7 +112,7 @@ tickets_approved → next → implementing → ticket_done → next → ...
 
 | 模式 | 说明 |
 |------|------|
-| `state.phase` | 旧状态字段（log.yaml execution_log.phase 除外） |
+| `state.phase`（旧路径） | 旧状态字段路径（log.yaml execution_log.phase 除外） |
 | `estimate_context_usage` | Cursor 专属 API |
 | `dispatch_openai` | OpenAI 专属调度 |
 | `OPENAI_API_KEY` | OpenAI 专属环境变量 |

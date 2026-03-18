@@ -309,6 +309,8 @@ prd_process:
     career: ["index.html", "lead-mentor.html", "assistant.html", "admin.html"]  # 求职中心（跨端）
     student: ["index.html", "PRD_Student.html"]
     mentor: ["mentor.html", "PRD_Mentor.html"]
+    lead-mentor: ["lead-mentor.html", "PRD_LeadMentor.html"]
+    assistant: ["assistant.html", "PRD_Assistant.html"]
 
 # 启用的开发者角色
 developers:
