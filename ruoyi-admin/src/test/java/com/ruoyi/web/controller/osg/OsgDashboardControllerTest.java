@@ -46,4 +46,28 @@ class OsgDashboardControllerTest
         assertFalse(data.isEmpty());
         assertTrue(data.get(0).containsKey("title"));
     }
+
+    @Test
+    void testStudentStatusSuccess()
+    {
+        AjaxResult result = controller.studentStatus();
+        assertEquals(200, result.get("code"));
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> data = (java.util.Map<String, Object>) result.get("data");
+        assertNotNull(data);
+        assertTrue(data.containsKey("activeNormal"));
+        assertTrue(data.containsKey("total"));
+    }
+
+    @Test
+    void testMonthlySuccess()
+    {
+        AjaxResult result = controller.monthly();
+        assertEquals(200, result.get("code"));
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> data = (java.util.Map<String, Object>) result.get("data");
+        assertNotNull(data);
+        assertTrue(data.containsKey("newStudents"));
+        assertTrue(data.containsKey("settledAmount"));
+    }
 }

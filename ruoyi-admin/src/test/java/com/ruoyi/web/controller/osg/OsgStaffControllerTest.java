@@ -304,6 +304,658 @@ class OsgStaffControllerTest
                 .andExpect(jsonPath("$.data.status").value("pending"));
     }
 
+    // ==================== NEW TEST METHODS FOR BRANCH COVERAGE ====================
+
+    @Test
+    void detailShouldReturnErrorWhenStaffNotFound() throws Exception
+    {
+        when(staffService.selectStaffDetail(999L)).thenReturn(null);
+
+        mockMvc.perform(get("/admin/staff/999")
+                .header("Authorization", "Bearer clerk-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("导师不存在"));
+    }
+
+    @Test
+    void detailShouldReturnErrorWhenDetailIsEmptyMap() throws Exception
+    {
+        when(staffService.selectStaffDetail(999L)).thenReturn(java.util.Collections.emptyMap());
+
+        mockMvc.perform(get("/admin/staff/999")
+                .header("Authorization", "Bearer clerk-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("导师不存在"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenStaffNameMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "email": "test@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("staffName不能为空"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenEmailMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Test",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("email不能为空"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenStaffTypeMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Test",
+                      "email": "test@example.com",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("staffType不能为空"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenMajorDirectionMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Test",
+                      "email": "test@example.com",
+                      "staffType": "mentor",
+                      "region": "北美",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("majorDirection不能为空"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenRegionMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Test",
+                      "email": "test@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("region不能为空"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenCityMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Test",
+                      "email": "test@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("city不能为空"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenHourlyRateMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Test",
+                      "email": "test@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "NY"
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("hourlyRate不能为空"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenInsertFails() throws Exception
+    {
+        when(staffService.insertStaff(any(OsgStaff.class))).thenReturn(0);
+
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Test",
+                      "email": "test@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("导师新增失败"));
+    }
+
+    @Test
+    void createShouldUseSelectStaffByStaffIdAfterInsert() throws Exception
+    {
+        when(staffService.insertStaff(any(OsgStaff.class))).thenAnswer(invocation -> {
+            OsgStaff staff = invocation.getArgument(0);
+            staff.setStaffId(3L);
+            return 1;
+        });
+        when(staffService.selectStaffByStaffId(3L)).thenReturn(null);
+
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "NullReturn",
+                      "email": "null@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.staffName").value("NullReturn"));
+    }
+
+    @Test
+    void updateShouldReturnErrorWhenStaffIdMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Test",
+                      "email": "test@example.com"
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("staffId不能为空"));
+    }
+
+    @Test
+    void updateShouldReturnErrorWhenStaffNotFound() throws Exception
+    {
+        mockMvc.perform(put("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffId": 999,
+                      "staffName": "Test",
+                      "email": "test@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("导师不存在"));
+    }
+
+    @Test
+    void updateShouldReturnValidationErrorForMissingFields() throws Exception
+    {
+        mockMvc.perform(put("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffId": 1,
+                      "email": "test@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "NY",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("staffName不能为空"));
+    }
+
+    @Test
+    void updateShouldReturnErrorWhenUpdateFails() throws Exception
+    {
+        when(staffService.updateStaff(any(OsgStaff.class))).thenReturn(0);
+
+        mockMvc.perform(put("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffId": 1,
+                      "staffName": "Diana Ross",
+                      "email": "diana.ross@example.com",
+                      "staffType": "lead_mentor",
+                      "majorDirection": "科技",
+                      "region": "北美",
+                      "city": "San Francisco",
+                      "hourlyRate": 720
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("导师更新失败"));
+    }
+
+    @Test
+    void updateShouldUseMergeExistingWhenRefetchReturnsNull() throws Exception
+    {
+        when(staffService.updateStaff(any(OsgStaff.class))).thenReturn(1);
+        when(staffService.selectStaffByStaffId(1L)).thenReturn(buildStaff("active")).thenReturn(null);
+
+        mockMvc.perform(put("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffId": 1,
+                      "staffName": "Diana Updated",
+                      "email": "diana.updated@example.com",
+                      "staffType": "lead_mentor",
+                      "majorDirection": "科技",
+                      "region": "北美",
+                      "city": "San Francisco",
+                      "hourlyRate": 720
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.staffName").value("Diana Updated"));
+    }
+
+    @Test
+    void changeStatusShouldResolveRestoreAction() throws Exception
+    {
+        when(staffService.updateStaffStatus(eq(1L), eq("active"), anyString())).thenAnswer(invocation -> {
+            staffRowsRef.set(List.of(buildStaff("active")));
+            return 1;
+        });
+
+        mockMvc.perform(put("/admin/staff/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"restore\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("0"));
+    }
+
+    @Test
+    void changeStatusShouldResolveDirectAccountStatusValue0() throws Exception
+    {
+        when(staffService.updateStaffStatus(eq(1L), eq("active"), anyString())).thenReturn(1);
+
+        mockMvc.perform(put("/admin/staff/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"accountStatus\":\"0\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("0"));
+    }
+
+    @Test
+    void changeStatusShouldResolveDirectAccountStatusValue1() throws Exception
+    {
+        when(staffService.updateStaffStatus(eq(1L), eq("frozen"), anyString())).thenReturn(1);
+
+        mockMvc.perform(put("/admin/staff/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"accountStatus\":\"1\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("1"));
+    }
+
+    @Test
+    void changeStatusShouldResolveDirectAccountStatusActive() throws Exception
+    {
+        when(staffService.updateStaffStatus(eq(1L), eq("active"), anyString())).thenReturn(1);
+
+        mockMvc.perform(put("/admin/staff/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"accountStatus\":\"active\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("0"));
+    }
+
+    @Test
+    void changeStatusShouldResolveDirectAccountStatusFrozen() throws Exception
+    {
+        when(staffService.updateStaffStatus(eq(1L), eq("frozen"), anyString())).thenReturn(1);
+
+        mockMvc.perform(put("/admin/staff/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"accountStatus\":\"frozen\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("1"));
+    }
+
+    @Test
+    void changeStatusShouldReturnErrorForInvalidAccountStatus() throws Exception
+    {
+        mockMvc.perform(put("/admin/staff/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"accountStatus\":\"invalid\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("参数缺失"));
+    }
+
+    @Test
+    void changeStatusShouldReturnErrorWhenStaffIdMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/staff/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"action\":\"freeze\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("参数缺失"));
+    }
+
+    @Test
+    void changeStatusShouldReturnErrorWhenRowsNotAffected() throws Exception
+    {
+        when(staffService.updateStaffStatus(eq(1L), eq("frozen"), anyString())).thenReturn(0);
+
+        mockMvc.perform(put("/admin/staff/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"freeze\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("导师状态更新失败"));
+    }
+
+    @Test
+    void blacklistShouldNormalizeAddAction() throws Exception
+    {
+        when(staffService.updateStaffBlacklist(eq(1L), eq("blacklist"), anyString(), anyLong())).thenReturn(1);
+
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"add\",\"reason\":\"test\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.action").value("blacklist"));
+    }
+
+    @Test
+    void blacklistShouldNormalizeRemoveAction() throws Exception
+    {
+        when(staffService.updateStaffBlacklist(eq(1L), eq("remove"), anyString(), anyLong())).thenReturn(1);
+
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"remove\",\"reason\":\"test\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("已移出黑名单"))
+                .andExpect(jsonPath("$.action").value("remove"));
+    }
+
+    @Test
+    void blacklistShouldNormalizeRestoreAction() throws Exception
+    {
+        when(staffService.updateStaffBlacklist(eq(1L), eq("remove"), anyString(), anyLong())).thenReturn(1);
+
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"restore\",\"reason\":\"test\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("已移出黑名单"));
+    }
+
+    @Test
+    void blacklistShouldReturnErrorForInvalidAction() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"invalid\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("参数缺失"));
+    }
+
+    @Test
+    void blacklistShouldReturnErrorWhenStaffIdMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"action\":\"blacklist\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("参数缺失"));
+    }
+
+    @Test
+    void blacklistShouldReturnErrorWhenRowsNotAffected() throws Exception
+    {
+        when(staffService.updateStaffBlacklist(eq(1L), eq("blacklist"), anyString(), anyLong())).thenReturn(0);
+
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"blacklist\",\"reason\":\"test\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("黑名单状态未变更"));
+    }
+
+    @Test
+    void blacklistShouldUseDefaultReasonWhenMissing() throws Exception
+    {
+        when(staffService.updateStaffBlacklist(eq(1L), eq("blacklist"), anyString(), anyLong())).thenReturn(1);
+
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"blacklist\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void resetPasswordShouldReturnErrorWhenStaffIdMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff/reset-password")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("staffId不能为空"));
+    }
+
+    @Test
+    void resetPasswordShouldReturnErrorWhenServiceThrows() throws Exception
+    {
+        when(staffService.resetStaffPassword(eq(1L), anyString()))
+            .thenThrow(new RuntimeException("服务异常"));
+
+        mockMvc.perform(post("/admin/staff/reset-password")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("服务异常"));
+    }
+
+    @Test
+    void submitChangeRequestShouldReturnErrorWhenServiceThrows() throws Exception
+    {
+        when(staffService.submitChangeRequest(any(), anyString()))
+            .thenThrow(new RuntimeException("变更请求失败"));
+
+        mockMvc.perform(post("/admin/staff/change-request")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("变更请求失败"));
+    }
+
+    @Test
+    void listShouldFilterByAccountStatusUsingStoredResolve() throws Exception
+    {
+        mockMvc.perform(get("/admin/staff/list")
+                .header("Authorization", "Bearer clerk-token")
+                .param("accountStatus", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void listShouldFilterByAccountStatusFrozen() throws Exception
+    {
+        mockMvc.perform(get("/admin/staff/list")
+                .header("Authorization", "Bearer clerk-token")
+                .param("accountStatus", "frozen"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void createShouldSetExplicitAccountStatus() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Olivia",
+                      "email": "olivia@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "咨询",
+                      "region": "欧洲",
+                      "city": "London",
+                      "hourlyRate": 680,
+                      "accountStatus": "1"
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("1"));
+    }
+
+    @Test
+    void updateShouldPreserveExistingAccountStatusWhenNotProvided() throws Exception
+    {
+        mockMvc.perform(put("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffId": 1,
+                      "staffName": "Diana Update",
+                      "email": "diana@example.com",
+                      "staffType": "lead_mentor",
+                      "majorDirection": "金融",
+                      "region": "北美",
+                      "city": "New York",
+                      "hourlyRate": 500
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("0"));
+    }
+
     private LoginUser buildLoginUser(String roleKey, String username)
     {
         SysRole role = new SysRole();
@@ -408,5 +1060,92 @@ class OsgStaffControllerTest
         payload.put("studentCount", 3);
         payload.put("accountStatus", "0");
         return payload;
+    }
+    @Test
+    void blacklistShouldReturnErrorForMissingParams() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"reason\":\"test\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("参数缺失"));
+    }
+
+    @Test
+    void blacklistShouldUseDefaultReasonWhenReasonMissing() throws Exception
+    {
+        when(staffService.updateStaffBlacklist(eq(1L), eq("blacklist"), anyString(), anyLong())).thenReturn(1);
+
+        mockMvc.perform(post("/admin/staff/blacklist")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"action\":\"add\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void createShouldHandleHourlyRateAsDecimalString() throws Exception
+    {
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffName\":\"Test\",\"email\":\"t@e.com\",\"staffType\":\"mentor\",\"majorDirection\":\"金融\",\"region\":\"北美\",\"city\":\"NY\",\"hourlyRate\":\"680.50\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void listShouldFilterByStoredAccountStatus0() throws Exception
+    {
+        mockMvc.perform(get("/admin/staff/list")
+                .header("Authorization", "Bearer clerk-token")
+                .param("accountStatus", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void listShouldFilterByStoredAccountStatus1() throws Exception
+    {
+        mockMvc.perform(get("/admin/staff/list")
+                .header("Authorization", "Bearer clerk-token")
+                .param("accountStatus", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void listShouldFilterByStoredAccountStatusActive() throws Exception
+    {
+        mockMvc.perform(get("/admin/staff/list")
+                .header("Authorization", "Bearer clerk-token")
+                .param("accountStatus", "active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void listShouldFilterByStoredAccountStatusFrozen() throws Exception
+    {
+        mockMvc.perform(get("/admin/staff/list")
+                .header("Authorization", "Bearer clerk-token")
+                .param("accountStatus", "frozen"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void updateShouldSetAccountStatusFromBodyInUpdateResponse() throws Exception
+    {
+        mockMvc.perform(put("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"staffId\":1,\"staffName\":\"Diana Update\",\"email\":\"diana@example.com\",\"staffType\":\"lead_mentor\",\"majorDirection\":\"金融\",\"region\":\"北美\",\"city\":\"New York\",\"hourlyRate\":500,\"accountStatus\":\"frozen\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("0"));
     }
 }

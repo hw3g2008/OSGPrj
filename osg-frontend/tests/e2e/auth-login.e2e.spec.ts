@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { assertRuoyiSuccess, loginAsAdmin, requestCaptchaChallenge, waitForApi } from './support/auth'
 import { recordBehaviorScenario } from './support/behavior-report'
+import { deleteRedisKeys } from './support/redis-runtime'
 
 test.describe('Auth Login @ui-smoke @ui-only', () => {
   test('login page renders with form fields @perm-s001-login-form', async ({ page }) => {
@@ -68,6 +69,9 @@ test.describe('Auth Login @api', () => {
       },
       evidenceRef: 'osg-frontend/tests/e2e/auth-login.e2e.spec.ts#perm-s001-login-invalid-credentials',
     })
+
+    // Clear login error counter to prevent account lockout for subsequent specs
+    deleteRedisKeys(['pwd_err_cnt:admin'])
   })
 
   test('logout clears token and returns to login @perm-s001-logout', async ({ page }) => {

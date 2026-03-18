@@ -101,6 +101,71 @@ class OsgComplaintControllerTest
         assertEquals("completed", complaintClass.getMethod("getProcessStatus").invoke(rowsAfterRollback.get(1)));
     }
 
+    @Test
+    void changeStatusShouldReturnErrorWhenComplaintNotFound() throws Exception
+    {
+        Class<?> complaintClass = Class.forName("com.ruoyi.system.domain.OsgComplaint");
+
+        List<Object> rows = new ArrayList<>();
+
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgComplaintMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> switch (method.getName())
+            {
+                case "selectComplaintList" -> new ArrayList<>(rows);
+                case "selectComplaintById" -> null;
+                case "updateComplaintStatus" -> 1;
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgComplaintController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "complaintMapper", mapperProxy);
+
+        java.lang.reflect.Method changeStatusMethod = controllerClass.getMethod("changeStatus", Long.class, String.class);
+        AjaxResult result = (AjaxResult) changeStatusMethod.invoke(controller, 999L, "processing");
+        assertEquals(500, result.get("code"));
+        assertEquals("投诉建议不存在", result.get("msg"));
+    }
+
+    @Test
+    void changeStatusShouldSetHandleTimeWhenCompleted() throws Exception
+    {
+        Class<?> complaintClass = Class.forName("com.ruoyi.system.domain.OsgComplaint");
+        Object complaint = newComplaint(complaintClass, 5L, "学员C", "complaint", "问题描述", "processing", LocalDateTime.of(2026, 3, 14, 11, 0));
+
+        List<Object> rows = new ArrayList<>();
+        rows.add(complaint);
+
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgComplaintMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> switch (method.getName())
+            {
+                case "selectComplaintList" -> new ArrayList<>(rows);
+                case "selectComplaintById" -> findComplaint(rows, (Long) args[0], complaintClass);
+                case "updateComplaintStatus" -> 1;
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgComplaintController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "complaintMapper", mapperProxy);
+
+        java.lang.reflect.Method changeStatusMethod = controllerClass.getMethod("changeStatus", Long.class, String.class);
+        AjaxResult result = (AjaxResult) changeStatusMethod.invoke(controller, 5L, "completed");
+        assertEquals(200, result.get("code"));
+
+        Object handleTime = complaintClass.getMethod("getHandleTime").invoke(complaint);
+        assertTrue(handleTime != null, "handleTime should be set when status is completed");
+    }
+
+
     private static Object newComplaint(
         Class<?> complaintClass,
         Long complaintId,
@@ -133,5 +198,41 @@ class OsgComplaintControllerTest
             }
         }
         return null;
+    }
+
+    // ==================== ADDITIONAL BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void changeStatusShouldClearHandleTimeWhenNotCompleted() throws Exception
+    {
+        Class<?> complaintClass = Class.forName("com.ruoyi.system.domain.OsgComplaint");
+        Object complaint = newComplaint(complaintClass, 10L, "学员X", "complaint", "测试问题", "pending", LocalDateTime.of(2026, 3, 14, 12, 0));
+
+        List<Object> rows = new ArrayList<>();
+        rows.add(complaint);
+
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgComplaintMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> switch (method.getName())
+            {
+                case "selectComplaintList" -> new ArrayList<>(rows);
+                case "selectComplaintById" -> findComplaint(rows, (Long) args[0], complaintClass);
+                case "updateComplaintStatus" -> 1;
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgComplaintController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "complaintMapper", mapperProxy);
+
+        java.lang.reflect.Method changeStatusMethod = controllerClass.getMethod("changeStatus", Long.class, String.class);
+        AjaxResult result = (AjaxResult) changeStatusMethod.invoke(controller, 10L, "processing");
+        assertEquals(200, result.get("code"));
+
+        Object handleTime = complaintClass.getMethod("getHandleTime").invoke(complaint);
+        assertTrue(handleTime == null, "handleTime should be null for non-completed status");
     }
 }

@@ -95,7 +95,7 @@ const items = computed(() => {
   background: #fff;
   border-radius: 16px;
   box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
-  margin-bottom: 20px;
+  margin-bottom: 0;
 
   &__header {
     padding: 18px 22px;

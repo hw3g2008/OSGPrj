@@ -33,6 +33,9 @@ ruoyi:
 
 user:
   password:
+    # Docker/dev 环境放宽密码重试限制，防止 E2E 测试触发锁定
+    maxRetryCount: ${USER_PASSWORD_MAX_RETRY_COUNT:50}
+    lockTime: ${USER_PASSWORD_LOCK_TIME:1}
     mail:
       from: ${SPRING_MAIL_FROM:}
       mailbox: ${PASSWORD_RESET_MAILBOX:}

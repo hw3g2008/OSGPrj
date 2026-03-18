@@ -106,4 +106,87 @@ class OsgCommunicationControllerTest
         assertEquals("networking", networkingRows.get(0).get("tabType"));
         assertEquals("Goldman Sachs", networkingRows.get(0).get("contactCompany"));
     }
+    @Test
+    void listShouldDefaultNullTabToRecord() throws Exception
+    {
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgCommunicationMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> switch (method.getName())
+            {
+                case "selectCommunicationList" -> {
+                    Object query = args[0];
+                    String tab = (String) query.getClass().getMethod("getTab").invoke(query);
+                    assertEquals("record", tab, "null tab should default to record");
+                    yield List.of(
+                        Map.of("communicationId", 50L, "tabType", "record")
+                    );
+                }
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgCommunicationController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "communicationMapper", mapperProxy);
+
+        java.lang.reflect.Method listMethod = Arrays.stream(controllerClass.getMethods())
+            .filter(method -> method.getName().equals("list"))
+            .findFirst()
+            .orElseThrow();
+
+        Object result = switch (listMethod.getParameterCount())
+        {
+            case 1 -> listMethod.invoke(controller, (Object) null);
+            case 2 -> listMethod.invoke(controller, null, null);
+            default -> throw new IllegalStateException("Unexpected list signature");
+        };
+
+        AjaxResult ajaxResult = (AjaxResult) result;
+        assertEquals(200, ajaxResult.get("code"));
+    }
+
+    @Test
+    void listShouldDefaultBlankTabToRecord() throws Exception
+    {
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgCommunicationMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> switch (method.getName())
+            {
+                case "selectCommunicationList" -> {
+                    Object query = args[0];
+                    String tab = (String) query.getClass().getMethod("getTab").invoke(query);
+                    assertEquals("record", tab, "blank tab should default to record");
+                    yield List.of(
+                        Map.of("communicationId", 51L, "tabType", "record")
+                    );
+                }
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgCommunicationController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "communicationMapper", mapperProxy);
+
+        java.lang.reflect.Method listMethod = Arrays.stream(controllerClass.getMethods())
+            .filter(method -> method.getName().equals("list"))
+            .findFirst()
+            .orElseThrow();
+
+        Object result = switch (listMethod.getParameterCount())
+        {
+            case 1 -> listMethod.invoke(controller, "  ");
+            case 2 -> listMethod.invoke(controller, "  ", null);
+            default -> throw new IllegalStateException("Unexpected list signature");
+        };
+
+        AjaxResult ajaxResult = (AjaxResult) result;
+        assertEquals(200, ajaxResult.get("code"));
+    }
+
+
 }

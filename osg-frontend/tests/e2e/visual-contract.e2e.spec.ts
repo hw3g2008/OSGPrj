@@ -872,7 +872,8 @@ async function navigateToVisualTarget(
   if (visualSource === 'prototype') {
     await page.goto(resolvePrototypeUrl(pageContract.prototype_file))
     const prototypePageKey = resolvePrototypePageKey(pageContract)
-    await page.evaluate(({ pageKey, isLoginPage }) => {
+    const prototypeRole = pageContract.prototype_role || ''
+    await page.evaluate(({ pageKey, isLoginPage, role }) => {
       const loginPage = document.getElementById('login-page')
       const mainApp = document.getElementById('main-app')
       if (isLoginPage) {
@@ -890,11 +891,18 @@ async function navigateToVisualTarget(
       if (mainApp) {
         mainApp.classList.add('active')
       }
+      if (role) {
+        ;(window as Window & { currentRole?: string }).currentRole = role
+        const maybeUpdateSidebar = (window as Window & { updateSidebarByRole?: () => void }).updateSidebarByRole
+        if (typeof maybeUpdateSidebar === 'function') {
+          maybeUpdateSidebar()
+        }
+      }
       const maybeShowPage = (window as Window & { showPage?: (key: string) => void }).showPage
       if (typeof maybeShowPage === 'function') {
         maybeShowPage(pageKey)
       }
-    }, { pageKey: prototypePageKey, isLoginPage: pageContract.page_id === 'login-page' })
+    }, { pageKey: prototypePageKey, isLoginPage: pageContract.page_id === 'login-page', role: prototypeRole })
   } else {
     await page.goto(pageContract.route)
   }

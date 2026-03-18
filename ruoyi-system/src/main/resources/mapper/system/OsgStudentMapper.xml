@@ -87,6 +87,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="majorDirection != null and majorDirection != ''">major_direction,</if>
             <if test="subDirection != null and subDirection != ''">sub_direction,</if>
             <if test="targetRegion != null and targetRegion != ''">target_region,</if>
+            <if test="targetPosition != null and targetPosition != ''">target_position,</if>
             <if test="recruitmentCycle != null and recruitmentCycle != ''">recruitment_cycle,</if>
             <if test="leadMentorId != null">lead_mentor_id,</if>
             <if test="assistantId != null">assistant_id,</if>
@@ -107,6 +108,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="majorDirection != null and majorDirection != ''">#{majorDirection},</if>
             <if test="subDirection != null and subDirection != ''">#{subDirection},</if>
             <if test="targetRegion != null and targetRegion != ''">#{targetRegion},</if>
+            <if test="targetPosition != null and targetPosition != ''">#{targetPosition},</if>
             <if test="recruitmentCycle != null and recruitmentCycle != ''">#{recruitmentCycle},</if>
             <if test="leadMentorId != null">#{leadMentorId},</if>
             <if test="assistantId != null">#{assistantId},</if>
@@ -131,6 +133,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="majorDirection != null">major_direction = #{majorDirection},</if>
             <if test="subDirection != null">sub_direction = #{subDirection},</if>
             <if test="targetRegion != null">target_region = #{targetRegion},</if>
+            <if test="targetPosition != null">target_position = #{targetPosition},</if>
             <if test="recruitmentCycle != null">recruitment_cycle = #{recruitmentCycle},</if>
             <if test="leadMentorId != null">lead_mentor_id = #{leadMentorId},</if>
             <if test="assistantId != null">assistant_id = #{assistantId},</if>

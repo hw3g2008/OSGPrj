@@ -197,6 +197,120 @@ class OsgQbankControllerTest
             .andExpect(jsonPath("$.msg").value("没有权限，请联系管理员授权"));
     }
 
+
+    // ==================== BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void createFolderShouldReturnErrorWhenFolderNameMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/qbank/folder")
+                .header("Authorization", "Bearer qbank-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("folderName 不能为空"));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorWhenFileIdMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/auth")
+                .header("Authorization", "Bearer qbank-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"authType\": \"all\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("fileId 不能为空"));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorWhenAuthTypeMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/auth")
+                .header("Authorization", "Bearer qbank-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 40}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("authType 不能为空"));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorForUnsupportedAuthType() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/auth")
+                .header("Authorization", "Bearer qbank-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 40, \"authType\": \"unknown\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("不支持的授权类型"));
+    }
+
+    @Test
+    void updateAuthShouldAcceptAllAuthType() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 40, \"authType\": \"all\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void updateAuthShouldAcceptClassAuthType() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "fileId": 40,
+                      "authType": "class",
+                      "authorizedClasses": ["2025Fall"]
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void updateAuthShouldAcceptFileIdAsString() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": \"40\", \"authType\": \"all\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void updateExpiryShouldReturnErrorWhenFileIdMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/expiry")
+                .header("Authorization", "Bearer qbank-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"expiryAt\": \"2027-12-31T23:59:00\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("fileId 不能为空"));
+    }
+
+    @Test
+    void updateExpiryShouldReturnErrorWhenExpiryAtMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/expiry")
+                .header("Authorization", "Bearer qbank-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 40}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("expiryAt 不能为空"));
+    }
+
     private LoginUser buildLoginUser(String roleKey, String username)
     {
         SysRole role = new SysRole();
@@ -333,5 +447,40 @@ class OsgQbankControllerTest
         }
         authRef.set(next);
         return authList.size();
+    }
+
+    // ==================== ADDITIONAL BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void updateAuthShouldHandleNullItemsInAuthorizedList() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 40, \"authType\": \"class\", \"authorizedClasses\": [\"2025Spring\", null, \"\", \"2025Fall\"]}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorForNonListAuthorizedUsers() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 40, \"authType\": \"user\", \"authorizedUsers\": \"notAList\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500));
+    }
+
+    @Test
+    void updateExpiryShouldAcceptFileIdAsString() throws Exception
+    {
+        mockMvc.perform(put("/admin/qbank/expiry")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": \"40\", \"expiryAt\": \"2027-12-31T23:59:00\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
     }
 }

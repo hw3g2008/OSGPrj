@@ -24,6 +24,9 @@ public class TableDataInfo implements Serializable
     /** 消息内容 */
     private String msg;
 
+    /** 待审核数量 */
+    private Integer pendingReviewCount;
+
     /**
      * 表格数据对象
      */
@@ -81,5 +84,15 @@ public class TableDataInfo implements Serializable
     public void setMsg(String msg)
     {
         this.msg = msg;
+    }
+
+    public Integer getPendingReviewCount()
+    {
+        return pendingReviewCount;
+    }
+
+    public void setPendingReviewCount(Integer pendingReviewCount)
+    {
+        this.pendingReviewCount = pendingReviewCount;
     }
 }

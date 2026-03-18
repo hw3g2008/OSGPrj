@@ -114,4 +114,71 @@ class OsgNoticeControllerTest
         assertEquals("模拟面试安排", rowsAfterSend.get(1).get("noticeTitle"));
         assertEquals("学员A", rowsAfterSend.get(1).get("receiverLabel"));
     }
+    @Test
+    void sendShouldRejectBlankContent() throws Exception
+    {
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgNoticeMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> null
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgNoticeController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "noticeMapper", mapperProxy);
+
+        Class<?> noticeClass = Class.forName("com.ruoyi.system.domain.OsgNotice");
+        Object notice = noticeClass.getDeclaredConstructor().newInstance();
+        noticeClass.getMethod("setNoticeTitle", String.class).invoke(notice, "Valid Title");
+        noticeClass.getMethod("setNoticeContent", String.class).invoke(notice, "");
+
+        java.lang.reflect.Method sendMethod = controllerClass.getMethod("send", noticeClass);
+        AjaxResult result = (AjaxResult) sendMethod.invoke(controller, notice);
+        assertEquals(500, result.get("code"));
+        assertEquals("标题和内容不能为空", result.get("msg"));
+    }
+
+    @Test
+    void sendShouldSetCreateTimeWhenNull() throws Exception
+    {
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgNoticeMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> switch (method.getName())
+            {
+                case "selectNoticeList" -> new ArrayList<>(rows);
+                case "insertNotice" -> {
+                    Object notice = args[0];
+                    notice.getClass().getMethod("setNoticeId", Long.class).invoke(notice, 12L);
+                    yield 1;
+                }
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgNoticeController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "noticeMapper", mapperProxy);
+
+        Class<?> noticeClass = Class.forName("com.ruoyi.system.domain.OsgNotice");
+        Object notice = noticeClass.getDeclaredConstructor().newInstance();
+        noticeClass.getMethod("setReceiverType", String.class).invoke(notice, "all_student");
+        noticeClass.getMethod("setReceiverLabel", String.class).invoke(notice, "全部学员");
+        noticeClass.getMethod("setNoticeTitle", String.class).invoke(notice, "Auto Time Notice");
+        noticeClass.getMethod("setNoticeContent", String.class).invoke(notice, "Content here");
+        // Do NOT set createTime
+
+        java.lang.reflect.Method sendMethod = controllerClass.getMethod("send", noticeClass);
+        AjaxResult result = (AjaxResult) sendMethod.invoke(controller, notice);
+        assertEquals(200, result.get("code"));
+
+        Object createTime = noticeClass.getMethod("getCreateTime").invoke(notice);
+        assertTrue(createTime != null, "createTime should be auto-set when null");
+    }
+
+
 }

@@ -171,6 +171,25 @@ class OsgReportControllerTest
     }
 
     @Test
+    void batchApproveShouldReviewMultiplePendingRows() throws Exception
+    {
+        mockMvc.perform(put("/admin/report/batch-approve")
+                .header("Authorization", "Bearer auditor-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"recordIds\":[1,2],\"remark\":\"批量审核通过\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.reviewedCount").value(2))
+            .andExpect(jsonPath("$.status").value("approved"));
+
+        mockMvc.perform(get("/admin/report/list")
+                .header("Authorization", "Bearer auditor-token")
+                .param("tab", "approved"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.rows[0].status").value("approved"));
+    }
+
+    @Test
     void reviewShouldRejectAlreadyReviewedRecord() throws Exception
     {
         mockMvc.perform(put("/admin/report/3/reject")

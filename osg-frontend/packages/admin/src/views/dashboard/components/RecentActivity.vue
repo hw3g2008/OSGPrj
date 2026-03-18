@@ -47,6 +47,10 @@ const router = useRouter()
 
 <style scoped lang="scss">
 .recent-activity {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
   &__title-wrap {
     gap: 0;
   }
@@ -136,6 +140,10 @@ const router = useRouter()
   background: #fff;
   border-radius: 16px;
   box-shadow: var(--card-shadow, 0 4px 24px rgba(99, 102, 241, 0.12));
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin-bottom: 0;
 
   &__header {
     padding: 18px 22px;
@@ -143,6 +151,7 @@ const router = useRouter()
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
   }
 
   &__title {
@@ -155,6 +164,8 @@ const router = useRouter()
 
   &__body {
     padding: 0;
+    flex: 1;
+    overflow-y: auto;
   }
 }
 </style>

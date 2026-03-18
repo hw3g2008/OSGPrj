@@ -84,6 +84,7 @@ export interface VisualPageContract {
   prototype_file: string
   prototype_selector: string
   prototype_page_key?: string
+  prototype_role?: string
   viewport: { width: number; height: number }
   auth_mode: VisualAuthMode
   snapshot_name: string

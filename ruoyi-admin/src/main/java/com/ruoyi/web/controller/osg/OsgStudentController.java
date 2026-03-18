@@ -219,10 +219,11 @@ public class OsgStudentController extends BaseController
             row.put("basicCourseCount", resolveActivityCount(activityCounts, student.getStudentId(), "basicCourseCount"));
             row.put("mockInterviewCount", resolveActivityCount(activityCounts, student.getStudentId(), "mockInterviewCount"));
             row.put("remainingHours", contractSnapshot.get("remainingHours"));
-            row.put("reminder", pendingReview ? "信息待审核" : "-");
+            row.put("reminder", pendingReview ? "待审核" : "-");
             row.put("pendingReview", pendingReview);
             row.put("reviewStatus", pendingReview ? "pending" : null);
             row.put("contractStatus", contractSnapshot.get("contractStatus"));
+            row.put("contractDaysLeft", contractSnapshot.get("contractDaysLeft"));
             row.put("accountStatus", defaultText(student.getAccountStatus(), "0"));
             row.put("isBlacklisted", isBlacklisted);
             rows.add(row);
@@ -272,6 +273,7 @@ public class OsgStudentController extends BaseController
         snapshot.put("totalHours", asInteger(summary.get("totalHours")));
         snapshot.put("remainingHours", asDecimal(summary.get("remainingHours")));
         snapshot.put("contractStatus", deriveContractStatus(contracts));
+        snapshot.put("contractDaysLeft", deriveContractDaysLeft(contracts));
         return snapshot;
     }
 
@@ -304,6 +306,26 @@ public class OsgStudentController extends BaseController
             return "normal";
         }
         return latestStatus;
+    }
+
+    private Long deriveContractDaysLeft(List<Map<String, Object>> contracts)
+    {
+        if (contracts == null || contracts.isEmpty())
+        {
+            return null;
+        }
+        LocalDate today = LocalDate.now();
+        LocalDate threshold = today.plusDays(30);
+        for (Map<String, Object> contract : contracts)
+        {
+            String status = defaultText(asText(contract.get("contractStatus")), "normal");
+            LocalDate endDate = asLocalDate(contract.get("endDate"));
+            if ("active".equals(status) && endDate != null && !endDate.isBefore(today) && !endDate.isAfter(threshold))
+            {
+                return java.time.temporal.ChronoUnit.DAYS.between(today, endDate);
+            }
+        }
+        return null;
     }
 
     private List<Long> extractStudentIds(List<OsgStudent> students)

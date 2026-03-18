@@ -42,6 +42,11 @@ public class LoginUser implements UserDetails
     private Long expireTime;
 
     /**
+     * 令牌有效期（分钟），用于续期时保持原始过期策略
+     */
+    private Integer tokenExpireMinutes;
+
+    /**
      * 登录IP地址
      */
     private String ipaddr;
@@ -236,6 +241,16 @@ public class LoginUser implements UserDetails
     public void setExpireTime(Long expireTime)
     {
         this.expireTime = expireTime;
+    }
+
+    public Integer getTokenExpireMinutes()
+    {
+        return tokenExpireMinutes;
+    }
+
+    public void setTokenExpireMinutes(Integer tokenExpireMinutes)
+    {
+        this.tokenExpireMinutes = tokenExpireMinutes;
     }
 
     public Set<String> getPermissions()

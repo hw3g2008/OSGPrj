@@ -94,7 +94,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             coalesce(sum(c.contract_amount), 0) as totalAmount,
             coalesce(sum(c.total_hours), 0) as totalHours,
             0 as usedHours,
-            coalesce(sum(c.total_hours), 0) as remainingHours
+            coalesce(sum(c.remaining_hours), 0) as remainingHours
         from osg_contract c
         left join osg_student s on c.student_id = s.student_id
         <include refid="contractFilterWhere"/>
@@ -108,6 +108,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             contract_type,
             contract_amount,
             total_hours,
+            <if test="usedHours != null">used_hours,</if>
+            <if test="remainingHours != null">remaining_hours,</if>
             start_date,
             end_date,
             <if test="renewalReason != null and renewalReason != ''">renewal_reason,</if>
@@ -125,6 +127,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{contractType},
             #{contractAmount},
             #{totalHours},
+            <if test="usedHours != null">#{usedHours},</if>
+            <if test="remainingHours != null">#{remainingHours},</if>
             #{startDate},
             #{endDate},
             <if test="renewalReason != null and renewalReason != ''">#{renewalReason},</if>

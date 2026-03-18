@@ -5,7 +5,10 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -24,6 +27,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.web.servlet.MockMvc;
 import jakarta.servlet.http.HttpServletRequest;
@@ -116,6 +120,14 @@ class OsgStaffScheduleControllerTest
             result.put("selectedSlotCount", selectedSlotKeys.size());
             return result;
         });
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", 1);
+            result.put("pendingCount", 1);
+            result.put("weekScope", "current");
+            result.put("recipients", List.of("diana@example.com"));
+            return result;
+        });
     }
 
     @Test
@@ -194,6 +206,455 @@ class OsgStaffScheduleControllerTest
                 .andExpect(jsonPath("$.msg").value("没有权限，请联系管理员授权"));
     }
 
+    @Test
+    void remindAllShouldReturnSuccessForSuperAdmin() throws Exception
+    {
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.recipientCount").value(1))
+                .andExpect(jsonPath("$.pendingCount").value(1))
+                .andExpect(jsonPath("$.weekScope").value("current"));
+    }
+
+    @Test
+    void exportShouldReturnExcelForSuperAdmin() throws Exception
+    {
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    // ==================== NEW TEST METHODS FOR BRANCH COVERAGE ====================
+
+    @Test
+    void remindAllShouldHandleNullBody() throws Exception
+    {
+        when(staffScheduleService.remindAll(any())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", 0);
+            result.put("pendingCount", 0);
+            result.put("weekScope", "current");
+            result.put("recipients", List.of());
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("当前无可提醒导师"))
+                .andExpect(jsonPath("$.recipientCount").value(0));
+    }
+
+    @Test
+    void remindAllShouldHandleZeroRecipients() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", 0);
+            result.put("pendingCount", 2);
+            result.put("weekScope", "current");
+            result.put("recipients", List.of());
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("当前无可提醒导师"))
+                .andExpect(jsonPath("$.pendingCount").value(2));
+    }
+
+    @Test
+    void remindAllShouldSendEmailsWhenRecipientsExist() throws Exception
+    {
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("已提醒 1 位导师"));
+
+        verify(mailSender).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    void remindAllShouldUseWeekScopeFallbackKey() throws Exception
+    {
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"weekScope\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void remindAllShouldReturnErrorWhenServiceThrows() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenThrow(new ServiceException("排期服务异常"));
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("排期服务异常"));
+    }
+
+    @Test
+    void remindAllShouldThrowWhenMailFromBlank() throws Exception
+    {
+        when(mailConfig.getFrom()).thenReturn("");
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("排期提醒邮件发送配置缺失: from"));
+    }
+
+    @Test
+    void remindAllShouldThrowWhenMailFromNull() throws Exception
+    {
+        when(mailConfig.getFrom()).thenReturn(null);
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("排期提醒邮件发送配置缺失: from"));
+    }
+
+    @Test
+    void remindAllShouldSkipBlankRecipientEmails() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", 2);
+            result.put("pendingCount", 2);
+            result.put("weekScope", "current");
+            result.put("recipients", List.of("diana@example.com", ""));
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("已提醒 2 位导师"));
+    }
+
+    @Test
+    void remindAllShouldNotBccWhenMailboxEqualsRecipient() throws Exception
+    {
+        when(mailConfig.getMailbox()).thenReturn("diana@example.com");
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(mailSender).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    void remindAllShouldNotBccWhenMailboxBlank() throws Exception
+    {
+        when(mailConfig.getMailbox()).thenReturn("");
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void remindAllShouldBuildNextWeekReminderBody() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", 1);
+            result.put("pendingCount", 1);
+            result.put("weekScope", "next");
+            result.put("recipients", List.of("diana@example.com"));
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"next\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.weekScope").value("next"));
+    }
+
+    @Test
+    void exportShouldHandleUnfilledAndCanRemindRows() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", 8L);
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", 0);
+        row.put("availableText", "-");
+        row.put("filled", false);
+        row.put("canRemind", true);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void exportShouldHandleIntegerAvailableHours() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", 8L);
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", 20);
+        row.put("availableText", "周一上午");
+        row.put("filled", true);
+        row.put("canRemind", false);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void exportShouldHandleNullAvailableHours() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", 8L);
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", null);
+        row.put("availableText", "-");
+        row.put("filled", false);
+        row.put("canRemind", false);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void exportShouldHandleStringBooleanValues() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", 8L);
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("5.5"));
+        row.put("availableText", "-");
+        row.put("filled", "true");
+        row.put("canRemind", "1");
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void exportShouldHandleNumericBooleanValues() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", 8L);
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("3"));
+        row.put("availableText", "-");
+        row.put("filled", 1);
+        row.put("canRemind", 0);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void exportShouldHandleNullBooleanValues() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", 8L);
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("3"));
+        row.put("availableText", "-");
+        row.put("filled", null);
+        row.put("canRemind", null);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void exportShouldHandleStringStaffId() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", "8");
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("3"));
+        row.put("availableText", "-");
+        row.put("filled", true);
+        row.put("canRemind", false);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void exportShouldHandleNonParsableStaffId() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", "abc");
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("3"));
+        row.put("availableText", "-");
+        row.put("filled", true);
+        row.put("canRemind", false);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void remindAllShouldHandleRecipientsNotAsList() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", 0);
+            result.put("pendingCount", 0);
+            result.put("weekScope", "current");
+            result.put("recipients", "not-a-list");
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void remindAllShouldHandleStringRecipientCountAsInteger() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", "0");
+            result.put("pendingCount", "3");
+            result.put("weekScope", "current");
+            result.put("recipients", List.of());
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("当前无可提醒导师"));
+    }
+
+    @Test
+    void remindAllShouldHandleNonParsableIntegerValues() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", "abc");
+            result.put("pendingCount", null);
+            result.put("weekScope", "current");
+            result.put("recipients", List.of());
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("当前无可提醒导师"));
+    }
+
+    @Test
+    void exportShouldHandleFalseBooleanString() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", 8L);
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("3"));
+        row.put("availableText", "-");
+        row.put("filled", "false");
+        row.put("canRemind", "0");
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void listShouldHandleNullWeekParam() throws Exception
+    {
+        when(staffScheduleService.selectScheduleList(any())).thenAnswer(invocation -> scheduleRowsRef.get());
+
+        mockMvc.perform(get("/admin/schedule/list")
+                .header("Authorization", "Bearer super-admin-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
     private LoginUser buildLoginUser(String roleKey, String username)
     {
         SysRole role = new SysRole();
@@ -258,5 +719,126 @@ class OsgStaffScheduleControllerTest
             return null;
         }
         return String.valueOf(value).trim();
+    }
+
+    // ==================== ADDITIONAL BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void exportShouldHandleNullStaffId() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", null);
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("3"));
+        row.put("availableText", "-");
+        row.put("filled", true);
+        row.put("canRemind", false);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void exportShouldHandleEmptyStringStaffName() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", 8L);
+        row.put("staffName", "");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("3"));
+        row.put("availableText", "");
+        row.put("filled", true);
+        row.put("canRemind", false);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void remindAllShouldHandleEmptyRecipientsListWithPositiveCount() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", 1);
+            result.put("pendingCount", 1);
+            result.put("weekScope", "current");
+            result.put("recipients", List.of());
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("已提醒 1 位导师"));
+    }
+
+    @Test
+    void remindAllShouldHandleNullRecipientsWithPositiveCount() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", 1);
+            result.put("pendingCount", 1);
+            result.put("weekScope", "current");
+            result.put("recipients", null);
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void exportShouldHandleBlankStringStaffId() throws Exception
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("staffId", "  ");
+        row.put("staffName", "Tom");
+        row.put("staffType", "mentor");
+        row.put("availableHours", new BigDecimal("3"));
+        row.put("availableText", "-");
+        row.put("filled", true);
+        row.put("canRemind", false);
+        scheduleRowsRef.set(List.of(row));
+
+        mockMvc.perform(get("/admin/schedule/export")
+                .header("Authorization", "Bearer super-admin-token")
+                .param("week", "current"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void remindAllShouldHandleNullRecipientCountValue() throws Exception
+    {
+        when(staffScheduleService.remindAll(anyString())).thenAnswer(invocation -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("recipientCount", null);
+            result.put("pendingCount", null);
+            result.put("weekScope", "current");
+            result.put("recipients", List.of());
+            return result;
+        });
+
+        mockMvc.perform(post("/admin/schedule/remind-all")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"week\":\"current\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("当前无可提醒导师"));
     }
 }

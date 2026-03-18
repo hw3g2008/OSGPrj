@@ -100,4 +100,79 @@ class OsgFeedbackControllerTest
         assertEquals(2, stats.get("prepCount"));
         assertFalse(rows.isEmpty());
     }
+    @Test
+    void listShouldDefaultTypeToPrep() throws Exception
+    {
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgClassFeedbackMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, _args) -> switch (method.getName())
+            {
+                case "selectFeedbackList" -> List.of(
+                    Map.of("feedbackId", 30L, "feedbackType", "prep")
+                );
+                case "selectFeedbackStats" -> Map.of("totalCount", 1);
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgFeedbackController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "feedbackMapper", mapperProxy);
+
+        java.lang.reflect.Method listMethod = Arrays.stream(controllerClass.getMethods())
+            .filter(method -> method.getName().equals("list"))
+            .findFirst()
+            .orElseThrow();
+
+        Object result = switch (listMethod.getParameterCount())
+        {
+            case 1 -> listMethod.invoke(controller, (Object) null);
+            case 2 -> listMethod.invoke(controller, null, null);
+            default -> throw new IllegalStateException("Unexpected list signature");
+        };
+
+        AjaxResult ajaxResult = (AjaxResult) result;
+        assertEquals(200, ajaxResult.get("code"));
+    }
+
+    @Test
+    void listShouldDefaultBlankTypeToPrep() throws Exception
+    {
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgClassFeedbackMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, _args) -> switch (method.getName())
+            {
+                case "selectFeedbackList" -> List.of(
+                    Map.of("feedbackId", 31L, "feedbackType", "prep")
+                );
+                case "selectFeedbackStats" -> Map.of("totalCount", 1);
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgFeedbackController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "feedbackMapper", mapperProxy);
+
+        java.lang.reflect.Method listMethod = Arrays.stream(controllerClass.getMethods())
+            .filter(method -> method.getName().equals("list"))
+            .findFirst()
+            .orElseThrow();
+
+        Object result = switch (listMethod.getParameterCount())
+        {
+            case 1 -> listMethod.invoke(controller, "  ");
+            case 2 -> listMethod.invoke(controller, "  ", null);
+            default -> throw new IllegalStateException("Unexpected list signature");
+        };
+
+        AjaxResult ajaxResult = (AjaxResult) result;
+        assertEquals(200, ajaxResult.get("code"));
+    }
+
+
 }

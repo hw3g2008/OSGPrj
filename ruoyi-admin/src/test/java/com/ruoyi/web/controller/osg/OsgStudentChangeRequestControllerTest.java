@@ -110,6 +110,56 @@ class OsgStudentChangeRequestControllerTest
         verify(studentMapper).updateStudent(any(OsgStudent.class));
     }
 
+    @Test
+    void createChangeRequestShouldReturnSuccess() {
+        OsgStudent student = buildStudent();
+        when(studentMapper.selectStudentByStudentId(1L)).thenReturn(student);
+        when(changeRequestMapper.insertChangeRequest(any(OsgStudentChangeRequest.class))).thenReturn(1);
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("studentId", 1L);
+        body.put("changeType", "求职方向");
+        body.put("fieldKey", "majorDirection");
+        body.put("fieldLabel", "主攻方向");
+        body.put("beforeValue", "科技 Tech");
+        body.put("afterValue", "金融 Finance");
+
+        AjaxResult result = controller.submit(body);
+
+        assertEquals(200, result.get("code"));
+        assertEquals("变更申请已提交", result.get("msg"));
+    }
+
+    @Test
+    void rejectChangeRequestShouldReturnSuccess() {
+        OsgStudentChangeRequest request = buildPendingRequest();
+        when(changeRequestMapper.selectChangeRequestById(10L)).thenReturn(request);
+        when(changeRequestMapper.updateChangeRequestReview(any(OsgStudentChangeRequest.class))).thenReturn(1);
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("reason", "信息有误");
+
+        AjaxResult result = controller.reject(10L, body);
+
+        assertEquals(200, result.get("code"));
+        assertEquals("rejected", result.get("status"));
+        assertEquals("变更申请已驳回", result.get("msg"));
+    }
+
+
+    @Test
+    void rejectWithNullBodyShouldUseNullReason()
+    {
+        OsgStudentChangeRequest request = buildPendingRequest();
+        when(changeRequestMapper.selectChangeRequestById(10L)).thenReturn(request);
+        when(changeRequestMapper.updateChangeRequestReview(any(OsgStudentChangeRequest.class))).thenReturn(1);
+
+        AjaxResult result = controller.reject(10L, null);
+
+        assertEquals(200, result.get("code"));
+        assertEquals("rejected", result.get("status"));
+    }
+
     private OsgStudentChangeRequest buildPendingRequest()
     {
         OsgStudentChangeRequest request = new OsgStudentChangeRequest();

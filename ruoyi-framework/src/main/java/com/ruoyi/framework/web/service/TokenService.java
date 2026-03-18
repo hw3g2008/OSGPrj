@@ -131,6 +131,7 @@ public class TokenService
         loginUser.setToken(token);
         setUserAgent(loginUser);
         int tokenExpireTime = rememberMe ? REMEMBER_ME_EXPIRE_TIME : expireTime;
+        loginUser.setTokenExpireMinutes(tokenExpireTime);
         refreshToken(loginUser, tokenExpireTime);
 
         Map<String, Object> claims = new HashMap<>();
@@ -162,7 +163,9 @@ public class TokenService
      */
     public void refreshToken(LoginUser loginUser)
     {
-        refreshToken(loginUser, expireTime);
+        Integer savedExpire = loginUser.getTokenExpireMinutes();
+        int tokenExpireTime = (savedExpire != null && savedExpire > 0) ? savedExpire : expireTime;
+        refreshToken(loginUser, tokenExpireTime);
     }
 
     /**

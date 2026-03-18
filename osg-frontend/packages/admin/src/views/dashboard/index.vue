@@ -154,6 +154,8 @@ onMounted(() => {
 
   &__left {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   &__right {

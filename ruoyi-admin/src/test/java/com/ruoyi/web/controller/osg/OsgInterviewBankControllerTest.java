@@ -196,6 +196,191 @@ class OsgInterviewBankControllerTest
             .andExpect(jsonPath("$.msg").value("没有权限，请联系管理员授权"));
     }
 
+
+    // ==================== BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void listShouldDefaultToNonApplicationsTabWhenTabNull() throws Exception
+    {
+        mockMvc.perform(get("/admin/interview-bank/list")
+                .header("Authorization", "Bearer quiz-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.rows[0].interviewBankName").value("GS Superday Sprint"));
+    }
+
+    @Test
+    void listShouldHandleApplicationsTabCaseInsensitive() throws Exception
+    {
+        mockMvc.perform(get("/admin/interview-bank/list")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .param("tab", "APPLICATIONS"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.rows[0].applicationCode").value("IV001"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenRequiredFieldMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("interviewBankName 不能为空"));
+    }
+
+    @Test
+    void createShouldReturnErrorWhenQuestionCountMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "interviewBankName": "Test",
+                      "interviewStage": "R1",
+                      "interviewType": "Tech",
+                      "industryName": "Tech",
+                      "status": "enabled"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("questionCount 不能为空"));
+    }
+
+    @Test
+    void createShouldAcceptQuestionCountAsString() throws Exception
+    {
+        mockMvc.perform(post("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "interviewBankName": "String Count Bank",
+                      "interviewStage": "R1",
+                      "interviewType": "Tech",
+                      "industryName": "Tech",
+                      "questionCount": "25",
+                      "status": "enabled"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.questionCount").value(25));
+    }
+
+    @Test
+    void updateShouldReturnErrorWhenBankIdMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("bankId 不能为空"));
+    }
+
+    @Test
+    void updateShouldReturnErrorWhenBankNotFound() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"bankId\": 9999}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("题库不存在"));
+    }
+
+    @Test
+    void updateShouldAcceptBankIdAsString() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"bankId\": \"11\", \"status\": \"disabled\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.status").value("disabled"));
+    }
+
+    @Test
+    void updateShouldSkipBlankOptionalFields() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "bankId": 11,
+                      "interviewBankName": "",
+                      "interviewStage": "",
+                      "interviewType": "",
+                      "industryName": "",
+                      "status": ""
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.interviewBankName").value("GS Superday Sprint"))
+            .andExpect(jsonPath("$.data.interviewStage").value("Superday"));
+    }
+
+    @Test
+    void updateShouldApplyOnlyProvidedOptionalFields() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "bankId": 11,
+                      "interviewBankName": "Updated Name",
+                      "questionCount": 99
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.interviewBankName").value("Updated Name"))
+            .andExpect(jsonPath("$.data.questionCount").value(99))
+            .andExpect(jsonPath("$.data.interviewStage").value("Superday"));
+    }
+
+    @Test
+    void updateShouldAcceptQuestionCountAsStringInUpdate() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"bankId\": 11, \"questionCount\": \"55\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.questionCount").value(55));
+    }
+
+
+    @Test
+    void updateShouldHandleQuestionCountAsNull() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "bankId": 11,
+                      "questionCount": null
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.questionCount").value(24));
+    }
+
     private LoginUser buildLoginUser(String roleKey, String username)
     {
         SysRole role = new SysRole();
@@ -325,5 +510,55 @@ class OsgInterviewBankControllerTest
         }
         bankRowsRef.set(updated);
         return 1;
+    }
+
+    // ==================== ADDITIONAL BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void updateShouldHandleNonStringOptionalFields() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"bankId\": 11, \"interviewBankName\": 12345}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.interviewBankName").value("GS Superday Sprint"));
+    }
+
+    @Test
+    void updateShouldHandleQuestionCountAsNonNumberNonString() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"bankId\": 11, \"questionCount\": true}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.questionCount").value(24));
+    }
+
+    @Test
+    void createShouldHandleQuestionCountAsNonNumberNonString() throws Exception
+    {
+        mockMvc.perform(post("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"interviewBankName\": \"Test\", \"interviewStage\": \"R1\", \"interviewType\": \"Tech\", \"industryName\": \"Tech\", \"questionCount\": false, \"status\": \"enabled\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("questionCount 不能为空"));
+    }
+
+    @Test
+    void updateShouldUpdateOnlyInterviewType() throws Exception
+    {
+        mockMvc.perform(put("/admin/interview-bank")
+                .header("Authorization", "Bearer quiz-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"bankId\": 11, \"interviewType\": \"Case\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.interviewType").value("Case"));
     }
 }

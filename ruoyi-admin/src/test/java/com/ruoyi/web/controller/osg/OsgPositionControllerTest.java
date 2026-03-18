@@ -261,6 +261,35 @@ class OsgPositionControllerTest
     }
 
     @Test
+    void batchUploadShouldRejectNonExcelFile() throws Exception
+    {
+        MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "positions.txt",
+            "text/plain",
+            "this is not an excel file".getBytes()
+        );
+
+        var request = multipart("/admin/position/batch-upload").file(file);
+        request.with(req -> {
+            req.setMethod("POST");
+            return req;
+        });
+
+        mockMvc.perform(request.header("Authorization", "Bearer position-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500));
+    }
+
+    @Test
+    void exportShouldReturnExcelForPositionAdmin() throws Exception
+    {
+        mockMvc.perform(get("/admin/position/export")
+                .header("Authorization", "Bearer position-admin-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void listShouldReturnForbiddenForUnauthorizedRole() throws Exception
     {
         mockMvc.perform(get("/admin/position/list")
@@ -383,4 +412,15 @@ class OsgPositionControllerTest
             return out.toByteArray();
         }
     }
+
+    // ==================== ADDITIONAL BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void exportShouldReturnEmptyTemplateWhenTemplateTrue() throws Exception
+    {
+        mockMvc.perform(get("/admin/position/export")
+                .header("Authorization", "Bearer position-admin-token")
+                .param("template", "true"))
+                .andExpect(status().isOk());
+}
 }

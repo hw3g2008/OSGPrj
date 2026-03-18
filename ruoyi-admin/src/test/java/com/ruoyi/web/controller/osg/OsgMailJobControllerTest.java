@@ -130,4 +130,76 @@ class OsgMailJobControllerTest
         assertEquals("导师周报", rowsAfterCreate.get(1).get("jobTitle"));
         assertEquals("Primary SMTP", rowsAfterCreate.get(1).get("smtpServerName"));
     }
+    @Test
+    void createShouldDefaultNullCountsToZeroAndSetCreateTime() throws Exception
+    {
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgMailJobMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> switch (method.getName())
+            {
+                case "selectMailJobList" -> new ArrayList<>(rows);
+                case "insertMailJob" -> {
+                    Object job = args[0];
+                    job.getClass().getMethod("setJobId", Long.class).invoke(job, 9L);
+                    yield 1;
+                }
+                default -> null;
+            }
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgMailJobController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "mailJobMapper", mapperProxy);
+
+        Class<?> jobClass = Class.forName("com.ruoyi.system.domain.OsgMailJob");
+        Object job = jobClass.getDeclaredConstructor().newInstance();
+        jobClass.getMethod("setJobTitle", String.class).invoke(job, "Test Job");
+        jobClass.getMethod("setRecipientGroup", String.class).invoke(job, "all");
+        jobClass.getMethod("setEmailSubject", String.class).invoke(job, "Test");
+        jobClass.getMethod("setEmailContent", String.class).invoke(job, "Test content");
+        jobClass.getMethod("setSmtpServerName", String.class).invoke(job, "Primary SMTP");
+        // Do NOT set totalCount, pendingCount, successCount, failCount, createTime - they should default
+
+        java.lang.reflect.Method createMethod = controllerClass.getMethod("create", jobClass);
+        AjaxResult result = (AjaxResult) createMethod.invoke(controller, job);
+        assertEquals(200, result.get("code"));
+
+        // Verify defaults were applied
+        assertEquals(0, jobClass.getMethod("getTotalCount").invoke(job));
+        assertEquals(0, jobClass.getMethod("getPendingCount").invoke(job));
+        assertEquals(0, jobClass.getMethod("getSuccessCount").invoke(job));
+        assertEquals(0, jobClass.getMethod("getFailCount").invoke(job));
+        assertTrue(jobClass.getMethod("getCreateTime").invoke(job) != null);
+    }
+
+    @Test
+    void createShouldRejectUnknownSmtpServer() throws Exception
+    {
+        Class<?> mapperClass = Class.forName("com.ruoyi.system.mapper.OsgMailJobMapper");
+        Object mapperProxy = Proxy.newProxyInstance(
+            mapperClass.getClassLoader(),
+            new Class<?>[] { mapperClass },
+            (_proxy, method, args) -> null
+        );
+
+        Class<?> controllerClass = Class.forName("com.ruoyi.web.controller.osg.OsgMailJobController");
+        Object controller = controllerClass.getDeclaredConstructor().newInstance();
+        ReflectionTestUtils.setField(controller, "mailJobMapper", mapperProxy);
+
+        Class<?> jobClass = Class.forName("com.ruoyi.system.domain.OsgMailJob");
+        Object job = jobClass.getDeclaredConstructor().newInstance();
+        jobClass.getMethod("setJobTitle", String.class).invoke(job, "Test");
+        jobClass.getMethod("setSmtpServerName", String.class).invoke(job, "Unknown SMTP");
+
+        java.lang.reflect.Method createMethod = controllerClass.getMethod("create", jobClass);
+        AjaxResult result = (AjaxResult) createMethod.invoke(controller, job);
+        assertEquals(500, result.get("code"));
+        assertEquals("SMTP未配置，无法发送邮件任务", result.get("msg"));
+    }
+
+
 }

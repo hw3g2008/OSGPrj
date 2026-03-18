@@ -1,6 +1,6 @@
 import { expect, type APIRequestContext, type APIResponse, type Page } from '@playwright/test'
 import { resolveAuthRuntimeConfig } from './auth-config'
-import { readRedisValue } from './redis-runtime'
+import { readRedisValue, deleteRedisKeys } from './redis-runtime'
 
 const E2E_TIMEOUT_MS = Number(process.env.E2E_WAIT_TIMEOUT_MS || 15000)
 const authConfig = resolveAuthRuntimeConfig()
@@ -54,6 +54,10 @@ export async function loginAsAdminApi(request: APIRequestContext): Promise<{ tok
     loginBody = JSON.parse(raw)
   } catch {
     throw new Error(`/api/login should return JSON, raw=${raw.slice(0, 500)}`)
+  }
+  if (loginBody.code !== 200) {
+    // Clear login error counter to prevent account lockout from captcha expiry
+    try { deleteRedisKeys(['pwd_err_cnt:' + authConfig.username]) } catch { /* best-effort */ }
   }
   expect(
     loginBody.code,

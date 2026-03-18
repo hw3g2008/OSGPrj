@@ -169,6 +169,141 @@ class OsgFileControllerTest
             .andExpect(jsonPath("$.msg").value("没有权限，请联系管理员授权"));
     }
 
+
+    // ==================== BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void createFolderShouldReturnErrorWhenFolderNameMissing() throws Exception
+    {
+        mockMvc.perform(post("/admin/file/folder")
+                .header("Authorization", "Bearer file-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("folderName 不能为空"));
+    }
+
+    @Test
+    void createFolderShouldUseDefaultClassNameWhenNotProvided() throws Exception
+    {
+        mockMvc.perform(post("/admin/file/folder")
+                .header("Authorization", "Bearer file-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"folderName\":\"Default Class Folder\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.className").value("All"));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorWhenFileIdMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("fileId 不能为空"));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorWhenFileNotFound() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 9999, \"authType\": \"all\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("文件不存在"));
+    }
+
+    @Test
+    void updateAuthShouldSetAllAuthTypeWithEmptyList() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 20, \"authType\": \"all\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.authorizedTo").value("全部用户"));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorForUnsupportedAuthType() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 20, \"authType\": \"unknown\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("不支持的授权类型"));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorForEmptyAuthorizedTargets() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 20, \"authType\": \"class\", \"authorizedClasses\": []}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("授权目标不能为空"));
+    }
+
+    @Test
+    void updateAuthShouldAcceptFileIdAsString() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": \"20\", \"authType\": \"all\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void updateAuthShouldAcceptClassAuthType() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 20, \"authType\": \"class\", \"authorizedClasses\": [\"2025Spring\"]}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.authorizedTo").value("2025Spring"));
+    }
+
+    @Test
+    void updateAuthShouldHandleNonListAuthorizedClasses() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 20, \"authType\": \"class\", \"authorizedClasses\": \"notAList\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("授权目标不能为空"));
+    }
+
+    @Test
+    void listShouldShowUnauthorizedForFileWithEmptyAuthList() throws Exception
+    {
+        OsgFile noAuthFile = buildFile(25L, "NoAuth.pdf", "pdf", "All", "1 MB", "user", "");
+        filesRef.get().add(noAuthFile);
+
+        mockMvc.perform(get("/admin/file/list")
+                .header("Authorization", "Bearer file-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.rows[3].authorizedTo").value("未授权"));
+    }
+
     private LoginUser buildLoginUser(String roleKey, String username)
     {
         SysRole role = new SysRole();
@@ -306,5 +441,55 @@ class OsgFileControllerTest
             authRef.get().add(auth);
         }
         return authList.size();
+    }
+
+    // ==================== ADDITIONAL BRANCH COVERAGE TESTS ====================
+
+    @Test
+    void updateAuthShouldHandleNullItemsInAuthorizedList() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 20, \"authType\": \"user\", \"authorizedUsers\": [\"Alice\", null, \"\", \"  \", \"Bob\"]}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.authorizedTo").value("Alice, Bob"));
+    }
+
+    @Test
+    void createFolderShouldHandleBlankClassName() throws Exception
+    {
+        mockMvc.perform(post("/admin/file/folder")
+                .header("Authorization", "Bearer file-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"folderName\":\"Test Folder\",\"className\":\"\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.className").value("All"));
+    }
+
+    @Test
+    void updateAuthShouldHandleFileIdAsNumber() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 20, \"authType\": \"user\", \"authorizedUsers\": [\"Charlie\"]}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.authorizedTo").value("Charlie"));
+    }
+
+    @Test
+    void updateAuthShouldReturnErrorWhenAuthTypeMissing() throws Exception
+    {
+        mockMvc.perform(put("/admin/file/auth")
+                .header("Authorization", "Bearer super-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileId\": 20}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(500))
+            .andExpect(jsonPath("$.msg").value("authType 不能为空"));
     }
 }
