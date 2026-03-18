@@ -1,4 +1,30 @@
 @import '@mdi/font/css/materialdesignicons.css';
+
+// ── Design Tokens (aligned with admin.html prototype) ──
+:root {
+  // Primary palette
+  --primary: #6366F1;
+  --primary-light: #EEF2FF;
+  --primary-dark: #4F46E5;
+
+  // Semantic colors
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+
+  // Text colors
+  --text: #1E293B;
+  --text2: #64748B;
+  --muted: #94A3B8;
+
+  // Layout colors
+  --border: #E2E8F0;
+  --bg: #F8FAFC;
+
+  // Shadows
+  --card-shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
+}
+
 // 全局样式
 * {
   margin: 0;
@@ -9,7 +35,8 @@
 html, body {
   width: 100%;
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text);
 }
 
 #app {

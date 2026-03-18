@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="student-status-change-modal"
-    width="520px"
+    width="480px"
     :body-class="'student-status-modal__body'"
     @cancel="handleClose"
   >
@@ -14,6 +14,9 @@
     </template>
 
     <div class="student-status-modal__intro">
+      <div class="student-status-modal__icon-circle" :class="`student-status-modal__icon-circle--${action}`">
+        <span class="mdi" :class="actionIcon" aria-hidden="true"></span>
+      </div>
       <strong>{{ studentName || '当前学员' }}</strong>
       <span>{{ modalDescription }}</span>
     </div>
@@ -92,9 +95,11 @@ const formState = reactive({
 
 const reasonOptionMap: Record<'freeze' | 'refund', { label: string; value: string }[]> = {
   freeze: [
-    { label: '课时欠费', value: 'payment_overdue' },
-    { label: '违反学习规范', value: 'policy_violation' },
-    { label: '资料待补齐', value: 'document_pending' }
+    { label: '学员申请暂停', value: 'student_pause' },
+    { label: '课时用完待续费', value: 'hours_exhausted' },
+    { label: '违反服务协议', value: 'policy_violation' },
+    { label: '学员申请退费', value: 'student_refund_request' },
+    { label: '其他原因', value: 'other' }
   ],
   refund: [
     { label: '服务终止', value: 'service_terminated' },
@@ -181,21 +186,60 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped lang="scss">
+:global([data-surface-id="student-status-change-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #7399C6, #5A7BA3);
+  border-bottom: none;
+}
+
+:global([data-surface-id="student-status-change-modal"] [data-surface-part="header"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
 .student-status-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  color: #fff;
 }
 
 .student-status-modal__intro {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
   margin-bottom: 18px;
   padding: 14px 16px;
   border-radius: 16px;
   background: linear-gradient(135deg, rgba(219, 234, 254, 0.68), rgba(254, 249, 195, 0.52));
   color: #1f2937;
+  text-align: center;
+}
+
+.student-status-modal__icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  font-size: 36px;
+
+  &--freeze {
+    background: #DBEAFE;
+    color: #1E40AF;
+  }
+
+  &--refund {
+    background: #FEE2E2;
+    color: #991B1B;
+  }
+
+  &--restore {
+    background: #DCFCE7;
+    color: #166534;
+  }
 }
 
 .student-status-modal__label {

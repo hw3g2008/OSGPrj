@@ -5,7 +5,7 @@ export interface StudentColumn {
 
 export const studentColumns: StudentColumn[] = [
   { key: 'id', label: 'ID' },
-  { key: 'englishName', label: '英文姓名' },
+  { key: 'englishName', label: '姓名' },
   { key: 'email', label: '邮箱' },
   { key: 'leadMentor', label: '班主任' },
   { key: 'school', label: '学校' },

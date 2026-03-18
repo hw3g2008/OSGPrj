@@ -2,32 +2,25 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="student-detail-modal"
-    width="980px"
-    :body-class="'student-detail-modal__body'"
+    width="960px"
+    :shell-class="'sdm-shell'"
+    :body-class="'sdm-body'"
     @cancel="handleClose"
   >
     <template #title>
-      <div class="student-detail-modal__title-wrap">
-        <div>
-          <span class="student-detail-modal__eyebrow">Student Detail</span>
-          <div class="student-detail-modal__title">
-            <span class="mdi mdi-account-box-outline" aria-hidden="true"></span>
-            <span>{{ modalTitle }}</span>
+      <div class="sdm-header">
+        <div class="sdm-header__avatar">{{ initials }}</div>
+        <div class="sdm-header__info">
+          <span class="sdm-header__name">{{ modalTitle }}</span>
+          <div class="sdm-header__meta">
+            ID: {{ detail?.studentId ?? '-' }} ·
+            <span class="sdm-header__status-pill">{{ formatAccountStatus(detail?.accountStatus) }}</span>
           </div>
         </div>
-        <button
-          type="button"
-          class="student-detail-modal__edit-button"
-          :disabled="!studentId"
-          @click="handleRequestEdit"
-        >
-          <span class="mdi mdi-pencil-outline" aria-hidden="true"></span>
-          <span>前往编辑页</span>
-        </button>
       </div>
     </template>
 
-    <div v-if="!canView" class="student-detail-modal__guard">
+    <div v-if="!canView" class="sdm-guard">
       <span class="mdi mdi-shield-alert-outline" aria-hidden="true"></span>
       <div>
         <strong>当前角色无权查看学员详情</strong>
@@ -36,173 +29,183 @@
     </div>
 
     <template v-else>
-      <div class="student-detail-modal__hero">
-        <div>
-          <strong>{{ detail?.studentName || fallbackStudentName }}</strong>
-          <p>{{ detail?.school || '学校待补充' }} · {{ detail?.major || '专业待补充' }}</p>
-        </div>
-        <div class="student-detail-modal__hero-tags">
-          <span class="student-detail-modal__pill student-detail-modal__pill--accent">
-            {{ formatAccountStatus(detail?.accountStatus) }}
-          </span>
-          <span class="student-detail-modal__pill">{{ detail?.targetRegion || '地区待补充' }}</span>
-          <span class="student-detail-modal__pill">{{ firstDirectionLabel }}</span>
-        </div>
-      </div>
-
-      <div class="student-detail-modal__stats">
-        <article class="student-detail-modal__stat-card">
-          <span>合同总额</span>
-          <strong>{{ formatCurrency(contractSummary.totalAmount) }}</strong>
-          <small>当前已归档合同金额汇总</small>
-        </article>
-        <article class="student-detail-modal__stat-card">
-          <span>总课时</span>
-          <strong>{{ contractSummary.totalHours }}h</strong>
-          <small>含当前所有有效合同</small>
-        </article>
-        <article class="student-detail-modal__stat-card">
-          <span>剩余课时</span>
-          <strong>{{ contractSummary.remainingHours }}h</strong>
-          <small>按已审核课时记录实时汇总</small>
-        </article>
-      </div>
-
-      <div class="student-detail-modal__tabs">
+      <!-- Tabs -->
+      <div class="sdm-tabs">
         <button
-          v-for="tab in tabs"
+          v-for="tab in tabDefs"
           :key="tab.key"
           type="button"
-          :class="['student-detail-modal__tab', { 'student-detail-modal__tab--active': activeTab === tab.key }]"
+          :class="['sdm-tabs__item', { 'sdm-tabs__item--active': activeTab === tab.key }]"
           @click="activeTab = tab.key"
         >
-          <span>{{ tab.label }}</span>
-          <small>{{ tab.hint }}</small>
+          <i :class="['mdi', tab.icon]" aria-hidden="true" style="margin-right:6px"></i>{{ tab.label }}
+          <span v-if="tab.key === 'changes' && pendingChanges.length > 0" class="sdm-tabs__dot"></span>
         </button>
       </div>
 
-      <div v-if="loading" class="student-detail-modal__loading">
+      <!-- Loading / Error -->
+      <div v-if="loading" class="sdm-loading">
         <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
         <span>正在加载学员详情...</span>
       </div>
-
-      <div v-else-if="loadError" class="student-detail-modal__error">
+      <div v-else-if="loadError" class="sdm-error">
         <strong>详情加载失败</strong>
         <p>{{ loadError }}</p>
       </div>
 
-      <div v-else-if="activeTab === 'profile'" class="student-detail-modal__content">
-        <section class="student-detail-modal__panel">
-          <header>
-            <strong>核心信息</strong>
-            <span>展示身份、联系方式与当前求职阶段</span>
-          </header>
-          <dl class="student-detail-modal__detail-grid">
-            <div>
-              <dt>英文姓名</dt>
-              <dd>{{ detail?.studentName || '-' }}</dd>
+      <!-- Tab 1: 基本信息 -->
+      <div v-else-if="activeTab === 'profile'" class="sdm-content">
+        <!-- 核心信息 -->
+        <section class="sdm-section sdm-section--primary">
+          <div class="sdm-section__badge sdm-badge--primary">核心信息</div>
+          <div class="sdm-grid sdm-grid--4">
+            <div class="sdm-field">
+              <span class="sdm-field__label">英文姓名</span>
+              <div class="sdm-field__value sdm-field__value--bold">{{ detail?.studentName || '-' }}</div>
             </div>
-            <div>
-              <dt>邮箱</dt>
-              <dd>{{ detail?.email || '-' }}</dd>
+            <div class="sdm-field">
+              <span class="sdm-field__label">性别</span>
+              <div class="sdm-field__value">{{ formatGender(detail?.gender) }}</div>
             </div>
-            <div>
-              <dt>性别</dt>
-              <dd>{{ formatGender(detail?.gender) }}</dd>
+            <div class="sdm-field sdm-field--span2">
+              <span class="sdm-field__label">邮箱</span>
+              <div class="sdm-field__value">{{ detail?.email || '-' }}</div>
             </div>
-            <div>
-              <dt>微信</dt>
-              <dd>{{ detail?.contact?.wechat || '-' }}</dd>
-            </div>
-            <div>
-              <dt>手机号</dt>
-              <dd>{{ detail?.contact?.phone || '-' }}</dd>
-            </div>
-            <div>
-              <dt>账号状态</dt>
-              <dd>{{ formatAccountStatus(detail?.accountStatus) }}</dd>
-            </div>
-          </dl>
+          </div>
         </section>
 
-        <section class="student-detail-modal__split">
-          <article class="student-detail-modal__panel">
-            <header>
-              <strong>导师配置</strong>
-              <span>班主任、助教与当前交付归属</span>
-            </header>
-            <dl class="student-detail-modal__detail-grid">
-              <div>
-                <dt>班主任</dt>
-                <dd>{{ detail?.mentor?.leadMentorName || '-' }}</dd>
+        <!-- 导师配置 -->
+        <section class="sdm-section">
+          <div class="sdm-section__badge sdm-badge--indigo">
+            <i class="mdi mdi-account-group" aria-hidden="true"></i> 导师配置
+          </div>
+          <div class="sdm-grid sdm-grid--2">
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">班主任</span>
+              <div class="sdm-field__pills">
+                <span v-if="detail?.mentor?.leadMentorName" class="sdm-pill sdm-pill--indigo">{{ detail.mentor.leadMentorName }}</span>
+                <span v-else class="sdm-field__value">{{ detail?.mentor?.leadMentorId ?? '-' }}</span>
               </div>
-              <div>
-                <dt>助教</dt>
-                <dd>{{ detail?.mentor?.assistantName || '-' }}</dd>
+            </div>
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">助教</span>
+              <div class="sdm-field__pills">
+                <span v-if="detail?.mentor?.assistantName" class="sdm-pill sdm-pill--green">{{ detail.mentor.assistantName }}</span>
+                <span v-else class="sdm-field__value">{{ detail?.mentor?.assistantId ?? '-' }}</span>
               </div>
-              <div>
-                <dt>班主任 ID</dt>
-                <dd>{{ detail?.mentor?.leadMentorId ?? '-' }}</dd>
-              </div>
-              <div>
-                <dt>助教 ID</dt>
-                <dd>{{ detail?.mentor?.assistantId ?? '-' }}</dd>
-              </div>
-            </dl>
-          </article>
-
-          <article class="student-detail-modal__panel">
-            <header>
-              <strong>学业信息</strong>
-              <span>学校、专业、毕业年份与升学状态</span>
-            </header>
-            <dl class="student-detail-modal__detail-grid">
-              <div>
-                <dt>学校</dt>
-                <dd>{{ detail?.school || '-' }}</dd>
-              </div>
-              <div>
-                <dt>专业</dt>
-                <dd>{{ detail?.major || '-' }}</dd>
-              </div>
-              <div>
-                <dt>毕业年份</dt>
-                <dd>{{ detail?.graduationYear ?? '-' }}</dd>
-              </div>
-              <div>
-                <dt>是否读研 / 延毕</dt>
-                <dd>{{ formatStudyPlan(detail?.academic?.studyPlan, detail?.academic?.deferredGraduation) }}</dd>
-              </div>
-            </dl>
-          </article>
+            </div>
+          </div>
         </section>
 
-        <section class="student-detail-modal__panel">
-          <header>
-            <strong>求职方向</strong>
-            <span>地区、招聘周期、主攻方向与子方向</span>
-          </header>
-          <div class="student-detail-modal__direction-wrap">
-            <div class="student-detail-modal__direction-card">
-              <span>求职地区</span>
-              <strong>{{ detail?.jobDirection?.targetRegion || detail?.targetRegion || '-' }}</strong>
+        <!-- 学业信息 -->
+        <section class="sdm-section">
+          <div class="sdm-section__badge sdm-badge--blue">
+            <i class="mdi mdi-school" aria-hidden="true"></i> 学业信息
+          </div>
+          <div class="sdm-grid sdm-grid--4">
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">学校</span>
+              <div class="sdm-field__value">{{ detail?.school || '-' }}</div>
             </div>
-            <div class="student-detail-modal__direction-card">
-              <span>招聘周期</span>
-              <strong>{{ formatList(detail?.jobDirection?.recruitmentCycles) }}</strong>
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">专业</span>
+              <div class="sdm-field__value">{{ detail?.major || '-' }}</div>
             </div>
-            <div class="student-detail-modal__direction-card">
-              <span>主攻方向</span>
-              <strong>{{ formatList(detail?.jobDirection?.majorDirections) }}</strong>
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">毕业年份</span>
+              <div class="sdm-field__value">{{ detail?.graduationYear ?? '-' }}</div>
             </div>
-            <div class="student-detail-modal__direction-card">
-              <span>子方向</span>
-              <strong>{{ detail?.jobDirection?.subDirection || detail?.subDirection || '-' }}</strong>
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">高中</span>
+              <div class="sdm-field__value">-</div>
+            </div>
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">是否读研或延毕</span>
+              <div class="sdm-field__value">{{ formatStudyPlan(detail?.academic?.studyPlan, detail?.academic?.deferredGraduation) }}</div>
+            </div>
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">签证</span>
+              <div class="sdm-field__value">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 求职方向 -->
+        <section class="sdm-section">
+          <div class="sdm-section__badge sdm-badge--amber">
+            <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
+          </div>
+          <!-- 求职地区 -->
+          <div class="sdm-field sdm-field" style="margin-bottom:12px">
+            <span class="sdm-field__label">求职地区</span>
+            <div class="sdm-field__pills">
+              <span v-if="detail?.jobDirection?.targetRegion || detail?.targetRegion" class="sdm-pill sdm-pill--green">
+                {{ detail?.jobDirection?.targetRegion || detail?.targetRegion }}
+              </span>
+              <span v-else class="sdm-field__value">-</span>
+            </div>
+          </div>
+          <!-- 招聘周期 -->
+          <div class="sdm-field sdm-field" style="margin-bottom:12px">
+            <span class="sdm-field__label">招聘周期</span>
+            <div class="sdm-field__pills">
+              <span
+                v-for="cycle in (detail?.jobDirection?.recruitmentCycles || detail?.recruitmentCycles || [])"
+                :key="cycle"
+                class="sdm-pill sdm-pill--blue"
+              >{{ cycle }}</span>
+              <span v-if="!(detail?.jobDirection?.recruitmentCycles || detail?.recruitmentCycles || []).length" class="sdm-field__value">-</span>
+            </div>
+          </div>
+          <!-- 主攻方向 + 子方向 -->
+          <div class="sdm-grid sdm-grid--direction">
+            <div class="sdm-field sdm-field sdm-field--bordered">
+              <span class="sdm-field__label" style="color:var(--primary)">主攻方向</span>
+              <div class="sdm-field__pills">
+                <span
+                  v-for="dir in (detail?.jobDirection?.majorDirections || detail?.majorDirections || [])"
+                  :key="dir"
+                  class="sdm-pill sdm-pill--purple"
+                >{{ dir }}</span>
+                <span v-if="!(detail?.jobDirection?.majorDirections || detail?.majorDirections || []).length" class="sdm-field__value">-</span>
+              </div>
+            </div>
+            <div class="sdm-field sdm-field sdm-field--bordered">
+              <span class="sdm-field__label" style="color:var(--primary)">子方向</span>
+              <div class="sdm-field__pills">
+                <span class="sdm-pill sdm-pill--sub">{{ detail?.jobDirection?.subDirection || detail?.subDirection || '-' }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 联系方式 -->
+        <section class="sdm-section">
+          <div class="sdm-section__badge sdm-badge--green">
+            <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式
+          </div>
+          <div class="sdm-grid sdm-grid--3">
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">电话</span>
+              <div class="sdm-field__value">{{ detail?.contact?.phone || '-' }}</div>
+            </div>
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">微信ID</span>
+              <div class="sdm-field__value">{{ detail?.contact?.wechat || '-' }}</div>
+            </div>
+            <div class="sdm-field sdm-field">
+              <span class="sdm-field__label">状态</span>
+              <div>
+                <span :class="['sdm-status-tag', `sdm-status-tag--${statusColor}`]">
+                  {{ formatAccountStatus(detail?.accountStatus) }}
+                </span>
+              </div>
             </div>
           </div>
         </section>
       </div>
 
+      <!-- Tab 2: 信息变更 -->
       <ChangeReviewTab
         v-else-if="activeTab === 'changes'"
         :pending-changes="pendingChanges"
@@ -211,6 +214,7 @@
         @reject="handleChangeDecision('reject', $event)"
       />
 
+      <!-- Tab 3: 合同信息 -->
       <ContractTab
         v-else
         :summary="contractSummary"
@@ -331,11 +335,13 @@ const emit = defineEmits<{
   'review-updated': []
 }>()
 
-const tabs = [
-  { key: 'profile', label: '基本信息', hint: '学生画像 + 辅导归属' },
-  { key: 'changes', label: '信息变更', hint: '待审核 + 历史记录' },
-  { key: 'contracts', label: '合同信息', hint: '金额 / 课时 / 合同列表' }
+const tabDefs = [
+  { key: 'profile', label: '基本信息', icon: 'mdi-account' },
+  { key: 'changes', label: '信息变更', icon: 'mdi-bell-ring' },
+  { key: 'contracts', label: '合同信息', icon: 'mdi-file-sign' }
 ] as const
+
+const tabs = tabDefs
 
 const activeTab = ref<(typeof tabs)[number]['key']>('profile')
 const loading = ref(false)
@@ -350,6 +356,22 @@ const modalTitle = computed(() => detail.value?.studentName || fallbackStudentNa
 const firstDirectionLabel = computed(() => {
   const directions = detail.value?.jobDirection?.majorDirections || detail.value?.majorDirections || []
   return directions[0] || '方向待补充'
+})
+
+const initials = computed(() => {
+  const name = detail.value?.studentName || props.studentName || ''
+  const parts = name.split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.substring(0, 2).toUpperCase()
+})
+
+const statusColor = computed(() => {
+  switch (detail.value?.accountStatus) {
+    case '1': return 'frozen'
+    case '2': return 'ended'
+    case '3': return 'refunded'
+    default: return 'normal'
+  }
 })
 
 const contractSummary = computed<ContractSummary>(() => ({
@@ -502,302 +524,306 @@ const formatCurrency = (value?: number) => {
 </script>
 
 <style scoped lang="scss">
-.student-detail-modal__title-wrap {
+/* ── Header (override OverlaySurfaceModal header) ── */
+:global([data-surface-id="student-detail-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0;
+  padding: 22px 26px !important;
+}
+
+:global([data-surface-id="student-detail-modal"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
+.sdm-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
 
-.student-detail-modal__eyebrow {
-  display: inline-flex;
-  margin-bottom: 6px;
-  color: #9f6b2e;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.student-detail-modal__title {
-  display: inline-flex;
+.sdm-header__avatar {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  color: #0f172a;
-  font-size: 22px;
+  justify-content: center;
+  font-size: 20px;
   font-weight: 700;
-}
-
-.student-detail-modal__edit-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 999px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
   color: #fff;
-  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sdm-header__name {
+  display: block;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sdm-header__meta {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4px;
+}
+
+.sdm-header__status-pill {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+/* ── Tabs ── */
+.sdm-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border, #E2E8F0);
+  background: #F8FAFC;
+}
+
+.sdm-tabs__item {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 12px 28px rgba(15, 118, 110, 0.22);
+  border-bottom: 3px solid transparent;
+  color: var(--text2, #64748B);
+  transition: color 0.2s, border-color 0.2s;
+  position: relative;
+
+  &--active {
+    border-bottom-color: var(--primary, #6366F1);
+    color: var(--primary, #6366F1);
+  }
+
+  &:hover:not(.sdm-tabs__item--active) {
+    color: var(--text, #1E293B);
+  }
 }
 
-.student-detail-modal__edit-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
+.sdm-tabs__dot {
+  position: absolute;
+  top: 8px;
+  right: 20%;
+  width: 8px;
+  height: 8px;
+  background: var(--danger, #EF4444);
+  border-radius: 50%;
 }
 
-.student-detail-modal__guard,
-.student-detail-modal__loading,
-.student-detail-modal__error {
+/* ── Loading / Error / Guard ── */
+.sdm-guard,
+.sdm-loading,
+.sdm-error {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 14px;
   align-items: start;
-  border-radius: 24px;
+  border-radius: 12px;
   padding: 18px 20px;
+  margin: 24px;
   background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 100%);
   color: #7c2d12;
+
+  .mdi { font-size: 22px; }
 }
 
-.student-detail-modal__guard .mdi,
-.student-detail-modal__loading .mdi,
-.student-detail-modal__error .mdi {
-  font-size: 22px;
-}
-
-.student-detail-modal__hero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+/* ── Content container ── */
+.sdm-content {
+  display: grid;
   gap: 20px;
-  border-radius: 28px;
-  padding: 24px 28px;
-  background:
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 42%),
-    linear-gradient(135deg, #0f172a 0%, #1e293b 46%, #164e63 100%);
-  color: #f8fafc;
+  padding: 24px;
 }
 
-.student-detail-modal__hero strong {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 26px;
-  line-height: 1.1;
+/* ── Section cards ── */
+.sdm-section {
+  background: #fff;
+  border: 1px solid var(--border, #E2E8F0);
+  border-radius: 12px;
+  padding: 20px;
 }
 
-.student-detail-modal__hero p {
-  margin: 0;
-  color: rgba(248, 250, 252, 0.74);
+.sdm-section--primary {
+  border: 2px solid var(--primary, #6366F1);
 }
 
-.student-detail-modal__hero-tags {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.student-detail-modal__pill {
+/* ── Section badges ── */
+.sdm-section__badge {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #e2e8f0;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  backdrop-filter: blur(12px);
+  margin-bottom: 16px;
 }
 
-.student-detail-modal__pill--accent {
-  background: rgba(251, 191, 36, 0.16);
-  color: #fef3c7;
+.sdm-badge--primary {
+  background: var(--primary, #6366F1);
+  color: #fff;
 }
 
-.student-detail-modal__stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 18px;
+.sdm-badge--indigo {
+  background: #E0E7FF;
+  color: #4338CA;
 }
 
-.student-detail-modal__stat-card {
-  border-radius: 24px;
-  padding: 18px 20px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 20px 50px rgba(15, 23, 42, 0.06);
+.sdm-badge--blue {
+  background: #E8F0F8;
+  color: var(--primary, #6366F1);
 }
 
-.student-detail-modal__stat-card span,
-.student-detail-modal__stat-card small {
-  display: block;
+.sdm-badge--amber {
+  background: #FEF3C7;
+  color: #92400E;
 }
 
-.student-detail-modal__stat-card span {
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.sdm-badge--green {
+  background: #DCFCE7;
+  color: #166534;
 }
 
-.student-detail-modal__stat-card strong {
-  display: block;
-  margin: 12px 0 8px;
-  color: #0f172a;
-  font-size: 26px;
-  line-height: 1;
-}
-
-.student-detail-modal__stat-card small {
-  color: #94a3b8;
-  line-height: 1.5;
-}
-
-.student-detail-modal__tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.student-detail-modal__tab {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 22px;
-  padding: 16px 18px;
-  background: #fff;
-  color: #0f172a;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-}
-
-.student-detail-modal__tab span {
-  font-weight: 700;
-}
-
-.student-detail-modal__tab small {
-  color: #64748b;
-  line-height: 1.4;
-}
-
-.student-detail-modal__tab:hover,
-.student-detail-modal__tab--active {
-  border-color: rgba(14, 165, 233, 0.28);
-  box-shadow: 0 18px 40px rgba(14, 165, 233, 0.12);
-  transform: translateY(-1px);
-}
-
-.student-detail-modal__content {
+/* ── Grid layouts ── */
+.sdm-grid {
   display: grid;
   gap: 16px;
-  margin-top: 18px;
 }
 
-.student-detail-modal__split {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+.sdm-grid--4 { grid-template-columns: repeat(4, 1fr); }
+.sdm-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.sdm-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.sdm-grid--direction { grid-template-columns: 1fr 2fr; }
+
+/* ── Field cells ── */
+.sdm-field {
+  background: #F8FAFC;
+  padding: 12px;
+  border-radius: 8px;
 }
 
-.student-detail-modal__panel {
-  border-radius: 24px;
-  padding: 22px;
-  background:
-    radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 36%),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+.sdm-field--bordered {
+  border: 1px solid var(--border, #E2E8F0);
 }
 
-.student-detail-modal__panel header {
+.sdm-field--span2 {
+  grid-column: span 2;
+}
+
+.sdm-field__label {
+  display: block;
+  color: var(--muted, #94A3B8);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.sdm-field__value {
+  font-size: 14px;
+  color: #0F172A;
+}
+
+.sdm-field__value--bold {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.sdm-field__pills {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.student-detail-modal__panel header strong {
-  color: #0f172a;
-  font-size: 16px;
-}
-
-.student-detail-modal__panel header span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.student-detail-modal__detail-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px 14px;
-  margin: 0;
-}
-
-.student-detail-modal__detail-grid div {
-  display: grid;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
-.student-detail-modal__detail-grid dt {
-  color: #94a3b8;
-  font-size: 12px;
-}
-
-.student-detail-modal__detail-grid dd {
-  margin: 0;
-  color: #0f172a;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.student-detail-modal__direction-wrap {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.student-detail-modal__direction-card {
+/* ── Pill tags ── */
+.sdm-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
   border-radius: 20px;
-  padding: 16px;
-  background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
-}
-
-.student-detail-modal__direction-card span {
-  display: block;
-  margin-bottom: 10px;
-  color: #64748b;
   font-size: 12px;
+  font-weight: 500;
 }
 
-.student-detail-modal__direction-card strong {
-  color: #0f172a;
-  font-size: 14px;
-  line-height: 1.5;
+.sdm-pill--indigo {
+  background: #E0E7FF;
+  color: #4338CA;
 }
 
-@media (max-width: 900px) {
-  .student-detail-modal__title-wrap,
-  .student-detail-modal__hero {
-    flex-direction: column;
+.sdm-pill--green {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.sdm-pill--blue {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.sdm-pill--purple {
+  background: var(--primary-light, #EEF2FF);
+  color: var(--primary-dark, #4F46E5);
+}
+
+.sdm-pill--sub {
+  background: #EFF6FF;
+  color: #1E40AF;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* ── Status tag ── */
+.sdm-status-tag {
+  display: inline-flex;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sdm-status-tag--normal {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.sdm-status-tag--frozen {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.sdm-status-tag--ended {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+.sdm-status-tag--refunded {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .sdm-grid--4,
+  .sdm-grid--3,
+  .sdm-grid--direction {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .student-detail-modal__stats,
-  .student-detail-modal__tabs,
-  .student-detail-modal__split,
-  .student-detail-modal__detail-grid,
-  .student-detail-modal__direction-wrap {
+  .sdm-grid--2 {
     grid-template-columns: 1fr;
   }
 
-  .student-detail-modal__hero-tags {
-    justify-content: flex-start;
+  .sdm-field--span2 {
+    grid-column: span 1;
   }
 }
 </style>

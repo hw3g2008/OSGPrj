@@ -88,7 +88,13 @@ const formatDateRange = (startDate?: string, endDate?: string) => {
   if (!startDate && !endDate) {
     return '-'
   }
-  return `${startDate || '-'} 至 ${endDate || '-'}`
+  const fmt = (d?: string) => {
+    if (!d) return '-'
+    const date = new Date(d)
+    if (isNaN(date.getTime())) return d
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+  return `${fmt(startDate)} 至 ${fmt(endDate)}`
 }
 
 const formatStatus = (status?: string) => {

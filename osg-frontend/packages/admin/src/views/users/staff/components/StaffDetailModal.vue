@@ -2,14 +2,20 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="staff-detail-modal"
-    width="760px"
+    width="960px"
     :body-class="'staff-detail-modal__body'"
     @cancel="handleClose"
   >
     <template #title>
-      <div class="staff-detail-modal__title">
-        <span class="mdi mdi-account-tie" aria-hidden="true"></span>
-        <span>{{ detail?.staffName || staffName || '导师详情' }}</span>
+      <div class="sfdm-header">
+        <div class="sfdm-header__avatar">{{ avatarText }}</div>
+        <div class="sfdm-header__info">
+          <span class="sfdm-header__name">{{ detail?.staffName || staffName || '导师详情' }}</span>
+          <div class="sfdm-header__meta">
+            ID: {{ detail?.staffId ?? '-' }} · {{ formatType(detail?.staffType) }}
+            · <span class="sfdm-header__status-pill">{{ formatStatus(detail?.accountStatus) }}</span>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -24,16 +30,6 @@
     </div>
 
     <template v-else>
-      <div class="staff-detail-modal__hero">
-        <div>
-          <strong>{{ detail?.staffName || staffName || '-' }}</strong>
-          <p>{{ formatType(detail?.staffType) }} · {{ formatStatus(detail?.accountStatus) }}</p>
-        </div>
-        <span :class="['staff-detail-modal__tag', `staff-detail-modal__tag--${detail?.isBlacklisted ? 'danger' : 'success'}`]">
-          {{ detail?.isBlacklisted ? '黑名单' : '正常' }}
-        </span>
-      </div>
-
       <div class="staff-detail-modal__grid">
         <article class="staff-detail-modal__card">
           <span>邮箱</span>
@@ -55,31 +51,33 @@
 
       <section class="staff-detail-modal__panel">
         <header>
-          <strong>基本资料</strong>
+          <div class="staff-detail-modal__badge staff-detail-modal__badge--blue">
+            <i class="mdi mdi-account" aria-hidden="true"></i> 基本资料
+          </div>
           <span>交付阶段使用真实后端数据展示导师账户和所在城市。</span>
         </header>
         <dl class="staff-detail-modal__detail-grid">
-          <div>
+          <div class="staff-detail-modal__detail-cell">
             <dt>导师 ID</dt>
             <dd>{{ detail?.staffId ?? '-' }}</dd>
           </div>
-          <div>
+          <div class="staff-detail-modal__detail-cell">
             <dt>姓名</dt>
             <dd>{{ detail?.staffName || '-' }}</dd>
           </div>
-          <div>
+          <div class="staff-detail-modal__detail-cell">
             <dt>地区</dt>
             <dd>{{ detail?.region || '-' }}</dd>
           </div>
-          <div>
+          <div class="staff-detail-modal__detail-cell">
             <dt>城市</dt>
             <dd>{{ detail?.city || '-' }}</dd>
           </div>
-          <div>
+          <div class="staff-detail-modal__detail-cell">
             <dt>子方向</dt>
             <dd>{{ detail?.subDirection || '-' }}</dd>
           </div>
-          <div>
+          <div class="staff-detail-modal__detail-cell">
             <dt>课时单价</dt>
             <dd>{{ formatHourlyRate(detail?.hourlyRate) }}</dd>
           </div>
@@ -94,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { getStaffDetail, type StaffDetailItem } from '@osg/shared/api/admin/staff'
 
@@ -114,6 +112,13 @@ const emit = defineEmits<{
 const detail = ref<StaffDetailItem | null>(null)
 const loading = ref(false)
 const loadError = ref('')
+
+const avatarText = computed(() => {
+  const name = detail.value?.staffName || props.staffName || ''
+  const parts = name.split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.substring(0, 2).toUpperCase() || 'ST'
+})
 
 const loadDetail = async () => {
   if (!props.visible || !props.staffId) {
@@ -162,12 +167,66 @@ const formatHourlyRate = (hourlyRate?: number) => {
 </script>
 
 <style scoped lang="scss">
-.staff-detail-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+/* ── Header override (gradient) ── */
+:global([data-surface-id="staff-detail-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0;
+  padding: 22px 26px !important;
 }
 
+:global([data-surface-id="staff-detail-modal"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
+/* ── Header content ── */
+.sfdm-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sfdm-header__avatar {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.sfdm-header__name {
+  display: block;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sfdm-header__meta {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4px;
+}
+
+.sfdm-header__status-pill {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+/* ── Body ── */
 .staff-detail-modal__body {
   display: flex;
   flex-direction: column;
@@ -193,45 +252,6 @@ const formatHourlyRate = (hourlyRate?: number) => {
 
 .staff-detail-modal__state--error p {
   margin: 6px 0 0;
-}
-
-.staff-detail-modal__hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(219, 234, 254, 0.9), rgba(239, 246, 255, 0.92));
-  color: #1e3a8a;
-}
-
-.staff-detail-modal__hero strong {
-  display: block;
-  font-size: 20px;
-}
-
-.staff-detail-modal__hero p {
-  margin: 6px 0 0;
-}
-
-.staff-detail-modal__tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.staff-detail-modal__tag--success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.staff-detail-modal__tag--danger {
-  background: #fee2e2;
-  color: #991b1b;
 }
 
 .staff-detail-modal__grid {
@@ -280,27 +300,66 @@ const formatHourlyRate = (hourlyRate?: number) => {
   font-size: 12px;
 }
 
+/* ── Section badge ── */
+.staff-detail-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.staff-detail-modal__badge--blue {
+  background: #E8F0F8;
+  color: #3B6FA0;
+}
+
 .staff-detail-modal__detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
-.staff-detail-modal__detail-grid div {
+.staff-detail-modal__detail-cell {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  background: #F8FAFC;
+  padding: 12px;
+  border-radius: 8px;
 }
 
-.staff-detail-modal__detail-grid dt {
+.staff-detail-modal__detail-cell dt {
   color: #64748b;
   font-size: 12px;
 }
 
-.staff-detail-modal__detail-grid dd {
+.staff-detail-modal__detail-cell dd {
   margin: 0;
   color: #0f172a;
   font-weight: 600;
+}
+
+.staff-detail-modal__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.staff-detail-modal__tag--success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.staff-detail-modal__tag--danger {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 @media (max-width: 768px) {

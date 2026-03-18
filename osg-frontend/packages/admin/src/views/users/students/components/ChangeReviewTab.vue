@@ -1,83 +1,120 @@
 <template>
-  <section class="change-review-tab">
-    <article class="change-review-tab__panel">
-      <header class="change-review-tab__header">
-        <div>
-          <strong>待审核变更</strong>
-          <span>展示当前待复核的信息更新，并支持快速通过或驳回。</span>
+  <section class="crt">
+    <!-- Blue Info Banner -->
+    <div class="crt-banner">
+      <i class="mdi mdi-information crt-banner__icon"></i>
+      <strong>审核说明：</strong>核心信息、学业信息和求职方向的修改需要后台审核，联系方式修改后直接生效。
+    </div>
+
+    <!-- Pending Changes Section -->
+    <article class="crt-section">
+      <header class="crt-section__header">
+        <div class="crt-section__title">
+          <i class="mdi mdi-clock-alert crt-section__title-icon crt-section__title-icon--warning"></i>
+          <span>待审核的变更</span>
+          <span class="crt-badge crt-badge--danger">{{ pendingChanges.length }}</span>
         </div>
-        <span class="change-review-tab__badge">{{ pendingChanges.length }} 条待处理</span>
       </header>
 
-      <div v-if="pendingChanges.length" class="change-review-tab__list">
-        <div v-for="item in pendingItems" :key="item.id" class="change-review-tab__card">
-          <div class="change-review-tab__meta">
-            <div class="change-review-tab__meta-copy">
-              <span>{{ item.field }}</span>
-              <small v-if="item.changeType">{{ item.changeType }}</small>
+      <div v-if="pendingChanges.length" class="crt-pending-list">
+        <div v-for="item in pendingItems" :key="item.id" class="crt-pending-card">
+          <!-- Header: tags + timestamp -->
+          <div class="crt-pending-card__header">
+            <div class="crt-pending-card__tags">
+              <span :class="['crt-tag', `crt-tag--${getCategoryStyle(item.changeType)}`]">
+                {{ getCategoryLabel(item.changeType) }}
+              </span>
+              <span class="crt-tag crt-tag--warning">{{ item.field }}</span>
             </div>
-            <strong>{{ item.requestedAt }}</strong>
+            <span class="crt-pending-card__time">{{ formatTime(item.requestedAt) }}</span>
           </div>
-          <div class="change-review-tab__diff">
-            <div>
-              <label>变更前</label>
-              <p>{{ item.before }}</p>
+
+          <!-- Value Comparison -->
+          <div class="crt-comparison">
+            <div class="crt-comparison__col">
+              <label class="crt-comparison__label">变更前</label>
+              <span class="crt-comparison__value crt-comparison__value--before">{{ item.before }}</span>
             </div>
-            <div>
-              <label>变更后</label>
-              <p>{{ item.after }}</p>
+            <div class="crt-comparison__arrow">
+              <i class="mdi mdi-arrow-right"></i>
+            </div>
+            <div class="crt-comparison__col">
+              <label class="crt-comparison__label">变更后</label>
+              <span class="crt-comparison__value crt-comparison__value--after">{{ item.after }}</span>
             </div>
           </div>
-          <p class="change-review-tab__note">{{ item.note || '无附加说明' }}</p>
-          <div class="change-review-tab__actions">
+
+          <!-- Action Buttons -->
+          <div class="crt-pending-card__actions">
             <button
               type="button"
-              class="change-review-tab__button change-review-tab__button--ghost"
-              :disabled="activeRequestId === item.id"
-              @click="handleDecision('reject', item)"
-            >
-              {{ activeRequestId === item.id ? '处理中...' : '驳回' }}
-            </button>
-            <button
-              type="button"
-              class="change-review-tab__button"
+              class="crt-btn crt-btn--success"
               :disabled="activeRequestId === item.id"
               @click="handleDecision('approve', item)"
             >
-              {{ activeRequestId === item.id ? '处理中...' : '通过' }}
+              {{ activeRequestId === item.id ? '处理中...' : '✓ 通过' }}
+            </button>
+            <button
+              type="button"
+              class="crt-btn crt-btn--danger"
+              :disabled="activeRequestId === item.id"
+              @click="handleDecision('reject', item)"
+            >
+              {{ activeRequestId === item.id ? '处理中...' : '✗ 驳回' }}
             </button>
           </div>
         </div>
       </div>
 
-      <div v-else class="change-review-tab__empty">
+      <div v-else class="crt-empty">
         当前没有待审核的信息变更。
       </div>
     </article>
 
-    <article class="change-review-tab__panel">
-      <header class="change-review-tab__header">
-        <div>
-          <strong>历史变更记录</strong>
-          <span>用于快速回看学员信息如何变化，以及审核结论。</span>
+    <!-- History Changes Section -->
+    <article class="crt-section">
+      <header class="crt-section__header">
+        <div class="crt-section__title">
+          <i class="mdi mdi-history crt-section__title-icon crt-section__title-icon--muted"></i>
+          <span>历史变更记录</span>
         </div>
       </header>
 
-      <div v-if="historyItems.length" class="change-review-tab__timeline">
-        <div v-for="item in historyItems" :key="item.id" class="change-review-tab__timeline-item">
-          <span class="change-review-tab__timeline-dot"></span>
-          <div>
-            <div class="change-review-tab__timeline-head">
-              <strong>{{ item.field }}</strong>
-              <span>{{ formatStatus(item.status) }}</span>
-            </div>
-            <p>{{ item.before }} → {{ item.after }}</p>
-            <small>{{ item.requestedAt }} · {{ item.requestedBy }}</small>
-          </div>
-        </div>
+      <div v-if="historyItems.length" class="crt-history-table-wrap">
+        <table class="crt-history-table">
+          <thead>
+            <tr>
+              <th>变更类型</th>
+              <th>变更字段</th>
+              <th>变更前</th>
+              <th>变更后</th>
+              <th>变更时间</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in historyItems" :key="item.id">
+              <td>
+                <span :class="['crt-tag', `crt-tag--${getCategoryStyle(item.changeType)}`]">
+                  {{ getCategoryLabel(item.changeType) }}
+                </span>
+              </td>
+              <td>{{ item.field }}</td>
+              <td class="crt-history-table__before">{{ item.before }}</td>
+              <td class="crt-history-table__after">{{ item.after }}</td>
+              <td class="crt-history-table__time">{{ formatTime(item.requestedAt) }}</td>
+              <td>
+                <span :class="['crt-status-tag', `crt-status-tag--${item.status || 'default'}`]">
+                  <i v-if="item.status === 'approved'" class="mdi mdi-check" style="margin-right:2px"></i>
+                  {{ formatStatus(item.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div v-else class="change-review-tab__empty">
+      <div v-else class="crt-empty">
         还没有历史变更记录。
       </div>
     </article>
@@ -191,180 +228,346 @@ const moveToHistory = (action: 'approve' | 'reject', item: ChangeItem) => {
     ...historyItems.value
   ]
 }
+
+const getCategoryLabel = (changeType?: string): string => {
+  switch (changeType) {
+    case 'academic':
+      return '学业信息'
+    case 'job_direction':
+      return '求职方向'
+    case 'contact':
+      return '联系方式'
+    default:
+      return '核心信息'
+  }
+}
+
+const getCategoryStyle = (changeType?: string): string => {
+  switch (changeType) {
+    case 'academic':
+      return 'blue'
+    case 'job_direction':
+      return 'amber'
+    case 'contact':
+      return 'green'
+    default:
+      return 'primary'
+  }
+}
+
+const formatTime = (raw: string): string => {
+  if (!raw) return ''
+  // Try to parse and format as YYYY-MM-DD HH:mm
+  try {
+    const d = new Date(raw)
+    if (isNaN(d.getTime())) return raw
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mi = String(d.getMinutes()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`
+  } catch {
+    return raw
+  }
+}
 </script>
 
 <style scoped lang="scss">
-.change-review-tab {
+/* ── Change Review Tab (crt-) ── */
+.crt {
   display: grid;
-  gap: 16px;
-  margin-top: 18px;
+  gap: 20px;
 }
 
-.change-review-tab__panel {
-  border-radius: 24px;
-  padding: 22px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+/* Blue Info Banner */
+.crt-banner {
+  padding: 12px 16px;
+  background: #e8f0f8;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e40af;
 }
 
-.change-review-tab__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+.crt-banner__icon {
+  margin-right: 6px;
+}
+
+/* Section */
+.crt-section {
+  /* no extra wrapper styling needed */
+}
+
+.crt-section__header {
   margin-bottom: 16px;
 }
 
-.change-review-tab__header strong {
-  display: block;
-  margin-bottom: 6px;
+.crt-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
   color: #0f172a;
-  font-size: 16px;
 }
 
-.change-review-tab__header span {
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.5;
+.crt-section__title-icon {
+  font-size: 18px;
 }
 
-.change-review-tab__badge {
+.crt-section__title-icon--warning {
+  color: #f59e0b;
+}
+
+.crt-section__title-icon--muted {
+  color: #94a3b8;
+}
+
+/* Badge (count) */
+.crt-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
   border-radius: 999px;
-  padding: 8px 12px;
-  background: #fff7ed;
-  color: #c2410c;
+  padding: 0 6px;
   font-size: 12px;
   font-weight: 700;
 }
 
-.change-review-tab__list {
+.crt-badge--danger {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Tags */
+.crt-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.crt-tag--primary {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.crt-tag--blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.crt-tag--amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.crt-tag--green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.crt-tag--warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Pending list */
+.crt-pending-list {
   display: grid;
   gap: 12px;
 }
 
-.change-review-tab__card {
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  border-radius: 22px;
-  padding: 16px 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%);
+/* Pending card */
+.crt-pending-card {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px;
 }
 
-.change-review-tab__meta,
-.change-review-tab__actions,
-.change-review-tab__timeline-head {
+.crt-pending-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 12px;
 }
 
-.change-review-tab__meta span,
-.change-review-tab__timeline-head strong {
-  color: #0f172a;
-  font-weight: 700;
+.crt-pending-card__tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.change-review-tab__meta-copy {
-  display: grid;
-  gap: 4px;
-}
-
-.change-review-tab__meta-copy small {
-  color: #b45309;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.change-review-tab__meta strong,
-.change-review-tab__timeline-head span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.change-review-tab__diff {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 14px 0;
-}
-
-.change-review-tab__diff div {
-  border-radius: 18px;
-  padding: 14px;
-  background: #f8fafc;
-}
-
-.change-review-tab__diff label {
-  display: block;
-  margin-bottom: 8px;
+.crt-pending-card__time {
   color: #94a3b8;
   font-size: 12px;
+  white-space: nowrap;
 }
 
-.change-review-tab__diff p,
-.change-review-tab__note,
-.change-review-tab__timeline-item p,
-.change-review-tab__timeline-item small {
-  margin: 0;
-  line-height: 1.6;
+/* Value comparison */
+.crt-comparison {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
 }
 
-.change-review-tab__button {
-  border: 0;
-  border-radius: 999px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, #0f766e 0%, #0ea5e9 100%);
-  color: #fff;
+.crt-comparison__col {
+  flex: 1;
+  text-align: center;
+}
+
+.crt-comparison__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.crt-comparison__value {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.crt-comparison__value--before {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.crt-comparison__value--after {
+  font-weight: 600;
+  color: var(--primary, #3b82f6);
+}
+
+.crt-comparison__arrow {
+  padding: 0 12px;
+  font-size: 20px;
+  color: var(--primary, #3b82f6);
+  display: flex;
+  align-items: center;
+}
+
+/* Action buttons */
+.crt-pending-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.crt-btn {
+  flex: 1;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 0;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  text-align: center;
 }
 
-.change-review-tab__button--ghost {
-  background: #eef2ff;
-  color: #3730a3;
-}
-
-.change-review-tab__button:disabled {
+.crt-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.change-review-tab__timeline {
-  display: grid;
-  gap: 16px;
+.crt-btn--success {
+  background: var(--success, #22c55e);
+  color: #fff;
 }
 
-.change-review-tab__timeline-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
+.crt-btn--danger {
+  background: var(--danger, #ef4444);
+  color: #fff;
 }
 
-.change-review-tab__timeline-dot {
-  width: 12px;
-  height: 12px;
-  margin-top: 6px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
-  box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.12);
+/* History table */
+.crt-history-table-wrap {
+  overflow-x: auto;
 }
 
-.change-review-tab__empty {
-  border-radius: 20px;
+.crt-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.crt-history-table th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 2px solid #e5e7eb;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.crt-history-table td {
+  padding: 10px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.crt-history-table__before {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.crt-history-table__after {
+  color: var(--text, #1e293b);
+}
+
+.crt-history-table__time {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* Status tags in history */
+.crt-status-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.crt-status-tag--auto_applied {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.crt-status-tag--approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.crt-status-tag--rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.crt-status-tag--default {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+/* Empty state */
+.crt-empty {
+  border-radius: 8px;
   padding: 18px;
   background: #f8fafc;
   color: #64748b;
   text-align: center;
-}
-
-@media (max-width: 900px) {
-  .change-review-tab__header,
-  .change-review-tab__diff,
-  .change-review-tab__actions {
-    grid-template-columns: 1fr;
-    display: grid;
-  }
+  font-size: 13px;
 }
 </style>

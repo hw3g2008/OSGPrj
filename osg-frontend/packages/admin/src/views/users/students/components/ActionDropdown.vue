@@ -1,7 +1,7 @@
 <template>
   <a-dropdown trigger="click" placement="bottomRight">
-    <button type="button" class="student-action-link">
-      <span>更多</span>
+    <button type="button" class="btn-text-sm action-more-btn">
+      <span>更多 ▾</span>
     </button>
 
     <template #overlay>
@@ -19,9 +19,9 @@
 <script setup lang="ts">
 const actionItems = [
   { key: 'resetPassword', label: '重置密码' },
-  { key: 'freeze', label: '冻结', tone: 'warning' },
+  { key: 'freeze', label: '冻结' },
   { key: 'restore', label: '恢复', tone: 'success' },
-  { key: 'blacklist', label: '加入黑名单', tone: 'danger' },
+  { key: 'blacklist', label: '加入黑名单', tone: 'warning' },
   { key: 'refund', label: '退费', tone: 'danger' }
 ] as const
 
@@ -37,21 +37,23 @@ const handleMenuClick = ({ key }: { key: string }) => {
 </script>
 
 <style scoped lang="scss">
-.student-action-link {
-  border: 0;
+.btn-text-sm {
+  border: none;
   background: transparent;
-  padding: 0;
-  color: #2563eb;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
+  color: var(--primary, #6366f1);
+  padding: 4px 0;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
 
   &:hover {
-    color: #1d4ed8;
-    text-decoration: underline;
+    color: var(--primary-dark, #4f46e5);
   }
+}
+
+.action-more-btn {
+  color: var(--primary, #6366f1);
 }
 
 .students-action-menu {

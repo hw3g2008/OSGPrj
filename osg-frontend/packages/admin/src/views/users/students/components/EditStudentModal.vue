@@ -21,16 +21,8 @@
       </div>
     </template>
 
-    <div class="edit-student-modal__hero">
-      <strong>更新学员基础资料</strong>
-      <p>这里直接回写真实学员主档，保存后会立即刷新列表中的邮箱、学校和求职方向等字段。</p>
-    </div>
-
     <section class="edit-student-modal__section edit-student-modal__section--primary">
-      <header>
-        <strong>核心信息</strong>
-        <span>英文姓名、性别、邮箱等基础身份字段</span>
-      </header>
+      <div class="edit-student-modal__badge edit-student-modal__badge--primary">核心信息</div>
       <div class="edit-student-modal__grid edit-student-modal__grid--three">
         <label>
           <span>英文姓名</span>
@@ -48,10 +40,9 @@
     </section>
 
     <section class="edit-student-modal__section">
-      <header>
-        <strong>导师配置</strong>
-        <span>班主任与助教信息沿用新增学员结构展示</span>
-      </header>
+      <div class="edit-student-modal__badge edit-student-modal__badge--indigo">
+        <i class="mdi mdi-account-group" aria-hidden="true"></i> 导师配置
+      </div>
       <div class="edit-student-modal__grid">
         <label>
           <span>班主任</span>
@@ -65,10 +56,9 @@
     </section>
 
     <section class="edit-student-modal__section">
-      <header>
-        <strong>学业信息</strong>
-        <span>学校、专业、毕业年份与学习阶段</span>
-      </header>
+      <div class="edit-student-modal__badge edit-student-modal__badge--blue">
+        <i class="mdi mdi-school" aria-hidden="true"></i> 学业信息
+      </div>
       <div class="edit-student-modal__grid edit-student-modal__grid--three">
         <label>
           <span>学校</span>
@@ -86,10 +76,9 @@
     </section>
 
     <section class="edit-student-modal__section">
-      <header>
-        <strong>求职方向</strong>
-        <span>求职地区、目标岗位与主攻方向展示</span>
-      </header>
+      <div class="edit-student-modal__badge edit-student-modal__badge--amber">
+        <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
+      </div>
       <div class="edit-student-modal__grid edit-student-modal__grid--three">
         <label>
           <span>主攻方向</span>
@@ -227,6 +216,23 @@ const formatStatus = (status?: string) => {
 </script>
 
 <style scoped lang="scss">
+/* ── Header (override OverlaySurfaceModal header) ── */
+:global([data-surface-id="student-edit-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0;
+  padding: 22px 26px !important;
+}
+
+:global([data-surface-id="student-edit-modal"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
 .edit-student-modal__title-wrap {
   display: flex;
   align-items: center;
@@ -268,37 +274,12 @@ const formatStatus = (status?: string) => {
   font-size: 13px;
 }
 
-:deep(.overlay-surface-modal__header) {
-  background: linear-gradient(135deg, #7399c6 0%, #5a7ba3 100%);
-  border-bottom: 0;
-}
-
 .edit-student-modal__body {
   display: flex;
   flex-direction: column;
   gap: 18px;
   padding: 24px;
   background: #f8fafc;
-}
-
-.edit-student-modal__hero {
-  border-radius: 18px;
-  padding: 18px 20px;
-  background: linear-gradient(135deg, rgba(115, 153, 198, 0.18) 0%, rgba(90, 123, 163, 0.1) 100%);
-  color: #334155;
-}
-
-.edit-student-modal__hero strong {
-  display: block;
-  margin-bottom: 6px;
-  color: #0f172a;
-  font-size: 16px;
-}
-
-.edit-student-modal__hero p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 .edit-student-modal__section input:disabled {
@@ -308,32 +289,46 @@ const formatStatus = (status?: string) => {
 
 .edit-student-modal__section {
   border: 1px solid #e2e8f0;
-  border-radius: 18px;
+  border-radius: 12px;
   padding: 20px;
   background: #fff;
 }
 
 .edit-student-modal__section--primary {
   border-width: 2px;
-  border-color: #7399c6;
+  border-color: var(--primary, #6366F1);
 }
 
-.edit-student-modal__section header {
-  display: flex;
+/* ── Section badges ── */
+.edit-student-modal__badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
   margin-bottom: 16px;
 }
 
-.edit-student-modal__section strong {
-  color: #0f172a;
-  font-size: 15px;
+.edit-student-modal__badge--primary {
+  background: var(--primary, #6366F1);
+  color: #fff;
 }
 
-.edit-student-modal__section span {
-  color: #64748b;
-  font-size: 12px;
+.edit-student-modal__badge--indigo {
+  background: #E0E7FF;
+  color: #4338CA;
+}
+
+.edit-student-modal__badge--blue {
+  background: #E8F0F8;
+  color: var(--primary, #6366F1);
+}
+
+.edit-student-modal__badge--amber {
+  background: #FEF3C7;
+  color: #92400E;
 }
 
 .edit-student-modal__grid {
@@ -382,7 +377,7 @@ const formatStatus = (status?: string) => {
 }
 
 .edit-student-modal__footer-button--primary {
-  background: linear-gradient(135deg, #7399c6 0%, #5a7ba3 100%);
+  background: linear-gradient(135deg, var(--primary, #6366F1) 0%, var(--primary-dark, #4F46E5) 100%);
   color: #fff;
 }
 

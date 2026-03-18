@@ -12,11 +12,6 @@
       </span>
     </template>
 
-    <div class="mentor-students-modal__intro">
-      <strong>关联学员列表</strong>
-      <span>展示该导师当前负责的学员信息，来源于现有学员列表接口。</span>
-    </div>
-
     <div v-if="loading" class="mentor-students-modal__state">加载中...</div>
     <div v-else-if="!rows.length" class="mentor-students-modal__state">暂无关联学员</div>
     <div v-else class="mentor-students-modal__table-wrap">
@@ -132,21 +127,27 @@ const resolveStatusTone = (status?: string) => {
 </script>
 
 <style scoped lang="scss">
+/* ── Header override (gradient) ── */
+:global([data-surface-id="mentor-students-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0;
+}
+
+:global([data-surface-id="mentor-students-modal"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
 .mentor-students-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-}
-
-.mentor-students-modal__intro {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 18px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(219, 234, 254, 0.68), rgba(224, 231, 255, 0.52));
-  color: #1f2937;
+  color: #fff;
 }
 
 .mentor-students-modal__state {

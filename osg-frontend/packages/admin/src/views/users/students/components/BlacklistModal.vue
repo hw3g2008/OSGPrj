@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="student-blacklist-modal"
-    width="520px"
+    width="480px"
     :body-class="'student-blacklist-modal__body'"
     @cancel="handleClose"
   >
@@ -14,6 +14,9 @@
     </template>
 
     <div class="student-blacklist-modal__intro">
+      <div class="student-blacklist-modal__icon-circle">
+        <span class="mdi mdi-alert-decagram" aria-hidden="true"></span>
+      </div>
       <strong>{{ studentName || '当前学员' }}</strong>
       <span>请输入加入黑名单原因，提交后将用于限制求职中心相关访问。</span>
     </div>
@@ -97,21 +100,47 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped lang="scss">
+:global([data-surface-id="student-blacklist-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  border-bottom: none;
+}
+
+:global([data-surface-id="student-blacklist-modal"] [data-surface-part="header"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
 .student-blacklist-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  color: #fff;
 }
 
 .student-blacklist-modal__intro {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
   margin-bottom: 18px;
   padding: 14px 16px;
   border-radius: 16px;
   background: linear-gradient(135deg, rgba(254, 226, 226, 0.76), rgba(254, 242, 242, 0.92));
   color: #7f1d1d;
+  text-align: center;
+}
+
+.student-blacklist-modal__icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  font-size: 36px;
+  background: #FEF3C7;
+  color: #92400E;
 }
 
 .student-blacklist-modal__label {

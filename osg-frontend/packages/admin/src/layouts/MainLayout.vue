@@ -28,8 +28,8 @@
             :key="item.path"
             type="button"
             class="nav-item"
-            :class="{ active: isActive(item.path) }"
-            @click="navigate(item.path)"
+            :class="{ active: !item.comingSoon && isActive(item.path) }"
+            @click="item.comingSoon ? message.info('敬请期待') : navigate(item.path)"
           >
             <span class="mdi" :class="item.iconClass" aria-hidden="true" />
             <span>{{ item.title }}</span>
@@ -89,6 +89,7 @@ interface MenuItem {
   permission?: string
   iconClass: string
   badge?: number
+  comingSoon?: boolean
 }
 
 interface MenuGroup {
@@ -115,56 +116,56 @@ const menuGroups: MenuGroup[] = [
     key: 'user-center',
     title: '用户中心 Users',
     children: [
-      { path: '/users/students', title: '学生列表', permission: 'system:student:list', iconClass: 'mdi-account-school', badge: 2 },
-      { path: '/users/contracts', title: '合同管理', permission: 'system:contract:list', iconClass: 'mdi-file-sign' },
-      { path: '/users/staff', title: '导师列表', permission: 'system:staff:list', iconClass: 'mdi-account-tie' },
-      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'system:mentorSchedule:list', iconClass: 'mdi-calendar-clock' },
+      { path: '/users/students', title: '学生列表', permission: 'admin:students:list', iconClass: 'mdi-account-school', badge: 2 },
+      { path: '/users/contracts', title: '合同管理', permission: 'admin:contracts:list', iconClass: 'mdi-file-sign' },
+      { path: '/users/staff', title: '导师列表', permission: 'admin:staff:list', iconClass: 'mdi-account-tie' },
+      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'admin:mentor-schedule:list', iconClass: 'mdi-calendar-clock' },
     ],
   },
   {
     key: 'career',
     title: '求职中心 Career',
     children: [
-      { path: '/career/positions', title: '岗位信息', permission: 'career:position:list', iconClass: 'mdi-briefcase-search' },
-      { path: '/career/student-positions', title: '学生自添岗位', permission: 'career:studentPosition:list', iconClass: 'mdi-briefcase-plus', badge: 3 },
-      { path: '/career/job-overview', title: '学员求职总览', permission: 'career:jobOverview:list', iconClass: 'mdi-briefcase-eye', badge: 8 },
-      { path: '/career/mock-practice', title: '模拟应聘管理', permission: 'career:mockPractice:list', iconClass: 'mdi-account-voice', badge: 3 },
+      { path: '/career/positions', title: '岗位信息', permission: 'admin:positions:list', iconClass: 'mdi-briefcase-search' },
+      { path: '/career/student-positions', title: '学生自添岗位', permission: 'admin:student-positions:list', iconClass: 'mdi-briefcase-plus', badge: 3 },
+      { path: '/career/job-overview', title: '学员求职总览', permission: 'admin:job-overview:list', iconClass: 'mdi-briefcase-eye', badge: 8 },
+      { path: '/career/mock-practice', title: '模拟应聘管理', permission: 'admin:mock-practice:list', iconClass: 'mdi-account-voice', badge: 3 },
     ],
   },
   {
     key: 'teaching',
     title: '教学中心 Teaching',
     children: [
-      { path: '/teaching/class-records', title: '课程记录', permission: 'teaching:classRecord:list', iconClass: 'mdi-book-open-variant' },
-      { path: '/teaching/communication', title: '人际关系沟通记录', permission: 'teaching:communication:list', iconClass: 'mdi-message-text-clock' },
+      { path: '/teaching/class-records', title: '课程记录', permission: 'admin:class-records:list', iconClass: 'mdi-book-open-variant' },
+      { path: '/teaching/communication', title: '人际关系沟通记录', permission: 'admin:communication:list', iconClass: 'mdi-message-text-clock', comingSoon: true },
     ],
   },
   {
     key: 'finance',
     title: '财务中心 Finance',
     children: [
-      { path: '/finance/settlement', title: '课时结算', permission: 'finance:settlement:list', iconClass: 'mdi-cash-check' },
-      { path: '/finance/expense', title: '报销管理', permission: 'finance:expense:list', iconClass: 'mdi-receipt' },
+      { path: '/finance/settlement', title: '课时结算', permission: 'finance:settlement:list', iconClass: 'mdi-cash-check', comingSoon: true },
+      { path: '/finance/expense', title: '报销管理', permission: 'finance:expense:list', iconClass: 'mdi-receipt', comingSoon: true },
     ],
   },
   {
     key: 'resource',
     title: '资源中心 Resources',
     children: [
-      { path: '/resource/files', title: '文件', permission: 'resource:file:list', iconClass: 'mdi-folder' },
-      { path: '/resource/online-test-bank', title: '在线测试题库', permission: 'resource:onlineTestBank:list', iconClass: 'mdi-monitor-cellphone', badge: 5 },
-      { path: '/resource/interview-bank', title: '真人面试题库', permission: 'resource:interviewBank:list', iconClass: 'mdi-account-tie-voice', badge: 3 },
-      { path: '/resource/questions', title: '面试真题', permission: 'resource:question:list', iconClass: 'mdi-file-document-edit', badge: 5 },
+      { path: '/resource/files', title: '文件', permission: 'resource:file:list', iconClass: 'mdi-folder', comingSoon: true },
+      { path: '/resource/online-test-bank', title: '在线测试题库', permission: 'resource:onlineTestBank:list', iconClass: 'mdi-monitor-cellphone', badge: 5, comingSoon: true },
+      { path: '/resource/interview-bank', title: '真人面试题库', permission: 'resource:interviewBank:list', iconClass: 'mdi-account-tie-voice', badge: 3, comingSoon: true },
+      { path: '/resource/questions', title: '面试真题', permission: 'resource:question:list', iconClass: 'mdi-file-document-edit', badge: 5, comingSoon: true },
     ],
   },
   {
     key: 'profile',
     title: '个人中心 Profile',
     children: [
-      { path: '/profile/mailjob', title: '邮件', permission: 'profile:mailjob:list', iconClass: 'mdi-email-outline' },
-      { path: '/profile/notice', title: '消息管理', permission: 'profile:notice:list', iconClass: 'mdi-bell' },
-      { path: '/profile/complaints', title: '投诉建议', permission: 'profile:complaint:list', iconClass: 'mdi-message-alert' },
-      { path: '/profile/logs', title: '操作日志', permission: 'profile:log:list', iconClass: 'mdi-history' },
+      { path: '/profile/mailjob', title: '邮件', permission: 'profile:mailjob:list', iconClass: 'mdi-email-outline', comingSoon: true },
+      { path: '/profile/notice', title: '消息管理', permission: 'profile:notice:list', iconClass: 'mdi-bell', comingSoon: true },
+      { path: '/profile/complaints', title: '投诉建议', permission: 'profile:complaint:list', iconClass: 'mdi-message-alert', comingSoon: true },
+      { path: '/profile/logs', title: '操作日志', permission: 'admin:logs:list', iconClass: 'mdi-history' },
     ],
   },
 ]
@@ -261,6 +262,9 @@ onBeforeUnmount(() => {
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
+  position: fixed;
+  left: 0;
+  top: 0;
 }
 
 .sidebar-header {
@@ -454,6 +458,9 @@ onBeforeUnmount(() => {
 .main-panel {
   min-width: 0;
   flex: 1;
+  margin-left: 260px;
+  overflow-y: auto;
+  height: 100vh;
 }
 
 .content {

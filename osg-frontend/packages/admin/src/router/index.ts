@@ -45,19 +45,61 @@ const routes: RouteRecordRaw[] = [
         path: 'users/students',
         name: 'Students',
         component: () => import('@/views/users/students/index.vue'),
-        meta: { title: '学员管理', permission: 'system:student:list' }
+        meta: { title: '学员管理', permission: 'admin:students:list' }
       },
       {
         path: 'users/staff',
         name: 'Staff',
         component: () => import('@/views/users/staff/index.vue'),
-        meta: { title: '导师管理', permission: 'system:staff:list' }
+        meta: { title: '导师管理', permission: 'admin:staff:list' }
       },
       {
         path: 'users/contracts',
         name: 'Contracts',
         component: () => import('@/views/users/contracts/index.vue'),
-        meta: { title: '合同管理', permission: 'system:contract:list' }
+        meta: { title: '合同管理', permission: 'admin:contracts:list' }
+      },
+      {
+        path: 'users/mentor-schedule',
+        name: 'MentorSchedule',
+        component: () => import('@/views/users/mentor-schedule/index.vue'),
+        meta: { title: '导师排期管理', permission: 'admin:mentor-schedule:list' }
+      },
+      {
+        path: 'career/positions',
+        name: 'Positions',
+        component: () => import('@/views/career/positions/index.vue'),
+        meta: { title: '岗位信息', permission: 'admin:positions:list' }
+      },
+      {
+        path: 'career/student-positions',
+        name: 'StudentPositions',
+        component: () => import('@/views/career/student-positions/index.vue'),
+        meta: { title: '学生自添岗位', permission: 'admin:student-positions:list' }
+      },
+      {
+        path: 'career/job-overview',
+        name: 'JobOverview',
+        component: () => import('@/views/career/job-overview/index.vue'),
+        meta: { title: '学员求职总览', permission: 'admin:job-overview:list' }
+      },
+      {
+        path: 'career/mock-practice',
+        name: 'MockPractice',
+        component: () => import('@/views/career/mock-practice/index.vue'),
+        meta: { title: '模拟应聘管理', permission: 'admin:mock-practice:list' }
+      },
+      {
+        path: 'teaching/class-records',
+        name: 'ClassRecords',
+        component: () => import('@/views/teaching/class-records/index.vue'),
+        meta: { title: '课程记录', permission: 'admin:class-records:list' }
+      },
+      {
+        path: 'profile/logs',
+        name: 'Logs',
+        component: () => import('@/views/profile/logs/index.vue'),
+        meta: { title: '操作日志', permission: 'admin:logs:list' }
       }
     ]
   }

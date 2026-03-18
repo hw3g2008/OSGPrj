@@ -13,6 +13,9 @@
     </template>
 
     <div class="staff-status-modal__intro">
+      <div class="staff-status-modal__icon-circle" :class="`staff-status-modal__icon-circle--${action}`">
+        <span class="mdi" :class="actionIcon" aria-hidden="true"></span>
+      </div>
       <strong>{{ staffName || '当前导师' }}</strong>
       <span>{{ modalDescription }}</span>
     </div>
@@ -91,9 +94,10 @@ const formState = reactive({
 
 const reasonOptionMap: Record<'freeze' | 'blacklist', { label: string; value: string }[]> = {
   freeze: [
-    { label: '排期长期未维护', value: 'schedule_missing' },
-    { label: '服务反馈异常', value: 'service_issue' },
-    { label: '账号资料待补齐', value: 'document_pending' }
+    { label: '导师申请暂停', value: 'staff_pause' },
+    { label: '服务质量问题', value: 'service_quality' },
+    { label: '违反服务协议', value: 'policy_violation' },
+    { label: '其他原因', value: 'other' }
   ],
   blacklist: [
     { label: '违规联系学员', value: 'contact_violation' },
@@ -189,21 +193,65 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped lang="scss">
+:global([data-surface-id="staff-status-change-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #7399C6, #5A7BA3);
+  border-bottom: none;
+}
+
+:global([data-surface-id="staff-status-change-modal"] [data-surface-part="header"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
 .staff-status-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  color: #fff;
 }
 
 .staff-status-modal__intro {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
   margin-bottom: 18px;
   padding: 14px 16px;
   border-radius: 16px;
   background: linear-gradient(135deg, rgba(219, 234, 254, 0.68), rgba(254, 249, 195, 0.52));
   color: #1f2937;
+  text-align: center;
+}
+
+.staff-status-modal__icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  font-size: 36px;
+
+  &--freeze {
+    background: #E2E8F0;
+    color: #334155;
+  }
+
+  &--restore {
+    background: #DCFCE7;
+    color: #166534;
+  }
+
+  &--blacklist {
+    background: #FEE2E2;
+    color: #991B1B;
+  }
+
+  &--remove {
+    background: #DBEAFE;
+    color: #1E40AF;
+  }
 }
 
 .staff-status-modal__label {

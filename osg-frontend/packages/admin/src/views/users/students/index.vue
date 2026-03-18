@@ -89,7 +89,7 @@
 
               <!-- 6. 主攻方向 -->
               <td>
-                <span :class="['tag', 'purple']">{{ record.majorDirection || '-' }}</span>
+                <span :class="['tag', getDirectionClass(record.majorDirection)]">{{ record.majorDirection || '-' }}</span>
               </td>
 
               <!-- 7. 投递岗位 -->
@@ -128,7 +128,8 @@
 
               <!-- 13. 提醒 -->
               <td>
-                <span v-if="getReminderLabel(record) !== '-'" :class="['tag', getReminderClass(getReminderLabel(record))]">
+                <span v-if="getReminderLabel(record) !== '暂无提醒'" :class="['tag', getReminderClass(getReminderLabel(record))]">
+                  <i v-if="getReminderIcon(getReminderLabel(record))" :class="getReminderIcon(getReminderLabel(record))" aria-hidden="true" style="font-size:14px;margin-right:2px"></i>
                   {{ getReminderLabel(record) }}
                 </span>
                 <span v-else style="color:var(--muted)">-</span>
@@ -142,7 +143,7 @@
               </td>
 
               <!-- 15. 操作 -->
-              <td>
+              <td class="action-cell">
                 <button type="button" class="btn-text-sm" @click="openStudentDetail(record)">详情</button>
                 <button type="button" class="btn-text-sm" @click="openStudentEdit(record)">编辑</button>
                 <ActionDropdown @select="handleStudentAction($event, record)" />
@@ -761,15 +762,18 @@ const getRemainingIcon = (hours?: number) => {
 
 const getReminderClass = (reminder?: string) => {
   if (!reminder || reminder === '-' || reminder === '暂无提醒') {
-    return 'student-reminder--quiet student-reminder--flat'
+    return 'default'
   }
-  if (reminder.includes('课时') || reminder.includes('待审核')) {
-    return 'student-reminder--danger student-reminder--flat'
+  if (reminder.includes('待审核')) {
+    return 'danger tag--pulse'
+  }
+  if (reminder.includes('课时')) {
+    return 'danger'
   }
   if (reminder.includes('到期')) {
-    return 'student-reminder--warning student-reminder--flat'
+    return 'warning'
   }
-  return 'student-reminder--info student-reminder--flat'
+  return 'info'
 }
 
 const getReminderIcon = (reminder?: string) => {
@@ -814,6 +818,16 @@ const getStatusClass = (status?: string) => {
   }
 }
 
+const getDirectionClass = (direction?: string) => {
+  if (!direction) return 'default'
+  const d = direction.toLowerCase()
+  if (d.includes('金融') || d.includes('finance')) return 'purple'
+  if (d.includes('咨询') || d.includes('consulting')) return 'info'
+  if (d.includes('科技') || d.includes('tech')) return 'warning'
+  if (d.includes('量化') || d.includes('quant')) return 'quant'
+  return 'purple'
+}
+
 const getStatusNote = (record: StudentListItem) => {
   if (isEndedStatus(record)) {
     return '服务已结束'
@@ -853,7 +867,7 @@ const getReminderLabel = (record: StudentListItem) => {
     return record.reminder
   }
   if (isPendingReview(record)) {
-    return '信息待审核'
+    return '待审核'
   }
   if (isLowHours(record)) {
     return '课时不足'
@@ -1350,8 +1364,8 @@ onMounted(() => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 12px;
-    border-radius: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
     line-height: 1.3;
@@ -1376,6 +1390,11 @@ onMounted(() => {
   .tag.default {
     background: #f3f4f6;
     color: #6b7280;
+  }
+
+  .tag.warning {
+    background: #FEF3C7;
+    color: #92400E;
   }
 
   // 操作按钮样式
@@ -1502,13 +1521,13 @@ onMounted(() => {
   }
 
   .permission-button--primary {
-    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
-    border-color: #7c3aed;
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    border-color: #6366F1;
     color: #ffffff;
 
     &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #6d28d9, #7c3aed);
-      border-color: #6d28d9;
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      border-color: #4F46E5;
     }
   }
 
@@ -1534,7 +1553,7 @@ onMounted(() => {
     background: transparent;
     padding: 0;
     color: var(--primary);
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     text-decoration: none;
   }
@@ -1557,12 +1576,15 @@ onMounted(() => {
     color: var(--primary-dark);
   }
 
-  .tag {
-    display: inline-flex;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
+  .action-cell > * {
+    display: block;
+  }
+
+  .action-cell .btn-text-sm,
+  .action-cell :deep(.ant-dropdown-trigger) {
+    display: block;
+    text-align: left;
+    padding: 4px 0;
   }
 
   .tag.purple {
@@ -1570,24 +1592,13 @@ onMounted(() => {
     color: var(--primary-dark);
   }
 
-  .tag.success {
-    background: #D1FAE5;
-    color: #065F46;
+  .tag.quant {
+    background: #E0E7FF;
+    color: #4338CA;
   }
 
-  .tag.warning {
-    background: #FEF3C7;
-    color: #92400E;
-  }
-
-  .tag.danger {
-    background: #FEE2E2;
-    color: #991B1B;
-  }
-
-  .tag.info {
-    background: #DBEAFE;
-    color: #1E40AF;
+  .tag--pulse {
+    animation: studentsPulse 1.5s ease-in-out infinite;
   }
 
   @keyframes studentsPulse {

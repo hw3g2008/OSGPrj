@@ -888,7 +888,7 @@ const closeResetPasswordModal = () => {
 
 .staff-pill--direction-quant {
   background: #ede9fe;
-  color: #6d28d9;
+  color: #4F46E5;
 }
 
 .staff-region-main {
@@ -1060,7 +1060,7 @@ const closeResetPasswordModal = () => {
 }
 
 .staff-count {
-  color: #6d28d9;
+  color: #4F46E5;
 }
 
 .staff-action-trigger {
@@ -1143,7 +1143,7 @@ const closeResetPasswordModal = () => {
 
 .staff-tag--direction-finance {
   background: #ede9fe;
-  color: #6d28d9;
+  color: #4F46E5;
 }
 
 .staff-tag--direction-consulting {
@@ -1207,13 +1207,13 @@ const closeResetPasswordModal = () => {
 }
 
 .permission-button--primary {
-  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
-  border-color: #7c3aed;
+  background: linear-gradient(135deg, #6366F1, #8b5cf6);
+  border-color: #6366F1;
   color: #ffffff;
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #6d28d9, #7c3aed);
-    border-color: #6d28d9;
+    background: linear-gradient(135deg, #4F46E5, #6366F1);
+    border-color: #4F46E5;
   }
 }
 

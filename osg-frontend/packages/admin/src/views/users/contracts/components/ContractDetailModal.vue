@@ -2,23 +2,17 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="contract-detail-modal"
-    width="920px"
+    width="960px"
     :body-class="'contract-detail-modal__body'"
     @cancel="handleClose"
   >
     <template #title>
-      <div class="contract-detail-modal__title-wrap">
-        <div>
-          <span class="contract-detail-modal__eyebrow">Contract Detail</span>
-          <div class="contract-detail-modal__title">
-            <span class="mdi mdi-file-document-multiple-outline" aria-hidden="true"></span>
-            <span>{{ modalTitle }}</span>
-          </div>
+      <div class="cdm-header">
+        <div class="cdm-header__avatar">{{ avatarInitials }}</div>
+        <div class="cdm-header__info">
+          <span class="cdm-header__name">{{ modalTitle }}</span>
+          <div class="cdm-header__meta">ID: {{ studentId }} · {{ contracts.length }}份合同</div>
         </div>
-        <button type="button" class="contract-detail-modal__action" @click="emit('request-renew')">
-          <span class="mdi mdi-refresh" aria-hidden="true"></span>
-          <span>续签合同</span>
-        </button>
       </div>
     </template>
 
@@ -68,9 +62,15 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="contract in contracts" :key="contract.contractId">
+            <tr
+              v-for="contract in contracts"
+              :key="contract.contractId"
+              :class="{ 'contract-detail-modal__row--expiring': isExpiring(contract) }"
+            >
               <td>{{ contract.contractNo || contract.contractId }}</td>
-              <td>{{ formatType(contract.contractType) }}</td>
+              <td>
+                <span :class="typeBadgeClass(contract.contractType)">{{ formatType(contract.contractType) }}</span>
+              </td>
               <td>{{ formatCurrency(contract.contractAmount) }}</td>
               <td>{{ contract.remainingHours ?? contract.totalHours ?? 0 }} / {{ contract.totalHours ?? 0 }}h</td>
               <td>{{ formatDateRange(contract.startDate, contract.endDate) }}</td>
@@ -91,6 +91,16 @@
       </div>
 
       <div v-else class="contract-detail-modal__empty">暂无合同记录。</div>
+    </template>
+
+    <template #footer>
+      <div class="contract-detail-modal__footer">
+        <button type="button" class="contract-detail-modal__secondary" @click="handleClose">关闭</button>
+        <button type="button" class="contract-detail-modal__primary" @click="emit('request-renew')">
+          <span class="mdi mdi-refresh" aria-hidden="true"></span>
+          <span>续签合同</span>
+        </button>
+      </div>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -124,6 +134,12 @@ const summary = computed(() => detail.value?.summary || {
 
 const contracts = computed<ContractListItem[]>(() => detail.value?.contracts || [])
 const modalTitle = computed(() => `${props.studentName || '学员'}的合同记录`)
+
+const avatarInitials = computed(() => {
+  const name = props.studentName?.trim()
+  if (!name) return 'ST'
+  return name.split(/\s+/).slice(0, 2).map(p => p[0]?.toUpperCase() || '').join('')
+})
 
 const loadDetail = async () => {
   if (!props.visible || !props.studentId) {
@@ -164,47 +180,81 @@ const formatType = (type?: string) => {
   return '首签'
 }
 
+const typeBadgeClass = (type?: string) => {
+  if (type === 'renew') return 'contract-detail-modal__type-badge contract-detail-modal__type-badge--blue'
+  return 'contract-detail-modal__type-badge contract-detail-modal__type-badge--green'
+}
+
+const isExpiring = (contract: ContractListItem) => {
+  if (!contract.endDate) return false
+  const end = new Date(contract.endDate)
+  const now = new Date()
+  const diffDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  return diffDays >= 0 && diffDays <= 30
+}
+
 watch(() => [props.visible, props.studentId], () => {
   void loadDetail()
 }, { immediate: true })
 </script>
 
 <style scoped lang="scss">
-.contract-detail-modal__title-wrap {
+/* ── Header (override OverlaySurfaceModal header) ── */
+:global([data-surface-id="contract-detail-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0;
+  padding: 22px 26px !important;
+}
+
+:global([data-surface-id="contract-detail-modal"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
+.cdm-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
 
-.contract-detail-modal__eyebrow {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #7a8ea8;
-}
-
-.contract-detail-modal__title {
-  margin-top: 6px;
+.cdm-header__avatar {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 24px;
+  justify-content: center;
+  font-size: 20px;
   font-weight: 700;
-  color: #10213a;
+  color: #fff;
+  flex-shrink: 0;
 }
 
-.contract-detail-modal__action {
-  border: none;
-  border-radius: 12px;
-  min-height: 40px;
-  padding: 0 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.cdm-header__name {
+  display: block;
   color: #fff;
-  background: linear-gradient(135deg, #5f85b4 0%, #7ea2d0 100%);
-  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.cdm-header__meta {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4px;
+}
+
+/* ── Body ── */
+.contract-detail-modal__body {
+  background: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .contract-detail-modal__state,
@@ -228,7 +278,7 @@ watch(() => [props.visible, props.studentId], () => {
 }
 
 .contract-detail-modal__summary-card {
-  border-radius: 18px;
+  border-radius: 22px;
   padding: 18px;
   background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
   box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
@@ -247,7 +297,6 @@ watch(() => [props.visible, props.studentId], () => {
 }
 
 .contract-detail-modal__table-wrap {
-  margin-top: 18px;
   overflow: auto;
   border-radius: 18px;
   border: 1px solid #ebf0f5;
@@ -278,6 +327,30 @@ watch(() => [props.visible, props.studentId], () => {
   font-size: 13px;
 }
 
+.contract-detail-modal__row--expiring {
+  background: #FFFBEB;
+}
+
+/* ── Type badges ── */
+.contract-detail-modal__type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.contract-detail-modal__type-badge--green {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.contract-detail-modal__type-badge--blue {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
 .contract-detail-modal__table-action {
   border: 1px solid #d7e1ed;
   background: #fff;
@@ -289,8 +362,39 @@ watch(() => [props.visible, props.studentId], () => {
   cursor: pointer;
 }
 
+/* ── Footer ── */
+.contract-detail-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.contract-detail-modal__secondary,
+.contract-detail-modal__primary {
+  border: none;
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.contract-detail-modal__secondary {
+  background: #f7f9fc;
+  color: #1d3552;
+  border: 1px solid #d8e1ed;
+}
+
+.contract-detail-modal__primary {
+  background: linear-gradient(135deg, #5f85b4 0%, #7ea2d0 100%);
+  color: #fff;
+}
+
 @media (max-width: 900px) {
-  .contract-detail-modal__title-wrap {
+  .cdm-header {
     flex-direction: column;
     align-items: flex-start;
   }

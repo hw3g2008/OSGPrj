@@ -65,16 +65,16 @@
       />
     </div>
     <div class="students-filter-bar__actions">
-      <button type="button" class="filter-action-button filter-action-button--primary" @click="emitSearch">
+      <button type="button" class="filter-action-button filter-action-button--secondary" @click="emitSearch">
         <i class="mdi mdi-magnify" aria-hidden="true"></i>
         <span>搜索</span>
       </button>
-      <button type="button" class="filter-action-button filter-action-button--secondary" @click="handleReset">
+      <button type="button" class="filter-action-button filter-action-button--text" @click="handleReset">
         <i class="mdi mdi-refresh" aria-hidden="true"></i>
         <span>重置</span>
       </button>
       <button type="button" class="filter-action-button filter-action-button--secondary" @click="emit('export')">
-        <i class="mdi mdi-download" aria-hidden="true"></i>
+        <i class="mdi mdi-export" aria-hidden="true"></i>
         <span>导出</span>
       </button>
     </div>
@@ -198,10 +198,9 @@ const normalizeText = (value?: string) => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 20px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .students-filter-bar__filters {
@@ -232,21 +231,20 @@ const normalizeText = (value?: string) => {
 }
 
 .students-filter-bar__control--select {
-  width: 140px;
+  width: auto;
+  min-width: max-content;
 }
 
-// 筛选操作按钮
+// 筛选操作按钮 - match prototype .btn style
 .filter-action-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 88px;
-  height: 36px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 0 16px;
-  font-size: 13px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
   cursor: pointer;
@@ -273,28 +271,31 @@ const normalizeText = (value?: string) => {
 }
 
 .filter-action-button--primary {
-  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
-  border-color: #7c3aed;
+  background: var(--primary-gradient, linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%));
+  border: none;
   color: #ffffff;
-  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.2);
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
-    border-color: #6d28d9;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
   }
 }
 
 .filter-action-button--secondary {
   background: #ffffff;
-  border-color: #d1d5db;
-  color: var(--text);
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--text2, #64748b);
 
   &:hover:not(:disabled) {
     background: #f9fafb;
     border-color: #9ca3af;
-    color: var(--text);
+    color: var(--text, #1e293b);
   }
+}
+
+.filter-action-button--text {
+  background: transparent;
+  color: var(--primary, #6366f1);
+  padding: 6px 12px;
 }
 
 @media (max-width: 1200px) {

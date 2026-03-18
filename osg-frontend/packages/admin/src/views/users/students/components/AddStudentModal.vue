@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="student-add-modal"
-    width="760px"
+    width="960px"
     :body-class="'add-student-modal__body'"
     @cancel="handleClose"
   >
@@ -135,11 +135,11 @@
           </a-radio-group>
         </a-form-item>
 
-        <div class="add-student-modal__field--wide add-student-modal__section">
-          <div class="add-student-modal__section-head">
-            <strong>求职方向</strong>
-            <span>地区、招聘周期、主攻方向与子方向</span>
+        <div class="add-student-modal__field--wide">
+          <div class="add-student-modal__section-badge add-student-modal__section-badge--amber">
+            <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
           </div>
+          <span class="add-student-modal__section-desc">地区、招聘周期、主攻方向与子方向</span>
         </div>
 
         <a-form-item name="targetRegion">
@@ -180,11 +180,11 @@
           />
         </div>
 
-        <div class="add-student-modal__field--wide add-student-modal__section">
-          <div class="add-student-modal__section-head">
-            <strong>辅导归属</strong>
-            <span>班主任与助教均支持搜索后多选</span>
+        <div class="add-student-modal__field--wide">
+          <div class="add-student-modal__section-badge add-student-modal__section-badge--indigo">
+            <i class="mdi mdi-account-group" aria-hidden="true"></i> 辅导归属
           </div>
+          <span class="add-student-modal__section-desc">班主任与助教均支持搜索后多选</span>
         </div>
 
         <a-form-item name="leadMentorIds">
@@ -533,10 +533,28 @@ const handlePrimaryAction = async () => {
 </script>
 
 <style scoped lang="scss">
+/* ── Header (override OverlaySurfaceModal header) ── */
+:global([data-surface-id="student-add-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0;
+  padding: 22px 26px !important;
+}
+
+:global([data-surface-id="student-add-modal"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
 .add-student-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  color: #fff;
 }
 
 .add-student-modal__hero {
@@ -663,25 +681,34 @@ const handlePrimaryAction = async () => {
   grid-column: 1 / -1;
 }
 
-.add-student-modal__section {
+/* ── Section badge pills ── */
+.add-student-modal__section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
   margin-top: 4px;
 }
 
-.add-student-modal__section-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px 0;
-  color: #0f172a;
+.add-student-modal__section-badge--amber {
+  background: #FEF3C7;
+  color: #92400E;
+}
 
-  strong {
-    font-size: 15px;
-  }
+.add-student-modal__section-badge--indigo {
+  background: #E0E7FF;
+  color: #4338CA;
+}
 
-  span {
-    color: #64748b;
-    font-size: 12px;
-  }
+.add-student-modal__section-desc {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 4px;
+  padding-left: 2px;
 }
 
 .add-student-modal__label {

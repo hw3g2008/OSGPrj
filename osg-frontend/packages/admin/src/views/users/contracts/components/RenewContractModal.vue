@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="renew-contract-modal"
-    width="760px"
+    width="600px"
     :body-class="'renew-contract-modal__body'"
     @cancel="handleClose"
   >
@@ -19,14 +19,6 @@
       </div>
     </template>
 
-    <div class="renew-contract-modal__hero">
-      <div>
-        <strong>{{ presetContract ? '当前学员已锁定' : '请选择需要续签的学员' }}</strong>
-        <p>支持合同附件上传（PDF），提交后会立即刷新合同列表。</p>
-      </div>
-      <span class="renew-contract-modal__hero-badge">5 个续签原因</span>
-    </div>
-
     <div class="renew-contract-modal__grid">
       <label class="renew-contract-modal__field">
         <span>学员</span>
@@ -42,12 +34,12 @@
       </label>
 
       <label class="renew-contract-modal__field">
-        <span>金额 Amount</span>
+        <span>续签金额(¥)</span>
         <input v-model="form.contractAmount" type="number" min="0" step="100" class="renew-contract-modal__input" />
       </label>
 
       <label class="renew-contract-modal__field">
-        <span>Learn Time</span>
+        <span>续签课时(h)</span>
         <input v-model="form.totalHours" type="number" min="0" step="1" class="renew-contract-modal__input" />
       </label>
 
@@ -264,6 +256,23 @@ watch(() => props.visible, (visible) => {
 </script>
 
 <style scoped lang="scss">
+/* ── Header (override OverlaySurfaceModal header) ── */
+:global([data-surface-id="renew-contract-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #F59E0B, #FBBF24) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0;
+  padding: 22px 26px !important;
+}
+
+:global([data-surface-id="renew-contract-modal"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
 .renew-contract-modal__title-wrap {
   display: flex;
   align-items: center;
@@ -275,7 +284,7 @@ watch(() => props.visible, (visible) => {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #7a8ea8;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .renew-contract-modal__title {
@@ -285,48 +294,19 @@ watch(() => props.visible, (visible) => {
   gap: 10px;
   font-size: 24px;
   font-weight: 700;
-  color: #10213a;
+  color: #fff;
 }
 
 .renew-contract-modal__mode {
   border-radius: 999px;
   padding: 6px 12px;
-  background: #eef5ff;
-  color: #315f8f;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.renew-contract-modal__hero {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 100%);
-  color: #385271;
-}
-
-.renew-contract-modal__hero strong {
-  display: block;
-  color: #173150;
-}
-
-.renew-contract-modal__hero p {
-  margin: 8px 0 0;
-}
-
-.renew-contract-modal__hero-badge {
-  align-self: flex-start;
-  border-radius: 999px;
-  padding: 6px 12px;
-  background: rgba(95, 133, 180, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  color: #92400E;
   font-size: 12px;
   font-weight: 700;
 }
 
 .renew-contract-modal__grid {
-  margin-top: 18px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
@@ -400,7 +380,7 @@ watch(() => props.visible, (visible) => {
 }
 
 .renew-contract-modal__primary {
-  background: linear-gradient(135deg, #5f85b4 0%, #7ea2d0 100%);
+  background: linear-gradient(135deg, #F59E0B, #D97706);
   color: #fff;
 }
 
@@ -419,7 +399,7 @@ watch(() => props.visible, (visible) => {
 
 .renew-contract-modal__progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #5f85b4 0%, #7ea2d0 100%);
+  background: linear-gradient(90deg, #F59E0B, #D97706);
   transition: width 0.18s ease;
 }
 
@@ -430,8 +410,7 @@ watch(() => props.visible, (visible) => {
 }
 
 @media (max-width: 900px) {
-  .renew-contract-modal__title-wrap,
-  .renew-contract-modal__hero {
+  .renew-contract-modal__title-wrap {
     flex-direction: column;
     align-items: flex-start;
   }

@@ -247,6 +247,22 @@ const handleSubmit = () => {
 </script>
 
 <style scoped lang="scss">
+/* ── Header override (gradient) ── */
+:global([data-surface-id="mentor-schedule-edit-modal"] [data-surface-part="header"]) {
+  background: linear-gradient(135deg, #6366F1, #4338CA) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0;
+}
+
+:global([data-surface-id="mentor-schedule-edit-modal"] .overlay-surface-modal__close) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
 .edit-schedule-modal__title-wrap {
   display: flex;
   align-items: center;
@@ -286,11 +302,6 @@ const handleSubmit = () => {
   margin: 6px 0 0;
   color: rgba(255, 255, 255, 0.84);
   font-size: 13px;
-}
-
-:deep(.overlay-surface-modal__header) {
-  background: linear-gradient(135deg, #5a7ba3 0%, #334155 100%);
-  border-bottom: 0;
 }
 
 .edit-schedule-modal__body {
