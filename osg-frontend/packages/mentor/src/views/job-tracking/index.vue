@@ -1,5 +1,5 @@
 <template>
-  <PlaceholderPage title="我的学员 My Students" />
+  <PlaceholderPage title="学员岗位追踪 Job Tracking" />
 </template>
 
 <script setup lang="ts">

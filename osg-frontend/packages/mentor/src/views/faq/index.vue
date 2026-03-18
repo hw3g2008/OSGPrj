@@ -1,5 +1,5 @@
 <template>
-  <PlaceholderPage title="我的学员 My Students" />
+  <PlaceholderPage title="常见问题 FAQ" />
 </template>
 
 <script setup lang="ts">

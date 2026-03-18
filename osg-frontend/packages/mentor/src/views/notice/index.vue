@@ -1,5 +1,5 @@
 <template>
-  <PlaceholderPage title="我的学员 My Students" />
+  <PlaceholderPage title="消息 Notice" />
 </template>
 
 <script setup lang="ts">
