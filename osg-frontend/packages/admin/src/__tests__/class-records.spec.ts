@@ -19,7 +19,6 @@ describe('课程记录页面', () => {
     expect(source).toContain('已驳回')
     expect(source).toContain('待结算金额')
     expect(source).toContain('学员评价')
-    expect(source).toContain('⭐')
   })
 
   it('wires the page to the real class-record list and stats APIs instead of placeholders', () => {
@@ -27,9 +26,8 @@ describe('课程记录页面', () => {
 
     expect(source).toContain('getClassRecordList(')
     expect(source).toContain('getClassRecordStats(')
-    expect(source).toContain('flowSteps')
+    expect(source).toContain('flow-banner')
     expect(source).toContain('statCards')
-    expect(source).toContain('columns')
     expect(source).not.toContain('课程记录页面开发中')
   })
 })

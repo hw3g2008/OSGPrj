@@ -8,89 +8,78 @@ const prototypeSource = fs.readFileSync(
 )
 
 describe('prototype students page structure', () => {
-  it('uses the optimized students layout markers instead of the old flat table-only shell', () => {
-    expect(prototypeSource).toContain('students-prototype-shell')
-    expect(prototypeSource).toContain('students-filters__primary')
-    expect(prototypeSource).toContain('students-filters__secondary')
-    expect(prototypeSource).toContain('students-table--optimized')
-    expect(prototypeSource).toContain('学员信息')
-    expect(prototypeSource).toContain('学习信息')
-    expect(prototypeSource).toContain('求职信息')
-    expect(prototypeSource).toContain('student-cell-block')
+  it('has the students page section with correct id and header', () => {
+    expect(prototypeSource).toContain('id="page-students"')
+    expect(prototypeSource).toContain('学员列表')
+    expect(prototypeSource).toContain('Student List')
+    expect(prototypeSource).toContain('新增学员')
   })
 
-  it('does not constrain the students page to a narrow centered shell', () => {
-    expect(prototypeSource).not.toContain('max-width: 1240px')
-    expect(prototypeSource).toContain('max-width: none')
-    expect(prototypeSource).toContain('width: 100%')
+  it('includes the pending review reminder banner', () => {
+    expect(prototypeSource).toContain('信息变更待审核')
+    expect(prototypeSource).toContain('立即查看')
+    expect(prototypeSource).toContain('mdi-bell-ring')
   })
 
-  it('uses the denser follow-up layout markers for alert and metrics', () => {
-    expect(prototypeSource).toContain('students-alert--compact')
-    expect(prototypeSource).toContain('student-meta-list')
-    expect(prototypeSource).toContain('student-metric-strip')
-    expect(prototypeSource).toContain('student-metric')
+  it('has tab switching between normal list and blacklist', () => {
+    expect(prototypeSource).toContain('正常列表')
+    expect(prototypeSource).toContain('黑名单')
+    expect(prototypeSource).toContain('switchStudentListTab')
   })
 
-  it('clarifies the filter hierarchy and compresses row metadata further', () => {
-    expect(prototypeSource).toContain('students-filters__section-title')
-    expect(prototypeSource).toContain('student-meta-inline')
-    expect(prototypeSource).toContain('students-blacklist-table')
+  it('includes filter controls for searching and filtering students', () => {
+    expect(prototypeSource).toContain('搜索姓名')
+    expect(prototypeSource).toContain('班主任')
+    expect(prototypeSource).toContain('毕业年份')
+    expect(prototypeSource).toContain('主攻方向')
+    expect(prototypeSource).toContain('账号状态')
   })
 
-  it('keeps the reminder and list header in a compact inline rhythm', () => {
-    expect(prototypeSource).toContain('students-alert--inline')
-    expect(prototypeSource).toContain('students-list-meta--compact')
-    expect(prototypeSource).toContain('students-tabs-note--compact')
-    expect(prototypeSource).toContain('students-meta-chip--quiet')
+  it('has the main direction options in filter select', () => {
+    expect(prototypeSource).toContain('金融 Finance')
+    expect(prototypeSource).toContain('咨询 Consulting')
+    expect(prototypeSource).toContain('科技 Tech')
+    expect(prototypeSource).toContain('量化 Quant')
   })
 
-  it('keeps the right-side reminder, status and actions visually quieter', () => {
-    expect(prototypeSource).toContain('student-reminder--flat')
-    expect(prototypeSource).toContain('student-status-stack--compact')
-    expect(prototypeSource).toContain('student-action-row--quiet')
+  it('includes the student table with key columns', () => {
+    expect(prototypeSource).toContain('学员')
+    expect(prototypeSource).toContain('岗位辅导')
+    expect(prototypeSource).toContain('基础课')
+    expect(prototypeSource).toContain('模拟应聘')
+    expect(prototypeSource).toContain('剩余课时')
   })
 
-  it('gives the left-side information columns a clearer pair-row hierarchy', () => {
-    expect(prototypeSource).toContain('student-email-line')
-    expect(prototypeSource).toContain('student-pair-row')
-    expect(prototypeSource).toContain('student-pair-label')
-    expect(prototypeSource).toContain('student-pair-value')
+  it('has action buttons for student rows', () => {
+    expect(prototypeSource).toContain('详情')
+    expect(prototypeSource).toContain('编辑')
   })
 
-  it('stabilizes the students table with explicit column sizing', () => {
-    expect(prototypeSource).toContain('students-colgroup')
-    expect(prototypeSource).toContain('students-col--info')
-    expect(prototypeSource).toContain('students-col--hours')
-    expect(prototypeSource).toContain('students-col--actions')
+  it('includes the add student modal', () => {
+    expect(prototypeSource).toContain('modal-add-student')
+    expect(prototypeSource).toContain('openModal')
   })
 
-  it('flattens the filter shell and table header rhythm', () => {
-    expect(prototypeSource).toContain('students-filters--flat')
-    expect(prototypeSource).toContain('students-table--soft-head')
+  it('has student detail modal references', () => {
+    expect(prototypeSource).toContain('modal-student-detail')
   })
 
-  it('keeps the list summary and pagination in a flatter closing rhythm', () => {
-    expect(prototypeSource).toContain('students-list-meta--inline')
-    expect(prototypeSource).toContain('students-pagination--compact')
-    expect(prototypeSource).toContain('students-pagination__summary')
+  it('includes pagination or list summary elements', () => {
+    expect(prototypeSource).toContain('page-sub')
+    expect(prototypeSource).toContain('管理学员信息')
   })
 
-  it('tightens the alert and table density for a more final-looking admin page', () => {
-    expect(prototypeSource).toContain('students-alert--micro')
-    expect(prototypeSource).toContain('students-table--dense')
-    expect(prototypeSource).toContain('student-hours-box--compact')
+  it('has proper page structure with header and content areas', () => {
+    expect(prototypeSource).toContain('page-header')
+    expect(prototypeSource).toContain('page-title')
+    expect(prototypeSource).toContain('page-title-en')
   })
 
-  it('keeps the top shell and row rhythm extra light for the final polish pass', () => {
-    expect(prototypeSource).toContain('students-filters--micro')
-    expect(prototypeSource).toContain('students-list-meta--micro')
-    expect(prototypeSource).toContain('student-cell-block--tight')
+  it('includes project time filter options', () => {
+    expect(prototypeSource).toContain('项目时间')
   })
 
-  it('settles the upper layout stack into a tighter final rhythm', () => {
-    expect(prototypeSource).toContain('students-prototype-shell--settled')
-    expect(prototypeSource).toContain('students-header--compact')
-    expect(prototypeSource).toContain('students-tabs-row--micro')
+  it('has the student management subtitle describing the page purpose', () => {
+    expect(prototypeSource).toContain('管理学员信息、合同信息，支持各端查看和维护学员数据')
   })
 })

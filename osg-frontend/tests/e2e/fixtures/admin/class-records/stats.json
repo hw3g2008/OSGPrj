@@ -1,0 +1,11 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "totalRecords": 156,
+    "pendingApproval": 12,
+    "approved": 128,
+    "rejected": 8,
+    "unpaid": 16
+  }
+}

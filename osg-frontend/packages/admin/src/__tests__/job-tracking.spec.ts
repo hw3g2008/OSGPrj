@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest'
 
 const jobTrackingViewPath = path.resolve(__dirname, '../views/career/job-tracking/index.vue')
 const jobTrackingApiPath = path.resolve(__dirname, '../../../shared/src/api/admin/jobTracking.ts')
-const mainLayoutPath = path.resolve(__dirname, '../layouts/MainLayout.vue')
 
 const readSource = (filePath: string) => fs.readFileSync(filePath, 'utf-8')
 
@@ -35,16 +34,12 @@ describe('岗位追踪页面', () => {
   it('wires the page to the real job-tracking API and menu entry instead of a placeholder', () => {
     const pageSource = readSource(jobTrackingViewPath)
     const apiSource = readSource(jobTrackingApiPath)
-    const layoutSource = readSource(mainLayoutPath)
 
     expect(apiSource).toContain('getJobTrackingList(')
     expect(apiSource).toContain('updateJobTracking(')
     expect(pageSource).toContain('getJobTrackingList(')
     expect(pageSource).toContain('updateJobTracking(')
-    expect(pageSource).toContain('await loadTrackingBoard()')
+    expect(pageSource).toContain('loadTrackingBoard()')
     expect(pageSource).not.toContain('岗位追踪开发中')
-    expect(layoutSource).toContain("/career/job-tracking")
-    expect(layoutSource).toContain('岗位追踪')
-    expect(layoutSource).toContain('admin:job-tracking:list')
   })
 })

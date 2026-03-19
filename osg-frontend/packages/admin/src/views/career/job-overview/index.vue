@@ -6,7 +6,7 @@
           学员求职总览
           <span class="page-title-en">Job Overview</span>
         </h2>
-        <p class="page-subtitle">查看全部学员的求职进度，管理导师分配与阶段提醒，快速锁定需要处理的申请。</p>
+        <p class="page-subtitle">查看全部学员的求职进度，管理导师和题库分配</p>
       </div>
       <div class="page-header__actions">
         <span class="job-overview-page__traffic">
@@ -741,6 +741,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.permission-card {
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border, #e2e8f0);
+  padding: 20px;
+}
+
+.permission-card__body--flush {
+  overflow-x: auto;
+  margin: 0 -20px;
+}
+
 .job-overview-page {
   display: flex;
   flex-direction: column;

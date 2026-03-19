@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "total": 156,
+    "active": 89,
+    "closed": 42,
+    "pending": 25
+  }
+}

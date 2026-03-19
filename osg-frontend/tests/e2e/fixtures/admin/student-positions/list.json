@@ -1,0 +1,34 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "id": 3001,
+      "studentName": "Emily Zhang",
+      "studentId": 58472,
+      "companyName": "J.P. Morgan",
+      "positionName": "Equity Research Intern",
+      "status": "pending",
+      "submittedAt": "2025-01-12T10:00:00Z"
+    },
+    {
+      "id": 3002,
+      "studentName": "Alice Wang",
+      "studentId": 31847,
+      "companyName": "Bain & Company",
+      "positionName": "Summer Associate",
+      "status": "approved",
+      "submittedAt": "2025-01-08T10:00:00Z"
+    },
+    {
+      "id": 3003,
+      "studentName": "Bob Chen",
+      "studentId": 72936,
+      "companyName": "Meta",
+      "positionName": "Product Manager Intern",
+      "status": "rejected",
+      "submittedAt": "2025-01-05T10:00:00Z"
+    }
+  ],
+  "total": 3
+}

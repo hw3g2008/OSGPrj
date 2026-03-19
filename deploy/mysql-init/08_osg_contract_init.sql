@@ -14,8 +14,6 @@ CREATE TABLE IF NOT EXISTS osg_contract (
   contract_type       VARCHAR(32)    NOT NULL DEFAULT 'initial' COMMENT '合同类型(initial首签 renew续签 supplement补充)',
   contract_amount     DECIMAL(10,2)  NOT NULL DEFAULT 0.00 COMMENT '合同金额',
   total_hours         INT            NOT NULL DEFAULT 0 COMMENT '合同总课时',
-  used_hours          INT            NOT NULL DEFAULT 0 COMMENT '已用课时',
-  remaining_hours     INT            NOT NULL DEFAULT 0 COMMENT '剩余课时',
   start_date          DATE           NOT NULL COMMENT '合同开始日期',
   end_date            DATE           NOT NULL COMMENT '合同结束日期',
   renewal_reason      VARCHAR(255)   DEFAULT NULL COMMENT '续签原因',

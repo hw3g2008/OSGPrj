@@ -26,7 +26,7 @@ describe('课程反馈页面', () => {
 
     expect(source).toContain('getFeedbackList(')
     expect(source).toContain('activeTab')
-    expect(source).toContain('summaryCards')
+    expect(source).toContain('summary-card')
     expect(source).not.toContain('课程反馈页面开发中')
   })
 })

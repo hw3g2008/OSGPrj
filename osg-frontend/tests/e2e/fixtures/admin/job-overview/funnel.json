@@ -1,0 +1,11 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": [
+    { "stage": "简历投递", "count": 45 },
+    { "stage": "笔试/测评", "count": 32 },
+    { "stage": "面试", "count": 20 },
+    { "stage": "终面", "count": 12 },
+    { "stage": "Offer", "count": 8 }
+  ]
+}

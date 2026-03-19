@@ -1,0 +1,29 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "studentId": 58472,
+      "studentName": "Emily Zhang",
+      "mentorName": "王明辉",
+      "stage": "面试中",
+      "targetCompany": "Goldman Sachs",
+      "targetPosition": "IB Analyst",
+      "applicationCount": 5,
+      "interviewCount": 3,
+      "offerCount": 0
+    },
+    {
+      "studentId": 31847,
+      "studentName": "Alice Wang",
+      "mentorName": "Jerry Li",
+      "stage": "已获Offer",
+      "targetCompany": "McKinsey",
+      "targetPosition": "BA",
+      "applicationCount": 8,
+      "interviewCount": 4,
+      "offerCount": 1
+    }
+  ],
+  "total": 2
+}

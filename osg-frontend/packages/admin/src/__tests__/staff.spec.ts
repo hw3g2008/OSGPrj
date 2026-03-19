@@ -51,8 +51,8 @@ describe('staff page shell', () => {
   it('keeps row actions visually lightweight, matching the prototype text-button rhythm', () => {
     const source = readSource()
 
-    expect(source).toContain('更多操作')
-    expect(source).toContain('class="staff-action-trigger"')
+    expect(source).toContain('更多')
+    expect(source).toContain('class="staff-action-link"')
     expect(source).not.toContain('linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)')
   })
 })

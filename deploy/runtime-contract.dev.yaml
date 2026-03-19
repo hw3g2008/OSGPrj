@@ -26,11 +26,44 @@ providers:
       auth: SPRING_MAIL_SMTP_AUTH
       starttls: SPRING_MAIL_SMTP_STARTTLS_ENABLE
       ssl: SPRING_MAIL_SMTP_SSL_ENABLE
+  http_download:
+    provider_class: http_download
+    truth_mode: real
+    note: "HTTP 文件下载提供者（Excel 导出等）"
+    config_env:
+      base_url: BASE_URL
+  local_fs:
+    provider_class: local_fs
+    truth_mode: real
+    note: "本地文件系统提供者（附件上传等）"
+    config_env:
+      upload_base_path: FILE_UPLOAD_PATH
 evidence_sinks:
   mailbox:
     sink_type: mailbox
     provider: smtp
+  download_audit:
+    sink_type: download_audit
+    provider: http_download
+    note: "下载审计日志"
+    audit_log_path: logs/download-audit.log
+  upload_audit:
+    sink_type: upload_audit
+    provider: local_fs
+    note: "上传审计日志"
+    audit_log_path: logs/upload-audit.log
+  notification_log:
+    sink_type: notification_log
+    provider: smtp
+    note: "通知日志（排课提醒等）"
+    audit_log_path: logs/notification-audit.log
 evidence_paths:
   mailbox:
     mailbox_target_env: PASSWORD_RESET_MAILBOX
     provider_log_path_env: PASSWORD_RESET_PROVIDER_LOG_PATH
+  download_audit:
+    audit_log_path_env: DOWNLOAD_AUDIT_LOG_PATH
+  upload_audit:
+    audit_log_path_env: UPLOAD_AUDIT_LOG_PATH
+  notification_log:
+    audit_log_path_env: NOTIFICATION_AUDIT_LOG_PATH

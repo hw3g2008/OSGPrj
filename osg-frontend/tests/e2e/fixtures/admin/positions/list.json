@@ -1,0 +1,40 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "positionId": 2001,
+      "companyName": "Goldman Sachs",
+      "positionName": "Investment Banking Analyst",
+      "industry": "金融",
+      "location": "New York",
+      "salary": "$85,000-$95,000",
+      "status": "active",
+      "applicantCount": 12,
+      "createdAt": "2025-01-10T10:00:00Z"
+    },
+    {
+      "positionId": 2002,
+      "companyName": "McKinsey & Company",
+      "positionName": "Business Analyst",
+      "industry": "咨询",
+      "location": "Shanghai",
+      "salary": "¥350,000-¥450,000",
+      "status": "active",
+      "applicantCount": 8,
+      "createdAt": "2025-01-05T10:00:00Z"
+    },
+    {
+      "positionId": 2003,
+      "companyName": "Google",
+      "positionName": "Software Engineer",
+      "industry": "科技",
+      "location": "Mountain View",
+      "salary": "$120,000-$150,000",
+      "status": "closed",
+      "applicantCount": 5,
+      "createdAt": "2024-12-15T10:00:00Z"
+    }
+  ],
+  "total": 3
+}

@@ -1,0 +1,57 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "staffId": 9001,
+      "staffName": "王明辉",
+      "staffType": "mentor",
+      "weekScope": "current",
+      "filled": true,
+      "availableHours": 6,
+      "availableSlots": [
+        { "weekday": 1, "timeSlot": "morning" },
+        { "weekday": 2, "timeSlot": "afternoon" },
+        { "weekday": 4, "timeSlot": "morning" }
+      ],
+      "availableSlotLabels": ["周一上午", "周二下午", "周四上午"],
+      "selectedSlotKeys": ["1-morning", "2-afternoon", "4-morning"],
+      "availableText": "周一上午、周二下午、周四上午",
+      "actionType": "adjust",
+      "canRemind": false
+    },
+    {
+      "staffId": 9002,
+      "staffName": "Jerry Li",
+      "staffType": "mentor",
+      "weekScope": "current",
+      "filled": true,
+      "availableHours": 4,
+      "availableSlots": [
+        { "weekday": 1, "timeSlot": "afternoon" },
+        { "weekday": 3, "timeSlot": "morning" }
+      ],
+      "availableSlotLabels": ["周一下午", "周三上午"],
+      "selectedSlotKeys": ["1-afternoon", "3-morning"],
+      "availableText": "周一下午、周三上午",
+      "actionType": "adjust",
+      "canRemind": false
+    },
+    {
+      "staffId": 9003,
+      "staffName": "Sophia Xu",
+      "staffType": "lead_mentor",
+      "weekScope": "current",
+      "filled": false,
+      "availableHours": 0,
+      "availableSlots": [],
+      "availableSlotLabels": [],
+      "selectedSlotKeys": [],
+      "availableText": "",
+      "actionType": "fill",
+      "canRemind": true,
+      "reminder": "未填写排期"
+    }
+  ],
+  "total": 3
+}

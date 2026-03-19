@@ -11,7 +11,7 @@
         <div>
           <span class="position-form-modal__eyebrow">Position Form</span>
           <div class="position-form-modal__title">
-            <span class="mdi mdi-briefcase-edit-outline" aria-hidden="true"></span>
+            <span :class="['mdi', isEditing ? 'mdi-briefcase-edit' : 'mdi-briefcase-plus']" aria-hidden="true"></span>
             <span>{{ modeTitle }}</span>
           </div>
         </div>
@@ -27,22 +27,22 @@
         </header>
         <div class="position-form-modal__grid">
           <label class="position-form-modal__field">
-            <span>岗位分类</span>
+            <span>岗位分类 <em class="position-form-modal__req">*</em></span>
             <select v-model="form.positionCategory" class="position-form-modal__select">
               <option value="">请选择</option>
               <option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
           </label>
           <label class="position-form-modal__field">
-            <span>岗位名称</span>
-            <input v-model="form.positionName" type="text" class="position-form-modal__input" placeholder="如 Summer Analyst" />
+            <span>岗位名称 <em class="position-form-modal__req">*</em></span>
+            <input v-model="form.positionName" type="text" class="position-form-modal__input" placeholder="如 IB Analyst" />
           </label>
           <label class="position-form-modal__field">
             <span>部门</span>
-            <input v-model="form.department" type="text" class="position-form-modal__input" placeholder="如 Investment Banking Division" />
+            <input v-model="form.department" type="text" class="position-form-modal__input" placeholder="如 IBD / S&T（选填）" />
           </label>
           <label class="position-form-modal__field">
-            <span>项目时间</span>
+            <span>项目时间 <em class="position-form-modal__req">*</em></span>
             <select v-model="form.projectYear" class="position-form-modal__select">
               <option value="">请选择</option>
               <option v-for="option in projectYearOptions" :key="option" :value="option">{{ option }}</option>
@@ -50,16 +50,20 @@
           </label>
         </div>
         <div class="position-form-modal__chips">
-          <span class="position-form-modal__chip-label">招聘周期</span>
-          <button
+          <span class="position-form-modal__chip-label">招聘周期 <em class="position-form-modal__req">*</em> <span class="position-form-modal__chip-hint">(可多选)</span></span>
+          <label
             v-for="option in recruitmentCycleOptions"
             :key="option"
-            type="button"
             :class="['position-form-modal__chip', { 'position-form-modal__chip--active': selectedCycles.includes(option) }]"
-            @click="toggleCycle(option)"
           >
+            <input
+              type="checkbox"
+              :checked="selectedCycles.includes(option)"
+              class="position-form-modal__chip-checkbox"
+              @change="toggleCycle(option)"
+            />
             {{ option }}
-          </button>
+          </label>
         </div>
       </section>
 
@@ -70,46 +74,50 @@
         </header>
         <div class="position-form-modal__grid">
           <label class="position-form-modal__field">
-            <span>公司名称</span>
+            <span>公司名称 <em class="position-form-modal__req">*</em></span>
             <input
               v-model="form.companyName"
               list="position-company-options"
               type="text"
               class="position-form-modal__input"
-              placeholder="搜索或输入公司名称"
+              placeholder="搜索公司..."
             />
             <datalist id="position-company-options">
               <option v-for="option in companyOptions" :key="option" :value="option" />
             </datalist>
           </label>
           <label class="position-form-modal__field">
-            <span>公司类别</span>
+            <span>公司类别 <em class="position-form-modal__req">*</em></span>
             <select v-model="form.companyType" class="position-form-modal__select">
               <option value="">请选择</option>
               <option v-for="option in industryOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </label>
           <label class="position-form-modal__field">
-            <span>大区</span>
+            <span>大区 <em class="position-form-modal__req">*</em></span>
             <select v-model="form.region" class="position-form-modal__select">
               <option value="">请选择</option>
               <option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
           </label>
           <label class="position-form-modal__field">
-            <span>城市</span>
+            <span>城市 <em class="position-form-modal__req">*</em></span>
             <select v-model="form.city" class="position-form-modal__select">
-              <option value="">请选择</option>
+              <option value="">{{ form.region ? '请选择' : '请先选择大区' }}</option>
               <option v-for="option in currentCityOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </label>
           <label class="position-form-modal__field">
-            <span>公司官网</span>
-            <input v-model="form.companyWebsite" type="url" class="position-form-modal__input" placeholder="https://company.com" />
+            <span>公司官网 <em class="position-form-modal__req">*</em></span>
+            <input v-model="form.companyWebsite" type="url" class="position-form-modal__input" placeholder="https://..." />
           </label>
           <label class="position-form-modal__field">
-            <span>岗位链接</span>
-            <input v-model="form.positionUrl" type="url" class="position-form-modal__input" placeholder="https://company.com/jobs/..." />
+            <span>岗位链接 <em class="position-form-modal__req">*</em></span>
+            <input v-model="form.positionUrl" type="url" class="position-form-modal__input" placeholder="https://..." />
+          </label>
+          <label class="position-form-modal__field">
+            <span>截止日期 <span class="position-form-modal__optional">(选填)</span></span>
+            <input v-model="form.deadline" type="date" class="position-form-modal__input" />
           </label>
         </div>
       </section>
@@ -121,25 +129,44 @@
         </header>
         <div class="position-form-modal__grid">
           <label class="position-form-modal__field">
-            <span>开始时间</span>
+            <span>开始时间 <em class="position-form-modal__req">*</em></span>
             <input v-model="form.displayStartTime" type="datetime-local" class="position-form-modal__input" />
           </label>
           <label class="position-form-modal__field">
-            <span>结束时间</span>
+            <span>结束时间 <em class="position-form-modal__req">*</em></span>
             <input v-model="form.displayEndTime" type="datetime-local" class="position-form-modal__input" />
-          </label>
-          <label v-if="isEditing" class="position-form-modal__field">
-            <span>岗位状态</span>
-            <select v-model="form.displayStatus" class="position-form-modal__select">
-              <option value="visible">展示中</option>
-              <option value="hidden">已隐藏</option>
-              <option value="expired">已过期</option>
-            </select>
           </label>
           <label class="position-form-modal__field position-form-modal__field--wide">
             <span>投递备注</span>
-            <textarea v-model="form.applicationNote" class="position-form-modal__textarea" rows="3" placeholder="例如 OA / VI / Super Day 等流程提示"></textarea>
+            <textarea v-model="form.applicationNote" class="position-form-modal__textarea" rows="4" placeholder="提醒学生投递时的注意事项..."></textarea>
           </label>
+        </div>
+        <p class="position-form-modal__auto-archive-hint">
+          <span class="mdi mdi-information-outline" aria-hidden="true"></span>
+          到达结束时间后自动归档
+        </p>
+      </section>
+
+      <section v-if="isEditing" class="position-form-modal__status-bar">
+        <div class="position-form-modal__status-info">
+          <span class="mdi mdi-toggle-switch" aria-hidden="true"></span>
+          <div>
+            <div class="position-form-modal__status-label">
+              岗位状态：
+              <span :class="['position-form-modal__status-tag', `position-form-modal__status-tag--${form.displayStatus}`]">
+                {{ formatDisplayStatus(form.displayStatus) }}
+              </span>
+            </div>
+            <div class="position-form-modal__status-note">隐藏后学员将无法看到此岗位</div>
+          </div>
+        </div>
+        <div class="position-form-modal__status-actions">
+          <button type="button" class="position-form-modal__status-btn position-form-modal__status-btn--hide" @click="form.displayStatus = 'hidden'">
+            <span class="mdi mdi-eye-off" aria-hidden="true"></span> 隐藏
+          </button>
+          <button type="button" class="position-form-modal__status-btn position-form-modal__status-btn--activate" @click="form.displayStatus = 'visible'">
+            <span class="mdi mdi-refresh" aria-hidden="true"></span> 激活
+          </button>
         </div>
       </section>
     </div>
@@ -148,7 +175,8 @@
       <div class="position-form-modal__footer">
         <button type="button" class="position-form-modal__secondary" @click="handleClose">取消</button>
         <button type="button" class="position-form-modal__primary" @click="handleSubmit">
-          {{ isEditing ? '保存岗位' : '新增岗位' }}
+          <span class="mdi mdi-check" aria-hidden="true"></span>
+          {{ isEditing ? '保存' : '保存' }}
         </button>
       </div>
     </template>
@@ -180,9 +208,13 @@ const categoryOptions = [
   { value: 'events', label: '招聘活动' }
 ]
 
-const industryOptions = ['Investment Bank', 'Consulting', 'Tech', 'PE/VC', 'Other']
-const recruitmentCycleOptions = ['2024', '2025', '2026']
-const projectYearOptions = ['2024', '2025', '2026']
+const industryOptions = ['Investment Bank', 'Consulting', 'Tech', 'PE', 'VC', 'Other']
+const recruitmentCycleOptions = [
+  '2024 Summer', '2024 Full-time', '2024 Off-cycle',
+  '2025 Summer', '2025 Full-time', '2025 Off-cycle',
+  '2026 Summer', '2026 Full-time'
+]
+const projectYearOptions = ['2024', '2025', '2026', '2027']
 
 const regionOptions = [
   { value: 'na', label: '北美' },
@@ -192,7 +224,7 @@ const regionOptions = [
 ]
 
 const cityMap: Record<string, string[]> = {
-  na: ['New York', 'San Francisco', 'Chicago'],
+  na: ['New York', 'San Francisco', 'Chicago', 'Boston'],
   eu: ['London', 'Frankfurt'],
   ap: ['Hong Kong', 'Singapore', 'Tokyo'],
   cn: ['Shanghai', 'Beijing']
@@ -213,6 +245,7 @@ const form = reactive({
   displayEndTime: '',
   positionUrl: '',
   applicationNote: '',
+  deadline: '',
   recruitmentCycles: [] as string[]
 })
 
@@ -221,11 +254,24 @@ const modeTitle = computed(() => (isEditing.value ? '编辑岗位' : '新增岗�
 const selectedCycles = computed(() => form.recruitmentCycles)
 const currentCityOptions = computed(() => cityMap[form.region] || [])
 
+const formatDisplayStatus = (value: string) => {
+  if (value === 'hidden') return '已隐藏'
+  if (value === 'expired') return '已过期'
+  return '展示中'
+}
+
 const toDateTimeLocal = (value?: string) => {
   if (!value) {
     return ''
   }
   return value.slice(0, 16)
+}
+
+const toDateValue = (value?: string) => {
+  if (!value) {
+    return ''
+  }
+  return value.slice(0, 10)
 }
 
 const resetForm = () => {
@@ -245,6 +291,7 @@ const resetForm = () => {
   form.displayEndTime = toDateTimeLocal(props.position?.displayEndTime) || end.toISOString().slice(0, 16)
   form.positionUrl = props.position?.positionUrl || ''
   form.applicationNote = props.position?.applicationNote || ''
+  form.deadline = toDateValue(props.position?.deadline)
   form.recruitmentCycles = (props.position?.recruitmentCycle || '').split(',').map(item => item.trim()).filter(Boolean)
 }
 
@@ -287,7 +334,8 @@ const handleSubmit = () => {
     displayStartTime: form.displayStartTime,
     displayEndTime: form.displayEndTime,
     positionUrl: form.positionUrl || undefined,
-    applicationNote: form.applicationNote || undefined
+    applicationNote: form.applicationNote || undefined,
+    deadline: form.deadline || undefined
   })
 }
 
@@ -378,6 +426,17 @@ watch(() => form.region, () => {
   grid-column: 1 / -1;
 }
 
+.position-form-modal__req {
+  color: #ef4444;
+  font-style: normal;
+}
+
+.position-form-modal__optional {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 400;
+}
+
 .position-form-modal__input,
 .position-form-modal__select,
 .position-form-modal__textarea {
@@ -390,7 +449,7 @@ watch(() => form.region, () => {
 }
 
 .position-form-modal__textarea {
-  resize: vertical;
+  resize: none;
 }
 
 .position-form-modal__chips {
@@ -406,19 +465,126 @@ watch(() => form.region, () => {
   color: #5b6f88;
 }
 
+.position-form-modal__chip-hint {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 400;
+}
+
 .position-form-modal__chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   border: 1px solid #d6dfeb;
   border-radius: 999px;
   padding: 8px 14px;
   background: #fff;
   color: #26415e;
   cursor: pointer;
+  font-size: 12px;
 }
 
 .position-form-modal__chip--active {
   border-color: #205493;
   background: #205493;
   color: #fff;
+}
+
+.position-form-modal__chip-checkbox {
+  width: 14px;
+  height: 14px;
+}
+
+.position-form-modal__auto-archive-hint {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.position-form-modal__status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 20px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+}
+
+.position-form-modal__status-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.position-form-modal__status-info > .mdi {
+  font-size: 20px;
+  color: #92400e;
+}
+
+.position-form-modal__status-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.position-form-modal__status-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.position-form-modal__status-tag--visible {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.position-form-modal__status-tag--hidden {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.position-form-modal__status-tag--expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.position-form-modal__status-note {
+  font-size: 11px;
+  color: #92400e;
+  margin-top: 2px;
+}
+
+.position-form-modal__status-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.position-form-modal__status-btn {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.position-form-modal__status-btn--hide {
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.position-form-modal__status-btn--activate {
+  border-color: #22c55e;
+  color: #22c55e;
 }
 
 .position-form-modal__footer {
@@ -445,6 +611,9 @@ watch(() => form.region, () => {
 .position-form-modal__primary {
   background: linear-gradient(135deg, #1d4e89 0%, #3875b7 100%);
   color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 @media (max-width: 768px) {

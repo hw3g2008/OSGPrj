@@ -6,7 +6,7 @@
           模拟应聘管理
           <span class="page-title-en">Mock Practice</span>
         </h2>
-        <p class="page-subtitle">集中安排模拟面试、人际关系测试和期中考试申请，确保求职训练按时推进。</p>
+        <p class="page-subtitle">管理所有学员的模拟面试、人际关系测试、期中考试申请</p>
       </div>
       <div class="page-header__actions">
         <span class="mock-practice-page__badge">{{ stats.pendingCount }} 条待处理</span>
@@ -435,6 +435,19 @@ function formatRelativeTime(value?: string | null) {
 </script>
 
 <style scoped lang="scss">
+.permission-card {
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border, #e2e8f0);
+  padding: 20px;
+}
+
+.permission-card__body--flush {
+  overflow-x: auto;
+  margin: 0 -20px;
+}
+
 .mock-practice-page {
   display: flex;
   flex-direction: column;

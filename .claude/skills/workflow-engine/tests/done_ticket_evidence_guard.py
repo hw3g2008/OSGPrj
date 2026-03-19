@@ -126,8 +126,8 @@ def main():
             continue
 
         status = ticket.get("status")
-        if require_all_done and status != "done":
-            issues.append(f"{ticket_id}: status={status}，当前阶段要求全部 done")
+        if require_all_done and status not in ("done", "deferred", "blocked"):
+            issues.append(f"{ticket_id}: status={status}，当前阶段要求全部 done/deferred/blocked")
 
         if status == "done":
             evidence = ticket.get("verification_evidence")

@@ -1,0 +1,43 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "id": 4001,
+      "studentName": "Emily Zhang",
+      "studentId": 58472,
+      "mentorName": "王明辉",
+      "type": "behavioral",
+      "scheduledAt": "2025-01-20T14:00:00Z",
+      "status": "completed",
+      "score": 85
+    },
+    {
+      "id": 4002,
+      "studentName": "Alice Wang",
+      "studentId": 31847,
+      "mentorName": "Jerry Li",
+      "type": "technical",
+      "scheduledAt": "2025-01-22T10:00:00Z",
+      "status": "scheduled",
+      "score": null
+    },
+    {
+      "id": 4003,
+      "studentName": "Bob Chen",
+      "studentId": 72936,
+      "mentorName": "王明辉",
+      "type": "case",
+      "scheduledAt": "2025-01-18T09:00:00Z",
+      "status": "completed",
+      "score": 72
+    }
+  ],
+  "total": 3,
+  "stats": {
+    "total": 28,
+    "completed": 18,
+    "scheduled": 7,
+    "cancelled": 3
+  }
+}

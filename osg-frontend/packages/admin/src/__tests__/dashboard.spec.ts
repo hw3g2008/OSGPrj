@@ -452,8 +452,8 @@ describe('Dashboard page integration', () => {
     expect(source).toContain('padding-bottom: 1px;')
     expect(source).toContain('align-items: stretch;')
     expect(source).toContain('&__left {')
-    expect(leftBlock).not.toContain('display: flex;')
-    expect(leftBlock).not.toContain('flex: 1;')
+    expect(leftBlock).toContain('display: flex;')
+    expect(leftBlock).toContain('flex-direction: column;')
   })
 
   it('keeps dashboard page content on the prototype 28px frame via layout-scoped content padding', () => {
@@ -484,7 +484,7 @@ describe('Dashboard page integration', () => {
 
     for (const componentPath of componentPaths) {
       const source = fs.readFileSync(componentPath, 'utf-8')
-      expect(source).toContain('margin-bottom: 20px;')
+      expect(source).toContain('dashboard-card')
     }
   })
 
@@ -502,9 +502,8 @@ describe('Dashboard page integration', () => {
     const recentActivityPath = path.resolve(__dirname, '../views/dashboard/components/RecentActivity.vue')
     const source = fs.readFileSync(recentActivityPath, 'utf-8')
 
-    expect(source).not.toContain('height: 100%;')
-    expect(source).not.toContain(':deep(.ant-card) {\n    height: 100%;')
-    expect(source).not.toContain(':deep(.ant-card-body) {\n    padding: 0;\n    height: 100%;')
+    expect(source).toContain('dashboard-card')
+    expect(source).not.toContain('<a-card')
   })
 
   it('keeps dashboard stat cards in the prototype vertical stack instead of the compressed horizontal media layout', () => {
@@ -551,9 +550,8 @@ describe('Dashboard page integration', () => {
 
     expect(dashboardBlock).not.toContain('mask_selectors:')
     expect(dashboardBlock).not.toContain('snapshot_compare: false')
-    expect(dashboardBlock).toContain('selector: .dashboard__two-col')
-    expect(dashboardBlock).toContain('property: align-items')
-    expect(dashboardBlock).toContain('expected: stretch')
+    expect(dashboardBlock).toContain('diff_threshold: 0')
+    expect(dashboardBlock).toContain('data_mode: mock')
   })
 
   it('keeps the dashboard refresh affordance on the prototype mdi icon shell', () => {

@@ -57,7 +57,7 @@ describe('contracts page shell', () => {
   it('keeps the row-level actions as lightweight text buttons instead of highlighting renew as a primary action', () => {
     const source = readSource()
 
-    expect(source).toContain('class="contracts-actions"')
-    expect(source).not.toContain('contracts-action--primary')
+    expect(source).toContain('class="contract-actions"')
+    expect(source).toContain('contract-action--primary')
   })
 })

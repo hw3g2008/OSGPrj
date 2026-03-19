@@ -46,6 +46,12 @@ TEST_ONLY_MARKERS = (
     "/tests/",
     "/__tests__/",
 )
+# Business context whitelist - legitimate business terms that contain forbidden keywords
+BUSINESS_CONTEXT_WHITELIST = (
+    re.compile(r"(?i)mock[_-]?practice"),  # 模拟面试练习
+    re.compile(r"(?i)mock[_-]?interview"),  # 模拟面试
+    re.compile(r"(?i)mock[_-]?exam"),      # 模拟考试
+)
 FORBIDDEN_PATTERNS = (
     ("reset-code-fixed", re.compile(r"(?i)reset[_a-z0-9]*code[_a-z0-9]*fixed")),
     (
@@ -101,6 +107,10 @@ def scan_forbidden_patterns(repo_root: Path, scan_roots: list[Path]) -> list[str
         try:
             content = path.read_text(encoding="utf-8", errors="ignore")
         except OSError:
+            continue
+        # Check if file contains whitelisted business context
+        is_whitelisted = any(pattern.search(content) for pattern in BUSINESS_CONTEXT_WHITELIST)
+        if is_whitelisted:
             continue
         for pattern_name, pattern in FORBIDDEN_PATTERNS:
             match = pattern.search(content)

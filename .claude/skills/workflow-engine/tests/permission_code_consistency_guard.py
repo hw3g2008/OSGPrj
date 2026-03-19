@@ -50,10 +50,12 @@ def parse_sql_seed_permissions(sql_seed_path: Path) -> dict[str, str]:
 
 def parse_backend_permissions(backend_root: Path) -> set[str]:
     permissions: set[str] = set()
-    pattern = re.compile(r"@PreAuthorize\(\"@ss\.hasPermi\('([^']+)'\)\"\)")
+    inline_pattern = re.compile(r"@PreAuthorize\(\"@ss\.hasPermi\('([^']+)'\)\"\)")
+    constant_pattern = re.compile(r"""=\s*"@ss\.hasPermi\('([^']+)'\)"\s*;""")
     for path in backend_root.rglob("*.java"):
         content = path.read_text(encoding="utf-8", errors="ignore")
-        permissions.update(pattern.findall(content))
+        permissions.update(inline_pattern.findall(content))
+        permissions.update(constant_pattern.findall(content))
     return permissions
 
 

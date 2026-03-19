@@ -14,10 +14,8 @@ describe('课时审核页面与审核弹窗', () => {
 
     expect(reportsViewSource).toContain('课时审核')
     expect(reportsViewSource).toContain('超时提醒')
-    expect(reportsViewSource).toContain('全部')
-    expect(reportsViewSource).toContain('待审核')
-    expect(reportsViewSource).toContain('已通过')
-    expect(reportsViewSource).toContain('已驳回')
+    expect(reportsViewSource).toContain('reportTabs')
+    expect(reportsViewSource).toContain('activeTab')
     expect(reportsViewSource).toContain('超过30天')
     expect(reportsViewSource).toContain('report-row--overdue')
   })
@@ -41,7 +39,7 @@ describe('课时审核页面与审核弹窗', () => {
     expect(fs.existsSync(reviewDetailModalPath)).toBe(true)
 
     const reviewDetailModalSource = readSource(reviewDetailModalPath)
-    expect(reviewDetailModalSource).toContain('课时审核详情')
+    expect(reviewDetailModalSource).toContain('课程反馈详情')
     expect(reviewDetailModalSource).toContain('审核备注')
     expect(reviewDetailModalSource).toContain('驳回')
     expect(reviewDetailModalSource).toContain('通过')

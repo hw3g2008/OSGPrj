@@ -13,18 +13,16 @@ describe('沟通记录页面', () => {
     const source = readSource(communicationViewPath)
     expect(source).toContain('人际关系沟通记录')
     expect(source).toContain('沟通记录')
-    expect(source).toContain('Networking')
-    expect(source).toContain('待跟进')
-    expect(source).toContain('已完成')
-    expect(source).toContain('联系人公司')
-    expect(source).toContain('联系人职位')
+    expect(source).toContain('沟通方式')
+    expect(source).toContain('沟通时间')
+    expect(source).toContain('跟进事项')
   })
 
   it('wires the communication page to the real communication API instead of placeholders', () => {
     const source = readSource(communicationViewPath)
 
     expect(source).toContain('getCommunicationList(')
-    expect(source).toContain('activeTab')
+    expect(source).toContain("tab: 'record'")
     expect(source).not.toContain('沟通记录页面开发中')
   })
 })

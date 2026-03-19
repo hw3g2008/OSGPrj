@@ -2,76 +2,103 @@
   <section class="complaints-page">
     <header class="page-header">
       <div>
-        <p class="page-eyebrow">Profile Center</p>
-        <h1>投诉建议</h1>
+        <h1 class="page-title">投诉建议</h1>
         <p class="page-subtitle">处理学员提交的投诉和建议</p>
       </div>
     </header>
 
-    <section class="table-card">
-      <table class="complaint-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>学生</th>
-            <th>类型</th>
-            <th>标题</th>
-            <th>提交时间</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.complaintId">
-            <td>#{{ row.complaintId }}</td>
-            <td>{{ row.studentName }}</td>
-            <td>
-              <span class="type-pill" :class="`type-pill--${row.complaintType}`">
-                {{ typeLabelMap[row.complaintType] }}
-              </span>
-            </td>
-            <td>
-              <div class="title-cell">{{ row.complaintTitle }}</div>
-              <p class="content-cell">{{ row.complaintContent }}</p>
-            </td>
-            <td>{{ row.submitTime }}</td>
-            <td>
-              <span class="status-pill" :class="`status-pill--${row.processStatus}`">
-                {{ statusLabelMap[row.processStatus] }}
-              </span>
-            </td>
-            <td>
-              <button
-                v-if="row.processStatus === 'pending'"
-                type="button"
-                class="action-button"
-                @click="handleStatusChange(row, 'processing')"
-              >
-                处理中
-              </button>
-              <button
-                v-else-if="row.processStatus === 'processing'"
-                type="button"
-                class="action-button action-button--primary"
-                @click="handleStatusChange(row, 'completed')"
-              >
-                已完成
-              </button>
-              <span v-else class="done-text">已完成</span>
-            </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td class="empty-row" colspan="7">暂无投诉建议</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+    <div class="filter-bar">
+      <a-input
+        v-model:value="keyword"
+        class="filter-input"
+        placeholder="搜索学员/内容..."
+        allow-clear
+      />
+      <a-select
+        v-model:value="statusFilter"
+        class="filter-select"
+        placeholder="全部状态"
+        allow-clear
+      >
+        <a-select-option value="">全部状态</a-select-option>
+        <a-select-option value="pending">待处理</a-select-option>
+        <a-select-option value="processing">处理中</a-select-option>
+        <a-select-option value="completed">已完成</a-select-option>
+      </a-select>
+      <a-select
+        v-model:value="typeFilter"
+        class="filter-select"
+        placeholder="全部类型"
+        allow-clear
+      >
+        <a-select-option value="">全部类型</a-select-option>
+        <a-select-option value="complaint">投诉</a-select-option>
+        <a-select-option value="suggestion">建议</a-select-option>
+      </a-select>
+      <a-button @click="loadComplaints">
+        <template #icon><SearchOutlined /></template>
+        搜索
+      </a-button>
+    </div>
+
+    <a-card :bordered="true" :body-style="{ padding: 0 }">
+      <a-table
+        :columns="columns"
+        :data-source="rows"
+        :row-key="(record: ComplaintRow) => record.complaintId"
+        :pagination="false"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'complaintId'">
+            {{ record.complaintId }}
+          </template>
+          <template v-else-if="column.dataIndex === 'studentName'">
+            <strong>{{ record.studentName }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'complaintType'">
+            <a-tag :color="typeColorMap[record.complaintType]">
+              {{ typeLabelMap[record.complaintType] }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'complaintTitle'">
+            {{ record.complaintTitle }}
+          </template>
+          <template v-else-if="column.dataIndex === 'submitTime'">
+            {{ record.submitTime }}
+          </template>
+          <template v-else-if="column.dataIndex === 'processStatus'">
+            <a-tag :color="statusColorMap[record.processStatus]">
+              {{ statusLabelMap[record.processStatus] }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-button
+              v-if="record.processStatus !== 'completed'"
+              type="link"
+              size="small"
+              @click="handleProcess(record)"
+            >
+              处理
+            </a-button>
+            <a-button
+              v-else
+              type="link"
+              size="small"
+              @click="handleView(record)"
+            >
+              查看
+            </a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
   </section>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { SearchOutlined } from '@ant-design/icons-vue'
 import {
   getComplaintList,
   updateComplaintStatus,
@@ -79,16 +106,40 @@ import {
 } from '@osg/shared/api/admin/complaint'
 
 const rows = ref<ComplaintRow[]>([])
+const keyword = ref('')
+const statusFilter = ref<string>('')
+const typeFilter = ref<string>('')
 
-const typeLabelMap: Record<ComplaintRow['complaintType'], string> = {
+const columns = [
+  { title: 'ID', dataIndex: 'complaintId', key: 'complaintId' },
+  { title: '学员', dataIndex: 'studentName', key: 'studentName' },
+  { title: '类型', dataIndex: 'complaintType', key: 'complaintType' },
+  { title: '标题', dataIndex: 'complaintTitle', key: 'complaintTitle' },
+  { title: '提交时间', dataIndex: 'submitTime', key: 'submitTime' },
+  { title: '状态', dataIndex: 'processStatus', key: 'processStatus' },
+  { title: '操作', dataIndex: 'action', key: 'action' }
+]
+
+const typeLabelMap: Record<string, string> = {
   complaint: '投诉',
   suggestion: '建议'
 }
 
-const statusLabelMap: Record<ComplaintRow['processStatus'], string> = {
+const typeColorMap: Record<string, string> = {
+  complaint: 'error',
+  suggestion: 'processing'
+}
+
+const statusLabelMap: Record<string, string> = {
   pending: '待处理',
   processing: '处理中',
   completed: '已完成'
+}
+
+const statusColorMap: Record<string, string> = {
+  pending: 'warning',
+  processing: 'processing',
+  completed: 'success'
 }
 
 const loadComplaints = async () => {
@@ -100,11 +151,9 @@ const loadComplaints = async () => {
   }
 }
 
-const handleStatusChange = async (
-  row: ComplaintRow,
-  nextStatus: ComplaintRow['processStatus']
-) => {
+const handleProcess = async (row: ComplaintRow) => {
   try {
+    const nextStatus = row.processStatus === 'pending' ? 'processing' : 'completed'
     await updateComplaintStatus(row.complaintId, nextStatus)
     message.success('状态更新成功')
     await loadComplaints()
@@ -113,128 +162,52 @@ const handleStatusChange = async (
   }
 }
 
+const handleView = (_row: ComplaintRow) => {
+  // View complaint detail
+}
+
 onMounted(() => {
   void loadComplaints()
 })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .complaints-page {
-  display: grid;
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  align-items: flex-start;
 }
 
-.page-eyebrow {
-  margin: 0 0 8px;
-  color: #c2410c;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-header h1 {
+.page-title {
   margin: 0;
-  font-size: 34px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
 }
 
 .page-subtitle {
-  margin: 10px 0 0;
-  color: #475569;
+  margin: 4px 0 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 14px;
 }
 
-.table-card {
-  padding: 18px 20px;
-  border: 1px solid #dbe4f0;
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.complaint-table {
-  width: 100%;
-  border-collapse: collapse;
+.filter-input {
+  width: 200px;
 }
 
-.complaint-table th,
-.complaint-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  vertical-align: top;
-}
-
-.type-pill,
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 64px;
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.type-pill--complaint {
-  color: #fff;
-  background: #dc2626;
-}
-
-.type-pill--suggestion {
-  color: #1d4ed8;
-  background: #dbeafe;
-}
-
-.status-pill--pending {
-  color: #92400e;
-  background: #fef3c7;
-}
-
-.status-pill--processing {
-  color: #1d4ed8;
-  background: #dbeafe;
-}
-
-.status-pill--completed {
-  color: #166534;
-  background: #dcfce7;
-}
-
-.title-cell {
-  font-weight: 600;
-}
-
-.content-cell {
-  margin: 6px 0 0;
-  color: #64748b;
-}
-
-.action-button {
-  height: 34px;
-  padding: 0 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
-  background: #fff;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.action-button--primary {
-  color: #fff;
-  border-color: #0f766e;
-  background: #0f766e;
-}
-
-.done-text,
-.empty-row {
-  color: #64748b;
+.filter-select {
+  width: 120px;
 }
 </style>

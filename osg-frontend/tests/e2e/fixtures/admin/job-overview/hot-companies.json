@@ -1,0 +1,9 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": [
+    { "companyName": "Goldman Sachs", "applicationCount": 12 },
+    { "companyName": "McKinsey", "applicationCount": 8 },
+    { "companyName": "Google", "applicationCount": 6 }
+  ]
+}

@@ -21,7 +21,7 @@ describe('投诉建议页面', () => {
     expect(pageSource).toContain('待处理')
     expect(pageSource).toContain('处理中')
     expect(pageSource).toContain('已完成')
-    expect(pageSource).toContain('学生')
+    expect(pageSource).toContain('学员')
     expect(pageSource).toContain('标题')
   })
 

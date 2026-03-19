@@ -2,87 +2,106 @@
   <section class="mailjob-page">
     <header class="page-header">
       <div>
-        <p class="page-eyebrow">Profile Center</p>
-        <h1>邮件作业</h1>
-        <p class="page-subtitle">批量邮件发送管理</p>
+        <h1 class="page-title">邮件作业</h1>
+        <p class="page-subtitle">Mail Job - 批量邮件发送管理</p>
       </div>
-      <button type="button" class="primary-button" @click="showNewMailJobModal = true">新建任务</button>
+      <a-button type="primary" @click="showNewMailJobModal = true">
+        <template #icon><MailOutlined /></template>
+        新建任务
+      </a-button>
     </header>
 
-    <section class="tabs-row">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        type="button"
-        class="tab-pill"
-        :class="{ 'tab-pill--active': activeTab === tab.key }"
-        @click="activeTab = tab.key"
-      >
-        {{ tab.label }}
-      </button>
-    </section>
+    <a-tabs v-model:activeKey="activeTab">
+      <a-tab-pane key="jobList" tab="Job List">
+        <div class="filter-bar">
+          <a-input
+            v-model:value="keyword"
+            class="filter-input-sm"
+            placeholder="Search"
+            allow-clear
+          />
+          <a-range-picker v-model:value="dateRange" />
+          <a-button @click="loadMailJobs">
+            <template #icon><SearchOutlined /></template>
+            Search
+          </a-button>
+        </div>
 
-    <section v-if="activeTab === 'jobList'" class="table-card">
-      <table class="mailjob-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>收件人</th>
-            <th>SMTP</th>
-            <th>Total</th>
-            <th>Pending</th>
-            <th>Success</th>
-            <th>Fail</th>
-            <th>Create Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.jobId">
-            <td>#{{ row.jobId }}</td>
-            <td>{{ row.jobTitle }}</td>
-            <td>{{ row.recipientGroup }}</td>
-            <td>{{ row.smtpServerName }}</td>
-            <td>{{ row.totalCount }}</td>
-            <td>{{ row.pendingCount }}</td>
-            <td>{{ row.successCount }}</td>
-            <td>{{ row.failCount }}</td>
-            <td>{{ row.createTime }}</td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td class="empty-row" colspan="9">暂无邮件任务</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+        <a-card :bordered="true" :body-style="{ padding: 0 }" class="table-card">
+          <a-table
+            :columns="jobColumns"
+            :data-source="rows"
+            :row-key="(record: MailJobRow) => record.jobId"
+            :pagination="false"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'jobId'">
+                {{ record.jobId }}
+              </template>
+              <template v-else-if="column.dataIndex === 'jobTitle'">
+                <strong>{{ record.jobTitle }}</strong>
+              </template>
+              <template v-else-if="column.dataIndex === 'stats'">
+                <a-tag color="processing">{{ record.totalCount }}</a-tag>
+                <span> | </span>
+                <a-tag color="warning">{{ record.pendingCount }}</a-tag>
+                <span> | </span>
+                <a-tag color="success">{{ record.successCount }}</a-tag>
+                <span> | </span>
+                <a-tag color="error">{{ record.failCount }}</a-tag>
+              </template>
+              <template v-else-if="column.dataIndex === 'actionBy'">
+                {{ record.actionBy }}
+              </template>
+              <template v-else-if="column.dataIndex === 'createTime'">
+                {{ record.createTime }}
+              </template>
+              <template v-else-if="column.dataIndex === 'action'">
+                <a-button type="link" size="small">查看</a-button>
+              </template>
+            </template>
+          </a-table>
+        </a-card>
+      </a-tab-pane>
 
-    <section v-else class="table-card">
-      <table class="mailjob-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Server Name</th>
-            <th>Host</th>
-            <th>Port</th>
-            <th>Username</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(server, index) in smtpServers" :key="server.serverName">
-            <td>#{{ index + 1 }}</td>
-            <td>{{ server.serverName }}</td>
-            <td>{{ server.host }}</td>
-            <td>{{ server.port }}</td>
-            <td>{{ server.username }}</td>
-            <td>{{ server.status }}</td>
-          </tr>
-          <tr v-if="!smtpServers.length">
-            <td class="empty-row" colspan="6">暂无 SMTP Server</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+      <a-tab-pane key="smtpServer" tab="SMTP Server">
+        <a-card :bordered="true" :body-style="{ padding: 0 }">
+          <a-table
+            :columns="smtpColumns"
+            :data-source="smtpServers"
+            :row-key="(record: SmtpServerRow) => record.serverName"
+            :pagination="false"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'id'">
+                {{ record.id }}
+              </template>
+              <template v-else-if="column.dataIndex === 'serverName'">
+                <strong>{{ record.serverName }}</strong>
+              </template>
+              <template v-else-if="column.dataIndex === 'host'">
+                {{ record.host }}
+              </template>
+              <template v-else-if="column.dataIndex === 'port'">
+                {{ record.port }}
+              </template>
+              <template v-else-if="column.dataIndex === 'username'">
+                {{ record.username }}
+              </template>
+              <template v-else-if="column.dataIndex === 'status'">
+                <a-tag :color="record.status === 'Active' ? 'success' : 'default'">
+                  {{ record.status }}
+                </a-tag>
+              </template>
+              <template v-else-if="column.dataIndex === 'action'">
+                <a-button type="link" size="small">编辑</a-button>
+                <a-button type="link" size="small">测试</a-button>
+              </template>
+            </template>
+          </a-table>
+        </a-card>
+      </a-tab-pane>
+    </a-tabs>
 
     <NewMailJobModal
       v-model="showNewMailJobModal"
@@ -96,6 +115,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { MailOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import type { Dayjs } from 'dayjs'
 import NewMailJobModal from './components/NewMailJobModal.vue'
 import {
   createMailJob,
@@ -105,16 +126,32 @@ import {
   type SmtpServerRow
 } from '@osg/shared/api/admin/mailjob'
 
-const tabs = [
-  { key: 'jobList', label: 'Job List' },
-  { key: 'smtpServer', label: 'SMTP Server' }
-]
-
-const activeTab = ref<'jobList' | 'smtpServer'>('jobList')
+const activeTab = ref<string>('jobList')
 const rows = ref<MailJobRow[]>([])
 const smtpServers = ref<SmtpServerRow[]>([])
 const submitting = ref(false)
 const showNewMailJobModal = ref(false)
+const keyword = ref('')
+const dateRange = ref<[Dayjs, Dayjs] | null>(null)
+
+const jobColumns = [
+  { title: 'ID', dataIndex: 'jobId', key: 'jobId' },
+  { title: 'Title', dataIndex: 'jobTitle', key: 'jobTitle' },
+  { title: 'Total | Pending | Success | Fail', dataIndex: 'stats', key: 'stats' },
+  { title: 'Action By', dataIndex: 'actionBy', key: 'actionBy' },
+  { title: 'Create Time', dataIndex: 'createTime', key: 'createTime' },
+  { title: '操作', dataIndex: 'action', key: 'action' }
+]
+
+const smtpColumns = [
+  { title: 'ID', dataIndex: 'id', key: 'id' },
+  { title: 'Server Name', dataIndex: 'serverName', key: 'serverName' },
+  { title: 'Host', dataIndex: 'host', key: 'host' },
+  { title: 'Port', dataIndex: 'port', key: 'port' },
+  { title: 'Username', dataIndex: 'username', key: 'username' },
+  { title: 'Status', dataIndex: 'status', key: 'status' },
+  { title: '操作', dataIndex: 'action', key: 'action' }
+]
 
 const loadMailJobs = async () => {
   try {
@@ -145,93 +182,43 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .mailjob-page {
-  display: grid;
-  gap: 20px;
-}
-
-.page-header,
-.tabs-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .page-header {
-  align-items: flex-start;
+  display: flex;
   justify-content: space-between;
+  align-items: flex-start;
 }
 
-.page-eyebrow {
-  margin: 0 0 8px;
-  color: #1d4ed8;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-header h1 {
+.page-title {
   margin: 0;
-  font-size: 34px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
 }
 
 .page-subtitle {
-  margin: 10px 0 0;
-  color: #475569;
+  margin: 4px 0 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 14px;
 }
 
-.tab-pill {
-  height: 40px;
-  padding: 0 18px;
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
-  background: #fff;
-  font-weight: 600;
-  cursor: pointer;
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.tab-pill--active {
-  color: #fff;
-  border-color: #1d4ed8;
-  background: #1d4ed8;
+.filter-input-sm {
+  width: 180px;
 }
 
 .table-card {
-  padding: 18px 20px;
-  border: 1px solid #dbe4f0;
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
-}
-
-.mailjob-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.mailjob-table th,
-.mailjob-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  vertical-align: top;
-}
-
-.empty-row {
-  text-align: center;
-  color: #64748b;
-}
-
-.primary-button {
-  height: 42px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 999px;
-  color: #fff;
-  background: linear-gradient(135deg, #1d4ed8, #0f766e);
-  font-weight: 600;
-  cursor: pointer;
+  margin-top: 0;
 }
 </style>

@@ -1,0 +1,292 @@
+# admin 模块 UI Closure Zone 定义
+# 引擎唯一输入，自包含所有必要信息
+
+module: admin
+prototype_file: "osg-spec-docs/source/prototype/admin.html"
+prototype_lines_total: 10121
+
+# 覆盖默认命令
+build_command: "pnpm --dir osg-frontend/packages/admin build"
+lint_command: "cd osg-frontend && pnpm lint"
+
+# 组件映射表（原型 class → Vue 组件）
+component_map:
+  ".table": "<a-table>"
+  ".btn-primary": '<a-button type="primary">'
+  ".badge-success": '<a-tag color="success">'
+  ".input": "<a-input>"
+  ".select": "<a-select>"
+  ".modal": "<a-modal>"
+  ".card": "<a-card>"
+  ".pagination": "<a-pagination>"
+  ".tab": "<a-tabs>"
+  ".stat-card": "<a-card> + <a-statistic>"
+  ".filter-bar": "<a-space> + <a-form>"
+  ".search-box": "<a-input-search>"
+  ".progress-bar": "<a-progress>"
+  ".avatar": "<a-avatar>"
+  ".sidebar .nav-item": "<a-menu> + <a-menu-item>"
+
+zones:
+  # ─── Zone 1: 用户中心 ───
+  - name: "用户中心"
+    id: users
+    vue_dir: "osg-frontend/packages/admin/src/views/users/"
+    pages:
+      - page_id: students
+        label: "学员管理"
+        prototype_lines: [502, 832]
+        notes: "含正常列表 Tab + 黑名单 Tab"
+        vue_files:
+          - "students/index.vue"
+          - "students/components/FilterBar.vue"
+          - "students/components/ActionDropdown.vue"
+          - "students/components/DirectionCascade.vue"
+          - "students/components/EditStudentModal.vue"
+          - "students/components/AddStudentModal.vue"
+          - "students/components/StudentDetailModal.vue"
+          - "students/components/StatusChangeModal.vue"
+          - "students/components/BlacklistModal.vue"
+          - "students/components/ContractTab.vue"
+          - "students/components/ChangeReviewTab.vue"
+
+      - page_id: staff
+        label: "导师管理"
+        prototype_lines: [849, 1034]
+        notes: "含正常列表 Tab + 黑名单 Tab"
+        vue_files:
+          - "staff/index.vue"
+          - "staff/components/StaffFormModal.vue"
+          - "staff/components/StaffDetailModal.vue"
+          - "staff/components/StaffStatusModal.vue"
+          - "staff/components/MentorStudentsModal.vue"
+
+      - page_id: contracts
+        label: "合同管理"
+        prototype_lines: [1056, 1171]
+        vue_files:
+          - "contracts/index.vue"
+          - "contracts/components/ContractDetailModal.vue"
+          - "contracts/components/RenewContractModal.vue"
+
+      - page_id: mentor-schedule
+        label: "导师排课"
+        prototype_lines: [5033, 5230]
+        vue_files:
+          - "mentor-schedule/index.vue"
+          - "mentor-schedule/components/EditScheduleModal.vue"
+
+    modals:
+      - modal_id: modal-mentor-students
+        label: "导师学员列表"
+        prototype_lines: [1035, 1055]
+      - modal_id: modal-contract-detail
+        label: "合同详情"
+        prototype_lines: [1172, 1242]
+      - modal_id: modal-add-contract
+        label: "新增合同"
+        prototype_lines: [1243, 1337]
+      - modal_id: modal-status-change
+        label: "状态修改"
+        prototype_lines: [1338, 1375]
+      - modal_id: modal-add-blacklist
+        label: "加入黑名单"
+        prototype_lines: [1376, 1429]
+      - modal_id: modal-remove-blacklist
+        label: "移出黑名单"
+        prototype_lines: [1430, 1465]
+      - modal_id: modal-admin-edit-schedule
+        label: "编辑排课"
+        prototype_lines: [5231, 5371]
+
+  # ─── Zone 2: 求职中心 ───
+  - name: "求职中心"
+    id: career
+    vue_dir: "osg-frontend/packages/admin/src/views/career/"
+    pages:
+      - page_id: positions
+        label: "岗位管理"
+        prototype_lines: [1941, 2641]
+        notes: "含下钻视图 + 列表视图切换"
+        vue_files:
+          - "positions/index.vue"
+          - "positions/components/PositionFormModal.vue"
+          - "positions/components/BatchUploadModal.vue"
+          - "positions/components/PositionStudentsModal.vue"
+
+      - page_id: student-positions
+        label: "学员岗位"
+        prototype_lines: [3121, 3256]
+        vue_files:
+          - "student-positions/index.vue"
+          - "student-positions/components/ReviewPositionModal.vue"
+          - "student-positions/components/RejectPositionModal.vue"
+
+      - page_id: job-overview
+        label: "求职总览"
+        prototype_lines: [3453, 3835]
+        notes: "含待分配导师 Tab + 全部学员 Tab"
+        vue_files:
+          - "job-overview/index.vue"
+          - "job-overview/components/AssignMentorModal.vue"
+
+      - page_id: mock-practice
+        label: "模拟练习"
+        prototype_lines: [5372, 5641]
+        notes: "含待分配导师 Tab + 全部记录 Tab"
+        vue_files:
+          - "mock-practice/index.vue"
+          - "mock-practice/components/AssignMockModal.vue"
+
+      - page_id: job-tracking
+        label: "求职追踪"
+        prototype_lines: [6174, 6357]
+        vue_files:
+          - "job-tracking/index.vue"
+
+    modals:
+      - modal_id: modal-new-position
+        label: "新增岗位"
+        prototype_lines: [2642, 2759]
+      - modal_id: modal-edit-position
+        label: "编辑岗位"
+        prototype_lines: [2760, 2887]
+      - modal_id: modal-position-upload
+        label: "批量上传"
+        prototype_lines: [2888, 2929]
+      - modal_id: modal-position-students
+        label: "岗位学员"
+        prototype_lines: [2930, 2995]
+      - modal_id: modal-job-detail
+        label: "求职详情"
+        prototype_lines: [2996, 3072]
+      - modal_id: modal-student-detail
+        label: "学员详情"
+        prototype_lines: [3073, 3120]
+      - modal_id: modal-edit-student-position
+        label: "编辑学员岗位"
+        prototype_lines: [3257, 3393]
+      - modal_id: modal-reject-position
+        label: "驳回岗位"
+        prototype_lines: [3394, 3452]
+      - modal_id: modal-admin-assign-mentor
+        label: "分配导师"
+        prototype_lines: [4131, 4202]
+      - modal_id: modal-admin-mock-feedback
+        label: "模拟反馈"
+        prototype_lines: [5572, 5608]
+      - modal_id: modal-admin-assign-mock
+        label: "分配模拟"
+        prototype_lines: [5609, 5641]
+
+  # ─── Zone 3: 教学中心 ───
+  - name: "教学中心"
+    id: teaching
+    vue_dir: "osg-frontend/packages/admin/src/views/teaching/"
+    pages:
+      - page_id: all-classes
+        label: "全部课程"
+        prototype_lines: [5642, 6173]
+        notes: "含课程详情弹窗和多种课程类型弹窗"
+        vue_files:
+          - "all-classes/index.vue"
+          - "all-classes/components/ClassDetailModal.vue"
+
+      - page_id: reports
+        label: "周报管理"
+        prototype_lines: [1466, 1672]
+        vue_files:
+          - "reports/index.vue"
+          - "reports/components/ReviewDetailModal.vue"
+
+      - page_id: feedback
+        label: "反馈记录"
+        prototype_lines: [1673, 1749]
+        notes: "含 Prep Feedback / Networking / Mock Midterm 三个 Tab"
+        vue_files:
+          - "feedback/index.vue"
+
+      - page_id: class-records
+        label: "课程记录"
+        prototype_lines: [3836, 3971]
+        vue_files:
+          - "class-records/index.vue"
+
+      - page_id: communication
+        label: "沟通记录"
+        prototype_lines: [3972, 3995]
+        vue_files:
+          - "communication/index.vue"
+
+    modals:
+      - modal_id: modal-report-detail
+        label: "周报详情"
+        prototype_lines: [1750, 1792]
+      - modal_id: modal-new-report
+        label: "新建周报"
+        prototype_lines: [6922, 10121]
+        notes: "在文件末尾附近"
+      - modal_id: modal-class-mock
+        label: "课程-模拟"
+        prototype_lines: [5836, 5893]
+      - modal_id: modal-class-entry
+        label: "课程-入职"
+        prototype_lines: [5894, 5950]
+      - modal_id: modal-class-midterm
+        label: "课程-期中"
+        prototype_lines: [5951, 6005]
+      - modal_id: modal-class-networking
+        label: "课程-Networking"
+        prototype_lines: [6006, 6073]
+      - modal_id: modal-class-written
+        label: "课程-笔试"
+        prototype_lines: [6074, 6134]
+      - modal_id: modal-class-rejected
+        label: "课程-驳回"
+        prototype_lines: [6135, 6173]
+      - modal_id: modal-admin-update-status
+        label: "更新课程状态"
+        prototype_lines: [6277, 6357]
+
+  # ─── Zone 4: 个人中心 ───
+  - name: "个人中心"
+    id: profile
+    vue_dir: "osg-frontend/packages/admin/src/views/profile/"
+    pages:
+      - page_id: notice
+        label: "通知管理"
+        prototype_lines: [6409, 6456]
+        vue_files:
+          - "notice/index.vue"
+          - "notice/components/SendNoticeModal.vue"
+
+      - page_id: mailjob
+        label: "邮件任务"
+        prototype_lines: [6457, 6489]
+        notes: "含 Job List + SMTP Server 两个 Tab"
+        vue_files:
+          - "mailjob/index.vue"
+          - "mailjob/components/NewMailJobModal.vue"
+
+      - page_id: complaints
+        label: "投诉管理"
+        prototype_lines: [6374, 6390]
+        vue_files:
+          - "complaints/index.vue"
+
+      - page_id: logs
+        label: "操作日志"
+        prototype_lines: [6391, 6408]
+        vue_files:
+          - "logs/index.vue"
+
+    modals:
+      - modal_id: modal-send-notice
+        label: "发送通知"
+        prototype_lines: [6425, 6456]
+      - modal_id: modal-new-mailjob
+        label: "新建邮件任务"
+        prototype_lines: [6490, 6531]
+      - modal_id: modal-setting
+        label: "个人设置"
+        prototype_lines: [6532, 6562]

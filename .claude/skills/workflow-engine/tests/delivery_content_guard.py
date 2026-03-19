@@ -184,6 +184,10 @@ def evaluate_delivery_content(
             continue
         if not isinstance(capability.get("content_contract"), dict):
             continue
+        # Skip capabilities that should be verified at a different stage
+        verification_stage = capability.get("verification_stage", "verify")
+        if verification_stage != stage and stage in VERIFY_LIKE_STAGES:
+            continue
 
         capability_id = str(capability.get("capability_id", "<unknown>"))
         evidence_paths, path_findings = _resolve_evidence_paths(

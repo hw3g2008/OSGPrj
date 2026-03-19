@@ -1,0 +1,11 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "totalStudents": 45,
+    "activelySearching": 28,
+    "interviewed": 15,
+    "offered": 8,
+    "placed": 5
+  }
+}

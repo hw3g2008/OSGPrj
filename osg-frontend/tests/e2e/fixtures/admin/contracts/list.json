@@ -1,0 +1,52 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "contractId": 1001,
+      "studentName": "Emily Zhang",
+      "studentId": 58472,
+      "contractNo": "OSG-2025-001",
+      "contractType": "standard",
+      "startDate": "2025-01-15",
+      "endDate": "2025-07-15",
+      "totalHours": 40,
+      "usedHours": 24.5,
+      "remainingHours": 15.5,
+      "amount": 28000,
+      "status": "active",
+      "createdAt": "2025-01-15T10:00:00Z"
+    },
+    {
+      "contractId": 1002,
+      "studentName": "Alice Wang",
+      "studentId": 31847,
+      "contractNo": "OSG-2025-002",
+      "contractType": "standard",
+      "startDate": "2025-02-01",
+      "endDate": "2025-08-01",
+      "totalHours": 20,
+      "usedHours": 17.5,
+      "remainingHours": 2.5,
+      "amount": 15000,
+      "status": "active",
+      "createdAt": "2025-02-01T10:00:00Z"
+    },
+    {
+      "contractId": 1003,
+      "studentName": "Cathy Wu",
+      "studentId": 45821,
+      "contractNo": "OSG-2025-003",
+      "contractType": "premium",
+      "startDate": "2024-12-01",
+      "endDate": "2025-06-01",
+      "totalHours": 60,
+      "usedHours": 52,
+      "remainingHours": 8,
+      "amount": 45000,
+      "status": "expiring",
+      "createdAt": "2024-12-01T10:00:00Z"
+    }
+  ],
+  "total": 3
+}

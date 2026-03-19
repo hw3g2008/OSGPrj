@@ -59,6 +59,7 @@
 | `/save` | 保存进度 |
 | `/restore` | 恢复检查点 |
 | `/rollback` | 回滚变更 |
+| `/ui-closure` | 独立 UI 收口引擎（不依赖 RPIV） |
 
 ## Agent 分派
 

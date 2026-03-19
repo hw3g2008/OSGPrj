@@ -1,59 +1,51 @@
 <template>
-  <div v-if="modelValue" class="modal-backdrop" @click.self="$emit('update:modelValue', false)">
-    <div class="modal-shell">
-      <header class="modal-shell__header">
-        <div>
-          <p class="modal-shell__eyebrow">Mail Job Center</p>
-          <h3>新建任务</h3>
-        </div>
-        <button type="button" class="modal-shell__close" @click="$emit('update:modelValue', false)">×</button>
-      </header>
-
-      <div class="modal-shell__body">
-        <label class="field">
-          <span>任务标题</span>
-          <input v-model.trim="form.jobTitle" type="text" placeholder="请输入任务标题">
-        </label>
-
-        <label class="field">
-          <span>收件人</span>
-          <select v-model="form.recipientGroup">
-            <option value="全部学员">全部学员</option>
-            <option value="全部导师">全部导师</option>
-            <option value="指定班级">指定班级</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>邮件主题</span>
-          <input v-model.trim="form.emailSubject" type="text" placeholder="请输入邮件主题">
-        </label>
-
-        <label class="field">
-          <span>邮件内容</span>
-          <textarea v-model.trim="form.emailContent" rows="5" placeholder="请输入邮件内容"></textarea>
-        </label>
-
-        <label class="field">
-          <span>SMTP服务器</span>
-          <select v-model="form.smtpServerName">
-            <option v-for="server in smtpServers" :key="server.serverName" :value="server.serverName">
-              {{ server.serverName }}
-            </option>
-          </select>
-        </label>
-      </div>
-
-      <footer class="modal-shell__footer">
-        <button type="button" class="ghost-button" @click="$emit('update:modelValue', false)">取消</button>
-        <button type="button" class="primary-button" :disabled="submitting" @click="handleConfirm">创建任务</button>
-      </footer>
-    </div>
-  </div>
+  <a-modal
+    :open="modelValue"
+    :width="550"
+    :confirm-loading="submitting"
+    ok-text="创建并发送"
+    cancel-text="取消"
+    @ok="handleConfirm"
+    @cancel="$emit('update:modelValue', false)"
+  >
+    <template #title>
+      <span><MailOutlined style="margin-right: 8px" />新建邮件任务</span>
+    </template>
+    <a-form :label-col="{ span: 24 }" layout="vertical">
+      <a-form-item label="任务标题" required>
+        <a-input v-model:value="form.jobTitle" placeholder="输入任务标题" />
+      </a-form-item>
+      <a-form-item label="收件人" required>
+        <a-select v-model:value="form.recipientGroup" placeholder="选择收件人组...">
+          <a-select-option value="全部学员">全部学员</a-select-option>
+          <a-select-option value="全部导师">全部导师</a-select-option>
+          <a-select-option value="指定班级">指定班级</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item label="邮件主题" required>
+        <a-input v-model:value="form.emailSubject" placeholder="输入邮件主题" />
+      </a-form-item>
+      <a-form-item label="邮件内容" required>
+        <a-textarea v-model:value="form.emailContent" :rows="5" placeholder="输入邮件内容" />
+      </a-form-item>
+      <a-form-item label="SMTP服务器">
+        <a-select v-model:value="form.smtpServerName">
+          <a-select-option
+            v-for="server in smtpServers"
+            :key="server.serverName"
+            :value="server.serverName"
+          >
+            {{ server.serverName }}
+          </a-select-option>
+        </a-select>
+      </a-form-item>
+    </a-form>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { MailOutlined } from '@ant-design/icons-vue'
 import type { SmtpServerRow } from '@osg/shared/api/admin/mailjob'
 
 const props = defineProps<{
@@ -75,7 +67,7 @@ const emit = defineEmits<{
 
 const form = reactive({
   jobTitle: '',
-  recipientGroup: '全部学员',
+  recipientGroup: '',
   emailSubject: '',
   emailContent: '',
   smtpServerName: ''
@@ -86,7 +78,7 @@ watch(
   ([visible, smtpServers]) => {
     if (!visible) return
     form.jobTitle = ''
-    form.recipientGroup = '全部学员'
+    form.recipientGroup = ''
     form.emailSubject = ''
     form.emailContent = ''
     form.smtpServerName = smtpServers[0]?.serverName || ''
@@ -104,107 +96,3 @@ const handleConfirm = () => {
   })
 }
 </script>
-
-<style scoped>
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(15, 23, 42, 0.48);
-  z-index: 70;
-}
-
-.modal-shell {
-  width: min(620px, 100%);
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
-}
-
-.modal-shell__header,
-.modal-shell__body,
-.modal-shell__footer {
-  padding: 20px 22px;
-}
-
-.modal-shell__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  color: #fff;
-  background: linear-gradient(135deg, #1d4ed8, #0f766e);
-  border-radius: 24px 24px 0 0;
-}
-
-.modal-shell__eyebrow {
-  margin: 0 0 6px;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.72;
-}
-
-.modal-shell__header h3 {
-  margin: 0;
-}
-
-.modal-shell__close {
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 28px;
-  cursor: pointer;
-}
-
-.modal-shell__body {
-  display: grid;
-  gap: 14px;
-}
-
-.field {
-  display: grid;
-  gap: 8px;
-}
-
-.field span {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.field input,
-.field select,
-.field textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-}
-
-.modal-shell__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.primary-button,
-.ghost-button {
-  height: 42px;
-  padding: 0 16px;
-  border-radius: 999px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.primary-button {
-  border: none;
-  color: #fff;
-  background: #1d4ed8;
-}
-
-.ghost-button {
-  border: 1px solid #cbd5e1;
-  background: #fff;
-}
-</style>

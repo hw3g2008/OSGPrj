@@ -1,0 +1,46 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "staffId": 9001,
+      "staffName": "王明辉",
+      "email": "wangmh@osg.com",
+      "phone": "13800000001",
+      "role": "mentor",
+      "roleName": "导师",
+      "status": "0",
+      "studentCount": 12,
+      "totalHours": 180,
+      "monthlyHours": 24,
+      "createdAt": "2024-06-01T10:00:00Z"
+    },
+    {
+      "staffId": 9002,
+      "staffName": "Jerry Li",
+      "email": "jerryli@osg.com",
+      "phone": "13800000002",
+      "role": "mentor",
+      "roleName": "导师",
+      "status": "0",
+      "studentCount": 8,
+      "totalHours": 120,
+      "monthlyHours": 16,
+      "createdAt": "2024-07-15T10:00:00Z"
+    },
+    {
+      "staffId": 9003,
+      "staffName": "Sophia Xu",
+      "email": "sophiaxu@osg.com",
+      "phone": "13800000003",
+      "role": "lead-mentor",
+      "roleName": "班主任",
+      "status": "0",
+      "studentCount": 20,
+      "totalHours": 240,
+      "monthlyHours": 32,
+      "createdAt": "2024-05-01T10:00:00Z"
+    }
+  ],
+  "total": 3
+}

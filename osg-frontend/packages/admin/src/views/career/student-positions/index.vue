@@ -6,7 +6,7 @@
           学生自添岗位
           <span class="page-title-en">Student Added Positions</span>
         </h2>
-        <p class="page-subtitle">审核学生手动添加的岗位，通过后加入公共岗位库。</p>
+        <p class="page-subtitle">审核学生手动添加的岗位，通过后加入公共岗位库</p>
       </div>
       <div class="page-header__actions">
         <span class="student-positions-page__badge">{{ pendingCount }} 条待审核</span>
@@ -26,10 +26,10 @@
           </select>
         </label>
         <label class="student-positions-field">
-          <span>岗位分类</span>
+          <span>公司类别</span>
           <select v-model="filters.positionCategory" class="student-positions-select">
             <option value="">全部</option>
-            <option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+            <option v-for="option in companyCategoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
         </label>
         <label class="student-positions-field">
@@ -46,7 +46,7 @@
             v-model="filters.keyword"
             type="text"
             class="student-positions-input"
-            placeholder="搜索公司或岗位名称"
+            placeholder="搜索公司/岗位..."
           />
         </label>
         <div class="student-positions-toolbar__actions">
@@ -185,12 +185,11 @@ import {
 import ReviewPositionModal from './components/ReviewPositionModal.vue'
 import RejectPositionModal from './components/RejectPositionModal.vue'
 
-const categoryOptions = [
-  { value: 'summer', label: '暑期实习' },
-  { value: 'fulltime', label: '全职招聘' },
-  { value: 'offcycle', label: '非常规周期' },
-  { value: 'spring', label: '春季实习' },
-  { value: 'events', label: '招聘活动' }
+const companyCategoryOptions = [
+  { value: 'Investment Bank', label: 'Investment Bank' },
+  { value: 'Consulting', label: 'Consulting' },
+  { value: 'Tech', label: 'Tech' },
+  { value: 'PE/VC', label: 'PE/VC' }
 ]
 
 const rows = ref<StudentPositionListItem[]>([])
@@ -330,6 +329,19 @@ const formatDateTime = (value?: string) => {
 </script>
 
 <style scoped lang="scss">
+.permission-card {
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border, #e2e8f0);
+  padding: 20px;
+}
+
+.permission-card__body--flush {
+  overflow-x: auto;
+  margin: 0 -20px;
+}
+
 .student-positions-page {
   display: flex;
   flex-direction: column;

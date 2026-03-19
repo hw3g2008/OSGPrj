@@ -6,7 +6,7 @@
           所有学员的岗位追踪
           <span class="page-title-en">Job Tracking</span>
         </h2>
-        <p class="page-subtitle">查看全部学员的求职申请进度，可直接更新状态、面试阶段与导师安排备注。</p>
+        <p class="page-subtitle">查看全部学员的求职申请进度</p>
       </div>
       <div class="page-header__actions">
         <span class="job-tracking-page__traffic">{{ rows.length }} 条岗位记录 · {{ stats.interviewingCount }} 条面试中</span>
@@ -40,6 +40,7 @@
           <select v-model="filters.trackingStatus" class="job-tracking-select">
             <option value="">全部</option>
             <option value="tracking">追踪中</option>
+            <option value="applied">已申请</option>
             <option value="interviewing">面试中</option>
             <option value="offer">已获Offer</option>
             <option value="rejected">已拒绝</option>
@@ -134,6 +135,8 @@
           <label class="job-tracking-field">
             <span>当前状态</span>
             <select v-model="form.trackingStatus" class="job-tracking-select">
+              <option value="not-applied">未申请</option>
+              <option value="applied">已申请</option>
               <option value="tracking">追踪中</option>
               <option value="interviewing">面试中</option>
               <option value="offer">已获Offer</option>
@@ -212,10 +215,9 @@ const filters = reactive<JobTrackingFilters>({
 })
 
 const interviewStageOptions = [
-  { value: 'hirevue', label: 'HireVue / OA' },
+  { value: 'oa', label: 'OA' },
   { value: 'phone_screen', label: 'Phone Screen' },
   { value: 'first_round', label: 'First Round' },
-  { value: 'second_round', label: 'Second Round' },
   { value: 'final', label: 'Final Round' }
 ]
 
@@ -317,6 +319,8 @@ async function submitUpdate() {
 
 function labelOf(status?: string) {
   switch (status) {
+    case 'applied':
+      return '已申请'
     case 'interviewing':
       return '面试中'
     case 'offer':
@@ -330,6 +334,8 @@ function labelOf(status?: string) {
 
 function toneOf(status?: string) {
   switch (status) {
+    case 'applied':
+      return 'info'
     case 'interviewing':
       return 'warning'
     case 'offer':

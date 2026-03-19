@@ -1,0 +1,37 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "recordId": 5001,
+      "studentName": "Emily Zhang",
+      "mentorName": "王明辉",
+      "classType": "求职辅导",
+      "date": "2025-01-15",
+      "duration": 2,
+      "status": "approved",
+      "isPaid": true
+    },
+    {
+      "recordId": 5002,
+      "studentName": "Alice Wang",
+      "mentorName": "Jerry Li",
+      "classType": "基础课程",
+      "date": "2025-01-16",
+      "duration": 1.5,
+      "status": "pending",
+      "isPaid": false
+    },
+    {
+      "recordId": 5003,
+      "studentName": "Cathy Wu",
+      "mentorName": "王明辉",
+      "classType": "模拟面试",
+      "date": "2025-01-14",
+      "duration": 1,
+      "status": "approved",
+      "isPaid": true
+    }
+  ],
+  "total": 3
+}

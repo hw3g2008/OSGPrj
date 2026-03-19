@@ -29,6 +29,16 @@ load_runtime_contract() {
 
 load_runtime_contract
 
+# Clear login error counter to prevent account lockout during E2E
+if command -v redis-cli &>/dev/null; then
+  source deploy/.env.dev 2>/dev/null || true
+  _REDIS_HOST="${SPRING_DATA_REDIS_HOST:-47.94.213.128}"
+  _REDIS_PORT="${SPRING_DATA_REDIS_PORT:-26379}"
+  _REDIS_PWD="${SPRING_DATA_REDIS_PASSWORD:-}"
+  redis-cli -h "${_REDIS_HOST}" -p "${_REDIS_PORT}" ${_REDIS_PWD:+-a "${_REDIS_PWD}"} DEL "pwd_err_cnt:admin" 2>/dev/null || true
+  unset _REDIS_HOST _REDIS_PORT _REDIS_PWD
+fi
+
 case "${MODE}" in
   full)
     E2E_SCRIPT="test:e2e"
