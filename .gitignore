@@ -92,3 +92,6 @@ screenshots/live-login-captcha-ok.png
 /*.png
 
 .worktrees/
+tmp/
+ruoyi-admin/null/
+org/springframework/
