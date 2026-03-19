@@ -611,10 +611,12 @@ onMounted(async () => {
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--border);
+  padding: 20px;
 }
 
 .permission-card__body--flush {
   overflow-x: auto;
+  margin: 0 -20px;
 }
 
 .contracts-filters {

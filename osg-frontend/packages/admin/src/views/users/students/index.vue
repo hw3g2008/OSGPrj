@@ -16,48 +16,51 @@
       </div>
     </div>
 
+    <div v-if="pendingReviewCount > 0" class="students-banner">
+      <div class="students-banner__icon" aria-hidden="true">
+        <i class="mdi mdi-bell-ring"></i>
+      </div>
+      <div class="students-banner__content">
+        <strong class="students-banner__title">⚠️ 有 {{ pendingReviewCount }} 位学员的信息变更待审核</strong>
+        <span class="students-banner__text">学员提交的学业信息、求职方向等信息变更需要您审核，请及时处理</span>
+      </div>
+      <button type="button" class="students-banner__cta" @click="openPendingReviewStudent">
+        <i class="mdi mdi-eye"></i>
+        <span>立即查看</span>
+      </button>
+    </div>
+
+    <div class="students-tabs" role="tablist" aria-label="学员列表类型切换">
+      <button
+        v-for="tab in studentTabs"
+        :key="tab.key"
+        type="button"
+        :class="['students-tabs__tab', { 'students-tabs__tab--active': selectedTab === tab.key }]"
+        :aria-selected="selectedTab === tab.key"
+        @click="handleTabChange(tab.key)"
+      >
+        <span>{{ tab.label }}</span>
+        <span v-if="tab.key === 'blacklist'" class="students-tabs__count">{{ getTabCount(tab.key) }}</span>
+      </button>
+    </div>
+
+    <FilterBar
+      v-model="filters"
+      :mentor-options="mentorOptions"
+      :school-options="schoolOptions"
+      :graduation-year-options="graduationYearOptions"
+      :recruitment-cycle-options="recruitmentCycleOptions"
+      :major-direction-options="majorDirectionOptions"
+      @search="handleSearch"
+      @export="handleExport"
+    />
+
     <div class="permission-card">
-      <div v-if="pendingReviewCount > 0" class="students-banner">
-        <div class="students-banner__icon" aria-hidden="true">
-          <i class="mdi mdi-bell-ring"></i>
-        </div>
-        <div class="students-banner__content">
-          <strong class="students-banner__title">⚠️ 有 {{ pendingReviewCount }} 位学员的信息变更待审核</strong>
-          <span class="students-banner__text">学员提交的学业信息、求职方向等信息变更需要您审核，请及时处理</span>
-        </div>
-        <button type="button" class="students-banner__cta" @click="openPendingReviewStudent">
-          <i class="mdi mdi-eye"></i>
-          <span>立即查看</span>
-        </button>
-      </div>
-      <div class="students-tabs" role="tablist" aria-label="学员列表类型切换">
-        <button
-          v-for="tab in studentTabs"
-          :key="tab.key"
-          type="button"
-          :class="['students-tabs__tab', { 'students-tabs__tab--active': selectedTab === tab.key }]"
-          :aria-selected="selectedTab === tab.key"
-          @click="handleTabChange(tab.key)"
-        >
-          <span>{{ tab.label }}</span>
-          <span v-if="tab.key === 'blacklist'" class="students-tabs__count">{{ getTabCount(tab.key) }}</span>
-        </button>
-      </div>
-      <FilterBar
-        v-model="filters"
-        :mentor-options="mentorOptions"
-        :school-options="schoolOptions"
-        :graduation-year-options="graduationYearOptions"
-        :recruitment-cycle-options="recruitmentCycleOptions"
-        :major-direction-options="majorDirectionOptions"
-        @search="handleSearch"
-        @export="handleExport"
-      />
       <div class="permission-card__body permission-card__body--flush">
         <table class="permission-table">
           <thead>
             <tr>
-              <th v-for="column in studentColumns" :key="column.key">
+              <th v-for="column in activeStudentColumns" :key="column.key">
                 {{ column.label }}
               </th>
             </tr>
@@ -150,10 +153,16 @@
               </td>
             </tr>
             <tr v-if="!visibleStudentList.length">
-              <td class="students-empty" :colspan="studentColumns.length">{{ emptyStateText }}</td>
+              <td class="students-empty" :colspan="activeStudentColumns.length">{{ emptyStateText }}</td>
             </tr>
           </tbody>
         </table>
+      </div>
+      <div v-if="selectedTab === 'blacklist'" class="students-blacklist-notice">
+        <i class="mdi mdi-alert" aria-hidden="true"></i>
+        <span>
+          <strong>黑名单限制：</strong>黑名单学员可以正常登录学生端，但<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能）
+        </span>
       </div>
     </div>
 
@@ -234,7 +243,7 @@ import EditStudentModal from './components/EditStudentModal.vue'
 import FilterBar from './components/FilterBar.vue'
 import StatusChangeModal from './components/StatusChangeModal.vue'
 import StudentDetailModal from './components/StudentDetailModal.vue'
-import { studentColumns } from './columns'
+import { studentColumns, blacklistColumns } from './columns'
 
 interface FilterOption {
   label: string
@@ -317,6 +326,9 @@ const visibleTotal = computed(() =>
 )
 const emptyStateText = computed(() =>
   selectedTab.value === 'blacklist' ? '暂无黑名单学员' : '暂无学员数据'
+)
+const activeStudentColumns = computed(() =>
+  selectedTab.value === 'blacklist' ? blacklistColumns : studentColumns
 )
 const pendingReviewCount = computed(() => visibleStudentList.value.filter((record) => isPendingReview(record)).length)
 const canManageStudentDetail = true
@@ -953,6 +965,11 @@ onMounted(() => {
 
   .permission-card {
     overflow: hidden;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border, #e2e8f0);
+    padding: 20px;
   }
 
   .permission-card__body--flush {
@@ -968,7 +985,6 @@ onMounted(() => {
     background: linear-gradient(135deg, #fef3c7, #fffbeb);
     border: 2px solid #f59e0b;
     border-radius: 12px;
-    margin: 16px 16px 16px;
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
     color: #854d0e;
   }
@@ -1021,7 +1037,6 @@ onMounted(() => {
   .students-tabs {
     display: inline-flex;
     gap: 8px;
-    margin: 0 16px 16px;
   }
 
   .students-tabs__tab {
@@ -1635,4 +1650,21 @@ onMounted(() => {
     }
   }
 }
+
+  .students-blacklist-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 16px 0;
+    padding: 12px 16px;
+    background: #fef3c7;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #92400e;
+
+    i {
+      flex-shrink: 0;
+    }
+  }
+
 </style>

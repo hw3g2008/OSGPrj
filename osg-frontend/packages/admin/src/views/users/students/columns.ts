@@ -5,7 +5,7 @@ export interface StudentColumn {
 
 export const studentColumns: StudentColumn[] = [
   { key: 'id', label: 'ID' },
-  { key: 'englishName', label: '姓名' },
+  { key: 'englishName', label: '英文姓名' },
   { key: 'email', label: '邮箱' },
   { key: 'leadMentor', label: '班主任' },
   { key: 'school', label: '学校' },
@@ -18,5 +18,18 @@ export const studentColumns: StudentColumn[] = [
   { key: 'remainingHours', label: '剩余课时' },
   { key: 'reminder', label: '提醒' },
   { key: 'accountStatus', label: '账号状态' },
+  { key: 'actions', label: '操作' }
+]
+
+export const blacklistColumns: StudentColumn[] = [
+  { key: 'id', label: 'ID' },
+  { key: 'englishName', label: '英文姓名' },
+  { key: 'email', label: '邮箱' },
+  { key: 'leadMentor', label: '班主任' },
+  { key: 'school', label: '学校' },
+  { key: 'major', label: '主攻方向' },
+  { key: 'blacklistReason', label: '黑名单原因' },
+  { key: 'blacklistTime', label: '加入时间' },
+  { key: 'operator', label: '操作人' },
   { key: 'actions', label: '操作' }
 ]

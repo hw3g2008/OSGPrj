@@ -2,85 +2,96 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="mentor-schedule-edit-modal"
-    width="980px"
-    :body-class="'edit-schedule-modal__body'"
+    width="800px"
     @cancel="handleClose"
   >
     <template #title>
-      <div class="edit-schedule-modal__title-wrap">
-        <div class="edit-schedule-modal__avatar">
-          {{ avatarText }}
-        </div>
-        <div>
-          <span class="edit-schedule-modal__eyebrow">Mentor Schedule</span>
-          <div class="edit-schedule-modal__title">{{ modalTitle }}</div>
-          <p class="edit-schedule-modal__subtitle">
-            {{ record?.staffName || '待选择导师' }} · {{ weekLabel }} · {{ record?.majorDirection || '待补充方向' }}
-          </p>
-        </div>
-      </div>
+      <span class="esm-header-title">
+        <i class="mdi mdi-calendar-edit" aria-hidden="true"></i>
+        {{ modalTitle }}
+      </span>
     </template>
 
-    <div class="edit-schedule-modal__hero">
-      <strong>按 7 天 × 3 时段维护导师排期</strong>
-      <p>保存时会把本周或下周的排期矩阵一次性提交，并记录本次调整原因。</p>
+    <!-- Staff info card -->
+    <div class="esm-staff-card">
+      <div class="esm-staff-card__avatar">{{ avatarText }}</div>
+      <div class="esm-staff-card__info">
+        <div class="esm-staff-card__name">{{ record?.staffName || '待选择导师' }}</div>
+        <div class="esm-staff-card__meta">ID: {{ record?.staffId }} · {{ record?.staffType === 'lead_mentor' ? '班主任' : '专业导师' }} · {{ record?.majorDirection || '-' }}</div>
+      </div>
+      <div class="esm-staff-card__hours">
+        <div class="esm-staff-card__hours-label">{{ weekLabel }}可用时长</div>
+        <div class="esm-staff-card__hours-value">{{ formState.availableHours }}h</div>
+      </div>
     </div>
 
-    <section class="edit-schedule-modal__section edit-schedule-modal__section--meta">
-      <div class="edit-schedule-modal__meta-card">
-        <span>当前状态</span>
-        <strong>{{ record?.filled ? '已填写，可继续调整' : '未填写，建议优先代填' }}</strong>
-      </div>
-      <div class="edit-schedule-modal__meta-card">
-        <span>可用时长</span>
-        <div class="edit-schedule-modal__hours-row">
-          <input
-            v-model.number="formState.availableHours"
-            type="number"
-            min="0"
-            step="0.5"
-            class="edit-schedule-modal__hours-input"
-          />
-          <span>小时</span>
-        </div>
-        <div class="edit-schedule-modal__quick-actions">
+    <!-- Week switch -->
+    <div class="esm-week-switch">
+      <button
+        type="button"
+        :class="['esm-week-btn', { 'esm-week-btn--active': localWeek === 'current' }]"
+        @click="localWeek = 'current'"
+      >
+        本周 {{ weekRanges.current }}
+      </button>
+      <button
+        type="button"
+        :class="['esm-week-btn', { 'esm-week-btn--active': localWeek === 'next' }]"
+        @click="localWeek = 'next'"
+      >
+        下周 {{ weekRanges.next }}
+      </button>
+    </div>
+
+    <!-- Hours input -->
+    <div class="esm-section">
+      <label class="esm-label">
+        <i class="mdi mdi-clock-outline" aria-hidden="true"></i>
+        可上课时长 <span class="esm-required">*</span>
+      </label>
+      <div class="esm-hours-row">
+        <input
+          v-model.number="formState.availableHours"
+          type="number"
+          min="0"
+          max="40"
+          class="esm-hours-input"
+        />
+        <span class="esm-hours-unit">小时</span>
+        <div class="esm-quick-btns">
           <button
             v-for="value in quickHours"
             :key="value"
             type="button"
-            class="edit-schedule-modal__chip"
+            class="esm-quick-btn"
             @click="formState.availableHours = value"
           >
             {{ value }}h
           </button>
         </div>
       </div>
-      <label class="edit-schedule-modal__meta-card edit-schedule-modal__meta-card--checkbox">
-        <input v-model="formState.notifyStaff" type="checkbox" />
-        <span>保存后同步通知导师</span>
-      </label>
-    </section>
+    </div>
 
-    <section class="edit-schedule-modal__section">
-      <header class="edit-schedule-modal__section-header">
-        <strong>每天可上课时间</strong>
-        <span>周末以绿色强调，直接勾选可用时段即可。</span>
-      </header>
-      <div class="edit-schedule-modal__grid">
-        <article
+    <!-- Day grid -->
+    <div class="esm-section">
+      <label class="esm-label">
+        <i class="mdi mdi-calendar-check" aria-hidden="true"></i>
+        每天可上课时间 <span class="esm-required">*</span>
+        <span class="esm-hint">（可多选）</span>
+      </label>
+      <div class="esm-day-grid">
+        <div
           v-for="day in weekdays"
           :key="day.value"
-          :class="['edit-schedule-modal__day-card', { 'edit-schedule-modal__day-card--weekend': day.weekend }]"
+          :class="['esm-day', { 'esm-day--weekend': day.weekend, 'esm-day--holiday': day.holiday }]"
         >
-          <header>
-            <strong>{{ day.label }}</strong>
-            <span>{{ day.hint }}</span>
-          </header>
-          <div class="edit-schedule-modal__slot-list">
+          <div :class="['esm-day__label', { 'esm-day__label--weekend': day.weekend, 'esm-day__label--holiday': day.holiday }]">{{ day.label }}</div>
+          <div :class="['esm-day__date', { 'esm-day__date--weekend': day.weekend, 'esm-day__date--holiday': day.holiday }]">{{ day.date }}</div>
+          <div class="esm-day__slots">
             <label
               v-for="slot in timeSlots"
               :key="`${day.value}-${slot.value}`"
-              class="edit-schedule-modal__slot"
+              class="esm-slot"
             >
               <input
                 :checked="isChecked(day.value, slot.value)"
@@ -90,32 +101,43 @@
               <span>{{ slot.label }}</span>
             </label>
           </div>
-        </article>
+        </div>
       </div>
-    </section>
+      <div class="esm-day-hint">
+        <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+        绿色=周末，红色=节假日
+      </div>
+    </div>
 
-    <section class="edit-schedule-modal__section">
-      <header class="edit-schedule-modal__section-header">
-        <strong>调整原因</strong>
-        <span>不填写原因将无法提交。</span>
-      </header>
+    <!-- Reason -->
+    <div class="esm-section">
+      <label class="esm-label">
+        <i class="mdi mdi-note-text" aria-hidden="true"></i>
+        调整原因 <span class="esm-required">*</span>
+      </label>
       <textarea
         v-model.trim="formState.reason"
-        rows="4"
-        class="edit-schedule-modal__textarea"
-        placeholder="例如：导师请假后重新协调时段，已与学员沟通完成。"
+        rows="2"
+        class="esm-textarea"
+        placeholder="请填写调整原因，将同步通知给导师"
       />
-      <div v-if="errorMessage" class="edit-schedule-modal__error">
-        {{ errorMessage }}
-      </div>
-    </section>
+      <div v-if="errorMessage" class="esm-error">{{ errorMessage }}</div>
+    </div>
+
+    <!-- Notify -->
+    <div class="esm-notify-card">
+      <label class="esm-notify-label">
+        <input v-model="formState.notifyStaff" type="checkbox" class="esm-notify-checkbox" />
+        <span><strong>同步通知导师</strong> - 调整后将发送邮件和站内消息通知该导师</span>
+      </label>
+    </div>
 
     <template #footer>
       <button type="button" class="permission-button permission-button--outline" @click="handleClose">
         取消
       </button>
-      <button type="button" class="permission-button permission-button--primary" @click="handleSubmit">
-        保存并通知
+      <button type="button" class="permission-button permission-button--primary esm-save-btn" @click="handleSubmit">
+        <i class="mdi mdi-check" aria-hidden="true"></i> 保存并通知
       </button>
     </template>
   </OverlaySurfaceModal>
@@ -149,15 +171,23 @@ const emit = defineEmits<{
 const quickHours = [5, 10, 15, 20]
 const errorMessage = ref('')
 
-const weekdays = [
-  { value: 1, label: '周一', hint: 'Mon', weekend: false },
-  { value: 2, label: '周二', hint: 'Tue', weekend: false },
-  { value: 3, label: '周三', hint: 'Wed', weekend: false },
-  { value: 4, label: '周四', hint: 'Thu', weekend: false },
-  { value: 5, label: '周五', hint: 'Fri', weekend: false },
-  { value: 6, label: '周六', hint: 'Sat', weekend: true },
-  { value: 7, label: '周日', hint: 'Sun', weekend: true },
-]
+const weekRanges = { current: '03/09 - 03/15', next: '03/16 - 03/22' }
+const localWeek = ref<WeekScope>(props.weekScope)
+
+const currentWeekDates = ['03/10', '03/11', '03/12', '03/13', '03/14', '03/15', '03/16']
+const nextWeekDates = ['03/17', '03/18', '03/19', '03/20', '03/21', '03/22', '03/23']
+const dayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+
+const weekdays = computed(() => {
+  const dates = localWeek.value === 'next' ? nextWeekDates : currentWeekDates
+  return dates.map((date, i) => ({
+    value: i + 1,
+    label: dayLabels[i],
+    date,
+    weekend: i >= 5,
+    holiday: false,
+  }))
+})
 
 const timeSlots: { value: TimeSlot; label: string }[] = [
   { value: 'morning', label: '上午' },
@@ -184,11 +214,12 @@ const avatarText = computed(() => {
     .join('')
 })
 
-const weekLabel = computed(() => (props.weekScope === 'next' ? '下周排期' : '本周排期'))
+const weekLabel = computed(() => (localWeek.value === 'next' ? '下周排期' : '本周排期'))
 
 const modalTitle = computed(() => (props.record?.filled ? '调整导师排期' : '代填导师排期'))
 
 const resetForm = () => {
+  localWeek.value = props.weekScope
   formState.availableHours = Number(props.record?.availableHours ?? 0)
   formState.reason = ''
   formState.notifyStaff = true
@@ -237,7 +268,7 @@ const handleSubmit = () => {
   errorMessage.value = ''
   emit('submit', {
     staffId: props.record.staffId,
-    week: props.weekScope,
+    week: localWeek.value,
     availableHours: Number(formState.availableHours) || 0,
     reason: formState.reason,
     notifyStaff: formState.notifyStaff,
@@ -247,9 +278,9 @@ const handleSubmit = () => {
 </script>
 
 <style scoped lang="scss">
-/* ── Header override (gradient) ── */
+// Header
 :global([data-surface-id="mentor-schedule-edit-modal"] [data-surface-part="header"]) {
-  background: linear-gradient(135deg, #6366F1, #4338CA) !important;
+  background: linear-gradient(135deg, var(--primary, #6366F1), #4338CA) !important;
   border-bottom: none !important;
   border-radius: 16px 16px 0 0;
 }
@@ -257,247 +288,258 @@ const handleSubmit = () => {
 :global([data-surface-id="mentor-schedule-edit-modal"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.35) !important;
-  }
+  &:hover { background: rgba(255, 255, 255, 0.35) !important; }
 }
 
-.edit-schedule-modal__title-wrap {
+.esm-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+
+  i { font-size: 22px; }
+}
+
+// Staff info card
+.esm-staff-card {
   display: flex;
   align-items: center;
   gap: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 20px;
 }
 
-.edit-schedule-modal__avatar {
+.esm-staff-card__avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.24);
+  background: linear-gradient(135deg, #7399c6, #5a7ba3);
   color: #fff;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
-.edit-schedule-modal__eyebrow {
-  display: inline-flex;
-  margin-bottom: 4px;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
+.esm-staff-card__info { flex: 1; }
+.esm-staff-card__name { font-weight: 700; font-size: 16px; color: var(--text); }
+.esm-staff-card__meta { font-size: 13px; color: var(--muted, #6b7280); margin-top: 4px; }
 
-.edit-schedule-modal__title {
-  color: #fff;
-  font-size: 22px;
-  font-weight: 700;
-}
+.esm-staff-card__hours { text-align: right; }
+.esm-staff-card__hours-label { font-size: 13px; color: var(--muted, #6b7280); }
+.esm-staff-card__hours-value { font-size: 24px; font-weight: 700; color: var(--primary, #6366f1); }
 
-.edit-schedule-modal__subtitle {
-  margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 13px;
-}
-
-.edit-schedule-modal__body {
+// Week switch
+.esm-week-switch {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 24px;
-  background: #f8fafc;
-}
-
-.edit-schedule-modal__hero {
-  border-radius: 18px;
-  padding: 18px 20px;
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.16) 0%, rgba(51, 65, 85, 0.08) 100%);
-  color: #334155;
-}
-
-.edit-schedule-modal__hero strong {
-  display: block;
-  margin-bottom: 6px;
-  color: #0f172a;
-  font-size: 16px;
-}
-
-.edit-schedule-modal__hero p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.edit-schedule-modal__section {
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 20px;
-  background: #fff;
-}
-
-.edit-schedule-modal__section--meta {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.edit-schedule-modal__meta-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border-radius: 16px;
-  padding: 16px;
-  background: #f8fafc;
-}
-
-.edit-schedule-modal__meta-card span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.edit-schedule-modal__meta-card strong {
-  color: #0f172a;
-  font-size: 15px;
-}
-
-.edit-schedule-modal__meta-card--checkbox {
-  justify-content: center;
   gap: 12px;
+  margin-bottom: 20px;
 }
 
-.edit-schedule-modal__meta-card--checkbox input {
-  width: 18px;
-  height: 18px;
-}
-
-.edit-schedule-modal__hours-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #0f172a;
-}
-
-.edit-schedule-modal__hours-input {
-  width: 120px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.edit-schedule-modal__quick-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.edit-schedule-modal__chip {
-  border: 0;
-  border-radius: 999px;
-  padding: 6px 12px;
-  background: #e2e8f0;
-  color: #334155;
+.esm-week-btn {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
   cursor: pointer;
 }
 
-.edit-schedule-modal__section-header {
+.esm-week-btn--active {
+  background: var(--primary, #6366f1);
+  border-color: var(--primary, #6366f1);
+  color: #fff;
+}
+
+// Sections
+.esm-section { margin-bottom: 24px; }
+
+.esm-label {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.edit-schedule-modal__section-header strong {
-  color: #0f172a;
+  gap: 6px;
   font-size: 15px;
-}
-
-.edit-schedule-modal__section-header span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.edit-schedule-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.edit-schedule-modal__day-card {
-  border: 1px solid #dbeafe;
-  border-radius: 16px;
-  padding: 14px;
-  background: #f8fbff;
-}
-
-.edit-schedule-modal__day-card--weekend {
-  border-color: #86efac;
-  background: #f0fdf4;
-}
-
-.edit-schedule-modal__day-card header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  font-weight: 600;
+  color: var(--text);
   margin-bottom: 12px;
+
+  i { color: var(--primary, #6366f1); }
 }
 
-.edit-schedule-modal__day-card strong {
-  color: #0f172a;
-}
+.esm-required { color: #dc2626; }
+.esm-hint { font-weight: 400; font-size: 12px; color: var(--muted, #6b7280); }
 
-.edit-schedule-modal__day-card span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.edit-schedule-modal__slot-list {
+// Hours input
+.esm-hours-row {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.esm-hours-input {
+  width: 120px;
+  border: 2px solid var(--primary, #6366f1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+}
+
+.esm-hours-unit { color: var(--muted, #6b7280); font-size: 15px; }
+
+.esm-quick-btns {
+  display: flex;
+  gap: 8px;
+  margin-left: 24px;
+}
+
+.esm-quick-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 6px 14px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover { background: #f3f4f6; }
+}
+
+// Day grid
+.esm-day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 10px;
 }
 
-.edit-schedule-modal__slot {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #334155;
-  font-size: 13px;
+.esm-day {
+  text-align: center;
+  padding: 12px 6px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 2px solid var(--border, #e2e8f0);
 }
 
-.edit-schedule-modal__textarea {
+.esm-day--weekend {
+  background: #dcfce7;
+  border-color: #22c55e;
+}
+
+.esm-day--holiday {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.esm-day__label { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+.esm-day__label--weekend { color: #166534; }
+.esm-day__label--holiday { color: #dc2626; }
+
+.esm-day__date { font-size: 10px; color: var(--muted, #6b7280); margin-bottom: 8px; }
+.esm-day__date--weekend { color: #166534; }
+.esm-day__date--holiday { color: #dc2626; }
+
+.esm-day__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.esm-slot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  cursor: pointer;
+
+  input { width: 14px; height: 14px; }
+}
+
+.esm-day-hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+
+  i { margin-right: 4px; }
+}
+
+// Reason
+.esm-textarea {
   width: 100%;
   border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
   resize: vertical;
-  min-height: 120px;
+  min-height: 60px;
 }
 
-.edit-schedule-modal__error {
-  margin-top: 10px;
-  color: #dc2626;
-  font-size: 13px;
+.esm-error { margin-top: 8px; color: #dc2626; font-size: 13px; }
+
+// Notify card
+.esm-notify-card {
+  padding: 16px;
+  background: #eef2ff;
+  border-radius: 10px;
+  margin-bottom: 16px;
 }
+
+.esm-notify-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.esm-notify-checkbox { width: 18px; height: 18px; }
+
+// Footer buttons
+.permission-button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.permission-button--outline {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: var(--text);
+}
+
+.permission-button--primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+
+.esm-save-btn { padding: 12px 32px; }
 
 @media (max-width: 960px) {
-  .edit-schedule-modal__section--meta,
-  .edit-schedule-modal__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .esm-day-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 @media (max-width: 640px) {
-  .edit-schedule-modal__section--meta,
-  .edit-schedule-modal__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  .esm-day-grid { grid-template-columns: repeat(2, 1fr); }
+  .esm-staff-card { flex-direction: column; text-align: center; }
+  .esm-staff-card__hours { text-align: center; }
+  .esm-week-switch { flex-direction: column; }
+  .esm-hours-row { flex-wrap: wrap; }
+  .esm-quick-btns { margin-left: 0; }
 }
 </style>

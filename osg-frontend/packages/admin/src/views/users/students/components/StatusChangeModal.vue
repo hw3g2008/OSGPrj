@@ -8,8 +8,8 @@
   >
     <template #title>
       <span class="student-status-modal__title">
-        <span class="mdi" :class="actionIcon" aria-hidden="true"></span>
-        <span>{{ modalTitle }}</span>
+        <span class="mdi mdi-account-cog" aria-hidden="true"></span>
+        <span>修改学员状态</span>
       </span>
     </template>
 
@@ -17,54 +17,55 @@
       <div class="student-status-modal__icon-circle" :class="`student-status-modal__icon-circle--${action}`">
         <span class="mdi" :class="actionIcon" aria-hidden="true"></span>
       </div>
-      <strong>{{ studentName || '当前学员' }}</strong>
-      <span>{{ modalDescription }}</span>
+      <h3 class="student-status-modal__heading">
+        确定将 <span class="student-status-modal__name">{{ studentName || '学员姓名' }}</span> 的状态修改为
+      </h3>
+      <div class="student-status-modal__target-status">{{ targetStatusLabel }}？</div>
+      <p class="student-status-modal__desc">{{ modalDescription }}</p>
     </div>
 
-    <a-form
-      ref="formRef"
-      :model="formState"
-      :rules="rules"
-      layout="vertical"
-      :required-mark="false"
-    >
-      <a-form-item v-if="requiresReason" name="reason">
-        <template #label>
-          <span class="student-status-modal__label">
-            原因
-            <span class="student-status-modal__required">*</span>
-          </span>
-        </template>
-        <a-select
-          v-model:value="formState.reason"
-          :placeholder="reasonPlaceholder"
-          :options="reasonOptions"
-        />
-      </a-form-item>
+    <div v-if="requiresReason" class="student-status-modal__form-area">
+      <a-form
+        ref="formRef"
+        :model="formState"
+        :rules="rules"
+        layout="vertical"
+        :required-mark="false"
+      >
+        <a-form-item name="reason">
+          <template #label>
+            <span class="student-status-modal__label">
+              修改原因
+              <span class="student-status-modal__required">*</span>
+            </span>
+          </template>
+          <a-select
+            v-model:value="formState.reason"
+            placeholder="请选择原因"
+            :options="reasonOptions"
+          />
+        </a-form-item>
 
-      <a-form-item v-if="requiresReason" name="remark">
-        <template #label>
-          <span class="student-status-modal__label">补充说明</span>
-        </template>
-        <a-textarea
-          v-model:value="formState.remark"
-          :rows="3"
-          :maxlength="120"
-          placeholder="可选，补充本次状态变更的背景说明"
-        />
-      </a-form-item>
-
-      <div v-else class="student-status-modal__restore-note">
-        恢复操作无需填写原因，确认后将直接恢复学员账号状态。
-      </div>
-    </a-form>
+        <a-form-item name="remark">
+          <template #label>
+            <span class="student-status-modal__label">备注说明</span>
+          </template>
+          <a-textarea
+            v-model:value="formState.remark"
+            :rows="2"
+            :maxlength="200"
+            placeholder="选填，可填写详细说明"
+          />
+        </a-form-item>
+      </a-form>
+    </div>
 
     <template #footer>
       <button type="button" class="permission-button permission-button--outline" @click="handleClose">
         取消
       </button>
       <button type="button" class="permission-button permission-button--primary" @click="handleSubmit">
-        确认
+        确认修改
       </button>
     </template>
   </OverlaySurfaceModal>
@@ -95,60 +96,48 @@ const formState = reactive({
 
 const reasonOptionMap: Record<'freeze' | 'refund', { label: string; value: string }[]> = {
   freeze: [
-    { label: '学员申请暂停', value: 'student_pause' },
-    { label: '课时用完待续费', value: 'hours_exhausted' },
-    { label: '违反服务协议', value: 'policy_violation' },
-    { label: '学员申请退费', value: 'student_refund_request' },
-    { label: '其他原因', value: 'other' }
+    { label: '学员申请暂停', value: '学员申请暂停' },
+    { label: '课时用完待续费', value: '课时用完待续费' },
+    { label: '违反服务协议', value: '违反服务协议' },
+    { label: '学员申请退费', value: '学员申请退费' },
+    { label: '其他原因', value: '其他原因' }
   ],
   refund: [
-    { label: '服务终止', value: 'service_terminated' },
-    { label: '重复缴费', value: 'duplicate_payment' },
-    { label: '转班退费', value: 'transfer_refund' }
+    { label: '学员申请暂停', value: '学员申请暂停' },
+    { label: '课时用完待续费', value: '课时用完待续费' },
+    { label: '违反服务协议', value: '违反服务协议' },
+    { label: '学员申请退费', value: '学员申请退费' },
+    { label: '其他原因', value: '其他原因' }
   ]
 }
 
 const requiresReason = computed(() => props.action === 'freeze' || props.action === 'refund')
 
-const modalTitle = computed(() => {
-  if (props.action === 'freeze') {
-    return '冻结学员账号'
-  }
-  if (props.action === 'refund') {
-    return '学员退费处理'
-  }
-  return '恢复学员账号'
+const targetStatusLabel = computed(() => {
+  if (props.action === 'freeze') return '冻结'
+  if (props.action === 'refund') return '退费'
+  return '正常'
 })
 
 const modalDescription = computed(() => {
   if (props.action === 'freeze') {
-    return '请先选择冻结原因，提交后系统会记录本次冻结依据。'
+    return '冻结后，学员账号将被暂停，无法登录系统。可随时恢复正常状态。'
   }
   if (props.action === 'refund') {
-    return '请先选择退费原因，便于后续追溯财务与服务状态。'
+    return '退费后，学员账号将被停用。'
   }
-  return '确认后学员账号将恢复为正常状态。'
+  return '恢复后，学员可正常登录和使用系统。'
 })
 
 const actionIcon = computed(() => {
-  if (props.action === 'freeze') {
-    return 'mdi-snowflake-alert'
-  }
-  if (props.action === 'refund') {
-    return 'mdi-cash-refund'
-  }
-  return 'mdi-lock-open-check'
+  if (props.action === 'freeze') return 'mdi-snowflake'
+  if (props.action === 'refund') return 'mdi-cash-refund'
+  return 'mdi-check-circle'
 })
 
 const reasonOptions = computed(() => {
-  if (props.action === 'restore') {
-    return []
-  }
+  if (props.action === 'restore') return []
   return reasonOptionMap[props.action]
-})
-
-const reasonPlaceholder = computed(() => {
-  return props.action === 'freeze' ? '请选择冻结原因' : '请选择退费原因'
 })
 
 const rules = computed(() => ({
@@ -186,33 +175,18 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped lang="scss">
-:global([data-surface-id="student-status-change-modal"] [data-surface-part="header"]) {
-  background: linear-gradient(135deg, #7399C6, #5A7BA3);
-  border-bottom: none;
-}
-
-:global([data-surface-id="student-status-change-modal"] [data-surface-part="header"] .overlay-surface-modal__close) {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-}
-
 .student-status-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #fff;
 }
 
 .student-status-modal__intro {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 18px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(219, 234, 254, 0.68), rgba(254, 249, 195, 0.52));
-  color: #1f2937;
+  gap: 8px;
+  padding: 32px 16px;
   text-align: center;
 }
 
@@ -220,26 +194,52 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 16px;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
   border-radius: 50%;
-  font-size: 36px;
+  font-size: 48px;
 
   &--freeze {
-    background: #DBEAFE;
     color: #1E40AF;
   }
 
   &--refund {
-    background: #FEE2E2;
-    color: #991B1B;
+    color: #DC2626;
   }
 
   &--restore {
-    background: #DCFCE7;
-    color: #166534;
+    color: #16A34A;
   }
+}
+
+.student-status-modal__heading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.student-status-modal__name {
+  color: var(--primary);
+}
+
+.student-status-modal__target-status {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.student-status-modal__desc {
+  color: var(--text2);
+  font-size: 14px;
+  margin: 0;
+}
+
+.student-status-modal__form-area {
+  background: #F8FAFC;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: left;
 }
 
 .student-status-modal__label {
@@ -250,15 +250,5 @@ const handleSubmit = async () => {
 
 .student-status-modal__required {
   color: #dc2626;
-}
-
-.student-status-modal__restore-note {
-  padding: 14px 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 14px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-size: 14px;
-  line-height: 1.6;
 }
 </style>

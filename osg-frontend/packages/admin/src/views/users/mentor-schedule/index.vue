@@ -2,10 +2,7 @@
   <div class="mentor-schedule-page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">
-          导师排期管理
-          <span class="page-title-en">Mentor Schedule</span>
-        </h2>
+        <h2 class="page-title">导师排期管理</h2>
         <p class="page-subtitle">监控排期填写情况，协调导师资源</p>
       </div>
       <div class="page-header__actions">
@@ -22,71 +19,69 @@
     </div>
 
     <div v-if="unfilledCount > 0" class="schedule-banner">
-      <div class="schedule-banner__icon">
-        <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
-      </div>
-      <div class="schedule-banner__copy">
-        <strong>{{ unfilledCount }} 位导师排期未填写</strong>
-        <span>{{ selectedWeek === 'next' ? '请尽快补齐下周排期' : '距离本周排期截止还有 2 天' }}</span>
+      <div class="schedule-banner__left">
+        <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
+        <span class="schedule-banner__text">
+          <strong>{{ unfilledCount }} 位导师排期未填写</strong>
+          <span>{{ selectedWeek === 'next' ? '请尽快补齐下周排期' : '距离截止还有 2 天' }}</span>
+        </span>
       </div>
       <button type="button" class="schedule-banner__action" @click="handleRemindAll">
-        一键催促全部
+        <i class="mdi mdi-email-send" aria-hidden="true"></i> 一键催促全部
       </button>
     </div>
 
-    <section class="permission-card">
-      <div class="schedule-toolbar">
-        <div class="schedule-week-switch">
-          <button
-            v-for="option in weekOptions"
-            :key="option.value"
-            type="button"
-            :class="['schedule-week-switch__button', { 'schedule-week-switch__button--active': selectedWeek === option.value }]"
-            @click="handleWeekChange(option.value)"
-          >
-            <span>{{ option.label }}</span>
-            <small>{{ option.range }}</small>
-          </button>
+    <div class="schedule-card">
+      <div class="schedule-card__header">
+        <div class="schedule-card__top-row">
+          <div class="schedule-week-group">
+            <button
+              v-for="(option, idx) in weekOptions"
+              :key="option.value"
+              type="button"
+              :class="[
+                'schedule-week-btn',
+                { 'schedule-week-btn--active': selectedWeek === option.value },
+                idx === 0 ? 'schedule-week-btn--first' : 'schedule-week-btn--last'
+              ]"
+              @click="handleWeekChange(option.value)"
+            >
+              {{ option.label }} <span class="schedule-week-btn__range">({{ option.range }})</span>
+            </button>
+          </div>
+          <div class="schedule-total-count">
+            <i class="mdi mdi-account-group" aria-hidden="true"></i>
+            全部导师 ({{ rows.length }}人)
+          </div>
         </div>
-
         <div class="schedule-filters">
-          <label class="schedule-field">
-            <span class="schedule-field__label">导师姓名 / ID</span>
-            <input v-model="filters.keyword" type="text" class="schedule-input" placeholder="搜索导师姓名或 ID" />
-          </label>
-          <label class="schedule-field">
-            <span class="schedule-field__label">类型</span>
-            <select v-model="filters.staffType" class="schedule-select">
-              <option value="">全部</option>
-              <option value="lead_mentor">班主任</option>
-              <option value="mentor">专业导师</option>
-            </select>
-          </label>
-          <label class="schedule-field">
-            <span class="schedule-field__label">日期</span>
-            <select v-model="filters.weekday" class="schedule-select">
-              <option value="">全部</option>
-              <option v-for="day in weekdays" :key="day.value" :value="String(day.value)">{{ day.label }}</option>
-            </select>
-          </label>
-          <label class="schedule-field">
-            <span class="schedule-field__label">时段</span>
-            <select v-model="filters.timeSlot" class="schedule-select">
-              <option value="">全部</option>
-              <option v-for="slot in timeSlots" :key="slot.value" :value="slot.value">{{ slot.label }}</option>
-            </select>
-          </label>
+          <input v-model="filters.keyword" type="text" class="schedule-input" placeholder="搜索导师姓名/ID..." />
+          <select v-model="filters.staffType" class="schedule-select">
+            <option value="">全部类型</option>
+            <option value="lead_mentor">班主任</option>
+            <option value="mentor">专业导师</option>
+            <option value="assistant">助教</option>
+          </select>
+          <select v-model="filters.weekday" class="schedule-select">
+            <option value="">全部日期</option>
+            <option v-for="day in weekdays" :key="day.value" :value="String(day.value)">{{ day.label }}</option>
+          </select>
+          <select v-model="filters.timeSlot" class="schedule-select">
+            <option value="">全部时段</option>
+            <option v-for="slot in timeSlots" :key="slot.value" :value="slot.value">{{ slot.label }}</option>
+          </select>
         </div>
       </div>
 
-      <div class="permission-card__body permission-card__body--flush">
-        <table class="permission-table schedule-table">
+      <div class="schedule-card__body">
+        <table class="schedule-table">
           <thead>
             <tr>
-              <th>导师信息</th>
-              <th>排期状态</th>
-              <th>可用时间</th>
-              <th>操作</th>
+              <th style="width:200px">导师</th>
+              <th style="width:90px;text-align:center">类型</th>
+              <th style="width:80px;text-align:center">可用时长</th>
+              <th style="text-align:center">可用时间</th>
+              <th style="width:100px">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -96,72 +91,65 @@
               :class="{ 'schedule-row--unfilled': !record.filled }"
             >
               <td>
-                <div class="schedule-cell-block">
-                  <div class="schedule-staff-row">
-                    <div class="schedule-staff__avatar">{{ getAvatarText(record.staffName) }}</div>
-                    <div class="schedule-staff-info">
-                      <div class="schedule-staff-primary">
-                        <strong class="schedule-staff-name">{{ record.staffName }}</strong>
-                        <span class="schedule-staff-id">ID {{ record.staffId }}</span>
-                      </div>
-                      <div class="schedule-staff-meta">
-                        <span :class="['schedule-tag', `schedule-tag--${getTypeTone(record.staffType)}`]">
-                          {{ formatType(record.staffType) }}
-                        </span>
-                        <span v-if="record.majorDirection" class="schedule-direction">{{ record.majorDirection }}</span>
-                      </div>
-                    </div>
+                <div class="schedule-staff-row">
+                  <div class="schedule-avatar" :class="{ 'schedule-avatar--unfilled': !record.filled }">{{ getAvatarText(record.staffName) }}</div>
+                  <div>
+                    <div class="schedule-staff-name" :class="{ 'schedule-staff-name--unfilled': !record.filled }">{{ record.staffName }}</div>
+                    <div class="schedule-staff-id" :class="{ 'schedule-staff-id--unfilled': !record.filled }">ID: {{ record.staffId }}</div>
                   </div>
                 </div>
               </td>
               <td>
-                <div class="schedule-cell-block">
-                  <div class="schedule-status-row">
-                    <span class="schedule-status-label">可用时长</span>
-                    <strong class="schedule-hours-value">{{ formatHours(record.availableHours) }}</strong>
-                  </div>
-                  <div class="schedule-status-row">
-                    <span class="schedule-status-label">填写状态</span>
-                    <span :class="['schedule-fill-badge', { 'schedule-fill-badge--filled': record.filled }]">
-                      {{ record.filled ? '已填写' : '未填写' }}
-                    </span>
-                  </div>
-                </div>
+                <span :class="['schedule-type-tag', `schedule-type-tag--${getTypeTone(record.staffType)}`]">
+                  {{ formatType(record.staffType) }}
+                </span>
               </td>
               <td>
-                <div class="schedule-slot-list">
+                <strong :class="record.filled ? 'schedule-hours' : 'schedule-hours--empty'">
+                  {{ record.filled ? formatHours(record.availableHours) : '-' }}
+                </strong>
+              </td>
+              <td>
+                <div v-if="record.filled" class="schedule-slots">
                   <span
-                    v-for="label in record.availableSlotLabels.length ? record.availableSlotLabels : ['未填写']"
+                    v-for="label in record.availableSlotLabels"
                     :key="label"
-                    :class="['schedule-slot-chip', { 'schedule-slot-chip--empty': label === '未填写' }]"
-                  >
-                    {{ label }}
-                  </span>
+                    :class="['schedule-slot', { 'schedule-slot--weekend': isWeekendSlot(label) }]"
+                  >{{ label }}</span>
                 </div>
+                <span v-else class="schedule-slot schedule-slot--empty">
+                  <i class="mdi mdi-alert-circle" aria-hidden="true"></i> 未填写排期
+                </span>
               </td>
               <td>
-                <div class="schedule-actions">
-                  <button type="button" class="schedule-action" @click="openEditModal(record)">
-                    {{ record.filled ? '调整' : '代填' }}
+                <div v-if="record.filled" class="schedule-action-filled">
+                  <button type="button" class="schedule-action-link" @click="openEditModal(record)">
+                    <i class="mdi mdi-pencil" aria-hidden="true"></i> 调整
                   </button>
-                  <button
-                    v-if="!record.filled"
-                    type="button"
-                    class="schedule-action schedule-action--warn"
-                    @click="handleRemindAll"
-                  >
-                    催促
+                </div>
+                <div v-else class="schedule-action-unfilled">
+                  <button type="button" class="schedule-btn-fill" @click="openEditModal(record)">
+                    <i class="mdi mdi-pencil" aria-hidden="true"></i> 代填
+                  </button>
+                  <button type="button" class="schedule-btn-remind" @click="handleRemindAll">
+                    <i class="mdi mdi-email-fast" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>
             </tr>
             <tr v-if="!visibleRows.length">
-              <td colspan="4" class="schedule-empty">当前筛选条件下暂无排期数据</td>
+              <td colspan="5" class="schedule-empty">当前筛选条件下暂无排期数据</td>
             </tr>
           </tbody>
         </table>
       </div>
-    </section>
+
+      <div class="schedule-card__footer">
+        <button type="button" class="schedule-view-all">
+          查看全部 {{ rows.length }} 位导师 <i class="mdi mdi-chevron-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
 
     <EditScheduleModal
       v-model:visible="editVisible"
@@ -345,6 +333,8 @@ const getTypeTone = (staffType?: string) => (staffType === 'lead_mentor' ? 'lead
 
 const formatHours = (value?: number) => `${value ?? 0}h`
 
+const isWeekendSlot = (label: string) => label.startsWith('周六') || label.startsWith('周日')
+
 const getExportFilename = (contentDisposition: string | null) => {
   if (!contentDisposition) {
     return '导师排期表.xlsx'
@@ -363,310 +353,374 @@ onMounted(() => {
 .mentor-schedule-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
+// Page header
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.page-subtitle {
+  margin: 6px 0 0;
+  color: var(--text2);
+  font-size: 14px;
+}
+
+.page-header__actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.permission-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.permission-button--primary {
+  background: linear-gradient(135deg, #6366F1, #8b5cf6);
+  color: #fff;
+}
+
+// Banner
 .schedule-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  border-radius: 20px;
-  padding: 18px 22px;
-  margin-bottom: 18px;
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  color: #991b1b;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
 }
 
-.schedule-banner__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(220, 38, 38, 0.12);
-  font-size: 22px;
-}
-
-.schedule-banner__copy {
+.schedule-banner__left {
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
+
+  > i { font-size: 24px; color: #dc2626; }
 }
 
-.schedule-banner__copy strong {
-  font-size: 16px;
-}
+.schedule-banner__text {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 
-.schedule-banner__copy span {
-  font-size: 13px;
+  strong { color: #991b1b; font-size: 14px; }
+  span { color: #b91c1c; font-size: 13px; }
 }
 
 .schedule-banner__action {
   border: 0;
-  border-radius: 999px;
-  padding: 10px 18px;
+  border-radius: 6px;
+  padding: 8px 16px;
   background: #dc2626;
   color: #fff;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.schedule-toolbar {
+// Card
+.schedule-card {
+  border-radius: 16px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.schedule-card__header {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 20px;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
 }
 
-.schedule-week-switch {
-  display: inline-flex;
-  gap: 12px;
+.schedule-card__top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.schedule-week-switch__button {
+// Week switch - connected button group
+.schedule-week-group {
   display: inline-flex;
-  flex-direction: column;
+}
+
+.schedule-week-btn {
+  display: inline-flex;
+  align-items: center;
   gap: 4px;
-  min-width: 160px;
-  border: 1px solid #cbd5e1;
-  border-radius: 18px;
-  padding: 14px 16px;
-  background: #fff;
-  color: var(--text);
+  border: 1px solid #d1d5db;
+  padding: 10px 22px;
+  background: #f5f5f5;
+  color: var(--muted, #6b7280);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.schedule-week-switch__button span {
-  font-size: 15px;
-  font-weight: 700;
+.schedule-week-btn--first { border-radius: 8px 0 0 8px; }
+.schedule-week-btn--last { border-radius: 0 8px 8px 0; border-left: 0; }
+
+.schedule-week-btn--active {
+  background: var(--primary, #6366f1);
+  border-color: var(--primary, #6366f1);
+  color: #fff;
 }
 
-.schedule-week-switch__button small {
-  color: var(--text2);
-  font-size: 12px;
+.schedule-week-btn__range {
+  font-size: 11px;
+  opacity: 0.8;
 }
 
-.schedule-week-switch__button--active {
-  border-color: #0f766e;
-  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, rgba(20, 184, 166, 0.16) 100%);
+.schedule-total-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+
+  i { color: var(--primary, #6366f1); font-size: 18px; }
 }
 
+// Filters
 .schedule-filters {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
 }
 
-.schedule-field {
-  display: flex;
-  flex: 0 0 auto;
-}
-
-.schedule-field__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .schedule-input,
 .schedule-select {
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 11px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 14px;
   background: #fff;
   color: var(--text);
   font-size: 13px;
+  min-height: 38px;
 }
 
-.schedule-input {
-  width: 220px;
-}
+.schedule-input { width: 200px; }
+.schedule-select { width: 110px; }
 
-.schedule-select {
-  width: 112px;
+// Table
+.schedule-card__body {
+  overflow-x: auto;
 }
 
 .schedule-table {
-  min-width: 1100px;
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th, td {
+    padding: 18px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  // Center columns: 类型(2), 可用时长(3), 可用时间(4)
+  th:nth-child(2), td:nth-child(2),
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4) {
+    text-align: center;
+  }
+
+  // Allow time slots column to wrap
+  td:nth-child(4) {
+    white-space: normal;
+  }
+
+  thead th {
+    background: #f8fafc;
+    color: var(--text2, #6b7280);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 14px 20px;
+    white-space: nowrap;
+  }
+
+  tbody tr:not(.schedule-row--unfilled):hover {
+    background: #f9fafb;
+  }
 }
 
 .schedule-row--unfilled {
   background: #fef2f2;
 }
 
-.schedule-cell-block {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
+// Staff cell
 .schedule-staff-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.schedule-staff__avatar {
+.schedule-avatar {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #7399c6 0%, #5a7ba3 100%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7399c6, #5a7ba3);
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
 
-.schedule-staff-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.schedule-staff-primary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.schedule-avatar--unfilled { background: #dc2626; }
 
 .schedule-staff-name {
-  color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
 }
+
+.schedule-staff-name--unfilled { color: #991b1b; }
 
 .schedule-staff-id {
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: #f3f4f6;
-  color: var(--text2);
   font-size: 11px;
+  color: var(--muted, #6b7280);
 }
 
-.schedule-staff-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.schedule-staff-id--unfilled { color: #b91c1c; }
 
-.schedule-direction {
-  color: var(--text2);
-  font-size: 12px;
-}
-
-.schedule-status-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.schedule-status-label {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.schedule-hours-value {
-  color: #0f766e;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.schedule-fill-badge {
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: #fee2e2;
-  color: #b91c1c;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.schedule-fill-badge--filled {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.schedule-tag {
+// Type tag
+.schedule-type-tag {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
   padding: 4px 12px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
-.schedule-tag--lead {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
+.schedule-type-tag--lead { background: #dbeafe; color: #1d4ed8; }
+.schedule-type-tag--mentor { background: #ede9fe; color: #6d28d9; }
 
-.schedule-tag--mentor {
-  background: #e0e7ff;
-  color: #4338ca;
-}
+// Hours
+.schedule-hours { color: var(--primary, #6366f1); font-size: 14px; font-weight: 600; }
+.schedule-hours--empty { color: #dc2626; font-size: 14px; font-weight: 600; }
 
-.schedule-hours strong {
-  display: block;
-  color: var(--text);
-  font-size: 18px;
-}
-
-.schedule-hours span {
-  color: var(--text2);
-  font-size: 12px;
-}
-
-.schedule-slot-list {
+// Slots
+.schedule-slots {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 
-.schedule-slot-chip {
+.schedule-slot {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
-  padding: 5px 10px;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
   background: #e8f0f8;
+  font-size: 11px;
   color: var(--text);
-  font-size: 12px;
 }
 
-.schedule-slot-chip--empty {
+.schedule-slot--weekend { background: #dcfce7; }
+
+.schedule-slot--empty {
   background: #fee2e2;
   color: #b91c1c;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
 }
 
-.schedule-actions {
+// Actions
+.schedule-action-filled {
   display: flex;
-  gap: 10px;
 }
 
-.schedule-action {
+.schedule-action-link {
   border: 0;
-  border-radius: 999px;
-  padding: 8px 14px;
-  background: #0f766e;
+  background: transparent;
+  padding: 0;
+  color: var(--primary, #6366f1);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+.schedule-action-unfilled {
+  display: flex;
+  gap: 4px;
+}
+
+.schedule-btn-fill {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  background: #dc2626;
   color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.schedule-btn-remind {
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #fff;
+  color: #dc2626;
+  font-size: 14px;
   cursor: pointer;
 }
 
-.schedule-action--warn {
-  background: #dc2626;
+// Footer
+.schedule-card__footer {
+  padding: 12px;
+  text-align: center;
+  border-top: 1px solid var(--border, #e2e8f0);
+}
+
+.schedule-view-all {
+  border: 0;
+  background: transparent;
+  color: var(--text2, #6b7280);
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover { color: var(--primary, #6366f1); }
 }
 
 .schedule-empty {
@@ -675,81 +729,10 @@ onMounted(() => {
   text-align: center;
 }
 
-// 翻页按钮样式
-.permission-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 8px 16px;
-  background: #ffffff;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.4;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-    border-color: var(--muted);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.permission-button--primary {
-  background: linear-gradient(135deg, #6366F1, #8b5cf6);
-  border-color: #6366F1;
-  color: #ffffff;
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #4F46E5, #6366F1);
-    border-color: #4F46E5;
-  }
-}
-
-.permission-button--outline {
-  background: #ffffff;
-  border-color: #d1d5db;
-  color: var(--text);
-
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-    border-color: var(--muted);
-    color: #111827;
-  }
-}
-
-.permission-button--small {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-@media (max-width: 1024px) {
-  .schedule-input {
-    width: 200px;
-  }
-}
-
 @media (max-width: 720px) {
-  .schedule-banner,
-  .schedule-week-switch {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .schedule-field {
-    width: 100%;
-  }
-
-  .schedule-input,
-  .schedule-select {
-    width: 100%;
-  }
+  .schedule-banner { flex-direction: column; align-items: stretch; }
+  .schedule-card__top-row { flex-direction: column; align-items: stretch; gap: 12px; }
+  .schedule-filters { flex-wrap: wrap; }
+  .schedule-input, .schedule-select { width: 100%; }
 }
 </style>

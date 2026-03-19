@@ -16,78 +16,87 @@
       </div>
     </div>
 
+    <div v-if="pendingReviewCount > 0" class="staff-banner">
+      <div class="staff-banner__icon">
+        <i class="mdi mdi-account-edit" aria-hidden="true"></i>
+      </div>
+      <div class="staff-banner__copy">
+        <strong>有 {{ pendingReviewCount }} 位导师的个人信息变更待审核</strong>
+        <span>导师提交的银行信息、联系方式等变更需要您审核确认</span>
+      </div>
+      <button type="button" class="staff-banner__action" @click="handlePendingReviewEntry">
+        <i class="mdi mdi-eye" aria-hidden="true"></i>
+        <span>立即处理</span>
+      </button>
+    </div>
+
+    <div class="staff-filters">
+      <label class="staff-field">
+        <span class="staff-field__label">姓名 / ID</span>
+        <input v-model="filters.staffName" type="text" class="staff-input" placeholder="搜索姓名/ID" />
+      </label>
+      <label class="staff-field">
+        <span class="staff-field__label">类型</span>
+        <select v-model="filters.staffType" class="staff-select">
+          <option value="">全部</option>
+          <option value="lead_mentor">班主任</option>
+          <option value="mentor">导师</option>
+        </select>
+      </label>
+      <label class="staff-field">
+        <span class="staff-field__label">主攻方向</span>
+        <select v-model="filters.majorDirection" class="staff-select">
+          <option value="">全部</option>
+          <option v-for="direction in majorDirectionOptions" :key="direction" :value="direction">{{ direction }}</option>
+        </select>
+      </label>
+      <label class="staff-field">
+        <span class="staff-field__label">状态</span>
+        <select v-model="filters.accountStatus" class="staff-select">
+          <option value="">全部</option>
+          <option value="0">激活</option>
+          <option value="1">禁用</option>
+        </select>
+      </label>
+      <div class="staff-filter-actions">
+        <button type="button" class="permission-button permission-button--primary" @click="handleSearch">搜索</button>
+        <button type="button" class="permission-button permission-button--outline" @click="handleExport"><i class="mdi mdi-export" aria-hidden="true"></i> 导出</button>
+      </div>
+    </div>
+
+    <div class="staff-tabs" role="tablist" aria-label="导师列表类型切换">
+      <button
+        v-for="tab in tabs"
+        :key="tab.key"
+        type="button"
+        :class="['staff-tabs__tab', { 'staff-tabs__tab--active': selectedTab === tab.key }]"
+        :aria-selected="selectedTab === tab.key"
+        @click="selectedTab = tab.key"
+      >
+        <span>{{ tab.label }}</span>
+        <span class="staff-tabs__count">{{ tab.key === 'normal' ? normalCount : blacklistedCount }}</span>
+      </button>
+    </div>
+
     <section class="permission-card">
-      <div v-if="pendingReviewCount > 0" class="staff-banner">
-        <div class="staff-banner__icon">
-          <i class="mdi mdi-account-edit" aria-hidden="true"></i>
+      <!-- Blacklist restriction notice -->
+      <div v-if="selectedTab === 'blacklist'" class="staff-blacklist-notice">
+        <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
+        <div>
+          <strong>黑名单导师限制说明</strong>
+          <p>黑名单中的导师<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能），但可以正常登录系统和进行其他操作</p>
         </div>
-        <div class="staff-banner__copy">
-          <strong>导师信息变更待审核</strong>
-          <span>当前有 {{ pendingReviewCount }} 位导师的资料变更待处理</span>
-        </div>
-        <button type="button" class="staff-banner__action" @click="handlePendingReviewEntry">
-          <i class="mdi mdi-eye" aria-hidden="true"></i>
-          <span>立即处理</span>
-        </button>
-      </div>
-
-      <div class="staff-filters">
-        <label class="staff-field">
-          <span class="staff-field__label">姓名 / ID</span>
-          <input v-model="filters.staffName" type="text" class="staff-input" placeholder="搜索姓名或 ID" />
-        </label>
-        <label class="staff-field">
-          <span class="staff-field__label">类型</span>
-          <select v-model="filters.staffType" class="staff-select">
-            <option value="">全部</option>
-            <option value="lead_mentor">班主任</option>
-            <option value="mentor">导师</option>
-          </select>
-        </label>
-        <label class="staff-field">
-          <span class="staff-field__label">主攻方向</span>
-          <select v-model="filters.majorDirection" class="staff-select">
-            <option value="">全部</option>
-            <option v-for="direction in majorDirectionOptions" :key="direction" :value="direction">{{ direction }}</option>
-          </select>
-        </label>
-        <label class="staff-field">
-          <span class="staff-field__label">状态</span>
-          <select v-model="filters.accountStatus" class="staff-select">
-            <option value="">全部</option>
-            <option value="0">激活</option>
-            <option value="1">禁用</option>
-          </select>
-        </label>
-        <div class="staff-filter-actions">
-          <button type="button" class="permission-button permission-button--primary" @click="handleSearch">搜索</button>
-          <button type="button" class="permission-button permission-button--outline" @click="handleReset">清空</button>
-        </div>
-      </div>
-
-      <div class="staff-tabs" role="tablist" aria-label="导师列表类型切换">
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          type="button"
-          :class="['staff-tabs__tab', { 'staff-tabs__tab--active': selectedTab === tab.key }]"
-          :aria-selected="selectedTab === tab.key"
-          @click="selectedTab = tab.key"
-        >
-          <span>{{ tab.label }}</span>
-          <span class="staff-tabs__count">{{ tab.key === 'normal' ? normalCount : blacklistedCount }}</span>
-        </button>
       </div>
 
       <div class="permission-card__body permission-card__body--flush">
         <table class="permission-table staff-table">
           <thead>
             <tr>
-              <th v-for="column in staffColumns" :key="column.key">{{ column.label }}</th>
+              <th v-for="column in activeColumns" :key="column.key">{{ column.label }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in visibleRows" :key="row.staffId" :class="{ 'staff-row--frozen': row.accountStatus === '1' }">
+            <tr v-for="row in visibleRows" :key="row.staffId" :class="{ 'staff-row--frozen': row.accountStatus === '1', 'staff-row--blacklist': selectedTab === 'blacklist' }">
               <!-- ID -->
               <td>{{ row.staffId }}</td>
 
@@ -181,7 +190,7 @@
               </td>
             </tr>
             <tr v-if="!visibleRows.length">
-              <td :colspan="staffColumns.length" class="staff-empty">{{ emptyStateText }}</td>
+              <td :colspan="activeColumns.length" class="staff-empty">{{ emptyStateText }}</td>
             </tr>
           </tbody>
         </table>
@@ -278,7 +287,7 @@ import MentorStudentsModal from './components/MentorStudentsModal.vue'
 import StaffDetailModal from './components/StaffDetailModal.vue'
 import StaffFormModal from './components/StaffFormModal.vue'
 import StaffStatusModal from './components/StaffStatusModal.vue'
-import { staffColumns } from './columns'
+import { staffColumns, staffBlacklistColumns } from './columns'
 
 type StaffTabKey = 'normal' | 'blacklist'
 type StaffActionKey = 'detail' | 'edit' | 'resetPassword' | 'freeze' | 'restore' | 'blacklist' | 'remove'
@@ -286,7 +295,7 @@ type StatusAction = Extract<StaffActionKey, 'freeze' | 'restore' | 'blacklist' |
 
 const tabs: { key: StaffTabKey; label: string }[] = [
   { key: 'normal', label: '正常列表' },
-  { key: 'blacklist', label: '黑名单列表' }
+  { key: 'blacklist', label: '黑名单' }
 ]
 
 const rows = ref<StaffListItem[]>([])
@@ -327,6 +336,10 @@ const emptyStateText = computed(() => (selectedTab.value === 'blacklist' ? '暂�
 const hasNext = computed(() => pagination.current * pagination.pageSize < pagination.total)
 const majorDirectionOptions = computed(() =>
   Array.from(new Set(rows.value.map((row) => row.majorDirection).filter((value): value is string => Boolean(value))))
+)
+
+const activeColumns = computed(() =>
+  selectedTab.value === 'blacklist' ? staffBlacklistColumns : staffColumns
 )
 
 const loadRows = async () => {
@@ -372,6 +385,10 @@ const handleReset = () => {
   selectedTab.value = 'normal'
   pagination.current = 1
   void loadRows()
+}
+
+const handleExport = () => {
+  message.info('导出功能开发中')
 }
 
 const handlePendingReviewEntry = () => {
@@ -597,8 +614,55 @@ const closeResetPasswordModal = () => {
   gap: 20px;
 }
 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.page-title-en {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+
+.page-sub {
+  margin: 10px 0 0;
+  color: var(--text2);
+  font-size: 14px;
+}
+
+.page-header__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.permission-card {
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border, #e2e8f0);
+  padding: 20px;
+}
+
 .permission-card__body--flush {
   overflow-x: auto;
+  margin: 0 -20px;
 }
 
 .staff-table {
@@ -637,7 +701,6 @@ const closeResetPasswordModal = () => {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 18px;
   padding: 16px 18px;
   border: 2px solid #3b82f6;
   border-radius: 20px;
@@ -681,7 +744,6 @@ const closeResetPasswordModal = () => {
   flex-wrap: wrap;
   align-items: center;
   gap: 14px;
-  margin-bottom: 18px;
 }
 
 .staff-field {
@@ -730,7 +792,6 @@ const closeResetPasswordModal = () => {
 .staff-tabs {
   display: inline-flex;
   gap: 10px;
-  margin-bottom: 18px;
 }
 
 .staff-tabs__tab {
@@ -1259,5 +1320,38 @@ const closeResetPasswordModal = () => {
   .staff-pagination__controls {
     justify-content: center;
   }
+}
+.staff-blacklist-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 16px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 13px;
+
+  i {
+    font-size: 20px;
+    color: #dc2626;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 0;
+    color: #7f1d1d;
+  }
+}
+
+.staff-row--blacklist {
+  background: #fef2f2;
 }
 </style>
