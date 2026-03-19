@@ -8,6 +8,7 @@ COPY osg-frontend/ ./
 RUN pnpm install --frozen-lockfile && pnpm --filter "@osg/${APP_PACKAGE}" exec vite build
 
 FROM nginx:1.27-alpine
+ARG APP_PACKAGE=admin
 COPY deploy/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/packages/${APP_PACKAGE}/dist/ /usr/share/nginx/html/
 
