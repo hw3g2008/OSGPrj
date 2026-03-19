@@ -26,20 +26,20 @@ services:
 
   admin:
     ports:
-      - "${ADMIN_PORT:-3005}:3005"
+      - "${ADMIN_PORT:-3005}:80"
 
   student:
     ports:
-      - "${STUDENT_PORT:-3001}:3001"
+      - "${STUDENT_PORT:-3001}:80"
 
   mentor:
     ports:
-      - "${MENTOR_PORT:-3002}:3002"
+      - "${MENTOR_PORT:-3002}:80"
 
   lead-mentor:
     ports:
-      - "${LEAD_MENTOR_PORT:-3003}:3003"
+      - "${LEAD_MENTOR_PORT:-3003}:80"
 
   assistant:
     ports:
-      - "${ASSISTANT_PORT:-3004}:3004"
+      - "${ASSISTANT_PORT:-3004}:80"

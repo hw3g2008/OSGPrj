@@ -78,14 +78,10 @@ services:
   admin:
     build:
       context: ..
-      dockerfile: deploy/frontend/Dockerfile.test
-    command: ["pnpm", "dev:admin", "--", "--host", "0.0.0.0", "--port", "3005"]
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: admin
     restart: unless-stopped
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
-      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy
@@ -95,14 +91,10 @@ services:
   student:
     build:
       context: ..
-      dockerfile: deploy/frontend/Dockerfile.test
-    command: ["pnpm", "dev:student", "--", "--host", "0.0.0.0", "--port", "3001"]
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: student
     restart: unless-stopped
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
-      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy
@@ -112,14 +104,10 @@ services:
   mentor:
     build:
       context: ..
-      dockerfile: deploy/frontend/Dockerfile.test
-    command: ["pnpm", "dev:mentor", "--", "--host", "0.0.0.0", "--port", "3002"]
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: mentor
     restart: unless-stopped
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
-      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy
@@ -129,14 +117,10 @@ services:
   lead-mentor:
     build:
       context: ..
-      dockerfile: deploy/frontend/Dockerfile.test
-    command: ["pnpm", "dev:lead-mentor", "--", "--host", "0.0.0.0", "--port", "3003"]
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: lead-mentor
     restart: unless-stopped
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
-      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy
@@ -146,14 +130,10 @@ services:
   assistant:
     build:
       context: ..
-      dockerfile: deploy/frontend/Dockerfile.test
-    command: ["pnpm", "dev:assistant", "--", "--host", "0.0.0.0", "--port", "3004"]
+      dockerfile: deploy/frontend/Dockerfile.prod
+      args:
+        APP_PACKAGE: assistant
     restart: unless-stopped
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-      VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://backend:8080}
-      E2E_API_PROXY_TARGET: ${E2E_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy

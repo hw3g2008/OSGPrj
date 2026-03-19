@@ -26,6 +26,8 @@ export function getInfo(): Promise<{
   return http.get('/getInfo')
 }
 
+export const getUserInfo = getInfo
+
 // 获取路由信息
 export function getRouters(): Promise<any[]> {
   return http.get('/getRouters')
