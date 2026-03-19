@@ -1,0 +1,20 @@
+create table if not exists osg_student_course_record (
+  course_record_id bigint not null auto_increment,
+  user_id bigint not null,
+  record_code varchar(32) not null,
+  coaching_type varchar(32) not null,
+  coaching_detail varchar(128) not null,
+  course_content varchar(64) not null,
+  mentor_name varchar(64) not null,
+  mentor_role varchar(32) not null,
+  class_date date not null,
+  duration_label varchar(32) not null,
+  is_new char(1) not null default '0',
+  rating_score decimal(3,1) null,
+  rating_tags varchar(255) null,
+  rating_feedback varchar(1000) null,
+  create_time datetime not null default current_timestamp,
+  update_time datetime not null default current_timestamp on update current_timestamp,
+  primary key (course_record_id),
+  unique key uk_osg_student_course_record_user_code (user_id, record_code)
+) engine=InnoDB default charset=utf8mb4;

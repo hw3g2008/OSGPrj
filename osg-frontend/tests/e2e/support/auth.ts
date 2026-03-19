@@ -4,6 +4,9 @@ import { readRedisValue, deleteRedisKeys } from './redis-runtime'
 
 const E2E_TIMEOUT_MS = Number(process.env.E2E_WAIT_TIMEOUT_MS || 15000)
 const authConfig = resolveAuthRuntimeConfig()
+const visualModule = process.env.UI_VISUAL_MODULE || ''
+const studentVisualUsername = process.env.E2E_STUDENT_USERNAME || 'student_demo'
+const studentVisualPassword = process.env.E2E_STUDENT_PASSWORD || 'student123'
 
 function asRegExpPath(path: string): RegExp {
   return new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -116,6 +119,17 @@ function normalizeApiPath(path: string): string[] {
   return [path]
 }
 
+function buildStudentVisualUser(sourceUser: Record<string, any> | null | undefined): Record<string, any> {
+  const baseUser = sourceUser && typeof sourceUser === 'object' ? sourceUser : {}
+  return {
+    ...baseUser,
+    userId: baseUser.userId || 12766,
+    userName: 'student',
+    nickName: 'Test Student',
+    email: baseUser.email || 'test@example.com',
+  }
+}
+
 export function waitForApi(page: Page, path: string, method: string = 'GET'): Promise<APIResponse> {
   const candidates = normalizeApiPath(path)
   return page.waitForResponse((response) => {
@@ -154,6 +168,32 @@ export async function assertRuoyiSuccess(
 }
 
 export async function loginAsAdmin(page: Page): Promise<void> {
+  if (visualModule === 'student') {
+    const loginResponse = await page.request.post('/api/student/login', {
+      data: {
+        username: studentVisualUsername,
+        password: studentVisualPassword,
+      },
+    })
+    const loginBody = await loginResponse.json()
+    expect(loginResponse.ok(), '/api/student/login should return HTTP 2xx for student visual auth').toBeTruthy()
+    expect(
+      loginBody?.code,
+      `/api/student/login should return code=200 for student visual auth, body=${JSON.stringify(loginBody).slice(0, 500)}`,
+    ).toBe(200)
+    expect(loginBody?.token, '/api/student/login should include token for student visual auth').toBeTruthy()
+
+    const visualToken = loginBody.token as string
+    const visualUser = buildStudentVisualUser(null)
+    await page.addInitScript(({ nextToken, nextUser }) => {
+      window.localStorage.setItem('osg_token', nextToken)
+      if (nextUser) {
+        window.localStorage.setItem('osg_user', JSON.stringify(nextUser))
+      }
+    }, { nextToken: visualToken, nextUser: visualUser })
+    return
+  }
+
   const usernameInput = page.locator(
     'input[placeholder*="用户名"], input[placeholder*="账号"], input[type="text"]'
   ).first()

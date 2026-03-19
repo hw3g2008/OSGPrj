@@ -14,6 +14,15 @@ const webServerTimeoutMs =
     ? parsedWebServerTimeout
     : 300_000
 const disableWebServerForPrototypeVisualSource = process.env.UI_VISUAL_SOURCE === 'prototype'
+const visualModule = process.env.UI_VISUAL_MODULE || 'permission'
+const visualContractJson = process.env.UI_VISUAL_CONTRACT_JSON || ''
+const useStudentVisualTarget =
+  visualModule === 'student' || /\/student\/|student-.*\.json$/i.test(visualContractJson)
+const visualBaseURL = useStudentVisualTarget ? 'http://127.0.0.1:4000' : 'http://localhost:4173'
+const visualWebServerCommand = useStudentVisualTarget
+  ? 'pnpm --dir packages/student build && pnpm --dir packages/student preview --host 127.0.0.1 --port 4000 --strictPort'
+  : 'pnpm --dir packages/admin build && pnpm --dir packages/admin preview --host 127.0.0.1 --port 4173 --strictPort'
+const visualWebServerPort = useStudentVisualTarget ? 4000 : 4173
 
 const snapshotPathTemplate = process.env.PW_VISUAL_SNAPSHOT_TEMPLATE
 const stability = resolveStabilityConfigFromEnv()
@@ -29,7 +38,7 @@ export default defineConfig({
   reporter: [['html', { open: 'never' }], ['list']],
 
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: visualBaseURL,
     trace: 'on-first-retry',
     locale: stability.locale,
     timezoneId: stability.timezoneId,
@@ -47,8 +56,8 @@ export default defineConfig({
   webServer: disableWebServerForPrototypeVisualSource
     ? undefined
     : {
-        command: 'pnpm --dir packages/admin build && pnpm --dir packages/admin preview --port 4173',
-        port: 4173,
+        command: visualWebServerCommand,
+        port: visualWebServerPort,
         reuseExistingServer,
         timeout: webServerTimeoutMs,
       },

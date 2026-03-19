@@ -65,6 +65,19 @@ public class SysLoginService
     {
         // 验证码校验
         validateCaptcha(username, code, uuid);
+        return loginWithoutCaptcha(username, password, rememberMe);
+    }
+
+    /**
+     * 登录验证（跳过验证码）
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @param rememberMe 是否记住我
+     * @return 令牌
+     */
+    public String loginWithoutCaptcha(String username, String password, boolean rememberMe)
+    {
         // 登录前置校验
         loginPreCheck(username, password);
         // 用户验证
