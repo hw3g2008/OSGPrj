@@ -22,24 +22,31 @@ class OsgMockPracticeServiceImplTest {
     private OsgMockPracticeMapper mapper;
 
     @Test
-    void testSelectListDelegates() {
+    void testSelectMentorMockPracticeListDelegates() {
         OsgMockPractice q = new OsgMockPractice();
-        when(mapper.selectList(q)).thenReturn(Collections.singletonList(new OsgMockPractice()));
-        assertEquals(1, service.selectList(q).size());
+        when(mapper.selectMentorMockPracticeList(q)).thenReturn(Collections.singletonList(new OsgMockPractice()));
+
+        assertEquals(1, service.selectMentorMockPracticeList(q).size());
+        verify(mapper).selectMentorMockPracticeList(q);
     }
 
     @Test
-    void testSelectByIdDelegates() {
+    void testSelectMentorMockPracticeByIdDelegates() {
         OsgMockPractice r = new OsgMockPractice();
         r.setPracticeId(1L);
-        when(mapper.selectById(1L)).thenReturn(r);
-        assertEquals(1L, service.selectById(1L).getPracticeId());
+        when(mapper.selectMentorMockPracticeById(1L)).thenReturn(r);
+
+        assertEquals(1L, service.selectMentorMockPracticeById(1L).getPracticeId());
+        verify(mapper).selectMentorMockPracticeById(1L);
     }
 
     @Test
-    void testUpdateDelegates() {
+    void testConfirmMentorMockPracticeDelegates() {
         OsgMockPractice r = new OsgMockPractice();
-        when(mapper.update(r)).thenReturn(1);
-        assertEquals(1, service.update(r));
+        when(mapper.updateMentorMockPracticeStatus(r)).thenReturn(1);
+
+        assertEquals(1, service.confirmMentorMockPractice(r));
+        assertNotNull(r.getUpdateTime());
+        verify(mapper).updateMentorMockPracticeStatus(r);
     }
 }
