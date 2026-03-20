@@ -3,82 +3,80 @@
     :open="visible"
     surface-id="assign-mock-practice-modal"
     width="760px"
-    :body-class="'assign-mock-modal__body'"
+    :body-class="['mock-practice-assign-modal__body', 'assign-mock-modal__body']"
     @cancel="handleClose"
   >
     <template #title>
-      <div class="assign-mock-modal__title-wrap">
-        <div>
-          <span class="assign-mock-modal__eyebrow">Mock Practice Dispatch</span>
-          <div class="assign-mock-modal__title">
-            <span class="mdi mdi-account-voice" aria-hidden="true"></span>
-            <span>处理模拟应聘申请</span>
-          </div>
-        </div>
-        <span class="assign-mock-modal__hint">为当前申请分配导师并锁定预约时间，提交后状态会切到已安排。</span>
+      <div class="mock-practice-assign-modal__title">
+        <i class="mdi mdi-account-voice-outline" aria-hidden="true"></i>
+        <span>处理模拟应聘申请</span>
       </div>
     </template>
 
-    <section class="assign-mock-modal__hero">
-      <div class="assign-mock-modal__avatar">{{ studentInitials }}</div>
-      <div class="assign-mock-modal__summary">
+    <section class="mock-practice-assign-modal__hero assign-mock-modal__hero">
+      <div class="mock-practice-assign-modal__avatar assign-mock-modal__avatar">{{ studentInitials }}</div>
+      <div class="mock-practice-assign-modal__summary assign-mock-modal__summary">
         <strong>{{ row?.studentName || '待分配学员' }}</strong>
         <span>ID {{ row?.studentId || '--' }}</span>
         <span>{{ practiceTypeLabel }}</span>
       </div>
-      <div class="assign-mock-modal__meta">
-        <span class="assign-mock-modal__meta-chip">建议导师 {{ requestedCount }} 位</span>
-        <span class="assign-mock-modal__meta-chip assign-mock-modal__meta-chip--accent">{{ preferredMentorLabel }}</span>
+      <div class="mock-practice-assign-modal__meta assign-mock-modal__meta">
+        <span class="mock-practice-assign-modal__meta-chip assign-mock-modal__meta-chip">建议导师 {{ requestedCount }} 位</span>
+        <span class="mock-practice-assign-modal__meta-chip mock-practice-assign-modal__meta-chip--accent assign-mock-modal__meta-chip assign-mock-modal__meta-chip--accent">
+          {{ preferredMentorLabel }}
+        </span>
       </div>
     </section>
 
-    <section class="assign-mock-modal__section">
-      <header class="assign-mock-modal__section-head">
+    <section class="mock-practice-assign-modal__panel">
+      <header class="mock-practice-assign-modal__section-head">
         <div>
-          <h3>分配导师</h3>
-          <p>意向导师会优先默认勾选，可继续补充协同导师。</p>
+          <h3>导师候选池</h3>
+          <p>意向导师优先默认勾选，可继续补充分配导师。</p>
         </div>
-        <span class="assign-mock-modal__section-badge">支持多导师</span>
+        <span class="mock-practice-assign-modal__badge">支持多导师</span>
       </header>
 
-      <div v-if="mentorOptions.length" class="assign-mock-modal__grid">
+      <div v-if="mentorOptions.length" class="mock-practice-assign-modal__mentor-list assign-mock-modal__mentor-list">
         <label
           v-for="option in mentorOptions"
           :key="option.mentorId"
           :class="[
-            'assign-mock-modal__option',
+            'mock-practice-assign-modal__mentor assign-mock-modal__option',
             {
-              'assign-mock-modal__option--selected': selectedMentorIds.includes(option.mentorId),
-              'assign-mock-modal__option--preferred': option.preferred
+              'mock-practice-assign-modal__mentor--selected assign-mock-modal__option--selected': selectedMentorIds.includes(option.mentorId),
+              'mock-practice-assign-modal__mentor--preferred assign-mock-modal__option--preferred': option.preferred
             }
           ]"
         >
           <input
             v-model="selectedMentorIds"
-            class="assign-mock-modal__checkbox"
+            class="mock-practice-assign-modal__checkbox assign-mock-modal__checkbox"
             type="checkbox"
             :value="option.mentorId"
           />
-          <div class="assign-mock-modal__option-copy">
+          <div class="mock-practice-assign-modal__mentor-avatar">{{ getMentorInitials(option.mentorName) }}</div>
+          <div class="mock-practice-assign-modal__mentor-copy assign-mock-modal__option-copy">
             <strong>{{ option.mentorName }}</strong>
             <span>{{ option.mentorBackground }}</span>
           </div>
-          <span v-if="option.preferred" class="assign-mock-modal__preferred-flag">意向导师</span>
+          <span v-if="option.preferred" class="mock-practice-assign-modal__mentor-flag assign-mock-modal__preferred-flag">意向导师</span>
         </label>
       </div>
-      <div v-else class="assign-mock-modal__empty">当前没有可分配导师，请先补充导师目录。</div>
+      <div v-else class="mock-practice-assign-modal__empty assign-mock-modal__empty">当前没有可分配导师，请先补充导师目录。</div>
     </section>
 
-    <section class="assign-mock-modal__section assign-mock-modal__section--schedule">
-      <label class="assign-mock-modal__field">
+    <section class="mock-practice-assign-modal__schedule-grid">
+      <label class="mock-practice-assign-modal__field">
         <span>预约时间</span>
-        <input v-model="scheduledAt" class="assign-mock-modal__datetime" type="datetime-local" />
+        <input v-model="scheduledAt" class="mock-practice-assign-modal__datetime assign-mock-modal__datetime" type="datetime-local" />
       </label>
-      <label class="assign-mock-modal__field">
+
+      <label class="mock-practice-assign-modal__field">
         <span>备注说明</span>
         <textarea
           v-model="note"
-          class="assign-mock-modal__textarea"
+          class="mock-practice-assign-modal__textarea assign-mock-modal__textarea"
           rows="4"
           maxlength="160"
           placeholder="例如：先安排行为面模拟，下一次补 technical drill。"
@@ -87,11 +85,13 @@
     </section>
 
     <template #footer>
-      <div class="assign-mock-modal__footer">
-        <button type="button" class="permission-button permission-button--outline" @click="handleClose">取消</button>
+      <div class="mock-practice-assign-modal__footer assign-mock-modal__footer">
+        <button type="button" class="mock-practice-assign-modal__button mock-practice-assign-modal__button--ghost" @click="handleClose">
+          取消
+        </button>
         <button
           type="button"
-          class="permission-button permission-button--primary"
+          class="mock-practice-assign-modal__button mock-practice-assign-modal__button--primary"
           :disabled="submitting"
           @click="handleSubmit"
         >
@@ -199,249 +199,294 @@ function formatPracticeType(value?: string) {
   if (value === 'midterm_exam') return '期中考试'
   return '模拟应聘'
 }
+
+const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
 </script>
 
 <style scoped lang="scss">
-.assign-mock-modal__title-wrap {
+.mock-practice-assign-modal__body {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.assign-mock-modal__eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #7a8ea8;
-}
-
-.assign-mock-modal__title {
-  margin-top: 6px;
-  display: flex;
+.mock-practice-assign-modal__title {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 24px;
+  color: #1e293b;
+  font-size: 18px;
   font-weight: 700;
-  color: #10213a;
 }
 
-.assign-mock-modal__hint {
-  max-width: 240px;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #60748e;
-  text-align: right;
-}
-
+.mock-practice-assign-modal__hero,
 .assign-mock-modal__hero {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
   padding: 18px 20px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(236, 253, 245, 0.96), rgba(220, 252, 231, 0.92));
+  border-radius: 12px;
+  border: 1px solid #ccfbf1;
+  background: #f0fdfa;
 }
 
+.mock-practice-assign-modal__avatar,
 .assign-mock-modal__avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f766e, #22c55e);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
   color: #fff;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 700;
 }
 
-.assign-mock-modal__summary {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.mock-practice-assign-modal__summary strong {
+  display: block;
+  color: #0f172a;
+  font-size: 16px;
 }
 
-.assign-mock-modal__summary strong {
-  font-size: 18px;
-  color: #10213a;
+.mock-practice-assign-modal__summary span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
 }
 
-.assign-mock-modal__summary span {
-  color: #52637a;
-  font-size: 13px;
-}
-
-.assign-mock-modal__meta {
+.mock-practice-assign-modal__meta {
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: flex-end;
 }
 
-.assign-mock-modal__meta-chip {
+.mock-practice-assign-modal__meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
-  padding: 7px 12px;
   background: rgba(15, 23, 42, 0.08);
   color: #334155;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.assign-mock-modal__meta-chip--accent {
-  background: rgba(220, 38, 38, 0.1);
-  color: #b91c1c;
+.mock-practice-assign-modal__meta-chip--accent {
+  background: #ecfeff;
+  color: #0f766e;
 }
 
-.assign-mock-modal__section {
+.mock-practice-assign-modal__panel {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.assign-mock-modal__section-head {
+.mock-practice-assign-modal__section-head {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
 }
 
-.assign-mock-modal__section-head h3 {
+.mock-practice-assign-modal__section-head h3 {
   margin: 0;
-  color: #10213a;
+  color: #0f172a;
   font-size: 16px;
 }
 
-.assign-mock-modal__section-head p {
-  margin: 6px 0 0;
-  color: #60748e;
-  font-size: 13px;
+.mock-practice-assign-modal__section-head p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
 }
 
-.assign-mock-modal__section-badge {
+.mock-practice-assign-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
-  padding: 6px 10px;
-  background: rgba(15, 118, 110, 0.12);
+  background: #ecfeff;
   color: #0f766e;
   font-size: 12px;
+  font-weight: 600;
+}
+
+.mock-practice-assign-modal__mentor-list,
+.assign-mock-modal__mentor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mock-practice-assign-modal__mentor,
+.assign-mock-modal__option {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 70px;
+  padding: 12px 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.mock-practice-assign-modal__mentor--selected,
+.assign-mock-modal__option--selected {
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
+
+.mock-practice-assign-modal__mentor--preferred,
+.assign-mock-modal__option--preferred {
+  background: linear-gradient(145deg, rgba(240, 253, 250, 0.96), rgba(236, 253, 245, 0.98));
+}
+
+.mock-practice-assign-modal__checkbox,
+.assign-mock-modal__checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.mock-practice-assign-modal__mentor-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 11px;
   font-weight: 700;
 }
 
-.assign-mock-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+.mock-practice-assign-modal__mentor-copy strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
 }
 
-.assign-mock-modal__option {
-  position: relative;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  background: #fff;
-  cursor: pointer;
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.assign-mock-modal__option:hover {
-  border-color: rgba(15, 118, 110, 0.4);
-  transform: translateY(-1px);
-}
-
-.assign-mock-modal__option--selected {
-  border-color: rgba(15, 118, 110, 0.6);
-  box-shadow: 0 14px 28px rgba(15, 118, 110, 0.12);
-}
-
-.assign-mock-modal__option--preferred {
-  background: linear-gradient(135deg, rgba(254, 242, 242, 0.92), rgba(255, 247, 237, 0.92));
-}
-
-.assign-mock-modal__checkbox {
-  margin-top: 4px;
-}
-
-.assign-mock-modal__option-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.assign-mock-modal__option-copy strong {
-  color: #10213a;
-}
-
-.assign-mock-modal__option-copy span {
-  color: #60748e;
+.mock-practice-assign-modal__mentor-copy span {
+  color: #64748b;
   font-size: 12px;
 }
 
+.mock-practice-assign-modal__mentor-flag,
 .assign-mock-modal__preferred-flag {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: 700;
-  color: #b91c1c;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #ccfbf1;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-.assign-mock-modal__empty {
-  padding: 18px;
-  border-radius: 16px;
-  text-align: center;
-  color: #60748e;
-  background: rgba(241, 245, 249, 0.85);
-}
-
-.assign-mock-modal__section--schedule {
+.mock-practice-assign-modal__schedule-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
-.assign-mock-modal__field {
+.mock-practice-assign-modal__field {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.assign-mock-modal__field span {
+.mock-practice-assign-modal__field span {
   color: #334155;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
+.mock-practice-assign-modal__datetime,
+.mock-practice-assign-modal__textarea,
 .assign-mock-modal__datetime,
 .assign-mock-modal__textarea {
   width: 100%;
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: #fff;
-  color: #10213a;
   padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
   font: inherit;
   resize: vertical;
 }
 
+.mock-practice-assign-modal__empty,
+.assign-mock-modal__empty {
+  padding: 18px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.mock-practice-assign-modal__footer,
 .assign-mock-modal__footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
-@media (max-width: 900px) {
+.mock-practice-assign-modal__button {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mock-practice-assign-modal__button--ghost {
+  background: #fff;
+  color: #475569;
+}
+
+.mock-practice-assign-modal__button--primary {
+  border-color: #0f766e;
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  color: #fff;
+}
+
+@media (max-width: 860px) {
+  .mock-practice-assign-modal__hero,
   .assign-mock-modal__hero {
     grid-template-columns: 1fr;
   }
 
-  .assign-mock-modal__meta {
+  .mock-practice-assign-modal__meta {
     align-items: flex-start;
   }
 
-  .assign-mock-modal__section--schedule {
+  .mock-practice-assign-modal__schedule-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .mock-practice-assign-modal__mentor,
+  .assign-mock-modal__option {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .mock-practice-assign-modal__mentor-flag,
+  .assign-mock-modal__preferred-flag {
+    grid-column: span 2;
+    justify-self: start;
   }
 }
 </style>

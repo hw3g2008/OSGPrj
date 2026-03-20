@@ -2,82 +2,88 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="review-student-position-modal"
-    width="920px"
-    :body-class="'review-position-modal__body'"
+    width="860px"
+    :body-class="'student-review-modal__body'"
     @cancel="handleClose"
   >
     <template #title>
-      <div class="review-position-modal__title-wrap">
-        <div>
-          <span class="review-position-modal__eyebrow">Student Added Position</span>
-          <div class="review-position-modal__title">
-            <span class="mdi mdi-briefcase-search-outline" aria-hidden="true"></span>
-            <span>审核学生自添岗位</span>
+      <div class="student-review-modal__titlebar">
+        <div class="student-review-modal__titlecopy">
+          <div class="student-review-modal__title">
+            <i class="mdi mdi-briefcase-plus-outline" aria-hidden="true"></i>
+            <span>审核岗位</span>
           </div>
         </div>
-        <span class="review-position-modal__hint">校正岗位信息后，再决定通过或拒绝。</span>
       </div>
     </template>
 
-    <div class="review-position-modal__sections">
-      <section class="review-position-modal__submitter">
-        <div class="review-position-modal__avatar">{{ submitterInitials }}</div>
-        <div class="review-position-modal__submitter-copy">
-          <strong>{{ position?.studentName || '未命名学生' }}</strong>
-          <span>ID {{ position?.studentId || '--' }}</span>
-          <span>{{ submittedLabel }}</span>
-        </div>
-        <div class="review-position-modal__meta">
-          <span :class="['review-position-modal__status', `review-position-modal__status--${statusTone}`]">
-            {{ statusLabel }}
-          </span>
-          <span v-if="position?.hasCoachingRequest === 'yes'" class="review-position-modal__coaching">
-            有辅导申请
-          </span>
-        </div>
-      </section>
+    <section class="student-review-modal__hero">
+      <div class="student-review-modal__avatar">{{ submitterInitials }}</div>
+      <div class="student-review-modal__hero-copy">
+        <strong>{{ position?.studentName || '未命名学生' }}</strong>
+        <span>ID {{ position?.studentId || '--' }}</span>
+        <span>{{ submittedLabel }}</span>
+      </div>
+      <div class="student-review-modal__hero-meta">
+        <span :class="['student-review-modal__status', `student-review-modal__status--${statusTone}`]">{{ statusLabel }}</span>
+        <span v-if="position?.hasCoachingRequest === 'yes'" class="student-review-modal__coaching">有辅导申请</span>
+      </div>
+    </section>
 
-      <section class="review-position-modal__section">
-        <header>
-          <h3>基本信息</h3>
-          <p>审核时可修正岗位分类、岗位名称、部门、招聘周期与项目时间。</p>
+    <div class="student-review-modal__sections">
+      <section class="student-review-modal__section-card">
+        <header class="student-review-modal__section-head">
+          <div class="student-review-modal__section-title">
+            <i class="mdi mdi-briefcase-variant-outline" aria-hidden="true"></i>
+            <span>基本信息</span>
+          </div>
         </header>
-        <div class="review-position-modal__grid">
-          <label class="review-position-modal__field">
-            <span>岗位分类</span>
-            <select v-model="form.positionCategory" class="review-position-modal__select" :disabled="!isPending">
+
+        <div class="student-review-modal__grid">
+          <label class="student-review-modal__field">
+            <span>岗位分类 *</span>
+            <select v-model="form.positionCategory" :disabled="!isPending">
               <option value="">请选择</option>
               <option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
           </label>
-          <label class="review-position-modal__field">
-            <span>岗位名称</span>
-            <input v-model="form.positionName" type="text" class="review-position-modal__input" placeholder="例如 Summer Analyst" :disabled="!isPending" />
+
+          <label class="student-review-modal__field">
+            <span>岗位名称 *</span>
+            <input v-model="form.positionName" type="text" placeholder="如 Summer Analyst" :disabled="!isPending" />
           </label>
-          <label class="review-position-modal__field">
+
+          <label class="student-review-modal__field">
             <span>部门</span>
-            <input v-model="form.department" type="text" class="review-position-modal__input" placeholder="例如 Global Markets" :disabled="!isPending" />
+            <input v-model="form.department" type="text" placeholder="如 Investment Banking Division" :disabled="!isPending" />
           </label>
-          <label class="review-position-modal__field">
-            <span>项目时间</span>
-            <input v-model="form.projectYear" type="text" class="review-position-modal__input" placeholder="例如 2026" :disabled="!isPending" />
+
+          <label class="student-review-modal__field">
+            <span>项目时间 *</span>
+            <input v-model="form.projectYear" type="text" placeholder="如 2026" :disabled="!isPending" />
           </label>
-          <label class="review-position-modal__field review-position-modal__field--wide">
-            <span>岗位分类行业</span>
-            <input v-model="form.industry" type="text" class="review-position-modal__input" placeholder="例如 Investment Bank" :disabled="!isPending" />
+
+          <label class="student-review-modal__field student-review-modal__field--wide">
+            <span>行业</span>
+            <input v-model="form.industry" type="text" placeholder="如 Investment Bank" :disabled="!isPending" />
           </label>
-          <label class="review-position-modal__field">
+
+          <label class="student-review-modal__field">
             <span>截止日期</span>
-            <input v-model="form.deadline" type="datetime-local" class="review-position-modal__input" :disabled="!isPending" />
+            <input v-model="form.deadline" type="datetime-local" :disabled="!isPending" />
           </label>
         </div>
-        <div class="review-position-modal__chips">
-          <span class="review-position-modal__chip-label">招聘周期</span>
+
+        <div class="student-review-modal__chip-group">
+          <span class="student-review-modal__chip-label">招聘周期 *</span>
           <button
             v-for="option in recruitmentCycleOptions"
             :key="option"
             type="button"
-            :class="['review-position-modal__chip', { 'review-position-modal__chip--active': selectedCycles.includes(option) }]"
+            :class="[
+              'student-review-modal__cycle-chip',
+              { 'student-review-modal__cycle-chip--active': selectedCycles.includes(option) }
+            ]"
             :disabled="!isPending"
             @click="toggleCycle(option)"
           >
@@ -86,52 +92,60 @@
         </div>
       </section>
 
-      <section class="review-position-modal__section">
-        <header>
-          <h3>公司信息</h3>
-          <p>核对公司与岗位链接，必要时修正地区与城市。</p>
+      <section class="student-review-modal__section-card">
+        <header class="student-review-modal__section-head">
+          <div class="student-review-modal__section-title">
+            <i class="mdi mdi-domain" aria-hidden="true"></i>
+            <span>公司信息</span>
+          </div>
         </header>
-        <div class="review-position-modal__grid">
-          <label class="review-position-modal__field">
-            <span>公司名称</span>
-            <input v-model="form.companyName" type="text" class="review-position-modal__input" placeholder="公司名称" :disabled="!isPending" />
+
+        <div class="student-review-modal__grid">
+          <label class="student-review-modal__field">
+            <span>公司名称 *</span>
+            <input v-model="form.companyName" type="text" placeholder="公司名称" :disabled="!isPending" />
           </label>
-          <label class="review-position-modal__field">
+
+          <label class="student-review-modal__field">
             <span>公司类别</span>
-            <input v-model="form.companyType" type="text" class="review-position-modal__input" placeholder="例如 Hedge Fund" :disabled="!isPending" />
+            <input v-model="form.companyType" type="text" placeholder="如 Consulting" :disabled="!isPending" />
           </label>
-          <label class="review-position-modal__field">
-            <span>大区</span>
-            <select v-model="form.region" class="review-position-modal__select" :disabled="!isPending">
+
+          <label class="student-review-modal__field">
+            <span>大区 *</span>
+            <select v-model="form.region" :disabled="!isPending">
               <option value="">请选择</option>
               <option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
           </label>
-          <label class="review-position-modal__field">
-            <span>城市</span>
-            <input v-model="form.city" type="text" class="review-position-modal__input" placeholder="例如 New York" :disabled="!isPending" />
+
+          <label class="student-review-modal__field">
+            <span>城市 *</span>
+            <input v-model="form.city" type="text" placeholder="如 Singapore" :disabled="!isPending" />
           </label>
-          <label class="review-position-modal__field">
+
+          <label class="student-review-modal__field">
             <span>公司官网</span>
-            <input v-model="form.companyWebsite" type="url" class="review-position-modal__input" placeholder="https://company.com" :disabled="!isPending" />
+            <input v-model="form.companyWebsite" type="url" placeholder="https://company.com" :disabled="!isPending" />
           </label>
-          <label class="review-position-modal__field">
+
+          <label class="student-review-modal__field">
             <span>岗位链接</span>
-            <input v-model="form.positionUrl" type="url" class="review-position-modal__input" placeholder="https://company.com/jobs/..." :disabled="!isPending" />
+            <input v-model="form.positionUrl" type="url" placeholder="https://company.com/jobs/..." :disabled="!isPending" />
           </label>
         </div>
       </section>
     </div>
 
     <template #footer>
-      <div class="review-position-modal__footer">
-        <button type="button" class="permission-button permission-button--outline" @click="handleClose">
+      <div class="student-review-modal__footer">
+        <button type="button" class="student-review-modal__footer-button student-review-modal__footer-button--ghost" @click="handleClose">
           取消
         </button>
-        <button v-if="isPending" type="button" class="permission-button permission-button--danger" @click="handleRejectRequest">
+        <button v-if="isPending" type="button" class="student-review-modal__footer-button student-review-modal__footer-button--danger" @click="handleRejectRequest">
           拒绝
         </button>
-        <button v-if="isPending" type="button" class="permission-button permission-button--primary" @click="handleSubmit">
+        <button v-if="isPending" type="button" class="student-review-modal__footer-button student-review-modal__footer-button--primary" @click="handleSubmit">
           保存并通过
         </button>
       </div>
@@ -199,7 +213,10 @@ const resetForm = () => {
   form.department = props.position?.department || ''
   form.region = props.position?.region || ''
   form.city = props.position?.city || ''
-  form.recruitmentCycle = (props.position?.recruitmentCycle || '').split(',').map(item => item.trim()).filter(Boolean)
+  form.recruitmentCycle = (props.position?.recruitmentCycle || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
   form.projectYear = props.position?.projectYear || ''
   form.deadline = toDateTimeLocal(props.position?.deadline)
   form.positionUrl = props.position?.positionUrl || ''
@@ -216,41 +233,32 @@ watch(
 
 const selectedCycles = computed(() => form.recruitmentCycle)
 const isPending = computed(() => props.position?.status === 'pending')
+
 const submitterInitials = computed(() => {
   const value = props.position?.studentName || '学员'
   return value.slice(0, 2).toUpperCase()
 })
 
 const submittedLabel = computed(() => {
-  if (!props.position?.submittedAt) {
-    return '提交时间待补充'
-  }
+  if (!props.position?.submittedAt) return '提交时间待补充'
   return `提交于 ${formatDateTime(props.position.submittedAt)}`
 })
 
 const statusLabel = computed(() => {
-  if (props.position?.status === 'approved') {
-    return '已通过'
-  }
-  if (props.position?.status === 'rejected') {
-    return '已拒绝'
-  }
+  if (props.position?.status === 'approved') return '已通过'
+  if (props.position?.status === 'rejected') return '已拒绝'
   return '待审核'
 })
 
 const statusTone = computed(() => {
-  if (props.position?.status === 'approved') {
-    return 'approved'
-  }
-  if (props.position?.status === 'rejected') {
-    return 'rejected'
-  }
+  if (props.position?.status === 'approved') return 'approved'
+  if (props.position?.status === 'rejected') return 'rejected'
   return 'pending'
 })
 
 const toggleCycle = (value: string) => {
   if (form.recruitmentCycle.includes(value)) {
-    form.recruitmentCycle = form.recruitmentCycle.filter(item => item !== value)
+    form.recruitmentCycle = form.recruitmentCycle.filter((item) => item !== value)
     return
   }
   form.recruitmentCycle = [...form.recruitmentCycle, value]
@@ -298,254 +306,261 @@ const handleSubmit = () => {
 }
 
 const toDateTimeLocal = (value?: string) => {
-  if (!value) {
-    return ''
-  }
+  if (!value) return ''
   return value.slice(0, 16)
 }
 
-const formatDateTime = (value: string) => {
-  return value.replace('T', ' ').slice(0, 16)
-}
+const formatDateTime = (value: string) => value.replace('T', ' ').slice(0, 16)
 
 const normalizeDateTimeLocal = (value: string) => {
-  if (!value) {
-    return undefined
-  }
-  if (value.length === 16) {
-    return `${value}:00`
-  }
+  if (!value) return undefined
+  if (value.length === 16) return `${value}:00`
   return value
 }
 </script>
 
 <style scoped lang="scss">
-.review-position-modal__title-wrap {
+.student-review-modal__titlebar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
 }
 
-.review-position-modal__eyebrow {
-  display: inline-flex;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(219, 234, 254, 0.72);
-  color: #1d4ed8;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.review-position-modal__title {
+.student-review-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin-top: 8px;
-  font-size: 22px;
+  color: #1e293b;
+  font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
 }
 
-.review-position-modal__hint {
-  color: #475569;
-  font-size: 13px;
-}
-
-.review-position-modal__sections {
+.student-review-modal__body {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
-.review-position-modal__submitter {
+.student-review-modal__hero {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
-  padding: 18px;
-  border-radius: 22px;
-  background: linear-gradient(145deg, rgba(219, 234, 254, 0.78), rgba(239, 246, 255, 0.96));
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
-.review-position-modal__avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  background: linear-gradient(145deg, #2563eb, #1d4ed8);
-  color: #eff6ff;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.review-position-modal__submitter-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: #334155;
-}
-
-.review-position-modal__meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.review-position-modal__status,
-.review-position-modal__coaching {
+.student-review-modal__avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 88px;
-  padding: 6px 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.student-review-modal__hero-copy,
+.student-review-modal__hero-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.student-review-modal__hero-copy strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.student-review-modal__hero-copy span,
+.student-review-modal__hero-meta span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.student-review-modal__hero-meta {
+  align-items: flex-end;
+}
+
+.student-review-modal__status,
+.student-review-modal__coaching {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
 }
 
-.review-position-modal__status--pending {
-  background: rgba(254, 243, 199, 0.9);
-  color: #9a3412;
+.student-review-modal__status--pending {
+  background: #fef3c7;
+  color: #92400e;
 }
 
-.review-position-modal__status--approved {
-  background: rgba(220, 252, 231, 0.92);
+.student-review-modal__status--approved {
+  background: #dcfce7;
   color: #166534;
 }
 
-.review-position-modal__status--rejected {
-  background: rgba(254, 226, 226, 0.9);
+.student-review-modal__status--rejected {
+  background: #fee2e2;
   color: #b91c1c;
 }
 
-.review-position-modal__coaching {
-  background: rgba(219, 234, 254, 0.88);
-  color: #1d4ed8;
+.student-review-modal__coaching {
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
-.review-position-modal__section {
-  padding: 20px;
-  border: 1px solid rgba(226, 232, 240, 0.88);
-  border-radius: 22px;
-  background: #ffffff;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.05);
+.student-review-modal__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.review-position-modal__section header {
-  margin-bottom: 16px;
+.student-review-modal__section-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid #dbe3ee;
+  background: #f8fafc;
 }
 
-.review-position-modal__section h3 {
-  margin: 0 0 6px;
-  font-size: 18px;
-  color: #0f172a;
+.student-review-modal__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.review-position-modal__section p {
-  margin: 0;
-  color: #64748b;
-  font-size: 13px;
+.student-review-modal__section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6366f1;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.review-position-modal__grid {
+.student-review-modal__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 14px 16px;
 }
 
-.review-position-modal__field {
+.student-review-modal__field {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.review-position-modal__field--wide {
-  grid-column: 1 / -1;
+.student-review-modal__field--wide {
+  grid-column: span 2;
 }
 
-.review-position-modal__field span {
+.student-review-modal__field span,
+.student-review-modal__chip-label {
   color: #334155;
   font-size: 13px;
   font-weight: 600;
 }
 
-.review-position-modal__input,
-.review-position-modal__select {
-  min-height: 46px;
+.student-review-modal__field input,
+.student-review-modal__field select {
+  min-height: 44px;
   padding: 0 14px;
   border: 1px solid #cbd5e1;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fff;
   color: #0f172a;
+  font: inherit;
+}
+
+.student-review-modal__field input:disabled,
+.student-review-modal__field select:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.student-review-modal__chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-review-modal__cycle-chip {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
   font-size: 14px;
 }
 
-.review-position-modal__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
+.student-review-modal__cycle-chip--active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 700;
 }
 
-.review-position-modal__chip-label {
-  display: inline-flex;
-  align-items: center;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.review-position-modal__chip {
-  border: 1px solid #bfdbfe;
-  border-radius: 999px;
-  background: rgba(239, 246, 255, 0.9);
-  color: #1d4ed8;
-  padding: 8px 12px;
-  font-size: 13px;
-}
-
-.review-position-modal__chip--active {
-  border-color: #2563eb;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #eff6ff;
-}
-
-.review-position-modal__chip:disabled,
-.review-position-modal__input:disabled,
-.review-position-modal__select:disabled {
-  cursor: not-allowed;
-  opacity: 0.72;
-  background: #f8fafc;
-}
-
-.review-position-modal__footer {
+.student-review-modal__footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
+}
+
+.student-review-modal__footer-button {
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.student-review-modal__footer-button--ghost {
+  background: #fff;
+  color: #475569;
+}
+
+.student-review-modal__footer-button--danger {
+  border-color: #ef4444;
+  background: #ef4444;
+  color: #fff;
+}
+
+.student-review-modal__footer-button--primary {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
 }
 
 @media (max-width: 900px) {
-  .review-position-modal__title-wrap,
-  .review-position-modal__submitter {
+  .student-review-modal__hero {
     grid-template-columns: 1fr;
-    display: grid;
   }
 
-  .review-position-modal__meta {
+  .student-review-modal__hero-meta {
     align-items: flex-start;
   }
 
-  .review-position-modal__grid {
+  .student-review-modal__grid {
     grid-template-columns: 1fr;
   }
 
-  .review-position-modal__footer {
-    flex-wrap: wrap;
+  .student-review-modal__field--wide {
+    grid-column: span 1;
   }
 }
 </style>

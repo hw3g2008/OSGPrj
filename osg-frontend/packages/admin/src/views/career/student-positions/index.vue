@@ -1,74 +1,68 @@
 <template>
-  <div class="student-positions-page">
-    <div class="page-header">
-      <div>
+  <div class="student-positions-page student-positions-shell">
+    <div class="page-header student-positions-header">
+      <div class="student-positions-header__copy">
         <h2 class="page-title">
           学生自添岗位
           <span class="page-title-en">Student Added Positions</span>
         </h2>
         <p class="page-subtitle">审核学生手动添加的岗位，通过后加入公共岗位库</p>
       </div>
-      <div class="page-header__actions">
-        <span class="student-positions-page__badge">{{ pendingCount }} 条待审核</span>
-        <span class="student-positions-page__badge student-positions-page__badge--ghost">{{ coachingCount }} 条带辅导申请</span>
+
+      <div class="student-positions-header__meta">
+        <span class="student-positions-header__pill student-positions-header__pill--pending">{{ pendingCount }} 条待审核</span>
+        <span class="student-positions-header__pill student-positions-header__pill--accent">{{ coachingCount }} 条有辅导申请</span>
       </div>
     </div>
 
-    <section class="permission-card student-positions-panel">
-      <div class="student-positions-toolbar">
-        <label class="student-positions-field">
-          <span>状态</span>
-          <select v-model="filters.status" class="student-positions-select">
-            <option value="pending">待审核</option>
-            <option value="">全部</option>
-            <option value="approved">已通过</option>
-            <option value="rejected">已拒绝</option>
-          </select>
-        </label>
-        <label class="student-positions-field">
-          <span>公司类别</span>
-          <select v-model="filters.positionCategory" class="student-positions-select">
-            <option value="">全部</option>
-            <option v-for="option in companyCategoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-          </select>
-        </label>
-        <label class="student-positions-field">
-          <span>辅导申请</span>
-          <select v-model="filters.hasCoachingRequest" class="student-positions-select">
-            <option value="">全部</option>
-            <option value="yes">有辅导申请</option>
-            <option value="no">无辅导申请</option>
-          </select>
-        </label>
-        <label class="student-positions-field student-positions-field--search">
-          <span>搜索</span>
+    <section class="student-positions-frame">
+      <div class="student-positions-filterbar">
+        <select v-model="filters.status" class="student-positions-filterbar__control" aria-label="状态">
+          <option value="pending">待审核</option>
+          <option value="">全部状态</option>
+          <option value="approved">已通过</option>
+          <option value="rejected">已拒绝</option>
+        </select>
+
+        <select v-model="filters.positionCategory" class="student-positions-filterbar__control" aria-label="岗位分类">
+          <option value="">全部类别</option>
+          <option v-for="option in companyCategoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+        </select>
+
+        <select v-model="filters.hasCoachingRequest" class="student-positions-filterbar__control" aria-label="辅导申请">
+          <option value="">有无辅导申请</option>
+          <option value="yes">有辅导申请</option>
+          <option value="no">无辅导申请</option>
+        </select>
+
+        <label class="student-positions-filterbar__search">
+          <i class="mdi mdi-magnify" aria-hidden="true"></i>
           <input
             v-model="filters.keyword"
             type="text"
-            class="student-positions-input"
-            placeholder="搜索公司/岗位..."
+            placeholder="搜索公司或岗位名称"
+            @keydown.enter.prevent="handleSearch"
           />
         </label>
-        <div class="student-positions-toolbar__actions">
-          <button type="button" class="permission-button permission-button--outline" @click="handleSearch">
-            搜索
-          </button>
-          <button type="button" class="permission-button permission-button--ghost" @click="handleReset">
+
+        <div class="student-positions-filterbar__actions">
+          <button type="button" class="student-positions-filterbar__button" @click="handleSearch">搜索</button>
+          <button type="button" class="student-positions-filterbar__button student-positions-filterbar__button--ghost" @click="handleReset">
             重置
           </button>
         </div>
       </div>
 
-      <div v-if="loading" class="student-positions-loading">
+      <div v-if="loading" class="student-positions-empty">
         <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
         <span>正在加载学生自添岗位...</span>
       </div>
 
-      <div v-else class="permission-card__body permission-card__body--flush">
-        <table class="permission-table student-positions-table">
+      <div v-else class="student-positions-datatable-wrap">
+        <table class="student-positions-datatable student-positions-table">
           <thead>
             <tr>
-              <th>公司 / 岗位</th>
+              <th>公司/岗位</th>
               <th>岗位分类</th>
               <th>提交学生</th>
               <th>提交时间</th>
@@ -80,17 +74,19 @@
             <tr
               v-for="record in rows"
               :key="record.studentPositionId"
-              :class="{ 'student-positions-row--pending': record.status === 'pending' }"
+              :class="[
+                'student-positions-datatable__row',
+                { 'student-positions-datatable__row--pending': record.status === 'pending' }
+              ]"
             >
               <td>
                 <div class="student-positions-company">
-                  <div class="student-positions-company__logo">{{ getCompanyInitials(record.companyName) }}</div>
+                  <div :class="['student-positions-company__logo', `student-positions-company__logo--${getCompanyTone(record.companyName)}`]">
+                    {{ getCompanyInitials(record.companyName) }}
+                  </div>
                   <div class="student-positions-company__copy">
                     <strong>{{ record.companyName }}</strong>
-                    <span>
-                      {{ record.positionName }}
-                      <template v-if="record.city">· {{ record.city }}</template>
-                    </span>
+                    <span>{{ record.positionName }}<template v-if="record.city"> · {{ record.city }}</template></span>
                     <a
                       v-if="record.positionUrl"
                       :href="record.positionUrl"
@@ -98,20 +94,18 @@
                       rel="noreferrer"
                       class="student-positions-company__link"
                     >
-                      查看岗位链接
+                      <i class="mdi mdi-link-variant" aria-hidden="true"></i>
+                      <span>{{ simplifyLink(record.positionUrl) }}</span>
                     </a>
                   </div>
                 </div>
               </td>
               <td>
                 <div class="student-positions-tags">
-                  <span class="student-positions-tag student-positions-tag--category">
+                  <span :class="['student-positions-tag', `student-positions-tag--${getCategoryTone(record.positionCategory)}`]">
                     {{ formatCategory(record.positionCategory) }}
                   </span>
-                  <span
-                    v-if="record.hasCoachingRequest === 'yes'"
-                    class="student-positions-tag student-positions-tag--coaching"
-                  >
+                  <span v-if="record.hasCoachingRequest === 'yes'" class="student-positions-tag student-positions-tag--coaching">
                     有辅导申请
                   </span>
                 </div>
@@ -119,7 +113,7 @@
               <td>
                 <div class="student-positions-student">
                   <strong>{{ record.studentName || '未命名学生' }}</strong>
-                  <span>ID {{ record.studentId }}</span>
+                  <span>ID: {{ record.studentId }}</span>
                 </div>
               </td>
               <td>
@@ -129,26 +123,27 @@
                 </div>
               </td>
               <td>
-                <span :class="['student-positions-tag', `student-positions-tag--${getStatusTone(record.status)}`]">
+                <span :class="['student-positions-tag', `student-positions-tag--status-${getStatusTone(record.status)}`]">
                   {{ formatStatus(record.status) }}
                 </span>
               </td>
               <td>
-                <button type="button" class="student-positions-action" @click="openReviewModal(record)">
-                  {{ record.status === 'pending' ? '审核 / 编辑' : '查看结果' }}
+                <button type="button" class="student-positions-datatable__action" @click="openReviewModal(record)">
+                  <i class="mdi mdi-pencil-outline" aria-hidden="true"></i>
+                  <span>{{ record.status === 'pending' ? '审核 / 编辑' : '查看结果' }}</span>
                 </button>
               </td>
             </tr>
             <tr v-if="!rows.length">
-              <td colspan="6" class="student-positions-empty">当前筛选条件下暂无学生自添岗位</td>
+              <td colspan="6" class="student-positions-empty student-positions-empty--inline">当前筛选条件下暂无学生自添岗位</td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
 
-    <section class="student-positions-note">
-      <span class="mdi mdi-information-outline" aria-hidden="true"></span>
+    <section class="student-positions-footnote student-positions-note">
+      <i class="mdi mdi-information-outline" aria-hidden="true"></i>
       <div>
         <strong>审核说明</strong>
         <p>岗位通过后将加入公共岗位库，其他学生可见。有辅导申请的岗位通过后，辅导申请将自动流转到班主任端进行导师分配。</p>
@@ -177,13 +172,13 @@ import {
   approveStudentPosition,
   getStudentPositionList,
   rejectStudentPosition,
+  type RejectStudentPositionPayload,
   type ReviewStudentPositionPayload,
   type StudentPositionListItem,
-  type StudentPositionListParams,
-  type RejectStudentPositionPayload
+  type StudentPositionListParams
 } from '@osg/shared/api/admin/studentPosition'
-import ReviewPositionModal from './components/ReviewPositionModal.vue'
 import RejectPositionModal from './components/RejectPositionModal.vue'
+import ReviewPositionModal from './components/ReviewPositionModal.vue'
 
 const companyCategoryOptions = [
   { value: 'Investment Bank', label: 'Investment Bank' },
@@ -205,8 +200,10 @@ const filters = reactive<StudentPositionListParams>({
   keyword: ''
 })
 
-const pendingCount = computed(() => rows.value.filter(item => item.status === 'pending').length)
-const coachingCount = computed(() => rows.value.filter(item => item.hasCoachingRequest === 'yes').length)
+const pendingCount = computed(() => rows.value.filter((item) => item.status === 'pending').length)
+const coachingCount = computed(() => rows.value.filter((item) => item.hasCoachingRequest === 'yes').length)
+
+const companyTones = ['amber', 'blue', 'slate', 'violet'] as const
 
 const loadRows = async () => {
   loading.value = true
@@ -265,8 +262,14 @@ const handleReject = async (payload: RejectStudentPositionPayload) => {
 }
 
 const getCompanyInitials = (companyName?: string) => {
-  const value = (companyName || 'OS').trim()
-  return value.slice(0, 2).toUpperCase()
+  const normalized = (companyName || 'OS').trim()
+  return normalized.slice(0, 3).toUpperCase()
+}
+
+const getCompanyTone = (companyName?: string) => {
+  const normalized = (companyName || '').trim()
+  const seed = Array.from(normalized).reduce((sum, current, index) => sum + current.charCodeAt(0) * (index + 1), 0)
+  return companyTones[seed % companyTones.length]
 }
 
 const formatCategory = (value?: string) => {
@@ -280,165 +283,237 @@ const formatCategory = (value?: string) => {
   return mapping[value || ''] || value || '-'
 }
 
+const getCategoryTone = (value?: string) => {
+  if (value === 'fulltime') return 'violet'
+  if (value === 'offcycle') return 'amber'
+  if (value === 'spring') return 'mint'
+  return 'blue'
+}
+
 const formatStatus = (value?: string) => {
-  if (value === 'approved') {
-    return '已通过'
-  }
-  if (value === 'rejected') {
-    return '已拒绝'
-  }
+  if (value === 'approved') return '已通过'
+  if (value === 'rejected') return '已拒绝'
   return '待审核'
 }
 
 const getStatusTone = (value?: string) => {
-  if (value === 'approved') {
-    return 'approved'
-  }
-  if (value === 'rejected') {
-    return 'rejected'
-  }
+  if (value === 'approved') return 'approved'
+  if (value === 'rejected') return 'rejected'
   return 'pending'
 }
 
 const formatRelativeTime = (value?: string) => {
-  if (!value) {
-    return '刚刚提交'
-  }
+  if (!value) return '刚刚提交'
 
   const submitted = new Date(value).getTime()
-  if (Number.isNaN(submitted)) {
-    return '刚刚提交'
-  }
+  if (Number.isNaN(submitted)) return '刚刚提交'
 
   const diffHours = Math.max(0, Math.floor((Date.now() - submitted) / (1000 * 60 * 60)))
-  if (diffHours < 1) {
-    return '1 小时内'
-  }
-  if (diffHours < 24) {
-    return `${diffHours} 小时前`
-  }
+  if (diffHours < 1) return '1 小时内'
+  if (diffHours < 24) return `${diffHours} 小时前`
   return `${Math.floor(diffHours / 24)} 天前`
 }
 
 const formatDateTime = (value?: string) => {
-  if (!value) {
-    return '--'
-  }
+  if (!value) return '--'
   return value.replace('T', ' ').slice(0, 16)
+}
+
+const simplifyLink = (value: string) => {
+  try {
+    const url = new URL(value)
+    const summary = `${url.host}${url.pathname}`.replace(/\/$/, '')
+    return summary.length > 30 ? `${summary.slice(0, 30)}...` : summary
+  } catch {
+    return value.length > 30 ? `${value.slice(0, 30)}...` : value
+  }
 }
 </script>
 
 <style scoped lang="scss">
-.permission-card {
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--border, #e2e8f0);
-  padding: 20px;
-}
-
-.permission-card__body--flush {
-  overflow-x: auto;
-  margin: 0 -20px;
-}
-
-.student-positions-page {
+.student-positions-shell {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
-.student-positions-page__badge {
+.student-positions-header {
+  align-items: flex-start;
+}
+
+.student-positions-header__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.student-positions-header__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.student-positions-header__pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px;
+  min-height: 28px;
+  padding: 0 12px;
   border-radius: 999px;
-  background: rgba(254, 243, 199, 0.9);
-  color: #9a3412;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
-.student-positions-page__badge--ghost {
-  background: rgba(219, 234, 254, 0.9);
+.student-positions-header__pill--pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.student-positions-header__pill--accent {
+  background: #eff6ff;
   color: #1d4ed8;
 }
 
-.student-positions-panel {
+.student-positions-frame {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
   overflow: hidden;
 }
 
-.student-positions-toolbar {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
-  gap: 14px;
-  padding: 22px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.student-positions-field {
+.student-positions-filterbar {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.student-positions-field--search {
-  min-width: 0;
+.student-positions-filterbar__control,
+.student-positions-filterbar__search {
+  min-height: 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 13px;
 }
 
-.student-positions-field span {
+.student-positions-filterbar__control {
+  min-width: 118px;
+  padding: 0 10px;
+}
+
+.student-positions-filterbar__search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 168px;
+  padding: 0 10px;
+}
+
+.student-positions-filterbar__search .mdi {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.student-positions-filterbar__search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.student-positions-filterbar__actions {
+  display: inline-flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.student-positions-filterbar__button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
   color: #334155;
   font-size: 13px;
   font-weight: 600;
 }
 
-.student-positions-select,
-.student-positions-input {
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  background: #fff;
-  color: #0f172a;
-  font-size: 14px;
-}
-
-.student-positions-toolbar__actions {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-.student-positions-loading,
-.student-positions-empty {
-  padding: 32px;
-  text-align: center;
+.student-positions-filterbar__button--ghost {
   color: #64748b;
 }
 
-.student-positions-table tr.student-positions-row--pending {
-  background: rgba(254, 243, 199, 0.34);
+.student-positions-datatable-wrap {
+  overflow-x: auto;
+}
+
+.student-positions-datatable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 860px;
+  font-size: 13px;
+}
+
+.student-positions-datatable thead th {
+  padding: 13px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.student-positions-datatable td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.student-positions-datatable__row--pending {
+  background: #fef3c7;
 }
 
 .student-positions-company {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
   align-items: center;
 }
 
 .student-positions-company__logo {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #1d4ed8, #2563eb);
-  color: #eff6ff;
-  font-size: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 11px;
   font-weight: 700;
+}
+
+.student-positions-company__logo--amber {
+  background: #f59e0b;
+}
+
+.student-positions-company__logo--blue {
+  background: #3b82f6;
+}
+
+.student-positions-company__logo--slate {
+  background: #64748b;
+}
+
+.student-positions-company__logo--violet {
+  background: #8b5cf6;
 }
 
 .student-positions-company__copy,
@@ -446,117 +521,178 @@ const formatDateTime = (value?: string) => {
 .student-positions-time {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+}
+
+.student-positions-company__copy strong,
+.student-positions-student strong,
+.student-positions-time strong {
+  color: #0f172a;
+  font-size: 13px;
 }
 
 .student-positions-company__copy span,
 .student-positions-student span,
 .student-positions-time span {
   color: #64748b;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .student-positions-company__link {
-  color: #2563eb;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #3b82f6;
+  font-size: 10px;
   text-decoration: none;
 }
 
 .student-positions-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .student-positions-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
+  min-height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
-.student-positions-tag--category {
-  background: rgba(219, 234, 254, 0.92);
-  color: #1d4ed8;
+.student-positions-tag--blue {
+  background: #dbeafe;
+  color: #1e40af;
 }
 
-.student-positions-tag--coaching {
-  background: rgba(224, 231, 255, 0.92);
-  color: #4338ca;
+.student-positions-tag--violet {
+  background: #f3e8ff;
+  color: #7c3aed;
 }
 
-.student-positions-tag--pending {
-  background: rgba(254, 243, 199, 0.92);
-  color: #9a3412;
+.student-positions-tag--amber {
+  background: #fef3c7;
+  color: #92400e;
 }
 
-.student-positions-tag--approved {
-  background: rgba(220, 252, 231, 0.96);
+.student-positions-tag--mint {
+  background: #dcfce7;
   color: #166534;
 }
 
-.student-positions-tag--rejected {
-  background: rgba(254, 226, 226, 0.96);
+.student-positions-tag--coaching {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.student-positions-tag--status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.student-positions-tag--status-approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.student-positions-tag--status-rejected {
+  background: #fee2e2;
   color: #b91c1c;
 }
 
-.student-positions-action {
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid #93c5fd;
-  border-radius: 999px;
-  background: rgba(239, 246, 255, 0.96);
-  color: #1d4ed8;
-  font-size: 12px;
+.student-positions-datatable__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 11px;
   font-weight: 600;
 }
 
-.student-positions-note {
+.student-positions-footnote {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
-  padding: 18px 20px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px 16px;
+  border-radius: 8px;
   border: 1px solid #bfdbfe;
-  border-radius: 20px;
   background: #eff6ff;
-  color: #1d4ed8;
+  color: #1e40af;
 }
 
-.student-positions-note .mdi {
-  margin-top: 2px;
-  font-size: 20px;
+.student-positions-footnote .mdi {
+  font-size: 16px;
+  margin-top: 1px;
 }
 
-.student-positions-note strong {
+.student-positions-footnote strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  font-size: 12px;
 }
 
-.student-positions-note p {
+.student-positions-footnote p {
   margin: 0;
   color: #334155;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
-@media (max-width: 1080px) {
-  .student-positions-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.student-positions-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 180px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.student-positions-empty--inline {
+  min-height: 0;
+  padding: 24px 0;
+}
+
+@media (max-width: 960px) {
+  .student-positions-filterbar__actions {
+    margin-left: 0;
   }
 }
 
-@media (max-width: 720px) {
-  .student-positions-toolbar {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  .student-positions-shell {
+    gap: 14px;
   }
 
-  .student-positions-toolbar__actions {
+  .student-positions-header__meta {
+    width: 100%;
+  }
+
+  .student-positions-filterbar {
+    flex-direction: column;
     align-items: stretch;
   }
 
-  .student-positions-note {
+  .student-positions-filterbar__actions {
+    width: 100%;
+  }
+
+  .student-positions-filterbar__button {
+    flex: 1;
+  }
+
+  .student-positions-footnote {
     grid-template-columns: 1fr;
   }
 }

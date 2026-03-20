@@ -2,105 +2,116 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="assign-mentor-modal"
-    width="760px"
-    :body-class="'assign-mentor-modal__body'"
+    width="780px"
+    :body-class="['job-overview-assign-modal__body', 'assign-mentor-modal__body']"
     @cancel="handleClose"
   >
     <template #title>
-      <div class="assign-mentor-modal__title-wrap">
-        <div>
-          <span class="assign-mentor-modal__eyebrow">Mentor Assignment</span>
-          <div class="assign-mentor-modal__title">
-            <span class="mdi mdi-account-tie-hat" aria-hidden="true"></span>
-            <span>分配导师</span>
-          </div>
+      <div class="job-overview-assign-modal__titlebar">
+        <div class="job-overview-assign-modal__title">
+          <i class="mdi mdi-account-plus-outline" aria-hidden="true"></i>
+          <span>分配导师</span>
         </div>
-        <span class="assign-mentor-modal__hint">按学员意向导师优先分配，并记录本次安排备注。</span>
       </div>
     </template>
 
-    <section class="assign-mentor-modal__hero">
-      <div class="assign-mentor-modal__avatar">{{ studentInitials }}</div>
-      <div class="assign-mentor-modal__summary">
+    <section class="job-overview-assign-modal__hero assign-mentor-modal__hero">
+      <div class="job-overview-assign-modal__avatar assign-mentor-modal__avatar">{{ studentInitials }}</div>
+      <div class="job-overview-assign-modal__summary assign-mentor-modal__summary">
         <strong>{{ row?.studentName || '待分配学员' }}</strong>
         <span>ID {{ row?.studentId || '--' }}</span>
         <span>{{ row?.companyName || '-' }} / {{ row?.positionName || '-' }}</span>
       </div>
-      <div class="assign-mentor-modal__meta">
-        <span class="assign-mentor-modal__meta-chip">建议分配 {{ requestedCount }} 位导师</span>
-        <span class="assign-mentor-modal__meta-chip assign-mentor-modal__meta-chip--accent">
+      <div class="job-overview-assign-modal__meta assign-mentor-modal__meta">
+        <span class="job-overview-assign-modal__meta-chip assign-mentor-modal__meta-chip">建议分配 {{ requestedCount }} 位导师</span>
+        <span class="job-overview-assign-modal__meta-chip job-overview-assign-modal__meta-chip--accent assign-mentor-modal__meta-chip assign-mentor-modal__meta-chip--accent">
           {{ preferredMentorLabel }}
         </span>
       </div>
     </section>
 
-    <section class="assign-mentor-modal__section">
-      <header class="assign-mentor-modal__section-head">
-        <div>
-          <h3>导师候选池</h3>
-          <p>意向导师会被高亮标记，checkbox 可直接勾选本次分配名单。</p>
-        </div>
-        <span class="assign-mentor-modal__section-badge">意向导师优先</span>
-      </header>
+    <section class="job-overview-assign-modal__panel">
+      <div class="job-overview-assign-modal__filters">
+        <label class="job-overview-assign-modal__search">
+          <i class="mdi mdi-magnify" aria-hidden="true"></i>
+          <input v-model="keyword" type="text" placeholder="搜索导师姓名..." />
+        </label>
 
-      <div v-if="mentorOptions.length" class="assign-mentor-modal__grid">
+        <div class="job-overview-assign-modal__scope">
+          <button
+            v-for="option in scopeOptions"
+            :key="option.value"
+            type="button"
+            :class="[
+              'job-overview-assign-modal__scope-button',
+              { 'job-overview-assign-modal__scope-button--active': scope === option.value }
+            ]"
+            @click="scope = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+
+        <div class="job-overview-assign-modal__summary-chip">
+          已找到 <strong>{{ filteredMentorOptions.length }}</strong> 位导师
+        </div>
+      </div>
+
+      <div v-if="filteredMentorOptions.length" class="job-overview-assign-modal__mentor-list assign-mentor-modal__mentor-list">
         <label
-          v-for="option in mentorOptions"
+          v-for="option in filteredMentorOptions"
           :key="option.mentorId"
           :class="[
-            'assign-mentor-modal__option',
+            'job-overview-assign-modal__mentor assign-mentor-modal__option',
             {
-              'assign-mentor-modal__option--selected': selectedMentorIds.includes(option.mentorId),
-              'assign-mentor-modal__option--preferred': option.preferred
+              'job-overview-assign-modal__mentor--selected assign-mentor-modal__option--selected': selectedMentorIds.includes(option.mentorId),
+              'job-overview-assign-modal__mentor--preferred assign-mentor-modal__option--preferred': option.preferred
             }
           ]"
         >
           <input
             v-model="selectedMentorIds"
-            class="assign-mentor-modal__checkbox"
+            class="job-overview-assign-modal__checkbox assign-mentor-modal__checkbox"
             type="checkbox"
             :value="option.mentorId"
           />
-          <div class="assign-mentor-modal__option-copy">
+
+          <div class="job-overview-assign-modal__mentor-avatar">{{ getMentorInitials(option.mentorName) }}</div>
+
+          <div class="job-overview-assign-modal__mentor-copy assign-mentor-modal__option-copy">
             <strong>{{ option.mentorName }}</strong>
-            <span>{{ option.preferred ? '意向导师' : option.hint || '可分配导师' }}</span>
+            <span>{{ option.hint || '可分配导师' }}</span>
           </div>
-          <span v-if="option.preferred" class="assign-mentor-modal__preferred-flag">意向导师</span>
+
+          <span v-if="option.preferred" class="job-overview-assign-modal__mentor-flag assign-mentor-modal__preferred-flag">意向导师</span>
         </label>
       </div>
-      <div v-else class="assign-mentor-modal__empty">
-        当前没有可直接分配的导师候选，请先回到数据面补充导师目录。
-      </div>
+      <div v-else class="job-overview-assign-modal__empty assign-mentor-modal__empty">当前没有可直接分配的导师候选。</div>
     </section>
 
-    <section class="assign-mentor-modal__section">
-      <header class="assign-mentor-modal__section-head">
-        <div>
-          <h3>分配备注</h3>
-          <p>记录本次分配原因、关注重点或后续辅导安排。</p>
-        </div>
-      </header>
+    <section class="job-overview-assign-modal__note-field">
+      <label class="job-overview-assign-modal__label">备注</label>
       <textarea
         v-model="assignNote"
-        class="assign-mentor-modal__textarea"
+        class="job-overview-assign-modal__textarea assign-mentor-modal__textarea"
         rows="4"
         maxlength="160"
-        placeholder="例如：优先覆盖 First Round 高频题型，48 小时内完成 mock 预约。"
+        placeholder="给导师的特别说明，如学员背景、重点辅导内容等..."
       />
-      <div class="assign-mentor-modal__note-meta">
+      <div class="job-overview-assign-modal__note-meta assign-mentor-modal__note-meta">
         <span>已选择 {{ selectedMentorIds.length }} 位导师</span>
         <span>{{ assignNote.length }}/160</span>
       </div>
     </section>
 
     <template #footer>
-      <div class="assign-mentor-modal__footer">
-        <button type="button" class="permission-button permission-button--outline" @click="handleClose">
+      <div class="job-overview-assign-modal__footer assign-mentor-modal__footer">
+        <button type="button" class="job-overview-assign-modal__button job-overview-assign-modal__button--ghost" @click="handleClose">
           取消
         </button>
         <button
           type="button"
-          class="permission-button permission-button--primary"
+          class="job-overview-assign-modal__button job-overview-assign-modal__button--primary"
           :disabled="submitting || !selectedMentorIds.length"
           @click="handleSubmit"
         >
@@ -139,8 +150,16 @@ const emit = defineEmits<{
   submit: [payload: { mentorIds: number[]; mentorNames: string[]; assignNote: string }]
 }>()
 
+const keyword = ref('')
+const scope = ref<'all' | 'preferred' | 'recommended'>('all')
 const selectedMentorIds = ref<number[]>([])
 const assignNote = ref('')
+
+const scopeOptions = [
+  { value: 'all', label: '全部导师' },
+  { value: 'preferred', label: '意向导师' },
+  { value: 'recommended', label: '班主任推荐' }
+] as const
 
 const studentInitials = computed(() => {
   const value = props.row?.studentName || '学员'
@@ -150,15 +169,36 @@ const studentInitials = computed(() => {
 const requestedCount = computed(() => props.row?.requestedMentorCount || 1)
 const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || '暂无学员意向导师')
 
+const filteredMentorOptions = computed(() => {
+  const normalizedKeyword = keyword.value.trim().toLowerCase()
+  return props.mentorOptions.filter((option) => {
+    if (scope.value === 'preferred' && !option.preferred) {
+      return false
+    }
+    if (scope.value === 'recommended' && option.hint !== '班主任推荐') {
+      return false
+    }
+    if (!normalizedKeyword) {
+      return true
+    }
+    return option.mentorName.toLowerCase().includes(normalizedKeyword)
+      || String(option.hint || '').toLowerCase().includes(normalizedKeyword)
+  })
+})
+
 watch(
   () => [props.visible, props.mentorOptions, props.row?.requestedMentorCount] as const,
   ([visible]) => {
     if (!visible) {
+      keyword.value = ''
+      scope.value = 'all'
       selectedMentorIds.value = []
       assignNote.value = ''
       return
     }
 
+    keyword.value = ''
+    scope.value = 'all'
     selectedMentorIds.value = props.mentorOptions
       .filter((option) => option.preferred)
       .slice(0, requestedCount.value)
@@ -185,253 +225,337 @@ const handleSubmit = () => {
     assignNote: assignNote.value.trim()
   })
 }
+
+const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
 </script>
 
 <style scoped lang="scss">
-.assign-mentor-modal__title-wrap {
+.job-overview-assign-modal__body {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 18px;
-  align-items: flex-start;
 }
 
-.assign-mentor-modal__eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #7a8ea8;
-}
-
-.assign-mentor-modal__title {
-  margin-top: 6px;
-  display: flex;
+.job-overview-assign-modal__title {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 24px;
+  color: #1e293b;
+  font-size: 18px;
   font-weight: 700;
-  color: #10213a;
 }
 
-.assign-mentor-modal__hint {
-  max-width: 220px;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #60748e;
-  text-align: right;
-}
-
+.job-overview-assign-modal__hero,
 .assign-mentor-modal__hero {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
   padding: 18px 20px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(239, 246, 255, 0.96), rgba(224, 242, 254, 0.92));
+  border-radius: 12px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
 }
 
+.job-overview-assign-modal__avatar,
 .assign-mentor-modal__avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
   color: #fff;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 700;
 }
 
+.job-overview-assign-modal__summary,
 .assign-mentor-modal__summary {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.assign-mentor-modal__summary strong {
-  color: #10213a;
-  font-size: 18px;
+.job-overview-assign-modal__summary strong {
+  color: #0f172a;
+  font-size: 16px;
 }
 
-.assign-mentor-modal__summary span {
-  color: #52637a;
-  font-size: 13px;
+.job-overview-assign-modal__summary span {
+  color: #64748b;
+  font-size: 12px;
 }
 
-.assign-mentor-modal__meta {
+.job-overview-assign-modal__meta {
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: flex-end;
 }
 
-.assign-mentor-modal__meta-chip {
+.job-overview-assign-modal__meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
-  padding: 7px 12px;
   background: rgba(15, 23, 42, 0.08);
   color: #334155;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.assign-mentor-modal__meta-chip--accent {
-  background: rgba(220, 38, 38, 0.1);
-  color: #b91c1c;
+.job-overview-assign-modal__meta-chip--accent {
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
-.assign-mentor-modal__section {
+.job-overview-assign-modal__panel {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.assign-mentor-modal__section-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.assign-mentor-modal__section-head h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #10213a;
-}
-
-.assign-mentor-modal__section-head p {
-  margin: 4px 0 0;
-  color: #60748e;
-  font-size: 13px;
-}
-
-.assign-mentor-modal__section-badge {
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: #fff1f2;
-  color: #be123c;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.assign-mentor-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
+.job-overview-assign-modal__filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.job-overview-assign-modal__search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 180px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.job-overview-assign-modal__search .mdi {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.job-overview-assign-modal__search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #0f172a;
+  font: inherit;
+}
+
+.job-overview-assign-modal__scope {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.job-overview-assign-modal__scope-button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.job-overview-assign-modal__scope-button--active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.job-overview-assign-modal__summary-chip {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.job-overview-assign-modal__summary-chip strong {
+  color: #4f46e5;
+}
+
+.job-overview-assign-modal__mentor-list,
+.assign-mentor-modal__mentor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.job-overview-assign-modal__mentor,
 .assign-mentor-modal__option {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   gap: 12px;
-  align-items: flex-start;
-  min-height: 92px;
-  padding: 16px;
-  border: 1px solid #dbe4f0;
-  border-radius: 18px;
+  align-items: center;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
   background: #fff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
+.job-overview-assign-modal__mentor--selected,
 .assign-mentor-modal__option--selected {
-  border-color: #2563eb;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.12);
-  transform: translateY(-1px);
+  border-color: #6366f1;
+  background: #f8faff;
 }
 
+.job-overview-assign-modal__mentor--preferred,
 .assign-mentor-modal__option--preferred {
-  background: linear-gradient(135deg, rgba(255, 241, 242, 0.86), rgba(254, 242, 242, 0.98));
+  background: linear-gradient(145deg, rgba(238, 242, 255, 0.92), rgba(248, 250, 252, 0.96));
 }
 
+.job-overview-assign-modal__checkbox,
 .assign-mentor-modal__checkbox {
-  margin-top: 4px;
   width: 16px;
   height: 16px;
+  margin: 0;
 }
 
-.assign-mentor-modal__option-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.assign-mentor-modal__option-copy strong {
-  color: #10213a;
-  font-size: 15px;
-}
-
-.assign-mentor-modal__option-copy span {
-  color: #60748e;
-  font-size: 13px;
-}
-
-.assign-mentor-modal__preferred-flag {
-  position: absolute;
-  top: 14px;
-  right: 14px;
+.job-overview-assign-modal__mentor-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
   border-radius: 999px;
-  padding: 4px 8px;
-  background: rgba(220, 38, 38, 0.12);
-  color: #b91c1c;
+  background: #6366f1;
+  color: #fff;
   font-size: 11px;
   font-weight: 700;
 }
 
+.job-overview-assign-modal__mentor-copy strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.job-overview-assign-modal__mentor-copy span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.job-overview-assign-modal__mentor-flag,
+.assign-mentor-modal__preferred-flag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.job-overview-assign-modal__note-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.job-overview-assign-modal__label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.job-overview-assign-modal__textarea,
 .assign-mentor-modal__textarea {
   width: 100%;
-  min-height: 120px;
-  padding: 14px 16px;
-  border: 1px solid #dbe4f0;
-  border-radius: 18px;
-  resize: vertical;
-  color: #10213a;
+  min-height: 112px;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
   font: inherit;
+  resize: vertical;
 }
 
-.assign-mentor-modal__textarea:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
-
+.job-overview-assign-modal__note-meta,
 .assign-mentor-modal__note-meta {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  color: #60748e;
+  color: #94a3b8;
   font-size: 12px;
 }
 
+.job-overview-assign-modal__empty,
 .assign-mentor-modal__empty {
-  border-radius: 18px;
-  padding: 20px;
-  background: #f8fbff;
-  color: #60748e;
+  padding: 18px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
   text-align: center;
 }
 
+.job-overview-assign-modal__footer,
 .assign-mentor-modal__footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
-@media (max-width: 768px) {
-  .assign-mentor-modal__title-wrap,
-  .assign-mentor-modal__hero,
-  .assign-mentor-modal__section-head {
+.job-overview-assign-modal__button {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.job-overview-assign-modal__button--ghost {
+  background: #fff;
+  color: #475569;
+}
+
+.job-overview-assign-modal__button--primary {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+
+@media (max-width: 860px) {
+  .job-overview-assign-modal__hero,
+  .assign-mentor-modal__hero {
     grid-template-columns: 1fr;
-    flex-direction: column;
   }
 
-  .assign-mentor-modal__hint,
-  .assign-mentor-modal__meta {
-    text-align: left;
+  .job-overview-assign-modal__meta {
     align-items: flex-start;
   }
 
-  .assign-mentor-modal__grid {
-    grid-template-columns: 1fr;
+  .job-overview-assign-modal__summary-chip {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .job-overview-assign-modal__mentor,
+  .assign-mentor-modal__option {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .job-overview-assign-modal__mentor-flag,
+  .assign-mentor-modal__preferred-flag {
+    grid-column: span 2;
+    justify-self: start;
   }
 }
 </style>

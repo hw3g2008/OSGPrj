@@ -52,7 +52,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         p.display_end_time,
         p.position_url,
         p.application_note,
-        0 as student_count,
+        coalesce(ja.student_count, 0) as student_count,
         p.create_by,
         p.create_time,
         p.update_by,
@@ -60,10 +60,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         p.remark
     </sql>
 
+    <sql id="selectPositionStudentJoin">
+        left join (
+            select position_id, count(1) as student_count
+            from osg_job_application
+            group by position_id
+        ) ja on ja.position_id = p.position_id
+    </sql>
+
     <select id="selectPositionByPositionId" parameterType="Long" resultMap="OsgPositionResult">
         select
         <include refid="selectPositionColumns"/>
         from osg_position p
+        <include refid="selectPositionStudentJoin"/>
         where p.position_id = #{positionId}
     </select>
 
@@ -71,6 +80,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select
         <include refid="selectPositionColumns"/>
         from osg_position p
+        <include refid="selectPositionStudentJoin"/>
         <where>
             <if test="keyword != null and keyword != ''">
                 and (

@@ -68,6 +68,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectJobApplicationColumns"/>
         from osg_job_application
         <where>
+            <if test="positionId != null">
+                and position_id = #{positionId}
+            </if>
             <if test="studentName != null and studentName != ''">
                 and student_name like concat('%', #{studentName}, '%')
             </if>

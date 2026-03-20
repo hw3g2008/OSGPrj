@@ -47,6 +47,52 @@ export interface PositionStats {
   studentApplications: number
 }
 
+export interface PositionMetaOption {
+  value: string
+  label: string
+  tone?: string
+  icon?: string
+  parent?: string
+  remark?: string
+}
+
+export interface PositionTrafficSummary {
+  totalViews: number
+}
+
+export interface PositionMeta {
+  categories: PositionMetaOption[]
+  displayStatuses: PositionMetaOption[]
+  industries: PositionMetaOption[]
+  companyTypes: PositionMetaOption[]
+  recruitmentCycles: PositionMetaOption[]
+  projectYears: PositionMetaOption[]
+  regions: PositionMetaOption[]
+  citiesByRegion: Record<string, PositionMetaOption[]>
+  publishPresets: PositionMetaOption[]
+  processGlossary: PositionMetaOption[]
+  uploadRuleCopy?: string
+  uploadSteps: string[]
+  trafficSummary?: PositionTrafficSummary | null
+}
+
+export interface PositionCompanyOption {
+  value: string
+  label: string
+  industry?: string
+  companyType?: string
+  companyWebsite?: string
+}
+
+export interface PositionStudentRow {
+  studentId: number
+  studentName: string
+  positionName: string
+  status: string
+  statusTone?: 'info' | 'warning' | 'success' | 'danger' | 'default'
+  usedHours: number
+}
+
 export interface DrillDownPosition extends PositionListItem {}
 
 export interface DrillDownCompany {
@@ -84,6 +130,7 @@ export interface PositionPayload {
   displayStatus?: string
   displayStartTime: string
   displayEndTime: string
+  deadline?: string
   positionUrl?: string
   applicationNote?: string
 }
@@ -132,6 +179,20 @@ export function getPositionDrillDown(params: PositionListParams = {}) {
   return http.get<DrillDownIndustry[]>('/admin/position/drill-down', {
     params: toRequestParams(params)
   })
+}
+
+export function getPositionMeta() {
+  return http.get<PositionMeta>('/admin/position/meta')
+}
+
+export function getPositionCompanyOptions(keyword?: string) {
+  return http.get<PositionCompanyOption[]>('/admin/position/company-options', {
+    params: keyword ? { keyword } : undefined
+  })
+}
+
+export function getPositionStudents(positionId: number) {
+  return http.get<PositionStudentRow[]>(`/admin/position/${positionId}/students`)
 }
 
 export function createPosition(payload: PositionPayload) {

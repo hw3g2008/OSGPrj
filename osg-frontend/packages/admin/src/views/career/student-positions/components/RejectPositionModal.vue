@@ -2,69 +2,72 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="reject-student-position-modal"
-    width="520px"
-    :body-class="'reject-position-modal__body'"
+    width="560px"
+    :body-class="'student-reject-modal__body'"
     @cancel="handleClose"
   >
     <template #title>
-      <span class="reject-position-modal__title">
-        <span class="mdi mdi-close-octagon-outline" aria-hidden="true"></span>
+      <div class="student-reject-modal__title">
+        <i class="mdi mdi-close-octagon-outline" aria-hidden="true"></i>
         <span>拒绝岗位申请</span>
-      </span>
+      </div>
     </template>
 
-    <div class="reject-position-modal__warning">
+    <section class="student-reject-modal__hero">
       <strong>{{ position?.studentName || '当前学生' }}</strong>
       <span>拒绝后，该岗位不会加入公共岗位库，学生将收到审核结果通知。</span>
-    </div>
+    </section>
 
-    <a-form
-      ref="formRef"
-      :model="formState"
-      :rules="rules"
-      layout="vertical"
-      :required-mark="false"
-    >
-      <a-form-item name="reason">
-        <template #label>
-          <span class="reject-position-modal__label">
-            拒绝原因
-            <span class="reject-position-modal__required">*</span>
-          </span>
-        </template>
-        <a-select
-          v-model:value="formState.reason"
-          :options="reasonOptions"
-          placeholder="请选择拒绝原因"
-        />
-      </a-form-item>
+    <section class="student-reject-modal__section">
+      <label class="student-reject-modal__label">
+        <span>拒绝原因 *</span>
+      </label>
+      <div class="student-reject-modal__reason-grid">
+        <button
+          v-for="option in reasonOptions"
+          :key="option.value"
+          type="button"
+          :class="[
+            'student-reject-modal__reason-option',
+            { 'student-reject-modal__reason-option--active': formState.reason === option.value }
+          ]"
+          @click="formState.reason = option.value"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+    </section>
 
-      <a-form-item name="note">
-        <template #label>
-          <span class="reject-position-modal__label">补充说明</span>
-        </template>
-        <a-textarea
-          v-model:value="formState.note"
-          :rows="3"
-          :maxlength="120"
-          placeholder="可选，补充本次拒绝说明"
-        />
-      </a-form-item>
-    </a-form>
+    <section class="student-reject-modal__section">
+      <label class="student-reject-modal__label">
+        <span>补充说明</span>
+      </label>
+      <textarea
+        v-model="formState.note"
+        class="student-reject-modal__textarea"
+        rows="4"
+        maxlength="120"
+        placeholder="可选，补充本次拒绝说明"
+      />
+      <div class="student-reject-modal__meta">{{ formState.note.length }}/120</div>
+    </section>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">
-        取消
-      </button>
-      <button type="button" class="permission-button permission-button--danger" @click="handleSubmit">
-        确认拒绝
-      </button>
+      <div class="student-reject-modal__footer">
+        <button type="button" class="student-reject-modal__button student-reject-modal__button--ghost" @click="handleClose">
+          取消
+        </button>
+        <button type="button" class="student-reject-modal__button student-reject-modal__button--danger" @click="handleSubmit">
+          确认拒绝
+        </button>
+      </div>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { reactive, watch } from 'vue'
+import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { RejectStudentPositionPayload, StudentPositionListItem } from '@osg/shared/api/admin/studentPosition'
 
@@ -78,9 +81,8 @@ const emit = defineEmits<{
   submit: [payload: RejectStudentPositionPayload]
 }>()
 
-const formRef = ref()
 const formState = reactive({
-  reason: undefined as string | undefined,
+  reason: '',
   note: ''
 })
 
@@ -92,17 +94,14 @@ const reasonOptions = [
   { label: '其他', value: '其他' }
 ]
 
-const rules = {
-  reason: [{ required: true, message: '请选择拒绝原因', trigger: 'change' }]
-}
-
 watch(
   () => props.visible,
-  (visible) => {
-    if (visible) {
-      formState.reason = undefined
-      formState.note = ''
+  (open) => {
+    if (!open) {
+      return
     }
+    formState.reason = ''
+    formState.note = ''
   }
 )
 
@@ -110,41 +109,138 @@ const handleClose = () => {
   emit('update:visible', false)
 }
 
-const handleSubmit = async () => {
-  await formRef.value?.validate()
+const handleSubmit = () => {
+  if (!formState.reason) {
+    message.warning('请选择拒绝原因')
+    return
+  }
+
   emit('submit', {
-    reason: formState.reason as string,
+    reason: formState.reason,
     note: formState.note.trim() || undefined
   })
 }
 </script>
 
 <style scoped lang="scss">
-.reject-position-modal__title {
+.student-reject-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.reject-position-modal__warning {
+.student-reject-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.student-reject-modal__hero {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 18px;
-  padding: 14px 16px;
-  border: 1px solid rgba(252, 165, 165, 0.5);
-  border-radius: 18px;
-  background: linear-gradient(145deg, rgba(254, 226, 226, 0.88), rgba(255, 247, 237, 0.96));
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(252, 165, 165, 0.45);
+  background: linear-gradient(145deg, rgba(254, 226, 226, 0.92), rgba(255, 247, 237, 0.96));
   color: #7f1d1d;
 }
 
-.reject-position-modal__label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.student-reject-modal__hero strong {
+  font-size: 15px;
 }
 
-.reject-position-modal__required {
-  color: #dc2626;
+.student-reject-modal__hero span {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.student-reject-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.student-reject-modal__label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.student-reject-modal__reason-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.student-reject-modal__reason-option {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.student-reject-modal__reason-option--active {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.student-reject-modal__textarea {
+  width: 100%;
+  min-height: 108px;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  resize: vertical;
+}
+
+.student-reject-modal__meta {
+  color: #94a3b8;
+  font-size: 12px;
+  text-align: right;
+}
+
+.student-reject-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.student-reject-modal__button {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.student-reject-modal__button--ghost {
+  background: #fff;
+  color: #475569;
+}
+
+.student-reject-modal__button--danger {
+  border-color: #ef4444;
+  background: #ef4444;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .student-reject-modal__reason-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -15,6 +15,12 @@ public interface IOsgPositionService
 
     List<Map<String, Object>> selectPositionDrillDown(OsgPosition position);
 
+    Map<String, Object> selectPositionMeta();
+
+    List<Map<String, Object>> selectPositionCompanyOptions(String keyword);
+
+    List<Map<String, Object>> selectPositionStudents(Long positionId);
+
     Map<String, Object> createPosition(Map<String, Object> body, String username);
 
     Map<String, Object> updatePosition(Map<String, Object> body, String username);

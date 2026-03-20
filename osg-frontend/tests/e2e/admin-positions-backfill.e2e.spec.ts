@@ -13,8 +13,8 @@ duplicate_company = sys.argv[1]
 unique_company = sys.argv[2]
 headers = ['company_name','position_name','region','city','project_year','industry','position_category','company_type','recruitment_cycle']
 rows = [
-    [duplicate_company, 'Runtime Analyst', 'na', 'New York', '2026', 'Investment Bank', 'summer', 'Investment Bank', '2026'],
-    [unique_company, 'Runtime Associate', 'eu', 'London', '2026', 'Consulting', 'fulltime', 'Consulting', '2026'],
+    [duplicate_company, 'Runtime Analyst', 'na', 'New York', '2026', 'Investment Bank', 'summer', 'Investment Bank', '2026 Summer'],
+    [unique_company, 'Runtime Associate', 'eu', 'London', '2026', 'Consulting', 'fulltime', 'Consulting', '2026 Summer'],
 ]
 
 def col(n):
@@ -181,7 +181,7 @@ async function seedPosition(
         department: 'Runtime Team',
         region: overrides.region ?? 'na',
         city: overrides.city ?? 'New York',
-        recruitmentCycle: overrides.recruitmentCycle ?? '2026',
+        recruitmentCycle: overrides.recruitmentCycle ?? '2026 Summer',
         projectYear: overrides.projectYear ?? '2026',
         displayStatus: overrides.displayStatus ?? 'visible',
         displayStartTime: `${offsetDate(-2)}T09:00`,
@@ -228,7 +228,7 @@ async function ensureDuplicateUploadBaseline(request: APIRequestContext): Promis
     companyType: 'Investment Bank',
     region: 'na',
     city: 'New York',
-    recruitmentCycle: '2026',
+    recruitmentCycle: '2026 Summer',
     projectYear: '2026',
   })
 }
@@ -287,7 +287,7 @@ test.describe('Admin Positions Ticket Backfill @ticket-backfill', () => {
     await formModal.getByPlaceholder('如 Summer Analyst').fill(positionName)
     await formModal.getByPlaceholder('如 Investment Banking Division').fill('Runtime Coverage')
     await formModal.locator('.position-form-modal__field').filter({ hasText: '项目时间' }).locator('select').selectOption('2026')
-    await formModal.getByRole('button', { name: '2026', exact: true }).click()
+    await formModal.locator('.position-form-modal__cycle-option[data-cycle-value="2026 Summer"]').click()
     await formModal.getByPlaceholder('搜索或输入公司名称').fill(companyName)
     await formModal.locator('.position-form-modal__field').filter({ hasText: '公司类别' }).locator('select').selectOption('Tech')
     await formModal.locator('.position-form-modal__field').filter({ hasText: '大区' }).locator('select').selectOption('ap')

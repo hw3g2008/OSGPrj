@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,6 +55,27 @@ public class OsgPositionController extends BaseController
     public AjaxResult drillDown(OsgPosition position)
     {
         return AjaxResult.success(positionService.selectPositionDrillDown(position));
+    }
+
+    @PreAuthorize(POSITION_ROLE_ACCESS)
+    @GetMapping("/meta")
+    public AjaxResult meta()
+    {
+        return AjaxResult.success(positionService.selectPositionMeta());
+    }
+
+    @PreAuthorize(POSITION_ROLE_ACCESS)
+    @GetMapping("/company-options")
+    public AjaxResult companyOptions(@RequestParam(value = "keyword", required = false) String keyword)
+    {
+        return AjaxResult.success(positionService.selectPositionCompanyOptions(keyword));
+    }
+
+    @PreAuthorize(POSITION_ROLE_ACCESS)
+    @GetMapping("/{positionId}/students")
+    public AjaxResult students(@PathVariable Long positionId)
+    {
+        return AjaxResult.success(positionService.selectPositionStudents(positionId));
     }
 
     @PreAuthorize(POSITION_ROLE_ACCESS)
