@@ -64,11 +64,21 @@ style_contracts: []
 #       width: "420px"
 #       border-radius: "28px"
 #       padding: "48px"
+#     tolerances:
+#       width: 2
+#       border-radius: 2
+#       padding: 2
 
 state_cases: []
 #   - state_id: "step-email"
 #     required_anchors: [".forgot-step-email", ".forgot-send-btn"]
-#     style_contracts: []
+#     style_contracts:
+#       - selector: ".forgot-send-btn"
+#         rule_class: "action-content-alignment"
+#         css:
+#           justify-content: "flex-start"
+#         tolerances:
+#           height: 2
 #     viewport_variants: ["desktop", "tablet"]
 
 # 依赖的 Tickets

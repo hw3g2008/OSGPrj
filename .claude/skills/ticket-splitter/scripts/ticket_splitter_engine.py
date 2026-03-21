@@ -85,6 +85,26 @@ WHITELIST_CSS_PROPS = {
     "border-bottom-width",
     "grid-template-columns",
 }
+DEFAULT_STYLE_TOLERANCE_BY_PROP = {
+    "width": 2,
+    "max-width": 2,
+    "height": 2,
+    "max-height": 2,
+    "min-height": 2,
+    "padding": 2,
+    "padding-left": 2,
+    "padding-right": 2,
+    "padding-top": 2,
+    "padding-bottom": 2,
+    "margin": 2,
+    "margin-left": 2,
+    "margin-right": 2,
+    "margin-top": 2,
+    "margin-bottom": 2,
+    "gap": 2,
+    "border-radius": 2,
+}
+NUMERIC_CSS_TOKEN_RE = re.compile(r"^-?\d+(?:\.\d+)?([a-z%]*)$", re.I)
 SEMANTIC_CLASS_HINTS = (
     "title",
     "subtitle",
@@ -292,6 +312,24 @@ def parse_css_declarations(raw: str) -> dict[str, str]:
     return result
 
 
+def _supports_default_style_tolerance(prop: str, value: str) -> bool:
+    normalized_prop = prop.strip().lower()
+    if normalized_prop not in DEFAULT_STYLE_TOLERANCE_BY_PROP:
+        return False
+    parts = value.strip().split()
+    if not parts:
+        return False
+    return all(NUMERIC_CSS_TOKEN_RE.match(part) for part in parts)
+
+
+def infer_style_tolerances(css: dict[str, str]) -> dict[str, float]:
+    tolerances: dict[str, float] = {}
+    for prop, value in css.items():
+        if _supports_default_style_tolerance(prop, value):
+            tolerances[prop] = DEFAULT_STYLE_TOLERANCE_BY_PROP[prop.strip().lower()]
+    return tolerances
+
+
 def extract_css_rules(html: str) -> dict[str, dict[str, str]]:
     rules: dict[str, dict[str, str]] = {}
     for block in STYLE_BLOCK_RE.findall(html):
@@ -427,9 +465,22 @@ def merge_style_contracts(*contract_sets: list[dict[str, Any]]) -> list[dict[str
                     "prototype_selector": prototype_selector,
                     **({"rule_class": rule_class} if rule_class else {}),
                     "css": {},
+                    "tolerances": {},
                 }
             if isinstance(css, dict):
                 merged[key]["css"].update({k: v for k, v in css.items() if isinstance(k, str) and isinstance(v, str)})
+            tolerances = rule.get("tolerances") or {}
+            if isinstance(tolerances, dict):
+                merged[key]["tolerances"].update(
+                    {
+                        k: v
+                        for k, v in tolerances.items()
+                        if isinstance(k, str) and isinstance(v, (int, float))
+                    }
+                )
+    for rule in merged.values():
+        if not rule["tolerances"]:
+            rule.pop("tolerances", None)
     return list(merged.values())
 
 
@@ -494,6 +545,7 @@ def extract_style_contracts(
         css.update({k: v for k, v in css_rules.get(selector, {}).items() if k in WHITELIST_CSS_PROPS})
         css.update({k: v for k, v in find_inline_style(section_html, selector).items() if k in WHITELIST_CSS_PROPS})
         if css:
+            tolerances = infer_style_tolerances(css)
             contracts.append(
                 {
                     "selector": selector,
@@ -506,6 +558,7 @@ def extract_style_contracts(
                         surface_type=surface_type,
                     ),
                     "css": css,
+                    **({"tolerances": tolerances} if tolerances else {}),
                 }
             )
     return contracts

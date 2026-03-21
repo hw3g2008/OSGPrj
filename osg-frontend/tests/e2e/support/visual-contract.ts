@@ -112,6 +112,7 @@ export interface VisualSurfaceCssContract {
   selector: string
   prototype_selector?: string
   css: Record<string, string>
+  tolerances?: Record<string, number>
 }
 
 export interface VisualSurfaceTriggerAction {

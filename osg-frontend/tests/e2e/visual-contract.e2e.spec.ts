@@ -5,7 +5,7 @@ import { test, expect, type Locator, type Page, type TestInfo } from '@playwrigh
 import { loginAsAdmin } from './support/auth'
 import { isCssSemanticallyEqual } from './support/css-value'
 import { resolvePrototypePageKey } from './support/prototype-contract'
-import { assertStyleContracts } from './support/style-contract'
+import { assertStyleContracts, styleRuleMatches } from './support/style-contract'
 import { performSurfaceTrigger, waitForVisualSettle } from './support/surface-trigger'
 import { applyStabilityToPage, resolveStabilityConfigFromEnv } from './support/test-stability'
 import {
@@ -473,14 +473,6 @@ function selectorsOverlap(left: string, right: string): boolean {
   )
 }
 
-function tryParseNumericCss(value: string): { num: number; unit: string } | null {
-  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)([a-z%]*)$/i)
-  if (!match) {
-    return null
-  }
-  return { num: Number(match[1]), unit: (match[2] || '').toLowerCase() }
-}
-
 async function resolveCriticalSurfaceTarget(
   page: Page,
   surfaceRoot: Locator,
@@ -513,22 +505,8 @@ async function evaluateCriticalSurfaceStyles(
       (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
       rule.property,
     )
-    if (typeof rule.tolerance === 'number') {
-      const expectedParsed = tryParseNumericCss(rule.expected)
-      const actualParsed = tryParseNumericCss(actual)
-      if (!expectedParsed || !actualParsed || expectedParsed.unit !== actualParsed.unit) {
-        failed += 1
-        continue
-      }
-      const diff = Math.abs(actualParsed.num - expectedParsed.num)
-      if (diff > rule.tolerance) {
-        failed += 1
-        continue
-      }
-      passed += 1
-      continue
-    }
-    if (!isCssSemanticallyEqual(rule.property, rule.expected.trim(), actual)) {
+    const match = styleRuleMatches(rule, actual)
+    if (!match.pass) {
       failed += 1
       continue
     }
@@ -829,8 +807,9 @@ function flattenSurfaceCssContracts(
   selector: string
   property: string
   expected: string
+  tolerance?: number
 }> {
-  const flattened: Array<{ selector: string; property: string; expected: string }> = []
+  const flattened: Array<{ selector: string; property: string; expected: string; tolerance?: number }> = []
   for (const rule of rules || []) {
     if (!rule || typeof rule.selector !== 'string' || typeof rule.css !== 'object' || rule.css === null) {
       continue
@@ -841,6 +820,7 @@ function flattenSurfaceCssContracts(
         selector: effectiveSelector,
         property,
         expected: String(expected),
+        ...(typeof rule.tolerances?.[property] === 'number' ? { tolerance: rule.tolerances[property] } : {}),
       })
     }
   }
@@ -850,7 +830,7 @@ function flattenSurfaceCssContracts(
 async function evaluateGenericCssRules(
   page: Page,
   contextId: string,
-  rules: Array<{ selector: string; property: string; expected: string }>,
+  rules: Array<{ selector: string; property: string; expected: string; tolerance?: number }>,
 ): Promise<{ total: number; passed: number; failed: number }> {
   let passed = 0
   let failed = 0
@@ -865,7 +845,7 @@ async function evaluateGenericCssRules(
       (el, prop) => getComputedStyle(el as Element).getPropertyValue(prop).trim(),
       rule.property,
     )
-    if (!isCssSemanticallyEqual(rule.property, rule.expected.trim(), actual)) {
+    if (!styleRuleMatches(rule, actual).pass) {
       failed += 1
       continue
     }

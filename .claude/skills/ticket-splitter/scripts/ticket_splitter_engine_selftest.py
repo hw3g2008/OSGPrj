@@ -185,6 +185,12 @@ def test_frontend_ui_bundle_contains_visual_details() -> None:
         assert any(item.get("text") == "OSG Platform" for item in page_ticket["visual_checklist"]), page_ticket
         assert any(item.get("icon_name") == "mdi-account-star" for item in page_ticket["visual_checklist"]), page_ticket
         assert page_ticket["style_contracts"], page_ticket
+        assert any(
+            (rule.get("tolerances") or {}).get("padding") == 2
+            and (rule.get("tolerances") or {}).get("border-radius") == 2
+            for rule in page_ticket["style_contracts"]
+            if rule.get("selector") == ".login-box"
+        ), page_ticket
         assert {
             "page-shell",
             "control-box-model",
@@ -205,12 +211,15 @@ def test_frontend_ui_bundle_contains_visual_details() -> None:
             rule.get("selector") == "#modal-forgot-password button"
             and rule.get("rule_class") == "action-content-alignment"
             and (rule.get("css") or {}).get("justify-content") == "flex-start"
+            and (rule.get("tolerances") or {}).get("height") == 2
+            and "justify-content" not in (rule.get("tolerances") or {})
             for rule in surface_ticket["style_contracts"]
         ), surface_ticket
         assert any(
             rule.get("selector") == "#modal-forgot-password input"
             and rule.get("rule_class") == "control-box-model"
             and (rule.get("css") or {}).get("height") == "44px"
+            and (rule.get("tolerances") or {}).get("height") == 2
             for rule in surface_ticket["style_contracts"]
         ), surface_ticket
 
