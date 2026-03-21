@@ -53,12 +53,45 @@
                   <div class="text-muted text-sm">{{ r.feedbackNote }}</div>
                 </template>
                 <template v-else>
-                  <button class="btn btn-text btn-sm">查看详情</button>
+                  <button class="btn btn-text btn-sm" @click="showDetail(r)">查看详情</button>
                 </template>
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <div v-if="detailModal.visible" class="modal active" @click.self="closeDetailModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title"><i class="mdi mdi-account-voice" /> 模拟应聘详情</span>
+          <button class="modal-close" @click="closeDetailModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">学员</span>
+              <div class="detail-value">{{ detailModal.record?.studentName || '-' }} ({{ detailModal.record?.studentId || '-' }})</div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">类型</span>
+              <div class="detail-value">{{ typeLabel(detailModal.record?.practiceType || '') }}</div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">状态</span>
+              <div class="detail-value">{{ mockStatusLabel(detailModal.record?.status || '') }}</div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">导师</span>
+              <div class="detail-value">{{ detailModal.record?.mentorNames || '-' }}</div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-label">申请内容</div>
+            <div class="detail-panel">{{ detailModal.record?.requestContent || '暂无申请内容' }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -69,6 +102,7 @@ import { ref, computed, onMounted } from 'vue'
 import { http } from '@osg/shared/utils/request'
 
 const list = ref<any[]>([])
+const detailModal = ref<{ visible: boolean; record: any | null }>({ visible: false, record: null })
 const filters = ref({ type: '', status: '', keyword: '' })
 
 const stats = computed(() => {
@@ -86,20 +120,62 @@ const filteredList = computed(() => {
 
 function resetFilters() { filters.value = { type: '', status: '', keyword: '' } }
 function rowClass(r: any) { return { 'row-new': r.status === 'new', 'row-midterm': r.practiceType === 'midterm' } }
-function avatarColor(r: any) { const c = ['#7399C6','#F59E0B','#3B82F6','#22C55E','#8B5CF6']; return c[r.id % c.length] }
+function avatarColor(r: any) { const c = ['#7399C6','#F59E0B','#3B82F6','#22C55E','#8B5CF6']; return c[(r.id ?? r.practiceId ?? 0) % c.length] }
 function typeClass(t: string) { return { mock_interview: 'info', relation_test: 'warning', midterm: 'purple' }[t] || 'info' }
 function typeIcon(t: string) { return { mock_interview: 'mdi mdi-account-voice', relation_test: 'mdi mdi-account-group', midterm: 'mdi mdi-file-document-edit' }[t] || '' }
 function typeLabel(t: string) { return { mock_interview: '模拟面试', relation_test: '人际关系测试', midterm: '期中考试' }[t] || t }
 function feedbackColor(l: string) { return { excellent: 'text-success', good: 'text-warning' }[l] || '' }
 function feedbackLabel(l: string) { return { excellent: '优秀', good: '良好', average: '一般', poor: '较差' }[l] || l }
 function formatDate(d: string) { return d ? new Date(d).toLocaleDateString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '' }
+function mockStatusLabel(status: string) { return { new: '新分配', pending: '待进行', confirmed: '待进行', completed: '已完成', cancelled: '已取消' }[status] || status }
+
+function normalizeFeedbackLevel(rating: number | undefined) {
+  if (rating == null) return ''
+  if (rating >= 5) return 'excellent'
+  if (rating >= 4) return 'good'
+  if (rating >= 3) return 'average'
+  return 'poor'
+}
+
+function normalizeStatus(status: string | undefined) {
+  if (status === 'confirmed') {
+    return 'pending'
+  }
+  return status || ''
+}
+
+function normalizeMockPractice(record: Record<string, any>) {
+  const practiceId = record.practiceId ?? record.id
+  return {
+    ...record,
+    id: practiceId,
+    practiceId,
+    assignedTime: record.assignedTime ?? record.submittedAt ?? record.scheduledAt ?? '',
+    totalHours: record.totalHours ?? record.completedHours ?? 0,
+    feedbackLevel: record.feedbackLevel ?? normalizeFeedbackLevel(record.feedbackRating),
+    feedbackNote: record.feedbackNote ?? record.feedbackSummary ?? '',
+    status: normalizeStatus(record.status),
+  }
+}
+
+function closeDetailModal() {
+  detailModal.value = { visible: false, record: null }
+}
+
+function showDetail(record: any) {
+  detailModal.value = { visible: true, record }
+}
 
 async function confirmMock(r: any) {
-  try { await http.put(`/api/mentor/mock-practice/${r.id}/confirm`); r.status = 'pending' } catch {}
+  const practiceId = r.practiceId ?? r.id
+  try { await http.put(`/api/mentor/mock-practice/${practiceId}/confirm`); r.status = 'pending' } catch {}
 }
 
 async function fetchList() {
-  try { const res = await http.get('/api/mentor/mock-practice/list'); list.value = res.rows || [] } catch {}
+  try {
+    const res = await http.get('/api/mentor/mock-practice/list')
+    list.value = (res.rows || []).map((record: Record<string, any>) => normalizeMockPractice(record))
+  } catch {}
 }
 
 onMounted(fetchList)
@@ -118,4 +194,16 @@ onMounted(fetchList)
 .btn{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}.btn-primary{background:#7399C6;color:#fff}.btn-text{background:transparent;color:#7399C6;padding:6px 12px}.btn-sm{padding:4px 12px;font-size:12px}
 .btn-confirm{background:#22C55E;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px}
 .text-muted{color:#94A3B8}.text-sm{font-size:11px}.text-success{color:#059669}.text-warning{color:#F59E0B}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-content{width:min(640px,100%);background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 64px rgba(15,23,42,0.2)}
+.modal-header{padding:20px 24px;background:linear-gradient(135deg,#7399C6,#5A7BA3);color:#fff;display:flex;align-items:center;justify-content:space-between}
+.modal-title{display:inline-flex;align-items:center;gap:8px;font-size:18px;font-weight:700}
+.modal-close{width:36px;height:36px;border:none;border-radius:10px;background:rgba(255,255,255,0.16);color:#fff;font-size:20px;cursor:pointer}
+.modal-body{padding:24px}
+.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.detail-item{background:#F8FAFC;border-radius:12px;padding:16px}
+.detail-label{display:block;font-size:12px;font-weight:600;color:#64748B;margin-bottom:6px}
+.detail-value{font-size:14px;color:#1E293B;line-height:1.6}
+.detail-section{margin-top:20px}
+.detail-panel{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#334155;line-height:1.7;white-space:pre-wrap}
 </style>

@@ -4,7 +4,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import LoginPage from '@/views/login/index.vue'
 
 // Mock shared modules
-vi.mock('@osg/shared/api', () => ({
+vi.mock('@/api/auth', () => ({
   login: vi.fn(),
   getInfo: vi.fn()
 }))
@@ -17,7 +17,8 @@ vi.mock('@osg/shared/utils', () => ({
   getToken: vi.fn()
 }))
 
-import { login, getInfo } from '@osg/shared/api'
+import { login, getInfo } from '@/api/auth'
+import { getCaptchaImage } from '@osg/shared/api/auth'
 import { setToken, setUser } from '@osg/shared/utils'
 
 function createTestRouter() {
@@ -52,6 +53,16 @@ describe('LoginPage', () => {
     expect(wrapper.find('.login-btn').exists()).toBe(true)
   })
 
+  it('uses a non-submit login button to avoid native page reloads', () => {
+    const wrapper = mountLogin()
+    expect(wrapper.find('.login-btn').attributes('type')).toBe('button')
+  })
+
+  it('does not request captcha on mount', () => {
+    mountLogin()
+    expect(getCaptchaImage).not.toHaveBeenCalled()
+  })
+
   it('renders brand area with title and features', () => {
     const wrapper = mountLogin()
     expect(wrapper.find('.login-left__title').text()).toBe('OSG Platform')
@@ -67,26 +78,26 @@ describe('LoginPage', () => {
 
   it('shows error when username is empty on submit', async () => {
     const wrapper = mountLogin()
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('.login-btn').trigger('click')
     expect(wrapper.find('.field-error').text()).toBe('请输入用户名或邮箱')
   })
 
   it('shows error when password is empty on submit', async () => {
     const wrapper = mountLogin()
     await wrapper.find('input[type="text"]').setValue('testuser')
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('.login-btn').trigger('click')
     expect(wrapper.find('.field-error').text()).toBe('请输入密码')
   })
 
   it('does not call login API when fields are empty', async () => {
     const wrapper = mountLogin()
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('.login-btn').trigger('click')
     expect(login).not.toHaveBeenCalled()
   })
 
   it('clears field error on input', async () => {
     const wrapper = mountLogin()
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('.login-btn').trigger('click')
     expect(wrapper.find('.field-error').exists()).toBe(true)
     await wrapper.find('input[type="text"]').setValue('a')
     await wrapper.find('input[type="text"]').trigger('input')
@@ -118,13 +129,13 @@ describe('LoginPage', () => {
 
     await wrapper.find('input[type="text"]').setValue('testuser')
     await wrapper.find('.pwd-wrapper input').setValue('password123')
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('.login-btn').trigger('click')
     await vi.dynamicImportSettled()
 
-    expect(mockLogin).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mockLogin).toHaveBeenCalledWith({
       username: 'testuser',
       password: 'password123'
-    }))
+    })
   })
 
   it('shows error banner when login fails', async () => {
@@ -134,7 +145,7 @@ describe('LoginPage', () => {
     const wrapper = mountLogin()
     await wrapper.find('input[type="text"]').setValue('testuser')
     await wrapper.find('.pwd-wrapper input').setValue('wrongpass')
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('.login-btn').trigger('click')
     await vi.dynamicImportSettled()
 
     // Wait for async error handling
@@ -151,7 +162,7 @@ describe('LoginPage', () => {
     const wrapper = mountLogin()
     await wrapper.find('input[type="text"]').setValue('student')
     await wrapper.find('.pwd-wrapper input').setValue('pass')
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('.login-btn').trigger('click')
     await vi.dynamicImportSettled()
     await new Promise(r => setTimeout(r, 10))
 

@@ -14,7 +14,7 @@ import com.ruoyi.framework.web.service.SysPasswordService;
  * 导师端忘记密码 — 委托 SysPasswordService（复用 permission 模块已有逻辑）
  */
 @RestController
-@RequestMapping("/api/mentor/forgot-password")
+@RequestMapping("/mentor/forgot-password")
 public class OsgForgotPasswordController
 {
     private static final String SEND_CODE_ACK = "我们会往您的注册邮箱发送验证码，请查收";

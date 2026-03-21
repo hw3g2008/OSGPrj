@@ -26,37 +26,60 @@
 
         <!-- Step 1: 输入邮箱 -->
         <div v-if="step === 1">
-          <form @submit.prevent="sendCode">
+          <div class="form-panel">
             <div class="form-group">
               <label class="form-label">邮箱地址</label>
-              <input v-model="email" type="email" class="form-input" placeholder="请输入注册邮箱" :class="{ error: emailError }" />
+              <input
+                v-model="email"
+                type="email"
+                class="form-input"
+                placeholder="请输入注册邮箱"
+                :class="{ error: emailError }"
+                @keydown.enter.prevent="sendCode"
+              />
               <p v-if="emailError" class="field-error">请输入有效的邮箱地址</p>
             </div>
-            <button type="submit" class="fp-btn" :disabled="sending">{{ sending ? '发送中...' : '发送验证码' }}</button>
-          </form>
+            <button type="button" class="fp-btn" :disabled="sending" @click="sendCode">{{ sending ? '发送中...' : '发送验证码' }}</button>
+          </div>
         </div>
 
         <!-- Step 2: 输入验证码 -->
         <div v-if="step === 2">
           <p class="masked-email">验证码已发送至 <strong>{{ maskedEmail }}</strong></p>
-          <form @submit.prevent="verifyCode">
+          <div class="form-panel">
             <div class="form-group">
               <label class="form-label">验证码</label>
-              <input v-model="code" type="text" class="form-input" placeholder="请输入6位验证码" maxlength="6" :class="{ error: codeError }" />
+              <input
+                v-model="code"
+                type="text"
+                class="form-input"
+                placeholder="请输入6位验证码"
+                maxlength="6"
+                :class="{ error: codeError }"
+                @keydown.enter.prevent="verifyCode"
+              />
               <p v-if="codeError" class="field-error">验证码错误</p>
             </div>
-            <button type="submit" class="fp-btn">验证</button>
+            <button type="button" class="fp-btn" @click="verifyCode">验证</button>
             <p class="countdown">{{ countdown > 0 ? `${countdown}秒后可重新发送` : '' }}<a v-if="countdown <= 0" href="#" @click.prevent="sendCode">重新发送</a></p>
-          </form>
+          </div>
         </div>
 
         <!-- Step 3: 设置新密码 -->
         <div v-if="step === 3">
-          <form @submit.prevent="resetPassword">
+          <div class="form-panel">
             <div class="form-group">
               <label class="form-label">新密码</label>
               <div class="pwd-wrapper">
-                <input v-model="newPwd" :type="showPwd1 ? 'text' : 'password'" class="form-input" placeholder="请输入新密码" minlength="8" @input="checkStrength" />
+                <input
+                  v-model="newPwd"
+                  :type="showPwd1 ? 'text' : 'password'"
+                  class="form-input"
+                  placeholder="请输入新密码"
+                  minlength="8"
+                  @input="checkStrength"
+                  @keydown.enter.prevent="resetPassword"
+                />
                 <button type="button" class="pwd-toggle" @click="showPwd1 = !showPwd1"><i :class="showPwd1 ? 'mdi mdi-eye' : 'mdi mdi-eye-off'" /></button>
               </div>
               <div class="strength">
@@ -67,13 +90,20 @@
             <div class="form-group">
               <label class="form-label">确认密码</label>
               <div class="pwd-wrapper">
-                <input v-model="confirmPwd" :type="showPwd2 ? 'text' : 'password'" class="form-input" placeholder="请再次输入新密码" :class="{ error: confirmError }" />
+                <input
+                  v-model="confirmPwd"
+                  :type="showPwd2 ? 'text' : 'password'"
+                  class="form-input"
+                  placeholder="请再次输入新密码"
+                  :class="{ error: confirmError }"
+                  @keydown.enter.prevent="resetPassword"
+                />
                 <button type="button" class="pwd-toggle" @click="showPwd2 = !showPwd2"><i :class="showPwd2 ? 'mdi mdi-eye' : 'mdi mdi-eye-off'" /></button>
               </div>
               <p v-if="confirmError" class="field-error">两次输入的密码不一致</p>
             </div>
-            <button type="submit" class="fp-btn">重置密码</button>
-          </form>
+            <button type="button" class="fp-btn" @click="resetPassword">重置密码</button>
+          </div>
         </div>
 
         <!-- Step 4: 完成 -->
@@ -90,11 +120,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { http } from '@osg/shared/utils/request'
+import { sendResetCode, verifyResetCode as verifyResetCodeApi, resetPassword as resetPasswordApi } from '@/api/auth'
 
 const step = ref(1)
 const email = ref('')
 const code = ref('')
+const resetToken = ref('')
 const newPwd = ref('')
 const confirmPwd = ref('')
 const emailError = ref(false)
@@ -140,10 +171,11 @@ async function sendCode() {
   if (!email.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { emailError.value = true; return }
   sending.value = true
   try {
-    await http.post('/api/mentor/forgot-password/send-code', { email: email.value })
+    await sendResetCode(email.value)
+    resetToken.value = ''
     alertMsg.value = '验证码已发送'; alertType.value = 'success'
     step.value = 2; startCountdown()
-  } catch { alertMsg.value = '发送失败，请重试'; alertType.value = 'error' }
+  } catch (error: any) { alertMsg.value = error?.message || '发送失败，请重试'; alertType.value = 'error' }
   finally { sending.value = false }
 }
 
@@ -151,19 +183,26 @@ async function verifyCode() {
   codeError.value = false; alertMsg.value = ''
   if (code.value.length !== 6) { codeError.value = true; return }
   try {
-    await http.post('/api/mentor/forgot-password/verify-code', { email: email.value, code: code.value })
+    const data = await verifyResetCodeApi(email.value, code.value)
+    if (!data?.resetToken) throw new Error('reset token missing')
+    resetToken.value = data.resetToken
     step.value = 3
-  } catch { codeError.value = true }
+  } catch (error: any) {
+    codeError.value = true
+    alertMsg.value = error?.message || '验证失败'
+    alertType.value = 'error'
+  }
 }
 
 async function resetPassword() {
   confirmError.value = false; alertMsg.value = ''
   if (newPwd.value !== confirmPwd.value) { confirmError.value = true; return }
   if (newPwd.value.length < 8) { alertMsg.value = '密码至少8位'; alertType.value = 'error'; return }
+  if (!resetToken.value) { alertMsg.value = '重置令牌不能为空'; alertType.value = 'error'; return }
   try {
-    await http.post('/api/mentor/forgot-password/reset', { email: email.value, code: code.value, password: newPwd.value })
+    await resetPasswordApi(email.value, resetToken.value, newPwd.value)
     step.value = 4
-  } catch { alertMsg.value = '重置失败，请重试'; alertType.value = 'error' }
+  } catch (error: any) { alertMsg.value = error?.message || '重置失败，请重试'; alertType.value = 'error' }
 }
 </script>
 
@@ -197,7 +236,8 @@ async function resetPassword() {
 .form-input.error { border-color:#EF4444; }
 .field-error { color:#EF4444; font-size:12px; margin-top:4px; }
 .pwd-wrapper { position:relative; }
-.pwd-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94A3B8; cursor:pointer; font-size:18px; }
+.pwd-wrapper .form-input { padding-right:52px; }
+.pwd-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; padding:0; background:none; border:none; color:#94A3B8; cursor:pointer; font-size:18px; }
 .fp-btn { width:100%; padding:16px; background:linear-gradient(135deg,#7399C6,#9BB8D9); color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer; box-shadow:0 4px 15px rgba(115,153,198,0.4); margin-top:8px; }
 .fp-btn:hover:not(:disabled) { transform:translateY(-2px); }
 .fp-btn:disabled { opacity:0.7; cursor:not-allowed; }

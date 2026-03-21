@@ -50,15 +50,17 @@
         </div>
 
         <!-- 登录表单 -->
-        <form class="login-form" @submit.prevent="handleLogin">
+        <div class="login-form">
           <div class="form-group">
             <label>用户名 / 邮箱</label>
             <input
               v-model="formState.username"
               type="text"
               placeholder="请输入用户名或邮箱"
+              autocomplete="username"
               :class="{ error: errors.username }"
               @input="errors.username = ''"
+              @keydown.enter.prevent="handleLogin"
             />
             <p v-if="errors.username" class="field-error">{{ errors.username }}</p>
           </div>
@@ -70,8 +72,10 @@
                 v-model="formState.password"
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="请输入密码"
+                autocomplete="current-password"
                 :class="{ error: errors.password }"
                 @input="errors.password = ''"
+                @keydown.enter.prevent="handleLogin"
               />
               <button
                 type="button"
@@ -84,34 +88,11 @@
             <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
           </div>
 
-          <!-- 验证码 -->
-          <div v-if="captchaEnabled" class="form-group">
-            <label>验证码</label>
-            <div class="captcha-row">
-              <input
-                v-model="formState.code"
-                type="text"
-                placeholder="请输入验证码"
-                class="captcha-input"
-                :class="{ error: errors.code }"
-                @input="errors.code = ''"
-              />
-              <img
-                v-if="captchaImg"
-                :src="'data:image/gif;base64,' + captchaImg"
-                class="captcha-img"
-                @click="getCaptcha"
-                title="点击刷新验证码"
-              />
-            </div>
-            <p v-if="errors.code" class="field-error">{{ errors.code }}</p>
-          </div>
-
-          <button type="submit" class="login-btn" :disabled="loading">
+          <button type="button" class="login-btn" :disabled="loading" @click="handleLogin">
             <i v-if="!loading" class="mdi mdi-login" />
             {{ loading ? '登录中...' : '登 录' }}
           </button>
-        </form>
+        </div>
 
         <div class="login-links">
           忘记密码？<router-link to="/forgot-password">点击重置</router-link>
@@ -122,10 +103,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { login, getInfo } from '@osg/shared/api'
-import { getCaptchaImage } from '@osg/shared/api/auth'
+import { login, getInfo } from '@/api/auth'
 import { setToken, setUser } from '@osg/shared/utils'
 
 const router = useRouter()
@@ -133,29 +113,12 @@ const route = useRoute()
 const loading = ref(false)
 const showPassword = ref(false)
 const errorMsg = ref('')
-const formState = reactive({ username: '', password: '', code: '', uuid: '' })
-const errors = reactive({ username: '', password: '', code: '' })
-const captchaEnabled = ref(false)
-const captchaImg = ref('')
-
-async function getCaptcha() {
-  try {
-    const res = await getCaptchaImage()
-    captchaEnabled.value = res.captchaEnabled !== false
-    captchaImg.value = res.img || ''
-    formState.uuid = res.uuid || ''
-  } catch {
-    captchaEnabled.value = false
-  }
-}
-
-onMounted(getCaptcha)
+const formState = reactive({ username: '', password: '' })
+const errors = reactive({ username: '', password: '' })
 
 const handleLogin = async () => {
-  // 前端校验
   errors.username = ''
   errors.password = ''
-  errors.code = ''
   errorMsg.value = ''
 
   if (!formState.username.trim()) {
@@ -164,28 +127,25 @@ const handleLogin = async () => {
   if (!formState.password) {
     errors.password = '请输入密码'
   }
-  if (captchaEnabled.value && !formState.code) {
-    errors.code = '请输入验证码'
-  }
-  if (errors.username || errors.password || errors.code) return
+  if (errors.username || errors.password) return
 
   loading.value = true
   try {
-    const { token } = await login(formState)
+    const { token } = await login({
+      username: formState.username.trim(),
+      password: formState.password
+    })
     setToken(token)
     const info = await getInfo()
-    // 角色校验：必须包含 mentor 角色
     if (!info.roles?.includes('mentor') && !info.roles?.includes('admin')) {
       errorMsg.value = '该账号无导师端访问权限'
       loading.value = false
-      getCaptcha()
       return
     }
     setUser(info.user)
     router.push((route.query.redirect as string) || '/')
   } catch (e: any) {
     errorMsg.value = e?.message || '用户名或密码错误'
-    getCaptcha()
   } finally {
     loading.value = false
   }
@@ -227,7 +187,7 @@ const handleLogin = async () => {
 .login-left__desc { font-size: 18px; opacity: 0.9; max-width: 400px; }
 .login-features { margin-top: 40px; display: flex; flex-direction: column; gap: 16px; }
 .login-feature { display: flex; align-items: center; gap: 12px; font-size: 15px; opacity: 0.9; }
-.login-feature i { font-size: 24px; }
+.login-feature i { display: inline-flex; align-items: center; justify-content: center; width: 24px; font-size: 24px; }
 
 /* 右侧登录面板 */
 .login-right {
@@ -279,10 +239,14 @@ const handleLogin = async () => {
 .field-error { color: #EF4444; font-size: 12px; margin-top: 4px; }
 
 .pwd-wrapper { position: relative; }
+.pwd-wrapper input { padding-right: 52px; }
 .pwd-toggle {
   position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0;
   background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 18px;
 }
+.pwd-toggle:hover { color: #5A7BA3; }
 
 /* 登录按钮 */
 .login-btn {
@@ -304,10 +268,4 @@ const handleLogin = async () => {
 .login-links a { color: #7399C6; text-decoration: none; font-weight: 500; }
 .login-links a:hover { text-decoration: underline; }
 
-/* 验证码 */
-.captcha-row { display: flex; gap: 10px; align-items: center; }
-.captcha-input { flex: 1; padding: 14px 16px; border: 2px solid #E2E8F0; border-radius: 12px; font-size: 15px; box-sizing: border-box; outline: none; }
-.captcha-input:focus { border-color: #7399C6; box-shadow: 0 0 0 4px #E8F0F8; }
-.captcha-input.error { border-color: #EF4444; }
-.captcha-img { height: 48px; border-radius: 8px; cursor: pointer; border: 2px solid #E2E8F0; }
 </style>

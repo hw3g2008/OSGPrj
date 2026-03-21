@@ -4,6 +4,7 @@ import { getToken, removeToken } from './storage'
 
 export interface AppRequestConfig extends AxiosRequestConfig {
   skipErrorMessage?: boolean
+  skipAuthRedirect?: boolean
   customErrorMessage?: string
 }
 
@@ -44,9 +45,11 @@ request.interceptors.response.use(
 
     // Token 过期
     if (code === 401) {
-      removeToken()
-      message.error('登录已过期，请重新登录')
-      window.location.href = '/login'
+      if (!requestConfig?.skipAuthRedirect) {
+        removeToken()
+        message.error('登录已过期，请重新登录')
+        window.location.href = '/login'
+      }
       return Promise.reject(new Error(msg || '未授权'))
     }
 

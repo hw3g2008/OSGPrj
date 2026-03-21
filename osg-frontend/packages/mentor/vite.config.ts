@@ -19,6 +19,21 @@ export default defineConfig({
     port: 3002,
     host: '0.0.0.0',
     proxy: {
+      '/api/mentor/login': {
+        target: 'http://localhost:28080',
+        changeOrigin: true,
+        rewrite: () => '/mentor/login'
+      },
+      '/api/mentor/getInfo': {
+        target: 'http://localhost:28080',
+        changeOrigin: true,
+        rewrite: () => '/mentor/getInfo'
+      },
+      '/api/mentor/forgot-password': {
+        target: 'http://localhost:28080',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/api/, '')
+      },
       // mentor 专属 API（后端路径带 /api 前缀）
       '/api/mentor': {
         target: 'http://localhost:28080',

@@ -42,6 +42,8 @@ services:
   admin:
     image: ${ADMIN_IMAGE:?ADMIN_IMAGE is required}
     restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: ${ADMIN_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy
@@ -52,6 +54,8 @@ services:
   student:
     image: ${STUDENT_IMAGE:?STUDENT_IMAGE is required}
     restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: ${STUDENT_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy
@@ -62,6 +66,8 @@ services:
   mentor:
     image: ${MENTOR_IMAGE:?MENTOR_IMAGE is required}
     restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: ${MENTOR_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy
@@ -72,6 +78,8 @@ services:
   lead-mentor:
     image: ${LEAD_MENTOR_IMAGE:?LEAD_MENTOR_IMAGE is required}
     restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: ${LEAD_MENTOR_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy
@@ -82,6 +90,8 @@ services:
   assistant:
     image: ${ASSISTANT_IMAGE:?ASSISTANT_IMAGE is required}
     restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: ${ASSISTANT_API_PROXY_TARGET:-http://backend:8080}
     depends_on:
       backend:
         condition: service_healthy

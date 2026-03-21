@@ -72,6 +72,59 @@
 
     <!-- 上报弹窗 -->
     <ReportModal v-if="showReportModal" @close="showReportModal = false" @submitted="onReportSubmitted" />
+
+    <div v-if="detailModal.visible" class="modal active" @click.self="closeDetailModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title"><i class="mdi mdi-file-document-outline" /> 课程记录详情</span>
+          <button class="modal-close" @click="closeDetailModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">记录编号</span>
+              <div class="detail-value">{{ detailModal.record?.recordNo || '-' }}</div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">学员</span>
+              <div class="detail-value">{{ detailModal.record?.studentName || '-' }} ({{ detailModal.record?.studentId || '-' }})</div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">辅导内容</span>
+              <div class="detail-value">{{ coachingLabel(detailModal.record?.coachingType || '') }}</div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">课程内容</span>
+              <div class="detail-value">{{ detailModal.record?.contentType || '-' }}</div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">上课日期</span>
+              <div class="detail-value">{{ formatDate(detailModal.record?.classDate || '') }}</div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">课时费</span>
+              <div class="detail-value">¥{{ detailModal.record?.totalFee ?? '-' }}</div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-label">课程反馈</div>
+            <div class="detail-panel">{{ detailModal.record?.contentDetail || '暂无课程反馈' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="rejectModal.visible" class="modal active" @click.self="closeRejectModal">
+      <div class="modal-content modal-content--narrow">
+        <div class="modal-header">
+          <span class="modal-title"><i class="mdi mdi-alert-circle-outline" /> 驳回原因</span>
+          <button class="modal-close" @click="closeRejectModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-panel detail-panel--danger">{{ rejectModal.reason || '暂无驳回原因' }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -83,6 +136,8 @@ import ReportModal from './components/ReportModal.vue'
 const activeTab = ref('all')
 const showReportModal = ref(false)
 const records = ref<any[]>([])
+const detailModal = ref<{ visible: boolean; record: any | null }>({ visible: false, record: null })
+const rejectModal = ref<{ visible: boolean; reason: string }>({ visible: false, reason: '' })
 const filters = ref({ keyword: '', coachingType: '', contentType: '', timeRange: '' })
 const contentTypes = ['新简历', '简历更新', 'Case准备', '模拟面试', '人际关系期中考试', '模拟期中考试', 'Behavioral', 'Technical', '其他']
 
@@ -111,13 +166,57 @@ function coachingTagClass(t: string) { return { job_coaching: 'info', mock_inter
 function contentTagClass(_t: string) { return 'info' }
 function statusClass(s: string) { return { pending: 'warning', approved: 'success', rejected: 'danger' }[s] || '' }
 function statusLabel(s: string) { return { pending: '待审核', approved: '已通过', rejected: '已驳回' }[s] || s }
-function showDetail(_r: any) { /* TODO: detail modal */ }
-function showReject(_r: any) { /* TODO: reject reason modal */ }
+
+function normalizeCourseRecord(record: Record<string, any>) {
+  const durationHours = Number(record.durationHours ?? 0)
+  const rate = Number(record.rate ?? record.hourlyRate ?? 0)
+  const recordId = record.recordId ?? record.id
+  return {
+    ...record,
+    id: recordId,
+    recordId,
+    recordNo: record.recordNo ?? record.classId ?? (recordId ? `CR-${recordId}` : '-'),
+    coachingType: record.coachingType ?? record.courseType ?? '',
+    contentType: record.contentType ?? record.courseSource ?? record.courseType ?? '',
+    contentDetail: record.contentDetail ?? record.feedbackContent ?? record.comments ?? record.topics ?? '',
+    reviewStatus: record.reviewStatus ?? record.status ?? '',
+    totalFee: record.totalFee ?? (Number.isFinite(durationHours * rate) ? durationHours * rate : 0),
+    studentEvaluation: record.studentEvaluation ?? record.feedbackRating ?? ''
+  }
+}
+
+function closeDetailModal() {
+  detailModal.value = { visible: false, record: null }
+}
+
+function closeRejectModal() {
+  rejectModal.value = { visible: false, reason: '' }
+}
+
+async function showDetail(record: any) {
+  const recordId = record.recordId ?? record.id
+  let detailRecord = record
+  if (recordId != null) {
+    try {
+      detailRecord = normalizeCourseRecord(await http.get(`/api/mentor/class-records/${recordId}`))
+    } catch {
+      detailRecord = normalizeCourseRecord(record)
+    }
+  }
+  detailModal.value = { visible: true, record: normalizeCourseRecord(detailRecord) }
+}
+
+function showReject(record: any) {
+  rejectModal.value = {
+    visible: true,
+    reason: record.reviewRemark || record.remark || '暂无驳回原因'
+  }
+}
 
 async function fetchRecords() {
   try {
     const res = await http.get('/api/mentor/class-records/list')
-    records.value = res.rows || []
+    records.value = (res.rows || []).map((record: Record<string, any>) => normalizeCourseRecord(record))
   } catch { records.value = [] }
 }
 
@@ -158,4 +257,18 @@ onMounted(fetchRecords)
 .tag.purple { background:#E8F0F8; color:#5A7BA3; }
 .text-muted { color:#94A3B8; }
 .text-sm { font-size:12px; }
+.modal { position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.modal-content { width:min(720px, 100%); background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 24px 64px rgba(15,23,42,0.2); }
+.modal-content--narrow { width:min(520px, 100%); }
+.modal-header { padding:20px 24px; background:linear-gradient(135deg,#7399C6,#5A7BA3); color:#fff; display:flex; align-items:center; justify-content:space-between; }
+.modal-title { display:inline-flex; align-items:center; gap:8px; font-size:18px; font-weight:700; }
+.modal-close { width:36px; height:36px; border:none; border-radius:10px; background:rgba(255,255,255,0.16); color:#fff; font-size:20px; cursor:pointer; }
+.modal-body { padding:24px; }
+.detail-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; }
+.detail-item { background:#F8FAFC; border-radius:12px; padding:16px; }
+.detail-label { display:block; font-size:12px; font-weight:600; color:#64748B; margin-bottom:6px; }
+.detail-value { font-size:14px; color:#1E293B; line-height:1.6; }
+.detail-section { margin-top:20px; }
+.detail-panel { background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:16px; color:#334155; line-height:1.7; white-space:pre-wrap; }
+.detail-panel--danger { background:#FEF2F2; border-color:#FECACA; color:#991B1B; }
 </style>

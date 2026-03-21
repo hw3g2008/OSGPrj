@@ -44,7 +44,7 @@ class OsgMentorProfileControllerTest {
         SysUser user = new SysUser();
         user.setUserId(100L);
         user.setNickName("Jerry Li");
-        user.setEmail("jerry@example.com");
+        user.setEmail("hw3g2008@outlook.com");
         when(userService.selectUserById(100L)).thenReturn(user);
 
         AjaxResult result = controller.getProfile();

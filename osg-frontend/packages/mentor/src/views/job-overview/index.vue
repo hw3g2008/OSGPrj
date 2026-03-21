@@ -109,6 +109,23 @@ const filteredList = computed(() => {
   return l
 })
 
+function fallbackStudentName(record: Record<string, any>) {
+  if (record.studentName) {
+    return record.studentName
+  }
+  if (record.studentId != null) {
+    return `学员${record.studentId}`
+  }
+  return '待分配学员'
+}
+
+function normalizeJobOverview(record: Record<string, any>) {
+  return {
+    ...record,
+    studentName: fallbackStudentName(record),
+  }
+}
+
 function rowClass(r: any) { return { 'row-new': r.coachingStatus === 'new', 'row-coaching': r.coachingStatus === 'coaching', 'row-ended': r.result === 'offer' || r.result === 'rejected' } }
 function avatarColor(r: any) { const colors = ['#7399C6','#EF4444','#22C55E','#3B82F6','#F59E0B']; return colors[r.id % colors.length] }
 function stageClass(r: any) { return r.result === 'offer' ? 'success' : r.result === 'rejected' ? 'danger' : 'warning' }
@@ -119,8 +136,17 @@ async function confirmJob(r: any) {
 }
 
 onMounted(async () => {
-  try { const res = await http.get('/api/mentor/job-overview/list'); list.value = res.rows || [] } catch {}
-  try { calendarEvents.value = await http.get('/api/mentor/job-overview/calendar') || [] } catch {}
+  try {
+    const res = await http.get('/api/mentor/job-overview/list')
+    list.value = (res.rows || []).map((record: Record<string, any>) => normalizeJobOverview(record))
+  } catch {}
+  try {
+    const res = await http.get('/api/mentor/job-overview/calendar')
+    calendarEvents.value = (res || []).map((record: Record<string, any>) => ({
+      ...record,
+      studentName: fallbackStudentName(record),
+    }))
+  } catch {}
 })
 </script>
 

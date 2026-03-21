@@ -112,6 +112,7 @@ const courseTypes = [
 const computedFee = computed(() => (form.value.durationHours * hourlyRate.value).toFixed(0))
 const canSubmit = computed(() => form.value.studentId && form.value.classDate && form.value.durationHours > 0 &&
   (form.value.studentStatus === 'no_show' || (form.value.coachingType && form.value.feedback)))
+const selectedStudent = computed(() => students.value.find((student) => String(student.userId) === String(form.value.studentId)) || null)
 
 function onStudentSelect() { /* load student positions if needed */ }
 
@@ -120,9 +121,16 @@ async function handleSubmit() {
   try {
     await http.post('/api/mentor/class-records', {
       ...form.value,
+      studentName: selectedStudent.value?.nickName || '',
+      courseType: form.value.coachingType,
+      courseSource: 'mentor',
+      weeklyHours: form.value.durationHours,
+      classStatus: form.value.studentStatus === 'no_show' ? 'no_show' : 'normal',
+      feedbackContent: form.value.feedback,
       hourlyRate: hourlyRate.value,
+      rate: String(hourlyRate.value),
       totalFee: form.value.durationHours * hourlyRate.value,
-      contentType: form.value.coachingType,
+      contentType: form.value.coachingType
     })
     emit('submitted')
   } catch { /* error handled by interceptor */ }
@@ -130,7 +138,7 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  try { const res = await http.get('/api/mentor/students'); students.value = res.rows || res || [] }
+  try { const res = await http.get('/api/mentor/students/list'); students.value = res.rows || res || [] }
   catch { students.value = [] }
 })
 </script>

@@ -14,6 +14,7 @@
   "dependencies": {
     "@osg/shared": "workspace:*",
     "@ant-design/icons-vue": "^7.0.0",
+    "@mdi/font": "^7.4.47",
     "ant-design-vue": "^4.0.0",
     "dayjs": "^1.11.0",
     "pinia": "^2.1.0",
