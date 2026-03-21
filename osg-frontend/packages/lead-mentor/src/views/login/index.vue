@@ -81,13 +81,15 @@
             href="javascript:void(0)"
             class="link-anchor"
             data-surface-trigger="modal-forgot-password"
-            @click.prevent
+            @click.prevent="forgotPasswordOpen = true"
           >
             点击重置
           </a>
         </div>
       </div>
     </section>
+
+    <ForgotPasswordModal v-model="forgotPasswordOpen" />
   </div>
 </template>
 
@@ -97,6 +99,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { getUserInfo, login } from '@osg/shared/api'
 import { setToken, setUser } from '@osg/shared/utils'
+import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
 
 const iconPaths = {
   checkCircle:
@@ -120,6 +123,7 @@ const router = useRouter()
 const route = useRoute()
 const loading = ref(false)
 const passwordVisible = ref(false)
+const forgotPasswordOpen = ref(false)
 const formState = reactive({ username: '', password: '' })
 
 const handleLogin = async () => {
