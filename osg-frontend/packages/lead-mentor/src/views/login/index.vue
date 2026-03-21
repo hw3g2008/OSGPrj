@@ -9,21 +9,11 @@
       <p class="platform-subtitle">职业培训一站式平台，学生与导师共同成长</p>
 
       <div class="login-features">
-        <div class="login-feature">
-          <CheckCircleFilled />
-          <span>学生端：一对一导师辅导</span>
-        </div>
-        <div class="login-feature">
-          <CheckCircleFilled />
-          <span>导师端：高效课程管理</span>
-        </div>
-        <div class="login-feature">
-          <CheckCircleFilled />
-          <span>实时岗位信息共享</span>
-        </div>
-        <div class="login-feature">
-          <CheckCircleFilled />
-          <span>完善的学习资料库</span>
+        <div v-for="feature in featureTexts" :key="feature" class="login-feature">
+          <svg class="feature-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path :d="iconPaths.checkCircle" />
+          </svg>
+          <span>{{ feature }}</span>
         </div>
       </div>
     </section>
@@ -32,7 +22,9 @@
       <div class="login-box">
         <div class="login-logo">
           <div class="login-logo-icon">
-            <UserSwitchOutlined />
+            <svg class="logo-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path :d="iconPaths.accountStar" />
+            </svg>
           </div>
           <span>OSG Lead Mentor</span>
         </div>
@@ -42,9 +34,9 @@
 
         <form class="login-form" @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="lead-mentor-username">用户名 / 邮箱</label>
+            <label for="login-username">用户名 / 邮箱</label>
             <input
-              id="lead-mentor-username"
+              id="login-username"
               v-model.trim="formState.username"
               type="text"
               placeholder="请输入用户名或邮箱"
@@ -53,10 +45,10 @@
           </div>
 
           <div class="form-group">
-            <label for="lead-mentor-password">密码</label>
+            <label for="login-password">密码</label>
             <div class="password-field">
               <input
-                id="lead-mentor-password"
+                id="login-password"
                 v-model="formState.password"
                 :type="passwordVisible ? 'text' : 'password'"
                 placeholder="请输入密码"
@@ -68,23 +60,31 @@
                 :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
                 @click="passwordVisible = !passwordVisible"
               >
-                <EyeInvisibleOutlined v-if="passwordVisible" />
-                <EyeOutlined v-else />
+                <svg id="pwd-eye" class="toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path :d="iconPaths.eye" />
+                </svg>
               </button>
             </div>
           </div>
 
           <button class="login-btn" type="submit" :disabled="loading">
-            <LoginOutlined />
+            <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path :d="iconPaths.login" />
+            </svg>
             <span>{{ loading ? '登录中...' : '登 录' }}</span>
           </button>
         </form>
 
         <div class="login-links">
           忘记密码？
-          <button type="button" class="link-button" data-surface-trigger="modal-forgot-password">
+          <a
+            href="javascript:void(0)"
+            class="link-anchor"
+            data-surface-trigger="modal-forgot-password"
+            @click.prevent
+          >
             点击重置
-          </button>
+          </a>
         </div>
       </div>
     </section>
@@ -93,17 +93,28 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import {
-  CheckCircleFilled,
-  EyeInvisibleOutlined,
-  EyeOutlined,
-  LoginOutlined,
-  UserSwitchOutlined,
-} from '@ant-design/icons-vue'
-import { login, getUserInfo } from '@osg/shared/api'
+import { getUserInfo, login } from '@osg/shared/api'
 import { setToken, setUser } from '@osg/shared/utils'
+
+const iconPaths = {
+  checkCircle:
+    'M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M10,17L16,11L14.59,9.58L10,14.17L7.41,11.59L6,13L10,17Z',
+  accountStar:
+    'M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5.8,11L4,12.3L4.5,10L2.7,8.5L5,8.3L5.8,6L6.6,8.3L9,8.5L7.2,10L7.7,12.3L5.8,11Z',
+  eye:
+    'M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z',
+  login:
+    'M10,17V14H3V10H10V7L15,12L10,17M19,3H12V5H19V19H12V21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3Z',
+}
+
+const featureTexts = [
+  '学生端：一对一导师辅导',
+  '导师端：高效课程管理',
+  '实时岗位信息共享',
+  '完善的学习资料库',
+]
 
 const router = useRouter()
 const route = useRoute()
@@ -143,23 +154,11 @@ const handleLogin = async () => {
   --border: #e2e8f0;
 
   position: relative;
-  min-height: 100vh;
   display: flex;
+  min-height: 100vh;
   overflow: hidden;
   background: linear-gradient(135deg, #5a7ba3 0%, #7399c6 50%, #9bb8d9 100%);
-  font-family: "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-}
-
-.login-page::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  animation: float 20s linear infinite;
-  pointer-events: none;
+  font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 }
 
 .login-accent {
@@ -204,7 +203,7 @@ const handleLogin = async () => {
   flex-direction: column;
   justify-content: center;
   padding: 60px;
-  color: #ffffff;
+  color: #fff;
 }
 
 .platform-title {
@@ -237,8 +236,17 @@ const handleLogin = async () => {
   opacity: 0.9;
 }
 
-.login-feature :deep(svg) {
-  font-size: 24px;
+.feature-icon,
+.logo-icon-svg,
+.toggle-icon,
+.button-icon {
+  fill: currentColor;
+}
+
+.feature-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
 .login-right {
@@ -247,8 +255,8 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #fff;
   border-radius: 24px 0 0 24px;
-  background: #ffffff;
 }
 
 .login-box {
@@ -270,10 +278,14 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
   background: var(--primary-gradient);
-  color: #ffffff;
-  font-size: 24px;
+  border-radius: 14px;
+  color: #fff;
+}
+
+.logo-icon-svg {
+  width: 24px;
+  height: 24px;
 }
 
 .login-logo span {
@@ -309,11 +321,11 @@ const handleLogin = async () => {
 .login-form input {
   width: 100%;
   padding: 14px 16px;
+  color: var(--text);
+  font-size: 15px;
+  background: #fff;
   border: 2px solid var(--border);
   border-radius: 12px;
-  font-size: 15px;
-  color: var(--text);
-  background: #ffffff;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -339,12 +351,16 @@ const handleLogin = async () => {
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: none;
-  background: none;
   color: var(--muted);
-  font-size: 18px;
+  background: none;
+  border: none;
   cursor: pointer;
   transform: translateY(-50%);
+}
+
+.toggle-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .visibility-toggle:hover {
@@ -358,15 +374,20 @@ const handleLogin = async () => {
   justify-content: center;
   gap: 8px;
   padding: 16px;
-  border: none;
-  border-radius: 12px;
-  background: var(--primary-gradient);
-  color: #ffffff;
+  color: #fff;
   font-size: 16px;
   font-weight: 600;
-  cursor: pointer;
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: 12px;
   box-shadow: 0 4px 15px rgba(115, 153, 198, 0.4);
+  cursor: pointer;
   transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.button-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .login-btn:hover:not(:disabled) {
@@ -374,8 +395,8 @@ const handleLogin = async () => {
 }
 
 .login-btn:disabled {
-  cursor: not-allowed;
   opacity: 0.72;
+  cursor: not-allowed;
 }
 
 .login-links {
@@ -385,29 +406,16 @@ const handleLogin = async () => {
   text-align: center;
 }
 
-.link-button {
+.link-anchor {
   margin-left: 4px;
-  padding: 0;
-  border: none;
-  background: none;
   color: var(--primary);
   font-size: 13px;
   font-weight: 500;
-  cursor: pointer;
+  text-decoration: none;
 }
 
-.link-button:hover {
+.link-anchor:hover {
   color: var(--primary-dark);
-}
-
-@keyframes float {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 @media (max-width: 1120px) {
