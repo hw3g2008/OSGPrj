@@ -12,6 +12,13 @@ metadata:
 
 将 Story 拆解为微任务 Tickets，每个 Ticket 2-5 分钟可完成。自动迭代校验，直到所有检查项通过。
 
+当前仓库的标准生成入口为：
+
+```bash
+python3 .claude/skills/ticket-splitter/scripts/ticket_splitter_engine.py --module <module> --story-id S-xxx
+python3 .claude/skills/ticket-splitter/scripts/ticket_splitter_engine.py --module <module> --all-stories
+```
+
 每个 Ticket 必须指定 `type`，可选值：`backend | frontend | frontend-ui | database | test | config`
 
 ## 何时使用
@@ -69,6 +76,17 @@ acceptance_criteria:
 # Ticket 承接哪些 Story AC（split-ticket 阶段必须写出）
 covers_ac_refs:
   - "AC-S-001-01"
+
+# Delivery / UI 契约映射
+contract_refs:
+  capabilities: []
+  critical_surfaces: []
+
+# frontend-ui 细粒度视觉载荷（type=frontend-ui 时必填）
+prototype_refs: []
+visual_checklist: []
+style_contracts: []
+state_cases: []
 
 # 依赖的 Tickets
 dependencies: []
@@ -142,6 +160,7 @@ completed_at: null
 | 依赖无环 | 依赖关系是否形成 DAG（无环图）？ | 是 | 否 → 调整依赖 |
 | 验收可测 | 每个 Ticket 的 acceptance_criteria 是否可客观验证？ | 是 | 否 → 改写为可验证语句 |
 | 展示验证 | type=frontend/frontend-ui 的 Ticket AC 是否包含"页面展示验证"步骤？ | 是 | 否 → 补充展示类 AC |
+| UI 视觉载荷 | type=frontend-ui 的 Ticket 是否具备 `prototype_refs / visual_checklist / style_contracts`，critical surface 是否具备 `state_cases`？ | 是 | 否 → 阻止通过，必须补齐 |
 | 场景类别标签 | 每个 Ticket AC 是否声明 `[category][scenario_obligation]` 双标签？ | 全部有 | 否 → 由 `parse_ac_labels()` 补充或提示补写 |
 | 场景义务完整性 | 同一 Story 下的 Ticket 集合是否覆盖 Story 的全部 `required_test_obligations`？ | 全部覆盖 | 否 → 补充缺失义务类别的 Ticket |
 
@@ -257,6 +276,10 @@ def strip_ac_labels(ac_text: str) -> str:
 def ensure_test_case_fields(ticket: dict, labels: dict):
     """将解析出的 category + scenario_obligation 写入 ticket.test_cases 对应条目。
     如果 test_cases 不存在则初始化；如果已存在但缺字段则补充。"""
+
+def ensure_frontend_ui_payload(ticket: dict):
+    """frontend-ui Ticket 必须携带 prototype_refs / visual_checklist / style_contracts。
+    critical surface ticket 还必须包含 state_cases。缺任一项则校验失败。"""
 
 def find_ac_by_ref(ticket: dict, ac_ref: str) -> str | None:
     """根据 ac_ref 在 ticket.acceptance_criteria 中找到对应的 AC 文本。

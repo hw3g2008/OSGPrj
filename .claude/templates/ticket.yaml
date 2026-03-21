@@ -25,9 +25,42 @@ acceptance_criteria:
 # Story AC 覆盖映射（split-ticket 时必须生成）
 covers_ac_refs: []  # 例如 ["AC-S-001-01"]
 
-# UI 还原专属字段（type: frontend-ui 时使用）
-# prototype_ref: "${config.paths.docs.prototypes}{file}#section"
-# design_tokens_ref: ".claude/project/agents/{agent}.md#设计 Token"
+# Delivery / UI 契约映射（split-ticket 时必须生成）
+contract_refs:
+  capabilities: []       # 例如 ["auth-login"]
+  critical_surfaces: []  # 例如 ["modal-forgot-password"]
+
+# UI 还原专属字段（type: frontend-ui 时必须生成）
+prototype_refs: []
+#   - target_type: "page"         # page | surface
+#     page_id: "login-page"
+#     surface_id: null
+#     host_page_id: null
+#     route: "/login"
+#     prototype_file: "lead-mentor.html"
+#     prototype_selector: "#login-page"
+
+visual_checklist: []
+#   - item_id: "heading-001"
+#     kind: "heading"             # heading | paragraph | label | button | link | input | icon
+#     selector: ".login-title"
+#     text: "欢迎回来"
+#     icon_library: null
+#     icon_name: null
+
+style_contracts: []
+#   - selector: ".login-box"
+#     prototype_selector: ".login-box"
+#     css:
+#       width: "420px"
+#       border-radius: "28px"
+#       padding: "48px"
+
+state_cases: []
+#   - state_id: "step-email"
+#     required_anchors: [".forgot-step-email", ".forgot-send-btn"]
+#     style_contracts: []
+#     viewport_variants: ["desktop", "tablet"]
 
 # 依赖的 Tickets
 dependencies: []

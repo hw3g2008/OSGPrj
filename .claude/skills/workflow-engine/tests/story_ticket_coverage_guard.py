@@ -113,6 +113,42 @@ def _variant_ids(surface_spec: dict, key: str, variant_key: str) -> set[str]:
     return values
 
 
+def validate_frontend_ui_ticket_payload(
+    *,
+    ticket: dict | None,
+    surface_spec: dict | None = None,
+) -> list[str]:
+    if not isinstance(ticket, dict):
+        return ["ticket is not a mapping"]
+
+    missing_parts: list[str] = []
+    prototype_refs = ticket.get("prototype_refs") or []
+    visual_checklist = ticket.get("visual_checklist") or []
+    style_contracts = ticket.get("style_contracts") or []
+    if not isinstance(prototype_refs, list) or not prototype_refs:
+        missing_parts.append("prototype_refs")
+    if not isinstance(visual_checklist, list) or not visual_checklist:
+        missing_parts.append("visual_checklist")
+    if not isinstance(style_contracts, list) or not style_contracts:
+        missing_parts.append("style_contracts")
+
+    if surface_spec:
+        state_cases = ticket.get("state_cases") or []
+        if not isinstance(state_cases, list) or not state_cases:
+            missing_parts.append("state_cases")
+        required_states = _variant_ids(surface_spec, "state_variants", "state_id")
+        provided_states = {
+            item.get("state_id")
+            for item in state_cases
+            if isinstance(item, dict) and isinstance(item.get("state_id"), str) and item.get("state_id")
+        }
+        missing_state_ids = sorted(state_id for state_id in required_states if state_id not in provided_states)
+        if missing_state_ids:
+            missing_parts.append(f"state_cases[{','.join(missing_state_ids)}]")
+
+    return missing_parts
+
+
 def evaluate_story_ticket_coverage(
     *,
     stories_dir: Path,
@@ -173,6 +209,12 @@ def evaluate_story_ticket_coverage(
                 findings.append(
                     f"ticket story mismatch: {tid} declared_by={sid} actual_story_id={actual_story_id}"
                 )
+            if (ticket.get("type") or "") == "frontend-ui":
+                missing_parts = validate_frontend_ui_ticket_payload(ticket=ticket)
+                if missing_parts:
+                    findings.append(
+                        f"frontend-ui ticket missing visual payload: {sid} -> {tid} -> {missing_parts}"
+                    )
 
         for capability_id in sorted(story_capabilities):
             if capability_id not in capability_scopes:
@@ -219,6 +261,12 @@ def evaluate_story_ticket_coverage(
                 if not story_surface_cases.get(surface_id):
                     findings.append(f"overlay critical surface missing story_cases skeleton: {sid} -> {surface_id}")
                 ui_tickets = [ticket for ticket in mapped_tickets if (ticket.get("type") or "") == "frontend-ui"]
+                for ticket in ui_tickets:
+                    missing_parts = validate_frontend_ui_ticket_payload(ticket=ticket, surface_spec=surface_spec)
+                    if missing_parts:
+                        findings.append(
+                            f"critical surface frontend-ui ticket missing visual payload: {sid} -> {ticket.get('id')} -> {surface_id} -> {missing_parts}"
+                        )
                 ticket_surface_cases: list[dict] = []
                 for ticket in ui_tickets:
                     ticket_surface_cases.extend(extract_ticket_surface_cases(ticket).get(surface_id, []))

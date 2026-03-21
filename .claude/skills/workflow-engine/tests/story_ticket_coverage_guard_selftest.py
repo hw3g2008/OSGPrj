@@ -205,6 +205,78 @@ def test_critical_surface_requires_frontend_ui_ticket() -> None:
         assert any("missing frontend-ui ticket coverage" in item for item in findings), findings
 
 
+def test_frontend_ui_ticket_missing_visual_payload_fails() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_yaml(
+            root / "stories/S-001.yaml",
+            {
+                "id": "S-001",
+                "tickets": ["T-001"],
+                "contract_refs": {"critical_surfaces": ["forgot-password-modal"]},
+                "story_cases": [
+                    {
+                        "story_case_id": "SC-S-001-001",
+                        "ac_ref": "AC-S-001-01",
+                        "case_kind": "critical_surface",
+                        "surface_id": "forgot-password-modal",
+                    }
+                ],
+            },
+        )
+        _write_yaml(
+            root / "tickets/T-001.yaml",
+            {
+                "id": "T-001",
+                "story_id": "S-001",
+                "type": "frontend-ui",
+                "contract_refs": {"critical_surfaces": ["forgot-password-modal"]},
+                "prototype_refs": [],
+                "visual_checklist": [],
+                "style_contracts": [],
+                "state_cases": [],
+                "test_cases": [
+                    {
+                        "test_case_id": "TCS-T-001-001",
+                        "ac_ref": "AC-S-001-01",
+                        "case_kind": "critical_surface",
+                        "surface_id": "forgot-password-modal",
+                        "state_variant": "step-email",
+                        "viewport_variant": "desktop",
+                    }
+                ],
+            },
+        )
+        _write_yaml(root / "DELIVERY-CONTRACT.yaml", {"schema_version": 1, "module": "lead-mentor", "capabilities": []})
+        _write_yaml(
+            root / "UI-VISUAL-CONTRACT.yaml",
+            {
+                "pages": [
+                    {
+                        "page_id": "login-page",
+                        "critical_surfaces": [
+                            {
+                                "surface_id": "forgot-password-modal",
+                                "surface_type": "modal",
+                                "state_variants": [{"state_id": "step-email"}],
+                                "viewport_variants": [{"viewport_id": "desktop"}],
+                            }
+                        ],
+                    }
+                ]
+            },
+        )
+
+        findings = evaluate_story_ticket_coverage(
+            stories_dir=root / "stories",
+            tickets_dir=root / "tickets",
+            delivery_contract_doc=root / "DELIVERY-CONTRACT.yaml",
+            ui_contract_doc=root / "UI-VISUAL-CONTRACT.yaml",
+        )
+
+        assert any("visual payload" in item for item in findings), findings
+
+
 def test_story_missing_contract_refs_fails_when_contracts_exist() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -435,6 +507,7 @@ def main() -> int:
         test_valid_inputs_pass,
         test_external_effect_requires_implementation_and_verification_ticket,
         test_critical_surface_requires_frontend_ui_ticket,
+        test_frontend_ui_ticket_missing_visual_payload_fails,
         test_story_missing_contract_refs_fails_when_contracts_exist,
         test_story_with_empty_contract_refs_passes_when_other_story_maps_contract_items,
         test_overlay_surface_requires_story_and_ticket_surface_skeletons,

@@ -50,12 +50,13 @@
 1. 触发 Planner Agent
 2. 加载 ticket-splitter Skill
 3. 读取 Story 定义
-4. 拆解为微任务
-5. 分配 allowed_paths
-6. 分析依赖关系
-7. 生成 Ticket YAML 文件
-8. 更新 STATE.yaml
-9. 由 ticket-splitter 内部调用 transition() 推进到 ticket_split_done
+4. 调用 `ticket_splitter_engine.py` 拆解为微任务
+5. 为 `frontend-ui` Ticket 自动提取 `prototype_refs / visual_checklist / style_contracts / state_cases`
+6. 分配 allowed_paths
+7. 分析依赖关系
+8. 生成 Ticket YAML / proof / traceability matrix
+9. 更新 STATE.yaml
+10. 由 ticket-splitter 内部调用 transition() 推进到 ticket_split_done
 ```
 
 ### 输出
