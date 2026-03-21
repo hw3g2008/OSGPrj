@@ -53,6 +53,35 @@ async function clickTriggerTarget(triggerRoot: Locator): Promise<void> {
   }
 }
 
+async function waitForRequiredAnchors(page: Page, anchors: string[], contextId: string): Promise<void> {
+  for (const anchor of anchors) {
+    await expect(page.locator(anchor).first(), `host anchor should exist: ${contextId} -> ${anchor}`).toBeVisible()
+  }
+}
+
+async function waitForAnyOfAnchorGroups(page: Page, groups: string[][], contextId: string): Promise<void> {
+  if (!Array.isArray(groups) || groups.length === 0) {
+    return
+  }
+
+  const failures: string[] = []
+  for (const group of groups) {
+    try {
+      await waitForRequiredAnchors(page, group, contextId)
+      return
+    } catch {
+      failures.push(group.join(' && '))
+    }
+  }
+
+  throw new Error(`host required_anchors_any_of not satisfied: ${contextId} -> ${failures.join(' || ')}`)
+}
+
+async function waitForHostPageReady(page: Page, hostPage: VisualPageContract): Promise<void> {
+  await waitForRequiredAnchors(page, hostPage.required_anchors || [], hostPage.page_id)
+  await waitForAnyOfAnchorGroups(page, hostPage.required_anchors_any_of || [], hostPage.page_id)
+}
+
 export async function waitForVisualSettle(page: Page, stableWaitMs: number): Promise<void> {
   await page.waitForLoadState('domcontentloaded')
   try {
@@ -69,6 +98,8 @@ export async function performSurfaceTrigger(
   surface: VisualSurfaceContract,
   visualSource: 'app' | 'prototype',
 ): Promise<void> {
+  await waitForHostPageReady(page, hostPage)
+
   const trigger = surface.trigger_action || { type: 'auto-open' as const }
   const selector =
     visualSource === 'prototype'

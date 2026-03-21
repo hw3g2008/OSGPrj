@@ -94,3 +94,49 @@ test('wrapper trigger prefers trigger root when outer surface wrapper owns click
     page.locator('[data-surface-id="modal-wrapper-root"] [data-surface-part="shell"]'),
   ).toBeVisible()
 })
+
+test('waits for host page anchors before resolving delayed surface triggers', async ({ page }) => {
+  await page.setContent(`
+    <div id="host-page">
+      <a data-surface-trigger="modal-delayed" href="javascript:void(0)">点击重置</a>
+    </div>
+    <div data-surface-id="modal-delayed" style="display:block;">
+      <div data-surface-part="shell" style="display:none;">modal shell</div>
+    </div>
+    <script>
+      setTimeout(() => {
+        const host = document.getElementById('host-page')
+        host.setAttribute('data-host-ready', '1')
+        host.querySelector('[data-surface-trigger="modal-delayed"]').addEventListener('click', () => {
+          document.querySelector('[data-surface-id="modal-delayed"] [data-surface-part="shell"]').style.display = 'block'
+        })
+      }, 2500)
+    </script>
+  `)
+
+  const delayedHostPage = {
+    ...hostPage,
+    required_anchors: ['#host-page[data-host-ready="1"]'],
+    stable_wait_ms: 0,
+  } satisfies VisualPageContract
+
+  const surface = {
+    surface_id: 'modal-delayed',
+    surface_type: 'modal',
+    host_page_id: delayedHostPage.page_id,
+    prototype_selector: '#modal-delayed',
+    app_selector: '[data-surface-id="modal-delayed"] [data-surface-part="shell"]',
+    surface_root_selector: '[data-surface-id="modal-delayed"] [data-surface-part="shell"]',
+    trigger_action: {
+      type: 'click',
+      selector: '[data-surface-trigger="modal-delayed"]',
+    },
+    required_anchors: [],
+    viewport_variants: [],
+    surface_parts: [],
+  } satisfies VisualSurfaceContract
+
+  await performSurfaceTrigger(page, delayedHostPage, surface, 'app')
+
+  await expect(page.locator('[data-surface-id="modal-delayed"] [data-surface-part="shell"]')).toBeVisible()
+})
