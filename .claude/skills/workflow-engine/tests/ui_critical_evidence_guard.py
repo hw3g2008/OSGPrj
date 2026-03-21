@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,92 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 def _load_json(path: Path) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
     return data if isinstance(data, dict) else {}
+
+
+def _derive_story_scope(
+    contract: dict[str, Any],
+    story_id: str,
+    project_root: Path,
+    errors: list[str],
+) -> dict[str, Any]:
+    story_path = project_root / "osg-spec-docs" / "tasks" / "stories" / f"{story_id}.yaml"
+    tickets_dir = project_root / "osg-spec-docs" / "tasks" / "tickets"
+    if not story_path.exists():
+        _err(errors, f"story file not found for story scope: {story_path}")
+        return contract
+
+    story = _load_yaml(story_path)
+    page_ids: set[str] = set()
+    surface_ids: set[str] = set()
+
+    story_contract_refs = story.get("contract_refs")
+    if isinstance(story_contract_refs, dict):
+        for surface_id in story_contract_refs.get("critical_surfaces") or []:
+            if _is_non_empty_string(surface_id):
+                surface_ids.add(surface_id.strip())
+
+    for ticket_id in story.get("tickets") or []:
+        if not _is_non_empty_string(ticket_id):
+            continue
+        ticket_path = tickets_dir / f"{ticket_id}.yaml"
+        if not ticket_path.exists():
+            _err(errors, f"ticket file not found while deriving story scope: {ticket_path}")
+            continue
+        ticket = _load_yaml(ticket_path)
+        for ref in ticket.get("prototype_refs") or []:
+            if not isinstance(ref, dict):
+                continue
+            target_type = str(ref.get("target_type") or "").strip()
+            if target_type == "page":
+                page_id = ref.get("page_id")
+                if _is_non_empty_string(page_id):
+                    page_ids.add(str(page_id).strip())
+            elif target_type == "surface":
+                surface_id = ref.get("surface_id")
+                host_page_id = ref.get("host_page_id")
+                if _is_non_empty_string(surface_id):
+                    surface_ids.add(str(surface_id).strip())
+                if _is_non_empty_string(host_page_id):
+                    page_ids.add(str(host_page_id).strip())
+
+    filtered = deepcopy(contract)
+    contract_surfaces = contract.get("surfaces") or []
+    filtered_surfaces: list[dict[str, Any]] = []
+    if isinstance(contract_surfaces, list):
+        for surface in contract_surfaces:
+            if not isinstance(surface, dict):
+                continue
+            surface_id = surface.get("surface_id")
+            if not _is_non_empty_string(surface_id) or surface_id not in surface_ids:
+                continue
+            filtered_surfaces.append(deepcopy(surface))
+            host_page_id = surface.get("host_page_id")
+            if _is_non_empty_string(host_page_id):
+                page_ids.add(str(host_page_id).strip())
+    filtered["surfaces"] = filtered_surfaces
+
+    contract_pages = contract.get("pages") or []
+    filtered_pages: list[dict[str, Any]] = []
+    if isinstance(contract_pages, list):
+        for page in contract_pages:
+            if not isinstance(page, dict):
+                continue
+            page_id = page.get("page_id")
+            if not _is_non_empty_string(page_id) or page_id not in page_ids:
+                continue
+            page_copy = deepcopy(page)
+            critical_surfaces = page_copy.get("critical_surfaces") or []
+            if isinstance(critical_surfaces, list):
+                page_copy["critical_surfaces"] = [
+                    surface
+                    for surface in critical_surfaces
+                    if isinstance(surface, dict)
+                    and _is_non_empty_string(surface.get("surface_id"))
+                    and surface.get("surface_id") in surface_ids
+                ]
+            filtered_pages.append(page_copy)
+    filtered["pages"] = filtered_pages
+    return filtered
 
 
 def _load_ui_delivery_policy(config_path: Path, errors: list[str]) -> dict[str, Any]:
@@ -542,10 +629,20 @@ def validate_page_report(
     *,
     stage: str,
     policy: dict[str, Any] | None = None,
+    story_id: str | None = None,
+    project_root: Path | None = None,
 ) -> None:
     if stage not in ALLOWED_STAGES:
         _err(errors, f"stage must be one of {sorted(ALLOWED_STAGES)}")
         return
+
+    if story_id:
+        contract = _derive_story_scope(
+            contract,
+            story_id,
+            project_root or Path.cwd(),
+            errors,
+        )
 
     page_map = _to_page_map(report, errors)
     module = contract.get("module")
@@ -636,6 +733,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--contract", required=True, help="Path to UI-VISUAL-CONTRACT.yaml")
     parser.add_argument("--page-report", required=True, help="Path to ui-visual-page-report-*.json")
     parser.add_argument("--stage", required=True, choices=sorted(ALLOWED_STAGES))
+    parser.add_argument("--story-id", help="Optional story id to scope contract pages/surfaces for story-level verify")
     parser.add_argument("--output-json", help="Optional path to write summary JSON")
     return parser.parse_args()
 
@@ -647,12 +745,21 @@ def main() -> int:
     errors: list[str] = []
     policy = _load_ui_delivery_policy(Path.cwd() / ".claude/project/config.yaml", errors)
     validate_contract(contract, errors, policy=policy)
-    validate_page_report(contract, report, errors, stage=args.stage, policy=policy)
+    validate_page_report(
+        contract,
+        report,
+        errors,
+        stage=args.stage,
+        policy=policy,
+        story_id=args.story_id,
+        project_root=Path.cwd(),
+    )
 
     summary = {
         "contract": args.contract,
         "page_report": args.page_report,
         "stage": args.stage,
+        "story_id": args.story_id,
         "issues": errors,
     }
     if args.output_json:

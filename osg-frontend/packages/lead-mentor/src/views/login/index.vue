@@ -10,9 +10,7 @@
 
       <div class="login-features">
         <div v-for="feature in featureTexts" :key="feature" class="login-feature">
-          <svg class="feature-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path :d="iconPaths.checkCircle" />
-          </svg>
+          <span class="mdi mdi-check-circle feature-icon" aria-hidden="true"></span>
           <span>{{ feature }}</span>
         </div>
       </div>
@@ -22,9 +20,7 @@
       <div class="login-box">
         <div class="login-logo">
           <div class="login-logo-icon">
-            <svg class="logo-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
-              <path :d="iconPaths.accountStar" />
-            </svg>
+            <span class="mdi mdi-account-star logo-icon-glyph" aria-hidden="true"></span>
           </div>
           <span>OSG Lead Mentor</span>
         </div>
@@ -33,9 +29,7 @@
         <p class="login-subtitle">使用您的账号登录（主导师/班主任）</p>
 
         <div v-if="errorMessage" class="login-error" role="alert">
-          <svg class="error-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path :d="iconPaths.alertCircle" />
-          </svg>
+          <span class="mdi mdi-alert-circle error-icon" aria-hidden="true"></span>
           <span>{{ errorMessage }}</span>
         </div>
 
@@ -67,17 +61,13 @@
                 :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
                 @click="passwordVisible = !passwordVisible"
               >
-                <svg id="pwd-eye" class="toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path :d="iconPaths.eye" />
-                </svg>
+                <span id="pwd-eye" class="mdi mdi-eye toggle-icon" aria-hidden="true"></span>
               </button>
             </div>
           </div>
 
           <button class="login-btn" type="submit" :disabled="loading">
-            <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path :d="iconPaths.login" />
-            </svg>
+            <span class="mdi mdi-login button-icon" aria-hidden="true"></span>
             <span>{{ loading ? '登录中...' : '登 录' }}</span>
           </button>
         </form>
@@ -116,9 +106,7 @@
       >
         <div class="forgot-password-header" data-surface-part="header">
           <span id="forgot-password-title" class="forgot-password-title">
-            <svg class="modal-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path :d="iconPaths.key" />
-            </svg>
+            <span class="mdi mdi-key modal-icon" aria-hidden="true"></span>
             找回密码
           </span>
           <button
@@ -168,7 +156,8 @@
               :disabled="forgotPasswordLoading.send"
               @click="handleSendResetCode"
             >
-              {{ forgotPasswordLoading.send ? '发送中...' : '发送验证码' }}
+              <span v-if="!forgotPasswordLoading.send" class="mdi mdi-email-fast btn-icon" aria-hidden="true"></span>
+              <span>{{ forgotPasswordLoading.send ? '发送中...' : '发送验证码' }}</span>
             </button>
           </div>
 
@@ -207,7 +196,8 @@
               :disabled="forgotPasswordLoading.verify"
               @click="handleVerifyResetCode"
             >
-              {{ forgotPasswordLoading.verify ? '验证中...' : '验证' }}
+              <span v-if="!forgotPasswordLoading.verify" class="mdi mdi-check btn-icon" aria-hidden="true"></span>
+              <span>{{ forgotPasswordLoading.verify ? '验证中...' : '验证' }}</span>
             </button>
           </div>
 
@@ -248,7 +238,8 @@
               :disabled="forgotPasswordLoading.reset"
               @click="handleResetPassword"
             >
-              {{ forgotPasswordLoading.reset ? '重置中...' : '重置密码' }}
+              <span v-if="!forgotPasswordLoading.reset" class="mdi mdi-lock-reset btn-icon" aria-hidden="true"></span>
+              <span>{{ forgotPasswordLoading.reset ? '重置中...' : '重置密码' }}</span>
             </button>
           </div>
 
@@ -258,9 +249,7 @@
             class="forgot-password-step success-step"
           >
             <div class="success-icon-wrap">
-              <svg class="success-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path :d="iconPaths.checkCircle" />
-              </svg>
+              <span class="mdi mdi-check-circle success-icon" aria-hidden="true"></span>
             </div>
             <h3 class="success-title">密码重置成功</h3>
             <p class="step-text">您的密码已成功重置，请使用新密码登录</p>
@@ -288,21 +277,6 @@ import {
 import { clearAuth, setToken, setUser } from '@osg/shared/utils'
 
 type ForgotPasswordStep = 'step-email' | 'step-code' | 'step-reset' | 'step-success'
-
-const iconPaths = {
-  checkCircle:
-    'M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M10,17L16,11L14.59,9.58L10,14.17L7.41,11.59L6,13L10,17Z',
-  accountStar:
-    'M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5.8,11L4,12.3L4.5,10L2.7,8.5L5,8.3L5.8,6L6.6,8.3L9,8.5L7.2,10L7.7,12.3L5.8,11Z',
-  key:
-    'M7,14A2,2 0 0,1 9,16A2,2 0 0,1 11,14A2,2 0 0,1 9,12A2,2 0 0,1 7,14M18,1L12,7C11.04,6.83 10.05,6.88 9.14,7.14L7.76,5.76L6.35,7.17L7.38,8.2C6.94,8.5 6.56,8.87 6.26,9.3L5.2,8.24L3.79,9.65L5.17,11.03C4.93,11.94 4.89,12.91 5.05,13.86L1,17.92V23H6.08L10.15,18.93C11.08,19.09 12.05,19.05 12.97,18.8L14.34,20.17L15.75,18.76L14.7,17.71C15.13,17.41 15.5,17.03 15.8,16.6L16.83,17.63L18.24,16.22L16.86,14.84C17.12,13.93 17.17,12.94 17,11.97L23,6M18,4.5A1.5,1.5 0 0,0 16.5,6A1.5,1.5 0 0,0 18,7.5A1.5,1.5 0 0,0 19.5,6A1.5,1.5 0 0,0 18,4.5Z',
-  alertCircle:
-    'M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z',
-  eye:
-    'M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z',
-  login:
-    'M10,17V14H3V10H10V7L15,12L10,17M19,3H12V5H19V19H12V21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3Z',
-}
 
 const featureTexts = [
   '学生端：一对一导师辅导',
@@ -644,17 +618,10 @@ onBeforeUnmount(() => {
   opacity: 0.9;
 }
 
-.feature-icon,
-.logo-icon-svg,
-.toggle-icon,
-.button-icon {
-  fill: currentColor;
-}
-
 .feature-icon {
-  width: 24px;
-  height: 24px;
   flex-shrink: 0;
+  font-size: 24px;
+  line-height: 1;
 }
 
 .login-right {
@@ -691,9 +658,9 @@ onBeforeUnmount(() => {
   color: #fff;
 }
 
-.logo-icon-svg {
-  width: 24px;
-  height: 24px;
+.logo-icon-glyph {
+  font-size: 24px;
+  line-height: 1;
 }
 
 .login-logo span {
@@ -729,10 +696,9 @@ onBeforeUnmount(() => {
 }
 
 .error-icon {
-  width: 20px;
-  height: 20px;
   flex-shrink: 0;
-  fill: currentColor;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .login-form .form-group {
@@ -788,8 +754,8 @@ onBeforeUnmount(() => {
 }
 
 .toggle-icon {
-  width: 18px;
-  height: 18px;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .visibility-toggle:hover {
@@ -815,8 +781,8 @@ onBeforeUnmount(() => {
 }
 
 .button-icon {
-  width: 18px;
-  height: 18px;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .login-btn:hover:not(:disabled) {
@@ -862,21 +828,22 @@ onBeforeUnmount(() => {
 .forgot-password-shell {
   position: relative;
   z-index: 1;
-  width: min(450px, calc(100vw - 32px));
+  width: calc(100vw - 32px);
+  max-width: 450px;
   margin: 80px auto;
   overflow: hidden;
   border-radius: 20px;
   background-color: #fff;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
 }
 
 .forgot-password-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 22px;
+  padding: 22px 26px;
   color: #fff;
   background: linear-gradient(135deg, #7399c6 0%, #9bb8d9 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .forgot-password-title {
@@ -887,25 +854,20 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
-.modal-icon,
-.success-icon {
-  fill: currentColor;
-}
-
 .modal-icon {
-  width: 18px;
-  height: 18px;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .modal-close {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   color: #fff;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
   background: rgba(255, 255, 255, 0.2);
   border: none;
-  border-radius: 50%;
+  border-radius: 10px;
   cursor: pointer;
 }
 
@@ -958,7 +920,7 @@ onBeforeUnmount(() => {
 
 .step-text {
   margin: 0 0 20px;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.6;
   text-align: center;
@@ -982,12 +944,12 @@ onBeforeUnmount(() => {
 
 .form-input {
   width: 100%;
-  padding: 14px 16px;
+  padding: 12px 14px;
   color: var(--text);
-  font-size: 15px;
+  font-size: 14px;
   background: #fff;
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1004,9 +966,16 @@ onBeforeUnmount(() => {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -1018,26 +987,28 @@ onBeforeUnmount(() => {
 .btn-primary {
   color: #fff;
   background: var(--primary-gradient);
-  box-shadow: 0 4px 15px rgba(115, 153, 198, 0.28);
+  box-shadow: 0 4px 12px rgba(115, 153, 198, 0.3);
 }
 
 .btn-outline {
-  color: var(--primary-dark);
-  background: #eef4fb;
-  border: 1px solid rgba(115, 153, 198, 0.32);
+  color: var(--text-secondary);
+  background: #fff;
+  border: 1px solid var(--border);
 }
 
 .modal-action-btn {
   width: 100%;
-  padding: 14px 16px;
-  font-size: 15px;
-  font-weight: 600;
+}
+
+.btn-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .masked-email {
-  margin: 0 0 18px;
-  color: var(--primary-dark);
-  font-size: 16px;
+  margin: 0 0 20px;
+  color: var(--text);
+  font-size: 14px;
   font-weight: 600;
   text-align: center;
 }
@@ -1047,26 +1018,26 @@ onBeforeUnmount(() => {
 }
 
 .success-icon-wrap {
-  width: 68px;
-  height: 68px;
+  width: 80px;
+  height: 80px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 18px;
-  color: #16a34a;
-  background: #eaf8ef;
+  color: #059669;
+  background: #d1fae5;
   border-radius: 50%;
 }
 
 .success-icon {
-  width: 32px;
-  height: 32px;
+  font-size: 40px;
+  line-height: 1;
 }
 
 .success-title {
   margin: 0 0 12px;
   color: var(--text);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
 }
 

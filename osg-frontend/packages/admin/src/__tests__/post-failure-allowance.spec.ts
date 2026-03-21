@@ -278,6 +278,24 @@ describe('evaluatePostFailureAllowance', () => {
     expect(result.source).toBe('derived')
   })
 
+  it('falls back to derived allowances when explicit regions exist but remain too narrow', () => {
+    const input: PostFailureAllowanceInput = {
+      diffPixels: [{ x: 80, y: 66 }],
+      explicitResidualRegions: [
+        { class: 'micro_spacing', selectors: ['.shell'], boxes: [{ x: 10, y: 10, width: 40, height: 40 }] },
+      ],
+      derivedSafeBoxes: [],
+      derivedLowSalienceTextIconBoxes: [{ x: 40, y: 50, width: 120, height: 24 }],
+      forbiddenRegions: [],
+      microSpacingEdgeBandPx: 4,
+    }
+    const result = evaluatePostFailureAllowance(input)
+    expect(result.applied).toBe(true)
+    expect(result.pass).toBe(true)
+    expect(result.source).toBe('hybrid')
+    expect(result.classifierResult.classBreakdown.low_salience_text_icon_rasterization).toBe(1)
+  })
+
   it('fails when diff pixels fall outside all safe boxes (geometry_change)', () => {
     const input: PostFailureAllowanceInput = {
       diffPixels: [{ x: 500, y: 500 }],

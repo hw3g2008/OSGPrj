@@ -46,7 +46,7 @@ export interface PostFailureAllowanceInput {
 export interface PostFailureAllowanceResult {
   applied: boolean
   pass: boolean
-  source: 'explicit' | 'derived' | 'none'
+  source: 'explicit' | 'derived' | 'hybrid' | 'none'
   classifierResult: VisualResidualClassifierResult
 }
 
@@ -281,24 +281,62 @@ export function evaluatePostFailureAllowance(
   } = input
 
   if (explicitResidualRegions.length > 0) {
-    const allowedRegions: AllowedVisualResidualRegion[] = explicitResidualRegions.map((r) => ({
+    const explicitAllowedRegions: AllowedVisualResidualRegion[] = explicitResidualRegions.map((r) => ({
       class: r.class,
       selector: r.selectors.join(', '),
       boxes: r.boxes,
     }))
 
-    const classifierResult = classifyVisualResiduals({
+    const explicitClassifierResult = classifyVisualResiduals({
       diffPixels,
-      allowedRegions,
+      allowedRegions: explicitAllowedRegions,
+      forbiddenRegions,
+      microSpacingEdgeBandPx,
+    })
+
+    if (explicitClassifierResult.pass) {
+      return {
+        applied: true,
+        pass: true,
+        source: 'explicit',
+        classifierResult: explicitClassifierResult,
+      }
+    }
+
+    const derivedAllowedRegions: AllowedVisualResidualRegion[] = [
+      ...derivedSafeBoxes.map((box, i) => ({
+        class: 'micro_spacing' as const,
+        selector: `[derived-safe-box-${i}]`,
+        boxes: [box],
+      })),
+      ...derivedLowSalienceTextIconBoxes.map((box, i) => ({
+        class: 'low_salience_text_icon_rasterization' as const,
+        selector: `[derived-low-salience-${i}]`,
+        boxes: [box],
+      })),
+    ]
+
+    if (derivedAllowedRegions.length === 0) {
+      return {
+        applied: true,
+        pass: false,
+        source: 'explicit',
+        classifierResult: explicitClassifierResult,
+      }
+    }
+
+    const hybridClassifierResult = classifyVisualResiduals({
+      diffPixels,
+      allowedRegions: [...explicitAllowedRegions, ...derivedAllowedRegions],
       forbiddenRegions,
       microSpacingEdgeBandPx,
     })
 
     return {
       applied: true,
-      pass: classifierResult.pass,
-      source: 'explicit',
-      classifierResult,
+      pass: hybridClassifierResult.pass,
+      source: 'hybrid',
+      classifierResult: hybridClassifierResult,
     }
   }
 

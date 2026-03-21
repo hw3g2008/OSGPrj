@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import tempfile
 from copy import deepcopy
 from pathlib import Path
 
@@ -430,6 +431,90 @@ def test_classifier_applied_surface_viewport_complete_evidence_passes(module) ->
     assert not issues, issues
 
 
+def test_story_scope_filters_unrelated_pages_and_surfaces(module) -> None:
+    contract = build_contract()
+    contract["pages"].append(
+        {
+            "page_id": "home",
+            "route": "/home",
+            "prototype_file": "admin.html",
+            "prototype_selector": "#page-home",
+            "viewport": {"width": 1440, "height": 900},
+            "auth_mode": "protected",
+            "snapshot_name": "home",
+            "baseline_ref": "osg-frontend/tests/e2e/visual-baseline/permission-home-1440x900.png",
+            "diff_threshold": 0.03,
+            "stable_wait_ms": 300,
+            "required_anchors": [".home"],
+            "critical_surfaces": [],
+        }
+    )
+    contract["surfaces"].append(
+        {
+            "surface_id": "modal-other",
+            "surface_type": "modal",
+            "host_page_id": "home",
+            "prototype_selector": "#other-modal",
+            "app_selector": "[data-surface-id='modal-other']",
+            "surface_root_selector": "[data-surface-id='modal-other']",
+            "trigger_action": {"type": "click", "selector": "[data-surface-trigger='modal-other']"},
+            "required_anchors": ["[data-surface-id='modal-other']"],
+            "viewport_variants": [{"viewport_id": "desktop", "width": 1440, "height": 900}],
+            "surface_parts": [
+                {"part_id": "shell", "selector": "[data-surface-id='modal-other']", "mask_allowed": False},
+            ],
+        }
+    )
+    report = build_page_report()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        (root / "osg-spec-docs" / "tasks" / "stories").mkdir(parents=True)
+        (root / "osg-spec-docs" / "tasks" / "tickets").mkdir(parents=True)
+        (root / "osg-spec-docs" / "tasks" / "stories" / "S-001.yaml").write_text(
+            """
+id: S-001
+tickets:
+  - T-001
+  - T-002
+contract_refs:
+  critical_surfaces:
+    - modal-forgot-password
+""".strip(),
+            encoding="utf-8",
+        )
+        (root / "osg-spec-docs" / "tasks" / "tickets" / "T-001.yaml").write_text(
+            """
+id: T-001
+prototype_refs:
+  - target_type: page
+    page_id: login-page
+""".strip(),
+            encoding="utf-8",
+        )
+        (root / "osg-spec-docs" / "tasks" / "tickets" / "T-002.yaml").write_text(
+            """
+id: T-002
+prototype_refs:
+  - target_type: surface
+    surface_id: modal-forgot-password
+    host_page_id: login-page
+""".strip(),
+            encoding="utf-8",
+        )
+
+        issues = []
+        module.validate_page_report(
+            contract,
+            report,
+            issues,
+            stage="verify",
+            story_id="S-001",
+            project_root=root,
+        )
+        assert not issues, issues
+
+
 def main() -> int:
     module = load_guard_module()
     tests = [
@@ -445,6 +530,7 @@ def main() -> int:
         test_classifier_applied_page_requires_classifier_evidence_fields,
         test_classifier_applied_surface_viewport_requires_classifier_evidence_fields,
         test_classifier_applied_surface_viewport_complete_evidence_passes,
+        test_story_scope_filters_unrelated_pages_and_surfaces,
     ]
     for fn in tests:
         fn(module)

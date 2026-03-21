@@ -7,6 +7,7 @@ set -euo pipefail
 MODULE="${1:-permission}"
 MODE="verify"
 SOURCE=""
+STORY_ID=""
 DEV_ENV_FILE="${DEV_ENV_FILE:-deploy/.env.dev}"
 UI_VISUAL_GREP_TAG="${UI_VISUAL_GREP_TAG:-@ui-visual}"
 UI_STATE_GREP_TAG="${UI_STATE_GREP_TAG:-@ui-state}"
@@ -31,6 +32,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --source=*)
       SOURCE="${1#*=}"
+      shift
+      ;;
+    --story-id)
+      STORY_ID="${2:-}"
+      shift 2
+      ;;
+    --story-id=*)
+      STORY_ID="${1#*=}"
       shift
       ;;
     *)
@@ -133,6 +142,32 @@ contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) 
 Path("${CONTRACT_JSON}").write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
 PY
 
+if [[ -n "${STORY_ID}" ]]; then
+  python3 - <<PY
+import json
+import sys
+from pathlib import Path
+
+project_root = Path.cwd()
+sys.path.insert(0, str((project_root / ".claude" / "skills" / "workflow-engine" / "tests").resolve()))
+import ui_critical_evidence_guard as guard
+
+contract_path = project_root / "${CONTRACT_JSON}"
+contract = json.loads(contract_path.read_text(encoding="utf-8"))
+errors = []
+filtered = guard._derive_story_scope(contract, "${STORY_ID}", project_root, errors)
+if errors:
+    for issue in errors:
+        print(f"FAIL: {issue}")
+    raise SystemExit(18)
+contract_path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2), encoding="utf-8")
+print(
+    "INFO: story_scope_applied="
+    f"${STORY_ID} pages={len(filtered.get('pages') or [])} surfaces={len(filtered.get('surfaces') or [])}"
+)
+PY
+fi
+
 CONTRACT_FIXED_TIME="$(python3 - <<PY
 import json
 from pathlib import Path
@@ -172,6 +207,9 @@ PY
 )"
 
 echo "INFO: module=${MODULE} mode=${MODE} source=${SOURCE} contract=${CONTRACT_PATH}"
+if [[ -n "${STORY_ID}" ]]; then
+  echo "INFO: story_id=${STORY_ID}"
+fi
 echo "INFO: summary=${SUMMARY_JSON}"
 echo "INFO: contract_json=${CONTRACT_JSON}"
 echo "INFO: has_state_cases=${HAS_STATE_CASES}"
@@ -356,10 +394,9 @@ fi
 
 python3 - <<PY
 import json
-import yaml
 from pathlib import Path
 
-contract = yaml.safe_load(Path("${CONTRACT_PATH}").read_text(encoding="utf-8")) or {}
+contract = json.loads(Path("${CONTRACT_JSON}").read_text(encoding="utf-8"))
 pages = contract.get("pages", []) if isinstance(contract.get("pages"), list) else []
 result_path = Path("${PAGE_RESULTS_JSONL}")
 

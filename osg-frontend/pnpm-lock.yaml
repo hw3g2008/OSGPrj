@@ -161,6 +161,12 @@ importers:
       '@vitejs/plugin-vue':
         specifier: ^4.5.0
         version: 4.6.2(vite@5.4.21(@types/node@20.19.30)(sass@1.97.3))(vue@3.5.27(typescript@5.9.3))
+      '@vue/test-utils':
+        specifier: ^2.4.0
+        version: 2.4.6
+      jsdom:
+        specifier: ^22.1.0
+        version: 22.1.0
       sass:
         specifier: ^1.69.0
         version: 1.97.3
@@ -170,6 +176,9 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.21(@types/node@20.19.30)(sass@1.97.3)
+      vitest:
+        specifier: ^1.0.0
+        version: 1.6.1(@types/node@20.19.30)(jsdom@22.1.0)(sass@1.97.3)
       vue-tsc:
         specifier: ^1.8.0
         version: 1.8.27(typescript@5.9.3)

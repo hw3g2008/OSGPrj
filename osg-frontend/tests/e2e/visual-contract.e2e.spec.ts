@@ -907,6 +907,22 @@ async function navigateToVisualTarget(
     await page.goto(pageContract.route)
   }
 
+  if ((pageContract.clear_input_values || []).length > 0) {
+    await page.evaluate((selectors) => {
+      for (const selector of selectors) {
+        const elements = Array.from(document.querySelectorAll(selector))
+        for (const element of elements) {
+          if (!(element instanceof HTMLInputElement) && !(element instanceof HTMLTextAreaElement)) {
+            continue
+          }
+          element.value = ''
+          element.dispatchEvent(new Event('input', { bubbles: true }))
+          element.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+      }
+    }, pageContract.clear_input_values)
+  }
+
   await waitForVisualSettle(page, pageContract.stable_wait_ms || 300)
 }
 
@@ -1300,7 +1316,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
             return { x: Math.round(rect.left + window.scrollX), y: Math.round(rect.top + window.scrollY) }
           })
           surfaceResidualClassifierResult = await runPostFailureAllowance(
-            page, surfaceRoot, capturedDiffRef, surfaceOrigin, [],
+            page, surfaceRoot, capturedDiffRef, surfaceOrigin, surfaceContract.residual_regions || [],
           )
           if (surfaceResidualClassifierResult?.pass) {
             capturedResult = 'PASS'

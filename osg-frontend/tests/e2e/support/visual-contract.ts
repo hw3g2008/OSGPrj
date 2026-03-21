@@ -103,6 +103,7 @@ export interface VisualPageContract {
   data_mode?: VisualDataMode
   fixture_routes?: VisualFixtureRoute[]
   dynamic_regions?: string[]
+  clear_input_values?: string[]
   critical_surfaces?: VisualCriticalSurfaceContract[]
   residual_regions?: VisualResidualRegion[]
 }
@@ -176,6 +177,7 @@ export interface VisualSurfaceContract {
   content_parts?: VisualSurfaceContentPartContract[]
   style_contracts?: VisualSurfaceCssContract[]
   state_contracts?: VisualSurfaceStateContract[]
+  residual_regions?: VisualResidualRegion[]
   _generated_note?: string
 }
 
