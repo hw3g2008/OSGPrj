@@ -164,12 +164,23 @@ def check_file_count_consistency(state):
     # Stories
     stories_in_state = state.get("stories") or []
     stories_on_disk = list(STORIES_DIR.glob("S-*.yaml")) if STORIES_DIR.exists() else []
-    if len(stories_in_state) != len(stories_on_disk):
-        msg = f"Stories 计数不一致: STATE={len(stories_in_state)}, disk={len(stories_on_disk)}"
-        issues.append(msg)
-        print(f"  ❌ {msg}")
+    if stories_in_state:
+        missing_stories = [
+            story_id
+            for story_id in stories_in_state
+            if not (STORIES_DIR / f"{story_id}.yaml").exists()
+        ]
+        if missing_stories:
+            msg = f"Stories 文件缺失: {missing_stories}"
+            issues.append(msg)
+            print(f"  ❌ {msg}")
+        else:
+            print(
+                f"  ✅ Stories 文件完整: active={len(stories_in_state)} "
+                f"(disk_total={len(stories_on_disk)})"
+            )
     else:
-        print(f"  ✅ Stories 计数一致: {len(stories_in_state)}")
+        print("  ✅ Stories 列表为空")
 
     # Tickets — 检查 STATE.tickets 中的每个 ticket 是否在磁盘上存在
     # 注意：磁盘上可能有历史 Story 的 ticket 文件，所以不能简单比较总数

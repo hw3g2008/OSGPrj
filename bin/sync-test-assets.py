@@ -492,17 +492,21 @@ def _variant_ids(surface_spec: dict[str, Any], key: str, variant_key: str) -> li
 
 
 def _next_story_case_id(story_id_value: str, normalized: list[dict[str, Any]], used_ids: set[str]) -> str:
-    candidate = story_case_id(story_id_value, len(normalized) + 1)
+    next_index = len(normalized) + 1
+    candidate = story_case_id(story_id_value, next_index)
     while candidate in used_ids:
-        candidate = story_case_id(story_id_value, len(normalized) + 2)
+        next_index += 1
+        candidate = story_case_id(story_id_value, next_index)
     used_ids.add(candidate)
     return candidate
 
 
 def _next_ticket_case_id(ticket_id_value: str, normalized: list[dict[str, Any]], used_ids: set[str]) -> str:
-    candidate = ticket_test_case_id(ticket_id_value, len(normalized) + 1)
+    next_index = len(normalized) + 1
+    candidate = ticket_test_case_id(ticket_id_value, next_index)
     while candidate in used_ids:
-        candidate = ticket_test_case_id(ticket_id_value, len(normalized) + 2)
+        next_index += 1
+        candidate = ticket_test_case_id(ticket_id_value, next_index)
     used_ids.add(candidate)
     return candidate
 
@@ -559,9 +563,11 @@ def normalize_story_cases(story: dict[str, Any]) -> list[dict[str, Any]]:
         ac_ref = story_ac_ref(story_id_value, index)
         if ac_ref in covered_ac_refs:
             continue
-        case_id = story_case_id(story_id_value, len(normalized) + 1)
+        next_index = len(normalized) + 1
+        case_id = story_case_id(story_id_value, next_index)
         while case_id in used_ids:
-            case_id = story_case_id(story_id_value, len(normalized) + 2)
+            next_index += 1
+            case_id = story_case_id(story_id_value, next_index)
         used_ids.add(case_id)
         normalized.append(
             {
@@ -620,9 +626,11 @@ def normalize_ticket_test_cases(ticket: dict[str, Any]) -> list[dict[str, Any]]:
     for ac_ref in covers_ac_refs:
         if ac_ref in covered_ac_refs:
             continue
-        case_id = ticket_test_case_id(ticket_id_value, len(normalized) + 1)
+        next_index = len(normalized) + 1
+        case_id = ticket_test_case_id(ticket_id_value, next_index)
         while case_id in used_ids:
-            case_id = ticket_test_case_id(ticket_id_value, len(normalized) + 2)
+            next_index += 1
+            case_id = ticket_test_case_id(ticket_id_value, next_index)
         used_ids.add(case_id)
         normalized.append(
             {
