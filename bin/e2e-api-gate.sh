@@ -58,6 +58,19 @@ case "${MODE}" in
     ;;
 esac
 
+EXTRA_E2E_ARGS=()
+
+case "${MODULE}" in
+  lead-mentor)
+    # lead-mentor tickets are verified through module-scoped Playwright specs.
+    # This prevents unrelated admin recovery/backfill suites from blocking a
+    # login-shell ticket while still keeping the command on the real e2e path.
+    E2E_SCRIPT="test:e2e"
+    WORKER_POLICY="serial"
+    EXTRA_E2E_ARGS+=(--grep "@lead-mentor")
+    ;;
+esac
+
 python3 .claude/skills/workflow-engine/tests/e2e_api_guard.py \
   --tests-dir osg-frontend/tests/e2e
 
@@ -68,6 +81,9 @@ echo "INFO: module=${MODULE} mode=${MODE} worker_policy=${WORKER_POLICY} base_ur
 E2E_CMD=(pnpm --dir osg-frontend "${E2E_SCRIPT}")
 if [[ "${WORKER_POLICY}" == "serial" ]]; then
   E2E_CMD+=(--workers=1)
+fi
+if [[ ${#EXTRA_E2E_ARGS[@]} -gt 0 ]]; then
+  E2E_CMD+=("${EXTRA_E2E_ARGS[@]}")
 fi
 
 set +e

@@ -14,15 +14,64 @@ const webServerTimeoutMs =
     ? parsedWebServerTimeout
     : 300_000
 const disableWebServerForPrototypeVisualSource = process.env.UI_VISUAL_SOURCE === 'prototype'
-const visualModule = process.env.UI_VISUAL_MODULE || 'permission'
+const requestedModule = process.env.UI_VISUAL_MODULE || process.env.E2E_MODULE || 'permission'
 const visualContractJson = process.env.UI_VISUAL_CONTRACT_JSON || ''
-const useStudentVisualTarget =
-  visualModule === 'student' || /\/student\/|student-.*\.json$/i.test(visualContractJson)
-const visualBaseURL = useStudentVisualTarget ? 'http://127.0.0.1:4000' : 'http://localhost:4173'
-const visualWebServerCommand = useStudentVisualTarget
-  ? 'pnpm --dir packages/student build && pnpm --dir packages/student preview --host 127.0.0.1 --port 4000 --strictPort'
-  : 'pnpm --dir packages/admin build && pnpm --dir packages/admin preview --host 127.0.0.1 --port 4173 --strictPort'
-const visualWebServerPort = useStudentVisualTarget ? 4000 : 4173
+
+interface E2ETarget {
+  baseURL: string
+  webServerCommand: string
+  webServerPort: number
+}
+
+function resolveE2ETarget(moduleName: string, contractJsonPath: string): E2ETarget {
+  const normalizedModule = moduleName.trim().toLowerCase()
+  const inferredStudentModule =
+    normalizedModule === 'student' || /\/student\/|student-.*\.json$/i.test(contractJsonPath)
+
+  if (inferredStudentModule) {
+    return {
+      baseURL: 'http://127.0.0.1:4000',
+      webServerCommand:
+        'pnpm --dir packages/student build && pnpm --dir packages/student preview --host 127.0.0.1 --port 4000 --strictPort',
+      webServerPort: 4000,
+    }
+  }
+
+  switch (normalizedModule) {
+    case 'mentor':
+      return {
+        baseURL: 'http://127.0.0.1:4175',
+        webServerCommand:
+          'pnpm --dir packages/mentor exec vite build && pnpm --dir packages/mentor preview --host 127.0.0.1 --port 4175 --strictPort',
+        webServerPort: 4175,
+      }
+    case 'lead-mentor':
+      return {
+        baseURL: 'http://127.0.0.1:4174',
+        webServerCommand:
+          'pnpm --dir packages/lead-mentor exec vite build && pnpm --dir packages/lead-mentor preview --host 127.0.0.1 --port 4174 --strictPort',
+        webServerPort: 4174,
+      }
+    case 'assistant':
+      return {
+        baseURL: 'http://127.0.0.1:4176',
+        webServerCommand:
+          'pnpm --dir packages/assistant exec vite build && pnpm --dir packages/assistant preview --host 127.0.0.1 --port 4176 --strictPort',
+        webServerPort: 4176,
+      }
+    case 'permission':
+    case 'admin':
+    default:
+      return {
+        baseURL: 'http://localhost:4173',
+        webServerCommand:
+          'pnpm --dir packages/admin build && pnpm --dir packages/admin preview --host 127.0.0.1 --port 4173 --strictPort',
+        webServerPort: 4173,
+      }
+  }
+}
+
+const e2eTarget = resolveE2ETarget(requestedModule, visualContractJson)
 
 const snapshotPathTemplate = process.env.PW_VISUAL_SNAPSHOT_TEMPLATE
 const stability = resolveStabilityConfigFromEnv()
@@ -38,7 +87,7 @@ export default defineConfig({
   reporter: [['html', { open: 'never' }], ['list']],
 
   use: {
-    baseURL: visualBaseURL,
+    baseURL: e2eTarget.baseURL,
     trace: 'on-first-retry',
     locale: stability.locale,
     timezoneId: stability.timezoneId,
@@ -56,8 +105,8 @@ export default defineConfig({
   webServer: disableWebServerForPrototypeVisualSource
     ? undefined
     : {
-        command: visualWebServerCommand,
-        port: visualWebServerPort,
+        command: e2eTarget.webServerCommand,
+        port: e2eTarget.webServerPort,
         reuseExistingServer,
         timeout: webServerTimeoutMs,
       },
