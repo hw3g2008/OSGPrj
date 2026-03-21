@@ -1,9 +1,19 @@
 import { http } from '../utils/request'
 import type { LoginParams, UserInfo } from '../types'
 
+const PUBLIC_AUTH_REQUEST = {
+  skipErrorMessage: true,
+  skipAuthRedirect: true,
+} as const
+
 // 登录
 export function login(data: LoginParams): Promise<{ token: string }> {
   return http.post('/login', data)
+}
+
+// Lead mentor 登录
+export function leadMentorLogin(data: LoginParams): Promise<{ token: string }> {
+  return http.post('/lead-mentor/login', data, PUBLIC_AUTH_REQUEST)
 }
 
 // Student 登录
@@ -24,6 +34,14 @@ export function getInfo(): Promise<{
   firstLogin: boolean
 }> {
   return http.get('/getInfo')
+}
+
+export function getLeadMentorInfo(): Promise<{
+  user: UserInfo
+  roles: string[]
+  permissions: string[]
+}> {
+  return http.get('/lead-mentor/getInfo')
 }
 
 export const getUserInfo = getInfo

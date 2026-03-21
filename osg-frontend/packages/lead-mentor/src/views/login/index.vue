@@ -32,6 +32,13 @@
         <h2 class="login-title">欢迎回来</h2>
         <p class="login-subtitle">使用您的账号登录（主导师/班主任）</p>
 
+        <div v-if="errorMessage" class="login-error" role="alert">
+          <svg class="error-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path :d="iconPaths.alertCircle" />
+          </svg>
+          <span>{{ errorMessage }}</span>
+        </div>
+
         <form class="login-form" @submit.prevent="handleLogin">
           <div class="form-group">
             <label for="login-username">用户名 / 邮箱</label>
@@ -97,8 +104,8 @@
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { getUserInfo, login } from '@osg/shared/api'
-import { setToken, setUser } from '@osg/shared/utils'
+import { getLeadMentorInfo, leadMentorLogin } from '@osg/shared/api'
+import { clearAuth, setToken, setUser } from '@osg/shared/utils'
 import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
 
 const iconPaths = {
@@ -106,6 +113,8 @@ const iconPaths = {
     'M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M10,17L16,11L14.59,9.58L10,14.17L7.41,11.59L6,13L10,17Z',
   accountStar:
     'M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5.8,11L4,12.3L4.5,10L2.7,8.5L5,8.3L5.8,6L6.6,8.3L9,8.5L7.2,10L7.7,12.3L5.8,11Z',
+  alertCircle:
+    'M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z',
   eye:
     'M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z',
   login:
@@ -124,9 +133,11 @@ const route = useRoute()
 const loading = ref(false)
 const passwordVisible = ref(false)
 const forgotPasswordOpen = ref(false)
+const errorMessage = ref('')
 const formState = reactive({ username: '', password: '' })
 
 const handleLogin = async () => {
+  errorMessage.value = ''
   if (!formState.username || !formState.password) {
     message.error('请输入用户名和密码')
     return
@@ -134,12 +145,27 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const { token } = await login(formState)
+    const { token } = await leadMentorLogin({
+      username: formState.username.trim(),
+      password: formState.password,
+    })
     setToken(token)
-    const userInfo = await getUserInfo()
-    setUser(userInfo)
+    const userInfo = await getLeadMentorInfo()
+    if (!userInfo.roles?.includes('lead-mentor') && !userInfo.roles?.includes('admin')) {
+      clearAuth()
+      errorMessage.value = '该账号无班主任端访问权限'
+      return
+    }
+    setUser({
+      ...userInfo.user,
+      roles: userInfo.roles,
+      permissions: userInfo.permissions,
+    })
     message.success('登录成功')
     router.push((route.query.redirect as string) || '/')
+  } catch (error: any) {
+    clearAuth()
+    errorMessage.value = error?.message || '用户不存在/密码错误'
   } finally {
     loading.value = false
   }
@@ -308,6 +334,27 @@ const handleLogin = async () => {
 .login-subtitle {
   margin: 0 0 28px;
   color: var(--muted);
+}
+
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.error-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: currentColor;
 }
 
 .login-form .form-group {
