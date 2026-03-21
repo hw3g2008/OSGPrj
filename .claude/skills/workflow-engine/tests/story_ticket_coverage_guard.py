@@ -125,12 +125,31 @@ def validate_frontend_ui_ticket_payload(
     prototype_refs = ticket.get("prototype_refs") or []
     visual_checklist = ticket.get("visual_checklist") or []
     style_contracts = ticket.get("style_contracts") or []
+    ui_rule_classes = ticket.get("ui_rule_classes") or []
     if not isinstance(prototype_refs, list) or not prototype_refs:
         missing_parts.append("prototype_refs")
     if not isinstance(visual_checklist, list) or not visual_checklist:
         missing_parts.append("visual_checklist")
     if not isinstance(style_contracts, list) or not style_contracts:
         missing_parts.append("style_contracts")
+    if not isinstance(ui_rule_classes, list) or not ui_rule_classes:
+        missing_parts.append("ui_rule_classes")
+
+    visual_kinds = {
+        item.get("kind")
+        for item in visual_checklist
+        if isinstance(item, dict) and isinstance(item.get("kind"), str) and item.get("kind")
+    }
+    provided_rule_classes = {
+        item.strip()
+        for item in ui_rule_classes
+        if isinstance(item, str) and item.strip()
+    }
+    style_rule_classes = {
+        rule.get("rule_class")
+        for rule in style_contracts
+        if isinstance(rule, dict) and isinstance(rule.get("rule_class"), str) and rule.get("rule_class")
+    }
 
     if surface_spec:
         state_cases = ticket.get("state_cases") or []
@@ -145,7 +164,31 @@ def validate_frontend_ui_ticket_payload(
         missing_state_ids = sorted(state_id for state_id in required_states if state_id not in provided_states)
         if missing_state_ids:
             missing_parts.append(f"state_cases[{','.join(missing_state_ids)}]")
+        for case in state_cases:
+            if not isinstance(case, dict):
+                continue
+            for rule in case.get("style_contracts") or []:
+                if isinstance(rule, dict) and isinstance(rule.get("rule_class"), str) and rule.get("rule_class"):
+                    style_rule_classes.add(rule.get("rule_class"))
+        if surface_spec.get("surface_type") in OVERLAY_SURFACE_TYPES:
+            if "overlay-surface-layout" not in provided_rule_classes:
+                missing_parts.append("ui_rule_classes[overlay-surface-layout]")
+            if "overlay-surface-layout" not in style_rule_classes:
+                missing_parts.append("style_contracts[overlay-surface-layout]")
 
+    if "icon" in visual_kinds:
+        if "iconography-consistency" not in provided_rule_classes:
+            missing_parts.append("ui_rule_classes[iconography-consistency]")
+    if {"label", "input", "button"} & visual_kinds:
+        if "control-box-model" not in provided_rule_classes:
+            missing_parts.append("ui_rule_classes[control-box-model]")
+        if "control-box-model" not in style_rule_classes:
+            missing_parts.append("style_contracts[control-box-model]")
+    if surface_spec and surface_spec.get("surface_type") in OVERLAY_SURFACE_TYPES and {"label", "input", "button"} & visual_kinds:
+        if "form-spacing" not in provided_rule_classes:
+            missing_parts.append("ui_rule_classes[form-spacing]")
+        if "form-spacing" not in style_rule_classes:
+            missing_parts.append("style_contracts[form-spacing]")
     return missing_parts
 
 

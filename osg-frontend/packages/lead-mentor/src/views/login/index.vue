@@ -22,7 +22,7 @@
           <div class="login-logo-icon">
             <span class="mdi mdi-account-star logo-icon-glyph" aria-hidden="true"></span>
           </div>
-          <span>OSG Lead Mentor</span>
+          <span class="login-logo-text">OSG Lead Mentor</span>
         </div>
 
         <h2 class="login-title">欢迎回来</h2>
@@ -663,7 +663,7 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-.login-logo span {
+.login-logo-text {
   color: var(--text);
   font-size: 22px;
   font-weight: 700;
@@ -817,22 +817,29 @@ onBeforeUnmount(() => {
   position: fixed;
   inset: 0;
   z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
 }
 
 .forgot-password-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.38);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
 }
 
 .forgot-password-shell {
   position: relative;
   z-index: 1;
-  width: calc(100vw - 32px);
+  width: 90%;
   max-width: 450px;
-  margin: 80px auto;
-  overflow: hidden;
+  max-height: 90vh;
+  margin: 0;
+  overflow-y: auto;
   border-radius: 20px;
+  font-family: Arial, sans-serif;
   background-color: #fff;
 }
 
@@ -843,6 +850,7 @@ onBeforeUnmount(() => {
   padding: 22px 26px;
   color: #fff;
   background: linear-gradient(135deg, #7399c6 0%, #9bb8d9 100%);
+  border-bottom: 1px solid var(--border);
   border-radius: 16px 16px 0 0;
 }
 
@@ -852,6 +860,7 @@ onBeforeUnmount(() => {
   gap: 8px;
   font-size: 18px;
   font-weight: 700;
+  line-height: normal;
 }
 
 .modal-icon {
@@ -918,11 +927,15 @@ onBeforeUnmount(() => {
   display: block;
 }
 
+.forgot-password-step .form-group {
+  margin-bottom: 16px;
+}
+
 .step-text {
   margin: 0 0 20px;
   color: var(--text-secondary);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: normal;
   text-align: center;
 }
 
@@ -936,6 +949,7 @@ onBeforeUnmount(() => {
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
+  line-height: normal;
 }
 
 .required-mark {
@@ -944,9 +958,11 @@ onBeforeUnmount(() => {
 
 .form-input {
   width: 100%;
+  height: 44px;
   padding: 12px 14px;
   color: var(--text);
   font-size: 14px;
+  line-height: normal;
   background: #fff;
   border: 2px solid var(--border);
   border-radius: 10px;
@@ -960,9 +976,18 @@ onBeforeUnmount(() => {
 }
 
 .code-row {
-  display: grid;
-  grid-template-columns: 1fr 104px;
-  gap: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.code-row .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.code-row .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .btn {
@@ -976,6 +1001,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  line-height: normal;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -998,6 +1024,7 @@ onBeforeUnmount(() => {
 
 .modal-action-btn {
   width: 100%;
+  justify-content: flex-start;
 }
 
 .btn-icon {
@@ -1010,6 +1037,7 @@ onBeforeUnmount(() => {
   color: var(--text);
   font-size: 14px;
   font-weight: 600;
+  line-height: normal;
   text-align: center;
 }
 
@@ -1035,10 +1063,11 @@ onBeforeUnmount(() => {
 }
 
 .success-title {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--text);
   font-size: 18px;
   font-weight: 700;
+  line-height: normal;
 }
 
 @media (max-width: 1120px) {
@@ -1080,13 +1109,12 @@ onBeforeUnmount(() => {
     padding: 32px 24px;
   }
 
-  .login-logo span {
+  .login-logo-text {
     font-size: 20px;
   }
 
   .forgot-password-shell {
-    width: calc(100vw - 24px);
-    margin: 32px auto;
+    width: 100%;
   }
 
   .forgot-password-body {

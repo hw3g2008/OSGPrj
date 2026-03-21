@@ -122,6 +122,14 @@ def test_frontend_ui_bundle_contains_visual_details() -> None:
                   .login-box { border-radius: 20px; padding: 56px; }
                   .login-logo-icon { width: 48px; height: 48px; border-radius: 14px; }
                   .login-btn { height: 56px; border-radius: 16px; }
+                  #modal-forgot-password .modal-content { max-width: 450px; border-radius: 20px; }
+                  #modal-forgot-password .modal-header { padding: 22px 26px 22px 26px; border-bottom-width: 1px; }
+                  #modal-forgot-password .modal-body { padding: 26px; }
+                  #modal-forgot-password .form-group { margin-bottom: 16px; }
+                  #modal-forgot-password label { line-height: normal; }
+                  #modal-forgot-password input { height: 44px; }
+                  #modal-forgot-password p { margin-bottom: 20px; }
+                  #modal-forgot-password button { height: 40px; justify-content: flex-start; }
                 </style>
               </head>
               <body>
@@ -177,11 +185,34 @@ def test_frontend_ui_bundle_contains_visual_details() -> None:
         assert any(item.get("text") == "OSG Platform" for item in page_ticket["visual_checklist"]), page_ticket
         assert any(item.get("icon_name") == "mdi-account-star" for item in page_ticket["visual_checklist"]), page_ticket
         assert page_ticket["style_contracts"], page_ticket
+        assert {
+            "page-shell",
+            "control-box-model",
+            "iconography-consistency",
+        }.issubset(set(page_ticket["ui_rule_classes"])), page_ticket
 
         surface_ticket = next(ticket for ticket in ui_tickets if ticket["contract_refs"]["critical_surfaces"])
         assert surface_ticket["contract_refs"]["critical_surfaces"] == ["modal-forgot-password"]
         assert surface_ticket["state_cases"], surface_ticket
         assert {case["state_id"] for case in surface_ticket["state_cases"]} == {"step-email", "step-code", "step-reset"}
+        assert {
+            "overlay-surface-layout",
+            "control-box-model",
+            "form-spacing",
+            "action-content-alignment",
+        }.issubset(set(surface_ticket["ui_rule_classes"])), surface_ticket
+        assert any(
+            rule.get("selector") == "#modal-forgot-password button"
+            and rule.get("rule_class") == "action-content-alignment"
+            and (rule.get("css") or {}).get("justify-content") == "flex-start"
+            for rule in surface_ticket["style_contracts"]
+        ), surface_ticket
+        assert any(
+            rule.get("selector") == "#modal-forgot-password input"
+            and rule.get("rule_class") == "control-box-model"
+            and (rule.get("css") or {}).get("height") == "44px"
+            for rule in surface_ticket["style_contracts"]
+        ), surface_ticket
 
 
 def test_module_generation_backfills_overlay_story_cases() -> None:

@@ -51,7 +51,7 @@
 2. 加载 ticket-splitter Skill
 3. 读取 Story 定义
 4. 调用 `ticket_splitter_engine.py` 拆解为微任务
-5. 为 `frontend-ui` Ticket 自动提取 `prototype_refs / visual_checklist / style_contracts / state_cases`
+5. 为 `frontend-ui` Ticket 自动提取 `ui_rule_classes / prototype_refs / visual_checklist / style_contracts / state_cases`
 6. 分配 allowed_paths
 7. 分析依赖关系
 8. 生成 Ticket YAML / proof / traceability matrix

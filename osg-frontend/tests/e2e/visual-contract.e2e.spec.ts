@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { spawnSync } from 'node:child_process'
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import { loginAsAdmin } from './support/auth'
 import { isCssSemanticallyEqual } from './support/css-value'
@@ -106,6 +107,28 @@ function buildSurfaceActualPath(
   const outputPath = path.resolve(visualEvidenceDir, 'surfaces', surfaceContract.surface_id, `${viewportLabel}.png`)
   fs.mkdirSync(path.dirname(outputPath), { recursive: true })
   return outputPath
+}
+
+function areDecodedPngPixelsIdentical(expectedRef: string, actualRef: string): boolean {
+  const expectedPath = toRepoAbsolute(expectedRef)
+  const actualPath = toRepoAbsolute(actualRef)
+  if (!expectedPath || !actualPath || !fs.existsSync(expectedPath) || !fs.existsSync(actualPath)) {
+    return false
+  }
+
+  const pythonCheck = [
+    'from PIL import Image, ImageChops',
+    'import sys',
+    'expected = Image.open(sys.argv[1]).convert("RGBA")',
+    'actual = Image.open(sys.argv[2]).convert("RGBA")',
+    'sys.exit(0 if ImageChops.difference(expected, actual).getbbox() is None else 1)',
+  ].join('; ')
+
+  const result = spawnSync('python3', ['-c', pythonCheck, expectedPath, actualPath], {
+    encoding: 'utf8',
+  })
+
+  return result.status === 0
 }
 
 function extractDiffRefFromError(error: unknown): string {
@@ -1177,6 +1200,10 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           capturedResult = 'FAIL'
           const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
           capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
+          if (actualRef !== 'none' && areDecodedPngPixelsIdentical(pageContract.baseline_ref, actualRef)) {
+            capturedResult = 'PASS'
+            capturedDiffRef = 'none'
+          } else {
           residualClassifierResult = await runPostFailureAllowance(
             page, page.locator('body').first(), capturedDiffRef, { x: 0, y: 0 },
             pageContract.residual_regions || [],
@@ -1185,6 +1212,7 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
             capturedResult = 'PASS'
           } else {
             capturedError = error
+          }
           }
         }
         const criticalSurfaceResults = await collectCriticalSurfaceResults(pageContract, page, actualRef, capturedDiffRef)
@@ -1231,14 +1259,18 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         capturedResult = 'FAIL'
         const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
         capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
-        residualClassifierResult = await runPostFailureAllowance(
-          page, clipTarget!, capturedDiffRef, captureOrigin!,
-          pageContract.residual_regions || [],
-        )
-        if (residualClassifierResult?.pass) {
+        if (actualRef !== 'none' && areDecodedPngPixelsIdentical(pageContract.baseline_ref, actualRef)) {
           capturedResult = 'PASS'
         } else {
-          capturedError = error
+          residualClassifierResult = await runPostFailureAllowance(
+            page, clipTarget!, capturedDiffRef, captureOrigin!,
+            pageContract.residual_regions || [],
+          )
+          if (residualClassifierResult?.pass) {
+            capturedResult = 'PASS'
+          } else {
+            capturedError = error
+          }
         }
       }
       const criticalSurfaceResults = await collectCriticalSurfaceResults(pageContract, page, actualRef, capturedDiffRef)
@@ -1311,17 +1343,21 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
           capturedResult = 'FAIL'
           const diffRef = inferDiffRefFromArtifacts(testInfo, snapshotArg)
           capturedDiffRef = diffRef !== 'none' ? diffRef : extractDiffRefFromError(error)
-          const surfaceOrigin = await surfaceRoot.evaluate((el) => {
-            const rect = (el as Element).getBoundingClientRect()
-            return { x: Math.round(rect.left + window.scrollX), y: Math.round(rect.top + window.scrollY) }
-          })
-          surfaceResidualClassifierResult = await runPostFailureAllowance(
-            page, surfaceRoot, capturedDiffRef, surfaceOrigin, surfaceContract.residual_regions || [],
-          )
-          if (surfaceResidualClassifierResult?.pass) {
+          if (actualRef !== 'none' && areDecodedPngPixelsIdentical(baselineRef, actualRef)) {
             capturedResult = 'PASS'
           } else {
-            capturedError = error
+            const surfaceOrigin = await surfaceRoot.evaluate((el) => {
+              const rect = (el as Element).getBoundingClientRect()
+              return { x: Math.round(rect.left + window.scrollX), y: Math.round(rect.top + window.scrollY) }
+            })
+            surfaceResidualClassifierResult = await runPostFailureAllowance(
+              page, surfaceRoot, capturedDiffRef, surfaceOrigin, surfaceContract.residual_regions || [],
+            )
+            if (surfaceResidualClassifierResult?.pass) {
+              capturedResult = 'PASS'
+            } else {
+              capturedError = error
+            }
           }
         }
 

@@ -167,7 +167,7 @@ metadata:
 开始
   │
   ▼
-[读取 Ticket] ─→ 获取 ticket_id, allowed_paths, prototype_refs, visual_checklist, style_contracts, state_cases, acceptance_criteria
+[读取 Ticket] ─→ 获取 ticket_id, allowed_paths, ui_rule_classes, prototype_refs, visual_checklist, style_contracts, state_cases, acceptance_criteria
   │
   ▼
 [创建 Checkpoint] ─→ 保存当前状态
@@ -176,7 +176,7 @@ metadata:
 [读取原型] ─→ 读取 prototype_refs 指定的 HTML 文件，提取目标区域结构和样式
   │
   ▼
-[视觉对齐] ─→ 逐项核对 visual_checklist / style_contracts / state_cases，禁止“相似替代”图标或间距
+[视觉对齐] ─→ 逐项核对 ui_rule_classes / visual_checklist / style_contracts / state_cases，禁止“相似替代”图标或间距
   │
   ▼
 [组件映射] ─→ 将原型 HTML 元素映射为目标 UI 框架组件（映射表由项目 Agent 定义）
@@ -838,7 +838,7 @@ def incremental_verify(ticket, story, state):
 - 必须创建 Checkpoint
 - **证据先于断言**：完成声明必须附带命令输出证明（测试结果、lint 输出、build 输出等）
 - UI 还原类 Ticket 必须引用 `prototype_refs` 中指定的原型片段作为视觉依据
-- UI 还原类 Ticket 必须逐项消费 `visual_checklist / style_contracts`，critical surface 还必须覆盖 `state_cases`
+- UI 还原类 Ticket 必须逐项消费 `ui_rule_classes / visual_checklist / style_contracts`，critical surface 还必须覆盖 `state_cases`
 
 ---
 

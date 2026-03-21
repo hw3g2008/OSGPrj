@@ -31,6 +31,14 @@ contract_refs:
   critical_surfaces: []  # 例如 ["modal-forgot-password"]
 
 # UI 还原专属字段（type: frontend-ui 时必须生成）
+ui_rule_classes: []
+#   - "page-shell"
+#   - "overlay-surface-layout"
+#   - "control-box-model"
+#   - "form-spacing"
+#   - "action-content-alignment"
+#   - "iconography-consistency"
+
 prototype_refs: []
 #   - target_type: "page"         # page | surface
 #     page_id: "login-page"
@@ -51,6 +59,7 @@ visual_checklist: []
 style_contracts: []
 #   - selector: ".login-box"
 #     prototype_selector: ".login-box"
+#     rule_class: "page-shell"
 #     css:
 #       width: "420px"
 #       border-radius: "28px"

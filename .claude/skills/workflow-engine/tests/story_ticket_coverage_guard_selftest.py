@@ -277,6 +277,92 @@ def test_frontend_ui_ticket_missing_visual_payload_fails() -> None:
         assert any("visual payload" in item for item in findings), findings
 
 
+def test_frontend_ui_ticket_missing_rule_classes_and_rule_coverage_fails() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write_yaml(
+            root / "stories/S-001.yaml",
+            {
+                "id": "S-001",
+                "tickets": ["T-001"],
+                "contract_refs": {"critical_surfaces": ["modal-forgot-password"]},
+                "story_cases": [
+                    {
+                        "story_case_id": "SC-S-001-001",
+                        "ac_ref": "AC-S-001-01",
+                        "case_kind": "critical_surface",
+                        "surface_id": "modal-forgot-password",
+                    }
+                ],
+            },
+        )
+        _write_yaml(
+            root / "tickets/T-001.yaml",
+            {
+                "id": "T-001",
+                "story_id": "S-001",
+                "type": "frontend-ui",
+                "contract_refs": {"critical_surfaces": ["modal-forgot-password"]},
+                "ui_rule_classes": ["overlay-surface-layout"],
+                "prototype_refs": [{"target_type": "surface", "surface_id": "modal-forgot-password"}],
+                "visual_checklist": [
+                    {"item_id": "label-001", "kind": "label", "selector": "label", "text": "邮箱地址"},
+                    {"item_id": "input-001", "kind": "input", "selector": "input", "text": "请输入注册邮箱"},
+                    {"item_id": "button-001", "kind": "button", "selector": "button", "text": "发送验证码"},
+                ],
+                "style_contracts": [
+                    {
+                        "selector": ".modal-content",
+                        "rule_class": "overlay-surface-layout",
+                        "css": {"max-width": "450px"},
+                    }
+                ],
+                "state_cases": [
+                    {
+                        "state_id": "step-email",
+                        "required_anchors": [".modal-content"],
+                        "style_contracts": [],
+                        "viewport_variants": ["desktop"],
+                    }
+                ],
+                "test_cases": [
+                    {
+                        "test_case_id": "TCS-T-001-001",
+                        "ac_ref": "AC-S-001-01",
+                        "case_kind": "critical_surface",
+                        "surface_id": "modal-forgot-password",
+                        "state_variant": "step-email",
+                        "viewport_variant": "desktop",
+                    }
+                ],
+            },
+        )
+        _write_yaml(root / "DELIVERY-CONTRACT.yaml", {"schema_version": 1, "module": "lead-mentor", "capabilities": []})
+        _write_yaml(
+            root / "UI-VISUAL-CONTRACT.yaml",
+            {
+                "surfaces": [
+                    {
+                        "surface_id": "modal-forgot-password",
+                        "surface_type": "modal",
+                        "viewport_variants": [{"viewport_id": "desktop"}],
+                        "state_variants": [{"state_id": "step-email"}],
+                    }
+                ],
+                "pages": [],
+            },
+        )
+
+        findings = evaluate_story_ticket_coverage(
+            stories_dir=root / "stories",
+            tickets_dir=root / "tickets",
+            delivery_contract_doc=root / "DELIVERY-CONTRACT.yaml",
+            ui_contract_doc=root / "UI-VISUAL-CONTRACT.yaml",
+        )
+
+        assert any("ui_rule_classes" in item for item in findings), findings
+
+
 def test_story_missing_contract_refs_fails_when_contracts_exist() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -508,6 +594,7 @@ def main() -> int:
         test_external_effect_requires_implementation_and_verification_ticket,
         test_critical_surface_requires_frontend_ui_ticket,
         test_frontend_ui_ticket_missing_visual_payload_fails,
+        test_frontend_ui_ticket_missing_rule_classes_and_rule_coverage_fails,
         test_story_missing_contract_refs_fails_when_contracts_exist,
         test_story_with_empty_contract_refs_passes_when_other_story_maps_contract_items,
         test_overlay_surface_requires_story_and_ticket_surface_skeletons,

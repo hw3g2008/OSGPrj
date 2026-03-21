@@ -265,10 +265,42 @@ def test_valid_overlay_surface_schema_passes() -> None:
                 {
                     "selector": ".forgot-password-modal",
                     "css": {
+                        "max-width": "450px",
                         "border-radius": "20px",
                         "background-color": "rgb(255, 255, 255)",
                     },
-                }
+                },
+                {
+                    "selector": ".forgot-password-modal__header",
+                    "css": {
+                        "padding": "22px 26px",
+                        "border-bottom-width": "1px",
+                    },
+                },
+                {
+                    "selector": ".forgot-password-modal__body",
+                    "css": {
+                        "padding": "26px",
+                    },
+                },
+                {
+                    "selector": ".forgot-password-modal__group",
+                    "css": {
+                        "margin-bottom": "16px",
+                    },
+                },
+                {
+                    "selector": ".forgot-password-modal__email-input",
+                    "css": {
+                        "height": "44px",
+                    },
+                },
+                {
+                    "selector": ".forgot-password-modal__send-code",
+                    "css": {
+                        "justify-content": "flex-start",
+                    },
+                },
             ],
             "state_contracts": [
                 {
@@ -303,6 +335,69 @@ def test_valid_overlay_surface_schema_passes() -> None:
 
     issues = collect_issues(contract)
     assert not issues, issues
+
+
+def test_overlay_form_surface_missing_archetype_rules_fails() -> None:
+    contract = deepcopy(build_base_contract())
+    contract["surfaces"] = [
+        {
+            "surface_id": "modal-forgot-password",
+            "surface_type": "modal",
+            "host_page_id": "dashboard",
+            "prototype_selector": "#forgot-password-modal",
+            "app_selector": ".forgot-password-modal",
+            "surface_root_selector": ".ant-modal-root .forgot-password-modal",
+            "backdrop_selector": ".ant-modal-mask",
+            "portal_host": "body",
+            "source_ref": "00-admin-login.md#modal-forgot-password",
+            "trigger_action": {"type": "click", "selector": ".forgot-password-link"},
+            "required_anchors": [
+                ".forgot-password-modal__header",
+                ".forgot-password-modal__steps",
+                ".forgot-password-modal__content",
+            ],
+            "viewport_variants": [
+                {"viewport_id": "desktop", "width": 1440, "height": 900},
+            ],
+            "state_variants": [
+                {"state_id": "step-email"},
+            ],
+            "surface_parts": [
+                {"part_id": "backdrop", "selector": ".ant-modal-mask", "mask_allowed": False},
+                {"part_id": "shell", "selector": ".forgot-password-modal", "mask_allowed": False},
+                {"part_id": "header", "selector": ".forgot-password-modal__header", "mask_allowed": False},
+                {"part_id": "body", "selector": ".forgot-password-modal__body", "mask_allowed": False},
+                {"part_id": "footer", "selector": ".forgot-password-modal__footer", "mask_allowed": False},
+                {"part_id": "close-control", "selector": ".forgot-password-modal__close", "mask_allowed": False},
+            ],
+            "style_contracts": [
+                {
+                    "selector": ".forgot-password-modal",
+                    "css": {"border-radius": "20px"},
+                }
+            ],
+            "state_contracts": [
+                {
+                    "state_id": "step-email",
+                    "required_anchors": [
+                        ".forgot-password-modal__email-input",
+                        ".forgot-password-modal__send-code",
+                    ],
+                    "style_contracts": [
+                        {
+                            "selector": ".forgot-password-modal__steps .is-active",
+                            "css": {"background-color": "rgb(99, 102, 241)"},
+                        }
+                    ],
+                }
+            ],
+        }
+    ]
+
+    issues = collect_issues(contract)
+    assert any("overlay form surface missing body layout contract" in issue for issue in issues), issues
+    assert any("overlay form surface missing control box model contract" in issue for issue in issues), issues
+    assert any("overlay form surface missing action alignment contract" in issue for issue in issues), issues
 
 
 def test_overlay_surface_schema_missing_required_blocks_fails() -> None:
@@ -376,6 +471,7 @@ def test_declared_overlay_surface_present_in_contract_passes() -> None:
             ],
             "style_contracts": [
                 {"selector": ".forgot-password-modal", "css": {"border-radius": "20px"}},
+                {"selector": ".forgot-password-modal__body", "css": {"padding": "26px"}},
             ],
             "state_contracts": [
                 {
@@ -625,6 +721,7 @@ def main() -> int:
         test_critical_surface_requires_style_and_state_contracts,
         test_critical_surface_required_structure_fails,
         test_valid_overlay_surface_schema_passes,
+        test_overlay_form_surface_missing_archetype_rules_fails,
         test_overlay_surface_schema_missing_required_blocks_fails,
         test_declared_overlay_surface_missing_from_contract_fails,
         test_declared_overlay_surface_present_in_contract_passes,

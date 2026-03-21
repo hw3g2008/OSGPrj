@@ -44,4 +44,115 @@ test.describe('Lead Mentor Login Shell @lead-mentor @ui-only @ui-smoke', () => {
     await expect(passwordInput).toHaveAttribute('type', 'password')
     await expect(passwordInput).toHaveValue('RealPass123!')
   })
+
+  test('forgot-password modal keeps prototype layout rules for placement and spacing @lead-mentor-t178-modal-layout', async ({
+    page,
+  }) => {
+    await page.goto('/login')
+    await page.locator('[data-surface-trigger="modal-forgot-password"]').click()
+
+    const modalRoot = page.locator('[data-surface-id="modal-forgot-password"]')
+    const shell = page.locator('[data-surface-id="modal-forgot-password"] [data-surface-part="shell"]')
+    const header = page.locator('[data-surface-id="modal-forgot-password"] [data-surface-part="header"]')
+    const body = page.locator('[data-surface-id="modal-forgot-password"] [data-surface-part="body"]')
+    const firstGroup = page.locator('#fp-step-1 .form-group')
+    const stepText = page.locator('#fp-step-1 .step-text')
+    const formLabel = page.locator('#fp-step-1 .form-label')
+    const emailInput = page.locator('#fp-email')
+    const sendCodeButton = page.locator('#fp-step-1 .btn.btn-primary')
+    const closeButton = page.locator('[data-surface-id="modal-forgot-password"] .modal-close')
+
+    await expect(shell).toBeVisible()
+
+    const modalLayout = await modalRoot.evaluate((el) => {
+      const style = getComputedStyle(el)
+      return {
+        display: style.display,
+        alignItems: style.alignItems,
+        justifyContent: style.justifyContent,
+      }
+    })
+    expect(modalLayout).toEqual({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    })
+
+    const viewport = page.viewportSize()
+    const shellBox = await shell.boundingBox()
+    if (!viewport || !shellBox) throw new Error('Missing viewport or shell box')
+    const shellCenter = shellBox.x + shellBox.width / 2
+    expect(Math.abs(shellCenter - viewport.width / 2)).toBeLessThan(12)
+
+    const shellStyle = await shell.evaluate((el) => {
+      const style = getComputedStyle(el)
+      return {
+        width: style.width,
+        maxWidth: style.maxWidth,
+        borderRadius: style.borderRadius,
+        maxHeight: style.maxHeight,
+      }
+    })
+    expect(shellStyle.maxWidth).toBe('450px')
+    expect(shellStyle.borderRadius).toBe('20px')
+    expect(parseFloat(shellStyle.maxHeight)).toBeCloseTo(viewport.height * 0.9, 0)
+
+    const headerStyle = await header.evaluate((el) => {
+      const style = getComputedStyle(el)
+      return {
+        paddingTop: style.paddingTop,
+        paddingRight: style.paddingRight,
+        paddingBottom: style.paddingBottom,
+        paddingLeft: style.paddingLeft,
+      }
+    })
+    expect(headerStyle).toEqual({
+      paddingTop: '22px',
+      paddingRight: '26px',
+      paddingBottom: '22px',
+      paddingLeft: '26px',
+    })
+    await expect(header).toHaveCSS('border-bottom-width', '1px')
+
+    const bodyStyle = await body.evaluate((el) => {
+      const style = getComputedStyle(el)
+      return {
+        paddingTop: style.paddingTop,
+        paddingRight: style.paddingRight,
+        paddingBottom: style.paddingBottom,
+        paddingLeft: style.paddingLeft,
+      }
+    })
+    expect(bodyStyle).toEqual({
+      paddingTop: '26px',
+      paddingRight: '26px',
+      paddingBottom: '26px',
+      paddingLeft: '26px',
+    })
+
+    await expect(firstGroup).toHaveCSS('margin-bottom', '16px')
+    await expect(stepText).toHaveCSS('margin-bottom', '20px')
+    await expect(closeButton).toHaveCSS('width', '36px')
+    await expect(closeButton).toHaveCSS('height', '36px')
+    await expect(sendCodeButton).toHaveCSS('justify-content', 'flex-start')
+
+    const typographyMetrics = await Promise.all([
+      stepText.boundingBox(),
+      firstGroup.boundingBox(),
+      formLabel.boundingBox(),
+      emailInput.boundingBox(),
+      sendCodeButton.boundingBox(),
+    ])
+    const [stepTextBox, firstGroupBox, formLabelBox, emailInputBox, sendCodeButtonBox] = typographyMetrics
+
+    if (!stepTextBox || !firstGroupBox || !formLabelBox || !emailInputBox || !sendCodeButtonBox) {
+      throw new Error('Missing forgot-password modal metrics')
+    }
+
+    expect(stepTextBox.height).toBeCloseTo(20, 0)
+    expect(firstGroupBox.height).toBeCloseTo(68, 0)
+    expect(formLabelBox.height).toBeCloseTo(18, 0)
+    expect(emailInputBox.height).toBeCloseTo(44, 0)
+    expect(sendCodeButtonBox.height).toBeCloseTo(40, 0)
+  })
 })

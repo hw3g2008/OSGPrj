@@ -55,7 +55,10 @@ CLASS_ATTR_RE = re.compile(r'class=(["\'])(.*?)\1', re.I | re.S)
 STYLE_ATTR_RE = re.compile(r'style=(["\'])(.*?)\1', re.I | re.S)
 WHITELIST_CSS_PROPS = {
     "width",
+    "max-width",
     "height",
+    "max-height",
+    "min-height",
     "padding",
     "padding-left",
     "padding-right",
@@ -76,6 +79,10 @@ WHITELIST_CSS_PROPS = {
     "background-color",
     "box-shadow",
     "display",
+    "align-items",
+    "justify-content",
+    "flex-direction",
+    "border-bottom-width",
     "grid-template-columns",
 }
 SEMANTIC_CLASS_HINTS = (
@@ -123,6 +130,8 @@ PAGE_DISPLAY_NAMES = {
     "schedule": "课程排期页",
     "communication": "沟通记录页",
 }
+OVERLAY_SURFACE_TYPES = {"modal", "drawer", "popover", "panel", "wizard-step"}
+CONTROL_TAGS = ("label", "input", "textarea", "select", "button", "a", "p")
 
 
 def load_yaml(path: Path) -> Any:
@@ -334,24 +343,153 @@ def collect_semantic_selectors(section_html: str) -> list[str]:
     return selectors
 
 
+def _html_contains_tag(section_html: str, tag_name: str) -> bool:
+    return re.search(rf"<{tag_name}\b", section_html, re.I) is not None
+
+
+def _collect_candidate_selectors(
+    *,
+    section_html: str,
+    root_selector: str,
+    required_anchors: list[str],
+) -> list[str]:
+    selectors: list[str] = []
+    seen: set[str] = set()
+
+    def add(selector: str) -> None:
+        normalized = re.sub(r"\s+", " ", selector.strip())
+        if normalized and normalized not in seen:
+            selectors.append(normalized)
+            seen.add(normalized)
+
+    for selector in [root_selector, *required_anchors, *collect_semantic_selectors(section_html)]:
+        if selector.startswith(("#", ".")):
+            add(selector)
+
+    if root_selector.startswith(("#", ".")):
+        for semantic_selector in collect_semantic_selectors(section_html):
+            add(f"{root_selector} {semantic_selector}")
+        for tag_name in CONTROL_TAGS:
+            if _html_contains_tag(section_html, tag_name):
+                add(f"{root_selector} {tag_name}")
+
+    return selectors
+
+
+def infer_style_rule_class(
+    *,
+    selector: str,
+    css: dict[str, str],
+    root_selector: str,
+    target_type: str,
+    surface_type: str | None,
+) -> str:
+    normalized_selector = selector.lower()
+    css_keys = {key.lower() for key in css}
+
+    if "icon" in normalized_selector:
+        return "iconography-consistency"
+    if any(token in normalized_selector for token in ("button", "btn", "action")) and (
+        {"justify-content", "align-items"} & css_keys
+    ):
+        return "action-content-alignment"
+    if any(token in normalized_selector for token in ("form-group", "code-row", "step-text", "label")) or (
+        {"gap", "margin-bottom"} & css_keys
+    ):
+        return "form-spacing"
+    if any(token in normalized_selector for token in ("input", "textarea", "select", "button", "btn", "label", "form-input", "form-select")):
+        return "control-box-model"
+    if surface_type in OVERLAY_SURFACE_TYPES and (
+        selector == root_selector
+        or any(token in normalized_selector for token in ("modal", "drawer", "popover", "panel", "header", "body", "footer", "backdrop", "shell"))
+        or {"max-width", "max-height", "border-radius", "display", "align-items", "justify-content", "border-bottom-width"} & css_keys
+    ):
+        return "overlay-surface-layout"
+    return "page-shell" if target_type == "page" else "overlay-surface-layout"
+
+
+def merge_style_contracts(*contract_sets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for contract_set in contract_sets:
+        for rule in contract_set:
+            if not isinstance(rule, dict):
+                continue
+            selector = str(rule.get("selector") or "").strip()
+            prototype_selector = str(rule.get("prototype_selector") or selector).strip() or selector
+            rule_class = str(rule.get("rule_class") or "").strip()
+            if not selector:
+                continue
+            key = (selector, prototype_selector, rule_class)
+            css = rule.get("css") or {}
+            if key not in merged:
+                merged[key] = {
+                    "selector": selector,
+                    "prototype_selector": prototype_selector,
+                    **({"rule_class": rule_class} if rule_class else {}),
+                    "css": {},
+                }
+            if isinstance(css, dict):
+                merged[key]["css"].update({k: v for k, v in css.items() if isinstance(k, str) and isinstance(v, str)})
+    return list(merged.values())
+
+
+def infer_ui_rule_classes(
+    *,
+    target_type: str,
+    surface_type: str | None,
+    visual_checklist: list[dict[str, Any]],
+    style_contracts: list[dict[str, Any]],
+    section_html: str,
+) -> list[str]:
+    rule_classes: set[str] = set()
+    if target_type == "page":
+        rule_classes.add("page-shell")
+    if surface_type in OVERLAY_SURFACE_TYPES:
+        rule_classes.add("overlay-surface-layout")
+
+    kinds = {
+        item.get("kind")
+        for item in visual_checklist
+        if isinstance(item, dict) and isinstance(item.get("kind"), str)
+    }
+    if "icon" in kinds:
+        rule_classes.add("iconography-consistency")
+    if {"label", "input", "button"} & kinds:
+        rule_classes.add("control-box-model")
+    if surface_type in OVERLAY_SURFACE_TYPES and (
+        {"label", "input", "button", "paragraph"} & kinds
+        or any(_html_contains_tag(section_html, tag_name) for tag_name in ("label", "input", "button"))
+    ):
+        rule_classes.add("form-spacing")
+
+    for rule in style_contracts:
+        if not isinstance(rule, dict):
+            continue
+        rule_class = rule.get("rule_class")
+        if isinstance(rule_class, str) and rule_class.strip():
+            rule_classes.add(rule_class.strip())
+
+    return sorted(rule_classes)
+
+
 def extract_style_contracts(
     *,
     prototype_html: str,
     section_html: str,
     root_selector: str,
     required_anchors: list[str],
+    target_type: str,
+    surface_type: str | None = None,
 ) -> list[dict[str, Any]]:
     css_rules = extract_css_rules(prototype_html)
-    selectors: list[str] = []
-    seen: set[str] = set()
-    for selector in [root_selector, *required_anchors, *collect_semantic_selectors(section_html)]:
-        normalized = re.sub(r"\s+", " ", selector.strip())
-        if normalized and normalized not in seen and (normalized.startswith("#") or normalized.startswith(".")):
-            selectors.append(normalized)
-            seen.add(normalized)
+    selectors = _collect_candidate_selectors(
+        section_html=section_html,
+        root_selector=root_selector,
+        required_anchors=required_anchors,
+    )
 
     contracts: list[dict[str, Any]] = []
-    for selector in selectors[:14]:
+    for selector in selectors[:20]:
         css: dict[str, str] = {}
         css.update({k: v for k, v in css_rules.get(selector, {}).items() if k in WHITELIST_CSS_PROPS})
         css.update({k: v for k, v in find_inline_style(section_html, selector).items() if k in WHITELIST_CSS_PROPS})
@@ -360,6 +498,13 @@ def extract_style_contracts(
                 {
                     "selector": selector,
                     "prototype_selector": selector,
+                    "rule_class": infer_style_rule_class(
+                        selector=selector,
+                        css=css,
+                        root_selector=root_selector,
+                        target_type=target_type,
+                        surface_type=surface_type,
+                    ),
                     "css": css,
                 }
             )
@@ -577,7 +722,26 @@ def build_state_cases(surface: dict[str, Any]) -> list[dict[str, Any]]:
             {
                 "state_id": state_id,
                 "required_anchors": contract.get("required_anchors") or [],
-                "style_contracts": contract.get("style_contracts") or [],
+                "style_contracts": [
+                    {
+                        **rule,
+                        **(
+                            {
+                                "rule_class": infer_style_rule_class(
+                                    selector=str(rule.get("prototype_selector") or rule.get("selector") or ""),
+                                    css=rule.get("css") or {},
+                                    root_selector=str(surface.get("prototype_selector") or ""),
+                                    target_type="surface",
+                                    surface_type=surface.get("surface_type"),
+                                )
+                            }
+                            if isinstance(rule, dict) and not rule.get("rule_class")
+                            else {}
+                        ),
+                    }
+                    for rule in (contract.get("style_contracts") or [])
+                    if isinstance(rule, dict)
+                ],
                 "viewport_variants": viewport_ids,
             }
         )
@@ -673,6 +837,19 @@ def make_page_ui_ticket(
             "capabilities": capability_ids,
             "critical_surfaces": [],
         },
+        "ui_rule_classes": infer_ui_rule_classes(
+            target_type="page",
+            surface_type=None,
+            visual_checklist=extract_visual_checklist(section_html),
+            style_contracts=extract_style_contracts(
+                prototype_html=prototype_html,
+                section_html=section_html,
+                root_selector=page.get("prototype_selector", ""),
+                required_anchors=page.get("required_anchors") or [],
+                target_type="page",
+            ),
+            section_html=section_html,
+        ),
         "prototype_refs": [
             {
                 "target_type": "page",
@@ -688,6 +865,7 @@ def make_page_ui_ticket(
             section_html=section_html,
             root_selector=page.get("prototype_selector", ""),
             required_anchors=page.get("required_anchors") or [],
+            target_type="page",
         ),
         "state_cases": [],
         "dependencies": [],
@@ -719,6 +897,38 @@ def make_surface_ui_ticket(
     primary_ac_ref = ac_refs[0] if ac_refs else story_acs[0]["ref"]
     title_target = surface.get("surface_id", "critical-surface")
     surface_label = humanize_identifier(title_target)
+    extracted_visual_checklist = extract_visual_checklist(section_html)
+    inferred_style_contracts = extract_style_contracts(
+        prototype_html=prototype_html,
+        section_html=section_html,
+        root_selector=surface.get("prototype_selector", ""),
+        required_anchors=surface.get("prototype_required_anchors") or surface.get("required_anchors") or [],
+        target_type="surface",
+        surface_type=surface.get("surface_type"),
+    )
+    merged_style_contracts = merge_style_contracts(
+        [
+            {
+                **rule,
+                **(
+                    {
+                        "rule_class": infer_style_rule_class(
+                            selector=str(rule.get("prototype_selector") or rule.get("selector") or ""),
+                            css=rule.get("css") or {},
+                            root_selector=surface.get("prototype_selector", ""),
+                            target_type="surface",
+                            surface_type=surface.get("surface_type"),
+                        )
+                    }
+                    if isinstance(rule, dict) and not rule.get("rule_class")
+                    else {}
+                ),
+            }
+            for rule in deep_copy(surface.get("style_contracts") or [])
+            if isinstance(rule, dict)
+        ],
+        inferred_style_contracts,
+    )
     return {
         "id": ticket_id,
         "story_id": story["id"],
@@ -744,6 +954,13 @@ def make_surface_ui_ticket(
             "capabilities": [],
             "critical_surfaces": [surface["surface_id"]],
         },
+        "ui_rule_classes": infer_ui_rule_classes(
+            target_type="surface",
+            surface_type=surface.get("surface_type"),
+            visual_checklist=extracted_visual_checklist,
+            style_contracts=merged_style_contracts,
+            section_html=section_html,
+        ),
         "prototype_refs": [
             {
                 "target_type": "surface",
@@ -754,8 +971,8 @@ def make_surface_ui_ticket(
                 "prototype_selector": surface.get("prototype_selector"),
             }
         ],
-        "visual_checklist": extract_visual_checklist(section_html),
-        "style_contracts": deep_copy(surface.get("style_contracts") or []),
+        "visual_checklist": extracted_visual_checklist,
+        "style_contracts": merged_style_contracts,
         "state_cases": build_state_cases(surface),
         "dependencies": [],
         "created_at": now_iso(),

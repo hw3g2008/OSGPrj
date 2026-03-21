@@ -37,6 +37,8 @@ ALLOWED_VISUAL_RESIDUAL_CLASSES = {"micro_spacing", "low_salience_text_icon_rast
 ALLOWED_SURFACE_TYPES = {"page", "modal", "drawer", "popover", "panel", "wizard-step"}
 ALLOWED_TRIGGER_TYPES = {"click", "keyboard", "route-param", "auto-open"}
 ALLOWED_SURFACE_PART_IDS = {"backdrop", "shell", "header", "body", "footer", "close-control"}
+OVERLAY_SURFACE_TYPES = {"modal", "drawer", "popover", "panel", "wizard-step"}
+FORM_CONTROL_HINTS = ("input", "textarea", "select", "label", "button", "btn", "action")
 MIN_REQUIRED_ANCHORS = 3
 SURFACE_ID_PATTERN = re.compile(
     r"^\|\s*((?:modal|drawer|popover|panel|wizard-step)-[^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$",
@@ -189,6 +191,149 @@ def _targets_forbidden_residual_area(selector: str) -> bool:
     if not text:
         return False
     return any(re.search(pattern, text) for pattern in FORBIDDEN_RESIDUAL_SELECTOR_PATTERNS)
+
+
+def _selector_texts(surface: dict[str, Any]) -> list[str]:
+    values: list[str] = []
+    for key in ("required_anchors", "prototype_required_anchors"):
+        items = surface.get(key)
+        if isinstance(items, list):
+            for item in items:
+                if isinstance(item, str) and item.strip():
+                    values.append(item.strip())
+
+    for part in surface.get("surface_parts") or []:
+        if not isinstance(part, dict):
+            continue
+        for key in ("selector", "prototype_selector"):
+            value = part.get(key)
+            if isinstance(value, str) and value.strip():
+                values.append(value.strip())
+
+    for rule in surface.get("style_contracts") or []:
+        if not isinstance(rule, dict):
+            continue
+        for key in ("selector", "prototype_selector"):
+            value = rule.get(key)
+            if isinstance(value, str) and value.strip():
+                values.append(value.strip())
+
+    for contract in surface.get("state_contracts") or []:
+        if not isinstance(contract, dict):
+            continue
+        for key in ("required_anchors", "prototype_required_anchors"):
+            items = contract.get(key)
+            if isinstance(items, list):
+                for item in items:
+                    if isinstance(item, str) and item.strip():
+                        values.append(item.strip())
+        for rule in contract.get("style_contracts") or []:
+            if not isinstance(rule, dict):
+                continue
+            for key in ("selector", "prototype_selector"):
+                value = rule.get(key)
+                if isinstance(value, str) and value.strip():
+                    values.append(value.strip())
+
+    return values
+
+
+def _surface_looks_like_form_overlay(surface: dict[str, Any]) -> bool:
+    if surface.get("surface_type") not in OVERLAY_SURFACE_TYPES:
+        return False
+    text = " ".join(_selector_texts(surface)).lower()
+    return any(hint in text for hint in FORM_CONTROL_HINTS)
+
+
+def _iter_surface_style_rules(surface: dict[str, Any]) -> list[dict[str, Any]]:
+    rules: list[dict[str, Any]] = []
+    for rule in surface.get("style_contracts") or []:
+        if isinstance(rule, dict):
+            rules.append(rule)
+    for contract in surface.get("state_contracts") or []:
+        if not isinstance(contract, dict):
+            continue
+        for rule in contract.get("style_contracts") or []:
+            if isinstance(rule, dict):
+                rules.append(rule)
+    return rules
+
+
+def _rule_targets_selector(rule: dict[str, Any], selector: str) -> bool:
+    for key in ("selector", "prototype_selector"):
+        value = rule.get(key)
+        if isinstance(value, str) and value.strip() and _selectors_overlap(value, selector):
+            return True
+    return False
+
+
+def _rule_has_any_prop(rule: dict[str, Any], props: set[str]) -> bool:
+    css = rule.get("css")
+    if not isinstance(css, dict):
+        return False
+    return any(isinstance(key, str) and key.strip().lower() in props for key in css.keys())
+
+
+def _validate_overlay_surface_archetype(surface: dict[str, Any], tag: str, errors: list[str]) -> None:
+    surface_type = surface.get("surface_type")
+    if surface_type not in OVERLAY_SURFACE_TYPES:
+        return
+
+    parts_by_id: dict[str, dict[str, Any]] = {}
+    for part in surface.get("surface_parts") or []:
+        if isinstance(part, dict) and isinstance(part.get("part_id"), str):
+            parts_by_id[part["part_id"]] = part
+
+    all_rules = _iter_surface_style_rules(surface)
+
+    shell_part = parts_by_id.get("shell")
+    if isinstance(shell_part, dict):
+        shell_selector = shell_part.get("selector") or shell_part.get("prototype_selector")
+        if isinstance(shell_selector, str) and shell_selector.strip():
+            if not any(
+                _rule_targets_selector(rule, shell_selector)
+                and _rule_has_any_prop(rule, {"width", "max-width", "max-height", "border-radius", "background", "background-color"})
+                for rule in all_rules
+            ):
+                _err(errors, f"{tag} overlay surface missing shell layout contract")
+
+    body_part = parts_by_id.get("body")
+    if isinstance(body_part, dict):
+        body_selector = body_part.get("selector") or body_part.get("prototype_selector")
+        if isinstance(body_selector, str) and body_selector.strip():
+            if not any(
+                _rule_targets_selector(rule, body_selector)
+                and _rule_has_any_prop(rule, {"padding", "padding-top", "padding-right", "padding-bottom", "padding-left", "gap"})
+                for rule in all_rules
+            ):
+                _err(errors, f"{tag} overlay form surface missing body layout contract")
+
+    if not _surface_looks_like_form_overlay(surface):
+        return
+
+    if not any(
+        any(token in str(rule.get("selector") or "").lower() or token in str(rule.get("prototype_selector") or "").lower() for token in ("input", "textarea", "select", "label", "button", "btn"))
+        and _rule_has_any_prop(rule, {"height", "min-height", "line-height", "padding", "font-size"})
+        for rule in all_rules
+    ):
+        _err(errors, f"{tag} overlay form surface missing control box model contract")
+
+    if not any(
+        any(token in str(rule.get("selector") or "").lower() or token in str(rule.get("prototype_selector") or "").lower() for token in ("form-group", "group", "row", "step-text", "label"))
+        and _rule_has_any_prop(rule, {"gap", "margin-bottom", "padding"})
+        for rule in all_rules
+    ):
+        _err(errors, f"{tag} overlay form surface missing spacing contract")
+
+    if not any(
+        _rule_has_any_prop(rule, {"justify-content", "align-items"})
+        and not any(
+            token in str(rule.get("selector") or "").lower() or token in str(rule.get("prototype_selector") or "").lower()
+            for token in ("shell", "backdrop", "header", "body", "footer")
+        )
+        for rule in all_rules
+    ):
+        _err(errors, f"{tag} overlay form surface missing action alignment contract")
 
 
 def _validate_style_contracts(page: dict[str, Any], tag: str, errors: list[str]) -> None:
@@ -645,6 +790,7 @@ def _validate_surface_schema(contract: dict[str, Any], page_ids: set[str], error
 
         _validate_surface_schema_style_contracts(surface.get("style_contracts"), stag, errors)
         _validate_surface_schema_state_contracts(surface.get("state_contracts"), stag, errors)
+        _validate_overlay_surface_archetype(surface, stag, errors)
 
 
 def _apply_strict_policy_to_page(

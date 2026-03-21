@@ -83,6 +83,7 @@ contract_refs:
   critical_surfaces: []
 
 # frontend-ui 细粒度视觉载荷（type=frontend-ui 时必填）
+ui_rule_classes: []
 prototype_refs: []
 visual_checklist: []
 style_contracts: []
@@ -160,7 +161,7 @@ completed_at: null
 | 依赖无环 | 依赖关系是否形成 DAG（无环图）？ | 是 | 否 → 调整依赖 |
 | 验收可测 | 每个 Ticket 的 acceptance_criteria 是否可客观验证？ | 是 | 否 → 改写为可验证语句 |
 | 展示验证 | type=frontend/frontend-ui 的 Ticket AC 是否包含"页面展示验证"步骤？ | 是 | 否 → 补充展示类 AC |
-| UI 视觉载荷 | type=frontend-ui 的 Ticket 是否具备 `prototype_refs / visual_checklist / style_contracts`，critical surface 是否具备 `state_cases`？ | 是 | 否 → 阻止通过，必须补齐 |
+| UI 视觉载荷 | type=frontend-ui 的 Ticket 是否具备 `ui_rule_classes / prototype_refs / visual_checklist / style_contracts`，critical surface 是否具备 `state_cases`？ | 是 | 否 → 阻止通过，必须补齐 |
 | 场景类别标签 | 每个 Ticket AC 是否声明 `[category][scenario_obligation]` 双标签？ | 全部有 | 否 → 由 `parse_ac_labels()` 补充或提示补写 |
 | 场景义务完整性 | 同一 Story 下的 Ticket 集合是否覆盖 Story 的全部 `required_test_obligations`？ | 全部覆盖 | 否 → 补充缺失义务类别的 Ticket |
 
