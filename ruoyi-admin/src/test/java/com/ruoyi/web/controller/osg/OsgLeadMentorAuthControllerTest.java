@@ -1,11 +1,13 @@
 package com.ruoyi.web.controller.osg;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Set;
 
@@ -19,6 +21,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysUser;
@@ -54,6 +57,13 @@ class OsgLeadMentorAuthControllerTest
     void tearDown()
     {
         securityMock.close();
+    }
+
+    @Test
+    void leadMentorLoginEndpointMustAllowAnonymousAccess() throws Exception
+    {
+        Method login = OsgLeadMentorAuthController.class.getMethod("login", LoginBody.class);
+        assertNotNull(login.getAnnotation(Anonymous.class), "lead-mentor login 必须支持匿名访问");
     }
 
     @Test

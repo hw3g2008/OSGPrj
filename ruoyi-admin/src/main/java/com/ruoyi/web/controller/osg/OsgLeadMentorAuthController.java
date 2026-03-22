@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.domain.AjaxResult;
@@ -35,6 +36,7 @@ public class OsgLeadMentorAuthController
     @Autowired
     private OsgLeadMentorAccessService leadMentorAccessService;
 
+    @Anonymous
     @PostMapping("/login")
     public AjaxResult login(@RequestBody LoginBody loginBody)
     {

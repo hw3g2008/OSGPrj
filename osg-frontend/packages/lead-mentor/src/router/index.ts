@@ -8,9 +8,11 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: MainLayout,
-    redirect: '/dashboard',
+    redirect: '/home',
     children: [
-      { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/dashboard/index.vue'), meta: { title: '工作台' } },
+      { path: 'home', name: 'Home', component: () => import('@/views/home/index.vue'), meta: { title: '首页' } },
+      { path: 'career/positions', name: 'CareerPositions', component: () => import('@/views/career/positions/index.vue'), meta: { title: '岗位信息' } },
+      { path: 'dashboard', redirect: '/home' },
       { path: 'classes', name: 'Classes', component: () => import('@/views/classes/index.vue'), meta: { title: '班级管理' } },
       { path: 'students', name: 'Students', component: () => import('@/views/students/index.vue'), meta: { title: '学员管理' } },
       { path: 'mentors', name: 'Mentors', component: () => import('@/views/mentors/index.vue'), meta: { title: '导师管理' } },

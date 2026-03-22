@@ -13,12 +13,46 @@ export interface AuthRuntimeConfig {
   postLoginPath: string
 }
 
+interface AuthRuntimeDefaults {
+  username: string
+  password: string
+  loginPath: string
+  infoPath: string
+  postLoginPath: string
+}
+
+function resolveModuleDefaults(env: Record<string, string | undefined>): AuthRuntimeDefaults {
+  const moduleName =
+    normalizeRuntimeEnvValue(env.UI_VISUAL_MODULE) ||
+    normalizeRuntimeEnvValue(env.E2E_MODULE) ||
+    ''
+
+  if (moduleName === 'lead-mentor') {
+    return {
+      username: 'student_demo',
+      password: 'student123',
+      loginPath: '/login',
+      infoPath: '/api/lead-mentor/getInfo',
+      postLoginPath: '/home',
+    }
+  }
+
+  return {
+    username: 'admin',
+    password: 'Osg@2025',
+    loginPath: '/login',
+    infoPath: '/api/getInfo',
+    postLoginPath: '/dashboard',
+  }
+}
+
 export function resolveAuthRuntimeConfig(
   env: Record<string, string | undefined> = process.env,
 ): AuthRuntimeConfig {
   if (env === process.env) {
     loadPlaywrightRuntimeEnv(process.env)
   }
+  const moduleDefaults = resolveModuleDefaults(env)
   const username = normalizeRuntimeEnvValue(env.E2E_ADMIN_USERNAME)
   const password = normalizeRuntimeEnvValue(env.E2E_ADMIN_PASSWORD)
   const captchaCode = normalizeRuntimeEnvValue(env.E2E_CAPTCHA_CODE)
@@ -30,15 +64,15 @@ export function resolveAuthRuntimeConfig(
   const infoPath = normalizeRuntimeEnvValue(env.E2E_INFO_PATH)
   const postLoginPath = normalizeRuntimeEnvValue(env.E2E_POST_LOGIN_PATH)
   return {
-    username: username || 'admin',
-    password: password || 'Osg@2025',
+    username: username || moduleDefaults.username,
+    password: password || moduleDefaults.password,
     captchaCode: captchaCode || '',
     redisHost: redisHost || '127.0.0.1',
     redisPort: redisPort || '26379',
     redisPassword: redisPassword || 'redis123456',
     redisContainer: redisContainer || '',
-    loginPath: loginPath || '/login',
-    infoPath: infoPath || '/api/getInfo',
-    postLoginPath: postLoginPath || '/dashboard',
+    loginPath: loginPath || moduleDefaults.loginPath,
+    infoPath: infoPath || moduleDefaults.infoPath,
+    postLoginPath: postLoginPath || moduleDefaults.postLoginPath,
   }
 }

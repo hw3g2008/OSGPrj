@@ -25,6 +25,33 @@ test.describe('Auth Runtime Config', () => {
     expect(config.username).toBe('root')
   })
 
+  test('uses lead-mentor module defaults that match the live verification runtime', () => {
+    const config = resolveAuthRuntimeConfig({
+      UI_VISUAL_MODULE: 'lead-mentor',
+    })
+
+    expect(config.loginPath).toBe('/login')
+    expect(config.infoPath).toBe('/api/lead-mentor/getInfo')
+    expect(config.postLoginPath).toBe('/home')
+    expect(config.username).toBe('student_demo')
+    expect(config.password).toBe('student123')
+  })
+
+  test('lead-mentor module defaults still allow explicit env overrides', () => {
+    const config = resolveAuthRuntimeConfig({
+      UI_VISUAL_MODULE: 'lead-mentor',
+      E2E_ADMIN_USERNAME: 'override-user',
+      E2E_ADMIN_PASSWORD: 'override-pass',
+      E2E_INFO_PATH: '/api/custom/info',
+      E2E_POST_LOGIN_PATH: '/custom-home',
+    })
+
+    expect(config.username).toBe('override-user')
+    expect(config.password).toBe('override-pass')
+    expect(config.infoPath).toBe('/api/custom/info')
+    expect(config.postLoginPath).toBe('/custom-home')
+  })
+
   test('falls back to spring redis env when e2e redis env is absent', () => {
     const config = resolveAuthRuntimeConfig({
       SPRING_DATA_REDIS_HOST: '47.94.213.128',
