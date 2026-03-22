@@ -253,15 +253,65 @@ def validate_behavior_report(
             )
 
 
+def _scope_contract_to_story(
+    contract: dict[str, Any],
+    *,
+    story_path: Path | None,
+    errors: list[str],
+) -> dict[str, Any]:
+    if story_path is None:
+        return contract
+    if not story_path.exists():
+        errors.append(f"story not found: {story_path}")
+        return contract
+
+    story = load_yaml(story_path)
+    contract_refs = story.get("contract_refs") if isinstance(story, dict) else None
+    capability_ids = contract_refs.get("capabilities") if isinstance(contract_refs, dict) else None
+    scoped_ids = {
+        str(capability_id)
+        for capability_id in (capability_ids or [])
+        if _is_non_empty_string(capability_id)
+    }
+
+    scoped_contract = dict(contract)
+    capabilities = contract.get("capabilities") or []
+    if not scoped_ids:
+        scoped_contract["capabilities"] = []
+        return scoped_contract
+
+    scoped_contract["capabilities"] = [
+        capability
+        for capability in capabilities
+        if isinstance(capability, dict) and capability.get("capability_id") in scoped_ids
+    ]
+
+    present_ids = {
+        str(capability.get("capability_id"))
+        for capability in scoped_contract["capabilities"]
+        if isinstance(capability, dict) and _is_non_empty_string(capability.get("capability_id"))
+    }
+    missing_ids = sorted(scoped_ids - present_ids)
+    for capability_id in missing_ids:
+        errors.append(f"story capability not found in contract: {capability_id}")
+
+    return scoped_contract
+
+
 def evaluate_behavior_contract(
     *,
     contract_path: Path,
     report_path: Path,
     stage: str,
+    story_path: Path | None = None,
 ) -> list[str]:
     errors: list[str] = []
     contract = load_yaml(contract_path)
     errors.extend(validate_contract(contract))
+    if errors:
+        return errors
+
+    contract = _scope_contract_to_story(contract, story_path=story_path, errors=errors)
     if errors:
         return errors
 
@@ -279,6 +329,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--contract", required=True, help="Path to DELIVERY-CONTRACT.yaml")
     parser.add_argument("--report", required=True, help="Path to behavior scenario report JSON")
     parser.add_argument("--stage", required=True, choices=sorted(ALLOWED_STAGES))
+    parser.add_argument("--story", help="Optional path to story YAML for capability scoping")
     parser.add_argument("--output-json", help="Optional path to write summary JSON")
     return parser.parse_args()
 
@@ -291,12 +342,14 @@ def main() -> int:
         contract_path=contract_path,
         report_path=report_path,
         stage=args.stage,
+        story_path=Path(args.story) if args.story else None,
     )
 
     summary = {
         "contract": args.contract,
         "report": args.report,
         "stage": args.stage,
+        "story": args.story,
         "issues": findings,
     }
     if args.output_json:
@@ -315,6 +368,12 @@ def main() -> int:
         return 1
 
     contract = load_yaml(contract_path)
+    display_errors: list[str] = []
+    contract = _scope_contract_to_story(
+        contract,
+        story_path=Path(args.story) if args.story else None,
+        errors=display_errors,
+    )
     capabilities = contract.get("capabilities") or []
     print(
         "PASS: behavior_contract_guard "

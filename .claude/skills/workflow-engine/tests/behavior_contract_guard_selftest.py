@@ -263,6 +263,18 @@ def _prepare_paths(root: Path) -> tuple[Path, Path]:
     return contract_path, report_path
 
 
+def _write_story(path: Path, capability_ids: list[str]) -> None:
+    _write_yaml(
+        path,
+        {
+            "id": "S-TEST",
+            "contract_refs": {
+                "capabilities": capability_ids,
+            },
+        },
+    )
+
+
 def test_missing_scenario_result_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -340,6 +352,26 @@ def test_valid_behavior_report_passes() -> None:
         assert not findings, findings
 
 
+def test_story_scope_limits_required_capabilities() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        contract_path, report_path = _prepare_paths(root)
+        story_path = root / "osg-spec-docs/tasks/stories/S-TEST.yaml"
+        report = valid_report()
+        report["capabilities"] = [
+            capability for capability in report["capabilities"] if capability["capability_id"] == "login-success"
+        ]
+        _write_json(report_path, report)
+        _write_story(story_path, ["login-success"])
+        findings = evaluate_behavior_contract(
+            contract_path=contract_path,
+            report_path=report_path,
+            stage="verify",
+            story_path=story_path,
+        )
+        assert not findings, findings
+
+
 def main() -> int:
     tests = [
         test_missing_scenario_result_fails,
@@ -347,6 +379,7 @@ def main() -> int:
         test_distinct_outcome_invariant_fails,
         test_single_observable_error_message_invariant_fails,
         test_valid_behavior_report_passes,
+        test_story_scope_limits_required_capabilities,
     ]
     for fn in tests:
         fn()
