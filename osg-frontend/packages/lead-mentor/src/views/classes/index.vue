@@ -2,7 +2,7 @@
   <div class="classes-page">
     <OsgPageContainer title="班级管理">
       <a-table :columns="columns" :data-source="classes" :loading="loading" row-key="id">
-        <template #bodyCell="{ column, record }">
+        <template #bodyCell="{ column }">
           <template v-if="column.key === 'action'">
             <a-space><a-button type="link" size="small">查看</a-button><a-button type="link" size="small">编辑</a-button></a-space>
           </template>

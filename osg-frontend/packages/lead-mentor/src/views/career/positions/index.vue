@@ -151,7 +151,8 @@
                     v-if="company.studentCount > 0"
                     type="button"
                     class="company-link"
-                    @click.stop="handleMyStudentsClick"
+                    data-surface-trigger="modal-position-mystudents"
+                    @click.stop="openCompanyStudentsModal(company)"
                   >
                     {{ formatStudentLabel(company.studentCount) }}
                   </button>
@@ -213,7 +214,8 @@
                             v-if="job.studentCount > 0"
                             type="button"
                             class="student-link"
-                            @click="handleMyStudentsClick"
+                            data-surface-trigger="modal-position-mystudents"
+                            @click="openJobStudentsModal(job)"
                           >
                             {{ formatStudentLabel(job.studentCount) }}
                           </button>
@@ -292,7 +294,8 @@
                     v-if="job.studentCount > 0"
                     type="button"
                     class="student-link"
-                    @click="handleMyStudentsClick"
+                    data-surface-trigger="modal-position-mystudents"
+                    @click="openJobStudentsModal(job)"
                   >
                     {{ formatStudentLabel(job.studentCount) }}
                   </button>
@@ -324,11 +327,18 @@
         我的学员 8人
       </span>
     </div>
+
+    <PositionMyStudentsModal
+      :model-value="isMyStudentsModalOpen"
+      :preview="activeStudentsPreview"
+      @update:model-value="handleMyStudentsModalVisibleChange"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
+import PositionMyStudentsModal, { type PositionMyStudentsPreview } from '@/components/PositionMyStudentsModal.vue'
 
 type ViewMode = 'drilldown' | 'list'
 type DeadlineTone = 'normal' | 'urgent' | 'closed'
@@ -385,6 +395,8 @@ const viewMode = ref<ViewMode>('drilldown')
 const publishSortDirection = ref<'default' | 'asc' | 'desc'>('default')
 const expandedCategories = ref<string[]>(['ib'])
 const expandedCompanies = ref<string[]>([])
+const isMyStudentsModalOpen = ref(false)
+const activeStudentsPreview = ref<PositionMyStudentsPreview | null>(null)
 
 const categories: PositionCategory[] = [
   {
@@ -756,6 +768,42 @@ const categories: PositionCategory[] = [
 ]
 
 const allJobs = computed(() => categories.flatMap((category) => category.companies.flatMap((company) => company.jobs)))
+const myStudentsPreviewByJobId: Record<string, PositionMyStudentsPreview> = {
+  'ib-analyst': {
+    companyName: 'Goldman Sachs',
+    jobTitle: 'IB Analyst',
+    students: [
+      { studentId: '12766', studentName: '张三', jobTitle: 'IB Analyst', statusLabel: '面试中', statusTone: 'interviewing', lessonHours: '24h' },
+      { studentId: '12890', studentName: '李四', jobTitle: 'IB Analyst', statusLabel: '已投递', statusTone: 'applied', lessonHours: '18h' },
+      { studentId: '12345', studentName: '王五', jobTitle: 'IB Analyst', statusLabel: '获得Offer', statusTone: 'offer', lessonHours: '32h' },
+    ],
+  },
+  'ibd-summer-analyst': {
+    companyName: 'Morgan Stanley',
+    jobTitle: 'IBD Summer Analyst',
+    students: [
+      { studentId: '13208', studentName: '赵六', jobTitle: 'IBD Summer Analyst', statusLabel: '面试中', statusTone: 'interviewing', lessonHours: '20h' },
+      { studentId: '13215', studentName: '钱七', jobTitle: 'IBD Summer Analyst', statusLabel: '已投递', statusTone: 'applied', lessonHours: '16h' },
+      { studentId: '13226', studentName: '孙八', jobTitle: 'IBD Summer Analyst', statusLabel: '获得Offer', statusTone: 'offer', lessonHours: '28h' },
+    ],
+  },
+  'st-analyst-jpm': {
+    companyName: 'JP Morgan',
+    jobTitle: 'S&T Analyst',
+    students: [
+      { studentId: '13618', studentName: '周九', jobTitle: 'S&T Analyst', statusLabel: '已投递', statusTone: 'applied', lessonHours: '14h' },
+    ],
+  },
+  'business-analyst': {
+    companyName: 'McKinsey',
+    jobTitle: 'Business Analyst',
+    students: [
+      { studentId: '14021', studentName: '吴十', jobTitle: 'Business Analyst', statusLabel: '面试中', statusTone: 'interviewing', lessonHours: '22h' },
+      { studentId: '14038', studentName: '郑十一', jobTitle: 'Business Analyst', statusLabel: '获得Offer', statusTone: 'offer', lessonHours: '30h' },
+    ],
+  },
+}
+
 const orderedListJobs = computed(() => {
   const items = [...allJobs.value]
   if (publishSortDirection.value === 'asc') {
@@ -802,8 +850,33 @@ const togglePublishSort = () => {
 }
 
 const formatStudentLabel = (count: number) => `${count}人`
+const handleMyStudentsModalVisibleChange = (visible: boolean) => {
+  isMyStudentsModalOpen.value = visible
+  if (!visible) {
+    activeStudentsPreview.value = null
+  }
+}
+
+const openJobStudentsModal = (job: PositionJob) => {
+  const preview = myStudentsPreviewByJobId[job.id]
+  if (!preview) {
+    return
+  }
+
+  activeStudentsPreview.value = preview
+  isMyStudentsModalOpen.value = true
+}
+
+const openCompanyStudentsModal = (company: PositionCompany) => {
+  const jobWithStudents = company.jobs.find((entry) => entry.studentCount > 0)
+  if (!jobWithStudents) {
+    return
+  }
+
+  openJobStudentsModal(jobWithStudents)
+}
+
 const handleJobLinkClick = () => showUpcomingToast()
-const handleMyStudentsClick = () => showUpcomingToast()
 </script>
 
 <style scoped lang="scss">

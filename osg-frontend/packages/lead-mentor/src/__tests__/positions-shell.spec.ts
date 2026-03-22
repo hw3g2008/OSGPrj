@@ -151,4 +151,45 @@ describe('lead-mentor positions shell contract', () => {
       page.unmount()
     }
   })
+
+  it('opens the my-students modal shell with the declared surface markers and prototype copy', async () => {
+    const page = await mountPositionsPage()
+
+    try {
+      const trigger = page.container.querySelector<HTMLElement>('[data-surface-trigger="modal-position-mystudents"]')
+      expect(trigger).toBeTruthy()
+
+      trigger?.click()
+      await flushUi()
+
+      const modal = page.container.querySelector('[data-surface-id="modal-position-mystudents"]')
+      const shell = modal?.querySelector('[data-surface-part="shell"]')
+      const header = modal?.querySelector('[data-surface-part="header"]')
+      const body = modal?.querySelector('[data-surface-part="body"]')
+      const title = modal?.querySelector('.modal-title')
+      const footer = modal?.querySelector('.modal-footer')
+
+      expect(modal).toBeTruthy()
+      expect(modal?.classList.contains('modal')).toBe(true)
+      expect(shell).toBeTruthy()
+      expect(shell?.classList.contains('modal-content')).toBe(true)
+      expect(header?.classList.contains('modal-header')).toBe(true)
+      expect(body?.classList.contains('modal-body')).toBe(true)
+      expect(title).toBeTruthy()
+      expect(footer).toBeTruthy()
+      expect(header?.textContent).toContain('Goldman Sachs - IB Analyst 我的学员申请')
+      expect(body?.textContent).toContain('仅显示您管理的学员')
+      expect(body?.textContent).toContain('张三')
+      expect(body?.textContent).toContain('面试中')
+      expect(modal?.textContent).toContain('关闭')
+      expect(modal?.textContent).toContain('保存修改')
+      expect(modal?.querySelector('.btn-outline')).toBeTruthy()
+      expect(modal?.querySelector('.btn-primary')).toBeTruthy()
+      expect(modal?.querySelector('.mdi-account-group')).toBeTruthy()
+      expect(modal?.querySelector('.mdi-information')).toBeTruthy()
+      expect(modal?.querySelector('.mdi-check')).toBeTruthy()
+    } finally {
+      page.unmount()
+    }
+  })
 })

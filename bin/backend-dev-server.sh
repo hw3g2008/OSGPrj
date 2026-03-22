@@ -3,6 +3,7 @@ set -euo pipefail
 
 ACTION="${1:-status}"
 ENV_FILE="${2:-}"
+HEALTH_TIMEOUT_SECONDS="${BACKEND_DEV_SERVER_HEALTH_TIMEOUT_SECONDS:-15}"
 
 resolve_runtime() {
   eval "$(bash bin/resolve-runtime-contract.sh "${RUNTIME_CONTRACT_FILE:-}")"
@@ -27,7 +28,7 @@ EOF
 }
 
 health_ok() {
-  curl -fsS --max-time 2 "${BACKEND_HEALTH_URL}" >/dev/null 2>&1
+  curl -fsS --max-time "${HEALTH_TIMEOUT_SECONDS}" "${BACKEND_HEALTH_URL}" >/dev/null 2>&1
 }
 
 listener_pids() {
