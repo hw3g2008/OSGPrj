@@ -110,6 +110,22 @@ class OsgLeadMentorAccessServiceTest
     }
 
     @Test
+    void hasLeadMentorAccessUsesCurrentBusinessOwnershipSchemaQueries()
+    {
+        SysUser user = activeUser(826L);
+        when(jdbcTemplate.queryForObject(contains("from sys_user_role"), eq(Integer.class), eq(826L))).thenReturn(0);
+        when(jdbcTemplate.queryForObject(contains("from osg_student where lead_mentor_id = ?"), eq(Integer.class), eq(826L)))
+                .thenReturn(0);
+        when(jdbcTemplate.queryForObject(contains("from osg_job_application where lead_mentor_id = ?"), eq(Integer.class), eq(826L)))
+                .thenReturn(0);
+
+        assertFalse(service.hasLeadMentorAccess(user));
+
+        verify(jdbcTemplate).queryForObject(contains("from osg_student where lead_mentor_id = ?"), eq(Integer.class), eq(826L));
+        verify(jdbcTemplate).queryForObject(contains("from osg_job_application where lead_mentor_id = ?"), eq(Integer.class), eq(826L));
+    }
+
+    @Test
     void hasLeadMentorAccessReturnsFalseForInactiveUser()
     {
         SysUser user = activeUser(825L);

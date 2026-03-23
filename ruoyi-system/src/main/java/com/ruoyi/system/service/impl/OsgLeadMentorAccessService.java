@@ -127,8 +127,8 @@ public class OsgLeadMentorAccessService
             return false;
         }
 
-        return exists("select count(1) from osg_student where del_flag = '0' and lead_mentor_id = ?", userId)
-                || exists("select count(1) from osg_job_application where del_flag = '0' and lead_mentor_id = ?", userId);
+        return exists("select count(1) from osg_student where lead_mentor_id = ? and (account_status is null or account_status <> 'deleted')", userId)
+                || exists("select count(1) from osg_job_application where lead_mentor_id = ?", userId);
     }
 
     private boolean exists(String sql, Object... args)

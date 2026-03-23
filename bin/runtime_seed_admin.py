@@ -220,6 +220,71 @@ def ensure_student(
     )
 
 
+def ensure_position(
+    cur,
+    *,
+    company_name: str,
+    position_name: str,
+    industry: str,
+    region: str,
+    city: str,
+    recruitment_cycle: str,
+    project_year: str,
+    now: datetime,
+) -> int:
+    cur.execute(
+        """
+        insert into osg_position (
+            position_category,
+            industry,
+            company_name,
+            company_type,
+            company_website,
+            position_name,
+            department,
+            region,
+            city,
+            recruitment_cycle,
+            project_year,
+            publish_time,
+            deadline,
+            display_status,
+            display_start_time,
+            display_end_time,
+            position_url,
+            application_note,
+            create_by,
+            update_by,
+            remark
+        ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            "summer",
+            industry,
+            company_name,
+            "Bulge Bracket",
+            "https://example.com/company",
+            position_name,
+            "Strategy",
+            region,
+            city,
+            recruitment_cycle,
+            project_year,
+            now - timedelta(days=1),
+            now + timedelta(days=30),
+            "visible",
+            now - timedelta(days=2),
+            now + timedelta(days=60),
+            f"https://example.com/jobs/{company_name.lower().replace(' ', '-')}",
+            "runtime lead-mentor position seed",
+            "runtime_seed",
+            "runtime_seed",
+            "runtime lead-mentor position seed",
+        ),
+    )
+    return int(cur.lastrowid)
+
+
 def seed_finance(env_file: Path, count: int) -> list[dict[str, object]]:
     now = datetime.now().replace(microsecond=0)
     created: list[dict[str, object]] = []
@@ -552,6 +617,7 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
     try:
         with conn.cursor() as cur:
             mentors = resolve_seed_mentors(cur, minimum=2)
+            lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
             primary_mentor_id, primary_mentor_name = mentors[0]
             secondary_mentor_id, secondary_mentor_name = mentors[1]
 
@@ -559,6 +625,17 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                 suffix = f"{base % 100000}-{index + 1}"
                 company_name = f"Career Overview Co {suffix}"
                 position_name = f"Strategy Analyst {suffix}"
+                position_id = ensure_position(
+                    cur,
+                    company_name=company_name,
+                    position_name=position_name,
+                    industry="Consulting",
+                    region="na",
+                    city="New York",
+                    recruitment_cycle="2026 Summer",
+                    project_year="2026",
+                    now=now,
+                )
 
                 student_specs = [
                     (992000000000 + base * 100 + index * 10 + 1, f"Overview Pending {suffix}"),
@@ -571,7 +648,7 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                         student_id=student_id,
                         student_name=student_name,
                         email=f"career-overview-{student_id}@example.com",
-                        lead_mentor_id=primary_mentor_id,
+                        lead_mentor_id=lead_mentor_id,
                         remark="career job overview runtime seed",
                     )
 
@@ -602,7 +679,7 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                     """,
                     (
                         student_specs[0][0],
-                        None,
+                        position_id,
                         student_specs[0][1],
                         company_name,
                         position_name,
@@ -611,8 +688,8 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                         "applied",
                         now + timedelta(days=2),
                         "待审批",
-                        primary_mentor_id,
-                        primary_mentor_name,
+                        lead_mentor_id,
+                        lead_mentor_name,
                         "pending",
                         2,
                         f"{primary_mentor_name}, {secondary_mentor_name}",
@@ -652,7 +729,7 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                     """,
                     (
                         student_specs[1][0],
-                        None,
+                        position_id,
                         student_specs[1][1],
                         company_name,
                         f"{position_name} Interview",
@@ -661,8 +738,8 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                         "first_round",
                         now + timedelta(days=4),
                         "辅导中",
-                        primary_mentor_id,
-                        primary_mentor_name,
+                        lead_mentor_id,
+                        lead_mentor_name,
                         "assigned",
                         1,
                         primary_mentor_name,
@@ -741,7 +818,7 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                     """,
                     (
                         student_specs[2][0],
-                        None,
+                        position_id,
                         student_specs[2][1],
                         company_name,
                         f"{position_name} Offer",
@@ -750,8 +827,8 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                         "offer",
                         now + timedelta(days=7),
                         "辅导中",
-                        secondary_mentor_id,
-                        secondary_mentor_name,
+                        lead_mentor_id,
+                        lead_mentor_name,
                         "assigned",
                         1,
                         secondary_mentor_name,
@@ -805,6 +882,8 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
 
                 created.append(
                     {
+                        "position_id": position_id,
+                        "position_name": position_name,
                         "company_name": company_name,
                         "pending_application_id": pending_application_id,
                         "pending_student_id": student_specs[0][0],
@@ -975,6 +1054,94 @@ def seed_mock_practice(env_file: Path, count: int) -> list[dict[str, object]]:
         conn.close()
 
 
+def seed_mock_practice_ack_ready(env_file: Path, count: int) -> list[dict[str, object]]:
+    now = datetime.now().replace(microsecond=0)
+    created: list[dict[str, object]] = []
+    base = int(now.timestamp())
+
+    conn = connect(env_file)
+    try:
+        with conn.cursor() as cur:
+            lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
+
+            for index in range(count):
+                suffix = f"{base % 100000}-{index + 1}"
+                student_id = 995000000000 + base * 10 + index
+                student_name = f"Mock Ack Ready {suffix}"
+
+                ensure_student(
+                    cur,
+                    student_id=student_id,
+                    student_name=student_name,
+                    email=f"mock-practice-ack-{student_id}@example.com",
+                    lead_mentor_id=lead_mentor_id,
+                    remark="mock practice ack-ready runtime seed",
+                )
+
+                cur.execute(
+                    """
+                    insert into osg_mock_practice (
+                        student_id,
+                        student_name,
+                        practice_type,
+                        request_content,
+                        requested_mentor_count,
+                        preferred_mentor_names,
+                        status,
+                        mentor_ids,
+                        mentor_names,
+                        mentor_backgrounds,
+                        scheduled_at,
+                        completed_hours,
+                        feedback_rating,
+                        feedback_summary,
+                        submitted_at,
+                        create_by,
+                        update_by,
+                        remark
+                    ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        student_id,
+                        student_name,
+                        "mock_interview",
+                        f"Runtime Mock Ack {suffix}",
+                        1,
+                        lead_mentor_name,
+                        "scheduled",
+                        str(lead_mentor_id),
+                        lead_mentor_name,
+                        "Lead Mentor Runtime Coach",
+                        now + timedelta(hours=2),
+                        0,
+                        None,
+                        None,
+                        now - timedelta(minutes=30),
+                        "runtime_seed",
+                        "runtime_seed",
+                        "mock practice ack-ready runtime seed",
+                    ),
+                )
+
+                created.append(
+                    {
+                        "practice_id": int(cur.lastrowid),
+                        "student_id": student_id,
+                        "student_name": student_name,
+                        "request_content": f"Runtime Mock Ack {suffix}",
+                        "status": "scheduled",
+                    }
+                )
+
+        conn.commit()
+        return created
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def seed_student_hours(env_file: Path, count: int) -> list[dict[str, object]]:
     now = datetime.now().replace(microsecond=0)
     created: list[dict[str, object]] = []
@@ -984,6 +1151,7 @@ def seed_student_hours(env_file: Path, count: int) -> list[dict[str, object]]:
     try:
         with conn.cursor() as cur:
             mentor_id, mentor_name, hourly = resolve_seed_mentor(cur)
+            lead_mentor_id, _ = resolve_lead_mentor_runtime_user(cur)
 
             for index in range(count):
                 suffix = f"{base % 100000}-{index + 1}"
@@ -1000,7 +1168,7 @@ def seed_student_hours(env_file: Path, count: int) -> list[dict[str, object]]:
                     student_id=student_id,
                     student_name=student_name,
                     email=email,
-                    lead_mentor_id=mentor_id,
+                    lead_mentor_id=lead_mentor_id,
                     remark="student hours runtime seed",
                 )
 
@@ -1177,7 +1345,16 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "target",
-        choices=["finance", "report", "student-position", "job-overview", "mock-practice", "student-hours", "staff-change-request"],
+        choices=[
+            "finance",
+            "report",
+            "student-position",
+            "job-overview",
+            "mock-practice",
+            "mock-practice-ack-ready",
+            "student-hours",
+            "staff-change-request",
+        ],
     )
     parser.add_argument("--env-file", default="deploy/.env.dev")
     parser.add_argument("--count", type=int, default=1)
@@ -1213,6 +1390,12 @@ def main() -> int:
             "target": "mock-practice",
             "count": args.count,
             "created": seed_mock_practice(env_file, args.count),
+        }
+    elif args.target == "mock-practice-ack-ready":
+        result = {
+            "target": "mock-practice-ack-ready",
+            "count": args.count,
+            "created": seed_mock_practice_ack_ready(env_file, args.count),
         }
     elif args.target == "student-hours":
         result = {
