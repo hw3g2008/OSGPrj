@@ -11,4 +11,6 @@ public interface OsgStaffScheduleMapper
     public int deleteByStaffAndWeekScope(@Param("staffId") Long staffId, @Param("weekScope") String weekScope);
 
     public int upsertSchedule(OsgStaffSchedule schedule);
+
+    public int batchUpsertSchedules(@Param("schedules") List<OsgStaffSchedule> schedules);
 }

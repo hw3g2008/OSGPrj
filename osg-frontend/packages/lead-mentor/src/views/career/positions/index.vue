@@ -36,43 +36,85 @@
     <section class="card">
       <div class="card-body">
         <div class="filter-row">
-          <select class="form-select" aria-label="岗位分类">
+          <select
+            v-model="filters.positionCategory"
+            class="form-select"
+            aria-label="岗位分类"
+            :disabled="isLoading"
+            @change="handleFilterChange"
+          >
             <option value="">全部分类</option>
-            <option value="summer">暑期实习</option>
-            <option value="fulltime">全职招聘</option>
-            <option value="offcycle">非常规周期</option>
-            <option value="spring">春季实习</option>
-            <option value="events">招聘活动</option>
+            <option
+              v-for="option in filterOptions.categories"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
           </select>
 
-          <select class="form-select" aria-label="行业">
+          <select
+            v-model="filters.industry"
+            class="form-select"
+            aria-label="行业"
+            :disabled="isLoading"
+            @change="handleFilterChange"
+          >
             <option value="">全部行业</option>
-            <option>Investment Bank</option>
-            <option>Consulting</option>
-            <option>Tech</option>
-            <option>PE/VC</option>
+            <option
+              v-for="option in filterOptions.industries"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
           </select>
 
-          <select class="form-select form-select--wide" aria-label="公司">
+          <select
+            v-model="filters.companyName"
+            class="form-select form-select--wide"
+            aria-label="公司"
+            :disabled="isLoading"
+            @change="handleFilterChange"
+          >
             <option value="">全部公司</option>
-            <option>Goldman Sachs</option>
-            <option>JP Morgan</option>
-            <option>Morgan Stanley</option>
-            <option>McKinsey</option>
-            <option>BCG</option>
+            <option
+              v-for="option in filterOptions.companies"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
           </select>
 
-          <select class="form-select" aria-label="地区">
+          <select
+            v-model="filters.region"
+            class="form-select"
+            aria-label="地区"
+            :disabled="isLoading"
+            @change="handleFilterChange"
+          >
             <option value="">全部地区</option>
-            <option>Hong Kong</option>
-            <option>New York</option>
-            <option>London</option>
-            <option>Singapore</option>
+            <option
+              v-for="option in filterOptions.regions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
           </select>
 
           <div class="search-box">
             <i class="mdi mdi-magnify" aria-hidden="true" />
-            <input class="form-input" type="text" placeholder="搜索岗位名称..." />
+            <input
+              v-model.trim="filters.keyword"
+              class="form-input"
+              type="text"
+              placeholder="搜索岗位名称..."
+              :disabled="isLoading"
+              @change="handleFilterChange"
+              @keyup.enter="handleFilterChange"
+            />
           </div>
         </div>
       </div>
@@ -311,20 +353,20 @@
     <div class="page-footer-stats">
       <span>
         共
-        <strong>12</strong>
+        <strong>{{ footerStats.total }}</strong>
         个岗位
       </span>
       <span class="footer-indicator footer-indicator--open">
         <i class="mdi mdi-circle-small" aria-hidden="true" />
-        开放中 10
+        开放中 {{ footerStats.open }}
       </span>
       <span class="footer-indicator footer-indicator--closed">
         <i class="mdi mdi-circle-small" aria-hidden="true" />
-        已关闭 2
+        已关闭 {{ footerStats.closed }}
       </span>
       <span class="footer-indicator footer-indicator--students">
         <i class="mdi mdi-circle-small" aria-hidden="true" />
-        我的学员 8人
+        我的学员 {{ footerStats.students }}人
       </span>
     </div>
 
@@ -337,8 +379,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue'
-import PositionMyStudentsModal, { type PositionMyStudentsPreview } from '@/components/PositionMyStudentsModal.vue'
+import { message } from 'ant-design-vue'
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
+import {
+  getLeadMentorPositionList,
+  getLeadMentorPositionMeta,
+  getLeadMentorPositionStudents,
+  type LeadMentorPositionListItem,
+  type LeadMentorPositionListParams,
+  type LeadMentorPositionMeta,
+  type LeadMentorPositionMetaOption,
+  type LeadMentorPositionStudentRow,
+} from '@osg/shared/api'
+import PositionMyStudentsModal, {
+  type PositionMyStudentRecord,
+  type PositionMyStudentsPreview,
+  type PositionStudentStatusTone,
+} from '@/components/PositionMyStudentsModal.vue'
 
 type ViewMode = 'drilldown' | 'list'
 type DeadlineTone = 'normal' | 'urgent' | 'closed'
@@ -346,6 +403,7 @@ type ChipTone = 'info' | 'neutral' | 'industry-bank' | 'industry-consulting' | '
 
 interface PositionJob {
   id: string
+  positionId: number
   title: string
   industry: string
   industryTone: ChipTone
@@ -390,419 +448,193 @@ interface PositionCategory {
   companies: PositionCompany[]
 }
 
-const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
-const viewMode = ref<ViewMode>('drilldown')
-const publishSortDirection = ref<'default' | 'asc' | 'desc'>('default')
-const expandedCategories = ref<string[]>(['ib'])
-const expandedCompanies = ref<string[]>([])
-const isMyStudentsModalOpen = ref(false)
-const activeStudentsPreview = ref<PositionMyStudentsPreview | null>(null)
+interface FilterOptions {
+  categories: LeadMentorPositionMetaOption[]
+  industries: LeadMentorPositionMetaOption[]
+  companies: LeadMentorPositionMetaOption[]
+  regions: LeadMentorPositionMetaOption[]
+}
 
-const categories: PositionCategory[] = [
-  {
+interface IndustryUiConfig {
+  id: string
+  iconClass: string
+  accentColor: string
+  chipTone: ChipTone
+  headerStyle: Record<string, string>
+}
+
+const INDUSTRY_UI_CONFIGS: Record<string, IndustryUiConfig> = {
+  'investment bank': {
     id: 'ib',
-    label: 'Investment Bank',
     iconClass: 'mdi-bank',
     accentColor: 'var(--primary)',
+    chipTone: 'industry-bank',
     headerStyle: {
       background: 'linear-gradient(135deg,#EEF2FF,#E0E7FF)',
     },
-    companySummary: '3 家公司',
-    positionSummary: '7 个岗位',
-    studentSummary: '我的学员: 6人',
-    companies: [
-      {
-        id: 'gs',
-        name: 'Goldman Sachs',
-        locations: 'Hong Kong, New York',
-        logoText: 'GS',
-        logoColor: 'var(--primary)',
-        positionCount: 3,
-        studentCount: 2,
-        officialUrl: 'https://goldmansachs.com/careers',
-        jobs: [
-          {
-            id: 'ib-analyst',
-            title: 'IB Analyst',
-            industry: 'Investment Bank',
-            industryTone: 'industry-bank',
-            jobType: '暑期实习',
-            location: 'Hong Kong',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '09-15',
-            publishSortKey: 915,
-            deadline: '12-31',
-            deadlineTone: 'urgent',
-            studentCount: 2,
-            companyName: 'Goldman Sachs',
-            companyId: 'gs',
-            officialUrl: 'https://goldmansachs.com/careers',
-            logoText: 'GS',
-            logoColor: 'var(--primary)',
-          },
-          {
-            id: 'st-analyst-gs',
-            title: 'S&T Analyst',
-            industry: 'Investment Bank',
-            industryTone: 'industry-bank',
-            jobType: '全职招聘',
-            location: 'New York',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '10-01',
-            publishSortKey: 1001,
-            deadline: '01-15',
-            deadlineTone: 'normal',
-            studentCount: 0,
-            companyName: 'Goldman Sachs',
-            companyId: 'gs',
-            officialUrl: 'https://goldmansachs.com/careers',
-            logoText: 'GS',
-            logoColor: 'var(--primary)',
-          },
-          {
-            id: 'quant-researcher',
-            title: 'Quant Researcher',
-            industry: 'Investment Bank',
-            industryTone: 'industry-bank',
-            jobType: '暑期实习',
-            location: 'London',
-            cycleLabel: '2025 Full-time',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '08-01',
-            publishSortKey: 801,
-            deadline: '11-30',
-            deadlineTone: 'normal',
-            studentCount: 0,
-            companyName: 'Goldman Sachs',
-            companyId: 'gs',
-            officialUrl: 'https://goldmansachs.com/careers',
-            logoText: 'GS',
-            logoColor: 'var(--primary)',
-          },
-        ],
-      },
-      {
-        id: 'ms',
-        name: 'Morgan Stanley',
-        locations: 'New York, Hong Kong',
-        logoText: 'MS',
-        logoColor: '#1E40AF',
-        positionCount: 2,
-        studentCount: 3,
-        officialUrl: 'https://morganstanley.com/careers',
-        jobs: [
-          {
-            id: 'ibd-summer-analyst',
-            title: 'IBD Summer Analyst',
-            industry: 'Investment Bank',
-            industryTone: 'industry-bank',
-            jobType: '暑期实习',
-            location: 'New York',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '09-01',
-            publishSortKey: 901,
-            deadline: '01-15',
-            deadlineTone: 'normal',
-            studentCount: 3,
-            companyName: 'Morgan Stanley',
-            companyId: 'ms',
-            officialUrl: 'https://morganstanley.com/careers',
-            logoText: 'MS',
-            logoColor: '#1E40AF',
-          },
-          {
-            id: 'wealth-management',
-            title: 'Wealth Management',
-            industry: 'Investment Bank',
-            industryTone: 'industry-bank',
-            jobType: '非常规周期',
-            location: 'Hong Kong',
-            cycleLabel: 'Off-cycle',
-            cycleTone: 'neutral',
-            recruitYear: '2024',
-            publishDate: '07-01',
-            publishSortKey: 701,
-            deadline: '10-31',
-            deadlineTone: 'closed',
-            studentCount: 0,
-            companyName: 'Morgan Stanley',
-            companyId: 'ms',
-            officialUrl: 'https://morganstanley.com/careers',
-            logoText: 'MS',
-            logoColor: '#1E40AF',
-          },
-        ],
-      },
-      {
-        id: 'jpm',
-        name: 'JP Morgan',
-        locations: 'London, New York',
-        logoText: 'JPM',
-        logoColor: '#0369A1',
-        positionCount: 2,
-        studentCount: 1,
-        officialUrl: 'https://jpmorgan.com/careers',
-        jobs: [
-          {
-            id: 'st-analyst-jpm',
-            title: 'S&T Analyst',
-            industry: 'Investment Bank',
-            industryTone: 'industry-bank',
-            jobType: '暑期实习',
-            location: 'London',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '09-20',
-            publishSortKey: 920,
-            deadline: '12-15',
-            deadlineTone: 'normal',
-            studentCount: 1,
-            companyName: 'JP Morgan',
-            companyId: 'jpm',
-            officialUrl: 'https://jpmorgan.com/careers',
-            logoText: 'JPM',
-            logoColor: '#0369A1',
-          },
-          {
-            id: 'asset-management',
-            title: 'Asset Management',
-            industry: 'Investment Bank',
-            industryTone: 'industry-bank',
-            jobType: '暑期实习',
-            location: 'New York',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '10-01',
-            publishSortKey: 1001,
-            deadline: '01-31',
-            deadlineTone: 'normal',
-            studentCount: 0,
-            companyName: 'JP Morgan',
-            companyId: 'jpm',
-            officialUrl: 'https://jpmorgan.com/careers',
-            logoText: 'JPM',
-            logoColor: '#0369A1',
-          },
-        ],
-      },
-    ],
   },
-  {
+  consulting: {
     id: 'consulting',
-    label: 'Consulting',
     iconClass: 'mdi-lightbulb',
     accentColor: '#7C3AED',
+    chipTone: 'industry-consulting',
     headerStyle: {
       background: 'linear-gradient(135deg,#F3E8FF,#E9D5FF)',
     },
-    companySummary: '2 家公司',
-    positionSummary: '3 个岗位',
-    studentSummary: '我的学员: 2人',
-    companies: [
-      {
-        id: 'mck',
-        name: 'McKinsey',
-        locations: 'Shanghai, Beijing',
-        logoText: 'MCK',
-        logoColor: '#7C3AED',
-        positionCount: 2,
-        studentCount: 2,
-        officialUrl: 'https://mckinsey.com/careers',
-        jobs: [
-          {
-            id: 'business-analyst',
-            title: 'Business Analyst',
-            industry: 'Consulting',
-            industryTone: 'industry-consulting',
-            jobType: '暑期实习',
-            location: 'Shanghai',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '07-01',
-            publishSortKey: 701,
-            deadline: '10-31',
-            deadlineTone: 'closed',
-            studentCount: 2,
-            companyName: 'McKinsey',
-            companyId: 'mck',
-            officialUrl: 'https://mckinsey.com/careers',
-            logoText: 'MCK',
-            logoColor: '#7C3AED',
-          },
-          {
-            id: 'associate-intern-mck',
-            title: 'Associate Intern',
-            industry: 'Consulting',
-            industryTone: 'industry-consulting',
-            jobType: '暑期实习',
-            location: 'Beijing',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '09-01',
-            publishSortKey: 901,
-            deadline: '12-15',
-            deadlineTone: 'normal',
-            studentCount: 0,
-            companyName: 'McKinsey',
-            companyId: 'mck',
-            officialUrl: 'https://mckinsey.com/careers',
-            logoText: 'MCK',
-            logoColor: '#7C3AED',
-          },
-        ],
-      },
-      {
-        id: 'bcg',
-        name: 'BCG',
-        locations: 'Beijing',
-        logoText: 'BCG',
-        logoColor: '#059669',
-        positionCount: 1,
-        studentCount: 0,
-        officialUrl: 'https://bcg.com/careers',
-        jobs: [
-          {
-            id: 'associate-intern-bcg',
-            title: 'Associate Intern',
-            industry: 'Consulting',
-            industryTone: 'industry-consulting',
-            jobType: '暑期实习',
-            location: 'Beijing',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '09-15',
-            publishSortKey: 915,
-            deadline: '11-30',
-            deadlineTone: 'normal',
-            studentCount: 0,
-            companyName: 'BCG',
-            companyId: 'bcg',
-            officialUrl: 'https://bcg.com/careers',
-            logoText: 'BCG',
-            logoColor: '#059669',
-          },
-        ],
-      },
-    ],
   },
-  {
+  tech: {
     id: 'tech',
-    label: 'Tech',
     iconClass: 'mdi-laptop',
     accentColor: '#1D4ED8',
+    chipTone: 'industry-tech',
     headerStyle: {
       background: 'linear-gradient(135deg,#DBEAFE,#BFDBFE)',
     },
-    companySummary: '1 家公司',
-    positionSummary: '2 个岗位',
-    studentSummary: '我的学员: 0人',
-    companies: [
-      {
-        id: 'google',
-        name: 'Google',
-        locations: 'San Francisco',
-        logoText: 'G',
-        logoColor: '#EA4335',
-        positionCount: 2,
-        studentCount: 0,
-        officialUrl: 'https://careers.google.com',
-        jobs: [
-          {
-            id: 'software-engineer',
-            title: 'Software Engineer',
-            industry: 'Tech',
-            industryTone: 'industry-tech',
-            jobType: '暑期实习',
-            location: 'San Francisco',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '10-01',
-            publishSortKey: 1001,
-            deadline: '01-31',
-            deadlineTone: 'normal',
-            studentCount: 0,
-            companyName: 'Google',
-            companyId: 'google',
-            officialUrl: 'https://careers.google.com',
-            logoText: 'G',
-            logoColor: '#EA4335',
-          },
-          {
-            id: 'product-manager',
-            title: 'Product Manager',
-            industry: 'Tech',
-            industryTone: 'industry-tech',
-            jobType: '暑期实习',
-            location: 'Singapore',
-            cycleLabel: '2025 Summer',
-            cycleTone: 'info',
-            recruitYear: '2025',
-            publishDate: '10-15',
-            publishSortKey: 1015,
-            deadline: '02-15',
-            deadlineTone: 'normal',
-            studentCount: 0,
-            companyName: 'Google',
-            companyId: 'google',
-            officialUrl: 'https://careers.google.com',
-            logoText: 'G',
-            logoColor: '#EA4335',
-          },
-        ],
-      },
-    ],
-  },
-]
-
-const allJobs = computed(() => categories.flatMap((category) => category.companies.flatMap((company) => company.jobs)))
-const myStudentsPreviewByJobId: Record<string, PositionMyStudentsPreview> = {
-  'ib-analyst': {
-    companyName: 'Goldman Sachs',
-    jobTitle: 'IB Analyst',
-    students: [
-      { studentId: '12766', studentName: '张三', jobTitle: 'IB Analyst', statusLabel: '面试中', statusTone: 'interviewing', lessonHours: '24h' },
-      { studentId: '12890', studentName: '李四', jobTitle: 'IB Analyst', statusLabel: '已投递', statusTone: 'applied', lessonHours: '18h' },
-      { studentId: '12345', studentName: '王五', jobTitle: 'IB Analyst', statusLabel: '获得Offer', statusTone: 'offer', lessonHours: '32h' },
-    ],
-  },
-  'ibd-summer-analyst': {
-    companyName: 'Morgan Stanley',
-    jobTitle: 'IBD Summer Analyst',
-    students: [
-      { studentId: '13208', studentName: '赵六', jobTitle: 'IBD Summer Analyst', statusLabel: '面试中', statusTone: 'interviewing', lessonHours: '20h' },
-      { studentId: '13215', studentName: '钱七', jobTitle: 'IBD Summer Analyst', statusLabel: '已投递', statusTone: 'applied', lessonHours: '16h' },
-      { studentId: '13226', studentName: '孙八', jobTitle: 'IBD Summer Analyst', statusLabel: '获得Offer', statusTone: 'offer', lessonHours: '28h' },
-    ],
-  },
-  'st-analyst-jpm': {
-    companyName: 'JP Morgan',
-    jobTitle: 'S&T Analyst',
-    students: [
-      { studentId: '13618', studentName: '周九', jobTitle: 'S&T Analyst', statusLabel: '已投递', statusTone: 'applied', lessonHours: '14h' },
-    ],
-  },
-  'business-analyst': {
-    companyName: 'McKinsey',
-    jobTitle: 'Business Analyst',
-    students: [
-      { studentId: '14021', studentName: '吴十', jobTitle: 'Business Analyst', statusLabel: '面试中', statusTone: 'interviewing', lessonHours: '22h' },
-      { studentId: '14038', studentName: '郑十一', jobTitle: 'Business Analyst', statusLabel: '获得Offer', statusTone: 'offer', lessonHours: '30h' },
-    ],
   },
 }
+
+const FALLBACK_INDUSTRY_CONFIG: IndustryUiConfig = {
+  id: 'other',
+  iconClass: 'mdi-domain',
+  accentColor: '#0F766E',
+  chipTone: 'neutral',
+  headerStyle: {
+    background: 'linear-gradient(135deg,#CCFBF1,#99F6E4)',
+  },
+}
+
+const COMPANY_COLORS: Record<string, string> = {
+  'goldman sachs': 'var(--primary)',
+  'morgan stanley': '#1E40AF',
+  'jp morgan': '#0369A1',
+  'mckinsey': '#7C3AED',
+  'bcg': '#059669',
+  'google': '#EA4335',
+}
+
+const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
+const viewMode = ref<ViewMode>('drilldown')
+const publishSortDirection = ref<'default' | 'asc' | 'desc'>('default')
+const expandedCategories = ref<string[]>([])
+const expandedCompanies = ref<string[]>([])
+const isMyStudentsModalOpen = ref(false)
+const activeStudentsPreview = ref<PositionMyStudentsPreview | null>(null)
+const isLoading = ref(false)
+const isStudentsLoading = ref(false)
+const positionRows = ref<LeadMentorPositionListItem[]>([])
+const positionMeta = ref<LeadMentorPositionMeta | null>(null)
+const filters = reactive<LeadMentorPositionListParams>({
+  positionCategory: '',
+  industry: '',
+  companyName: '',
+  region: '',
+  keyword: '',
+})
+
+const filterOptions = computed<FilterOptions>(() => ({
+  categories: positionMeta.value?.categories ?? [],
+  industries: positionMeta.value?.industries ?? [],
+  companies: positionMeta.value?.companies ?? [],
+  regions: positionMeta.value?.regions ?? [],
+}))
+
+const categoryLabelMap = computed(() => buildLabelMap(positionMeta.value?.categories ?? []))
+
+const categories = computed<PositionCategory[]>(() => {
+  const groupedIndustries = new Map<
+    string,
+    {
+      label: string
+      config: IndustryUiConfig
+      companies: Map<string, PositionCompany>
+    }
+  >()
+
+  positionRows.value.forEach((row) => {
+    const industryLabel = row.industry?.trim() || 'Other'
+    const industryConfig = resolveIndustryUiConfig(industryLabel)
+    const industryKey = industryConfig.id
+    const companyKey = slugify(row.companyName || `${industryLabel}-${row.positionId}`)
+    const job = toPositionJob(row, categoryLabelMap.value)
+
+    let industryGroup = groupedIndustries.get(industryKey)
+    if (!industryGroup) {
+      industryGroup = {
+        label: industryLabel,
+        config: industryConfig,
+        companies: new Map(),
+      }
+      groupedIndustries.set(industryKey, industryGroup)
+    }
+
+    let company = industryGroup.companies.get(companyKey)
+    if (!company) {
+      company = {
+        id: companyKey,
+        name: row.companyName || '-',
+        locations: '',
+        logoText: buildLogoText(row.companyName || '-'),
+        logoColor: resolveCompanyColor(row.companyName || ''),
+        positionCount: 0,
+        studentCount: 0,
+        officialUrl: row.companyWebsite || row.positionUrl || '',
+        jobs: [],
+      }
+      industryGroup.companies.set(companyKey, company)
+    }
+
+    company.jobs.push(job)
+    if (!company.officialUrl) {
+      company.officialUrl = job.officialUrl
+    }
+  })
+
+  return Array.from(groupedIndustries.values()).map((industryGroup) => {
+    const companies = Array.from(industryGroup.companies.values()).map((company) => {
+      const companyStudentCount = company.jobs.reduce((sum, job) => sum + job.studentCount, 0)
+      return {
+        ...company,
+        locations: Array.from(
+          new Set(company.jobs.map((job) => job.location).filter((value) => value && value !== '-')),
+        ).join(', ') || '-',
+        positionCount: company.jobs.length,
+        studentCount: companyStudentCount,
+      }
+    })
+
+    const positionCount = companies.reduce((sum, company) => sum + company.positionCount, 0)
+    const studentCount = companies.reduce((sum, company) => sum + company.studentCount, 0)
+
+    return {
+      id: industryGroup.config.id,
+      label: industryGroup.label,
+      iconClass: industryGroup.config.iconClass,
+      accentColor: industryGroup.config.accentColor,
+      headerStyle: industryGroup.config.headerStyle,
+      companySummary: `${companies.length} 家公司`,
+      positionSummary: `${positionCount} 个岗位`,
+      studentSummary: `我的学员: ${studentCount}人`,
+      companies,
+    }
+  })
+})
+
+const allJobs = computed(() =>
+  categories.value.flatMap((category) => category.companies.flatMap((company) => company.jobs)),
+)
+
+const footerStats = computed(() => {
+  const total = allJobs.value.length
+  const closed = allJobs.value.filter((job) => job.deadlineTone === 'closed').length
+  const students = allJobs.value.reduce((sum, job) => sum + job.studentCount, 0)
+
+  return {
+    total,
+    open: total - closed,
+    closed,
+    students,
+  }
+})
 
 const orderedListJobs = computed(() => {
   const items = [...allJobs.value]
@@ -823,6 +655,29 @@ const publishSortIcon = computed(() => {
   }
   return 'mdi-swap-vertical'
 })
+
+watch(
+  categories,
+  (nextCategories) => {
+    if (!nextCategories.length) {
+      expandedCategories.value = []
+      expandedCompanies.value = []
+      return
+    }
+
+    const nextCategoryIds = new Set(nextCategories.map((category) => category.id))
+    expandedCategories.value = expandedCategories.value.filter((entry) => nextCategoryIds.has(entry))
+    if (!expandedCategories.value.length) {
+      expandedCategories.value = [nextCategories[0].id]
+    }
+
+    const nextCompanyIds = new Set(
+      nextCategories.flatMap((category) => category.companies.map((company) => company.id)),
+    )
+    expandedCompanies.value = expandedCompanies.value.filter((entry) => nextCompanyIds.has(entry))
+  },
+  { immediate: true },
+)
 
 const isCategoryOpen = (categoryId: string) => expandedCategories.value.includes(categoryId)
 const isCompanyOpen = (companyId: string) => expandedCompanies.value.includes(companyId)
@@ -849,7 +704,54 @@ const togglePublishSort = () => {
   }
 }
 
+const buildListParams = (): LeadMentorPositionListParams => {
+  const nextParams: LeadMentorPositionListParams = {}
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (!value) {
+      return
+    }
+
+    nextParams[key as keyof LeadMentorPositionListParams] = value
+  })
+
+  return nextParams
+}
+
+const loadPositionMeta = async () => {
+  try {
+    positionMeta.value = await getLeadMentorPositionMeta()
+  } catch (_error) {
+    positionMeta.value = null
+    message.error('岗位筛选项加载失败')
+  }
+}
+
+const loadPositions = async () => {
+  isLoading.value = true
+
+  try {
+    const response = await getLeadMentorPositionList(buildListParams())
+    positionRows.value = Array.isArray(response?.rows) ? response.rows : []
+  } catch (_error) {
+    positionRows.value = []
+    activeStudentsPreview.value = null
+    isMyStudentsModalOpen.value = false
+    message.error('岗位列表加载失败')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const loadPageData = async () => {
+  await Promise.all([loadPositionMeta(), loadPositions()])
+}
+
 const formatStudentLabel = (count: number) => `${count}人`
+const handleFilterChange = () => {
+  void loadPositions()
+}
+
 const handleMyStudentsModalVisibleChange = (visible: boolean) => {
   isMyStudentsModalOpen.value = visible
   if (!visible) {
@@ -857,14 +759,28 @@ const handleMyStudentsModalVisibleChange = (visible: boolean) => {
   }
 }
 
-const openJobStudentsModal = (job: PositionJob) => {
-  const preview = myStudentsPreviewByJobId[job.id]
-  if (!preview) {
+const openJobStudentsModal = async (job: PositionJob) => {
+  if (isStudentsLoading.value) {
     return
   }
 
-  activeStudentsPreview.value = preview
-  isMyStudentsModalOpen.value = true
+  isStudentsLoading.value = true
+
+  try {
+    const students = await getLeadMentorPositionStudents(job.positionId)
+    activeStudentsPreview.value = {
+      companyName: job.companyName,
+      jobTitle: job.title,
+      students: students.map((student) => toMyStudentRecord(student, job.title)),
+    }
+    isMyStudentsModalOpen.value = true
+  } catch (_error) {
+    activeStudentsPreview.value = null
+    isMyStudentsModalOpen.value = false
+    message.error('我的学员申请加载失败')
+  } finally {
+    isStudentsLoading.value = false
+  }
 }
 
 const openCompanyStudentsModal = (company: PositionCompany) => {
@@ -873,10 +789,170 @@ const openCompanyStudentsModal = (company: PositionCompany) => {
     return
   }
 
-  openJobStudentsModal(jobWithStudents)
+  void openJobStudentsModal(jobWithStudents)
 }
 
 const handleJobLinkClick = () => showUpcomingToast()
+
+onMounted(() => {
+  void loadPageData()
+})
+
+function buildLabelMap(options: LeadMentorPositionMetaOption[]) {
+  return options.reduce<Record<string, string>>((result, option) => {
+    result[option.value] = option.label
+    return result
+  }, {})
+}
+
+function resolveIndustryUiConfig(industry: string): IndustryUiConfig {
+  return INDUSTRY_UI_CONFIGS[industry.trim().toLowerCase()] ?? FALLBACK_INDUSTRY_CONFIG
+}
+
+function toPositionJob(
+  row: LeadMentorPositionListItem,
+  categoryLabels: Record<string, string>,
+): PositionJob {
+  const industryLabel = row.industry?.trim() || 'Other'
+  const industryConfig = resolveIndustryUiConfig(industryLabel)
+  const companyName = row.companyName || '-'
+
+  return {
+    id: String(row.positionId),
+    positionId: row.positionId,
+    title: row.positionName || '-',
+    industry: industryLabel,
+    industryTone: industryConfig.chipTone,
+    jobType: categoryLabels[row.positionCategory] || row.positionCategory || '-',
+    location: row.department || row.city || row.region || '-',
+    cycleLabel: row.recruitmentCycle || row.projectYear || '-',
+    cycleTone: resolveCycleTone(row.recruitmentCycle),
+    recruitYear: row.projectYear || '-',
+    publishDate: formatShortDate(row.publishTime),
+    publishSortKey: toSortKey(row.publishTime),
+    deadline: formatShortDate(row.deadline),
+    deadlineTone: resolveDeadlineTone(row.deadline),
+    studentCount: normalizeStudentCount(row),
+    companyName,
+    companyId: slugify(companyName),
+    officialUrl: row.companyWebsite || row.positionUrl || '',
+    logoText: buildLogoText(companyName),
+    logoColor: resolveCompanyColor(companyName),
+  }
+}
+
+function resolveCycleTone(recruitmentCycle?: string): ChipTone {
+  const normalized = recruitmentCycle?.trim().toLowerCase() || ''
+  if (normalized.includes('off')) {
+    return 'neutral'
+  }
+
+  return 'info'
+}
+
+function resolveDeadlineTone(deadline?: string): DeadlineTone {
+  if (!deadline) {
+    return 'normal'
+  }
+
+  const deadlineTime = new Date(deadline).getTime()
+  if (Number.isNaN(deadlineTime)) {
+    return 'normal'
+  }
+
+  const now = Date.now()
+  if (deadlineTime < now) {
+    return 'closed'
+  }
+
+  const sevenDays = 7 * 24 * 60 * 60 * 1000
+  if (deadlineTime - now <= sevenDays) {
+    return 'urgent'
+  }
+
+  return 'normal'
+}
+
+function formatShortDate(value?: string) {
+  if (!value) {
+    return '-'
+  }
+
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  return `${month}-${day}`
+}
+
+function toSortKey(value?: string) {
+  if (!value) {
+    return 0
+  }
+
+  const parsed = new Date(value).getTime()
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+function normalizeStudentCount(row: LeadMentorPositionListItem) {
+  const rawValue = row.myStudentCount ?? row.studentCount ?? 0
+  return Number.isFinite(rawValue) ? Number(rawValue) : 0
+}
+
+function toMyStudentRecord(
+  row: LeadMentorPositionStudentRow,
+  fallbackJobTitle: string,
+): PositionMyStudentRecord {
+  return {
+    studentId: String(row.studentId),
+    studentName: row.studentName || '-',
+    jobTitle: row.positionName || fallbackJobTitle,
+    statusLabel: row.currentStage || row.status || row.statusRemark || '未申请',
+    statusTone: mapStudentTone(row.statusTone),
+    lessonHours: `${row.usedHours ?? 0}h`,
+  }
+}
+
+function mapStudentTone(statusTone?: LeadMentorPositionStudentRow['statusTone']): PositionStudentStatusTone {
+  if (statusTone === 'success') {
+    return 'offer'
+  }
+  if (statusTone === 'warning') {
+    return 'interviewing'
+  }
+  return 'applied'
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'position'
+}
+
+function buildLogoText(companyName: string) {
+  const parts = companyName
+    .split(/\s+/)
+    .map((part) => part.replace(/[^A-Za-z0-9]/g, ''))
+    .filter(Boolean)
+
+  if (!parts.length) {
+    return 'OSG'
+  }
+
+  return parts
+    .slice(0, 3)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('')
+}
+
+function resolveCompanyColor(companyName: string) {
+  return COMPANY_COLORS[companyName.trim().toLowerCase()] ?? '#64748B'
+}
 </script>
 
 <style scoped lang="scss">

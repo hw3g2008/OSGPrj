@@ -118,7 +118,9 @@ export async function performSurfaceTrigger(
           const fn = new Function(scriptText)
           return fn()
         }, script)
-        break
+        if (visualSource === 'prototype' || !selector) {
+          break
+        }
       }
       if (!selector) {
         throw new Error(`surface '${surface.surface_id}' click trigger missing selector`)
@@ -144,8 +146,16 @@ export async function performSurfaceTrigger(
       break
     }
     case 'route-param': {
-      if (visualSource !== 'app') {
-        throw new Error(`surface '${surface.surface_id}' route-param trigger is only supported for app source`)
+      if (visualSource === 'prototype') {
+        if (!script) {
+          throw new Error(`surface '${surface.surface_id}' route-param trigger requires prototype_script for prototype source`)
+        }
+        await page.evaluate((scriptText) => {
+          // eslint-disable-next-line no-new-func
+          const fn = new Function(scriptText)
+          return fn()
+        }, script)
+        break
       }
       const param = trigger.param?.trim()
       const value = trigger.value?.trim()

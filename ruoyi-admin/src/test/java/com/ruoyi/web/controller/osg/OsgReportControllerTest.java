@@ -37,6 +37,7 @@ import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.service.impl.OsgClassRecordServiceImpl;
 
 @WebMvcTest(controllers = OsgReportController.class)
@@ -60,6 +61,9 @@ class OsgReportControllerTest
 
     @MockBean
     private OsgStaffMapper staffMapper;
+
+    @MockBean
+    private OsgStudentMapper studentMapper;
 
     @MockBean
     private TokenService tokenService;

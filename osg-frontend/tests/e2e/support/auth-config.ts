@@ -1,5 +1,7 @@
 import { loadPlaywrightRuntimeEnv, normalizeRuntimeEnvValue } from './runtime-env'
 
+export { normalizeRuntimeEnvValue } from './runtime-env'
+
 export interface AuthRuntimeConfig {
   username: string
   password: string
@@ -9,6 +11,7 @@ export interface AuthRuntimeConfig {
   redisPassword: string
   redisContainer: string
   loginPath: string
+  loginApiPath: string
   infoPath: string
   postLoginPath: string
 }
@@ -17,6 +20,7 @@ interface AuthRuntimeDefaults {
   username: string
   password: string
   loginPath: string
+  loginApiPath: string
   infoPath: string
   postLoginPath: string
 }
@@ -32,6 +36,7 @@ function resolveModuleDefaults(env: Record<string, string | undefined>): AuthRun
       username: 'student_demo',
       password: 'student123',
       loginPath: '/login',
+      loginApiPath: '/api/lead-mentor/login',
       infoPath: '/api/lead-mentor/getInfo',
       postLoginPath: '/home',
     }
@@ -41,6 +46,7 @@ function resolveModuleDefaults(env: Record<string, string | undefined>): AuthRun
     username: 'admin',
     password: 'Osg@2025',
     loginPath: '/login',
+    loginApiPath: '/api/login',
     infoPath: '/api/getInfo',
     postLoginPath: '/dashboard',
   }
@@ -61,6 +67,7 @@ export function resolveAuthRuntimeConfig(
   const redisPassword = normalizeRuntimeEnvValue(env.E2E_REDIS_PASSWORD) || normalizeRuntimeEnvValue(env.SPRING_DATA_REDIS_PASSWORD)
   const redisContainer = normalizeRuntimeEnvValue(env.E2E_REDIS_CONTAINER)
   const loginPath = normalizeRuntimeEnvValue(env.E2E_LOGIN_PATH)
+  const loginApiPath = normalizeRuntimeEnvValue(env.E2E_LOGIN_API_PATH)
   const infoPath = normalizeRuntimeEnvValue(env.E2E_INFO_PATH)
   const postLoginPath = normalizeRuntimeEnvValue(env.E2E_POST_LOGIN_PATH)
   return {
@@ -72,6 +79,7 @@ export function resolveAuthRuntimeConfig(
     redisPassword: redisPassword || 'redis123456',
     redisContainer: redisContainer || '',
     loginPath: loginPath || moduleDefaults.loginPath,
+    loginApiPath: loginApiPath || moduleDefaults.loginApiPath,
     infoPath: infoPath || moduleDefaults.infoPath,
     postLoginPath: postLoginPath || moduleDefaults.postLoginPath,
   }

@@ -109,3 +109,39 @@ export function rateStudentClassRecord(data: {
 }): Promise<void> {
   return http.post('/student/class-records/rate', data)
 }
+
+export interface LeadMentorClassRecordCreatePayload {
+  studentId: number
+  classDate: string
+  durationHours: number
+  courseType: string
+  classStatus: string
+  feedbackContent: string
+  topics?: string
+  comments?: string
+}
+
+export interface LeadMentorClassRecordCreateResponse {
+  recordId: number
+  mentorId: number
+  mentorName: string
+  studentId: number
+  studentName: string
+  courseType: string
+  courseSource: string
+  classStatus: string
+  classDate: string
+  durationHours: number
+  weeklyHours: number
+  topics?: string | null
+  comments?: string | null
+  feedbackContent: string
+  status: string
+  submittedAt: string
+}
+
+export function createLeadMentorClassRecord(data: LeadMentorClassRecordCreatePayload) {
+  return http.post<LeadMentorClassRecordCreateResponse>('/lead-mentor/class-records', data, {
+    skipErrorMessage: true,
+  })
+}

@@ -7,6 +7,8 @@ public interface OsgStudentMapper
 {
     public OsgStudent selectStudentByStudentId(Long studentId);
 
+    public List<OsgStudent> selectStudentByStudentIds(List<Long> studentIds);
+
     public List<OsgStudent> selectStudentList(OsgStudent student);
 
     public int insertStudent(OsgStudent student);

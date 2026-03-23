@@ -95,4 +95,51 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             remark = values(remark)
     </insert>
 
+    <insert id="batchUpsertSchedules">
+        insert into osg_staff_schedule (
+            staff_id,
+            week_scope,
+            weekday,
+            time_slot,
+            is_available,
+            available_hours,
+            adjust_reason,
+            notify_staff,
+            operator_id,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            remark
+        )
+        values
+        <foreach collection="schedules" item="schedule" separator=",">
+            (
+                #{schedule.staffId},
+                #{schedule.weekScope},
+                #{schedule.weekday},
+                #{schedule.timeSlot},
+                #{schedule.isAvailable},
+                #{schedule.availableHours},
+                #{schedule.adjustReason},
+                #{schedule.notifyStaff},
+                #{schedule.operatorId},
+                #{schedule.createBy},
+                sysdate(),
+                #{schedule.updateBy},
+                sysdate(),
+                #{schedule.remark}
+            )
+        </foreach>
+        on duplicate key update
+            is_available = values(is_available),
+            available_hours = values(available_hours),
+            adjust_reason = values(adjust_reason),
+            notify_staff = values(notify_staff),
+            operator_id = values(operator_id),
+            update_by = values(update_by),
+            update_time = sysdate(),
+            remark = values(remark)
+    </insert>
+
 </mapper>

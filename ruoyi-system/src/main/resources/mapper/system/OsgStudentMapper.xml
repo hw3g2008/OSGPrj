@@ -41,6 +41,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where student_id = #{studentId}
     </select>
 
+    <select id="selectStudentByStudentIds" parameterType="list" resultMap="OsgStudentResult">
+        <include refid="selectStudentColumns"/>
+        where student_id in
+        <foreach collection="list" item="studentId" open="(" separator="," close=")">
+            #{studentId}
+        </foreach>
+    </select>
+
     <select id="selectStudentList" parameterType="OsgStudent" resultMap="OsgStudentResult">
         <include refid="selectStudentColumns"/>
         <where>

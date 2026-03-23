@@ -16,6 +16,7 @@ const webServerTimeoutMs =
 const disableWebServerForPrototypeVisualSource = process.env.UI_VISUAL_SOURCE === 'prototype'
 const requestedModule = process.env.UI_VISUAL_MODULE || process.env.E2E_MODULE || 'permission'
 const visualContractJson = process.env.UI_VISUAL_CONTRACT_JSON || ''
+const explicitFrontendBaseURL = process.env.E2E_FRONTEND_BASE_URL?.trim() || ''
 
 interface E2ETarget {
   baseURL: string
@@ -87,7 +88,7 @@ export default defineConfig({
   reporter: [['html', { open: 'never' }], ['list']],
 
   use: {
-    baseURL: e2eTarget.baseURL,
+    baseURL: explicitFrontendBaseURL || e2eTarget.baseURL,
     trace: 'on-first-retry',
     locale: stability.locale,
     timezoneId: stability.timezoneId,
@@ -102,7 +103,7 @@ export default defineConfig({
     },
   ],
 
-  webServer: disableWebServerForPrototypeVisualSource
+  webServer: disableWebServerForPrototypeVisualSource || explicitFrontendBaseURL
     ? undefined
     : {
         command: e2eTarget.webServerCommand,

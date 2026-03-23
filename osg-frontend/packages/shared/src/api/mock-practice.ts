@@ -119,6 +119,77 @@ export interface StudentMockPracticeMeta {
   }
 }
 
+export type LeadMentorMockPracticeScope = 'pending' | 'coaching' | 'managed'
+
+export interface LeadMentorMockPracticeStats {
+  pendingCount: number
+  scheduledCount: number
+  completedCount: number
+  cancelledCount: number
+  confirmedCount?: number
+  totalCount: number
+}
+
+export interface LeadMentorMockPracticeMentorOption {
+  mentorId: number
+  mentorName: string
+  mentorBackground?: string
+  hourlyRate?: number | string | null
+  selected: boolean
+  availabilityLabel?: string
+  availableSlotCount?: number
+}
+
+export interface LeadMentorMockPracticeItem {
+  practiceId: number
+  studentId: number
+  studentName: string
+  practiceType: string
+  requestContent?: string
+  requestedMentorCount?: number
+  preferredMentorNames?: string
+  status: string
+  statusLabel?: string
+  mentorIds?: number[]
+  mentorNames?: string
+  mentorBackgrounds?: string
+  scheduledAt?: string
+  completedHours?: number
+  completedHoursLabel?: string
+  feedbackRating?: number
+  feedbackSummary?: string
+  submittedAt?: string
+  note?: string
+  isNewAssignment?: boolean
+  mentorOptions?: LeadMentorMockPracticeMentorOption[]
+  allowedScopes?: LeadMentorMockPracticeScope[]
+  canAssign?: boolean
+  canAcknowledge?: boolean
+}
+
+export interface LeadMentorMockPracticeListParams {
+  scope: LeadMentorMockPracticeScope
+  keyword?: string
+  practiceType?: string
+  status?: string
+}
+
+const toLeadMentorMockPracticeRequestParams = (
+  params: Partial<LeadMentorMockPracticeListParams> = {},
+) => {
+  const requestParams: Record<string, string> = {}
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return
+    }
+
+    requestParams[key] = String(value)
+  })
+
+  return requestParams
+}
+
 export function getStudentMockPracticeOverview(): Promise<StudentMockPracticeOverview> {
   return http.get('/student/mock-practice/overview')
 }
@@ -145,4 +216,43 @@ export function createStudentClassRequest(data: {
   remark: string
 }): Promise<{ requestId: number }> {
   return http.post('/student/mock-practice/class-request', data)
+}
+
+export function getLeadMentorMockPracticeStats(
+  params: Omit<Partial<LeadMentorMockPracticeListParams>, 'scope'> = {},
+): Promise<LeadMentorMockPracticeStats> {
+  return http.get('/lead-mentor/mock-practice/stats', {
+    params: toLeadMentorMockPracticeRequestParams(params),
+  })
+}
+
+export function getLeadMentorMockPracticeList(
+  params: LeadMentorMockPracticeListParams,
+): Promise<{ rows: LeadMentorMockPracticeItem[]; stats?: LeadMentorMockPracticeStats }> {
+  return http.get('/lead-mentor/mock-practice/list', {
+    params: toLeadMentorMockPracticeRequestParams(params),
+  })
+}
+
+export function getLeadMentorMockPracticeDetail(
+  practiceId: number,
+): Promise<LeadMentorMockPracticeItem> {
+  return http.get(`/lead-mentor/mock-practice/${practiceId}`)
+}
+
+export function assignLeadMentorMockPractice(
+  practiceId: number,
+  payload: {
+    mentorIds: number[]
+    scheduledAt: string
+    note?: string
+  },
+): Promise<LeadMentorMockPracticeItem> {
+  return http.post(`/lead-mentor/mock-practice/${practiceId}/assign`, payload)
+}
+
+export function acknowledgeLeadMentorMockPractice(
+  practiceId: number,
+): Promise<LeadMentorMockPracticeItem> {
+  return http.post(`/lead-mentor/mock-practice/${practiceId}/ack-assignment`)
 }

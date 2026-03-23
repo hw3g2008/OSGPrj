@@ -1,15 +1,24 @@
+import { execFileSync } from 'node:child_process'
+import path from 'node:path'
 import { expect, type APIRequestContext, type APIResponse, type Page } from '@playwright/test'
-import { resolveAuthRuntimeConfig } from './auth-config'
+import { normalizeRuntimeEnvValue, resolveAuthRuntimeConfig } from './auth-config'
 import { readRedisValue, deleteRedisKeys } from './redis-runtime'
 
 const E2E_TIMEOUT_MS = Number(process.env.E2E_WAIT_TIMEOUT_MS || 15000)
 const authConfig = resolveAuthRuntimeConfig()
-const visualModule = process.env.UI_VISUAL_MODULE || ''
+const requestedModule =
+  normalizeRuntimeEnvValue(process.env.E2E_MODULE) ||
+  normalizeRuntimeEnvValue(process.env.UI_VISUAL_MODULE) ||
+  ''
 const studentVisualUsername = process.env.E2E_STUDENT_USERNAME || 'student_demo'
 const studentVisualPassword = process.env.E2E_STUDENT_PASSWORD || 'student123'
 
 function asRegExpPath(path: string): RegExp {
   return new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+}
+
+function resolveRepoRoot(): string {
+  return path.resolve(__dirname, '../../../..')
 }
 
 function readCaptchaFromRedis(uuid: string): string | null {
@@ -130,6 +139,89 @@ function buildStudentVisualUser(sourceUser: Record<string, any> | null | undefin
   }
 }
 
+async function seedBrowserSession(page: Page, token: string, user: Record<string, any> | null | undefined): Promise<void> {
+  await page.addInitScript(({ nextToken, nextUser }) => {
+    window.localStorage.clear()
+    window.localStorage.setItem('osg_token', nextToken)
+    if (nextUser) {
+      window.localStorage.setItem('osg_user', JSON.stringify(nextUser))
+    }
+  }, { nextToken: token, nextUser: user ?? null })
+}
+
+export function ensureLeadMentorRuntimeCredentials(
+  username: string = authConfig.username,
+  password: string = authConfig.password,
+  email: string = `${username}@osg.local`,
+): void {
+  execFileSync(
+    'python3',
+    ['-c', `
+from pathlib import Path
+import bcrypt
+import pymysql
+import re
+
+vals = {}
+for line in Path('deploy/.env.dev').read_text().splitlines():
+    line = line.strip()
+    if not line or line.startswith('#') or '=' not in line:
+        continue
+    key, value = line.split('=', 1)
+    vals[key.strip()] = value.strip().strip('"').strip("'")
+
+url = vals['SPRING_DATASOURCE_DRUID_MASTER_URL']
+match = re.match(r'jdbc:mysql://([^:/]+)(?::(\\d+))?/([^?]+)', url)
+host = match.group(1)
+port = int(match.group(2) or 3306)
+database = match.group(3)
+
+conn = pymysql.connect(
+    host=host,
+    port=port,
+    user=vals['SPRING_DATASOURCE_DRUID_MASTER_USERNAME'],
+    password=vals['SPRING_DATASOURCE_DRUID_MASTER_PASSWORD'],
+    database=database,
+    charset='utf8mb4',
+)
+
+username = ${JSON.stringify(username)}
+password = ${JSON.stringify(password)}
+email = ${JSON.stringify(email)}
+password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+with conn.cursor() as cur:
+    cur.execute("select user_id from sys_user where user_name = %s limit 1", (username,))
+    existing = cur.fetchone()
+    if not existing:
+        raise RuntimeError(f'lead-mentor runtime account not found: {username}')
+    cur.execute(
+        '''
+        update sys_user
+           set email = %s,
+               password = %s,
+               status = '0',
+               del_flag = '0',
+               user_type = '00',
+               first_login = '0',
+               update_by = 'codex',
+               update_time = now()
+         where user_name = %s
+        ''',
+        (email, password_hash, username),
+    )
+
+conn.commit()
+conn.close()
+`],
+    {
+      cwd: resolveRepoRoot(),
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  )
+}
+
 export function waitForApi(page: Page, path: string, method: string = 'GET'): Promise<APIResponse> {
   const candidates = normalizeApiPath(path)
   return page.waitForResponse((response) => {
@@ -168,7 +260,7 @@ export async function assertRuoyiSuccess(
 }
 
 export async function loginAsAdmin(page: Page): Promise<void> {
-  if (visualModule === 'student') {
+  if (requestedModule === 'student') {
     const loginResponse = await page.request.post('/api/student/login', {
       data: {
         username: studentVisualUsername,
@@ -183,14 +275,48 @@ export async function loginAsAdmin(page: Page): Promise<void> {
     ).toBe(200)
     expect(loginBody?.token, '/api/student/login should include token for student visual auth').toBeTruthy()
 
-    const visualToken = loginBody.token as string
-    const visualUser = buildStudentVisualUser(null)
-    await page.addInitScript(({ nextToken, nextUser }) => {
-      window.localStorage.setItem('osg_token', nextToken)
-      if (nextUser) {
-        window.localStorage.setItem('osg_user', JSON.stringify(nextUser))
-      }
-    }, { nextToken: visualToken, nextUser: visualUser })
+    await seedBrowserSession(page, loginBody.token as string, buildStudentVisualUser(null))
+    return
+  }
+
+  if (requestedModule === 'lead-mentor') {
+    if (authConfig.username === 'student_demo') {
+      ensureLeadMentorRuntimeCredentials(authConfig.username, authConfig.password, 'student_demo@osg.local')
+    }
+
+    const loginBody = await assertRuoyiSuccess(
+      Promise.resolve(page.request.post(authConfig.loginApiPath, {
+        data: {
+          username: authConfig.username,
+          password: authConfig.password,
+        },
+      })),
+      authConfig.loginApiPath,
+    )
+    const leadMentorToken = loginBody?.token || loginBody?.data?.token
+    expect(leadMentorToken, `${authConfig.loginApiPath} should include token`).toBeTruthy()
+
+    const infoBody = await assertRuoyiSuccess(
+      Promise.resolve(page.request.get(authConfig.infoPath, {
+        headers: {
+          Authorization: `Bearer ${leadMentorToken}`,
+        },
+      })),
+      authConfig.infoPath,
+    )
+
+    await seedBrowserSession(page, leadMentorToken, {
+      ...(infoBody?.user || {}),
+      roles: Array.isArray(infoBody?.roles) ? infoBody.roles : [],
+      permissions: Array.isArray(infoBody?.permissions) ? infoBody.permissions : [],
+    })
+
+    await page.goto(authConfig.postLoginPath, {
+      waitUntil: 'domcontentloaded',
+      timeout: E2E_TIMEOUT_MS,
+    })
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(asRegExpPath(authConfig.postLoginPath), { timeout: E2E_TIMEOUT_MS })
     return
   }
 
@@ -273,14 +399,17 @@ export async function loginAsAdmin(page: Page): Promise<void> {
     await captchaInput.fill(finalCaptchaCode)
   }
 
-  const loginPromise = waitForApi(page, '/api/login', 'POST')
+  const loginPromise = waitForApi(page, authConfig.loginApiPath, 'POST')
   const infoPromise = waitForApi(page, authConfig.infoPath, 'GET')
 
   await submitButton.click()
 
-  const loginBody = await assertRuoyiSuccess(loginPromise, '/api/login')
-  expect(loginBody?.token || loginBody?.data?.token, '/api/login should include token').toBeTruthy()
+  const loginBody = await assertRuoyiSuccess(loginPromise, authConfig.loginApiPath)
+  expect(
+    loginBody?.token || loginBody?.data?.token,
+    `${authConfig.loginApiPath} should include token`,
+  ).toBeTruthy()
 
   await assertRuoyiSuccess(infoPromise, authConfig.infoPath)
-  await page.waitForURL(asRegExpPath(authConfig.postLoginPath), { timeout: E2E_TIMEOUT_MS })
+  await expect(page).toHaveURL(asRegExpPath(authConfig.postLoginPath), { timeout: E2E_TIMEOUT_MS })
 }

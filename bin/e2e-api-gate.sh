@@ -13,6 +13,7 @@ MODE="${2:-full}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 BASE_URL="${BASE_URL:-}"
 BASE_HEALTH_URL="${BASE_HEALTH_URL:-}"
+E2E_FRONTEND_BASE_URL="${E2E_FRONTEND_BASE_URL:-}"
 DATE_STR="$(date +%Y-%m-%d)"
 AUDIT_DIR="osg-spec-docs/tasks/audit"
 DEFAULT_LOG="${AUDIT_DIR}/e2e-api-gate-${MODULE}-${DATE_STR}.log"
@@ -68,6 +69,14 @@ case "${MODULE}" in
     E2E_SCRIPT="test:e2e"
     WORKER_POLICY="serial"
     EXTRA_E2E_ARGS+=(--grep "@lead-mentor")
+    if [[ -z "${E2E_FRONTEND_BASE_URL}" ]]; then
+      for candidate in "http://127.0.0.1:3003" "http://localhost:3003"; do
+        if curl -fsS --max-time 2 "${candidate}/login" >/dev/null 2>&1; then
+          E2E_FRONTEND_BASE_URL="${candidate}"
+          break
+        fi
+      done
+    fi
     ;;
 esac
 
@@ -77,6 +86,9 @@ python3 .claude/skills/workflow-engine/tests/e2e_api_guard.py \
 : > "${E2E_API_GATE_LOG}"
 rm -f "${BEHAVIOR_CONTRACT_REPORT}"
 echo "INFO: module=${MODULE} mode=${MODE} worker_policy=${WORKER_POLICY} base_url=${BASE_URL} health_url=${BASE_HEALTH_URL}" | tee -a "${E2E_API_GATE_LOG}"
+if [[ -n "${E2E_FRONTEND_BASE_URL}" ]]; then
+  echo "INFO: frontend_base_url=${E2E_FRONTEND_BASE_URL}" | tee -a "${E2E_API_GATE_LOG}"
+fi
 
 E2E_CMD=(pnpm --dir osg-frontend "${E2E_SCRIPT}")
 if [[ "${WORKER_POLICY}" == "serial" ]]; then
@@ -89,6 +101,7 @@ fi
 set +e
 E2E_MODULE="${MODULE}" \
 E2E_API_PROXY_TARGET="${BASE_URL}" \
+E2E_FRONTEND_BASE_URL="${E2E_FRONTEND_BASE_URL}" \
 BEHAVIOR_CONTRACT_REPORT="${BEHAVIOR_CONTRACT_REPORT}" \
 PW_E2E_REUSE_SERVER="${PW_E2E_REUSE_SERVER:-1}" \
 "${E2E_CMD[@]}" 2>&1 | tee -a "${E2E_API_GATE_LOG}"

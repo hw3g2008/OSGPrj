@@ -12,13 +12,19 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: 'home', name: 'Home', component: () => import('@/views/home/index.vue'), meta: { title: '首页' } },
       { path: 'career/positions', name: 'CareerPositions', component: () => import('@/views/career/positions/index.vue'), meta: { title: '岗位信息' } },
+      { path: 'career/job-overview', name: 'CareerJobOverview', component: () => import('@/views/career/job-overview/index.vue'), meta: { title: '学员求职总览' } },
+      { path: 'career/mock-practice', name: 'CareerMockPractice', component: () => import('@/views/career/mock-practice/index.vue'), meta: { title: '模拟应聘管理' } },
+      { path: 'teaching/students', name: 'TeachingStudents', component: () => import('@/views/teaching/students/index.vue'), meta: { title: '学员列表' } },
+      { path: 'teaching/class-records', name: 'TeachingClassRecords', component: () => import('@/views/teaching/class-records/index.vue'), meta: { title: '课程记录' } },
       { path: 'dashboard', redirect: '/home' },
       { path: 'classes', name: 'Classes', component: () => import('@/views/classes/index.vue'), meta: { title: '班级管理' } },
-      { path: 'students', name: 'Students', component: () => import('@/views/students/index.vue'), meta: { title: '学员管理' } },
+      { path: 'students', redirect: '/teaching/students' },
       { path: 'mentors', name: 'Mentors', component: () => import('@/views/mentors/index.vue'), meta: { title: '导师管理' } },
-      { path: 'schedule', name: 'Schedule', component: () => import('@/views/schedule/index.vue'), meta: { title: '排课总览' } },
+      { path: 'schedule', redirect: '/profile/schedule' },
       { path: 'reports', name: 'Reports', component: () => import('@/views/reports/index.vue'), meta: { title: '学情报告' } },
-      { path: 'profile', name: 'Profile', component: () => import('@/views/profile/index.vue'), meta: { title: '个人中心' } }
+      { path: 'profile', redirect: '/profile/basic' },
+      { path: 'profile/basic', name: 'ProfileBasic', component: () => import('@/views/profile/basic/index.vue'), meta: { title: '基本信息' } },
+      { path: 'profile/schedule', name: 'ProfileSchedule', component: () => import('@/views/profile/schedule/index.vue'), meta: { title: '课程排期' } }
     ]
   }
 ]

@@ -4,6 +4,7 @@ set -euo pipefail
 ACTION="${1:-status}"
 ENV_FILE="${2:-}"
 HEALTH_TIMEOUT_SECONDS="${BACKEND_DEV_SERVER_HEALTH_TIMEOUT_SECONDS:-15}"
+START_WAIT_SECONDS="${BACKEND_DEV_SERVER_START_WAIT_SECONDS:-180}"
 
 resolve_runtime() {
   eval "$(bash bin/resolve-runtime-contract.sh "${RUNTIME_CONTRACT_FILE:-}")"
@@ -156,7 +157,7 @@ with open(log_file, "ab", buffering=0) as stream:
 PY
   )"
 
-  for _ in {1..120}; do
+  for ((attempt=1; attempt<=START_WAIT_SECONDS; attempt++)); do
     if adopt_existing_listener; then
       echo "PASS: backend started at ${BACKEND_BASE_URL} (pid=$(tracked_pid))"
       return 0
@@ -172,6 +173,7 @@ PY
     wait "${launcher_pid}" 2>/dev/null || true
   fi
   echo "FAIL: backend failed to start at ${BACKEND_BASE_URL}" >&2
+  echo "INFO: waited_seconds=${START_WAIT_SECONDS}" >&2
   echo "INFO: log=${LOG_FILE}" >&2
   bash bin/runtime-port-guard.sh --mode describe --port "${BACKEND_PORT}" >&2 || true
   exit 17

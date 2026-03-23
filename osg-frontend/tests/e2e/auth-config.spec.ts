@@ -6,6 +6,7 @@ test.describe('Auth Runtime Config', () => {
     const config = resolveAuthRuntimeConfig({})
 
     expect(config.loginPath).toBe('/login')
+    expect(config.loginApiPath).toBe('/api/login')
     expect(config.infoPath).toBe('/api/getInfo')
     expect(config.postLoginPath).toBe('/dashboard')
     expect(config.username).toBe('admin')
@@ -14,12 +15,14 @@ test.describe('Auth Runtime Config', () => {
   test('allows env overrides for login and landing paths', () => {
     const config = resolveAuthRuntimeConfig({
       E2E_LOGIN_PATH: '/auth/sign-in',
+      E2E_LOGIN_API_PATH: '/api/auth/login',
       E2E_INFO_PATH: '/api/profile/me',
       E2E_POST_LOGIN_PATH: '/workbench',
       E2E_ADMIN_USERNAME: 'root',
     })
 
     expect(config.loginPath).toBe('/auth/sign-in')
+    expect(config.loginApiPath).toBe('/api/auth/login')
     expect(config.infoPath).toBe('/api/profile/me')
     expect(config.postLoginPath).toBe('/workbench')
     expect(config.username).toBe('root')
@@ -31,6 +34,7 @@ test.describe('Auth Runtime Config', () => {
     })
 
     expect(config.loginPath).toBe('/login')
+    expect(config.loginApiPath).toBe('/api/lead-mentor/login')
     expect(config.infoPath).toBe('/api/lead-mentor/getInfo')
     expect(config.postLoginPath).toBe('/home')
     expect(config.username).toBe('student_demo')
@@ -42,12 +46,14 @@ test.describe('Auth Runtime Config', () => {
       UI_VISUAL_MODULE: 'lead-mentor',
       E2E_ADMIN_USERNAME: 'override-user',
       E2E_ADMIN_PASSWORD: 'override-pass',
+      E2E_LOGIN_API_PATH: '/api/custom/login',
       E2E_INFO_PATH: '/api/custom/info',
       E2E_POST_LOGIN_PATH: '/custom-home',
     })
 
     expect(config.username).toBe('override-user')
     expect(config.password).toBe('override-pass')
+    expect(config.loginApiPath).toBe('/api/custom/login')
     expect(config.infoPath).toBe('/api/custom/info')
     expect(config.postLoginPath).toBe('/custom-home')
   })

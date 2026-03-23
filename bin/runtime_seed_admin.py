@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
@@ -110,6 +111,47 @@ def resolve_seed_mentors(cur, minimum: int = 2) -> list[tuple[int, str]]:
     while len(mentors) < minimum:
         mentors.append(mentors[-1])
     return mentors
+
+
+def resolve_lead_mentor_runtime_user(cur) -> tuple[int, str]:
+    preferred_usernames = [
+        os.environ.get("E2E_LEAD_MENTOR_USERNAME", "").strip(),
+        os.environ.get("E2E_STUDENT_USERNAME", "").strip(),
+        "student_demo",
+        "lead_mentor",
+    ]
+
+    for username in preferred_usernames:
+        if not username:
+            continue
+        cur.execute(
+            """
+            select user_id, coalesce(nullif(nick_name, ''), user_name) as display_name
+            from sys_user
+            where status = '0'
+              and user_name = %s
+            limit 1
+            """,
+            (username,),
+        )
+        row = cur.fetchone()
+        if row is not None:
+            return int(row[0]), str(row[1])
+
+    cur.execute(
+        """
+        select user_id, coalesce(nullif(nick_name, ''), user_name) as display_name
+        from sys_user
+        where status = '0'
+          and user_name != 'admin'
+        order by user_id asc
+        limit 1
+        """
+    )
+    row = cur.fetchone()
+    if row is None:
+        raise RuntimeError("no active sys_user row available for lead-mentor runtime seed")
+    return int(row[0]), str(row[1])
 
 
 def ensure_student(
@@ -794,6 +836,7 @@ def seed_mock_practice(env_file: Path, count: int) -> list[dict[str, object]]:
     try:
         with conn.cursor() as cur:
             mentors = resolve_seed_mentors(cur, minimum=2)
+            lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
             primary_mentor_name = mentors[0][1]
             secondary_mentor_name = mentors[1][1]
 
@@ -809,7 +852,7 @@ def seed_mock_practice(env_file: Path, count: int) -> list[dict[str, object]]:
                     student_id=pending_student_id,
                     student_name=pending_student_name,
                     email=f"mock-practice-{pending_student_id}@example.com",
-                    lead_mentor_id=mentors[0][0],
+                    lead_mentor_id=lead_mentor_id,
                     remark="mock practice runtime seed",
                 )
                 ensure_student(
@@ -817,7 +860,7 @@ def seed_mock_practice(env_file: Path, count: int) -> list[dict[str, object]]:
                     student_id=scheduled_student_id,
                     student_name=scheduled_student_name,
                     email=f"mock-practice-{scheduled_student_id}@example.com",
-                    lead_mentor_id=mentors[0][0],
+                    lead_mentor_id=lead_mentor_id,
                     remark="mock practice runtime seed",
                 )
 
@@ -894,21 +937,21 @@ def seed_mock_practice(env_file: Path, count: int) -> list[dict[str, object]]:
                         scheduled_student_id,
                         scheduled_student_name,
                         "communication_test",
-                        f"Runtime Mock Scheduled {suffix}",
+                        f"Runtime Mock Feedback {suffix}",
                         1,
-                        primary_mentor_name,
-                        "scheduled",
-                        str(mentors[0][0]),
-                        primary_mentor_name,
-                        "Runtime Backfill Mentor",
-                        now + timedelta(days=1),
-                        0,
-                        None,
-                        None,
+                        lead_mentor_name,
+                        "completed",
+                        str(lead_mentor_id),
+                        lead_mentor_name,
+                        "Lead Mentor Runtime Coach",
+                        now - timedelta(days=1),
+                        2,
+                        5,
+                        f"Runtime feedback summary {suffix}",
                         now - timedelta(hours=5),
                         "runtime_seed",
                         "runtime_seed",
-                        "mock practice scheduled runtime seed",
+                        "mock practice feedback runtime seed",
                     ),
                 )
 

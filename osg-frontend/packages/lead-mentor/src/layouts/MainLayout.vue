@@ -83,7 +83,15 @@ interface NavigationGroup {
 
 const FALLBACK_USER_NAME = 'Jess (Lead Mentor)'
 const FALLBACK_USER_INITIALS = 'JL'
-const AVAILABLE_NAVIGATION_PATHS = new Set(['/career/positions'])
+const AVAILABLE_NAVIGATION_PATHS = new Set([
+  '/career/positions',
+  '/career/job-overview',
+  '/career/mock-practice',
+  '/teaching/students',
+  '/teaching/class-records',
+  '/profile/basic',
+  '/profile/schedule',
+])
 
 const route = useRoute()
 const router = useRouter()

@@ -16,8 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgStaff;
+import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.service.IOsgClassRecordService;
 
 @Service
@@ -32,6 +34,9 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     @Autowired
     private OsgStaffMapper staffMapper;
+
+    @Autowired
+    private OsgStudentMapper studentMapper;
 
     @Override
     public List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord record)
@@ -48,16 +53,26 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> createLeadMentorClassRecord(OsgClassRecord record)
+    {
+        validateLeadMentorCreate(record);
+
+        OsgStudent student = requireManagedStudent(record.getStudentId(), record.getMentorId());
+        record.setStudentName(student.getStudentName());
+        record.setCourseSource("clerk");
+        normalizeCreateDefaults(record);
+        if (classRecordMapper.insertMentorClassRecord(record) <= 0)
+        {
+            throw new ServiceException("课程记录提交失败");
+        }
+        return toLeadMentorCreatePayload(record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public int createMentorClassRecord(OsgClassRecord record)
     {
-        if (record.getStatus() == null || record.getStatus().isBlank())
-        {
-            record.setStatus(STATUS_PENDING);
-        }
-        if (record.getSubmittedAt() == null)
-        {
-            record.setSubmittedAt(new Timestamp(System.currentTimeMillis()));
-        }
+        normalizeCreateDefaults(record);
         return classRecordMapper.insertMentorClassRecord(record);
     }
 
@@ -258,6 +273,94 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         query.setTab(normalizeTab(tab));
         List<OsgClassRecord> rows = classRecordMapper.selectClassRecordList(query);
         return rows == null ? Collections.emptyList() : rows;
+    }
+
+    private void validateLeadMentorCreate(OsgClassRecord record)
+    {
+        if (record == null)
+        {
+            throw new ServiceException("课程记录不能为空");
+        }
+        if (record.getStudentId() == null)
+        {
+            throw new ServiceException("学员不能为空");
+        }
+        if (record.getClassDate() == null)
+        {
+            throw new ServiceException("上课日期不能为空");
+        }
+        if (record.getDurationHours() == null || record.getDurationHours() <= 0)
+        {
+            throw new ServiceException("学习时长不能为空");
+        }
+        if (record.getCourseType() == null || record.getCourseType().isBlank())
+        {
+            throw new ServiceException("课程类型不能为空");
+        }
+        if (record.getClassStatus() == null || record.getClassStatus().isBlank())
+        {
+            throw new ServiceException("课程内容不能为空");
+        }
+        if (record.getFeedbackContent() == null || record.getFeedbackContent().isBlank())
+        {
+            throw new ServiceException("课程反馈不能为空");
+        }
+    }
+
+    private void normalizeCreateDefaults(OsgClassRecord record)
+    {
+        if (record.getStatus() == null || record.getStatus().isBlank())
+        {
+            record.setStatus(STATUS_PENDING);
+        }
+        if (record.getSubmittedAt() == null)
+        {
+            record.setSubmittedAt(new Timestamp(System.currentTimeMillis()));
+        }
+        if (record.getWeeklyHours() == null)
+        {
+            record.setWeeklyHours(0D);
+        }
+        if (record.getUpdateBy() == null || record.getUpdateBy().isBlank())
+        {
+            record.setUpdateBy(record.getCreateBy());
+        }
+    }
+
+    private OsgStudent requireManagedStudent(Long studentId, Long leadMentorId)
+    {
+        OsgStudent student = studentMapper.selectStudentByStudentId(studentId);
+        if (student == null)
+        {
+            throw new ServiceException("学员不存在");
+        }
+        if (leadMentorId == null || !Objects.equals(student.getLeadMentorId(), leadMentorId))
+        {
+            throw new ServiceException("无权为该学员上报课程记录");
+        }
+        return student;
+    }
+
+    private Map<String, Object> toLeadMentorCreatePayload(OsgClassRecord row)
+    {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("recordId", row.getRecordId());
+        payload.put("mentorId", row.getMentorId());
+        payload.put("mentorName", row.getMentorName());
+        payload.put("studentId", row.getStudentId());
+        payload.put("studentName", row.getStudentName());
+        payload.put("courseType", row.getCourseType());
+        payload.put("courseSource", row.getCourseSource());
+        payload.put("classStatus", row.getClassStatus());
+        payload.put("classDate", row.getClassDate());
+        payload.put("durationHours", row.getDurationHours());
+        payload.put("weeklyHours", row.getWeeklyHours());
+        payload.put("topics", row.getTopics());
+        payload.put("comments", row.getComments());
+        payload.put("feedbackContent", row.getFeedbackContent());
+        payload.put("status", row.getStatus());
+        payload.put("submittedAt", row.getSubmittedAt());
+        return payload;
     }
 
     private Map<String, Object> toPayload(OsgClassRecord row, Integer fallbackPendingReviewCount)

@@ -24,6 +24,8 @@ public interface IOsgClassRecordService
 
     OsgClassRecord selectMentorClassRecordById(Long id);
 
+    Map<String, Object> createLeadMentorClassRecord(OsgClassRecord record);
+
     int createMentorClassRecord(OsgClassRecord record);
 
     int updateMentorClassRecord(OsgClassRecord record);
