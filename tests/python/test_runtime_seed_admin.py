@@ -62,12 +62,34 @@ class FakeConnection:
 
 
 class RuntimeSeedAdminTest(unittest.TestCase):
+    def test_resolve_lead_mentor_runtime_user_prefers_clear_demo_username_over_legacy_student_name(self):
+        class LookupCursor:
+            def __init__(self):
+                self.current_username = None
+
+            def execute(self, sql, params=None):
+                if params:
+                    self.current_username = params[0]
+                else:
+                    self.current_username = None
+
+            def fetchone(self):
+                if self.current_username == "lead_mentor_demo":
+                    return (2026, "Lead Mentor Demo")
+                if self.current_username == "student_demo":
+                    return (101, "student_demo")
+                return None
+
+        resolved = runtime_seed_admin.resolve_lead_mentor_runtime_user(LookupCursor())
+
+        self.assertEqual((2026, "Lead Mentor Demo"), resolved)
+
     def test_seed_job_overview_binds_rows_to_runtime_lead_mentor_and_visible_position(self):
         conn = FakeConnection()
 
         with patch.object(runtime_seed_admin, "connect", return_value=conn), \
              patch.object(runtime_seed_admin, "resolve_seed_mentors", return_value=[(3, "Mentor A"), (4, "Mentor B")]), \
-             patch.object(runtime_seed_admin, "resolve_lead_mentor_runtime_user", return_value=(101, "student_demo")), \
+             patch.object(runtime_seed_admin, "resolve_lead_mentor_runtime_user", return_value=(2026, "lead_mentor_demo")), \
              patch.object(runtime_seed_admin, "ensure_student"):
             created = runtime_seed_admin.seed_job_overview(Path("deploy/.env.dev"), 1)
 
@@ -77,8 +99,8 @@ class RuntimeSeedAdminTest(unittest.TestCase):
         application_inserts = [params for sql, params in conn.cursor_instance.executed if "insert into osg_job_application" in sql]
         self.assertEqual(3, len(application_inserts), "job-overview seed 应创建 3 条 scoped application 记录")
         self.assertTrue(all(params[1] is not None for params in application_inserts), "application 应绑定 position_id")
-        self.assertTrue(all(params[10] == 101 for params in application_inserts), "application 应绑定当前 runtime lead-mentor userId")
-        self.assertTrue(all(params[11] == "student_demo" for params in application_inserts), "application 应记录当前 runtime lead-mentor 名称")
+        self.assertTrue(all(params[10] == 2026 for params in application_inserts), "application 应绑定当前 runtime lead-mentor userId")
+        self.assertTrue(all(params[11] == "lead_mentor_demo" for params in application_inserts), "application 应记录当前 runtime lead-mentor 名称")
         self.assertIn("position_id", created[0], "seed 返回值应暴露 position_id，便于后续 API/E2E 精确验证")
 
     def test_seed_student_hours_binds_managed_student_to_runtime_lead_mentor(self):
@@ -86,29 +108,29 @@ class RuntimeSeedAdminTest(unittest.TestCase):
 
         with patch.object(runtime_seed_admin, "connect", return_value=conn), \
              patch.object(runtime_seed_admin, "resolve_seed_mentor", return_value=(3, "Mentor A", Decimal("500"))), \
-             patch.object(runtime_seed_admin, "resolve_lead_mentor_runtime_user", return_value=(101, "student_demo")), \
+             patch.object(runtime_seed_admin, "resolve_lead_mentor_runtime_user", return_value=(2026, "lead_mentor_demo")), \
              patch.object(runtime_seed_admin, "ensure_student") as ensure_student:
             runtime_seed_admin.seed_student_hours(Path("deploy/.env.dev"), 1)
 
         _, kwargs = ensure_student.call_args
-        self.assertEqual(101, kwargs["lead_mentor_id"], "student-hours seed 应把学员绑定到当前 runtime lead-mentor userId")
+        self.assertEqual(2026, kwargs["lead_mentor_id"], "student-hours seed 应把学员绑定到当前 runtime lead-mentor userId")
 
     def test_seed_mock_practice_ack_ready_binds_scheduled_record_to_runtime_lead_mentor(self):
         conn = FakeConnection()
 
         with patch.object(runtime_seed_admin, "connect", return_value=conn), \
-             patch.object(runtime_seed_admin, "resolve_lead_mentor_runtime_user", return_value=(101, "student_demo")), \
+             patch.object(runtime_seed_admin, "resolve_lead_mentor_runtime_user", return_value=(2026, "lead_mentor_demo")), \
              patch.object(runtime_seed_admin, "ensure_student") as ensure_student:
             created = runtime_seed_admin.seed_mock_practice_ack_ready(Path("deploy/.env.dev"), 1)
 
         _, kwargs = ensure_student.call_args
-        self.assertEqual(101, kwargs["lead_mentor_id"], "ack-ready mock-practice seed 应把学员绑定到当前 runtime lead-mentor userId")
+        self.assertEqual(2026, kwargs["lead_mentor_id"], "ack-ready mock-practice seed 应把学员绑定到当前 runtime lead-mentor userId")
 
         practice_inserts = [params for sql, params in conn.cursor_instance.executed if "insert into osg_mock_practice" in sql]
         self.assertEqual(1, len(practice_inserts), "ack-ready mock-practice seed 应只创建一条 scheduled 记录")
         self.assertEqual("scheduled", practice_inserts[0][6], "ack-ready mock-practice 记录状态应为 scheduled")
-        self.assertEqual("101", practice_inserts[0][7], "ack-ready mock-practice 记录应把 mentor_ids 绑定到当前 runtime lead-mentor userId")
-        self.assertEqual("student_demo", practice_inserts[0][8], "ack-ready mock-practice 记录应把 mentor_names 绑定到当前 runtime lead-mentor 名称")
+        self.assertEqual("2026", practice_inserts[0][7], "ack-ready mock-practice 记录应把 mentor_ids 绑定到当前 runtime lead-mentor userId")
+        self.assertEqual("lead_mentor_demo", practice_inserts[0][8], "ack-ready mock-practice 记录应把 mentor_names 绑定到当前 runtime lead-mentor 名称")
         self.assertEqual("scheduled", created[0]["status"], "seed 返回值应标识 scheduled 状态，便于后续 curl/E2E 精确验证")
 
 

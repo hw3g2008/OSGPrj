@@ -156,83 +156,19 @@ export function ensureLeadMentorRuntimeCredentials(
 ): void {
   execFileSync(
     'python3',
-    ['-c', `
-from pathlib import Path
-import bcrypt
-import pymysql
-import re
-import time
-
-vals = {}
-for line in Path('deploy/.env.dev').read_text().splitlines():
-    line = line.strip()
-    if not line or line.startswith('#') or '=' not in line:
-        continue
-    key, value = line.split('=', 1)
-    vals[key.strip()] = value.strip().strip('"').strip("'")
-
-url = vals['SPRING_DATASOURCE_DRUID_MASTER_URL']
-match = re.match(r'jdbc:mysql://([^:/]+)(?::(\\d+))?/([^?]+)', url)
-host = match.group(1)
-port = int(match.group(2) or 3306)
-database = match.group(3)
-
-conn = None
-last_error = None
-for attempt in range(4):
-    try:
-        conn = pymysql.connect(
-            host=host,
-            port=port,
-            user=vals['SPRING_DATASOURCE_DRUID_MASTER_USERNAME'],
-            password=vals['SPRING_DATASOURCE_DRUID_MASTER_PASSWORD'],
-            database=database,
-            charset='utf8mb4',
-            connect_timeout=5,
-            read_timeout=5,
-            write_timeout=5,
-        )
-        break
-    except pymysql.err.OperationalError as exc:
-        last_error = exc
-        if attempt == 3:
-            raise
-        time.sleep(1.5 * (attempt + 1))
-
-if conn is None:
-    raise last_error or RuntimeError('lead-mentor runtime credential connection unavailable')
-
-username = ${JSON.stringify(username)}
-password = ${JSON.stringify(password)}
-email = ${JSON.stringify(email)}
-password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-try:
-    with conn.cursor() as cur:
-        cur.execute("select user_id from sys_user where user_name = %s limit 1", (username,))
-        existing = cur.fetchone()
-        if not existing:
-            raise RuntimeError(f'lead-mentor runtime account not found: {username}')
-        cur.execute(
-            '''
-            update sys_user
-               set email = %s,
-                   password = %s,
-                   status = '0',
-                   del_flag = '0',
-                   user_type = '00',
-                   first_login = '0',
-                   update_by = 'codex',
-                   update_time = now()
-             where user_name = %s
-            ''',
-            (email, password_hash, username),
-        )
-
-    conn.commit()
-finally:
-    conn.close()
-`],
+    [
+      'bin/ensure_lead_mentor_account.py',
+      '--env-file',
+      'deploy/.env.dev',
+      '--username',
+      username,
+      '--password',
+      password,
+      '--email',
+      email,
+      '--nick-name',
+      username === 'lead_mentor_demo' ? 'Lead Mentor Demo' : username,
+    ],
     {
       cwd: resolveRepoRoot(),
       encoding: 'utf-8',
@@ -299,9 +235,11 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   }
 
   if (requestedModule === 'lead-mentor') {
-    if (authConfig.username === 'student_demo') {
-      ensureLeadMentorRuntimeCredentials(authConfig.username, authConfig.password, 'student_demo@osg.local')
-    }
+    ensureLeadMentorRuntimeCredentials(
+      authConfig.username,
+      authConfig.password,
+      process.env.E2E_LEAD_MENTOR_EMAIL || `${authConfig.username}@osg.local`,
+    )
 
     const loginBody = await assertRuoyiSuccess(
       Promise.resolve(page.request.post(authConfig.loginApiPath, {

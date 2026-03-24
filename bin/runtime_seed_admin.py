@@ -117,6 +117,7 @@ def resolve_lead_mentor_runtime_user(cur) -> tuple[int, str]:
     preferred_usernames = [
         os.environ.get("E2E_LEAD_MENTOR_USERNAME", "").strip(),
         os.environ.get("E2E_STUDENT_USERNAME", "").strip(),
+        "lead_mentor_demo",
         "student_demo",
         "lead_mentor",
     ]

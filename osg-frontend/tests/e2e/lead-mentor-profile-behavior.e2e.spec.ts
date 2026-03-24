@@ -10,6 +10,9 @@ const backendBaseUrl = process.env.E2E_BACKEND_BASE_URL || 'http://127.0.0.1:280
 const loginApiUrl = `${backendBaseUrl}/lead-mentor/login`
 const infoApiUrl = `${backendBaseUrl}/lead-mentor/getInfo`
 const changeRequestApiPath = '/lead-mentor/profile/change-request'
+const leadMentorUsername = process.env.E2E_LEAD_MENTOR_USERNAME || process.env.E2E_ADMIN_USERNAME || 'lead_mentor_demo'
+const leadMentorPassword = process.env.E2E_LEAD_MENTOR_PASSWORD || process.env.E2E_ADMIN_PASSWORD || 'Osg@2026'
+const leadMentorEmail = process.env.E2E_LEAD_MENTOR_EMAIL || 'lead_mentor_demo@osg.local'
 
 function resolveRepoRoot(): string {
   return path.resolve(__dirname, '../../..')
@@ -70,8 +73,8 @@ with conn.cursor() as cur:
           remark = values(remark)
         ''',
         (
-          'student_demo',
-          'student_demo@osg.local',
+          'Lead Mentor Demo',
+          leadMentorEmail,
           '13800001234',
           '金融 Finance',
           'Investment Banking / Capital Markets',
@@ -147,13 +150,13 @@ function nextPhoneValue(currentPhone: string): string {
 }
 
 async function loginAsLeadMentorRuntime(page: Page): Promise<string> {
-  ensureLeadMentorRuntimeCredentials('student_demo', 'student123', 'student_demo@osg.local')
+  ensureLeadMentorRuntimeCredentials(leadMentorUsername, leadMentorPassword, leadMentorEmail)
 
   const loginBody = await assertRuoyiSuccess(
     Promise.resolve(page.request.post(loginApiUrl, {
       data: {
-        username: 'student_demo',
-        password: 'student123',
+        username: leadMentorUsername,
+        password: leadMentorPassword,
       },
     })),
     loginApiUrl,

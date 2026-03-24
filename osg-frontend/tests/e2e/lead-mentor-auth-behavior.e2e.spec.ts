@@ -13,9 +13,15 @@ const leadMentorInfoPath = '/api/lead-mentor/getInfo'
 const passwordSendCodePath = '/api/system/password/sendCode'
 const passwordVerifyPath = '/api/system/password/verify'
 const passwordResetPath = '/api/system/password/reset'
-const leadMentorUsername = normalizeRuntimeEnvValue(process.env.E2E_ADMIN_USERNAME) || 'student_demo'
-const leadMentorPassword = normalizeRuntimeEnvValue(process.env.E2E_ADMIN_PASSWORD) || 'student123'
-const leadMentorEmail = normalizeRuntimeEnvValue(process.env.E2E_LEAD_MENTOR_EMAIL) || 'student_demo@osg.local'
+const leadMentorUsername =
+  normalizeRuntimeEnvValue(process.env.E2E_LEAD_MENTOR_USERNAME) ||
+  normalizeRuntimeEnvValue(process.env.E2E_ADMIN_USERNAME) ||
+  'lead_mentor_demo'
+const leadMentorPassword =
+  normalizeRuntimeEnvValue(process.env.E2E_LEAD_MENTOR_PASSWORD) ||
+  normalizeRuntimeEnvValue(process.env.E2E_ADMIN_PASSWORD) ||
+  'Osg@2026'
+const leadMentorEmail = normalizeRuntimeEnvValue(process.env.E2E_LEAD_MENTOR_EMAIL) || 'lead_mentor_demo@osg.local'
 
 interface ForbiddenLeadMentorAccount {
   username: string
@@ -33,6 +39,7 @@ function ensureForbiddenLeadMentorAccount(): ForbiddenLeadMentorAccount {
     ['-c', `
 from pathlib import Path
 import json
+import bcrypt
 import pymysql
 import re
 
@@ -60,17 +67,12 @@ conn = pymysql.connect(
 )
 username = 'leadmentor_forbidden_e2e'
 email = 'leadmentor_forbidden_e2e@osg.local'
-password = 'student123'
+password = 'Osg@2026'
 nick_name = 'Lead Mentor Forbidden E2E'
 remark = 'Codex E2E unauthorized lead-mentor account'
+password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 with conn.cursor() as cur:
-    cur.execute("select password from sys_user where user_name = 'student_demo' limit 1")
-    row = cur.fetchone()
-    if not row:
-        raise RuntimeError('student_demo password hash not found')
-    password_hash = row[0]
-
     cur.execute("select user_id from sys_user where user_name = %s limit 1", (username,))
     existing = cur.fetchone()
     if existing:

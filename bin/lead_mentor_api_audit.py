@@ -17,9 +17,9 @@ from urllib.parse import quote
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ENV_FILE = ROOT / "deploy" / ".env.dev"
 DEFAULT_BASE_URL = "http://127.0.0.1:28080"
-DEFAULT_USERNAME = "student_demo"
-DEFAULT_PASSWORD = "student123"
-DEFAULT_EMAIL = "student_demo@osg.local"
+DEFAULT_USERNAME = "lead_mentor_demo"
+DEFAULT_PASSWORD = "Osg@2026"
+DEFAULT_EMAIL = "lead_mentor_demo@osg.local"
 DEFAULT_FORBIDDEN_USERNAME = "leadmentor_forbidden_e2e"
 DEFAULT_FORBIDDEN_PASSWORD = "student123"
 RATE_LIMIT_KEY = "pwd_reset_code:127.0.0.1-com.ruoyi.web.controller.system.SysPasswordController-sendCode"
@@ -65,6 +65,8 @@ class LeadMentorApiAudit:
         timestamp_suffix = datetime.now().strftime("%Y%m%d%H%M%S")
         temp_password = f"Student123!Temp{timestamp_suffix[-4:]}"
 
+        self.ensure_runtime_account()
+
         job_seed = self.seed("job-overview")["created"][0]
         practice_seed = self.seed("mock-practice")["created"][0]
         ack_ready_seed = self.seed("mock-practice-ack-ready")["created"][0]
@@ -74,6 +76,12 @@ class LeadMentorApiAudit:
         info_body = self.call_json("GET", "/lead-mentor/getInfo", token=token)
         self.assert_code(info_body, 200, "lead-mentor/getInfo")
         self.assert_contains(info_body, "lead-mentor", "lead-mentor/getInfo 角色口径")
+        info_json = json.loads(info_body)
+        runtime_user = info_json.get("user") or {}
+        runtime_user_id = int(runtime_user.get("userId") or 0)
+        runtime_user_name = str(runtime_user.get("userName") or self.username)
+        if runtime_user_id <= 0:
+            raise AuditError(f"lead-mentor/getInfo 未返回有效 userId: {info_body}")
 
         forbidden_body = self.call_json(
             "POST",
@@ -158,7 +166,7 @@ class LeadMentorApiAudit:
             "POST",
             f"/lead-mentor/job-overview/{application_id}/assign-mentor",
             token=token,
-            data={"mentorIds": [101], "mentorNames": ["student_demo"], "assignNote": "curl audit assign"},
+            data={"mentorIds": [runtime_user_id], "mentorNames": [runtime_user_name], "assignNote": "curl audit assign"},
         )
         self.assert_code(job_assign, 200, "lead-mentor/job-overview/{applicationId}/assign-mentor")
 
@@ -293,6 +301,28 @@ class LeadMentorApiAudit:
         self.assert_contains(schedule_next, "3-evening", "lead-mentor/schedule next 持久化命中")
 
         self.log(f"API_AUDIT_DONE log={self.log_file}")
+
+    def ensure_runtime_account(self) -> None:
+        command = [
+            sys.executable,
+            str(ROOT / "bin" / "ensure_lead_mentor_account.py"),
+            "--env-file",
+            str(self.env_file),
+            "--username",
+            self.username,
+            "--password",
+            self.password,
+            "--email",
+            self.email,
+            "--nick-name",
+            "Lead Mentor Demo" if self.username == DEFAULT_USERNAME else self.username,
+        ]
+        completed = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+        if completed.returncode != 0:
+            raise AuditError(
+                "failed to ensure lead-mentor runtime account: "
+                + (completed.stderr.strip() or completed.stdout.strip() or "unknown error")
+            )
 
     def seed(self, target: str) -> dict[str, Any]:
         output = self.run_cmd(
