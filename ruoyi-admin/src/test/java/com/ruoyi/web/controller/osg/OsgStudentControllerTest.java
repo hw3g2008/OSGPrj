@@ -130,7 +130,7 @@ class OsgStudentControllerTest
             result.put("contractId", 10L);
             result.put("contractNo", "CT21700000000000");
             result.put("loginAccount", email);
-            result.put("defaultPassword", "Osg@2025");
+            result.put("defaultPassword", "Osg@2026");
             result.put("firstLoginRequired", true);
             return result;
         });
@@ -154,7 +154,7 @@ class OsgStudentControllerTest
         when(studentService.resetStudentPassword(eq(1L), anyString())).thenReturn(Map.of(
             "studentId", 1L,
             "loginAccount", "alice@example.com",
-            "defaultPassword", "Osg@2025"
+            "defaultPassword", "Osg@2026"
         ));
         when(studentService.updateStudentBlacklist(anyLong(), anyString(), anyString(), anyLong())).thenReturn(1);
     }
@@ -240,7 +240,7 @@ class OsgStudentControllerTest
                 .andExpect(jsonPath("$.data.studentId").value(2))
                 .andExpect(jsonPath("$.data.contractId").value(10))
                 .andExpect(jsonPath("$.data.loginAccount").value("emily@example.com"))
-                .andExpect(jsonPath("$.data.defaultPassword").value("Osg@2025"))
+                .andExpect(jsonPath("$.data.defaultPassword").value("Osg@2026"))
                 .andExpect(jsonPath("$.data.firstLoginRequired").value(true));
     }
 
@@ -324,7 +324,7 @@ class OsgStudentControllerTest
                 .andExpect(jsonPath("$.msg").value("学员密码已重置"))
                 .andExpect(jsonPath("$.data.studentId").value(1))
                 .andExpect(jsonPath("$.data.loginAccount").value("alice@example.com"))
-                .andExpect(jsonPath("$.data.defaultPassword").value("Osg@2025"));
+                .andExpect(jsonPath("$.data.defaultPassword").value("Osg@2026"));
     }
 
     @Test

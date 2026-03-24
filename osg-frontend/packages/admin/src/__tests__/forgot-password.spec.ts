@@ -172,7 +172,7 @@ describe('Forgot Password - Password Validation', () => {
   }
 
   it('should accept valid password', () => {
-    expect(validatePassword('Osg@2025').valid).toBe(true)
+    expect(validatePassword('Osg@2026').valid).toBe(true)
   })
 
   it('should accept password with exactly 8 characters', () => {

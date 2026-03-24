@@ -116,7 +116,7 @@ class OsgStaffControllerTest
         when(staffService.resetStaffPassword(eq(1L), anyString())).thenReturn(Map.of(
             "staffId", 1L,
             "loginAccount", "diana@example.com",
-            "defaultPassword", "Osg@2025"
+            "defaultPassword", "Osg@2026"
         ));
         when(staffService.submitChangeRequest(any(), anyString())).thenAnswer(invocation -> Map.of(
             "requestId", 10L,
@@ -279,7 +279,7 @@ class OsgStaffControllerTest
                 .andExpect(jsonPath("$.msg").value("导师密码已重置"))
                 .andExpect(jsonPath("$.data.staffId").value(1))
                 .andExpect(jsonPath("$.data.loginAccount").value("diana@example.com"))
-                .andExpect(jsonPath("$.data.defaultPassword").value("Osg@2025"));
+                .andExpect(jsonPath("$.data.defaultPassword").value("Osg@2026"));
     }
 
     @Test

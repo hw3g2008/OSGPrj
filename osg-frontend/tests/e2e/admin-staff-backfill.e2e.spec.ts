@@ -337,7 +337,7 @@ test.describe('Admin Staff Ticket Backfill @ticket-backfill', () => {
     await resetResponse
     const resetModal = page.locator('[data-surface-id="staff-reset-password-modal"]')
     await expect(resetModal).toBeVisible()
-    await expect(resetModal).toContainText('Osg@2025')
+    await expect(resetModal).toContainText('Osg@2026')
     await expect(resetModal).toContainText(primaryStaff.email || '')
 
     expect(runtime.pageErrors, 'staff detail/reset runtime errors').toEqual([])

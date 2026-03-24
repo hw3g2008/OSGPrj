@@ -29,7 +29,7 @@ import com.ruoyi.system.service.IOsgStudentService;
 @Service
 public class OsgStudentServiceImpl implements IOsgStudentService
 {
-    private static final String DEFAULT_STUDENT_PASSWORD = "Osg@2025";
+    private static final String DEFAULT_STUDENT_PASSWORD = "Osg@2026";
     private static final int SYS_USER_NICKNAME_MAX_LENGTH = 30;
 
     private static final String DEFAULT_CONTRACT_TYPE = "initial";

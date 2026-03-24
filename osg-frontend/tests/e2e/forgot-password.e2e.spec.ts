@@ -71,7 +71,7 @@ test.describe('Forgot Password @api', () => {
   test('4-step forgot password flow completes @perm-s002-forgot-flow', async ({ page }) => {
     test.setTimeout(120000)
 
-    const adminPassword = normalizeRuntimeEnvValue(process.env.E2E_ADMIN_PASSWORD) || 'Osg@2025'
+    const adminPassword = normalizeRuntimeEnvValue(process.env.E2E_ADMIN_PASSWORD) || 'Osg@2026'
     const e2eEmail = normalizeRuntimeEnvValue(process.env.E2E_RESET_EMAIL) || 'test@example.com'
     const newPassword = normalizeRuntimeEnvValue(process.env.E2E_RESET_PASSWORD) || adminPassword
 
@@ -310,7 +310,7 @@ test.describe('Forgot Password @api', () => {
     const response = await page.request.post('/api/system/password/reset', {
       data: {
         email,
-        password: normalizeRuntimeEnvValue(process.env.E2E_RESET_PASSWORD) || 'Osg@2025',
+        password: normalizeRuntimeEnvValue(process.env.E2E_RESET_PASSWORD) || 'Osg@2026',
         resetToken: 'invalid-reset-token',
       },
     })

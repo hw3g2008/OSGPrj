@@ -4,9 +4,18 @@
 # 任一步骤失败即整体 FAIL（set -euo pipefail）
 set -euo pipefail
 
+export PYTHONIOENCODING="${PYTHONIOENCODING:-utf-8}"
+export PYTHONUTF8="${PYTHONUTF8:-1}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=bin/python-runtime.sh
+source "${SCRIPT_DIR}/python-runtime.sh"
+require_python_cmd
+export PATH="${SCRIPT_DIR}:${PATH}"
+
 MODULE="${1:-}"
 if [[ -z "${MODULE}" ]]; then
-  MODULE="$(python3 - <<'PY'
+  MODULE="$(python_run - <<'PY'
 import yaml
 from pathlib import Path
 p = Path("osg-spec-docs/tasks/STATE.yaml")
@@ -40,9 +49,9 @@ BASE_URL_DEFAULT="http://127.0.0.1:${BACKEND_PORT}"
 BASE_URL="${BASE_URL:-}"
 HEALTH_URL="${BASE_HEALTH_URL:-}"
 CAPTCHA_EXPECTED="${CAPTCHA_EXPECTED:-}"
-E2E_ADMIN_USERNAME="${E2E_ADMIN_USERNAME:-admin}"
-E2E_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-Osg@2025}"
-LOGIN_PATH="${LOGIN_PATH:-/login}"
+E2E_ADMIN_USERNAME="${E2E_ADMIN_USERNAME:-}"
+E2E_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-}"
+LOGIN_PATH="${LOGIN_PATH:-}"
 REDIS_HOST="${REDIS_HOST:-${SPRING_DATA_REDIS_HOST:-127.0.0.1}}"
 REDIS_PORT="${REDIS_PORT:-${SPRING_DATA_REDIS_PORT:-6379}}"
 REDIS_DB="${REDIS_DB:-0}"
@@ -59,8 +68,30 @@ BACKEND_HEALTH_TIMEOUT_SECONDS="${BACKEND_HEALTH_TIMEOUT_SECONDS:-15}"
 BACKEND_BOOT_LOG="${BACKEND_BOOT_LOG:-${AUDIT_DIR}/final-gate-backend-boot-${MODULE}-${DATE_STR}.log}"
 BACK_PID="${BACK_PID:-}"
 
+apply_module_login_contract_defaults() {
+  case "${MODULE}" in
+    assistant)
+      E2E_ADMIN_USERNAME="${E2E_ADMIN_USERNAME:-admin}"
+      E2E_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-Osg@2026}"
+      LOGIN_PATH="${LOGIN_PATH:-/assistant/login}"
+      ;;
+    lead-mentor)
+      E2E_ADMIN_USERNAME="${E2E_ADMIN_USERNAME:-student_demo}"
+      E2E_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-student123}"
+      LOGIN_PATH="${LOGIN_PATH:-/lead-mentor/login}"
+      ;;
+    *)
+      E2E_ADMIN_USERNAME="${E2E_ADMIN_USERNAME:-admin}"
+      E2E_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-Osg@2026}"
+      LOGIN_PATH="${LOGIN_PATH:-/login}"
+      ;;
+  esac
+}
+
+apply_module_login_contract_defaults
+
 read_ui_delivery_required_repair_chain() {
-  python3 - <<'PY'
+  python_run - <<'PY'
 import sys
 from pathlib import Path
 import yaml
@@ -83,6 +114,19 @@ PY
 
 UI_DELIVERY_REQUIRED_REPAIR_CHAIN="$(read_ui_delivery_required_repair_chain)"
 
+resolve_frontend_package_dir() {
+  case "${MODULE}" in
+    permission)
+      printf '%s' "osg-frontend/packages/admin"
+      ;;
+    *)
+      printf '%s' "osg-frontend/packages/${MODULE}"
+      ;;
+  esac
+}
+
+FRONTEND_PACKAGE_DIR="$(resolve_frontend_package_dir)"
+
 require_cmd() {
   local cmd="$1"
   if ! command -v "${cmd}" >/dev/null 2>&1; then
@@ -93,7 +137,7 @@ require_cmd() {
 
 write_visual_baseline_fingerprint() {
   local outfile="$1"
-  python3 - <<PY > "${outfile}"
+  python_run - <<PY > "${outfile}"
 import hashlib
 from pathlib import Path
 
@@ -160,14 +204,104 @@ ensure_backend_ready() {
 }
 
 build_redis_cmd() {
+  REDIS_TRANSPORT="redis-cli"
   REDIS_CMD=(redis-cli -h "${REDIS_HOST}" -p "${REDIS_PORT}" -n "${REDIS_DB}" --raw)
   REDIS_ENV=()
   if [[ -n "${REDIS_PASSWORD}" ]]; then
     REDIS_ENV+=(REDISCLI_AUTH="${REDIS_PASSWORD}")
   fi
+  if command -v redis-cli >/dev/null 2>&1; then
+    return 0
+  fi
+  REDIS_TRANSPORT="python-fallback"
 }
 
 redis_raw() {
+  if [[ "${REDIS_TRANSPORT:-}" == "python-fallback" ]]; then
+    python_run - "${REDIS_HOST}" "${REDIS_PORT}" "${REDIS_DB}" "${REDIS_PASSWORD}" "$@" <<'PY'
+import socket
+import sys
+
+host = sys.argv[1]
+port = int(sys.argv[2])
+db = int(sys.argv[3])
+password = sys.argv[4]
+command = sys.argv[5:]
+
+if not command:
+    print("redis command missing", file=sys.stderr)
+    raise SystemExit(2)
+
+
+def encode_command(parts):
+    payload = bytearray()
+    payload.extend(f"*{len(parts)}\r\n".encode("utf-8"))
+    for part in parts:
+        encoded = str(part).encode("utf-8")
+        payload.extend(f"${len(encoded)}\r\n".encode("utf-8"))
+        payload.extend(encoded)
+        payload.extend(b"\r\n")
+    return bytes(payload)
+
+
+def read_line(stream):
+    line = stream.readline()
+    if not line:
+        raise RuntimeError("redis connection closed")
+    return line.rstrip(b"\r\n")
+
+
+def read_response(stream):
+    prefix = stream.read(1)
+    if not prefix:
+        raise RuntimeError("redis connection closed")
+    if prefix == b"+":
+        return read_line(stream).decode("utf-8", "replace")
+    if prefix == b":":
+        return read_line(stream).decode("utf-8", "replace")
+    if prefix == b"$":
+        length = int(read_line(stream))
+        if length == -1:
+            return ""
+        data = stream.read(length)
+        if len(data) != length:
+            raise RuntimeError("redis bulk reply truncated")
+        trail = stream.read(2)
+        if trail != b"\r\n":
+            raise RuntimeError("redis bulk reply missing terminator")
+        return data.decode("utf-8", "replace")
+    if prefix == b"*":
+        length = int(read_line(stream))
+        if length == -1:
+            return ""
+        return "\n".join(read_response(stream) for _ in range(length))
+    if prefix == b"-":
+        raise RuntimeError(read_line(stream).decode("utf-8", "replace"))
+    raise RuntimeError(f"unsupported redis response prefix: {prefix!r}")
+
+
+with socket.create_connection((host, port), timeout=5) as sock:
+    sock.settimeout(5)
+    with sock.makefile("rwb", buffering=0) as stream:
+        def run(parts):
+            stream.write(encode_command(parts))
+            stream.flush()
+            return read_response(stream)
+
+        try:
+            if password:
+                run(["AUTH", password])
+            if db:
+                run(["SELECT", str(db)])
+            result = run(command)
+        except Exception as exc:  # pragma: no cover - shell fallback path
+            print(str(exc), file=sys.stderr)
+            raise SystemExit(1)
+
+print(result)
+PY
+    return
+  fi
   if [[ ${#REDIS_ENV[@]} -gt 0 ]]; then
     env "${REDIS_ENV[@]}" "${REDIS_CMD[@]}" "$@"
   else
@@ -193,7 +327,6 @@ echo "=== Final Gate: 开始（module=${MODULE}） ==="
 echo "INFO: ui_delivery_required_repair_chain=${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
 
 echo "--- 0. toolchain_preflight ---"
-require_cmd python3
 require_cmd node
 require_cmd pnpm
 require_cmd mvn
@@ -201,6 +334,7 @@ require_cmd curl
 require_cmd jq
 resolve_backend_urls
 echo "INFO: backend base=${BASE_URL}, health=${HEALTH_URL}"
+echo "INFO: python_runtime=${PYTHON_BIN}"
 
 if [[ ! -f "osg-frontend/playwright.config.ts" ]]; then
   echo "FAIL: 缺少 Playwright 配置文件 osg-frontend/playwright.config.ts"
@@ -215,60 +349,60 @@ fi
 echo "INFO: E2E 前端启动策略=Playwright webServer（Option B），不依赖 Docker frontends(3001-3005)"
 
 echo "--- 0.1 plan_standard_guard ---"
-python3 .claude/skills/workflow-engine/tests/plan_standard_guard.py
+python_run .claude/skills/workflow-engine/tests/plan_standard_guard.py
 
 echo "--- 0.15 runtime_contract_guard ---"
-python3 .claude/skills/workflow-engine/tests/runtime_contract_guard.py \
+python_run .claude/skills/workflow-engine/tests/runtime_contract_guard.py \
   --contract "${RESOLVED_RUNTIME_CONTRACT_FILE}"
 
 echo "--- 0.16 delivery_truth_guard ---"
-python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py \
+python_run .claude/skills/workflow-engine/tests/delivery_truth_guard.py \
   --module "${MODULE}" \
   --runtime-contract "${RESOLVED_RUNTIME_CONTRACT_FILE}" \
   --stage final-gate
 
 echo "--- 0.16b delivery_content_guard ---"
-python3 .claude/skills/workflow-engine/tests/delivery_content_guard.py \
+python_run .claude/skills/workflow-engine/tests/delivery_content_guard.py \
   --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/DELIVERY-CONTRACT.yaml" \
   --runtime-contract "${RESOLVED_RUNTIME_CONTRACT_FILE}" \
   --stage final-gate
 
 echo "--- 0.16c prototype_derivation_consistency_guard ---"
-python3 .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py \
+python_run .claude/skills/workflow-engine/tests/prototype_derivation_consistency_guard.py \
   --module-dir "osg-spec-docs/docs/01-product/prd/${MODULE}"
 
 echo "--- 0.2 srs_guard ---"
-python3 .claude/skills/workflow-engine/tests/srs_guard.py \
+python_run .claude/skills/workflow-engine/tests/srs_guard.py \
   --module "${MODULE}"
 
 echo "--- 0.3 decisions_guard ---"
-python3 .claude/skills/workflow-engine/tests/decisions_guard.py \
+python_run .claude/skills/workflow-engine/tests/decisions_guard.py \
   --module "${MODULE}" \
   --allow-missing
 
 echo "--- 0.3b truth_sync_guard ---"
-python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py \
+python_run .claude/skills/workflow-engine/tests/truth_sync_guard.py \
   --module "${MODULE}"
 
 echo "--- 0.4 requirements_coverage_guard ---"
-python3 .claude/skills/workflow-engine/tests/requirements_coverage_guard.py \
+python_run .claude/skills/workflow-engine/tests/requirements_coverage_guard.py \
   --module "${MODULE}" \
   --mode requirements_to_story_tests
 
 echo "--- 0.4b story_ticket_coverage_guard ---"
-python3 .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py \
+python_run .claude/skills/workflow-engine/tests/story_ticket_coverage_guard.py \
   --module "${MODULE}"
 
 echo "--- 0.5 menu_route_view_guard ---"
-python3 .claude/skills/workflow-engine/tests/menu_route_view_guard.py \
+python_run .claude/skills/workflow-engine/tests/menu_route_view_guard.py \
   --module "${MODULE}"
 
 echo "--- 0.6 permission_code_consistency_guard ---"
-python3 .claude/skills/workflow-engine/tests/permission_code_consistency_guard.py \
+python_run .claude/skills/workflow-engine/tests/permission_code_consistency_guard.py \
   --module "${MODULE}"
 
 echo "--- 1. story_runtime_guard ---"
-python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py \
+python_run .claude/skills/workflow-engine/tests/story_runtime_guard.py \
   --state osg-spec-docs/tasks/STATE.yaml \
   --config .claude/project/config.yaml \
   --state-machine .claude/skills/workflow-engine/state-machine.yaml \
@@ -278,21 +412,22 @@ python3 .claude/skills/workflow-engine/tests/story_runtime_guard.py \
   --events osg-spec-docs/tasks/workflow-events.jsonl
 
 echo "--- 2. story_event_log_check ---"
-python3 .claude/skills/workflow-engine/tests/story_event_log_check.py \
+python_run .claude/skills/workflow-engine/tests/story_event_log_check.py \
   --events osg-spec-docs/tasks/workflow-events.jsonl \
   --state osg-spec-docs/tasks/STATE.yaml
 
 echo "--- 3. done_ticket_evidence_guard (全 Story 循环) ---"
-python3 - <<'PY'
+python_run - <<'PY'
 import subprocess, sys, yaml
 state = yaml.safe_load(open("osg-spec-docs/tasks/STATE.yaml", "r", encoding="utf-8"))
 stories = state.get("stories", [])
 if not stories:
     print("FAIL: STATE.stories 为空，无法执行全量证据校验")
     sys.exit(1)
+python_exec = sys.executable or "python3"
 for sid in stories:
     cmd = [
-        "python3",
+        python_exec,
         ".claude/skills/workflow-engine/tests/done_ticket_evidence_guard.py",
         "--state", "osg-spec-docs/tasks/STATE.yaml",
         "--stories-dir", "osg-spec-docs/tasks/stories",
@@ -307,7 +442,7 @@ print("PASS: 全 Story done_ticket_evidence_guard 通过")
 PY
 
 echo "--- 4. traceability_guard ---"
-python3 .claude/skills/workflow-engine/tests/traceability_guard.py \
+python_run .claude/skills/workflow-engine/tests/traceability_guard.py \
   --cases "osg-spec-docs/tasks/testing/${MODULE}-test-cases.yaml" \
   --matrix "osg-spec-docs/tasks/testing/${MODULE}-traceability-matrix.md"
 
@@ -355,14 +490,14 @@ echo "--- 4.6 ui_critical_evidence_guard ---"
 if (( ui_visual_gate_rc != 0 )) && [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
   echo "INFO: ui_critical_evidence_guard skipped due to manual ui adjudication"
 else
-  python3 .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
+  python_run .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
     --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/UI-VISUAL-CONTRACT.yaml" \
     --page-report "${UI_VISUAL_PAGE_REPORT}" \
     --stage final-gate
 fi
 
 read -r visual_total visual_pass visual_fail visual_not_run style_passed style_failed state_executed state_failed critical_total critical_failed <<EOF
-$(python3 - <<PY
+$(python_run - <<PY
 import json
 from pathlib import Path
 report = json.loads(Path("${UI_VISUAL_PAGE_REPORT}").read_text(encoding="utf-8"))
@@ -404,10 +539,10 @@ echo "INFO: ui_visual_adjudication_status=${ui_visual_gate_status}"
 echo "INFO: ui_visual_adjudication_reason=${ui_visual_adjudication_reason}"
 
 echo "--- 5. 前端单测 ---"
-pnpm --dir osg-frontend/packages/admin test
+pnpm --dir "${FRONTEND_PACKAGE_DIR}" test
 
 echo "--- 6. 前端构建 ---"
-pnpm --dir osg-frontend/packages/admin build
+pnpm --dir "${FRONTEND_PACKAGE_DIR}" build
 
 echo "--- 7. 后端测试 ---"
 mvn test -pl ruoyi-admin -am
@@ -544,7 +679,7 @@ echo "PASS: 登录锁预检通过（key=${lock_key} value=${lock_value}）"
 
 echo "--- 8.25 安全契约守卫 ---"
 set +e
-security_guard_output="$(python3 .claude/skills/workflow-engine/tests/security_contract_guard.py \
+security_guard_output="$(python_run .claude/skills/workflow-engine/tests/security_contract_guard.py \
   --contract contracts/security-contract.yaml \
   --stage final-gate \
   --audit "${SECURITY_CONTRACT_LOG}" 2>&1)"
@@ -597,7 +732,7 @@ else
 fi
 
 echo "--- 8.9 api_operation_parity_guard ---"
-python3 .claude/skills/workflow-engine/tests/api_operation_parity_guard.py \
+python_run .claude/skills/workflow-engine/tests/api_operation_parity_guard.py \
   --module "${MODULE}" \
   --config .claude/project/config.yaml
 
@@ -607,7 +742,7 @@ BASE_URL="${BASE_URL}" E2E_API_GATE_LOG="${E2E_API_GATE_LOG}" \
   bash bin/e2e-api-gate.sh "${MODULE}" "full"
 
 echo "--- 9.1 behavior_contract_guard ---"
-python3 .claude/skills/workflow-engine/tests/behavior_contract_guard.py \
+python_run .claude/skills/workflow-engine/tests/behavior_contract_guard.py \
   --contract "osg-spec-docs/docs/01-product/prd/${MODULE}/DELIVERY-CONTRACT.yaml" \
   --report "${BEHAVIOR_CONTRACT_REPORT}" \
   --stage final-gate

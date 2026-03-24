@@ -101,7 +101,7 @@
           <span class="user-modal__label">初始密码</span>
         </template>
         <div class="user-modal__default-password">
-          <div class="user-modal__default-password-input">Osg@2025</div>
+          <div class="user-modal__default-password-input">Osg@2026</div>
           <span class="user-modal__default-password-tag">系统默认</span>
         </div>
         <p class="user-modal__help" data-content-part="supporting-text">用户首次登录后需修改密码</p>
@@ -257,7 +257,7 @@ const handleSubmit = async () => {
         phonenumber: formState.phonenumber || undefined,
         roleIds: formState.roleIds,
         remark: formState.remark || undefined,
-        password: 'Osg@2025',
+        password: 'Osg@2026',
       }, {
         customErrorMessage: '用户新增失败，请检查输入信息'
       })

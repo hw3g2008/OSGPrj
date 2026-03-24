@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -91,10 +92,11 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             return Collections.emptyList();
         }
 
+        Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
         List<Map<String, Object>> result = new ArrayList<>(rows.size());
         for (OsgClassRecord row : rows)
         {
-            result.add(toClassRecordPayload(row));
+            result.add(toClassRecordPayload(row, hourlyRates));
         }
         return result;
     }
@@ -102,9 +104,10 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     public Map<String, Object> selectClassRecordStats(String keyword)
     {
         List<OsgClassRecord> rows = selectRows(keyword, null, null, null);
+        Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
         BigDecimal pendingSettlementAmount = rows.stream()
-            .filter(row -> Objects.equals(normalize(row.getStatus()), STATUS_PENDING))
-            .map(this::resolveCourseFee)
+            .filter(row -> Objects.equals(normalizeReviewStatus(row.getStatus()), STATUS_PENDING))
+            .map(row -> resolveCourseFee(row, hourlyRates))
             .reduce(BigDecimal.ZERO, BigDecimal::add)
             .setScale(1, RoundingMode.HALF_UP);
 
@@ -393,7 +396,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         return payload;
     }
 
-    private Map<String, Object> toClassRecordPayload(OsgClassRecord row)
+    private Map<String, Object> toClassRecordPayload(OsgClassRecord row, Map<Long, BigDecimal> hourlyRates)
     {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("recordId", row.getRecordId());
@@ -408,9 +411,9 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         payload.put("reporterRole", toReporterRoleLabel(row.getCourseSource()));
         payload.put("classDate", row.getClassDate());
         payload.put("durationHours", row.getDurationHours());
-        payload.put("courseFee", resolveCourseFee(row).toPlainString());
+        payload.put("courseFee", resolveCourseFee(row, hourlyRates).toPlainString());
         payload.put("studentRating", row.getRate());
-        payload.put("status", row.getStatus());
+        payload.put("status", normalizeReviewStatus(row.getStatus()));
         payload.put("reviewRemark", row.getReviewRemark());
         payload.put("submittedAt", row.getSubmittedAt());
         return payload;
@@ -418,15 +421,50 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     private int countByStatus(List<OsgClassRecord> rows, String targetStatus)
     {
-        return (int) rows.stream().filter(item -> Objects.equals(normalize(item.getStatus()), targetStatus)).count();
+        return (int) rows.stream()
+            .filter(item -> Objects.equals(normalizeReviewStatus(item.getStatus()), targetStatus))
+            .count();
     }
 
-    private BigDecimal resolveCourseFee(OsgClassRecord row)
+    private Map<Long, BigDecimal> loadHourlyRates(List<OsgClassRecord> rows)
     {
-        OsgStaff staff = row.getMentorId() == null ? null : staffMapper.selectStaffByStaffId(row.getMentorId());
-        BigDecimal hourlyRate = staff == null || staff.getHourlyRate() == null
+        if (rows == null || rows.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+
+        List<Long> mentorIds = rows.stream()
+            .map(OsgClassRecord::getMentorId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+        if (mentorIds.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+
+        List<OsgStaff> staffRows = staffMapper.selectStaffByStaffIds(mentorIds);
+        if (staffRows == null || staffRows.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+
+        Map<Long, BigDecimal> hourlyRates = new HashMap<>();
+        for (OsgStaff staff : staffRows)
+        {
+            if (staff.getStaffId() != null && staff.getHourlyRate() != null)
+            {
+                hourlyRates.put(staff.getStaffId(), staff.getHourlyRate());
+            }
+        }
+        return hourlyRates;
+    }
+
+    private BigDecimal resolveCourseFee(OsgClassRecord row, Map<Long, BigDecimal> hourlyRates)
+    {
+        BigDecimal hourlyRate = row.getMentorId() == null
             ? BigDecimal.ZERO
-            : staff.getHourlyRate();
+            : hourlyRates.getOrDefault(row.getMentorId(), BigDecimal.ZERO);
         BigDecimal duration = row.getDurationHours() == null
             ? BigDecimal.ZERO
             : BigDecimal.valueOf(row.getDurationHours());
@@ -485,6 +523,29 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     private String normalize(String text)
     {
         return text == null ? null : text.trim().toLowerCase();
+    }
+
+    private String normalizeReviewStatus(String text)
+    {
+        String normalized = normalize(text);
+        if (normalized == null || normalized.isBlank())
+        {
+            return STATUS_PENDING;
+        }
+        if (normalized.contains("rejected") || normalized.contains("驳回"))
+        {
+            return STATUS_REJECTED;
+        }
+        if (normalized.contains("approved")
+            || normalized.contains("completed")
+            || normalized.contains("done")
+            || normalized.contains("finish")
+            || normalized.contains("通过")
+            || normalized.contains("完成"))
+        {
+            return STATUS_APPROVED;
+        }
+        return STATUS_PENDING;
     }
 
     private String defaultText(String text, String fallback)

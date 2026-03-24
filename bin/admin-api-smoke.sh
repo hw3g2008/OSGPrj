@@ -12,7 +12,7 @@ fi
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:28080}"
 ADMIN_USERNAME="${ADMIN_USERNAME:-${E2E_ADMIN_USERNAME:-admin}}"
-ADMIN_PASSWORD="${ADMIN_PASSWORD:-${E2E_ADMIN_PASSWORD:-Osg@2025}}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-${E2E_ADMIN_PASSWORD:-Osg@2026}}"
 STUDENT_USERNAME="${STUDENT_USERNAME:-${E2E_STUDENT_USERNAME:-student_demo}}"
 STUDENT_PASSWORD="${STUDENT_PASSWORD:-${E2E_STUDENT_PASSWORD:-student123}}"
 REQUEST_TIMEOUT_SECONDS="${REQUEST_TIMEOUT_SECONDS:-20}"
@@ -727,7 +727,7 @@ pass "staff.update" "staffId=${autotest_staff_id}"
 reset_staff_payload="$(jq -cn --argjson staffId "${autotest_staff_id}" '{staffId: $staffId}')"
 reset_staff_response="$(request_json POST /admin/staff/reset-password "${reset_staff_payload}" "${ADMIN_TOKEN}")"
 reset_staff_password="$(json_required '.data.defaultPassword // .defaultPassword' "${reset_staff_response}")"
-if [[ "${reset_staff_password}" != "Osg@2025" ]]; then
+if [[ "${reset_staff_password}" != "Osg@2026" ]]; then
   fail "staff.resetPassword" "unexpected default password ${reset_staff_password}"
 fi
 pass "staff.resetPassword" "staffId=${autotest_staff_id}"
@@ -791,7 +791,7 @@ pass "students.update" "studentId=${autotest_student_id}"
 reset_student_payload="$(jq -cn --argjson studentId "${autotest_student_id}" '{studentId: $studentId}')"
 reset_student_response="$(request_json POST /admin/student/reset-password "${reset_student_payload}" "${ADMIN_TOKEN}")"
 reset_student_password="$(json_required '.data.defaultPassword // .defaultPassword' "${reset_student_response}")"
-if [[ "${reset_student_password}" != "Osg@2025" ]]; then
+if [[ "${reset_student_password}" != "Osg@2026" ]]; then
   fail "students.resetPassword" "unexpected default password ${reset_student_password}"
 fi
 pass "students.resetPassword" "studentId=${autotest_student_id}"

@@ -25,7 +25,7 @@ import com.ruoyi.system.service.IOsgStaffService;
 @Service
 public class OsgStaffServiceImpl implements IOsgStaffService
 {
-    private static final String DEFAULT_STAFF_PASSWORD = "Osg@2025";
+    private static final String DEFAULT_STAFF_PASSWORD = "Osg@2026";
     private static final int SYS_USER_NICKNAME_MAX_LENGTH = 30;
 
     @Autowired

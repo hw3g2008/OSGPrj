@@ -55,6 +55,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where s.staff_id = #{staffId}
     </select>
 
+    <select id="selectStaffByStaffIds" resultMap="OsgStaffResult">
+        select
+            s.staff_id,
+            s.hourly_rate
+        from osg_staff s
+        where s.staff_id in
+        <foreach collection="staffIds" item="staffId" open="(" separator="," close=")">
+            #{staffId}
+        </foreach>
+    </select>
+
     <select id="selectStaffList" parameterType="OsgStaff" resultMap="OsgStaffResult">
         select
         <include refid="selectStaffColumns"/>

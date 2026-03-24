@@ -41,6 +41,18 @@ test.describe('Auth Runtime Config', () => {
     expect(config.password).toBe('Osg@2026')
   })
 
+  test('uses assistant module defaults with the unified admin password', () => {
+    const config = resolveAuthRuntimeConfig({
+      UI_VISUAL_MODULE: 'assistant',
+    })
+
+    expect(config.loginPath).toBe('/login')
+    expect(config.infoPath).toBe('/api/assistant/getInfo')
+    expect(config.postLoginPath).toBe('/home')
+    expect(config.username).toBe('admin')
+    expect(config.password).toBe('Osg@2026')
+  })
+
   test('lead-mentor module defaults still allow explicit env overrides', () => {
     const config = resolveAuthRuntimeConfig({
       UI_VISUAL_MODULE: 'lead-mentor',

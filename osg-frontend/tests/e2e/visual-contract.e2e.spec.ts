@@ -875,8 +875,44 @@ async function navigateToVisualTarget(
   if (visualSource === 'prototype') {
     await page.goto(resolvePrototypeUrl(pageContract.prototype_file))
     const prototypePageKey = resolvePrototypePageKey(pageContract)
+    const prototypeSelector = pageContract.prototype_selector || ''
     const prototypeRole = pageContract.prototype_role || ''
-    await page.evaluate(({ pageKey, isLoginPage, role }) => {
+    await page.evaluate(({ pageKey, isLoginPage, role, selector }) => {
+      const buildSelectorCandidates = (prototypeSelector: string): string[] => {
+        if (!prototypeSelector) {
+          return []
+        }
+        const candidates = [prototypeSelector]
+        const matchA = prototypeSelector.match(/^#([a-z0-9-]+)-page$/i)
+        if (matchA) {
+          candidates.push(`#page-${matchA[1]}`)
+        }
+        const matchB = prototypeSelector.match(/^#page-([a-z0-9-]+)$/i)
+        if (matchB) {
+          candidates.push(`#${matchB[1]}-page`)
+        }
+        return [...new Set(candidates)]
+      }
+
+      const forceVisible = (node: HTMLElement): void => {
+        const shouldUseFlexDisplay =
+          node.classList.contains('modal') ||
+          node.classList.contains('app') ||
+          node.classList.contains('login-page') ||
+          node.classList.contains('forgot-page') ||
+          node.id === 'login-page' ||
+          node.id === 'forgot-password-page'
+
+        if (shouldUseFlexDisplay) {
+          node.style.display = 'flex'
+        } else {
+          node.style.display = 'block'
+        }
+        node.style.animation = 'none'
+        node.style.opacity = '1'
+        node.style.transform = 'none'
+      }
+
       const loginPage = document.getElementById('login-page')
       const mainApp = document.getElementById('main-app')
       if (isLoginPage) {
@@ -905,7 +941,39 @@ async function navigateToVisualTarget(
       if (typeof maybeShowPage === 'function') {
         maybeShowPage(pageKey)
       }
-    }, { pageKey: prototypePageKey, isLoginPage: pageContract.page_id === 'login-page', role: prototypeRole })
+      const modalId = selector.startsWith('#modal-') ? selector.slice(1) : ''
+      const maybeOpenModal = (window as Window & { openModal?: (id: string) => void }).openModal
+      if (modalId && typeof maybeOpenModal === 'function') {
+        maybeOpenModal(modalId)
+      }
+
+      const targetNode = buildSelectorCandidates(selector)
+        .map((candidate) => document.querySelector(candidate))
+        .find((candidate): candidate is HTMLElement => candidate instanceof HTMLElement)
+      if (targetNode) {
+        forceVisible(targetNode)
+        let ancestor = targetNode.parentElement
+        while (ancestor) {
+          if (ancestor.classList.contains('page') || ancestor.classList.contains('modal')) {
+            ancestor.classList.add('active')
+            forceVisible(ancestor)
+          }
+          ancestor = ancestor.parentElement
+        }
+      }
+
+      document.querySelectorAll('.page.active, .modal.active').forEach((node) => {
+        if (!(node instanceof HTMLElement)) {
+          return
+        }
+        forceVisible(node)
+      })
+    }, {
+      pageKey: prototypePageKey,
+      isLoginPage: pageContract.page_id === 'login-page',
+      role: prototypeRole,
+      selector: prototypeSelector,
+    })
   } else {
     await page.goto(pageContract.route)
   }
@@ -1211,10 +1279,11 @@ test.describe(`Visual Contract @ui-visual (${contract?.module || 'disabled'}, mo
         return
       }
 
+      const clipSelector = pageContract.clip_selector || pageContract.prototype_selector
       const clipTarget =
         visualSource === 'prototype'
-          ? await findVisibleLocatorByCandidates(page, buildPrototypeSelectorCandidates(pageContract.prototype_selector))
-          : page.locator(pageContract.clip_selector || pageContract.prototype_selector).first()
+          ? page.locator(clipSelector).first()
+          : page.locator(clipSelector).first()
       expect(clipTarget, 'clip target should exist').not.toBeNull()
       await expect(clipTarget!, 'clip target should be visible').toBeVisible()
       const captureOrigin = await resolveCaptureOriginFromLocator(clipTarget!)

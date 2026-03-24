@@ -4,6 +4,7 @@
     <resultMap type="com.ruoyi.system.domain.OsgJobCoaching" id="Result">
         <id property="id" column="id"/>
         <result property="studentId" column="student_id"/>
+        <result property="studentName" column="student_name"/>
         <result property="mentorId" column="mentor_id"/>
         <result property="company" column="company"/>
         <result property="position" column="position"/>
@@ -15,16 +16,49 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
     </resultMap>
+    <sql id="selectJobCoachingColumns">
+        jc.id,
+        jc.student_id,
+        stu.student_name,
+        jc.mentor_id,
+        jc.company,
+        jc.position,
+        jc.location,
+        jc.interview_stage,
+        jc.interview_time,
+        jc.coaching_status,
+        jc.result,
+        jc.create_time,
+        jc.update_time
+    </sql>
     <select id="selectList" resultMap="Result">
-        select * from osg_job_coaching where del_flag='0'
-        <if test="mentorId != null">and mentor_id=#{mentorId}</if>
-        <if test="coachingStatus != null and coachingStatus != ''">and coaching_status=#{coachingStatus}</if>
-        <if test="company != null and company != ''">and company like concat('%',#{company},'%')</if>
-        order by create_time desc
+        select
+        <include refid="selectJobCoachingColumns"/>
+        from osg_job_coaching jc
+        left join osg_student stu on stu.student_id = jc.student_id
+        where jc.del_flag='0'
+        <if test="mentorId != null">and jc.mentor_id=#{mentorId}</if>
+        <if test="studentName != null and studentName != ''">and stu.student_name like concat('%',#{studentName},'%')</if>
+        <if test="coachingStatus != null and coachingStatus != ''">and jc.coaching_status=#{coachingStatus}</if>
+        <if test="company != null and company != ''">and jc.company like concat('%',#{company},'%')</if>
+        order by jc.create_time desc
     </select>
-    <select id="selectById" resultMap="Result">select * from osg_job_coaching where id=#{id} and del_flag='0'</select>
+    <select id="selectById" resultMap="Result">
+        select
+        <include refid="selectJobCoachingColumns"/>
+        from osg_job_coaching jc
+        left join osg_student stu on stu.student_id = jc.student_id
+        where jc.id=#{id} and jc.del_flag='0'
+    </select>
     <select id="selectCalendar" resultMap="Result">
-        select * from osg_job_coaching where del_flag='0' and mentor_id=#{mentorId} and interview_time is not null order by interview_time asc
+        select
+        <include refid="selectJobCoachingColumns"/>
+        from osg_job_coaching jc
+        left join osg_student stu on stu.student_id = jc.student_id
+        where jc.del_flag='0'
+          and jc.mentor_id=#{mentorId}
+          and jc.interview_time is not null
+        order by jc.interview_time asc
     </select>
     <update id="update">
         update osg_job_coaching <set><if test="coachingStatus != null">coaching_status=#{coachingStatus},</if>update_time=sysdate()</set> where id=#{id}

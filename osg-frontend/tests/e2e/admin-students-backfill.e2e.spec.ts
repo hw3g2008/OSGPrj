@@ -388,7 +388,7 @@ test.describe('Admin Students Ticket Backfill @ticket-backfill', () => {
     await page.getByRole('menu').getByText('重置密码', { exact: true }).click()
     await resetResponse
     const resetDialog = page.getByRole('dialog')
-    await expect(resetDialog).toContainText('Osg@2025')
+    await expect(resetDialog).toContainText('Osg@2026')
     await expect(resetDialog).toContainText(`登录账号：${updatedEmail}`)
 
     expect(runtime.pageErrors, 'student edit/reset runtime errors').toEqual([])

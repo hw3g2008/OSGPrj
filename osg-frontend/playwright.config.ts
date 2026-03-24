@@ -30,12 +30,12 @@ function resolveE2ETarget(moduleName: string, contractJsonPath: string): E2ETarg
     normalizedModule === 'student' || /\/student\/|student-.*\.json$/i.test(contractJsonPath)
 
   if (inferredStudentModule) {
-    return {
-      baseURL: 'http://127.0.0.1:4000',
-      webServerCommand:
-        'pnpm --dir packages/student build && pnpm --dir packages/student preview --host 127.0.0.1 --port 4000 --strictPort',
-      webServerPort: 4000,
-    }
+      return {
+        baseURL: 'http://127.0.0.1:4000',
+        webServerCommand:
+          'pnpm --dir packages/student build && pnpm --dir packages/student exec vite preview --host 127.0.0.1 --port 4000 --strictPort',
+        webServerPort: 4000,
+      }
   }
 
   switch (normalizedModule) {
@@ -43,21 +43,21 @@ function resolveE2ETarget(moduleName: string, contractJsonPath: string): E2ETarg
       return {
         baseURL: 'http://127.0.0.1:4175',
         webServerCommand:
-          'pnpm --dir packages/mentor exec vite build && pnpm --dir packages/mentor preview --host 127.0.0.1 --port 4175 --strictPort',
+          'pnpm --dir packages/mentor exec vite build && pnpm --dir packages/mentor exec vite preview --host 127.0.0.1 --port 4175 --strictPort',
         webServerPort: 4175,
       }
     case 'lead-mentor':
       return {
         baseURL: 'http://127.0.0.1:4174',
         webServerCommand:
-          'pnpm --dir packages/lead-mentor exec vite build && pnpm --dir packages/lead-mentor preview --host 127.0.0.1 --port 4174 --strictPort',
+          'pnpm --dir packages/lead-mentor exec vite build && pnpm --dir packages/lead-mentor exec vite preview --host 127.0.0.1 --port 4174 --strictPort',
         webServerPort: 4174,
       }
     case 'assistant':
       return {
         baseURL: 'http://127.0.0.1:4176',
         webServerCommand:
-          'pnpm --dir packages/assistant exec vite build && pnpm --dir packages/assistant preview --host 127.0.0.1 --port 4176 --strictPort',
+          'pnpm --dir packages/assistant exec vite build && pnpm --dir packages/assistant exec vite preview --host 127.0.0.1 --port 4176 --strictPort',
         webServerPort: 4176,
       }
     case 'permission':
@@ -66,7 +66,7 @@ function resolveE2ETarget(moduleName: string, contractJsonPath: string): E2ETarg
       return {
         baseURL: 'http://localhost:4173',
         webServerCommand:
-          'pnpm --dir packages/admin build && pnpm --dir packages/admin preview --host 127.0.0.1 --port 4173 --strictPort',
+          'pnpm --dir packages/admin build && pnpm --dir packages/admin exec vite preview --host 127.0.0.1 --port 4173 --strictPort',
         webServerPort: 4173,
       }
   }

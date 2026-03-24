@@ -1,11 +1,14 @@
 package com.ruoyi.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.system.domain.OsgStaff;
 
 public interface OsgStaffMapper
 {
     public OsgStaff selectStaffByStaffId(Long staffId);
+
+    public List<OsgStaff> selectStaffByStaffIds(@Param("staffIds") List<Long> staffIds);
 
     public List<OsgStaff> selectStaffList(OsgStaff staff);
 

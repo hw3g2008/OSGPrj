@@ -368,5 +368,6 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   ).toBeTruthy()
 
   await assertRuoyiSuccess(infoPromise, authConfig.infoPath)
-  await expect(page).toHaveURL(asRegExpPath(authConfig.postLoginPath), { timeout: E2E_TIMEOUT_MS })
+  const postLoginUrl = asRegExpPath(authConfig.postLoginPath)
+  await expect(page).toHaveURL(postLoginUrl, { timeout: E2E_TIMEOUT_MS })
 }

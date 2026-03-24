@@ -42,9 +42,20 @@ function resolveModuleDefaults(env: Record<string, string | undefined>): AuthRun
     }
   }
 
+  if (moduleName === 'assistant') {
+    return {
+      username: 'admin',
+      password: 'Osg@2026',
+      loginPath: '/login',
+      loginApiPath: '/api/assistant/login',
+      infoPath: '/api/assistant/getInfo',
+      postLoginPath: '/home',
+    }
+  }
+
   return {
     username: 'admin',
-    password: 'Osg@2025',
+    password: 'Osg@2026',
     loginPath: '/login',
     loginApiPath: '/api/login',
     infoPath: '/api/getInfo',
