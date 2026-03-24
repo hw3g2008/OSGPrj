@@ -13,7 +13,7 @@
           href="#"
           class="nav-item"
           :class="{ active: isActive(['/home', '/dashboard']) }"
-          @click.prevent="showUpcomingToast()"
+          @click.prevent="handleHomeNavigation"
         >
           <i class="mdi mdi-home" aria-hidden="true" />
           <span>首页 Home</span>
@@ -242,6 +242,13 @@ const showUpcomingToast = () => {
 }
 
 provide('showUpcomingToast', showUpcomingToast)
+
+const handleHomeNavigation = () => {
+  showUserMenu.value = false
+  if (currentPath.value !== '/home' && currentPath.value !== '/dashboard') {
+    void router.push('/home')
+  }
+}
 
 const handleUpcomingNavigation = (_path: string) => {
   showUserMenu.value = false

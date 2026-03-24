@@ -31,6 +31,7 @@ function createTestRouter() {
         component: MainLayout,
         children: [
           { path: 'home', name: 'Home', component: HomePage },
+          { path: 'career/positions', name: 'CareerPositions', component: { template: '<div>positions</div>' } },
         ],
       },
     ],
@@ -77,24 +78,36 @@ describe('lead-mentor upcoming navigation toast flow', () => {
     vi.clearAllMocks()
   })
 
-  it('shows the unified upcoming toast and stays on /home when clicking sidebar items', async () => {
+  it('shows the unified upcoming toast only for unavailable sidebar items', async () => {
     const page = await mountShellPage()
 
     try {
-      const homeNav = findElementByText(page.container, '.nav-item', '首页 Home')
       const expenseNav = findElementByText(page.container, '.nav-item', '报销管理 Expense')
 
-      expect(homeNav).toBeTruthy()
       expect(expenseNav).toBeTruthy()
 
-      homeNav?.click()
-      await flushUi()
       expenseNav?.click()
       await flushUi()
 
-      expect(message.info).toHaveBeenCalledTimes(2)
+      expect(message.info).toHaveBeenCalledTimes(1)
       expect(message.info).toHaveBeenNthCalledWith(1, '敬请期待')
-      expect(message.info).toHaveBeenNthCalledWith(2, '敬请期待')
+      expect(page.router.currentRoute.value.fullPath).toBe('/home')
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('navigates back to /home when clicking the sidebar home entry from another page', async () => {
+    const page = await mountShellPage('/career/positions')
+
+    try {
+      const homeNav = findElementByText(page.container, '.nav-item', '首页 Home')
+      expect(homeNav).toBeTruthy()
+
+      homeNav?.click()
+      await flushUi()
+
+      expect(message.info).not.toHaveBeenCalled()
       expect(page.router.currentRoute.value.fullPath).toBe('/home')
     } finally {
       page.unmount()
