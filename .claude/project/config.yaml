@@ -57,6 +57,8 @@ commands:
     docker_run: "bash bin/docker-env-up.sh test --profile core"
     logs: "bash bin/docker-env-logs.sh test --profile core"
     health: "curl -sS --max-time 5 \"${BASE_HEALTH_URL:-http://127.0.0.1:28080/actuator/health}\""
+    deploy_backend_single: "bash bin/deploy-test-artifacts.sh --host {remote_host} --backend-only"
+    deploy_frontend_single: "bash bin/deploy-test-artifacts.sh --host {remote_host} --frontend-app {frontend_app} --frontend-only --frontend-api-base {backend_base_url}"
     e2e_api_gate: "bash bin/e2e-api-gate.sh {module} full"
     ui_visual_gate: "bash bin/ui-visual-gate.sh {module}"
 

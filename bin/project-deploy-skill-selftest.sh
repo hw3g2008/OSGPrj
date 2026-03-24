@@ -10,8 +10,8 @@ cleanup() {
 trap cleanup EXIT
 
 CONFIG_FILE="${ROOT_DIR}/.claude/project/config.yaml"
-CLAUDE_SKILL="${ROOT_DIR}/.claude/skills/deploy-frontend/SKILL.md"
-CODEX_SKILL="${ROOT_DIR}/.codex/project-skills/deploy-frontend/SKILL.md"
+CODEX_FRONTEND_SKILL="${ROOT_DIR}/.codex/project-skills/deploy-frontend/SKILL.md"
+CODEX_BACKEND_SKILL="${ROOT_DIR}/.codex/project-skills/deploy-backend/SKILL.md"
 INSTALL_SCRIPT="${ROOT_DIR}/bin/install-project-codex-skills.sh"
 
 grep -q 'deploy_frontend_single:' "${CONFIG_FILE}" || {
@@ -19,13 +19,18 @@ grep -q 'deploy_frontend_single:' "${CONFIG_FILE}" || {
   exit 1
 }
 
-[[ -f "${CLAUDE_SKILL}" ]] || {
-  echo "FAIL: missing Claude deploy frontend skill"
+grep -q 'deploy_backend_single:' "${CONFIG_FILE}" || {
+  echo "FAIL: config should define commands.ops.deploy_backend_single"
   exit 1
 }
 
-[[ -f "${CODEX_SKILL}" ]] || {
+[[ -f "${CODEX_FRONTEND_SKILL}" ]] || {
   echo "FAIL: missing Codex project deploy frontend skill"
+  exit 1
+}
+
+[[ -f "${CODEX_BACKEND_SKILL}" ]] || {
+  echo "FAIL: missing Codex project deploy backend skill"
   exit 1
 }
 
@@ -48,6 +53,21 @@ EXPECTED_TARGET="${ROOT_DIR}/.codex/project-skills/deploy-frontend"
 [[ "${TARGET_PATH}" == "${EXPECTED_TARGET}" ]] || {
   printf 'actual=%s\nexpected=%s\n' "${TARGET_PATH}" "${EXPECTED_TARGET}"
   echo "FAIL: Codex skill symlink target mismatch"
+  exit 1
+}
+
+BACKEND_LINK_PATH="${TMP_HOME}/.codex/skills/deploy-backend"
+[[ -L "${BACKEND_LINK_PATH}" ]] || {
+  ls -la "${TMP_HOME}/.codex/skills" 2>/dev/null || true
+  echo "FAIL: install script should create a symlinked backend deploy skill"
+  exit 1
+}
+
+BACKEND_TARGET_PATH="$(readlink "${BACKEND_LINK_PATH}")"
+EXPECTED_BACKEND_TARGET="${ROOT_DIR}/.codex/project-skills/deploy-backend"
+[[ "${BACKEND_TARGET_PATH}" == "${EXPECTED_BACKEND_TARGET}" ]] || {
+  printf 'actual=%s\nexpected=%s\n' "${BACKEND_TARGET_PATH}" "${EXPECTED_BACKEND_TARGET}"
+  echo "FAIL: backend Codex skill symlink target mismatch"
   exit 1
 }
 

@@ -24,6 +24,7 @@ SKIP_BACKEND_BUILD=0
 SKIP_FRONTEND_BUILD=0
 SKIP_UPLOAD=0
 FRONTEND_ONLY=0
+BACKEND_ONLY=0
 SELECTED_FRONTEND_APP=""
 FRONTEND_API_BASE="${FRONTEND_API_BASE:-http://backend:8080}"
 
@@ -47,6 +48,7 @@ Options:
   --tag <release_tag>         Release tag for remote-built artifact images (default: current timestamp)
   --frontend-app <app>        Deploy one frontend app only: admin|student|mentor|lead-mentor|assistant
   --frontend-only             Only deploy the selected frontend app, reusing an existing backend
+  --backend-only              Only deploy backend artifact, without rebuilding or restarting frontend apps
   --frontend-api-base <url>   Runtime API proxy target for the selected frontend app (default: http://backend:8080)
   --skip-backend-build        Reuse existing local backend jar
   --skip-frontend-build       Reuse existing local frontend dist artifacts
@@ -58,6 +60,7 @@ Notes:
   - Local machine only builds jar/dist; it does not run Docker.
   - Remote host builds thin runtime images from uploaded artifacts and starts the test stack.
   - With --frontend-app and --frontend-only, only the selected frontend app is built and updated.
+  - With --backend-only, only the backend artifact is built and updated.
 EOF
 }
 
@@ -90,6 +93,11 @@ is_valid_frontend_app() {
 }
 
 configure_target_frontend_apps() {
+  if (( BACKEND_ONLY == 1 )); then
+    TARGET_FRONTEND_APPS=()
+    return 0
+  fi
+
   if [[ -n "${SELECTED_FRONTEND_APP}" ]]; then
     TARGET_FRONTEND_APPS=("${SELECTED_FRONTEND_APP}")
   else
@@ -165,6 +173,10 @@ parse_args() {
         FRONTEND_ONLY=1
         shift
         ;;
+      --backend-only)
+        BACKEND_ONLY=1
+        shift
+        ;;
       --frontend-api-base)
         FRONTEND_API_BASE="${2:-}"
         shift 2
@@ -206,16 +218,32 @@ validate_args() {
     fail "invalid --frontend-app: ${SELECTED_FRONTEND_APP}"
   fi
 
+  if (( FRONTEND_ONLY == 1 && BACKEND_ONLY == 1 )); then
+    fail "--frontend-only and --backend-only cannot be used together"
+  fi
+
   if (( FRONTEND_ONLY == 1 )) && [[ -z "${SELECTED_FRONTEND_APP}" ]]; then
     fail "--frontend-only requires --frontend-app"
+  fi
+
+  if (( BACKEND_ONLY == 1 )) && [[ -n "${SELECTED_FRONTEND_APP}" ]]; then
+    fail "--backend-only cannot be combined with --frontend-app"
   fi
 
   if [[ "${FRONTEND_API_BASE}" != "http://backend:8080" ]] && [[ -z "${SELECTED_FRONTEND_APP}" ]]; then
     fail "--frontend-api-base requires --frontend-app"
   fi
 
+  if (( BACKEND_ONLY == 1 )) && [[ "${FRONTEND_API_BASE}" != "http://backend:8080" ]]; then
+    fail "--backend-only cannot be combined with --frontend-api-base"
+  fi
+
   if (( FRONTEND_ONLY == 1 )); then
     SKIP_BACKEND_BUILD=1
+  fi
+
+  if (( BACKEND_ONLY == 1 )); then
+    SKIP_FRONTEND_BUILD=1
   fi
 
   configure_target_frontend_apps
@@ -323,9 +351,7 @@ prepare_artifact_bundle() {
   local bundle_root="$1"
   local app
 
-  mkdir -p \
-    "${bundle_root}/deploy/frontend" \
-    "${bundle_root}/frontend-contexts"
+  mkdir -p "${bundle_root}/deploy"
 
   if (( FRONTEND_ONLY == 0 )); then
     mkdir -p \
@@ -336,18 +362,24 @@ prepare_artifact_bundle() {
     cp "${ROOT_DIR}/ruoyi-admin/target/ruoyi-admin.jar" "${bundle_root}/backend-context/ruoyi-admin.jar"
   fi
 
-  cp "${ROOT_DIR}/deploy/frontend/Dockerfile.artifact" "${bundle_root}/deploy/frontend/Dockerfile.artifact"
   cp "${ROOT_DIR}/deploy/compose.test.artifact.yml" "${bundle_root}/deploy/compose.test.artifact.yml"
   cp "${ROOT_DIR}/deploy/.env.test" "${bundle_root}/deploy/.env.test"
   bash "${ROOT_DIR}/bin/render-test-artifact-image-env.sh" "${RELEASE_TAG}" > "${bundle_root}/artifact-images.env"
   render_artifact_runtime_env "${bundle_root}/artifact-runtime.env"
 
-  for app in "${TARGET_FRONTEND_APPS[@]}"; do
-    mkdir -p "${bundle_root}/frontend-contexts/${app}/dist"
-    cp "${ROOT_DIR}/deploy/frontend/nginx.conf" "${bundle_root}/frontend-contexts/${app}/nginx.conf"
-    cp "${ROOT_DIR}/deploy/frontend/docker-entrypoint.sh" "${bundle_root}/frontend-contexts/${app}/docker-entrypoint.sh"
-    cp -R "${ROOT_DIR}/osg-frontend/packages/${app}/dist/." "${bundle_root}/frontend-contexts/${app}/dist/"
-  done
+  if (( BACKEND_ONLY == 0 )); then
+    mkdir -p \
+      "${bundle_root}/deploy/frontend" \
+      "${bundle_root}/frontend-contexts"
+    cp "${ROOT_DIR}/deploy/frontend/Dockerfile.artifact" "${bundle_root}/deploy/frontend/Dockerfile.artifact"
+
+    for app in "${TARGET_FRONTEND_APPS[@]}"; do
+      mkdir -p "${bundle_root}/frontend-contexts/${app}/dist"
+      cp "${ROOT_DIR}/deploy/frontend/nginx.conf" "${bundle_root}/frontend-contexts/${app}/nginx.conf"
+      cp "${ROOT_DIR}/deploy/frontend/docker-entrypoint.sh" "${bundle_root}/frontend-contexts/${app}/docker-entrypoint.sh"
+      cp -R "${ROOT_DIR}/osg-frontend/packages/${app}/dist/." "${bundle_root}/frontend-contexts/${app}/dist/"
+    done
+  fi
 }
 
 run_remote_deploy() {
@@ -361,6 +393,7 @@ run_remote_deploy() {
     "${SKIP_UPLOAD}" \
     "${SKIP_HEALTH_CHECK}" \
     "${FRONTEND_ONLY}" \
+    "${BACKEND_ONLY}" \
     "${selected_app_arg}" <<'REMOTE_SH'
 set -euo pipefail
 
@@ -369,7 +402,8 @@ REMOTE_ARTIFACT_DIR="${2:-}"
 SKIP_UPLOAD="${3:-0}"
 SKIP_HEALTH_CHECK="${4:-0}"
 FRONTEND_ONLY="${5:-0}"
-SELECTED_FRONTEND_APP="${6:-}"
+BACKEND_ONLY="${6:-0}"
+SELECTED_FRONTEND_APP="${7:-}"
 
 if [[ ! -d "${REMOTE_DIR}" ]]; then
   mkdir -p "${REMOTE_DIR}"
@@ -468,19 +502,25 @@ if (( FRONTEND_ONLY == 0 )); then
     "${REMOTE_ARTIFACT_DIR}/backend-context"
 fi
 
-if [[ -n "${SELECTED_FRONTEND_APP}" ]]; then
+declare -a TARGET_FRONTEND_APPS=()
+
+if (( BACKEND_ONLY == 1 )); then
+  TARGET_FRONTEND_APPS=()
+elif [[ -n "${SELECTED_FRONTEND_APP}" ]]; then
   TARGET_FRONTEND_APPS=("${SELECTED_FRONTEND_APP}")
 else
   TARGET_FRONTEND_APPS=(admin student mentor lead-mentor assistant)
 fi
 
-for app in "${TARGET_FRONTEND_APPS[@]}"; do
-  image_ref="$(image_ref_for_app "${app}")"
-  echo "INFO: docker build ${image_ref}"
-  docker build -t "${image_ref}" \
-    -f "${REMOTE_ARTIFACT_DIR}/deploy/frontend/Dockerfile.artifact" \
-    "${REMOTE_ARTIFACT_DIR}/frontend-contexts/${app}"
-done
+if (( ${#TARGET_FRONTEND_APPS[@]} > 0 )); then
+  for app in "${TARGET_FRONTEND_APPS[@]}"; do
+    image_ref="$(image_ref_for_app "${app}")"
+    echo "INFO: docker build ${image_ref}"
+    docker build -t "${image_ref}" \
+      -f "${REMOTE_ARTIFACT_DIR}/deploy/frontend/Dockerfile.artifact" \
+      "${REMOTE_ARTIFACT_DIR}/frontend-contexts/${app}"
+  done
+fi
 
 COMPOSE_CMD=(
   docker compose
@@ -490,7 +530,9 @@ COMPOSE_CMD=(
   -f "${REMOTE_ARTIFACT_DIR}/deploy/compose.test.artifact.yml"
 )
 
-if [[ -z "${SELECTED_FRONTEND_APP}" ]] && (( FRONTEND_ONLY == 0 )); then
+if (( BACKEND_ONLY == 1 )); then
+  "${COMPOSE_CMD[@]}" up -d --force-recreate backend
+elif [[ -z "${SELECTED_FRONTEND_APP}" ]] && (( FRONTEND_ONLY == 0 )); then
   "${COMPOSE_CMD[@]}" down --remove-orphans || true
   "${COMPOSE_CMD[@]}" up -d --force-recreate --remove-orphans
 else
@@ -498,7 +540,9 @@ else
   if (( FRONTEND_ONLY == 0 )); then
     SERVICES+=(backend)
   fi
-  SERVICES+=("${TARGET_FRONTEND_APPS[@]}")
+  if (( ${#TARGET_FRONTEND_APPS[@]} > 0 )); then
+    SERVICES+=("${TARGET_FRONTEND_APPS[@]}")
+  fi
 
   if (( FRONTEND_ONLY == 1 )); then
     "${COMPOSE_CMD[@]}" up -d --force-recreate --no-deps "${SERVICES[@]}"
@@ -515,7 +559,16 @@ fi
 HEALTH_TIMEOUT=180
 HEALTH_INTERVAL=3
 
-if [[ -z "${SELECTED_FRONTEND_APP}" ]] && (( FRONTEND_ONLY == 0 )); then
+if (( BACKEND_ONLY == 1 )); then
+  BACKEND_URL="http://127.0.0.1:${BACKEND_PORT:-28080}/actuator/health"
+  echo "INFO: wait backend => ${BACKEND_URL}"
+  if ! wait_http_ok "${BACKEND_URL}" "${HEALTH_TIMEOUT}" "${HEALTH_INTERVAL}"; then
+    "${COMPOSE_CMD[@]}" ps || true
+    "${COMPOSE_CMD[@]}" logs backend || true
+    echo "FAIL: backend health check timeout" >&2
+    exit 1
+  fi
+elif [[ -z "${SELECTED_FRONTEND_APP}" ]] && (( FRONTEND_ONLY == 0 )); then
   BACKEND_URL="http://127.0.0.1:${BACKEND_PORT:-28080}/actuator/health"
   ADMIN_URL="http://127.0.0.1:${ADMIN_PORT:-3005}/login"
 
@@ -565,6 +618,9 @@ main() {
   if (( FRONTEND_ONLY == 1 )); then
     echo "INFO: frontend_only=1"
     echo "INFO: frontend_api_base=${FRONTEND_API_BASE}"
+  fi
+  if (( BACKEND_ONLY == 1 )); then
+    echo "INFO: backend_only=1"
   fi
 
   require_cmd bash
@@ -626,7 +682,9 @@ main() {
     done
   fi
 
-  ensure_target_frontend_dists
+  if (( BACKEND_ONLY == 0 )); then
+    ensure_target_frontend_dists
+  fi
 
   prepare_artifact_bundle "${ARTIFACT_DIR}"
 

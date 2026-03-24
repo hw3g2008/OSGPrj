@@ -7,17 +7,25 @@ description: "Deploy a single frontend app for this repository by using the exis
 
 ## Overview
 
-Use the repository's existing deployment script to deploy one frontend app at a time while reusing an already running backend. Keep the flow minimal: collect the required inputs, run the single-frontend deploy command from the repo root, then verify the frontend login page is reachable.
+Use the repository's existing artifact deployment script to deploy one frontend app at a time while reusing an already running backend. Keep the flow minimal: collect the required inputs, run the single-frontend deploy command from the repo root, then verify the frontend login page is reachable.
 
 ## Required Inputs
 
-Collect these values before running the deploy command:
+Collect only these values before running the deploy command:
 
-- Remote host or server address
+- Environment name
 - Frontend app name
-- Existing backend base URL
 
-If any of these are missing, ask for them before deployment.
+For now the only supported environment is `test`, so normal use looks like:
+
+```text
+/deploy-frontend test lead-mentor
+```
+
+Resolve the remote host and backend base URL from:
+
+- `.claude/project/config.yaml`
+- `deploy/.env.remote.local`
 
 ## Supported Apps
 
@@ -53,8 +61,10 @@ bash bin/deploy-test-artifacts.sh \
 
 ## Workflow
 
-1. Confirm the target app is one of the supported app names.
-2. Confirm the backend URL points to an already running backend.
+1. Confirm the requested environment is `test`.
+2. Confirm the target app is one of the supported app names.
+3. Resolve the backend URL from `.claude/project/config.yaml` test runtime:
+   - `runtime_model.test.backend.base_url`
 3. Run the deploy command from the repository root.
 4. Read the command output and ensure the script finishes without errors.
 5. Verify the target frontend login page is reachable.
