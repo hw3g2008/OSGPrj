@@ -1,6 +1,7 @@
 package com.ruoyi.web.controller.osg;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -13,6 +14,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -274,6 +276,32 @@ class OsgPositionControllerTest
                 .andExpect(jsonPath("$.data.regions[0].value").value("na"))
                 .andExpect(jsonPath("$.data.citiesByRegion.na[0].label").value("New York"))
                 .andExpect(jsonPath("$.data.processGlossary[0].value").value("OA"));
+    }
+
+    @Test
+    void metaShouldNotRewriteStaticDictsWhenReferenceDataAlreadyNormalized() throws Exception
+    {
+        positionRowsRef.set(new ArrayList<>(List.of(
+            buildPosition(201L, "Investment Bank", "Goldman Sachs", "Summer Analyst", "New York", "2026", "visible", 12),
+            buildPosition(202L, "Consulting", "McKinsey", "Business Analyst", "London", "2025", "hidden", 3)
+        )));
+        positionRowsRef.get().get(0).setRecruitmentCycle("2026 Summer");
+        positionRowsRef.get().get(1).setRecruitmentCycle("2025 Full-time");
+        dictRowsRef.set(buildNormalizedDictRows());
+
+        mockMvc.perform(get("/admin/position/meta")
+                .header("Authorization", "Bearer position-admin-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.recruitmentCycles[0].value").value("Spring Week"))
+                .andExpect(jsonPath("$.data.recruitmentCycles[7].value").value("2026 Summer"));
+
+        org.mockito.Mockito.verify(sysDictDataMapper, org.mockito.Mockito.never()).updateDictData(any(SysDictData.class));
+        org.mockito.Mockito.verify(sysDictDataMapper, org.mockito.Mockito.never()).insertDictData(any(SysDictData.class));
+        org.mockito.Mockito.verify(sysDictDataMapper, org.mockito.Mockito.never()).deleteDictDataById(any());
+        org.mockito.Mockito.verify(positionMapper, org.mockito.Mockito.never()).updatePosition(argThat(position ->
+            position != null && position.getPositionId() != null && position.getRecruitmentCycle() != null
+        ));
     }
 
     @Test
@@ -586,6 +614,103 @@ class OsgPositionControllerTest
                 buildDict("osg_position_process_glossary", "OA", "Online Assessment", 1, null, null)
             )
         );
+    }
+
+    private Map<String, List<SysDictData>> buildNormalizedDictRows()
+    {
+        Map<String, List<SysDictData>> rows = new LinkedHashMap<>();
+        rows.put("osg_position_category", List.of(
+                buildDict("osg_position_category", "summer", "暑期实习", 1, null, null),
+                buildDict("osg_position_category", "fulltime", "全职招聘", 2, null, null),
+                buildDict("osg_position_category", "offcycle", "非常规周期", 3, null, null),
+                buildDict("osg_position_category", "spring", "春季实习", 4, null, null),
+                buildDict("osg_position_category", "events", "招聘活动", 5, null, null)
+            ));
+        rows.put("osg_position_display_status", List.of(
+                buildDict("osg_position_display_status", "visible", "展示中", 1, "success", null),
+                buildDict("osg_position_display_status", "hidden", "已隐藏", 2, "muted", null),
+                buildDict("osg_position_display_status", "expired", "已过期", 3, "danger", null)
+            ));
+        rows.put("osg_position_industry", List.of(
+                buildDict("osg_position_industry", "Investment Bank", "Investment Bank", 1, "gold", "mdi-star"),
+                buildDict("osg_position_industry", "Consulting", "Consulting", 2, "violet", "mdi-lightbulb"),
+                buildDict("osg_position_industry", "Tech", "Tech", 3, "blue", "mdi-laptop"),
+                buildDict("osg_position_industry", "PE/VC", "PE/VC", 4, "amber", "mdi-chart-line")
+            ));
+        rows.put("osg_company_type", List.of(
+                buildDict("osg_company_type", "Investment Bank", "Investment Bank", 1, null, null),
+                buildDict("osg_company_type", "Consulting", "Consulting", 2, null, null),
+                buildDict("osg_company_type", "Tech", "Tech", 3, null, null),
+                buildDict("osg_company_type", "PE/VC", "PE/VC", 4, null, null),
+                buildDict("osg_company_type", "PE", "PE", 5, null, null),
+                buildDict("osg_company_type", "VC", "VC", 6, null, null),
+                buildDict("osg_company_type", "Other", "Other", 7, null, null)
+            ));
+        rows.put("osg_recruitment_cycle", List.of(
+                buildDict("osg_recruitment_cycle", "Spring Week", "Spring Week", 1, null, null),
+                buildDict("osg_recruitment_cycle", "2024 Spring", "2024 Spring", 2, null, null),
+                buildDict("osg_recruitment_cycle", "2025 Spring", "2025 Spring", 3, null, null),
+                buildDict("osg_recruitment_cycle", "2026 Spring", "2026 Spring", 4, null, null),
+                buildDict("osg_recruitment_cycle", "2027 Spring", "2027 Spring", 5, null, null),
+                buildDict("osg_recruitment_cycle", "2024 Summer", "2024 Summer", 6, null, null),
+                buildDict("osg_recruitment_cycle", "2025 Summer", "2025 Summer", 7, null, null),
+                buildDict("osg_recruitment_cycle", "2026 Summer", "2026 Summer", 8, null, null),
+                buildDict("osg_recruitment_cycle", "2027 Summer", "2027 Summer", 9, null, null),
+                buildDict("osg_recruitment_cycle", "2024 Autumn", "2024 Autumn", 10, null, null),
+                buildDict("osg_recruitment_cycle", "2025 Autumn", "2025 Autumn", 11, null, null),
+                buildDict("osg_recruitment_cycle", "2026 Autumn", "2026 Autumn", 12, null, null),
+                buildDict("osg_recruitment_cycle", "2027 Autumn", "2027 Autumn", 13, null, null),
+                buildDict("osg_recruitment_cycle", "2024 Full-time", "2024 Full-time", 14, null, null),
+                buildDict("osg_recruitment_cycle", "2025 Full-time", "2025 Full-time", 15, null, null),
+                buildDict("osg_recruitment_cycle", "2026 Full-time", "2026 Full-time", 16, null, null),
+                buildDict("osg_recruitment_cycle", "2027 Full-time", "2027 Full-time", 17, null, null),
+                buildDict("osg_recruitment_cycle", "Off-cycle", "Off-cycle", 18, null, null)
+            ));
+        rows.put("osg_project_year", List.of(
+                buildDict("osg_project_year", "2024", "2024", 1, null, null),
+                buildDict("osg_project_year", "2025", "2025", 2, null, null),
+                buildDict("osg_project_year", "2026", "2026", 3, null, null),
+                buildDict("osg_project_year", "2027", "2027", 4, null, null)
+            ));
+        rows.put("osg_position_region", List.of(
+                buildDict("osg_position_region", "na", "北美", 1, null, null),
+                buildDict("osg_position_region", "eu", "欧洲", 2, null, null),
+                buildDict("osg_position_region", "ap", "亚太", 3, null, null),
+                buildDict("osg_position_region", "cn", "中国大陆", 4, null, null)
+            ));
+        rows.put("osg_position_city", List.of(
+                buildDict("osg_position_city", "New York", "New York", 1, null, "na"),
+                buildDict("osg_position_city", "San Francisco", "San Francisco", 2, null, "na"),
+                buildDict("osg_position_city", "Chicago", "Chicago", 3, null, "na"),
+                buildDict("osg_position_city", "Boston", "Boston", 4, null, "na"),
+                buildDict("osg_position_city", "London", "London", 5, null, "eu"),
+                buildDict("osg_position_city", "Frankfurt", "Frankfurt", 6, null, "eu"),
+                buildDict("osg_position_city", "Hong Kong", "Hong Kong", 7, null, "ap"),
+                buildDict("osg_position_city", "Singapore", "Singapore", 8, null, "ap"),
+                buildDict("osg_position_city", "Tokyo", "Tokyo", 9, null, "ap"),
+                buildDict("osg_position_city", "Shanghai", "Shanghai", 10, null, "cn"),
+                buildDict("osg_position_city", "Beijing", "Beijing", 11, null, "cn")
+            ));
+        rows.put("osg_position_publish_preset", List.of(
+                buildDict("osg_position_publish_preset", "week", "本周", 1, null, null),
+                buildDict("osg_position_publish_preset", "month", "本月", 2, null, null),
+                buildDict("osg_position_publish_preset", "quarter", "近三个月", 3, null, null)
+            ));
+        rows.put("osg_position_process_glossary", List.of(
+                buildDict("osg_position_process_glossary", "OA", "Online Assessment", 1, null, null),
+                buildDict("osg_position_process_glossary", "VI", "Video Interview", 2, null, null),
+                buildDict("osg_position_process_glossary", "HV", "Hirevue", 3, null, null),
+                buildDict("osg_position_process_glossary", "AC", "Assessment Centre", 4, null, null),
+                buildDict("osg_position_process_glossary", "SD", "Super Day", 5, null, null),
+                buildDict("osg_position_process_glossary", "Case", "Case Interview", 6, null, null)
+            ));
+        rows.put("osg_position_ui_copy", List.of(
+                buildDict("osg_position_ui_copy", "upload_rule", "银行名称 + 岗位名称 + 地区 + 项目时间；当前系统按公司名称 + 岗位名称 + 地区 + 项目时间 相同视为重复，将跳过导入", 1, null, null),
+                buildDict("osg_position_ui_copy", "upload_step_1", "点击上方\"下载模板\"按钮获取Excel模板", 2, null, null),
+                buildDict("osg_position_ui_copy", "upload_step_2", "按模板格式填写岗位信息（所有字段必填）", 3, null, null),
+                buildDict("osg_position_ui_copy", "upload_step_3", "上传填写好的文件", 4, null, null)
+            ));
+        return rows;
     }
 
     private SysDictData buildDict(String dictType, String value, String label, long sort, String cssClass, String listClass)

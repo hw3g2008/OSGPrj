@@ -4,6 +4,7 @@ import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 
 import { expect, test } from '@playwright/test'
+import { reseedStudentDemoUser } from './support/student-demo-user'
 
 const STUDENT_USERNAME = 'student_demo'
 const STUDENT_PASSWORD = 'student123'
@@ -67,20 +68,6 @@ function mysqlConnectorJar(): string {
   )
 }
 
-function studentSeedClasspath(): string {
-  const home = os.homedir()
-  return [
-    '/tmp',
-    mysqlConnectorJar(),
-    path.join(
-      home,
-      '.m2/repository/org/springframework/security/spring-security-crypto/6.5.3/spring-security-crypto-6.5.3.jar'
-    ),
-    path.join(home, '.m2/repository/org/springframework/spring-core/6.2.14/spring-core-6.2.14.jar'),
-    path.join(home, '.m2/repository/commons-logging/commons-logging/1.2/commons-logging-1.2.jar')
-  ].join(':')
-}
-
 function fixtureClasspath(): string {
   return [FIXTURE_BUILD_DIR, mysqlConnectorJar()].join(':')
 }
@@ -128,13 +115,6 @@ function ensureDbEnv() {
       throw new Error(`missing required env for positions real integration: ${key}`)
     }
   }
-}
-
-function reseedStudentDemoUser() {
-  execFileSync('java', ['-cp', studentSeedClasspath(), 'CreateStudentDemoUser'], {
-    stdio: 'pipe',
-    env: process.env
-  })
 }
 
 function compileFixture() {

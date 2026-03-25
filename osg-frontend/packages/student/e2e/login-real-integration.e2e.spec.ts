@@ -1,9 +1,9 @@
 import fs from 'node:fs'
-import os from 'node:os'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 
 import { expect, test } from '@playwright/test'
+import { reseedStudentDemoUser } from './support/student-demo-user'
 
 const PASSWORD_RESET_LOG = path.resolve(
   __dirname,
@@ -20,26 +20,6 @@ type MailboxEntry = {
   sentAt: string
   email: string
   code: string
-}
-
-function studentSeedClasspath(): string {
-  const home = os.homedir()
-  return [
-    '/tmp',
-    path.join(home, '.m2/repository/com/mysql/mysql-connector-j/8.2.0/mysql-connector-j-8.2.0.jar'),
-    path.join(
-      home,
-      '.m2/repository/org/springframework/security/spring-security-crypto/6.5.3/spring-security-crypto-6.5.3.jar'
-    ),
-    path.join(home, '.m2/repository/org/springframework/spring-core/6.2.14/spring-core-6.2.14.jar'),
-    path.join(home, '.m2/repository/commons-logging/commons-logging/1.2/commons-logging-1.2.jar')
-  ].join(':')
-}
-
-function reseedStudentDemoUser() {
-  execFileSync('java', ['-cp', studentSeedClasspath(), 'CreateStudentDemoUser'], {
-    stdio: 'pipe'
-  })
 }
 
 function clearPasswordResetThrottle() {
@@ -179,6 +159,7 @@ test.describe('student auth real integration', () => {
     page,
     request,
   }) => {
+    test.setTimeout(120000)
     const startedAt = Date.now()
     const nextPassword = `Stu${String(startedAt).slice(-6)}A1`
     let passwordChanged = false
@@ -189,9 +170,15 @@ test.describe('student auth real integration', () => {
     try {
       await page.goto('/forgot-password')
       await page.getByPlaceholder('请输入注册邮箱').fill(STUDENT_EMAIL)
+      const sendResponsePromise = page.waitForResponse('**/api/system/password/sendCode')
       await page.locator('#send-btn').click()
+      const sendResponse = await sendResponsePromise
+      const sendBody = await sendResponse.json()
 
-      await expect(page.getByText('验证码已发送至')).toBeVisible()
+      expect(sendResponse.ok()).toBeTruthy()
+      expect(sendBody.code).toBe(200)
+      await expect(page.locator('#step-2')).toHaveClass(/active/)
+      await expect(page.locator('#step-2 .masked-email')).toContainText('验证码已发送至')
       const resetCode = await waitForLatestResetCode(STUDENT_EMAIL, startedAt)
 
       await page.locator('#fp-code').fill(resetCode)

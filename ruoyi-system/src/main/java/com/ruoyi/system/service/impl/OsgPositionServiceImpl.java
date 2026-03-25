@@ -679,6 +679,10 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         SysDictData existing = findDict(seed.type(), seed.value());
         if (existing != null)
         {
+            if (sameDictSeed(existing, seed))
+            {
+                return;
+            }
             existing.setDictSort(seed.sort());
             existing.setDictLabel(seed.label());
             existing.setCssClass(seed.cssClass());
@@ -702,6 +706,16 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         created.setStatus("0");
         created.setCreateBy("codex");
         sysDictDataMapper.insertDictData(created);
+    }
+
+    private boolean sameDictSeed(SysDictData existing, DictSeed seed)
+    {
+        return Objects.equals(existing.getDictSort(), seed.sort())
+            && Objects.equals(existing.getDictLabel(), seed.label())
+            && Objects.equals(existing.getCssClass(), seed.cssClass())
+            && Objects.equals(existing.getListClass(), seed.listClass())
+            && Objects.equals(existing.getRemark(), seed.remark())
+            && Objects.equals(defaultText(existing.getStatus(), "0"), "0");
     }
 
     private SysDictData findDict(String dictType, String dictValue)

@@ -23,6 +23,7 @@ function ensureLeadMentorProfileSeed(): void {
     'python3',
     ['-c', `
 from pathlib import Path
+import os
 import pymysql
 import re
 
@@ -39,6 +40,7 @@ match = re.match(r'jdbc:mysql://([^:/]+)(?::(\\d+))?/([^?]+)', url)
 host = match.group(1)
 port = int(match.group(2) or 3306)
 database = match.group(3)
+lead_mentor_email = os.environ['E2E_LEAD_MENTOR_EMAIL']
 
 conn = pymysql.connect(
     host=host,
@@ -74,7 +76,7 @@ with conn.cursor() as cur:
         ''',
         (
           'Lead Mentor Demo',
-          leadMentorEmail,
+          lead_mentor_email,
           '13800001234',
           '金融 Finance',
           'Investment Banking / Capital Markets',
@@ -91,6 +93,10 @@ conn.close()
     {
       cwd: resolveRepoRoot(),
       stdio: ['ignore', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        E2E_LEAD_MENTOR_EMAIL: leadMentorEmail,
+      },
     },
   )
 }

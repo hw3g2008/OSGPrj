@@ -768,9 +768,10 @@ public class PositionServiceImpl implements IPositionService
 
     private void upsertLocationMeta(String location)
     {
+        SysDictData existing = findDict(DICT_TYPE_POSITION_LOCATION, location);
         upsertDictData(new DictSeed(
                 DICT_TYPE_POSITION_LOCATION,
-                nextDynamicSort(DICT_TYPE_POSITION_LOCATION),
+                resolveDynamicSort(existing, DICT_TYPE_POSITION_LOCATION),
                 location,
                 location,
                 normalizeLocationCode(location),
@@ -780,9 +781,10 @@ public class PositionServiceImpl implements IPositionService
 
     private void upsertCompanyMeta(String companyKey, String company, String companyCode)
     {
+        SysDictData existing = findDict(DICT_TYPE_POSITION_COMPANY, companyKey);
         upsertDictData(new DictSeed(
                 DICT_TYPE_POSITION_COMPANY,
-                nextDynamicSort(DICT_TYPE_POSITION_COMPANY),
+                resolveDynamicSort(existing, DICT_TYPE_POSITION_COMPANY),
                 company,
                 companyKey,
                 colorForCompanyKey(companyKey),
@@ -795,6 +797,10 @@ public class PositionServiceImpl implements IPositionService
         SysDictData existing = findDict(seed.type(), seed.value());
         if (existing != null)
         {
+            if (sameDictMetadata(existing, seed))
+            {
+                return;
+            }
             existing.setDictSort(seed.sort());
             existing.setDictLabel(seed.label());
             existing.setCssClass(seed.cssClass());
@@ -818,6 +824,25 @@ public class PositionServiceImpl implements IPositionService
         created.setRemark(seed.remark());
         created.setCreateBy("codex");
         sysDictDataMapper.insertDictData(created);
+    }
+
+    private boolean sameDictMetadata(SysDictData existing, DictSeed seed)
+    {
+        return Objects.equals(existing.getDictSort(), seed.sort())
+                && Objects.equals(existing.getDictLabel(), seed.label())
+                && Objects.equals(existing.getCssClass(), seed.cssClass())
+                && Objects.equals(existing.getListClass(), seed.listClass())
+                && Objects.equals(existing.getStatus(), "0")
+                && Objects.equals(existing.getRemark(), seed.remark());
+    }
+
+    private Long resolveDynamicSort(SysDictData existing, String dictType)
+    {
+        if (existing != null && existing.getDictSort() != null)
+        {
+            return existing.getDictSort();
+        }
+        return nextDynamicSort(dictType);
     }
 
     private SysDictData findDict(String dictType, String dictValue)

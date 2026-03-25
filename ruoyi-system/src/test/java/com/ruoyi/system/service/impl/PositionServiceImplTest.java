@@ -3,8 +3,10 @@ package com.ruoyi.system.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.domain.OsgPosition;
 import com.ruoyi.system.domain.OsgStudent;
@@ -312,6 +315,45 @@ class PositionServiceImplTest
     }
 
     @Test
+    void selectPositionListDoesNotRewriteExistingDynamicDictMetadata()
+    {
+        Map<String, Object> publicRow = positionRow(501L, "Goldman Sachs", "Summer Analyst", "New York");
+        publicRow = new LinkedHashMap<>(publicRow);
+        publicRow.put("companyKey", "gs");
+        publicRow.put("companyCode", "GS");
+        publicRow.put("category", "summer");
+
+        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of(publicRow));
+        when(positionMapper.selectPositionList(any(OsgPosition.class))).thenReturn(List.of());
+        when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
+        when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of());
+        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_category"))).thenReturn(List.of(dict(1L, "osg_student_position_category", "summer", "暑期实习", "岗位分类")));
+        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_industry"))).thenReturn(List.of(dict(2L, "osg_student_position_industry", "ib", "Investment Bank", "行业展示")));
+        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_apply_method"))).thenReturn(List.of(dict(3L, "osg_student_position_apply_method", "官网投递", "官网投递", "投递方式")));
+        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_progress_stage"))).thenReturn(List.of(dict(4L, "osg_student_position_progress_stage", "applied", "已投递", "岗位进度")));
+        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_coaching_stage"))).thenReturn(List.of(dict(5L, "osg_student_position_coaching_stage", "first", "First Round", "辅导阶段")));
+        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_mentor_count"))).thenReturn(List.of(dict(6L, "osg_student_position_mentor_count", "2", "2 位导师", "导师数量")));
+        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_location"))).thenReturn(List.of(dictWithStyle(7L, "osg_student_position_location", "New York", "New York", "ny", null, 100L, "地区展示")));
+        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_company_brand"))).thenReturn(List.of(dictWithStyle(8L, "osg_student_position_company_brand", "gs", "Goldman Sachs", "#4F46E5", "GS", 200L, "公司品牌")));
+
+        List<Map<String, Object>> rows = service.selectPositionList(838L);
+
+        assertEquals(1, rows.size());
+        verify(sysDictDataMapper, never()).updateDictData(argThat(dict ->
+            dict != null
+                && ("osg_student_position_location".equals(dict.getDictType())
+                    || "osg_student_position_company_brand".equals(dict.getDictType()))
+        ));
+        verify(sysDictDataMapper, never()).insertDictData(argThat(dict ->
+            dict != null
+                && ("osg_student_position_location".equals(dict.getDictType())
+                    || "osg_student_position_company_brand".equals(dict.getDictType()))
+        ));
+        verify(sysDictDataMapper, atLeastOnce()).selectDictDataByType("osg_student_position_location");
+        verify(sysDictDataMapper, atLeastOnce()).selectDictDataByType("osg_student_position_company_brand");
+    }
+
+    @Test
     void updateApplyStatusFailsWhenStudentIdentityMissing()
     {
         when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
@@ -341,7 +383,30 @@ class PositionServiceImplTest
             "company", company,
             "title", title,
             "location", location,
-            "industry", "ib");
+            "industry", "ib",
+            "companyKey", "gs",
+            "companyCode", "GS",
+            "category", "summer");
+    }
+
+    private SysDictData dict(Long dictCode, String dictType, String dictValue, String dictLabel, String remark)
+    {
+        return dictWithStyle(dictCode, dictType, dictValue, dictLabel, null, null, dictCode, remark);
+    }
+
+    private SysDictData dictWithStyle(Long dictCode, String dictType, String dictValue, String dictLabel, String cssClass, String listClass, Long dictSort, String remark)
+    {
+        SysDictData item = new SysDictData();
+        item.setDictCode(dictCode);
+        item.setDictType(dictType);
+        item.setDictValue(dictValue);
+        item.setDictLabel(dictLabel);
+        item.setCssClass(cssClass);
+        item.setListClass(listClass);
+        item.setDictSort(dictSort);
+        item.setStatus("0");
+        item.setRemark(remark);
+        return item;
     }
 
     private OsgStudentPosition reviewRow()
