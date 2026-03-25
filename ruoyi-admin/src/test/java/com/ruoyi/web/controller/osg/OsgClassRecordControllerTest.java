@@ -32,9 +32,11 @@ import com.ruoyi.framework.web.service.PermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgStaff;
+import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
+import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgClassRecordServiceImpl;
 
 @WebMvcTest(controllers = OsgClassRecordController.class)
@@ -63,6 +65,9 @@ class OsgClassRecordControllerTest
     private OsgStudentMapper studentMapper;
 
     @MockBean
+    private OsgAssistantAccessService assistantAccessService;
+
+    @MockBean
     private TokenService tokenService;
 
     @MockBean
@@ -82,6 +87,10 @@ class OsgClassRecordControllerTest
             {
                 return buildLoginUser("clerk", "clerk");
             }
+            if ("Bearer assistant-token".equals(authorization))
+            {
+                return buildAssistantLoginUser();
+            }
             return null;
         });
 
@@ -89,6 +98,13 @@ class OsgClassRecordControllerTest
             .thenReturn(buildRows());
         org.mockito.Mockito.when(staffMapper.selectStaffByStaffId(any(Long.class)))
             .thenAnswer(invocation -> buildStaff(invocation.getArgument(0)));
+        org.mockito.Mockito.when(studentMapper.selectStudentByStudentIds(any()))
+            .thenAnswer(invocation -> buildStudents(invocation.getArgument(0)));
+        org.mockito.Mockito.when(assistantAccessService.hasAssistantAccess(any()))
+            .thenAnswer(invocation -> {
+                SysUser user = invocation.getArgument(0);
+                return user != null && Long.valueOf(920L).equals(user.getUserId());
+            });
     }
 
     @Test
@@ -130,6 +146,31 @@ class OsgClassRecordControllerTest
             .andExpect(jsonPath("$.msg").value("没有权限，请联系管理员授权"));
     }
 
+    @Test
+    void listShouldAllowAssistantAccessAndOnlyReturnOwnedStudents() throws Exception
+    {
+        mockMvc.perform(get("/admin/class-record/list")
+                .header("Authorization", "Bearer assistant-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.rows.length()").value(2))
+            .andExpect(jsonPath("$.rows[0].studentName").value("学员A"))
+            .andExpect(jsonPath("$.rows[1].studentName").value("学员B"));
+    }
+
+    @Test
+    void statsShouldAllowAssistantAccessAndUseScopedRows() throws Exception
+    {
+        mockMvc.perform(get("/admin/class-record/stats")
+                .header("Authorization", "Bearer assistant-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.totalCount").value(2))
+            .andExpect(jsonPath("$.data.pendingCount").value(2))
+            .andExpect(jsonPath("$.data.approvedCount").value(0))
+            .andExpect(jsonPath("$.data.pendingSettlementAmount").value("1120.0"));
+    }
+
     private LoginUser buildLoginUser(String roleKey, String username)
     {
         SysRole role = new SysRole();
@@ -143,6 +184,21 @@ class OsgClassRecordControllerTest
         user.setRoles(List.of(role));
 
         return new LoginUser(10L, 1L, user, OsgTestPermissions.permissionsForRole(roleKey));
+    }
+
+    private LoginUser buildAssistantLoginUser()
+    {
+        SysRole role = new SysRole();
+        role.setRoleKey("assistant");
+        role.setRoleName("assistant");
+
+        SysUser user = new SysUser();
+        user.setUserId(920L);
+        user.setUserName("assistant.user");
+        user.setPassword("password");
+        user.setRoles(List.of(role));
+
+        return new LoginUser(920L, 1L, user, Set.of());
     }
 
     private List<OsgClassRecord> buildRows()
@@ -204,5 +260,26 @@ class OsgClassRecordControllerTest
             staff.setHourlyRate(BigDecimal.valueOf(250));
         }
         return staff;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<OsgStudent> buildStudents(Object rawIds)
+    {
+        List<Long> studentIds = (List<Long>) rawIds;
+        return studentIds.stream()
+            .map(studentId -> {
+                OsgStudent student = new OsgStudent();
+                student.setStudentId(studentId);
+                if (studentId == 1011L || studentId == 1012L)
+                {
+                    student.setAssistantId(920L);
+                }
+                else
+                {
+                    student.setAssistantId(999L);
+                }
+                return student;
+            })
+            .toList();
     }
 }

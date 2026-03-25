@@ -50,6 +50,7 @@ import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgPositionMapper;
 import com.ruoyi.system.mapper.SysDictDataMapper;
+import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgPositionServiceImpl;
 
 @WebMvcTest(controllers = OsgPositionController.class)
@@ -86,6 +87,9 @@ class OsgPositionControllerTest
     @MockBean
     private RedisCache redisCache;
 
+    @MockBean
+    private OsgAssistantAccessService assistantAccessService;
+
     private final AtomicReference<List<OsgPosition>> positionRowsRef = new AtomicReference<>();
     private final AtomicReference<Map<String, List<SysDictData>>> dictRowsRef = new AtomicReference<>();
     private final AtomicReference<List<OsgJobApplication>> jobApplicationRowsRef = new AtomicReference<>();
@@ -120,7 +124,16 @@ class OsgPositionControllerTest
             {
                 return buildLoginUser("clerk", "clerk");
             }
+            if ("Bearer assistant-token".equals(authorization))
+            {
+                return buildLoginUser("assistant", "assistant");
+            }
             return null;
+        });
+
+        org.mockito.Mockito.when(assistantAccessService.hasAssistantAccess(any())).thenAnswer(invocation -> {
+            SysUser user = invocation.getArgument(0);
+            return user != null && "assistant".equals(user.getUserName());
         });
 
         org.mockito.Mockito.when(positionMapper.selectPositionList(any(OsgPosition.class))).thenAnswer(invocation -> {
@@ -223,6 +236,28 @@ class OsgPositionControllerTest
                 .andExpect(jsonPath("$.data[0].companyCount").value(1))
                 .andExpect(jsonPath("$.data[0].companies[0].companyName").value("Goldman Sachs"))
                 .andExpect(jsonPath("$.data[0].companies[0].positions[0].positionName").value("Summer Analyst"));
+    }
+
+    @Test
+    void assistantShouldReadStatsWithoutAdminPermission() throws Exception
+    {
+        mockMvc.perform(get("/admin/position/stats")
+                .header("Authorization", "Bearer assistant-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.totalPositions").value(2))
+                .andExpect(jsonPath("$.data.studentApplications").value(15));
+    }
+
+    @Test
+    void assistantShouldReadDrillDownWithoutAdminPermission() throws Exception
+    {
+        mockMvc.perform(get("/admin/position/drill-down")
+                .header("Authorization", "Bearer assistant-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].industry").value("Investment Bank"))
+                .andExpect(jsonPath("$.data[0].companies[0].companyName").value("Goldman Sachs"));
     }
 
     @Test
@@ -383,6 +418,16 @@ class OsgPositionControllerTest
     {
         mockMvc.perform(get("/admin/position/list")
                 .header("Authorization", "Bearer clerk-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.msg").value("没有权限，请联系管理员授权"));
+    }
+
+    @Test
+    void assistantShouldStillBeForbiddenFromPositionList() throws Exception
+    {
+        mockMvc.perform(get("/admin/position/list")
+                .header("Authorization", "Bearer assistant-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(403))
                 .andExpect(jsonPath("$.msg").value("没有权限，请联系管理员授权"));

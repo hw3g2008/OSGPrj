@@ -47,6 +47,7 @@ import com.ruoyi.framework.security.handle.LogoutSuccessHandlerImpl;
 import com.ruoyi.framework.web.service.PermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgStudentChangeRequestServiceImpl;
 import com.ruoyi.system.service.impl.OsgStudentServiceImpl;
 
@@ -70,6 +71,9 @@ class OsgStudentControllerTest
 
     @MockBean
     private OsgStudentChangeRequestServiceImpl changeRequestService;
+
+    @MockBean
+    private OsgAssistantAccessService assistantAccessService;
 
     @MockBean
     private TokenService tokenService;
@@ -98,18 +102,38 @@ class OsgStudentControllerTest
             {
                 return buildLoginUser("accountant", "accountant");
             }
+            if ("Bearer assistant-token".equals(authorization))
+            {
+                return buildLoginUser("assistant", "assistant.user", 901L);
+            }
             return null;
         });
 
-        when(studentService.selectStudentList(any(OsgStudent.class))).thenAnswer(invocation -> studentRowsRef.get());
+        when(studentService.selectStudentList(any(OsgStudent.class))).thenAnswer(invocation -> {
+            OsgStudent query = invocation.getArgument(0);
+            if (query != null && Long.valueOf(901L).equals(query.getAssistantId()))
+            {
+                return List.of(buildStudent(11L, "Assistant Owned", "assistant-owned@example.com", "0"));
+            }
+            return studentRowsRef.get();
+        });
         when(studentService.selectStudentActivityCounts(anyList())).thenReturn(Map.of(
             1L,
             buildStudentActivityCountsPayload(2, 3, 1)
         ));
+        when(studentService.selectStudentActivityCounts(eq(List.of(11L)))).thenReturn(Map.of(
+            11L,
+            buildStudentActivityCountsPayload(1, 1, 0)
+        ));
         when(studentService.selectStudentDetail(1L)).thenReturn(buildStudentDetailPayload(1L, "Alice", "alice@example.com", accountStatusRef.get()));
+        when(studentService.selectStudentContracts(11L)).thenReturn(buildStudentContractsPayload(11L));
         when(studentService.selectStudentContracts(1L)).thenReturn(buildStudentContractsPayload(1L));
         when(studentService.selectBlacklistedStudentIds(anyList())).thenReturn(Collections.emptyList());
         when(changeRequestService.selectChangeRequestList(null, "pending")).thenReturn(List.of(buildPendingChangeRequestPayload(1L)));
+        when(assistantAccessService.hasAssistantAccess(any())).thenAnswer(invocation -> {
+            SysUser user = invocation.getArgument(0);
+            return user != null && Long.valueOf(901L).equals(user.getUserId());
+        });
         when(studentService.changeStudentStatus(eq(1L), eq("3"), anyString())).thenAnswer(invocation -> {
             accountStatusRef.set("3");
             studentRowsRef.set(List.of(buildStudent(1L, "Alice", "alice@example.com", accountStatusRef.get())));
@@ -208,6 +232,20 @@ class OsgStudentControllerTest
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(403))
                 .andExpect(jsonPath("$.msg").value("没有权限，请联系管理员授权"));
+    }
+
+    @Test
+    void listShouldAllowAssistantAccessAndScopeStudentsToAssistantOwnership() throws Exception
+    {
+        mockMvc.perform(get("/admin/student/list")
+                .header("Authorization", "Bearer assistant-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.rows[0].studentId").value(11))
+                .andExpect(jsonPath("$.rows[0].studentName").value("Assistant Owned"))
+                .andExpect(jsonPath("$.rows[0].jobCoachingCount").value(1))
+                .andExpect(jsonPath("$.rows[0].basicCourseCount").value(1))
+                .andExpect(jsonPath("$.rows[0].mockInterviewCount").value(0));
     }
 
     @Test
@@ -1188,17 +1226,22 @@ class OsgStudentControllerTest
 
     private LoginUser buildLoginUser(String roleKey, String username)
     {
+        return buildLoginUser(roleKey, username, 2L);
+    }
+
+    private LoginUser buildLoginUser(String roleKey, String username, Long userId)
+    {
         SysRole role = new SysRole();
         role.setRoleKey(roleKey);
         role.setRoleName(roleKey);
 
         SysUser user = new SysUser();
-        user.setUserId(2L);
+        user.setUserId(userId);
         user.setUserName(username);
         user.setPassword("password");
         user.setRoles(List.of(role));
 
-        return new LoginUser(2L, 1L, user, OsgTestPermissions.permissionsForRole(roleKey));
+        return new LoginUser(userId, 1L, user, OsgTestPermissions.permissionsForRole(roleKey));
     }
 
     private OsgStudent buildStudent(Long studentId, String studentName, String email, String accountStatus)

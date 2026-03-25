@@ -10,10 +10,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgStaff;
+import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +30,9 @@ class OsgClassRecordServiceImplTest {
 
     @Mock
     private OsgStaffMapper staffMapper;
+
+    @Mock
+    private OsgStudentMapper studentMapper;
 
     @Test
     void testSelectMentorClassRecordListDelegates() {
@@ -83,6 +89,27 @@ class OsgClassRecordServiceImplTest {
     }
 
     @Test
+    void testCreateMentorClassRecordPopulatesStudentNameFromStudentRecord() {
+        OsgClassRecord record = new OsgClassRecord();
+        record.setStudentId(3001L);
+        record.setCreateBy("mentor.user");
+        OsgStudent student = new OsgStudent();
+        student.setStudentId(3001L);
+        student.setStudentName("Runtime Student");
+        when(studentMapper.selectStudentByStudentId(3001L)).thenReturn(student);
+        when(mapper.insertMentorClassRecord(record)).thenReturn(1);
+
+        assertEquals(1, service.createMentorClassRecord(record));
+
+        assertEquals("Runtime Student", record.getStudentName());
+        assertEquals("mentor", record.getCourseSource());
+        assertEquals("pending", record.getStatus());
+        assertNotNull(record.getSubmittedAt());
+        verify(studentMapper).selectStudentByStudentId(3001L);
+        verify(mapper).insertMentorClassRecord(record);
+    }
+
+    @Test
     void testUpdateMentorClassRecordDelegates() {
         OsgClassRecord r = new OsgClassRecord();
         when(mapper.updateMentorClassRecord(r)).thenReturn(1);
@@ -131,6 +158,53 @@ class OsgClassRecordServiceImplTest {
         verify(staffMapper, never()).selectStaffByStaffId(anyLong());
     }
 
+    @Test
+    void selectAssistantClassRecordListShouldOnlyReturnAssistantOwnedStudents() {
+        OsgClassRecord owned = buildRecord(31L, 401L, "pending", 2.0);
+        owned.setStudentId(5001L);
+        owned.setStudentName("Owned Student");
+        OsgClassRecord foreign = buildRecord(32L, 402L, "approved", 1.0);
+        foreign.setStudentId(5002L);
+        foreign.setStudentName("Foreign Student");
+
+        when(mapper.selectClassRecordList(any(OsgClassRecord.class))).thenReturn(List.of(owned, foreign));
+        when(studentMapper.selectStudentByStudentIds(anyList())).thenReturn(List.of(
+            buildStudent(5001L, 920L),
+            buildStudent(5002L, 921L)
+        ));
+        when(staffMapper.selectStaffByStaffIds(List.of(401L))).thenReturn(List.of(buildStaff(401L, 300)));
+
+        List<Map<String, Object>> rows = service.selectAssistantClassRecordList(null, 920L);
+
+        assertEquals(1, rows.size());
+        assertEquals(31L, rows.get(0).get("recordId"));
+        assertEquals("Owned Student", rows.get(0).get("studentName"));
+        verify(staffMapper).selectStaffByStaffIds(List.of(401L));
+    }
+
+    @Test
+    void selectAssistantClassRecordStatsShouldOnlyAggregateAssistantOwnedStudents() {
+        OsgClassRecord pending = buildRecord(41L, 501L, "pending", 2.0);
+        pending.setStudentId(6001L);
+        OsgClassRecord approved = buildRecord(42L, 502L, "approved", 1.5);
+        approved.setStudentId(6002L);
+
+        when(mapper.selectClassRecordList(any(OsgClassRecord.class))).thenReturn(List.of(pending, approved));
+        when(studentMapper.selectStudentByStudentIds(anyList())).thenReturn(List.of(
+            buildStudent(6001L, 930L),
+            buildStudent(6002L, 931L)
+        ));
+        when(staffMapper.selectStaffByStaffIds(List.of(501L))).thenReturn(List.of(buildStaff(501L, 280)));
+
+        Map<String, Object> stats = service.selectAssistantClassRecordStats(null, 930L);
+
+        assertEquals(1, stats.get("totalCount"));
+        assertEquals(1, stats.get("pendingCount"));
+        assertEquals(0, stats.get("approvedCount"));
+        assertEquals("560.0", stats.get("pendingSettlementAmount"));
+        verify(staffMapper).selectStaffByStaffIds(List.of(501L));
+    }
+
     private OsgClassRecord buildRecord(Long recordId, Long mentorId, String status, double durationHours) {
         OsgClassRecord record = new OsgClassRecord();
         record.setRecordId(recordId);
@@ -151,5 +225,12 @@ class OsgClassRecordServiceImplTest {
         staff.setStaffId(staffId);
         staff.setHourlyRate(java.math.BigDecimal.valueOf(hourlyRate));
         return staff;
+    }
+
+    private OsgStudent buildStudent(Long studentId, Long assistantId) {
+        OsgStudent student = new OsgStudent();
+        student.setStudentId(studentId);
+        student.setAssistantId(assistantId);
+        return student;
     }
 }

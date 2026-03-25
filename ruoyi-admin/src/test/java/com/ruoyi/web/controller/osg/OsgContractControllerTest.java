@@ -255,8 +255,8 @@ class OsgContractControllerTest
         contract.setContractType(contractType);
         contract.setContractAmount(amount);
         contract.setTotalHours(totalHours);
-        contract.setUsedHours(0);
-        contract.setRemainingHours(totalHours);
+        contract.setUsedHours(BigDecimal.ZERO);
+        contract.setRemainingHours(BigDecimal.valueOf(totalHours));
         contract.setStartDate(Date.valueOf(LocalDate.of(2026, 3, 13)));
         contract.setEndDate(Date.valueOf(LocalDate.of(2026, 6, 13)));
         contract.setRenewalReason(renewalReason);

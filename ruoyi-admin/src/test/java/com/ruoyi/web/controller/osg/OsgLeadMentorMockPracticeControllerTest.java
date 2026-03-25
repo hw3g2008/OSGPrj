@@ -1,5 +1,6 @@
 package com.ruoyi.web.controller.osg;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -326,6 +327,12 @@ class OsgLeadMentorMockPracticeControllerTest
             .andExpect(jsonPath("$.rows[1].practiceId").value(9001))
             .andExpect(jsonPath("$.rows[1].status").value("scheduled"))
             .andExpect(jsonPath("$.rows[1].mentorNames").value("Jerry Li, Mike Chen"));
+
+        OsgMockPractice persisted = practiceRowsRef.get().stream()
+            .filter(item -> Long.valueOf(9001L).equals(item.getPracticeId()))
+            .findFirst()
+            .orElseThrow();
+        assertEquals("9001,9002", persisted.getMentorIds());
     }
 
     @Test

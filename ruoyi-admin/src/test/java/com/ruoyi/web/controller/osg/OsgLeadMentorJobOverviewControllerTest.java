@@ -1,5 +1,6 @@
 package com.ruoyi.web.controller.osg;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -310,7 +311,7 @@ class OsgLeadMentorJobOverviewControllerTest
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
-                      "mentorIds": [9001, 9002],
+                      "mentorIds": [9201, 9202],
                       "mentorNames": ["Jerry Li", "Mike Wang"],
                       "assignNote": "优先覆盖 First Round 题型"
                     }
@@ -326,6 +327,12 @@ class OsgLeadMentorJobOverviewControllerTest
                 .param("scope", "pending"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.rows.length()").value(0));
+
+        OsgCoaching persisted = coachingRowsRef.get().stream()
+            .filter(item -> Long.valueOf(7001L).equals(item.getApplicationId()))
+            .findFirst()
+            .orElseThrow();
+        assertEquals("9001,9002", persisted.getMentorIds());
     }
 
     @Test

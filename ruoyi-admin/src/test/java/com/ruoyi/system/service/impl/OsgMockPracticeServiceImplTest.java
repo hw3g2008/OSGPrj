@@ -7,7 +7,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.ruoyi.system.domain.OsgMockPractice;
+import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -21,13 +23,26 @@ class OsgMockPracticeServiceImplTest {
     @Mock
     private OsgMockPracticeMapper mapper;
 
+    @Mock
+    private OsgStudentMapper studentMapper;
+
     @Test
-    void testSelectMentorMockPracticeListDelegates() {
+    void testSelectMentorMockPracticeListIncludesAssistantOwnedRows() {
         OsgMockPractice q = new OsgMockPractice();
-        when(mapper.selectMentorMockPracticeList(q)).thenReturn(Collections.singletonList(new OsgMockPractice()));
+        q.setCurrentMentorId(920L);
+        OsgMockPractice practice = new OsgMockPractice();
+        practice.setPracticeId(1L);
+        practice.setStudentId(3001L);
+
+        OsgStudent student = new OsgStudent();
+        student.setStudentId(3001L);
+        student.setAssistantId(920L);
+
+        when(mapper.selectMockPracticeList(q)).thenReturn(Collections.singletonList(practice));
+        when(studentMapper.selectStudentByStudentId(3001L)).thenReturn(student);
 
         assertEquals(1, service.selectMentorMockPracticeList(q).size());
-        verify(mapper).selectMentorMockPracticeList(q);
+        verify(mapper).selectMockPracticeList(q);
     }
 
     @Test

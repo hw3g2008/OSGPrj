@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,6 +93,36 @@ class OsgStudentPositionControllerTest
         assertEquals(301L, result.get("positionId"));
         verify(positionMapper).insertPosition(any(OsgPosition.class));
         verify(studentPositionMapper).updateStudentPositionReview(any(OsgStudentPosition.class));
+    }
+
+    @Test
+    void approveShouldCreateVisibleWindowForApprovedPublicPositionWithoutDeadline()
+    {
+        OsgStudentPosition request = buildPendingPosition();
+        request.setDeadline(null);
+        OsgStudent student = buildStudent();
+
+        when(studentPositionMapper.selectStudentPositionById(10L)).thenReturn(request);
+        when(studentMapper.selectStudentByStudentId(12766L)).thenReturn(student);
+        when(positionMapper.selectPositionList(any(OsgPosition.class))).thenReturn(List.of());
+        when(positionMapper.insertPosition(any(OsgPosition.class))).thenAnswer(invocation -> {
+            OsgPosition position = invocation.getArgument(0);
+            position.setPositionId(301L);
+            return 1;
+        });
+        when(studentPositionMapper.updateStudentPositionReview(any(OsgStudentPosition.class))).thenReturn(1);
+
+        controller.approve(10L, Map.of());
+
+        org.mockito.ArgumentCaptor<OsgPosition> captor = org.mockito.ArgumentCaptor.forClass(OsgPosition.class);
+        verify(positionMapper).insertPosition(captor.capture());
+        OsgPosition saved = captor.getValue();
+        assertEquals("visible", saved.getDisplayStatus());
+        assertEquals(true, saved.getDisplayEndTime().after(saved.getDisplayStartTime()));
+        long visibleDays = Duration.between(
+            saved.getDisplayStartTime().toInstant(),
+            saved.getDisplayEndTime().toInstant()).toDays();
+        assertEquals(90L, visibleDays);
     }
 
     @Test
