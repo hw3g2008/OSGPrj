@@ -1,5 +1,6 @@
 package com.ruoyi.system.service.impl;
 
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -12,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.domain.OsgMockPractice;
+import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.StudentJobPositionMapper;
 import com.ruoyi.system.mapper.StudentMockPracticeMapper;
 import com.ruoyi.system.mapper.SysDictDataMapper;
@@ -182,6 +186,12 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
     @Autowired
     private SysDictDataMapper sysDictDataMapper;
 
+    @Autowired
+    private OsgMockPracticeMapper osgMockPracticeMapper;
+
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
     private final Object referenceDataLock = new Object();
 
     private volatile boolean referenceDataReady = false;
@@ -240,6 +250,7 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             String excludedMentor, String remark, Long userId)
     {
         syncReferenceData();
+        OsgStudent student = identityResolver.resolveStudentByUserId(userId);
         PracticeTypeMeta practiceMeta = resolvePracticeMeta(practiceType);
 
         Map<String, Object> params = new LinkedHashMap<>();
@@ -262,7 +273,22 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
         params.put("feedbackHint", "-");
         params.put("remark", normalizeOptional(remark));
         studentMockPracticeMapper.insertRequest(params);
-        return toRequestId(params.get("requestId"));
+
+        OsgMockPractice practice = new OsgMockPractice();
+        practice.setStudentId(student.getStudentId());
+        practice.setStudentName(defaultString(student.getStudentName(), "学员" + student.getStudentId()));
+        practice.setPracticeType(toMainPracticeType(practiceMeta.value()));
+        practice.setRequestContent(practiceMeta.label());
+        practice.setRequestedMentorCount(parseMentorCount(mentorCount));
+        practice.setPreferredMentorNames(normalizeOptional(preferredMentor));
+        practice.setStatus("pending");
+        practice.setCompletedHours(0);
+        practice.setSubmittedAt(new Date());
+        practice.setRemark(normalizeOptional(remark));
+        practice.setCreateBy("student");
+        practice.setUpdateBy("student");
+        osgMockPracticeMapper.insertMockPractice(practice);
+        return practice.getPracticeId() == null ? toRequestId(params.get("requestId")) : practice.getPracticeId();
     }
 
     @Override
@@ -298,7 +324,8 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
 
     private List<Map<String, Object>> loadPracticeRecords(Long userId)
     {
-        List<Map<String, Object>> practiceRecords = studentMockPracticeMapper.selectPracticeList(userId);
+        Long studentId = identityResolver.resolveStudentIdByUserId(userId);
+        List<Map<String, Object>> practiceRecords = projectPracticeRecords(osgMockPracticeMapper.selectStudentPracticeList(studentId));
         Map<String, SysDictData> practiceTypeDict = loadDictValueMap(DICT_TYPE_PRACTICE_TYPE);
         Map<String, SysDictData> practiceTypeLabelDict = loadDictLabelMap(DICT_TYPE_PRACTICE_TYPE);
         Map<String, SysDictData> practiceStatusDict = loadDictValueMap(DICT_TYPE_PRACTICE_STATUS);
@@ -337,6 +364,33 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             }
         }
         return practiceRecords;
+    }
+
+    private List<Map<String, Object>> projectPracticeRecords(List<OsgMockPractice> rows)
+    {
+        if (rows == null || rows.isEmpty())
+        {
+            return new ArrayList<>();
+        }
+        List<Map<String, Object>> records = new ArrayList<>(rows.size());
+        for (OsgMockPractice row : rows)
+        {
+            Map<String, Object> record = new LinkedHashMap<>();
+            record.put("id", "MP" + row.getPracticeId());
+            record.put("type", toPracticeTypeLabel(row.getPracticeType()));
+            record.put("typeValue", toPracticeTypeValue(row.getPracticeType()));
+            record.put("content", defaultString(row.getRequestContent(), "-"));
+            record.put("appliedAt", row.getSubmittedAt() == null ? "" : new java.text.SimpleDateFormat("MM/dd HH:mm").format(row.getSubmittedAt()));
+            record.put("submittedAtValue", row.getSubmittedAt() == null ? "" : new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(row.getSubmittedAt()));
+            record.put("mentor", defaultString(row.getMentorNames(), "待分配"));
+            record.put("mentorMeta", defaultString(row.getMentorBackgrounds(), "班主任分配中"));
+            record.put("hours", row.getCompletedHours() == null || row.getCompletedHours() == 0 ? "-" : String.valueOf(row.getCompletedHours()));
+            record.put("feedback", defaultString(row.getFeedbackSummary(), "-"));
+            record.put("feedbackHint", defaultString(row.getRemark(), "-"));
+            record.put("status", defaultString(row.getStatus(), ""));
+            records.add(record);
+        }
+        return records;
     }
 
     private List<Map<String, Object>> loadRequestRecords(Long userId)
@@ -566,7 +620,12 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
         SysDictData item = findDict(DICT_TYPE_PRACTICE_TYPE, normalized);
         if (item == null)
         {
-            throw new ServiceException("不支持的模拟应聘类型");
+            return switch (normalized) {
+                case "mock" -> new PracticeTypeMeta("mock", "模拟面试", "模拟面试");
+                case "networking" -> new PracticeTypeMeta("networking", "人际关系测试", "人际关系测试");
+                case "midterm" -> new PracticeTypeMeta("midterm", "期中考试", "期中考试");
+                default -> throw new ServiceException("不支持的模拟应聘类型");
+            };
         }
         return new PracticeTypeMeta(item.getDictValue(), item.getDictLabel(), defaultString(item.getRemark(), item.getDictLabel()));
     }
@@ -772,6 +831,47 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
     {
         return StringUtils.hasText(value) ? value.trim() : fallback;
     }
+
+    private int parseMentorCount(String mentorCount)
+    {
+        String normalized = defaultString(mentorCount, "").replaceAll("[^0-9]", "");
+        if (!StringUtils.hasText(normalized))
+        {
+            return 0;
+        }
+        return Integer.parseInt(normalized);
+    }
+
+    private String toMainPracticeType(String value)
+    {
+        return switch (defaultString(value, "")) {
+            case "mock" -> "mock_interview";
+            case "networking" -> "communication_test";
+            case "midterm" -> "midterm_exam";
+            default -> value;
+        };
+    }
+
+    private String toPracticeTypeValue(String practiceType)
+    {
+        return switch (defaultString(practiceType, "")) {
+            case "mock_interview" -> "mock";
+            case "communication_test" -> "networking";
+            case "midterm_exam" -> "midterm";
+            default -> practiceType;
+        };
+    }
+
+    private String toPracticeTypeLabel(String practiceType)
+    {
+        return switch (defaultString(practiceType, "")) {
+            case "mock_interview" -> "模拟面试";
+            case "communication_test" -> "人际关系测试";
+            case "midterm_exam" -> "期中考试";
+            default -> practiceType;
+        };
+    }
+
 
     private Long toRequestId(Object requestId)
     {

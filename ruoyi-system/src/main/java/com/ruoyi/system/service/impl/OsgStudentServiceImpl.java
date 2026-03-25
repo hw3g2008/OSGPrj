@@ -336,8 +336,8 @@ public class OsgStudentServiceImpl implements IOsgStudentService
 
         BigDecimal totalAmount = BigDecimal.ZERO;
         int totalHours = 0;
-        int usedHours = 0;
-        int remainingHours = 0;
+        BigDecimal usedHours = BigDecimal.ZERO;
+        BigDecimal remainingHours = BigDecimal.ZERO;
         for (OsgContract contract : contractRows)
         {
             Map<String, Object> row = new LinkedHashMap<>();
@@ -358,8 +358,8 @@ public class OsgStudentServiceImpl implements IOsgStudentService
 
             totalAmount = totalAmount.add(contract.getContractAmount() == null ? BigDecimal.ZERO : contract.getContractAmount());
             totalHours += contract.getTotalHours() == null ? 0 : contract.getTotalHours();
-            usedHours += contract.getUsedHours() == null ? 0 : contract.getUsedHours();
-            remainingHours += contract.getRemainingHours() == null ? 0 : contract.getRemainingHours();
+            usedHours = usedHours.add(contract.getUsedHours() == null ? BigDecimal.ZERO : contract.getUsedHours());
+            remainingHours = remainingHours.add(contract.getRemainingHours() == null ? BigDecimal.ZERO : contract.getRemainingHours());
         }
 
         Map<String, Object> summary = new LinkedHashMap<>();

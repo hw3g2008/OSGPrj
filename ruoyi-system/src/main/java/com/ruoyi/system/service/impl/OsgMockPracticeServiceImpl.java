@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.OsgMockPractice;
+import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.service.IOsgMockPracticeService;
 
 @Service
@@ -28,11 +30,22 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
     @Autowired
     private OsgMockPracticeMapper mockPracticeMapper;
 
+    @Autowired
+    private OsgStudentMapper studentMapper;
+
     @Override
     public List<OsgMockPractice> selectMentorMockPracticeList(OsgMockPractice query)
     {
-        List<OsgMockPractice> rows = mockPracticeMapper.selectMentorMockPracticeList(query);
-        return rows == null ? Collections.emptyList() : rows;
+        Long currentUserId = query == null ? null : query.getCurrentMentorId();
+        if (currentUserId == null)
+        {
+            return Collections.emptyList();
+        }
+
+        List<OsgMockPractice> rows = mockPracticeMapper.selectMockPracticeList(query == null ? new OsgMockPractice() : query);
+        return (rows == null ? Collections.<OsgMockPractice>emptyList() : rows).stream()
+            .filter(row -> hasMentorRelation(row, currentUserId) || hasAssistantOwnership(row, currentUserId))
+            .toList();
     }
 
     @Override
@@ -149,6 +162,36 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
     private int countByStatus(List<OsgMockPractice> rows, String status)
     {
         return (int) rows.stream().filter(row -> Objects.equals(normalize(row.getStatus()), status)).count();
+    }
+
+    private boolean hasMentorRelation(OsgMockPractice practice, Long currentUserId)
+    {
+        if (practice == null || currentUserId == null)
+        {
+            return false;
+        }
+
+        String mentorIds = practice.getMentorIds();
+        if (mentorIds == null || mentorIds.isBlank())
+        {
+            return false;
+        }
+
+        String token = String.valueOf(currentUserId);
+        return java.util.Arrays.stream(mentorIds.split(","))
+            .map(String::trim)
+            .anyMatch(token::equals);
+    }
+
+    private boolean hasAssistantOwnership(OsgMockPractice practice, Long currentUserId)
+    {
+        if (practice == null || practice.getStudentId() == null || currentUserId == null)
+        {
+            return false;
+        }
+
+        OsgStudent student = studentMapper.selectStudentByStudentId(practice.getStudentId());
+        return student != null && Objects.equals(student.getAssistantId(), currentUserId);
     }
 
     private Map<String, Object> toPayload(OsgMockPractice row)

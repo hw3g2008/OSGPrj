@@ -65,6 +65,12 @@ public class OsgPositionServiceImpl implements IOsgPositionService
 
     private volatile boolean referenceDataReady;
 
+    private Date currentSecond()
+    {
+        long now = System.currentTimeMillis();
+        return new Date((now / 1000L) * 1000L);
+    }
+
     @Override
     public OsgPosition selectPositionByPositionId(Long positionId)
     {
@@ -747,11 +753,11 @@ public class OsgPositionServiceImpl implements IOsgPositionService
 
         if (position.getPublishTime() == null)
         {
-            position.setPublishTime(new Date());
+            position.setPublishTime(currentSecond());
         }
         if (position.getDisplayStartTime() == null)
         {
-            position.setDisplayStartTime(new Date());
+            position.setDisplayStartTime(currentSecond());
         }
         if (position.getDisplayEndTime() == null)
         {

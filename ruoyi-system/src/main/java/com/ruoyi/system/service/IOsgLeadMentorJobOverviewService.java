@@ -14,4 +14,6 @@ public interface IOsgLeadMentorJobOverviewService
     Map<String, Object> assignMentors(Long applicationId, Map<String, Object> payload, Long currentUserId, String operator);
 
     Map<String, Object> acknowledgeStageUpdate(Long applicationId, Long currentUserId, String operator);
+
+    Map<String, Object> confirmCoaching(Long applicationId, Long currentUserId, String operator);
 }

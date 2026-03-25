@@ -1,21 +1,31 @@
 package com.ruoyi.system.service.impl;
 
+import java.time.ZoneId;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.domain.OsgJobApplication;
+import com.ruoyi.system.domain.OsgPosition;
+import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.domain.OsgStudentPosition;
+import com.ruoyi.system.mapper.OsgJobApplicationMapper;
+import com.ruoyi.system.mapper.OsgPositionMapper;
+import com.ruoyi.system.mapper.OsgStudentPositionMapper;
 import com.ruoyi.system.mapper.StudentJobPositionMapper;
 import com.ruoyi.system.mapper.StudentProfileMapper;
 import com.ruoyi.system.mapper.SysDictDataMapper;
@@ -37,11 +47,17 @@ public class PositionServiceImpl implements IPositionService
     private static final String DICT_TYPE_POSITION_MENTOR_COUNT = "osg_student_position_mentor_count";
     private static final String DICT_TYPE_APPLICATION_COACHING_STATUS = "osg_student_application_coaching_status";
     private static final String DICT_TYPE_APPLICATION_PAGE_COPY = "osg_student_application_page_copy";
+    private static final String PUBLIC_DISPLAY_STATUS = "visible";
+    private static final String STUDENT_POSITION_STATUS_PENDING = "pending";
+    private static final String STUDENT_POSITION_STATUS_APPROVED = "approved";
+    private static final String STUDENT_POSITION_STATUS_REJECTED = "rejected";
+    private static final long PUBLIC_POSITION_VISIBILITY_GRACE_MILLIS = 1000L;
     private static final DateTimeFormatter APPLICATION_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter APPLICATION_WEEKDAY = DateTimeFormatter.ofPattern("EEE", Locale.CHINA);
     private static final DateTimeFormatter APPLICATION_DAY = DateTimeFormatter.ofPattern("dd", Locale.CHINA);
     private static final DateTimeFormatter APPLICATION_TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.CHINA);
     private static final DateTimeFormatter APPLICATION_MODAL_TIME = DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm", Locale.CHINA);
+    private static final DateTimeFormatter MONTH_DAY = DateTimeFormatter.ofPattern("MM-dd");
 
     private static final List<DictSeed> CATEGORY_SEEDS = List.of(
             new DictSeed(DICT_TYPE_POSITION_CATEGORY, 1L, "暑期实习", "summer", "blue", null, "岗位分类"),
@@ -103,6 +119,18 @@ public class PositionServiceImpl implements IPositionService
 
     @Autowired
     private SysDictDataMapper sysDictDataMapper;
+
+    @Autowired
+    private OsgPositionMapper positionMapper;
+
+    @Autowired
+    private OsgJobApplicationMapper jobApplicationMapper;
+
+    @Autowired
+    private OsgStudentPositionMapper studentPositionMapper;
+
+    @Autowired
+    private OsgIdentityResolver identityResolver;
 
     /**
      * 查询岗位列表
@@ -190,7 +218,8 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public List<Map<String, Object>> selectApplicationList(Long userId)
     {
-        List<Map<String, Object>> applications = studentJobPositionMapper.selectApplicationList(userId);
+        Long studentId = identityResolver.resolveStudentIdByUserId(userId);
+        List<Map<String, Object>> applications = jobApplicationMapper.selectStudentApplicationRecords(studentId);
         syncApplicationReferenceData(applications);
 
         Map<String, SysDictData> stageDict = loadDictValueMap(DICT_TYPE_POSITION_PROGRESS_STAGE);
@@ -260,20 +289,24 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int updateApplyStatus(Long positionId, Boolean applied, String appliedDate, String method, String note, Long userId)
     {
-        ensurePositionVisible(positionId, userId);
+        PositionReference position = requireVisiblePosition(positionId, userId);
         boolean appliedFlag = Boolean.TRUE.equals(applied);
         LocalDate normalizedDate = appliedFlag ? parseRequiredDate(appliedDate) : null;
         String normalizedMethod = appliedFlag ? defaultString(method, "官网投递") : null;
         String normalizedNote = appliedFlag ? defaultString(note, "") : "";
-        return studentJobPositionMapper.upsertApplyState(
-                positionId,
-                userId,
-                asFlag(appliedFlag),
-                normalizedDate,
-                normalizedMethod,
-                normalizedNote,
-                "applied",
-                "");
+        int compatibilityRows = position.shadowCompatible()
+                ? studentJobPositionMapper.upsertApplyState(
+                        positionId,
+                        userId,
+                        asFlag(appliedFlag),
+                        normalizedDate,
+                        normalizedMethod,
+                        normalizedNote,
+                        "applied",
+                        "")
+                : 1;
+        upsertMainApplication(positionId, position, userId, "applied", normalizedNote, normalizedDate, "none", null, 0);
+        return compatibilityRows;
     }
 
     /**
@@ -282,7 +315,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int updateFavoriteStatus(Long positionId, Boolean favorited, Long userId)
     {
-        ensurePositionVisible(positionId, userId);
+        requireVisiblePosition(positionId, userId);
         return studentJobPositionMapper.upsertFavoriteState(positionId, userId, asFlag(Boolean.TRUE.equals(favorited)));
     }
 
@@ -292,12 +325,16 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int insertProgress(Long positionId, String stage, String notes, Long userId)
     {
-        ensurePositionVisible(positionId, userId);
+        PositionReference position = requireVisiblePosition(positionId, userId);
         if (!StringUtils.hasText(stage))
         {
             throw new ServiceException("当前阶段不能为空");
         }
-        return studentJobPositionMapper.upsertProgressState(positionId, userId, stage.trim(), defaultString(notes, ""));
+        int compatibilityRows = position.shadowCompatible()
+                ? studentJobPositionMapper.upsertProgressState(positionId, userId, stage.trim(), defaultString(notes, ""))
+                : 1;
+        upsertMainApplication(positionId, position, userId, stage.trim(), defaultString(notes, ""), null, null, Boolean.TRUE, null);
+        return compatibilityRows;
     }
 
     /**
@@ -306,7 +343,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int requestCoaching(Long positionId, String stage, String mentorCount, String note, Long userId)
     {
-        ensurePositionVisible(positionId, userId);
+        PositionReference position = requireVisiblePosition(positionId, userId);
         if (!StringUtils.hasText(stage))
         {
             throw new ServiceException("请选择当前面试阶段");
@@ -315,13 +352,18 @@ public class PositionServiceImpl implements IPositionService
         {
             throw new ServiceException("请选择导师数量");
         }
-        return studentJobPositionMapper.upsertCoachingState(
-                positionId,
-                userId,
-                "pending",
-                stage.trim(),
-                mentorCount.trim(),
-                defaultString(note, ""));
+        int compatibilityRows = position.shadowCompatible()
+                ? studentJobPositionMapper.upsertCoachingState(
+                        positionId,
+                        userId,
+                        "pending",
+                        stage.trim(),
+                        mentorCount.trim(),
+                        defaultString(note, ""))
+                : 1;
+        upsertMainApplication(positionId, position, userId, stage.trim(), defaultString(note, ""), null, "pending", Boolean.TRUE,
+                parseMentorCount(mentorCount));
+        return compatibilityRows;
     }
 
     /**
@@ -344,42 +386,88 @@ public class PositionServiceImpl implements IPositionService
         String companyCode = normalizeCompanyCode(normalizedCompany);
         String recruitCycle = resolveProfileField(userId, "recruitmentCycle", "Open");
         String primaryDirection = resolveProfileField(userId, "primaryDirection", "Investment Bank");
-        String industryValue = resolveIndustryValue(primaryDirection);
+        String industryLabel = resolveIndustryLabel(primaryDirection);
+        OsgStudent student = identityResolver.resolveStudentByUserId(userId);
 
         upsertLocationMeta(normalizedLocation);
         upsertCompanyMeta(companyKey, normalizedCompany, companyCode);
 
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("businessKey", "manual:" + userId + ":" + System.currentTimeMillis());
-        params.put("title", normalizedTitle);
-        params.put("company", normalizedCompany);
-        params.put("category", category.trim());
-        params.put("department", "Pending");
-        params.put("location", normalizedLocation);
-        params.put("recruitCycle", recruitCycle);
-        params.put("publishDate", LocalDate.now());
-        params.put("deadline", null);
-        params.put("positionUrl", "#");
-        params.put("careerUrl", "#");
-        params.put("companyKey", companyKey);
-        params.put("companyCode", companyCode);
-        params.put("industry", industryValue);
-        params.put("requirements", "");
-        params.put("ownerUserId", userId);
-        studentJobPositionMapper.insertManualPosition(params);
-        Object positionId = params.get("positionId");
-        return positionId instanceof Number ? ((Number) positionId).longValue() : null;
+        OsgStudentPosition reviewRow = new OsgStudentPosition();
+        reviewRow.setStudentId(student.getStudentId());
+        reviewRow.setStudentName(defaultString(student.getStudentName(), "学员" + student.getStudentId()));
+        reviewRow.setPositionCategory(category.trim());
+        reviewRow.setIndustry(industryLabel);
+        reviewRow.setCompanyName(normalizedCompany);
+        reviewRow.setCompanyType(industryLabel);
+        reviewRow.setPositionName(normalizedTitle);
+        reviewRow.setDepartment("Pending");
+        reviewRow.setRegion(resolveManualRegion(normalizedLocation));
+        reviewRow.setCity(normalizedLocation);
+        reviewRow.setRecruitmentCycle(recruitCycle);
+        reviewRow.setProjectYear(resolveProjectYear(recruitCycle));
+        reviewRow.setPositionUrl("#");
+        reviewRow.setStatus(STUDENT_POSITION_STATUS_PENDING);
+        reviewRow.setHasCoachingRequest("no");
+        reviewRow.setFlowStatus("pending_review");
+        reviewRow.setCreateBy(defaultString(student.getStudentName(), "student"));
+        reviewRow.setUpdateBy(defaultString(student.getStudentName(), "student"));
+        studentPositionMapper.insertStudentPosition(reviewRow);
+        return reviewRow.getStudentPositionId();
     }
 
     private List<Map<String, Object>> loadVisiblePositions(Long userId)
     {
-        List<Map<String, Object>> positions = studentJobPositionMapper.selectPositionList(userId);
-        for (Map<String, Object> position : positions)
+        LinkedHashMap<Long, Map<String, Object>> positions = new LinkedHashMap<>();
+        for (Map<String, Object> position : studentJobPositionMapper.selectPositionList(userId))
         {
-            position.put("favorited", asBoolean(position.get("favorited")));
-            position.put("applied", asBoolean(position.get("applied")));
+            Map<String, Object> normalized = new LinkedHashMap<>(position);
+            normalized.put("favorited", asBoolean(normalized.get("favorited")));
+            normalized.put("applied", asBoolean(normalized.get("applied")));
+            positions.put(toLong(normalized.get("id")), normalized);
         }
-        return positions;
+
+        for (OsgStudentPosition reviewPosition : loadOwnedManualReviewPositions(userId))
+        {
+            Long reviewId = reviewPosition.getStudentPositionId();
+            if (reviewId == null || positions.containsKey(reviewId))
+            {
+                continue;
+            }
+            positions.put(reviewId, toStudentPositionRow(reviewPosition));
+        }
+
+        OsgPosition query = new OsgPosition();
+        query.setDisplayStatus(PUBLIC_DISPLAY_STATUS);
+        for (OsgPosition publicPosition : positionMapper.selectPositionList(query))
+        {
+            if (!isVisiblePublicPosition(publicPosition))
+            {
+                continue;
+            }
+            Long publicPositionId = publicPosition.getPositionId();
+            if (publicPositionId == null || positions.containsKey(publicPositionId))
+            {
+                continue;
+            }
+            positions.put(publicPositionId, toStudentPositionRow(publicPosition));
+        }
+
+        return new ArrayList<>(positions.values());
+    }
+
+    private List<OsgStudentPosition> loadOwnedManualReviewPositions(Long userId)
+    {
+        Long studentId = identityResolver.resolveStudentIdByUserId(userId);
+        OsgStudentPosition query = new OsgStudentPosition();
+        query.setStudentId(studentId);
+        List<OsgStudentPosition> rows = studentPositionMapper.selectStudentPositionList(query);
+        if (rows == null || rows.isEmpty())
+        {
+            return List.of();
+        }
+        return rows.stream()
+            .filter(row -> !STUDENT_POSITION_STATUS_APPROVED.equals(defaultString(row.getStatus(), STUDENT_POSITION_STATUS_PENDING)))
+            .toList();
     }
 
     private void syncPositionReferenceData(List<Map<String, Object>> positions)
@@ -776,6 +864,26 @@ public class PositionServiceImpl implements IPositionService
         return "ib";
     }
 
+    private String resolveIndustryLabel(String primaryDirection)
+    {
+        String normalized = defaultString(primaryDirection, "");
+        for (SysDictData item : sysDictDataMapper.selectDictDataByType(DICT_TYPE_POSITION_INDUSTRY))
+        {
+            if (normalized.equalsIgnoreCase(item.getDictLabel()) || normalized.equalsIgnoreCase(item.getDictValue()))
+            {
+                return defaultString(item.getDictLabel(), normalized);
+            }
+        }
+
+        return switch (resolveIndustryValue(primaryDirection))
+        {
+            case "consulting" -> "Consulting";
+            case "tech" -> "Tech";
+            case "pevc" -> "PE / VC";
+            default -> "Investment Bank";
+        };
+    }
+
     private String resolveProfileField(Long userId, String key, String fallback)
     {
         Map<String, Object> profile = studentProfileMapper.selectProfileByUserId(userId);
@@ -845,12 +953,314 @@ public class PositionServiceImpl implements IPositionService
         return palette[index];
     }
 
-    private void ensurePositionVisible(Long positionId, Long userId)
+    private int upsertMainApplication(Long positionId, PositionReference positionReference, Long userId, String stage, String remark, LocalDate appliedDate,
+            String coachingStatus, Boolean stageUpdated, Integer requestedMentorCount)
     {
-        if (positionId == null || studentJobPositionMapper.countVisiblePosition(positionId, userId) == 0)
+        OsgStudent student = identityResolver.resolveStudentByUserId(userId);
+        Map<String, Object> position = positionReference.position();
+        String companyName = stringValue(position.get("company"));
+        String positionName = stringValue(position.get("title"));
+
+        OsgJobApplication existing = jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(
+                student.getStudentId(),
+                companyName,
+                positionName);
+        if (existing == null)
+        {
+            OsgJobApplication created = new OsgJobApplication();
+            created.setStudentId(student.getStudentId());
+            created.setPositionId(positionId);
+            created.setLeadMentorId(student.getLeadMentorId());
+            created.setStudentName(defaultString(student.getStudentName(), "学员" + student.getStudentId()));
+            created.setCompanyName(companyName);
+            created.setPositionName(positionName);
+            created.setCity(stringValue(position.get("location")));
+            created.setRegion(normalizeRegion(stringValue(position.get("location"))));
+            created.setCurrentStage(defaultString(stage, "applied"));
+            created.setAssignStatus("pending");
+            created.setCoachingStatus(defaultString(coachingStatus, "none"));
+            created.setRequestedMentorCount(requestedMentorCount == null ? 0 : requestedMentorCount);
+            created.setStageUpdated(Boolean.TRUE.equals(stageUpdated));
+            created.setSubmittedAt(java.sql.Timestamp.valueOf((appliedDate == null ? LocalDate.now() : appliedDate).atStartOfDay()));
+            created.setRemark(remark);
+            return jobApplicationMapper.insertJobApplication(created);
+        }
+
+        OsgJobApplication stagePatch = new OsgJobApplication();
+        stagePatch.setApplicationId(existing.getApplicationId());
+        stagePatch.setCurrentStage(defaultString(stage, existing.getCurrentStage()));
+        stagePatch.setStageUpdated(stageUpdated);
+        stagePatch.setRemark(remark);
+        int rows = jobApplicationMapper.updateJobApplicationStage(stagePatch);
+
+        if (coachingStatus != null || requestedMentorCount != null)
+        {
+            OsgJobApplication coachingPatch = new OsgJobApplication();
+            coachingPatch.setApplicationId(existing.getApplicationId());
+            coachingPatch.setCurrentStage(defaultString(stage, existing.getCurrentStage()));
+            coachingPatch.setAssignStatus("pending");
+            coachingPatch.setCoachingStatus(defaultString(coachingStatus, existing.getCoachingStatus()));
+            coachingPatch.setRequestedMentorCount(requestedMentorCount == null
+                    ? defaultRequestedMentorCount(existing.getRequestedMentorCount())
+                    : requestedMentorCount);
+            coachingPatch.setRemark(remark);
+            rows = Math.max(rows, jobApplicationMapper.updateJobApplicationCoaching(coachingPatch));
+        }
+        return rows;
+    }
+
+    private int defaultRequestedMentorCount(Integer value)
+    {
+        return value == null ? 0 : value;
+    }
+
+    private int parseMentorCount(String mentorCount)
+    {
+        String normalized = defaultString(mentorCount, "").replaceAll("[^0-9]", "");
+        if (!StringUtils.hasText(normalized))
+        {
+            return 0;
+        }
+        return Integer.parseInt(normalized);
+    }
+
+    private String normalizeRegion(String location)
+    {
+        String normalized = defaultString(location, "").toLowerCase(Locale.ROOT);
+        if (normalized.contains("new york") || normalized.contains("san francisco"))
+        {
+            return "na";
+        }
+        if (normalized.contains("london"))
+        {
+            return "uk";
+        }
+        if (normalized.contains("hong kong") || normalized.contains("shanghai") || normalized.contains("singapore"))
+        {
+            return "apac";
+        }
+        return "";
+    }
+
+    private String resolveManualRegion(String location)
+    {
+        String normalized = defaultString(location, "").toLowerCase(Locale.ROOT);
+        if (normalized.contains("new york") || normalized.contains("san francisco"))
+        {
+            return "na";
+        }
+        if (normalized.contains("london"))
+        {
+            return "uk";
+        }
+        if (normalized.contains("hong kong") || normalized.contains("shanghai") || normalized.contains("singapore"))
+        {
+            return "ap";
+        }
+        return "";
+    }
+
+    private String resolveProjectYear(String recruitCycle)
+    {
+        var matcher = Pattern.compile("(20\\d{2})").matcher(defaultString(recruitCycle, ""));
+        if (matcher.find())
+        {
+            return matcher.group(1);
+        }
+        return String.valueOf(LocalDate.now().getYear());
+    }
+
+    private String resolveStudentPositionStatusLabel(String status)
+    {
+        return switch (defaultString(status, STUDENT_POSITION_STATUS_PENDING))
+        {
+            case STUDENT_POSITION_STATUS_REJECTED -> "已拒绝";
+            case STUDENT_POSITION_STATUS_APPROVED -> "已通过";
+            default -> "待审核";
+        };
+    }
+
+    private PositionReference requireVisiblePosition(Long positionId, Long userId)
+    {
+        if (positionId == null)
         {
             throw new ServiceException("岗位不存在或无权操作");
         }
+
+        if (studentJobPositionMapper.countVisiblePosition(positionId, userId) > 0)
+        {
+            Map<String, Object> shadowPosition = studentJobPositionMapper.selectPositionList(userId).stream()
+                .filter(position -> Objects.equals(positionId, toLong(position.get("id"))))
+                .findFirst()
+                .orElse(null);
+            if (shadowPosition != null)
+            {
+                Map<String, Object> normalized = new LinkedHashMap<>(shadowPosition);
+                normalized.put("favorited", asBoolean(normalized.get("favorited")));
+                normalized.put("applied", asBoolean(normalized.get("applied")));
+                return new PositionReference(normalized, true);
+            }
+        }
+
+        OsgPosition publicPosition = positionMapper.selectPositionByPositionId(positionId);
+        if (isVisiblePublicPosition(publicPosition))
+        {
+            return new PositionReference(toStudentPositionRow(publicPosition), false);
+        }
+
+        throw new ServiceException("岗位不存在或无权操作");
+    }
+
+    private boolean isVisiblePublicPosition(OsgPosition position)
+    {
+        if (position == null)
+        {
+            return false;
+        }
+        if (!PUBLIC_DISPLAY_STATUS.equals(normalizeDisplayStatus(position.getDisplayStatus())))
+        {
+            return false;
+        }
+
+        Date now = new Date();
+        if (position.getDisplayStartTime() != null
+                && position.getDisplayStartTime().getTime() - now.getTime() > PUBLIC_POSITION_VISIBILITY_GRACE_MILLIS)
+        {
+            return false;
+        }
+        if (position.getDisplayEndTime() != null
+                && now.getTime() - position.getDisplayEndTime().getTime() > PUBLIC_POSITION_VISIBILITY_GRACE_MILLIS)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private Map<String, Object> toStudentPositionRow(OsgPosition position)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        String companyName = defaultString(position.getCompanyName(), "");
+        String positionUrl = defaultString(position.getPositionUrl(), "#");
+        row.put("id", position.getPositionId());
+        row.put("title", defaultString(position.getPositionName(), ""));
+        row.put("url", positionUrl);
+        row.put("category", defaultString(position.getPositionCategory(), "summer"));
+        row.put("categoryText", defaultString(position.getPositionCategory(), "summer"));
+        row.put("department", defaultString(position.getDepartment(), ""));
+        row.put("location", publicPositionLocation(position));
+        row.put("recruitCycle", defaultString(position.getRecruitmentCycle(), ""));
+        row.put("publishDate", formatMonthDay(position.getPublishTime()));
+        row.put("deadline", formatMonthDay(position.getDeadline()));
+        row.put("company", companyName);
+        row.put("companyKey", normalizeCompanyKey(companyName));
+        row.put("companyCode", normalizeCompanyCode(companyName));
+        row.put("careerUrl", positionUrl);
+        row.put("industry", resolveIndustryValue(position.getIndustry()));
+        row.put("sourceType", "global");
+        row.put("favorited", false);
+        row.put("applied", false);
+        row.put("progressStage", "applied");
+        row.put("progressNote", "");
+        row.put("requirements", defaultString(position.getApplicationNote(), ""));
+        return row;
+    }
+
+    private Map<String, Object> toStudentPositionRow(OsgStudentPosition position)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        String companyName = defaultString(position.getCompanyName(), "");
+        String positionUrl = defaultString(position.getPositionUrl(), "#");
+        String status = defaultString(position.getStatus(), STUDENT_POSITION_STATUS_PENDING);
+        row.put("id", position.getStudentPositionId());
+        row.put("title", defaultString(position.getPositionName(), ""));
+        row.put("url", positionUrl);
+        row.put("category", defaultString(position.getPositionCategory(), "summer"));
+        row.put("categoryText", defaultString(position.getPositionCategory(), "summer"));
+        row.put("department", defaultString(position.getDepartment(), ""));
+        row.put("location", reviewPositionLocation(position));
+        row.put("recruitCycle", defaultString(position.getRecruitmentCycle(), ""));
+        row.put("publishDate", formatMonthDay(position.getCreateTime()));
+        row.put("deadline", formatMonthDay(position.getDeadline()));
+        row.put("company", companyName);
+        row.put("companyKey", normalizeCompanyKey(companyName));
+        row.put("companyCode", normalizeCompanyCode(companyName));
+        row.put("careerUrl", positionUrl);
+        row.put("industry", resolveIndustryValue(position.getIndustry()));
+        row.put("sourceType", "manual");
+        row.put("favorited", false);
+        row.put("applied", false);
+        row.put("progressStage", "applied");
+        row.put("progressNote", "");
+        row.put("reviewStatus", status);
+        row.put("reviewStatusLabel", resolveStudentPositionStatusLabel(status));
+        row.put("rejectReason", defaultString(position.getRejectReason(), ""));
+        row.put("requirements", defaultString(position.getRejectReason(), ""));
+        return row;
+    }
+
+    private String publicPositionLocation(OsgPosition position)
+    {
+        if (StringUtils.hasText(position.getCity()))
+        {
+            return position.getCity().trim();
+        }
+        if (StringUtils.hasText(position.getRegion()))
+        {
+            return position.getRegion().trim();
+        }
+        return "";
+    }
+
+    private String reviewPositionLocation(OsgStudentPosition position)
+    {
+        if (StringUtils.hasText(position.getCity()))
+        {
+            return position.getCity().trim();
+        }
+        if (StringUtils.hasText(position.getRegion()))
+        {
+            return position.getRegion().trim();
+        }
+        return "";
+    }
+
+    private String formatMonthDay(Date value)
+    {
+        if (value == null)
+        {
+            return "--";
+        }
+        return MONTH_DAY.format(value.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+    }
+
+    private String normalizeDisplayStatus(String displayStatus)
+    {
+        if (!StringUtils.hasText(displayStatus))
+        {
+            return PUBLIC_DISPLAY_STATUS;
+        }
+
+        String normalized = displayStatus.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized)
+        {
+            case "0", "visible" -> "visible";
+            case "1", "hidden" -> "hidden";
+            case "2", "expired" -> "expired";
+            default -> normalized;
+        };
+    }
+
+    private Long toLong(Object value)
+    {
+        if (value instanceof Number number)
+        {
+            return number.longValue();
+        }
+        if (value == null || !StringUtils.hasText(String.valueOf(value)))
+        {
+            return null;
+        }
+        return Long.valueOf(String.valueOf(value).trim());
     }
 
     private LocalDate parseRequiredDate(String appliedDate)
@@ -975,6 +1385,10 @@ public class PositionServiceImpl implements IPositionService
     private String stringValue(Object value)
     {
         return value == null ? "" : String.valueOf(value).trim();
+    }
+
+    private record PositionReference(Map<String, Object> position, boolean shadowCompatible)
+    {
     }
 
     private record DictSeed(String type, Long sort, String label, String value, String cssClass, String listClass,

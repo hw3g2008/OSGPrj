@@ -1,6 +1,8 @@
 package com.ruoyi.system.service.impl;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.domain.OsgClassRecord;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.StudentCourseRecordMapper;
 import com.ruoyi.system.mapper.SysDictDataMapper;
 import com.ruoyi.system.service.IStudentCourseRecordService;
@@ -109,6 +113,12 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
     @Autowired
     private SysDictDataMapper sysDictDataMapper;
 
+    @Autowired
+    private OsgClassRecordMapper osgClassRecordMapper;
+
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
     private final Object referenceDataLock = new Object();
 
     private volatile boolean referenceDataReady = false;
@@ -134,7 +144,8 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
     public List<Map<String, Object>> selectCourseRecordList(Long userId)
     {
         syncReferenceData();
-        List<Map<String, Object>> records = studentCourseRecordMapper.selectCourseRecordList(userId);
+        Long studentId = identityResolver.resolveStudentIdByUserId(userId);
+        List<Map<String, Object>> records = projectMainRecords(osgClassRecordMapper.selectStudentApprovedClassRecordList(studentId));
         Map<String, SysDictData> pageCopy = loadDictValueMap(DICT_TYPE_PAGE_COPY);
         Map<String, SysDictData> coachingTypeDict = loadDictValueMap(DICT_TYPE_COACHING_TYPE);
         Map<String, SysDictData> contentTypeDict = loadDictValueMap(DICT_TYPE_CONTENT_TYPE);
@@ -176,7 +187,21 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
     {
         syncReferenceData();
         String normalizedRecordId = requireText(recordId, "课程记录不存在");
-        if (studentCourseRecordMapper.countCourseRecord(normalizedRecordId, userId) == 0)
+        Long studentId = identityResolver.resolveStudentIdByUserId(userId);
+        OsgClassRecord record = osgClassRecordMapper.selectStudentClassRecordByClassId(normalizedRecordId, studentId);
+        if (record == null)
+        {
+            Long fallbackRecordId = parseFallbackRecordId(normalizedRecordId);
+            if (fallbackRecordId != null)
+            {
+                OsgClassRecord candidate = osgClassRecordMapper.selectClassRecordByRecordId(fallbackRecordId);
+                if (candidate != null && studentId.equals(candidate.getStudentId()))
+                {
+                    record = candidate;
+                }
+            }
+        }
+        if (record == null)
         {
             throw new ServiceException("课程记录不存在或无权操作");
         }
@@ -187,12 +212,125 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
         }
         String normalizedTags = ratingTags == null || ratingTags.isEmpty() ? "" : String.join(",", ratingTags);
         String normalizedFeedback = requireText(ratingFeedback, "请填写详细反馈");
-        return studentCourseRecordMapper.updateCourseRating(
-                normalizedRecordId,
-                userId,
-                BigDecimal.valueOf(normalizedScore),
-                normalizedTags,
-                normalizedFeedback);
+        OsgClassRecord patch = new OsgClassRecord();
+        patch.setRecordId(record.getRecordId());
+        patch.setRate(String.valueOf(normalizedScore));
+        patch.setTopics(normalizedTags);
+        patch.setComments(normalizedFeedback);
+        patch.setRemark(normalizedFeedback);
+        return osgClassRecordMapper.updateStudentClassRecordRating(patch);
+    }
+
+    private Long parseFallbackRecordId(String recordId)
+    {
+        String normalized = defaultString(recordId, "").trim();
+        if (normalized.startsWith("#"))
+        {
+            normalized = normalized.substring(1).trim();
+        }
+        if (!normalized.chars().allMatch(Character::isDigit))
+        {
+            return null;
+        }
+        try
+        {
+            return Long.valueOf(normalized);
+        }
+        catch (NumberFormatException error)
+        {
+            return null;
+        }
+    }
+
+    private List<Map<String, Object>> projectMainRecords(List<OsgClassRecord> rows)
+    {
+        if (rows == null || rows.isEmpty())
+        {
+            return new ArrayList<>();
+        }
+        SimpleDateFormat classDateFormatter = new SimpleDateFormat("MM/dd");
+        SimpleDateFormat classDateRawFormatter = new SimpleDateFormat("yyyy-MM-dd");
+
+        List<Map<String, Object>> projected = new ArrayList<>(rows.size());
+        for (OsgClassRecord row : rows)
+        {
+            Map<String, Object> record = new LinkedHashMap<>();
+            record.put("recordId", defaultString(row.getClassId(), "#" + row.getRecordId()));
+            record.put("coachingType", toCoachingTypeLabel(row.getCourseType()));
+            record.put("coachingDetail", toCoachingDetail(row));
+            record.put("courseContent", toCourseContentLabel(row.getClassStatus()));
+            record.put("mentor", defaultString(row.getMentorName(), "-"));
+            record.put("mentorRole", toReporterRoleLabel(row.getCourseSource()));
+            record.put("classDate", row.getClassDate() == null ? "" : classDateFormatter.format(row.getClassDate()));
+            record.put("classDateRaw", row.getClassDate() == null ? "" : classDateRawFormatter.format(row.getClassDate()));
+            record.put("isNew", !StringUtils.hasText(row.getRate()));
+            record.put("duration", formatDuration(row.getDurationHours()));
+            record.put("ratingScoreValue", defaultString(row.getRate(), ""));
+            record.put("ratingTags", defaultString(row.getTopics(), ""));
+            record.put("ratingFeedback", defaultString(row.getComments(), ""));
+            projected.add(record);
+        }
+        return projected;
+    }
+
+    private String toCoachingDetail(OsgClassRecord row)
+    {
+        String courseContent = toCourseContentLabel(row.getClassStatus());
+        if ("岗位辅导".equals(toCoachingTypeLabel(row.getCourseType())))
+        {
+            return courseContent;
+        }
+        return courseContent;
+    }
+
+    private String toCoachingTypeLabel(String courseType)
+    {
+        if ("mock_practice".equalsIgnoreCase(defaultString(courseType, "")))
+        {
+            return "模拟应聘";
+        }
+        return "岗位辅导";
+    }
+
+    private String toCourseContentLabel(String classStatus)
+    {
+        if (!StringUtils.hasText(classStatus))
+        {
+            return "其他";
+        }
+        return switch (classStatus.trim().toLowerCase()) {
+            case "resume_revision" -> "新简历";
+            case "resume_update" -> "简历更新";
+            case "case_prep" -> "Case准备";
+            case "mock_interview" -> "模拟面试";
+            case "networking_midterm", "communication_midterm" -> "人际关系期中考试";
+            case "mock_midterm", "midterm_exam" -> "模拟期中考试";
+            case "behavioral" -> "Behavioral";
+            default -> classStatus;
+        };
+    }
+
+    private String toReporterRoleLabel(String courseSource)
+    {
+        if (!StringUtils.hasText(courseSource))
+        {
+            return "导师";
+        }
+        return switch (courseSource.trim().toLowerCase()) {
+            case "assistant" -> "助教";
+            case "clerk" -> "班主任";
+            default -> "导师";
+        };
+    }
+
+    private String formatDuration(Double durationHours)
+    {
+        if (durationHours == null)
+        {
+            return "";
+        }
+        BigDecimal value = BigDecimal.valueOf(durationHours).stripTrailingZeros();
+        return value.toPlainString() + "h";
     }
 
     private Map<String, Object> buildPageSummary(Map<String, SysDictData> pageCopy)

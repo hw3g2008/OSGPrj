@@ -63,6 +63,92 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where application_id = #{applicationId}
     </select>
 
+    <select id="selectLatestByStudentAndCompanyAndPosition" resultMap="OsgJobApplicationResult">
+        select
+        <include refid="selectJobApplicationColumns"/>
+        from osg_job_application
+        where student_id = #{studentId}
+          and company_name = #{companyName}
+          and position_name = #{positionName}
+        order by submitted_at desc, application_id desc
+        limit 1
+    </select>
+
+    <select id="selectStudentApplicationRecords" parameterType="Long" resultType="java.util.LinkedHashMap">
+        select
+            application_id as id,
+            company_name as company,
+            position_name as position,
+            coalesce(city, region, '') as location,
+            'ib' as companyType,
+            current_stage as stage,
+            case lower(current_stage)
+                when 'applied' then '已投递'
+                when 'hirevue' then 'HireVue / OT'
+                when 'hirevue / ot' then 'HireVue / OT'
+                when 'first' then 'First Round'
+                when 'first_round' then 'First Round'
+                when 'second' then 'Second Round'
+                when 'second_round' then 'Second Round'
+                when 'case' then 'Case Study'
+                when 'case_study' then 'Case Study'
+                when 'offer' then 'Offer'
+                when 'rejected' then '已拒绝'
+                else current_stage
+            end as stageLabel,
+            case lower(current_stage)
+                when 'applied' then 'blue'
+                when 'hirevue' then 'blue'
+                when 'hirevue / ot' then 'blue'
+                when 'first' then 'orange'
+                when 'first_round' then 'orange'
+                when 'second' then 'orange'
+                when 'second_round' then 'orange'
+                when 'case' then 'gold'
+                when 'case_study' then 'gold'
+                when 'offer' then 'green'
+                when 'rejected' then 'red'
+                else 'default'
+            end as stageColor,
+            coalesce(date_format(interview_time, '%m/%d %H:%i'), '-') as interviewTime,
+            case
+                when interview_time is not null then date_format(interview_time, '%Y-%m-%d %H:%i:%s')
+                else '-'
+            end as interviewHint,
+            case lower(coalesce(coaching_status, 'none'))
+                when '辅导中' then 'coaching'
+                when 'coaching' then 'coaching'
+                when '待审批' then 'pending'
+                when 'pending' then 'pending'
+                else 'none'
+            end as coachingStatus,
+            case lower(coalesce(coaching_status, 'none'))
+                when '辅导中' then '辅导中'
+                when 'coaching' then '辅导中'
+                when '待审批' then '待审批'
+                when 'pending' then '待审批'
+                else '无辅导'
+            end as coachingStatusLabel,
+            case lower(coalesce(coaching_status, 'none'))
+                when '辅导中' then 'purple'
+                when 'coaching' then 'purple'
+                when '待审批' then 'warning'
+                when 'pending' then 'warning'
+                else 'default'
+            end as coachingColor,
+            '-' as mentor,
+            '-' as mentorMeta,
+            '-' as hoursFeedback,
+            '-' as feedback,
+            coalesce(date_format(interview_time, '%Y-%m-%d %H:%i:%s'), '') as interviewAt,
+            coalesce(date_format(submitted_at, '%Y-%m-%d'), '') as appliedDate,
+            '' as applyMethod,
+            coalesce(remark, '') as progressNote
+        from osg_job_application
+        where student_id = #{userId}
+        order by submitted_at desc, application_id desc
+    </select>
+
     <select id="selectJobApplicationList" parameterType="OsgJobApplication" resultMap="OsgJobApplicationResult">
         select
         <include refid="selectJobApplicationColumns"/>
@@ -168,6 +254,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate(),
             <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where application_id = #{applicationId}
+    </update>
+
+    <update id="updateJobApplicationCoaching" parameterType="OsgJobApplication">
+        update osg_job_application
+        <set>
+            <if test="currentStage != null and currentStage != ''">current_stage = #{currentStage},</if>
+            <if test="assignStatus != null and assignStatus != ''">assign_status = #{assignStatus},</if>
+            <if test="coachingStatus != null and coachingStatus != ''">coaching_status = #{coachingStatus},</if>
+            <if test="requestedMentorCount != null">requested_mentor_count = #{requestedMentorCount},</if>
+            <if test="preferredMentorNames != null">preferred_mentor_names = #{preferredMentorNames},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
         </set>
         where application_id = #{applicationId}
     </update>

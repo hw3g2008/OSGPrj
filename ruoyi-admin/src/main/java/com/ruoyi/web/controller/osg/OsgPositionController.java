@@ -17,12 +17,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.common.annotation.Excel;
+import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.OsgPosition;
+import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgPositionServiceImpl;
 
 @RestController
@@ -34,6 +39,9 @@ public class OsgPositionController extends BaseController
     @Autowired
     private OsgPositionServiceImpl positionService;
 
+    @Autowired
+    private OsgAssistantAccessService assistantAccessService;
+
     @PreAuthorize(POSITION_ROLE_ACCESS)
     @GetMapping("/list")
     public TableDataInfo list(OsgPosition position)
@@ -43,17 +51,23 @@ public class OsgPositionController extends BaseController
         return getDataTable(rows);
     }
 
-    @PreAuthorize(POSITION_ROLE_ACCESS)
     @GetMapping("/stats")
     public AjaxResult stats(OsgPosition position)
     {
+        if (!hasPositionStatsAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, "没有权限，请联系管理员授权");
+        }
         return AjaxResult.success(positionService.selectPositionStats(position));
     }
 
-    @PreAuthorize(POSITION_ROLE_ACCESS)
     @GetMapping("/drill-down")
     public AjaxResult drillDown(OsgPosition position)
     {
+        if (!hasPositionStatsAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, "没有权限，请联系管理员授权");
+        }
         return AjaxResult.success(positionService.selectPositionDrillDown(position));
     }
 
@@ -154,6 +168,17 @@ public class OsgPositionController extends BaseController
             ));
         }
         return exportRows;
+    }
+
+    private boolean hasPositionStatsAccess()
+    {
+        if (SecurityUtils.hasPermi("admin:positions:list"))
+        {
+            return true;
+        }
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        SysUser user = loginUser == null ? null : loginUser.getUser();
+        return assistantAccessService.hasAssistantAccess(user);
     }
 
     private static class PositionExportRow

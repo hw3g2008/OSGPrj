@@ -10,11 +10,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgClassRecord;
+import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgClassRecordServiceImpl;
 
 @RestController
@@ -25,20 +29,38 @@ public class OsgClassRecordController extends BaseController
     @Autowired
     private OsgClassRecordServiceImpl classRecordService;
 
-    @PreAuthorize(CLASS_RECORD_ACCESS)
+    @Autowired
+    private OsgAssistantAccessService assistantAccessService;
+
     @GetMapping("/admin/class-record/list")
     public TableDataInfo list(@RequestParam(value = "keyword", required = false) String keyword)
     {
-        startPage();
-        List<Map<String, Object>> rows = classRecordService.selectClassRecordList(keyword);
-        return getDataTable(rows);
+        if (SecurityUtils.hasPermi("admin:class-records:list"))
+        {
+            startPage();
+            List<Map<String, Object>> rows = classRecordService.selectClassRecordList(keyword);
+            return getDataTable(rows);
+        }
+        if (hasAssistantAccess())
+        {
+            List<Map<String, Object>> rows = classRecordService.selectAssistantClassRecordList(keyword, SecurityUtils.getUserId());
+            return getDataTable(rows);
+        }
+        return forbiddenTable();
     }
 
-    @PreAuthorize(CLASS_RECORD_ACCESS)
     @GetMapping("/admin/class-record/stats")
     public AjaxResult stats(@RequestParam(value = "keyword", required = false) String keyword)
     {
-        return AjaxResult.success(classRecordService.selectClassRecordStats(keyword));
+        if (SecurityUtils.hasPermi("admin:class-records:list"))
+        {
+            return AjaxResult.success(classRecordService.selectClassRecordStats(keyword));
+        }
+        if (hasAssistantAccess())
+        {
+            return AjaxResult.success(classRecordService.selectAssistantClassRecordStats(keyword, SecurityUtils.getUserId()));
+        }
+        return AjaxResult.error(HttpStatus.FORBIDDEN, "没有权限，请联系管理员授权");
     }
 
     @GetMapping("/api/mentor/class-records/list")
@@ -62,5 +84,22 @@ public class OsgClassRecordController extends BaseController
         record.setMentorName(SecurityUtils.getUsername());
         record.setCreateBy(SecurityUtils.getUsername());
         return toAjax(classRecordService.createMentorClassRecord(record));
+    }
+
+    private boolean hasAssistantAccess()
+    {
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        SysUser user = loginUser == null ? null : loginUser.getUser();
+        return assistantAccessService.hasAssistantAccess(user);
+    }
+
+    private TableDataInfo forbiddenTable()
+    {
+        TableDataInfo response = new TableDataInfo();
+        response.setCode(HttpStatus.FORBIDDEN);
+        response.setMsg("没有权限，请联系管理员授权");
+        response.setRows(List.of());
+        response.setTotal(0);
+        return response;
     }
 }

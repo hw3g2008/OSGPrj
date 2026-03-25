@@ -1,5 +1,7 @@
 package com.ruoyi.system.service.impl;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -25,6 +27,7 @@ public class OsgStudentPositionServiceImpl implements IOsgStudentPositionService
     private static final String STATUS_PENDING = "pending";
     private static final String STATUS_APPROVED = "approved";
     private static final String STATUS_REJECTED = "rejected";
+    private static final long DEFAULT_PUBLIC_POSITION_VISIBLE_DAYS = 90L;
 
     @Autowired
     private OsgStudentPositionMapper studentPositionMapper;
@@ -193,6 +196,7 @@ public class OsgStudentPositionServiceImpl implements IOsgStudentPositionService
 
     private OsgPosition toPublicPosition(OsgStudentPosition request, String reviewer)
     {
+        Date visibleFrom = new Date();
         OsgPosition position = new OsgPosition();
         position.setPositionCategory(request.getPositionCategory());
         position.setIndustry(request.getIndustry());
@@ -207,14 +211,23 @@ public class OsgStudentPositionServiceImpl implements IOsgStudentPositionService
         position.setProjectYear(request.getProjectYear());
         position.setDeadline(request.getDeadline());
         position.setDisplayStatus("visible");
-        position.setPublishTime(new Date());
-        position.setDisplayStartTime(new Date());
-        position.setDisplayEndTime(request.getDeadline() == null ? new Date() : request.getDeadline());
+        position.setPublishTime(visibleFrom);
+        position.setDisplayStartTime(visibleFrom);
+        position.setDisplayEndTime(resolveVisibleUntil(request.getDeadline(), visibleFrom));
         position.setPositionUrl(request.getPositionUrl());
         position.setApplicationNote("student-submitted");
         position.setCreateBy(defaultText(reviewer, "system"));
         position.setUpdateBy(defaultText(reviewer, "system"));
         return position;
+    }
+
+    private Date resolveVisibleUntil(Date deadline, Date visibleFrom)
+    {
+        if (deadline != null && deadline.after(visibleFrom))
+        {
+            return deadline;
+        }
+        return Date.from(Instant.ofEpochMilli(visibleFrom.getTime()).plus(DEFAULT_PUBLIC_POSITION_VISIBLE_DAYS, ChronoUnit.DAYS));
     }
 
     private boolean isDuplicatePublicPosition(OsgStudentPosition request)

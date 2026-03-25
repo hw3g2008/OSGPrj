@@ -69,6 +69,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where record_id = #{recordId}
     </select>
 
+    <select id="selectStudentClassRecordByClassId" resultMap="OsgClassRecordResult">
+        select
+        <include refid="selectClassRecordColumns"/>
+        from osg_class_record
+        where class_id = #{classId}
+          and student_id = #{studentId}
+    </select>
+
+    <select id="selectStudentApprovedClassRecordList" parameterType="Long" resultMap="OsgClassRecordResult">
+        select
+        <include refid="selectClassRecordColumns"/>
+        from osg_class_record
+        where student_id = #{studentId}
+          and status = 'approved'
+        order by class_date desc, record_id desc
+    </select>
+
     <select id="selectClassRecordList" parameterType="OsgClassRecord" resultMap="OsgClassRecordResult">
         select
         <include refid="selectClassRecordColumns"/>
@@ -258,6 +275,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="reviewRemark != null">review_remark = #{reviewRemark},</if>
             <if test="reviewedAt != null">reviewed_at = #{reviewedAt},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where record_id = #{recordId}
+    </update>
+
+    <update id="updateStudentClassRecordRating" parameterType="OsgClassRecord">
+        update osg_class_record
+        <set>
+            <if test="rate != null">rate = #{rate},</if>
+            <if test="topics != null">topics = #{topics},</if>
+            <if test="comments != null">comments = #{comments},</if>
+            <if test="remark != null">remark = #{remark},</if>
             update_time = sysdate()
         </set>
         where record_id = #{recordId}

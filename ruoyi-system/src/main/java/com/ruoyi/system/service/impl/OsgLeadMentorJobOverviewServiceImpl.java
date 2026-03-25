@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.OsgCoaching;
 import com.ruoyi.system.domain.OsgJobApplication;
+import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.service.IOsgLeadMentorJobOverviewService;
 
 @Service
@@ -34,6 +36,12 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
 
     @Autowired
     private OsgCoachingMapper coachingMapper;
+
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
+    @Autowired
+    private OsgStudentMapper studentMapper;
 
     @Override
     public List<Map<String, Object>> selectOverviewList(String scope, OsgJobApplication query, Long currentUserId)
@@ -63,6 +71,9 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         {
             throw new ServiceException("请至少选择1位导师");
         }
+        List<Long> mentorUserIds = mentorIds.stream()
+            .map(identityResolver::resolveUserIdByStaffId)
+            .toList();
 
         List<String> mentorNames = toStringList(payload.get("mentorNames"));
         String mentorNamesText = mentorNames.isEmpty() ? null : String.join(", ", mentorNames);
@@ -78,7 +89,7 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
             coaching.setCreateBy(operator);
         }
 
-        coaching.setMentorIds(mentorIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        coaching.setMentorIds(mentorUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         coaching.setMentorNames(mentorNamesText);
         coaching.setMentorName(mentorNames.isEmpty() ? null : mentorNames.get(0));
         coaching.setStatus("辅导中");
@@ -110,7 +121,7 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("applicationId", applicationId);
         result.put("coachingStatus", "辅导中");
-        result.put("mentorIds", mentorIds);
+        result.put("mentorIds", mentorUserIds);
         result.put("mentorNames", mentorNamesText);
         result.put("assignNote", assignNote);
         result.put("assignedAt", now);
@@ -137,6 +148,43 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         result.put("currentStage", application.getCurrentStage());
         result.put("stageUpdated", Boolean.FALSE);
         result.put("interviewTime", application.getInterviewTime());
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> confirmCoaching(Long applicationId, Long currentUserId, String operator)
+    {
+        OsgJobApplication application = jobApplicationMapper.selectJobApplicationByApplicationId(applicationId);
+        if (application == null)
+        {
+            throw new ServiceException("求职申请不存在");
+        }
+        if (!resolveCoachingApplicationIds(currentUserId).contains(applicationId))
+        {
+            throw new ServiceException("无权确认该求职申请");
+        }
+
+        OsgCoaching coaching = coachingMapper.selectCoachingByApplicationId(applicationId);
+        if (coaching == null)
+        {
+            throw new ServiceException("辅导记录不存在");
+        }
+
+        OsgCoaching patch = new OsgCoaching();
+        patch.setCoachingId(coaching.getCoachingId());
+        patch.setStatus("辅导中");
+        patch.setConfirmedAt(new Date());
+        patch.setUpdateBy(operator);
+        patch.setRemark("mentor confirmed coaching");
+        if (coachingMapper.updateCoaching(patch) <= 0)
+        {
+            throw new ServiceException("辅导确认保存失败");
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("applicationId", applicationId);
+        result.put("coachingStatus", "coaching");
+        result.put("confirmedAt", patch.getConfirmedAt());
         return result;
     }
 
@@ -168,8 +216,13 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         if (SCOPE_COACHING.equals(scope))
         {
             Set<Long> coachingApplicationIds = resolveCoachingApplicationIds(currentUserId);
+            Map<Long, OsgStudent> studentMap = loadStudentMap(rows.stream()
+                .map(OsgJobApplication::getStudentId)
+                .filter(Objects::nonNull)
+                .toList());
             return rows.stream()
-                .filter(row -> coachingApplicationIds.contains(row.getApplicationId()))
+                .filter(row -> coachingApplicationIds.contains(row.getApplicationId())
+                    || hasAssistantOwnership(row, currentUserId, studentMap))
                 .toList();
         }
         return rows;
@@ -182,7 +235,9 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         {
             throw new ServiceException("求职申请不存在");
         }
-        if (!canManage(application, currentUserId) && !resolveCoachingApplicationIds(currentUserId).contains(applicationId))
+        if (!canManage(application, currentUserId)
+            && !hasAssistantOwnership(application, currentUserId)
+            && !resolveCoachingApplicationIds(currentUserId).contains(applicationId))
         {
             throw new ServiceException("无权访问该求职申请");
         }
@@ -336,6 +391,44 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
     private boolean canManage(OsgJobApplication application, Long currentUserId)
     {
         return application != null && currentUserId != null && currentUserId.equals(application.getLeadMentorId());
+    }
+
+    private boolean hasAssistantOwnership(OsgJobApplication application, Long currentUserId)
+    {
+        if (application == null || application.getStudentId() == null)
+        {
+            return false;
+        }
+        OsgStudent student = studentMapper.selectStudentByStudentId(application.getStudentId());
+        return student != null && Objects.equals(student.getAssistantId(), currentUserId);
+    }
+
+    private boolean hasAssistantOwnership(OsgJobApplication application, Long currentUserId, Map<Long, OsgStudent> studentMap)
+    {
+        if (application == null || application.getStudentId() == null)
+        {
+            return false;
+        }
+        OsgStudent student = studentMap.get(application.getStudentId());
+        return student != null && Objects.equals(student.getAssistantId(), currentUserId);
+    }
+
+    private Map<Long, OsgStudent> loadStudentMap(List<Long> studentIds)
+    {
+        if (studentIds == null || studentIds.isEmpty())
+        {
+            return Map.of();
+        }
+
+        List<OsgStudent> students = studentMapper.selectStudentByStudentIds(studentIds.stream().distinct().toList());
+        if (students == null || students.isEmpty())
+        {
+            return Map.of();
+        }
+
+        return students.stream()
+            .filter(student -> student != null && student.getStudentId() != null)
+            .collect(Collectors.toMap(OsgStudent::getStudentId, student -> student, (first, second) -> first, LinkedHashMap::new));
     }
 
     private List<Long> toLongList(Object value)

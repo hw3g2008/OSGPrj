@@ -28,9 +28,9 @@ public class OsgContract extends BaseEntity
 
     private Integer totalHours;
 
-    private Integer usedHours;
+    private BigDecimal usedHours;
 
-    private Integer remainingHours;
+    private BigDecimal remainingHours;
 
     private Date startDate;
 
@@ -132,22 +132,22 @@ public class OsgContract extends BaseEntity
         this.totalHours = totalHours;
     }
 
-    public Integer getUsedHours()
+    public BigDecimal getUsedHours()
     {
         return usedHours;
     }
 
-    public void setUsedHours(Integer usedHours)
+    public void setUsedHours(BigDecimal usedHours)
     {
         this.usedHours = usedHours;
     }
 
-    public Integer getRemainingHours()
+    public BigDecimal getRemainingHours()
     {
         return remainingHours;
     }
 
-    public void setRemainingHours(Integer remainingHours)
+    public void setRemainingHours(BigDecimal remainingHours)
     {
         this.remainingHours = remainingHours;
     }

@@ -22,12 +22,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Excel;
+import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgStudentChangeRequestServiceImpl;
 import com.ruoyi.system.service.impl.OsgStudentServiceImpl;
 
@@ -43,10 +48,21 @@ public class OsgStudentController extends BaseController
     @Autowired
     private OsgStudentChangeRequestServiceImpl changeRequestService;
 
-    @PreAuthorize(STUDENT_ROLE_ACCESS)
+    @Autowired
+    private OsgAssistantAccessService assistantAccessService;
+
     @GetMapping("/list")
     public TableDataInfo list(OsgStudent student)
     {
+        if (!SecurityUtils.hasPermi("admin:students:list"))
+        {
+            if (!hasAssistantAccess())
+            {
+                return forbiddenTable();
+            }
+            student.setAssistantId(getUserId());
+        }
+
         startPage();
         List<OsgStudent> students = studentService.selectStudentList(student);
         Map<Long, Map<String, Integer>> activityCounts = studentService.selectStudentActivityCounts(extractStudentIds(students));
@@ -244,6 +260,23 @@ public class OsgStudentController extends BaseController
             }
         }
         return pendingReviewIds;
+    }
+
+    private boolean hasAssistantAccess()
+    {
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        SysUser user = loginUser == null ? null : loginUser.getUser();
+        return assistantAccessService.hasAssistantAccess(user);
+    }
+
+    private TableDataInfo forbiddenTable()
+    {
+        TableDataInfo response = new TableDataInfo();
+        response.setCode(HttpStatus.FORBIDDEN);
+        response.setMsg("没有权限，请联系管理员授权");
+        response.setRows(List.of());
+        response.setTotal(0);
+        return response;
     }
 
     private Map<String, Object> resolveContractSnapshot(Long studentId)

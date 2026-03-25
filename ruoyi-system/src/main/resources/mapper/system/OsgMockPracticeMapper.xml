@@ -61,6 +61,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where practice_id = #{practiceId}
     </select>
 
+    <select id="selectStudentPracticeList" parameterType="Long" resultMap="OsgMockPracticeResult">
+        select
+        <include refid="selectMockPracticeColumns"/>
+        from osg_mock_practice
+        where student_id = #{studentId}
+        order by submitted_at desc, practice_id desc
+    </select>
+
     <select id="selectMockPracticeList" parameterType="OsgMockPractice" resultMap="OsgMockPracticeResult">
         select
         <include refid="selectMockPracticeColumns"/>

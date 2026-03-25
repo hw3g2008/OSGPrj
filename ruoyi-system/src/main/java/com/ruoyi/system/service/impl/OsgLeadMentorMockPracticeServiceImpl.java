@@ -56,6 +56,9 @@ public class OsgLeadMentorMockPracticeServiceImpl implements IOsgLeadMentorMockP
     @Autowired
     private OsgStaffScheduleMapper staffScheduleMapper;
 
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
     @Override
     public Map<String, Object> selectScopedStats(String keyword, String practiceType, String status, Long currentUserId)
     {
@@ -114,8 +117,11 @@ public class OsgLeadMentorMockPracticeServiceImpl implements IOsgLeadMentorMockP
         }
 
         List<OsgStaff> mentors = resolveMentors(mentorIds);
+        List<Long> mentorUserIds = mentorIds.stream()
+            .map(identityResolver::resolveUserIdByStaffId)
+            .toList();
         practice.setStatus("scheduled");
-        practice.setMentorIds(mentors.stream().map(item -> String.valueOf(item.getStaffId())).collect(Collectors.joining(",")));
+        practice.setMentorIds(mentorUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         practice.setMentorNames(mentors.stream().map(OsgStaff::getStaffName).collect(Collectors.joining(", ")));
         practice.setMentorBackgrounds(mentors.stream().map(this::mentorBackground).collect(Collectors.joining(" / ")));
         practice.setScheduledAt(scheduledAt);

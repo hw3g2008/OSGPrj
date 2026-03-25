@@ -41,6 +41,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where student_id = #{studentId}
     </select>
 
+    <select id="selectStudentByEmail" parameterType="String" resultMap="OsgStudentResult">
+        <include refid="selectStudentColumns"/>
+        where email = #{email}
+    </select>
+
     <select id="selectStudentByStudentIds" parameterType="list" resultMap="OsgStudentResult">
         <include refid="selectStudentColumns"/>
         where student_id in
@@ -75,6 +80,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="leadMentorId != null">
                 and lead_mentor_id = #{leadMentorId}
+            </if>
+            <if test="assistantId != null">
+                and assistant_id = #{assistantId}
             </if>
             <if test="accountStatus != null and accountStatus != ''">
                 and account_status = #{accountStatus}
