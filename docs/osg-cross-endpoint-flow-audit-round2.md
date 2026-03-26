@@ -134,6 +134,8 @@
 当前状态：
 
 - 已拆分为 `岗位发布与学生自添岗位审核`、`求职状态与辅导申请流转`、`模拟应聘申请/分配/确认/反馈`
+- `后台岗位发布 -> 公共岗位池曝光链`：
+  当前可用。Admin 可真实写入 `osg_position`，Student / Lead-Mentor / Assistant 岗位池围绕公开岗位主表消费。
 - `Student 自添岗位 -> Admin 审核链`：
   当前代码已形成完整审核闭环。学生手动添加岗位写入 `osg_student_position`，Admin 侧具备 `list / approve / reject`，审核通过后会写入公共岗位 `osg_position`。
 - `Student 求职主链`：
