@@ -155,7 +155,14 @@
 
 当前状态：
 
-- 已建立各端恢复链占位
+- `Student 恢复链`：
+  当前代码已可用，走 shared `/system/password/*`。
+- `Mentor 恢复链`：
+  当前代码已可用，走 `/mentor/forgot-password/*` 专属命名空间。
+- `Lead-Mentor 恢复链`：
+  当前代码已可用，但实际走的是 shared `/system/password/*`，与 Mentor 端形成并行命名风格。
+- `Assistant 恢复链`：
+  当前代码已可用，Assistant forgot-password 页面同样走 shared `/system/password/*`。
 - 已承接跨端 forgot-password 命名空间不一致问题
 - 已识别 `Admin forgot-password surface` 的需求冲突，以及 Student / Mentor / Assistant 身份恢复资产缺口
 - 详细结论待补
@@ -164,8 +171,10 @@
 
 当前状态：
 
-- 已建立地区、方向、状态枚举 3 条子链
-- 已承接地区与方向相关已知问题
+- `求职 / 课程 / 模拟应聘`：
+  当前代码已经大量使用 `SysDictData` 动态生成 page copy、过滤器和类型 / 状态枚举，不是全站都还停留在硬编码。
+- `Profile 相关字段`：
+  Mentor Profile 与 Lead-Mentor 编辑弹窗仍在硬编码地区、城市和方向相关展示，继续构成已知问题。
 - 已识别 `基础数据统一源 vs 页面静态选项` 的需求冲突
 - 详细结论待补
 
