@@ -86,6 +86,28 @@ public class OsgClassRecordController extends BaseController
         return toAjax(classRecordService.createMentorClassRecord(record));
     }
 
+    @PostMapping("/assistant/class-records")
+    public AjaxResult createAssistantRecord(@RequestBody OsgClassRecord record)
+    {
+        if (!hasAssistantAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, "没有权限，请联系管理员授权");
+        }
+
+        record.setMentorId(SecurityUtils.getUserId());
+        record.setMentorName(SecurityUtils.getUsername());
+        record.setCreateBy(SecurityUtils.getUsername());
+        record.setUpdateBy(SecurityUtils.getUsername());
+        try
+        {
+            return AjaxResult.success(classRecordService.createAssistantClassRecord(record));
+        }
+        catch (com.ruoyi.common.exception.ServiceException ex)
+        {
+            return AjaxResult.error(HttpStatus.BAD_REQUEST, ex.getMessage());
+        }
+    }
+
     private boolean hasAssistantAccess()
     {
         LoginUser loginUser = SecurityUtils.getLoginUser();

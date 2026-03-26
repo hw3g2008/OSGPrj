@@ -14,6 +14,14 @@
       <div class="page-header__actions">
         <span class="status-pill">课程总览</span>
         <span class="readonly-pill">已分配课程 / 反馈摘要</span>
+        <button
+          id="assistant-class-records-create"
+          type="button"
+          class="primary-button"
+          @click="toggleReportForm"
+        >
+          上报课程记录
+        </button>
       </div>
     </div>
 
@@ -100,6 +108,86 @@
         >
           重置
         </button>
+      </div>
+    </section>
+
+    <section v-if="showReportForm" class="editor-card">
+      <div class="panel-card__header">
+        <div>
+          <h2>上报课程记录</h2>
+          <p>助教只能为自己负责的学员上报课程记录，提交后会进入后台审核。</p>
+        </div>
+      </div>
+
+      <div class="panel-card__body">
+        <div class="editor-grid">
+          <label class="toolbar-field">
+            <span class="toolbar-field__label">学员</span>
+            <select id="assistant-class-record-student" v-model="reportDraft.studentId" class="form-select">
+              <option value="">请选择学员</option>
+              <option v-for="option in reportStudentOptions" :key="option.studentId" :value="String(option.studentId)">
+                {{ option.studentName }}
+              </option>
+            </select>
+          </label>
+
+          <label class="toolbar-field">
+            <span class="toolbar-field__label">辅导类型</span>
+            <select id="assistant-class-record-course-type" v-model="reportDraft.courseType" class="form-select">
+              <option value="position_coaching">岗位辅导</option>
+              <option value="mock_practice">模拟应聘</option>
+            </select>
+          </label>
+
+          <label class="toolbar-field">
+            <span class="toolbar-field__label">课程内容</span>
+            <select id="assistant-class-record-class-status" v-model="reportDraft.classStatus" class="form-select">
+              <option value="case_prep">Case准备</option>
+              <option value="resume_revision">新简历</option>
+              <option value="mock_interview">模拟面试</option>
+              <option value="behavioral">Behavioral</option>
+            </select>
+          </label>
+
+          <label class="toolbar-field">
+            <span class="toolbar-field__label">上课时间</span>
+            <input id="assistant-class-record-date" v-model="reportDraft.classDate" class="form-input" type="datetime-local" />
+          </label>
+
+          <label class="toolbar-field">
+            <span class="toolbar-field__label">时长（小时）</span>
+            <input id="assistant-class-record-duration" v-model="reportDraft.durationHours" class="form-input" type="number" min="0.5" step="0.5" />
+          </label>
+
+          <label class="toolbar-field">
+            <span class="toolbar-field__label">课程主题</span>
+            <input v-model="reportDraft.topics" class="form-input" type="text" placeholder="选填：本次课程主题" />
+          </label>
+        </div>
+
+        <label class="toolbar-field">
+          <span class="toolbar-field__label">课程反馈</span>
+          <textarea
+            id="assistant-class-record-feedback"
+            v-model.trim="reportDraft.feedbackContent"
+            class="form-textarea"
+            rows="4"
+            placeholder="请输入本次课程反馈"
+          />
+        </label>
+
+        <div class="editor-actions">
+          <button type="button" class="ghost-button" @click="toggleReportForm">取消</button>
+          <button
+            id="assistant-class-record-submit"
+            type="button"
+            class="primary-button"
+            :disabled="submittingReport"
+            @click="submitReport"
+          >
+            {{ submittingReport ? '提交中...' : '提交记录' }}
+          </button>
+        </div>
       </div>
     </section>
 
@@ -255,10 +343,14 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
+  createAssistantClassRecord,
   getAssistantClassRecordList,
   getAssistantClassRecordStats,
+  getAssistantStudentList,
+  type AssistantClassRecordCreatePayload,
   type AssistantClassRecordRow,
   type AssistantClassRecordStats,
+  type AssistantStudentListItem,
 } from '@osg/shared/api'
 
 interface FilterState {
@@ -273,6 +365,9 @@ const errorMessage = ref('')
 const records = ref<AssistantClassRecordRow[]>([])
 const stats = ref<AssistantClassRecordStats | null>(null)
 const selectedRecordId = ref<number | null>(null)
+const showReportForm = ref(false)
+const submittingReport = ref(false)
+const reportStudentOptions = ref<AssistantStudentListItem[]>([])
 let latestLoadRequestId = 0
 
 const filters = reactive<FilterState>({
@@ -280,6 +375,17 @@ const filters = reactive<FilterState>({
   status: '',
   reporterRole: '',
   coachingType: '',
+})
+
+const reportDraft = reactive({
+  studentId: '',
+  courseType: 'position_coaching',
+  classStatus: 'case_prep',
+  classDate: '',
+  durationHours: '1.5',
+  feedbackContent: '',
+  topics: '',
+  comments: '',
 })
 
 const defaultFlowSteps = [
@@ -559,6 +665,14 @@ async function loadStats(keyword: string | undefined, requestId: number) {
   }
 }
 
+async function loadReportStudents() {
+  const response = await getAssistantStudentList({
+    pageNum: 1,
+    pageSize: 100,
+  })
+  reportStudentOptions.value = response.rows || []
+}
+
 async function handleSearch() {
   await loadRecords()
 }
@@ -571,8 +685,50 @@ async function resetFilters() {
   await loadRecords()
 }
 
+function toggleReportForm() {
+  showReportForm.value = !showReportForm.value
+}
+
+async function submitReport() {
+  if (!reportDraft.studentId || !reportDraft.classDate || !reportDraft.feedbackContent.trim()) {
+    errorMessage.value = '请先完整填写学员、上课时间和课程反馈。'
+    return
+  }
+
+  const payload: AssistantClassRecordCreatePayload = {
+    studentId: Number(reportDraft.studentId),
+    courseType: reportDraft.courseType,
+    classStatus: reportDraft.classStatus,
+    classDate: reportDraft.classDate,
+    durationHours: Number(reportDraft.durationHours),
+    feedbackContent: reportDraft.feedbackContent.trim(),
+    topics: reportDraft.topics.trim(),
+    comments: reportDraft.comments.trim(),
+  }
+
+  submittingReport.value = true
+  errorMessage.value = ''
+  try {
+    await createAssistantClassRecord(payload)
+    showReportForm.value = false
+    reportDraft.studentId = ''
+    reportDraft.courseType = 'position_coaching'
+    reportDraft.classStatus = 'case_prep'
+    reportDraft.classDate = ''
+    reportDraft.durationHours = '1.5'
+    reportDraft.feedbackContent = ''
+    reportDraft.topics = ''
+    reportDraft.comments = ''
+    await loadRecords()
+  } catch (error: any) {
+    errorMessage.value = error?.message || '课程记录提交失败，请稍后重试。'
+  } finally {
+    submittingReport.value = false
+  }
+}
+
 onMounted(() => {
-  void loadRecords()
+  void Promise.all([loadRecords(), loadReportStudents()])
 })
 </script>
 
@@ -649,7 +805,8 @@ onMounted(() => {
 .flow-banner,
 .toolbar-card,
 .panel-card,
-.state-card {
+.state-card,
+.editor-card {
   border-radius: 24px;
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -745,6 +902,18 @@ onMounted(() => {
   padding: 24px 28px;
 }
 
+.editor-card {
+  display: grid;
+  gap: 0;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
 .toolbar-card__row {
   display: grid;
   grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
@@ -818,6 +987,31 @@ onMounted(() => {
 .ghost-button {
   background: #eef2f7;
   color: #334155;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #d7dee9;
+  background: #fff;
+  color: #111827;
+  font-size: 14px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #7c9cc9;
+  box-shadow: 0 0 0 3px rgba(124, 156, 201, 0.16);
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .state-card {
@@ -982,7 +1176,8 @@ onMounted(() => {
 @media (max-width: 1200px) {
   .summary-grid,
   .toolbar-card__row,
-  .content-grid {
+  .content-grid,
+  .editor-grid {
     grid-template-columns: 1fr;
   }
 

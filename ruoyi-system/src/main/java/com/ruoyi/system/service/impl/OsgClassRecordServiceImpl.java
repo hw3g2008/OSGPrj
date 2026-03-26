@@ -73,6 +73,23 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> createAssistantClassRecord(OsgClassRecord record)
+    {
+        validateLeadMentorCreate(record);
+
+        OsgStudent student = requireAssistantOwnedStudent(record.getStudentId(), record.getMentorId());
+        record.setStudentName(student.getStudentName());
+        record.setCourseSource("assistant");
+        normalizeCreateDefaults(record);
+        if (classRecordMapper.insertMentorClassRecord(record) <= 0)
+        {
+            throw new ServiceException("课程记录提交失败");
+        }
+        return toLeadMentorCreatePayload(record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public int createMentorClassRecord(OsgClassRecord record)
     {
         if (record != null && record.getStudentId() != null
@@ -435,6 +452,20 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             throw new ServiceException("学员不存在");
         }
         if (leadMentorId == null || !Objects.equals(student.getLeadMentorId(), leadMentorId))
+        {
+            throw new ServiceException("无权为该学员上报课程记录");
+        }
+        return student;
+    }
+
+    private OsgStudent requireAssistantOwnedStudent(Long studentId, Long assistantUserId)
+    {
+        OsgStudent student = studentMapper.selectStudentByStudentId(studentId);
+        if (student == null)
+        {
+            throw new ServiceException("学员不存在");
+        }
+        if (assistantUserId == null || !Objects.equals(student.getAssistantId(), assistantUserId))
         {
             throw new ServiceException("无权为该学员上报课程记录");
         }

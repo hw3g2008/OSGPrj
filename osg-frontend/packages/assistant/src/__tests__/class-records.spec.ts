@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const apiMocks = vi.hoisted(() => ({
   getAssistantClassRecordList: vi.fn(),
   getAssistantClassRecordStats: vi.fn(),
+  getAssistantStudentList: vi.fn(),
+  createAssistantClassRecord: vi.fn(),
 }))
 
 vi.mock('@osg/shared/api', () => apiMocks)
 
-const { getAssistantClassRecordList, getAssistantClassRecordStats } = apiMocks
+const { getAssistantClassRecordList, getAssistantClassRecordStats, getAssistantStudentList, createAssistantClassRecord } = apiMocks
 
 import ClassRecordsPage from '@/views/class-records/index.vue'
 
@@ -76,6 +78,28 @@ describe('assistant class records page', () => {
     vi.clearAllMocks()
     getAssistantClassRecordList.mockResolvedValue(classRecordFixture)
     getAssistantClassRecordStats.mockResolvedValue(classRecordStatsFixture)
+    getAssistantStudentList.mockResolvedValue({
+      total: 2,
+      rows: [
+        { studentId: 2001, studentName: 'Amy Student', email: 'amy@example.com' },
+        { studentId: 2002, studentName: 'Ben Student', email: 'ben@example.com' },
+      ],
+    })
+    createAssistantClassRecord.mockResolvedValue({
+      recordId: 91,
+      studentId: 2001,
+      studentName: 'Amy Student',
+      mentorId: 920,
+      mentorName: 'assistant.user',
+      courseType: 'position_coaching',
+      courseSource: 'assistant',
+      classStatus: 'case_prep',
+      classDate: '2026-03-27T10:00:00',
+      durationHours: 1.5,
+      status: 'pending',
+      feedbackContent: '已完成案例拆解与复盘',
+      submittedAt: '2026-03-27T10:30:00',
+    })
   })
 
   it('renders the real class records page, summary cards, and detail panel', async () => {
@@ -127,8 +151,37 @@ describe('assistant class records page', () => {
     await flushUi()
 
     expect(getAssistantClassRecordList).toHaveBeenLastCalledWith({ keyword: undefined })
-    expect(wrapper.text()).not.toContain('新增课程')
-    expect(wrapper.text()).not.toContain('上报课程记录')
+    expect(wrapper.text()).toContain('上报课程记录')
+  })
+
+  it('opens the report form and submits through the real assistant create API', async () => {
+    const wrapper = mount(ClassRecordsPage)
+    await flushUi()
+
+    await wrapper.get('#assistant-class-records-create').trigger('click')
+    await flushUi()
+
+    await wrapper.get('#assistant-class-record-student').setValue('2001')
+    await wrapper.get('#assistant-class-record-course-type').setValue('position_coaching')
+    await wrapper.get('#assistant-class-record-class-status').setValue('case_prep')
+    await wrapper.get('#assistant-class-record-date').setValue('2026-03-27T10:00')
+    await wrapper.get('#assistant-class-record-duration').setValue('1.5')
+    await wrapper.get('#assistant-class-record-feedback').setValue('已完成案例拆解与复盘')
+    await wrapper.get('#assistant-class-record-submit').trigger('click')
+    await flushUi()
+
+    expect(createAssistantClassRecord).toHaveBeenCalledWith({
+      studentId: 2001,
+      courseType: 'position_coaching',
+      classStatus: 'case_prep',
+      classDate: '2026-03-27T10:00',
+      durationHours: 1.5,
+      feedbackContent: '已完成案例拆解与复盘',
+      topics: '',
+      comments: '',
+    })
+    expect(getAssistantClassRecordList).toHaveBeenCalledTimes(2)
+    expect(getAssistantClassRecordStats).toHaveBeenCalledTimes(2)
   })
   it('treats completed records as approved in filters and labels', async () => {
     getAssistantClassRecordList.mockResolvedValue({
