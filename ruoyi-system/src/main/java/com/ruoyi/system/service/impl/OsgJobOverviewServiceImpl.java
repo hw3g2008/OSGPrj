@@ -34,6 +34,9 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
     @Autowired
     private OsgCoachingMapper coachingMapper;
 
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
     @Override
     public Map<String, Object> selectJobOverviewStats(String studentName, String companyName, String currentStage, Long leadMentorId, String assignStatus)
     {
@@ -130,11 +133,14 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
             throw new ServiceException("applicationId不能为空");
         }
 
-        List<Long> mentorIds = toLongList(payload.get("mentorIds"));
-        if (mentorIds.isEmpty())
+        List<Long> mentorStaffIds = toLongList(payload.get("mentorIds"));
+        if (mentorStaffIds.isEmpty())
         {
             throw new ServiceException("请至少选择1位导师");
         }
+        List<Long> mentorUserIds = mentorStaffIds.stream()
+            .map(identityResolver::resolveUserIdByStaffId)
+            .toList();
 
         OsgJobApplication application = jobApplicationMapper.selectJobApplicationByApplicationId(applicationId);
         if (application == null)
@@ -159,7 +165,7 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
             coaching.setStudentId(application.getStudentId());
             coaching.setCreateBy(operator);
         }
-        coaching.setMentorIds(mentorIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        coaching.setMentorIds(mentorUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         coaching.setMentorNames(mentorNamesText);
         coaching.setMentorName(mentorNames.isEmpty() ? null : mentorNames.get(0));
         coaching.setStatus("辅导中");
@@ -192,7 +198,7 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         result.put("applicationId", applicationId);
         result.put("status", "assigned");
         result.put("coachingStatus", "辅导中");
-        result.put("mentorIds", mentorIds);
+        result.put("mentorIds", mentorUserIds);
         result.put("mentorNames", mentorNamesText);
         result.put("assignNote", assignNote);
         result.put("assignedAt", now);

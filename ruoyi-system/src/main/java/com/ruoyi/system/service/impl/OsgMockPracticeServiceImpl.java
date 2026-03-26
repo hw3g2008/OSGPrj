@@ -33,6 +33,9 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
     @Autowired
     private OsgStudentMapper studentMapper;
 
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
     @Override
     public List<OsgMockPractice> selectMentorMockPracticeList(OsgMockPractice query)
     {
@@ -102,11 +105,14 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
             throw new ServiceException("practiceId不能为空");
         }
 
-        List<Long> mentorIds = toLongList(payload.get("mentorIds"));
-        if (mentorIds.isEmpty())
+        List<Long> mentorStaffIds = toLongList(payload.get("mentorIds"));
+        if (mentorStaffIds.isEmpty())
         {
             throw new ServiceException("请至少选择1位导师");
         }
+        List<Long> mentorUserIds = mentorStaffIds.stream()
+            .map(identityResolver::resolveUserIdByStaffId)
+            .toList();
 
         Date scheduledAt = toDate(payload.get("scheduledAt"));
         if (scheduledAt == null)
@@ -119,7 +125,7 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
         List<String> mentorBackgrounds = toStringList(payload.get("mentorBackgrounds"));
 
         practice.setStatus(STATUS_SCHEDULED);
-        practice.setMentorIds(mentorIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        practice.setMentorIds(mentorUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         practice.setMentorNames(mentorNames.isEmpty() ? null : String.join(", ", mentorNames));
         practice.setMentorBackgrounds(mentorBackgrounds.isEmpty() ? null : String.join(" / ", mentorBackgrounds));
         practice.setScheduledAt(scheduledAt);

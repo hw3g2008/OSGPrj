@@ -26,6 +26,7 @@ import com.ruoyi.system.domain.OsgCoaching;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
+import com.ruoyi.system.service.impl.OsgIdentityResolver;
 import com.ruoyi.system.service.impl.OsgJobOverviewServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +37,9 @@ class OsgJobOverviewControllerTest
 
     @Mock
     private OsgCoachingMapper coachingMapper;
+
+    @Mock
+    private OsgIdentityResolver identityResolver;
 
     private OsgJobOverviewController controller;
 
@@ -49,6 +53,7 @@ class OsgJobOverviewControllerTest
         OsgJobOverviewServiceImpl service = new OsgJobOverviewServiceImpl();
         ReflectionTestUtils.setField(service, "jobApplicationMapper", jobApplicationMapper);
         ReflectionTestUtils.setField(service, "coachingMapper", coachingMapper);
+        ReflectionTestUtils.setField(service, "identityResolver", identityResolver);
 
         controller = new OsgJobOverviewController();
         ReflectionTestUtils.setField(controller, "jobOverviewService", service);
@@ -74,6 +79,8 @@ class OsgJobOverviewControllerTest
                 .filter(item -> Objects.equals(item.getApplicationId(), invocation.getArgument(0)))
                 .findFirst()
                 .orElse(null));
+        lenient().when(identityResolver.resolveUserIdByStaffId(anyLong()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(coachingMapper.insertCoaching(any(OsgCoaching.class)))
             .thenAnswer(invocation -> insertCoaching(invocation.getArgument(0)));
         lenient().when(coachingMapper.updateCoaching(any(OsgCoaching.class)))

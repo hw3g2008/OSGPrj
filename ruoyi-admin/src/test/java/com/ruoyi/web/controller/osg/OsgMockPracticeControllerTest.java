@@ -21,6 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
+import com.ruoyi.system.service.impl.OsgIdentityResolver;
 import com.ruoyi.system.service.impl.OsgMockPracticeServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,6 +29,9 @@ class OsgMockPracticeControllerTest
 {
     @Mock
     private OsgMockPracticeMapper mockPracticeMapper;
+
+    @Mock
+    private OsgIdentityResolver identityResolver;
 
     private OsgMockPracticeController controller;
 
@@ -38,6 +42,7 @@ class OsgMockPracticeControllerTest
     {
         OsgMockPracticeServiceImpl service = new OsgMockPracticeServiceImpl();
         ReflectionTestUtils.setField(service, "mockPracticeMapper", mockPracticeMapper);
+        ReflectionTestUtils.setField(service, "identityResolver", identityResolver);
 
         controller = new OsgMockPracticeController();
         ReflectionTestUtils.setField(controller, "mockPracticeService", service);
@@ -51,6 +56,8 @@ class OsgMockPracticeControllerTest
                 .filter(item -> Objects.equals(item.getPracticeId(), invocation.getArgument(0)))
                 .findFirst()
                 .orElse(null));
+        lenient().when(identityResolver.resolveUserIdByStaffId(anyLong()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(mockPracticeMapper.updateMockPracticeAssignment(any(OsgMockPractice.class)))
             .thenAnswer(invocation -> applyAssignment(invocation.getArgument(0)));
     }

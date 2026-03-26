@@ -278,6 +278,7 @@ import {
   type MockPracticeListItem,
   type MockPracticeStats
 } from '@osg/shared/api/admin/mockPractice'
+import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 
 type ActiveTab = 'pending' | 'all'
 type TagTone = 'info' | 'warning' | 'purple'
@@ -307,18 +308,12 @@ const loading = ref(false)
 const activeTab = ref<ActiveTab>('pending')
 const stats = ref<MockPracticeStats>({ ...defaultStats })
 const rows = ref<MockPracticeListItem[]>([])
+const assignableMentors = ref<StaffListItem[]>([])
 const assignVisible = ref(false)
 const assignSubmitting = ref(false)
 const selectedRow = ref<MockPracticeListItem | null>(null)
 const feedbackVisible = ref(false)
 const selectedFeedbackRow = ref<MockPracticeListItem | null>(null)
-
-const mentorCatalog = [
-  { mentorId: 9101, mentorName: 'Jess', mentorBackground: 'PE / MBB' },
-  { mentorId: 9102, mentorName: 'Amy', mentorBackground: 'IBD / ECM' },
-  { mentorId: 9103, mentorName: 'Jerry Li', mentorBackground: 'S&T / Macro' },
-  { mentorId: 9104, mentorName: 'Mike Lee', mentorBackground: 'Tech / Product' }
-]
 
 const requestFilters = computed<MockPracticeFilters>(() => ({
   keyword: filters.keyword || undefined,
@@ -338,11 +333,23 @@ const allRows = computed(() => rows.value)
 
 const assignMentorOptions = computed<MentorOption[]>(() => {
   const preferredNames = splitMentorNames(selectedRow.value?.preferredMentorNames)
-  return mentorCatalog.map((mentor) => ({
-    ...mentor,
-    preferred: preferredNames.includes(mentor.mentorName)
+  return assignableMentors.value.map((mentor) => ({
+    mentorId: mentor.staffId,
+    mentorName: mentor.staffName,
+    mentorBackground: [mentor.majorDirection, mentor.city].filter(Boolean).join(' / ') || '可分配导师',
+    preferred: preferredNames.includes(mentor.staffName)
   }))
 })
+
+async function loadAssignableMentors() {
+  const response = await getStaffList({
+    pageNum: 1,
+    pageSize: 100,
+    staffType: 'mentor',
+    accountStatus: '0'
+  })
+  assignableMentors.value = (response.rows || []).filter((row) => row.staffId && row.staffName)
+}
 
 const loadData = async () => {
   loading.value = true
@@ -362,7 +369,7 @@ const loadData = async () => {
 }
 
 onMounted(() => {
-  void loadData()
+  void Promise.all([loadAssignableMentors(), loadData()])
 })
 
 const handleSearch = () => {

@@ -39,4 +39,10 @@ describe('学员求职总览导师分配与阶段确认', () => {
     expect(assignMentorModalSource).toContain('checkbox')
     expect(assignMentorModalSource).toContain('备注')
   })
+
+  it('loads real mentor options and must not fabricate mentor ids in the admin page source', () => {
+    expect(jobOverviewViewSource).toContain('getStaffList(')
+    expect(jobOverviewViewSource).toContain("staffType: 'mentor'")
+    expect(jobOverviewViewSource).not.toContain('buildMentorId(')
+  })
 })

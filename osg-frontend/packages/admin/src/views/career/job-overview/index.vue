@@ -344,6 +344,7 @@ import {
   type JobOverviewStats,
   type UnassignedJobOverviewRow
 } from '@osg/shared/api/admin/jobOverview'
+import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 
 type ActiveTab = 'pending' | 'all'
 type TagTone = 'info' | 'warning' | 'success' | 'danger' | 'default' | 'purple' | 'amber'
@@ -400,6 +401,7 @@ const funnelRows = ref<JobOverviewFunnelNode[]>([])
 const hotCompanies = ref<HotCompanyItem[]>([])
 const allRows = ref<JobOverviewRow[]>([])
 const unassignedRows = ref<UnassignedJobOverviewRow[]>([])
+const assignableMentors = ref<StaffListItem[]>([])
 const assignMentorVisible = ref(false)
 const assignSubmitting = ref(false)
 const selectedAssignmentRow = ref<UnassignedJobOverviewRow | null>(null)
@@ -432,50 +434,28 @@ const mentorOptions = computed(() => {
 })
 
 const pendingBadge = computed(() => (unassignedRows.value.length > 99 ? '99+' : String(unassignedRows.value.length)))
-const mentorCatalog = computed(() => {
-  const seen = new Set<string>()
-  const values: string[] = []
-
-  const register = (value?: string | null) => {
-    const normalized = normalizeMentorName(value)
-    if (!normalized || seen.has(normalized)) {
-      return
-    }
-    seen.add(normalized)
-    values.push(normalized)
-  }
-
-  allRows.value.forEach((row) => {
-    register(row.mentorName)
-    register(row.leadMentorName)
-  })
-
-  unassignedRows.value.forEach((row) => {
-    splitMentorNames(row.preferredMentorNames).forEach(register)
-    register(row.leadMentorName)
-  })
-
-  return values
-})
-
 const assignMentorOptions = computed<AssignMentorOption[]>(() => {
   const row = selectedAssignmentRow.value
   if (!row) return []
 
-  const preferredMentors = splitMentorNames(row.preferredMentorNames)
-  const values = uniqueMentorNames([
-    ...preferredMentors,
-    normalizeMentorName(row.leadMentorName),
-    ...mentorCatalog.value
-  ])
-
-  return values.map((mentorName, index) => ({
-    mentorId: buildMentorId(mentorName, index),
-    mentorName,
-    preferred: preferredMentors.includes(mentorName),
-    hint: mentorName === normalizeMentorName(row.leadMentorName) ? '班主任推荐' : '历史可分配导师'
+  const preferredMentors = new Set(splitMentorNames(row.preferredMentorNames))
+  return assignableMentors.value.map((mentor) => ({
+    mentorId: mentor.staffId,
+    mentorName: mentor.staffName,
+    preferred: preferredMentors.has(mentor.staffName),
+    hint: [mentor.majorDirection, mentor.city].filter(Boolean).join(' / ') || '可分配导师'
   }))
 })
+
+async function loadAssignableMentors() {
+  const response = await getStaffList({
+    pageNum: 1,
+    pageSize: 100,
+    staffType: 'mentor',
+    accountStatus: '0'
+  })
+  assignableMentors.value = (response.rows || []).filter((row) => row.staffId && row.staffName)
+}
 
 const statsCards = computed(() => [
   {
@@ -681,36 +661,14 @@ function formatDelta(value?: string) {
 }
 
 function splitMentorNames(value?: string | null) {
-  return uniqueMentorNames((value || '').split(/[,，/]/))
-}
-
-function uniqueMentorNames(values: Array<string | null | undefined>) {
-  const seen = new Set<string>()
-  const result: string[] = []
-
-  values.forEach((value) => {
-    const normalized = normalizeMentorName(value)
-    if (!normalized || seen.has(normalized)) return
-    seen.add(normalized)
-    result.push(normalized)
-  })
-
-  return result
-}
-
-function normalizeMentorName(value?: string | null) {
-  const normalized = value?.trim()
-  return normalized || ''
-}
-
-function buildMentorId(mentorName: string, index: number) {
-  return Array.from(`${mentorName}-${index + 1}`).reduce((sum, current, currentIndex) => {
-    return sum + current.charCodeAt(0) * (currentIndex + 17)
-  }, 0)
+  return (value || '')
+    .split(/[,，/]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
 }
 
 onMounted(() => {
-  void loadDashboard()
+  void Promise.all([loadAssignableMentors(), loadDashboard()])
 })
 </script>
 
