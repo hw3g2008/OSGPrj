@@ -4,6 +4,26 @@
 审计范围：按 `docs/plans/2026-03-26-cross-endpoint-flow-audit-design.md` 执行的第二轮跨端数据流与审批必要性审计  
 当前状态：第二轮静态审计与针对性运行时 spot-check 已完成
 
+## 修复进展（2026-03-27）
+
+说明：本节用于记录审计后的修复落地情况；上文 `3.1 结果总览` 仍保留 2026-03-26 审计快照，不回写历史统计。
+
+已完成并验证：
+
+- `Admin 求职分配导师链` 已改为真实 `staff_id -> user_id` 解析，导师端可见性错路已修复
+- `Admin 模拟应聘分配链` 已改为真实 staff 选项 + `user_id` 写入语义
+- `Assistant 课时提交侧` 已补齐前后端提交链，并进入后台审核流
+- `Student 审核字段变更 -> Admin 审批` 已接入统一 `osg_student_change_request` 主链
+- `Student 审核字段 key` 已补齐 `highSchool / postgraduatePlan / visaStatus / primaryDirection / secondaryDirection` 映射
+- `Staff 资料变更 Admin 审批链` 已补齐 `list / approve / reject` 后端能力，并接入 Admin staff 详情弹窗处理入口
+
+对应验证：
+
+- `mvn -pl ruoyi-system -Dtest=OsgJobOverviewServiceImplTest,OsgMockPracticeServiceImplTest,OsgClassRecordServiceImplAssistantScopeTest,StudentProfileServiceImplTest,OsgStudentChangeRequestServiceImplTest,PositionServiceImplTest,OsgStaffServiceImplChangeRequestTest test`
+- `mvn -pl ruoyi-admin -am -Dsurefire.failIfNoSpecifiedTests=false -Dtest=OsgStudentChangeRequestControllerTest,OsgStudentControllerTest,OsgStaffControllerTest test`
+- `mvn -pl ruoyi-admin -am -Dmaven.test.skip=true package`
+- `pnpm --dir osg-frontend/packages/admin exec vitest run src/__tests__/staff.spec.ts`
+
 ## 1. 审计目标
 
 本轮目标不是重复罗列页面现象，而是按“可写且跨端流转”的业务链路，回答以下问题：

@@ -3,9 +3,14 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const staffPagePath = path.resolve(__dirname, '../views/users/staff/index.vue')
+const staffDetailModalPath = path.resolve(__dirname, '../views/users/staff/components/StaffDetailModal.vue')
 
 function readSource() {
   return fs.readFileSync(staffPagePath, 'utf-8')
+}
+
+function readDetailModalSource() {
+  return fs.readFileSync(staffDetailModalPath, 'utf-8')
 }
 
 function readBlock(source: string, anchor: string, nextAnchor?: string) {
@@ -54,5 +59,17 @@ describe('staff page shell', () => {
     expect(source).toContain('更多')
     expect(source).toContain('class="staff-action-link"')
     expect(source).not.toContain('linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)')
+  })
+
+  it('wires the staff detail modal into a real change-review flow and refreshes the list after review', () => {
+    const source = readSource()
+    const detailModalSource = readDetailModalSource()
+
+    expect(source).toContain('@review-updated="handleDetailReviewUpdated"')
+    expect(source).toContain('getStaffChangeRequestList')
+    expect(detailModalSource).toContain('待审核变更')
+    expect(detailModalSource).toContain('approveStaffChangeRequest')
+    expect(detailModalSource).toContain('rejectStaffChangeRequest')
+    expect(detailModalSource).toContain("emit('review-updated')")
   })
 })

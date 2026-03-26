@@ -6,27 +6,27 @@
 
 ## P1 新增问题
 
-- [ ] 修复 `Admin 求职分配导师链` 使用非真实导师标识的问题
+- [x] 修复 `Admin 求职分配导师链` 使用非真实导师标识的问题
   当前风险：Admin 分配成功，但导师端看不到记录
   目标：Admin 分配链与 Lead-Mentor 分配链统一使用真实 `user_id` 语义
 
-- [ ] 修复 `Admin 模拟应聘分配链` 使用静态导师目录与原样 `mentorIds` 的问题
+- [x] 修复 `Admin 模拟应聘分配链` 使用静态导师目录与原样 `mentorIds` 的问题
   当前风险：Admin 分配成功，但导师端看不到记录
   目标：前端导师选项来自真实 staff 数据，后端统一写入真实 `user_id`
 
-- [ ] 补齐 `Assistant 课时提交侧`
+- [x] 补齐 `Assistant 课时提交侧`
   当前风险：助教只有读取课时记录能力，没有真实提交链
   目标：助教可按需求提交课程记录，并进入后台审核链
 
 ## 已知待修复问题
 
-- [ ] 修复 `Student 审核字段变更 -> Admin 审批` 的双表断裂
+- [x] 修复 `Student 审核字段变更 -> Admin 审批` 的双表断裂
   当前问题：Student 写 `osg_student_profile_change`，Admin 读 `osg_student_change_request`
 
-- [ ] 修复 `Student 审核字段 key` 与 `Admin applyChangeToStudent` switch 不一致的问题
+- [x] 修复 `Student 审核字段 key` 与 `Admin applyChangeToStudent` switch 不一致的问题
   当前问题：`highSchool / postgraduatePlan / visaStatus / primaryDirection / secondaryDirection` 会在审批时崩溃
 
-- [ ] 补齐 `Staff 资料变更 Admin 审批链`
+- [x] 补齐 `Staff 资料变更 Admin 审批链`
   当前问题：只有 submit，没有 approve / reject
 
 - [ ] 修复 `Mentor 自助资料链`

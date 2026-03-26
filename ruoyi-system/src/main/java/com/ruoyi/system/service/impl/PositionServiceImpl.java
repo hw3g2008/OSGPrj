@@ -637,12 +637,11 @@ public class PositionServiceImpl implements IPositionService
             Map<String, SysDictData> industryDict
     )
     {
-        Map<String, Object> profile = studentProfileMapper.selectProfileByUserId(userId);
-        String recruitmentCycle = resolveSummaryValue(profile == null ? null : profile.get("recruitmentCycle"),
+        String recruitmentCycle = resolveProfileField(userId, "recruitmentCycle",
                 positions.stream().map(position -> stringValue(position.get("recruitCycle"))).filter(StringUtils::hasText).findFirst().orElse("-"));
-        String targetRegion = resolveSummaryValue(profile == null ? null : profile.get("targetRegion"),
+        String targetRegion = resolveProfileField(userId, "targetRegion",
                 positions.stream().map(position -> stringValue(position.get("location"))).filter(StringUtils::hasText).findFirst().orElse("-"));
-        String primaryDirection = resolveSummaryValue(profile == null ? null : profile.get("primaryDirection"),
+        String primaryDirection = resolveProfileField(userId, "primaryDirection",
                 positions.stream()
                         .map(position -> industryDict.get(stringValue(position.get("industry"))))
                         .filter(Objects::nonNull)
@@ -911,12 +910,38 @@ public class PositionServiceImpl implements IPositionService
 
     private String resolveProfileField(Long userId, String key, String fallback)
     {
+        OsgStudent mainStudent = resolveMainProfileStudent(userId);
+        String mainValue = switch (key)
+        {
+            case "recruitmentCycle" -> mainStudent == null ? null : mainStudent.getRecruitmentCycle();
+            case "targetRegion" -> mainStudent == null ? null : mainStudent.getTargetRegion();
+            case "primaryDirection" -> mainStudent == null ? null : mainStudent.getMajorDirection();
+            default -> null;
+        };
+        String resolvedMainValue = resolveSummaryValue(mainValue, null);
+        if (StringUtils.hasText(resolvedMainValue))
+        {
+            return resolvedMainValue;
+        }
+
         Map<String, Object> profile = studentProfileMapper.selectProfileByUserId(userId);
         if (profile == null)
         {
             return fallback;
         }
         return resolveSummaryValue(profile.get(key), fallback);
+    }
+
+    private OsgStudent resolveMainProfileStudent(Long userId)
+    {
+        try
+        {
+            return identityResolver.resolveStudentByUserId(userId);
+        }
+        catch (ServiceException ex)
+        {
+            return null;
+        }
     }
 
     private String resolveSummaryValue(Object value, String fallback)

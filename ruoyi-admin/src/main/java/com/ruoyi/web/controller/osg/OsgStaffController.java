@@ -10,10 +10,12 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.controller.BaseController;
@@ -192,6 +194,48 @@ public class OsgStaffController extends BaseController
         {
             Map<String, Object> result = staffService.submitChangeRequest(body, getUsername());
             return AjaxResult.success("导师信息变更申请已提交", result);
+        }
+        catch (Exception ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
+    }
+
+    @PreAuthorize(STAFF_ROLE_ACCESS)
+    @GetMapping("/change-request/list")
+    public AjaxResult listChangeRequests(@RequestParam(required = false) Long staffId,
+                                         @RequestParam(required = false) String status)
+    {
+        return AjaxResult.success().put("rows", staffService.selectChangeRequestList(staffId, status));
+    }
+
+    @PreAuthorize(STAFF_ROLE_ACCESS)
+    @PutMapping("/change-request/{requestId}/approve")
+    public AjaxResult approveChangeRequest(@PathVariable Long requestId)
+    {
+        try
+        {
+            Map<String, Object> result = staffService.approveChangeRequest(requestId, getUsername());
+            return AjaxResult.success("导师变更申请已通过", result)
+                .put("status", result.get("status"));
+        }
+        catch (Exception ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
+    }
+
+    @PreAuthorize(STAFF_ROLE_ACCESS)
+    @PutMapping("/change-request/{requestId}/reject")
+    public AjaxResult rejectChangeRequest(@PathVariable Long requestId,
+                                          @RequestBody(required = false) Map<String, Object> body)
+    {
+        try
+        {
+            String reason = body == null ? null : asText(body.get("reason"));
+            Map<String, Object> result = staffService.rejectChangeRequest(requestId, getUsername(), reason);
+            return AjaxResult.success("导师变更申请已驳回", result)
+                .put("status", result.get("status"));
         }
         catch (Exception ex)
         {

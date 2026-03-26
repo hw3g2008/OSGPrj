@@ -158,21 +158,23 @@ public class OsgStudentChangeRequestServiceImpl implements IOsgStudentChangeRequ
 
     private void applyChangeToStudent(OsgStudent student, OsgStudentChangeRequest request)
     {
-        switch (defaultText(request.getFieldKey(), "")) {
+        String fieldKey = normalizeFieldKey(request.getFieldKey());
+        switch (fieldKey) {
             case "studentName" -> student.setStudentName(request.getAfterValue());
             case "email" -> student.setEmail(request.getAfterValue());
             case "school" -> student.setSchool(request.getAfterValue());
             case "major" -> student.setMajor(request.getAfterValue());
             case "graduationYear" -> student.setGraduationYear(asInteger(request.getAfterValue()));
-            case "majorDirection" -> student.setMajorDirection(request.getAfterValue());
-            case "subDirection" -> student.setSubDirection(request.getAfterValue());
+            case "primaryDirection" -> student.setMajorDirection(request.getAfterValue());
+            case "secondaryDirection" -> student.setSubDirection(request.getAfterValue());
             case "targetRegion" -> student.setTargetRegion(request.getAfterValue());
             case "recruitmentCycle" -> student.setRecruitmentCycle(request.getAfterValue());
             case "leadMentorId" -> student.setLeadMentorId(asLong(request.getAfterValue()));
             case "assistantId" -> student.setAssistantId(asLong(request.getAfterValue()));
-            case "phone", "wechat", "backupEmail", "studyPlan", "deferredGraduation" -> {
+            case "phone", "wechatId", "backupEmail", "studyPlan", "deferredGraduation",
+                "highSchool", "postgraduatePlan", "visaStatus" -> {
                 Map<String, String> remarkFields = parseRemarkFields(student.getRemark());
-                remarkFields.put(request.getFieldKey(), defaultText(request.getAfterValue(), ""));
+                remarkFields.put(toRemarkFieldKey(fieldKey), defaultText(request.getAfterValue(), ""));
                 student.setRemark(joinRemarkFields(remarkFields));
             }
             default -> throw new ServiceException("暂不支持该字段审核: " + request.getFieldKey());
@@ -240,7 +242,30 @@ public class OsgStudentChangeRequestServiceImpl implements IOsgStudentChangeRequ
 
     private boolean isContactField(String fieldKey)
     {
-        return CONTACT_FIELDS.contains(defaultText(fieldKey, ""));
+        return CONTACT_FIELDS.contains(defaultText(fieldKey, ""))
+            || CONTACT_FIELDS.contains(normalizeFieldKey(fieldKey));
+    }
+
+    private String normalizeFieldKey(String fieldKey)
+    {
+        String normalized = defaultText(fieldKey, "");
+        return switch (normalized)
+        {
+            case "majorDirection" -> "primaryDirection";
+            case "subDirection" -> "secondaryDirection";
+            case "wechat" -> "wechatId";
+            default -> normalized;
+        };
+    }
+
+    private String toRemarkFieldKey(String fieldKey)
+    {
+        return switch (fieldKey)
+        {
+            case "wechatId" -> "wechat";
+            case "postgraduatePlan" -> "postgraduate";
+            default -> fieldKey;
+        };
     }
 
     private Long asLong(Object value)

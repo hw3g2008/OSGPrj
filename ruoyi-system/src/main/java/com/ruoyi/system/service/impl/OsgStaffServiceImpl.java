@@ -1,5 +1,6 @@
 package com.ruoyi.system.service.impl;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -226,6 +227,46 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         return staffChangeRequestMapper.selectPendingReviewCount();
     }
 
+    public List<Map<String, Object>> selectChangeRequestList(Long staffId, String status)
+    {
+        StringBuilder sql = new StringBuilder("""
+            select request_id, staff_id, field_key, field_label, before_value, after_value,
+                   status, requested_by, reviewer, reviewed_at, create_by, create_time, update_by, update_time, remark
+            from osg_staff_change_request
+            where 1 = 1
+            """);
+        List<Object> args = new ArrayList<>();
+        if (staffId != null)
+        {
+            sql.append(" and staff_id = ?");
+            args.add(staffId);
+        }
+        if (status != null && !status.isBlank())
+        {
+            sql.append(" and status = ?");
+            args.add(status.trim());
+        }
+        sql.append(" order by create_time desc, request_id desc");
+
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql.toString(), args.toArray());
+        if (rows == null || rows.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        List<Map<String, Object>> payload = new ArrayList<>(rows.size());
+        for (Map<String, Object> row : rows)
+        {
+            OsgStaffChangeRequest request = hydrateChangeRequest(row);
+            OsgStaff staff = staffMapper.selectStaffByStaffId(request.getStaffId());
+            if (staff != null)
+            {
+                payload.add(toChangeRequestPayload(request, staff));
+            }
+        }
+        return payload;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> submitChangeRequest(Map<String, Object> payload, String operator)
     {
@@ -260,6 +301,53 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         request.setUpdateBy(operator);
         request.setRemark(asText(payload.get("remark")));
         staffChangeRequestMapper.insertChangeRequest(request);
+        return toChangeRequestPayload(request, staff);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> approveChangeRequest(Long requestId, String reviewer)
+    {
+        OsgStaffChangeRequest request = requirePendingChangeRequest(requestId);
+        OsgStaff staff = staffMapper.selectStaffByStaffId(request.getStaffId());
+        if (staff == null)
+        {
+            throw new ServiceException("导师不存在");
+        }
+
+        applyChangeToStaff(staff, request);
+        staff.setUpdateBy(reviewer);
+        if (updateStaff(staff) <= 0)
+        {
+            throw new ServiceException("导师信息更新失败");
+        }
+
+        Date reviewedAt = new Date();
+        updateChangeRequestReview(requestId, "approved", reviewer, reviewedAt, request.getRemark());
+        request.setStatus("approved");
+        request.setReviewer(reviewer);
+        request.setReviewedAt(reviewedAt);
+        request.setUpdateBy(reviewer);
+        return toChangeRequestPayload(request, staff);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> rejectChangeRequest(Long requestId, String reviewer, String reason)
+    {
+        OsgStaffChangeRequest request = requirePendingChangeRequest(requestId);
+        Date reviewedAt = new Date();
+        String rejectReason = asText(reason);
+        updateChangeRequestReview(requestId, "rejected", reviewer, reviewedAt, rejectReason);
+        request.setStatus("rejected");
+        request.setReviewer(reviewer);
+        request.setReviewedAt(reviewedAt);
+        request.setUpdateBy(reviewer);
+        request.setRemark(rejectReason);
+
+        OsgStaff staff = staffMapper.selectStaffByStaffId(request.getStaffId());
+        if (staff == null)
+        {
+            throw new ServiceException("导师不存在");
+        }
         return toChangeRequestPayload(request, staff);
     }
 
@@ -347,6 +435,88 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         return payload;
     }
 
+    private OsgStaffChangeRequest requirePendingChangeRequest(Long requestId)
+    {
+        String sql = """
+            select request_id, staff_id, field_key, field_label, before_value, after_value,
+                   status, requested_by, reviewer, reviewed_at, create_by, create_time, update_by, update_time, remark
+            from osg_staff_change_request
+            where request_id = ?
+            """;
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, new Object[] { requestId });
+        if (rows == null || rows.isEmpty())
+        {
+            throw new ServiceException("变更申请不存在");
+        }
+
+        OsgStaffChangeRequest request = hydrateChangeRequest(rows.get(0));
+        if (!"pending".equals(request.getStatus()))
+        {
+            throw new ServiceException("该变更申请已处理，不能重复审核");
+        }
+        return request;
+    }
+
+    private void updateChangeRequestReview(Long requestId, String status, String reviewer, Date reviewedAt, String remark)
+    {
+        int rows = jdbcTemplate.update(
+            """
+                update osg_staff_change_request
+                set status = ?,
+                    reviewer = ?,
+                    reviewed_at = ?,
+                    update_by = ?,
+                    remark = ?,
+                    update_time = sysdate()
+                where request_id = ?
+                """,
+            new Object[] { status, reviewer, reviewedAt, reviewer, remark, requestId });
+        if (rows <= 0)
+        {
+            throw new ServiceException("导师变更申请更新失败");
+        }
+    }
+
+    private OsgStaffChangeRequest hydrateChangeRequest(Map<String, Object> row)
+    {
+        OsgStaffChangeRequest request = new OsgStaffChangeRequest();
+        request.setRequestId(firstLong(row, "request_id", "requestId"));
+        request.setStaffId(firstLong(row, "staff_id", "staffId"));
+        request.setFieldKey(firstText(row, "field_key", "fieldKey"));
+        request.setFieldLabel(firstText(row, "field_label", "fieldLabel"));
+        request.setBeforeValue(firstText(row, "before_value", "beforeValue"));
+        request.setAfterValue(firstText(row, "after_value", "afterValue"));
+        request.setStatus(firstText(row, "status"));
+        request.setRequestedBy(firstText(row, "requested_by", "requestedBy"));
+        request.setReviewer(firstText(row, "reviewer"));
+        request.setReviewedAt(firstDate(row, "reviewed_at", "reviewedAt"));
+        request.setCreateBy(firstText(row, "create_by", "createBy"));
+        request.setCreateTime(firstDate(row, "create_time", "createTime"));
+        request.setUpdateBy(firstText(row, "update_by", "updateBy"));
+        request.setUpdateTime(firstDate(row, "update_time", "updateTime"));
+        request.setRemark(firstText(row, "remark"));
+        return request;
+    }
+
+    private void applyChangeToStaff(OsgStaff staff, OsgStaffChangeRequest request)
+    {
+        String fieldKey = asText(request.getFieldKey());
+        switch (fieldKey == null ? "" : fieldKey)
+        {
+            case "staffName" -> staff.setStaffName(request.getAfterValue());
+            case "email" -> staff.setEmail(request.getAfterValue());
+            case "phone" -> staff.setPhone(request.getAfterValue());
+            case "staffType" -> staff.setStaffType(request.getAfterValue());
+            case "majorDirection" -> staff.setMajorDirection(request.getAfterValue());
+            case "subDirection" -> staff.setSubDirection(request.getAfterValue());
+            case "region" -> staff.setRegion(request.getAfterValue());
+            case "city" -> staff.setCity(request.getAfterValue());
+            case "hourlyRate" -> staff.setHourlyRate(asDecimal(request.getAfterValue()));
+            case "accountStatus" -> staff.setAccountStatus(request.getAfterValue());
+            default -> throw new ServiceException("暂不支持该字段审核: " + request.getFieldKey());
+        }
+    }
+
     private Long asLong(Object value)
     {
         if (value instanceof Number number)
@@ -367,6 +537,30 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         return null;
     }
 
+    private BigDecimal asDecimal(Object value)
+    {
+        if (value instanceof BigDecimal decimal)
+        {
+            return decimal;
+        }
+        if (value instanceof Number number)
+        {
+            return BigDecimal.valueOf(number.doubleValue());
+        }
+        if (value instanceof String text && !text.isBlank())
+        {
+            try
+            {
+                return new BigDecimal(text.trim());
+            }
+            catch (NumberFormatException ex)
+            {
+                return null;
+            }
+        }
+        return null;
+    }
+
     private String asText(Object value)
     {
         if (value == null)
@@ -375,6 +569,39 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         }
         String text = String.valueOf(value).trim();
         return text.isEmpty() ? null : text;
+    }
+
+    private Long firstLong(Map<String, Object> row, String... keys)
+    {
+        Object value = firstValue(row, keys);
+        return asLong(value);
+    }
+
+    private String firstText(Map<String, Object> row, String... keys)
+    {
+        return asText(firstValue(row, keys));
+    }
+
+    private Date firstDate(Map<String, Object> row, String... keys)
+    {
+        Object value = firstValue(row, keys);
+        return value instanceof Date date ? date : null;
+    }
+
+    private Object firstValue(Map<String, Object> row, String... keys)
+    {
+        if (row == null)
+        {
+            return null;
+        }
+        for (String key : keys)
+        {
+            if (row.containsKey(key))
+            {
+                return row.get(key);
+            }
+        }
+        return null;
     }
 
     private void syncStaffAccount(OsgStaff existing, OsgStaff update, String operator)

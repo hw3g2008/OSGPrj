@@ -231,6 +231,7 @@
       v-model:visible="detailModalVisible"
       :staff-id="selectedStaff?.staffId ?? null"
       :staff-name="selectedStaff?.staffName"
+      @review-updated="handleDetailReviewUpdated"
     />
     <StaffStatusModal
       v-model:visible="statusModalVisible"
@@ -274,6 +275,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   createStaff,
+  getStaffChangeRequestList,
   getStaffList,
   resetStaffPassword,
   updateStaff,
@@ -392,13 +394,7 @@ const handleExport = () => {
 }
 
 const handlePendingReviewEntry = () => {
-  const target = visibleRows.value[0]
-  if (!target) {
-    message.info('当前没有可处理的导师记录')
-    return
-  }
-  selectedStaff.value = target
-  detailModalVisible.value = true
+  void openFirstPendingReview()
 }
 
 const openMentorStudents = (row: StaffListItem) => {
@@ -514,6 +510,10 @@ const handleFormSubmit = async (payload: StaffPayload) => {
   }
 }
 
+const handleDetailReviewUpdated = () => {
+  void loadRows()
+}
+
 const isBlacklisted = (row: StaffListItem) => Boolean(row.isBlacklisted)
 
 const formatType = (staffType?: string) => {
@@ -586,6 +586,27 @@ const getStatusNote = (row: StaffListItem) => {
 const openStaffDetail = (row: StaffListItem) => {
   selectedStaff.value = row
   detailModalVisible.value = true
+}
+
+const openFirstPendingReview = async () => {
+  try {
+    const response = await getStaffChangeRequestList(undefined, 'pending')
+    const firstPending = response.rows?.[0]
+    if (!firstPending) {
+      message.info('当前没有可处理的导师记录')
+      return
+    }
+
+    const existingRow = rows.value.find((row) => row.staffId === firstPending.staffId)
+    selectedStaff.value = existingRow ?? {
+      staffId: firstPending.staffId,
+      staffName: firstPending.staffName || `导师 ${firstPending.staffId}`,
+    }
+    detailModalVisible.value = true
+  } catch (error) {
+    console.error(error)
+    message.error('待审核导师信息加载失败')
+  }
 }
 
 const resolveSuccessMessage = (action: StatusAction) => {

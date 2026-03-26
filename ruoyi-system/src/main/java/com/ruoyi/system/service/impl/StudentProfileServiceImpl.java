@@ -1,17 +1,21 @@
 package com.ruoyi.system.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.StudentProfileMapper;
 import com.ruoyi.system.service.IStudentProfileService;
+import com.ruoyi.system.service.IOsgStudentChangeRequestService;
 import com.ruoyi.system.service.ISysUserService;
 
 /**
@@ -38,12 +42,18 @@ public class StudentProfileServiceImpl implements IStudentProfileService
     @Autowired
     private ISysUserService userService;
 
+    @Autowired
+    private IOsgStudentChangeRequestService changeRequestService;
+
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
     @Override
     public Map<String, Object> selectProfileView(Long userId)
     {
         Map<String, Object> profile = ensureProfile(userId);
-        List<Map<String, Object>> pendingChanges = normalizePendingChanges(
-                studentProfileMapper.selectPendingChangesByUserId(userId));
+        overlayApprovedMainStudent(profile, resolveMainStudent(userId));
+        List<Map<String, Object>> pendingChanges = normalizePendingChanges(resolvePendingChanges(userId));
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("profile", normalizeProfile(profile));
@@ -53,6 +63,7 @@ public class StudentProfileServiceImpl implements IStudentProfileService
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> updateProfile(Long userId, Map<String, Object> params)
     {
         Map<String, Object> current = ensureProfile(userId);
@@ -60,19 +71,72 @@ public class StudentProfileServiceImpl implements IStudentProfileService
         String wechatId = normalizeEditableString(params.get("wechatId"), stringValue(current.get("wechatId")));
 
         studentProfileMapper.updateImmediateFields(userId, phone, wechatId);
-        studentProfileMapper.deletePendingChangesByUserId(userId);
-
-        for (ReviewField field : REVIEW_FIELDS)
+        List<ReviewChange> reviewChanges = collectReviewChanges(current, params);
+        if (reviewChanges.isEmpty())
         {
-            String oldValue = stringValue(current.get(field.key()));
-            String newValue = normalizeEditableString(params.get(field.key()), oldValue);
-            if (!Objects.equals(oldValue, newValue))
-            {
-                studentProfileMapper.insertPendingChange(userId, field.key(), field.label(), oldValue, newValue);
-            }
+            return selectProfileView(userId);
+        }
+
+        String operator = "student-" + userId;
+        if (submitMainChainReviewChanges(userId, reviewChanges, operator))
+        {
+            return selectProfileView(userId);
+        }
+
+        studentProfileMapper.deletePendingChangesByUserId(userId);
+        for (ReviewChange change : reviewChanges)
+        {
+            studentProfileMapper.insertPendingChange(userId, change.key(), change.label(), change.oldValue(), change.newValue());
         }
 
         return selectProfileView(userId);
+    }
+
+    private List<Map<String, Object>> resolvePendingChanges(Long userId)
+    {
+        try
+        {
+            Long studentId = identityResolver.resolveStudentIdByUserId(userId);
+            return defaultList(changeRequestService.selectChangeRequestList(studentId, "pending"));
+        }
+        catch (ServiceException ex)
+        {
+            return defaultList(studentProfileMapper.selectPendingChangesByUserId(userId));
+        }
+    }
+
+    private boolean submitMainChainReviewChanges(Long userId, List<ReviewChange> reviewChanges, String operator)
+    {
+        try
+        {
+            Long studentId = identityResolver.resolveStudentIdByUserId(userId);
+            Map<String, Long> existingPending = indexPendingRequests(
+                changeRequestService.selectChangeRequestList(studentId, "pending"));
+
+            for (ReviewChange change : reviewChanges)
+            {
+                Long existingRequestId = existingPending.get(change.key());
+                if (existingRequestId != null)
+                {
+                    changeRequestService.rejectChangeRequest(existingRequestId, operator, "学生重新提交，旧申请已覆盖");
+                }
+
+                Map<String, Object> payload = new LinkedHashMap<>();
+                payload.put("studentId", studentId);
+                payload.put("changeType", "学生资料");
+                payload.put("fieldKey", change.key());
+                payload.put("fieldLabel", change.label());
+                payload.put("beforeValue", change.oldValue());
+                payload.put("afterValue", change.newValue());
+                payload.put("requestedBy", operator);
+                changeRequestService.submitChangeRequest(payload, operator);
+            }
+            return true;
+        }
+        catch (ServiceException ex)
+        {
+            return false;
+        }
     }
 
     private Map<String, Object> ensureProfile(Long userId)
@@ -114,6 +178,43 @@ public class StudentProfileServiceImpl implements IStudentProfileService
         return studentProfileMapper.selectProfileByUserId(userId);
     }
 
+    private OsgStudent resolveMainStudent(Long userId)
+    {
+        try
+        {
+            return identityResolver.resolveStudentByUserId(userId);
+        }
+        catch (ServiceException ex)
+        {
+            return null;
+        }
+    }
+
+    private void overlayApprovedMainStudent(Map<String, Object> profile, OsgStudent student)
+    {
+        if (profile == null || student == null)
+        {
+            return;
+        }
+
+        overlayValue(profile, "email", student.getEmail());
+        overlayValue(profile, "school", student.getSchool());
+        overlayValue(profile, "major", student.getMajor());
+        overlayValue(profile, "graduationYear", student.getGraduationYear());
+        overlayValue(profile, "targetRegion", student.getTargetRegion());
+        overlayValue(profile, "recruitmentCycle", student.getRecruitmentCycle());
+        overlayValue(profile, "primaryDirection", student.getMajorDirection());
+        overlayValue(profile, "secondaryDirection", student.getSubDirection());
+
+        Map<String, String> remarkFields = parseRemarkFields(student.getRemark());
+        overlayValue(profile, "highSchool", remarkFields.get("highSchool"));
+        overlayValue(profile, "postgraduatePlan", firstNonBlank(
+            remarkFields.get("postgraduatePlan"),
+            remarkFields.get("postgraduate"),
+            remarkFields.get("studyPlan")));
+        overlayValue(profile, "visaStatus", remarkFields.get("visaStatus"));
+    }
+
     private Map<String, Object> normalizeProfile(Map<String, Object> source)
     {
         Map<String, Object> profile = new LinkedHashMap<>();
@@ -148,13 +249,49 @@ public class StudentProfileServiceImpl implements IStudentProfileService
             Map<String, Object> change = new LinkedHashMap<>();
             change.put("fieldKey", stringValue(row.get("fieldKey")));
             change.put("fieldLabel", stringValue(row.get("fieldLabel")));
-            change.put("oldValue", stringValue(row.get("oldValue")));
-            change.put("newValue", stringValue(row.get("newValue")));
+            change.put("oldValue", stringValue(firstNonNull(row.get("oldValue"), row.get("beforeValue"))));
+            change.put("newValue", stringValue(firstNonNull(row.get("newValue"), row.get("afterValue"))));
             change.put("status", stringValue(row.get("status")));
-            change.put("submittedAt", stringValue(row.get("submittedAt")));
+            change.put("submittedAt", stringValue(firstNonNull(row.get("submittedAt"), row.get("requestedAt"))));
             changes.add(change);
         }
         return changes;
+    }
+
+    private List<ReviewChange> collectReviewChanges(Map<String, Object> current, Map<String, Object> params)
+    {
+        List<ReviewChange> reviewChanges = new ArrayList<>();
+        for (ReviewField field : REVIEW_FIELDS)
+        {
+            String oldValue = stringValue(current.get(field.key()));
+            String newValue = normalizeEditableString(params.get(field.key()), oldValue);
+            if (!Objects.equals(oldValue, newValue))
+            {
+                reviewChanges.add(new ReviewChange(field.key(), field.label(), oldValue, newValue));
+            }
+        }
+        return reviewChanges;
+    }
+
+    private Map<String, Long> indexPendingRequests(List<Map<String, Object>> rows)
+    {
+        if (rows == null || rows.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (Map<String, Object> row : rows)
+        {
+            String fieldKey = stringValue(row.get("fieldKey"));
+            Long requestId = asLong(row.get("requestId"));
+            if (StringUtils.isEmpty(fieldKey) || requestId == null)
+            {
+                continue;
+            }
+            result.put(fieldKey, requestId);
+        }
+        return result;
     }
 
     private String normalizeEditableString(Object rawValue, String fallback)
@@ -177,6 +314,79 @@ public class StudentProfileServiceImpl implements IStudentProfileService
         return StringUtils.isNotEmpty(primary) ? primary : fallback;
     }
 
+    private List<Map<String, Object>> defaultList(List<Map<String, Object>> rows)
+    {
+        return rows == null ? Collections.emptyList() : rows;
+    }
+
+    private void overlayValue(Map<String, Object> target, String key, Object value)
+    {
+        String normalized = stringValue(value);
+        if (!"-".equals(normalized))
+        {
+            target.put(key, normalized);
+        }
+    }
+
+    private Map<String, String> parseRemarkFields(String remark)
+    {
+        if (StringUtils.isEmpty(remark))
+        {
+            return Collections.emptyMap();
+        }
+
+        Map<String, String> fields = new LinkedHashMap<>();
+        String normalized = remark.replace(" | ", ";");
+        for (String segment : normalized.split(";"))
+        {
+            String trimmed = segment.trim();
+            if (trimmed.isEmpty() || !trimmed.contains("="))
+            {
+                continue;
+            }
+            String[] parts = trimmed.split("=", 2);
+            fields.put(parts[0].trim(), parts[1].trim());
+        }
+        return fields;
+    }
+
+    private Object firstNonNull(Object primary, Object fallback)
+    {
+        return primary != null ? primary : fallback;
+    }
+
+    private String firstNonBlank(String... values)
+    {
+        for (String value : values)
+        {
+            if (StringUtils.isNotEmpty(value) && !"-".equals(value))
+            {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private Long asLong(Object value)
+    {
+        if (value instanceof Number number)
+        {
+            return number.longValue();
+        }
+        if (value == null)
+        {
+            return null;
+        }
+        try
+        {
+            return Long.parseLong(String.valueOf(value));
+        }
+        catch (NumberFormatException ex)
+        {
+            return null;
+        }
+    }
+
     private String sexLabel(String sex)
     {
         if ("1".equals(sex))
@@ -191,6 +401,10 @@ public class StudentProfileServiceImpl implements IStudentProfileService
     }
 
     private record ReviewField(String key, String label)
+    {
+    }
+
+    private record ReviewChange(String key, String label, String oldValue, String newValue)
     {
     }
 }

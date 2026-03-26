@@ -60,6 +60,20 @@ export interface ResetStaffPasswordResult {
   defaultPassword: string
 }
 
+export interface StaffChangeRequestItem {
+  requestId: number
+  staffId: number
+  staffName?: string
+  fieldKey: string
+  fieldLabel: string
+  beforeValue?: string
+  afterValue?: string
+  status: string
+  requestedBy?: string
+  reviewedAt?: string
+  remark?: string
+}
+
 export function getStaffList(params: StaffListParams) {
   return http.get<StaffListResponse>('/admin/staff/list', { params })
 }
@@ -78,6 +92,25 @@ export function updateStaff(payload: StaffPayload) {
 
 export function resetStaffPassword(staffId: number) {
   return http.post<ResetStaffPasswordResult>('/admin/staff/reset-password', { staffId })
+}
+
+export function getStaffChangeRequestList(staffId?: number, status?: string) {
+  return http.get<{ rows: StaffChangeRequestItem[] }>('/admin/staff/change-request/list', {
+    params: {
+      staffId,
+      status,
+    },
+  })
+}
+
+export function approveStaffChangeRequest(requestId: number) {
+  return http.put<StaffChangeRequestItem>(`/admin/staff/change-request/${requestId}/approve`)
+}
+
+export function rejectStaffChangeRequest(requestId: number, reason?: string) {
+  return http.put<StaffChangeRequestItem>(`/admin/staff/change-request/${requestId}/reject`, {
+    reason,
+  })
 }
 
 export async function getStaffOptions(keyword = ''): Promise<StaffOption[]> {

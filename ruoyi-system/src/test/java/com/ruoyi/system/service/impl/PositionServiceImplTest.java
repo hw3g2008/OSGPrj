@@ -296,6 +296,55 @@ class PositionServiceImplTest
     }
 
     @Test
+    void createManualPositionUsesApprovedMainStudentIntentInsteadOfStaleProfileSnapshot()
+    {
+        OsgStudent approvedStudent = student(12766L, "Curl Stu");
+        approvedStudent.setMajorDirection("咨询 Consulting");
+        approvedStudent.setRecruitmentCycle("2027");
+
+        when(sysDictDataMapper.selectDictDataByType(any())).thenReturn(List.of());
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(approvedStudent);
+        when(studentPositionMapper.insertStudentPosition(any(OsgStudentPosition.class))).thenAnswer(invocation -> {
+            OsgStudentPosition row = invocation.getArgument(0);
+            row.setStudentPositionId(702L);
+            return 1;
+        });
+
+        Long reviewId = service.createManualPosition("summer", "OpenAI Intern", "OpenAI", "San Francisco", 838L);
+
+        assertEquals(702L, reviewId);
+        ArgumentCaptor<OsgStudentPosition> captor = ArgumentCaptor.forClass(OsgStudentPosition.class);
+        verify(studentPositionMapper).insertStudentPosition(captor.capture());
+        OsgStudentPosition saved = captor.getValue();
+        assertEquals("Consulting", saved.getIndustry());
+        assertEquals("2027", saved.getRecruitmentCycle());
+    }
+
+    @Test
+    void selectPositionMetaUsesApprovedMainStudentIntentSummaryInsteadOfStaleProfileSnapshot()
+    {
+        OsgStudent approvedStudent = student(12766L, "Curl Stu");
+        approvedStudent.setMajorDirection("金融 Finance");
+        approvedStudent.setRecruitmentCycle("2027");
+        approvedStudent.setTargetRegion("New York");
+
+        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of());
+        when(positionMapper.selectPositionList(any(OsgPosition.class))).thenReturn(List.of());
+        when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(approvedStudent);
+        when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of());
+        when(sysDictDataMapper.selectDictDataByType(any())).thenReturn(List.of());
+
+        Map<String, Object> payload = service.selectPositionMeta(838L);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> intentSummary = (Map<String, Object>) payload.get("intentSummary");
+        assertEquals("2027", intentSummary.get("recruitmentCycle"));
+        assertEquals("New York", intentSummary.get("targetRegion"));
+        assertEquals("金融 Finance", intentSummary.get("primaryDirection"));
+    }
+
+    @Test
     void selectPositionListIncludesOwnedPendingManualReviewRows()
     {
         when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of());

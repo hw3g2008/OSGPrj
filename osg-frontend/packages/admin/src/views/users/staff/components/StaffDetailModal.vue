@@ -83,6 +83,60 @@
           </div>
         </dl>
       </section>
+
+      <section class="staff-detail-modal__panel">
+        <header>
+          <div class="staff-detail-modal__badge staff-detail-modal__badge--amber">
+            <i class="mdi mdi-clipboard-text-clock-outline" aria-hidden="true"></i> 待审核变更
+          </div>
+          <span>导师提交的资料变更会在这里完成审核，审核完成后会刷新列表待处理数量。</span>
+        </header>
+
+        <div v-if="pendingRequests.length === 0" class="staff-detail-modal__empty">
+          当前没有待审核的资料变更。
+        </div>
+
+        <div v-else class="staff-detail-modal__review-list">
+          <article v-for="request in pendingRequests" :key="request.requestId" class="staff-detail-modal__review-card">
+            <div class="staff-detail-modal__review-head">
+              <div>
+                <strong>{{ request.fieldLabel }}</strong>
+                <p>{{ request.beforeValue || '-' }} -> {{ request.afterValue || '-' }}</p>
+              </div>
+              <span class="staff-detail-modal__review-pill">待审核</span>
+            </div>
+
+            <label class="staff-detail-modal__review-field">
+              <span>驳回说明</span>
+              <textarea
+                v-model.trim="reviewReasons[request.requestId]"
+                class="staff-detail-modal__review-textarea"
+                rows="2"
+                placeholder="选填：输入驳回原因后再执行驳回"
+              />
+            </label>
+
+            <div class="staff-detail-modal__review-actions">
+              <button
+                type="button"
+                class="permission-button permission-button--outline"
+                :disabled="reviewingRequestId === request.requestId"
+                @click="handleReject(request.requestId)"
+              >
+                驳回
+              </button>
+              <button
+                type="button"
+                class="permission-button permission-button--primary"
+                :disabled="reviewingRequestId === request.requestId"
+                @click="handleApprove(request.requestId)"
+              >
+                通过
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
     </template>
 
     <template #footer>
@@ -92,9 +146,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
-import { getStaffDetail, type StaffDetailItem } from '@osg/shared/api/admin/staff'
+import {
+  approveStaffChangeRequest,
+  getStaffChangeRequestList,
+  getStaffDetail,
+  rejectStaffChangeRequest,
+  type StaffChangeRequestItem,
+  type StaffDetailItem,
+} from '@osg/shared/api/admin/staff'
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -107,11 +169,15 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
+  'review-updated': []
 }>()
 
 const detail = ref<StaffDetailItem | null>(null)
+const pendingRequests = ref<StaffChangeRequestItem[]>([])
 const loading = ref(false)
 const loadError = ref('')
+const reviewingRequestId = ref<number | null>(null)
+const reviewReasons = reactive<Record<number, string>>({})
 
 const avatarText = computed(() => {
   const name = detail.value?.staffName || props.staffName || ''
@@ -123,6 +189,7 @@ const avatarText = computed(() => {
 const loadDetail = async () => {
   if (!props.visible || !props.staffId) {
     detail.value = null
+    pendingRequests.value = []
     loadError.value = ''
     return
   }
@@ -130,7 +197,12 @@ const loadDetail = async () => {
   loading.value = true
   loadError.value = ''
   try {
-    detail.value = await getStaffDetail(props.staffId)
+    const [detailResponse, changeRequestResponse] = await Promise.all([
+      getStaffDetail(props.staffId),
+      getStaffChangeRequestList(props.staffId, 'pending'),
+    ])
+    detail.value = detailResponse
+    pendingRequests.value = changeRequestResponse.rows || []
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '请稍后重试'
   } finally {
@@ -148,6 +220,34 @@ watch(
 
 const handleClose = () => {
   emit('update:visible', false)
+}
+
+const handleApprove = async (requestId: number) => {
+  reviewingRequestId.value = requestId
+  try {
+    await approveStaffChangeRequest(requestId)
+    pendingRequests.value = pendingRequests.value.filter((request) => request.requestId !== requestId)
+    message.success('导师变更申请已通过')
+    emit('review-updated')
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : '审核通过失败')
+  } finally {
+    reviewingRequestId.value = null
+  }
+}
+
+const handleReject = async (requestId: number) => {
+  reviewingRequestId.value = requestId
+  try {
+    await rejectStaffChangeRequest(requestId, reviewReasons[requestId] || '')
+    pendingRequests.value = pendingRequests.value.filter((request) => request.requestId !== requestId)
+    message.success('导师变更申请已驳回')
+    emit('review-updated')
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : '驳回失败')
+  } finally {
+    reviewingRequestId.value = null
+  }
 }
 
 const formatType = (staffType?: string) => {
@@ -317,6 +417,11 @@ const formatHourlyRate = (hourlyRate?: number) => {
   color: #3B6FA0;
 }
 
+.staff-detail-modal__badge--amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .staff-detail-modal__detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -343,6 +448,102 @@ const formatHourlyRate = (hourlyRate?: number) => {
   font-weight: 600;
 }
 
+.staff-detail-modal__empty {
+  padding: 16px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.staff-detail-modal__review-list {
+  display: grid;
+  gap: 14px;
+}
+
+.staff-detail-modal__review-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.staff-detail-modal__review-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.staff-detail-modal__review-head strong {
+  color: #0f172a;
+}
+
+.staff-detail-modal__review-head p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.staff-detail-modal__review-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.staff-detail-modal__review-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.staff-detail-modal__review-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #dbe3f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  resize: vertical;
+  font: inherit;
+}
+
+.staff-detail-modal__review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.permission-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.permission-button--primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-color: #6366f1;
+  color: #ffffff;
+}
+
+.permission-button--outline {
+  background: #ffffff;
+}
+
 .staff-detail-modal__tag {
   display: inline-flex;
   align-items: center;
@@ -366,6 +567,12 @@ const formatHourlyRate = (hourlyRate?: number) => {
   .staff-detail-modal__grid,
   .staff-detail-modal__detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .staff-detail-modal__review-head,
+  .staff-detail-modal__review-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

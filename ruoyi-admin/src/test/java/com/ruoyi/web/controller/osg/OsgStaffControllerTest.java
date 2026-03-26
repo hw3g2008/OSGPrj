@@ -304,6 +304,71 @@ class OsgStaffControllerTest
                 .andExpect(jsonPath("$.data.status").value("pending"));
     }
 
+    @Test
+    void listChangeRequestsShouldReturnPendingRowsForClerk() throws Exception
+    {
+        when(staffService.selectChangeRequestList(eq(1L), eq("pending"))).thenReturn(List.of(Map.of(
+            "requestId", 10L,
+            "staffId", 1L,
+            "staffName", "Diana",
+            "fieldKey", "city",
+            "fieldLabel", "所在城市",
+            "beforeValue", "New York",
+            "afterValue", "London",
+            "status", "pending"
+        )));
+
+        mockMvc.perform(get("/admin/staff/change-request/list")
+                .header("Authorization", "Bearer clerk-token")
+                .param("staffId", "1")
+                .param("status", "pending"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.rows[0].requestId").value(10))
+                .andExpect(jsonPath("$.rows[0].staffName").value("Diana"))
+                .andExpect(jsonPath("$.rows[0].status").value("pending"));
+    }
+
+    @Test
+    void approveChangeRequestShouldReturnApprovedPayloadForClerk() throws Exception
+    {
+        when(staffService.approveChangeRequest(eq(10L), anyString())).thenReturn(Map.of(
+            "requestId", 10L,
+            "staffId", 1L,
+            "status", "approved",
+            "afterValue", "London"
+        ));
+
+        mockMvc.perform(put("/admin/staff/change-request/10/approve")
+                .header("Authorization", "Bearer clerk-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("导师变更申请已通过"))
+                .andExpect(jsonPath("$.status").value("approved"))
+                .andExpect(jsonPath("$.data.afterValue").value("London"));
+    }
+
+    @Test
+    void rejectChangeRequestShouldReturnRejectedPayloadForClerk() throws Exception
+    {
+        when(staffService.rejectChangeRequest(eq(10L), anyString(), eq("信息不完整"))).thenReturn(Map.of(
+            "requestId", 10L,
+            "staffId", 1L,
+            "status", "rejected",
+            "remark", "信息不完整"
+        ));
+
+        mockMvc.perform(put("/admin/staff/change-request/10/reject")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"reason\":\"信息不完整\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.msg").value("导师变更申请已驳回"))
+                .andExpect(jsonPath("$.status").value("rejected"))
+                .andExpect(jsonPath("$.data.remark").value("信息不完整"));
+    }
+
     // ==================== NEW TEST METHODS FOR BRANCH COVERAGE ====================
 
     @Test
