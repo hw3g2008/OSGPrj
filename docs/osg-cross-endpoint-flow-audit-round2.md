@@ -94,6 +94,36 @@
 - `Admin 模拟应聘分配链使用静态导师目录与原样 mentorIds`：
   Admin 模拟应聘前端使用静态 `mentorCatalog`，服务端直接把传入 `mentorIds` 写入 `osg_mock_practice.mentor_ids`，同样没有做 `staff_id -> user_id` 转换。导师侧消费链依赖 `userId` 匹配 `mentor_ids`，存在同类错路风险。
 
+## 7.1 运行时 Spot-Check 证据
+
+针对两条新增 `P1` 风险，已在远端测试栈 `http://47.94.213.128:28080` 做最小化运行时验证。
+
+### Spot-Check A：Admin 求职分配导师链
+
+- 先在远端测试栈创建真实导师账号：
+  - `staffId = 178`
+  - `userId = 1010`
+  - 登录账号：`sm74535511@osg.io`
+- 复用 Admin API 对现成未分配记录 `applicationId = 113` 发起分配。
+- 按当前 Admin 前端 `buildMentorId` 逻辑，为导师名 `Spot Mentor 74535511` 计算出伪造 `mentorId = 41932`。
+- Admin 接口返回成功，数据库 `osg_coaching.mentor_ids` 被写成 `41932`。
+- 该真实导师随后登录 `/mentor` 侧回查 `/api/mentor/job-overview/list`，结果为空。
+
+结论：
+
+- 该问题已不仅是静态代码推断，而是有真实运行时复现证据。
+
+### Spot-Check B：Admin 模拟应聘分配链
+
+- 复用同一真实导师账号与同一伪造 `mentorId = 41932`。
+- 对现成待处理模拟应聘记录 `practiceId = 5062` 发起 `/admin/mock-practice/assign`。
+- Admin 接口返回成功，数据库 `osg_mock_practice.mentor_ids` 被写成 `41932`。
+- 该真实导师随后回查 `/api/mentor/mock-practice/list`，结果为空。
+
+结论：
+
+- 这条链同样已具备真实运行时复现证据。
+
 ## 8. 按链路分组的审计结论
 
 ### 8.1 个人资料与变更申请
