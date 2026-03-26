@@ -97,10 +97,20 @@
 
 当前状态：
 
-- 已建立矩阵占位
-- 已承接首轮已知问题
-- 已识别 `Staff 审核 capability 缺口`、`Lead-Mentor 可编辑字段范围歧义`、以及 Student/Mentor/Assistant profile 需求资产缺口
-- 详细结论待补
+- `Student 即时字段直写链`：
+  代码已形成自洽闭环。`StudentProfileServiceImpl` 先直写 `phone/wechatId`，再返回刷新后的 profile 视图，这一部分当前没有看到实现层断链。
+- `Student 审核字段链`：
+  仍是已知断裂。Student 提交面写 `osg_student_profile_change`，Admin 审核面读 `osg_student_change_request`，并且 `applyChangeToStudent` 的 switch 与 Student 提交 key 不一致，首轮 `P0-1` / `P1-7` 继续成立。
+- `Lead-Mentor 提交侧`：
+  已经具备真实变更申请能力。`/lead-mentor/profile/change-request` 会校验本人范围、拒绝锁定字段修改，并写入 `osg_staff_change_request`。
+- `Staff 审批侧`：
+  仍然缺失。Admin 侧只有 `POST /admin/staff/change-request`，没有对应 `approve/reject` 入口，首轮 `P0-2` 继续成立。
+- `Mentor 自助资料链`：
+  当前实现仍是直接读写 `SysUser`，前端把微信号和地区分别绑到 `remark` / `loginIp`，并且方向展示仍是硬编码，已知问题继续成立。
+- `Assistant 自助资料链`：
+  当前前端确实复用了 `/api/mentor/profile`。更准确地说，这是“错误端点复用 + 错误角色边界”，但控制器仍按当前登录 `userId` 读写，不是跨用户覆盖。
+- `需求层面`：
+  已确认 `Staff 审核 capability 缺口`、`Lead-Mentor 可编辑字段范围歧义`、以及 Student/Mentor/Assistant profile 需求资产缺口。
 
 ### 8.2 教学链路
 
