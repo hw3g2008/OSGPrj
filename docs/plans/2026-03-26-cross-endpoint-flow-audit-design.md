@@ -146,21 +146,29 @@
 1. 产品确认结论  
    [docs/osg-product-confirmation-checklist.md](/Users/hw/workspace/OSGPrj/docs/osg-product-confirmation-checklist.md)
 
-2. PRD / DELIVERY-CONTRACT / 模块文档  
+2. 明确裁决与机器可执行约束  
+   包括 `DECISIONS`、`DELIVERY-CONTRACT` 及其他已确认约束文件
+
+3. 五端链路相关需求资产  
+   需遍历所有与当前链路相关的 PRD 资产，不限于本节示例文件；包括页面 PRD、`MATRIX`、`SIDEBAR`、`DECISIONS`、`DELIVERY-CONTRACT` 等。  
    示例：
    - [03-admin-staff.md](/Users/hw/workspace/OSGPrj/osg-spec-docs/docs/01-product/prd/admin/03-admin-staff.md)
    - [05-admin-reports.md](/Users/hw/workspace/OSGPrj/osg-spec-docs/docs/01-product/prd/admin/05-admin-reports.md)
    - [07-admin-student-positions.md](/Users/hw/workspace/OSGPrj/osg-spec-docs/docs/01-product/prd/admin/07-admin-student-positions.md)
    - [DELIVERY-CONTRACT.yaml](/Users/hw/workspace/OSGPrj/osg-spec-docs/docs/01-product/prd/admin/DELIVERY-CONTRACT.yaml)
 
-3. 串联测试清单  
+4. 串联测试清单  
    [docs/osg-curl-chain-checklist.md](/Users/hw/workspace/OSGPrj/docs/osg-curl-chain-checklist.md)
 
-4. 代码现状  
+5. 代码现状  
    前端 API 调用点、后端 Controller / Service / Mapper、数据库表与字段
 
 取证原则：
 
+- 先做跨文档一致性校验，再进入链路判定
+- PRD 是重要证据源，但不自动视为绝对真值
+- 若 PRD 与产品确认清单、明确裁决或交付约束冲突，以更高优先级真值为准
+- 需求冲突本身需要进入审计结果，不能静默择一忽略
 - 先用需求回答“应不应该”
 - 再用代码回答“现在是不是这样”
 - 最后给出偏差和严重度
@@ -185,33 +193,36 @@
 - 哪些字段应直接生效，哪些字段应进入审核
 - 审核通过后是否回写到正式展示源
 
-### 9.2 课程与课时链路
+### 9.2 教学链路
 
 覆盖：
 
-- Mentor / Lead-Mentor / Assistant 提交
-- Admin 审核
-- Student 回看与评价
+- 子链 A：课程记录链
+- 子链 B：课时上报 / 审核链
 
 重点：
 
-- 提交记录是否真正进入后台审核链
-- 审核结果是否回写到学生端和统计口径
-- 审核是否为需求强制链
+- `课程记录链` 重点检查：
+  - Student / Mentor / Lead-Mentor / Assistant / Admin 是否围绕同一条课程记录读取与展示
+  - 课程记录是否被错误实现成只读投影或孤立影子表
+- `课时上报 / 审核链` 重点检查：
+  - Mentor / Lead-Mentor / Assistant 的提交是否真正进入后台审核链
+  - Admin 审核结果是否回写到学生端、统计口径和后续结算链
+  - 审核是否为需求强制链，而不是可选动作
 
-### 9.3 岗位与求职流转
+### 9.3 岗位、求职与模拟应聘流转
 
 覆盖：
 
-- Student 创建或申请
-- Admin 审核
-- Lead-Mentor / Assistant 分配或查看
-- Mentor 只读或消费
+- 子链 A：岗位发布与学生自添岗位审核
+- 子链 B：求职状态与辅导申请流转
+- 子链 C：模拟应聘申请、分配、确认与反馈
 
 重点：
 
 - 原始申请事实与工作流投影是否混淆
-- 通过、驳回、分配是否是同一条链路的连续状态
+- 审批、分配、确认是否属于同一条链路的连续状态
+- 模拟应聘是否被错误折叠进求职链，导致申请、分配、导师确认或学生回看断裂
 - 审批与分配是否被错误混用
 
 ### 9.4 登录、忘记密码与身份恢复
@@ -320,8 +331,9 @@
 本设计确认后，执行顺序固定为：
 
 1. 按 5 组链路收集需求证据和实现证据
-2. 形成链路矩阵初稿
+2. 形成链路矩阵初稿，并将首轮已确认问题统一标记为 `已知-待修复`
 3. 输出第二轮主报告
-4. 再决定是否进入修复设计或修复实施
+4. 在第二轮结果中区分“首轮已知问题”“本轮新增问题”“需求冲突问题”
+5. 再决定是否进入修复设计或修复实施
 
 本轮审计本身不是代码修复任务，不在设计阶段直接改动业务实现。
