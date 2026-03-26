@@ -64,6 +64,10 @@
 
 ## 存疑项
 
+说明：以下清单按“修复动作”合并同类缺口，因此条目数可能少于
+`docs/osg-cross-endpoint-flow-matrix.md` 中的 `存疑` 计数。
+例如 `Mentor / Assistant / Student Mock Practice` 的页面 PRD 缺口在矩阵中是 3 条独立业务行，但在本清单中合并为 1 个修复动作。
+
 - [ ] 补齐 `Student Profile` 专属 PRD 资产，避免长期靠 Admin 学员页反推
 - [ ] 补齐 `Mentor Profile` 专属 PRD 资产
 - [ ] 补齐 `Assistant Profile` 专属 PRD 资产
@@ -73,6 +77,11 @@
 - [ ] 明确 `Student class-request` 到底归属 `模拟应聘链` 还是 `课程申请链`
 
 ## 建议顺序
+
+说明：以下排序优先考虑“对日常主链流转的实际阻断面”和“是否已有运行时复现证据”，不单纯按 `P0/P1/P2` 标签机械排序。
+其中：
+- `P0` 已知问题严重度更高，但属于首轮已识别问题，触发面相对更窄
+- `P1` 新增问题虽然标签略低，但直接阻断日常分配主链，且已被第二轮运行时 spot-check 复现，因此优先修复
 
 1. 先修 3 个 `P1` 新增问题
 2. 再修 `Student 审核字段链` 和 `Staff 审批链`
