@@ -49,7 +49,7 @@
 - `P3-13` Assistant 编辑字段缺失
 - `GAP-C-01/GAP-C-02` 求职状态 / 辅导申请主链断裂
 - `GAP-D-01/GAP-D-02` 模拟应聘主链断裂 / 分配标识不一致
-- `GAP-E-01` Student 课程记录回看不消费后台主链
+- `GAP-E-01` Student 课程记录回看不消费后台主链（已在本轮代码取证中复核，当前实现不再匹配该旧结论）
 
 ## 5. 需求冲突
 
@@ -87,9 +87,8 @@
 
 本节用于记录第二轮新增发现的问题。
 
-当前状态：
-
-- 暂无；待完成各组链路取证后更新
+- `Assistant 课时提交侧缺失`：
+  产品确认清单和 Admin 课程记录 PRD 都把助教列为提交方，但当前代码只给 Assistant 提供了读取 `/admin/class-record/list` 和 `/admin/class-record/stats` 的能力，未找到 Assistant 创建课程记录的后端入口或前端提交 surface。
 
 ## 8. 按链路分组的审计结论
 
@@ -117,9 +116,14 @@
 当前状态：
 
 - 已拆分为 `课程记录链` 与 `课时上报 / 审核链`
-- `课程记录链` 已承接 `GAP-E-01`
-- 已识别 `审核提交来源范围` 的需求冲突
-- 详细结论待补
+- `Student 回看链`：
+  已回查当前实现，`StudentCourseRecordServiceImpl` 现在直接读取 `osg_class_record` 中 `approved` 记录，并把评价回写同一主表。因此历史 `GAP-E-01` 不再匹配当前代码。
+- `Mentor / Lead-Mentor 提交 -> Admin 审核链`：
+  当前代码已具备真实链路。Mentor 和 Lead-Mentor 都能写入 `osg_class_record`，Admin `report` 视角也具备 approve/reject/batch 审核入口。
+- `Assistant 提交侧`：
+  当前未找到真实创建入口。Assistant 端目前只具备读取 `/admin/class-record/list` 和 `/stats` 的能力，这是本轮新发现的实现缺口。
+- `需求层面`：
+  仍保留 `审核提交来源范围` 的需求冲突，尤其是 reports PRD 对提交来源的定义比 checklist 和 class-records PRD 更窄。
 
 ### 8.3 岗位、求职与模拟应聘流转
 
