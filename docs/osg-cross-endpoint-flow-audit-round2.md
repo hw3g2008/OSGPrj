@@ -47,8 +47,8 @@
 - `P2-9/P3-12` 忘记密码路径不一致
 - `P2-10` Lead-Mentor 地区城市硬编码
 - `P3-13` Assistant 编辑字段缺失
-- `GAP-C-01/GAP-C-02` 求职状态 / 辅导申请主链断裂
-- `GAP-D-01/GAP-D-02` 模拟应聘主链断裂 / 分配标识不一致
+- `GAP-C-01/GAP-C-02` 求职状态 / 辅导申请主链断裂（已在本轮代码取证中复核；Student 主链写入已接通，但 Admin 分配导师链出现新的标识错路问题）
+- `GAP-D-01/GAP-D-02` 模拟应聘主链断裂 / 分配标识不一致（已在本轮代码取证中复核；practice-request 主链与 Lead-Mentor 分配链已接通，但 Admin 分配链仍存在标识错路问题）
 - `GAP-E-01` Student 课程记录回看不消费后台主链（已在本轮代码取证中复核，当前实现不再匹配该旧结论）
 
 ## 5. 需求冲突
@@ -89,6 +89,10 @@
 
 - `Assistant 课时提交侧缺失`：
   产品确认清单和 Admin 课程记录 PRD 都把助教列为提交方，但当前代码只给 Assistant 提供了读取 `/admin/class-record/list` 和 `/admin/class-record/stats` 的能力，未找到 Assistant 创建课程记录的后端入口或前端提交 surface。
+- `Admin 求职分配导师链使用非真实导师标识`：
+  Admin 求职总览前端用导师姓名和序号前端生成 `mentorId`，服务端又直接把这些值写入 `osg_coaching.mentor_ids`，没有做 `staff_id -> user_id` 解析。导师侧读取依赖当前登录 `userId` 匹配 `mentor_ids`，这条链有高风险读不到分配结果。
+- `Admin 模拟应聘分配链使用静态导师目录与原样 mentorIds`：
+  Admin 模拟应聘前端使用静态 `mentorCatalog`，服务端直接把传入 `mentorIds` 写入 `osg_mock_practice.mentor_ids`，同样没有做 `staff_id -> user_id` 转换。导师侧消费链依赖 `userId` 匹配 `mentor_ids`，存在同类错路风险。
 
 ## 8. 按链路分组的审计结论
 
@@ -130,9 +134,22 @@
 当前状态：
 
 - 已拆分为 `岗位发布与学生自添岗位审核`、`求职状态与辅导申请流转`、`模拟应聘申请/分配/确认/反馈`
-- 已承接 `GAP-C-01/GAP-C-02` 与 `GAP-D-01/GAP-D-02`
-- 已识别 mentor / assistant / student mock-practice 需求资产缺口
-- 详细结论待补
+- `Student 自添岗位 -> Admin 审核链`：
+  当前代码已形成完整审核闭环。学生手动添加岗位写入 `osg_student_position`，Admin 侧具备 `list / approve / reject`，审核通过后会写入公共岗位 `osg_position`。
+- `Student 求职主链`：
+  当前代码已经把 `apply / progress / coaching` 写入 `osg_job_application` 主表，Student 自己的 `/student/application/list` 也直接从主表读。历史 `GAP-C-01` 不再匹配当前实现。
+- `Admin 求职分配导师链`：
+  当前是本轮新增问题。前端分配弹窗使用前端生成的 `mentorId`，服务端又直接把该值写入 `osg_coaching.mentor_ids`，没有做真实导师标识解析，导师端可能读不到 Admin 分配结果。
+- `Student 模拟应聘主链（practice-request）`：
+  当前代码已经把 `practice-request` 同时写入 shadow 表和 `osg_mock_practice` 主表，Student overview 的 practiceRecords 也直接读取主表，因此历史 `GAP-D-01` 在该子链上已不再成立。
+- `Lead-Mentor 模拟应聘分配链`：
+  当前可用。班主任分配时会把 `staffId` 转成 `userId` 再写入 `mentor_ids`，与导师端读取方式一致。
+- `Admin 模拟应聘分配链`：
+  当前是本轮新增问题。前端使用静态导师目录，服务端直接写入传入的 `mentorIds`，没有做 `staff_id -> user_id` 解析，导师端存在读不到 Admin 分配结果的风险。
+- `Student class-request`：
+  当前只写 `osg_student_mock_request`，未进入 `osg_mock_practice` 主链；但它究竟属于模拟应聘链还是课程申请链，需求边界还没完全收敛，暂记 `存疑`。
+- `需求层面`：
+  继续保留 mentor / assistant / student mock-practice 页面契约缺口。
 
 ### 8.4 登录、忘记密码与身份恢复
 
