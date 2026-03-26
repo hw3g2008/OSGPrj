@@ -58,6 +58,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { normalizeStudentPath } from '@/navigation/access'
 import { logout } from '@osg/shared/api'
 import { clearAuth, getUser } from '@osg/shared/utils'
 
@@ -75,6 +76,18 @@ interface MenuEntry {
 interface MenuGroup {
   title: string
   items: MenuEntry[]
+}
+
+function readRequestedPath(value: unknown): string {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return typeof value[0] === 'string' ? value[0] : ''
+  }
+
+  return ''
 }
 
 const userInfo = computed(() => getUser())
@@ -216,12 +229,30 @@ const menuGroups: MenuGroup[] = [
   }
 ]
 
+const currentRoutePath = computed(() => {
+  if (route.name === 'StudentComingSoon') {
+    const requestedPath = readRequestedPath(route.query.from)
+    if (requestedPath) {
+      return normalizeStudentPath(requestedPath)
+    }
+  }
+
+  return normalizeStudentPath(route.path)
+})
+
 const isActive = (paths: string[]) => {
-  return paths.some(path => route.path === path || route.path.startsWith(`${path}/`))
+  return paths.some(path => {
+    const normalizedPath = normalizeStudentPath(path)
+    return (
+      currentRoutePath.value === normalizedPath ||
+      currentRoutePath.value.startsWith(`${normalizedPath}/`)
+    )
+  })
 }
 
 const navigate = (path: string) => {
-  if (route.path !== path) {
+  const normalizedPath = normalizeStudentPath(path)
+  if (currentRoutePath.value !== normalizedPath) {
     router.push(path)
   }
 }

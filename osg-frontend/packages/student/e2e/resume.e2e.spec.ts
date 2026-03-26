@@ -8,19 +8,16 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('student resume story S-010', () => {
-  test('renders resume shells and ai resume report workflow @student-s010-resume', async ({ page }) => {
-    await page.goto('/resume')
-
-    await expect(page.getByRole('heading', { name: /我的简历\s*My Resume/ })).toBeVisible()
-    await page.getByRole('button', { name: '预览' }).first().click()
-    const previewDialog = page.getByRole('dialog', { name: /简历预览/ })
-    await expect(previewDialog).toBeVisible()
-    await previewDialog.getByRole('button', { name: /关\s*闭/ }).click()
-
-    await page.goto('/ai-resume')
-
-    await expect(page.getByRole('heading', { name: /AI简历分析\s*AI Resume Analysis/ })).toBeVisible()
-    await page.getByRole('button', { name: '查看报告' }).first().click()
-    await expect(page.getByRole('dialog', { name: /AI简历分析报告/ })).toBeVisible()
+  test('keeps resume routes behind the limited-rollout coming-soon surface @student-s010-resume', async ({ page }) => {
+    for (const blockedRoute of [
+      { path: '/resume', title: '简历管理' },
+      { path: '/ai-resume', title: 'AI简历分析' },
+    ]) {
+      await page.goto(blockedRoute.path)
+      await expect(page).toHaveURL(/\/coming-soon/)
+      await expect(page.getByRole('heading', { name: blockedRoute.title })).toBeVisible()
+      await expect(page.getByText('敬请期待')).toBeVisible()
+      await expect(page.getByText('当前页面不在本次学生端交付范围内')).toBeVisible()
+    }
   })
 })

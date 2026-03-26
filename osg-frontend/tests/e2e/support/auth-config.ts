@@ -53,6 +53,17 @@ function resolveModuleDefaults(env: Record<string, string | undefined>): AuthRun
     }
   }
 
+  if (moduleName === 'mentor') {
+    return {
+      username: 'mentor',
+      password: 'Osg@2026',
+      loginPath: '/login',
+      loginApiPath: '/api/mentor/login',
+      infoPath: '/api/mentor/getInfo',
+      postLoginPath: '/dashboard',
+    }
+  }
+
   return {
     username: 'admin',
     password: 'Osg@2026',
@@ -71,11 +82,16 @@ export function resolveAuthRuntimeConfig(
   }
   const moduleDefaults = resolveModuleDefaults(env)
   const isLeadMentorModule = moduleDefaults.loginApiPath === '/api/lead-mentor/login'
+  const isMentorModule = moduleDefaults.loginApiPath === '/api/mentor/login'
   const username = isLeadMentorModule
     ? normalizeRuntimeEnvValue(env.E2E_LEAD_MENTOR_USERNAME) || normalizeRuntimeEnvValue(env.E2E_ADMIN_USERNAME)
+    : isMentorModule
+      ? normalizeRuntimeEnvValue(env.E2E_MENTOR_USERNAME) || normalizeRuntimeEnvValue(env.E2E_ADMIN_USERNAME)
     : normalizeRuntimeEnvValue(env.E2E_ADMIN_USERNAME)
   const password = isLeadMentorModule
     ? normalizeRuntimeEnvValue(env.E2E_LEAD_MENTOR_PASSWORD) || normalizeRuntimeEnvValue(env.E2E_ADMIN_PASSWORD)
+    : isMentorModule
+      ? normalizeRuntimeEnvValue(env.E2E_MENTOR_PASSWORD) || normalizeRuntimeEnvValue(env.E2E_ADMIN_PASSWORD)
     : normalizeRuntimeEnvValue(env.E2E_ADMIN_PASSWORD)
   const captchaCode = normalizeRuntimeEnvValue(env.E2E_CAPTCHA_CODE)
   const redisHost = normalizeRuntimeEnvValue(env.E2E_REDIS_HOST) || normalizeRuntimeEnvValue(env.SPRING_DATA_REDIS_HOST)

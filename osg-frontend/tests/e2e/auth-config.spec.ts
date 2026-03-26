@@ -53,6 +53,19 @@ test.describe('Auth Runtime Config', () => {
     expect(config.password).toBe('Osg@2026')
   })
 
+  test('uses mentor module defaults with the mentor runtime credentials', () => {
+    const config = resolveAuthRuntimeConfig({
+      UI_VISUAL_MODULE: 'mentor',
+    })
+
+    expect(config.loginPath).toBe('/login')
+    expect(config.loginApiPath).toBe('/api/mentor/login')
+    expect(config.infoPath).toBe('/api/mentor/getInfo')
+    expect(config.postLoginPath).toBe('/dashboard')
+    expect(config.username).toBe('mentor')
+    expect(config.password).toBe('Osg@2026')
+  })
+
   test('lead-mentor module defaults still allow explicit env overrides', () => {
     const config = resolveAuthRuntimeConfig({
       UI_VISUAL_MODULE: 'lead-mentor',
@@ -81,6 +94,19 @@ test.describe('Auth Runtime Config', () => {
 
     expect(config.username).toBe('lead-mentor-explicit')
     expect(config.password).toBe('lead-mentor-pass')
+  })
+
+  test('mentor module prefers dedicated mentor runtime overrides over admin fallbacks', () => {
+    const config = resolveAuthRuntimeConfig({
+      UI_VISUAL_MODULE: 'mentor',
+      E2E_MENTOR_USERNAME: 'mentor-explicit',
+      E2E_MENTOR_PASSWORD: 'mentor-pass',
+      E2E_ADMIN_USERNAME: 'admin-fallback',
+      E2E_ADMIN_PASSWORD: 'admin-fallback-pass',
+    })
+
+    expect(config.username).toBe('mentor-explicit')
+    expect(config.password).toBe('mentor-pass')
   })
 
   test('falls back to spring redis env when e2e redis env is absent', () => {

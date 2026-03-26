@@ -59,7 +59,7 @@ public class SysPermissionService
     {
         Set<String> perms = new HashSet<String>();
         // 管理员拥有所有权限
-        if (user.isAdmin())
+        if (user.isAdmin() || hasSuperAdminRole(user))
         {
             perms.add(Constants.ALL_PERMISSION);
         }
@@ -85,5 +85,19 @@ public class SysPermissionService
             }
         }
         return perms;
+    }
+
+    private boolean hasSuperAdminRole(SysUser user)
+    {
+        List<SysRole> roles = user.getRoles();
+        if (CollectionUtils.isEmpty(roles))
+        {
+            return false;
+        }
+
+        return roles.stream().anyMatch(role ->
+            role != null
+                && StringUtils.equals(role.getStatus(), UserConstants.ROLE_NORMAL)
+                && (role.isAdmin() || StringUtils.equals(role.getRoleKey(), "super_admin")));
     }
 }

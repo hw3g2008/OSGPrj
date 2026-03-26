@@ -139,9 +139,21 @@ function buildStudentVisualUser(sourceUser: Record<string, any> | null | undefin
   }
 }
 
+function buildMentorVisualUser(sourceUser: Record<string, any> | null | undefined): Record<string, any> {
+  const baseUser = sourceUser && typeof sourceUser === 'object' ? sourceUser : {}
+  return {
+    ...baseUser,
+    userId: baseUser.userId || 837,
+    userName: baseUser.userName || 'mentor',
+    nickName: baseUser.nickName || baseUser.userName || 'mentor',
+    email: baseUser.email || 'autotest.mentor.api@osg.local',
+  }
+}
+
 async function seedBrowserSession(page: Page, token: string, user: Record<string, any> | null | undefined): Promise<void> {
   await page.addInitScript(({ nextToken, nextUser }) => {
-    window.localStorage.clear()
+    window.localStorage.removeItem('osg_token')
+    window.localStorage.removeItem('osg_user')
     window.localStorage.setItem('osg_token', nextToken)
     if (nextUser) {
       window.localStorage.setItem('osg_user', JSON.stringify(nextUser))
@@ -231,6 +243,86 @@ export async function loginAsAdmin(page: Page): Promise<void> {
     expect(loginBody?.token, '/api/student/login should include token for student visual auth').toBeTruthy()
 
     await seedBrowserSession(page, loginBody.token as string, buildStudentVisualUser(null))
+    await page.goto('/dashboard', {
+      waitUntil: 'domcontentloaded',
+      timeout: E2E_TIMEOUT_MS,
+    })
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(asRegExpPath('/dashboard'), { timeout: E2E_TIMEOUT_MS })
+    return
+  }
+
+  if (requestedModule === 'assistant') {
+    const loginBody = await assertRuoyiSuccess(
+      Promise.resolve(page.request.post(authConfig.loginApiPath, {
+        data: {
+          username: authConfig.username,
+          password: authConfig.password,
+        },
+      })),
+      authConfig.loginApiPath,
+    )
+    const assistantToken = loginBody?.token || loginBody?.data?.token
+    expect(assistantToken, `${authConfig.loginApiPath} should include token`).toBeTruthy()
+
+    const infoBody = await assertRuoyiSuccess(
+      Promise.resolve(page.request.get(authConfig.infoPath, {
+        headers: {
+          Authorization: `Bearer ${assistantToken}`,
+        },
+      })),
+      authConfig.infoPath,
+    )
+
+    await seedBrowserSession(page, assistantToken, {
+      ...(infoBody?.user || {}),
+      roles: Array.isArray(infoBody?.roles) ? infoBody.roles : [],
+      permissions: Array.isArray(infoBody?.permissions) ? infoBody.permissions : [],
+    })
+
+    await page.goto(authConfig.postLoginPath, {
+      waitUntil: 'domcontentloaded',
+      timeout: E2E_TIMEOUT_MS,
+    })
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(asRegExpPath(authConfig.postLoginPath), { timeout: E2E_TIMEOUT_MS })
+    return
+  }
+
+  if (requestedModule === 'mentor') {
+    const loginBody = await assertRuoyiSuccess(
+      Promise.resolve(page.request.post(authConfig.loginApiPath, {
+        data: {
+          username: authConfig.username,
+          password: authConfig.password,
+        },
+      })),
+      authConfig.loginApiPath,
+    )
+    const mentorToken = loginBody?.token || loginBody?.data?.token
+    expect(mentorToken, `${authConfig.loginApiPath} should include token`).toBeTruthy()
+
+    const infoBody = await assertRuoyiSuccess(
+      Promise.resolve(page.request.get(authConfig.infoPath, {
+        headers: {
+          Authorization: `Bearer ${mentorToken}`,
+        },
+      })),
+      authConfig.infoPath,
+    )
+
+    await seedBrowserSession(page, mentorToken, buildMentorVisualUser({
+      ...(infoBody?.user || {}),
+      roles: Array.isArray(infoBody?.roles) ? infoBody.roles : [],
+      permissions: Array.isArray(infoBody?.permissions) ? infoBody.permissions : [],
+    }))
+
+    await page.goto(authConfig.postLoginPath, {
+      waitUntil: 'domcontentloaded',
+      timeout: E2E_TIMEOUT_MS,
+    })
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(asRegExpPath(authConfig.postLoginPath), { timeout: E2E_TIMEOUT_MS })
     return
   }
 
@@ -263,6 +355,32 @@ export async function loginAsAdmin(page: Page): Promise<void> {
     )
 
     await seedBrowserSession(page, leadMentorToken, {
+      ...(infoBody?.user || {}),
+      roles: Array.isArray(infoBody?.roles) ? infoBody.roles : [],
+      permissions: Array.isArray(infoBody?.permissions) ? infoBody.permissions : [],
+    })
+
+    await page.goto(authConfig.postLoginPath, {
+      waitUntil: 'domcontentloaded',
+      timeout: E2E_TIMEOUT_MS,
+    })
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(asRegExpPath(authConfig.postLoginPath), { timeout: E2E_TIMEOUT_MS })
+    return
+  }
+
+  if (!requestedModule || requestedModule === 'admin' || requestedModule === 'permission') {
+    const { token } = await loginAsAdminApi(page.request)
+    const infoBody = await assertRuoyiSuccess(
+      Promise.resolve(page.request.get(authConfig.infoPath, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })),
+      authConfig.infoPath,
+    )
+
+    await seedBrowserSession(page, token, {
       ...(infoBody?.user || {}),
       roles: Array.isArray(infoBody?.roles) ? infoBody.roles : [],
       permissions: Array.isArray(infoBody?.permissions) ? infoBody.permissions : [],

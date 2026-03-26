@@ -842,6 +842,11 @@ onMounted(() => {
   align-items: start;
 }
 
+.panel-card--table,
+.panel-card--detail {
+  min-width: 0;
+}
+
 .panel-card__header {
   display: flex;
   justify-content: space-between;
@@ -853,6 +858,10 @@ onMounted(() => {
   padding: 20px 24px 24px;
 }
 
+.panel-card--table .panel-card__body {
+  overflow-x: auto;
+}
+
 .panel-card__body--state {
   color: #64748b;
   line-height: 1.7;
@@ -861,6 +870,10 @@ onMounted(() => {
 .data-table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.class-records-table {
+  min-width: 860px;
 }
 
 .data-table th,

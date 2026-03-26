@@ -6,17 +6,17 @@
       </div>
       <div class="card-body">
         <div class="profile-grid">
-          <div class="profile-avatar">TS</div>
+          <div class="profile-avatar">{{ avatarInitials }}</div>
           <div>
             <h2 class="student-name">
-              Test Student
-              <span class="student-id">ID: 12766</span>
+              {{ profile.fullName || '-' }}
+              <span class="student-id">ID: {{ profile.studentCode || '-' }}</span>
             </h2>
             <div class="student-meta-grid">
-              <div><i class="mdi mdi-school" aria-hidden="true"></i>北京大学 · 光华管理学院</div>
-              <div><i class="mdi mdi-calendar" aria-hidden="true"></i>2025届毕业</div>
-              <div><i class="mdi mdi-target" aria-hidden="true"></i><strong>主攻方向：</strong>Finance · IB</div>
-              <div><i class="mdi mdi-email" aria-hidden="true"></i>test@example.com</div>
+              <div><i class="mdi mdi-school" aria-hidden="true"></i>{{ profile.school }} · {{ profile.major }}</div>
+              <div><i class="mdi mdi-calendar" aria-hidden="true"></i>{{ profile.graduationYear }}届毕业</div>
+              <div><i class="mdi mdi-target" aria-hidden="true"></i><strong>主攻方向：</strong>{{ profile.primaryDirection }}</div>
+              <div><i class="mdi mdi-email" aria-hidden="true"></i>{{ profile.email }}</div>
             </div>
           </div>
           <div class="mentor-section">
@@ -28,18 +28,18 @@
               <div>
                 <div class="mentor-role">班主任 Lead Mentor</div>
                 <div class="mentor-primary-card">
-                  <div class="mentor-avatar">TL</div>
+                  <div class="mentor-avatar">{{ leadMentorInitials }}</div>
                   <div>
-                    <div class="mentor-name">Test Lead Mentor</div>
-                    <div class="mentor-area">金融 Finance</div>
+                    <div class="mentor-name">{{ profile.leadMentor || '待分配' }}</div>
+                    <div class="mentor-area">{{ profile.primaryDirection || '方向待更新' }}</div>
                   </div>
                 </div>
               </div>
               <div>
-                <div class="mentor-role">辅导导师 Tutors</div>
+                <div class="mentor-role">Support Team</div>
                 <div class="mentor-tags">
-                  <span class="tag purple">Jerry Li</span>
-                  <span class="tag purple">Mike Chen</span>
+                  <span class="tag purple">{{ profile.assistantName || 'Assistant Pending' }}</span>
+                  <span class="tag info">{{ profile.targetRegion || 'Region Pending' }}</span>
                 </div>
               </div>
             </div>
@@ -53,11 +53,6 @@
       <div class="analysis-orb analysis-orb-lg"></div>
       <div class="analysis-orb analysis-orb-sm"></div>
       <div class="analysis-orb analysis-orb-bottom"></div>
-      <div class="analysis-dot analysis-dot-1"></div>
-      <div class="analysis-dot analysis-dot-2"></div>
-      <div class="analysis-dot analysis-dot-3"></div>
-      <div class="analysis-line analysis-line-left"></div>
-      <div class="analysis-line analysis-line-bottom"></div>
 
       <div class="analysis-shell">
         <div class="analysis-header">
@@ -67,39 +62,37 @@
           </div>
           <div class="analysis-updated">
             <i class="mdi mdi-clock-outline" aria-hidden="true"></i>
-            Updated Dec 17, 2025
+            {{ analysisUpdatedText }}
           </div>
         </div>
 
         <div class="analysis-grid">
           <div class="grade-card">
             <div class="grade-circle">
-              <span>B+</span>
+              <span>{{ performanceGrade }}</span>
             </div>
             <div class="grade-label">Overall Grade</div>
             <div class="grade-trend">
               <i class="mdi mdi-trending-up" aria-hidden="true"></i>
-              Improving
+              {{ trendLabel }}
             </div>
           </div>
 
           <div class="analysis-copy">
             <p>
-              Completed <strong>12 mock interviews</strong> with an average score of
-              <strong>75</strong>. Great performance rate at 42% with an upward trend.
-              Foundation courses progressing well (Technical 60%, Interview Skills 70%).
-              Active in networking with <strong class="positive">8 connections</strong>.
-              Currently have <strong class="warning">5 real interviews</strong>, 2 advancing
-              to final rounds.
+              当前共有 <strong>{{ applicationsMeta.tabCounts.ongoing }}</strong> 条进行中的求职记录，
+              已完成 <strong>{{ summaryCards[0].value }}</strong> 条模拟应聘记录，
+              待评价课程 <strong>{{ pendingClassCount }}</strong> 条，
+              岗位池可见 <strong>{{ summaryCards[4].value }}</strong> 个岗位。
             </p>
             <div class="analysis-tags">
               <div class="focus-tag warning-tag">
                 <div>Needs Work</div>
-                <span>Behavioral &amp; Leadership</span>
+                <span>{{ analysisNeedsWork }}</span>
               </div>
               <div class="focus-tag success-tag">
                 <div>Strengths</div>
-                <span>Case Study &amp; Technical</span>
+                <span>{{ analysisStrengths }}</span>
               </div>
             </div>
           </div>
@@ -111,8 +104,12 @@
             Focus Areas
           </span>
           <div class="focus-pills">
-            <span class="focus-pill focus-pill-success">🎯 Goldman Sachs - Superday</span>
-            <span class="focus-pill focus-pill-warning">📋 Morgan Stanley - R2</span>
+            <span class="focus-pill focus-pill-success">
+              {{ applicationsPreview[0]?.company || profile.primaryDirection || 'Primary Focus' }}
+            </span>
+            <span class="focus-pill focus-pill-warning">
+              {{ profile.targetRegion || 'Target Region Pending' }}
+            </span>
           </div>
         </div>
 
@@ -125,19 +122,19 @@
           <div class="criteria-grid">
             <div class="criteria-card criteria-a">
               <div>A</div>
-              <span>Great≥60% · Course≥80%</span>
+              <span>3+ active tracks</span>
             </div>
             <div class="criteria-card criteria-b">
               <div>B</div>
-              <span>Great≥40% · Course≥60%</span>
+              <span>1-2 active tracks</span>
             </div>
             <div class="criteria-card criteria-c">
               <div>C</div>
-              <span>Great≥20% · Course≥40%</span>
+              <span>Needs more input</span>
             </div>
             <div class="criteria-card criteria-d">
               <div>D</div>
-              <span>Below C standards</span>
+              <span>No active records</span>
             </div>
           </div>
         </div>
@@ -163,7 +160,7 @@
       <div class="card-header">
         <span class="card-title">模拟面试得分 Mock Interview Scores</span>
         <span class="card-inline-hint">
-          平均分 <strong>75.0</strong>
+          记录 <strong>{{ practiceRecords.length }}</strong>
         </span>
         <button type="button" class="header-link" @click="$router.push('/feedback')">查看全部 →</button>
       </div>
@@ -174,17 +171,20 @@
               <th>日期</th>
               <th>Mentor</th>
               <th>类型</th>
-              <th>得分</th>
+              <th>状态</th>
               <th>Performance</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in mockScores" :key="`${row.date}-${row.mentor}`">
+            <tr v-for="row in mockScores" :key="`${row.date}-${row.mentor}-${row.type}`">
               <td>{{ row.date }}</td>
               <td>{{ row.mentor }}</td>
               <td>{{ row.type }}</td>
               <td class="score-cell" :class="row.scoreTone">{{ row.score }}</td>
               <td><span class="tag" :class="row.tagTone">{{ row.tag }}</span></td>
+            </tr>
+            <tr v-if="mockScores.length === 0">
+              <td colspan="5" class="empty-cell">暂无模拟应聘记录</td>
             </tr>
           </tbody>
         </table>
@@ -217,7 +217,7 @@
       <div class="card-header">
         <span class="card-title">简历详情 Resume Details</span>
         <span class="card-inline-hint">
-          共 <strong>3</strong> 份
+          实时摘要 <strong>{{ resumeRows.length }}</strong>
         </span>
         <button type="button" class="header-link" @click="$router.push('/resume')">管理简历 →</button>
       </div>
@@ -233,7 +233,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="resume in resumes" :key="resume.fileName">
+            <tr v-for="resume in resumeRows" :key="resume.fileName">
               <td>
                 <span v-if="resume.versionTone" class="tag" :class="resume.versionTone">
                   {{ resume.version }}
@@ -243,7 +243,7 @@
               <td>{{ resume.fileName }}</td>
               <td>{{ resume.mentor }}</td>
               <td>{{ resume.updatedAt }}</td>
-              <td><button type="button" class="btn btn-text btn-sm">查看</button></td>
+              <td><button type="button" class="btn btn-text btn-sm" @click="$router.push('/resume')">查看</button></td>
             </tr>
           </tbody>
         </table>
@@ -254,7 +254,7 @@
       <div class="card-header">
         <span class="card-title">真实面试记录 Real Interviews</span>
         <span class="card-inline-hint">
-          累计 <strong>5</strong> 次
+          累计 <strong>{{ applicationsPreview.length }}</strong> 次
         </span>
         <button type="button" class="header-link" @click="$router.push('/questions')">查看全部 →</button>
       </div>
@@ -272,14 +272,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="interview in realInterviews" :key="`${interview.date}-${interview.company}`">
+            <tr v-for="interview in applicationsPreview" :key="`${interview.company}-${interview.position}`">
               <td>{{ interview.date }}</td>
               <td class="company-cell">{{ interview.company }}</td>
               <td>{{ interview.office }}</td>
               <td>{{ interview.role }}</td>
               <td>{{ interview.program }}</td>
               <td>{{ interview.round }}</td>
-              <td><button type="button" class="btn btn-text btn-sm">详情</button></td>
+              <td><button type="button" class="btn btn-text btn-sm" @click="$router.push('/job-tracking')">详情</button></td>
+            </tr>
+            <tr v-if="applicationsPreview.length === 0">
+              <td colspan="7" class="empty-cell">暂无真实面试记录</td>
             </tr>
           </tbody>
         </table>
@@ -333,63 +336,415 @@
 </template>
 
 <script setup lang="ts">
-const summaryCards = [
-  { label: 'Mock Interviews', value: '12', iconClass: 'mdi-microphone', progress: '75%', tone: 'tone-blue' },
-  { label: 'Networking', value: '8', iconClass: 'mdi-account-group', progress: '80%', tone: 'tone-green' },
-  { label: 'Resumes', value: '3', iconClass: 'mdi-file-document-multiple', progress: '100%', tone: 'tone-sky' },
-  { label: 'Real Interviews', value: '5', iconClass: 'mdi-briefcase-check', progress: '50%', tone: 'tone-amber' },
-  { label: 'Skill Courses', value: '6', iconClass: 'mdi-book-open-page-variant', progress: '60%', tone: 'tone-purple' }
-]
+import { computed, onMounted, reactive, ref } from 'vue'
+import {
+  getStudentApplicationsMeta,
+  getStudentClassRecordsMeta,
+  getStudentMockPracticeOverview,
+  getStudentPositionMeta,
+  getStudentProfile,
+  listStudentApplications,
+  listStudentClassRecords,
+  listStudentPositions,
+  type StudentApplicationRecord,
+  type StudentApplicationsMeta,
+  type StudentClassRecord,
+  type StudentClassRecordsMeta,
+  type StudentMockPracticeOverview,
+  type StudentPositionMeta,
+  type StudentPositionRecord,
+  type StudentProfileRecord,
+} from '@osg/shared/api'
 
-const mockScores = [
-  { date: '03/05/2025', mentor: 'Jess', type: 'Behavioral', score: '85', scoreTone: 'score-primary', tag: 'Great', tagTone: 'success' },
-  { date: '03/02/2025', mentor: 'Jeremy', type: 'Technical', score: '62', scoreTone: 'score-warning', tag: 'Disappointing', tagTone: 'danger' },
-  { date: '02/28/2025', mentor: 'Mike', type: 'Case', score: '78', scoreTone: 'score-primary', tag: 'Okay', tagTone: 'warning' }
-]
+const profile = reactive<StudentProfileRecord>({
+  studentCode: '-',
+  fullName: '-',
+  englishName: '-',
+  email: '-',
+  sexLabel: '-',
+  statusLabel: '正常',
+  leadMentor: '-',
+  assistantName: '-',
+  school: '-',
+  major: '-',
+  graduationYear: '-',
+  highSchool: '-',
+  postgraduatePlan: '否',
+  visaStatus: '-',
+  targetRegion: '-',
+  recruitmentCycle: '-',
+  primaryDirection: '-',
+  secondaryDirection: '-',
+  phone: '-',
+  wechatId: '-',
+})
 
-const foundationProgress = [
-  {
-    label: '技术技巧 Technical Skills',
-    iconClass: 'mdi-cog',
-    progressText: '60% (6/10节)',
-    width: '60%'
+const applicationsMeta = reactive<StudentApplicationsMeta>({
+  pageSummary: {
+    titleZh: '我的求职',
+    titleEn: 'My Applications',
+    subtitle: '查看您的岗位申请和面试安排',
   },
-  {
-    label: '面试技巧 Interview Skills',
-    iconClass: 'mdi-account-voice',
-    progressText: '70% (7/10节)',
-    width: '70%'
+  tabCounts: {
+    all: 0,
+    applied: 0,
+    ongoing: 0,
+    completed: 0,
+  },
+  filterOptions: {
+    progressStages: [],
+    coachingStatuses: [],
+    companyTypes: [],
+    applyMethods: [],
+  },
+  schedule: [],
+})
+
+const classRecordsMeta = reactive<StudentClassRecordsMeta>({
+  pageSummary: {
+    titleZh: '课程记录',
+    titleEn: 'Class Records',
+    subtitle: '查看我的上课记录和导师反馈',
+  },
+  reminderBanner: {
+    iconLabel: 'CR',
+    title: '新增课程记录',
+    leadText: '导师',
+    mentorName: '-',
+    middleText: '为您填报了',
+    newRecordCount: 0,
+    suffixText: '条新的上课记录，请及时评价',
+    ctaLabel: '去评价',
+  },
+  tabDefinitions: [],
+  filters: {
+    keywordPlaceholder: '',
+    coachingTypePlaceholder: '',
+    courseContentPlaceholder: '',
+    timeRangePlaceholder: '',
+    resetLabel: '',
+    coachingTypeOptions: [],
+    courseContentOptions: [],
+    timeRangeOptions: [],
+  },
+  tableHeaders: {
+    recordId: '记录ID',
+    coachingDetail: '辅导内容',
+    courseContent: '课程内容',
+    mentor: '导师',
+    classDate: '上课日期',
+    duration: '时长',
+    rating: '我的评价',
+    action: '操作',
+  },
+  detailDialog: {
+    closeLabel: '关闭',
+    confirmLabel: '修改评价',
+    fields: {
+      recordId: '记录ID',
+      coachingDetail: '辅导内容',
+      courseContent: '课程内容',
+      mentor: '导师',
+      classDate: '上课日期',
+      duration: '时长',
+    },
+  },
+  ratingDialog: {
+    title: '课程评价',
+    scoreLabel: '整体评分',
+    tagLabel: '评价标签',
+    feedbackLabel: '详细反馈',
+    tagPlaceholder: '',
+    feedbackPlaceholder: '',
+    cancelLabel: '取消',
+    submitLabel: '提交评价',
+    successMessage: '评价提交成功',
+    tagOptions: [],
+  },
+})
+
+const positionMeta = reactive<StudentPositionMeta>({
+  intentSummary: {
+    recruitmentCycle: '-',
+    targetRegion: '-',
+    primaryDirection: '-',
+  },
+  filterOptions: {
+    categories: [],
+    industries: [],
+    companies: [],
+    locations: [],
+    applyMethods: [],
+    progressStages: [],
+    coachingStages: [],
+    mentorCounts: [],
+  },
+})
+
+const applications = ref<StudentApplicationRecord[]>([])
+const classRecords = ref<StudentClassRecord[]>([])
+const positions = ref<StudentPositionRecord[]>([])
+const practiceOverview = ref<StudentMockPracticeOverview>({
+  practiceRecords: [],
+  requestRecords: [],
+})
+
+const avatarInitials = computed(() => {
+  const name = profile.fullName.trim()
+  if (!name) {
+    return 'ST'
   }
-]
+  const parts = name.split(/\s+/).filter(Boolean)
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('') || 'ST'
+})
 
-const resumes = [
-  { version: 'Latest', versionTone: 'purple', fileName: 'Resume_TestStudent_v3_final.pdf', mentor: 'Jess', updatedAt: '12/10/2025' },
-  { version: 'v2', versionTone: '', fileName: 'Resume_TestStudent_v2.pdf', mentor: 'Jeremy', updatedAt: '12/01/2025' },
-  { version: 'v1 (原始)', versionTone: '', fileName: 'Resume_TestStudent_v1.pdf', mentor: '-', updatedAt: '11/20/2025' }
-]
+const leadMentorInitials = computed(() => {
+  const name = profile.leadMentor.trim()
+  if (!name || name === '-') {
+    return 'LM'
+  }
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('') || 'LM'
+})
 
-const realInterviews = [
-  { date: '12/15/2025', company: 'Goldman Sachs', office: 'Hong Kong', role: 'Investment Banking', program: 'Summer Analyst', round: 'Superday' },
-  { date: '12/10/2025', company: 'Morgan Stanley', office: 'New York', role: 'S&T', program: 'Summer Analyst', round: 'R2' },
-  { date: '12/05/2025', company: 'JP Morgan', office: 'London', role: 'Asset Management', program: 'Off-Cycle', round: 'R1' }
-]
+const practiceRecords = computed(() => practiceOverview.value.practiceRecords || [])
+const pendingClassCount = computed(() => {
+  const pendingTab = classRecordsMeta.tabDefinitions.find((item) => item.key === 'pending')
+  return pendingTab?.count || 0
+})
 
-const mentorNotes = [
+const performanceGrade = computed(() => {
+  if (applicationsMeta.tabCounts.ongoing >= 3) return 'A'
+  if (applicationsMeta.tabCounts.ongoing >= 1) return 'B'
+  if (practiceRecords.value.length > 0) return 'C'
+  return 'D'
+})
+
+const trendLabel = computed(() => {
+  if (applicationsMeta.tabCounts.ongoing > 0 || practiceRecords.value.length > 0) {
+    return 'Active'
+  }
+  return 'Starting'
+})
+
+const analysisUpdatedText = computed(() => {
+  const latest =
+    practiceRecords.value[0]?.submittedAtValue ||
+    applications.value[0]?.appliedDate ||
+    classRecords.value[0]?.classDateRaw ||
+    ''
+  return latest ? `Updated ${latest}` : 'Updated just now'
+})
+
+const analysisNeedsWork = computed(() => {
+  if (pendingClassCount.value > 0) {
+    return `待评价课程 ${pendingClassCount.value} 条`
+  }
+  if (applicationsMeta.tabCounts.applied > 0) {
+    return `已投递待推进 ${applicationsMeta.tabCounts.applied} 条`
+  }
+  return '继续补充更多真实反馈'
+})
+
+const analysisStrengths = computed(() => {
+  if (applicationsMeta.tabCounts.ongoing > 0) {
+    return `${applicationsMeta.tabCounts.ongoing} 条求职流程持续推进`
+  }
+  if (practiceRecords.value.length > 0) {
+    return `${practiceRecords.value.length} 条模拟应聘已进入记录`
+  }
+  return '基础资料与求职意向已同步'
+})
+
+const applicationsPreview = computed(() =>
+  applications.value.slice(0, 3).map((item) => ({
+    date: item.appliedDate || '-',
+    company: item.company || '-',
+    office: item.location || '-',
+    role: item.position || '-',
+    program: item.coachingStatusLabel || '-',
+    round: item.stageLabel || '-',
+  })),
+)
+
+const mockScores = computed(() =>
+  practiceRecords.value.slice(0, 3).map((item) => ({
+    date: item.submittedAtValue || item.appliedAt || '-',
+    mentor: item.mentor || '-',
+    type: item.type || '-',
+    score: item.statusValue || item.status || '-',
+    scoreTone: item.status === 'scheduled' ? 'score-primary' : 'score-warning',
+    tag: item.feedback && item.feedback !== '-' ? item.feedback : 'In Progress',
+    tagTone: item.feedback && item.feedback !== '-' ? 'success' : 'warning',
+  })),
+)
+
+const foundationProgress = computed(() => {
+  const totalPositions = Math.max(positions.value.length, 1)
+  const appliedCount = positions.value.filter((item) => item.applied).length
+  const favoritesCount = positions.value.filter((item) => item.favorited).length
+
+  return [
+    {
+      label: '岗位追踪 Position Tracking',
+      iconClass: 'mdi-briefcase-search',
+      progressText: `${appliedCount}/${totalPositions}`,
+      width: `${Math.min(100, Math.round((appliedCount / totalPositions) * 100))}%`,
+    },
+    {
+      label: '求职准备 Career Readiness',
+      iconClass: 'mdi-account-voice',
+      progressText: `${practiceRecords.value.length + pendingClassCount.value} 条`,
+      width: `${Math.min(100, (practiceRecords.value.length + pendingClassCount.value) * 20)}%`,
+    },
+    {
+      label: '岗位收藏 Saved Targets',
+      iconClass: 'mdi-star-outline',
+      progressText: `${favoritesCount} 个`,
+      width: `${Math.min(100, favoritesCount * 15)}%`,
+    },
+  ]
+})
+
+const resumeRows = computed(() => {
+  const resumeLikeRecords = classRecords.value
+    .filter((item) => /简历|resume/i.test(item.courseContent || item.coachingDetail || ''))
+    .slice(0, 3)
+
+  if (resumeLikeRecords.length > 0) {
+    return resumeLikeRecords.map((item, index) => ({
+      version: index === 0 ? 'Latest' : `v${resumeLikeRecords.length - index}`,
+      versionTone: index === 0 ? 'purple' : '',
+      fileName: `${profile.englishName || profile.fullName || 'resume'}-${item.recordId}.pdf`,
+      mentor: item.mentor || profile.leadMentor || '-',
+      updatedAt: item.classDate || '-',
+    }))
+  }
+
+  return [
+    {
+      version: 'Live Summary',
+      versionTone: 'info',
+      fileName: `${profile.englishName || profile.fullName || 'resume'}-profile-sync.pdf`,
+      mentor: profile.leadMentor || '-',
+      updatedAt: analysisUpdatedText.value,
+    },
+  ]
+})
+
+const mentorNotes = computed(() => [
   {
     title: 'Lead Mentor Call',
     tagTone: 'purple',
-    author: 'Jess (Lead Mentor)',
-    date: '12/10/2025',
-    copy: '"该学员学习态度积极，技术面试掌握较好，Case分析能力提升明显。建议加强Behavioral准备，尤其是Leadership相关问题。整体进度符合预期。"'
+    author: profile.leadMentor || 'Lead Mentor Pending',
+    date: analysisUpdatedText.value.replace('Updated ', '') || '-',
+    copy:
+      applicationsMeta.tabCounts.ongoing > 0
+        ? `当前共有 ${applicationsMeta.tabCounts.ongoing} 条进行中的求职记录，建议优先推进 ${applications.value[0]?.company || '重点岗位'} 的下一轮准备。`
+        : '当前暂无进行中的求职记录，建议先完善岗位收藏与申请动作。',
   },
   {
     title: 'RA Session',
     tagTone: 'info',
-    author: 'Alex (RA)',
-    date: '12/12/2025',
-    copy: '"本周完成了3次模拟面试练习，Valuation部分有明显进步。建议多复习DCF和LBO模型的细节问题。下周重点跟进Goldman Sachs Superday准备。"'
-  }
-]
+    author: profile.assistantName || 'Assistant Pending',
+    date: analysisUpdatedText.value.replace('Updated ', '') || '-',
+    copy:
+      pendingClassCount.value > 0
+        ? `有 ${pendingClassCount.value} 条课程记录待评价，完成评价后可以帮助团队更快跟进后续辅导安排。`
+        : `当前模拟应聘记录 ${practiceRecords.value.length} 条，岗位池可见 ${positions.value.length} 个岗位，建议继续保持节奏。`,
+  },
+])
+
+const summaryCards = computed(() => {
+  const totalPositions = positions.value.length
+  const favoritedCount = positions.value.filter((item) => item.favorited).length
+  const appliedCount = positions.value.filter((item) => item.applied).length
+
+  return [
+    {
+      label: 'Mock Interviews',
+      value: String(practiceRecords.value.length),
+      iconClass: 'mdi-microphone',
+      progress: `${Math.min(100, practiceRecords.value.length * 20)}%`,
+      tone: 'tone-blue',
+    },
+    {
+      label: 'Active Applications',
+      value: String(applicationsMeta.tabCounts.ongoing),
+      iconClass: 'mdi-briefcase-clock',
+      progress: `${Math.min(100, applicationsMeta.tabCounts.ongoing * 25)}%`,
+      tone: 'tone-green',
+    },
+    {
+      label: 'Pending Reviews',
+      value: String(pendingClassCount.value),
+      iconClass: 'mdi-book-open-page-variant',
+      progress: `${Math.min(100, pendingClassCount.value * 25)}%`,
+      tone: 'tone-sky',
+    },
+    {
+      label: 'Saved Targets',
+      value: String(favoritedCount),
+      iconClass: 'mdi-star-outline',
+      progress: `${totalPositions > 0 ? Math.min(100, Math.round((favoritedCount / totalPositions) * 100)) : 0}%`,
+      tone: 'tone-amber',
+    },
+    {
+      label: 'Open Positions',
+      value: String(totalPositions),
+      iconClass: 'mdi-briefcase-search',
+      progress: `${totalPositions > 0 ? Math.min(100, Math.round((appliedCount / totalPositions) * 100)) : 0}%`,
+      tone: 'tone-purple',
+    },
+  ]
+})
+
+async function loadDashboard() {
+  const tasks = [
+    getStudentProfile()
+      .then((profileView) => {
+        Object.assign(profile, profileView.profile)
+      }),
+    getStudentApplicationsMeta()
+      .then((applicationsMetaView) => {
+        Object.assign(applicationsMeta, applicationsMetaView)
+      }),
+    listStudentApplications()
+      .then((applicationsListView) => {
+        applications.value = applicationsListView.applications || []
+      }),
+    getStudentMockPracticeOverview()
+      .then((mockPracticeView) => {
+        practiceOverview.value = mockPracticeView
+      }),
+    getStudentClassRecordsMeta()
+      .then((classRecordsMetaView) => {
+        Object.assign(classRecordsMeta, classRecordsMetaView)
+      }),
+    listStudentClassRecords()
+      .then((classRecordsListView) => {
+        classRecords.value = classRecordsListView.records || []
+      }),
+    getStudentPositionMeta()
+      .then((positionMetaView) => {
+        Object.assign(positionMeta, positionMetaView)
+      }),
+    listStudentPositions()
+      .then((positionsListView) => {
+        positions.value = positionsListView || []
+      }),
+  ]
+
+  await Promise.allSettled(tasks)
+}
+
+onMounted(() => {
+  loadDashboard()
+})
 </script>
 
 <style scoped lang="scss">
@@ -560,58 +915,6 @@ const mentorNotes = [
     background: linear-gradient(135deg, rgba(115, 153, 198, 0.06), transparent);
   }
 
-  .analysis-dot {
-    position: absolute;
-    border-radius: 50%;
-    background: var(--primary);
-  }
-
-  .analysis-dot-1 {
-    top: 40px;
-    right: 20%;
-    width: 8px;
-    height: 8px;
-    opacity: 0.3;
-  }
-
-  .analysis-dot-2 {
-    top: 70px;
-    right: 12%;
-    width: 5px;
-    height: 5px;
-    background: #9bb8d9;
-    opacity: 0.4;
-  }
-
-  .analysis-dot-3 {
-    bottom: 60px;
-    left: 15%;
-    width: 6px;
-    height: 6px;
-    opacity: 0.25;
-  }
-
-  .analysis-line {
-    position: absolute;
-    border-radius: 2px;
-  }
-
-  .analysis-line-left {
-    top: 50px;
-    left: 0;
-    width: 3px;
-    height: 60px;
-    background: linear-gradient(180deg, #7399c6, transparent);
-  }
-
-  .analysis-line-bottom {
-    bottom: 0;
-    right: 100px;
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(115, 153, 198, 0.2), transparent);
-  }
-
   .analysis-shell {
     position: relative;
     z-index: 1;
@@ -712,14 +1015,6 @@ const mentorNotes = [
     strong {
       color: var(--primary);
     }
-  }
-
-  .positive {
-    color: var(--success);
-  }
-
-  .warning {
-    color: var(--warning);
   }
 
   .analysis-tags {
@@ -1029,7 +1324,7 @@ const mentorNotes = [
 
   .progress-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
   }
 
@@ -1105,6 +1400,12 @@ const mentorNotes = [
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+  }
+
+  .empty-cell {
+    text-align: center;
+    color: var(--muted);
+    padding: 24px;
   }
 }
 

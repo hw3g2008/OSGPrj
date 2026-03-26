@@ -36,7 +36,7 @@ public class OsgIdentityResolver
     public OsgStudent resolveStudentByUserId(Long userId)
     {
         SysUser account = requireUserAccount(userId);
-        String email = requireEmail(account.getUserName(), "学员账号邮箱缺失，无法建立五端主链");
+        String email = resolveAccountEmail(account, "学员账号邮箱缺失，无法建立五端主链");
         OsgStudent student = studentMapper.selectStudentByEmail(email);
         if (student == null || student.getStudentId() == null)
         {
@@ -49,7 +49,7 @@ public class OsgIdentityResolver
     {
         OsgStaff staff = requireStaff(staffId);
         String email = requireEmail(staff.getEmail(), "员工邮箱缺失，无法完成导师分配");
-        SysUser account = sysUserService.selectUserByUserName(email);
+        SysUser account = resolveAccountByEmail(email);
         if (account == null || account.getUserId() == null)
         {
             throw new ServiceException("员工账号不存在，无法完成导师分配");
@@ -106,5 +106,33 @@ public class OsgIdentityResolver
             throw new ServiceException(message);
         }
         return value.trim();
+    }
+
+    private String resolveAccountEmail(SysUser account, String message)
+    {
+        String email = StringUtils.hasText(account.getEmail()) ? account.getEmail().trim() : "";
+        if (StringUtils.hasText(email))
+        {
+            return email;
+        }
+        return requireEmail(account.getUserName(), message);
+    }
+
+    private SysUser resolveAccountByEmail(String email)
+    {
+        SysUser account = sysUserService.selectUserByUserName(email);
+        if (account != null)
+        {
+            return account;
+        }
+
+        SysUser query = new SysUser();
+        query.setEmail(email);
+        List<SysUser> matches = sysUserService.selectUserList(query);
+        if (matches == null || matches.isEmpty())
+        {
+            return null;
+        }
+        return matches.get(0);
     }
 }

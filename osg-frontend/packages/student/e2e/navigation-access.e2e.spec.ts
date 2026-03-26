@@ -7,12 +7,18 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test.describe('student resource center story S-011', () => {
-  test('keeps resource center routes behind coming soon in the current rollout @student-s011-resource-center', async ({ page }) => {
+test.describe('student limited rollout navigation access', () => {
+  test('keeps delivered pages live and sends other routes to the coming-soon surface', async ({
+    page,
+  }) => {
+    await page.goto('/positions')
+    await expect(page).toHaveURL(/\/positions$/)
+
     for (const blockedRoute of [
+      { path: '/resume', title: '简历管理' },
       { path: '/files', title: '文件' },
-      { path: '/online-test-bank', title: '在线测试题库' },
-      { path: '/interview-bank', title: '真人面试题库' },
+      { path: '/notice', title: '消息中心' },
+      { path: '/ai-interview', title: 'AI面试分析' },
       { path: '/questions', title: '面试真题' },
     ]) {
       await page.goto(blockedRoute.path)

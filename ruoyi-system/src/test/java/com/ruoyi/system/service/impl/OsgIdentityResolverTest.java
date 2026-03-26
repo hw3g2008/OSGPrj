@@ -2,8 +2,11 @@ package com.ruoyi.system.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,11 +38,12 @@ class OsgIdentityResolverTest
     private ISysUserService sysUserService;
 
     @Test
-    void resolveStudentIdByUserIdResolvesThroughLoginUserName()
+    void resolveStudentIdByUserIdPrefersAccountEmailWhenUserNameIsNotAnEmail()
     {
         SysUser account = new SysUser();
         account.setUserId(838L);
-        account.setUserName("student@example.com");
+        account.setUserName("osg_student");
+        account.setEmail("student@example.com");
 
         OsgStudent student = new OsgStudent();
         student.setStudentId(12766L);
@@ -50,6 +54,25 @@ class OsgIdentityResolverTest
 
         assertEquals(12766L, resolver.resolveStudentIdByUserId(838L));
         verify(sysUserService).selectUserById(838L);
+        verify(studentMapper).selectStudentByEmail("student@example.com");
+    }
+
+    @Test
+    void resolveStudentIdByUserIdFallsBackToUserNameWhenEmailIsBlank()
+    {
+        SysUser account = new SysUser();
+        account.setUserId(838L);
+        account.setUserName("student@example.com");
+        account.setEmail("");
+
+        OsgStudent student = new OsgStudent();
+        student.setStudentId(12766L);
+        student.setEmail("student@example.com");
+
+        when(sysUserService.selectUserById(838L)).thenReturn(account);
+        when(studentMapper.selectStudentByEmail("student@example.com")).thenReturn(student);
+
+        assertEquals(12766L, resolver.resolveStudentIdByUserId(838L));
         verify(studentMapper).selectStudentByEmail("student@example.com");
     }
 
@@ -69,7 +92,7 @@ class OsgIdentityResolverTest
     }
 
     @Test
-    void resolveUserIdByStaffIdResolvesThroughStaffEmail()
+    void resolveUserIdByStaffIdFallsBackToAccountEmailLookupWhenUserNameDiffersFromStaffEmail()
     {
         OsgStaff staff = new OsgStaff();
         staff.setStaffId(9201L);
@@ -77,14 +100,18 @@ class OsgIdentityResolverTest
 
         SysUser account = new SysUser();
         account.setUserId(9001L);
-        account.setUserName("mentor@example.com");
+        account.setUserName("osg_mentor");
+        account.setEmail("mentor@example.com");
 
         when(staffMapper.selectStaffByStaffId(9201L)).thenReturn(staff);
-        when(sysUserService.selectUserByUserName("mentor@example.com")).thenReturn(account);
+        when(sysUserService.selectUserByUserName("mentor@example.com")).thenReturn(null);
+        when(sysUserService.selectUserList(argThat(query -> "mentor@example.com".equals(query.getEmail()))))
+            .thenReturn(List.of(account));
 
         assertEquals(9001L, resolver.resolveUserIdByStaffId(9201L));
         verify(staffMapper).selectStaffByStaffId(9201L);
         verify(sysUserService).selectUserByUserName("mentor@example.com");
+        verify(sysUserService).selectUserList(argThat(query -> "mentor@example.com".equals(query.getEmail())));
     }
 
     @Test
@@ -96,6 +123,8 @@ class OsgIdentityResolverTest
 
         when(staffMapper.selectStaffByStaffId(9201L)).thenReturn(staff);
         when(sysUserService.selectUserByUserName("mentor@example.com")).thenReturn(null);
+        when(sysUserService.selectUserList(argThat(query -> "mentor@example.com".equals(query.getEmail()))))
+            .thenReturn(List.of());
 
         ServiceException error = assertThrows(ServiceException.class, () -> resolver.resolveUserIdByStaffId(9201L));
 

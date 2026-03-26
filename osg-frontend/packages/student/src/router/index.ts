@@ -1,7 +1,34 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
+import { COMING_SOON_TOAST, isStudentPathAvailable, normalizeStudentPath } from '@/navigation/access'
 import { getToken } from '@osg/shared/utils'
+
+const STUDENT_COMING_SOON_ROUTE_NAME = 'StudentComingSoon'
+const STUDENT_COMING_SOON_SUBTITLE = '当前页面不在本次学生端交付范围内。'
+
+function readSingleQueryValue(value: unknown): string | undefined {
+  if (typeof value === 'string' && value.trim()) {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    const firstString = value.find(item => typeof item === 'string' && item.trim())
+    return typeof firstString === 'string' ? firstString : undefined
+  }
+
+  return undefined
+}
+
+function resolveComingSoonProps(query: Record<string, unknown>) {
+  const requestedPath = normalizeStudentPath(readSingleQueryValue(query.from) ?? '')
+
+  return {
+    title: readSingleQueryValue(query.title) ?? COMING_SOON_TOAST,
+    subtitle: STUDENT_COMING_SOON_SUBTITLE,
+    requestedPath: requestedPath === '/' ? '' : requestedPath
+  }
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -148,6 +175,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '个人中心' }
       },
       {
+        path: 'coming-soon',
+        name: STUDENT_COMING_SOON_ROUTE_NAME,
+        component: () => import('@/views/placeholder/index.vue'),
+        props: route => resolveComingSoonProps(route.query),
+        meta: { title: COMING_SOON_TOAST, rolloutBypass: true }
+      },
+      {
         path: 'notice',
         name: 'Notice',
         component: () => import('@/views/notice/index.vue'),
@@ -175,7 +209,7 @@ const routes: RouteRecordRaw[] = [
         path: 'restricted',
         name: 'Restricted',
         component: () => import('@/views/restricted/index.vue'),
-        meta: { title: '受限模式' }
+        meta: { title: '受限模式', rolloutBypass: true }
       },
       {
         path: 'schedule',
@@ -201,11 +235,21 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, _from, next) => {
   const token = getToken()
-  
+
   if (to.meta.public) {
     next()
   } else if (!token) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
+  } else if (to.path === '/' || to.meta.rolloutBypass) {
+    next()
+  } else if (!isStudentPathAvailable(to.path)) {
+    next({
+      name: STUDENT_COMING_SOON_ROUTE_NAME,
+      query: {
+        from: normalizeStudentPath(to.path),
+        title: typeof to.meta.title === 'string' ? to.meta.title : COMING_SOON_TOAST
+      }
+    })
   } else {
     next()
   }

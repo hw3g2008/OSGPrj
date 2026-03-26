@@ -99,7 +99,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('student profile story S-012', () => {
-  test('renders profile dialogs and the notice/faq/complaint/restricted placeholders @student-s012-profile', async ({ page }) => {
+  test('renders profile dialogs and keeps the limited-rollout routes gated @student-s012-profile', async ({ page }) => {
     await page.goto('/profile')
 
     await expect(page.getByRole('heading', { name: /基本信息\s*My Profile/ })).toBeVisible()
@@ -111,18 +111,17 @@ test.describe('student profile story S-012', () => {
     await page.getByRole('button', { name: '查看详情' }).click()
     await expect(page.getByRole('dialog', { name: /待审核的信息变更/ })).toBeVisible()
 
-    await page.goto('/notice')
-    await expect(page.getByRole('heading', { name: /消息中心\s*Notifications/ })).toBeVisible()
-    await page.getByRole('button', { name: /模拟面试已安排/ }).first().click()
-    await expect(page.getByRole('dialog', { name: /消息详情/ })).toBeVisible()
-
-    await page.goto('/faq')
-    await expect(page.getByRole('heading', { name: /常见问题\s*FAQ/ })).toBeVisible()
-    await page.getByRole('button', { name: /如何申请课程\/Staffing Request/ }).click()
-
-    await page.goto('/complaint')
-    await expect(page.getByRole('heading', { name: /投诉与建议\s*OSG Feedback Form/ })).toBeVisible()
-    await expect(page.getByRole('button', { name: '提交反馈 Submit' })).toBeVisible()
+    for (const blockedRoute of [
+      { path: '/notice', title: '消息中心' },
+      { path: '/faq', title: '常见问题' },
+      { path: '/complaint', title: '投诉与建议' },
+    ]) {
+      await page.goto(blockedRoute.path)
+      await expect(page).toHaveURL(/\/coming-soon/)
+      await expect(page.getByRole('heading', { name: blockedRoute.title })).toBeVisible()
+      await expect(page.getByText('敬请期待')).toBeVisible()
+      await expect(page.getByText('当前页面不在本次学生端交付范围内')).toBeVisible()
+    }
 
     await page.goto('/restricted')
     await expect(page.getByRole('heading', { name: '账号状态受限' })).toBeVisible()
