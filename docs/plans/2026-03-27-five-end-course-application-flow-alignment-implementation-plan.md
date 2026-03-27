@@ -151,6 +151,44 @@
 5. `模拟应聘` 仍只消费 `practiceRecords` 而不明确 `requestRecords` 的正式职责
 6. `class-request` 的去留、迁移或降级策略未写清楚
 
+## Decision Locks
+
+以下规则不是“待讨论项”，而是本计划的执行锁。任何实施、测试或原型修正都必须按此执行。
+
+### 1. `模拟应聘` 的唯一可见主对象
+
+- 学生端 `模拟应聘` 页面在本轮统一收口中，唯一可见主对象是 `practiceRecords`
+- 对应正式主链是 `osg_mock_practice`
+- 对应学生发起入口是 `POST /student/mock-practice/practice-request`
+- `practice-request` 已覆盖：
+  - `mock`
+  - `networking`
+  - `midterm`
+  也就是本轮定义中的 `模拟面试 / 人际关系测试 / 期中考试`
+
+### 2. `requestRecords` / `class-request` 的正式定位
+
+- `requestRecords` 与 `POST /student/mock-practice/class-request` 属于历史兼容课程申请链
+- 它们对应的是旧 `Staffing / Hirevue / OT` 语义，不属于本轮五端统一后的学生端可见主流程
+- 本轮实施要求：
+  - 学生端当前可见范围不得以 `requestRecords` 作为主表
+  - 学生端当前可见范围不得恢复 `requestSection / requestTabs / requestCourseOptions` 可见壳子
+  - 不允许新增任何以 `class-request` 为主入口的新需求实现
+- 若后续需要迁移或清退该链，必须另开专项计划；本计划内只允许将其视为历史兼容对象，不允许再与当前五端统一流转并列
+
+### 3. 课程记录提交流转的正式口径
+
+- 正式主链仍定义为：`学生申请 -> 班主任/后台分配导师 -> 导师授课 -> 提交课程记录 -> 后台审核 -> 学生回看评价`
+- 但根据 `docs/osg-product-confirmation-checklist.md` 与现有 HTML 真源，`班主任` 与 `助教` 的课程记录提交入口在本轮保留
+- 执行口径固定为：
+  - `POST /api/mentor/class-records`：主提交入口
+  - `POST /lead-mentor/class-records`：班主任补录/兼容入口
+  - `POST /assistant/class-records`：助教补录/兼容入口
+- 班主任/助教的“可提交课程记录”能力，不得被解释为：
+  - 他们拥有正式分配导师权
+  - 学生端需要为其单独建立第二套课程记录语义
+  - 审核前即可进入学生端
+
 ## Execution Order
 
 design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mapping -> prototype-delta-list -> role-boundary-fix -> student-c1-applications -> student-c2-mock-practice -> student-c3-class-records -> mentor-record-chain-check -> backend-review-chain-check -> assistant-role-cleanup -> focused-tests -> five-end-alignment-review
@@ -186,10 +224,11 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 
 ### Mock Coaching Request
 
-1. Student initiates:
+1. Student initiates current visible mainline:
    - `POST /student/mock-practice/practice-request`
-   - `POST /student/mock-practice/class-request`
    - `GET /student/mock-practice/overview`
+   - historical compatibility only, excluded from current visible mainline:
+     - `POST /student/mock-practice/class-request`
 2. Lead mentor consumes and assigns:
    - `GET /lead-mentor/mock-practice/list`
    - `POST /lead-mentor/mock-practice/{practiceId}/assign`
@@ -221,12 +260,16 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
   - 模拟类现字段：`status = pending`
 - 目标：`已分配导师`
   - 真实岗位现字段：`assignStatus = assigned`
-  - 模拟类现字段：`status = scheduled/assigned`，需实施时统一文案
+  - 模拟类现字段：`status in {scheduled, confirmed}`
+  - 学生端统一展示文案：`已分配导师`
 - 目标：`辅导中`
   - 真实岗位现字段：`coachingStatus = coaching`
-  - 模拟类现字段：由 `status` 与已开课事实共同映射，需明确唯一展示规则
+  - 模拟类现字段：`status in {scheduled, confirmed}` 且 `completedHours > 0`
+  - 学生端统一展示文案：`辅导中`
 - 目标：`已完成`
-  - 两链都需要有统一展示规则，当前需在实现中明确终态来源
+  - 真实岗位现字段：`bucket = completed`，对应 `currentStage in {offer, rejected}`
+  - 模拟类现字段：`status = completed`
+  - 学生端若存在 `cancelled`，统一展示为 `已取消`，不得并入 `已完成`
 
 ### Class Record States
 
@@ -353,19 +396,24 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 
 **Tasks**
 
-- 先决定并落文档：
-  - `practiceRecords` 的正式职责
-  - `requestRecords` 的正式职责
-  - `class-request` 是迁移、降级还是退出主页面
+- 锁定 `practiceRecords` 为页面唯一可见主对象
+- 明确 `practice-request` 是当前可见范围内唯一学生发起入口
+- 将 `requestRecords / requestSection / requestTabs / requestCourseOptions / class-request` 统一视为历史兼容链，不在当前可见范围恢复
 - 页面主表改为以“申请记录”语义为中心
 - `导师 / 已上课时 / 课程反馈` 只作为摘要字段保留，不再充当主对象定义
-- 对 `practice-request` 与 `class-request` 分别补共享 contract 与页面断言
-- 明确 `requestRecords` 与班主任/后台分配链的对接方式
+- 仅对 `practice-request` 补当前主链 contract 与页面断言
+- 对 `class-request` 补“保持隐藏/不参与当前主流程”的防回归断言
+- 统一学生端 mock 状态文案：
+  - `pending` -> `待分配导师`
+  - `scheduled/confirmed` -> `已分配导师`
+  - `scheduled/confirmed + completedHours > 0` -> `辅导中`
+  - `completed` -> `已完成`
+  - `cancelled` -> `已取消`
 
 **Exit Criteria**
 
 - `模拟应聘` 页面不再依赖混合对象讲完整故事
-- `practiceRecords / requestRecords / class-request` 去留清晰
+- `practiceRecords / requestRecords / class-request` 去留已经被代码与测试锁定
 - 页面职责与定义稿一致
 
 ## Workstream C3: 修正学生端 `课程记录`
@@ -423,13 +471,15 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 - 确认导师端每次上课提交一条课程记录
 - 确认后台审核是学生可见的前置条件
 - 确认学生评价作用在同一条已审核课程记录上
-- 明确 `POST /lead-mentor/class-records` 与 `POST /assistant/class-records` 在本轮是保留补录能力还是退出主链能力
+- 保留 `POST /lead-mentor/class-records` 与 `POST /assistant/class-records` 作为补录/兼容入口
+- 明确补录入口不改变“班主任/后台分配导师、后台审核后学生可见”的主链定义
 - 确认 admin review 使用真实 `approved/rejected` 状态，不允许出现学生端提前可见
-- 明确助教补录课时是否作为本轮主链能力，若保留必须注明其不影响导师分配角色边界
+- 明确助教补录课时不会被扩展为导师分配权限或第二套学生端记录语义
 
 **Exit Criteria**
 
 - 不再出现“未审核课程记录已进入学生端”的路径
+- 课程记录提交角色边界已被实现和测试统一
 
 ## Workstream E: 助教端实现与测试去误导
 
@@ -484,8 +534,8 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 
 4. 当前双对象问题核验
    - `模拟应聘` 页面明确消费哪一类主对象
-   - `requestRecords` 有正式职责且被验证
-   - `class-request` 的去留已在代码与测试中体现一致
+   - `requestRecords` 的历史兼容职责已被验证，且未重新进入当前可见主流程
+   - `class-request` 的隐藏/兼容定位已在代码与测试中体现一致
 
 **Suggested Verification Layers**
 
