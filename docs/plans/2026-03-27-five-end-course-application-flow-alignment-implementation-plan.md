@@ -572,7 +572,7 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 
 - 审计助教端所有复用 `/api/mentor/*` 的 career 读取路径
 - 明确这些路径在本轮中属于 carrier route，而不是助教拥有导师端同等权限的证据
-- 为 carrier route 补服务层与 e2e 断言，证明助教只看到 assistant ownership 范围内的学员
+- 为 `/api/mentor/job-overview/list` 与 `/api/mentor/mock-practice/list` 两条 carrier route 分别补服务层与 e2e 断言，证明助教只看到 assistant ownership 范围内的学员
 - 去掉或重命名会被误读为正式分配权限的助教操作
 - 确保助教端保留“查看、跟进、管理、协同”语义
 - 修正测试数据与断言，避免默认助教可以分配导师
@@ -580,7 +580,7 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 **Exit Criteria**
 
 - 助教端不再作为正式导师分配角色出现在实现和测试中
-- 助教端通过 `/api/mentor/*` carrier route 读取的数据范围已被测试锁定为 assistant ownership
+- 助教端通过 `/api/mentor/job-overview/list` 与 `/api/mentor/mock-practice/list` 读取的数据范围已分别被测试锁定为 assistant ownership
 
 ## Workstream F: 验证与验收
 
@@ -615,6 +615,10 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
    - `模拟应聘` 页面明确消费哪一类主对象
    - `requestRecords` 的历史兼容职责已被验证，且未重新进入当前可见主流程
    - `class-request` 的隐藏/兼容定位已在代码与测试中体现一致
+
+5. 助教端 carrier route ownership 核验
+   - `/api/mentor/job-overview/list` 已验证只返回 assistant ownership 范围内的学员
+   - `/api/mentor/mock-practice/list` 已验证只返回 assistant ownership 范围内的学员
 
 **Suggested Verification Layers**
 
