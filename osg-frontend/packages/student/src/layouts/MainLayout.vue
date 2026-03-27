@@ -11,17 +11,7 @@
       </div>
 
       <nav class="sidebar-nav">
-        <a
-          href="#"
-          class="nav-item"
-          :class="{ active: isActive(['/dashboard', '/home']) }"
-          @click.prevent="navigate('/home')"
-        >
-          <i class="mdi mdi-home" aria-hidden="true"></i>
-          <span>首页 Home</span>
-        </a>
-
-        <template v-for="group in menuGroups" :key="group.title">
+        <template v-for="group in filteredMenuGroups" :key="group.title">
           <div class="nav-section">{{ group.title }}</div>
           <a
             v-for="item in group.items"
@@ -59,6 +49,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { normalizeStudentPath } from '@/navigation/access'
+import { PHASE1_VISIBLE_PATHS } from '@/navigation/phase1'
 import { logout } from '@osg/shared/api'
 import { clearAuth, getUser } from '@osg/shared/utils'
 
@@ -228,6 +219,17 @@ const menuGroups: MenuGroup[] = [
     ]
   }
 ]
+
+const filteredMenuGroups = computed(() =>
+  menuGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item =>
+        item.activePaths.some(path => PHASE1_VISIBLE_PATHS.has(normalizeStudentPath(path)))
+      ),
+    }))
+    .filter(group => group.items.length > 0)
+)
 
 const currentRoutePath = computed(() => {
   if (route.name === 'StudentComingSoon') {

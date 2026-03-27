@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { COMING_SOON_TOAST, isStudentPathAvailable, normalizeStudentPath } from '@/navigation/access'
+import { PHASE1_DEFAULT_PATH } from '@/navigation/phase1'
 import { getToken } from '@osg/shared/utils'
 
 const STUDENT_COMING_SOON_ROUTE_NAME = 'StudentComingSoon'
@@ -46,7 +47,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: MainLayout,
-    redirect: '/dashboard',
+    redirect: PHASE1_DEFAULT_PATH,
     children: [
       {
         path: 'dashboard',

@@ -38,8 +38,8 @@ describe('student login workflow', () => {
   })
 
   describe('resolveLoginRedirect', () => {
-    it('falls back to dashboard when redirect is missing', () => {
-      expect(resolveLoginRedirect()).toBe('/dashboard')
+    it('falls back to positions when redirect is missing', () => {
+      expect(resolveLoginRedirect()).toBe('/positions')
     })
 
     it('keeps the provided redirect', () => {

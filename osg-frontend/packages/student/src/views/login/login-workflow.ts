@@ -31,7 +31,7 @@ export function hasLoginErrors(fieldErrors: LoginFieldErrors): boolean {
 }
 
 export function resolveLoginRedirect(redirect?: string): string {
-  return redirect && redirect.trim() ? redirect : '/dashboard'
+  return redirect && redirect.trim() ? redirect : '/positions'
 }
 
 function buildLoginPayload(formState: LoginFormState): LoginFormState {

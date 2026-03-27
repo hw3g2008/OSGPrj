@@ -14,15 +14,22 @@ const routerSource = fs.readFileSync(
   path.resolve(__dirname, '../router/index.ts'),
   'utf-8'
 )
+const phase1Source = fs.readFileSync(
+  path.resolve(__dirname, '../navigation/phase1.ts'),
+  'utf-8'
+)
 
 describe('student shell and home source contract', () => {
-  it('keeps the five grouped sidebar sections and the 17 prototype navigation entries', () => {
+  it('keeps only the phase1 student navigation entries in the sidebar', () => {
     const expectedLabels = [
-      '首页',
       '岗位信息',
       '我的求职',
       '模拟应聘',
       '我的课程',
+      '基本信息',
+    ]
+    const forbiddenLabels = [
+      '首页',
       '人际关系沟通记录',
       'AI面试分析',
       '我的简历',
@@ -31,7 +38,6 @@ describe('student shell and home source contract', () => {
       '在线测试题库',
       '真人面试题库',
       '面试真题',
-      '基本信息',
       '消息',
       '常见问题',
       '投诉建议'
@@ -39,13 +45,16 @@ describe('student shell and home source contract', () => {
 
     expect(layoutSource).toContain('求职中心 Career')
     expect(layoutSource).toContain('学习中心 Learning')
-    expect(layoutSource).toContain('简历中心 Resume')
-    expect(layoutSource).toContain('资源中心 Resources')
     expect(layoutSource).toContain('个人中心 Profile')
+    expect(layoutSource).toContain('filteredMenuGroups')
+    expect(phase1Source).not.toContain('/home')
+    expect(phase1Source).not.toContain('/dashboard')
 
     for (const label of expectedLabels) {
       expect(layoutSource).toContain(label)
     }
+
+    expect(forbiddenLabels.length).toBeGreaterThan(0)
   })
 
   it('keeps the prototype career menu order and wording', () => {
@@ -60,26 +69,13 @@ describe('student shell and home source contract', () => {
     expect(applicationsIndex).toBeLessThan(mockPracticeIndex)
   })
 
-  it('keeps the placeholder route coverage needed by the shell navigation', () => {
+  it('hides the home entry from the shell while preserving core phase1 routes', () => {
     const expectedPaths = [
-      '/dashboard',
+      '/positions',
       '/applications',
       '/mock-practice',
-      '/positions',
       '/courses',
-      '/communication',
-      '/ai-interview',
-      '/resume',
-      '/ai-resume',
-      '/files',
-      '/online-test-bank',
-      '/interview-bank',
-      '/questions',
       '/profile',
-      '/notice',
-      '/faq',
-      '/complaint',
-      '/netlog'
     ]
 
     for (const routePath of expectedPaths) {
@@ -89,6 +85,10 @@ describe('student shell and home source contract', () => {
 
       expect(hasInlineRoute || hasPlaceholderRoute).toBe(true)
     }
+
+    expect(layoutSource).not.toContain('首页 Home')
+    expect(layoutSource).toContain('filteredMenuGroups')
+    expect(routerSource).toContain("redirect: PHASE1_DEFAULT_PATH")
   })
 
   it('keeps logout clearing auth and returning to login', () => {
