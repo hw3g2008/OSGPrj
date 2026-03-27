@@ -1,8 +1,8 @@
 # OSG 五端 Curl 闭环实施计划
 
-> Goal: 按 `docs/plans/2026-03-25-osg-five-end-curl-closure-design.md` 的单真相设计，完成 `FLOW-A + FLOW-C + FLOW-D + FLOW-E` 的五端真实数据闭环。
+> Goal: 按 `docs/plans/five-end-course-flow/2026-03-25-osg-five-end-curl-closure-design.md` 的单真相设计，完成 `FLOW-A + FLOW-C + FLOW-D + FLOW-E` 的五端真实数据闭环。
 >
-> Design Doc: `docs/plans/2026-03-25-osg-five-end-curl-closure-design.md`
+> Design Doc: `docs/plans/five-end-course-flow/2026-03-25-osg-five-end-curl-closure-design.md`
 >
 > Architecture: 保持现有 controller 路径不变，在 `ruoyi-system` 中新增统一身份解析层，逐步把学生求职、学生模拟应聘、学生课程记录切到后台主业务表；同时把导师和班主任分配链统一到 `sys_user.user_id` 语义，并让导师求职总览退出旧 `osg_job_coaching` 链。
 >
@@ -14,7 +14,7 @@
 
 ## 0. 与设计稿关系
 
-1. 本计划是 `docs/plans/2026-03-25-osg-five-end-curl-closure-design.md` 的唯一实施计划。
+1. 本计划是 `docs/plans/five-end-course-flow/2026-03-25-osg-five-end-curl-closure-design.md` 的唯一实施计划。
 2. 若实施中发现计划与代码现实冲突，先以代码真实入口和已有 contract 为准，再回改设计与计划，不允许静默偏航。
 3. 不允许跳过公共身份解析直接在业务 service 中散落临时映射逻辑。
 

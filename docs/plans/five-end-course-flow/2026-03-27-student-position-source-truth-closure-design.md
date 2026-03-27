@@ -2,7 +2,7 @@
 
 日期：2026-03-27  
 状态：设计已确认，待进入实施计划  
-关联主设计：`docs/plans/2026-03-27-student-formal-dataflow-closure-design.md`
+关联主设计：`docs/plans/five-end-course-flow/2026-03-27-student-formal-dataflow-closure-design.md`
 
 ## 1. 背景
 

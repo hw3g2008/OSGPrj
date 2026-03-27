@@ -1,6 +1,6 @@
 # 学生端岗位真源收口实施计划
 
-> Goal: 按 `docs/plans/2026-03-27-student-position-source-truth-closure-design.md` 的设计，把学生端岗位页收成“正式公共岗位 + 学生自添待审核岗位”两类可解释真源，并与 `我的求职` 正式主状态对齐。
+> Goal: 按 `docs/plans/five-end-course-flow/2026-03-27-student-position-source-truth-closure-design.md` 的设计，把学生端岗位页收成“正式公共岗位 + 学生自添待审核岗位”两类可解释真源，并与 `我的求职` 正式主状态对齐。
 
 ## 0. 执行原则
 

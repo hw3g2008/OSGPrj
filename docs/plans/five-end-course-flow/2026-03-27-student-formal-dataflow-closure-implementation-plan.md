@@ -1,6 +1,6 @@
 # 学生端正式数据流收口实施计划
 
-> Goal: 按 `docs/plans/2026-03-27-student-formal-dataflow-closure-design.md` 的设计，收口学生端首批保留页面的正式数据来源、写入链路、错误处理与跨端一致性。
+> Goal: 按 `docs/plans/five-end-course-flow/2026-03-27-student-formal-dataflow-closure-design.md` 的设计，收口学生端首批保留页面的正式数据来源、写入链路、错误处理与跨端一致性。
 >
 > Scope: `岗位信息 / 我的求职 / 模拟应聘 / 我的课程 / 基本信息`
 >

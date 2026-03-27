@@ -47,8 +47,8 @@
 
 参考：
 
-- [2026-03-27-five-end-course-application-flow-alignment-implementation-plan.md](/Users/hw/workspace/OSGPrj/docs/plans/2026-03-27-five-end-course-application-flow-alignment-implementation-plan.md)
-- [2026-03-27-ticket落地新标准计划.md](/Users/hw/workspace/OSGPrj/docs/plans/2026-03-27-ticket%E8%90%BD%E5%9C%B0%E6%96%B0%E6%A0%87%E5%87%86%E8%AE%A1%E5%88%92.md)
+- [2026-03-27-five-end-course-application-flow-alignment-implementation-plan.md](/Users/hw/workspace/OSGPrj/docs/plans/five-end-course-flow/2026-03-27-five-end-course-application-flow-alignment-implementation-plan.md)
+- [2026-03-27-ticket落地新标准计划.md](/Users/hw/workspace/OSGPrj/docs/plans/five-end-course-flow/2026-03-27-ticket%E8%90%BD%E5%9C%B0%E6%96%B0%E6%A0%87%E5%87%86%E8%AE%A1%E5%88%92.md)
 
 ## Chosen Approach
 
@@ -244,8 +244,8 @@ skill 不得自行发明字段名、状态名、页面文案。所有这些内�
 
 ### Required Plan Inputs
 
-- [2026-03-27-five-end-course-application-flow-alignment-implementation-plan.md](/Users/hw/workspace/OSGPrj/docs/plans/2026-03-27-five-end-course-application-flow-alignment-implementation-plan.md)
-- [2026-03-27-ticket落地新标准计划.md](/Users/hw/workspace/OSGPrj/docs/plans/2026-03-27-ticket%E8%90%BD%E5%9C%B0%E6%96%B0%E6%A0%87%E5%87%86%E8%AE%A1%E5%88%92.md)
+- [2026-03-27-five-end-course-application-flow-alignment-implementation-plan.md](/Users/hw/workspace/OSGPrj/docs/plans/five-end-course-flow/2026-03-27-five-end-course-application-flow-alignment-implementation-plan.md)
+- [2026-03-27-ticket落地新标准计划.md](/Users/hw/workspace/OSGPrj/docs/plans/five-end-course-flow/2026-03-27-ticket%E8%90%BD%E5%9C%B0%E6%96%B0%E6%A0%87%E5%87%86%E8%AE%A1%E5%88%92.md)
 
 ### Required Scope Input
 

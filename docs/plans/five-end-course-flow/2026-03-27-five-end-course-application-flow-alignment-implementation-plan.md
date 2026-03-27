@@ -1,8 +1,8 @@
 # 五端课程申请与课程记录统一流转实施计划
 
-> Goal: 按 `docs/plans/2026-03-27-five-end-course-application-flow-alignment-design.md` 的统一定义，完成五端在“课程申请记录”和“课程记录”上的页面语义、权限边界、实现链路与测试口径收口。
+> Goal: 按 `docs/plans/five-end-course-flow/2026-03-27-five-end-course-application-flow-alignment-design.md` 的统一定义，完成五端在“课程申请记录”和“课程记录”上的页面语义、权限边界、实现链路与测试口径收口。
 >
-> Design Doc: `docs/plans/2026-03-27-five-end-course-application-flow-alignment-design.md`
+> Design Doc: `docs/plans/five-end-course-flow/2026-03-27-five-end-course-application-flow-alignment-design.md`
 >
 > Scope: 学生端、导师端、助教端、班主任端、后台端的申请追踪与课程记录职责对齐；不在本计划中一次性重做整套课程建模。
 >
@@ -10,7 +10,7 @@
 
 ## 0. 与设计稿关系
 
-1. 本计划是 `docs/plans/2026-03-27-five-end-course-application-flow-alignment-design.md` 的唯一实施计划。
+1. 本计划是 `docs/plans/five-end-course-flow/2026-03-27-five-end-course-application-flow-alignment-design.md` 的唯一实施计划。
 2. 本计划先做“定义收口 -> 真源修正 -> 实现对齐 -> 测试闭环”，不允许跳过定义直接各端各自修页面。
 3. 若某个原型或实现与本计划冲突，必须先回到设计稿确认，再统一修改，不允许端内自行解释。
 
@@ -93,7 +93,7 @@
   - `osg-spec-docs/source/prototype/lead-mentor.html`
   - `osg-spec-docs/source/prototype/admin.html`
 - 统一定义稿：
-  - `docs/plans/2026-03-27-five-end-course-application-flow-alignment-design.md`
+  - `docs/plans/five-end-course-flow/2026-03-27-five-end-course-application-flow-alignment-design.md`
 
 ## Derived Artifact Inventory
 
@@ -365,7 +365,7 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 - Read: `osg-spec-docs/source/prototype/assistant.html`
 - Read: `osg-spec-docs/source/prototype/lead-mentor.html`
 - Read: `osg-spec-docs/source/prototype/admin.html`
-- Write: `docs/plans/2026-03-27-five-end-course-application-flow-alignment-design.md`（如需补充）
+- Write: `docs/plans/five-end-course-flow/2026-03-27-five-end-course-application-flow-alignment-design.md`（如需补充）
 
 **Tasks**
 

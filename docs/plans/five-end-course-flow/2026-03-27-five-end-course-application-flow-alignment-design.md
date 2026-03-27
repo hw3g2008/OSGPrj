@@ -5,8 +5,8 @@
 关联文档：
 
 - `docs/osg-product-confirmation-checklist.md`
-- `docs/plans/2026-03-27-student-formal-dataflow-closure-design.md`
-- `docs/plans/2026-03-27-student-position-source-truth-closure-design.md`
+- `docs/plans/five-end-course-flow/2026-03-27-student-formal-dataflow-closure-design.md`
+- `docs/plans/five-end-course-flow/2026-03-27-student-position-source-truth-closure-design.md`
 
 ## 1. 背景
 
