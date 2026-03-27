@@ -233,6 +233,10 @@ public class SysRoleServiceImpl implements ISysRoleService
     @Transactional
     public int insertRole(SysRole role)
     {
+        if (StringUtils.isEmpty(role.getStatus()))
+        {
+            role.setStatus("0");
+        }
         // 新增角色信息
         roleMapper.insertRole(role);
         return insertRoleMenu(role);

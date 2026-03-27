@@ -7,6 +7,10 @@ const rolesViewSource = fs.readFileSync(
   path.resolve(__dirname, '../views/permission/roles/index.vue'),
   'utf-8'
 )
+const roleModalSource = fs.readFileSync(
+  path.resolve(__dirname, '../views/permission/roles/components/RoleModal.vue'),
+  'utf-8'
+)
 
 // 操作按钮显示逻辑（与 index.vue 模板逻辑一致）
 function getActionButtons(role: { roleKey: string; userCount: number }) {
@@ -233,6 +237,10 @@ describe('角色管理模块测试', () => {
       expect(rolesViewSource).toContain("await deleteRole(record.roleId)")
       expect(rolesViewSource).toContain("message.success('角色删除成功')")
       expect(rolesViewSource).toContain('loadRoleList()')
+    })
+
+    it('submits new roles with active status by default', () => {
+      expect(roleModalSource).toContain("status: '0'")
     })
   })
 })

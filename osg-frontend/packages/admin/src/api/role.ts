@@ -9,6 +9,7 @@ export function getRoleList(params: { pageNum: number; pageSize: number }) {
 export function addRole(data: {
   roleName: string
   roleKey: string
+  status?: string
   remark?: string
   menuIds: number[]
 }, config?: import('@osg/shared/utils').AppRequestConfig) {
@@ -20,6 +21,7 @@ export function updateRole(data: {
   roleId: number
   roleName: string
   roleKey: string
+  status?: string
   remark?: string
   menuIds: number[]
 }, config?: import('@osg/shared/utils').AppRequestConfig) {

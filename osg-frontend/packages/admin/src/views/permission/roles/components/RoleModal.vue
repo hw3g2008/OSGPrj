@@ -246,6 +246,7 @@ const handleSubmit = async () => {
 
     const payload = {
       ...formState,
+      status: '0',
       roleKey: formState.roleKey || formState.roleName.toLowerCase().replace(/\s+/g, '_'),
     }
 
