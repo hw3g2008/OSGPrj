@@ -1,0 +1,3 @@
+interface:
+  display_name: "Acceptance Ticket Splitter"
+  short_description: "Split current five-end flow workstreams into acceptance-grade ticket assets"
