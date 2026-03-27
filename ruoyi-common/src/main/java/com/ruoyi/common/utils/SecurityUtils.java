@@ -132,7 +132,43 @@ public class SecurityUtils
      */
     public static boolean isAdmin(Long userId)
     {
-        return userId != null && 1L == userId;
+        if (userId != null && 1L == userId)
+        {
+            return true;
+        }
+
+        try
+        {
+            LoginUser loginUser = getLoginUser();
+            if (loginUser == null || loginUser.getUser() == null)
+            {
+                return false;
+            }
+            if (userId != null && !userId.equals(loginUser.getUserId()))
+            {
+                return false;
+            }
+            if (hasPermi(loginUser.getPermissions(), Constants.ALL_PERMISSION))
+            {
+                return true;
+            }
+
+            List<SysRole> roles = loginUser.getUser().getRoles();
+            if (roles == null || roles.isEmpty())
+            {
+                return false;
+            }
+
+            return roles.stream().anyMatch(role ->
+                role != null
+                    && ("super_admin".equals(role.getRoleKey())
+                        || Constants.SUPER_ADMIN.equals(role.getRoleKey())
+                        || SysRole.isAdmin(role.getRoleId())));
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
     }
 
     /**
