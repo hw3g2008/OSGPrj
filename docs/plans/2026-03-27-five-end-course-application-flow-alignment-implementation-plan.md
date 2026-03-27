@@ -18,6 +18,13 @@
 
 ### Student Entrypoints
 
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/StudentPositionController.java`
+  - `GET /student/position/list`
+  - `GET /student/position/meta`
+  - `POST /student/position/apply`
+  - `POST /student/position/progress`
+  - `POST /student/position/coaching`
+  - `POST /student/position/manual`
 - `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgApplicationController.java`
   - `GET /student/application/list`
   - `GET /student/application/meta`
@@ -46,6 +53,16 @@
 - `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgMockPracticeController.java`
   - `GET /admin/mock-practice/list`
   - `POST /admin/mock-practice/assign`
+
+### Mentor / Assistant Carrier Entrypoints
+
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgJobOverviewController.java`
+  - `GET /api/mentor/job-overview/list`
+  - `GET /api/mentor/job-overview/calendar`
+  - `PUT /api/mentor/job-overview/{id}/confirm`
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgMockPracticeController.java`
+  - `GET /api/mentor/mock-practice/list`
+  - `PUT /api/mentor/mock-practice/{id}/confirm`
 
 ### Class Record Entrypoints
 
@@ -130,6 +147,18 @@
   - 当前已经是班主任分配入口
 - `OsgJobOverviewController` / `OsgMockPracticeController`
   - 当前已经是后台分配入口
+- `assistantCareer.ts`
+  - 当前助教端 career 相关读取并未走独立 `/assistant/` 前缀
+  - 而是复用 `/api/mentor/job-overview/list` 与 `/api/mentor/mock-practice/list` 这两个 carrier route
+  - 后端当前不是“无过滤放行”，而是通过 assistant ownership 参与范围过滤
+
+### Controller Name Clarification
+
+- `StudentPositionController.java`
+  - 学生端岗位信息与真实岗位辅导申请发起入口
+- `OsgStudentPositionController.java`
+  - 后台学生自添岗位审核入口
+- 两者不是同一 controller，不允许在实施中混用职责
 
 ### Blocking Reality
 
@@ -139,6 +168,7 @@
 2. `class-request` 仍是现存入口，不允许在实施时假装不存在
 3. 课程记录链当前已经以“审核通过后学生可见”为真实行为
 4. 助教当前存在部分原型与接口能力残留，需要显式判断哪些是历史兼容、哪些是本轮要退出的职责
+5. 助教端 career 数据读取当前复用了 `/api/mentor/*` carrier route，若不显式收口，很容易被误读为“助教 = 导师接口”
 
 ## Sync Gate Policy
 
@@ -188,6 +218,40 @@
   - 他们拥有正式分配导师权
   - 学生端需要为其单独建立第二套课程记录语义
   - 审核前即可进入学生端
+- 本轮补录记录执行锁：
+  - `班主任 / 助教` 补录按“独立补录人提交”入链
+  - 不在本轮中伪装为“代原导师署名补录”
+  - 仍统一进入后台审核，再进入学生端可见范围
+
+### 4. 助教端 carrier route 的正式口径
+
+- 本轮不新增独立 `/assistant/career/*` 路径
+- 助教端允许继续复用：
+  - `/api/mentor/job-overview/list`
+  - `/api/mentor/mock-practice/list`
+  作为历史 carrier route
+- 但执行上必须满足：
+  - 后端服务层明确按 assistant ownership 过滤
+  - contract / e2e 必须证明助教只看到自己名下学员
+  - 文案、命名、测试中不得再把这两条 carrier route 解释为“助教拥有导师端同等数据权限”
+
+### 5. 当前阶段的 schema 决策
+
+- 本轮默认不做数据库 schema 变更
+- `课程申请记录` 的 5 态业务定义，在当前实现中压缩为 4 态可执行模型：
+  - `已提交 + 待分配导师` 合并展示为 `待分配导师`
+  - `已分配导师`
+  - `辅导中`
+  - `已完成 / 已取消`
+- `osg_job_application`
+  - 本轮不新增字段区分 `已提交` 与 `待分配导师`
+- `osg_mock_practice`
+  - 本轮通过服务层和前端映射统一 `pending / scheduled / confirmed / completed / cancelled`
+  - 不在本轮新增状态字段
+- `osg_class_record`
+  - 本轮继续使用现有 `status / classStatus / rate`
+  - 不新增学生可见状态字段
+- 若后续必须把 `已提交` 与 `待分配导师` 在存储层分开，需另开 schema 专项计划，不在本轮实施计划中隐式扩展
 
 ## Execution Order
 
@@ -253,11 +317,12 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 ### Application Record States
 
 - 目标：`已提交`
-  - 真实岗位现字段：`assignStatus = pending` 或未分配初始态
-  - 模拟类现字段：`OsgMockPractice.status = pending`
+  - 当前一期实现不单独展示
+  - 在可执行模型中并入 `待分配导师`
 - 目标：`待分配导师`
   - 真实岗位现字段：`assignStatus = pending`
   - 模拟类现字段：`status = pending`
+  - 当前一期统一展示文案：`待分配导师`
 - 目标：`已分配导师`
   - 真实岗位现字段：`assignStatus = assigned`
   - 模拟类现字段：`status in {scheduled, confirmed}`
@@ -357,6 +422,7 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 - `osg-frontend/packages/shared/src/api/applications.ts`
 - `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/StudentPositionController.java`
 - `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgApplicationController.java`
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgStudentPositionController.java`（仅用于区分后台审核入口，不参与学生发起链实现）
 - `ruoyi-system/src/main/java/com/ruoyi/system/service/impl/PositionServiceImpl.java`
 
 **Tasks**
@@ -460,6 +526,8 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 
 - 导师端页面与服务实现
 - 后台审核入口与学生课程记录读取链
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgJobOverviewController.java`（mentor-facing job overview carrier route）
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgMockPracticeController.java`（mentor-facing mock-practice carrier route）
 - `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgClassRecordController.java`
 - `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgLeadMentorClassRecordController.java`
 - `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgReportController.java`
@@ -469,10 +537,12 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 **Tasks**
 
 - 确认导师端每次上课提交一条课程记录
+- 确认导师读取已分配任务的 carrier route 实际定义在 `OsgJobOverviewController` / `OsgMockPracticeController`，不误以为存在独立 mentor controller
 - 确认后台审核是学生可见的前置条件
 - 确认学生评价作用在同一条已审核课程记录上
 - 保留 `POST /lead-mentor/class-records` 与 `POST /assistant/class-records` 作为补录/兼容入口
 - 明确补录入口不改变“班主任/后台分配导师、后台审核后学生可见”的主链定义
+- 明确补录记录按当前提交人身份入链，不伪装为原导师记录
 - 确认 admin review 使用真实 `approved/rejected` 状态，不允许出现学生端提前可见
 - 明确助教补录课时不会被扩展为导师分配权限或第二套学生端记录语义
 
@@ -491,10 +561,18 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 
 - 助教端原型差异清单
 - 助教端页面实现
+- `osg-frontend/packages/shared/src/api/assistantCareer.ts`
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgJobOverviewController.java`
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgMockPracticeController.java`
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/impl/OsgLeadMentorJobOverviewServiceImpl.java`
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/impl/OsgMockPracticeServiceImpl.java`
 - 助教端相关 contract / e2e / fixture
 
 **Tasks**
 
+- 审计助教端所有复用 `/api/mentor/*` 的 career 读取路径
+- 明确这些路径在本轮中属于 carrier route，而不是助教拥有导师端同等权限的证据
+- 为 carrier route 补服务层与 e2e 断言，证明助教只看到 assistant ownership 范围内的学员
 - 去掉或重命名会被误读为正式分配权限的助教操作
 - 确保助教端保留“查看、跟进、管理、协同”语义
 - 修正测试数据与断言，避免默认助教可以分配导师
@@ -502,6 +580,7 @@ design-doc-confirmed -> current-state-inventory -> entrypoint-map -> state-mappi
 **Exit Criteria**
 
 - 助教端不再作为正式导师分配角色出现在实现和测试中
+- 助教端通过 `/api/mentor/*` carrier route 读取的数据范围已被测试锁定为 assistant ownership
 
 ## Workstream F: 验证与验收
 
