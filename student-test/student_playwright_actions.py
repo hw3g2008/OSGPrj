@@ -276,7 +276,7 @@ def build_gap_visibility_map(gap_register_text: str, prototype_html: str) -> dic
     for gap_id in parse_gap_register_ids(gap_register_text):
         rule = _GAP_AUDIT_RULES.get(gap_id)
         if rule is None:
-            visibility[gap_id] = False
+            visibility[gap_id] = True
             continue
         page_html = page_blocks.get(rule['page_id'], '')
         visibility[gap_id] = any(trigger in page_html for trigger in rule['triggers'])

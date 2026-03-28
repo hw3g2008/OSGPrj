@@ -2,6 +2,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -9,9 +10,11 @@ from student_test_playwright_runner import (
     GAP_REGISTER_PATH,
     ItemResult,
     PROTOTYPE_PATH,
+    _collect_top_items,
     RuntimeConfig,
     build_runtime_config,
     filter_manifest_items,
+    is_release_ready,
     load_gap_visibility_map,
     load_tsv,
     render_final_summary,
@@ -419,6 +422,28 @@ class ReportingTests(unittest.TestCase):
 
 
 class FinalSummaryTests(unittest.TestCase):
+    def test_render_final_summary_orders_top_items_by_severity(self) -> None:
+        results = [
+            ItemResult('LOW-1', 'A', 'T', '求职中心', '岗位信息', 'P0', 'Fail', 'a', 'n', severity='Low', defect_kind='Fail'),
+            ItemResult('CRIT-1', 'A', 'T', '求职中心', '岗位信息', 'P0', 'Block', 'a', 'n', severity='Critical', defect_kind='Block'),
+            ItemResult('HIGH-1', 'A', 'T', '求职中心', '岗位信息', 'P0', 'Fail', 'a', 'n', severity='High', defect_kind='Fail'),
+            ItemResult('MED-1', 'A', 'T', '求职中心', '岗位信息', 'P0', 'Block', 'a', 'n', severity='Medium', defect_kind='Block'),
+        ]
+        self.assertEqual(['HIGH-1', 'LOW-1'], _collect_top_items(results, 'Fail'))
+        self.assertEqual(['CRIT-1', 'MED-1'], _collect_top_items(results, 'Block'))
+        summary = render_final_summary(
+            {'total': 25, 'pass': 20, 'fail': 2, 'block': 2, 'unexecuted': 1},
+            {'total': 51, 'pass': 0, 'fail': 0, 'block': 0, 'unexecuted': 51},
+            visible_failures=1,
+            top_defects=_collect_top_items(results, 'Fail'),
+            top_blockers=_collect_top_items(results, 'Block'),
+            gap_status='gap register 仍只包含无可见入口资产',
+            run_results_path=Path('/tmp/run-results.tsv'),
+            defects_path=Path('/tmp/defects.md'),
+        )
+        self.assertIn('4. Top defects: HIGH-1, LOW-1', summary)
+        self.assertIn('5. Top blockers: CRIT-1, MED-1', summary)
+
     def test_render_final_summary_uses_exact_eight_line_structure(self) -> None:
         summary = render_final_summary(
             {'total': 25, 'pass': 24, 'fail': 1, 'block': 0, 'unexecuted': 0},
@@ -490,3 +515,48 @@ function openCoachingModal(company, position, location){}
         )
         self.assertIn('6. gap register 不再纯净', summary)
         self.assertTrue(summary.endswith('8. 当前 student 端是否达到测试放行标准: 否'))
+
+    def test_is_release_ready_matches_summary_line_8_for_scope_p0(self) -> None:
+        self.assertFalse(
+            is_release_ready(
+                {'total': 25, 'pass': 0, 'fail': 0, 'block': 1, 'unexecuted': 24},
+                {'total': 51, 'pass': 0, 'fail': 0, 'block': 0, 'unexecuted': 51},
+                gap_status='gap register 仍只包含无可见入口资产',
+            )
+        )
+
+    def test_main_scope_p0_returns_non_zero_when_summary_line_8_is_no(self) -> None:
+        class FakeBrowser:
+            def new_context(self, base_url: str):
+                class FakeContext:
+                    def new_page(self):
+                        return object()
+                return FakeContext()
+
+            def close(self) -> None:
+                pass
+
+        class FakePlaywright:
+            class chromium:
+                @staticmethod
+                def launch(headless: bool):
+                    return FakeBrowser()
+
+        class FakeSyncPlaywright:
+            def __enter__(self):
+                return FakePlaywright()
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        with patch('student_test_playwright_runner.load_tsv', return_value=[]), \
+             patch('student_test_playwright_runner.select_scope_rows', side_effect=lambda rows, scope: [] if scope == 'p1' else [{}] * 25), \
+             patch('student_test_playwright_runner._filter_manifest_rows', side_effect=lambda rows, manifest_item: rows), \
+             patch('student_test_playwright_runner.precheck_environment', return_value=('Block', 'env blocked')), \
+             patch('student_test_playwright_runner.load_gap_visibility_map', return_value={'GAP-001': False}), \
+             patch('student_test_playwright_runner.write_run_results'), \
+             patch('student_test_playwright_runner.write_defects'), \
+             patch('playwright.sync_api.sync_playwright', return_value=FakeSyncPlaywright()):
+            from student_test_playwright_runner import main
+            exit_code = main(['--scope', 'p0'])
+        self.assertEqual(1, exit_code)

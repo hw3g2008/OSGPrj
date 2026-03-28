@@ -275,13 +275,7 @@ def render_final_summary(
     run_results_path: Path,
     defects_path: Path,
 ) -> str:
-    p0_green = p0_summary['pass'] == p0_summary['total'] and p0_summary['fail'] == 0 and p0_summary['block'] == 0
-    p1_green = (
-        p1_summary['block'] == 0
-        and p1_summary['fail'] <= int(p1_summary['total'] * 0.05)
-        and p1_summary['pass'] + p1_summary['fail'] + p1_summary['block'] == p1_summary['total']
-    ) if p1_summary['total'] > 0 else True
-    release_ready = p0_green and p1_green and gap_status == 'gap register 仍只包含无可见入口资产'
+    release_ready = is_release_ready(p0_summary, p1_summary, gap_status=gap_status)
     lines = [
         f"1. P0 总数 / Pass / Fail / Block: {p0_summary['total']} / {p0_summary['pass']} / {p0_summary['fail']} / {p0_summary['block']}",
         f"2. P1 总数 / Pass / Fail / Block: {p1_summary['total']} / {p1_summary['pass']} / {p1_summary['fail']} / {p1_summary['block']}",
@@ -301,7 +295,26 @@ def _blank_summary(total: int) -> dict[str, int]:
 
 def _collect_top_items(results: list[ItemResult], status: str) -> list[str]:
     normalized = normalize_status(status)
-    return [item.manifest_item for item in results if normalize_status(item.status) == normalized][:3]
+    ordered = [
+        item.manifest_item
+        for _, item in _sorted_findings(results)
+        if normalize_status(item.status) == normalized
+    ]
+    return ordered[:3]
+
+
+def _severity_rank(severity: str) -> int:
+    return _SEVERITY_RANKS.get(severity.strip().lower(), _SEVERITY_RANKS['medium'])
+
+
+def _sorted_findings(results: list[ItemResult]) -> list[tuple[int, ItemResult]]:
+    findings = [
+        (index, item)
+        for index, item in enumerate(results)
+        if normalize_status(item.status) in {'Fail', 'Block'}
+    ]
+    findings.sort(key=lambda entry: (_severity_rank(entry[1].severity), entry[0]))
+    return findings
 
 
 def _env_block_result(note: str) -> ItemResult:
@@ -331,6 +344,21 @@ def load_gap_visibility_map(
         gap_register_path.read_text(encoding='utf-8'),
         prototype_path.read_text(encoding='utf-8'),
     )
+
+
+def is_release_ready(
+    p0_summary: dict[str, int],
+    p1_summary: dict[str, int],
+    *,
+    gap_status: str,
+) -> bool:
+    p0_green = p0_summary['pass'] == p0_summary['total'] and p0_summary['fail'] == 0 and p0_summary['block'] == 0
+    p1_green = (
+        p1_summary['block'] == 0
+        and p1_summary['fail'] <= int(p1_summary['total'] * 0.05)
+        and p1_summary['pass'] + p1_summary['fail'] + p1_summary['block'] == p1_summary['total']
+    ) if p1_summary['total'] > 0 else True
+    return p0_green and p1_green and gap_status == 'gap register 仍只包含无可见入口资产'
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -393,9 +421,7 @@ def main(argv: list[str] | None = None) -> int:
         defects_path=DEFECTS_PATH,
     )
     print(final_summary)
-    if args.scope == 'p1':
-        return 0 if '当前 student 端是否达到测试放行标准: 是' in final_summary else 1
-    return 0 if should_enter_p1(p0_summary) else 1
+    return 0 if is_release_ready(p0_summary, p1_summary, gap_status=audit_gap_register_purity(gap_visibility)) else 1
 
 
 if __name__ == '__main__':

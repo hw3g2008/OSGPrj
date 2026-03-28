@@ -380,6 +380,10 @@ function openCoachingModal(company, position, location){}
             actual,
         )
 
+    def test_build_gap_visibility_map_fails_closed_for_unknown_gap_id(self) -> None:
+        actual = build_gap_visibility_map('## GAP-999\nx\n', '<div class="page" id="page-job-tracking"></div>')
+        self.assertEqual({'GAP-999': True}, actual)
+
 
 if __name__ == '__main__':
     unittest.main()
