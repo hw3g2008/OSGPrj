@@ -7,13 +7,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from student_test_playwright_runner import (
     ItemResult,
+    RuntimeConfig,
+    build_runtime_config,
     filter_manifest_items,
     load_tsv,
     select_scope_rows,
     summarize_statuses,
+    should_enter_p1,
     write_defects,
     write_run_results,
 )
+from student_playwright_actions import authenticate_student_session, precheck_environment
 
 
 class ManifestSelectionTests(unittest.TestCase):
@@ -39,6 +43,159 @@ class ManifestSelectionTests(unittest.TestCase):
         ]
         actual = select_scope_rows(rows, scope='p0')
         self.assertEqual(['A'], [row['ManifestItem'] for row in actual])
+
+
+class RuntimeConfigTests(unittest.TestCase):
+    def test_build_runtime_config_uses_student_defaults(self) -> None:
+        config = build_runtime_config(base_url=None, username=None, password=None, scope='p0')
+        self.assertEqual(RuntimeConfig('http://127.0.0.1:4000', 'student_demo', 'student123', 'p0'), config)
+
+    def test_should_enter_p1_requires_perfect_p0_summary(self) -> None:
+        self.assertFalse(should_enter_p1({'total': 25, 'pass': 24, 'fail': 1, 'block': 0, 'unexecuted': 0}))
+        self.assertFalse(should_enter_p1({'total': 25, 'pass': 24, 'fail': 0, 'block': 1, 'unexecuted': 0}))
+        self.assertTrue(should_enter_p1({'total': 25, 'pass': 25, 'fail': 0, 'block': 0, 'unexecuted': 0}))
+
+
+class PrecheckTests(unittest.TestCase):
+    def test_authenticate_student_session_seeds_token_and_user(self) -> None:
+        calls: list[tuple[str, object]] = []
+
+        class FakeResponse:
+            ok = True
+
+            def json(self) -> dict[str, object]:
+                return {'code': 200, 'token': 'student-token'}
+
+        class FakeRequest:
+            def post(self, url: str, data: dict[str, str]) -> FakeResponse:
+                calls.append((url, data))
+                return FakeResponse()
+
+        class FakePage:
+            def __init__(self) -> None:
+                self.request = FakeRequest()
+                self.scripts: list[str] = []
+
+            def add_init_script(self, script: str) -> None:
+                self.scripts.append(script)
+
+        page = FakePage()
+        token = authenticate_student_session(
+            page,
+            base_url='http://127.0.0.1:4000',
+            username='student_demo',
+            password='student123',
+        )
+
+        self.assertEqual('student-token', token)
+        self.assertEqual(
+            [('http://127.0.0.1:4000/api/student/login', {'username': 'student_demo', 'password': 'student123'})],
+            calls,
+        )
+        self.assertEqual(1, len(page.scripts))
+        self.assertIn("osg_token", page.scripts[0])
+        self.assertIn("osg_user", page.scripts[0])
+
+    def test_precheck_environment_returns_pass_and_writes_screenshot(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            screenshot_path = Path(tmp) / 'nested' / 'precheck.png'
+            events: list[tuple[str, object]] = []
+
+            class FakeResponse:
+                ok = True
+
+                def json(self) -> dict[str, object]:
+                    return {'code': 200, 'token': 'student-token'}
+
+            class FakeRequest:
+                def post(self, url: str, data: dict[str, str]) -> FakeResponse:
+                    events.append(('post', url))
+                    return FakeResponse()
+
+            class FakeLocator:
+                def __init__(self, count_value: int) -> None:
+                    self.count_value = count_value
+
+                def count(self) -> int:
+                    return self.count_value
+
+            class FakePage:
+                def __init__(self) -> None:
+                    self.request = FakeRequest()
+                    self.screenshots: list[str] = []
+
+                def add_init_script(self, script: str) -> None:
+                    events.append(('script', script))
+
+                def goto(self, url: str, wait_until: str, timeout: int) -> None:
+                    events.append(('goto', url))
+
+                def wait_for_load_state(self, state: str, timeout: int) -> None:
+                    events.append(('wait', state))
+
+                def screenshot(self, path: str, full_page: bool) -> None:
+                    self.screenshots.append(path)
+                    Path(path).write_text('fake screenshot', encoding='utf-8')
+
+                def get_by_role(self, role: str, name: str) -> FakeLocator:
+                    events.append(('role', (role, name)))
+                    return FakeLocator(1)
+
+            page = FakePage()
+            status, notes = precheck_environment(
+                page,
+                config=RuntimeConfig('http://127.0.0.1:4000', 'student_demo', 'student123', 'p0'),
+                screenshot_path=screenshot_path,
+            )
+            self.assertEqual(('Pass', '预检通过：student 登录与首屏页面可用'), (status, notes))
+            self.assertTrue(screenshot_path.exists())
+            self.assertEqual([str(screenshot_path)], page.screenshots)
+            self.assertIn(('goto', 'http://127.0.0.1:4000/positions'), events)
+            self.assertIn(('wait', 'networkidle'), events)
+
+    def test_precheck_environment_blocks_when_heading_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            screenshot_path = Path(tmp) / 'precheck.png'
+
+            class FakeResponse:
+                ok = True
+
+                def json(self) -> dict[str, object]:
+                    return {'code': 200, 'token': 'student-token'}
+
+            class FakeRequest:
+                def post(self, url: str, data: dict[str, str]) -> FakeResponse:
+                    return FakeResponse()
+
+            class FakeLocator:
+                def count(self) -> int:
+                    return 0
+
+            class FakePage:
+                request = FakeRequest()
+
+                def add_init_script(self, script: str) -> None:
+                    pass
+
+                def goto(self, url: str, wait_until: str, timeout: int) -> None:
+                    pass
+
+                def wait_for_load_state(self, state: str, timeout: int) -> None:
+                    pass
+
+                def screenshot(self, path: str, full_page: bool) -> None:
+                    Path(path).write_text('fake screenshot', encoding='utf-8')
+
+                def get_by_role(self, role: str, name: str) -> FakeLocator:
+                    return FakeLocator()
+
+            status, notes = precheck_environment(
+                FakePage(),
+                config=RuntimeConfig('http://127.0.0.1:4000', 'student_demo', 'student123', 'p0'),
+                screenshot_path=screenshot_path,
+            )
+
+        self.assertEqual(('Block', '预检失败：岗位信息页面未出现标题'), (status, notes))
 
 
 class ReportingTests(unittest.TestCase):

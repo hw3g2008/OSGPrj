@@ -33,6 +33,14 @@ class ItemResult:
     visible_but_unimplemented: bool = False
 
 
+@dataclass
+class RuntimeConfig:
+    base_url: str
+    username: str
+    password: str
+    scope: str
+
+
 _KNOWN_STATUSES = {
     'pass': 'Pass',
     'fail': 'Fail',
@@ -94,6 +102,24 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument('--manifest-item')
     parser.add_argument('--headed', action='store_true')
     return parser.parse_args(argv)
+
+
+def build_runtime_config(
+    base_url: str | None,
+    username: str | None,
+    password: str | None,
+    scope: str,
+) -> RuntimeConfig:
+    return RuntimeConfig(
+        base_url=(base_url or 'http://127.0.0.1:4000').rstrip('/'),
+        username=username or 'student_demo',
+        password=password or 'student123',
+        scope=scope,
+    )
+
+
+def should_enter_p1(summary: dict[str, int]) -> bool:
+    return summary['total'] == summary['pass'] and summary['fail'] == 0 and summary['block'] == 0
 
 
 def summarize_statuses(results: list[ItemResult], *, total_planned: int) -> dict[str, int]:

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 ROUTE_PREFIXES = (
     ('menu://求职中心/岗位信息', '/positions'),
     ('surface://求职中心/岗位信息', '/positions'),
@@ -50,3 +53,45 @@ def apply_isolation_plan(page: object, plan: str) -> None:
     if plan.startswith('reset_'):
         return
     raise ValueError(f'unsupported state isolation plan: {plan}')
+
+
+def authenticate_student_session(page: object, *, base_url: str, username: str, password: str) -> str:
+    response = page.request.post(
+        f'{base_url}/api/student/login',
+        data={
+            'username': username,
+            'password': password,
+        },
+    )
+    body = response.json()
+    token = body.get('token')
+    if not response.ok or body.get('code') != 200 or not token:
+        raise RuntimeError(f'student login failed: body={body}')
+    user_payload = {
+        'userName': username,
+        'nickName': 'Test Student',
+        'roles': ['student'],
+    }
+    page.add_init_script(
+        f"""
+        window.localStorage.setItem('osg_token', {json.dumps(token)});
+        window.localStorage.setItem('osg_user', JSON.stringify({json.dumps(user_payload)}));
+        """.strip()
+    )
+    return token
+
+
+def precheck_environment(page: object, *, config: object, screenshot_path: Path) -> tuple[str, str]:
+    screenshot_path.parent.mkdir(parents=True, exist_ok=True)
+    authenticate_student_session(
+        page,
+        base_url=getattr(config, 'base_url'),
+        username=getattr(config, 'username'),
+        password=getattr(config, 'password'),
+    )
+    page.goto(f"{getattr(config, 'base_url')}/positions", wait_until='domcontentloaded', timeout=30000)
+    page.wait_for_load_state('networkidle', timeout=30000)
+    page.screenshot(path=str(screenshot_path), full_page=True)
+    if page.get_by_role('heading', name='岗位信息').count() == 0:
+        return 'Block', '预检失败：岗位信息页面未出现标题'
+    return 'Pass', '预检通过：student 登录与首屏页面可用'
