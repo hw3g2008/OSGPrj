@@ -17,6 +17,14 @@ ROUTE_PREFIXES = (
     ('surface://个人中心/基本信息', '/profile'),
 )
 
+_P0_ROUTES = {
+    ('求职中心', '岗位信息'): '/positions',
+    ('求职中心', '我的求职'): '/applications',
+    ('求职中心', '模拟应聘'): '/mock-practice',
+    ('学习中心', '课程记录'): '/courses',
+    ('个人中心', '基本信息'): '/profile',
+}
+
 
 def resolve_student_route(route_hint: str) -> str:
     for prefix, route in ROUTE_PREFIXES:
@@ -100,3 +108,92 @@ def precheck_environment(page: object, *, config: object, screenshot_path: Path)
     if heading.count() == 0:
         return 'Block', '预检失败：岗位信息页面未出现标题'
     return 'Pass', '预检通过：student 登录与首屏页面可用'
+
+
+def classify_result(*, primary_ok: bool, secondary_ok: bool, visible_target: bool, blocked: bool) -> tuple[str, bool]:
+    if blocked:
+        return 'Block', False
+    if primary_ok and secondary_ok:
+        return 'Pass', False
+    if visible_target:
+        return 'Fail', True
+    return 'Fail', False
+
+
+def execute_manifest_item(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    if row['Priority'] == 'P0':
+        return execute_p0_item(page, row, evidence_dir)
+    return execute_p1_item(page, row, evidence_dir)
+
+
+def execute_p0_item(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    module = row['模块']
+    submodule = row['子模块']
+    if module == '求职中心' and submodule == '岗位信息':
+        return execute_positions_submit_flow(page, row, evidence_dir)
+    if module == '求职中心' and submodule == '我的求职':
+        return execute_applications_submit_flow(page, row, evidence_dir)
+    if module == '求职中心' and submodule == '模拟应聘':
+        return execute_mock_practice_submit_flow(page, row, evidence_dir)
+    if module == '学习中心' and submodule == '课程记录':
+        return execute_courses_submit_flow(page, row, evidence_dir)
+    if module == '个人中心' and submodule == '基本信息':
+        return execute_profile_submit_flow(page, row, evidence_dir)
+    raise KeyError(f"unsupported P0 row: {row['ManifestItem']}")
+
+
+def execute_p1_item(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    raise KeyError(f"P1 execution not implemented yet: {row['ManifestItem']}")
+
+
+def execute_positions_submit_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/positions')
+
+
+def execute_applications_submit_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/applications')
+
+
+def execute_mock_practice_submit_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/mock-practice')
+
+
+def execute_courses_submit_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/courses')
+
+
+def execute_profile_submit_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/profile')
+
+
+def execute_common_flow(
+    page: object,
+    row: dict[str, str],
+    evidence_dir: Path,
+    *,
+    route: str,
+) -> tuple[str, str, bool]:
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    manifest_item = row['ManifestItem']
+    try:
+        page.goto(route, wait_until='domcontentloaded', timeout=30000)
+        page.wait_for_load_state('networkidle', timeout=30000)
+        page.screenshot(path=str(evidence_dir / f'{manifest_item}-before.png'), full_page=True)
+    except Exception as exc:
+        status, visible_but_unimplemented = classify_result(
+            primary_ok=False,
+            secondary_ok=False,
+            visible_target=False,
+            blocked=True,
+        )
+        return status, f'{manifest_item} 执行被环境或页面异常阻断：{exc}', visible_but_unimplemented
+    status, visible_but_unimplemented = classify_result(
+        primary_ok=False,
+        secondary_ok=False,
+        visible_target=True,
+        blocked=False,
+    )
+    page.screenshot(path=str(evidence_dir / f'{manifest_item}-after.png'), full_page=True)
+    route_hint = _P0_ROUTES.get((row['模块'], row['子模块']), route)
+    notes = f'{manifest_item} 页面可见但未落地：{route_hint} 尚未补齐显式 DOM 断言，先按防假通过策略记失败'
+    return status, notes, visible_but_unimplemented

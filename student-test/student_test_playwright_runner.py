@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+from student_playwright_actions import execute_manifest_item, precheck_environment
 
 ROOT = Path(__file__).resolve().parents[1]
 STUDENT_TEST_DIR = ROOT / 'student-test'
@@ -185,3 +188,95 @@ def write_defects(results: list[ItemResult], path: Path) -> None:
             '',
         ])
     path.write_text('\n'.join(lines), encoding='utf-8')
+
+
+def run_priority_batch(
+    page: object,
+    rows: list[dict[str, str]],
+    *,
+    total_planned: int,
+    evidence_dir: Path,
+) -> tuple[list[ItemResult], dict[str, int]]:
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    results: list[ItemResult] = []
+    for row in rows:
+        item_dir = evidence_dir / row['ManifestItem']
+        status, notes, visible_but_unimplemented = execute_manifest_item(page, row, item_dir)
+        results.append(
+            ItemResult(
+                manifest_item=row['ManifestItem'],
+                acceptance_refs=row['AcceptanceRefs'],
+                trigger_item=row['TriggerItem'],
+                module=row['模块'],
+                submodule=row['子模块'],
+                priority=row['Priority'],
+                status=status,
+                evidence_path=str(item_dir),
+                notes=notes,
+                defect_kind=status,
+                visible_but_unimplemented=visible_but_unimplemented,
+            )
+        )
+    return results, summarize_statuses(results, total_planned=total_planned)
+
+
+def _filter_manifest_rows(rows: list[dict[str, str]], manifest_item: str | None) -> list[dict[str, str]]:
+    if manifest_item is None:
+        return rows
+    selected = [row for row in rows if row['ManifestItem'] == manifest_item]
+    if not selected:
+        raise ValueError(f'unknown manifest item: {manifest_item}')
+    return selected
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(sys.argv[1:] if argv is None else argv)
+    config = build_runtime_config(args.base_url, args.username, args.password, args.scope)
+    rows = _filter_manifest_rows(select_scope_rows(load_tsv(MANIFEST_PATH), args.scope), args.manifest_item)
+    total_planned = len(rows)
+    evidence_dir = SCREENSHOT_DIR / config.scope
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError as exc:
+        raise RuntimeError(f'playwright is required for live execution: {exc}') from exc
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=not args.headed)
+        context = browser.new_context(base_url=config.base_url)
+        page = context.new_page()
+        precheck_status, precheck_notes = precheck_environment(page, config=config, screenshot_path=PRECHECK_PATH)
+        if precheck_status == 'Pass':
+            results, summary = run_priority_batch(
+                page,
+                rows,
+                total_planned=total_planned,
+                evidence_dir=evidence_dir,
+            )
+        else:
+            results = [
+                ItemResult(
+                    manifest_item=row['ManifestItem'],
+                    acceptance_refs=row['AcceptanceRefs'],
+                    trigger_item=row['TriggerItem'],
+                    module=row['模块'],
+                    submodule=row['子模块'],
+                    priority=row['Priority'],
+                    status='Block',
+                    evidence_path=str(PRECHECK_PATH),
+                    notes=precheck_notes,
+                    defect_kind='Block',
+                )
+                for row in rows
+            ]
+            summary = summarize_statuses(results, total_planned=total_planned)
+        browser.close()
+
+    write_run_results(results, RUN_RESULTS_PATH)
+    write_defects(results, DEFECTS_PATH)
+    print(summary)
+    return 0 if summary['fail'] == 0 and summary['block'] == 0 else 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
