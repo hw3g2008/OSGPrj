@@ -25,6 +25,25 @@ _P0_ROUTES = {
     ('个人中心', '基本信息'): '/profile',
 }
 
+_GAP_AUDIT_RULES = {
+    'GAP-001': {
+        'page_id': 'page-mock-practice',
+        'triggers': ("openModal('modal-student-mock-detail')", "openModal('modal-student-mock-feedback')"),
+    },
+    'GAP-002': {
+        'page_id': 'page-myclass',
+        'triggers': ("openModal('modal-class-mock')",),
+    },
+    'GAP-003': {
+        'page_id': 'page-job-tracking',
+        'triggers': ("openModal('modal-reminder-settings')",),
+    },
+    'GAP-004': {
+        'page_id': 'page-job-tracking',
+        'triggers': ('openCoachingModal(',),
+    },
+}
+
 
 def resolve_student_route(route_hint: str) -> str:
     for prefix, route in ROUTE_PREFIXES:
@@ -245,3 +264,31 @@ def audit_gap_register_purity(gap_visibility: dict[str, bool]) -> str:
         if has_visible_entry:
             return 'gap register 不再纯净'
     return 'gap register 仍只包含无可见入口资产'
+
+
+def parse_gap_register_ids(markdown_text: str) -> list[str]:
+    return re.findall(r'^##\s+(GAP-\d+)\s*$', markdown_text, flags=re.MULTILINE)
+
+
+def build_gap_visibility_map(gap_register_text: str, prototype_html: str) -> dict[str, bool]:
+    page_blocks = _extract_page_blocks(prototype_html)
+    visibility: dict[str, bool] = {}
+    for gap_id in parse_gap_register_ids(gap_register_text):
+        rule = _GAP_AUDIT_RULES.get(gap_id)
+        if rule is None:
+            visibility[gap_id] = False
+            continue
+        page_html = page_blocks.get(rule['page_id'], '')
+        visibility[gap_id] = any(trigger in page_html for trigger in rule['triggers'])
+    return visibility
+
+
+def _extract_page_blocks(prototype_html: str) -> dict[str, str]:
+    pattern = re.compile(
+        r'(<div class="page" id="(?P<page_id>[^"]+)".*?)(?=<div class="page" id="|<div class="modal" id="|<script>|</body>)',
+        re.DOTALL,
+    )
+    blocks: dict[str, str] = {}
+    for match in pattern.finditer(prototype_html):
+        blocks[match.group('page_id')] = match.group(1)
+    return blocks

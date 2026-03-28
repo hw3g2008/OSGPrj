@@ -8,8 +8,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from student_playwright_actions import (  # noqa: E402
     apply_isolation_plan,
     audit_gap_register_purity,
+    build_gap_visibility_map,
     classify_result,
     execute_manifest_item,
+    parse_gap_register_ids,
     parse_input_profile,
     parse_locator_hint,
     resolve_student_route,
@@ -344,6 +346,39 @@ class GapAuditTests(unittest.TestCase):
             'GAP-002': False,
         })
         self.assertEqual('gap register 仍只包含无可见入口资产', findings)
+
+    def test_parse_gap_register_ids_reads_declared_gap_entries(self) -> None:
+        ids = parse_gap_register_ids('## GAP-001\nx\n## GAP-002\nx\n')
+        self.assertEqual(['GAP-001', 'GAP-002'], ids)
+
+    def test_build_gap_visibility_map_uses_page_trigger_calls_not_modal_or_function_defs(self) -> None:
+        gap_register = '## GAP-001\nx\n## GAP-002\nx\n## GAP-003\nx\n## GAP-004\nx\n'
+        prototype_html = '''
+<div class="page" id="page-mock-practice">
+    <button onclick="openModal('modal-student-mock-detail')">详情</button>
+</div>
+<div class="page" id="page-myclass">
+    <button>无触发</button>
+</div>
+<div class="page" id="page-job-tracking">
+    <button onclick="openModal('modal-reminder-settings')">提醒</button>
+</div>
+<div class="modal" id="modal-class-mock"></div>
+<div class="modal" id="modal-student-mock-feedback"></div>
+<script>
+function openCoachingModal(company, position, location){}
+</script>
+'''
+        actual = build_gap_visibility_map(gap_register, prototype_html)
+        self.assertEqual(
+            {
+                'GAP-001': True,
+                'GAP-002': False,
+                'GAP-003': True,
+                'GAP-004': False,
+            },
+            actual,
+        )
 
 
 if __name__ == '__main__':

@@ -6,10 +6,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from student_test_playwright_runner import (
+    GAP_REGISTER_PATH,
     ItemResult,
+    PROTOTYPE_PATH,
     RuntimeConfig,
     build_runtime_config,
     filter_manifest_items,
+    load_gap_visibility_map,
     load_tsv,
     render_final_summary,
     select_scope_rows,
@@ -18,7 +21,7 @@ from student_test_playwright_runner import (
     write_defects,
     write_run_results,
 )
-from student_playwright_actions import authenticate_student_session, precheck_environment
+from student_playwright_actions import audit_gap_register_purity, authenticate_student_session, precheck_environment
 
 
 class ManifestSelectionTests(unittest.TestCase):
@@ -450,3 +453,40 @@ class FinalSummaryTests(unittest.TestCase):
             defects_path=Path('/tmp/defects.md'),
         )
         self.assertTrue(summary.endswith('8. 当前 student 端是否达到测试放行标准: 是'))
+
+    def test_load_gap_visibility_map_reads_real_sources_instead_of_empty_map(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            gap_register_path = Path(tmp) / 'gap.md'
+            prototype_path = Path(tmp) / 'prototype.html'
+            gap_register_path.write_text('## GAP-001\nx\n## GAP-004\nx\n', encoding='utf-8')
+            prototype_path.write_text(
+                '''
+<div class="page" id="page-mock-practice">
+    <button onclick="openModal('modal-student-mock-detail')">详情</button>
+</div>
+<div class="page" id="page-job-tracking">
+    <button>无共享辅导触发</button>
+</div>
+<script>
+function openCoachingModal(company, position, location){}
+</script>
+''',
+                encoding='utf-8',
+            )
+            actual = load_gap_visibility_map(gap_register_path, prototype_path)
+        self.assertEqual({'GAP-001': True, 'GAP-004': False}, actual)
+
+    def test_render_final_summary_marks_gap_impure_when_visibility_map_contains_true(self) -> None:
+        gap_status = audit_gap_register_purity({'GAP-001': False, 'GAP-003': True})
+        summary = render_final_summary(
+            {'total': 25, 'pass': 25, 'fail': 0, 'block': 0, 'unexecuted': 0},
+            {'total': 51, 'pass': 51, 'fail': 0, 'block': 0, 'unexecuted': 0},
+            visible_failures=0,
+            top_defects=[],
+            top_blockers=[],
+            gap_status=gap_status,
+            run_results_path=Path('/tmp/run-results.tsv'),
+            defects_path=Path('/tmp/defects.md'),
+        )
+        self.assertIn('6. gap register 不再纯净', summary)
+        self.assertTrue(summary.endswith('8. 当前 student 端是否达到测试放行标准: 否'))

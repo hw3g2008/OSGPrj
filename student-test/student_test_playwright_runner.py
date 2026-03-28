@@ -6,15 +6,22 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from student_playwright_actions import audit_gap_register_purity, execute_manifest_item, precheck_environment
+from student_playwright_actions import (
+    audit_gap_register_purity,
+    build_gap_visibility_map,
+    execute_manifest_item,
+    precheck_environment,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 STUDENT_TEST_DIR = ROOT / 'student-test'
 SCREENSHOT_DIR = ROOT / 'screenshots' / 'student-acceptance'
 MANIFEST_PATH = STUDENT_TEST_DIR / '2026-03-28-student-playwright-manifest.tsv'
+GAP_REGISTER_PATH = STUDENT_TEST_DIR / '2026-03-28-student-gap-register.md'
 RUN_RESULTS_PATH = STUDENT_TEST_DIR / '2026-03-28-student-playwright-run-results.tsv'
 DEFECTS_PATH = STUDENT_TEST_DIR / '2026-03-28-student-playwright-defects.md'
 PRECHECK_PATH = SCREENSHOT_DIR / 'precheck.png'
+PROTOTYPE_PATH = ROOT / 'osg-spec-docs' / 'source' / 'prototype' / 'index.html'
 
 
 @dataclass
@@ -316,6 +323,16 @@ def _env_block_result(note: str) -> ItemResult:
     )
 
 
+def load_gap_visibility_map(
+    gap_register_path: Path = GAP_REGISTER_PATH,
+    prototype_path: Path = PROTOTYPE_PATH,
+) -> dict[str, bool]:
+    return build_gap_visibility_map(
+        gap_register_path.read_text(encoding='utf-8'),
+        prototype_path.read_text(encoding='utf-8'),
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     config = build_runtime_config(args.base_url, args.username, args.password, args.scope)
@@ -364,13 +381,14 @@ def main(argv: list[str] | None = None) -> int:
 
     write_run_results(all_results, RUN_RESULTS_PATH)
     write_defects(all_results, DEFECTS_PATH)
+    gap_visibility = load_gap_visibility_map()
     final_summary = render_final_summary(
         p0_summary,
         p1_summary,
         visible_failures=sum(1 for item in all_results if item.visible_but_unimplemented and normalize_status(item.status) == 'Fail'),
         top_defects=_collect_top_items(all_results, 'Fail'),
         top_blockers=_collect_top_items(all_results, 'Block'),
-        gap_status=audit_gap_register_purity({}),
+        gap_status=audit_gap_register_purity(gap_visibility),
         run_results_path=RUN_RESULTS_PATH,
         defects_path=DEFECTS_PATH,
     )
