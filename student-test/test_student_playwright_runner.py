@@ -5,7 +5,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from student_test_playwright_runner import load_tsv, filter_manifest_items, select_scope_rows
+from student_test_playwright_runner import (
+    ItemResult,
+    filter_manifest_items,
+    load_tsv,
+    select_scope_rows,
+    summarize_statuses,
+    write_defects,
+    write_run_results,
+)
 
 
 class ManifestSelectionTests(unittest.TestCase):
@@ -31,3 +39,66 @@ class ManifestSelectionTests(unittest.TestCase):
         ]
         actual = select_scope_rows(rows, scope='p0')
         self.assertEqual(['A'], [row['ManifestItem'] for row in actual])
+
+
+class ReportingTests(unittest.TestCase):
+    def test_summarize_statuses_counts_only_executed_rows(self) -> None:
+        results = [
+            ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'Pass', 'a.png', 'ok'),
+            ItemResult('B', 'ACC-B', 'TRI-B', '求职中心', '岗位信息', 'P0', 'Fail', 'b.png', 'bad'),
+        ]
+        summary = summarize_statuses(results, total_planned=3)
+        self.assertEqual({'total': 3, 'pass': 1, 'fail': 1, 'block': 0, 'unexecuted': 1}, summary)
+
+    def test_summarize_statuses_accepts_lowercase_known_statuses(self) -> None:
+        results = [ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'pass', 'a.png', 'ok')]
+        summary = summarize_statuses(results, total_planned=1)
+        self.assertEqual({'total': 1, 'pass': 1, 'fail': 0, 'block': 0, 'unexecuted': 0}, summary)
+
+    def test_summarize_statuses_rejects_unknown_statuses(self) -> None:
+        results = [ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'Skip', 'a.png', 'ok')]
+        with self.assertRaises(ValueError):
+            summarize_statuses(results, total_planned=1)
+
+    def test_write_defects_includes_visible_but_unimplemented_field(self) -> None:
+        result = ItemResult(
+            'STU-PW-POS-999',
+            'STU-ACC-POS-999',
+            'STU-POS-999',
+            '求职中心',
+            '岗位信息',
+            'P0',
+            'Fail',
+            '/tmp/evidence.png',
+            '页面可见但未落地',
+            actual_result='实际结果',
+            expected_result='预期结果',
+            repro_steps='步骤',
+            severity='High',
+            defect_kind='Fail',
+            visible_but_unimplemented=True,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'defects.md'
+            write_defects([result], path)
+            body = path.read_text(encoding='utf-8')
+        self.assertIn('是否页面可见但未落地: 是', body)
+
+    def test_write_run_results_writes_tabular_rows(self) -> None:
+        result = ItemResult(
+            'STU-PW-POS-001',
+            'STU-ACC-POS-001',
+            'STU-POS-001',
+            '求职中心',
+            '岗位信息',
+            'P0',
+            'Pass',
+            '/tmp/pass.png',
+            'ok',
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'run-results.tsv'
+            write_run_results([result], path)
+            body = path.read_text(encoding='utf-8')
+        self.assertIn('ManifestItem\tAcceptanceRefs\tTriggerItem\tModule\tSubmodule\tPriority\tStatus\tEvidencePath\tNotes', body)
+        self.assertIn('STU-PW-POS-001\tSTU-ACC-POS-001\tSTU-POS-001\t求职中心\t岗位信息\tP0\tPass\t/tmp/pass.png\tok', body)
