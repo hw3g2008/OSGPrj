@@ -123,6 +123,7 @@ def write_run_results(results: list[ItemResult], path: Path) -> None:
             'Notes',
         ])
         for item in results:
+            normalized_status = normalize_status(item.status)
             writer.writerow([
                 item.manifest_item,
                 item.acceptance_refs,
@@ -130,7 +131,7 @@ def write_run_results(results: list[ItemResult], path: Path) -> None:
                 item.module,
                 item.submodule,
                 item.priority,
-                item.status,
+                normalized_status,
                 item.evidence_path,
                 item.notes,
             ])

@@ -72,6 +72,21 @@ class ReportingTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 write_defects([result], path)
 
+    def test_write_run_results_rejects_unknown_statuses(self) -> None:
+        result = ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'Skip', 'a.png', 'ok')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'run-results.tsv'
+            with self.assertRaises(ValueError):
+                write_run_results([result], path)
+
+    def test_write_run_results_normalizes_statuses_before_writing(self) -> None:
+        result = ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'pass', 'a.png', 'ok')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'run-results.tsv'
+            write_run_results([result], path)
+            body = path.read_text(encoding='utf-8')
+        self.assertIn('A\tACC-A\tTRI-A\t求职中心\t岗位信息\tP0\tPass\ta.png\tok', body)
+
     def test_write_defects_includes_visible_but_unimplemented_field(self) -> None:
         result = ItemResult(
             'STU-PW-POS-999',
