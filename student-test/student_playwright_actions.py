@@ -16,7 +16,7 @@ ROUTE_PREFIXES = (
 
 def resolve_student_route(route_hint: str) -> str:
     for prefix, route in ROUTE_PREFIXES:
-        if route_hint.startswith(prefix):
+        if route_hint == prefix or route_hint.startswith(f'{prefix}/'):
             return route
     raise KeyError(f'unsupported route hint: {route_hint}')
 
@@ -36,6 +36,8 @@ def parse_input_profile(profile: str) -> dict[str, str]:
 
 def parse_locator_hint(locator_hint: str) -> dict[str, str]:
     kind, _, selector = locator_hint.partition(' ')
+    if not kind or not selector.strip():
+        raise ValueError(f'malformed locator hint: {locator_hint}')
     return {'kind': kind.strip(), 'selector': selector.strip()}
 
 

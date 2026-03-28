@@ -19,6 +19,10 @@ class RouteMappingTests(unittest.TestCase):
     def test_resolves_profile_surface_to_real_route(self) -> None:
         self.assertEqual('/profile', resolve_student_route('surface://个人中心/基本信息/编辑基本信息'))
 
+    def test_rejects_route_hint_with_typo_suffix(self) -> None:
+        with self.assertRaises(KeyError):
+            resolve_student_route('menu://求职中心/岗位信息-typo')
+
     def test_rejects_unsupported_route_hint(self) -> None:
         with self.assertRaises(KeyError):
             resolve_student_route('menu://消息中心/系统消息')
@@ -36,6 +40,10 @@ class ProfileParsingTests(unittest.TestCase):
         parsed = parse_locator_hint('stage select#apply-stage-select')
         self.assertEqual({'kind': 'stage', 'selector': 'select#apply-stage-select'}, parsed)
 
+    def test_rejects_malformed_locator_hint(self) -> None:
+        with self.assertRaises(ValueError):
+            parse_locator_hint('stage')
+
 
 class IsolationPlanTests(unittest.TestCase):
     def test_soft_refresh_calls_reload(self) -> None:
@@ -47,6 +55,36 @@ class IsolationPlanTests(unittest.TestCase):
 
         apply_isolation_plan(FakePage(), 'soft_refresh')
         self.assertEqual(['networkidle'], calls)
+
+    def test_independent_plan_does_not_reload(self) -> None:
+        calls: list[str] = []
+
+        class FakePage:
+            def reload(self, wait_until: str = 'networkidle') -> None:
+                calls.append(wait_until)
+
+        apply_isolation_plan(FakePage(), 'independent')
+        self.assertEqual([], calls)
+
+    def test_none_plan_does_not_reload(self) -> None:
+        calls: list[str] = []
+
+        class FakePage:
+            def reload(self, wait_until: str = 'networkidle') -> None:
+                calls.append(wait_until)
+
+        apply_isolation_plan(FakePage(), 'NONE')
+        self.assertEqual([], calls)
+
+    def test_reset_plan_does_not_reload(self) -> None:
+        calls: list[str] = []
+
+        class FakePage:
+            def reload(self, wait_until: str = 'networkidle') -> None:
+                calls.append(wait_until)
+
+        apply_isolation_plan(FakePage(), 'reset_filters')
+        self.assertEqual([], calls)
 
     def test_rejects_unsupported_isolation_plans(self) -> None:
         class FakePage:
