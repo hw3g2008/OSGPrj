@@ -55,10 +55,22 @@ class ReportingTests(unittest.TestCase):
         summary = summarize_statuses(results, total_planned=1)
         self.assertEqual({'total': 1, 'pass': 1, 'fail': 0, 'block': 0, 'unexecuted': 0}, summary)
 
+    def test_summarize_statuses_accepts_na_status(self) -> None:
+        results = [ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'N/A', 'a.png', 'ok')]
+        summary = summarize_statuses(results, total_planned=1)
+        self.assertEqual({'total': 1, 'pass': 0, 'fail': 0, 'block': 0, 'unexecuted': 1}, summary)
+
     def test_summarize_statuses_rejects_unknown_statuses(self) -> None:
         results = [ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'Skip', 'a.png', 'ok')]
         with self.assertRaises(ValueError):
             summarize_statuses(results, total_planned=1)
+
+    def test_write_defects_rejects_unknown_statuses(self) -> None:
+        result = ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'Skip', 'a.png', 'ok')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'defects.md'
+            with self.assertRaises(ValueError):
+                write_defects([result], path)
 
     def test_write_defects_includes_visible_but_unimplemented_field(self) -> None:
         result = ItemResult(
@@ -83,6 +95,44 @@ class ReportingTests(unittest.TestCase):
             write_defects([result], path)
             body = path.read_text(encoding='utf-8')
         self.assertIn('是否页面可见但未落地: 是', body)
+
+    def test_write_defects_writes_no_defects_when_no_fail_or_block_findings(self) -> None:
+        results = [
+            ItemResult('A', 'ACC-A', 'TRI-A', '求职中心', '岗位信息', 'P0', 'Pass', 'a.png', 'ok'),
+            ItemResult('B', 'ACC-B', 'TRI-B', '求职中心', '岗位信息', 'P0', 'N/A', 'b.png', 'skipped'),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'defects.md'
+            write_defects(results, path)
+            body = path.read_text(encoding='utf-8')
+        self.assertIn('无缺陷。', body)
+
+    def test_write_defects_orders_findings_by_severity(self) -> None:
+        results = [
+            ItemResult(
+                'LOW-1', 'ACC-L1', 'TRI-L1', '求职中心', '岗位信息', 'P0', 'Fail', 'low1.png', 'low',
+                severity='Low', defect_kind='Fail', actual_result='low', expected_result='expected', repro_steps='steps',
+            ),
+            ItemResult(
+                'HIGH-1', 'ACC-H1', 'TRI-H1', '求职中心', '岗位信息', 'P0', 'Fail', 'high1.png', 'high',
+                severity='High', defect_kind='Fail', actual_result='high', expected_result='expected', repro_steps='steps',
+            ),
+            ItemResult(
+                'CRIT-1', 'ACC-C1', 'TRI-C1', '求职中心', '岗位信息', 'P0', 'Block', 'crit1.png', 'crit',
+                severity='Critical', defect_kind='Block', actual_result='crit', expected_result='expected', repro_steps='steps',
+            ),
+            ItemResult(
+                'HIGH-2', 'ACC-H2', 'TRI-H2', '求职中心', '岗位信息', 'P0', 'Fail', 'high2.png', 'high2',
+                severity='High', defect_kind='Fail', actual_result='high2', expected_result='expected', repro_steps='steps',
+            ),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'defects.md'
+            write_defects(results, path)
+            body = path.read_text(encoding='utf-8')
+        self.assertLess(body.index('## CRIT-1'), body.index('## HIGH-1'))
+        self.assertLess(body.index('## HIGH-1'), body.index('## HIGH-2'))
+        self.assertLess(body.index('## HIGH-2'), body.index('## LOW-1'))
 
     def test_write_run_results_writes_tabular_rows(self) -> None:
         result = ItemResult(

@@ -33,6 +33,28 @@ class ItemResult:
     visible_but_unimplemented: bool = False
 
 
+_KNOWN_STATUSES = {
+    'pass': 'Pass',
+    'fail': 'Fail',
+    'block': 'Block',
+    'n/a': 'N/A',
+}
+
+_SEVERITY_RANKS = {
+    'critical': 0,
+    'high': 1,
+    'medium': 2,
+    'low': 3,
+}
+
+
+def normalize_status(status: str) -> str:
+    normalized = _KNOWN_STATUSES.get(status.strip().lower())
+    if normalized is None:
+        raise ValueError(f'unknown status: {status}')
+    return normalized
+
+
 def load_tsv(path: Path) -> list[dict[str, str]]:
     with path.open('r', encoding='utf-8') as handle:
         return list(csv.DictReader(handle, delimiter='\t'))
@@ -77,10 +99,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def summarize_statuses(results: list[ItemResult], *, total_planned: int) -> dict[str, int]:
     summary = {'total': total_planned, 'pass': 0, 'fail': 0, 'block': 0, 'unexecuted': 0}
     for item in results:
-        lowered = item.status.lower()
-        if lowered not in {'pass', 'fail', 'block'}:
-            raise ValueError(f'unknown status: {item.status}')
-        summary[lowered] += 1
+        normalized = normalize_status(item.status)
+        lowered = normalized.lower()
+        if lowered in summary:
+            summary[lowered] += 1
     executed = summary['pass'] + summary['fail'] + summary['block']
     summary['unexecuted'] = max(total_planned - executed, 0)
     return summary
@@ -116,10 +138,12 @@ def write_run_results(results: list[ItemResult], path: Path) -> None:
 
 def write_defects(results: list[ItemResult], path: Path) -> None:
     lines = ['# Student Playwright Defects', '']
-    findings = [item for item in results if item.status.lower() in {'fail', 'block'}]
+    normalized_results = [(index, item, normalize_status(item.status)) for index, item in enumerate(results)]
+    findings = [entry for entry in normalized_results if entry[2] in {'Fail', 'Block'}]
+    findings.sort(key=lambda entry: (_SEVERITY_RANKS.get(entry[1].severity.strip().lower(), _SEVERITY_RANKS['medium']), entry[0]))
     if not findings:
         lines.append('无缺陷。')
-    for item in findings:
+    for _, item, _ in findings:
         lines.extend([
             f'## {item.manifest_item}',
             f'- 用例 ID: {item.manifest_item}',
