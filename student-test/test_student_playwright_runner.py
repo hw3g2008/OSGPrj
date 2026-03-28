@@ -139,7 +139,7 @@ class PrecheckTests(unittest.TestCase):
 
                 def get_by_role(self, role: str, name: str) -> FakeLocator:
                     events.append(('role', (role, name)))
-                    return FakeLocator(1)
+                    return FakeLocator(1 if getattr(name, 'search', None) and name.search('岗位信息 - 真实环境') else 0)
 
             page = FakePage()
             status, notes = precheck_environment(
@@ -152,6 +152,94 @@ class PrecheckTests(unittest.TestCase):
             self.assertEqual([str(screenshot_path)], page.screenshots)
             self.assertIn(('goto', 'http://127.0.0.1:4000/positions'), events)
             self.assertIn(('wait', 'networkidle'), events)
+
+    def test_precheck_environment_accepts_expanded_heading_text(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            screenshot_path = Path(tmp) / 'precheck.png'
+
+            class FakeResponse:
+                ok = True
+
+                def json(self) -> dict[str, object]:
+                    return {'code': 200, 'token': 'student-token'}
+
+            class FakeRequest:
+                def post(self, url: str, data: dict[str, str]) -> FakeResponse:
+                    return FakeResponse()
+
+            class FakeLocator:
+                def count(self) -> int:
+                    return 1
+
+            class FakePage:
+                request = FakeRequest()
+
+                def add_init_script(self, script: str) -> None:
+                    pass
+
+                def goto(self, url: str, wait_until: str, timeout: int) -> None:
+                    pass
+
+                def wait_for_load_state(self, state: str, timeout: int) -> None:
+                    pass
+
+                def screenshot(self, path: str, full_page: bool) -> None:
+                    Path(path).write_text('fake screenshot', encoding='utf-8')
+
+                def get_by_role(self, role: str, name: object) -> FakeLocator:
+                    assert hasattr(name, 'search')
+                    assert name.search('岗位信息 - 真实环境')
+                    return FakeLocator()
+
+            status, notes = precheck_environment(
+                FakePage(),
+                config=RuntimeConfig('http://127.0.0.1:4000', 'student_demo', 'student123', 'p0'),
+                screenshot_path=screenshot_path,
+            )
+            self.assertEqual(('Pass', '预检通过：student 登录与首屏页面可用'), (status, notes))
+            self.assertTrue(screenshot_path.exists())
+
+    def test_precheck_environment_returns_block_when_login_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            screenshot_path = Path(tmp) / 'precheck.png'
+
+            class FakeResponse:
+                ok = False
+
+                def json(self) -> dict[str, object]:
+                    return {'code': 401, 'message': 'login failed'}
+
+            class FakeRequest:
+                def post(self, url: str, data: dict[str, str]) -> FakeResponse:
+                    return FakeResponse()
+
+            class FakePage:
+                request = FakeRequest()
+
+                def add_init_script(self, script: str) -> None:
+                    raise AssertionError('should not be called')
+
+                def goto(self, url: str, wait_until: str, timeout: int) -> None:
+                    raise AssertionError('should not be called')
+
+                def wait_for_load_state(self, state: str, timeout: int) -> None:
+                    raise AssertionError('should not be called')
+
+                def screenshot(self, path: str, full_page: bool) -> None:
+                    raise AssertionError('should not be called')
+
+                def get_by_role(self, role: str, name: object):
+                    raise AssertionError('should not be called')
+
+            status, notes = precheck_environment(
+                FakePage(),
+                config=RuntimeConfig('http://127.0.0.1:4000', 'student_demo', 'student123', 'p0'),
+                screenshot_path=screenshot_path,
+            )
+
+        self.assertEqual('Block', status)
+        self.assertIn('预检失败：student 登录失败', notes)
+        self.assertFalse(screenshot_path.exists())
 
     def test_precheck_environment_blocks_when_heading_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
