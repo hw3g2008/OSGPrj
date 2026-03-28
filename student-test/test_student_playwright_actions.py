@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from student_playwright_actions import (  # noqa: E402
     apply_isolation_plan,
+    audit_gap_register_purity,
     classify_result,
     execute_manifest_item,
     parse_input_profile,
@@ -226,6 +227,51 @@ class P0DispatchTests(unittest.TestCase):
             expected_route='/profile',
         )
 
+    def test_execute_manifest_item_dispatches_positions_p1_row_without_false_pass(self) -> None:
+        self._assert_route_fail(
+            manifest_item='STU-PW-POS-001',
+            module='求职中心',
+            submodule='岗位信息',
+            priority='P1',
+            expected_route='/positions',
+        )
+
+    def test_execute_manifest_item_dispatches_applications_p1_row_without_false_pass(self) -> None:
+        self._assert_route_fail(
+            manifest_item='STU-PW-APP-010',
+            module='求职中心',
+            submodule='我的求职',
+            priority='P1',
+            expected_route='/applications',
+        )
+
+    def test_execute_manifest_item_dispatches_mock_practice_p1_row_without_false_pass(self) -> None:
+        self._assert_route_fail(
+            manifest_item='STU-PW-MOC-010',
+            module='求职中心',
+            submodule='模拟应聘',
+            priority='P1',
+            expected_route='/mock-practice',
+        )
+
+    def test_execute_manifest_item_dispatches_courses_p1_row_without_false_pass(self) -> None:
+        self._assert_route_fail(
+            manifest_item='STU-PW-COU-010',
+            module='学习中心',
+            submodule='课程记录',
+            priority='P1',
+            expected_route='/courses',
+        )
+
+    def test_execute_manifest_item_dispatches_profile_p1_row_without_false_pass(self) -> None:
+        self._assert_route_fail(
+            manifest_item='STU-PW-PRO-010',
+            module='个人中心',
+            submodule='基本信息',
+            priority='P1',
+            expected_route='/profile',
+        )
+
     def _assert_p0_route_fail(
         self,
         *,
@@ -234,11 +280,28 @@ class P0DispatchTests(unittest.TestCase):
         submodule: str,
         expected_route: str,
     ) -> None:
+        self._assert_route_fail(
+            manifest_item=manifest_item,
+            module=module,
+            submodule=submodule,
+            priority='P0',
+            expected_route=expected_route,
+        )
+
+    def _assert_route_fail(
+        self,
+        *,
+        manifest_item: str,
+        module: str,
+        submodule: str,
+        priority: str,
+        expected_route: str,
+    ) -> None:
         row = {
             'ManifestItem': manifest_item,
             '模块': module,
             '子模块': submodule,
-            'Priority': 'P0',
+            'Priority': priority,
         }
         events: list[tuple[str, object]] = []
 
@@ -263,6 +326,24 @@ class P0DispatchTests(unittest.TestCase):
         self.assertIn(('wait', 'networkidle'), events)
         self.assertIn(('screenshot', f'{manifest_item}-before.png'), events)
         self.assertIn(('screenshot', f'{manifest_item}-after.png'), events)
+
+
+class GapAuditTests(unittest.TestCase):
+    def test_gap_audit_is_impure_when_visible_entry_exists(self) -> None:
+        findings = audit_gap_register_purity({
+            'GAP-001': False,
+            'GAP-002': False,
+            'GAP-003': True,
+            'GAP-004': False,
+        })
+        self.assertEqual('gap register 不再纯净', findings)
+
+    def test_gap_audit_is_pure_when_all_entries_are_hidden(self) -> None:
+        findings = audit_gap_register_purity({
+            'GAP-001': False,
+            'GAP-002': False,
+        })
+        self.assertEqual('gap register 仍只包含无可见入口资产', findings)
 
 
 if __name__ == '__main__':

@@ -11,6 +11,7 @@ from student_test_playwright_runner import (
     build_runtime_config,
     filter_manifest_items,
     load_tsv,
+    render_final_summary,
     select_scope_rows,
     summarize_statuses,
     should_enter_p1,
@@ -412,3 +413,40 @@ class ReportingTests(unittest.TestCase):
             body = path.read_text(encoding='utf-8')
         self.assertIn('ManifestItem\tAcceptanceRefs\tTriggerItem\tModule\tSubmodule\tPriority\tStatus\tEvidencePath\tNotes', body)
         self.assertIn('STU-PW-POS-001\tSTU-ACC-POS-001\tSTU-POS-001\t求职中心\t岗位信息\tP0\tPass\t/tmp/pass.png\tok', body)
+
+
+class FinalSummaryTests(unittest.TestCase):
+    def test_render_final_summary_uses_exact_eight_line_structure(self) -> None:
+        summary = render_final_summary(
+            {'total': 25, 'pass': 24, 'fail': 1, 'block': 0, 'unexecuted': 0},
+            {'total': 51, 'pass': 0, 'fail': 0, 'block': 0, 'unexecuted': 51},
+            visible_failures=1,
+            top_defects=['STU-PW-POS-009'],
+            top_blockers=['ENV-BLOCK'],
+            gap_status='gap register 仍只包含无可见入口资产',
+            run_results_path=Path('/tmp/run-results.tsv'),
+            defects_path=Path('/tmp/defects.md'),
+        )
+        lines = summary.splitlines()
+        self.assertEqual(8, len(lines))
+        self.assertEqual('1. P0 总数 / Pass / Fail / Block: 25 / 24 / 1 / 0', lines[0])
+        self.assertEqual('2. P1 总数 / Pass / Fail / Block: 51 / 0 / 0 / 0', lines[1])
+        self.assertEqual('3. 页面可见但未落地的 Fail 数量: 1', lines[2])
+        self.assertEqual('4. Top defects: STU-PW-POS-009', lines[3])
+        self.assertEqual('5. Top blockers: ENV-BLOCK', lines[4])
+        self.assertEqual('6. gap register 仍只包含无可见入口资产', lines[5])
+        self.assertEqual('7. 结果文件路径: /tmp/run-results.tsv | /tmp/defects.md', lines[6])
+        self.assertEqual('8. 当前 student 端是否达到测试放行标准: 否', lines[7])
+
+    def test_render_final_summary_marks_release_ready_only_when_both_batches_green(self) -> None:
+        summary = render_final_summary(
+            {'total': 25, 'pass': 25, 'fail': 0, 'block': 0, 'unexecuted': 0},
+            {'total': 51, 'pass': 51, 'fail': 0, 'block': 0, 'unexecuted': 0},
+            visible_failures=0,
+            top_defects=[],
+            top_blockers=[],
+            gap_status='gap register 仍只包含无可见入口资产',
+            run_results_path=Path('/tmp/run-results.tsv'),
+            defects_path=Path('/tmp/defects.md'),
+        )
+        self.assertTrue(summary.endswith('8. 当前 student 端是否达到测试放行标准: 是'))

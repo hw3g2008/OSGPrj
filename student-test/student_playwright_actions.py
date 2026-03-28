@@ -143,7 +143,19 @@ def execute_p0_item(page: object, row: dict[str, str], evidence_dir: Path) -> tu
 
 
 def execute_p1_item(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
-    raise KeyError(f"P1 execution not implemented yet: {row['ManifestItem']}")
+    module = row['模块']
+    submodule = row['子模块']
+    if module == '求职中心' and submodule == '岗位信息':
+        return execute_positions_surface_flow(page, row, evidence_dir)
+    if module == '求职中心' and submodule == '我的求职':
+        return execute_applications_surface_flow(page, row, evidence_dir)
+    if module == '求职中心' and submodule == '模拟应聘':
+        return execute_mock_practice_surface_flow(page, row, evidence_dir)
+    if module == '学习中心' and submodule == '课程记录':
+        return execute_courses_surface_flow(page, row, evidence_dir)
+    if module == '个人中心' and submodule == '基本信息':
+        return execute_profile_surface_flow(page, row, evidence_dir)
+    raise KeyError(f"unsupported P1 row: {row['ManifestItem']}")
 
 
 def execute_positions_submit_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
@@ -163,6 +175,26 @@ def execute_courses_submit_flow(page: object, row: dict[str, str], evidence_dir:
 
 
 def execute_profile_submit_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/profile')
+
+
+def execute_positions_surface_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/positions')
+
+
+def execute_applications_surface_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/applications')
+
+
+def execute_mock_practice_surface_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/mock-practice')
+
+
+def execute_courses_surface_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
+    return execute_common_flow(page, row, evidence_dir, route='/courses')
+
+
+def execute_profile_surface_flow(page: object, row: dict[str, str], evidence_dir: Path) -> tuple[str, str, bool]:
     return execute_common_flow(page, row, evidence_dir, route='/profile')
 
 
@@ -206,3 +238,10 @@ def execute_common_flow(
     route_hint = _P0_ROUTES.get((row['模块'], row['子模块']), route)
     notes = f'{manifest_item} 页面可见但未落地：{route_hint} 尚未补齐显式 DOM 断言，先按防假通过策略记失败'
     return status, notes, visible_but_unimplemented
+
+
+def audit_gap_register_purity(gap_visibility: dict[str, bool]) -> str:
+    for has_visible_entry in gap_visibility.values():
+        if has_visible_entry:
+            return 'gap register 不再纯净'
+    return 'gap register 仍只包含无可见入口资产'

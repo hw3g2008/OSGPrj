@@ -6,7 +6,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from student_playwright_actions import execute_manifest_item, precheck_environment
+from student_playwright_actions import audit_gap_register_purity, execute_manifest_item, precheck_environment
 
 ROOT = Path(__file__).resolve().parents[1]
 STUDENT_TEST_DIR = ROOT / 'student-test'
@@ -213,6 +213,10 @@ def run_priority_batch(
                 status=status,
                 evidence_path=str(item_dir),
                 notes=notes,
+                actual_result=notes,
+                expected_result=_join_expected_results(row),
+                repro_steps=_build_repro_steps(row),
+                severity=_infer_severity(status, row['Priority'], visible_but_unimplemented),
                 defect_kind=status,
                 visible_but_unimplemented=visible_but_unimplemented,
             )
@@ -229,11 +233,100 @@ def _filter_manifest_rows(rows: list[dict[str, str]], manifest_item: str | None)
     return selected
 
 
+def _join_expected_results(row: dict[str, str]) -> str:
+    parts = [row.get('ExpectedPrimary', '').strip(), row.get('ExpectedSecondary', '').strip()]
+    return ' | '.join(part for part in parts if part)
+
+
+def _build_repro_steps(row: dict[str, str]) -> str:
+    steps = [
+        row.get('Precondition', '').strip(),
+        row.get('ActionType', '').strip(),
+        row.get('LocatorHint', '').strip(),
+        row.get('InputProfile', '').strip(),
+    ]
+    return ' -> '.join(step for step in steps if step and step != 'no_input')
+
+
+def _infer_severity(status: str, priority: str, visible_but_unimplemented: bool) -> str:
+    normalized = normalize_status(status)
+    if normalized == 'Block':
+        return 'Critical' if priority == 'P0' else 'High'
+    if visible_but_unimplemented:
+        return 'High' if priority == 'P0' else 'Medium'
+    return 'Medium'
+
+
+def render_final_summary(
+    p0_summary: dict[str, int],
+    p1_summary: dict[str, int],
+    *,
+    visible_failures: int,
+    top_defects: list[str],
+    top_blockers: list[str],
+    gap_status: str,
+    run_results_path: Path,
+    defects_path: Path,
+) -> str:
+    p0_green = p0_summary['pass'] == p0_summary['total'] and p0_summary['fail'] == 0 and p0_summary['block'] == 0
+    p1_green = (
+        p1_summary['block'] == 0
+        and p1_summary['fail'] <= int(p1_summary['total'] * 0.05)
+        and p1_summary['pass'] + p1_summary['fail'] + p1_summary['block'] == p1_summary['total']
+    ) if p1_summary['total'] > 0 else True
+    release_ready = p0_green and p1_green and gap_status == 'gap register 仍只包含无可见入口资产'
+    lines = [
+        f"1. P0 总数 / Pass / Fail / Block: {p0_summary['total']} / {p0_summary['pass']} / {p0_summary['fail']} / {p0_summary['block']}",
+        f"2. P1 总数 / Pass / Fail / Block: {p1_summary['total']} / {p1_summary['pass']} / {p1_summary['fail']} / {p1_summary['block']}",
+        f'3. 页面可见但未落地的 Fail 数量: {visible_failures}',
+        f"4. Top defects: {', '.join(top_defects) if top_defects else '无'}",
+        f"5. Top blockers: {', '.join(top_blockers) if top_blockers else '无'}",
+        f'6. {gap_status}',
+        f'7. 结果文件路径: {run_results_path} | {defects_path}',
+        f"8. 当前 student 端是否达到测试放行标准: {'是' if release_ready else '否'}",
+    ]
+    return '\n'.join(lines)
+
+
+def _blank_summary(total: int) -> dict[str, int]:
+    return {'total': total, 'pass': 0, 'fail': 0, 'block': 0, 'unexecuted': total}
+
+
+def _collect_top_items(results: list[ItemResult], status: str) -> list[str]:
+    normalized = normalize_status(status)
+    return [item.manifest_item for item in results if normalize_status(item.status) == normalized][:3]
+
+
+def _env_block_result(note: str) -> ItemResult:
+    return ItemResult(
+        manifest_item='ENV-BLOCK',
+        acceptance_refs='N/A',
+        trigger_item='N/A',
+        module='环境',
+        submodule='预检',
+        priority='P0',
+        status='Block',
+        evidence_path=str(PRECHECK_PATH),
+        notes=note,
+        actual_result=note,
+        expected_result='预检应通过：student 登录与首屏页面可用',
+        repro_steps='执行 runner 预检',
+        severity='Critical',
+        defect_kind='Block',
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     config = build_runtime_config(args.base_url, args.username, args.password, args.scope)
-    rows = _filter_manifest_rows(select_scope_rows(load_tsv(MANIFEST_PATH), args.scope), args.manifest_item)
-    total_planned = len(rows)
+    manifest_rows = load_tsv(MANIFEST_PATH)
+    p0_rows = _filter_manifest_rows(select_scope_rows(manifest_rows, 'p0' if args.scope != 'p0_smoke' else 'p0_smoke'), args.manifest_item)
+    if args.scope == 'p1':
+        p1_rows = _filter_manifest_rows(select_scope_rows(manifest_rows, 'p1'), args.manifest_item)
+        p1_total_planned = len(p1_rows)
+    else:
+        p1_rows = []
+        p1_total_planned = 0 if args.manifest_item else len(select_scope_rows(manifest_rows, 'p1'))
     evidence_dir = SCREENSHOT_DIR / config.scope
 
     try:
@@ -247,35 +340,44 @@ def main(argv: list[str] | None = None) -> int:
         page = context.new_page()
         precheck_status, precheck_notes = precheck_environment(page, config=config, screenshot_path=PRECHECK_PATH)
         if precheck_status == 'Pass':
-            results, summary = run_priority_batch(
+            p0_results, p0_summary = run_priority_batch(
                 page,
-                rows,
-                total_planned=total_planned,
-                evidence_dir=evidence_dir,
+                p0_rows,
+                total_planned=len(p0_rows),
+                evidence_dir=evidence_dir / 'p0',
             )
-        else:
-            results = [
-                ItemResult(
-                    manifest_item=row['ManifestItem'],
-                    acceptance_refs=row['AcceptanceRefs'],
-                    trigger_item=row['TriggerItem'],
-                    module=row['模块'],
-                    submodule=row['子模块'],
-                    priority=row['Priority'],
-                    status='Block',
-                    evidence_path=str(PRECHECK_PATH),
-                    notes=precheck_notes,
-                    defect_kind='Block',
+            all_results = list(p0_results)
+            p1_summary = _blank_summary(p1_total_planned)
+            if args.scope == 'p1' and should_enter_p1(p0_summary):
+                p1_results, p1_summary = run_priority_batch(
+                    page,
+                    p1_rows,
+                    total_planned=len(p1_rows),
+                    evidence_dir=evidence_dir / 'p1',
                 )
-                for row in rows
-            ]
-            summary = summarize_statuses(results, total_planned=total_planned)
+                all_results.extend(p1_results)
+        else:
+            all_results = [_env_block_result(precheck_notes)]
+            p0_summary = summarize_statuses(all_results, total_planned=len(p0_rows))
+            p1_summary = _blank_summary(p1_total_planned)
         browser.close()
 
-    write_run_results(results, RUN_RESULTS_PATH)
-    write_defects(results, DEFECTS_PATH)
-    print(summary)
-    return 0 if summary['fail'] == 0 and summary['block'] == 0 else 1
+    write_run_results(all_results, RUN_RESULTS_PATH)
+    write_defects(all_results, DEFECTS_PATH)
+    final_summary = render_final_summary(
+        p0_summary,
+        p1_summary,
+        visible_failures=sum(1 for item in all_results if item.visible_but_unimplemented and normalize_status(item.status) == 'Fail'),
+        top_defects=_collect_top_items(all_results, 'Fail'),
+        top_blockers=_collect_top_items(all_results, 'Block'),
+        gap_status=audit_gap_register_purity({}),
+        run_results_path=RUN_RESULTS_PATH,
+        defects_path=DEFECTS_PATH,
+    )
+    print(final_summary)
+    if args.scope == 'p1':
+        return 0 if '当前 student 端是否达到测试放行标准: 是' in final_summary else 1
+    return 0 if should_enter_p1(p0_summary) else 1
 
 
 if __name__ == '__main__':
