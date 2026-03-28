@@ -163,6 +163,107 @@ class P0DispatchTests(unittest.TestCase):
         self.assertFalse(visible)
         self.assertIn('阻断', notes)
 
+    def test_execute_manifest_item_classifies_after_screenshot_error_as_block(self) -> None:
+        row = {
+            'ManifestItem': 'STU-PW-POS-009',
+            '模块': '求职中心',
+            '子模块': '岗位信息',
+            'Priority': 'P0',
+        }
+        calls: list[str] = []
+
+        class FakePage:
+            def goto(self, url: str, wait_until: str, timeout: int) -> None:
+                calls.append(url)
+
+            def wait_for_load_state(self, state: str, timeout: int) -> None:
+                calls.append(state)
+
+            def screenshot(self, path: str, full_page: bool) -> None:
+                name = Path(path).name
+                calls.append(name)
+                if name.endswith('-after.png'):
+                    raise RuntimeError('after screenshot failed')
+                Path(path).write_text('fake screenshot', encoding='utf-8')
+
+        with tempfile.TemporaryDirectory() as tmp:
+            status, notes, visible = execute_manifest_item(FakePage(), row, Path(tmp))
+
+        self.assertEqual('Block', status)
+        self.assertFalse(visible)
+        self.assertIn('阻断', notes)
+        self.assertIn('STU-PW-POS-009-after.png', calls)
+
+    def test_execute_manifest_item_dispatches_applications_p0_row_without_false_pass(self) -> None:
+        self._assert_p0_route_fail(
+            manifest_item='STU-PW-APP-001',
+            module='求职中心',
+            submodule='我的求职',
+            expected_route='/applications',
+        )
+
+    def test_execute_manifest_item_dispatches_mock_practice_p0_row_without_false_pass(self) -> None:
+        self._assert_p0_route_fail(
+            manifest_item='STU-PW-MOC-001',
+            module='求职中心',
+            submodule='模拟应聘',
+            expected_route='/mock-practice',
+        )
+
+    def test_execute_manifest_item_dispatches_courses_p0_row_without_false_pass(self) -> None:
+        self._assert_p0_route_fail(
+            manifest_item='STU-PW-COU-001',
+            module='学习中心',
+            submodule='课程记录',
+            expected_route='/courses',
+        )
+
+    def test_execute_manifest_item_dispatches_profile_p0_row_without_false_pass(self) -> None:
+        self._assert_p0_route_fail(
+            manifest_item='STU-PW-PRO-001',
+            module='个人中心',
+            submodule='基本信息',
+            expected_route='/profile',
+        )
+
+    def _assert_p0_route_fail(
+        self,
+        *,
+        manifest_item: str,
+        module: str,
+        submodule: str,
+        expected_route: str,
+    ) -> None:
+        row = {
+            'ManifestItem': manifest_item,
+            '模块': module,
+            '子模块': submodule,
+            'Priority': 'P0',
+        }
+        events: list[tuple[str, object]] = []
+
+        class FakePage:
+            def goto(self, url: str, wait_until: str, timeout: int) -> None:
+                events.append(('goto', url))
+
+            def wait_for_load_state(self, state: str, timeout: int) -> None:
+                events.append(('wait', state))
+
+            def screenshot(self, path: str, full_page: bool) -> None:
+                events.append(('screenshot', Path(path).name))
+                Path(path).write_text('fake screenshot', encoding='utf-8')
+
+        with tempfile.TemporaryDirectory() as tmp:
+            status, notes, visible = execute_manifest_item(FakePage(), row, Path(tmp))
+
+        self.assertEqual('Fail', status)
+        self.assertTrue(visible)
+        self.assertIn('页面可见但未落地', notes)
+        self.assertIn(('goto', expected_route), events)
+        self.assertIn(('wait', 'networkidle'), events)
+        self.assertIn(('screenshot', f'{manifest_item}-before.png'), events)
+        self.assertIn(('screenshot', f'{manifest_item}-after.png'), events)
+
 
 if __name__ == '__main__':
     unittest.main()

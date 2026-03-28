@@ -193,7 +193,16 @@ def execute_common_flow(
         visible_target=True,
         blocked=False,
     )
-    page.screenshot(path=str(evidence_dir / f'{manifest_item}-after.png'), full_page=True)
+    try:
+        page.screenshot(path=str(evidence_dir / f'{manifest_item}-after.png'), full_page=True)
+    except Exception as exc:
+        status, visible_but_unimplemented = classify_result(
+            primary_ok=False,
+            secondary_ok=False,
+            visible_target=False,
+            blocked=True,
+        )
+        return status, f'{manifest_item} 执行被环境或页面异常阻断：{exc}', visible_but_unimplemented
     route_hint = _P0_ROUTES.get((row['模块'], row['子模块']), route)
     notes = f'{manifest_item} 页面可见但未落地：{route_hint} 尚未补齐显式 DOM 断言，先按防假通过策略记失败'
     return status, notes, visible_but_unimplemented
