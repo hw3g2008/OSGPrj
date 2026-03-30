@@ -463,6 +463,14 @@
               <a-input v-model:value="manualForm.interviewTime" type="datetime-local" style="width:100%" />
               <span class="field-helper">请填写该阶段面试的具体时间，方便导师安排辅导</span>
             </div>
+            <div class="manual-field manual-field--full">
+              <label class="manual-label">你期望有几个导师辅导？ <span class="optional">（选填）</span></label>
+              <a-select v-model:value="manualForm.mentorCount" placeholder="请选择" style="width:100%">
+                <a-select-option v-for="option in filterOptions.mentorCounts" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </a-select-option>
+              </a-select>
+            </div>
             <div class="manual-section-grid">
               <div class="manual-field">
                 <label class="manual-label">意向导师 <span class="optional">（选填）</span></label>
@@ -1148,7 +1156,7 @@ async function submitManualPosition() {
     deadline: f.deadline || undefined,
     needCoaching: f.needCoaching,
     coachingStage: f.needCoaching ? f.coachingStage : undefined,
-    mentorCount: f.needCoaching && f.coachingStage !== 'hirevue' ? f.mentorCount : undefined,
+    mentorCount: f.needCoaching && f.coachingStage !== 'hirevue' ? (f.mentorCount || '0') : undefined,
     hirevueType: f.needCoaching && f.coachingStage === 'hirevue' ? f.hirevueType : undefined,
     viLink: f.needCoaching && f.hirevueType === 'vi' ? f.viLink : undefined,
     otLink: f.needCoaching && f.hirevueType === 'ot' ? f.otLink : undefined,
