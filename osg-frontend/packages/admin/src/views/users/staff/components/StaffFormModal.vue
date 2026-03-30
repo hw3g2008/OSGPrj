@@ -34,6 +34,7 @@
             <option value="">请选择</option>
             <option value="mentor">导师</option>
             <option value="lead_mentor">班主任</option>
+            <option value="assistant">助教</option>
           </select>
         </label>
         <label class="staff-form-modal__field" data-field-name="性别">

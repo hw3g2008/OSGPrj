@@ -602,7 +602,9 @@ const handleDetailReviewUpdated = () => {
 const isBlacklisted = (row: StaffListItem) => Boolean(row.isBlacklisted)
 
 const formatType = (staffType?: string) => {
-  return staffType === 'lead_mentor' ? '班主任' : '导师'
+  if (staffType === 'lead_mentor') return '班主任'
+  if (staffType === 'assistant') return '助教'
+  return '导师'
 }
 
 const getTypeTone = (staffType?: string) => {

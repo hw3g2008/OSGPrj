@@ -13,7 +13,7 @@ public class CreateStudentDemoUser {
 
     private static final String USERNAME = "student_demo";
     private static final String EMAIL = "student_demo@osg.local";
-    private static final String STUDENT_MAIN_EMAIL = USERNAME;
+    private static final String STUDENT_MAIN_EMAIL = EMAIL;
     private static final String NICK_NAME = "Student Demo";
     private static final String PHONE = "13900000002";
     private static final long DEFAULT_DEPT_ID = 103L;
@@ -143,7 +143,7 @@ public class CreateStudentDemoUser {
 
     private static long ensureStudentMainData(Connection connection) throws Exception {
         Long studentId = findStudentIdByEmail(connection, STUDENT_MAIN_EMAIL);
-        Long legacyStudentId = findStudentIdByEmail(connection, EMAIL);
+        Long legacyStudentId = findStudentIdByEmail(connection, USERNAME);
 
         if (studentId == null && legacyStudentId != null) {
             studentId = legacyStudentId;
