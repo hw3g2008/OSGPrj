@@ -15,7 +15,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: MainLayout,
-    redirect: '/dashboard',
+    redirect: '/permission/roles',
     children: [
       {
         path: 'dashboard',

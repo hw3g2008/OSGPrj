@@ -79,8 +79,16 @@ public class OsgMockPracticeController extends BaseController
     {
         OsgMockPractice record = new OsgMockPractice();
         record.setPracticeId(id);
+        record.setCurrentMentorId(SecurityUtils.getUserId());
         record.setStatus("confirmed");
-        return toAjax(mockPracticeService.confirmMentorMockPractice(record));
+        try
+        {
+            return toAjax(mockPracticeService.confirmMentorMockPractice(record));
+        }
+        catch (ServiceException ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
     }
 
     private String resolveOperator()

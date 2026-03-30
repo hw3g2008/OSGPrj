@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="position-students-modal"
+    surface-id="modal-position-students"
     width="850px"
     :body-class="'position-students-modal__body'"
     @cancel="handleClose"

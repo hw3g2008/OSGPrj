@@ -9,7 +9,12 @@
         <p class="page-sub subtitle">管理学员信息、合同信息，支持各端查看和维护学员数据</p>
       </div>
       <div class="page-header__actions">
-        <button type="button" class="permission-button permission-button--primary students-page__add-button" @click="openAddStudentModal">
+        <button
+          type="button"
+          class="permission-button permission-button--primary students-page__add-button"
+          data-surface-trigger="modal-add-student"
+          @click="openAddStudentModal"
+        >
           <i class="mdi mdi-plus" aria-hidden="true"></i>
           <span>新增学员</span>
         </button>
@@ -24,7 +29,13 @@
         <strong class="students-banner__title">⚠️ 有 {{ pendingReviewCount }} 位学员的信息变更待审核</strong>
         <span class="students-banner__text">学员提交的学业信息、求职方向等信息变更需要您审核，请及时处理</span>
       </div>
-      <button type="button" class="students-banner__cta" @click="openPendingReviewStudent">
+      <button
+        type="button"
+        class="students-banner__cta"
+        data-surface-trigger="modal-student-detail-bob"
+        data-surface-sample-key="pending-review"
+        @click="openPendingReviewStudent"
+      >
         <i class="mdi mdi-eye"></i>
         <span>立即查看</span>
       </button>
@@ -37,6 +48,8 @@
         type="button"
         :class="['students-tabs__tab', { 'students-tabs__tab--active': selectedTab === tab.key }]"
         :aria-selected="selectedTab === tab.key"
+        :aria-label="`学员管理页${tab.label}`"
+        :data-tab="tab.key"
         @click="handleTabChange(tab.key)"
       >
         <span>{{ tab.label }}</span>
@@ -76,7 +89,13 @@
 
               <!-- 2. 英文姓名 -->
               <td>
-                <button type="button" class="student-link" @click="openStudentDetail(record)">
+                <button
+                  type="button"
+                  class="student-link"
+                  :data-surface-trigger="getStudentDetailSurfaceId(record)"
+                  :data-surface-sample-key="getStudentSurfaceSampleKey(record)"
+                  @click="openStudentDetail(record)"
+                >
                   {{ record.studentName }}
                 </button>
               </td>
@@ -147,8 +166,42 @@
 
               <!-- 15. 操作 -->
               <td class="action-cell">
-                <button type="button" class="btn-text-sm" @click="openStudentDetail(record)">详情</button>
-                <button type="button" class="btn-text-sm" @click="openStudentEdit(record)">编辑</button>
+                <button
+                  type="button"
+                  class="btn-text-sm"
+                  :data-surface-trigger="getStudentDetailSurfaceId(record)"
+                  :data-surface-sample-key="getStudentSurfaceSampleKey(record)"
+                  @click="openStudentDetail(record)"
+                >
+                  详情
+                </button>
+                <button
+                  type="button"
+                  class="btn-text-sm"
+                  data-surface-trigger="modal-edit-student-new"
+                  :data-surface-sample-key="getStudentSurfaceSampleKey(record)"
+                  @click="openStudentEdit(record)"
+                >
+                  编辑
+                </button>
+                <button
+                  type="button"
+                  class="btn-text-sm"
+                  data-surface-trigger="modal-contract-renew"
+                  :disabled="renewContractLoadingId === record.studentId"
+                  :data-surface-sample-key="`${getStudentSurfaceSampleKey(record)}-contract-renew`"
+                  @click="openStudentRenew(record)"
+                  >
+                  合同续签
+                </button>
+                <button
+                  type="button"
+                  class="btn-text-sm"
+                  data-surface-trigger="student-reset-password"
+                  @click="handleStudentAction('resetPassword', record)"
+                >
+                  重置密码
+                </button>
                 <ActionDropdown @select="handleStudentAction($event, record)" />
               </td>
             </tr>
@@ -200,6 +253,7 @@
       v-model:visible="detailStudentVisible"
       :student-id="selectedStudent?.studentId ?? null"
       :student-name="selectedStudent?.studentName"
+      :surface-id="selectedStudent ? getStudentDetailSurfaceId(selectedStudent) : 'modal-student-detail-new'"
       :can-view="canManageStudentDetail"
       @request-edit="handleDetailEditRequest"
       @review-updated="handleDetailReviewUpdated"
@@ -209,6 +263,12 @@
       :student="selectedStudent"
       :submitting="editingStudent"
       @submit="handleEditStudentSubmit"
+    />
+    <RenewContractModal
+      v-model:visible="renewContractVisible"
+      :student-options="renewStudentOptions"
+      :preset-contract="renewContractPreset"
+      @submitted="handleStudentContractRenewed"
     />
     <StatusChangeModal
       v-model:visible="statusChangeVisible"
@@ -234,6 +294,11 @@ import {
   type StudentListItem,
   type UpdateStudentPayload
 } from '@osg/shared/api/admin/student'
+import {
+  getStudentContractDetail,
+  type ContractDetailPayload,
+  type ContractListItem,
+} from '@osg/shared/api/admin/contract'
 import { getToken } from '@osg/shared/utils'
 import { http } from '@osg/shared/utils/request'
 import ActionDropdown from './components/ActionDropdown.vue'
@@ -241,6 +306,7 @@ import AddStudentModal from './components/AddStudentModal.vue'
 import BlacklistModal from './components/BlacklistModal.vue'
 import EditStudentModal from './components/EditStudentModal.vue'
 import FilterBar from './components/FilterBar.vue'
+import RenewContractModal from '../contracts/components/RenewContractModal.vue'
 import StatusChangeModal from './components/StatusChangeModal.vue'
 import StudentDetailModal from './components/StudentDetailModal.vue'
 import { studentColumns, blacklistColumns } from './columns'
@@ -285,6 +351,10 @@ const creatingStudent = ref(false)
 const detailStudentVisible = ref(false)
 const editStudentVisible = ref(false)
 const editingStudent = ref(false)
+const renewContractVisible = ref(false)
+const renewContractLoadingId = ref<number | null>(null)
+const renewContractPreset = ref<ContractListItem | null>(null)
+const renewableStudentIds = ref<Set<number>>(new Set())
 const statusChangeVisible = ref(false)
 const blacklistVisible = ref(false)
 const selectedStudent = ref<StudentListItem | null>(null)
@@ -351,6 +421,7 @@ const loadStudentList = async () => {
     pagination.total = res.total || 0
     syncFilterOptions(rows)
     syncSelectedStudent(rows)
+    void hydrateRenewableStudentIds(rows)
   } catch (_error) {
     message.error('加载学员列表失败')
   }
@@ -417,6 +488,20 @@ const openAddStudentModal = () => {
   addStudentVisible.value = true
 }
 
+const getStudentDetailSurfaceId = (record: StudentListItem) => {
+  return isPendingReview(record) ? 'modal-student-detail-bob' : 'modal-student-detail-new'
+}
+
+const getStudentSurfaceSampleKey = (record: StudentListItem) => {
+  const normalizedName = `${record.studentName || ''}`
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return normalizedName || `student-${record.studentId}`
+}
+
 const openStudentDetail = (record: StudentListItem) => {
   selectedStudent.value = record
   detailStudentVisible.value = true
@@ -426,6 +511,72 @@ const openStudentEdit = (record: StudentListItem) => {
   selectedStudent.value = record
   detailStudentVisible.value = false
   editStudentVisible.value = true
+}
+
+const hasRenewableContract = (record: StudentListItem) => {
+  return renewableStudentIds.value.has(record.studentId)
+}
+
+const contractSortScore = (contract: ContractListItem) => {
+  const isActive = contract.contractStatus === 'active' ? 1 : 0
+  const endTime = contract.endDate ? new Date(contract.endDate).getTime() : 0
+  const updateTime = contract.updateTime ? new Date(contract.updateTime).getTime() : 0
+  return [isActive, endTime, updateTime] as const
+}
+
+const buildRenewPreset = (record: StudentListItem, payload: ContractDetailPayload): ContractListItem | null => {
+  const contract = [...(payload.contracts || [])].sort((left, right) => {
+    const [leftActive, leftEnd, leftUpdate] = contractSortScore(left)
+    const [rightActive, rightEnd, rightUpdate] = contractSortScore(right)
+    if (rightActive !== leftActive) return rightActive - leftActive
+    if (rightEnd !== leftEnd) return rightEnd - leftEnd
+    return rightUpdate - leftUpdate
+  })[0]
+
+  if (!contract) {
+    return null
+  }
+
+  return {
+    ...contract,
+    studentId: record.studentId,
+    studentName: record.studentName,
+  }
+}
+
+const openStudentRenew = async (record: StudentListItem) => {
+  try {
+    renewContractLoadingId.value = record.studentId
+    selectedStudent.value = record
+    const payload = await getStudentContractDetail(record.studentId)
+    const preset = buildRenewPreset(record, payload)
+    if (!preset) {
+      message.warning('当前学员暂无可续签的原合同')
+      return
+    }
+    renewContractPreset.value = preset
+    renewContractVisible.value = true
+  } catch (_error) {
+    message.error('加载合同续签上下文失败')
+  } finally {
+    renewContractLoadingId.value = null
+  }
+}
+
+const hydrateRenewableStudentIds = async (rows: StudentListItem[]) => {
+  renewableStudentIds.value = new Set()
+  const settled = await Promise.allSettled(
+    rows.map(async (record) => {
+      const payload = await getStudentContractDetail(record.studentId)
+      return payload.contracts?.length ? record.studentId : null
+    })
+  )
+  renewableStudentIds.value = new Set(
+    settled
+      .filter((result): result is PromiseFulfilledResult<number | null> => result.status === 'fulfilled')
+      .map((result) => result.value)
+      .filter((value): value is number => typeof value === 'number')
+  )
 }
 
 const openPendingReviewStudent = () => {
@@ -451,6 +602,21 @@ const handleDetailEditRequest = (studentId: number) => {
 }
 
 const handleDetailReviewUpdated = async () => {
+  await loadStudentList()
+}
+
+const renewStudentOptions = computed(() => {
+  if (!selectedStudent.value) {
+    return []
+  }
+  return [{
+    studentId: selectedStudent.value.studentId,
+    studentName: selectedStudent.value.studentName,
+  }]
+})
+
+const handleStudentContractRenewed = async () => {
+  renewContractVisible.value = false
   await loadStudentList()
 }
 

@@ -17,11 +17,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.ruoyi.common.constant.HttpStatus;
+import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.file.FileUtils;
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.service.impl.OsgStaffServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/admin/staff")
@@ -52,9 +58,36 @@ public class OsgStaffController extends BaseController
         Map<String, Object> detail = staffService.selectStaffDetail(staffId);
         if (detail == null || detail.isEmpty())
         {
-            return AjaxResult.error("导师不存在");
+            return AjaxResult.error(HttpStatus.NOT_FOUND, "导师不存在");
         }
         return AjaxResult.success(detail);
+    }
+
+    @PreAuthorize(STAFF_ROLE_ACCESS)
+    @GetMapping("/export")
+    public void export(HttpServletResponse response,
+                       OsgStaff staff,
+                       @RequestParam(value = "tab", required = false) String tab)
+    {
+        prepareExportResponse(response, "导师列表.xlsx");
+        normalizeFilter(staff);
+        List<StaffExportRow> exportRows = staffService.selectStaffExportList(staff, tab).stream()
+            .map(StaffExportRow::from)
+            .toList();
+        ExcelUtil<StaffExportRow> util = new ExcelUtil<>(StaffExportRow.class);
+        util.exportExcel(response, exportRows, "导师列表");
+    }
+
+    private void prepareExportResponse(HttpServletResponse response, String fileName)
+    {
+        try
+        {
+            FileUtils.setAttachmentResponseHeader(response, fileName);
+        }
+        catch (java.io.UnsupportedEncodingException ex)
+        {
+            throw new IllegalStateException("设置导出响应头失败", ex);
+        }
     }
 
     @PreAuthorize(STAFF_ROLE_ACCESS)
@@ -180,9 +213,9 @@ public class OsgStaffController extends BaseController
             Map<String, Object> result = staffService.resetStaffPassword(staffId, getUsername());
             return AjaxResult.success("导师密码已重置", result);
         }
-        catch (Exception ex)
+        catch (ServiceException ex)
         {
-            return AjaxResult.error(ex.getMessage());
+            return handleServiceException(ex);
         }
     }
 
@@ -195,9 +228,9 @@ public class OsgStaffController extends BaseController
             Map<String, Object> result = staffService.submitChangeRequest(body, getUsername());
             return AjaxResult.success("导师信息变更申请已提交", result);
         }
-        catch (Exception ex)
+        catch (ServiceException ex)
         {
-            return AjaxResult.error(ex.getMessage());
+            return handleServiceException(ex);
         }
     }
 
@@ -219,9 +252,9 @@ public class OsgStaffController extends BaseController
             return AjaxResult.success("导师变更申请已通过", result)
                 .put("status", result.get("status"));
         }
-        catch (Exception ex)
+        catch (ServiceException ex)
         {
-            return AjaxResult.error(ex.getMessage());
+            return handleServiceException(ex);
         }
     }
 
@@ -237,9 +270,9 @@ public class OsgStaffController extends BaseController
             return AjaxResult.success("导师变更申请已驳回", result)
                 .put("status", result.get("status"));
         }
-        catch (Exception ex)
+        catch (ServiceException ex)
         {
-            return AjaxResult.error(ex.getMessage());
+            return handleServiceException(ex);
         }
     }
 
@@ -441,5 +474,127 @@ public class OsgStaffController extends BaseController
     private String defaultText(String value, String defaultValue)
     {
         return value == null || value.isBlank() ? defaultValue : value.trim();
+    }
+
+    private AjaxResult handleServiceException(ServiceException ex)
+    {
+        String message = ex.getMessage();
+        if (message != null && message.contains("不存在"))
+        {
+            return AjaxResult.error(HttpStatus.NOT_FOUND, message);
+        }
+        if (message != null && message.contains("无权"))
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, message);
+        }
+        return AjaxResult.error(HttpStatus.BAD_REQUEST, message);
+    }
+
+    private static class StaffExportRow
+    {
+        @Excel(name = "导师ID")
+        private final Long staffId;
+
+        @Excel(name = "导师姓名")
+        private final String staffName;
+
+        @Excel(name = "导师类型")
+        private final String staffType;
+
+        @Excel(name = "主攻方向")
+        private final String majorDirection;
+
+        @Excel(name = "子方向")
+        private final String subDirection;
+
+        @Excel(name = "邮箱")
+        private final String email;
+
+        @Excel(name = "手机号")
+        private final String phone;
+
+        @Excel(name = "地区")
+        private final String region;
+
+        @Excel(name = "城市")
+        private final String city;
+
+        @Excel(name = "课时单价")
+        private final BigDecimal hourlyRate;
+
+        @Excel(name = "学员数")
+        private final Integer studentCount;
+
+        @Excel(name = "账号状态")
+        private final String accountStatus;
+
+        @Excel(name = "名单标签")
+        private final String blacklistStatus;
+
+        private StaffExportRow(Long staffId, String staffName, String staffType, String majorDirection,
+                               String subDirection, String email, String phone, String region, String city,
+                               BigDecimal hourlyRate, Integer studentCount, String accountStatus, String blacklistStatus)
+        {
+            this.staffId = staffId;
+            this.staffName = staffName;
+            this.staffType = staffType;
+            this.majorDirection = majorDirection;
+            this.subDirection = subDirection;
+            this.email = email;
+            this.phone = phone;
+            this.region = region;
+            this.city = city;
+            this.hourlyRate = hourlyRate;
+            this.studentCount = studentCount;
+            this.accountStatus = accountStatus;
+            this.blacklistStatus = blacklistStatus;
+        }
+
+        private static StaffExportRow from(Map<String, Object> row)
+        {
+            return new StaffExportRow(
+                asLong(row.get("staffId")),
+                asText(row.get("staffName")),
+                asText(row.get("staffTypeLabel")),
+                asText(row.get("majorDirection")),
+                asText(row.get("subDirection")),
+                asText(row.get("email")),
+                asText(row.get("phone")),
+                asText(row.get("region")),
+                asText(row.get("city")),
+                asDecimal(row.get("hourlyRate")),
+                asInteger(row.get("studentCount")),
+                asText(row.get("accountStatusLabel")),
+                asText(row.get("blacklistStatus"))
+            );
+        }
+
+        private static Long asLong(Object value)
+        {
+            return value instanceof Number number ? number.longValue() : null;
+        }
+
+        private static Integer asInteger(Object value)
+        {
+            return value instanceof Number number ? number.intValue() : null;
+        }
+
+        private static BigDecimal asDecimal(Object value)
+        {
+            if (value instanceof BigDecimal decimal)
+            {
+                return decimal;
+            }
+            if (value instanceof Number number)
+            {
+                return BigDecimal.valueOf(number.doubleValue());
+            }
+            return null;
+        }
+
+        private static String asText(Object value)
+        {
+            return value == null ? null : String.valueOf(value);
+        }
     }
 }

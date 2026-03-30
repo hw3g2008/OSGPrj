@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="assign-mentor-modal"
+    surface-id="modal-assign-mentor"
     width="780px"
     :body-class="['job-overview-assign-modal__body', 'assign-mentor-modal__body']"
     @cancel="handleClose"
@@ -32,16 +32,32 @@
 
     <section class="job-overview-assign-modal__panel">
       <div class="job-overview-assign-modal__filters">
-        <label class="job-overview-assign-modal__search">
+        <label
+          class="job-overview-assign-modal__search"
+          data-field-name="导师搜索"
+          data-field-name-alias="分配导师弹窗导师搜索"
+        >
           <i class="mdi mdi-magnify" aria-hidden="true"></i>
-          <input v-model="keyword" type="text" placeholder="搜索导师姓名..." />
+          <input
+            v-model="keyword"
+            data-field-name="导师搜索"
+            data-field-name-alias="分配导师弹窗导师搜索"
+            type="text"
+            placeholder="搜索导师姓名..."
+          />
         </label>
 
-        <div class="job-overview-assign-modal__scope">
+        <div
+          class="job-overview-assign-modal__scope"
+          data-field-name="排期状态筛选"
+          data-field-name-alias="分配导师弹窗排期状态筛选"
+        >
           <button
             v-for="option in scopeOptions"
             :key="option.value"
             type="button"
+            :data-field-name="option.label"
+            :data-field-name-alias="`分配导师弹窗${option.label}`"
             :class="[
               'job-overview-assign-modal__scope-button',
               { 'job-overview-assign-modal__scope-button--active': scope === option.value }
@@ -52,47 +68,78 @@
           </button>
         </div>
 
-        <div class="job-overview-assign-modal__summary-chip">
-          已找到 <strong>{{ filteredMentorOptions.length }}</strong> 位导师
+        <div
+          class="job-overview-assign-modal__scope"
+          data-field-name="主攻方向筛选"
+          data-field-name-alias="分配导师弹窗主攻方向筛选"
+        >
+          <button
+            v-for="option in majorDirectionOptions"
+            :key="option.value"
+            type="button"
+            :data-field-name="option.label"
+            :data-field-name-alias="`分配导师弹窗${option.label}`"
+            :class="[
+              'job-overview-assign-modal__scope-button',
+              { 'job-overview-assign-modal__scope-button--active': majorDirection === option.value }
+            ]"
+            @click="majorDirection = option.value"
+          >
+            {{ option.label }}
+          </button>
         </div>
       </div>
 
-      <div v-if="filteredMentorOptions.length" class="job-overview-assign-modal__mentor-list assign-mentor-modal__mentor-list">
-        <label
-          v-for="option in filteredMentorOptions"
-          :key="option.mentorId"
-          :class="[
-            'job-overview-assign-modal__mentor assign-mentor-modal__option',
-            {
-              'job-overview-assign-modal__mentor--selected assign-mentor-modal__option--selected': selectedMentorIds.includes(option.mentorId),
-              'job-overview-assign-modal__mentor--preferred assign-mentor-modal__option--preferred': option.preferred
-            }
-          ]"
-        >
-          <input
-            v-model="selectedMentorIds"
-            class="job-overview-assign-modal__checkbox assign-mentor-modal__checkbox"
-            type="checkbox"
-            :value="option.mentorId"
-          />
+      <div
+        class="job-overview-assign-modal__mentor-list assign-mentor-modal__mentor-list"
+        data-field-name="子方向筛选"
+        data-field-name-alias="分配导师弹窗子方向筛选"
+      >
+        <template v-if="filteredMentorOptions.length">
+          <label
+            v-for="option in filteredMentorOptions"
+            :key="option.mentorId"
+            :class="[
+              'job-overview-assign-modal__mentor assign-mentor-modal__option',
+              {
+                'job-overview-assign-modal__mentor--selected assign-mentor-modal__option--selected': selectedMentorIds.includes(option.mentorId),
+                'job-overview-assign-modal__mentor--preferred assign-mentor-modal__option--preferred': option.preferred
+              }
+            ]"
+          >
+            <input
+              v-model="selectedMentorIds"
+              class="job-overview-assign-modal__checkbox assign-mentor-modal__checkbox"
+              :data-field-name="option.mentorName"
+              :data-field-name-alias="`分配导师弹窗${option.mentorName}`"
+              type="checkbox"
+              :value="option.mentorId"
+            />
 
-          <div class="job-overview-assign-modal__mentor-avatar">{{ getMentorInitials(option.mentorName) }}</div>
+            <div class="job-overview-assign-modal__mentor-avatar">{{ getMentorInitials(option.mentorName) }}</div>
 
-          <div class="job-overview-assign-modal__mentor-copy assign-mentor-modal__option-copy">
-            <strong>{{ option.mentorName }}</strong>
-            <span>{{ option.hint || '可分配导师' }}</span>
-          </div>
+            <div class="job-overview-assign-modal__mentor-copy assign-mentor-modal__option-copy">
+              <strong>{{ option.mentorName }}</strong>
+              <span>{{ option.hint || '可分配导师' }}</span>
+            </div>
 
-          <span v-if="option.preferred" class="job-overview-assign-modal__mentor-flag assign-mentor-modal__preferred-flag">意向导师</span>
-        </label>
+            <span v-if="option.preferred" class="job-overview-assign-modal__mentor-flag assign-mentor-modal__preferred-flag">意向导师</span>
+          </label>
+        </template>
+        <div v-else class="job-overview-assign-modal__empty assign-mentor-modal__empty">当前没有可直接分配的导师候选。</div>
       </div>
-      <div v-else class="job-overview-assign-modal__empty assign-mentor-modal__empty">当前没有可直接分配的导师候选。</div>
     </section>
 
-    <section class="job-overview-assign-modal__note-field">
+    <section
+      class="job-overview-assign-modal__note-field"
+      data-field-name="备注"
+      data-field-name-alias="分配导师弹窗备注"
+    >
       <label class="job-overview-assign-modal__label">备注</label>
       <textarea
         v-model="assignNote"
+        data-field-name="备注"
+        data-field-name-alias="分配导师弹窗备注"
         class="job-overview-assign-modal__textarea assign-mentor-modal__textarea"
         rows="4"
         maxlength="160"
@@ -133,6 +180,7 @@ interface AssignMentorOption {
   mentorName: string
   preferred: boolean
   hint?: string
+  majorDirection?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -152,6 +200,7 @@ const emit = defineEmits<{
 
 const keyword = ref('')
 const scope = ref<'all' | 'preferred' | 'recommended'>('all')
+const majorDirection = ref('all')
 const selectedMentorIds = ref<number[]>([])
 const assignNote = ref('')
 
@@ -160,6 +209,24 @@ const scopeOptions = [
   { value: 'preferred', label: '意向导师' },
   { value: 'recommended', label: '班主任推荐' }
 ] as const
+
+const majorDirectionOptions = computed(() => {
+  const values = new Set<string>()
+  props.mentorOptions.forEach((option) => {
+    const direction = resolveMajorDirection(option)
+    if (direction) {
+      values.add(direction)
+    }
+  })
+
+  return [
+    { value: 'all', label: '全部方向' },
+    ...[...values].sort((left, right) => left.localeCompare(right, 'zh-Hans-CN')).map((value) => ({
+      value,
+      label: value
+    }))
+  ]
+})
 
 const studentInitials = computed(() => {
   const value = props.row?.studentName || '学员'
@@ -178,6 +245,9 @@ const filteredMentorOptions = computed(() => {
     if (scope.value === 'recommended' && option.hint !== '班主任推荐') {
       return false
     }
+    if (majorDirection.value !== 'all' && resolveMajorDirection(option) !== majorDirection.value) {
+      return false
+    }
     if (!normalizedKeyword) {
       return true
     }
@@ -192,6 +262,7 @@ watch(
     if (!visible) {
       keyword.value = ''
       scope.value = 'all'
+      majorDirection.value = 'all'
       selectedMentorIds.value = []
       assignNote.value = ''
       return
@@ -199,6 +270,7 @@ watch(
 
     keyword.value = ''
     scope.value = 'all'
+    majorDirection.value = 'all'
     selectedMentorIds.value = props.mentorOptions
       .filter((option) => option.preferred)
       .slice(0, requestedCount.value)
@@ -227,6 +299,17 @@ const handleSubmit = () => {
 }
 
 const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
+
+const resolveMajorDirection = (option: AssignMentorOption) => {
+  if (option.majorDirection) {
+    return option.majorDirection.trim()
+  }
+
+  const [direction] = String(option.hint || '')
+    .split('/')
+    .map((item) => item.trim())
+  return direction || ''
+}
 </script>
 
 <style scoped lang="scss">

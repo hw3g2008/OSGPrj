@@ -9,7 +9,12 @@
         <p class="page-sub subtitle">管理导师和班主任账户，录入信息开通账号</p>
       </div>
       <div class="page-header__actions">
-        <button type="button" class="permission-button permission-button--primary" @click="openCreateModal">
+        <button
+          type="button"
+          class="permission-button permission-button--primary"
+          data-surface-trigger="modal-add-staff"
+          @click="openCreateModal"
+        >
           <i class="mdi mdi-plus" aria-hidden="true"></i>
           <span>新增导师</span>
         </button>
@@ -24,16 +29,16 @@
         <strong>有 {{ pendingReviewCount }} 位导师的个人信息变更待审核</strong>
         <span>导师提交的银行信息、联系方式等变更需要您审核确认</span>
       </div>
-      <button type="button" class="staff-banner__action" @click="handlePendingReviewEntry">
+      <button type="button" class="staff-banner__action" data-surface-trigger="modal-mentor-info-change" @click="handlePendingReviewEntry">
         <i class="mdi mdi-eye" aria-hidden="true"></i>
         <span>立即处理</span>
       </button>
     </div>
 
-    <div class="staff-filters">
+    <div class="staff-filters" data-field-name="导师管理页">
       <label class="staff-field">
         <span class="staff-field__label">姓名 / ID</span>
-        <input v-model="filters.staffName" type="text" class="staff-input" placeholder="搜索姓名/ID" />
+        <input v-model="filters.staffName" type="text" class="staff-input" data-field-name="搜索框" placeholder="搜索姓名/ID" />
       </label>
       <label class="staff-field">
         <span class="staff-field__label">类型</span>
@@ -52,7 +57,7 @@
       </label>
       <label class="staff-field">
         <span class="staff-field__label">状态</span>
-        <select v-model="filters.accountStatus" class="staff-select">
+        <select v-model="filters.accountStatus" class="staff-select" data-field-name="状态">
           <option value="">全部</option>
           <option value="0">激活</option>
           <option value="1">禁用</option>
@@ -60,7 +65,7 @@
       </label>
       <div class="staff-filter-actions">
         <button type="button" class="permission-button permission-button--primary" @click="handleSearch">搜索</button>
-        <button type="button" class="permission-button permission-button--outline" @click="handleExport"><i class="mdi mdi-export" aria-hidden="true"></i> 导出</button>
+        <button type="button" class="permission-button permission-button--outline" :disabled="exporting" @click="handleExport"><i class="mdi mdi-export" aria-hidden="true"></i> {{ exporting ? '导出中...' : '导出' }}</button>
       </div>
     </div>
 
@@ -71,6 +76,8 @@
         type="button"
         :class="['staff-tabs__tab', { 'staff-tabs__tab--active': selectedTab === tab.key }]"
         :aria-selected="selectedTab === tab.key"
+        :aria-label="`导师管理页${tab.label}`"
+        :data-tab="tab.key"
         @click="selectedTab = tab.key"
       >
         <span>{{ tab.label }}</span>
@@ -102,7 +109,13 @@
 
               <!-- 英文名 -->
               <td>
-                <button type="button" class="staff-name" @click="openStaffDetail(row)">
+                <button
+                  type="button"
+                  class="staff-name"
+                  data-surface-trigger="modal-staff-detail"
+                  :data-surface-sample-key="`staff-${row.staffId}`"
+                  @click="openStaffDetail(row)"
+                >
                   {{ row.staffName }}
                 </button>
               </td>
@@ -150,7 +163,13 @@
 
               <!-- 学员数 -->
               <td>
-                <button type="button" class="staff-work-value staff-work-value--count" @click="openMentorStudents(row)">
+                <button
+                  type="button"
+                  class="staff-work-value staff-work-value--count"
+                  data-surface-trigger="modal-mentor-students"
+                  :data-surface-sample-key="`staff-${row.staffId}-students`"
+                  @click="openMentorStudents(row)"
+                >
                   {{ formatStudentCount(row.studentCount) }}
                 </button>
               </td>
@@ -168,8 +187,50 @@
               <!-- 操作 -->
               <td>
                 <div class="staff-action-row">
-                  <button type="button" class="staff-action-link" @click="openStaffDetail(row)">
+                  <button
+                    type="button"
+                    class="staff-action-link"
+                    data-surface-trigger="modal-staff-detail"
+                    :data-surface-sample-key="`staff-${row.staffId}`"
+                    @click="openStaffDetail(row)"
+                  >
                     详情
+                  </button>
+                  <span class="staff-action-divider"></span>
+                  <button
+                    type="button"
+                    class="staff-action-link"
+                    data-surface-trigger="modal-edit-staff"
+                    :data-surface-sample-key="`staff-${row.staffId}`"
+                    aria-label="编辑导师信息"
+                    @click="openEditModal(row)"
+                  >
+                    编辑
+                  </button>
+                  <span class="staff-action-divider"></span>
+                  <button type="button" class="staff-action-link" @click="handleActionSelect('resetPassword', row)">
+                    重置密码
+                  </button>
+                  <span class="staff-action-divider"></span>
+                  <button
+                    type="button"
+                    class="staff-action-link"
+                    :data-surface-trigger="getStatusSurfaceId(row)"
+                    :data-surface-sample-key="`staff-${row.staffId}`"
+                    @click="handleActionSelect(row.accountStatus === '1' ? 'restore' : 'freeze', row)"
+                  >
+                    {{ row.accountStatus === '1' ? '解冻' : '禁用' }}
+                  </button>
+                  <span class="staff-action-divider"></span>
+                  <button
+                    type="button"
+                    class="staff-action-link"
+                    :data-surface-trigger="isBlacklisted(row) ? 'modal-remove-mentor-blacklist' : 'modal-mentor-blacklist'"
+                    :data-surface-sample-key="`staff-${row.staffId}`"
+                    :aria-label="isBlacklisted(row) ? '移出黑名单' : '加入黑名单'"
+                    @click="handleActionSelect(isBlacklisted(row) ? 'remove' : 'blacklist', row)"
+                  >
+                    {{ isBlacklisted(row) ? '移出黑名单' : '加入黑名单' }}
                   </button>
                   <span class="staff-action-divider"></span>
                   <a-dropdown trigger="click" placement="bottomRight">
@@ -226,11 +287,13 @@
       v-model:visible="studentsModalVisible"
       :staff-id="selectedStaff?.staffId ?? null"
       :staff-name="selectedStaff?.staffName"
+      surface-id="modal-mentor-students"
     />
     <StaffDetailModal
       v-model:visible="detailModalVisible"
       :staff-id="selectedStaff?.staffId ?? null"
       :staff-name="selectedStaff?.staffName"
+      :surface-id="detailSurfaceId"
       @review-updated="handleDetailReviewUpdated"
     />
     <StaffStatusModal
@@ -275,6 +338,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   createStaff,
+  exportStaffList,
   getStaffChangeRequestList,
   getStaffList,
   resetStaffPassword,
@@ -305,6 +369,7 @@ const pendingReviewCount = ref(0)
 const selectedTab = ref<StaffTabKey>('normal')
 const studentsModalVisible = ref(false)
 const detailModalVisible = ref(false)
+const detailSurfaceId = ref('modal-staff-detail')
 const statusModalVisible = ref(false)
 const statusSubmitting = ref(false)
 const formModalVisible = ref(false)
@@ -314,6 +379,7 @@ const statusAction = ref<StatusAction>('freeze')
 const selectedStaff = ref<StaffListItem | null>(null)
 const editingStaff = ref<StaffListItem | null>(null)
 const resetPasswordResult = ref<ResetStaffPasswordResult | null>(null)
+const exporting = ref(false)
 
 const filters = reactive({
   staffName: '',
@@ -389,11 +455,26 @@ const handleReset = () => {
   void loadRows()
 }
 
-const handleExport = () => {
-  message.info('导出功能开发中')
+const handleExport = async () => {
+  try {
+    exporting.value = true
+    await exportStaffList({
+      staffName: filters.staffName || undefined,
+      staffType: filters.staffType || undefined,
+      majorDirection: filters.majorDirection || undefined,
+      accountStatus: filters.accountStatus || undefined,
+      tab: selectedTab.value
+    })
+    message.success('导师列表导出成功')
+  } catch (_error) {
+    message.error('导师列表导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 const handlePendingReviewEntry = () => {
+  detailSurfaceId.value = 'modal-mentor-info-change'
   void openFirstPendingReview()
 }
 
@@ -431,6 +512,10 @@ const getActionItems = (row: StaffListItem) => {
     }
   ] as const
 }
+
+const getStatusSurfaceId = () => 'modal-staff-status-change'
+
+const getBlacklistSurfaceId = (row: StaffListItem) => (isBlacklisted(row) ? 'modal-remove-mentor-blacklist' : 'modal-mentor-blacklist')
 
 const handleActionSelect = (action: StaffActionKey, row: StaffListItem) => {
   selectedStaff.value = row
@@ -584,6 +669,7 @@ const getStatusNote = (row: StaffListItem) => {
 }
 
 const openStaffDetail = (row: StaffListItem) => {
+  detailSurfaceId.value = 'modal-staff-detail'
   selectedStaff.value = row
   detailModalVisible.value = true
 }
@@ -626,6 +712,7 @@ const closeResetPasswordModal = () => {
   resetPasswordVisible.value = false
   resetPasswordResult.value = null
 }
+
 </script>
 
 <style scoped lang="scss">

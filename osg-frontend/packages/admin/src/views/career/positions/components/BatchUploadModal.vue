@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="position-batch-upload-modal"
+    surface-id="modal-position-upload"
     width="520px"
     :body-class="'batch-upload-modal__body'"
     @cancel="handleClose"

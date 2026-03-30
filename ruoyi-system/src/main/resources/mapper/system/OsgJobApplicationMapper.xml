@@ -76,13 +76,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectStudentApplicationRecords" parameterType="Long" resultType="java.util.LinkedHashMap">
         select
-            application_id as id,
-            company_name as company,
-            position_name as position,
-            coalesce(city, region, '') as location,
-            'ib' as companyType,
-            current_stage as stage,
-            case lower(current_stage)
+            app.application_id as id,
+            app.position_id as positionId,
+            app.company_name as company,
+            app.position_name as position,
+            coalesce(app.city, app.region, '') as location,
+            case
+                when lower(coalesce(position_ref.industry, '')) like '%consult%' then 'consulting'
+                when lower(coalesce(position_ref.industry, '')) like '%tech%' then 'tech'
+                when lower(coalesce(position_ref.industry, '')) like '%pe%' or lower(coalesce(position_ref.industry, '')) like '%vc%' then 'pevc'
+                else 'ib'
+            end as companyType,
+            app.current_stage as stage,
+            case lower(app.current_stage)
                 when 'applied' then '已投递'
                 when 'hirevue' then 'HireVue / OT'
                 when 'hirevue / ot' then 'HireVue / OT'
@@ -94,9 +100,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 when 'case_study' then 'Case Study'
                 when 'offer' then 'Offer'
                 when 'rejected' then '已拒绝'
-                else current_stage
+                else app.current_stage
             end as stageLabel,
-            case lower(current_stage)
+            case lower(app.current_stage)
                 when 'applied' then 'blue'
                 when 'hirevue' then 'blue'
                 when 'hirevue / ot' then 'blue'
@@ -110,26 +116,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 when 'rejected' then 'red'
                 else 'default'
             end as stageColor,
-            coalesce(date_format(interview_time, '%m/%d %H:%i'), '-') as interviewTime,
+            coalesce(date_format(app.interview_time, '%m/%d %H:%i'), '-') as interviewTime,
             case
-                when interview_time is not null then date_format(interview_time, '%Y-%m-%d %H:%i:%s')
+                when app.interview_time is not null then date_format(app.interview_time, '%Y-%m-%d %H:%i:%s')
                 else '-'
             end as interviewHint,
-            case lower(coalesce(coaching_status, 'none'))
+            case lower(coalesce(app.coaching_status, 'none'))
                 when '辅导中' then 'coaching'
                 when 'coaching' then 'coaching'
                 when '待审批' then 'pending'
                 when 'pending' then 'pending'
                 else 'none'
             end as coachingStatus,
-            case lower(coalesce(coaching_status, 'none'))
+            case lower(coalesce(app.coaching_status, 'none'))
                 when '辅导中' then '辅导中'
                 when 'coaching' then '辅导中'
                 when '待审批' then '待审批'
                 when 'pending' then '待审批'
                 else '无辅导'
             end as coachingStatusLabel,
-            case lower(coalesce(coaching_status, 'none'))
+            case lower(coalesce(app.coaching_status, 'none'))
                 when '辅导中' then 'purple'
                 when 'coaching' then 'purple'
                 when '待审批' then 'warning'
@@ -140,13 +146,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             '-' as mentorMeta,
             '-' as hoursFeedback,
             '-' as feedback,
-            coalesce(date_format(interview_time, '%Y-%m-%d %H:%i:%s'), '') as interviewAt,
-            coalesce(date_format(submitted_at, '%Y-%m-%d'), '') as appliedDate,
+            coalesce(date_format(app.interview_time, '%Y-%m-%d %H:%i:%s'), '') as interviewAt,
+            coalesce(date_format(app.submitted_at, '%Y-%m-%d'), '') as appliedDate,
             '' as applyMethod,
-            coalesce(remark, '') as progressNote
-        from osg_job_application
-        where student_id = #{userId}
-        order by submitted_at desc, application_id desc
+            coalesce(app.remark, '') as progressNote
+        from osg_job_application app
+        left join osg_position position_ref on position_ref.position_id = app.position_id
+        where app.student_id = #{userId}
+        order by app.submitted_at desc, app.application_id desc
     </select>
 
     <select id="selectJobApplicationList" parameterType="OsgJobApplication" resultMap="OsgJobApplicationResult">
@@ -172,6 +179,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="assignStatus != null and assignStatus != ''">
                 and assign_status = #{assignStatus}
             </if>
+            <if test="status != null and status != ''">
+                and coaching_status = #{status}
+            </if>
+            <if test="month != null and month != ''">
+                and date_format(interview_time, '%Y-%m') = #{month}
+            </if>
             <if test="keyword != null and keyword != ''">
                 and (
                     student_name like concat('%', #{keyword}, '%')
@@ -180,6 +193,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 )
             </if>
         </where>
+        order by submitted_at desc, application_id desc
+    </select>
+
+    <select id="selectJobApplicationsByIds" resultMap="OsgJobApplicationResult">
+        select
+        <include refid="selectJobApplicationColumns"/>
+        from osg_job_application
+        where application_id in
+        <foreach collection="applicationIds" item="applicationId" open="(" separator="," close=")">
+            #{applicationId}
+        </foreach>
         order by submitted_at desc, application_id desc
     </select>
 

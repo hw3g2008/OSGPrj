@@ -1,9 +1,10 @@
 <template>
-  <div class="students-filter-bar">
+  <div class="students-filter-bar" data-field-name="学员管理页">
     <div class="students-filter-bar__filters">
       <a-input
         v-model:value="draft.studentName"
         class="students-filter-bar__control students-filter-bar__control--name"
+        data-field-name="搜索框"
         placeholder="搜索姓名"
         allow-clear
         @pressEnter="emitSearch"
@@ -12,6 +13,7 @@
       <a-select
         v-model:value="draft.leadMentorId"
         class="students-filter-bar__control students-filter-bar__control--select"
+        data-field-name="班主任"
         placeholder="班主任"
         allow-clear
         :options="mentorOptions"
@@ -21,6 +23,7 @@
       <a-select
         v-model:value="draft.school"
         class="students-filter-bar__control students-filter-bar__control--school"
+        data-field-name="学校"
         placeholder="学校"
         allow-clear
         :options="schoolOptions"
@@ -30,6 +33,7 @@
       <a-select
         v-model:value="draft.graduationYear"
         class="students-filter-bar__control students-filter-bar__control--select"
+        data-field-name="毕业年份"
         placeholder="毕业年份"
         allow-clear
         :options="graduationYearOptions"
@@ -39,6 +43,7 @@
       <a-select
         v-model:value="draft.recruitmentCycle"
         class="students-filter-bar__control students-filter-bar__control--select"
+        data-field-name="项目时间"
         placeholder="项目时间"
         allow-clear
         :options="recruitmentCycleOptions"
@@ -48,6 +53,7 @@
       <a-select
         v-model:value="draft.majorDirection"
         class="students-filter-bar__control students-filter-bar__control--select"
+        data-field-name="主攻方向"
         placeholder="主攻方向"
         allow-clear
         :options="majorDirectionOptions"
@@ -57,6 +63,7 @@
       <a-select
         v-model:value="draft.accountStatus"
         class="students-filter-bar__control students-filter-bar__control--select"
+        data-field-name="账号状态"
         placeholder="账号状态"
         allow-clear
         :options="statusOptions"

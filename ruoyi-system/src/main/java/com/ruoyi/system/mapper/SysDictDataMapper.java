@@ -21,11 +21,19 @@ public interface SysDictDataMapper
 
     /**
      * 根据字典类型查询字典数据
-     * 
+     *
      * @param dictType 字典类型
      * @return 字典数据集合信息
      */
     public List<SysDictData> selectDictDataByType(String dictType);
+
+    /**
+     * 根据多个字典类型批量查询字典数据
+     *
+     * @param dictTypes 字典类型集合
+     * @return 字典数据集合信息
+     */
+    public List<SysDictData> selectDictDataByTypes(@Param("dictTypes") List<String> dictTypes);
 
     /**
      * 根据字典类型和字典键值查询字典数据信息

@@ -19,10 +19,11 @@
       </button>
     </div>
 
-    <div class="filter-bar">
+    <div class="filter-bar" data-field-name="后台用户管理页">
       <a-input
         v-model:value="searchParams.userName"
         class="filter-bar__control filter-bar__control--search"
+        data-field-name="搜索框"
         placeholder="搜索用户名 / 姓名"
         allow-clear
         @pressEnter="handleSearch"
@@ -30,6 +31,7 @@
       <a-select
         v-model:value="searchParams.roleId"
         class="filter-bar__control filter-bar__control--role"
+        data-field-name="角色"
         placeholder="全部角色"
         allow-clear
       >
@@ -40,6 +42,7 @@
       <a-select
         v-model:value="searchParams.status"
         class="filter-bar__control filter-bar__control--status"
+        data-field-name="状态"
         placeholder="全部状态"
         allow-clear
       >

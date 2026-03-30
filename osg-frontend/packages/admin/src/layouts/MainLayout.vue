@@ -11,7 +11,9 @@
       </div>
 
       <nav class="sidebar-nav">
+        <!-- v1: 首页入口暂时隐藏，二期恢复 -->
         <button
+          v-show="false"
           type="button"
           class="nav-item"
           :class="{ active: isActive('/dashboard') }"
@@ -33,12 +35,21 @@
           >
             <span class="mdi" :class="item.iconClass" aria-hidden="true" />
             <span>{{ item.title }}</span>
-            <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+            <!-- v1: 角标暂时隐藏，二期恢复改回 v-if="item.badge" -->
+            <span v-if="false" class="nav-badge">{{ item.badge }}</span>
           </button>
         </template>
       </nav>
 
       <div ref="footerMenuRef" class="sidebar-footer">
+        <button
+          type="button"
+          class="user-card__profile-entry"
+          data-surface-trigger="modal-setting"
+          @click="openProfileSettings"
+        >
+          个人设置
+        </button>
         <button type="button" class="user-card" @click="toggleUserMenu">
           <div class="user-avatar">{{ userInitials }}</div>
           <div class="user-info">
@@ -47,7 +58,12 @@
           </div>
         </button>
         <div v-if="showUserMenu" class="user-menu" role="menu" aria-label="用户菜单">
-          <button type="button" class="user-menu-item" @click="openProfileSettings">
+          <button
+            type="button"
+            class="user-menu-item"
+            data-surface-trigger="modal-setting"
+            @click="openProfileSettings"
+          >
             个人设置
           </button>
           <button type="button" class="user-menu-item danger" @click="handleLogout">
@@ -178,6 +194,7 @@ const filteredMenuGroups = computed(() => {
     .map((group) => ({
       ...group,
       children: group.children.filter((item) => {
+        if (item.comingSoon) return false
         if (isAdmin) return true
         return !item.permission || perms.includes(item.permission)
       }),
@@ -370,6 +387,22 @@ onBeforeUnmount(() => {
   padding: 16px;
   border-top: 1px solid #e2e8f0;
   position: relative;
+}
+
+.user-card__profile-entry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6366f1;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
 }
 
 .user-card {

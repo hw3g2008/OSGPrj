@@ -11,7 +11,9 @@
       </div>
 
       <nav class="sidebar-nav">
+        <!-- v1: 首页入口暂时隐藏，二期恢复 -->
         <a
+          v-show="false"
           href="#"
           class="nav-item"
           :class="{ active: isActive(['/home']) }"
@@ -21,7 +23,7 @@
           <span>首页 Home</span>
         </a>
 
-        <template v-for="group in navigationGroups" :key="group.title">
+        <template v-for="group in filteredNavigationGroups" :key="group.title">
           <div class="nav-section">{{ group.title }}</div>
           <a
             v-for="item in group.items"
@@ -33,7 +35,8 @@
           >
             <i class="mdi" :class="item.iconClass" aria-hidden="true" />
             <span>{{ item.label }}</span>
-            <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+            <!-- v1: 角标暂时隐藏，二期恢复改回 v-if="item.badge" -->
+            <span v-if="false" class="nav-badge">{{ item.badge }}</span>
           </a>
         </template>
       </nav>
@@ -80,6 +83,7 @@ interface NavigationItem {
   iconClass: string
   activePaths: string[]
   badge?: number
+  hidden?: boolean
 }
 
 interface NavigationGroup {
@@ -130,6 +134,7 @@ const navigationGroups: NavigationGroup[] = [
         label: '人际关系沟通记录 Communication',
         iconClass: 'mdi-message-text-clock',
         activePaths: ['/communication'],
+        hidden: true,
       },
     ],
   },
@@ -152,12 +157,14 @@ const navigationGroups: NavigationGroup[] = [
         label: '课时结算 Settlement',
         iconClass: 'mdi-cash-clock',
         activePaths: ['/settlement'],
+        hidden: true,
       },
       {
         path: '/expense',
         label: '报销管理 Expense',
         iconClass: 'mdi-receipt-text-clock',
         activePaths: ['/expense'],
+        hidden: true,
       },
     ],
   },
@@ -169,18 +176,21 @@ const navigationGroups: NavigationGroup[] = [
         label: '文件 Files',
         iconClass: 'mdi-folder-open',
         activePaths: ['/files'],
+        hidden: true,
       },
       {
         path: '/online-test-bank',
         label: '在线测试题库 Online Test',
         iconClass: 'mdi-monitor-cellphone',
         activePaths: ['/online-test-bank'],
+        hidden: true,
       },
       {
         path: '/interview-bank',
         label: '真人面试题库 Interview Bank',
         iconClass: 'mdi-account-tie-voice',
         activePaths: ['/interview-bank'],
+        hidden: true,
       },
     ],
   },
@@ -205,16 +215,24 @@ const navigationGroups: NavigationGroup[] = [
         iconClass: 'mdi-bell-outline',
         activePaths: ['/notice'],
         badge: 2,
+        hidden: true,
       },
       {
         path: '/faq',
         label: '常见问题 FAQ',
         iconClass: 'mdi-help-circle-outline',
         activePaths: ['/faq'],
+        hidden: true,
       },
     ],
   },
 ]
+
+const filteredNavigationGroups = computed(() =>
+  navigationGroups
+    .map((group) => ({ ...group, items: group.items.filter((item) => !item.hidden) }))
+    .filter((group) => group.items.length > 0)
+)
 
 const route = useRoute()
 const router = useRouter()

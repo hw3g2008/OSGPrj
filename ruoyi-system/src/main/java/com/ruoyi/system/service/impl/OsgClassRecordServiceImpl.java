@@ -119,7 +119,41 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     public List<Map<String, Object>> selectClassRecordList(String keyword)
     {
-        List<OsgClassRecord> rows = selectRows(keyword, null, null, null);
+        return selectClassRecordList(keyword, null, null, null, null, null, null);
+    }
+
+    public List<Map<String, Object>> selectClassRecordList(String keyword,
+                                                           String courseType,
+                                                           String classStatus,
+                                                           String courseSource,
+                                                           String tab,
+                                                           Date classDateStart,
+                                                           Date classDateEnd)
+    {
+        List<OsgClassRecord> rows = selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd);
+        if (rows.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
+        List<Map<String, Object>> result = new ArrayList<>(rows.size());
+        for (OsgClassRecord row : rows)
+        {
+            result.add(toClassRecordPayload(row, hourlyRates));
+        }
+        return result;
+    }
+
+    public List<Map<String, Object>> selectClassRecordExportList(String keyword,
+                                                                 String courseType,
+                                                                 String classStatus,
+                                                                 String courseSource,
+                                                                 String tab,
+                                                                 Date classDateStart,
+                                                                 Date classDateEnd)
+    {
+        List<OsgClassRecord> rows = selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd);
         if (rows.isEmpty())
         {
             return Collections.emptyList();
@@ -136,7 +170,22 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     public List<Map<String, Object>> selectAssistantClassRecordList(String keyword, Long assistantUserId)
     {
-        List<OsgClassRecord> rows = filterAssistantOwnedRows(selectRows(keyword, null, null, null), assistantUserId);
+        return selectAssistantClassRecordList(keyword, null, null, null, null, null, null, assistantUserId);
+    }
+
+    public List<Map<String, Object>> selectAssistantClassRecordList(String keyword,
+                                                                    String courseType,
+                                                                    String classStatus,
+                                                                    String courseSource,
+                                                                    String tab,
+                                                                    Date classDateStart,
+                                                                    Date classDateEnd,
+                                                                    Long assistantUserId)
+    {
+        List<OsgClassRecord> rows = filterAssistantOwnedRows(
+            selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd),
+            assistantUserId
+        );
         if (rows.isEmpty())
         {
             return Collections.emptyList();
@@ -153,7 +202,18 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     public Map<String, Object> selectClassRecordStats(String keyword)
     {
-        List<OsgClassRecord> rows = selectRows(keyword, null, null, null);
+        return selectClassRecordStats(keyword, null, null, null, null, null, null);
+    }
+
+    public Map<String, Object> selectClassRecordStats(String keyword,
+                                                      String courseType,
+                                                      String classStatus,
+                                                      String courseSource,
+                                                      String tab,
+                                                      Date classDateStart,
+                                                      Date classDateEnd)
+    {
+        List<OsgClassRecord> rows = selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd);
         Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
         BigDecimal pendingSettlementAmount = rows.stream()
             .filter(row -> Objects.equals(normalizeReviewStatus(row.getStatus()), STATUS_PENDING))
@@ -179,7 +239,22 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     public Map<String, Object> selectAssistantClassRecordStats(String keyword, Long assistantUserId)
     {
-        List<OsgClassRecord> rows = filterAssistantOwnedRows(selectRows(keyword, null, null, null), assistantUserId);
+        return selectAssistantClassRecordStats(keyword, null, null, null, null, null, null, assistantUserId);
+    }
+
+    public Map<String, Object> selectAssistantClassRecordStats(String keyword,
+                                                               String courseType,
+                                                               String classStatus,
+                                                               String courseSource,
+                                                               String tab,
+                                                               Date classDateStart,
+                                                               Date classDateEnd,
+                                                               Long assistantUserId)
+    {
+        List<OsgClassRecord> rows = filterAssistantOwnedRows(
+            selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd),
+            assistantUserId
+        );
         Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
         BigDecimal pendingSettlementAmount = rows.stream()
             .filter(row -> Objects.equals(normalizeReviewStatus(row.getStatus()), STATUS_PENDING))
@@ -307,8 +382,9 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     private Map<String, Object> reviewRecord(Long recordId, String targetStatus, Map<String, Object> payload, String operator)
     {
         OsgClassRecord record = requirePendingRecord(recordId);
+        String reviewRemark = resolveReviewRemark(targetStatus, payload);
         record.setStatus(targetStatus);
-        record.setReviewRemark(firstText(payload == null ? null : payload.get("remark")));
+        record.setReviewRemark(reviewRemark);
         record.setReviewedAt(new Timestamp(System.currentTimeMillis()));
         record.setUpdateBy(defaultText(operator, "system"));
 
@@ -317,6 +393,24 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             throw new ServiceException("课时审核更新失败");
         }
         return toPayload(record, null);
+    }
+
+    private String resolveReviewRemark(String targetStatus, Map<String, Object> payload)
+    {
+        String reviewRemark = firstText(payload == null ? null : payload.get("remark"));
+        if (reviewRemark == null || reviewRemark.isBlank())
+        {
+            reviewRemark = firstText(payload == null ? null : payload.get("rejectReason"));
+        }
+        if (reviewRemark == null || reviewRemark.isBlank())
+        {
+            reviewRemark = firstText(payload == null ? null : payload.get("reason"));
+        }
+        if (Objects.equals(targetStatus, STATUS_REJECTED) && (reviewRemark == null || reviewRemark.isBlank()))
+        {
+            throw new ServiceException("驳回原因不能为空");
+        }
+        return reviewRemark;
     }
 
     private OsgClassRecord requirePendingRecord(Long recordId)
@@ -345,11 +439,25 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     private List<OsgClassRecord> selectRows(String keyword, String courseType, String courseSource, String tab)
     {
+        return selectRows(keyword, courseType, null, courseSource, tab, null, null);
+    }
+
+    private List<OsgClassRecord> selectRows(String keyword,
+                                            String courseType,
+                                            String classStatus,
+                                            String courseSource,
+                                            String tab,
+                                            Date classDateStart,
+                                            Date classDateEnd)
+    {
         OsgClassRecord query = new OsgClassRecord();
         query.setKeyword(keyword);
-        query.setCourseType(courseType);
-        query.setCourseSource(courseSource);
+        query.setCourseType(normalizeCourseTypeFilter(courseType));
+        query.setClassStatus(normalizeClassStatusFilter(classStatus));
+        query.setCourseSource(normalizeCourseSourceFilter(courseSource));
         query.setTab(normalizeTab(tab));
+        query.setClassDateStart(normalizeClassDateStart(classDateStart));
+        query.setClassDateEnd(normalizeClassDateEnd(classDateEnd));
         List<OsgClassRecord> rows = classRecordMapper.selectClassRecordList(query);
         return rows == null ? Collections.emptyList() : rows;
     }
@@ -426,10 +534,9 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     private void normalizeCreateDefaults(OsgClassRecord record)
     {
-        if (record.getStatus() == null || record.getStatus().isBlank())
-        {
-            record.setStatus(STATUS_PENDING);
-        }
+        record.setStatus(STATUS_PENDING);
+        record.setReviewRemark(null);
+        record.setReviewedAt(null);
         if (record.getSubmittedAt() == null)
         {
             record.setSubmittedAt(new Timestamp(System.currentTimeMillis()));
@@ -651,6 +758,64 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     private String normalize(String text)
     {
         return text == null ? null : text.trim().toLowerCase();
+    }
+
+    private String normalizeCourseTypeFilter(String courseType)
+    {
+        String normalized = normalize(courseType);
+        if (normalized == null || normalized.isBlank())
+        {
+            return null;
+        }
+        if ("mock_application".equals(normalized))
+        {
+            return "mock_practice";
+        }
+        return normalized;
+    }
+
+    private String normalizeClassStatusFilter(String classStatus)
+    {
+        String normalized = normalize(classStatus);
+        if (normalized == null || normalized.isBlank())
+        {
+            return null;
+        }
+        return switch (normalized)
+        {
+            case "new_resume" -> "resume_revision";
+            case "communication_midterm" -> "networking_midterm";
+            case "midterm_exam" -> "mock_midterm";
+            default -> normalized;
+        };
+    }
+
+    private String normalizeCourseSourceFilter(String courseSource)
+    {
+        String normalized = normalize(courseSource);
+        if (normalized == null || normalized.isBlank())
+        {
+            return null;
+        }
+        if ("headteacher".equals(normalized))
+        {
+            return "clerk";
+        }
+        return normalized;
+    }
+
+    private Date normalizeClassDateStart(Date classDateStart)
+    {
+        return classDateStart;
+    }
+
+    private Date normalizeClassDateEnd(Date classDateEnd)
+    {
+        if (classDateEnd == null)
+        {
+            return null;
+        }
+        return new Date(classDateEnd.getTime() + 24L * 60L * 60L * 1000L - 1L);
     }
 
     private String normalizeReviewStatus(String text)

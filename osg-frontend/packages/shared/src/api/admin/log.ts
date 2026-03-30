@@ -1,4 +1,4 @@
-import { http } from '../../utils/request'
+import { downloadAdminFile, http } from '../../utils'
 
 export interface LogRow {
   operId: number
@@ -10,10 +10,36 @@ export interface LogRow {
   ipAddress: string
 }
 
-export function getLogList() {
-  return http.get<{ rows: LogRow[] }>('/admin/log/list')
+export interface LogFilters {
+  keyword?: string
+  operationType?: string
+  beginTime?: string
+  endTime?: string
 }
 
-export function exportLogs() {
-  return http.get<{ fileName: string; exportCount: number }>('/admin/log/export')
+const toParams = (filters: LogFilters = {}) => {
+  const params: Record<string, string> = {}
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (!value) {
+      return
+    }
+    params[key] = value
+  })
+
+  return params
+}
+
+export function getLogList(filters: LogFilters = {}) {
+  return http.get<{ rows: LogRow[] }>('/admin/log/list', {
+    params: toParams(filters)
+  })
+}
+
+export function exportLogs(filters: LogFilters = {}) {
+  return downloadAdminFile({
+    path: '/admin/log/export',
+    params: toParams(filters),
+    fallbackFilename: '操作日志.xlsx',
+  })
 }

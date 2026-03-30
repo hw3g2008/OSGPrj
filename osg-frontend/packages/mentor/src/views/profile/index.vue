@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="page-profile">
     <div class="page-header">
       <div><h1 class="page-title">基本信息 <span class="page-title-en">Profile</span></h1><p class="page-sub">查看和管理您的个人信息</p></div>
       <button class="btn btn-primary" @click="showEditModal = true"><i class="mdi mdi-pencil" /> 编辑信息</button>
@@ -48,7 +48,7 @@
     </div>
 
     <!-- 编辑弹窗 -->
-    <div v-if="showEditModal" class="modal active" @click.self="showEditModal = false">
+    <div v-if="showEditModal" id="modal-mentor-edit-profile" class="modal active" @click.self="showEditModal = false">
       <div class="modal-content" style="max-width:600px">
         <div class="modal-header"><span class="modal-title"><i class="mdi mdi-account-edit" /> 编辑个人信息</span><button class="modal-close" @click="showEditModal = false">×</button></div>
         <div class="modal-body">
@@ -63,11 +63,11 @@
               <div class="form-group"><label class="form-label">邮箱 <span class="req">*</span></label><input v-model="editForm.email" type="email" class="form-input" /></div>
               <div class="form-group"><label class="form-label">所属地区 <span class="req">*</span></label>
                 <div style="display:flex;gap:8px">
-                  <select v-model="editForm.region" class="form-select" style="width:50%" @change="editForm.city = ''">
+                  <select id="mentor-region-area" v-model="editForm.region" class="form-select" style="width:50%" @change="editForm.city = ''">
                     <option value="">选择大区</option><option value="north-america">🌎 北美</option><option value="europe">🌍 欧洲</option><option value="asia-pacific">🌏 亚太</option><option value="china">🇨🇳 中国大陆</option>
                   </select>
-                  <select v-model="editForm.city" class="form-select" style="width:50%">
-                    <option value="">选择城市</option><option v-for="c in cityOptions" :key="c">{{ c }}</option>
+                  <select id="mentor-region-city" v-model="editForm.city" class="form-select" style="width:50%">
+                    <option value="">选择城市</option><option v-for="c in cityOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
                   </select>
                 </div>
               </div>
@@ -75,6 +75,51 @@
           </div>
         </div>
         <div class="modal-footer"><button class="btn btn-outline" @click="showEditModal = false">取消</button><button class="btn btn-primary" @click="saveProfile"><i class="mdi mdi-check" /> 保存修改</button></div>
+      </div>
+    </div>
+
+    <div v-if="showSaveConfirmModal" id="modal-mentor-profile-save-confirm" class="modal active" @click.self="closeSaveConfirmModal">
+      <div class="modal-content modal-content--confirm" style="max-width:560px">
+        <div class="modal-header">
+          <span class="modal-title"><i class="mdi mdi-check-decagram" /> 确认提交变更</span>
+          <button class="modal-close" @click="closeSaveConfirmModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="save-summary">
+            <div class="save-summary-title">本次提交将进入后台文员审核链路</div>
+            <ul class="save-summary-list">
+              <li>英文名：{{ editForm.nickName || '-' }}</li>
+              <li>性别：{{ editForm.sex === '0' ? 'Male' : 'Female' }}</li>
+              <li>手机号：{{ editForm.phonenumber || '-' }}</li>
+              <li>邮箱：{{ editForm.email || '-' }}</li>
+              <li>所属地区：{{ editForm.region || '-' }} / {{ editForm.city || '-' }}</li>
+            </ul>
+          </div>
+          <div v-if="saveErrorMessage" class="save-error">{{ saveErrorMessage }}</div>
+          <div class="save-hint">确认后，系统会真实创建一条变更请求，等待后台文员处理。</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="closeSaveConfirmModal">返回修改</button>
+          <button class="btn btn-primary" @click="submitSaveProfile"><i class="mdi mdi-cloud-upload" /> 确认保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showSaveSuccessModal" id="modal-mentor-profile-save-success" class="modal active" @click.self="closeSaveSuccessModal">
+      <div class="modal-content modal-content--success" style="max-width:480px">
+        <div class="modal-header modal-header--success">
+          <span class="modal-title"><i class="mdi mdi-check-circle" /> 保存成功</span>
+          <button class="modal-close" @click="closeSaveSuccessModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="success-card">
+            <div class="success-icon"><i class="mdi mdi-bell-ring" /></div>
+            <div class="success-text">保存成功！后台文员已收到您的信息变更通知。</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" @click="closeSaveSuccessModal">知道了</button>
+        </div>
       </div>
     </div>
   </div>
@@ -86,28 +131,62 @@ import { http } from '@osg/shared/utils/request'
 
 const profile = ref<any>({})
 const showEditModal = ref(false)
+const showSaveConfirmModal = ref(false)
+const showSaveSuccessModal = ref(false)
+const saveErrorMessage = ref('')
 const editForm = ref<any>({})
 
-const regionCities: Record<string, string[]> = {
-  'north-america': ['New York', 'San Francisco', 'Los Angeles', 'Chicago', 'Toronto'],
-  'europe': ['London', 'Frankfurt', 'Paris', 'Zurich'],
-  'asia-pacific': ['Hong Kong 香港', 'Singapore 新加坡', 'Tokyo 东京'],
-  'china': ['Beijing 北京', 'Shanghai 上海', 'Shenzhen 深圳', 'Guangzhou 广州'],
+const regionCities: Record<string, Array<{ value: string; label: string }>> = {
+  'north-america': [
+    { value: 'new-york', label: 'New York 纽约' },
+    { value: 'san-francisco', label: 'San Francisco 旧金山' },
+    { value: 'chicago', label: 'Chicago 芝加哥' },
+  ],
+  'europe': [
+    { value: 'london', label: 'London 伦敦' },
+    { value: 'frankfurt', label: 'Frankfurt 法兰克福' },
+  ],
+  'asia-pacific': [
+    { value: 'hong-kong', label: 'Hong Kong 香港' },
+    { value: 'singapore', label: 'Singapore 新加坡' },
+    { value: 'tokyo', label: 'Tokyo 东京' },
+  ],
+  'china': [
+    { value: 'shanghai', label: 'Shanghai 上海' },
+    { value: 'beijing', label: 'Beijing 北京' },
+  ],
 }
 const cityOptions = computed(() => regionCities[editForm.value.region] || [])
 
 async function fetchProfile() {
   try { profile.value = await http.get('/api/mentor/profile') } catch { profile.value = {} }
   editForm.value = { ...profile.value, region: '', city: '' }
+  saveErrorMessage.value = ''
 }
 
 async function saveProfile() {
-  if (!window.confirm('确认保存修改？\n\n修改后，后台文员将收到您的信息变更通知。')) return
+  saveErrorMessage.value = ''
+  showSaveConfirmModal.value = true
+}
+
+function closeSaveConfirmModal() {
+  showSaveConfirmModal.value = false
+}
+
+function closeSaveSuccessModal() {
+  showSaveSuccessModal.value = false
+}
+
+async function submitSaveProfile() {
   try {
     await http.put('/api/mentor/profile', editForm.value)
+    showSaveConfirmModal.value = false
     showEditModal.value = false
+    showSaveSuccessModal.value = true
     fetchProfile()
-  } catch {}
+  } catch {
+    saveErrorMessage.value = '保存失败，请稍后重试'
+  }
 }
 
 onMounted(fetchProfile)
@@ -127,6 +206,9 @@ onMounted(fetchProfile)
 .tag{display:inline-flex;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600}.tag.info{background:#DBEAFE;color:#1E40AF}.tag.purple{background:#E8F0F8;color:#5A7BA3}
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .modal-content{background:#fff;border-radius:20px;max-height:90vh;overflow-y:auto}.modal-header{padding:22px 26px;background:linear-gradient(135deg,#7399C6,#5A7BA3);color:#fff;border-radius:20px 20px 0 0;display:flex;justify-content:space-between;align-items:center}
+.modal-content--confirm{box-shadow:0 24px 64px rgba(15,23,42,.22)}
+.modal-content--success{box-shadow:0 24px 64px rgba(15,23,42,.22)}
+.modal-header--success{background:linear-gradient(135deg,#7399C6,#4F8B72)}
 .modal-title{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}.modal-close{width:36px;height:36px;border-radius:10px;border:none;background:rgba(255,255,255,0.2);cursor:pointer;font-size:20px;color:#fff}
 .modal-body{padding:24px}.modal-footer{padding:18px 26px;border-top:1px solid #E2E8F0;display:flex;justify-content:flex-end;gap:12px;background:#F8FAFC;border-radius:0 0 20px 20px}
 .edit-notice{padding:12px 16px;background:#E8F0F8;border-radius:8px;font-size:13px;color:#1E40AF;margin-bottom:20px}
@@ -136,5 +218,8 @@ onMounted(fetchProfile)
 .form-input:focus,.form-select:focus{border-color:#7399C6;box-shadow:0 0 0 4px #E8F0F8}.form-select.full{width:100%}
 .btn{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:linear-gradient(135deg,#7399C6,#9BB8D9);color:#fff}.btn-outline{background:#fff;color:#64748B;border:1px solid #E2E8F0}
+.save-summary{padding:16px;border:1px solid #E2E8F0;border-radius:12px;background:#F8FAFC}.save-summary-title{font-size:14px;font-weight:700;color:#1E293B;margin-bottom:10px}.save-summary-list{margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.8}
+.save-hint{margin-top:14px;font-size:13px;color:#64748B}.save-error{margin-bottom:12px;padding:10px 12px;border-radius:10px;background:#FEE2E2;color:#B91C1C;font-size:13px}
+.success-card{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:8px 0}.success-icon{width:56px;height:56px;border-radius:18px;background:#E8F0F8;color:#7399C6;display:flex;align-items:center;justify-content:center;font-size:28px}.success-text{font-size:15px;font-weight:600;color:#1E293B;line-height:1.6}
 .text-muted{color:#94A3B8}.text-sm{font-size:11px}
 </style>

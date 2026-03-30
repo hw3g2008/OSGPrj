@@ -145,7 +145,7 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
     {
         syncReferenceData();
         Long studentId = identityResolver.resolveStudentIdByUserId(userId);
-        List<Map<String, Object>> records = projectMainRecords(osgClassRecordMapper.selectStudentApprovedClassRecordList(studentId));
+        List<Map<String, Object>> records = loadCourseRecords(userId, studentId);
         Map<String, SysDictData> pageCopy = loadDictValueMap(DICT_TYPE_PAGE_COPY);
         Map<String, SysDictData> coachingTypeDict = loadDictValueMap(DICT_TYPE_COACHING_TYPE);
         Map<String, SysDictData> contentTypeDict = loadDictValueMap(DICT_TYPE_CONTENT_TYPE);
@@ -187,6 +187,14 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
     {
         syncReferenceData();
         String normalizedRecordId = requireText(recordId, "课程记录不存在");
+        int normalizedScore = ratingScore == null ? 5 : ratingScore;
+        if (normalizedScore < 1 || normalizedScore > 5)
+        {
+            throw new ServiceException("评分范围必须在1到5之间");
+        }
+        String normalizedTags = ratingTags == null || ratingTags.isEmpty() ? "" : String.join(",", ratingTags);
+        String normalizedFeedback = requireText(ratingFeedback, "请填写详细反馈");
+
         Long studentId = identityResolver.resolveStudentIdByUserId(userId);
         OsgClassRecord record = osgClassRecordMapper.selectStudentClassRecordByClassId(normalizedRecordId, studentId);
         if (record == null)
@@ -195,7 +203,9 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
             if (fallbackRecordId != null)
             {
                 OsgClassRecord candidate = osgClassRecordMapper.selectClassRecordByRecordId(fallbackRecordId);
-                if (candidate != null && studentId.equals(candidate.getStudentId()))
+                if (candidate != null
+                        && studentId.equals(candidate.getStudentId())
+                        && isApprovedRecord(candidate))
                 {
                     record = candidate;
                 }
@@ -203,22 +213,55 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
         }
         if (record == null)
         {
-            throw new ServiceException("课程记录不存在或无权操作");
+            return updateLegacyCourseRecord(normalizedRecordId, normalizedScore, normalizedTags, normalizedFeedback, userId);
         }
-        int normalizedScore = ratingScore == null ? 5 : ratingScore;
-        if (normalizedScore < 1 || normalizedScore > 5)
-        {
-            throw new ServiceException("评分范围必须在1到5之间");
-        }
-        String normalizedTags = ratingTags == null || ratingTags.isEmpty() ? "" : String.join(",", ratingTags);
-        String normalizedFeedback = requireText(ratingFeedback, "请填写详细反馈");
         OsgClassRecord patch = new OsgClassRecord();
         patch.setRecordId(record.getRecordId());
         patch.setRate(String.valueOf(normalizedScore));
         patch.setTopics(normalizedTags);
         patch.setComments(normalizedFeedback);
         patch.setRemark(normalizedFeedback);
-        return osgClassRecordMapper.updateStudentClassRecordRating(patch);
+        int rows = osgClassRecordMapper.updateStudentClassRecordRating(patch);
+        if (rows <= 0)
+        {
+            throw new ServiceException("课程记录主链写入失败，请稍后重试");
+        }
+        return rows;
+    }
+
+    private List<Map<String, Object>> loadCourseRecords(Long userId, Long studentId)
+    {
+        List<Map<String, Object>> mainRecords =
+                projectMainRecords(osgClassRecordMapper.selectStudentApprovedClassRecordList(studentId));
+        if (!mainRecords.isEmpty())
+        {
+            return mainRecords;
+        }
+        return projectLegacyRecords(studentCourseRecordMapper.selectCourseRecordList(userId));
+    }
+
+    private int updateLegacyCourseRecord(String recordId, int ratingScore, String ratingTags, String ratingFeedback, Long userId)
+    {
+        if (studentCourseRecordMapper.countCourseRecord(recordId, userId) <= 0)
+        {
+            throw new ServiceException("课程记录不存在或无权操作");
+        }
+        int rows = studentCourseRecordMapper.updateCourseRating(
+                recordId,
+                userId,
+                BigDecimal.valueOf(ratingScore),
+                ratingTags,
+                ratingFeedback);
+        if (rows <= 0)
+        {
+            throw new ServiceException("课程记录写入失败，请稍后重试");
+        }
+        return rows;
+    }
+
+    private boolean isApprovedRecord(OsgClassRecord record)
+    {
+        return record != null && "approved".equalsIgnoreCase(defaultString(record.getStatus(), "").trim());
     }
 
     private Long parseFallbackRecordId(String recordId)
@@ -268,6 +311,34 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
             record.put("ratingScoreValue", defaultString(row.getRate(), ""));
             record.put("ratingTags", defaultString(row.getTopics(), ""));
             record.put("ratingFeedback", defaultString(row.getComments(), ""));
+            projected.add(record);
+        }
+        return projected;
+    }
+
+    private List<Map<String, Object>> projectLegacyRecords(List<Map<String, Object>> rows)
+    {
+        if (rows == null || rows.isEmpty())
+        {
+            return new ArrayList<>();
+        }
+        List<Map<String, Object>> projected = new ArrayList<>(rows.size());
+        for (Map<String, Object> row : rows)
+        {
+            Map<String, Object> record = new LinkedHashMap<>();
+            record.put("recordId", defaultString(stringValue(row.get("recordId")), ""));
+            record.put("coachingType", defaultString(stringValue(row.get("coachingType")), ""));
+            record.put("coachingDetail", defaultString(stringValue(row.get("coachingDetail")), ""));
+            record.put("courseContent", defaultString(stringValue(row.get("courseContent")), ""));
+            record.put("mentor", defaultString(stringValue(row.get("mentor")), "-"));
+            record.put("mentorRole", defaultString(stringValue(row.get("mentorRole")), "导师"));
+            record.put("classDate", defaultString(stringValue(row.get("classDate")), ""));
+            record.put("classDateRaw", defaultString(stringValue(row.get("classDateRaw")), ""));
+            record.put("isNew", row.get("isNew"));
+            record.put("duration", defaultString(stringValue(row.get("duration")), ""));
+            record.put("ratingScoreValue", defaultString(stringValue(row.get("ratingScoreValue")), ""));
+            record.put("ratingTags", defaultString(stringValue(row.get("ratingTags")), ""));
+            record.put("ratingFeedback", defaultString(stringValue(row.get("ratingFeedback")), ""));
             projected.add(record);
         }
         return projected;

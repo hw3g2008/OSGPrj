@@ -44,7 +44,7 @@
     </div>
 
     <!-- Hours input -->
-    <div class="esm-section">
+    <div class="esm-section" data-field-name="调整导师排期弹窗可上课时长">
       <label class="esm-label">
         <i class="mdi mdi-clock-outline" aria-hidden="true"></i>
         可上课时长 <span class="esm-required">*</span>
@@ -73,18 +73,20 @@
     </div>
 
     <!-- Day grid -->
-    <div class="esm-section">
+    <div class="esm-section" data-field-name="调整导师排期弹窗每天可上课时间">
       <label class="esm-label">
         <i class="mdi mdi-calendar-check" aria-hidden="true"></i>
         每天可上课时间 <span class="esm-required">*</span>
         <span class="esm-hint">（可多选）</span>
       </label>
       <div class="esm-day-grid">
-        <div
+        <fieldset
           v-for="day in weekdays"
           :key="day.value"
           :class="['esm-day', { 'esm-day--weekend': day.weekend, 'esm-day--holiday': day.holiday }]"
+          :data-field-name="`${day.label}可用时段`"
         >
+          <legend class="esm-day__legend">{{ day.label }}可用时段</legend>
           <div :class="['esm-day__label', { 'esm-day__label--weekend': day.weekend, 'esm-day__label--holiday': day.holiday }]">{{ day.label }}</div>
           <div :class="['esm-day__date', { 'esm-day__date--weekend': day.weekend, 'esm-day__date--holiday': day.holiday }]">{{ day.date }}</div>
           <div class="esm-day__slots">
@@ -101,7 +103,7 @@
               <span>{{ slot.label }}</span>
             </label>
           </div>
-        </div>
+        </fieldset>
       </div>
       <div class="esm-day-hint">
         <i class="mdi mdi-information-outline" aria-hidden="true"></i>
@@ -125,18 +127,28 @@
     </div>
 
     <!-- Notify -->
-    <div class="esm-notify-card">
+    <fieldset class="esm-notify-card" data-field-name="同步通知导师复选框">
       <label class="esm-notify-label">
         <input v-model="formState.notifyStaff" type="checkbox" class="esm-notify-checkbox" />
         <span><strong>同步通知导师</strong> - 调整后将发送邮件和站内消息通知该导师</span>
       </label>
-    </div>
+    </fieldset>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">
+      <button
+        type="button"
+        class="permission-button permission-button--outline"
+        data-surface-part="cancel-control"
+        @click="handleClose"
+      >
         取消
       </button>
-      <button type="button" class="permission-button permission-button--primary esm-save-btn" @click="handleSubmit">
+      <button
+        type="button"
+        class="permission-button permission-button--primary esm-save-btn"
+        data-surface-part="confirm-control"
+        @click="handleSubmit"
+      >
         <i class="mdi mdi-check" aria-hidden="true"></i> 保存并通知
       </button>
     </template>

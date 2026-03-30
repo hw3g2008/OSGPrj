@@ -35,6 +35,9 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   (response: AxiosResponse) => {
     const requestConfig = response.config as AppRequestConfig
+    if (requestConfig.responseType === 'blob' || requestConfig.responseType === 'arraybuffer') {
+      return response.data
+    }
     const { code, msg, data } = response.data
 
     // 若依标准响应格式

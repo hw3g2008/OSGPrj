@@ -292,29 +292,195 @@
       title="手动添加岗位"
       ok-text="添加岗位"
       cancel-text="取消"
+      :width="640"
       @ok="submitManualPosition"
     >
-      <div class="modal-intro">
-        找不到想申请的岗位？填写以下信息手动添加到您的求职列表。
+      <div class="manual-add-tip">
+        <InfoCircleOutlined />
+        找不到想申请的岗位？填写以下信息手动添加到您的求职列表
       </div>
-      <a-form layout="vertical">
-        <a-form-item label="岗位分类">
-          <a-select v-model:value="manualForm.category" placeholder="请选择岗位分类">
-            <a-select-option v-for="option in filterOptions.categories" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="岗位名称">
-          <a-input v-model:value="manualForm.title" placeholder="如：IB Analyst" />
-        </a-form-item>
-        <a-form-item label="公司名称">
-          <a-input v-model:value="manualForm.company" placeholder="如：Goldman Sachs" />
-        </a-form-item>
-        <a-form-item label="工作地点">
-          <a-input v-model:value="manualForm.location" placeholder="如：Hong Kong" />
-        </a-form-item>
-      </a-form>
+
+      <div class="manual-section">
+        <div class="manual-section-title">基本信息</div>
+        <div class="manual-section-grid">
+          <div class="manual-field">
+            <label class="manual-label">岗位分类 <span class="req">*</span></label>
+            <a-select v-model:value="manualForm.category" placeholder="请选择" style="width:100%">
+              <a-select-option v-for="option in filterOptions.categories" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </a-select-option>
+            </a-select>
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">岗位名称 <span class="req">*</span></label>
+            <a-input v-model:value="manualForm.title" placeholder="如：IB Analyst" />
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">部门 <span class="optional">（选填）</span></label>
+            <a-input v-model:value="manualForm.department" placeholder="如：IBD / S&T" />
+          </div>
+          <div class="manual-field manual-field--span2">
+            <label class="manual-label">招聘周期 <span class="req">*</span></label>
+            <div class="cycle-checkboxes">
+              <label v-for="cycle in RECRUITMENT_CYCLES" :key="cycle" class="cycle-checkbox">
+                <input v-model="manualForm.recruitmentCycles" type="checkbox" :value="cycle" />
+                {{ cycle }}
+              </label>
+            </div>
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">项目时间 <span class="req">*</span></label>
+            <a-select v-model:value="manualForm.projectYear" placeholder="请选择" style="width:100%">
+              <a-select-option v-for="year in PROJECT_YEARS" :key="year" :value="year">{{ year }}</a-select-option>
+            </a-select>
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">截止日期 <span class="optional">（选填）</span></label>
+            <a-input v-model:value="manualForm.deadline" type="date" style="width:100%" />
+          </div>
+        </div>
+      </div>
+
+      <div class="manual-section">
+        <div class="manual-section-title">公司信息</div>
+        <div class="manual-section-grid">
+          <div class="manual-field">
+            <label class="manual-label">公司名称 <span class="req">*</span></label>
+            <a-input v-model:value="manualForm.company" placeholder="如：Goldman Sachs" />
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">公司类别 <span class="req">*</span></label>
+            <a-select v-model:value="manualForm.companyType" placeholder="请选择" style="width:100%">
+              <a-select-option v-for="t in COMPANY_TYPES" :key="t.value" :value="t.value">{{ t.label }}</a-select-option>
+            </a-select>
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">大区 <span class="req">*</span></label>
+            <a-select v-model:value="manualForm.region" placeholder="请选择" style="width:100%" @change="onManualRegionChange">
+              <a-select-option v-for="r in REGIONS" :key="r.value" :value="r.value">{{ r.label }}</a-select-option>
+            </a-select>
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">城市 <span class="req">*</span></label>
+            <a-select v-model:value="manualForm.city" placeholder="请先选择大区" style="width:100%" :disabled="!manualForm.region">
+              <a-select-option v-for="city in manualCityOptions" :key="city" :value="city">{{ city }}</a-select-option>
+            </a-select>
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">公司官网 <span class="req">*</span></label>
+            <a-input v-model:value="manualForm.website" placeholder="https://..." />
+          </div>
+          <div class="manual-field">
+            <label class="manual-label">岗位链接 <span class="req">*</span></label>
+            <a-input v-model:value="manualForm.link" placeholder="https://..." />
+          </div>
+        </div>
+      </div>
+
+      <div class="manual-section">
+        <div class="manual-section-title">辅导需求</div>
+        <div class="manual-coaching-options">
+          <label class="coaching-radio" :class="{ 'coaching-radio--selected': !manualForm.needCoaching }">
+            <input v-model="manualForm.needCoaching" type="radio" :value="false" />
+            暂不需要辅导，仅添加到追踪列表
+          </label>
+          <label class="coaching-radio" :class="{ 'coaching-radio--selected': manualForm.needCoaching }">
+            <input v-model="manualForm.needCoaching" type="radio" :value="true" />
+            需要辅导，同时申请导师辅导
+          </label>
+        </div>
+
+        <div v-if="manualForm.needCoaching" class="manual-coaching-fields">
+          <div class="manual-field manual-field--full">
+            <label class="manual-label">你现在处于什么阶段？ <span class="req">*</span></label>
+            <a-select v-model:value="manualForm.coachingStage" placeholder="请选择面试阶段" style="width:100%">
+              <a-select-option value="hirevue">HireVue or Online Test（在线测试）</a-select-option>
+              <a-select-option value="screening">Screening Call</a-select-option>
+              <a-select-option value="first">First Round</a-select-option>
+              <a-select-option value="second">Second Round</a-select-option>
+              <a-select-option value="third">Third Round and Beyond</a-select-option>
+              <a-select-option value="case">Case Study Round</a-select-option>
+              <a-select-option value="superday">Superday / Assessment Centre / AC</a-select-option>
+            </a-select>
+          </div>
+
+          <div v-if="manualCoachingIsHirevue" class="manual-hirevue-card">
+            <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
+            <div class="manual-field manual-field--full">
+              <label class="manual-label">请选择类型 <span class="req">*</span></label>
+              <div class="inline-radios">
+                <label><input v-model="manualForm.hirevueType" type="radio" value="vi" /> VI (Video Interview)</label>
+                <label><input v-model="manualForm.hirevueType" type="radio" value="ot" /> OT (Online Test)</label>
+              </div>
+            </div>
+            <div v-if="manualForm.hirevueType === 'vi'" class="manual-field manual-field--full">
+              <label class="manual-label">VI 链接 <span class="req">*</span></label>
+              <a-input v-model:value="manualForm.viLink" placeholder="请输入 Video Interview 链接" />
+            </div>
+            <template v-if="manualForm.hirevueType === 'ot'">
+              <div class="manual-field manual-field--full">
+                <label class="manual-label">OT 链接 <span class="req">*</span></label>
+                <a-input v-model:value="manualForm.otLink" placeholder="请输入 Online Test 链接" />
+              </div>
+              <div class="manual-section-grid">
+                <div class="manual-field">
+                  <label class="manual-label">登录账号 <span class="req">*</span></label>
+                  <a-input v-model:value="manualForm.otAccount" placeholder="账号" />
+                </div>
+                <div class="manual-field">
+                  <label class="manual-label">登录密码 <span class="req">*</span></label>
+                  <a-input v-model:value="manualForm.otPassword" placeholder="密码" />
+                </div>
+              </div>
+            </template>
+            <div class="manual-field manual-field--full">
+              <label class="manual-label">截止时间 <span class="req">*</span></label>
+              <a-input v-model:value="manualForm.hirevueDeadline" type="datetime-local" style="width:100%" />
+              <span class="field-helper">请填写 VI/OT 的截止时间</span>
+            </div>
+            <div class="manual-field manual-field--full">
+              <label class="manual-label">上传邀请邮件截图 <span class="req">*</span></label>
+              <input id="manual-hirevue-upload" type="file" accept="image/*" style="display:none" @change="handleManualHirevueUpload" />
+              <label class="upload-dropzone upload-dropzone--compact" for="manual-hirevue-upload">
+                <CloudUploadOutlined class="upload-dropzone__icon" />
+                <span class="upload-dropzone__title">点击上传截图</span>
+                <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+                <span v-if="manualForm.inviteScreenshotName" class="upload-dropzone__file">{{ manualForm.inviteScreenshotName }}</span>
+              </label>
+            </div>
+            <div class="manual-field manual-field--full">
+              <label class="manual-label">是否需要导师协助？ <span class="req">*</span></label>
+              <div class="inline-radios">
+                <label><input v-model="manualForm.mentorHelp" type="radio" value="yes" /> 是，需要导师协助</label>
+                <label><input v-model="manualForm.mentorHelp" type="radio" value="no" /> 否，仅需题库权限</label>
+              </div>
+            </div>
+          </div>
+
+          <template v-if="manualCoachingShowInterview">
+            <div class="manual-field manual-field--full">
+              <label class="manual-label">该阶段的面试时间 <span class="req">*</span></label>
+              <a-input v-model:value="manualForm.interviewTime" type="datetime-local" style="width:100%" />
+              <span class="field-helper">请填写该阶段面试的具体时间，方便导师安排辅导</span>
+            </div>
+            <div class="manual-section-grid">
+              <div class="manual-field">
+                <label class="manual-label">意向导师 <span class="optional">（选填）</span></label>
+                <a-input v-model:value="manualForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
+              </div>
+              <div class="manual-field">
+                <label class="manual-label">排除导师 <span class="optional">（选填）</span></label>
+                <a-input v-model:value="manualForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
+              </div>
+            </div>
+          </template>
+
+          <div class="manual-field manual-field--full">
+            <label class="manual-label">备注说明 <span class="optional">（选填）</span></label>
+            <a-textarea v-model:value="manualForm.note" :rows="2" placeholder="如有其他需求或说明，请在此填写..." />
+          </div>
+        </div>
+      </div>
     </a-modal>
 
     <a-modal
@@ -427,6 +593,7 @@ import {
   BulbOutlined,
   CheckCircleFilled,
   CheckOutlined,
+  CloudUploadOutlined,
   CodeOutlined,
   ExportOutlined,
   FileTextOutlined,
@@ -519,11 +686,61 @@ const filterOptions = ref<StudentPositionMeta['filterOptions']>({
   mentorCounts: []
 })
 
+const RECRUITMENT_CYCLES = ['2024 Summer', '2024 Full-time', '2025 Summer', '2025 Full-time', '2026 Summer', '2026 Full-time']
+
+const CITY_OPTIONS: Record<string, string[]> = {
+  na: ['New York', 'San Francisco', 'Houston', 'Boston', 'Toronto'],
+  eu: ['London', 'Paris', 'Frankfurt', 'Zurich'],
+  ap: ['Hong Kong', 'Singapore', 'Tokyo', 'Sydney'],
+  cn: ['Beijing', 'Shanghai', 'Shenzhen', 'Guangzhou']
+}
+
+const COMPANY_TYPES = [
+  { value: 'ib', label: 'Investment Bank' },
+  { value: 'consulting', label: 'Consulting' },
+  { value: 'tech', label: 'Tech' },
+  { value: 'pe', label: 'PE' },
+  { value: 'vc', label: 'VC' },
+  { value: 'other', label: 'Other' }
+]
+
+const REGIONS = [
+  { value: 'na', label: '🌎 北美' },
+  { value: 'eu', label: '🌍 欧洲' },
+  { value: 'ap', label: '🌏 亚太' },
+  { value: 'cn', label: '🇨🇳 中国大陆' }
+]
+
+const PROJECT_YEARS = ['2024', '2025', '2026', '2027']
+
 const manualForm = ref({
   category: undefined as string | undefined,
   title: '',
+  department: '',
+  recruitmentCycles: [] as string[],
+  projectYear: undefined as string | undefined,
+  deadline: '',
   company: '',
-  location: ''
+  companyType: undefined as string | undefined,
+  region: undefined as string | undefined,
+  city: undefined as string | undefined,
+  website: '',
+  link: '',
+  needCoaching: false,
+  coachingStage: undefined as string | undefined,
+  hirevueType: undefined as string | undefined,
+  viLink: '',
+  otLink: '',
+  otAccount: '',
+  otPassword: '',
+  hirevueDeadline: '',
+  inviteScreenshotName: '',
+  mentorHelp: undefined as string | undefined,
+  interviewTime: '',
+  mentorCount: undefined as string | undefined,
+  preferMentor: '',
+  excludeMentor: '',
+  note: ''
 })
 
 const progressForm = ref({
@@ -582,6 +799,24 @@ const industryIconComponents: Record<string, unknown> = {
   bulb: BulbOutlined,
   code: CodeOutlined,
   fund: FundOutlined
+}
+
+const manualCityOptions = computed(() =>
+  manualForm.value.region ? (CITY_OPTIONS[manualForm.value.region] ?? []) : []
+)
+
+const manualCoachingIsHirevue = computed(() => manualForm.value.coachingStage === 'hirevue')
+const manualCoachingShowInterview = computed(() =>
+  !!manualForm.value.coachingStage && manualForm.value.coachingStage !== 'hirevue'
+)
+
+function onManualRegionChange() {
+  manualForm.value.city = undefined
+}
+
+function handleManualHirevueUpload(event: Event) {
+  const input = event.target as HTMLInputElement
+  manualForm.value.inviteScreenshotName = input.files?.[0]?.name ?? ''
 }
 
 const categoryOptionsByValue = computed(() => optionMap(filterOptions.value.categories))
@@ -748,8 +983,31 @@ function openManualAddModal() {
   manualForm.value = {
     category: undefined,
     title: '',
+    department: '',
+    recruitmentCycles: [],
+    projectYear: undefined,
+    deadline: '',
     company: '',
-    location: ''
+    companyType: undefined,
+    region: undefined,
+    city: undefined,
+    website: '',
+    link: '',
+    needCoaching: false,
+    coachingStage: undefined,
+    hirevueType: undefined,
+    viLink: '',
+    otLink: '',
+    otAccount: '',
+    otPassword: '',
+    hirevueDeadline: '',
+    inviteScreenshotName: '',
+    mentorHelp: undefined,
+    interviewTime: '',
+    mentorCount: undefined,
+    preferMentor: '',
+    excludeMentor: '',
+    note: ''
   }
   manualAddOpen.value = true
 }
@@ -768,6 +1026,16 @@ async function loadPositionMeta() {
   const payload = await getStudentPositionMeta()
   intentSummary.value = payload.intentSummary
   filterOptions.value = payload.filterOptions
+
+  const methodMap: Record<string, string> = {
+    '官网投递': 'official',
+    '内推': 'referral',
+    '邮件投递': 'campus'
+  }
+  filterOptions.value.applyMethods = filterOptions.value.applyMethods.map((m) => ({
+    label: m.label,
+    value: methodMap[m.value] ?? m.value
+  }))
 }
 
 function setSelectedPosition(record: PositionRecord) {
@@ -823,21 +1091,76 @@ async function toggleFavorite(record: PositionRecord) {
     positionId: record.id,
     favorited: nextFavorited
   })
-  await loadPositions()
+  const target = positions.value.find((p) => p.id === record.id)
+  if (target) target.favorited = nextFavorited
   message.success(nextFavorited ? '已收藏！可在“我的收藏”中查看。' : '已取消收藏')
 }
 
 async function submitManualPosition() {
-  if (!manualForm.value.category || !manualForm.value.title || !manualForm.value.company || !manualForm.value.location) {
-    message.error('请完整填写岗位分类、岗位名称、公司名称和工作地点')
+  const f = manualForm.value
+  if (!f.category || !f.title || !f.company || !f.city) {
+    message.error('请完整填写岗位分类、岗位名称、公司名称和城市')
     return
   }
 
+  if (f.needCoaching) {
+    if (!f.coachingStage) {
+      message.error('请选择当前面试阶段')
+      return
+    }
+    if (f.coachingStage === 'hirevue') {
+      if (!f.hirevueType) {
+        message.error('请选择 VI 或 OT 类型')
+        return
+      }
+      if (f.hirevueType === 'vi' && !f.viLink) {
+        message.error('请填写 VI 链接')
+        return
+      }
+      if (f.hirevueType === 'ot' && (!f.otLink || !f.otAccount || !f.otPassword)) {
+        message.error('请完整填写 OT 链接、账号和密码')
+        return
+      }
+      if (!f.hirevueDeadline) {
+        message.error('请填写截止时间')
+        return
+      }
+    } else {
+      if (!f.interviewTime) {
+        message.error('请填写面试时间')
+        return
+      }
+    }
+  }
+
   await createStudentManualPosition({
-    category: manualForm.value.category,
-    title: manualForm.value.title,
-    company: manualForm.value.company,
-    location: manualForm.value.location
+    category: f.category,
+    title: f.title,
+    company: f.company,
+    location: f.city,
+    recruitmentCycle: f.recruitmentCycles.join(', ') || undefined,
+    projectYear: f.projectYear,
+    companyType: f.companyType,
+    region: f.region,
+    city: f.city,
+    website: f.website || undefined,
+    link: f.link || undefined,
+    deadline: f.deadline || undefined,
+    needCoaching: f.needCoaching,
+    coachingStage: f.needCoaching ? f.coachingStage : undefined,
+    mentorCount: f.needCoaching && f.coachingStage !== 'hirevue' ? f.mentorCount : undefined,
+    hirevueType: f.needCoaching && f.coachingStage === 'hirevue' ? f.hirevueType : undefined,
+    viLink: f.needCoaching && f.hirevueType === 'vi' ? f.viLink : undefined,
+    otLink: f.needCoaching && f.hirevueType === 'ot' ? f.otLink : undefined,
+    otAccount: f.needCoaching && f.hirevueType === 'ot' ? f.otAccount : undefined,
+    otPassword: f.needCoaching && f.hirevueType === 'ot' ? f.otPassword : undefined,
+    hirevueDeadline: f.needCoaching && f.coachingStage === 'hirevue' ? f.hirevueDeadline : undefined,
+    inviteScreenshotName: f.inviteScreenshotName || undefined,
+    mentorHelp: f.needCoaching && f.coachingStage === 'hirevue' ? f.mentorHelp : undefined,
+    interviewTime: f.needCoaching && f.coachingStage !== 'hirevue' ? f.interviewTime : undefined,
+    preferMentor: f.needCoaching ? f.preferMentor || undefined : undefined,
+    excludeMentor: f.needCoaching ? f.excludeMentor || undefined : undefined,
+    note: f.note || undefined
   })
   await Promise.all([loadPositions(), loadPositionMeta()])
   manualAddOpen.value = false
@@ -926,6 +1249,211 @@ watch(
   { immediate: true }
 )
 </script>
+
+<style lang="scss">
+.manual-add-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1e40af;
+}
+
+.manual-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+  background: #f8fafc;
+}
+
+.manual-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 14px;
+}
+
+.manual-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.manual-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &--span2 {
+    grid-column: span 2;
+  }
+
+  &--full {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+}
+
+.manual-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+
+  .req {
+    color: #ef4444;
+    margin-left: 2px;
+  }
+
+  .optional {
+    color: #9ca3af;
+    font-weight: 400;
+    font-size: 11px;
+  }
+}
+
+.cycle-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  min-height: 44px;
+}
+
+.cycle-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+
+  input {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.manual-coaching-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.coaching-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+
+  input {
+    width: 16px;
+    height: 16px;
+  }
+
+  &--selected {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+}
+
+.manual-coaching-fields {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 14px;
+}
+
+.manual-hirevue-card {
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.manual-hirevue-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c3aed;
+  margin-bottom: 12px;
+}
+
+.inline-radios {
+  display: flex;
+  gap: 20px;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  input {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.field-helper {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+
+  &--compact {
+    padding: 14px;
+  }
+
+  &__icon {
+    font-size: 24px;
+    color: #2563eb;
+    margin-bottom: 6px;
+  }
+
+  &__title {
+    font-size: 12px;
+    color: #2563eb;
+  }
+
+  &__helper {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  &__file {
+    font-size: 11px;
+    color: #059669;
+    margin-top: 4px;
+  }
+}
+</style>
 
 <style scoped lang="scss">
 .positions-page {

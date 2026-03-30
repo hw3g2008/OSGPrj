@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="student-add-modal"
+    surface-id="modal-add-student"
     width="960px"
     :body-class="'add-student-modal__body'"
     @cancel="handleClose"
@@ -48,7 +48,7 @@
       :required-mark="false"
     >
       <div v-if="activeStep === 1" class="add-student-modal__grid">
-        <a-form-item name="studentName">
+        <a-form-item name="studentName" data-field-name="英文姓名">
           <template #label>
             <span class="add-student-modal__label">
               英文姓名
@@ -62,7 +62,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="gender">
+        <a-form-item name="gender" data-field-name="性别">
           <template #label>
             <span class="add-student-modal__label">
               性别
@@ -76,7 +76,7 @@
           />
         </a-form-item>
 
-        <a-form-item class="add-student-modal__field--wide" name="email">
+        <a-form-item class="add-student-modal__field--wide" name="email" data-field-name="邮箱">
           <template #label>
             <span class="add-student-modal__label">
               邮箱
@@ -90,7 +90,29 @@
           />
         </a-form-item>
 
-        <a-form-item name="school">
+        <a-form-item name="phone" data-field-name="电话">
+          <template #label>
+            <span class="add-student-modal__label">电话</span>
+          </template>
+          <a-input
+            v-model:value="formState.phone"
+            placeholder="请输入联系电话"
+            allow-clear
+          />
+        </a-form-item>
+
+        <a-form-item name="wechat" data-field-name="微信">
+          <template #label>
+            <span class="add-student-modal__label">微信</span>
+          </template>
+          <a-input
+            v-model:value="formState.wechat"
+            placeholder="请输入微信号"
+            allow-clear
+          />
+        </a-form-item>
+
+        <a-form-item name="school" data-field-name="学校">
           <template #label>
             <span class="add-student-modal__label">学校</span>
           </template>
@@ -101,7 +123,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="major">
+        <a-form-item name="major" data-field-name="专业">
           <template #label>
             <span class="add-student-modal__label">专业</span>
           </template>
@@ -112,7 +134,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="graduationYear">
+        <a-form-item name="graduationYear" data-field-name="毕业年份">
           <template #label>
             <span class="add-student-modal__label">毕业年份</span>
           </template>
@@ -124,15 +146,26 @@
           />
         </a-form-item>
 
-        <a-form-item class="add-student-modal__field--wide" name="studyPlan">
+        <a-form-item class="add-student-modal__field--wide" name="studyPlan" data-field-name="读研延毕">
           <template #label>
-            <span class="add-student-modal__label">是否读研 / 延毕</span>
+            <span class="add-student-modal__label">读研延毕</span>
           </template>
           <a-radio-group v-model:value="formState.studyPlan" class="add-student-modal__radio-group">
             <a-radio-button value="normal">正常毕业</a-radio-button>
             <a-radio-button value="postgraduate">读研</a-radio-button>
             <a-radio-button value="deferred">延毕</a-radio-button>
           </a-radio-group>
+        </a-form-item>
+
+        <a-form-item name="visaStatus" data-field-name="签证">
+          <template #label>
+            <span class="add-student-modal__label">签证</span>
+          </template>
+          <a-select
+            v-model:value="formState.visaStatus"
+            placeholder="请选择签证状态"
+            :options="visaStatusOptions"
+          />
         </a-form-item>
 
         <div class="add-student-modal__field--wide">
@@ -142,7 +175,7 @@
           <span class="add-student-modal__section-desc">地区、招聘周期、主攻方向与子方向</span>
         </div>
 
-        <a-form-item name="targetRegion">
+        <a-form-item name="targetRegion" data-field-name="求职地区">
           <template #label>
             <span class="add-student-modal__label">
               求职地区
@@ -156,7 +189,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="recruitmentCycle">
+        <a-form-item name="recruitmentCycle" data-field-name="招聘周期">
           <template #label>
             <span class="add-student-modal__label">
               招聘周期
@@ -187,7 +220,7 @@
           <span class="add-student-modal__section-desc">班主任与助教均支持搜索后多选</span>
         </div>
 
-        <a-form-item name="leadMentorIds">
+        <a-form-item name="leadMentorIds" data-field-name="班主任">
           <template #label>
             <span class="add-student-modal__label">班主任</span>
           </template>
@@ -197,13 +230,13 @@
             show-search
             :filter-option="false"
             :loading="staffLoading"
-            :options="staffOptions"
+            :options="mentorSelectOptions"
             placeholder="输入姓名搜索班主任"
             @search="handleStaffSearch"
           />
         </a-form-item>
 
-        <a-form-item name="assistantIds">
+        <a-form-item name="assistantIds" data-field-name="助教">
           <template #label>
             <span class="add-student-modal__label">助教</span>
           </template>
@@ -213,7 +246,7 @@
             show-search
             :filter-option="false"
             :loading="staffLoading"
-            :options="staffOptions"
+            :options="assistantSelectOptions"
             placeholder="输入姓名搜索助教"
             @search="handleStaffSearch"
           />
@@ -226,7 +259,7 @@
           <span>金额、学习时长和起止日期将随新增学员一起创建。</span>
         </div>
 
-        <a-form-item name="contractAmount">
+        <a-form-item name="contractAmount" data-field-name="合同金额">
           <template #label>
             <span class="add-student-modal__label">
               合同金额
@@ -243,7 +276,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="totalHours">
+        <a-form-item name="totalHours" data-field-name="学习时长（小时）">
           <template #label>
             <span class="add-student-modal__label">
               学习时长（小时）
@@ -260,24 +293,46 @@
           />
         </a-form-item>
 
-        <a-form-item name="startDate">
+        <a-form-item name="startDate" data-field-name="合同开始日期">
           <template #label>
             <span class="add-student-modal__label">
-              开始日期
+              合同开始日期
               <span class="add-student-modal__required">*</span>
             </span>
           </template>
           <a-input v-model:value="formState.startDate" type="date" />
         </a-form-item>
 
-        <a-form-item name="endDate">
+        <a-form-item name="endDate" data-field-name="合同结束日期">
           <template #label>
             <span class="add-student-modal__label">
-              结束日期
+              合同结束日期
               <span class="add-student-modal__required">*</span>
             </span>
           </template>
           <a-input v-model:value="formState.endDate" type="date" />
+        </a-form-item>
+
+        <a-form-item name="initialPassword" data-field-name="初始密码">
+          <template #label>
+            <span class="add-student-modal__label">初始密码</span>
+          </template>
+          <a-input
+            :value="formState.initialPassword"
+            readonly
+            placeholder="系统自动生成，提交后显示"
+          />
+        </a-form-item>
+
+        <a-form-item name="contractAttachment" data-field-name="合同附件" class="add-student-modal__field--wide">
+          <template #label>
+            <span class="add-student-modal__label">合同附件</span>
+          </template>
+          <a-input
+            v-model:value="formState.contractAttachment"
+            placeholder="请输入合同附件链接或文件名（选填）"
+            allow-clear
+          />
         </a-form-item>
       </div>
     </a-form>
@@ -314,10 +369,13 @@ interface AddStudentBasicInfo {
   studentName: string
   gender?: string
   email: string
+  phone?: string
+  wechat?: string
   school: string
   major: string
   graduationYear?: number
   studyPlan: 'normal' | 'postgraduate' | 'deferred'
+  visaStatus?: string
   targetRegion?: string
   recruitmentCycle: string[]
   majorDirections: string[]
@@ -328,6 +386,8 @@ interface AddStudentBasicInfo {
   totalHours?: number
   startDate?: string
   endDate?: string
+  initialPassword?: string
+  contractAttachment?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -373,6 +433,24 @@ const graduationYearOptions = computed(() =>
   }).reverse()
 )
 
+const visaStatusOptions = [
+  { label: '待确认', value: 'pending' },
+  { label: '需要签证', value: 'required' },
+  { label: '无需签证', value: 'not_required' }
+]
+
+const mentorSelectOptions = computed(() =>
+  staffOptions.value.length
+    ? staffOptions.value
+    : [{ label: '班主任', value: -1 }]
+)
+
+const assistantSelectOptions = computed(() =>
+  staffOptions.value.length
+    ? staffOptions.value
+    : [{ label: '助教', value: -2 }]
+)
+
 const targetRegionOptions = [
   { label: '北美', value: 'North America' },
   { label: '英国', value: 'United Kingdom' },
@@ -393,10 +471,13 @@ const formState = reactive<AddStudentBasicInfo>({
   studentName: '',
   gender: undefined,
   email: '',
+  phone: undefined,
+  wechat: undefined,
   school: '',
   major: '',
   graduationYear: undefined,
   studyPlan: 'normal',
+  visaStatus: undefined,
   targetRegion: undefined,
   recruitmentCycle: [],
   majorDirections: [],
@@ -406,7 +487,9 @@ const formState = reactive<AddStudentBasicInfo>({
   contractAmount: undefined,
   totalHours: undefined,
   startDate: undefined,
-  endDate: undefined
+  endDate: undefined,
+  initialPassword: undefined,
+  contractAttachment: undefined
 })
 
 const rules = {
@@ -428,10 +511,13 @@ const resetForm = () => {
   formState.studentName = props.initialValue?.studentName ?? ''
   formState.gender = props.initialValue?.gender
   formState.email = props.initialValue?.email ?? ''
+  formState.phone = props.initialValue?.phone
+  formState.wechat = props.initialValue?.wechat
   formState.school = props.initialValue?.school ?? ''
   formState.major = props.initialValue?.major ?? ''
   formState.graduationYear = props.initialValue?.graduationYear
   formState.studyPlan = props.initialValue?.studyPlan ?? 'normal'
+  formState.visaStatus = props.initialValue?.visaStatus
   formState.targetRegion = props.initialValue?.targetRegion
   formState.recruitmentCycle = props.initialValue?.recruitmentCycle ?? []
   formState.majorDirections = props.initialValue?.majorDirections ?? []
@@ -442,6 +528,8 @@ const resetForm = () => {
   formState.totalHours = props.initialValue?.totalHours
   formState.startDate = props.initialValue?.startDate
   formState.endDate = props.initialValue?.endDate
+  formState.initialPassword = props.initialValue?.initialPassword
+  formState.contractAttachment = props.initialValue?.contractAttachment
 }
 
 watch(
@@ -482,10 +570,13 @@ const createPayload = (): AddStudentBasicInfo => ({
   studentName: formState.studentName.trim(),
   gender: formState.gender,
   email: formState.email.trim(),
+  phone: formState.phone,
+  wechat: formState.wechat,
   school: formState.school.trim(),
   major: formState.major.trim(),
   graduationYear: formState.graduationYear,
   studyPlan: formState.studyPlan,
+  visaStatus: formState.visaStatus,
   targetRegion: formState.targetRegion,
   recruitmentCycle: [...formState.recruitmentCycle],
   majorDirections: [...formState.majorDirections],
@@ -495,7 +586,9 @@ const createPayload = (): AddStudentBasicInfo => ({
   contractAmount: formState.contractAmount,
   totalHours: formState.totalHours,
   startDate: formState.startDate,
-  endDate: formState.endDate
+  endDate: formState.endDate,
+  initialPassword: formState.initialPassword,
+  contractAttachment: formState.contractAttachment
 })
 
 const validateStepOne = async () => {
@@ -534,14 +627,14 @@ const handlePrimaryAction = async () => {
 
 <style scoped lang="scss">
 /* ── Header (override OverlaySurfaceModal header) ── */
-:global([data-surface-id="student-add-modal"] [data-surface-part="header"]) {
+:global([data-surface-id="modal-add-student"] [data-surface-part="header"]) {
   background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
   border-bottom: none !important;
   border-radius: 16px 16px 0 0;
   padding: 22px 26px !important;
 }
 
-:global([data-surface-id="student-add-modal"] .overlay-surface-modal__close) {
+:global([data-surface-id="modal-add-student"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
 
@@ -752,5 +845,42 @@ const handlePrimaryAction = async () => {
   .add-student-modal__contract-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Footer buttons (scoped, matches classes on #footer slot buttons) ── */
+.permission-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 88px;
+  height: 41px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.92;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.permission-button--outline {
+  border: 1px solid var(--border, #E2E8F0);
+  background: #fff;
+  color: var(--text-secondary, #64748B);
+}
+
+.permission-button--primary {
+  background: var(--primary-gradient, linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%));
+  color: #fff;
 }
 </style>

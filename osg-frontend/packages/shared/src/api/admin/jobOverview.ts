@@ -1,3 +1,4 @@
+import { downloadAdminFile } from '../../utils'
 import { http } from '../../utils/request'
 
 export interface JobOverviewFilters {
@@ -82,6 +83,10 @@ export interface StageUpdatePayload {
   note?: string
 }
 
+export interface JobOverviewExportFilters extends JobOverviewFilters {
+  tab?: 'pending' | 'all'
+}
+
 const toRequestParams = (filters: JobOverviewFilters = {}) => {
   const params: Record<string, string | number> = {}
 
@@ -122,6 +127,14 @@ export function getJobOverviewList(filters: JobOverviewFilters = {}) {
 export function getUnassignedJobOverviewList(filters: Omit<JobOverviewFilters, 'assignStatus'> = {}) {
   return http.get<{ rows: UnassignedJobOverviewRow[] }>('/admin/job-overview/unassigned', {
     params: toRequestParams(filters)
+  })
+}
+
+export function exportJobOverview(filters: JobOverviewExportFilters = {}) {
+  return downloadAdminFile({
+    path: '/admin/job-overview/export',
+    params: toRequestParams(filters),
+    fallbackFilename: '求职总览.xlsx',
   })
 }
 

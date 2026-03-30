@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="student-detail-modal"
+    :surface-id="surfaceId"
     width="960px"
     :shell-class="'sdm-shell'"
     :body-class="'sdm-body'"
@@ -36,10 +36,33 @@
           :key="tab.key"
           type="button"
           :class="['sdm-tabs__item', { 'sdm-tabs__item--active': activeTab === tab.key }]"
+          :aria-label="`学员详情弹窗${tab.label}`"
+          :data-tab="tab.key"
+          :data-tab-text="tab.label"
           @click="activeTab = tab.key"
         >
           <i :class="['mdi', tab.icon]" aria-hidden="true" style="margin-right:6px"></i>{{ tab.label }}
           <span v-if="tab.key === 'changes' && pendingChanges.length > 0" class="sdm-tabs__dot"></span>
+        </button>
+      </div>
+
+      <div v-if="canView" class="sdm-quick-actions" data-content-part="student-detail-quick-actions">
+        <button
+          type="button"
+          class="permission-button permission-button--outline sdm-quick-actions__renew"
+          data-surface-trigger="modal-contract-renew"
+          :data-surface-sample-key="`student-${detail?.studentId || studentId}-contract-renew`"
+          @click="renewVisible = true"
+        >
+          合同续签
+        </button>
+        <button
+          type="button"
+          class="permission-button permission-button--outline"
+          data-surface-trigger="modal-student-applications"
+          @click="activeTab = 'applications'"
+        >
+          学员投递岗位
         </button>
       </div>
 
@@ -80,14 +103,14 @@
             <i class="mdi mdi-account-group" aria-hidden="true"></i> 导师配置
           </div>
           <div class="sdm-grid sdm-grid--2">
-            <div class="sdm-field sdm-field">
+            <div class="sdm-field sdm-field" data-field-name="班主任">
               <span class="sdm-field__label">班主任</span>
               <div class="sdm-field__pills">
                 <span v-if="detail?.mentor?.leadMentorName" class="sdm-pill sdm-pill--indigo">{{ detail.mentor.leadMentorName }}</span>
                 <span v-else class="sdm-field__value">{{ detail?.mentor?.leadMentorId ?? '-' }}</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field">
+            <div class="sdm-field sdm-field" data-field-name="助教">
               <span class="sdm-field__label">助教</span>
               <div class="sdm-field__pills">
                 <span v-if="detail?.mentor?.assistantName" class="sdm-pill sdm-pill--green">{{ detail.mentor.assistantName }}</span>
@@ -103,15 +126,15 @@
             <i class="mdi mdi-school" aria-hidden="true"></i> 学业信息
           </div>
           <div class="sdm-grid sdm-grid--4">
-            <div class="sdm-field sdm-field">
+            <div class="sdm-field sdm-field" data-field-name="学校">
               <span class="sdm-field__label">学校</span>
               <div class="sdm-field__value">{{ detail?.school || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field">
+            <div class="sdm-field sdm-field" data-field-name="专业">
               <span class="sdm-field__label">专业</span>
               <div class="sdm-field__value">{{ detail?.major || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field">
+            <div class="sdm-field sdm-field" data-field-name="毕业年份">
               <span class="sdm-field__label">毕业年份</span>
               <div class="sdm-field__value">{{ detail?.graduationYear ?? '-' }}</div>
             </div>
@@ -136,7 +159,7 @@
             <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
           </div>
           <!-- 求职地区 -->
-          <div class="sdm-field sdm-field" style="margin-bottom:12px">
+          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="求职地区">
             <span class="sdm-field__label">求职地区</span>
             <div class="sdm-field__pills">
               <span v-if="detail?.jobDirection?.targetRegion || detail?.targetRegion" class="sdm-pill sdm-pill--green">
@@ -146,7 +169,7 @@
             </div>
           </div>
           <!-- 招聘周期 -->
-          <div class="sdm-field sdm-field" style="margin-bottom:12px">
+          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="招聘周期">
             <span class="sdm-field__label">招聘周期</span>
             <div class="sdm-field__pills">
               <span
@@ -159,7 +182,7 @@
           </div>
           <!-- 主攻方向 + 子方向 -->
           <div class="sdm-grid sdm-grid--direction">
-            <div class="sdm-field sdm-field sdm-field--bordered">
+            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="主攻方向">
               <span class="sdm-field__label" style="color:var(--primary)">主攻方向</span>
               <div class="sdm-field__pills">
                 <span
@@ -170,7 +193,7 @@
                 <span v-if="!(detail?.jobDirection?.majorDirections || detail?.majorDirections || []).length" class="sdm-field__value">-</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field sdm-field--bordered">
+            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="子方向">
               <span class="sdm-field__label" style="color:var(--primary)">子方向</span>
               <div class="sdm-field__pills">
                 <span class="sdm-pill sdm-pill--sub">{{ detail?.jobDirection?.subDirection || detail?.subDirection || '-' }}</span>
@@ -185,16 +208,16 @@
             <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式
           </div>
           <div class="sdm-grid sdm-grid--3">
-            <div class="sdm-field sdm-field">
+            <div class="sdm-field sdm-field" data-field-name="电话">
               <span class="sdm-field__label">电话</span>
               <div class="sdm-field__value">{{ detail?.contact?.phone || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">微信ID</span>
+            <div class="sdm-field sdm-field" data-field-name="微信">
+              <span class="sdm-field__label">微信</span>
               <div class="sdm-field__value">{{ detail?.contact?.wechat || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">状态</span>
+            <div class="sdm-field sdm-field" data-field-name="账号状态">
+              <span class="sdm-field__label">账号状态</span>
               <div>
                 <span :class="['sdm-status-tag', `sdm-status-tag--${statusColor}`]">
                   {{ formatAccountStatus(detail?.accountStatus) }}
@@ -221,7 +244,27 @@
         :contracts="contracts"
       />
     </template>
+
+    <template #footer>
+      <button type="button" class="permission-button permission-button--outline" @click="handleClose">取消</button>
+      <button
+        v-if="canView && studentId"
+        type="button"
+        class="permission-button permission-button--primary"
+        data-surface-trigger="modal-edit-student-new"
+        @click="handleRequestEdit"
+      >
+        编辑学员
+      </button>
+    </template>
   </OverlaySurfaceModal>
+
+  <RenewContractModal
+    v-model:visible="renewVisible"
+    :student-options="[]"
+    :preset-contract="latestContract"
+    @submitted="handleContractRenewed"
+  />
 </template>
 
 <script setup lang="ts">
@@ -234,6 +277,8 @@ import {
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import ChangeReviewTab from './ChangeReviewTab.vue'
 import ContractTab from './ContractTab.vue'
+import RenewContractModal from '../../contracts/components/RenewContractModal.vue'
+import type { ContractListItem } from '@osg/shared/api/admin/contract'
 
 interface StudentContact {
   email?: string
@@ -297,6 +342,9 @@ interface ContractRow {
   startDate?: string
   endDate?: string
   contractStatus?: string
+  renewalReason?: string
+  attachmentPath?: string
+  updateTime?: string
 }
 
 interface ContractPayload {
@@ -322,10 +370,12 @@ const props = withDefaults(defineProps<{
   visible: boolean
   studentId?: number | null
   studentName?: string
+  surfaceId?: string
   canView?: boolean
 }>(), {
   studentId: null,
   studentName: '',
+  surfaceId: 'modal-student-detail-new',
   canView: true
 })
 
@@ -382,6 +432,59 @@ const contractSummary = computed<ContractSummary>(() => ({
 }))
 
 const contracts = computed(() => contractPayload.value?.contracts || [])
+const renewVisible = ref(false)
+
+const contractSortScore = (contract: ContractRow & {
+  leadMentorId?: number
+  leadMentorName?: string
+  attachmentPath?: string
+  updateTime?: string
+}) => {
+  const isActive = contract.contractStatus === 'active' ? 1 : 0
+  const endTime = contract.endDate ? new Date(contract.endDate).getTime() : 0
+  const updateTime = contract.updateTime ? new Date(contract.updateTime).getTime() : 0
+  return [isActive, endTime, updateTime] as const
+}
+
+const latestContract = computed<ContractListItem | null>(() => {
+  const contract = [...(contractPayload.value?.contracts || [])]
+    .sort((left, right) => {
+      const [leftActive, leftEnd, leftUpdate] = contractSortScore(left)
+      const [rightActive, rightEnd, rightUpdate] = contractSortScore(right)
+      if (rightActive !== leftActive) return rightActive - leftActive
+      if (rightEnd !== leftEnd) return rightEnd - leftEnd
+      return rightUpdate - leftUpdate
+    })[0] as (ContractRow & {
+      leadMentorId?: number
+      leadMentorName?: string
+      attachmentPath?: string
+      updateTime?: string
+    }) | undefined
+
+  if (!contract || !detail.value?.studentId || !detail.value?.studentName) {
+    return null
+  }
+
+  return {
+    contractId: contract.contractId,
+    contractNo: contract.contractNo || `CONTRACT-${contract.contractId}`,
+    studentId: detail.value.studentId,
+    studentName: detail.value.studentName,
+    leadMentorId: contract.leadMentorId,
+    leadMentorName: contract.leadMentorName,
+    contractType: contract.contractType || 'renew',
+    contractAmount: Number(contract.contractAmount || 0),
+    totalHours: Number(contract.totalHours || 0),
+    usedHours: Number(contract.usedHours || 0),
+    remainingHours: Number(contract.remainingHours ?? contract.totalHours ?? 0),
+    startDate: contract.startDate || '',
+    endDate: contract.endDate || '',
+    renewalReason: contract.renewalReason,
+    contractStatus: contract.contractStatus || 'active',
+    attachmentPath: contract.attachmentPath,
+    updateTime: contract.updateTime,
+  }
+})
 
 const loadStudentDetail = async () => {
   if (!props.visible || !props.studentId || !props.canView) {
@@ -430,6 +533,10 @@ const handleRequestEdit = () => {
     return
   }
   emit('request-edit', props.studentId)
+}
+
+const handleContractRenewed = async () => {
+  await loadStudentDetail()
 }
 
 const handleChangeDecision = async () => {
@@ -525,14 +632,16 @@ const formatCurrency = (value?: number) => {
 
 <style scoped lang="scss">
 /* ── Header (override OverlaySurfaceModal header) ── */
-:global([data-surface-id="student-detail-modal"] [data-surface-part="header"]) {
+:global([data-surface-id="modal-student-detail-new"] [data-surface-part="header"]),
+:global([data-surface-id="modal-student-detail-bob"] [data-surface-part="header"]) {
   background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
   border-bottom: none !important;
   border-radius: 16px 16px 0 0;
   padding: 22px 26px !important;
 }
 
-:global([data-surface-id="student-detail-modal"] .overlay-surface-modal__close) {
+:global([data-surface-id="modal-student-detail-new"] .overlay-surface-modal__close),
+:global([data-surface-id="modal-student-detail-bob"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
 
@@ -620,6 +729,16 @@ const formatCurrency = (value?: number) => {
   height: 8px;
   background: var(--danger, #EF4444);
   border-radius: 50%;
+}
+
+.sdm-quick-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px 0;
+}
+
+.sdm-quick-actions__renew {
+  min-width: 120px;
 }
 
 /* ── Loading / Error / Guard ── */

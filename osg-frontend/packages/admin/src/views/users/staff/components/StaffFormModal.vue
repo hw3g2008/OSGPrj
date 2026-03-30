@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :open="visible"
     width="960px"
-    surface-id="staff-form-modal"
+    :surface-id="surfaceId"
     :body-class="'staff-form-modal__body'"
     @cancel="handleClose"
   >
@@ -20,15 +20,15 @@
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--primary">核心信息</div>
       <div class="staff-form-modal__grid">
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="姓名">
           <span>姓名</span>
           <input v-model="form.staffName" type="text" class="staff-form-modal__input" placeholder="请输入英文名" />
         </label>
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="邮箱">
           <span>邮箱</span>
           <input v-model="form.email" type="email" class="staff-form-modal__input" placeholder="请输入邮箱" />
         </label>
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="类型">
           <span>类型</span>
           <select v-model="form.staffType" class="staff-form-modal__select">
             <option value="">请选择</option>
@@ -36,7 +36,7 @@
             <option value="lead_mentor">班主任</option>
           </select>
         </label>
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="性别">
           <span>性别</span>
           <select v-model="form.gender" class="staff-form-modal__select">
             <option value="">请选择</option>
@@ -53,18 +53,22 @@
         <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式
       </div>
       <div class="staff-form-modal__grid">
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="手机号">
           <span>手机号</span>
           <input v-model="form.phone" type="tel" class="staff-form-modal__input" placeholder="请输入手机号" />
         </label>
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="微信">
+          <span>微信</span>
+          <input v-model="form.wechatId" type="text" class="staff-form-modal__input" placeholder="请输入微信号" />
+        </label>
+        <label class="staff-form-modal__field" data-field-name="地区">
           <span>地区</span>
           <select v-model="form.region" class="staff-form-modal__select">
             <option value="">请选择</option>
             <option v-for="option in regionOptions" :key="option" :value="option">{{ option }}</option>
           </select>
         </label>
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="城市">
           <span>城市</span>
           <input v-model="form.city" type="text" class="staff-form-modal__input" placeholder="请输入城市" />
         </label>
@@ -77,33 +81,53 @@
         <i class="mdi mdi-target" aria-hidden="true"></i> 专业方向
       </div>
       <div class="staff-form-modal__grid">
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="主攻方向">
           <span>主攻方向</span>
           <select v-model="form.majorDirection" class="staff-form-modal__select">
             <option value="">请选择</option>
             <option v-for="option in majorDirectionOptions" :key="option" :value="option">{{ option }}</option>
           </select>
         </label>
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="子方向">
           <span>子方向</span>
           <input v-model="form.subDirection" type="text" class="staff-form-modal__input" placeholder="请输入子方向" />
         </label>
-        <label class="staff-form-modal__field">
+        <label class="staff-form-modal__field" data-field-name="可授课程类型">
+          <span>可授课程类型</span>
+          <input v-model="form.courseTypes" type="text" class="staff-form-modal__input" placeholder="请输入可授课程类型" />
+        </label>
+        <label class="staff-form-modal__field" data-field-name="课单价">
           <span>课时单价</span>
           <input v-model="form.hourlyRate" type="number" min="0" class="staff-form-modal__input" placeholder="请输入课时单价" />
         </label>
       </div>
     </section>
 
+    <section class="staff-form-modal__section">
+      <div class="staff-form-modal__badge staff-form-modal__badge--blue">
+        <i class="mdi mdi-shield-account" aria-hidden="true"></i> 账号信息
+      </div>
+      <div class="staff-form-modal__grid">
+        <label class="staff-form-modal__field" data-field-name="登录账号">
+          <span>登录账号</span>
+          <input v-model="form.loginAccount" type="text" class="staff-form-modal__input" placeholder="请输入登录账号" />
+        </label>
+        <label class="staff-form-modal__field" data-field-name="初始密码">
+          <span>初始密码</span>
+          <input v-model="form.initialPassword" type="text" class="staff-form-modal__input" placeholder="请输入初始密码" />
+        </label>
+      </div>
+    </section>
+
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">取消</button>
+      <button type="button" class="permission-button permission-button--outline" data-surface-part="cancel-control" @click="handleClose">取消</button>
       <button
         type="button"
         class="permission-button permission-button--primary"
         :disabled="submitting"
         @click="handleSubmit"
       >
-        {{ submitting ? '提交中...' : '确认' }}
+        {{ submitting ? '提交中...' : (isEditing ? '保存修改' : '创建导师账户') }}
       </button>
     </template>
   </OverlaySurfaceModal>
@@ -135,14 +159,19 @@ const form = reactive({
   phone: '',
   staffType: '',
   gender: '',
+  wechatId: '',
   majorDirection: '',
   subDirection: '',
   region: '',
   city: '',
+  courseTypes: '',
+  loginAccount: '',
+  initialPassword: '',
   hourlyRate: '' as string | number
 })
 
 const isEditing = computed(() => Boolean(props.staff?.staffId))
+const surfaceId = computed(() => (isEditing.value ? 'modal-edit-staff' : 'modal-add-staff'))
 
 const avatarText = computed(() => {
   const name = props.staff?.staffName?.trim()
@@ -156,10 +185,16 @@ const resetForm = () => {
   form.phone = props.staff?.phone || ''
   form.staffType = props.staff?.staffType || ''
   form.gender = (props.staff as Record<string, unknown>)?.gender as string || ''
+  form.wechatId = (props.staff as Record<string, unknown>)?.wechatId as string || ''
   form.majorDirection = props.staff?.majorDirection || ''
   form.subDirection = props.staff?.subDirection || ''
   form.region = props.staff?.region || ''
   form.city = props.staff?.city || ''
+  form.courseTypes = Array.isArray((props.staff as Record<string, unknown>)?.courseTypes)
+    ? ((props.staff as Record<string, unknown>)?.courseTypes as string[]).join(', ')
+    : ((props.staff as Record<string, unknown>)?.courseTypes as string) || ''
+  form.loginAccount = (props.staff as Record<string, unknown>)?.loginAccount as string || ''
+  form.initialPassword = (props.staff as Record<string, unknown>)?.initialPassword as string || ''
   form.hourlyRate = props.staff?.hourlyRate == null ? '' : String(props.staff.hourlyRate)
 }
 
@@ -214,10 +249,14 @@ const handleSubmit = () => {
     email: form.email.trim(),
     phone: form.phone.trim() || undefined,
     staffType: form.staffType,
+    wechatId: form.wechatId.trim() || undefined,
     majorDirection: form.majorDirection,
     subDirection: form.subDirection.trim() || undefined,
     region: form.region,
     city: form.city.trim(),
+    courseTypes: form.courseTypes.trim() || undefined,
+    loginAccount: form.loginAccount.trim() || undefined,
+    initialPassword: form.initialPassword.trim() || undefined,
     hourlyRate: Number(hourlyRateText)
   })
 }
@@ -225,13 +264,15 @@ const handleSubmit = () => {
 
 <style scoped lang="scss">
 /* ── Header override (gradient) ── */
-:global([data-surface-id="staff-form-modal"] [data-surface-part="header"]) {
+:global([data-surface-id="modal-add-staff"] [data-surface-part="header"]),
+:global([data-surface-id="modal-edit-staff"] [data-surface-part="header"]) {
   background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
   border-bottom: none !important;
   border-radius: 16px 16px 0 0;
 }
 
-:global([data-surface-id="staff-form-modal"] .overlay-surface-modal__close) {
+:global([data-surface-id="modal-add-staff"] .overlay-surface-modal__close),
+:global([data-surface-id="modal-edit-staff"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
 

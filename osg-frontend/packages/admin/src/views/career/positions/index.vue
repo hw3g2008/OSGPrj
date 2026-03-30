@@ -15,6 +15,8 @@
             <button
               type="button"
               :class="['positions-view-toggle__button', { 'positions-view-toggle__button--active': viewMode === 'drilldown' }]"
+              data-tab="drilldown"
+              :aria-pressed="viewMode === 'drilldown'"
               @click="viewMode = 'drilldown'"
             >
               <i class="mdi mdi-file-tree" aria-hidden="true"></i>
@@ -23,6 +25,8 @@
             <button
               type="button"
               :class="['positions-view-toggle__button', { 'positions-view-toggle__button--active': viewMode === 'list' }]"
+              data-tab="list"
+              :aria-pressed="viewMode === 'list'"
               @click="viewMode = 'list'"
             >
               <i class="mdi mdi-format-list-bulleted" aria-hidden="true"></i>
@@ -41,7 +45,12 @@
             <i class="mdi mdi-export" aria-hidden="true"></i>
             <span>{{ downloading ? '导出中...' : '导出' }}</span>
           </button>
-          <button type="button" class="positions-header-button" @click="batchVisible = true">
+          <button
+            type="button"
+            class="positions-header-button"
+            data-surface-trigger="modal-position-upload"
+            @click="batchVisible = true"
+          >
             <i class="mdi mdi-upload" aria-hidden="true"></i>
             <span>批量上传</span>
           </button>
@@ -49,7 +58,12 @@
             <i class="mdi mdi-download" aria-hidden="true"></i>
             <span>下载模板</span>
           </button>
-          <button type="button" class="positions-header-button positions-header-button--primary" @click="openCreateModal()">
+          <button
+            type="button"
+            class="positions-header-button positions-header-button--primary"
+            data-surface-trigger="modal-new-position"
+            @click="openCreateModal()"
+          >
             <i class="mdi mdi-plus" aria-hidden="true"></i>
             <span>新增岗位</span>
           </button>
@@ -70,47 +84,47 @@
 
     <section class="positions-shell">
       <div class="positions-filters">
-        <select v-model="filters.positionCategory" class="positions-filter-select" aria-label="岗位分类" @change="handleSearch">
+        <select v-model="filters.positionCategory" class="positions-filter-select" aria-label="岗位分类" data-field-name="类别" @change="handleSearch">
           <option value="">全部分类</option>
           <option v-for="option in meta.categories" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
 
-        <select v-model="filters.industry" class="positions-filter-select" aria-label="行业" @change="handleSearch">
+        <select v-model="filters.industry" class="positions-filter-select" aria-label="行业" data-field-name="大区" @change="handleSearch">
           <option value="">全部行业</option>
           <option v-for="option in meta.industries" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
 
-        <select v-model="filters.companyName" class="positions-filter-select" aria-label="公司" @change="handleSearch">
+        <select v-model="filters.companyName" class="positions-filter-select" aria-label="公司" data-field-name="公司/银行名称" @change="handleSearch">
           <option value="">全部公司</option>
           <option v-for="option in companyOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
 
-        <select v-model="filters.city" class="positions-filter-select" aria-label="地区" @change="handleSearch">
+        <select v-model="filters.city" class="positions-filter-select" aria-label="地区" data-field-name="地区/城市" @change="handleSearch">
           <option value="">全部地区</option>
           <option v-for="option in cityOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
 
-        <select v-model="filters.displayStatus" class="positions-filter-select" aria-label="状态" @change="handleSearch">
+        <select v-model="filters.displayStatus" class="positions-filter-select" aria-label="状态" data-field-name="状态" @change="handleSearch">
           <option value="">全部状态</option>
           <option v-for="option in meta.displayStatuses" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
 
-        <select v-model="filters.recruitmentCycle" class="positions-filter-select" aria-label="招聘周期" @change="handleSearch">
+        <select v-model="filters.recruitmentCycle" class="positions-filter-select" aria-label="招聘周期" data-field-name="招聘周期" @change="handleSearch">
           <option value="">招聘周期</option>
           <option v-for="option in meta.recruitmentCycles" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
 
-        <select v-model="publishPreset" class="positions-filter-select" aria-label="发布时间" @change="handleSearch">
+        <select v-model="publishPreset" class="positions-filter-select" aria-label="发布时间" data-field-name="发布时间" @change="handleSearch">
           <option value="">发布时间</option>
           <option v-for="option in meta.publishPresets" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
 
-        <button type="button" class="positions-filter-reset" @click="handleReset">
+        <button type="button" class="positions-filter-reset" data-field-name="重置" @click="handleReset">
           <i class="mdi mdi-refresh" aria-hidden="true"></i>
           <span>重置</span>
         </button>
 
-        <label class="positions-filter-search">
+        <label class="positions-filter-search" data-field-name="搜索框">
           <i class="mdi mdi-magnify" aria-hidden="true"></i>
           <input
             v-model="filters.keyword"
@@ -140,6 +154,7 @@
             <button
               type="button"
               :class="['positions-drilldown__industry-head', `positions-drilldown__industry-head--${getIndustryTone(industry.industry)}`]"
+              :aria-expanded="expandedIndustries.has(industry.industry)"
               @click="toggleIndustry(industry.industry)"
             >
               <div class="positions-drilldown__industry-main">
@@ -162,12 +177,13 @@
               </div>
             </button>
 
-            <div v-show="expandedIndustries.has(industry.industry)" class="positions-drilldown__companies">
+            <div v-if="expandedIndustries.has(industry.industry)" class="positions-drilldown__companies">
               <section v-for="company in industry.companies" :key="`${industry.industry}-${company.companyName}`" class="positions-drilldown__company">
                 <div class="positions-drilldown__company-head">
                   <button
                     type="button"
                     class="positions-drilldown__company-main positions-drilldown__company-main-button"
+                    :aria-expanded="isCompanyExpanded(industry.industry, company.companyName)"
                     @click="toggleCompany(industry.industry, company.companyName)"
                   >
                     <i :class="['mdi', isCompanyExpanded(industry.industry, company.companyName) ? 'mdi-chevron-down' : 'mdi-chevron-right']" aria-hidden="true"></i>
@@ -183,23 +199,33 @@
                   <div class="positions-drilldown__company-side">
                     <span class="positions-drilldown__company-count"><strong>{{ company.positionCount }}</strong> 个岗位</span>
                     <span class="positions-drilldown__industry-pill positions-drilldown__industry-pill--success">{{ company.openCount }} 开放</span>
-                    <button type="button" class="positions-link-button" @click="openStudentsModal(company.positions[0])">
-                      {{ company.studentCount }}人
+                    <button
+                      type="button"
+                      class="positions-link-button"
+                      data-surface-trigger="modal-position-students"
+                      :data-surface-sample-key="`position-${company.positions[0]?.positionId || company.companyName}`"
+                      data-field-name="关联学员"
+                      aria-label="关联学员"
+                      @click="openStudentsModal(company.positions[0])"
+                    >
+                    {{ company.studentCount }}人
                     </button>
                     <a
                       v-if="company.companyWebsite"
                       :href="company.companyWebsite"
                       target="_blank"
                       rel="noreferrer"
+                      :title="`${company.companyName} 官网`"
+                      :aria-label="`${company.companyName} 官网`"
                       class="positions-drilldown__company-link"
                     >
                       <i class="mdi mdi-web" aria-hidden="true"></i>
-                      官网
+                      {{ company.companyName }} 官网
                     </a>
                   </div>
                 </div>
 
-                <div v-show="isCompanyExpanded(industry.industry, company.companyName)" class="positions-drilldown__position-list">
+                <div v-if="isCompanyExpanded(industry.industry, company.companyName)" class="positions-drilldown__position-list">
                   <table class="positions-drilldown__company-table">
                     <thead>
                       <tr>
@@ -242,16 +268,33 @@
                           </button>
                         </td>
                         <td>
-                          <button type="button" class="positions-action-link" @click="openEditModal(position)">编辑</button>
+                          <button
+                            type="button"
+                            class="positions-action-link"
+                            data-surface-trigger="modal-edit-position"
+                            :data-surface-sample-key="`position-${position.positionId}`"
+                            data-field-name="编辑"
+                            aria-label="编辑"
+                            @click="openEditModal(position)"
+                          >
+                            编辑岗位
+                          </button>
                         </td>
                       </tr>
                     </tbody>
                   </table>
 
                   <div class="positions-drilldown__company-footer">
-                    <button type="button" class="positions-inline-add" @click="openCreateModal(industry, company)">
+                    <button
+                      type="button"
+                      class="positions-inline-add"
+                      data-surface-trigger="modal-new-position-company"
+                      :data-surface-sample-key="company.companyName"
+                      :aria-label="`${company.companyName} 添加岗位`"
+                      @click="openCreateModal(industry, company)"
+                    >
                       <i class="mdi mdi-plus" aria-hidden="true"></i>
-                      添加岗位
+                      {{ company.companyName }} 添加岗位
                     </button>
                   </div>
                 </div>
@@ -315,12 +358,30 @@
                   </span>
                 </td>
                 <td>
-                  <button type="button" class="positions-link-button" @click="openStudentsModal(record)">
+                  <button
+                    type="button"
+                    class="positions-link-button"
+                    data-surface-trigger="modal-position-students"
+                    :data-surface-sample-key="`position-${record.positionId}`"
+                    data-field-name="关联学员"
+                    aria-label="关联学员"
+                    @click="openStudentsModal(record)"
+                  >
                     {{ record.studentCount || 0 }}人
                   </button>
                 </td>
                 <td>
-                  <button type="button" class="positions-action-link" @click="openEditModal(record)">编辑</button>
+                  <button
+                    type="button"
+                    class="positions-action-link"
+                    data-surface-trigger="modal-edit-position"
+                    :data-surface-sample-key="`position-${record.positionId}`"
+                    data-field-name="编辑"
+                    aria-label="编辑"
+                    @click="openEditModal(record)"
+                  >
+                    编辑
+                  </button>
                 </td>
               </tr>
               <tr v-if="!sortedListRows.length">
@@ -427,7 +488,7 @@ const stats = ref<PositionStats>({
   closedPositions: 0,
   studentApplications: 0
 })
-const viewMode = ref<'drilldown' | 'list'>('drilldown')
+const viewMode = ref<'drilldown' | 'list'>('list')
 const publishSort = ref<'desc' | 'asc'>('desc')
 const publishPreset = ref('')
 const formVisible = ref(false)

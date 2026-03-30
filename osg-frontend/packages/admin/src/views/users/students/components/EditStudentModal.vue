@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="student-edit-modal"
+    surface-id="modal-edit-student-new"
     width="960px"
     :body-class="'edit-student-modal__body'"
     @cancel="handleClose"
@@ -23,17 +23,25 @@
 
     <section class="edit-student-modal__section edit-student-modal__section--primary">
       <div class="edit-student-modal__badge edit-student-modal__badge--primary">核心信息</div>
-      <div class="edit-student-modal__grid edit-student-modal__grid--three">
-        <label>
+      <div class="edit-student-modal__grid edit-student-modal__grid--four">
+        <label data-field-name="英文姓名">
           <span>英文姓名</span>
           <input v-model="form.studentName" :disabled="submitting">
         </label>
-        <label>
+        <label data-field-name="性别">
+          <span>性别</span>
+          <select v-model="form.gender" :disabled="submitting">
+            <option value="">请选择</option>
+            <option value="0">男</option>
+            <option value="1">女</option>
+          </select>
+        </label>
+        <label data-field-name="邮箱">
           <span>邮箱</span>
           <input v-model="form.email" type="email" :disabled="submitting">
         </label>
-        <label>
-          <span>状态</span>
+        <label data-field-name="账号状态">
+          <span>账号状态</span>
           <input :value="formatStatus(student?.accountStatus)" readonly>
         </label>
       </div>
@@ -44,11 +52,11 @@
         <i class="mdi mdi-account-group" aria-hidden="true"></i> 导师配置
       </div>
       <div class="edit-student-modal__grid">
-        <label>
+        <label data-field-name="班主任">
           <span>班主任</span>
           <input :value="student?.leadMentorName || '待补充'" readonly>
         </label>
-        <label>
+        <label data-field-name="助教">
           <span>助教</span>
           <input value="待补充" readonly>
         </label>
@@ -60,15 +68,15 @@
         <i class="mdi mdi-school" aria-hidden="true"></i> 学业信息
       </div>
       <div class="edit-student-modal__grid edit-student-modal__grid--three">
-        <label>
+        <label data-field-name="学校">
           <span>学校</span>
           <input v-model="form.school" :disabled="submitting">
         </label>
-        <label>
+        <label data-field-name="专业">
           <span>专业</span>
           <input :value="student?.majorDirection || ''" readonly>
         </label>
-        <label>
+        <label data-field-name="毕业年份">
           <span>毕业年份</span>
           <input value="待补充" readonly>
         </label>
@@ -80,17 +88,37 @@
         <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
       </div>
       <div class="edit-student-modal__grid edit-student-modal__grid--three">
-        <label>
+        <label data-field-name="主攻方向">
           <span>主攻方向</span>
           <input v-model="form.majorDirection" :disabled="submitting">
         </label>
-        <label>
-          <span>目标岗位</span>
+        <label data-field-name="子方向">
+          <span>子方向</span>
           <input v-model="form.targetPosition" :disabled="submitting">
         </label>
-        <label>
+        <label data-field-name="求职地区">
           <span>求职地区</span>
           <input value="待补充" readonly>
+        </label>
+      </div>
+    </section>
+
+    <section class="edit-student-modal__section">
+      <div class="edit-student-modal__badge edit-student-modal__badge--green">
+        <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式与备注
+      </div>
+      <div class="edit-student-modal__grid edit-student-modal__grid--three">
+        <label data-field-name="电话">
+          <span>电话</span>
+          <input v-model="form.phone" :disabled="submitting" placeholder="选填">
+        </label>
+        <label data-field-name="微信">
+          <span>微信</span>
+          <input v-model="form.wechat" :disabled="submitting" placeholder="选填">
+        </label>
+        <label data-field-name="备注">
+          <span>备注</span>
+          <input v-model="form.remark" :disabled="submitting" placeholder="选填">
         </label>
       </div>
     </section>
@@ -137,18 +165,26 @@ const emit = defineEmits<{
 
 const form = reactive({
   studentName: '',
+  gender: '',
   email: '',
   school: '',
   majorDirection: '',
-  targetPosition: ''
+  targetPosition: '',
+  phone: '',
+  wechat: '',
+  remark: ''
 })
 
 const syncForm = () => {
   form.studentName = props.student?.studentName || ''
+  form.gender = (props.student as Record<string, unknown>)?.gender as string || ''
   form.email = props.student?.email || ''
   form.school = props.student?.school || ''
   form.majorDirection = props.student?.majorDirection || ''
   form.targetPosition = props.student?.targetPosition || ''
+  form.phone = (props.student as Record<string, unknown>)?.phone as string || ''
+  form.wechat = (props.student as Record<string, unknown>)?.wechat as string || ''
+  form.remark = (props.student as Record<string, unknown>)?.remark as string || ''
 }
 
 watch(
@@ -217,14 +253,14 @@ const formatStatus = (status?: string) => {
 
 <style scoped lang="scss">
 /* ── Header (override OverlaySurfaceModal header) ── */
-:global([data-surface-id="student-edit-modal"] [data-surface-part="header"]) {
+:global([data-surface-id="modal-edit-student-new"] [data-surface-part="header"]) {
   background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
   border-bottom: none !important;
   border-radius: 16px 16px 0 0;
   padding: 22px 26px !important;
 }
 
-:global([data-surface-id="student-edit-modal"] .overlay-surface-modal__close) {
+:global([data-surface-id="modal-edit-student-new"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
 
@@ -282,7 +318,8 @@ const formatStatus = (status?: string) => {
   background: #f8fafc;
 }
 
-.edit-student-modal__section input:disabled {
+.edit-student-modal__section input:disabled,
+.edit-student-modal__section select:disabled {
   cursor: not-allowed;
   background: #f1f5f9;
 }
@@ -331,6 +368,11 @@ const formatStatus = (status?: string) => {
   color: #92400E;
 }
 
+.edit-student-modal__badge--green {
+  background: #DCFCE7;
+  color: #166534;
+}
+
 .edit-student-modal__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -339,6 +381,10 @@ const formatStatus = (status?: string) => {
 
 .edit-student-modal__grid--three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.edit-student-modal__grid--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .edit-student-modal__grid label {
@@ -353,7 +399,8 @@ const formatStatus = (status?: string) => {
   font-weight: 600;
 }
 
-.edit-student-modal__grid input {
+.edit-student-modal__grid input,
+.edit-student-modal__grid select {
   width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
@@ -383,7 +430,8 @@ const formatStatus = (status?: string) => {
 
 @media (max-width: 960px) {
   .edit-student-modal__grid,
-  .edit-student-modal__grid--three {
+  .edit-student-modal__grid--three,
+  .edit-student-modal__grid--four {
     grid-template-columns: 1fr;
   }
 

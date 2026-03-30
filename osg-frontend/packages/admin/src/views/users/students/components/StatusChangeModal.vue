@@ -32,7 +32,7 @@
         layout="vertical"
         :required-mark="false"
       >
-        <a-form-item name="reason">
+        <a-form-item name="reason" data-field-name="修改原因">
           <template #label>
             <span class="student-status-modal__label">
               修改原因
@@ -46,7 +46,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="remark">
+        <a-form-item name="remark" data-field-name="备注说明">
           <template #label>
             <span class="student-status-modal__label">备注说明</span>
           </template>

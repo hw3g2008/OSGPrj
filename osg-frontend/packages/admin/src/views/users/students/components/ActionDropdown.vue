@@ -18,7 +18,6 @@
 
 <script setup lang="ts">
 const actionItems = [
-  { key: 'resetPassword', label: '重置密码' },
   { key: 'freeze', label: '冻结' },
   { key: 'restore', label: '恢复', tone: 'success' },
   { key: 'blacklist', label: '加入黑名单', tone: 'warning' },

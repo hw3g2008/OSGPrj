@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :open="visible"
     width="800px"
-    surface-id="mentor-students-modal"
+    :surface-id="surfaceId"
     @cancel="handleClose"
   >
     <template #title>
@@ -54,6 +54,7 @@ const props = defineProps<{
   visible: boolean
   staffId: number | null
   staffName?: string
+  surfaceId?: string
 }>()
 
 const emit = defineEmits<{
@@ -69,6 +70,8 @@ const modalTitle = computed(() => {
   }
   return '导师学员列表'
 })
+
+const surfaceId = computed(() => props.surfaceId || 'modal-mentor-students')
 
 const loadStudents = async () => {
   if (!props.visible || !props.staffId) {

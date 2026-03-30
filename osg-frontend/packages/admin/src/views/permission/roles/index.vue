@@ -82,6 +82,7 @@
                       v-if="!record.userCount"
                       type="button"
                       class="permission-action permission-action--danger"
+                      data-surface-part="delete-control"
                       @click="handleDelete(record)"
                     >
                       删除

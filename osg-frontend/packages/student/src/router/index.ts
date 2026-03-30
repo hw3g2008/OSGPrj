@@ -65,13 +65,13 @@ const routes: RouteRecordRaw[] = [
         path: 'courses',
         name: 'Courses',
         component: () => import('@/views/courses/index.vue'),
-        meta: { title: '我的课程' }
+        meta: { title: '课程记录' }
       },
       {
         path: 'myclass',
         name: 'MyClass',
         component: () => import('@/views/courses/index.vue'),
-        meta: { title: '我的课程' }
+        meta: { title: '课程记录' }
       },
       {
         path: 'communication',

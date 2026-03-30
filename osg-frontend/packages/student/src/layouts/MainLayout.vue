@@ -124,7 +124,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       {
         path: '/myclass',
-        label: '我的课程 Class Records',
+        label: '课程记录 Class Records',
         iconClass: 'mdi-book-open-variant',
         activePaths: ['/courses', '/myclass']
       },

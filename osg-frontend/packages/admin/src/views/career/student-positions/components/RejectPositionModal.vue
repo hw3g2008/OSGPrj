@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="reject-student-position-modal"
+    surface-id="modal-reject-position"
     width="560px"
     :body-class="'student-reject-modal__body'"
     @cancel="handleClose"
@@ -9,7 +9,7 @@
     <template #title>
       <div class="student-reject-modal__title">
         <i class="mdi mdi-close-octagon-outline" aria-hidden="true"></i>
-        <span>拒绝岗位申请</span>
+        <span>拒绝岗位</span>
       </div>
     </template>
 
@@ -18,11 +18,11 @@
       <span>拒绝后，该岗位不会加入公共岗位库，学生将收到审核结果通知。</span>
     </section>
 
-    <section class="student-reject-modal__section">
+    <section class="student-reject-modal__section" data-field-name="拒绝原因">
       <label class="student-reject-modal__label">
         <span>拒绝原因 *</span>
       </label>
-      <div class="student-reject-modal__reason-grid">
+      <div class="student-reject-modal__reason-grid" data-field-name="拒绝原因">
         <button
           v-for="option in reasonOptions"
           :key="option.value"
@@ -38,12 +38,13 @@
       </div>
     </section>
 
-    <section class="student-reject-modal__section">
+    <section class="student-reject-modal__section" data-field-name="补充说明">
       <label class="student-reject-modal__label">
         <span>补充说明</span>
       </label>
       <textarea
         v-model="formState.note"
+        data-field-name="补充说明"
         class="student-reject-modal__textarea"
         rows="4"
         maxlength="120"
@@ -54,10 +55,20 @@
 
     <template #footer>
       <div class="student-reject-modal__footer">
-        <button type="button" class="student-reject-modal__button student-reject-modal__button--ghost" @click="handleClose">
+        <button
+          type="button"
+          class="student-reject-modal__button student-reject-modal__button--ghost"
+          data-surface-part="cancel-control"
+          @click="handleClose"
+        >
           取消
         </button>
-        <button type="button" class="student-reject-modal__button student-reject-modal__button--danger" @click="handleSubmit">
+        <button
+          type="button"
+          class="student-reject-modal__button student-reject-modal__button--danger"
+          data-surface-part="confirm-control"
+          @click="handleSubmit"
+        >
           确认拒绝
         </button>
       </div>

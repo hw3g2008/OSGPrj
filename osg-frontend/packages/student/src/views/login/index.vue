@@ -126,8 +126,8 @@ const fieldErrors = reactive<Record<string, string>>({
 })
 
 const formState = reactive({
-  username: 'student',
-  password: '123456',
+  username: '',
+  password: '',
   remember: false
 })
 

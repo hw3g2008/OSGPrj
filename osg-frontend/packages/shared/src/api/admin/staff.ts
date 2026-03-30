@@ -1,3 +1,4 @@
+import { downloadAdminFile } from '../../utils'
 import { http } from '../../utils/request'
 
 export interface StaffListParams {
@@ -39,10 +40,14 @@ export interface StaffPayload {
   email: string
   phone?: string
   staffType: string
+  wechatId?: string
   majorDirection: string
   subDirection?: string
   region: string
   city: string
+  courseTypes?: string
+  loginAccount?: string
+  initialPassword?: string
   hourlyRate: number
   accountStatus?: string
 }
@@ -50,6 +55,14 @@ export interface StaffPayload {
 export interface StaffOption {
   label: string
   value: number
+}
+
+export interface StaffExportParams {
+  staffName?: string
+  staffType?: string
+  majorDirection?: string
+  accountStatus?: string
+  tab?: 'normal' | 'blacklist'
 }
 
 export interface StaffDetailItem extends StaffListItem {}
@@ -76,6 +89,14 @@ export interface StaffChangeRequestItem {
 
 export function getStaffList(params: StaffListParams) {
   return http.get<StaffListResponse>('/admin/staff/list', { params })
+}
+
+export function exportStaffList(params: StaffExportParams = {}) {
+  return downloadAdminFile({
+    path: '/admin/staff/export',
+    params,
+    fallbackFilename: '导师列表.xlsx',
+  })
 }
 
 export function getStaffDetail(staffId: number) {

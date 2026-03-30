@@ -17,25 +17,25 @@
 
     <section class="student-positions-frame">
       <div class="student-positions-filterbar">
-        <select v-model="filters.status" class="student-positions-filterbar__control" aria-label="状态">
+        <select v-model="filters.status" class="student-positions-filterbar__control" aria-label="状态" data-field-name="状态">
           <option value="pending">待审核</option>
           <option value="">全部状态</option>
           <option value="approved">已通过</option>
           <option value="rejected">已拒绝</option>
         </select>
 
-        <select v-model="filters.positionCategory" class="student-positions-filterbar__control" aria-label="岗位分类">
+        <select v-model="filters.positionCategory" class="student-positions-filterbar__control" aria-label="岗位分类" data-field-name="类别">
           <option value="">全部类别</option>
           <option v-for="option in companyCategoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
 
-        <select v-model="filters.hasCoachingRequest" class="student-positions-filterbar__control" aria-label="辅导申请">
+        <select v-model="filters.hasCoachingRequest" class="student-positions-filterbar__control" aria-label="辅导申请" data-field-name="辅导申请">
           <option value="">有无辅导申请</option>
           <option value="yes">有辅导申请</option>
           <option value="no">无辅导申请</option>
         </select>
 
-        <label class="student-positions-filterbar__search">
+        <label class="student-positions-filterbar__search" data-field-name="搜索框">
           <i class="mdi mdi-magnify" aria-hidden="true"></i>
           <input
             v-model="filters.keyword"
@@ -128,10 +128,38 @@
                 </span>
               </td>
               <td>
-                <button type="button" class="student-positions-datatable__action" @click="openReviewModal(record)">
-                  <i class="mdi mdi-pencil-outline" aria-hidden="true"></i>
-                  <span>{{ record.status === 'pending' ? '审核 / 编辑' : '查看结果' }}</span>
-                </button>
+                <div class="student-positions-datatable__actions">
+                  <button
+                    type="button"
+                    class="student-positions-datatable__action"
+                    data-surface-trigger="modal-edit-student-position"
+                    :data-surface-sample-key="`student-position-${record.studentPositionId}`"
+                    @click="openReviewModal(record)"
+                  >
+                    <i class="mdi mdi-pencil-outline" aria-hidden="true"></i>
+                    <span>学生自添岗位编辑</span>
+                  </button>
+                  <button
+                    v-if="record.status === 'pending'"
+                    type="button"
+                    class="student-positions-datatable__action student-positions-datatable__action--danger"
+                    data-surface-trigger="modal-reject-position"
+                    :data-surface-sample-key="`student-position-${record.studentPositionId}`"
+                    @click="openRejectModal(record)"
+                  >
+                    <i class="mdi mdi-close-octagon-outline" aria-hidden="true"></i>
+                    <span>拒绝岗位</span>
+                  </button>
+                  <button
+                    v-if="record.status !== 'pending'"
+                    type="button"
+                    class="student-positions-datatable__action student-positions-datatable__action--ghost"
+                    @click="openReviewModal(record)"
+                  >
+                    <i class="mdi mdi-eye-outline" aria-hidden="true"></i>
+                    <span>查看结果</span>
+                  </button>
+                </div>
               </td>
             </tr>
             <tr v-if="!rows.length">
@@ -236,7 +264,10 @@ const openReviewModal = (record: StudentPositionListItem) => {
   reviewVisible.value = true
 }
 
-const openRejectModal = () => {
+const openRejectModal = (record?: StudentPositionListItem) => {
+  if (record) {
+    selectedRecord.value = record
+  }
   reviewVisible.value = false
   rejectVisible.value = true
 }
@@ -617,6 +648,23 @@ const simplifyLink = (value: string) => {
   color: #334155;
   font-size: 11px;
   font-weight: 600;
+}
+
+.student-positions-datatable__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.student-positions-datatable__action--danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.student-positions-datatable__action--ghost {
+  border-style: dashed;
+  color: #64748b;
 }
 
 .student-positions-footnote {

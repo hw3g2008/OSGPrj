@@ -190,86 +190,182 @@
     <div v-if="detailVisible && currentCourse" class="overlay-shell">
       <section
         class="overlay-card"
+        :class="`overlay-card--${detailDialogMeta.tone}`"
         role="dialog"
         :aria-label="currentCourse.detailTitle"
         aria-modal="true"
       >
-        <header class="overlay-card__header">
-          <h2>{{ currentCourse.detailTitle }}</h2>
+        <header class="overlay-card__header" :class="`overlay-card__header--${detailDialogMeta.tone}`">
+          <div class="overlay-card__title-group">
+            <span class="overlay-card__title-icon">
+              <i :class="['mdi', detailDialogMeta.icon]" aria-hidden="true"></i>
+            </span>
+            <div>
+              <h2>{{ currentCourse.detailTitle }}</h2>
+              <p>{{ detailDialogMeta.subtitle }}</p>
+            </div>
+          </div>
           <button type="button" class="overlay-card__close" @click="detailVisible = false">×</button>
         </header>
         <div class="overlay-card__body detail-stack">
-          <div class="detail-hero">
-            <div class="detail-hero__main">
+          <div class="detail-summary-card">
+            <div class="detail-summary-card__avatar">{{ mentorInitials(currentCourse.mentor) }}</div>
+            <div class="detail-summary-card__copy">
               <strong>{{ currentCourse.mentor }}</strong>
-              <span>{{ currentCourse.courseContent }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
+              <span>{{ currentCourse.mentorRole }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
+              <div class="detail-summary-card__tags">
+                <span class="record-tag" :class="mapTagTone(currentCourse.coachingTagColor)">
+                  {{ currentCourse.coachingType }}
+                </span>
+                <span class="record-tag" :class="mapTagTone(currentCourse.contentTagColor)">
+                  {{ currentCourse.courseContent }}
+                </span>
+              </div>
             </div>
             <a-tag :color="currentCourse.ratingColor">{{ currentCourse.ratingLabel }}</a-tag>
           </div>
-          <a-descriptions :column="1" bordered size="small">
-            <a-descriptions-item :label="classRecordsMeta.detailDialog.fields.recordId">
-              {{ currentCourse.recordId }}
-            </a-descriptions-item>
-            <a-descriptions-item :label="classRecordsMeta.detailDialog.fields.coachingDetail">
-              {{ currentCourse.coachingDetail }}
-            </a-descriptions-item>
-            <a-descriptions-item :label="classRecordsMeta.detailDialog.fields.courseContent">
-              {{ currentCourse.courseContent }}
-            </a-descriptions-item>
-            <a-descriptions-item :label="classRecordsMeta.detailDialog.fields.mentor">
-              {{ currentCourse.mentor }}
-            </a-descriptions-item>
-            <a-descriptions-item :label="classRecordsMeta.detailDialog.fields.classDate">
-              {{ currentCourse.classDate }}
-            </a-descriptions-item>
-            <a-descriptions-item :label="classRecordsMeta.detailDialog.fields.duration">
-              {{ currentCourse.duration }}
-            </a-descriptions-item>
-          </a-descriptions>
+          <section class="detail-section-card">
+            <div class="detail-section-card__title">
+              <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+              课程信息
+            </div>
+            <div class="detail-info-list">
+              <div class="detail-info-row">
+                <span>{{ classRecordsMeta.detailDialog.fields.recordId }}</span>
+                <strong>{{ currentCourse.recordId }}</strong>
+              </div>
+              <div class="detail-info-row">
+                <span>{{ classRecordsMeta.detailDialog.fields.coachingDetail }}</span>
+                <strong>{{ currentCourse.coachingDetail }}</strong>
+              </div>
+              <div class="detail-info-row">
+                <span>{{ classRecordsMeta.detailDialog.fields.courseContent }}</span>
+                <strong>{{ currentCourse.courseContent }}</strong>
+              </div>
+              <div class="detail-info-row">
+                <span>{{ classRecordsMeta.detailDialog.fields.mentor }}</span>
+                <strong>{{ currentCourse.mentor }} · {{ currentCourse.mentorRole }}</strong>
+              </div>
+              <div class="detail-info-row">
+                <span>{{ classRecordsMeta.detailDialog.fields.classDate }}</span>
+                <strong>{{ currentCourse.classDate }}</strong>
+              </div>
+              <div class="detail-info-row">
+                <span>{{ classRecordsMeta.detailDialog.fields.duration }}</span>
+                <strong>{{ currentCourse.duration }}</strong>
+              </div>
+              <div class="detail-info-row">
+                <span>当前评价</span>
+                <strong>{{ detailRatingSummary }}</strong>
+              </div>
+            </div>
+          </section>
+          <section class="detail-section-card detail-section-card--feedback">
+            <div class="detail-section-card__title">
+              <i class="mdi mdi-comment-text-outline" aria-hidden="true"></i>
+              课程反馈
+            </div>
+            <div class="detail-feedback-card">
+              {{ currentCourse.ratingFeedback || '当前还没有填写详细反馈，完成反馈后会在这里显示。' }}
+            </div>
+            <div
+              v-if="currentCourse.ratingTags"
+              class="detail-feedback-tags"
+            >
+              <span
+                v-for="tag in currentCourse.ratingTags.split(',').filter(Boolean)"
+                :key="tag"
+                class="detail-feedback-tag"
+              >
+                {{ tag }}
+              </span>
+            </div>
+          </section>
         </div>
         <footer class="overlay-card__footer">
           <a-button @click="detailVisible = false">{{ classRecordsMeta.detailDialog.closeLabel }}</a-button>
-          <a-button type="primary" @click="handleDetailConfirm">
+          <a-button
+            type="primary"
+            :class="`overlay-card__action overlay-card__action--${detailDialogMeta.tone}`"
+            @click="handleDetailConfirm"
+          >
             {{ classRecordsMeta.detailDialog.confirmLabel }}
           </a-button>
         </footer>
       </section>
     </div>
 
-    <div v-if="rateVisible && currentCourse" class="overlay-shell">
+    <div
+      v-if="rateVisible && currentCourse"
+      id="modal-student-rate"
+      class="overlay-shell"
+    >
       <section
-        class="overlay-card"
+        class="overlay-card overlay-card--amber overlay-card--compact"
         role="dialog"
         :aria-label="classRecordsMeta.ratingDialog.title"
         aria-modal="true"
       >
         <header class="overlay-card__header overlay-card__header--amber">
-          <h2>{{ classRecordsMeta.ratingDialog.title }}</h2>
+          <div class="overlay-card__title-group">
+            <span class="overlay-card__title-icon">
+              <i class="mdi mdi-star-outline" aria-hidden="true"></i>
+            </span>
+            <div>
+              <h2>{{ classRecordsMeta.ratingDialog.title }}</h2>
+              <p>请根据本次课程体验补充评分与反馈</p>
+            </div>
+          </div>
           <button type="button" class="overlay-card__close" @click="rateVisible = false">×</button>
         </header>
         <div class="overlay-card__body rate-stack">
           <div class="rate-course-card">
-            <strong>{{ currentCourse.mentor }}</strong>
-            <span>{{ currentCourse.courseContent }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
+            <div class="rate-course-card__avatar">{{ mentorInitials(currentCourse.mentor) }}</div>
+            <div class="rate-course-card__copy">
+              <strong>{{ currentCourse.mentor }}</strong>
+              <span>{{ currentCourse.mentorRole }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
+              <div class="rate-course-card__tags">
+                <span class="record-tag" :class="mapTagTone(currentCourse.coachingTagColor)">
+                  {{ currentCourse.coachingType }}
+                </span>
+                <span class="record-tag" :class="mapTagTone(currentCourse.contentTagColor)">
+                  {{ currentCourse.courseContent }}
+                </span>
+              </div>
+            </div>
           </div>
           <a-form layout="vertical">
             <a-form-item :label="classRecordsMeta.ratingDialog.scoreLabel">
-              <a-rate v-model:value="rateForm.rating" />
+              <div class="rating-button-row">
+                <button
+                  v-for="score in ratingButtons"
+                  :key="score"
+                  type="button"
+                  class="rating-star-button"
+                  :class="{ 'rating-star-button--active': rateForm.rating !== null && score <= rateForm.rating }"
+                  @click="setRating(score)"
+                >
+                  ⭐
+                </button>
+                <span id="rating-text" class="rating-text">{{ ratingText }}</span>
+              </div>
             </a-form-item>
             <a-form-item :label="classRecordsMeta.ratingDialog.tagLabel">
-              <a-select
-                v-model:value="rateForm.tags"
-                mode="multiple"
-                :placeholder="classRecordsMeta.ratingDialog.tagPlaceholder"
-              >
-                <a-select-option
+              <div class="rating-tag-chip-list">
+                <button
                   v-for="option in classRecordsMeta.ratingDialog.tagOptions"
                   :key="option.value"
-                  :value="option.value"
+                  type="button"
+                  class="rating-tag-chip"
+                  :class="{ 'rating-tag-chip--active': rateForm.tags.includes(option.value) }"
+                  @click="toggleRateTag(option.value)"
                 >
                   {{ option.label }}
-                </a-select-option>
-              </a-select>
+                </button>
+              </div>
+              <div class="rating-tag-chip-hint">
+                {{ rateForm.tags.length > 0 ? `已选择 ${rateForm.tags.length} 项标签` : classRecordsMeta.ratingDialog.tagPlaceholder }}
+              </div>
             </a-form-item>
             <a-form-item :label="classRecordsMeta.ratingDialog.feedbackLabel">
               <a-textarea
@@ -282,7 +378,7 @@
         </div>
         <footer class="overlay-card__footer">
           <a-button @click="rateVisible = false">{{ classRecordsMeta.ratingDialog.cancelLabel }}</a-button>
-          <a-button type="primary" @click="submitRate">
+          <a-button type="primary" class="overlay-card__action overlay-card__action--amber" @click="submitRate">
             {{ classRecordsMeta.ratingDialog.submitLabel }}
           </a-button>
         </footer>
@@ -318,9 +414,72 @@ const filters = ref({
 })
 
 const rateForm = ref({
-  rating: 5,
+  rating: null as number | null,
   tags: [] as string[],
   feedback: ''
+})
+
+const ratingButtons = [1, 2, 3, 4, 5] as const
+const ratingDescriptions: Record<number, string> = {
+  1: '很差',
+  2: '一般',
+  3: '还行',
+  4: '很好',
+  5: '非常棒'
+}
+
+const ratingText = computed(() => {
+  if (rateForm.value.rating === null) {
+    return '请选择'
+  }
+
+  return `${rateForm.value.rating}分 - ${ratingDescriptions[rateForm.value.rating]}`
+})
+
+const detailDialogMeta = computed(() => {
+  const tone = mapDialogTone(currentCourse.value?.contentTagColor)
+  if (tone === 'emerald') {
+    return {
+      tone,
+      icon: 'mdi-check-circle-outline',
+      subtitle: '查看课程记录、反馈与当前评价状态'
+    }
+  }
+
+  if (tone === 'violet') {
+    return {
+      tone,
+      icon: 'mdi-account-group-outline',
+      subtitle: '查看课程记录、反馈与当前评价状态'
+    }
+  }
+
+  if (tone === 'amber') {
+    return {
+      tone,
+      icon: 'mdi-school-outline',
+      subtitle: '查看课程记录、反馈与当前评价状态'
+    }
+  }
+
+  return {
+    tone,
+    icon: 'mdi-book-open-page-variant-outline',
+    subtitle: '查看课程记录、反馈与当前评价状态'
+  }
+})
+
+const detailRatingSummary = computed(() => {
+  if (!currentCourse.value) {
+    return '-'
+  }
+
+  const score = Number(currentCourse.value.ratingScoreValue)
+  if (!score) {
+    return '尚未评价'
+  }
+
+  return `${score}分 · ${currentCourse.value.ratingLabel}`
 })
 
 const visibleCourses = computed(() => {
@@ -463,6 +622,31 @@ function mapTagTone(color?: string) {
   }
 }
 
+function mapDialogTone(color?: string) {
+  switch ((color || '').toLowerCase()) {
+    case 'green':
+    case 'success':
+      return 'emerald'
+    case 'orange':
+    case 'warning':
+      return 'amber'
+    case 'purple':
+      return 'violet'
+    default:
+      return 'blue'
+  }
+}
+
+function mentorInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .map((segment) => segment.trim().charAt(0))
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'MT'
+}
+
 const goToEvaluate = () => {
   activeTab.value = 'pending'
 }
@@ -501,21 +685,49 @@ const submitRate = async () => {
     return
   }
 
-  await rateStudentClassRecord({
-    recordId: currentCourse.value.recordId,
-    rating: rateForm.value.rating,
-    tags: rateForm.value.tags,
-    feedback: rateForm.value.feedback
-  })
-  rateVisible.value = false
-  detailVisible.value = false
-  await loadPage()
-  message.success(classRecordsMeta.value.ratingDialog.successMessage)
+  if (rateForm.value.rating === null) {
+    message.error('请先选择整体评分')
+    return
+  }
+
+  if (!rateForm.value.feedback.trim()) {
+    message.error('请填写详细反馈')
+    return
+  }
+
+  try {
+    await rateStudentClassRecord({
+      recordId: currentCourse.value.recordId,
+      rating: rateForm.value.rating,
+      tags: rateForm.value.tags,
+      feedback: rateForm.value.feedback.trim()
+    })
+    rateVisible.value = false
+    detailVisible.value = false
+    await loadPage()
+    message.success('评价提交成功！')
+  } catch {
+    return
+  }
+}
+
+const setRating = (rating: number) => {
+  rateForm.value.rating = rating
+}
+
+const toggleRateTag = (tag: string) => {
+  if (rateForm.value.tags.includes(tag)) {
+    rateForm.value.tags = rateForm.value.tags.filter((item) => item !== tag)
+    return
+  }
+
+  rateForm.value.tags = [...rateForm.value.tags, tag]
 }
 
 const hydrateRateForm = (record: StudentClassRecord) => {
+  const parsedScore = Number(record.ratingScoreValue)
   rateForm.value = {
-    rating: Number(record.ratingScoreValue || '5') || 5,
+    rating: parsedScore > 0 ? parsedScore : null,
     tags: record.ratingTags ? record.ratingTags.split(',').filter(Boolean) : [],
     feedback: record.ratingFeedback || ''
   }
@@ -530,8 +742,16 @@ const loadPage = async () => {
   courseRecords.value = listResponse.records
 }
 
+async function bootstrapPage() {
+  try {
+    await loadPage()
+  } catch {
+    return
+  }
+}
+
 onMounted(() => {
-  void loadPage()
+  void bootstrapPage()
 })
 </script>
 
@@ -880,84 +1100,326 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(12px);
   }
 
   .overlay-card {
+    --modal-accent: #5a7ba3;
+    --modal-accent-soft: #e8f0f8;
+    --modal-accent-strong: #7399c6;
+    --modal-accent-highlight: #9bb8d9;
     width: min(640px, 100%);
-    max-height: 90vh;
-    overflow: auto;
-    border-radius: 20px;
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid #e2e8f0;
     background: #fff;
-    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+    box-shadow: 0 20px 56px rgba(115, 153, 198, 0.22);
+  }
+
+  .overlay-card--compact {
+    width: min(550px, 100%);
+  }
+
+  .overlay-card--amber,
+  .overlay-card--emerald,
+  .overlay-card--violet {
+    --modal-accent: #5a7ba3;
+    --modal-accent-soft: #e8f0f8;
+    --modal-accent-strong: #7399c6;
+    --modal-accent-highlight: #9bb8d9;
   }
 
   .overlay-card__header {
-    padding: 18px 20px;
+    padding: 22px 26px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    gap: 16px;
+    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
     color: #fff;
+    border-bottom: 0;
 
     h2 {
-      margin: 0;
+      margin: 0 0 4px;
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 700;
+      color: #fff;
     }
   }
 
-  .overlay-card__header--amber {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+  .overlay-card__title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+    }
+  }
+
+  .overlay-card__title-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 20px;
+    flex-shrink: 0;
   }
 
   .overlay-card__close {
     width: 36px;
     height: 36px;
     border: 0;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.16);
-    color: #fff;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.92);
     font-size: 24px;
     line-height: 1;
     cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.28);
+      transform: translateY(-1px);
+    }
   }
 
   .overlay-card__body {
-    padding: 20px;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 26px;
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
   }
 
   .overlay-card__footer {
-    padding: 0 20px 20px;
+    padding: 18px 26px 20px;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+    background: #f8fafc;
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
   }
 
-  .detail-hero,
+  .overlay-card__action {
+    border: none;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  }
+
+  .overlay-card__action--blue {
+    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
+  }
+
+  .overlay-card__action--emerald {
+    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
+  }
+
+  .overlay-card__action--violet {
+    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
+  }
+
+  .overlay-card__action--amber {
+    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
+  }
+
+  .detail-summary-card,
   .rate-course-card {
-    padding: 16px;
-    border-radius: 14px;
-    background: #f8fafc;
+    padding: 18px;
+    border-radius: 16px;
+    background: #e8f0f8;
     border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 16px;
   }
 
-  .detail-hero__main,
-  .rate-course-card {
+  .detail-summary-card__avatar,
+  .rate-course-card__avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--modal-accent-soft);
+    color: var(--modal-accent);
+    font-size: 18px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .detail-summary-card__copy,
+  .rate-course-card__copy {
+    flex: 1;
+
     strong {
       display: block;
       margin-bottom: 4px;
       color: #0f172a;
+      font-size: 16px;
     }
 
     span {
       color: #475569;
       font-size: 13px;
     }
+  }
+
+  .detail-summary-card__tags,
+  .rate-course-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .detail-section-card {
+    padding: 18px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .detail-section-card__title {
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--modal-accent);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .detail-section-card--feedback {
+    background: #e8f0f8;
+    border-color: #e2e8f0;
+  }
+
+  .detail-info-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .detail-info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+
+    &:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    span {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    strong {
+      color: #0f172a;
+      font-size: 13px;
+      text-align: right;
+    }
+  }
+
+  .detail-feedback-card {
+    padding: 14px;
+    border-radius: 12px;
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .detail-feedback-tags {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .detail-feedback-tag {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--modal-accent-soft);
+    color: var(--modal-accent);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .rating-button-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .rating-star-button {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px 14px;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .rating-star-button--active {
+    border-color: var(--modal-accent);
+    background: var(--modal-accent-soft);
+  }
+
+  .rating-text {
+    margin-left: 6px;
+    color: var(--modal-accent);
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .rating-tag-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .rating-tag-chip {
+    border: 1px solid color-mix(in srgb, var(--modal-accent) 28%, #e5e7eb);
+    border-radius: 999px;
+    background: #fff;
+    color: #475569;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .rating-tag-chip--active {
+    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
+    border-color: var(--modal-accent-strong);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+  }
+
+  .rating-tag-chip-hint {
+    margin-top: 10px;
+    color: var(--modal-accent);
+    font-size: 12px;
   }
 }
 
@@ -977,6 +1439,28 @@ onMounted(() => {
     .filters-row__search,
     .filters-row__select {
       width: 100%;
+    }
+
+    .overlay-shell {
+      padding: 16px;
+    }
+
+    .overlay-card__body,
+    .overlay-card__footer,
+    .overlay-card__header {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .detail-summary-card,
+    .rate-course-card,
+    .detail-info-row {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .overlay-card__footer {
+      flex-direction: column;
     }
   }
 }

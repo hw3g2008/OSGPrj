@@ -11,7 +11,8 @@
 
       <!-- Nav -->
       <nav class="sidebar-nav">
-        <a class="nav-item" :class="{ active: currentPath === '/dashboard' }" @click="navigate('/dashboard')">
+        <!-- v1: 首页入口暂时隐藏，二期恢复 -->
+        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/dashboard' }" @click="navigate('/dashboard')">
           <i class="mdi mdi-home" /><span>首页 Home</span>
         </a>
 
@@ -19,25 +20,29 @@
         <a class="nav-item" :class="{ active: currentPath === '/courses' }" @click="navigate('/courses')">
           <i class="mdi mdi-book-open-variant" /><span>课程记录 Class Records</span>
         </a>
-        <a class="nav-item" :class="{ active: currentPath === '/communication' }" @click="navigate('/communication')">
+        <!-- v1: 人际关系沟通记录暂时隐藏，二期恢复 -->
+        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/communication' }" @click="navigate('/communication')">
           <i class="mdi mdi-message-text-clock" /><span>人际关系沟通记录 Records</span>
         </a>
 
         <div class="nav-section">求职中心 JOB CENTER</div>
         <a class="nav-item" :class="{ active: currentPath === '/job-overview' }" @click="navigate('/job-overview')">
           <i class="mdi mdi-briefcase-search" /><span>学员求职总览 Job Overview</span>
-          <span v-if="jobBadge > 0" class="nav-badge">{{ jobBadge }}</span>
+          <!-- v1: 角标暂时隐藏 -->
+          <span v-if="false" class="nav-badge">{{ jobBadge }}</span>
         </a>
         <a class="nav-item" :class="{ active: currentPath === '/mock-practice' }" @click="navigate('/mock-practice')">
           <i class="mdi mdi-account-voice" /><span>模拟应聘管理 Mock Practice</span>
-          <span v-if="mockBadge > 0" class="nav-badge">{{ mockBadge }}</span>
+          <!-- v1: 角标暂时隐藏 -->
+          <span v-if="false" class="nav-badge">{{ mockBadge }}</span>
         </a>
 
-        <div class="nav-section">财务中心 FINANCE</div>
-        <a class="nav-item" :class="{ active: currentPath === '/settlement' }" @click="navigate('/settlement')">
+        <!-- v1: 财务中心暂时隐藏，二期恢复 -->
+        <div v-show="false" class="nav-section">财务中心 FINANCE</div>
+        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/settlement' }" @click="navigate('/settlement')">
           <i class="mdi mdi-cash-check" /><span>课时结算 Settlement</span>
         </a>
-        <a class="nav-item" :class="{ active: currentPath === '/expense' }" @click="navigate('/expense')">
+        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/expense' }" @click="navigate('/expense')">
           <i class="mdi mdi-receipt" /><span>报销管理 Expense</span>
         </a>
 
@@ -48,10 +53,11 @@
         <a class="nav-item" :class="{ active: currentPath === '/schedule' }" @click="navigate('/schedule')">
           <i class="mdi mdi-calendar-clock" /><span>课程排期 Schedule</span>
         </a>
-        <a class="nav-item" :class="{ active: currentPath === '/notice' }" @click="navigate('/notice')">
+        <!-- v1: 消息和常见问题暂时隐藏，二期恢复 -->
+        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/notice' }" @click="navigate('/notice')">
           <i class="mdi mdi-bell" /><span>消息 Notice</span>
         </a>
-        <a class="nav-item" :class="{ active: currentPath === '/faq' }" @click="navigate('/faq')">
+        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/faq' }" @click="navigate('/faq')">
           <i class="mdi mdi-help-circle" /><span>常见问题 FAQ</span>
         </a>
       </nav>
@@ -87,15 +93,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, provide, type Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { http } from '@osg/shared/utils/request'
 import { getUser, clearAuth } from '@osg/shared/utils'
+
+const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
+
+type MentorNavBadgeState = {
+  jobBadge: Ref<number>
+  mockBadge: Ref<number>
+  refreshJobBadge: () => Promise<void>
+  refreshMockBadge: () => Promise<void>
+}
 
 const router = useRouter()
 const route = useRoute()
 const showUserMenu = ref(false)
-const jobBadge = ref(1)
-const mockBadge = ref(2)
+const jobBadge = ref(0)
+const mockBadge = ref(0)
 
 const currentPath = computed(() => route.path)
 const user = getUser<{ nickName?: string; userName?: string }>()
@@ -109,6 +125,33 @@ function navigate(path: string) {
   router.push(path)
 }
 
+async function refreshJobBadge() {
+  try {
+    const res = await http.get('/api/mentor/job-overview/list')
+    const rows = Array.isArray((res as any)?.rows) ? (res as any).rows : []
+    jobBadge.value = rows.filter((row: Record<string, any>) => row.coachingStatus === 'new').length
+  } catch {
+    jobBadge.value = 0
+  }
+}
+
+async function refreshMockBadge() {
+  try {
+    const res = await http.get('/api/mentor/mock-practice/list')
+    const rows = Array.isArray((res as any)?.rows) ? (res as any).rows : []
+    mockBadge.value = rows.filter((row: Record<string, any>) => row.status === 'new').length
+  } catch {
+    mockBadge.value = 0
+  }
+}
+
+provide<MentorNavBadgeState>(MENTOR_NAV_BADGE_KEY, {
+  jobBadge,
+  mockBadge,
+  refreshJobBadge,
+  refreshMockBadge,
+})
+
 function handleLogout() {
   if (window.confirm('确定要退出登录吗？')) {
     clearAuth()
@@ -116,6 +159,11 @@ function handleLogout() {
   }
   showUserMenu.value = false
 }
+
+onMounted(() => {
+  void refreshJobBadge()
+  void refreshMockBadge()
+})
 </script>
 
 <style scoped>

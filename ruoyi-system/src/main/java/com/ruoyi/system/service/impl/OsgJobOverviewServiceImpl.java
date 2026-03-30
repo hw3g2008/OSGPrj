@@ -124,6 +124,25 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
             .toList();
     }
 
+    public List<Map<String, Object>> selectJobOverviewExportRows(String studentName,
+                                                                 String companyName,
+                                                                 String currentStage,
+                                                                 Long leadMentorId,
+                                                                 String assignStatus,
+                                                                 String tab)
+    {
+        if ("pending".equalsIgnoreCase(defaultText(tab, "all")))
+        {
+            return selectUnassignedList(studentName, companyName, currentStage, leadMentorId).stream()
+                .map(this::toPendingExportPayload)
+                .toList();
+        }
+
+        return selectJobOverviewList(studentName, companyName, currentStage, leadMentorId, assignStatus).stream()
+            .map(this::toAllExportPayload)
+            .toList();
+    }
+
     @Override
     public Map<String, Object> assignMentors(Map<String, Object> payload, String operator)
     {
@@ -325,6 +344,52 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         return payload;
     }
 
+    private Map<String, Object> toPendingExportPayload(Map<String, Object> row)
+    {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("applicationId", row.get("applicationId"));
+        payload.put("studentId", row.get("studentId"));
+        payload.put("studentName", row.get("studentName"));
+        payload.put("companyName", row.get("companyName"));
+        payload.put("positionName", row.get("positionName"));
+        payload.put("currentStage", row.get("currentStage"));
+        payload.put("interviewTime", row.get("interviewTime"));
+        payload.put("assignedStatusLabel", "待分配");
+        payload.put("datasetLabel", "待分配导师");
+        payload.put("leadMentorName", row.get("leadMentorName"));
+        payload.put("mentorName", null);
+        payload.put("coachingStatus", "待分配");
+        payload.put("requestedMentorCount", row.get("requestedMentorCount"));
+        payload.put("preferredMentorNames", row.get("preferredMentorNames"));
+        payload.put("hoursUsed", 0);
+        payload.put("feedbackSummary", null);
+        payload.put("submittedAt", row.get("submittedAt"));
+        return payload;
+    }
+
+    private Map<String, Object> toAllExportPayload(Map<String, Object> row)
+    {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("applicationId", row.get("applicationId"));
+        payload.put("studentId", row.get("studentId"));
+        payload.put("studentName", row.get("studentName"));
+        payload.put("companyName", row.get("companyName"));
+        payload.put("positionName", row.get("positionName"));
+        payload.put("currentStage", row.get("currentStage"));
+        payload.put("interviewTime", row.get("interviewTime"));
+        payload.put("assignedStatusLabel", toAssignedStatusLabel(row.get("assignedStatus")));
+        payload.put("datasetLabel", "全部学员");
+        payload.put("leadMentorName", row.get("leadMentorName"));
+        payload.put("mentorName", row.get("mentorName"));
+        payload.put("coachingStatus", row.get("coachingStatus"));
+        payload.put("requestedMentorCount", null);
+        payload.put("preferredMentorNames", null);
+        payload.put("hoursUsed", row.get("hoursUsed"));
+        payload.put("feedbackSummary", row.get("feedbackSummary"));
+        payload.put("submittedAt", null);
+        return payload;
+    }
+
     private Map<String, Object> funnelNode(String label, int count, int rate)
     {
         Map<String, Object> payload = new LinkedHashMap<>();
@@ -428,6 +493,12 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
     private String normalize(String value)
     {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String toAssignedStatusLabel(Object assignedStatus)
+    {
+        String normalized = normalize(assignedStatus == null ? null : String.valueOf(assignedStatus));
+        return "assigned".equals(normalized) ? "已分配" : "待分配";
     }
 
     private Long toLong(Object value)

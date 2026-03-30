@@ -1,7 +1,8 @@
 <template>
+  <div v-if="visible" data-surface-id="modal-contract-renew" style="display:none" aria-hidden="true"></div>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="renew-contract-modal"
+    :surface-id="surfaceId"
     width="600px"
     :body-class="'renew-contract-modal__body'"
     @cancel="handleClose"
@@ -20,7 +21,26 @@
     </template>
 
     <div class="renew-contract-modal__grid">
-      <label class="renew-contract-modal__field">
+      <div v-if="presetContract" class="renew-contract-modal__context">
+        <div class="renew-contract-modal__context-card">
+          <span>当前合同编号</span>
+          <strong>{{ presetContract.contractNo }}</strong>
+        </div>
+        <div class="renew-contract-modal__context-card">
+          <span>当前合同金额</span>
+          <strong>{{ formatCurrency(presetContract.contractAmount) }}</strong>
+        </div>
+        <div class="renew-contract-modal__context-card">
+          <span>当前课时</span>
+          <strong>{{ presetContract.totalHours || 0 }}h</strong>
+        </div>
+        <div class="renew-contract-modal__context-card">
+          <span>当前有效期</span>
+          <strong>{{ formatDateRange(presetContract.startDate, presetContract.endDate) }}</strong>
+        </div>
+      </div>
+
+      <label class="renew-contract-modal__field" data-field-name="学员">
         <span>学员</span>
         <template v-if="presetContract">
           <div class="renew-contract-modal__locked">{{ presetContract.studentName }} · ID {{ presetContract.studentId }}</div>
@@ -33,27 +53,27 @@
         </select>
       </label>
 
-      <label class="renew-contract-modal__field">
-        <span>续签金额(¥)</span>
+      <label class="renew-contract-modal__field" data-field-name="金额">
+        <span>金额</span>
         <input v-model="form.contractAmount" type="number" min="0" step="100" class="renew-contract-modal__input" />
       </label>
 
-      <label class="renew-contract-modal__field">
-        <span>续签课时(h)</span>
+      <label class="renew-contract-modal__field" data-field-name="课时">
+        <span>课时</span>
         <input v-model="form.totalHours" type="number" min="0" step="1" class="renew-contract-modal__input" />
       </label>
 
-      <label class="renew-contract-modal__field">
+      <label class="renew-contract-modal__field" data-field-name="开始日期">
         <span>开始日期</span>
         <input v-model="form.startDate" type="date" class="renew-contract-modal__input" />
       </label>
 
-      <label class="renew-contract-modal__field">
+      <label class="renew-contract-modal__field" data-field-name="结束日期">
         <span>结束日期</span>
         <input v-model="form.endDate" type="date" class="renew-contract-modal__input" />
       </label>
 
-      <label class="renew-contract-modal__field renew-contract-modal__field--wide">
+      <label class="renew-contract-modal__field renew-contract-modal__field--wide" data-field-name="续签原因">
         <span>续签原因</span>
         <select v-model="form.renewalReason" class="renew-contract-modal__select">
           <option value="">请选择续签原因</option>
@@ -61,13 +81,17 @@
         </select>
       </label>
 
-      <label v-if="requiresOtherReason" class="renew-contract-modal__field renew-contract-modal__field--wide">
+      <label
+        v-if="requiresOtherReason"
+        class="renew-contract-modal__field renew-contract-modal__field--wide"
+        data-field-name="其他原因说明"
+      >
         <span>其他原因说明</span>
         <input v-model="form.otherReason" type="text" class="renew-contract-modal__input" placeholder="请输入补充说明" />
       </label>
 
-      <label class="renew-contract-modal__field renew-contract-modal__field--wide">
-        <span>合同附件（PDF）</span>
+      <label class="renew-contract-modal__field renew-contract-modal__field--wide" data-field-name="合同附件">
+        <span>合同附件</span>
         <div class="renew-contract-modal__upload">
           <input
             ref="fileInputRef"
@@ -87,7 +111,7 @@
         </div>
       </label>
 
-      <label class="renew-contract-modal__field renew-contract-modal__field--wide">
+      <label class="renew-contract-modal__field renew-contract-modal__field--wide" data-field-name="备注">
         <span>备注</span>
         <textarea v-model="form.remark" class="renew-contract-modal__textarea" rows="3" placeholder="选填"></textarea>
       </label>
@@ -97,7 +121,7 @@
       <div class="renew-contract-modal__footer">
         <button type="button" class="renew-contract-modal__secondary" @click="handleClose">取消</button>
         <button type="button" class="renew-contract-modal__primary" :disabled="submitting || uploading" @click="handleSubmit">
-          {{ submitting ? '提交中...' : '确认续签' }}
+          {{ submitting ? '提交中...' : (presetContract ? '确认续签' : '创建合同') }}
         </button>
       </div>
     </template>
@@ -158,7 +182,31 @@ const form = reactive({
 
 const presetContract = computed(() => props.presetContract || null)
 const requiresOtherReason = computed(() => form.renewalReason === '其他原因')
-const modalTitle = computed(() => presetContract.value ? `为 ${presetContract.value.studentName} 续签合同` : '续签合同')
+const modalTitle = computed(() => presetContract.value ? `为 ${presetContract.value.studentName} 续签合同` : '新增合同')
+const surfaceId = computed(() => (presetContract.value ? 'modal-contract-renew' : 'modal-add-contract'))
+
+const formatCurrency = (value?: number) => {
+  return `¥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
+const formatDateRange = (startDate?: string, endDate?: string) => {
+  const fmt = (value?: string) => {
+    if (!value) {
+      return '-'
+    }
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) {
+      return value
+    }
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+
+  if (!startDate && !endDate) {
+    return '-'
+  }
+
+  return `${fmt(startDate)} 至 ${fmt(endDate)}`
+}
 
 const resetForm = () => {
   const today = new Date()
@@ -166,8 +214,8 @@ const resetForm = () => {
   form.studentId = presetContract.value ? String(presetContract.value.studentId) : ''
   form.contractAmount = presetContract.value?.contractAmount ? String(presetContract.value.contractAmount) : '5000'
   form.totalHours = presetContract.value?.totalHours ? String(presetContract.value.totalHours) : '20'
-  form.startDate = today.toISOString().slice(0, 10)
-  form.endDate = after90Days.toISOString().slice(0, 10)
+  form.startDate = presetContract.value?.startDate || today.toISOString().slice(0, 10)
+  form.endDate = presetContract.value?.endDate || after90Days.toISOString().slice(0, 10)
   form.renewalReason = ''
   form.otherReason = ''
   form.attachmentPath = ''
@@ -257,14 +305,14 @@ watch(() => props.visible, (visible) => {
 
 <style scoped lang="scss">
 /* ── Header (override OverlaySurfaceModal header) ── */
-:global([data-surface-id="renew-contract-modal"] [data-surface-part="header"]) {
+:global([data-surface-id="modal-contract-renew"] [data-surface-part="header"]) {
   background: linear-gradient(135deg, #F59E0B, #FBBF24) !important;
   border-bottom: none !important;
   border-radius: 16px 16px 0 0;
   padding: 22px 26px !important;
 }
 
-:global([data-surface-id="renew-contract-modal"] .overlay-surface-modal__close) {
+:global([data-surface-id="modal-contract-renew"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
 
@@ -310,6 +358,34 @@ watch(() => props.visible, (visible) => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.renew-contract-modal__context {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.renew-contract-modal__context-card {
+  border-radius: 14px;
+  border: 1px solid #fde3b0;
+  background: #fff8eb;
+  padding: 12px 14px;
+
+  span {
+    display: block;
+    margin-bottom: 6px;
+    color: #9a6700;
+    font-size: 12px;
+  }
+
+  strong {
+    display: block;
+    color: #6b3d00;
+    font-size: 13px;
+    font-weight: 700;
+  }
 }
 
 .renew-contract-modal__field {

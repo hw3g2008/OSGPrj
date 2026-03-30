@@ -17,14 +17,19 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.common.utils.file.FileUtils;
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.service.IOsgLeadMentorJobOverviewService;
 import com.ruoyi.system.service.impl.OsgJobOverviewServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 public class OsgJobOverviewController extends BaseController
@@ -80,6 +85,43 @@ public class OsgJobOverviewController extends BaseController
     {
         List<Map<String, Object>> rows = jobOverviewService.selectJobOverviewList(studentName, companyName, currentStage, leadMentorId, assignStatus);
         return AjaxResult.success().put("rows", rows);
+    }
+
+    @PreAuthorize(JOB_OVERVIEW_ACCESS)
+    @GetMapping("/admin/job-overview/export")
+    public void export(HttpServletResponse response,
+                       @RequestParam(required = false) String studentName,
+                       @RequestParam(required = false) String companyName,
+                       @RequestParam(required = false) String currentStage,
+                       @RequestParam(required = false) Long leadMentorId,
+                       @RequestParam(required = false) String assignStatus,
+                       @RequestParam(required = false) String tab)
+    {
+        prepareExportResponse(response, "求职总览.xlsx");
+        List<JobOverviewExportRow> exportRows = jobOverviewService.selectJobOverviewExportRows(
+            studentName,
+            companyName,
+            currentStage,
+            leadMentorId,
+            assignStatus,
+            tab
+        ).stream()
+            .map(JobOverviewExportRow::from)
+            .toList();
+        ExcelUtil<JobOverviewExportRow> util = new ExcelUtil<>(JobOverviewExportRow.class);
+        util.exportExcel(response, exportRows, "求职总览");
+    }
+
+    private void prepareExportResponse(HttpServletResponse response, String fileName)
+    {
+        try
+        {
+            FileUtils.setAttachmentResponseHeader(response, fileName);
+        }
+        catch (java.io.UnsupportedEncodingException ex)
+        {
+            throw new IllegalStateException("设置导出响应头失败", ex);
+        }
     }
 
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
@@ -150,11 +192,24 @@ public class OsgJobOverviewController extends BaseController
     @GetMapping("/api/mentor/job-overview/calendar")
     public AjaxResult calendar()
     {
-        List<Map<String, Object>> rows = leadMentorJobOverviewService.selectOverviewList("coaching", new OsgJobApplication(), SecurityUtils.getUserId()).stream()
+        OsgJobApplication query = buildMentorQueryFromRequest();
+        List<Map<String, Object>> rows = leadMentorJobOverviewService.selectOverviewList("coaching", query, SecurityUtils.getUserId()).stream()
             .map(this::toLegacyCalendarEvent)
             .filter(event -> event.get("time") != null)
             .toList();
         return success(rows);
+    }
+
+    @GetMapping("/api/mentor/job-overview/export")
+    public void mentorExport(HttpServletResponse response, OsgJobApplication query)
+    {
+        prepareExportResponse(response, "学员求职总览.xlsx");
+        List<JobOverviewExportRow> exportRows = leadMentorJobOverviewService.selectOverviewList("coaching", query, SecurityUtils.getUserId()).stream()
+            .map(this::toLegacyMentorOverviewRow)
+            .map(JobOverviewExportRow::fromMentorLegacy)
+            .toList();
+        ExcelUtil<JobOverviewExportRow> util = new ExcelUtil<>(JobOverviewExportRow.class);
+        util.exportExcel(response, exportRows, "学员求职总览");
     }
 
     private String resolveOperator()
@@ -167,6 +222,25 @@ public class OsgJobOverviewController extends BaseController
         {
             return "system";
         }
+    }
+
+    private OsgJobApplication buildMentorQueryFromRequest()
+    {
+        OsgJobApplication query = new OsgJobApplication();
+        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes))
+        {
+            return query;
+        }
+
+        jakarta.servlet.http.HttpServletRequest request = attributes.getRequest();
+        query.setStudentName(stringValue(request.getParameter("studentName")));
+        query.setCompanyName(stringValue(request.getParameter("companyName")));
+        query.setCurrentStage(stringValue(request.getParameter("currentStage")));
+        query.setAssignStatus(stringValue(request.getParameter("assignStatus")));
+        query.setKeyword(stringValue(request.getParameter("keyword")));
+        query.setMonth(stringValue(request.getParameter("month")));
+        query.setStatus(stringValue(request.getParameter("status")));
+        return query;
     }
 
     private Map<String, Object> toLegacyMentorOverviewRow(Map<String, Object> row)
@@ -211,6 +285,10 @@ public class OsgJobOverviewController extends BaseController
     private String toLegacyCoachingStatus(Map<String, Object> row)
     {
         String coachingStatus = stringValue(row.get("coachingStatus"));
+        if ("new".equalsIgnoreCase(coachingStatus) || "新申请".equals(coachingStatus))
+        {
+            return "new";
+        }
         if ("待审批".equals(coachingStatus) || "pending".equalsIgnoreCase(coachingStatus))
         {
             return "new";
@@ -285,5 +363,146 @@ public class OsgJobOverviewController extends BaseController
         }
         String text = value.toString().trim();
         return text.isEmpty() ? null : text;
+    }
+
+    private static class JobOverviewExportRow
+    {
+        @Excel(name = "申请ID")
+        private final Long applicationId;
+
+        @Excel(name = "学员ID")
+        private final Long studentId;
+
+        @Excel(name = "学员姓名")
+        private final String studentName;
+
+        @Excel(name = "公司")
+        private final String companyName;
+
+        @Excel(name = "岗位")
+        private final String positionName;
+
+        @Excel(name = "当前阶段")
+        private final String currentStage;
+
+        @Excel(name = "面试时间", width = 20, dateFormat = "yyyy-MM-dd HH:mm:ss")
+        private final Object interviewTime;
+
+        @Excel(name = "分配状态")
+        private final String assignedStatusLabel;
+
+        @Excel(name = "数据视图")
+        private final String datasetLabel;
+
+        @Excel(name = "班主任")
+        private final String leadMentorName;
+
+        @Excel(name = "导师")
+        private final String mentorName;
+
+        @Excel(name = "辅导状态")
+        private final String coachingStatus;
+
+        @Excel(name = "需求导师数")
+        private final Integer requestedMentorCount;
+
+        @Excel(name = "意向导师")
+        private final String preferredMentorNames;
+
+        @Excel(name = "已用课时")
+        private final Integer hoursUsed;
+
+        @Excel(name = "反馈摘要")
+        private final String feedbackSummary;
+
+        @Excel(name = "申请时间", width = 20, dateFormat = "yyyy-MM-dd HH:mm:ss")
+        private final Object submittedAt;
+
+        private JobOverviewExportRow(Long applicationId, Long studentId, String studentName, String companyName,
+                                     String positionName, String currentStage, Object interviewTime,
+                                     String assignedStatusLabel, String datasetLabel, String leadMentorName,
+                                     String mentorName, String coachingStatus, Integer requestedMentorCount,
+                                     String preferredMentorNames, Integer hoursUsed, String feedbackSummary,
+                                     Object submittedAt)
+        {
+            this.applicationId = applicationId;
+            this.studentId = studentId;
+            this.studentName = studentName;
+            this.companyName = companyName;
+            this.positionName = positionName;
+            this.currentStage = currentStage;
+            this.interviewTime = interviewTime;
+            this.assignedStatusLabel = assignedStatusLabel;
+            this.datasetLabel = datasetLabel;
+            this.leadMentorName = leadMentorName;
+            this.mentorName = mentorName;
+            this.coachingStatus = coachingStatus;
+            this.requestedMentorCount = requestedMentorCount;
+            this.preferredMentorNames = preferredMentorNames;
+            this.hoursUsed = hoursUsed;
+            this.feedbackSummary = feedbackSummary;
+            this.submittedAt = submittedAt;
+        }
+
+        private static JobOverviewExportRow from(Map<String, Object> row)
+        {
+            return new JobOverviewExportRow(
+                asLong(row.get("applicationId")),
+                asLong(row.get("studentId")),
+                asText(row.get("studentName")),
+                asText(row.get("companyName")),
+                asText(row.get("positionName")),
+                asText(row.get("currentStage")),
+                row.get("interviewTime"),
+                asText(row.get("assignedStatusLabel")),
+                asText(row.get("datasetLabel")),
+                asText(row.get("leadMentorName")),
+                asText(row.get("mentorName")),
+                asText(row.get("coachingStatus")),
+                asInteger(row.get("requestedMentorCount")),
+                asText(row.get("preferredMentorNames")),
+                asInteger(row.get("hoursUsed")),
+                asText(row.get("feedbackSummary")),
+                row.get("submittedAt")
+            );
+        }
+
+        private static JobOverviewExportRow fromMentorLegacy(Map<String, Object> row)
+        {
+            return new JobOverviewExportRow(
+                asLong(row.get("id")),
+                asLong(row.get("studentId")),
+                asText(row.get("studentName")),
+                asText(row.get("company")),
+                asText(row.get("position")),
+                asText(row.get("interviewStage")),
+                row.get("interviewTime"),
+                asText(row.get("coachingStatus")),
+                "导师端",
+                "",
+                asText(row.get("mentorName")),
+                asText(row.get("coachingStatus")),
+                null,
+                "",
+                null,
+                "",
+                row.get("createTime")
+            );
+        }
+
+        private static Long asLong(Object value)
+        {
+            return value instanceof Number number ? number.longValue() : null;
+        }
+
+        private static Integer asInteger(Object value)
+        {
+            return value instanceof Number number ? number.intValue() : null;
+        }
+
+        private static String asText(Object value)
+        {
+            return value == null ? null : String.valueOf(value);
+        }
     }
 }

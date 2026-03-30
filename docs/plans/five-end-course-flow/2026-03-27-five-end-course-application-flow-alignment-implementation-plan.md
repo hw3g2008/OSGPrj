@@ -14,6 +14,17 @@
 2. 本计划先做“定义收口 -> 真源修正 -> 实现对齐 -> 测试闭环”，不允许跳过定义直接各端各自修页面。
 3. 若某个原型或实现与本计划冲突，必须先回到设计稿确认，再统一修改，不允许端内自行解释。
 
+### 0.1 本轮进度状态真源
+
+本轮五端试点的推进状态，统一以本地 [STATE.yaml](/Users/hw/workspace/OSGPrj/docs/plans/five-end-course-flow/STATE.yaml) 为准。
+
+规则如下：
+
+- 新开 context 时，先读本地 [STATE.yaml](/Users/hw/workspace/OSGPrj/docs/plans/five-end-course-flow/STATE.yaml)，再决定当前应继续哪个 workstream / pilot / ticket
+- 不使用 [osg-spec-docs/tasks/STATE.yaml](/Users/hw/workspace/OSGPrj/osg-spec-docs/tasks/STATE.yaml) 承接本轮五端试点状态
+- 不改动现有全局 RPIV 工作流状态机
+- 与本计划相关的 pilot 资产、skill 试点和验证结果，都必须回写到本地 [STATE.yaml](/Users/hw/workspace/OSGPrj/docs/plans/five-end-course-flow/STATE.yaml)
+
 ## Existing Implementation Inventory
 
 ### Student Entrypoints

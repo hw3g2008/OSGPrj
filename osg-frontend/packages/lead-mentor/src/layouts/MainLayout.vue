@@ -9,7 +9,9 @@
       </div>
 
       <nav class="sidebar-nav">
+        <!-- v1: 首页入口暂时隐藏，二期恢复 -->
         <a
+          v-show="false"
           href="#"
           class="nav-item"
           :class="{ active: isActive(['/home', '/dashboard']) }"
@@ -19,7 +21,7 @@
           <span>首页 Home</span>
         </a>
 
-        <template v-for="group in navigationGroups" :key="group.title">
+        <template v-for="group in filteredNavigationGroups" :key="group.title">
           <div class="nav-section">{{ group.title }}</div>
           <a
             v-for="item in group.items"
@@ -31,7 +33,8 @@
           >
             <i class="mdi" :class="item.iconClass" aria-hidden="true"></i>
             <span>{{ item.label }}</span>
-            <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+            <!-- v1: 角标暂时隐藏，二期恢复改回 v-if="item.badge" -->
+            <span v-if="false" class="nav-badge">{{ item.badge }}</span>
           </a>
         </template>
       </nav>
@@ -74,6 +77,7 @@ interface NavigationItem {
   path: string
   activePaths: string[]
   badge?: number
+  hidden?: boolean
 }
 
 interface NavigationGroup {
@@ -142,7 +146,8 @@ const navigationGroups: NavigationGroup[] = [
         path: '/teaching/communication',
         label: '人际关系沟通记录 Records',
         iconClass: 'mdi-message-text-clock',
-        activePaths: ['/teaching/communication']
+        activePaths: ['/teaching/communication'],
+        hidden: true
       }
     ]
   },
@@ -153,13 +158,15 @@ const navigationGroups: NavigationGroup[] = [
         path: '/finance/settlement',
         label: '课时结算 Settlement',
         iconClass: 'mdi-cash-check',
-        activePaths: ['/finance/settlement']
+        activePaths: ['/finance/settlement'],
+        hidden: true
       },
       {
         path: '/finance/expense',
         label: '报销管理 Expense',
         iconClass: 'mdi-receipt',
-        activePaths: ['/finance/expense']
+        activePaths: ['/finance/expense'],
+        hidden: true
       }
     ]
   },
@@ -170,19 +177,22 @@ const navigationGroups: NavigationGroup[] = [
         path: '/resources/files',
         label: '文件 Files',
         iconClass: 'mdi-folder-multiple',
-        activePaths: ['/resources/files']
+        activePaths: ['/resources/files'],
+        hidden: true
       },
       {
         path: '/resources/online-tests',
         label: '在线测试题库 Online Tests',
         iconClass: 'mdi-clipboard-list',
-        activePaths: ['/resources/online-tests']
+        activePaths: ['/resources/online-tests'],
+        hidden: true
       },
       {
         path: '/resources/interview-bank',
         label: '真人面试题库 Interview Bank',
         iconClass: 'mdi-account-question',
-        activePaths: ['/resources/interview-bank']
+        activePaths: ['/resources/interview-bank'],
+        hidden: true
       }
     ]
   },
@@ -205,17 +215,25 @@ const navigationGroups: NavigationGroup[] = [
         path: '/profile/notice',
         label: '消息 Notice',
         iconClass: 'mdi-bell',
-        activePaths: ['/profile/notice']
+        activePaths: ['/profile/notice'],
+        hidden: true
       },
       {
         path: '/profile/faq',
         label: '常见问题 FAQ',
         iconClass: 'mdi-help-circle',
-        activePaths: ['/profile/faq']
+        activePaths: ['/profile/faq'],
+        hidden: true
       }
     ]
   }
 ]
+
+const filteredNavigationGroups = computed(() =>
+  navigationGroups
+    .map((group) => ({ ...group, items: group.items.filter((item) => !item.hidden) }))
+    .filter((group) => group.items.length > 0)
+)
 
 const currentPath = computed(() => route.path)
 const userInfo = computed(() => getUser<{ nickName?: string; userName?: string }>())

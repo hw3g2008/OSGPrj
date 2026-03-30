@@ -46,7 +46,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<include refid="selectDictDataVo"/>
 		where status = '0' and dict_type = #{dictType} order by dict_sort asc
 	</select>
-	
+
+	<select id="selectDictDataByTypes" resultMap="SysDictDataResult">
+		<include refid="selectDictDataVo"/>
+		where status = '0'
+		  and dict_type in
+		  <foreach collection="dictTypes" item="dictType" open="(" separator="," close=")">
+		    #{dictType}
+		  </foreach>
+		order by dict_type asc, dict_sort asc
+	</select>
+
 	<select id="selectDictLabel" resultType="String">
 		select dict_label from sys_dict_data
 		where dict_type = #{dictType} and dict_value = #{dictValue}

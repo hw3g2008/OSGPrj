@@ -96,5 +96,5 @@ public interface IPositionService
      * @param userId 用户ID
      * @return 岗位ID
      */
-    public Long createManualPosition(String category, String title, String company, String location, Long userId);
+    public Long createManualPosition(Map<String, Object> params, Long userId);
 }

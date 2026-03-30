@@ -222,6 +222,54 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         return payload;
     }
 
+    public List<Map<String, Object>> selectStaffExportList(OsgStaff staff, String tab)
+    {
+        List<OsgStaff> rows = selectStaffList(staff);
+        if (rows == null || rows.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        List<Long> blacklistedIds = selectBlacklistedStaffIds(rows.stream()
+            .map(OsgStaff::getStaffId)
+            .filter(Objects::nonNull)
+            .toList());
+        String normalizedTab = normalizeExportTab(tab);
+
+        List<Map<String, Object>> payload = new ArrayList<>();
+        for (OsgStaff row : rows)
+        {
+            boolean blacklisted = blacklistedIds.contains(row.getStaffId());
+            if ("blacklist".equals(normalizedTab) && !blacklisted)
+            {
+                continue;
+            }
+            if ("normal".equals(normalizedTab) && blacklisted)
+            {
+                continue;
+            }
+
+            Map<String, Object> exportRow = new LinkedHashMap<>();
+            exportRow.put("staffId", row.getStaffId());
+            exportRow.put("staffName", row.getStaffName());
+            exportRow.put("email", row.getEmail());
+            exportRow.put("phone", row.getPhone());
+            exportRow.put("staffType", row.getStaffType());
+            exportRow.put("staffTypeLabel", toStaffTypeLabel(row.getStaffType()));
+            exportRow.put("majorDirection", row.getMajorDirection());
+            exportRow.put("subDirection", row.getSubDirection());
+            exportRow.put("region", row.getRegion());
+            exportRow.put("city", row.getCity());
+            exportRow.put("hourlyRate", row.getHourlyRate());
+            exportRow.put("studentCount", row.getStudentCount());
+            exportRow.put("accountStatus", normalizeAccountStatus(row.getAccountStatus()));
+            exportRow.put("accountStatusLabel", toAccountStatusLabel(row.getAccountStatus()));
+            exportRow.put("blacklistStatus", blacklisted ? "黑名单" : "正常");
+            payload.add(exportRow);
+        }
+        return payload;
+    }
+
     public int selectPendingReviewCount()
     {
         return staffChangeRequestMapper.selectPendingReviewCount();
@@ -684,6 +732,34 @@ public class OsgStaffServiceImpl implements IOsgStaffService
     private String normalizeAccountStatus(String accountStatus)
     {
         return "frozen".equals(accountStatus) ? "1" : "0";
+    }
+
+    private String toAccountStatusLabel(String accountStatus)
+    {
+        return "1".equals(normalizeAccountStatus(accountStatus)) ? "禁用" : "激活";
+    }
+
+    private String toStaffTypeLabel(String staffType)
+    {
+        return "lead_mentor".equalsIgnoreCase(defaultText(staffType, "mentor")) ? "班主任" : "导师";
+    }
+
+    private String normalizeExportTab(String tab)
+    {
+        if (tab == null || tab.isBlank())
+        {
+            return "normal";
+        }
+        String normalized = tab.trim().toLowerCase();
+        if ("all".equals(normalized))
+        {
+            return "all";
+        }
+        if ("blacklist".equals(normalized))
+        {
+            return "blacklist";
+        }
+        return "normal";
     }
 
     private String toSysUserStatus(String accountStatus)

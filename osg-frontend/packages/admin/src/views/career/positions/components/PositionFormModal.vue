@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="position-form-modal"
+    :surface-id="surfaceId"
     width="680px"
     :max-height="'86vh'"
     :shell-class="'position-form-modal__shell'"
@@ -22,34 +22,34 @@
       <section class="position-form-modal__section">
         <h4><i class="mdi mdi-briefcase" aria-hidden="true"></i>基本信息</h4>
         <div class="position-form-modal__grid">
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="岗位分类">
             <span>岗位分类 <em>*</em></span>
             <select v-model="form.positionCategory" class="position-form-modal__control">
               <option value="">请选择</option>
               <option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
-          </label>
+          </fieldset>
 
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="岗位名称">
             <span>岗位名称 <em>*</em></span>
             <input v-model="form.positionName" type="text" class="position-form-modal__control" placeholder="如 Summer Analyst" />
-          </label>
+          </fieldset>
 
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="部门">
             <span>部门</span>
             <input v-model="form.department" type="text" class="position-form-modal__control" placeholder="如 Investment Banking Division" />
-          </label>
+          </fieldset>
 
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="项目时间">
             <span>项目时间 <em>*</em></span>
             <select v-model="form.projectYear" class="position-form-modal__control">
               <option value="">请选择</option>
               <option v-for="option in projectYearOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
-          </label>
+          </fieldset>
         </div>
 
-        <div class="position-form-modal__cycle-wrap">
+        <fieldset class="position-form-modal__cycle-wrap" data-field-name="招聘周期">
           <span>招聘周期 <em>*</em> <small>(可多选)</small></span>
           <div class="position-form-modal__cycle-list">
             <label
@@ -68,13 +68,13 @@
               <span>{{ option.label }}</span>
             </label>
           </div>
-        </div>
+        </fieldset>
       </section>
 
       <section class="position-form-modal__section">
         <h4><i class="mdi mdi-domain" aria-hidden="true"></i>公司信息</h4>
         <div class="position-form-modal__grid">
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="公司名称">
             <span>公司名称 <em>*</em></span>
             <input
               v-model="form.companyName"
@@ -86,75 +86,99 @@
             <datalist id="position-company-options">
               <option v-for="option in companyOptions" :key="option" :value="option" />
             </datalist>
-          </label>
+          </fieldset>
 
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="公司类别">
             <span>公司类别</span>
             <select v-model="form.companyType" class="position-form-modal__control">
               <option value="">请选择</option>
               <option v-for="option in companyTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
-          </label>
+          </fieldset>
 
-          <label class="position-form-modal__field">
-            <span>大区 <em>*</em></span>
-            <select v-model="form.region" class="position-form-modal__control">
-              <option value="">请选择</option>
-              <option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-            </select>
-          </label>
+          <fieldset class="position-form-modal__location-group" data-field-name="大区/城市">
+            <div class="position-form-modal__location-grid">
+              <fieldset class="position-form-modal__field" data-field-name="大区">
+                <span>大区 <em>*</em></span>
+                <select v-model="form.region" class="position-form-modal__control">
+                  <option value="">请选择</option>
+                  <option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                </select>
+              </fieldset>
 
-          <label class="position-form-modal__field">
-            <span>城市 <em>*</em></span>
-            <select v-model="form.city" class="position-form-modal__control">
-              <option value="">{{ form.region ? '请选择' : '请先选择地区' }}</option>
-              <option v-for="option in currentCityOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-            </select>
-          </label>
+              <fieldset class="position-form-modal__field" data-field-name="城市">
+                <span>城市 <em>*</em></span>
+                <select v-model="form.city" class="position-form-modal__control">
+                  <option value="">{{ form.region ? '请选择' : '请先选择地区' }}</option>
+                  <option v-for="option in currentCityOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                </select>
+              </fieldset>
+            </div>
+          </fieldset>
 
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="公司官网">
             <span>公司官网</span>
             <input v-model="form.companyWebsite" type="url" class="position-form-modal__control" placeholder="https://company.com" />
-          </label>
+          </fieldset>
 
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="岗位链接">
             <span>岗位链接</span>
             <input v-model="form.positionUrl" type="url" class="position-form-modal__control" placeholder="https://company.com/jobs/..." />
-          </label>
+          </fieldset>
 
-          <label class="position-form-modal__field">
+          <fieldset class="position-form-modal__field" data-field-name="截止日期">
             <span>截止日期 <small>(选填)</small></span>
-            <input v-model="form.deadline" type="date" class="position-form-modal__control" />
-          </label>
+            <input
+              v-model="form.deadline"
+              type="date"
+              class="position-form-modal__control"
+              data-field-name="截止日期"
+              aria-label="截止日期"
+            />
+          </fieldset>
         </div>
       </section>
 
       <div class="position-form-modal__display-grid">
-        <section class="position-form-modal__section">
+        <section class="position-form-modal__section" data-field-name="展示时间">
           <h4><i class="mdi mdi-clock-outline" aria-hidden="true"></i>展示时间</h4>
-          <div class="position-form-modal__display-stack">
-            <label class="position-form-modal__field">
-              <span>开始时间 <em>*</em></span>
-              <input v-model="form.displayStartTime" type="datetime-local" class="position-form-modal__control" />
-            </label>
-            <label class="position-form-modal__field">
-              <span>结束时间 <em>*</em></span>
-              <input v-model="form.displayEndTime" type="datetime-local" class="position-form-modal__control" />
-            </label>
-          </div>
+          <fieldset class="position-form-modal__display-group" data-field-name="开始时间/结束时间">
+            <div class="position-form-modal__display-stack">
+              <fieldset class="position-form-modal__field" data-field-name="开始时间">
+                <span>开始时间 <em>*</em></span>
+                <input
+                  v-model="form.displayStartTime"
+                  type="datetime-local"
+                  class="position-form-modal__control"
+                  data-field-name="开始时间"
+                  aria-label="开始时间"
+                />
+              </fieldset>
+              <fieldset class="position-form-modal__field" data-field-name="结束时间">
+                <span>结束时间 <em>*</em></span>
+                <input
+                  v-model="form.displayEndTime"
+                  type="datetime-local"
+                  class="position-form-modal__control"
+                  data-field-name="结束时间"
+                  aria-label="结束时间"
+                />
+              </fieldset>
+            </div>
+          </fieldset>
         </section>
 
-        <section class="position-form-modal__section">
+        <section class="position-form-modal__section" data-field-name="投递备注">
           <h4><i class="mdi mdi-note-text" aria-hidden="true"></i>投递备注</h4>
-          <label class="position-form-modal__field">
-            <span class="position-form-modal__sr-only">投递备注</span>
-            <textarea
-              v-model="form.applicationNote"
-              rows="4"
-              class="position-form-modal__control position-form-modal__control--textarea"
-              placeholder="提醒学生投递时的注意事项..."
-            />
-          </label>
+        <fieldset class="position-form-modal__field">
+          <span class="position-form-modal__sr-only">投递备注</span>
+          <textarea
+            v-model="form.applicationNote"
+            rows="4"
+            class="position-form-modal__control position-form-modal__control--textarea"
+            placeholder="提醒学生投递时的注意事项..."
+          />
+        </fieldset>
         </section>
       </div>
 
@@ -177,12 +201,12 @@
           </div>
         </div>
 
-        <label class="position-form-modal__field position-form-modal__status-field">
+        <fieldset class="position-form-modal__field position-form-modal__status-field">
           <span>岗位状态</span>
           <select v-model="form.displayStatus" class="position-form-modal__control">
             <option v-for="option in statusOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
-        </label>
+        </fieldset>
 
         <div class="position-form-modal__status-actions">
           <button type="button" class="position-form-modal__status-action" @click="form.displayStatus = 'hidden'">
@@ -197,7 +221,7 @@
 
     <template #footer>
       <div class="position-form-modal__footer">
-        <button type="button" class="position-form-modal__secondary" @click="handleClose">取消</button>
+        <button type="button" class="position-form-modal__secondary" data-surface-part="cancel-control" @click="handleClose">取消</button>
         <button type="button" class="position-form-modal__primary" @click="handleSubmit">
           <i class="mdi mdi-check" aria-hidden="true"></i>
           {{ isEditing ? '保存岗位' : '新增岗位' }}
@@ -246,6 +270,12 @@ const form = reactive({
 })
 
 const isEditing = computed(() => Boolean(props.position?.positionId))
+const isCompanyScopedCreate = computed(() => !isEditing.value && Boolean(props.defaults?.companyName))
+const surfaceId = computed(() => {
+  if (isEditing.value) return 'modal-edit-position'
+  if (isCompanyScopedCreate.value) return 'modal-new-position-company'
+  return 'modal-new-position'
+})
 const categoryOptions = computed(() => props.meta.categories || [])
 const companyTypeOptions = computed(() => props.meta.companyTypes || [])
 const recruitmentCycleOptions = computed(() => props.meta.recruitmentCycles || [])
@@ -466,10 +496,27 @@ watch(
   gap: 14px;
 }
 
+.position-form-modal__location-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.position-form-modal__location-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .position-form-modal__field {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
   font-size: 13px;
   color: #334155;
 }
@@ -511,6 +558,9 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
   color: #334155;
   font-size: 13px;
 }
@@ -573,6 +623,13 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.position-form-modal__display-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
 }
 
 .position-form-modal__hint {

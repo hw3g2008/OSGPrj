@@ -77,48 +77,108 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="editOpen" title="编辑基本信息" :footer="null" width="720px">
-      <div class="modal-tip">审核说明：核心信息、学业信息和求职方向的修改需要后台审核，联系方式修改后直接生效。</div>
-      <div class="form-grid">
-        <a-form-item label="学校" class="form-item"><a-input id="profile-school" v-model:value="editForm.school" /></a-form-item>
-        <a-form-item label="专业" class="form-item"><a-input id="profile-major" v-model:value="editForm.major" /></a-form-item>
-        <a-form-item label="毕业年份" class="form-item"><a-input id="profile-graduation-year" v-model:value="editForm.graduationYear" /></a-form-item>
-        <a-form-item label="高中" class="form-item"><a-input id="profile-high-school" v-model:value="editForm.highSchool" placeholder="选填" /></a-form-item>
-        <a-form-item label="是否读研或延毕" class="form-item"><a-select id="profile-postgraduate-plan" v-model:value="editForm.postgraduatePlan" :options="yesNoOptions" /></a-form-item>
-        <a-form-item label="签证" class="form-item"><a-input id="profile-visa-status" v-model:value="editForm.visaStatus" /></a-form-item>
-        <a-form-item label="招聘周期" class="form-item"><a-input id="profile-recruitment-cycle" v-model:value="editForm.recruitmentCycle" /></a-form-item>
-        <a-form-item label="求职地区" class="form-item"><a-input id="profile-target-region" v-model:value="editForm.targetRegion" /></a-form-item>
-        <a-form-item label="主攻方向" class="form-item"><a-input id="profile-primary-direction" v-model:value="editForm.primaryDirection" /></a-form-item>
-        <a-form-item label="子方向" class="form-item"><a-input id="profile-secondary-direction" v-model:value="editForm.secondaryDirection" /></a-form-item>
-        <a-form-item label="电话" class="form-item"><a-input id="profile-phone" v-model:value="editForm.phone" /></a-form-item>
-        <a-form-item label="微信ID" class="form-item"><a-input id="profile-wechat" v-model:value="editForm.wechatId" /></a-form-item>
-      </div>
-      <div class="dialog-actions">
-        <a-button @click="editOpen = false">取消</a-button>
-        <a-button type="primary" @click="saveProfile">保存修改</a-button>
-      </div>
-    </a-modal>
+    <div v-if="editOpen" class="profile-modal-shell" @click.self="editOpen = false">
+      <section class="profile-modal profile-modal--edit" role="dialog" aria-label="编辑基本信息" aria-modal="true">
+        <header class="profile-modal__header profile-modal__header--primary">
+          <div class="profile-modal__title-group">
+            <span class="profile-modal__title-icon">
+              <i class="mdi mdi-account-edit-outline" aria-hidden="true"></i>
+            </span>
+            <div>
+              <h2>编辑基本信息</h2>
+              <p>修改后的核心信息会进入后台审核流程</p>
+            </div>
+          </div>
+          <button type="button" class="profile-modal__close" @click="editOpen = false">×</button>
+        </header>
+        <div class="profile-modal__body">
+          <div class="modal-tip">审核说明：核心信息、学业信息和求职方向的修改需要后台审核，联系方式修改后直接生效。</div>
 
-    <a-modal v-model:open="pendingOpen" title="待审核的信息变更" :footer="null" width="640px">
-      <div class="pending-list">
-        <div v-if="pendingChanges.length === 0" class="pending-item">
-          <div class="pending-head">
-            <a-tag color="default">暂无待审核</a-tag>
-          </div>
-          <div class="pending-body">当前没有待审核的信息变更。</div>
+          <section class="profile-modal-section">
+            <div class="edit-section-title">以下信息修改需后台审核</div>
+            <div class="form-grid">
+              <a-form-item label="学校" class="form-item"><a-input id="profile-school" v-model:value="editForm.school" /></a-form-item>
+              <a-form-item label="专业" class="form-item"><a-input id="profile-major" v-model:value="editForm.major" /></a-form-item>
+              <a-form-item label="毕业年份" class="form-item"><a-input id="profile-graduation-year" v-model:value="editForm.graduationYear" /></a-form-item>
+              <a-form-item label="高中" class="form-item"><a-input id="profile-high-school" v-model:value="editForm.highSchool" placeholder="选填" /></a-form-item>
+              <a-form-item label="是否读研或延毕" class="form-item"><a-select id="profile-postgraduate-plan" v-model:value="editForm.postgraduatePlan" :options="yesNoOptions" /></a-form-item>
+              <a-form-item label="签证" class="form-item"><a-input id="profile-visa-status" v-model:value="editForm.visaStatus" /></a-form-item>
+              <a-form-item label="招聘周期" class="form-item"><a-input id="profile-recruitment-cycle" v-model:value="editForm.recruitmentCycle" /></a-form-item>
+              <a-form-item label="求职地区" class="form-item"><a-input id="profile-target-region" v-model:value="editForm.targetRegion" /></a-form-item>
+              <a-form-item label="主攻方向" class="form-item"><a-input id="profile-primary-direction" v-model:value="editForm.primaryDirection" /></a-form-item>
+              <a-form-item label="子方向" class="form-item"><a-input id="profile-secondary-direction" v-model:value="editForm.secondaryDirection" /></a-form-item>
+            </div>
+          </section>
+
+          <section class="profile-modal-section">
+            <div class="edit-section-title edit-section-title--success">以下信息修改后直接生效</div>
+            <div class="form-grid form-grid--compact">
+              <a-form-item label="电话" class="form-item"><a-input id="profile-phone" v-model:value="editForm.phone" /></a-form-item>
+              <a-form-item label="微信ID" class="form-item"><a-input id="profile-wechat" v-model:value="editForm.wechatId" /></a-form-item>
+            </div>
+          </section>
         </div>
-        <div v-for="change in pendingChanges" :key="`${change.fieldKey}-${change.newValue}`" class="pending-item">
-          <div class="pending-head">
-            <a-tag color="warning">待审核</a-tag>
-            <span>提交于 {{ change.submittedAt }}</span>
+        <footer class="profile-modal__footer">
+          <a-button @click="editOpen = false">取消</a-button>
+          <a-button type="primary" class="profile-modal__action profile-modal__action--primary" @click="saveProfile">
+            保存修改
+          </a-button>
+        </footer>
+      </section>
+    </div>
+
+    <div v-if="pendingOpen" class="profile-modal-shell" @click.self="pendingOpen = false">
+      <section class="profile-modal profile-modal--pending" role="dialog" aria-label="待审核的信息变更" aria-modal="true">
+        <header class="profile-modal__header profile-modal__header--warning">
+          <div class="profile-modal__title-group">
+            <span class="profile-modal__title-icon">
+              <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
+            </span>
+            <div>
+              <h2>待审核的信息变更</h2>
+              <p>以下内容正在等待后台处理与确认</p>
+            </div>
           </div>
-          <div class="pending-body">{{ change.fieldLabel }}：{{ change.oldValue }} → {{ change.newValue }}</div>
+          <button type="button" class="profile-modal__close" @click="pendingOpen = false">×</button>
+        </header>
+        <div class="profile-modal__body">
+          <div class="modal-tip modal-tip--warning">审核期间原始信息仍保持生效，审核通过后系统会自动更新您的资料。</div>
+          <div class="pending-list">
+            <div v-if="pendingChanges.length === 0" class="pending-item pending-item--empty">
+              <div class="pending-head">
+                <a-tag color="default">暂无待审核</a-tag>
+              </div>
+              <div class="pending-body">当前没有待审核的信息变更。</div>
+            </div>
+            <div v-for="change in pendingChanges" :key="`${change.fieldKey}-${change.newValue}`" class="pending-item">
+              <div class="pending-head">
+                <div class="pending-head__meta">
+                  <strong>{{ change.fieldLabel }}</strong>
+                  <span>提交于 {{ change.submittedAt }}</span>
+                </div>
+                <a-tag color="warning">{{ change.status || '待审核' }}</a-tag>
+              </div>
+              <div class="pending-diff">
+                <div class="pending-diff__card">
+                  <span>原值</span>
+                  <strong>{{ displayPendingValue(change.oldValue) }}</strong>
+                </div>
+                <div class="pending-diff__arrow">
+                  <i class="mdi mdi-arrow-right" aria-hidden="true"></i>
+                </div>
+                <div class="pending-diff__card pending-diff__card--next">
+                  <span>申请值</span>
+                  <strong>{{ displayPendingValue(change.newValue) }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="dialog-actions">
-        <a-button @click="pendingOpen = false">关闭</a-button>
-      </div>
-    </a-modal>
+        <footer class="profile-modal__footer">
+          <a-button @click="pendingOpen = false">关闭</a-button>
+        </footer>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -230,6 +290,10 @@ function openEdit() {
   editOpen.value = true
 }
 
+function displayPendingValue(value: string) {
+  return value?.trim() ? value : '未填写'
+}
+
 async function loadProfile() {
   const payload = await getStudentProfile()
   applyProfileView(payload)
@@ -237,14 +301,23 @@ async function loadProfile() {
 }
 
 async function saveProfile() {
-  const payload = await updateStudentProfile({ ...editForm })
-  applyProfileView(payload)
-  editOpen.value = false
-  message.success('保存修改成功')
+  const confirmed = window.confirm('确认保存修改？\n\n修改后，后台文员和班主任将收到提醒通知。')
+  if (!confirmed) {
+    return
+  }
+
+  try {
+    const payload = await updateStudentProfile({ ...editForm })
+    applyProfileView(payload)
+    editOpen.value = false
+    message.success('保存成功！后台文员和班主任已收到您的信息变更通知。')
+  } catch {
+    return
+  }
 }
 
 onMounted(() => {
-  loadProfile()
+  void loadProfile().catch(() => undefined)
 })
 </script>
 
@@ -398,11 +471,167 @@ onMounted(() => {
 }
 
 .modal-tip {
-  border-radius: 12px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
   background: #e8f0f8;
-  color: #1e3a8a;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+  color: #5a7ba3;
+  padding: 14px 16px;
+}
+
+.modal-tip--warning {
+  background: #e8f0f8;
+  color: #5a7ba3;
+}
+
+.profile-modal-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(12px);
+}
+
+.profile-modal {
+  --modal-accent: #5a7ba3;
+  --modal-accent-soft: #e8f0f8;
+  --modal-accent-strong: #7399c6;
+  --modal-accent-highlight: #9bb8d9;
+  width: min(600px, 100%);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 20px 56px rgba(115, 153, 198, 0.22);
+}
+
+.profile-modal--pending {
+  width: min(640px, 100%);
+}
+
+.profile-modal--warning {
+  --modal-accent: #5a7ba3;
+  --modal-accent-soft: #e8f0f8;
+  --modal-accent-strong: #7399c6;
+  --modal-accent-highlight: #9bb8d9;
+}
+
+.profile-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
+  border-bottom: 0;
+}
+
+.profile-modal__header--primary {
+  --modal-accent: #5a7ba3;
+  --modal-accent-soft: #e8f0f8;
+  --modal-accent-strong: #7399c6;
+  --modal-accent-highlight: #9bb8d9;
+}
+
+.profile-modal__header--warning {
+  --modal-accent: #5a7ba3;
+  --modal-accent-soft: #e8f0f8;
+  --modal-accent-strong: #7399c6;
+  --modal-accent-highlight: #9bb8d9;
+}
+
+.profile-modal__title-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 13px;
+  }
+}
+
+.profile-modal__title-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.profile-modal__close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: translateY(-1px);
+  }
+}
+
+.profile-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+}
+
+.profile-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 26px 20px;
+  background: #f8fafc;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.profile-modal__action {
+  border: none;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+}
+
+.profile-modal__action--primary {
+  background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
+}
+
+.profile-modal-section {
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .form-grid {
@@ -411,8 +640,24 @@ onMounted(() => {
   gap: 12px 16px;
 }
 
+.form-grid--compact {
+  margin-top: 12px;
+}
+
 .form-item {
   margin-bottom: 0;
+}
+
+.edit-section-title {
+  margin: 0 0 12px;
+  color: #5a7ba3;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.edit-section-title--success {
+  margin-top: 20px;
+  color: #7399c6;
 }
 
 .pending-list {
@@ -421,21 +666,77 @@ onMounted(() => {
 }
 
 .pending-item {
-  border-radius: 14px;
-  background: #f8fafc;
-  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 18px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.pending-item--empty {
+  text-align: center;
 }
 
 .pending-head {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+
+  strong {
+    color: #0f172a;
+    font-size: 15px;
+  }
 
   span {
     color: #64748b;
     font-size: 12px;
   }
+}
+
+.pending-head__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pending-diff {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.pending-diff__card {
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  strong {
+    color: #334155;
+    line-height: 1.6;
+  }
+}
+
+.pending-diff__card--next {
+  border-color: #bfd1e3;
+  background: #e8f0f8;
+}
+
+.pending-diff__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7399c6;
+  font-size: 20px;
 }
 
 .pending-body {
@@ -447,5 +748,44 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .page-header,
+  .pending-banner,
+  .profile-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .four-columns,
+  .two-columns,
+  .form-grid,
+  .pending-diff {
+    grid-template-columns: 1fr;
+  }
+
+  .wide {
+    grid-column: span 1;
+  }
+
+  .profile-modal-shell {
+    padding: 16px;
+  }
+
+  .profile-modal__header,
+  .profile-modal__body,
+  .profile-modal__footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .profile-modal__footer {
+    flex-direction: column;
+  }
+
+  .pending-diff__arrow {
+    transform: rotate(90deg);
+  }
 }
 </style>

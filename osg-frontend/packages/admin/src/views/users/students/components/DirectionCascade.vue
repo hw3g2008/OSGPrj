@@ -1,5 +1,5 @@
 <template>
-  <div class="direction-cascade">
+  <div class="direction-cascade" data-field-name="主攻方向">
     <div class="direction-cascade__header">
       <div>
         <span class="direction-cascade__label">
@@ -24,7 +24,7 @@
       </button>
     </div>
 
-    <div class="direction-cascade__sub">
+    <div class="direction-cascade__sub" data-field-name="子方向">
       <span class="direction-cascade__label">
         子方向
         <span class="direction-cascade__required">*</span>

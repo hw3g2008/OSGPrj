@@ -9,9 +9,15 @@
         <p class="page-subtitle">查看所有合同记录，为老学员续签添加新合同。新增学员时的合同信息会自动同步到此处。</p>
       </div>
       <div class="page-header__actions">
-        <button type="button" class="permission-button permission-button--primary" @click="handleRenewEntry()">
+        <button
+          type="button"
+          class="permission-button permission-button--primary"
+          data-surface-trigger="modal-add-contract"
+          data-surface-sample-key="contracts-add-entry"
+          @click="handleRenewEntry()"
+        >
           <i class="mdi mdi-plus" aria-hidden="true"></i>
-          <span>续签合同</span>
+          <span>新增合同</span>
         </button>
       </div>
     </div>
@@ -28,8 +34,8 @@
     </section>
 
     <section class="permission-card contracts-panel">
-      <div class="contracts-filters">
-        <div class="contracts-filter-group contracts-filter-group--date">
+      <div class="contracts-filters" data-field-name="合同管理页">
+        <div class="contracts-filter-group contracts-filter-group--date" data-field-name="日期">
           <div class="contracts-date-range">
             <input v-model="filters.startDate" type="date" class="contracts-input" />
             <span class="contracts-separator">~</span>
@@ -37,7 +43,7 @@
           </div>
         </div>
         <div class="contracts-filter-group contracts-filter-group--search">
-          <input v-model="filters.studentKeyword" type="text" class="contracts-input" placeholder="姓名或学员ID" />
+          <input v-model="filters.studentKeyword" type="text" class="contracts-input" data-field-name="搜索框" placeholder="姓名或学员ID" />
         </div>
         <div class="contracts-filter-group">
           <select v-model="filters.contractType" class="contracts-select">
@@ -47,7 +53,7 @@
           </select>
         </div>
         <div class="contracts-filter-group">
-          <select v-model="filters.contractStatus" class="contracts-select">
+          <select v-model="filters.contractStatus" class="contracts-select" data-field-name="状态">
             <option value="">合同状态</option>
             <option value="active">有效</option>
             <option value="expiring">即将到期</option>
@@ -90,7 +96,13 @@
 
               <!-- 学员 -->
               <td>
-                <button type="button" class="contract-link" @click="handleDetailEntry(record)">
+                <button
+                  type="button"
+                  class="contract-link"
+                  data-surface-trigger="modal-contract-detail"
+                  :data-surface-sample-key="`contract-${record.contractId}`"
+                  @click="handleDetailEntry(record)"
+                >
                   {{ record.studentName || '-' }}
                 </button>
               </td>
@@ -140,9 +152,23 @@
               <!-- 操作 -->
               <td>
                 <div class="contract-actions">
-                  <button type="button" class="contract-action" @click="handleDetailEntry(record)">详情</button>
-                  <button type="button" class="contract-action contract-action--primary" @click="handleRenewEntry(record)">
-                    续签
+                  <button
+                    type="button"
+                    class="contract-action"
+                    data-surface-trigger="modal-contract-detail"
+                    :data-surface-sample-key="`contract-${record.contractId}`"
+                    @click="handleDetailEntry(record)"
+                  >
+                    详情
+                  </button>
+                  <button
+                    type="button"
+                    class="contract-action contract-action--primary"
+                    data-surface-trigger="modal-contract-renew"
+                    :data-surface-sample-key="`contract-${record.contractId}-renew`"
+                    @click="handleRenewEntry(record)"
+                  >
+                    续签合同
                   </button>
                 </div>
               </td>
@@ -166,12 +192,27 @@
       :student-id="selectedContract?.studentId ?? null"
       :student-name="selectedContract?.studentName"
       @request-renew="handleRenewEntry(selectedContract || undefined)"
+      @request-status-change="handleStatusChangeEntry(selectedContract || undefined)"
+      @request-add-blacklist="handleAddBlacklistEntry(selectedContract || undefined)"
+      @request-remove-blacklist="handleRemoveBlacklistEntry(selectedContract || undefined)"
     />
     <RenewContractModal
       v-model:visible="renewVisible"
       :student-options="renewStudentOptions"
       :preset-contract="renewTarget"
       @submitted="handleRenewSubmitted"
+    />
+    <ContractStatusChangeModal
+      v-model:visible="statusChangeVisible"
+      :contract="statusChangeTarget"
+    />
+    <ContractBlacklistModal
+      v-model:visible="addBlacklistVisible"
+      :contract="addBlacklistTarget"
+    />
+    <ContractRemoveBlacklistModal
+      v-model:visible="removeBlacklistVisible"
+      :contract="removeBlacklistTarget"
     />
   </div>
 </template>
@@ -180,6 +221,9 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import ContractDetailModal from './components/ContractDetailModal.vue'
+import ContractStatusChangeModal from './components/ContractStatusChangeModal.vue'
+import ContractBlacklistModal from './components/ContractBlacklistModal.vue'
+import ContractRemoveBlacklistModal from './components/ContractRemoveBlacklistModal.vue'
 import RenewContractModal from './components/RenewContractModal.vue'
 import {
   getContractList,
@@ -204,8 +248,14 @@ const contractRows = ref<ContractListItem[]>([])
 const loading = ref(false)
 const detailVisible = ref(false)
 const renewVisible = ref(false)
+const statusChangeVisible = ref(false)
+const addBlacklistVisible = ref(false)
+const removeBlacklistVisible = ref(false)
 const selectedContract = ref<ContractListItem | null>(null)
 const renewTarget = ref<ContractListItem | null>(null)
+const statusChangeTarget = ref<ContractListItem | null>(null)
+const addBlacklistTarget = ref<ContractListItem | null>(null)
+const removeBlacklistTarget = ref<ContractListItem | null>(null)
 const summaryStats = ref<ContractStats>({
   totalContracts: 0,
   activeContracts: 0,
@@ -352,6 +402,21 @@ const handleDetailEntry = (record: ContractListItem) => {
 const handleRenewEntry = (record?: ContractListItem) => {
   renewTarget.value = record || null
   renewVisible.value = true
+}
+
+const handleStatusChangeEntry = (record?: ContractListItem) => {
+  statusChangeTarget.value = record || selectedContract.value || null
+  statusChangeVisible.value = true
+}
+
+const handleAddBlacklistEntry = (record?: ContractListItem) => {
+  addBlacklistTarget.value = record || selectedContract.value || null
+  addBlacklistVisible.value = true
+}
+
+const handleRemoveBlacklistEntry = (record?: ContractListItem) => {
+  removeBlacklistTarget.value = record || selectedContract.value || null
+  removeBlacklistVisible.value = true
 }
 
 const handleExport = async () => {

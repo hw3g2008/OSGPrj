@@ -1,3 +1,4 @@
+import { downloadAdminFile } from '../../utils'
 import { http } from '../../utils/request'
 
 export interface ClassRecordRow {
@@ -31,14 +32,23 @@ export interface ClassRecordStats {
 
 export interface ClassRecordFilters {
   keyword?: string
+  courseType?: string
+  classStatus?: string
+  courseSource?: string
+  tab?: string
+  classDateStart?: string
+  classDateEnd?: string
 }
 
 const toParams = (filters: ClassRecordFilters = {}) => {
   const params: Record<string, string> = {}
 
-  if (filters.keyword) {
-    params.keyword = filters.keyword
-  }
+  Object.entries(filters).forEach(([key, value]) => {
+    if (!value) {
+      return
+    }
+    params[key] = value
+  })
 
   return params
 }
@@ -52,5 +62,13 @@ export function getClassRecordList(filters: ClassRecordFilters = {}) {
 export function getClassRecordStats(filters: ClassRecordFilters = {}) {
   return http.get<ClassRecordStats>('/admin/class-record/stats', {
     params: toParams(filters)
+  })
+}
+
+export function exportClassRecords(filters: ClassRecordFilters = {}) {
+  return downloadAdminFile({
+    path: '/admin/class-record/export',
+    params: toParams(filters),
+    fallbackFilename: '课程记录.xlsx',
   })
 }

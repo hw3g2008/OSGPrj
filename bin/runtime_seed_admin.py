@@ -113,6 +113,122 @@ def resolve_seed_mentors(cur, minimum: int = 2) -> list[tuple[int, str]]:
     return mentors
 
 
+def resolve_active_user_by_username(cur, username: str) -> tuple[int, str] | None:
+    cur.execute(
+        """
+        select user_id, coalesce(nullif(nick_name, ''), user_name) as display_name
+        from sys_user
+        where status = '0'
+          and user_name = %s
+        limit 1
+        """,
+        (username,),
+    )
+    row = cur.fetchone()
+    if row is None:
+        return None
+    return int(row[0]), str(row[1])
+
+
+def resolve_active_user_by_email(cur, email: str) -> tuple[int, str] | None:
+    normalized = email.strip()
+    if not normalized:
+        return None
+    cur.execute(
+        """
+        select user_id, coalesce(nullif(nick_name, ''), user_name) as display_name
+        from sys_user
+        where status = '0'
+          and (user_name = %s or email = %s)
+        order by user_id asc
+        limit 1
+        """,
+        (normalized, normalized),
+    )
+    row = cur.fetchone()
+    if row is None:
+        return None
+    return int(row[0]), str(row[1])
+
+
+def resolve_runtime_mentor_user(cur) -> tuple[int, str]:
+    preferred_usernames = [
+        os.environ.get("E2E_MENTOR_USERNAME", "").strip(),
+        os.environ.get("E2E_ADMIN_USERNAME", "").strip(),
+        "mentor",
+        "mentor_demo",
+    ]
+
+    for username in preferred_usernames:
+        if not username:
+            continue
+        row = resolve_active_user_by_username(cur, username)
+        if row is not None:
+            return row
+
+    cur.execute(
+        """
+        select email
+        from osg_staff
+        where account_status = 'active'
+          and email is not null
+          and trim(email) != ''
+        order by coalesce(hourly_rate, 0) desc, staff_id asc
+        limit 1
+        """
+    )
+    staff = cur.fetchone()
+    if staff is not None:
+        row = resolve_active_user_by_email(cur, str(staff[0]))
+        if row is not None:
+            return row
+
+    cur.execute(
+        """
+        select user_id, coalesce(nullif(nick_name, ''), user_name) as display_name
+        from sys_user
+        where status = '0'
+          and user_name != 'admin'
+        order by user_id asc
+        limit 1
+        """
+    )
+    row = cur.fetchone()
+    if row is None:
+        raise RuntimeError("no active sys_user row available for mentor runtime seed")
+    return int(row[0]), str(row[1])
+
+
+def resolve_runtime_mentor_users(cur, minimum: int = 2) -> list[tuple[int, str]]:
+    mentors = [resolve_runtime_mentor_user(cur)]
+    seen_user_ids = {mentors[0][0]}
+
+    cur.execute(
+        """
+        select email
+        from osg_staff
+        where account_status = 'active'
+          and email is not null
+          and trim(email) != ''
+        order by coalesce(hourly_rate, 0) desc, staff_id asc
+        limit %s
+        """,
+        (max(minimum * 2, minimum),),
+    )
+    for row in cur.fetchall() or []:
+        resolved = resolve_active_user_by_email(cur, str(row[0]))
+        if resolved is None or resolved[0] in seen_user_ids:
+            continue
+        mentors.append(resolved)
+        seen_user_ids.add(resolved[0])
+        if len(mentors) >= minimum:
+            break
+
+    while len(mentors) < minimum:
+        mentors.append(mentors[-1])
+    return mentors
+
+
 def resolve_lead_mentor_runtime_user(cur) -> tuple[int, str]:
     preferred_usernames = [
         os.environ.get("E2E_LEAD_MENTOR_USERNAME", "").strip(),
@@ -125,19 +241,9 @@ def resolve_lead_mentor_runtime_user(cur) -> tuple[int, str]:
     for username in preferred_usernames:
         if not username:
             continue
-        cur.execute(
-            """
-            select user_id, coalesce(nullif(nick_name, ''), user_name) as display_name
-            from sys_user
-            where status = '0'
-              and user_name = %s
-            limit 1
-            """,
-            (username,),
-        )
-        row = cur.fetchone()
+        row = resolve_active_user_by_username(cur, username)
         if row is not None:
-            return int(row[0]), str(row[1])
+            return row
 
     cur.execute(
         """
@@ -152,6 +258,25 @@ def resolve_lead_mentor_runtime_user(cur) -> tuple[int, str]:
     row = cur.fetchone()
     if row is None:
         raise RuntimeError("no active sys_user row available for lead-mentor runtime seed")
+    return int(row[0]), str(row[1])
+
+
+def resolve_student_by_email(cur, email: str) -> tuple[int, str] | None:
+    normalized = email.strip()
+    if not normalized:
+        return None
+    cur.execute(
+        """
+        select student_id, student_name
+        from osg_student
+        where email = %s
+        limit 1
+        """,
+        (normalized,),
+    )
+    row = cur.fetchone()
+    if row is None:
+        return None
     return int(row[0]), str(row[1])
 
 
@@ -286,6 +411,35 @@ def ensure_position(
     return int(cur.lastrowid)
 
 
+def resolve_existing_position_id(
+    cur,
+    *,
+    company_name: str,
+    position_name: str,
+    region: str,
+    city: str,
+    project_year: str,
+) -> int | None:
+    cur.execute(
+        """
+        select position_id
+        from osg_position
+        where company_name = %s
+          and position_name = %s
+          and region = %s
+          and city = %s
+          and project_year = %s
+        order by position_id desc
+        limit 1
+        """,
+        (company_name, position_name, region, city, project_year),
+    )
+    row = cur.fetchone()
+    if row is None:
+        return None
+    return int(row[0])
+
+
 def seed_finance(env_file: Path, count: int) -> list[dict[str, object]]:
     now = datetime.now().replace(microsecond=0)
     created: list[dict[str, object]] = []
@@ -295,7 +449,8 @@ def seed_finance(env_file: Path, count: int) -> list[dict[str, object]]:
     conn = connect(env_file)
     try:
         with conn.cursor() as cur:
-            mentor_id, mentor_name, hourly = resolve_seed_mentor(cur)
+            _, _, hourly = resolve_seed_mentor(cur)
+            mentor_id, mentor_name = resolve_runtime_mentor_user(cur)
 
             for index in range(count):
                 class_date = now - timedelta(minutes=index)
@@ -421,7 +576,8 @@ def seed_report(env_file: Path, count: int) -> list[dict[str, object]]:
     conn = connect(env_file)
     try:
         with conn.cursor() as cur:
-            mentor_id, mentor_name, hourly = resolve_seed_mentor(cur)
+            _, _, hourly = resolve_seed_mentor(cur)
+            mentor_id, mentor_name = resolve_runtime_mentor_user(cur)
 
             for index in range(count):
                 class_date = now - timedelta(minutes=index)
@@ -609,6 +765,452 @@ def seed_student_position(env_file: Path, count: int) -> list[dict[str, object]]
         conn.close()
 
 
+def seed_student_position_favorite_only(env_file: Path) -> list[dict[str, object]]:
+    now = datetime.now().replace(microsecond=0)
+    business_suffix = now.strftime("%Y%m%d%H%M%S%f")
+    business_key = f"runtime-student-position-favorite-only-{business_suffix}"
+    position_title = f"Runtime Favorite Only Analyst {business_suffix}"
+    company_name = f"Runtime Favorite Only Co {business_suffix}"
+
+    conn = connect(env_file)
+    try:
+        with conn.cursor() as cur:
+            user = resolve_active_user_by_username(cur, "student_demo")
+            if user is None:
+                raise RuntimeError("student_demo user not found for student-position-favorite-only seed")
+            user_id, user_name = user
+            public_position_id = ensure_position(
+                cur,
+                company_name=company_name,
+                position_name=position_title,
+                industry="Investment Bank",
+                region="na",
+                city="New York",
+                recruitment_cycle="2026 Summer",
+                project_year="2026",
+                now=now,
+            )
+
+            cur.execute(
+                """
+                insert into osg_student_job_position (
+                    position_id,
+                    business_key,
+                    title,
+                    company,
+                    category,
+                    department,
+                    location,
+                    recruit_cycle,
+                    publish_date,
+                    deadline,
+                    position_url,
+                    career_url,
+                    company_key,
+                    company_code,
+                    industry,
+                    requirements,
+                    source_type,
+                    owner_user_id
+                ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                on duplicate key update
+                    title = values(title),
+                    company = values(company),
+                    category = values(category),
+                    department = values(department),
+                    location = values(location),
+                    recruit_cycle = values(recruit_cycle),
+                    publish_date = values(publish_date),
+                    deadline = values(deadline),
+                    position_url = values(position_url),
+                    career_url = values(career_url),
+                    company_key = values(company_key),
+                    company_code = values(company_code),
+                    industry = values(industry),
+                    requirements = values(requirements),
+                    source_type = values(source_type),
+                    owner_user_id = values(owner_user_id)
+                """,
+                (
+                    public_position_id,
+                    business_key,
+                    position_title,
+                    company_name,
+                    "summer",
+                    "Global Markets",
+                    "New York",
+                    "2026 Summer",
+                    now.date(),
+                    (now + timedelta(days=30)).date(),
+                    f"https://example.com/student-positions/{business_suffix}",
+                    "https://example.com/company",
+                    "runtime-favorite-only",
+                    "runtime-favorite-only",
+                    "Investment Bank",
+                    "runtime favorite-only seed",
+                    "global",
+                    None,
+                ),
+            )
+            shadow_position_id = public_position_id
+
+            cur.execute(
+                """
+                insert into osg_student_job_position_state (
+                    user_id,
+                    position_id,
+                    favorited,
+                    applied,
+                    applied_at,
+                    apply_method,
+                    apply_note,
+                    progress_stage,
+                    progress_note
+                ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                on duplicate key update
+                    favorited = values(favorited),
+                    applied = values(applied),
+                    applied_at = values(applied_at),
+                    apply_method = values(apply_method),
+                    apply_note = values(apply_note),
+                    progress_stage = values(progress_stage),
+                    progress_note = values(progress_note)
+                """,
+                (
+                    user_id,
+                    shadow_position_id,
+                    "1",
+                    "0",
+                    None,
+                    None,
+                    None,
+                    "applied",
+                    "",
+                ),
+            )
+
+        conn.commit()
+        return [
+            {
+                "seed_type": "student-position-favorite-only",
+                "user_id": int(user_id),
+                "user_name": user_name,
+                "public_position_id": public_position_id,
+                "shadow_position_id": shadow_position_id,
+                "state_position_id": shadow_position_id,
+                "position_id": shadow_position_id,
+                "business_key": business_key,
+                "title": position_title,
+                "company": company_name,
+                "favorited": "1",
+                "applied": "0",
+            }
+        ]
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def seed_student_position_acceptance_unlock(env_file: Path) -> list[dict[str, object]]:
+    now = datetime.now().replace(microsecond=0)
+    business_suffix = now.strftime("%Y%m%d%H%M%S%f")
+    created: list[dict[str, object]] = []
+    row_specs = [
+        {
+            "business_key": f"runtime-student-position-acceptance-gs-st-{business_suffix}",
+            "title": "S&T Analyst",
+            "company": "Goldman Sachs",
+            "department": "Global Markets",
+            "location": "London",
+            "company_key": "gs",
+            "company_code": "GS",
+            "career_url": "https://goldmansachs.com/careers",
+            "position_url": "https://goldmansachs.com/careers/students/programs-and-internships",
+            "favorited": "0",
+            "applied": "0",
+            "apply_method": None,
+            "applied_at": None,
+            "progress_stage": "applied",
+            "progress_note": "",
+            "application_stage": None,
+            "application_coaching_status": None,
+            "application_remark": "runtime acceptance unlock cleared main chain",
+        },
+        {
+            "business_key": f"runtime-student-position-acceptance-gs-ib-{business_suffix}",
+            "title": "IB Analyst",
+            "company": "Goldman Sachs",
+            "department": "Investment Banking",
+            "location": "Hong Kong",
+            "company_key": "gs",
+            "company_code": "GS",
+            "career_url": "https://goldmansachs.com/careers",
+            "position_url": "https://goldmansachs.com/careers/students/programs-and-internships",
+            "favorited": "1",
+            "applied": "1",
+            "apply_method": "官网投递",
+            "applied_at": now,
+            "progress_stage": "applied",
+            "progress_note": "runtime acceptance unlock favorite row",
+            "application_stage": "hirevue",
+            "application_coaching_status": "pending",
+            "application_remark": "runtime acceptance unlock favorite row",
+        },
+        {
+            "business_key": f"runtime-student-position-acceptance-ms-ibd-{business_suffix}",
+            "title": "IBD Summer Analyst",
+            "company": "Morgan Stanley",
+            "department": "Investment Banking Division",
+            "location": "New York",
+            "company_key": "ms",
+            "company_code": "MS",
+            "career_url": "https://www.morganstanley.com/careers/career-opportunities-search",
+            "position_url": "https://www.morganstanley.com/careers/career-opportunities-search",
+            "favorited": "0",
+            "applied": "1",
+            "apply_method": "官网投递",
+            "applied_at": now,
+            "progress_stage": "applied",
+            "progress_note": "runtime acceptance unlock stage row",
+            "application_stage": "applied",
+            "application_coaching_status": "pending",
+            "application_remark": "runtime acceptance unlock stage row",
+        },
+    ]
+
+    conn = connect(env_file)
+    try:
+        with conn.cursor() as cur:
+            user = resolve_active_user_by_username(cur, "student_demo")
+            if user is None:
+                raise RuntimeError("student_demo user not found for student-position-acceptance-unlock seed")
+            user_id, user_name = user
+            student = resolve_student_by_email(cur, "student_demo@osg.local")
+            if student is None:
+                raise RuntimeError("student_demo osg_student row not found for student-position-acceptance-unlock seed")
+            student_id, student_name = student
+
+            for spec in row_specs:
+                public_position_id = resolve_existing_position_id(
+                    cur,
+                    company_name=spec["company"],
+                    position_name=spec["title"],
+                    region="na",
+                    city=spec["location"],
+                    project_year="2026",
+                )
+                if public_position_id is None:
+                    public_position_id = ensure_position(
+                        cur,
+                        company_name=spec["company"],
+                        position_name=spec["title"],
+                        industry="Investment Bank",
+                        region="na",
+                        city=spec["location"],
+                        recruitment_cycle="2026 Summer",
+                        project_year="2026",
+                        now=now,
+                    )
+
+                cur.execute(
+                    """
+                    insert into osg_student_job_position (
+                        position_id,
+                        business_key,
+                        title,
+                        company,
+                        category,
+                        department,
+                        location,
+                        recruit_cycle,
+                        publish_date,
+                        deadline,
+                        position_url,
+                        career_url,
+                        company_key,
+                        company_code,
+                        industry,
+                        requirements,
+                        source_type,
+                        owner_user_id
+                    ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    on duplicate key update
+                        title = values(title),
+                        company = values(company),
+                        category = values(category),
+                        department = values(department),
+                        location = values(location),
+                        recruit_cycle = values(recruit_cycle),
+                        publish_date = values(publish_date),
+                        deadline = values(deadline),
+                        position_url = values(position_url),
+                        career_url = values(career_url),
+                        company_key = values(company_key),
+                        company_code = values(company_code),
+                        industry = values(industry),
+                        requirements = values(requirements),
+                        source_type = values(source_type),
+                        owner_user_id = values(owner_user_id)
+                    """,
+                    (
+                        public_position_id,
+                        spec["business_key"],
+                        spec["title"],
+                        spec["company"],
+                        "summer",
+                        spec["department"],
+                        spec["location"],
+                        "2026 Summer",
+                        now.date(),
+                        (now + timedelta(days=30)).date(),
+                        spec["position_url"],
+                        spec["career_url"],
+                        spec["company_key"],
+                        spec["company_code"],
+                        "Investment Bank",
+                        "runtime acceptance unlock seed",
+                        "global",
+                        None,
+                    ),
+                )
+
+                cur.execute(
+                    """
+                    insert into osg_student_job_position_state (
+                        user_id,
+                        position_id,
+                        favorited,
+                        applied,
+                        applied_at,
+                        apply_method,
+                        apply_note,
+                        progress_stage,
+                        progress_note
+                    ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    on duplicate key update
+                        favorited = values(favorited),
+                        applied = values(applied),
+                        applied_at = values(applied_at),
+                        apply_method = values(apply_method),
+                        apply_note = values(apply_note),
+                        progress_stage = values(progress_stage),
+                        progress_note = values(progress_note)
+                    """,
+                    (
+                        user_id,
+                        public_position_id,
+                        spec["favorited"],
+                        spec["applied"],
+                        spec["applied_at"],
+                        spec["apply_method"],
+                        "runtime acceptance unlock seed",
+                        spec["progress_stage"],
+                        spec["progress_note"],
+                    ),
+                )
+
+                cur.execute(
+                    """
+                    delete from osg_job_application
+                    where student_id = %s
+                      and company_name = %s
+                      and position_name = %s
+                    """,
+                    (
+                        student_id,
+                        spec["company"],
+                        spec["title"],
+                    ),
+                )
+
+                if spec["application_stage"] is not None:
+                    cur.execute(
+                        """
+                        insert into osg_job_application (
+                            student_id,
+                            position_id,
+                            student_name,
+                            company_name,
+                            position_name,
+                            region,
+                            city,
+                            current_stage,
+                            interview_time,
+                            coaching_status,
+                            lead_mentor_id,
+                            lead_mentor_name,
+                            assign_status,
+                            requested_mentor_count,
+                            preferred_mentor_names,
+                            stage_updated,
+                            submitted_at,
+                            create_by,
+                            create_time,
+                            update_by,
+                            update_time,
+                            remark
+                        ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, sysdate(), %s, sysdate(), %s)
+                        """,
+                        (
+                            student_id,
+                            public_position_id,
+                            student_name,
+                            spec["company"],
+                            spec["title"],
+                            resolve_runtime_seed_region(spec["location"]),
+                            spec["location"],
+                            spec["application_stage"],
+                            None,
+                            spec["application_coaching_status"],
+                            None,
+                            None,
+                            "pending",
+                            0,
+                            None,
+                            False,
+                            now,
+                            "runtime_seed_admin",
+                            "runtime_seed_admin",
+                            spec["application_remark"],
+                        ),
+                    )
+
+                created.append(
+                    {
+                        "seed_type": "student-position-acceptance-unlock",
+                        "user_id": int(user_id),
+                        "user_name": user_name,
+                        "position_id": public_position_id,
+                        "business_key": spec["business_key"],
+                        "company": spec["company"],
+                        "title": spec["title"],
+                        "favorited": spec["favorited"],
+                        "applied": spec["applied"],
+                    }
+                )
+
+        conn.commit()
+        return created
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def resolve_runtime_seed_region(location: str) -> str:
+    normalized = location.strip().lower()
+    if "new york" in normalized or "san francisco" in normalized:
+        return "na"
+    if "london" in normalized:
+        return "uk"
+    if "hong kong" in normalized or "shanghai" in normalized or "singapore" in normalized:
+        return "apac"
+    return ""
+
+
 def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
     now = datetime.now().replace(microsecond=0)
     created: list[dict[str, object]] = []
@@ -618,9 +1220,12 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
     try:
         with conn.cursor() as cur:
             mentors = resolve_seed_mentors(cur, minimum=2)
+            runtime_mentors = resolve_runtime_mentor_users(cur, minimum=2)
             lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
-            primary_mentor_id, primary_mentor_name = mentors[0]
-            secondary_mentor_id, secondary_mentor_name = mentors[1]
+            _, primary_mentor_name = mentors[0]
+            _, secondary_mentor_name = mentors[1]
+            primary_mentor_id, primary_visible_mentor_name = runtime_mentors[0]
+            secondary_mentor_id, secondary_visible_mentor_name = runtime_mentors[1]
 
             for index in range(count):
                 suffix = f"{base % 100000}-{index + 1}"
@@ -777,9 +1382,9 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                         interview_application_id,
                         student_specs[1][0],
                         primary_mentor_id,
-                        primary_mentor_name,
+                        primary_visible_mentor_name,
                         str(primary_mentor_id),
-                        primary_mentor_name,
+                        primary_visible_mentor_name,
                         "Runtime Backfill Mentor",
                         "辅导中",
                         6,
@@ -866,9 +1471,9 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                         offer_application_id,
                         student_specs[2][0],
                         secondary_mentor_id,
-                        secondary_mentor_name,
+                        secondary_visible_mentor_name,
                         str(secondary_mentor_id),
-                        secondary_mentor_name,
+                        secondary_visible_mentor_name,
                         "Runtime Backfill Mentor",
                         "辅导中",
                         10,
@@ -889,12 +1494,670 @@ def seed_job_overview(env_file: Path, count: int) -> list[dict[str, object]]:
                         "pending_application_id": pending_application_id,
                         "pending_student_id": student_specs[0][0],
                         "pending_student_name": student_specs[0][1],
-                        "mentor_names": [primary_mentor_name, secondary_mentor_name],
+                        "mentor_names": [primary_visible_mentor_name, secondary_visible_mentor_name],
                         "expected_stats": {
                             "applied_count": 3,
                             "interviewing_count": 1,
                             "offer_count": 1,
                         },
+                    }
+                )
+
+        conn.commit()
+        return created
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def seed_job_overview_unlock(env_file: Path, count: int) -> list[dict[str, object]]:
+    created: list[dict[str, object]] = []
+    conn = connect(env_file)
+    seed_now = datetime(2026, 1, 20, 12, 0, 0)
+    specs = [
+        {
+            "student_id_offset": 1,
+            "student_name": "张三",
+            "company_name": "Goldman Sachs",
+            "position_name": "IB Analyst",
+            "stage": "First Round",
+            "city": "Hong Kong",
+            "coaching_status": "new",
+            "submitted_at": datetime(2026, 1, 20, 12, 0, 0),
+            "interview_time": datetime(2026, 1, 27, 10, 0, 0),
+            "hours_used": 0,
+            "mentor_background": "Runtime Backfill Mentor",
+            "feedback_summary": "runtime job overview new chain",
+            "assign_status": "pending",
+        },
+        {
+            "student_id_offset": 2,
+            "student_name": "李四",
+            "company_name": "McKinsey",
+            "position_name": "Consultant",
+            "stage": "Case Study",
+            "city": "Shanghai",
+            "coaching_status": "coaching",
+            "submitted_at": datetime(2026, 1, 19, 12, 0, 0),
+            "interview_time": datetime(2026, 1, 28, 14, 0, 0),
+            "hours_used": 6,
+            "mentor_background": "Runtime Backfill Mentor",
+            "feedback_summary": "runtime job overview coaching chain",
+            "assign_status": "assigned",
+        },
+        {
+            "student_id_offset": 3,
+            "student_name": "赵六",
+            "company_name": "Morgan Stanley",
+            "position_name": "IBD Analyst",
+            "stage": "R2",
+            "city": "New York",
+            "coaching_status": "coaching",
+            "submitted_at": datetime(2026, 1, 18, 12, 0, 0),
+            "interview_time": datetime(2026, 1, 30, 15, 0, 0),
+            "hours_used": 8,
+            "mentor_background": "Runtime Backfill Mentor",
+            "feedback_summary": "runtime job overview coaching chain",
+            "assign_status": "assigned",
+        },
+    ]
+
+    try:
+        with conn.cursor() as cur:
+            runtime_mentor_id, runtime_mentor_name = resolve_runtime_mentor_user(cur)
+            lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
+            mentors = resolve_seed_mentors(cur, minimum=2)
+
+            for index in range(max(count, 1)):
+                for spec in specs:
+                    student_id = 997000000000 + index * 100 + spec["student_id_offset"]
+                    student_name = spec["student_name"] if index == 0 else f'{spec["student_name"]}-{index + 1}'
+
+                    ensure_student(
+                        cur,
+                        student_id=student_id,
+                        student_name=student_name,
+                        email=f"job-overview-unlock-{student_id}@example.com",
+                        lead_mentor_id=lead_mentor_id,
+                        remark="job overview unlock runtime seed",
+                    )
+
+                    position_id = resolve_existing_position_id(
+                        cur,
+                        company_name=spec["company_name"],
+                        position_name=spec["position_name"],
+                        region="na",
+                        city=spec["city"],
+                        project_year="2026",
+                    )
+                    if position_id is None:
+                        position_id = ensure_position(
+                            cur,
+                            company_name=spec["company_name"],
+                            position_name=spec["position_name"],
+                            industry="Consulting",
+                            region="na",
+                            city=spec["city"],
+                            recruitment_cycle="2026 Summer",
+                            project_year="2026",
+                            now=seed_now - timedelta(minutes=index),
+                        )
+
+                    cur.execute(
+                        """
+                        insert into osg_job_application (
+                            student_id,
+                            position_id,
+                            student_name,
+                            company_name,
+                            position_name,
+                            region,
+                            city,
+                            current_stage,
+                            interview_time,
+                            coaching_status,
+                            lead_mentor_id,
+                            lead_mentor_name,
+                            assign_status,
+                            requested_mentor_count,
+                            preferred_mentor_names,
+                            stage_updated,
+                            submitted_at,
+                            create_by,
+                            update_by,
+                            remark
+                        ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            student_id,
+                            position_id,
+                            student_name,
+                            spec["company_name"],
+                            spec["position_name"],
+                            "na",
+                            spec["city"],
+                            spec["stage"],
+                            spec["interview_time"],
+                            spec["coaching_status"],
+                            lead_mentor_id,
+                            lead_mentor_name,
+                            spec["assign_status"],
+                            1,
+                            runtime_mentor_name,
+                            0,
+                            spec["submitted_at"] - timedelta(minutes=index),
+                            "runtime_seed",
+                            "runtime_seed",
+                            "job overview unlock runtime seed",
+                        ),
+                    )
+                    application_id = int(cur.lastrowid)
+
+                    cur.execute(
+                        """
+                        insert into osg_coaching (
+                            application_id,
+                            student_id,
+                            mentor_id,
+                            mentor_name,
+                            mentor_ids,
+                            mentor_names,
+                            mentor_background,
+                            status,
+                            total_hours,
+                            feedback_summary,
+                            assign_note,
+                            assigned_at,
+                            create_by,
+                            update_by,
+                            remark
+                        ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            application_id,
+                            student_id,
+                            runtime_mentor_id,
+                            runtime_mentor_name,
+                            str(runtime_mentor_id),
+                            runtime_mentor_name,
+                            spec["mentor_background"],
+                            spec["coaching_status"],
+                            spec["hours_used"],
+                            spec["feedback_summary"],
+                            "job overview unlock runtime seed",
+                            spec["submitted_at"],
+                            "runtime_seed",
+                            "runtime_seed",
+                            "job overview unlock runtime seed",
+                        ),
+                    )
+
+                    created.append(
+                        {
+                            "application_id": application_id,
+                            "student_id": student_id,
+                            "student_name": student_name,
+                            "company_name": spec["company_name"],
+                            "position_name": spec["position_name"],
+                            "current_stage": spec["stage"],
+                            "coachingStatus": spec["coaching_status"],
+                            "interviewTime": spec["interview_time"].isoformat(),
+                        }
+                    )
+
+        conn.commit()
+        return created
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def seed_student_applications_unlock(env_file: Path) -> list[dict[str, object]]:
+    now = datetime.now().replace(microsecond=0)
+    business_suffix = now.strftime("%Y%m%d%H%M%S%f")
+    business_key = f"runtime-student-applications-unlock-{business_suffix}"
+    position_title = "IB Analyst"
+    company_name = "Goldman Sachs"
+    position_id = None
+
+    conn = connect(env_file)
+    try:
+        with conn.cursor() as cur:
+            user = resolve_active_user_by_username(cur, "student_demo")
+            if user is None:
+                raise RuntimeError("student_demo user not found for student-applications-unlock seed")
+            user_id, user_name = user
+
+            student = resolve_student_by_email(cur, "student_demo@osg.local")
+            if student is None:
+                raise RuntimeError("student_demo osg_student row not found for student-applications-unlock seed")
+            student_id, student_name = student
+            lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
+
+            public_position_id = resolve_existing_position_id(
+                cur,
+                company_name=company_name,
+                position_name=position_title,
+                region="na",
+                city="Hong Kong",
+                project_year="2026",
+            )
+            if public_position_id is None:
+                public_position_id = ensure_position(
+                    cur,
+                    company_name=company_name,
+                    position_name=position_title,
+                    industry="Investment Bank",
+                    region="na",
+                    city="Hong Kong",
+                    recruitment_cycle="2026 Summer",
+                    project_year="2026",
+                    now=now,
+                )
+
+            cur.execute(
+                """
+                insert into osg_student_job_position (
+                    position_id,
+                    business_key,
+                    title,
+                    company,
+                    category,
+                    department,
+                    location,
+                    recruit_cycle,
+                    publish_date,
+                    deadline,
+                    position_url,
+                    career_url,
+                    company_key,
+                    company_code,
+                    industry,
+                    requirements,
+                    source_type,
+                    owner_user_id
+                ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                on duplicate key update
+                    business_key = values(business_key),
+                    title = values(title),
+                    company = values(company),
+                    category = values(category),
+                    department = values(department),
+                    location = values(location),
+                    recruit_cycle = values(recruit_cycle),
+                    publish_date = values(publish_date),
+                    deadline = values(deadline),
+                    position_url = values(position_url),
+                    career_url = values(career_url),
+                    company_key = values(company_key),
+                    company_code = values(company_code),
+                    industry = values(industry),
+                    requirements = values(requirements),
+                    source_type = values(source_type),
+                    owner_user_id = values(owner_user_id)
+                """,
+                (
+                    public_position_id,
+                    business_key,
+                    position_title,
+                    company_name,
+                    "summer",
+                    "Investment Banking",
+                    "Hong Kong",
+                    "2026 Summer",
+                    now.date(),
+                    (now + timedelta(days=30)).date(),
+                    f"https://example.com/student-applications/{business_suffix}",
+                    "https://goldmansachs.com/careers",
+                    "gs",
+                    "GS",
+                    "Investment Bank",
+                    "runtime student applications unlock seed",
+                    "global",
+                    None,
+                ),
+            )
+
+            cur.execute(
+                """
+                delete from osg_job_application
+                where student_id = %s
+                  and company_name = %s
+                  and position_name = %s
+                """,
+                (
+                    student_id,
+                    company_name,
+                    position_title,
+                ),
+            )
+
+            cur.execute(
+                """
+                insert into osg_job_application (
+                    student_id,
+                    position_id,
+                    student_name,
+                    company_name,
+                    position_name,
+                    region,
+                    city,
+                    current_stage,
+                    interview_time,
+                    coaching_status,
+                    lead_mentor_id,
+                    lead_mentor_name,
+                    assign_status,
+                    requested_mentor_count,
+                    preferred_mentor_names,
+                    stage_updated,
+                    submitted_at,
+                    create_by,
+                    update_by,
+                    remark
+                ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    student_id,
+                    public_position_id,
+                    student_name,
+                    company_name,
+                    position_title,
+                    "na",
+                    "Hong Kong",
+                    "first",
+                    now + timedelta(days=2),
+                    "coaching",
+                    lead_mentor_id,
+                    lead_mentor_name,
+                    "assigned",
+                    1,
+                    lead_mentor_name,
+                    0,
+                    now - timedelta(hours=1),
+                    "runtime_seed",
+                    "runtime_seed",
+                    "student applications unlock runtime seed",
+                ),
+            )
+            position_id = int(public_position_id)
+
+        conn.commit()
+        return [
+            {
+                "seed_type": "student-applications-unlock",
+                "user_id": int(user_id),
+                "user_name": user_name,
+                "student_id": int(student_id),
+                "student_name": student_name,
+                "position_id": position_id,
+                "business_key": business_key,
+                "company": company_name,
+                "title": position_title,
+                "current_stage": "first",
+                "coachingStatus": "coaching",
+                "bucket": "ongoing",
+            }
+        ]
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def seed_student_applications_schedule_unlock(env_file: Path) -> list[dict[str, object]]:
+    now = datetime.now().replace(microsecond=0)
+    conn = connect(env_file)
+    created: list[dict[str, object]] = []
+
+    def company_short_label(company: str) -> str:
+        if company == "Goldman Sachs":
+            return "GS"
+        if company == "McKinsey":
+            return "MCK"
+        if company == "JP Morgan":
+            return "JPM"
+        initials = "".join(segment[0].upper() for segment in company.split() if segment)
+        return initials or "APP"
+
+    dict_specs = [
+        (8, "Final Round", "final_round", "orange"),
+        (9, "Case Interview", "case_interview", "gold"),
+    ]
+    application_specs = [
+        {
+            "company_name": "Goldman Sachs",
+            "position_name": "IB Analyst",
+            "position_industry": "Investment Bank",
+            "position_location": "Hong Kong",
+            "position_cycle": "2026 Summer",
+            "position_year": "2026",
+            "current_stage": "final_round",
+            "stage_label": "Final Round",
+            "interview_time": datetime(2026, 3, 31, 5, 49, 0),
+            "coaching_status": "coaching",
+            "assign_status": "assigned",
+            "apply_method": "官网投递",
+            "submitted_at": datetime(2026, 3, 29, 9, 0, 0),
+            "remark": "student applications schedule runtime seed",
+        },
+        {
+            "company_name": "McKinsey",
+            "position_name": "Business Analyst",
+            "position_industry": "Consulting",
+            "position_location": "Shanghai",
+            "position_cycle": "2026 Summer",
+            "position_year": "2026",
+            "current_stage": "case_interview",
+            "stage_label": "Case Interview",
+            "interview_time": datetime(2026, 4, 1, 10, 0, 0),
+            "coaching_status": "pending",
+            "assign_status": "pending",
+            "apply_method": "内推",
+            "submitted_at": datetime(2026, 3, 29, 9, 5, 0),
+            "remark": "student applications schedule runtime seed",
+        },
+    ]
+
+    try:
+        with conn.cursor() as cur:
+            user = resolve_active_user_by_username(cur, "student_demo")
+            if user is None:
+                raise RuntimeError("student_demo user not found for student-applications-schedule-unlock seed")
+            user_id, user_name = user
+
+            student = resolve_student_by_email(cur, "student_demo@osg.local")
+            if student is None:
+                raise RuntimeError("student_demo osg_student row not found for student-applications-schedule-unlock seed")
+            student_id, student_name = student
+            lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
+
+            for sort, label, value, css_class in dict_specs:
+                cur.execute(
+                    """
+                    insert into sys_dict_data (
+                        dict_sort,
+                        dict_label,
+                        dict_value,
+                        dict_type,
+                        css_class,
+                        list_class,
+                        is_default,
+                        status,
+                        remark,
+                        create_by,
+                        create_time,
+                        update_by,
+                        update_time
+                    ) values (%s, %s, %s, %s, %s, %s, 'N', '0', %s, 'runtime_seed', sysdate(), 'runtime_seed', sysdate())
+                    on duplicate key update
+                        dict_sort = values(dict_sort),
+                        dict_label = values(dict_label),
+                        css_class = values(css_class),
+                        list_class = values(list_class),
+                        status = values(status),
+                        remark = values(remark),
+                        update_by = values(update_by),
+                        update_time = values(update_time)
+                    """,
+                    (
+                        sort,
+                        label,
+                        value,
+                        "osg_student_position_progress_stage",
+                        css_class,
+                        None,
+                        "岗位进度",
+                    ),
+                )
+
+            for spec in application_specs:
+                position_id = resolve_existing_position_id(
+                    cur,
+                    company_name=spec["company_name"],
+                    position_name=spec["position_name"],
+                    region="na",
+                    city=spec["position_location"],
+                    project_year=spec["position_year"],
+                )
+                if position_id is None:
+                    position_id = ensure_position(
+                        cur,
+                        company_name=spec["company_name"],
+                        position_name=spec["position_name"],
+                        industry=spec["position_industry"],
+                        region="na",
+                        city=spec["position_location"],
+                        recruitment_cycle=spec["position_cycle"],
+                        project_year=spec["position_year"],
+                        now=now,
+                    )
+
+                cur.execute(
+                    """
+                    select application_id
+                    from osg_job_application
+                    where student_id = %s
+                      and company_name = %s
+                      and position_name = %s
+                    order by submitted_at desc, application_id desc
+                    limit 1
+                    """,
+                    (student_id, spec["company_name"], spec["position_name"]),
+                )
+                existing = cur.fetchone()
+                short_label = f"{company_short_label(spec['company_name'])} {spec['stage_label']}"
+
+                if existing is None:
+                    cur.execute(
+                        """
+                        insert into osg_job_application (
+                            student_id,
+                            position_id,
+                            student_name,
+                            company_name,
+                            position_name,
+                            region,
+                            city,
+                            current_stage,
+                            interview_time,
+                            coaching_status,
+                            lead_mentor_id,
+                            lead_mentor_name,
+                            assign_status,
+                            requested_mentor_count,
+                            preferred_mentor_names,
+                            stage_updated,
+                            submitted_at,
+                            create_by,
+                            update_by,
+                            remark
+                        ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            student_id,
+                            position_id,
+                            student_name,
+                            spec["company_name"],
+                            spec["position_name"],
+                            "na",
+                            spec["position_location"],
+                            spec["current_stage"],
+                            spec["interview_time"],
+                            spec["coaching_status"],
+                            lead_mentor_id,
+                            lead_mentor_name,
+                            spec["assign_status"],
+                            1,
+                            lead_mentor_name,
+                            0,
+                            spec["submitted_at"],
+                            "runtime_seed",
+                            "runtime_seed",
+                            spec["remark"],
+                        ),
+                    )
+                    application_id = int(cur.lastrowid)
+                else:
+                    application_id = int(existing[0])
+                    cur.execute(
+                        """
+                        update osg_job_application
+                           set position_id = %s,
+                               student_name = %s,
+                               current_stage = %s,
+                               interview_time = %s,
+                               coaching_status = %s,
+                               lead_mentor_id = %s,
+                               lead_mentor_name = %s,
+                               assign_status = %s,
+                               requested_mentor_count = %s,
+                               preferred_mentor_names = %s,
+                               stage_updated = %s,
+                               submitted_at = %s,
+                               update_by = %s,
+                               update_time = sysdate(),
+                               remark = %s
+                         where application_id = %s
+                        """,
+                        (
+                            position_id,
+                            student_name,
+                            spec["current_stage"],
+                            spec["interview_time"],
+                            spec["coaching_status"],
+                            lead_mentor_id,
+                            lead_mentor_name,
+                            spec["assign_status"],
+                            1,
+                            lead_mentor_name,
+                            0,
+                            spec["submitted_at"],
+                            "runtime_seed",
+                            spec["remark"],
+                            application_id,
+                        ),
+                    )
+
+                created.append(
+                    {
+                        "seed_type": "student-applications-schedule-unlock",
+                        "user_id": int(user_id),
+                        "user_name": user_name,
+                        "student_id": int(student_id),
+                        "student_name": student_name,
+                        "position_id": position_id,
+                        "application_id": application_id,
+                        "company": spec["company_name"],
+                        "title": spec["position_name"],
+                        "current_stage": spec["current_stage"],
+                        "shortLabel": short_label,
+                        "interviewTime": spec["interview_time"].isoformat(),
                     }
                 )
 
@@ -916,6 +2179,7 @@ def seed_mock_practice(env_file: Path, count: int) -> list[dict[str, object]]:
     try:
         with conn.cursor() as cur:
             mentors = resolve_seed_mentors(cur, minimum=2)
+            runtime_mentor_id, runtime_mentor_name = resolve_runtime_mentor_user(cur)
             lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
             primary_mentor_name = mentors[0][1]
             secondary_mentor_name = mentors[1][1]
@@ -1019,10 +2283,10 @@ def seed_mock_practice(env_file: Path, count: int) -> list[dict[str, object]]:
                         "communication_test",
                         f"Runtime Mock Feedback {suffix}",
                         1,
-                        lead_mentor_name,
+                        runtime_mentor_name,
                         "completed",
-                        str(lead_mentor_id),
-                        lead_mentor_name,
+                        str(runtime_mentor_id),
+                        runtime_mentor_name,
                         "Lead Mentor Runtime Coach",
                         now - timedelta(days=1),
                         2,
@@ -1055,6 +2319,101 @@ def seed_mock_practice(env_file: Path, count: int) -> list[dict[str, object]]:
         conn.close()
 
 
+def seed_mock_practice_new(env_file: Path, count: int) -> list[dict[str, object]]:
+    now = datetime.now().replace(microsecond=0)
+    created: list[dict[str, object]] = []
+    base = int(now.timestamp())
+
+    conn = connect(env_file)
+    try:
+        with conn.cursor() as cur:
+            mentors = resolve_seed_mentors(cur, minimum=2)
+            runtime_mentor_id, runtime_mentor_name = resolve_runtime_mentor_user(cur)
+            lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
+            primary_mentor_name = mentors[0][1]
+            secondary_mentor_name = mentors[1][1]
+
+            for index in range(count):
+                suffix = f"{base % 100000}-{index + 1}"
+                student_id = 994000000000 + base * 10 + index
+                student_name = f"Mock New {suffix}"
+                practice_type = "mock_interview" if index % 2 == 0 else "relation_test"
+                request_content = f"Runtime Mock New {suffix}"
+
+                ensure_student(
+                    cur,
+                    student_id=student_id,
+                    student_name=student_name,
+                    email=f"mock-practice-new-{student_id}@example.com",
+                    lead_mentor_id=lead_mentor_id,
+                    remark="mock practice new runtime seed",
+                )
+
+                cur.execute(
+                    """
+                    insert into osg_mock_practice (
+                        student_id,
+                        student_name,
+                        practice_type,
+                        request_content,
+                        requested_mentor_count,
+                        preferred_mentor_names,
+                        status,
+                        mentor_ids,
+                        mentor_names,
+                        mentor_backgrounds,
+                        scheduled_at,
+                        completed_hours,
+                        feedback_rating,
+                        feedback_summary,
+                        submitted_at,
+                        create_by,
+                        update_by,
+                        remark
+                    ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        student_id,
+                        student_name,
+                        practice_type,
+                        request_content,
+                        2,
+                        f"{primary_mentor_name}, {secondary_mentor_name}",
+                        "new",
+                        str(runtime_mentor_id),
+                        runtime_mentor_name,
+                        "Lead Mentor Runtime Coach",
+                        None,
+                        0,
+                        None,
+                        None,
+                        now - timedelta(minutes=15 + index),
+                        "runtime_seed",
+                        "runtime_seed",
+                        "mock practice new runtime seed",
+                    ),
+                )
+                created.append(
+                    {
+                        "practice_id": int(cur.lastrowid),
+                        "student_id": student_id,
+                        "student_name": student_name,
+                        "request_content": request_content,
+                        "mentor_ids": [runtime_mentor_id],
+                        "mentor_names": [runtime_mentor_name],
+                        "status": "new",
+                    }
+                )
+
+        conn.commit()
+        return created
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def seed_mock_practice_ack_ready(env_file: Path, count: int) -> list[dict[str, object]]:
     now = datetime.now().replace(microsecond=0)
     created: list[dict[str, object]] = []
@@ -1063,6 +2422,7 @@ def seed_mock_practice_ack_ready(env_file: Path, count: int) -> list[dict[str, o
     conn = connect(env_file)
     try:
         with conn.cursor() as cur:
+            runtime_mentor_id, runtime_mentor_name = resolve_runtime_mentor_user(cur)
             lead_mentor_id, lead_mentor_name = resolve_lead_mentor_runtime_user(cur)
 
             for index in range(count):
@@ -1108,10 +2468,10 @@ def seed_mock_practice_ack_ready(env_file: Path, count: int) -> list[dict[str, o
                         "mock_interview",
                         f"Runtime Mock Ack {suffix}",
                         1,
-                        lead_mentor_name,
+                        runtime_mentor_name,
                         "scheduled",
-                        str(lead_mentor_id),
-                        lead_mentor_name,
+                        str(runtime_mentor_id),
+                        runtime_mentor_name,
                         "Lead Mentor Runtime Coach",
                         now + timedelta(hours=2),
                         0,
@@ -1143,6 +2503,173 @@ def seed_mock_practice_ack_ready(env_file: Path, count: int) -> list[dict[str, o
         conn.close()
 
 
+def seed_student_profile_pending_changes(env_file: Path) -> list[dict[str, object]]:
+    conn = connect(env_file)
+    try:
+        with conn.cursor() as cur:
+            user = resolve_active_user_by_username(cur, "student_demo")
+            if user is None:
+                raise RuntimeError("student_demo user not found for student-profile-pending-changes seed")
+            user_id, user_name = user
+
+            student = resolve_student_by_email(cur, "student_demo@osg.local")
+            student_id = int(student[0]) if student is not None else int(user_id)
+            student_name = str(student[1]) if student is not None else user_name
+
+            cur.execute(
+                """
+                insert into osg_student_profile (
+                    user_id,
+                    student_code,
+                    full_name,
+                    english_name,
+                    email,
+                    sex_label,
+                    lead_mentor,
+                    assistant_name,
+                    school,
+                    major,
+                    graduation_year,
+                    high_school,
+                    postgraduate_plan,
+                    visa_status,
+                    target_region,
+                    recruitment_cycle,
+                    primary_direction,
+                    secondary_direction,
+                    phone,
+                    wechat_id
+                ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                on duplicate key update
+                    student_code = values(student_code),
+                    full_name = values(full_name),
+                    english_name = values(english_name),
+                    email = values(email),
+                    sex_label = values(sex_label),
+                    lead_mentor = values(lead_mentor),
+                    assistant_name = values(assistant_name),
+                    school = values(school),
+                    major = values(major),
+                    graduation_year = values(graduation_year),
+                    high_school = values(high_school),
+                    postgraduate_plan = values(postgraduate_plan),
+                    visa_status = values(visa_status),
+                    target_region = values(target_region),
+                    recruitment_cycle = values(recruitment_cycle),
+                    primary_direction = values(primary_direction),
+                    secondary_direction = values(secondary_direction),
+                    phone = values(phone),
+                    wechat_id = values(wechat_id)
+                """,
+                (
+                    user_id,
+                    "12766",
+                    "Emily Zhang",
+                    "Emily Zhang",
+                    "emily@example.com",
+                    "Female",
+                    "Test Lead Mentor",
+                    "-",
+                    "NYU",
+                    "Finance",
+                    "2025",
+                    "-",
+                    "否",
+                    "F1",
+                    "亚太 - 香港",
+                    "2025 Summer",
+                    "金融 Finance",
+                    "IB 投行",
+                    "+1 123-456-7890",
+                    "emily_zhang",
+                ),
+            )
+
+            cur.execute("delete from osg_student_profile_change where user_id = %s", (user_id,))
+            cur.execute("delete from osg_student_change_request where student_id = %s", (student_id,))
+
+            change_specs = [
+                ("school", "学校", "NYU", "Columbia University"),
+                ("recruitmentCycle", "招聘周期", "2025 Summer", "2025 Full-time"),
+            ]
+
+            for field_key, field_label, old_value, new_value in change_specs:
+                cur.execute(
+                    """
+                    insert into osg_student_change_request (
+                        student_id,
+                        change_type,
+                        field_key,
+                        field_label,
+                        before_value,
+                        after_value,
+                        status,
+                        requested_by,
+                        create_by,
+                        update_by,
+                        remark
+                    ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        student_id,
+                        "学生资料",
+                        field_key,
+                        field_label,
+                        old_value,
+                        new_value,
+                        "pending",
+                        "runtime_seed",
+                        "runtime_seed",
+                        "runtime_seed",
+                        "student profile pending change runtime seed",
+                    ),
+                )
+
+                cur.execute(
+                    """
+                    insert into osg_student_profile_change (
+                        user_id,
+                        field_key,
+                        field_label,
+                        old_value,
+                        new_value,
+                        status,
+                        submitted_at
+                    ) values (%s, %s, %s, %s, %s, %s, sysdate())
+                    """,
+                    (
+                        user_id,
+                        field_key,
+                        field_label,
+                        old_value,
+                        new_value,
+                        "pending",
+                    ),
+                )
+
+        conn.commit()
+        return [
+            {
+                "seed_type": "student-profile-pending-changes",
+                "user_id": int(user_id),
+                "user_name": user_name,
+                "student_id": int(student_id),
+                "student_name": student_name,
+                "fieldKey": field_key,
+                "fieldLabel": field_label,
+                "oldValue": old_value,
+                "newValue": new_value,
+                "pendingChanges": [field_key],
+            }
+            for field_key, field_label, old_value, new_value in change_specs
+        ]
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def seed_student_hours(env_file: Path, count: int) -> list[dict[str, object]]:
     now = datetime.now().replace(microsecond=0)
     created: list[dict[str, object]] = []
@@ -1151,7 +2678,8 @@ def seed_student_hours(env_file: Path, count: int) -> list[dict[str, object]]:
     conn = connect(env_file)
     try:
         with conn.cursor() as cur:
-            mentor_id, mentor_name, hourly = resolve_seed_mentor(cur)
+            _, _, hourly = resolve_seed_mentor(cur)
+            mentor_id, mentor_name = resolve_runtime_mentor_user(cur)
             lead_mentor_id, _ = resolve_lead_mentor_runtime_user(cur)
 
             for index in range(count):
@@ -1268,6 +2796,363 @@ def seed_student_hours(env_file: Path, count: int) -> list[dict[str, object]]:
                     }
                 )
 
+            insert_student_demo_course_record(
+                cur,
+                mentor_id=mentor_id,
+                mentor_name=mentor_name,
+                now=now,
+                rate="",
+                remark="student hours runtime seed for student_demo",
+            )
+
+        conn.commit()
+        return created
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def seed_student_demo_course_record(env_file: Path) -> dict[str, object]:
+    now = datetime.now().replace(microsecond=0)
+    conn = connect(env_file)
+    try:
+        with conn.cursor() as cur:
+            mentor_id, mentor_name, _ = resolve_seed_mentor(cur)
+            record = insert_student_demo_course_record(
+                cur,
+                mentor_id=mentor_id,
+                mentor_name=mentor_name,
+                now=now,
+                rate="",
+                remark="student demo course runtime seed",
+            )
+        conn.commit()
+        return record
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def seed_student_demo_course_bundle(env_file: Path) -> list[dict[str, object]]:
+    now = datetime.now().replace(microsecond=0)
+    conn = connect(env_file)
+    try:
+        with conn.cursor() as cur:
+            mentor_id, mentor_name, _ = resolve_seed_mentor(cur)
+            student_demo = resolve_student_by_email(cur, "student_demo@osg.local")
+            if student_demo is None:
+                raise RuntimeError("student_demo main data missing, cannot seed course bundle")
+
+            demo_student_id, demo_student_name = student_demo
+            bundle_specs = [
+                {
+                    "class_id": f"STU-DEMO-BUNDLE-{int(now.timestamp())}-1",
+                    "mentor_name": "Jerry Li",
+                    "course_type": "basic_course",
+                    "class_status": "case_prep",
+                    "rate": "",
+                    "comment": "student demo course runtime bundle pending",
+                    "review_remark": "student demo course runtime bundle pending",
+                },
+                {
+                    "class_id": f"STU-DEMO-BUNDLE-{int(now.timestamp())}-2",
+                    "mentor_name": "Jerry Li",
+                    "course_type": "mock_practice",
+                    "class_status": "networking_midterm",
+                    "rate": "5",
+                    "comment": "student demo course runtime bundle networking midterm",
+                    "review_remark": "student demo course runtime bundle networking midterm",
+                },
+                {
+                    "class_id": f"STU-DEMO-BUNDLE-{int(now.timestamp())}-3",
+                    "mentor_name": "Sarah Chen",
+                    "course_type": "mock_practice",
+                    "class_status": "mock_midterm",
+                    "rate": "4",
+                    "comment": "student demo course runtime bundle mock midterm",
+                    "review_remark": "student demo course runtime bundle mock midterm",
+                },
+            ]
+
+            created: list[dict[str, object]] = []
+            for index, spec in enumerate(bundle_specs):
+                class_date = now - timedelta(days=index + 1)
+                submitted_at = now - timedelta(hours=2 + index)
+                reviewed_at = now - timedelta(hours=1 + index)
+                cur.execute(
+                    """
+                    insert into osg_class_record (
+                        class_id,
+                        mentor_id,
+                        mentor_name,
+                        student_id,
+                        student_name,
+                        course_type,
+                        course_source,
+                        class_date,
+                        duration_hours,
+                        weekly_hours,
+                        status,
+                        class_status,
+                        rate,
+                        topics,
+                        comments,
+                        feedback_content,
+                        review_remark,
+                        reviewed_at,
+                        submitted_at,
+                        create_by,
+                        update_by,
+                        remark
+                    ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        spec["class_id"],
+                        mentor_id,
+                        spec["mentor_name"],
+                        demo_student_id,
+                        demo_student_name,
+                        spec["course_type"],
+                        "mentor",
+                        class_date,
+                        3.5,
+                        3.5,
+                        "approved",
+                        spec["class_status"],
+                        spec["rate"],
+                        "",
+                        spec["comment"],
+                        spec["comment"],
+                        spec["review_remark"],
+                        reviewed_at,
+                        submitted_at,
+                        "runtime_seed",
+                        "runtime_seed",
+                        "student demo course runtime bundle",
+                    ),
+                )
+                created.append(
+                    {
+                        "class_id": spec["class_id"],
+                        "student_id": demo_student_id,
+                        "student_name": demo_student_name,
+                        "mentor_id": mentor_id,
+                        "mentor_name": spec["mentor_name"],
+                        "course_type": spec["course_type"],
+                        "class_status": spec["class_status"],
+                        "status": "approved",
+                        "rate": spec["rate"],
+                    }
+                )
+
+        conn.commit()
+        return created
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def insert_student_demo_course_record(cur, *, mentor_id: int, mentor_name: str, now: datetime, rate: str = "", remark: str) -> dict[str, object]:
+    student_demo = resolve_student_by_email(cur, "student_demo@osg.local")
+    if student_demo is None:
+        raise RuntimeError("student_demo main data missing, cannot seed course record")
+
+    demo_student_id, demo_student_name = student_demo
+    cur.execute(
+        """
+        insert into osg_class_record (
+            class_id,
+            mentor_id,
+            mentor_name,
+            student_id,
+            student_name,
+            course_type,
+            course_source,
+            class_date,
+            duration_hours,
+            weekly_hours,
+            status,
+            class_status,
+            rate,
+            topics,
+            comments,
+            feedback_content,
+            review_remark,
+            reviewed_at,
+            submitted_at,
+            create_by,
+            update_by,
+            remark
+        ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            f"STU-DEMO-{int(now.timestamp())}",
+            mentor_id,
+            mentor_name,
+            demo_student_id,
+            demo_student_name,
+            "mock_interview",
+            "mentor",
+            now - timedelta(days=1),
+            3.5,
+            3.5,
+            "approved",
+            "completed",
+            rate,
+            "",
+            "",
+            "",
+            "",
+            now - timedelta(hours=1),
+            now - timedelta(hours=2),
+            "runtime_seed",
+            "runtime_seed",
+            remark,
+        ),
+    )
+    return {
+        "class_id": f"STU-DEMO-{int(now.timestamp())}",
+        "student_id": demo_student_id,
+        "student_name": demo_student_name,
+        "mentor_id": mentor_id,
+        "mentor_name": mentor_name,
+        "course_type": "mock_interview",
+        "course_source": "mentor",
+        "status": "approved",
+        "class_status": "completed",
+        "record_type": "student_demo_course",
+    }
+
+
+def seed_class_records_unlock(env_file: Path, count: int) -> list[dict[str, object]]:
+    created: list[dict[str, object]] = []
+    conn = connect(env_file)
+    base_now = datetime(2026, 3, 21, 9, 0, 0)
+    record_specs = [
+        {
+            "class_id": "CR-UNLOCK-1",
+            "student_id": 998000000001,
+            "student_name": "张三",
+            "course_type": "mock_interview",
+            "course_source": "mentor",
+            "class_status": "mock_interview",
+            "rate": "5",
+            "topics": "runtime class record unlock",
+            "comments": "runtime class record unlock",
+            "feedback_content": "表现优秀，建议继续加强结构化表达",
+            "review_remark": "runtime class record unlock",
+            "class_date": datetime(2026, 3, 20, 9, 0, 0),
+            "submitted_at": datetime(2026, 3, 20, 7, 0, 0),
+            "rating_state": "rated",
+        },
+        {
+            "class_id": "CR-UNLOCK-2",
+            "student_id": 998000000002,
+            "student_name": "李四",
+            "course_type": "mock_interview",
+            "course_source": "mentor",
+            "class_status": "case_prep",
+            "rate": "",
+            "topics": "runtime class record unlock",
+            "comments": "runtime class record unlock",
+            "feedback_content": "课程已通过，待学员后续评价",
+            "review_remark": "runtime class record unlock",
+            "class_date": datetime(2026, 3, 19, 9, 0, 0),
+            "submitted_at": datetime(2026, 3, 19, 7, 0, 0),
+            "rating_state": "pending_rating",
+        },
+    ]
+
+    try:
+        with conn.cursor() as cur:
+            runtime_mentor_id, runtime_mentor_name = resolve_runtime_mentor_user(cur)
+            lead_mentor_id, _ = resolve_lead_mentor_runtime_user(cur)
+
+            for index in range(max(count, 1)):
+                for spec in record_specs:
+                    student_id = spec["student_id"] + index * 10
+                    student_name = spec["student_name"] if index == 0 else f'{spec["student_name"]}-{index + 1}'
+                    ensure_student(
+                        cur,
+                        student_id=student_id,
+                        student_name=student_name,
+                        email=f"class-record-unlock-{student_id}@example.com",
+                        lead_mentor_id=lead_mentor_id,
+                        remark="class records unlock runtime seed",
+                    )
+
+                    cur.execute(
+                        """
+                        insert into osg_class_record (
+                            class_id,
+                            mentor_id,
+                            mentor_name,
+                            student_id,
+                            student_name,
+                            course_type,
+                            course_source,
+                            class_date,
+                            duration_hours,
+                            weekly_hours,
+                            status,
+                            class_status,
+                            rate,
+                            topics,
+                            comments,
+                            feedback_content,
+                            review_remark,
+                            reviewed_at,
+                            submitted_at,
+                            create_by,
+                            update_by,
+                            remark
+                        ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            spec["class_id"] if index == 0 else f'{spec["class_id"]}-{index + 1}',
+                            runtime_mentor_id,
+                            runtime_mentor_name,
+                            student_id,
+                            student_name,
+                            spec["course_type"],
+                            spec["course_source"],
+                            spec["class_date"] - timedelta(days=index),
+                            1.5,
+                            1.5,
+                            "approved",
+                            spec["class_status"],
+                            spec["rate"],
+                            spec["topics"],
+                            spec["comments"],
+                            spec["feedback_content"],
+                            spec["review_remark"],
+                            base_now - timedelta(hours=index),
+                            spec["submitted_at"] - timedelta(days=index),
+                            "runtime_seed",
+                            "runtime_seed",
+                            "class records unlock runtime seed",
+                        ),
+                    )
+
+                    created.append(
+                        {
+                            "class_id": spec["class_id"] if index == 0 else f'{spec["class_id"]}-{index + 1}',
+                            "student_id": student_id,
+                            "student_name": student_name,
+                            "status": "approved",
+                            "ratingState": spec["rating_state"],
+                            "rate": spec["rate"],
+                            "mentor_id": runtime_mentor_id,
+                            "mentor_name": runtime_mentor_name,
+                        }
+                    )
+
         conn.commit()
         return created
     except Exception:
@@ -1351,8 +3236,18 @@ def main() -> int:
             "report",
             "student-position",
             "job-overview",
+            "job-overview-unlock",
             "mock-practice",
-            "mock-practice-ack-ready",
+            "mock-practice-new",
+                "mock-practice-ack-ready",
+                "student-applications-unlock",
+                "student-applications-schedule-unlock",
+                "student-profile-pending-changes",
+                "class-records-unlock",
+            "student-course-record",
+            "student-course-record-bundle",
+            "student-position-favorite-only",
+            "student-position-acceptance-unlock",
             "student-hours",
             "staff-change-request",
         ],
@@ -1386,11 +3281,23 @@ def main() -> int:
             "count": args.count,
             "created": seed_job_overview(env_file, args.count),
         }
+    elif args.target == "job-overview-unlock":
+        result = {
+            "target": "job-overview-unlock",
+            "count": args.count,
+            "created": seed_job_overview_unlock(env_file, args.count),
+        }
     elif args.target == "mock-practice":
         result = {
             "target": "mock-practice",
             "count": args.count,
             "created": seed_mock_practice(env_file, args.count),
+        }
+    elif args.target == "mock-practice-new":
+        result = {
+            "target": "mock-practice-new",
+            "count": args.count,
+            "created": seed_mock_practice_new(env_file, args.count),
         }
     elif args.target == "mock-practice-ack-ready":
         result = {
@@ -1398,11 +3305,59 @@ def main() -> int:
             "count": args.count,
             "created": seed_mock_practice_ack_ready(env_file, args.count),
         }
+    elif args.target == "student-applications-unlock":
+        result = {
+            "target": "student-applications-unlock",
+            "count": args.count,
+            "created": seed_student_applications_unlock(env_file),
+        }
+    elif args.target == "student-applications-schedule-unlock":
+        result = {
+            "target": "student-applications-schedule-unlock",
+            "count": args.count,
+            "created": seed_student_applications_schedule_unlock(env_file),
+        }
+    elif args.target == "student-profile-pending-changes":
+        result = {
+            "target": "student-profile-pending-changes",
+            "count": args.count,
+            "created": seed_student_profile_pending_changes(env_file),
+        }
     elif args.target == "student-hours":
         result = {
             "target": "student-hours",
             "count": args.count,
             "created": seed_student_hours(env_file, args.count),
+        }
+    elif args.target == "student-course-record":
+        result = {
+            "target": "student-course-record",
+            "count": args.count,
+            "created": [seed_student_demo_course_record(env_file)],
+        }
+    elif args.target == "student-course-record-bundle":
+        result = {
+            "target": "student-course-record-bundle",
+            "count": args.count,
+            "created": seed_student_demo_course_bundle(env_file),
+        }
+    elif args.target == "student-position-favorite-only":
+        result = {
+            "target": "student-position-favorite-only",
+            "count": args.count,
+            "created": seed_student_position_favorite_only(env_file),
+        }
+    elif args.target == "student-position-acceptance-unlock":
+        result = {
+            "target": "student-position-acceptance-unlock",
+            "count": args.count,
+            "created": seed_student_position_acceptance_unlock(env_file),
+        }
+    elif args.target == "class-records-unlock":
+        result = {
+            "target": "class-records-unlock",
+            "count": args.count,
+            "created": seed_class_records_unlock(env_file, args.count),
         }
     elif args.target == "staff-change-request":
         result = {

@@ -3,12 +3,17 @@ package com.ruoyi.system.service.impl;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +35,7 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
     private static final String SCOPE_COACHING = "coaching";
     private static final String SCOPE_MANAGED = "managed";
     private static final Set<String> SUPPORTED_SCOPES = Set.of(SCOPE_PENDING, SCOPE_COACHING, SCOPE_MANAGED);
+    private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
 
     @Autowired
     private OsgJobApplicationMapper jobApplicationMapper;
@@ -48,6 +54,7 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
     {
         String resolvedScope = normalizeScope(scope);
         List<OsgJobApplication> rows = selectScopedApplications(resolvedScope, query, currentUserId);
+        rows = filterRowsByQuery(rows, normalizeQuery(query));
         Map<Long, OsgCoaching> coachingMap = selectCoachingMap();
         return rows.stream()
             .sorted(Comparator.comparing(OsgJobApplication::getSubmittedAt, Comparator.nullsLast(Date::compareTo)).reversed())
@@ -215,17 +222,48 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         }
         if (SCOPE_COACHING.equals(scope))
         {
+            OsgJobApplication managedQuery = normalizeQuery(rawQuery);
+            managedQuery.setLeadMentorId(currentUserId);
+            List<OsgJobApplication> managedRows = jobApplicationMapper.selectJobApplicationList(managedQuery);
+            List<OsgJobApplication> visibleRows = mergeApplications(rows, managedRows);
             Set<Long> coachingApplicationIds = resolveCoachingApplicationIds(currentUserId);
-            Map<Long, OsgStudent> studentMap = loadStudentMap(rows.stream()
+            visibleRows = mergeApplications(visibleRows,
+                filterRowsByQuery(selectMissingApplications(coachingApplicationIds, visibleRows), normalizedQuery));
+            Map<Long, OsgStudent> studentMap = loadStudentMap(visibleRows.stream()
                 .map(OsgJobApplication::getStudentId)
                 .filter(Objects::nonNull)
                 .toList());
-            return rows.stream()
+            return visibleRows.stream()
                 .filter(row -> coachingApplicationIds.contains(row.getApplicationId())
+                    || canManage(row, currentUserId)
                     || hasAssistantOwnership(row, currentUserId, studentMap))
                 .toList();
         }
         return rows;
+    }
+
+    private List<OsgJobApplication> mergeApplications(List<OsgJobApplication> primaryRows, List<OsgJobApplication> fallbackRows)
+    {
+        if ((primaryRows == null || primaryRows.isEmpty()) && (fallbackRows == null || fallbackRows.isEmpty()))
+        {
+            return List.of();
+        }
+
+        Map<Long, OsgJobApplication> merged = new LinkedHashMap<>();
+        mergeApplicationRows(merged, primaryRows);
+        mergeApplicationRows(merged, fallbackRows);
+        return new ArrayList<>(merged.values());
+    }
+
+    private void mergeApplicationRows(Map<Long, OsgJobApplication> merged, List<OsgJobApplication> rows)
+    {
+        if (rows == null || rows.isEmpty())
+        {
+            return;
+        }
+        rows.stream()
+            .filter(row -> row != null && row.getApplicationId() != null)
+            .forEach(row -> merged.putIfAbsent(row.getApplicationId(), row));
     }
 
     private OsgJobApplication requireAccessibleApplication(Long applicationId, Long currentUserId)
@@ -287,7 +325,90 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
             .filter(row -> row.getApplicationId() != null)
             .filter(row -> matchesMentorRelation(row, currentUserId))
             .map(OsgCoaching::getApplicationId)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private List<OsgJobApplication> selectMissingApplications(Set<Long> applicationIds, List<OsgJobApplication> existingRows)
+    {
+        if (applicationIds == null || applicationIds.isEmpty())
+        {
+            return List.of();
+        }
+
+        Set<Long> existingIds = existingRows == null ? Set.of() : existingRows.stream()
+            .map(OsgJobApplication::getApplicationId)
+            .filter(Objects::nonNull)
             .collect(Collectors.toSet());
+        List<Long> missingIds = applicationIds.stream()
+            .filter(applicationId -> !existingIds.contains(applicationId))
+            .toList();
+        if (missingIds.isEmpty())
+        {
+            return List.of();
+        }
+
+        List<OsgJobApplication> rows = jobApplicationMapper.selectJobApplicationsByIds(missingIds);
+        return rows == null ? List.of() : rows;
+    }
+
+    private List<OsgJobApplication> filterRowsByQuery(List<OsgJobApplication> rows, OsgJobApplication query)
+    {
+        if (rows == null || rows.isEmpty())
+        {
+            return List.of();
+        }
+        if (query == null)
+        {
+            return rows;
+        }
+        return rows.stream()
+            .filter(row -> matchesQuery(row, query))
+            .toList();
+    }
+
+    private boolean matchesQuery(OsgJobApplication row, OsgJobApplication query)
+    {
+        if (row == null)
+        {
+            return false;
+        }
+        if (query.getStudentName() != null && !containsText(row.getStudentName(), query.getStudentName()))
+        {
+            return false;
+        }
+        if (query.getCompanyName() != null && !Objects.equals(query.getCompanyName(), trimToNull(row.getCompanyName())))
+        {
+            return false;
+        }
+        if (query.getCurrentStage() != null && !Objects.equals(query.getCurrentStage(), trimToNull(row.getCurrentStage())))
+        {
+            return false;
+        }
+        if (query.getAssignStatus() != null && !Objects.equals(query.getAssignStatus(), trimToNull(row.getAssignStatus())))
+        {
+            return false;
+        }
+        if (!matchesMonth(row.getInterviewTime(), query.getMonth()))
+        {
+            return false;
+        }
+        if (!matchesStatus(row, query.getStatus()))
+        {
+            return false;
+        }
+        if (query.getKeyword() != null
+            && !containsText(row.getStudentName(), query.getKeyword())
+            && !containsText(row.getCompanyName(), query.getKeyword())
+            && !containsText(row.getPositionName(), query.getKeyword()))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean containsText(String source, String fragment)
+    {
+        return source != null && fragment != null && source.contains(fragment);
     }
 
     private Map<String, Object> toOverviewPayload(OsgJobApplication application, OsgCoaching coaching)
@@ -343,6 +464,8 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         normalized.setCurrentStage(trimToNull(query.getCurrentStage()));
         normalized.setKeyword(trimToNull(query.getKeyword()));
         normalized.setAssignStatus(trimToNull(query.getAssignStatus()));
+        normalized.setMonth(normalizeMonth(trimToNull(query.getMonth())));
+        normalized.setStatus(normalizeStatusFilter(firstText(query.getStatus(), query.getCoachingStatus())));
         return normalized;
     }
 
@@ -505,6 +628,83 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
             return null;
         }
         return value.trim();
+    }
+
+    private boolean matchesMonth(Date interviewTime, String month)
+    {
+        String normalizedMonth = normalizeMonth(month);
+        if (normalizedMonth == null)
+        {
+            return true;
+        }
+        if (interviewTime == null)
+        {
+            return false;
+        }
+        LocalDateTime dateTime = interviewTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        return MONTH_FORMATTER.format(dateTime).equals(normalizedMonth);
+    }
+
+    private boolean matchesStatus(OsgJobApplication row, String status)
+    {
+        String normalizedStatus = normalizeStatusFilter(status);
+        if (normalizedStatus == null)
+        {
+            return true;
+        }
+        String rowStatus = resolveStatusForQuery(row);
+        return normalizedStatus.equals(rowStatus);
+    }
+
+    private String normalizeMonth(String month)
+    {
+        String value = trimToNull(month);
+        if (value == null)
+        {
+            return null;
+        }
+        return value.length() >= 7 ? value.substring(0, 7) : value;
+    }
+
+    private String resolveStatusForQuery(OsgJobApplication row)
+    {
+        if (row == null)
+        {
+            return null;
+        }
+        String normalizedStatus = normalizeStatusFilter(firstText(row.getCoachingStatus(), row.getAssignStatus()));
+        if (normalizedStatus != null)
+        {
+            return normalizedStatus;
+        }
+        if (defaultNumber(row.getRequestedMentorCount()) > 0)
+        {
+            return "new";
+        }
+        return null;
+    }
+
+    private String normalizeStatusFilter(String status)
+    {
+        String value = trimToNull(status);
+        if (value == null)
+        {
+            return null;
+        }
+        String lower = value.toLowerCase(java.util.Locale.ROOT);
+        if ("new".equals(lower) || "pending".equals(lower) || "待审批".equals(value) || "新申请".equals(value))
+        {
+            return "new";
+        }
+        if ("coaching".equals(lower) || "辅导中".equals(value))
+        {
+            return "coaching";
+        }
+        if ("completed".equals(lower) || "已完成".equals(value))
+        {
+            return "completed";
+        }
+        return value;
     }
 
     private String defaultText(String value)

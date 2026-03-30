@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :open="visible"
     width="520px"
-    surface-id="staff-status-change-modal"
+    :surface-id="surfaceId"
     @cancel="handleClose"
   >
     <template #title>
@@ -27,31 +27,65 @@
       layout="vertical"
       :required-mark="false"
     >
-      <a-form-item v-if="requiresReason" name="reason">
-        <template #label>
+      <label
+        v-if="props.action === 'remove'"
+        class="staff-status-modal__field"
+        data-field-name="移出原因"
+      >
+        <a-form-item name="reason" class="staff-status-modal__form-item">
           <span class="staff-status-modal__label">
-            原因
+            {{ reasonLabel }}
             <span class="staff-status-modal__required">*</span>
           </span>
-        </template>
-        <a-select
-          v-model:value="formState.reason"
-          :placeholder="reasonPlaceholder"
-          :options="reasonOptions"
-        />
-      </a-form-item>
+          <a-select
+            v-model:value="formState.reason"
+            :placeholder="reasonPlaceholder"
+            :options="reasonOptions"
+          />
+        </a-form-item>
+      </label>
 
-      <a-form-item name="remark">
-        <template #label>
-          <span class="staff-status-modal__label">补充说明</span>
-        </template>
-        <a-textarea
-          v-model:value="formState.remark"
-          :rows="3"
-          :maxlength="120"
-          placeholder="可选，补充本次操作的背景说明"
-        />
-      </a-form-item>
+      <label
+        v-else-if="requiresReason"
+        class="staff-status-modal__field"
+        :data-field-name="reasonFieldName"
+      >
+        <a-form-item name="reason" class="staff-status-modal__form-item">
+          <span class="staff-status-modal__label">
+            {{ reasonLabel }}
+            <span class="staff-status-modal__required">*</span>
+          </span>
+          <a-select
+            v-model:value="formState.reason"
+            :placeholder="reasonPlaceholder"
+            :options="reasonOptions"
+          />
+        </a-form-item>
+      </label>
+
+      <label v-if="formState.reason === 'other'" class="staff-status-modal__field" data-field-name="其他原因说明">
+        <a-form-item name="otherReason" class="staff-status-modal__form-item">
+          <span class="staff-status-modal__label">其他原因说明</span>
+          <a-textarea
+            v-model:value="formState.otherReason"
+            :rows="3"
+            :maxlength="120"
+            placeholder="请补充其他原因"
+          />
+        </a-form-item>
+      </label>
+
+      <label class="staff-status-modal__field" data-field-name="备注说明">
+        <a-form-item name="remark" class="staff-status-modal__form-item">
+          <span class="staff-status-modal__label">备注说明</span>
+          <a-textarea
+            v-model:value="formState.remark"
+            :rows="3"
+            :maxlength="120"
+            placeholder="可选，补充本次操作的背景说明"
+          />
+        </a-form-item>
+      </label>
     </a-form>
 
     <template #footer>
@@ -89,6 +123,7 @@ const emit = defineEmits<{
 const formRef = ref()
 const formState = reactive({
   reason: undefined as string | undefined,
+  otherReason: '',
   remark: ''
 })
 
@@ -102,11 +137,22 @@ const reasonOptionMap: Record<'freeze' | 'blacklist', { label: string; value: st
   blacklist: [
     { label: '违规联系学员', value: 'contact_violation' },
     { label: '严重服务投诉', value: 'service_complaint' },
-    { label: '合作终止', value: 'cooperation_end' }
+    { label: '合作终止', value: 'cooperation_end' },
+    { label: '其他原因', value: 'other' }
   ]
 }
 
-const requiresReason = computed(() => props.action === 'freeze' || props.action === 'blacklist')
+const requiresReason = computed(() => true)
+
+const surfaceId = computed(() => {
+  if (props.action === 'blacklist') {
+    return 'modal-mentor-blacklist'
+  }
+  if (props.action === 'remove') {
+    return 'modal-remove-mentor-blacklist'
+  }
+  return 'modal-staff-status-change'
+})
 
 const modalTitle = computed(() => {
   if (props.action === 'freeze') {
@@ -120,6 +166,18 @@ const modalTitle = computed(() => {
   }
   return '移出黑名单'
 })
+
+const reasonLabel = computed(() => {
+  if (props.action === 'remove') {
+    return '移出原因'
+  }
+  if (props.action === 'blacklist') {
+    return '原因选择'
+  }
+  return '状态修改原因'
+})
+
+const reasonFieldName = computed(() => reasonLabel.value)
 
 const modalDescription = computed(() => {
   if (props.action === 'freeze') {
@@ -148,14 +206,23 @@ const actionIcon = computed(() => {
 })
 
 const reasonOptions = computed(() => {
-  if (props.action === 'freeze' || props.action === 'blacklist') {
-    return reasonOptionMap[props.action]
+  if (props.action === 'blacklist') {
+    return reasonOptionMap.blacklist
   }
-  return []
+  return reasonOptionMap.freeze
 })
 
 const reasonPlaceholder = computed(() => {
-  return props.action === 'freeze' ? '请选择禁用原因' : '请选择黑名单原因'
+  if (props.action === 'remove') {
+    return '请选择移出原因'
+  }
+  if (props.action === 'blacklist') {
+    return '请选择黑名单原因'
+  }
+  if (props.action === 'restore') {
+    return '请选择恢复原因'
+  }
+  return '请选择禁用原因'
 })
 
 const rules = computed(() => ({
@@ -164,6 +231,7 @@ const rules = computed(() => ({
 
 const resetForm = () => {
   formState.reason = undefined
+  formState.otherReason = ''
   formState.remark = ''
 }
 
@@ -187,18 +255,22 @@ const handleSubmit = async () => {
   emit('submit', {
     action: props.action,
     reason: formState.reason,
-    remark: formState.remark.trim() || undefined
+    remark: [formState.otherReason.trim(), formState.remark.trim()].filter(Boolean).join(' ') || undefined
   })
 }
 </script>
 
 <style scoped lang="scss">
-:global([data-surface-id="staff-status-change-modal"] [data-surface-part="header"]) {
+:global([data-surface-id="modal-staff-status-change"] [data-surface-part="header"]),
+:global([data-surface-id="modal-mentor-blacklist"] [data-surface-part="header"]),
+:global([data-surface-id="modal-remove-mentor-blacklist"] [data-surface-part="header"]) {
   background: linear-gradient(135deg, #7399C6, #5A7BA3);
   border-bottom: none;
 }
 
-:global([data-surface-id="staff-status-change-modal"] [data-surface-part="header"] .overlay-surface-modal__close) {
+:global([data-surface-id="modal-staff-status-change"] [data-surface-part="header"] .overlay-surface-modal__close),
+:global([data-surface-id="modal-mentor-blacklist"] [data-surface-part="header"] .overlay-surface-modal__close),
+:global([data-surface-id="modal-remove-mentor-blacklist"] [data-surface-part="header"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
@@ -262,5 +334,17 @@ const handleSubmit = async () => {
 
 .staff-status-modal__required {
   color: #dc2626;
+}
+
+.staff-status-modal__field {
+  display: block;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.staff-status-modal__form-item {
+  margin-bottom: 0;
 }
 </style>

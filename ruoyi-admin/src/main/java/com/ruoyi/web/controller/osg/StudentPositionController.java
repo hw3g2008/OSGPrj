@@ -106,12 +106,8 @@ public class StudentPositionController extends BaseController
     @PostMapping("/manual")
     public AjaxResult manual(@RequestBody Map<String, Object> params)
     {
-        String category = params.get("category").toString();
-        String title = params.get("title").toString();
-        String company = params.get("company").toString();
-        String location = params.get("location").toString();
         Long userId = getUserId();
-        Long positionId = positionService.createManualPosition(category, title, company, location, userId);
+        Long positionId = positionService.createManualPosition(params, userId);
         return success(Map.of("positionId", positionId));
     }
 }

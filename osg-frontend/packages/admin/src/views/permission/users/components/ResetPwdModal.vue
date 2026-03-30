@@ -51,7 +51,7 @@
 
     <template #footer>
       <div data-content-part="action-row" class="reset-pwd-modal__actions">
-        <a-button class="reset-pwd-modal__cancel-btn" @click="handleClose">取消</a-button>
+        <a-button class="reset-pwd-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose"><span>取消</span></a-button>
         <a-button
           type="primary"
           :loading="loading"

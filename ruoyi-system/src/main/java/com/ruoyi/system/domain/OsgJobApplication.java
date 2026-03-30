@@ -45,6 +45,10 @@ public class OsgJobApplication extends BaseEntity
 
     private Date submittedAt;
 
+    private String month;
+
+    private String status;
+
     private String keyword;
 
     public Long getApplicationId()
@@ -227,6 +231,26 @@ public class OsgJobApplication extends BaseEntity
         this.submittedAt = submittedAt;
     }
 
+    public String getMonth()
+    {
+        return month;
+    }
+
+    public void setMonth(String month)
+    {
+        this.month = month;
+    }
+
+    public String getStatus()
+    {
+        return status;
+    }
+
+    public void setStatus(String status)
+    {
+        this.status = status;
+    }
+
     public String getKeyword()
     {
         return keyword;
@@ -259,6 +283,8 @@ public class OsgJobApplication extends BaseEntity
             .append("preferredMentorNames", getPreferredMentorNames())
             .append("stageUpdated", getStageUpdated())
             .append("submittedAt", getSubmittedAt())
+            .append("month", getMonth())
+            .append("status", getStatus())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

@@ -26,14 +26,14 @@
       layout="vertical"
       :required-mark="false"
     >
-      <a-form-item name="roleName">
+      <a-form-item name="roleName" data-field-name="角色名称">
         <template #label>
           <span class="role-modal__label">角色名称<span class="role-modal__required">*</span></span>
         </template>
         <a-input v-model:value="formState.roleName" placeholder="请输入角色名称，如：运营专员" />
       </a-form-item>
 
-      <a-form-item name="remark">
+      <a-form-item name="remark" data-field-name="角色描述">
         <template #label>
           <span class="role-modal__label">角色描述</span>
         </template>
@@ -45,7 +45,7 @@
         />
       </a-form-item>
 
-      <a-form-item name="menuIds">
+      <a-form-item name="menuIds" data-field-name="权限模块">
         <template #label>
           <span class="role-modal__label">权限模块<span class="role-modal__required">*</span></span>
         </template>
@@ -92,8 +92,8 @@
     </a-form>
 
     <template #footer>
-      <a-button class="role-modal__cancel-btn" @click="handleClose">取消</a-button>
-      <a-button class="role-modal__confirm-btn" :loading="loading" @click="handleSubmit">
+      <a-button class="role-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose"><span>取消</span></a-button>
+      <a-button class="role-modal__confirm-btn" data-surface-part="confirm-control" :loading="loading" @click="handleSubmit">
         <span class="mdi mdi-check" aria-hidden="true" />
         <span>保存</span>
       </a-button>
@@ -239,6 +239,26 @@ const handleClose = () => {
   emit('update:visible', false)
 }
 
+const resolveRoleSubmitErrorMessage = (rawMessage: string | undefined, roleName: string, editMode: boolean) => {
+  const normalizedRoleName = roleName.trim() || '该角色'
+  const actionLabel = editMode ? '保存' : '新增'
+  const messageText = rawMessage || ''
+
+  if (messageText.includes('角色名称已存在')) {
+    return `角色"${normalizedRoleName}"已存在，请换一个角色名称后重试`
+  }
+
+  if (messageText.includes('角色权限已存在')) {
+    return `角色"${normalizedRoleName}"的权限标识已存在，请修改角色名称后重试`
+  }
+
+  if (messageText) {
+    return `${actionLabel}角色"${normalizedRoleName}"失败：${messageText}`
+  }
+
+  return `${actionLabel}角色失败，请稍后重试`
+}
+
 const handleSubmit = async () => {
   try {
     await formRef.value.validate()
@@ -251,13 +271,13 @@ const handleSubmit = async () => {
     }
 
     if (isEdit.value) {
-      await updateRole(payload as any, { 
-        customErrorMessage: '角色修改失败，请检查输入信息' 
+      await updateRole(payload as any, {
+        skipErrorMessage: true,
       })
       message.success('角色修改成功')
     } else {
-      await addRole(payload, { 
-        customErrorMessage: '角色新增失败，请检查输入信息' 
+      await addRole(payload, {
+        skipErrorMessage: true,
       })
       message.success('角色新增成功')
     }
@@ -266,7 +286,7 @@ const handleSubmit = async () => {
     handleClose()
   } catch (error: any) {
     if (error?.errorFields) return
-    // 移除组件内的错误提示，让拦截器处理
+    message.error(resolveRoleSubmitErrorMessage(error?.message, formState.roleName, isEdit.value))
   } finally {
     loading.value = false
   }

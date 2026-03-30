@@ -26,6 +26,13 @@ export interface StudentPositionRecord {
   industryIconKey?: string
   companyBrandColor?: string
   locationCode?: string
+  reviewStatus?: string
+  reviewStatusLabel?: string
+  coachingStatus?: string
+  coachingStatusLabel?: string
+  coachingColor?: string
+  appliedDate?: string
+  applyMethod?: string
   requirements?: string
 }
 
@@ -181,6 +188,29 @@ export function createStudentManualPosition(data: {
   title: string
   company: string
   location: string
+  recruitmentCycle?: string
+  projectYear?: string
+  companyType?: string
+  region?: string
+  city?: string
+  website?: string
+  link?: string
+  deadline?: string
+  needCoaching?: boolean
+  coachingStage?: string
+  mentorCount?: string
+  note?: string
+  hirevueType?: string
+  viLink?: string
+  otLink?: string
+  otAccount?: string
+  otPassword?: string
+  hirevueDeadline?: string
+  inviteScreenshotName?: string
+  mentorHelp?: string
+  interviewTime?: string
+  preferMentor?: string
+  excludeMentor?: string
 }): Promise<{ positionId: number }> {
   return http.post('/student/position/manual', data)
 }

@@ -21,7 +21,7 @@ import com.ruoyi.system.service.impl.OsgStudentChangeRequestServiceImpl;
 @RequestMapping("/admin/student/change-request")
 public class OsgStudentChangeRequestController extends BaseController
 {
-    private static final String STUDENT_ROLE_ACCESS = "@ss.hasAnyRoles('super_admin,clerk')";
+    private static final String STUDENT_ROLE_ACCESS = "@ss.hasPermi('admin:students:list')";
 
     @Autowired
     private OsgStudentChangeRequestServiceImpl changeRequestService;

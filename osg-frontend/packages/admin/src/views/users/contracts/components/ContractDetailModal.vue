@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="contract-detail-modal"
+    surface-id="modal-contract-detail"
     width="960px"
     :body-class="'contract-detail-modal__body'"
     @cancel="handleClose"
@@ -81,8 +81,14 @@
               </td>
               <td>{{ formatDate(contract.updateTime || contract.endDate) }}</td>
               <td>
-                <button type="button" class="contract-detail-modal__table-action" @click="emit('request-renew')">
-                  续签
+                <button
+                  type="button"
+                  class="contract-detail-modal__table-action"
+                  data-surface-trigger="modal-contract-renew"
+                  :data-surface-sample-key="`contract-${contract.contractId}-renew`"
+                  @click="emit('request-renew')"
+                >
+                  续签合同
                 </button>
               </td>
             </tr>
@@ -95,8 +101,43 @@
 
     <template #footer>
       <div class="contract-detail-modal__footer">
+        <div class="contract-detail-modal__footer-actions">
+          <button
+            type="button"
+            class="contract-detail-modal__secondary"
+            data-surface-trigger="modal-status-change"
+            data-surface-sample-key="contract-detail-status-change"
+            @click="emit('request-status-change')"
+          >
+            状态修改
+          </button>
+          <button
+            type="button"
+            class="contract-detail-modal__secondary"
+            data-surface-trigger="modal-add-blacklist"
+            data-surface-sample-key="contract-detail-add-blacklist"
+            @click="emit('request-add-blacklist')"
+          >
+            加入黑名单
+          </button>
+          <button
+            type="button"
+            class="contract-detail-modal__secondary"
+            data-surface-trigger="modal-remove-blacklist"
+            data-surface-sample-key="contract-detail-remove-blacklist"
+            @click="emit('request-remove-blacklist')"
+          >
+            移出黑名单
+          </button>
+        </div>
         <button type="button" class="contract-detail-modal__secondary" @click="handleClose">关闭</button>
-        <button type="button" class="contract-detail-modal__primary" @click="emit('request-renew')">
+        <button
+          type="button"
+          class="contract-detail-modal__primary"
+          data-surface-trigger="modal-contract-renew"
+          data-surface-sample-key="contract-detail-renew"
+          @click="emit('request-renew')"
+        >
           <span class="mdi mdi-refresh" aria-hidden="true"></span>
           <span>续签合同</span>
         </button>
@@ -119,6 +160,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [value: boolean]
   'request-renew': []
+  'request-status-change': []
+  'request-add-blacklist': []
+  'request-remove-blacklist': []
 }>()
 
 const loading = ref(false)
@@ -200,14 +244,14 @@ watch(() => [props.visible, props.studentId], () => {
 
 <style scoped lang="scss">
 /* ── Header (override OverlaySurfaceModal header) ── */
-:global([data-surface-id="contract-detail-modal"] [data-surface-part="header"]) {
+:global([data-surface-id="modal-contract-detail"] [data-surface-part="header"]) {
   background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
   border-bottom: none !important;
   border-radius: 16px 16px 0 0;
   padding: 22px 26px !important;
 }
 
-:global([data-surface-id="contract-detail-modal"] .overlay-surface-modal__close) {
+:global([data-surface-id="modal-contract-detail"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
 
@@ -365,8 +409,16 @@ watch(() => [props.visible, props.studentId], () => {
 /* ── Footer ── */
 .contract-detail-modal__footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.contract-detail-modal__footer-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .contract-detail-modal__secondary,

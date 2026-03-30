@@ -76,6 +76,75 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where p.position_id = #{positionId}
     </select>
 
+    <select id="selectVisiblePublicPositionList" parameterType="OsgPosition" resultMap="OsgPositionResult">
+        select
+        p.position_id,
+        p.position_category,
+        p.industry,
+        p.company_name,
+        p.company_type,
+        p.company_website,
+        p.position_name,
+        p.department,
+        p.region,
+        p.city,
+        p.recruitment_cycle,
+        p.project_year,
+        p.publish_time,
+        p.deadline,
+        p.display_status,
+        p.display_start_time,
+        p.display_end_time,
+        p.position_url,
+        p.application_note,
+        p.create_by,
+        p.create_time,
+        p.update_by,
+        p.update_time,
+        p.remark
+        from osg_position p
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    p.position_name like concat('%', #{keyword}, '%')
+                    or p.company_name like concat('%', #{keyword}, '%')
+                    or p.department like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="positionCategory != null and positionCategory != ''">
+                and p.position_category = #{positionCategory}
+            </if>
+            <if test="industry != null and industry != ''">
+                and p.industry = #{industry}
+            </if>
+            <if test="companyName != null and companyName != ''">
+                and p.company_name = #{companyName}
+            </if>
+            <if test="region != null and region != ''">
+                and p.region = #{region}
+            </if>
+            <if test="city != null and city != ''">
+                and p.city = #{city}
+            </if>
+            <if test="displayStatus != null and displayStatus != ''">
+                and p.display_status = #{displayStatus}
+            </if>
+            <if test="recruitmentCycle != null and recruitmentCycle != ''">
+                and p.recruitment_cycle like concat('%', #{recruitmentCycle}, '%')
+            </if>
+            <if test="projectYear != null and projectYear != ''">
+                and p.project_year = #{projectYear}
+            </if>
+            <if test="params != null and params.beginPublishTime != null and params.beginPublishTime != ''">
+                and p.publish_time <![CDATA[>=]]> #{params.beginPublishTime}
+            </if>
+            <if test="params != null and params.endPublishTime != null and params.endPublishTime != ''">
+                and p.publish_time <![CDATA[<=]]> #{params.endPublishTime}
+            </if>
+        </where>
+        order by p.publish_time desc, p.position_id desc
+    </select>
+
     <select id="selectPositionList" parameterType="OsgPosition" resultMap="OsgPositionResult">
         select
         <include refid="selectPositionColumns"/>

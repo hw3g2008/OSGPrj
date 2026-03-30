@@ -54,19 +54,19 @@
             全部导师 ({{ rows.length }}人)
           </div>
         </div>
-        <div class="schedule-filters">
-          <input v-model="filters.keyword" type="text" class="schedule-input" placeholder="搜索导师姓名/ID..." />
-          <select v-model="filters.staffType" class="schedule-select">
+        <div class="schedule-filters" data-field-name="导师排期管理页">
+          <input v-model="filters.keyword" type="text" class="schedule-input" data-field-name="搜索框" placeholder="搜索导师姓名/ID..." />
+          <select v-model="filters.staffType" class="schedule-select" data-field-name="类型">
             <option value="">全部类型</option>
             <option value="lead_mentor">班主任</option>
             <option value="mentor">专业导师</option>
             <option value="assistant">助教</option>
           </select>
-          <select v-model="filters.weekday" class="schedule-select">
+          <select v-model="filters.weekday" class="schedule-select" data-field-name="日期">
             <option value="">全部日期</option>
             <option v-for="day in weekdays" :key="day.value" :value="String(day.value)">{{ day.label }}</option>
           </select>
-          <select v-model="filters.timeSlot" class="schedule-select">
+          <select v-model="filters.timeSlot" class="schedule-select" data-field-name="时段">
             <option value="">全部时段</option>
             <option v-for="slot in timeSlots" :key="slot.value" :value="slot.value">{{ slot.label }}</option>
           </select>
@@ -123,13 +123,25 @@
               </td>
               <td>
                 <div v-if="record.filled" class="schedule-action-filled">
-                  <button type="button" class="schedule-action-link" @click="openEditModal(record)">
-                    <i class="mdi mdi-pencil" aria-hidden="true"></i> 调整
+                  <button
+                    type="button"
+                    class="schedule-action-link"
+                    data-surface-trigger="mentor-schedule-edit-modal"
+                    :data-surface-sample-key="`mentor-schedule-${record.staffId}-edit`"
+                    @click="openEditModal(record)"
+                  >
+                    <i class="mdi mdi-pencil" aria-hidden="true"></i> 调整导师排期
                   </button>
                 </div>
                 <div v-else class="schedule-action-unfilled">
-                  <button type="button" class="schedule-btn-fill" @click="openEditModal(record)">
-                    <i class="mdi mdi-pencil" aria-hidden="true"></i> 代填
+                  <button
+                    type="button"
+                    class="schedule-btn-fill"
+                    data-surface-trigger="mentor-schedule-edit-modal"
+                    :data-surface-sample-key="`mentor-schedule-${record.staffId}-fill`"
+                    @click="openEditModal(record)"
+                  >
+                    <i class="mdi mdi-pencil" aria-hidden="true"></i> 代填导师排期
                   </button>
                   <button type="button" class="schedule-btn-remind" @click="handleRemindAll">
                     <i class="mdi mdi-email-fast" aria-hidden="true"></i>

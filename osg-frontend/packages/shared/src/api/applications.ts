@@ -2,12 +2,13 @@ import { http } from '../utils/request'
 
 export interface StudentApplicationRecord {
   id: number
+  positionId: number
   company: string
   position: string
   location: string
   bucket: 'applied' | 'ongoing' | 'completed'
   companyType: 'ib' | 'consulting' | 'tech' | 'pevc'
-  stage: 'applied' | 'hirevue' | 'first' | 'second' | 'case' | 'offer' | 'rejected'
+  stage: string
   stageLabel: string
   stageColor: string
   interviewTime: string
@@ -65,6 +66,8 @@ export interface StudentApplicationsMeta {
   }
   filterOptions: {
     progressStages: StudentApplicationOption[]
+    coachingStages: StudentApplicationOption[]
+    mentorCounts: StudentApplicationOption[]
     coachingStatuses: StudentApplicationOption[]
     companyTypes: StudentApplicationOption[]
     applyMethods: StudentApplicationOption[]

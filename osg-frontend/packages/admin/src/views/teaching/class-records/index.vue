@@ -5,8 +5,13 @@
         <h1 class="page-title">课程记录 <span class="page-title-en">Class Records</span></h1>
         <p class="page-subtitle">查看所有学员的课程记录，审核导师/班主任/助教提交的上课记录</p>
       </div>
-      <button type="button" class="btn-outline" @click="handleExport">
-        <span class="mdi mdi-export" aria-hidden="true" /> 导出
+      <button
+        type="button"
+        class="btn-outline"
+        :disabled="exporting"
+        @click="handleExport"
+      >
+        <span class="mdi mdi-export" aria-hidden="true" /> {{ exporting ? '导出中...' : '导出' }}
       </button>
     </header>
 
@@ -39,13 +44,13 @@
 
     <!-- 筛选条件 -->
     <div class="filter-row">
-      <input v-model.trim="keyword" class="filter-input" type="text" placeholder="搜索学员/申报人..." @keyup.enter="loadData">
-      <select v-model="filterCoachingType" class="filter-select">
+      <input v-model.trim="keyword" class="filter-input" type="text" placeholder="搜索学员/申报人..." data-field-name="搜索" data-field-name-alias="课程记录页筛选搜索" @keyup.enter="loadData">
+      <select v-model="filterCoachingType" class="filter-select" data-field-name="辅导类型" data-field-name-alias="课程记录页筛选辅导类型">
         <option value="">辅导类型</option>
         <option value="position_coaching">岗位辅导</option>
         <option value="mock_application">模拟应聘</option>
       </select>
-      <select v-model="filterCourseContent" class="filter-select">
+      <select v-model="filterCourseContent" class="filter-select" data-field-name="课程内容" data-field-name-alias="课程记录页筛选课程内容">
         <option value="">课程内容</option>
         <option value="new_resume">新简历</option>
         <option value="resume_update">简历更新</option>
@@ -55,15 +60,15 @@
         <option value="midterm_exam">模拟期中考试</option>
         <option value="other">其他</option>
       </select>
-      <select v-model="filterReporterRole" class="filter-select">
+      <select v-model="filterReporterRole" class="filter-select" data-field-name="申报人角色" data-field-name-alias="课程记录页筛选申报人角色">
         <option value="">申报人角色</option>
         <option value="mentor">导师</option>
         <option value="headteacher">班主任</option>
         <option value="assistant">助教</option>
       </select>
-      <input v-model="filterDateStart" type="date" class="filter-input filter-input--date">
+      <input v-model="filterDateStart" type="date" class="filter-input filter-input--date" data-field-name="上课日期开始" data-field-name-alias="课程记录页筛选上课日期开始">
       <span class="filter-date-sep">~</span>
-      <input v-model="filterDateEnd" type="date" class="filter-input filter-input--date">
+      <input v-model="filterDateEnd" type="date" class="filter-input filter-input--date" data-field-name="上课日期结束" data-field-name-alias="课程记录页筛选上课日期结束">
       <button type="button" class="btn-outline" @click="loadData">
         <span class="mdi mdi-magnify" aria-hidden="true" /> 搜索
       </button>
@@ -77,6 +82,8 @@
         type="button"
         class="records-tab"
         :class="{ 'records-tab--active': activeTab === tab.key }"
+        :data-tab="tab.key"
+        :aria-pressed="activeTab === tab.key"
         @click="switchTab(tab.key)"
       >
         {{ tab.label }}
@@ -138,18 +145,23 @@
                 <span class="status-tag" :class="statusTagClass(row.status)">{{ statusLabel(row.status) }}</span>
               </td>
               <td>
-                <button
-                  v-if="row.status === 'pending'"
-                  type="button"
-                  class="btn-primary btn-sm"
-                  @click="handleAudit(row)"
-                >审核</button>
-                <button
-                  v-else
-                  type="button"
-                  class="action-link"
-                  @click="handleView(row)"
-                >详情</button>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    class="btn-primary btn-sm"
+                    data-surface-trigger="modal-class-record-review"
+                    :data-surface-sample-key="`record-${row.recordId}`"
+                    @click="openRecordReview(row)"
+                  >课程审核</button>
+                  <button
+                    v-if="row.status !== 'pending'"
+                    type="button"
+                    class="action-link"
+                    data-surface-trigger="modal-class-record-detail"
+                    :data-surface-sample-key="`record-${row.recordId}`"
+                    @click="openRecordDetail(row)"
+                  >详情</button>
+                </div>
               </td>
             </tr>
             <tr v-if="!rows.length">
@@ -159,13 +171,37 @@
         </table>
       </div>
     </div>
+
+    <ClassRecordReviewModal
+      v-model:visible="reviewVisible"
+      :detail="selectedRecord"
+      :loading="recordDetailLoading"
+      :submitting="reviewSubmitting"
+      @approve="handleReviewApprove"
+      @reject="handleReviewReject"
+    />
+
+    <ClassRecordDetailModal
+      v-model:visible="detailVisible"
+      :detail="selectedRecord"
+      :loading="recordDetailLoading"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
-import { getClassRecordList, getClassRecordStats, type ClassRecordRow, type ClassRecordStats } from '@osg/shared/api/admin/classRecord'
+import {
+  exportClassRecords,
+  getClassRecordList,
+  getClassRecordStats,
+  type ClassRecordRow,
+  type ClassRecordStats
+} from '@osg/shared/api/admin/classRecord'
+import { approveReport, getReportDetail, rejectReport, type ReportRow } from '@osg/shared/api/admin/report'
+import ClassRecordDetailModal from './components/ClassRecordDetailModal.vue'
+import ClassRecordReviewModal from './components/ClassRecordReviewModal.vue'
 
 const keyword = ref('')
 const filterCoachingType = ref('')
@@ -176,6 +212,12 @@ const filterDateEnd = ref('')
 const activeTab = ref('all')
 const rows = ref<ClassRecordRow[]>([])
 const stats = ref<ClassRecordStats | null>(null)
+const exporting = ref(false)
+const reviewVisible = ref(false)
+const detailVisible = ref(false)
+const reviewSubmitting = ref(false)
+const recordDetailLoading = ref(false)
+const selectedRecord = ref<ReportRow | null>(null)
 
 const statCards = computed(() => {
   const current = stats.value
@@ -196,11 +238,22 @@ const tabList = computed(() => [
   { key: 'rejected', label: '已驳回', badge: null, badgeTone: '' }
 ])
 
+const toFilters = () => ({
+  keyword: keyword.value || undefined,
+  courseType: filterCoachingType.value || undefined,
+  classStatus: filterCourseContent.value || undefined,
+  courseSource: filterReporterRole.value || undefined,
+  tab: activeTab.value,
+  classDateStart: filterDateStart.value || undefined,
+  classDateEnd: filterDateEnd.value || undefined
+})
+
 const loadData = async () => {
   try {
+    const currentFilters = toFilters()
     const [listResponse, statsResponse] = await Promise.all([
-      getClassRecordList({ keyword: keyword.value }),
-      getClassRecordStats({ keyword: keyword.value })
+      getClassRecordList(currentFilters),
+      getClassRecordStats(currentFilters)
     ])
 
     rows.value = listResponse.rows ?? []
@@ -210,21 +263,82 @@ const loadData = async () => {
   }
 }
 
+const loadRecordDetail = async (recordId: number) => {
+  recordDetailLoading.value = true
+  selectedRecord.value = null
+  try {
+    const response = await getReportDetail(recordId)
+    selectedRecord.value = response
+  } catch (_error) {
+    message.error('课程记录详情加载失败')
+  } finally {
+    recordDetailLoading.value = false
+  }
+}
+
+const openRecordReview = async (row: ClassRecordRow) => {
+  detailVisible.value = false
+  reviewVisible.value = true
+  await loadRecordDetail(row.recordId)
+}
+
+const openRecordDetail = async (row: ClassRecordRow) => {
+  reviewVisible.value = false
+  detailVisible.value = true
+  await loadRecordDetail(row.recordId)
+}
+
+const handleReviewApprove = async (payload: { remark?: string }) => {
+  if (!selectedRecord.value) {
+    return
+  }
+
+  reviewSubmitting.value = true
+  try {
+    await approveReport(selectedRecord.value.recordId, payload)
+    message.success('课时审核已通过')
+    reviewVisible.value = false
+    await loadData()
+  } catch (_error) {
+    message.error('课时审核通过失败')
+  } finally {
+    reviewSubmitting.value = false
+  }
+}
+
+const handleReviewReject = async (payload: { remark?: string }) => {
+  if (!selectedRecord.value) {
+    return
+  }
+
+  reviewSubmitting.value = true
+  try {
+    await rejectReport(selectedRecord.value.recordId, payload)
+    message.success('课时审核已驳回')
+    reviewVisible.value = false
+    await loadData()
+  } catch (_error) {
+    message.error('课时审核驳回失败')
+  } finally {
+    reviewSubmitting.value = false
+  }
+}
+
 const switchTab = (tab: string) => {
   activeTab.value = tab
   void loadData()
 }
 
-const handleExport = () => {
-  message.info('导出功能将在后续版本中接入')
-}
-
-const handleAudit = (_row: ClassRecordRow) => {
-  message.info('审核功能将在后续版本中接入')
-}
-
-const handleView = (_row: ClassRecordRow) => {
-  message.info('详情功能将在后续版本中接入')
+const handleExport = async () => {
+  try {
+    exporting.value = true
+    await exportClassRecords(toFilters())
+    message.success('课程记录导出成功')
+  } catch (_error) {
+    message.error('课程记录导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 const formatDate = (value?: string | null) => {
@@ -345,6 +459,13 @@ onMounted(() => {
 }
 
 .btn-sm { padding: 4px 12px; font-size: 13px; }
+
+.record-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
 /* --- Flow banner --- */
 .flow-banner {
@@ -581,6 +702,17 @@ onMounted(() => {
   font-weight: 500;
   cursor: pointer;
   font-size: 13px;
+}
+
+.btn-outline[disabled],
+.btn-primary[disabled],
+.action-link[disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.action-link[disabled] {
+  color: #94a3b8;
 }
 
 /* --- Empty --- */

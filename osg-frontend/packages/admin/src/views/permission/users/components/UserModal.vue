@@ -96,7 +96,7 @@
         </div>
       </a-form-item>
 
-      <a-form-item v-if="!isEdit">
+      <a-form-item v-if="!isEdit" data-field-name="初始密码">
         <template #label>
           <span class="user-modal__label">初始密码</span>
         </template>
@@ -121,7 +121,7 @@
     </a-form>
 
     <template #footer>
-      <a-button class="user-modal__cancel-btn" @click="handleClose">取消</a-button>
+      <a-button class="user-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose"><span>取消</span></a-button>
       <a-button type="primary" class="user-modal__confirm-btn" :loading="loading" @click="handleSubmit">
         <span class="mdi mdi-check" aria-hidden="true" />
         <span>保存</span>

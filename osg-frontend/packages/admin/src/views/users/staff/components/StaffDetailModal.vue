@@ -1,7 +1,7 @@
 <template>
   <OverlaySurfaceModal
     :open="visible"
-    surface-id="staff-detail-modal"
+    :surface-id="surfaceId"
     width="960px"
     :body-class="'staff-detail-modal__body'"
     @cancel="handleClose"
@@ -30,6 +30,22 @@
     </div>
 
     <template v-else>
+      <div class="staff-detail-modal__tabs">
+        <button
+          v-for="tab in detailTabs"
+          :key="tab.key"
+          type="button"
+          :class="['staff-detail-modal__tab', { 'staff-detail-modal__tab--active': detailTab === tab.key }]"
+          :aria-label="`导师详情弹窗${tab.label}`"
+          :data-tab="tab.key"
+          :data-tab-text="tab.label"
+          @click="detailTab = tab.key"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <div v-if="detailTab === 'profile'">
       <div class="staff-detail-modal__grid">
         <article class="staff-detail-modal__card">
           <span>邮箱</span>
@@ -83,8 +99,9 @@
           </div>
         </dl>
       </section>
+      </div>
 
-      <section class="staff-detail-modal__panel">
+      <section v-else class="staff-detail-modal__panel">
         <header>
           <div class="staff-detail-modal__badge staff-detail-modal__badge--amber">
             <i class="mdi mdi-clipboard-text-clock-outline" aria-hidden="true"></i> 待审核变更
@@ -106,7 +123,7 @@
               <span class="staff-detail-modal__review-pill">待审核</span>
             </div>
 
-            <label class="staff-detail-modal__review-field">
+            <label class="staff-detail-modal__review-field" data-field-name="驳回说明">
               <span>驳回说明</span>
               <textarea
                 v-model.trim="reviewReasons[request.requestId]"
@@ -162,9 +179,11 @@ const props = withDefaults(defineProps<{
   visible: boolean
   staffId?: number | null
   staffName?: string
+  surfaceId?: string
 }>(), {
   staffId: null,
-  staffName: ''
+  staffName: '',
+  surfaceId: 'modal-staff-detail'
 })
 
 const emit = defineEmits<{
@@ -178,6 +197,11 @@ const loading = ref(false)
 const loadError = ref('')
 const reviewingRequestId = ref<number | null>(null)
 const reviewReasons = reactive<Record<number, string>>({})
+const detailTab = ref<'profile' | 'changes'>('profile')
+const detailTabs = [
+  { key: 'profile' as const, label: '基本信息' },
+  { key: 'changes' as const, label: '信息变更' }
+] as const
 
 const avatarText = computed(() => {
   const name = detail.value?.staffName || props.staffName || ''
@@ -213,6 +237,9 @@ const loadDetail = async () => {
 watch(
   () => [props.visible, props.staffId] as const,
   () => {
+    if (props.visible) {
+      detailTab.value = 'profile'
+    }
     void loadDetail()
   },
   { immediate: true }
@@ -268,14 +295,16 @@ const formatHourlyRate = (hourlyRate?: number) => {
 
 <style scoped lang="scss">
 /* ── Header override (gradient) ── */
-:global([data-surface-id="staff-detail-modal"] [data-surface-part="header"]) {
+:global([data-surface-id="modal-staff-detail"] [data-surface-part="header"]),
+:global([data-surface-id="modal-mentor-info-change"] [data-surface-part="header"]) {
   background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
   border-bottom: none !important;
   border-radius: 16px 16px 0 0;
   padding: 22px 26px !important;
 }
 
-:global([data-surface-id="staff-detail-modal"] .overlay-surface-modal__close) {
+:global([data-surface-id="modal-staff-detail"] .overlay-surface-modal__close),
+:global([data-surface-id="modal-mentor-info-change"] .overlay-surface-modal__close) {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
 
@@ -520,6 +549,33 @@ const formatHourlyRate = (hourlyRate?: number) => {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 12px;
+}
+
+.staff-detail-modal__tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.staff-detail-modal__tab {
+  flex: 1;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.staff-detail-modal__tab--active {
+  background: #ffffff;
+  color: #1d4ed8;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 .permission-button {

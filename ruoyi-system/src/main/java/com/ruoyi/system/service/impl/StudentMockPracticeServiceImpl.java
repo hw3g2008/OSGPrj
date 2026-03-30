@@ -82,8 +82,11 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             new DictSeed(DICT_TYPE_PRACTICE_TYPE, 3L, "期中考试", "midterm", "purple", null, "期中考试测试"));
 
     private static final List<DictSeed> PRACTICE_STATUS_SEEDS = List.of(
-            new DictSeed(DICT_TYPE_PRACTICE_STATUS, 1L, "待分配", "待分配", "orange", null, "模拟应聘状态"),
-            new DictSeed(DICT_TYPE_PRACTICE_STATUS, 2L, "已完成", "已完成", "green", null, "模拟应聘状态"));
+            new DictSeed(DICT_TYPE_PRACTICE_STATUS, 1L, "待分配导师", "pending", "orange", null, "模拟应聘状态"),
+            new DictSeed(DICT_TYPE_PRACTICE_STATUS, 2L, "已分配导师", "assigned", "blue", null, "模拟应聘状态"),
+            new DictSeed(DICT_TYPE_PRACTICE_STATUS, 3L, "辅导中", "coaching", "purple", null, "模拟应聘状态"),
+            new DictSeed(DICT_TYPE_PRACTICE_STATUS, 4L, "已完成", "completed", "green", null, "模拟应聘状态"),
+            new DictSeed(DICT_TYPE_PRACTICE_STATUS, 5L, "已取消", "cancelled", "red", null, "模拟应聘状态"));
 
     private static final List<DictSeed> PRACTICE_RANGE_SEEDS = List.of(
             new DictSeed(DICT_TYPE_PRACTICE_RANGE, 1L, "本周", "week", null, null, "时间范围"),
@@ -210,7 +213,7 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
 
         Map<String, Object> practiceFilters = new LinkedHashMap<>();
         practiceFilters.put("typeOptions", buildPracticeTypeOptions(practiceRecords));
-        practiceFilters.put("statusOptions", buildPracticeStatusOptions(practiceRecords));
+        practiceFilters.put("statusOptions", buildPracticeStatusOptions());
         practiceFilters.put("rangeOptions", buildStaticOptions(DICT_TYPE_PRACTICE_RANGE));
         payload.put("practiceFilters", practiceFilters);
 
@@ -250,30 +253,8 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             String excludedMentor, String remark, Long userId)
     {
         syncReferenceData();
-        OsgStudent student = identityResolver.resolveStudentByUserId(userId);
         PracticeTypeMeta practiceMeta = resolvePracticeMeta(practiceType);
-
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("userId", userId);
-        params.put("requestGroup", "practice");
-        params.put("requestType", practiceMeta.label());
-        params.put("courseType", practiceMeta.value());
-        params.put("company", null);
-        params.put("jobStatus", null);
-        params.put("requestStatus", "待分配");
-        params.put("requestContent", practiceMeta.requestContent());
-        params.put("requestReason", normalizeOptional(reason));
-        params.put("mentorCount", requireOptionalOrDefault(mentorCount, "2位导师"));
-        params.put("preferredMentor", normalizeOptional(preferredMentor));
-        params.put("excludedMentor", normalizeOptional(excludedMentor));
-        params.put("mentorName", "待分配");
-        params.put("mentorMeta", "班主任分配中");
-        params.put("hoursFeedback", "-");
-        params.put("feedbackSummary", "-");
-        params.put("feedbackHint", "-");
-        params.put("remark", normalizeOptional(remark));
-        studentMockPracticeMapper.insertRequest(params);
-
+        OsgStudent student = identityResolver.resolveStudentByUserId(userId);
         OsgMockPractice practice = new OsgMockPractice();
         practice.setStudentId(student.getStudentId());
         practice.setStudentName(defaultString(student.getStudentName(), "学员" + student.getStudentId()));
@@ -287,8 +268,12 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
         practice.setRemark(normalizeOptional(remark));
         practice.setCreateBy("student");
         practice.setUpdateBy("student");
-        osgMockPracticeMapper.insertMockPractice(practice);
-        return practice.getPracticeId() == null ? toRequestId(params.get("requestId")) : practice.getPracticeId();
+        int rows = osgMockPracticeMapper.insertMockPractice(practice);
+        if (rows <= 0 || practice.getPracticeId() == null)
+        {
+            throw new ServiceException("模拟应聘主链写入失败，请稍后重试");
+        }
+        return practice.getPracticeId();
     }
 
     @Override
@@ -354,13 +339,22 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
                 record.put("typeColor", defaultString(stringValue(record.get("typeColor")), "blue"));
             }
 
-            String statusValue = stringValue(record.get("status"));
+            String statusValue = stringValue(record.get("statusValue"));
+            if (!StringUtils.hasText(statusValue))
+            {
+                statusValue = stringValue(record.get("status"));
+            }
             record.put("statusValue", statusValue);
             SysDictData practiceStatus = practiceStatusDict.get(statusValue);
             if (practiceStatus != null)
             {
                 record.put("status", defaultString(practiceStatus.getDictLabel(), statusValue));
                 record.put("statusColor", defaultString(practiceStatus.getCssClass(), "default"));
+            }
+            else
+            {
+                record.put("status", toPracticeStatusLabel(statusValue));
+                record.put("statusColor", defaultString(stringValue(record.get("statusColor")), "default"));
             }
         }
         return practiceRecords;
@@ -387,7 +381,9 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             record.put("hours", row.getCompletedHours() == null || row.getCompletedHours() == 0 ? "-" : String.valueOf(row.getCompletedHours()));
             record.put("feedback", defaultString(row.getFeedbackSummary(), "-"));
             record.put("feedbackHint", defaultString(row.getRemark(), "-"));
-            record.put("status", defaultString(row.getStatus(), ""));
+            String statusValue = toPracticeStatusValue(row.getStatus(), row.getCompletedHours());
+            record.put("status", statusValue);
+            record.put("statusValue", statusValue);
             records.add(record);
         }
         return records;
@@ -528,14 +524,13 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
         return buildDynamicOptions(values, loadDictValueMap(DICT_TYPE_PRACTICE_TYPE));
     }
 
-    private List<Map<String, Object>> buildPracticeStatusOptions(List<Map<String, Object>> practiceRecords)
+    private List<Map<String, Object>> buildPracticeStatusOptions()
     {
-        LinkedHashSet<String> values = new LinkedHashSet<>();
-        for (Map<String, Object> record : practiceRecords)
-        {
-            values.add(stringValue(record.get("statusValue")));
-        }
-        return buildDynamicOptions(values, loadDictValueMap(DICT_TYPE_PRACTICE_STATUS));
+        List<Map<String, Object>> options = new ArrayList<>();
+        options.add(option("pending", "待分配", "orange", null, 1L));
+        options.add(option("ongoing", "进行中", "blue", null, 2L));
+        options.add(option("completed", "已完成", "green", null, 3L));
+        return options;
     }
 
     private List<Map<String, Object>> buildRequestTypeOptions(List<Map<String, Object>> requestRecords)
@@ -869,6 +864,29 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             case "communication_test" -> "人际关系测试";
             case "midterm_exam" -> "期中考试";
             default -> practiceType;
+        };
+    }
+
+    private String toPracticeStatusValue(String status, Integer completedHours)
+    {
+        return switch (defaultString(status, "").toLowerCase(Locale.ROOT)) {
+            case "pending", "submitted" -> "pending";
+            case "scheduled", "confirmed" -> completedHours != null && completedHours > 0 ? "coaching" : "assigned";
+            case "completed" -> "completed";
+            case "cancelled" -> "cancelled";
+            default -> defaultString(status, "");
+        };
+    }
+
+    private String toPracticeStatusLabel(String statusValue)
+    {
+        return switch (defaultString(statusValue, "")) {
+            case "pending" -> "待分配导师";
+            case "assigned" -> "已分配导师";
+            case "coaching" -> "辅导中";
+            case "completed" -> "已完成";
+            case "cancelled" -> "已取消";
+            default -> statusValue;
         };
     }
 

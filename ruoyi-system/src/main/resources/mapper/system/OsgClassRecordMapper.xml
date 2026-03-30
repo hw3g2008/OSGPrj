@@ -97,11 +97,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="courseSource != null and courseSource != ''">
                 and course_source = #{courseSource}
             </if>
+            <if test="classStatus != null and classStatus != ''">
+                and class_status = #{classStatus}
+            </if>
             <if test="status != null and status != ''">
                 and status = #{status}
             </if>
             <if test="tab != null and tab != '' and tab != 'all'">
                 and status = #{tab}
+            </if>
+            <if test="classDateStart != null">
+                and class_date &gt;= #{classDateStart}
+            </if>
+            <if test="classDateEnd != null">
+                and class_date &lt;= #{classDateEnd}
             </if>
             <if test="keyword != null and keyword != ''">
                 and (

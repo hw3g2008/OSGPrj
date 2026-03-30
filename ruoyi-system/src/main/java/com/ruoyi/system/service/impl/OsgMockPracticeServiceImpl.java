@@ -45,9 +45,12 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
             return Collections.emptyList();
         }
 
-        List<OsgMockPractice> rows = mockPracticeMapper.selectMockPracticeList(query == null ? new OsgMockPractice() : query);
+        String requestedVisibleStatus = normalizeMentorVisibleStatus(query == null ? null : query.getStatus());
+        OsgMockPractice mapperQuery = buildMentorListQuery(query, requestedVisibleStatus);
+        List<OsgMockPractice> rows = mockPracticeMapper.selectMockPracticeList(mapperQuery);
         return (rows == null ? Collections.<OsgMockPractice>emptyList() : rows).stream()
             .filter(row -> hasMentorRelation(row, currentUserId) || hasAssistantOwnership(row, currentUserId))
+            .filter(row -> requestedVisibleStatus == null || Objects.equals(normalizeMentorVisibleStatus(row.getStatus()), requestedVisibleStatus))
             .toList();
     }
 
@@ -61,7 +64,9 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
     @Transactional(rollbackFor = Exception.class)
     public int confirmMentorMockPractice(OsgMockPractice record)
     {
+        OsgMockPractice persisted = requireMentorOwnedPractice(record == null ? null : record.getPracticeId(), record == null ? null : record.getCurrentMentorId());
         record.setUpdateTime(new Date());
+        record.setPracticeId(persisted.getPracticeId());
         return mockPracticeMapper.updateMentorMockPracticeStatus(record);
     }
 
@@ -154,6 +159,20 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
         return practice;
     }
 
+    private OsgMockPractice requireMentorOwnedPractice(Long practiceId, Long currentUserId)
+    {
+        OsgMockPractice practice = mockPracticeMapper.selectMockPracticeByPracticeId(practiceId);
+        if (practice == null)
+        {
+            throw new ServiceException("模拟应聘申请不存在");
+        }
+        if (!hasMentorRelation(practice, currentUserId))
+        {
+            throw new ServiceException("无权确认该模拟应聘记录");
+        }
+        return practice;
+    }
+
     private List<OsgMockPractice> selectPractices(String keyword, String practiceType, String status, String tab)
     {
         OsgMockPractice query = new OsgMockPractice();
@@ -163,6 +182,29 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
         query.setTab(tab);
         List<OsgMockPractice> rows = mockPracticeMapper.selectMockPracticeList(query);
         return rows == null ? Collections.emptyList() : rows;
+    }
+
+    private OsgMockPractice buildMentorListQuery(OsgMockPractice source, String requestedVisibleStatus)
+    {
+        OsgMockPractice query = new OsgMockPractice();
+        if (source == null)
+        {
+            return query;
+        }
+        query.setCurrentMentorId(source.getCurrentMentorId());
+        query.setPracticeType(source.getPracticeType());
+        query.setStatus(Objects.equals(requestedVisibleStatus, STATUS_PENDING) ? null : source.getStatus());
+        return query;
+    }
+
+    private String normalizeMentorVisibleStatus(String status)
+    {
+        String normalized = normalize(status);
+        if (Objects.equals(normalized, STATUS_SCHEDULED) || Objects.equals(normalized, "confirmed"))
+        {
+            return STATUS_PENDING;
+        }
+        return normalized;
     }
 
     private int countByStatus(List<OsgMockPractice> rows, String status)

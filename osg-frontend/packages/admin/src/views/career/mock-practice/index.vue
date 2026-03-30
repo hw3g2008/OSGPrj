@@ -31,7 +31,7 @@
     </section>
 
     <section class="mock-practice-filterbar">
-      <label class="mock-practice-filterbar__field mock-practice-filterbar__field--search">
+      <label class="mock-practice-filterbar__field mock-practice-filterbar__field--search" data-field-name="搜索框">
         <span>搜索</span>
         <input
           v-model="filters.keyword"
@@ -41,7 +41,7 @@
         />
       </label>
 
-      <label class="mock-practice-filterbar__field">
+      <label class="mock-practice-filterbar__field" data-field-name="类型">
         <span>类型</span>
         <select v-model="filters.practiceType">
           <option value="">全部类型</option>
@@ -51,7 +51,7 @@
         </select>
       </label>
 
-      <label class="mock-practice-filterbar__field">
+      <label class="mock-practice-filterbar__field" data-field-name="状态">
         <span>状态</span>
         <select v-model="filters.status">
           <option value="">全部状态</option>
@@ -78,6 +78,8 @@
             'mock-practice-dataset-tabs__button',
             { 'mock-practice-dataset-tabs__button--active': activeTab === 'pending' }
           ]"
+          data-tab="pending"
+          :aria-pressed="activeTab === 'pending'"
           @click="switchTab('pending')"
         >
           <span>待分配导师</span>
@@ -89,6 +91,8 @@
             'mock-practice-dataset-tabs__button',
             { 'mock-practice-dataset-tabs__button--active': activeTab === 'all' }
           ]"
+          data-tab="all"
+          :aria-pressed="activeTab === 'all'"
           @click="switchTab('all')"
         >
           <span>全部记录</span>

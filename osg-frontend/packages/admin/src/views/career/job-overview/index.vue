@@ -11,9 +11,9 @@
 
       <div class="job-overview-header__actions">
         <span class="job-overview-header__traffic">{{ allRows.length }} 条申请 · {{ unassignedRows.length }} 条待分配 · {{ stats.offerCount }} 条 Offer</span>
-        <button type="button" class="job-overview-header__button" @click="handleExportPlaceholder">
+        <button type="button" class="job-overview-header__button" :disabled="exporting" @click="handleExport">
           <i class="mdi mdi-export" aria-hidden="true"></i>
-          <span>导出</span>
+          <span>{{ exporting ? '导出中...' : '导出' }}</span>
         </button>
       </div>
     </div>
@@ -81,12 +81,12 @@
     </section>
 
     <section class="job-overview-filterbar">
-      <label class="job-overview-filterbar__field">
+      <label class="job-overview-filterbar__field" data-field-name="搜索框">
         <span>学员姓名</span>
         <input v-model="filters.studentName" type="text" placeholder="搜索学员" @keydown.enter.prevent="handleSearch" />
       </label>
 
-      <label class="job-overview-filterbar__field">
+      <label class="job-overview-filterbar__field" data-field-name="公司">
         <span>公司</span>
         <select v-model="filters.companyName">
           <option value="">全部公司</option>
@@ -94,7 +94,7 @@
         </select>
       </label>
 
-      <label class="job-overview-filterbar__field">
+      <label class="job-overview-filterbar__field" data-field-name="状态">
         <span>状态</span>
         <select v-model="filters.currentStage">
           <option value="">全部状态</option>
@@ -102,7 +102,7 @@
         </select>
       </label>
 
-      <label class="job-overview-filterbar__field">
+      <label class="job-overview-filterbar__field" data-field-name="班主任">
         <span>班主任</span>
         <select v-model="filters.leadMentorId">
           <option value="">全部班主任</option>
@@ -110,7 +110,7 @@
         </select>
       </label>
 
-      <label class="job-overview-filterbar__field">
+      <label class="job-overview-filterbar__field" data-field-name="分配状态">
         <span>分配状态</span>
         <select v-model="filters.assignStatus">
           <option value="">全部状态</option>
@@ -135,6 +135,8 @@
             'job-overview-dataset-tabs__button',
             { 'job-overview-dataset-tabs__button--active': activeTab === 'pending' }
           ]"
+          data-tab="pending"
+          :aria-pressed="activeTab === 'pending'"
           @click="activeTab = 'pending'"
         >
           <i class="mdi mdi-account-clock-outline" aria-hidden="true"></i>
@@ -147,6 +149,8 @@
             'job-overview-dataset-tabs__button',
             { 'job-overview-dataset-tabs__button--active': activeTab === 'all' }
           ]"
+          data-tab="all"
+          :aria-pressed="activeTab === 'all'"
           @click="activeTab = 'all'"
         >
           <i class="mdi mdi-table-large" aria-hidden="true"></i>
@@ -215,7 +219,15 @@
                 </td>
                 <td>{{ formatRelativeDate(row.submittedAt) }}</td>
                 <td>
-                  <button type="button" class="job-overview-action" @click="handleOpenAssignMentor(row)">分配导师</button>
+                  <button
+                    type="button"
+                    class="job-overview-action"
+                    data-surface-trigger="modal-assign-mentor"
+                    :data-surface-sample-key="`application-${row.applicationId}`"
+                    @click="handleOpenAssignMentor(row)"
+                  >
+                    分配导师
+                  </button>
                 </td>
               </tr>
               <tr v-if="!unassignedRows.length">
@@ -331,6 +343,7 @@ import { message } from 'ant-design-vue'
 import AssignMentorModal from './components/AssignMentorModal.vue'
 import {
   assignMentors,
+  exportJobOverview,
   getHotCompanies,
   getJobOverviewFunnel,
   getJobOverviewList,
@@ -406,6 +419,7 @@ const assignMentorVisible = ref(false)
 const assignSubmitting = ref(false)
 const selectedAssignmentRow = ref<UnassignedJobOverviewRow | null>(null)
 const stageUpdatingId = ref<number | null>(null)
+const exporting = ref(false)
 
 const requestFilters = computed<JobOverviewFilters>(() => ({
   studentName: filters.studentName || undefined,
@@ -534,8 +548,23 @@ function handleReset() {
   void loadDashboard()
 }
 
-function handleExportPlaceholder() {
-  message.info('导出能力保留在后续票面接入，当前先提供总览数据面。')
+async function handleExport() {
+  try {
+    exporting.value = true
+    await exportJobOverview({
+      studentName: requestFilters.value.studentName,
+      companyName: requestFilters.value.companyName,
+      currentStage: requestFilters.value.currentStage,
+      leadMentorId: requestFilters.value.leadMentorId,
+      assignStatus: requestFilters.value.assignStatus,
+      tab: activeTab.value
+    })
+    message.success('求职总览导出成功')
+  } catch (_error) {
+    message.error('求职总览导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 function handleOpenAssignMentor(row: UnassignedJobOverviewRow) {

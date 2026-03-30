@@ -86,6 +86,14 @@
               {{ option.label }}
             </a-select-option>
           </a-select>
+          <a-button
+            type="text"
+            class="records-toolbar__refresh"
+            aria-label="刷新"
+            @click="resetPracticeFilters"
+          >
+            <i class="mdi mdi-refresh" aria-hidden="true"></i>
+          </a-button>
         </div>
 
         <a-table
@@ -121,231 +129,126 @@
         </a-table>
       </a-card>
 
-      <section class="request-section">
-        <div class="request-header">
-          <div>
-            <h2 class="request-header__title">
-              {{ mockPracticeMeta.requestSection.titleZh }} / {{ mockPracticeMeta.requestSection.titleEn }}
-            </h2>
-            <p class="request-header__subtitle">{{ mockPracticeMeta.requestSection.subtitle }}</p>
-          </div>
-        </div>
-
-        <div class="action-hero">
-          <div class="action-hero__copy">
-            <h3>{{ mockPracticeMeta.requestSection.heroTitle }}</h3>
-            <p>{{ mockPracticeMeta.requestSection.heroSubtitle }}</p>
-          </div>
-          <a-button type="primary" size="large" @click="openRequestModal">
-            {{ mockPracticeMeta.requestSection.actionButtonText }}
-          </a-button>
-        </div>
-
-        <a-card :title="mockPracticeMeta.requestSection.tableTitle" :bordered="false" class="request-card">
-          <a-tabs v-model:activeKey="activeRequestTab" class="request-tabs">
-            <a-tab-pane
-              v-for="tab in mockPracticeMeta.requestTabs"
-              :key="tab.key"
-              :tab="`${tab.label} ${tab.count}`"
-            />
-          </a-tabs>
-
-          <div class="request-toolbar">
-            <a-input
-              v-model:value="requestFilters.keyword"
-              :placeholder="mockPracticeMeta.requestSection.keywordPlaceholder"
-              class="request-toolbar__search"
-            />
-            <a-select
-              v-model:value="requestFilters.type"
-              :placeholder="mockPracticeMeta.requestSection.typePlaceholder"
-              allow-clear
-              class="request-toolbar__select"
-            >
-              <a-select-option
-                v-for="option in mockPracticeMeta.requestFilters.typeOptions"
-                :key="`request-type-${option.value}`"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </a-select-option>
-            </a-select>
-            <a-select
-              v-model:value="requestFilters.status"
-              :placeholder="mockPracticeMeta.requestSection.statusPlaceholder"
-              allow-clear
-              class="request-toolbar__select"
-            >
-              <a-select-option
-                v-for="option in mockPracticeMeta.requestFilters.statusOptions"
-                :key="`request-status-${option.value}`"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </a-select-option>
-            </a-select>
-          </div>
-
-          <a-table
-            :columns="requestColumns"
-            :data-source="visibleRequestRecords"
-            :pagination="false"
-            row-key="id"
-            :scroll="{ x: 920 }"
-          >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'type'">
-                <a-tag :color="record.typeColor">{{ record.type }}</a-tag>
-              </template>
-
-              <template v-else-if="column.key === 'status'">
-                <a-tag :color="record.statusColor">{{ record.status }}</a-tag>
-              </template>
-
-              <template v-else-if="column.key === 'actions'">
-                <a-button size="small">查看</a-button>
-              </template>
-            </template>
-          </a-table>
-        </a-card>
-      </section>
     </OsgPageContainer>
 
-    <a-modal
-      v-model:open="practiceModalOpen"
-      :title="practiceModalTitle"
-      ok-text="提交申请"
-      cancel-text="取消"
-      @ok="submitPracticeRequest"
-      @cancel="closePracticeModal"
+    <div
+      v-if="practiceModalOpen && currentPracticeModal"
+      class="practice-dialog-shell"
+      @click.self="closePracticeModal"
     >
-      <div v-if="currentPracticeModal === 'mock'" class="modal-stack">
-        <a-form layout="vertical">
-          <a-form-item label="你为什么要做模拟面试？">
-            <a-textarea
-              v-model:value="practiceForm.reason"
-              :rows="3"
-              placeholder="请描述您申请模拟面试的原因，例如：即将参加某公司面试、希望提升面试技巧等..."
-            />
-          </a-form-item>
-          <a-form-item label="需要几位导师？">
-            <a-select v-model:value="practiceForm.mentorCount" placeholder="请选择">
-              <a-select-option
-                v-for="option in mockPracticeMeta.practiceForm.mentorCountOptions"
-                :key="`mentor-count-${option.value}`"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item label="意向导师 (选填)">
-            <a-input
-              v-model:value="practiceForm.preferredMentor"
-              placeholder="如有特别想要的导师，请填写导师姓名"
-            />
-          </a-form-item>
-          <a-form-item label="排除导师 (选填)">
-            <a-input
-              v-model:value="practiceForm.excludedMentor"
-              placeholder="如有不希望分配的导师，请填写导师姓名"
-            />
-          </a-form-item>
-        </a-form>
-      </div>
-
-      <div v-else-if="currentPracticeModal === 'networking'" class="modal-stack">
-        <div class="modal-note modal-note--amber">
-          <strong>测试说明</strong>
-          <p>人际关系测试将由班主任直接分配导师，测试内容包括邮件沟通、电话礼仪、自我介绍等职场软技能。</p>
-        </div>
-        <a-form layout="vertical">
-          <a-form-item label="备注说明 (选填)">
-            <a-textarea
-              v-model:value="practiceForm.remark"
-              :rows="3"
-              placeholder="如有特殊需求或说明，请在此填写..."
-            />
-          </a-form-item>
-        </a-form>
-      </div>
-
-      <div v-else-if="currentPracticeModal === 'midterm'" class="modal-stack">
-        <div class="modal-note modal-note--violet">
-          <strong>考试说明</strong>
-          <p>期中考试是阶段性知识检测，由班主任直接分配导师进行考核，考核内容根据您的学习进度而定。</p>
-        </div>
-        <a-form layout="vertical">
-          <a-form-item label="备注说明 (选填)">
-            <a-textarea
-              v-model:value="practiceForm.remark"
-              :rows="3"
-              placeholder="如有特殊需求或说明，请在此填写..."
-            />
-          </a-form-item>
-        </a-form>
-      </div>
-    </a-modal>
-
-    <a-modal
-      v-model:open="requestModalOpen"
-      :title="mockPracticeMeta.requestSection.modalTitle"
-      ok-text="提交申请"
-      cancel-text="取消"
-      width="720px"
-      @ok="submitRequest"
-      @cancel="closeRequestModal"
-    >
-      <div class="modal-stack">
-        <div class="request-course-grid">
-          <button
-            v-for="option in mockPracticeMeta.requestCourseOptions"
-            :key="option.value"
-            type="button"
-            class="course-type-option"
-            :class="{ 'course-type-option--active': requestForm.courseType === option.value }"
-            @click="requestForm.courseType = option.value"
-          >
-            <span class="course-type-option__badge" :style="{ background: option.gradient }">
-              {{ option.badge }}
+      <section
+        class="practice-dialog"
+        :class="`practice-dialog--${currentPracticeModal}`"
+        role="dialog"
+        :aria-label="practiceModalTitle"
+        aria-modal="true"
+      >
+        <header class="practice-dialog__header" :class="`practice-dialog__header--${currentPracticeModal}`">
+          <div class="practice-dialog__title-group">
+            <span class="practice-dialog__title-icon">
+              <i :class="['mdi', practiceDialogConfig.icon]" aria-hidden="true"></i>
             </span>
-            <span>{{ option.label }}</span>
-          </button>
+            <div>
+              <h2>{{ practiceModalTitle }}</h2>
+              <p>{{ practiceDialogConfig.subtitle }}</p>
+            </div>
+          </div>
+          <button type="button" class="practice-dialog__close" @click="closePracticeModal">×</button>
+        </header>
+
+        <div class="practice-dialog__body">
+          <div class="practice-dialog__summary-card">
+            <div class="practice-dialog__summary-badge" :style="{ background: selectedPracticeCard?.gradient }">
+              {{ selectedPracticeCard?.badge }}
+            </div>
+            <div class="practice-dialog__summary-copy">
+              <strong>{{ selectedPracticeCard?.title }}</strong>
+              <p>{{ selectedPracticeCard?.description }}</p>
+            </div>
+          </div>
+
+          <div
+            class="modal-note"
+            :class="`modal-note--${practiceDialogConfig.noteTone}`"
+          >
+            <strong>{{ practiceDialogConfig.noteTitle }}</strong>
+            <p>{{ practiceDialogConfig.noteText }}</p>
+          </div>
+
+          <div v-if="currentPracticeModal === 'mock'" class="modal-stack">
+            <section class="practice-dialog__section">
+              <div class="practice-dialog__section-label">申请信息</div>
+              <a-form layout="vertical">
+                <a-form-item label="你为什么要做模拟面试？">
+                  <a-textarea
+                    v-model:value="practiceForm.reason"
+                    :rows="3"
+                    placeholder="请描述您申请模拟面试的原因，例如：即将参加某公司面试、希望提升面试技巧等..."
+                  />
+                </a-form-item>
+                <a-form-item label="需要几位导师？">
+                  <a-select v-model:value="practiceForm.mentorCount" placeholder="请选择">
+                    <a-select-option
+                      v-for="option in mockPracticeMeta.practiceForm.mentorCountOptions"
+                      :key="`mentor-count-${option.value}`"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-form>
+            </section>
+
+            <section class="practice-dialog__section">
+              <div class="practice-dialog__section-label">导师偏好</div>
+              <a-form layout="vertical">
+                <a-form-item label="意向导师 (选填)">
+                  <a-input
+                    v-model:value="practiceForm.preferredMentor"
+                    placeholder="如有特别想要的导师，请填写导师姓名"
+                  />
+                </a-form-item>
+                <a-form-item label="排除导师 (选填)" class="practice-dialog__form-item-last">
+                  <a-input
+                    v-model:value="practiceForm.excludedMentor"
+                    placeholder="如有不希望分配的导师，请填写导师姓名"
+                  />
+                </a-form-item>
+              </a-form>
+            </section>
+          </div>
+
+          <div v-else class="modal-stack">
+            <section class="practice-dialog__section">
+              <div class="practice-dialog__section-label">补充说明</div>
+              <a-form layout="vertical">
+                <a-form-item label="备注说明 (选填)" class="practice-dialog__form-item-last">
+                  <a-textarea
+                    v-model:value="practiceForm.remark"
+                    :rows="4"
+                    placeholder="如有特殊需求或说明，请在此填写..."
+                  />
+                </a-form-item>
+              </a-form>
+            </section>
+          </div>
         </div>
 
-        <a-form layout="vertical">
-          <a-form-item label="目标公司">
-            <a-select v-model:value="requestForm.company" placeholder="请选择公司">
-              <a-select-option
-                v-for="option in mockPracticeMeta.requestForm.companyOptions"
-                :key="`request-company-${option.value}`"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item label="当前状态">
-            <a-select v-model:value="requestForm.status" placeholder="请选择状态">
-              <a-select-option
-                v-for="option in mockPracticeMeta.requestForm.jobStatusOptions"
-                :key="`request-job-status-${option.value}`"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item label="备注说明">
-            <a-textarea
-              v-model:value="requestForm.remark"
-              :rows="3"
-              placeholder="如有其他需求请在此说明"
-            />
-          </a-form-item>
-        </a-form>
-      </div>
-    </a-modal>
+        <footer class="practice-dialog__footer">
+          <a-button @click="closePracticeModal">取消</a-button>
+          <a-button
+            type="primary"
+            :class="practiceDialogConfig.actionClass"
+            :loading="practiceSubmitting"
+            @click="submitPracticeRequest"
+          >
+            提交申请
+          </a-button>
+        </footer>
+      </section>
+    </div>
+
   </div>
 </template>
 
@@ -354,18 +257,15 @@ import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { OsgPageContainer } from '@osg/shared/components'
 import {
-  createStudentClassRequest,
   getStudentMockPracticeMeta,
   createStudentPracticeRequest,
   getStudentMockPracticeOverview,
   type StudentMockPracticeCard,
   type StudentMockPracticeMeta,
-  type StudentClassRequestRecord,
   type StudentPracticeRecord
 } from '@osg/shared/api'
 
 type PracticeModalKey = string
-type RequestTabKey = 'all' | 'processing' | 'completed'
 
 const practiceColumns = [
   { title: '类型', dataIndex: 'type', key: 'type', width: 120 },
@@ -376,15 +276,6 @@ const practiceColumns = [
   { title: '课程反馈', dataIndex: 'feedback', key: 'feedback', width: 220 }
 ]
 
-const requestColumns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 120 },
-  { title: '类型', dataIndex: 'type', key: 'type', width: 140 },
-  { title: '公司', dataIndex: 'company', key: 'company', width: 180 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 140 },
-  { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 160 },
-  { title: '操作', key: 'actions', width: 100 }
-]
-
 const practiceFilters = ref({
   keyword: '',
   type: undefined as string | undefined,
@@ -392,20 +283,10 @@ const practiceFilters = ref({
   range: undefined as string | undefined
 })
 
-const requestFilters = ref({
-  keyword: '',
-  type: undefined as string | undefined,
-  status: undefined as string | undefined
-})
-
 const practiceModalOpen = ref(false)
 const currentPracticeModal = ref<PracticeModalKey | null>(null)
-const requestModalOpen = ref(false)
-const activeRequestTab = ref<RequestTabKey>('all')
 const practiceSubmitting = ref(false)
-const classSubmitting = ref(false)
 const practiceRecords = ref<StudentPracticeRecord[]>([])
-const requestRecords = ref<StudentClassRequestRecord[]>([])
 const mockPracticeMeta = ref<StudentMockPracticeMeta>({
   pageSummary: {
     titleZh: '',
@@ -455,16 +336,9 @@ const mockPracticeMeta = ref<StudentMockPracticeMeta>({
 
 const practiceForm = ref({
   reason: '',
-  mentorCount: '2位导师',
+  mentorCount: undefined as string | undefined,
   preferredMentor: '',
   excludedMentor: '',
-  remark: ''
-})
-
-const requestForm = ref({
-  courseType: 'interview',
-  company: undefined as string | undefined,
-  status: undefined as string | undefined,
   remark: ''
 })
 
@@ -474,6 +348,39 @@ const selectedPracticeCard = computed<StudentMockPracticeCard | null>(() =>
 
 const practiceModalTitle = computed(() => {
   return selectedPracticeCard.value?.modalTitle ?? ''
+})
+
+const practiceDialogConfig = computed(() => {
+  if (currentPracticeModal.value === 'networking') {
+    return {
+      icon: 'mdi-account-group',
+      subtitle: '由班主任统一分配导师并安排软技能考核',
+      noteTone: 'amber',
+      noteTitle: '测试说明',
+      noteText: '人际关系测试将由班主任直接分配导师，测试内容包括邮件沟通、电话礼仪、自我介绍等职场软技能。',
+      actionClass: 'practice-dialog__submit practice-dialog__submit--amber'
+    }
+  }
+
+  if (currentPracticeModal.value === 'midterm') {
+    return {
+      icon: 'mdi-school',
+      subtitle: '阶段性知识检测将结合当前学习进度安排考核',
+      noteTone: 'violet',
+      noteTitle: '考试说明',
+      noteText: '期中考试是阶段性知识检测，由班主任直接分配导师进行考核，考核内容根据您的学习进度而定。',
+      actionClass: 'practice-dialog__submit practice-dialog__submit--violet'
+    }
+  }
+
+  return {
+    icon: 'mdi-account-voice',
+    subtitle: '提交申请后，班主任会尽快协助安排合适导师',
+    noteTone: 'blue',
+    noteTitle: '安排说明',
+    noteText: '模拟面试会根据您的目标公司、轮次和准备状态安排导师，请尽量补充完整背景信息以便更精准地分配。',
+    actionClass: 'practice-dialog__submit practice-dialog__submit--blue'
+  }
 })
 
 const visiblePracticeRecords = computed(() => {
@@ -488,44 +395,12 @@ const visiblePracticeRecords = computed(() => {
     const matchesType =
       !practiceFilters.value.type || record.typeValue === practiceFilters.value.type
     const matchesStatus =
-      !practiceFilters.value.status || record.statusValue === practiceFilters.value.status
+      matchesPracticeStatus(record.statusValue, practiceFilters.value.status)
     const matchesRange = isWithinSelectedRange(record.submittedAtValue, practiceFilters.value.range)
 
     return matchesKeyword && matchesType && matchesStatus && matchesRange
   })
 })
-
-const visibleRequestRecords = computed(() => {
-  const keyword = requestFilters.value.keyword.trim().toLowerCase()
-
-  return requestRecords.value.filter((record) => {
-    const matchesTab =
-      activeRequestTab.value === 'all' ||
-      (activeRequestTab.value === 'processing' && record.statusValue === 'Processing') ||
-      (activeRequestTab.value === 'completed' && record.statusValue === 'Completed')
-    const matchesKeyword =
-      keyword.length === 0 ||
-      [record.company, record.type, record.id].some((value) =>
-        value.toLowerCase().includes(keyword)
-      )
-    const matchesType =
-      !requestFilters.value.type || record.typeValue === requestFilters.value.type
-    const matchesStatus =
-      !requestFilters.value.status || record.statusValue === requestFilters.value.status
-
-    return matchesTab && matchesKeyword && matchesType && matchesStatus
-  })
-})
-
-const defaultMentorCount = computed(() =>
-  mockPracticeMeta.value.practiceForm.mentorCountOptions.find((option) => option.value === '2位导师')?.value ??
-  mockPracticeMeta.value.practiceForm.mentorCountOptions[0]?.value ??
-  '2位导师'
-)
-
-const defaultCourseType = computed(() =>
-  mockPracticeMeta.value.requestCourseOptions[0]?.value ?? 'interview'
-)
 
 const buttonStyleForCard = (entry: StudentMockPracticeCard) => {
   if (entry.buttonType === 'default' && entry.buttonColor) {
@@ -549,27 +424,31 @@ const closePracticeModal = () => {
   resetPracticeForm()
 }
 
-const openRequestModal = () => {
-  resetRequestForm()
-  requestModalOpen.value = true
-}
-
-const closeRequestModal = () => {
-  requestModalOpen.value = false
-  resetRequestForm()
-}
-
 const submitPracticeRequest = async () => {
   if (!currentPracticeModal.value || practiceSubmitting.value) {
     return
   }
 
+  const practiceType = currentPracticeModal.value
+
+  if (practiceType === 'mock') {
+    if (!practiceForm.value.reason.trim()) {
+      message.error('请填写模拟面试申请原因')
+      return
+    }
+
+    if (!practiceForm.value.mentorCount) {
+      message.error('请选择导师数量')
+      return
+    }
+  }
+
   practiceSubmitting.value = true
   try {
     await createStudentPracticeRequest({
-      type: currentPracticeModal.value,
+      type: practiceType,
       reason: practiceForm.value.reason,
-      mentorCount: practiceForm.value.mentorCount,
+      mentorCount: practiceForm.value.mentorCount as string,
       preferredMentor: practiceForm.value.preferredMentor,
       excludedMentor: practiceForm.value.excludedMentor,
       remark: practiceForm.value.remark
@@ -578,36 +457,16 @@ const submitPracticeRequest = async () => {
     currentPracticeModal.value = null
     resetPracticeForm()
     await loadPageData()
-    message.success('申请提交成功')
+    if (practiceType === 'mock') {
+      message.success('模拟面试申请已提交！班主任将尽快为您安排导师。')
+      return
+    }
+
+    message.success('申请已提交！班主任将为您分配导师。')
+  } catch {
+    return
   } finally {
     practiceSubmitting.value = false
-  }
-}
-
-const submitRequest = async () => {
-  if (classSubmitting.value) {
-    return
-  }
-
-  if (!requestForm.value.company || !requestForm.value.status) {
-    message.error('请完整填写目标公司和当前状态')
-    return
-  }
-
-  classSubmitting.value = true
-  try {
-    await createStudentClassRequest({
-      courseType: requestForm.value.courseType,
-      company: requestForm.value.company,
-      status: requestForm.value.status,
-      remark: requestForm.value.remark
-    })
-    requestModalOpen.value = false
-    resetRequestForm()
-    await loadPageData()
-    message.success('课程申请已提交')
-  } finally {
-    classSubmitting.value = false
   }
 }
 
@@ -617,27 +476,46 @@ const loadPageData = async () => {
     getStudentMockPracticeMeta()
   ])
   practiceRecords.value = overview.practiceRecords
-  requestRecords.value = overview.requestRecords
   mockPracticeMeta.value = meta
 }
 
 const resetPracticeForm = () => {
   practiceForm.value = {
     reason: '',
-    mentorCount: defaultMentorCount.value,
+    mentorCount: undefined,
     preferredMentor: '',
     excludedMentor: '',
     remark: ''
   }
 }
 
-const resetRequestForm = () => {
-  requestForm.value = {
-    courseType: defaultCourseType.value,
-    company: undefined,
+const resetPracticeFilters = () => {
+  practiceFilters.value = {
+    keyword: '',
+    type: undefined,
     status: undefined,
-    remark: ''
+    range: undefined
   }
+}
+
+const matchesPracticeStatus = (recordStatusValue: string, selectedStatus: string | undefined) => {
+  if (!selectedStatus) {
+    return true
+  }
+
+  if (selectedStatus === 'pending') {
+    return recordStatusValue === 'pending'
+  }
+
+  if (selectedStatus === 'ongoing') {
+    return ['assigned', 'coaching', 'ongoing'].includes(recordStatusValue)
+  }
+
+  if (selectedStatus === 'completed') {
+    return recordStatusValue === 'completed'
+  }
+
+  return recordStatusValue === selectedStatus
 }
 
 const parseDateTime = (value: string) => {
@@ -675,11 +553,17 @@ const isWithinSelectedRange = (submittedAtValue: string, range: string | undefin
   return true
 }
 
-onMounted(() => {
-  void loadPageData().then(() => {
+async function bootstrapPage() {
+  try {
+    await loadPageData()
     resetPracticeForm()
-    resetRequestForm()
-  })
+  } catch {
+    return
+  }
+}
+
+onMounted(() => {
+  void bootstrapPage()
 })
 </script>
 
@@ -750,27 +634,23 @@ onMounted(() => {
     border-radius: 999px;
   }
 
-  .records-card,
-  .request-card {
+  .records-card {
     border-radius: 20px;
     box-shadow: 0 18px 36px rgba(15, 23, 42, 0.05);
   }
 
-  .records-toolbar,
-  .request-toolbar {
+  .records-toolbar {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 16px;
   }
 
-  .records-toolbar__search,
-  .request-toolbar__search {
+  .records-toolbar__search {
     width: 160px;
   }
 
-  .records-toolbar__select,
-  .request-toolbar__select {
+  .records-toolbar__select {
     width: 140px;
   }
 
@@ -791,133 +671,241 @@ onMounted(() => {
     color: #0f6fb6;
   }
 
-  .request-section {
-    margin-top: 32px;
-  }
-
-  .request-header {
-    margin-bottom: 16px;
-  }
-
-  .request-header__title {
-    margin: 0 0 6px;
-    font-size: 22px;
-    font-weight: 600;
-    color: #0f172a;
-  }
-
-  .request-header__subtitle {
-    margin: 0;
-    color: #6b7280;
-    font-size: 14px;
-  }
-
-  .action-hero {
-    margin-bottom: 20px;
-    padding: 24px 28px;
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    background: linear-gradient(135deg, #eff6ff, #eef2ff);
-    border: 1px solid #dbeafe;
-  }
-
-  .action-hero__copy {
-    h3 {
-      margin: 0 0 6px;
-      font-size: 22px;
-      color: #0f172a;
-    }
-
-    p {
-      margin: 0;
-      color: #475569;
-    }
-  }
-
-  .request-tabs {
-    margin-bottom: 8px;
-  }
-
   .modal-stack {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
 
-  .modal-note {
+  .practice-dialog-shell {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(12px);
+  }
+
+  .practice-dialog {
+    --modal-header-from: #7399c6;
+    --modal-header-to: #9bb8d9;
+    --modal-card-bg: #e8f0f8;
+    --modal-card-border: #e2e8f0;
+    --modal-accent: #5a7ba3;
+    --modal-accent-soft: #eff5fb;
+    --modal-accent-strong: #7399c6;
+    width: min(620px, 100%);
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid var(--modal-card-border);
+    background: #fff;
+    box-shadow: 0 20px 56px rgba(115, 153, 198, 0.22);
+  }
+
+  .practice-dialog--networking,
+  .practice-dialog--midterm {
+    width: min(540px, 100%);
+  }
+
+  .practice-dialog__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 26px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
+    border-bottom: 0;
+  }
+
+  .practice-dialog__title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    h2 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+    }
+  }
+
+  .practice-dialog__title-icon {
+    width: 42px;
+    height: 42px;
     border-radius: 14px;
-    padding: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .practice-dialog__close {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.28);
+      transform: translateY(-1px);
+    }
+  }
+
+  .practice-dialog__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  }
+
+  .practice-dialog__summary-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--modal-card-bg);
+    border: 1px solid var(--modal-card-border);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .practice-dialog__summary-badge {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  .practice-dialog__summary-copy {
+    strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #0f172a;
+      font-size: 15px;
+    }
+
+    p {
+      margin: 0;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+  }
+
+  .practice-dialog__section {
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--modal-card-bg);
+    border: 1px solid var(--modal-card-border);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .practice-dialog__section-label {
+    margin-bottom: 14px;
+    color: var(--modal-accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .practice-dialog__form-item-last {
+    margin-bottom: 0;
+  }
+
+  .modal-note {
+    border-radius: 16px;
+    padding: 16px 18px;
+    background: var(--modal-card-bg);
+    border: 1px solid var(--modal-card-border);
 
     strong {
       display: block;
       margin-bottom: 6px;
+      font-size: 14px;
     }
 
     p {
       margin: 0;
       line-height: 1.6;
+      font-size: 13px;
     }
+  }
+
+  .modal-note--blue {
+    color: var(--modal-accent);
   }
 
   .modal-note--amber {
-    background: #fef3c7;
-    color: #92400e;
+    color: var(--modal-accent);
   }
 
   .modal-note--violet {
-    background: #f3e8ff;
-    color: #6d28d9;
+    color: var(--modal-accent);
   }
 
-  .request-course-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .course-type-option {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e5e7eb;
-    border-radius: 14px;
-    background: #fff;
+  .practice-dialog__footer {
     display: flex;
-    align-items: center;
+    justify-content: flex-end;
     gap: 12px;
-    text-align: left;
-    font-size: 13px;
-    font-weight: 500;
-    color: #0f172a;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: #93c5fd;
-      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.1);
-    }
+    padding: 18px 26px 20px;
+    background: #f8fafc;
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
   }
 
-  .course-type-option--active {
-    border-color: #2563eb;
-    background: #eff6ff;
+  .practice-dialog__submit {
+    min-width: 124px;
+    border: none;
+    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
   }
 
-  .course-type-option__badge {
-    width: 34px;
-    height: 34px;
-    border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    flex-shrink: 0;
+  .practice-dialog__submit--blue {
+    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
   }
+
+  .practice-dialog__submit--amber {
+    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
+  }
+
+  .practice-dialog__submit--violet {
+    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
+  }
+
 }
 
 @media (max-width: 1200px) {
@@ -925,25 +913,29 @@ onMounted(() => {
     .practice-grid {
       grid-template-columns: 1fr;
     }
-
-    .request-course-grid {
-      grid-template-columns: 1fr;
-    }
   }
 }
 
 @media (max-width: 768px) {
   .mock-practice-page {
-    .action-hero {
-      padding: 20px;
+    .practice-dialog-shell {
+      padding: 16px;
+    }
+
+    .practice-dialog__header,
+    .practice-dialog__body,
+    .practice-dialog__footer {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .practice-dialog__title-group,
+    .practice-dialog__summary-card {
       align-items: flex-start;
-      flex-direction: column;
     }
 
     .records-toolbar__search,
-    .records-toolbar__select,
-    .request-toolbar__search,
-    .request-toolbar__select {
+    .records-toolbar__select {
       width: 100%;
     }
   }

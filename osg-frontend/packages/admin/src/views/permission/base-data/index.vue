@@ -12,6 +12,8 @@
         v-for="cat in categories"
         :key="cat.key"
         type="button"
+        :aria-label="cat.label"
+        :data-field-name="cat.label"
         :class="['category-card', { 'category-card--active': selectedCategory === cat.key }]"
         @click="selectCategory(cat.key)"
       >
@@ -28,6 +30,10 @@
         v-for="tab in currentTabs"
         :key="tab.key"
         type="button"
+        :aria-label="tab.label"
+        :data-field-name="tab.label"
+        :data-surface-trigger="tab.key"
+        :data-surface-active="selectedTab === tab.key"
         :class="['base-data-tabs__tab', { 'base-data-tabs__tab--active': selectedTab === tab.key }]"
         @click="selectTab(tab.key)"
       >
@@ -35,11 +41,12 @@
       </button>
     </div>
 
-    <div class="content-toolbar">
+    <div class="content-toolbar" data-field-name="基础数据页筛选区">
       <div class="content-toolbar__search">
         <a-input
           v-model:value="searchName"
           class="content-toolbar__input"
+          :data-field-name="`${currentTabLabel}搜索`"
           :placeholder="`搜索${currentTabLabel}...`"
           allow-clear
           @pressEnter="handleSearch"
@@ -49,7 +56,13 @@
           <span>搜索</span>
         </button>
       </div>
-      <button type="button" class="permission-button permission-button--primary" @click="handleAdd">
+      <button
+        type="button"
+        class="permission-button permission-button--primary"
+        :data-surface-trigger="currentAddSurfaceId"
+        :aria-label="`新增${currentAddLabel}`"
+        @click="handleAdd"
+      >
         <i class="mdi mdi-plus" aria-hidden="true"></i>
         <span>新增{{ currentAddLabel }}</span>
       </button>
@@ -86,7 +99,17 @@
               <td>{{ record.updateTime ? dayjs(record.updateTime).format('MM/DD/YYYY') : '-' }}</td>
               <td>
                 <div class="permission-actions">
-                  <button type="button" class="permission-action" @click="handleEdit(record)">编辑</button>
+                  <button
+                    type="button"
+                    class="permission-action"
+                    aria-label="编辑"
+                    title="编辑"
+                    :data-surface-trigger="currentEditSurfaceId"
+                    :data-surface-sample-key="record.name"
+                    @click="handleEdit(record)"
+                  >
+                    编辑
+                  </button>
                   <button
                     v-if="record.status === '0'"
                     type="button"
@@ -113,6 +136,7 @@
 
     <BaseDataModal
       v-model:visible="modalVisible"
+      :category="selectedCategory"
       :record="currentRecord"
       :tab="selectedTab"
       :tab-label="currentTabLabel"
@@ -149,11 +173,25 @@ const categories = [
     iconBg: '#DBEAFE',
     iconColor: '#3B82F6',
     tabs: [
-      { key: 'job_category', label: '岗位分类', createLabel: '分类', nameHeader: '分类名称' },
-      { key: 'company_name', label: '公司/银行名称', createLabel: '银行', nameHeader: '公司名称' },
-      { key: 'company_type', label: '公司/银行类别', createLabel: '类别', nameHeader: '类别名称' },
+      { key: 'job_category', label: '岗位分类', createLabel: '岗位分类', nameHeader: '分类名称' },
+      {
+        key: 'company_name',
+        label: '公司/银行名称',
+        createLabel: '公司/银行名称',
+        nameHeader: '公司名称',
+        hasParent: true,
+        parentTab: 'company_type',
+      },
+      { key: 'company_type', label: '公司/银行类别', createLabel: '公司/银行类别', nameHeader: '类别名称' },
       { key: 'region', label: '大区', createLabel: '大区', nameHeader: '大区名称' },
-      { key: 'city', label: '地区/城市', createLabel: '城市', nameHeader: '城市名称' },
+      {
+        key: 'city',
+        label: '地区/城市',
+        createLabel: '地区/城市',
+        nameHeader: '城市名称',
+        hasParent: true,
+        parentTab: 'region',
+      },
       { key: 'recruit_cycle', label: '招聘周期', createLabel: '周期', nameHeader: '周期名称' }
     ]
   },
@@ -166,8 +204,15 @@ const categories = [
     iconColor: '#22C55E',
     tabs: [
       { key: 'school', label: '学校', createLabel: '学校', nameHeader: '学校名称' },
-      { key: 'major_direction', label: '主攻方向', createLabel: '方向', nameHeader: '方向名称' },
-      { key: 'sub_direction', label: '子方向', createLabel: '子方向', nameHeader: '子方向名称' }
+       { key: 'major_direction', label: '主攻方向', createLabel: '方向', nameHeader: '方向名称' },
+      {
+        key: 'sub_direction',
+        label: '子方向',
+        createLabel: '子方向',
+        nameHeader: '子方向名称',
+        hasParent: true,
+        parentTab: 'major_direction',
+      }
     ]
   },
   {
@@ -209,6 +254,21 @@ const currentTabConfig = computed(() => {
 const currentTabLabel = computed(() => currentTabConfig.value?.label ?? '')
 const currentAddLabel = computed(() => currentTabConfig.value?.createLabel ?? currentTabLabel.value)
 const currentNameHeader = computed(() => currentTabConfig.value?.nameHeader ?? '名称')
+const surfaceIdMap: Record<string, { create: string; edit: string }> = {
+  recruit_cycle: { create: 'modal-new-program', edit: 'modal-edit-program' },
+  major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
+  sub_direction: { create: 'modal-new-sub-direction', edit: 'modal-edit-sub-direction' },
+}
+
+const resolveSurfaceId = (tab: string, mode: 'create' | 'edit') => {
+  const mapped = surfaceIdMap[tab]
+  if (mapped) return mapped[mode]
+  const normalizedTab = tab.replace(/_/g, '-')
+  return mode === 'create' ? `modal-new-${normalizedTab}` : `modal-edit-${normalizedTab}`
+}
+
+const currentAddSurfaceId = computed(() => resolveSurfaceId(selectedTab.value, 'create'))
+const currentEditSurfaceId = computed(() => resolveSurfaceId(selectedTab.value, 'edit'))
 
 const selectCategory = (key: string) => {
   selectedCategory.value = key

@@ -7,6 +7,8 @@ public interface OsgPositionMapper
 {
     OsgPosition selectPositionByPositionId(Long positionId);
 
+    List<OsgPosition> selectVisiblePublicPositionList(OsgPosition position);
+
     List<OsgPosition> selectPositionList(OsgPosition position);
 
     int insertPosition(OsgPosition position);
