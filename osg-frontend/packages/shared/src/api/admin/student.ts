@@ -18,8 +18,6 @@ export interface StudentListItem {
   email: string
   leadMentorId?: number
   leadMentorName?: string
-  assistantId?: number
-  assistantName?: string
   school?: string
   majorDirection?: string
   targetPosition?: string
@@ -48,8 +46,6 @@ export interface UpdateStudentPayload {
   school?: string
   majorDirection?: string
   subDirection?: string
-  leadMentorId?: number
-  assistantId?: number
 }
 
 export interface ResetStudentPasswordResult {

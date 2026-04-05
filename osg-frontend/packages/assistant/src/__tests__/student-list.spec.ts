@@ -6,11 +6,6 @@ const apiMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@osg/shared/api', () => apiMocks)
-vi.mock('vue-router', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
-}))
 
 const { getAssistantStudentList } = apiMocks
 
@@ -64,11 +59,12 @@ async function flushUi() {
   await new Promise((resolve) => setTimeout(resolve, 0))
 }
 
-function createLocalStorageMock() {
+function createStorageMock() {
   const store = new Map<string, string>()
+
   return {
     getItem(key: string) {
-      return store.has(key) ? store.get(key) || null : null
+      return store.has(key) ? store.get(key)! : null
     },
     setItem(key: string, value: string) {
       store.set(key, String(value))
@@ -86,46 +82,37 @@ describe('assistant student list page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     Object.defineProperty(window, 'localStorage', {
-      value: createLocalStorageMock(),
+      value: createStorageMock(),
       configurable: true,
-      writable: true,
     })
-    window.localStorage.removeItem('assistant-student-list-state')
+    window.localStorage.clear()
     getAssistantStudentList.mockResolvedValue(studentListFixture)
   })
 
-  it('renders lead-mentor style summary, toolbar and table while keeping assistant data', async () => {
+  it('renders the lead-mentor-like shell, filters, rows, and footer using assistant data', async () => {
     const wrapper = mount(StudentListPage)
     await flushUi()
 
     expect(wrapper.find('#page-student-list').exists()).toBe(true)
-    expect(wrapper.find('.page-header').exists()).toBe(true)
-    expect(wrapper.find('.summary-grid').exists()).toBe(true)
-    expect(wrapper.find('.toolbar-card').exists()).toBe(true)
-    expect(wrapper.find('.toolbar-card__row').exists()).toBe(true)
-    expect(wrapper.find('.toolbar-card__meta').exists()).toBe(true)
-    expect(wrapper.find('.table-card').exists()).toBe(true)
-    expect(wrapper.find('.data-table').exists()).toBe(true)
-    expect(wrapper.findAll('.summary-card')).toHaveLength(4)
-    expect(wrapper.text()).toContain('学员总览')
-    expect(wrapper.text()).toContain('筛选已保存')
-    expect(wrapper.text()).toContain('当前页学员')
-    expect(wrapper.text()).toContain('待跟进提醒')
-    expect(wrapper.text()).toContain('账号正常')
-    expect(wrapper.text()).toContain('待审核')
-    expect(wrapper.text()).toContain('状态提醒')
-    expect(wrapper.text()).toContain('账号状态')
-    expect(wrapper.text()).toContain('学习进度')
-    expect(wrapper.text()).toContain('班主任 / 学校')
-    expect(wrapper.text()).toContain('跟进说明')
+    expect(wrapper.find('.page-title').text()).toContain('Student List')
+    expect(wrapper.find('.filters').exists()).toBe(true)
+    expect(wrapper.find('.card').exists()).toBe(true)
+    expect(wrapper.find('.page-footer').exists()).toBe(true)
+    expect(wrapper.findAll('[data-student-row]')).toHaveLength(2)
     expect(wrapper.text()).toContain('Amy Student')
+    expect(wrapper.text()).toContain('amy@example.com')
+    expect(wrapper.text()).toContain('Jess')
     expect(wrapper.text()).toContain('Runtime Backfill University')
     expect(wrapper.text()).toContain('Consulting')
-    expect(wrapper.text()).toContain('4h')
-    expect(wrapper.text()).toContain('助教跟进')
+    expect(wrapper.text()).toContain('Strategy')
     expect(wrapper.text()).toContain('待审核')
+    expect(wrapper.text()).toContain('即将到期')
+    expect(wrapper.text()).toContain('冻结')
+    expect(wrapper.text()).toContain('共 2 条记录')
+    expect(wrapper.text()).toContain('查看求职')
     expect(wrapper.text()).not.toContain('敬请期待')
     expect(wrapper.text()).not.toContain('真实接口数据')
+    expect(wrapper.text()).not.toContain('不提供独立详情页')
   })
 
   it('hydrates persisted filters and uses them on the first real request', async () => {

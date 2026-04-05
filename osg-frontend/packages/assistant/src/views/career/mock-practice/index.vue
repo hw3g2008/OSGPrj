@@ -6,7 +6,7 @@
           模拟应聘管理
           <span class="page-title-en">Mock Practice</span>
         </h1>
-        <p class="page-sub">查看学员模拟应聘安排、导师信息与反馈结果，帮助助教完成跟进与复盘</p>
+        <p class="page-sub">查看学员的模拟面试、人际关系测试与考核记录，聚焦近期安排和反馈结果。</p>
       </div>
     </div>
 
@@ -19,38 +19,36 @@
       </article>
     </section>
 
-    <section v-if="errorMessage" class="card state-card state-card--error">
-      <div class="card-body state-card__body">
-        <h2>模拟应聘记录加载失败</h2>
-        <p>{{ errorMessage }}</p>
-        <button type="button" class="btn btn-sm" @click="loadRecords">重新加载</button>
-      </div>
+    <section v-if="errorMessage" class="state-card state-card--error">
+      <h2>模拟应聘记录加载失败</h2>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="btn btn-text btn-sm" @click="loadRecords">重新加载</button>
     </section>
 
     <section v-else class="card">
       <div class="card-header">
         <div class="tabs">
           <button
-            id="mock-tab-pending"
+            id="mock-tab-upcoming"
             type="button"
             class="tab"
-            :class="[{ active: activeTab === 'pending' }, 'tab--pending']"
-            @click="activeTab = 'pending'"
+            :class="[{ active: activeTab === 'upcoming' }, 'tab--info']"
+            @click="activeTab = 'upcoming'"
           >
-            <i class="mdi mdi-account-clock" aria-hidden="true" />
-            即将进行
-            <span class="tab-count">{{ pendingRows.length }}</span>
+            <i class="mdi mdi-calendar-clock" aria-hidden="true" />
+            待进行
+            <span class="tab-count">{{ upcomingCount }}</span>
           </button>
           <button
             id="mock-tab-feedback"
             type="button"
             class="tab"
-            :class="[{ active: activeTab === 'feedback' }, 'tab--primary']"
+            :class="[{ active: activeTab === 'feedback' }, 'tab--success']"
             @click="activeTab = 'feedback'"
           >
-            <i class="mdi mdi-message-text" aria-hidden="true" />
-            已完成反馈
-            <span class="tab-count">{{ feedbackRows.length }}</span>
+            <i class="mdi mdi-message-text-outline" aria-hidden="true" />
+            已有反馈
+            <span class="tab-count">{{ feedbackCount }}</span>
           </button>
           <button
             id="mock-tab-all"
@@ -61,19 +59,15 @@
           >
             <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
             全部记录
-            <span class="tab-count tab-count--managed">{{ filteredAllRows.length }}</span>
+            <span class="tab-count tab-count--managed">{{ records.length }}</span>
           </button>
         </div>
       </div>
 
-      <div
-        id="mock-content-pending"
-        class="card-body tab-panel"
-        :style="{ display: activeTab === 'pending' ? 'block' : 'none' }"
-      >
-        <div class="panel-banner panel-banner--info">
-          <i class="mdi mdi-calendar-clock" aria-hidden="true" />
-          展示近期待执行或已安排的模拟应聘记录，便于助教跟进安排进度
+      <div class="card-body tab-panel">
+        <div class="panel-banner" :class="bannerClass">
+          <i class="mdi" :class="bannerIcon" aria-hidden="true" />
+          {{ bannerText }}
         </div>
 
         <div class="filters filters--compact">
@@ -97,188 +91,25 @@
           </div>
           <div class="filter-chip">
             <span class="filter-chip__label">学员:</span>
-            <input v-model.trim="filters.keyword" class="form-input" type="text" placeholder="搜索学员姓名/内容" />
+            <input
+              v-model.trim="filters.keyword"
+              class="form-input"
+              type="text"
+              placeholder="搜索学员姓名/内容"
+            />
           </div>
+          <button type="button" class="btn btn-sm" @click="noopFilterAction">
+            <i class="mdi mdi-magnify" aria-hidden="true" />
+            筛选
+          </button>
           <button type="button" class="btn btn-text btn-sm" @click="resetFilters">
             <i class="mdi mdi-refresh" aria-hidden="true" />
             重置
           </button>
         </div>
 
-        <div v-if="pendingRows.length === 0" class="panel-state">当前没有待跟进的模拟应聘记录</div>
-        <div v-else class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>学员</th>
-                <th>类型</th>
-                <th>申请时间</th>
-                <th>状态</th>
-                <th>导师</th>
-                <th style="width: 120px">详情</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in pendingRows" :key="row.practiceId" class="mock-row" :class="row.rowTone">
-                <td>
-                  <div class="student-cell">
-                    <div class="avatar" :style="{ background: row.avatarColor }">{{ row.avatar }}</div>
-                    <div>
-                      <div class="student-name">{{ row.studentName }}</div>
-                      <div class="student-meta">ID: {{ row.studentId }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="tag" :class="row.typeTone">
-                    <i class="mdi" :class="row.typeIcon" aria-hidden="true" />
-                    {{ row.practiceType }}
-                  </span>
-                </td>
-                <td><span class="date-text">{{ row.appliedAt }}</span></td>
-                <td>
-                  <span class="tag" :class="row.statusTone">
-                    <i v-if="row.statusIcon" class="mdi" :class="row.statusIcon" aria-hidden="true" />
-                    {{ row.status }}
-                  </span>
-                </td>
-                <td>
-                  <div class="mentor-stack">
-                    <div class="mentor-stack__name">{{ row.mentorName }}</div>
-                    <div class="student-meta">{{ row.mentorMeta }}</div>
-                  </div>
-                </td>
-                <td>
-                  <button type="button" class="detail-trigger" @click="openDetail(row.raw)">查看详情</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div
-        id="mock-content-feedback"
-        class="card-body tab-panel"
-        :style="{ display: activeTab === 'feedback' ? 'block' : 'none' }"
-      >
-        <div class="panel-banner panel-banner--success">
-          <i class="mdi mdi-check-circle" aria-hidden="true" />
-          以下为已回填反馈结果的模拟应聘记录，助教可直接查看复盘摘要
-        </div>
-
-        <div class="filters filters--compact">
-          <div class="filter-chip">
-            <span class="filter-chip__label">类型:</span>
-            <select v-model="filters.practiceType" class="form-select">
-              <option value="">全部类型</option>
-              <option v-for="option in practiceTypeOptions" :key="option" :value="option">
-                {{ practiceTypeLabel(option) }}
-              </option>
-            </select>
-          </div>
-          <div class="filter-chip">
-            <span class="filter-chip__label">学员:</span>
-            <input v-model.trim="filters.keyword" class="form-input" type="text" placeholder="搜索学员姓名/内容" />
-          </div>
-          <button type="button" class="btn btn-text btn-sm" @click="resetFilters">
-            <i class="mdi mdi-refresh" aria-hidden="true" />
-            重置
-          </button>
-        </div>
-
-        <div v-if="feedbackRows.length === 0" class="panel-state">当前没有可查看反馈的模拟应聘记录</div>
-        <div v-else class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>学员</th>
-                <th>类型</th>
-                <th>状态</th>
-                <th>已上课时</th>
-                <th>课程反馈</th>
-                <th style="width: 120px">详情</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in feedbackRows" :key="row.practiceId" class="mock-row" :class="row.rowTone">
-                <td>
-                  <div class="student-cell">
-                    <div class="avatar" :style="{ background: row.avatarColor }">{{ row.avatar }}</div>
-                    <div>
-                      <div class="student-name">{{ row.studentName }}</div>
-                      <div class="student-meta">ID: {{ row.studentId }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="tag" :class="row.typeTone">
-                    <i class="mdi" :class="row.typeIcon" aria-hidden="true" />
-                    {{ row.practiceType }}
-                  </span>
-                </td>
-                <td>
-                  <span class="tag" :class="row.statusTone">
-                    <i v-if="row.statusIcon" class="mdi" :class="row.statusIcon" aria-hidden="true" />
-                    {{ row.status }}
-                  </span>
-                </td>
-                <td><span class="hours-text">{{ row.hours }}</span></td>
-                <td>
-                  <div class="feedback-stack">
-                    <div class="feedback-stack__title" :class="row.feedbackTone">{{ row.feedbackTitle }}</div>
-                    <div class="student-meta">{{ row.feedbackSummary }}</div>
-                  </div>
-                </td>
-                <td>
-                  <button type="button" class="detail-trigger" @click="openDetail(row.raw)">查看详情</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div
-        id="mock-content-all"
-        class="card-body tab-panel"
-        :style="{ display: activeTab === 'all' ? 'block' : 'none' }"
-      >
-        <div class="panel-banner panel-banner--neutral">
-          <i class="mdi mdi-text-box-search" aria-hidden="true" />
-          集中查看全部模拟应聘记录、导师安排与反馈概览
-        </div>
-
-        <div class="filters filters--compact">
-          <div class="filter-chip">
-            <span class="filter-chip__label">类型:</span>
-            <select v-model="filters.practiceType" class="form-select">
-              <option value="">全部类型</option>
-              <option v-for="option in practiceTypeOptions" :key="option" :value="option">
-                {{ practiceTypeLabel(option) }}
-              </option>
-            </select>
-          </div>
-          <div class="filter-chip">
-            <span class="filter-chip__label">状态:</span>
-            <select v-model="filters.status" class="form-select">
-              <option value="">全部状态</option>
-              <option v-for="option in statusOptions" :key="option" :value="option">
-                {{ statusLabel(option) }}
-              </option>
-            </select>
-          </div>
-          <div class="filter-chip">
-            <span class="filter-chip__label">学员:</span>
-            <input v-model.trim="filters.keyword" class="form-input" type="text" placeholder="搜索学员姓名/内容" />
-          </div>
-          <button type="button" class="btn btn-text btn-sm" @click="resetFilters">
-            <i class="mdi mdi-refresh" aria-hidden="true" />
-            重置
-          </button>
-        </div>
-
-        <div v-if="filteredAllRows.length === 0" class="panel-state">当前筛选下没有可展示的模拟应聘记录</div>
+        <div v-if="loading" class="table-state">正在读取模拟应聘记录...</div>
+        <div v-else-if="filteredRecords.length === 0" class="table-state">当前筛选下没有可展示的模拟应聘记录。</div>
         <div v-else class="table-wrap">
           <table class="table">
             <thead>
@@ -289,47 +120,61 @@
                 <th>状态</th>
                 <th>辅导导师</th>
                 <th>已上课时</th>
-                <th>课程反馈</th>
+                <th>反馈结果</th>
+                <th style="width: 92px">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in filteredAllRows" :key="row.practiceId" class="mock-row" :class="row.rowTone">
+              <tr
+                v-for="record in filteredRecords"
+                :key="record.practiceId"
+                class="mock-row"
+                :class="rowTone(record.practiceType)"
+              >
                 <td>
                   <div class="student-cell">
-                    <div class="avatar" :style="{ background: row.avatarColor }">{{ row.avatar }}</div>
+                    <div class="avatar" :style="{ background: resolveAvatarColor(record.studentName) }">
+                      {{ buildAvatarText(record.studentName) }}
+                    </div>
                     <div>
-                      <div class="student-name">{{ row.studentName }}</div>
-                      <div class="student-meta">ID: {{ row.studentId }}</div>
+                      <div class="student-name">{{ record.studentName || '-' }}</div>
+                      <div class="student-meta">ID: {{ record.studentId || '-' }}</div>
                     </div>
                   </div>
                 </td>
                 <td>
-                  <span class="tag" :class="row.typeTone">
-                    <i class="mdi" :class="row.typeIcon" aria-hidden="true" />
-                    {{ row.practiceType }}
+                  <span class="tag" :class="practiceTypeTone(record.practiceType)">
+                    <i class="mdi" :class="practiceTypeIcon(record.practiceType)" aria-hidden="true" />
+                    {{ practiceTypeLabel(record.practiceType) }}
                   </span>
                 </td>
-                <td><span class="date-text">{{ row.appliedAt }}</span></td>
+                <td><span class="date-text">{{ formatDateTime(record.submittedAt) }}</span></td>
                 <td>
-                  <span class="tag" :class="row.statusTone">
-                    <i v-if="row.statusIcon" class="mdi" :class="row.statusIcon" aria-hidden="true" />
-                    {{ row.status }}
+                  <span class="tag" :class="statusTone(record.status)">
+                    <i class="mdi" :class="statusIcon(record.status)" aria-hidden="true" />
+                    {{ statusLabel(record.status) }}
                   </span>
                 </td>
                 <td>
                   <div class="mentor-stack">
-                    <div class="mentor-stack__name">{{ row.mentorName }}</div>
-                    <div class="student-meta">{{ row.mentorMeta }}</div>
+                    <div class="mentor-stack__name">{{ record.mentorNames || '暂未安排' }}</div>
+                    <div class="student-meta">{{ record.mentorBackgrounds || '等待排期同步' }}</div>
                   </div>
                 </td>
-                <td><span class="hours-text">{{ row.hours }}</span></td>
                 <td>
-                  <button type="button" class="feedback-trigger" @click="openDetail(row.raw)">
-                    <div class="feedback-stack">
-                      <div class="feedback-stack__title" :class="row.feedbackTone">{{ row.feedbackTitle }}</div>
-                      <div class="student-meta">{{ row.feedbackSummary }}</div>
+                  <span v-if="record.completedHours" class="hours-text">{{ record.completedHours }}h</span>
+                  <span v-else class="muted-text">-</span>
+                </td>
+                <td>
+                  <div class="feedback-stack">
+                    <div class="feedback-stack__title" :class="feedbackTone(record.feedbackRating)">
+                      {{ feedbackLabel(record.feedbackRating) }}
                     </div>
-                  </button>
+                    <div class="student-meta">{{ record.feedbackSummary || '暂无反馈摘要' }}</div>
+                  </div>
+                </td>
+                <td>
+                  <button type="button" class="link-button" @click="openDetail(record)">查看详情</button>
                 </td>
               </tr>
             </tbody>
@@ -356,15 +201,15 @@
             </div>
             <div>
               <span class="detail-label">安排时间</span>
-              <div class="detail-value">{{ formatDateTime(detailModal.record.scheduledAt || detailModal.record.submittedAt, 'YYYY-MM-DD HH:mm') }}</div>
+              <div class="detail-value">{{ formatDateTime(detailModal.record.scheduledAt || detailModal.record.submittedAt) }}</div>
             </div>
             <div>
               <span class="detail-label">导师</span>
-              <div class="detail-value">{{ detailModal.record.mentorNames || '暂未分配导师' }}</div>
+              <div class="detail-value">{{ detailModal.record.mentorNames || '暂未安排' }}</div>
             </div>
             <div>
               <span class="detail-label">已完成课时</span>
-              <div class="detail-value">{{ completedHoursLabel(detailModal.record.completedHours) }}</div>
+              <div class="detail-value">{{ detailModal.record.completedHours || 0 }} h</div>
             </div>
           </div>
 
@@ -374,16 +219,13 @@
           </div>
 
           <div class="detail-section">
-            <span class="detail-label">导师背景</span>
-            <div class="detail-panel">{{ detailModal.record.mentorBackgrounds || '暂无导师背景信息' }}</div>
-          </div>
-
-          <div class="detail-section">
             <span class="detail-label">反馈摘要</span>
             <div class="detail-panel">{{ detailModal.record.feedbackSummary || '当前记录尚未回填反馈摘要。' }}</div>
           </div>
 
-          <div class="detail-callout">这里汇总本次模拟应聘的申请内容、安排信息和反馈摘要，便于助教后续沟通与复盘。</div>
+          <div class="detail-callout">
+            这里汇总本次模拟应聘的申请内容、安排信息和反馈摘要，便于助教跟进后续沟通与复盘。
+          </div>
         </div>
       </section>
     </div>
@@ -397,7 +239,7 @@ import {
   type AssistantMockPracticeRecord,
 } from '@osg/shared/api'
 
-type MockTab = 'pending' | 'feedback' | 'all'
+type ActiveTab = 'upcoming' | 'feedback' | 'all'
 
 interface StatsCard {
   label: string
@@ -405,32 +247,9 @@ interface StatsCard {
   tone: string
 }
 
-interface PracticeRow {
-  practiceId: number
-  studentId: number | string
-  studentName: string
-  avatar: string
-  avatarColor: string
-  practiceType: string
-  typeTone: string
-  typeIcon: string
-  appliedAt: string
-  rowTone: string
-  status: string
-  statusTone: string
-  statusIcon: string
-  mentorName: string
-  mentorMeta: string
-  hours: string
-  feedbackTitle: string
-  feedbackTone: string
-  feedbackSummary: string
-  raw: AssistantMockPracticeRecord
-}
-
 const loading = ref(true)
 const errorMessage = ref('')
-const activeTab = ref<MockTab>('all')
+const activeTab = ref<ActiveTab>('all')
 const records = ref<AssistantMockPracticeRecord[]>([])
 
 const filters = reactive({
@@ -447,35 +266,39 @@ const detailModal = reactive<{
   record: null,
 })
 
-const filteredRecords = computed(() => {
-  const keyword = filters.keyword.trim().toLowerCase()
-  return records.value.filter((record) => {
+const filteredRecords = computed(() =>
+  records.value.filter((record) => {
+    const keyword = filters.keyword.trim().toLowerCase()
     const matchesKeyword =
       !keyword ||
       [record.studentName, record.requestContent, record.mentorNames]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(keyword))
 
+    const matchesTab =
+      activeTab.value === 'all' ||
+      (activeTab.value === 'upcoming' && isUpcoming(record.status)) ||
+      (activeTab.value === 'feedback' && hasFeedback(record))
+
     return (
       matchesKeyword &&
+      matchesTab &&
       (!filters.practiceType || record.practiceType === filters.practiceType) &&
       (!filters.status || record.status === filters.status)
     )
-  })
-})
+  }),
+)
 
-const pendingRecords = computed(() => filteredRecords.value.filter((record) => isUpcoming(record.status)))
-const feedbackRecords = computed(() => filteredRecords.value.filter((record) => hasFeedback(record)))
-
-const pendingRows = computed(() => pendingRecords.value.map((record) => toPracticeRow(record)))
-const feedbackRows = computed(() => feedbackRecords.value.map((record) => toPracticeRow(record)))
-const filteredAllRows = computed(() => filteredRecords.value.map((record) => toPracticeRow(record)))
+const upcomingCount = computed(() => records.value.filter((record) => isUpcoming(record.status)).length)
+const feedbackCount = computed(() => records.value.filter((record) => hasFeedback(record)).length)
+const completedCount = computed(() => records.value.filter((record) => isDone(record.status)).length)
+const pendingCount = computed(() => records.value.filter((record) => isPending(record.status)).length)
 
 const statsCards = computed<StatsCard[]>(() => [
-  { label: '待开始', value: records.value.filter((record) => isUpcoming(record.status)).length, tone: 'stats-card__value--warning' },
-  { label: '已安排', value: records.value.filter((record) => isScheduled(record.status)).length, tone: 'stats-card__value--info' },
-  { label: '已完成', value: records.value.filter((record) => isDone(record.status)).length, tone: 'stats-card__value--success' },
-  { label: '有反馈', value: records.value.filter((record) => hasFeedback(record)).length, tone: 'stats-card__value--muted' },
+  { label: '待进行', value: upcomingCount.value, tone: 'stats-card__value--info' },
+  { label: '已有反馈', value: feedbackCount.value, tone: 'stats-card__value--success' },
+  { label: '已完成', value: completedCount.value, tone: 'stats-card__value--warning' },
+  { label: '待安排', value: pendingCount.value, tone: 'stats-card__value--muted' },
 ])
 
 const practiceTypeOptions = computed(
@@ -486,25 +309,55 @@ const statusOptions = computed(
   () => Array.from(new Set(records.value.map((record) => record.status).filter(Boolean))) as string[],
 )
 
-function isUpcoming(status?: string | null) {
+const bannerClass = computed(() => {
+  if (activeTab.value === 'feedback') {
+    return 'panel-banner--success'
+  }
+  if (activeTab.value === 'all') {
+    return 'panel-banner--primary'
+  }
+  return 'panel-banner--info'
+})
+
+const bannerIcon = computed(() => {
+  if (activeTab.value === 'feedback') {
+    return 'mdi-message-text-outline'
+  }
+  if (activeTab.value === 'all') {
+    return 'mdi-format-list-bulleted'
+  }
+  return 'mdi-calendar-clock'
+})
+
+const bannerText = computed(() => {
+  if (activeTab.value === 'feedback') {
+    return '以下为已回填反馈结果的模拟应聘记录，方便快速复盘与同步。'
+  }
+  if (activeTab.value === 'all') {
+    return '以下为助教当前可查看的全部模拟应聘记录，仅展示安排与反馈，不提供管理操作。'
+  }
+  return '以下为近期待进行或待同步安排的模拟应聘记录，便于跟进准备情况。'
+})
+
+function isPending(status?: string) {
+  return String(status || '').toLowerCase() === 'pending'
+}
+
+function isUpcoming(status?: string) {
   const normalized = String(status || '').toLowerCase()
   return normalized === 'pending' || normalized === 'scheduled' || normalized === 'confirmed'
 }
 
-function isScheduled(status?: string | null) {
-  return String(status || '').toLowerCase() === 'scheduled'
-}
-
-function isDone(status?: string | null) {
+function isDone(status?: string) {
   const normalized = String(status || '').toLowerCase()
   return normalized === 'completed' || normalized === 'cancelled'
 }
 
 function hasFeedback(record: AssistantMockPracticeRecord) {
-  return Boolean(record.feedbackSummary || record.feedbackRating != null)
+  return Boolean(record.feedbackSummary || record.feedbackRating)
 }
 
-function practiceTypeLabel(value?: string | null) {
+function practiceTypeLabel(value?: string) {
   const labels: Record<string, string> = {
     mock_interview: '模拟面试',
     communication_test: '沟通测试',
@@ -519,11 +372,47 @@ function practiceTypeLabel(value?: string | null) {
   return labels[value] || value
 }
 
-function statusLabel(value?: string | null) {
+function practiceTypeTone(value?: string) {
+  const normalized = String(value || '').toLowerCase()
+  if (normalized === 'communication_test') {
+    return 'tag--warning'
+  }
+  if (normalized === 'relation_test' || normalized === 'midterm') {
+    return 'tag--purple'
+  }
+  return 'tag--info'
+}
+
+function practiceTypeIcon(value?: string) {
+  const normalized = String(value || '').toLowerCase()
+  if (normalized === 'communication_test') {
+    return 'mdi-account-group'
+  }
+  if (normalized === 'relation_test') {
+    return 'mdi-account-heart'
+  }
+  if (normalized === 'midterm') {
+    return 'mdi-file-document-edit'
+  }
+  return 'mdi-account-voice'
+}
+
+function rowTone(value?: string) {
+  const normalized = String(value || '').toLowerCase()
+  if (normalized === 'communication_test') {
+    return 'mock-row--amber'
+  }
+  if (normalized === 'relation_test' || normalized === 'midterm') {
+    return 'mock-row--purple'
+  }
+  return 'mock-row--blue'
+}
+
+function statusLabel(value?: string) {
   const labels: Record<string, string> = {
-    pending: '待开始',
-    scheduled: '已安排',
-    confirmed: '待执行',
+    pending: '待安排',
+    scheduled: '待进行',
+    confirmed: '已确认',
     completed: '已完成',
     cancelled: '已取消',
   }
@@ -535,51 +424,51 @@ function statusLabel(value?: string | null) {
   return labels[value] || value
 }
 
-function resolveTypeUi(practiceType?: string | null) {
-  const normalized = String(practiceType || '').trim()
-  if (normalized === 'mock_interview') {
-    return { typeTone: 'tag--info', typeIcon: 'mdi-account-voice', rowTone: 'mock-row--blue' }
-  }
-  if (normalized === 'communication_test') {
-    return { typeTone: 'tag--warning', typeIcon: 'mdi-account-group', rowTone: 'mock-row--amber' }
-  }
-  if (normalized === 'relation_test' || normalized === 'midterm') {
-    return { typeTone: 'tag--purple', typeIcon: 'mdi-file-document-edit', rowTone: 'mock-row--purple' }
-  }
-  return { typeTone: 'tag--info', typeIcon: 'mdi-clipboard-text', rowTone: 'mock-row--blue' }
-}
-
-function resolveStatusUi(status?: string | null) {
-  const normalized = String(status || '').trim().toLowerCase()
+function statusTone(value?: string) {
+  const normalized = String(value || '').toLowerCase()
   if (normalized === 'completed') {
-    return { statusTone: 'tag--success', statusIcon: 'mdi-check-circle' }
-  }
-  if (normalized === 'confirmed') {
-    return { statusTone: 'tag--info', statusIcon: 'mdi-check-decagram' }
+    return 'tag--success'
   }
   if (normalized === 'cancelled') {
-    return { statusTone: 'tag--muted', statusIcon: 'mdi-close-circle' }
+    return 'tag--muted'
   }
   if (normalized === 'pending') {
-    return { statusTone: 'tag--danger', statusIcon: 'mdi-clock-outline' }
+    return 'tag--warning'
   }
-  return { statusTone: 'tag--info', statusIcon: 'mdi-calendar-clock' }
+  return 'tag--info'
+}
+
+function statusIcon(value?: string) {
+  const normalized = String(value || '').toLowerCase()
+  if (normalized === 'completed') {
+    return 'mdi-check-circle'
+  }
+  if (normalized === 'cancelled') {
+    return 'mdi-close-circle'
+  }
+  if (normalized === 'pending') {
+    return 'mdi-clock-outline'
+  }
+  if (normalized === 'confirmed') {
+    return 'mdi-check-decagram'
+  }
+  return 'mdi-calendar-clock'
 }
 
 function feedbackLabel(value?: number | null) {
   if (value == null) {
-    return '待反馈'
+    return '暂无评分'
   }
   if (value >= 5) {
-    return '优秀'
+    return '反馈优秀'
   }
   if (value >= 4) {
-    return '良好'
+    return '反馈良好'
   }
   if (value >= 3) {
-    return '待改进'
+    return '反馈一般'
   }
-  return '需复盘'
+  return '需要补充反馈'
 }
 
 function feedbackTone(value?: number | null) {
@@ -595,7 +484,7 @@ function feedbackTone(value?: number | null) {
   return 'feedback-stack__title--muted'
 }
 
-function formatDateTime(value?: string | null, pattern: 'MM/DD HH:mm' | 'YYYY-MM-DD HH:mm' = 'MM/DD HH:mm') {
+function formatDateTime(value?: string | null) {
   if (!value) {
     return '-'
   }
@@ -605,22 +494,16 @@ function formatDateTime(value?: string | null, pattern: 'MM/DD HH:mm' | 'YYYY-MM
     return value
   }
 
-  const year = parsed.getFullYear()
   const month = String(parsed.getMonth() + 1).padStart(2, '0')
   const day = String(parsed.getDate()).padStart(2, '0')
   const hour = String(parsed.getHours()).padStart(2, '0')
   const minute = String(parsed.getMinutes()).padStart(2, '0')
-
-  if (pattern === 'YYYY-MM-DD HH:mm') {
-    return `${year}-${month}-${day} ${hour}:${minute}`
-  }
-
   return `${month}/${day} ${hour}:${minute}`
 }
 
 function buildAvatarText(name?: string | null) {
-  const text = String(name || '').trim()
-  return text.slice(0, 2) || '--'
+  const trimmed = String(name || '').trim()
+  return trimmed.slice(0, 2) || '--'
 }
 
 function resolveAvatarColor(seed?: string | null) {
@@ -629,44 +512,13 @@ function resolveAvatarColor(seed?: string | null) {
   if (!source) {
     return palette[0]
   }
+
   const hash = Array.from(source).reduce((total, char) => total + char.charCodeAt(0), 0)
   return palette[hash % palette.length]
 }
 
-function completedHoursLabel(value?: number | null) {
-  const hours = Number(value ?? 0)
-  if (!hours) {
-    return '0h'
-  }
-  return `${hours}h`
-}
-
-function toPracticeRow(record: AssistantMockPracticeRecord): PracticeRow {
-  const typeUi = resolveTypeUi(record.practiceType)
-  const statusUi = resolveStatusUi(record.status)
-
-  return {
-    practiceId: record.practiceId,
-    studentId: record.studentId || '-',
-    studentName: record.studentName || '-',
-    avatar: buildAvatarText(record.studentName),
-    avatarColor: resolveAvatarColor(record.studentName),
-    practiceType: practiceTypeLabel(record.practiceType),
-    typeTone: typeUi.typeTone,
-    typeIcon: typeUi.typeIcon,
-    appliedAt: formatDateTime(record.submittedAt),
-    rowTone: typeUi.rowTone,
-    status: statusLabel(record.status),
-    statusTone: statusUi.statusTone,
-    statusIcon: statusUi.statusIcon,
-    mentorName: record.mentorNames || '暂未分配导师',
-    mentorMeta: record.mentorBackgrounds || '等待后续安排',
-    hours: completedHoursLabel(record.completedHours),
-    feedbackTitle: feedbackLabel(record.feedbackRating),
-    feedbackTone: feedbackTone(record.feedbackRating),
-    feedbackSummary: record.feedbackSummary || '暂无反馈摘要',
-    raw: record,
-  }
+function noopFilterAction() {
+  return undefined
 }
 
 function resetFilters() {
@@ -693,7 +545,6 @@ async function loadRecords() {
     const response = await getAssistantMockPracticeList()
     records.value = response.rows || []
   } catch (error: any) {
-    records.value = []
     errorMessage.value = error?.message || '模拟应聘记录暂时无法加载，请稍后重试。'
   } finally {
     loading.value = false
@@ -746,7 +597,9 @@ onMounted(() => {
   gap: 16px;
 }
 
-.card {
+.card,
+.state-card,
+.modal-card {
   overflow: hidden;
   margin: 0;
   background: #fff;
@@ -781,7 +634,7 @@ onMounted(() => {
 }
 
 .stats-card__value--muted {
-  color: #8B5CF6;
+  color: var(--muted);
 }
 
 .stats-card__label {
@@ -819,8 +672,13 @@ onMounted(() => {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.tab.active.tab--pending {
-  background: #EF4444;
+.tab.active.tab--info {
+  background: #3B82F6;
+  color: #fff;
+}
+
+.tab.active.tab--success {
+  background: #22C55E;
   color: #fff;
 }
 
@@ -864,9 +722,9 @@ onMounted(() => {
   color: #166534;
 }
 
-.panel-banner--neutral {
-  background: #F8FAFC;
-  color: #334155;
+.panel-banner--primary {
+  background: rgba(115, 153, 198, 0.12);
+  color: var(--primary);
 }
 
 .filters {
@@ -911,18 +769,23 @@ onMounted(() => {
   padding: 4px 8px;
 }
 
-.btn {
+.btn,
+.link-button,
+.icon-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
   border: 0;
+  cursor: pointer;
+}
+
+.btn {
+  padding: 4px 12px;
   border-radius: 4px;
   background: var(--primary);
   color: #fff;
   font-size: 12px;
   font-weight: 500;
-  cursor: pointer;
 }
 
 .btn-sm {
@@ -935,13 +798,19 @@ onMounted(() => {
   color: var(--muted);
 }
 
-.panel-state,
-.state-card__body p {
-  color: var(--muted);
+.link-button,
+.icon-button {
+  padding: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.panel-state {
-  padding: 16px;
+.table-state {
+  padding: 20px 16px 24px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .table-wrap {
@@ -1005,7 +874,9 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.student-meta {
+.student-meta,
+.detail-label,
+.modal-card__header p {
   color: var(--muted);
   font-size: 11px;
 }
@@ -1039,9 +910,9 @@ onMounted(() => {
   color: #166534;
 }
 
-.tag--danger {
-  background: #EF4444;
-  color: #fff;
+.tag--muted {
+  background: #E5E7EB;
+  color: #4B5563;
 }
 
 .tag--purple {
@@ -1049,14 +920,13 @@ onMounted(() => {
   color: #fff;
 }
 
-.tag--muted {
-  background: #E2E8F0;
-  color: #475569;
-}
-
 .hours-text {
   color: var(--primary);
   font-weight: 600;
+}
+
+.muted-text {
+  color: var(--muted);
 }
 
 .feedback-stack,
@@ -1064,30 +934,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-
-.feedback-trigger,
-.detail-trigger,
-.icon-button {
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.feedback-trigger,
-.detail-trigger {
-  display: block;
-  width: 100%;
-  padding: 0;
-  color: inherit;
-  text-align: left;
-}
-
-.detail-trigger,
-.icon-button {
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .feedback-stack__title {
@@ -1107,21 +953,6 @@ onMounted(() => {
   color: var(--muted);
 }
 
-.state-card--error {
-  border: 1px solid rgba(239, 68, 68, 0.16);
-  background: #fff7f7;
-}
-
-.state-card__body {
-  display: grid;
-  gap: 8px;
-}
-
-.state-card__body h2,
-.modal-card__header h2 {
-  margin: 0;
-}
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1137,9 +968,6 @@ onMounted(() => {
   width: min(720px, 100%);
   max-height: calc(100vh - 40px);
   overflow: auto;
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: var(--card-shadow);
 }
 
 .modal-card__header {
@@ -1151,9 +979,12 @@ onMounted(() => {
   border-bottom: 1px solid var(--border);
 }
 
+.modal-card__header h2 {
+  margin: 0;
+}
+
 .modal-card__header p {
   margin: 6px 0 0;
-  color: var(--muted);
   font-size: 13px;
 }
 
@@ -1174,8 +1005,6 @@ onMounted(() => {
 .detail-label {
   display: block;
   margin-bottom: 6px;
-  color: var(--muted);
-  font-size: 12px;
   font-weight: 700;
 }
 
@@ -1192,10 +1021,21 @@ onMounted(() => {
   margin-top: 18px;
   border-radius: 16px;
   background: rgba(115, 153, 198, 0.08);
-  color: var(--text2, var(--muted));
+  color: var(--text2);
   padding: 14px 16px;
   line-height: 1.7;
   font-size: 13px;
+}
+
+.state-card {
+  display: grid;
+  gap: 8px;
+  padding: 28px;
+}
+
+.state-card--error {
+  border: 1px solid rgba(239, 68, 68, 0.14);
+  background: #fff7f7;
 }
 
 @media (max-width: 1200px) {

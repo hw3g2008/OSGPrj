@@ -151,7 +151,7 @@ const jobOverviewCalendarFixture = [
 ]
 
 const mockPracticeFixture = {
-  total: 2,
+  total: 3,
   rows: [
     {
       practiceId: 11,
@@ -187,6 +187,23 @@ const mockPracticeFixture = {
       feedbackSummary: '表达节奏稳定，反馈完整。',
       submittedAt: '2026-03-20T12:00:00',
     },
+    {
+      practiceId: 13,
+      studentId: 4003,
+      studentName: 'Cara Student',
+      practiceType: 'relation_test',
+      requestContent: 'Relationship practice',
+      requestedMentorCount: 1,
+      preferredMentorNames: 'Nina',
+      status: 'pending',
+      mentorNames: '',
+      mentorBackgrounds: '',
+      scheduledAt: '',
+      completedHours: 0,
+      feedbackRating: null,
+      feedbackSummary: '',
+      submittedAt: '2026-03-24T09:00:00',
+    },
   ],
 }
 
@@ -206,34 +223,31 @@ describe('assistant career pages', () => {
     getAssistantMockPracticeList.mockResolvedValue(mockPracticeFixture)
   })
 
-  it('renders the positions page with lead-mentor structure while keeping assistant read-only students detail', async () => {
+  it('renders the positions page with lead-mentor shell while hiding management surfaces', async () => {
     const wrapper = mount(PositionsPage)
     await flushUi()
 
-    expect(getAssistantPositionDrillDown).toHaveBeenCalledWith({})
     expect(wrapper.find('#page-positions').exists()).toBe(true)
-    expect(wrapper.find('.page-title').text()).toContain('Positions')
-    expect(wrapper.find('.status-pill').text()).toContain('岗位总览')
+    expect(wrapper.find('.page-title').text()).toContain('Job Tracker')
     expect(wrapper.find('.filter-row').exists()).toBe(true)
-    expect(wrapper.find('#assistant-position-drilldown').exists()).toBe(true)
-    expect(wrapper.find('#assistant-position-list').exists()).toBe(true)
-    expect(wrapper.findAll('.category-section')).toHaveLength(1)
-    expect(wrapper.findAll('.company-section')).toHaveLength(2)
+    expect(wrapper.find('#lead-view-drilldown').exists()).toBe(true)
+    expect(wrapper.find('#lead-view-list').exists()).toBe(true)
+    expect(wrapper.find('#lead-position-drilldown').exists()).toBe(true)
+    expect(wrapper.find('.category-header').exists()).toBe(true)
+    expect(wrapper.find('.company-header').exists()).toBe(true)
+    expect(wrapper.find('.sort-button').exists()).toBe(true)
     expect(wrapper.find('.page-footer-stats').exists()).toBe(true)
     expect(wrapper.text()).toContain('Goldman Sachs')
     expect(wrapper.text()).toContain('IB Analyst')
-    expect(wrapper.text()).toContain('我的学员: 3人')
-    expect(wrapper.text()).toContain('开放中 1')
     expect(wrapper.text()).not.toContain('只读浏览')
     expect(wrapper.text()).not.toContain('分配导师')
     expect(wrapper.text()).not.toContain('更换导师')
+    expect(wrapper.text()).not.toContain('确认')
 
     await wrapper.get('#assistant-positions-keyword').setValue('JP Morgan')
     await flushUi()
-
     expect(wrapper.text()).toContain('JP Morgan')
-    expect(wrapper.findAll('.company-section')).toHaveLength(1)
-    expect(wrapper.find('.company-name').text()).toContain('JP Morgan')
+    expect(wrapper.text()).not.toContain('IB Analyst')
 
     await wrapper.get('.student-link').trigger('click')
     await flushUi()
@@ -241,74 +255,73 @@ describe('assistant career pages', () => {
     expect(getAssistantPositionStudents).toHaveBeenCalledWith(102)
     expect(wrapper.text()).toContain('Amy Student')
     expect(wrapper.text()).toContain('First Round')
-    expect(wrapper.text()).toContain('2h')
   })
 
-  it('renders the job overview page with lead-mentor calendar shell but without management actions', async () => {
+  it('renders the job overview page with lead-mentor shell and read-only assistant semantics', async () => {
     const wrapper = mount(JobOverviewPage)
     await flushUi()
 
-    expect(getAssistantJobOverviewList).toHaveBeenCalledTimes(1)
-    expect(getAssistantJobOverviewCalendar).toHaveBeenCalledTimes(1)
     expect(wrapper.find('#page-job-overview').exists()).toBe(true)
     expect(wrapper.find('.page-title').text()).toContain('Job Overview')
-    expect(wrapper.find('.summary-grid').exists()).toBe(true)
-    expect(wrapper.findAll('.summary-card')).toHaveLength(4)
-    expect(wrapper.find('.calendar-card').exists()).toBe(true)
     expect(wrapper.find('.calendar-toolbar').exists()).toBe(true)
-    expect(wrapper.find('.compact-days').exists()).toBe(true)
-    expect(wrapper.find('.status-pill').text()).toContain('求职总览')
-    expect(wrapper.find('.pending-pill').text()).toContain('1')
+    expect(wrapper.find('.calendar-days').exists()).toBe(true)
+    expect(wrapper.find('.panel-banner').exists()).toBe(true)
+    expect(wrapper.find('#assistant-job-content-readonly').exists()).toBe(true)
     expect(wrapper.text()).toContain('Amy Student')
     expect(wrapper.text()).toContain('Goldman Sachs')
     expect(wrapper.text()).toContain('Business Analyst')
-    expect(wrapper.text()).toContain('跟进详情')
-    expect(wrapper.text()).not.toContain('敬请期待')
-    expect(wrapper.text()).not.toContain('承载位')
+    expect(wrapper.text()).toContain('查看详情')
     expect(wrapper.text()).not.toContain('待分配导师')
     expect(wrapper.text()).not.toContain('分配导师')
     expect(wrapper.text()).not.toContain('更换导师')
     expect(wrapper.text()).not.toContain('确认')
 
+    await wrapper.get('#assistant-toggle-view-btn').trigger('click')
+    await flushUi()
+    expect(wrapper.find('.month-view').attributes('style')).toContain('block')
+
     await wrapper.get('.link-button').trigger('click')
     await flushUi()
 
-    expect(wrapper.find('.detail-callout').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Goldman Sachs')
+    expect(wrapper.text()).toContain('跟进详情')
+    expect(wrapper.text()).toContain('Hong Kong')
   })
 
-  it('renders the mock practice page with lead-mentor card tabs shell while keeping assistant read-only detail flow', async () => {
+  it('renders the mock practice page with lead-mentor-like shell while keeping assistant surfaces read-only', async () => {
     const wrapper = mount(MockPracticePage)
     await flushUi()
 
-    expect(getAssistantMockPracticeList).toHaveBeenCalledTimes(1)
     expect(wrapper.find('#page-mock-practice').exists()).toBe(true)
     expect(wrapper.find('.page-title').text()).toContain('Mock Practice')
     expect(wrapper.find('.stats-grid').exists()).toBe(true)
-    expect(wrapper.findAll('.stats-card')).toHaveLength(4)
-    expect(wrapper.find('.card-header').exists()).toBe(true)
-    expect(wrapper.find('.tabs').exists()).toBe(true)
-    expect(wrapper.find('#mock-tab-pending').exists()).toBe(true)
+    expect(wrapper.find('.card-header .tabs').exists()).toBe(true)
+    expect(wrapper.find('#mock-tab-upcoming').exists()).toBe(true)
     expect(wrapper.find('#mock-tab-feedback').exists()).toBe(true)
     expect(wrapper.find('#mock-tab-all').exists()).toBe(true)
-    expect(wrapper.find('#mock-content-all').exists()).toBe(true)
     expect(wrapper.find('.panel-banner').exists()).toBe(true)
+    expect(wrapper.find('.filters').exists()).toBe(true)
     expect(wrapper.text()).toContain('Amy Student')
-    expect(wrapper.text()).toContain('表达节奏稳定')
-    expect(wrapper.text()).toContain('Jerry')
+    expect(wrapper.text()).toContain('表达节奏稳定，反馈完整。')
+    expect(wrapper.text()).toContain('待进行')
+    expect(wrapper.text()).toContain('反馈结果')
     expect(wrapper.text()).not.toContain('敬请期待')
     expect(wrapper.text()).not.toContain('新建模拟应聘')
     expect(wrapper.text()).not.toContain('待分配导师')
     expect(wrapper.text()).not.toContain('分配导师')
-    expect(wrapper.text()).not.toContain('确认执行')
-    expect(wrapper.text()).not.toContain('保存修改')
+    expect(wrapper.text()).not.toContain('确认分配')
+    expect(wrapper.text()).not.toContain('确认')
 
     await wrapper.get('#mock-tab-feedback').trigger('click')
     await flushUi()
-    expect(wrapper.text()).toContain('已完成反馈')
-    expect(wrapper.text()).toContain('Ben Student')
 
-    await wrapper.get('.detail-trigger').trigger('click')
+    expect(wrapper.text()).toContain('Ben Student')
+    expect(wrapper.text()).toContain('反馈优秀')
+    expect(wrapper.text()).not.toContain('Cara Student')
+
+    await wrapper.get('#mock-tab-all').trigger('click')
+    await flushUi()
+
+    await wrapper.get('.link-button').trigger('click')
     await flushUi()
 
     expect(wrapper.text()).toContain('模拟应聘详情')

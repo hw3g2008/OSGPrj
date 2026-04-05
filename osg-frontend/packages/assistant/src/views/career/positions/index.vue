@@ -4,125 +4,67 @@
       <div>
         <h1 class="page-title">
           岗位信息
-          <span class="page-title-en">Positions</span>
+          <span class="page-title-en">Job Tracker</span>
         </h1>
-        <p class="page-sub">追踪岗位池与关联学员申请情况，保持助教视角浏览与明细查看。</p>
+        <p class="page-sub">追踪岗位池与助教学员申请情况，保留只读查看与关联学员明细</p>
       </div>
 
-      <div class="page-header__actions">
-        <span class="status-pill">岗位总览</span>
-        <div class="view-switcher">
-          <button
-            id="asst-view-drilldown"
-            type="button"
-            class="btn btn-sm"
-            :class="{ 'btn--active': viewMode === 'drilldown' }"
-            @click="viewMode = 'drilldown'"
-          >
-            <i class="mdi mdi-file-tree" aria-hidden="true" />
-            下钻视图
-          </button>
-          <button
-            id="asst-view-list"
-            type="button"
-            class="btn btn-sm"
-            :class="{ 'btn--active': viewMode === 'list' }"
-            @click="viewMode = 'list'"
-          >
-            <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
-            列表视图
-          </button>
-        </div>
+      <div class="view-switcher">
+        <button type="button" class="sort-button" @click="noopSort">
+          <i class="mdi mdi-sort-variant" aria-hidden="true" />
+          排序
+        </button>
+        <button
+          id="lead-view-drilldown"
+          type="button"
+          class="btn btn-sm"
+          :class="{ 'btn--active': viewMode === 'drilldown' }"
+          @click="viewMode = 'drilldown'"
+        >
+          <i class="mdi mdi-file-tree" aria-hidden="true" />
+          下钻视图
+        </button>
+        <button
+          id="lead-view-list"
+          type="button"
+          class="btn btn-sm"
+          :class="{ 'btn--active': viewMode === 'list' }"
+          @click="viewMode = 'list'"
+        >
+          <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
+          列表视图
+        </button>
       </div>
     </div>
 
-    <section class="summary-grid">
-      <article class="summary-card">
-        <span class="summary-card__label">筛选后岗位</span>
-        <strong class="summary-card__value">{{ footerStats.total }}</strong>
-        <span class="summary-card__hint">当前视图中的岗位数量</span>
-      </article>
-      <article class="summary-card">
-        <span class="summary-card__label">开放岗位</span>
-        <strong class="summary-card__value summary-card__value--success">{{ footerStats.open }}</strong>
-        <span class="summary-card__hint">仍在展示中的岗位</span>
-      </article>
-      <article class="summary-card">
-        <span class="summary-card__label">关联学员申请</span>
-        <strong class="summary-card__value summary-card__value--accent">{{ footerStats.students }}</strong>
-        <span class="summary-card__hint">当前岗位关联的学员申请数</span>
-      </article>
-      <article class="summary-card">
-        <span class="summary-card__label">公司数</span>
-        <strong class="summary-card__value">{{ categories.length ? allCompanies.length : 0 }}</strong>
-        <span class="summary-card__hint">筛选后覆盖的公司范围</span>
-      </article>
-    </section>
-
-    <section class="toolbar-card card">
+    <section class="card">
       <div class="card-body">
         <div class="filter-row">
-          <select
-            v-model="filters.positionCategory"
-            class="form-select"
-            aria-label="岗位分类"
-            :disabled="isLoading"
-          >
+          <select v-model="filters.category" class="form-select" aria-label="岗位分类">
             <option value="">全部分类</option>
-            <option
-              v-for="option in filterOptions.categories"
-              :key="option.value"
-              :value="option.value"
-            >
+            <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
           </select>
 
-          <select
-            v-model="filters.industry"
-            class="form-select"
-            aria-label="行业"
-            :disabled="isLoading"
-          >
+          <select v-model="filters.industry" class="form-select" aria-label="行业">
             <option value="">全部行业</option>
-            <option
-              v-for="option in filterOptions.industries"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
+            <option v-for="option in industryOptions" :key="option" :value="option">
+              {{ option }}
             </option>
           </select>
 
-          <select
-            v-model="filters.companyName"
-            class="form-select form-select--wide"
-            aria-label="公司"
-            :disabled="isLoading"
-          >
+          <select v-model="filters.companyName" class="form-select form-select--wide" aria-label="公司">
             <option value="">全部公司</option>
-            <option
-              v-for="option in filterOptions.companies"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
+            <option v-for="option in companyOptions" :key="option" :value="option">
+              {{ option }}
             </option>
           </select>
 
-          <select
-            v-model="filters.region"
-            class="form-select"
-            aria-label="地区"
-            :disabled="isLoading"
-          >
+          <select v-model="filters.region" class="form-select" aria-label="地区">
             <option value="">全部地区</option>
-            <option
-              v-for="option in filterOptions.regions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
+            <option v-for="option in regionOptions" :key="option" :value="option">
+              {{ option }}
             </option>
           </select>
 
@@ -134,7 +76,6 @@
               class="form-input"
               type="text"
               placeholder="搜索岗位名称..."
-              :disabled="isLoading"
             />
           </div>
         </div>
@@ -144,80 +85,48 @@
     <section v-if="errorMessage" class="state-card state-card--error">
       <h2>岗位数据加载失败</h2>
       <p>{{ errorMessage }}</p>
-      <button type="button" class="ghost-button" @click="loadPositions">重新加载</button>
+      <button type="button" class="btn btn-outline" @click="loadPositions">重新加载</button>
     </section>
 
-    <section v-else-if="isLoading" class="state-card">
+    <section v-else-if="loading" class="state-card">
       <h2>岗位数据加载中</h2>
       <p>正在读取岗位池与关联学员关系，请稍候。</p>
     </section>
 
-    <section v-else-if="!categories.length" class="state-card">
+    <section v-else-if="filteredPositions.length === 0" class="state-card">
       <h2>当前筛选下暂无岗位</h2>
       <p>可以清空关键词或筛选条件，查看完整岗位池。</p>
     </section>
 
     <template v-else>
       <section
-        id="assistant-position-drilldown"
+        id="lead-position-drilldown"
         class="card"
         :style="{ display: viewMode === 'drilldown' ? 'block' : 'none' }"
       >
         <div class="card-body card-body--drilldown">
-          <article
-            v-for="category in categories"
-            :key="category.id"
-            class="category-section"
-          >
-            <button
-              type="button"
-              class="category-header"
-              :style="category.headerStyle"
-              :aria-expanded="isCategoryOpen(category.id)"
-              @click="toggleCategory(category.id)"
-            >
+          <article v-for="industry in groupedPositions" :key="industry.industry" class="category-section">
+            <button type="button" class="category-header" :style="industry.headerStyle">
               <div class="category-title-group">
-                <i
-                  class="mdi category-icon"
-                  :class="isCategoryOpen(category.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"
-                  aria-hidden="true"
-                />
-                <i class="mdi category-kind-icon" :class="category.iconClass" aria-hidden="true" />
-                <span class="category-title" :style="{ color: category.accentColor }">{{ category.label }}</span>
-                <span class="category-badge" :style="{ background: category.accentColor }">{{ category.companySummary }}</span>
-                <span class="category-badge category-badge--success">{{ category.positionSummary }}</span>
+                <i class="mdi mdi-chevron-down category-icon" aria-hidden="true" />
+                <i class="mdi category-kind-icon" :class="industry.iconClass" aria-hidden="true" />
+                <span class="category-title" :style="{ color: industry.accentColor }">{{ industry.industry }}</span>
+                <span class="category-badge" :style="{ background: industry.accentColor }">{{ industry.companyCount }} 家公司</span>
+                <span class="category-badge category-badge--success">{{ industry.positionCount }} 个岗位</span>
               </div>
-              <span class="category-summary" :style="{ color: category.accentColor }">{{ category.studentSummary }}</span>
+              <span class="category-summary" :style="{ color: industry.accentColor }">
+                助教学员: {{ industry.studentCount }}人
+              </span>
             </button>
 
-            <div
-              :id="`assistant-content-${category.id}`"
-              class="category-content"
-              :style="{ display: isCategoryOpen(category.id) ? 'block' : 'none' }"
-            >
-              <article
-                v-for="company in category.companies"
-                :key="company.id"
-                class="company-section"
-              >
-                <div
-                  class="company-header"
-                  role="button"
-                  tabindex="0"
-                  :aria-expanded="isCompanyOpen(company.id)"
-                  @click="toggleCompany(company.id)"
-                  @keydown.enter.prevent="toggleCompany(company.id)"
-                  @keydown.space.prevent="toggleCompany(company.id)"
-                >
+            <div class="category-content" :style="{ display: 'block' }">
+              <article v-for="company in industry.companies" :key="company.companyName" class="company-section">
+                <div class="company-header" role="button" tabindex="0">
                   <div class="company-header__main">
-                    <i
-                      class="mdi company-icon"
-                      :class="isCompanyOpen(company.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"
-                      aria-hidden="true"
-                    />
+                    <i class="mdi mdi-chevron-down company-icon" aria-hidden="true" />
                     <div class="company-logo" :style="{ background: company.logoColor }">{{ company.logoText }}</div>
                     <div class="company-meta">
-                      <div class="company-name">{{ company.name }}</div>
+                      <div class="company-name">{{ company.companyName }}</div>
                       <div class="company-locations">{{ company.locations }}</div>
                     </div>
                   </div>
@@ -231,14 +140,15 @@
                       v-if="company.studentCount > 0"
                       type="button"
                       class="company-link"
-                      @click.stop="openCompanyStudentsModal(company)"
+                      @click.stop="openCompanyStudents(company)"
                     >
                       {{ formatStudentLabel(company.studentCount) }}
                     </button>
                     <span v-else class="company-link company-link--muted">0人</span>
                     <a
+                      v-if="company.companyWebsite"
                       class="btn btn-outline btn-sm btn-outline--tiny"
-                      :href="company.officialUrl"
+                      :href="company.companyWebsite"
                       target="_blank"
                       rel="noreferrer"
                       @click.stop
@@ -249,11 +159,7 @@
                   </div>
                 </div>
 
-                <div
-                  :id="`assistant-company-${company.id}`"
-                  class="company-content"
-                  :style="{ display: isCompanyOpen(company.id) ? 'block' : 'none' }"
-                >
+                <div class="company-content" :style="{ display: 'block' }">
                   <div class="table-wrap">
                     <table class="table">
                       <thead>
@@ -264,12 +170,12 @@
                           <th>地区</th>
                           <th>招聘周期</th>
                           <th>发布时间</th>
-                          <th>展示状态</th>
+                          <th>状态</th>
                           <th>我的学员</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="job in company.jobs" :key="job.id">
+                        <tr v-for="job in company.positions" :key="job.positionId">
                           <td class="table-cell-title">
                             <a
                               v-if="job.positionUrl"
@@ -277,31 +183,32 @@
                               :href="job.positionUrl"
                               target="_blank"
                               rel="noreferrer"
-                              @click.stop
                             >
-                              {{ job.title }}
+                              {{ job.positionName }}
                               <i class="mdi mdi-open-in-new" aria-hidden="true" />
                             </a>
-                            <span v-else class="text-link text-link--static">{{ job.title }}</span>
+                            <span v-else>{{ job.positionName }}</span>
                           </td>
-                          <td>{{ job.jobType }}</td>
-                          <td>{{ job.department }}</td>
-                          <td>{{ job.location }}</td>
+                          <td>{{ categoryLabelMap[job.positionCategory] || job.positionCategory || '-' }}</td>
+                          <td>{{ job.department || '-' }}</td>
+                          <td>{{ formatLocation(job) }}</td>
                           <td>
-                            <span class="tag" :class="job.cycleTone">{{ job.cycleLabel }}</span>
+                            <span class="tag" :class="cycleTone(job.recruitmentCycle)">{{ job.recruitmentCycle || '-' }}</span>
                           </td>
-                          <td>{{ job.publishDate }}</td>
+                          <td>{{ formatDate(job.publishTime) }}</td>
                           <td>
-                            <span class="tag" :class="job.displayTone">{{ job.displayLabel }}</span>
+                            <span class="tag" :class="statusToneClass(job.displayStatus)">
+                              {{ displayStatusLabel(job.displayStatus) }}
+                            </span>
                           </td>
                           <td>
                             <button
-                              v-if="job.studentCount > 0"
+                              v-if="Number(job.studentCount || 0) > 0"
                               type="button"
                               class="student-link"
-                              @click="openJobStudentsModal(job)"
+                              @click="openStudents(job)"
                             >
-                              {{ formatStudentLabel(job.studentCount) }}
+                              {{ formatStudentLabel(Number(job.studentCount || 0)) }}
                             </button>
                             <span v-else class="student-link student-link--muted">0人</span>
                           </td>
@@ -317,7 +224,7 @@
       </section>
 
       <section
-        id="assistant-position-list"
+        id="lead-position-list"
         class="card"
         :style="{ display: viewMode === 'list' ? 'block' : 'none' }"
       >
@@ -332,18 +239,13 @@
                   <th>岗位分类</th>
                   <th>地区</th>
                   <th>招聘周期</th>
-                  <th>
-                    <button type="button" class="sort-button" @click="togglePublishSort">
-                      发布时间
-                      <i class="mdi" :class="publishSortIcon" aria-hidden="true" />
-                    </button>
-                  </th>
-                  <th>展示状态</th>
+                  <th>发布时间</th>
+                  <th>状态</th>
                   <th>我的学员</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="job in orderedListJobs" :key="job.id">
+                <tr v-for="job in filteredPositions" :key="job.positionId">
                   <td class="table-cell-title">
                     <a
                       v-if="job.positionUrl"
@@ -352,41 +254,47 @@
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {{ job.title }}
+                      {{ job.positionName }}
                       <i class="mdi mdi-open-in-new" aria-hidden="true" />
                     </a>
-                    <span v-else class="text-link text-link--strong text-link--static">{{ job.title }}</span>
+                    <span v-else>{{ job.positionName }}</span>
                   </td>
                   <td>
                     <div class="company-listing">
-                      <div class="company-logo company-logo--small" :style="{ background: job.logoColor }">{{ job.logoText }}</div>
-                      <a v-if="job.officialUrl" class="company-external" :href="job.officialUrl" target="_blank" rel="noreferrer">
+                      <div class="company-logo company-logo--small" :style="{ background: resolveCompanyColor(job.companyName) }">
+                        {{ buildLogoText(job.companyName) }}
+                      </div>
+                      <a
+                        v-if="job.companyWebsite"
+                        class="company-external"
+                        :href="job.companyWebsite"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         {{ job.companyName }}
                         <i class="mdi mdi-open-in-new" aria-hidden="true" />
                       </a>
-                      <span v-else class="company-external company-external--static">{{ job.companyName }}</span>
+                      <span v-else>{{ job.companyName }}</span>
                     </div>
                   </td>
+                  <td><span class="tag" :class="industryTone(job.industry)">{{ job.industry || '-' }}</span></td>
+                  <td>{{ categoryLabelMap[job.positionCategory] || job.positionCategory || '-' }}</td>
+                  <td>{{ formatLocation(job) }}</td>
+                  <td><span class="tag" :class="cycleTone(job.recruitmentCycle)">{{ job.recruitmentCycle || '-' }}</span></td>
+                  <td>{{ formatDate(job.publishTime) }}</td>
                   <td>
-                    <span class="tag" :class="job.industryTone">{{ job.industry }}</span>
-                  </td>
-                  <td>{{ job.jobType }}</td>
-                  <td>{{ job.location }}</td>
-                  <td>
-                    <span class="tag" :class="job.cycleTone">{{ job.cycleLabel }}</span>
-                  </td>
-                  <td>{{ job.publishDate }}</td>
-                  <td>
-                    <span class="tag" :class="job.displayTone">{{ job.displayLabel }}</span>
+                    <span class="tag" :class="statusToneClass(job.displayStatus)">
+                      {{ displayStatusLabel(job.displayStatus) }}
+                    </span>
                   </td>
                   <td>
                     <button
-                      v-if="job.studentCount > 0"
+                      v-if="Number(job.studentCount || 0) > 0"
                       type="button"
                       class="student-link"
-                      @click="openJobStudentsModal(job)"
+                      @click="openStudents(job)"
                     >
-                      {{ formatStudentLabel(job.studentCount) }}
+                      {{ formatStudentLabel(Number(job.studentCount || 0)) }}
                     </button>
                     <span v-else class="student-link student-link--muted">0人</span>
                   </td>
@@ -401,20 +309,16 @@
     <div class="page-footer-stats">
       <span>
         共
-        <strong>{{ footerStats.total }}</strong>
+        <strong>{{ filteredPositions.length }}</strong>
         个岗位
       </span>
       <span class="footer-indicator footer-indicator--open">
         <i class="mdi mdi-circle-small" aria-hidden="true" />
-        开放中 {{ footerStats.open }}
-      </span>
-      <span class="footer-indicator footer-indicator--closed">
-        <i class="mdi mdi-circle-small" aria-hidden="true" />
-        非展示 {{ footerStats.closed }}
+        开放中 {{ openPositionCount }}
       </span>
       <span class="footer-indicator footer-indicator--students">
         <i class="mdi mdi-circle-small" aria-hidden="true" />
-        我的学员 {{ footerStats.students }}人
+        我的学员 {{ linkedStudentCount }}人
       </span>
     </div>
 
@@ -422,15 +326,21 @@
       <section class="modal-card">
         <header class="modal-card__header">
           <div>
-            <h2>我的学员</h2>
-            <p>{{ studentModal.position?.title || '-' }} · {{ studentModal.position?.companyName || '-' }}</p>
+            <h2>关联学员</h2>
+            <p>{{ studentModal.position?.positionName || '-' }} · {{ studentModal.position?.companyName || '-' }}</p>
           </div>
           <button type="button" class="icon-button" @click="closeStudents">关闭</button>
         </header>
 
-        <div v-if="studentModal.loading" class="modal-card__body modal-card__body--state">正在读取学员明细...</div>
-        <div v-else-if="studentModal.error" class="modal-card__body modal-card__body--state">{{ studentModal.error }}</div>
-        <div v-else-if="studentModal.rows.length === 0" class="modal-card__body modal-card__body--state">当前岗位暂无可展示的关联学员明细。</div>
+        <div v-if="studentModal.loading" class="modal-card__body modal-card__body--state">
+          正在读取关联学员...
+        </div>
+        <div v-else-if="studentModal.error" class="modal-card__body modal-card__body--state">
+          {{ studentModal.error }}
+        </div>
+        <div v-else-if="studentModal.rows.length === 0" class="modal-card__body modal-card__body--state">
+          当前岗位暂无可展示的关联学员明细。
+        </div>
         <div v-else class="modal-card__body">
           <table class="table list-table">
             <thead>
@@ -443,13 +353,13 @@
             <tbody>
               <tr v-for="row in studentModal.rows" :key="`${row.studentId}-${row.positionName}`">
                 <td>
-                  <div class="table-primary">{{ row.studentName }}</div>
-                  <div class="table-muted">ID: {{ row.studentId }}</div>
+                  <div class="student-name">{{ row.studentName }}</div>
+                  <div class="student-meta">ID: {{ row.studentId }}</div>
                 </td>
                 <td>
-                  <span class="tag" :class="studentStatusTone(row.statusTone)">{{ row.status || '-' }}</span>
+                  <span class="tag" :class="statusToneClass(row.statusTone)">{{ row.status }}</span>
                 </td>
-                <td>{{ row.usedHours ?? 0 }}h</td>
+                <td>{{ row.usedHours }} h</td>
               </tr>
             </tbody>
           </table>
@@ -460,7 +370,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getAssistantPositionDrillDown,
   getAssistantPositionStudents,
@@ -469,166 +379,61 @@ import {
 } from '@osg/shared/api'
 
 type ViewMode = 'drilldown' | 'list'
-type DisplayTone = 'info' | 'neutral' | 'success' | 'warning'
-type ChipTone = 'info' | 'neutral' | 'industry-bank' | 'industry-consulting' | 'industry-tech'
-
-interface FilterOption {
-  value: string
-  label: string
-}
-
-interface FilterState {
-  positionCategory: string
-  industry: string
-  companyName: string
-  region: string
-  keyword: string
-}
-
-interface FilterOptions {
-  categories: FilterOption[]
-  industries: FilterOption[]
-  companies: FilterOption[]
-  regions: FilterOption[]
-}
 
 interface PositionRecord {
   positionId: number
-  positionCategory?: string
-  industry?: string
-  companyName?: string
+  positionCategory: string
+  industry: string
+  companyName: string
   companyType?: string
   companyWebsite?: string
-  positionName?: string
+  positionName: string
   department?: string
-  region?: string
-  city?: string
-  recruitmentCycle?: string
-  projectYear?: string
+  region: string
+  city: string
+  recruitmentCycle: string
+  projectYear: string
   publishTime?: string
-  displayStatus?: string
+  deadline?: string
+  displayStatus: string
   positionUrl?: string
   studentCount?: number
 }
 
-interface PositionJob {
-  id: string
-  positionId: number
-  title: string
-  industry: string
-  industryTone: ChipTone
-  jobType: string
-  department: string
-  location: string
-  cycleLabel: string
-  cycleTone: ChipTone
-  publishDate: string
-  publishSortKey: number
-  studentCount: number
+interface GroupedCompany {
   companyName: string
-  officialUrl: string
-  logoText: string
-  logoColor: string
-  positionUrl: string
-  displayLabel: string
-  displayTone: DisplayTone
-}
-
-interface PositionCompany {
-  id: string
-  name: string
-  locations: string
+  companyType?: string
+  companyWebsite?: string
   logoText: string
   logoColor: string
   positionCount: number
   studentCount: number
-  officialUrl: string
-  jobs: PositionJob[]
+  locations: string
+  positions: PositionRecord[]
 }
 
-interface PositionCategory {
-  id: string
-  label: string
+interface GroupedIndustry {
+  industry: string
+  companyCount: number
+  positionCount: number
+  studentCount: number
+  companies: GroupedCompany[]
   iconClass: string
   accentColor: string
   headerStyle: Record<string, string>
-  companySummary: string
-  positionSummary: string
-  studentSummary: string
-  companies: PositionCompany[]
-}
-
-interface IndustryUiConfig {
-  id: string
-  iconClass: string
-  accentColor: string
-  chipTone: ChipTone
-  headerStyle: Record<string, string>
-}
-
-const INDUSTRY_UI_CONFIGS: Record<string, IndustryUiConfig> = {
-  'investment bank': {
-    id: 'ib',
-    iconClass: 'mdi-bank',
-    accentColor: 'var(--primary)',
-    chipTone: 'industry-bank',
-    headerStyle: { background: 'linear-gradient(135deg,#EEF2FF,#E0E7FF)' },
-  },
-  consulting: {
-    id: 'consulting',
-    iconClass: 'mdi-lightbulb',
-    accentColor: '#7C3AED',
-    chipTone: 'industry-consulting',
-    headerStyle: { background: 'linear-gradient(135deg,#F3E8FF,#E9D5FF)' },
-  },
-  tech: {
-    id: 'tech',
-    iconClass: 'mdi-laptop',
-    accentColor: '#1D4ED8',
-    chipTone: 'industry-tech',
-    headerStyle: { background: 'linear-gradient(135deg,#DBEAFE,#BFDBFE)' },
-  },
-}
-
-const FALLBACK_INDUSTRY_CONFIG: IndustryUiConfig = {
-  id: 'other',
-  iconClass: 'mdi-domain',
-  accentColor: '#0F766E',
-  chipTone: 'neutral',
-  headerStyle: { background: 'linear-gradient(135deg,#CCFBF1,#99F6E4)' },
-}
-
-const COMPANY_COLORS: Record<string, string> = {
-  'goldman sachs': 'var(--primary)',
-  'morgan stanley': '#1E40AF',
-  'jp morgan': '#0369A1',
-  'mckinsey': '#7C3AED',
-  'bcg': '#059669',
-  'google': '#EA4335',
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  summer: '暑期实习',
-  fulltime: '全职招聘',
-  offcycle: 'Off-cycle',
-  spring: '春季实习',
-  events: '招聘活动',
 }
 
 const viewMode = ref<ViewMode>('drilldown')
-const publishSortDirection = ref<'default' | 'asc' | 'desc'>('default')
-const expandedCategories = ref<string[]>([])
-const expandedCompanies = ref<string[]>([])
-const isLoading = ref(true)
+const loading = ref(true)
 const errorMessage = ref('')
-const allRows = ref<PositionRecord[]>([])
+const allPositions = ref<PositionRecord[]>([])
 
-const filters = reactive<FilterState>({
-  positionCategory: '',
+const filters = reactive({
+  keyword: '',
+  category: '',
   industry: '',
   companyName: '',
   region: '',
-  keyword: '',
 })
 
 const studentModal = reactive<{
@@ -636,7 +441,7 @@ const studentModal = reactive<{
   loading: boolean
   error: string
   rows: AssistantPositionStudent[]
-  position: PositionJob | null
+  position: PositionRecord | null
 }>({
   visible: false,
   loading: false,
@@ -645,256 +450,113 @@ const studentModal = reactive<{
   position: null,
 })
 
-const filterOptions = computed<FilterOptions>(() => ({
-  categories: toOptions(uniqueValues(allRows.value.map((row) => row.positionCategory)).map((value) => ({ value, label: CATEGORY_LABELS[value] || value }))),
-  industries: toOptions(uniqueValues(allRows.value.map((row) => row.industry)).map((value) => ({ value, label: value }))),
-  companies: toOptions(uniqueValues(allRows.value.map((row) => row.companyName)).map((value) => ({ value, label: value }))),
-  regions: toOptions(uniqueValues(allRows.value.map((row) => row.region)).map((value) => ({ value, label: value }))),
-}))
+const categoryLabelMap: Record<string, string> = {
+  summer: '暑期实习',
+  fulltime: '全职招聘',
+  offcycle: 'Off-cycle',
+  spring: '春季实习',
+  events: '招聘活动',
+}
 
-const filteredRows = computed(() => {
-  const keyword = filters.keyword.trim().toLowerCase()
-
-  return allRows.value.filter((row) => {
-    const searchable = [row.positionName, row.companyName, row.city, row.region]
-      .filter(Boolean)
-      .map((value) => String(value).toLowerCase())
+const filteredPositions = computed(() =>
+  allPositions.value.filter((position) => {
+    const keyword = filters.keyword.trim().toLowerCase()
+    const matchesKeyword =
+      !keyword ||
+      [position.positionName, position.companyName, position.city, position.region]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(keyword))
 
     return (
-      (!keyword || searchable.some((value) => value.includes(keyword))) &&
-      (!filters.positionCategory || row.positionCategory === filters.positionCategory) &&
-      (!filters.industry || row.industry === filters.industry) &&
-      (!filters.companyName || row.companyName === filters.companyName) &&
-      (!filters.region || row.region === filters.region)
+      matchesKeyword &&
+      (!filters.category || position.positionCategory === filters.category) &&
+      (!filters.industry || position.industry === filters.industry) &&
+      (!filters.companyName || position.companyName === filters.companyName) &&
+      (!filters.region || position.region === filters.region)
     )
-  })
-})
-
-const categories = computed<PositionCategory[]>(() => {
-  const groupedIndustries = new Map<
-    string,
-    {
-      label: string
-      config: IndustryUiConfig
-      companies: Map<string, PositionCompany>
-    }
-  >()
-
-  filteredRows.value.forEach((row) => {
-    const industryLabel = row.industry?.trim() || 'Other'
-    const industryConfig = resolveIndustryUiConfig(industryLabel)
-    const industryKey = industryConfig.id
-    const companyKey = slugify(row.companyName || `${industryLabel}-${row.positionId}`)
-    const job = toPositionJob(row)
-
-    let industryGroup = groupedIndustries.get(industryKey)
-    if (!industryGroup) {
-      industryGroup = {
-        label: industryLabel,
-        config: industryConfig,
-        companies: new Map(),
-      }
-      groupedIndustries.set(industryKey, industryGroup)
-    }
-
-    let company = industryGroup.companies.get(companyKey)
-    if (!company) {
-      company = {
-        id: companyKey,
-        name: row.companyName || '-',
-        locations: '',
-        logoText: buildLogoText(row.companyName || '-'),
-        logoColor: resolveCompanyColor(row.companyName || ''),
-        positionCount: 0,
-        studentCount: 0,
-        officialUrl: row.companyWebsite || row.positionUrl || '',
-        jobs: [],
-      }
-      industryGroup.companies.set(companyKey, company)
-    }
-
-    company.jobs.push(job)
-    if (!company.officialUrl) {
-      company.officialUrl = job.officialUrl
-    }
-  })
-
-  return Array.from(groupedIndustries.values()).map((industryGroup) => {
-    const companies = Array.from(industryGroup.companies.values()).map((company) => {
-      const companyStudentCount = company.jobs.reduce((sum, job) => sum + job.studentCount, 0)
-      return {
-        ...company,
-        locations: Array.from(new Set(company.jobs.map((job) => job.location).filter((value) => value && value !== '-'))).join(', ') || '-',
-        positionCount: company.jobs.length,
-        studentCount: companyStudentCount,
-      }
-    })
-
-    const positionCount = companies.reduce((sum, company) => sum + company.positionCount, 0)
-    const studentCount = companies.reduce((sum, company) => sum + company.studentCount, 0)
-
-    return {
-      id: industryGroup.config.id,
-      label: industryGroup.label,
-      iconClass: industryGroup.config.iconClass,
-      accentColor: industryGroup.config.accentColor,
-      headerStyle: industryGroup.config.headerStyle,
-      companySummary: `${companies.length} 家公司`,
-      positionSummary: `${positionCount} 个岗位`,
-      studentSummary: `我的学员: ${studentCount}人`,
-      companies,
-    }
-  })
-})
-
-const allCompanies = computed(() => categories.value.flatMap((category) => category.companies))
-const allJobs = computed(() => categories.value.flatMap((category) => category.companies.flatMap((company) => company.jobs)))
-
-const footerStats = computed(() => {
-  const total = allJobs.value.length
-  const open = allJobs.value.filter((job) => job.displayTone === 'success').length
-  const students = allJobs.value.reduce((sum, job) => sum + job.studentCount, 0)
-
-  return {
-    total,
-    open,
-    closed: total - open,
-    students,
-  }
-})
-
-const orderedListJobs = computed(() => {
-  const items = [...allJobs.value]
-  if (publishSortDirection.value === 'asc') {
-    return items.sort((left, right) => left.publishSortKey - right.publishSortKey)
-  }
-  if (publishSortDirection.value === 'desc') {
-    return items.sort((left, right) => right.publishSortKey - left.publishSortKey)
-  }
-  return items
-})
-
-const publishSortIcon = computed(() => {
-  if (publishSortDirection.value === 'asc') {
-    return 'mdi-sort-ascending'
-  }
-  if (publishSortDirection.value === 'desc') {
-    return 'mdi-sort-descending'
-  }
-  return 'mdi-swap-vertical'
-})
-
-watch(
-  categories,
-  (nextCategories) => {
-    if (!nextCategories.length) {
-      expandedCategories.value = []
-      expandedCompanies.value = []
-      return
-    }
-
-    const nextCategoryIds = new Set(nextCategories.map((category) => category.id))
-    expandedCategories.value = expandedCategories.value.filter((entry) => nextCategoryIds.has(entry))
-    if (!expandedCategories.value.length) {
-      expandedCategories.value = [nextCategories[0].id]
-    }
-
-    const nextCompanyIds = new Set(nextCategories.flatMap((category) => category.companies.map((company) => company.id)))
-    expandedCompanies.value = expandedCompanies.value.filter((entry) => nextCompanyIds.has(entry))
-    if (!expandedCompanies.value.length) {
-      expandedCompanies.value = nextCategories[0].companies.length ? [nextCategories[0].companies[0].id] : []
-    }
-  },
-  { immediate: true },
+  }),
 )
 
-const isCategoryOpen = (categoryId: string) => expandedCategories.value.includes(categoryId)
-const isCompanyOpen = (companyId: string) => expandedCompanies.value.includes(companyId)
+const categoryOptions = computed(() =>
+  Array.from(new Set(allPositions.value.map((position) => position.positionCategory)))
+    .filter(Boolean)
+    .map((value) => ({ value, label: categoryLabelMap[value] || value })),
+)
 
-const toggleCategory = (categoryId: string) => {
-  expandedCategories.value = isCategoryOpen(categoryId)
-    ? expandedCategories.value.filter((entry) => entry !== categoryId)
-    : [...expandedCategories.value, categoryId]
-}
+const industryOptions = computed(() =>
+  Array.from(new Set(allPositions.value.map((position) => position.industry))).filter(Boolean),
+)
 
-const toggleCompany = (companyId: string) => {
-  expandedCompanies.value = isCompanyOpen(companyId)
-    ? expandedCompanies.value.filter((entry) => entry !== companyId)
-    : [...expandedCompanies.value, companyId]
-}
+const companyOptions = computed(() =>
+  Array.from(new Set(allPositions.value.map((position) => position.companyName))).filter(Boolean),
+)
 
-const togglePublishSort = () => {
-  if (publishSortDirection.value === 'default') {
-    publishSortDirection.value = 'asc'
-  } else if (publishSortDirection.value === 'asc') {
-    publishSortDirection.value = 'desc'
-  } else {
-    publishSortDirection.value = 'asc'
-  }
-}
+const regionOptions = computed(() =>
+  Array.from(new Set(allPositions.value.map((position) => position.region))).filter(Boolean),
+)
 
-const formatStudentLabel = (count: number) => `${count}人`
+const openPositionCount = computed(
+  () => filteredPositions.value.filter((position) => position.displayStatus === 'visible').length,
+)
 
-async function loadPositions() {
-  isLoading.value = true
-  errorMessage.value = ''
+const linkedStudentCount = computed(() =>
+  filteredPositions.value.reduce((sum, position) => sum + Number(position.studentCount || 0), 0),
+)
 
-  try {
-    const industries = await getAssistantPositionDrillDown({})
-    allRows.value = flattenIndustries(industries)
-  } catch (error: any) {
-    allRows.value = []
-    errorMessage.value = error?.message || '岗位列表暂时无法加载，请稍后重试。'
-  } finally {
-    isLoading.value = false
-  }
-}
+const groupedPositions = computed<GroupedIndustry[]>(() => {
+  const industries = new Map<string, GroupedIndustry>()
 
-async function openJobStudentsModal(job: PositionJob) {
-  studentModal.visible = true
-  studentModal.loading = true
-  studentModal.error = ''
-  studentModal.rows = []
-  studentModal.position = job
+  filteredPositions.value.forEach((position) => {
+    const industryKey = position.industry || '未归类行业'
+    const industry = industries.get(industryKey) || {
+      industry: industryKey,
+      companyCount: 0,
+      positionCount: 0,
+      studentCount: 0,
+      companies: [],
+      iconClass: industryIcon(industryKey),
+      accentColor: industryColor(industryKey),
+      headerStyle: {
+        background: industryGradient(industryKey),
+      },
+    }
 
-  try {
-    studentModal.rows = await getAssistantPositionStudents(job.positionId)
-  } catch (error: any) {
-    studentModal.error = error?.message || '关联学员暂时无法加载。'
-  } finally {
-    studentModal.loading = false
-  }
-}
+    let company = industry.companies.find((entry) => entry.companyName === position.companyName)
+    if (!company) {
+      company = {
+        companyName: position.companyName,
+        companyType: position.companyType,
+        companyWebsite: position.companyWebsite,
+        logoText: buildLogoText(position.companyName),
+        logoColor: resolveCompanyColor(position.companyName),
+        positionCount: 0,
+        studentCount: 0,
+        locations: '',
+        positions: [],
+      }
+      industry.companies.push(company)
+    }
 
-function openCompanyStudentsModal(company: PositionCompany) {
-  const jobWithStudents = company.jobs.find((entry) => entry.studentCount > 0)
-  if (!jobWithStudents) {
-    return
-  }
+    company.positions.push(position)
+    company.positionCount += 1
+    company.studentCount += Number(position.studentCount || 0)
+    company.locations = Array.from(
+      new Set(company.positions.map((entry) => formatLocation(entry)).filter(Boolean)),
+    ).join(', ')
 
-  void openJobStudentsModal(jobWithStudents)
-}
+    industry.positionCount += 1
+    industry.studentCount += Number(position.studentCount || 0)
+    industries.set(industryKey, industry)
+  })
 
-function closeStudents() {
-  studentModal.visible = false
-  studentModal.loading = false
-  studentModal.error = ''
-  studentModal.rows = []
-  studentModal.position = null
-}
-
-function studentStatusTone(statusTone?: string) {
-  if (statusTone === 'success') {
-    return 'industry-tech'
-  }
-  if (statusTone === 'warning') {
-    return 'industry-consulting'
-  }
-  if (statusTone === 'danger') {
-    return 'neutral'
-  }
-  return 'industry-bank'
-}
+  return Array.from(industries.values())
+    .map((industry) => ({
+      ...industry,
+      companyCount: industry.companies.length,
+      companies: industry.companies.sort((left, right) => left.companyName.localeCompare(right.companyName)),
+    }))
+    .sort((left, right) => left.industry.localeCompare(right.industry))
+})
 
 function flattenIndustries(industries: AssistantPositionIndustry[]): PositionRecord[] {
   return industries.flatMap((industry) =>
@@ -910,45 +572,15 @@ function flattenIndustries(industries: AssistantPositionIndustry[]): PositionRec
   )
 }
 
-function toPositionJob(row: PositionRecord): PositionJob {
-  const industryLabel = row.industry?.trim() || 'Other'
-  const industryConfig = resolveIndustryUiConfig(industryLabel)
-  const companyName = row.companyName || '-'
-
-  return {
-    id: String(row.positionId),
-    positionId: row.positionId,
-    title: row.positionName || '-',
-    industry: industryLabel,
-    industryTone: industryConfig.chipTone,
-    jobType: CATEGORY_LABELS[row.positionCategory || ''] || row.positionCategory || '-',
-    department: row.department || '-',
-    location: formatLocation(row),
-    cycleLabel: row.recruitmentCycle || row.projectYear || '-',
-    cycleTone: resolveCycleTone(row.recruitmentCycle),
-    publishDate: formatShortDate(row.publishTime),
-    publishSortKey: toSortKey(row.publishTime),
-    studentCount: normalizeStudentCount(row),
-    companyName,
-    officialUrl: row.companyWebsite || row.positionUrl || '',
-    logoText: buildLogoText(companyName),
-    logoColor: resolveCompanyColor(companyName),
-    positionUrl: row.positionUrl || '',
-    displayLabel: displayStatusLabel(row.displayStatus),
-    displayTone: displayTone(row.displayStatus),
+function formatDate(value?: string) {
+  if (!value) {
+    return '-'
   }
+  return value.slice(0, 10)
 }
 
-function resolveIndustryUiConfig(industry: string): IndustryUiConfig {
-  return INDUSTRY_UI_CONFIGS[industry.trim().toLowerCase()] ?? FALLBACK_INDUSTRY_CONFIG
-}
-
-function resolveCycleTone(recruitmentCycle?: string): ChipTone {
-  const normalized = recruitmentCycle?.trim().toLowerCase() || ''
-  if (normalized.includes('off')) {
-    return 'neutral'
-  }
-  return 'info'
+function formatLocation(position: PositionRecord) {
+  return [position.region, position.city].filter(Boolean).join(' / ') || '-'
 }
 
 function displayStatusLabel(status?: string) {
@@ -964,58 +596,80 @@ function displayStatusLabel(status?: string) {
   return status || '未标注'
 }
 
-function displayTone(status?: string): DisplayTone {
-  if (status === 'visible') {
+function statusToneClass(status?: string) {
+  if (status === 'visible' || status === 'success') {
     return 'success'
   }
-  if (status === 'hidden') {
+  if (status === 'warning') {
     return 'warning'
+  }
+  if (status === 'danger' || status === 'hidden' || status === 'expired') {
+    return 'danger'
+  }
+  if (status === 'info') {
+    return 'info'
   }
   return 'neutral'
 }
 
-function formatLocation(position: PositionRecord) {
-  return [position.region, position.city].filter(Boolean).join(' / ') || '-'
+function cycleTone(cycle?: string) {
+  return cycle?.toLowerCase().includes('off') ? 'neutral' : 'info'
 }
 
-function formatShortDate(value?: string) {
-  if (!value) {
-    return '-'
+function industryTone(industry?: string) {
+  const normalized = String(industry || '').toLowerCase()
+  if (normalized.includes('bank')) {
+    return 'industry-bank'
   }
-
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return value
+  if (normalized.includes('consult')) {
+    return 'industry-consulting'
   }
-
-  const month = String(parsed.getMonth() + 1).padStart(2, '0')
-  const day = String(parsed.getDate()).padStart(2, '0')
-  return `${month}-${day}`
-}
-
-function toSortKey(value?: string) {
-  if (!value) {
-    return 0
+  if (normalized.includes('tech')) {
+    return 'industry-tech'
   }
-  const parsed = new Date(value).getTime()
-  return Number.isNaN(parsed) ? 0 : parsed
+  return 'neutral'
 }
 
-function normalizeStudentCount(row: PositionRecord) {
-  const rawValue = row.studentCount ?? 0
-  return Number.isFinite(rawValue) ? Number(rawValue) : 0
+function industryIcon(industry?: string) {
+  const normalized = String(industry || '').toLowerCase()
+  if (normalized.includes('bank')) {
+    return 'mdi-bank'
+  }
+  if (normalized.includes('consult')) {
+    return 'mdi-lightbulb'
+  }
+  if (normalized.includes('tech')) {
+    return 'mdi-laptop'
+  }
+  return 'mdi-domain'
 }
 
-function uniqueValues(values: Array<string | undefined>) {
-  return Array.from(new Set(values.filter((value): value is string => Boolean(value))))
+function industryColor(industry?: string) {
+  const normalized = String(industry || '').toLowerCase()
+  if (normalized.includes('bank')) {
+    return 'var(--primary)'
+  }
+  if (normalized.includes('consult')) {
+    return '#7C3AED'
+  }
+  if (normalized.includes('tech')) {
+    return '#1D4ED8'
+  }
+  return '#0F766E'
 }
 
-function toOptions(options: FilterOption[]) {
-  return options.sort((left, right) => left.label.localeCompare(right.label))
-}
-
-function slugify(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'position'
+function industryGradient(industry?: string) {
+  const normalized = String(industry || '').toLowerCase()
+  if (normalized.includes('bank')) {
+    return 'linear-gradient(135deg,#EEF2FF,#E0E7FF)'
+  }
+  if (normalized.includes('consult')) {
+    return 'linear-gradient(135deg,#F3E8FF,#E9D5FF)'
+  }
+  if (normalized.includes('tech')) {
+    return 'linear-gradient(135deg,#DBEAFE,#BFDBFE)'
+  }
+  return 'linear-gradient(135deg,#CCFBF1,#99F6E4)'
 }
 
 function buildLogoText(companyName: string) {
@@ -1035,7 +689,71 @@ function buildLogoText(companyName: string) {
 }
 
 function resolveCompanyColor(companyName: string) {
-  return COMPANY_COLORS[companyName.trim().toLowerCase()] ?? '#64748B'
+  const normalized = companyName.trim().toLowerCase()
+  if (normalized.includes('goldman')) {
+    return 'var(--primary)'
+  }
+  if (normalized.includes('morgan')) {
+    return '#1E40AF'
+  }
+  if (normalized.includes('mckinsey')) {
+    return '#7C3AED'
+  }
+  return '#64748B'
+}
+
+function formatStudentLabel(count: number) {
+  return `${count}人`
+}
+
+async function loadPositions() {
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const industries = await getAssistantPositionDrillDown()
+    allPositions.value = flattenIndustries(industries)
+  } catch (error: any) {
+    errorMessage.value = error?.message || '岗位列表暂时无法加载，请稍后重试。'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function openStudents(position: PositionRecord) {
+  studentModal.visible = true
+  studentModal.loading = true
+  studentModal.error = ''
+  studentModal.rows = []
+  studentModal.position = position
+
+  try {
+    studentModal.rows = await getAssistantPositionStudents(position.positionId)
+  } catch (error: any) {
+    studentModal.error = error?.message || '关联学员暂时无法加载。'
+  } finally {
+    studentModal.loading = false
+  }
+}
+
+function openCompanyStudents(company: GroupedCompany) {
+  const position = company.positions.find((entry) => Number(entry.studentCount || 0) > 0)
+  if (!position) {
+    return
+  }
+  void openStudents(position)
+}
+
+function noopSort() {
+  return undefined
+}
+
+function closeStudents() {
+  studentModal.visible = false
+  studentModal.loading = false
+  studentModal.error = ''
+  studentModal.rows = []
+  studentModal.position = null
 }
 
 onMounted(() => {
@@ -1054,12 +772,6 @@ onMounted(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-}
-
-.page-header__actions {
-  display: grid;
-  justify-items: end;
-  gap: 12px;
 }
 
 .page-title {
@@ -1083,64 +795,6 @@ onMounted(() => {
   color: var(--text2);
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(115, 153, 198, 0.12);
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.summary-card {
-  display: grid;
-  gap: 10px;
-  padding: 20px;
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: var(--card-shadow);
-}
-
-.summary-card__label,
-.summary-card__hint,
-.state-card p,
-.modal-card__header p,
-.table-muted,
-.company-locations {
-  color: var(--text2);
-}
-
-.summary-card__label {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.summary-card__value {
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.summary-card__value--success {
-  color: #16a34a;
-}
-
-.summary-card__value--accent {
-  color: var(--primary);
-}
-
-.summary-card__hint {
-  font-size: 12px;
-}
-
 .view-switcher {
   display: flex;
   gap: 4px;
@@ -1149,8 +803,8 @@ onMounted(() => {
   background: var(--bg);
 }
 
-.btn {
-  border: 0;
+.sort-button,
+.btn {  border: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1166,8 +820,14 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.btn--active {
-  background: var(--primary);
+.sort-button {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+}
+
+.btn--active {  background: var(--primary);
   color: #fff;
 }
 
@@ -1183,9 +843,8 @@ onMounted(() => {
 }
 
 .card,
-.toolbar-card,
-.modal-card,
-.state-card {
+.state-card,
+.modal-card {
   margin-bottom: 16px;
   border-radius: 16px;
   background: #fff;
@@ -1227,7 +886,7 @@ onMounted(() => {
 }
 
 .form-select--wide {
-  width: 110px;
+  width: 120px;
 }
 
 .search-box {
@@ -1245,7 +904,7 @@ onMounted(() => {
 }
 
 .form-input {
-  width: 160px;
+  width: 180px;
   padding: 0 14px 0 28px;
 }
 
@@ -1253,37 +912,12 @@ onMounted(() => {
   display: grid;
   gap: 8px;
   padding: 28px;
+  color: var(--text2);
 }
 
 .state-card--error {
   border: 1px solid rgba(239, 68, 68, 0.14);
   background: #fff7f7;
-}
-
-.ghost-button,
-.company-link,
-.student-link,
-.text-link,
-.sort-button,
-.icon-button {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.ghost-button,
-.company-link,
-.student-link,
-.text-link {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.company-link--muted,
-.student-link--muted {
-  color: var(--muted);
-  font-weight: 400;
 }
 
 .category-section {
@@ -1327,15 +961,25 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.category-badge {
+.category-badge,
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.category-badge {
   color: #fff;
   font-size: 11px;
 }
 
-.category-badge--success {
+.category-badge--success,
+.success {
   background: #22c55e;
+  color: #fff;
 }
 
 .category-summary {
@@ -1409,14 +1053,39 @@ onMounted(() => {
   gap: 2px;
 }
 
-.company-name {
+.company-name,
+.student-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
 }
 
+.company-locations,
+.student-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .company-count strong {
   color: var(--primary);
+}
+
+.company-link,
+.student-link,
+.text-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.company-link--muted,
+.student-link--muted {
+  color: var(--muted);
+  font-weight: 400;
 }
 
 .company-content {
@@ -1465,26 +1134,14 @@ onMounted(() => {
   min-width: 180px;
 }
 
-.table-primary {
-  font-weight: 700;
-}
-
 .text-link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-weight: 500;
-  text-decoration: none;
 }
 
 .text-link--strong {
   font-weight: 600;
-}
-
-.text-link--static,
-.company-external--static {
-  color: var(--text);
-  cursor: default;
 }
 
 .company-external {
@@ -1500,15 +1157,6 @@ onMounted(() => {
   gap: 8px;
 }
 
-.tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-}
-
 .info {
   background: #dbeafe;
   color: #2563eb;
@@ -1517,16 +1165,6 @@ onMounted(() => {
 .neutral {
   background: #e5e7eb;
   color: #6b7280;
-}
-
-.success {
-  background: rgba(22, 163, 74, 0.12);
-  color: #15803d;
-}
-
-.warning {
-  background: rgba(245, 158, 11, 0.14);
-  color: #b45309;
 }
 
 .industry-bank {
@@ -1544,17 +1182,14 @@ onMounted(() => {
   color: #1d4ed8;
 }
 
-.sort-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 600;
-  color: var(--text);
+.warning {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
 }
 
-.sort-button .mdi {
-  font-size: 12px;
-  color: var(--muted);
+.danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
 }
 
 .page-footer-stats {
@@ -1583,10 +1218,6 @@ onMounted(() => {
 
 .footer-indicator--open {
   color: #16a34a;
-}
-
-.footer-indicator--closed {
-  color: var(--muted);
 }
 
 .footer-indicator--students {
@@ -1619,43 +1250,38 @@ onMounted(() => {
   border-bottom: 1px solid var(--border);
 }
 
-.modal-card__header h2 {
+.modal-card__header h2,
+.modal-card__header p {
   margin: 0;
 }
 
 .modal-card__header p {
-  margin: 6px 0 0;
+  margin-top: 6px;
   font-size: 13px;
+  color: var(--text2);
 }
 
 .modal-card__body {
   padding: 20px 24px 24px;
 }
 
-.modal-card__body--state {
+.modal-card__body--state,
+.icon-button {
   color: var(--text2);
 }
 
 .icon-button {
-  color: var(--text2);
+  border: 0;
+  background: transparent;
   font-size: 13px;
   font-weight: 700;
-}
-
-@media (max-width: 1280px) {
-  .summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  cursor: pointer;
 }
 
 @media (max-width: 1100px) {
   .page-header {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .page-header__actions {
-    justify-items: start;
   }
 
   .search-box {
@@ -1688,10 +1314,6 @@ onMounted(() => {
   .category-content {
     margin-left: 0;
     padding-left: 0;
-  }
-
-  .summary-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>
