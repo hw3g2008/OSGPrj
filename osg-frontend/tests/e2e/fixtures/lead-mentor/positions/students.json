@@ -1,0 +1,35 @@
+[
+  {
+    "applicationId": 101,
+    "studentId": 843,
+    "studentName": "张三",
+    "positionId": 1,
+    "positionName": "IB Analyst",
+    "currentStage": "面试中",
+    "status": "面试中",
+    "statusTone": "warning",
+    "usedHours": 8
+  },
+  {
+    "applicationId": 102,
+    "studentId": 844,
+    "studentName": "李四",
+    "positionId": 1,
+    "positionName": "IB Analyst",
+    "currentStage": "已投递",
+    "status": "已投递",
+    "statusTone": "info",
+    "usedHours": 2
+  },
+  {
+    "applicationId": 103,
+    "studentId": 845,
+    "studentName": "王五",
+    "positionId": 1,
+    "positionName": "IB Analyst",
+    "currentStage": "获得Offer",
+    "status": "获得Offer",
+    "statusTone": "success",
+    "usedHours": 12
+  }
+]

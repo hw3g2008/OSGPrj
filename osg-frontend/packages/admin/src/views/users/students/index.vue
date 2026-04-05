@@ -316,6 +316,39 @@ interface FilterOption {
   value: string | number
 }
 
+interface StudentDetailMentor {
+  leadMentorId?: number
+  leadMentorName?: string
+  assistantId?: number
+  assistantName?: string
+}
+
+interface StudentEditDetailPayload {
+  studentId: number
+  studentName: string
+  email?: string
+  gender?: string
+  school?: string
+  major?: string
+  targetRegion?: string
+  subDirection?: string
+  accountStatus?: string
+  contact?: {
+    wechat?: string
+    phone?: string
+  }
+  mentor?: StudentDetailMentor
+}
+
+type StudentEditableRecord = StudentListItem & {
+  gender?: string
+  phone?: string
+  wechat?: string
+  remark?: string
+  assistantId?: number
+  assistantName?: string
+}
+
 interface AddStudentFormPayload {
   studentName: string
   gender?: string
@@ -357,7 +390,7 @@ const renewContractPreset = ref<ContractListItem | null>(null)
 const renewableStudentIds = ref<Set<number>>(new Set())
 const statusChangeVisible = ref(false)
 const blacklistVisible = ref(false)
-const selectedStudent = ref<StudentListItem | null>(null)
+const selectedStudent = ref<StudentEditableRecord | null>(null)
 const pendingStatusAction = ref<StudentStatusAction>('freeze')
 
 const filters = reactive({
@@ -507,8 +540,29 @@ const openStudentDetail = (record: StudentListItem) => {
   detailStudentVisible.value = true
 }
 
-const openStudentEdit = (record: StudentListItem) => {
-  selectedStudent.value = record
+const openStudentEdit = async (record: StudentListItem) => {
+  try {
+    const detail = await http.get<StudentEditDetailPayload>(`/admin/student/${record.studentId}`)
+    selectedStudent.value = {
+      ...record,
+      gender: detail.gender,
+      phone: detail.contact?.phone,
+      wechat: detail.contact?.wechat,
+      leadMentorId: detail.mentor?.leadMentorId ?? record.leadMentorId,
+      leadMentorName: detail.mentor?.leadMentorName ?? record.leadMentorName,
+      assistantId: detail.mentor?.assistantId,
+      assistantName: detail.mentor?.assistantName,
+      targetRegion: detail.targetRegion ?? record.targetRegion,
+      targetPosition: detail.subDirection ?? record.targetPosition,
+    }
+  } catch (_error) {
+    selectedStudent.value = {
+      ...record,
+      assistantId: record.assistantId,
+      assistantName: record.assistantName,
+    }
+    message.warning('学员详情加载失败，已使用列表数据打开编辑弹窗')
+  }
   detailStudentVisible.value = false
   editStudentVisible.value = true
 }
@@ -588,17 +642,13 @@ const openPendingReviewStudent = () => {
   message.info('当前没有可查看的待审核学员')
 }
 
-const handleDetailEditRequest = (studentId: number) => {
+const handleDetailEditRequest = async (studentId: number) => {
   const matchedRecord = studentList.value.find((record) => record.studentId === studentId)
-  if (matchedRecord) {
-    selectedStudent.value = matchedRecord
-  }
-  if (!selectedStudent.value) {
+  if (!matchedRecord) {
     message.warning('未找到学员信息，暂时无法进入编辑弹窗')
     return
   }
-  detailStudentVisible.value = false
-  editStudentVisible.value = true
+  await openStudentEdit(matchedRecord)
 }
 
 const handleDetailReviewUpdated = async () => {
@@ -643,7 +693,9 @@ const handleEditStudentSubmit = async (payload: UpdateStudentPayload) => {
     if (selectedStudent.value?.studentId === updated.studentId) {
       selectedStudent.value = {
         ...selectedStudent.value,
-        ...updated
+        ...updated,
+        leadMentorId: payload.leadMentorId,
+        assistantId: payload.assistantId,
       }
     }
     await loadStudentList()

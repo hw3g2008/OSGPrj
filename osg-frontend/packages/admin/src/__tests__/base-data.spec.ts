@@ -85,7 +85,7 @@ function getDefaultSort(): number {
   return 100
 }
 
-describe('基础数据管理模块测试', () => {
+describe('字典管理模块测试', () => {
   describe('分类卡片切换', () => {
     it('共4个分类', () => {
       expect(categories).toHaveLength(4)
@@ -202,8 +202,8 @@ describe('基础数据管理模块测试', () => {
   })
 
   describe('visual shell alignment', () => {
-    it('uses the prototype category cards and custom tabs instead of ant tabs', () => {
-      expect(baseDataViewSource).toContain('岗位分类、公司、地区、招聘周期')
+    it('uses the prototype category cards and custom tabs while deriving descriptions from registry data', () => {
+      expect(baseDataViewSource).toContain('group.dict_types.map(item => item.dict_name).join')
       expect(baseDataViewSource).toContain('base-data-tabs')
       expect(baseDataViewSource).not.toContain('<a-tabs')
     })
@@ -219,9 +219,17 @@ describe('基础数据管理模块测试', () => {
       expect(baseDataViewSource).toContain('@success="loadDataList"')
       expect(baseDataViewSource).toContain("message.success('已禁用')")
       expect(baseDataViewSource).toContain("message.success('已启用')")
-      expect(baseDataViewSource).toContain("await changeBaseDataStatus({ id: record.id, status: '1' }")
-      expect(baseDataViewSource).toContain("await changeBaseDataStatus({ id: record.id, status: '0' }")
+      expect(baseDataViewSource).toContain('await updateAdminDictItem({')
+      expect(baseDataViewSource).toContain("status: '1'")
+      expect(baseDataViewSource).toContain("status: '0'")
       expect(baseDataViewSource).toContain('loadDataList()')
+    })
+  })
+
+  describe('admin dict registry wiring', () => {
+    it('loads categories from getAdminDictRegistry instead of local hardcoded constants', () => {
+      expect(baseDataViewSource).toContain('getAdminDictRegistry')
+      expect(baseDataViewSource).not.toContain('const categories = [')
     })
   })
 })

@@ -3,11 +3,13 @@ package com.ruoyi.system.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,14 +54,19 @@ class OsgMockPracticeServiceImplTest
         student.setStudentId(3001L);
         student.setAssistantId(920L);
 
-        when(mockPracticeMapper.selectMockPracticeList(query)).thenReturn(List.of(practice));
+        when(mockPracticeMapper.selectMockPracticeList(any(OsgMockPractice.class))).thenReturn(List.of(practice));
         when(studentMapper.selectStudentByStudentId(3001L)).thenReturn(student);
 
         List<OsgMockPractice> rows = service.selectMentorMockPracticeList(query);
 
         assertEquals(1, rows.size());
         assertEquals(9001L, rows.get(0).getPracticeId());
-        verify(mockPracticeMapper).selectMockPracticeList(query);
+        verify(mockPracticeMapper).selectMockPracticeList(argThat(actual ->
+            actual != null
+                && Objects.equals(actual.getCurrentMentorId(), 920L)
+                && actual.getPracticeType() == null
+                && actual.getStatus() == null
+        ));
     }
 
     @Test

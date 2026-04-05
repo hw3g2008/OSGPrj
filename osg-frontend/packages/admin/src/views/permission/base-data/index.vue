@@ -2,8 +2,8 @@
   <div class="base-data-page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">基础数据管理</h2>
-        <p class="page-sub subtitle">管理系统基础配置数据</p>
+        <h2 class="page-title">字典管理</h2>
+        <p class="page-sub subtitle">管理系统基础配置字典数据</p>
       </div>
     </div>
 
@@ -75,6 +75,7 @@
             <tr>
               <th>ID</th>
               <th>{{ currentNameHeader }}</th>
+              <th>键值</th>
               <th>状态</th>
               <th>排序</th>
               <th>更新时间</th>
@@ -82,9 +83,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="record in dataList" :key="record.id">
-              <td>{{ record.id }}</td>
-              <td><strong>{{ record.name }}</strong></td>
+            <tr v-for="record in dataList" :key="record.dictCode">
+              <td>{{ record.dictCode }}</td>
+              <td><strong>{{ record.dictLabel }}</strong></td>
+              <td>{{ record.dictValue }}</td>
               <td>
                 <span
                   :class="[
@@ -95,7 +97,7 @@
                   {{ record.status === '0' ? '启用' : '禁用' }}
                 </span>
               </td>
-              <td>{{ record.sort }}</td>
+              <td>{{ record.dictSort }}</td>
               <td>{{ record.updateTime ? dayjs(record.updateTime).format('MM/DD/YYYY') : '-' }}</td>
               <td>
                 <div class="permission-actions">
@@ -105,7 +107,7 @@
                     aria-label="编辑"
                     title="编辑"
                     :data-surface-trigger="currentEditSurfaceId"
-                    :data-surface-sample-key="record.name"
+                    :data-surface-sample-key="record.dictLabel"
                     @click="handleEdit(record)"
                   >
                     编辑
@@ -149,13 +151,19 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { getBaseDataList, changeBaseDataStatus } from '@/api/baseData'
+import {
+  getAdminDictRegistry,
+  getAdminDictList,
+  updateAdminDictItem,
+  type AdminDictListRow,
+  type AdminDictRegistryGroup,
+} from '@/api/adminDict'
 import BaseDataModal from './components/BaseDataModal.vue'
 import dayjs from 'dayjs'
 
-const dataList = ref<any[]>([])
+const dataList = ref<AdminDictListRow[]>([])
 const modalVisible = ref(false)
-const currentRecord = ref<any>(null)
+const currentRecord = ref<AdminDictListRow | null>(null)
 const searchName = ref('')
 
 const pagination = reactive({
@@ -164,86 +172,55 @@ const pagination = reactive({
   total: 0
 })
 
-const categories = [
-  {
-    key: 'job',
-    label: '求职相关',
-    description: '岗位分类、公司、地区、招聘周期',
-    iconClass: 'mdi-briefcase',
-    iconBg: '#DBEAFE',
-    iconColor: '#3B82F6',
-    tabs: [
-      { key: 'job_category', label: '岗位分类', createLabel: '岗位分类', nameHeader: '分类名称' },
-      {
-        key: 'company_name',
-        label: '公司/银行名称',
-        createLabel: '公司/银行名称',
-        nameHeader: '公司名称',
-        hasParent: true,
-        parentTab: 'company_type',
-      },
-      { key: 'company_type', label: '公司/银行类别', createLabel: '公司/银行类别', nameHeader: '类别名称' },
-      { key: 'region', label: '大区', createLabel: '大区', nameHeader: '大区名称' },
-      {
-        key: 'city',
-        label: '地区/城市',
-        createLabel: '地区/城市',
-        nameHeader: '城市名称',
-        hasParent: true,
-        parentTab: 'region',
-      },
-      { key: 'recruit_cycle', label: '招聘周期', createLabel: '周期', nameHeader: '周期名称' }
-    ]
-  },
-  {
-    key: 'student',
-    label: '学员相关',
-    description: '学校、主攻方向、子方向',
-    iconClass: 'mdi-account-school',
-    iconBg: '#D1FAE5',
-    iconColor: '#22C55E',
-    tabs: [
-      { key: 'school', label: '学校', createLabel: '学校', nameHeader: '学校名称' },
-       { key: 'major_direction', label: '主攻方向', createLabel: '方向', nameHeader: '方向名称' },
-      {
-        key: 'sub_direction',
-        label: '子方向',
-        createLabel: '子方向',
-        nameHeader: '子方向名称',
-        hasParent: true,
-        parentTab: 'major_direction',
-      }
-    ]
-  },
-  {
-    key: 'course',
-    label: '课程相关',
-    description: '课程类型',
-    iconClass: 'mdi-book-open-variant',
-    iconBg: '#FEF3C7',
-    iconColor: '#F59E0B',
-    tabs: [
-      { key: 'course_type', label: '课程类型', createLabel: '课程类型', nameHeader: '课程类型' }
-    ]
-  },
-  {
-    key: 'finance',
-    label: '财务相关',
-    description: '报销类型',
-    iconClass: 'mdi-cash-multiple',
-    iconBg: '#E0E7FF',
-    iconColor: '#8B5CF6',
-    tabs: [
-      { key: 'expense_type', label: '报销类型', createLabel: '报销类型', nameHeader: '报销类型' }
-    ]
-  }
-] as const
+const registryGroups = ref<AdminDictRegistryGroup[]>([])
 
-const selectedCategory = ref('job')
-const selectedTab = ref('job_category')
+const tabPresentationMap: Record<string, { createLabel: string; nameHeader: string }> = {
+  osg_job_category: { createLabel: '岗位分类', nameHeader: '分类名称' },
+  osg_company_name: { createLabel: '公司/银行名称', nameHeader: '公司名称' },
+  osg_company_type: { createLabel: '公司/银行类别', nameHeader: '类别名称' },
+  osg_region: { createLabel: '大区', nameHeader: '大区名称' },
+  osg_city: { createLabel: '地区/城市', nameHeader: '城市名称' },
+  osg_recruit_cycle: { createLabel: '招聘周期', nameHeader: '周期名称' },
+  osg_school: { createLabel: '学校', nameHeader: '学校名称' },
+  osg_major_direction: { createLabel: '方向', nameHeader: '方向名称' },
+  osg_sub_direction: { createLabel: '子方向', nameHeader: '子方向名称' },
+  osg_course_type: { createLabel: '课程类型', nameHeader: '课程类型' },
+  osg_expense_type: { createLabel: '报销类型', nameHeader: '报销类型' },
+}
+
+const categories = computed(() => {
+  return registryGroups.value
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map(group => ({
+      key: group.group_key,
+      label: group.group_label,
+      description: group.dict_types.map(item => item.dict_name).join('、'),
+      iconClass: group.icon,
+      iconBg: group.icon_bg,
+      iconColor: group.icon_color,
+      tabs: group.dict_types.map(item => {
+        const presentation = tabPresentationMap[item.dict_type] ?? {
+          createLabel: item.dict_name,
+          nameHeader: `${item.dict_name}名称`,
+        }
+        return {
+          key: item.dict_type,
+          label: item.dict_name,
+          createLabel: presentation.createLabel,
+          nameHeader: presentation.nameHeader,
+          hasParent: item.has_parent,
+          parentTab: item.parent_dict_type,
+        }
+      }),
+    }))
+})
+
+const selectedCategory = ref('')
+const selectedTab = ref('')
 
 const currentTabs = computed(() => {
-  const category = categories.find(cat => cat.key === selectedCategory.value)
+  const category = categories.value.find(cat => cat.key === selectedCategory.value)
   return category ? [...category.tabs] : []
 })
 
@@ -255,9 +232,9 @@ const currentTabLabel = computed(() => currentTabConfig.value?.label ?? '')
 const currentAddLabel = computed(() => currentTabConfig.value?.createLabel ?? currentTabLabel.value)
 const currentNameHeader = computed(() => currentTabConfig.value?.nameHeader ?? '名称')
 const surfaceIdMap: Record<string, { create: string; edit: string }> = {
-  recruit_cycle: { create: 'modal-new-program', edit: 'modal-edit-program' },
-  major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
-  sub_direction: { create: 'modal-new-sub-direction', edit: 'modal-edit-sub-direction' },
+  osg_recruit_cycle: { create: 'modal-new-program', edit: 'modal-edit-program' },
+  osg_major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
+  osg_sub_direction: { create: 'modal-new-sub-direction', edit: 'modal-edit-sub-direction' },
 }
 
 const resolveSurfaceId = (tab: string, mode: 'create' | 'edit') => {
@@ -272,7 +249,7 @@ const currentEditSurfaceId = computed(() => resolveSurfaceId(selectedTab.value, 
 
 const selectCategory = (key: string) => {
   selectedCategory.value = key
-  const category = categories.find(cat => cat.key === key)
+  const category = categories.value.find(cat => cat.key === key)
   if (category?.tabs.length) {
     selectedTab.value = category.tabs[0].key
   }
@@ -283,19 +260,35 @@ const selectTab = (key: string) => {
 }
 
 watch(selectedTab, () => {
+  if (!selectedTab.value) return
   pagination.current = 1
   searchName.value = ''
   loadDataList()
 })
 
-const loadDataList = async () => {
+const loadRegistry = async () => {
   try {
-    const res = await getBaseDataList({
+    const groups = await getAdminDictRegistry()
+    registryGroups.value = groups || []
+    const firstGroup = categories.value[0]
+    if (firstGroup) {
+      selectedCategory.value = firstGroup.key
+      selectedTab.value = firstGroup.tabs[0]?.key ?? ''
+    }
+  } catch (error) {
+    registryGroups.value = []
+    message.error('加载字典分类失败')
+  }
+}
+
+const loadDataList = async () => {
+  if (!selectedTab.value) return
+  try {
+    const res = await getAdminDictList({
       pageNum: pagination.current,
       pageSize: pagination.pageSize,
-      name: searchName.value || undefined,
-      category: selectedCategory.value,
-      tab: selectedTab.value
+      dictType: selectedTab.value,
+      dictLabel: searchName.value || undefined,
     })
     dataList.value = res.rows || []
     pagination.total = res.total || 0
@@ -314,20 +307,28 @@ const handleAdd = () => {
   modalVisible.value = true
 }
 
-const handleEdit = (record: any) => {
+const handleEdit = (record: AdminDictListRow) => {
   currentRecord.value = record
   modalVisible.value = true
 }
 
-const handleDisable = (record: any) => {
+const handleDisable = (record: AdminDictListRow) => {
   Modal.confirm({
     title: '确认禁用',
-    content: `确定要禁用「${record.name}」吗？`,
+    content: `确定要禁用「${record.dictLabel}」吗？`,
     okText: '确定',
     cancelText: '取消',
     onOk: async () => {
       try {
-        await changeBaseDataStatus({ id: record.id, status: '1' }, {
+        await updateAdminDictItem({
+          dictCode: record.dictCode,
+          dictType: record.dictType,
+          dictLabel: record.dictLabel,
+          dictValue: record.dictValue,
+          dictSort: record.dictSort,
+          status: '1',
+          remark: record.remark,
+        }, {
           customErrorMessage: '禁用基础数据失败，请重试'
         })
         message.success('已禁用')
@@ -339,9 +340,17 @@ const handleDisable = (record: any) => {
   })
 }
 
-const handleEnable = async (record: any) => {
+const handleEnable = async (record: AdminDictListRow) => {
   try {
-    await changeBaseDataStatus({ id: record.id, status: '0' }, {
+    await updateAdminDictItem({
+      dictCode: record.dictCode,
+      dictType: record.dictType,
+      dictLabel: record.dictLabel,
+      dictValue: record.dictValue,
+      dictSort: record.dictSort,
+      status: '0',
+      remark: record.remark,
+    }, {
       customErrorMessage: '启用基础数据失败，请重试'
     })
     message.success('已启用')
@@ -352,7 +361,7 @@ const handleEnable = async (record: any) => {
 }
 
 onMounted(() => {
-  loadDataList()
+  void loadRegistry()
 })
 </script>
 

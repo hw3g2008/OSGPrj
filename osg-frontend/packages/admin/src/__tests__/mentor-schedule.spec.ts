@@ -32,14 +32,18 @@ describe('mentor schedule page shell', () => {
     expect(source).toContain('一键催促全部')
   })
 
-  it('uses an inline filter toolbar while keeping semantic labels in the source', () => {
+  it('uses an inline filter toolbar driven by placeholders and data-field-name metadata', () => {
     const source = readSource()
-    const filtersStyleBlock = readBlock(source, '.schedule-filters {', '\n}\n\n.schedule-field {')
+    const filtersStyleBlock = readBlock(source, '.schedule-filters {', '\n}\n\n.schedule-input,')
 
-    expect(source).toContain('class="schedule-field__label"')
+    expect(source).toContain('data-field-name="导师排期管理页"')
+    expect(source).toContain('data-field-name="类型"')
+    expect(source).toContain('data-field-name="日期"')
+    expect(source).toContain('data-field-name="时段"')
     expect(filtersStyleBlock).toContain('display: flex;')
-    expect(filtersStyleBlock).toContain('flex-wrap: wrap;')
     expect(filtersStyleBlock).toContain('align-items: center;')
+    expect(source).toContain("@media (max-width: 720px)")
+    expect(source).toContain('.schedule-filters { flex-wrap: wrap; }')
     expect(filtersStyleBlock).not.toContain('grid-template-columns')
   })
 })

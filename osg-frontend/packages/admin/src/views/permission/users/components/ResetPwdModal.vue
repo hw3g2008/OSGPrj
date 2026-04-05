@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     surface-id="modal-reset-password"
     :open="visible"
-    width="400px"
+    width="460px"
     body-class="reset-pwd-modal__body"
     @cancel="handleClose"
   >
@@ -15,7 +15,20 @@
 
     <div class="reset-pwd-modal__warning" data-content-part="status-banner">
       <span class="mdi mdi-alert" aria-hidden="true" />
-      <p data-content-part="supporting-text">重置后该用户需使用新密码登录</p>
+      <p data-content-part="supporting-text">重置后该用户需使用新密码重新登录，建议立即同步通知对方。</p>
+    </div>
+
+    <div class="reset-pwd-modal__identity">
+      <span class="reset-pwd-modal__identity-name">
+        {{ props.user?.nickName || props.user?.userName || '未选择用户' }}
+      </span>
+      <span class="reset-pwd-modal__identity-account">@{{ props.user?.userName || 'unknown' }}</span>
+    </div>
+
+    <div class="reset-pwd-modal__policy">
+      <span>至少 8 位</span>
+      <span>必须包含字母</span>
+      <span>必须包含数字</span>
     </div>
 
     <a-form
@@ -51,7 +64,9 @@
 
     <template #footer>
       <div data-content-part="action-row" class="reset-pwd-modal__actions">
-        <a-button class="reset-pwd-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose"><span>取消</span></a-button>
+        <a-button class="reset-pwd-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose">
+          <span>取消</span>
+        </a-button>
         <a-button
           type="primary"
           :loading="loading"
@@ -118,6 +133,11 @@ watch(
   },
 )
 
+const getIdentityInitials = () => {
+  const base = String(props.user?.nickName || props.user?.userName || 'AD').trim()
+  return base.slice(0, 2).toUpperCase()
+}
+
 const handleClose = () => {
   emit('update:visible', false)
 }
@@ -139,7 +159,6 @@ const handleSubmit = async () => {
     handleClose()
   } catch (error: any) {
     if (error?.errorFields) return
-    // 移除组件内的错误提示，让拦截器处理
   } finally {
     loading.value = false
   }
@@ -151,51 +170,94 @@ const handleSubmit = async () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  color: #1a2234;
+  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .reset-pwd-modal__title-icon {
+  color: #4f74ff;
   font-size: 18px;
-  line-height: 1;
+}
+
+.reset-pwd-modal__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 0 2px;
+}
+
+.reset-pwd-modal__identity-name {
+  color: #1a2234;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.reset-pwd-modal__identity-account {
+  color: #69758b;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
+  font-size: 12px;
 }
 
 .reset-pwd-modal__label {
   display: inline-flex;
   align-items: center;
-  color: var(--text, #1e293b);
+  gap: 4px;
+  color: #1a2234;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .reset-pwd-modal__required {
-  color: #ef4444;
+  color: #d35d53;
 }
 
 .reset-pwd-modal__warning {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  margin-bottom: 16px;
-  border-radius: 8px;
-  background: #fef3c7;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: #eef2ff;
+  border: 1px solid rgba(79, 116, 255, 0.12);
 
-  .anticon,
+  .mdi,
   p {
-    color: #92400e;
+    color: #4f46e5;
+  }
+
+  .mdi {
+    font-size: 18px;
+    line-height: 1;
   }
 
   p {
     margin: 0;
     font-size: 13px;
+    line-height: 1.6;
   }
 }
 
-.reset-pwd-modal__cancel-btn {
-  border-color: var(--border, #d0d7e2);
-  border-radius: 10px;
-  color: var(--text-secondary, #64748b);
-  font-weight: 500;
-  min-width: 80px;
+.reset-pwd-modal__policy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(79, 116, 255, 0.08);
+    color: #526786;
+    font-size: 12px;
+    font-weight: 700;
+  }
 }
 
 .reset-pwd-modal__actions {
@@ -204,18 +266,33 @@ const handleSubmit = async () => {
   gap: 12px;
 }
 
+.reset-pwd-modal__cancel-btn {
+  min-width: 92px;
+  height: 42px;
+  border-color: rgba(26, 34, 52, 0.12);
+  border-radius: 14px;
+  color: #69758b;
+  font-weight: 600;
+}
+
 .reset-pwd-modal__confirm-btn {
-  background-color: var(--warning, #f59e0b);
-  border-color: var(--warning, #f59e0b);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-width: 120px;
+  height: 42px;
+  border: none !important;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3f68ff, #6788ff) !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.2);
 
   &:hover,
   &:focus {
-    background-color: var(--warning, #f59e0b);
-    border-color: var(--warning, #f59e0b);
+    background: linear-gradient(135deg, #3f68ff, #6788ff) !important;
+    color: #fff !important;
     opacity: 0.96;
   }
 }
@@ -226,18 +303,31 @@ const handleSubmit = async () => {
   margin-bottom: 0;
 }
 
+.overlay-surface-modal__body.reset-pwd-modal__body .ant-input,
+.overlay-surface-modal__body.reset-pwd-modal__body .ant-input-affix-wrapper {
+  min-height: 46px;
+  border-radius: 14px !important;
+  border-color: rgba(79, 116, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+.overlay-surface-modal__body.reset-pwd-modal__body .ant-input,
+.overlay-surface-modal__body.reset-pwd-modal__body .ant-input-affix-wrapper {
+  padding-inline: 14px;
+}
+
 .overlay-surface-modal__footer .reset-pwd-modal__confirm-btn {
-  background-color: var(--warning, #f59e0b) !important;
+  background-color: #4f74ff !important;
   background-image: none !important;
-  border-color: var(--warning, #f59e0b) !important;
+  border-color: #4f74ff !important;
   color: #fff !important;
 }
 
 .overlay-surface-modal__footer .reset-pwd-modal__confirm-btn:hover,
 .overlay-surface-modal__footer .reset-pwd-modal__confirm-btn:focus {
-  background-color: var(--warning, #f59e0b) !important;
+  background-color: #4f74ff !important;
   background-image: none !important;
-  border-color: var(--warning, #f59e0b) !important;
+  border-color: #4f74ff !important;
   color: #fff !important;
 }
 </style>

@@ -24,6 +24,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '首页' }
       },
       {
+        path: 'permission/menu',
+        name: 'MenuManagement',
+        component: () => import('@/views/permission/menu/index.vue'),
+        meta: { title: '菜单管理', permission: 'system:menu:list' }
+      },
+      {
         path: 'permission/roles',
         name: 'Roles',
         component: () => import('@/views/permission/roles/index.vue'),
@@ -39,7 +45,7 @@ const routes: RouteRecordRaw[] = [
         path: 'permission/base-data',
         name: 'BaseData',
         component: () => import('@/views/permission/base-data/index.vue'),
-        meta: { title: '基础数据管理', permission: 'system:baseData:list' }
+        meta: { title: '字典管理', permission: 'system:dict:list' }
       },
       {
         path: 'users/students',

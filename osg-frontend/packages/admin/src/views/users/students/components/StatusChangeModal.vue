@@ -8,20 +8,20 @@
   >
     <template #title>
       <span class="student-status-modal__title">
-        <span class="mdi mdi-account-cog" aria-hidden="true"></span>
+        <span class="mdi mdi-account-cog student-status-modal__title-icon" aria-hidden="true"></span>
         <span>修改学员状态</span>
       </span>
     </template>
 
     <div class="student-status-modal__intro">
-      <div class="student-status-modal__icon-circle" :class="`student-status-modal__icon-circle--${action}`">
-        <span class="mdi" :class="actionIcon" aria-hidden="true"></span>
+      <span class="mdi student-status-modal__intro-icon" :class="actionIcon" aria-hidden="true"></span>
+      <div class="student-status-modal__intro-copy">
+        <h3 class="student-status-modal__heading">
+          确定将 <span class="student-status-modal__name">{{ studentName || '学员姓名' }}</span> 的状态修改为
+          <span class="student-status-modal__target-status">{{ targetStatusLabel }}</span>？
+        </h3>
+        <p class="student-status-modal__desc">{{ modalDescription }}</p>
       </div>
-      <h3 class="student-status-modal__heading">
-        确定将 <span class="student-status-modal__name">{{ studentName || '学员姓名' }}</span> 的状态修改为
-      </h3>
-      <div class="student-status-modal__target-status">{{ targetStatusLabel }}？</div>
-      <p class="student-status-modal__desc">{{ modalDescription }}</p>
     </div>
 
     <div v-if="requiresReason" class="student-status-modal__form-area">
@@ -61,10 +61,10 @@
     </div>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">
+      <button type="button" class="student-status-modal__footer-button student-status-modal__footer-button--ghost" @click="handleClose">
         取消
       </button>
-      <button type="button" class="permission-button permission-button--primary" @click="handleSubmit">
+      <button type="button" class="student-status-modal__footer-button student-status-modal__footer-button--primary" @click="handleSubmit">
         确认修改
       </button>
     </template>
@@ -178,67 +178,75 @@ const handleSubmit = async () => {
 .student-status-modal__title {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  color: #1a2234;
+  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.student-status-modal__title-icon {
+  color: #4f74ff;
+  font-size: 18px;
 }
 
 .student-status-modal__intro {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 32px 16px;
-  text-align: center;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
-.student-status-modal__icon-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  margin-bottom: 16px;
-  border-radius: 50%;
-  font-size: 48px;
+.student-status-modal__intro-icon {
+  font-size: 18px;
+  line-height: 1;
+  color: #4f74ff;
+}
 
-  &--freeze {
-    color: #1E40AF;
-  }
-
-  &--refund {
-    color: #DC2626;
-  }
-
-  &--restore {
-    color: #16A34A;
-  }
+.student-status-modal__intro-copy {
+  flex: 1;
 }
 
 .student-status-modal__heading {
   margin: 0;
-  font-size: 16px;
+  color: #1a2234;
+  font-size: 15px;
   font-weight: 600;
+  line-height: 1.6;
 }
 
 .student-status-modal__name {
-  color: var(--primary);
+  color: #3f68ff;
 }
 
 .student-status-modal__target-status {
-  font-size: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  margin: 0 4px;
+  border-radius: 999px;
+  background: rgba(79, 116, 255, 0.12);
+  color: #3f68ff;
+  font-size: 13px;
   font-weight: 700;
-  margin-bottom: 16px;
 }
 
 .student-status-modal__desc {
-  color: var(--text2);
-  font-size: 14px;
-  margin: 0;
+  margin: 4px 0 0;
+  color: #546179;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .student-status-modal__form-area {
-  background: #F8FAFC;
+  background: #f9fbff;
   padding: 16px;
-  border-radius: 8px;
+  border: 1px solid rgba(79, 116, 255, 0.1);
+  border-radius: 14px;
   text-align: left;
 }
 
@@ -250,5 +258,27 @@ const handleSubmit = async () => {
 
 .student-status-modal__required {
   color: #dc2626;
+}
+
+.student-status-modal__footer-button {
+  min-width: 96px;
+  height: 42px;
+  border-radius: 14px;
+  padding: 0 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.student-status-modal__footer-button--ghost {
+  border: 1px solid rgba(26, 34, 52, 0.12);
+  background: #fff;
+  color: #69758b;
+}
+
+.student-status-modal__footer-button--primary {
+  border: 0;
+  background: linear-gradient(135deg, #3f68ff, #6788ff);
+  color: #fff;
+  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.22);
 }
 </style>

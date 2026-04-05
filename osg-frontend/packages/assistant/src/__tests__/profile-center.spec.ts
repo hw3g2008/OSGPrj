@@ -144,12 +144,14 @@ describe('assistant personal center pages', () => {
     expect(wrapper.text()).toContain('无法保存')
   })
 
-  it('renders the weekly schedule view and copies last week values into the current form', async () => {
+  it('renders the weekly schedule view in lead-mentor style shell and copies last week values into the current form', async () => {
     const wrapper = mount(SchedulePage)
     await flushUi()
 
     expect(wrapper.find('#page-schedule').exists()).toBe(true)
-    expect(wrapper.find('.page-title').text()).toContain('Schedule')
+    expect(wrapper.find('.schedule-banner').exists()).toBe(true)
+    expect(wrapper.findAll('.card')).toHaveLength(3)
+    expect(wrapper.find('.card-tag').text()).toContain('只读视图')
     expect((wrapper.get('#assistant-schedule-monday').element as HTMLSelectElement).value).toBe('morning')
     expect(wrapper.text()).toContain('8 小时')
 

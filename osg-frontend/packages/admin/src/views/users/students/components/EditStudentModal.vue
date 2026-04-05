@@ -7,19 +7,19 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="edit-student-modal__title-wrap">
-        <div class="edit-student-modal__avatar">
-          {{ avatarText }}
-        </div>
-        <div>
-          <span class="edit-student-modal__eyebrow">Edit Student</span>
-          <div class="edit-student-modal__title">编辑学员 - {{ student?.studentName || '待选择学员' }}</div>
-          <p class="edit-student-modal__subtitle">
-            ID: {{ student?.studentId ?? '-' }} · {{ formatStatus(student?.accountStatus) }}
-          </p>
-        </div>
-      </div>
+      <span class="edit-student-modal__title">
+        <span class="mdi mdi-account-edit edit-student-modal__title-icon" aria-hidden="true"></span>
+        <span>编辑学员</span>
+      </span>
     </template>
+
+    <div class="edit-student-modal__note" data-content-part="supporting-text">
+      <span class="mdi mdi-card-account-details-outline edit-student-modal__note-icon" aria-hidden="true"></span>
+      <div class="edit-student-modal__note-copy">
+        <strong>{{ student?.studentName || '待选择学员' }}</strong>
+        <p>ID {{ student?.studentId ?? '-' }} · {{ formatStatus(student?.accountStatus) }} · 可同步更新资料、导师归属与求职方向。</p>
+      </div>
+    </div>
 
     <section class="edit-student-modal__section edit-student-modal__section--primary">
       <div class="edit-student-modal__badge edit-student-modal__badge--primary">核心信息</div>
@@ -54,11 +54,31 @@
       <div class="edit-student-modal__grid">
         <label data-field-name="班主任">
           <span>班主任</span>
-          <input :value="student?.leadMentorName || '待补充'" readonly>
+          <a-select
+            v-model:value="form.leadMentorId"
+            show-search
+            :filter-option="false"
+            :loading="staffLoading"
+            :disabled="submitting"
+            :options="mentorSelectOptions"
+            placeholder="输入姓名搜索班主任"
+            allow-clear
+            @search="handleStaffSearch"
+          />
         </label>
         <label data-field-name="助教">
           <span>助教</span>
-          <input value="待补充" readonly>
+          <a-select
+            v-model:value="form.assistantId"
+            show-search
+            :filter-option="false"
+            :loading="staffLoading"
+            :disabled="submitting"
+            :options="assistantSelectOptions"
+            placeholder="输入姓名搜索助教"
+            allow-clear
+            @search="handleStaffSearch"
+          />
         </label>
       </div>
     </section>
@@ -144,9 +164,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { StudentListItem, UpdateStudentPayload } from '@osg/shared/api/admin/student'
+import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
 const props = withDefaults(defineProps<{
@@ -172,19 +193,92 @@ const form = reactive({
   targetPosition: '',
   phone: '',
   wechat: '',
-  remark: ''
+  remark: '',
+  leadMentorId: undefined as number | undefined,
+  assistantId: undefined as number | undefined,
 })
 
+const staffOptions = ref<StaffListItem[]>([])
+const staffLoading = ref(false)
+
+const mentorSelectOptions = computed(() => staffOptions.value
+  .filter((item) => item.staffType === 'lead_mentor' && item.userId != null)
+  .map((item) => ({
+    label: item.staffName,
+    value: item.userId!,
+  })))
+
+const assistantSelectOptions = computed(() => staffOptions.value
+  .filter((item) => item.staffType === 'assistant' && item.userId != null)
+  .map((item) => ({
+    label: item.staffName,
+    value: item.userId!,
+  })))
+
+const mergeCurrentOption = (staffType: 'lead_mentor' | 'assistant', userId?: number, label?: string) => {
+  if (userId == null) {
+    return
+  }
+  const exists = staffOptions.value.some((item) => item.userId === userId)
+  if (exists) {
+    return
+  }
+  staffOptions.value = [
+    ...staffOptions.value,
+    {
+      staffId: userId,
+      staffName: label || `${staffType === 'lead_mentor' ? '班主任' : '助教'} ${userId}`,
+      staffType,
+      userId,
+    },
+  ]
+}
+
+const toExtraStudentFields = (student?: StudentListItem | null) => (student ?? {}) as unknown as {
+  gender?: string
+  phone?: string
+  wechat?: string
+  remark?: string
+}
+
 const syncForm = () => {
+  const extraFields = toExtraStudentFields(props.student)
   form.studentName = props.student?.studentName || ''
-  form.gender = (props.student as Record<string, unknown>)?.gender as string || ''
+  form.gender = extraFields.gender || ''
   form.email = props.student?.email || ''
   form.school = props.student?.school || ''
   form.majorDirection = props.student?.majorDirection || ''
   form.targetPosition = props.student?.targetPosition || ''
-  form.phone = (props.student as Record<string, unknown>)?.phone as string || ''
-  form.wechat = (props.student as Record<string, unknown>)?.wechat as string || ''
-  form.remark = (props.student as Record<string, unknown>)?.remark as string || ''
+  form.phone = extraFields.phone || ''
+  form.wechat = extraFields.wechat || ''
+  form.remark = extraFields.remark || ''
+  form.leadMentorId = props.student?.leadMentorId
+  form.assistantId = props.student?.assistantId
+
+  mergeCurrentOption('lead_mentor', props.student?.leadMentorId, props.student?.leadMentorName)
+  mergeCurrentOption('assistant', props.student?.assistantId, props.student?.assistantName)
+}
+
+const loadStaffOptions = async (keyword = '') => {
+  try {
+    staffLoading.value = true
+    const response = await getStaffList({
+      pageNum: 1,
+      pageSize: 50,
+      staffName: keyword || undefined,
+    })
+    staffOptions.value = response.rows || []
+    mergeCurrentOption('lead_mentor', props.student?.leadMentorId, props.student?.leadMentorName)
+    mergeCurrentOption('assistant', props.student?.assistantId, props.student?.assistantName)
+  } catch (_error) {
+    message.error('加载导师列表失败')
+  } finally {
+    staffLoading.value = false
+  }
+}
+
+const handleStaffSearch = (keyword: string) => {
+  void loadStaffOptions(keyword)
 }
 
 watch(
@@ -192,6 +286,7 @@ watch(
   ([visible]) => {
     if (visible) {
       syncForm()
+      void loadStaffOptions()
     }
   },
   { immediate: true }
@@ -233,7 +328,9 @@ const handleSubmit = () => {
     email: form.email.trim(),
     school: form.school.trim(),
     majorDirection: form.majorDirection.trim() || undefined,
-    subDirection: form.targetPosition.trim() || undefined
+    subDirection: form.targetPosition.trim() || undefined,
+    leadMentorId: form.leadMentorId,
+    assistantId: form.assistantId,
   })
 }
 
@@ -252,62 +349,66 @@ const formatStatus = (status?: string) => {
 </script>
 
 <style scoped lang="scss">
-/* ── Header (override OverlaySurfaceModal header) ── */
 :global([data-surface-id="modal-edit-student-new"] [data-surface-part="header"]) {
-  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
-  border-bottom: none !important;
-  border-radius: 16px 16px 0 0;
-  padding: 22px 26px !important;
+  background: #fff !important;
+  border-bottom: 1px solid rgba(79, 116, 255, 0.1) !important;
 }
 
 :global([data-surface-id="modal-edit-student-new"] .overlay-surface-modal__close) {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #fff !important;
+  background: #f5f7ff !important;
+  color: #69758b !important;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.35) !important;
+    background: #eef2ff !important;
+    color: #4f74ff !important;
   }
 }
 
-.edit-student-modal__title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.edit-student-modal__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.24);
-  color: #fff;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.edit-student-modal__eyebrow {
-  display: inline-flex;
-  margin-bottom: 4px;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
 .edit-student-modal__title {
-  color: #fff;
-  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a2234;
+  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
+  font-size: 18px;
   font-weight: 700;
 }
 
-.edit-student-modal__subtitle {
-  margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 13px;
+.edit-student-modal__title-icon {
+  color: #4f74ff;
+  font-size: 18px;
+}
+
+.edit-student-modal__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.edit-student-modal__note-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.edit-student-modal__note-copy {
+  strong {
+    display: block;
+    color: #3f68ff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: #546179;
+    font-size: 13px;
+    line-height: 1.6;
+  }
 }
 
 .edit-student-modal__body {
@@ -315,7 +416,30 @@ const formatStatus = (status?: string) => {
   flex-direction: column;
   gap: 18px;
   padding: 24px;
-  background: #f8fafc;
+  background: #fff;
+}
+
+.edit-student-modal__section {
+  border: 1px solid rgba(79, 116, 255, 0.1);
+  border-radius: 16px;
+  padding: 18px;
+  background: #fff;
+}
+
+.edit-student-modal__section--primary {
+  border-color: rgba(79, 116, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(79, 116, 255, 0.06);
+}
+
+.edit-student-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 14px;
 }
 
 .edit-student-modal__section input:disabled,
@@ -324,53 +448,29 @@ const formatStatus = (status?: string) => {
   background: #f1f5f9;
 }
 
-.edit-student-modal__section {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  background: #fff;
-}
-
-.edit-student-modal__section--primary {
-  border-width: 2px;
-  border-color: var(--primary, #6366F1);
-}
-
-/* ── Section badges ── */
-.edit-student-modal__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
 .edit-student-modal__badge--primary {
-  background: var(--primary, #6366F1);
-  color: #fff;
+  background: #edf2ff;
+  color: #3f68ff;
 }
 
 .edit-student-modal__badge--indigo {
-  background: #E0E7FF;
-  color: #4338CA;
+  background: #edf2ff;
+  color: #3f68ff;
 }
 
 .edit-student-modal__badge--blue {
-  background: #E8F0F8;
-  color: var(--primary, #6366F1);
+  background: #eef6ff;
+  color: #3f68ff;
 }
 
 .edit-student-modal__badge--amber {
-  background: #FEF3C7;
-  color: #92400E;
+  background: #fff2db;
+  color: #c56a26;
 }
 
 .edit-student-modal__badge--green {
-  background: #DCFCE7;
-  color: #166534;
+  background: #ebfbf2;
+  color: #2f8f62;
 }
 
 .edit-student-modal__grid {
@@ -394,38 +494,50 @@ const formatStatus = (status?: string) => {
 }
 
 .edit-student-modal__grid label span {
-  color: #334155;
-  font-size: 12px;
+  color: #1a2234;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .edit-student-modal__grid input,
-.edit-student-modal__grid select {
+.edit-student-modal__grid select,
+:global(.edit-student-modal__grid .ant-select-selector) {
   width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border: 1px solid rgba(79, 116, 255, 0.12);
+  border-radius: 14px;
   padding: 11px 12px;
-  background: #f8fafc;
-  color: #0f172a;
+  background: #f9fbff;
+  color: #1a2234;
+}
+
+:global(.edit-student-modal__grid .ant-select) {
+  width: 100%;
+}
+
+:global(.edit-student-modal__grid .ant-select-selector) {
+  min-height: 44px;
+  box-shadow: none !important;
 }
 
 .edit-student-modal__footer-button {
   min-width: 112px;
-  border: 0;
-  border-radius: 999px;
+  border-radius: 14px;
   padding: 11px 20px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .edit-student-modal__footer-button--ghost {
-  background: #e2e8f0;
-  color: #334155;
+  border: 1px solid rgba(26, 34, 52, 0.12);
+  background: #fff;
+  color: #69758b;
 }
 
 .edit-student-modal__footer-button--primary {
-  background: linear-gradient(135deg, var(--primary, #6366F1) 0%, var(--primary-dark, #4F46E5) 100%);
+  border: 0;
+  background: linear-gradient(135deg, #3f68ff, #6788ff);
   color: #fff;
+  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.22);
 }
 
 @media (max-width: 960px) {
@@ -435,8 +547,5 @@ const formatStatus = (status?: string) => {
     grid-template-columns: 1fr;
   }
 
-  .edit-student-modal__title-wrap {
-    align-items: flex-start;
-  }
 }
 </style>

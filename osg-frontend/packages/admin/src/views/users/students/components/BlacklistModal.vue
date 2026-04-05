@@ -8,21 +8,21 @@
   >
     <template #title>
       <span class="student-blacklist-modal__title">
-        <span class="mdi mdi-account-cancel" aria-hidden="true"></span>
+        <span class="mdi mdi-account-cancel student-blacklist-modal__title-icon" aria-hidden="true"></span>
         <span>加入黑名单</span>
       </span>
     </template>
 
     <div class="student-blacklist-modal__intro">
-      <div class="student-blacklist-modal__icon-circle">
-        <span class="mdi mdi-account-cancel" aria-hidden="true"></span>
+      <span class="mdi mdi-alert-circle-outline student-blacklist-modal__intro-icon" aria-hidden="true"></span>
+      <div class="student-blacklist-modal__intro-copy">
+        <h3 class="student-blacklist-modal__heading">
+          确定将 <strong>{{ studentName || '当前学员' }}</strong> 加入黑名单？
+        </h3>
+        <p class="student-blacklist-modal__desc">
+          加入黑名单后，该学员将<strong>无法查看“求职中心”模块</strong>（包括岗位信息、面试准备等功能）。
+        </p>
       </div>
-      <h3 class="student-blacklist-modal__heading">
-        确定将 <strong>{{ studentName || '当前学员' }}</strong> 加入黑名单？
-      </h3>
-      <p class="student-blacklist-modal__desc">
-        加入黑名单后，该学员将<strong>无法查看"求职中心"模块</strong>（包括岗位信息、面试准备等功能）
-      </p>
     </div>
 
     <div class="student-blacklist-modal__form-area">
@@ -76,10 +76,10 @@
     </div>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">
+      <button type="button" class="student-blacklist-modal__footer-button student-blacklist-modal__footer-button--ghost" @click="handleClose">
         取消
       </button>
-      <button type="button" class="student-blacklist-modal__confirm-btn" @click="handleSubmit">
+      <button type="button" class="student-blacklist-modal__footer-button student-blacklist-modal__footer-button--primary" @click="handleSubmit">
         确认加入黑名单
       </button>
     </template>
@@ -158,61 +158,64 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped lang="scss">
-:global([data-surface-id="student-blacklist-modal"] [data-surface-part="header"]) {
-  background: #FEF3C7;
-  border-bottom: none;
-}
-
 :global([data-surface-id="student-blacklist-modal"] [data-surface-part="header"] .overlay-surface-modal__close) {
-  color: #92400E;
+  color: #69758b;
 }
 
 .student-blacklist-modal__title {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: #92400E;
+  gap: 8px;
+  color: #1a2234;
+  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.student-blacklist-modal__title-icon {
+  color: #f18d43;
+  font-size: 18px;
 }
 
 .student-blacklist-modal__intro {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 20px;
-  padding: 24px 16px;
-  text-align: center;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff5eb;
 }
 
-.student-blacklist-modal__icon-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  margin-bottom: 8px;
-  border-radius: 50%;
-  font-size: 48px;
-  color: #92400E;
+.student-blacklist-modal__intro-icon {
+  font-size: 18px;
+  line-height: 1;
+  color: #f18d43;
+}
+
+.student-blacklist-modal__intro-copy {
+  flex: 1;
 }
 
 .student-blacklist-modal__heading {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--text);
+  color: #1a2234;
 }
 
 .student-blacklist-modal__desc {
-  margin: 0;
-  color: var(--text2);
-  font-size: 14px;
+  margin: 4px 0 0;
+  color: #546179;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .student-blacklist-modal__form-area {
-  background: #F8FAFC;
+  background: #f9fbff;
   padding: 16px;
-  border-radius: 8px;
+  border: 1px solid rgba(79, 116, 255, 0.1);
+  border-radius: 14px;
 }
 
 .student-blacklist-modal__label {
@@ -225,17 +228,25 @@ const handleSubmit = async () => {
   color: #dc2626;
 }
 
-.student-blacklist-modal__confirm-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  border-radius: 8px;
-  padding: 8px 16px;
-  background: #92400E;
-  color: #fff;
-  font-size: 13px;
+.student-blacklist-modal__footer-button {
+  min-width: 112px;
+  height: 42px;
+  border-radius: 14px;
+  padding: 0 20px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.student-blacklist-modal__footer-button--ghost {
+  border: 1px solid rgba(26, 34, 52, 0.12);
+  background: #fff;
+  color: #69758b;
+}
+
+.student-blacklist-modal__footer-button--primary {
+  border: 0;
+  background: linear-gradient(135deg, #f18d43, #f5ad6c);
+  color: #fff;
+  box-shadow: 0 16px 34px rgba(241, 141, 67, 0.2);
 }
 </style>

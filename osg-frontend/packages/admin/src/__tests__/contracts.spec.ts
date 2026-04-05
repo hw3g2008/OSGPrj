@@ -21,14 +21,15 @@ function readBlock(source: string, anchor: string, nextAnchor?: string) {
 }
 
 describe('contracts page shell', () => {
-  it('keeps the page header focused on the renew-contract CTA', () => {
+  it('keeps the page header focused on the add-contract CTA while preserving renew in row actions', () => {
     const source = readSource()
     const headerBlock = readBlock(source, '<div class="page-header">', '\n\n    <section class="contracts-stats">')
     const filtersActionBlock = readBlock(source, '<div class="contracts-filters__actions">', '\n        </div>')
 
-    expect(headerBlock).toContain('续签合同')
+    expect(headerBlock).toContain('新增合同')
     expect(headerBlock).toContain('新增学员时的合同信息会自动同步到此处')
     expect(headerBlock).not.toContain('mdi-file-export-outline')
+    expect(source).toContain('续签合同')
     expect(filtersActionBlock).toContain('搜索')
     expect(filtersActionBlock).toContain('重置')
     expect(filtersActionBlock).toContain('导出')

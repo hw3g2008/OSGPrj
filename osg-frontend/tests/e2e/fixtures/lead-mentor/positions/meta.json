@@ -1,0 +1,35 @@
+{
+  "categories": [
+    { "value": "summer", "label": "暑期实习" },
+    { "value": "fulltime", "label": "全职招聘" },
+    { "value": "offcycle", "label": "非常规周期" },
+    { "value": "spring", "label": "春季实习" },
+    { "value": "event", "label": "招聘活动" }
+  ],
+  "industries": [
+    { "value": "Investment Bank", "label": "IB" },
+    { "value": "Consulting", "label": "Consulting" },
+    { "value": "Tech", "label": "Tech" },
+    { "value": "PE", "label": "PE" },
+    { "value": "VC", "label": "VC" }
+  ],
+  "companies": [
+    { "value": "Goldman Sachs", "label": "GS" },
+    { "value": "JP Morgan", "label": "JPM" },
+    { "value": "Morgan Stanley", "label": "MS" },
+    { "value": "McKinsey", "label": "MCK" },
+    { "value": "BCG", "label": "BCG" }
+  ],
+  "regions": [
+    { "value": "HK", "label": "Hong Kong" },
+    { "value": "NY", "label": "New York" },
+    { "value": "London", "label": "London" },
+    { "value": "SG", "label": "Singapore" }
+  ],
+  "displayStatuses": [],
+  "companyTypes": [],
+  "recruitmentCycles": [],
+  "projectYears": [],
+  "citiesByRegion": {},
+  "sortOptions": []
+}

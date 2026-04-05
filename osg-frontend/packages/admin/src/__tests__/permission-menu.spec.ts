@@ -18,9 +18,10 @@ const menuGroups: MenuGroup[] = [
     key: 'permission',
     title: '权限管理',
     children: [
+      { path: '/permission/menu', title: '菜单管理', permission: 'system:menu:list' },
       { path: '/permission/roles', title: '权限配置', permission: 'system:role:list' },
       { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list' },
-      { path: '/permission/base-data', title: '基础数据管理', permission: 'system:baseData:list' },
+      { path: '/permission/base-data', title: '字典管理', permission: 'system:dict:list' },
     ]
   },
   {
@@ -82,7 +83,7 @@ describe('菜单权限过滤测试', () => {
     const filtered = filterMenuGroups(menuGroups, perms)
 
     expect(filtered).toHaveLength(3)
-    expect(filtered[0].children).toHaveLength(3)
+    expect(filtered[0].children).toHaveLength(4)
     expect(filtered[1].children).toHaveLength(2)
     expect(filtered[2].children).toHaveLength(1)
   })

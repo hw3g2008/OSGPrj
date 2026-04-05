@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -83,7 +82,7 @@ class StudentMockPracticeServiceImplTest
         assertEquals("希望本周安排", saved.getRemark());
         assertNotNull(requestId);
         assertEquals(requestId, saved.getPracticeId());
-        verify(studentMockPracticeMapper).insertRequest(any(Map.class));
+        verify(studentMockPracticeMapper, never()).insertRequest(any(Map.class));
     }
 
     @Test
@@ -115,7 +114,7 @@ class StudentMockPracticeServiceImplTest
         assertEquals(1, practiceRecords.size());
         assertEquals("MP7001", practiceRecords.get(0).get("id"));
         assertEquals("模拟面试", practiceRecords.get(0).get("type"));
-        assertEquals("scheduled", practiceRecords.get(0).get("statusValue"));
+        assertEquals("coaching", practiceRecords.get(0).get("statusValue"));
         assertEquals("Jerry Li", practiceRecords.get(0).get("mentor"));
         verify(osgMockPracticeMapper).selectStudentPracticeList(12766L);
         verify(studentMockPracticeMapper).selectClassRequestList(838L);

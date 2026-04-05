@@ -1,17 +1,39 @@
 package com.ruoyi.web.controller.osg;
 
-import org.junit.jupiter.api.Test;
-import com.ruoyi.common.core.page.TableDataInfo;
-import com.ruoyi.common.core.domain.AjaxResult;
-
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.SysDictData;
+import com.ruoyi.common.core.domain.entity.SysDictType;
+import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.system.service.IOsgAdminDictRegistryService;
+import com.ruoyi.system.service.ISysDictDataService;
+import com.ruoyi.system.service.ISysDictTypeService;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OsgBaseDataControllerTest
 {
-    private final OsgBaseDataController controller = new OsgBaseDataController();
+    private OsgBaseDataController controller;
+    private InMemoryDictDataService dictDataService;
+
+    @BeforeEach
+    void setUp()
+    {
+        dictDataService = new InMemoryDictDataService(seedData());
+        controller = new OsgBaseDataController(
+            dictDataService,
+            new StubDictTypeService(seedTypes()),
+            new StubRegistryService()
+        );
+    }
 
     @Test
     void testListReturnsRows()
@@ -68,7 +90,7 @@ class OsgBaseDataControllerTest
         @SuppressWarnings("unchecked")
         Map<String, Object> row = (Map<String, Object>) list.getRows().get(0);
         assertEquals("测试分类", row.get("name"));
-        assertEquals(9, row.get("sort"));
+        assertEquals(9L, row.get("sort"));
     }
 
     @Test
@@ -100,420 +122,259 @@ class OsgBaseDataControllerTest
         @SuppressWarnings("unchecked")
         Map<String, Object> updated = (Map<String, Object>) afterEdit.getRows().get(0);
         assertEquals("已编辑分类", updated.get("name"));
-        assertEquals(11, updated.get("sort"));
+        assertEquals(11L, updated.get("sort"));
         assertEquals("1", updated.get("status"));
     }
 
-    // ==================== NEW TEST METHODS FOR BRANCH COVERAGE ====================
-
     @Test
-    void testListFilterByName()
+    void testCategoriesReturnsRegistryPayload()
     {
-        TableDataInfo result = controller.list("Java", null, null);
-        assertEquals(200, result.getCode());
-        assertFalse(result.getRows().isEmpty());
+        AjaxResult result = controller.categories();
+        assertEquals(200, result.get("code"));
         @SuppressWarnings("unchecked")
-        Map<String, Object> row = (Map<String, Object>) result.getRows().get(0);
-        assertTrue(row.get("name").toString().contains("Java"));
-    }
-
-    @Test
-    void testListFilterByNameNoMatch()
-    {
-        TableDataInfo result = controller.list("不存在的名称", null, null);
-        assertEquals(200, result.getCode());
-        assertTrue(result.getRows().isEmpty());
-    }
-
-    @Test
-    void testListFilterByCategoryOnly()
-    {
-        TableDataInfo result = controller.list(null, "student", null);
-        assertEquals(200, result.getCode());
-        assertFalse(result.getRows().isEmpty());
-    }
-
-    @Test
-    void testListFilterByTabOnly()
-    {
-        TableDataInfo result = controller.list(null, null, "school");
-        assertEquals(200, result.getCode());
-        assertFalse(result.getRows().isEmpty());
-    }
-
-    @Test
-    void testListFilterWithBlankName()
-    {
-        TableDataInfo result = controller.list("  ", null, null);
-        assertEquals(200, result.getCode());
-        assertTrue(result.getTotal() > 0);
-    }
-
-    @Test
-    void testListFilterWithBlankCategory()
-    {
-        TableDataInfo result = controller.list(null, "  ", null);
-        assertEquals(200, result.getCode());
-        assertTrue(result.getTotal() > 0);
-    }
-
-    @Test
-    void testListFilterWithBlankTab()
-    {
-        TableDataInfo result = controller.list(null, null, "  ");
-        assertEquals(200, result.getCode());
-        assertTrue(result.getTotal() > 0);
-    }
-
-    @Test
-    void testAddShouldReturnErrorWhenNameMissing()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("tab", "job_category");
-        body.put("category", "job");
-        AjaxResult result = controller.add(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
-    }
-
-    @Test
-    void testAddShouldReturnErrorWhenTabMissing()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "测试");
-        body.put("category", "job");
-        AjaxResult result = controller.add(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
-    }
-
-    @Test
-    void testAddShouldInferCategoryFromTabJobCategory()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "推断job分类");
-        body.put("tab", "job_category");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("推断job分类", "job", "job_category");
-        assertEquals(1, list.getRows().size());
-    }
-
-    @Test
-    void testAddShouldInferCategoryFromTabCity()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "推断city分类");
-        body.put("tab", "city");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("推断city分类", "job", "city");
-        assertEquals(1, list.getRows().size());
-    }
-
-    @Test
-    void testAddShouldInferCategoryFromTabSchool()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "推断school分类");
-        body.put("tab", "school");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("推断school分类", "student", "school");
-        assertEquals(1, list.getRows().size());
-    }
-
-    @Test
-    void testAddShouldInferCategoryFromTabMajorDirection()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "推断major分类");
-        body.put("tab", "major_direction");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("推断major分类", "student", "major_direction");
-        assertEquals(1, list.getRows().size());
-    }
-
-    @Test
-    void testAddShouldInferCategoryFromTabCourseType()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "推断course分类");
-        body.put("tab", "course_type");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("推断course分类", "course", "course_type");
-        assertEquals(1, list.getRows().size());
-    }
-
-    @Test
-    void testAddShouldInferCategoryFromTabExpenseType()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "推断finance分类");
-        body.put("tab", "expense_type");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("推断finance分类", "finance", "expense_type");
-        assertEquals(1, list.getRows().size());
-    }
-
-    @Test
-    void testAddShouldReturnErrorWhenCategoryCannotBeInferred()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "无法推断");
-        body.put("tab", "unknown_tab");
-        AjaxResult result = controller.add(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
-    }
-
-    @Test
-    void testAddShouldSetParentId()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "带parentId");
-        body.put("category", "job");
-        body.put("tab", "job_category");
-        body.put("parentId", 1);
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-    }
-
-    @Test
-    void testAddShouldUseDefaultSortWhenMissing()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "默认排序");
-        body.put("category", "job");
-        body.put("tab", "job_category");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("默认排序", "job", "job_category");
+        Map<String, Object> data = (Map<String, Object>) result.get("data");
         @SuppressWarnings("unchecked")
-        Map<String, Object> row = (Map<String, Object>) list.getRows().get(0);
-        assertEquals(100, row.get("sort"));
+        List<Map<String, Object>> categories = (List<Map<String, Object>>) data.get("categories");
+        assertFalse(categories.isEmpty());
+        assertEquals("job", categories.get(0).get("key"));
     }
 
-    @Test
-    void testAddShouldNormalizeStatusTo0WhenNotProvided()
+    private List<SysDictData> seedData()
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "无状态");
-        body.put("category", "job");
-        body.put("tab", "job_category");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("无状态", "job", "job_category");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> row = (Map<String, Object>) list.getRows().get(0);
-        assertEquals("0", row.get("status"));
+        return List.of(
+            dict(1L, "osg_job_category", "java_dev", "Java开发", "0", 1L),
+            dict(2L, "osg_job_category", "risk", "风控分析", "0", 2L),
+            dict(3L, "osg_city", "beijing", "北京", "0", 1L),
+            dict(4L, "osg_city", "shanghai", "上海", "0", 2L),
+            dict(5L, "osg_school", "tsinghua", "清华大学", "0", 1L),
+            dict(6L, "osg_major_direction", "cs", "计算机", "0", 1L),
+            dict(7L, "osg_course_type", "practical", "实训课", "0", 1L),
+            dict(8L, "osg_expense_type", "travel", "交通报销", "1", 1L)
+        );
     }
 
-    @Test
-    void testAddShouldNormalizeStatusTo1()
+    private List<SysDictType> seedTypes()
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "停用状态");
-        body.put("category", "job");
-        body.put("tab", "job_category");
-        body.put("status", "1");
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-        TableDataInfo list = controller.list("停用状态", "job", "job_category");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> row = (Map<String, Object>) list.getRows().get(0);
-        assertEquals("1", row.get("status"));
+        return List.of(
+            dictType(1L, "岗位分类", "osg_job_category", "0"),
+            dictType(2L, "地区/城市", "osg_city", "0"),
+            dictType(3L, "学校", "osg_school", "0"),
+            dictType(4L, "主攻方向", "osg_major_direction", "0"),
+            dictType(5L, "课程类型", "osg_course_type", "0"),
+            dictType(6L, "报销类型", "osg_expense_type", "0")
+        );
     }
 
-    @Test
-    void testEditShouldReturnErrorWhenIdMissing()
+    private SysDictData dict(Long code, String type, String value, String label, String status, Long sort)
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "缺少ID");
-        AjaxResult result = controller.edit(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
+        SysDictData item = new SysDictData();
+        item.setDictCode(code);
+        item.setDictType(type);
+        item.setDictValue(value);
+        item.setDictLabel(label);
+        item.setStatus(status);
+        item.setDictSort(sort);
+        return item;
     }
 
-    @Test
-    void testEditShouldReturnErrorWhenNameMissing()
+    private SysDictType dictType(Long id, String name, String type, String status)
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        AjaxResult result = controller.edit(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
+        SysDictType item = new SysDictType();
+        item.setDictId(id);
+        item.setDictName(name);
+        item.setDictType(type);
+        item.setStatus(status);
+        return item;
     }
 
-    @Test
-    void testEditShouldReturnErrorWhenIdNotFound()
+    private static final class InMemoryDictDataService implements ISysDictDataService
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 99999);
-        body.put("name", "不存在");
-        AjaxResult result = controller.edit(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("基础数据不存在", result.get("msg"));
+        private final List<SysDictData> store = new ArrayList<>();
+        private long nextId;
+
+        private InMemoryDictDataService(List<SysDictData> seed)
+        {
+            store.addAll(seed);
+            nextId = seed.stream().map(SysDictData::getDictCode).max(Long::compareTo).orElse(0L) + 1;
+        }
+
+        @Override
+        public List<SysDictData> selectDictDataList(SysDictData dictData)
+        {
+            return store.stream()
+                .filter(item -> dictData.getDictType() == null || dictData.getDictType().equals(item.getDictType()))
+                .filter(item -> dictData.getDictLabel() == null || item.getDictLabel().contains(dictData.getDictLabel()))
+                .filter(item -> dictData.getStatus() == null || dictData.getStatus().equals(item.getStatus()))
+                .toList();
+        }
+
+        @Override
+        public String selectDictLabel(String dictType, String dictValue)
+        {
+            return store.stream()
+                .filter(item -> dictType.equals(item.getDictType()) && dictValue.equals(item.getDictValue()))
+                .map(SysDictData::getDictLabel)
+                .findFirst()
+                .orElse(null);
+        }
+
+        @Override
+        public SysDictData selectDictDataById(Long dictCode)
+        {
+            return store.stream().filter(item -> dictCode.equals(item.getDictCode())).findFirst().orElse(null);
+        }
+
+        @Override
+        public void deleteDictDataByIds(Long[] dictCodes)
+        {
+            store.removeIf(item -> List.of(dictCodes).contains(item.getDictCode()));
+        }
+
+        @Override
+        public int insertDictData(SysDictData dictData)
+        {
+            dictData.setDictCode(nextId++);
+            store.add(dictData);
+            return 1;
+        }
+
+        @Override
+        public int updateDictData(SysDictData dictData)
+        {
+            deleteDictDataByIds(new Long[] { dictData.getDictCode() });
+            store.add(dictData);
+            return 1;
+        }
     }
 
-    @Test
-    void testEditShouldUpdateParentId()
+    private static final class StubDictTypeService implements ISysDictTypeService
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        body.put("name", "Java开发");
-        body.put("parentId", 99);
-        AjaxResult result = controller.edit(body);
-        assertEquals(200, result.get("code"));
+        private final List<SysDictType> types;
+
+        private StubDictTypeService(List<SysDictType> types)
+        {
+            this.types = types;
+        }
+
+        @Override
+        public List<SysDictType> selectDictTypeList(SysDictType dictType)
+        {
+            return types.stream()
+                .filter(item -> dictType.getStatus() == null || dictType.getStatus().equals(item.getStatus()))
+                .filter(item -> dictType.getDictType() == null || item.getDictType().contains(dictType.getDictType()))
+                .toList();
+        }
+
+        @Override
+        public List<SysDictType> selectDictTypeAll()
+        {
+            return types;
+        }
+
+        @Override
+        public List<SysDictData> selectDictDataByType(String dictType)
+        {
+            return null;
+        }
+
+        @Override
+        public SysDictType selectDictTypeById(Long dictId)
+        {
+            return types.stream().filter(item -> dictId.equals(item.getDictId())).findFirst().orElse(null);
+        }
+
+        @Override
+        public SysDictType selectDictTypeByType(String dictType)
+        {
+            return types.stream().filter(item -> dictType.equals(item.getDictType())).findFirst().orElse(null);
+        }
+
+        @Override
+        public void deleteDictTypeByIds(Long[] dictIds)
+        {
+        }
+
+        @Override
+        public void loadingDictCache()
+        {
+        }
+
+        @Override
+        public void clearDictCache()
+        {
+        }
+
+        @Override
+        public void resetDictCache()
+        {
+        }
+
+        @Override
+        public int insertDictType(SysDictType dictType)
+        {
+            return 0;
+        }
+
+        @Override
+        public int updateDictType(SysDictType dictType)
+        {
+            return 0;
+        }
+
+        @Override
+        public boolean checkDictTypeUnique(SysDictType dictType)
+        {
+            return true;
+        }
     }
 
-    @Test
-    void testEditShouldUseExistingSortWhenNotProvided()
+    private static final class StubRegistryService implements IOsgAdminDictRegistryService
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        body.put("name", "Java开发更新");
-        AjaxResult result = controller.edit(body);
-        assertEquals(200, result.get("code"));
-    }
+        @Override
+        public List<Map<String, Object>> loadRegistryGroups()
+        {
+            return List.of(
+                category("job", "求职相关", List.of(
+                    dictType("osg_job_category", "岗位分类", false, null),
+                    dictType("osg_city", "地区/城市", true, "osg_region")
+                )),
+                category("student", "学员相关", List.of(
+                    dictType("osg_school", "学校", false, null),
+                    dictType("osg_major_direction", "主攻方向", false, null)
+                )),
+                category("course", "课程相关", List.of(
+                    dictType("osg_course_type", "课程类型", false, null)
+                )),
+                category("finance", "财务相关", List.of(
+                    dictType("osg_expense_type", "报销类型", false, null)
+                ))
+            );
+        }
 
-    @Test
-    void testEditShouldHandleStringSortValue()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        body.put("name", "Java开发");
-        body.put("sort", "5");
-        AjaxResult result = controller.edit(body);
-        assertEquals(200, result.get("code"));
-    }
+        private Map<String, Object> category(String key, String label, List<Map<String, Object>> dictTypes)
+        {
+            Map<String, Object> category = new LinkedHashMap<>();
+            category.put("group_key", key);
+            category.put("group_label", label);
+            category.put("icon", "mdi");
+            category.put("icon_color", "#000");
+            category.put("icon_bg", "#fff");
+            category.put("order", 10);
+            category.put("dict_types", dictTypes);
+            return category;
+        }
 
-    @Test
-    void testEditShouldHandleNonParsableSortValue()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        body.put("name", "Java开发");
-        body.put("sort", "abc");
-        AjaxResult result = controller.edit(body);
-        assertEquals(200, result.get("code"));
-    }
-
-    @Test
-    void testChangeStatusShouldReturnErrorWhenNullBody()
-    {
-        Map<String, Object> body = null;
-        AjaxResult result = controller.changeStatus(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
-    }
-
-    @Test
-    void testChangeStatusShouldReturnErrorWhenIdNull()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", null);
-        body.put("status", "0");
-        AjaxResult result = controller.changeStatus(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
-    }
-
-    @Test
-    void testChangeStatusShouldReturnErrorWhenStatusNull()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        body.put("status", null);
-        AjaxResult result = controller.changeStatus(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
-    }
-
-    @Test
-    void testChangeStatusShouldReturnErrorWhenIdNotFound()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 99999);
-        body.put("status", "1");
-        AjaxResult result = controller.changeStatus(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("基础数据不存在", result.get("msg"));
-    }
-
-    @Test
-    void testChangeStatusShouldNormalizeStatusTo0()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        body.put("status", "0");
-        AjaxResult result = controller.changeStatus(body);
-        assertEquals(200, result.get("code"));
-    }
-
-    @Test
-    void testChangeStatusShouldNormalizeNonOneStatusTo0()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        body.put("status", "invalid");
-        AjaxResult result = controller.changeStatus(body);
-        assertEquals(200, result.get("code"));
-    }
-
-    @Test
-    void testAsLongShouldHandleStringId()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", "1");
-        body.put("status", "1");
-        AjaxResult result = controller.changeStatus(body);
-        assertEquals(200, result.get("code"));
-    }
-
-    @Test
-    void testAsLongShouldHandleNonParsableString()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", "abc");
-        body.put("name", "test");
-        AjaxResult result = controller.edit(body);
-        assertEquals(500, result.get("code"));
-    }
-
-    @Test
-    void testAsTextShouldHandleEmptyString()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "");
-        body.put("tab", "job_category");
-        AjaxResult result = controller.add(body);
-        assertEquals(500, result.get("code"));
-        assertEquals("参数缺失", result.get("msg"));
-    }
-
-    @Test
-    void testAddShouldHandleNullParentId()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", "nullParent");
-        body.put("category", "job");
-        body.put("tab", "job_category");
-        body.put("parentId", null);
-        AjaxResult result = controller.add(body);
-        assertEquals(200, result.get("code"));
-    }
-
-    @Test
-    void testEditShouldNotUpdateParentIdWhenNotInBody()
-    {
-        Map<String, Object> body = new HashMap<>();
-        body.put("id", 1);
-        body.put("name", "无parentId更新");
-        AjaxResult result = controller.edit(body);
-        assertEquals(200, result.get("code"));
+        private Map<String, Object> dictType(String type, String name, boolean hasParent, String parent)
+        {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("dict_type", type);
+            entry.put("dict_name", name);
+            entry.put("has_parent", hasParent);
+            if (parent != null)
+            {
+                entry.put("parent_dict_type", parent);
+            }
+            return entry;
+        }
     }
 }

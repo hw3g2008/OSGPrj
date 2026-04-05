@@ -91,7 +91,10 @@
         </label>
         <label class="staff-form-modal__field" data-field-name="子方向">
           <span>子方向</span>
-          <input v-model="form.subDirection" type="text" class="staff-form-modal__input" placeholder="请输入子方向" />
+          <select v-model="form.subDirection" class="staff-form-modal__select">
+            <option value="">{{ subDirectionOptions.length ? '请选择' : '请先选择主攻方向' }}</option>
+            <option v-for="option in subDirectionOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
         </label>
         <label class="staff-form-modal__field" data-field-name="可授课程类型">
           <span>可授课程类型</span>
@@ -121,14 +124,21 @@
     </section>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" data-surface-part="cancel-control" @click="handleClose">取消</button>
       <button
         type="button"
-        class="permission-button permission-button--primary"
+        class="staff-form-modal__footer-button staff-form-modal__footer-button--ghost"
+        data-surface-part="cancel-control"
+        @click="handleClose"
+      >
+        取消
+      </button>
+      <button
+        type="button"
+        class="staff-form-modal__footer-button staff-form-modal__footer-button--primary"
         :disabled="submitting"
         @click="handleSubmit"
       >
-        {{ submitting ? '提交中...' : (isEditing ? '保存修改' : '创建导师账户') }}
+        {{ submitting ? '提交中...' : (isEditing ? '保存修改' : '确定添加') }}
       </button>
     </template>
   </OverlaySurfaceModal>
@@ -151,7 +161,14 @@ const emit = defineEmits<{
   submit: [payload: StaffPayload]
 }>()
 
+const DEFAULT_INITIAL_PASSWORD = 'Osg@2026'
 const majorDirectionOptions = ['金融', '咨询', '科技', '量化']
+const subDirectionMap: Record<string, string[]> = {
+  金融: ['IB', 'PE', 'VC', 'S&T', 'AM', 'ER', 'IB 投行'],
+  咨询: ['Strategy', 'Operations', 'Transformation'],
+  科技: ['Product', 'Data', 'Software', 'AI', 'AI Product'],
+  量化: ['Quant Research', 'Quant Trading', 'Quant Dev'],
+}
 const regionOptions = ['北美', '欧洲', '亚太', '中国大陆']
 
 const form = reactive({
@@ -173,12 +190,27 @@ const form = reactive({
 
 const isEditing = computed(() => Boolean(props.staff?.staffId))
 const surfaceId = computed(() => (isEditing.value ? 'modal-edit-staff' : 'modal-add-staff'))
+const subDirectionOptions = computed(() => {
+  const options = subDirectionMap[form.majorDirection] ?? []
+  if (form.subDirection && !options.includes(form.subDirection)) {
+    return [...options, form.subDirection]
+  }
+  return options
+})
 
 const avatarText = computed(() => {
   const name = props.staff?.staffName?.trim()
   if (!name) return 'ST'
   return name.split(/\s+/).slice(0, 2).map(p => p[0]?.toUpperCase() || '').join('')
 })
+
+const syncAccountDefaults = () => {
+  if (isEditing.value) {
+    return
+  }
+  form.loginAccount = form.email.trim()
+  form.initialPassword = DEFAULT_INITIAL_PASSWORD
+}
 
 const resetForm = () => {
   form.staffName = props.staff?.staffName || ''
@@ -197,6 +229,7 @@ const resetForm = () => {
   form.loginAccount = (props.staff as Record<string, unknown>)?.loginAccount as string || ''
   form.initialPassword = (props.staff as Record<string, unknown>)?.initialPassword as string || ''
   form.hourlyRate = props.staff?.hourlyRate == null ? '' : String(props.staff.hourlyRate)
+  syncAccountDefaults()
 }
 
 watch(
@@ -207,6 +240,26 @@ watch(
     }
   },
   { immediate: true }
+)
+
+watch(
+  () => form.majorDirection,
+  (next, prev) => {
+    if (!next || !prev || next === prev) {
+      return
+    }
+    if (subDirectionMap[next]?.includes(form.subDirection)) {
+      return
+    }
+    form.subDirection = ''
+  }
+)
+
+watch(
+  () => form.email,
+  () => {
+    syncAccountDefaults()
+  }
 )
 
 const handleClose = () => {
@@ -375,6 +428,25 @@ const handleSubmit = () => {
   padding: 0 14px;
   background: #ffffff;
   color: #0f172a;
+}
+
+.staff-form-modal__footer-button {
+  min-width: 112px;
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.staff-form-modal__footer-button--ghost {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.staff-form-modal__footer-button--primary {
+  background: linear-gradient(135deg, var(--primary, #6366F1) 0%, var(--primary-dark, #4F46E5) 100%);
+  color: #fff;
 }
 
 @media (max-width: 768px) {

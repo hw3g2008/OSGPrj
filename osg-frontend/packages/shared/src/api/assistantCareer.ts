@@ -89,13 +89,13 @@ export function getAssistantPositionStudents(positionId: number) {
 }
 
 export function getAssistantJobOverviewList(filters: AssistantJobOverviewFilters = {}) {
-  return http.get<AssistantTableResponse<AssistantJobOverviewRecord>>('/api/mentor/job-overview/list', {
+  return http.get<AssistantTableResponse<AssistantJobOverviewRecord>>('/assistant/job-overview/list', {
     params: toRequestParams(filters),
   })
 }
 
 export function getAssistantJobOverviewCalendar() {
-  return http.get<AssistantJobOverviewRecord[]>('/api/mentor/job-overview/calendar')
+  return http.get<AssistantJobOverviewRecord[]>('/assistant/job-overview/calendar')
 }
 
 export function getAssistantMockPracticeList(filters: AssistantMockPracticeFilters = {}) {

@@ -7,7 +7,7 @@
           <span class="page-title-en">Student List</span>
         </h1>
         <p class="page-sub">
-          查看学员筛选结果、账号状态和重点跟进提醒，快速定位需要关注的学习进度与服务状态。
+          查看助教负责学员的基础信息、关系状态和求职进度，快速定位需要优先跟进的学员。
         </p>
       </div>
 
@@ -26,7 +26,7 @@
       <article class="summary-card">
         <span class="summary-card__label">待跟进提醒</span>
         <strong class="summary-card__value summary-card__value--warning">{{ attentionCount }}</strong>
-        <span class="summary-card__hint">待审核、低课时或即将到期的学员</span>
+        <span class="summary-card__hint">待审核、低课时或合同临期的学员</span>
       </article>
       <article class="summary-card">
         <span class="summary-card__label">账号正常</span>
@@ -153,15 +153,15 @@
               <div class="metric-grid">
                 <div class="metric-cell">
                   <span class="metric-label">求职辅导</span>
-                  <strong>{{ student.jobCoachingCount || 0 }}</strong>
+                  <strong>{{ Number(student.jobCoachingCount || 0) }}</strong>
                 </div>
                 <div class="metric-cell">
                   <span class="metric-label">基础课</span>
-                  <strong>{{ student.basicCourseCount || 0 }}</strong>
+                  <strong>{{ Number(student.basicCourseCount || 0) }}</strong>
                 </div>
                 <div class="metric-cell">
                   <span class="metric-label">模拟应聘</span>
-                  <strong>{{ student.mockInterviewCount || 0 }}</strong>
+                  <strong>{{ Number(student.mockInterviewCount || 0) }}</strong>
                 </div>
                 <div class="metric-cell metric-cell--accent">
                   <span class="metric-label">剩余课时</span>
@@ -177,13 +177,22 @@
                 <span class="status-chip" :class="contractStatusToneClass(student.contractStatus, student.isBlacklisted)">
                   {{ formatContractStatus(student.contractStatus, student.isBlacklisted) }}
                 </span>
+                <span class="status-chip status-chip--info">助教跟进</span>
                 <span v-if="student.pendingReview" class="status-chip status-chip--warning">待审核</span>
               </div>
               <div class="table-muted">{{ formatReminder(student) }}</div>
             </td>
             <td>
               <div class="followup-note" :class="followupToneClass(student)">
-                {{ followupNote(student) }}
+                <div>{{ followupNote(student) }}</div>
+                <button
+                  type="button"
+                  class="ghost-button ghost-button--inline followup-action"
+                  data-action="view-job-overview"
+                  @click="focusJobOverview(student)"
+                >
+                  查看求职
+                </button>
               </div>
             </td>
           </tr>
@@ -208,6 +217,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   getAssistantStudentList,
   type AssistantStudentListItem,
@@ -223,6 +233,7 @@ interface StudentFilterState {
 
 const STORAGE_KEY = 'assistant-student-list-state'
 
+const router = useRouter()
 const loading = ref(true)
 const errorMessage = ref('')
 const students = ref<AssistantStudentListItem[]>([])
@@ -244,15 +255,12 @@ const pagination = reactive({
 const schoolOptions = computed(() =>
   Array.from(new Set(students.value.map((student) => student.school).filter(Boolean))) as string[],
 )
-
 const majorDirectionOptions = computed(() =>
   Array.from(new Set(students.value.map((student) => student.majorDirection).filter(Boolean))) as string[],
 )
-
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pagination.pageSize)))
 const hasPrev = computed(() => pagination.current > 1)
 const hasNext = computed(() => pagination.current < totalPages.value)
-
 const attentionCount = computed(() => students.value.filter((student) => needsAttention(student)).length)
 const activeCount = computed(
   () => students.value.filter((student) => formatAccountStatus(student.accountStatus) === '正常').length,
@@ -277,7 +285,7 @@ function normalizePersistedState(value: unknown): StudentFilterState | null {
 }
 
 function readPersistedState() {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || !window.localStorage?.getItem) {
     return null
   }
 
@@ -289,7 +297,7 @@ function readPersistedState() {
 }
 
 function persistState() {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || !window.localStorage?.setItem) {
     return
   }
 
@@ -320,8 +328,8 @@ function applyPersistedState() {
 }
 
 function formatHours(value?: number) {
-  const safeValue = typeof value === 'number' ? value : 0
-  return `${safeValue}h`
+  const safeValue = Number(value ?? 0)
+  return Number.isInteger(safeValue) ? `${safeValue}h` : `${safeValue.toFixed(1)}h`
 }
 
 function formatMentor(value?: string) {
@@ -329,44 +337,24 @@ function formatMentor(value?: string) {
 }
 
 function formatAccountStatus(value?: string) {
-  if (value === '1') {
-    return '冻结'
-  }
-  if (value === '2') {
-    return '已结束'
-  }
-  if (value === '3') {
-    return '退款'
-  }
+  if (value === '1') return '冻结'
+  if (value === '2') return '已结束'
+  if (value === '3') return '退款'
   return '正常'
 }
 
 function accountStatusToneClass(value?: string) {
-  if (value === '1') {
-    return 'status-chip--info'
-  }
-  if (value === '2' || value === '3') {
-    return 'status-chip--danger'
-  }
+  if (value === '1') return 'status-chip--info'
+  if (value === '2' || value === '3') return 'status-chip--danger'
   return 'status-chip--success'
 }
 
 function formatContractStatus(value?: string, isBlacklisted?: boolean) {
-  if (isBlacklisted || value === 'blacklist') {
-    return '黑名单'
-  }
-  if (value === 'expiring') {
-    return '即将到期'
-  }
-  if (value === 'expired') {
-    return '已到期'
-  }
-  if (value === 'cancelled') {
-    return '已终止'
-  }
-  if (value === 'pending_review') {
-    return '待审核'
-  }
+  if (isBlacklisted || value === 'blacklist') return '黑名单'
+  if (value === 'expiring') return '即将到期'
+  if (value === 'expired') return '已到期'
+  if (value === 'cancelled') return '已终止'
+  if (value === 'pending_review') return '待审核'
   return '正常服务'
 }
 
@@ -382,20 +370,14 @@ function contractStatusToneClass(value?: string, isBlacklisted?: boolean) {
 
 function directionToneClass(value?: string) {
   const normalized = String(value || '').toLowerCase()
-  if (normalized.includes('consult')) {
-    return 'direction-pill--info'
-  }
-  if (normalized.includes('tech')) {
-    return 'direction-pill--warning'
-  }
-  if (normalized.includes('quant')) {
-    return 'direction-pill--accent'
-  }
+  if (normalized.includes('consult')) return 'direction-pill--info'
+  if (normalized.includes('tech')) return 'direction-pill--warning'
+  if (normalized.includes('quant')) return 'direction-pill--accent'
   return 'direction-pill--default'
 }
 
 function isLowHours(student: AssistantStudentListItem) {
-  const remainingHours = typeof student.remainingHours === 'number' ? student.remainingHours : 0
+  const remainingHours = Number(student.remainingHours ?? 0)
   return remainingHours <= 5
 }
 
@@ -408,61 +390,40 @@ function needsAttention(student: AssistantStudentListItem) {
 }
 
 function formatReminder(student: AssistantStudentListItem) {
-  if (student.reminder && student.reminder !== '-') {
-    return student.reminder
-  }
-  if (student.pendingReview) {
-    return '资料变更待审核'
-  }
-  if (student.isBlacklisted) {
-    return '当前学员已被纳入黑名单'
-  }
-  if (isLowHours(student)) {
-    return '剩余课时偏低，建议优先跟进'
-  }
-  if (isContractExpiring(student)) {
-    return '合同即将到期'
-  }
+  if (student.reminder && student.reminder !== '-') return student.reminder
+  if (student.pendingReview) return '资料变更待审核'
+  if (student.isBlacklisted) return '当前学员已被纳入黑名单'
+  if (isLowHours(student)) return '剩余课时偏低，建议优先跟进'
+  if (isContractExpiring(student)) return '合同即将到期'
   return '当前暂无额外提醒'
 }
 
 function followupNote(student: AssistantStudentListItem) {
-  if (student.pendingReview) {
-    return '优先确认学员资料或状态变更。'
-  }
-  if (student.isBlacklisted) {
-    return '仅保留状态查看，后续由业务侧处理黑名单流程。'
-  }
-  if (isLowHours(student)) {
-    return '建议结合课程安排与续费状态尽快跟进。'
-  }
-  if (isContractExpiring(student)) {
-    return '合同临期，建议同步确认服务与求职节奏。'
-  }
+  if (student.pendingReview) return '优先确认学员资料或状态变更。'
+  if (student.isBlacklisted) return '仅保留状态查看，后续由业务侧处理黑名单流程。'
+  if (isLowHours(student)) return '建议结合课程安排与续费状态尽快跟进。'
+  if (isContractExpiring(student)) return '合同临期，建议同步确认服务与求职节奏。'
   return '当前状态稳定，可继续按既有节奏跟进。'
 }
 
 function followupToneClass(student: AssistantStudentListItem) {
-  if (student.pendingReview || student.isBlacklisted) {
-    return 'followup-note--danger'
-  }
-  if (isLowHours(student) || isContractExpiring(student)) {
-    return 'followup-note--warning'
-  }
+  if (student.pendingReview || student.isBlacklisted) return 'followup-note--danger'
+  if (isLowHours(student) || isContractExpiring(student)) return 'followup-note--warning'
   return 'followup-note--default'
 }
 
 function rowToneClass(student: AssistantStudentListItem) {
-  if (student.pendingReview) {
-    return 'student-row--pending'
-  }
-  if (student.isBlacklisted) {
-    return 'student-row--danger'
-  }
-  if (isLowHours(student)) {
-    return 'student-row--warning'
-  }
+  if (student.pendingReview) return 'student-row--pending'
+  if (student.isBlacklisted) return 'student-row--danger'
+  if (isLowHours(student)) return 'student-row--warning'
   return ''
+}
+
+function focusJobOverview(student: AssistantStudentListItem) {
+  void router.push({
+    path: '/career/job-overview',
+    query: student.studentName ? { studentName: student.studentName } : {},
+  })
 }
 
 async function loadStudents() {
@@ -515,17 +476,13 @@ async function resetFilters() {
 }
 
 async function goPrev() {
-  if (!hasPrev.value) {
-    return
-  }
+  if (!hasPrev.value) return
   pagination.current -= 1
   await loadStudents()
 }
 
 async function goNext() {
-  if (!hasNext.value) {
-    return
-  }
+  if (!hasNext.value) return
   pagination.current += 1
   await loadStudents()
 }
@@ -737,6 +694,10 @@ onMounted(() => {
 .primary-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.followup-action {
+  margin-top: 10px;
 }
 
 .table-card {

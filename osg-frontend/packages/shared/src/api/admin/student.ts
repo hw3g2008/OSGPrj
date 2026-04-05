@@ -18,6 +18,8 @@ export interface StudentListItem {
   email: string
   leadMentorId?: number
   leadMentorName?: string
+  assistantId?: number
+  assistantName?: string
   school?: string
   majorDirection?: string
   targetPosition?: string
@@ -30,7 +32,6 @@ export interface StudentListItem {
   contractStatus?: string
   accountStatus?: string
   targetRegion?: string
-  targetPosition?: string
   isBlacklisted?: boolean
   pendingReview?: boolean
   reviewStatus?: string | null
@@ -47,6 +48,8 @@ export interface UpdateStudentPayload {
   school?: string
   majorDirection?: string
   subDirection?: string
+  leadMentorId?: number
+  assistantId?: number
 }
 
 export interface ResetStudentPasswordResult {

@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :surface-id="surfaceId"
     :open="visible"
-    width="500px"
+    width="640px"
     :body-class="bodyClass"
     @cancel="handleClose"
   >
@@ -17,6 +17,15 @@
       </span>
     </template>
 
+    <div class="user-modal__note" data-content-part="supporting-text">
+      <span class="mdi mdi-shield-account user-modal__note-icon" aria-hidden="true" />
+      <span>
+        {{ isEdit
+          ? '编辑模式下可更新用户资料、角色与联系方式，用户名保持锁定。'
+          : '新增用户会同步生成默认密码，并将角色与资料直接写入后台台账。' }}
+      </span>
+    </div>
+
     <a-form
       ref="formRef"
       data-content-part="field-group"
@@ -26,7 +35,7 @@
       :required-mark="false"
       class="user-modal__grid"
     >
-      <a-form-item name="userName">
+      <a-form-item name="userName" class="user-modal__field">
         <template #label>
           <span class="user-modal__label">
             用户名<span v-if="!isEdit" class="user-modal__required">*</span>
@@ -38,37 +47,38 @@
           :disabled="isEdit"
           :class="{ 'user-modal__input--disabled': isEdit }"
         />
-        <p class="user-modal__help" data-content-part="supporting-text">{{ isEdit ? '用户名不可修改' : '用户名创建后不可修改' }}</p>
+        <p class="user-modal__help">{{ isEdit ? '用户名不可修改' : '用户名创建后不可修改' }}</p>
       </a-form-item>
 
-      <a-form-item name="nickName">
+      <a-form-item name="nickName" class="user-modal__field">
         <template #label>
           <span class="user-modal__label">姓名<span class="user-modal__required">*</span></span>
         </template>
         <a-input v-model:value="formState.nickName" placeholder="请输入真实姓名" />
       </a-form-item>
 
-      <a-form-item name="email">
+      <a-form-item name="email" class="user-modal__field">
         <template #label>
           <span class="user-modal__label">邮箱<span class="user-modal__required">*</span></span>
         </template>
         <a-input v-model:value="formState.email" placeholder="用于接收通知和密码重置" />
       </a-form-item>
 
-      <a-form-item name="phonenumber">
+      <a-form-item name="phonenumber" class="user-modal__field">
         <template #label>
           <span class="user-modal__label">手机号</span>
         </template>
         <a-input v-model:value="formState.phonenumber" placeholder="选填" />
       </a-form-item>
 
-      <a-form-item name="roleIds">
+      <a-form-item name="roleIds" class="user-modal__field user-modal__field--span-2">
         <template #label>
           <span class="user-modal__label">
             角色<span class="user-modal__required">*</span>
             <span v-if="!isEdit" class="user-modal__meta">（可多选）</span>
           </span>
         </template>
+
         <a-select
           v-if="isEdit"
           v-model:value="selectedRoleId"
@@ -96,7 +106,7 @@
         </div>
       </a-form-item>
 
-      <a-form-item v-if="!isEdit" data-field-name="初始密码">
+      <a-form-item v-if="!isEdit" data-field-name="初始密码" class="user-modal__field user-modal__field--span-2">
         <template #label>
           <span class="user-modal__label">初始密码</span>
         </template>
@@ -104,24 +114,26 @@
           <div class="user-modal__default-password-input">Osg@2026</div>
           <span class="user-modal__default-password-tag">系统默认</span>
         </div>
-        <p class="user-modal__help" data-content-part="supporting-text">用户首次登录后需修改密码</p>
+        <p class="user-modal__help">用户首次登录后需修改密码</p>
       </a-form-item>
 
-      <a-form-item name="remark">
+      <a-form-item name="remark" class="user-modal__field user-modal__field--span-2">
         <template #label>
           <span class="user-modal__label">备注</span>
         </template>
         <a-textarea
           v-model:value="formState.remark"
           placeholder="选填，最多200字"
-          :rows="2"
+          :rows="3"
           :maxlength="200"
         />
       </a-form-item>
     </a-form>
 
     <template #footer>
-      <a-button class="user-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose"><span>取消</span></a-button>
+      <a-button class="user-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose">
+        <span>取消</span>
+      </a-button>
       <a-button type="primary" class="user-modal__confirm-btn" :loading="loading" @click="handleSubmit">
         <span class="mdi mdi-check" aria-hidden="true" />
         <span>保存</span>
@@ -268,7 +280,6 @@ const handleSubmit = async () => {
     handleClose()
   } catch (error: any) {
     if (error?.errorFields) return
-    // 移除组件内的错误提示，让拦截器处理
   } finally {
     loading.value = false
   }
@@ -277,66 +288,98 @@ const handleSubmit = async () => {
 
 <style scoped lang="scss">
 .user-modal__title {
-  display: block;
-  line-height: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a2234;
+  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .user-modal__title-icon {
-  margin-right: 8px;
-  font-size: inherit;
-  line-height: normal;
+  color: #4f74ff;
+  font-size: 18px;
+  line-height: 1;
 }
 
-.user-modal__label {
-  display: inline;
-  color: var(--text, #1e293b);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: normal;
+.user-modal__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-.user-modal__required {
-  color: #ef4444;
-}
-
-.user-modal__meta {
-  color: var(--text-secondary, #94a3b8);
-  font-size: 11px;
-  font-weight: 400;
+.user-modal__note-icon {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .user-modal__grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.user-modal__field--span-2 {
+  grid-column: 1 / -1;
+}
+
+.user-modal__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #1a2234;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.user-modal__required {
+  color: #d35d53;
+}
+
+.user-modal__meta {
+  color: #8f99aa;
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .user-modal__input--disabled {
-  background-color: var(--bg, #f8fafc);
+  background-color: #f4f5f7;
 }
 
 .user-modal__help {
   margin-top: 4px;
-  font-size: 11px;
-  line-height: 16px;
-  color: var(--text-secondary, #94a3b8);
+  color: #69758b;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .user-modal__role-panel {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   margin-top: 8px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid var(--border, #e2e8f0);
 }
 
 .user-modal__role-item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(79, 116, 255, 0.12);
+  background: #f9fbff;
+  color: #1a2234;
   font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -348,35 +391,38 @@ const handleSubmit = async () => {
 
 .user-modal__default-password-input {
   flex: 1;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 2px solid var(--border, #e2e8f0);
-  border-radius: 10px;
-  background: #f3f4f6;
-  font-weight: 600;
-  color: var(--text, #1e293b);
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px dashed rgba(79, 116, 255, 0.3);
+  background: #f9fbff;
+  color: #1a2234;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .user-modal__default-password-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 68px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 20px;
-  background: #dbeafe;
-  color: #1e40af;
+  min-width: 76px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(79, 116, 255, 0.12);
+  color: #3f68ff;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .user-modal__cancel-btn {
-  border-color: var(--border, #d0d7e2);
-  border-radius: 10px;
-  color: var(--text-secondary, #64748b);
-  font-weight: 500;
-  min-width: 80px;
+  min-width: 92px;
+  height: 42px;
+  border-color: rgba(26, 34, 52, 0.12);
+  border-radius: 14px;
+  color: #69758b;
+  font-weight: 600;
 }
 
 .user-modal__confirm-btn {
@@ -384,23 +430,60 @@ const handleSubmit = async () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-width: 110px;
+  height: 42px;
   border: none !important;
-  border-radius: 10px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3f68ff, #6788ff) !important;
   color: #fff !important;
   font-weight: 500;
-  background: var(--primary-gradient, linear-gradient(135deg, #4f46e5, #8b5cf6)) !important;
-  box-shadow: none;
+  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.22);
 
   &:hover,
   &:focus {
+    background: linear-gradient(135deg, #3f68ff, #6788ff) !important;
     color: #fff !important;
-    background: var(--primary-gradient, linear-gradient(135deg, #4f46e5, #8b5cf6)) !important;
     opacity: 0.96;
   }
 }
 </style>
 
 <style lang="scss">
+.overlay-surface-modal__body.user-modal__body .ant-form-item {
+  margin-bottom: 0;
+}
+
+.overlay-surface-modal__body.user-modal__body .ant-input,
+.overlay-surface-modal__body.user-modal__body .ant-input-affix-wrapper,
+.overlay-surface-modal__body.user-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.overlay-surface-modal__body.user-modal__body .ant-input-textarea textarea {
+  border-radius: 14px !important;
+  border-color: rgba(79, 116, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+.overlay-surface-modal__body.user-modal__body .ant-input,
+.overlay-surface-modal__body.user-modal__body .ant-input-affix-wrapper,
+.overlay-surface-modal__body.user-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  min-height: 44px;
+  height: 44px;
+  line-height: normal !important;
+}
+
+.overlay-surface-modal__body.user-modal__body .ant-input,
+.overlay-surface-modal__body.user-modal__body .ant-input-affix-wrapper {
+  padding-inline: 14px;
+}
+
+.overlay-surface-modal__body.user-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  padding: 8px 14px !important;
+}
+
+.overlay-surface-modal__body.user-modal__body .ant-input-textarea textarea {
+  min-height: 108px;
+  padding: 12px 14px;
+}
+
 .overlay-surface-modal__body.user-modal__body.user-modal__body--create .ant-form-item {
   margin-bottom: 0;
 }
@@ -419,18 +502,6 @@ const handleSubmit = async () => {
 
 .overlay-surface-modal__body.user-modal__body.user-modal__body--edit .ant-form-item:last-child {
   margin-bottom: 2px;
-}
-
-.overlay-surface-modal__body.user-modal__body .ant-input,
-.overlay-surface-modal__body.user-modal__body .ant-input-affix-wrapper {
-  height: 44px;
-  line-height: normal !important;
-}
-
-.overlay-surface-modal__body.user-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  min-height: 44px;
-  line-height: normal !important;
-  padding: 12px 14px;
 }
 
 .overlay-surface-modal__footer .user-modal__cancel-btn,

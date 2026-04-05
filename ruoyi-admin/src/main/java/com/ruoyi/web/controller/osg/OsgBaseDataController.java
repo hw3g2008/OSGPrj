@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.annotation.Log;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,53 +14,65 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.service.IOsgAdminDictRegistryService;
+import com.ruoyi.system.service.ISysDictDataService;
+import com.ruoyi.system.service.ISysDictTypeService;
 
 /**
- * OSG 基础数据接口（S-006 最小可运行实现）
+ * OSG 基础数据兼容接口。
  */
 @RestController
 @RequestMapping("/system/basedata")
 public class OsgBaseDataController extends BaseController
 {
-    private final List<Map<String, Object>> rows = seedRows();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    @PreAuthorize("@ss.hasPermi('system:baseData:list')")
+    private final ISysDictDataService dictDataService;
+    private final ISysDictTypeService dictTypeService;
+    private final IOsgAdminDictRegistryService registryService;
+
+    public OsgBaseDataController(
+        ISysDictDataService dictDataService,
+        ISysDictTypeService dictTypeService,
+        IOsgAdminDictRegistryService registryService)
+    {
+        this.dictDataService = dictDataService;
+        this.dictTypeService = dictTypeService;
+        this.registryService = registryService;
+    }
+
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:list,system:baseData:list')")
     @GetMapping("/list")
     public TableDataInfo list(String name, String category, String tab)
     {
-        List<Map<String, Object>> filtered = rows.stream().filter(item -> {
-            if (name != null && !name.isBlank())
+        List<SysDictData> rows = new ArrayList<>();
+        String dictType = resolveDictType(tab);
+        if (StringUtils.isNotEmpty(dictType))
+        {
+            rows.addAll(queryDictRows(dictType, name));
+        }
+        else
+        {
+            for (String runtimeDictType : resolveAllRuntimeDictTypes())
             {
-                String itemName = Objects.toString(item.get("name"), "");
-                if (!itemName.contains(name))
-                {
-                    return false;
-                }
+                rows.addAll(queryDictRows(runtimeDictType, name));
             }
-            if (category != null && !category.isBlank())
-            {
-                if (!category.equals(item.get("category")))
-                {
-                    return false;
-                }
-            }
-            if (tab != null && !tab.isBlank())
-            {
-                if (!tab.equals(item.get("tab")))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }).collect(Collectors.toList());
-        return getDataTable(filtered);
+        }
+
+        List<Map<String, Object>> payload = rows.stream()
+            .map(this::toLegacyRow)
+            .filter(row -> category == null || category.isBlank() || category.equals(row.get("category")))
+            .toList();
+        return getDataTable(payload);
     }
 
-    @PreAuthorize("@ss.hasPermi('system:baseData:add')")
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:add,system:baseData:add')")
     @Log(title = "基础数据管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Map<String, Object> body)
@@ -71,23 +83,26 @@ public class OsgBaseDataController extends BaseController
         {
             return AjaxResult.error("参数缺失");
         }
-        String category = asText(body.get("category"));
-        if (category == null)
-        {
-            category = inferCategoryFromTab(tab);
-        }
-        if (category == null)
+
+        String dictType = resolveDictType(tab);
+        if (dictType == null)
         {
             return AjaxResult.error("参数缺失");
         }
 
-        Map<String, Object> row = row(nextId(), name, category, tab, normalizeStatus(body.get("status")), asInt(body.get("sort"), 100));
-        row.put("parentId", asLong(body.get("parentId")));
-        rows.add(row);
-        return toAjax(1);
+        SysDictData dictData = new SysDictData();
+        dictData.setDictType(dictType);
+        dictData.setDictLabel(name);
+        dictData.setDictValue(normalizeDictValue(name));
+        dictData.setDictSort((long) asInt(body.get("sort"), 100));
+        dictData.setStatus(normalizeStatus(body.get("status")));
+        dictData.setIsDefault("N");
+        dictData.setRemark(buildRemark(body.get("parentId"), body.get("website"), body.get("country"), body.get("type")));
+        dictData.setCreateBy(resolveOperator());
+        return toAjax(dictDataService.insertDictData(dictData));
     }
 
-    @PreAuthorize("@ss.hasPermi('system:baseData:edit')")
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:edit,system:baseData:edit')")
     @Log(title = "基础数据管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody Map<String, Object> body)
@@ -98,24 +113,22 @@ public class OsgBaseDataController extends BaseController
         {
             return AjaxResult.error("参数缺失");
         }
-        Map<String, Object> target = findRow(id);
-        if (target == null)
+
+        SysDictData existing = dictDataService.selectDictDataById(id);
+        if (existing == null)
         {
             return AjaxResult.error("基础数据不存在");
         }
 
-        target.put("name", name);
-        target.put("sort", asInt(body.get("sort"), asInt(target.get("sort"), 100)));
-        target.put("status", normalizeStatus(body.get("status")));
-        if (body.containsKey("parentId"))
-        {
-            target.put("parentId", asLong(body.get("parentId")));
-        }
-        target.put("updateTime", "2026-03-12 23:00:00");
-        return toAjax(1);
+        existing.setDictLabel(name);
+        existing.setDictSort((long) asInt(body.get("sort"), existing.getDictSort() == null ? 100 : existing.getDictSort().intValue()));
+        existing.setStatus(normalizeStatus(body.get("status")));
+        existing.setRemark(buildRemark(body.get("parentId"), body.get("website"), body.get("country"), body.get("type")));
+        existing.setUpdateBy(resolveOperator());
+        return toAjax(dictDataService.updateDictData(existing));
     }
 
-    @PreAuthorize("@ss.hasPermi('system:baseData:list')")
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:edit,system:baseData:list')")
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(@RequestBody Map<String, Object> body)
     {
@@ -123,74 +136,194 @@ public class OsgBaseDataController extends BaseController
         {
             return AjaxResult.error("参数缺失");
         }
-        Map<String, Object> target = findRow(asLong(body.get("id")));
-        if (target == null)
+
+        SysDictData existing = dictDataService.selectDictDataById(asLong(body.get("id")));
+        if (existing == null)
         {
             return AjaxResult.error("基础数据不存在");
         }
-        target.put("status", normalizeStatus(body.get("status")));
-        target.put("updateTime", "2026-03-12 23:00:00");
-        return toAjax(1);
+
+        existing.setStatus(normalizeStatus(body.get("status")));
+        existing.setUpdateBy(resolveOperator());
+        return toAjax(dictDataService.updateDictData(existing));
     }
 
-    private List<Map<String, Object>> seedRows()
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:list,system:baseData:list')")
+    @GetMapping("/categories")
+    public AjaxResult categories()
     {
-        List<Map<String, Object>> rows = new ArrayList<>();
-        rows.add(row(1L, "Java开发", "job", "job_category", "0", 1));
-        rows.add(row(2L, "风控分析", "job", "job_category", "0", 2));
-        rows.add(row(3L, "北京", "job", "city", "0", 1));
-        rows.add(row(4L, "上海", "job", "city", "0", 2));
-        rows.add(row(5L, "清华大学", "student", "school", "0", 1));
-        rows.add(row(6L, "计算机", "student", "major_direction", "0", 1));
-        rows.add(row(7L, "实训课", "course", "course_type", "0", 1));
-        rows.add(row(8L, "交通报销", "finance", "expense_type", "1", 1));
-        return rows;
+        List<Map<String, Object>> categories = registryService.loadRegistryGroups().stream()
+            .map(this::toLegacyCategory)
+            .toList();
+        return AjaxResult.success(Map.of("categories", categories));
     }
 
-    private Map<String, Object> row(Long id, String name, String category, String tab, String status, Integer sort)
+    private List<SysDictData> queryDictRows(String dictType, String name)
     {
-        Map<String, Object> row = new LinkedHashMap<>();
-        row.put("id", id);
-        row.put("name", name);
-        row.put("category", category);
-        row.put("tab", tab);
-        row.put("status", status);
-        row.put("sort", sort);
-        row.put("updateTime", "2026-03-03 12:00:00");
-        return row;
+        SysDictData query = new SysDictData();
+        query.setDictType(dictType);
+        query.setDictLabel(name);
+        return dictDataService.selectDictDataList(query);
     }
 
-    private Long nextId()
+    private List<String> resolveAllRuntimeDictTypes()
     {
-        return rows.stream()
-            .map(item -> asLong(item.get("id")))
-            .filter(Objects::nonNull)
-            .max(Long::compareTo)
-            .orElse(0L) + 1;
+        return registryService.loadRegistryGroups().stream()
+            .flatMap(group -> {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> dictTypes = (List<Map<String, Object>>) group.getOrDefault("dict_types", List.of());
+                return dictTypes.stream();
+            })
+            .map(entry -> asText(entry.get("dict_type")))
+            .filter(StringUtils::isNotEmpty)
+            .toList();
     }
 
-    private Map<String, Object> findRow(Long id)
+    private String resolveDictType(String tab)
     {
-        if (id == null)
+        if (StringUtils.isEmpty(tab))
         {
             return null;
         }
-        return rows.stream()
-            .filter(item -> Objects.equals(asLong(item.get("id")), id))
-            .findFirst()
-            .orElse(null);
-    }
-
-    private String inferCategoryFromTab(String tab)
-    {
+        if (tab.startsWith("osg_"))
+        {
+            return tab;
+        }
         return switch (tab)
         {
-            case "job_category", "city" -> "job";
-            case "school", "major_direction" -> "student";
-            case "course_type" -> "course";
-            case "expense_type" -> "finance";
+            case "job_category" -> "osg_job_category";
+            case "company_type" -> "osg_company_type";
+            case "company_name" -> "osg_company_name";
+            case "region" -> "osg_region";
+            case "city" -> "osg_city";
+            case "recruit_cycle" -> "osg_recruit_cycle";
+            case "school" -> "osg_school";
+            case "major_direction" -> "osg_major_direction";
+            case "sub_direction" -> "osg_sub_direction";
+            case "course_type" -> "osg_course_type";
+            case "expense_type" -> "osg_expense_type";
             default -> null;
         };
+    }
+
+    private String resolveLegacyTab(String dictType)
+    {
+        return switch (dictType)
+        {
+            case "osg_job_category" -> "job_category";
+            case "osg_company_type" -> "company_type";
+            case "osg_company_name" -> "company_name";
+            case "osg_region" -> "region";
+            case "osg_city" -> "city";
+            case "osg_recruit_cycle" -> "recruit_cycle";
+            case "osg_school" -> "school";
+            case "osg_major_direction" -> "major_direction";
+            case "osg_sub_direction" -> "sub_direction";
+            case "osg_course_type" -> "course_type";
+            case "osg_expense_type" -> "expense_type";
+            default -> dictType;
+        };
+    }
+
+    private String resolveLegacyCategory(String dictType)
+    {
+        return switch (dictType)
+        {
+            case "osg_job_category", "osg_company_type", "osg_company_name", "osg_region", "osg_city", "osg_recruit_cycle" -> "job";
+            case "osg_school", "osg_major_direction", "osg_sub_direction" -> "student";
+            case "osg_course_type" -> "course";
+            case "osg_expense_type" -> "finance";
+            default -> "";
+        };
+    }
+
+    private Map<String, Object> toLegacyRow(SysDictData data)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", data.getDictCode());
+        row.put("name", data.getDictLabel());
+        row.put("value", data.getDictValue());
+        row.put("category", resolveLegacyCategory(data.getDictType()));
+        row.put("tab", resolveLegacyTab(data.getDictType()));
+        row.put("status", data.getStatus());
+        row.put("sort", data.getDictSort());
+        row.put("updateTime", data.getUpdateTime());
+        row.put("remark", data.getRemark());
+        return row;
+    }
+
+    private Map<String, Object> toLegacyCategory(Map<String, Object> group)
+    {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("key", group.get("group_key"));
+        payload.put("label", group.get("group_label"));
+        payload.put("icon", group.get("icon"));
+        payload.put("iconColor", group.get("icon_color"));
+        payload.put("iconBg", group.get("icon_bg"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> dictTypes = (List<Map<String, Object>>) group.getOrDefault("dict_types", List.of());
+        List<Map<String, Object>> tabs = dictTypes.stream().map(item -> {
+            Map<String, Object> tab = new LinkedHashMap<>();
+            String dictType = asText(item.get("dict_type"));
+            tab.put("key", resolveLegacyTab(dictType));
+            tab.put("label", item.get("dict_name"));
+            tab.put("hasParent", Boolean.TRUE.equals(item.get("has_parent")));
+            if (item.get("parent_dict_type") != null)
+            {
+                tab.put("parentTab", resolveLegacyTab(asText(item.get("parent_dict_type"))));
+            }
+            return tab;
+        }).toList();
+        payload.put("tabs", tabs);
+        return payload;
+    }
+
+    private String buildRemark(Object parentId, Object website, Object country, Object type)
+    {
+        Map<String, Object> remark = new LinkedHashMap<>();
+        String parentValue = resolveParentValue(parentId);
+        if (StringUtils.isNotEmpty(parentValue))
+        {
+            remark.put("parentValue", parentValue);
+        }
+
+        Map<String, Object> extra = new LinkedHashMap<>();
+        putIfNotBlank(extra, "website", website);
+        putIfNotBlank(extra, "country", country);
+        putIfNotBlank(extra, "type", type);
+        if (!extra.isEmpty())
+        {
+            remark.put("extra", extra);
+        }
+
+        try
+        {
+            return OBJECT_MAPPER.writeValueAsString(remark);
+        }
+        catch (Exception ex)
+        {
+            return "{}";
+        }
+    }
+
+    private String resolveParentValue(Object parentId)
+    {
+        Long dictCode = asLong(parentId);
+        if (dictCode == null)
+        {
+            return null;
+        }
+        SysDictData parent = dictDataService.selectDictDataById(dictCode);
+        return parent == null ? null : parent.getDictValue();
+    }
+
+    private void putIfNotBlank(Map<String, Object> target, String key, Object value)
+    {
+        String text = asText(value);
+        if (text != null)
+        {
+            target.put(key, text);
+        }
     }
 
     private String asText(Object value)
@@ -223,7 +356,7 @@ public class OsgBaseDataController extends BaseController
         }
     }
 
-    private Integer asInt(Object value, int defaultValue)
+    private int asInt(Object value, int defaultValue)
     {
         if (value == null)
         {
@@ -247,5 +380,29 @@ public class OsgBaseDataController extends BaseController
     {
         String status = asText(value);
         return "1".equals(status) ? "1" : "0";
+    }
+
+    private String normalizeDictValue(String label)
+    {
+        if (label == null)
+        {
+            return "";
+        }
+        String normalized = label.trim().toLowerCase()
+            .replaceAll("[^a-z0-9\\u4e00-\\u9fa5]+", "_")
+            .replaceAll("^_+|_+$", "");
+        return normalized.isEmpty() ? "dict_value" : normalized;
+    }
+
+    private String resolveOperator()
+    {
+        try
+        {
+            return getUsername();
+        }
+        catch (Exception ex)
+        {
+            return "system";
+        }
     }
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -71,8 +72,8 @@ class PositionServiceImplTest
     {
         when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
         when(studentJobPositionMapper.upsertApplyState(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
+        when(positionMapper.selectPositionByPositionId(501L)).thenReturn(publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York"));
         when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
-        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of(positionRow(501L, "Goldman Sachs", "Summer Analyst", "New York")));
         when(jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(12766L, "Goldman Sachs", "Summer Analyst")).thenReturn(null);
         when(jobApplicationMapper.insertJobApplication(any(OsgJobApplication.class))).thenReturn(1);
 
@@ -179,8 +180,8 @@ class PositionServiceImplTest
 
         when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
         when(studentJobPositionMapper.upsertProgressState(501L, 838L, "first", "进入 First Round")).thenReturn(1);
+        when(positionMapper.selectPositionByPositionId(501L)).thenReturn(publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York"));
         when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
-        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of(positionRow(501L, "Goldman Sachs", "Summer Analyst", "New York")));
         when(jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(12766L, "Goldman Sachs", "Summer Analyst")).thenReturn(existing);
         when(jobApplicationMapper.updateJobApplicationStage(any(OsgJobApplication.class))).thenReturn(1);
 
@@ -208,8 +209,8 @@ class PositionServiceImplTest
 
         when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
         when(studentJobPositionMapper.upsertCoachingState(501L, 838L, "pending", "first", "2 位导师", "希望有投行导师")).thenReturn(1);
+        when(positionMapper.selectPositionByPositionId(501L)).thenReturn(publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York"));
         when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
-        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of(positionRow(501L, "Goldman Sachs", "Summer Analyst", "New York")));
         when(jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(12766L, "Goldman Sachs", "Summer Analyst")).thenReturn(existing);
         when(jobApplicationMapper.updateJobApplicationCoaching(any(OsgJobApplication.class))).thenReturn(1);
 
@@ -278,7 +279,7 @@ class PositionServiceImplTest
             return 1;
         });
 
-        Long reviewId = service.createManualPosition("summer", "OpenAI Intern", "OpenAI", "San Francisco", 838L);
+        Long reviewId = service.createManualPosition(manualPositionParams("summer", "OpenAI Intern", "OpenAI", "San Francisco"), 838L);
 
         assertEquals(701L, reviewId);
         ArgumentCaptor<OsgStudentPosition> captor = ArgumentCaptor.forClass(OsgStudentPosition.class);
@@ -310,13 +311,13 @@ class PositionServiceImplTest
             return 1;
         });
 
-        Long reviewId = service.createManualPosition("summer", "OpenAI Intern", "OpenAI", "San Francisco", 838L);
+        Long reviewId = service.createManualPosition(manualPositionParams("summer", "OpenAI Intern", "OpenAI", "San Francisco"), 838L);
 
         assertEquals(702L, reviewId);
         ArgumentCaptor<OsgStudentPosition> captor = ArgumentCaptor.forClass(OsgStudentPosition.class);
         verify(studentPositionMapper).insertStudentPosition(captor.capture());
         OsgStudentPosition saved = captor.getValue();
-        assertEquals("Consulting", saved.getIndustry());
+        assertEquals("brokerage", saved.getIndustry());
         assertEquals("2027", saved.getRecruitmentCycle());
     }
 
@@ -328,12 +329,10 @@ class PositionServiceImplTest
         approvedStudent.setRecruitmentCycle("2027");
         approvedStudent.setTargetRegion("New York");
 
-        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of());
-        when(positionMapper.selectPositionList(any(OsgPosition.class))).thenReturn(List.of());
         when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
         when(identityResolver.resolveStudentByUserId(838L)).thenReturn(approvedStudent);
         when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of());
-        when(sysDictDataMapper.selectDictDataByType(any())).thenReturn(List.of());
+        when(sysDictDataMapper.selectDictDataByTypes(anyList())).thenReturn(List.of());
 
         Map<String, Object> payload = service.selectPositionMeta(838L);
 
@@ -347,11 +346,9 @@ class PositionServiceImplTest
     @Test
     void selectPositionListIncludesOwnedPendingManualReviewRows()
     {
-        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of());
-        when(positionMapper.selectPositionList(any(OsgPosition.class))).thenReturn(List.of());
         when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
         when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of(reviewRow()));
-        when(sysDictDataMapper.selectDictDataByType(any())).thenReturn(List.of());
+        when(sysDictDataMapper.selectDictDataByTypes(anyList())).thenReturn(List.of());
 
         List<Map<String, Object>> rows = service.selectPositionList(838L);
 
@@ -372,22 +369,18 @@ class PositionServiceImplTest
         publicRow.put("companyCode", "GS");
         publicRow.put("category", "summer");
 
-        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of(publicRow));
-        when(positionMapper.selectPositionList(any(OsgPosition.class))).thenReturn(List.of());
         when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
         when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of());
-        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_category"))).thenReturn(List.of(dict(1L, "osg_student_position_category", "summer", "暑期实习", "岗位分类")));
-        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_industry"))).thenReturn(List.of(dict(2L, "osg_student_position_industry", "ib", "Investment Bank", "行业展示")));
-        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_apply_method"))).thenReturn(List.of(dict(3L, "osg_student_position_apply_method", "官网投递", "官网投递", "投递方式")));
-        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_progress_stage"))).thenReturn(List.of(dict(4L, "osg_student_position_progress_stage", "applied", "已投递", "岗位进度")));
-        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_coaching_stage"))).thenReturn(List.of(dict(5L, "osg_student_position_coaching_stage", "first", "First Round", "辅导阶段")));
-        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_mentor_count"))).thenReturn(List.of(dict(6L, "osg_student_position_mentor_count", "2", "2 位导师", "导师数量")));
-        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_location"))).thenReturn(List.of(dictWithStyle(7L, "osg_student_position_location", "New York", "New York", "ny", null, 100L, "地区展示")));
-        when(sysDictDataMapper.selectDictDataByType(eq("osg_student_position_company_brand"))).thenReturn(List.of(dictWithStyle(8L, "osg_student_position_company_brand", "gs", "Goldman Sachs", "#4F46E5", "GS", 200L, "公司品牌")));
+        when(sysDictDataMapper.selectDictDataByTypes(anyList())).thenReturn(List.of(
+            dict(1L, "osg_student_position_category", "summer", "暑期实习", "岗位分类"),
+            dict(2L, "osg_student_position_industry", "ib", "Investment Bank", "行业展示"),
+            dictWithStyle(7L, "osg_student_position_location", "New York", "New York", "ny", null, 100L, "地区展示"),
+            dictWithStyle(8L, "osg_student_position_company_brand", "gs", "Goldman Sachs", "#4F46E5", "GS", 200L, "公司品牌")
+        ));
 
         List<Map<String, Object>> rows = service.selectPositionList(838L);
 
-        assertEquals(1, rows.size());
+        assertEquals(0, rows.size());
         verify(sysDictDataMapper, never()).updateDictData(argThat(dict ->
             dict != null
                 && ("osg_student_position_location".equals(dict.getDictType())
@@ -398,15 +391,14 @@ class PositionServiceImplTest
                 && ("osg_student_position_location".equals(dict.getDictType())
                     || "osg_student_position_company_brand".equals(dict.getDictType()))
         ));
-        verify(sysDictDataMapper, atLeastOnce()).selectDictDataByType("osg_student_position_location");
-        verify(sysDictDataMapper, atLeastOnce()).selectDictDataByType("osg_student_position_company_brand");
+        verify(sysDictDataMapper, atLeastOnce()).selectDictDataByTypes(anyList());
     }
 
     @Test
     void updateApplyStatusFailsWhenStudentIdentityMissing()
     {
         when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
-        when(studentJobPositionMapper.selectPositionList(838L)).thenReturn(List.of(positionRow(501L, "Goldman Sachs", "Summer Analyst", "New York")));
+        when(positionMapper.selectPositionByPositionId(501L)).thenReturn(publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York"));
         when(identityResolver.resolveStudentByUserId(838L)).thenThrow(new ServiceException("学员主数据不存在，无法建立五端主链"));
 
         ServiceException error = assertThrows(ServiceException.class, () ->
@@ -425,6 +417,24 @@ class PositionServiceImplTest
         return student;
     }
 
+    private Map<String, Object> manualPositionParams(String category, String title, String company, String location)
+    {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("category", category);
+        params.put("title", title);
+        params.put("company", company);
+        params.put("location", location);
+        params.put("recruitmentCycle", "2027");
+        params.put("projectYear", "2027");
+        params.put("companyType", "brokerage");
+        params.put("region", "north-america");
+        params.put("city", location);
+        params.put("website", "https://example.com");
+        params.put("link", "https://example.com/jobs");
+        params.put("needCoaching", false);
+        return params;
+    }
+
     private Map<String, Object> positionRow(Long positionId, String company, String title, String location)
     {
         return Map.of(
@@ -436,6 +446,22 @@ class PositionServiceImplTest
             "companyKey", "gs",
             "companyCode", "GS",
             "category", "summer");
+    }
+
+    private OsgPosition publicPosition(Long positionId, String company, String title, String location)
+    {
+        OsgPosition position = new OsgPosition();
+        position.setPositionId(positionId);
+        position.setCompanyName(company);
+        position.setPositionName(title);
+        position.setCity(location);
+        position.setIndustry("ib");
+        position.setPositionCategory("summer");
+        position.setRecruitmentCycle("2027");
+        position.setDisplayStatus("visible");
+        position.setDisplayStartTime(Date.from(java.time.Instant.now().minus(1, ChronoUnit.DAYS)));
+        position.setDisplayEndTime(Date.from(java.time.Instant.now().plus(30, ChronoUnit.DAYS)));
+        return position;
     }
 
     private SysDictData dict(Long dictCode, String dictType, String dictValue, String dictLabel, String remark)

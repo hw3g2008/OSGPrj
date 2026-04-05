@@ -102,38 +102,51 @@ describe('assistant class records page', () => {
     })
   })
 
-  it('renders the real class records page, summary cards, and detail panel', async () => {
+  it('renders lead-mentor style dual scope panels while keeping assistant APIs', async () => {
     const wrapper = mount(ClassRecordsPage)
     await flushUi()
 
+    const minePanel = wrapper.get('#assistant-class-content-mine')
+    const managedPanel = wrapper.get('#assistant-class-content-managed')
+
     expect(wrapper.find('#page-myclass').exists()).toBe(true)
-    expect(wrapper.find('.page-title').text()).toContain('Class Records')
-    expect(wrapper.find('.status-pill').text()).toContain('课程总览')
-    expect(wrapper.findAll('.summary-card')).toHaveLength(4)
-    expect(wrapper.findAll('[data-class-record-row]')).toHaveLength(2)
-    expect(wrapper.text()).toContain('Case Interview Drill')
-    expect(wrapper.text()).toContain('课程详情')
-    expect(wrapper.text()).toContain('学员反馈良好')
+    expect(wrapper.find('.scope-switch').exists()).toBe(true)
+    expect(wrapper.find('#assistant-class-tab-mine').exists()).toBe(true)
+    expect(wrapper.find('#assistant-class-tab-managed').exists()).toBe(true)
+    expect(minePanel.exists()).toBe(true)
+    expect(managedPanel.exists()).toBe(true)
+    expect(wrapper.findAll('.scope-panel .tabs')).toHaveLength(2)
+    expect(minePanel.attributes('style')).toContain('display: block')
+    expect(managedPanel.attributes('style')).toContain('display: none')
+    expect(minePanel.findAll('[data-class-record-row]')).toHaveLength(1)
+    expect(minePanel.text()).toContain('Case Interview Drill')
+    expect(minePanel.text()).toContain('待审核')
+    expect(minePanel.text()).not.toContain('Mock Interview Review')
     expect(wrapper.text()).not.toContain('敬请期待')
     expect(wrapper.text()).not.toContain('记录骨架')
   })
 
-  it('filters rows by client-side status and opens the selected record detail', async () => {
+  it('switches scope and status tabs on the migrated class-record page', async () => {
     const wrapper = mount(ClassRecordsPage)
     await flushUi()
 
-    await wrapper.get('select').setValue('approved')
+    await wrapper.get('#assistant-class-tab-managed').trigger('click')
     await flushUi()
 
-    expect(wrapper.findAll('[data-class-record-row]')).toHaveLength(1)
-    expect(wrapper.text()).toContain('Ben Student')
-    expect(wrapper.text()).not.toContain('Amy Student')
+    const minePanel = wrapper.get('#assistant-class-content-mine')
+    const managedPanel = wrapper.get('#assistant-class-content-managed')
 
-    await wrapper.get('.link-button').trigger('click')
+    expect(minePanel.attributes('style')).toContain('display: none')
+    expect(managedPanel.attributes('style')).toContain('display: block')
+    expect(wrapper.text()).toContain('我管理的学员')
+
+    const statusTabs = managedPanel.findAll('.tabs .tab')
+    await statusTabs[2].trigger('click')
     await flushUi()
 
-    expect(wrapper.text()).toContain('Mock Interview Review')
-    expect(wrapper.text()).toContain('暂无学员评价')
+    expect(managedPanel.findAll('[data-class-record-row]')).toHaveLength(1)
+    expect(managedPanel.text()).toContain('Ben Student')
+    expect(managedPanel.text()).not.toContain('Amy Student')
   })
 
   it('submits keyword search through the real request path and resets filters', async () => {
@@ -183,6 +196,7 @@ describe('assistant class records page', () => {
     expect(getAssistantClassRecordList).toHaveBeenCalledTimes(2)
     expect(getAssistantClassRecordStats).toHaveBeenCalledTimes(2)
   })
+
   it('treats completed records as approved in filters and labels', async () => {
     getAssistantClassRecordList.mockResolvedValue({
       total: 1,
@@ -208,12 +222,13 @@ describe('assistant class records page', () => {
     const wrapper = mount(ClassRecordsPage)
     await flushUi()
 
-    await wrapper.findAll('select')[0].setValue('approved')
+    const minePanel = wrapper.get('#assistant-class-content-mine')
+    await minePanel.get('.tabs .tab:nth-child(3)').trigger('click')
     await flushUi()
 
-    expect(wrapper.findAll('[data-class-record-row]')).toHaveLength(1)
-    expect(wrapper.text()).toContain('Completed Student')
-    expect(wrapper.text()).toContain('已通过')
+    expect(minePanel.findAll('[data-class-record-row]')).toHaveLength(1)
+    expect(minePanel.text()).toContain('Completed Student')
+    expect(minePanel.text()).toContain('已通过')
   })
 
   it('keeps the list visible when stats loading fails', async () => {
@@ -223,9 +238,10 @@ describe('assistant class records page', () => {
     const wrapper = mount(ClassRecordsPage)
     await flushUi()
 
+    const minePanel = wrapper.get('#assistant-class-content-mine')
+
     expect(wrapper.find('.state-card--error').exists()).toBe(false)
-    expect(wrapper.findAll('[data-class-record-row]')).toHaveLength(2)
-    expect(wrapper.text()).toContain('Amy Student')
-    expect(wrapper.text()).toContain('Ben Student')
+    expect(minePanel.findAll('[data-class-record-row]')).toHaveLength(1)
+    expect(minePanel.text()).toContain('Amy Student')
   })
 })

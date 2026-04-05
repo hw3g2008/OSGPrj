@@ -25,35 +25,39 @@
       layout="vertical"
       :required-mark="false"
     >
-      <a-form-item name="name" :data-field-name="nameFieldLabel">
+      <a-form-item name="dictLabel" :data-field-name="nameFieldLabel">
         <template #label>
           <span class="base-data-modal__label">{{ nameFieldLabel }}<span class="base-data-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.name" :placeholder="`请输入${nameFieldLabel}`" />
+        <a-input v-model:value="formState.dictLabel" :placeholder="`请输入${nameFieldLabel}`" />
       </a-form-item>
 
-      <a-form-item v-if="parentTabInfo" name="parentId" :data-field-name="parentFieldLabel">
+      <a-form-item name="dictValue" data-field-name="字典键值" label="字典键值">
+        <a-input v-model:value="formState.dictValue" placeholder="请输入字典键值" />
+      </a-form-item>
+
+      <a-form-item v-if="parentTabInfo" name="parentValue" :data-field-name="parentFieldLabel">
         <template #label>
           <span class="base-data-modal__label">{{ parentFieldLabel }}<span class="base-data-modal__required">*</span></span>
         </template>
         <a-select
-          v-model:value="formState.parentId"
+          v-model:value="formState.parentValue"
           :placeholder="`请选择${parentFieldLabel}`"
           allow-clear
         >
           <a-select-option
             v-for="item in parentOptions"
-            :key="item.id"
-            :value="item.id"
+            :key="item.dictValue"
+            :value="item.dictValue"
           >
-            {{ item.name }}
+            {{ item.dictLabel }}
           </a-select-option>
         </a-select>
       </a-form-item>
 
       <!-- Fix 3: 官网地址字段，company_name Tab 特有，供 Playwright 定位 -->
       <a-form-item
-        v-if="props.tab === 'company_name'"
+        v-if="props.tab === 'osg_company_name'"
         name="website"
         data-field-name="官网地址"
         label="官网地址"
@@ -63,7 +67,7 @@
 
       <!-- Fix 4: 国家/地区字段，school Tab 特有，供 Playwright 定位 -->
       <a-form-item
-        v-if="props.tab === 'school'"
+        v-if="props.tab === 'osg_school'"
         name="country"
         data-field-name="国家/地区"
         label="国家/地区"
@@ -73,7 +77,7 @@
 
       <!-- Fix 5: Type 字段，company_type Tab 特有（英文字段名），供 Playwright 定位 -->
       <a-form-item
-        v-if="props.tab === 'company_type'"
+        v-if="props.tab === 'osg_company_type'"
         name="type"
         data-field-name="Type"
         label="Type"
@@ -81,9 +85,9 @@
         <a-input v-model:value="formState.type" placeholder="请输入 Type（选填）" />
       </a-form-item>
 
-      <a-form-item label="排序" name="sort" data-field-name="排序">
+      <a-form-item label="排序" name="dictSort" data-field-name="排序">
         <a-input-number
-          v-model:value="formState.sort"
+          v-model:value="formState.dictSort"
           :min="0"
           placeholder="数字越大越靠前"
           style="width: 100%"
@@ -114,7 +118,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import { addBaseData, updateBaseData, getBaseDataList } from '@/api/baseData'
+import { createAdminDictItem, getAdminDictOptions, updateAdminDictItem } from '@/api/adminDict'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
 const props = defineProps<{
@@ -135,27 +139,27 @@ const formRef = ref()
 const loading = ref(false)
 const parentOptions = ref<any[]>([])
 const surfaceIdMap: Record<string, { create: string; edit: string }> = {
-  recruit_cycle: { create: 'modal-new-program', edit: 'modal-edit-program' },
-  major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
-  sub_direction: { create: 'modal-new-sub-direction', edit: 'modal-edit-sub-direction' },
+  osg_recruit_cycle: { create: 'modal-new-program', edit: 'modal-edit-program' },
+  osg_major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
+  osg_sub_direction: { create: 'modal-new-sub-direction', edit: 'modal-edit-sub-direction' },
 }
 const nameFieldLabelMap: Record<string, string> = {
-  job_category: '分类名称',
-  company_name: '公司/银行名称',
-  company_type: '类别名称',
-  region: '大区名称',
-  city: '地区/城市名称',
-  recruit_cycle: '周期名称',
-  school: '学校名称',
-  major_direction: '方向名称',
-  sub_direction: '子方向名称',
-  course_type: '课程类型名称',
-  expense_type: '报销类型名称',
+  osg_job_category: '分类名称',
+  osg_company_name: '公司/银行名称',
+  osg_company_type: '类别名称',
+  osg_region: '大区名称',
+  osg_city: '地区/城市名称',
+  osg_recruit_cycle: '周期名称',
+  osg_school: '学校名称',
+  osg_major_direction: '方向名称',
+  osg_sub_direction: '子方向名称',
+  osg_course_type: '课程类型名称',
+  osg_expense_type: '报销类型名称',
 }
 const parentFieldLabelMap: Record<string, string> = {
-  company_name: '所属公司/银行类别',
-  city: '所属大区',
-  sub_direction: '所属主攻方向',
+  osg_company_name: '所属公司/银行类别',
+  osg_city: '所属大区',
+  osg_sub_direction: '所属主攻方向',
 }
 
 const isEdit = computed(() => !!props.record)
@@ -184,11 +188,12 @@ const parentFieldLabel = computed(() => {
 })
 
 const formState = reactive({
-  id: undefined as number | undefined,
-  name: '',
-  sort: 100,
+  dictCode: undefined as number | undefined,
+  dictLabel: '',
+  dictValue: '',
+  dictSort: 100,
   status: '0',
-  parentId: undefined as number | undefined,
+  parentValue: undefined as string | undefined,
   website: '',
   country: '',
   type: ''
@@ -200,8 +205,9 @@ const statusChecked = computed({
 })
 
 const rules = computed(() => ({
-  name: [{ required: true, message: `请输入${nameFieldLabel.value}`, trigger: 'blur' }],
-  parentId: parentTabInfo.value
+  dictLabel: [{ required: true, message: `请输入${nameFieldLabel.value}`, trigger: 'blur' }],
+  dictValue: [{ required: true, message: '请输入字典键值', trigger: 'blur' }],
+  parentValue: parentTabInfo.value
     ? [{ required: true, message: `请选择${parentFieldLabel.value}`, trigger: 'change' }]
     : [],
 }))
@@ -212,14 +218,7 @@ const loadParentOptions = async () => {
     return
   }
   try {
-    const res = await getBaseDataList({
-      pageNum: 1,
-      pageSize: 999,
-      category: props.category,
-      tab: parentTabInfo.value.key,
-      status: '0'
-    })
-    parentOptions.value = res.rows || []
+    parentOptions.value = await getAdminDictOptions(parentTabInfo.value.key)
   } catch (error) {
     parentOptions.value = []
   }
@@ -227,20 +226,22 @@ const loadParentOptions = async () => {
 
 const syncFormState = async () => {
   if (props.record) {
-    formState.id = props.record.id
-    formState.name = props.record.name || ''
-    formState.sort = props.record.sort ?? 100
+    formState.dictCode = props.record.dictCode
+    formState.dictLabel = props.record.dictLabel || ''
+    formState.dictValue = props.record.dictValue || ''
+    formState.dictSort = props.record.dictSort ?? 100
     formState.status = props.record.status || '0'
-    formState.parentId = props.record.parentId || undefined
-    formState.website = props.record.website || ''
-    formState.country = props.record.country || ''
-    formState.type = props.record.type || ''
+    formState.parentValue = props.record.parentValue || undefined
+    formState.website = props.record.extra?.website || ''
+    formState.country = props.record.extra?.country || ''
+    formState.type = props.record.extra?.type || ''
   } else {
-    formState.id = undefined
-    formState.name = ''
-    formState.sort = 100
+    formState.dictCode = undefined
+    formState.dictLabel = ''
+    formState.dictValue = ''
+    formState.dictSort = 100
     formState.status = '0'
-    formState.parentId = undefined
+    formState.parentValue = undefined
     formState.website = ''
     formState.country = ''
     formState.type = ''
@@ -268,33 +269,38 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     loading.value = true
 
+    const extra: Record<string, string> = {}
+    if (formState.website) extra.website = formState.website
+    if (formState.country) extra.country = formState.country
+    if (formState.type) extra.type = formState.type
+    const remark = JSON.stringify({
+      parentValue: formState.parentValue,
+      extra,
+    })
+
     if (isEdit.value) {
-      await updateBaseData({
-        id: formState.id!,
-        name: formState.name,
-        sort: formState.sort,
+      await updateAdminDictItem({
+        dictCode: formState.dictCode!,
+        dictType: props.tab,
+        dictLabel: formState.dictLabel,
+        dictValue: formState.dictValue,
+        dictSort: formState.dictSort,
         status: formState.status,
-        parentId: formState.parentId,
-        website: formState.website || undefined,
-        country: formState.country || undefined,
-        type: formState.type || undefined
+        remark,
       }, {
-        customErrorMessage: '基础数据修改失败，请检查输入信息'
+        customErrorMessage: '字典项修改失败，请检查输入信息'
       })
       message.success('修改成功')
     } else {
-      await addBaseData({
-        name: formState.name,
-        category: props.category,
-        tab: props.tab,
-        sort: formState.sort,
+      await createAdminDictItem({
+        dictType: props.tab,
+        dictLabel: formState.dictLabel,
+        dictValue: formState.dictValue,
+        dictSort: formState.dictSort,
         status: formState.status,
-        parentId: formState.parentId,
-        website: formState.website || undefined,
-        country: formState.country || undefined,
-        type: formState.type || undefined
+        remark,
       }, {
-        customErrorMessage: '基础数据新增失败，请检查输入信息'
+        customErrorMessage: '字典项新增失败，请检查输入信息'
       })
       message.success('新增成功')
     }

@@ -1,5 +1,5 @@
 <template>
-  <div class="roles-page">
+  <div id="page-roles" class="roles-page">
     <div class="page-header">
       <div>
         <h2 class="page-title">
@@ -9,6 +9,7 @@
         <p class="page-sub subtitle">配置后台角色能访问的功能模块</p>
       </div>
       <button
+        v-hasPermi="'system:role:add'"
         type="button"
         class="permission-button permission-button--primary surface-trigger surface-trigger--primary"
         data-surface-trigger="modal-new-role"
@@ -17,6 +18,24 @@
         <i class="mdi mdi-plus" aria-hidden="true"></i>
         <span>新增角色</span>
       </button>
+    </div>
+
+    <div class="permission-card permission-card--tip">
+      <div class="permission-card__body permission-card__body--tip">
+        <div class="permission-tip__icon">
+          <i class="mdi mdi-file-tree" aria-hidden="true"></i>
+        </div>
+        <div class="permission-tip__content">
+          <div class="permission-tip__title">动态权限升级说明</div>
+          <p class="permission-tip__copy">
+            角色配置已从静态权限模块逐步升级为菜单树授权。保存后，菜单树授权会驱动
+            <code>/getRouters</code> 和按钮级权限，确保菜单树授权与侧边栏/操作权限保持一致。
+          </p>
+          <p class="permission-tip__copy permission-tip__copy--muted">
+            当前阶段：角色基础信息仍保留原入口，菜单树授权通过“配置菜单树”弹层收口。
+          </p>
+        </div>
+      </div>
     </div>
 
     <div class="permission-card">
@@ -69,6 +88,7 @@
                 <template v-else>
                   <div class="permission-actions">
                     <button
+                      v-hasPermi="'system:role:edit'"
                       type="button"
                       class="permission-action surface-trigger surface-trigger--inline"
                       data-surface-trigger="modal-edit-role"
@@ -79,7 +99,18 @@
                       编辑
                     </button>
                     <button
+                      v-hasPermi="'system:role:edit'"
+                      type="button"
+                      class="permission-action surface-trigger surface-trigger--inline"
+                      data-surface-trigger="modal-role-menu-tree"
+                      :data-surface-sample-key="record.roleKey"
+                      @click="handleRoleTree(record)"
+                    >
+                      配置菜单树
+                    </button>
+                    <button
                       v-if="!record.userCount"
+                      v-hasPermi="'system:role:remove'"
                       type="button"
                       class="permission-action permission-action--danger"
                       data-surface-part="delete-control"
@@ -102,15 +133,25 @@
       :menu-tree="menuTree"
       @success="loadRoleList"
     />
+
+    <RoleMenuTreeModal
+      v-model:visible="roleTreeVisible"
+      :role="currentRole"
+      :menu-tree="menuTree"
+      :checked-keys="currentRoleTreeKeys"
+      @submit="handleRoleTreeSubmit"
+      @success="loadRoleList"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { getRoleList, getMenuTree, deleteRole, getRoleMenuIds } from '@/api/role'
+import { getRoleList, getMenuTree, deleteRole, getRoleMenuIds, updateRole } from '@/api/role'
 import { getPermissionClassName } from '@osg/shared/utils/permissionColors'
 import RoleModal from './components/RoleModal.vue'
+import RoleMenuTreeModal from './components/RoleMenuTreeModal.vue'
 import { normalizeMenuTree } from './menuTree'
 import dayjs from 'dayjs'
 
@@ -118,7 +159,9 @@ const loading = ref(false)
 const roleList = ref<any[]>([])
 const menuTree = ref<any[]>([])
 const modalVisible = ref(false)
+const roleTreeVisible = ref(false)
 const currentRole = ref<any>(null)
+const currentRoleTreeKeys = ref<number[]>([])
 
 const formatDate = (date: string) => {
   return date ? dayjs(date).format('MM/DD/YYYY') : '-'
@@ -204,6 +247,19 @@ const handleEdit = (record: any) => {
   modalVisible.value = true
 }
 
+const handleRoleTree = (record: any) => {
+  currentRole.value = record
+  currentRoleTreeKeys.value = []
+  roleTreeVisible.value = true
+  getRoleMenuIds(record.roleId)
+    .then((res) => {
+      currentRoleTreeKeys.value = res.checkedKeys || []
+    })
+    .catch(() => {
+      message.error('加载角色菜单树失败')
+    })
+}
+
 const handleDelete = (record: any) => {
   Modal.confirm({
     title: '确认删除',
@@ -226,6 +282,28 @@ onMounted(() => {
   loadRoleList()
   loadMenuTree()
 })
+
+const handleRoleTreeSubmit = async (menuIds: number[]) => {
+  if (!currentRole.value) {
+    return
+  }
+
+  try {
+    await updateRole({
+      roleId: currentRole.value.roleId,
+      roleName: currentRole.value.roleName,
+      roleKey: currentRole.value.roleKey,
+      status: currentRole.value.status || '0',
+      remark: currentRole.value.remark || '',
+      menuIds,
+    })
+    message.success('角色菜单树已保存')
+    currentRoleTreeKeys.value = menuIds
+    loadRoleList()
+  } catch (error) {
+    message.error('保存角色菜单树失败')
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -289,8 +367,63 @@ onMounted(() => {
     padding: 22px;
   }
 
+  .permission-card--tip {
+    margin-bottom: 16px;
+  }
+
+  .permission-card__body--tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
   .permission-card__body--flush {
     padding: 0;
+  }
+
+  .permission-tip__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #6366f1;
+    background: #eef2ff;
+
+    .mdi {
+      font-size: 22px;
+      line-height: 1;
+    }
+  }
+
+  .permission-tip__title {
+    margin-bottom: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .permission-tip__copy {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #334155;
+
+    code {
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4f46e5;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+    }
+
+    &--muted {
+      margin-top: 4px;
+      color: #64748b;
+    }
   }
 
   .permission-table {

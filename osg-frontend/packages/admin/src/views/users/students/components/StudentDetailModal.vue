@@ -29,6 +29,14 @@
     </div>
 
     <template v-else>
+      <div class="sdm-note" data-content-part="supporting-text">
+        <span class="mdi mdi-card-account-details-outline sdm-note__icon" aria-hidden="true"></span>
+        <div class="sdm-note__copy">
+          <strong>学员资料台账</strong>
+          <p>可查看资料、信息变更和合同信息，并从这里继续进入编辑或续签流程。</p>
+        </div>
+      </div>
+
       <!-- Tabs -->
       <div class="sdm-tabs">
         <button
@@ -246,11 +254,17 @@
     </template>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">取消</button>
+      <button
+        type="button"
+        class="sdm-footer-button sdm-footer-button--ghost"
+        @click="handleClose"
+      >
+        取消
+      </button>
       <button
         v-if="canView && studentId"
         type="button"
-        class="permission-button permission-button--primary"
+        class="sdm-footer-button sdm-footer-button--primary"
         data-surface-trigger="modal-edit-student-new"
         @click="handleRequestEdit"
       >
@@ -631,71 +645,103 @@ const formatCurrency = (value?: number) => {
 </script>
 
 <style scoped lang="scss">
-/* ── Header (override OverlaySurfaceModal header) ── */
 :global([data-surface-id="modal-student-detail-new"] [data-surface-part="header"]),
 :global([data-surface-id="modal-student-detail-bob"] [data-surface-part="header"]) {
-  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
-  border-bottom: none !important;
-  border-radius: 16px 16px 0 0;
-  padding: 22px 26px !important;
+  background: #fff !important;
+  border-bottom: 1px solid rgba(79, 116, 255, 0.1) !important;
 }
 
 :global([data-surface-id="modal-student-detail-new"] .overlay-surface-modal__close),
 :global([data-surface-id="modal-student-detail-bob"] .overlay-surface-modal__close) {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #fff !important;
+  background: #f5f7ff !important;
+  color: #69758b !important;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.35) !important;
+    background: #eef2ff !important;
+    color: #4f74ff !important;
   }
 }
 
 .sdm-header {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .sdm-header__avatar {
-  width: 56px;
-  height: 56px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  background: #edf2ff;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
-  color: #fff;
+  color: #4f74ff;
   flex-shrink: 0;
 }
 
 .sdm-header__name {
   display: block;
-  color: #fff;
-  font-size: 20px;
+  color: #1a2234;
+  font-size: 18px;
   font-weight: 700;
 }
 
 .sdm-header__meta {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #69758b;
   margin-top: 4px;
 }
 
 .sdm-header__status-pill {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(79, 116, 255, 0.12);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 999px;
   font-size: 11px;
+  color: #3f68ff;
+}
+
+.sdm-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 18px 24px 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.sdm-note__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sdm-note__copy {
+  strong {
+    display: block;
+    color: #3f68ff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: #546179;
+    font-size: 13px;
+    line-height: 1.6;
+  }
 }
 
 /* ── Tabs ── */
 .sdm-tabs {
   display: flex;
+  margin-top: 18px;
   border-bottom: 1px solid var(--border, #E2E8F0);
-  background: #F8FAFC;
+  background: #f9fbff;
 }
 
 .sdm-tabs__item {
@@ -768,13 +814,14 @@ const formatCurrency = (value?: number) => {
 /* ── Section cards ── */
 .sdm-section {
   background: #fff;
-  border: 1px solid var(--border, #E2E8F0);
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid rgba(79, 116, 255, 0.1);
+  border-radius: 16px;
+  padding: 18px;
 }
 
 .sdm-section--primary {
-  border: 2px solid var(--primary, #6366F1);
+  border-color: rgba(79, 116, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(79, 116, 255, 0.06);
 }
 
 /* ── Section badges ── */
@@ -782,36 +829,36 @@ const formatCurrency = (value?: number) => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
-  border-radius: 20px;
+  padding: 4px 10px;
+  border-radius: 999px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 16px;
 }
 
 .sdm-badge--primary {
-  background: var(--primary, #6366F1);
-  color: #fff;
+  background: #edf2ff;
+  color: #3f68ff;
 }
 
 .sdm-badge--indigo {
-  background: #E0E7FF;
-  color: #4338CA;
+  background: #edf2ff;
+  color: #3f68ff;
 }
 
 .sdm-badge--blue {
-  background: #E8F0F8;
-  color: var(--primary, #6366F1);
+  background: #eef6ff;
+  color: #3f68ff;
 }
 
 .sdm-badge--amber {
-  background: #FEF3C7;
-  color: #92400E;
+  background: #fff2db;
+  color: #c56a26;
 }
 
 .sdm-badge--green {
-  background: #DCFCE7;
-  color: #166534;
+  background: #ebfbf2;
+  color: #2f8f62;
 }
 
 /* ── Grid layouts ── */
@@ -827,13 +874,13 @@ const formatCurrency = (value?: number) => {
 
 /* ── Field cells ── */
 .sdm-field {
-  background: #F8FAFC;
+  background: #f9fbff;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 14px;
 }
 
 .sdm-field--bordered {
-  border: 1px solid var(--border, #E2E8F0);
+  border: 1px solid rgba(79, 116, 255, 0.12);
 }
 
 .sdm-field--span2 {
@@ -927,6 +974,28 @@ const formatCurrency = (value?: number) => {
 .sdm-status-tag--refunded {
   background: #FEE2E2;
   color: #991B1B;
+}
+
+/* ── Footer buttons ── */
+.sdm-footer-button {
+  min-width: 112px;
+  border-radius: 14px;
+  padding: 11px 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sdm-footer-button--ghost {
+  border: 1px solid rgba(26, 34, 52, 0.12);
+  background: #fff;
+  color: #69758b;
+}
+
+.sdm-footer-button--primary {
+  border: 0;
+  background: linear-gradient(135deg, #3f68ff, #6788ff);
+  color: #fff;
+  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.22);
 }
 
 /* ── Responsive ── */

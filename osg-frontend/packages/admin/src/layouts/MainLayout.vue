@@ -35,7 +35,6 @@
           >
             <span class="mdi" :class="item.iconClass" aria-hidden="true" />
             <span>{{ item.title }}</span>
-            <!-- v1: 角标暂时隐藏，二期恢复改回 v-if="item.badge" -->
             <span v-if="false" class="nav-badge">{{ item.badge }}</span>
           </button>
         </template>
@@ -123,9 +122,10 @@ const menuGroups: MenuGroup[] = [
     key: 'permission',
     title: '权限管理 Permission',
     children: [
+      { path: '/permission/menu', title: '菜单管理', permission: 'system:menu:list', iconClass: 'mdi-file-tree' },
       { path: '/permission/roles', title: '权限配置', permission: 'system:role:list', iconClass: 'mdi-key' },
       { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list', iconClass: 'mdi-shield-account' },
-      { path: '/permission/base-data', title: '基础数据管理', permission: 'system:baseData:list', iconClass: 'mdi-database-cog' },
+      { path: '/permission/base-data', title: '字典管理', permission: 'system:dict:list', iconClass: 'mdi-database-cog' },
     ],
   },
   {

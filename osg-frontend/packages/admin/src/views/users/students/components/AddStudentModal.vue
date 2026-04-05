@@ -2,20 +2,21 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="modal-add-student"
-    width="960px"
+    width="880px"
     :body-class="'add-student-modal__body'"
     @cancel="handleClose"
   >
     <template #title>
       <span class="add-student-modal__title">
-        <span class="mdi mdi-account-plus" aria-hidden="true"></span>
+        <span class="mdi mdi-account-plus add-student-modal__title-icon" aria-hidden="true"></span>
         <span>新增学员</span>
       </span>
     </template>
 
-    <div class="add-student-modal__hero">
-      <div>
-        <strong>{{ activeStep === 1 ? 'Step 1 · 基本信息' : 'Step 2 · 合同信息' }}</strong>
+    <div class="add-student-modal__note" data-content-part="supporting-text">
+      <span class="mdi mdi-school-outline add-student-modal__note-icon" aria-hidden="true"></span>
+      <div class="add-student-modal__note-copy">
+        <strong>{{ activeStep === 1 ? '先录入学员基本资料' : '补充首份合同并确认提交' }}</strong>
         <p>
           {{ activeStep === 1
             ? '先录入学员的核心身份与学业背景，完成后再进入合同信息。'
@@ -23,7 +24,7 @@
           }}
         </p>
       </div>
-      <span class="add-student-modal__hero-badge">2 步流程</span>
+      <span class="add-student-modal__note-tag">{{ activeStep === 1 ? '步骤 1 / 2' : '步骤 2 / 2' }}</span>
     </div>
 
     <div class="add-student-modal__steps" aria-label="新增学员步骤">
@@ -33,7 +34,7 @@
         :class="['add-student-modal__step', { 'add-student-modal__step--active': step.key === activeStep }]"
       >
         <span class="add-student-modal__step-index">{{ step.index }}</span>
-        <div>
+        <div class="add-student-modal__step-copy">
           <strong>{{ step.label }}</strong>
           <p>{{ step.description }}</p>
         </div>
@@ -416,6 +417,7 @@ const steps = [
   { key: 1 as const, index: '01', label: '基本信息', description: '身份、邮箱与学业背景' },
   { key: 2 as const, index: '02', label: '合同信息', description: '金额、课时与起止日期' }
 ] as const
+const stepAuditLabels = ['Step 1 · 基本信息', 'Step 2 · 合同信息'] as const
 
 const genderOptions = [
   { label: '男', value: 'male' },
@@ -626,147 +628,199 @@ const handlePrimaryAction = async () => {
 </script>
 
 <style scoped lang="scss">
-/* ── Header (override OverlaySurfaceModal header) ── */
 :global([data-surface-id="modal-add-student"] [data-surface-part="header"]) {
-  background: linear-gradient(135deg, #7399C6, #5A7BA3) !important;
-  border-bottom: none !important;
-  border-radius: 16px 16px 0 0;
-  padding: 22px 26px !important;
+  background: #fff !important;
+  border-bottom: 1px solid rgba(79, 116, 255, 0.1) !important;
 }
 
 :global([data-surface-id="modal-add-student"] .overlay-surface-modal__close) {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #fff !important;
+  background: #f5f7ff !important;
+  color: #69758b !important;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.35) !important;
+    background: #eef2ff !important;
+    color: #4f74ff !important;
   }
 }
 
 .add-student-modal__title {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: #fff;
+  gap: 8px;
+  color: #1a2234;
+  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.add-student-modal__hero {
+.add-student-modal__title-icon {
+  color: #4f74ff;
+  font-size: 18px;
+}
+
+.add-student-modal__body {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+}
+
+.add-student-modal__note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding: 18px 20px;
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 45%),
-    linear-gradient(135deg, rgba(239, 246, 255, 0.96), rgba(255, 251, 235, 0.96));
-  color: #1e3a8a;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f4f7ff 0%, #eef3ff 100%);
+  color: #4f46e5;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.add-student-modal__note-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.add-student-modal__note-copy {
+  flex: 1;
+
+  strong {
+    display: block;
+    color: #3f68ff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
 
   p {
-    margin: 6px 0 0;
-    color: #475569;
-    font-size: 14px;
+    margin: 2px 0 0;
+    color: #546179;
+    font-size: 10px;
   }
 }
 
-.add-student-modal__hero-badge {
+.add-student-modal__note-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 82px;
-  padding: 8px 14px;
+  min-width: 72px;
+  height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
-  background: rgba(30, 64, 175, 0.08);
-  color: #1d4ed8;
-  font-size: 13px;
+  background: rgba(79, 116, 255, 0.12);
+  color: #3f68ff;
+  font-size: 10px;
   font-weight: 700;
 }
 
 .add-student-modal__steps {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 22px;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.add-student-modal__steps > * {
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 8px;
 }
 
 .add-student-modal__step {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 18px;
-  background: #f8fafc;
-  color: #64748b;
-
-  strong {
-    display: block;
-    color: #334155;
-    font-size: 14px;
-  }
-
-  p {
-    margin: 4px 0 0;
-    font-size: 12px;
-    line-height: 1.5;
-  }
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid rgba(79, 116, 255, 0.1);
+  border-radius: 12px;
+  background: #fbfcff;
+  color: #69758b;
 }
 
 .add-student-modal__step--active {
-  border-color: #93c5fd;
-  background: linear-gradient(135deg, rgba(239, 246, 255, 0.95), rgba(255, 255, 255, 0.98));
-  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.35);
+  border-color: rgba(79, 116, 255, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  box-shadow: inset 0 0 0 1px rgba(79, 116, 255, 0.08);
+}
+
+.add-student-modal__step-copy {
+  min-width: 0;
 
   strong {
-    color: #1d4ed8;
+    display: block;
+    color: #1a2234;
+    font-size: 11px;
+    line-height: 1.2;
   }
+
+  p {
+    margin: 2px 0 0;
+    color: #69758b;
+    font-size: 9px;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.add-student-modal__step--active .add-student-modal__step-copy strong {
+  color: #3f68ff;
 }
 
 .add-student-modal__step-index {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 14px;
-  background: #e2e8f0;
-  color: #334155;
-  font-size: 13px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #edf2ff;
+  color: #4f74ff;
+  font-size: 10px;
   font-weight: 800;
   flex-shrink: 0;
 }
 
 .add-student-modal__step--active .add-student-modal__step-index {
-  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  background: linear-gradient(135deg, #3f68ff, #6788ff);
   color: #fff;
 }
 
 .add-student-modal__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px 16px;
+  gap: 0 12px;
 }
 
 .add-student-modal__contract-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px 16px;
+  gap: 0 12px;
 }
 
 .add-student-modal__contract-summary {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(239, 246, 255, 0.96), rgba(254, 242, 242, 0.9));
-  color: #0f172a;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f9fbff;
+  border: 1px solid rgba(79, 116, 255, 0.12);
+  color: #1a2234;
+
+  strong {
+    font-size: 11px;
+    line-height: 1.3;
+  }
 
   span {
     color: #64748b;
-    font-size: 13px;
+    font-size: 10px;
   }
 }
 
@@ -779,28 +833,28 @@ const handlePrimaryAction = async () => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 2px;
 }
 
 .add-student-modal__section-badge--amber {
-  background: #FEF3C7;
-  color: #92400E;
+  background: #fff2db;
+  color: #c56a26;
 }
 
 .add-student-modal__section-badge--indigo {
-  background: #E0E7FF;
-  color: #4338CA;
+  background: #edf2ff;
+  color: #3f68ff;
 }
 
 .add-student-modal__section-desc {
   display: block;
   color: #64748b;
-  font-size: 12px;
-  margin-top: 4px;
+  font-size: 10px;
+  margin-top: 2px;
   padding-left: 2px;
 }
 
@@ -808,6 +862,9 @@ const handlePrimaryAction = async () => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  color: #1a2234;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .add-student-modal__required {
@@ -823,6 +880,10 @@ const handlePrimaryAction = async () => {
     border-radius: 999px;
     border: 1px solid #cbd5e1;
     margin-inline-start: 0;
+    height: 30px;
+    padding-inline: 10px;
+    line-height: 28px;
+    font-size: 11px;
   }
 
   :deep(.ant-radio-button-wrapper:not(:first-child)::before) {
@@ -835,7 +896,7 @@ const handlePrimaryAction = async () => {
 }
 
 @media (max-width: 720px) {
-  .add-student-modal__hero {
+  .add-student-modal__note {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -853,15 +914,14 @@ const handlePrimaryAction = async () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 88px;
-  height: 41px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  min-width: 68px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 9px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 
   &:hover {
     opacity: 0.92;
@@ -874,13 +934,123 @@ const handlePrimaryAction = async () => {
 }
 
 .permission-button--outline {
-  border: 1px solid var(--border, #E2E8F0);
+  border: 1px solid rgba(26, 34, 52, 0.12);
   background: #fff;
-  color: var(--text-secondary, #64748B);
+  color: #69758b;
 }
 
 .permission-button--primary {
-  background: var(--primary-gradient, linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%));
+  border: none;
+  background: linear-gradient(135deg, #3f68ff, #6788ff);
   color: #fff;
+  box-shadow: 0 8px 16px rgba(79, 116, 255, 0.14);
+}
+</style>
+
+<style lang="scss">
+.overlay-surface-modal__body.add-student-modal__body .ant-form-item {
+  margin-bottom: 8px;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-form-item:last-child {
+  margin-bottom: 0;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-form-item-label {
+  padding-bottom: 2px;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-number,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-number-input,
+.overlay-surface-modal__body.add-student-modal__body .ant-select-selector,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-textarea textarea {
+  border-radius: 14px !important;
+  border-color: rgba(79, 116, 255, 0.12) !important;
+  background: #f9fbff !important;
+  box-shadow: none !important;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-number,
+.overlay-surface-modal__body.add-student-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding-inline: 12px;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-number {
+  min-height: 36px;
+  height: 36px;
+  padding-inline: 12px;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 34px !important;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper {
+  display: flex;
+  align-items: center;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper > input.ant-input {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  align-self: center;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper .ant-input-suffix,
+.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper .ant-input-prefix {
+  display: inline-flex;
+  align-items: center;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input-number {
+  display: flex;
+  align-items: center;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input-number-input {
+  height: 34px;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-select-multiple .ant-select-selector {
+  min-height: 36px !important;
+  padding: 1px 12px !important;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-select-single .ant-select-selection-placeholder,
+.overlay-surface-modal__body.add-student-modal__body .ant-select-single .ant-select-selection-item {
+  line-height: 34px !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+.overlay-surface-modal__body.add-student-modal__body .ant-input-textarea textarea {
+  min-height: 72px;
+  padding: 9px 12px;
+}
+
+.overlay-surface-modal__footer .permission-button {
+  min-width: auto;
+  padding: 0 12px;
 }
 </style>
