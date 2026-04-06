@@ -22,13 +22,13 @@ export interface AssistantProfileUpdatePayload extends AssistantProfile {
 }
 
 export function getAssistantProfile() {
-  return http.get<AssistantProfile>('/api/mentor/profile', {
+  return http.get<AssistantProfile>('/assistant/profile', {
     timeout: 60000,
   })
 }
 
 export function updateAssistantProfile(data: AssistantProfileUpdatePayload) {
-  return http.put<{ code: number; msg: string }>('/api/mentor/profile', data, {
+  return http.put<{ code: number; msg: string }>('/assistant/profile', data, {
     timeout: 60000,
   })
 }

@@ -37,14 +37,14 @@ export interface AssistantClassRecordCreateResponse {
 }
 
 export function getAssistantClassRecordList(filters: AssistantClassRecordFilters = {}) {
-  return http.get<{ rows: AssistantClassRecordRow[]; total: number }>('/admin/class-record/list', {
+  return http.get<{ rows: AssistantClassRecordRow[]; total: number }>('/assistant/class-records/list', {
     params: filters,
     timeout: 60000,
   })
 }
 
 export function getAssistantClassRecordStats(filters: AssistantClassRecordFilters = {}) {
-  return http.get<AssistantClassRecordStats>('/admin/class-record/stats', {
+  return http.get<AssistantClassRecordStats>('/assistant/class-records/stats', {
     params: filters,
     timeout: 60000,
   })

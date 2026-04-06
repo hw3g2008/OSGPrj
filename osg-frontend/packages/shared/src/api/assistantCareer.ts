@@ -1,8 +1,5 @@
 import { http } from '../utils/request'
 import {
-  getPositionDrillDown,
-  getPositionStats,
-  getPositionStudents,
   type DrillDownIndustry,
   type PositionListParams,
   type PositionStats,
@@ -77,15 +74,19 @@ function toRequestParams(filters: Record<string, string | number | undefined>) {
 }
 
 export function getAssistantPositionStats(filters: AssistantPositionFilters = {}) {
-  return getPositionStats(filters)
+  return http.get<AssistantPositionStats>('/assistant/positions/stats', {
+    params: toRequestParams(filters as Record<string, string | number | undefined>),
+  })
 }
 
 export function getAssistantPositionDrillDown(filters: AssistantPositionFilters = {}) {
-  return getPositionDrillDown(filters)
+  return http.get<{ rows: AssistantPositionIndustry[] }>('/assistant/positions/drill-down', {
+    params: toRequestParams(filters as Record<string, string | number | undefined>),
+  })
 }
 
 export function getAssistantPositionStudents(positionId: number) {
-  return getPositionStudents(positionId)
+  return http.get<{ rows: AssistantPositionStudent[] }>(`/assistant/positions/${positionId}/students`)
 }
 
 export function getAssistantJobOverviewList(filters: AssistantJobOverviewFilters = {}) {
@@ -99,7 +100,7 @@ export function getAssistantJobOverviewCalendar() {
 }
 
 export function getAssistantMockPracticeList(filters: AssistantMockPracticeFilters = {}) {
-  return http.get<AssistantTableResponse<AssistantMockPracticeRecord>>('/api/mentor/mock-practice/list', {
+  return http.get<AssistantTableResponse<AssistantMockPracticeRecord>>('/assistant/mock-practice/list', {
     params: toRequestParams(filters),
   })
 }

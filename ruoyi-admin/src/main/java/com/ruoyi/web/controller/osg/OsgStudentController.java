@@ -32,6 +32,7 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgStudentChangeRequestServiceImpl;
 import com.ruoyi.system.service.impl.OsgStudentServiceImpl;
@@ -47,6 +48,9 @@ public class OsgStudentController extends BaseController
 
     @Autowired
     private OsgStudentChangeRequestServiceImpl changeRequestService;
+
+    @Autowired
+    private ISysUserService userService;
 
     @Autowired
     private OsgAssistantAccessService assistantAccessService;
@@ -565,7 +569,11 @@ public class OsgStudentController extends BaseController
 
     private String formatMentorName(Long leadMentorId)
     {
-        return leadMentorId == null ? "-" : String.valueOf(leadMentorId);
+        if (leadMentorId == null) return "-";
+        SysUser u = userService.selectUserById(leadMentorId);
+        if (u == null) return String.valueOf(leadMentorId);
+        String name = u.getNickName();
+        return name == null || name.isBlank() ? u.getUserName() : name;
     }
 
     private String defaultText(String value, String fallback)

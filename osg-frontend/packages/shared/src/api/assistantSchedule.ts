@@ -15,19 +15,19 @@ export interface AssistantSchedule {
 }
 
 export function getAssistantCurrentSchedule() {
-  return http.get<AssistantSchedule | null>('/api/mentor/schedule', {
+  return http.get<AssistantSchedule | null>('/assistant/schedule', {
     timeout: 60000,
   })
 }
 
 export function saveAssistantSchedule(data: AssistantSchedule) {
-  return http.put<{ code: number; msg: string }>('/api/mentor/schedule', data, {
+  return http.put<{ code: number; msg: string }>('/assistant/schedule', data, {
     timeout: 60000,
   })
 }
 
 export function getAssistantLastWeekSchedule() {
-  return http.get<AssistantSchedule | null>('/api/mentor/schedule/last-week', {
+  return http.get<AssistantSchedule | null>('/assistant/schedule/last-week', {
     timeout: 60000,
   })
 }

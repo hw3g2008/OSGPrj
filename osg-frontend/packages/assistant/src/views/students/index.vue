@@ -117,7 +117,7 @@
                   </div>
                 </td>
                 <td>
-                  <button type="button" class="btn btn-link">查看求职</button>
+                  <button type="button" class="btn btn-link" @click="handleViewJob(student)">查看求职</button>
                 </td>
               </tr>
               <tr v-if="!students.length">
@@ -142,10 +142,23 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   getAssistantStudentList,
   type AssistantStudentListItem,
 } from '@osg/shared/api'
+
+const router = useRouter()
+
+const handleViewJob = (row: AssistantStudentListItem) => {
+  if (!row.studentName || row.studentName === '-') {
+    return
+  }
+  void router.push({
+    path: '/career/job-overview',
+    query: { studentName: row.studentName },
+  })
+}
 
 interface StudentFilterState {
   keyword: string
