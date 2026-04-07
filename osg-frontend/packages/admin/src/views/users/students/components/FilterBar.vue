@@ -242,7 +242,6 @@ const normalizeText = (value?: string) => {
   min-width: max-content;
 }
 
-// 筛选操作按钮 - match prototype .btn style
 .filter-action-button {
   display: inline-flex;
   align-items: center;
@@ -302,7 +301,6 @@ const normalizeText = (value?: string) => {
 .filter-action-button--text {
   background: transparent;
   color: var(--primary, #6366f1);
-  padding: 6px 12px;
 }
 
 @media (max-width: 1200px) {

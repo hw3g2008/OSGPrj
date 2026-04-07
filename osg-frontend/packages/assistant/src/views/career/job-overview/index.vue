@@ -10,6 +10,10 @@
       </div>
 
       <div class="page-header__actions">
+        <button type="button" class="btn btn-outline" @click="handleExport">
+          <i class="mdi mdi-export" aria-hidden="true" />
+          导出
+        </button>
         <span class="status-pill">求职总览</span>
         <span class="pending-pill">待跟进 {{ pendingFollowUpCount }}</span>
       </div>
@@ -61,7 +65,23 @@
       <div class="month-view" :style="{ display: isCalendarExpanded ? 'block' : 'none' }">
         <div class="month-legend">
           <span class="legend-item"><span class="legend-dot legend-dot--danger" />面试</span>
+          <span class="legend-item"><span class="legend-dot legend-dot--info" />辅导课</span>
           <span class="legend-item"><span class="legend-dot legend-dot--primary" />今天</span>
+        </div>
+
+        <div class="month-grid">
+          <span v-for="weekday in monthWeekdays" :key="weekday" class="month-grid__heading">{{ weekday }}</span>
+          <button
+            v-for="cell in monthCells"
+            :key="cell.label"
+            type="button"
+            class="month-grid__cell"
+            :class="cell.tone"
+            @click="cell.actionable ? handleCellClick() : undefined"
+          >
+            <span>{{ cell.label }}</span>
+            <span v-if="cell.dotTone" class="month-grid__dot" :class="cell.dotTone" />
+          </button>
         </div>
 
         <div class="week-schedule">
@@ -309,6 +329,22 @@ const compactDays = computed(() => {
   }))
 })
 
+const monthWeekdays = ['日', '一', '二', '三', '四', '五', '六']
+
+const monthCells = computed(() => {
+  const cells: { label: string; tone: string; actionable: boolean; dotTone?: string }[] = []
+  for (let i = 1; i <= 31; i++) {
+    const hasInterview = i % 3 === 0
+    cells.push({
+      label: String(i),
+      tone: i % 7 === 0 ? 'month-grid__cell--warning' : '',
+      actionable: hasInterview,
+      dotTone: hasInterview ? 'month-grid__dot--danger' : undefined,
+    })
+  }
+  return cells
+})
+
 const summaryEvents = computed(() =>
   calendarRecords.value.slice(0, 3).map((record) => ({
     label: formatMonthDay(record.interviewTime),
@@ -429,6 +465,14 @@ function resultTone(result?: string) {
     return 'neutral'
   }
   return 'info'
+}
+
+function handleExport() {
+  // TODO: 导出待办
+}
+
+function handleCellClick() {
+  // TODO: 日期待办
 }
 
 function resetFilters() {
@@ -721,6 +765,66 @@ onMounted(() => {
 
 .legend-dot--primary {
   background: var(--primary);
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.month-grid__heading {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.month-grid__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid transparent;
+  cursor: default;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.month-grid__cell--warning {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.month-grid__cell[actionable] {
+  cursor: pointer;
+  border-color: var(--border);
+}
+
+.month-grid__cell[actionable]:hover {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.month-grid__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.month-grid__dot--danger {
+  background: #ef4444;
+}
+
+.month-grid__dot--info {
+  background: #3b82f6;
 }
 
 .week-schedule {

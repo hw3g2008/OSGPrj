@@ -5,7 +5,7 @@ import { createApiProxyConfig } from '../../config/viteProxy'
 
 const apiProxy = createApiProxyConfig({
   authNamespace: 'assistant',
-  passthroughPrefixes: ['/api/mentor'],
+  passthroughPrefixes: ['/api/mentor', '/assistant'],
 })
 
 export default defineConfig({

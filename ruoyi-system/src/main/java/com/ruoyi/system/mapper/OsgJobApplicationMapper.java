@@ -18,6 +18,8 @@ public interface OsgJobApplicationMapper
 
     List<OsgJobApplication> selectJobApplicationsByIds(@Param("applicationIds") List<Long> applicationIds);
 
+    List<OsgJobApplication> selectByStudentIds(@Param("studentIds") List<Long> studentIds);
+
     int insertJobApplication(OsgJobApplication jobApplication);
 
     int updateJobApplicationAssignment(OsgJobApplication jobApplication);

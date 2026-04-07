@@ -207,6 +207,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by submitted_at desc, application_id desc
     </select>
 
+    <select id="selectByStudentIds" resultMap="OsgJobApplicationResult">
+        select
+        <include refid="selectJobApplicationColumns"/>
+        from osg_job_application
+        where student_id in
+        <foreach collection="studentIds" item="sid" open="(" separator="," close=")">
+            #{sid}
+        </foreach>
+        order by submitted_at desc, application_id desc
+    </select>
+
     <insert id="insertJobApplication" parameterType="OsgJobApplication" useGeneratedKeys="true" keyProperty="applicationId">
         insert into osg_job_application (
             student_id,
