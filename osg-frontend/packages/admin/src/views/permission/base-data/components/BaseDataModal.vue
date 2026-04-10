@@ -104,13 +104,8 @@
     </a-form>
 
     <template #footer>
-      <div data-content-part="action-row" class="base-data-modal__actions">
-        <a-button class="base-data-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose">取消</a-button>
-        <a-button type="primary" class="base-data-modal__confirm-btn" :loading="loading" @click="handleSubmit">
-          <span class="mdi mdi-check" aria-hidden="true" />
-          <span>保存</span>
-        </a-button>
-      </div>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :loading="loading" @click="handleSubmit">保存</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -340,24 +335,4 @@ const handleSubmit = async () => {
   color: #ef4444;
 }
 
-.base-data-modal__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.base-data-modal__cancel-btn {
-  min-width: 80px;
-  border-color: var(--border, #d0d7e2);
-  border-radius: 10px;
-  color: var(--text-secondary, #64748b);
-  font-weight: 500;
-}
-
-.base-data-modal__confirm-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
 </style>

@@ -1,167 +1,110 @@
 <template>
-  <div class="mentor-schedule-page">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">导师排期管理</h2>
-        <p class="page-subtitle">监控排期填写情况，协调导师资源</p>
-      </div>
-      <div class="page-header__actions">
-        <button
-          type="button"
-          class="permission-button permission-button--primary"
-          :disabled="exporting"
-          @click="handleExport"
-        >
-          <i class="mdi mdi-download" aria-hidden="true"></i>
-          <span>{{ exporting ? '导出中...' : '导出排期表' }}</span>
-        </button>
-      </div>
-    </div>
+  <div class="osg-page">
+    <PageHeader title="导师排期管理" subtitle="Mentor Schedule" description="监控排期填写情况，协调导师资源">
+      <template #actions>
+        <a-button :loading="exporting" @click="handleExport">
+          <template #icon><DownloadOutlined /></template>
+          {{ exporting ? '导出中...' : '导出排期表' }}
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <div v-if="unfilledCount > 0" class="schedule-banner">
-      <div class="schedule-banner__left">
-        <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
-        <span class="schedule-banner__text">
-          <strong>{{ unfilledCount }} 位导师排期未填写</strong>
-          <span>{{ selectedWeek === 'next' ? '请尽快补齐下周排期' : '距离截止还有 2 天' }}</span>
-        </span>
-      </div>
-      <button type="button" class="schedule-banner__action" @click="handleRemindAll">
-        <i class="mdi mdi-email-send" aria-hidden="true"></i> 一键催促全部
-      </button>
-    </div>
+    <a-alert
+      v-if="unfilledCount > 0"
+      type="error"
+      show-icon
+      :message="`${unfilledCount} 位导师排期未填写`"
+      :description="selectedWeek === 'next' ? '请尽快补齐下周排期' : '距离截止还有 2 天'"
+    >
+      <template #action>
+        <a-button type="primary" danger size="small" @click="handleRemindAll">
+          <template #icon><SendOutlined /></template>
+          一键催促全部
+        </a-button>
+      </template>
+    </a-alert>
 
-    <div class="schedule-card">
-      <div class="schedule-card__header">
-        <div class="schedule-card__top-row">
-          <div class="schedule-week-group">
-            <button
-              v-for="(option, idx) in weekOptions"
-              :key="option.value"
-              type="button"
-              :class="[
-                'schedule-week-btn',
-                { 'schedule-week-btn--active': selectedWeek === option.value },
-                idx === 0 ? 'schedule-week-btn--first' : 'schedule-week-btn--last'
-              ]"
-              @click="handleWeekChange(option.value)"
-            >
-              {{ option.label }} <span class="schedule-week-btn__range">({{ option.range }})</span>
-            </button>
-          </div>
-          <div class="schedule-total-count">
-            <i class="mdi mdi-account-group" aria-hidden="true"></i>
+    <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
+      <template #title>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px">
+          <a-radio-group v-model:value="selectedWeek" button-style="solid" @change="(e: any) => handleWeekChange(e.target.value)">
+            <a-radio-button v-for="option in weekOptions" :key="option.value" :value="option.value">
+              {{ option.label }} ({{ option.range }})
+            </a-radio-button>
+          </a-radio-group>
+          <span style="font-size: 14px; font-weight: 600; color: var(--text)">
             全部导师 ({{ rows.length }}人)
-          </div>
+          </span>
         </div>
-        <div class="schedule-filters" data-field-name="导师排期管理页">
-          <input v-model="filters.keyword" type="text" class="schedule-input" data-field-name="搜索框" placeholder="搜索导师姓名/ID..." />
-          <select v-model="filters.staffType" class="schedule-select" data-field-name="类型">
-            <option value="">全部类型</option>
-            <option value="lead_mentor">班主任</option>
-            <option value="mentor">专业导师</option>
-            <option value="assistant">助教</option>
-          </select>
-          <select v-model="filters.weekday" class="schedule-select" data-field-name="日期">
-            <option value="">全部日期</option>
-            <option v-for="day in weekdays" :key="day.value" :value="String(day.value)">{{ day.label }}</option>
-          </select>
-          <select v-model="filters.timeSlot" class="schedule-select" data-field-name="时段">
-            <option value="">全部时段</option>
-            <option v-for="slot in timeSlots" :key="slot.value" :value="slot.value">{{ slot.label }}</option>
-          </select>
-        </div>
-      </div>
+      </template>
+      <a-form layout="inline" style="margin-bottom: 16px" data-field-name="导师排期管理页">
+        <a-form-item>
+          <a-input v-model:value="filters.keyword" placeholder="搜索导师姓名/ID..." allow-clear style="width: 200px" data-field-name="搜索框" />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.staffType" placeholder="全部类型" allow-clear style="width: 120px" data-field-name="类型">
+            <a-select-option value="lead_mentor">班主任</a-select-option>
+            <a-select-option value="mentor">专业导师</a-select-option>
+            <a-select-option value="assistant">助教</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.weekday" placeholder="全部日期" allow-clear style="width: 110px" data-field-name="日期">
+            <a-select-option v-for="day in weekdays" :key="day.value" :value="String(day.value)">{{ day.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.timeSlot" placeholder="全部时段" allow-clear style="width: 110px" data-field-name="时段">
+            <a-select-option v-for="slot in timeSlots" :key="slot.value" :value="slot.value">{{ slot.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
 
-      <div class="schedule-card__body">
-        <table class="schedule-table">
-          <thead>
-            <tr>
-              <th style="width:200px">导师</th>
-              <th style="width:90px;text-align:center">类型</th>
-              <th style="width:80px;text-align:center">可用时长</th>
-              <th style="text-align:center">可用时间</th>
-              <th style="width:100px">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="record in visibleRows"
-              :key="record.staffId"
-              :class="{ 'schedule-row--unfilled': !record.filled }"
-            >
-              <td>
-                <div class="schedule-staff-row">
-                  <div class="schedule-avatar" :class="{ 'schedule-avatar--unfilled': !record.filled }">{{ getAvatarText(record.staffName) }}</div>
-                  <div>
-                    <div class="schedule-staff-name" :class="{ 'schedule-staff-name--unfilled': !record.filled }">{{ record.staffName }}</div>
-                    <div class="schedule-staff-id" :class="{ 'schedule-staff-id--unfilled': !record.filled }">ID: {{ record.staffId }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span :class="['schedule-type-tag', `schedule-type-tag--${getTypeTone(record.staffType)}`]">
-                  {{ formatType(record.staffType) }}
-                </span>
-              </td>
-              <td>
-                <strong :class="record.filled ? 'schedule-hours' : 'schedule-hours--empty'">
-                  {{ record.filled ? formatHours(record.availableHours) : '-' }}
-                </strong>
-              </td>
-              <td>
-                <div v-if="record.filled" class="schedule-slots">
-                  <span
-                    v-for="label in record.availableSlotLabels"
-                    :key="label"
-                    :class="['schedule-slot', { 'schedule-slot--weekend': isWeekendSlot(label) }]"
-                  >{{ label }}</span>
-                </div>
-                <span v-else class="schedule-slot schedule-slot--empty">
-                  <i class="mdi mdi-alert-circle" aria-hidden="true"></i> 未填写排期
-                </span>
-              </td>
-              <td>
-                <div v-if="record.filled" class="schedule-action-filled">
-                  <button
-                    type="button"
-                    class="schedule-action-link"
-                    data-surface-trigger="mentor-schedule-edit-modal"
-                    :data-surface-sample-key="`mentor-schedule-${record.staffId}-edit`"
-                    @click="openEditModal(record)"
-                  >
-                    <i class="mdi mdi-pencil" aria-hidden="true"></i> 调整导师排期
-                  </button>
-                </div>
-                <div v-else class="schedule-action-unfilled">
-                  <button
-                    type="button"
-                    class="schedule-btn-fill"
-                    data-surface-trigger="mentor-schedule-edit-modal"
-                    :data-surface-sample-key="`mentor-schedule-${record.staffId}-fill`"
-                    @click="openEditModal(record)"
-                  >
-                    <i class="mdi mdi-pencil" aria-hidden="true"></i> 代填导师排期
-                  </button>
-                  <button type="button" class="schedule-btn-remind" @click="handleRemindAll">
-                    <i class="mdi mdi-email-fast" aria-hidden="true"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="!visibleRows.length">
-              <td colspan="5" class="schedule-empty">当前筛选条件下暂无排期数据</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="schedule-card__footer">
-        <button type="button" class="schedule-view-all">
-          查看全部 {{ rows.length }} 位导师 <i class="mdi mdi-chevron-down" aria-hidden="true"></i>
-        </button>
-      </div>
-    </div>
+      <a-table
+        :columns="scheduleColumns"
+        :data-source="visibleRows"
+        :scroll="{ x: 'max-content' }"
+        :row-key="(record: StaffScheduleListItem) => record.staffId"
+        :pagination="false"
+        :row-class-name="(record: StaffScheduleListItem) => record.filled ? '' : 'row-unfilled'"
+        :locale="{ emptyText: '当前筛选条件下暂无排期数据' }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'staffName'">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <a-avatar :style="{ background: record.filled ? 'linear-gradient(135deg, #7399c6, #5a7ba3)' : '#dc2626', flexShrink: 0 }" :size="36">{{ getAvatarText(record.staffName) }}</a-avatar>
+              <div>
+                <div :style="{ fontWeight: 600, color: record.filled ? 'var(--text)' : '#991b1b' }">{{ record.staffName }}</div>
+                <div style="font-size: 11px; color: var(--muted)">ID: {{ record.staffId }}</div>
+              </div>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'staffType'">
+            <a-tag :color="record.staffType === 'lead_mentor' ? 'blue' : 'purple'">{{ formatType(record.staffType) }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'availableHours'">
+            <strong :style="{ color: record.filled ? 'var(--primary)' : '#dc2626' }">
+              {{ record.filled ? formatHours(record.availableHours) : '-' }}
+            </strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'availableSlotLabels'">
+            <div v-if="record.filled" style="display: flex; flex-wrap: wrap; gap: 4px">
+              <a-tag v-for="label in record.availableSlotLabels" :key="label" :color="isWeekendSlot(label) ? 'green' : 'default'">{{ label }}</a-tag>
+            </div>
+            <a-tag v-else color="error">未填写排期</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-space v-if="record.filled">
+              <a-button type="link" size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-edit`" @click="openEditModal(record)">调整排期</a-button>
+            </a-space>
+            <a-space v-else>
+              <a-button type="primary" danger size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-fill`" @click="openEditModal(record)">代填排期</a-button>
+              <a-button size="small" @click="handleRemindAll"><template #icon><SendOutlined /></template></a-button>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <EditScheduleModal
       v-model:visible="editVisible"
@@ -175,6 +118,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { DownloadOutlined, SendOutlined } from '@ant-design/icons-vue'
 import { getToken } from '@osg/shared/utils'
 import {
   getStaffScheduleList,
@@ -185,6 +129,15 @@ import {
   type WeekScope,
 } from '@osg/shared/api/admin/schedule'
 import EditScheduleModal from './components/EditScheduleModal.vue'
+import PageHeader from '@/components/PageHeader.vue'
+
+const scheduleColumns = [
+  { title: '导师', dataIndex: 'staffName', key: 'staffName', width: 200 },
+  { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 90, align: 'center' as const },
+  { title: '可用时长', dataIndex: 'availableHours', key: 'availableHours', width: 80, align: 'center' as const },
+  { title: '可用时间', dataIndex: 'availableSlotLabels', key: 'availableSlotLabels' },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 160 },
+]
 
 const rows = ref<StaffScheduleListItem[]>([])
 const exporting = ref(false)
@@ -216,9 +169,9 @@ const timeSlots: { value: TimeSlot; label: string }[] = [
 
 const filters = reactive({
   keyword: '',
-  staffType: '',
-  weekday: '',
-  timeSlot: '',
+  staffType: undefined as string | undefined,
+  weekday: undefined as string | undefined,
+  timeSlot: undefined as string | undefined,
 })
 
 const unfilledCount = computed(() => rows.value.filter((item) => !item.filled).length)
@@ -341,8 +294,6 @@ const formatType = (staffType?: string) => {
   return '专业导师'
 }
 
-const getTypeTone = (staffType?: string) => (staffType === 'lead_mentor' ? 'lead' : 'mentor')
-
 const formatHours = (value?: number) => `${value ?? 0}h`
 
 const isWeekendSlot = (label: string) => label.startsWith('周六') || label.startsWith('周日')
@@ -361,390 +312,8 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
-.mentor-schedule-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-// Page header
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.page-subtitle {
-  margin: 6px 0 0;
-  color: var(--text2);
-  font-size: 14px;
-}
-
-.page-header__actions {
-  display: flex;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.permission-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.permission-button--primary {
-  background: linear-gradient(135deg, #6366F1, #8b5cf6);
-  color: #fff;
-}
-
-// Banner
-.schedule-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-}
-
-.schedule-banner__left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  > i { font-size: 24px; color: #dc2626; }
-}
-
-.schedule-banner__text {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-
-  strong { color: #991b1b; font-size: 14px; }
-  span { color: #b91c1c; font-size: 13px; }
-}
-
-.schedule-banner__action {
-  border: 0;
-  border-radius: 6px;
-  padding: 8px 16px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-// Card
-.schedule-card {
-  border-radius: 16px;
-  border: 1px solid var(--border, #e2e8f0);
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-}
-
-.schedule-card__header {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border, #e2e8f0);
-}
-
-.schedule-card__top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-// Week switch - connected button group
-.schedule-week-group {
-  display: inline-flex;
-}
-
-.schedule-week-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: 1px solid #d1d5db;
-  padding: 10px 22px;
-  background: #f5f5f5;
-  color: var(--muted, #6b7280);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.schedule-week-btn--first { border-radius: 8px 0 0 8px; }
-.schedule-week-btn--last { border-radius: 0 8px 8px 0; border-left: 0; }
-
-.schedule-week-btn--active {
-  background: var(--primary, #6366f1);
-  border-color: var(--primary, #6366f1);
-  color: #fff;
-}
-
-.schedule-week-btn__range {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-.schedule-total-count {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
-
-  i { color: var(--primary, #6366f1); font-size: 18px; }
-}
-
-// Filters
-.schedule-filters {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.schedule-input,
-.schedule-select {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 9px 14px;
-  background: #fff;
-  color: var(--text);
-  font-size: 13px;
-  min-height: 38px;
-}
-
-.schedule-input { width: 200px; }
-.schedule-select { width: 110px; }
-
-// Table
-.schedule-card__body {
-  overflow-x: auto;
-}
-
-.schedule-table {
-  width: 100%;
-  min-width: 900px;
-  border-collapse: collapse;
-  font-size: 13px;
-
-  th, td {
-    padding: 18px 20px;
-    text-align: left;
-    border-bottom: 1px solid var(--border, #e2e8f0);
-    vertical-align: middle;
-    white-space: nowrap;
-  }
-
-  // Center columns: 类型(2), 可用时长(3), 可用时间(4)
-  th:nth-child(2), td:nth-child(2),
-  th:nth-child(3), td:nth-child(3),
-  th:nth-child(4), td:nth-child(4) {
-    text-align: center;
-  }
-
-  // Allow time slots column to wrap
-  td:nth-child(4) {
-    white-space: normal;
-  }
-
-  thead th {
-    background: #f8fafc;
-    color: var(--text2, #6b7280);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 14px 20px;
-    white-space: nowrap;
-  }
-
-  tbody tr:not(.schedule-row--unfilled):hover {
-    background: #f9fafb;
-  }
-}
-
-.schedule-row--unfilled {
+<style scoped>
+:deep(.row-unfilled) {
   background: #fef2f2;
-}
-
-// Staff cell
-.schedule-staff-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.schedule-avatar {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #7399c6, #5a7ba3);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.schedule-avatar--unfilled { background: #dc2626; }
-
-.schedule-staff-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.4;
-}
-
-.schedule-staff-name--unfilled { color: #991b1b; }
-
-.schedule-staff-id {
-  font-size: 11px;
-  color: var(--muted, #6b7280);
-}
-
-.schedule-staff-id--unfilled { color: #b91c1c; }
-
-// Type tag
-.schedule-type-tag {
-  display: inline-flex;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.schedule-type-tag--lead { background: #dbeafe; color: #1d4ed8; }
-.schedule-type-tag--mentor { background: #ede9fe; color: #6d28d9; }
-
-// Hours
-.schedule-hours { color: var(--primary, #6366f1); font-size: 14px; font-weight: 600; }
-.schedule-hours--empty { color: #dc2626; font-size: 14px; font-weight: 600; }
-
-// Slots
-.schedule-slots {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.schedule-slot {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: #e8f0f8;
-  font-size: 11px;
-  color: var(--text);
-}
-
-.schedule-slot--weekend { background: #dcfce7; }
-
-.schedule-slot--empty {
-  background: #fee2e2;
-  color: #b91c1c;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-}
-
-// Actions
-.schedule-action-filled {
-  display: flex;
-}
-
-.schedule-action-link {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  color: var(--primary, #6366f1);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:hover { text-decoration: underline; }
-}
-
-.schedule-action-unfilled {
-  display: flex;
-  gap: 4px;
-}
-
-.schedule-btn-fill {
-  border: 0;
-  border-radius: 6px;
-  padding: 6px 12px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.schedule-btn-remind {
-  border: 1px solid #dc2626;
-  border-radius: 6px;
-  padding: 6px 10px;
-  background: #fff;
-  color: #dc2626;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-// Footer
-.schedule-card__footer {
-  padding: 12px;
-  text-align: center;
-  border-top: 1px solid var(--border, #e2e8f0);
-}
-
-.schedule-view-all {
-  border: 0;
-  background: transparent;
-  color: var(--text2, #6b7280);
-  font-size: 13px;
-  cursor: pointer;
-
-  &:hover { color: var(--primary, #6366f1); }
-}
-
-.schedule-empty {
-  padding: 28px 0;
-  color: var(--text2);
-  text-align: center;
-}
-
-@media (max-width: 720px) {
-  .schedule-banner { flex-direction: column; align-items: stretch; }
-  .schedule-card__top-row { flex-direction: column; align-items: stretch; gap: 12px; }
-  .schedule-filters { flex-wrap: wrap; }
-  .schedule-input, .schedule-select { width: 100%; }
 }
 </style>

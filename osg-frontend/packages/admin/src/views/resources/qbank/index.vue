@@ -1,53 +1,53 @@
 <template>
-  <section class="qbank-page">
-    <header class="page-header">
-      <div>
-        <p class="page-eyebrow">Resources</p>
-        <h1>题库管理 Question Bank</h1>
-        <p class="page-subtitle">组织和分发题库文件夹，支持授权和过期时间。</p>
-      </div>
-      <button type="button" class="primary-button" @click="openCreateModal">New Folder</button>
-    </header>
+  <div class="osg-page">
+    <PageHeader title="题库管理" subtitle="Question Bank" description="组织和分发题库文件夹，支持授权和过期时间">
+      <template #actions>
+        <a-button type="primary" @click="openCreateModal">
+          <template #icon><FolderAddOutlined /></template>
+          新建文件夹
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <section class="toolbar-card">
-      <input v-model.trim="keyword" class="toolbar-input" type="search" placeholder="File Name">
-      <button type="button" class="ghost-button" @click="loadRows">Search</button>
-    </section>
+    <a-card :bordered="false">
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+        <a-form-item>
+          <a-input v-model:value="keyword" placeholder="搜索文件名" allow-clear style="width: 200px" @press-enter="loadRows" />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" @click="loadRows">
+            <template #icon><SearchOutlined /></template>
+            搜索
+          </a-button>
+        </a-form-item>
+      </a-form>
 
-    <section class="table-card">
-      <table class="qbank-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Authorized To</th>
-            <th>Expired</th>
-            <th>Create Time</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.fileId">
-            <td>#{{ row.fileId }}</td>
-            <td class="qbank-name-cell">
-              <span class="mdi mdi-folder" />
-              <strong>{{ row.fileName }}</strong>
-            </td>
-            <td>{{ row.fileSize || '--' }}</td>
-            <td>{{ row.authorizedTo || '全部用户' }}</td>
-            <td>{{ row.expiryAt || '未设置' }}</td>
-            <td>{{ formatTime(row.createTime) }}</td>
-            <td>
-              <button type="button" class="link-button" @click="openEditModal(row)">Edit + 授权</button>
-            </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="7" class="empty-row">暂无题库文件夹</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+      <a-table :columns="qbankColumns" :data-source="rows" :row-key="(r: QbankFolderRow) => r.fileId" :pagination="false" :locale="{ emptyText: '暂无题库文件夹' }" :scroll="{ x: 800 }">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'fileName'">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <span class="mdi mdi-folder" style="color: #f59e0b; font-size: 22px" />
+              <strong>{{ record.fileName }}</strong>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'fileSize'">
+            {{ record.fileSize || '--' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'authorizedTo'">
+            {{ record.authorizedTo || '全部用户' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'expiryAt'">
+            {{ record.expiryAt || '未设置' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'createTime'">
+            {{ formatTime(record.createTime) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-button type="link" size="small" @click="openEditModal(record)">编辑 + 授权</a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <QbankFolderModal
       v-model="showModal"
@@ -56,12 +56,14 @@
       :submitting="submitting"
       @confirm="handleConfirm"
     />
-  </section>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { FolderAddOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import QbankFolderModal from './components/QbankFolderModal.vue'
 import {
   createQbankFolder,
@@ -70,6 +72,16 @@ import {
   updateQbankExpiry,
   type QbankFolderRow
 } from '@osg/shared/api/admin/qbank'
+
+const qbankColumns = [
+  { title: 'ID', dataIndex: 'fileId', key: 'fileId', width: 80, customRender: ({ text }: { text: number }) => `#${text}` },
+  { title: '名称', dataIndex: 'fileName', key: 'fileName', width: 200 },
+  { title: '大小', dataIndex: 'fileSize', key: 'fileSize', width: 100 },
+  { title: '授权对象', dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
+  { title: '过期时间', dataIndex: 'expiryAt', key: 'expiryAt', width: 130 },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 140 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 100 },
+]
 
 const rows = ref<QbankFolderRow[]>([])
 const keyword = ref('')
@@ -153,128 +165,5 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
-.qbank-page {
-  display: grid;
-  gap: 20px;
-}
-
-.page-header,
-.toolbar-card {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.page-header {
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.page-eyebrow {
-  margin: 0 0 8px;
-  color: #92400e;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-header h1,
-.page-subtitle {
-  margin: 0;
-}
-
-.page-subtitle {
-  margin-top: 8px;
-  color: #64748b;
-}
-
-.toolbar-card,
-.table-card {
-  border-radius: 24px;
-  background: #fff;
-  padding: 20px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-}
-
-.toolbar-card {
-  align-items: center;
-}
-
-.toolbar-input,
-.ghost-button,
-.primary-button,
-.link-button {
-  border-radius: 14px;
-  font: inherit;
-}
-
-.toolbar-input {
-  min-width: 260px;
-  border: 1px solid #cbd5e1;
-  padding: 10px 12px;
-}
-
-.primary-button,
-.ghost-button {
-  border: none;
-  padding: 12px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.primary-button {
-  background: #92400e;
-  color: #fff;
-}
-
-.ghost-button {
-  background: #e2e8f0;
-  color: #334155;
-}
-
-.qbank-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.qbank-table th,
-.qbank-table td {
-  padding: 14px 10px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.qbank-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.qbank-name-cell .mdi {
-  color: #f59e0b;
-  font-size: 22px;
-}
-
-.link-button {
-  border: none;
-  background: transparent;
-  color: #0f766e;
-  padding: 0;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.empty-row {
-  text-align: center;
-  color: #64748b;
-}
-
-@media (max-width: 900px) {
-  .table-card {
-    overflow-x: auto;
-  }
-}
+<style scoped>
 </style>

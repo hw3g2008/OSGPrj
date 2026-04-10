@@ -91,18 +91,14 @@
         </a-select>
 
         <div v-else class="user-modal__role-panel">
-          <label
+          <a-checkbox
             v-for="role in roleOptions"
             :key="role.roleId"
-            class="user-modal__role-item"
+            :checked="formState.roleIds.includes(role.roleId)"
+            @change="(e: any) => toggleRole(role.roleId, e.target.checked)"
           >
-            <input
-              type="checkbox"
-              :checked="formState.roleIds.includes(role.roleId)"
-              @change="toggleRole(role.roleId, ($event.target as HTMLInputElement).checked)"
-            />
-            <span>{{ role.roleName }}</span>
-          </label>
+            {{ role.roleName }}
+          </a-checkbox>
         </div>
       </a-form-item>
 
@@ -131,13 +127,8 @@
     </a-form>
 
     <template #footer>
-      <a-button class="user-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose">
-        <span>取消</span>
-      </a-button>
-      <a-button type="primary" class="user-modal__confirm-btn" :loading="loading" @click="handleSubmit">
-        <span class="mdi mdi-check" aria-hidden="true" />
-        <span>保存</span>
-      </a-button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :loading="loading" @click="handleSubmit">保存</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -368,21 +359,6 @@ const handleSubmit = async () => {
   margin-top: 8px;
 }
 
-.user-modal__role-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 0 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(79, 116, 255, 0.12);
-  background: #f9fbff;
-  color: #1a2234;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .user-modal__default-password {
   display: flex;
   align-items: center;
@@ -416,99 +392,4 @@ const handleSubmit = async () => {
   font-weight: 700;
 }
 
-.user-modal__cancel-btn {
-  min-width: 92px;
-  height: 42px;
-  border-color: rgba(26, 34, 52, 0.12);
-  border-radius: 14px;
-  color: #69758b;
-  font-weight: 600;
-}
-
-.user-modal__confirm-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 110px;
-  height: 42px;
-  border: none !important;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #3f68ff, #6788ff) !important;
-  color: #fff !important;
-  font-weight: 500;
-  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.22);
-
-  &:hover,
-  &:focus {
-    background: linear-gradient(135deg, #3f68ff, #6788ff) !important;
-    color: #fff !important;
-    opacity: 0.96;
-  }
-}
-</style>
-
-<style lang="scss">
-.overlay-surface-modal__body.user-modal__body .ant-form-item {
-  margin-bottom: 0;
-}
-
-.overlay-surface-modal__body.user-modal__body .ant-input,
-.overlay-surface-modal__body.user-modal__body .ant-input-affix-wrapper,
-.overlay-surface-modal__body.user-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
-.overlay-surface-modal__body.user-modal__body .ant-input-textarea textarea {
-  border-radius: 14px !important;
-  border-color: rgba(79, 116, 255, 0.12) !important;
-  box-shadow: none !important;
-}
-
-.overlay-surface-modal__body.user-modal__body .ant-input,
-.overlay-surface-modal__body.user-modal__body .ant-input-affix-wrapper,
-.overlay-surface-modal__body.user-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  min-height: 44px;
-  height: 44px;
-  line-height: normal !important;
-}
-
-.overlay-surface-modal__body.user-modal__body .ant-input,
-.overlay-surface-modal__body.user-modal__body .ant-input-affix-wrapper {
-  padding-inline: 14px;
-}
-
-.overlay-surface-modal__body.user-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  padding: 8px 14px !important;
-}
-
-.overlay-surface-modal__body.user-modal__body .ant-input-textarea textarea {
-  min-height: 108px;
-  padding: 12px 14px;
-}
-
-.overlay-surface-modal__body.user-modal__body.user-modal__body--create .ant-form-item {
-  margin-bottom: 0;
-}
-
-.overlay-surface-modal__body.user-modal__body.user-modal__body--create .ant-form-item:last-child {
-  margin-bottom: 1px;
-}
-
-.overlay-surface-modal__body.user-modal__body.user-modal__body--create .user-modal__help {
-  margin-bottom: 6px;
-}
-
-.overlay-surface-modal__body.user-modal__body.user-modal__body--edit .ant-form-item {
-  margin-bottom: 2px;
-}
-
-.overlay-surface-modal__body.user-modal__body.user-modal__body--edit .ant-form-item:last-child {
-  margin-bottom: 2px;
-}
-
-.overlay-surface-modal__footer .user-modal__cancel-btn,
-.overlay-surface-modal__footer .user-modal__confirm-btn {
-  min-width: auto;
-  height: 41px;
-  padding: 0 20px;
-  gap: 6px;
-}
 </style>

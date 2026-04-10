@@ -61,12 +61,8 @@
     </div>
 
     <template #footer>
-      <button type="button" class="student-status-modal__footer-button student-status-modal__footer-button--ghost" @click="handleClose">
-        取消
-      </button>
-      <button type="button" class="student-status-modal__footer-button student-status-modal__footer-button--primary" @click="handleSubmit">
-        确认修改
-      </button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" @click="handleSubmit">确认修改</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -260,25 +256,4 @@ const handleSubmit = async () => {
   color: #dc2626;
 }
 
-.student-status-modal__footer-button {
-  min-width: 96px;
-  height: 42px;
-  border-radius: 14px;
-  padding: 0 20px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.student-status-modal__footer-button--ghost {
-  border: 1px solid rgba(26, 34, 52, 0.12);
-  background: #fff;
-  color: #69758b;
-}
-
-.student-status-modal__footer-button--primary {
-  border: 0;
-  background: linear-gradient(135deg, #3f68ff, #6788ff);
-  color: #fff;
-  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.22);
-}
 </style>

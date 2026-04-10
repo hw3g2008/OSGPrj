@@ -18,31 +18,20 @@
       <span>填写本次状态修改的原因与备注说明。</span>
     </div>
 
-    <div class="contract-status-change-modal__field-list">
-      <label class="contract-status-change-modal__field" data-field-name="状态修改原因">
-        <span>状态修改原因</span>
-        <select v-model="form.reason" class="contract-status-change-modal__control">
-          <option value="">请选择状态修改原因</option>
-          <option v-for="option in reasonOptions" :key="option" :value="option">{{ option }}</option>
-        </select>
-      </label>
-
-      <label class="contract-status-change-modal__field contract-status-change-modal__field--wide" data-field-name="备注说明">
-        <span>备注说明</span>
-        <textarea
-          v-model="form.remark"
-          rows="3"
-          class="contract-status-change-modal__control contract-status-change-modal__control--textarea"
-          placeholder="可填写补充说明"
-        />
-      </label>
-    </div>
+    <a-form layout="vertical">
+      <a-form-item label="状态修改原因">
+        <a-select v-model:value="form.reason" placeholder="请选择状态修改原因">
+          <a-select-option v-for="option in reasonOptions" :key="option" :value="option">{{ option }}</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item label="备注说明">
+        <a-textarea v-model:value="form.remark" :rows="3" placeholder="可填写补充说明" />
+      </a-form-item>
+    </a-form>
 
     <template #footer>
-      <div class="contract-status-change-modal__footer">
-        <button type="button" class="contract-status-change-modal__secondary" @click="handleClose">取消</button>
-        <button type="button" class="contract-status-change-modal__primary" @click="handleSubmit">确认修改</button>
-      </div>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" @click="handleSubmit">确认修改</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -133,63 +122,4 @@ const handleSubmit = () => {
   margin-bottom: 4px;
 }
 
-.contract-status-change-modal__field-list {
-  display: grid;
-  gap: 14px;
-}
-
-.contract-status-change-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #40536d;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.contract-status-change-modal__field--wide {
-  grid-column: 1 / -1;
-}
-
-.contract-status-change-modal__control {
-  min-height: 42px;
-  border-radius: 12px;
-  border: 1px solid #d5dfeb;
-  background: #fff;
-  padding: 0 14px;
-  color: #1f3552;
-}
-
-.contract-status-change-modal__control--textarea {
-  padding: 12px 14px;
-}
-
-.contract-status-change-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.contract-status-change-modal__secondary,
-.contract-status-change-modal__primary {
-  border: none;
-  border-radius: 12px;
-  min-height: 42px;
-  padding: 0 18px;
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.contract-status-change-modal__secondary {
-  background: #f7f9fc;
-  color: #1d3552;
-  border: 1px solid #d8e1ed;
-}
-
-.contract-status-change-modal__primary {
-  background: linear-gradient(135deg, #5f85b4, #7ea2d0);
-  color: #fff;
-}
 </style>

@@ -1,63 +1,70 @@
 <template>
-  <div v-if="modelValue" class="expense-modal">
-    <div class="expense-modal__backdrop" @click="close" />
-    <div class="expense-modal__panel">
-      <header class="expense-modal__hero">
-        <span class="expense-modal__eyebrow">Finance Expense</span>
-        <h3>新建报销</h3>
-        <p>录入导师报销申请并进入审核流。</p>
-      </header>
+  <OverlaySurfaceModal
+    surface-id="modal-new-expense"
+    :open="modelValue"
+    width="600px"
+    @cancel="close"
+  >
+    <template #title>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-cash-plus" aria-hidden="true" />
+        <span>新建报销</span>
+      </span>
+    </template>
 
-      <div class="expense-modal__grid">
-        <label class="expense-modal__field">
-          <span>导师 ID</span>
-          <input v-model.number="form.mentorId" type="number" min="1" placeholder="导师">
-        </label>
+    <a-form layout="vertical">
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item label="导师 ID">
+            <a-input-number v-model:value="form.mentorId" :min="1" placeholder="导师" style="width:100%" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="导师">
+            <a-input v-model:value="form.mentorName" placeholder="导师姓名" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="报销类型">
+            <a-select v-model:value="form.expenseType">
+              <a-select-option v-for="type in expenseTypes" :key="type" :value="type">{{ type }}</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="金额">
+            <a-input v-model:value="form.expenseAmount" placeholder="金额" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="日期">
+            <a-input v-model:value="form.expenseDate" type="date" placeholder="日期" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="附件">
+            <a-input v-model:value="form.attachmentUrl" placeholder="附件" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="24">
+          <a-form-item label="说明">
+            <a-textarea v-model:value="form.description" :rows="4" placeholder="说明" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+    </a-form>
 
-        <label class="expense-modal__field">
-          <span>导师</span>
-          <input v-model.trim="form.mentorName" type="text" placeholder="导师姓名">
-        </label>
-
-        <label class="expense-modal__field">
-          <span>报销类型</span>
-          <select v-model="form.expenseType">
-            <option v-for="type in expenseTypes" :key="type" :value="type">{{ type }}</option>
-          </select>
-        </label>
-
-        <label class="expense-modal__field">
-          <span>金额</span>
-          <input v-model.trim="form.expenseAmount" type="number" min="0" step="0.1" placeholder="金额">
-        </label>
-
-        <label class="expense-modal__field">
-          <span>日期</span>
-          <input v-model="form.expenseDate" type="date">
-        </label>
-
-        <label class="expense-modal__field">
-          <span>附件</span>
-          <input v-model.trim="form.attachmentUrl" type="text" placeholder="附件">
-        </label>
-      </div>
-
-      <label class="expense-modal__field expense-modal__field--full">
-        <span>说明</span>
-        <textarea v-model.trim="form.description" rows="4" placeholder="说明" />
-      </label>
-
-      <footer class="expense-modal__footer">
-        <button type="button" class="ghost-button" @click="close">取消</button>
-        <button type="button" class="primary-button" :disabled="submitting" @click="submit">创建报销</button>
-      </footer>
-    </div>
-  </div>
+    <template #footer>
+      <a-button @click="close">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="submit">创建报销</a-button>
+    </template>
+  </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import type { CreateExpensePayload, ExpenseType } from '@osg/shared/api/admin/expense'
+import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
 const expenseTypes: ExpenseType[] = [
   'Mentor Referral',
@@ -113,100 +120,3 @@ const submit = () => {
   })
 }
 </script>
-
-<style scoped lang="scss">
-.expense-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-}
-
-.expense-modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-}
-
-.expense-modal__panel {
-  position: relative;
-  z-index: 1;
-  width: min(720px, calc(100vw - 32px));
-  margin: 48px auto;
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
-  overflow: hidden;
-}
-
-.expense-modal__hero {
-  padding: 24px;
-  color: #eef2ff;
-  background: linear-gradient(135deg, #dc2626, #f59e0b);
-}
-
-.expense-modal__hero h3,
-.expense-modal__hero p {
-  margin: 0;
-}
-
-.expense-modal__eyebrow {
-  display: inline-flex;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.expense-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  padding: 24px 24px 0;
-}
-
-.expense-modal__field {
-  display: grid;
-  gap: 8px;
-}
-
-.expense-modal__field--full {
-  padding: 16px 24px 0;
-}
-
-.expense-modal__field input,
-.expense-modal__field select,
-.expense-modal__field textarea {
-  width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 10px 12px;
-  font: inherit;
-}
-
-.expense-modal__footer {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 24px;
-}
-
-.ghost-button,
-.primary-button {
-  border: none;
-  border-radius: 14px;
-  padding: 12px 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ghost-button {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.primary-button {
-  background: #dc2626;
-  color: #fff;
-}
-</style>

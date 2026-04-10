@@ -1,35 +1,30 @@
-export interface StudentColumn {
-  key: string
-  label: string
-}
-
-export const studentColumns: StudentColumn[] = [
-  { key: 'id', label: 'ID' },
-  { key: 'englishName', label: '英文姓名' },
-  { key: 'email', label: '邮箱' },
-  { key: 'leadMentor', label: '班主任' },
-  { key: 'school', label: '学校' },
-  { key: 'major', label: '主攻方向' },
-  { key: 'positions', label: '投递岗位' },
-  { key: 'totalHours', label: '总课时' },
-  { key: 'positionCoaching', label: '岗位辅导' },
-  { key: 'basicCourse', label: '基础课' },
-  { key: 'mockInterview', label: '模拟应聘' },
-  { key: 'remainingHours', label: '剩余课时' },
-  { key: 'reminder', label: '提醒' },
-  { key: 'accountStatus', label: '账号状态' },
-  { key: 'actions', label: '操作' }
+export const studentColumns = [
+  { title: 'ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
+  { title: '英文姓名', dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: '邮箱', dataIndex: 'email', key: 'email', width: 160 },
+  { title: '班主任', dataIndex: 'leadMentorName', key: 'leadMentorName', width: 100 },
+  { title: '学校', dataIndex: 'school', key: 'school', width: 120, ellipsis: true },
+  { title: '主攻方向', dataIndex: 'majorDirection', key: 'majorDirection', width: 140, ellipsis: true },
+  { title: '投递岗位', dataIndex: 'positions', key: 'positions', width: 160 },
+  { title: '总课时', dataIndex: 'totalHours', key: 'totalHours', width: 80, align: 'center' as const },
+  { title: '岗位辅导', dataIndex: 'jobCoachingCount', key: 'jobCoachingCount', width: 90, align: 'center' as const },
+  { title: '基础课', dataIndex: 'basicCourseCount', key: 'basicCourseCount', width: 80, align: 'center' as const },
+  { title: '模拟应聘', dataIndex: 'mockInterviewCount', key: 'mockInterviewCount', width: 90, align: 'center' as const },
+  { title: '剩余课时', dataIndex: 'remainingHours', key: 'remainingHours', width: 90, align: 'center' as const },
+  { title: '提醒', dataIndex: 'reminder', key: 'reminder', width: 100 },
+  { title: '账号状态', dataIndex: 'accountStatus', key: 'accountStatus', width: 90 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 200, fixed: 'right' as const },
 ]
 
-export const blacklistColumns: StudentColumn[] = [
-  { key: 'id', label: 'ID' },
-  { key: 'englishName', label: '英文姓名' },
-  { key: 'email', label: '邮箱' },
-  { key: 'leadMentor', label: '班主任' },
-  { key: 'school', label: '学校' },
-  { key: 'major', label: '主攻方向' },
-  { key: 'blacklistReason', label: '黑名单原因' },
-  { key: 'blacklistTime', label: '加入时间' },
-  { key: 'operator', label: '操作人' },
-  { key: 'actions', label: '操作' }
+export const blacklistColumns = [
+  { title: 'ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
+  { title: '英文姓名', dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: '邮箱', dataIndex: 'email', key: 'email', width: 160 },
+  { title: '班主任', dataIndex: 'leadMentorName', key: 'leadMentorName', width: 100 },
+  { title: '学校', dataIndex: 'school', key: 'school', width: 120 },
+  { title: '主攻方向', dataIndex: 'majorDirection', key: 'majorDirection', width: 90 },
+  { title: '黑名单原因', dataIndex: 'blacklistReason', key: 'blacklistReason', width: 160 },
+  { title: '加入时间', dataIndex: 'blacklistTime', key: 'blacklistTime', width: 120 },
+  { title: '操作人', dataIndex: 'operator', key: 'operator', width: 90 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 200, fixed: 'right' as const },
 ]

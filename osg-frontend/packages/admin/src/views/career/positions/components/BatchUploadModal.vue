@@ -7,10 +7,10 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="batch-upload-modal__title">
+      <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-upload" aria-hidden="true"></span>
         <span>批量上传岗位</span>
-      </div>
+      </span>
     </template>
 
     <div class="batch-upload-modal__panel">
@@ -25,14 +25,13 @@
         <span class="mdi mdi-cloud-upload batch-upload-modal__icon" aria-hidden="true"></span>
         <strong>{{ selectedFile?.name || '拖拽文件到此处，或点击选择文件' }}</strong>
         <p>支持 Excel 文件上传，导入后会直接刷新岗位列表</p>
-        <button type="button" class="batch-upload-modal__choose" @click.stop="fileInputRef?.click()">
-          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
-          选择Excel文件
-        </button>
+        <a-button @click.stop="fileInputRef?.click()">
+          <span class="mdi mdi-file-excel" aria-hidden="true" style="margin-right:4px"></span>选择Excel文件
+        </a-button>
       </div>
 
       <div class="batch-upload-modal__rule">
-        <i class="mdi mdi-information" aria-hidden="true"></i>
+        <span class="mdi mdi-information" aria-hidden="true"></span>
         <p><strong>排重规则：</strong>{{ uploadRuleCopy }}</p>
       </div>
 
@@ -45,13 +44,10 @@
     </div>
 
     <template #footer>
-      <div class="batch-upload-modal__footer">
-        <button type="button" class="batch-upload-modal__secondary" @click="handleClose">取消</button>
-        <button type="button" class="batch-upload-modal__primary" :disabled="!selectedFile" @click="handleSubmit">
-          <i class="mdi mdi-upload" aria-hidden="true"></i>
-          上传文件
-        </button>
-      </div>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :disabled="!selectedFile" @click="handleSubmit">
+        <span class="mdi mdi-upload" aria-hidden="true" style="margin-right:4px"></span>上传文件
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -109,15 +105,6 @@ const handleSubmit = () => {
 </script>
 
 <style scoped lang="scss">
-.batch-upload-modal__title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 24px;
-  font-weight: 700;
-  color: #20304a;
-}
-
 .batch-upload-modal__panel {
   display: flex;
   flex-direction: column;
@@ -156,20 +143,6 @@ const handleSubmit = () => {
   font-size: 13px;
 }
 
-.batch-upload-modal__choose {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 16px;
-  border: 1px solid #cdd7e5;
-  border-radius: 10px;
-  padding: 10px 16px;
-  background: #fff;
-  color: #475569;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .batch-upload-modal__rule {
   display: flex;
   gap: 10px;
@@ -200,38 +173,4 @@ const handleSubmit = () => {
   line-height: 1.8;
 }
 
-.batch-upload-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.batch-upload-modal__secondary,
-.batch-upload-modal__primary {
-  border-radius: 10px;
-  min-height: 40px;
-  padding: 0 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.batch-upload-modal__secondary {
-  border: 1px solid #d4deeb;
-  background: #fff;
-  color: #4a5c78;
-}
-
-.batch-upload-modal__primary {
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #6b6ef7 0%, #7b61ff 100%);
-  color: #fff;
-}
-
-.batch-upload-modal__primary:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
 </style>

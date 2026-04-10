@@ -19,127 +19,132 @@
     <!-- Section 1: 核心信息 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--primary">核心信息</div>
-      <div class="staff-form-modal__grid">
-        <label class="staff-form-modal__field" data-field-name="姓名">
-          <span>姓名</span>
-          <input v-model="form.staffName" type="text" class="staff-form-modal__input" placeholder="请输入英文名" />
-        </label>
-        <label class="staff-form-modal__field" data-field-name="邮箱">
-          <span>邮箱</span>
-          <input v-model="form.email" type="email" class="staff-form-modal__input" placeholder="请输入邮箱" />
-        </label>
-        <label class="staff-form-modal__field" data-field-name="类型">
-          <span>类型</span>
-          <select v-model="form.staffType" class="staff-form-modal__select">
-            <option value="">请选择</option>
-            <option value="mentor">导师</option>
-            <option value="lead_mentor">班主任</option>
-            <option value="assistant">助教</option>
-          </select>
-        </label>
-        <label class="staff-form-modal__field" data-field-name="性别">
-          <span>性别</span>
-          <select v-model="form.gender" class="staff-form-modal__select">
-            <option value="">请选择</option>
-            <option value="0">男</option>
-            <option value="1">女</option>
-          </select>
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="姓名">
+              <a-input v-model:value="form.staffName" placeholder="请输入英文名" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="邮箱">
+              <a-input v-model:value="form.email" placeholder="请输入邮箱" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="类型">
+              <a-select v-model:value="form.staffType" placeholder="请选择">
+                <a-select-option value="mentor">导师</a-select-option>
+                <a-select-option value="lead_mentor">班主任</a-select-option>
+                <a-select-option value="assistant">助教</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="性别">
+              <a-select v-model:value="form.gender" placeholder="请选择">
+                <a-select-option value="0">男</a-select-option>
+                <a-select-option value="1">女</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <!-- Section 2: 联系方式 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--green">
-        <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式
+        <span class="mdi mdi-phone" aria-hidden="true" /> 联系方式
       </div>
-      <div class="staff-form-modal__grid">
-        <label class="staff-form-modal__field" data-field-name="手机号">
-          <span>手机号</span>
-          <input v-model="form.phone" type="tel" class="staff-form-modal__input" placeholder="请输入手机号" />
-        </label>
-        <label class="staff-form-modal__field" data-field-name="微信">
-          <span>微信</span>
-          <input v-model="form.wechatId" type="text" class="staff-form-modal__input" placeholder="请输入微信号" />
-        </label>
-        <label class="staff-form-modal__field" data-field-name="地区">
-          <span>地区</span>
-          <select v-model="form.region" class="staff-form-modal__select">
-            <option value="">请选择</option>
-            <option v-for="option in regionOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
-        </label>
-        <label class="staff-form-modal__field" data-field-name="城市">
-          <span>城市</span>
-          <input v-model="form.city" type="text" class="staff-form-modal__input" placeholder="请输入城市" />
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="手机号">
+              <a-input v-model:value="form.phone" placeholder="请输入手机号" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="微信">
+              <a-input v-model:value="form.wechatId" placeholder="请输入微信号" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="地区">
+              <a-select v-model:value="form.region" placeholder="请选择">
+                <a-select-option v-for="option in regionOptions" :key="option" :value="option">{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="城市">
+              <a-input v-model:value="form.city" placeholder="请输入城市" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <!-- Section 3: 专业方向 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--amber">
-        <i class="mdi mdi-target" aria-hidden="true"></i> 专业方向
+        <span class="mdi mdi-target" aria-hidden="true" /> 专业方向
       </div>
-      <div class="staff-form-modal__grid">
-        <label class="staff-form-modal__field" data-field-name="主攻方向">
-          <span>主攻方向</span>
-          <select v-model="form.majorDirection" class="staff-form-modal__select">
-            <option value="">请选择</option>
-            <option v-for="option in majorDirectionOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
-        </label>
-        <label class="staff-form-modal__field" data-field-name="子方向">
-          <span>子方向</span>
-          <select v-model="form.subDirection" class="staff-form-modal__select">
-            <option value="">{{ subDirectionOptions.length ? '请选择' : '请先选择主攻方向' }}</option>
-            <option v-for="option in subDirectionOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
-        </label>
-        <label class="staff-form-modal__field" data-field-name="可授课程类型">
-          <span>可授课程类型</span>
-          <input v-model="form.courseTypes" type="text" class="staff-form-modal__input" placeholder="请输入可授课程类型" />
-        </label>
-        <label class="staff-form-modal__field" data-field-name="课单价">
-          <span>课时单价</span>
-          <input v-model="form.hourlyRate" type="number" min="0" class="staff-form-modal__input" placeholder="请输入课时单价" />
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="主攻方向">
+              <a-select v-model:value="form.majorDirection" placeholder="请选择">
+                <a-select-option v-for="option in majorDirectionOptions" :key="option" :value="option">{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="子方向">
+              <a-select v-model:value="form.subDirection" :placeholder="subDirectionOptions.length ? '请选择' : '请先选择主攻方向'">
+                <a-select-option v-for="option in subDirectionOptions" :key="option" :value="option">{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="可授课程类型">
+              <a-input v-model:value="form.courseTypes" placeholder="请输入可授课程类型" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="课时单价">
+              <a-input-number v-model:value="form.hourlyRate" :min="0" placeholder="请输入课时单价" style="width:100%" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--blue">
-        <i class="mdi mdi-shield-account" aria-hidden="true"></i> 账号信息
+        <span class="mdi mdi-shield-account" aria-hidden="true" /> 账号信息
       </div>
-      <div class="staff-form-modal__grid">
-        <label class="staff-form-modal__field" data-field-name="登录账号">
-          <span>登录账号</span>
-          <input v-model="form.loginAccount" type="text" class="staff-form-modal__input" placeholder="请输入登录账号" />
-        </label>
-        <label class="staff-form-modal__field" data-field-name="初始密码">
-          <span>初始密码</span>
-          <input v-model="form.initialPassword" type="text" class="staff-form-modal__input" placeholder="请输入初始密码" />
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="登录账号">
+              <a-input v-model:value="form.loginAccount" placeholder="请输入登录账号" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="初始密码">
+              <a-input v-model:value="form.initialPassword" placeholder="请输入初始密码" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <template #footer>
-      <button
-        type="button"
-        class="staff-form-modal__footer-button staff-form-modal__footer-button--ghost"
-        data-surface-part="cancel-control"
-        @click="handleClose"
-      >
-        取消
-      </button>
-      <button
-        type="button"
-        class="staff-form-modal__footer-button staff-form-modal__footer-button--primary"
-        :disabled="submitting"
-        @click="handleSubmit"
-      >
-        {{ submitting ? '提交中...' : (isEditing ? '保存修改' : '确定添加') }}
-      </button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">
+        {{ isEditing ? '保存修改' : '确定添加' }}
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -411,47 +416,4 @@ const handleSubmit = () => {
   gap: 14px;
 }
 
-.staff-form-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.staff-form-modal__input,
-.staff-form-modal__select {
-  min-height: 42px;
-  border: 1px solid #dbe3f0;
-  border-radius: 14px;
-  padding: 0 14px;
-  background: #ffffff;
-  color: #0f172a;
-}
-
-.staff-form-modal__footer-button {
-  min-width: 112px;
-  border: 0;
-  border-radius: 999px;
-  padding: 11px 20px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.staff-form-modal__footer-button--ghost {
-  background: #e2e8f0;
-  color: #334155;
-}
-
-.staff-form-modal__footer-button--primary {
-  background: linear-gradient(135deg, var(--primary, #6366F1) 0%, var(--primary-dark, #4F46E5) 100%);
-  color: #fff;
-}
-
-@media (max-width: 768px) {
-  .staff-form-modal__grid {
-    grid-template-columns: 1fr;
-  }
-}
 </style>

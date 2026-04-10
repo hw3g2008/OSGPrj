@@ -7,14 +7,10 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="student-review-modal__titlebar">
-        <div class="student-review-modal__titlecopy">
-          <div class="student-review-modal__title">
-            <i class="mdi mdi-briefcase-plus-outline" aria-hidden="true"></i>
-            <span>{{ modalTitle }}</span>
-          </div>
-        </div>
-      </div>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-briefcase-plus-outline" aria-hidden="true"></span>
+        <span>{{ modalTitle }}</span>
+      </span>
     </template>
 
     <section class="student-review-modal__hero">
@@ -34,7 +30,7 @@
       <section class="student-review-modal__section-card">
         <header class="student-review-modal__section-head">
           <div class="student-review-modal__section-title">
-            <i class="mdi mdi-briefcase-variant-outline" aria-hidden="true"></i>
+            <span class="mdi mdi-briefcase-variant-outline" aria-hidden="true"></span>
             <span>基本信息</span>
           </div>
         </header>
@@ -42,60 +38,56 @@
         <div class="student-review-modal__grid">
           <fieldset class="student-review-modal__field" data-field-name="岗位分类">
             <span>岗位分类 *</span>
-            <select v-model="form.positionCategory" data-field-name="岗位分类" :disabled="!isPending">
-              <option value="">请选择</option>
-              <option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-            </select>
+            <a-select v-model:value="form.positionCategory" placeholder="请选择" :disabled="!isPending">
+              <a-select-option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+            </a-select>
           </fieldset>
 
           <label class="student-review-modal__field" data-field-name="岗位名称">
             <span>岗位名称 *</span>
-            <input v-model="form.positionName" data-field-name="岗位名称" type="text" placeholder="如 Summer Analyst" :disabled="!isPending" />
+            <a-input v-model:value="form.positionName" placeholder="如 Summer Analyst" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field" data-field-name="部门">
             <span>部门</span>
-            <input v-model="form.department" data-field-name="部门" type="text" placeholder="如 Investment Banking Division" :disabled="!isPending" />
+            <a-input v-model:value="form.department" placeholder="如 Investment Banking Division" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field" data-field-name="项目时间">
             <span>项目时间 *</span>
-            <input v-model="form.projectYear" data-field-name="项目时间" type="text" placeholder="如 2026" :disabled="!isPending" />
+            <a-input v-model:value="form.projectYear" placeholder="如 2026" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field student-review-modal__field--wide" data-field-name="行业">
             <span>行业</span>
-            <input v-model="form.industry" data-field-name="行业" type="text" placeholder="如 Investment Bank" :disabled="!isPending" />
+            <a-input v-model:value="form.industry" placeholder="如 Investment Bank" :disabled="!isPending" />
           </label>
 
           <fieldset class="student-review-modal__field" data-field-name="截止日期">
             <span>截止日期</span>
-            <input v-model="form.deadline" data-field-name="截止日期" type="datetime-local" :disabled="!isPending" />
+            <a-input v-model:value="form.deadline" type="datetime-local" :disabled="!isPending" />
           </fieldset>
         </div>
 
         <fieldset class="student-review-modal__chip-group" data-field-name="招聘周期">
           <span class="student-review-modal__chip-label">招聘周期 *</span>
-          <button
+          <a-button
             v-for="option in recruitmentCycleOptions"
             :key="option"
-            type="button"
-            :class="[
-              'student-review-modal__cycle-chip',
-              { 'student-review-modal__cycle-chip--active': selectedCycles.includes(option) }
-            ]"
+            :type="selectedCycles.includes(option) ? 'primary' : 'default'"
+            size="small"
             :disabled="!isPending"
             @click="toggleCycle(option)"
           >
             {{ option }}
-          </button>
+          </a-button>
         </fieldset>
       </section>
 
       <section class="student-review-modal__section-card">
         <header class="student-review-modal__section-head">
           <div class="student-review-modal__section-title">
-            <i class="mdi mdi-domain" aria-hidden="true"></i>
+            <span class="mdi mdi-domain" aria-hidden="true"></span>
             <span>公司信息</span>
           </div>
         </header>
@@ -103,71 +95,59 @@
         <div class="student-review-modal__grid">
           <label class="student-review-modal__field" data-field-name="公司名称">
             <span>公司名称 *</span>
-            <input v-model="form.companyName" data-field-name="公司名称" type="text" placeholder="公司名称" :disabled="!isPending" />
+            <a-input v-model:value="form.companyName" placeholder="公司名称" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field" data-field-name="公司类别">
             <span>公司类别</span>
-            <input v-model="form.companyType" data-field-name="公司类别" type="text" placeholder="如 Consulting" :disabled="!isPending" />
+            <a-input v-model:value="form.companyType" placeholder="如 Consulting" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field" data-field-name="大区">
             <span>大区 *</span>
-            <select v-model="form.region" data-field-name="大区" :disabled="!isPending">
-              <option value="">请选择</option>
-              <option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-            </select>
+            <a-select v-model:value="form.region" placeholder="请选择" :disabled="!isPending">
+              <a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+            </a-select>
           </label>
 
           <label class="student-review-modal__field" data-field-name="城市">
             <span>城市 *</span>
-            <input v-model="form.city" data-field-name="城市" type="text" placeholder="如 Singapore" :disabled="!isPending" />
+            <a-input v-model:value="form.city" placeholder="如 Singapore" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field" data-field-name="公司官网">
             <span>公司官网</span>
-            <input v-model="form.companyWebsite" data-field-name="公司官网" type="url" placeholder="https://company.com" :disabled="!isPending" />
+            <a-input v-model:value="form.companyWebsite" placeholder="https://company.com" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field" data-field-name="岗位链接">
             <span>岗位链接</span>
-            <input v-model="form.positionUrl" data-field-name="岗位链接" type="url" placeholder="https://company.com/jobs/..." :disabled="!isPending" />
+            <a-input v-model:value="form.positionUrl" placeholder="https://company.com/jobs/..." :disabled="!isPending" />
           </label>
         </div>
       </section>
     </div>
 
     <template #footer>
-      <div class="student-review-modal__footer">
-        <button
-          type="button"
-          class="student-review-modal__footer-button student-review-modal__footer-button--ghost"
-          data-surface-part="cancel-control"
-          @click="handleClose"
-        >
-          取消
-        </button>
-        <button
-          v-if="isPending"
-          type="button"
-          class="student-review-modal__footer-button student-review-modal__footer-button--danger"
-          data-surface-part="reject-control"
-          data-surface-trigger="modal-reject-position"
-          :data-surface-sample-key="props.position ? `student-position-${props.position.studentPositionId}` : 'student-position'"
-          @click="handleRejectRequest"
-        >
-          拒绝岗位
-        </button>
-        <button
-          v-if="isPending"
-          type="button"
-          class="student-review-modal__footer-button student-review-modal__footer-button--primary"
-          data-surface-part="confirm-control"
-          @click="handleSubmit"
-        >
-          保存并通过
-        </button>
-      </div>
+      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button
+        v-if="isPending"
+        danger
+        data-surface-part="reject-control"
+        data-surface-trigger="modal-reject-position"
+        :data-surface-sample-key="props.position ? `student-position-${props.position.studentPositionId}` : 'student-position'"
+        @click="handleRejectRequest"
+      >
+        拒绝岗位
+      </a-button>
+      <a-button
+        v-if="isPending"
+        type="primary"
+        data-surface-part="confirm-control"
+        @click="handleSubmit"
+      >
+        保存并通过
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -340,21 +320,6 @@ const normalizeDateTimeLocal = (value: string) => {
 </script>
 
 <style scoped lang="scss">
-.student-review-modal__titlebar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.student-review-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #1e293b;
-  font-size: 18px;
-  font-weight: 700;
-}
-
 .student-review-modal__body {
   display: flex;
   flex-direction: column;
@@ -497,23 +462,6 @@ const normalizeDateTimeLocal = (value: string) => {
   font-weight: 600;
 }
 
-.student-review-modal__field input,
-.student-review-modal__field select {
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  background: #fff;
-  color: #0f172a;
-  font: inherit;
-}
-
-.student-review-modal__field input:disabled,
-.student-review-modal__field select:disabled {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
 .student-review-modal__chip-group {
   display: flex;
   flex-wrap: wrap;
@@ -523,55 +471,6 @@ const normalizeDateTimeLocal = (value: string) => {
   padding: 0;
   border: 0;
   min-inline-size: 0;
-}
-
-.student-review-modal__cycle-chip {
-  min-height: 36px;
-  padding: 0 16px;
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
-  background: #fff;
-  color: #475569;
-  font-size: 14px;
-}
-
-.student-review-modal__cycle-chip--active {
-  border-color: #6366f1;
-  background: #eef2ff;
-  color: #4338ca;
-  font-weight: 700;
-}
-
-.student-review-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.student-review-modal__footer-button {
-  min-height: 48px;
-  padding: 0 22px;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.student-review-modal__footer-button--ghost {
-  background: #fff;
-  color: #475569;
-}
-
-.student-review-modal__footer-button--danger {
-  border-color: #ef4444;
-  background: #ef4444;
-  color: #fff;
-}
-
-.student-review-modal__footer-button--primary {
-  border-color: #6366f1;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
 }
 
 @media (max-width: 900px) {

@@ -1,61 +1,56 @@
 <template>
-  <div v-if="modelValue" class="auth-modal">
-    <div class="auth-modal__backdrop" @click="close" />
-    <div class="auth-modal__panel">
-      <header class="auth-modal__hero">
-        <span class="auth-modal__eyebrow">File Authorization</span>
-        <h3>文件授权</h3>
-        <p>{{ row?.fileName || '当前文件' }} 的可访问范围设置。</p>
-      </header>
+  <OverlaySurfaceModal
+    surface-id="modal-file-auth"
+    :open="modelValue"
+    width="560px"
+    @cancel="close"
+  >
+    <template #title>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-shield-key-outline" aria-hidden="true" />
+        <span>文件授权</span>
+      </span>
+    </template>
 
-      <section class="auth-modal__section">
-        <label class="auth-modal__choice">
-          <input v-model="authType" type="radio" value="all">
-          <span>全部用户</span>
-        </label>
-        <label class="auth-modal__choice">
-          <input v-model="authType" type="radio" value="class">
-          <span>指定班级</span>
-        </label>
-        <label class="auth-modal__choice">
-          <input v-model="authType" type="radio" value="user">
-          <span>指定用户</span>
-        </label>
-      </section>
+    <p style="margin:0 0 16px;color:#64748b">{{ row?.fileName || '当前文件' }} 的可访问范围设置。</p>
 
-      <section v-if="authType === 'class'" class="auth-modal__section auth-modal__section--stack">
-        <strong>班级范围</strong>
-        <label v-for="option in classOptions" :key="option" class="auth-modal__choice">
-          <input v-model="authorizedClasses" type="checkbox" :value="option">
-          <span>{{ option }}</span>
-        </label>
-      </section>
+    <a-form layout="vertical">
+      <a-form-item label="授权类型">
+        <a-radio-group v-model:value="authType">
+          <a-radio value="all">全部用户</a-radio>
+          <a-radio value="class">指定班级</a-radio>
+          <a-radio value="user">指定用户</a-radio>
+        </a-radio-group>
+      </a-form-item>
 
-      <section v-if="authType === 'user'" class="auth-modal__section auth-modal__section--stack">
-        <strong>添加用户</strong>
-        <div class="auth-modal__adder">
-          <input v-model.trim="draftUser" type="text" placeholder="添加用户">
-          <button type="button" class="ghost-button" @click="addUser">添加用户</button>
+      <a-form-item v-if="authType === 'class'" label="班级范围">
+        <a-checkbox-group v-model:value="authorizedClasses" :options="classOptions" />
+      </a-form-item>
+
+      <template v-if="authType === 'user'">
+        <a-form-item label="添加用户">
+          <div style="display:flex;gap:8px">
+            <a-input v-model:value="draftUser" placeholder="添加用户" style="flex:1" @press-enter="addUser" />
+            <a-button @click="addUser">添加</a-button>
+          </div>
+        </a-form-item>
+        <div v-if="authorizedUsers.length" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+          <a-tag v-for="user in authorizedUsers" :key="user" closable @close="removeUser(user)">{{ user }}</a-tag>
         </div>
-        <div class="auth-modal__tags">
-          <span v-for="user in authorizedUsers" :key="user" class="auth-modal__tag">
-            {{ user }}
-            <button type="button" @click="removeUser(user)">×</button>
-          </span>
-        </div>
-      </section>
+      </template>
+    </a-form>
 
-      <footer class="auth-modal__footer">
-        <button type="button" class="ghost-button" @click="close">取消</button>
-        <button type="button" class="primary-button" :disabled="submitting" @click="submit">保存授权</button>
-      </footer>
-    </div>
-  </div>
+    <template #footer>
+      <a-button @click="close">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="submit">保存授权</a-button>
+    </template>
+  </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { FileAuthType, FileRow, UpdateFileAuthPayload } from '@osg/shared/api/admin/file'
+import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
 const classOptions = ['2024Fall', '2025Spring']
 
@@ -118,128 +113,3 @@ const submit = () => {
   })
 }
 </script>
-
-<style scoped lang="scss">
-.auth-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-}
-
-.auth-modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.42);
-}
-
-.auth-modal__panel {
-  position: relative;
-  z-index: 1;
-  width: min(620px, calc(100vw - 32px));
-  margin: 52px auto;
-  border-radius: 24px;
-  overflow: hidden;
-  background: #fff;
-  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.2);
-}
-
-.auth-modal__hero {
-  padding: 24px;
-  color: #eff6ff;
-  background: linear-gradient(135deg, #1d4ed8, #0f172a);
-}
-
-.auth-modal__hero h3,
-.auth-modal__hero p {
-  margin: 0;
-}
-
-.auth-modal__eyebrow {
-  display: inline-flex;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.auth-modal__section {
-  display: flex;
-  gap: 16px;
-  padding: 24px 24px 0;
-  flex-wrap: wrap;
-}
-
-.auth-modal__section--stack {
-  display: grid;
-  gap: 12px;
-}
-
-.auth-modal__choice {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.auth-modal__adder {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-}
-
-.auth-modal__adder input {
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 10px 12px;
-  font: inherit;
-}
-
-.auth-modal__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.auth-modal__tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 999px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: 8px 12px;
-}
-
-.auth-modal__tag button {
-  border: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.auth-modal__footer {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 24px;
-}
-
-.ghost-button,
-.primary-button {
-  border: none;
-  border-radius: 14px;
-  padding: 12px 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ghost-button {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.primary-button {
-  background: #1d4ed8;
-  color: #fff;
-}
-</style>

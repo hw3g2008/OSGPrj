@@ -7,11 +7,11 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="class-record-review-modal__title">
-        <i class="mdi mdi-clipboard-check-outline" aria-hidden="true"></i>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-clipboard-check-outline" aria-hidden="true"></span>
         <span>课程记录审核</span>
         <span class="class-record-review-modal__title-sub">#{{ detail?.recordId || '--' }}</span>
-      </div>
+      </span>
     </template>
 
     <div v-if="loading" class="class-record-review-modal__loading">
@@ -55,22 +55,22 @@
         <div class="class-record-review-modal__section-head">
           <span>审核结果</span>
           <div class="class-record-review-modal__result-toggle">
-            <button
-              type="button"
-              :class="['class-record-review-modal__toggle', { 'class-record-review-modal__toggle--active': reviewResult === 'approved' }]"
+            <a-button
+              :type="reviewResult === 'approved' ? 'primary' : 'default'"
+              size="small"
               :disabled="submitting"
               @click="reviewResult = 'approved'"
             >
               通过
-            </button>
-            <button
-              type="button"
-              :class="['class-record-review-modal__toggle', { 'class-record-review-modal__toggle--active': reviewResult === 'rejected' }]"
+            </a-button>
+            <a-button
+              :type="reviewResult === 'rejected' ? 'primary' : 'default'"
+              size="small"
               :disabled="submitting"
               @click="reviewResult = 'rejected'"
             >
               驳回
-            </button>
+            </a-button>
           </div>
         </div>
       </section>
@@ -81,39 +81,33 @@
         data-field-name="驳回原因"
         data-field-name-alias="课程审核弹窗驳回原因"
       >
-        <label
-          class="class-record-review-modal__field"
+        <a-form-item
+          label="驳回原因 *"
           data-field-name="驳回原因"
           data-field-name-alias="课程审核弹窗驳回原因"
         >
-          <span>驳回原因 *</span>
-          <select
-            v-model="rejectReason"
-            data-field-name="驳回原因"
-            data-field-name-alias="课程审核弹窗驳回原因"
+          <a-select
+            v-model:value="rejectReason"
+            placeholder="请选择驳回原因"
             :disabled="submitting"
           >
-            <option value="">请选择驳回原因</option>
-            <option v-for="option in rejectReasonOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-          </select>
-        </label>
+            <a-select-option v-for="option in rejectReasonOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
 
-        <label
-          class="class-record-review-modal__field"
+        <a-form-item
+          label="驳回说明"
           data-field-name="驳回说明"
           data-field-name-alias="课程审核弹窗驳回说明"
         >
-          <span>驳回说明</span>
-          <textarea
-            v-model="rejectRemark"
-            data-field-name="驳回说明"
-            data-field-name-alias="课程审核弹窗驳回说明"
-            rows="4"
-            maxlength="120"
+          <a-textarea
+            v-model:value="rejectRemark"
+            :rows="4"
+            :maxlength="120"
             :disabled="submitting"
             placeholder="补充本次驳回说明"
           />
-        </label>
+        </a-form-item>
       </section>
 
       <section
@@ -121,22 +115,19 @@
         data-field-name="审核备注"
         data-field-name-alias="课程审核弹窗审核备注"
       >
-        <label
-          class="class-record-review-modal__field"
+        <a-form-item
+          label="审核备注"
           data-field-name="审核备注"
           data-field-name-alias="课程审核弹窗审核备注"
         >
-          <span>审核备注</span>
-          <textarea
-            v-model="reviewRemark"
-            data-field-name="审核备注"
-            data-field-name-alias="课程审核弹窗审核备注"
-            rows="3"
-            maxlength="120"
+          <a-textarea
+            v-model:value="reviewRemark"
+            :rows="3"
+            :maxlength="120"
             :disabled="submitting"
             placeholder="输入审核备注（可选）"
           />
-        </label>
+        </a-form-item>
       </section>
 
       <section
@@ -154,19 +145,14 @@
     </template>
 
     <template #footer>
-      <div class="class-record-review-modal__footer">
-        <button type="button" class="class-record-review-modal__button class-record-review-modal__button--ghost" @click="handleClose">
-          取消
-        </button>
-        <button
-          type="button"
-          class="class-record-review-modal__button class-record-review-modal__button--primary"
-          :disabled="loading || submitting"
-          @click="handleSubmit"
-        >
-          {{ submitting ? '提交中...' : reviewResult === 'rejected' ? '确认驳回' : '确认通过' }}
-        </button>
-      </div>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button
+        type="primary"
+        :disabled="loading || submitting"
+        @click="handleSubmit"
+      >
+        {{ submitting ? '提交中...' : reviewResult === 'rejected' ? '确认驳回' : '确认通过' }}
+      </a-button>
     </template>
 
     <div v-if="visible" data-surface-id="modal-audit" class="class-record-review-modal__compat-surface"></div>
@@ -270,15 +256,6 @@ const formatStatus = (value?: string | null) => {
   gap: 16px;
 }
 
-.class-record-review-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #1e293b;
-  font-size: 18px;
-  font-weight: 700;
-}
-
 .class-record-review-modal__title-sub {
   color: #64748b;
   font-size: 13px;
@@ -358,68 +335,6 @@ const formatStatus = (value?: string | null) => {
 .class-record-review-modal__result-toggle {
   display: inline-flex;
   gap: 8px;
-}
-
-.class-record-review-modal__toggle {
-  min-height: 32px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 0 12px;
-  background: #fff;
-  color: #475569;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.class-record-review-modal__toggle--active {
-  border-color: #6366f1;
-  background: #eef2ff;
-  color: #4338ca;
-}
-
-.class-record-review-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.class-record-review-modal__field select,
-.class-record-review-modal__field textarea {
-  width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: #fff;
-  color: #0f172a;
-  font: inherit;
-}
-
-.class-record-review-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.class-record-review-modal__button {
-  min-height: 40px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  padding: 0 16px;
-  font-weight: 700;
-}
-
-.class-record-review-modal__button--ghost {
-  background: #fff;
-  color: #475569;
-}
-
-.class-record-review-modal__button--primary {
-  border-color: #6366f1;
-  background: #6366f1;
-  color: #fff;
 }
 
 .class-record-review-modal__compat-surface {

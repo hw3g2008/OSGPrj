@@ -94,6 +94,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <insert id="insertStudent" parameterType="OsgStudent" useGeneratedKeys="true" keyProperty="studentId">
         insert into osg_student
         <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="studentId != null">student_id,</if>
             <if test="studentName != null and studentName != ''">student_name,</if>
             <if test="email != null and email != ''">email,</if>
             <if test="gender != null and gender != ''">gender,</if>
@@ -115,6 +116,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="remark != null and remark != ''">remark,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="studentId != null">#{studentId},</if>
             <if test="studentName != null and studentName != ''">#{studentName},</if>
             <if test="email != null and email != ''">#{email},</if>
             <if test="gender != null and gender != ''">#{gender},</if>

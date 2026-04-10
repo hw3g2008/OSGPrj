@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.OsgIdGenerator;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgContract;
 import com.ruoyi.system.domain.OsgStudent;
@@ -167,6 +168,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         student.setAccountStatus(defaultText(student.getAccountStatus(), "0"));
         student.setCreateBy(operator);
         student.setUpdateBy(operator);
+        student.setStudentId(OsgIdGenerator.generateUniqueId(jdbcTemplate, "osg_student", "student_id"));
         if (studentMapper.insertStudent(student) <= 0 || student.getStudentId() == null)
         {
             throw new ServiceException("学员创建失败");
@@ -314,6 +316,8 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         detail.put("accountStatus", student.getAccountStatus());
         detail.put("recruitmentCycles", splitCsv(student.getRecruitmentCycle()));
         detail.put("majorDirections", splitCsv(student.getMajorDirection()));
+        detail.put("highSchool", firstNonBlank(remarkFields.get("highSchool")));
+        detail.put("visaStatus", firstNonBlank(remarkFields.get("visaStatus")));
         detail.put("mentor", buildMentorBlock(student));
         detail.put("academic", buildAcademicBlock(student, remarkFields));
         detail.put("jobDirection", buildJobDirectionBlock(student));
@@ -789,9 +793,9 @@ public class OsgStudentServiceImpl implements IOsgStudentService
     {
         Map<String, Object> mentor = new LinkedHashMap<>();
         mentor.put("leadMentorId", student.getLeadMentorId());
-        mentor.put("leadMentorName", student.getLeadMentorId() == null ? null : String.valueOf(student.getLeadMentorId()));
+        mentor.put("leadMentorName", resolveUserDisplayName(student.getLeadMentorId()));
         mentor.put("assistantId", student.getAssistantId());
-        mentor.put("assistantName", student.getAssistantId() == null ? null : String.valueOf(student.getAssistantId()));
+        mentor.put("assistantName", resolveUserDisplayName(student.getAssistantId()));
         return mentor;
     }
 
@@ -803,6 +807,13 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         academic.put("graduationYear", student.getGraduationYear());
         academic.put("studyPlan", defaultText(remarkFields.get("studyPlan"), remarkFields.get("postgraduate")));
         academic.put("deferredGraduation", remarkFields.get("deferredGraduation"));
+        academic.put("highSchool", firstNonBlank(remarkFields.get("highSchool")));
+        academic.put("visaStatus", firstNonBlank(remarkFields.get("visaStatus")));
+        academic.put("postgraduatePlan", firstNonBlank(
+            remarkFields.get("postgraduatePlan"),
+            remarkFields.get("postgraduate"),
+            remarkFields.get("studyPlan")
+        ));
         return academic;
     }
 
@@ -820,9 +831,23 @@ public class OsgStudentServiceImpl implements IOsgStudentService
     {
         Map<String, Object> contact = new LinkedHashMap<>();
         contact.put("email", student.getEmail());
-        contact.put("wechat", remarkFields.get("wechat"));
+        contact.put("wechat", firstNonBlank(remarkFields.get("wechat"), remarkFields.get("wechatId")));
         contact.put("phone", remarkFields.get("phone"));
         return contact;
+    }
+
+    private String resolveUserDisplayName(Long userId)
+    {
+        if (userId == null)
+        {
+            return null;
+        }
+        SysUser user = sysUserService.selectUserById(userId);
+        if (user == null)
+        {
+            return String.valueOf(userId);
+        }
+        return firstNonBlank(user.getNickName(), user.getUserName(), String.valueOf(userId));
     }
 
     private Map<String, String> parseRemarkFields(String remark)
@@ -862,6 +887,22 @@ public class OsgStudentServiceImpl implements IOsgStudentService
     private String defaultText(String value, String fallback)
     {
         return isBlank(value) ? fallback : value;
+    }
+
+    private String firstNonBlank(String... values)
+    {
+        if (values == null)
+        {
+            return null;
+        }
+        for (String value : values)
+        {
+            if (!isBlank(value))
+            {
+                return value;
+            }
+        }
+        return null;
     }
 
     private String normalizeAccountNickname(String value, String fallback)

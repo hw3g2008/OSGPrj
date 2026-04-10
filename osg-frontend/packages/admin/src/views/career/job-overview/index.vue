@@ -1,330 +1,176 @@
 <template>
-  <div class="job-overview-page job-overview-shell">
-    <div class="page-header job-overview-header">
-      <div class="job-overview-header__copy">
-        <h2 class="page-title">
-          学员求职总览
-          <span class="page-title-en">Job Overview</span>
-        </h2>
-        <p class="page-subtitle">查看全部学员的求职进度，管理导师和题库分配</p>
-      </div>
+  <div class="osg-page">
+    <PageHeader title="学员求职总览" subtitle="Job Overview" description="查看全部学员的求职进度，管理导师和题库分配">
+      <template #actions>
+        <a-space>
+          <a-tag>{{ allRows.length }} 条申请</a-tag>
+          <a-tag color="orange">{{ unassignedRows.length }} 条待分配</a-tag>
+          <a-tag color="green">{{ stats.offerCount }} 条 Offer</a-tag>
+          <a-button :loading="exporting" @click="handleExport">
+            <template #icon><ExportOutlined /></template>
+            导出
+          </a-button>
+        </a-space>
+      </template>
+    </PageHeader>
 
-      <div class="job-overview-header__actions">
-        <span class="job-overview-header__traffic">{{ allRows.length }} 条申请 · {{ unassignedRows.length }} 条待分配 · {{ stats.offerCount }} 条 Offer</span>
-        <button type="button" class="job-overview-header__button" :disabled="exporting" @click="handleExport">
-          <i class="mdi mdi-export" aria-hidden="true"></i>
-          <span>{{ exporting ? '导出中...' : '导出' }}</span>
-        </button>
-      </div>
-    </div>
+    <a-row :gutter="12">
+      <a-col v-for="card in statsCards" :key="card.key" :span="Math.floor(24 / statsCards.length)">
+        <a-card :bordered="false" :body-style="{ textAlign: 'center', background: card.bg, borderRadius: '12px' }">
+          <a-statistic :title="card.label" :value="card.value" :value-style="{ color: card.color, fontWeight: 700 }" />
+          <div style="color: #64748b; font-size: 12px; margin-top: 4px">{{ card.meta }}</div>
+        </a-card>
+      </a-col>
+    </a-row>
 
-    <section class="job-overview-summary-grid">
-      <article
-        v-for="card in statsCards"
-        :key="card.key"
-        :class="['job-overview-summary-grid__card', `job-overview-summary-grid__card--${card.tone}`]"
-      >
-        <span class="job-overview-summary-grid__label">{{ card.label }}</span>
-        <strong class="job-overview-summary-grid__value">{{ card.value }}</strong>
-        <span class="job-overview-summary-grid__meta">{{ card.meta }}</span>
-      </article>
-    </section>
-
-    <section class="job-overview-analytics">
-      <article class="job-overview-funnel-card">
-        <header class="job-overview-analytics__head">
-          <div>
-            <span class="job-overview-analytics__eyebrow">本月转化</span>
-            <h3>求职转化漏斗</h3>
-          </div>
-          <span class="job-overview-analytics__legend">已投递 → 面试中 → 获 Offer</span>
-        </header>
-
-        <div class="job-overview-funnel-card__rows">
-          <div v-for="item in funnelRows" :key="item.label" class="job-overview-funnel-card__row">
-            <div class="job-overview-funnel-card__copy">
+    <!-- 分析区域 -->
+    <a-row :gutter="16">
+      <a-col :span="14">
+        <a-card :bordered="false" title="求职转化漏斗" :body-style="{ padding: '16px' }">
+          <template #extra><span style="color: #94a3b8; font-size: 12px">已投递 → 面试中 → 获 Offer</span></template>
+          <div v-for="item in funnelRows" :key="item.label" class="funnel-row">
+            <div class="funnel-label">
               <strong>{{ item.label }}</strong>
               <span>{{ item.count }} 人</span>
             </div>
-            <div class="job-overview-funnel-card__track">
-              <div class="job-overview-funnel-card__fill" :style="{ width: `${Math.max(item.rate, 6)}%` }"></div>
+            <div class="funnel-track">
+              <div class="funnel-fill" :style="{ width: `${Math.max(item.rate, 6)}%` }"></div>
             </div>
-            <span class="job-overview-funnel-card__rate">{{ item.rate }}%</span>
+            <span class="funnel-rate">{{ item.rate }}%</span>
           </div>
-          <div v-if="!funnelRows.length" class="job-overview-empty job-overview-empty--analytics">当前暂无漏斗数据</div>
-        </div>
-      </article>
-
-      <article class="job-overview-hot-card">
-        <header class="job-overview-analytics__head">
-          <div>
-            <span class="job-overview-analytics__eyebrow">热门企业</span>
-            <h3>申请热度 Top 5</h3>
-          </div>
-          <span class="job-overview-analytics__legend">申请数 / Offer 数 / Offer 率</span>
-        </header>
-
-        <div class="job-overview-hot-card__list">
-          <article v-for="company in hotCompanies" :key="company.companyName" class="job-overview-hot-card__item">
+          <a-empty v-if="!funnelRows.length" description="当前暂无漏斗数据" />
+        </a-card>
+      </a-col>
+      <a-col :span="10">
+        <a-card :bordered="false" title="申请热度 Top 5" :body-style="{ padding: '16px' }">
+          <template #extra><span style="color: #94a3b8; font-size: 12px">申请数 / Offer 率</span></template>
+          <div v-for="company in hotCompanies" :key="company.companyName" class="hot-item">
             <div>
               <strong>{{ company.companyName }}</strong>
-              <span>{{ company.applicationCount }} 份申请</span>
+              <div style="color: #64748b; font-size: 12px">{{ company.applicationCount }} 份申请</div>
             </div>
-            <div class="job-overview-hot-card__stats">
-              <span>{{ company.offerCount }} Offer</span>
-              <strong>{{ company.offerRate }}%</strong>
+            <div style="text-align: right">
+              <span style="color: #64748b; font-size: 12px">{{ company.offerCount }} Offer</span>
+              <div style="color: #16a34a; font-size: 18px; font-weight: 700">{{ company.offerRate }}%</div>
             </div>
-          </article>
-          <div v-if="!hotCompanies.length" class="job-overview-empty job-overview-empty--analytics">当前暂无热门公司统计</div>
-        </div>
-      </article>
-    </section>
+          </div>
+          <a-empty v-if="!hotCompanies.length" description="当前暂无热门公司统计" />
+        </a-card>
+      </a-col>
+    </a-row>
 
-    <section class="job-overview-filterbar">
-      <label class="job-overview-filterbar__field" data-field-name="搜索框">
-        <span>学员姓名</span>
-        <input v-model="filters.studentName" type="text" placeholder="搜索学员" @keydown.enter.prevent="handleSearch" />
-      </label>
+    <a-card :bordered="false">
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+        <a-form-item>
+          <a-input v-model:value="filters.studentName" placeholder="搜索学员" allow-clear style="width: 150px" @press-enter="handleSearch" />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px">
+            <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.currentStage" placeholder="全部状态" allow-clear style="width: 130px">
+            <a-select-option v-for="option in stageOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.leadMentorId" placeholder="全部班主任" allow-clear style="width: 130px">
+            <a-select-option v-for="option in mentorOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.assignStatus" placeholder="分配状态" allow-clear style="width: 120px">
+            <a-select-option value="pending">待分配</a-select-option>
+            <a-select-option value="assigned">已分配</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="handleSearch">
+              <template #icon><SearchOutlined /></template>
+              搜索
+            </a-button>
+            <a-button @click="handleReset">重置</a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
 
-      <label class="job-overview-filterbar__field" data-field-name="公司">
-        <span>公司</span>
-        <select v-model="filters.companyName">
-          <option value="">全部公司</option>
-          <option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</option>
-        </select>
-      </label>
+      <a-tabs v-model:activeKey="activeTab">
+        <a-tab-pane key="pending">
+          <template #tab>
+            待分配导师
+            <a-badge :count="pendingBadge" :number-style="{ backgroundColor: '#faad14' }" style="margin-left: 4px" />
+          </template>
+        </a-tab-pane>
+        <a-tab-pane key="all">
+          <template #tab>
+            全部学员
+            <a-badge :count="allRows.length" :number-style="{ backgroundColor: '#1890ff' }" style="margin-left: 4px" />
+          </template>
+        </a-tab-pane>
+      </a-tabs>
 
-      <label class="job-overview-filterbar__field" data-field-name="状态">
-        <span>状态</span>
-        <select v-model="filters.currentStage">
-          <option value="">全部状态</option>
-          <option v-for="option in stageOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-        </select>
-      </label>
-
-      <label class="job-overview-filterbar__field" data-field-name="班主任">
-        <span>班主任</span>
-        <select v-model="filters.leadMentorId">
-          <option value="">全部班主任</option>
-          <option v-for="option in mentorOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-        </select>
-      </label>
-
-      <label class="job-overview-filterbar__field" data-field-name="分配状态">
-        <span>分配状态</span>
-        <select v-model="filters.assignStatus">
-          <option value="">全部状态</option>
-          <option value="pending">待分配</option>
-          <option value="assigned">已分配</option>
-        </select>
-      </label>
-
-      <div class="job-overview-filterbar__actions">
-        <button type="button" class="job-overview-filterbar__button" @click="handleSearch">搜索</button>
-        <button type="button" class="job-overview-filterbar__button job-overview-filterbar__button--ghost" @click="handleReset">
-          重置
-        </button>
-      </div>
-    </section>
-
-    <section class="job-overview-board">
-      <div class="job-overview-dataset-tabs">
-        <button
-          type="button"
-          :class="[
-            'job-overview-dataset-tabs__button',
-            { 'job-overview-dataset-tabs__button--active': activeTab === 'pending' }
-          ]"
-          data-tab="pending"
-          :aria-pressed="activeTab === 'pending'"
-          @click="activeTab = 'pending'"
-        >
-          <i class="mdi mdi-account-clock-outline" aria-hidden="true"></i>
-          <span>待分配导师</span>
-          <strong>{{ pendingBadge }}</strong>
-        </button>
-        <button
-          type="button"
-          :class="[
-            'job-overview-dataset-tabs__button',
-            { 'job-overview-dataset-tabs__button--active': activeTab === 'all' }
-          ]"
-          data-tab="all"
-          :aria-pressed="activeTab === 'all'"
-          @click="activeTab = 'all'"
-        >
-          <i class="mdi mdi-table-large" aria-hidden="true"></i>
-          <span>全部学员</span>
-          <strong>{{ allRows.length }}</strong>
-        </button>
-      </div>
-
-      <div v-if="loading" class="job-overview-loading">
-        <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-        <span>正在加载求职总览...</span>
-      </div>
-
-      <template v-else-if="activeTab === 'pending'">
-        <div class="job-overview-alert">
-          <i class="mdi mdi-information-outline" aria-hidden="true"></i>
-          <span>以下学员申请了辅导，需要为岗位申请分配导师。</span>
-        </div>
-
-        <div class="job-overview-tablewrap">
-          <table class="job-overview-table job-overview-datatable">
-            <thead>
-              <tr>
-                <th>学员</th>
-                <th>公司/岗位</th>
-                <th>阶段</th>
-                <th>面试时间</th>
-                <th>需求导师</th>
-                <th>申请时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in unassignedRows" :key="row.applicationId">
-                <td>
-                  <div class="job-overview-student">
-                    <div class="job-overview-student__avatar">{{ getInitials(row.studentName) }}</div>
-                    <div class="job-overview-student__copy">
-                      <strong>{{ row.studentName || '-' }}</strong>
-                      <span>ID: {{ row.studentId }}</span>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="job-overview-company">
-                    <strong>{{ row.companyName }}</strong>
-                    <span>{{ row.positionName }}</span>
-                  </div>
-                </td>
-                <td>
-                  <span :class="['job-overview-chip', `job-overview-chip--${getStageTone(row.currentStage)}`]">
-                    {{ formatStage(row.currentStage) }}
-                  </span>
-                </td>
-                <td>
-                  <div class="job-overview-time">
-                    <strong>{{ formatDateTime(row.interviewTime) }}</strong>
-                    <span>{{ formatInterviewCountdown(row.interviewTime) }}</span>
-                  </div>
-                </td>
-                <td>
-                  <div class="job-overview-demand">
-                    <strong>{{ row.requestedMentorCount || 0 }} 位</strong>
-                    <span>{{ row.preferredMentorNames || '暂无意向导师' }}</span>
-                  </div>
-                </td>
-                <td>{{ formatRelativeDate(row.submittedAt) }}</td>
-                <td>
-                  <button
-                    type="button"
-                    class="job-overview-action"
-                    data-surface-trigger="modal-assign-mentor"
-                    :data-surface-sample-key="`application-${row.applicationId}`"
-                    @click="handleOpenAssignMentor(row)"
-                  >
-                    分配导师
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="!unassignedRows.length">
-                <td colspan="7" class="job-overview-empty job-overview-empty--inline">当前没有待分配导师的岗位申请</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <!-- 待分配导师表格 -->
+      <template v-if="activeTab === 'pending'">
+        <a-alert type="info" show-icon message="以下学员申请了辅导，需要为岗位申请分配导师。" style="margin-bottom: 12px; border-radius: 8px" />
+        <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedJobOverviewRow) => r.applicationId" :pagination="false" :loading="loading" :locale="{ emptyText: '当前没有待分配导师的岗位申请' }" :scroll="{ x: 1000 }">
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.dataIndex === 'studentName'">
+              <div><strong>{{ record.studentName || '-' }}</strong><div style="color: #64748b; font-size: 12px">ID: {{ record.studentId }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'companyName'">
+              <div><strong>{{ record.companyName }}</strong><div style="color: #64748b; font-size: 12px">{{ record.positionName }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'currentStage'">
+              <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
+            </template>
+            <template v-else-if="column.dataIndex === 'interviewTime'">
+              <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: #64748b; font-size: 12px">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'requestedMentorCount'">
+              <div><strong>{{ record.requestedMentorCount || 0 }} 位</strong><div style="color: #64748b; font-size: 12px">{{ record.preferredMentorNames || '暂无意向导师' }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'submittedAt'">
+              {{ formatRelativeDate(record.submittedAt) }}
+            </template>
+            <template v-else-if="column.dataIndex === 'action'">
+              <a-button type="primary" size="small" @click="handleOpenAssignMentor(record)">分配导师</a-button>
+            </template>
+          </template>
+        </a-table>
       </template>
 
-      <template v-else>
-        <div class="job-overview-tablewrap">
-          <table class="job-overview-table job-overview-datatable">
-            <thead>
-              <tr>
-                <th>学员</th>
-                <th>公司/岗位</th>
-                <th>阶段</th>
-                <th>面试时间</th>
-                <th>辅导状态</th>
-                <th>导师</th>
-                <th>课时 / 反馈</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in allRows"
-                :key="row.applicationId"
-                :class="[
-                  { 'job-overview-datatable__row--updated': row.stageUpdated },
-                  { 'job-overview-datatable__row--ended': isEndedStage(row.currentStage) }
-                ]"
-              >
-                <td>
-                  <div class="job-overview-student">
-                    <div class="job-overview-student__avatar job-overview-student__avatar--cool">{{ getInitials(row.studentName) }}</div>
-                    <div class="job-overview-student__copy">
-                      <strong>{{ row.studentName || '-' }}</strong>
-                      <span>ID: {{ row.studentId }}</span>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="job-overview-company">
-                    <strong>{{ row.companyName }}</strong>
-                    <span>{{ row.positionName }} · {{ row.city || row.region || '地区待补充' }}</span>
-                  </div>
-                </td>
-                <td>
-                  <div class="job-overview-stage">
-                    <span :class="['job-overview-chip', `job-overview-chip--${getStageTone(row.currentStage)}`]">
-                      {{ formatStage(row.currentStage) }}
-                    </span>
-                    <button
-                      v-if="row.stageUpdated"
-                      type="button"
-                      class="job-overview-stage__confirm"
-                      :disabled="stageUpdatingId === row.applicationId"
-                      @click="handleStageConfirm(row)"
-                    >
-                      <i class="mdi mdi-check-circle-outline" aria-hidden="true"></i>
-                      <span>{{ stageUpdatingId === row.applicationId ? '提交中' : '确认' }}</span>
-                    </button>
-                  </div>
-                </td>
-                <td>
-                  <div class="job-overview-time">
-                    <strong>{{ formatDateTime(row.interviewTime) }}</strong>
-                    <span>{{ formatInterviewCountdown(row.interviewTime) }}</span>
-                  </div>
-                </td>
-                <td>
-                  <span :class="['job-overview-chip', `job-overview-chip--${getCoachingTone(row.coachingStatus)}`]">
-                    {{ row.coachingStatus || '未申请' }}
-                  </span>
-                </td>
-                <td>
-                  <div class="job-overview-mentor">
-                    <strong>{{ row.mentorName || row.leadMentorName || '待分配' }}</strong>
-                    <span>{{ row.mentorBackground || (row.assignedStatus === 'assigned' ? '导师信息待补充' : '未分配导师') }}</span>
-                  </div>
-                </td>
-                <td>
-                  <div class="job-overview-feedback">
-                    <strong>{{ row.hoursUsed || 0 }}h</strong>
-                    <span>{{ row.feedbackSummary || '暂无反馈' }}</span>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="!allRows.length">
-                <td colspan="7" class="job-overview-empty job-overview-empty--inline">当前筛选条件下暂无学员求职记录</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </template>
-    </section>
+      <!-- 全部学员表格 -->
+      <a-table v-else :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="false" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 1200 }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'studentName'">
+            <div><strong>{{ record.studentName || '-' }}</strong><div style="color: #64748b; font-size: 12px">ID: {{ record.studentId }}</div></div>
+          </template>
+          <template v-else-if="column.dataIndex === 'companyName'">
+            <div><strong>{{ record.companyName }}</strong><div style="color: #64748b; font-size: 12px">{{ record.positionName }} · {{ record.city || record.region || '地区待补充' }}</div></div>
+          </template>
+          <template v-else-if="column.dataIndex === 'currentStage'">
+            <a-space>
+              <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
+              <a-button v-if="record.stageUpdated" size="small" :loading="stageUpdatingId === record.applicationId" @click="handleStageConfirm(record)">确认</a-button>
+            </a-space>
+          </template>
+          <template v-else-if="column.dataIndex === 'interviewTime'">
+            <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: #64748b; font-size: 12px">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
+          </template>
+          <template v-else-if="column.dataIndex === 'coachingStatus'">
+            <a-tag :color="coachingColor(record.coachingStatus)">{{ record.coachingStatus || '未申请' }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'mentorName'">
+            <div><strong>{{ record.mentorName || record.leadMentorName || '待分配' }}</strong><div style="color: #64748b; font-size: 12px">{{ record.mentorBackground || (record.assignedStatus === 'assigned' ? '导师信息待补充' : '未分配导师') }}</div></div>
+          </template>
+          <template v-else-if="column.dataIndex === 'hoursUsed'">
+            <div><strong>{{ record.hoursUsed || 0 }}h</strong><div style="color: #64748b; font-size: 12px">{{ record.feedbackSummary || '暂无反馈' }}</div></div>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <AssignMentorModal
       :visible="assignMentorVisible"
@@ -340,6 +186,8 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import AssignMentorModal from './components/AssignMentorModal.vue'
 import {
   assignMentors,
@@ -360,7 +208,26 @@ import {
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 
 type ActiveTab = 'pending' | 'all'
-type TagTone = 'info' | 'warning' | 'success' | 'danger' | 'default' | 'purple' | 'amber'
+
+const pendingColumns = [
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140 },
+  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 160 },
+  { title: '阶段', dataIndex: 'currentStage', key: 'currentStage', width: 100 },
+  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 130 },
+  { title: '需求导师', dataIndex: 'requestedMentorCount', key: 'requestedMentorCount', width: 140 },
+  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 100 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
+]
+
+const allColumns = [
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140 },
+  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 180 },
+  { title: '阶段', dataIndex: 'currentStage', key: 'currentStage', width: 130 },
+  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 130 },
+  { title: '辅导状态', dataIndex: 'coachingStatus', key: 'coachingStatus', width: 100 },
+  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 140 },
+  { title: '课时 / 反馈', dataIndex: 'hoursUsed', key: 'hoursUsed', width: 140 },
+]
 
 interface AssignMentorOption {
   mentorId: number
@@ -389,10 +256,10 @@ const defaultStats: JobOverviewStats = {
 
 const filters = reactive({
   studentName: '',
-  companyName: '',
-  currentStage: '',
-  leadMentorId: '',
-  assignStatus: ''
+  companyName: undefined,
+  currentStage: undefined,
+  leadMentorId: undefined,
+  assignStatus: undefined
 })
 
 const stageOptions = [
@@ -472,41 +339,11 @@ async function loadAssignableMentors() {
 }
 
 const statsCards = computed(() => [
-  {
-    key: 'applied',
-    label: '已投递',
-    value: stats.value.appliedCount,
-    meta: `Offer率 ${formatDelta(stats.value.offerRateYoY)}`,
-    tone: 'blue'
-  },
-  {
-    key: 'interviewing',
-    label: '面试中',
-    value: stats.value.interviewingCount,
-    meta: `通过率 ${formatDelta(stats.value.interviewPassRateYoY)}`,
-    tone: 'amber'
-  },
-  {
-    key: 'offer',
-    label: '已获 Offer',
-    value: stats.value.offerCount,
-    meta: `${stats.value.offerRate}% Offer rate`,
-    tone: 'green'
-  },
-  {
-    key: 'rejected',
-    label: '已拒绝',
-    value: stats.value.rejectedCount,
-    meta: '关注失败复盘',
-    tone: 'red'
-  },
-  {
-    key: 'withdrawn',
-    label: '已放弃',
-    value: stats.value.withdrawnCount,
-    meta: '追踪后续转化',
-    tone: 'slate'
-  }
+  { key: 'applied', label: '已投递', value: stats.value.appliedCount, meta: `Offer率 ${formatDelta(stats.value.offerRateYoY)}`, bg: '#eff6ff', color: '#2563eb' },
+  { key: 'interviewing', label: '面试中', value: stats.value.interviewingCount, meta: `通过率 ${formatDelta(stats.value.interviewPassRateYoY)}`, bg: '#fffbeb', color: '#d97706' },
+  { key: 'offer', label: '已获 Offer', value: stats.value.offerCount, meta: `${stats.value.offerRate}% Offer rate`, bg: '#f0fdf4', color: '#16a34a' },
+  { key: 'rejected', label: '已拒绝', value: stats.value.rejectedCount, meta: '关注失败复盘', bg: '#fef2f2', color: '#dc2626' },
+  { key: 'withdrawn', label: '已放弃', value: stats.value.withdrawnCount, meta: '追踪后续转化', bg: '#f8fafc', color: '#64748b' }
 ])
 
 async function loadDashboard() {
@@ -541,10 +378,10 @@ function handleSearch() {
 
 function handleReset() {
   filters.studentName = ''
-  filters.companyName = ''
-  filters.currentStage = ''
-  filters.leadMentorId = ''
-  filters.assignStatus = ''
+  filters.companyName = undefined
+  filters.currentStage = undefined
+  filters.leadMentorId = undefined
+  filters.assignStatus = undefined
   void loadDashboard()
 }
 
@@ -613,41 +450,35 @@ async function handleStageConfirm(row: JobOverviewRow) {
   }
 }
 
-function getInitials(name?: string) {
-  if (!name) return 'OS'
-  return name.slice(0, 2)
-}
-
 function formatStage(stage?: string) {
   const matched = stageOptions.find((item) => item.value === stage)
   return matched?.label || stage || '未更新'
 }
 
-function getStageTone(stage?: string): TagTone {
+function stageColor(stage?: string): string {
   switch (stage) {
-    case 'offer':
-      return 'success'
-    case 'rejected':
-      return 'danger'
-    case 'withdrawn':
-      return 'default'
-    case 'case_study':
-      return 'warning'
+    case 'offer': return 'green'
+    case 'rejected': return 'red'
+    case 'withdrawn': return 'default'
+    case 'case_study': return 'orange'
     case 'first_round':
     case 'second_round':
-    case 'final':
-      return 'amber'
-    case 'hirevue':
-      return 'info'
-    default:
-      return 'purple'
+    case 'final': return 'gold'
+    case 'hirevue': return 'blue'
+    default: return 'purple'
   }
 }
 
-function getCoachingTone(status?: string): TagTone {
+function coachingColor(status?: string): string {
   if (status === '辅导中') return 'purple'
-  if (status === '待审批') return 'warning'
+  if (status === '待审批') return 'orange'
   return 'default'
+}
+
+function allRowClassName(record: JobOverviewRow): string {
+  if (record.stageUpdated) return 'row-updated'
+  if (isEndedStage(record.currentStage)) return 'row-ended'
+  return ''
 }
 
 function isEndedStage(stage?: string) {
@@ -702,562 +533,20 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.job-overview-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.job-overview-header {
-  align-items: flex-start;
-}
-
-.job-overview-header__copy {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.job-overview-header__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.job-overview-header__traffic {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: #f8fafc;
-  color: #475569;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.job-overview-header__button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.job-overview-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.job-overview-summary-grid__card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 110px;
-  padding: 16px 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(203, 213, 225, 0.7);
-}
-
-.job-overview-summary-grid__label {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.job-overview-summary-grid__value {
-  font-size: 30px;
-  line-height: 1;
-}
-
-.job-overview-summary-grid__meta {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.job-overview-summary-grid__card--blue {
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-.job-overview-summary-grid__card--amber {
-  background: #fffbeb;
-  color: #d97706;
-}
-
-.job-overview-summary-grid__card--green {
-  background: #f0fdf4;
-  color: #16a34a;
-}
-
-.job-overview-summary-grid__card--red {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.job-overview-summary-grid__card--slate {
-  background: #f8fafc;
-  color: #64748b;
-}
-
-.job-overview-analytics {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-  gap: 16px;
-}
-
-.job-overview-funnel-card,
-.job-overview-hot-card,
-.job-overview-filterbar,
-.job-overview-board {
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-}
-
-.job-overview-funnel-card,
-.job-overview-hot-card {
-  padding: 18px;
-}
-
-.job-overview-analytics__head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.job-overview-analytics__eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #3b82f6;
-}
-
-.job-overview-analytics__head h3 {
-  margin: 4px 0 0;
-  color: #0f172a;
-  font-size: 16px;
-}
-
-.job-overview-analytics__legend {
-  color: #94a3b8;
-  font-size: 12px;
-}
-
-.job-overview-funnel-card__rows {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.job-overview-funnel-card__row {
+.funnel-row {
   display: grid;
   grid-template-columns: 100px minmax(0, 1fr) 42px;
   gap: 10px;
   align-items: center;
+  margin-bottom: 8px;
 }
-
-.job-overview-funnel-card__copy {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.job-overview-funnel-card__copy strong {
-  color: #0f172a;
-  font-size: 13px;
-}
-
-.job-overview-funnel-card__copy span,
-.job-overview-funnel-card__rate {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.job-overview-funnel-card__track {
-  height: 10px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
-}
-
-.job-overview-funnel-card__fill {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #3b82f6, #60a5fa);
-}
-
-.job-overview-hot-card__list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.job-overview-hot-card__item {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-
-.job-overview-hot-card__item strong {
-  display: block;
-  color: #0f172a;
-  font-size: 13px;
-}
-
-.job-overview-hot-card__item span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.job-overview-hot-card__stats {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.job-overview-hot-card__stats strong {
-  color: #16a34a;
-  font-size: 18px;
-}
-
-.job-overview-filterbar {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
-  gap: 10px;
-  padding: 16px 18px;
-}
-
-.job-overview-filterbar__field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.job-overview-filterbar__field span {
-  color: #475569;
-  font-size: 12px;
-}
-
-.job-overview-filterbar__field input,
-.job-overview-filterbar__field select {
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #0f172a;
-  font-size: 13px;
-}
-
-.job-overview-filterbar__actions {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.job-overview-filterbar__button {
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.job-overview-filterbar__button--ghost {
-  color: #64748b;
-}
-
-.job-overview-board {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px 18px;
-}
-
-.job-overview-dataset-tabs {
-  display: inline-flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.job-overview-dataset-tabs__button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 34px;
-  padding: 0 14px;
-  border: 1px solid #dbe3ee;
-  border-radius: 999px;
-  background: #fff;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.job-overview-dataset-tabs__button strong {
-  min-width: 24px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  font-size: 11px;
-}
-
-.job-overview-dataset-tabs__button--active {
-  border-color: transparent;
-  background: linear-gradient(135deg, #8b5cf6, #6366f1);
-  color: #fff;
-}
-
-.job-overview-dataset-tabs__button--active strong {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.job-overview-alert {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-size: 12px;
-}
-
-.job-overview-tablewrap {
-  overflow-x: auto;
-}
-
-.job-overview-datatable {
-  width: 100%;
-  min-width: 980px;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 13px;
-}
-
-.job-overview-datatable th {
-  padding: 13px 14px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #475569;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: left;
-}
-
-.job-overview-datatable td {
-  padding: 14px;
-  border-bottom: 1px solid #e2e8f0;
-  vertical-align: middle;
-}
-
-.job-overview-datatable__row--updated {
-  background: rgba(239, 246, 255, 0.6);
-}
-
-.job-overview-datatable__row--ended {
-  background: rgba(248, 250, 252, 0.8);
-}
-
-.job-overview-student {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-}
-
-.job-overview-student__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.job-overview-student__avatar--cool {
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
-.job-overview-student__copy,
-.job-overview-company,
-.job-overview-time,
-.job-overview-demand,
-.job-overview-mentor,
-.job-overview-feedback {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.job-overview-student__copy strong,
-.job-overview-company strong,
-.job-overview-time strong,
-.job-overview-demand strong,
-.job-overview-mentor strong,
-.job-overview-feedback strong {
-  color: #0f172a;
-  font-size: 13px;
-}
-
-.job-overview-student__copy span,
-.job-overview-company span,
-.job-overview-time span,
-.job-overview-demand span,
-.job-overview-mentor span,
-.job-overview-feedback span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.job-overview-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.job-overview-chip--info {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.job-overview-chip--warning,
-.job-overview-chip--amber {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.job-overview-chip--success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.job-overview-chip--danger {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.job-overview-chip--default {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.job-overview-chip--purple {
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
-.job-overview-stage {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.job-overview-stage__confirm,
-.job-overview-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.job-overview-action {
-  border-color: #c7d2fe;
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
-.job-overview-loading,
-.job-overview-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #64748b;
-  font-size: 13px;
-}
-
-.job-overview-loading {
-  min-height: 220px;
-}
-
-.job-overview-empty--analytics {
-  min-height: 120px;
-}
-
-.job-overview-empty--inline {
-  min-height: 0;
-  padding: 24px 0;
-}
-
-@media (max-width: 1280px) {
-  .job-overview-summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .job-overview-filterbar {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 960px) {
-  .job-overview-analytics {
-    grid-template-columns: 1fr;
-  }
-
-  .job-overview-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .job-overview-filterbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .job-overview-shell {
-    gap: 14px;
-  }
-
-  .job-overview-summary-grid,
-  .job-overview-filterbar {
-    grid-template-columns: 1fr;
-  }
-}
+.funnel-label { display: flex; flex-direction: column; gap: 2px; }
+.funnel-label strong { color: #0f172a; font-size: 13px; }
+.funnel-label span, .funnel-rate { color: #64748b; font-size: 12px; }
+.funnel-track { height: 10px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+.funnel-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.hot-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: 10px; background: #f8fafc; margin-bottom: 8px; }
+.hot-item strong { color: #0f172a; font-size: 13px; }
+:deep(.row-updated) { background: rgba(239, 246, 255, 0.6); }
+:deep(.row-ended) { background: rgba(248, 250, 252, 0.8); }
 </style>

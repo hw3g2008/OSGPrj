@@ -7,8 +7,8 @@
     @cancel="handleClose"
   >
     <template #title>
-      <span class="profile-modal__title">
-        <span class="mdi mdi-account-cog profile-modal__title-icon" aria-hidden="true" />
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-account-cog" aria-hidden="true" />
         <span>个人设置</span>
       </span>
     </template>
@@ -83,13 +83,11 @@
     </a-form>
 
     <template #footer>
-      <div data-content-part="action-row" class="profile-modal__actions">
-        <a-button class="profile-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose">取消</a-button>
-        <a-button type="primary" class="profile-modal__confirm-btn" :loading="saving" @click="handleSave">
-          <span class="mdi mdi-check" aria-hidden="true" />
-          <span>保存</span>
-        </a-button>
-      </div>
+      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button type="primary" :loading="saving" @click="handleSave">
+        <span class="mdi mdi-check" aria-hidden="true" />
+        <span>保存</span>
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -221,17 +219,6 @@ const handleSave = async () => {
 </script>
 
 <style scoped lang="scss">
-.profile-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.profile-modal__title-icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
 .profile-modal__form {
   display: grid;
   gap: 12px;
@@ -264,27 +251,6 @@ const handleSave = async () => {
   color: #1d4ed8;
   font-size: 13px;
   font-weight: 500;
-}
-
-.profile-modal__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.profile-modal__cancel-btn {
-  min-width: 80px;
-  border-color: var(--border, #d0d7e2);
-  border-radius: 10px;
-  color: var(--text-secondary, #64748b);
-  font-weight: 500;
-}
-
-.profile-modal__confirm-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
 }
 
 .profile-modal__read-only :deep(.ant-input[disabled]) {

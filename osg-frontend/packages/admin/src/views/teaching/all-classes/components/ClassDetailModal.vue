@@ -7,10 +7,10 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="modal-title-row" :style="headerGradientStyle">
+      <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-file-document" aria-hidden="true" />
         <span>{{ headerTitle }}</span>
-      </div>
+      </span>
     </template>
 
     <!-- 基本信息 3x3 网格 -->
@@ -248,26 +248,23 @@
       <label class="review-label">
         <span class="mdi mdi-comment-edit" aria-hidden="true" /> 审核备注
       </label>
-      <textarea
-        v-model="reviewRemark"
-        class="review-textarea"
-        rows="2"
+      <a-textarea
+        v-model:value="reviewRemark"
+        :rows="2"
         placeholder="输入审核备注（可选）"
       />
     </section>
 
     <template #footer>
-      <div class="modal-footer-row">
-        <button type="button" class="btn-outline" @click="handleClose">关闭</button>
-        <template v-if="isPendingReview">
-          <button type="button" class="btn-outline btn-outline--danger" @click="handleReject">
-            <span class="mdi mdi-close" aria-hidden="true" /> 驳回
-          </button>
-          <button type="button" class="btn-primary" @click="handleApprove">
-            <span class="mdi mdi-check" aria-hidden="true" /> 通过
-          </button>
-        </template>
-      </div>
+      <a-button @click="handleClose">关闭</a-button>
+      <template v-if="isPendingReview">
+        <a-button danger @click="handleReject">
+          <span class="mdi mdi-close" aria-hidden="true" style="margin-right:4px" />驳回
+        </a-button>
+        <a-button type="primary" @click="handleApprove">
+          <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px" />通过
+        </a-button>
+      </template>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -393,15 +390,6 @@ const nl2br = (text: string) => {
 </script>
 
 <style scoped lang="scss">
-.modal-title-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
 /* --- Info grid --- */
 .info-grid {
   display: grid;
@@ -709,51 +697,4 @@ const nl2br = (text: string) => {
   margin-bottom: 8px;
 }
 
-.review-textarea {
-  width: 100%;
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font: inherit;
-  font-size: 14px;
-  resize: vertical;
-}
-
-/* --- Footer --- */
-.modal-footer-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.btn-outline {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 8px;
-  padding: 8px 16px;
-  background: var(--card-bg, #ffffff);
-  color: var(--text-primary, #1e293b);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.btn-outline--danger {
-  color: var(--danger, #ef4444);
-  border-color: var(--danger, #ef4444);
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  background: var(--primary, #3b82f6);
-  color: #fff;
-  font-weight: 500;
-  cursor: pointer;
-}
 </style>

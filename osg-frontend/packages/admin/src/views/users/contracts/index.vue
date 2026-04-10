@@ -1,191 +1,124 @@
 <template>
-  <div class="contracts-page">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">
-          合同管理
-          <span class="page-title-en">Contract</span>
-        </h2>
-        <p class="page-subtitle">查看所有合同记录，为老学员续签添加新合同。新增学员时的合同信息会自动同步到此处。</p>
-      </div>
-      <div class="page-header__actions">
-        <button
-          type="button"
-          class="permission-button permission-button--primary"
-          data-surface-trigger="modal-add-contract"
-          data-surface-sample-key="contracts-add-entry"
-          @click="handleRenewEntry()"
-        >
-          <i class="mdi mdi-plus" aria-hidden="true"></i>
-          <span>新增合同</span>
-        </button>
-      </div>
-    </div>
+  <div class="osg-page">
+    <PageHeader title="合同管理" subtitle="Contract" description="查看所有合同记录，为老学员续签添加新合同。新增学员时的合同信息会自动同步到此处。">
+      <template #actions>
+        <a-button type="primary" data-surface-trigger="modal-add-contract" data-surface-sample-key="contracts-add-entry" @click="handleRenewEntry()">
+          <template #icon><PlusOutlined /></template>
+          新增合同
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <section class="contracts-stats">
-      <article
-        v-for="card in statsCards"
-        :key="card.key"
-        :class="['contracts-stats__card', `contracts-stats__card--${card.tone}`]"
+    <a-row :gutter="16">
+      <a-col v-for="card in statsCards" :key="card.key" :span="Math.floor(24 / statsCards.length)">
+        <a-card :bordered="false" :body-style="{ textAlign: 'center', background: card.bg, borderRadius: '12px' }">
+          <a-statistic :title="card.label" :value="card.value" :value-style="{ fontWeight: 700 }" />
+        </a-card>
+      </a-col>
+    </a-row>
+
+    <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+        <a-form-item label="日期">
+          <a-space>
+            <a-date-picker v-model:value="filters.startDate" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 140px" />
+            <span>~</span>
+            <a-date-picker v-model:value="filters.endDate" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 140px" />
+          </a-space>
+        </a-form-item>
+        <a-form-item>
+          <a-input v-model:value="filters.studentKeyword" placeholder="姓名或学员ID" allow-clear style="width: 180px" />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.contractType" placeholder="合同类型" allow-clear style="width: 120px">
+            <a-select-option value="initial">首签</a-select-option>
+            <a-select-option value="renew">续签</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.contractStatus" placeholder="合同状态" allow-clear style="width: 130px">
+            <a-select-option value="active">有效</a-select-option>
+            <a-select-option value="expiring">即将到期</a-select-option>
+            <a-select-option value="expired">已结束</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.leadMentorName" placeholder="班主任" allow-clear style="width: 120px">
+            <a-select-option v-for="mentor in mentorOptions" :key="mentor" :value="mentor">{{ mentor }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="handleSearch">
+              <template #icon><SearchOutlined /></template>
+              搜索
+            </a-button>
+            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleExport">
+              <template #icon><ExportOutlined /></template>
+              导出
+            </a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
+
+      <a-table
+        :columns="contractColumns"
+        :data-source="filteredContracts"
+        :row-key="(record: ContractListItem) => record.contractId"
+        :pagination="false"
+        :loading="loading"
+        :locale="{ emptyText: '暂无合同数据' }"
+        :scroll="{ x: 1280 }"
       >
-        <div class="contracts-stats__value">{{ card.value }}</div>
-        <div class="contracts-stats__label">{{ card.label }}</div>
-      </article>
-    </section>
-
-    <section class="permission-card contracts-panel">
-      <div class="contracts-filters" data-field-name="合同管理页">
-        <div class="contracts-filter-group contracts-filter-group--date" data-field-name="日期">
-          <div class="contracts-date-range">
-            <input v-model="filters.startDate" type="date" class="contracts-input" />
-            <span class="contracts-separator">~</span>
-            <input v-model="filters.endDate" type="date" class="contracts-input" />
-          </div>
-        </div>
-        <div class="contracts-filter-group contracts-filter-group--search">
-          <input v-model="filters.studentKeyword" type="text" class="contracts-input" data-field-name="搜索框" placeholder="姓名或学员ID" />
-        </div>
-        <div class="contracts-filter-group">
-          <select v-model="filters.contractType" class="contracts-select">
-            <option value="">合同类型</option>
-            <option value="initial">首签</option>
-            <option value="renew">续签</option>
-          </select>
-        </div>
-        <div class="contracts-filter-group">
-          <select v-model="filters.contractStatus" class="contracts-select" data-field-name="状态">
-            <option value="">合同状态</option>
-            <option value="active">有效</option>
-            <option value="expiring">即将到期</option>
-            <option value="expired">已结束</option>
-          </select>
-        </div>
-        <div class="contracts-filter-group">
-          <select v-model="filters.leadMentorName" class="contracts-select">
-            <option value="">班主任</option>
-            <option v-for="mentor in mentorOptions" :key="mentor" :value="mentor">{{ mentor }}</option>
-          </select>
-        </div>
-        <div class="contracts-filters__actions">
-          <button type="button" class="permission-button permission-button--outline" @click="handleSearch">
-            <i class="mdi mdi-magnify" aria-hidden="true"></i>
-            搜索
-          </button>
-          <button type="button" class="permission-button permission-button--ghost" @click="handleReset">
-            <i class="mdi mdi-refresh" aria-hidden="true"></i>
-            重置
-          </button>
-          <button type="button" class="permission-button permission-button--outline" @click="handleExport">
-            <i class="mdi mdi-file-export-outline" aria-hidden="true"></i>
-            导出
-          </button>
-        </div>
-      </div>
-
-      <div class="permission-card__body permission-card__body--flush">
-        <table class="permission-table contracts-table">
-          <thead>
-            <tr>
-              <th v-for="column in contractColumns" :key="column.key">{{ column.label }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="record in filteredContracts" :key="record.contractId">
-              <!-- 合同编号 -->
-              <td>{{ record.contractNo }}</td>
-
-              <!-- 学员 -->
-              <td>
-                <button
-                  type="button"
-                  class="contract-link"
-                  data-surface-trigger="modal-contract-detail"
-                  :data-surface-sample-key="`contract-${record.contractId}`"
-                  @click="handleDetailEntry(record)"
-                >
-                  {{ record.studentName || '-' }}
-                </button>
-              </td>
-
-              <!-- 班主任 -->
-              <td>{{ record.leadMentorName || '-' }}</td>
-
-              <!-- 合同类型 -->
-              <td>
-                <span :class="['contract-pill', `contract-pill--${getTypeTone(record.contractType)}`]">
-                  {{ formatContractType(record.contractType) }}
-                </span>
-              </td>
-
-              <!-- 金额 -->
-              <td>
-                <strong class="contract-amount-value">{{ formatCurrency(record.contractAmount) }}</strong>
-              </td>
-
-              <!-- 课时 -->
-              <td>
-                <div class="contract-hours-value">
-                  <strong>{{ record.remainingHours ?? record.totalHours }}</strong>
-                  <span>/ {{ record.totalHours }}h</span>
-                </div>
-              </td>
-
-              <!-- 有效期 -->
-              <td>
-                <div class="contract-cell-block contract-cell-block--period">
-                  <span class="contract-date">{{ formatDate(record.startDate) }}</span>
-                  <span class="contract-date-separator">~</span>
-                  <span class="contract-date">{{ formatDate(record.endDate) }}</span>
-                </div>
-              </td>
-
-              <!-- 续签原因 -->
-              <td>{{ record.renewalReason || '-' }}</td>
-
-              <!-- 状态 -->
-              <td>
-                <span :class="['contract-status-tag', `contract-status-tag--${getStatusTone(resolveStatus(record))}`]">
-                  {{ formatContractStatus(resolveStatus(record)) }}
-                </span>
-              </td>
-
-              <!-- 操作 -->
-              <td>
-                <div class="contract-actions">
-                  <button
-                    type="button"
-                    class="contract-action"
-                    data-surface-trigger="modal-contract-detail"
-                    :data-surface-sample-key="`contract-${record.contractId}`"
-                    @click="handleDetailEntry(record)"
-                  >
-                    详情
-                  </button>
-                  <button
-                    type="button"
-                    class="contract-action contract-action--primary"
-                    data-surface-trigger="modal-contract-renew"
-                    :data-surface-sample-key="`contract-${record.contractId}-renew`"
-                    @click="handleRenewEntry(record)"
-                  >
-                    续签合同
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="!filteredContracts.length">
-              <td :colspan="contractColumns.length" class="contracts-empty">暂无合同数据</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="contracts-summary-bar">
-          <span><strong>总金额:</strong> {{ formatCurrency(summary.totalAmount) }}</span>
-          <span><strong>总课时:</strong> {{ summary.totalHours }}h</span>
-          <span><strong>已用:</strong> {{ summary.usedHours }}h</span>
-          <span><strong>剩余:</strong> {{ summary.remainingHours }}h</span>
-        </div>
-      </div>
-    </section>
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'contractNo'">
+            <span style="font-family: monospace; font-weight: 600">{{ record.contractNo }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'studentName'">
+            <a-button type="link" size="small" style="padding: 0; font-weight: 600" data-surface-trigger="modal-contract-detail" :data-surface-sample-key="`contract-${record.contractId}`" @click="handleDetailEntry(record)">
+              {{ record.studentName || '-' }}
+            </a-button>
+          </template>
+          <template v-else-if="column.dataIndex === 'leadMentorName'">
+            {{ record.leadMentorName || '-' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'contractType'">
+            <a-tag :color="getTypeColor(record.contractType)">{{ formatContractType(record.contractType) }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'contractAmount'">
+            <strong>{{ formatCurrency(record.contractAmount) }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'totalHours'">
+            <strong>{{ record.remainingHours ?? record.totalHours }}</strong>
+            <span style="color: #9ca3af; font-size: 12px"> / {{ record.totalHours }}h</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'period'">
+            <span style="color: #566178; font-size: 12px">{{ formatDate(record.startDate) }} ~ {{ formatDate(record.endDate) }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'renewalReason'">
+            {{ record.renewalReason || '-' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'contractStatus'">
+            <a-tag :color="getStatusColor(resolveStatus(record))">{{ formatContractStatus(resolveStatus(record)) }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-space :size="4">
+              <a-button type="link" size="small" data-surface-trigger="modal-contract-detail" :data-surface-sample-key="`contract-${record.contractId}`" @click="handleDetailEntry(record)">详情</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-contract-renew" :data-surface-sample-key="`contract-${record.contractId}-renew`" @click="handleRenewEntry(record)">续签合同</a-button>
+            </a-space>
+          </template>
+        </template>
+        <template #footer>
+          <a-space :size="24">
+            <span><strong>总金额:</strong> {{ formatCurrency(summary.totalAmount) }}</span>
+            <span><strong>总课时:</strong> {{ summary.totalHours }}h</span>
+            <span><strong>已用:</strong> {{ summary.usedHours }}h</span>
+            <span><strong>剩余:</strong> {{ summary.remainingHours }}h</span>
+          </a-space>
+        </template>
+      </a-table>
+    </a-card>
 
     <ContractDetailModal
       v-model:visible="detailVisible"
@@ -220,6 +153,8 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { ExportOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import ContractDetailModal from './components/ContractDetailModal.vue'
 import ContractStatusChangeModal from './components/ContractStatusChangeModal.vue'
 import ContractBlacklistModal from './components/ContractBlacklistModal.vue'
@@ -239,9 +174,9 @@ interface ContractFilters {
   startDate: string
   endDate: string
   studentKeyword: string
-  contractType: string
-  contractStatus: string
-  leadMentorName: string
+  contractType?: string
+  contractStatus?: string
+  leadMentorName?: string
 }
 
 const contractRows = ref<ContractListItem[]>([])
@@ -271,9 +206,9 @@ const filters = reactive<ContractFilters>({
   startDate: '',
   endDate: '',
   studentKeyword: '',
-  contractType: '',
-  contractStatus: '',
-  leadMentorName: '',
+  contractType: undefined,
+  contractStatus: undefined,
+  leadMentorName: undefined,
 })
 
 const mentorOptions = computed(() =>
@@ -338,11 +273,11 @@ const statsCards = computed(() => {
   const totalAmount = filteredContracts.value.length ? summary.value.totalAmount : Number(summaryStats.value.totalAmount || 0)
 
   return [
-    { key: 'total', label: '总合同数', value: String(totalContracts), tone: 'total' },
-    { key: 'active', label: '有效合同', value: String(activeContracts || summaryStats.value.activeContracts), tone: 'active' },
-    { key: 'expiring', label: '即将到期', value: String(expiringContracts || summaryStats.value.expiringContracts), tone: 'expiring' },
-    { key: 'ended', label: '已结束', value: String(endedContracts || summaryStats.value.endedContracts), tone: 'ended' },
-    { key: 'amount', label: '合同总金额', value: formatCurrency(totalAmount), tone: 'amount' },
+    { key: 'total', label: '总合同数', value: String(totalContracts), tone: 'total', bg: '#eff3ff' },
+    { key: 'active', label: '有效合同', value: String(activeContracts || summaryStats.value.activeContracts), tone: 'active', bg: '#dcfce7' },
+    { key: 'expiring', label: '即将到期', value: String(expiringContracts || summaryStats.value.expiringContracts), tone: 'expiring', bg: '#fef3c7' },
+    { key: 'ended', label: '已结束', value: String(endedContracts || summaryStats.value.endedContracts), tone: 'ended', bg: '#f3f4f6' },
+    { key: 'amount', label: '合同总金额', value: formatCurrency(totalAmount), tone: 'amount', bg: '#dbeafe' },
   ]
 })
 
@@ -388,9 +323,9 @@ const handleReset = async () => {
   filters.startDate = ''
   filters.endDate = ''
   filters.studentKeyword = ''
-  filters.contractType = ''
-  filters.contractStatus = ''
-  filters.leadMentorName = ''
+  filters.contractType = undefined
+  filters.contractStatus = undefined
+  filters.leadMentorName = undefined
   await loadContracts()
 }
 
@@ -499,16 +434,16 @@ const formatContractStatus = (status: string) => {
   return '有效'
 }
 
-const getTypeTone = (type?: string) => {
-  if (type === 'renew') return 'renew'
-  if (type === 'supplement') return 'supplement'
-  return 'initial'
+const getTypeColor = (type?: string) => {
+  if (type === 'renew') return 'green'
+  if (type === 'supplement') return 'purple'
+  return 'blue'
 }
 
-const getStatusTone = (status: string) => {
-  if (status === 'expiring') return 'warning'
-  if (status === 'expired') return 'muted'
-  return 'success'
+const getStatusColor = (status: string) => {
+  if (status === 'expiring') return 'orange'
+  if (status === 'expired') return 'default'
+  return 'green'
 }
 
 const formatCurrency = (value?: number) =>
@@ -541,483 +476,5 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped lang="scss">
-.contracts-page {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 30px;
-  font-weight: 700;
-  color: var(--text);
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.page-title-en {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text2);
-}
-
-.page-subtitle {
-  margin: 10px 0 0;
-  color: var(--text2);
-  font-size: 14px;
-}
-
-.page-header__actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.permission-button {
-  border: none;
-  border-radius: 12px;
-  padding: 0 18px;
-  min-height: 42px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-}
-
-.permission-button:hover {
-  transform: translateY(-1px);
-}
-
-.permission-button--primary {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.24);
-}
-
-.permission-button--outline {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.permission-button--ghost {
-  background: transparent;
-  color: var(--text2);
-  border: 1px dashed var(--border);
-}
-
-.contracts-stats {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.contracts-stats__card {
-  border-radius: 18px;
-  padding: 18px 20px;
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  text-align: center;
-}
-
-.contracts-stats__card--total {
-  background: var(--primary-light);
-}
-
-.contracts-stats__card--active {
-  background: #dcfce7;
-}
-
-.contracts-stats__card--expiring {
-  background: #fef3c7;
-}
-
-.contracts-stats__card--ended {
-  background: var(--bg);
-}
-
-.contracts-stats__card--amount {
-  background: #dbeafe;
-}
-
-.contracts-stats__label {
-  font-size: 13px;
-  color: var(--text2);
-}
-
-.contracts-stats__value {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 10px;
-}
-
-.contracts-panel {
-  overflow: hidden;
-}
-
-.permission-card {
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--border);
-  padding: 20px;
-}
-
-.permission-card__body--flush {
-  overflow-x: auto;
-  margin: 0 -20px;
-}
-
-.contracts-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-}
-
-.contracts-filter-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-}
-
-.contracts-filter-group--date {
-  min-width: 296px;
-}
-
-.contracts-filter-group--search {
-  min-width: 200px;
-}
-
-.contracts-input,
-.contracts-select {
-  min-height: 38px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  padding: 0 12px;
-  color: var(--text);
-  outline: none;
-  font-size: 13px;
-}
-
-.contracts-input:focus,
-.contracts-select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-}
-
-.contracts-date-range {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.contracts-date-range .contracts-input {
-  width: 140px;
-}
-
-.contracts-filter-group--search .contracts-input {
-  width: 200px;
-}
-
-.contracts-select {
-  width: 140px;
-}
-
-.contracts-separator {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.contracts-filters__actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.permission-table {
-  width: 100%;
-  min-width: 1180px;
-  border-collapse: collapse;
-}
-
-.permission-table th,
-.permission-table td {
-  padding: 16px 14px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-
-.permission-table thead th {
-  background: var(--bg);
-  color: var(--text2);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.contract-cell-block {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.contract-cell-block--period {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.contract-primary-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.contract-no {
-  font-family: 'SFMono-Regular', 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.contract-pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.contract-pill--initial {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.contract-pill--renew {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.contract-pill--supplement {
-  background: #f3e8ff;
-  color: #9333ea;
-}
-
-.contract-link {
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: var(--primary);
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  text-align: left;
-}
-
-.contract-link:hover {
-  text-decoration: underline;
-}
-
-.contract-id-badge {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.contract-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-}
-
-.contract-meta-label {
-  color: var(--muted);
-}
-
-.contract-meta-value {
-  color: var(--text2);
-  font-weight: 500;
-}
-
-.contract-amount-row,
-.contract-hours-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.contract-amount-label,
-.contract-hours-label {
-  color: var(--muted);
-  min-width: 32px;
-}
-
-.contract-amount-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.contract-hours-value {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.contract-hours-value strong {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.contract-hours-value span {
-  color: var(--text2);
-  font-size: 12px;
-}
-
-.contract-date {
-  font-size: 13px;
-  color: var(--text2);
-}
-
-.contract-date-separator {
-  color: var(--muted);
-}
-
-.contract-status-tag {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.contract-status-tag--success {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.contract-status-tag--warning {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.contract-status-tag--muted {
-  background: var(--bg);
-  color: var(--muted);
-}
-
-.contract-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.contract-action {
-  border: none;
-  background: transparent;
-  color: var(--text2);
-  padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.contract-action:hover {
-  color: var(--text);
-}
-
-.contract-action--primary {
-  color: var(--primary);
-}
-
-.contract-action--primary:hover {
-  color: var(--primary-dark);
-}
-
-.contracts-empty {
-  padding: 34px 16px;
-  text-align: center;
-  color: var(--muted);
-}
-
-.contracts-summary-bar {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  padding: 12px 16px;
-  background: var(--bg);
-  color: var(--text2);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-@media (max-width: 1280px) {
-  .contracts-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .page-header__actions {
-    width: 100%;
-  }
-
-  .contracts-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .contracts-filter-group,
-  .contracts-filter-group--date,
-  .contracts-filter-group--search {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .contracts-date-range {
-    width: 100%;
-  }
-
-  .contracts-date-range .contracts-input,
-  .contracts-filter-group--search .contracts-input,
-  .contracts-select {
-    width: 100%;
-  }
-
-  .contracts-filters__actions {
-    align-items: stretch;
-    width: 100%;
-  }
-}
+<style scoped>
 </style>

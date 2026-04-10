@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.OsgIdGenerator;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStaffChangeRequest;
@@ -59,6 +60,7 @@ public class OsgStaffServiceImpl implements IOsgStaffService
     {
         validateAccountEmail(staff.getEmail());
         ensureStaffEmailAvailable(staff.getEmail(), null);
+        staff.setStaffId(OsgIdGenerator.generateUniqueId(jdbcTemplate, "osg_staff", "staff_id"));
         int rows = staffMapper.insertStaff(staff);
         if (rows > 0)
         {

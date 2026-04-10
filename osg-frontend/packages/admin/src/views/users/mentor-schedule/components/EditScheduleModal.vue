@@ -6,9 +6,9 @@
     @cancel="handleClose"
   >
     <template #title>
-      <span class="esm-header-title">
-        <i class="mdi mdi-calendar-edit" aria-hidden="true"></i>
-        {{ modalTitle }}
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-calendar-edit" aria-hidden="true"></span>
+        <span>{{ modalTitle }}</span>
       </span>
     </template>
 
@@ -27,47 +27,45 @@
 
     <!-- Week switch -->
     <div class="esm-week-switch">
-      <button
-        type="button"
-        :class="['esm-week-btn', { 'esm-week-btn--active': localWeek === 'current' }]"
+      <a-button
+        :type="localWeek === 'current' ? 'primary' : 'default'"
+        block
         @click="localWeek = 'current'"
       >
         本周 {{ weekRanges.current }}
-      </button>
-      <button
-        type="button"
-        :class="['esm-week-btn', { 'esm-week-btn--active': localWeek === 'next' }]"
+      </a-button>
+      <a-button
+        :type="localWeek === 'next' ? 'primary' : 'default'"
+        block
         @click="localWeek = 'next'"
       >
         下周 {{ weekRanges.next }}
-      </button>
+      </a-button>
     </div>
 
     <!-- Hours input -->
     <div class="esm-section" data-field-name="调整导师排期弹窗可上课时长">
       <label class="esm-label">
-        <i class="mdi mdi-clock-outline" aria-hidden="true"></i>
+        <span class="mdi mdi-clock-outline" aria-hidden="true"></span>
         可上课时长 <span class="esm-required">*</span>
       </label>
       <div class="esm-hours-row">
-        <input
-          v-model.number="formState.availableHours"
-          type="number"
-          min="0"
-          max="40"
-          class="esm-hours-input"
+        <a-input-number
+          v-model:value="formState.availableHours"
+          :min="0"
+          :max="40"
+          style="width:120px"
         />
         <span class="esm-hours-unit">小时</span>
         <div class="esm-quick-btns">
-          <button
+          <a-button
             v-for="value in quickHours"
             :key="value"
-            type="button"
-            class="esm-quick-btn"
+            size="small"
             @click="formState.availableHours = value"
           >
             {{ value }}h
-          </button>
+          </a-button>
         </div>
       </div>
     </div>
@@ -75,7 +73,7 @@
     <!-- Day grid -->
     <div class="esm-section" data-field-name="调整导师排期弹窗每天可上课时间">
       <label class="esm-label">
-        <i class="mdi mdi-calendar-check" aria-hidden="true"></i>
+        <span class="mdi mdi-calendar-check" aria-hidden="true"></span>
         每天可上课时间 <span class="esm-required">*</span>
         <span class="esm-hint">（可多选）</span>
       </label>
@@ -90,18 +88,15 @@
           <div :class="['esm-day__label', { 'esm-day__label--weekend': day.weekend, 'esm-day__label--holiday': day.holiday }]">{{ day.label }}</div>
           <div :class="['esm-day__date', { 'esm-day__date--weekend': day.weekend, 'esm-day__date--holiday': day.holiday }]">{{ day.date }}</div>
           <div class="esm-day__slots">
-            <label
+            <a-checkbox
               v-for="slot in timeSlots"
               :key="`${day.value}-${slot.value}`"
               class="esm-slot"
+              :checked="isChecked(day.value, slot.value)"
+              @change="toggleSlot(day.value, slot.value)"
             >
-              <input
-                :checked="isChecked(day.value, slot.value)"
-                type="checkbox"
-                @change="toggleSlot(day.value, slot.value)"
-              />
-              <span>{{ slot.label }}</span>
-            </label>
+              {{ slot.label }}
+            </a-checkbox>
           </div>
         </fieldset>
       </div>
@@ -114,13 +109,12 @@
     <!-- Reason -->
     <div class="esm-section">
       <label class="esm-label">
-        <i class="mdi mdi-note-text" aria-hidden="true"></i>
+        <span class="mdi mdi-note-text" aria-hidden="true"></span>
         调整原因 <span class="esm-required">*</span>
       </label>
-      <textarea
-        v-model.trim="formState.reason"
-        rows="2"
-        class="esm-textarea"
+      <a-textarea
+        v-model:value="formState.reason"
+        :rows="2"
         placeholder="请填写调整原因，将同步通知给导师"
       />
       <div v-if="errorMessage" class="esm-error">{{ errorMessage }}</div>
@@ -129,28 +123,17 @@
     <!-- Notify -->
     <fieldset class="esm-notify-card" data-field-name="同步通知导师复选框">
       <label class="esm-notify-label">
-        <input v-model="formState.notifyStaff" type="checkbox" class="esm-notify-checkbox" />
-        <span><strong>同步通知导师</strong> - 调整后将发送邮件和站内消息通知该导师</span>
+        <a-checkbox v-model:checked="formState.notifyStaff">
+          <strong>同步通知导师</strong> - 调整后将发送邮件和站内消息通知该导师
+        </a-checkbox>
       </label>
     </fieldset>
 
     <template #footer>
-      <button
-        type="button"
-        class="permission-button permission-button--outline"
-        data-surface-part="cancel-control"
-        @click="handleClose"
-      >
-        取消
-      </button>
-      <button
-        type="button"
-        class="permission-button permission-button--primary esm-save-btn"
-        data-surface-part="confirm-control"
-        @click="handleSubmit"
-      >
-        <i class="mdi mdi-check" aria-hidden="true"></i> 保存并通知
-      </button>
+      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button type="primary" data-surface-part="confirm-control" @click="handleSubmit">
+        <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px"></span>保存并通知
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -303,17 +286,6 @@ const handleSubmit = () => {
   &:hover { background: rgba(255, 255, 255, 0.35) !important; }
 }
 
-.esm-header-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-
-  i { font-size: 22px; }
-}
-
 // Staff info card
 .esm-staff-card {
   display: flex;
@@ -354,25 +326,6 @@ const handleSubmit = () => {
   margin-bottom: 20px;
 }
 
-.esm-week-btn {
-  flex: 1;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-}
-
-.esm-week-btn--active {
-  background: var(--primary, #6366f1);
-  border-color: var(--primary, #6366f1);
-  color: #fff;
-}
-
 // Sections
 .esm-section { margin-bottom: 24px; }
 
@@ -385,7 +338,7 @@ const handleSubmit = () => {
   color: var(--text);
   margin-bottom: 12px;
 
-  i { color: var(--primary, #6366f1); }
+  .mdi { color: var(--primary, #6366f1); }
 }
 
 .esm-required { color: #dc2626; }
@@ -398,35 +351,12 @@ const handleSubmit = () => {
   gap: 12px;
 }
 
-.esm-hours-input {
-  width: 120px;
-  border: 2px solid var(--primary, #6366f1);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 20px;
-  font-weight: 700;
-  text-align: center;
-  color: var(--text);
-}
-
 .esm-hours-unit { color: var(--muted, #6b7280); font-size: 15px; }
 
 .esm-quick-btns {
   display: flex;
   gap: 8px;
   margin-left: 24px;
-}
-
-.esm-quick-btn {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 6px 14px;
-  background: #fff;
-  color: var(--text);
-  font-size: 13px;
-  cursor: pointer;
-
-  &:hover { background: #f3f4f6; }
 }
 
 // Day grid
@@ -476,7 +406,7 @@ const handleSubmit = () => {
   font-size: 10px;
   cursor: pointer;
 
-  input { width: 14px; height: 14px; }
+  .ant-checkbox-wrapper { font-size: 10px; }
 }
 
 .esm-day-hint {
@@ -484,20 +414,10 @@ const handleSubmit = () => {
   font-size: 12px;
   color: var(--muted, #6b7280);
 
-  i { margin-right: 4px; }
+  .mdi { margin-right: 4px; }
 }
 
 // Reason
-.esm-textarea {
-  width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 13px;
-  resize: vertical;
-  min-height: 60px;
-}
-
 .esm-error { margin-top: 8px; color: #dc2626; font-size: 13px; }
 
 // Notify card
@@ -516,31 +436,6 @@ const handleSubmit = () => {
   font-size: 14px;
   color: var(--text);
 }
-
-.esm-notify-checkbox { width: 18px; height: 18px; }
-
-// Footer buttons
-.permission-button {
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.permission-button--outline {
-  background: #fff;
-  border: 1px solid #d1d5db;
-  color: var(--text);
-}
-
-.permission-button--primary {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-}
-
-.esm-save-btn { padding: 12px 32px; }
 
 @media (max-width: 960px) {
   .esm-day-grid { grid-template-columns: repeat(4, 1fr); }

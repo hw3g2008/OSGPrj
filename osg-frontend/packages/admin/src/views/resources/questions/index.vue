@@ -1,124 +1,111 @@
 <template>
-  <section class="questions-page">
-    <header class="page-header">
-      <div>
-        <p class="page-eyebrow">Interview Resource Center</p>
-        <h1>面试真题审核</h1>
-        <p class="page-subtitle">审核学员提交的面试真题，通过后自动开放给相同申请的学生</p>
-      </div>
-      <button type="button" class="ghost-button" @click="message.success('已导出当前筛选结果')">导出</button>
-    </header>
+  <div class="osg-page">
+    <PageHeader title="面试真题审核" subtitle="Question Review" description="审核学员提交的面试真题，通过后自动开放给相同申请的学生">
+      <template #actions>
+        <a-button @click="message.success('已导出当前筛选结果')">
+          <template #icon><ExportOutlined /></template>
+          导出
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <section v-if="pendingCount > 0" class="banner-card">
-      <div>
-        <strong>当前有 {{ pendingCount }} 条面试真题待审核，请及时处理</strong>
-        <p>优先处理班主任流转过来的真题，审核通过后会自动开放给同公司 + 同部门 + 同办公地点 + 同面试状态 的学生。</p>
-      </div>
-      <button type="button" class="ghost-button ghost-button--warn" @click="activeTab = 'pending'">查看待审核</button>
-    </section>
+    <a-alert
+      v-if="pendingCount > 0"
+      type="warning"
+      show-icon
+      :message="`当前有 ${pendingCount} 条面试真题待审核，请及时处理`"
+      description="优先处理班主任流转过来的真题，审核通过后会自动开放给同公司 + 同部门 + 同办公地点 + 同面试状态 的学生。"
+    >
+      <template #action>
+        <a-button size="small" @click="activeTab = 'pending'">查看待审核</a-button>
+      </template>
+    </a-alert>
 
-    <section class="tabs-row">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        type="button"
-        class="tab-pill"
-        :class="{ 'tab-pill--active': activeTab === tab.key }"
-        @click="activeTab = tab.key"
+    <a-card :bordered="false">
+      <a-tabs v-model:activeKey="activeTab" style="margin-bottom: 16px">
+        <a-tab-pane v-for="tab in tabs" :key="tab.key">
+          <template #tab>
+            {{ tab.label }}
+            <a-badge v-if="tab.key === 'pending'" :count="pendingCount" :number-style="{ backgroundColor: '#faad14' }" style="margin-left: 4px" />
+          </template>
+        </a-tab-pane>
+      </a-tabs>
+
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+        <a-form-item>
+          <a-input v-model:value="filters.keyword" placeholder="搜索学员 / 公司 / 真题编号" allow-clear style="width: 200px" @press-enter="loadRows" />
+        </a-form-item>
+        <a-form-item>
+          <a-input v-model:value="filters.companyName" placeholder="公司" allow-clear style="width: 120px" @press-enter="loadRows" />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.interviewRound" placeholder="全部轮次" allow-clear style="width: 120px">
+            <a-select-option v-for="round in interviewRoundOptions" :key="round" :value="round">{{ round }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-date-picker v-model:value="filters.beginDate" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+        </a-form-item>
+        <a-form-item>
+          <a-date-picker v-model:value="filters.endDate" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+        </a-form-item>
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="loadRows">
+              <template #icon><SearchOutlined /></template>
+              搜索
+            </a-button>
+            <a-button @click="handleReset">重置</a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
+
+      <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <a-button type="primary" :disabled="!canBatchReview" @click="reviewSelected('approved')">批量通过</a-button>
+        <a-button danger :disabled="!canBatchReview" @click="reviewSelected('rejected')">批量驳回</a-button>
+        <span style="color: #1890ff">已选择 {{ selectedIds.length }} 条</span>
+        <span style="margin-left: auto; font-size: 13px; color: #64748b">来源字典：入职面试申请 / 自主填写</span>
+      </div>
+
+      <a-table
+        :columns="questionColumns"
+        :data-source="rows"
+        :row-key="(r: InterviewQuestionRow) => r.questionId"
+        :pagination="false"
+        :locale="{ emptyText: '暂无面试真题记录' }"
+        :scroll="{ x: 1300 }"
+        :row-selection="activeTab === 'pending' ? { selectedRowKeys: selectedIds, onChange: onSelectChange } : undefined"
+        :row-class-name="(record: InterviewQuestionRow) => record.reviewStatus === 'pending' ? 'row-pending' : ''"
       >
-        {{ tab.label }}
-        <span v-if="tab.key === 'pending'" class="tab-pill__count">{{ pendingCount }}</span>
-      </button>
-    </section>
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'questionCode'">
+            <span style="font-family: monospace">{{ record.questionCode }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'studentName'">
+            <div><strong>{{ record.studentName }}</strong></div>
+            <small style="color: #94a3b8">{{ record.studentId || '—' }}</small>
+          </template>
+          <template v-else-if="column.dataIndex === 'companyName'">
+            <strong>{{ record.companyName }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'questionCount'">
+            {{ record.questionCount }} 题
+          </template>
+          <template v-else-if="column.dataIndex === 'sourceType'">
+            <a-tag :color="record.sourceType === '入职面试申请' ? 'orange' : 'blue'">{{ record.sourceType }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'submittedAt'">
+            {{ formatTime(record.submittedAt) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-button v-if="record.reviewStatus === 'pending'" type="link" size="small" @click="openReviewModal(record)">审核</a-button>
+            <a-tag v-else :color="record.reviewStatus === 'approved' ? 'green' : 'red'">{{ reviewStatusLabel[record.reviewStatus] }}</a-tag>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
-    <section class="toolbar-card">
-      <input v-model.trim="filters.keyword" class="toolbar-input" type="search" placeholder="搜索学员 / 公司 / 真题编号">
-      <input v-model.trim="filters.companyName" class="toolbar-input" type="search" placeholder="公司">
-      <select v-model="filters.interviewRound" class="toolbar-select">
-        <option value="">全部轮次</option>
-        <option v-for="round in interviewRoundOptions" :key="round" :value="round">{{ round }}</option>
-      </select>
-      <input v-model="filters.beginDate" class="toolbar-input toolbar-input--date" type="date">
-      <input v-model="filters.endDate" class="toolbar-input toolbar-input--date" type="date">
-      <button type="button" class="ghost-button" @click="loadRows">搜索</button>
-      <button type="button" class="ghost-button ghost-button--light" @click="handleReset">重置</button>
-    </section>
-
-    <section class="batch-card">
-      <button type="button" class="primary-button" :disabled="!canBatchReview" @click="reviewSelected('approved')">批量通过</button>
-      <button type="button" class="ghost-button ghost-button--danger" :disabled="!canBatchReview" @click="reviewSelected('rejected')">批量驳回</button>
-      <span>已选择 {{ selectedIds.length }} 条</span>
-      <span class="batch-card__legend">来源字典：入职面试申请 / 自主填写</span>
-    </section>
-
-    <section class="table-card">
-      <table class="question-table">
-        <thead>
-          <tr>
-            <th><input type="checkbox" :checked="allSelected" @change="toggleSelectAll"></th>
-            <th>ID</th>
-            <th>学员</th>
-            <th>公司</th>
-            <th>部门</th>
-            <th>办公地点</th>
-            <th>轮次</th>
-            <th>题目数</th>
-            <th>来源</th>
-            <th>提交时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.questionId" :class="{ 'question-row--pending': row.reviewStatus === 'pending' }">
-            <td>
-              <input
-                :disabled="activeTab !== 'pending'"
-                type="checkbox"
-                :checked="selectedIds.includes(row.questionId)"
-                @change="toggleRow(row.questionId)"
-              >
-            </td>
-            <td class="code-cell">{{ row.questionCode }}</td>
-            <td>
-              <strong>{{ row.studentName }}</strong>
-              <small>{{ row.studentId || '—' }}</small>
-            </td>
-            <td><strong>{{ row.companyName }}</strong></td>
-            <td>{{ row.departmentName }}</td>
-            <td>{{ row.officeLocation }}</td>
-            <td>{{ row.interviewRound }}</td>
-            <td>{{ row.questionCount }} 题</td>
-            <td>
-              <span class="source-pill" :class="`source-pill--${row.sourceType === '入职面试申请' ? 'referral' : 'self'}`">
-                {{ row.sourceType }}
-              </span>
-            </td>
-            <td>{{ formatTime(row.submittedAt) }}</td>
-            <td>
-              <button
-                v-if="row.reviewStatus === 'pending'"
-                type="button"
-                class="link-button"
-                @click="openReviewModal(row)"
-              >
-                审核
-              </button>
-              <span v-else class="status-pill" :class="`status-pill--${row.reviewStatus}`">
-                {{ reviewStatusLabel[row.reviewStatus] }}
-              </span>
-            </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="11" class="empty-row">暂无面试真题记录</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section class="rule-card">
-      <strong>审核规则</strong>
-      <p>审核通过后，面试真题将自动开放给满足以下条件的学生：同公司 + 同部门 + 同办公地点 + 同面试状态。</p>
-    </section>
+    <a-alert type="info" show-icon message="审核规则" description="审核通过后，面试真题将自动开放给满足以下条件的学生：同公司 + 同部门 + 同办公地点 + 同面试状态。" />
 
     <QuestionReviewModal
       v-model="showReviewModal"
@@ -127,12 +114,14 @@
       @approve="handleApprove"
       @reject="handleReject"
     />
-  </section>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import QuestionReviewModal from './components/QuestionReviewModal.vue'
 import {
   batchApproveQuestions,
@@ -143,6 +132,19 @@ import {
   type QuestionReviewStatus,
   type QuestionTab
 } from '@osg/shared/api/admin/question'
+
+const questionColumns = [
+  { title: 'ID', dataIndex: 'questionCode', key: 'questionCode', width: 100 },
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 120 },
+  { title: '部门', dataIndex: 'departmentName', key: 'departmentName', width: 100 },
+  { title: '办公地点', dataIndex: 'officeLocation', key: 'officeLocation', width: 100 },
+  { title: '轮次', dataIndex: 'interviewRound', key: 'interviewRound', width: 80 },
+  { title: '题目数', dataIndex: 'questionCount', key: 'questionCount', width: 80 },
+  { title: '来源', dataIndex: 'sourceType', key: 'sourceType', width: 110 },
+  { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 90 },
+]
 
 const tabs: Array<{ key: QuestionTab; label: string }> = [
   { key: 'pending', label: '待审核' },
@@ -167,13 +169,16 @@ const submitting = ref(false)
 const filters = ref({
   keyword: '',
   companyName: '',
-  interviewRound: '' as InterviewRound | '',
+  interviewRound: undefined as InterviewRound | undefined,
   beginDate: '',
   endDate: ''
 })
 
 const canBatchReview = computed(() => activeTab.value === 'pending' && selectedIds.value.length > 0)
-const allSelected = computed(() => rows.value.length > 0 && selectedIds.value.length === rows.value.length && activeTab.value === 'pending')
+
+const onSelectChange = (keys: number[]) => {
+  selectedIds.value = keys
+}
 
 const loadRows = async () => {
   try {
@@ -197,29 +202,11 @@ const handleReset = () => {
   filters.value = {
     keyword: '',
     companyName: '',
-    interviewRound: '',
+    interviewRound: undefined,
     beginDate: '',
     endDate: ''
   }
   void loadRows()
-}
-
-const toggleRow = (questionId: number) => {
-  if (selectedIds.value.includes(questionId))
-  {
-    selectedIds.value = selectedIds.value.filter((item) => item !== questionId)
-    return
-  }
-  selectedIds.value = [...selectedIds.value, questionId]
-}
-
-const toggleSelectAll = () => {
-  if (allSelected.value)
-  {
-    selectedIds.value = []
-    return
-  }
-  selectedIds.value = rows.value.map((row) => row.questionId)
 }
 
 const openReviewModal = (row: InterviewQuestionRow) => {
@@ -298,271 +285,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.questions-page {
-  display: grid;
-  gap: 18px;
-  padding: 8px;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.page-eyebrow {
-  margin: 0 0 6px;
-  color: #475569;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-header h1 {
-  margin: 0;
-  font-size: 34px;
-  color: #0f172a;
-}
-
-.page-subtitle {
-  margin: 8px 0 0;
-  color: #475569;
-}
-
-.banner-card,
-.toolbar-card,
-.batch-card,
-.table-card,
-.rule-card {
-  padding: 18px 20px;
-  border: 1px solid #dbe4f0;
-  border-radius: 24px;
-  background: #fff;
-}
-
-.banner-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  border-color: #facc15;
-}
-
-.banner-card p {
-  margin: 6px 0 0;
-  color: #7c2d12;
-}
-
-.tabs-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.tab-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 18px;
-  border: 1px solid #dbe4f0;
-  border-radius: 999px;
-  background: #fff;
-  color: #334155;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tab-pill--active {
-  color: #fff;
-  border-color: transparent;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-}
-
-.tab-pill__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.24);
-}
-
-.toolbar-card {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.toolbar-input,
-.toolbar-select {
-  width: 100%;
-  height: 42px;
-  padding: 0 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-}
-
-.toolbar-input--date {
-  min-width: 0;
-}
-
-.batch-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #475569;
-}
-
-.batch-card__legend {
-  margin-left: auto;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.question-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.question-table th,
-.question-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  vertical-align: top;
-}
-
-.question-row--pending {
-  background: #fefce8;
-}
-
-.code-cell {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-}
-
-.source-pill,
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.source-pill--referral {
-  color: #92400e;
-  background: #fef3c7;
-}
-
-.source-pill--self {
-  color: #1d4ed8;
-  background: #dbeafe;
-}
-
-.status-pill--approved {
-  color: #166534;
-  background: #dcfce7;
-}
-
-.status-pill--rejected {
-  color: #b91c1c;
-  background: #fee2e2;
-}
-
-.link-button {
-  border: none;
-  background: transparent;
-  color: #2563eb;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.empty-row {
-  text-align: center;
-  color: #64748b;
-}
-
-.rule-card {
-  color: #0c4a6e;
-  background: #f0f9ff;
-  border-color: #bae6fd;
-}
-
-.primary-button,
-.ghost-button {
-  height: 42px;
-  padding: 0 18px;
-  border-radius: 999px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.primary-button {
-  border: none;
-  color: #fff;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-}
-
-.ghost-button {
-  border: 1px solid #cbd5e1;
-  color: #0f172a;
-  background: #fff;
-}
-
-.ghost-button--warn {
-  color: #92400e;
-  border-color: #f59e0b;
-  background: rgba(255, 255, 255, 0.68);
-}
-
-.ghost-button--danger {
-  color: #b91c1c;
-  border-color: #fecaca;
-  background: #fff1f2;
-}
-
-.ghost-button--light {
-  color: #475569;
-}
-
-.primary-button:disabled,
-.ghost-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-@media (max-width: 1100px) {
-  .toolbar-card {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 760px) {
-  .page-header,
-  .banner-card,
-  .batch-card {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .batch-card__legend {
-    margin-left: 0;
-  }
-
-  .toolbar-card {
-    grid-template-columns: 1fr;
-  }
-
-  .table-card {
-    overflow-x: auto;
-  }
+:deep(.row-pending) {
+  background: rgba(254, 252, 232, 0.6);
 }
 </style>

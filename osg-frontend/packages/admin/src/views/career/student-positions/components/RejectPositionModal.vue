@@ -7,10 +7,10 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="student-reject-modal__title">
-        <i class="mdi mdi-close-octagon-outline" aria-hidden="true"></i>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-close-octagon-outline" aria-hidden="true"></span>
         <span>拒绝岗位</span>
-      </div>
+      </span>
     </template>
 
     <section class="student-reject-modal__hero">
@@ -42,36 +42,19 @@
       <label class="student-reject-modal__label">
         <span>补充说明</span>
       </label>
-      <textarea
-        v-model="formState.note"
+      <a-textarea
+        v-model:value="formState.note"
         data-field-name="补充说明"
-        class="student-reject-modal__textarea"
-        rows="4"
-        maxlength="120"
+        :rows="4"
+        :maxlength="120"
         placeholder="可选，补充本次拒绝说明"
       />
       <div class="student-reject-modal__meta">{{ formState.note.length }}/120</div>
     </section>
 
     <template #footer>
-      <div class="student-reject-modal__footer">
-        <button
-          type="button"
-          class="student-reject-modal__button student-reject-modal__button--ghost"
-          data-surface-part="cancel-control"
-          @click="handleClose"
-        >
-          取消
-        </button>
-        <button
-          type="button"
-          class="student-reject-modal__button student-reject-modal__button--danger"
-          data-surface-part="confirm-control"
-          @click="handleSubmit"
-        >
-          确认拒绝
-        </button>
-      </div>
+      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button danger data-surface-part="confirm-control" @click="handleSubmit">确认拒绝</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -134,15 +117,6 @@ const handleSubmit = () => {
 </script>
 
 <style scoped lang="scss">
-.student-reject-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #1e293b;
-  font-size: 18px;
-  font-weight: 700;
-}
-
 .student-reject-modal__body {
   display: flex;
   flex-direction: column;
@@ -205,48 +179,10 @@ const handleSubmit = () => {
   color: #b91c1c;
 }
 
-.student-reject-modal__textarea {
-  width: 100%;
-  min-height: 108px;
-  padding: 12px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  background: #fff;
-  color: #0f172a;
-  font: inherit;
-  resize: vertical;
-}
-
 .student-reject-modal__meta {
   color: #94a3b8;
   font-size: 12px;
   text-align: right;
-}
-
-.student-reject-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.student-reject-modal__button {
-  min-height: 44px;
-  padding: 0 20px;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.student-reject-modal__button--ghost {
-  background: #fff;
-  color: #475569;
-}
-
-.student-reject-modal__button--danger {
-  border-color: #ef4444;
-  background: #ef4444;
-  color: #fff;
 }
 
 @media (max-width: 640px) {

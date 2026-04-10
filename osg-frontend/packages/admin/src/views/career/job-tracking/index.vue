@@ -1,195 +1,151 @@
 <template>
-  <div class="job-tracking-page">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">
-          所有学员的岗位追踪
-          <span class="page-title-en">Job Tracking</span>
-        </h2>
-        <p class="page-subtitle">查看全部学员的求职申请进度</p>
-      </div>
-      <div class="page-header__actions">
-        <span class="job-tracking-page__traffic">{{ rows.length }} 条岗位记录 · {{ stats.interviewingCount }} 条面试中</span>
-      </div>
-    </div>
+  <div class="osg-page">
+    <PageHeader title="所有学员的岗位追踪" subtitle="Job Tracking" description="查看全部学员的求职申请进度">
+      <template #actions>
+        <span style="color: #64748b; font-size: 13px">{{ rows.length }} 条岗位记录 · {{ stats.interviewingCount }} 条面试中</span>
+      </template>
+    </PageHeader>
 
-    <section class="job-tracking-hero">
-      <article
-        v-for="card in statCards"
-        :key="card.key"
-        :class="['job-tracking-card', `job-tracking-card--${card.tone}`]"
+    <a-row :gutter="16">
+      <a-col v-for="card in statCards" :key="card.key" :span="Math.floor(24 / statCards.length)">
+        <a-card :bordered="false" :body-style="{ textAlign: 'center', background: card.bg, borderRadius: '12px' }">
+          <a-statistic :title="card.label" :value="card.value" :value-style="{ fontWeight: 700 }" />
+          <div style="color: #64748b; font-size: 12px; margin-top: 4px">{{ card.meta }}</div>
+        </a-card>
+      </a-col>
+    </a-row>
+
+    <a-card :bordered="false">
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+        <a-form-item label="学员姓名">
+          <a-input v-model:value="filters.studentName" placeholder="搜索学员" allow-clear style="width: 140px" />
+        </a-form-item>
+        <a-form-item label="班主任">
+          <a-input v-model:value="filters.leadMentorName" placeholder="如 Jess / Amy" allow-clear style="width: 140px" />
+        </a-form-item>
+        <a-form-item label="状态">
+          <a-select v-model:value="filters.trackingStatus" placeholder="全部" allow-clear style="width: 120px">
+            <a-select-option value="tracking">追踪中</a-select-option>
+            <a-select-option value="applied">已申请</a-select-option>
+            <a-select-option value="interviewing">面试中</a-select-option>
+            <a-select-option value="offer">已获Offer</a-select-option>
+            <a-select-option value="rejected">已拒绝</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="公司">
+          <a-input v-model:value="filters.companyName" placeholder="搜索公司" allow-clear style="width: 140px" />
+        </a-form-item>
+        <a-form-item label="地点">
+          <a-input v-model:value="filters.location" placeholder="搜索城市 / 地区" allow-clear style="width: 150px" />
+        </a-form-item>
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="loadTrackingBoard">
+              <template #icon><SearchOutlined /></template>
+              搜索
+            </a-button>
+            <a-button @click="resetFilters">重置</a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
+    </a-card>
+
+    <a-card :bordered="false">
+      <a-table
+        :columns="trackingColumns"
+        :data-source="rows"
+        :row-key="(record: JobTrackingRow) => record.applicationId"
+        :pagination="false"
+        :loading="loading"
+        :locale="{ emptyText: '当前筛选条件下暂无岗位追踪记录' }"
+        :scroll="{ x: 1100 }"
       >
-        <span class="job-tracking-card__label">{{ card.label }}</span>
-        <strong class="job-tracking-card__value">{{ card.value }}</strong>
-        <span class="job-tracking-card__meta">{{ card.meta }}</span>
-      </article>
-    </section>
-
-    <section class="permission-card job-tracking-panel">
-      <div class="job-tracking-filters">
-        <label class="job-tracking-field">
-          <span>学员姓名</span>
-          <input v-model="filters.studentName" type="text" class="job-tracking-input" placeholder="搜索学员" />
-        </label>
-        <label class="job-tracking-field">
-          <span>班主任</span>
-          <input v-model="filters.leadMentorName" type="text" class="job-tracking-input" placeholder="如 Jess / Amy" />
-        </label>
-        <label class="job-tracking-field">
-          <span>状态</span>
-          <select v-model="filters.trackingStatus" class="job-tracking-select">
-            <option value="">全部</option>
-            <option value="tracking">追踪中</option>
-            <option value="applied">已申请</option>
-            <option value="interviewing">面试中</option>
-            <option value="offer">已获Offer</option>
-            <option value="rejected">已拒绝</option>
-          </select>
-        </label>
-        <label class="job-tracking-field">
-          <span>公司</span>
-          <input v-model="filters.companyName" type="text" class="job-tracking-input" placeholder="搜索公司" />
-        </label>
-        <label class="job-tracking-field">
-          <span>地点</span>
-          <input v-model="filters.location" type="text" class="job-tracking-input" placeholder="搜索城市 / 地区" />
-        </label>
-        <div class="job-tracking-actions">
-          <button type="button" class="permission-button permission-button--outline" @click="loadTrackingBoard">搜索</button>
-          <button type="button" class="permission-button permission-button--ghost" @click="resetFilters">重置</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="permission-card job-tracking-panel">
-      <div v-if="loading" class="job-tracking-loading">
-        <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-        <span>正在加载岗位追踪...</span>
-      </div>
-
-      <div v-else class="permission-card__body permission-card__body--flush">
-        <table class="permission-table job-tracking-table">
-          <thead>
-            <tr>
-              <th>学员</th>
-              <th>导师</th>
-              <th>公司</th>
-              <th>岗位</th>
-              <th>地点</th>
-              <th>状态</th>
-              <th>面试时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in rows" :key="row.applicationId">
-              <td>
-                <div class="job-tracking-cell">
-                  <strong>{{ row.studentName || '-' }}</strong>
-                  <span>ID: {{ row.studentId }}</span>
-                </div>
-              </td>
-              <td>{{ row.mentorName || '未分配' }}</td>
-              <td>{{ row.companyName }}</td>
-              <td>{{ row.positionName }}</td>
-              <td>{{ row.location || '-' }}</td>
-              <td>
-                <div class="job-tracking-status">
-                  <span :class="['job-tracking-tag', `job-tracking-tag--${toneOf(row.trackingStatus)}`]">
-                    {{ labelOf(row.trackingStatus) }}
-                  </span>
-                  <span v-if="row.interviewStage" class="job-tracking-status__stage">{{ stageLabelOf(row.interviewStage) }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="job-tracking-cell">
-                  <strong>{{ formatDateTime(row.interviewTime) }}</strong>
-                  <span>{{ row.preferredMentor || '意向导师未填' }}</span>
-                </div>
-              </td>
-              <td>
-                <button type="button" class="job-tracking-link-button" @click="openEditor(row)">编辑</button>
-              </td>
-            </tr>
-            <tr v-if="!rows.length">
-              <td colspan="8" class="job-tracking-empty">当前筛选条件下暂无岗位追踪记录</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <div v-if="editingVisible" class="job-tracking-modal-backdrop" @click.self="closeEditor">
-      <div class="job-tracking-modal">
-        <div class="job-tracking-modal__header">
-          <div>
-            <span class="job-tracking-modal__eyebrow">更新学员求职状态</span>
-            <h3>{{ editingRow?.studentName }} · {{ editingRow?.companyName }}</h3>
-          </div>
-          <button type="button" class="job-tracking-modal__close" @click="closeEditor">
-            <i class="mdi mdi-close" aria-hidden="true"></i>
-          </button>
-        </div>
-
-        <div class="job-tracking-modal__body">
-          <label class="job-tracking-field">
-            <span>当前状态</span>
-            <select v-model="form.trackingStatus" class="job-tracking-select">
-              <option value="not-applied">未申请</option>
-              <option value="applied">已申请</option>
-              <option value="tracking">追踪中</option>
-              <option value="interviewing">面试中</option>
-              <option value="offer">已获Offer</option>
-              <option value="rejected">已拒绝</option>
-            </select>
-          </label>
-
-          <template v-if="form.trackingStatus === 'interviewing'">
-            <label class="job-tracking-field">
-              <span>面试阶段</span>
-              <select v-model="form.interviewStage" class="job-tracking-select">
-                <option v-for="option in interviewStageOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </label>
-
-            <label class="job-tracking-field">
-              <span>面试日期+时间</span>
-              <input v-model="form.interviewTime" type="datetime-local" class="job-tracking-input" />
-            </label>
-
-            <label class="job-tracking-field">
-              <span>意向导师</span>
-              <input v-model="form.preferredMentor" type="text" class="job-tracking-input" placeholder="如 Jess" />
-            </label>
-
-            <label class="job-tracking-field">
-              <span>排除导师</span>
-              <input v-model="form.excludedMentor" type="text" class="job-tracking-input" placeholder="如 Amy" />
-            </label>
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'studentName'">
+            <div>
+              <strong>{{ record.studentName || '-' }}</strong>
+              <div style="color: #9ca3af; font-size: 12px">ID: {{ record.studentId }}</div>
+            </div>
           </template>
+          <template v-else-if="column.dataIndex === 'mentorName'">
+            {{ record.mentorName || '未分配' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'location'">
+            {{ record.location || '-' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'trackingStatus'">
+            <div>
+              <a-tag :color="colorOf(record.trackingStatus)">{{ labelOf(record.trackingStatus) }}</a-tag>
+              <div v-if="record.interviewStage" style="color: #64748b; font-size: 12px; margin-top: 2px">{{ stageLabelOf(record.interviewStage) }}</div>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'interviewTime'">
+            <div>
+              <strong>{{ formatDateTime(record.interviewTime) }}</strong>
+              <div style="color: #9ca3af; font-size: 12px">{{ record.preferredMentor || '意向导师未填' }}</div>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-button type="link" size="small" @click="openEditor(record)">编辑</a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
-          <label class="job-tracking-field">
-            <span>备注</span>
-            <textarea v-model="form.note" class="job-tracking-textarea" rows="4" placeholder="补充跟进说明"></textarea>
-          </label>
-        </div>
+    <a-modal
+      v-model:open="editingVisible"
+      :title="`更新求职状态 · ${editingRow?.studentName} · ${editingRow?.companyName}`"
+      :confirm-loading="submitting"
+      ok-text="保存更新"
+      cancel-text="取消"
+      :width="600"
+      @ok="submitUpdate"
+      @cancel="closeEditor"
+    >
+      <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" style="margin-top: 16px">
+        <a-form-item label="当前状态">
+          <a-select v-model:value="form.trackingStatus">
+            <a-select-option value="not-applied">未申请</a-select-option>
+            <a-select-option value="applied">已申请</a-select-option>
+            <a-select-option value="tracking">追踪中</a-select-option>
+            <a-select-option value="interviewing">面试中</a-select-option>
+            <a-select-option value="offer">已获Offer</a-select-option>
+            <a-select-option value="rejected">已拒绝</a-select-option>
+          </a-select>
+        </a-form-item>
 
-        <div class="job-tracking-modal__footer">
-          <button type="button" class="permission-button permission-button--ghost" @click="closeEditor">取消</button>
-          <button type="button" class="permission-button" :disabled="submitting" @click="submitUpdate">
-            {{ submitting ? '提交中' : '保存更新' }}
-          </button>
-        </div>
-      </div>
-    </div>
+        <template v-if="form.trackingStatus === 'interviewing'">
+          <a-form-item label="面试阶段">
+            <a-select v-model:value="form.interviewStage">
+              <a-select-option v-for="option in interviewStageOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="面试时间">
+            <a-date-picker v-model:value="form.interviewTime" show-time placeholder="选择面试时间" value-format="YYYY-MM-DDTHH:mm" style="width: 100%" />
+          </a-form-item>
+          <a-form-item label="意向导师">
+            <a-input v-model:value="form.preferredMentor" placeholder="如 Jess" />
+          </a-form-item>
+          <a-form-item label="排除导师">
+            <a-input v-model:value="form.excludedMentor" placeholder="如 Amy" />
+          </a-form-item>
+        </template>
+
+        <a-form-item label="备注">
+          <a-textarea v-model:value="form.note" :rows="4" placeholder="补充跟进说明" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import {
   getJobTrackingList,
   updateJobTracking,
@@ -197,6 +153,17 @@ import {
   type JobTrackingRow,
   type JobTrackingStats
 } from '@osg/shared/api/admin/jobTracking'
+
+const trackingColumns = [
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140 },
+  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 140 },
+  { title: '岗位', dataIndex: 'positionName', key: 'positionName', width: 160 },
+  { title: '地点', dataIndex: 'location', key: 'location', width: 100 },
+  { title: '状态', dataIndex: 'trackingStatus', key: 'trackingStatus', width: 120 },
+  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 180 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
+]
 
 const defaultStats: JobTrackingStats = {
   totalStudentCount: 0,
@@ -209,7 +176,7 @@ const defaultStats: JobTrackingStats = {
 const filters = reactive<JobTrackingFilters>({
   studentName: '',
   leadMentorName: '',
-  trackingStatus: '',
+  trackingStatus: undefined,
   companyName: '',
   location: ''
 })
@@ -245,11 +212,11 @@ const requestFilters = computed<JobTrackingFilters>(() => ({
 }))
 
 const statCards = computed(() => [
-  { key: 'totalStudentCount', label: '全部学员', value: stats.value.totalStudentCount, meta: '唯一学员数', tone: 'blue' },
-  { key: 'trackingCount', label: '追踪中', value: stats.value.trackingCount, meta: '已投递待推进', tone: 'slate' },
-  { key: 'interviewingCount', label: '面试中', value: stats.value.interviewingCount, meta: '需跟进排期', tone: 'amber' },
-  { key: 'offerCount', label: '已获Offer', value: stats.value.offerCount, meta: '转化完成', tone: 'green' },
-  { key: 'rejectedCount', label: '已拒绝', value: stats.value.rejectedCount, meta: '待复盘', tone: 'red' }
+  { key: 'totalStudentCount', label: '全部学员', value: stats.value.totalStudentCount, meta: '唯一学员数', tone: 'blue', bg: '#eff6ff' },
+  { key: 'trackingCount', label: '追踪中', value: stats.value.trackingCount, meta: '已投递待推进', tone: 'slate', bg: '#f1f5f9' },
+  { key: 'interviewingCount', label: '面试中', value: stats.value.interviewingCount, meta: '需跟进排期', tone: 'amber', bg: '#fffbeb' },
+  { key: 'offerCount', label: '已获Offer', value: stats.value.offerCount, meta: '转化完成', tone: 'green', bg: '#f0fdf4' },
+  { key: 'rejectedCount', label: '已拒绝', value: stats.value.rejectedCount, meta: '待复盘', tone: 'red', bg: '#fef2f2' }
 ])
 
 async function loadTrackingBoard() {
@@ -269,7 +236,7 @@ async function loadTrackingBoard() {
 function resetFilters() {
   filters.studentName = ''
   filters.leadMentorName = ''
-  filters.trackingStatus = ''
+  filters.trackingStatus = undefined
   filters.companyName = ''
   filters.location = ''
   void loadTrackingBoard()
@@ -332,18 +299,18 @@ function labelOf(status?: string) {
   }
 }
 
-function toneOf(status?: string) {
+function colorOf(status?: string) {
   switch (status) {
     case 'applied':
-      return 'info'
+      return 'blue'
     case 'interviewing':
-      return 'warning'
+      return 'orange'
     case 'offer':
-      return 'success'
+      return 'green'
     case 'rejected':
-      return 'danger'
+      return 'red'
     default:
-      return 'info'
+      return 'blue'
   }
 }
 
@@ -389,230 +356,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.job-tracking-page {
-  display: grid;
-  gap: 24px;
-}
-
-.job-tracking-page__traffic {
-  color: #52606d;
-  font-size: 13px;
-}
-
-.job-tracking-hero {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-.job-tracking-card {
-  border-radius: 18px;
-  padding: 20px;
-  display: grid;
-  gap: 10px;
-  color: #102a43;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.88));
-  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.08);
-}
-
-.job-tracking-card--blue {
-  border: 1px solid rgba(59, 130, 246, 0.18);
-}
-
-.job-tracking-card--slate {
-  border: 1px solid rgba(71, 85, 105, 0.16);
-}
-
-.job-tracking-card--amber {
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.job-tracking-card--green {
-  border: 1px solid rgba(34, 197, 94, 0.18);
-}
-
-.job-tracking-card--red {
-  border: 1px solid rgba(239, 68, 68, 0.18);
-}
-
-.job-tracking-card__label,
-.job-tracking-card__meta,
-.job-tracking-cell span,
-.job-tracking-status__stage {
-  color: #52606d;
-  font-size: 13px;
-}
-
-.job-tracking-card__value {
-  font-size: 28px;
-  line-height: 1;
-}
-
-.job-tracking-panel {
-  border-radius: 22px;
-  overflow: hidden;
-}
-
-.job-tracking-filters {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px;
-  align-items: end;
-}
-
-.job-tracking-field {
-  display: grid;
-  gap: 8px;
-}
-
-.job-tracking-field span {
-  font-size: 13px;
-  color: #52606d;
-}
-
-.job-tracking-input,
-.job-tracking-select,
-.job-tracking-textarea {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(255, 255, 255, 0.96);
-  padding: 12px 14px;
-  font-size: 14px;
-  color: #102a43;
-}
-
-.job-tracking-textarea {
-  resize: vertical;
-  min-height: 120px;
-}
-
-.job-tracking-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.job-tracking-loading,
-.job-tracking-empty {
-  padding: 36px;
-  text-align: center;
-  color: #52606d;
-}
-
-.job-tracking-cell,
-.job-tracking-status {
-  display: grid;
-  gap: 4px;
-}
-
-.job-tracking-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 78px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.job-tracking-tag--info {
-  color: #0f4c81;
-  background: rgba(191, 219, 254, 0.8);
-}
-
-.job-tracking-tag--warning {
-  color: #92400e;
-  background: rgba(253, 230, 138, 0.85);
-}
-
-.job-tracking-tag--success {
-  color: #166534;
-  background: rgba(187, 247, 208, 0.85);
-}
-
-.job-tracking-tag--danger {
-  color: #991b1b;
-  background: rgba(254, 205, 211, 0.85);
-}
-
-.job-tracking-link-button {
-  border: none;
-  background: none;
-  color: #0f4c81;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.job-tracking-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.46);
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  z-index: 20;
-}
-
-.job-tracking-modal {
-  width: min(720px, 100%);
-  border-radius: 24px;
-  background: #f8fafc;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
-  overflow: hidden;
-}
-
-.job-tracking-modal__header,
-.job-tracking-modal__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-}
-
-.job-tracking-modal__header {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-}
-
-.job-tracking-modal__body {
-  padding: 24px;
-  display: grid;
-  gap: 16px;
-}
-
-.job-tracking-modal__eyebrow {
-  color: #52606d;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.job-tracking-modal__close {
-  border: none;
-  background: rgba(226, 232, 240, 0.8);
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-@media (max-width: 1080px) {
-  .job-tracking-hero,
-  .job-tracking-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 720px) {
-  .job-tracking-hero,
-  .job-tracking-filters {
-    grid-template-columns: 1fr;
-  }
-
-  .job-tracking-actions,
-  .job-tracking-modal__footer {
-    flex-direction: column;
-  }
-}
 </style>

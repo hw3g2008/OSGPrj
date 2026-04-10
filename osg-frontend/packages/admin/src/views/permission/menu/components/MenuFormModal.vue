@@ -7,72 +7,72 @@
     @cancel="handleClose"
   >
     <template #title>
-      <span class="menu-form-modal__title">
-        <span class="mdi mdi-file-tree menu-form-modal__title-icon" aria-hidden="true" />
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-file-tree" aria-hidden="true" />
         <span>菜单项配置</span>
       </span>
     </template>
 
-    <div class="menu-form-modal__note">
-      菜单类型决定字段联动：目录仅维护显示结构；菜单维护路由与组件；按钮仅维护权限标识。
-    </div>
+    <a-alert type="info" show-icon :message="'菜单类型决定字段联动：目录仅维护显示结构；菜单维护路由与组件；按钮仅维护权限标识。'" style="margin-bottom: 16px" />
 
-    <div data-content-part="field-group" class="menu-form-modal__fields">
-      <label class="form-label">菜单类型 <span class="required">*</span></label>
-      <select v-model="formState.menuType" class="form-select">
-        <option>菜单 C</option>
-        <option>目录 M</option>
-        <option>按钮 F</option>
-      </select>
-
-      <label class="form-label">上级菜单</label>
-      <select v-model="formState.parentId" class="form-select">
-        <option :value="0">权限管理</option>
-        <option :value="1">菜单管理</option>
-        <option :value="2">角色管理</option>
-      </select>
-
-      <label class="form-label">菜单名称 <span class="required">*</span></label>
-      <input v-model="formState.menuName" class="form-input" placeholder="请输入菜单名称" />
-
-      <label class="form-label">路由地址</label>
-      <input v-model="formState.path" class="form-input" placeholder="如：/permission/menu" />
-
-      <label class="form-label">组件路径</label>
-      <input v-model="formState.component" class="form-input" placeholder="如：permission/menu/index" />
-
-      <label class="form-label">权限标识 <span class="required">*</span></label>
-      <input v-model="formState.perms" class="form-input" placeholder="如：system:menu:list" />
-
-      <label class="form-label">图标</label>
-      <input v-model="formState.icon" class="form-input" placeholder="如：mdi-file-tree" />
-
-      <div class="menu-form-modal__grid">
-        <div class="menu-form-modal__field">
-          <label class="form-label">显示排序</label>
-          <input v-model="formState.orderNum" class="form-input" />
-        </div>
-        <div class="menu-form-modal__field">
-          <label class="form-label">状态</label>
-          <select v-model="formState.status" class="form-select">
-            <option value="0">启用</option>
-            <option value="1">停用</option>
-          </select>
-        </div>
-      </div>
-    </div>
+    <a-form layout="vertical">
+      <a-form-item label="菜单类型" required>
+        <a-select v-model:value="formState.menuType" :disabled="!!formState.menuId">
+          <a-select-option value="M">目录 M</a-select-option>
+          <a-select-option value="C">菜单 C</a-select-option>
+          <a-select-option value="F">按钮 F</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item v-if="formState.menuType === 'C'" label="所属目录">
+        <a-select v-model:value="formState.parentId" placeholder="请选择所属目录">
+          <a-select-option v-for="item in parentDirOptions" :key="item.menuId" :value="item.menuId">{{ item.menuName }}</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item v-if="formState.menuType === 'F'" label="所属菜单">
+        <a-select v-model:value="formState.parentId" placeholder="请选择所属菜单">
+          <a-select-option v-for="item in parentMenuOptions" :key="item.menuId" :value="item.menuId">{{ item.menuName }}</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item label="菜单名称" required>
+        <a-input v-model:value="formState.menuName" placeholder="请输入菜单名称" />
+      </a-form-item>
+      <a-form-item v-if="formState.menuType === 'C'" label="路由地址">
+        <a-input v-model:value="formState.path" placeholder="如：permission/menu" />
+      </a-form-item>
+      <a-form-item v-if="formState.menuType === 'C'" label="组件路径">
+        <a-input v-model:value="formState.component" placeholder="如：permission/menu/index" />
+      </a-form-item>
+      <a-form-item v-if="formState.menuType === 'F'" label="权限标识" required>
+        <a-input v-model:value="formState.perms" placeholder="如：system:menu:list" />
+      </a-form-item>
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item label="显示排序">
+            <a-input-number v-model:value="formState.orderNum" size="middle" style="width: 100%" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="状态">
+            <a-select v-model:value="formState.status">
+              <a-select-option value="0">启用</a-select-option>
+              <a-select-option value="1">停用</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+      </a-row>
+    </a-form>
 
     <template #footer>
-      <button type="button" class="btn btn-outline" @click="handleClose">取消</button>
-      <button type="button" class="btn btn-primary" @click="handleSubmit">保存</button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" @click="handleSubmit">保存</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
-import type { MenuListItem, MenuMutationPayload } from '@osg/shared/api/admin/menu'
+import { getAdminMenuList, type MenuListItem, type MenuMutationPayload } from '@osg/shared/api/admin/menu'
 
 const props = defineProps<{
   visible: boolean
@@ -84,16 +84,29 @@ const emit = defineEmits<{
   'submit': [payload: MenuMutationPayload]
 }>()
 
+// 动态获取上级菜单选项
+const parentDirOptions = ref<MenuListItem[]>([])   // 目录列表，供菜单 C 选择上级
+const parentMenuOptions = ref<MenuListItem[]>([])  // 菜单列表，供按钮 F 选择上级
+const loadParentMenus = async () => {
+  try {
+    const list = await getAdminMenuList()
+    parentDirOptions.value = list.filter((m) => m.menuType === 'M')
+    parentMenuOptions.value = list.filter((m) => m.menuType === 'C')
+  } catch {
+    // 静默
+  }
+}
+
 const formState = reactive<MenuMutationPayload>({
   menuId: undefined,
   parentId: 0,
   menuName: '',
   menuType: 'C',
   orderNum: 90,
-  path: '/permission/menu',
-  component: 'permission/menu/index',
-  perms: 'system:menu:list',
-  icon: 'mdi-file-tree',
+  path: '',
+  component: '',
+  perms: '',
+  icon: '',
   status: '0',
   visible: '0',
   isFrame: '1',
@@ -111,19 +124,19 @@ watch(
       formState.menuName = ''
       formState.menuType = 'C'
       formState.orderNum = 90
-      formState.path = '/permission/menu'
-      formState.component = 'permission/menu/index'
-      formState.perms = 'system:menu:list'
-      formState.icon = 'mdi-file-tree'
+      formState.path = ''
+      formState.component = ''
+      formState.perms = ''
+      formState.icon = ''
       formState.status = '0'
       formState.visible = '0'
       formState.isFrame = '1'
-      formState.isCache = '0'
       formState.query = ''
       formState.routeName = ''
       return
     }
 
+    loadParentMenus()
     formState.menuId = record.menuId
     formState.parentId = record.parentId ?? 0
     formState.menuName = record.menuName
@@ -152,91 +165,10 @@ const handleSubmit = () => {
 }
 </script>
 
-<style scoped lang="scss">
-.menu-form-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.menu-form-modal__title-icon {
-  font-size: 20px;
-  line-height: 1;
-  color: #6366f1;
-}
-
-.menu-form-modal__note {
-  margin-bottom: 16px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #eef2ff;
-  color: #4f46e5;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.menu-form-modal__fields {
+<style scoped>
+:deep(.ant-input-number) {
+  height: 32px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.menu-form-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.menu-form-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 0;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.required {
-  color: #ef4444;
-}
-
-.form-input,
-.form-select {
-  width: 100%;
-  padding: 12px 14px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 14px;
-  color: #1e293b;
-  background: #fff;
-}
-
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 10px;
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.btn-outline {
-  background: #fff;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: #fff;
 }
 </style>

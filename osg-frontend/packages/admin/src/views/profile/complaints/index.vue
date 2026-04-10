@@ -1,50 +1,39 @@
 <template>
-  <section class="complaints-page">
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">投诉建议</h1>
-        <p class="page-subtitle">处理学员提交的投诉和建议</p>
-      </div>
-    </header>
+  <section class="osg-page">
+    <PageHeader title="投诉建议" description="处理学员提交的投诉和建议" />
 
-    <div class="filter-bar">
-      <a-input
-        v-model:value="keyword"
-        class="filter-input"
-        placeholder="搜索学员/内容..."
-        allow-clear
-      />
-      <a-select
-        v-model:value="statusFilter"
-        class="filter-select"
-        placeholder="全部状态"
-        allow-clear
-      >
-        <a-select-option value="">全部状态</a-select-option>
-        <a-select-option value="pending">待处理</a-select-option>
-        <a-select-option value="processing">处理中</a-select-option>
-        <a-select-option value="completed">已完成</a-select-option>
-      </a-select>
-      <a-select
-        v-model:value="typeFilter"
-        class="filter-select"
-        placeholder="全部类型"
-        allow-clear
-      >
-        <a-select-option value="">全部类型</a-select-option>
-        <a-select-option value="complaint">投诉</a-select-option>
-        <a-select-option value="suggestion">建议</a-select-option>
-      </a-select>
-      <a-button @click="loadComplaints">
-        <template #icon><SearchOutlined /></template>
-        搜索
-      </a-button>
-    </div>
+    <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
+      <a-form-item>
+        <a-input v-model:value="keyword" placeholder="搜索学员/内容..." allow-clear style="width: 200px" />
+      </a-form-item>
+      <a-form-item>
+        <a-select v-model:value="statusFilter" placeholder="全部状态" allow-clear style="width: 120px">
+          <a-select-option value="">全部状态</a-select-option>
+          <a-select-option value="pending">待处理</a-select-option>
+          <a-select-option value="processing">处理中</a-select-option>
+          <a-select-option value="completed">已完成</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item>
+        <a-select v-model:value="typeFilter" placeholder="全部类型" allow-clear style="width: 120px">
+          <a-select-option value="">全部类型</a-select-option>
+          <a-select-option value="complaint">投诉</a-select-option>
+          <a-select-option value="suggestion">建议</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item>
+        <a-button type="primary" @click="loadComplaints">
+          <template #icon><SearchOutlined /></template>
+          搜索
+        </a-button>
+      </a-form-item>
+    </a-form>
 
     <a-card :bordered="true" :body-style="{ padding: 0 }">
       <a-table
         :columns="columns"
         :data-source="rows"
+        :scroll="{ x: 'max-content' }"
         :row-key="(record: ComplaintRow) => record.complaintId"
         :pagination="false"
       >
@@ -99,6 +88,7 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import {
   getComplaintList,
   updateComplaintStatus,
@@ -172,42 +162,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.complaints-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary, #1e293b);
-}
-
-.page-subtitle {
-  margin: 4px 0 0;
-  color: var(--text-secondary, #64748b);
-  font-size: 14px;
-}
-
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-input {
-  width: 200px;
-}
-
-.filter-select {
-  width: 120px;
-}
 </style>

@@ -1,45 +1,42 @@
 <template>
-  <section class="notice-page">
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">通知管理</h1>
-        <p class="page-subtitle">向学员和导师发送通知</p>
-      </div>
-      <a-button type="primary" @click="showSendNoticeModal = true">
-        <template #icon><BellOutlined /></template>
-        发送通知
-      </a-button>
-    </header>
+  <section class="osg-page">
+    <PageHeader title="通知管理" description="向学员和导师发送通知">
+      <template #actions>
+        <a-button type="primary" @click="showSendNoticeModal = true">
+          <template #icon><BellOutlined /></template>
+          发送通知
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <div class="filter-bar">
-      <a-input
-        v-model:value="keyword"
-        class="filter-input"
-        placeholder="标题 / 接收人"
-        allow-clear
-      />
-      <a-select
-        v-model:value="receiverType"
-        class="filter-select"
-        placeholder="类型"
-        allow-clear
-      >
-        <a-select-option value="">类型</a-select-option>
-        <a-select-option value="Lead">Lead</a-select-option>
-        <a-select-option value="Mentor">Mentor</a-select-option>
-        <a-select-option value="Student">Student</a-select-option>
-      </a-select>
-      <a-range-picker v-model:value="dateRange" />
-      <a-button @click="loadNotices">
-        <template #icon><SearchOutlined /></template>
-        搜索
-      </a-button>
-    </div>
+    <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
+      <a-form-item>
+        <a-input v-model:value="keyword" placeholder="标题 / 接收人" allow-clear style="width: 200px" />
+      </a-form-item>
+      <a-form-item>
+        <a-select v-model:value="receiverType" placeholder="类型" allow-clear style="width: 120px">
+          <a-select-option value="">类型</a-select-option>
+          <a-select-option value="Lead">Lead</a-select-option>
+          <a-select-option value="Mentor">Mentor</a-select-option>
+          <a-select-option value="Student">Student</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item>
+        <a-range-picker v-model:value="dateRange" />
+      </a-form-item>
+      <a-form-item>
+        <a-button type="primary" @click="loadNotices">
+          <template #icon><SearchOutlined /></template>
+          搜索
+        </a-button>
+      </a-form-item>
+    </a-form>
 
     <a-card :bordered="true" :body-style="{ padding: 0 }">
       <a-table
         :columns="columns"
         :data-source="rows"
+        :scroll="{ x: 'max-content' }"
         :row-key="(record: NoticeRow) => record.noticeId"
         :pagination="false"
       >
@@ -87,6 +84,7 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { BellOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import type { Dayjs } from 'dayjs'
 import SendNoticeModal from './components/SendNoticeModal.vue'
 import {
@@ -146,42 +144,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.notice-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary, #1e293b);
-}
-
-.page-subtitle {
-  margin: 4px 0 0;
-  color: var(--text-secondary, #64748b);
-  font-size: 14px;
-}
-
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-input {
-  width: 200px;
-}
-
-.filter-select {
-  width: 120px;
-}
 </style>

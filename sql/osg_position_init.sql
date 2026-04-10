@@ -7,7 +7,7 @@
 
 CREATE TABLE IF NOT EXISTS osg_position (
   position_id          BIGINT         NOT NULL AUTO_INCREMENT COMMENT '岗位ID',
-  position_category    VARCHAR(32)    NOT NULL COMMENT '岗位分类(summer/fulltime/offcycle/spring/events)',
+  position_category    VARCHAR(128)   NOT NULL COMMENT '岗位分类(summer/fulltime/offcycle/spring/events)',
   industry             VARCHAR(64)    NOT NULL COMMENT '行业分类(Investment Bank/Consulting/Tech/PE/VC/Other)',
   company_name         VARCHAR(128)   NOT NULL COMMENT '公司名称',
   company_type         VARCHAR(64)    NOT NULL COMMENT '公司类别',

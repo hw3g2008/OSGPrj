@@ -123,33 +123,29 @@
               <span class="staff-detail-modal__review-pill">待审核</span>
             </div>
 
-            <label class="staff-detail-modal__review-field" data-field-name="驳回说明">
+            <div class="staff-detail-modal__review-field" data-field-name="驳回说明">
               <span>驳回说明</span>
-              <textarea
-                v-model.trim="reviewReasons[request.requestId]"
-                class="staff-detail-modal__review-textarea"
-                rows="2"
+              <a-textarea
+                v-model:value="reviewReasons[request.requestId]"
+                :rows="2"
                 placeholder="选填：输入驳回原因后再执行驳回"
               />
-            </label>
+            </div>
 
             <div class="staff-detail-modal__review-actions">
-              <button
-                type="button"
-                class="permission-button permission-button--outline"
+              <a-button
                 :disabled="reviewingRequestId === request.requestId"
                 @click="handleReject(request.requestId)"
               >
                 驳回
-              </button>
-              <button
-                type="button"
-                class="permission-button permission-button--primary"
+              </a-button>
+              <a-button
+                type="primary"
                 :disabled="reviewingRequestId === request.requestId"
                 @click="handleApprove(request.requestId)"
               >
                 通过
-              </button>
+              </a-button>
             </div>
           </article>
         </div>
@@ -157,7 +153,7 @@
     </template>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">关闭</button>
+      <a-button @click="handleClose">关闭</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -534,16 +530,6 @@ const formatHourlyRate = (hourlyRate?: number) => {
   font-size: 13px;
 }
 
-.staff-detail-modal__review-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #dbe3f0;
-  border-radius: 12px;
-  padding: 10px 12px;
-  resize: vertical;
-  font: inherit;
-}
-
 .staff-detail-modal__review-actions {
   display: flex;
   justify-content: flex-end;
@@ -576,28 +562,6 @@ const formatHourlyRate = (hourlyRate?: number) => {
   background: #ffffff;
   color: #1d4ed8;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-}
-
-.permission-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  padding: 8px 14px;
-  background: #ffffff;
-  color: #0f172a;
-  cursor: pointer;
-}
-
-.permission-button--primary {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-color: #6366f1;
-  color: #ffffff;
-}
-
-.permission-button--outline {
-  background: #ffffff;
 }
 
 .staff-detail-modal__tag {

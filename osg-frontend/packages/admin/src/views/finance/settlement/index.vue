@@ -1,133 +1,112 @@
 <template>
-  <section class="settlement-page">
-    <header class="page-header">
-      <div>
-        <p class="page-eyebrow">Finance Center</p>
-        <h1>财务结算</h1>
-        <p class="page-subtitle">管理导师课时费支付，支持单条与批量标记已支付。</p>
-      </div>
-      <button type="button" class="ghost-button">导出</button>
-    </header>
+  <div class="osg-page">
+    <PageHeader title="财务结算" subtitle="Settlement" description="管理导师课时费支付，支持单条与批量标记已支付">
+      <template #actions>
+        <a-button @click="loadData">
+          <template #icon><ExportOutlined /></template>
+          导出
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <section class="process-banner">
-      <div>
-        <span class="banner-label">支付流程说明</span>
-        <h2>审核通过 → 未支付 → 已支付</h2>
-      </div>
-      <div class="banner-steps">
-        <span v-for="step in flowSteps" :key="step" class="banner-step">{{ step }}</span>
-      </div>
-    </section>
+    <a-alert type="warning" show-icon style="margin-bottom: 0">
+      <template #message>支付流程说明</template>
+      <template #description>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px">
+          <a-tag v-for="step in flowSteps" :key="step" color="orange">{{ step }}</a-tag>
+        </div>
+      </template>
+    </a-alert>
 
-    <section class="stats-grid">
-      <article v-for="card in statCards" :key="card.label" class="stat-card">
-        <p class="stat-card__label">{{ card.label }}</p>
-        <p class="stat-card__value">{{ card.value }}</p>
-      </article>
-    </section>
+    <a-row :gutter="16">
+      <a-col v-for="card in statCards" :key="card.label" :xs="24" :sm="8">
+        <a-card :bordered="false" :body-style="{ padding: '16px 20px', background: card.bg }">
+          <a-statistic :title="card.label" :value="card.value" :value-style="{ color: card.color, fontSize: '24px', fontWeight: 700 }" />
+        </a-card>
+      </a-col>
+    </a-row>
 
-    <section class="tabs-row">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        type="button"
-        class="tab-pill"
-        :class="{ 'tab-pill--active': activeTab === tab.key }"
-        @click="switchTab(tab.key)"
+    <a-card :bordered="false">
+      <a-tabs v-model:activeKey="activeTab" style="margin-bottom: 16px" @change="(key: string) => switchTab(key as FinanceSettlementTab)">
+        <a-tab-pane v-for="tab in tabs" :key="tab.key">
+          <template #tab>
+            {{ tab.label }}
+            <a-badge :count="tab.count" :number-style="{ backgroundColor: tab.key === 'unpaid' ? '#faad14' : '#52c41a' }" style="margin-left: 4px" />
+          </template>
+        </a-tab-pane>
+      </a-tabs>
+
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+        <a-form-item>
+          <a-input v-model:value="keyword" placeholder="搜索导师 / 学员" allow-clear style="width: 180px" @press-enter="loadData" />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="source" style="width: 120px">
+            <a-select-option value="all">全部来源</a-select-option>
+            <a-select-option value="mentor">导师端</a-select-option>
+            <a-select-option value="clerk">班主任端</a-select-option>
+            <a-select-option value="assistant">助教端</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-date-picker v-model:value="startDate" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+        </a-form-item>
+        <a-form-item>
+          <a-date-picker v-model:value="endDate" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" @click="loadData">
+            <template #icon><SearchOutlined /></template>
+            查询
+          </a-button>
+        </a-form-item>
+      </a-form>
+
+      <div v-if="activeTab === 'unpaid'" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px">
+        <span v-if="selectedSettlementIds.length" style="color: #1890ff">已选择 {{ selectedSettlementIds.length }} 条，合计 {{ selectedAmount }}</span>
+        <span v-else style="color: #94a3b8">批量标记已支付</span>
+        <a-button v-if="selectedSettlementIds.length" type="primary" @click="openBatchPay">批量标记已支付</a-button>
+      </div>
+
+      <a-table
+        :columns="settlementColumns"
+        :data-source="rows"
+        :row-key="(r: FinanceSettlementRow) => r.settlementId"
+        :pagination="false"
+        :locale="{ emptyText: '暂无结算记录' }"
+        :scroll="{ x: 1300 }"
+        :row-selection="activeTab === 'unpaid' ? { selectedRowKeys: selectedSettlementIds, onChange: onSelectChange } : undefined"
+        :row-class-name="(record: FinanceSettlementRow) => selectedSettlementIds.includes(record.settlementId) ? 'row-selected' : ''"
       >
-        {{ tab.label }}
-        <span class="tab-pill__count">{{ tab.count }}</span>
-      </button>
-    </section>
-
-    <section class="toolbar-card">
-      <div class="toolbar-filters">
-        <input v-model.trim="keyword" class="toolbar-input" type="search" placeholder="搜索导师 / 学员">
-        <select v-model="source" class="toolbar-select">
-          <option value="all">全部来源</option>
-          <option value="mentor">导师端</option>
-          <option value="clerk">班主任端</option>
-          <option value="assistant">助教端</option>
-        </select>
-        <input v-model="startDate" class="toolbar-input" type="date">
-        <input v-model="endDate" class="toolbar-input" type="date">
-        <button type="button" class="primary-button" @click="loadData">查询</button>
-      </div>
-
-      <div v-if="activeTab === 'unpaid' && selectedSettlementIds.length" class="selection-bar">
-        <span>已选择 {{ selectedSettlementIds.length }} 条，合计 {{ selectedAmount }}</span>
-        <button type="button" class="primary-button" @click="openBatchPay">批量标记已支付</button>
-      </div>
-      <div v-else-if="activeTab === 'unpaid'" class="selection-bar selection-bar--hint">
-        <span>批量标记已支付</span>
-      </div>
-    </section>
-
-    <section class="table-card">
-      <table class="settlement-table">
-        <thead>
-          <tr>
-            <th>选择</th>
-            <th>课程ID</th>
-            <th>导师</th>
-            <th>学员</th>
-            <th>课程类型</th>
-            <th>时长</th>
-            <th>课时费</th>
-            <th>日期</th>
-            <th>来源</th>
-            <th>状态</th>
-            <th>支付日期</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in rows"
-            :key="row.settlementId"
-            :class="{ 'settlement-table__row--selected': selectedSettlementIds.includes(row.settlementId) }"
-          >
-            <td>
-              <input
-                v-if="activeTab === 'unpaid'"
-                v-model="selectedSettlementIds"
-                type="checkbox"
-                :value="row.settlementId"
-              >
-              <span v-else>—</span>
-            </td>
-            <td>{{ row.recordCode || `#R${row.recordId}` }}</td>
-            <td>{{ row.mentorName }}</td>
-            <td>{{ row.studentName }}</td>
-            <td>{{ row.courseTypeLabel }}</td>
-            <td>{{ formatHours(row.durationHours) }}</td>
-            <td>{{ formatFee(row.courseFee) }}</td>
-            <td>{{ formatDate(row.classDate) }}</td>
-            <td>
-              <span class="source-pill" :class="`source-pill--${row.source}`">{{ row.sourceLabel }}</span>
-            </td>
-            <td>
-              <span class="status-pill" :class="`status-pill--${row.paymentStatus}`">{{ row.paymentStatusLabel }}</span>
-            </td>
-            <td>{{ row.paymentDate || '--' }}</td>
-            <td>
-              <button
-                v-if="row.paymentStatus === 'unpaid'"
-                type="button"
-                class="link-button"
-                @click="openSinglePay(row)"
-              >
-                标记支付
-              </button>
-              <span v-else>查看</span>
-            </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td class="empty-row" colspan="12">暂无结算记录</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'recordCode'">
+            {{ record.recordCode || `#R${record.recordId}` }}
+          </template>
+          <template v-else-if="column.dataIndex === 'durationHours'">
+            {{ formatHours(record.durationHours) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'courseFee'">
+            {{ formatFee(record.courseFee) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'classDate'">
+            {{ formatDate(record.classDate) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'source'">
+            <a-tag :color="sourceColorMap[record.source] || 'default'">{{ record.sourceLabel }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'paymentStatus'">
+            <a-tag :color="record.paymentStatus === 'unpaid' ? 'blue' : 'green'">{{ record.paymentStatusLabel }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'paymentDate'">
+            {{ record.paymentDate || '--' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-button v-if="record.paymentStatus === 'unpaid'" type="link" size="small" @click="openSinglePay(record)">标记支付</a-button>
+            <span v-else style="color: #94a3b8">查看</span>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <MarkPaidModal
       v-model="showMarkPaidModal"
@@ -136,12 +115,14 @@
       :submitting="submitting"
       @confirm="handleConfirmPaid"
     />
-  </section>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import MarkPaidModal from './components/MarkPaidModal.vue'
 import {
   batchPayFinanceSettlement,
@@ -153,6 +134,26 @@ import {
   type FinanceSettlementStats,
   type FinanceSettlementTab
 } from '@osg/shared/api/admin/finance'
+
+const sourceColorMap: Record<string, string> = {
+  mentor: 'purple',
+  clerk: 'green',
+  assistant: 'orange'
+}
+
+const settlementColumns = [
+  { title: '课程ID', dataIndex: 'recordCode', key: 'recordCode', width: 100 },
+  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
+  { title: '课程类型', dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 100 },
+  { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: '课时费', dataIndex: 'courseFee', key: 'courseFee', width: 90 },
+  { title: '日期', dataIndex: 'classDate', key: 'classDate', width: 100 },
+  { title: '来源', dataIndex: 'source', key: 'source', width: 90 },
+  { title: '状态', dataIndex: 'paymentStatus', key: 'paymentStatus', width: 80 },
+  { title: '支付日期', dataIndex: 'paymentDate', key: 'paymentDate', width: 100 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 90 },
+]
 
 const rows = ref<FinanceSettlementRow[]>([])
 const stats = ref<FinanceSettlementStats | null>(null)
@@ -171,11 +172,15 @@ const flowSteps = computed(() => stats.value?.flowSteps ?? ['审核通过', '未
 const statCards = computed(() => {
   const current = stats.value
   return [
-    { label: '未支付', value: formatFee(current?.unpaidAmount) },
-    { label: '本月已支付', value: formatFee(current?.monthPaidAmount) },
-    { label: '本周课程数', value: String(current?.weekClassCount ?? 0) }
+    { label: '未支付', value: formatFee(current?.unpaidAmount), bg: '#fffbeb', color: '#d97706' },
+    { label: '本月已支付', value: formatFee(current?.monthPaidAmount), bg: '#f0fdf4', color: '#16a34a' },
+    { label: '本周课程数', value: String(current?.weekClassCount ?? 0), bg: '#eff6ff', color: '#2563eb' }
   ]
 })
+
+const onSelectChange = (keys: number[]) => {
+  selectedSettlementIds.value = keys
+}
 
 const tabs = computed(() => {
   const unpaidCount = rows.value.filter((row) => row.paymentStatus === 'unpaid').length
@@ -300,223 +305,8 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
-.settlement-page {
-  display: grid;
-  gap: 20px;
-}
-
-.page-header,
-.toolbar-filters,
-.tabs-row,
-.selection-bar,
-.banner-steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.page-header {
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.page-eyebrow {
-  margin: 0 0 6px;
-  color: #c2410c;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-header h1,
-.page-header p,
-.process-banner h2,
-.stat-card__label,
-.stat-card__value {
-  margin: 0;
-}
-
-.page-subtitle {
-  margin-top: 8px;
-  color: #475569;
-}
-
-.ghost-button,
-.primary-button,
-.link-button,
-.tab-pill {
-  border: none;
-  border-radius: 14px;
-  padding: 10px 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ghost-button {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.primary-button {
-  background: #15803d;
-  color: #fff;
-}
-
-.link-button {
-  background: transparent;
-  color: #15803d;
-  padding: 0;
-}
-
-.process-banner,
-.toolbar-card,
-.table-card {
-  padding: 20px 24px;
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-}
-
-.process-banner {
-  background: linear-gradient(135deg, #fef3c7, #fffbeb);
-}
-
-.banner-label {
-  display: inline-flex;
-  margin-bottom: 8px;
-  color: #b45309;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.banner-step {
-  border-radius: 999px;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.72);
-  color: #92400e;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  border-radius: 20px;
-  padding: 18px 20px;
-  background: #f8fafc;
-}
-
-.stat-card__label {
-  color: #64748b;
-}
-
-.stat-card__value {
-  margin-top: 8px;
-  color: #0f172a;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.tab-pill {
-  background: #e2e8f0;
-  color: #334155;
-}
-
-.tab-pill--active {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.tab-pill__count {
-  margin-left: 8px;
-}
-
-.toolbar-input,
-.toolbar-select {
-  min-width: 160px;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 10px 12px;
-  font: inherit;
-}
-
-.selection-bar {
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 16px;
-}
-
-.selection-bar--hint {
-  justify-content: flex-start;
-  color: #64748b;
-}
-
-.settlement-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.settlement-table th,
-.settlement-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-}
-
-.settlement-table__row--selected {
-  background: #eff6ff;
-}
-
-.source-pill,
-.status-pill {
-  display: inline-flex;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.source-pill--mentor {
-  background: rgba(90, 123, 163, 0.16);
-  color: #5a7ba3;
-}
-
-.source-pill--clerk {
-  background: rgba(5, 150, 105, 0.14);
-  color: #059669;
-}
-
-.source-pill--assistant {
-  background: rgba(146, 64, 14, 0.14);
-  color: #92400e;
-}
-
-.status-pill--unpaid {
-  background: rgba(59, 130, 246, 0.14);
-  color: #2563eb;
-}
-
-.status-pill--paid {
-  background: rgba(34, 197, 94, 0.14);
-  color: #15803d;
-}
-
-.empty-row {
-  text-align: center;
-  color: #94a3b8;
-}
-
-@media (max-width: 960px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .table-card {
-    overflow-x: auto;
-  }
+<style scoped>
+:deep(.row-selected) {
+  background: rgba(239, 246, 255, 0.6);
 }
 </style>

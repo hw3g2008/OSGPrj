@@ -1,30 +1,25 @@
-export interface StaffColumn {
-  key: string
-  label: string
-}
-
-export const staffColumns: StaffColumn[] = [
-  { key: 'id', label: 'ID' },
-  { key: 'name', label: '英文名' },
-  { key: 'contact', label: '联系方式' },
-  { key: 'type', label: '类型' },
-  { key: 'majorDirection', label: '主攻方向' },
-  { key: 'subDirection', label: '子方向' },
-  { key: 'region', label: '所属地区' },
-  { key: 'hourlyRate', label: '课单价' },
-  { key: 'studentCount', label: '学员数' },
-  { key: 'accountStatus', label: '账号状态' },
-  { key: 'actions', label: '操作' }
+export const staffColumns = [
+  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90 },
+  { title: '英文名', dataIndex: 'staffName', key: 'staffName', width: 120 },
+  { title: '联系方式', dataIndex: 'contact', key: 'contact', width: 160 },
+  { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 80, align: 'center' as const },
+  { title: '主攻方向', dataIndex: 'majorDirection', key: 'majorDirection', width: 100 },
+  { title: '子方向', dataIndex: 'subDirection', key: 'subDirection', width: 90 },
+  { title: '所属地区', dataIndex: 'region', key: 'region', width: 120 },
+  { title: '课单价', dataIndex: 'hourlyRate', key: 'hourlyRate', width: 80, align: 'center' as const },
+  { title: '学员数', dataIndex: 'studentCount', key: 'studentCount', width: 80, align: 'center' as const },
+  { title: '账号状态', dataIndex: 'accountStatus', key: 'accountStatus', width: 90 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 240, fixed: 'right' as const },
 ]
 
-export const staffBlacklistColumns: StaffColumn[] = [
-  { key: 'id', label: 'ID' },
-  { key: 'name', label: '英文名' },
-  { key: 'email', label: '邮箱' },
-  { key: 'type', label: '类型' },
-  { key: 'majorDirection', label: '主攻方向' },
-  { key: 'blacklistReason', label: '黑名单原因' },
-  { key: 'blacklistTime', label: '加入时间' },
-  { key: 'operator', label: '操作人' },
-  { key: 'actions', label: '操作' }
+export const staffBlacklistColumns = [
+  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90 },
+  { title: '英文名', dataIndex: 'staffName', key: 'staffName', width: 120 },
+  { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
+  { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 80, align: 'center' as const },
+  { title: '主攻方向', dataIndex: 'majorDirection', key: 'majorDirection', width: 100 },
+  { title: '黑名单原因', dataIndex: 'blacklistReason', key: 'blacklistReason', width: 160 },
+  { title: '加入时间', dataIndex: 'blacklistTime', key: 'blacklistTime', width: 120 },
+  { title: '操作人', dataIndex: 'operator', key: 'operator', width: 90 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 240, fixed: 'right' as const },
 ]

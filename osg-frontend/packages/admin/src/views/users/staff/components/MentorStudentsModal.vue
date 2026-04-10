@@ -15,7 +15,7 @@
     <div v-if="loading" class="mentor-students-modal__state">加载中...</div>
     <div v-else-if="!rows.length" class="mentor-students-modal__state">暂无关联学员</div>
     <div v-else class="mentor-students-modal__table-wrap">
-      <table class="permission-table mentor-students-modal__table">
+      <table class="mentor-students-modal__table">
         <thead>
           <tr>
             <th>Student ID</th>
@@ -40,7 +40,7 @@
     </div>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">关闭</button>
+      <a-button @click="handleClose">关闭</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>

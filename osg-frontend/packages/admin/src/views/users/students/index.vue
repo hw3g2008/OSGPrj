@@ -1,61 +1,27 @@
 <template>
-  <div class="students-page">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">
-          学员列表
-          <span class="page-title-en">Student List</span>
-        </h2>
-        <p class="page-sub subtitle">管理学员信息、合同信息，支持各端查看和维护学员数据</p>
-      </div>
-      <div class="page-header__actions">
-        <button
-          type="button"
-          class="permission-button permission-button--primary students-page__add-button"
-          data-surface-trigger="modal-add-student"
-          @click="openAddStudentModal"
-        >
-          <i class="mdi mdi-plus" aria-hidden="true"></i>
-          <span>新增学员</span>
-        </button>
-      </div>
-    </div>
+  <div class="osg-page">
+    <PageHeader title="学员列表" subtitle="Student List" description="管理学员信息、合同信息，支持各端查看和维护学员数据">
+      <template #actions>
+        <a-button type="primary" data-surface-trigger="modal-add-student" @click="openAddStudentModal">
+          <template #icon><PlusOutlined /></template>
+          新增学员
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <div v-if="pendingReviewCount > 0" class="students-banner">
-      <div class="students-banner__icon" aria-hidden="true">
-        <i class="mdi mdi-bell-ring"></i>
-      </div>
-      <div class="students-banner__content">
-        <strong class="students-banner__title">⚠️ 有 {{ pendingReviewCount }} 位学员的信息变更待审核</strong>
-        <span class="students-banner__text">学员提交的学业信息、求职方向等信息变更需要您审核，请及时处理</span>
-      </div>
-      <button
-        type="button"
-        class="students-banner__cta"
-        data-surface-trigger="modal-student-detail-bob"
-        data-surface-sample-key="pending-review"
-        @click="openPendingReviewStudent"
-      >
-        <i class="mdi mdi-eye"></i>
-        <span>立即查看</span>
-      </button>
-    </div>
-
-    <div class="students-tabs" role="tablist" aria-label="学员列表类型切换">
-      <button
-        v-for="tab in studentTabs"
-        :key="tab.key"
-        type="button"
-        :class="['students-tabs__tab', { 'students-tabs__tab--active': selectedTab === tab.key }]"
-        :aria-selected="selectedTab === tab.key"
-        :aria-label="`学员管理页${tab.label}`"
-        :data-tab="tab.key"
-        @click="handleTabChange(tab.key)"
-      >
-        <span>{{ tab.label }}</span>
-        <span v-if="tab.key === 'blacklist'" class="students-tabs__count">{{ getTabCount(tab.key) }}</span>
-      </button>
-    </div>
+    <a-alert
+      v-if="pendingReviewCount > 0"
+      type="warning"
+      show-icon
+      :message="`有 ${pendingReviewCount} 位学员的信息变更待审核`"
+      description="学员提交的学业信息、求职方向等信息变更需要您审核，请及时处理"
+    >
+      <template #action>
+        <a-button type="primary" size="small" data-surface-trigger="modal-student-detail-bob" data-surface-sample-key="pending-review" @click="openPendingReviewStudent">
+          立即查看
+        </a-button>
+      </template>
+    </a-alert>
 
     <FilterBar
       v-model="filters"
@@ -68,194 +34,116 @@
       @export="handleExport"
     />
 
-    <div class="permission-card">
-      <div class="students-list-head">
-        <div>
-          <h3 class="students-list-head__title">{{ selectedTab === 'blacklist' ? '黑名单学员' : '学员台账' }}</h3>
-          <p class="students-list-head__sub">{{ selectedTab === 'blacklist' ? '查看限制求职中心访问的学员名单与原因。' : '按提醒、课时与账号状态查看当前在管学员。' }}</p>
-        </div>
-        <div class="students-list-head__meta">
-          <span class="students-list-head__chip">{{ visibleTotal }} 条记录</span>
-          <span class="students-list-head__chip">{{ pagination.current }} / {{ totalPages }} 页</span>
-        </div>
-      </div>
+    <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
+      <a-tabs v-model:activeKey="selectedTab" @change="(key: string) => handleTabChange(key as StudentTabKey)">
+        <a-tab-pane v-for="tab in studentTabs" :key="tab.key">
+          <template #tab>
+            {{ tab.label }}
+            <a-badge v-if="tab.key === 'blacklist'" :count="getTabCount(tab.key)" :number-style="{ backgroundColor: '#ef4444' }" style="margin-left: 4px" />
+          </template>
+        </a-tab-pane>
+      </a-tabs>
 
-      <div class="permission-card__body permission-card__body--flush">
-        <div class="students-table-scroll">
-        <table class="permission-table">
-          <thead>
-            <tr>
-              <th v-for="column in activeStudentColumns" :key="column.key">
-                {{ column.label }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="record in visibleStudentList"
-              :key="record.studentId"
-              :class="getStudentRowClass(record)"
-            >
-              <!-- 1. ID -->
-              <td><span class="students-id-pill">#{{ record.studentId }}</span></td>
+      <a-alert
+        v-if="selectedTab === 'blacklist'"
+        type="warning"
+        show-icon
+        style="margin-bottom: 16px"
+      >
+        <template #message><strong>黑名单限制</strong></template>
+        <template #description>黑名单学员可以正常登录学生端，但<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能）</template>
+      </a-alert>
 
-              <!-- 2. 英文姓名 -->
-              <td>
-                <button
-                  type="button"
-                  class="student-link"
-                  :data-surface-trigger="getStudentDetailSurfaceId(record)"
-                  :data-surface-sample-key="getStudentSurfaceSampleKey(record)"
-                  @click="openStudentDetail(record)"
-                >
-                  {{ record.studentName }}
-                </button>
-                <div class="students-cell-note">{{ getStatusNote(record) }}</div>
-              </td>
-
-              <!-- 3. 邮箱 -->
-              <td><span class="students-secondary-text">{{ record.email || '-' }}</span></td>
-
-              <!-- 4. 班主任 -->
-              <td><span class="students-secondary-text">{{ record.leadMentorName || '-' }}</span></td>
-
-              <!-- 5. 学校 -->
-              <td><span class="students-secondary-text">{{ record.school || '-' }}</span></td>
-
-              <!-- 6. 主攻方向 -->
-              <td>
-                <span :class="['tag', getDirectionClass(record.majorDirection)]">{{ record.majorDirection || '-' }}</span>
-              </td>
-
-              <!-- 7. 投递岗位 -->
-              <td>
-                <button type="button" class="students-inline-link" @click="openJobsModal(record)">
-                  {{ formatJobApplications(record) }}
-                </button>
-              </td>
-
-              <!-- 8. 总课时 -->
-              <td>
-                <strong class="students-hour-value">{{ formatHours(record.totalHours) }}</strong>
-              </td>
-
-              <!-- 9. 岗位辅导 -->
-              <td>
-                <span class="students-inline-metric students-inline-metric--blue">{{ record.jobCoachingCount || 0 }}次</span>
-              </td>
-
-              <!-- 10. 基础课 -->
-              <td>
-                <span class="students-inline-metric students-inline-metric--indigo">{{ record.basicCourseCount || 0 }}次</span>
-              </td>
-
-              <!-- 11. 模拟应聘 -->
-              <td>
-                <span class="students-inline-metric students-inline-metric--green">{{ record.mockInterviewCount || 0 }}次</span>
-              </td>
-
-              <!-- 12. 剩余课时 -->
-              <td>
-                <span class="students-inline-metric" :style="{ color: getRemainingHoursColor(record.remainingHours), fontWeight: 700 }">
-                  {{ formatHours(record.remainingHours) }}
-                </span>
-              </td>
-
-              <!-- 13. 提醒 -->
-              <td>
-                <span v-if="getReminderLabel(record) !== '暂无提醒'" :class="['tag', getReminderClass(getReminderLabel(record))]">
-                  <i v-if="getReminderIcon(getReminderLabel(record))" :class="getReminderIcon(getReminderLabel(record))" aria-hidden="true" style="font-size:14px;margin-right:2px"></i>
-                  {{ getReminderLabel(record) }}
-                </span>
-                <span v-else style="color:var(--muted)">-</span>
-              </td>
-
-              <!-- 14. 账号状态 -->
-              <td>
-                <div class="student-status-stack student-status-stack--compact">
-                  <span :class="['tag', getStatusClass(record.accountStatus)]">
-                    {{ formatStatus(record.accountStatus) }}
-                  </span>
-                  <span class="student-note">{{ getStatusNote(record) }}</span>
-                </div>
-              </td>
-
-              <!-- 15. 操作 -->
-              <td class="action-cell">
-                <div class="student-action-row student-action-row--quiet">
-                  <button
-                    type="button"
-                    class="student-action-link"
-                    :data-surface-trigger="getStudentDetailSurfaceId(record)"
-                    :data-surface-sample-key="getStudentSurfaceSampleKey(record)"
-                    @click="openStudentDetail(record)"
-                  >
-                    详情
-                  </button>
-                  <span class="student-action-divider" aria-hidden="true"></span>
-                  <button
-                    type="button"
-                    class="student-action-link"
-                    data-surface-trigger="modal-edit-student-new"
-                    :data-surface-sample-key="getStudentSurfaceSampleKey(record)"
-                    @click="openStudentEdit(record)"
-                  >
-                    编辑
-                  </button>
-                  <span class="student-action-divider" aria-hidden="true"></span>
-                  <button
-                    type="button"
-                    class="student-action-link"
-                    data-surface-trigger="modal-contract-renew"
-                    :disabled="renewContractLoadingId === record.studentId"
-                    :data-surface-sample-key="`${getStudentSurfaceSampleKey(record)}-contract-renew`"
-                    @click="openStudentRenew(record)"
-                  >
-                    续签
-                  </button>
-                  <ActionDropdown @select="handleStudentAction($event, record)" />
-                </div>
-              </td>
-            </tr>
-            <tr v-if="!visibleStudentList.length">
-              <td class="students-empty" :colspan="activeStudentColumns.length">{{ emptyStateText }}</td>
-            </tr>
-          </tbody>
-        </table>
-        </div>
-      </div>
-      <div v-if="selectedTab === 'blacklist'" class="students-blacklist-notice">
-        <i class="mdi mdi-alert" aria-hidden="true"></i>
-        <span>
-          <strong>黑名单限制：</strong>黑名单学员可以正常登录学生端，但<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能）
-        </span>
-      </div>
-    </div>
-
-    <div class="students-pagination">
-      <span class="students-pagination__total">共 {{ visibleTotal }} 条记录</span>
-      <div class="students-pagination__controls">
-        <button
-          type="button"
-          class="permission-button permission-button--outline permission-button--small"
-          :disabled="!hasPrev"
-          @click="goPrev"
-        >
-          上一页
-        </button>
-        <button type="button" class="permission-button permission-button--primary permission-button--small">
-          {{ pagination.current }}
-        </button>
-        <button
-          type="button"
-          class="permission-button permission-button--outline permission-button--small"
-          :disabled="!hasNext"
-          @click="goNext"
-        >
-          下一页
-        </button>
-      </div>
-    </div>
+      <a-table
+        :columns="activeStudentColumns"
+        :data-source="visibleStudentList"
+        :row-key="(record: StudentListItem) => record.studentId"
+        :pagination="tablePagination"
+        :row-class-name="getRowClassName"
+        :locale="{ emptyText: emptyStateText }"
+        :scroll="{ x: 'max-content' }"
+        @change="handleTableChange"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'studentId'">
+            <a-tag color="blue">#{{ record.studentId }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'studentName'">
+            <a-button type="link" size="small" style="padding: 0; font-weight: 600" :data-surface-trigger="getStudentDetailSurfaceId(record)" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentDetail(record)">
+              {{ record.studentName }}
+            </a-button>
+            <div style="font-size: 10px; color: #9099b0; margin-top: 2px">{{ getStatusNote(record) }}</div>
+          </template>
+          <template v-else-if="column.dataIndex === 'email'">
+            <span style="color: #566178; font-size: 12px">{{ record.email || '-' }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'leadMentorName'">
+            <span style="color: #566178; font-size: 12px">{{ record.leadMentorName || '-' }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'school'">
+            <a-tooltip :title="record.school || '-'">
+              <span style="color: #566178; font-size: 12px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.school || '-' }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.dataIndex === 'majorDirection'">
+            <a-tooltip :title="record.majorDirection || '-'">
+              <a-tag :color="getDirectionColor(record.majorDirection)" style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.majorDirection || '-' }}</a-tag>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.dataIndex === 'positions'">
+            <a-button type="link" size="small" style="padding: 0" @click="openJobsModal(record)">
+              {{ formatJobApplications(record) }}
+            </a-button>
+          </template>
+          <template v-else-if="column.dataIndex === 'totalHours'">
+            <strong style="color: var(--primary)">{{ formatHours(record.totalHours) }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'jobCoachingCount'">
+            <span style="color: #3172f4; font-weight: 700">{{ record.jobCoachingCount || 0 }}次</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'basicCourseCount'">
+            <span style="color: #5a63ef; font-weight: 700">{{ record.basicCourseCount || 0 }}次</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'mockInterviewCount'">
+            <span style="color: #12a56a; font-weight: 700">{{ record.mockInterviewCount || 0 }}次</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'remainingHours'">
+            <strong :style="{ color: getRemainingHoursColor(record.remainingHours) }">{{ formatHours(record.remainingHours) }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'reminder'">
+            <template v-if="getReminderLabel(record) !== '暂无提醒'">
+              <a-tag :color="getReminderTagColor(getReminderLabel(record))">{{ getReminderLabel(record) }}</a-tag>
+            </template>
+            <span v-else style="color: var(--muted)">-</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'accountStatus'">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <a-tag :color="getStatusTagColor(record.accountStatus)">{{ formatStatus(record.accountStatus) }}</a-tag>
+              <span style="font-size: 11px; color: #9ca3af">{{ getStatusNote(record) }}</span>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-space :size="4" wrap>
+              <a-button type="link" size="small" :data-surface-trigger="getStudentDetailSurfaceId(record)" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentDetail(record)">详情</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-edit-student-new" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentEdit(record)">编辑</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-contract-renew" :loading="renewContractLoadingId === record.studentId" :data-surface-sample-key="`${getStudentSurfaceSampleKey(record)}-contract-renew`" @click="openStudentRenew(record)">续签</a-button>
+              <a-dropdown :trigger="['click']" placement="bottomRight">
+                <a-button type="link" size="small">更多 <DownOutlined /></a-button>
+                <template #overlay>
+                  <a-menu @click="({ key }: { key: string }) => handleStudentAction(key as StudentActionKey, record)">
+                    <a-menu-item key="resetPassword">重置密码</a-menu-item>
+                    <a-menu-item key="freeze"><span style="color: #b45309">冻结</span></a-menu-item>
+                    <a-menu-item key="restore"><span style="color: #15803d">恢复</span></a-menu-item>
+                    <a-menu-item key="blacklist"><span style="color: #b45309">加入黑名单</span></a-menu-item>
+                    <a-menu-item key="refund"><span style="color: #b91c1c">退费</span></a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <AddStudentModal
       v-model:visible="addStudentVisible"
@@ -300,6 +188,7 @@
 <script setup lang="ts">
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
+import { DownOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import {
   getStudentList,
   resetStudentPassword,
@@ -314,7 +203,7 @@ import {
 } from '@osg/shared/api/admin/contract'
 import { getToken } from '@osg/shared/utils'
 import { http } from '@osg/shared/utils/request'
-import ActionDropdown from './components/ActionDropdown.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import AddStudentModal from './components/AddStudentModal.vue'
 import BlacklistModal from './components/BlacklistModal.vue'
 import EditStudentModal from './components/EditStudentModal.vue'
@@ -431,15 +320,16 @@ type StudentTabKey = (typeof studentTabs)[number]['key']
 
 const selectedTab = ref<StudentTabKey>('normal')
 
-const totalPages = computed(() => Math.max(1, Math.ceil((pagination.total || 0) / pagination.pageSize)))
-const hasPrev = computed(() => pagination.current > 1)
-const hasNext = computed(() => pagination.current < totalPages.value)
 const visibleStudentList = computed(() =>
   studentList.value.filter((record) => (selectedTab.value === 'blacklist' ? isBlacklisted(record) : !isBlacklisted(record)))
 )
-const visibleTotal = computed(() =>
-  selectedTab.value === 'blacklist' ? countBlacklisted(studentList.value) : Math.max(pagination.total - countBlacklisted(studentList.value), 0)
-)
+const tablePagination = computed(() => ({
+  current: pagination.current,
+  pageSize: pagination.pageSize,
+  total: pagination.total,
+  showSizeChanger: false,
+  showTotal: (total: number) => `共 ${total} 条记录`
+}))
 const emptyStateText = computed(() =>
   selectedTab.value === 'blacklist' ? '暂无黑名单学员' : '暂无学员数据'
 )
@@ -762,20 +652,19 @@ const handleTabChange = async (tab: StudentTabKey) => {
   await loadStudentList()
 }
 
-const goPrev = async () => {
-  if (!hasPrev.value) {
-    return
-  }
-  pagination.current -= 1
-  await loadStudentList()
+const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
+  pagination.current = pag.current ?? 1
+  pagination.pageSize = pag.pageSize ?? 10
+  void loadStudentList()
 }
 
-const goNext = async () => {
-  if (!hasNext.value) {
-    return
-  }
-  pagination.current += 1
-  await loadStudentList()
+const getRowClassName = (record: StudentListItem) => {
+  if (isPendingReview(record)) return 'row-pending-review'
+  if (isLowHours(record)) return 'row-low-hours'
+  if (isContractExpiring(record)) return 'row-contract-expiring'
+  if (isEndedStatus(record)) return 'row-ended'
+  if (isRefundedStatus(record)) return 'row-refunded'
+  return ''
 }
 
 const syncFilterOptions = (rows: StudentListItem[]) => {
@@ -899,16 +788,6 @@ const isRefundedStatus = (record: StudentListItem) => {
   return record.accountStatus === '3'
 }
 
-const getStudentRowClass = (record: StudentListItem) => {
-  return {
-    'students-row--pending-review': isPendingReview(record),
-    'students-row--low-hours': isLowHours(record),
-    'students-row--contract-expiring': isContractExpiring(record),
-    'students-row--ended': isEndedStatus(record),
-    'students-row--refunded': isRefundedStatus(record)
-  }
-}
-
 const handleStudentAction = (action: StudentActionKey, record: StudentListItem) => {
   if (action === 'detail') {
     openStudentDetail(record)
@@ -954,7 +833,7 @@ const formatHours = (value?: number) => {
   return `${safeValue}h`
 }
 
-const formatJobApplications = (record: StudentListItem) => {
+const formatJobApplications = (_record: StudentListItem) => {
   // 暂时返回占位文本,实际应该从API获取投递岗位数量
   const count = 3
   const company = 'Goldman Sachs'
@@ -973,102 +852,31 @@ const openJobsModal = (record: StudentListItem) => {
   console.log('Open jobs modal for student:', record.studentId)
 }
 
-const formatGraduation = (year?: number) => {
-  if (!year) return '-'
-  return `${year} 届`
-}
-
-const formatLastLogin = (record: StudentListItem) => {
-  // 这里可以根据实际的 lastLoginTime 字段来格式化
-  // 暂时返回占位文本
-  return '今天'
-}
-
-const formatLastUpdate = (record: StudentListItem) => {
-  // 这里可以根据实际的 lastUpdateTime 字段来格式化
-  // 暂时返回占位文本
-  return '最近'
-}
-
-const getRemainingClass = (hours?: number) => {
-  const safeHours = typeof hours === 'number' ? hours : 0
-  if (safeHours <= 5) return 'student-remaining--danger'
-  if (safeHours <= 10) return 'student-remaining--warning'
-  return 'student-remaining--good'
-}
-
-const getRemainingIcon = (hours?: number) => {
-  const safeHours = typeof hours === 'number' ? hours : 0
-  if (safeHours <= 5) return 'mdi mdi-alert-circle-outline'
-  return 'mdi mdi-timer-sand'
-}
-
-const getReminderClass = (reminder?: string) => {
-  if (!reminder || reminder === '-' || reminder === '暂无提醒') {
-    return 'default'
-  }
-  if (reminder.includes('待审核')) {
-    return 'danger tag--pulse'
-  }
-  if (reminder.includes('课时')) {
-    return 'danger'
-  }
-  if (reminder.includes('到期')) {
-    return 'warning'
-  }
-  return 'info'
-}
-
-const getReminderIcon = (reminder?: string) => {
-  if (!reminder || reminder === '-' || reminder === '暂无提醒') {
-    return null
-  }
-  if (reminder.includes('课时')) {
-    return 'mdi mdi-clock-alert'
-  }
-  if (reminder.includes('待审核')) {
-    return 'mdi mdi-alert-circle'
-  }
-  if (reminder.includes('到期')) {
-    return 'mdi mdi-calendar-alert'
-  }
-  return null
-}
-
-const getReminderNote = (record: StudentListItem) => {
-  if (isPendingReview(record)) {
-    return '请优先处理资料变更'
-  }
-  if (isLowHours(record)) {
-    return '建议优先安排续签或排期'
-  }
-  if (isContractExpiring(record)) {
-    return '合同即将到期'
-  }
-  return '资料状态正常'
-}
-
-const getStatusClass = (status?: string) => {
-  switch (status) {
-    case '1':
-      return 'info'
-    case '2':
-      return 'default'
-    case '3':
-      return 'danger'
-    default:
-      return 'success'
-  }
-}
-
-const getDirectionClass = (direction?: string) => {
+const getDirectionColor = (direction?: string) => {
   if (!direction) return 'default'
   const d = direction.toLowerCase()
   if (d.includes('金融') || d.includes('finance')) return 'purple'
-  if (d.includes('咨询') || d.includes('consulting')) return 'info'
-  if (d.includes('科技') || d.includes('tech')) return 'warning'
-  if (d.includes('量化') || d.includes('quant')) return 'quant'
+  if (d.includes('咨询') || d.includes('consulting')) return 'blue'
+  if (d.includes('科技') || d.includes('tech')) return 'orange'
+  if (d.includes('量化') || d.includes('quant')) return 'cyan'
   return 'purple'
+}
+
+const getReminderTagColor = (reminder?: string) => {
+  if (!reminder || reminder === '-' || reminder === '暂无提醒') return 'default'
+  if (reminder.includes('待审核')) return 'red'
+  if (reminder.includes('课时')) return 'red'
+  if (reminder.includes('到期')) return 'orange'
+  return 'blue'
+}
+
+const getStatusTagColor = (status?: string) => {
+  switch (status) {
+    case '1': return 'blue'
+    case '2': return 'default'
+    case '3': return 'red'
+    default: return 'green'
+  }
 }
 
 const getStatusNote = (record: StudentListItem) => {
@@ -1085,11 +893,6 @@ const getStatusNote = (record: StudentListItem) => {
     return '需优先跟进'
   }
   return '服务中'
-}
-
-const formatCountWithUnit = (value?: number) => {
-  const safeValue = typeof value === 'number' ? value : 0
-  return `${safeValue}次`
 }
 
 const formatStatus = (status?: string) => {
@@ -1121,921 +924,25 @@ const getReminderLabel = (record: StudentListItem) => {
   return '暂无提醒'
 }
 
-const getDirectionTone = (direction?: string) => {
-  switch (direction) {
-    case '咨询':
-    case 'Consulting':
-      return 'consulting'
-    case '科技':
-    case 'Tech':
-      return 'tech'
-    case '量化':
-    case 'Quant':
-      return 'quant'
-    default:
-      return 'finance'
-  }
-}
-
 onMounted(() => {
   loadStudentList()
 })
 </script>
 
-<style scoped lang="scss">
-.students-page {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .page-header__actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .students-page__add-button {
-    border: 0;
-    border-radius: 10px;
-    padding: 10px 16px;
-    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
-    box-shadow: 0 14px 30px -22px rgba(124, 58, 237, 0.9);
-  }
-
-  .page-title {
-    margin: 0;
-    color: #111827;
-    font-size: 26px;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  .page-title-en {
-    margin-left: 8px;
-    color: #6b7280;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-
-  .page-sub {
-    margin: 8px 0 0;
-    color: #6b7280;
-    font-size: 14px;
-  }
-
-  .permission-card {
-    overflow: hidden;
-    border-radius: 20px;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--border, #e2e8f0);
-    padding: 20px;
-  }
-
-  .permission-card__body--flush {
-    overflow: visible;
-  }
-
-  .students-table-scroll {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(99, 102, 241, 0.24) transparent;
-  }
-
-  .students-table-scroll::-webkit-scrollbar {
-    height: 8px;
-  }
-
-  .students-table-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .students-table-scroll::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: rgba(99, 102, 241, 0.24);
-  }
-
-  .students-list-head {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 14px;
-  }
-
-  .students-list-head__title {
-    margin: 0;
-    color: #172033;
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  .students-list-head__sub {
-    margin: 6px 0 0;
-    color: #6b7690;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  .students-list-head__meta {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .students-list-head__chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 30px;
-    padding: 0 12px;
-    border-radius: 999px;
-    background: #f5f7ff;
-    color: #5e6c8f;
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  .students-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, #fff8e9, #fffdf5);
-    border: 1px solid rgba(245, 158, 11, 0.2);
-    border-radius: 22px;
-    box-shadow: 0 14px 30px rgba(245, 158, 11, 0.1);
-    color: #854d0e;
-  }
-
-  .students-banner__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
-    background: #f59e0b;
-    color: #ffffff;
-    font-size: 20px;
-    box-shadow: 0 10px 28px -16px rgba(245, 158, 11, 0.75);
-    animation: studentsPulse 1.6s ease-in-out infinite;
-  }
-
-  .students-banner__content {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .students-banner__title {
-    font-size: 16px;
-    font-weight: 700;
-  }
-
-  .students-banner__text {
-    font-size: 13px;
-    color: #b45309;
-  }
-
-  .students-banner__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 0;
-    border-radius: 10px;
-    padding: 10px 18px;
-    background: #f59e0b;
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .students-tabs {
-    display: inline-flex;
-    gap: 8px;
-    padding: 4px;
-    border-radius: 999px;
-    background: #f6f8ff;
-    box-shadow: inset 0 0 0 1px rgba(112, 137, 221, 0.1);
-  }
-
-  .students-tabs__tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 0;
-    border-radius: 999px;
-    padding: 6px 14px;
-    background: transparent;
-    color: #65708a;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: none;
-  }
-
-  .students-tabs__tab:hover {
-    color: #1d4ed8;
-  }
-
-  .students-tabs__tab--active {
-    background: #ffffff;
-    color: var(--students-accent);
-    box-shadow: 0 10px 18px rgba(65, 103, 255, 0.12);
-  }
-
-  .students-tabs__count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 4px;
-    border-radius: 999px;
-    background: #fee2e2;
-    color: #991b1b;
-    font-size: 10px;
-    font-weight: 700;
-  }
-
-  .students-tabs__tab--active .students-tabs__count {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-
-  .permission-table {
-    width: max(100%, 1680px);
-    min-width: 1680px;
-    table-layout: auto;
-    border-collapse: collapse;
-    font-size: 12px;
-
-    th,
-    td {
-      padding: 16px 12px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
-      vertical-align: top;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    thead th {
-      color: #6b7280;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      padding-top: 14px;
-      padding-bottom: 14px;
-      background: #f8fafc;
-      vertical-align: middle;
-    }
-
-    tbody tr:hover {
-      background: #f9fafb;
-    }
-  }
-
-  .students-id-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 48px;
-    height: 28px;
-    padding: 0 10px;
-    border-radius: 999px;
-    background: #eff3ff;
-    color: #456cff;
-    font-size: 11px;
-    font-weight: 700;
-  }
-
-  .students-cell-note {
-    margin-top: 4px;
-    color: #9099b0;
-    font-size: 10px;
-    line-height: 1.4;
-  }
-
-  .students-secondary-text {
-    color: #566178;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  .students-inline-link {
-    border: 0;
-    background: transparent;
-    padding: 0;
-    color: #2563eb;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .students-inline-link:hover {
-    text-decoration: underline;
-  }
-
-  .students-hour-value {
-    color: var(--primary);
-    font-size: 14px;
-    font-weight: 700;
-  }
-
-  .students-inline-metric {
-    display: inline-flex;
-    align-items: center;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.4;
-  }
-
-  .students-inline-metric--blue {
-    color: #3172f4;
-  }
-
-  .students-inline-metric--indigo {
-    color: #5a63ef;
-  }
-
-  .students-inline-metric--green {
-    color: #12a56a;
-  }
-
-  // 学员信息单元格样式
-  .student-cell-block {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-  }
-
-  .student-meta-list {
-    gap: 8px;
-  }
-
-  .student-primary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .student-name {
-    border: 0;
-    background: transparent;
-    padding: 0;
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 13px;
-    line-height: 1.4;
-    cursor: pointer;
-    text-decoration: none;
-
-    &:hover {
-      color: var(--primary-dark);
-      text-decoration: underline;
-    }
-  }
-
-  .student-id-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: #f3f4f6;
-    color: var(--text2);
-    font-size: 11px;
-    font-weight: 500;
-    line-height: 1.3;
-  }
-
-  .student-email-line {
-    color: var(--text2);
-    font-size: 12px;
-    line-height: 1.4;
-    word-break: break-word;
-  }
-
-  .student-meta-inline {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.3;
-  }
-
-  .student-pair-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  .student-pair-label {
-    color: var(--muted);
-    font-size: 11px;
-    flex-shrink: 0;
-  }
-
-  .student-pair-value {
-    color: var(--text);
-    font-weight: 500;
-    word-break: break-word;
-  }
-
-  .student-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.3;
-    width: fit-content;
-  }
-
-  .student-pill--finance {
-    background: #e0e7ff;
-    color: #4338ca;
-  }
-
-  .student-pill--consulting {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  .student-pill--tech {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  .student-pill--quant {
-    background: #ede9fe;
-    color: #6d28d9;
-  }
-
-  // 课时盒子样式
-  .student-hours-box {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .student-hours-box--compact {
-    gap: 8px;
-  }
-
-  .student-hours-box__top {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .student-hours-box__label {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.3;
-  }
-
-  .student-hours-box__value {
-    color: var(--primary);
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  .student-remaining {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.3;
-
-    i {
-      font-size: 13px;
-    }
-  }
-
-  .student-remaining--good {
-    color: #16a34a;
-  }
-
-  .student-remaining--warning {
-    color: #ea580c;
-  }
-
-  .student-remaining--danger {
-    color: #dc2626;
-  }
-
-  .student-metric-strip {
-    display: flex;
-    gap: 12px;
-  }
-
-  .student-metric {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .student-count-item__label {
-    color: #9ca3af;
-    font-size: 10px;
-    line-height: 1.2;
-  }
-
-  .student-count-item__value {
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  .student-count-item__value--blue {
-    color: #3b82f6;
-  }
-
-  .student-count-item__value--indigo {
-    color: #6366f1;
-  }
-
-  .student-count-item__value--green {
-    color: #22c55e;
-  }
-
-  // 提醒样式
-  .student-reminder {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.3;
-    width: fit-content;
-
-    i {
-      font-size: 14px;
-    }
-  }
-
-  .student-reminder--quiet {
-    background: #f9fafb;
-    color: #6b7280;
-  }
-
-  .student-reminder--danger {
-    background: #fee2e2;
-    color: #b91c1c;
-  }
-
-  .student-reminder--warning {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  .student-reminder--info {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  .student-reminder--flat {
-    border-radius: 6px;
-  }
-
-  .student-note {
-    color: #9ca3af;
-    font-size: 11px;
-    line-height: 1.4;
-  }
-
-  // 状态样式
-  .student-status-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .student-status-stack--compact {
-    gap: 4px;
-  }
-
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.3;
-    width: fit-content;
-  }
-
-  .tag.success {
-    background: #dcfce7;
-    color: #166534;
-  }
-
-  .tag.info {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  .tag.danger {
-    background: #fee2e2;
-    color: #b91c1c;
-  }
-
-  .tag.default {
-    background: #f3f4f6;
-    color: #6b7280;
-  }
-
-  .tag.warning {
-    background: #FEF3C7;
-    color: #92400E;
-  }
-
-  // 操作按钮样式
-  .student-action-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-  }
-
-  .student-action-row--quiet {
-    gap: 6px;
-  }
-
-  .student-action-link {
-    border: 0;
-    background: transparent;
-    padding: 0;
-    color: #2563eb;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.4;
-    cursor: pointer;
-    white-space: nowrap;
-
-    &:hover {
-      color: #1d4ed8;
-      text-decoration: underline;
-    }
-  }
-
-  .student-action-divider {
-    width: 1px;
-    height: 12px;
-    background: #d1d5db;
-  }
-
-  .students-row--low-hours {
-    background: rgba(254, 226, 226, 0.58);
-  }
-
-  .students-row--low-hours:hover {
-    background: rgba(254, 202, 202, 0.74);
-  }
-
-  .students-row--pending-review {
-    background: linear-gradient(90deg, rgba(254, 240, 138, 0.92), rgba(254, 249, 195, 0.86));
-  }
-
-  .students-row--pending-review td:first-child {
-    border-left: 4px solid #f59e0b;
-  }
-
-  .students-row--pending-review:hover {
-    background: linear-gradient(90deg, rgba(253, 230, 138, 0.95), rgba(254, 240, 138, 0.88));
-  }
-
-  .students-row--contract-expiring {
-    background: rgba(254, 249, 195, 0.72);
-  }
-
-  .students-row--contract-expiring:hover {
-    background: rgba(253, 230, 138, 0.82);
-  }
-
-  .students-row--ended {
-    opacity: 0.7;
-  }
-
-  .students-row--refunded {
-    opacity: 0.5;
-  }
-
-  .students-empty {
-    text-align: center;
-    color: #9ca3af;
-    padding: 28px 12px;
-  }
-
-  .students-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-top: 8px;
-  }
-
-  .students-pagination__total {
-    color: #6b7280;
-    font-size: 13px;
-  }
-
-  .students-pagination__controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  // 翻页按钮样式
-  .permission-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 8px 16px;
-    background: #ffffff;
-    color: #374151;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 1.4;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover:not(:disabled) {
-      background: #f9fafb;
-      border-color: #9ca3af;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-
-  .permission-button--primary {
-    background: linear-gradient(135deg, #6366F1, #8B5CF6);
-    border-color: #6366F1;
-    color: #ffffff;
-
-    &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #4F46E5, #7C3AED);
-      border-color: #4F46E5;
-    }
-  }
-
-  .permission-button--outline {
-    background: #ffffff;
-    border-color: #d1d5db;
-    color: #374151;
-
-    &:hover:not(:disabled) {
-      background: #f9fafb;
-      border-color: #9ca3af;
-      color: #111827;
-    }
-  }
-
-  .permission-button--small {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  .student-link {
-    border: none;
-    background: transparent;
-    padding: 0;
-    color: var(--primary);
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-  }
-
-  .student-link:hover {
-    text-decoration: underline;
-  }
-
-  .btn-text-sm {
-    border: none;
-    background: transparent;
-    color: var(--primary);
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .btn-text-sm:hover {
-    color: var(--primary-dark);
-  }
-
-  .action-cell > * {
-    display: block;
-  }
-
-  .action-cell .btn-text-sm,
-  .action-cell :deep(.ant-dropdown-trigger) {
-    display: block;
-    text-align: left;
-    padding: 4px 0;
-  }
-
-  .tag.purple {
-    background: var(--primary-light);
-    color: var(--primary-dark);
-  }
-
-  .tag.quant {
-    background: #E0E7FF;
-    color: #4338CA;
-  }
-
-  .tag--pulse {
-    animation: studentsPulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes studentsPulse {
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.15);
-      opacity: 1;
-    }
-
-    50% {
-      box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
-      opacity: 0.68;
-    }
-  }
-
-  @media (max-width: 960px) {
-    .page-header {
-      flex-direction: column;
-    }
-
-    .page-header__actions {
-      width: 100%;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .students-banner {
-      flex-wrap: wrap;
-    }
-
-    .students-tabs {
-      padding-top: 16px;
-      flex-wrap: wrap;
-    }
-  }
+<style scoped>
+:deep(.row-pending-review) {
+  background: rgba(254, 240, 138, 0.6);
 }
-
-  .students-blacklist-notice {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 12px 16px 0;
-    padding: 12px 16px;
-    background: #fef3c7;
-    border-radius: 8px;
-    font-size: 12px;
-    color: #92400e;
-
-    i {
-      flex-shrink: 0;
-    }
-  }
-
+:deep(.row-low-hours) {
+  background: rgba(254, 226, 226, 0.5);
+}
+:deep(.row-contract-expiring) {
+  background: rgba(254, 249, 195, 0.6);
+}
+:deep(.row-ended) {
+  opacity: 0.7;
+}
+:deep(.row-refunded) {
+  opacity: 0.5;
+}
 </style>

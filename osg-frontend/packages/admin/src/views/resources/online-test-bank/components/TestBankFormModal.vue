@@ -1,58 +1,65 @@
 <template>
-  <div v-if="modelValue" class="test-bank-modal">
-    <div class="test-bank-modal__backdrop" @click="close" />
-    <div class="test-bank-modal__panel">
-      <header class="test-bank-modal__hero">
-        <span class="test-bank-modal__eyebrow">Online Test Bank</span>
-        <h3>{{ mode === 'edit' ? '编辑题库' : '新增题库' }}</h3>
-        <p>维护 HireVue、Pymetrics、SHL 等在线测试资源。</p>
-      </header>
+  <OverlaySurfaceModal
+    surface-id="modal-test-bank-form"
+    :open="modelValue"
+    width="600px"
+    @cancel="close"
+  >
+    <template #title>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-clipboard-text-outline" aria-hidden="true" />
+        <span>{{ mode === 'edit' ? '编辑题库' : '新增题库' }}</span>
+      </span>
+    </template>
 
-      <div class="test-bank-modal__grid">
-        <label class="test-bank-modal__field">
-          <span>题库名称</span>
-          <input v-model.trim="form.testBankName" type="text" placeholder="题库名称">
-        </label>
+    <a-form layout="vertical">
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item label="题库名称">
+            <a-input v-model:value="form.testBankName" placeholder="题库名称" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="公司">
+            <a-input v-model:value="form.companyName" placeholder="公司" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="类型">
+            <a-select v-model:value="form.testType">
+              <a-select-option v-for="option in testTypeOptions" :key="option" :value="option">{{ option }}</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="题目数">
+            <a-input-number v-model:value="form.questionCount" :min="1" placeholder="题目数" style="width:100%" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="24">
+          <a-form-item label="状态">
+            <a-select v-model:value="form.status">
+              <a-select-option value="enabled">启用</a-select-option>
+              <a-select-option value="disabled">禁用</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+      </a-row>
+    </a-form>
 
-        <label class="test-bank-modal__field">
-          <span>公司</span>
-          <input v-model.trim="form.companyName" type="text" placeholder="公司">
-        </label>
-
-        <label class="test-bank-modal__field">
-          <span>类型</span>
-          <select v-model="form.testType">
-            <option v-for="option in testTypeOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
-        </label>
-
-        <label class="test-bank-modal__field">
-          <span>题目数</span>
-          <input v-model.number="form.questionCount" type="number" min="1" placeholder="题目数">
-        </label>
-
-        <label class="test-bank-modal__field test-bank-modal__field--full">
-          <span>状态</span>
-          <select v-model="form.status">
-            <option value="enabled">启用</option>
-            <option value="disabled">禁用</option>
-          </select>
-        </label>
-      </div>
-
-      <footer class="test-bank-modal__footer">
-        <button type="button" class="ghost-button" @click="close">取消</button>
-        <button type="button" class="primary-button" :disabled="submitting" @click="submit">
-          {{ mode === 'edit' ? '保存修改' : '创建题库' }}
-        </button>
-      </footer>
-    </div>
-  </div>
+    <template #footer>
+      <a-button @click="close">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="submit">
+        {{ mode === 'edit' ? '保存修改' : '创建题库' }}
+      </a-button>
+    </template>
+  </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import type { SaveTestBankPayload, TestBankRow, TestBankType } from '@osg/shared/api/admin/testBank'
+import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
 const testTypeOptions: TestBankType[] = ['HireVue', 'Pymetrics', 'SHL']
 
@@ -115,99 +122,3 @@ const submit = () => {
   })
 }
 </script>
-
-<style scoped lang="scss">
-.test-bank-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-}
-
-.test-bank-modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-}
-
-.test-bank-modal__panel {
-  position: relative;
-  z-index: 1;
-  width: min(680px, calc(100vw - 32px));
-  margin: 56px auto;
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
-  overflow: hidden;
-}
-
-.test-bank-modal__hero {
-  padding: 24px;
-  color: #eff6ff;
-  background: linear-gradient(135deg, #7c3aed, #2563eb);
-}
-
-.test-bank-modal__hero h3,
-.test-bank-modal__hero p {
-  margin: 0;
-}
-
-.test-bank-modal__eyebrow {
-  display: inline-flex;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.test-bank-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  padding: 24px;
-}
-
-.test-bank-modal__field {
-  display: grid;
-  gap: 8px;
-}
-
-.test-bank-modal__field--full {
-  grid-column: 1 / -1;
-}
-
-.test-bank-modal__field input,
-.test-bank-modal__field select {
-  width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 10px 12px;
-  font: inherit;
-}
-
-.test-bank-modal__footer {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 0 24px 24px;
-}
-
-.ghost-button,
-.primary-button {
-  border: none;
-  border-radius: 14px;
-  padding: 12px 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ghost-button {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.primary-button {
-  background: #2563eb;
-  color: #fff;
-}
-</style>

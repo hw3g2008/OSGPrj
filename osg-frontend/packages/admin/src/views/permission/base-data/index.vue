@@ -1,17 +1,11 @@
 <template>
-  <div class="base-data-page">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">字典管理</h2>
-        <p class="page-sub subtitle">管理系统基础配置字典数据</p>
-      </div>
-    </div>
+  <div class="osg-page">
+    <PageHeader title="字典管理" description="管理系统基础配置字典数据" />
 
-    <div class="base-data-page__categories category-cards">
-      <button
+    <div class="category-cards">
+      <a-button
         v-for="cat in categories"
         :key="cat.key"
-        type="button"
         :aria-label="cat.label"
         :data-field-name="cat.label"
         :class="['category-card', { 'category-card--active': selectedCategory === cat.key }]"
@@ -22,119 +16,104 @@
         </span>
         <span class="category-card__label">{{ cat.label }}</span>
         <span class="category-card__desc">{{ cat.description }}</span>
-      </button>
+      </a-button>
     </div>
 
     <div class="base-data-tabs">
-      <button
+      <a-button
         v-for="tab in currentTabs"
         :key="tab.key"
-        type="button"
         :aria-label="tab.label"
         :data-field-name="tab.label"
         :data-surface-trigger="tab.key"
         :data-surface-active="selectedTab === tab.key"
-        :class="['base-data-tabs__tab', { 'base-data-tabs__tab--active': selectedTab === tab.key }]"
+        :type="selectedTab === tab.key ? 'primary' : 'text'"
+        :ghost="selectedTab === tab.key"
+        size="small"
         @click="selectTab(tab.key)"
       >
         {{ tab.label }}
-      </button>
+      </a-button>
     </div>
 
     <div class="content-toolbar" data-field-name="基础数据页筛选区">
       <div class="content-toolbar__search">
         <a-input
           v-model:value="searchName"
-          class="content-toolbar__input"
+          style="width: 200px"
           :data-field-name="`${currentTabLabel}搜索`"
           :placeholder="`搜索${currentTabLabel}...`"
           allow-clear
           @pressEnter="handleSearch"
         />
-        <button type="button" class="permission-button permission-button--outline" @click="handleSearch">
-          <i class="mdi mdi-magnify" aria-hidden="true"></i>
-          <span>搜索</span>
-        </button>
+        <a-button @click="handleSearch">
+          <template #icon><SearchOutlined /></template>
+          搜索
+        </a-button>
       </div>
-      <button
-        type="button"
-        class="permission-button permission-button--primary"
+      <a-button
+        type="primary"
         :data-surface-trigger="currentAddSurfaceId"
         :aria-label="`新增${currentAddLabel}`"
         @click="handleAdd"
       >
-        <i class="mdi mdi-plus" aria-hidden="true"></i>
-        <span>新增{{ currentAddLabel }}</span>
-      </button>
+        <template #icon><PlusOutlined /></template>
+        新增{{ currentAddLabel }}
+      </a-button>
     </div>
 
-    <div class="permission-card">
-      <div class="permission-card__body permission-card__body--flush">
-        <table class="permission-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>{{ currentNameHeader }}</th>
-              <th>键值</th>
-              <th>状态</th>
-              <th>排序</th>
-              <th>更新时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="record in dataList" :key="record.dictCode">
-              <td>{{ record.dictCode }}</td>
-              <td><strong>{{ record.dictLabel }}</strong></td>
-              <td>{{ record.dictValue }}</td>
-              <td>
-                <span
-                  :class="[
-                    'permission-pill',
-                    record.status === '0' ? 'permission-pill--success' : 'permission-pill--danger'
-                  ]"
-                >
-                  {{ record.status === '0' ? '启用' : '禁用' }}
-                </span>
-              </td>
-              <td>{{ record.dictSort }}</td>
-              <td>{{ record.updateTime ? dayjs(record.updateTime).format('MM/DD/YYYY') : '-' }}</td>
-              <td>
-                <div class="permission-actions">
-                  <button
-                    type="button"
-                    class="permission-action"
-                    aria-label="编辑"
-                    title="编辑"
-                    :data-surface-trigger="currentEditSurfaceId"
-                    :data-surface-sample-key="record.dictLabel"
-                    @click="handleEdit(record)"
-                  >
-                    编辑
-                  </button>
-                  <button
-                    v-if="record.status === '0'"
-                    type="button"
-                    class="permission-action permission-action--danger"
-                    @click="handleDisable(record)"
-                  >
-                    禁用
-                  </button>
-                  <button
-                    v-if="record.status === '1'"
-                    type="button"
-                    class="permission-action permission-action--success"
-                    @click="handleEnable(record)"
-                  >
-                    启用
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <a-card :bordered="false">
+      <a-table
+        :columns="dictColumns"
+        :data-source="dataList"
+        :scroll="{ x: 'max-content' }"
+        :row-key="(record: AdminDictListRow) => record.dictCode"
+        :pagination="false"
+        :locale="{ emptyText: '暂无数据' }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'dictLabel'">
+            <strong>{{ record.dictLabel }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'status'">
+            <a-tag :color="record.status === '0' ? 'success' : 'error'">
+              {{ record.status === '0' ? '启用' : '禁用' }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'updateTime'">
+            {{ record.updateTime ? dayjs(record.updateTime).format('MM/DD/YYYY') : '-' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-button
+              type="link"
+              size="small"
+              :data-surface-trigger="currentEditSurfaceId"
+              :data-surface-sample-key="record.dictLabel"
+              @click="handleEdit(record)"
+            >
+              编辑
+            </a-button>
+            <a-button
+              v-if="record.status === '0'"
+              type="link"
+              size="small"
+              danger
+              @click="handleDisable(record)"
+            >
+              禁用
+            </a-button>
+            <a-button
+              v-if="record.status === '1'"
+              type="link"
+              size="small"
+              @click="handleEnable(record)"
+            >
+              启用
+            </a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <BaseDataModal
       v-model:visible="modalVisible"
@@ -159,6 +138,8 @@ import {
   type AdminDictRegistryGroup,
 } from '@/api/adminDict'
 import BaseDataModal from './components/BaseDataModal.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 
 const dataList = ref<AdminDictListRow[]>([])
@@ -218,6 +199,16 @@ const categories = computed(() => {
 
 const selectedCategory = ref('')
 const selectedTab = ref('')
+
+const dictColumns = computed(() => [
+  { title: 'ID', dataIndex: 'dictCode', key: 'dictCode', width: 80 },
+  { title: currentNameHeader.value, dataIndex: 'dictLabel', key: 'dictLabel' },
+  { title: '键值', dataIndex: 'dictValue', key: 'dictValue' },
+  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
+  { title: '排序', dataIndex: 'dictSort', key: 'dictSort', width: 80 },
+  { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 180 },
+])
 
 const currentTabs = computed(() => {
   const category = categories.value.find(cat => cat.key === selectedCategory.value)
@@ -366,236 +357,76 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.base-data-page {
-  padding: 8px 4px 0;
+.category-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
 
-  .page-header {
-    margin-bottom: 24px;
+.category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: auto;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
   }
 
-  .page-title {
-    margin: 0;
-    font-size: 26px;
-    font-weight: 700;
-    line-height: normal;
-    color: #1e293b;
+  &--active {
+    outline: 2px solid var(--primary);
+    outline-offset: 0;
   }
+}
 
-  .page-sub {
-    margin: 6px 0 0;
-    font-size: 14px;
-    line-height: normal;
-    color: #64748b;
-  }
+.category-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  font-size: 24px;
+}
 
-  .base-data-page__categories {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-  }
+.category-card__label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
 
-  .category-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 16px;
-    border: none;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+.category-card__desc {
+  font-size: 12px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.45;
+}
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
-    }
+.base-data-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--bg);
+}
 
-    &--active {
-      outline: 2px solid #6366f1;
-      outline-offset: 0;
-    }
-  }
+.content-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
 
-  .category-card__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    margin-bottom: 8px;
-    border-radius: 12px;
-    font-size: 24px;
-  }
-
-  .category-card__label {
-    font-size: 15px;
-    font-weight: 600;
-    color: #111827;
-  }
-
-  .category-card__desc {
-    font-size: 12px;
-    color: #6b7280;
-    text-align: center;
-    line-height: 1.45;
-  }
-
-  .base-data-tabs {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 4px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    background: #f8fafc;
-  }
-
-  .base-data-tabs__tab {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    background: transparent;
-    color: #4b5563;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-
-    &--active {
-      background: #fff;
-      color: #6366f1;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-    }
-  }
-
-  .content-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-
-  .content-toolbar__search {
-    display: flex;
-    gap: 12px;
-  }
-
-  .content-toolbar__input {
-    width: 200px;
-
-    :deep(.ant-input) {
-      min-height: 42px;
-      border-color: #d1d5db;
-      border-radius: 10px;
-      box-shadow: none;
-      padding-inline: 14px;
-    }
-  }
-
-  .permission-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-    cursor: pointer;
-    border: none;
-
-    &--primary {
-      color: #fff;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    }
-
-    &--outline {
-      color: #64748b;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-    }
-  }
-
-  .permission-card {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
-  }
-
-  .permission-card__body--flush {
-    padding: 0;
-  }
-
-  .permission-table {
-    width: 100%;
-    border-collapse: collapse;
-
-    th,
-    td {
-      padding: 14px 16px;
-      border-bottom: 1px solid #e2e8f0;
-      text-align: left;
-      font-size: 14px;
-      line-height: normal;
-      color: #1e293b;
-      vertical-align: middle;
-    }
-
-    th {
-      font-size: 12px;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      background: #f8fafc;
-      letter-spacing: 0.02em;
-    }
-
-    tbody tr:hover {
-      background: #f8fafc;
-    }
-  }
-
-  .permission-pill {
-    display: inline-flex;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-
-    &--success {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    &--danger {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-  }
-
-  .permission-actions {
-    display: flex;
-    gap: 0;
-  }
-
-  .permission-action {
-    padding: 6px 12px;
-    border: none;
-    background: transparent;
-    color: #6366f1;
-    font-size: 13px;
-    cursor: pointer;
-
-    &--danger {
-      color: #ef4444;
-    }
-
-    &--success {
-      color: #22c55e;
-    }
-  }
+.content-toolbar__search {
+  display: flex;
+  gap: 12px;
 }
 </style>

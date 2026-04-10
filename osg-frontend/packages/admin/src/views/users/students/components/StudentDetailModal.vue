@@ -37,6 +37,25 @@
         </div>
       </div>
 
+      <div class="sdm-overview" data-content-part="student-detail-overview">
+        <article class="sdm-overview__card">
+          <span class="sdm-overview__label">账号状态</span>
+          <strong class="sdm-overview__value">{{ formatAccountStatus(detail?.accountStatus) }}</strong>
+        </article>
+        <article class="sdm-overview__card">
+          <span class="sdm-overview__label">求职地区</span>
+          <strong class="sdm-overview__value">{{ detail?.jobDirection?.targetRegion || detail?.targetRegion || '-' }}</strong>
+        </article>
+        <article class="sdm-overview__card">
+          <span class="sdm-overview__label">招聘周期</span>
+          <strong class="sdm-overview__value">{{ formatList(detail?.jobDirection?.recruitmentCycles || detail?.recruitmentCycles) }}</strong>
+        </article>
+        <article class="sdm-overview__card">
+          <span class="sdm-overview__label">剩余课时</span>
+          <strong class="sdm-overview__value">{{ contractSummary.remainingHours }}h</strong>
+        </article>
+      </div>
+
       <!-- Tabs -->
       <div class="sdm-tabs">
         <button
@@ -55,23 +74,15 @@
       </div>
 
       <div v-if="canView" class="sdm-quick-actions" data-content-part="student-detail-quick-actions">
-        <button
-          type="button"
-          class="permission-button permission-button--outline sdm-quick-actions__renew"
+        <a-button
           data-surface-trigger="modal-contract-renew"
           :data-surface-sample-key="`student-${detail?.studentId || studentId}-contract-renew`"
           @click="renewVisible = true"
         >
           合同续签
-        </button>
-        <button
-          type="button"
-          class="permission-button permission-button--outline"
-          data-surface-trigger="modal-student-applications"
-          @click="activeTab = 'applications'"
-        >
-          学员投递岗位
-        </button>
+        </a-button>
+        <a-button @click="activeTab = 'changes'">信息变更</a-button>
+        <a-button @click="activeTab = 'contracts'">查看合同</a-button>
       </div>
 
       <!-- Loading / Error -->
@@ -148,7 +159,7 @@
             </div>
             <div class="sdm-field sdm-field">
               <span class="sdm-field__label">高中</span>
-              <div class="sdm-field__value">-</div>
+              <div class="sdm-field__value">{{ detail?.academic?.highSchool || detail?.highSchool || '-' }}</div>
             </div>
             <div class="sdm-field sdm-field">
               <span class="sdm-field__label">是否读研或延毕</span>
@@ -156,7 +167,7 @@
             </div>
             <div class="sdm-field sdm-field">
               <span class="sdm-field__label">签证</span>
-              <div class="sdm-field__value">-</div>
+              <div class="sdm-field__value">{{ detail?.academic?.visaStatus || detail?.visaStatus || '-' }}</div>
             </div>
           </div>
         </section>
@@ -254,22 +265,15 @@
     </template>
 
     <template #footer>
-      <button
-        type="button"
-        class="sdm-footer-button sdm-footer-button--ghost"
-        @click="handleClose"
-      >
-        取消
-      </button>
-      <button
+      <a-button @click="handleClose">取消</a-button>
+      <a-button
         v-if="canView && studentId"
-        type="button"
-        class="sdm-footer-button sdm-footer-button--primary"
+        type="primary"
         data-surface-trigger="modal-edit-student-new"
         @click="handleRequestEdit"
       >
         编辑学员
-      </button>
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 
@@ -310,6 +314,9 @@ interface StudentMentor {
 interface StudentAcademic {
   studyPlan?: string
   deferredGraduation?: string
+  highSchool?: string
+  visaStatus?: string
+  postgraduatePlan?: string
 }
 
 interface StudentJobDirection {
@@ -327,6 +334,8 @@ interface StudentDetailPayload {
   school?: string
   major?: string
   graduationYear?: number
+  highSchool?: string
+  visaStatus?: string
   targetRegion?: string
   subDirection?: string
   accountStatus?: string
@@ -736,6 +745,39 @@ const formatCurrency = (value?: number) => {
   }
 }
 
+.sdm-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 24px 0;
+}
+
+.sdm-overview__card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 72px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(79, 116, 255, 0.1);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.sdm-overview__label {
+  color: #7c88a4;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sdm-overview__value {
+  color: #1a2234;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
 /* ── Tabs ── */
 .sdm-tabs {
   display: flex;
@@ -780,11 +822,8 @@ const formatCurrency = (value?: number) => {
 .sdm-quick-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
   padding: 16px 24px 0;
-}
-
-.sdm-quick-actions__renew {
-  min-width: 120px;
 }
 
 /* ── Loading / Error / Guard ── */
@@ -976,30 +1015,12 @@ const formatCurrency = (value?: number) => {
   color: #991B1B;
 }
 
-/* ── Footer buttons ── */
-.sdm-footer-button {
-  min-width: 112px;
-  border-radius: 14px;
-  padding: 11px 20px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sdm-footer-button--ghost {
-  border: 1px solid rgba(26, 34, 52, 0.12);
-  background: #fff;
-  color: #69758b;
-}
-
-.sdm-footer-button--primary {
-  border: 0;
-  background: linear-gradient(135deg, #3f68ff, #6788ff);
-  color: #fff;
-  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.22);
-}
-
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  .sdm-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .sdm-grid--4,
   .sdm-grid--3,
   .sdm-grid--direction {
@@ -1012,6 +1033,11 @@ const formatCurrency = (value?: number) => {
 
   .sdm-field--span2 {
     grid-column: span 1;
+  }
+
+  .sdm-quick-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
 </style>

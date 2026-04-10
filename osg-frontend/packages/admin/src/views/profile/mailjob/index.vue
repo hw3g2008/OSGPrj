@@ -1,36 +1,36 @@
 <template>
-  <section class="mailjob-page">
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">邮件作业</h1>
-        <p class="page-subtitle">Mail Job - 批量邮件发送管理</p>
-      </div>
-      <a-button type="primary" @click="showNewMailJobModal = true">
-        <template #icon><MailOutlined /></template>
-        新建任务
-      </a-button>
-    </header>
+  <section class="osg-page">
+    <PageHeader title="邮件作业" subtitle="Mail Job" description="批量邮件发送管理">
+      <template #actions>
+        <a-button type="primary" @click="showNewMailJobModal = true">
+          <template #icon><MailOutlined /></template>
+          新建任务
+        </a-button>
+      </template>
+    </PageHeader>
 
     <a-tabs v-model:activeKey="activeTab">
       <a-tab-pane key="jobList" tab="Job List">
-        <div class="filter-bar">
-          <a-input
-            v-model:value="keyword"
-            class="filter-input-sm"
-            placeholder="Search"
-            allow-clear
-          />
-          <a-range-picker v-model:value="dateRange" />
-          <a-button @click="loadMailJobs">
-            <template #icon><SearchOutlined /></template>
-            Search
-          </a-button>
-        </div>
+        <a-form layout="inline" style="gap: 12px; flex-wrap: wrap; margin-bottom: 16px">
+          <a-form-item>
+            <a-input v-model:value="keyword" placeholder="Search" allow-clear style="width: 180px" />
+          </a-form-item>
+          <a-form-item>
+            <a-range-picker v-model:value="dateRange" />
+          </a-form-item>
+          <a-form-item>
+            <a-button type="primary" @click="loadMailJobs">
+              <template #icon><SearchOutlined /></template>
+              Search
+            </a-button>
+          </a-form-item>
+        </a-form>
 
-        <a-card :bordered="true" :body-style="{ padding: 0 }" class="table-card">
+        <a-card :bordered="true" :body-style="{ padding: 0 }">
           <a-table
             :columns="jobColumns"
             :data-source="rows"
+            :scroll="{ x: 'max-content' }"
             :row-key="(record: MailJobRow) => record.jobId"
             :pagination="false"
           >
@@ -69,6 +69,7 @@
           <a-table
             :columns="smtpColumns"
             :data-source="smtpServers"
+            :scroll="{ x: 'max-content' }"
             :row-key="(record: SmtpServerRow) => record.serverName"
             :pagination="false"
           >
@@ -116,6 +117,7 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { MailOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import type { Dayjs } from 'dayjs'
 import NewMailJobModal from './components/NewMailJobModal.vue'
 import {
@@ -183,42 +185,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.mailjob-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary, #1e293b);
-}
-
-.page-subtitle {
-  margin: 4px 0 0;
-  color: var(--text-secondary, #64748b);
-  font-size: 14px;
-}
-
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.filter-input-sm {
-  width: 180px;
-}
-
-.table-card {
-  margin-top: 0;
-}
 </style>

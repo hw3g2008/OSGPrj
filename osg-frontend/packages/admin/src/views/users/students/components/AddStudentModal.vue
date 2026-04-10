@@ -339,22 +339,20 @@
     </a-form>
 
     <template #footer>
-      <button
-        type="button"
-        class="permission-button permission-button--outline"
+      <a-button
         :disabled="submitting"
         @click="activeStep === 1 ? handleClose() : handleBack()"
       >
         {{ activeStep === 1 ? '取消' : '返回上一步' }}
-      </button>
-      <button
-        type="button"
-        class="permission-button permission-button--primary"
+      </a-button>
+      <a-button
+        type="primary"
+        :loading="submitting && activeStep === 2"
         :disabled="submitting"
         @click="handlePrimaryAction"
       >
-        {{ activeStep === 1 ? '下一步' : (submitting ? '提交中...' : '提交学员') }}
-      </button>
+        {{ activeStep === 1 ? '下一步' : '提交学员' }}
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -908,149 +906,4 @@ const handlePrimaryAction = async () => {
   }
 }
 
-/* ── Footer buttons (scoped, matches classes on #footer slot buttons) ── */
-.permission-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 68px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 9px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-
-  &:hover {
-    opacity: 0.92;
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
-
-.permission-button--outline {
-  border: 1px solid rgba(26, 34, 52, 0.12);
-  background: #fff;
-  color: #69758b;
-}
-
-.permission-button--primary {
-  border: none;
-  background: linear-gradient(135deg, #3f68ff, #6788ff);
-  color: #fff;
-  box-shadow: 0 8px 16px rgba(79, 116, 255, 0.14);
-}
-</style>
-
-<style lang="scss">
-.overlay-surface-modal__body.add-student-modal__body .ant-form-item {
-  margin-bottom: 8px;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-form-item:last-child {
-  margin-bottom: 0;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-form-item-label {
-  padding-bottom: 2px;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-number,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-number-input,
-.overlay-surface-modal__body.add-student-modal__body .ant-select-selector,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-textarea textarea {
-  border-radius: 14px !important;
-  border-color: rgba(79, 116, 255, 0.12) !important;
-  background: #f9fbff !important;
-  box-shadow: none !important;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-number,
-.overlay-surface-modal__body.add-student-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  height: 36px !important;
-  min-height: 36px !important;
-  padding-inline: 12px;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-number {
-  min-height: 36px;
-  height: 36px;
-  padding-inline: 12px;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  line-height: 34px !important;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper {
-  display: flex;
-  align-items: center;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper > input.ant-input {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  height: 32px !important;
-  line-height: 32px !important;
-  align-self: center;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper .ant-input-suffix,
-.overlay-surface-modal__body.add-student-modal__body .ant-input-affix-wrapper .ant-input-prefix {
-  display: inline-flex;
-  align-items: center;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input-number {
-  display: flex;
-  align-items: center;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input-number-input {
-  height: 34px;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-select-multiple .ant-select-selector {
-  min-height: 36px !important;
-  padding: 1px 12px !important;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  display: flex !important;
-  align-items: center !important;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-select-single .ant-select-selection-placeholder,
-.overlay-surface-modal__body.add-student-modal__body .ant-select-single .ant-select-selection-item {
-  line-height: 34px !important;
-  display: inline-flex;
-  align-items: center;
-}
-
-.overlay-surface-modal__body.add-student-modal__body .ant-input-textarea textarea {
-  min-height: 72px;
-  padding: 9px 12px;
-}
-
-.overlay-surface-modal__footer .permission-button {
-  min-width: auto;
-  padding: 0 12px;
-}
 </style>

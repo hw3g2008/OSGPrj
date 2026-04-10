@@ -90,6 +90,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <insert id="insertStaff" parameterType="OsgStaff" useGeneratedKeys="true" keyProperty="staffId">
         insert into osg_staff
         <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="staffId != null">staff_id,</if>
             staff_name,
             email,
             <if test="phone != null and phone != ''">phone,</if>
@@ -107,6 +108,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="remark != null and remark != ''">remark,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="staffId != null">#{staffId},</if>
             #{staffName},
             #{email},
             <if test="phone != null and phone != ''">#{phone},</if>

@@ -7,10 +7,10 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="mock-practice-feedback-modal__title">
-        <i class="mdi mdi-message-text-outline" aria-hidden="true"></i>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-message-text-outline" aria-hidden="true"></span>
         <span>查看模拟反馈</span>
-      </div>
+      </span>
     </template>
 
     <section class="mock-practice-feedback-modal__hero">
@@ -56,9 +56,7 @@
     </section>
 
     <template #footer>
-      <div class="mock-practice-feedback-modal__footer">
-        <button type="button" class="mock-practice-feedback-modal__button" @click="handleClose">关闭</button>
-      </div>
+      <a-button @click="handleClose">关闭</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -130,15 +128,6 @@ function formatDateTime(value?: string | null) {
   display: flex;
   flex-direction: column;
   gap: 18px;
-}
-
-.mock-practice-feedback-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #1e293b;
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .mock-practice-feedback-modal__hero {
@@ -258,22 +247,6 @@ function formatDateTime(value?: string | null) {
 
 .mock-practice-feedback-modal__panel--muted {
   color: #475569;
-}
-
-.mock-practice-feedback-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.mock-practice-feedback-modal__button {
-  min-height: 44px;
-  padding: 0 20px;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #475569;
-  font-size: 14px;
-  font-weight: 700;
 }
 
 @media (max-width: 900px) {

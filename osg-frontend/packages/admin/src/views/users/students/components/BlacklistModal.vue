@@ -76,12 +76,8 @@
     </div>
 
     <template #footer>
-      <button type="button" class="student-blacklist-modal__footer-button student-blacklist-modal__footer-button--ghost" @click="handleClose">
-        取消
-      </button>
-      <button type="button" class="student-blacklist-modal__footer-button student-blacklist-modal__footer-button--primary" @click="handleSubmit">
-        确认加入黑名单
-      </button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" danger @click="handleSubmit">确认加入黑名单</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -228,25 +224,4 @@ const handleSubmit = async () => {
   color: #dc2626;
 }
 
-.student-blacklist-modal__footer-button {
-  min-width: 112px;
-  height: 42px;
-  border-radius: 14px;
-  padding: 0 20px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.student-blacklist-modal__footer-button--ghost {
-  border: 1px solid rgba(26, 34, 52, 0.12);
-  background: #fff;
-  color: #69758b;
-}
-
-.student-blacklist-modal__footer-button--primary {
-  border: 0;
-  background: linear-gradient(135deg, #f18d43, #f5ad6c);
-  color: #fff;
-  box-shadow: 0 16px 34px rgba(241, 141, 67, 0.2);
-}
 </style>

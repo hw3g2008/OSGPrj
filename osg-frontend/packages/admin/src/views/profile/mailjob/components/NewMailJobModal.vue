@@ -1,15 +1,15 @@
 <template>
-  <a-modal
+  <OverlaySurfaceModal
+    surface-id="modal-new-mailjob"
     :open="modelValue"
-    :width="550"
-    :confirm-loading="submitting"
-    ok-text="创建并发送"
-    cancel-text="取消"
-    @ok="handleConfirm"
+    width="550px"
     @cancel="$emit('update:modelValue', false)"
   >
     <template #title>
-      <span><MailOutlined style="margin-right: 8px" />新建邮件任务</span>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-email-outline" aria-hidden="true" />
+        <span>新建邮件任务</span>
+      </span>
     </template>
     <a-form :label-col="{ span: 24 }" layout="vertical">
       <a-form-item label="任务标题" required>
@@ -40,12 +40,16 @@
         </a-select>
       </a-form-item>
     </a-form>
-  </a-modal>
+    <template #footer>
+      <a-button @click="$emit('update:modelValue', false)">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleConfirm">创建并发送</a-button>
+    </template>
+  </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import { MailOutlined } from '@ant-design/icons-vue'
+import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { SmtpServerRow } from '@osg/shared/api/admin/mailjob'
 
 const props = defineProps<{

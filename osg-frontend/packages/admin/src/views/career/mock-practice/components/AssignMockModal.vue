@@ -7,10 +7,10 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="mock-practice-assign-modal__title">
-        <i class="mdi mdi-account-voice-outline" aria-hidden="true"></i>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-account-voice-outline" aria-hidden="true"></span>
         <span>处理模拟应聘申请</span>
-      </div>
+      </span>
     </template>
 
     <section class="mock-practice-assign-modal__hero assign-mock-modal__hero">
@@ -49,11 +49,9 @@
             }
           ]"
         >
-          <input
-            v-model="selectedMentorIds"
-            class="mock-practice-assign-modal__checkbox assign-mock-modal__checkbox"
-            type="checkbox"
-            :value="option.mentorId"
+          <a-checkbox
+            :checked="selectedMentorIds.includes(option.mentorId)"
+            @change="toggleMentor(option.mentorId)"
           />
           <div class="mock-practice-assign-modal__mentor-avatar">{{ getMentorInitials(option.mentorName) }}</div>
           <div class="mock-practice-assign-modal__mentor-copy assign-mock-modal__option-copy">
@@ -69,35 +67,25 @@
     <section class="mock-practice-assign-modal__schedule-grid">
       <label class="mock-practice-assign-modal__field">
         <span>预约时间</span>
-        <input v-model="scheduledAt" class="mock-practice-assign-modal__datetime assign-mock-modal__datetime" type="datetime-local" />
+        <a-input v-model:value="scheduledAt" type="datetime-local" />
       </label>
 
       <label class="mock-practice-assign-modal__field">
         <span>备注说明</span>
-        <textarea
-          v-model="note"
-          class="mock-practice-assign-modal__textarea assign-mock-modal__textarea"
-          rows="4"
-          maxlength="160"
+        <a-textarea
+          v-model:value="note"
+          :rows="4"
+          :maxlength="160"
           placeholder="例如：先安排行为面模拟，下一次补 technical drill。"
         />
       </label>
     </section>
 
     <template #footer>
-      <div class="mock-practice-assign-modal__footer assign-mock-modal__footer">
-        <button type="button" class="mock-practice-assign-modal__button mock-practice-assign-modal__button--ghost" @click="handleClose">
-          取消
-        </button>
-        <button
-          type="button"
-          class="mock-practice-assign-modal__button mock-practice-assign-modal__button--primary"
-          :disabled="submitting"
-          @click="handleSubmit"
-        >
-          {{ submitting ? '提交中...' : '确认安排' }}
-        </button>
-      </div>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :disabled="submitting" @click="handleSubmit">
+        {{ submitting ? '提交中...' : '确认安排' }}
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -169,6 +157,15 @@ watch(
   { immediate: true }
 )
 
+const toggleMentor = (mentorId: number) => {
+  const index = selectedMentorIds.value.indexOf(mentorId)
+  if (index === -1) {
+    selectedMentorIds.value.push(mentorId)
+  } else {
+    selectedMentorIds.value.splice(index, 1)
+  }
+}
+
 const handleClose = () => {
   emit('update:visible', false)
 }
@@ -208,15 +205,6 @@ const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
   display: flex;
   flex-direction: column;
   gap: 18px;
-}
-
-.mock-practice-assign-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #1e293b;
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .mock-practice-assign-modal__hero,
@@ -349,13 +337,6 @@ const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
   background: linear-gradient(145deg, rgba(240, 253, 250, 0.96), rgba(236, 253, 245, 0.98));
 }
 
-.mock-practice-assign-modal__checkbox,
-.assign-mock-modal__checkbox {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-}
-
 .mock-practice-assign-modal__mentor-avatar {
   display: inline-flex;
   align-items: center;
@@ -411,20 +392,6 @@ const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
   font-weight: 600;
 }
 
-.mock-practice-assign-modal__datetime,
-.mock-practice-assign-modal__textarea,
-.assign-mock-modal__datetime,
-.assign-mock-modal__textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  background: #fff;
-  color: #0f172a;
-  font: inherit;
-  resize: vertical;
-}
-
 .mock-practice-assign-modal__empty,
 .assign-mock-modal__empty {
   padding: 18px;
@@ -433,33 +400,6 @@ const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
   color: #64748b;
   font-size: 13px;
   text-align: center;
-}
-
-.mock-practice-assign-modal__footer,
-.assign-mock-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.mock-practice-assign-modal__button {
-  min-height: 44px;
-  padding: 0 20px;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.mock-practice-assign-modal__button--ghost {
-  background: #fff;
-  color: #475569;
-}
-
-.mock-practice-assign-modal__button--primary {
-  border-color: #0f766e;
-  background: linear-gradient(135deg, #0f766e, #14b8a6);
-  color: #fff;
 }
 
 @media (max-width: 860px) {

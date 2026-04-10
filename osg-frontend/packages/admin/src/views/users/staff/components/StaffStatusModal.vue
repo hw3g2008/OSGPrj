@@ -89,15 +89,8 @@
     </a-form>
 
     <template #footer>
-      <button type="button" class="permission-button permission-button--outline" @click="handleClose">取消</button>
-      <button
-        type="button"
-        class="permission-button permission-button--primary"
-        :disabled="submitting"
-        @click="handleSubmit"
-      >
-        {{ submitting ? '提交中...' : '确认' }}
-      </button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">确认</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>

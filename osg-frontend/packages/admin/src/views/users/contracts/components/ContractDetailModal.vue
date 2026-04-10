@@ -81,15 +81,14 @@
               </td>
               <td>{{ formatDate(contract.updateTime || contract.endDate) }}</td>
               <td>
-                <button
-                  type="button"
-                  class="contract-detail-modal__table-action"
+                <a-button
+                  size="small"
                   data-surface-trigger="modal-contract-renew"
                   :data-surface-sample-key="`contract-${contract.contractId}-renew`"
                   @click="emit('request-renew')"
                 >
                   续签合同
-                </button>
+                </a-button>
               </td>
             </tr>
           </tbody>
@@ -100,48 +99,30 @@
     </template>
 
     <template #footer>
-      <div class="contract-detail-modal__footer">
-        <div class="contract-detail-modal__footer-actions">
-          <button
-            type="button"
-            class="contract-detail-modal__secondary"
-            data-surface-trigger="modal-status-change"
-            data-surface-sample-key="contract-detail-status-change"
-            @click="emit('request-status-change')"
-          >
-            状态修改
-          </button>
-          <button
-            type="button"
-            class="contract-detail-modal__secondary"
-            data-surface-trigger="modal-add-blacklist"
-            data-surface-sample-key="contract-detail-add-blacklist"
-            @click="emit('request-add-blacklist')"
-          >
-            加入黑名单
-          </button>
-          <button
-            type="button"
-            class="contract-detail-modal__secondary"
-            data-surface-trigger="modal-remove-blacklist"
-            data-surface-sample-key="contract-detail-remove-blacklist"
-            @click="emit('request-remove-blacklist')"
-          >
-            移出黑名单
-          </button>
-        </div>
-        <button type="button" class="contract-detail-modal__secondary" @click="handleClose">关闭</button>
-        <button
-          type="button"
-          class="contract-detail-modal__primary"
-          data-surface-trigger="modal-contract-renew"
-          data-surface-sample-key="contract-detail-renew"
-          @click="emit('request-renew')"
-        >
-          <span class="mdi mdi-refresh" aria-hidden="true"></span>
-          <span>续签合同</span>
-        </button>
-      </div>
+      <a-button
+        data-surface-trigger="modal-status-change"
+        data-surface-sample-key="contract-detail-status-change"
+        @click="emit('request-status-change')"
+      >状态修改</a-button>
+      <a-button
+        data-surface-trigger="modal-add-blacklist"
+        data-surface-sample-key="contract-detail-add-blacklist"
+        @click="emit('request-add-blacklist')"
+      >加入黑名单</a-button>
+      <a-button
+        data-surface-trigger="modal-remove-blacklist"
+        data-surface-sample-key="contract-detail-remove-blacklist"
+        @click="emit('request-remove-blacklist')"
+      >移出黑名单</a-button>
+      <a-button @click="handleClose">关闭</a-button>
+      <a-button
+        type="primary"
+        data-surface-trigger="modal-contract-renew"
+        data-surface-sample-key="contract-detail-renew"
+        @click="emit('request-renew')"
+      >
+        <span class="mdi mdi-refresh" aria-hidden="true" style="margin-right:4px"></span>续签合同
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -395,55 +376,6 @@ watch(() => [props.visible, props.studentId], () => {
   color: #1E40AF;
 }
 
-.contract-detail-modal__table-action {
-  border: 1px solid #d7e1ed;
-  background: #fff;
-  color: #2b4e74;
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* ── Footer ── */
-.contract-detail-modal__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.contract-detail-modal__footer-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.contract-detail-modal__secondary,
-.contract-detail-modal__primary {
-  border: none;
-  border-radius: 12px;
-  min-height: 42px;
-  padding: 0 18px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.contract-detail-modal__secondary {
-  background: #f7f9fc;
-  color: #1d3552;
-  border: 1px solid #d8e1ed;
-}
-
-.contract-detail-modal__primary {
-  background: linear-gradient(135deg, #5f85b4 0%, #7ea2d0 100%);
-  color: #fff;
-}
 
 @media (max-width: 900px) {
   .cdm-header {

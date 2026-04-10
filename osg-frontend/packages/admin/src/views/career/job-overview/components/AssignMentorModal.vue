@@ -7,12 +7,10 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="job-overview-assign-modal__titlebar">
-        <div class="job-overview-assign-modal__title">
-          <i class="mdi mdi-account-plus-outline" aria-hidden="true"></i>
-          <span>分配导师</span>
-        </div>
-      </div>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-account-plus-outline" aria-hidden="true"></span>
+        <span>分配导师</span>
+      </span>
     </template>
 
     <section class="job-overview-assign-modal__hero assign-mentor-modal__hero">
@@ -37,7 +35,7 @@
           data-field-name="导师搜索"
           data-field-name-alias="分配导师弹窗导师搜索"
         >
-          <i class="mdi mdi-magnify" aria-hidden="true"></i>
+          <span class="mdi mdi-magnify" aria-hidden="true"></span>
           <input
             v-model="keyword"
             data-field-name="导师搜索"
@@ -52,20 +50,17 @@
           data-field-name="排期状态筛选"
           data-field-name-alias="分配导师弹窗排期状态筛选"
         >
-          <button
+          <a-button
             v-for="option in scopeOptions"
             :key="option.value"
-            type="button"
             :data-field-name="option.label"
             :data-field-name-alias="`分配导师弹窗${option.label}`"
-            :class="[
-              'job-overview-assign-modal__scope-button',
-              { 'job-overview-assign-modal__scope-button--active': scope === option.value }
-            ]"
+            :type="scope === option.value ? 'primary' : 'default'"
+            size="small"
             @click="scope = option.value"
           >
             {{ option.label }}
-          </button>
+          </a-button>
         </div>
 
         <div
@@ -73,20 +68,17 @@
           data-field-name="主攻方向筛选"
           data-field-name-alias="分配导师弹窗主攻方向筛选"
         >
-          <button
+          <a-button
             v-for="option in majorDirectionOptions"
             :key="option.value"
-            type="button"
             :data-field-name="option.label"
             :data-field-name-alias="`分配导师弹窗${option.label}`"
-            :class="[
-              'job-overview-assign-modal__scope-button',
-              { 'job-overview-assign-modal__scope-button--active': majorDirection === option.value }
-            ]"
+            :type="majorDirection === option.value ? 'primary' : 'default'"
+            size="small"
             @click="majorDirection = option.value"
           >
             {{ option.label }}
-          </button>
+          </a-button>
         </div>
       </div>
 
@@ -107,13 +99,11 @@
               }
             ]"
           >
-            <input
-              v-model="selectedMentorIds"
-              class="job-overview-assign-modal__checkbox assign-mentor-modal__checkbox"
+            <a-checkbox
+              :checked="selectedMentorIds.includes(option.mentorId)"
               :data-field-name="option.mentorName"
               :data-field-name-alias="`分配导师弹窗${option.mentorName}`"
-              type="checkbox"
-              :value="option.mentorId"
+              @change="toggleMentor(option.mentorId)"
             />
 
             <div class="job-overview-assign-modal__mentor-avatar">{{ getMentorInitials(option.mentorName) }}</div>
@@ -136,13 +126,12 @@
       data-field-name-alias="分配导师弹窗备注"
     >
       <label class="job-overview-assign-modal__label">备注</label>
-      <textarea
-        v-model="assignNote"
+      <a-textarea
+        v-model:value="assignNote"
         data-field-name="备注"
         data-field-name-alias="分配导师弹窗备注"
-        class="job-overview-assign-modal__textarea assign-mentor-modal__textarea"
-        rows="4"
-        maxlength="160"
+        :rows="4"
+        :maxlength="160"
         placeholder="给导师的特别说明，如学员背景、重点辅导内容等..."
       />
       <div class="job-overview-assign-modal__note-meta assign-mentor-modal__note-meta">
@@ -152,19 +141,10 @@
     </section>
 
     <template #footer>
-      <div class="job-overview-assign-modal__footer assign-mentor-modal__footer">
-        <button type="button" class="job-overview-assign-modal__button job-overview-assign-modal__button--ghost" @click="handleClose">
-          取消
-        </button>
-        <button
-          type="button"
-          class="job-overview-assign-modal__button job-overview-assign-modal__button--primary"
-          :disabled="submitting || !selectedMentorIds.length"
-          @click="handleSubmit"
-        >
-          {{ submitting ? '提交中...' : '确认分配' }}
-        </button>
-      </div>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :disabled="submitting || !selectedMentorIds.length" @click="handleSubmit">
+        {{ submitting ? '提交中...' : '确认分配' }}
+      </a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -280,6 +260,15 @@ watch(
   { immediate: true }
 )
 
+const toggleMentor = (mentorId: number) => {
+  const index = selectedMentorIds.value.indexOf(mentorId)
+  if (index === -1) {
+    selectedMentorIds.value.push(mentorId)
+  } else {
+    selectedMentorIds.value.splice(index, 1)
+  }
+}
+
 const handleClose = () => {
   emit('update:visible', false)
 }
@@ -317,15 +306,6 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
   display: flex;
   flex-direction: column;
   gap: 18px;
-}
-
-.job-overview-assign-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #1e293b;
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .job-overview-assign-modal__hero,
@@ -440,23 +420,6 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
   flex-wrap: wrap;
 }
 
-.job-overview-assign-modal__scope-button {
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
-  background: #fff;
-  color: #475569;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.job-overview-assign-modal__scope-button--active {
-  border-color: #6366f1;
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
 .job-overview-assign-modal__summary-chip {
   margin-left: auto;
   color: #64748b;
@@ -497,13 +460,6 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
 .job-overview-assign-modal__mentor--preferred,
 .assign-mentor-modal__option--preferred {
   background: linear-gradient(145deg, rgba(238, 242, 255, 0.92), rgba(248, 250, 252, 0.96));
-}
-
-.job-overview-assign-modal__checkbox,
-.assign-mentor-modal__checkbox {
-  width: 16px;
-  height: 16px;
-  margin: 0;
 }
 
 .job-overview-assign-modal__mentor-avatar {
@@ -555,19 +511,6 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
   font-weight: 600;
 }
 
-.job-overview-assign-modal__textarea,
-.assign-mentor-modal__textarea {
-  width: 100%;
-  min-height: 112px;
-  padding: 12px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  background: #fff;
-  color: #0f172a;
-  font: inherit;
-  resize: vertical;
-}
-
 .job-overview-assign-modal__note-meta,
 .assign-mentor-modal__note-meta {
   display: flex;
@@ -585,33 +528,6 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
   color: #64748b;
   font-size: 13px;
   text-align: center;
-}
-
-.job-overview-assign-modal__footer,
-.assign-mentor-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.job-overview-assign-modal__button {
-  min-height: 44px;
-  padding: 0 20px;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.job-overview-assign-modal__button--ghost {
-  background: #fff;
-  color: #475569;
-}
-
-.job-overview-assign-modal__button--primary {
-  border-color: #6366f1;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
 }
 
 @media (max-width: 860px) {

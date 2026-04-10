@@ -1,16 +1,13 @@
 <template>
-  <div class="dashboard">
-    <!-- 顶部欢迎栏 -->
-    <div class="dashboard__welcome">
-      <div>
-        <h1 class="dashboard__title">欢迎回来，管理员</h1>
-        <p class="dashboard__date">今天是 {{ todayStr }}</p>
-      </div>
-      <button type="button" class="dashboard__refresh" @click="fetchAll">
-        <span class="mdi mdi-refresh" aria-hidden="true" />
-        <span>刷新数据</span>
-      </button>
-    </div>
+  <div class="osg-page">
+    <PageHeader title="欢迎回来，管理员" :description="`今天是 ${todayStr}`">
+      <template #actions>
+        <a-button @click="fetchAll">
+          <template #icon><ReloadOutlined /></template>
+          刷新数据
+        </a-button>
+      </template>
+    </PageHeader>
 
     <!-- 待处理事项提醒 -->
     <TodoReminder :todos="todos" />
@@ -19,21 +16,25 @@
     <StatCards :stats="stats" />
 
     <!-- 两栏布局 -->
-    <div class="dashboard__two-col">
-      <div class="dashboard__left">
+    <a-row :gutter="20">
+      <a-col :span="16">
         <RecentActivity :activities="activities" />
-      </div>
-      <div class="dashboard__right">
-        <QuickActions @action="handleAction" />
-        <StudentStatus :data="studentStatus" />
-        <MonthlyStats :data="monthlyStats" />
-      </div>
-    </div>
+      </a-col>
+      <a-col :span="8">
+        <div style="display: flex; flex-direction: column">
+          <QuickActions @action="handleAction" />
+          <StudentStatus :data="studentStatus" />
+          <MonthlyStats :data="monthlyStats" />
+        </div>
+      </a-col>
+    </a-row>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { ReloadOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import {
   getDashboardStats,
   getDashboardTodos,
@@ -96,72 +97,5 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
-.dashboard {
-  padding-bottom: 1px;
-
-  &__welcome {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-  }
-
-  &__title {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1.5;
-    color: var(--text, #1E293B);
-    margin: 0 0 4px 0;
-    display: inline-block;
-    text-decoration: none;
-    border: 0;
-    box-shadow: none;
-    background: transparent;
-  }
-
-  &__date {
-    font-size: 14px;
-    color: var(--muted, #94A3B8);
-    margin: 0;
-  }
-
-  &__refresh {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border, #E2E8F0);
-    background: #fff;
-    color: var(--text2, #64748B);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-
-    .mdi {
-      font-size: 16px;
-      line-height: 1;
-    }
-  }
-
-  &__two-col {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
-    align-items: stretch;
-  }
-
-  &__left {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__right {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-}
+<style scoped>
 </style>

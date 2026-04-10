@@ -23,142 +23,153 @@
 
     <section class="edit-student-modal__section edit-student-modal__section--primary">
       <div class="edit-student-modal__badge edit-student-modal__badge--primary">核心信息</div>
-      <div class="edit-student-modal__grid edit-student-modal__grid--four">
-        <label data-field-name="英文姓名">
-          <span>英文姓名</span>
-          <input v-model="form.studentName" :disabled="submitting">
-        </label>
-        <label data-field-name="性别">
-          <span>性别</span>
-          <select v-model="form.gender" :disabled="submitting">
-            <option value="">请选择</option>
-            <option value="0">男</option>
-            <option value="1">女</option>
-          </select>
-        </label>
-        <label data-field-name="邮箱">
-          <span>邮箱</span>
-          <input v-model="form.email" type="email" :disabled="submitting">
-        </label>
-        <label data-field-name="账号状态">
-          <span>账号状态</span>
-          <input :value="formatStatus(student?.accountStatus)" readonly>
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="6">
+            <a-form-item label="英文姓名">
+              <a-input v-model:value="form.studentName" :disabled="submitting" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item label="性别">
+              <a-select v-model:value="form.gender" :disabled="submitting" placeholder="请选择">
+                <a-select-option value="0">男</a-select-option>
+                <a-select-option value="1">女</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item label="邮箱">
+              <a-input v-model:value="form.email" :disabled="submitting" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item label="账号状态">
+              <a-input :value="formatStatus(student?.accountStatus)" readonly />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <section class="edit-student-modal__section">
       <div class="edit-student-modal__badge edit-student-modal__badge--indigo">
-        <i class="mdi mdi-account-group" aria-hidden="true"></i> 导师配置
+        <span class="mdi mdi-account-group" aria-hidden="true" /> 导师配置
       </div>
-      <div class="edit-student-modal__grid">
-        <label data-field-name="班主任">
-          <span>班主任</span>
-          <a-select
-            v-model:value="form.leadMentorId"
-            show-search
-            :filter-option="false"
-            :loading="staffLoading"
-            :disabled="submitting"
-            :options="mentorSelectOptions"
-            placeholder="输入姓名搜索班主任"
-            allow-clear
-            @search="handleStaffSearch"
-          />
-        </label>
-        <label data-field-name="助教">
-          <span>助教</span>
-          <a-select
-            v-model:value="form.assistantId"
-            show-search
-            :filter-option="false"
-            :loading="staffLoading"
-            :disabled="submitting"
-            :options="assistantSelectOptions"
-            placeholder="输入姓名搜索助教"
-            allow-clear
-            @search="handleStaffSearch"
-          />
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="班主任">
+              <a-select
+                v-model:value="form.leadMentorId"
+                show-search
+                :filter-option="false"
+                :loading="staffLoading"
+                :disabled="submitting"
+                :options="mentorSelectOptions"
+                placeholder="输入姓名搜索班主任"
+                allow-clear
+                @search="handleStaffSearch"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="助教">
+              <a-select
+                v-model:value="form.assistantId"
+                show-search
+                :filter-option="false"
+                :loading="staffLoading"
+                :disabled="submitting"
+                :options="assistantSelectOptions"
+                placeholder="输入姓名搜索助教"
+                allow-clear
+                @search="handleStaffSearch"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <section class="edit-student-modal__section">
       <div class="edit-student-modal__badge edit-student-modal__badge--blue">
-        <i class="mdi mdi-school" aria-hidden="true"></i> 学业信息
+        <span class="mdi mdi-school" aria-hidden="true" /> 学业信息
       </div>
-      <div class="edit-student-modal__grid edit-student-modal__grid--three">
-        <label data-field-name="学校">
-          <span>学校</span>
-          <input v-model="form.school" :disabled="submitting">
-        </label>
-        <label data-field-name="专业">
-          <span>专业</span>
-          <input :value="student?.majorDirection || ''" readonly>
-        </label>
-        <label data-field-name="毕业年份">
-          <span>毕业年份</span>
-          <input value="待补充" readonly>
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="学校">
+              <a-input v-model:value="form.school" :disabled="submitting" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="专业">
+              <a-input :value="student?.majorDirection || ''" readonly />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="毕业年份">
+              <a-input value="待补充" readonly />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <section class="edit-student-modal__section">
       <div class="edit-student-modal__badge edit-student-modal__badge--amber">
-        <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
+        <span class="mdi mdi-target" aria-hidden="true" /> 求职方向
       </div>
-      <div class="edit-student-modal__grid edit-student-modal__grid--three">
-        <label data-field-name="主攻方向">
-          <span>主攻方向</span>
-          <input v-model="form.majorDirection" :disabled="submitting">
-        </label>
-        <label data-field-name="子方向">
-          <span>子方向</span>
-          <input v-model="form.targetPosition" :disabled="submitting">
-        </label>
-        <label data-field-name="求职地区">
-          <span>求职地区</span>
-          <input value="待补充" readonly>
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="主攻方向">
+              <a-input v-model:value="form.majorDirection" :disabled="submitting" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="子方向">
+              <a-input v-model:value="form.targetPosition" :disabled="submitting" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="求职地区">
+              <a-input value="待补充" readonly />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <section class="edit-student-modal__section">
       <div class="edit-student-modal__badge edit-student-modal__badge--green">
-        <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式与备注
+        <span class="mdi mdi-phone" aria-hidden="true" /> 联系方式与备注
       </div>
-      <div class="edit-student-modal__grid edit-student-modal__grid--three">
-        <label data-field-name="电话">
-          <span>电话</span>
-          <input v-model="form.phone" :disabled="submitting" placeholder="选填">
-        </label>
-        <label data-field-name="微信">
-          <span>微信</span>
-          <input v-model="form.wechat" :disabled="submitting" placeholder="选填">
-        </label>
-        <label data-field-name="备注">
-          <span>备注</span>
-          <input v-model="form.remark" :disabled="submitting" placeholder="选填">
-        </label>
-      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="电话">
+              <a-input v-model:value="form.phone" :disabled="submitting" placeholder="选填" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="微信">
+              <a-input v-model:value="form.wechat" :disabled="submitting" placeholder="选填" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="备注">
+              <a-input v-model:value="form.remark" :disabled="submitting" placeholder="选填" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </section>
 
     <template #footer>
-      <button
-        type="button"
-        class="edit-student-modal__footer-button edit-student-modal__footer-button--ghost"
-        @click="handleClose"
-      >
-        取消
-      </button>
-      <button
-        type="button"
-        class="edit-student-modal__footer-button edit-student-modal__footer-button--primary"
-        :disabled="submitting"
-        @click="handleSubmit"
-      >
-        {{ submitting ? '保存中...' : '保存修改' }}
-      </button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">保存修改</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -349,34 +360,10 @@ const formatStatus = (status?: string) => {
 </script>
 
 <style scoped lang="scss">
-:global([data-surface-id="modal-edit-student-new"] [data-surface-part="header"]) {
-  background: #fff !important;
-  border-bottom: 1px solid rgba(79, 116, 255, 0.1) !important;
-}
-
-:global([data-surface-id="modal-edit-student-new"] .overlay-surface-modal__close) {
-  background: #f5f7ff !important;
-  color: #69758b !important;
-
-  &:hover {
-    background: #eef2ff !important;
-    color: #4f74ff !important;
-  }
-}
-
 .edit-student-modal__title {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #1a2234;
-  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.edit-student-modal__title-icon {
-  color: #4f74ff;
-  font-size: 18px;
 }
 
 .edit-student-modal__note {
@@ -442,12 +429,6 @@ const formatStatus = (status?: string) => {
   margin-bottom: 14px;
 }
 
-.edit-student-modal__section input:disabled,
-.edit-student-modal__section select:disabled {
-  cursor: not-allowed;
-  background: #f1f5f9;
-}
-
 .edit-student-modal__badge--primary {
   background: #edf2ff;
   color: #3f68ff;
@@ -473,79 +454,4 @@ const formatStatus = (status?: string) => {
   color: #2f8f62;
 }
 
-.edit-student-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.edit-student-modal__grid--three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.edit-student-modal__grid--four {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.edit-student-modal__grid label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.edit-student-modal__grid label span {
-  color: #1a2234;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.edit-student-modal__grid input,
-.edit-student-modal__grid select,
-:global(.edit-student-modal__grid .ant-select-selector) {
-  width: 100%;
-  border: 1px solid rgba(79, 116, 255, 0.12);
-  border-radius: 14px;
-  padding: 11px 12px;
-  background: #f9fbff;
-  color: #1a2234;
-}
-
-:global(.edit-student-modal__grid .ant-select) {
-  width: 100%;
-}
-
-:global(.edit-student-modal__grid .ant-select-selector) {
-  min-height: 44px;
-  box-shadow: none !important;
-}
-
-.edit-student-modal__footer-button {
-  min-width: 112px;
-  border-radius: 14px;
-  padding: 11px 20px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.edit-student-modal__footer-button--ghost {
-  border: 1px solid rgba(26, 34, 52, 0.12);
-  background: #fff;
-  color: #69758b;
-}
-
-.edit-student-modal__footer-button--primary {
-  border: 0;
-  background: linear-gradient(135deg, #3f68ff, #6788ff);
-  color: #fff;
-  box-shadow: 0 16px 34px rgba(79, 116, 255, 0.22);
-}
-
-@media (max-width: 960px) {
-  .edit-student-modal__grid,
-  .edit-student-modal__grid--three,
-  .edit-student-modal__grid--four {
-    grid-template-columns: 1fr;
-  }
-
-}
 </style>

@@ -7,11 +7,11 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="class-record-detail-modal__title">
-        <i class="mdi mdi-file-document-outline" aria-hidden="true"></i>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-file-document-outline" aria-hidden="true"></span>
         <span>课程记录详情</span>
         <span class="class-record-detail-modal__title-sub">#{{ detail?.recordId || '--' }}</span>
-      </div>
+      </span>
     </template>
 
     <div v-if="loading" class="class-record-detail-modal__loading">
@@ -69,9 +69,7 @@
     </template>
 
     <template #footer>
-      <div class="class-record-detail-modal__footer">
-        <button type="button" class="class-record-detail-modal__button" @click="handleClose">关闭</button>
-      </div>
+      <a-button @click="handleClose">关闭</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -117,15 +115,6 @@ const formatMoney = (value?: string | null) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.class-record-detail-modal__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #1e293b;
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .class-record-detail-modal__title-sub {
@@ -181,21 +170,6 @@ const formatMoney = (value?: string | null) => {
   font-size: 14px;
   line-height: 1.7;
   white-space: pre-wrap;
-}
-
-.class-record-detail-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.class-record-detail-modal__button {
-  min-width: 100px;
-  height: 40px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: #fff;
-  color: #334155;
-  font-weight: 600;
 }
 
 @media (max-width: 960px) {

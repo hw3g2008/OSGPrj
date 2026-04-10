@@ -1,287 +1,157 @@
 <template>
-  <div class="staff-page">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">
-          导师列表
-          <span class="page-title-en">Mentor List</span>
-        </h2>
-        <p class="page-sub subtitle">管理导师和班主任账户，录入信息开通账号</p>
-      </div>
-      <div class="page-header__actions">
-        <button
-          type="button"
-          class="permission-button permission-button--primary"
-          data-surface-trigger="modal-add-staff"
-          @click="openCreateModal"
-        >
-          <i class="mdi mdi-plus" aria-hidden="true"></i>
-          <span>新增导师</span>
-        </button>
-      </div>
-    </div>
+  <div class="osg-page">
+    <PageHeader title="导师列表" subtitle="Mentor List" description="管理导师和班主任账户，录入信息开通账号">
+      <template #actions>
+        <a-button type="primary" data-surface-trigger="modal-add-staff" @click="openCreateModal">
+          <template #icon><PlusOutlined /></template>
+          新增导师
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <div v-if="pendingReviewCount > 0" class="staff-banner">
-      <div class="staff-banner__icon">
-        <i class="mdi mdi-account-edit" aria-hidden="true"></i>
-      </div>
-      <div class="staff-banner__copy">
-        <strong>有 {{ pendingReviewCount }} 位导师的个人信息变更待审核</strong>
-        <span>导师提交的银行信息、联系方式等变更需要您审核确认</span>
-      </div>
-      <button type="button" class="staff-banner__action" data-surface-trigger="modal-mentor-info-change" @click="handlePendingReviewEntry">
-        <i class="mdi mdi-eye" aria-hidden="true"></i>
-        <span>立即处理</span>
-      </button>
-    </div>
+    <a-alert
+      v-if="pendingReviewCount > 0"
+      type="warning"
+      show-icon
+      :message="`有 ${pendingReviewCount} 位导师的个人信息变更待审核`"
+      description="导师提交的银行信息、联系方式等变更需要您审核确认"
+    >
+      <template #action>
+        <a-button type="primary" size="small" data-surface-trigger="modal-mentor-info-change" @click="handlePendingReviewEntry">
+          立即处理
+        </a-button>
+      </template>
+    </a-alert>
 
-    <div class="staff-filters" data-field-name="导师管理页">
-      <label class="staff-field">
-        <span class="staff-field__label">姓名 / ID</span>
-        <input v-model="filters.staffName" type="text" class="staff-input" data-field-name="搜索框" placeholder="搜索姓名/ID" />
-      </label>
-      <label class="staff-field">
-        <span class="staff-field__label">类型</span>
-        <select v-model="filters.staffType" class="staff-select">
-          <option value="">全部</option>
-          <option value="lead_mentor">班主任</option>
-          <option value="mentor">导师</option>
-        </select>
-      </label>
-      <label class="staff-field">
-        <span class="staff-field__label">主攻方向</span>
-        <select v-model="filters.majorDirection" class="staff-select">
-          <option value="">全部</option>
-          <option v-for="direction in majorDirectionOptions" :key="direction" :value="direction">{{ direction }}</option>
-        </select>
-      </label>
-      <label class="staff-field">
-        <span class="staff-field__label">状态</span>
-        <select v-model="filters.accountStatus" class="staff-select" data-field-name="状态">
-          <option value="">全部</option>
-          <option value="0">激活</option>
-          <option value="1">禁用</option>
-        </select>
-      </label>
-      <div class="staff-filter-actions">
-        <button type="button" class="permission-button permission-button--primary" @click="handleSearch">搜索</button>
-        <button type="button" class="permission-button permission-button--outline" :disabled="exporting" @click="handleExport"><i class="mdi mdi-export" aria-hidden="true"></i> {{ exporting ? '导出中...' : '导出' }}</button>
-      </div>
-    </div>
+    <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
+      <a-form layout="inline" style="margin-bottom: 16px" data-field-name="导师管理页">
+        <a-form-item>
+          <a-input v-model:value="filters.staffName" placeholder="搜索姓名/ID" allow-clear style="width: 180px" data-field-name="搜索框" @pressEnter="handleSearch" />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.staffType" placeholder="全部类型" allow-clear style="width: 120px">
+            <a-select-option value="lead_mentor">班主任</a-select-option>
+            <a-select-option value="mentor">导师</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.majorDirection" placeholder="全部方向" allow-clear style="width: 130px">
+            <a-select-option v-for="direction in majorDirectionOptions" :key="direction" :value="direction">{{ direction }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.accountStatus" placeholder="全部状态" allow-clear style="width: 110px" data-field-name="状态">
+            <a-select-option value="0">激活</a-select-option>
+            <a-select-option value="1">禁用</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="handleSearch">
+              <template #icon><SearchOutlined /></template>
+              搜索
+            </a-button>
+            <a-button :loading="exporting" @click="handleExport">
+              <template #icon><ExportOutlined /></template>
+              {{ exporting ? '导出中...' : '导出' }}
+            </a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
 
-    <div class="staff-tabs" role="tablist" aria-label="导师列表类型切换">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        type="button"
-        :class="['staff-tabs__tab', { 'staff-tabs__tab--active': selectedTab === tab.key }]"
-        :aria-selected="selectedTab === tab.key"
-        :aria-label="`导师管理页${tab.label}`"
-        :data-tab="tab.key"
-        @click="selectedTab = tab.key"
+      <a-tabs v-model:activeKey="selectedTab">
+        <a-tab-pane v-for="tab in tabs" :key="tab.key">
+          <template #tab>
+            {{ tab.label }}
+            <a-badge :count="tab.key === 'normal' ? normalCount : blacklistedCount" :number-style="{ backgroundColor: tab.key === 'blacklist' ? '#ef4444' : '#3b82f6' }" style="margin-left: 4px" />
+          </template>
+        </a-tab-pane>
+      </a-tabs>
+
+      <a-alert
+        v-if="selectedTab === 'blacklist'"
+        type="error"
+        show-icon
+        style="margin-bottom: 16px"
       >
-        <span>{{ tab.label }}</span>
-        <span class="staff-tabs__count">{{ tab.key === 'normal' ? normalCount : blacklistedCount }}</span>
-      </button>
-    </div>
+        <template #message><strong>黑名单导师限制说明</strong></template>
+        <template #description>黑名单中的导师<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能），但可以正常登录系统和进行其他操作</template>
+      </a-alert>
 
-    <section class="permission-card">
-      <!-- Blacklist restriction notice -->
-      <div v-if="selectedTab === 'blacklist'" class="staff-blacklist-notice">
-        <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
-        <div>
-          <strong>黑名单导师限制说明</strong>
-          <p>黑名单中的导师<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能），但可以正常登录系统和进行其他操作</p>
-        </div>
-      </div>
-
-      <div class="permission-card__body permission-card__body--flush">
-        <table class="permission-table staff-table">
-          <thead>
-            <tr>
-              <th v-for="column in activeColumns" :key="column.key">{{ column.label }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in visibleRows" :key="row.staffId" :class="{ 'staff-row--frozen': row.accountStatus === '1', 'staff-row--blacklist': selectedTab === 'blacklist' }">
-              <!-- ID -->
-              <td>{{ row.staffId }}</td>
-
-              <!-- 英文名 -->
-              <td>
-                <button
-                  type="button"
-                  class="staff-name"
-                  data-surface-trigger="modal-staff-detail"
-                  :data-surface-sample-key="`staff-${row.staffId}`"
-                  @click="openStaffDetail(row)"
-                >
-                  {{ row.staffName }}
-                </button>
-              </td>
-
-              <!-- 联系方式 -->
-              <td>
-                <div class="staff-cell-block">
-                  <div class="staff-contact-line">{{ row.email || '-' }}</div>
-                  <div class="staff-contact-line">{{ row.phone || '-' }}</div>
-                </div>
-              </td>
-
-              <!-- 类型 -->
-              <td>
-                <span :class="['staff-pill', `staff-pill--${getTypeTone(row.staffType)}`]">
-                  {{ formatType(row.staffType) }}
-                </span>
-              </td>
-
-              <!-- 主攻方向 -->
-              <td>
-                <span :class="['staff-pill staff-pill--small', `staff-pill--direction-${getDirectionTone(row.majorDirection)}`]">
-                  {{ row.majorDirection || '-' }}
-                </span>
-              </td>
-
-              <!-- 子方向 -->
-              <td>{{ row.subDirection || '-' }}</td>
-
-              <!-- 所属地区 -->
-              <td>
-                <div class="staff-cell-block">
-                  <div class="staff-region-main">
-                    <span class="staff-region-emoji">{{ getRegionEmoji(row.region) }}</span>
-                    <span class="staff-region-name">{{ row.region || '-' }}</span>
-                  </div>
-                  <div class="staff-city-line">{{ row.city || '-' }}</div>
-                </div>
-              </td>
-
-              <!-- 课单价 -->
-              <td>
-                <div class="staff-work-value staff-work-value--rate">{{ formatHourlyRate(row.hourlyRate) }}</div>
-              </td>
-
-              <!-- 学员数 -->
-              <td>
-                <button
-                  type="button"
-                  class="staff-work-value staff-work-value--count"
-                  data-surface-trigger="modal-mentor-students"
-                  :data-surface-sample-key="`staff-${row.staffId}-students`"
-                  @click="openMentorStudents(row)"
-                >
-                  {{ formatStudentCount(row.studentCount) }}
-                </button>
-              </td>
-
-              <!-- 账号状态 -->
-              <td>
-                <div class="staff-status-stack">
-                  <span :class="['tag', getStatusClass(row.accountStatus)]">
-                    {{ formatStatus(row.accountStatus) }}
-                  </span>
-                  <span class="staff-note">{{ getStatusNote(row) }}</span>
-                </div>
-              </td>
-
-              <!-- 操作 -->
-              <td>
-                <div class="staff-action-row">
-                  <button
-                    type="button"
-                    class="staff-action-link"
-                    data-surface-trigger="modal-staff-detail"
-                    :data-surface-sample-key="`staff-${row.staffId}`"
-                    @click="openStaffDetail(row)"
-                  >
-                    详情
-                  </button>
-                  <span class="staff-action-divider"></span>
-                  <button
-                    type="button"
-                    class="staff-action-link"
-                    data-surface-trigger="modal-edit-staff"
-                    :data-surface-sample-key="`staff-${row.staffId}`"
-                    aria-label="编辑导师信息"
-                    @click="openEditModal(row)"
-                  >
-                    编辑
-                  </button>
-                  <span class="staff-action-divider"></span>
-                  <button type="button" class="staff-action-link" @click="handleActionSelect('resetPassword', row)">
-                    重置密码
-                  </button>
-                  <span class="staff-action-divider"></span>
-                  <button
-                    type="button"
-                    class="staff-action-link"
-                    :data-surface-trigger="getStatusSurfaceId(row)"
-                    :data-surface-sample-key="`staff-${row.staffId}`"
-                    @click="handleActionSelect(row.accountStatus === '1' ? 'restore' : 'freeze', row)"
-                  >
-                    {{ row.accountStatus === '1' ? '解冻' : '禁用' }}
-                  </button>
-                  <span class="staff-action-divider"></span>
-                  <button
-                    type="button"
-                    class="staff-action-link"
-                    :data-surface-trigger="isBlacklisted(row) ? 'modal-remove-mentor-blacklist' : 'modal-mentor-blacklist'"
-                    :data-surface-sample-key="`staff-${row.staffId}`"
-                    :aria-label="isBlacklisted(row) ? '移出黑名单' : '加入黑名单'"
-                    @click="handleActionSelect(isBlacklisted(row) ? 'remove' : 'blacklist', row)"
-                  >
-                    {{ isBlacklisted(row) ? '移出黑名单' : '加入黑名单' }}
-                  </button>
-                  <span class="staff-action-divider"></span>
-                  <a-dropdown trigger="click" placement="bottomRight">
-                    <button type="button" class="staff-action-link">
-                      更多
-                    </button>
-                    <template #overlay>
-                      <a-menu class="staff-action-menu" @click="({ key }) => handleActionSelect(key as StaffActionKey, row)">
-                        <a-menu-item v-for="action in getActionItems(row)" :key="action.key">
-                          <span :class="['staff-action-menu__item', action.tone ? `staff-action-menu__item--${action.tone}` : '']">
-                            {{ action.label }}
-                          </span>
-                        </a-menu-item>
-                      </a-menu>
-                    </template>
-                  </a-dropdown>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="!visibleRows.length">
-              <td :colspan="activeColumns.length" class="staff-empty">{{ emptyStateText }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <div class="staff-pagination">
-      <span>共 {{ selectedTab === 'normal' ? normalCount : blacklistedCount }} 条记录</span>
-      <div class="staff-pagination__controls">
-        <button
-          type="button"
-          class="permission-button permission-button--outline permission-button--small"
-          :disabled="pagination.current <= 1"
-          @click="pagination.current -= 1"
-        >
-          上一页
-        </button>
-        <button type="button" class="permission-button permission-button--primary permission-button--small">
-          {{ pagination.current }}
-        </button>
-        <button
-          type="button"
-          class="permission-button permission-button--outline permission-button--small"
-          :disabled="!hasNext"
-          @click="pagination.current += 1"
-        >
-          下一页
-        </button>
-      </div>
-    </div>
+      <a-table
+        :columns="activeColumns"
+        :data-source="visibleRows"
+        :row-key="(record: StaffListItem) => record.staffId"
+        :pagination="tablePagination"
+        :row-class-name="(record: StaffListItem) => record.accountStatus === '1' ? 'row-frozen' : (selectedTab === 'blacklist' ? 'row-blacklist' : '')"
+        :locale="{ emptyText: emptyStateText }"
+        :scroll="{ x: 1400 }"
+        @change="handleTableChange"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'staffName'">
+            <a-button type="link" size="small" style="padding: 0; font-weight: 600" data-surface-trigger="modal-staff-detail" :data-surface-sample-key="`staff-${record.staffId}`" @click="openStaffDetail(record)">
+              {{ record.staffName }}
+            </a-button>
+          </template>
+          <template v-else-if="column.dataIndex === 'contact'">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 12px; color: #64748b">{{ record.email || '-' }}</span>
+              <span style="font-size: 12px; color: #64748b">{{ record.phone || '-' }}</span>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'staffType'">
+            <a-tag :color="record.staffType === 'lead_mentor' ? 'blue' : 'purple'">{{ formatType(record.staffType) }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'majorDirection'">
+            <a-tag :color="getDirectionColor(record.majorDirection)">{{ record.majorDirection || '-' }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'subDirection'">
+            {{ record.subDirection || '-' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'region'">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-weight: 600">{{ getRegionEmoji(record.region) }} {{ record.region || '-' }}</span>
+              <span style="font-size: 12px; color: #64748b">{{ record.city || '-' }}</span>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'hourlyRate'">
+            <strong style="color: #0f766e">{{ formatHourlyRate(record.hourlyRate) }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'studentCount'">
+            <a-button type="link" size="small" style="padding: 0; font-weight: 700" data-surface-trigger="modal-mentor-students" :data-surface-sample-key="`staff-${record.staffId}-students`" @click="openMentorStudents(record)">
+              {{ formatStudentCount(record.studentCount) }}
+            </a-button>
+          </template>
+          <template v-else-if="column.dataIndex === 'accountStatus'">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <a-tag :color="record.accountStatus === '1' ? 'orange' : 'green'">{{ formatStatus(record.accountStatus) }}</a-tag>
+              <span style="font-size: 11px; color: #94a3b8">{{ getStatusNote(record) }}</span>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-space :size="4" wrap>
+              <a-button type="link" size="small" data-surface-trigger="modal-staff-detail" :data-surface-sample-key="`staff-${record.staffId}`" @click="openStaffDetail(record)">详情</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-edit-staff" :data-surface-sample-key="`staff-${record.staffId}`" @click="openEditModal(record)">编辑</a-button>
+              <a-dropdown :trigger="['click']" placement="bottomRight">
+                <a-button type="link" size="small">更多 <DownOutlined /></a-button>
+                <template #overlay>
+                  <a-menu @click="({ key }: { key: string }) => handleActionSelect(key as StaffActionKey, record)">
+                    <a-menu-item key="resetPassword">重置密码</a-menu-item>
+                    <a-menu-item :key="record.accountStatus === '1' ? 'restore' : 'freeze'">
+                      <span :style="{ color: record.accountStatus === '1' ? '#15803d' : '#b45309' }">{{ record.accountStatus === '1' ? '解冻' : '禁用' }}</span>
+                    </a-menu-item>
+                    <a-menu-item :key="isBlacklisted(record) ? 'remove' : 'blacklist'">
+                      <span style="color: #b91c1c">{{ isBlacklisted(record) ? '移出黑名单' : '加入黑名单' }}</span>
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <MentorStudentsModal
       v-model:visible="studentsModalVisible"
@@ -316,26 +186,27 @@
       @cancel="closeResetPasswordModal"
     >
       <template #title>
-        <span class="staff-reset-password-modal__title">重置密码成功</span>
+        <span style="font-weight: 700; color: var(--text)">重置密码成功</span>
       </template>
 
-      <div class="staff-reset-password-modal__body">
-        <p>登录账号：{{ resetPasswordResult?.loginAccount || '-' }}</p>
-        <p>默认密码：{{ resetPasswordResult?.defaultPassword || '-' }}</p>
+      <div style="display: flex; flex-direction: column; gap: 10px; color: var(--text)">
+        <p style="margin: 0">登录账号：{{ resetPasswordResult?.loginAccount || '-' }}</p>
+        <p style="margin: 0">默认密码：{{ resetPasswordResult?.defaultPassword || '-' }}</p>
       </div>
 
       <template #footer>
-        <button type="button" class="permission-button permission-button--primary" @click="closeResetPasswordModal">
+        <a-button type="primary" @click="closeResetPasswordModal">
           知道了
-        </button>
+        </a-button>
       </template>
     </OverlaySurfaceModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { DownOutlined, ExportOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import {
   createStaff,
   exportStaffList,
@@ -349,6 +220,7 @@ import {
 } from '@osg/shared/api/admin/staff'
 import { http } from '@osg/shared/utils/request'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import MentorStudentsModal from './components/MentorStudentsModal.vue'
 import StaffDetailModal from './components/StaffDetailModal.vue'
 import StaffFormModal from './components/StaffFormModal.vue'
@@ -383,9 +255,9 @@ const exporting = ref(false)
 
 const filters = reactive({
   staffName: '',
-  staffType: '',
-  majorDirection: '',
-  accountStatus: ''
+  staffType: undefined as string | undefined,
+  majorDirection: undefined as string | undefined,
+  accountStatus: undefined as string | undefined
 })
 
 const pagination = reactive({
@@ -401,7 +273,13 @@ const visibleRows = computed(() =>
 const blacklistedCount = computed(() => rows.value.filter((row) => isBlacklisted(row)).length)
 const normalCount = computed(() => Math.max(pagination.total - blacklistedCount.value, 0))
 const emptyStateText = computed(() => (selectedTab.value === 'blacklist' ? '暂无黑名单导师' : '暂无导师数据'))
-const hasNext = computed(() => pagination.current * pagination.pageSize < pagination.total)
+const tablePagination = computed(() => ({
+  current: pagination.current,
+  pageSize: pagination.pageSize,
+  total: pagination.total,
+  showSizeChanger: false,
+  showTotal: (total: number) => `共 ${total} 条记录`
+}))
 const majorDirectionOptions = computed(() =>
   Array.from(new Set(rows.value.map((row) => row.majorDirection).filter((value): value is string => Boolean(value))))
 )
@@ -429,28 +307,17 @@ const loadRows = async () => {
   }
 }
 
-watch(
-  () => pagination.current,
-  () => {
-    void loadRows()
-  }
-)
+const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
+  pagination.current = pag.current ?? 1
+  pagination.pageSize = pag.pageSize ?? 10
+  void loadRows()
+}
 
 onMounted(() => {
   void loadRows()
 })
 
 const handleSearch = () => {
-  pagination.current = 1
-  void loadRows()
-}
-
-const handleReset = () => {
-  filters.staffName = ''
-  filters.staffType = ''
-  filters.majorDirection = ''
-  filters.accountStatus = ''
-  selectedTab.value = 'normal'
   pagination.current = 1
   void loadRows()
 }
@@ -492,30 +359,6 @@ const openEditModal = (row: StaffListItem) => {
   editingStaff.value = { ...row }
   formModalVisible.value = true
 }
-
-const getActionItems = (row: StaffListItem) => {
-  const isFrozen = row.accountStatus === '1'
-  const isInBlacklist = isBlacklisted(row)
-  return [
-    { key: 'detail', label: '详情' },
-    { key: 'edit', label: '编辑' },
-    { key: 'resetPassword', label: '重置密码' },
-    {
-      key: isFrozen ? 'restore' : 'freeze',
-      label: isFrozen ? '解冻' : '禁用',
-      tone: isFrozen ? 'success' : 'warning'
-    },
-    {
-      key: isInBlacklist ? 'remove' : 'blacklist',
-      label: isInBlacklist ? '移出黑名单' : '加入黑名单',
-      tone: 'danger'
-    }
-  ] as const
-}
-
-const getStatusSurfaceId = () => 'modal-staff-status-change'
-
-const getBlacklistSurfaceId = (row: StaffListItem) => (isBlacklisted(row) ? 'modal-remove-mentor-blacklist' : 'modal-mentor-blacklist')
 
 const handleActionSelect = (action: StaffActionKey, row: StaffListItem) => {
   selectedStaff.value = row
@@ -607,21 +450,11 @@ const formatType = (staffType?: string) => {
   return '导师'
 }
 
-const getTypeTone = (staffType?: string) => {
-  return staffType === 'lead_mentor' ? 'success' : 'info'
-}
-
-const getDirectionTone = (direction?: string) => {
-  if (direction?.includes('量化')) {
-    return 'quant'
-  }
-  if (direction?.includes('咨询')) {
-    return 'consulting'
-  }
-  if (direction?.includes('科技')) {
-    return 'tech'
-  }
-  return 'finance'
+const getDirectionColor = (direction?: string) => {
+  if (direction?.includes('量化')) return 'purple'
+  if (direction?.includes('咨询')) return 'blue'
+  if (direction?.includes('科技')) return 'orange'
+  return 'cyan'
 }
 
 const getRegionEmoji = (region?: string) => {
@@ -650,14 +483,6 @@ const formatStudentCount = (studentCount?: number) => {
 
 const formatStatus = (accountStatus?: string) => {
   return accountStatus === '1' ? '冻结' : '正常'
-}
-
-const getStatusTone = (accountStatus?: string) => {
-  return accountStatus === '1' ? 'warning' : 'success'
-}
-
-const getStatusClass = (accountStatus?: string) => {
-  return accountStatus === '1' ? 'warning' : 'success'
 }
 
 const getStatusNote = (row: StaffListItem) => {
@@ -717,751 +542,11 @@ const closeResetPasswordModal = () => {
 
 </script>
 
-<style scoped lang="scss">
-.staff-page {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 30px;
-  font-weight: 700;
-  color: var(--text);
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.page-title-en {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text2);
-}
-
-.page-sub {
-  margin: 10px 0 0;
-  color: var(--text2);
-  font-size: 14px;
-}
-
-.page-header__actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-.permission-card {
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--border, #e2e8f0);
-  padding: 20px;
-}
-
-.permission-card__body--flush {
-  overflow-x: auto;
-  margin: 0 -20px;
-}
-
-.staff-table {
-  width: 100%;
-  table-layout: auto;
-  border-collapse: collapse;
-  font-size: 12px;
-
-  th,
-  td {
-    padding: 16px 12px;
-    border-bottom: 1px solid #e5e7eb;
-    text-align: left;
-    vertical-align: top;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  thead th {
-    color: var(--text2);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    padding-top: 14px;
-    padding-bottom: 14px;
-    background: #f8fafc;
-    vertical-align: middle;
-  }
-
-  tbody tr:hover {
-    background: #f9fafb;
-  }
-}
-
-.staff-banner {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  border: 2px solid #3b82f6;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
-}
-
-.staff-banner__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #3b82f6;
-  color: #ffffff;
-  font-size: 22px;
-}
-
-.staff-banner__copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: #1e3a8a;
-}
-
-.staff-banner__action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 18px;
-  background: #3b82f6;
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.staff-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-}
-
-.staff-field {
-  display: flex;
-  flex: 0 0 auto;
-}
-
-.staff-field__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.staff-input,
-.staff-select {
-  min-height: 40px;
-  border: 1px solid #dbe3f0;
-  border-radius: 14px;
-  padding: 0 14px;
-  background: #ffffff;
-  color: var(--text);
-  font-size: 13px;
-}
-
-.staff-input {
-  width: 200px;
-}
-
-.staff-select {
-  width: 140px;
-}
-
-.staff-filter-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.staff-tabs {
-  display: inline-flex;
-  gap: 10px;
-}
-
-.staff-tabs__tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #dbe3f0;
-  border-radius: 999px;
-  padding: 10px 16px;
-  background: #ffffff;
-  color: var(--text);
-  font-weight: 600;
-}
-
-.staff-tabs__tab--active {
-  border-color: var(--primary);
-  background: #eff6ff;
-  color: var(--primary-dark);
-}
-
-.staff-tabs__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  padding: 0 8px;
-  background: rgba(37, 99, 235, 0.12);
-  font-size: 12px;
-}
-
-.staff-row--frozen {
+<style scoped>
+:deep(.row-frozen) {
   opacity: 0.68;
 }
-
-// 新的分组单元格样式
-.staff-cell-block {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.staff-meta-list {
-  gap: 8px;
-}
-
-.staff-primary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.staff-name {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  color: var(--primary);
-  font-weight: 600;
-  font-size: 13px;
-  line-height: 1.4;
-  cursor: pointer;
-  text-decoration: none;
-
-  &:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
-  }
-}
-
-.staff-id-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: #f3f4f6;
-  color: var(--text2);
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.3;
-}
-
-.staff-contact-line {
-  color: var(--text2);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.staff-contact-item {
-  word-break: break-word;
-}
-
-.staff-pair-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.staff-pair-label {
-  color: var(--muted);
-  font-size: 11px;
-  flex-shrink: 0;
-}
-
-.staff-pair-value {
-  color: var(--text);
-  font-weight: 500;
-  word-break: break-word;
-}
-
-.staff-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.3;
-  width: fit-content;
-}
-
-.staff-pill--small {
-  padding: 3px 10px;
-  font-size: 11px;
-}
-
-.staff-pill--lead_mentor {
-  background: #dbeafe;
-  color: var(--primary-dark);
-}
-
-.staff-pill--mentor {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.staff-pill--direction-finance {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.staff-pill--direction-consulting {
-  background: #dbeafe;
-  color: var(--primary-dark);
-}
-
-.staff-pill--direction-tech {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.staff-pill--direction-quant {
-  background: #ede9fe;
-  color: #4F46E5;
-}
-
-.staff-region-main {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  color: var(--text);
-  font-size: 13px;
-}
-
-.staff-region-emoji {
-  font-size: 16px;
-}
-
-.staff-region-name {
-  font-weight: 600;
-}
-
-.staff-city-line {
-  color: var(--text2);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.staff-work-box {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.staff-work-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.staff-work-label {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.3;
-}
-
-.staff-work-value {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.staff-work-value--rate {
-  color: #0f766e;
-}
-
-.staff-work-value--count {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  color: var(--primary);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  text-align: left;
-
-  &:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
-  }
-}
-
-.staff-status-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.3;
-  width: fit-content;
-}
-
-.tag.success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.tag.warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.tag.danger {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.staff-note {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.staff-action-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap;
-}
-
-.staff-action-link {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
-  }
-}
-
-.staff-action-divider {
-  width: 1px;
-  height: 12px;
-  background: #d1d5db;
-}
-
-// 保留旧样式以兼容
-.staff-cell--stack {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.staff-cell--stack span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.staff-cell--muted {
-  color: #64748b;
-}
-
-.staff-cell--money {
-  white-space: nowrap;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.staff-link,
-.staff-count {
-  border: none;
-  background: none;
-  padding: 0;
-  color: var(--primary);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.staff-count {
-  color: #4F46E5;
-}
-
-.staff-action-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.staff-action-menu {
-  min-width: 160px;
-}
-
-.staff-action-menu__item {
-  display: inline-flex;
-  align-items: center;
-  width: 100%;
-}
-
-.staff-action-menu__item--warning {
-  color: #b45309;
-}
-
-.staff-action-menu__item--success {
-  color: #15803d;
-}
-
-.staff-action-menu__item--danger {
-  color: #b91c1c;
-}
-
-.staff-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.staff-tag--success,
-.staff-tag--status-success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.staff-tag--info {
-  background: #dbeafe;
-  color: var(--primary-dark);
-}
-
-.staff-reset-password-modal__title {
-  font-weight: 700;
-  color: var(--text);
-}
-
-.staff-reset-password-modal__body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  color: var(--text);
-}
-
-.staff-reset-password-modal__body p {
-  margin: 0;
-}
-
-.staff-tag--status-warning {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.staff-tag--direction-finance {
-  background: #ede9fe;
-  color: #4F46E5;
-}
-
-.staff-tag--direction-consulting {
-  background: #dbeafe;
-  color: var(--primary-dark);
-}
-
-.staff-tag--direction-tech {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.staff-tag--direction-quant {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.staff-empty {
-  padding: 36px 0;
-  text-align: center;
-  color: #64748b;
-}
-
-.staff-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.staff-pagination__controls {
-  display: inline-flex;
-  gap: 8px;
-}
-
-// 翻页按钮样式
-.permission-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 8px 16px;
-  background: #ffffff;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.4;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-    border-color: var(--muted);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.permission-button--primary {
-  background: linear-gradient(135deg, #6366F1, #8b5cf6);
-  border-color: #6366F1;
-  color: #ffffff;
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #4F46E5, #6366F1);
-    border-color: #4F46E5;
-  }
-}
-
-.permission-button--outline {
-  background: #ffffff;
-  border-color: #d1d5db;
-  color: var(--text);
-
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-    border-color: var(--muted);
-    color: #111827;
-  }
-}
-
-.permission-button--small {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-@media (max-width: 1200px) {
-  .staff-filter-actions {
-    width: 100%;
-  }
-}
-
-@media (max-width: 768px) {
-  .staff-field,
-  .staff-filter-actions {
-    width: 100%;
-  }
-
-  .staff-input,
-  .staff-select {
-    width: 100%;
-  }
-
-  .staff-pagination {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .staff-pagination__controls {
-    justify-content: center;
-  }
-}
-.staff-blacklist-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin: 16px;
-  padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #991b1b;
-  font-size: 13px;
-
-  i {
-    font-size: 20px;
-    color: #dc2626;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  strong {
-    display: block;
-    margin-bottom: 4px;
-  }
-
-  p {
-    margin: 0;
-    color: #7f1d1d;
-  }
-}
-
-.staff-row--blacklist {
+:deep(.row-blacklist) {
   background: #fef2f2;
 }
 </style>

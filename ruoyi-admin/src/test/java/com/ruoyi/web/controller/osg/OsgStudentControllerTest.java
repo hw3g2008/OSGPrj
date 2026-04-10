@@ -50,6 +50,7 @@ import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgStudentChangeRequestServiceImpl;
 import com.ruoyi.system.service.impl.OsgStudentServiceImpl;
+import com.ruoyi.system.service.ISysUserService;
 
 @WebMvcTest(controllers = OsgStudentController.class)
 @AutoConfigureMockMvc(addFilters = true)
@@ -74,6 +75,9 @@ class OsgStudentControllerTest
 
     @MockBean
     private OsgAssistantAccessService assistantAccessService;
+
+    @MockBean
+    private ISysUserService userService;
 
     @MockBean
     private TokenService tokenService;

@@ -1,138 +1,109 @@
 <template>
-  <section class="test-bank-page">
-    <header class="page-header">
-      <div>
-        <p class="page-eyebrow">Assessment Resource Center</p>
-        <h1>在线测试题库</h1>
-        <p class="page-subtitle">管理HireVue、Pymetrics、SHL等在线测试资源</p>
-      </div>
-      <button
-        v-if="activeTab === 'banks'"
-        type="button"
-        class="primary-button"
-        @click="openCreateModal"
-      >
-        新增题库
-      </button>
-    </header>
+  <div class="osg-page">
+    <PageHeader title="在线测试题库" subtitle="Online Test Bank" description="管理HireVue、Pymetrics、SHL等在线测试资源">
+      <template #actions>
+        <a-button v-if="activeTab === 'banks'" type="primary" @click="openCreateModal">
+          <template #icon><PlusOutlined /></template>
+          新增题库
+        </a-button>
+      </template>
+    </PageHeader>
 
-    <section v-if="pendingCount > 0" class="banner-card">
-      <div>
-        <strong>有 {{ pendingCount }} 个学员题库申请待分配</strong>
-        <p>请优先处理班主任流转过来的在线测试申请。</p>
-      </div>
-      <button type="button" class="ghost-button ghost-button--warn" @click="activeTab = 'applications'">查看申请</button>
-    </section>
+    <a-alert
+      v-if="pendingCount > 0"
+      type="info"
+      show-icon
+      :message="`有 ${pendingCount} 个学员题库申请待分配`"
+      description="请优先处理班主任流转过来的在线测试申请。"
+    >
+      <template #action>
+        <a-button size="small" @click="activeTab = 'applications'">查看申请</a-button>
+      </template>
+    </a-alert>
 
-    <section class="tabs-row">
-      <button
-        type="button"
-        class="tab-pill"
-        :class="{ 'tab-pill--active': activeTab === 'banks' }"
-        @click="activeTab = 'banks'"
-      >
-        题库列表
-      </button>
-      <button
-        type="button"
-        class="tab-pill"
-        :class="{ 'tab-pill--active': activeTab === 'applications' }"
-        @click="activeTab = 'applications'"
-      >
-        学员申请
-        <span class="tab-pill__count">{{ pendingCount }}</span>
-      </button>
-    </section>
+    <a-card :bordered="false">
+      <a-tabs v-model:activeKey="activeTab" style="margin-bottom: 16px">
+        <a-tab-pane key="banks">
+          <template #tab>题库列表</template>
+        </a-tab-pane>
+        <a-tab-pane key="applications">
+          <template #tab>
+            学员申请
+            <a-badge :count="pendingCount" :number-style="{ backgroundColor: '#faad14' }" style="margin-left: 4px" />
+          </template>
+        </a-tab-pane>
+      </a-tabs>
 
-    <section class="toolbar-card">
-      <input
-        v-model.trim="filters.keyword"
-        class="toolbar-input"
-        type="search"
-        :placeholder="activeTab === 'banks' ? '搜索题库 / 公司' : '搜索学员 / 岗位'"
-      >
-      <select v-if="activeTab === 'banks'" v-model="filters.companyName" class="toolbar-select">
-        <option value="">全部公司</option>
-        <option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</option>
-      </select>
-      <select v-if="activeTab === 'banks'" v-model="filters.testType" class="toolbar-select">
-        <option value="">全部类型</option>
-        <option v-for="option in testTypeOptions" :key="option" :value="option">{{ option }}</option>
-      </select>
-      <button type="button" class="ghost-button" @click="loadRows">搜索</button>
-      <button type="button" class="ghost-button ghost-button--light" @click="handleReset">重置</button>
-    </section>
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+        <a-form-item>
+          <a-input v-model:value="filters.keyword" :placeholder="activeTab === 'banks' ? '搜索题库 / 公司' : '搜索学员 / 岗位'" allow-clear style="width: 180px" @press-enter="loadRows" />
+        </a-form-item>
+        <template v-if="activeTab === 'banks'">
+          <a-form-item>
+            <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px">
+              <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item>
+            <a-select v-model:value="filters.testType" placeholder="全部类型" allow-clear style="width: 120px">
+              <a-select-option v-for="option in testTypeOptions" :key="option" :value="option">{{ option }}</a-select-option>
+            </a-select>
+          </a-form-item>
+        </template>
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="loadRows">
+              <template #icon><SearchOutlined /></template>
+              搜索
+            </a-button>
+            <a-button @click="handleReset">重置</a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
 
-    <section class="table-card">
-      <table v-if="activeTab === 'banks'" class="resource-table">
-        <thead>
-          <tr>
-            <th>题库名称</th>
-            <th>公司</th>
-            <th>类型</th>
-            <th>题目数</th>
-            <th>状态</th>
-            <th>更新时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.bankId">
-            <td class="resource-name-cell">
-              <span class="mdi" :class="testTypeIconMap[row.testType]" :style="{ color: testTypeColorMap[row.testType] }" />
-              <strong>{{ row.testBankName }}</strong>
-            </td>
-            <td>{{ row.companyName }}</td>
-            <td>
-              <span class="type-pill" :class="`type-pill--${row.testType}`">{{ row.testType }}</span>
-            </td>
-            <td>{{ row.questionCount }}</td>
-            <td>
-              <span class="status-pill" :class="`status-pill--${row.status}`">{{ statusLabelMap[row.status || 'enabled'] }}</span>
-            </td>
-            <td>{{ formatTime(row.updatedAt) }}</td>
-            <td>
-              <button type="button" class="link-button" @click="openEditModal(row)">编辑</button>
-            </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="7" class="empty-row">暂无题库记录</td>
-          </tr>
-        </tbody>
-      </table>
+      <a-table v-if="activeTab === 'banks'" :columns="bankColumns" :data-source="rows" :row-key="(r: TestBankRow) => r.bankId" :pagination="false" :locale="{ emptyText: '暂无题库记录' }" :scroll="{ x: 1000 }">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'testBankName'">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <span class="mdi" :class="testTypeIconMap[record.testType]" :style="{ color: testTypeColorMap[record.testType] }" style="font-size: 20px" />
+              <strong>{{ record.testBankName }}</strong>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'testType'">
+            <a-tag :color="typeColorMap[record.testType] || 'default'">{{ record.testType }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'status'">
+            <a-tag :color="record.status === 'enabled' ? 'green' : 'default'">{{ statusLabelMap[record.status || 'enabled'] }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'updatedAt'">
+            {{ formatTime(record.updatedAt) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-button type="link" size="small" @click="openEditModal(record)">编辑</a-button>
+          </template>
+        </template>
+      </a-table>
 
-      <table v-else class="resource-table">
-        <thead>
-          <tr>
-            <th>申请ID</th>
-            <th>学员</th>
-            <th>申请岗位</th>
-            <th>测试类型</th>
-            <th>申请时间</th>
-            <th>来源</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.applicationCode">
-            <td class="code-cell">{{ row.applicationCode }}</td>
-            <td><strong>{{ row.studentName }}</strong></td>
-            <td>{{ row.appliedPosition }}</td>
-            <td>{{ row.testType }}</td>
-            <td>{{ formatTime(row.applicationTime) }}</td>
-            <td>
-              <span class="source-pill">{{ row.applicationSource || '班主任流转' }}</span>
-            </td>
-            <td>
-              <button type="button" class="primary-link-button">分配题库</button>
-            </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="7" class="empty-row">暂无学员申请</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+      <a-table v-else :columns="applicationColumns" :data-source="rows" :row-key="(r: TestBankRow) => r.applicationCode" :pagination="false" :locale="{ emptyText: '暂无学员申请' }" :scroll="{ x: 900 }">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'applicationCode'">
+            <span style="font-family: monospace; color: #64748b">{{ record.applicationCode }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'studentName'">
+            <strong>{{ record.studentName }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'applicationTime'">
+            {{ formatTime(record.applicationTime) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'applicationSource'">
+            <a-tag color="blue">{{ record.applicationSource || '班主任流转' }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'appAction'">
+            <a-button type="primary" size="small">分配题库</a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <TestBankFormModal
       v-model="showFormModal"
@@ -141,12 +112,14 @@
       :submitting="submitting"
       @confirm="handleSubmit"
     />
-  </section>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import TestBankFormModal from './components/TestBankFormModal.vue'
 import {
   createTestBank,
@@ -158,6 +131,32 @@ import {
   type TestBankTab,
   type TestBankType
 } from '@osg/shared/api/admin/testBank'
+
+const typeColorMap: Record<string, string> = {
+  HireVue: 'red',
+  Pymetrics: 'purple',
+  SHL: 'blue'
+}
+
+const bankColumns = [
+  { title: '题库名称', dataIndex: 'testBankName', key: 'testBankName', width: 200 },
+  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 130 },
+  { title: '类型', dataIndex: 'testType', key: 'testType', width: 100 },
+  { title: '题目数', dataIndex: 'questionCount', key: 'questionCount', width: 80 },
+  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
+  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 130 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 80 },
+]
+
+const applicationColumns = [
+  { title: '申请ID', dataIndex: 'applicationCode', key: 'applicationCode', width: 120 },
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: '申请岗位', dataIndex: 'appliedPosition', key: 'appliedPosition', width: 150 },
+  { title: '测试类型', dataIndex: 'testType', key: 'testType', width: 100 },
+  { title: '申请时间', dataIndex: 'applicationTime', key: 'applicationTime', width: 130 },
+  { title: '来源', dataIndex: 'applicationSource', key: 'applicationSource', width: 110 },
+  { title: '操作', dataIndex: 'appAction', key: 'appAction', width: 100 },
+]
 
 const testTypeOptions: TestBankType[] = ['HireVue', 'Pymetrics', 'SHL']
 
@@ -188,8 +187,8 @@ const formMode = ref<'create' | 'edit'>('create')
 const editingRow = ref<TestBankRow | null>(null)
 const filters = ref({
   keyword: '',
-  companyName: '',
-  testType: '' as TestBankType | ''
+  companyName: undefined as string | undefined,
+  testType: undefined as TestBankType | undefined
 })
 
 const companyOptions = computed(() => companyRegistry.value)
@@ -222,8 +221,8 @@ const loadRows = async () => {
 const handleReset = () => {
   filters.value = {
     keyword: '',
-    companyName: '',
-    testType: ''
+    companyName: undefined,
+    testType: undefined
   }
   void loadRows()
 }
@@ -276,230 +275,5 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
-.test-bank-page {
-  display: grid;
-  gap: 20px;
-}
-
-.page-header,
-.tabs-row,
-.toolbar-card {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.page-header {
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.page-eyebrow {
-  margin: 0 0 8px;
-  color: #7c3aed;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-header h1,
-.page-subtitle {
-  margin: 0;
-}
-
-.page-subtitle {
-  margin-top: 8px;
-  color: #64748b;
-}
-
-.banner-card,
-.toolbar-card,
-.table-card {
-  border-radius: 24px;
-  background: #fff;
-  padding: 20px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-}
-
-.banner-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-}
-
-.banner-card strong,
-.banner-card p {
-  margin: 0;
-}
-
-.banner-card p {
-  margin-top: 8px;
-  color: #92400e;
-}
-
-.tab-pill,
-.toolbar-input,
-.toolbar-select,
-.ghost-button,
-.primary-button,
-.link-button,
-.primary-link-button {
-  border-radius: 14px;
-  font: inherit;
-}
-
-.tab-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  background: #f3e8ff;
-  color: #6d28d9;
-  padding: 10px 16px;
-  cursor: pointer;
-}
-
-.tab-pill--active {
-  background: #7c3aed;
-  color: #fff;
-}
-
-.tab-pill__count {
-  min-width: 22px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.28);
-  text-align: center;
-}
-
-.toolbar-card {
-  align-items: center;
-}
-
-.toolbar-input,
-.toolbar-select {
-  min-width: 200px;
-  border: 1px solid #cbd5e1;
-  padding: 10px 12px;
-  background: #fff;
-}
-
-.primary-button,
-.ghost-button {
-  border: none;
-  padding: 12px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.primary-button {
-  background: #7c3aed;
-  color: #fff;
-}
-
-.ghost-button {
-  background: #e2e8f0;
-  color: #334155;
-}
-
-.ghost-button--warn {
-  background: transparent;
-  border: 1px solid #d97706;
-  color: #92400e;
-}
-
-.ghost-button--light {
-  background: #f8fafc;
-}
-
-.resource-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.resource-table th,
-.resource-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.resource-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.type-pill,
-.status-pill,
-.source-pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.type-pill--HireVue {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.type-pill--Pymetrics {
-  background: #ede9fe;
-  color: #6d28d9;
-}
-
-.type-pill--SHL {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.status-pill--enabled {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.status-pill--disabled {
-  background: #e2e8f0;
-  color: #475569;
-}
-
-.source-pill {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.link-button,
-.primary-link-button {
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.link-button {
-  color: #7c3aed;
-}
-
-.primary-link-button {
-  color: #2563eb;
-}
-
-.code-cell {
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  color: #64748b;
-}
-
-.empty-row {
-  text-align: center;
-  color: #64748b;
-}
+<style scoped>
 </style>

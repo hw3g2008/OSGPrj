@@ -36,42 +36,38 @@
         :key="group.id"
         class="role-tree-modal__group"
       >
-        <label class="role-tree-modal__group-label">
-          <input
-            type="checkbox"
+        <div class="role-tree-modal__group-label">
+          <a-checkbox
             :checked="isGroupChecked(group)"
-            @change="toggleGroup(group, ($event.target as HTMLInputElement).checked)"
-          />
-          <span class="mdi" :class="inferGroupIcon(group.label)" aria-hidden="true" />
-          <span>{{ group.label }}</span>
-        </label>
+            @change="(e: any) => toggleGroup(group, e.target.checked)"
+          >
+            <span class="mdi" :class="inferGroupIcon(group.label)" aria-hidden="true" />
+            <span>{{ group.label }}</span>
+          </a-checkbox>
+        </div>
 
         <div class="role-tree-modal__children">
           <template v-for="node in group.children || []" :key="node.id">
-            <label class="role-tree-modal__node-label role-tree-modal__node-label--menu">
-              <input
-                type="checkbox"
+            <div class="role-tree-modal__node-label role-tree-modal__node-label--menu">
+              <a-checkbox
                 :checked="selectedMenuIds.includes(node.id)"
-                @change="toggleNode(node.id, ($event.target as HTMLInputElement).checked)"
-              />
-              <span class="mdi mdi-view-list" aria-hidden="true" />
-              <span>{{ node.label }}</span>
-            </label>
+                @change="(e: any) => toggleNode(node.id, e.target.checked)"
+              >
+                <span class="mdi mdi-view-list" aria-hidden="true" />
+                <span>{{ node.label }}</span>
+              </a-checkbox>
+            </div>
 
             <div v-if="node.children?.length" class="role-tree-modal__grand-children">
-              <label
+              <a-checkbox
                 v-for="child in node.children"
                 :key="child.id"
-                class="role-tree-modal__node-label role-tree-modal__node-label--action"
+                :checked="selectedMenuIds.includes(child.id)"
+                @change="(e: any) => toggleNode(child.id, e.target.checked)"
               >
-                <input
-                  type="checkbox"
-                  :checked="selectedMenuIds.includes(child.id)"
-                  @change="toggleNode(child.id, ($event.target as HTMLInputElement).checked)"
-                />
                 <span class="mdi mdi-radiobox-marked" aria-hidden="true" />
                 <span>{{ child.label }}</span>
-              </label>
+              </a-checkbox>
             </div>
           </template>
         </div>
@@ -79,8 +75,8 @@
     </div>
 
     <template #footer>
-      <button type="button" class="btn btn-outline" @click="handleClose">取消</button>
-      <button type="button" class="btn btn-primary" @click="handleSubmit">保存授权</button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" @click="handleSubmit">保存授权</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -229,18 +225,10 @@ function handleSubmit() {
   margin-top: 16px;
 }
 
-.role-tree-modal__group-label,
-.role-tree-modal__node-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #1e293b;
-  cursor: pointer;
-}
-
 .role-tree-modal__group-label {
   font-weight: 700;
   margin-bottom: 12px;
+  color: #1e293b;
 }
 
 .role-tree-modal__children {
@@ -259,33 +247,5 @@ function handleSubmit() {
 
 .role-tree-modal__node-label--menu {
   font-weight: 600;
-}
-
-.role-tree-modal__node-label--action {
-  color: #475569;
-}
-
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.btn-outline {
-  background: #fff;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: #fff;
 }
 </style>

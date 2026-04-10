@@ -7,14 +7,14 @@
     @cancel="handleClose"
   >
     <template #title>
-      <div class="position-students-modal__title">
+      <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-group" aria-hidden="true"></span>
         <span>{{ companyName }} - {{ positionName }} 申请学员</span>
-      </div>
+      </span>
     </template>
 
     <div class="position-students-modal__tip">
-      <i class="mdi mdi-information" aria-hidden="true"></i>
+      <span class="mdi mdi-information" aria-hidden="true"></span>
       <span>以下为该岗位的申请学员列表，求职状态由学员自行更新</span>
     </div>
 
@@ -55,7 +55,7 @@
     </div>
 
     <template #footer>
-      <button type="button" class="position-students-modal__close" @click="handleClose">关闭</button>
+      <a-button @click="handleClose">关闭</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -90,15 +90,6 @@ const handleClose = () => {
 </script>
 
 <style scoped lang="scss">
-.position-students-modal__title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 24px;
-  font-weight: 700;
-  color: #20304a;
-}
-
 .position-students-modal__tip {
   display: flex;
   align-items: center;
@@ -183,13 +174,4 @@ const handleClose = () => {
   color: #6b7280;
 }
 
-.position-students-modal__close {
-  border: 1px solid #d4deeb;
-  border-radius: 10px;
-  padding: 10px 18px;
-  background: #fff;
-  color: #4a5c78;
-  font-weight: 600;
-  cursor: pointer;
-}
 </style>

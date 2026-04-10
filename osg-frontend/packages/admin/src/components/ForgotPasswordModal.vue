@@ -10,8 +10,8 @@
     @cancel="handleClose"
   >
     <template #title>
-      <span class="forgot-modal__title">
-        <span class="mdi mdi-key forgot-modal__title-icon" aria-hidden="true" />
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-key" aria-hidden="true" />
         <span>找回密码</span>
       </span>
     </template>
@@ -394,17 +394,6 @@ watch(
 
 <style scoped lang="scss">
 .forgot-modal {
-  &__title {
-    display: block;
-    line-height: normal;
-  }
-
-  &__title-icon {
-    margin-right: 8px;
-    font-size: inherit;
-    line-height: normal;
-  }
-
   &__dots {
     display: flex;
     justify-content: center;

@@ -56,35 +56,29 @@
             :key="group.id"
             class="role-modal__perm-group"
           >
-            <label class="role-modal__perm-group-label">
-              <input
-                class="role-modal__perm-group-checkbox"
-                type="checkbox"
+            <div class="role-modal__perm-group-label">
+              <a-checkbox
                 :checked="isGroupChecked(group)"
-                :indeterminate="false"
-                @change="toggleGroup(group, ($event.target as HTMLInputElement).checked)"
-              />
-              <span
-                class="mdi role-modal__perm-group-icon"
-                :class="group.icon"
-                aria-hidden="true"
-              />
-              <span>{{ group.label }}</span>
-            </label>
+                @change="(e: any) => toggleGroup(group, e.target.checked)"
+              >
+                <span
+                  class="mdi role-modal__perm-group-icon"
+                  :class="group.icon"
+                  aria-hidden="true"
+                />
+                <span>{{ group.label }}</span>
+              </a-checkbox>
+            </div>
 
             <div class="role-modal__perm-items">
-              <label
+              <a-checkbox
                 v-for="item in group.items"
                 :key="item.id"
-                class="role-modal__perm-item"
+                :checked="formState.menuIds.includes(item.id)"
+                @change="(e: any) => toggleMenu(item.id, e.target.checked)"
               >
-                <input
-                  type="checkbox"
-                  :checked="formState.menuIds.includes(item.id)"
-                  @change="toggleMenu(item.id, ($event.target as HTMLInputElement).checked)"
-                />
-                <span>{{ item.label }}</span>
-              </label>
+                {{ item.label }}
+              </a-checkbox>
             </div>
           </section>
         </div>
@@ -92,11 +86,8 @@
     </a-form>
 
     <template #footer>
-      <a-button class="role-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose"><span>取消</span></a-button>
-      <a-button class="role-modal__confirm-btn" data-surface-part="confirm-control" :loading="loading" @click="handleSubmit">
-        <span class="mdi mdi-check" aria-hidden="true" />
-        <span>保存</span>
-      </a-button>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" :loading="loading" @click="handleSubmit">保存</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -305,15 +296,6 @@ const handleSubmit = async () => {
   line-height: 1;
 }
 
-.role-modal__body {
-  max-height: 434px;
-  padding-bottom: 18px;
-
-  :deep(.ant-form-item) {
-    margin-bottom: 4px;
-  }
-}
-
 .role-modal__tip {
   font-size: 12px;
   color: var(--text-secondary, #64748b);
@@ -348,10 +330,6 @@ const handleSubmit = async () => {
 }
 
 .role-modal__perm-group-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
   font-weight: 600;
   margin-bottom: 2px;
   color: var(--text, #1e293b);
@@ -372,42 +350,5 @@ const handleSubmit = async () => {
   row-gap: 4px;
   flex-wrap: wrap;
   padding-left: 20px;
-}
-
-.role-modal__perm-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  color: var(--text-secondary, #475569);
-}
-
-.role-modal__cancel-btn {
-  border-color: var(--border, #d0d7e2);
-  border-radius: 10px;
-  color: var(--text-secondary, #64748b);
-  font-weight: 500;
-  min-width: 80px;
-}
-
-.role-modal__confirm-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 96px;
-  border: none;
-  border-radius: 10px;
-  color: #fff;
-  font-weight: 600;
-  background: var(--primary-gradient, linear-gradient(135deg, #4f46e5, #8b5cf6));
-  box-shadow: none;
-
-  &:hover,
-  &:focus {
-    color: #fff;
-    background: var(--primary-gradient, linear-gradient(135deg, #4f46e5, #8b5cf6));
-    opacity: 0.96;
-  }
 }
 </style>

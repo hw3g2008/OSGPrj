@@ -23,6 +23,17 @@
 
   // Shadows
   --card-shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
+
+  // Gradients
+  --primary-gradient: linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%);
+}
+
+// ── Page layout ──
+.osg-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px;
 }
 
 // 全局样式

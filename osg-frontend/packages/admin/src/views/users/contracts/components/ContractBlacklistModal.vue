@@ -18,36 +18,23 @@
       <span>填写加入黑名单的原因与备注说明。</span>
     </div>
 
-    <div class="contract-blacklist-modal__field-list">
-      <label class="contract-blacklist-modal__field" data-field-name="原因选择">
-        <span>原因选择</span>
-        <select v-model="form.reason" class="contract-blacklist-modal__control" @change="handleReasonChange">
-          <option value="">请选择原因</option>
-          <option v-for="option in reasonOptions" :key="option" :value="option">{{ option }}</option>
-        </select>
-      </label>
-
-      <label v-if="requiresOtherReason" class="contract-blacklist-modal__field" data-field-name="其他原因说明">
-        <span>其他原因说明</span>
-        <input v-model="form.otherReason" type="text" class="contract-blacklist-modal__control" placeholder="请输入其他原因说明" />
-      </label>
-
-      <label class="contract-blacklist-modal__field contract-blacklist-modal__field--wide" data-field-name="备注说明">
-        <span>备注说明</span>
-        <textarea
-          v-model="form.remark"
-          rows="3"
-          class="contract-blacklist-modal__control contract-blacklist-modal__control--textarea"
-          placeholder="可填写补充说明"
-        />
-      </label>
-    </div>
+    <a-form layout="vertical">
+      <a-form-item label="原因选择">
+        <a-select v-model:value="form.reason" placeholder="请选择原因" @change="handleReasonChange">
+          <a-select-option v-for="option in reasonOptions" :key="option" :value="option">{{ option }}</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item v-if="requiresOtherReason" label="其他原因说明">
+        <a-input v-model:value="form.otherReason" placeholder="请输入其他原因说明" />
+      </a-form-item>
+      <a-form-item label="备注说明">
+        <a-textarea v-model:value="form.remark" :rows="3" placeholder="可填写补充说明" />
+      </a-form-item>
+    </a-form>
 
     <template #footer>
-      <div class="contract-blacklist-modal__footer">
-        <button type="button" class="contract-blacklist-modal__secondary" @click="handleClose">取消</button>
-        <button type="button" class="contract-blacklist-modal__primary" @click="handleSubmit">确认加入</button>
-      </div>
+      <a-button @click="handleClose">取消</a-button>
+      <a-button type="primary" danger @click="handleSubmit">确认加入</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -152,63 +139,4 @@ const handleSubmit = () => {
   margin-bottom: 4px;
 }
 
-.contract-blacklist-modal__field-list {
-  display: grid;
-  gap: 14px;
-}
-
-.contract-blacklist-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #40536d;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.contract-blacklist-modal__field--wide {
-  grid-column: 1 / -1;
-}
-
-.contract-blacklist-modal__control {
-  min-height: 42px;
-  border-radius: 12px;
-  border: 1px solid #d5dfeb;
-  background: #fff;
-  padding: 0 14px;
-  color: #1f3552;
-}
-
-.contract-blacklist-modal__control--textarea {
-  padding: 12px 14px;
-}
-
-.contract-blacklist-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.contract-blacklist-modal__secondary,
-.contract-blacklist-modal__primary {
-  border: none;
-  border-radius: 12px;
-  min-height: 42px;
-  padding: 0 18px;
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.contract-blacklist-modal__secondary {
-  background: #f7f9fc;
-  color: #1d3552;
-  border: 1px solid #d8e1ed;
-}
-
-.contract-blacklist-modal__primary {
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-  color: #fff;
-}
 </style>

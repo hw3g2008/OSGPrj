@@ -1,16 +1,15 @@
 <template>
-  <a-modal
+  <OverlaySurfaceModal
+    surface-id="modal-send-notice"
     :open="modelValue"
-    title="发送通知"
-    :width="500"
-    :confirm-loading="submitting"
-    ok-text="发送"
-    cancel-text="取消"
-    @ok="handleConfirm"
+    width="500px"
     @cancel="$emit('update:modelValue', false)"
   >
     <template #title>
-      <span><BellOutlined style="margin-right: 8px" />发送通知</span>
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span class="mdi mdi-bell-outline" aria-hidden="true" />
+        <span>发送通知</span>
+      </span>
     </template>
     <a-form :label-col="{ span: 24 }" layout="vertical">
       <a-form-item label="接收人类型" required>
@@ -28,12 +27,16 @@
         <a-textarea v-model:value="form.noticeContent" :rows="4" placeholder="输入通知内容" />
       </a-form-item>
     </a-form>
-  </a-modal>
+    <template #footer>
+      <a-button @click="$emit('update:modelValue', false)">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleConfirm">发送</a-button>
+    </template>
+  </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import { BellOutlined } from '@ant-design/icons-vue'
+import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { NoticeReceiverType } from '@osg/shared/api/admin/notice'
 
 const props = defineProps<{
