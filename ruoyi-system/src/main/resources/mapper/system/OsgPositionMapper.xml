@@ -19,6 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="projectYear" column="project_year"/>
         <result property="publishTime" column="publish_time"/>
         <result property="deadline" column="deadline"/>
+        <result property="deadlineText" column="deadline_text"/>
         <result property="displayStatus" column="display_status"/>
         <result property="displayStartTime" column="display_start_time"/>
         <result property="displayEndTime" column="display_end_time"/>
@@ -47,6 +48,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         p.project_year,
         p.publish_time,
         p.deadline,
+        p.deadline_text,
         p.display_status,
         p.display_start_time,
         p.display_end_time,
@@ -92,6 +94,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         p.project_year,
         p.publish_time,
         p.deadline,
+        p.deadline_text,
         p.display_status,
         p.display_start_time,
         p.display_end_time,
@@ -208,6 +211,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             project_year,
             publish_time,
             <if test="deadline != null">deadline,</if>
+            <if test="deadlineText != null">deadline_text,</if>
             display_status,
             display_start_time,
             display_end_time,
@@ -233,6 +237,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{projectYear},
             #{publishTime},
             <if test="deadline != null">#{deadline},</if>
+            <if test="deadlineText != null">#{deadlineText},</if>
             #{displayStatus},
             #{displayStartTime},
             #{displayEndTime},
@@ -262,6 +267,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="projectYear != null and projectYear != ''">project_year = #{projectYear},</if>
             <if test="publishTime != null">publish_time = #{publishTime},</if>
             <if test="deadline != null">deadline = #{deadline},</if>
+            <if test="deadlineText != null">deadline_text = #{deadlineText},</if>
             <if test="displayStatus != null and displayStatus != ''">display_status = #{displayStatus},</if>
             <if test="displayStartTime != null">display_start_time = #{displayStartTime},</if>
             <if test="displayEndTime != null">display_end_time = #{displayEndTime},</if>

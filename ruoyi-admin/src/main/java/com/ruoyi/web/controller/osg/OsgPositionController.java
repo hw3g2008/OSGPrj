@@ -142,12 +142,17 @@ public class OsgPositionController extends BaseController
                        OsgPosition position,
                        @RequestParam(value = "template", required = false, defaultValue = "false") boolean template)
     {
-        List<PositionExportRow> exportRows = template
-            ? new ArrayList<>()
-            : toExportRows(positionService.selectPositionList(position));
-
-        ExcelUtil<PositionExportRow> util = new ExcelUtil<>(PositionExportRow.class);
-        util.exportExcel(response, exportRows, template ? "岗位导入模板" : "岗位列表");
+        if (template)
+        {
+            ExcelUtil<PositionImportTemplate> util = new ExcelUtil<>(PositionImportTemplate.class);
+            util.exportExcel(response, new ArrayList<>(), "岗位导入模板");
+        }
+        else
+        {
+            List<PositionExportRow> exportRows = toExportRows(positionService.selectPositionList(position));
+            ExcelUtil<PositionExportRow> util = new ExcelUtil<>(PositionExportRow.class);
+            util.exportExcel(response, exportRows, "岗位列表");
+        }
     }
 
     private List<PositionExportRow> toExportRows(List<OsgPosition> rows)
@@ -224,5 +229,32 @@ public class OsgPositionController extends BaseController
             this.displayStatus = displayStatus;
             this.publishTime = publishTime;
         }
+    }
+
+    private static class PositionImportTemplate
+    {
+        @Excel(name = "岗位名称")
+        private String positionName;
+
+        @Excel(name = "公司名称")
+        private String companyName;
+
+        @Excel(name = "公司行业")
+        private String industry;
+
+        @Excel(name = "岗位分类")
+        private String positionCategory;
+
+        @Excel(name = "地区")
+        private String city;
+
+        @Excel(name = "招聘周期")
+        private String recruitmentCycle;
+
+        @Excel(name = "发布时间", width = 20)
+        private String publishTime;
+
+        @Excel(name = "截止时间", width = 20)
+        private String deadlineRaw;
     }
 }

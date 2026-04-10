@@ -14,6 +14,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -326,6 +328,8 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             throw new ServiceException("上传文件不能为空");
         }
 
+        ensurePositionReferenceData();
+
         List<OsgPosition> existingRows = selectPositionList(new OsgPosition());
         Set<String> existingKeys = existingRows.stream()
             .map(this::buildDedupKey)
@@ -335,13 +339,32 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         int totalCount = 0;
         int successCount = 0;
         List<String> duplicates = new ArrayList<>();
+        List<Map<String, Object>> failedRows = new ArrayList<>();
         Set<String> seenInFile = new LinkedHashSet<>();
         DataFormatter formatter = new DataFormatter();
 
         try (InputStream inputStream = file.getInputStream(); XSSFWorkbook workbook = new XSSFWorkbook(inputStream))
         {
             XSSFSheet sheet = workbook.getSheetAt(0);
-            Map<String, Integer> headerIndexes = readHeaderIndexes(sheet.getRow(0), formatter);
+            Map<String, Integer> rawHeaderIndexes = readHeaderIndexes(sheet.getRow(0), formatter);
+            Map<String, Integer> headerIndexes = resolveHeaderIndexes(rawHeaderIndexes);
+
+            // Phase A: batch-level header validation
+            List<String> missingHeaders = new ArrayList<>();
+            for (String required : REQUIRED_HEADERS)
+            {
+                if (!headerIndexes.containsKey(required))
+                {
+                    missingHeaders.add(required);
+                }
+            }
+            if (!missingHeaders.isEmpty())
+            {
+                throw new ServiceException("Excel缺少必需列: " + String.join(", ", missingHeaders)
+                    + "。请使用系统提供的模板文件。");
+            }
+
+            // Phase B: row-level validation
             for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++)
             {
                 Row row = sheet.getRow(rowIndex);
@@ -351,7 +374,17 @@ public class OsgPositionServiceImpl implements IOsgPositionService
                 }
 
                 totalCount++;
-                OsgPosition position = buildPositionFromRow(row, headerIndexes, formatter);
+                RowBuildResult buildResult = buildPositionFromRow(row, headerIndexes, formatter, rowIndex + 1);
+                if (buildResult.failReason() != null)
+                {
+                    Map<String, Object> fail = new LinkedHashMap<>();
+                    fail.put("row", rowIndex + 1);
+                    fail.put("reason", buildResult.failReason());
+                    failedRows.add(fail);
+                    continue;
+                }
+
+                OsgPosition position = buildResult.position();
                 String dedupKey = buildDedupKey(position);
                 String label = buildDuplicateLabel(position);
                 if (existingKeys.contains(dedupKey) || seenInFile.contains(dedupKey))
@@ -382,6 +415,8 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         result.put("successCount", successCount);
         result.put("duplicateCount", duplicates.size());
         result.put("duplicates", duplicates);
+        result.put("failedCount", failedRows.size());
+        result.put("failedRows", failedRows);
         return result;
     }
 
@@ -455,6 +490,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
                 new DictSeed(DICT_POSITION_CITY, "Tokyo", "Tokyo", 9L, null, "ap", null),
                 new DictSeed(DICT_POSITION_CITY, "Shanghai", "Shanghai", 10L, null, "cn", null),
                 new DictSeed(DICT_POSITION_CITY, "Beijing", "Beijing", 11L, null, "cn", null),
+                new DictSeed(DICT_POSITION_CITY, "St Louis", "St Louis", 12L, null, "na", null),
                 new DictSeed(DICT_POSITION_PUBLISH_PRESET, "week", "本周", 1L, null, null, null),
                 new DictSeed(DICT_POSITION_PUBLISH_PRESET, "month", "本月", 2L, null, null, null),
                 new DictSeed(DICT_POSITION_PUBLISH_PRESET, "quarter", "近三个月", 3L, null, null, null),
@@ -746,6 +782,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         position.setProjectYear(asText(body.get("projectYear")));
         position.setPublishTime(asDate(body.get("publishTime")));
         position.setDeadline(asDate(body.get("deadline")));
+        position.setDeadlineText(asText(body.get("deadlineText")));
         position.setDisplayStatus(normalizeDisplayStatus(asText(body.get("displayStatus"))));
         position.setDisplayStartTime(asDate(body.get("displayStartTime")));
         position.setDisplayEndTime(asDate(body.get("displayEndTime")));
@@ -784,29 +821,100 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         return position;
     }
 
-    private OsgPosition buildPositionFromRow(Row row, Map<String, Integer> headerIndexes, DataFormatter formatter)
+    private record RowBuildResult(OsgPosition position, String failReason) {}
+
+    private RowBuildResult buildPositionFromRow(Row row, Map<String, Integer> headerIndexes, DataFormatter formatter, int rowNum)
     {
         OsgPosition position = new OsgPosition();
         position.setCompanyName(readCell(row, headerIndexes, formatter, "company_name"));
         position.setPositionName(readCell(row, headerIndexes, formatter, "position_name"));
-        position.setRegion(readCell(row, headerIndexes, formatter, "region"));
-        position.setCity(readCell(row, headerIndexes, formatter, "city"));
-        position.setProjectYear(readCell(row, headerIndexes, formatter, "project_year"));
         position.setIndustry(defaultText(readCell(row, headerIndexes, formatter, "industry"), "Other"));
         position.setPositionCategory(defaultText(readCell(row, headerIndexes, formatter, "position_category"), "summer"));
         position.setCompanyType(defaultText(readCell(row, headerIndexes, formatter, "company_type"), position.getIndustry()));
         position.setRecruitmentCycle(defaultText(readCell(row, headerIndexes, formatter, "recruitment_cycle"), position.getProjectYear()));
-        position.setPublishTime(new Date());
+
+        // city normalization + region inference
+        String rawCity = readCell(row, headerIndexes, formatter, "city");
+        CityNormResult cityResult = normalizeCity(rawCity);
+        if (cityResult == null)
+        {
+            return new RowBuildResult(null, "第" + rowNum + "行: 地区为空");
+        }
+        position.setCity(cityResult.city());
+
+        String region = readCell(row, headerIndexes, formatter, "region");
+        if (StringUtils.hasText(region))
+        {
+            position.setRegion(region);
+        }
+        else if (cityResult.region() != null)
+        {
+            position.setRegion(cityResult.region());
+        }
+        else
+        {
+            String inferred = inferRegionFromCity(cityResult.city());
+            if (inferred == null)
+            {
+                return new RowBuildResult(null, "第" + rowNum + "行: 无法从地区\"" + rawCity + "\"推断大区");
+            }
+            position.setRegion(inferred);
+        }
+
+        // project_year inference
+        String projectYear = readCell(row, headerIndexes, formatter, "project_year");
+        if (StringUtils.hasText(projectYear))
+        {
+            position.setProjectYear(projectYear);
+        }
+        else
+        {
+            String inferred = inferProjectYear(position.getPositionCategory());
+            if (inferred == null)
+            {
+                return new RowBuildResult(null, "第" + rowNum + "行: 无法从岗位分类\"" + position.getPositionCategory() + "\"提取项目年份");
+            }
+            position.setProjectYear(inferred);
+        }
+
+        // deadline handling
+        String deadlineRaw = readCell(row, headerIndexes, formatter, "deadline");
+        if (StringUtils.hasText(deadlineRaw))
+        {
+            Date deadlineDate = asDate(deadlineRaw);
+            if (deadlineDate != null)
+            {
+                position.setDeadline(deadlineDate);
+            }
+            else
+            {
+                position.setDeadlineText(deadlineRaw);
+            }
+        }
+
+        // publish_time default
+        String publishRaw = readCell(row, headerIndexes, formatter, "publish_time");
+        Date publishDate = StringUtils.hasText(publishRaw) ? asDate(publishRaw) : null;
+        position.setPublishTime(publishDate != null ? publishDate : new Date());
+
         position.setDisplayStatus("visible");
         position.setDisplayStartTime(new Date());
         position.setDisplayEndTime(Date.from(LocalDateTime.now().plusDays(90).atZone(ZONE_ID).toInstant()));
 
-        require(position.getCompanyName(), "公司名称不能为空");
-        require(position.getPositionName(), "岗位名称不能为空");
-        require(position.getRegion(), "大区不能为空");
-        require(position.getCity(), "城市不能为空");
-        require(position.getProjectYear(), "项目时间不能为空");
-        return position;
+        // required field validation
+        List<String> missing = new ArrayList<>();
+        if (!StringUtils.hasText(position.getCompanyName())) missing.add("公司名称");
+        if (!StringUtils.hasText(position.getPositionName())) missing.add("岗位名称");
+        if (!StringUtils.hasText(position.getCity())) missing.add("地区");
+        if (!StringUtils.hasText(position.getRegion())) missing.add("大区");
+        if (!StringUtils.hasText(position.getProjectYear())) missing.add("项目时间");
+        if (!StringUtils.hasText(position.getRecruitmentCycle())) missing.add("招聘周期");
+        if (!missing.isEmpty())
+        {
+            return new RowBuildResult(null, "第" + rowNum + "行: 缺少必填字段 " + String.join(", ", missing));
+        }
+
+        return new RowBuildResult(position, null);
     }
 
     private Map<String, Integer> readHeaderIndexes(Row headerRow, DataFormatter formatter)
@@ -841,6 +949,52 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         return true;
     }
 
+    private static final Map<String, String> HEADER_ALIAS;
+    static
+    {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("岗位名称", "position_name");
+        m.put("公司名称", "company_name");
+        m.put("公司行业", "industry");
+        m.put("岗位分类", "position_category");
+        m.put("地区", "city");
+        m.put("招聘周期", "recruitment_cycle");
+        m.put("发布时间", "publish_time");
+        m.put("截止时间", "deadline");
+        m.put("大区", "region");
+        m.put("项目时间", "project_year");
+        m.put("学员数", "_ignore");
+        HEADER_ALIAS = Map.copyOf(m);
+    }
+
+    private static final Map<String, String> COUNTRY_ALIAS;
+    static
+    {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("us", "na");
+        m.put("usa", "na");
+        m.put("uk", "eu");
+        m.put("apac", "ap");
+        COUNTRY_ALIAS = Map.copyOf(m);
+    }
+
+    private static final Map<String, String> CITY_ALIAS;
+    static
+    {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("hong kong sar, singapore", "Hong Kong");
+        m.put("hong kong sar", "Hong Kong");
+        m.put("st louis, mo", "St Louis");
+        m.put("st. louis", "St Louis");
+        CITY_ALIAS = Map.copyOf(m);
+    }
+
+    private static final Pattern YEAR_PATTERN = Pattern.compile("(\\d{4})");
+
+    private static final List<String> REQUIRED_HEADERS = List.of(
+        "position_name", "company_name", "industry", "position_category", "city", "recruitment_cycle"
+    );
+
     private String readCell(Row row, Map<String, Integer> headerIndexes, DataFormatter formatter, String key)
     {
         Integer columnIndex = headerIndexes.get(key);
@@ -849,6 +1003,80 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             return null;
         }
         return asText(formatter.formatCellValue(row.getCell(columnIndex)));
+    }
+
+    private Map<String, Integer> resolveHeaderIndexes(Map<String, Integer> rawIndexes)
+    {
+        Map<String, Integer> resolved = new LinkedHashMap<>(rawIndexes);
+        for (Map.Entry<String, Integer> entry : rawIndexes.entrySet())
+        {
+            String alias = HEADER_ALIAS.get(entry.getKey());
+            if (alias != null && !resolved.containsKey(alias))
+            {
+                resolved.put(alias, entry.getValue());
+            }
+        }
+        return resolved;
+    }
+
+    private record CityNormResult(String city, String region) {}
+
+    private CityNormResult normalizeCity(String rawCity)
+    {
+        if (rawCity == null || rawCity.isBlank())
+        {
+            return null;
+        }
+        String trimmed = rawCity.trim();
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+
+        String countryRegion = COUNTRY_ALIAS.get(lower);
+        if (countryRegion != null)
+        {
+            return new CityNormResult(trimmed, countryRegion);
+        }
+
+        String aliasCity = CITY_ALIAS.get(lower);
+        if (aliasCity != null)
+        {
+            return new CityNormResult(aliasCity, null);
+        }
+
+        return new CityNormResult(trimmed, null);
+    }
+
+    private String inferRegionFromCity(String city)
+    {
+        if (city == null || city.isBlank())
+        {
+            return null;
+        }
+        for (SysDictData item : loadDictItems(DICT_POSITION_CITY))
+        {
+            if (item.getDictValue().equalsIgnoreCase(city))
+            {
+                String parent = defaultText(item.getListClass(), item.getRemark());
+                if (StringUtils.hasText(parent))
+                {
+                    return parent;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String inferProjectYear(String positionCategory)
+    {
+        if (positionCategory == null || positionCategory.isBlank())
+        {
+            return null;
+        }
+        Matcher matcher = YEAR_PATTERN.matcher(positionCategory);
+        if (matcher.find())
+        {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     private String buildDedupKey(OsgPosition position)
@@ -893,6 +1121,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         row.put("projectYear", position.getProjectYear());
         row.put("publishTime", position.getPublishTime());
         row.put("deadline", position.getDeadline());
+        row.put("deadlineText", defaultText(position.getDeadlineText(), ""));
         row.put("displayStatus", normalizeDisplayStatus(position.getDisplayStatus()));
         row.put("displayStartTime", position.getDisplayStartTime());
         row.put("displayEndTime", position.getDisplayEndTime());

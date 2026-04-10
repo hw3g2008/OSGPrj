@@ -131,6 +131,7 @@ export interface PositionPayload {
   displayStartTime: string
   displayEndTime: string
   deadline?: string
+  deadlineText?: string
   positionUrl?: string
   applicationNote?: string
 }
@@ -140,6 +141,8 @@ export interface PositionBatchUploadResult {
   successCount: number
   duplicateCount: number
   duplicates: string[]
+  failedCount: number
+  failedRows: Array<{ row: number; reason: string }>
 }
 
 const toRequestParams = (params: PositionListParams = {}) => {

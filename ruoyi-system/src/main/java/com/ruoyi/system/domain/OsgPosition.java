@@ -37,6 +37,8 @@ public class OsgPosition extends BaseEntity
 
     private Date deadline;
 
+    private String deadlineText;
+
     private String displayStatus;
 
     private Date displayStartTime;
@@ -191,6 +193,16 @@ public class OsgPosition extends BaseEntity
         this.deadline = deadline;
     }
 
+    public String getDeadlineText()
+    {
+        return deadlineText;
+    }
+
+    public void setDeadlineText(String deadlineText)
+    {
+        this.deadlineText = deadlineText;
+    }
+
     public String getDisplayStatus()
     {
         return displayStatus;
@@ -279,6 +291,7 @@ public class OsgPosition extends BaseEntity
             .append("projectYear", getProjectYear())
             .append("publishTime", getPublishTime())
             .append("deadline", getDeadline())
+            .append("deadlineText", getDeadlineText())
             .append("displayStatus", getDisplayStatus())
             .append("displayStartTime", getDisplayStartTime())
             .append("displayEndTime", getDisplayEndTime())
