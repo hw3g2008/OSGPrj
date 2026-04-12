@@ -5,6 +5,7 @@ ACTION="${1:-status}"
 ENV_FILE="${2:-}"
 HEALTH_TIMEOUT_SECONDS="${BACKEND_DEV_SERVER_HEALTH_TIMEOUT_SECONDS:-15}"
 START_WAIT_SECONDS="${BACKEND_DEV_SERVER_START_WAIT_SECONDS:-180}"
+RETRY_COUNT="${BACKEND_DEV_SERVER_RETRY_COUNT:-3}"
 
 resolve_runtime() {
   eval "$(bash bin/resolve-runtime-contract.sh "${RUNTIME_CONTRACT_FILE:-}")"
@@ -112,7 +113,7 @@ fail_unknown_listener() {
 }
 
 start_server() {
-  local start_cmd launcher_pid
+  local start_cmd launcher_pid attempt
   if is_running; then
     echo "INFO: backend already running at ${BACKEND_BASE_URL} (pid=$(tracked_pid))"
     return 0
@@ -135,10 +136,11 @@ start_server() {
     start_cmd="exec bash bin/run-backend-dev.sh '${ENV_FILE}'"
   fi
 
-  launcher_pid="$(
-    BACKEND_DEV_SERVER_START_CMD_EFFECTIVE="${start_cmd}" \
-    BACKEND_DEV_SERVER_START_LOG_FILE="${LOG_FILE}" \
-    python3 - <<'PY'
+  for ((attempt=1; attempt<=RETRY_COUNT; attempt++)); do
+    launcher_pid="$(
+      BACKEND_DEV_SERVER_START_CMD_EFFECTIVE="${start_cmd}" \
+      BACKEND_DEV_SERVER_START_LOG_FILE="${LOG_FILE}" \
+      python3 - <<'PY'
 import os
 import subprocess
 
@@ -155,25 +157,33 @@ with open(log_file, "ab", buffering=0) as stream:
     )
     print(proc.pid)
 PY
-  )"
+    )"
 
-  for ((attempt=1; attempt<=START_WAIT_SECONDS; attempt++)); do
-    if adopt_existing_listener; then
-      echo "PASS: backend started at ${BACKEND_BASE_URL} (pid=$(tracked_pid))"
-      return 0
+    for ((wait_attempt=1; wait_attempt<=START_WAIT_SECONDS; wait_attempt++)); do
+      if adopt_existing_listener; then
+        echo "PASS: backend started at ${BACKEND_BASE_URL} (pid=$(tracked_pid))"
+        return 0
+      fi
+      if ! kill -0 "${launcher_pid}" >/dev/null 2>&1 && [[ -z "$(listener_pids || true)" ]]; then
+        break
+      fi
+      sleep 1
+    done
+
+    if kill -0 "${launcher_pid}" >/dev/null 2>&1; then
+      kill "${launcher_pid}" >/dev/null 2>&1 || true
+      wait "${launcher_pid}" 2>/dev/null || true
     fi
-    if ! kill -0 "${launcher_pid}" >/dev/null 2>&1 && [[ -z "$(listener_pids || true)" ]]; then
-      break
+
+    if (( attempt < RETRY_COUNT )); then
+      echo "WARN: backend start attempt ${attempt}/${RETRY_COUNT} failed, retrying..." >&2
+      sleep 2
     fi
-    sleep 1
   done
 
-  if kill -0 "${launcher_pid}" >/dev/null 2>&1; then
-    kill "${launcher_pid}" >/dev/null 2>&1 || true
-    wait "${launcher_pid}" 2>/dev/null || true
-  fi
   echo "FAIL: backend failed to start at ${BACKEND_BASE_URL}" >&2
   echo "INFO: waited_seconds=${START_WAIT_SECONDS}" >&2
+  echo "INFO: retry_count=${RETRY_COUNT}" >&2
   echo "INFO: log=${LOG_FILE}" >&2
   bash bin/runtime-port-guard.sh --mode describe --port "${BACKEND_PORT}" >&2 || true
   exit 17

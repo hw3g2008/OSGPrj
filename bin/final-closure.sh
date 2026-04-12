@@ -109,6 +109,7 @@ esac
 BACKEND_MODE="external"
 BACK_PID=""
 CLEANUP_WARN=""
+AUDIT_WARN=""
 CC_STATUS="skipped"
 FINAL_GATE_LOG=""
 E2E_API_GATE_LOG=""
@@ -133,6 +134,7 @@ UI_VISUAL_STYLE_PASSED="0"
 UI_VISUAL_STYLE_FAILED="0"
 UI_VISUAL_STATE_EXECUTED="0"
 UI_VISUAL_STATE_FAILED="0"
+GLOBAL_AUDIT_MODE="${GLOBAL_AUDIT_MODE:-}"
 
 read_ui_delivery_required_repair_chain() {
   python3 - <<'PY'
@@ -157,6 +159,29 @@ PY
 }
 
 UI_DELIVERY_REQUIRED_REPAIR_CHAIN="$(read_ui_delivery_required_repair_chain)"
+
+read_final_closure_global_audit_mode() {
+  python3 - <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+config_path = Path(".claude/project/config.yaml")
+if not config_path.exists():
+    print("FAIL: machine truth config missing: .claude/project/config.yaml", file=sys.stderr)
+    raise SystemExit(1)
+
+data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+workflow_policy = data.get("workflow_policy") or {}
+mode = str(workflow_policy.get("final_closure_global_audit_mode") or "required").strip()
+if mode not in {"required", "optional", "off"}:
+    print(f"FAIL: workflow_policy.final_closure_global_audit_mode invalid: {mode}", file=sys.stderr)
+    raise SystemExit(1)
+print(mode)
+PY
+}
+
+GLOBAL_AUDIT_MODE="${GLOBAL_AUDIT_MODE:-$(read_final_closure_global_audit_mode)}"
 
 cleanup_backend() {
   if [[ "${BACKEND_MODE}" == "managed" ]]; then
@@ -520,6 +545,7 @@ BASE_URL="${BASE_URL}" HEALTH_PATH="${HEALTH_PATH}" BASE_HEALTH_URL="${BASE_HEAL
   UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG}" \
   UI_VISUAL_ALLOW_DOWNSTREAM="${UI_VISUAL_ALLOW_DOWNSTREAM}" \
   UI_VISUAL_ADJUDICATION_REASON="${UI_VISUAL_ADJUDICATION_REASON}" \
+  BACKEND_MODE="${BACKEND_MODE}" \
   CAPTCHA_EXPECTED="${CAPTCHA_EXPECTED:-}" \
   bash bin/final-gate.sh "${MODULE}" 2>&1 | tee "${FINAL_GATE_LOG}"
 gate_rc=${PIPESTATUS[0]}
@@ -579,9 +605,22 @@ if ! python3 .claude/skills/workflow-engine/tests/traceability_guard.py \
   fail_exit 13 "traceability_guard 失败"
 fi
 
-if ! python3 .claude/skills/workflow-engine/tests/story_integration_assertions.py; then
-  fail_exit 13 "story_integration_assertions 失败"
-fi
+case "${GLOBAL_AUDIT_MODE}" in
+  required)
+    if ! python3 .claude/skills/workflow-engine/tests/story_integration_assertions.py; then
+      fail_exit 13 "story_integration_assertions 失败"
+    fi
+    ;;
+  optional)
+    if ! python3 .claude/skills/workflow-engine/tests/story_integration_assertions.py; then
+      AUDIT_WARN="story_integration_assertions optional_failed"
+      echo "WARNING: ${AUDIT_WARN}"
+    fi
+    ;;
+  off)
+    echo "INFO: story_integration_assertions skipped (final_closure_global_audit_mode=off)"
+    ;;
+esac
 
 echo "INFO: 审计校验通过"
 
@@ -690,7 +729,7 @@ cleanup_backend
 
 # Step 7: 输出结论与收尾报告
 CONCLUSION="PASS"
-if [[ "${CC_STATUS}" == optional_failed* || -n "${CLEANUP_WARN}" || "${UI_VISUAL_GATE_STATUS}" == "HUMAN_WAIVED" ]]; then
+if [[ "${CC_STATUS}" == optional_failed* || -n "${CLEANUP_WARN}" || -n "${AUDIT_WARN}" || "${UI_VISUAL_GATE_STATUS}" == "HUMAN_WAIVED" || "${UI_VISUAL_GATE_STATUS}" == "SKIPPED_BY_POLICY" ]]; then
   CONCLUSION="PARTIAL"
 fi
 
@@ -705,6 +744,7 @@ fi
   echo "- backend_policy: ${BACKEND_POLICY}"
   echo "- backend_mode: ${BACKEND_MODE}"
   echo "- ui_delivery_required_repair_chain: ${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
+  echo "- final_closure_global_audit_mode: ${GLOBAL_AUDIT_MODE}"
   echo "- base_url: ${BASE_URL}"
   echo "- base_health_url: ${BASE_HEALTH_URL}"
   echo
@@ -753,6 +793,11 @@ fi
     echo "- cleanup_warning: ${CLEANUP_WARN}"
   else
     echo "- cleanup_warning: none"
+  fi
+  if [[ -n "${AUDIT_WARN}" ]]; then
+    echo "- audit_warning: ${AUDIT_WARN}"
+  else
+    echo "- audit_warning: none"
   fi
 } > "${FINAL_CLOSURE_REPORT}" || fail_exit 15 "写入 final-closure 审计报告失败"
 

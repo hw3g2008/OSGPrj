@@ -2,7 +2,7 @@ schema_version: 1
 project_type: springboot-vue
 contract_version: 2026-03-03.1
 generated_by: security_contract_init
-generated_at: '2026-03-20T10:03:06.483243Z'
+generated_at: '2026-04-03T15:04:22.022935Z'
 endpoints:
 - id: get_captchaImage
   method: GET

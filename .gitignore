@@ -86,7 +86,7 @@ deploy/secrets/*
 osg-frontend/playwright-report/
 osg-frontend/test-results/
 osg-frontend/tmp-capture-login.js
-screenshots/live-login-captcha-ok.png
+screenshots/
 
 ######################################################################
 # 根目录截图（原型参考图，不入库）

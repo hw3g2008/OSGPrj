@@ -666,6 +666,14 @@ request_json DELETE "/system/role/${TEMP_ROLE_ID}" "" "${ADMIN_TOKEN}" >/dev/nul
 pass "permission.roles.cleanup" "deleted roleId=${TEMP_ROLE_ID}"
 TEMP_ROLE_ID=""
 
+admin_dict_registry_response="$(request_json GET "/system/admin-dict/registry" "" "${ADMIN_TOKEN}")"
+admin_dict_group_count="$(json_required '(.data // .) | length' "${admin_dict_registry_response}")"
+pass "admin-dict.registry" "groups=${admin_dict_group_count}"
+
+admin_dict_list_response="$(request_json GET "/system/dict/data/list?pageNum=1&pageSize=20&dictType=osg_city" "" "${ADMIN_TOKEN}")"
+admin_dict_rows="$(json_required '.rows | length' "${admin_dict_list_response}")"
+pass "admin-dict.list" "rows=${admin_dict_rows}"
+
 base_data_list_response="$(request_json GET "/system/basedata/list?pageNum=1&pageSize=100&tab=city" "" "${ADMIN_TOKEN}")"
 base_data_count="$(json_required '.rows | length' "${base_data_list_response}")"
 pass "base-data.list" "count=${base_data_count}"

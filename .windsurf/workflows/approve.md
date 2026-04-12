@@ -58,7 +58,7 @@ description: 审批当前待审批项（Stories 或 Tickets 或 Story 验收）
      - 如果 `auto`：自动审批，直接更新状态
    - 用户确认后：
      - 更新每个 Story 状态为 `approved`
-     - **设置 `current_story` 为第一个 Story（按优先级排序）**
+     - **设置 `current_story` 为 scheduler 选中的下一个 Story focus**
      - 调用 `transition("/approve stories", state, "stories_approved")`
 
    ### Tickets 审批

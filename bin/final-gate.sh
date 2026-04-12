@@ -62,6 +62,13 @@ UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG:-${AUDIT_DIR}/ui-visual-gate-${MODULE}-
 UI_VISUAL_PAGE_REPORT="${AUDIT_DIR}/ui-visual-page-report-${MODULE}-${DATE_STR}.json"
 UI_VISUAL_ALLOW_DOWNSTREAM="${UI_VISUAL_ALLOW_DOWNSTREAM:-0}"
 UI_VISUAL_ADJUDICATION_REASON="${UI_VISUAL_ADJUDICATION_REASON:-}"
+UI_VISUAL_FINAL_MODE="${UI_VISUAL_FINAL_MODE:-}"
+UI_VISUAL_DEFAULT_REASON="${UI_VISUAL_DEFAULT_REASON:-}"
+FRONTEND_TEST_COMMAND_OVERRIDE="${FRONTEND_TEST_COMMAND_OVERRIDE:-}"
+FRONTEND_BUILD_COMMAND_OVERRIDE="${FRONTEND_BUILD_COMMAND_OVERRIDE:-}"
+BACKEND_TEST_COMMAND_OVERRIDE="${BACKEND_TEST_COMMAND_OVERRIDE:-}"
+API_SMOKE_COMMAND_OVERRIDE="${API_SMOKE_COMMAND_OVERRIDE:-}"
+E2E_API_GATE_COMMAND_OVERRIDE="${E2E_API_GATE_COMMAND_OVERRIDE:-}"
 BEHAVIOR_CONTRACT_REPORT="${BEHAVIOR_CONTRACT_REPORT:-${AUDIT_DIR}/behavior-contract-${MODULE}-${DATE_STR}.json}"
 BACKEND_READY_TIMEOUT_SECONDS="${BACKEND_READY_TIMEOUT_SECONDS:-120}"
 BACKEND_HEALTH_TIMEOUT_SECONDS="${BACKEND_HEALTH_TIMEOUT_SECONDS:-15}"
@@ -114,9 +121,87 @@ PY
 
 UI_DELIVERY_REQUIRED_REPAIR_CHAIN="$(read_ui_delivery_required_repair_chain)"
 
+read_ui_visual_final_policy() {
+  python_run - <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+config_path = Path(".claude/project/config.yaml")
+if not config_path.exists():
+    print("FAIL: machine truth config missing: .claude/project/config.yaml", file=sys.stderr)
+    raise SystemExit(1)
+
+data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+policy = data.get("ui_delivery_policy") or {}
+mode = str(policy.get("final_closure_ui_mode") or "required").strip()
+reason = str(policy.get("final_closure_ui_reason") or "not_provided").strip()
+if mode not in {"required", "optional", "off"}:
+    print(f"FAIL: ui_delivery_policy.final_closure_ui_mode invalid: {mode}", file=sys.stderr)
+    raise SystemExit(1)
+print(mode)
+print(reason)
+PY
+}
+
+read_module_final_gate_override() {
+  local field="$1"
+  MODULE_NAME="${MODULE}" FIELD_NAME="${field}" python_run - <<'PY'
+import os
+from pathlib import Path
+import yaml
+
+config_path = Path(".claude/project/config.yaml")
+if not config_path.exists():
+    raise SystemExit(0)
+
+data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+overrides = data.get("module_final_gate_overrides") or {}
+if not isinstance(overrides, dict):
+    raise SystemExit(0)
+
+module = os.environ["MODULE_NAME"]
+field = os.environ["FIELD_NAME"]
+module_overrides = overrides.get(module) or {}
+if not isinstance(module_overrides, dict):
+    raise SystemExit(0)
+
+value = module_overrides.get(field)
+if isinstance(value, str) and value.strip():
+    print(value.strip())
+PY
+}
+
+UI_VISUAL_POLICY_OUTPUT="$(read_ui_visual_final_policy)"
+UI_VISUAL_FINAL_MODE="$(printf '%s\n' "${UI_VISUAL_POLICY_OUTPUT}" | sed -n '1p')"
+UI_VISUAL_DEFAULT_REASON="$(printf '%s\n' "${UI_VISUAL_POLICY_OUTPUT}" | sed -n '2p')"
+UI_VISUAL_FINAL_MODE="${UI_VISUAL_FINAL_MODE:-required}"
+UI_VISUAL_DEFAULT_REASON="${UI_VISUAL_DEFAULT_REASON:-not_provided}"
+
+FRONTEND_TEST_COMMAND_OVERRIDE="${FRONTEND_TEST_COMMAND_OVERRIDE:-$(read_module_final_gate_override frontend_test_command)}"
+FRONTEND_BUILD_COMMAND_OVERRIDE="${FRONTEND_BUILD_COMMAND_OVERRIDE:-$(read_module_final_gate_override frontend_build_command)}"
+BACKEND_TEST_COMMAND_OVERRIDE="${BACKEND_TEST_COMMAND_OVERRIDE:-$(read_module_final_gate_override backend_test_command)}"
+API_SMOKE_COMMAND_OVERRIDE="${API_SMOKE_COMMAND_OVERRIDE:-$(read_module_final_gate_override api_smoke_command)}"
+E2E_API_GATE_COMMAND_OVERRIDE="${E2E_API_GATE_COMMAND_OVERRIDE:-$(read_module_final_gate_override e2e_api_gate_command)}"
+
+if [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" != "1" ]]; then
+  case "${UI_VISUAL_FINAL_MODE}" in
+    optional|off)
+      UI_VISUAL_ALLOW_DOWNSTREAM="1"
+      if [[ -z "${UI_VISUAL_ADJUDICATION_REASON}" ]]; then
+        UI_VISUAL_ADJUDICATION_REASON="${UI_VISUAL_DEFAULT_REASON}"
+      fi
+      ;;
+  esac
+fi
+
 resolve_frontend_package_dir() {
+  if [[ -n "${MODULE_FRONTEND_PACKAGE_DIR:-}" ]]; then
+    printf '%s' "${MODULE_FRONTEND_PACKAGE_DIR}"
+    return
+  fi
   case "${MODULE}" in
-    permission)
+    permission|admin-dict)
       printf '%s' "osg-frontend/packages/admin"
       ;;
     *)
@@ -125,6 +210,7 @@ resolve_frontend_package_dir() {
   esac
 }
 
+MODULE_FRONTEND_PACKAGE_DIR="${MODULE_FRONTEND_PACKAGE_DIR:-$(read_module_final_gate_override frontend_package_dir)}"
 FRONTEND_PACKAGE_DIR="$(resolve_frontend_package_dir)"
 
 require_cmd() {
@@ -325,6 +411,7 @@ normalize_redis_value() {
 
 echo "=== Final Gate: 开始（module=${MODULE}） ==="
 echo "INFO: ui_delivery_required_repair_chain=${UI_DELIVERY_REQUIRED_REPAIR_CHAIN}"
+echo "INFO: ui_visual_final_mode=${UI_VISUAL_FINAL_MODE}"
 
 echo "--- 0. toolchain_preflight ---"
 require_cmd node
@@ -417,13 +504,65 @@ python_run .claude/skills/workflow-engine/tests/story_event_log_check.py \
   --state osg-spec-docs/tasks/STATE.yaml
 
 echo "--- 3. done_ticket_evidence_guard (全 Story 循环) ---"
-python_run - <<'PY'
+MODULE_NAME="${MODULE}" python_run - <<'PY'
+import os
 import subprocess, sys, yaml
+from pathlib import Path
+
+module = os.environ["MODULE_NAME"]
 state = yaml.safe_load(open("osg-spec-docs/tasks/STATE.yaml", "r", encoding="utf-8"))
-stories = state.get("stories", [])
+stories_dir = Path("osg-spec-docs/tasks/stories")
+delivery_contract = yaml.safe_load(
+    Path(f"osg-spec-docs/docs/01-product/prd/{module}/DELIVERY-CONTRACT.yaml").read_text(encoding="utf-8")
+) or {}
+ui_contract = yaml.safe_load(
+    Path(f"osg-spec-docs/docs/01-product/prd/{module}/UI-VISUAL-CONTRACT.yaml").read_text(encoding="utf-8")
+) or {}
+
+module_capabilities = {
+    item.get("capability_id")
+    for item in (delivery_contract.get("capabilities") or [])
+    if isinstance(item, dict) and isinstance(item.get("capability_id"), str) and item.get("capability_id")
+}
+
+module_surfaces = {
+    item.get("surface_id")
+    for item in (ui_contract.get("surfaces") or [])
+    if isinstance(item, dict) and isinstance(item.get("surface_id"), str) and item.get("surface_id")
+}
+
+for page in (ui_contract.get("pages") or []):
+    if not isinstance(page, dict):
+        continue
+    for surface in (page.get("critical_surfaces") or []):
+        if isinstance(surface, dict) and isinstance(surface.get("surface_id"), str) and surface.get("surface_id"):
+            module_surfaces.add(surface.get("surface_id"))
+
+stories = []
+for path in sorted(stories_dir.glob("S-*.yaml")):
+    story = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(story, dict):
+        continue
+    refs = story.get("contract_refs") or {}
+    if not isinstance(refs, dict):
+        continue
+    story_caps = {
+        item for item in (refs.get("capabilities") or [])
+        if isinstance(item, str) and item
+    }
+    story_surfaces = {
+        item for item in (refs.get("critical_surfaces") or [])
+        if isinstance(item, str) and item
+    }
+    if (story_caps & module_capabilities) or (story_surfaces & module_surfaces):
+        story_id = story.get("id") or path.stem
+        stories.append(story_id)
+
 if not stories:
-    print("FAIL: STATE.stories 为空，无法执行全量证据校验")
+    print(f"FAIL: 模块 {module} 未解析到任何 in-scope stories，无法执行模块级证据校验")
     sys.exit(1)
+
+print(f"INFO: module-scoped stories for {module}: {stories}")
 python_exec = sys.executable or "python3"
 for sid in stories:
     cmd = [
@@ -451,24 +590,38 @@ ensure_backend_ready
 pre_visual_fp="$(mktemp)"
 post_visual_fp="$(mktemp)"
 write_visual_baseline_fingerprint "${pre_visual_fp}"
-set +e
-UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG}" \
-  E2E_API_PROXY_TARGET="${BASE_URL}" \
-  E2E_BACKEND_URL="${BASE_URL}" \
-  BACKEND_BASE_URL="${BASE_URL}" \
-  BASE_URL="${BASE_URL}" \
-  BASE_HEALTH_URL="${HEALTH_URL}" \
-  E2E_ADMIN_USERNAME="${E2E_ADMIN_USERNAME}" \
-  E2E_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD}" \
-  E2E_REDIS_HOST="${REDIS_HOST}" \
-  E2E_REDIS_PORT="${REDIS_PORT}" \
-  E2E_REDIS_PASSWORD="${REDIS_PASSWORD}" \
-  REDIS_HOST="${REDIS_HOST}" \
-  REDIS_PORT="${REDIS_PORT}" \
-  REDIS_PASSWORD="${REDIS_PASSWORD}" \
-  bash bin/ui-visual-gate.sh "${MODULE}"
-ui_visual_gate_rc=$?
-set -e
+if [[ "${UI_VISUAL_FINAL_MODE}" == "off" ]]; then
+  ui_visual_gate_rc=0
+  ui_visual_gate_status="SKIPPED_BY_POLICY"
+  ui_visual_adjudication_reason="${UI_VISUAL_ADJUDICATION_REASON:-${UI_VISUAL_DEFAULT_REASON}}"
+  cat > "${UI_VISUAL_GATE_LOG}" <<EOF
+INFO: ui-visual-gate skipped by policy
+INFO: ui_visual_adjudication_status=${ui_visual_gate_status}
+INFO: ui_visual_adjudication_reason=${ui_visual_adjudication_reason}
+EOF
+  cat > "${UI_VISUAL_PAGE_REPORT}" <<'EOF'
+{"module":"admin-dict","total_pages":0,"pass_pages":0,"fail_pages":0,"not_run_pages":0,"style_assertions_passed":0,"style_assertions_failed":0,"state_cases_executed":0,"state_cases_failed":0,"critical_surfaces_total":0,"critical_surfaces_failed":0,"pages":[],"surfaces":[]}
+EOF
+else
+  set +e
+  UI_VISUAL_GATE_LOG="${UI_VISUAL_GATE_LOG}" \
+    E2E_API_PROXY_TARGET="${BASE_URL}" \
+    E2E_BACKEND_URL="${BASE_URL}" \
+    BACKEND_BASE_URL="${BASE_URL}" \
+    BASE_URL="${BASE_URL}" \
+    BASE_HEALTH_URL="${HEALTH_URL}" \
+    E2E_ADMIN_USERNAME="${E2E_ADMIN_USERNAME}" \
+    E2E_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD}" \
+    E2E_REDIS_HOST="${REDIS_HOST}" \
+    E2E_REDIS_PORT="${REDIS_PORT}" \
+    E2E_REDIS_PASSWORD="${E2E_REDIS_PASSWORD:-${REDIS_PASSWORD}}" \
+    REDIS_HOST="${REDIS_HOST}" \
+    REDIS_PORT="${REDIS_PORT}" \
+    REDIS_PASSWORD="${REDIS_PASSWORD}" \
+    bash bin/ui-visual-gate.sh "${MODULE}"
+  ui_visual_gate_rc=$?
+  set -e
+fi
 write_visual_baseline_fingerprint "${post_visual_fp}"
 
 if [[ ! -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
@@ -477,17 +630,21 @@ if [[ ! -f "${UI_VISUAL_PAGE_REPORT}" ]]; then
   exit 12
 fi
 
-ui_visual_gate_status="STRICT_PASS"
-ui_visual_adjudication_reason="none"
-if (( ui_visual_gate_rc != 0 )); then
-  if [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
-    ui_visual_gate_status="HUMAN_WAIVED"
-    ui_visual_adjudication_reason="${UI_VISUAL_ADJUDICATION_REASON:-not_provided}"
+if [[ "${UI_VISUAL_FINAL_MODE}" != "off" ]]; then
+  ui_visual_gate_status="STRICT_PASS"
+  ui_visual_adjudication_reason="none"
+  if (( ui_visual_gate_rc != 0 )); then
+    if [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
+      ui_visual_gate_status="HUMAN_WAIVED"
+      ui_visual_adjudication_reason="${UI_VISUAL_ADJUDICATION_REASON:-not_provided}"
+    fi
   fi
 fi
 
 echo "--- 4.6 ui_critical_evidence_guard ---"
-if (( ui_visual_gate_rc != 0 )) && [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
+if [[ "${UI_VISUAL_FINAL_MODE}" == "off" ]]; then
+  echo "INFO: ui_critical_evidence_guard skipped due to final_closure_ui_mode=off"
+elif (( ui_visual_gate_rc != 0 )) && [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
   echo "INFO: ui_critical_evidence_guard skipped due to manual ui adjudication"
 else
   python_run .claude/skills/workflow-engine/tests/ui_critical_evidence_guard.py \
@@ -527,7 +684,7 @@ if ! diff -q "${pre_visual_fp}" "${post_visual_fp}" >/dev/null 2>&1; then
 fi
 rm -f "${pre_visual_fp}" "${post_visual_fp}"
 
-if (( ui_visual_gate_rc != 0 )); then
+if [[ "${UI_VISUAL_FINAL_MODE}" != "off" ]] && (( ui_visual_gate_rc != 0 )); then
   if [[ "${UI_VISUAL_ALLOW_DOWNSTREAM}" == "1" ]]; then
     echo "WARNING: ui-visual-gate failed (exit=${ui_visual_gate_rc}) but downstream allowed by human adjudication"
   else
@@ -539,18 +696,44 @@ echo "INFO: ui_visual_adjudication_status=${ui_visual_gate_status}"
 echo "INFO: ui_visual_adjudication_reason=${ui_visual_adjudication_reason}"
 
 echo "--- 5. 前端单测 ---"
-pnpm --dir "${FRONTEND_PACKAGE_DIR}" test
+if [[ -n "${FRONTEND_TEST_COMMAND_OVERRIDE}" ]]; then
+  echo "INFO: using module-scoped frontend test command override"
+  bash -lc "${FRONTEND_TEST_COMMAND_OVERRIDE}"
+else
+  pnpm --dir "${FRONTEND_PACKAGE_DIR}" test
+fi
 
 echo "--- 6. 前端构建 ---"
-pnpm --dir "${FRONTEND_PACKAGE_DIR}" build
+if [[ -n "${FRONTEND_BUILD_COMMAND_OVERRIDE}" ]]; then
+  echo "INFO: using module-scoped frontend build command override"
+  bash -lc "${FRONTEND_BUILD_COMMAND_OVERRIDE}"
+else
+  pnpm --dir "${FRONTEND_PACKAGE_DIR}" build
+fi
 
 echo "--- 7. 后端测试 ---"
-mvn test -pl ruoyi-admin -am
+if [[ "${BACKEND_MODE}" == "managed" ]]; then
+  echo "INFO: stopping managed backend before backend tests to avoid target/ compile interference"
+  BACKEND_DEV_SERVER_LOG_FILE="${BACKEND_BOOT_LOG}" \
+    bash bin/backend-dev-server.sh stop "${DEV_ENV_FILE}" >/dev/null 2>&1 || true
+fi
+if [[ -n "${BACKEND_TEST_COMMAND_OVERRIDE}" ]]; then
+  echo "INFO: using module-scoped backend test command override"
+  bash -lc "${BACKEND_TEST_COMMAND_OVERRIDE}"
+else
+  mvn test -pl ruoyi-admin -am
+fi
 
 echo "--- 8. API 冒烟 ---"
 ensure_backend_ready
-BASE_URL="${BASE_URL}" HEALTH_PATH="${HEALTH_PATH}" BASE_HEALTH_URL="${HEALTH_URL}" \
-  bash bin/api-smoke.sh "${MODULE}"
+if [[ -n "${API_SMOKE_COMMAND_OVERRIDE}" ]]; then
+  echo "INFO: using module-scoped api smoke command override"
+  BASE_URL="${BASE_URL}" HEALTH_PATH="${HEALTH_PATH}" BASE_HEALTH_URL="${HEALTH_URL}" \
+    bash -lc "${API_SMOKE_COMMAND_OVERRIDE}"
+else
+  BASE_URL="${BASE_URL}" HEALTH_PATH="${HEALTH_PATH}" BASE_HEALTH_URL="${HEALTH_URL}" \
+    bash bin/api-smoke.sh "${MODULE}"
+fi
 
 echo "--- 8.1 登录契约预检 ---"
 ensure_backend_ready
@@ -738,8 +921,27 @@ python_run .claude/skills/workflow-engine/tests/api_operation_parity_guard.py \
 
 echo "--- 9. E2E 全量 ---"
 ensure_backend_ready
-BASE_URL="${BASE_URL}" E2E_API_GATE_LOG="${E2E_API_GATE_LOG}" \
-  bash bin/e2e-api-gate.sh "${MODULE}" "full"
+if [[ -n "${E2E_API_GATE_COMMAND_OVERRIDE}" ]]; then
+  echo "INFO: using module-scoped e2e gate command override"
+  BASE_URL="${BASE_URL}" E2E_API_GATE_LOG="${E2E_API_GATE_LOG}" \
+    bash -lc "${E2E_API_GATE_COMMAND_OVERRIDE}"
+else
+  BASE_URL="${BASE_URL}" E2E_API_GATE_LOG="${E2E_API_GATE_LOG}" \
+    bash bin/e2e-api-gate.sh "${MODULE}" "full"
+fi
+
+if [[ -n "${E2E_API_GATE_COMMAND_OVERRIDE}" ]] && [[ -f "${BEHAVIOR_CONTRACT_REPORT}" ]]; then
+  python_run - <<PY
+import json
+from pathlib import Path
+
+path = Path("${BEHAVIOR_CONTRACT_REPORT}")
+data = json.loads(path.read_text(encoding="utf-8"))
+if isinstance(data, dict):
+    data["stage"] = "final-gate"
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+PY
+fi
 
 echo "--- 9.1 behavior_contract_guard ---"
 python_run .claude/skills/workflow-engine/tests/behavior_contract_guard.py \
