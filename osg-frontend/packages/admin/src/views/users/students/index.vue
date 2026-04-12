@@ -327,6 +327,7 @@ const tablePagination = computed(() => ({
   current: pagination.current,
   pageSize: pagination.pageSize,
   total: pagination.total,
+  simple: false,
   showSizeChanger: false,
   showTotal: (total: number) => `共 ${total} 条记录`
 }))

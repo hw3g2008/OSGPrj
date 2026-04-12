@@ -78,7 +78,7 @@
         :row-key="(r: AllClassesRow) => r.recordId"
         :locale="{ emptyText: '当前筛选下暂无课程记录' }"
         :scroll="{ x: 1100 }"
-        :pagination="{ current: currentPage, pageSize, total, showTotal: (t: number) => `共 ${t} 条记录`, onChange: onPageChange }"
+        :pagination="{ current: currentPage, pageSize, total, simple: false, showTotal: (t: number) => `共 ${t} 条记录`, onChange: onPageChange }"
         :row-class-name="(record: AllClassesRow) => rowClassMap[record.displayStatus] || ''"
       >
         <template #bodyCell="{ column, record }">

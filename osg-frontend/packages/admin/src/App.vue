@@ -1,5 +1,5 @@
 <template>
-  <a-config-provider :locale="zhCN">
+  <a-config-provider :locale="zhCN" :theme="{ token: { colorPrimary: '#6366F1' } }">
     <router-view />
   </a-config-provider>
 </template>

@@ -236,9 +236,6 @@ public class OsgPositionController extends BaseController
         @Excel(name = "岗位名称")
         private String positionName;
 
-        @Excel(name = "公司名称")
-        private String companyName;
-
         @Excel(name = "公司行业")
         private String industry;
 
@@ -256,5 +253,8 @@ public class OsgPositionController extends BaseController
 
         @Excel(name = "截止时间", width = 20)
         private String deadlineRaw;
+
+        @Excel(name = "学员数")
+        private String studentCount;
     }
 }

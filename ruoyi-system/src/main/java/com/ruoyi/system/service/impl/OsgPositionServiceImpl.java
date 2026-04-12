@@ -826,12 +826,17 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     private RowBuildResult buildPositionFromRow(Row row, Map<String, Integer> headerIndexes, DataFormatter formatter, int rowNum)
     {
         OsgPosition position = new OsgPosition();
-        position.setCompanyName(readCell(row, headerIndexes, formatter, "company_name"));
         position.setPositionName(readCell(row, headerIndexes, formatter, "position_name"));
-        position.setIndustry(defaultText(readCell(row, headerIndexes, formatter, "industry"), "Other"));
+        position.setCompanyName(readCell(row, headerIndexes, formatter, "company_name"));
         position.setPositionCategory(defaultText(readCell(row, headerIndexes, formatter, "position_category"), "summer"));
-        position.setCompanyType(defaultText(readCell(row, headerIndexes, formatter, "company_type"), position.getIndustry()));
-        position.setRecruitmentCycle(defaultText(readCell(row, headerIndexes, formatter, "recruitment_cycle"), position.getProjectYear()));
+        String companyType = defaultText(readCell(row, headerIndexes, formatter, "company_type"),
+            defaultText(readCell(row, headerIndexes, formatter, "industry"), "Other"));
+        position.setCompanyType(companyType);
+        position.setIndustry(companyType);
+        position.setRecruitmentCycle(readCell(row, headerIndexes, formatter, "recruitment_cycle"));
+        position.setDepartment(readCell(row, headerIndexes, formatter, "department"));
+        position.setPositionUrl(readCell(row, headerIndexes, formatter, "position_url"));
+        position.setCompanyWebsite(readCell(row, headerIndexes, formatter, "company_website"));
 
         // city normalization + region inference
         String rawCity = readCell(row, headerIndexes, formatter, "city");
@@ -953,16 +958,22 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     static
     {
         Map<String, String> m = new LinkedHashMap<>();
+        m.put("岗位分类", "position_category");
         m.put("岗位名称", "position_name");
         m.put("公司名称", "company_name");
-        m.put("公司行业", "industry");
-        m.put("岗位分类", "position_category");
-        m.put("地区", "city");
+        m.put("公司类别", "company_type");
+        m.put("城市", "city");
         m.put("招聘周期", "recruitment_cycle");
-        m.put("发布时间", "publish_time");
-        m.put("截止时间", "deadline");
-        m.put("大区", "region");
         m.put("项目时间", "project_year");
+        m.put("截止时间", "deadline");
+        m.put("部门", "department");
+        m.put("岗位链接", "position_url");
+        m.put("公司官网", "company_website");
+        // 兼容旧表头
+        m.put("公司行业", "industry");
+        m.put("地区", "city");
+        m.put("大区", "region");
+        m.put("发布时间", "publish_time");
         m.put("学员数", "_ignore");
         HEADER_ALIAS = Map.copyOf(m);
     }
@@ -992,7 +1003,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     private static final Pattern YEAR_PATTERN = Pattern.compile("(\\d{4})");
 
     private static final List<String> REQUIRED_HEADERS = List.of(
-        "position_name", "company_name", "industry", "position_category", "city", "recruitment_cycle"
+        "position_name", "company_name", "position_category", "city", "recruitment_cycle", "project_year"
     );
 
     private String readCell(Row row, Map<String, Integer> headerIndexes, DataFormatter formatter, String key)
@@ -1088,6 +1099,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         return String.join("::",
             defaultText(position.getCompanyName(), ""),
             defaultText(position.getPositionName(), ""),
+            defaultText(position.getPositionCategory(), ""),
             defaultText(position.getRegion(), ""),
             defaultText(position.getCity(), ""),
             defaultText(position.getProjectYear(), "")

@@ -5,8 +5,12 @@
         <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
             <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
-              <a-radio-button value="drilldown">下钻视图</a-radio-button>
-              <a-radio-button value="list">列表视图</a-radio-button>
+              <a-radio-button value="drilldown">
+                <i class="mdi mdi-file-tree" style="margin-right: 4px"></i>下钻视图
+              </a-radio-button>
+              <a-radio-button value="list">
+                <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px"></i>列表视图
+              </a-radio-button>
             </a-radio-group>
             <span v-if="meta.trafficSummary" style="color: #94a3b8; font-size: 12px">总浏览 {{ meta.trafficSummary.totalViews.toLocaleString('en-US') }} 次</span>
           </div>
@@ -32,13 +36,13 @@
       </template>
     </PageHeader>
 
-    <a-row :gutter="12">
-      <a-col v-for="card in statsCards" :key="card.key" :xs="12" :sm="8" :lg="{ span: 4, offset: card.key === 'total' ? 2 : 0 }">
+    <div style="display: flex; gap: 12px;">
+      <div v-for="card in statsCards" :key="card.key" style="flex: 1; min-width: 0;">
         <a-card :bordered="false" :body-style="{ padding: '16px', textAlign: 'center' }">
           <a-statistic :title="card.label" :value="card.value" :value-style="{ color: statColorMap[card.tone] || '#1890ff', fontSize: '24px', fontWeight: 700 }" />
         </a-card>
-      </a-col>
-    </a-row>
+      </div>
+    </div>
 
     <a-card :bordered="false">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 10px; flex-wrap: wrap">
@@ -201,14 +205,11 @@
                 <span v-else>{{ record.positionName }}</span>
               </template>
               <template v-else-if="column.dataIndex === 'companyIndustry'">
-                <div style="display: flex; align-items: center; gap: 8px">
+                <div style="display: flex; align-items: center; gap: 8px; text-align: left">
                   <div :class="['positions-drilldown__company-logo', `positions-drilldown__company-logo--${getIndustryTone(record.industry)}`]">
-                    {{ getCompanyInitials(record.companyName) }}
+                    {{ getCompanyInitials(record.industry) }}
                   </div>
-                  <div>
-                    <span>{{ record.companyName }}</span>
-                    <span v-if="record.companyName !== record.industry" style="color: #888; font-size: 12px"> · {{ formatIndustry(record.industry) }}</span>
-                  </div>
+                  <span>{{ formatIndustry(record.industry) }}</span>
                 </div>
               </template>
               <template v-else-if="column.dataIndex === 'positionCategory'">{{ formatCategory(record.positionCategory) }}</template>
@@ -324,7 +325,7 @@ const industryToneToColor: Record<string, string> = {
 }
 
 const drilldownColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName' },
+  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
   { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
   { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
   { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
@@ -337,8 +338,8 @@ const drilldownColumns = [
 ]
 
 const listColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName' },
-  { title: '公司行业', dataIndex: 'companyIndustry', key: 'companyIndustry', width: 200 },
+  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
+  { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
   { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
   { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
   { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
@@ -378,7 +379,7 @@ const stats = ref<PositionStats>({
   closedPositions: 0,
   studentApplications: 0
 })
-const viewMode = ref<'drilldown' | 'list'>('list')
+const viewMode = ref<'drilldown' | 'list'>('drilldown')
 const publishSort = ref<'desc' | 'asc'>('desc')
 const publishPreset = ref<string | undefined>(undefined)
 const formVisible = ref(false)
@@ -776,6 +777,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
+:deep(.ant-table-cell) {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
 .positions-drilldown {
   display: flex;
   flex-direction: column;

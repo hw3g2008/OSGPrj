@@ -26,13 +26,13 @@
       </template>
     </a-alert>
 
-    <a-row :gutter="12">
-      <a-col v-for="card in statCards" :key="card.label" :span="Math.floor(24 / (statCards.length || 1))">
-        <a-card :bordered="false" style="text-align: center; box-shadow: var(--card-shadow)">
+    <div style="display: flex; gap: 12px;">
+      <div v-for="card in statCards" :key="card.label" style="flex: 1; min-width: 0;">
+        <a-card :bordered="false" :body-style="{ padding: '16px', textAlign: 'center' }" style="box-shadow: var(--card-shadow)">
           <a-statistic :title="card.label" :value="card.value" :value-style="{ color: card.color, fontWeight: 700 }" />
         </a-card>
-      </a-col>
-    </a-row>
+      </div>
+    </div>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <a-form layout="inline" style="margin-bottom: 16px">

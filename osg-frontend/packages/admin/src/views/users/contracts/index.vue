@@ -9,13 +9,13 @@
       </template>
     </PageHeader>
 
-    <a-row :gutter="16">
-      <a-col v-for="card in statsCards" :key="card.key" :span="Math.floor(24 / statsCards.length)">
-        <a-card :bordered="false" :body-style="{ textAlign: 'center', background: card.bg, borderRadius: '12px' }">
+    <div style="display: flex; gap: 12px;">
+      <div v-for="card in statsCards" :key="card.key" style="flex: 1; min-width: 0;">
+        <a-card :bordered="false" :body-style="{ padding: '16px', textAlign: 'center', background: card.bg, borderRadius: '12px' }">
           <a-statistic :title="card.label" :value="card.value" :value-style="{ fontWeight: 700 }" />
         </a-card>
-      </a-col>
-    </a-row>
+      </div>
+    </div>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">

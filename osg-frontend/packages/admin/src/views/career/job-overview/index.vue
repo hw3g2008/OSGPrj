@@ -2,118 +2,111 @@
   <div class="osg-page">
     <PageHeader title="学员求职总览" subtitle="Job Overview" description="查看全部学员的求职进度，管理导师和题库分配">
       <template #actions>
-        <a-space>
-          <a-tag>{{ allRows.length }} 条申请</a-tag>
-          <a-tag color="orange">{{ unassignedRows.length }} 条待分配</a-tag>
-          <a-tag color="green">{{ stats.offerCount }} 条 Offer</a-tag>
-          <a-button :loading="exporting" @click="handleExport">
-            <template #icon><ExportOutlined /></template>
-            导出
-          </a-button>
-        </a-space>
+        <a-button :loading="exporting" @click="handleExport">
+          <template #icon><ExportOutlined /></template>
+          导出
+        </a-button>
       </template>
     </PageHeader>
 
-    <a-row :gutter="12">
-      <a-col v-for="card in statsCards" :key="card.key" :span="Math.floor(24 / statsCards.length)">
-        <a-card :bordered="false" :body-style="{ textAlign: 'center', background: card.bg, borderRadius: '12px' }">
-          <a-statistic :title="card.label" :value="card.value" :value-style="{ color: card.color, fontWeight: 700 }" />
-          <div style="color: #64748b; font-size: 12px; margin-top: 4px">{{ card.meta }}</div>
-        </a-card>
-      </a-col>
-    </a-row>
-
-    <!-- 分析区域 -->
-    <a-row :gutter="16">
-      <a-col :span="14">
-        <a-card :bordered="false" title="求职转化漏斗" :body-style="{ padding: '16px' }">
-          <template #extra><span style="color: #94a3b8; font-size: 12px">已投递 → 面试中 → 获 Offer</span></template>
-          <div v-for="item in funnelRows" :key="item.label" class="funnel-row">
-            <div class="funnel-label">
-              <strong>{{ item.label }}</strong>
-              <span>{{ item.count }} 人</span>
-            </div>
-            <div class="funnel-track">
-              <div class="funnel-fill" :style="{ width: `${Math.max(item.rate, 6)}%` }"></div>
-            </div>
-            <span class="funnel-rate">{{ item.rate }}%</span>
+    <!-- 关键指标 + 转化漏斗（左右两栏） -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <!-- 左侧：本月关键指标 -->
+      <a-card :bordered="false" style="margin: 0;">
+        <template #title>
+          <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-chart-box" style="color: var(--primary); margin-right: 6px;"></i>本月关键指标</span>
+        </template>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+          <div v-for="card in statsCards" :key="card.key" :style="{ textAlign: 'center', padding: '12px', background: card.bg, borderRadius: '8px' }">
+            <div :style="{ fontSize: '24px', fontWeight: 700, color: card.color }">{{ card.value }}</div>
+            <div style="font-size: 11px; color: #64748b;">{{ card.label }}</div>
           </div>
-          <a-empty v-if="!funnelRows.length" description="当前暂无漏斗数据" />
-        </a-card>
-      </a-col>
-      <a-col :span="10">
-        <a-card :bordered="false" title="申请热度 Top 5" :body-style="{ padding: '16px' }">
-          <template #extra><span style="color: #94a3b8; font-size: 12px">申请数 / Offer 率</span></template>
-          <div v-for="company in hotCompanies" :key="company.companyName" class="hot-item">
-            <div>
-              <strong>{{ company.companyName }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ company.applicationCount }} 份申请</div>
-            </div>
-            <div style="text-align: right">
-              <span style="color: #64748b; font-size: 12px">{{ company.offerCount }} Offer</span>
-              <div style="color: #16a34a; font-size: 18px; font-weight: 700">{{ company.offerRate }}%</div>
-            </div>
-          </div>
-          <a-empty v-if="!hotCompanies.length" description="当前暂无热门公司统计" />
-        </a-card>
-      </a-col>
-    </a-row>
+        </div>
+        <div style="display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px;">
+          <span style="color: #22C55E;"><i class="mdi mdi-trending-up"></i> Offer率 {{ stats.offerRate }}% <span style="color: var(--muted);">{{ formatDelta(stats.offerRateYoY) }}</span></span>
+          <span style="color: #3B82F6;"><i class="mdi mdi-trending-up"></i> 面试通过率 {{ stats.interviewPassRate }}% <span style="color: var(--muted);">{{ formatDelta(stats.interviewPassRateYoY) }}</span></span>
+        </div>
+      </a-card>
 
+      <!-- 右侧：求职转化漏斗 -->
+      <a-card :bordered="false" style="margin: 0;">
+        <template #title>
+          <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-filter-variant" style="color: var(--primary); margin-right: 6px;"></i>求职转化漏斗</span>
+        </template>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div v-for="item in funnelRows" :key="item.label" style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 60px; font-size: 11px; color: var(--muted);">{{ item.label }}</span>
+            <div style="flex: 1; height: 24px; background: #e2e8f0; border-radius: 4px; position: relative; overflow: hidden;">
+              <div :style="{ width: `${Math.max(item.rate, 6)}%`, height: '100%', background: funnelColor(item.label), borderRadius: '4px' }"></div>
+              <div style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 600;">{{ item.count }}</div>
+            </div>
+            <span style="font-size: 11px; color: var(--muted); width: 40px;">{{ item.rate }}%</span>
+          </div>
+        </div>
+        <a-empty v-if="!funnelRows.length" description="当前暂无漏斗数据" />
+      </a-card>
+    </div>
+
+    <!-- 热门公司申请统计 -->
+    <a-card :bordered="false" size="small" :body-style="{ padding: '16px' }">
+      <template #title>
+        <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-office-building" style="color: var(--primary); margin-right: 6px;"></i>热门公司申请统计</span>
+      </template>
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+        <div v-for="company in hotCompanies" :key="company.companyName" style="padding: 12px; background: #F8FAFC; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
+          <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">{{ company.companyName }}</div>
+          <div style="display: flex; justify-content: center; gap: 12px; font-size: 11px;">
+            <span><strong style="color: #3B82F6;">{{ company.applicationCount }}</strong> 申请</span>
+            <span><strong style="color: #22C55E;">{{ company.offerCount }}</strong> Offer</span>
+          </div>
+          <div style="font-size: 10px; color: #22C55E; margin-top: 4px;">Offer率 {{ company.offerRate }}%</div>
+        </div>
+      </div>
+      <a-empty v-if="!hotCompanies.length" description="当前暂无热门公司统计" />
+    </a-card>
+
+    <!-- 筛选条件（卡片外平铺） -->
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <a-input v-model:value="filters.studentName" placeholder="搜索学员姓名..." allow-clear style="width: 180px;" @press-enter="handleSearch" />
+      <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px;">
+        <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
+      </a-select>
+      <a-select v-model:value="filters.currentStage" placeholder="全部状态" allow-clear style="width: 140px;">
+        <a-select-option v-for="option in stageOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+      </a-select>
+      <a-select v-model:value="filters.leadMentorId" placeholder="全部班主任" allow-clear style="width: 140px;">
+        <a-select-option v-for="option in mentorOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+      </a-select>
+      <a-select v-model:value="filters.assignStatus" placeholder="分配状态" allow-clear style="width: 140px;">
+        <a-select-option value="pending">待分配</a-select-option>
+        <a-select-option value="assigned">已分配</a-select-option>
+      </a-select>
+      <a-button type="primary" @click="handleSearch">
+        <template #icon><SearchOutlined /></template>
+        搜索
+      </a-button>
+    </div>
+
+    <!-- 学员求职列表 -->
     <a-card :bordered="false">
-      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
-        <a-form-item>
-          <a-input v-model:value="filters.studentName" placeholder="搜索学员" allow-clear style="width: 150px" @press-enter="handleSearch" />
-        </a-form-item>
-        <a-form-item>
-          <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px">
-            <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-select v-model:value="filters.currentStage" placeholder="全部状态" allow-clear style="width: 130px">
-            <a-select-option v-for="option in stageOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-select v-model:value="filters.leadMentorId" placeholder="全部班主任" allow-clear style="width: 130px">
-            <a-select-option v-for="option in mentorOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-select v-model:value="filters.assignStatus" placeholder="分配状态" allow-clear style="width: 120px">
-            <a-select-option value="pending">待分配</a-select-option>
-            <a-select-option value="assigned">已分配</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <template #icon><SearchOutlined /></template>
-              搜索
-            </a-button>
-            <a-button @click="handleReset">重置</a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-
-      <a-tabs v-model:activeKey="activeTab">
-        <a-tab-pane key="pending">
-          <template #tab>
-            待分配导师
-            <a-badge :count="pendingBadge" :number-style="{ backgroundColor: '#faad14' }" style="margin-left: 4px" />
-          </template>
-        </a-tab-pane>
-        <a-tab-pane key="all">
-          <template #tab>
-            全部学员
-            <a-badge :count="allRows.length" :number-style="{ backgroundColor: '#1890ff' }" style="margin-left: 4px" />
-          </template>
-        </a-tab-pane>
-      </a-tabs>
+      <template #title>
+        <div style="display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 6px; width: fit-content;">
+          <button :class="['job-tab', activeTab === 'pending' ? 'job-tab-active job-tab-pending' : '']" @click="activeTab = 'pending'">
+            <i class="mdi mdi-account-clock" style="margin-right: 4px;"></i>待分配导师
+            <span class="job-tab-badge">{{ unassignedRows.length }}</span>
+          </button>
+          <button :class="['job-tab', activeTab === 'all' ? 'job-tab-active job-tab-all' : '']" @click="activeTab = 'all'">
+            <i class="mdi mdi-account-group" style="margin-right: 4px;"></i>全部学员
+            <span class="job-tab-badge">{{ allRows.length }}</span>
+          </button>
+        </div>
+      </template>
 
       <!-- 待分配导师表格 -->
       <template v-if="activeTab === 'pending'">
-        <a-alert type="info" show-icon message="以下学员申请了辅导，需要为岗位申请分配导师。" style="margin-bottom: 12px; border-radius: 8px" />
+        <a-alert type="warning" show-icon style="margin-bottom: 12px; border-radius: 8px;">
+          <template #message>以下学员申请了辅导，需要分配导师</template>
+        </a-alert>
         <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedJobOverviewRow) => r.applicationId" :pagination="false" :loading="loading" :locale="{ emptyText: '当前没有待分配导师的岗位申请' }" :scroll="{ x: 1000 }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
@@ -142,34 +135,39 @@
       </template>
 
       <!-- 全部学员表格 -->
-      <a-table v-else :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="false" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 1200 }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.dataIndex === 'studentName'">
-            <div><strong>{{ record.studentName || '-' }}</strong><div style="color: #64748b; font-size: 12px">ID: {{ record.studentId }}</div></div>
+      <template v-else>
+        <a-alert type="info" show-icon style="margin-bottom: 12px; border-radius: 8px;">
+          <template #message>查看全部学员的求职进度（只读）</template>
+        </a-alert>
+        <a-table :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="false" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 1200 }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.dataIndex === 'studentName'">
+              <div><strong>{{ record.studentName || '-' }}</strong><div style="color: #64748b; font-size: 12px">ID: {{ record.studentId }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'companyName'">
+              <div><strong>{{ record.companyName }}</strong><div style="color: #64748b; font-size: 12px">{{ record.positionName }} · {{ record.city || record.region || '地区待补充' }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'currentStage'">
+              <a-space>
+                <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
+                <a-button v-if="record.stageUpdated" size="small" :loading="stageUpdatingId === record.applicationId" @click="handleStageConfirm(record)">确认</a-button>
+              </a-space>
+            </template>
+            <template v-else-if="column.dataIndex === 'interviewTime'">
+              <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: #64748b; font-size: 12px">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'coachingStatus'">
+              <a-tag :color="coachingColor(record.coachingStatus)">{{ record.coachingStatus || '未申请' }}</a-tag>
+            </template>
+            <template v-else-if="column.dataIndex === 'mentorName'">
+              <div><strong>{{ record.mentorName || record.leadMentorName || '待分配' }}</strong><div style="color: #64748b; font-size: 12px">{{ record.mentorBackground || (record.assignedStatus === 'assigned' ? '导师信息待补充' : '未分配导师') }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'hoursUsed'">
+              <div><strong>{{ record.hoursUsed || 0 }}h</strong><div style="color: #64748b; font-size: 12px">{{ record.feedbackSummary || '暂无反馈' }}</div></div>
+            </template>
           </template>
-          <template v-else-if="column.dataIndex === 'companyName'">
-            <div><strong>{{ record.companyName }}</strong><div style="color: #64748b; font-size: 12px">{{ record.positionName }} · {{ record.city || record.region || '地区待补充' }}</div></div>
-          </template>
-          <template v-else-if="column.dataIndex === 'currentStage'">
-            <a-space>
-              <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
-              <a-button v-if="record.stageUpdated" size="small" :loading="stageUpdatingId === record.applicationId" @click="handleStageConfirm(record)">确认</a-button>
-            </a-space>
-          </template>
-          <template v-else-if="column.dataIndex === 'interviewTime'">
-            <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: #64748b; font-size: 12px">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
-          </template>
-          <template v-else-if="column.dataIndex === 'coachingStatus'">
-            <a-tag :color="coachingColor(record.coachingStatus)">{{ record.coachingStatus || '未申请' }}</a-tag>
-          </template>
-          <template v-else-if="column.dataIndex === 'mentorName'">
-            <div><strong>{{ record.mentorName || record.leadMentorName || '待分配' }}</strong><div style="color: #64748b; font-size: 12px">{{ record.mentorBackground || (record.assignedStatus === 'assigned' ? '导师信息待补充' : '未分配导师') }}</div></div>
-          </template>
-          <template v-else-if="column.dataIndex === 'hoursUsed'">
-            <div><strong>{{ record.hoursUsed || 0 }}h</strong><div style="color: #64748b; font-size: 12px">{{ record.feedbackSummary || '暂无反馈' }}</div></div>
-          </template>
-        </template>
-      </a-table>
+        </a-table>
+      </template>
     </a-card>
 
     <AssignMentorModal
@@ -516,6 +514,12 @@ function formatRelativeDate(value?: string) {
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
+function funnelColor(label: string) {
+  if (label.includes('Offer') || label.includes('offer')) return '#DCFCE7'
+  if (label.includes('面试')) return '#FEF3C7'
+  return '#E0F2FE'
+}
+
 function formatDelta(value?: string) {
   return value || '0%'
 }
@@ -533,20 +537,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.funnel-row {
-  display: grid;
-  grid-template-columns: 100px minmax(0, 1fr) 42px;
-  gap: 10px;
+.job-tab {
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-weight: 500;
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 8px;
 }
-.funnel-label { display: flex; flex-direction: column; gap: 2px; }
-.funnel-label strong { color: #0f172a; font-size: 13px; }
-.funnel-label span, .funnel-rate { color: #64748b; font-size: 12px; }
-.funnel-track { height: 10px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
-.funnel-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-.hot-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: 10px; background: #f8fafc; margin-bottom: 8px; }
-.hot-item strong { color: #0f172a; font-size: 13px; }
+.job-tab:hover { background: #e2e8f0; }
+.job-tab-active { color: #fff; font-weight: 600; }
+.job-tab-pending.job-tab-active { background: #EF4444; }
+.job-tab-all.job-tab-active { background: var(--primary); }
+.job-tab-badge {
+  background: rgba(255, 255, 255, 0.3);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  margin-left: 4px;
+}
 :deep(.row-updated) { background: rgba(239, 246, 255, 0.6); }
 :deep(.row-ended) { background: rgba(248, 250, 252, 0.8); }
 </style>

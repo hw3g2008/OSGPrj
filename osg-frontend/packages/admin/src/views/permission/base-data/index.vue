@@ -169,6 +169,13 @@ const tabPresentationMap: Record<string, { createLabel: string; nameHeader: stri
   osg_expense_type: { createLabel: '报销类型', nameHeader: '报销类型' },
 }
 
+const categoryDescMap: Record<string, string> = {
+  job: '岗位分类、公司、地区、招聘周期',
+  student: '学校、主攻方向、子方向',
+  course: '课程类型',
+  finance: '报销类型',
+}
+
 const categories = computed(() => {
   return registryGroups.value
     .slice()
@@ -176,7 +183,7 @@ const categories = computed(() => {
     .map(group => ({
       key: group.group_key,
       label: group.group_label,
-      description: group.dict_types.map(item => item.dict_name).join('、'),
+      description: categoryDescMap[group.group_key] ?? group.dict_types.map(item => item.dict_name).join('、'),
       iconClass: group.icon,
       iconBg: group.icon_bg,
       iconColor: group.icon_color,
@@ -373,6 +380,7 @@ onMounted(() => {
   border-radius: 16px;
   background: #fff;
   box-shadow: var(--card-shadow);
+  overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
@@ -407,6 +415,10 @@ onMounted(() => {
   color: var(--text2);
   text-align: center;
   line-height: 1.45;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .base-data-tabs {

@@ -90,6 +90,7 @@
           current: pagination.current,
           pageSize: pagination.pageSize,
           total: pagination.total,
+          simple: false,
           showTotal: (total: number) => `共 ${total} 条记录`,
           onChange: onPageChange,
         }"
