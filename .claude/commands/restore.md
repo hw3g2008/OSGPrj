@@ -11,12 +11,23 @@
 
 从检查点恢复状态，用于会话恢复或回滚。
 
+恢复时不仅回填 `workflow.*`，也要恢复 execution plane 投影，确保 scheduler / backend 视角连续：
+- `current_story` / `current_ticket`
+- `execution.active_stories`
+- `execution.active_tickets`
+- `execution.story_leases`
+- `execution.ticket_leases`
+- `execution.workspaces`
+- `execution.scheduler`
+
 ## 执行流程
 
 ```
 1. 触发 checkpoint-manager Skill
 2. 读取 Checkpoint 文件
 3. 恢复 STATE.yaml
+   - 恢复 workflow 快照
+   - 恢复 execution projection
 4. 加载上下文摘要
 5. 输出恢复报告
 ```
@@ -33,6 +44,8 @@
 - Story: S-001
 - Ticket: T-003
 - 进度: 3/7 Tickets
+- Execution backend: inline
+- Active tickets: 1
 
 ### 上下文摘要
 - 使用 JWT Token 认证
@@ -44,7 +57,7 @@
 - 测试状态: 通过
 
 ### ⏭️ 继续执行
-执行 `/next` 继续下一个 Ticket (T-004)
+执行 `/next` 继续下一个 runnable Ticket
 ```
 
 ## 使用场景

@@ -56,7 +56,7 @@ audit_files:
 
 | 检查项 | 通过条件 | 检查方法 |
 |--------|----------|----------|
-| phase 字段清理 | `.claude/` 目录中 `state.phase` 出现 0 次（log.yaml execution_log.phase 除外） | grep 搜索 |
+| phase 字段清理 | 审计范围内框架文件中旧 phase 状态字段出现 0 次（log.yaml execution_log.phase 除外；不扫描 `.claude/worktrees/**` 与本 Skill 的模式说明文本） | grep 搜索 |
 | workflow 写入统一 | 所有写入 STATE.yaml 的伪代码统一使用 `workflow.current_step` 和 `workflow.next_step` | 逐文件检查 |
 | state 模板无 phase | state.yaml 模板不定义 phase 字段 | 读取模板 |
 | checkpoint 结构一致 | checkpoint.yaml 的 state_snapshot.workflow 结构与 STATE.yaml 一致 | 字段对比 |
@@ -108,15 +108,15 @@ tickets_approved → next → implementing → ticket_done → next → ...
 
 ### 维度 5：废弃概念清理
 
-在 `.claude/` 目录中搜索以下模式，全部应为 0 结果：
+在审计范围内的真实框架文件中搜索以下废弃模式，全部应为 0 结果（排除 `.claude/worktrees/**` 与本 Skill 的模式说明文本）：
 
-| 模式 | 说明 |
+| 模式代号 | 说明 |
 |------|------|
-| `state.phase` | 旧状态字段（log.yaml execution_log.phase 除外） |
-| `estimate_context_usage` | Cursor 专属 API |
-| `dispatch_openai` | OpenAI 专属调度 |
-| `OPENAI_API_KEY` | OpenAI 专属环境变量 |
-| `\|\| true` | lint 错误吞掉 |
+| legacy phase field | 旧状态字段（log.yaml execution_log.phase 除外） |
+| legacy context API | Cursor 专属 API |
+| legacy OpenAI dispatch | OpenAI 专属调度 |
+| legacy OpenAI env | OpenAI 专属环境变量 |
+| swallowed lint failure | lint 错误吞掉 |
 
 ### 维度 6：跨文件引用一致性
 
@@ -251,6 +251,6 @@ def framework_audit():
 
 - 禁止只验证上一轮修复的内容 — 每轮必须完整执行所有 7 个维度
 - 禁止在任何维度 ❌ 时声明通过
-- 禁止跳过任何审计文件
+- 禁止跳过任何审计范围文件（但 `.claude/worktrees/**` 不属于审计范围）
 - 必须以「全新 session 视角」审计 — 不信任任何历史修复结论
 - 最大迭代 5 次 — 超过则强制停止，人工介入

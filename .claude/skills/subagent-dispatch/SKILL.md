@@ -19,26 +19,23 @@ def detect_platform():
     """检测当前运行平台"""
     
     # 检查环境变量
-    if os.getenv("CURSOR_IDE"):
-        return "cursor"
-    
     if os.getenv("CLAUDE_CLI"):
         return "claude-cli"
-    
+
     if os.getenv("MCP_SERVER"):
         return "mcp"
 
-    # 默认为 Cursor（Prompt 模拟）
-    return "cursor"
+    # 默认回退到提示词宿主适配层
+    return "prompt-host"
 ```
 
 ## 平台实现
 
-### Cursor（Prompt 模拟）
+### Prompt Host（Prompt 模拟）
 
 ```python
-def dispatch_cursor(agent_name, task_context):
-    """Cursor 平台使用 Prompt 模拟子代理"""
+def dispatch_prompt_host(agent_name, task_context):
+    """提示词宿主环境使用 Prompt 模拟子代理"""
     
     # 1. 加载 Agent 定义
     agent = load_agent(agent_name)
@@ -115,12 +112,12 @@ def dispatch_agent(agent_name, task_context):
     platform = detect_platform()
     
     dispatchers = {
-        "cursor": dispatch_cursor,
+        "prompt-host": dispatch_prompt_host,
         "claude-cli": dispatch_claude_cli,
         "mcp": dispatch_mcp
     }
-    
-    dispatcher = dispatchers.get(platform, dispatch_cursor)
+
+    dispatcher = dispatchers.get(platform, dispatch_prompt_host)
     
     return dispatcher(agent_name, task_context)
 ```
@@ -149,7 +146,7 @@ def load_agent(agent_name):
 ```markdown
 ## 🔄 Agent 调度
 
-**平台**: Cursor
+**平台**: Prompt Host
 **方式**: Prompt 模拟
 **Agent**: Developer
 

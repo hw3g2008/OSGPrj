@@ -21,6 +21,17 @@ python3 .claude/skills/ticket-splitter/scripts/ticket_splitter_engine.py --modul
 
 每个 Ticket 必须指定 `type`，可选值：`backend | frontend | frontend-ui | database | test | config`
 
+每个 Ticket 还必须在 split-ticket 阶段直接生成**可执行交付契约**，至少包含：
+- `covers_ac_refs`
+- `contract_refs`
+- `test_cases`
+- `test_cases[*].ac_ref`
+- `test_cases[*].category`
+- `test_cases[*].scenario_obligation`
+- `test_cases[*].operation`
+
+禁止生成“只有一句话 AC、靠后续脚本再猜 category / obligation / operation”的 Ticket。
+
 ## 何时使用
 
 - `/split ticket S-xxx` 命令
@@ -82,12 +93,13 @@ contract_refs:
   capabilities: []
   critical_surfaces: []
 
-# frontend-ui 细粒度视觉载荷（type=frontend-ui 时必填）
-ui_rule_classes: []
-prototype_refs: []
-visual_checklist: []
-style_contracts: []
-state_cases: []
+# split-ticket 阶段直接生成的可执行测试契约
+# 禁止把 category / scenario_obligation / operation 留给后续脚本推断
+# 至少每个 covers_ac_refs 都要有 1 条 test_case
+# test_cases[*].ac_ref 必须指向 covers_ac_refs 中的某一项
+# test_cases[*].category / scenario_obligation / operation 为必填
+# operation 可选值：list | search | create | edit | status_toggle | delete | reject_disable | auth_filter
+test_cases: []
 
 # 依赖的 Tickets
 dependencies: []
@@ -160,9 +172,10 @@ completed_at: null
 | 路径存在性 | allowed_paths 中的路径是否为合法路径（已存在或将要创建）？ | 是 | 否 → 修正 |
 | 依赖无环 | 依赖关系是否形成 DAG（无环图）？ | 是 | 否 → 调整依赖 |
 | 验收可测 | 每个 Ticket 的 acceptance_criteria 是否可客观验证？ | 是 | 否 → 改写为可验证语句 |
+| 可执行契约 | 每个 Ticket 是否具备 `covers_ac_refs + contract_refs + test_cases`，且 `test_cases` 含 `ac_ref/category/scenario_obligation/operation`？ | 全部具备 | 任一缺失 → 阻止通过，必须补齐 |
 | 展示验证 | type=frontend/frontend-ui 的 Ticket AC 是否包含"页面展示验证"步骤？ | 是 | 否 → 补充展示类 AC |
 | UI 视觉载荷 | type=frontend-ui 的 Ticket 是否具备 `ui_rule_classes / prototype_refs / visual_checklist / style_contracts`，critical surface 是否具备 `state_cases`？ | 是 | 否 → 阻止通过，必须补齐 |
-| 场景类别标签 | 每个 Ticket AC 是否声明 `[category][scenario_obligation]` 双标签？ | 全部有 | 否 → 由 `parse_ac_labels()` 补充或提示补写 |
+| 场景类别标签 | 每个 Ticket AC 是否声明 `[category][scenario_obligation]` 双标签？ | 全部有 | 否 → 不依赖后续推断，必须在 split 阶段补写 |
 | 场景义务完整性 | 同一 Story 下的 Ticket 集合是否覆盖 Story 的全部 `required_test_obligations`？ | 全部覆盖 | 否 → 补充缺失义务类别的 Ticket |
 
 ## 覆盖率校验
@@ -352,6 +365,8 @@ def split_tickets(story_id, state):
                 "allowed_paths": item.paths,
                 "acceptance_criteria": item.criteria,
                 "covers_ac_refs": item.ac_refs,
+                "contract_refs": item.contract_refs,
+                "test_cases": item.test_cases,
                 "dependencies": item.dependencies
             }
 
@@ -386,7 +401,35 @@ def split_tickets(story_id, state):
             for ac in ticket.get("acceptance_criteria", []):
                 if not is_verifiable(ac):
                     quality_issues.append(f"{ticket['id']}: 验收标准不可测 '{ac}'")
-            # 6. 展示验证（type=frontend/frontend-ui 的 Ticket AC 必须包含页面展示验证）
+            # 6. 可执行契约完整性
+            test_cases = ticket.get("test_cases") or []
+            if not ticket.get("covers_ac_refs"):
+                quality_issues.append(f"{ticket['id']}: 缺少 covers_ac_refs")
+            if not ticket.get("contract_refs"):
+                quality_issues.append(f"{ticket['id']}: 缺少 contract_refs")
+            if not test_cases:
+                quality_issues.append(f"{ticket['id']}: 缺少 test_cases，禁止以自然语言 Ticket 进入下游")
+            else:
+                covered_case_refs = set()
+                for case in test_cases:
+                    ac_ref = case.get("ac_ref")
+                    category = case.get("category")
+                    obligation = case.get("scenario_obligation")
+                    operation = case.get("operation")
+                    if not ac_ref:
+                        quality_issues.append(f"{ticket['id']}: test_case 缺少 ac_ref")
+                    else:
+                        covered_case_refs.add(ac_ref)
+                    if not category:
+                        quality_issues.append(f"{ticket['id']}: test_case {case.get('test_case_id')} 缺少 category")
+                    if not obligation:
+                        quality_issues.append(f"{ticket['id']}: test_case {case.get('test_case_id')} 缺少 scenario_obligation")
+                    if not operation:
+                        quality_issues.append(f"{ticket['id']}: test_case {case.get('test_case_id')} 缺少 operation")
+                missing_case_refs = [ref for ref in ticket.get("covers_ac_refs", []) if ref not in covered_case_refs]
+                if missing_case_refs:
+                    quality_issues.append(f"{ticket['id']}: covers_ac_refs 未被 test_cases 完整承接: {missing_case_refs}")
+            # 7. 展示验证（type=frontend/frontend-ui 的 Ticket AC 必须包含页面展示验证）
             if ticket.get("type") in ("frontend", "frontend-ui"):
                 has_display_ac = any(
                     is_display_acceptance(ac)

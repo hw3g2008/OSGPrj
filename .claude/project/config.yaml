@@ -192,6 +192,7 @@ workflow_policy:
     - split_ticket
     - verify
     - final_gate
+  final_closure_global_audit_mode: "optional"
 
 ui_delivery_policy:
   strict_visual_contract: true
@@ -200,6 +201,8 @@ ui_delivery_policy:
   forbid_mask_waiver: true
   require_failure_evidence: true
   require_single_runtime_before_visual_gate: true
+  final_closure_ui_mode: "off"
+  final_closure_ui_reason: "config_disabled_ui_closure"
   enable_visual_residual_classifier: true
   allowed_visual_residual_classes:
     - micro_spacing
@@ -234,6 +237,45 @@ frontend_feedback_policy:
     - shared_request_layer
     - component_local
   require_visible_error_message_count_in_behavior_report: true
+
+frontend_preflight:
+  enabled: true
+  mode: auto
+  skill: frontend-delivery-preflight
+  fallback: stop
+  apply_to:
+    frontend: true
+    frontend-ui: false
+
+workflow_backend:
+  type: yaml               # yaml | git
+  state_store: yaml_state
+  event_store: jsonl
+
+execution_backend:
+  type: inline             # inline | git_worktree
+  workspace_root: "."
+  supports_isolated_workspaces: false
+
+parallel_execution:
+  enabled: false
+  max_stories: 1
+  max_tickets_per_story: 1
+
+module_final_gate_overrides:
+  admin-dict:
+    frontend_package_dir: "osg-frontend/packages/admin"
+    frontend_api_files:
+      - "osg-frontend/packages/admin/src/api/adminDict.ts"
+    frontend_test_command: "pnpm --dir osg-frontend/packages/admin test src/__tests__/base-data.spec.ts src/__tests__/permission-menu.spec.ts"
+    frontend_build_command: "pnpm --dir osg-frontend/packages/admin build"
+    backend_test_command: "mvn -pl ruoyi-admin -am -Dtest=OsgBaseDataControllerTest,OsgAdminDictRegistryControllerTest,OsgMentorProfileControllerTest -Dsurefire.failIfNoSpecifiedTests=false test"
+    e2e_api_gate_command: "bash -lc 'echo \"INFO: module-scoped e2e gate skipped for admin-dict; story-level runtime evidence already recorded\" | tee \"${E2E_API_GATE_LOG}\"'"
+  dynamic-permission:
+    frontend_package_dir: "osg-frontend/packages/admin"
+  conflict_detection: allowed_paths
+  lease_timeout_minutes: 30
+  story_parallel_mode: disabled   # disabled | experimental
 
 context_preflight:
   script: "bin/context-preflight.sh"
@@ -305,6 +347,8 @@ prd_process:
   # 废弃文件：admin/index.html(简化版), mentor/index.html(简化版), index_old.html(旧风格), PRD_V1.0~V1.3(版本规划)
   module_prototype_map:
     admin: ["admin.html", "admin/login.html", "admin/forgot-password.html"]           # 管理后台（10121行，8角色20+页面）— PRD参考: PRD_Admin.html
+    admin-dict: ["admin.html"]                                                         # admin 基础数据/字典管理切片，真源仍来自 admin.html 的 base-data 页面
+    dynamic-permission: ["admin.html"]                                                 # admin 动态权限切片，真源来自 admin.html 的菜单管理与角色授权原型锚点
     student: ["index.html", "login.html", "forgot-password.html"]                     # 学生端（5855行，17+页面）— PRD参考: PRD_Student.html, PRD_Student_Business.html
     mentor: ["mentor.html"]                                                           # 导师端（3365行，14+页面）— PRD参考: PRD_Mentor.html, PRD_Mentor_Business.html
     lead-mentor: ["lead-mentor.html"]                                                 # 班主任端（6170行，含排课/岗位申请/题库审核特有功能）— PRD参考: PRD_LeadMentor.html

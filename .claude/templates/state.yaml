@@ -7,9 +7,27 @@ initialized_at: "{ISO8601_UTC}"
 
 # 注意: 全局工作流状态统一由 workflow.current_step 管理
 
-# 当前任务
+# 当前任务（materialized focus，用于兼容现有命令面）
 current_story: null
 current_ticket: null
+
+# execution plane 投影（调度/并发运行态；不替代 workflow 真源）
+execution:
+  backend:
+    workflow_backend: yaml
+    execution_backend: inline
+  active_stories: []
+  active_tickets: []
+  story_leases: []
+  ticket_leases: []
+  workspaces: []
+  scheduler:
+    parallel_enabled: false
+    max_stories: 1
+    max_tickets_per_story: 1
+    last_tick_at: null
+    last_selected_story: null
+    last_runnable_tickets: []
 
 # 需求列表
 requirements: []
@@ -53,3 +71,6 @@ workflow:
   next_step: null                  # 下一步要执行的命令
   next_requires_approval: false    # 下一步是否需要审批（从 config.yaml 读取）
   auto_continue: true              # 是否自动继续（如果不需要审批则自动执行）
+  brainstorm_version: null         # brainstorm 产物版本（如 v1.0）
+  srs_path: null                   # 当前模块 SRS 路径
+  decisions_path: null             # 当前模块决策日志路径

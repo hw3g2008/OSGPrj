@@ -1,0 +1,22 @@
+id: "CP-20260331T044500Z"
+created_at: "2026-03-31T04:45:00Z"
+trigger: "ticket_complete"
+state_snapshot:
+  current_story: "S-047"
+  current_ticket: null
+  completed_tickets:
+    - "T-177"
+    - "T-229"
+context_summary:
+  decisions:
+    - "assistant home/profile/schedule 快速向 lead-mentor 成熟骨架收敛"
+    - "assistant 保持只读语义，不接入编辑与提交流程"
+  current_task: "迁移 assistant home/profile/schedule 并兼容 profile/basic 与 profile/schedule 路由"
+  blockers: []
+working_memory:
+  files_modified:
+    - "osg-frontend/packages/assistant/src/views/home/index.vue"
+    - "osg-frontend/packages/assistant/src/views/profile/index.vue"
+    - "osg-frontend/packages/assistant/src/views/schedule/index.vue"
+    - "osg-frontend/packages/assistant/src/router/index.ts"
+  test_status: "red"

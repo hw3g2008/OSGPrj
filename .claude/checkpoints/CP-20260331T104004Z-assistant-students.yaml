@@ -1,0 +1,17 @@
+id: CP-$(date +%Y%m%dT%H%M%SZ)-assistant-students
+created_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+trigger: manual
+state_snapshot:
+  current_story: null
+  current_ticket: null
+  completed_tickets: []
+context_summary:
+  decisions:
+    - "迁移 assistant students 页面，参考 lead-mentor 结构"
+    - "移除管理动作，改为只读版本"
+  current_task: "assistant students 页面迁移"
+  blockers: []
+working_memory:
+  files_modified:
+    - osg-frontend/packages/assistant/src/views/students/index.vue
+  test_status: pending

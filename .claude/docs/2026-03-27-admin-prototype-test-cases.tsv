@@ -1,0 +1,986 @@
+Item	Version	端	模块	子模块	分类	CheckPoint	Result	Note	Date
+ADM-LOGIN-001	V2026.03.27-admin-ssot	admin	登录模块	登录页	页面	登录页基础壳层测试：系统标题、管理员登录标题和主登录卡片同时可见	NS	源：admin.html L308-L366；登录页区域	2026-03-27
+ADM-LOGIN-002	V2026.03.27-admin-ssot	admin	登录模块	登录页	字段	登录页用户名字段测试：用户名字段可见且名称/占位语义正确	NS	源：admin.html L308-L366；登录页区域	2026-03-27
+ADM-LOGIN-003	V2026.03.27-admin-ssot	admin	登录模块	登录页	字段	登录页密码字段测试：密码字段可见且名称/占位语义正确	NS	源：admin.html L308-L366；登录页区域	2026-03-27
+ADM-LOGIN-004	V2026.03.27-admin-ssot	admin	登录模块	登录页	字段	登录页验证码字段测试：验证码字段可见且名称/占位语义正确	NS	源：admin.html L308-L366；登录页区域	2026-03-27
+ADM-LOGIN-005	V2026.03.27-admin-ssot	admin	登录模块	登录页	字段	登录页记住我复选框测试：记住我控件可见且可勾选	NS	源：admin.html L308-L366；登录页区域	2026-03-27
+ADM-LOGIN-006	V2026.03.27-admin-ssot	admin	登录模块	登录页	按钮	登录页登录按钮测试：登录按钮可见且可触发对应动作	NS	源：admin.html L308-L366；登录页区域	2026-03-27
+ADM-LOGIN-007	V2026.03.27-admin-ssot	admin	登录模块	登录页	按钮	登录页忘记密码入口测试：忘记密码入口可见且可触发对应动作	NS	源：admin.html L308-L366；登录页区域	2026-03-27
+ADM-LOGIN-008	V2026.03.27-admin-ssot	admin	登录模块	登录页	按钮	登录页密码显隐按钮测试：点击后密码框类型在 password/text 间切换	NS	源：admin.html L340-L341；toggleLoginPwd	2026-03-27
+ADM-LOGIN-009	V2026.03.27-admin-ssot	admin	登录模块	登录页	按钮	登录页验证码刷新测试：点击验证码区域后验证码文本刷新	NS	源：admin.html L350；refreshCaptcha	2026-03-27
+ADM-LOGIN-010	V2026.03.27-admin-ssot	admin	登录模块	登录页	校验	登录页用户名空值校验测试：用户名为空时阻止登录并显示错误态	NS	源：admin.html L308-L366；登录前置校验结构	2026-03-27
+ADM-LOGIN-011	V2026.03.27-admin-ssot	admin	登录模块	登录页	校验	登录页密码空值校验测试：密码为空时阻止登录并显示错误态	NS	源：admin.html L308-L366；登录前置校验结构	2026-03-27
+ADM-LOGIN-012	V2026.03.27-admin-ssot	admin	登录模块	登录页	校验	登录页验证码空值校验测试：验证码为空时阻止登录并显示错误态	NS	源：admin.html L308-L366；登录前置校验结构	2026-03-27
+ADM-LOGIN-013	V2026.03.27-admin-ssot	admin	登录模块	登录页	状态流转	登录成功链路测试：填写合法信息后点击登录应进入主后台	NS	源：admin.html L133-L166；doLogin 与 showPage('home')	2026-03-27
+ADM-LOGIN-014	V2026.03.27-admin-ssot	admin	登录模块	登录页	异常	登录错误态缺口测试：login-error 容器存在但错误凭证触发路径未定义	NS	源：admin.html 登录区错误容器；当前仅能记录为真源缺口	2026-03-27
+ADM-LOGIN-015	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	弹窗	忘记密码弹窗打开测试：点击忘记密码入口应打开 modal-forgot-password	NS	源：admin.html L359 与 L9435-L9502	2026-03-27
+ADM-LOGIN-016	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	弹窗	忘记密码弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-017	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	弹窗	忘记密码步骤指示测试：发送验证码、验证验证码、重置密码三步指示同时可见	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-018	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	字段	忘记密码弹窗注册邮箱字段测试：注册邮箱字段可见且名称/占位语义正确	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-019	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	字段	忘记密码弹窗验证码字段测试：验证码字段可见且名称/占位语义正确	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-020	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	字段	忘记密码弹窗新密码字段测试：新密码字段可见且名称/占位语义正确	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-021	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	字段	忘记密码弹窗确认密码字段测试：确认密码字段可见且名称/占位语义正确	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-022	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	按钮	忘记密码弹窗发送验证码按钮测试：发送验证码按钮可见且可触发对应动作	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-023	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	按钮	忘记密码弹窗验证码验证按钮测试：验证码验证按钮可见且可触发对应动作	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-024	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	按钮	忘记密码弹窗重置密码按钮测试：重置密码按钮可见且可触发对应动作	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-025	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	按钮	忘记密码弹窗返回登录按钮测试：返回登录按钮可见且可触发对应动作	NS	源：admin.html L9435-L9502；modal-forgot-password	2026-03-27
+ADM-LOGIN-026	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	按钮	忘记密码重发倒计时按钮测试：验证码发送后重发按钮进入倒计时并可恢复可点状态	NS	源：admin.html L9465 与 L9714-L9728；fpStartCountdown/fpResendCode	2026-03-27
+ADM-LOGIN-027	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	状态流转	忘记密码验证码验证推进测试：点击验证按钮后流程应推进到重置密码步骤	NS	源：admin.html L9468 与 L9729-L9733；fpVerifyCode	2026-03-27
+ADM-LOGIN-028	V2026.03.27-admin-ssot	admin	登录模块	忘记密码	状态流转	忘记密码重置成功测试：点击重置密码后应提示成功并关闭弹窗	NS	源：admin.html L9486 与 L9734-L9741；fpResetPassword	2026-03-27
+ADM-ROLE-001	V2026.03.27-admin-ssot	admin	权限管理	角色管理	页面	角色管理页标题测试：权限配置标题和角色管理主区域同时可见	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-002	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格	角色管理页ID列显示测试：ID列头可见	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-003	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格	角色管理页角色名称列显示测试：角色名称列头可见	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-004	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格	角色管理页角色描述列显示测试：角色描述列头可见	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-005	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格	角色管理页权限模块列显示测试：权限模块列头可见	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-006	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格	角色管理页员工数列显示测试：员工数列头可见	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-007	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格	角色管理页更新时间列显示测试：更新时间列头可见	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-008	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格	角色管理页操作列显示测试：操作列头可见	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-009	V2026.03.27-admin-ssot	admin	权限管理	角色管理	按钮	角色管理页新增角色按钮测试：新增角色按钮可见且可触发对应动作	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-010	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格操作	角色管理页编辑动作测试：点击行内编辑应打开编辑角色弹窗	NS	源：admin.html L4768-L5032；roles 页面与角色列表	2026-03-27
+ADM-ROLE-011	V2026.03.27-admin-ssot	admin	权限管理	角色管理	表格操作	角色管理页删除动作测试：点击行内删除应进入删除确认链路	NS	源：admin.html 角色列表与 L5025-L5031；confirmDeleteRole	2026-03-27
+ADM-ROLE-012	V2026.03.27-admin-ssot	admin	权限管理	角色管理	弹窗	新增角色弹窗打开测试：点击新增角色按钮应打开 modal-new-role	NS	源：admin.html L4782-L4912；modal-new-role	2026-03-27
+ADM-ROLE-013	V2026.03.27-admin-ssot	admin	权限管理	角色管理	弹窗	新增角色弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L4782-L4912；modal-new-role	2026-03-27
+ADM-ROLE-014	V2026.03.27-admin-ssot	admin	权限管理	角色管理	弹窗	新增角色弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L4782-L4912；modal-new-role	2026-03-27
+ADM-ROLE-015	V2026.03.27-admin-ssot	admin	权限管理	角色管理	字段	新增角色弹窗角色名称字段测试：角色名称字段可见且名称/占位语义正确	NS	源：admin.html L4782-L4912；modal-new-role	2026-03-27
+ADM-ROLE-016	V2026.03.27-admin-ssot	admin	权限管理	角色管理	字段	新增角色弹窗角色描述字段测试：角色描述字段可见且名称/占位语义正确	NS	源：admin.html L4782-L4912；modal-new-role	2026-03-27
+ADM-ROLE-017	V2026.03.27-admin-ssot	admin	权限管理	角色管理	选项	新增角色弹窗权限模块权限模块选项测试：权限模块选项集应完整覆盖 权限管理、用户中心、课程管理、求职中心、财务中心、资源中心、系统设置	NS	源：admin.html L4782-L4912；modal-new-role	2026-03-27
+ADM-ROLE-018	V2026.03.27-admin-ssot	admin	权限管理	角色管理	按钮	新增角色保存测试：点击保存按钮应提交新角色配置	NS	源：admin.html L4782-L4912；modal-new-role	2026-03-27
+ADM-ROLE-019	V2026.03.27-admin-ssot	admin	权限管理	角色管理	弹窗	编辑角色弹窗打开测试：点击行内编辑应打开 modal-edit-role	NS	源：admin.html L4913-L5032；modal-edit-role	2026-03-27
+ADM-ROLE-020	V2026.03.27-admin-ssot	admin	权限管理	角色管理	弹窗	编辑角色弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L4913-L5032；modal-edit-role	2026-03-27
+ADM-ROLE-021	V2026.03.27-admin-ssot	admin	权限管理	角色管理	弹窗	编辑角色弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L4913-L5032；modal-edit-role	2026-03-27
+ADM-ROLE-022	V2026.03.27-admin-ssot	admin	权限管理	角色管理	字段	编辑角色弹窗角色名称字段测试：角色名称字段可见且名称/占位语义正确	NS	源：admin.html L4913-L5032；modal-edit-role	2026-03-27
+ADM-ROLE-023	V2026.03.27-admin-ssot	admin	权限管理	角色管理	字段	编辑角色弹窗角色描述字段测试：角色描述字段可见且名称/占位语义正确	NS	源：admin.html L4913-L5032；modal-edit-role	2026-03-27
+ADM-ROLE-024	V2026.03.27-admin-ssot	admin	权限管理	角色管理	选项	编辑角色弹窗权限模块权限模块选项测试：权限模块选项集应完整覆盖 权限管理、用户中心、课程管理、求职中心、财务中心、资源中心、系统设置	NS	源：admin.html L4913-L5032；modal-edit-role	2026-03-27
+ADM-ROLE-025	V2026.03.27-admin-ssot	admin	权限管理	角色管理	按钮	编辑角色保存测试：点击保存按钮应提交角色变更	NS	源：admin.html L4913-L5032；modal-edit-role	2026-03-27
+ADM-ROLE-026	V2026.03.27-admin-ssot	admin	权限管理	角色管理	状态流转	删除角色确认测试：确认删除后应完成删除并关闭确认框	NS	源：admin.html L9161-L9178 与 L5025-L5031；modal-confirm-delete/confirmDeleteRole	2026-03-27
+ADM-ROLE-027	V2026.03.27-admin-ssot	admin	权限管理	角色管理	异常	角色管理重复 modal ID 冲突测试：roles 区与 base-data 区同时存在 modal-new-role	NS	源：admin.html L4782-L4912 与 L6986-L7197；重复 ID 可能导致弹窗错绑	2026-03-27
+ADM-ROLE-028	V2026.03.27-admin-ssot	admin	权限管理	角色管理	状态流转	新增角色权限组全选联动测试：勾选分组复选框后该组下权限项应全部同步选中	NS	源：admin.html L4803-L4820 与 L4891-L4896；toggleGroupItems	2026-03-27
+ADM-ROLE-029	V2026.03.27-admin-ssot	admin	权限管理	角色管理	状态流转	新增角色权限子项回写测试：单项权限勾选变化后分组复选框应同步更新选中/半选态	NS	源：admin.html L4807-L4820 与 L4898-L4908；updateGroupCheckbox	2026-03-27
+ADM-ROLE-030	V2026.03.27-admin-ssot	admin	权限管理	角色管理	状态流转	编辑角色权限组全选联动测试：勾选分组复选框后该组下权限项应全部同步选中	NS	源：admin.html L4944-L4951 与 L4891-L4896；toggleGroupItems	2026-03-27
+ADM-ROLE-031	V2026.03.27-admin-ssot	admin	权限管理	角色管理	状态流转	编辑角色权限半选初始化测试：编辑弹窗打开后用户中心分组复选框应呈半选态	NS	源：admin.html L4944-L4951 与 L5019-L5021；edit-user-group 半选初始化	2026-03-27
+ADM-ROLE-032	V2026.03.27-admin-ssot	admin	权限管理	角色管理	状态流转	编辑角色权限子项回写测试：单项权限勾选变化后分组复选框应同步更新选中/半选态	NS	源：admin.html L4948-L4951 与 L4898-L4908；updateGroupCheckbox	2026-03-27
+ADM-ADMINUSER-001	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	页面	后台用户管理页标题测试：后台用户管理标题和用户列表区域同时可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-002	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	筛选	后台用户管理页角色筛选测试：角色筛选控件可见且可切换	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-003	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	筛选	后台用户管理页状态筛选测试：状态筛选控件可见且可切换	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-004	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	筛选	后台用户管理页搜索框测试：搜索框可见且支持输入用户名/姓名关键词	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-005	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	按钮	后台用户管理页新增用户按钮测试：新增用户按钮可见且可点击	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-006	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	页面	后台用户管理页分页测试：分页区域可见且支持翻页	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-007	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页ID列显示测试：ID列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-008	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页用户名列显示测试：用户名列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-009	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页姓名列显示测试：姓名列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-010	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页邮箱列显示测试：邮箱列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-011	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页角色列显示测试：角色列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-012	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页状态列显示测试：状态列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-013	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页最后登录列显示测试：最后登录列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-014	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页更新时间列显示测试：更新时间列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-015	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格	后台用户管理页操作列显示测试：操作列头可见	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-016	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格操作	后台用户管理页编辑动作测试：点击编辑应打开编辑用户弹窗	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-017	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格操作	后台用户管理页重置密码动作测试：点击重置密码应打开重置密码弹窗	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-018	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	表格操作	后台用户管理页禁用/启用动作测试：点击禁用或启用应触发状态变更链路	NS	源：admin.html L4603-L4767；admins 页面与列表	2026-03-27
+ADM-ADMINUSER-019	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	新增用户弹窗打开测试：点击新增用户按钮应打开 modal-add-admin	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-020	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	新增用户弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-021	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	新增用户弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-022	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	新增用户弹窗用户名字段测试：用户名字段可见且名称/占位语义正确	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-023	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	新增用户弹窗姓名字段测试：姓名字段可见且名称/占位语义正确	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-024	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	新增用户弹窗邮箱字段测试：邮箱字段可见且名称/占位语义正确	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-025	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	新增用户弹窗手机号字段测试：手机号字段可见且名称/占位语义正确	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-026	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	新增用户弹窗角色字段测试：角色字段可见且名称/占位语义正确	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-027	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	新增用户弹窗初始密码字段测试：初始密码字段可见且名称/占位语义正确	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-028	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	新增用户弹窗备注字段测试：备注字段可见且名称/占位语义正确	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-029	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	选项	新增用户弹窗角色选项测试：角色选项集应完整覆盖 文员、课时审核员、会计、岗位管理员、文件管理员、题库管理员、报销审核员、超级管理员	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-030	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	按钮	新增用户保存测试：点击创建用户按钮应提交新增用户信息	NS	源：admin.html L4629-L4685；modal-add-admin	2026-03-27
+ADM-ADMINUSER-031	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	编辑用户弹窗打开测试：点击行内编辑应打开 modal-edit-admin	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-032	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	编辑用户弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-033	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	编辑用户弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-034	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	编辑用户弹窗用户名字段测试：用户名字段可见且名称/占位语义正确	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-035	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	编辑用户弹窗姓名字段测试：姓名字段可见且名称/占位语义正确	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-036	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	编辑用户弹窗邮箱字段测试：邮箱字段可见且名称/占位语义正确	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-037	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	编辑用户弹窗手机号字段测试：手机号字段可见且名称/占位语义正确	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-038	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	编辑用户弹窗角色字段测试：角色字段可见且名称/占位语义正确	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-039	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	编辑用户弹窗备注字段测试：备注字段可见且名称/占位语义正确	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-040	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	按钮	编辑用户保存测试：点击保存按钮应提交用户变更	NS	源：admin.html L4686-L4734；modal-edit-admin	2026-03-27
+ADM-ADMINUSER-041	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	重置密码弹窗打开测试：点击重置密码动作应打开 modal-reset-password	NS	源：admin.html L4735-L4767；modal-reset-password	2026-03-27
+ADM-ADMINUSER-042	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	重置密码弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L4735-L4767；modal-reset-password	2026-03-27
+ADM-ADMINUSER-043	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	弹窗	重置密码弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L4735-L4767；modal-reset-password	2026-03-27
+ADM-ADMINUSER-044	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	重置密码弹窗新密码字段测试：新密码字段可见且名称/占位语义正确	NS	源：admin.html L4735-L4767；modal-reset-password	2026-03-27
+ADM-ADMINUSER-045	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	字段	重置密码弹窗确认密码字段测试：确认密码字段可见且名称/占位语义正确	NS	源：admin.html L4735-L4767；modal-reset-password	2026-03-27
+ADM-ADMINUSER-046	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	按钮	重置密码确认测试：点击确认重置应完成密码重置链路	NS	源：admin.html L4735-L4767；modal-reset-password	2026-03-27
+ADM-ADMINUSER-047	V2026.03.27-admin-ssot	admin	权限管理	后台用户管理	异常	后台用户管理重复 modal ID 冲突测试：modal-add-admin、modal-edit-admin、modal-reset-password 在后段再次定义	NS	源：admin.html L4629-L4767 与 L8160-L8175、L9117-L9160；重复定义可能导致入口错绑	2026-03-27
+ADM-BASE-001	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	页面	基础数据管理首页分组卡测试：求职相关、学员相关、课程相关、财务相关四张卡片同时可见	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-002	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理首页分组卡求职相关切换测试：切换到求职相关后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-003	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理首页分组卡学员相关切换测试：切换到学员相关后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-004	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理首页分组卡课程相关切换测试：切换到课程相关后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-005	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理首页分组卡财务相关切换测试：切换到财务相关后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-006	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理求职相关 tab 岗位分类切换测试：切换到岗位分类后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-007	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理求职相关 tab 公司/银行名称切换测试：切换到公司/银行名称后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-008	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理求职相关 tab 公司/银行类别切换测试：切换到公司/银行类别后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-009	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理求职相关 tab 大区切换测试：切换到大区后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-010	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理求职相关 tab 地区/城市切换测试：切换到地区/城市后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-011	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理求职相关 tab 招聘周期切换测试：切换到招聘周期后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-012	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理学员/课程/财务 tab 学校切换测试：切换到学校后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-013	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理学员/课程/财务 tab 主攻方向切换测试：切换到主攻方向后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-014	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理学员/课程/财务 tab 子方向切换测试：切换到子方向后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-015	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理学员/课程/财务 tab 课程类型切换测试：切换到课程类型后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-016	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	tab	基础数据管理学员/课程/财务 tab 报销类型切换测试：切换到报销类型后仅对应内容区显示	NS	源：admin.html L6563-L6631；base-data 分组卡与 tab 区	2026-03-27
+ADM-BASE-017	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	筛选	岗位分类筛选测试：搜索框控件可见且可用	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-018	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	筛选	岗位分类筛选测试：搜索按钮控件可见且可用	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-019	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格	岗位分类列表ID列显示测试：ID列头可见	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-020	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格	岗位分类列表分类名称列显示测试：分类名称列头可见	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-021	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格	岗位分类列表状态列显示测试：状态列头可见	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-022	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格	岗位分类列表排序列显示测试：排序列头可见	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-023	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格	岗位分类列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-024	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格	岗位分类列表操作列显示测试：操作列头可见	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-025	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格操作	岗位分类页新增分类按钮测试：新增分类按钮可见且可触发对应动作	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-026	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格操作	岗位分类页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-027	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	表格操作	岗位分类页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html L6633-L6646；base-data-position-category 区域	2026-03-27
+ADM-BASE-028	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	弹窗	岗位分类新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9503-L9552；modal-new-position-category 与 modal-edit-position-category	2026-03-27
+ADM-BASE-029	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	弹窗	岗位分类编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9503-L9552；modal-new-position-category 与 modal-edit-position-category	2026-03-27
+ADM-BASE-030	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	弹窗	岗位分类弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9503-L9552；modal-new-position-category 与 modal-edit-position-category	2026-03-27
+ADM-BASE-031	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	弹窗	岗位分类弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9503-L9552；modal-new-position-category 与 modal-edit-position-category	2026-03-27
+ADM-BASE-032	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	字段	岗位分类弹窗分类名称字段测试：分类名称字段可见且名称/占位语义正确	NS	源：admin.html L9503-L9552；modal-new-position-category 与 modal-edit-position-category	2026-03-27
+ADM-BASE-033	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	字段	岗位分类弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9503-L9552；modal-new-position-category 与 modal-edit-position-category	2026-03-27
+ADM-BASE-034	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	字段	岗位分类弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9503-L9552；modal-new-position-category 与 modal-edit-position-category	2026-03-27
+ADM-BASE-035	V2026.03.27-admin-ssot	admin	权限管理	岗位分类	按钮	岗位分类弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9503-L9552；modal-new-position-category 与 modal-edit-position-category	2026-03-27
+ADM-BASE-036	V2026.03.27-admin-ssot	admin	权限管理	大区	筛选	大区筛选测试：搜索框控件可见且可用	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-037	V2026.03.27-admin-ssot	admin	权限管理	大区	筛选	大区筛选测试：搜索按钮控件可见且可用	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-038	V2026.03.27-admin-ssot	admin	权限管理	大区	表格	大区列表ID列显示测试：ID列头可见	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-039	V2026.03.27-admin-ssot	admin	权限管理	大区	表格	大区列表大区名称列显示测试：大区名称列头可见	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-040	V2026.03.27-admin-ssot	admin	权限管理	大区	表格	大区列表城市数量列显示测试：城市数量列头可见	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-041	V2026.03.27-admin-ssot	admin	权限管理	大区	表格	大区列表状态列显示测试：状态列头可见	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-042	V2026.03.27-admin-ssot	admin	权限管理	大区	表格	大区列表排序列显示测试：排序列头可见	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-043	V2026.03.27-admin-ssot	admin	权限管理	大区	表格	大区列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-044	V2026.03.27-admin-ssot	admin	权限管理	大区	表格	大区列表操作列显示测试：操作列头可见	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-045	V2026.03.27-admin-ssot	admin	权限管理	大区	表格操作	大区页新增大区按钮测试：新增大区按钮可见且可触发对应动作	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-046	V2026.03.27-admin-ssot	admin	权限管理	大区	表格操作	大区页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-047	V2026.03.27-admin-ssot	admin	权限管理	大区	表格操作	大区页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html L6648-L6661；base-data-area 区域	2026-03-27
+ADM-BASE-048	V2026.03.27-admin-ssot	admin	权限管理	大区	弹窗	大区新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9516-L9539；modal-new-area 与 modal-edit-area	2026-03-27
+ADM-BASE-049	V2026.03.27-admin-ssot	admin	权限管理	大区	弹窗	大区编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9516-L9539；modal-new-area 与 modal-edit-area	2026-03-27
+ADM-BASE-050	V2026.03.27-admin-ssot	admin	权限管理	大区	弹窗	大区弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9516-L9539；modal-new-area 与 modal-edit-area	2026-03-27
+ADM-BASE-051	V2026.03.27-admin-ssot	admin	权限管理	大区	弹窗	大区弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9516-L9539；modal-new-area 与 modal-edit-area	2026-03-27
+ADM-BASE-052	V2026.03.27-admin-ssot	admin	权限管理	大区	字段	大区弹窗大区名称字段测试：大区名称字段可见且名称/占位语义正确	NS	源：admin.html L9516-L9539；modal-new-area 与 modal-edit-area	2026-03-27
+ADM-BASE-053	V2026.03.27-admin-ssot	admin	权限管理	大区	字段	大区弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9516-L9539；modal-new-area 与 modal-edit-area	2026-03-27
+ADM-BASE-054	V2026.03.27-admin-ssot	admin	权限管理	大区	字段	大区弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9516-L9539；modal-new-area 与 modal-edit-area	2026-03-27
+ADM-BASE-055	V2026.03.27-admin-ssot	admin	权限管理	大区	按钮	大区弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9516-L9539；modal-new-area 与 modal-edit-area	2026-03-27
+ADM-BASE-056	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	筛选	公司/银行名称筛选测试：搜索框控件可见且可用	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-057	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格	公司/银行名称列表ID列显示测试：ID列头可见	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-058	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格	公司/银行名称列表公司名称列显示测试：公司名称列头可见	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-059	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格	公司/银行名称列表公司类别列显示测试：公司类别列头可见	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-060	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格	公司/银行名称列表官网列显示测试：官网列头可见	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-061	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格	公司/银行名称列表状态列显示测试：状态列头可见	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-062	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格	公司/银行名称列表排序列显示测试：排序列头可见	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-063	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格	公司/银行名称列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-064	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格	公司/银行名称列表操作列显示测试：操作列头可见	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-065	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格操作	公司/银行名称页新增银行按钮测试：新增银行按钮可见且可触发对应动作	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-066	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格操作	公司/银行名称页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-067	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	表格操作	公司/银行名称页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html L6663-L6680；base-data-bank 区域	2026-03-27
+ADM-BASE-068	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	弹窗	公司/银行名称新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-069	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	弹窗	公司/银行名称编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-070	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	弹窗	公司/银行名称弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-071	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	弹窗	公司/银行名称弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-072	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	字段	公司/银行名称弹窗公司名称字段测试：公司名称字段可见且名称/占位语义正确	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-073	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	字段	公司/银行名称弹窗公司类别字段测试：公司类别字段可见且名称/占位语义正确	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-074	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	字段	公司/银行名称弹窗官网地址字段测试：官网地址字段可见且名称/占位语义正确	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-075	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	字段	公司/银行名称弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-076	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	字段	公司/银行名称弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-077	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	选项	公司/银行名称弹窗公司类别选项测试：公司类别选项集应完整覆盖 Investment Bank、Consulting、Tech、PE、VC、Other	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-078	V2026.03.27-admin-ssot	admin	权限管理	公司/银行名称	按钮	公司/银行名称弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9179-L9220；modal-new-bank 与 modal-edit-bank	2026-03-27
+ADM-BASE-079	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	筛选	公司/银行类别筛选测试：搜索框控件可见且可用	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-080	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格	公司/银行类别列表ID列显示测试：ID列头可见	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-081	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格	公司/银行类别列表类别名称列显示测试：类别名称列头可见	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-082	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格	公司/银行类别列表状态列显示测试：状态列头可见	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-083	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格	公司/银行类别列表排序列显示测试：排序列头可见	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-084	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格	公司/银行类别列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-085	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格	公司/银行类别列表操作列显示测试：操作列头可见	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-086	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格操作	公司/银行类别页新增类别按钮测试：新增类别按钮可见且可触发对应动作	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-087	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格操作	公司/银行类别页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-088	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	表格操作	公司/银行类别页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html L6682-L6698；base-data-bank-type 区域	2026-03-27
+ADM-BASE-089	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	弹窗	公司/银行类别新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-090	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	弹窗	公司/银行类别编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-091	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	弹窗	公司/银行类别弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-092	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	弹窗	公司/银行类别弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-093	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	字段	公司/银行类别弹窗类别名称字段测试：类别名称字段可见且名称/占位语义正确	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-094	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	字段	公司/银行类别弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-095	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	字段	公司/银行类别弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-096	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	选项	公司/银行类别弹窗类别清单选项测试：类别清单选项集应完整覆盖 Investment Bank、Consulting、Tech、PE、VC、Other	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-097	V2026.03.27-admin-ssot	admin	权限管理	公司/银行类别	按钮	公司/银行类别弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9221-L9254 与 L9553-L9565；modal-new-bank-type 与 modal-edit-bank-type	2026-03-27
+ADM-BASE-098	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	筛选	地区/城市筛选测试：大区筛选控件可见且可用	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-099	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	筛选	地区/城市筛选测试：城市搜索控件可见且可用	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-100	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格	地区/城市列表ID列显示测试：ID列头可见	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-101	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格	地区/城市列表大区列显示测试：大区列头可见	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-102	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格	地区/城市列表城市名称列显示测试：城市名称列头可见	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-103	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格	地区/城市列表状态列显示测试：状态列头可见	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-104	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格	地区/城市列表排序列显示测试：排序列头可见	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-105	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格	地区/城市列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-106	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格	地区/城市列表操作列显示测试：操作列头可见	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-107	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格操作	地区/城市页新增地区按钮测试：新增地区按钮可见且可触发对应动作	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-108	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格操作	地区/城市页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-109	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	表格操作	地区/城市页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html L6700-L6725；base-data-region 区域	2026-03-27
+ADM-BASE-110	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	弹窗	地区/城市新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-111	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	弹窗	地区/城市编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-112	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	弹窗	地区/城市弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-113	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	弹窗	地区/城市弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-114	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	字段	地区/城市弹窗所属大区字段测试：所属大区字段可见且名称/占位语义正确	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-115	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	字段	地区/城市弹窗城市名称字段测试：城市名称字段可见且名称/占位语义正确	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-116	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	字段	地区/城市弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-117	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	字段	地区/城市弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-118	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	选项	地区/城市弹窗所属大区选项测试：所属大区选项集应完整覆盖 North America、Europe、Asia Pacific、China	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-119	V2026.03.27-admin-ssot	admin	权限管理	地区/城市	按钮	地区/城市弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9255-L9309；modal-new-region 与 modal-edit-region	2026-03-27
+ADM-BASE-120	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	筛选	招聘周期筛选测试：搜索框控件可见且可用	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-121	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格	招聘周期列表ID列显示测试：ID列头可见	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-122	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格	招聘周期列表周期名称列显示测试：周期名称列头可见	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-123	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格	招聘周期列表状态列显示测试：状态列头可见	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-124	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格	招聘周期列表排序列显示测试：排序列头可见	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-125	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格	招聘周期列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-126	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格	招聘周期列表操作列显示测试：操作列头可见	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-127	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格操作	招聘周期页新增周期按钮测试：新增周期按钮可见且可触发对应动作	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-128	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格操作	招聘周期页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-129	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	表格操作	招聘周期页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html base-data-program 区域；招聘周期列表	2026-03-27
+ADM-BASE-130	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	弹窗	招聘周期新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9310-L9343 与 L9566-L9578；modal-new-program 与 modal-edit-program	2026-03-27
+ADM-BASE-131	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	弹窗	招聘周期编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9310-L9343 与 L9566-L9578；modal-new-program 与 modal-edit-program	2026-03-27
+ADM-BASE-132	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	弹窗	招聘周期弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9310-L9343 与 L9566-L9578；modal-new-program 与 modal-edit-program	2026-03-27
+ADM-BASE-133	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	弹窗	招聘周期弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9310-L9343 与 L9566-L9578；modal-new-program 与 modal-edit-program	2026-03-27
+ADM-BASE-134	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	字段	招聘周期弹窗周期名称字段测试：周期名称字段可见且名称/占位语义正确	NS	源：admin.html L9310-L9343 与 L9566-L9578；modal-new-program 与 modal-edit-program	2026-03-27
+ADM-BASE-135	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	字段	招聘周期弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9310-L9343 与 L9566-L9578；modal-new-program 与 modal-edit-program	2026-03-27
+ADM-BASE-136	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	字段	招聘周期弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9310-L9343 与 L9566-L9578；modal-new-program 与 modal-edit-program	2026-03-27
+ADM-BASE-137	V2026.03.27-admin-ssot	admin	权限管理	招聘周期	按钮	招聘周期弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9310-L9343 与 L9566-L9578；modal-new-program 与 modal-edit-program	2026-03-27
+ADM-BASE-138	V2026.03.27-admin-ssot	admin	权限管理	学校	筛选	学校筛选测试：搜索框控件可见且可用	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-139	V2026.03.27-admin-ssot	admin	权限管理	学校	表格	学校列表学校名称列显示测试：学校名称列头可见	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-140	V2026.03.27-admin-ssot	admin	权限管理	学校	表格	学校列表国家地区列显示测试：国家地区列头可见	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-141	V2026.03.27-admin-ssot	admin	权限管理	学校	表格	学校列表状态列显示测试：状态列头可见	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-142	V2026.03.27-admin-ssot	admin	权限管理	学校	表格	学校列表排序列显示测试：排序列头可见	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-143	V2026.03.27-admin-ssot	admin	权限管理	学校	表格	学校列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-144	V2026.03.27-admin-ssot	admin	权限管理	学校	表格	学校列表操作列显示测试：操作列头可见	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-145	V2026.03.27-admin-ssot	admin	权限管理	学校	表格操作	学校页新增学校按钮测试：新增学校按钮可见且可触发对应动作	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-146	V2026.03.27-admin-ssot	admin	权限管理	学校	表格操作	学校页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-147	V2026.03.27-admin-ssot	admin	权限管理	学校	表格操作	学校页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html school 区域；学校列表	2026-03-27
+ADM-BASE-148	V2026.03.27-admin-ssot	admin	权限管理	学校	弹窗	学校新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-149	V2026.03.27-admin-ssot	admin	权限管理	学校	弹窗	学校编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-150	V2026.03.27-admin-ssot	admin	权限管理	学校	弹窗	学校弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-151	V2026.03.27-admin-ssot	admin	权限管理	学校	弹窗	学校弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-152	V2026.03.27-admin-ssot	admin	权限管理	学校	字段	学校弹窗学校名称字段测试：学校名称字段可见且名称/占位语义正确	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-153	V2026.03.27-admin-ssot	admin	权限管理	学校	字段	学校弹窗国家地区字段测试：国家地区字段可见且名称/占位语义正确	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-154	V2026.03.27-admin-ssot	admin	权限管理	学校	字段	学校弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-155	V2026.03.27-admin-ssot	admin	权限管理	学校	字段	学校弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-156	V2026.03.27-admin-ssot	admin	权限管理	学校	选项	学校弹窗国家地区选项测试：国家地区选项集应完整覆盖 美国、中国、中国香港、英国、新加坡、其他	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-157	V2026.03.27-admin-ssot	admin	权限管理	学校	按钮	学校弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9344-L9369；modal-new-school 与 modal-edit-school	2026-03-27
+ADM-BASE-158	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	筛选	主攻方向筛选测试：搜索框控件可见且可用	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-159	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格	主攻方向列表方向名称列显示测试：方向名称列头可见	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-160	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格	主攻方向列表子方向数列显示测试：子方向数列头可见	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-161	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格	主攻方向列表状态列显示测试：状态列头可见	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-162	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格	主攻方向列表排序列显示测试：排序列头可见	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-163	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格	主攻方向列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-164	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格	主攻方向列表操作列显示测试：操作列头可见	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-165	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格操作	主攻方向页新增方向按钮测试：新增方向按钮可见且可触发对应动作	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-166	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格操作	主攻方向页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-167	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	表格操作	主攻方向页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html direction 区域；主攻方向列表	2026-03-27
+ADM-BASE-168	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	弹窗	主攻方向新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9370-L9393；modal-new-direction 与 modal-edit-direction	2026-03-27
+ADM-BASE-169	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	弹窗	主攻方向编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9370-L9393；modal-new-direction 与 modal-edit-direction	2026-03-27
+ADM-BASE-170	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	弹窗	主攻方向弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9370-L9393；modal-new-direction 与 modal-edit-direction	2026-03-27
+ADM-BASE-171	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	弹窗	主攻方向弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9370-L9393；modal-new-direction 与 modal-edit-direction	2026-03-27
+ADM-BASE-172	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	字段	主攻方向弹窗方向名称字段测试：方向名称字段可见且名称/占位语义正确	NS	源：admin.html L9370-L9393；modal-new-direction 与 modal-edit-direction	2026-03-27
+ADM-BASE-173	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	字段	主攻方向弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9370-L9393；modal-new-direction 与 modal-edit-direction	2026-03-27
+ADM-BASE-174	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	字段	主攻方向弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9370-L9393；modal-new-direction 与 modal-edit-direction	2026-03-27
+ADM-BASE-175	V2026.03.27-admin-ssot	admin	权限管理	主攻方向	按钮	主攻方向弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9370-L9393；modal-new-direction 与 modal-edit-direction	2026-03-27
+ADM-BASE-176	V2026.03.27-admin-ssot	admin	权限管理	子方向	筛选	子方向筛选测试：主攻方向筛选控件可见且可用	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-177	V2026.03.27-admin-ssot	admin	权限管理	子方向	筛选	子方向筛选测试：搜索框控件可见且可用	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-178	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格	子方向列表子方向名称列显示测试：子方向名称列头可见	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-179	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格	子方向列表所属主攻方向列显示测试：所属主攻方向列头可见	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-180	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格	子方向列表状态列显示测试：状态列头可见	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-181	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格	子方向列表排序列显示测试：排序列头可见	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-182	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格	子方向列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-183	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格	子方向列表操作列显示测试：操作列头可见	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-184	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格操作	子方向页新增子方向按钮测试：新增子方向按钮可见且可触发对应动作	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-185	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格操作	子方向页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-186	V2026.03.27-admin-ssot	admin	权限管理	子方向	表格操作	子方向页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html L6938-L6985；sub-direction 列表区	2026-03-27
+ADM-BASE-187	V2026.03.27-admin-ssot	admin	权限管理	子方向	弹窗	子方向新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-188	V2026.03.27-admin-ssot	admin	权限管理	子方向	弹窗	子方向编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-189	V2026.03.27-admin-ssot	admin	权限管理	子方向	弹窗	子方向弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-190	V2026.03.27-admin-ssot	admin	权限管理	子方向	弹窗	子方向弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-191	V2026.03.27-admin-ssot	admin	权限管理	子方向	字段	子方向弹窗所属主攻方向字段测试：所属主攻方向字段可见且名称/占位语义正确	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-192	V2026.03.27-admin-ssot	admin	权限管理	子方向	字段	子方向弹窗子方向名称字段测试：子方向名称字段可见且名称/占位语义正确	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-193	V2026.03.27-admin-ssot	admin	权限管理	子方向	字段	子方向弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-194	V2026.03.27-admin-ssot	admin	权限管理	子方向	字段	子方向弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-195	V2026.03.27-admin-ssot	admin	权限管理	子方向	选项	子方向弹窗所属主攻方向选项测试：所属主攻方向选项集应完整覆盖 金融、咨询、科技、量化	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-196	V2026.03.27-admin-ssot	admin	权限管理	子方向	按钮	子方向弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L9394-L9434 与 L9579-L9592；modal-new-sub-direction 与 modal-edit-sub-direction	2026-03-27
+ADM-BASE-197	V2026.03.27-admin-ssot	admin	权限管理	课程类型	筛选	课程类型筛选测试：搜索框控件可见且可用	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-198	V2026.03.27-admin-ssot	admin	权限管理	课程类型	筛选	课程类型筛选测试：Type 下拉控件可见且可用	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-199	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格	课程类型列表类型名称列显示测试：类型名称列头可见	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-200	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格	课程类型列表Type列显示测试：Type列头可见	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-201	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格	课程类型列表状态列显示测试：状态列头可见	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-202	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格	课程类型列表排序列显示测试：排序列头可见	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-203	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格	课程类型列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-204	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格	课程类型列表操作列显示测试：操作列头可见	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-205	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格操作	课程类型页新增类型按钮测试：新增类型按钮可见且可触发对应动作	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-206	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格操作	课程类型页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-207	V2026.03.27-admin-ssot	admin	权限管理	课程类型	表格操作	课程类型页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html class-type 区域；课程类型列表	2026-03-27
+ADM-BASE-208	V2026.03.27-admin-ssot	admin	权限管理	课程类型	弹窗	课程类型新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-209	V2026.03.27-admin-ssot	admin	权限管理	课程类型	弹窗	课程类型编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-210	V2026.03.27-admin-ssot	admin	权限管理	课程类型	弹窗	课程类型弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-211	V2026.03.27-admin-ssot	admin	权限管理	课程类型	弹窗	课程类型弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-212	V2026.03.27-admin-ssot	admin	权限管理	课程类型	字段	课程类型弹窗类型名称字段测试：类型名称字段可见且名称/占位语义正确	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-213	V2026.03.27-admin-ssot	admin	权限管理	课程类型	字段	课程类型弹窗Type字段测试：Type字段可见且名称/占位语义正确	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-214	V2026.03.27-admin-ssot	admin	权限管理	课程类型	字段	课程类型弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-215	V2026.03.27-admin-ssot	admin	权限管理	课程类型	字段	课程类型弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-216	V2026.03.27-admin-ssot	admin	权限管理	课程类型	选项	课程类型弹窗Type选项测试：Type选项集应完整覆盖 Normal、Free	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-217	V2026.03.27-admin-ssot	admin	权限管理	课程类型	按钮	课程类型弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L7198-L7215、L9082-L9099、L9593-L9606；modal-new-class 与 modal-edit-class	2026-03-27
+ADM-BASE-218	V2026.03.27-admin-ssot	admin	权限管理	报销类型	筛选	报销类型筛选测试：搜索框控件可见且可用	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-219	V2026.03.27-admin-ssot	admin	权限管理	报销类型	表格	报销类型列表类型名称列显示测试：类型名称列头可见	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-220	V2026.03.27-admin-ssot	admin	权限管理	报销类型	表格	报销类型列表状态列显示测试：状态列头可见	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-221	V2026.03.27-admin-ssot	admin	权限管理	报销类型	表格	报销类型列表排序列显示测试：排序列头可见	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-222	V2026.03.27-admin-ssot	admin	权限管理	报销类型	表格	报销类型列表更新时间列显示测试：更新时间列头可见	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-223	V2026.03.27-admin-ssot	admin	权限管理	报销类型	表格	报销类型列表操作列显示测试：操作列头可见	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-224	V2026.03.27-admin-ssot	admin	权限管理	报销类型	表格操作	报销类型页新增类型按钮测试：新增类型按钮可见且可触发对应动作	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-225	V2026.03.27-admin-ssot	admin	权限管理	报销类型	表格操作	报销类型页行内编辑按钮测试：行内编辑按钮可见且可触发对应动作	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-226	V2026.03.27-admin-ssot	admin	权限管理	报销类型	表格操作	报销类型页行内禁用按钮测试：行内禁用按钮可见且可触发对应动作	NS	源：admin.html expense-type 区域；报销类型列表	2026-03-27
+ADM-BASE-227	V2026.03.27-admin-ssot	admin	权限管理	报销类型	弹窗	报销类型新增弹窗打开测试：点击新增入口应打开对应新增弹窗	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-228	V2026.03.27-admin-ssot	admin	权限管理	报销类型	弹窗	报销类型编辑弹窗打开测试：点击行内编辑应打开对应编辑弹窗	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-229	V2026.03.27-admin-ssot	admin	权限管理	报销类型	弹窗	报销类型弹窗右上关闭测试：点击右上关闭按钮应关闭当前弹窗	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-230	V2026.03.27-admin-ssot	admin	权限管理	报销类型	弹窗	报销类型弹窗取消测试：点击取消按钮应关闭当前弹窗	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-231	V2026.03.27-admin-ssot	admin	权限管理	报销类型	字段	报销类型弹窗类型名称字段测试：类型名称字段可见且名称/占位语义正确	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-232	V2026.03.27-admin-ssot	admin	权限管理	报销类型	字段	报销类型弹窗排序字段测试：排序字段可见且名称/占位语义正确	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-233	V2026.03.27-admin-ssot	admin	权限管理	报销类型	字段	报销类型弹窗状态字段测试：状态字段可见且名称/占位语义正确	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-234	V2026.03.27-admin-ssot	admin	权限管理	报销类型	选项	报销类型弹窗报销类型清单选项测试：报销类型清单选项集应完整覆盖 Mentor Referral、Student Referral、Transportation、Materials、Other	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-235	V2026.03.27-admin-ssot	admin	权限管理	报销类型	按钮	报销类型弹窗保存测试：点击保存按钮应提交当前维护项	NS	源：admin.html L7216-L7232、L9100-L9116、L9607-L9619；modal-new-expense-type 与 modal-edit-expense-type	2026-03-27
+ADM-BASE-236	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据重复 modal ID 测试：modal-new-bank-type 存在重复定义	NS	源：admin.html L9221-L9254 与 L9553-L9565；重复 ID	2026-03-27
+ADM-BASE-237	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据重复 modal ID 测试：modal-new-program 存在重复定义	NS	源：admin.html L9310-L9343 与 L9566-L9578；重复 ID	2026-03-27
+ADM-BASE-238	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据重复 modal ID 测试：modal-new-sub-direction 存在重复定义	NS	源：admin.html L9394-L9434 与 L9579-L9592；重复 ID	2026-03-27
+ADM-BASE-239	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据重复 modal ID 测试：modal-new-class 存在重复定义	NS	源：admin.html L7198-L7215 与 L9593-L9606；重复 ID	2026-03-27
+ADM-BASE-240	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据重复 modal ID 测试：modal-new-expense-type 存在重复定义	NS	源：admin.html L7216-L7232 与 L9607-L9619；重复 ID	2026-03-27
+ADM-BASE-241	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：公司/银行名称保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-242	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：公司/银行类别保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-243	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：地区/城市保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-244	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：招聘周期保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-245	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：学校保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-246	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：主攻方向保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-247	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：子方向保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-248	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：课程类型保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-249	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据保存绑定测试：报销类型保存按钮存在但未见明确绑定行为	NS	源：admin.html L9179-L9434 与 L7198-L7232、L9082-L9116；多数保存按钮无 onclick	2026-03-27
+ADM-BASE-250	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：岗位分类禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-251	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：大区禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-252	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：公司/银行名称禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-253	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：公司/银行类别禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-254	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：地区/城市禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-255	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：招聘周期禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-256	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：学校禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-257	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：主攻方向禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-258	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：子方向禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-259	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：课程类型禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-BASE-260	V2026.03.27-admin-ssot	admin	权限管理	基础数据管理	异常	基础数据列表禁用动作测试：报销类型禁用按钮点击后应有状态变化，否则记原型缺口	NS	源：admin.html 各 base-data 列表行；当前禁用文本普遍未见绑定	2026-03-27
+ADM-STUD-001	V2026.03.27-admin-ssot	admin	用户中心	学员管理	页面	学员管理页壳层测试：学员列表标题、列表区和顶部动作区同时可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-002	V2026.03.27-admin-ssot	admin	用户中心	学员管理	筛选	学员管理页筛选测试：搜索姓名输入框可见且可用	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-003	V2026.03.27-admin-ssot	admin	用户中心	学员管理	筛选	学员管理页筛选测试：班主任筛选可见且可用	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-004	V2026.03.27-admin-ssot	admin	用户中心	学员管理	筛选	学员管理页筛选测试：学校筛选可见且可用	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-005	V2026.03.27-admin-ssot	admin	用户中心	学员管理	筛选	学员管理页筛选测试：毕业年份筛选可见且可用	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-006	V2026.03.27-admin-ssot	admin	用户中心	学员管理	筛选	学员管理页筛选测试：项目时间筛选可见且可用	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-007	V2026.03.27-admin-ssot	admin	用户中心	学员管理	筛选	学员管理页筛选测试：主攻方向筛选可见且可用	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-008	V2026.03.27-admin-ssot	admin	用户中心	学员管理	筛选	学员管理页筛选测试：账号状态筛选可见且可用	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-009	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员管理页新增学员按钮测试：新增学员按钮可见且可触发对应动作	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-010	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员管理页搜索按钮测试：搜索按钮可见且可触发对应动作	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-011	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员管理页重置按钮测试：重置按钮可见且可触发对应动作	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-012	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员管理页导出按钮测试：导出按钮可见且可触发对应动作	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-013	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员管理页立即查看按钮测试：立即查看按钮可见且可触发对应动作	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-014	V2026.03.27-admin-ssot	admin	用户中心	学员管理	tab	学员管理页正常列表切换测试：切换到正常列表后仅对应内容区显示	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-015	V2026.03.27-admin-ssot	admin	用户中心	学员管理	tab	学员管理页黑名单切换测试：切换到黑名单后仅对应内容区显示	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-016	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页ID列显示测试：ID列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-017	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页英文姓名列显示测试：英文姓名列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-018	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页邮箱列显示测试：邮箱列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-019	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页班主任列显示测试：班主任列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-020	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页学校列显示测试：学校列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-021	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页主攻方向列显示测试：主攻方向列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-022	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页投递岗位列显示测试：投递岗位列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-023	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页总课时列显示测试：总课时列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-024	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页岗位辅导列显示测试：岗位辅导列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-025	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页基础课列显示测试：基础课列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-026	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页模拟应聘列显示测试：模拟应聘列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-027	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页剩余课时列显示测试：剩余课时列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-028	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页提醒列显示测试：提醒列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-029	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页账号状态列显示测试：账号状态列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-030	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页黑名单原因列显示测试：黑名单原因列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-031	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页加入时间列显示测试：加入时间列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-032	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页操作人列显示测试：操作人列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-033	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员管理页操作列显示测试：操作列头可见	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-034	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格操作	学员管理页详情动作测试：点击详情应打开学员详情弹窗	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-035	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格操作	学员管理页编辑动作测试：点击编辑应打开编辑学员弹窗	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-036	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格操作	学员管理页更多下拉测试：点击更多应展开更多操作菜单	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-037	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格操作	学员管理页续签合同动作测试：点击续签合同应打开合同续签弹窗	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-038	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格操作	学员管理页移出黑名单动作测试：黑名单列表点击移出黑名单应进入恢复链路	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-039	V2026.03.27-admin-ssot	admin	用户中心	学员管理	下拉	学员管理页更多下拉重置密码测试：点击重置密码应触发密码重置提示或链路	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-040	V2026.03.27-admin-ssot	admin	用户中心	学员管理	下拉	学员管理页更多下拉冻结测试：点击冻结应打开状态修改弹窗	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-041	V2026.03.27-admin-ssot	admin	用户中心	学员管理	下拉	学员管理页更多下拉加入黑名单测试：点击加入黑名单应打开加入黑名单弹窗	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-042	V2026.03.27-admin-ssot	admin	用户中心	学员管理	下拉	学员管理页更多下拉退费测试：点击退费应打开状态修改弹窗	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-043	V2026.03.27-admin-ssot	admin	用户中心	学员管理	下拉	学员管理页黑名单恢复正常测试：点击恢复正常应打开状态修改弹窗或恢复链路	NS	源：admin.html L502-L832；students 页面	2026-03-27
+ADM-STUD-044	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	新增学员弹窗打开测试：点击新增学员按钮应打开 modal-add-student	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-045	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	新增学员弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-046	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	新增学员弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-047	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗姓名字段测试：姓名字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-048	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗性别字段测试：性别字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-049	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗邮箱字段测试：邮箱字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-050	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗班主任字段测试：班主任字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-051	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗助教字段测试：助教字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-052	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗学校字段测试：学校字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-053	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗专业字段测试：专业字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-054	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗毕业年份字段测试：毕业年份字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-055	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗读研延毕字段测试：读研延毕字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-056	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗签证字段测试：签证字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-057	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗求职地区字段测试：求职地区字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-058	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗招聘周期字段测试：招聘周期字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-059	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗主攻方向字段测试：主攻方向字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-060	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗子方向字段测试：子方向字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-061	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗电话字段测试：电话字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-062	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗微信字段测试：微信字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-063	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗登录账号字段测试：登录账号字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-064	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗初始密码字段测试：初始密码字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-065	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗合同金额字段测试：合同金额字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-066	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗学习时长字段测试：学习时长字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-067	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗合同开始日期字段测试：合同开始日期字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-068	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗合同结束日期字段测试：合同结束日期字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-069	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗合同附件字段测试：合同附件字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-070	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	新增学员弹窗备注字段测试：备注字段可见且名称/占位语义正确	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-071	V2026.03.27-admin-ssot	admin	用户中心	学员管理	选项	新增学员弹窗性别选项测试：性别选项集应完整覆盖 Male、Female	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-072	V2026.03.27-admin-ssot	admin	用户中心	学员管理	选项	新增学员弹窗学校选项测试：学校选项集应完整覆盖 NYU、Columbia、Harvard、Stanford、MIT、Yale	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-073	V2026.03.27-admin-ssot	admin	用户中心	学员管理	选项	新增学员弹窗班主任选项测试：班主任选项集应完整覆盖 支持搜索并选择现有班主任	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-074	V2026.03.27-admin-ssot	admin	用户中心	学员管理	选项	新增学员弹窗助教选项测试：助教选项集应完整覆盖 支持搜索并选择现有助教	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-075	V2026.03.27-admin-ssot	admin	用户中心	学员管理	选项	新增学员弹窗招聘周期选项测试：招聘周期选项集应完整覆盖 支持多选周期标签	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-076	V2026.03.27-admin-ssot	admin	用户中心	学员管理	选项	新增学员弹窗主攻方向选项测试：主攻方向选项集应完整覆盖 支持多选主攻方向标签	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-077	V2026.03.27-admin-ssot	admin	用户中心	学员管理	选项	新增学员弹窗子方向选项测试：子方向选项集应完整覆盖 支持随主攻方向联动的子方向标签	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-078	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	新增学员保存测试：点击创建学员账户应提交新增学员信息	NS	源：admin.html L7233-L7515；modal-add-student	2026-03-27
+ADM-STUD-079	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	学员详情弹窗打开测试：点击正常学员详情应打开 modal-student-detail-new	NS	源：admin.html L7516-L7749；modal-student-detail-new	2026-03-27
+ADM-STUD-080	V2026.03.27-admin-ssot	admin	用户中心	学员管理	tab	学员详情弹窗基本信息切换测试：切换到基本信息后仅对应内容区显示	NS	源：admin.html L7516-L7749；modal-student-detail-new	2026-03-27
+ADM-STUD-081	V2026.03.27-admin-ssot	admin	用户中心	学员管理	tab	学员详情弹窗信息变更切换测试：切换到信息变更后仅对应内容区显示	NS	源：admin.html L7516-L7749；modal-student-detail-new	2026-03-27
+ADM-STUD-082	V2026.03.27-admin-ssot	admin	用户中心	学员管理	tab	学员详情弹窗合同信息切换测试：切换到合同信息后仅对应内容区显示	NS	源：admin.html L7516-L7749；modal-student-detail-new	2026-03-27
+ADM-STUD-083	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	学员详情弹窗关闭测试：点击关闭按钮应关闭详情弹窗	NS	源：admin.html L7516-L7749；modal-student-detail-new	2026-03-27
+ADM-STUD-084	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员详情弹窗编辑跳转测试：点击编辑应关闭详情并打开编辑学员弹窗	NS	源：admin.html L7516-L7749；modal-student-detail-new	2026-03-27
+ADM-STUD-085	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	异常学员详情弹窗打开测试：点击异常学员详情应打开 modal-student-detail-bob	NS	源：admin.html L7750-L7987；modal-student-detail-bob	2026-03-27
+ADM-STUD-086	V2026.03.27-admin-ssot	admin	用户中心	学员管理	tab	异常学员详情弹窗基本信息切换测试：切换到基本信息后仅对应内容区显示	NS	源：admin.html L7750-L7987；modal-student-detail-bob	2026-03-27
+ADM-STUD-087	V2026.03.27-admin-ssot	admin	用户中心	学员管理	tab	异常学员详情弹窗信息变更切换测试：切换到信息变更后仅对应内容区显示	NS	源：admin.html L7750-L7987；modal-student-detail-bob	2026-03-27
+ADM-STUD-088	V2026.03.27-admin-ssot	admin	用户中心	学员管理	tab	异常学员详情弹窗合同信息切换测试：切换到合同信息后仅对应内容区显示	NS	源：admin.html L7750-L7987；modal-student-detail-bob	2026-03-27
+ADM-STUD-089	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	异常学员详情弹窗通过按钮测试：通过按钮可见且可触发对应动作	NS	源：admin.html L7750-L7987；modal-student-detail-bob	2026-03-27
+ADM-STUD-090	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	异常学员详情弹窗驳回按钮测试：驳回按钮可见且可触发对应动作	NS	源：admin.html L7750-L7987；modal-student-detail-bob	2026-03-27
+ADM-STUD-091	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	异常学员详情弹窗关闭按钮测试：关闭按钮可见且可触发对应动作	NS	源：admin.html L7750-L7987；modal-student-detail-bob	2026-03-27
+ADM-STUD-092	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	异常学员详情弹窗编辑学员按钮测试：编辑学员按钮可见且可触发对应动作	NS	源：admin.html L7750-L7987；modal-student-detail-bob	2026-03-27
+ADM-STUD-093	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	编辑学员弹窗打开测试：点击行内编辑应打开 modal-edit-student-new	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-094	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	编辑学员弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-095	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	编辑学员弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-096	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗姓名字段测试：姓名字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-097	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗性别字段测试：性别字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-098	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗邮箱字段测试：邮箱字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-099	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗班主任字段测试：班主任字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-100	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗助教字段测试：助教字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-101	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗学校字段测试：学校字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-102	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗专业字段测试：专业字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-103	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗毕业年份字段测试：毕业年份字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-104	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗主攻方向字段测试：主攻方向字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-105	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗子方向字段测试：子方向字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-106	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗电话字段测试：电话字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-107	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗微信字段测试：微信字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-108	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗账号状态字段测试：账号状态字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-109	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	编辑学员弹窗备注字段测试：备注字段可见且名称/占位语义正确	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-110	V2026.03.27-admin-ssot	admin	用户中心	学员管理	选项	编辑学员弹窗账号状态选项测试：账号状态选项集应完整覆盖 正常、冻结、合同结束、退费	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-111	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	编辑学员保存测试：点击保存修改应提交学员变更	NS	源：admin.html L7988-L8159；modal-edit-student-new	2026-03-27
+ADM-STUD-112	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	学员投递岗位弹窗打开测试：点击投递岗位链接应打开 modal-student-jobs	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-113	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗学生ID列显示测试：学生ID列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-114	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗姓名列显示测试：姓名列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-115	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗岗位列显示测试：岗位列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-116	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗状态列显示测试：状态列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-117	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗已上课时列显示测试：已上课时列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-118	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗上课时间列显示测试：上课时间列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-119	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗课程类型列显示测试：课程类型列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-120	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗导师列显示测试：导师列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-121	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗课时列显示测试：课时列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-122	V2026.03.27-admin-ssot	admin	用户中心	学员管理	表格	学员投递岗位弹窗课程反馈列显示测试：课程反馈列头可见	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-123	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	学员投递岗位弹窗关闭测试：点击关闭按钮应关闭弹窗	NS	源：admin.html L10060-L10116；modal-student-jobs	2026-03-27
+ADM-STUD-124	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	合同续签弹窗打开测试：从学员列表点击续签合同应打开 modal-contract-renew	NS	源：admin.html L9620-L9786；modal-contract-renew	2026-03-27
+ADM-STUD-125	V2026.03.27-admin-ssot	admin	用户中心	学员管理	状态流转	合同续签带出信息测试：续签弹窗打开后应预填当前学员合同信息	NS	源：admin.html L9620-L9786；modal-contract-renew	2026-03-27
+ADM-STUD-126	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	学员状态修改弹窗测试：冻结或退费操作应打开 modal-status-change	NS	源：admin.html L1338-L1375；modal-status-change	2026-03-27
+ADM-STUD-127	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	学员状态修改弹窗状态修改原因字段测试：状态修改原因字段可见且名称/占位语义正确	NS	源：admin.html L1338-L1375；modal-status-change	2026-03-27
+ADM-STUD-128	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	学员状态修改弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L1338-L1375；modal-status-change	2026-03-27
+ADM-STUD-129	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员状态修改确认测试：点击确认修改应提交状态变更	NS	源：admin.html L1338-L1375；modal-status-change	2026-03-27
+ADM-STUD-130	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	学员加入黑名单弹窗测试：加入黑名单操作应打开 modal-add-blacklist	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-STUD-131	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	学员加入黑名单弹窗原因选择字段测试：原因选择字段可见且名称/占位语义正确	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-STUD-132	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	学员加入黑名单弹窗其他原因说明字段测试：其他原因说明字段可见且名称/占位语义正确	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-STUD-133	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	学员加入黑名单弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-STUD-134	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员加入黑名单确认测试：点击确认加入黑名单应提交黑名单操作	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-STUD-135	V2026.03.27-admin-ssot	admin	用户中心	学员管理	弹窗	学员移出黑名单弹窗测试：移出黑名单操作应打开 modal-remove-blacklist	NS	源：admin.html L1430-L1465；modal-remove-blacklist	2026-03-27
+ADM-STUD-136	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	学员移出黑名单弹窗移出原因字段测试：移出原因字段可见且名称/占位语义正确	NS	源：admin.html L1430-L1465；modal-remove-blacklist	2026-03-27
+ADM-STUD-137	V2026.03.27-admin-ssot	admin	用户中心	学员管理	字段	学员移出黑名单弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L1430-L1465；modal-remove-blacklist	2026-03-27
+ADM-STUD-138	V2026.03.27-admin-ssot	admin	用户中心	学员管理	按钮	学员移出黑名单确认测试：点击确认移出黑名单应提交恢复操作	NS	源：admin.html L1430-L1465；modal-remove-blacklist	2026-03-27
+ADM-STUD-139	V2026.03.27-admin-ssot	admin	用户中心	学员管理	异常	新增学员保存绑定测试：创建学员账户按钮存在但未见明确保存绑定	NS	源：admin.html L7233-L7515；当前创建按钮未见 onclick	2026-03-27
+ADM-STUD-140	V2026.03.27-admin-ssot	admin	用户中心	学员管理	异常	编辑学员保存绑定测试：保存修改按钮存在但未见明确保存绑定	NS	源：admin.html L7988-L8159；当前保存按钮未见 onclick	2026-03-27
+ADM-STUD-141	V2026.03.27-admin-ssot	admin	用户中心	学员管理	异常	学员详情遗留 modal ID 冲突测试：modal-student-detail 在前后段存在重复定义，可能导致旧详情弹窗误触发	NS	源：admin.html L3073-L3117 与 L8897-L9034；重复 ID	2026-03-27
+ADM-STUD-142	V2026.03.27-admin-ssot	admin	用户中心	学员管理	异常	学员详情合同 Tab ID 冲突测试：tab-contract 在新旧详情弹窗中重复定义，切换脚本存在串扰风险	NS	源：admin.html L7532 与 L8906；重复 ID	2026-03-27
+ADM-STUD-143	V2026.03.27-admin-ssot	admin	用户中心	学员管理	异常	学员详情遗留编辑按钮错绑测试：旧 modal-student-detail 的编辑学员按钮当前打开 modal-add-student 而非编辑弹窗	NS	源：admin.html L9020-L9022；旧详情编辑入口错绑	2026-03-27
+ADM-STUD-144	V2026.03.27-admin-ssot	admin	用户中心	学员管理	异常	遗留编辑学员弹窗孤儿节点测试：modal-edit-student 已定义但当前主流程未见入口触发	NS	源：admin.html L9035-L9054；孤儿弹窗	2026-03-27
+ADM-STUD-145	V2026.03.27-admin-ssot	admin	用户中心	学员管理	页面	学员管理页信息变更提醒横幅测试：待审核信息变更提醒区、提示文案和数量标识同时可见	NS	源：admin.html L510-L523；students 页面信息变更提醒区	2026-03-27
+ADM-STUD-146	V2026.03.27-admin-ssot	admin	用户中心	学员管理	异常	学员信息变更提醒弹窗孤儿节点测试：modal-admin-student-changes 已定义但当前学员列表主入口未直接指向该弹窗	NS	源：admin.html L8780-L8836；当前立即查看入口打开 modal-student-detail-bob	2026-03-27
+ADM-CONT-001	V2026.03.27-admin-ssot	admin	用户中心	合同管理	页面	合同管理页壳层测试：合同管理标题、筛选区和合同列表同时可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-002	V2026.03.27-admin-ssot	admin	用户中心	合同管理	筛选	合同管理页筛选测试：日期筛选可见且可用	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-003	V2026.03.27-admin-ssot	admin	用户中心	合同管理	筛选	合同管理页筛选测试：搜索输入框可见且可用	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-004	V2026.03.27-admin-ssot	admin	用户中心	合同管理	筛选	合同管理页筛选测试：重置按钮可见且可用	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-005	V2026.03.27-admin-ssot	admin	用户中心	合同管理	筛选	合同管理页筛选测试：导出按钮可见且可用	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-006	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页合同编号列显示测试：合同编号列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-007	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页学员列显示测试：学员列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-008	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页班主任列显示测试：班主任列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-009	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页合同类型列显示测试：合同类型列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-010	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页金额列显示测试：金额列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-011	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页课时列显示测试：课时列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-012	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页有效期列显示测试：有效期列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-013	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页续签原因列显示测试：续签原因列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-014	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页状态列显示测试：状态列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-015	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同管理页操作列显示测试：操作列头可见	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-016	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格操作	合同管理页详情动作测试：点击详情应打开合同详情弹窗	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-017	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格操作	合同管理页续签动作测试：点击续签应打开续签合同弹窗	NS	源：admin.html L1056-L1465；contracts 页面与相关弹窗	2026-03-27
+ADM-CONT-018	V2026.03.27-admin-ssot	admin	用户中心	合同管理	弹窗	合同详情弹窗打开测试：点击详情应打开 modal-contract-detail	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-019	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗合同ID列显示测试：合同ID列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-020	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗类型列显示测试：类型列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-021	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗金额列显示测试：金额列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-022	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗课时列显示测试：课时列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-023	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗有效期列显示测试：有效期列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-024	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗续签原因列显示测试：续签原因列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-025	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗附件列显示测试：附件列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-026	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗更新时间列显示测试：更新时间列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-027	V2026.03.27-admin-ssot	admin	用户中心	合同管理	表格	合同详情弹窗操作列显示测试：操作列头可见	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-028	V2026.03.27-admin-ssot	admin	用户中心	合同管理	按钮	合同详情弹窗关闭按钮测试：关闭按钮可见且可触发对应动作	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-029	V2026.03.27-admin-ssot	admin	用户中心	合同管理	按钮	合同详情弹窗续签合同按钮测试：续签合同按钮可见且可触发对应动作	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-030	V2026.03.27-admin-ssot	admin	用户中心	合同管理	按钮	合同详情弹窗编辑按钮测试：编辑按钮可见且可触发对应动作	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-031	V2026.03.27-admin-ssot	admin	用户中心	合同管理	按钮	合同详情弹窗删除按钮测试：删除按钮可见且可触发对应动作	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-032	V2026.03.27-admin-ssot	admin	用户中心	合同管理	弹窗	新增合同弹窗打开测试：点击新增合同入口应打开 modal-add-contract	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-033	V2026.03.27-admin-ssot	admin	用户中心	合同管理	弹窗	续签合同弹窗打开测试：点击续签入口应打开 modal-contract-renew	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-034	V2026.03.27-admin-ssot	admin	用户中心	合同管理	弹窗	合同弹窗右上关闭测试：点击右上关闭按钮应关闭当前合同弹窗	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-035	V2026.03.27-admin-ssot	admin	用户中心	合同管理	弹窗	合同弹窗取消测试：点击取消按钮应关闭当前合同弹窗	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-036	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗学员字段测试：学员字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-037	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗金额字段测试：金额字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-038	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗课时字段测试：课时字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-039	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗开始日期字段测试：开始日期字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-040	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗结束日期字段测试：结束日期字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-041	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗续签原因字段测试：续签原因字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-042	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗其他原因说明字段测试：其他原因说明字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-043	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗合同附件字段测试：合同附件字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-044	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同弹窗备注字段测试：备注字段可见且名称/占位语义正确	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-045	V2026.03.27-admin-ssot	admin	用户中心	合同管理	选项	合同弹窗续签原因选项测试：续签原因选项集应完整覆盖 课时不足加课、合同到期续签、增加辅导内容、延长服务周期、其他原因	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-046	V2026.03.27-admin-ssot	admin	用户中心	合同管理	按钮	合同保存测试：点击创建合同或确认续签应提交合同信息	NS	源：admin.html L1243-L1337 与 L9620-L9786；modal-add-contract 与 modal-contract-renew	2026-03-27
+ADM-CONT-047	V2026.03.27-admin-ssot	admin	用户中心	合同管理	弹窗	合同状态修改弹窗测试：冻结、恢复或退费操作应打开 modal-status-change	NS	源：admin.html L1338-L1375；modal-status-change	2026-03-27
+ADM-CONT-048	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同状态修改弹窗状态修改原因字段测试：状态修改原因字段可见且名称/占位语义正确	NS	源：admin.html L1338-L1375；modal-status-change	2026-03-27
+ADM-CONT-049	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同状态修改弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L1338-L1375；modal-status-change	2026-03-27
+ADM-CONT-050	V2026.03.27-admin-ssot	admin	用户中心	合同管理	按钮	合同状态修改确认测试：点击确认修改应提交状态变更	NS	源：admin.html L1338-L1375；modal-status-change	2026-03-27
+ADM-CONT-051	V2026.03.27-admin-ssot	admin	用户中心	合同管理	弹窗	合同加入黑名单弹窗测试：加入黑名单操作应打开 modal-add-blacklist	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-CONT-052	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同加入黑名单弹窗原因选择字段测试：原因选择字段可见且名称/占位语义正确	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-CONT-053	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同加入黑名单弹窗其他原因说明字段测试：其他原因说明字段可见且名称/占位语义正确	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-CONT-054	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同加入黑名单弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-CONT-055	V2026.03.27-admin-ssot	admin	用户中心	合同管理	按钮	合同加入黑名单确认测试：点击确认加入黑名单应提交操作	NS	源：admin.html L1376-L1429；modal-add-blacklist	2026-03-27
+ADM-CONT-056	V2026.03.27-admin-ssot	admin	用户中心	合同管理	弹窗	合同移出黑名单弹窗测试：移出黑名单操作应打开 modal-remove-blacklist	NS	源：admin.html L1430-L1465；modal-remove-blacklist	2026-03-27
+ADM-CONT-057	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同移出黑名单弹窗移出原因字段测试：移出原因字段可见且名称/占位语义正确	NS	源：admin.html L1430-L1465；modal-remove-blacklist	2026-03-27
+ADM-CONT-058	V2026.03.27-admin-ssot	admin	用户中心	合同管理	字段	合同移出黑名单弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L1430-L1465；modal-remove-blacklist	2026-03-27
+ADM-CONT-059	V2026.03.27-admin-ssot	admin	用户中心	合同管理	按钮	合同移出黑名单确认测试：点击确认移出黑名单应提交操作	NS	源：admin.html L1430-L1465；modal-remove-blacklist	2026-03-27
+ADM-CONT-060	V2026.03.27-admin-ssot	admin	用户中心	合同管理	异常	合同详情编辑按钮绑定测试：详情弹窗中的编辑按钮存在但未见明确绑定行为	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-061	V2026.03.27-admin-ssot	admin	用户中心	合同管理	异常	合同详情删除按钮绑定测试：详情弹窗中的删除按钮存在但未见明确绑定行为	NS	源：admin.html L1172-L1242；modal-contract-detail	2026-03-27
+ADM-CONT-062	V2026.03.27-admin-ssot	admin	用户中心	合同管理	异常	新增/续签合同保存绑定测试：保存续签合同按钮存在但未见明确绑定行为	NS	源：admin.html L1243-L1337；保存续签合同按钮当前未见 onclick	2026-03-27
+ADM-CONT-063	V2026.03.27-admin-ssot	admin	用户中心	合同管理	异常	新增合同 modal ID 冲突测试：modal-add-contract 在合同模块前后段存在重复定义，字段集和标题不一致可能导致入口错绑	NS	源：admin.html L1243-L1337 与 L8764-L8777；重复 ID 与结构冲突	2026-03-27
+ADM-STAFF-001	V2026.03.27-admin-ssot	admin	用户中心	导师管理	页面	导师管理页壳层测试：导师列表标题、筛选区和列表区同时可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-002	V2026.03.27-admin-ssot	admin	用户中心	导师管理	筛选	导师管理页筛选测试：搜索输入框可见且可用	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-003	V2026.03.27-admin-ssot	admin	用户中心	导师管理	筛选	导师管理页筛选测试：搜索按钮可见且可用	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-004	V2026.03.27-admin-ssot	admin	用户中心	导师管理	筛选	导师管理页筛选测试：导出按钮可见且可用	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-005	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师管理页新增导师按钮测试：新增导师按钮可见且可触发对应动作	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-006	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师管理页立即处理按钮测试：立即处理按钮可见且可触发对应动作	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-007	V2026.03.27-admin-ssot	admin	用户中心	导师管理	tab	导师管理页正常列表切换测试：切换到正常列表后仅对应内容区显示	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-008	V2026.03.27-admin-ssot	admin	用户中心	导师管理	tab	导师管理页黑名单切换测试：切换到黑名单后仅对应内容区显示	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-009	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页ID列显示测试：ID列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-010	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页英文名列显示测试：英文名列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-011	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页联系方式列显示测试：联系方式列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-012	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页类型列显示测试：类型列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-013	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页主攻方向列显示测试：主攻方向列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-014	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页子方向列显示测试：子方向列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-015	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页所属地区列显示测试：所属地区列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-016	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页课单价列显示测试：课单价列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-017	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页学员数列显示测试：学员数列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-018	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页账号状态列显示测试：账号状态列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-019	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页黑名单原因列显示测试：黑名单原因列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-020	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页加入时间列显示测试：加入时间列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-021	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页操作人列显示测试：操作人列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-022	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页操作列显示测试：操作列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-023	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页Student ID列显示测试：Student ID列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-024	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页Student Name列显示测试：Student Name列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-025	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页Lead Mentor列显示测试：Lead Mentor列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-026	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页Email列显示测试：Email列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-027	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页Phone列显示测试：Phone列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-028	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师管理页CreateTime列显示测试：CreateTime列头可见	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-029	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格操作	导师管理页详情动作测试：点击详情应打开导师详情弹窗	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-030	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格操作	导师管理页编辑动作测试：点击编辑应打开编辑导师弹窗	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-031	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格操作	导师管理页更多下拉测试：点击更多应展开更多操作菜单	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-032	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格操作	导师管理页学员关联动作测试：点击学员数标签应打开导师关联学员弹窗	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-033	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格操作	导师管理页移出黑名单动作测试：点击移出黑名单应进入恢复链路	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-034	V2026.03.27-admin-ssot	admin	用户中心	导师管理	下拉	导师管理页更多下拉重置密码测试：点击重置密码应触发密码重置提示或链路	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-035	V2026.03.27-admin-ssot	admin	用户中心	导师管理	下拉	导师管理页更多下拉禁用/激活测试：点击禁用或激活应打开状态修改弹窗	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-036	V2026.03.27-admin-ssot	admin	用户中心	导师管理	下拉	导师管理页更多下拉加入黑名单测试：点击加入黑名单应打开加入黑名单弹窗	NS	源：admin.html L849-L1055；staff 页面与导师列表	2026-03-27
+ADM-STAFF-037	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	导师关联学员弹窗打开测试：点击学员数应打开 modal-mentor-students	NS	源：admin.html L1035-L1055 与 L7860-L7918；modal-mentor-students	2026-03-27
+ADM-STAFF-038	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师关联学员弹窗Student ID列显示测试：Student ID列头可见	NS	源：admin.html L1035-L1055 与 L7860-L7918；modal-mentor-students	2026-03-27
+ADM-STAFF-039	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师关联学员弹窗Student Name列显示测试：Student Name列头可见	NS	源：admin.html L1035-L1055 与 L7860-L7918；modal-mentor-students	2026-03-27
+ADM-STAFF-040	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师关联学员弹窗Lead Mentor列显示测试：Lead Mentor列头可见	NS	源：admin.html L1035-L1055 与 L7860-L7918；modal-mentor-students	2026-03-27
+ADM-STAFF-041	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师关联学员弹窗Email列显示测试：Email列头可见	NS	源：admin.html L1035-L1055 与 L7860-L7918；modal-mentor-students	2026-03-27
+ADM-STAFF-042	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师关联学员弹窗Phone列显示测试：Phone列头可见	NS	源：admin.html L1035-L1055 与 L7860-L7918；modal-mentor-students	2026-03-27
+ADM-STAFF-043	V2026.03.27-admin-ssot	admin	用户中心	导师管理	表格	导师关联学员弹窗CreateTime列显示测试：CreateTime列头可见	NS	源：admin.html L1035-L1055 与 L7860-L7918；modal-mentor-students	2026-03-27
+ADM-STAFF-044	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	导师关联学员弹窗关闭测试：点击关闭按钮应关闭弹窗	NS	源：admin.html L1035-L1055 与 L7860-L7918；modal-mentor-students	2026-03-27
+ADM-STAFF-045	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	新增导师弹窗打开测试：点击新增导师按钮应打开 modal-add-staff	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-046	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	新增导师弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-047	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	新增导师弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-048	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗英文名字段测试：英文名字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-049	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗性别字段测试：性别字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-050	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗类型字段测试：类型字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-051	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗邮箱字段测试：邮箱字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-052	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗手机号字段测试：手机号字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-053	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗微信字段测试：微信字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-054	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗地区字段测试：地区字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-055	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗主攻方向字段测试：主攻方向字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-056	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗子方向字段测试：子方向字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-057	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗可授课程类型字段测试：可授课程类型字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-058	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗课单价字段测试：课单价字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-059	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗登录账号字段测试：登录账号字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-060	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	新增导师弹窗初始密码字段测试：初始密码字段可见且名称/占位语义正确	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-061	V2026.03.27-admin-ssot	admin	用户中心	导师管理	选项	新增导师弹窗性别选项测试：性别选项集应完整覆盖 Male、Female	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-062	V2026.03.27-admin-ssot	admin	用户中心	导师管理	选项	新增导师弹窗类型选项测试：类型选项集应完整覆盖 Lead Mentor、Mentor	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-063	V2026.03.27-admin-ssot	admin	用户中心	导师管理	选项	新增导师弹窗地区选项测试：地区选项集应完整覆盖 支持选择导师所属地区	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-064	V2026.03.27-admin-ssot	admin	用户中心	导师管理	选项	新增导师弹窗主攻方向选项测试：主攻方向选项集应完整覆盖 支持多选主攻方向	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-065	V2026.03.27-admin-ssot	admin	用户中心	导师管理	选项	新增导师弹窗子方向选项测试：子方向选项集应完整覆盖 支持按主攻方向联动子方向	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-066	V2026.03.27-admin-ssot	admin	用户中心	导师管理	选项	新增导师弹窗可授课程类型选项测试：可授课程类型选项集应完整覆盖 支持多选课程类型	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-067	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	新增导师保存测试：点击创建导师账户应提交新增导师信息	NS	源：admin.html L8176-L8353；modal-add-staff	2026-03-27
+ADM-STAFF-068	V2026.03.27-admin-ssot	admin	用户中心	导师管理	异常	新增导师子方向脏数据测试：子方向下拉中出现“+opt+”占位残留应记原型异常	NS	源：admin.html L8176-L8353；子方向 option 拼接异常	2026-03-27
+ADM-STAFF-069	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	导师详情弹窗打开测试：点击详情应打开 modal-staff-detail	NS	源：admin.html L8506-L8654；modal-staff-detail	2026-03-27
+ADM-STAFF-070	V2026.03.27-admin-ssot	admin	用户中心	导师管理	tab	导师详情弹窗基本信息切换测试：切换到基本信息后仅对应内容区显示	NS	源：admin.html L8506-L8654；modal-staff-detail	2026-03-27
+ADM-STAFF-071	V2026.03.27-admin-ssot	admin	用户中心	导师管理	tab	导师详情弹窗信息变更切换测试：切换到信息变更后仅对应内容区显示	NS	源：admin.html L8506-L8654；modal-staff-detail	2026-03-27
+ADM-STAFF-072	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师详情弹窗驳回按钮测试：驳回按钮可见且可触发对应动作	NS	源：admin.html L8506-L8654；modal-staff-detail	2026-03-27
+ADM-STAFF-073	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师详情弹窗通过按钮测试：通过按钮可见且可触发对应动作	NS	源：admin.html L8506-L8654；modal-staff-detail	2026-03-27
+ADM-STAFF-074	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师详情弹窗关闭按钮测试：关闭按钮可见且可触发对应动作	NS	源：admin.html L8506-L8654；modal-staff-detail	2026-03-27
+ADM-STAFF-075	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师详情弹窗编辑按钮测试：编辑按钮可见且可触发对应动作	NS	源：admin.html L8506-L8654；modal-staff-detail	2026-03-27
+ADM-STAFF-076	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	编辑导师弹窗打开测试：点击编辑应打开 modal-edit-staff	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-077	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	编辑导师弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-078	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	编辑导师弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-079	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗英文名字段测试：英文名字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-080	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗性别字段测试：性别字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-081	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗类型字段测试：类型字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-082	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗邮箱字段测试：邮箱字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-083	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗手机号字段测试：手机号字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-084	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗微信字段测试：微信字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-085	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗地区字段测试：地区字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-086	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗主攻方向字段测试：主攻方向字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-087	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗子方向字段测试：子方向字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-088	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗可授课程类型字段测试：可授课程类型字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-089	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	编辑导师弹窗课单价字段测试：课单价字段可见且名称/占位语义正确	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-090	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	编辑导师保存测试：点击保存修改应提交导师变更	NS	源：admin.html L8655-L8726；modal-edit-staff	2026-03-27
+ADM-STAFF-091	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	导师状态修改弹窗测试：禁用或激活操作应打开 modal-staff-status-change	NS	源：admin.html L8727-L8759；modal-staff-status-change	2026-03-27
+ADM-STAFF-092	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	导师状态修改弹窗状态修改原因字段测试：状态修改原因字段可见且名称/占位语义正确	NS	源：admin.html L8727-L8759；modal-staff-status-change	2026-03-27
+ADM-STAFF-093	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	导师状态修改弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L8727-L8759；modal-staff-status-change	2026-03-27
+ADM-STAFF-094	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师状态修改确认测试：点击确认修改应提交状态变更	NS	源：admin.html L8727-L8759；modal-staff-status-change	2026-03-27
+ADM-STAFF-095	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	导师加入黑名单弹窗测试：加入黑名单操作应打开 modal-mentor-blacklist	NS	源：admin.html L8354-L8407；modal-mentor-blacklist	2026-03-27
+ADM-STAFF-096	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	导师加入黑名单弹窗原因选择字段测试：原因选择字段可见且名称/占位语义正确	NS	源：admin.html L8354-L8407；modal-mentor-blacklist	2026-03-27
+ADM-STAFF-097	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	导师加入黑名单弹窗其他原因说明字段测试：其他原因说明字段可见且名称/占位语义正确	NS	源：admin.html L8354-L8407；modal-mentor-blacklist	2026-03-27
+ADM-STAFF-098	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	导师加入黑名单弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L8354-L8407；modal-mentor-blacklist	2026-03-27
+ADM-STAFF-099	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师加入黑名单确认测试：点击确认加入黑名单应提交黑名单操作	NS	源：admin.html L8354-L8407；modal-mentor-blacklist	2026-03-27
+ADM-STAFF-100	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	导师移出黑名单弹窗测试：移出黑名单操作应打开 modal-remove-mentor-blacklist	NS	源：admin.html L8408-L8443；modal-remove-mentor-blacklist	2026-03-27
+ADM-STAFF-101	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	导师移出黑名单弹窗移出原因字段测试：移出原因字段可见且名称/占位语义正确	NS	源：admin.html L8408-L8443；modal-remove-mentor-blacklist	2026-03-27
+ADM-STAFF-102	V2026.03.27-admin-ssot	admin	用户中心	导师管理	字段	导师移出黑名单弹窗备注说明字段测试：备注说明字段可见且名称/占位语义正确	NS	源：admin.html L8408-L8443；modal-remove-mentor-blacklist	2026-03-27
+ADM-STAFF-103	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师移出黑名单确认测试：点击确认移出黑名单应提交恢复操作	NS	源：admin.html L8408-L8443；modal-remove-mentor-blacklist	2026-03-27
+ADM-STAFF-104	V2026.03.27-admin-ssot	admin	用户中心	导师管理	弹窗	导师信息变更弹窗测试：信息变更入口应打开 modal-mentor-info-change	NS	源：admin.html L8444-L8505；modal-mentor-info-change	2026-03-27
+ADM-STAFF-105	V2026.03.27-admin-ssot	admin	用户中心	导师管理	按钮	导师信息变更弹窗关闭按钮测试：关闭按钮可见且可触发对应动作	NS	源：admin.html L8444-L8505；modal-mentor-info-change	2026-03-27
+ADM-STAFF-106	V2026.03.27-admin-ssot	admin	用户中心	导师管理	异常	新增导师保存绑定测试：创建导师账户按钮存在但未见明确绑定行为	NS	源：admin.html L8176-L8353；创建按钮当前未见 onclick	2026-03-27
+ADM-STAFF-107	V2026.03.27-admin-ssot	admin	用户中心	导师管理	异常	编辑导师保存绑定测试：保存修改按钮存在但未见明确绑定行为	NS	源：admin.html L8655-L8726；保存按钮当前未见 onclick	2026-03-27
+ADM-STAFF-108	V2026.03.27-admin-ssot	admin	用户中心	导师管理	页面	导师管理页信息变更提醒横幅测试：待审核导师信息变更提醒区、提示文案和数量标识同时可见	NS	源：admin.html L854-L867；staff 页面信息变更提醒区	2026-03-27
+ADM-SCHED-001	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	页面	导师排期管理页壳层测试：排期列表、筛选区和顶部快捷操作同时可见	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-002	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	筛选	导师排期管理页筛选测试：搜索输入框可见且可用	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-003	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	筛选	导师排期管理页筛选测试：类型筛选可见且可用	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-004	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	筛选	导师排期管理页筛选测试：日期筛选可见且可用	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-005	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	筛选	导师排期管理页筛选测试：时段筛选可见且可用	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-006	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	导师排期管理页导出排期表按钮测试：导出排期表按钮可见且可触发对应动作	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-007	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	导师排期管理页一键催促全部按钮测试：一键催促全部按钮可见且可触发对应动作	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-008	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	导师排期管理页本周按钮测试：本周按钮可见且可触发对应动作	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-009	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	导师排期管理页下周按钮测试：下周按钮可见且可触发对应动作	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-010	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	导师排期管理页查看全部 25 位导师按钮测试：查看全部 25 位导师按钮可见且可触发对应动作	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-011	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	表格	导师排期管理页导师列显示测试：导师列头可见	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-012	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	表格	导师排期管理页类型列显示测试：类型列头可见	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-013	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	表格	导师排期管理页可用时长列显示测试：可用时长列头可见	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-014	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	表格	导师排期管理页可用时间列显示测试：可用时间列头可见	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-015	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	表格	导师排期管理页操作列显示测试：操作列头可见	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-016	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	表格操作	导师排期管理页代填动作测试：点击代填应触发代填链路	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-017	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	表格操作	导师排期管理页单行催促动作测试：点击单行催促应触发催促链路	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-018	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	表格操作	导师排期管理页调整动作测试：点击调整应打开调整排期弹窗	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-019	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	弹窗	调整导师排期弹窗打开测试：点击调整动作应打开排期调整弹窗	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-020	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	弹窗	调整导师排期弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-021	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	弹窗	调整导师排期弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-022	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗可上课时长字段测试：可上课时长字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-023	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗周一可用时段字段测试：周一可用时段字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-024	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗周二可用时段字段测试：周二可用时段字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-025	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗周三可用时段字段测试：周三可用时段字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-026	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗周四可用时段字段测试：周四可用时段字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-027	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗周五可用时段字段测试：周五可用时段字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-028	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗周六可用时段字段测试：周六可用时段字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-029	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗周日可用时段字段测试：周日可用时段字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-030	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗调整原因字段测试：调整原因字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-031	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	字段	调整导师排期弹窗同步通知导师复选框字段测试：同步通知导师复选框字段可见且名称/占位语义正确	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-032	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	调整导师排期弹窗本周预设按钮测试：本周预设按钮可见且可触发对应动作	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-033	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	调整导师排期弹窗下周预设按钮测试：下周预设按钮可见且可触发对应动作	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-034	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	调整导师排期弹窗5h 预设按钮测试：5h 预设按钮可见且可触发对应动作	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-035	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	调整导师排期弹窗10h 预设按钮测试：10h 预设按钮可见且可触发对应动作	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-036	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	调整导师排期弹窗15h 预设按钮测试：15h 预设按钮可见且可触发对应动作	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-037	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	调整导师排期弹窗20h 预设按钮测试：20h 预设按钮可见且可触发对应动作	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-038	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	按钮	调整导师排期弹窗保存并通知按钮测试：保存并通知按钮可见且可触发对应动作	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-039	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	状态流转	调整导师排期保存测试：点击保存并通知后应完成保存并提示已同步通知导师	NS	源：admin.html L5231-L5371；调整导师排期弹窗	2026-03-27
+ADM-SCHED-040	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	异常	导师排期管理无绑定测试：导出排期表按钮存在但未见稳定绑定行为	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-041	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	异常	导师排期管理无绑定测试：查看全部 25 位导师按钮存在但未见稳定绑定行为	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-042	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	异常	导师排期管理无绑定测试：搜索按钮存在但未见稳定绑定行为	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-043	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	异常	导师排期管理无绑定测试：本周/下周预设按钮存在但未见稳定绑定行为	NS	源：admin.html L5033-L5371；mentor-schedule 页面与调整弹窗	2026-03-27
+ADM-SCHED-044	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	状态流转	导师排期下周视图切换测试：点击下周按钮后下周按钮高亮且本周按钮恢复未选中样式	NS	源：admin.html L5058-L5059；导师排期周切换按钮	2026-03-27
+ADM-SCHED-045	V2026.03.27-admin-ssot	admin	用户中心	导师排期管理	状态流转	导师排期本周视图切换测试：点击本周按钮后本周按钮高亮且下周按钮恢复未选中样式	NS	源：admin.html L5058-L5059；导师排期周切换按钮	2026-03-27
+ADM-POS-001	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	页面	岗位信息页壳层测试：岗位列表、视图切换和筛选区同时可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-002	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	筛选	岗位信息页筛选测试：搜索输入框可见且可用	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-003	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	筛选	岗位信息页筛选测试：筛选区可见且可用	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-004	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	筛选	岗位信息页筛选测试：重置按钮可见且可用	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-005	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	筛选	岗位信息页筛选测试：下钻视图按钮可见且可用	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-006	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	筛选	岗位信息页筛选测试：列表视图按钮可见且可用	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-007	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	岗位信息页导出按钮测试：导出按钮可见且可触发对应动作	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-008	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	岗位信息页批量上传按钮测试：批量上传按钮可见且可触发对应动作	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-009	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	岗位信息页下载模板按钮测试：下载模板按钮可见且可触发对应动作	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-010	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	岗位信息页新增岗位按钮测试：新增岗位按钮可见且可触发对应动作	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-011	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页岗位名称列显示测试：岗位名称列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-012	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页岗位分类列显示测试：岗位分类列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-013	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页部门列显示测试：部门列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-014	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页地区列显示测试：地区列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-015	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页招聘周期列显示测试：招聘周期列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-016	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页发布时间列显示测试：发布时间列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-017	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页截止时间列显示测试：截止时间列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-018	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页状态列显示测试：状态列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-019	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页学员列显示测试：学员列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-020	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页操作列显示测试：操作列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-021	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页公司列显示测试：公司列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-022	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位信息页行业列显示测试：行业列头可见	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-023	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格操作	岗位信息页学员人数动作测试：点击学员人数应打开岗位关联学员弹窗	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-024	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格操作	岗位信息页查看详情动作测试：点击查看详情应打开岗位详情弹窗	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-025	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格操作	岗位信息页编辑动作测试：点击编辑应打开编辑岗位弹窗	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-026	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格操作	岗位信息页隐藏动作测试：点击隐藏应触发岗位隐藏链路	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-027	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格操作	岗位信息页激活动作测试：点击激活应触发岗位激活链路	NS	源：admin.html L1941-L3120；positions 页面与相关弹窗	2026-03-27
+ADM-POS-028	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	新增岗位弹窗打开测试：点击新增岗位按钮应打开 modal-new-position	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-029	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	新增岗位弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-030	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	新增岗位弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-031	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗岗位分类字段测试：岗位分类字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-032	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗岗位名称字段测试：岗位名称字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-033	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗部门字段测试：部门字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-034	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗招聘周期字段测试：招聘周期字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-035	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗项目时间字段测试：项目时间字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-036	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗公司名称字段测试：公司名称字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-037	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗公司类别字段测试：公司类别字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-038	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗大区字段测试：大区字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-039	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗城市字段测试：城市字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-040	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗官网字段测试：官网字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-041	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗岗位链接字段测试：岗位链接字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-042	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗截止日期字段测试：截止日期字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-043	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗开始时间字段测试：开始时间字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-044	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗结束时间字段测试：结束时间字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-045	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	新增岗位弹窗备注字段测试：备注字段可见且名称/占位语义正确	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-046	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	选项	新增岗位弹窗招聘周期选项测试：招聘周期选项集应完整覆盖 支持多选招聘周期	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-047	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	选项	新增岗位弹窗公司类别选项测试：公司类别选项集应完整覆盖 Investment Bank、Consulting、Tech、PE、VC、Other	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-048	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	选项	新增岗位弹窗大区/城市选项测试：大区/城市选项集应完整覆盖 支持大区与城市联动选择	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-049	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	新增岗位保存测试：点击添加岗位应提交新增岗位信息	NS	源：admin.html L2642-L2759；modal-new-position	2026-03-27
+ADM-POS-050	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	编辑岗位弹窗打开测试：点击编辑动作应打开 modal-edit-position	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-051	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	编辑岗位弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-052	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	编辑岗位弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-053	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗岗位分类字段测试：岗位分类字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-054	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗岗位名称字段测试：岗位名称字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-055	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗部门字段测试：部门字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-056	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗招聘周期字段测试：招聘周期字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-057	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗项目时间字段测试：项目时间字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-058	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗公司名称字段测试：公司名称字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-059	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗公司类别字段测试：公司类别字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-060	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗大区字段测试：大区字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-061	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗城市字段测试：城市字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-062	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗官网字段测试：官网字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-063	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗岗位链接字段测试：岗位链接字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-064	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗截止日期字段测试：截止日期字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-065	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗开始时间字段测试：开始时间字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-066	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗结束时间字段测试：结束时间字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-067	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	字段	编辑岗位弹窗备注字段测试：备注字段可见且名称/占位语义正确	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-068	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	编辑岗位弹窗隐藏按钮测试：隐藏按钮可见且可触发对应动作	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-069	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	编辑岗位弹窗激活按钮测试：激活按钮可见且可触发对应动作	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-070	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	编辑岗位弹窗保存按钮测试：保存按钮可见且可触发对应动作	NS	源：admin.html L2760-L2887；modal-edit-position	2026-03-27
+ADM-POS-071	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	批量上传弹窗打开测试：点击批量上传按钮应打开 modal-position-upload	NS	源：admin.html L2888-L2929；modal-position-upload	2026-03-27
+ADM-POS-072	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	批量上传弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L2888-L2929；modal-position-upload	2026-03-27
+ADM-POS-073	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	批量上传弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L2888-L2929；modal-position-upload	2026-03-27
+ADM-POS-074	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	上传	批量上传文件选择测试：点击选择Excel文件应触发文件选择器	NS	源：admin.html L2888-L2929；modal-position-upload	2026-03-27
+ADM-POS-075	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	批量上传开始测试：点击开始上传应触发上传链路	NS	源：admin.html L2888-L2929；modal-position-upload	2026-03-27
+ADM-POS-076	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	岗位关联学员弹窗打开测试：点击学员人数应打开 modal-position-students	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-077	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗学生ID列显示测试：学生ID列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-078	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗姓名列显示测试：姓名列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-079	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗岗位列显示测试：岗位列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-080	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗状态列显示测试：状态列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-081	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗已上课时列显示测试：已上课时列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-082	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗上课时间列显示测试：上课时间列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-083	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗课程类型列显示测试：课程类型列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-084	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗导师列显示测试：导师列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-085	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗课时列显示测试：课时列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-086	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	表格	岗位关联学员弹窗课程反馈列显示测试：课程反馈列头可见	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-087	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	岗位关联学员弹窗关闭测试：点击关闭按钮应关闭弹窗	NS	源：admin.html L2930-L2995；modal-position-students	2026-03-27
+ADM-POS-088	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	弹窗	岗位详情弹窗打开测试：点击查看详情应打开 modal-job-detail	NS	源：admin.html L2996-L3072；modal-job-detail	2026-03-27
+ADM-POS-089	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	岗位详情弹窗查看全部按钮测试：查看全部按钮可见且可触发对应动作	NS	源：admin.html L2996-L3072；modal-job-detail	2026-03-27
+ADM-POS-090	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	按钮	岗位详情弹窗关闭按钮测试：关闭按钮可见且可触发对应动作	NS	源：admin.html L2996-L3072；modal-job-detail	2026-03-27
+ADM-POS-091	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	异常	岗位信息关键按钮无绑定测试：新增岗位保存按钮存在但未见明确绑定行为	NS	源：admin.html L2642-L2887；当前关键动作多未绑定	2026-03-27
+ADM-POS-092	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	异常	岗位信息关键按钮无绑定测试：编辑岗位保存按钮存在但未见明确绑定行为	NS	源：admin.html L2642-L2887；当前关键动作多未绑定	2026-03-27
+ADM-POS-093	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	异常	岗位信息关键按钮无绑定测试：隐藏按钮存在但未见明确绑定行为	NS	源：admin.html L2642-L2887；当前关键动作多未绑定	2026-03-27
+ADM-POS-094	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	异常	岗位信息关键按钮无绑定测试：激活按钮存在但未见明确绑定行为	NS	源：admin.html L2642-L2887；当前关键动作多未绑定	2026-03-27
+ADM-POS-095	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	岗位信息页下钻视图切换测试：点击下钻视图后下钻卡片显示、列表视图隐藏且按钮高亮切换	NS	源：admin.html L1951-L1952 与 L2456-L2460；switchAdminPositionView	2026-03-27
+ADM-POS-096	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	岗位信息页列表视图切换测试：点击列表视图后列表区域显示、下钻卡片隐藏且按钮高亮切换	NS	源：admin.html L1951-L1952 与 L2456-L2460；switchAdminPositionView	2026-03-27
+ADM-POS-097	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	岗位信息页筛选重置测试：点击重置后状态/周期/发布时间筛选回到默认且搜索词清空	NS	源：admin.html L2033 与 L2478-L2482；resetAdminFilters	2026-03-27
+ADM-POS-098	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	岗位信息页发布时间排序升序测试：首次点击发布时间列后列表应按发布时间升序重排且排序图标高亮	NS	源：admin.html L2423 与 L2463-L2472；sortAdminListByPublishTime	2026-03-27
+ADM-POS-099	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	岗位信息页发布时间排序降序测试：再次点击发布时间列后列表应按发布时间降序重排且排序图标切换	NS	源：admin.html L2423 与 L2463-L2472；sortAdminListByPublishTime	2026-03-27
+ADM-POS-100	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	岗位信息页行业分组展开测试：点击行业分组后对应公司列表展开且分组箭头切换为展开态	NS	源：admin.html L2047 与 L2534-L2546；toggleCategory	2026-03-27
+ADM-POS-101	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	岗位信息页公司分组展开测试：点击公司分组后对应岗位列表展开且公司箭头切换为展开态	NS	源：admin.html L2063 与 L2549-L2561；toggleCompany	2026-03-27
+ADM-POS-102	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	新增岗位公司快捷选择测试：点击公司候选项后公司名称输入框回填且官网字段自动带出	NS	源：admin.html L2696-L2702 与 L2623-L2629；selectBankOption	2026-03-27
+ADM-POS-103	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	新增岗位大区联动城市测试：切换大区后城市下拉应刷新为对应城市选项集	NS	源：admin.html L2718-L2725 与 L2585-L2611；updateCityOptions('new')	2026-03-27
+ADM-POS-104	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	编辑岗位公司快捷选择测试：点击公司候选项后公司名称输入框应回填所选公司	NS	源：admin.html L2810-L2817 与 L2580-L2584；selectOption	2026-03-27
+ADM-POS-105	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	编辑岗位大区联动城市测试：切换大区后城市下拉应刷新为对应城市选项集	NS	源：admin.html L2833-L2839 与 L2585-L2611；updateCityOptions('edit')	2026-03-27
+ADM-POS-106	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	新增岗位公司候选列表展开测试：聚焦公司名称输入框后候选列表应展开显示	NS	源：admin.html L2694-L2695 与 L2564-L2567；showSelectOptions('bank-options-new')	2026-03-27
+ADM-POS-107	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	新增岗位公司候选列表过滤测试：输入公司关键词后候选项应按关键字过滤显示	NS	源：admin.html L2694-L2702 与 L2568-L2577；filterSelectOptions('bank-options-new')	2026-03-27
+ADM-POS-108	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	编辑岗位公司候选列表展开测试：聚焦公司名称输入框后候选列表应展开显示	NS	源：admin.html L2810-L2811 与 L2564-L2567；showSelectOptions('bank-options-edit')	2026-03-27
+ADM-POS-109	V2026.03.27-admin-ssot	admin	求职中心	岗位信息	状态流转	编辑岗位公司候选列表过滤测试：输入公司关键词后候选项应按关键字过滤显示	NS	源：admin.html L2810-L2817 与 L2568-L2577；filterSelectOptions('bank-options-edit')	2026-03-27
+ADM-SPOS-001	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	页面	学生自添岗位页壳层测试：列表区、筛选区和审核动作同时可见	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-002	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	筛选	学生自添岗位页筛选测试：状态筛选可见且可用	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-003	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	筛选	学生自添岗位页筛选测试：类别筛选可见且可用	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-004	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	筛选	学生自添岗位页筛选测试：辅导申请筛选可见且可用	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-005	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	筛选	学生自添岗位页筛选测试：搜索输入框可见且可用	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-006	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	表格	学生自添岗位页公司/岗位列显示测试：公司/岗位列头可见	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-007	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	表格	学生自添岗位页岗位分类列显示测试：岗位分类列头可见	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-008	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	表格	学生自添岗位页提交学生列显示测试：提交学生列头可见	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-009	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	表格	学生自添岗位页提交时间列显示测试：提交时间列头可见	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-010	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	表格	学生自添岗位页状态列显示测试：状态列头可见	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-011	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	表格	学生自添岗位页操作列显示测试：操作列头可见	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-012	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	表格操作	学生自添岗位页审核/编辑动作测试：点击审核/编辑应打开编辑学生自添岗位弹窗	NS	源：admin.html L3121-L3452；student-positions 页面与相关弹窗	2026-03-27
+ADM-SPOS-013	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	弹窗	学生自添岗位编辑弹窗打开测试：点击审核/编辑应打开 modal-edit-student-position	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-014	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	弹窗	学生自添岗位编辑弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-015	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	弹窗	学生自添岗位编辑弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-016	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗岗位分类字段测试：岗位分类字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-017	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗岗位名称字段测试：岗位名称字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-018	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗部门字段测试：部门字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-019	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗招聘周期字段测试：招聘周期字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-020	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗项目时间字段测试：项目时间字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-021	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗截止日期字段测试：截止日期字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-022	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗公司名称字段测试：公司名称字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-023	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗公司类别字段测试：公司类别字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-024	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗大区字段测试：大区字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-025	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗城市字段测试：城市字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-026	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗官网字段测试：官网字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-027	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	学生自添岗位编辑弹窗岗位链接字段测试：岗位链接字段可见且名称/占位语义正确	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-028	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	按钮	学生自添岗位保存并通过测试：点击保存并通过应完成审核通过流程	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-029	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	按钮	学生自添岗位拒绝按钮测试：点击拒绝应打开拒绝岗位弹窗	NS	源：admin.html L3257-L3393；modal-edit-student-position	2026-03-27
+ADM-SPOS-030	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	弹窗	拒绝岗位弹窗打开测试：从编辑弹窗点击拒绝应打开 modal-reject-position	NS	源：admin.html L3394-L3452；modal-reject-position	2026-03-27
+ADM-SPOS-031	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	弹窗	拒绝岗位弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L3394-L3452；modal-reject-position	2026-03-27
+ADM-SPOS-032	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	弹窗	拒绝岗位弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L3394-L3452；modal-reject-position	2026-03-27
+ADM-SPOS-033	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	拒绝岗位弹窗拒绝原因字段测试：拒绝原因字段可见且名称/占位语义正确	NS	源：admin.html L3394-L3452；modal-reject-position	2026-03-27
+ADM-SPOS-034	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	字段	拒绝岗位弹窗补充说明字段测试：补充说明字段可见且名称/占位语义正确	NS	源：admin.html L3394-L3452；modal-reject-position	2026-03-27
+ADM-SPOS-035	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	选项	拒绝岗位弹窗拒绝原因选项测试：拒绝原因选项集应完整覆盖 链接无法访问、官网无此岗位、信息不符、重复、其他	NS	源：admin.html L3394-L3452；modal-reject-position	2026-03-27
+ADM-SPOS-036	V2026.03.27-admin-ssot	admin	求职中心	学生自添岗位	按钮	拒绝岗位确认测试：点击确认拒绝应提交拒绝结果	NS	源：admin.html L3394-L3452；modal-reject-position	2026-03-27
+ADM-JOB-001	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	页面	学员求职总览页壳层测试：列表区、筛选区和导师分配入口同时可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-002	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	筛选	学员求职总览页筛选测试：搜索输入框可见且可用	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-003	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	筛选	学员求职总览页筛选测试：公司筛选可见且可用	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-004	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	筛选	学员求职总览页筛选测试：状态筛选可见且可用	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-005	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	筛选	学员求职总览页筛选测试：班主任筛选可见且可用	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-006	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	筛选	学员求职总览页筛选测试：分配状态筛选可见且可用	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-007	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	tab	学员求职总览页待分配导师切换测试：切换到待分配导师后仅对应内容区显示	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-008	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	tab	学员求职总览页全部学员切换测试：切换到全部学员后仅对应内容区显示	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-009	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页学员列显示测试：学员列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-010	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页公司/岗位列显示测试：公司/岗位列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-011	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页阶段列显示测试：阶段列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-012	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页面试时间列显示测试：面试时间列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-013	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页辅导状态列显示测试：辅导状态列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-014	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页导师列显示测试：导师列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-015	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页课时/反馈列显示测试：课时/反馈列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-016	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页需求导师列显示测试：需求导师列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-017	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页申请时间列显示测试：申请时间列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-018	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格	学员求职总览页操作列显示测试：操作列头可见	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-019	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格操作	学员求职总览页确认动作测试：点击确认应切换为已确认状态	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-020	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	表格操作	学员求职总览页分配导师动作测试：点击分配导师应打开分配导师弹窗	NS	源：admin.html L3453-L3835；job-overview 页面	2026-03-27
+ADM-JOB-021	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	弹窗	分配导师弹窗打开测试：点击分配导师动作应打开 modal-assign-mentor	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-JOB-022	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	弹窗	分配导师弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-JOB-023	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	弹窗	分配导师弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-JOB-024	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	字段	分配导师弹窗导师搜索字段测试：导师搜索字段可见且名称/占位语义正确	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-JOB-025	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	字段	分配导师弹窗备注字段测试：备注字段可见且名称/占位语义正确	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-JOB-026	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	选项	分配导师弹窗排期状态筛选选项测试：排期状态筛选选项集应完整覆盖 支持按排期状态过滤导师	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-JOB-027	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	选项	分配导师弹窗主攻方向筛选选项测试：主攻方向筛选选项集应完整覆盖 支持按主攻方向过滤导师	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-JOB-028	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	选项	分配导师弹窗子方向筛选选项测试：子方向筛选选项集应完整覆盖 支持按子方向过滤导师	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-JOB-029	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	按钮	分配导师勾选高亮测试：切换导师勾选后高亮态应同步变化	NS	源：admin.html L9849-L9885 与 L9916-L9923；toggleAdminMentorSelect	2026-03-27
+ADM-JOB-030	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	按钮	分配导师确认匹配测试：点击确认匹配应关闭弹窗并提示成功	NS	源：admin.html L9911 与 L9924-L9929；confirmAdminAssignMentor	2026-03-27
+ADM-JOB-031	V2026.03.27-admin-ssot	admin	求职中心	学员求职总览	状态流转	待分配导师确认状态切换测试：点击确认后按钮文案和样式切换为已确认	NS	源：admin.html job-overview 行内按钮脚本	2026-03-27
+ADM-MOCK-001	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	页面	模拟应聘管理页壳层测试：待分配列表、全部记录列表和筛选区同时可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-002	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	筛选	模拟应聘管理页筛选测试：搜索输入框可见且可用	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-003	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	筛选	模拟应聘管理页筛选测试：类型筛选可见且可用	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-004	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	筛选	模拟应聘管理页筛选测试：状态筛选可见且可用	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-005	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	tab	模拟应聘管理页待分配导师切换测试：切换到待分配导师后仅对应内容区显示	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-006	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	tab	模拟应聘管理页全部记录切换测试：切换到全部记录后仅对应内容区显示	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-007	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格	模拟应聘管理页学员列显示测试：学员列头可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-008	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格	模拟应聘管理页类型列显示测试：类型列头可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-009	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格	模拟应聘管理页申请内容列显示测试：申请内容列头可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-010	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格	模拟应聘管理页申请时间列显示测试：申请时间列头可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-011	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格	模拟应聘管理页导师列显示测试：导师列头可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-012	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格	模拟应聘管理页已上课时列显示测试：已上课时列头可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-013	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格	模拟应聘管理页课程反馈列显示测试：课程反馈列头可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-014	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格	模拟应聘管理页操作列显示测试：操作列头可见	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-015	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	表格操作	模拟应聘管理页分配导师动作测试：点击分配导师应进入导师分配链路	NS	源：admin.html L5372-L5641；mock-practice 页面	2026-03-27
+ADM-MOCK-016	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	弹窗	模拟应聘分配导师弹窗打开测试：当前页面点击分配导师应打开 modal-assign-mentor	NS	源：admin.html L9787-L9929；modal-assign-mentor	2026-03-27
+ADM-MOCK-017	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	按钮	模拟应聘分配导师确认测试：点击确认匹配应完成导师分配	NS	源：admin.html L9911 与 L9924-L9929；confirmAdminAssignMentor	2026-03-27
+ADM-MOCK-018	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	异常	模拟应聘专用分配弹窗冲突测试：原型存在 modal-admin-assign-mock，但页面入口未指向该弹窗	NS	源：admin.html L5609-L5636；modal-admin-assign-mock	2026-03-27
+ADM-MOCK-019	V2026.03.27-admin-ssot	admin	求职中心	模拟应聘管理	异常	模拟应聘反馈弹窗可达性测试：原型存在 modal-admin-mock-feedback，但页面未提供明确触发入口	NS	源：admin.html L5572-L5608；modal-admin-mock-feedback	2026-03-27
+ADM-CLASS-001	V2026.03.27-admin-ssot	admin	教学中心	课程记录	页面	课程记录页壳层测试：课程记录列表、筛选区和状态 tab 同时可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-002	V2026.03.27-admin-ssot	admin	教学中心	课程记录	筛选	课程记录页筛选测试：搜索输入框可见且可用	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-003	V2026.03.27-admin-ssot	admin	教学中心	课程记录	筛选	课程记录页筛选测试：辅导类型筛选可见且可用	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-004	V2026.03.27-admin-ssot	admin	教学中心	课程记录	筛选	课程记录页筛选测试：课程内容筛选可见且可用	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-005	V2026.03.27-admin-ssot	admin	教学中心	课程记录	筛选	课程记录页筛选测试：申报人角色筛选可见且可用	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-006	V2026.03.27-admin-ssot	admin	教学中心	课程记录	筛选	课程记录页筛选测试：日期区间筛选可见且可用	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-007	V2026.03.27-admin-ssot	admin	教学中心	课程记录	tab	课程记录页待审核切换测试：切换到待审核后仅对应内容区显示	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-008	V2026.03.27-admin-ssot	admin	教学中心	课程记录	tab	课程记录页已通过切换测试：切换到已通过后仅对应内容区显示	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-009	V2026.03.27-admin-ssot	admin	教学中心	课程记录	tab	课程记录页已驳回切换测试：切换到已驳回后仅对应内容区显示	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-010	V2026.03.27-admin-ssot	admin	教学中心	课程记录	tab	课程记录页全部切换测试：切换到全部后仅对应内容区显示	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-011	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页记录ID列显示测试：记录ID列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-012	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页学员列显示测试：学员列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-013	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页申报人列显示测试：申报人列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-014	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页辅导内容列显示测试：辅导内容列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-015	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页课程内容列显示测试：课程内容列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-016	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页上课日期列显示测试：上课日期列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-017	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页时长列显示测试：时长列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-018	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页课时费列显示测试：课时费列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-019	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页学员评价列显示测试：学员评价列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-020	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页审核状态列显示测试：审核状态列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-021	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格	课程记录页操作列显示测试：操作列头可见	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-022	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格操作	课程记录页审核动作测试：点击审核应打开课程审核弹窗	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-023	V2026.03.27-admin-ssot	admin	教学中心	课程记录	表格操作	课程记录页详情动作测试：点击详情应打开详情链路或详情视图	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-024	V2026.03.27-admin-ssot	admin	教学中心	课程记录	弹窗	课程审核弹窗打开测试：点击审核动作应打开 modal-audit	NS	源：admin.html L9930-L10059；modal-audit	2026-03-27
+ADM-CLASS-025	V2026.03.27-admin-ssot	admin	教学中心	课程记录	弹窗	课程审核弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L9930-L10059；modal-audit	2026-03-27
+ADM-CLASS-026	V2026.03.27-admin-ssot	admin	教学中心	课程记录	弹窗	课程审核弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L9930-L10059；modal-audit	2026-03-27
+ADM-CLASS-027	V2026.03.27-admin-ssot	admin	教学中心	课程记录	字段	课程审核弹窗审核结果字段测试：审核结果字段可见且名称/占位语义正确	NS	源：admin.html L9930-L10059；modal-audit	2026-03-27
+ADM-CLASS-028	V2026.03.27-admin-ssot	admin	教学中心	课程记录	字段	课程审核弹窗驳回原因字段测试：驳回原因字段可见且名称/占位语义正确	NS	源：admin.html L9930-L10059；modal-audit	2026-03-27
+ADM-CLASS-029	V2026.03.27-admin-ssot	admin	教学中心	课程记录	字段	课程审核弹窗驳回说明字段测试：驳回说明字段可见且名称/占位语义正确	NS	源：admin.html L9930-L10059；modal-audit	2026-03-27
+ADM-CLASS-030	V2026.03.27-admin-ssot	admin	教学中心	课程记录	字段	课程审核弹窗审核备注字段测试：审核备注字段可见且名称/占位语义正确	NS	源：admin.html L9930-L10059；modal-audit	2026-03-27
+ADM-CLASS-031	V2026.03.27-admin-ssot	admin	教学中心	课程记录	选项	课程审核弹窗驳回原因选项测试：驳回原因选项集应完整覆盖 时长、内容、类型、附件、重复、其他	NS	源：admin.html L9930-L10059；modal-audit	2026-03-27
+ADM-CLASS-032	V2026.03.27-admin-ssot	admin	教学中心	课程记录	状态流转	课程审核通过态测试：选择通过后通过态样式应激活	NS	源：admin.html L9983-L10034；selectAuditResult	2026-03-27
+ADM-CLASS-033	V2026.03.27-admin-ssot	admin	教学中心	课程记录	状态流转	课程审核驳回态测试：选择驳回后驳回原因区域应显示	NS	源：admin.html L9987-L10034；selectAuditResult	2026-03-27
+ADM-CLASS-034	V2026.03.27-admin-ssot	admin	教学中心	课程记录	按钮	课程审核提交测试：点击提交审核应完成审核并关闭弹窗	NS	源：admin.html L10019 与 L10045-L10058；submitAudit	2026-03-27
+ADM-CLASS-035	V2026.03.27-admin-ssot	admin	教学中心	课程记录	异常	课程记录页无绑定控件测试：导出按钮存在但未见明确绑定行为	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-036	V2026.03.27-admin-ssot	admin	教学中心	课程记录	异常	课程记录页无绑定控件测试：搜索按钮存在但未见明确绑定行为	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-037	V2026.03.27-admin-ssot	admin	教学中心	课程记录	异常	课程记录页无绑定控件测试：状态 tab存在但未见明确绑定行为	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-CLASS-038	V2026.03.27-admin-ssot	admin	教学中心	课程记录	异常	课程记录页无绑定控件测试：详情按钮存在但未见明确绑定行为	NS	源：admin.html L3836-L3971；class-records 页面	2026-03-27
+ADM-LOG-001	V2026.03.27-admin-ssot	admin	个人中心	操作日志	页面	操作日志页壳层测试：日志列表、筛选区和导出动作同时可见	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-002	V2026.03.27-admin-ssot	admin	个人中心	操作日志	筛选	操作日志页筛选测试：搜索输入框可见且可用	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-003	V2026.03.27-admin-ssot	admin	个人中心	操作日志	筛选	操作日志页筛选测试：操作类型筛选可见且可用	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-004	V2026.03.27-admin-ssot	admin	个人中心	操作日志	筛选	操作日志页筛选测试：日期区间筛选可见且可用	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-005	V2026.03.27-admin-ssot	admin	个人中心	操作日志	表格	操作日志页时间列显示测试：时间列头可见	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-006	V2026.03.27-admin-ssot	admin	个人中心	操作日志	表格	操作日志页操作人列显示测试：操作人列头可见	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-007	V2026.03.27-admin-ssot	admin	个人中心	操作日志	表格	操作日志页角色列显示测试：角色列头可见	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-008	V2026.03.27-admin-ssot	admin	个人中心	操作日志	表格	操作日志页操作类型列显示测试：操作类型列头可见	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-009	V2026.03.27-admin-ssot	admin	个人中心	操作日志	表格	操作日志页操作内容列显示测试：操作内容列头可见	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-010	V2026.03.27-admin-ssot	admin	个人中心	操作日志	表格	操作日志页IP地址列显示测试：IP地址列头可见	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-011	V2026.03.27-admin-ssot	admin	个人中心	操作日志	按钮	操作日志页搜索按钮测试：搜索按钮可见且可触发对应动作	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-012	V2026.03.27-admin-ssot	admin	个人中心	操作日志	按钮	操作日志页导出日志按钮测试：导出日志按钮可见且可触发对应动作	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-013	V2026.03.27-admin-ssot	admin	个人中心	操作日志	状态流转	操作日志搜索测试：点击搜索应按关键词、类型和日期执行查询	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-LOG-014	V2026.03.27-admin-ssot	admin	个人中心	操作日志	状态流转	操作日志导出测试：点击导出日志应触发日志导出链路	NS	源：admin.html L6391-L6408；logs 页面	2026-03-27
+ADM-PROFILE-001	V2026.03.27-admin-ssot	admin	个人中心	个人设置	按钮	个人设置入口测试：点击侧边栏用户卡应展开用户菜单	NS	源：admin.html L403；侧边栏用户卡与用户菜单	2026-03-27
+ADM-PROFILE-002	V2026.03.27-admin-ssot	admin	个人中心	个人设置	按钮	个人设置菜单项测试：点击个人设置菜单项应打开 modal-setting	NS	源：admin.html L403；侧边栏用户卡与用户菜单	2026-03-27
+ADM-PROFILE-003	V2026.03.27-admin-ssot	admin	个人中心	个人设置	弹窗	个人设置弹窗右上关闭测试：点击右上关闭按钮应关闭弹窗	NS	源：admin.html L6532-L6562；modal-setting	2026-03-27
+ADM-PROFILE-004	V2026.03.27-admin-ssot	admin	个人中心	个人设置	字段	个人设置弹窗姓名字段测试：姓名字段可见且名称/占位语义正确	NS	源：admin.html L6532-L6562；modal-setting	2026-03-27
+ADM-PROFILE-005	V2026.03.27-admin-ssot	admin	个人中心	个人设置	字段	个人设置弹窗账号字段测试：账号字段可见且名称/占位语义正确	NS	源：admin.html L6532-L6562；modal-setting	2026-03-27
+ADM-PROFILE-006	V2026.03.27-admin-ssot	admin	个人中心	个人设置	字段	个人设置弹窗新密码字段测试：新密码字段可见且名称/占位语义正确	NS	源：admin.html L6532-L6562；modal-setting	2026-03-27
+ADM-PROFILE-007	V2026.03.27-admin-ssot	admin	个人中心	个人设置	字段	个人设置弹窗确认密码字段测试：确认密码字段可见且名称/占位语义正确	NS	源：admin.html L6532-L6562；modal-setting	2026-03-27
+ADM-PROFILE-008	V2026.03.27-admin-ssot	admin	个人中心	个人设置	弹窗	个人设置弹窗取消测试：点击取消按钮应关闭弹窗	NS	源：admin.html L6532-L6562；modal-setting	2026-03-27
+ADM-PROFILE-009	V2026.03.27-admin-ssot	admin	个人中心	个人设置	按钮	个人设置保存测试：点击保存应提示成功并关闭弹窗	NS	源：admin.html L6532-L6562；modal-setting	2026-03-27

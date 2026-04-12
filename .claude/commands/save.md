@@ -11,6 +11,8 @@
 
 `/checkpoint` 的别名，保存当前状态到检查点。
 
+除 `workflow.*` 外，也要一并保存 execution plane 投影，确保恢复后不会丢失当前 lease / workspace / scheduler 视图。
+
 ## 执行流程
 
 等同于 `/checkpoint`：
@@ -20,6 +22,8 @@
 2. 读取当前状态
 3. 压缩上下文
 4. 生成 Checkpoint 文件
+   - 保存 workflow 快照
+   - 保存 execution projection
 5. 更新 STATE.yaml
 ```
 

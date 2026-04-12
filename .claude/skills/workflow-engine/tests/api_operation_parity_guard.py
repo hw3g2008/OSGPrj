@@ -226,6 +226,32 @@ def load_config(config_path: Path) -> dict[str, Any]:
     return yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
 
 
+def resolve_override_frontend_files(
+    *,
+    config: dict[str, Any],
+    project_root: Path,
+    module: str,
+) -> list[Path]:
+    overrides = config.get("module_final_gate_overrides") or {}
+    if not isinstance(overrides, dict):
+        return []
+    module_overrides = overrides.get(module) or {}
+    if not isinstance(module_overrides, dict):
+        return []
+    raw_files = module_overrides.get("frontend_api_files") or []
+    if not isinstance(raw_files, list):
+        return []
+
+    files: list[Path] = []
+    for raw in raw_files:
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        resolved = project_root / raw.strip()
+        if resolved.exists():
+            files.append(resolved)
+    return files
+
+
 def resolve_scan_paths(config: dict[str, Any], project_root: Path) -> tuple[list[Path], list[Path]]:
     """Resolve frontend API dirs and backend controller dirs from config."""
     paths = config.get("paths", {})
@@ -310,6 +336,12 @@ def main() -> int:
         module=args.module,
         story_id=args.story_id,
     )
+    if not frontend_files:
+        frontend_files = resolve_override_frontend_files(
+            config=config,
+            project_root=project_root,
+            module=args.module,
+        )
 
     missing_dirs = [str(d) for d in frontend_dirs + backend_dirs if not d.exists()]
     if missing_dirs:

@@ -38,7 +38,7 @@
 5b. source=phase4:
    - Guard: resolved&&未应用 存在 → 报错（应走重新 /brainstorm）
    - 标记 pending 为 rejected（跳过语义）
-   - 更新 workflow: brainstorm_done / split_story / auto_continue=true
+   - 调用 transition("/approve brainstorm", state, "brainstorm_done")，自动继续到 /split story
 5c. source=phase1_dependency:
    - 隔离约束: 不读取 phase0/phase4 裁决，不触发 PRD 更新
    - 裁决类型:
@@ -68,12 +68,12 @@
 1. 显示所有 Stories 摘要
 2. 等待用户确认
 3. 调用 transition("/approve stories", state, "stories_approved")
-4. 设置 current_story = 第一个 Story ID
+4. 设置 current_story = scheduler 选中的下一个 Story focus
 ```
 
 ### 下一步
 
-自动执行 `/split ticket S-001` 拆分第一个 Story
+自动执行 `/split ticket {current_story}` 拆分当前聚焦 Story
 
 ---
 
@@ -94,7 +94,7 @@
 
 ### 下一步
 
-自动执行 `/next` 开始执行第一个 Ticket
+自动执行 `/next` 开始执行下一个 runnable Ticket
 
 ---
 
@@ -155,8 +155,7 @@ def check_story_completion(state):
 1. 显示 Ticket 完成摘要
 2. 显示代码审查结果
 3. 等待用户确认
-4. 更新 Ticket 状态为 done
-5. 更新 STATE.yaml
+4. 通过对应 Skill / transition() 推进 Ticket 审批后的状态
 ```
 
 ---

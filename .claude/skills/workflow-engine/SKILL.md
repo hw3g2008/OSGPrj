@@ -17,6 +17,12 @@ metadata:
 3. 决定是否需要审批
 4. 自动执行下一个命令（如果配置为 auto）
 
+控制面 / 执行面边界：
+- `workflow-engine` 只管理 control plane：`workflow.current_step / next_step / next_requires_approval / auto_continue`
+- 并行调度、lease、workspace/worktree 绑定属于 execution plane，只能写到 `STATE.execution.*` 投影
+- 默认后端仍是 `workflow_backend.type = yaml` + `execution_backend.type = inline`
+- 后续切换 Git / worktree 时，只替换后端实现，不新增 workflow state
+
 上游真源约束：
 - `prototype-extraction` 必须生成 `UI-VISUAL-CONTRACT.yaml` 与 `DELIVERY-CONTRACT.yaml`
 - 下游 coverage/truth/critical-ui guards 必须把这两个 contract 当作 fail-closed 真源，而不是可选附件
@@ -25,6 +31,9 @@ metadata:
 
 - **状态 (state)**：工作流当前所处的位置，如 `brainstorm_done`、`story_split_done`
 - **动作 (action)**：下一步要执行的操作，如 `split_story`、`approve_stories`
+- **control plane**：Story 生命周期与审批门控
+- **execution plane**：runnable set、ticket/story lease、workspace/worktree 绑定等运行态投影
+- **materialized focus**：`current_story / current_ticket`，用于兼容现有命令面的当前焦点，并不代表系统只能单线程执行
 - `current_step`：当前状态
 - `next_step`：下一个动作
 
@@ -38,17 +47,38 @@ metadata:
 
 ```python
 def get_workflow_state():
-    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+    state = state_store().read_state("osg-spec-docs/tasks/STATE.yaml")
     config = read_yaml(".claude/project/config.yaml")
 
     if not state.workflow:
         return {"current_step": None, "next_step": None}
 
+    execution = state.get("execution") or {
+        "backend": {
+            "workflow_backend": config.workflow_backend.type,
+            "execution_backend": config.execution_backend.type,
+        },
+        "active_stories": [],
+        "active_tickets": [],
+        "story_leases": [],
+        "ticket_leases": [],
+        "workspaces": [],
+        "scheduler": {
+            "parallel_enabled": False,
+            "max_stories": 1,
+            "max_tickets_per_story": 1,
+            "last_tick_at": None,
+            "last_selected_story": None,
+            "last_runnable_tickets": [],
+        },
+    }
+
     return {
         "current_step": state.workflow.current_step,
         "next_step": state.workflow.next_step,
         "current_story": state.current_story,
-        "current_ticket": state.current_ticket
+        "current_ticket": state.current_ticket,
+        "execution": execution,
     }
 ```
 
@@ -146,6 +176,7 @@ def transition(command, state, state_to, meta=None):
     """
     sm = load_yaml(".claude/skills/workflow-engine/state-machine.yaml")
     config = load_yaml(".claude/project/config.yaml")
+    stores = resolve_backends(config)
 
     state_from = state.workflow.current_step
 
@@ -158,12 +189,16 @@ def transition(command, state, state_to, meta=None):
     state.workflow.current_step = state_to
     state.workflow.next_step = next_action
 
+    # execution plane 只保留 materialized focus / projection，不得替代 workflow authority
+    if not state.get("execution"):
+        state.execution = default_execution_projection(config)
+
     # --- 3. 推导 next_requires_approval（禁止手写）---
     state.workflow.next_requires_approval = requires_approval(next_action, config)
 
-    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+    stores.state.write_state("osg-spec-docs/tasks/STATE.yaml", state)
 
-    # --- 4. 写事件（open("a") 模式自动创建文件）---
+    # --- 4. 写事件（默认 JSONL，可替换 event store）---
     event = build_event(
         command=command,
         state_from=state_from,
@@ -172,8 +207,8 @@ def transition(command, state, state_to, meta=None):
         evidence_ref=meta.get("evidence_ref") if meta else None,
         result=meta.get("result", "success") if meta else "success",
     )
-    if not append_workflow_event(event):
-        write_yaml("osg-spec-docs/tasks/STATE.yaml", state_before)  # 回滚
+    if not stores.events.append(event):
+        stores.state.write_state("osg-spec-docs/tasks/STATE.yaml", state_before)  # 回滚
         raise EventWriteError("事件写入失败，已回滚状态")
 
     # --- 5. postcheck_guard ---
@@ -368,6 +403,43 @@ def build_event(command, state_from, state_to, actor="system", gate_result=None,
 | W10 | `/approve` (Story) | `transition("/approve story", state, "story_approved" or "all_stories_done")` | `story_approved` / `all_stories_done` |
 | W11 | `next_story` 分支 | `transition("next_story", state, "stories_approved" or "all_stories_done")` | `stories_approved` / `all_stories_done` |
 
+### 5e. 后端抽象（默认 YAML / JSONL）
+
+```python
+def resolve_backends(config):
+    workflow_backend = (config.get("workflow_backend") or {}).get("type", "yaml")
+    execution_backend = (config.get("execution_backend") or {}).get("type", "inline")
+
+    return {
+        "state": YamlStateStore() if workflow_backend == "yaml" else GitStateStore(),
+        "events": JsonlEventStore(),
+        "execution": InlineWorkspaceBackend() if execution_backend == "inline" else GitWorktreeBackend(),
+    }
+
+
+def default_execution_projection(config):
+    parallel = config.get("parallel_execution") or {}
+    return {
+        "backend": {
+            "workflow_backend": (config.get("workflow_backend") or {}).get("type", "yaml"),
+            "execution_backend": (config.get("execution_backend") or {}).get("type", "inline"),
+        },
+        "active_stories": [],
+        "active_tickets": [],
+        "story_leases": [],
+        "ticket_leases": [],
+        "workspaces": [],
+        "scheduler": {
+            "parallel_enabled": bool(parallel.get("enabled", False)),
+            "max_stories": parallel.get("max_stories", 1),
+            "max_tickets_per_story": parallel.get("max_tickets_per_story", 1),
+            "last_tick_at": None,
+            "last_selected_story": None,
+            "last_runnable_tickets": [],
+        },
+    }
+```
+
 ## 自动继续循环
 
 当一个命令完成后，框架会自动执行以下循环：
@@ -423,7 +495,7 @@ def build_event(command, state_from, state_to, actor="system", gate_result=None,
 | 转换表中找不到 next_step | 停止，输出"未知步骤: {next_step}" |
 | split_ticket 需要 Story ID 但不存在 | 停止，输出"需要先选择 Story" |
 | 命令执行失败 | 不更新 workflow，停止并输出错误 |
-| Ticket 依赖未满足 | 跳过该 Ticket，选择下一个无依赖的 pending Ticket |
+| Ticket 依赖未满足 | 跳过该 Ticket，选择下一个满足依赖且无冲突的 runnable Ticket |
 | Story 的 tickets 列表为空时执行 /verify | 停止，输出"Story 没有 Tickets，无法验收" |
 | Ticket 的 allowed_paths 为空 | 停止，输出"Ticket 缺少 allowed_paths 配置" |
 | Ticket 完成时缺少 verification_evidence | 停止，不更新状态，提示执行验证命令 |
@@ -438,16 +510,15 @@ def build_event(command, state_from, state_to, actor="system", gate_result=None,
 
 ```python
 # 在 brainstorming skill 完成时
-update_workflow("/brainstorm", state)
+transition("/brainstorm", state, "brainstorm_done")
+# 或 transition("/brainstorm", state, "brainstorm_pending_confirm")
 
 # 在 story-splitter skill 完成时
-update_workflow("/split story", state)
+transition("/split story", state, "story_split_done")
 
-# ⚠️ deliver-ticket 和 verify 不调用 update_workflow
-# 它们直接写 STATE.yaml（因为有复杂的分支逻辑：
-#   /next → implementing / story_verified / verification_failed
-#   /verify → story_verified / verification_failed
-# ）
+# deliver-ticket 和 verify 也必须走 transition()
+# /next → implementing / story_verified / verification_failed
+# /verify → story_verified / verification_failed
 ```
 
 ### 获取当前状态

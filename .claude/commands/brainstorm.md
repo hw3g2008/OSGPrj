@@ -29,9 +29,9 @@
 7. Phase 3: 增强全局终审（连续两轮无修改通过）
 8. Phase 4: HTML 原型全量校验（差异分 A/B/C/D 四类）
 9. 输出最终需求文档 + 决策日志 {module}-DECISIONS.md（如有 B/C/D 类）
-10. 更新 workflow:
-   - 无问题: current_step = "brainstorm_done", next_step = "split_story"
-   - 有问题: current_step = "brainstorm_pending_confirm", 阻塞
+10. 由 brainstorming Skill 通过 transition() 推进 workflow:
+   - 无问题: 进入 "brainstorm_done"，下一步为 "split_story"
+   - 有问题: 进入 "brainstorm_pending_confirm"，阻塞等待 /approve brainstorm
 ```
 
 ## ⚠️ 执行模式

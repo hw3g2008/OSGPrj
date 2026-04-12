@@ -17,7 +17,8 @@ allowed_paths:
   read:                    # 可选：允许读取但不修改的文件
     - "{path/to/file}"
 
-# 验收标准
+# 验收标准（人类可读摘要，不是唯一执行依据）
+# 真正驱动实现 / 验证的是 covers_ac_refs + contract_refs + test_cases
 acceptance_criteria:
   - "{验收标准1}"
   - "{验收标准2}"
@@ -29,6 +30,23 @@ covers_ac_refs: []  # 例如 ["AC-S-001-01"]
 contract_refs:
   capabilities: []       # 例如 ["auth-login"]
   critical_surfaces: []  # 例如 ["modal-forgot-password"]
+
+# 可执行测试契约（split-ticket 时必须生成，禁止仅靠 prose AC）
+test_cases: []
+#   - test_case_id: "TCS-T-001-001"
+#     ac_ref: "AC-S-001-01"
+#     case_kind: "ac"  # ac | critical_surface
+#     surface_id: null
+#     state_variant: null
+#     viewport_variant: null
+#     category: "positive"   # positive | negative | boundary | exception | null_empty
+#     scenario_obligation: "display"  # display | state_change | business_rule_reject | auth_or_data_boundary | persist_effect
+#     operation: "list"  # list | search | create | edit | status_toggle | delete | reject_disable | auth_filter
+#     description: "{测试描述}"
+#     input: "{输入描述}"
+#     expected: "{预期输出}"
+#     covers_branches: ["B1", "B2"]
+#     design_method: "equivalence_partitioning"
 
 # UI 还原专属字段（type: frontend-ui 时必须生成）
 ui_rule_classes: []
@@ -127,23 +145,11 @@ completed_at: null
 #   uncovered_branches: []   # 未覆盖的分支列表
 
 # ============================================
-# 🧪 测试用例矩阵（由 test-design Skill 生成）
+# 🧪 执行前测试契约（split-ticket 阶段必须落盘）
 # ============================================
-# test_cases:
-#   - test_case_id: "TCS-T-001-001"
-#     ac_ref: "AC-S-001-01"
-#     case_kind: "ac"  # ac | critical_surface
-#     surface_id: null
-#     state_variant: null
-#     viewport_variant: null
-#     category: "positive"   # positive | negative | boundary | exception | null_empty
-#     scenario_obligation: "display"  # display | state_change | business_rule_reject | auth_or_data_boundary | persist_effect
-#     description: "{测试描述}"
-#     input: "{输入描述}"
-#     expected: "{预期输出}"
-#     covers_branches: ["B1", "B2"]  # 覆盖的分支 ID
-#     design_method: "equivalence_partitioning"  # 设计方法
-#
+# test_cases 是 /next 进入实现前的硬前置条件之一。
+# 禁止只写自然语言 acceptance_criteria 而不生成结构化 test_cases。
+
 # branch_coverage_matrix:
 #   - branch_id: "B1"
 #     condition: "user != null"

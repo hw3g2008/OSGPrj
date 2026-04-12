@@ -1,0 +1,8 @@
+id: CP-20260331-104308
+created_at: "2026-03-31T10:43:08Z"
+trigger: ticket_start
+state_snapshot:
+  ticket: migrate-assistant-schedule-readonly
+task: 将 assistant schedule 页面迁移为只读版本，参考 lead-mentor 结构
+files:
+  - osg-frontend/packages/assistant/src/views/schedule/index.vue

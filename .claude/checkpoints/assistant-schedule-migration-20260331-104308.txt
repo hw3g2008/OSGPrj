@@ -1,0 +1,11 @@
+/**
+ * Checkpoint: assistant-schedule-migration
+ * Timestamp: 20260331-104308
+ *
+ * Task: 迁移 assistant 的 schedule 页面为只读版本
+ * - 参考 lead-mentor 的 schedule 页面结构样式
+ * - 移除编辑功能，保留只读展示
+ * - 使用现有 assistant API
+ *
+ * Modified: osg-frontend/packages/assistant/src/views/schedule/index.vue
+ */

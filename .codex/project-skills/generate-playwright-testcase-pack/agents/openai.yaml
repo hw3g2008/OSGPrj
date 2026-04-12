@@ -1,0 +1,3 @@
+interface:
+  display_name: "Generate Playwright Testcase Pack"
+  short_description: "Generate a single-source final Playwright testcase pack for one end"

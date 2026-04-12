@@ -24,7 +24,7 @@
 1. 触发 Coordinator + Developer
 2. 加载 ralph-loop Skill
 3. 循环执行：
-   - 获取下一个 pending Ticket
+   - 通过 scheduler 获取下一个 runnable Ticket
    - 执行 Ticket
    - 检查完成承诺
    - 检查安全限制

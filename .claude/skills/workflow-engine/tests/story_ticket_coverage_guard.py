@@ -86,6 +86,18 @@ def extract_story_surface_cases(node: dict | None) -> dict[str, list[dict]]:
     return result
 
 
+def _story_in_scope(
+    story: dict | None,
+    *,
+    module_capabilities: set[str],
+    module_surfaces: set[str],
+) -> bool:
+    capabilities, surfaces = extract_contract_refs(story)
+    if module_capabilities or module_surfaces:
+        return bool((capabilities & module_capabilities) or (surfaces & module_surfaces))
+    return True
+
+
 def extract_ticket_surface_cases(node: dict | None) -> dict[str, list[dict]]:
     if not isinstance(node, dict):
         return {}
@@ -204,11 +216,19 @@ def evaluate_story_ticket_coverage(
     capability_scopes = extract_delivery_capability_scopes(delivery_contract_doc)
     surface_specs = extract_surface_specs(ui_contract_doc)
     valid_surface_ids = set(surface_specs)
+    module_capability_ids = set(capability_scopes)
+    module_surface_ids = valid_surface_ids
     stories: dict[str, dict] = {}
     for path in sorted(stories_dir.glob("S-*.yaml")):
         data = load_yaml(path) or {}
         sid = data.get("id") or path.stem
         if story_id and sid != story_id:
+            continue
+        if not story_id and not _story_in_scope(
+            data,
+            module_capabilities=module_capability_ids,
+            module_surfaces=module_surface_ids,
+        ):
             continue
         stories[sid] = data
 
@@ -224,6 +244,8 @@ def evaluate_story_ticket_coverage(
             findings.append(f"ticket missing story_id: {path.name}")
             continue
         if story_id and sid != story_id:
+            continue
+        if not story_id and sid not in stories:
             continue
         disk_tickets_by_story.setdefault(sid, set()).add(tid)
 

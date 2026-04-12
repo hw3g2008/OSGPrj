@@ -158,6 +158,33 @@ def load_yaml(path: Path) -> Any:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
+_PROJECT_CONFIG_CACHE: dict[str, Any] | None = None
+
+
+def project_config() -> dict[str, Any]:
+    global _PROJECT_CONFIG_CACHE
+    if _PROJECT_CONFIG_CACHE is None:
+        config_path = Path(".claude/project/config.yaml")
+        try:
+            data = load_yaml(config_path) or {}
+        except FileNotFoundError:
+            data = {}
+        _PROJECT_CONFIG_CACHE = data if isinstance(data, dict) else {}
+    return _PROJECT_CONFIG_CACHE
+
+
+def resolve_frontend_package_dir(module: str) -> str:
+    config = project_config()
+    overrides = config.get("module_final_gate_overrides") or {}
+    if isinstance(overrides, dict):
+        module_override = overrides.get(module) or {}
+        if isinstance(module_override, dict):
+            package_dir = module_override.get("frontend_package_dir")
+            if isinstance(package_dir, str) and package_dir.strip():
+                return package_dir.strip().rstrip("/")
+    return f"osg-frontend/packages/{module}"
+
+
 def write_yaml(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
@@ -677,16 +704,31 @@ def operation_hint(capability: dict[str, Any]) -> str | None:
     mapping = {
         "data_create": "create",
         "state_change": "edit",
+        "relation_update": "edit",
         "change_request": "edit",
-        "authentication": "auth",
+        "authentication": "auth_filter",
         "credential_reset": "edit",
         "scoped_query": "list",
+        "structured_query": "list",
         "data_display": "list",
-        "scoped_detail": "detail",
+        "scoped_detail": "search",
+        "auth_scoped_navigation": "auth_filter",
+        "authorization": "auth_filter",
     }
     if isinstance(effect_kind, str):
         return mapping.get(effect_kind)
     return None
+
+
+def infer_operation_from_scenario(scenario: str) -> str:
+    mapping = {
+        "display": "list",
+        "state_change": "edit",
+        "business_rule_reject": "reject_disable",
+        "auth_or_data_boundary": "auth_filter",
+        "persist_effect": "edit",
+    }
+    return mapping.get(scenario, "list")
 
 
 def build_ac_test_cases(
@@ -709,7 +751,7 @@ def build_ac_test_cases(
                 "viewport_variant": None,
                 "category": info.get("category", "positive"),
                 "scenario_obligation": info.get("scenario", "display"),
-                "operation": operation,
+                "operation": operation or infer_operation_from_scenario(info.get("scenario", "display")),
             }
         )
     return test_cases
@@ -745,7 +787,7 @@ def build_surface_test_cases(
                     "viewport_variant": viewport_id,
                     "category": "positive",
                     "scenario_obligation": "display",
-                    "operation": None,
+                    "operation": "list",
                 }
             )
             counter += 1
@@ -802,10 +844,11 @@ def build_state_cases(surface: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def route_to_view_glob(module: str, route: str) -> str:
+    package_dir = resolve_frontend_package_dir(module)
     segments = [segment for segment in route.strip("/").split("/") if segment]
     if not segments:
-        return f"osg-frontend/packages/{module}/src/views/**"
-    return f"osg-frontend/packages/{module}/src/views/{'/'.join(segments)}/**"
+        return f"{package_dir}/src/views/**"
+    return f"{package_dir}/src/views/{'/'.join(segments)}/**"
 
 
 def capability_to_page_ids(capability: dict[str, Any], pages: dict[str, dict[str, Any]], module: str) -> list[str]:
@@ -860,6 +903,7 @@ def make_page_ui_ticket(
     ticket_number: int,
     prototype_html: str,
 ) -> dict[str, Any]:
+    package_dir = resolve_frontend_package_dir(module)
     ticket_id = next_ticket_id(ticket_number)
     target_selector = page.get("prototype_selector", f"#{page.get('page_id')}")
     section_html = extract_element_by_id(prototype_html, target_selector.lstrip("#").split(" ", 1)[0])
@@ -875,9 +919,9 @@ def make_page_ui_ticket(
         "allowed_paths": {
             "modify": [
                 route_to_view_glob(module, page.get("route", "/")),
-                f"osg-frontend/packages/{module}/src/router/**",
-                f"osg-frontend/packages/{module}/src/layouts/**",
-                f"osg-frontend/packages/{module}/src/__tests__/**",
+                f"{package_dir}/src/router/**",
+                f"{package_dir}/src/layouts/**",
+                f"{package_dir}/src/__tests__/**",
             ]
         },
         "acceptance_criteria": [
@@ -943,6 +987,7 @@ def make_surface_ui_ticket(
     ticket_number: int,
     prototype_html: str,
 ) -> dict[str, Any]:
+    package_dir = resolve_frontend_package_dir(module)
     ticket_id = next_ticket_id(ticket_number)
     target_selector = surface.get("prototype_selector", f"#{surface.get('surface_id')}")
     section_html = extract_element_by_id(prototype_html, target_selector.lstrip("#").split(" ", 1)[0])
@@ -993,8 +1038,8 @@ def make_surface_ui_ticket(
         "allowed_paths": {
             "modify": [
                 route_to_view_glob(module, page.get("route", "/")),
-                f"osg-frontend/packages/{module}/src/components/**",
-                f"osg-frontend/packages/{module}/src/__tests__/**",
+                f"{package_dir}/src/components/**",
+                f"{package_dir}/src/__tests__/**",
             ]
         },
         "acceptance_criteria": [
@@ -1093,13 +1138,14 @@ def make_frontend_ticket(
     story_acs: list[dict[str, str]],
     ticket_number: int,
 ) -> dict[str, Any]:
+    package_dir = resolve_frontend_package_dir(module)
     ticket_id = next_ticket_id(ticket_number)
     capability_id = capability["capability_id"]
     page_ids = capability.get("_page_ids") or []
     modify_paths = [
-        f"osg-frontend/packages/{module}/src/router/**",
-        f"osg-frontend/packages/{module}/src/layouts/**",
-        f"osg-frontend/packages/{module}/src/__tests__/**",
+        f"{package_dir}/src/router/**",
+        f"{package_dir}/src/layouts/**",
+        f"{package_dir}/src/__tests__/**",
         f"osg-frontend/packages/shared/src/api/**",
     ]
     for page_id in page_ids:
@@ -1148,6 +1194,7 @@ def make_story_test_ticket(
     capability_ids: list[str],
     ticket_number: int,
 ) -> dict[str, Any]:
+    package_dir = resolve_frontend_package_dir(module)
     ticket_id = next_ticket_id(ticket_number)
     ac_refs = [item["ref"] for item in story_acs]
     return {
@@ -1160,7 +1207,7 @@ def make_story_test_ticket(
         "estimate": "5m",
         "allowed_paths": {
             "modify": [
-                f"osg-frontend/packages/{module}/src/__tests__/**",
+                f"{package_dir}/src/__tests__/**",
                 "ruoyi-admin/src/test/java/com/ruoyi/web/controller/osg/**",
                 f"osg-spec-docs/tasks/testing/{module}-traceability-matrix.md",
             ]
@@ -1430,7 +1477,8 @@ def update_state_for_generated_tickets(
     story_ids: list[str],
     ticket_ids: list[str],
     current_story: str,
-) -> None:
+    ticket_split_approval: str,
+) -> dict[str, Any]:
     state = load_yaml(state_path) or {}
     state["current_requirement"] = module
     state["current_story"] = current_story
@@ -1445,10 +1493,13 @@ def update_state_for_generated_tickets(
     state["stats"]["completed_stories"] = len(state.get("completed_stories") or [])
     state["stats"]["completed_tickets"] = len(state.get("completed_tickets") or [])
     state.setdefault("workflow", {})
-    state["workflow"]["current_step"] = "tickets_approved"
-    state["workflow"]["next_step"] = "next"
-    state["workflow"]["next_requires_approval"] = False
-    state["workflow"]["auto_continue"] = True
+
+    auto_approved = ticket_split_approval == "auto"
+    state["workflow"]["current_step"] = "tickets_approved" if auto_approved else "ticket_split_done"
+    state["workflow"]["next_step"] = "next" if auto_approved else "approve_tickets"
+    state["workflow"]["next_requires_approval"] = not auto_approved
+    state["workflow"]["auto_continue"] = auto_approved
+
     state.setdefault("changelog", [])
     timestamp = now_iso()[:10]
     state["changelog"].append(
@@ -1458,14 +1509,20 @@ def update_state_for_generated_tickets(
             "reason": f"{module} 模块按增强 frontend-ui ticket-splitter 规则重建 {story_ids[0]}~{story_ids[-1]} Tickets，并补齐视觉 payload / proofs / traceability matrix",
         }
     )
-    state["changelog"].append(
-        {
-            "date": timestamp,
-            "action": "approve_tickets",
-            "reason": f"按 config.approval.ticket_split=auto 自动通过 {module} 模块已重建 Tickets，当前状态切换为 tickets_approved",
-        }
-    )
+    if auto_approved:
+        state["changelog"].append(
+            {
+                "date": timestamp,
+                "action": "approve_tickets",
+                "reason": f"按 config.approval.ticket_split=auto 自动通过 {module} 模块已重建 Tickets，当前状态切换为 tickets_approved",
+            }
+        )
     write_yaml(state_path, state)
+    return {
+        "auto_approved": auto_approved,
+        "current_step": state["workflow"]["current_step"],
+        "next_step": state["workflow"]["next_step"],
+    }
 
 
 def generate_module_tickets(
@@ -1544,12 +1601,13 @@ def generate_module_tickets(
     matrix_path.parent.mkdir(parents=True, exist_ok=True)
     matrix_path.write_text(build_traceability_matrix(module, generated_stories, generated_tickets), encoding="utf-8")
 
-    update_state_for_generated_tickets(
+    update_result = update_state_for_generated_tickets(
         state_path=state_path,
         module=module,
         story_ids=story_ids,
         ticket_ids=[ticket["id"] for ticket in generated_tickets],
         current_story=story_ids[0],
+        ticket_split_approval=((load_yaml(Path(".claude/project/config.yaml")) or {}).get("approval") or {}).get("ticket_split", "required"),
     )
 
     events_path = state_path.parent / "workflow-events.jsonl"
@@ -1565,17 +1623,18 @@ def generate_module_tickets(
             note=f"{module} 全量重建 {story_ids[0]}~{story_ids[-1]} Tickets，并为所有 stories 生成视觉 payload / proofs / traceability matrix。",
         ),
     )
-    append_event(
-        events_path,
-        build_event(
-            module=module,
-            command="/approve tickets",
-            state_from="ticket_split_done",
-            state_to="tickets_approved",
-            evidence_ref=evidence_ref,
-            note=f"{module} 重建 Tickets 按 config.approval.ticket_split=auto 自动通过，workflow 进入 tickets_approved。",
-        ),
-    )
+    if update_result["auto_approved"]:
+        append_event(
+            events_path,
+            build_event(
+                module=module,
+                command="/approve tickets",
+                state_from="ticket_split_done",
+                state_to="tickets_approved",
+                evidence_ref=evidence_ref,
+                note=f"{module} 重建 Tickets 按 config.approval.ticket_split=auto 自动通过，workflow 进入 tickets_approved。",
+            ),
+        )
 
     return {
         "module": module,

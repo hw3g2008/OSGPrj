@@ -48,7 +48,7 @@ UI Team 的收口由 `/final-closure` 统一执行（RPIV 标准）：
 
 ## 前置条件
 
-- STATE.workflow.current_step = `all_stories_done`（推荐）
+- `workflow.current_step` 推荐已到达 `all_stories_done`
 - zone 映射文件存在
 - 原型文件存在
 

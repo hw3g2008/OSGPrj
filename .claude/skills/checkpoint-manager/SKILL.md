@@ -32,6 +32,15 @@ trigger: "ticket_complete"  # | context_full | manual
 state_snapshot:
   current_story: "S-001"
   current_ticket: "T-003"
+  execution:
+    active_stories: ["S-001"]
+    active_tickets: ["T-003"]
+    ticket_leases: []
+    workspaces: []
+    scheduler:
+      parallel_enabled: false
+      max_stories: 1
+      max_tickets_per_story: 1
   completed_tickets:
     - "T-001"
     - "T-002"
@@ -119,7 +128,41 @@ def create_checkpoint(trigger="manual"):
         "state_snapshot": {
             "current_story": state.current_story,
             "current_ticket": state.current_ticket,
-            "completed_tickets": state.completed_tickets
+            "current_requirement": state.current_requirement,
+            "current_requirement_path": state.current_requirement_path,
+            "workflow": {
+                "current_step": state.workflow.current_step,
+                "next_step": state.workflow.next_step,
+                "next_requires_approval": state.workflow.next_requires_approval,
+                "auto_continue": state.workflow.auto_continue,
+                "brainstorm_version": state.workflow.brainstorm_version,
+                "srs_path": state.workflow.srs_path,
+                "decisions_path": state.workflow.decisions_path,
+            },
+            "execution": state.execution or {
+                "backend": {
+                    "workflow_backend": "yaml",
+                    "execution_backend": "inline",
+                },
+                "active_stories": [],
+                "active_tickets": [],
+                "story_leases": [],
+                "ticket_leases": [],
+                "workspaces": [],
+                "scheduler": {
+                    "parallel_enabled": False,
+                    "max_stories": 1,
+                    "max_tickets_per_story": 1,
+                    "last_tick_at": None,
+                    "last_selected_story": None,
+                    "last_runnable_tickets": [],
+                },
+            },
+            "completed_stories": state.completed_stories,
+            "completed_tickets": state.completed_tickets,
+            "blocked_tickets": state.blocked_tickets,
+            "blockers": state.blockers,
+            "stats": state.stats,
         },
         "context_summary": {
             "decisions": decisions.recent[:10],
@@ -154,6 +197,33 @@ def restore_checkpoint(checkpoint_id):
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     state.current_story = checkpoint.state_snapshot.current_story
     state.current_ticket = checkpoint.state_snapshot.current_ticket
+    state.current_requirement = checkpoint.state_snapshot.current_requirement
+    state.current_requirement_path = checkpoint.state_snapshot.current_requirement_path
+    state.workflow = checkpoint.state_snapshot.workflow
+    state.execution = checkpoint.state_snapshot.execution or {
+        "backend": {
+            "workflow_backend": "yaml",
+            "execution_backend": "inline",
+        },
+        "active_stories": [],
+        "active_tickets": [],
+        "story_leases": [],
+        "ticket_leases": [],
+        "workspaces": [],
+        "scheduler": {
+            "parallel_enabled": False,
+            "max_stories": 1,
+            "max_tickets_per_story": 1,
+            "last_tick_at": None,
+            "last_selected_story": None,
+            "last_runnable_tickets": [],
+        },
+    }
+    state.completed_stories = checkpoint.state_snapshot.completed_stories
+    state.completed_tickets = checkpoint.state_snapshot.completed_tickets
+    state.blocked_tickets = checkpoint.state_snapshot.blocked_tickets
+    state.blockers = checkpoint.state_snapshot.blockers
+    state.stats = checkpoint.state_snapshot.stats
     state.restored_from = checkpoint_id
     write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
     

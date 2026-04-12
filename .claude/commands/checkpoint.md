@@ -11,6 +11,13 @@
 
 手动创建状态检查点，用于后续恢复。
 
+Checkpoint 不仅保存 `workflow.*`，还要保存 execution plane 投影，确保会话恢复后仍能理解：
+- 当前 materialized focus（`current_story` / `current_ticket`）
+- `STATE.execution.*` 中的 active set
+- ticket/story lease
+- workspace/worktree 绑定
+- scheduler 最近一次投影
+
 ## 执行流程
 
 ```
@@ -18,6 +25,8 @@
 2. 读取当前状态
 3. 压缩上下文
 4. 生成 Checkpoint 文件
+   - 包含 state_snapshot.workflow
+   - 包含 state_snapshot.execution
 5. 更新 STATE.yaml
 ```
 
@@ -42,6 +51,8 @@
 - Story: S-001
 - Ticket: T-003 (刚完成)
 - 已完成: 3/7 Tickets
+- Execution backend: inline
+- Active tickets: 1
 
 ### 上下文摘要
 - 关键决策: 3 条

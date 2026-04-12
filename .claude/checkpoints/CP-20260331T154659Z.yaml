@@ -1,0 +1,72 @@
+id: CP-20260331T154659Z
+created_at: '2026-03-31T15:46:59Z'
+trigger: manual
+state_snapshot:
+  current_story: S-047
+  current_ticket: null
+  completed_tickets:
+  - T-177
+  - T-178
+  - T-179
+  - T-180
+  - T-181
+  - T-182
+  - T-183
+  - T-184
+  - T-185
+  - T-186
+  - T-187
+  - T-188
+  - T-189
+  - T-190
+  - T-230
+  - T-191
+  - T-192
+  - T-193
+  - T-194
+  - T-195
+  - T-196
+  - T-197
+  - T-198
+  - T-199
+  - T-200
+  - T-201
+  - T-202
+  - T-203
+  - T-204
+  - T-205
+  - T-206
+  - T-207
+  - T-208
+  - T-209
+  - T-210
+  - T-211
+  - T-212
+  - T-213
+  - T-214
+  - T-215
+  - T-216
+  - T-217
+  - T-218
+  - T-219
+  - T-220
+  - T-221
+  - T-222
+  - T-223
+  - T-224
+  - T-231
+  - T-225
+  - T-226
+  - T-227
+  - T-228
+  - T-229
+context_summary:
+  decisions: []
+  current_task: Port assistant class-records page toward lead-mentor structure/styles
+    while preserving assistant semantics
+  blockers: []
+working_memory:
+  files_modified:
+  - osg-frontend/packages/assistant/src/views/class-records/index.vue
+  - osg-frontend/packages/assistant/src/__tests__/class-records.spec.ts
+  test_status: pending

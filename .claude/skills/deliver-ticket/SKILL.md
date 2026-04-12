@@ -18,6 +18,22 @@ metadata:
 3. 执行测试并验证覆盖率（调用 `test-execution` Skill）
 4. 分支覆盖率必须达到 100%
 
+**🚨 开发前硬门槛**：Ticket 进入实现前，必须已经是可执行契约，而不是自然语言任务摘要。至少要具备：
+- `covers_ac_refs`
+- `contract_refs`
+- `test_cases`
+- `test_cases[*].ac_ref`
+- `test_cases[*].category`
+- `test_cases[*].scenario_obligation`
+- `test_cases[*].operation`
+
+任一缺失都必须停止，先回到 split-ticket / reconcile 补齐契约，再进入 `/next`。
+
+**🧭 前端实现前置能力**：当 `config.frontend_preflight.enabled = true` 时，`frontend` / `frontend-ui` Ticket 在进入既有实现流前，还要先消费一次 frontend preflight：
+- `mode = auto` → 自动调用 `frontend-delivery-preflight`，再继续既有流程
+- `mode = manual` → 停止并提示先执行 frontend preflight，不新增 workflow state
+- `apply_to.frontend-ui = false` 时，UI 还原票保持现状
+
 ## 何时使用
 
 - `/next` 命令分配了一个 Ticket
@@ -32,26 +48,59 @@ metadata:
 2. 完成后必须运行自我审查清单
 3. 完成声明必须附带验证证据
 4. 🚨 verification_evidence 必须存在且 exit_code = 0 才能更新状态
+5. 🚨 进入实现前必须先通过 executable-ticket preflight：`covers_ac_refs + contract_refs + test_cases` 及 `test_cases[*].ac_ref/category/scenario_obligation/operation` 全部齐备
+6. 🚨 缺少上述任一字段时，立即停止，不允许先开发后补测试契约
 
 ⚠️ TDD 铁律（type: backend / database / test）：
-5. 🚨 必须先设计测试用例（调用 test-design Skill）
-6. 🚨 测试用例必须覆盖所有 if-else 分支（分支覆盖率 100%）
-7. 必须先写测试，再写代码（Red-Green-Refactor）
-8. 测试必须通过且覆盖率达标才能完成
+7. 🚨 必须先设计测试用例（调用 test-design Skill）
+8. 🚨 测试用例必须覆盖所有 if-else 分支（分支覆盖率 100%）
+9. 必须先写测试，再写代码（Red-Green-Refactor）
+10. 测试必须通过且覆盖率达标才能完成
 
 ⚠️ UI / 前端铁律（type: frontend-ui / frontend）：
-9. lint + build 必须通过才能完成
-10. frontend-ui / frontend 必须通过 E2E 测试（bash bin/e2e-api-gate.sh {module} full）
-11. 含真实副作用 / 关键状态变更的能力必须通过 `delivery_truth_guard.py --stage next`
-12. 含 critical_surfaces 的页面必须通过 `ui_critical_evidence_guard.py --stage next`
+11. 当 `config.frontend_preflight.enabled = true` 且命中对应 type 时，必须先经过 frontend preflight（auto 调用 `frontend-delivery-preflight`；manual 停止并提示先执行）
+12. frontend-ui / frontend 必须通过 lint/build 对应检查后才能完成
+13. frontend-ui / frontend 必须通过 E2E 测试（bash bin/e2e-api-gate.sh {module} full）
+14. 含真实副作用 / 关键状态变更的能力必须通过 `delivery_truth_guard.py --stage next`
+15. 含 critical_surfaces 的页面必须通过 `ui_critical_evidence_guard.py --stage next`
 
 ⚠️ 配置铁律（type: config）：
-13. 修改后必须验证配置正确性（语法检查、启动验证等）
+16. 修改后必须验证配置正确性（语法检查、启动验证等）
 ```
 
 ## 执行流程
 
-根据 Ticket 的 `type` 字段选择不同流程：
+根据 Ticket 的 `type` 字段选择不同流程。
+
+### 所有流程共享的 executable-ticket preflight
+
+在真正进入实现前，必须先读取 Ticket 并校验：
+- `covers_ac_refs` 非空
+- `contract_refs` 字段存在
+- `test_cases` 非空
+- 每条 `test_case` 都具备 `ac_ref/category/scenario_obligation/operation`
+- `covers_ac_refs` 中的每一项都至少被 1 条 `test_case` 承接
+
+任一条件不满足都必须立即停止，返回“先补齐 Ticket 契约，再执行 `/next`”，禁止带着自然语言 Ticket 进入开发。
+
+### 所有前端流程共享的 frontend preflight policy
+
+对 `frontend` / `frontend-ui` Ticket，还必须读取 `config.frontend_preflight`：
+- `enabled = false` → 保持既有实现流，不新增前置动作
+- `enabled = true` 且命中当前 type → 进入 frontend preflight
+- `mode = auto` → 先调用 `frontend-delivery-preflight`，再继续既有实现流
+- `mode = manual` → 停止并输出“当前 Ticket 需要先执行 frontend preflight，再继续 /next”
+- `apply_to.frontend-ui = false` → UI 还原票不启用该前置步骤
+
+frontend preflight 只是实现前置整理，不写状态、不替代验证、不新增 workflow node。
+
+### execution plane / scheduler 约束
+
+`deliver-ticket` 仍然是**单 Ticket 执行器**，不是全局调度器：
+- runnable set 计算、并行 slot、lease、workspace/worktree 分配属于 scheduler / execution backend
+- `deliver-ticket` 只消费已被选中的单个 Ticket
+- 允许读取和回填 `STATE.execution.*` 投影（如 lease / workspace 绑定），但**禁止**直接推进 `workflow.current_step`
+- workflow 仍只能通过 `transition()` 推进
 
 ### 流程 A：TDD 流程（type: backend / database / test）
 
@@ -169,6 +218,9 @@ metadata:
   ▼
 [读取 Ticket] ─→ 获取 ticket_id, allowed_paths, ui_rule_classes, prototype_refs, visual_checklist, style_contracts, state_cases, acceptance_criteria
   │
+  ├── 若 config.frontend_preflight.enabled = true 且 apply_to.frontend-ui = true
+  │      ├── mode = auto   → 调用 frontend-delivery-preflight
+  │      └── mode = manual → 停止，提示先执行 frontend preflight
   ▼
 [创建 Checkpoint] ─→ 保存当前状态
   │
@@ -221,6 +273,9 @@ metadata:
   ▼
 [读取 Ticket] ─→ 获取 ticket_id, allowed_paths, acceptance_criteria
   │
+  ├── 若 config.frontend_preflight.enabled = true 且 apply_to.frontend = true
+  │      ├── mode = auto   → 调用 frontend-delivery-preflight
+  │      └── mode = manual → 停止，提示先执行 frontend preflight
   ▼
 [创建 Checkpoint] ─→ 保存当前状态
   │
@@ -366,10 +421,12 @@ metadata:
 def deliver_ticket(ticket_id):
     config = load_yaml(".claude/project/config.yaml")
     ticket_path = f"{config.paths.tasks.tickets}{ticket_id}.yaml"
+    state_store = resolve_state_store(config)
+    execution_backend = resolve_execution_backend(config)
 
     # Step 0: 前置检查
     if not ticket_id:
-        return failed("当前 Story 无 pending Ticket，请执行 /verify 或 /approve")
+        return failed("当前 Story 无 runnable Ticket，请执行 /verify、/approve 或等待依赖/lease/冲突解除")
 
     if not exists(ticket_path):
         return failed(f"Ticket 文件不存在: {ticket_path}")
@@ -380,7 +437,63 @@ def deliver_ticket(ticket_id):
     if ticket.status not in ["pending", "in_progress"]:
         return failed(f"Ticket {ticket_id} 状态为 {ticket.status}，需要 pending 或 in_progress")
 
-    module = read_yaml("osg-spec-docs/tasks/STATE.yaml").workflow.current_requirement
+    covers_ac_refs = ticket.get("covers_ac_refs") or []
+    contract_refs = ticket.get("contract_refs")
+    test_cases = ticket.get("test_cases") or []
+
+    if not covers_ac_refs:
+        return failed(f"Ticket {ticket_id} 缺少 covers_ac_refs，先补齐 split-ticket 契约再执行 /next")
+
+    if not contract_refs:
+        return failed(f"Ticket {ticket_id} 缺少 contract_refs，先补齐 split-ticket 契约再执行 /next")
+
+    if not test_cases:
+        return failed(f"Ticket {ticket_id} 缺少 test_cases，禁止以自然语言 Ticket 进入开发")
+
+    covered_case_refs = set()
+    for case in test_cases:
+        case_id = case.get("test_case_id") or "<unknown>"
+        ac_ref = case.get("ac_ref")
+        category = case.get("category")
+        obligation = case.get("scenario_obligation")
+        operation = case.get("operation")
+
+        if not ac_ref:
+            return failed(f"Ticket {ticket_id} 的 test_case {case_id} 缺少 ac_ref")
+        covered_case_refs.add(ac_ref)
+
+        if not category:
+            return failed(f"Ticket {ticket_id} 的 test_case {case_id} 缺少 category")
+        if not obligation:
+            return failed(f"Ticket {ticket_id} 的 test_case {case_id} 缺少 scenario_obligation")
+        if not operation:
+            return failed(f"Ticket {ticket_id} 的 test_case {case_id} 缺少 operation")
+
+    missing_case_refs = [ref for ref in covers_ac_refs if ref not in covered_case_refs]
+    if missing_case_refs:
+        return failed(
+            f"Ticket {ticket_id} 的 covers_ac_refs 未被 test_cases 完整承接: {missing_case_refs}"
+        )
+
+    frontend_preflight = config.get("frontend_preflight") or {}
+    apply_to = frontend_preflight.get("apply_to") or {}
+    frontend_preflight_enabled = bool(frontend_preflight.get("enabled"))
+    frontend_preflight_targeted = (
+        (ticket.type == "frontend" and apply_to.get("frontend", False))
+        or (ticket.type == "frontend-ui" and apply_to.get("frontend-ui", False))
+    )
+    if frontend_preflight_enabled and frontend_preflight_targeted:
+        mode = frontend_preflight.get("mode", "manual")
+        preflight_skill = frontend_preflight.get("skill", "frontend-delivery-preflight")
+        if mode == "manual":
+            return failed(
+                f"Ticket {ticket_id} 需要先执行 frontend preflight（{preflight_skill}），再继续 /next"
+            )
+        if mode == "auto":
+            run_skill(preflight_skill, ticket_id=ticket_id)
+
+    state = state_store.read_state("osg-spec-docs/tasks/STATE.yaml")
+    module = state.current_requirement
     truth_guard = bash(
         "python3 .claude/skills/workflow-engine/tests/delivery_truth_guard.py "
         f"--module {module} --stage next"
@@ -399,6 +512,13 @@ def deliver_ticket(ticket_id):
 
     # Step 2: 创建 Checkpoint
     checkpoint_id = create_checkpoint(ticket_id)
+
+    # Step 2.5: execution plane 绑定（默认 inline，可切换 git_worktree）
+    state = state_store.read_state("osg-spec-docs/tasks/STATE.yaml")
+    if not state.get("execution"):
+        state.execution = default_execution_projection(config)
+    bind_ticket_execution(state.execution, ticket_id, execution_backend, ticket)
+    state_store.write_state("osg-spec-docs/tasks/STATE.yaml", state)
 
     # Step 3: 根据 type 选择流程
     if ticket.type in ("backend", "database"):
@@ -574,18 +694,16 @@ def deliver_ticket(ticket_id):
     # Step 9: 更新 STATE.yaml + Level 3/4 验证
     # ========================================
     # state 已在 Step 7.5 读取，此处重新读取以获取最新状态
-    state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
+    state = state_store.read_state("osg-spec-docs/tasks/STATE.yaml")
     update_state(ticket_id, "done")
 
     # --- Level 3: 增量 Story 验证 ---
     story = read_yaml(f"osg-spec-docs/tasks/stories/{ticket.story_id}.yaml")
     incremental_verify(ticket, story, state)
 
-    # 判断是否所有 Tickets 都完成了
-    pending_tickets = [t for t in story.tickets
-                       if get_ticket_status(t) != "done"]
+    pending_tickets = get_story_runnable_summary(story, state)
 
-    if len(pending_tickets) == 0:
+    if pending_tickets["remaining_count"] == 0:
         # --- Level 4: 完整 Story 验收（自动调用 verification skill）---
         print("🎉 所有 Tickets 已完成，自动执行 Story 验收...")
         verify_result = verify_story(ticket.story_id)
@@ -605,7 +723,7 @@ def deliver_ticket(ticket_id):
     else:
         # W5: 中间 Ticket — 通过 transition() 推进
         transition("/next", state, "implementing")
-        print(f"⏭️ 还有 {len(pending_tickets)} 个 Ticket 待完成")
+        print(f"⏭️ 还有 {pending_tickets['remaining_count']} 个 Ticket 待完成")
 
     return {
         "status": "done",
@@ -715,6 +833,79 @@ def incremental_verify(ticket, story, state):
         print(f"  当前 Ticket 覆盖 AC: {len(current_covers)} 个")
 
     print(f"  Level 3 增量验证: ✅ 完成")
+```
+
+def get_story_runnable_summary(story, state):
+    done = []
+    remaining = []
+    for tid in story.tickets:
+        if get_ticket_status(tid) == "done":
+            done.append(tid)
+        else:
+            remaining.append(tid)
+
+    return {
+        "done_ticket_ids": done,
+        "remaining_ticket_ids": remaining,
+        "remaining_count": len(remaining),
+    }
+
+
+def bind_ticket_execution(execution, ticket_id, execution_backend, ticket):
+    execution.setdefault("active_tickets", [])
+    execution.setdefault("ticket_leases", [])
+    execution.setdefault("workspaces", [])
+
+    if ticket_id not in execution["active_tickets"]:
+        execution["active_tickets"].append(ticket_id)
+
+    lease = {
+        "ticket_id": ticket_id,
+        "backend": execution_backend.name,
+        "workspace": execution_backend.allocate_workspace(ticket_id, ticket),
+        "status": "active",
+    }
+    execution["ticket_leases"] = [l for l in execution["ticket_leases"] if l.get("ticket_id") != ticket_id]
+    execution["ticket_leases"].append(lease)
+
+    execution["workspaces"] = [w for w in execution["workspaces"] if w.get("ticket_id") != ticket_id]
+    execution["workspaces"].append({
+        "ticket_id": ticket_id,
+        "backend": execution_backend.name,
+        "path": lease["workspace"],
+    })
+
+
+def resolve_state_store(config):
+    return YamlStateStore() if (config.get("workflow_backend") or {}).get("type", "yaml") == "yaml" else GitStateStore()
+
+
+def resolve_execution_backend(config):
+    backend_type = (config.get("execution_backend") or {}).get("type", "inline")
+    return InlineWorkspaceBackend() if backend_type == "inline" else GitWorktreeBackend()
+
+
+def default_execution_projection(config):
+    parallel = config.get("parallel_execution") or {}
+    return {
+        "backend": {
+            "workflow_backend": (config.get("workflow_backend") or {}).get("type", "yaml"),
+            "execution_backend": (config.get("execution_backend") or {}).get("type", "inline"),
+        },
+        "active_stories": [],
+        "active_tickets": [],
+        "story_leases": [],
+        "ticket_leases": [],
+        "workspaces": [],
+        "scheduler": {
+            "parallel_enabled": bool(parallel.get("enabled", False)),
+            "max_stories": parallel.get("max_stories", 1),
+            "max_tickets_per_story": parallel.get("max_tickets_per_story", 1),
+            "last_tick_at": None,
+            "last_selected_story": None,
+            "last_runnable_tickets": [],
+        },
+    }
 ```
 
 ## 输出格式
@@ -906,6 +1097,8 @@ if exit_code != 0:
 ```
 
 ### Step 3: 记录验证证据到 Ticket 文件
+
+```
 
 **必须**在 Ticket YAML 文件中写入 `verification_evidence` 字段：
 

@@ -9,11 +9,42 @@ trigger: manual  # manual | ticket_complete | context_full | session_end
 state_snapshot:
   current_story: "{story_id}"
   current_ticket: "{ticket_id}"
+  current_requirement: "{current_requirement}"
+  current_requirement_path: "{current_requirement_path}"
   workflow:
     current_step: "{workflow.current_step}"
     next_step: "{workflow.next_step}"
+    next_requires_approval: false
+    auto_continue: true
+    brainstorm_version: "{workflow.brainstorm_version}"
+    srs_path: "{workflow.srs_path}"
+    decisions_path: "{workflow.decisions_path}"
+  execution:
+    backend:
+      workflow_backend: "{execution.backend.workflow_backend}"
+      execution_backend: "{execution.backend.execution_backend}"
+    active_stories: []
+    active_tickets: []
+    story_leases: []
+    ticket_leases: []
+    workspaces: []
+    scheduler:
+      parallel_enabled: false
+      max_stories: 1
+      max_tickets_per_story: 1
+      last_tick_at: null
+      last_selected_story: null
+      last_runnable_tickets: []
   completed_stories: []
   completed_tickets: []
+  blocked_tickets: []
+  blockers: []
+  stats:
+    total_stories: 0
+    completed_stories: 0
+    total_tickets: 0
+    completed_tickets: 0
+    total_time_spent: "0m"
 
 # 上下文摘要
 context_summary:

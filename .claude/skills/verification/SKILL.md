@@ -152,7 +152,7 @@ def verify_story(story_id):
     # ============================================
     pre_issues = []
 
-    module = read_yaml("osg-spec-docs/tasks/STATE.yaml").workflow.current_requirement
+    module = read_yaml("osg-spec-docs/tasks/STATE.yaml").current_requirement
     truth_sync_guard = bash(
         "python3 .claude/skills/workflow-engine/tests/truth_sync_guard.py "
         f"--module {module}"

@@ -20,12 +20,10 @@
 4. 验证验收标准
 5. 运行测试（含 frontend Ticket 时追加 E2E: bash bin/e2e-api-gate.sh {module} full）+ 场景义务完整性校验（required_test_obligations 是否被 TC 覆盖且已执行，pending 状态阻断）+ 操作级完整性校验（required_test_operations 的 operation×obligation 二维覆盖矩阵）
 6. 输出验证报告
-7. 更新 workflow:
-   - current_step = "story_verified" 或 "verification_failed"
-   - next_step = null  # 用户自行选择 /cc-review 或 /approve
-8. 事件审计（W6a）:
-   - 调用 append_workflow_event(build_event(command="/verify", state_from=old_step, state_to=new_step))
-   - 写入失败时回滚 STATE.yaml 并终止（见 workflow-engine/SKILL.md §6）
+7. 根据 verification Skill 的 passed/failed 结果，通过 transition() 推进 workflow:
+   - 通过 → "story_verified"
+   - 失败 → "verification_failed"
+8. transition() 负责推导 next_step / next_requires_approval 并写入 workflow event
 ```
 
 ## 输出示例

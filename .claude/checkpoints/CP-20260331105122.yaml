@@ -1,0 +1,17 @@
+id: "CP-$(date +%Y%m%d%H%M%S)"
+created_at: "$(date -Iseconds)"
+trigger: "manual"
+state_snapshot:
+  current_story: "assistant-home-migration"
+  current_ticket: "assistant-home-migration"
+  completed_tickets: []
+context_summary:
+  decisions:
+    - "迁移 assistant home 页面结构"
+    - "参考 lead-mentor home 页面样式"
+  current_task: "迁移 assistant home 页面为只读视角"
+  blockers: []
+working_memory:
+  files_modified:
+    - "osg-frontend/packages/assistant/src/views/home/index.vue"
+  test_status: "pending"

@@ -171,6 +171,67 @@ def extract_story_case_coverage(stories_dir: Path) -> tuple[set[str], list[str]]
     return covered_story_ids, findings
 
 
+def _story_in_scope(
+    data: dict,
+    *,
+    scope_frs: set[str],
+    contract_capabilities: set[str],
+    contract_surfaces: set[str],
+) -> bool:
+    contract_refs = data.get("contract_refs") or {}
+    if isinstance(contract_refs, dict):
+        story_capabilities = {
+            item for item in (contract_refs.get("capabilities") or [])
+            if isinstance(item, str) and item.strip()
+        }
+        if story_capabilities & contract_capabilities:
+            return True
+
+        story_surfaces = {
+            item for item in (contract_refs.get("critical_surfaces") or [])
+            if isinstance(item, str) and item.strip()
+        }
+        if story_surfaces & contract_surfaces:
+            return True
+
+    # FR 编号在不同模块之间会重复。
+    # 只有当目标模块根本没有 capability / surface 真相时，才回退到 FR 交集过滤。
+    if contract_capabilities or contract_surfaces:
+        return False
+
+    requirements = {
+        normalize_top_level_fr(ref)
+        for ref in (data.get("requirements") or [])
+        if isinstance(ref, str)
+    }
+    if requirements & scope_frs:
+        return True
+
+    return False
+
+
+def _extract_in_scope_story_ids(
+    *,
+    stories_dir: Path,
+    scope_frs: set[str],
+    contract_capabilities: set[str],
+    contract_surfaces: set[str],
+) -> set[str]:
+    story_ids: set[str] = set()
+    for path in sorted(stories_dir.glob("S-*.yaml")):
+        data = load_yaml(path) or {}
+        if not isinstance(data, dict):
+            continue
+        if _story_in_scope(
+            data,
+            scope_frs=scope_frs,
+            contract_capabilities=contract_capabilities,
+            contract_surfaces=contract_surfaces,
+        ):
+            story_ids.add(str(data.get("id") or path.stem))
+    return story_ids
+
+
 def extract_case_story_ids(cases_doc: Path) -> set[str]:
     data = load_yaml(cases_doc) or []
     story_ids: set[str] = set()
@@ -214,9 +275,18 @@ def evaluate_coverage(
     capabilities = extract_delivery_capabilities(delivery_contract_doc)
     critical_surfaces = extract_critical_surfaces(contract_doc)
     srs_frs = extract_top_level_frs(srs_doc)
-    story_frs, story_ids, ui_only_story_ids = extract_story_fr_coverage(stories_dir)
+    all_story_frs, all_story_ids, all_ui_only_story_ids = extract_story_fr_coverage(stories_dir)
     story_capabilities, story_surfaces = extract_story_contract_coverage(stories_dir)
     story_case_story_ids, story_case_findings = extract_story_case_coverage(stories_dir)
+    in_scope_story_ids = _extract_in_scope_story_ids(
+        stories_dir=stories_dir,
+        scope_frs=srs_frs,
+        contract_capabilities=set(capabilities.keys()),
+        contract_surfaces=set(critical_surfaces.keys()),
+    )
+    story_ids = in_scope_story_ids
+    ui_only_story_ids = all_ui_only_story_ids & in_scope_story_ids
+    story_frs = all_story_frs
     missing_pages = sorted(page for page in scope_pages if not _page_present(page, contract_pages))
     # Note: missing pages are future features, not blocking for final-closure
     # if missing_pages:
@@ -242,7 +312,11 @@ def evaluate_coverage(
     if missing_story_surfaces:
         findings.append(f"critical surface missing story contract coverage: {missing_story_surfaces}")
 
-    findings.extend(story_case_findings)
+    findings.extend(
+        item
+        for item in story_case_findings
+        if any(story_id in item for story_id in in_scope_story_ids)
+    )
     missing_story_case_coverage = sorted(story_id for story_id in story_ids if story_id not in story_case_story_ids)
     if missing_story_case_coverage:
         findings.append(f"story missing story_case coverage: {missing_story_case_coverage}")

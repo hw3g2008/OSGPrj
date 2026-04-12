@@ -211,11 +211,9 @@ def brainstorming(user_input):
             if round_num >= MAX_PHASE0_ROUNDS:
                 append_decisions(decisions_path, html_issues, source="phase0")
                 state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
-                state.workflow.current_step = "brainstorm_pending_confirm"
-                state.workflow.next_step = "approve_brainstorm"
                 state.workflow.auto_continue = False
                 state.workflow.decisions_path = decisions_path
-                write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+                transition("/brainstorm", state, "brainstorm_pending_confirm")
                 print(f"⛔ Phase 0 安全阀：{len(html_issues)} 个问题写入 {decisions_path}")
                 print(f"请 PM 在 {decisions_path} 中裁决后执行 /approve brainstorm")
                 return  # 停在这里，等 /approve brainstorm
@@ -258,11 +256,9 @@ def brainstorming(user_input):
         decisions_path = f"{config.paths.docs.srs}{module_name}-DECISIONS.md"
         append_decisions(decisions_path, dep_result["missing_deps"], source="phase1_dependency")
         state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
-        state.workflow.current_step = "brainstorm_pending_confirm"
-        state.workflow.next_step = "approve_brainstorm"
         state.workflow.auto_continue = False
         state.workflow.decisions_path = decisions_path
-        write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+        transition("/brainstorm", state, "brainstorm_pending_confirm")
         print("⚠️ 上游依赖未就绪，已写入决策日志。请执行 /approve brainstorm 裁决后继续。")
         return {"status": "pending_decision", "decisions_path": decisions_path}
 
@@ -559,19 +555,16 @@ def brainstorming(user_input):
         print(f"📋 决策日志: {decisions_path}")
         print(f"📋 视觉决策投影: {visual_decisions_path}")
 
-    # 更新 workflow 状态
+    # 通过 transition() 推进 workflow
     state = read_yaml("osg-spec-docs/tasks/STATE.yaml")
     if pending_decisions:  # 只有 B/C/D/V 类
-        state.workflow.current_step = "brainstorm_pending_confirm"
-        state.workflow.next_step = "approve_brainstorm"
         state.workflow.auto_continue = False
         state.workflow.decisions_path = decisions_path
+        transition("/brainstorm", state, "brainstorm_pending_confirm")
         print(f"⚠️ 有待确认项，阻塞自动继续。请在 {decisions_path} 中裁决后执行 /approve brainstorm 或重新执行 /brainstorm {module_name}")
     else:
-        state.workflow.current_step = "brainstorm_done"
-        state.workflow.next_step = "split_story"
         state.workflow.auto_continue = True
-    write_yaml("osg-spec-docs/tasks/STATE.yaml", state)
+        transition("/brainstorm", state, "brainstorm_done")
 
     return format_output(requirement_doc)
 ```
@@ -581,7 +574,7 @@ def brainstorming(user_input):
 ```
 ⚠️ Phase 0 安全阀：当闭环经过 3 轮后仍有 html_issues：
 1. 输出 {module}-DECISIONS.md（source=phase0）
-2. 设置 workflow.current_step = brainstorm_pending_confirm
+2. 通过 transition("/brainstorm", state, "brainstorm_pending_confirm") 进入阻塞态
 3. 停止 — 不继续走 Phase 1~4（上游有问题不往下跑）
 4. PM 在 {srs_dir}/{module}-DECISIONS.md 中裁决后执行 /approve brainstorm → 更新 PRD → 重新执行 /brainstorm
 
@@ -600,7 +593,7 @@ def brainstorming(user_input):
 ⚠️ Phase 4 阻塞：当存在 B/C/D/V 类不确定差异时：
 1. 输出决策日志（{module}-DECISIONS.md，source=phase4）
 2. 同步输出视觉决策投影（{prd_dir}/UI-VISUAL-DECISIONS.md，source=phase4）
-3. 设置 workflow.current_step = brainstorm_pending_confirm
+3. 通过 transition("/brainstorm", state, "brainstorm_pending_confirm") 进入阻塞态
 4. 停止自动继续 — 等待产品确认
 5. 产品确认后重新执行 /brainstorm（增量更新路径）或 /approve brainstorm（跳过语义）
 ```
