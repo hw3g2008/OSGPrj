@@ -233,28 +233,37 @@ public class OsgPositionController extends BaseController
 
     private static class PositionImportTemplate
     {
-        @Excel(name = "岗位名称")
-        private String positionName;
-
-        @Excel(name = "公司行业")
-        private String industry;
-
         @Excel(name = "岗位分类")
         private String positionCategory;
 
-        @Excel(name = "地区")
+        @Excel(name = "岗位名称")
+        private String positionName;
+
+        @Excel(name = "公司名称")
+        private String companyName;
+
+        @Excel(name = "公司类别")
+        private String companyType;
+
+        @Excel(name = "城市")
         private String city;
 
         @Excel(name = "招聘周期")
         private String recruitmentCycle;
 
-        @Excel(name = "发布时间", width = 20)
-        private String publishTime;
+        @Excel(name = "项目时间")
+        private String projectYear;
 
         @Excel(name = "截止时间", width = 20)
         private String deadlineRaw;
 
-        @Excel(name = "学员数")
-        private String studentCount;
+        @Excel(name = "部门")
+        private String department;
+
+        @Excel(name = "岗位链接", width = 30)
+        private String positionUrl;
+
+        @Excel(name = "公司官网", width = 30)
+        private String companyWebsite;
     }
 }

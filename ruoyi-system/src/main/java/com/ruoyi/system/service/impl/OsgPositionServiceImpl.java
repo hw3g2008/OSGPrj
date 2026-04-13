@@ -45,6 +45,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     private static final String DICT_POSITION_DISPLAY_STATUS = "osg_position_display_status";
     private static final String DICT_POSITION_INDUSTRY = "osg_position_industry";
     private static final String DICT_COMPANY_TYPE = "osg_company_type";
+    private static final String DICT_POSITION_COMPANY = "osg_company_name";
     private static final String DICT_RECRUITMENT_CYCLE = "osg_recruitment_cycle";
     private static final String DICT_PROJECT_YEAR = "osg_project_year";
     private static final String DICT_POSITION_REGION = "osg_position_region";
@@ -220,26 +221,15 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     public List<Map<String, Object>> selectPositionCompanyOptions(String keyword)
     {
         String normalizedKeyword = normalizeSearch(keyword);
-        return selectPositionList(new OsgPosition()).stream()
-            .filter(row -> StringUtils.hasText(row.getCompanyName()))
-            .filter(row -> normalizedKeyword == null
-                || row.getCompanyName().toLowerCase(Locale.ROOT).contains(normalizedKeyword))
-            .collect(Collectors.toMap(
-                row -> row.getCompanyName().trim(),
-                row -> row,
-                (first, second) -> first,
-                LinkedHashMap::new
-            ))
-            .values()
-            .stream()
-            .sorted(Comparator.comparing(row -> row.getCompanyName().toLowerCase(Locale.ROOT)))
-            .map(row -> {
+        return loadDictItems(DICT_POSITION_COMPANY).stream()
+            .filter(item -> StringUtils.hasText(item.getDictValue()))
+            .filter(item -> normalizedKeyword == null
+                || item.getDictValue().toLowerCase(Locale.ROOT).contains(normalizedKeyword))
+            .sorted(Comparator.comparing(item -> item.getDictValue().toLowerCase(Locale.ROOT)))
+            .map(item -> {
                 Map<String, Object> option = new LinkedHashMap<>();
-                option.put("value", row.getCompanyName());
-                option.put("label", row.getCompanyName());
-                option.put("industry", defaultText(row.getIndustry(), ""));
-                option.put("companyType", defaultText(row.getCompanyType(), ""));
-                option.put("companyWebsite", defaultText(row.getCompanyWebsite(), ""));
+                option.put("value", item.getDictValue());
+                option.put("label", item.getDictLabel());
                 return option;
             })
             .toList();
@@ -399,6 +389,17 @@ public class OsgPositionServiceImpl implements IOsgPositionService
                 successCount++;
                 existingKeys.add(dedupKey);
                 seenInFile.add(dedupKey);
+
+                // 批量导入时，新公司名自动追加到字典
+                String companyName = position.getCompanyName();
+                if (StringUtils.hasText(companyName) && findDict(DICT_POSITION_COMPANY, companyName.trim()) == null)
+                {
+                    try
+                    {
+                        upsertDictData(new DictSeed(DICT_POSITION_COMPANY, companyName.trim(), companyName.trim(), 0L, null, null, null));
+                    }
+                    catch (Exception ignored) { }
+                }
             }
         }
         catch (ServiceException ex)
