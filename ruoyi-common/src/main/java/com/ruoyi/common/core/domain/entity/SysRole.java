@@ -64,6 +64,9 @@ public class SysRole extends BaseEntity
     /** 角色菜单权限 */
     private Set<String> permissions;
 
+    /** 角色绑定用户数（仅列表查询时填充） */
+    private Integer userCount;
+
     public SysRole()
     {
 
@@ -217,6 +220,16 @@ public class SysRole extends BaseEntity
     public void setPermissions(Set<String> permissions)
     {
         this.permissions = permissions;
+    }
+
+    public Integer getUserCount()
+    {
+        return userCount;
+    }
+
+    public void setUserCount(Integer userCount)
+    {
+        this.userCount = userCount;
     }
 
     @Override

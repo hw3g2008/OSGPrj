@@ -68,8 +68,9 @@
         :data-source="dataList"
         :scroll="{ x: 'max-content' }"
         :row-key="(record: AdminDictListRow) => record.dictCode"
-        :pagination="false"
+        :pagination="tablePagination"
         :locale="{ emptyText: '暂无数据' }"
+        @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'dictLabel'">
@@ -149,16 +150,30 @@ const searchName = ref('')
 
 const pagination = reactive({
   current: 1,
-  pageSize: 10,
+  pageSize: 20,
   total: 0
 })
+
+const tablePagination = computed(() => ({
+  current: pagination.current,
+  pageSize: pagination.pageSize,
+  total: pagination.total,
+  simple: false,
+  showSizeChanger: false,
+  showTotal: (total: number) => `共 ${total} 条记录`,
+}))
+
+const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
+  pagination.current = pag.current ?? 1
+  pagination.pageSize = pag.pageSize ?? 20
+  void loadDataList()
+}
 
 const registryGroups = ref<AdminDictRegistryGroup[]>([])
 
 const tabPresentationMap: Record<string, { createLabel: string; nameHeader: string }> = {
   osg_job_category: { createLabel: '岗位分类', nameHeader: '分类名称' },
   osg_company_name: { createLabel: '公司/银行名称', nameHeader: '公司名称' },
-  osg_company_type: { createLabel: '公司/银行类别', nameHeader: '类别名称' },
   osg_region: { createLabel: '大区', nameHeader: '大区名称' },
   osg_city: { createLabel: '地区/城市', nameHeader: '城市名称' },
   osg_recruit_cycle: { createLabel: '招聘周期', nameHeader: '周期名称' },

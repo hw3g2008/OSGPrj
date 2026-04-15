@@ -138,9 +138,6 @@
             <a-tag :color="record.status === '0' ? 'success' : 'error'">
               {{ record.status === '0' ? '启用' : '禁用' }}
             </a-tag>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px">
-              {{ record.status === '0' ? '可登录并执行授权操作' : '账号已被冻结' }}
-            </div>
           </template>
           <template v-else-if="column.dataIndex === 'activity'">
             <div>最后登录：{{ formatLogin(record.loginDate) }}</div>
@@ -327,7 +324,7 @@ const loadUserList = async () => {
           const detail = await getUserDetail(user.userId)
           return {
             ...user,
-            roles: detail.roles || detail.data?.roles || []
+            roles: detail.roles || []
           }
         } catch {
           return { ...user, roles: [] }

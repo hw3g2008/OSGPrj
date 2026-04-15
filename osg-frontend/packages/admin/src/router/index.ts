@@ -42,9 +42,10 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '后台用户管理', permission: 'system:user:list' }
       },
       {
-        path: 'permission/base-data',
-        name: 'BaseData',
-        component: () => import('@/views/permission/base-data/index.vue'),
+        path: 'permission/dicts',
+        name: 'DictManagement',
+        component: () => import('@/views/permission/dicts/index.vue'),
+        alias: ['/permission/base-data'],
         meta: { title: '字典管理', permission: 'system:dict:list' }
       },
       {

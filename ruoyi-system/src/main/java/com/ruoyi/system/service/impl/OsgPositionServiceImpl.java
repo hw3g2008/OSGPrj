@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -40,11 +42,11 @@ import com.ruoyi.system.service.IOsgPositionService;
 @Service
 public class OsgPositionServiceImpl implements IOsgPositionService
 {
+    private static final Logger log = LoggerFactory.getLogger(OsgPositionServiceImpl.class);
     private static final ZoneId ZONE_ID = ZoneId.systemDefault();
     private static final String DICT_POSITION_CATEGORY = "osg_position_category";
     private static final String DICT_POSITION_DISPLAY_STATUS = "osg_position_display_status";
     private static final String DICT_POSITION_INDUSTRY = "osg_position_industry";
-    private static final String DICT_COMPANY_TYPE = "osg_company_type";
     private static final String DICT_POSITION_COMPANY = "osg_company_name";
     private static final String DICT_RECRUITMENT_CYCLE = "osg_recruitment_cycle";
     private static final String DICT_PROJECT_YEAR = "osg_project_year";
@@ -202,7 +204,6 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         meta.put("categories", buildMergedOptions(distinctValues(rows, OsgPosition::getPositionCategory), DICT_POSITION_CATEGORY));
         meta.put("displayStatuses", buildMergedOptions(distinctValues(rows, OsgPosition::getDisplayStatus), DICT_POSITION_DISPLAY_STATUS));
         meta.put("industries", buildMergedOptions(distinctValues(rows, OsgPosition::getIndustry), DICT_POSITION_INDUSTRY));
-        meta.put("companyTypes", buildMergedOptions(distinctValues(rows, OsgPosition::getCompanyType), DICT_COMPANY_TYPE));
         meta.put("recruitmentCycles", buildStaticOptions(DICT_RECRUITMENT_CYCLE));
         meta.put("projectYears", buildMergedOptions(distinctValues(rows, OsgPosition::getProjectYear), DICT_PROJECT_YEAR));
         meta.put("regions", buildMergedOptions(distinctValues(rows, OsgPosition::getRegion), DICT_POSITION_REGION));
@@ -228,7 +229,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             .sorted(Comparator.comparing(item -> item.getDictValue().toLowerCase(Locale.ROOT)))
             .map(item -> {
                 Map<String, Object> option = new LinkedHashMap<>();
-                option.put("value", item.getDictValue());
+                option.put("value", item.getDictLabel());
                 option.put("label", item.getDictLabel());
                 return option;
             })
@@ -358,7 +359,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++)
             {
                 Row row = sheet.getRow(rowIndex);
-                if (row == null || isBlankRow(row, headerIndexes, formatter))
+                if (row == null || isBlankRow(row, headerIndexes, formatter) || isExampleRow(row, headerIndexes, formatter))
                 {
                     continue;
                 }
@@ -408,7 +409,8 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         }
         catch (Exception ex)
         {
-            throw new ServiceException("岗位批量上传解析失败");
+            log.error("岗位批量上传解析失败", ex);
+            throw new ServiceException("岗位批量上传解析失败: " + ex.getMessage());
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -447,13 +449,6 @@ public class OsgPositionServiceImpl implements IOsgPositionService
                 new DictSeed(DICT_POSITION_INDUSTRY, "Consulting", "Consulting", 2L, "violet", "mdi-lightbulb", null),
                 new DictSeed(DICT_POSITION_INDUSTRY, "Tech", "Tech", 3L, "blue", "mdi-laptop", null),
                 new DictSeed(DICT_POSITION_INDUSTRY, "PE/VC", "PE/VC", 4L, "amber", "mdi-chart-line", null),
-                new DictSeed(DICT_COMPANY_TYPE, "Investment Bank", "Investment Bank", 1L, null, null, null),
-                new DictSeed(DICT_COMPANY_TYPE, "Consulting", "Consulting", 2L, null, null, null),
-                new DictSeed(DICT_COMPANY_TYPE, "Tech", "Tech", 3L, null, null, null),
-                new DictSeed(DICT_COMPANY_TYPE, "PE/VC", "PE/VC", 4L, null, null, null),
-                new DictSeed(DICT_COMPANY_TYPE, "PE", "PE", 5L, null, null, null),
-                new DictSeed(DICT_COMPANY_TYPE, "VC", "VC", 6L, null, null, null),
-                new DictSeed(DICT_COMPANY_TYPE, "Other", "Other", 7L, null, null, null),
                 new DictSeed(DICT_RECRUITMENT_CYCLE, "Spring Week", "Spring Week", 1L, null, null, null),
                 new DictSeed(DICT_RECRUITMENT_CYCLE, "2024 Spring", "2024 Spring", 2L, null, null, null),
                 new DictSeed(DICT_RECRUITMENT_CYCLE, "2025 Spring", "2025 Spring", 3L, null, null, null),
@@ -773,7 +768,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         position.setPositionCategory(asText(body.get("positionCategory")));
         position.setIndustry(asText(body.get("industry")));
         position.setCompanyName(asText(body.get("companyName")));
-        position.setCompanyType(defaultText(asText(body.get("companyType")), position.getIndustry()));
+        position.setCompanyType(position.getIndustry());
         position.setCompanyWebsite(asText(body.get("companyWebsite")));
         position.setPositionName(asText(body.get("positionName")));
         position.setDepartment(asText(body.get("department")));
@@ -830,41 +825,41 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         position.setPositionName(readCell(row, headerIndexes, formatter, "position_name"));
         position.setCompanyName(readCell(row, headerIndexes, formatter, "company_name"));
         position.setPositionCategory(defaultText(readCell(row, headerIndexes, formatter, "position_category"), "summer"));
-        String companyType = defaultText(readCell(row, headerIndexes, formatter, "company_type"),
-            defaultText(readCell(row, headerIndexes, formatter, "industry"), "Other"));
-        position.setCompanyType(companyType);
-        position.setIndustry(companyType);
+        String rawIndustry = defaultText(
+            readCell(row, headerIndexes, formatter, "company_type"),
+            defaultText(readCell(row, headerIndexes, formatter, "industry"), ""));
+        String validatedIndustry = validateIndustry(rawIndustry);
+        position.setIndustry(validatedIndustry);
+        position.setCompanyType(validatedIndustry);
         position.setRecruitmentCycle(readCell(row, headerIndexes, formatter, "recruitment_cycle"));
         position.setDepartment(readCell(row, headerIndexes, formatter, "department"));
         position.setPositionUrl(readCell(row, headerIndexes, formatter, "position_url"));
         position.setCompanyWebsite(readCell(row, headerIndexes, formatter, "company_website"));
 
-        // city normalization + region inference
+        // city normalization + region inference (city is optional)
         String rawCity = readCell(row, headerIndexes, formatter, "city");
         CityNormResult cityResult = normalizeCity(rawCity);
-        if (cityResult == null)
+        if (cityResult != null)
         {
-            return new RowBuildResult(null, "第" + rowNum + "行: 地区为空");
-        }
-        position.setCity(cityResult.city());
+            position.setCity(cityResult.city());
 
-        String region = readCell(row, headerIndexes, formatter, "region");
-        if (StringUtils.hasText(region))
-        {
-            position.setRegion(region);
-        }
-        else if (cityResult.region() != null)
-        {
-            position.setRegion(cityResult.region());
-        }
-        else
-        {
-            String inferred = inferRegionFromCity(cityResult.city());
-            if (inferred == null)
+            String region = readCell(row, headerIndexes, formatter, "region");
+            if (StringUtils.hasText(region))
             {
-                return new RowBuildResult(null, "第" + rowNum + "行: 无法从地区\"" + rawCity + "\"推断大区");
+                position.setRegion(region);
             }
-            position.setRegion(inferred);
+            else if (cityResult.region() != null)
+            {
+                position.setRegion(cityResult.region());
+            }
+            else
+            {
+                String inferred = inferRegionFromCity(cityResult.city());
+                if (inferred != null)
+                {
+                    position.setRegion(inferred);
+                }
+            }
         }
 
         // project_year inference
@@ -911,8 +906,6 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         List<String> missing = new ArrayList<>();
         if (!StringUtils.hasText(position.getCompanyName())) missing.add("公司名称");
         if (!StringUtils.hasText(position.getPositionName())) missing.add("岗位名称");
-        if (!StringUtils.hasText(position.getCity())) missing.add("地区");
-        if (!StringUtils.hasText(position.getRegion())) missing.add("大区");
         if (!StringUtils.hasText(position.getProjectYear())) missing.add("项目时间");
         if (!StringUtils.hasText(position.getRecruitmentCycle())) missing.add("招聘周期");
         if (!missing.isEmpty())
@@ -936,7 +929,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             String name = formatter.formatCellValue(cell);
             if (name != null && !name.isBlank())
             {
-                indexes.put(name.trim().toLowerCase(Locale.ROOT), cell.getColumnIndex());
+                indexes.put(name.trim().replaceAll("[\\s*]+$", "").toLowerCase(Locale.ROOT), cell.getColumnIndex());
             }
         }
         return indexes;
@@ -953,6 +946,41 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             }
         }
         return true;
+    }
+
+    private boolean isExampleRow(Row row, Map<String, Integer> headerIndexes, DataFormatter formatter)
+    {
+        for (Integer columnIndex : headerIndexes.values())
+        {
+            String value = formatter.formatCellValue(row.getCell(columnIndex));
+            if (value != null && value.trim().startsWith("如:"))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Set<String> validIndustryValues;
+
+    private String validateIndustry(String raw)
+    {
+        if (validIndustryValues == null)
+        {
+            validIndustryValues = loadDictItems(DICT_POSITION_INDUSTRY).stream()
+                .map(SysDictData::getDictValue)
+                .collect(Collectors.toSet());
+        }
+        if (validIndustryValues.contains(raw))
+        {
+            return raw;
+        }
+        String lower = raw.toLowerCase(Locale.ROOT);
+        if (lower.contains("bank") || lower.contains("ib") || lower.contains("finance")) return "Investment Bank";
+        if (lower.contains("consult")) return "Consulting";
+        if (lower.contains("tech") || lower.contains("quant")) return "Tech";
+        if (lower.contains("pe") || lower.contains("vc")) return "PE/VC";
+        return "Investment Bank";
     }
 
     private static final Map<String, String> HEADER_ALIAS;
@@ -1004,7 +1032,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     private static final Pattern YEAR_PATTERN = Pattern.compile("(\\d{4})");
 
     private static final List<String> REQUIRED_HEADERS = List.of(
-        "position_name", "company_name", "position_category", "city", "recruitment_cycle", "project_year"
+        "position_name", "company_name", "position_category", "recruitment_cycle", "project_year"
     );
 
     private String readCell(Row row, Map<String, Integer> headerIndexes, DataFormatter formatter, String key)

@@ -47,7 +47,7 @@ public class OsgBaseDataController extends BaseController
         this.registryService = registryService;
     }
 
-    @PreAuthorize("@ss.hasAnyPermi('system:dict:list,system:baseData:list')")
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:list,admin:base-data:list')")
     @GetMapping("/list")
     public TableDataInfo list(String name, String category, String tab)
     {
@@ -72,8 +72,8 @@ public class OsgBaseDataController extends BaseController
         return getDataTable(payload);
     }
 
-    @PreAuthorize("@ss.hasAnyPermi('system:dict:add,system:baseData:add')")
-    @Log(title = "基础数据管理", businessType = BusinessType.INSERT)
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:add,admin:base-data:list')")
+    @Log(title = "字典管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Map<String, Object> body)
     {
@@ -102,8 +102,8 @@ public class OsgBaseDataController extends BaseController
         return toAjax(dictDataService.insertDictData(dictData));
     }
 
-    @PreAuthorize("@ss.hasAnyPermi('system:dict:edit,system:baseData:edit')")
-    @Log(title = "基础数据管理", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:edit,admin:base-data:list')")
+    @Log(title = "字典管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody Map<String, Object> body)
     {
@@ -117,7 +117,7 @@ public class OsgBaseDataController extends BaseController
         SysDictData existing = dictDataService.selectDictDataById(id);
         if (existing == null)
         {
-            return AjaxResult.error("基础数据不存在");
+            return AjaxResult.error("字典项不存在");
         }
 
         existing.setDictLabel(name);
@@ -128,7 +128,7 @@ public class OsgBaseDataController extends BaseController
         return toAjax(dictDataService.updateDictData(existing));
     }
 
-    @PreAuthorize("@ss.hasAnyPermi('system:dict:edit,system:baseData:list')")
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:edit,admin:base-data:list')")
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(@RequestBody Map<String, Object> body)
     {
@@ -140,7 +140,7 @@ public class OsgBaseDataController extends BaseController
         SysDictData existing = dictDataService.selectDictDataById(asLong(body.get("id")));
         if (existing == null)
         {
-            return AjaxResult.error("基础数据不存在");
+            return AjaxResult.error("字典项不存在");
         }
 
         existing.setStatus(normalizeStatus(body.get("status")));
@@ -148,7 +148,7 @@ public class OsgBaseDataController extends BaseController
         return toAjax(dictDataService.updateDictData(existing));
     }
 
-    @PreAuthorize("@ss.hasAnyPermi('system:dict:list,system:baseData:list')")
+    @PreAuthorize("@ss.hasAnyPermi('system:dict:list,admin:base-data:list')")
     @GetMapping("/categories")
     public AjaxResult categories()
     {

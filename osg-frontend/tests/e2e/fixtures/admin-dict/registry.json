@@ -1,0 +1,56 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": [
+    {
+      "group_key": "job",
+      "group_label": "求职相关",
+      "icon": "mdi-briefcase",
+      "icon_color": "#3B82F6",
+      "icon_bg": "#DBEAFE",
+      "order": 10,
+      "dict_types": [
+        { "dict_type": "osg_job_category", "dict_name": "岗位分类", "has_parent": false },
+        { "dict_type": "osg_company_name", "dict_name": "公司/银行名称", "has_parent": true, "parent_dict_type": "osg_company_type" },
+        { "dict_type": "osg_region", "dict_name": "大区", "has_parent": false },
+        { "dict_type": "osg_city", "dict_name": "地区/城市", "has_parent": true, "parent_dict_type": "osg_region" },
+        { "dict_type": "osg_recruit_cycle", "dict_name": "招聘周期", "has_parent": false }
+      ]
+    },
+    {
+      "group_key": "student",
+      "group_label": "学员相关",
+      "icon": "mdi-account-school",
+      "icon_color": "#22C55E",
+      "icon_bg": "#D1FAE5",
+      "order": 20,
+      "dict_types": [
+        { "dict_type": "osg_school", "dict_name": "学校", "has_parent": false },
+        { "dict_type": "osg_major_direction", "dict_name": "主攻方向", "has_parent": false },
+        { "dict_type": "osg_sub_direction", "dict_name": "子方向", "has_parent": true, "parent_dict_type": "osg_major_direction" }
+      ]
+    },
+    {
+      "group_key": "course",
+      "group_label": "课程相关",
+      "icon": "mdi-book-open-variant",
+      "icon_color": "#F59E0B",
+      "icon_bg": "#FEF3C7",
+      "order": 30,
+      "dict_types": [
+        { "dict_type": "osg_course_type", "dict_name": "课程类型", "has_parent": false }
+      ]
+    },
+    {
+      "group_key": "finance",
+      "group_label": "财务相关",
+      "icon": "mdi-cash-multiple",
+      "icon_color": "#8B5CF6",
+      "icon_bg": "#E0E7FF",
+      "order": 40,
+      "dict_types": [
+        { "dict_type": "osg_expense_type", "dict_name": "报销类型", "has_parent": false }
+      ]
+    }
+  ]
+}

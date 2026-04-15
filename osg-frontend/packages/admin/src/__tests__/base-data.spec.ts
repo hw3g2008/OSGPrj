@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 
 const baseDataViewSource = fs.readFileSync(
-  path.resolve(__dirname, '../views/permission/base-data/index.vue'),
+  path.resolve(__dirname, '../views/permission/dicts/index.vue'),
   'utf-8'
 )
 
@@ -210,7 +210,7 @@ describe('字典管理模块测试', () => {
 
     it('moves the add action into the content toolbar instead of the page header', () => {
       expect(baseDataViewSource).not.toContain('新增{{ currentTabLabel }}')
-      expect(baseDataViewSource).toContain('mdi mdi-plus')
+      expect(baseDataViewSource).toContain('<PlusOutlined />')
     })
   })
 

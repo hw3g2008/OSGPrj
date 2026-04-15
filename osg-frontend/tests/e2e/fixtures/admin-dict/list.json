@@ -1,0 +1,37 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "rows": [
+    {
+      "dictCode": 1,
+      "dictLabel": "暑期实习",
+      "dictValue": "summer",
+      "dictType": "osg_job_category",
+      "dictSort": 100,
+      "status": "0",
+      "updateTime": "2026-01-15 00:00:00",
+      "remark": "{}"
+    },
+    {
+      "dictCode": 2,
+      "dictLabel": "全职招聘",
+      "dictValue": "fulltime",
+      "dictType": "osg_job_category",
+      "dictSort": 90,
+      "status": "0",
+      "updateTime": "2026-01-15 00:00:00",
+      "remark": "{}"
+    },
+    {
+      "dictCode": 3,
+      "dictLabel": "非常规周期",
+      "dictValue": "offcycle",
+      "dictType": "osg_job_category",
+      "dictSort": 80,
+      "status": "0",
+      "updateTime": "2026-01-15 00:00:00",
+      "remark": "{}"
+    }
+  ],
+  "total": 3
+}

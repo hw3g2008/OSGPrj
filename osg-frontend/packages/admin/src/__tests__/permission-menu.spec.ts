@@ -21,7 +21,7 @@ const menuGroups: MenuGroup[] = [
       { path: '/permission/menu', title: '菜单管理', permission: 'system:menu:list' },
       { path: '/permission/roles', title: '权限配置', permission: 'system:role:list' },
       { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list' },
-      { path: '/permission/base-data', title: '字典管理', permission: 'system:dict:list' },
+      { path: '/permission/dicts', title: '字典管理', permission: 'system:dict:list' },
     ]
   },
   {

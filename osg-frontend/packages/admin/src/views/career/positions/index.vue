@@ -52,7 +52,7 @@
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.industry" placeholder="全部行业" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.industry" placeholder="公司类别" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.industries" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
@@ -108,16 +108,16 @@
                 @click="toggleIndustry(industry.industry)"
               >
                 <div class="positions-drilldown__industry-main">
-                  <i :class="['mdi', expandedIndustries.has(industry.industry) ? 'mdi-chevron-down' : 'mdi-chevron-right']" aria-hidden="true"></i>
-                  <i :class="['mdi', getIndustryIcon(industry.industry)]" aria-hidden="true"></i>
-                  <strong>{{ formatIndustry(industry.industry) }}</strong>
-                  <a-tag color="orange">{{ industry.companyCount }} 家公司</a-tag>
+                  <i :class="['mdi', expandedIndustries.has(industry.industry) ? 'mdi-chevron-down' : 'mdi-chevron-right']" :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" aria-hidden="true"></i>
+                  <i :class="['mdi', getIndustryIcon(industry.industry)]" :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" aria-hidden="true"></i>
+                  <strong :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ formatIndustry(industry.industry) }}</strong>
+                  <span :style="{ background: toneTextColor[getIndustryTone(industry.industry) || 'slate'], color: '#fff', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }">{{ industry.companyCount }} 家公司</span>
                   <a-tag color="purple">{{ industry.positionCount }} 个岗位</a-tag>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px">
                   <a-tag color="green">{{ industry.openCount }} 开放</a-tag>
                   <a-tag v-if="industry.positionCount - industry.openCount > 0" color="default">{{ industry.positionCount - industry.openCount }} 已关闭</a-tag>
-                  <span style="font-size: 12px; font-weight: 700">{{ industry.studentCount }} 学员</span>
+                  <span :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ industry.studentCount }} 学员</span>
                 </div>
               </button>
 
@@ -316,13 +316,14 @@ const statusToneToColor: Record<string, string> = {
   danger: 'red'
 }
 
-const industryToneToColor: Record<string, string> = {
-  gold: 'orange',
-  violet: 'purple',
-  blue: 'blue',
-  amber: 'orange',
-  slate: 'default'
+const toneTextColor: Record<string, string> = {
+  gold: '#92400E',
+  violet: '#7C3AED',
+  blue: '#1D4ED8',
+  amber: '#D97706',
+  slate: '#64748b'
 }
+
 
 const drilldownColumns = [
   { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
@@ -339,6 +340,8 @@ const drilldownColumns = [
 
 const listColumns = [
   { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
+  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 160 },
+  { title: '公司类别', dataIndex: 'companyType', key: 'companyType', width: 100 },
   { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
   { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
   { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
@@ -354,7 +357,6 @@ const createEmptyMeta = (): PositionMeta => ({
   categories: [],
   displayStatuses: [],
   industries: [],
-  companyTypes: [],
   recruitmentCycles: [],
   projectYears: [],
   regions: [],

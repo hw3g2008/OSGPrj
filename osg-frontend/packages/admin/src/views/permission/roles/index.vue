@@ -22,16 +22,12 @@
       type="info"
       show-icon
       banner
-      message="动态权限升级说明"
+      message="操作提示"
       style="border-radius: 12px"
     >
       <template #description>
         <p style="margin: 0">
-          角色配置已从静态权限模块逐步升级为菜单树授权。保存后，菜单树授权会驱动
-          <code>/getRouters</code> 和按钮级权限，确保菜单树授权与侧边栏/操作权限保持一致。
-        </p>
-        <p style="margin: 4px 0 0; color: #64748b">
-          当前阶段：角色基础信息仍保留原入口，菜单树授权通过“配置菜单树”弹层收口。
+          点击「编辑」修改角色名称和描述，点击「配置菜单树」管理角色可访问的功能模块。员工数为 0 的角色可删除。
         </p>
       </template>
     </a-alert>
@@ -42,7 +38,13 @@
         :data-source="roleList"
         :scroll="{ x: 'max-content' }"
         :row-key="(r: any) => r.roleId"
-        :pagination="false"
+        :pagination="{
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          showTotal: (total: number) => `共 ${total} 条记录`,
+          onChange: onPageChange,
+        }"
         :loading="loading"
       >
         <template #bodyCell="{ column, record }">
@@ -54,19 +56,19 @@
           </template>
           <template v-else-if="column.dataIndex === 'menuNames'">
             <template v-if="record.roleKey === 'super_admin'">
-              <a-tag color="purple">全部权限</a-tag>
+              <span :style="pillStyle('purple')">全部权限</span>
             </template>
             <template v-else>
-              <a-tag
+              <span
                 v-for="menu in record.menuNames?.slice(0, 5)"
                 :key="menu"
-                :color="getPermissionTagColor(menu)"
+                :style="pillStyle(getPermissionColor(menu))"
               >
                 {{ menu }}
-              </a-tag>
-              <a-tag v-if="record.menuNames?.length > 5">
+              </span>
+              <span v-if="record.menuNames?.length > 5" :style="pillStyle('default')">
                 +{{ record.menuNames.length - 5 }}
-              </a-tag>
+              </span>
             </template>
           </template>
           <template v-else-if="column.dataIndex === 'userCount'">
@@ -137,10 +139,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { getRoleList, getMenuTree, deleteRole, getRoleMenuIds, updateRole } from '@/api/role'
-import { getPermissionClassName } from '@osg/shared/utils/permissionColors'
+import { getPermissionColor, getPermissionColorConfig } from '@osg/shared/utils/permissionColors'
+import type { PermissionColorType } from '@osg/shared/utils/permissionColors'
 import RoleModal from './components/RoleModal.vue'
 import RoleMenuTreeModal from './components/RoleMenuTreeModal.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -158,24 +161,34 @@ const roleColumns = [
   { title: '操作', dataIndex: 'action', key: 'action', width: 220 },
 ]
 
-const permissionColorMap: Record<string, string> = {
-  'permission-pill--info': 'blue',
-  'permission-pill--warning': 'orange',
-  'permission-pill--success': 'green',
-  'permission-pill--danger': 'red',
-  'permission-pill--purple': 'purple',
-  'permission-pill--teal': 'cyan',
-  'permission-pill--default': 'default',
-}
-
-const getPermissionTagColor = (menu: string) => {
-  const cls = getPermissionClassName(menu)
-  return permissionColorMap[cls] || 'default'
+const pillStyle = (colorType: PermissionColorType) => {
+  const cfg = getPermissionColorConfig(colorType)
+  return {
+    display: 'inline-flex',
+    padding: '5px 12px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: 600,
+    margin: '2px',
+    background: cfg.bg,
+    color: cfg.text,
+  }
 }
 
 const loading = ref(false)
 const roleList = ref<any[]>([])
 const menuTree = ref<any[]>([])
+
+const pagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0
+})
+
+const onPageChange = (page: number) => {
+  pagination.current = page
+  loadRoleList()
+}
 const modalVisible = ref(false)
 const roleTreeVisible = ref(false)
 const currentRole = ref<any>(null)
@@ -189,10 +202,11 @@ const loadRoleList = async () => {
   try {
     loading.value = true
     const res = await getRoleList({
-      pageNum: 1,
-      pageSize: 10
+      pageNum: pagination.current,
+      pageSize: pagination.pageSize
     })
     const roles = res.rows || []
+    pagination.total = res.total || 0
     
     // 为每个角色加载权限信息
     const rolesWithMenus = await Promise.all(
@@ -207,23 +221,26 @@ const loadRoleList = async () => {
         
         try {
           const menuRes = await getRoleMenuIds(role.roleId)
-          const menuMap = new Map()
+          const checkedSet = new Set(menuRes.checkedKeys || [])
           
-          // 构建菜单映射
-          const buildMenuMap = (menus: any[]) => {
-            menus.forEach(menu => {
-              menuMap.set(menu.id, menu.label)
-              if (menu.children) {
-                buildMenuMap(menu.children)
+          // 收集被选中叶子所属的二级菜单名称（去重）
+          const secondLevelNames: string[] = []
+          const menus = menuRes.menus || []
+          for (const top of menus) {
+            if (!top.children?.length) {
+              // 一级无子项（如「首页」），跳过
+              continue
+            }
+            for (const second of top.children) {
+              // 检查二级菜单本身或其下任意子项是否被选中
+              const hasChecked = checkedSet.has(second.id) ||
+                (second.children || []).some((c: any) => checkedSet.has(c.id))
+              if (hasChecked && !secondLevelNames.includes(second.label)) {
+                secondLevelNames.push(second.label)
               }
-            })
+            }
           }
-          buildMenuMap(menuRes.menus || [])
-          
-          // 获取已选权限的名称
-          const menuNames = (menuRes.checkedKeys || [])
-            .map(id => menuMap.get(id))
-            .filter(Boolean)
+          const menuNames = secondLevelNames
           
           return {
             ...role,

@@ -201,7 +201,7 @@ public class OsgStudentPositionServiceImpl implements IOsgStudentPositionService
         position.setPositionCategory(request.getPositionCategory());
         position.setIndustry(request.getIndustry());
         position.setCompanyName(request.getCompanyName());
-        position.setCompanyType(defaultText(request.getCompanyType(), request.getIndustry()));
+        position.setCompanyType(request.getIndustry());
         position.setCompanyWebsite(request.getCompanyWebsite());
         position.setPositionName(request.getPositionName());
         position.setDepartment(request.getDepartment());

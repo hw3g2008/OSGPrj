@@ -26,7 +26,7 @@ insert into sys_menu values(2010, '首页', 0, 0, 'home', 'admin/home/index', ''
 -- 4. 插入权限管理菜单（parent_id=2001）
 insert into sys_menu values(2011, '权限配置',     2001, 1, 'roles',    'admin/permission/roles/index',    '', '', 1, 0, 'C', '0', '0', 'admin:roles:list',    '#', 'admin', sysdate(), '', null, '权限配置菜单');
 insert into sys_menu values(2012, '后台用户管理', 2001, 2, 'admins',   'admin/permission/admins/index',   '', '', 1, 0, 'C', '0', '0', 'admin:admins:list',   '#', 'admin', sysdate(), '', null, '后台用户管理菜单');
-insert into sys_menu values(2013, '基础数据管理', 2001, 3, 'base-data','admin/permission/baseData/index', '', '', 1, 0, 'C', '0', '0', 'admin:base-data:list','#', 'admin', sysdate(), '', null, '基础数据管理菜单');
+insert into sys_menu values(2013, '字典管理', 2001, 3, 'dicts','admin/permission/dicts/index', '', '', 1, 0, 'C', '0', '0', 'system:dict:list','#', 'admin', sysdate(), '', null, '字典管理菜单');
 
 -- 5. 插入用户中心菜单（parent_id=2002）
 insert into sys_menu values(2014, '学生列表',     2002, 1, 'students',        'admin/userCenter/students/index',       '', '', 1, 0, 'C', '0', '0', 'admin:students:list',        '#', 'admin', sysdate(), '', null, '学生列表菜单');

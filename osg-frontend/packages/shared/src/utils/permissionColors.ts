@@ -16,6 +16,7 @@ export const PERMISSION_COLOR_CONFIG: Record<string, PermissionColorType> = {
   '权限配置': 'purple',
   '后台用户管理': 'purple',
   '基础数据管理': 'purple',
+  '字典管理': 'purple',
   
   // 用户中心 - 蓝色系
   '用户中心': 'info',

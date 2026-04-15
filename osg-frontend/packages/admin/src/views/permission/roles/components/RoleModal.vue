@@ -156,12 +156,14 @@ function collectLeafItems(nodes: MenuNode[] = []): Array<{ id: number; label: st
 }
 
 function inferGroupIcon(label: string): string {
+  if (label.includes('首页')) return 'mdi-home'
   if (label.includes('权限')) return 'mdi-shield-key'
   if (label.includes('用户')) return 'mdi-account-group'
-  if (label.includes('课程')) return 'mdi-book-open-variant'
+  if (label.includes('教学')) return 'mdi-book-open-variant'
   if (label.includes('求职')) return 'mdi-briefcase'
   if (label.includes('财务')) return 'mdi-cash'
   if (label.includes('资源')) return 'mdi-folder'
+  if (label.includes('个人')) return 'mdi-account-circle'
   if (label.includes('系统')) return 'mdi-cog'
   return 'mdi-circle-small'
 }

@@ -25,10 +25,8 @@
     </div>
 
     <p class="role-tree-modal__tip">
-      勾选目录会级联选中子菜单；勾选按钮权限后，前端 <code>v-hasPermi</code> 与后端
-      <code>@PreAuthorize</code> 将使用相同的 <code>perms</code> Key。
+      勾选目录会自动选中其下所有子菜单。取消目录勾选将同时移除子菜单权限。
     </p>
-    <p class="role-tree-modal__hint">典型按钮节点包括：新增菜单、编辑菜单、删除菜单。</p>
 
     <div id="role-menu-tree" class="role-tree-modal__tree" data-content-part="tree-shell">
       <section
@@ -116,9 +114,16 @@ watch(
 )
 
 function inferGroupIcon(label: string) {
-  if (label.includes('权限')) return 'mdi-folder-key'
+  if (label.includes('首页')) return 'mdi-home'
+  if (label.includes('权限')) return 'mdi-shield-key'
   if (label.includes('用户')) return 'mdi-account-group'
-  return 'mdi-folder-key'
+  if (label.includes('教学')) return 'mdi-book-open-variant'
+  if (label.includes('求职')) return 'mdi-briefcase'
+  if (label.includes('财务')) return 'mdi-cash'
+  if (label.includes('资源')) return 'mdi-folder'
+  if (label.includes('个人')) return 'mdi-account-circle'
+  if (label.includes('系统')) return 'mdi-cog'
+  return 'mdi-circle-small'
 }
 
 function collectNodeIds(node: MenuNode): number[] {

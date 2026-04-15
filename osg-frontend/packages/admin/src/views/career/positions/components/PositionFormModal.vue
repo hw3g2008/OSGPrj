@@ -239,7 +239,7 @@ const surfaceId = computed(() => {
   return 'modal-new-position'
 })
 const categoryOptions = computed(() => props.meta.categories || [])
-const companyTypeOptions = computed(() => props.meta.companyTypes || [])
+const companyTypeOptions = computed(() => props.meta.industries || [])
 const recruitmentCycleOptions = computed(() => props.meta.recruitmentCycles || [])
 const projectYearOptions = computed(() => props.meta.projectYears || [])
 const regionOptions = computed(() => props.meta.regions || [])
@@ -324,7 +324,7 @@ const handleSubmit = () => {
   emit('submit', {
     positionId: props.position?.positionId,
     positionCategory: form.positionCategory,
-    industry: form.companyType || 'Other',
+    industry: form.companyType || 'Investment Bank',
     companyName: form.companyName,
     companyType: form.companyType || undefined,
     companyWebsite: form.companyWebsite || undefined,

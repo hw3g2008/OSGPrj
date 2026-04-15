@@ -75,16 +75,6 @@
         <a-input v-model:value="formState.country" placeholder="请输入国家/地区（选填）" />
       </a-form-item>
 
-      <!-- Fix 5: Type 字段，company_type Tab 特有（英文字段名），供 Playwright 定位 -->
-      <a-form-item
-        v-if="props.tab === 'osg_company_type'"
-        name="type"
-        data-field-name="Type"
-        label="Type"
-      >
-        <a-input v-model:value="formState.type" placeholder="请输入 Type（选填）" />
-      </a-form-item>
-
       <a-form-item label="排序" name="dictSort" data-field-name="排序">
         <a-input-number
           v-model:value="formState.dictSort"
@@ -141,7 +131,6 @@ const surfaceIdMap: Record<string, { create: string; edit: string }> = {
 const nameFieldLabelMap: Record<string, string> = {
   osg_job_category: '分类名称',
   osg_company_name: '公司/银行名称',
-  osg_company_type: '类别名称',
   osg_region: '大区名称',
   osg_city: '地区/城市名称',
   osg_recruit_cycle: '周期名称',

@@ -248,8 +248,6 @@ const handleSubmit = async () => {
         phonenumber: formState.phonenumber || undefined,
         roleIds: formState.roleIds,
         remark: formState.remark || undefined,
-      }, {
-        customErrorMessage: '用户修改失败，请检查输入信息'
       })
       message.success('用户修改成功')
     } else {
@@ -261,8 +259,6 @@ const handleSubmit = async () => {
         roleIds: formState.roleIds,
         remark: formState.remark || undefined,
         password: 'Osg@2026',
-      }, {
-        customErrorMessage: '用户新增失败，请检查输入信息'
       })
       message.success('用户新增成功')
     }

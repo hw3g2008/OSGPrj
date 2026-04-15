@@ -54,7 +54,7 @@ public class OsgLeadMentorPositionServiceImpl implements IOsgLeadMentorPositionS
         payload.put("categories", buildOptions(rows, OsgPosition::getPositionCategory));
         payload.put("displayStatuses", List.of(option(PUBLIC_DISPLAY_STATUS, PUBLIC_DISPLAY_STATUS)));
         payload.put("industries", buildOptions(rows, OsgPosition::getIndustry));
-        payload.put("companyTypes", buildOptions(rows, OsgPosition::getCompanyType));
+        payload.put("companyTypes", buildOptions(rows, OsgPosition::getIndustry));
         payload.put("companies", buildOptions(rows, OsgPosition::getCompanyName));
         payload.put("recruitmentCycles", buildOptions(rows, OsgPosition::getRecruitmentCycle));
         payload.put("projectYears", buildOptions(rows, OsgPosition::getProjectYear));
@@ -139,7 +139,7 @@ public class OsgLeadMentorPositionServiceImpl implements IOsgLeadMentorPositionS
         row.put("positionCategory", defaultText(position.getPositionCategory()));
         row.put("industry", defaultText(position.getIndustry()));
         row.put("companyName", defaultText(position.getCompanyName()));
-        row.put("companyType", defaultText(position.getCompanyType()));
+        row.put("companyType", defaultText(position.getIndustry()));
         row.put("companyWebsite", defaultText(position.getCompanyWebsite()));
         row.put("positionName", defaultText(position.getPositionName()));
         row.put("department", defaultText(position.getDepartment()));

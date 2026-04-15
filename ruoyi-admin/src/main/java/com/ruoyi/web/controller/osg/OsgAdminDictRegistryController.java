@@ -21,7 +21,7 @@ public class OsgAdminDictRegistryController
         this.registryService = registryService;
     }
 
-    @PreAuthorize("@ss.hasAnyPermi('system:dict:list,system:baseData:list')")
+    @PreAuthorize("@ss.hasPermi('system:dict:list')")
     @GetMapping("/registry")
     public AjaxResult registry()
     {

@@ -670,32 +670,38 @@ admin_dict_registry_response="$(request_json GET "/system/admin-dict/registry" "
 admin_dict_group_count="$(json_required '(.data // .) | length' "${admin_dict_registry_response}")"
 pass "admin-dict.registry" "groups=${admin_dict_group_count}"
 
-admin_dict_list_response="$(request_json GET "/system/dict/data/list?pageNum=1&pageSize=20&dictType=osg_city" "" "${ADMIN_TOKEN}")"
+admin_dict_list_response="$(request_json GET "/system/dict/data/list?pageNum=1&pageSize=100&dictType=osg_city" "" "${ADMIN_TOKEN}")"
 admin_dict_rows="$(json_required '.rows | length' "${admin_dict_list_response}")"
 pass "admin-dict.list" "rows=${admin_dict_rows}"
 
-base_data_list_response="$(request_json GET "/system/basedata/list?pageNum=1&pageSize=100&tab=city" "" "${ADMIN_TOKEN}")"
-base_data_count="$(json_required '.rows | length' "${base_data_list_response}")"
-pass "base-data.list" "count=${base_data_count}"
-
+autotest_base_data_value="autotest_city_api_${SMOKE_TAG}"
 create_base_data_payload="$(jq -cn \
-  --arg name "${AUTOTEST_BASE_DATA_NAME}" \
-  '{name: $name, category: "job", tab: "city", sort: 88, status: "0"}')"
-request_json POST /system/basedata "${create_base_data_payload}" "${ADMIN_TOKEN}" >/dev/null
-base_data_after_create="$(request_json GET "/system/basedata/list?pageNum=1&pageSize=100&name=$(uri_encode "${AUTOTEST_BASE_DATA_NAME}")&tab=city" "" "${ADMIN_TOKEN}")"
-base_data_id="$(json_required '.rows[0].id' "${base_data_after_create}")"
-pass "base-data.create" "id=${base_data_id}"
+  --arg dictType "osg_city" \
+  --arg dictLabel "${AUTOTEST_BASE_DATA_NAME}" \
+  --arg dictValue "${autotest_base_data_value}" \
+  '{dictType: $dictType, dictLabel: $dictLabel, dictValue: $dictValue, dictSort: 88, status: "0", isDefault: "N", remark: "{}"}')"
+request_json POST /system/dict/data "${create_base_data_payload}" "${ADMIN_TOKEN}" >/dev/null
+base_data_after_create="$(request_json GET "/system/dict/data/list?pageNum=1&pageSize=100&dictType=osg_city&dictLabel=$(uri_encode "${AUTOTEST_BASE_DATA_NAME}")" "" "${ADMIN_TOKEN}")"
+base_data_id="$(json_required '.rows[0].dictCode' "${base_data_after_create}")"
+pass "admin-dict.create" "dictCode=${base_data_id}"
 
 update_base_data_payload="$(jq -cn \
-  --argjson id "${base_data_id}" \
-  --arg name "${AUTOTEST_BASE_DATA_NAME} Updated" \
-  '{id: $id, name: $name, sort: 89, status: "0"}')"
-request_json PUT /system/basedata "${update_base_data_payload}" "${ADMIN_TOKEN}" >/dev/null
-pass "base-data.update" "id=${base_data_id}"
+  --argjson dictCode "${base_data_id}" \
+  --arg dictType "osg_city" \
+  --arg dictLabel "${AUTOTEST_BASE_DATA_NAME} Updated" \
+  --arg dictValue "${autotest_base_data_value}" \
+  '{dictCode: $dictCode, dictType: $dictType, dictLabel: $dictLabel, dictValue: $dictValue, dictSort: 89, status: "0", remark: "{}"}')"
+request_json PUT /system/dict/data "${update_base_data_payload}" "${ADMIN_TOKEN}" >/dev/null
+pass "admin-dict.update" "dictCode=${base_data_id}"
 
-disable_base_data_payload="$(jq -cn --argjson id "${base_data_id}" '{id: $id, status: "1"}')"
-request_json PUT /system/basedata/changeStatus "${disable_base_data_payload}" "${ADMIN_TOKEN}" >/dev/null
-pass "base-data.disable" "id=${base_data_id}"
+disable_base_data_payload="$(jq -cn \
+  --argjson dictCode "${base_data_id}" \
+  --arg dictType "osg_city" \
+  --arg dictLabel "${AUTOTEST_BASE_DATA_NAME} Updated" \
+  --arg dictValue "${autotest_base_data_value}" \
+  '{dictCode: $dictCode, dictType: $dictType, dictLabel: $dictLabel, dictValue: $dictValue, dictSort: 89, status: "1", remark: "{}"}')"
+request_json PUT /system/dict/data "${disable_base_data_payload}" "${ADMIN_TOKEN}" >/dev/null
+pass "admin-dict.disable" "dictCode=${base_data_id}"
 
 staff_list_response="$(request_json GET "/admin/staff/list?pageNum=1&pageSize=100" "" "${ADMIN_TOKEN}")"
 staff_count="$(json_required '.rows | length' "${staff_list_response}")"

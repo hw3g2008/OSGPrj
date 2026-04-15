@@ -10,5 +10,11 @@ DELETE FROM sys_dict_data WHERE dict_code IN (296, 297, 298, 299, 300, 301, 302)
 -- 3. 删除 osg_company_type 重复的 PE/VC（dict_code=475，与 480 重复）
 DELETE FROM sys_dict_data WHERE dict_code = 475;
 
--- 4. 菜单改名
-UPDATE sys_menu SET menu_name = '基础数据管理' WHERE menu_id = 2013;
+-- 4. 统一现有环境中的字典管理菜单口径
+UPDATE sys_menu
+SET menu_name = '字典管理',
+    path = 'dicts',
+    component = 'admin/permission/dicts/index',
+    perms = 'system:dict:list',
+    remark = '字典管理菜单'
+WHERE menu_id = 2013;

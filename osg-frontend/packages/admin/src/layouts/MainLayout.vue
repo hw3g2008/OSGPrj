@@ -125,7 +125,7 @@ const menuGroups: MenuGroup[] = [
       { path: '/permission/menu', title: '菜单管理', permission: 'system:menu:list', iconClass: 'mdi-file-tree' },
       { path: '/permission/roles', title: '权限配置', permission: 'system:role:list', iconClass: 'mdi-key' },
       { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list', iconClass: 'mdi-shield-account' },
-      { path: '/permission/base-data', title: '字典管理', permission: 'system:dict:list', iconClass: 'mdi-database-cog' },
+      { path: '/permission/dicts', title: '字典管理', permission: 'system:dict:list', iconClass: 'mdi-database-cog' },
     ],
   },
   {
