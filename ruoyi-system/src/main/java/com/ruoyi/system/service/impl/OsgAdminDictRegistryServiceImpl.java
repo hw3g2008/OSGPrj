@@ -62,6 +62,12 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
 
         List<Map<String, Object>> groups = new ArrayList<>(grouped.values());
         groups.sort(Comparator.comparingInt(this::extractGroupOrder));
+        for (Map<String, Object> group : groups)
+        {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> tabs = (List<Map<String, Object>>) group.get("dict_types");
+            tabs.sort(Comparator.comparingInt(this::extractTabOrder));
+        }
         return groups;
     }
 
@@ -89,6 +95,7 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
         {
             entry.put("parent_dict_type", parentDictType);
         }
+        entry.put("tab_order", extractTabOrderFromMetadata(metadata));
         return entry;
     }
 
@@ -117,6 +124,18 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
     private int extractGroupOrder(Map<String, Object> group)
     {
         Object value = group.get("order");
+        return value instanceof Number number ? number.intValue() : Integer.MAX_VALUE;
+    }
+
+    private int extractTabOrder(Map<String, Object> tab)
+    {
+        Object value = tab.get("tab_order");
+        return value instanceof Number number ? number.intValue() : Integer.MAX_VALUE;
+    }
+
+    private int extractTabOrderFromMetadata(Map<String, Object> metadata)
+    {
+        Object value = metadata.get("tabOrder");
         return value instanceof Number number ? number.intValue() : Integer.MAX_VALUE;
     }
 

@@ -150,8 +150,8 @@ const captchaSrc = computed(() => {
 })
 
 const formState = reactive({
-  username: '',
-  password: '',
+  username: 'admin',
+  password: 'Osg@2026',
   code: '',
   uuid: '',
   rememberMe: false

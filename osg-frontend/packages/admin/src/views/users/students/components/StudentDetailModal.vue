@@ -358,6 +358,9 @@ interface ContractRow {
   contractId: number
   contractNo: string
   contractType?: string
+  currency?: string
+  amountUsd?: number
+  amountGbp?: number
   contractAmount?: number
   totalHours?: number
   remainingHours?: number
@@ -496,6 +499,9 @@ const latestContract = computed<ContractListItem | null>(() => {
     leadMentorId: contract.leadMentorId,
     leadMentorName: contract.leadMentorName,
     contractType: contract.contractType || 'renew',
+    currency: contract.currency,
+    amountUsd: Number(contract.amountUsd || 0),
+    amountGbp: Number(contract.amountGbp || 0),
     contractAmount: Number(contract.contractAmount || 0),
     totalHours: Number(contract.totalHours || 0),
     usedHours: Number(contract.usedHours || 0),
@@ -648,8 +654,10 @@ const formatStudyPlan = (studyPlan?: string, deferredGraduation?: string) => {
   }
 }
 
-const formatCurrency = (value?: number) => {
-  return `¥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+const formatCurrency = (value?: number, currency: string = 'USD') => {
+  const num = Number(value || 0)
+  if (currency === 'GBP') return `£${num.toLocaleString()}`
+  return `$${num.toLocaleString()}`
 }
 </script>
 

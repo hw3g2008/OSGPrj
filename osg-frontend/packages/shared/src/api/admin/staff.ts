@@ -55,6 +55,7 @@ export interface StaffPayload {
 export interface StaffOption {
   label: string
   value: number
+  staffType?: string
 }
 
 export interface StaffExportParams {
@@ -143,5 +144,6 @@ export async function getStaffOptions(keyword = ''): Promise<StaffOption[]> {
   return (response.rows || []).map((item) => ({
     label: item.staffName,
     value: item.staffId,
+    staffType: item.staffType,
   }))
 }

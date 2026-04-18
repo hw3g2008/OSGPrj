@@ -70,7 +70,7 @@
         :columns="pendingColumns"
         :data-source="pendingRows"
         :row-key="(r: MockPracticeListItem) => r.practiceId"
-        :pagination="false"
+        :pagination="pendingPagination"
         :loading="loading"
         :locale="{ emptyText: '当前筛选条件下暂无待分配导师的申请' }"
         :scroll="{ x: 900 }"
@@ -109,7 +109,7 @@
         :columns="allColumns"
         :data-source="allRows"
         :row-key="(r: MockPracticeListItem) => r.practiceId"
-        :pagination="false"
+        :pagination="allPagination"
         :loading="loading"
         :locale="{ emptyText: '当前筛选条件下暂无模拟应聘记录' }"
         :scroll="{ x: 1200 }"
@@ -193,6 +193,7 @@ import {
   type MockPracticeStats
 } from '@osg/shared/api/admin/mockPractice'
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
+import { useStandardClientPagination } from '@osg/shared'
 
 type ActiveTab = 'pending' | 'all'
 
@@ -262,6 +263,8 @@ const statCards = computed(() => [
 
 const pendingRows = computed(() => rows.value.filter((row) => row.status === 'pending'))
 const allRows = computed(() => rows.value)
+const pendingPagination = useStandardClientPagination(() => pendingRows.value.length)
+const allPagination = useStandardClientPagination(() => allRows.value.length)
 
 const assignMentorOptions = computed<MentorOption[]>(() => {
   const preferredNames = splitMentorNames(selectedRow.value?.preferredMentorNames)

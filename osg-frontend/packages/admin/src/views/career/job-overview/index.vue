@@ -107,7 +107,7 @@
         <a-alert type="warning" show-icon style="margin-bottom: 12px; border-radius: 8px;">
           <template #message>以下学员申请了辅导，需要分配导师</template>
         </a-alert>
-        <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedJobOverviewRow) => r.applicationId" :pagination="false" :loading="loading" :locale="{ emptyText: '当前没有待分配导师的岗位申请' }" :scroll="{ x: 1000 }">
+        <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedJobOverviewRow) => r.applicationId" :pagination="unassignedPagination" :loading="loading" :locale="{ emptyText: '当前没有待分配导师的岗位申请' }" :scroll="{ x: 1000 }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
               <div><strong>{{ record.studentName || '-' }}</strong><div style="color: #64748b; font-size: 12px">ID: {{ record.studentId }}</div></div>
@@ -139,7 +139,7 @@
         <a-alert type="info" show-icon style="margin-bottom: 12px; border-radius: 8px;">
           <template #message>查看全部学员的求职进度（只读）</template>
         </a-alert>
-        <a-table :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="false" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 1200 }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
+        <a-table :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="allListPagination" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 1200 }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
               <div><strong>{{ record.studentName || '-' }}</strong><div style="color: #64748b; font-size: 12px">ID: {{ record.studentId }}</div></div>
@@ -204,6 +204,7 @@ import {
   type UnassignedJobOverviewRow
 } from '@osg/shared/api/admin/jobOverview'
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
+import { useStandardClientPagination } from '@osg/shared'
 
 type ActiveTab = 'pending' | 'all'
 
@@ -279,6 +280,8 @@ const funnelRows = ref<JobOverviewFunnelNode[]>([])
 const hotCompanies = ref<HotCompanyItem[]>([])
 const allRows = ref<JobOverviewRow[]>([])
 const unassignedRows = ref<UnassignedJobOverviewRow[]>([])
+const unassignedPagination = useStandardClientPagination(() => unassignedRows.value.length)
+const allListPagination = useStandardClientPagination(() => allRows.value.length)
 const assignableMentors = ref<StaffListItem[]>([])
 const assignMentorVisible = ref(false)
 const assignSubmitting = ref(false)

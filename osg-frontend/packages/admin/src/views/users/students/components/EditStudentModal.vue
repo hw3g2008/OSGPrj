@@ -100,17 +100,24 @@
         <a-row :gutter="16">
           <a-col :span="8">
             <a-form-item label="学校">
-              <a-input v-model:value="form.school" :disabled="submitting" />
+              <a-select
+                v-model:value="form.school"
+                :disabled="submitting"
+                :options="schoolOptions"
+                show-search
+                allow-clear
+                placeholder="请选择学校"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="8">
             <a-form-item label="专业">
-              <a-input :value="student?.majorDirection || ''" readonly />
+              <a-input v-model:value="form.major" :disabled="submitting" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
             <a-form-item label="毕业年份">
-              <a-input value="待补充" readonly />
+              <a-input v-model:value="form.graduationYear" :disabled="submitting" placeholder="如 2026" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -125,17 +132,38 @@
         <a-row :gutter="16">
           <a-col :span="8">
             <a-form-item label="主攻方向">
-              <a-input v-model:value="form.majorDirection" :disabled="submitting" />
+              <a-select
+                v-model:value="form.majorDirection"
+                :disabled="submitting"
+                :options="majorDirOptions"
+                show-search
+                allow-clear
+                placeholder="请选择主攻方向"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="8">
             <a-form-item label="子方向">
-              <a-input v-model:value="form.targetPosition" :disabled="submitting" />
+              <a-select
+                v-model:value="form.targetPosition"
+                :disabled="submitting"
+                :options="subDirOptions"
+                show-search
+                allow-clear
+                placeholder="请选择子方向"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="8">
             <a-form-item label="求职地区">
-              <a-input value="待补充" readonly />
+              <a-select
+                v-model:value="form.targetRegion"
+                :disabled="submitting"
+                :options="regionOptions"
+                show-search
+                allow-clear
+                placeholder="请选择地区"
+              />
             </a-form-item>
           </a-col>
         </a-row>
@@ -179,6 +207,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { StudentListItem, UpdateStudentPayload } from '@osg/shared/api/admin/student'
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
+import { getAdminDictOptions } from '@/api/adminDict'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
 const props = withDefaults(defineProps<{
@@ -202,6 +231,9 @@ const form = reactive({
   school: '',
   majorDirection: '',
   targetPosition: '',
+  major: '',
+  graduationYear: '',
+  targetRegion: '',
   phone: '',
   wechat: '',
   remark: '',
@@ -212,35 +244,52 @@ const form = reactive({
 const staffOptions = ref<StaffListItem[]>([])
 const staffLoading = ref(false)
 
+const schoolOptions = ref<{ label: string; value: string }[]>([])
+const majorDirOptions = ref<{ label: string; value: string }[]>([])
+const subDirOptions = ref<{ label: string; value: string }[]>([])
+const regionOptions = ref<{ label: string; value: string }[]>([])
+
+const loadDictOptions = async () => {
+  const [schools, majors, subs, regions] = await Promise.all([
+    getAdminDictOptions('osg_school'),
+    getAdminDictOptions('osg_major_direction'),
+    getAdminDictOptions('osg_sub_direction'),
+    getAdminDictOptions('osg_region'),
+  ])
+  schoolOptions.value = schools.map(d => ({ label: d.dictLabel, value: d.dictValue }))
+  majorDirOptions.value = majors.map(d => ({ label: d.dictLabel, value: d.dictValue }))
+  subDirOptions.value = subs.map(d => ({ label: d.dictLabel, value: d.dictValue }))
+  regionOptions.value = regions.map(d => ({ label: d.dictLabel, value: d.dictValue }))
+}
+
 const mentorSelectOptions = computed(() => staffOptions.value
-  .filter((item) => item.staffType === 'lead_mentor' && item.userId != null)
+  .filter((item) => item.staffType === 'lead_mentor' && item.staffId != null)
   .map((item) => ({
     label: item.staffName,
-    value: item.userId!,
+    value: item.staffId,
   })))
 
 const assistantSelectOptions = computed(() => staffOptions.value
-  .filter((item) => item.staffType === 'assistant' && item.userId != null)
+  .filter((item) => item.staffType === 'assistant' && item.staffId != null)
   .map((item) => ({
     label: item.staffName,
-    value: item.userId!,
+    value: item.staffId,
   })))
 
-const mergeCurrentOption = (staffType: 'lead_mentor' | 'assistant', userId?: number, label?: string) => {
-  if (userId == null) {
+const mergeCurrentOption = (staffType: 'lead_mentor' | 'assistant', staffId?: number, label?: string) => {
+  if (staffId == null) {
     return
   }
-  const exists = staffOptions.value.some((item) => item.userId === userId)
+  const exists = staffOptions.value.some((item) => item.staffId === staffId)
   if (exists) {
     return
   }
   staffOptions.value = [
     ...staffOptions.value,
     {
-      staffId: userId,
-      staffName: label || `${staffType === 'lead_mentor' ? '班主任' : '助教'} ${userId}`,
+      staffId,
+      staffName: label || `${staffType === 'lead_mentor' ? '班主任' : '助教'} ${staffId}`,
       staffType,
-      userId,
     },
   ]
 }
@@ -258,8 +307,11 @@ const syncForm = () => {
   form.gender = extraFields.gender || ''
   form.email = props.student?.email || ''
   form.school = props.student?.school || ''
+  form.major = (props.student as any)?.major || ''
+  form.graduationYear = (props.student as any)?.graduationYear ?? ''
   form.majorDirection = props.student?.majorDirection || ''
   form.targetPosition = props.student?.targetPosition || ''
+  form.targetRegion = (props.student as any)?.targetRegion || ''
   form.phone = extraFields.phone || ''
   form.wechat = extraFields.wechat || ''
   form.remark = extraFields.remark || ''
@@ -298,6 +350,7 @@ watch(
     if (visible) {
       syncForm()
       void loadStaffOptions()
+      void loadDictOptions()
     }
   },
   { immediate: true }
@@ -338,8 +391,11 @@ const handleSubmit = () => {
     studentName: form.studentName.trim() || props.student.studentName,
     email: form.email.trim(),
     school: form.school.trim(),
+    major: form.major.trim() || undefined,
+    graduationYear: form.graduationYear ? Number(form.graduationYear) || undefined : undefined,
     majorDirection: form.majorDirection.trim() || undefined,
     subDirection: form.targetPosition.trim() || undefined,
+    targetRegion: form.targetRegion.trim() || undefined,
     leadMentorId: form.leadMentorId,
     assistantId: form.assistantId,
   })

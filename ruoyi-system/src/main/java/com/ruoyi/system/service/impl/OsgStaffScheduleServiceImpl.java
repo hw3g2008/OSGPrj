@@ -9,7 +9,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.github.pagehelper.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,12 +42,29 @@ public class OsgStaffScheduleServiceImpl implements IOsgStaffScheduleService
         Map<Long, List<OsgStaffSchedule>> groupedSchedules = scheduleRows.stream()
             .collect(Collectors.groupingBy(OsgStaffSchedule::getStaffId, LinkedHashMap::new, Collectors.toList()));
 
-        List<Map<String, Object>> result = new ArrayList<>(staffRows.size());
-        for (OsgStaff staff : staffRows)
-        {
+        return mapPreservingPage(staffRows, staff -> {
             List<OsgStaffSchedule> staffSchedules = groupedSchedules.getOrDefault(staff.getStaffId(), Collections.emptyList());
-            result.add(toScheduleRow(staff, normalizedWeekScope, staffSchedules));
+            return toScheduleRow(staff, normalizedWeekScope, staffSchedules);
+        });
+    }
+
+    /**
+     * 映射 List 但保留 PageHelper 的 Page 元数据（total/pageNum/pageSize），避免 total 退化为当前页大小。
+     */
+    private static <S, T> List<T> mapPreservingPage(List<S> source, Function<S, T> mapper)
+    {
+        if (source instanceof Page<?>)
+        {
+            Page<?> srcPage = (Page<?>) source;
+            Page<T> resultPage = new Page<>();
+            resultPage.setPageNum(srcPage.getPageNum());
+            resultPage.setPageSize(srcPage.getPageSize());
+            resultPage.setTotal(srcPage.getTotal());
+            for (S item : source) { resultPage.add(mapper.apply(item)); }
+            return resultPage;
         }
+        List<T> result = new ArrayList<>(source.size());
+        for (S item : source) { result.add(mapper.apply(item)); }
         return result;
     }
 

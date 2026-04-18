@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.github.pagehelper.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -137,12 +139,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         }
 
         Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
-        List<Map<String, Object>> result = new ArrayList<>(rows.size());
-        for (OsgClassRecord row : rows)
-        {
-            result.add(toClassRecordPayload(row, hourlyRates));
-        }
-        return result;
+        return mapPreservingPage(rows, row -> toClassRecordPayload(row, hourlyRates));
     }
 
     public List<Map<String, Object>> selectClassRecordExportList(String keyword,
@@ -192,12 +189,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         }
 
         Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
-        List<Map<String, Object>> result = new ArrayList<>(rows.size());
-        for (OsgClassRecord row : rows)
-        {
-            result.add(toClassRecordPayload(row, hourlyRates));
-        }
-        return result;
+        return mapPreservingPage(rows, row -> toClassRecordPayload(row, hourlyRates));
     }
 
     public Map<String, Object> selectClassRecordStats(String keyword)
@@ -921,6 +913,26 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         }
         String text = String.valueOf(value).trim();
         return text.isEmpty() ? null : text;
+    }
+
+    /**
+     * 映射 List 但保留 PageHelper 的 Page 元数据（total/pageNum/pageSize），避免 total 退化为当前页大小。
+     */
+    private static <S, T> List<T> mapPreservingPage(List<S> source, Function<S, T> mapper)
+    {
+        if (source instanceof Page<?>)
+        {
+            Page<?> srcPage = (Page<?>) source;
+            Page<T> resultPage = new Page<>();
+            resultPage.setPageNum(srcPage.getPageNum());
+            resultPage.setPageSize(srcPage.getPageSize());
+            resultPage.setTotal(srcPage.getTotal());
+            for (S item : source) { resultPage.add(mapper.apply(item)); }
+            return resultPage;
+        }
+        List<T> result = new ArrayList<>(source.size());
+        for (S item : source) { result.add(mapper.apply(item)); }
+        return result;
     }
 
 }

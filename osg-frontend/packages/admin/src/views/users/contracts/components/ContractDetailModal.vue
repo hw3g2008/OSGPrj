@@ -71,7 +71,15 @@
               <td>
                 <span :class="typeBadgeClass(contract.contractType)">{{ formatType(contract.contractType) }}</span>
               </td>
-              <td>{{ formatCurrency(contract.contractAmount) }}</td>
+              <td>
+                <template v-if="contract.currency === 'GBP'">
+                  <div><strong>£{{ (contract.amountGbp || 0).toLocaleString() }}</strong></div>
+                  <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} 等值</div>
+                </template>
+                <template v-else>
+                  <strong>${{ (contract.amountUsd || contract.contractAmount || 0).toLocaleString() }}</strong>
+                </template>
+              </td>
               <td>{{ contract.remainingHours ?? contract.totalHours ?? 0 }} / {{ contract.totalHours ?? 0 }}h</td>
               <td>{{ formatDateRange(contract.startDate, contract.endDate) }}</td>
               <td>{{ contract.renewalReason || '—' }}</td>
@@ -188,13 +196,11 @@ const handleClose = () => {
   emit('update:visible', false)
 }
 
-const formatCurrency = (value?: number) =>
-  new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency: 'CNY',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0))
+const formatCurrency = (value?: number, currency: string = 'USD') => {
+  const num = Number(value || 0)
+  if (currency === 'GBP') return `£${num.toLocaleString()}`
+  return `$${num.toLocaleString()}`
+}
 
 const formatDate = (value?: string) => value ? value.slice(0, 10) : '-'
 const formatDateRange = (startDate?: string, endDate?: string) => `${formatDate(startDate)} 至 ${formatDate(endDate)}`

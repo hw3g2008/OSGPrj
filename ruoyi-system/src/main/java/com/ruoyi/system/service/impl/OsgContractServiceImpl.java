@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -131,6 +133,9 @@ public class OsgContractServiceImpl implements IOsgContractService
         contract.setStudentId(studentId);
         contract.setContractNo(generateContractNo(studentId));
         contract.setContractType("renew");
+        contract.setCurrency(defaultText(asText(payload.get("currency")), "USD"));
+        contract.setAmountUsd(asBigDecimalOrNull(payload.get("amountUsd")));
+        contract.setAmountGbp(asBigDecimalOrNull(payload.get("amountGbp")));
         contract.setContractAmount(defaultAmount(payload.get("contractAmount")));
         contract.setTotalHours(defaultHours(payload.get("totalHours"), payload.get("studyHours")));
         contract.setUsedHours(BigDecimal.ZERO);
@@ -408,6 +413,30 @@ public class OsgContractServiceImpl implements IOsgContractService
         }
     }
 
+    private BigDecimal asBigDecimalOrNull(Object value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+        if (value instanceof BigDecimal decimal)
+        {
+            return decimal;
+        }
+        if (value instanceof Number number)
+        {
+            return BigDecimal.valueOf(number.doubleValue());
+        }
+        try
+        {
+            return new BigDecimal(String.valueOf(value));
+        }
+        catch (NumberFormatException ex)
+        {
+            return null;
+        }
+    }
+
     private LocalDate asDate(Object value)
     {
         if (value == null)
@@ -422,13 +451,26 @@ public class OsgContractServiceImpl implements IOsgContractService
         {
             return new Date(utilDate.getTime()).toLocalDate();
         }
+        String text = String.valueOf(value);
+        int tIdx = text.indexOf('T');
+        if (tIdx > 0)
+        {
+            text = text.substring(0, tIdx);
+        }
         try
         {
-            return LocalDate.parse(String.valueOf(value));
+            return LocalDate.parse(text);
         }
-        catch (RuntimeException ex)
+        catch (DateTimeParseException e)
         {
-            return null;
+            try
+            {
+                return LocalDate.parse(text, DateTimeFormatter.ofPattern("yyyy-M-d"));
+            }
+            catch (DateTimeParseException ex)
+            {
+                return null;
+            }
         }
     }
 

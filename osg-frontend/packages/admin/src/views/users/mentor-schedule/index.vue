@@ -65,7 +65,7 @@
         :data-source="visibleRows"
         :scroll="{ x: 'max-content' }"
         :row-key="(record: StaffScheduleListItem) => record.staffId"
-        :pagination="false"
+        :pagination="schedulePagination"
         :row-class-name="(record: StaffScheduleListItem) => record.filled ? '' : 'row-unfilled'"
         :locale="{ emptyText: '当前筛选条件下暂无排期数据' }"
       >
@@ -190,6 +190,14 @@ const visibleRows = computed(() => {
     return matchesKeyword && matchesType && matchesWeekday && matchesTimeSlot
   })
 })
+
+const schedulePagination = computed(() => ({
+  pageSize: 10,
+  showSizeChanger: false,
+  total: visibleRows.value.length,
+  showTotal: (t: number) => `共 ${t} 条记录`,
+  hideOnSinglePage: false
+}))
 
 const loadScheduleList = async () => {
   const response = await getStaffScheduleList({

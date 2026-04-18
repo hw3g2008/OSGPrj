@@ -3,7 +3,7 @@
     <div class="contract-tab__summary">
       <article class="contract-tab__summary-card">
         <span>合同总金额</span>
-        <strong>{{ formatCurrency(summary.totalAmount) }}</strong>
+        <strong>{{ formatCurrency(summary.totalAmount, 'USD') }}</strong>
       </article>
       <article class="contract-tab__summary-card">
         <span>总课时</span>
@@ -35,7 +35,15 @@
           <tr v-for="contract in contracts" :key="contract.contractId">
             <td>{{ contract.contractNo }}</td>
             <td>{{ contract.contractType || '-' }}</td>
-            <td>{{ formatCurrency(contract.contractAmount) }}</td>
+            <td>
+              <template v-if="contract.currency === 'GBP'">
+                <div><strong>£{{ (contract.amountGbp || 0).toLocaleString() }}</strong></div>
+                <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} 等值</div>
+              </template>
+              <template v-else>
+                <strong>${{ (contract.amountUsd || contract.contractAmount || 0).toLocaleString() }}</strong>
+              </template>
+            </td>
             <td>{{ contract.totalHours || 0 }}h / 剩余 {{ contract.remainingHours || 0 }}h</td>
             <td>{{ formatDateRange(contract.startDate, contract.endDate) }}</td>
             <td>
@@ -66,6 +74,9 @@ interface ContractRow {
   contractId: number
   contractNo: string
   contractType?: string
+  currency?: string
+  amountUsd?: number
+  amountGbp?: number
   contractAmount?: number
   totalHours?: number
   remainingHours?: number
@@ -80,8 +91,10 @@ defineProps<{
   contracts: ContractRow[]
 }>()
 
-const formatCurrency = (value?: number) => {
-  return `¥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+const formatCurrency = (value?: number, currency: string = 'USD') => {
+  const num = Number(value || 0)
+  if (currency === 'GBP') return `£${num.toLocaleString()}`
+  return `$${num.toLocaleString()}`
 }
 
 const formatDateRange = (startDate?: string, endDate?: string) => {

@@ -13,6 +13,7 @@ import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
+import com.ruoyi.system.mapper.SysUserMapper;
 import com.ruoyi.system.service.ISysUserService;
 
 @Component
@@ -26,6 +27,9 @@ public class OsgIdentityResolver
 
     @Autowired
     private ISysUserService sysUserService;
+
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     public Long resolveStudentIdByUserId(Long userId)
     {
@@ -125,14 +129,6 @@ public class OsgIdentityResolver
         {
             return account;
         }
-
-        SysUser query = new SysUser();
-        query.setEmail(email);
-        List<SysUser> matches = sysUserService.selectUserList(query);
-        if (matches == null || matches.isEmpty())
-        {
-            return null;
-        }
-        return matches.get(0);
+        return sysUserMapper.checkEmailUnique(email);
     }
 }

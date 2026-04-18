@@ -7,6 +7,9 @@ export interface ContractListParams {
   contractType?: string
   contractStatus?: string
   leadMentorId?: number
+  leadMentorName?: string
+  'params[beginTime]'?: string
+  'params[endTime]'?: string
 }
 
 export interface ContractListItem {
@@ -18,6 +21,9 @@ export interface ContractListItem {
   leadMentorName?: string
   contractType: string
   contractAmount: number
+  currency?: string
+  amountUsd?: number
+  amountGbp?: number
   totalHours: number
   usedHours?: number
   remainingHours?: number
@@ -52,6 +58,9 @@ export interface ContractDetailPayload {
 
 export interface RenewContractPayload {
   studentId: number
+  currency?: 'USD' | 'GBP'
+  amountUsd?: number
+  amountGbp?: number
   contractAmount?: number
   totalHours?: number
   startDate: string

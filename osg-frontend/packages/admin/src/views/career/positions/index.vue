@@ -5,11 +5,11 @@
         <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
             <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
-              <a-radio-button value="drilldown">
-                <i class="mdi mdi-file-tree" style="margin-right: 4px"></i>下钻视图
-              </a-radio-button>
               <a-radio-button value="list">
                 <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px"></i>列表视图
+              </a-radio-button>
+              <a-radio-button value="drilldown">
+                <i class="mdi mdi-file-tree" style="margin-right: 4px"></i>下钻视图
               </a-radio-button>
             </a-radio-group>
             <span v-if="meta.trafficSummary" style="color: #94a3b8; font-size: 12px">总浏览 {{ meta.trafficSummary.totalViews.toLocaleString('en-US') }} 次</span>
@@ -196,7 +196,7 @@
         </template>
 
         <template v-else>
-          <a-table :columns="listColumns" :data-source="sortedListRows" :row-key="(r: PositionListItem) => r.positionId" :pagination="false" :locale="{ emptyText: '当前筛选条件下暂无岗位数据' }" :scroll="{ x: 1400 }">
+          <a-table :columns="listColumns" :data-source="sortedListRows" :row-key="(r: PositionListItem) => r.positionId" :pagination="tablePagination" :locale="{ emptyText: '当前筛选条件下暂无岗位数据' }" :scroll="{ x: 1400 }" @change="handleTableChange">
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'positionName'">
                 <a v-if="record.positionUrl" :href="record.positionUrl" target="_blank" rel="noreferrer" style="font-weight: 700">
@@ -381,7 +381,7 @@ const stats = ref<PositionStats>({
   closedPositions: 0,
   studentApplications: 0
 })
-const viewMode = ref<'drilldown' | 'list'>('drilldown')
+const viewMode = ref<'drilldown' | 'list'>('list')
 const publishSort = ref<'desc' | 'asc'>('desc')
 const publishPreset = ref<string | undefined>(undefined)
 const formVisible = ref(false)
@@ -396,7 +396,7 @@ const expandedCompanies = ref(new Set<string>())
 
 const filters = reactive<PositionListParams>({
   pageNum: 1,
-  pageSize: 100,
+  pageSize: 10,
   keyword: '',
   positionCategory: undefined,
   industry: undefined,
@@ -405,6 +405,22 @@ const filters = reactive<PositionListParams>({
   displayStatus: undefined,
   recruitmentCycle: undefined
 })
+
+const total = ref(0)
+
+const tablePagination = computed(() => ({
+  current: filters.pageNum,
+  pageSize: filters.pageSize,
+  total: total.value,
+  showSizeChanger: false,
+  showTotal: (value: number) => `共 ${value} 条记录`
+}))
+
+const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
+  filters.pageNum = pag.current ?? 1
+  filters.pageSize = pag.pageSize ?? 10
+  void loadPage()
+}
 
 const statsCards = computed(() => [
   { key: 'total', label: '总岗位数', value: stats.value.totalPositions, tone: 'primary' },
@@ -547,6 +563,7 @@ const loadPage = async () => {
       getPositionDrillDown(params)
     ])
     positions.value = listRes.rows || []
+    total.value = listRes.total || 0
     stats.value = statsRes
     drillDownRows.value = drillRes || []
     syncExpandedState(drillDownRows.value)
@@ -558,6 +575,7 @@ const loadPage = async () => {
 }
 
 const handleSearch = async () => {
+  filters.pageNum = 1
   await loadPage()
 }
 
@@ -570,6 +588,7 @@ const handleReset = async () => {
   filters.displayStatus = undefined
   filters.recruitmentCycle = undefined
   publishPreset.value = undefined
+  filters.pageNum = 1
   await loadPage()
 }
 

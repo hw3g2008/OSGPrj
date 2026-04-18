@@ -72,7 +72,6 @@
             <a-button type="link" size="small" style="padding: 0; font-weight: 600" :data-surface-trigger="getStudentDetailSurfaceId(record)" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentDetail(record)">
               {{ record.studentName }}
             </a-button>
-            <div style="font-size: 10px; color: #9099b0; margin-top: 2px">{{ getStatusNote(record) }}</div>
           </template>
           <template v-else-if="column.dataIndex === 'email'">
             <span style="color: #566178; font-size: 12px">{{ record.email || '-' }}</span>
@@ -125,20 +124,30 @@
           <template v-else-if="column.dataIndex === 'action'">
             <a-space :size="4" wrap>
               <a-button type="link" size="small" :data-surface-trigger="getStudentDetailSurfaceId(record)" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentDetail(record)">详情</a-button>
-              <a-button type="link" size="small" data-surface-trigger="modal-edit-student-new" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentEdit(record)">编辑</a-button>
-              <a-button type="link" size="small" data-surface-trigger="modal-contract-renew" :loading="renewContractLoadingId === record.studentId" :data-surface-sample-key="`${getStudentSurfaceSampleKey(record)}-contract-renew`" @click="openStudentRenew(record)">续签</a-button>
-              <a-dropdown :trigger="['click']" placement="bottomRight">
-                <a-button type="link" size="small">更多 <DownOutlined /></a-button>
-                <template #overlay>
-                  <a-menu @click="({ key }: { key: string }) => handleStudentAction(key as StudentActionKey, record)">
-                    <a-menu-item key="resetPassword">重置密码</a-menu-item>
-                    <a-menu-item key="freeze"><span style="color: #b45309">冻结</span></a-menu-item>
-                    <a-menu-item key="restore"><span style="color: #15803d">恢复</span></a-menu-item>
-                    <a-menu-item key="blacklist"><span style="color: #b45309">加入黑名单</span></a-menu-item>
-                    <a-menu-item key="refund"><span style="color: #b91c1c">退费</span></a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
+              <template v-if="!isEndedStatus(record) && !isRefundedStatus(record)">
+                <a-button type="link" size="small" data-surface-trigger="modal-edit-student-new" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentEdit(record)">编辑</a-button>
+                <a-tooltip v-if="isContractExpiring(record)" title="续签合同">
+                  <a-button type="text" size="small" :loading="renewContractLoadingId === record.studentId" style="color: #F59E0B" data-surface-trigger="modal-contract-renew" :data-surface-sample-key="`${getStudentSurfaceSampleKey(record)}-contract-renew`" @click="openStudentRenew(record)">
+                    <template #icon><FileTextOutlined /></template>
+                  </a-button>
+                </a-tooltip>
+                <a-dropdown v-else :trigger="['click']" placement="bottomRight">
+                  <a-button type="link" size="small">更多 <DownOutlined /></a-button>
+                  <template #overlay>
+                    <a-menu @click="({ key }: { key: string }) => handleStudentAction(key as StudentActionKey, record)">
+                      <a-menu-item key="resetPassword">重置密码</a-menu-item>
+                      <template v-if="record.accountStatus === '1'">
+                        <a-menu-item key="restore"><span style="color: var(--success)">恢复正常</span></a-menu-item>
+                      </template>
+                      <template v-else>
+                        <a-menu-item key="freeze">冻结</a-menu-item>
+                        <a-menu-item key="blacklist"><span style="color: #92400E">加入黑名单</span></a-menu-item>
+                      </template>
+                      <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
+              </template>
             </a-space>
           </template>
         </template>
@@ -188,7 +197,7 @@
 <script setup lang="ts">
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { DownOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { DownOutlined, FileTextOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import {
   getStudentList,
   resetStudentPassword,
@@ -265,6 +274,9 @@ interface AddStudentFormPayload {
   subDirection?: string
   leadMentorIds: number[]
   assistantIds: number[]
+  currency?: 'USD' | 'GBP'
+  amountUsd?: number
+  amountGbp?: number
   contractAmount?: number
   totalHours?: number
   startDate?: string
@@ -835,10 +847,7 @@ const formatHours = (value?: number) => {
 }
 
 const formatJobApplications = (_record: StudentListItem) => {
-  // 暂时返回占位文本,实际应该从API获取投递岗位数量
-  const count = 3
-  const company = 'Goldman Sachs'
-  return `${company}等${count}个`
+  return '暂无投递'
 }
 
 const getRemainingHoursColor = (hours?: number) => {

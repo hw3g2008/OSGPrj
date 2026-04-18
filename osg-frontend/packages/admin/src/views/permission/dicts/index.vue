@@ -81,6 +81,24 @@
               {{ record.status === '0' ? '启用' : '禁用' }}
             </a-tag>
           </template>
+          <template v-else-if="column.dataIndex === 'parentLabel'">
+            <a-tag v-if="record.parentValue" :color="parentTagColor(record.parentValue)">
+              {{ parentOptionsMap[record.parentValue] || record.parentValue }}
+            </a-tag>
+            <span v-else style="color: #999">-</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'website'">
+            <a
+              v-if="record.extra?.website"
+              :href="record.extra.website.startsWith('http') ? record.extra.website : 'https://' + record.extra.website"
+              target="_blank"
+              style="color: var(--primary); font-size: 12px"
+            >
+              {{ record.extra.website.replace(/^https?:\/\//, '') }}
+              <i class="mdi mdi-open-in-new" style="font-size: 10px" />
+            </a>
+            <span v-else style="color: #999">-</span>
+          </template>
           <template v-else-if="column.dataIndex === 'updateTime'">
             {{ record.updateTime ? dayjs(record.updateTime).format('MM/DD/YYYY') : '-' }}
           </template>
@@ -134,6 +152,7 @@ import { message, Modal } from 'ant-design-vue'
 import {
   getAdminDictRegistry,
   getAdminDictList,
+  getAdminDictOptions,
   updateAdminDictItem,
   type AdminDictListRow,
   type AdminDictRegistryGroup,
@@ -174,6 +193,7 @@ const registryGroups = ref<AdminDictRegistryGroup[]>([])
 const tabPresentationMap: Record<string, { createLabel: string; nameHeader: string }> = {
   osg_job_category: { createLabel: '岗位分类', nameHeader: '分类名称' },
   osg_company_name: { createLabel: '公司/银行名称', nameHeader: '公司名称' },
+  osg_company_type: { createLabel: '公司/银行类别', nameHeader: '类别名称' },
   osg_region: { createLabel: '大区', nameHeader: '大区名称' },
   osg_city: { createLabel: '地区/城市', nameHeader: '城市名称' },
   osg_recruit_cycle: { createLabel: '招聘周期', nameHeader: '周期名称' },
@@ -222,15 +242,58 @@ const categories = computed(() => {
 const selectedCategory = ref('')
 const selectedTab = ref('')
 
-const dictColumns = computed(() => [
-  { title: 'ID', dataIndex: 'dictCode', key: 'dictCode', width: 80 },
-  { title: currentNameHeader.value, dataIndex: 'dictLabel', key: 'dictLabel' },
-  { title: '键值', dataIndex: 'dictValue', key: 'dictValue' },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-  { title: '排序', dataIndex: 'dictSort', key: 'dictSort', width: 80 },
-  { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 180 },
-])
+const parentOptionsMap = ref<Record<string, string>>({})
+
+const parentTagColor = (value: string): string => {
+  const colorMap: Record<string, string> = {
+    bulge_bracket: 'blue',
+    elite_boutique: 'purple',
+    middle_market: 'geekblue',
+    buyside: 'orange',
+    consulting: 'green',
+    swe_pm: 'cyan',
+    other_company: 'default',
+  }
+  return colorMap[value] ?? 'default'
+}
+
+const loadParentOptions = async () => {
+  const cfg = currentTabConfig.value
+  if (cfg?.hasParent && cfg.parentTab) {
+    try {
+      const options = await getAdminDictOptions(cfg.parentTab)
+      const map: Record<string, string> = {}
+      for (const opt of options) {
+        map[opt.dictValue] = opt.dictLabel
+      }
+      parentOptionsMap.value = map
+    } catch {
+      parentOptionsMap.value = {}
+    }
+  } else {
+    parentOptionsMap.value = {}
+  }
+}
+
+const dictColumns = computed(() => {
+  const base = [
+    { title: 'ID', dataIndex: 'dictCode', key: 'dictCode', width: 80 },
+    { title: currentNameHeader.value, dataIndex: 'dictLabel', key: 'dictLabel' },
+  ]
+  if (selectedTab.value === 'osg_company_name') {
+    base.push({ title: '公司类别', dataIndex: 'parentLabel', key: 'parentLabel', width: 150 })
+    base.push({ title: '官网地址', dataIndex: 'website', key: 'website', width: 220 })
+  } else {
+    base.push({ title: '键值', dataIndex: 'dictValue', key: 'dictValue' })
+  }
+  base.push(
+    { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
+    { title: '排序', dataIndex: 'dictSort', key: 'dictSort', width: 80 },
+    { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
+    { title: '操作', dataIndex: 'action', key: 'action', width: 180 },
+  )
+  return base
+})
 
 const currentTabs = computed(() => {
   const category = categories.value.find(cat => cat.key === selectedCategory.value)
@@ -276,6 +339,7 @@ watch(selectedTab, () => {
   if (!selectedTab.value) return
   pagination.current = 1
   searchName.value = ''
+  void loadParentOptions()
   loadDataList()
 })
 

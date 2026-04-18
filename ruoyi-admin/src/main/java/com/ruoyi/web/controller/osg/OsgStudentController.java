@@ -69,10 +69,13 @@ public class OsgStudentController extends BaseController
 
         startPage();
         List<OsgStudent> students = studentService.selectStudentList(student);
+        TableDataInfo table = getDataTable(students);
+
         Map<Long, Map<String, Integer>> activityCounts = studentService.selectStudentActivityCounts(extractStudentIds(students));
         List<Long> blacklistedIds = studentService.selectBlacklistedStudentIds(extractStudentIds(students));
         Set<Long> pendingReviewIds = extractPendingReviewStudentIds();
-        return getDataTable(toTableRows(students, blacklistedIds, pendingReviewIds, activityCounts));
+        table.setRows(toTableRows(students, blacklistedIds, pendingReviewIds, activityCounts));
+        return table;
     }
 
     @PreAuthorize(STUDENT_ROLE_ACCESS)

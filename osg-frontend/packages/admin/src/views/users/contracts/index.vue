@@ -64,10 +64,11 @@
 
       <a-table
         :columns="contractColumns"
-        :data-source="filteredContracts"
+        :data-source="contractRows"
         :row-key="(record: ContractListItem) => record.contractId"
-        :pagination="false"
+        :pagination="tablePagination"
         :loading="loading"
+        @change="handleTableChange"
         :locale="{ emptyText: '暂无合同数据' }"
         :scroll="{ x: 1280 }"
       >
@@ -87,7 +88,13 @@
             <a-tag :color="getTypeColor(record.contractType)">{{ formatContractType(record.contractType) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'contractAmount'">
-            <strong>{{ formatCurrency(record.contractAmount) }}</strong>
+            <template v-if="record.currency === 'GBP'">
+              <div><strong>£{{ (record.amountGbp || 0).toLocaleString() }}</strong></div>
+              <div style="color: #9ca3af; font-size: 12px">${{ (record.amountUsd || 0).toLocaleString() }} 等值</div>
+            </template>
+            <template v-else>
+              <strong>${{ (record.amountUsd || record.contractAmount || 0).toLocaleString() }}</strong>
+            </template>
           </template>
           <template v-else-if="column.dataIndex === 'totalHours'">
             <strong>{{ record.remainingHours ?? record.totalHours }}</strong>
@@ -202,6 +209,10 @@ const summaryStats = ref<ContractStats>({
   remainingHours: 0,
 })
 
+const pageNum = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+
 const filters = reactive<ContractFilters>({
   startDate: '',
   endDate: '',
@@ -210,6 +221,20 @@ const filters = reactive<ContractFilters>({
   contractStatus: undefined,
   leadMentorName: undefined,
 })
+
+const tablePagination = computed(() => ({
+  current: pageNum.value,
+  pageSize: pageSize.value,
+  total: total.value,
+  showSizeChanger: true,
+  showTotal: (value: number) => `共 ${value} 条记录`
+}))
+
+const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
+  pageNum.value = pag.current ?? 1
+  pageSize.value = pag.pageSize ?? 20
+  void loadContracts()
+}
 
 const mentorOptions = computed(() =>
   Array.from(
@@ -229,31 +254,8 @@ const renewStudentOptions = computed(() =>
   )
 )
 
-const filteredContracts = computed(() => {
-  return contractRows.value.filter((record) => {
-    const status = resolveStatus(record)
-    const startDate = record.startDate ? new Date(record.startDate).getTime() : 0
-    const endDate = record.endDate ? new Date(record.endDate).getTime() : 0
-    const rangeStart = filters.startDate ? new Date(filters.startDate).getTime() : null
-    const rangeEnd = filters.endDate ? new Date(filters.endDate).getTime() : null
-    const keyword = filters.studentKeyword.trim().toLowerCase()
-
-    if (rangeStart && endDate < rangeStart) return false
-    if (rangeEnd && startDate > rangeEnd) return false
-    if (keyword) {
-      const matchesName = (record.studentName || '').toLowerCase().includes(keyword)
-      const matchesId = String(record.studentId || '').includes(keyword)
-      if (!matchesName && !matchesId) return false
-    }
-    if (filters.contractType && record.contractType !== filters.contractType) return false
-    if (filters.contractStatus && status !== filters.contractStatus) return false
-    if (filters.leadMentorName && record.leadMentorName !== filters.leadMentorName) return false
-    return true
-  })
-})
-
 const summary = computed(() =>
-  filteredContracts.value.reduce(
+  contractRows.value.reduce(
     (acc, record) => {
       acc.totalAmount += Number(record.contractAmount || 0)
       acc.totalHours += Number(record.totalHours || 0)
@@ -266,31 +268,37 @@ const summary = computed(() =>
 )
 
 const statsCards = computed(() => {
-  const activeContracts = filteredContracts.value.filter((record) => resolveStatus(record) === 'active').length
-  const expiringContracts = filteredContracts.value.filter((record) => resolveStatus(record) === 'expiring').length
-  const endedContracts = filteredContracts.value.filter((record) => resolveStatus(record) === 'expired').length
-  const totalContracts = filteredContracts.value.length || summaryStats.value.totalContracts
-  const totalAmount = filteredContracts.value.length ? summary.value.totalAmount : Number(summaryStats.value.totalAmount || 0)
-
   return [
-    { key: 'total', label: '总合同数', value: String(totalContracts), tone: 'total', bg: '#eff3ff' },
-    { key: 'active', label: '有效合同', value: String(activeContracts || summaryStats.value.activeContracts), tone: 'active', bg: '#dcfce7' },
-    { key: 'expiring', label: '即将到期', value: String(expiringContracts || summaryStats.value.expiringContracts), tone: 'expiring', bg: '#fef3c7' },
-    { key: 'ended', label: '已结束', value: String(endedContracts || summaryStats.value.endedContracts), tone: 'ended', bg: '#f3f4f6' },
-    { key: 'amount', label: '合同总金额', value: formatCurrency(totalAmount), tone: 'amount', bg: '#dbeafe' },
+    { key: 'total', label: '总合同数', value: String(summaryStats.value.totalContracts), tone: 'total', bg: '#eff3ff' },
+    { key: 'active', label: '有效合同', value: String(summaryStats.value.activeContracts), tone: 'active', bg: '#dcfce7' },
+    { key: 'expiring', label: '即将到期', value: String(summaryStats.value.expiringContracts), tone: 'expiring', bg: '#fef3c7' },
+    { key: 'ended', label: '已结束', value: String(summaryStats.value.endedContracts), tone: 'ended', bg: '#f3f4f6' },
+    { key: 'amount', label: '合同总金额', value: formatCurrency(Number(summaryStats.value.totalAmount || 0)), tone: 'amount', bg: '#dbeafe' },
   ]
 })
+
+const buildParams = (): ContractListParams => {
+  const params: ContractListParams = {
+    pageNum: pageNum.value,
+    pageSize: pageSize.value,
+    studentName: filters.studentKeyword?.trim() || undefined,
+    contractType: filters.contractType || undefined,
+    contractStatus: filters.contractStatus || undefined,
+    leadMentorName: filters.leadMentorName || undefined,
+  }
+  if (filters.startDate) {
+    params['params[beginTime]'] = filters.startDate
+  }
+  if (filters.endDate) {
+    params['params[endTime]'] = filters.endDate
+  }
+  return params
+}
 
 const loadContracts = async () => {
   loading.value = true
   try {
-    const params: ContractListParams = {
-      pageNum: 1,
-      pageSize: 200,
-      studentName: filters.studentKeyword || undefined,
-      contractType: filters.contractType || undefined,
-      contractStatus: filters.contractStatus && filters.contractStatus !== 'expiring' ? filters.contractStatus : undefined,
-    }
+    const params = buildParams()
 
     const [listResponse, statsResponse] = await Promise.all([
       getContractList(params),
@@ -298,6 +306,7 @@ const loadContracts = async () => {
     ])
 
     contractRows.value = Array.isArray(listResponse?.rows) ? listResponse.rows : []
+    total.value = listResponse?.total || 0
     summaryStats.value = {
       totalContracts: Number(statsResponse?.totalContracts || 0),
       activeContracts: Number(statsResponse?.activeContracts || 0),
@@ -316,6 +325,7 @@ const loadContracts = async () => {
 }
 
 const handleSearch = async () => {
+  pageNum.value = 1
   await loadContracts()
 }
 
@@ -326,6 +336,7 @@ const handleReset = async () => {
   filters.contractType = undefined
   filters.contractStatus = undefined
   filters.leadMentorName = undefined
+  pageNum.value = 1
   await loadContracts()
 }
 
@@ -359,15 +370,12 @@ const handleExport = async () => {
 
   try {
     const params = new URLSearchParams()
-    if (filters.studentKeyword.trim()) {
-      params.set('studentName', filters.studentKeyword.trim())
-    }
-    if (filters.contractType) {
-      params.set('contractType', filters.contractType)
-    }
-    if (filters.contractStatus && filters.contractStatus !== 'expiring') {
-      params.set('contractStatus', filters.contractStatus)
-    }
+    const exportParams = buildParams()
+    Object.entries(exportParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.set(key, String(value))
+      }
+    })
 
     const token = getToken()
     const response = await fetch(`/api/admin/contract/export?${params.toString()}`, {
@@ -446,13 +454,11 @@ const getStatusColor = (status: string) => {
   return 'green'
 }
 
-const formatCurrency = (value?: number) =>
-  new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency: 'CNY',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0))
+const formatCurrency = (value?: number, curr: string = 'USD') => {
+  const num = Number(value || 0)
+  if (curr === 'GBP') return `£${num.toLocaleString()}`
+  return `$${num.toLocaleString()}`
+}
 
 const formatDate = (value?: string) => {
   if (!value) return '-'

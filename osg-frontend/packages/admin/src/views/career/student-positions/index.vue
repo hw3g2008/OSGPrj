@@ -50,7 +50,7 @@
         :scroll="{ x: 'max-content' }"
         :row-key="(record: StudentPositionListItem) => record.studentPositionId"
         :loading="loading"
-        :pagination="false"
+        :pagination="listPagination"
         :row-class-name="(record: StudentPositionListItem) => record.status === 'pending' ? 'row-pending' : ''"
         :locale="{ emptyText: '当前筛选条件下暂无学生自添岗位' }"
       >
@@ -125,6 +125,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
+import { useStandardClientPagination } from '@osg/shared'
 import {
   approveStudentPosition,
   getStudentPositionList,
@@ -156,6 +157,7 @@ const companyCategoryOptions = [
 
 const rows = ref<StudentPositionListItem[]>([])
 const loading = ref(false)
+const listPagination = useStandardClientPagination(() => rows.value.length)
 const reviewVisible = ref(false)
 const rejectVisible = ref(false)
 const selectedRecord = ref<StudentPositionListItem | null>(null)

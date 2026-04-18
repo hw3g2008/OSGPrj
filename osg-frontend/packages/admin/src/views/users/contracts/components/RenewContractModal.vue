@@ -1,123 +1,226 @@
 <template>
-  <div v-if="visible" data-surface-id="modal-contract-renew" style="display:none" aria-hidden="true"></div>
   <OverlaySurfaceModal
     :open="visible"
     :surface-id="surfaceId"
-    width="600px"
+    width="720px"
     :body-class="'renew-contract-modal__body'"
     @cancel="handleClose"
   >
     <template #title>
-      <div class="renew-contract-modal__title-wrap">
-        <div>
-          <span class="renew-contract-modal__eyebrow">Renew Contract</span>
-          <div class="renew-contract-modal__title">
-            <span class="mdi mdi-file-sign" aria-hidden="true"></span>
-            <span>{{ modalTitle }}</span>
-          </div>
-        </div>
-        <span class="renew-contract-modal__mode">{{ presetContract ? '列表续签入口' : '顶部新增入口' }}</span>
-      </div>
+      <span class="renew-contract-modal__header-title">
+        <span class="mdi mdi-file-document-plus renew-contract-modal__header-icon" aria-hidden="true"></span>
+        <span>续费/新增合同</span>
+      </span>
     </template>
 
-    <div v-if="presetContract" class="renew-contract-modal__context">
-      <div class="renew-contract-modal__context-card">
-        <span>当前合同编号</span>
-        <strong>{{ presetContract.contractNo }}</strong>
+    <a-form
+      ref="formRef"
+      :model="form"
+      layout="vertical"
+      :required-mark="false"
+    >
+      <!-- ══ 学员选择 ══ -->
+      <div class="renew-contract-modal__section">
+        <a-form-item>
+          <template #label>
+            <span class="renew-contract-modal__label">
+              学员 Student
+              <span class="renew-contract-modal__required">*</span>
+            </span>
+          </template>
+          <template v-if="presetContract">
+            <div class="renew-contract-modal__student-card">
+              <div class="renew-contract-modal__avatar">{{ studentInitials }}</div>
+              <div class="renew-contract-modal__student-info">
+                <div class="renew-contract-modal__student-name">{{ presetContract.studentName }}</div>
+                <div class="renew-contract-modal__student-meta">ID: {{ presetContract.studentId }} · 剩余 {{ presetContract.remainingHours ?? 0 }}h</div>
+              </div>
+            </div>
+          </template>
+          <a-select v-else v-model:value="form.studentId" placeholder="请选择学员">
+            <a-select-option v-for="option in studentOptions" :key="option.studentId" :value="String(option.studentId)">
+              {{ option.studentName }} · ID {{ option.studentId }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
       </div>
-      <div class="renew-contract-modal__context-card">
-        <span>当前合同金额</span>
-        <strong>{{ formatCurrency(presetContract.contractAmount) }}</strong>
-      </div>
-      <div class="renew-contract-modal__context-card">
-        <span>当前课时</span>
-        <strong>{{ presetContract.totalHours || 0 }}h</strong>
-      </div>
-      <div class="renew-contract-modal__context-card">
-        <span>当前有效期</span>
-        <strong>{{ formatDateRange(presetContract.startDate, presetContract.endDate) }}</strong>
-      </div>
-    </div>
 
-    <a-form layout="vertical">
-      <a-row :gutter="16">
-        <a-col :span="24">
-          <a-form-item label="学员">
-            <template v-if="presetContract">
-              <div class="renew-contract-modal__locked">{{ presetContract.studentName }} · ID {{ presetContract.studentId }}</div>
+      <!-- ══ 合同金额 ══ -->
+      <div class="renew-contract-modal__part-title">
+        <div class="renew-contract-modal__part-title-heading">
+          <i class="mdi mdi-cash-multiple" aria-hidden="true"></i>
+          <strong>合同金额</strong>
+        </div>
+        <p>选择币种并填写金额信息</p>
+      </div>
+
+      <div class="renew-contract-modal__section">
+        <div class="renew-contract-modal__grid">
+          <a-form-item class="renew-contract-modal__field--wide">
+            <template #label>
+              <span class="renew-contract-modal__label">
+                币种
+                <span class="renew-contract-modal__required">*</span>
+              </span>
             </template>
-            <a-select v-else v-model:value="form.studentId" placeholder="请选择学员">
-              <a-select-option v-for="option in studentOptions" :key="option.studentId" :value="String(option.studentId)">
-                {{ option.studentName }} · ID {{ option.studentId }}
-              </a-select-option>
-            </a-select>
+            <a-radio-group v-model:value="form.currency" class="renew-contract-modal__radio-group">
+              <a-radio-button value="USD">美元 (USD)</a-radio-button>
+              <a-radio-button value="GBP">英镑 (GBP)</a-radio-button>
+            </a-radio-group>
           </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="金额">
-            <a-input-number v-model:value="form.contractAmount" :min="0" :step="100" style="width:100%" />
+
+          <a-form-item v-if="form.currency === 'GBP'">
+            <template #label>
+              <span class="renew-contract-modal__label">
+                英镑金额
+                <span class="renew-contract-modal__required">*</span>
+              </span>
+            </template>
+            <a-input-number
+              v-model:value="form.amountGbp"
+              class="renew-contract-modal__number"
+              :min="0"
+              :precision="2"
+              :controls="false"
+              placeholder="£ 请输入英镑金额"
+            />
           </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="课时">
-            <a-input-number v-model:value="form.totalHours" :min="0" :step="1" style="width:100%" />
+
+          <a-form-item>
+            <template #label>
+              <span class="renew-contract-modal__label">
+                {{ form.currency === 'GBP' ? '美元等值金额' : '金额 Amount' }}
+                <span class="renew-contract-modal__required">*</span>
+              </span>
+            </template>
+            <a-input-number
+              v-model:value="form.amountUsd"
+              class="renew-contract-modal__number"
+              :min="0"
+              :precision="2"
+              :controls="false"
+              :placeholder="form.currency === 'GBP' ? '$ 请输入美元等值金额' : '$ 请输入美元金额'"
+            />
           </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="开始日期">
-            <a-input v-model:value="form.startDate" type="date" />
+
+          <a-form-item>
+            <template #label>
+              <span class="renew-contract-modal__label">
+                新增课时 / New Hours
+                <span class="renew-contract-modal__required">*</span>
+              </span>
+            </template>
+            <a-input-number
+              v-model:value="form.totalHours"
+              class="renew-contract-modal__number"
+              :min="1"
+              :precision="0"
+              :controls="false"
+              placeholder="如 50（本次新增课时数）"
+            />
           </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="结束日期">
-            <a-input v-model:value="form.endDate" type="date" />
+        </div>
+      </div>
+
+      <!-- ══ 合同期限 & 续签原因 ══ -->
+      <div class="renew-contract-modal__part-title">
+        <div class="renew-contract-modal__part-title-heading">
+          <i class="mdi mdi-calendar-range" aria-hidden="true"></i>
+          <strong>合同期限与原因</strong>
+        </div>
+        <p>设置合同有效期和续签原因</p>
+      </div>
+
+      <div class="renew-contract-modal__section">
+        <div class="renew-contract-modal__grid">
+          <a-form-item>
+            <template #label>
+              <span class="renew-contract-modal__label">
+                开始日期
+                <span class="renew-contract-modal__required">*</span>
+              </span>
+            </template>
+            <a-date-picker v-model:value="form.startDate" style="width: 100%" value-format="YYYY-MM-DD" />
           </a-form-item>
-        </a-col>
-        <a-col :span="24">
-          <a-form-item label="续签原因">
+
+          <a-form-item>
+            <template #label>
+              <span class="renew-contract-modal__label">
+                结束日期
+                <span class="renew-contract-modal__required">*</span>
+              </span>
+            </template>
+            <a-date-picker v-model:value="form.endDate" style="width: 100%" value-format="YYYY-MM-DD" />
+          </a-form-item>
+
+          <a-form-item class="renew-contract-modal__field--wide">
+            <template #label>
+              <span class="renew-contract-modal__label">
+                续签原因
+                <span class="renew-contract-modal__required">*</span>
+              </span>
+            </template>
             <a-select v-model:value="form.renewalReason" placeholder="请选择续签原因">
               <a-select-option v-for="option in renewalReasonOptions" :key="option" :value="option">{{ option }}</a-select-option>
             </a-select>
           </a-form-item>
-        </a-col>
-        <a-col v-if="requiresOtherReason" :span="24">
-          <a-form-item label="其他原因说明">
-            <a-input v-model:value="form.otherReason" placeholder="请输入补充说明" />
+
+          <a-form-item v-if="requiresOtherReason" class="renew-contract-modal__field--wide">
+            <template #label>
+              <span class="renew-contract-modal__label">
+                其他原因说明
+                <span class="renew-contract-modal__required">*</span>
+              </span>
+            </template>
+            <a-input v-model:value="form.otherReason" placeholder="请输入补充说明" allow-clear />
           </a-form-item>
-        </a-col>
-        <a-col :span="24">
-          <a-form-item label="合同附件">
-            <div class="renew-contract-modal__upload">
-              <input
-                ref="fileInputRef"
-                type="file"
-                accept=".pdf,application/pdf"
-                class="renew-contract-modal__file-input"
-                @change="handleFileSelect"
-              />
-              <a-button :loading="uploading" @click="triggerFileSelect">
-                <span class="mdi mdi-paperclip" aria-hidden="true" style="margin-right:4px"></span>
-                {{ uploading ? '上传中...' : '上传附件' }}
-              </a-button>
-              <span v-if="form.attachmentName" class="renew-contract-modal__upload-name">{{ form.attachmentName }}</span>
-            </div>
-            <div v-if="uploading || form.uploadProgress > 0" class="renew-contract-modal__progress">
-              <div class="renew-contract-modal__progress-bar" :style="{ width: `${form.uploadProgress}%` }"></div>
-            </div>
+        </div>
+      </div>
+
+      <!-- ══ 附件 & 备注 ══ -->
+      <div class="renew-contract-modal__section">
+        <div class="renew-contract-modal__grid">
+          <a-form-item class="renew-contract-modal__field--wide">
+            <template #label>
+              <span class="renew-contract-modal__label">合同附件</span>
+            </template>
+            <a-upload-dragger
+              :action="uploadAction"
+              :headers="uploadHeaders"
+              name="file"
+              :max-count="1"
+              :file-list="fileList"
+              accept=".pdf,application/pdf"
+              @change="handleUploadChange"
+            >
+              <p class="ant-upload-drag-icon">
+                <i class="mdi mdi-cloud-upload" style="font-size: 28px; color: #4f74ff"></i>
+              </p>
+              <p class="ant-upload-text">点击或拖拽文件上传</p>
+              <p class="ant-upload-hint">支持 PDF 格式</p>
+            </a-upload-dragger>
           </a-form-item>
-        </a-col>
-        <a-col :span="24">
-          <a-form-item label="备注">
-            <a-textarea v-model:value="form.remark" :rows="3" placeholder="选填" />
+
+          <a-form-item class="renew-contract-modal__field--wide">
+            <template #label>
+              <span class="renew-contract-modal__label">备注</span>
+            </template>
+            <a-textarea
+              v-model:value="form.remark"
+              placeholder="选填，可填写特殊约定等"
+              :rows="2"
+              allow-clear
+            />
           </a-form-item>
-        </a-col>
-      </a-row>
+        </div>
+      </div>
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="submitting" :disabled="uploading" @click="handleSubmit">
-        {{ presetContract ? '确认续签' : '创建合同' }}
+      <a-button :disabled="submitting" @click="handleClose">取消</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">
+        <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px"></span>
+        {{ presetContract ? '保存续签合同' : '创建合同' }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -125,13 +228,15 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import dayjs from 'dayjs'
 import { message } from 'ant-design-vue'
+import type { UploadChangeParam } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import {
   renewContract,
-  uploadContractAttachment,
   type ContractListItem,
 } from '@osg/shared/api/admin/contract'
+import { getToken } from '@osg/shared/utils/storage'
 
 interface StudentOption {
   studentId: number
@@ -157,93 +262,79 @@ const emit = defineEmits<{
   submitted: []
 }>()
 
-const fileInputRef = ref<HTMLInputElement | null>(null)
-const uploading = ref(false)
+const resolveCurrency = (preset: ContractListItem | null | undefined): 'USD' | 'GBP' => {
+  if (preset?.currency === 'GBP') return 'GBP'
+  if (preset?.currency === 'USD') return 'USD'
+  if (preset && Number(preset.amountGbp) > 0) return 'GBP'
+  return 'USD'
+}
+
+const toFiniteNumber = (v: unknown): number | undefined => {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : undefined
+}
+
+const formRef = ref()
 const submitting = ref(false)
+const fileList = ref<any[]>([])
+
+const uploadAction = '/api/admin/contract/upload'
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${getToken() || ''}`,
+}))
 
 const form = reactive({
   studentId: '',
-  contractAmount: 5000,
-  totalHours: 20,
+  currency: 'USD' as 'USD' | 'GBP',
+  amountUsd: undefined as number | undefined,
+  amountGbp: undefined as number | undefined,
+  totalHours: undefined as number | undefined,
   startDate: '',
   endDate: '',
   renewalReason: '',
   otherReason: '',
   attachmentPath: '',
-  attachmentName: '',
-  uploadProgress: 0,
   remark: '',
 })
 
 const presetContract = computed(() => props.presetContract || null)
+const studentInitials = computed(() => {
+  const name = presetContract.value?.studentName || ''
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+})
 const requiresOtherReason = computed(() => form.renewalReason === '其他原因')
-const modalTitle = computed(() => presetContract.value ? `为 ${presetContract.value.studentName} 续签合同` : '新增合同')
 const surfaceId = computed(() => (presetContract.value ? 'modal-contract-renew' : 'modal-add-contract'))
 
-const formatCurrency = (value?: number) => {
-  return `¥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-}
-
-const formatDateRange = (startDate?: string, endDate?: string) => {
-  const fmt = (value?: string) => {
-    if (!value) {
-      return '-'
-    }
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) {
-      return value
-    }
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-  }
-
-  if (!startDate && !endDate) {
-    return '-'
-  }
-
-  return `${fmt(startDate)} 至 ${fmt(endDate)}`
-}
-
 const resetForm = () => {
-  const today = new Date()
-  const after90Days = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000)
+  const todayStr = dayjs().format('YYYY-MM-DD')
+  const nextYearMay31 = `${new Date().getFullYear() + 1}-05-31`
   form.studentId = presetContract.value ? String(presetContract.value.studentId) : ''
-  form.contractAmount = presetContract.value?.contractAmount ? Number(presetContract.value.contractAmount) : 5000
-  form.totalHours = presetContract.value?.totalHours ? Number(presetContract.value.totalHours) : 20
-  form.startDate = presetContract.value?.startDate || today.toISOString().slice(0, 10)
-  form.endDate = presetContract.value?.endDate || after90Days.toISOString().slice(0, 10)
+  form.currency = resolveCurrency(presetContract.value)
+  form.amountUsd = undefined
+  form.amountGbp = undefined
+  form.totalHours = undefined
+  form.startDate = todayStr
+  form.endDate = nextYearMay31
   form.renewalReason = ''
   form.otherReason = ''
   form.attachmentPath = ''
-  form.attachmentName = ''
-  form.uploadProgress = 0
   form.remark = ''
-  uploading.value = false
   submitting.value = false
-  if (fileInputRef.value) {
-    fileInputRef.value.value = ''
-  }
+  fileList.value = []
 }
 
-const triggerFileSelect = () => {
-  fileInputRef.value?.click()
-}
-
-const handleFileSelect = async (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-  uploading.value = true
-  form.uploadProgress = 25
-  try {
-    const result = await uploadContractAttachment(file)
-    form.uploadProgress = 100
-    form.attachmentPath = result.attachmentPath
-    form.attachmentName = file.name
-    message.success('合同附件上传成功')
-  } catch (_error) {
-    form.uploadProgress = 0
-  } finally {
-    uploading.value = false
+const handleUploadChange = (info: UploadChangeParam) => {
+  fileList.value = info.fileList.slice(-1)
+  if (info.file.status === 'done') {
+    const res = info.file.response
+    if (res?.data?.attachmentPath) {
+      form.attachmentPath = res.data.attachmentPath
+      message.success('合同附件上传成功')
+    }
+  } else if (info.file.status === 'error') {
+    message.error('附件上传失败')
   }
 }
 
@@ -255,6 +346,14 @@ const handleSubmit = async () => {
   const studentId = Number(form.studentId)
   if (!studentId) {
     message.error('请选择学员')
+    return
+  }
+  if (!form.amountUsd) {
+    message.error(form.currency === 'GBP' ? '请输入美元等值金额' : '请输入美元金额')
+    return
+  }
+  if (form.currency === 'GBP' && !form.amountGbp) {
+    message.error('请输入英镑金额')
     return
   }
   if (!form.startDate || !form.endDate) {
@@ -272,12 +371,18 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
+    const amountUsd = toFiniteNumber(form.amountUsd)
+    const amountGbp = toFiniteNumber(form.amountGbp)
+    const contractAmount = amountUsd ?? 0
     await renewContract({
       studentId,
-      contractAmount: Number(form.contractAmount || 0),
-      totalHours: Number(form.totalHours || 0),
-      startDate: form.startDate,
-      endDate: form.endDate,
+      currency: form.currency,
+      amountUsd,
+      amountGbp: form.currency === 'GBP' ? amountGbp : undefined,
+      contractAmount,
+      totalHours: toFiniteNumber(form.totalHours) ?? 0,
+      startDate: String(form.startDate).slice(0, 10),
+      endDate: String(form.endDate).slice(0, 10),
       renewalReason: form.renewalReason,
       otherReason: form.otherReason.trim() || undefined,
       attachmentPath: form.attachmentPath || undefined,
@@ -299,124 +404,190 @@ watch(() => props.visible, (visible) => {
 </script>
 
 <style scoped lang="scss">
-/* ── Header (override OverlaySurfaceModal header) ── */
+/* ── Header ── */
 :global([data-surface-id="modal-contract-renew"] [data-surface-part="header"]) {
-  background: linear-gradient(135deg, #F59E0B, #FBBF24) !important;
-  border-bottom: none !important;
-  border-radius: 16px 16px 0 0;
-  padding: 22px 26px !important;
+  background: #fff !important;
+  border-bottom: 1px solid rgba(79, 116, 255, 0.1) !important;
 }
 
 :global([data-surface-id="modal-contract-renew"] .overlay-surface-modal__close) {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #fff !important;
+  background: #f5f7ff !important;
+  color: #69758b !important;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.35) !important;
+    background: #eef2ff !important;
+    color: #4f74ff !important;
   }
 }
 
-.renew-contract-modal__title-wrap {
-  display: flex;
+.renew-contract-modal__header-title {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.renew-contract-modal__eyebrow {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.renew-contract-modal__title {
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 24px;
-  font-weight: 700;
-  color: #fff;
-}
-
-.renew-contract-modal__mode {
-  border-radius: 999px;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.85);
-  color: #92400E;
-  font-size: 12px;
+  gap: 8px;
+  color: #1a2234;
+  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
+  font-size: 18px;
   font-weight: 700;
 }
 
-.renew-contract-modal__context {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+.renew-contract-modal__header-icon {
+  color: #4f74ff;
+  font-size: 18px;
 }
 
-.renew-contract-modal__context-card {
-  border-radius: 14px;
-  border: 1px solid #fde3b0;
-  background: #fff8eb;
-  padding: 12px 14px;
+/* ── Body ── */
+.renew-contract-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+}
 
-  span {
-    display: block;
-    margin-bottom: 6px;
-    color: #9a6700;
-    font-size: 12px;
+
+/* ── Part title banners ── */
+.renew-contract-modal__part-title {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #fef9e7 0%, #fff8e1 100%);
+  border: 1px solid rgba(197, 106, 38, 0.15);
+  color: #92400e;
+
+  p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #78716c;
+  }
+}
+
+.renew-contract-modal__part-title-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    font-size: 18px;
   }
 
   strong {
-    display: block;
-    color: #6b3d00;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
   }
 }
 
-.renew-contract-modal__locked {
-  display: flex;
-  align-items: center;
-  background: #f7f9fc;
+/* ── Section cards ── */
+.renew-contract-modal__section {
+  background: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
-.renew-contract-modal__upload {
+/* ── Grid layout ── */
+.renew-contract-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+.renew-contract-modal__field--wide {
+  grid-column: 1 / -1;
+}
+
+/* ── Labels ── */
+.renew-contract-modal__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #1a2234;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.renew-contract-modal__required {
+  color: #dc2626;
+}
+
+/* ── Radio group ── */
+.renew-contract-modal__radio-group {
+  display: flex;
+  gap: 0;
+
+  :deep(.ant-radio-button-wrapper) {
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    margin-inline-start: 0;
+    height: 30px;
+    padding-inline: 10px;
+    line-height: 28px;
+    font-size: 11px;
+  }
+
+  :deep(.ant-radio-button-wrapper:not(:first-child)::before) {
+    display: none;
+  }
+}
+
+/* ── Number input full width ── */
+.renew-contract-modal__number {
+  width: 100%;
+  height: 32px !important;
+
+  :deep(.ant-input-number-input-wrap),
+  :deep(.ant-input-number-input) {
+    height: 100% !important;
+  }
+}
+
+/* ── Student card ── */
+.renew-contract-modal__student-card {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #f7f9fc;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
 }
 
-.renew-contract-modal__file-input {
-  display: none;
+.renew-contract-modal__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c5cfc, #a78bfa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
 }
 
-.renew-contract-modal__upload-name {
-  font-size: 12px;
-  color: #5b708d;
+.renew-contract-modal__student-info {
+  flex: 1;
+  min-width: 0;
 }
 
-.renew-contract-modal__progress {
-  margin-top: 10px;
-  height: 8px;
-  border-radius: 999px;
-  background: #eaf0f6;
-  overflow: hidden;
+.renew-contract-modal__student-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a2234;
+  line-height: 1.3;
 }
 
-.renew-contract-modal__progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #F59E0B, #D97706);
-  transition: width 0.18s ease;
+.renew-contract-modal__student-meta {
+  font-size: 13px;
+  color: #69758b;
+  margin-top: 2px;
 }
 
-@media (max-width: 900px) {
-  .renew-contract-modal__title-wrap {
-    flex-direction: column;
-    align-items: flex-start;
+@media (max-width: 720px) {
+  .renew-contract-modal__grid {
+    grid-template-columns: 1fr;
   }
+
 }
 </style>

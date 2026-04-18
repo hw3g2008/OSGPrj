@@ -42,6 +42,42 @@ public class OsgContract extends BaseEntity
 
     private String attachmentPath;
 
+    private String currency;
+
+    private BigDecimal amountUsd;
+
+    private BigDecimal amountGbp;
+
+    public String getCurrency()
+    {
+        return currency;
+    }
+
+    public void setCurrency(String currency)
+    {
+        this.currency = currency;
+    }
+
+    public BigDecimal getAmountUsd()
+    {
+        return amountUsd;
+    }
+
+    public void setAmountUsd(BigDecimal amountUsd)
+    {
+        this.amountUsd = amountUsd;
+    }
+
+    public BigDecimal getAmountGbp()
+    {
+        return amountGbp;
+    }
+
+    public void setAmountGbp(BigDecimal amountGbp)
+    {
+        this.amountGbp = amountGbp;
+    }
+
     public Long getContractId()
     {
         return contractId;

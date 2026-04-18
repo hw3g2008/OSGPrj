@@ -21,6 +21,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="renewalReason" column="renewal_reason"/>
         <result property="contractStatus" column="contract_status"/>
         <result property="attachmentPath" column="attachment_path"/>
+        <result property="currency" column="currency"/>
+        <result property="amountUsd" column="amount_usd"/>
+        <result property="amountGbp" column="amount_gbp"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -45,6 +48,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         c.renewal_reason,
         c.contract_status,
         c.attachment_path,
+        c.currency,
+        c.amount_usd,
+        c.amount_gbp,
         c.create_by,
         c.create_time,
         c.update_by,
@@ -60,17 +66,30 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="leadMentorId != null">
                 and s.lead_mentor_id = #{leadMentorId}
             </if>
+            <if test="leadMentorName != null and leadMentorName != ''">
+                and u.nick_name like concat('%', #{leadMentorName}, '%')
+            </if>
             <if test="contractType != null and contractType != ''">
                 and c.contract_type = #{contractType}
             </if>
-            <if test="contractStatus != null and contractStatus != ''">
+            <if test="contractStatus != null and contractStatus != '' and contractStatus != 'expiring'">
                 and c.contract_status = #{contractStatus}
+            </if>
+            <if test="contractStatus != null and contractStatus == 'expiring'">
+                and c.contract_status = 'active'
+                and c.end_date between curdate() and date_add(curdate(), interval 30 day)
             </if>
             <if test="studentName != null and studentName != ''">
                 and (
                     s.student_name like concat('%', #{studentName}, '%')
                     or cast(c.student_id as char) like concat('%', #{studentName}, '%')
                 )
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and c.end_date &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and c.start_date &lt;= #{params.endTime}
             </if>
         </where>
     </sql>
@@ -115,6 +134,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="renewalReason != null and renewalReason != ''">renewal_reason,</if>
             contract_status,
             <if test="attachmentPath != null and attachmentPath != ''">attachment_path,</if>
+            <if test="currency != null and currency != ''">currency,</if>
+            <if test="amountUsd != null">amount_usd,</if>
+            <if test="amountGbp != null">amount_gbp,</if>
             <if test="createBy != null and createBy != ''">create_by,</if>
             create_time,
             <if test="updateBy != null and updateBy != ''">update_by,</if>
@@ -134,6 +156,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="renewalReason != null and renewalReason != ''">#{renewalReason},</if>
             #{contractStatus},
             <if test="attachmentPath != null and attachmentPath != ''">#{attachmentPath},</if>
+            <if test="currency != null and currency != ''">#{currency},</if>
+            <if test="amountUsd != null">#{amountUsd},</if>
+            <if test="amountGbp != null">#{amountGbp},</if>
             <if test="createBy != null and createBy != ''">#{createBy},</if>
             sysdate(),
             <if test="updateBy != null and updateBy != ''">#{updateBy},</if>

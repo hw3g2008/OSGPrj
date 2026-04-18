@@ -52,6 +52,9 @@ public class OsgStudentServiceImpl implements IOsgStudentService
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
     @Override
     public OsgStudent selectStudentByStudentId(Long studentId)
     {
@@ -115,8 +118,8 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         update.setSubDirection(defaultText(asText(payload.get("subDirection")), existing.getSubDirection()));
         update.setTargetRegion(defaultText(asText(payload.get("targetRegion")), existing.getTargetRegion()));
         update.setRecruitmentCycle(defaultText(asCsv(payload.get("recruitmentCycle")), existing.getRecruitmentCycle()));
-        update.setLeadMentorId(defaultLong(asLong(payload.get("leadMentorId")), existing.getLeadMentorId()));
-        update.setAssistantId(defaultLong(asLong(payload.get("assistantId")), existing.getAssistantId()));
+        update.setLeadMentorId(resolveStaffToUserId(asLong(payload.get("leadMentorId")), existing.getLeadMentorId()));
+        update.setAssistantId(resolveStaffToUserId(asLong(payload.get("assistantId")), existing.getAssistantId()));
         update.setGender(defaultText(normalizeGender(asText(payload.get("gender"))), existing.getGender()));
         update.setAccountStatus(defaultText(asText(payload.get("accountStatus")), existing.getAccountStatus()));
         update.setRemark(defaultText(asText(payload.get("remark")), existing.getRemark()));
@@ -348,6 +351,9 @@ public class OsgStudentServiceImpl implements IOsgStudentService
             row.put("contractId", contract.getContractId());
             row.put("contractNo", contract.getContractNo());
             row.put("contractType", contract.getContractType());
+            row.put("currency", contract.getCurrency());
+            row.put("amountUsd", contract.getAmountUsd());
+            row.put("amountGbp", contract.getAmountGbp());
             row.put("contractAmount", contract.getContractAmount());
             row.put("totalHours", contract.getTotalHours());
             row.put("usedHours", contract.getUsedHours());
@@ -403,7 +409,18 @@ public class OsgStudentServiceImpl implements IOsgStudentService
     {
         OsgContract contract = new OsgContract();
         contract.setContractType(asText(firstPresent(source, "contractType")));
-        contract.setContractAmount(asBigDecimal(firstPresent(source, "contractAmount", "amount")));
+        contract.setCurrency(asText(firstPresent(source, "currency")));
+        contract.setAmountUsd(asBigDecimal(firstPresent(source, "amountUsd")));
+        contract.setAmountGbp(asBigDecimal(firstPresent(source, "amountGbp")));
+        BigDecimal explicitAmount = asBigDecimal(firstPresent(source, "contractAmount", "amount"));
+        if (explicitAmount != null)
+        {
+            contract.setContractAmount(explicitAmount);
+        }
+        else
+        {
+            contract.setContractAmount(contract.getAmountUsd() == null ? BigDecimal.ZERO : contract.getAmountUsd());
+        }
         contract.setTotalHours(asInteger(firstPresent(source, "totalHours", "studyHours")));
         contract.setStartDate(asDate(firstPresent(source, "startDate")));
         contract.setEndDate(asDate(firstPresent(source, "endDate")));
@@ -834,6 +851,22 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         contact.put("wechat", firstNonBlank(remarkFields.get("wechat"), remarkFields.get("wechatId")));
         contact.put("phone", remarkFields.get("phone"));
         return contact;
+    }
+
+    private Long resolveStaffToUserId(Long staffId, Long fallback)
+    {
+        if (staffId == null)
+        {
+            return fallback;
+        }
+        try
+        {
+            return identityResolver.resolveUserIdByStaffId(staffId);
+        }
+        catch (ServiceException ex)
+        {
+            return fallback;
+        }
     }
 
     private String resolveUserDisplayName(Long userId)

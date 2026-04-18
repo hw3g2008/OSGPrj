@@ -45,8 +45,9 @@ public class OsgStaffController extends BaseController
         normalizeFilter(staff);
         startPage();
         List<OsgStaff> rows = staffService.selectStaffList(staff);
+        TableDataInfo table = getDataTable(rows);
         List<Long> blacklistedIds = staffService.selectBlacklistedStaffIds(extractStaffIds(rows));
-        TableDataInfo table = getDataTable(toTableRows(rows, blacklistedIds));
+        table.setRows(toTableRows(rows, blacklistedIds));
         table.setPendingReviewCount(staffService.selectPendingReviewCount());
         return table;
     }

@@ -93,10 +93,12 @@
         :columns="recordColumns"
         :data-source="rows"
         :row-key="(record: ClassRecordRow) => record.recordId"
-        :pagination="false"
+        :pagination="tablePagination"
+        :loading="loading"
         :row-class-name="(record: ClassRecordRow) => record.status === 'pending' ? 'row-pending' : ''"
         :locale="{ emptyText: '暂无课程记录' }"
         :scroll="{ x: 1200 }"
+        @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'recordId'">
@@ -162,6 +164,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import { usePagination } from '@osg/shared'
 import {
   exportClassRecords,
   getClassRecordList,
@@ -195,9 +198,29 @@ const filterReporterRole = ref('')
 const filterDateStart = ref('')
 const filterDateEnd = ref('')
 const activeTab = ref('all')
-const rows = ref<ClassRecordRow[]>([])
 const stats = ref<ClassRecordStats | null>(null)
 const exporting = ref(false)
+
+const toFilters = () => ({
+  keyword: keyword.value || undefined,
+  courseType: filterCoachingType.value || undefined,
+  classStatus: filterCourseContent.value || undefined,
+  courseSource: filterReporterRole.value || undefined,
+  tab: activeTab.value,
+  classDateStart: filterDateStart.value || undefined,
+  classDateEnd: filterDateEnd.value || undefined
+})
+
+const {
+  rows,
+  loading,
+  tablePagination,
+  search: searchList,
+  reload: reloadList,
+  handleTableChange
+} = usePagination<ClassRecordRow, ReturnType<typeof toFilters>>(
+  (params) => getClassRecordList(params)
+)
 const reviewVisible = ref(false)
 const detailVisible = ref(false)
 const reviewSubmitting = ref(false)
@@ -223,28 +246,27 @@ const tabList = computed(() => [
   { key: 'rejected', label: '已驳回', badge: null, badgeTone: '' }
 ])
 
-const toFilters = () => ({
-  keyword: keyword.value || undefined,
-  courseType: filterCoachingType.value || undefined,
-  classStatus: filterCourseContent.value || undefined,
-  courseSource: filterReporterRole.value || undefined,
-  tab: activeTab.value,
-  classDateStart: filterDateStart.value || undefined,
-  classDateEnd: filterDateEnd.value || undefined
-})
+const loadStats = async () => {
+  try {
+    stats.value = await getClassRecordStats(toFilters())
+  } catch (_error) {
+    // 不阻塞列表加载
+  }
+}
 
 const loadData = async () => {
   try {
-    const currentFilters = toFilters()
-    const [listResponse, statsResponse] = await Promise.all([
-      getClassRecordList(currentFilters),
-      getClassRecordStats(currentFilters)
-    ])
-
-    rows.value = listResponse.rows ?? []
-    stats.value = statsResponse
+    await Promise.all([searchList(toFilters()), loadStats()])
   } catch (_error) {
     message.error('课程记录加载失败')
+  }
+}
+
+const refreshAfterMutation = async () => {
+  try {
+    await Promise.all([reloadList(), loadStats()])
+  } catch (_error) {
+    /* ignore */
   }
 }
 
@@ -283,7 +305,7 @@ const handleReviewApprove = async (payload: { remark?: string }) => {
     await approveReport(selectedRecord.value.recordId, payload)
     message.success('课时审核已通过')
     reviewVisible.value = false
-    await loadData()
+    await refreshAfterMutation()
   } catch (_error) {
     message.error('课时审核通过失败')
   } finally {
@@ -301,7 +323,7 @@ const handleReviewReject = async (payload: { remark?: string }) => {
     await rejectReport(selectedRecord.value.recordId, payload)
     message.success('课时审核已驳回')
     reviewVisible.value = false
-    await loadData()
+    await refreshAfterMutation()
   } catch (_error) {
     message.error('课时审核驳回失败')
   } finally {
