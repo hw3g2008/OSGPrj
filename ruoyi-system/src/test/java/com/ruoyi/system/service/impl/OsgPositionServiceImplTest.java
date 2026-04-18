@@ -46,8 +46,8 @@ class OsgPositionServiceImplTest
     void selectPositionMetaDoesNotRewriteNormalizedReferenceData()
     {
         when(positionMapper.selectPositionList(any(OsgPosition.class))).thenReturn(List.of(
-            position(201L, "Investment Bank", "Goldman Sachs", "Summer Analyst", "na", "New York", "2026 Summer", "2026"),
-            position(202L, "Consulting", "McKinsey", "Business Analyst", "eu", "London", "2025 Full-time", "2025")
+            position(201L, "Investment Bank", "Goldman Sachs", "Summer Analyst", "na", "New York", "Class of 2026", "2026"),
+            position(202L, "Consulting", "McKinsey", "Business Analyst", "eu", "London", "Class of 2027", "2025")
         ));
         Map<String, List<SysDictData>> dictRows = normalizedDictRows();
         when(sysDictDataMapper.selectDictDataByType(anyString())).thenAnswer(invocation ->
@@ -56,7 +56,7 @@ class OsgPositionServiceImplTest
         Map<String, Object> meta = service.selectPositionMeta();
 
         assertEquals("summer", valueAt(meta, "categories", 0));
-        assertEquals("2026 Summer", valueAt(meta, "recruitmentCycles", 7));
+        assertEquals("Class of 2026", valueAt(meta, "recruitmentCycles", 0));
         verify(sysDictDataMapper, never()).updateDictData(any(SysDictData.class));
         verify(sysDictDataMapper, never()).insertDictData(any(SysDictData.class));
         verify(sysDictDataMapper, never()).deleteDictDataById(any());
@@ -119,25 +119,10 @@ class OsgPositionServiceImplTest
                 dict("osg_company_type", "VC", "VC", 6L, null, null, null),
                 dict("osg_company_type", "Other", "Other", 7L, null, null, null)
             ));
-        rows.put("osg_recruitment_cycle", List.of(
-                dict("osg_recruitment_cycle", "Spring Week", "Spring Week", 1L, null, null, null),
-                dict("osg_recruitment_cycle", "2024 Spring", "2024 Spring", 2L, null, null, null),
-                dict("osg_recruitment_cycle", "2025 Spring", "2025 Spring", 3L, null, null, null),
-                dict("osg_recruitment_cycle", "2026 Spring", "2026 Spring", 4L, null, null, null),
-                dict("osg_recruitment_cycle", "2027 Spring", "2027 Spring", 5L, null, null, null),
-                dict("osg_recruitment_cycle", "2024 Summer", "2024 Summer", 6L, null, null, null),
-                dict("osg_recruitment_cycle", "2025 Summer", "2025 Summer", 7L, null, null, null),
-                dict("osg_recruitment_cycle", "2026 Summer", "2026 Summer", 8L, null, null, null),
-                dict("osg_recruitment_cycle", "2027 Summer", "2027 Summer", 9L, null, null, null),
-                dict("osg_recruitment_cycle", "2024 Autumn", "2024 Autumn", 10L, null, null, null),
-                dict("osg_recruitment_cycle", "2025 Autumn", "2025 Autumn", 11L, null, null, null),
-                dict("osg_recruitment_cycle", "2026 Autumn", "2026 Autumn", 12L, null, null, null),
-                dict("osg_recruitment_cycle", "2027 Autumn", "2027 Autumn", 13L, null, null, null),
-                dict("osg_recruitment_cycle", "2024 Full-time", "2024 Full-time", 14L, null, null, null),
-                dict("osg_recruitment_cycle", "2025 Full-time", "2025 Full-time", 15L, null, null, null),
-                dict("osg_recruitment_cycle", "2026 Full-time", "2026 Full-time", 16L, null, null, null),
-                dict("osg_recruitment_cycle", "2027 Full-time", "2027 Full-time", 17L, null, null, null),
-                dict("osg_recruitment_cycle", "Off-cycle", "Off-cycle", 18L, null, null, null)
+        rows.put("osg_recruit_cycle", List.of(
+                dict("osg_recruit_cycle", "Class of 2026", "Class of 2026", 1L, null, null, null),
+                dict("osg_recruit_cycle", "Class of 2027", "Class of 2027", 2L, null, null, null),
+                dict("osg_recruit_cycle", "Class of 2028", "Class of 2028", 3L, null, null, null)
             ));
         rows.put("osg_project_year", List.of(
                 dict("osg_project_year", "2024", "2024", 1L, null, null, null),
@@ -162,7 +147,8 @@ class OsgPositionServiceImplTest
                 dict("osg_position_city", "Singapore", "Singapore", 8L, null, "ap", null),
                 dict("osg_position_city", "Tokyo", "Tokyo", 9L, null, "ap", null),
                 dict("osg_position_city", "Shanghai", "Shanghai", 10L, null, "cn", null),
-                dict("osg_position_city", "Beijing", "Beijing", 11L, null, "cn", null)
+                dict("osg_position_city", "Beijing", "Beijing", 11L, null, "cn", null),
+                dict("osg_position_city", "St Louis", "St Louis", 12L, null, "na", null)
             ));
         rows.put("osg_position_publish_preset", List.of(
                 dict("osg_position_publish_preset", "week", "本周", 1L, null, null, null),

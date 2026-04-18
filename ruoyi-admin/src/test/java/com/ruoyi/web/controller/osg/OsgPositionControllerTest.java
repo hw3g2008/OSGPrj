@@ -285,16 +285,16 @@ class OsgPositionControllerTest
             buildPosition(201L, "Investment Bank", "Goldman Sachs", "Summer Analyst", "New York", "2026", "visible", 12),
             buildPosition(202L, "Consulting", "McKinsey", "Business Analyst", "London", "2025", "hidden", 3)
         )));
-        positionRowsRef.get().get(0).setRecruitmentCycle("2026 Summer");
-        positionRowsRef.get().get(1).setRecruitmentCycle("2025 Full-time");
+        positionRowsRef.get().get(0).setRecruitmentCycle("Class of 2026");
+        positionRowsRef.get().get(1).setRecruitmentCycle("Class of 2027");
         dictRowsRef.set(buildNormalizedDictRows());
 
         mockMvc.perform(get("/admin/position/meta")
                 .header("Authorization", "Bearer position-admin-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.recruitmentCycles[0].value").value("Spring Week"))
-                .andExpect(jsonPath("$.data.recruitmentCycles[7].value").value("2026 Summer"));
+                .andExpect(jsonPath("$.data.recruitmentCycles[0].value").value("Class of 2026"))
+                .andExpect(jsonPath("$.data.recruitmentCycles[2].value").value("Class of 2028"));
 
         org.mockito.Mockito.verify(sysDictDataMapper, org.mockito.Mockito.never()).updateDictData(any(SysDictData.class));
         org.mockito.Mockito.verify(sysDictDataMapper, org.mockito.Mockito.never()).insertDictData(any(SysDictData.class));
@@ -594,9 +594,9 @@ class OsgPositionControllerTest
                 buildDict("osg_company_type", "Investment Bank", "Investment Bank", 1, null, null),
                 buildDict("osg_company_type", "Consulting", "Consulting", 2, null, null)
             ),
-            "osg_recruitment_cycle", List.of(
-                buildDict("osg_recruitment_cycle", "2025", "2025", 1, null, null),
-                buildDict("osg_recruitment_cycle", "2026", "2026", 2, null, null)
+            "osg_recruit_cycle", List.of(
+                buildDict("osg_recruit_cycle", "Class of 2026", "Class of 2026", 1, null, null),
+                buildDict("osg_recruit_cycle", "Class of 2027", "Class of 2027", 2, null, null)
             ),
             "osg_project_year", List.of(
                 buildDict("osg_project_year", "2025", "2025", 1, null, null),
@@ -646,25 +646,10 @@ class OsgPositionControllerTest
                 buildDict("osg_company_type", "VC", "VC", 6, null, null),
                 buildDict("osg_company_type", "Other", "Other", 7, null, null)
             ));
-        rows.put("osg_recruitment_cycle", List.of(
-                buildDict("osg_recruitment_cycle", "Spring Week", "Spring Week", 1, null, null),
-                buildDict("osg_recruitment_cycle", "2024 Spring", "2024 Spring", 2, null, null),
-                buildDict("osg_recruitment_cycle", "2025 Spring", "2025 Spring", 3, null, null),
-                buildDict("osg_recruitment_cycle", "2026 Spring", "2026 Spring", 4, null, null),
-                buildDict("osg_recruitment_cycle", "2027 Spring", "2027 Spring", 5, null, null),
-                buildDict("osg_recruitment_cycle", "2024 Summer", "2024 Summer", 6, null, null),
-                buildDict("osg_recruitment_cycle", "2025 Summer", "2025 Summer", 7, null, null),
-                buildDict("osg_recruitment_cycle", "2026 Summer", "2026 Summer", 8, null, null),
-                buildDict("osg_recruitment_cycle", "2027 Summer", "2027 Summer", 9, null, null),
-                buildDict("osg_recruitment_cycle", "2024 Autumn", "2024 Autumn", 10, null, null),
-                buildDict("osg_recruitment_cycle", "2025 Autumn", "2025 Autumn", 11, null, null),
-                buildDict("osg_recruitment_cycle", "2026 Autumn", "2026 Autumn", 12, null, null),
-                buildDict("osg_recruitment_cycle", "2027 Autumn", "2027 Autumn", 13, null, null),
-                buildDict("osg_recruitment_cycle", "2024 Full-time", "2024 Full-time", 14, null, null),
-                buildDict("osg_recruitment_cycle", "2025 Full-time", "2025 Full-time", 15, null, null),
-                buildDict("osg_recruitment_cycle", "2026 Full-time", "2026 Full-time", 16, null, null),
-                buildDict("osg_recruitment_cycle", "2027 Full-time", "2027 Full-time", 17, null, null),
-                buildDict("osg_recruitment_cycle", "Off-cycle", "Off-cycle", 18, null, null)
+        rows.put("osg_recruit_cycle", List.of(
+                buildDict("osg_recruit_cycle", "Class of 2026", "Class of 2026", 1, null, null),
+                buildDict("osg_recruit_cycle", "Class of 2027", "Class of 2027", 2, null, null),
+                buildDict("osg_recruit_cycle", "Class of 2028", "Class of 2028", 3, null, null)
             ));
         rows.put("osg_project_year", List.of(
                 buildDict("osg_project_year", "2024", "2024", 1, null, null),
@@ -689,7 +674,8 @@ class OsgPositionControllerTest
                 buildDict("osg_position_city", "Singapore", "Singapore", 8, null, "ap"),
                 buildDict("osg_position_city", "Tokyo", "Tokyo", 9, null, "ap"),
                 buildDict("osg_position_city", "Shanghai", "Shanghai", 10, null, "cn"),
-                buildDict("osg_position_city", "Beijing", "Beijing", 11, null, "cn")
+                buildDict("osg_position_city", "Beijing", "Beijing", 11, null, "cn"),
+                buildDict("osg_position_city", "St Louis", "St Louis", 12, null, "na")
             ));
         rows.put("osg_position_publish_preset", List.of(
                 buildDict("osg_position_publish_preset", "week", "本周", 1, null, null),

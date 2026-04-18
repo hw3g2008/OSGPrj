@@ -161,7 +161,10 @@
                         </template>
                         <template v-else-if="column.dataIndex === 'positionCategory'">{{ formatCategory(position.positionCategory) }}</template>
                         <template v-else-if="column.dataIndex === 'department'">{{ position.department || '-' }}</template>
-                        <template v-else-if="column.dataIndex === 'recruitmentCycle'"><a-tag color="purple">{{ formatCycle(position.recruitmentCycle) }}</a-tag></template>
+                        <template v-else-if="column.dataIndex === 'recruitmentCycle'">
+                          <a-tag v-for="cycle in splitCycles(position.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
+                          <span v-if="!splitCycles(position.recruitmentCycle).length">-</span>
+                        </template>
                         <template v-else-if="column.dataIndex === 'publishTime'">{{ formatShortDate(position.publishTime) }}</template>
                         <template v-else-if="column.dataIndex === 'deadline'">
                           <template v-if="position.deadlineText">{{ position.deadlineText }}</template>
@@ -213,7 +216,10 @@
                 </div>
               </template>
               <template v-else-if="column.dataIndex === 'positionCategory'">{{ formatCategory(record.positionCategory) }}</template>
-              <template v-else-if="column.dataIndex === 'recruitmentCycle'"><a-tag color="purple">{{ formatCycle(record.recruitmentCycle) }}</a-tag></template>
+              <template v-else-if="column.dataIndex === 'recruitmentCycle'">
+                <a-tag v-for="cycle in splitCycles(record.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
+                <span v-if="!splitCycles(record.recruitmentCycle).length">-</span>
+              </template>
               <template v-else-if="column.dataIndex === 'publishTime'">{{ formatShortDate(record.publishTime) }}</template>
               <template v-else-if="column.dataIndex === 'deadlineDisplay'">
                 <template v-if="record.deadlineText">{{ record.deadlineText }}</template>
@@ -764,13 +770,14 @@ const formatStatus = (value?: string) => statusMap.value.get(value || '')?.label
 
 const getStatusTone = (value?: string) => statusMap.value.get(value || '')?.tone || 'success'
 
+const splitCycles = (value?: string) =>
+  (value || '').split(',').map((item) => item.trim()).filter(Boolean)
+
 const formatCycle = (value?: string) => {
   if (!value) {
     return '-'
   }
-  const cycles = value.split(',').map((item) => item.trim()).filter(Boolean)
-  const first = cycles[0] || value
-  return cycleMap.value.get(first)?.label || first
+  return cycleMap.value.get(value)?.label || value
 }
 
 const formatShortDate = (value?: string) => {

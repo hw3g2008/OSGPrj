@@ -48,7 +48,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     private static final String DICT_POSITION_DISPLAY_STATUS = "osg_position_display_status";
     private static final String DICT_POSITION_INDUSTRY = "osg_position_industry";
     private static final String DICT_POSITION_COMPANY = "osg_company_name";
-    private static final String DICT_RECRUITMENT_CYCLE = "osg_recruitment_cycle";
+    private static final String DICT_RECRUITMENT_CYCLE = "osg_recruit_cycle";
     private static final String DICT_PROJECT_YEAR = "osg_project_year";
     private static final String DICT_POSITION_REGION = "osg_position_region";
     private static final String DICT_POSITION_CITY = "osg_position_city";
@@ -449,24 +449,6 @@ public class OsgPositionServiceImpl implements IOsgPositionService
                 new DictSeed(DICT_POSITION_INDUSTRY, "Consulting", "Consulting", 2L, "violet", "mdi-lightbulb", null),
                 new DictSeed(DICT_POSITION_INDUSTRY, "Tech", "Tech", 3L, "blue", "mdi-laptop", null),
                 new DictSeed(DICT_POSITION_INDUSTRY, "PE/VC", "PE/VC", 4L, "amber", "mdi-chart-line", null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "Spring Week", "Spring Week", 1L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2024 Spring", "2024 Spring", 2L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2025 Spring", "2025 Spring", 3L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2026 Spring", "2026 Spring", 4L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2027 Spring", "2027 Spring", 5L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2024 Summer", "2024 Summer", 6L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2025 Summer", "2025 Summer", 7L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2026 Summer", "2026 Summer", 8L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2027 Summer", "2027 Summer", 9L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2024 Autumn", "2024 Autumn", 10L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2025 Autumn", "2025 Autumn", 11L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2026 Autumn", "2026 Autumn", 12L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2027 Autumn", "2027 Autumn", 13L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2024 Full-time", "2024 Full-time", 14L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2025 Full-time", "2025 Full-time", 15L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2026 Full-time", "2026 Full-time", 16L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "2027 Full-time", "2027 Full-time", 17L, null, null, null),
-                new DictSeed(DICT_RECRUITMENT_CYCLE, "Off-cycle", "Off-cycle", 18L, null, null, null),
                 new DictSeed(DICT_PROJECT_YEAR, "2024", "2024", 1L, null, null, null),
                 new DictSeed(DICT_PROJECT_YEAR, "2025", "2025", 2L, null, null, null),
                 new DictSeed(DICT_PROJECT_YEAR, "2026", "2026", 3L, null, null, null),
@@ -501,8 +483,6 @@ public class OsgPositionServiceImpl implements IOsgPositionService
                 new DictSeed(DICT_POSITION_UI_COPY, "upload_step_2", "按模板格式填写岗位信息（所有字段必填）", 3L, null, null, null),
                 new DictSeed(DICT_POSITION_UI_COPY, "upload_step_3", "上传填写好的文件", 4L, null, null, null)
             ));
-            purgeObsoleteDictValues(DICT_RECRUITMENT_CYCLE, Set.of("2024", "2025", "2026", "2027"));
-            normalizeLegacyRecruitmentCycles();
 
             referenceDataReady = true;
         }
@@ -514,58 +494,6 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         {
             upsertDictData(seed);
         }
-    }
-
-    private void purgeObsoleteDictValues(String dictType, Set<String> obsoleteValues)
-    {
-        if (obsoleteValues == null || obsoleteValues.isEmpty())
-        {
-            return;
-        }
-        for (SysDictData item : loadDictItems(dictType))
-        {
-            if (!obsoleteValues.contains(item.getDictValue()))
-            {
-                continue;
-            }
-            sysDictDataMapper.deleteDictDataById(item.getDictCode());
-        }
-    }
-
-    private void normalizeLegacyRecruitmentCycles()
-    {
-        for (OsgPosition row : selectPositionList(new OsgPosition()))
-        {
-            String normalizedCycle = normalizeLegacyRecruitmentCycleValue(row);
-            if (!StringUtils.hasText(normalizedCycle) || Objects.equals(normalizedCycle, row.getRecruitmentCycle()))
-            {
-                continue;
-            }
-            OsgPosition patch = new OsgPosition();
-            patch.setPositionId(row.getPositionId());
-            patch.setRecruitmentCycle(normalizedCycle);
-            patch.setUpdateBy("codex");
-            positionMapper.updatePosition(patch);
-        }
-    }
-
-    private String normalizeLegacyRecruitmentCycleValue(OsgPosition position)
-    {
-        String recruitmentCycle = asText(position.getRecruitmentCycle());
-        if (!StringUtils.hasText(recruitmentCycle) || !recruitmentCycle.matches("\\d{4}"))
-        {
-            return recruitmentCycle;
-        }
-
-        String category = defaultText(asText(position.getPositionCategory()), "").toLowerCase(Locale.ROOT);
-        return switch (category)
-        {
-            case "summer", "暑期实习" -> recruitmentCycle + " Summer";
-            case "fulltime", "全职招聘" -> recruitmentCycle + " Full-time";
-            case "spring", "春季实习" -> recruitmentCycle + " Spring";
-            case "offcycle", "非常规周期" -> "Off-cycle";
-            default -> recruitmentCycle;
-        };
     }
 
     private List<String> distinctValues(List<OsgPosition> rows, java.util.function.Function<OsgPosition, String> getter)

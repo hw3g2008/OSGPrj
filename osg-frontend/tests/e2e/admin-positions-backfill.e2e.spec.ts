@@ -181,7 +181,7 @@ async function seedPosition(
         department: 'Runtime Team',
         region: overrides.region ?? 'na',
         city: overrides.city ?? 'New York',
-        recruitmentCycle: overrides.recruitmentCycle ?? '2026 Summer',
+        recruitmentCycle: overrides.recruitmentCycle ?? 'Class of 2026',
         projectYear: overrides.projectYear ?? '2026',
         displayStatus: overrides.displayStatus ?? 'visible',
         displayStartTime: `${offsetDate(-2)}T09:00`,
@@ -228,7 +228,7 @@ async function ensureDuplicateUploadBaseline(request: APIRequestContext): Promis
     companyType: 'Investment Bank',
     region: 'na',
     city: 'New York',
-    recruitmentCycle: '2026 Summer',
+    recruitmentCycle: 'Class of 2026',
     projectYear: '2026',
   })
 }
