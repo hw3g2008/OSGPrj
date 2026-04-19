@@ -134,7 +134,7 @@
           <button
             type="button"
             class="category-header"
-            :style="category.headerStyle"
+            :class="`industry-${category.tone}`"
             :aria-expanded="isCategoryOpen(category.id)"
             @click="toggleCategory(category.id)"
           >
@@ -144,12 +144,12 @@
                 :class="isCategoryOpen(category.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"
                 aria-hidden="true"
               />
-              <i class="mdi category-kind-icon" :class="category.iconClass" aria-hidden="true" />
-              <span class="category-title" :style="{ color: category.accentColor }">{{ category.label }}</span>
-              <span class="category-badge" :style="{ background: category.accentColor }">{{ category.companySummary }}</span>
+              <i class="mdi category-kind-icon" :class="category.icon" aria-hidden="true" />
+              <span class="category-title">{{ category.label }}</span>
+              <span class="category-badge">{{ category.companySummary }}</span>
               <span class="category-badge category-badge--success">{{ category.positionSummary }}</span>
             </div>
-            <span class="category-summary" :style="{ color: category.accentColor }">{{ category.studentSummary }}</span>
+            <span class="category-summary">{{ category.studentSummary }}</span>
           </button>
 
           <div
@@ -391,6 +391,7 @@ import {
   type LeadMentorPositionMetaOption,
   type LeadMentorPositionStudentRow,
 } from '@osg/shared/api'
+import { useIndustryMeta } from '@osg/shared'
 import PositionMyStudentsModal, {
   type PositionMyStudentRecord,
   type PositionMyStudentsPreview,
@@ -399,7 +400,13 @@ import PositionMyStudentsModal, {
 
 type ViewMode = 'drilldown' | 'list'
 type DeadlineTone = 'normal' | 'urgent' | 'closed'
-type ChipTone = 'info' | 'neutral' | 'industry-bank' | 'industry-consulting' | 'industry-tech'
+/**
+ * Chip 色系 token：
+ * - info / neutral 用于周期、fallback
+ * - industry-{gold|violet|blue|amber|teal|indigo|slate} 对应 osg_company_type 字典 css_class 字段
+ * 此处使用 string 类型兼容字典未来新增 css_class（前端不必跟字典同步扩枚举）
+ */
+type ChipTone = string
 
 interface PositionJob {
   id: string
@@ -439,9 +446,10 @@ interface PositionCompany {
 interface PositionCategory {
   id: string
   label: string
-  iconClass: string
-  accentColor: string
-  headerStyle: Record<string, string>
+  /** 字典 css_class（如 gold/violet/blue...），用于模板 `.industry-${tone}` class 绑定 */
+  tone: string
+  /** 字典 list_class（如 mdi-bank/mdi-trophy...），直接作为 icon class 使用 */
+  icon: string
   companySummary: string
   positionSummary: string
   studentSummary: string
@@ -455,53 +463,16 @@ interface FilterOptions {
   regions: LeadMentorPositionMetaOption[]
 }
 
-interface IndustryUiConfig {
-  id: string
-  iconClass: string
-  accentColor: string
-  chipTone: ChipTone
-  headerStyle: Record<string, string>
-}
-
-const INDUSTRY_UI_CONFIGS: Record<string, IndustryUiConfig> = {
-  'investment bank': {
-    id: 'ib',
-    iconClass: 'mdi-bank',
-    accentColor: 'var(--primary)',
-    chipTone: 'industry-bank',
-    headerStyle: {
-      background: 'linear-gradient(135deg,#EEF2FF,#E0E7FF)',
-    },
-  },
-  consulting: {
-    id: 'consulting',
-    iconClass: 'mdi-lightbulb',
-    accentColor: '#7C3AED',
-    chipTone: 'industry-consulting',
-    headerStyle: {
-      background: 'linear-gradient(135deg,#F3E8FF,#E9D5FF)',
-    },
-  },
-  tech: {
-    id: 'tech',
-    iconClass: 'mdi-laptop',
-    accentColor: '#1D4ED8',
-    chipTone: 'industry-tech',
-    headerStyle: {
-      background: 'linear-gradient(135deg,#DBEAFE,#BFDBFE)',
-    },
-  },
-}
-
-const FALLBACK_INDUSTRY_CONFIG: IndustryUiConfig = {
-  id: 'other',
-  iconClass: 'mdi-domain',
-  accentColor: '#0F766E',
-  chipTone: 'neutral',
-  headerStyle: {
-    background: 'linear-gradient(135deg,#CCFBF1,#99F6E4)',
-  },
-}
+/**
+ * industries 元数据统一从 `useIndustryMeta`（@osg/shared）拉取，消费字典 osg_company_type。
+ * 不再本地硬编码 industries 映射表或其 fallback。
+ * 对字典缺失或 industry 字段为空的行，统一走 FALLBACK_INDUSTRY_META（slate/briefcase 灰度）。
+ */
+const FALLBACK_INDUSTRY_META = {
+  tone: 'slate',
+  icon: 'mdi-briefcase',
+  label: '未归类',
+} as const
 
 const COMPANY_COLORS: Record<string, string> = {
   'goldman sachs': 'var(--primary)',
@@ -521,6 +492,11 @@ const isMyStudentsModalOpen = ref(false)
 const activeStudentsPreview = ref<PositionMyStudentsPreview | null>(null)
 const isLoading = ref(false)
 const isStudentsLoading = ref(false)
+
+// industries 元数据：消费 @osg/shared 提供的字典（osg_company_type）
+// 组件挂载时 load()，`industryMeta.value` 即 PositionMetaOption[]
+const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
+
 const positionRows = ref<LeadMentorPositionListItem[]>([])
 const positionMeta = ref<LeadMentorPositionMeta | null>(null)
 const filters = reactive<LeadMentorPositionListParams>({
@@ -540,28 +516,57 @@ const filterOptions = computed<FilterOptions>(() => ({
 
 const categoryLabelMap = computed(() => buildLabelMap(positionMeta.value?.categories ?? []))
 
+interface IndustryGroupMeta {
+  /** 分组 key，用于 expandedCategories 绑定；优先用字典 value，否则用 trimmed label */
+  id: string
+  /** 分组显示 label（取原始 industry 字段或字典 label） */
+  label: string
+  /** CSS token（对应字典 css_class） */
+  tone: string
+  /** MDI icon class（对应字典 list_class） */
+  icon: string
+}
+
+function resolveIndustryGroupMeta(industryRaw: string): IndustryGroupMeta {
+  const trimmed = industryRaw?.trim() || ''
+  const match = industryMeta.value.find((m) => m.value === trimmed)
+  if (match) {
+    return {
+      id: match.value,
+      label: match.label,
+      tone: match.tone ?? FALLBACK_INDUSTRY_META.tone,
+      icon: match.icon ?? FALLBACK_INDUSTRY_META.icon,
+    }
+  }
+  // 字典未命中：保留原 industry 字符串作为分组 key 和 label（空值 → "未归类"），走 fallback 灰度样式
+  return {
+    id: trimmed || 'uncategorized',
+    label: trimmed || FALLBACK_INDUSTRY_META.label,
+    tone: FALLBACK_INDUSTRY_META.tone,
+    icon: FALLBACK_INDUSTRY_META.icon,
+  }
+}
+
 const categories = computed<PositionCategory[]>(() => {
   const groupedIndustries = new Map<
     string,
     {
-      label: string
-      config: IndustryUiConfig
+      meta: IndustryGroupMeta
       companies: Map<string, PositionCompany>
     }
   >()
 
   positionRows.value.forEach((row) => {
-    const industryLabel = row.industry?.trim() || 'Other'
-    const industryConfig = resolveIndustryUiConfig(industryLabel)
-    const industryKey = industryConfig.id
-    const companyKey = slugify(row.companyName || `${industryLabel}-${row.positionId}`)
+    const industryRaw = row.industry ?? ''
+    const industryGroupMeta = resolveIndustryGroupMeta(industryRaw)
+    const industryKey = industryGroupMeta.id
+    const companyKey = slugify(row.companyName || `${industryGroupMeta.label}-${row.positionId}`)
     const job = toPositionJob(row, categoryLabelMap.value)
 
     let industryGroup = groupedIndustries.get(industryKey)
     if (!industryGroup) {
       industryGroup = {
-        label: industryLabel,
-        config: industryConfig,
+        meta: industryGroupMeta,
         companies: new Map(),
       }
       groupedIndustries.set(industryKey, industryGroup)
@@ -606,11 +611,10 @@ const categories = computed<PositionCategory[]>(() => {
     const studentCount = companies.reduce((sum, company) => sum + company.studentCount, 0)
 
     return {
-      id: industryGroup.config.id,
-      label: industryGroup.label,
-      iconClass: industryGroup.config.iconClass,
-      accentColor: industryGroup.config.accentColor,
-      headerStyle: industryGroup.config.headerStyle,
+      id: industryGroup.meta.id,
+      label: industryGroup.meta.label,
+      tone: industryGroup.meta.tone,
+      icon: industryGroup.meta.icon,
       companySummary: `${companies.length} 家公司`,
       positionSummary: `${positionCount} 个岗位`,
       studentSummary: `我的学员: ${studentCount}人`,
@@ -795,6 +799,7 @@ const openCompanyStudentsModal = (company: PositionCompany) => {
 const handleJobLinkClick = () => showUpcomingToast()
 
 onMounted(() => {
+  void loadIndustryMeta()
   void loadPageData()
 })
 
@@ -805,24 +810,21 @@ function buildLabelMap(options: LeadMentorPositionMetaOption[]) {
   }, {})
 }
 
-function resolveIndustryUiConfig(industry: string): IndustryUiConfig {
-  return INDUSTRY_UI_CONFIGS[industry.trim().toLowerCase()] ?? FALLBACK_INDUSTRY_CONFIG
-}
-
 function toPositionJob(
   row: LeadMentorPositionListItem,
   categoryLabels: Record<string, string>,
 ): PositionJob {
-  const industryLabel = row.industry?.trim() || 'Other'
-  const industryConfig = resolveIndustryUiConfig(industryLabel)
+  const industryMetaResolved = resolveIndustryGroupMeta(row.industry ?? '')
   const companyName = row.companyName || '-'
 
   return {
     id: String(row.positionId),
     positionId: row.positionId,
     title: row.positionName || '-',
-    industry: industryLabel,
-    industryTone: industryConfig.chipTone,
+    // industry 对外展示用字典 label（命中时用字典 label，未命中时用原始字符串或"未归类"）
+    industry: industryMetaResolved.label,
+    // industryTone 直接作为 CSS class 使用：`industry-${tone}`，绑定字典 css_class 字段
+    industryTone: `industry-${industryMetaResolved.tone}`,
     jobType: categoryLabels[row.positionCategory] || row.positionCategory || '-',
     location: row.department || row.city || row.region || '-',
     cycleLabel: row.recruitmentCycle || row.projectYear || '-',
@@ -1344,19 +1346,24 @@ function resolveCompanyColor(companyName: string) {
   color: #6b7280;
 }
 
-.industry-bank {
-  background: #eef2ff;
-  color: var(--primary);
-}
-
-.industry-consulting {
-  background: #f3e8ff;
-  color: #7c3aed;
-}
-
-.industry-tech {
-  background: #dbeafe;
-  color: #1d4ed8;
+/*
+ * 按字典 osg_company_type 的 css_class 字段命名（7 色系 token）：
+ *   gold | violet | blue | amber | teal | indigo | slate
+ *
+ * 过渡期说明：设计方案 TBD 前统一使用中性灰度，等 §五 未决问题 1（7 种公司分类各自的图标/配色规则）
+ * 有结论后再补具体色值。此期间 7 个 tone 视觉一致，靠 label 文本区分。
+ *
+ * 同一 class 复用于 chip 场景（`.tag.industry-{tone}`）和 category header 场景（`.category-header.industry-{tone}`）。
+ */
+.industry-gold,
+.industry-violet,
+.industry-blue,
+.industry-amber,
+.industry-teal,
+.industry-indigo,
+.industry-slate {
+  background: #f3f4f6;
+  color: #4b5563;
 }
 
 .deadline-open {

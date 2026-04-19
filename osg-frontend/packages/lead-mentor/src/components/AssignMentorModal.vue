@@ -224,7 +224,7 @@ const emit = defineEmits<{
 
 const titleId = 'assign-mentor-modal-title'
 const scheduleFilter = ref('available')
-const mainDirection = ref('ib')
+const mainDirection = ref('')
 const subDirection = ref('')
 const mentorKeyword = ref('')
 const notes = ref('')

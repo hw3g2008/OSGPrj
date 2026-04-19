@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { createApp, nextTick } from 'vue'
+import { createApp, nextTick, ref } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -12,6 +12,21 @@ const apiMocks = vi.hoisted(() => ({
   getLeadMentorPositionMeta: vi.fn(),
   getLeadMentorPositionStudents: vi.fn(),
 }))
+
+/**
+ * 7 项 PositionMetaOption fixture（对齐 osg_company_type 字典 7 项，按 T3+T4 契约）
+ * 真实后端返回 DTO 裁剪字段，shared/useIndustryMeta 映射为 { value, label, tone, icon }
+ * 见 docs/plans/2026-04-19-shared-prerequisites-plan.md §5.4 / §6.2
+ */
+const industryMetaFixture = vi.hoisted(() => [
+  { value: 'bulge_bracket', label: 'Bulge Bracket', tone: 'gold', icon: 'mdi-trophy' },
+  { value: 'elite_boutique', label: 'Elite Boutique', tone: 'violet', icon: 'mdi-diamond-stone' },
+  { value: 'middle_market', label: 'Middle Market', tone: 'blue', icon: 'mdi-city' },
+  { value: 'buyside', label: 'Buyside', tone: 'amber', icon: 'mdi-currency-usd' },
+  { value: 'consulting', label: 'Consulting', tone: 'teal', icon: 'mdi-lightbulb' },
+  { value: 'swe_pm', label: 'SWE/PM', tone: 'indigo', icon: 'mdi-laptop' },
+  { value: 'other_company', label: 'Other', tone: 'slate', icon: 'mdi-briefcase' },
+])
 
 const routerSource = fs.readFileSync(
   path.resolve(__dirname, '../router/index.ts'),
@@ -31,6 +46,15 @@ vi.mock('@osg/shared/utils', () => ({
 
 vi.mock('@osg/shared/api', () => apiMocks)
 
+// mock shared 主入口，避免 useIndustryMeta 真发网络请求（走 axios + localStorage 会在 jsdom 中失败）
+vi.mock('@osg/shared', () => ({
+  useIndustryMeta: () => ({
+    meta: ref(industryMetaFixture),
+    loading: ref(false),
+    load: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
+
 vi.mock('ant-design-vue', () => ({
   message: {
     info: vi.fn(),
@@ -38,11 +62,18 @@ vi.mock('ant-design-vue', () => ({
   },
 }))
 
+/**
+ * positionRowsFixture 设计（覆盖双路径）：
+ * - row 101: industry='bulge_bracket' → 字典命中 → label="Bulge Bracket"、tone=gold
+ * - row 102: industry='Consulting'（老字符串）→ 字典未命中 → 原字符串 label、tone=slate（fallback）
+ * - row 103: industry='Tech'（老字符串）→ 字典未命中 → 原字符串 label、tone=slate（fallback）
+ * 真实生产数据会混杂"字典 value / 老字符串 / 空值"，fixture 同时覆盖前两种
+ */
 const positionRowsFixture = [
   {
     positionId: 101,
     positionCategory: 'summer',
-    industry: 'Investment Bank',
+    industry: 'bulge_bracket',
     companyName: 'Goldman Sachs',
     companyWebsite: 'https://goldmansachs.com/careers',
     positionName: 'IB Analyst',
@@ -230,7 +261,8 @@ describe('lead-mentor positions shell contract', () => {
       expect(page.container.textContent).toContain('全部行业')
       expect(page.container.textContent).toContain('全部公司')
       expect(page.container.textContent).toContain('全部地区')
-      expect(page.container.textContent).toContain('Investment Bank')
+      // industries 行业 label：bulge_bracket 走字典命中显示"Bulge Bracket"，其他走 fallback 显示原字符串
+      expect(page.container.textContent).toContain('Bulge Bracket')
       expect(page.container.textContent).toContain('Consulting')
       expect(page.container.textContent).toContain('Tech')
       expect(page.container.textContent).toContain('Goldman Sachs')
@@ -239,6 +271,16 @@ describe('lead-mentor positions shell contract', () => {
       expect(page.container.textContent).toContain('官网')
       expect(page.container.textContent).toContain('个岗位')
       expect(page.container.querySelectorAll('.table').length).toBeGreaterThanOrEqual(2)
+
+      // 新 CSS class 契约（对齐字典 css_class 字段，禁用按老 value 命名的 class）
+      // 字典命中路径：bulge_bracket → industry-gold
+      expect(page.container.querySelector('.industry-gold')).toBeTruthy()
+      // Fallback 路径：未命中字典 → industry-slate（Consulting/Tech 老字符串）
+      expect(page.container.querySelector('.industry-slate')).toBeTruthy()
+      // 老 class 已废除，不应出现在渲染结果
+      expect(page.container.querySelector('.industry-bank')).toBeFalsy()
+      expect(page.container.querySelector('.industry-consulting')).toBeFalsy()
+      expect(page.container.querySelector('.industry-tech')).toBeFalsy()
     } finally {
       page.unmount()
     }

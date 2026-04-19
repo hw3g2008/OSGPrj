@@ -1,4 +1,4 @@
-import { createApp, nextTick } from 'vue'
+import { createApp, nextTick, ref } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -15,7 +15,30 @@ const messageMocks = vi.hoisted(() => ({
   info: vi.fn(),
 }))
 
+/**
+ * useIndustryMeta mock fixture（osg_company_type 字典 7 项）
+ * 不 mock 会让 useIndustryMeta.load() 真发 axios 请求 → jsdom localStorage 不完整 → TypeError
+ * → axios 拦截器 catch 后调 message.error → 本 spec 的 messageMocks.error 被误触 → line 317 断言失败
+ */
+const industryMetaFixture = vi.hoisted(() => [
+  { value: 'bulge_bracket', label: 'Bulge Bracket', tone: 'gold', icon: 'mdi-trophy' },
+  { value: 'elite_boutique', label: 'Elite Boutique', tone: 'violet', icon: 'mdi-diamond-stone' },
+  { value: 'middle_market', label: 'Middle Market', tone: 'blue', icon: 'mdi-city' },
+  { value: 'buyside', label: 'Buyside', tone: 'amber', icon: 'mdi-currency-usd' },
+  { value: 'consulting', label: 'Consulting', tone: 'teal', icon: 'mdi-lightbulb' },
+  { value: 'swe_pm', label: 'SWE/PM', tone: 'indigo', icon: 'mdi-laptop' },
+  { value: 'other_company', label: 'Other', tone: 'slate', icon: 'mdi-briefcase' },
+])
+
 vi.mock('@osg/shared/api', () => apiMocks)
+
+vi.mock('@osg/shared', () => ({
+  useIndustryMeta: () => ({
+    meta: ref(industryMetaFixture),
+    loading: ref(false),
+    load: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
 
 vi.mock('@osg/shared/utils', () => ({
   getUser: vi.fn(() => ({
