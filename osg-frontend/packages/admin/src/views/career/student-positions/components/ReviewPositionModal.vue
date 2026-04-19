@@ -50,7 +50,7 @@
 
           <label class="student-review-modal__field" data-field-name="部门">
             <span>部门</span>
-            <a-input v-model:value="form.department" placeholder="如 Investment Banking Division" :disabled="!isPending" />
+            <a-input v-model:value="form.department" placeholder="如 M&A / Global Markets" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field" data-field-name="项目时间">
@@ -60,7 +60,7 @@
 
           <label class="student-review-modal__field student-review-modal__field--wide" data-field-name="行业">
             <span>行业</span>
-            <a-input v-model:value="form.industry" placeholder="如 Investment Bank" :disabled="!isPending" />
+            <a-input v-model:value="form.industry" placeholder="如 Bulge Bracket / Buyside / Consulting" :disabled="!isPending" />
           </label>
 
           <fieldset class="student-review-modal__field" data-field-name="截止日期">
@@ -100,7 +100,7 @@
 
           <label class="student-review-modal__field" data-field-name="公司类别">
             <span>公司类别</span>
-            <a-input v-model:value="form.companyType" placeholder="如 Consulting" :disabled="!isPending" />
+            <a-input v-model:value="form.companyType" placeholder="如 bulge_bracket / consulting / swe_pm" :disabled="!isPending" />
           </label>
 
           <label class="student-review-modal__field" data-field-name="大区">

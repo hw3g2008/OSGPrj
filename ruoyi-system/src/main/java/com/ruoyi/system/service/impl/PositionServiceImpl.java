@@ -67,11 +67,10 @@ public class PositionServiceImpl implements IPositionService
             new DictSeed(DICT_TYPE_POSITION_CATEGORY, 4L, "春季实习", "spring", "purple", null, "岗位分类"),
             new DictSeed(DICT_TYPE_POSITION_CATEGORY, 5L, "招聘活动", "events", "red", null, "岗位分类"));
 
-    private static final List<DictSeed> INDUSTRY_SEEDS = List.of(
-            new DictSeed(DICT_TYPE_POSITION_INDUSTRY, 1L, "Investment Bank", "ib", "bank", null, "行业展示"),
-            new DictSeed(DICT_TYPE_POSITION_INDUSTRY, 2L, "Consulting", "consulting", "bulb", null, "行业展示"),
-            new DictSeed(DICT_TYPE_POSITION_INDUSTRY, 3L, "Tech", "tech", "code", null, "行业展示"),
-            new DictSeed(DICT_TYPE_POSITION_INDUSTRY, 4L, "PE / VC", "pevc", "fund", null, "行业展示"));
+    // INDUSTRY_SEEDS 移除：原先会向 osg_company_type 字典插入 ib/consulting/tech/pevc 4 条老 seed，
+    // 与 admin 端新字典 (bulge_bracket/elite_boutique/middle_market/buyside/consulting/swe_pm/other_company) 冲突，
+    // 导致字典反复被污染。现治理：完全依赖 admin 字典为唯一真源，student 端 UI 展示通过
+    // fallbackIndustryLabel/Icon 对老数据降级显示。
 
     private static final List<DictSeed> APPLY_METHOD_SEEDS = List.of(
             new DictSeed(DICT_TYPE_POSITION_APPLY_METHOD, 1L, "官网投递", "官网投递", null, null, "投递方式"),
@@ -768,7 +767,7 @@ public class PositionServiceImpl implements IPositionService
     private void syncPositionReferenceData(List<Map<String, Object>> positions)
     {
         seedStaticDicts(CATEGORY_SEEDS);
-        seedStaticDicts(INDUSTRY_SEEDS);
+        // 不再 seed INDUSTRY_SEEDS，避免向 osg_company_type 注入老 value
         seedStaticDicts(APPLY_METHOD_SEEDS);
         seedStaticDicts(PROGRESS_STAGE_SEEDS);
         seedStaticDicts(COACHING_STAGE_SEEDS);

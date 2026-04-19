@@ -135,6 +135,7 @@ import {
   type StudentPositionListItem,
   type StudentPositionListParams
 } from '@osg/shared/api/admin/studentPosition'
+import { getPositionMeta, type PositionMetaOption } from '@osg/shared/api/admin/position'
 import RejectPositionModal from './components/RejectPositionModal.vue'
 import ReviewPositionModal from './components/ReviewPositionModal.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -148,12 +149,7 @@ const positionColumns = [
   { title: '操作', dataIndex: 'action', key: 'action', width: 200 },
 ]
 
-const companyCategoryOptions = [
-  { value: 'Investment Bank', label: 'Investment Bank' },
-  { value: 'Consulting', label: 'Consulting' },
-  { value: 'Tech', label: 'Tech' },
-  { value: 'PE/VC', label: 'PE/VC' }
-]
+const companyCategoryOptions = ref<PositionMetaOption[]>([])
 
 const rows = ref<StudentPositionListItem[]>([])
 const loading = ref(false)
@@ -182,8 +178,18 @@ const loadRows = async () => {
   }
 }
 
+const loadCompanyCategoryOptions = async () => {
+  try {
+    const meta = await getPositionMeta()
+    companyCategoryOptions.value = meta.industries || []
+  } catch {
+    companyCategoryOptions.value = []
+  }
+}
+
 onMounted(() => {
   void loadRows()
+  void loadCompanyCategoryOptions()
 })
 
 const handleSearch = () => {
