@@ -82,11 +82,17 @@ describe('lead-mentor upcoming navigation toast flow', () => {
     const page = await mountShellPage()
 
     try {
-      const expenseNav = findElementByText(page.container, '.nav-item', '报销管理 Expense')
+      // V1 scope: 所有可见 nav-item 路径均已实现，"敬请期待"通过用户菜单"个人设置"触发
+      const userCard = page.container.querySelector<HTMLElement>('.user-card')
+      expect(userCard).toBeTruthy()
 
-      expect(expenseNav).toBeTruthy()
+      userCard!.click()
+      await flushUi()
 
-      expenseNav?.click()
+      const settingsItem = findElementByText(page.container, '.user-menu-item', '个人设置')
+      expect(settingsItem).toBeTruthy()
+
+      settingsItem?.click()
       await flushUi()
 
       expect(message.info).toHaveBeenCalledTimes(1)

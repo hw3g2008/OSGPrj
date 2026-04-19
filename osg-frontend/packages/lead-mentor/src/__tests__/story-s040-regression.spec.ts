@@ -81,27 +81,28 @@ describe('S-040 story regression skeleton', () => {
     const page = await mountStoryPage()
 
     try {
-      expect(page.container.querySelector('.sidebar-nav')?.textContent).toContain('首页 Home')
+      // V1 scope 内可见的 sidebar groups
       expect(page.container.querySelector('.sidebar-nav')?.textContent).toContain('求职中心 Career')
-      expect(page.container.querySelector('.sidebar-nav')?.textContent).toContain('财务中心 Finance')
+      expect(page.container.querySelector('.sidebar-nav')?.textContent).toContain('教学中心 Teaching')
+      expect(page.container.querySelector('.sidebar-nav')?.textContent).toContain('个人中心 Profile')
 
-      const homeNav = findElementByText(page.container, '.nav-item', '首页 Home')
-      const expenseNav = findElementByText(page.container, '.nav-item', '报销管理 Expense')
+      // "敬请期待" toast：用户菜单"个人设置" + home quick-entry
+      const userCard = page.container.querySelector<HTMLElement>('.user-card')
+      userCard!.click()
+      await flushUi()
+
+      const settingsItem = findElementByText(page.container, '.user-menu-item', '个人设置')
+      settingsItem?.click()
+      await flushUi()
+
       const quickEntry = findElementByText(page.container, '.quick-entry', '岗位申请')
-
-      homeNav?.click()
-      await flushUi()
-      expenseNav?.click()
-      await flushUi()
       quickEntry?.click()
       await flushUi()
 
-      expect(message.info).toHaveBeenCalledTimes(3)
+      expect(message.info).toHaveBeenCalledTimes(2)
       expect(message.info).toHaveBeenNthCalledWith(1, '敬请期待')
       expect(message.info).toHaveBeenNthCalledWith(2, '敬请期待')
-      expect(message.info).toHaveBeenNthCalledWith(3, '敬请期待')
       expect(page.router.currentRoute.value.fullPath).toBe('/home')
-      expect(page.container.querySelector('.nav-item.active')?.textContent).toContain('首页 Home')
     } finally {
       page.unmount()
     }
