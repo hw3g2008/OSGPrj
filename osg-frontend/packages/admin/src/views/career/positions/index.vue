@@ -77,7 +77,7 @@
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="publishPreset" placeholder="发布时间" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="publishPreset" placeholder="展示起始" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.publishPresets" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
@@ -167,7 +167,7 @@
                             <span v-if="!splitCycles(position.recruitmentCycle).length">-</span>
                           </div>
                         </template>
-                        <template v-else-if="column.dataIndex === 'publishTime'">{{ formatShortDate(position.publishTime) }}</template>
+                        <template v-else-if="column.dataIndex === 'displayStartTime'">{{ formatShortDate(position.displayStartTime) }}</template>
                         <template v-else-if="column.dataIndex === 'deadline'">
                           <template v-if="position.deadlineText">{{ position.deadlineText }}</template>
                           <template v-else-if="position.deadline">
@@ -224,7 +224,7 @@
                   <span v-if="!splitCycles(record.recruitmentCycle).length">-</span>
                 </div>
               </template>
-              <template v-else-if="column.dataIndex === 'publishTime'">{{ formatShortDate(record.publishTime) }}</template>
+              <template v-else-if="column.dataIndex === 'displayStartTime'">{{ formatShortDate(record.displayStartTime) }}</template>
               <template v-else-if="column.dataIndex === 'deadlineDisplay'">
                 <template v-if="record.deadlineText">{{ record.deadlineText }}</template>
                 <template v-else-if="record.deadline">
@@ -341,7 +341,7 @@ const drilldownColumns = [
   { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
   { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
   { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
-  { title: '发布时间', dataIndex: 'publishTime', key: 'publishTime', width: 80 },
+  { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
   { title: '截止时间', dataIndex: 'deadline', key: 'deadline', width: 80 },
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
   { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
@@ -357,7 +357,7 @@ const listColumns = [
   { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
   { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
   { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
-  { title: '发布时间', dataIndex: 'publishTime', key: 'publishTime', width: 80 },
+  { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
   { title: '截止时间', dataIndex: 'deadlineDisplay', key: 'deadlineDisplay', width: 100 },
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
   { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
@@ -469,8 +469,8 @@ const cycleMap = computed(() => buildOptionMap(meta.value.recruitmentCycles))
 const sortedListRows = computed(() => {
   const rows = [...positions.value]
   rows.sort((left, right) => {
-    const leftTime = left.publishTime ? new Date(left.publishTime).getTime() : 0
-    const rightTime = right.publishTime ? new Date(right.publishTime).getTime() : 0
+    const leftTime = left.displayStartTime ? new Date(left.displayStartTime).getTime() : 0
+    const rightTime = right.displayStartTime ? new Date(right.displayStartTime).getTime() : 0
     return publishSort.value === 'desc' ? rightTime - leftTime : leftTime - rightTime
   })
   return rows
@@ -513,8 +513,8 @@ const buildPublishRange = () => {
   }
 
   return {
-    beginPublishTime: start.toISOString().slice(0, 10),
-    endPublishTime: end.toISOString().slice(0, 10)
+    beginDisplayStartTime: start.toISOString().slice(0, 10),
+    endDisplayStartTime: end.toISOString().slice(0, 10)
   }
 }
 

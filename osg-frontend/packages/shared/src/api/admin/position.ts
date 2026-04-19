@@ -12,8 +12,8 @@ export interface PositionListParams {
   displayStatus?: string
   recruitmentCycle?: string
   projectYear?: string
-  beginPublishTime?: string
-  endPublishTime?: string
+  beginDisplayStartTime?: string
+  endDisplayStartTime?: string
 }
 
 export interface PositionListItem {
@@ -153,12 +153,12 @@ const toRequestParams = (params: PositionListParams = {}) => {
     if (value === undefined || value === null || value === '') {
       return
     }
-    if (key === 'beginPublishTime') {
-      requestParams['params[beginPublishTime]'] = value
+    if (key === 'beginDisplayStartTime') {
+      requestParams['params[beginDisplayStartTime]'] = value
       return
     }
-    if (key === 'endPublishTime') {
-      requestParams['params[endPublishTime]'] = value
+    if (key === 'endDisplayStartTime') {
+      requestParams['params[endDisplayStartTime]'] = value
       return
     }
     requestParams[key] = value

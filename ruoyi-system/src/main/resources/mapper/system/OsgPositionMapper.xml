@@ -138,14 +138,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="projectYear != null and projectYear != ''">
                 and p.project_year = #{projectYear}
             </if>
-            <if test="params != null and params.beginPublishTime != null and params.beginPublishTime != ''">
-                and p.publish_time <![CDATA[>=]]> #{params.beginPublishTime}
+            <if test="params != null and params.beginDisplayStartTime != null and params.beginDisplayStartTime != ''">
+                and p.display_start_time <![CDATA[>=]]> #{params.beginDisplayStartTime}
             </if>
-            <if test="params != null and params.endPublishTime != null and params.endPublishTime != ''">
-                and p.publish_time <![CDATA[<=]]> #{params.endPublishTime}
+            <if test="params != null and params.endDisplayStartTime != null and params.endDisplayStartTime != ''">
+                and p.display_start_time <![CDATA[<=]]> #{params.endDisplayStartTime}
             </if>
         </where>
-        order by p.publish_time desc, p.position_id desc
+        order by p.display_start_time desc, p.position_id desc
     </select>
 
     <select id="selectPositionList" parameterType="OsgPosition" resultMap="OsgPositionResult">
@@ -185,14 +185,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="projectYear != null and projectYear != ''">
                 and p.project_year = #{projectYear}
             </if>
-            <if test="params != null and params.beginPublishTime != null and params.beginPublishTime != ''">
-                and p.publish_time <![CDATA[>=]]> #{params.beginPublishTime}
+            <if test="params != null and params.beginDisplayStartTime != null and params.beginDisplayStartTime != ''">
+                and p.display_start_time <![CDATA[>=]]> #{params.beginDisplayStartTime}
             </if>
-            <if test="params != null and params.endPublishTime != null and params.endPublishTime != ''">
-                and p.publish_time <![CDATA[<=]]> #{params.endPublishTime}
+            <if test="params != null and params.endDisplayStartTime != null and params.endDisplayStartTime != ''">
+                and p.display_start_time <![CDATA[<=]]> #{params.endDisplayStartTime}
             </if>
         </where>
-        order by p.publish_time desc, p.position_id desc
+        order by p.display_start_time desc, p.position_id desc
     </select>
 
     <insert id="insertPosition" parameterType="OsgPosition" useGeneratedKeys="true" keyProperty="positionId">
