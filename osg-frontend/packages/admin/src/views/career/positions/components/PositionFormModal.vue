@@ -91,7 +91,7 @@
               </fieldset>
 
               <fieldset class="position-form-modal__field" data-field-name="城市">
-                <span>城市 <em>*</em></span>
+                <span>城市</span>
                 <a-select v-model:value="form.city" :placeholder="form.region ? '请选择' : '请先选择地区'">
                   <a-select-option v-for="option in currentCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
                 </a-select>
@@ -308,7 +308,7 @@ const handleClose = () => {
 }
 
 const handleSubmit = () => {
-  if (!form.positionCategory || !form.positionName || !form.companyName || !form.region || !form.city || !form.projectYear) {
+  if (!form.positionCategory || !form.positionName || !form.companyName || !form.region || !form.projectYear) {
     message.error('请补全岗位分类、岗位名称、公司、地区和项目时间')
     return
   }
@@ -324,14 +324,13 @@ const handleSubmit = () => {
   emit('submit', {
     positionId: props.position?.positionId,
     positionCategory: form.positionCategory,
-    industry: form.companyType || 'Investment Bank',
     companyName: form.companyName,
     companyType: form.companyType || undefined,
     companyWebsite: form.companyWebsite || undefined,
     positionName: form.positionName,
     department: form.department || undefined,
     region: form.region,
-    city: form.city,
+    city: form.city || undefined,
     recruitmentCycle: form.recruitmentCycles.join(','),
     projectYear: form.projectYear,
     displayStatus: form.displayStatus,

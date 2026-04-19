@@ -162,8 +162,10 @@
                         <template v-else-if="column.dataIndex === 'positionCategory'">{{ formatCategory(position.positionCategory) }}</template>
                         <template v-else-if="column.dataIndex === 'department'">{{ position.department || '-' }}</template>
                         <template v-else-if="column.dataIndex === 'recruitmentCycle'">
-                          <a-tag v-for="cycle in splitCycles(position.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
-                          <span v-if="!splitCycles(position.recruitmentCycle).length">-</span>
+                          <div class="positions-cycle-tags">
+                            <a-tag v-for="cycle in splitCycles(position.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
+                            <span v-if="!splitCycles(position.recruitmentCycle).length">-</span>
+                          </div>
                         </template>
                         <template v-else-if="column.dataIndex === 'publishTime'">{{ formatShortDate(position.publishTime) }}</template>
                         <template v-else-if="column.dataIndex === 'deadline'">
@@ -217,8 +219,10 @@
               </template>
               <template v-else-if="column.dataIndex === 'positionCategory'">{{ formatCategory(record.positionCategory) }}</template>
               <template v-else-if="column.dataIndex === 'recruitmentCycle'">
-                <a-tag v-for="cycle in splitCycles(record.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
-                <span v-if="!splitCycles(record.recruitmentCycle).length">-</span>
+                <div class="positions-cycle-tags">
+                  <a-tag v-for="cycle in splitCycles(record.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
+                  <span v-if="!splitCycles(record.recruitmentCycle).length">-</span>
+                </div>
               </template>
               <template v-else-if="column.dataIndex === 'publishTime'">{{ formatShortDate(record.publishTime) }}</template>
               <template v-else-if="column.dataIndex === 'deadlineDisplay'">
@@ -893,6 +897,15 @@ onMounted(() => {
 .positions-drilldown__company-logo--blue { background: #2563eb; }
 .positions-drilldown__company-logo--amber { background: #d97706; }
 .positions-drilldown__company-logo--slate { background: #64748b; }
+.positions-cycle-tags {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.positions-cycle-tags .ant-tag {
+  margin-right: 0;
+}
 .positions-drilldown__company-main strong {
   display: block;
   color: #1f2937;

@@ -104,20 +104,14 @@ class OsgPositionServiceImplTest
                 dict("osg_position_display_status", "hidden", "已隐藏", 2L, "muted", null, null),
                 dict("osg_position_display_status", "expired", "已过期", 3L, "danger", null, null)
             ));
-        rows.put("osg_position_industry", List.of(
-                dict("osg_position_industry", "Investment Bank", "Investment Bank", 1L, "gold", "mdi-star", null),
-                dict("osg_position_industry", "Consulting", "Consulting", 2L, "violet", "mdi-lightbulb", null),
-                dict("osg_position_industry", "Tech", "Tech", 3L, "blue", "mdi-laptop", null),
-                dict("osg_position_industry", "PE/VC", "PE/VC", 4L, "amber", "mdi-chart-line", null)
-            ));
         rows.put("osg_company_type", List.of(
-                dict("osg_company_type", "Investment Bank", "Investment Bank", 1L, null, null, null),
-                dict("osg_company_type", "Consulting", "Consulting", 2L, null, null, null),
-                dict("osg_company_type", "Tech", "Tech", 3L, null, null, null),
-                dict("osg_company_type", "PE/VC", "PE/VC", 4L, null, null, null),
-                dict("osg_company_type", "PE", "PE", 5L, null, null, null),
-                dict("osg_company_type", "VC", "VC", 6L, null, null, null),
-                dict("osg_company_type", "Other", "Other", 7L, null, null, null)
+                dict("osg_company_type", "other_company", "Other Company", 40L, "slate", "mdi-briefcase", null),
+                dict("osg_company_type", "swe_pm", "SWE/PM", 50L, "indigo", "mdi-laptop", null),
+                dict("osg_company_type", "consulting", "Consulting", 60L, "teal", "mdi-lightbulb", null),
+                dict("osg_company_type", "buyside", "Buyside", 70L, "amber", "mdi-currency-usd", null),
+                dict("osg_company_type", "middle_market", "Middle Market", 80L, "blue", "mdi-city", null),
+                dict("osg_company_type", "elite_boutique", "Elite Boutique", 90L, "violet", "mdi-diamond-stone", null),
+                dict("osg_company_type", "bulge_bracket", "Bulge Bracket", 100L, "gold", "mdi-trophy", null)
             ));
         rows.put("osg_recruit_cycle", List.of(
                 dict("osg_recruit_cycle", "Class of 2026", "Class of 2026", 1L, null, null, null),

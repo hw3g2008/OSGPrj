@@ -46,7 +46,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     private static final ZoneId ZONE_ID = ZoneId.systemDefault();
     private static final String DICT_POSITION_CATEGORY = "osg_position_category";
     private static final String DICT_POSITION_DISPLAY_STATUS = "osg_position_display_status";
-    private static final String DICT_POSITION_INDUSTRY = "osg_position_industry";
+    private static final String DICT_POSITION_INDUSTRY = "osg_company_type";
     private static final String DICT_POSITION_COMPANY = "osg_company_name";
     private static final String DICT_RECRUITMENT_CYCLE = "osg_recruit_cycle";
     private static final String DICT_PROJECT_YEAR = "osg_project_year";
@@ -445,10 +445,6 @@ public class OsgPositionServiceImpl implements IOsgPositionService
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "visible", "展示中", 1L, "success", null, null),
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "hidden", "已隐藏", 2L, "muted", null, null),
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "expired", "已过期", 3L, "danger", null, null),
-                new DictSeed(DICT_POSITION_INDUSTRY, "Investment Bank", "Investment Bank", 1L, "gold", "mdi-star", null),
-                new DictSeed(DICT_POSITION_INDUSTRY, "Consulting", "Consulting", 2L, "violet", "mdi-lightbulb", null),
-                new DictSeed(DICT_POSITION_INDUSTRY, "Tech", "Tech", 3L, "blue", "mdi-laptop", null),
-                new DictSeed(DICT_POSITION_INDUSTRY, "PE/VC", "PE/VC", 4L, "amber", "mdi-chart-line", null),
                 new DictSeed(DICT_PROJECT_YEAR, "2024", "2024", 1L, null, null, null),
                 new DictSeed(DICT_PROJECT_YEAR, "2025", "2025", 2L, null, null, null),
                 new DictSeed(DICT_PROJECT_YEAR, "2026", "2026", 3L, null, null, null),
@@ -694,9 +690,10 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     {
         OsgPosition position = new OsgPosition();
         position.setPositionCategory(asText(body.get("positionCategory")));
-        position.setIndustry(asText(body.get("industry")));
+        String companyType = asText(body.get("companyType"));
+        position.setIndustry(companyType);
         position.setCompanyName(asText(body.get("companyName")));
-        position.setCompanyType(position.getIndustry());
+        position.setCompanyType(companyType);
         position.setCompanyWebsite(asText(body.get("companyWebsite")));
         position.setPositionName(asText(body.get("positionName")));
         position.setDepartment(asText(body.get("department")));

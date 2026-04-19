@@ -103,8 +103,8 @@ class OsgPositionControllerTest
     void setUp()
     {
         positionRowsRef.set(new ArrayList<>(List.of(
-            buildPosition(101L, "Investment Bank", "Goldman Sachs", "Summer Analyst", "New York", "2026", "visible", 12),
-            buildPosition(102L, "Consulting", "McKinsey", "Business Analyst", "London", "2025", "hidden", 3)
+            buildPosition(101L, "bulge_bracket", "Goldman Sachs", "Summer Analyst", "New York", "2026", "visible", 12),
+            buildPosition(102L, "consulting", "McKinsey", "Business Analyst", "London", "2025", "hidden", 3)
         )));
         dictRowsRef.set(buildDictRows());
         jobApplicationRowsRef.set(new ArrayList<>(List.of(
@@ -207,7 +207,7 @@ class OsgPositionControllerTest
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.rows[0].positionId").value(101))
-                .andExpect(jsonPath("$.rows[0].industry").value("Investment Bank"))
+                .andExpect(jsonPath("$.rows[0].industry").value("bulge_bracket"))
                 .andExpect(jsonPath("$.rows[0].companyName").value("Goldman Sachs"))
                 .andExpect(jsonPath("$.rows[0].positionName").value("Summer Analyst"))
                 .andExpect(jsonPath("$.rows[0].studentCount").value(12))
@@ -234,7 +234,7 @@ class OsgPositionControllerTest
                 .header("Authorization", "Bearer position-admin-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data[0].industry").value("Investment Bank"))
+                .andExpect(jsonPath("$.data[0].industry").value("bulge_bracket"))
                 .andExpect(jsonPath("$.data[0].companyCount").value(1))
                 .andExpect(jsonPath("$.data[0].companies[0].companyName").value("Goldman Sachs"))
                 .andExpect(jsonPath("$.data[0].companies[0].positions[0].positionName").value("Summer Analyst"));
@@ -258,7 +258,7 @@ class OsgPositionControllerTest
                 .header("Authorization", "Bearer assistant-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data[0].industry").value("Investment Bank"))
+                .andExpect(jsonPath("$.data[0].industry").value("bulge_bracket"))
                 .andExpect(jsonPath("$.data[0].companies[0].companyName").value("Goldman Sachs"));
     }
 
@@ -271,7 +271,7 @@ class OsgPositionControllerTest
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.categories[0].value").value("summer"))
                 .andExpect(jsonPath("$.data.categories[0].label").value("暑期实习"))
-                .andExpect(jsonPath("$.data.industries[0].value").value("Investment Bank"))
+                .andExpect(jsonPath("$.data.industries[0].value").value("bulge_bracket"))
                 .andExpect(jsonPath("$.data.industries[0].tone").value("gold"))
                 .andExpect(jsonPath("$.data.regions[0].value").value("na"))
                 .andExpect(jsonPath("$.data.citiesByRegion.na[0].label").value("New York"))
@@ -282,8 +282,8 @@ class OsgPositionControllerTest
     void metaShouldNotRewriteStaticDictsWhenReferenceDataAlreadyNormalized() throws Exception
     {
         positionRowsRef.set(new ArrayList<>(List.of(
-            buildPosition(201L, "Investment Bank", "Goldman Sachs", "Summer Analyst", "New York", "2026", "visible", 12),
-            buildPosition(202L, "Consulting", "McKinsey", "Business Analyst", "London", "2025", "hidden", 3)
+            buildPosition(201L, "bulge_bracket", "Goldman Sachs", "Summer Analyst", "New York", "2026", "visible", 12),
+            buildPosition(202L, "consulting", "McKinsey", "Business Analyst", "London", "2025", "hidden", 3)
         )));
         positionRowsRef.get().get(0).setRecruitmentCycle("Class of 2026");
         positionRowsRef.get().get(1).setRecruitmentCycle("Class of 2027");
@@ -338,9 +338,8 @@ class OsgPositionControllerTest
                 .content("""
                     {
                       "positionCategory": "fulltime",
-                      "industry": "Tech",
                       "companyName": "ByteDance",
-                      "companyType": "Tech",
+                      "companyType": "swe_pm",
                       "companyWebsite": "https://careers.bytedance.com",
                       "positionName": "Backend Engineer",
                       "department": "Infrastructure",
@@ -559,7 +558,7 @@ class OsgPositionControllerTest
             sheet.getRow(1).createCell(2).setCellValue("na");
             sheet.getRow(1).createCell(3).setCellValue("New York");
             sheet.getRow(1).createCell(4).setCellValue("2026");
-            sheet.getRow(1).createCell(5).setCellValue("Investment Bank");
+            sheet.getRow(1).createCell(5).setCellValue("bulge_bracket");
             sheet.getRow(1).createCell(6).setCellValue("summer");
 
             sheet.createRow(2).createCell(0).setCellValue("JP Morgan");
@@ -567,7 +566,7 @@ class OsgPositionControllerTest
             sheet.getRow(2).createCell(2).setCellValue("na");
             sheet.getRow(2).createCell(3).setCellValue("New York");
             sheet.getRow(2).createCell(4).setCellValue("2026");
-            sheet.getRow(2).createCell(5).setCellValue("Investment Bank");
+            sheet.getRow(2).createCell(5).setCellValue("bulge_bracket");
             sheet.getRow(2).createCell(6).setCellValue("summer");
 
             workbook.write(out);
@@ -586,13 +585,9 @@ class OsgPositionControllerTest
                 buildDict("osg_position_display_status", "visible", "展示中", 1, "success", null),
                 buildDict("osg_position_display_status", "hidden", "已隐藏", 2, "muted", null)
             ),
-            "osg_position_industry", List.of(
-                buildDict("osg_position_industry", "Investment Bank", "Investment Bank", 1, "gold", "mdi-star"),
-                buildDict("osg_position_industry", "Consulting", "Consulting", 2, "violet", "mdi-lightbulb")
-            ),
             "osg_company_type", List.of(
-                buildDict("osg_company_type", "Investment Bank", "Investment Bank", 1, null, null),
-                buildDict("osg_company_type", "Consulting", "Consulting", 2, null, null)
+                buildDict("osg_company_type", "bulge_bracket", "Bulge Bracket", 100, "gold", "mdi-trophy"),
+                buildDict("osg_company_type", "consulting", "Consulting", 60, "teal", "mdi-lightbulb")
             ),
             "osg_recruit_cycle", List.of(
                 buildDict("osg_recruit_cycle", "Class of 2026", "Class of 2026", 1, null, null),
@@ -631,20 +626,14 @@ class OsgPositionControllerTest
                 buildDict("osg_position_display_status", "hidden", "已隐藏", 2, "muted", null),
                 buildDict("osg_position_display_status", "expired", "已过期", 3, "danger", null)
             ));
-        rows.put("osg_position_industry", List.of(
-                buildDict("osg_position_industry", "Investment Bank", "Investment Bank", 1, "gold", "mdi-star"),
-                buildDict("osg_position_industry", "Consulting", "Consulting", 2, "violet", "mdi-lightbulb"),
-                buildDict("osg_position_industry", "Tech", "Tech", 3, "blue", "mdi-laptop"),
-                buildDict("osg_position_industry", "PE/VC", "PE/VC", 4, "amber", "mdi-chart-line")
-            ));
         rows.put("osg_company_type", List.of(
-                buildDict("osg_company_type", "Investment Bank", "Investment Bank", 1, null, null),
-                buildDict("osg_company_type", "Consulting", "Consulting", 2, null, null),
-                buildDict("osg_company_type", "Tech", "Tech", 3, null, null),
-                buildDict("osg_company_type", "PE/VC", "PE/VC", 4, null, null),
-                buildDict("osg_company_type", "PE", "PE", 5, null, null),
-                buildDict("osg_company_type", "VC", "VC", 6, null, null),
-                buildDict("osg_company_type", "Other", "Other", 7, null, null)
+                buildDict("osg_company_type", "other_company", "Other Company", 40, "slate", "mdi-briefcase"),
+                buildDict("osg_company_type", "swe_pm", "SWE/PM", 50, "indigo", "mdi-laptop"),
+                buildDict("osg_company_type", "consulting", "Consulting", 60, "teal", "mdi-lightbulb"),
+                buildDict("osg_company_type", "buyside", "Buyside", 70, "amber", "mdi-currency-usd"),
+                buildDict("osg_company_type", "middle_market", "Middle Market", 80, "blue", "mdi-city"),
+                buildDict("osg_company_type", "elite_boutique", "Elite Boutique", 90, "violet", "mdi-diamond-stone"),
+                buildDict("osg_company_type", "bulge_bracket", "Bulge Bracket", 100, "gold", "mdi-trophy")
             ));
         rows.put("osg_recruit_cycle", List.of(
                 buildDict("osg_recruit_cycle", "Class of 2026", "Class of 2026", 1, null, null),

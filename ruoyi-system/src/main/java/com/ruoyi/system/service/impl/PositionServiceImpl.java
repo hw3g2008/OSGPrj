@@ -39,7 +39,7 @@ import com.ruoyi.system.service.IPositionService;
 public class PositionServiceImpl implements IPositionService
 {
     private static final String DICT_TYPE_POSITION_CATEGORY = "osg_student_position_category";
-    private static final String DICT_TYPE_POSITION_INDUSTRY = "osg_student_position_industry";
+    private static final String DICT_TYPE_POSITION_INDUSTRY = "osg_company_type";
     private static final String DICT_TYPE_POSITION_LOCATION = "osg_student_position_location";
     private static final String DICT_TYPE_POSITION_COMPANY = "osg_student_position_company_brand";
     private static final String DICT_TYPE_POSITION_APPLY_METHOD = "osg_student_position_apply_method";

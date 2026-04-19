@@ -163,7 +163,7 @@ describe('岗位信息页面原型收口', () => {
     const source = readSource(positionFormModalPath)
 
     expect(source).toContain('>大区 <')
-    expect(source).toContain('>城市 <')
+    expect(source).toContain('>城市<')
     expect(source).toContain("请先选择地区")
     expect(source).not.toContain("请先选择大区")
   })
