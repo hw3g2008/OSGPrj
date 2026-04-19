@@ -694,6 +694,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         position.setIndustry(companyType);
         position.setCompanyName(asText(body.get("companyName")));
         position.setCompanyType(companyType);
+        position.setCreateBy(asText(body.get("createBy")));
         position.setCompanyWebsite(asText(body.get("companyWebsite")));
         position.setPositionName(asText(body.get("positionName")));
         position.setDepartment(asText(body.get("department")));

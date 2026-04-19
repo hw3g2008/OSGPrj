@@ -133,6 +133,14 @@
           </fieldset>
         </section>
 
+        <section class="position-form-modal__section" data-field-name="添加人">
+          <h4><span class="mdi mdi-account-edit" aria-hidden="true"></span>添加人</h4>
+          <fieldset class="position-form-modal__field">
+            <span class="position-form-modal__sr-only">添加人</span>
+            <a-input v-model:value="form.createBy" placeholder="新增时自动为当前登录用户；管理员可修改" />
+          </fieldset>
+        </section>
+
         <section class="position-form-modal__section" data-field-name="投递备注">
           <h4><span class="mdi mdi-note-text" aria-hidden="true"></span>投递备注</h4>
         <fieldset class="position-form-modal__field">
@@ -228,6 +236,7 @@ const form = reactive({
   deadline: '',
   positionUrl: '',
   applicationNote: '',
+  createBy: '',
   recruitmentCycles: [] as string[]
 })
 
@@ -288,6 +297,7 @@ const resetForm = () => {
   form.deadline = toDateValue(seed.deadline)
   form.positionUrl = seed.positionUrl || ''
   form.applicationNote = seed.applicationNote || ''
+  form.createBy = seed.createBy || ''
   form.recruitmentCycles = normalizeCycles(seed.recruitmentCycle)
 }
 
@@ -338,7 +348,8 @@ const handleSubmit = () => {
     displayEndTime: form.displayEndTime,
     deadline: form.deadline || undefined,
     positionUrl: form.positionUrl || undefined,
-    applicationNote: form.applicationNote || undefined
+    applicationNote: form.applicationNote || undefined,
+    createBy: form.createBy || undefined
   })
 }
 

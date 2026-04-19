@@ -37,6 +37,7 @@ export interface PositionListItem {
   positionUrl?: string
   applicationNote?: string
   studentCount?: number
+  createBy?: string
 }
 
 export interface PositionStats {
@@ -116,14 +117,14 @@ export interface DrillDownIndustry {
 export interface PositionPayload {
   positionId?: number
   positionCategory: string
-  industry: string
+  industry?: string
   companyName: string
   companyType?: string
   companyWebsite?: string
   positionName: string
   department?: string
   region: string
-  city: string
+  city?: string
   recruitmentCycle: string
   projectYear: string
   displayStatus?: string
@@ -133,6 +134,7 @@ export interface PositionPayload {
   deadlineText?: string
   positionUrl?: string
   applicationNote?: string
+  createBy?: string
 }
 
 export interface PositionBatchUploadResult {

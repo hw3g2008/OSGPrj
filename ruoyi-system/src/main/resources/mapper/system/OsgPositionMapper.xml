@@ -273,6 +273,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="displayEndTime != null">display_end_time = #{displayEndTime},</if>
             <if test="positionUrl != null">position_url = #{positionUrl},</if>
             <if test="applicationNote != null">application_note = #{applicationNote},</if>
+            <if test="createBy != null and createBy != ''">create_by = #{createBy},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate(),
             <if test="remark != null">remark = #{remark},</if>

@@ -345,6 +345,7 @@ const drilldownColumns = [
   { title: '截止时间', dataIndex: 'deadline', key: 'deadline', width: 80 },
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
   { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
+  { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
 ]
 
@@ -360,6 +361,7 @@ const listColumns = [
   { title: '截止时间', dataIndex: 'deadlineDisplay', key: 'deadlineDisplay', width: 100 },
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
   { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
+  { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
 ]
 
