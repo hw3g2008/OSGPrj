@@ -277,7 +277,7 @@
                       <span v-else>{{ job.companyName }}</span>
                     </div>
                   </td>
-                  <td><span class="tag" :class="industryTone(job.industry)">{{ job.industry || '-' }}</span></td>
+                  <td><span class="tag" :class="`industry-${resolveIndustryGroupMeta(job.industry).tone}`">{{ resolveIndustryGroupMeta(job.industry).label || '-' }}</span></td>
                   <td>{{ categoryLabelMap[job.positionCategory] || job.positionCategory || '-' }}</td>
                   <td>{{ formatLocation(job) }}</td>
                   <td><span class="tag" :class="cycleTone(job.recruitmentCycle)">{{ job.recruitmentCycle || '-' }}</span></td>
@@ -377,6 +377,8 @@ import {
   type AssistantPositionIndustry,
   type AssistantPositionStudent,
 } from '@osg/shared/api'
+import { useIndustryMeta } from '@osg/shared'
+import type { PositionMetaOption } from '@osg/shared'
 
 type ViewMode = 'drilldown' | 'list'
 
@@ -421,6 +423,40 @@ interface GroupedIndustry {
   iconClass: string
   accentColor: string
   headerStyle: Record<string, string>
+}
+
+const FALLBACK_INDUSTRY_META = {
+  tone: 'slate',
+  icon: 'mdi-briefcase',
+  label: '未归类',
+} as const
+
+const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
+
+interface IndustryGroupMeta {
+  id: string
+  label: string
+  tone: string
+  icon: string
+}
+
+function resolveIndustryGroupMeta(industryRaw: string): IndustryGroupMeta {
+  const trimmed = industryRaw?.trim() || ''
+  const match = industryMeta.value.find((m) => m.value === trimmed)
+  if (match) {
+    return {
+      id: match.value,
+      label: match.label,
+      tone: match.tone ?? FALLBACK_INDUSTRY_META.tone,
+      icon: match.icon ?? FALLBACK_INDUSTRY_META.icon,
+    }
+  }
+  return {
+    id: trimmed || 'uncategorized',
+    label: trimmed || FALLBACK_INDUSTRY_META.label,
+    tone: FALLBACK_INDUSTRY_META.tone,
+    icon: FALLBACK_INDUSTRY_META.icon,
+  }
 }
 
 const viewMode = ref<ViewMode>('drilldown')
@@ -508,16 +544,17 @@ const groupedPositions = computed<GroupedIndustry[]>(() => {
 
   filteredPositions.value.forEach((position) => {
     const industryKey = position.industry || '未归类行业'
+    const meta = resolveIndustryGroupMeta(industryKey)
     const industry = industries.get(industryKey) || {
-      industry: industryKey,
+      industry: meta.label,
       companyCount: 0,
       positionCount: 0,
       studentCount: 0,
       companies: [],
-      iconClass: industryIcon(industryKey),
-      accentColor: industryColor(industryKey),
+      iconClass: meta.icon,
+      accentColor: `var(--industry-${meta.tone}, #4b5563)`,
       headerStyle: {
-        background: industryGradient(industryKey),
+        background: '#f3f4f6',
       },
     }
 
@@ -616,61 +653,8 @@ function cycleTone(cycle?: string) {
   return cycle?.toLowerCase().includes('off') ? 'neutral' : 'info'
 }
 
-function industryTone(industry?: string) {
-  const normalized = String(industry || '').toLowerCase()
-  if (normalized.includes('bank')) {
-    return 'industry-bank'
-  }
-  if (normalized.includes('consult')) {
-    return 'industry-consulting'
-  }
-  if (normalized.includes('tech')) {
-    return 'industry-tech'
-  }
-  return 'neutral'
-}
-
-function industryIcon(industry?: string) {
-  const normalized = String(industry || '').toLowerCase()
-  if (normalized.includes('bank')) {
-    return 'mdi-bank'
-  }
-  if (normalized.includes('consult')) {
-    return 'mdi-lightbulb'
-  }
-  if (normalized.includes('tech')) {
-    return 'mdi-laptop'
-  }
-  return 'mdi-domain'
-}
-
-function industryColor(industry?: string) {
-  const normalized = String(industry || '').toLowerCase()
-  if (normalized.includes('bank')) {
-    return 'var(--primary)'
-  }
-  if (normalized.includes('consult')) {
-    return '#7C3AED'
-  }
-  if (normalized.includes('tech')) {
-    return '#1D4ED8'
-  }
-  return '#0F766E'
-}
-
-function industryGradient(industry?: string) {
-  const normalized = String(industry || '').toLowerCase()
-  if (normalized.includes('bank')) {
-    return 'linear-gradient(135deg,#EEF2FF,#E0E7FF)'
-  }
-  if (normalized.includes('consult')) {
-    return 'linear-gradient(135deg,#F3E8FF,#E9D5FF)'
-  }
-  if (normalized.includes('tech')) {
-    return 'linear-gradient(135deg,#DBEAFE,#BFDBFE)'
-  }
-  return 'linear-gradient(135deg,#CCFBF1,#99F6E4)'
-}
+/* industryTone / industryIcon / industryColor / industryGradient 已删除
+ * 行业元数据统一由 resolveIndustryGroupMeta() + useIndustryMeta 提供 */
 
 function buildLogoText(companyName: string) {
   const parts = companyName
@@ -757,6 +741,7 @@ function closeStudents() {
 }
 
 onMounted(() => {
+  void loadIndustryMeta()
   void loadPositions()
 })
 </script>
@@ -1167,19 +1152,15 @@ onMounted(() => {
   color: #6b7280;
 }
 
-.industry-bank {
-  background: #eef2ff;
-  color: var(--primary);
-}
-
-.industry-consulting {
-  background: #f3e8ff;
-  color: #7c3aed;
-}
-
-.industry-tech {
-  background: #dbeafe;
-  color: #1d4ed8;
+.industry-gold,
+.industry-violet,
+.industry-blue,
+.industry-amber,
+.industry-teal,
+.industry-indigo,
+.industry-slate {
+  background: #f3f4f6;
+  color: #4b5563;
 }
 
 .warning {

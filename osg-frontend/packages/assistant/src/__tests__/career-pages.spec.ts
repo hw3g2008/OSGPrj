@@ -11,6 +11,23 @@ const apiMocks = vi.hoisted(() => ({
 
 vi.mock('@osg/shared/api', () => apiMocks)
 
+const industryMetaFixture = [
+  { value: 'bulge_bracket', label: 'Bulge Bracket', tone: 'gold', icon: 'mdi-trophy' },
+  { value: 'elite_boutique', label: 'Elite Boutique', tone: 'violet', icon: 'mdi-diamond-stone' },
+  { value: 'middle_market', label: 'Middle Market', tone: 'blue', icon: 'mdi-city' },
+  { value: 'buyside', label: 'Buy-Side', tone: 'amber', icon: 'mdi-currency-usd' },
+  { value: 'consulting', label: 'Consulting', tone: 'teal', icon: 'mdi-lightbulb' },
+  { value: 'swe_pm', label: 'SWE / PM', tone: 'indigo', icon: 'mdi-laptop' },
+  { value: 'other_company', label: '其他公司', tone: 'slate', icon: 'mdi-briefcase' },
+]
+
+vi.mock('@osg/shared', () => ({
+  useIndustryMeta: () => ({
+    meta: { value: industryMetaFixture },
+    load: vi.fn().mockResolvedValue(industryMetaFixture),
+  }),
+}))
+
 const {
   getAssistantPositionDrillDown,
   getAssistantPositionStudents,
