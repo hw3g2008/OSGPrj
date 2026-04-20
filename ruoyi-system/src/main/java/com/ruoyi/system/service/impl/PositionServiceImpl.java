@@ -513,7 +513,7 @@ public class PositionServiceImpl implements IPositionService
         String companyCode = normalizeCompanyCode(normalizedCompany);
         String recruitCycle = defaultString(recruitmentCycle, resolveProfileField(userId, "recruitmentCycle", "Open"));
         String normalizedProjectYear = defaultString(projectYear, resolveProjectYear(recruitCycle));
-        String normalizedCompanyType = defaultString(companyType, resolveIndustryLabel(resolveProfileField(userId, "primaryDirection", "Investment Bank")));
+        String normalizedCompanyType = defaultString(companyType, resolveIndustryLabel(resolveProfileField(userId, "primaryDirection", "")));
         String industryLabel = defaultString(normalizedCompanyType, "ib");
 
         upsertLocationMeta(normalizedLocation);
@@ -1283,35 +1283,20 @@ public class PositionServiceImpl implements IPositionService
             }
         }
 
-        return switch (resolveIndustryValue(primaryDirection, buildIndustryAliases(loadDictValueMap(DICT_TYPE_POSITION_INDUSTRY))))
-        {
-            case "consulting" -> "Consulting";
-            case "tech" -> "Tech";
-            case "pevc" -> "PE / VC";
-            default -> "Investment Bank";
-        };
+        // 字典查不到时返原始值，不再伪造硬编码 label（§3.2）
+        return normalized;
     }
 
     private String fallbackIndustryLabel(String industry)
     {
-        return switch (defaultString(industry, "ib"))
-        {
-            case "consulting" -> "Consulting";
-            case "tech" -> "Tech";
-            case "pevc" -> "PE / VC";
-            default -> "Investment Bank";
-        };
+        // 字典未命中：返原始 industry 字符串，不再硬编码 4 分类 label（§3.2）
+        return defaultString(industry, "");
     }
 
     private String fallbackIndustryIcon(String industry)
     {
-        return switch (defaultString(industry, "ib"))
-        {
-            case "consulting" -> "bulb";
-            case "tech" -> "code";
-            case "pevc" -> "fund";
-            default -> "bank";
-        };
+        // 字典未命中：返空，由前端 useIndustryMeta 走 FALLBACK（§3.2）
+        return "";
     }
 
     private String resolveProfileField(Long userId, String key, String fallback)
