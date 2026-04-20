@@ -51,7 +51,7 @@ export function useIndustryMeta() {
     loading.value = true
     // ⚠️ shared 的 http.get<T>() 返回 Promise<T>（interceptor 已拆 data 层），不是 AxiosResponse<T>
     //    见 osg-frontend/packages/shared/src/utils/request.ts:46
-    fetching = http.get<SharedDictItem[]>('/dict/osg_company_type')
+    fetching = (http.get<SharedDictItem[]>('/dict/osg_company_type') as unknown as Promise<SharedDictItem[]>)
       .then((data) => {
         cached = (data ?? []).map(dictItemToMetaOption)
         return cached
