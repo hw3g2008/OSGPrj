@@ -846,7 +846,6 @@ function handleManualHirevueUpload(event: Event) {
 const categoryOptionsByValue = computed(() => optionMap(filterOptions.value.categories))
 const industryOptionsByValue = computed(() => optionMap(filterOptions.value.industries))
 const companyOptionsByValue = computed(() => optionMap(filterOptions.value.companies))
-const locationOptionsByValue = computed(() => optionMap(filterOptions.value.locations))
 
 const filteredPositions = computed(() =>
   positions.value.filter((record) => {
@@ -880,9 +879,6 @@ const filteredPositions = computed(() =>
 )
 
 const favoritePositions = computed(() => filteredPositions.value.filter((record) => record.favorited))
-const manualPositionsCount = computed(() =>
-  filteredPositions.value.filter((record) => record.sourceType === 'manual').length
-)
 const openPositionsCount = computed(() =>
   filteredPositions.value.filter((record) => !isDeadlineClosed(record.deadline)).length
 )
