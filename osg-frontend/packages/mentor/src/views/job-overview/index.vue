@@ -619,7 +619,7 @@ function normalizeJobOverview(record: Record<string, any>): JobOverviewRow {
     lessonHours: record.lessonHours || '8h',
     applyTime: record.applyTime || formatApplyTime(record.createTime),
     notes: record.notes || 'HireVue已通过，准备First Round。建议持续复盘面试表现。',
-  }
+  } as JobOverviewRow
 }
 
 function contentLabel(value: string) {
@@ -676,7 +676,7 @@ function normalizeCalendarEvent(record: Record<string, any>): CalendarEvent {
     color: record.color || '#7399C6',
     badge: record.badge || '',
     tagClass: record.tagClass || 'warning',
-  }
+  } as CalendarEvent
 }
 
 function rowClass(row: JobOverviewRow) {
@@ -758,7 +758,7 @@ async function loadStudentDetailRecords(studentId: number | string | undefined) 
 async function loadJobOverviewRows(confirmedRowId?: number) {
   const res = await http.get('/api/mentor/job-overview/list')
   const rows = Array.isArray(res?.rows) ? res.rows : []
-  const normalizedRows = rows.map((record: Record<string, any>) => normalizeJobOverview(record))
+  const normalizedRows: JobOverviewRow[] = rows.map((record: Record<string, any>) => normalizeJobOverview(record))
   normalizedRows.forEach((row) => {
     const anchor = visibleNewRowAnchors.value.get(row.id)
     if (anchor) persistentRowAnchors.value.set(row.id, anchor)

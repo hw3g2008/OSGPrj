@@ -378,7 +378,6 @@ import {
   type AssistantPositionStudent,
 } from '@osg/shared/api'
 import { useIndustryMeta } from '@osg/shared'
-import type { PositionMetaOption } from '@osg/shared'
 
 type ViewMode = 'drilldown' | 'list'
 
@@ -695,8 +694,8 @@ async function loadPositions() {
   errorMessage.value = ''
 
   try {
-    const industries = await getAssistantPositionDrillDown()
-    allPositions.value = flattenIndustries(industries)
+    const result = await getAssistantPositionDrillDown()
+    allPositions.value = flattenIndustries(result.rows)
   } catch (error: any) {
     errorMessage.value = error?.message || '岗位列表暂时无法加载，请稍后重试。'
   } finally {
@@ -712,7 +711,8 @@ async function openStudents(position: PositionRecord) {
   studentModal.position = position
 
   try {
-    studentModal.rows = await getAssistantPositionStudents(position.positionId)
+    const result = await getAssistantPositionStudents(position.positionId)
+    studentModal.rows = result.rows
   } catch (error: any) {
     studentModal.error = error?.message || '关联学员暂时无法加载。'
   } finally {

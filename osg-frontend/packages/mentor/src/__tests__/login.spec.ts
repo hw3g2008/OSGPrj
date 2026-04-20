@@ -19,8 +19,6 @@ vi.mock('@osg/shared/utils', () => ({
 
 import { login, getInfo } from '@/api/auth'
 import { getCaptchaImage } from '@osg/shared/api/auth'
-import { setToken, setUser } from '@osg/shared/utils'
-
 function createTestRouter() {
   return createRouter({
     history: createMemoryHistory(),

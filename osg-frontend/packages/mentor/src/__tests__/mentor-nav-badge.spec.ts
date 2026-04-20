@@ -124,7 +124,7 @@ describe('mentor nav badge state', () => {
       },
     ]
 
-    vi.mocked(http.get).mockImplementation(async (url: string, options?: Record<string, any>) => {
+    vi.mocked(http.get).mockImplementation(async (url: string, _options?: Record<string, any>) => {
       if (url === '/api/mentor/job-overview/list') {
         return { rows: jobRows.map((row) => ({ ...row })) }
       }
