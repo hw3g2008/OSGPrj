@@ -194,11 +194,6 @@ import {
   type StudentPendingProfileChange
 } from '@osg/shared/api'
 
-const profileActionTriggers = [
-  { actionId: 'open-edit-profile' },
-  { actionId: 'open-pending-changes' }
-]
-
 const yesNoOptions = [
   { value: '是', label: '是' },
   { value: '否', label: '否' }

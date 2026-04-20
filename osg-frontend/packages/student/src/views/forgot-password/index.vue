@@ -204,7 +204,7 @@ const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
 const resetToken = ref('')
 
-let countdownTimer: ReturnType<typeof window.setInterval> | null = null
+let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 const step1Form = reactive({ email: '' })
 const step2Form = reactive({ code: '' })
@@ -235,7 +235,7 @@ const startCountdown = () => {
     clearInterval(countdownTimer)
   }
 
-  countdownTimer = window.setInterval(() => {
+  countdownTimer = setInterval(() => {
     countdown.value -= 1
     if (countdown.value <= 0) {
       countdown.value = 0

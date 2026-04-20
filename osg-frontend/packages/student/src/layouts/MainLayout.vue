@@ -92,7 +92,7 @@ const userInitials = computed(() => {
   if (parts.length === 1) {
     return parts[0].slice(0, 2).toUpperCase()
   }
-  return parts.slice(0, 2).map(part => part[0]?.toUpperCase() || '').join('')
+  return parts.slice(0, 2).map((part: string) => part[0]?.toUpperCase() || '').join('')
 })
 
 const menuGroups: MenuGroup[] = [

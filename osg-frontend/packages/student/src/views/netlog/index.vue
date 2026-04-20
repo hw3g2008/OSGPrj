@@ -146,12 +146,6 @@ const channelOptions = [
   { value: 'Meeting', label: '面谈' }
 ]
 
-const netlogActionTriggers = [
-  { actionId: 'open-create-modal', label: '填写记录' },
-  { actionId: 'open-detail-modal', label: '查看' },
-  { actionId: 'open-edit-from-detail', label: '编辑' }
-]
-
 const networkingLogs: NetworkingLog[] = [
   {
     actionId: 'log-001',

@@ -224,19 +224,6 @@ type SubmittedQuestion = {
   canEdit: boolean
 }
 
-const questionActionTriggers = [
-  { actionId: 'question-new' },
-  { actionId: 'question-view-1' },
-  { actionId: 'question-view-2' },
-  { actionId: 'question-view-3' },
-  { actionId: 'question-pending-1' },
-  { actionId: 'question-pending-2' },
-  { actionId: 'question-detail-1' },
-  { actionId: 'question-edit-1' },
-  { actionId: 'question-detail-2' },
-  { actionId: 'question-detail-3' }
-]
-
 const departmentOptions = [
   { value: 'ib', label: 'Investment Banking' },
   { value: 'snt', label: 'Sales & Trading' },

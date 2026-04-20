@@ -78,19 +78,6 @@ const performanceOptions = [
   { value: 'Disappointing', label: 'Disappointing' }
 ]
 
-const feedbackActionTriggers = [
-  { actionId: 'fb-prep-1' },
-  { actionId: 'fb-prep-2' },
-  { actionId: 'fb-prep-3' },
-  { actionId: 'fb-networking-1' },
-  { actionId: 'fb-networking-2' },
-  { actionId: 'fb-networking-3' },
-  { actionId: 'fb-mock-1' },
-  { actionId: 'fb-mock-2' },
-  { actionId: 'fb-mock-3' },
-  { actionId: 'fb-mock-4' }
-]
-
 const tabColumns = {
   prep: ['ID', 'Student', 'Mentor', 'Performance', 'Create Time', 'Action'],
   networking: ['ID', 'Mentor', 'Lead Mentor', 'Email Quality', 'Call Quality', 'Recommend', 'Create Time', 'Action'],

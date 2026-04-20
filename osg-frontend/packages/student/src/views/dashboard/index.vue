@@ -272,7 +272,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="interview in applicationsPreview" :key="`${interview.company}-${interview.position}`">
+            <tr v-for="interview in applicationsPreview" :key="`${interview.company}-${interview.role}`">
               <td>{{ interview.date }}</td>
               <td class="company-cell">{{ interview.company }}</td>
               <td>{{ interview.office }}</td>
@@ -393,6 +393,8 @@ const applicationsMeta = reactive<StudentApplicationsMeta>({
   },
   filterOptions: {
     progressStages: [],
+    coachingStages: [],
+    mentorCounts: [],
     coachingStatuses: [],
     companyTypes: [],
     applyMethods: [],

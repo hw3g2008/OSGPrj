@@ -830,16 +830,6 @@ function stageDropdownChanged(record: StudentApplicationRecord, event: Event) {
   })
 }
 
-function openAppliedModal(record: StudentApplicationRecord) {
-  selectedApplicationId.value = record.id
-  appliedForm.value = {
-    date: record.appliedDate || new Date().toISOString().slice(0, 10),
-    method: record.applyMethod || applicationsMeta.value.filterOptions.applyMethods[0]?.value || '',
-    note: record.progressNote || ''
-  }
-  appliedModalOpen.value = true
-}
-
 function shiftCalendarMonth(offset: number) {
   calendarMonthOffset.value += offset
 }
