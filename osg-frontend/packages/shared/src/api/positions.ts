@@ -15,7 +15,7 @@ export interface StudentPositionRecord {
   companyKey: string
   companyCode: string
   careerUrl: string
-  industry: 'ib' | 'consulting' | 'tech' | 'pevc'
+  industry: string
   sourceType?: 'global' | 'manual'
   favorited: boolean
   applied: boolean

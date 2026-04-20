@@ -105,12 +105,12 @@
             v-for="industry in groupedIndustries"
             :key="industry.key"
             class="industry-section"
-            :class="`industry-${industry.key}`"
+            :class="`industry-${industry.tone}`"
           >
             <button class="industry-header" type="button" @click="toggleIndustry(industry.key)">
               <div class="industry-info">
                 <RightOutlined :class="['industry-chevron', { 'rotate-icon': activeCategories.includes(industry.key) }]" />
-                <component :is="industry.icon" class="industry-icon" />
+                <i class="mdi industry-icon" :class="industry.icon" aria-hidden="true" />
                 <span class="industry-name">{{ industry.label }}</span>
                 <a-tag color="blue">{{ industry.companyCount }} 家公司</a-tag>
                 <a-tag color="green">{{ industry.positionCount }} 个岗位</a-tag>
@@ -595,17 +595,15 @@ import {
   type StudentPositionOption,
   type StudentPositionRecord
 } from '@osg/shared/api'
+import { useIndustryMeta } from '@osg/shared'
 import {
   AppstoreOutlined,
   BankOutlined,
-  BulbOutlined,
   CheckCircleFilled,
   CheckOutlined,
   CloudUploadOutlined,
-  CodeOutlined,
   ExportOutlined,
   FileTextOutlined,
-  FundOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   RightOutlined,
@@ -631,7 +629,8 @@ interface CompanyGroup {
 interface IndustryGroup {
   key: IndustryKey
   label: string
-  icon: unknown
+  icon: string
+  tone: string
   sort: number
   companies: CompanyGroup[]
   companyCount: number
@@ -639,6 +638,31 @@ interface IndustryGroup {
 }
 
 const router = useRouter()
+
+const FALLBACK_INDUSTRY_META = {
+  tone: 'slate',
+  icon: 'mdi-briefcase',
+  label: '未归类',
+} as const
+
+const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
+
+function resolveIndustryMeta(industryRaw: string) {
+  const trimmed = industryRaw?.trim() || ''
+  const match = industryMeta.value.find((m) => m.value === trimmed)
+  if (match) {
+    return {
+      tone: match.tone ?? FALLBACK_INDUSTRY_META.tone,
+      icon: match.icon ?? FALLBACK_INDUSTRY_META.icon,
+      label: match.label,
+    }
+  }
+  return {
+    tone: FALLBACK_INDUSTRY_META.tone,
+    icon: FALLBACK_INDUSTRY_META.icon,
+    label: trimmed || FALLBACK_INDUSTRY_META.label,
+  }
+}
 
 const positionsActionTriggers = [
   { actionId: 'manual-add', label: '手动添加岗位' },
@@ -660,7 +684,7 @@ const positionsActionTriggers = [
 
 const viewMode = ref<ViewMode>('drilldown')
 const activeTab = ref<TabKey>('all')
-const activeCategories = ref(['ib'])
+const activeCategories = ref<string[]>([])
 const expandedCompanies = ref<string[]>([])
 const selectedPositionId = ref<number | null>(null)
 
@@ -703,14 +727,11 @@ const CITY_OPTIONS: Record<string, string[]> = {
   cn: ['Beijing', 'Shanghai', 'Shenzhen', 'Guangzhou']
 }
 
-const COMPANY_TYPES = [
-  { value: 'ib', label: 'Investment Bank' },
-  { value: 'consulting', label: 'Consulting' },
-  { value: 'tech', label: 'Tech' },
-  { value: 'pe', label: 'PE' },
-  { value: 'vc', label: 'VC' },
-  { value: 'other', label: 'Other' }
-]
+const COMPANY_TYPES = computed(() =>
+  industryMeta.value.length
+    ? industryMeta.value.map((m) => ({ value: m.value, label: m.label }))
+    : [{ value: 'other_company', label: '其他公司' }]
+)
 
 const REGIONS = [
   { value: 'na', label: '🌎 北美' },
@@ -802,12 +823,7 @@ const selectedPosition = computed(() =>
   positions.value.find((record) => record.id === selectedPositionId.value) ?? null
 )
 
-const industryIconComponents: Record<string, unknown> = {
-  bank: BankOutlined,
-  bulb: BulbOutlined,
-  code: CodeOutlined,
-  fund: FundOutlined
-}
+/* industryIconComponents 已删除 — icon 统一由 resolveIndustryMeta() 从字典取 MDI class */
 
 const manualCityOptions = computed(() =>
   manualForm.value.region ? (CITY_OPTIONS[manualForm.value.region] ?? []) : []
@@ -876,18 +892,21 @@ const groupedIndustries = computed<IndustryGroup[]>(() => {
   const groups = new Map<IndustryKey, {
     key: IndustryKey
     label: string
-    icon: unknown
+    icon: string
+    tone: string
     sort: number
     companies: Map<string, CompanyGroup>
   }>()
 
   for (const record of filteredPositions.value) {
-    const meta = industryOptionsByValue.value.get(record.industry)
+    const optionMeta = industryOptionsByValue.value.get(record.industry)
+    const resolved = resolveIndustryMeta(record.industry)
     const industryGroup = groups.get(record.industry) ?? {
       key: record.industry,
-      label: meta?.label ?? record.industryLabel ?? record.industry,
-      icon: iconForIndustry(meta?.iconKey ?? record.industryIconKey),
-      sort: Number(meta?.sort ?? 999),
+      label: optionMeta?.label ?? record.industryLabel ?? resolved.label,
+      icon: resolved.icon,
+      tone: resolved.tone,
+      sort: Number(optionMeta?.sort ?? 999),
       companies: new Map<string, CompanyGroup>()
     }
 
@@ -907,23 +926,15 @@ const groupedIndustries = computed<IndustryGroup[]>(() => {
     groups.set(record.industry, industryGroup)
   }
 
-  const order: IndustryKey[] = ['ib', 'consulting', 'tech', 'pevc']
-
   return Array.from(groups.values())
-    .sort((left, right) => {
-      const leftOrder = order.indexOf(left.key)
-      const rightOrder = order.indexOf(right.key)
-      if (leftOrder >= 0 || rightOrder >= 0) {
-        return leftOrder - rightOrder
-      }
-      return left.sort - right.sort
-    })
+    .sort((left, right) => left.sort - right.sort)
     .map((group) => {
       const companies = Array.from(group.companies.values())
       return {
         key: group.key,
         label: group.label,
         icon: group.icon,
+        tone: group.tone,
         sort: group.sort,
         companies,
         companyCount: companies.length,
@@ -942,10 +953,6 @@ function getCategoryColor(category: PositionRecord['category']) {
 
 function getCompanyBrandColor(companyKey: string) {
   return companyOptionsByValue.value.get(companyKey)?.brandColor ?? '#4F46E5'
-}
-
-function iconForIndustry(iconKey?: string) {
-  return industryIconComponents[iconKey ?? 'bank'] ?? BankOutlined
 }
 
 function isDeadlineClosed(deadline: string) {
@@ -1239,6 +1246,7 @@ async function submitCoachingApplication() {
 }
 
 onMounted(() => {
+  void loadIndustryMeta()
   void Promise.all([loadPositions(), loadPositionMeta()])
 })
 
@@ -1665,24 +1673,15 @@ watch(
     cursor: pointer;
   }
 
-  .industry-ib .industry-header {
-    background: linear-gradient(135deg, #eef2ff, #dde7ff);
-    color: #4567b7;
-  }
-
-  .industry-consulting .industry-header {
-    background: linear-gradient(135deg, #f3e8ff, #ead8ff);
-    color: #7c3aed;
-  }
-
-  .industry-tech .industry-header {
-    background: linear-gradient(135deg, #dbeafe, #c7dcff);
-    color: #2563eb;
-  }
-
-  .industry-pevc .industry-header {
-    background: linear-gradient(135deg, #dcfce7, #c9f6d4);
-    color: #15803d;
+  .industry-gold .industry-header,
+  .industry-violet .industry-header,
+  .industry-blue .industry-header,
+  .industry-amber .industry-header,
+  .industry-teal .industry-header,
+  .industry-indigo .industry-header,
+  .industry-slate .industry-header {
+    background: #f3f4f6;
+    color: #4b5563;
   }
 
   .industry-info {
