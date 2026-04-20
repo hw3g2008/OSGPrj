@@ -113,6 +113,11 @@
             <span>截止日期 <small>(选填)</small></span>
             <a-input v-model:value="form.deadline" type="date" aria-label="截止日期" />
           </fieldset>
+
+          <fieldset class="position-form-modal__field" data-field-name="截止文案">
+            <span>截止文案 <small>(选填，如"Rolling")</small></span>
+            <a-input v-model:value="form.deadlineText" placeholder="如 Rolling、ASAP、Until Filled" aria-label="截止文案" />
+          </fieldset>
         </div>
       </section>
 
@@ -234,6 +239,7 @@ const form = reactive({
   displayStartTime: '',
   displayEndTime: '',
   deadline: '',
+  deadlineText: '',
   positionUrl: '',
   applicationNote: '',
   createBy: '',
@@ -295,6 +301,7 @@ const resetForm = () => {
   form.displayStartTime = toDateTimeLocal(seed.displayStartTime) || now.toISOString().slice(0, 16)
   form.displayEndTime = toDateTimeLocal(seed.displayEndTime) || end.toISOString().slice(0, 16)
   form.deadline = toDateValue(seed.deadline)
+  form.deadlineText = seed.deadlineText || ''
   form.positionUrl = seed.positionUrl || ''
   form.applicationNote = seed.applicationNote || ''
   form.createBy = seed.createBy || ''
@@ -347,6 +354,7 @@ const handleSubmit = () => {
     displayStartTime: form.displayStartTime,
     displayEndTime: form.displayEndTime,
     deadline: form.deadline || undefined,
+    deadlineText: form.deadlineText || undefined,
     positionUrl: form.positionUrl || undefined,
     applicationNote: form.applicationNote || undefined,
     createBy: form.createBy || undefined

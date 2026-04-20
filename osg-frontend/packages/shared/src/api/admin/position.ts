@@ -31,6 +31,7 @@ export interface PositionListItem {
   projectYear: string
   publishTime?: string
   deadline?: string
+  deadlineText?: string
   displayStatus: string
   displayStartTime?: string
   displayEndTime?: string
