@@ -17,9 +17,9 @@
             <span>面试安排</span>
           </div>
           <div class="schedule-month-nav">
-            <button class="month-nav-btn" @click="shiftCalendarMonth(-1)">‹</button>
+            <a-button type="text" size="small" @click="shiftCalendarMonth(-1)">‹</a-button>
             <span class="schedule-month-label">{{ scheduleMonthLabel }}</span>
-            <button class="month-nav-btn" @click="shiftCalendarMonth(1)">›</button>
+            <a-button type="text" size="small" @click="shiftCalendarMonth(1)">›</a-button>
           </div>
           <span data-testid="schedule-summary-chip-total" class="summary-chip">本月 {{ monthlyCount }} 场</span>
           <span data-testid="schedule-summary-chip-week" class="summary-chip summary-chip--muted">本周 {{ weeklyCount }} 场</span>
@@ -40,16 +40,16 @@
           </div>
           <div class="schedule-flex-gap"></div>
           <div class="schedule-events">
-            <button
+            <a-tag
               v-for="event in scheduleItems"
               :key="`pill-${event.id}`"
-              class="event-pill"
-              :class="event.accentClass"
+              :color="event.accentClass === 'danger-chip' ? 'red' : event.accentClass === 'warning-chip' ? 'orange' : 'blue'"
+              style="cursor:pointer"
               @click="openInterviewModal(event.id)"
             >
-              <span class="event-pill__date">{{ event.dayLabel }}日</span>
-              <span class="event-pill__label">{{ event.shortLabel }}</span>
-            </button>
+              <span>{{ event.dayLabel }}日</span>
+              <span>{{ event.shortLabel }}</span>
+            </a-tag>
             <span v-if="!scheduleItems.length" style="color:#94a3b8;font-size:11px">暂无面试安排</span>
           </div>
           <button class="btn-expand" @click="calendarExpanded = !calendarExpanded">
@@ -153,19 +153,17 @@
         </a-space>
       </a-card>
 
-      <div class="pill-tabs">
-        <button
+      <a-radio-group v-model:value="activeTab">
+        <a-radio-button
           v-for="tab in tabDefs"
           :key="tab.key"
-          class="pill-tab"
-          :class="{ 'pill-tab--active': activeTab === tab.key }"
-          @click="activeTab = tab.key"
+          :value="tab.key"
         >
           <component :is="tab.icon" style="margin-right:4px" />
           {{ tab.label }}
           <span class="pill-tab__badge" :style="tab.badgeStyle">{{ tab.count }}</span>
-        </button>
-      </div>
+        </a-radio-button>
+      </a-radio-group>
 
       <a-card :bordered="false">
         <a-table :columns="columns" :data-source="visibleApplications" :pagination="false" row-key="id" :scroll="{ x: 1120 }" :row-class-name="rowClassName">
@@ -211,29 +209,30 @@
             </template>
 
             <template v-else-if="column.key === 'actions'">
-              <button
+              <a-button
                 v-if="record.bucket === 'completed'"
-                class="btn-ended"
+                type="primary"
                 disabled
               >
                 <CheckCircleOutlined /> 已结束
-              </button>
-              <select
+              </a-button>
+              <a-select
                 v-else
                 :id="`action-stage-select-${record.id}`"
-                class="action-stage-select"
+                v-model:value="record.stage"
+                size="small"
+                style="width: 120px"
                 :style="selectStageTone(record.stage)"
-                :value="record.stage"
                 @change="stageDropdownChanged(record, $event)"
               >
-                <option
+                <a-select-option
                   v-for="option in stageDropdownOptions(record.stage)"
                   :key="`action-option-${record.id}-${option.value}`"
                   :value="option.value"
                 >
                   {{ option.label }}
-                </option>
-              </select>
+                </a-select-option>
+              </a-select>
             </template>
           </template>
         </a-table>
@@ -249,6 +248,7 @@
       :wrap-class-name="interviewModalWrapClass"
       :mask-style="{ backdropFilter: 'blur(4px)' }"
       :cancel-button-props="{ style: { display: 'none' } }"
+      destroy-on-close
       @ok="interviewModalOpen = false"
     >
       <template #title>
@@ -279,6 +279,7 @@
       :width="580"
       wrap-class-name="applications-modal applications-modal--progress"
       :mask-style="{ backdropFilter: 'blur(4px)' }"
+      destroy-on-close
       @ok="saveProgress"
     >
       <div id="modal-update-result" class="rich-modal-shell">
@@ -291,21 +292,21 @@
         </div>
         <label class="rich-form-field rich-form-field--full">
           <span>当前面试阶段 <span class="field-required">*</span></span>
-          <select
+          <a-select
             id="update-stage-select"
-            v-model="progressForm.stage"
-            class="modal-stage-select"
+            v-model:value="progressForm.stage"
+            placeholder="请选择当前阶段"
             :style="selectStageTone(progressForm.stage)"
+            style="width: 120px"
           >
-            <option value="">请选择当前阶段</option>
-            <option
+            <a-select-option
               v-for="option in stageDropdownOptions(progressForm.stage)"
               :key="`progress-${option.value}`"
               :value="option.value"
             >
               {{ option.label }}
-            </option>
-          </select>
+            </a-select-option>
+          </a-select>
           <span class="field-helper">选择阶段后，页面会切换到对应的 HireVue 或面试辅导分段内容。</span>
         </label>
 
@@ -317,10 +318,10 @@
           <div class="rich-form-stack">
             <div class="rich-form-field rich-form-field--full">
               <span>请选择类型 <span class="field-required">*</span></span>
-              <div class="inline-radio-group">
-                <label><input v-model="progressForm.hirevueType" type="radio" name="application-update-hirevue-type" value="vi" /> VI (Video Interview)</label>
-                <label><input v-model="progressForm.hirevueType" type="radio" name="application-update-hirevue-type" value="ot" /> OT (Online Test)</label>
-              </div>
+              <a-radio-group v-model:value="progressForm.hirevueType">
+                <a-radio value="vi">VI (Video Interview)</a-radio>
+                <a-radio value="ot">OT (Online Test)</a-radio>
+              </a-radio-group>
             </div>
 
             <label v-if="progressForm.hirevueType === 'vi'" id="update-vi-fields" class="rich-form-field rich-form-field--full">
@@ -345,25 +346,39 @@
 
             <label class="rich-form-field">
               <span>截止时间 <span class="field-required">*</span></span>
-              <input id="update-hirevue-deadline" v-model="progressForm.hirevueDeadline" type="datetime-local" class="native-form-input" />
+              <DatePicker
+                id="update-hirevue-deadline"
+                v-model:value="progressForm.hirevueDeadline"
+                show-time
+                format="YYYY-MM-DD HH:mm"
+                value-format="YYYY-MM-DDTHH:mm"
+                style="width: 100%"
+              />
               <span class="field-helper">请填写 VI/OT 的截止时间，系统会一并写入进度说明。</span>
             </label>
             <label class="rich-form-field">
               <span>上传邀请邮件截图 <span class="field-required">*</span></span>
-              <input id="update-hirevue-upload" type="file" accept="image/*" class="native-form-input native-form-input--hidden" @change="handleUpdateHirevueUpload" />
-              <label class="upload-dropzone upload-dropzone--compact" for="update-hirevue-upload">
-                <CloudUploadOutlined class="upload-dropzone__icon" />
-                <span class="upload-dropzone__title">点击上传截图</span>
-                <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
-                <span v-if="progressForm.inviteScreenshotName" class="upload-dropzone__file">{{ progressForm.inviteScreenshotName }}</span>
-              </label>
+              <Upload
+                id="update-hirevue-upload"
+                accept="image/*"
+                :max-count="1"
+                :before-upload="() => false"
+                @change="handleUpdateHirevueUpload"
+              >
+                <label class="upload-dropzone upload-dropzone--compact">
+                  <CloudUploadOutlined class="upload-dropzone__icon" />
+                  <span class="upload-dropzone__title">点击上传截图</span>
+                  <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+                  <span v-if="progressForm.inviteScreenshotName" class="upload-dropzone__file">{{ progressForm.inviteScreenshotName }}</span>
+                </label>
+              </Upload>
             </label>
             <div class="rich-form-field rich-form-field--full">
               <span>是否需要导师协助？ <span class="field-required">*</span></span>
-              <div class="inline-radio-group">
-                <label><input v-model="progressForm.mentorHelp" type="radio" name="application-update-mentor-help" value="yes" /> 是，需要导师协助</label>
-                <label><input v-model="progressForm.mentorHelp" type="radio" name="application-update-mentor-help" value="no" /> 否，仅需题库权限</label>
-              </div>
+              <a-radio-group v-model:value="progressForm.mentorHelp">
+                <a-radio value="yes">是，需要导师协助</a-radio>
+                <a-radio value="no">否，仅需题库权限</a-radio>
+              </a-radio-group>
             </div>
           </div>
         </div>
@@ -376,21 +391,32 @@
           <div class="rich-form-stack">
             <label class="rich-form-field">
               <span>需要几个导师？ <span class="field-required">*</span></span>
-              <select id="mentor-count-select" v-model="progressForm.mentorCount" class="native-form-input native-form-select">
-                <option value="">请选择导师数量</option>
-                <option
+              <a-select
+                id="mentor-count-select"
+                v-model:value="progressForm.mentorCount"
+                placeholder="请选择导师数量"
+                style="width: 100%"
+              >
+                <a-select-option
                   v-for="option in applicationsMeta.filterOptions.mentorCounts"
                   :key="`application-mentor-count-${option.value}`"
                   :value="option.value"
                 >
                   {{ option.label }}
-                </option>
-              </select>
+                </a-select-option>
+              </a-select>
               <span class="field-helper">根据面试难度，您可申请 1-3 位导师进行模拟面试。</span>
             </label>
             <label class="rich-form-field">
               <span>面试时间 <span class="field-required">*</span></span>
-              <input id="update-interview-time" v-model="progressForm.interviewTime" type="datetime-local" class="native-form-input" />
+              <DatePicker
+                id="update-interview-time"
+                v-model:value="progressForm.interviewTime"
+                show-time
+                format="YYYY-MM-DD HH:mm"
+                value-format="YYYY-MM-DDTHH:mm"
+                style="width: 100%"
+              />
               <span class="field-helper">请填写该轮面试的具体时间，系统会同步写入进度说明。</span>
             </label>
             <label class="rich-form-field">
@@ -406,7 +432,7 @@
 
         <label class="rich-form-field rich-form-field--full">
           <span>备注 <span class="field-optional">(选填)</span></span>
-          <textarea v-model="progressForm.note" class="native-form-input native-form-textarea" rows="2" placeholder="其他需要说明的内容..." />
+          <a-textarea v-model:value="progressForm.note" :rows="2" placeholder="其他需要说明的内容..." />
         </label>
       </div>
     </a-modal>
@@ -420,6 +446,7 @@
       :width="450"
       wrap-class-name="applications-modal applications-modal--applied"
       :mask-style="{ backdropFilter: 'blur(4px)' }"
+      destroy-on-close
       @ok="confirmApplied"
     >
       <div id="modal-mark-applied" class="rich-modal-shell">
@@ -432,23 +459,34 @@
         </div>
         <label class="rich-form-field rich-form-field--full">
           <span class="field-label-inline"><CalendarOutlined />投递时间 <span class="field-required">*</span></span>
-          <input id="applied-date" v-model="appliedForm.date" type="date" class="native-form-input" />
+          <DatePicker
+              id="applied-date"
+              v-model:value="appliedForm.date"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              style="width: 100%"
+            />
         </label>
         <label class="rich-form-field rich-form-field--full">
           <span class="field-label-inline"><SendOutlined />投递方式</span>
-          <select id="applied-method" v-model="appliedForm.method" class="native-form-select">
-            <option
-              v-for="option in applicationsMeta.filterOptions.applyMethods"
-              :key="`apply-method-${option.value}`"
-              :value="option.value"
+          <a-select
+              id="applied-method"
+              v-model:value="appliedForm.method"
+              placeholder="请选择投递方式"
+              style="width: 100%"
             >
-              {{ option.label }}
-            </option>
-          </select>
+              <a-select-option
+                v-for="option in applicationsMeta.filterOptions.applyMethods"
+                :key="`apply-method-${option.value}`"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </a-select-option>
+            </a-select>
         </label>
         <label class="rich-form-field rich-form-field--full">
           <span class="field-label-inline"><FileTextOutlined />备注（选填）</span>
-          <textarea v-model="appliedForm.note" class="native-form-input native-form-textarea" rows="2" placeholder="如：投递了哪个部门、使用了谁的内推等" />
+          <a-textarea v-model:value="appliedForm.note" :rows="2" placeholder="如：投递了哪个部门、使用了谁的内推等" />
         </label>
       </div>
     </a-modal>
@@ -457,7 +495,7 @@
 
 <script setup lang="ts">
 import { computed, h, onMounted, ref } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, DatePicker, Upload } from 'ant-design-vue'
 import {
   CalendarOutlined,
   CheckCircleOutlined,
@@ -815,11 +853,7 @@ function rowClassName(record: StudentApplicationRecord) {
   return ''
 }
 
-function stageDropdownChanged(record: StudentApplicationRecord, event: Event) {
-  const target = event.target as HTMLSelectElement
-  const nextStage = target.value
-  target.value = record.stage
-
+function stageDropdownChanged(record: StudentApplicationRecord, nextStage: string) {
   if (!nextStage || nextStage === record.stage) {
     return
   }
@@ -952,9 +986,8 @@ function defaultApplyStageForm(): ApplyStageForm {
   }
 }
 
-function handleUpdateHirevueUpload(event: Event) {
-  const target = event.target as HTMLInputElement
-  progressForm.value.inviteScreenshotName = target.files?.[0]?.name || ''
+function handleUpdateHirevueUpload(info: { file: { name?: string } }) {
+  progressForm.value.inviteScreenshotName = info.file.name || ''
 }
 
 function renderModalTitle(Icon: any, text: string) {

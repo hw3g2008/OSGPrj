@@ -38,87 +38,63 @@
         </div>
 
         <div id="step-1" class="step-content" :class="{ active: currentStep === 1 }">
-          <form @submit.prevent="handleSendCode">
+          <a-form @finish="handleSendCode">
             <div class="form-group">
               <label class="form-label" for="forgot-email">邮箱地址</label>
-              <input
-                id="forgot-email"
-                v-model="step1Form.email"
-                :class="['form-input', { error: Boolean(emailError) }]"
-                type="email"
+              <a-input
+                v-model:value="step1Form.email"
                 placeholder="请输入注册邮箱"
                 autocomplete="email"
-                @input="emailError = ''"
-              >
+              ></a-input>
               <p class="field-error" :class="{ show: Boolean(emailError) }">{{ emailError }}</p>
             </div>
-            <button id="send-btn" type="submit" class="login-btn" :disabled="sendingCode">
+            <a-button id="send-btn" type="primary" class="login-btn" :loading="sendingCode" html-type="submit">
               {{ sendingCode ? '发送中...' : '发送验证码' }}
-            </button>
-          </form>
+            </a-button>
+          </a-form>
         </div>
 
         <div id="step-2" class="step-content" :class="{ active: currentStep === 2 }">
           <p class="masked-email">
             验证码已发送至 <strong>{{ maskedEmail }}</strong>
           </p>
-          <form @submit.prevent="handleVerifyCode">
+          <a-form @finish="handleVerifyCode">
             <div class="form-group">
               <label class="form-label" for="fp-code">验证码</label>
               <div class="input-row">
-                <input
-                  id="fp-code"
-                  v-model="step2Form.code"
-                  :class="['form-input', { error: Boolean(codeError) }]"
-                  type="text"
+                <a-input
+                  v-model:value="step2Form.code"
+                  :maxlength="6"
                   placeholder="请输入6位验证码"
-                  maxlength="6"
-                  @input="codeError = ''"
-                >
-                <button
+                ></a-input>
+                <a-button
                   id="fp-resend-btn"
-                  type="button"
+                  type="default"
                   class="btn-code"
                   :disabled="resendMeta.disabled || sendingCode"
                   @click="handleResendCode"
                 >
                   {{ resendMeta.label }}
-                </button>
+                </a-button>
               </div>
               <p class="field-error" :class="{ show: Boolean(codeError) }">{{ codeError }}</p>
             </div>
-            <button id="verify-btn" type="submit" class="login-btn" :disabled="verifying">
+            <a-button id="verify-btn" type="primary" class="login-btn" :loading="verifying" html-type="submit">
               {{ verifying ? '验证中...' : '验证' }}
-            </button>
+            </a-button>
             <p class="countdown-text">{{ countdownText }}</p>
-          </form>
+          </a-form>
         </div>
 
         <div id="step-3" class="step-content" :class="{ active: currentStep === 3 }">
-          <form @submit.prevent="handleResetPassword">
+          <a-form @finish="handleResetPassword">
             <div class="form-group">
               <label class="form-label" for="new-password">新密码</label>
-              <div class="pwd-wrapper">
-                <input
-                  id="new-password"
-                  v-model="step3Form.newPassword"
-                  class="form-input"
-                  :type="showNewPassword ? 'text' : 'password'"
+              <a-input-password
+                  v-model:value="step3Form.newPassword"
                   placeholder="请输入新密码"
                   autocomplete="new-password"
-                >
-                <button
-                  type="button"
-                  class="pwd-toggle"
-                  @click="showNewPassword = !showNewPassword"
-                >
-                  <i
-                    class="mdi"
-                    :class="showNewPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                    aria-hidden="true"
-                  ></i>
-                </button>
-              </div>
+                ></a-input-password>
               <div class="password-strength">
                 <div class="strength-bar">
                   <div class="strength-fill" :class="passwordStrength.className"></div>
@@ -129,35 +105,19 @@
 
             <div class="form-group">
               <label class="form-label" for="confirm-password">确认密码</label>
-              <div class="pwd-wrapper">
-                <input
-                  id="confirm-password"
-                  v-model="step3Form.confirmPassword"
-                  :class="['form-input', { error: Boolean(confirmError) }]"
-                  :type="showConfirmPassword ? 'text' : 'password'"
+              <a-input-password
+                  v-model:value="step3Form.confirmPassword"
+                  :class="{ error: Boolean(confirmError) }"
                   placeholder="请再次输入新密码"
                   autocomplete="new-password"
-                  @input="confirmError = ''"
-                >
-                <button
-                  type="button"
-                  class="pwd-toggle"
-                  @click="showConfirmPassword = !showConfirmPassword"
-                >
-                  <i
-                    class="mdi"
-                    :class="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                    aria-hidden="true"
-                  ></i>
-                </button>
-              </div>
+                ></a-input-password>
               <p class="field-error" :class="{ show: Boolean(confirmError) }">{{ confirmError }}</p>
             </div>
 
-            <button id="reset-btn" type="submit" class="login-btn" :disabled="resetting">
+            <a-button id="reset-btn" type="primary" class="login-btn" :loading="resetting" html-type="submit">
               {{ resetting ? '重置中...' : '重置密码' }}
-            </button>
-          </form>
+            </a-button>
+          </a-form>
         </div>
 
         <div id="step-4" class="step-content success-content" :class="{ active: currentStep === 4 }">
@@ -170,7 +130,7 @@
         </div>
 
         <div class="copyright">
-          备案号 <a href="https://beian.miit.gov.cn/" target="_blank">冀ICP备17000879号-4</a>
+          备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">冀ICP备17000879号-4</a>
         </div>
       </div>
     </div>
@@ -200,8 +160,6 @@ const countdown = ref(60)
 const emailError = ref('')
 const codeError = ref('')
 const confirmError = ref('')
-const showNewPassword = ref(false)
-const showConfirmPassword = ref(false)
 const resetToken = ref('')
 
 let countdownTimer: ReturnType<typeof setInterval> | null = null
@@ -422,6 +380,7 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 360px;
   padding: 40px;
+  box-sizing: border-box;
 }
 
 .back-link {
@@ -567,47 +526,16 @@ onBeforeUnmount(() => {
 .input-row {
   display: flex;
   gap: 12px;
-}
 
-.input-row .form-input {
-  flex: 1;
-}
-
-.btn-code {
-  padding: 14px 18px;
-  background: var(--bg);
-  color: var(--primary);
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover:not(:disabled) {
-    border-color: var(--primary);
+  :deep(.ant-input) {
+    flex: 1;
   }
 
-  &:disabled {
-    color: var(--muted);
-    cursor: not-allowed;
+  :deep(.btn-code) {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border-radius: 8px;
   }
-}
-
-.pwd-wrapper {
-  position: relative;
-}
-
-.pwd-toggle {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 18px;
 }
 
 .field-error {
@@ -623,25 +551,25 @@ onBeforeUnmount(() => {
 
 .login-btn {
   width: 100%;
-  padding: 16px;
   background: var(--primary-gradient);
   color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(115, 153, 198, 0.4);
   margin-top: 8px;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
+    filter: brightness(1.05);
   }
 
   &:disabled {
     background: var(--muted);
     cursor: not-allowed;
     transform: none;
+    filter: none;
   }
 }
 

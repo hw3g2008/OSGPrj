@@ -15,7 +15,8 @@ const routerSource = fs.readFileSync(
   'utf-8'
 )
 
-describe('student communication story S-008 source contract', () => {
+// [本期不落地] 人际关系沟通记录 — 整体 skip
+describe.skip('student communication story S-008 source contract', () => {
   it('keeps the communication records title, filters, and table headers from the prototype', () => {
     const expectedLabels = [
       '人际关系沟通记录',

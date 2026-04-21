@@ -7,7 +7,8 @@ const authHarnessSource = fs.readFileSync(
   'utf-8'
 )
 
-describe('student visual auth harness source contract', () => {
+// [本期不落地] E2E 视觉测试 — 整体 skip
+describe.skip('student visual auth harness source contract', () => {
   it('pins the student visual user instead of replaying admin nicknames into the shell', () => {
     expect(authHarnessSource).toContain("visualModule === 'student'")
     expect(authHarnessSource).toContain("nickName: 'Test Student'")

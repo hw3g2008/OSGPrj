@@ -131,123 +131,102 @@
 
     </OsgPageContainer>
 
-    <div
-      v-if="practiceModalOpen && currentPracticeModal"
-      class="practice-dialog-shell"
-      @click.self="closePracticeModal"
+    <a-modal
+      v-model:open="practiceModalOpen"
+      :title="practiceModalTitle"
+      :width="560"
+      :footer="null"
+      @cancel="closePracticeModal"
     >
-      <section
-        class="practice-dialog"
-        :class="`practice-dialog--${currentPracticeModal}`"
-        role="dialog"
-        :aria-label="practiceModalTitle"
-        aria-modal="true"
-      >
-        <header class="practice-dialog__header" :class="`practice-dialog__header--${currentPracticeModal}`">
-          <div class="practice-dialog__title-group">
-            <span class="practice-dialog__title-icon">
-              <i :class="['mdi', practiceDialogConfig.icon]" aria-hidden="true"></i>
-            </span>
-            <div>
-              <h2>{{ practiceModalTitle }}</h2>
-              <p>{{ practiceDialogConfig.subtitle }}</p>
-            </div>
-          </div>
-          <button type="button" class="practice-dialog__close" @click="closePracticeModal">×</button>
-        </header>
-
-        <div class="practice-dialog__body">
-          <div class="practice-dialog__summary-card">
-            <div class="practice-dialog__summary-badge" :style="{ background: selectedPracticeCard?.gradient }">
-              {{ selectedPracticeCard?.badge }}
-            </div>
-            <div class="practice-dialog__summary-copy">
-              <strong>{{ selectedPracticeCard?.title }}</strong>
-              <p>{{ selectedPracticeCard?.description }}</p>
-            </div>
-          </div>
-
-          <div
-            class="modal-note"
-            :class="`modal-note--${practiceDialogConfig.noteTone}`"
-          >
-            <strong>{{ practiceDialogConfig.noteTitle }}</strong>
-            <p>{{ practiceDialogConfig.noteText }}</p>
-          </div>
-
-          <div v-if="currentPracticeModal === 'mock'" class="modal-stack">
-            <section class="practice-dialog__section">
-              <div class="practice-dialog__section-label">申请信息</div>
-              <a-form layout="vertical">
-                <a-form-item label="你为什么要做模拟面试？">
-                  <a-textarea
-                    v-model:value="practiceForm.reason"
-                    :rows="3"
-                    placeholder="请描述您申请模拟面试的原因，例如：即将参加某公司面试、希望提升面试技巧等..."
-                  />
-                </a-form-item>
-                <a-form-item label="需要几位导师？">
-                  <a-select v-model:value="practiceForm.mentorCount" placeholder="请选择">
-                    <a-select-option
-                      v-for="option in mockPracticeMeta.practiceForm.mentorCountOptions"
-                      :key="`mentor-count-${option.value}`"
-                      :value="option.value"
-                    >
-                      {{ option.label }}
-                    </a-select-option>
-                  </a-select>
-                </a-form-item>
-              </a-form>
-            </section>
-
-            <section class="practice-dialog__section">
-              <div class="practice-dialog__section-label">导师偏好</div>
-              <a-form layout="vertical">
-                <a-form-item label="意向导师 (选填)">
-                  <a-input
-                    v-model:value="practiceForm.preferredMentor"
-                    placeholder="如有特别想要的导师，请填写导师姓名"
-                  />
-                </a-form-item>
-                <a-form-item label="排除导师 (选填)" class="practice-dialog__form-item-last">
-                  <a-input
-                    v-model:value="practiceForm.excludedMentor"
-                    placeholder="如有不希望分配的导师，请填写导师姓名"
-                  />
-                </a-form-item>
-              </a-form>
-            </section>
-          </div>
-
-          <div v-else class="modal-stack">
-            <section class="practice-dialog__section">
-              <div class="practice-dialog__section-label">补充说明</div>
-              <a-form layout="vertical">
-                <a-form-item label="备注说明 (选填)" class="practice-dialog__form-item-last">
-                  <a-textarea
-                    v-model:value="practiceForm.remark"
-                    :rows="4"
-                    placeholder="如有特殊需求或说明，请在此填写..."
-                  />
-                </a-form-item>
-              </a-form>
-            </section>
-          </div>
+      <div class="practice-dialog__summary-card">
+        <div class="practice-dialog__summary-badge" :style="{ background: selectedPracticeCard?.gradient }">
+          {{ selectedPracticeCard?.badge }}
         </div>
+        <div class="practice-dialog__summary-copy">
+          <strong>{{ selectedPracticeCard?.title }}</strong>
+          <p>{{ selectedPracticeCard?.description }}</p>
+        </div>
+      </div>
 
-        <footer class="practice-dialog__footer">
-          <a-button @click="closePracticeModal">取消</a-button>
-          <a-button
-            type="primary"
-            :class="practiceDialogConfig.actionClass"
-            :loading="practiceSubmitting"
-            @click="submitPracticeRequest"
-          >
-            提交申请
-          </a-button>
-        </footer>
-      </section>
-    </div>
+      <div
+        class="modal-note"
+        :class="`modal-note--${practiceDialogConfig.noteTone}`"
+        style="margin: 16px 0"
+      >
+        <strong>{{ practiceDialogConfig.noteTitle }}</strong>
+        <p>{{ practiceDialogConfig.noteText }}</p>
+      </div>
+
+      <div v-if="currentPracticeModal === 'mock'" class="modal-stack">
+        <section class="practice-dialog__section">
+          <div class="practice-dialog__section-label">申请信息</div>
+          <a-form layout="vertical">
+            <a-form-item label="你为什么要做模拟面试？">
+              <a-textarea
+                v-model:value="practiceForm.reason"
+                :rows="3"
+                placeholder="请描述您申请模拟面试的原因，例如：即将参加某公司面试、希望提升面试技巧等..."
+              />
+            </a-form-item>
+            <a-form-item label="需要几位导师？">
+              <a-select v-model:value="practiceForm.mentorCount" placeholder="请选择">
+                <a-select-option
+                  v-for="option in mockPracticeMeta.practiceForm.mentorCountOptions"
+                  :key="`mentor-count-${option.value}`"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-form>
+        </section>
+
+        <section class="practice-dialog__section">
+          <div class="practice-dialog__section-label">导师偏好</div>
+          <a-form layout="vertical">
+            <a-form-item label="意向导师 (选填)">
+              <a-input
+                v-model:value="practiceForm.preferredMentor"
+                placeholder="如有特别想要的导师，请填写导师姓名"
+              />
+            </a-form-item>
+            <a-form-item label="排除导师 (选填)" class="practice-dialog__form-item-last">
+              <a-input
+                v-model:value="practiceForm.excludedMentor"
+                placeholder="如有不希望分配的导师，请填写导师姓名"
+              />
+            </a-form-item>
+          </a-form>
+        </section>
+      </div>
+
+      <div v-else class="modal-stack">
+        <section class="practice-dialog__section">
+          <div class="practice-dialog__section-label">补充说明</div>
+          <a-form layout="vertical">
+            <a-form-item label="备注说明 (选填)" class="practice-dialog__form-item-last">
+              <a-textarea
+                v-model:value="practiceForm.remark"
+                :rows="4"
+                placeholder="如有特殊需求或说明，请在此填写..."
+              />
+            </a-form-item>
+          </a-form>
+        </section>
+      </div>
+
+      <div class="practice-dialog__footer" style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px">
+        <a-button @click="closePracticeModal">取消</a-button>
+        <a-button
+          type="primary"
+          :loading="practiceSubmitting"
+          @click="submitPracticeRequest"
+        >
+          提交申请
+        </a-button>
+      </div>
+    </a-modal>
 
   </div>
 </template>
@@ -677,114 +656,6 @@ onMounted(() => {
     gap: 16px;
   }
 
-  .practice-dialog-shell {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: rgba(15, 23, 42, 0.48);
-    backdrop-filter: blur(12px);
-  }
-
-  .practice-dialog {
-    --modal-header-from: #7399c6;
-    --modal-header-to: #9bb8d9;
-    --modal-card-bg: #e8f0f8;
-    --modal-card-border: #e2e8f0;
-    --modal-accent: #5a7ba3;
-    --modal-accent-soft: #eff5fb;
-    --modal-accent-strong: #7399c6;
-    width: min(620px, 100%);
-    max-height: calc(100vh - 48px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: 24px;
-    border: 1px solid var(--modal-card-border);
-    background: #fff;
-    box-shadow: 0 20px 56px rgba(115, 153, 198, 0.22);
-  }
-
-  .practice-dialog--networking,
-  .practice-dialog--midterm {
-    width: min(540px, 100%);
-  }
-
-  .practice-dialog__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 22px 26px;
-    color: #fff;
-    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
-    border-bottom: 0;
-  }
-
-  .practice-dialog__title-group {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-
-    h2 {
-      margin: 0 0 4px;
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    p {
-      margin: 0;
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 13px;
-    }
-  }
-
-  .practice-dialog__title-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.18);
-    color: #fff;
-    font-size: 22px;
-    flex-shrink: 0;
-  }
-
-  .practice-dialog__close {
-    width: 36px;
-    height: 36px;
-    border: 0;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.18);
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 22px;
-    line-height: 1;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.28);
-      transform: translateY(-1px);
-    }
-  }
-
-  .practice-dialog__body {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-    padding: 26px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
-  }
-
   .practice-dialog__summary-card {
     display: flex;
     align-items: center;
@@ -878,34 +749,6 @@ onMounted(() => {
     color: var(--modal-accent);
   }
 
-  .practice-dialog__footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 18px 26px 20px;
-    background: #f8fafc;
-    border-top: 1px solid rgba(148, 163, 184, 0.18);
-  }
-
-  .practice-dialog__submit {
-    min-width: 124px;
-    border: none;
-    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
-  }
-
-  .practice-dialog__submit--blue {
-    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
-  }
-
-  .practice-dialog__submit--amber {
-    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
-  }
-
-  .practice-dialog__submit--violet {
-    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to));
-  }
-
 }
 
 @media (max-width: 1200px) {
@@ -918,18 +761,6 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .mock-practice-page {
-    .practice-dialog-shell {
-      padding: 16px;
-    }
-
-    .practice-dialog__header,
-    .practice-dialog__body,
-    .practice-dialog__footer {
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-
-    .practice-dialog__title-group,
     .practice-dialog__summary-card {
       align-items: flex-start;
     }

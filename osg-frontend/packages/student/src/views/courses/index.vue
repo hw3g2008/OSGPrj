@@ -28,9 +28,9 @@
             {{ classRecordsMeta.reminderBanner.suffixText }}
           </div>
         </div>
-        <button type="button" class="btn btn-sm reminder-banner__action" @click="goToEvaluate">
+        <a-button size="small" class="reminder-banner__action" @click="goToEvaluate">
           {{ classRecordsMeta.reminderBanner.ctaLabel }}
-        </button>
+        </a-button>
       </div>
 
       <div class="courses-tabs" role="tablist" aria-label="Class record tabs">
@@ -104,291 +104,245 @@
               {{ option.label }}
             </a-select-option>
           </a-select>
-            <button type="button" class="btn btn-outline btn-sm filters-row__reset" @click="resetFilters">
-              <i class="mdi mdi-filter-variant" aria-hidden="true"></i>
+            <a-button size="small" class="filters-row__reset" @click="resetFilters">
+              <template #icon><FilterOutlined /></template>
               {{ classRecordsMeta.filters.resetLabel }}
-            </button>
+            </a-button>
           </div>
         </div>
         <div class="card-body card-body--table">
-          <table class="courses-table">
-            <thead>
-              <tr>
-                <th>{{ classRecordsMeta.tableHeaders.recordId }}</th>
-                <th>{{ classRecordsMeta.tableHeaders.coachingDetail }}</th>
-                <th>{{ classRecordsMeta.tableHeaders.courseContent }}</th>
-                <th>{{ classRecordsMeta.tableHeaders.mentor }}</th>
-                <th>{{ classRecordsMeta.tableHeaders.classDate }}</th>
-                <th>{{ classRecordsMeta.tableHeaders.duration }}</th>
-                <th>{{ classRecordsMeta.tableHeaders.rating }}</th>
-                <th>{{ classRecordsMeta.tableHeaders.action }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="record in visibleCourses"
-                :key="record.recordId"
-                :class="{ 'courses-table__row--new': record.isNew }"
-              >
-                <td>{{ record.recordId }}</td>
-                <td>
-                  <div class="coaching-cell">
-                    <span class="record-tag" :class="mapTagTone(record.coachingTagColor)">
-                      {{ record.coachingType }}
-                    </span>
-                    <span>{{ record.coachingDetail }}</span>
-                  </div>
-                </td>
-                <td>
-                  <span class="record-tag" :class="mapTagTone(record.contentTagColor)">
-                    {{ record.courseContent }}
+          <a-table
+            :data-source="visibleCourses"
+            :columns="courseColumns"
+            :pagination="{ pageSize: 10 }"
+            row-key="recordId"
+            :scroll="{ x: 1080 }"
+            size="middle"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'coachingDetail'">
+                <div class="coaching-cell">
+                  <span class="record-tag" :class="mapTagTone(record.coachingTagColor)">
+                    {{ record.coachingType }}
                   </span>
-                </td>
-                <td>
-                  <div class="mentor-cell">
-                    <div>{{ record.mentor }}</div>
-                    <span>{{ record.mentorRole }}</span>
-                  </div>
-                </td>
-                <td>
-                  <div class="date-cell">
-                    <strong>{{ record.classDate }}</strong>
-                    <span
-                      v-if="record.isNew"
-                      class="record-tag record-tag--success record-tag--tiny"
-                    >
-                      {{ record.newBadgeLabel }}
-                    </span>
-                  </div>
-                </td>
-                <td>{{ record.duration }}</td>
-                <td>
-                  <span class="record-tag" :class="mapTagTone(record.ratingColor)">
-                    {{ record.ratingLabel }}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    class="action-button btn btn-sm"
-                    :class="{
-                      'action-button--primary': record.actionKind === 'rate',
-                      'action-button--text': record.actionKind !== 'rate'
-                    }"
-                    @click="openCourseAction(record)"
+                  <span>{{ record.coachingDetail }}</span>
+                </div>
+              </template>
+
+              <template v-else-if="column.dataIndex === 'courseContent'">
+                <span class="record-tag" :class="mapTagTone(record.contentTagColor)">
+                  {{ record.courseContent }}
+                </span>
+              </template>
+
+              <template v-else-if="column.dataIndex === 'mentor'">
+                <div class="mentor-cell">
+                  <div>{{ record.mentor }}</div>
+                  <span>{{ record.mentorRole }}</span>
+                </div>
+              </template>
+
+              <template v-else-if="column.dataIndex === 'classDate'">
+                <div class="date-cell">
+                  <strong>{{ record.classDate }}</strong>
+                  <span
+                    v-if="record.isNew"
+                    class="record-tag record-tag--success record-tag--tiny"
                   >
-                    {{ record.actionLabel }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    {{ record.newBadgeLabel }}
+                  </span>
+                </div>
+              </template>
+
+              <template v-else-if="column.dataIndex === 'ratingLabel'">
+                <span class="record-tag" :class="mapTagTone(record.ratingColor)">
+                  {{ record.ratingLabel }}
+                </span>
+              </template>
+
+              <template v-else-if="column.key === 'action'">
+                <a-button
+                  size="small"
+                  :type="record.actionKind === 'rate' ? 'primary' : 'default'"
+                  @click="openCourseAction(record)"
+                >
+                  {{ record.actionLabel }}
+                </a-button>
+              </template>
+            </template>
+          </a-table>
         </div>
       </div>
     </OsgPageContainer>
 
-    <div v-if="detailVisible && currentCourse" class="overlay-shell">
-      <section
-        class="overlay-card"
-        :class="`overlay-card--${detailDialogMeta.tone}`"
-        role="dialog"
-        :aria-label="currentCourse.detailTitle"
-        aria-modal="true"
-      >
-        <header class="overlay-card__header" :class="`overlay-card__header--${detailDialogMeta.tone}`">
-          <div class="overlay-card__title-group">
-            <span class="overlay-card__title-icon">
-              <i :class="['mdi', detailDialogMeta.icon]" aria-hidden="true"></i>
-            </span>
-            <div>
-              <h2>{{ currentCourse.detailTitle }}</h2>
-              <p>{{ detailDialogMeta.subtitle }}</p>
-            </div>
-          </div>
-          <button type="button" class="overlay-card__close" @click="detailVisible = false">×</button>
-        </header>
-        <div class="overlay-card__body detail-stack">
-          <div class="detail-summary-card">
-            <div class="detail-summary-card__avatar">{{ mentorInitials(currentCourse.mentor) }}</div>
-            <div class="detail-summary-card__copy">
-              <strong>{{ currentCourse.mentor }}</strong>
-              <span>{{ currentCourse.mentorRole }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
-              <div class="detail-summary-card__tags">
-                <span class="record-tag" :class="mapTagTone(currentCourse.coachingTagColor)">
-                  {{ currentCourse.coachingType }}
-                </span>
-                <span class="record-tag" :class="mapTagTone(currentCourse.contentTagColor)">
-                  {{ currentCourse.courseContent }}
-                </span>
-              </div>
-            </div>
-            <a-tag :color="currentCourse.ratingColor">{{ currentCourse.ratingLabel }}</a-tag>
-          </div>
-          <section class="detail-section-card">
-            <div class="detail-section-card__title">
-              <i class="mdi mdi-information-outline" aria-hidden="true"></i>
-              课程信息
-            </div>
-            <div class="detail-info-list">
-              <div class="detail-info-row">
-                <span>{{ classRecordsMeta.detailDialog.fields.recordId }}</span>
-                <strong>{{ currentCourse.recordId }}</strong>
-              </div>
-              <div class="detail-info-row">
-                <span>{{ classRecordsMeta.detailDialog.fields.coachingDetail }}</span>
-                <strong>{{ currentCourse.coachingDetail }}</strong>
-              </div>
-              <div class="detail-info-row">
-                <span>{{ classRecordsMeta.detailDialog.fields.courseContent }}</span>
-                <strong>{{ currentCourse.courseContent }}</strong>
-              </div>
-              <div class="detail-info-row">
-                <span>{{ classRecordsMeta.detailDialog.fields.mentor }}</span>
-                <strong>{{ currentCourse.mentor }} · {{ currentCourse.mentorRole }}</strong>
-              </div>
-              <div class="detail-info-row">
-                <span>{{ classRecordsMeta.detailDialog.fields.classDate }}</span>
-                <strong>{{ currentCourse.classDate }}</strong>
-              </div>
-              <div class="detail-info-row">
-                <span>{{ classRecordsMeta.detailDialog.fields.duration }}</span>
-                <strong>{{ currentCourse.duration }}</strong>
-              </div>
-              <div class="detail-info-row">
-                <span>当前评价</span>
-                <strong>{{ detailRatingSummary }}</strong>
-              </div>
-            </div>
-          </section>
-          <section class="detail-section-card detail-section-card--feedback">
-            <div class="detail-section-card__title">
-              <i class="mdi mdi-comment-text-outline" aria-hidden="true"></i>
-              课程反馈
-            </div>
-            <div class="detail-feedback-card">
-              {{ currentCourse.ratingFeedback || '当前还没有填写详细反馈，完成反馈后会在这里显示。' }}
-            </div>
-            <div
-              v-if="currentCourse.ratingTags"
-              class="detail-feedback-tags"
-            >
-              <span
-                v-for="tag in currentCourse.ratingTags.split(',').filter(Boolean)"
-                :key="tag"
-                class="detail-feedback-tag"
-              >
-                {{ tag }}
+    <a-modal
+      v-model:open="detailVisible"
+      :title="currentCourse?.detailTitle || ''"
+      :width="620"
+      :footer="null"
+      @cancel="detailVisible = false"
+    >
+      <div class="detail-stack">
+        <div v-if="currentCourse" class="detail-summary-card">
+          <div class="detail-summary-card__avatar">{{ mentorInitials(currentCourse.mentor) }}</div>
+          <div class="detail-summary-card__copy">
+            <strong>{{ currentCourse.mentor }}</strong>
+            <span>{{ currentCourse.mentorRole }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
+            <div class="detail-summary-card__tags">
+              <span class="record-tag" :class="mapTagTone(currentCourse.coachingTagColor)">
+                {{ currentCourse.coachingType }}
+              </span>
+              <span class="record-tag" :class="mapTagTone(currentCourse.contentTagColor)">
+                {{ currentCourse.courseContent }}
               </span>
             </div>
-          </section>
+          </div>
+          <a-tag :color="currentCourse.ratingColor">{{ currentCourse.ratingLabel }}</a-tag>
         </div>
-        <footer class="overlay-card__footer">
-          <a-button @click="detailVisible = false">{{ classRecordsMeta.detailDialog.closeLabel }}</a-button>
-          <a-button
-            type="primary"
-            :class="`overlay-card__action overlay-card__action--${detailDialogMeta.tone}`"
-            @click="handleDetailConfirm"
+        <section class="detail-section-card">
+          <div class="detail-section-card__title">
+            <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+            课程信息
+          </div>
+          <div class="detail-info-list">
+            <div class="detail-info-row">
+              <span>{{ classRecordsMeta.detailDialog.fields.recordId }}</span>
+              <strong>{{ currentCourse?.recordId }}</strong>
+            </div>
+            <div class="detail-info-row">
+              <span>{{ classRecordsMeta.detailDialog.fields.coachingDetail }}</span>
+              <strong>{{ currentCourse?.coachingDetail }}</strong>
+            </div>
+            <div class="detail-info-row">
+              <span>{{ classRecordsMeta.detailDialog.fields.courseContent }}</span>
+              <strong>{{ currentCourse?.courseContent }}</strong>
+            </div>
+            <div class="detail-info-row">
+              <span>{{ classRecordsMeta.detailDialog.fields.mentor }}</span>
+              <strong>{{ currentCourse?.mentor }} · {{ currentCourse?.mentorRole }}</strong>
+            </div>
+            <div class="detail-info-row">
+              <span>{{ classRecordsMeta.detailDialog.fields.classDate }}</span>
+              <strong>{{ currentCourse?.classDate }}</strong>
+            </div>
+            <div class="detail-info-row">
+              <span>{{ classRecordsMeta.detailDialog.fields.duration }}</span>
+              <strong>{{ currentCourse?.duration }}</strong>
+            </div>
+            <div class="detail-info-row">
+              <span>当前评价</span>
+              <strong>{{ detailRatingSummary }}</strong>
+            </div>
+          </div>
+        </section>
+        <section class="detail-section-card detail-section-card--feedback">
+          <div class="detail-section-card__title">
+            <i class="mdi mdi-comment-text-outline" aria-hidden="true"></i>
+            课程反馈
+          </div>
+          <div class="detail-feedback-card">
+            {{ currentCourse?.ratingFeedback || '当前还没有填写详细反馈，完成反馈后会在这里显示。' }}
+          </div>
+          <div
+            v-if="currentCourse?.ratingTags"
+            class="detail-feedback-tags"
           >
-            {{ classRecordsMeta.detailDialog.confirmLabel }}
-          </a-button>
-        </footer>
-      </section>
-    </div>
-
-    <div
-      v-if="rateVisible && currentCourse"
-      id="modal-student-rate"
-      class="overlay-shell"
-    >
-      <section
-        class="overlay-card overlay-card--amber overlay-card--compact"
-        role="dialog"
-        :aria-label="classRecordsMeta.ratingDialog.title"
-        aria-modal="true"
-      >
-        <header class="overlay-card__header overlay-card__header--amber">
-          <div class="overlay-card__title-group">
-            <span class="overlay-card__title-icon">
-              <i class="mdi mdi-star-outline" aria-hidden="true"></i>
+            <span
+              v-for="tag in currentCourse.ratingTags.split(',').filter(Boolean)"
+              :key="tag"
+              class="detail-feedback-tag"
+            >
+              {{ tag }}
             </span>
-            <div>
-              <h2>{{ classRecordsMeta.ratingDialog.title }}</h2>
-              <p>请根据本次课程体验补充评分与反馈</p>
+          </div>
+        </section>
+      </div>
+      <div class="profile-modal__footer" style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px">
+        <a-button @click="detailVisible = false">{{ classRecordsMeta.detailDialog.closeLabel }}</a-button>
+        <a-button type="primary" @click="handleDetailConfirm">
+          {{ classRecordsMeta.detailDialog.confirmLabel }}
+        </a-button>
+      </div>
+    </a-modal>
+
+    <a-modal
+      v-model:open="rateVisible"
+      :title="classRecordsMeta.ratingDialog.title"
+      :width="550"
+      :footer="null"
+      @cancel="rateVisible = false"
+    >
+      <div class="rate-stack">
+        <div v-if="currentCourse" class="rate-course-card">
+          <div class="rate-course-card__avatar">{{ mentorInitials(currentCourse.mentor) }}</div>
+          <div class="rate-course-card__copy">
+            <strong>{{ currentCourse.mentor }}</strong>
+            <span>{{ currentCourse.mentorRole }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
+            <div class="rate-course-card__tags">
+              <span class="record-tag" :class="mapTagTone(currentCourse.coachingTagColor)">
+                {{ currentCourse.coachingType }}
+              </span>
+              <span class="record-tag" :class="mapTagTone(currentCourse.contentTagColor)">
+                {{ currentCourse.courseContent }}
+              </span>
             </div>
           </div>
-          <button type="button" class="overlay-card__close" @click="rateVisible = false">×</button>
-        </header>
-        <div class="overlay-card__body rate-stack">
-          <div class="rate-course-card">
-            <div class="rate-course-card__avatar">{{ mentorInitials(currentCourse.mentor) }}</div>
-            <div class="rate-course-card__copy">
-              <strong>{{ currentCourse.mentor }}</strong>
-              <span>{{ currentCourse.mentorRole }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
-              <div class="rate-course-card__tags">
-                <span class="record-tag" :class="mapTagTone(currentCourse.coachingTagColor)">
-                  {{ currentCourse.coachingType }}
-                </span>
-                <span class="record-tag" :class="mapTagTone(currentCourse.contentTagColor)">
-                  {{ currentCourse.courseContent }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <a-form layout="vertical">
-            <a-form-item :label="classRecordsMeta.ratingDialog.scoreLabel">
-              <div class="rating-button-row">
-                <button
-                  v-for="score in ratingButtons"
-                  :key="score"
-                  type="button"
-                  class="rating-star-button"
-                  :class="{ 'rating-star-button--active': rateForm.rating !== null && score <= rateForm.rating }"
-                  @click="setRating(score)"
-                >
-                  ⭐
-                </button>
-                <span id="rating-text" class="rating-text">{{ ratingText }}</span>
-              </div>
-            </a-form-item>
-            <a-form-item :label="classRecordsMeta.ratingDialog.tagLabel">
-              <div class="rating-tag-chip-list">
-                <button
-                  v-for="option in classRecordsMeta.ratingDialog.tagOptions"
-                  :key="option.value"
-                  type="button"
-                  class="rating-tag-chip"
-                  :class="{ 'rating-tag-chip--active': rateForm.tags.includes(option.value) }"
-                  @click="toggleRateTag(option.value)"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
-              <div class="rating-tag-chip-hint">
-                {{ rateForm.tags.length > 0 ? `已选择 ${rateForm.tags.length} 项标签` : classRecordsMeta.ratingDialog.tagPlaceholder }}
-              </div>
-            </a-form-item>
-            <a-form-item :label="classRecordsMeta.ratingDialog.feedbackLabel">
-              <a-textarea
-                v-model:value="rateForm.feedback"
-                :rows="4"
-                :placeholder="classRecordsMeta.ratingDialog.feedbackPlaceholder"
-              />
-            </a-form-item>
-          </a-form>
         </div>
-        <footer class="overlay-card__footer">
-          <a-button @click="rateVisible = false">{{ classRecordsMeta.ratingDialog.cancelLabel }}</a-button>
-          <a-button type="primary" class="overlay-card__action overlay-card__action--amber" @click="submitRate">
-            {{ classRecordsMeta.ratingDialog.submitLabel }}
-          </a-button>
-        </footer>
-      </section>
-    </div>
+        <a-form layout="vertical">
+          <a-form-item :label="classRecordsMeta.ratingDialog.scoreLabel">
+            <div class="rating-button-row">
+              <button
+                v-for="score in ratingButtons"
+                :key="score"
+                type="button"
+                class="rating-star-button"
+                :class="{ 'rating-star-button--active': rateForm.rating !== null && score <= rateForm.rating }"
+                @click="setRating(score)"
+              >
+                ⭐
+              </button>
+              <span id="rating-text" class="rating-text">{{ ratingText }}</span>
+            </div>
+          </a-form-item>
+          <a-form-item :label="classRecordsMeta.ratingDialog.tagLabel">
+            <div class="rating-tag-chip-list">
+              <button
+                v-for="option in classRecordsMeta.ratingDialog.tagOptions"
+                :key="option.value"
+                type="button"
+                class="rating-tag-chip"
+                :class="{ 'rating-tag-chip--active': rateForm.tags.includes(option.value) }"
+                @click="toggleRateTag(option.value)"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+            <div class="rating-tag-chip-hint">
+              {{ rateForm.tags.length > 0 ? `已选择 ${rateForm.tags.length} 项标签` : classRecordsMeta.ratingDialog.tagPlaceholder }}
+            </div>
+          </a-form-item>
+          <a-form-item :label="classRecordsMeta.ratingDialog.feedbackLabel">
+            <a-textarea
+              v-model:value="rateForm.feedback"
+              :rows="4"
+              :placeholder="classRecordsMeta.ratingDialog.feedbackPlaceholder"
+            />
+          </a-form-item>
+        </a-form>
+      </div>
+      <div class="profile-modal__footer" style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px">
+        <a-button @click="rateVisible = false">{{ classRecordsMeta.ratingDialog.cancelLabel }}</a-button>
+        <a-button type="primary" @click="submitRate">
+          {{ classRecordsMeta.ratingDialog.submitLabel }}
+        </a-button>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { FilterOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { OsgPageContainer } from '@osg/shared/components'
 import {
@@ -398,6 +352,17 @@ import {
   type StudentClassRecord,
   type StudentClassRecordsMeta
 } from '@osg/shared/api'
+
+const courseColumns = computed(() => [
+  { title: classRecordsMeta.value.tableHeaders.recordId, dataIndex: 'recordId', width: 80 },
+  { title: classRecordsMeta.value.tableHeaders.coachingDetail, dataIndex: 'coachingDetail', key: 'coachingDetail', width: 160 },
+  { title: classRecordsMeta.value.tableHeaders.courseContent, dataIndex: 'courseContent', width: 160 },
+  { title: classRecordsMeta.value.tableHeaders.mentor, dataIndex: 'mentor', width: 120 },
+  { title: classRecordsMeta.value.tableHeaders.classDate, dataIndex: 'classDate', width: 140 },
+  { title: classRecordsMeta.value.tableHeaders.duration, dataIndex: 'duration', width: 80 },
+  { title: classRecordsMeta.value.tableHeaders.rating, dataIndex: 'ratingLabel', width: 100 },
+  { title: classRecordsMeta.value.tableHeaders.action, key: 'action', width: 180, fixed: 'right' }
+])
 
 const activeTab = ref<'all' | 'pending' | 'evaluated'>('all')
 const detailVisible = ref(false)
@@ -434,39 +399,6 @@ const ratingText = computed(() => {
   }
 
   return `${rateForm.value.rating}分 - ${ratingDescriptions[rateForm.value.rating]}`
-})
-
-const detailDialogMeta = computed(() => {
-  const tone = mapDialogTone(currentCourse.value?.contentTagColor)
-  if (tone === 'emerald') {
-    return {
-      tone,
-      icon: 'mdi-check-circle-outline',
-      subtitle: '查看课程记录、反馈与当前评价状态'
-    }
-  }
-
-  if (tone === 'violet') {
-    return {
-      tone,
-      icon: 'mdi-account-group-outline',
-      subtitle: '查看课程记录、反馈与当前评价状态'
-    }
-  }
-
-  if (tone === 'amber') {
-    return {
-      tone,
-      icon: 'mdi-school-outline',
-      subtitle: '查看课程记录、反馈与当前评价状态'
-    }
-  }
-
-  return {
-    tone,
-    icon: 'mdi-book-open-page-variant-outline',
-    subtitle: '查看课程记录、反馈与当前评价状态'
-  }
 })
 
 const detailRatingSummary = computed(() => {
@@ -619,21 +551,6 @@ function mapTagTone(color?: string) {
       return 'record-tag--purple'
     default:
       return 'record-tag--default'
-  }
-}
-
-function mapDialogTone(color?: string) {
-  switch ((color || '').toLowerCase()) {
-    case 'green':
-    case 'success':
-      return 'emerald'
-    case 'orange':
-    case 'warning':
-      return 'amber'
-    case 'purple':
-      return 'violet'
-    default:
-      return 'blue'
   }
 }
 
@@ -1092,146 +1009,6 @@ onMounted(() => {
     background: #e8f0f8;
   }
 
-  .overlay-shell {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    padding: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(15, 23, 42, 0.48);
-    backdrop-filter: blur(12px);
-  }
-
-  .overlay-card {
-    --modal-accent: #5a7ba3;
-    --modal-accent-soft: #e8f0f8;
-    --modal-accent-strong: #7399c6;
-    --modal-accent-highlight: #9bb8d9;
-    width: min(640px, 100%);
-    max-height: calc(100vh - 48px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: 24px;
-    border: 1px solid #e2e8f0;
-    background: #fff;
-    box-shadow: 0 20px 56px rgba(115, 153, 198, 0.22);
-  }
-
-  .overlay-card--compact {
-    width: min(550px, 100%);
-  }
-
-  .overlay-card--amber,
-  .overlay-card--emerald,
-  .overlay-card--violet {
-    --modal-accent: #5a7ba3;
-    --modal-accent-soft: #e8f0f8;
-    --modal-accent-strong: #7399c6;
-    --modal-accent-highlight: #9bb8d9;
-  }
-
-  .overlay-card__header {
-    padding: 22px 26px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
-    color: #fff;
-    border-bottom: 0;
-
-    h2 {
-      margin: 0 0 4px;
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
-    }
-  }
-
-  .overlay-card__title-group {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-
-    p {
-      margin: 0;
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 13px;
-    }
-  }
-
-  .overlay-card__title-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.18);
-    color: #fff;
-    font-size: 20px;
-    flex-shrink: 0;
-  }
-
-  .overlay-card__close {
-    width: 36px;
-    height: 36px;
-    border: 0;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.18);
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 24px;
-    line-height: 1;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.28);
-      transform: translateY(-1px);
-    }
-  }
-
-  .overlay-card__body {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-    padding: 26px;
-    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
-  }
-
-  .overlay-card__footer {
-    padding: 18px 26px 20px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    background: #f8fafc;
-    border-top: 1px solid rgba(148, 163, 184, 0.18);
-  }
-
-  .overlay-card__action {
-    border: none;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
-  }
-
-  .overlay-card__action--blue {
-    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
-  }
-
-  .overlay-card__action--emerald {
-    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
-  }
-
-  .overlay-card__action--violet {
-    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
-  }
-
-  .overlay-card__action--amber {
-    background: linear-gradient(135deg, var(--modal-accent-strong), var(--modal-accent-highlight));
-  }
-
   .detail-summary-card,
   .rate-course-card {
     padding: 18px;
@@ -1441,25 +1218,10 @@ onMounted(() => {
       width: 100%;
     }
 
-    .overlay-shell {
-      padding: 16px;
-    }
-
-    .overlay-card__body,
-    .overlay-card__footer,
-    .overlay-card__header {
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-
     .detail-summary-card,
     .rate-course-card,
     .detail-info-row {
       align-items: flex-start;
-      flex-direction: column;
-    }
-
-    .overlay-card__footer {
       flex-direction: column;
     }
   }

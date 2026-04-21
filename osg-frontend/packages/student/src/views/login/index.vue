@@ -95,7 +95,7 @@
         </form>
 
         <div class="copyright">
-          备案号 <a href="https://beian.miit.gov.cn/" target="_blank">冀ICP备17000879号-4</a>
+          备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">冀ICP备17000879号-4</a>
         </div>
       </div>
     </div>

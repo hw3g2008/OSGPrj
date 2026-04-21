@@ -66,33 +66,10 @@
       </div>
     </a-card>
 
-    <div class="content-tab-strip" role="tablist" aria-label="岗位内容切换">
-      <button
-        id="positions-tab-all"
-        type="button"
-        role="tab"
-        class="content-tab-trigger"
-        :class="{ 'content-tab-trigger--active': activeTab === 'all' }"
-        :aria-selected="activeTab === 'all'"
-        @click="activeTab = 'all'"
-      >
-        <BankOutlined />
-        <span>全部岗位</span>
-      </button>
-      <button
-        id="positions-tab-favorites"
-        type="button"
-        role="tab"
-        class="content-tab-trigger"
-        :class="{ 'content-tab-trigger--active': activeTab === 'favorites' }"
-        :aria-selected="activeTab === 'favorites'"
-        @click="activeTab = 'favorites'"
-      >
-        <StarOutlined />
-        <span>我的收藏</span>
-        <span class="content-tab-badge">{{ favoritePositions.length }}</span>
-      </button>
-    </div>
+    <a-segmented v-model:value="activeTab" :options="[
+      { label: '全部岗位', value: 'all' },
+      { label: () => h('span', ['我的收藏', favoritePositions.length > 0 ? h('span', { class: 'content-tab-badge' }, ` ${favoritePositions.length}`) : null]), value: 'favorites' }
+    ]" block class="content-tab-strip" />
 
     <div
       v-if="activeTab === 'all'"
@@ -107,7 +84,7 @@
             class="industry-section"
             :class="`industry-${industry.tone}`"
           >
-            <button class="industry-header" type="button" @click="toggleIndustry(industry.key)">
+            <div class="industry-header" @click="toggleIndustry(industry.key)">
               <div class="industry-info">
                 <RightOutlined :class="['industry-chevron', { 'rotate-icon': activeCategories.includes(industry.key) }]" />
                 <i class="mdi industry-icon" :class="industry.icon" aria-hidden="true" />
@@ -115,7 +92,7 @@
                 <a-tag color="blue">{{ industry.companyCount }} 家公司</a-tag>
                 <a-tag color="green">{{ industry.positionCount }} 个岗位</a-tag>
               </div>
-            </button>
+            </div>
 
             <div v-if="activeCategories.includes(industry.key)" class="industry-content">
               <div
@@ -138,6 +115,7 @@
                       class="company-career-link"
                       :href="company.careerUrl"
                       target="_blank"
+                      rel="noopener noreferrer"
                       @click.stop
                     >
                       <template #icon><ExportOutlined /></template>
@@ -157,7 +135,7 @@
                   >
                     <template #bodyCell="{ column, record }">
                       <template v-if="column.key === 'title'">
-                        <a :href="record.url" target="_blank" class="job-link">
+                        <a :href="record.url" target="_blank" rel="noopener noreferrer" class="job-link">
                           {{ record.title }}
                           <ExportOutlined />
                         </a>
@@ -225,7 +203,7 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'title'">
-              <a :href="record.url" target="_blank" class="job-link">
+              <a :href="record.url" target="_blank" rel="noopener noreferrer" class="job-link">
                 {{ record.title }}
                 <ExportOutlined />
               </a>
@@ -293,6 +271,7 @@
       ok-text="添加岗位"
       cancel-text="取消"
       :width="640"
+      destroy-on-close
       @ok="submitManualPosition"
     >
       <div class="manual-add-tip">
@@ -321,12 +300,11 @@
           </div>
           <div class="manual-field manual-field--span2">
             <label class="manual-label">招聘周期 <span class="req">*</span></label>
-            <div class="cycle-checkboxes">
-              <label v-for="cycle in RECRUITMENT_CYCLES" :key="cycle" class="cycle-checkbox">
-                <input v-model="manualForm.recruitmentCycles" type="checkbox" :value="cycle" />
+            <a-checkbox-group v-model:value="manualForm.recruitmentCycles" class="cycle-checkboxes">
+              <a-checkbox v-for="cycle in RECRUITMENT_CYCLES" :key="cycle" :value="cycle" class="cycle-checkbox">
                 {{ cycle }}
-              </label>
-            </div>
+              </a-checkbox>
+            </a-checkbox-group>
           </div>
           <div class="manual-field">
             <label class="manual-label">项目时间 <span class="req">*</span></label>
@@ -379,16 +357,10 @@
 
       <div class="manual-section">
         <div class="manual-section-title">辅导需求</div>
-        <div class="manual-coaching-options">
-          <label class="coaching-radio" :class="{ 'coaching-radio--selected': !manualForm.needCoaching }">
-            <input v-model="manualForm.needCoaching" type="radio" :value="false" />
-            暂不需要辅导，仅添加到追踪列表
-          </label>
-          <label class="coaching-radio" :class="{ 'coaching-radio--selected': manualForm.needCoaching }">
-            <input v-model="manualForm.needCoaching" type="radio" :value="true" />
-            需要辅导，同时申请导师辅导
-          </label>
-        </div>
+        <a-radio-group v-model:value="manualForm.needCoaching" class="manual-coaching-options">
+          <a-radio :value="false" class="coaching-radio">暂不需要辅导，仅添加到追踪列表</a-radio>
+          <a-radio :value="true" class="coaching-radio">需要辅导，同时申请导师辅导</a-radio>
+        </a-radio-group>
 
         <div v-if="manualForm.needCoaching" class="manual-coaching-fields">
           <div class="manual-field manual-field--full">
@@ -408,10 +380,10 @@
             <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
             <div class="manual-field manual-field--full">
               <label class="manual-label">请选择类型 <span class="req">*</span></label>
-              <div class="inline-radios">
-                <label><input v-model="manualForm.hirevueType" type="radio" value="vi" /> VI (Video Interview)</label>
-                <label><input v-model="manualForm.hirevueType" type="radio" value="ot" /> OT (Online Test)</label>
-              </div>
+              <a-radio-group v-model:value="manualForm.hirevueType" class="inline-radios">
+                <a-radio value="vi">VI (Video Interview)</a-radio>
+                <a-radio value="ot">OT (Online Test)</a-radio>
+              </a-radio-group>
             </div>
             <div v-if="manualForm.hirevueType === 'vi'" class="manual-field manual-field--full">
               <label class="manual-label">VI 链接 <span class="req">*</span></label>
@@ -440,20 +412,24 @@
             </div>
             <div class="manual-field manual-field--full">
               <label class="manual-label">上传邀请邮件截图 <span class="req">*</span></label>
-              <input id="manual-hirevue-upload" type="file" accept="image/*" style="display:none" @change="handleManualHirevueUpload" />
-              <label class="upload-dropzone upload-dropzone--compact" for="manual-hirevue-upload">
+              <a-upload
+                accept="image/*"
+                :before-upload="handleManualHirevueUpload"
+                :show-upload-list="false"
+                class="upload-dropzone upload-dropzone--compact"
+              >
                 <CloudUploadOutlined class="upload-dropzone__icon" />
                 <span class="upload-dropzone__title">点击上传截图</span>
                 <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
                 <span v-if="manualForm.inviteScreenshotName" class="upload-dropzone__file">{{ manualForm.inviteScreenshotName }}</span>
-              </label>
+              </a-upload>
             </div>
             <div class="manual-field manual-field--full">
               <label class="manual-label">是否需要导师协助？ <span class="req">*</span></label>
-              <div class="inline-radios">
-                <label><input v-model="manualForm.mentorHelp" type="radio" value="yes" /> 是，需要导师协助</label>
-                <label><input v-model="manualForm.mentorHelp" type="radio" value="no" /> 否，仅需题库权限</label>
-              </div>
+              <a-radio-group v-model:value="manualForm.mentorHelp" class="inline-radios">
+                <a-radio value="yes">是，需要导师协助</a-radio>
+                <a-radio value="no">否，仅需题库权限</a-radio>
+              </a-radio-group>
             </div>
           </div>
 
@@ -496,6 +472,7 @@
       title="记录岗位进度"
       ok-text="保存进度"
       cancel-text="取消"
+      destroy-on-close
       @ok="submitProgressUpdate"
     >
       <div v-if="selectedPosition" class="modal-job-card progress-card">
@@ -521,6 +498,7 @@
       title="标记已投递"
       ok-text="确认投递"
       cancel-text="取消"
+      destroy-on-close
       @ok="submitAppliedMark"
     >
       <div v-if="selectedPosition" class="modal-job-card applied-card">
@@ -549,6 +527,7 @@
       title="申请面试辅导"
       ok-text="提交申请"
       cancel-text="取消"
+      destroy-on-close
       @ok="submitCoachingApplication"
     >
       <div v-if="selectedPosition" class="modal-job-card coaching-card">
@@ -579,7 +558,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, h, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -598,7 +577,6 @@ import {
 import { useIndustryMeta } from '@osg/shared'
 import {
   AppstoreOutlined,
-  BankOutlined,
   CheckCircleFilled,
   CheckOutlined,
   CloudUploadOutlined,
@@ -838,9 +816,9 @@ function onManualRegionChange() {
   manualForm.value.city = undefined
 }
 
-function handleManualHirevueUpload(event: Event) {
-  const input = event.target as HTMLInputElement
-  manualForm.value.inviteScreenshotName = input.files?.[0]?.name ?? ''
+function handleManualHirevueUpload(file: File) {
+  manualForm.value.inviteScreenshotName = file.name ?? ''
+  return false
 }
 
 const categoryOptionsByValue = computed(() => optionMap(filterOptions.value.categories))
@@ -1065,7 +1043,7 @@ function openProgressModal(record: PositionRecord) {
 function openAppliedModal(record: PositionRecord) {
   setSelectedPosition(record)
   appliedForm.value = {
-    date: appliedForm.value.date || '2026-03-15',
+    date: appliedForm.value.date || '',
     method: '官网投递',
     note: ''
   }

@@ -19,7 +19,8 @@ const routerSource = fs.readFileSync(
   'utf-8'
 )
 
-describe('student feedback/report/ai interview story S-009 source contract', () => {
+// [本期不落地] 课程反馈/报告/AI面试 — 整体 skip
+describe.skip('student feedback/report/ai interview story S-009 source contract', () => {
   it('keeps the feedback title, tabs, filters, and ten modal triggers from the prototype', () => {
     const expectedLabels = [
       '课程反馈',

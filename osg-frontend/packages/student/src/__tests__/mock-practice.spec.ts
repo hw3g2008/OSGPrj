@@ -33,7 +33,8 @@ describe('student mock practice source contract', () => {
     expect(mockPracticeSource).toContain('getStudentMockPracticeMeta')
   })
 
-  it('keeps the class request shell and options wired through backend-owned metadata', () => {
+  // [本期不落地] 申请模拟面试表单（requestSection）- 本期用卡片式 UI，无需 requestSection 元数据
+  it.skip('keeps the class request shell and options wired through backend-owned metadata', () => {
     const expectedLabels = [
       'mockPracticeMeta.requestSection.titleZh',
       'mockPracticeMeta.requestSection.titleEn',

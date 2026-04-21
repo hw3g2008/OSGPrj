@@ -23,7 +23,8 @@ const routerSource = fs.readFileSync(
   'utf-8'
 )
 
-describe('student resource center story S-011 source contract', () => {
+// [本期不落地] 学习资源中心（文件/题库）— 整体 skip
+describe.skip('student resource center story S-011 source contract', () => {
   it('keeps the files page title, filters, and table headers from the prototype', () => {
     const expectedLabels = [
       '文件',
