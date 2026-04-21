@@ -20,11 +20,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.OsgClassRecord;
+import com.ruoyi.system.domain.OsgClassRecordAttachment;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.domain.OsgStudentPosition;
+import com.ruoyi.system.mapper.OsgClassRecordAttachmentMapper;
 import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
+import com.ruoyi.system.mapper.OsgStudentPositionMapper;
 import com.ruoyi.system.service.IOsgClassRecordService;
 
 @Service
@@ -42,6 +46,12 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     @Autowired
     private OsgStudentMapper studentMapper;
+
+    @Autowired
+    private OsgClassRecordAttachmentMapper attachmentMapper;
+
+    @Autowired
+    private OsgStudentPositionMapper studentPositionMapper;
 
     @Override
     public List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord record)
@@ -627,6 +637,35 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         if (hourlyRates != null)
         {
             payload.put("courseFee", resolveCourseFee(row, hourlyRates).toPlainString());
+        }
+        List<OsgClassRecordAttachment> attachments = attachmentMapper.selectByRecordId(row.getRecordId());
+        if (attachments != null && !attachments.isEmpty())
+        {
+            List<Map<String, Object>> attList = new ArrayList<>();
+            for (OsgClassRecordAttachment att : attachments)
+            {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("attachmentId", att.getAttachmentId());
+                m.put("fileName", att.getFileName());
+                m.put("filePath", att.getFilePath());
+                m.put("fileSize", att.getFileSize());
+                m.put("fileType", att.getFileType());
+                m.put("attachmentTag", att.getAttachmentTag());
+                attList.add(m);
+            }
+            payload.put("attachments", attList);
+        }
+        else
+        {
+            payload.put("attachments", Collections.emptyList());
+        }
+        if (row.getStudentPositionId() != null)
+        {
+            OsgStudentPosition pos = studentPositionMapper.selectStudentPositionById(row.getStudentPositionId());
+            if (pos != null && pos.getCompanyName() != null)
+            {
+                payload.put("coachingCompany", pos.getCompanyName());
+            }
         }
         return payload;
     }

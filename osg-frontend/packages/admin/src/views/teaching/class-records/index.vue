@@ -13,11 +13,11 @@
       <template #message><strong>课程记录流程</strong></template>
       <template #description>
         <a-space wrap>
-          <a-tag>① 学员申请岗位/模拟应聘</a-tag>
+          <a-tag class="flow-tag--purple">① 学员申请岗位/模拟应聘</a-tag>
           <span>→</span>
-          <a-tag>② 班主任分配导师</a-tag>
+          <a-tag class="flow-tag--purple">② 班主任分配导师</a-tag>
           <span>→</span>
-          <a-tag>③ 导师上课并申报记录</a-tag>
+          <a-tag class="flow-tag--purple">③ 导师上课并申报记录</a-tag>
           <span>→</span>
           <a-tag color="orange">④ 后台审核</a-tag>
           <span>→</span>
@@ -402,5 +402,11 @@ onMounted(() => {
 <style scoped>
 :deep(.row-pending) {
   background: #fef3c7;
+}
+
+.flow-tag--purple {
+  color: #7c3aed !important;
+  background: #f5f3ff !important;
+  border-color: #ddd6fe !important;
 }
 </style>

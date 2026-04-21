@@ -36,7 +36,7 @@
           </div>
           <div class="class-record-review-modal__cell">
             <span class="class-record-review-modal__label">辅导内容</span>
-            <strong>{{ normalizeCourseType(detail?.courseType) }}</strong>
+            <strong>{{ normalizeCourseType(detail?.courseType) }}<span v-if="detail?.coachingCompany" class="class-record-review-modal__company"> {{ detail.coachingCompany }}</span></strong>
           </div>
           <div class="class-record-review-modal__cell">
             <span class="class-record-review-modal__label">课程内容</span>
@@ -64,6 +64,20 @@
       <section v-if="detail?.feedbackContent" class="class-record-review-modal__section" data-field-name="课程反馈">
         <div class="class-record-review-modal__section-head"><span>课程反馈</span></div>
         <div class="class-record-review-modal__feedback">{{ detail.feedbackContent }}</div>
+      </section>
+
+      <section class="class-record-review-modal__section" data-field-name="附件">
+        <div class="class-record-review-modal__section-head"><span>附件</span></div>
+        <div v-if="detail?.attachments && detail.attachments.length > 0" class="class-record-review-modal__attachments">
+          <div v-for="att in detail.attachments" :key="att.attachmentId" class="class-record-review-modal__att-card" @click="handleDownload(att.filePath)">
+            <span class="mdi mdi-file-pdf-box class-record-review-modal__att-icon" aria-hidden="true"></span>
+            <div class="class-record-review-modal__att-info">
+              <span class="class-record-review-modal__att-name">{{ att.fileName || '未命名文件' }}</span>
+              <span class="class-record-review-modal__att-size">{{ formatFileSize(att.fileSize) }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-else class="class-record-review-modal__empty">暂无附件</div>
       </section>
 
       <section
@@ -301,13 +315,26 @@ const formatDateTime = (value?: string | null) => {
   if (!value) return '--'
   return value.replace('T', ' ').slice(0, 16)
 }
+
+const formatFileSize = (bytes?: number | null) => {
+  if (!bytes) return ''
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+const handleDownload = (filePath?: string) => {
+  if (!filePath) return
+  const url = `/common/download/resource?resource=${encodeURIComponent(filePath)}`
+  window.open(url, '_blank')
+}
 </script>
 
 <style scoped lang="scss">
 .class-record-review-modal__body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .class-record-review-modal__title-sub {
@@ -370,8 +397,7 @@ const formatDateTime = (value?: string | null) => {
   word-break: break-word;
 }
 
-.class-record-review-modal__cell,
-.class-record-review-modal__section {
+.class-record-review-modal__cell {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #fff;
@@ -410,7 +436,8 @@ const formatDateTime = (value?: string | null) => {
 }
 
 .class-record-review-modal__section {
-  padding: 14px;
+  padding: 16px 0 0 0;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -422,6 +449,7 @@ const formatDateTime = (value?: string | null) => {
   justify-content: space-between;
   gap: 12px;
   color: #334155;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -438,6 +466,62 @@ const formatDateTime = (value?: string | null) => {
   height: 1px;
   opacity: 0.01;
   pointer-events: none;
+}
+
+.class-record-review-modal__company {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.class-record-review-modal__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.class-record-review-modal__att-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.class-record-review-modal__att-card:hover {
+  border-color: #3b82f6;
+}
+
+.class-record-review-modal__att-icon {
+  font-size: 28px;
+  color: #ef4444;
+}
+
+.class-record-review-modal__att-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.class-record-review-modal__att-name {
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.class-record-review-modal__att-size {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.class-record-review-modal__empty {
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 @media (max-width: 640px) {

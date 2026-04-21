@@ -48,6 +48,15 @@ export interface ReportRow {
   overdueFlag?: boolean
   pendingReviewCount?: number
   courseFee?: string | null
+  coachingCompany?: string | null
+  attachments?: Array<{
+    attachmentId: number
+    fileName: string
+    filePath: string
+    fileSize: number
+    fileType: string
+    attachmentTag: string
+  }>
 }
 
 export interface ReviewPayload {

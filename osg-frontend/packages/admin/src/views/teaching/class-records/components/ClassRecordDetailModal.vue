@@ -36,7 +36,7 @@
           </div>
           <div class="class-record-detail-modal__cell">
             <span class="class-record-detail-modal__label">辅导内容</span>
-            <strong>{{ normalizeCourseType(detail?.courseType) }}</strong>
+            <strong>{{ normalizeCourseType(detail?.courseType) }}<span v-if="detail?.coachingCompany" class="class-record-detail-modal__company"> {{ detail.coachingCompany }}</span></strong>
           </div>
           <div class="class-record-detail-modal__cell">
             <span class="class-record-detail-modal__label">课程内容</span>
@@ -64,6 +64,20 @@
       <section v-if="detail?.feedbackContent" class="class-record-detail-modal__section">
         <span class="class-record-detail-modal__section-title">课程反馈</span>
         <div class="class-record-detail-modal__content">{{ detail.feedbackContent }}</div>
+      </section>
+
+      <section class="class-record-detail-modal__section">
+        <span class="class-record-detail-modal__section-title">附件</span>
+        <div v-if="detail?.attachments && detail.attachments.length > 0" class="class-record-detail-modal__attachments">
+          <div v-for="att in detail.attachments" :key="att.attachmentId" class="class-record-detail-modal__att-card" @click="handleDownload(att.filePath)">
+            <span class="mdi mdi-file-pdf-box class-record-detail-modal__att-icon" aria-hidden="true"></span>
+            <div class="class-record-detail-modal__att-info">
+              <span class="class-record-detail-modal__att-name">{{ att.fileName || '未命名文件' }}</span>
+              <span class="class-record-detail-modal__att-size">{{ formatFileSize(att.fileSize) }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-else class="class-record-detail-modal__empty">暂无附件</div>
       </section>
 
       <section v-if="detail?.rate" class="class-record-detail-modal__section">
@@ -159,13 +173,26 @@ const formatDateTime = (value?: string | null) => {
   if (!value) return '--'
   return value.replace('T', ' ').slice(0, 16)
 }
+
+const formatFileSize = (bytes?: number | null) => {
+  if (!bytes) return ''
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+const handleDownload = (filePath?: string) => {
+  if (!filePath) return
+  const url = `/common/download/resource?resource=${encodeURIComponent(filePath)}`
+  window.open(url, '_blank')
+}
 </script>
 
 <style scoped lang="scss">
 .class-record-detail-modal__body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .class-record-detail-modal__title-sub {
@@ -222,8 +249,9 @@ const formatDateTime = (value?: string | null) => {
 
 .class-record-detail-modal__section-title {
   color: #334155;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .class-record-detail-modal__review-result {
@@ -233,14 +261,10 @@ const formatDateTime = (value?: string | null) => {
   flex-wrap: wrap;
 }
 
-.class-record-detail-modal__cell,
-.class-record-detail-modal__section {
+.class-record-detail-modal__cell {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #fff;
-}
-
-.class-record-detail-modal__cell {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -251,7 +275,8 @@ const formatDateTime = (value?: string | null) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 16px;
+  padding: 16px 0 0 0;
+  border-top: 1px solid #f1f5f9;
 }
 
 .class-record-detail-modal__label {
@@ -265,6 +290,62 @@ const formatDateTime = (value?: string | null) => {
   font-size: 14px;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+.class-record-detail-modal__company {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.class-record-detail-modal__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.class-record-detail-modal__att-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.class-record-detail-modal__att-card:hover {
+  border-color: #3b82f6;
+}
+
+.class-record-detail-modal__att-icon {
+  font-size: 28px;
+  color: #ef4444;
+}
+
+.class-record-detail-modal__att-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.class-record-detail-modal__att-name {
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.class-record-detail-modal__att-size {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.class-record-detail-modal__empty {
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 @media (max-width: 640px) {

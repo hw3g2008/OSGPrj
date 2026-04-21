@@ -38,6 +38,7 @@ public class OsgClassRecord extends BaseEntity
     private Integer pendingReviewCount;
     private Date classDateStart;
     private Date classDateEnd;
+    private Long studentPositionId;
 
     public Long getRecordId()
     {
@@ -329,6 +330,16 @@ public class OsgClassRecord extends BaseEntity
         this.classDateEnd = classDateEnd;
     }
 
+    public Long getStudentPositionId()
+    {
+        return studentPositionId;
+    }
+
+    public void setStudentPositionId(Long studentPositionId)
+    {
+        this.studentPositionId = studentPositionId;
+    }
+
     @Override
     public String toString()
     {
@@ -354,6 +365,7 @@ public class OsgClassRecord extends BaseEntity
             .append("overtimeFlag", getOvertimeFlag())
             .append("overdueFlag", getOverdueFlag())
             .append("remark", getRemark())
+            .append("studentPositionId", getStudentPositionId())
             .toString();
     }
 }
