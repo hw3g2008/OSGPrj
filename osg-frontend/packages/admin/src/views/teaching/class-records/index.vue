@@ -135,7 +135,7 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space>
-              <a-button type="primary" size="small" data-surface-trigger="modal-class-record-review" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordReview(record)">课程审核</a-button>
+              <a-button v-if="record.status === 'pending'" type="primary" size="small" data-surface-trigger="modal-class-record-review" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordReview(record)">课程审核</a-button>
               <a-button v-if="record.status !== 'pending'" type="link" size="small" data-surface-trigger="modal-class-record-detail" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordDetail(record)">详情</a-button>
             </a-space>
           </template>

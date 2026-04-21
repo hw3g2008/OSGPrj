@@ -305,10 +305,11 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             return Collections.emptyList();
         }
         List<Map<String, Object>> result = new ArrayList<>(rows.size());
+        Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
         int pendingReviewCount = countByStatus(selectRows(keyword, courseType, courseSource, null), STATUS_PENDING);
         for (OsgClassRecord row : rows)
         {
-            result.add(toPayload(row, pendingReviewCount));
+            result.add(toPayload(row, pendingReviewCount, hourlyRates));
         }
         return result;
     }
@@ -316,7 +317,9 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     @Override
     public Map<String, Object> selectReportDetail(Long recordId)
     {
-        return toPayload(requireRecord(recordId), null);
+        OsgClassRecord record = requireRecord(recordId);
+        Map<Long, BigDecimal> hourlyRates = loadHourlyRates(List.of(record));
+        return toPayload(record, null, hourlyRates);
     }
 
     @Override
@@ -384,7 +387,8 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         {
             throw new ServiceException("课时审核更新失败");
         }
-        return toPayload(record, null);
+        Map<Long, BigDecimal> hourlyRates = loadHourlyRates(List.of(record));
+        return toPayload(record, null, hourlyRates);
     }
 
     private String resolveReviewRemark(String targetStatus, Map<String, Object> payload)
@@ -593,7 +597,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         return payload;
     }
 
-    private Map<String, Object> toPayload(OsgClassRecord row, Integer fallbackPendingReviewCount)
+    private Map<String, Object> toPayload(OsgClassRecord row, Integer fallbackPendingReviewCount, Map<Long, BigDecimal> hourlyRates)
     {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("recordId", row.getRecordId());
@@ -620,6 +624,10 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         payload.put("overtimeFlag", isOvertime(row));
         payload.put("overdueFlag", isOverdue(row));
         payload.put("pendingReviewCount", fallbackPendingReviewCount != null ? fallbackPendingReviewCount : row.getPendingReviewCount());
+        if (hourlyRates != null)
+        {
+            payload.put("courseFee", resolveCourseFee(row, hourlyRates).toPlainString());
+        }
         return payload;
     }
 

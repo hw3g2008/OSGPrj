@@ -47,6 +47,7 @@ export interface ReportRow {
   overtimeFlag?: boolean
   overdueFlag?: boolean
   pendingReviewCount?: number
+  courseFee?: string | null
 }
 
 export interface ReviewPayload {

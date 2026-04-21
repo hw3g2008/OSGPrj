@@ -21,50 +21,73 @@
 
     <template v-else>
       <section class="class-record-detail-modal__summary">
-        <div class="class-record-detail-modal__cell">
-          <span class="class-record-detail-modal__label">学员</span>
-          <strong>{{ detail?.studentName || '--' }}</strong>
+        <div class="class-record-detail-modal__status-row">
+          <a-tag :color="statusTagColor(detail?.status)">{{ formatStatus(detail?.status) }}</a-tag>
+          <span class="class-record-detail-modal__record-id">#{{ detail?.recordId || '--' }}</span>
         </div>
-        <div class="class-record-detail-modal__cell">
-          <span class="class-record-detail-modal__label">导师</span>
-          <strong>{{ detail?.mentorName || '--' }}</strong>
-        </div>
-        <div class="class-record-detail-modal__cell">
-          <span class="class-record-detail-modal__label">课程类型</span>
-          <strong>{{ detail?.courseType || '--' }}</strong>
-        </div>
-        <div class="class-record-detail-modal__cell">
-          <span class="class-record-detail-modal__label">课程内容</span>
-          <strong>{{ detail?.courseSource || '--' }}</strong>
-        </div>
-        <div class="class-record-detail-modal__cell">
-          <span class="class-record-detail-modal__label">上课日期</span>
-          <strong>{{ formatDate(detail?.classDate) }}</strong>
-        </div>
-        <div class="class-record-detail-modal__cell">
-          <span class="class-record-detail-modal__label">状态</span>
-          <strong>{{ formatStatus(detail?.status) }}</strong>
+        <div class="class-record-detail-modal__grid">
+          <div class="class-record-detail-modal__cell">
+            <span class="class-record-detail-modal__label">学员</span>
+            <strong>{{ detail?.studentName || '--' }} <span v-if="detail?.studentId" class="class-record-detail-modal__sub-text">({{ detail.studentId }})</span></strong>
+          </div>
+          <div class="class-record-detail-modal__cell">
+            <span class="class-record-detail-modal__label">申报人</span>
+            <strong>{{ detail?.mentorName || '--' }} <a-tag v-if="detail?.courseSource" size="small" color="blue">{{ normalizeSourceLabel(detail.courseSource) }}</a-tag></strong>
+          </div>
+          <div class="class-record-detail-modal__cell">
+            <span class="class-record-detail-modal__label">辅导内容</span>
+            <strong>{{ normalizeCourseType(detail?.courseType) }}</strong>
+          </div>
+          <div class="class-record-detail-modal__cell">
+            <span class="class-record-detail-modal__label">课程内容</span>
+            <strong><a-tag v-if="detail?.classStatus" color="processing">{{ detail.classStatus }}</a-tag><span v-else>--</span></strong>
+          </div>
+          <div class="class-record-detail-modal__cell">
+            <span class="class-record-detail-modal__label">上课日期</span>
+            <strong>{{ formatDate(detail?.classDate) }}</strong>
+          </div>
+          <div class="class-record-detail-modal__cell">
+            <span class="class-record-detail-modal__label">时长</span>
+            <strong>{{ detail?.durationHours ? detail.durationHours + '小时' : '--' }}</strong>
+          </div>
+          <div class="class-record-detail-modal__cell">
+            <span class="class-record-detail-modal__label">课时费</span>
+            <strong class="class-record-detail-modal__fee">{{ formatFee(detail?.courseFee) }}</strong>
+          </div>
+          <div class="class-record-detail-modal__cell">
+            <span class="class-record-detail-modal__label">提交时间</span>
+            <strong>{{ formatDateTime(detail?.submittedAt) }}</strong>
+          </div>
         </div>
       </section>
 
-      <section class="class-record-detail-modal__section">
-        <span class="class-record-detail-modal__label">课时费</span>
-        <strong>{{ formatMoney(detail?.rate) }}</strong>
+      <section v-if="detail?.feedbackContent" class="class-record-detail-modal__section">
+        <span class="class-record-detail-modal__section-title">课程反馈</span>
+        <div class="class-record-detail-modal__content">{{ detail.feedbackContent }}</div>
+      </section>
+
+      <section v-if="detail?.rate" class="class-record-detail-modal__section">
+        <span class="class-record-detail-modal__section-title">学员评价</span>
+        <div>⭐ {{ detail.rate }}</div>
+      </section>
+
+      <section v-if="detail?.topics" class="class-record-detail-modal__section">
+        <span class="class-record-detail-modal__section-title">Topics</span>
+        <div class="class-record-detail-modal__content">{{ detail.topics }}</div>
+      </section>
+
+      <section v-if="detail?.comments" class="class-record-detail-modal__section">
+        <span class="class-record-detail-modal__section-title">Comments</span>
+        <div class="class-record-detail-modal__content">{{ detail.comments }}</div>
       </section>
 
       <section class="class-record-detail-modal__section">
-        <span class="class-record-detail-modal__label">Topics</span>
-        <div class="class-record-detail-modal__content">{{ detail?.topics || '--' }}</div>
-      </section>
-
-      <section class="class-record-detail-modal__section">
-        <span class="class-record-detail-modal__label">Comments</span>
-        <div class="class-record-detail-modal__content">{{ detail?.comments || '--' }}</div>
-      </section>
-
-      <section class="class-record-detail-modal__section">
-        <span class="class-record-detail-modal__label">审核备注</span>
-        <div class="class-record-detail-modal__content">{{ detail?.reviewRemark || '暂无审核备注' }}</div>
+        <span class="class-record-detail-modal__section-title">审核结果</span>
+        <div class="class-record-detail-modal__review-result">
+          <a-tag :color="statusTagColor(detail?.status)">{{ formatStatus(detail?.status) }}</a-tag>
+          <span v-if="detail?.reviewRemark" class="class-record-detail-modal__content">{{ detail.reviewRemark }}</span>
+          <span v-else style="color:#64748b">暂无审核备注</span>
+        </div>
       </section>
     </template>
 
@@ -104,9 +127,37 @@ const formatStatus = (value?: string | null) => {
   return '待审核'
 }
 
-const formatMoney = (value?: string | null) => {
+const statusTagColor = (value?: string | null) => {
+  if (value === 'approved') return 'success'
+  if (value === 'rejected') return 'error'
+  return 'warning'
+}
+
+const normalizeCourseType = (v?: string | null) => {
+  if (!v) return '--'
+  if (v.toLowerCase().includes('mock') || v === 'mock_practice') return '模拟应聘'
+  if (v.toLowerCase().includes('position') || v === 'position_coaching') return '岗位辅导'
+  return v
+}
+
+const normalizeSourceLabel = (v?: string | null) => {
+  if (!v) return '--'
+  if (v === 'mentor') return '导师'
+  if (v === 'headteacher') return '班主任'
+  if (v === 'assistant') return '助教'
+  return v
+}
+
+const formatFee = (v?: string | null) => {
+  if (!v) return '--'
+  const num = parseFloat(v)
+  if (isNaN(num)) return '--'
+  return `¥${num % 1 === 0 ? num.toFixed(0) : num.toFixed(1)}`
+}
+
+const formatDateTime = (value?: string | null) => {
   if (!value) return '--'
-  return value.startsWith('¥') ? value : `¥${value}`
+  return value.replace('T', ' ').slice(0, 16)
 }
 </script>
 
@@ -133,9 +184,53 @@ const formatMoney = (value?: string | null) => {
 }
 
 .class-record-detail-modal__summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+}
+
+.class-record-detail-modal__status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.class-record-detail-modal__record-id {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.class-record-detail-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.class-record-detail-modal__sub-text {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.class-record-detail-modal__fee {
+  color: #16a34a;
+}
+
+.class-record-detail-modal__section-title {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.class-record-detail-modal__review-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .class-record-detail-modal__cell,
@@ -172,9 +267,9 @@ const formatMoney = (value?: string | null) => {
   white-space: pre-wrap;
 }
 
-@media (max-width: 960px) {
-  .class-record-detail-modal__summary {
-    grid-template-columns: 1fr 1fr;
+@media (max-width: 640px) {
+  .class-record-detail-modal__grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
