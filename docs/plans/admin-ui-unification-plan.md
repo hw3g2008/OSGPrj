@@ -714,3 +714,129 @@ done
 12. **验收脚本分阶段执行** — Phase 1-4 只检查当批改过的文件，Phase 5 全量检查；避免未改的文件触发假红线
 13. **壳子迁移风险（10 个弹窗）** — 2 个 `<a-modal>` 弹窗迁移到 OverlaySurfaceModal 时，需要把 `<a-modal>` 的 `:open`/`@cancel`/`:confirm-loading` 等 prop 映射为 OverlaySurfaceModal 的 `:open`/`@cancel`/自定义 loading；8 个自建遮罩弹窗需要将整个自建 div 结构（backdrop + shell + header + body + footer）替换为 OverlaySurfaceModal 的 slot 结构，同时保留原有业务逻辑
 14. **自建遮罩弹窗的关闭逻辑** — 自建遮罩弹窗用的是 `@click` 直接 emit，迁移到 OverlaySurfaceModal 后需改为 `@cancel` 事件，且 Escape 键关闭逻辑自动由壳子接管
+
+---
+
+## 十一、数据/字典层标准（2026-04-18~19 追加）
+
+> 本章节是在 UI 层统一之后，基于岗位模块重构时沉淀出的数据/字典层规范。与前述 UI 层规范**共同构成** admin 端的完整标准。
+> 其他端在做对齐时应同时参考 UI 层（§一~§十）和本章节。
+
+### 11.1 字典单一真源原则
+
+**规则**：一个业务概念只允许存在一个字典，所有端前后端都消费同一个字典。
+
+| 业务概念 | 唯一字典 | 值示例 |
+|---|---|---|
+| 公司/岗位类别 | `osg_company_type` | `bulge_bracket` / `elite_boutique` / `middle_market` / `buyside` / `consulting` / `swe_pm` / `other_company`（7 项） |
+| 招聘周期 | `osg_recruit_cycle` | `Class of 2026` / `Class of 2027` / `Open` 等 |
+| 岗位分类 | `osg_student_position_category` | `summer` / `fulltime` / `offcycle` / `spring` / `events` |
+
+**反例**（本次已清理）：曾并存 `osg_position_industry`（老 4 项）+ `osg_student_position_industry`（老 4 项）+ `osg_company_type`（新 7 项）三个并列字典，造成各端混用。
+
+### 11.2 字典 seed 注入纪律
+
+**规则**：后端 service 不得向"非自身职责字典"注入 seed；字典的写入方必须唯一。
+
+**反例**（本次已删除）：`PositionServiceImpl`（学生端服务）的 `INDUSTRY_SEEDS` 在 `syncPositionReferenceData` 时向 admin 所属的 `osg_company_type` 注入老 4 项 seed，启动或学生端每次调用相关 API 都污染字典。
+
+**正例**（admin 现状）：
+- Admin 端字典管理 UI = `osg_company_type` 唯一写入方
+- 其他端的 service **只读**该字典，调用 `loadDictValueMap(...)` 读取，**不** upsert 回写
+
+### 11.3 后端 derive，不靠前端兜底
+
+**规则**：同一业务语义对应多个 DB 列（如 `industry` label + `company_type` value）时，**后端从字典 derive**，前端只提交 value。
+
+**反例**（本次已删除）：
+```ts
+// PositionFormModal.vue 旧代码
+const payload = {
+  companyType: form.companyType,
+  industry: form.companyType || 'Investment Bank',  // 前端写死老字典 label
+};
+```
+
+**正例**（admin 现状）：
+```ts
+// 前端只提交 value
+const payload = { companyType: form.companyType /* 其他字段 */ };
+```
+```java
+// 后端 OsgPositionServiceImpl.buildPosition
+SysDictData dict = findDict("osg_company_type", companyType);
+position.setCompanyType(companyType);
+position.setIndustry(dict != null ? dict.getDictLabel() : "");
+```
+
+### 11.4 审计字段规范
+
+**规则**：`create_by` / `update_by` / `create_time` / `update_time` 这类审计字段：
+
+- **列表展示**：需要时放在"操作"列之前
+- **新增时**：后端强制写入当前登录用户，不信任前端传值
+- **编辑时**：允许管理员改 `create_by`（业务可能需要修正历史数据的"添加人"）
+- **Mapper**：`updatePosition` 等 XML 必须支持 `create_by` 的更新分支，否则编辑不生效
+
+**admin 已落地**：岗位列表"添加人"列 + 编辑弹窗可改 + `OsgPositionMapper.xml` `updatePosition` 含 `<if test="createBy != null">create_by = #{createBy},</if>` 分支。
+
+### 11.5 Fallback 降级策略
+
+**规则**：DB 中的老 value 在新字典里找不到时，UI 不报错不白屏；后端 service 用字典的"默认/其他"项样式作为兜底。
+
+**admin 已落地**：`OsgPositionServiceImpl` 查字典未命中时使用 `other_company` 的 css_class / list_class 作为降级样式，不抛异常。
+
+### 11.6 可观测的字典约束（给验收用）
+
+| 约束 | 验收命令 |
+|---|---|
+| 前端不得硬编码老字典 value | `rg "'Investment Bank'\|'investment bank'\|'ib'\|'pevc'" packages/admin/src --glob '!**/*.spec.ts' \| wc -l` → 应为 0 |
+| 后端 service 不得 seed 非自身职责字典 | `rg "new DictSeed\(\"osg_company_type\"" ruoyi-system/src/main/java` → 应仅有 admin 端 |
+| DB 岗位表不得残留老 value | `SELECT COUNT(*) FROM osg_position WHERE industry IN ('Investment Bank','Tech','PE/VC') OR company_type IN ('Investment Bank','Tech','PE/VC')` → 应为 0 |
+
+---
+
+## 十二、改动记录（2026-04-18~19）
+
+### 12.1 提交
+
+| Commit | 内容 |
+|---|---|
+| `34d10c19` | 岗位列表切新字典 + 22 条数据 legacy 值恢复（为后续 SQL 迁移做准备）+ "添加人"列 + 编辑可改 + Mapper XML `create_by` 修复 |
+| `75020f24` | 消除 `osg_company_type` 污染炸弹（删 `PositionServiceImpl.INDUSTRY_SEEDS`）+ admin 学生自添岗位 filter 改从 `getPositionMeta().industries` 拉取 |
+| `f09ffe61` | 22 条老数据一次性 SQL 迁移到新字典（按公司本质智能归类） |
+
+### 12.2 影响文件
+
+**后端**：
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/impl/OsgPositionServiceImpl.java` — `DICT_POSITION_INDUSTRY` 切到 `osg_company_type`；buildPosition 从 companyType derive industry；删 4 条老 DictSeed
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/impl/PositionServiceImpl.java` — 删 `INDUSTRY_SEEDS` 注入；`syncPositionReferenceData` 不再调用对应 seed
+- `ruoyi-system/src/main/resources/mapper/system/OsgPositionMapper.xml` — updatePosition 加 `create_by` 更新分支
+
+**前端 admin**：
+- `osg-frontend/packages/admin/src/views/career/positions/index.vue` — 列表/下钻 columns 加"添加人"列
+- `osg-frontend/packages/admin/src/views/career/positions/components/PositionFormModal.vue` — 删 `'Investment Bank'` 兜底；加"添加人" input 字段；field 加入 resetForm/submit 流程
+- `osg-frontend/packages/admin/src/views/career/student-positions/index.vue` — filter 下拉从 `getPositionMeta().industries` 动态拉取
+- `osg-frontend/packages/admin/src/views/career/student-positions/components/ReviewPositionModal.vue` — placeholder 用新字典值示例（Bulge Bracket / Buyside / Consulting / swe_pm）
+- `osg-frontend/packages/shared/src/api/admin/position.ts` — PositionListItem/Payload 加 createBy 字段；industry/city 改可选
+
+**SQL**：
+- `sql/migrations/2026-04-19-restore-position-industry-values.sql` — 回滚预案
+- `sql/migrations/2026-04-19-migrate-position-legacy-industry-to-new-dict.sql` — 22 条一次性迁移
+
+**测试**：
+- `ruoyi-system/src/test/java/com/ruoyi/system/service/impl/OsgPositionServiceImplTest.java` — mock 字典切换
+- `ruoyi-admin/src/test/java/com/ruoyi/web/controller/osg/OsgPositionControllerTest.java` — mock + payload 同步
+
+### 12.3 22 条岗位数据迁移分布
+
+| 新 `company_type` | 条数 | 公司列表 |
+|---|---|---|
+| `consulting` | 6 | Alvarez & Marsal ×3, Advancy ×2, DHL Consulting |
+| `bulge_bracket` | 4 | Citi, Morgan Stanley ×2, BNP Paribas |
+| `elite_boutique` | 1 | MTS（假设为 MTS Health Partners） |
+| `middle_market` | 6 | BMO, Piper Sandler, TD ×3, William Blair |
+| `buyside` | 5 | Walleye Capital, Ardian, SIG ×3 |
+| **合计** | **22** | |
+
+映射原则：**按公司本质**归类，不按岗位性质。业务后续可在 admin 后台手改个例。
