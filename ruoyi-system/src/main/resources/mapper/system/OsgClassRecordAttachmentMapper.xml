@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OsgClassRecordAttachmentMapper">
+
+    <resultMap id="AttachmentResult" type="com.ruoyi.system.domain.OsgClassRecordAttachment">
+        <id property="attachmentId" column="attachment_id"/>
+        <result property="recordId" column="record_id"/>
+        <result property="fileName" column="file_name"/>
+        <result property="filePath" column="file_path"/>
+        <result property="fileSize" column="file_size"/>
+        <result property="fileType" column="file_type"/>
+        <result property="attachmentTag" column="attachment_tag"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+    </resultMap>
+
+    <select id="selectByRecordId" parameterType="Long" resultMap="AttachmentResult">
+        select attachment_id, record_id, file_name, file_path, file_size, file_type, attachment_tag, create_time, create_by
+        from osg_class_record_attachment
+        where record_id = #{recordId}
+        order by create_time asc
+    </select>
+
+    <select id="selectByRecordIds" resultMap="AttachmentResult">
+        select attachment_id, record_id, file_name, file_path, file_size, file_type, attachment_tag, create_time, create_by
+        from osg_class_record_attachment
+        where record_id in
+        <foreach collection="recordIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        order by record_id, create_time asc
+    </select>
+
+    <insert id="insertAttachment" parameterType="com.ruoyi.system.domain.OsgClassRecordAttachment" useGeneratedKeys="true" keyProperty="attachmentId">
+        insert into osg_class_record_attachment (
+            record_id, file_name, file_path, file_size, file_type, attachment_tag, create_time, create_by
+        ) values (
+            #{recordId}, #{fileName}, #{filePath}, #{fileSize}, #{fileType}, #{attachmentTag}, sysdate(), #{createBy}
+        )
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into osg_class_record_attachment (
+            record_id, file_name, file_path, file_size, file_type, attachment_tag, create_time, create_by
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.recordId}, #{item.fileName}, #{item.filePath}, #{item.fileSize}, #{item.fileType}, #{item.attachmentTag}, sysdate(), #{item.createBy})
+        </foreach>
+    </insert>
+
+    <delete id="deleteById" parameterType="Long">
+        delete from osg_class_record_attachment where attachment_id = #{attachmentId}
+    </delete>
+
+</mapper>
