@@ -16,4 +16,6 @@ public interface IOsgLeadMentorJobOverviewService
     Map<String, Object> acknowledgeStageUpdate(Long applicationId, Long currentUserId, String operator);
 
     Map<String, Object> confirmCoaching(Long applicationId, Long currentUserId, String operator);
+
+    List<Map<String, Object>> selectCalendarEvents(Long currentUserId);
 }

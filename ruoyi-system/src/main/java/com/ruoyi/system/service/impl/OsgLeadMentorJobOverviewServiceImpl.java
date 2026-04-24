@@ -195,6 +195,85 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         return result;
     }
 
+    @Override
+    public List<Map<String, Object>> selectCalendarEvents(Long currentUserId)
+    {
+        if (currentUserId == null)
+        {
+            return List.of();
+        }
+
+        OsgJobApplication query = new OsgJobApplication();
+        query.setLeadMentorId(currentUserId);
+        List<OsgJobApplication> applications = jobApplicationMapper.selectJobApplicationList(query);
+        if (applications == null || applications.isEmpty())
+        {
+            return List.of();
+        }
+
+        return applications.stream()
+            .filter(app -> app.getInterviewTime() != null)
+            .sorted(Comparator.comparing(OsgJobApplication::getInterviewTime, Comparator.nullsLast(Date::compareTo)))
+            .map(this::toCalendarRow)
+            .toList();
+    }
+
+    private Map<String, Object> toCalendarRow(OsgJobApplication app)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", app.getApplicationId());
+        row.put("studentName", app.getStudentName());
+        row.put("company", app.getCompanyName());
+        row.put("position", app.getPositionName());
+        row.put("location", firstText(app.getCity(), app.getRegion()));
+        row.put("interviewTime", app.getInterviewTime());
+        row.put("interviewStage", app.getCurrentStage());
+        row.put("coachingStatus", toLegacyCoachingStatus(app.getCoachingStatus()));
+        row.put("result", toLegacyResult(app.getCurrentStage()));
+        return row;
+    }
+
+    private String toLegacyCoachingStatus(String coachingStatus)
+    {
+        if (coachingStatus == null)
+        {
+            return "none";
+        }
+        String normalized = coachingStatus.trim().toLowerCase();
+        if (normalized.isEmpty() || "new".equals(normalized) || "none".equals(normalized)
+            || "待审批".equals(coachingStatus) || "pending".equals(normalized))
+        {
+            return "new";
+        }
+        if ("辅导中".equals(coachingStatus) || "coaching".equals(normalized))
+        {
+            return "coaching";
+        }
+        return "none";
+    }
+
+    private String toLegacyResult(String currentStage)
+    {
+        if (currentStage == null)
+        {
+            return null;
+        }
+        String normalized = currentStage.trim().toLowerCase();
+        if ("offer".equals(normalized))
+        {
+            return "offer";
+        }
+        if ("rejected".equals(normalized) || "拒绝".equals(currentStage))
+        {
+            return "rejected";
+        }
+        if ("withdrawn".equals(normalized) || "withdraw".equals(normalized))
+        {
+            return "cancelled";
+        }
+        return null;
+    }
+
     private List<OsgJobApplication> selectScopedApplications(String scope, OsgJobApplication rawQuery, Long currentUserId)
     {
         if (currentUserId == null)

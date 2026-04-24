@@ -53,6 +53,25 @@ public class OsgLeadMentorJobOverviewController extends BaseController
         }
     }
 
+    @GetMapping("/calendar")
+    public AjaxResult calendar()
+    {
+        if (!hasLeadMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+
+        try
+        {
+            List<Map<String, Object>> rows = leadMentorJobOverviewService.selectCalendarEvents(getUserId());
+            return success(rows);
+        }
+        catch (ServiceException ex)
+        {
+            return handleServiceException(ex);
+        }
+    }
+
     @GetMapping("/{applicationId}")
     public AjaxResult detail(@PathVariable Long applicationId)
     {

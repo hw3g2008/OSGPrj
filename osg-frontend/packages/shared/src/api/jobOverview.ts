@@ -38,6 +38,18 @@ export interface LeadMentorAssignMentorPayload {
   assignNote?: string
 }
 
+export interface LeadMentorCalendarRecord {
+  id: number
+  studentName?: string
+  company?: string
+  position?: string
+  location?: string
+  interviewTime?: string
+  interviewStage?: string
+  coachingStatus?: string
+  result?: string | null
+}
+
 const toRequestParams = <T extends object>(params: T) => {
   const requestParams: Record<string, string | number> = {}
 
@@ -69,4 +81,8 @@ export function assignLeadMentorJobOverviewMentor(applicationId: number, payload
 
 export function acknowledgeLeadMentorJobOverviewStage(applicationId: number) {
   return http.post(`/lead-mentor/job-overview/${applicationId}/ack-stage-update`)
+}
+
+export function getLeadMentorJobOverviewCalendar() {
+  return http.get<LeadMentorCalendarRecord[]>('/lead-mentor/job-overview/calendar')
 }

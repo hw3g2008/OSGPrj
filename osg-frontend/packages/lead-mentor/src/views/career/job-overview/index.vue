@@ -15,118 +15,7 @@
       </button>
     </div>
 
-    <section class="card">
-      <div class="card-body card-body--calendar">
-        <div class="calendar-toolbar">
-          <div class="calendar-title-group">
-            <i class="mdi mdi-calendar-month" aria-hidden="true" />
-            <span class="calendar-title">学员面试安排</span>
-            <button type="button" class="btn btn-text btn-sm btn-icon" @click="showUpcomingToast()">
-              <i class="mdi mdi-chevron-left" aria-hidden="true" />
-            </button>
-            <span class="calendar-month">1月</span>
-            <button type="button" class="btn btn-text btn-sm btn-icon" @click="showUpcomingToast()">
-              <i class="mdi mdi-chevron-right" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div class="toolbar-divider" aria-hidden="true" />
-
-          <div class="calendar-days">
-            <article
-              v-for="day in compactDays"
-              :key="day.date"
-              class="calendar-day"
-              :class="day.tone"
-            >
-              <span class="calendar-day__week">{{ day.weekday }}</span>
-              <span class="calendar-day__date">{{ day.date }}</span>
-            </article>
-          </div>
-
-          <div class="toolbar-divider" aria-hidden="true" />
-
-          <div class="calendar-summary">
-            <button
-              v-for="item in summaryEvents"
-              :key="item.label"
-              type="button"
-              class="summary-pill"
-              :class="item.tone"
-              @click="showUpcomingToast()"
-            >
-              <span>{{ item.label }}</span>
-              <span>{{ item.student }}</span>
-            </button>
-          </div>
-
-          <button
-            id="lm-toggle-view-btn"
-            type="button"
-            class="btn btn-text btn-sm toggle-calendar-btn"
-            @click="isCalendarExpanded = !isCalendarExpanded"
-          >
-            <i
-              class="mdi"
-              :class="isCalendarExpanded ? 'mdi-calendar-collapse-horizontal' : 'mdi-calendar-expand-horizontal'"
-              aria-hidden="true"
-            />
-            {{ isCalendarExpanded ? '收起' : '展开' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        id="lm-month-view-expanded"
-        class="month-view"
-        :style="{ display: isCalendarExpanded ? 'block' : 'none' }"
-      >
-        <div class="month-legend">
-          <span class="legend-item"><span class="legend-dot legend-dot--danger" />面试</span>
-          <span class="legend-item"><span class="legend-dot legend-dot--info" />辅导课</span>
-          <span class="legend-item"><span class="legend-dot legend-dot--primary" />今天</span>
-        </div>
-
-        <div class="month-grid">
-          <span v-for="weekday in monthWeekdays" :key="weekday" class="month-grid__heading">{{ weekday }}</span>
-          <button
-            v-for="cell in monthCells"
-            :key="cell.label"
-            type="button"
-            class="month-grid__cell"
-            :class="cell.tone"
-            @click="cell.actionable ? showUpcomingToast() : undefined"
-          >
-            <span>{{ cell.label }}</span>
-            <span v-if="cell.dotTone" class="month-grid__dot" :class="cell.dotTone" />
-          </button>
-        </div>
-
-        <div class="week-schedule">
-          <div class="week-schedule__title">
-            <i class="mdi mdi-calendar-clock" aria-hidden="true" />
-            本周学员面试安排
-          </div>
-
-          <article
-            v-for="item in weeklySchedule"
-            :key="item.student"
-            class="week-schedule__card"
-            :class="item.tone"
-          >
-            <div class="week-schedule__date">
-              <strong>{{ item.date }}</strong>
-              <span>{{ item.weekday }}</span>
-            </div>
-            <div class="week-schedule__meta">
-              <div>{{ item.student }} - {{ item.company }}</div>
-              <div>{{ item.time }} · {{ item.role }}</div>
-            </div>
-            <span class="tag" :class="item.tagTone">{{ item.tag }}</span>
-          </article>
-        </div>
-      </div>
-    </section>
+    <InterviewCalendar :events="calendarEvents" />
 
     <section class="filters">
       <input
@@ -442,46 +331,18 @@ import { message } from 'ant-design-vue'
 import {
   acknowledgeLeadMentorJobOverviewStage,
   assignLeadMentorJobOverviewMentor,
+  getLeadMentorJobOverviewCalendar,
   getLeadMentorJobOverviewDetail,
   getLeadMentorJobOverviewList,
+  type LeadMentorCalendarRecord,
   type LeadMentorJobOverviewListItem,
   type LeadMentorJobOverviewListParams,
 } from '@osg/shared/api'
+import { InterviewCalendar } from '@osg/shared/components'
 import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
 
 type TabKey = 'pending' | 'coaching' | 'managed'
-
-interface CompactDay {
-  weekday: string
-  date: string
-  tone: string
-}
-
-interface SummaryEvent {
-  label: string
-  student: string
-  tone: string
-}
-
-interface MonthCell {
-  label: string
-  tone: string
-  dotTone?: string
-  actionable?: boolean
-}
-
-interface WeeklyScheduleItem {
-  date: string
-  weekday: string
-  student: string
-  company: string
-  role: string
-  time: string
-  tone: string
-  tag: string
-  tagTone: string
-}
 
 interface PendingRow {
   applicationId: number
@@ -545,7 +406,6 @@ const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
 const route = useRoute()
 const router = useRouter()
 
-const isCalendarExpanded = ref(false)
 const activeTab = ref<TabKey>('coaching')
 const isJobDetailModalOpen = ref(false)
 const isAssignMentorModalOpen = ref(false)
@@ -566,81 +426,7 @@ const filters = reactive<JobOverviewFilters>({
   currentStage: '',
 })
 
-const compactDays: CompactDay[] = [
-  { weekday: '日', date: '26', tone: 'today' },
-  { weekday: '一', date: '27', tone: 'warning' },
-  { weekday: '二', date: '28', tone: 'danger' },
-  { weekday: '三', date: '29', tone: 'default' },
-  { weekday: '四', date: '30', tone: 'info' },
-  { weekday: '五', date: '31', tone: 'default' },
-  { weekday: '六', date: '1', tone: 'default' },
-]
-
-const summaryEvents: SummaryEvent[] = [
-  { label: '27日', student: '张三 GS', tone: 'warning' },
-  { label: '28日', student: '李四 MCK', tone: 'danger' },
-]
-
-const monthWeekdays = ['一', '二', '三', '四', '五', '六', '日']
-
-const monthCells: MonthCell[] = [
-  { label: '20', tone: 'muted' },
-  { label: '21', tone: 'muted' },
-  { label: '22', tone: 'muted' },
-  { label: '23', tone: 'muted' },
-  { label: '24', tone: 'muted' },
-  { label: '25', tone: 'muted' },
-  { label: '26', tone: 'today' },
-  { label: '27', tone: 'warning', dotTone: 'warning', actionable: true },
-  { label: '28', tone: 'danger', dotTone: 'danger', actionable: true },
-  { label: '29', tone: 'muted' },
-  { label: '30', tone: 'info', dotTone: 'info', actionable: true },
-  { label: '31', tone: 'muted' },
-  { label: '1', tone: 'ghost' },
-  { label: '2', tone: 'ghost' },
-  { label: '3', tone: 'ghost' },
-  { label: '4', tone: 'ghost' },
-  { label: '5', tone: 'ghost' },
-  { label: '6', tone: 'ghost' },
-  { label: '7', tone: 'ghost' },
-  { label: '8', tone: 'ghost' },
-]
-
-const weeklySchedule: WeeklyScheduleItem[] = [
-  {
-    date: '27',
-    weekday: '周一',
-    student: '张三',
-    company: 'Goldman Sachs First Round',
-    role: 'IB Analyst · Hong Kong',
-    time: '10:00',
-    tone: 'warning',
-    tag: '明天',
-    tagTone: 'warning',
-  },
-  {
-    date: '28',
-    weekday: '周二',
-    student: '李四',
-    company: 'McKinsey Case Study',
-    role: 'Business Analyst · Shanghai',
-    time: '14:00',
-    tone: 'danger',
-    tag: '后天',
-    tagTone: 'danger',
-  },
-  {
-    date: '30',
-    weekday: '周四',
-    student: '赵六',
-    company: 'Morgan Stanley R2',
-    role: 'IBD Analyst · New York',
-    time: '15:00',
-    tone: 'info',
-    tag: '4天后',
-    tagTone: 'info',
-  },
-]
+const calendarEvents = ref<LeadMentorCalendarRecord[]>([])
 
 const allRows = computed(() => [
   ...scopeRows.value.pending,
@@ -749,6 +535,15 @@ const loadAllScopes = async () => {
     jobDetailPreview.value = null
     assignMentorPreview.value = null
     message.error('求职总览加载失败')
+  }
+}
+
+const loadCalendar = async () => {
+  try {
+    const rows = await getLeadMentorJobOverviewCalendar()
+    calendarEvents.value = Array.isArray(rows) ? rows : []
+  } catch (_error) {
+    calendarEvents.value = []
   }
 }
 
@@ -886,6 +681,7 @@ const handleAcknowledgeStage = async (row: OverviewRow) => {
 onMounted(() => {
   applyRouteFilters()
   void loadAllScopes()
+  void loadCalendar()
 })
 
 function applyRouteFilters() {
@@ -1211,10 +1007,6 @@ function escapeHtml(value: string) {
   padding: 12px 16px;
 }
 
-.card-body--calendar {
-  padding: 12px 16px;
-}
-
 .card-body--table {
   padding: 0;
 }
@@ -1266,318 +1058,6 @@ function escapeHtml(value: string) {
 
 .btn-success {
   background: #22c55e;
-}
-
-.calendar-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.calendar-title-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.calendar-title-group > .mdi {
-  color: var(--primary);
-  font-size: 18px;
-}
-
-.calendar-title {
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.calendar-month {
-  min-width: 50px;
-  text-align: center;
-  font-size: 12px;
-}
-
-.toolbar-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border);
-}
-
-.calendar-days {
-  display: flex;
-  gap: 6px;
-  flex: 1;
-  min-width: min(100%, 300px);
-}
-
-.calendar-day {
-  min-width: 36px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  text-align: center;
-  background: #f8fafc;
-}
-
-.calendar-day__week {
-  display: block;
-  font-size: 9px;
-  color: var(--muted);
-}
-
-.calendar-day__date {
-  display: block;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.calendar-day.today {
-  background: var(--primary);
-}
-
-.calendar-day.today .calendar-day__week,
-.calendar-day.today .calendar-day__date {
-  color: #fff;
-}
-
-.calendar-day.warning {
-  background: #fef3c7;
-}
-
-.calendar-day.warning .calendar-day__week,
-.calendar-day.warning .calendar-day__date {
-  color: #92400e;
-}
-
-.calendar-day.danger {
-  background: #fee2e2;
-}
-
-.calendar-day.danger .calendar-day__week,
-.calendar-day.danger .calendar-day__date {
-  color: #b91c1c;
-}
-
-.calendar-day.info {
-  background: #dbeafe;
-}
-
-.calendar-day.info .calendar-day__week,
-.calendar-day.info .calendar-day__date {
-  color: #1d4ed8;
-}
-
-.calendar-summary {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.summary-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.summary-pill.warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.summary-pill.danger {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.toggle-calendar-btn {
-  margin-left: auto;
-  font-size: 11px;
-}
-
-.month-view {
-  padding: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.month-legend {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-}
-
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.legend-dot--danger {
-  background: #ef4444;
-}
-
-.legend-dot--info {
-  background: #3b82f6;
-}
-
-.legend-dot--primary {
-  background: var(--primary);
-}
-
-.month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  text-align: center;
-  font-size: 11px;
-}
-
-.month-grid__heading {
-  padding: 6px;
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.month-grid__cell {
-  min-height: 38px;
-  border: 0;
-  border-radius: 6px;
-  background: #f8fafc;
-  color: var(--text);
-  font-size: 11px;
-  cursor: default;
-}
-
-.month-grid__cell.warning {
-  background: #fef3c7;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.month-grid__cell.danger {
-  background: #fee2e2;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.month-grid__cell.info {
-  background: #dbeafe;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.month-grid__cell.today {
-  background: var(--primary);
-  color: #fff;
-  font-weight: 700;
-}
-
-.month-grid__cell.ghost {
-  color: var(--muted);
-}
-
-.month-grid__dot {
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin: 2px auto 0;
-}
-
-.month-grid__dot.warning {
-  background: #f59e0b;
-}
-
-.month-grid__dot.danger {
-  background: #ef4444;
-}
-
-.month-grid__dot.info {
-  background: #3b82f6;
-}
-
-.week-schedule {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.week-schedule__title {
-  margin-bottom: 12px;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.week-schedule__title .mdi {
-  margin-right: 6px;
-  color: var(--primary);
-}
-
-.week-schedule__card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  margin-bottom: 10px;
-  border: 1px solid var(--border);
-  border-left: 4px solid transparent;
-  border-radius: 8px;
-}
-
-.week-schedule__card.warning {
-  border-left-color: #f59e0b;
-}
-
-.week-schedule__card.danger {
-  border-left-color: #ef4444;
-}
-
-.week-schedule__card.info {
-  border-left-color: #3b82f6;
-}
-
-.week-schedule__date {
-  min-width: 50px;
-  text-align: center;
-}
-
-.week-schedule__date strong {
-  display: block;
-  font-size: 20px;
-}
-
-.week-schedule__date span {
-  font-size: 10px;
-  color: var(--text2);
-}
-
-.week-schedule__meta {
-  flex: 1;
-  display: grid;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text2);
-}
-
-.week-schedule__meta div:first-child {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
 }
 
 .filters {
@@ -1841,14 +1321,6 @@ function escapeHtml(value: string) {
 @media (max-width: 1024px) {
   .page-header {
     flex-direction: column;
-  }
-
-  .calendar-toolbar {
-    align-items: flex-start;
-  }
-
-  .toggle-calendar-btn {
-    margin-left: 0;
   }
 }
 

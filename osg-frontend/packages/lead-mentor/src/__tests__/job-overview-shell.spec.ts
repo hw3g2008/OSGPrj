@@ -11,6 +11,7 @@ const apiMocks = vi.hoisted(() => ({
   getLeadMentorJobOverviewDetail: vi.fn(),
   assignLeadMentorJobOverviewMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
+  getLeadMentorJobOverviewCalendar: vi.fn(),
 }))
 
 const routerSource = fs.readFileSync(
@@ -89,6 +90,7 @@ async function mountJobOverviewPage(initialPath = '/career/job-overview') {
 describe('lead-mentor job overview shell contract', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    apiMocks.getLeadMentorJobOverviewCalendar.mockResolvedValue([])
     apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
       if (params.scope === 'pending') {
         return {
@@ -164,9 +166,10 @@ describe('lead-mentor job overview shell contract', () => {
       expect(page.container.textContent).toContain('Job Overview')
       expect(page.container.textContent).toContain('查看我辅导和管理的学员求职进度')
       expect(page.container.textContent).toContain('导出')
+      // InterviewCalendar（共享组件）渲染的 toolbar + 标题
+      expect(page.container.querySelector('.osg-ic__toolbar')).toBeTruthy()
       expect(page.container.textContent).toContain('学员面试安排')
-      expect(page.container.textContent).toContain('27日')
-      expect(page.container.textContent).toContain('张三 GS')
+      expect(apiMocks.getLeadMentorJobOverviewCalendar).toHaveBeenCalled()
       expect(page.container.querySelector<HTMLInputElement>('input.form-input')?.placeholder).toBe('搜索学员姓名...')
       expect(page.container.textContent).toContain('全部类型')
       expect(page.container.textContent).toContain('全部公司')
@@ -177,7 +180,6 @@ describe('lead-mentor job overview shell contract', () => {
       expect(page.container.textContent).toContain('分配导师')
       expect(page.container.textContent).toContain('查看详情')
       expect(page.container.textContent).toContain('已确认')
-      expect(page.container.querySelector('#lm-toggle-view-btn')).toBeTruthy()
       expect(page.container.querySelector('#lm-job-tab-pending')).toBeTruthy()
       expect(page.container.querySelector('#lm-job-tab-coaching')).toBeTruthy()
       expect(page.container.querySelector('#lm-job-tab-managed')).toBeTruthy()
@@ -187,12 +189,10 @@ describe('lead-mentor job overview shell contract', () => {
     }
   })
 
-  it('switches the compact calendar and tabs while preserving the job overview nav highlight', async () => {
+  it('switches tabs while preserving the job overview nav highlight', async () => {
     const page = await mountJobOverviewPage()
 
     try {
-      const toggleButton = page.container.querySelector<HTMLButtonElement>('#lm-toggle-view-btn')
-      const monthView = page.container.querySelector<HTMLElement>('#lm-month-view-expanded')
       const pendingButton = page.container.querySelector<HTMLButtonElement>('#lm-job-tab-pending')
       const coachingButton = page.container.querySelector<HTMLButtonElement>('#lm-job-tab-coaching')
       const managedButton = page.container.querySelector<HTMLButtonElement>('#lm-job-tab-managed')
@@ -203,22 +203,13 @@ describe('lead-mentor job overview shell contract', () => {
         item.textContent?.includes('学员求职总览 Job Overview'),
       )
 
-      expect(toggleButton).toBeTruthy()
-      expect(monthView).toBeTruthy()
       expect(pendingButton).toBeTruthy()
       expect(coachingButton).toBeTruthy()
       expect(managedButton).toBeTruthy()
       expect(pendingPanel?.style.display).toBe('none')
       expect(coachingPanel?.style.display).not.toBe('none')
       expect(managedPanel?.style.display).toBe('none')
-      expect(monthView?.style.display).toBe('none')
       expect(overviewNav?.classList.contains('active')).toBe(true)
-
-      toggleButton?.click()
-      await flushUi()
-
-      expect(monthView?.style.display).toBe('block')
-      expect(toggleButton?.textContent).toContain('收起')
 
       pendingButton?.click()
       await flushUi()
@@ -234,6 +225,30 @@ describe('lead-mentor job overview shell contract', () => {
       expect(coachingPanel?.style.display).toBe('none')
       expect(managedPanel?.style.display).toBe('block')
       expect(overviewNav?.classList.contains('active')).toBe(true)
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('renders the shared InterviewCalendar with events returned from the calendar endpoint', async () => {
+    apiMocks.getLeadMentorJobOverviewCalendar.mockResolvedValueOnce([
+      {
+        id: 9001,
+        studentName: 'Alice',
+        company: 'Goldman Sachs',
+        position: 'Summer Analyst',
+        location: 'Hong Kong',
+        interviewTime: '2099-12-24 10:00:00',
+        interviewStage: 'First Round',
+        coachingStatus: 'coaching',
+      },
+    ])
+
+    const page = await mountJobOverviewPage()
+
+    try {
+      expect(apiMocks.getLeadMentorJobOverviewCalendar).toHaveBeenCalled()
+      expect(page.container.querySelector('.osg-ic__toolbar')).toBeTruthy()
     } finally {
       page.unmount()
     }

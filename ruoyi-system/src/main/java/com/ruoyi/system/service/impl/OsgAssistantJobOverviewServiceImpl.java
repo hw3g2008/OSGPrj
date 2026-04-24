@@ -162,8 +162,9 @@ public class OsgAssistantJobOverviewServiceImpl implements IOsgAssistantJobOverv
         row.put("studentName", app.getStudentName());
         row.put("company", app.getCompanyName());
         row.put("position", app.getPositionName());
+        row.put("location", firstText(app.getCity(), app.getRegion()));
         row.put("interviewTime", app.getInterviewTime());
-        row.put("stage", app.getCurrentStage());
+        row.put("interviewStage", app.getCurrentStage());
         row.put("coachingStatus", toLegacyCoachingStatus(app.getCoachingStatus()));
         row.put("result", toLegacyResult(app.getCurrentStage()));
         return row;

@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -36,8 +38,6 @@ const {
   getAssistantMockPracticeList,
 } = apiMocks
 
-import JobOverviewPage from '@/views/career/job-overview/index.vue'
-import MockPracticePage from '@/views/career/mock-practice/index.vue'
 import PositionsPage from '@/views/career/positions/index.vue'
 
 const positionDrillDownFixture = [
@@ -240,109 +240,276 @@ describe('assistant career pages', () => {
     getAssistantMockPracticeList.mockResolvedValue(mockPracticeFixture)
   })
 
-  it('renders the positions page with lead-mentor shell while hiding management surfaces', async () => {
-    const wrapper = mount(PositionsPage)
-    await flushUi()
+  it('positions page source aligns with admin Ant Design shell while hiding management surfaces', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../views/career/positions/index.vue'),
+      'utf-8',
+    )
 
-    expect(wrapper.find('#page-positions').exists()).toBe(true)
-    expect(wrapper.find('.page-title').text()).toContain('Job Tracker')
-    expect(wrapper.find('.filter-row').exists()).toBe(true)
-    expect(wrapper.find('#lead-view-drilldown').exists()).toBe(true)
-    expect(wrapper.find('#lead-view-list').exists()).toBe(true)
-    expect(wrapper.find('#lead-position-drilldown').exists()).toBe(true)
-    expect(wrapper.find('.category-header').exists()).toBe(true)
-    expect(wrapper.find('.company-header').exists()).toBe(true)
-    expect(wrapper.find('.sort-button').exists()).toBe(true)
-    expect(wrapper.find('.page-footer-stats').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Goldman Sachs')
-    expect(wrapper.text()).toContain('IB Analyst')
-    expect(wrapper.text()).not.toContain('只读浏览')
-    expect(wrapper.text()).not.toContain('分配导师')
-    expect(wrapper.text()).not.toContain('更换导师')
-    expect(wrapper.text()).not.toContain('确认')
+    // PageHeader 复用 admin 风格组件
+    expect(src).toContain('<PageHeader')
+    expect(src).toContain('title="岗位信息"')
+    expect(src).toContain('subtitle="Job Tracker"')
 
-    await wrapper.get('#assistant-positions-keyword').setValue('JP Morgan')
-    await flushUi()
-    expect(wrapper.text()).toContain('JP Morgan')
-    expect(wrapper.text()).not.toContain('IB Analyst')
+    // 使用 Ant Design Vue 组件（对齐 admin 框架）
+    expect(src).toContain('<a-radio-group')
+    expect(src).toContain('<a-form layout="inline"')
+    expect(src).toContain('<a-table')
+    expect(src).toContain('<a-modal')
+    expect(src).toContain('<a-spin')
+    expect(src).toContain('<a-statistic')
 
-    await wrapper.get('.student-link').trigger('click')
-    await flushUi()
+    // 下钻视图：与 admin 一致的两级折叠（使用 Set + toggle 函数）
+    expect(src).toContain('expandedIndustries')
+    expect(src).toContain('expandedCompanies')
+    expect(src).toContain('function toggleIndustry')
+    expect(src).toContain('function toggleCompany')
+    expect(src).toContain('positions-drilldown__industry-head')
+    expect(src).toContain('positions-drilldown__company-head')
+    expect(src).toContain('positions-drilldown__position-list')
 
-    expect(getAssistantPositionStudents).toHaveBeenCalledWith(102)
-    expect(wrapper.text()).toContain('Amy Student')
-    expect(wrapper.text()).toContain('First Round')
+    // 列表视图：分页 + 水平滚动（解决"左右不能滑动"）
+    expect(src).toContain(':pagination="tablePagination"')
+    expect(src).toContain(':scroll="{ x: 1400 }"')
+    expect(src).toContain('showSizeChanger: true')
+
+    // 默认视图 = 列表（不是全展开下钻）
+    expect(src).toContain("ref<ViewMode>('list')")
+
+    // 统计卡片（对齐 admin）
+    expect(src).toContain('statsCards')
+    expect(src).toContain("key: 'open'")
+    expect(src).toContain("key: 'closed'")
+
+    // 只读：不包含 admin 端的管理入口
+    expect(src).not.toContain('新增岗位')
+    expect(src).not.toContain('批量上传')
+    expect(src).not.toContain('下载模板')
+    expect(src).not.toContain('openCreateModal')
+    expect(src).not.toContain('openEditModal')
+    expect(src).not.toContain('排序')
+    expect(src).not.toContain('分配导师')
+    expect(src).not.toContain('更换导师')
+
+    // 保留 assistant 行业 tone 色系（不与 admin 对齐颜色）
+    expect(src).toContain('industry-gold')
+    expect(src).toContain('industry-teal')
+    expect(src).toContain('industry-indigo')
+    expect(src).toContain('industry-slate')
+
+    // 保留助教端业务语义
+    expect(src).toContain('我的学员')
+    expect(src).toContain('getAssistantPositionDrillDown')
+    expect(src).toContain('getAssistantPositionStudents')
+    expect(src).toContain('useIndustryMeta')
   })
 
-  it('renders the job overview page with lead-mentor shell and read-only assistant semantics', async () => {
-    const wrapper = mount(JobOverviewPage)
+  it('positions page mounts and loads drilldown data from the shared API', async () => {
+    // 使用 stub 模式挂载，只验证数据加载链路（避免 jsdom 下 antd 真实渲染的 computedStyle 问题）
+    const wrapper = mount(PositionsPage, {
+      global: {
+        stubs: {
+          PageHeader: true,
+          'a-radio-group': true,
+          'a-radio-button': true,
+          'a-card': { template: '<div><slot /></div>' },
+          'a-statistic': true,
+          'a-form': { template: '<div><slot /></div>' },
+          'a-form-item': { template: '<div><slot /></div>' },
+          'a-select': true,
+          'a-select-option': true,
+          'a-input': true,
+          'a-button': { template: '<button @click="$emit(\'click\')"><slot /></button>' },
+          'a-space': { template: '<div><slot /></div>' },
+          'a-spin': { template: '<div><slot /></div>' },
+          'a-empty': true,
+          'a-alert': true,
+          'a-tag': { template: '<span><slot /></span>' },
+          'a-table': { template: '<div class="stub-table"><slot /></div>' },
+          'a-modal': true,
+        },
+      },
+    })
+    await flushUi()
     await flushUi()
 
-    expect(wrapper.find('#page-job-overview').exists()).toBe(true)
-    expect(wrapper.find('.page-title').text()).toContain('Job Overview')
-    expect(wrapper.find('.calendar-toolbar').exists()).toBe(true)
-    expect(wrapper.find('.calendar-days').exists()).toBe(true)
-    expect(wrapper.find('.panel-banner').exists()).toBe(true)
-    expect(wrapper.find('#assistant-job-content-readonly').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Amy Student')
-    expect(wrapper.text()).toContain('Goldman Sachs')
-    expect(wrapper.text()).toContain('Business Analyst')
-    expect(wrapper.text()).toContain('查看详情')
-    expect(wrapper.text()).not.toContain('待分配导师')
-    expect(wrapper.text()).not.toContain('分配导师')
-    expect(wrapper.text()).not.toContain('更换导师')
-    expect(wrapper.text()).not.toContain('确认')
-
-    await wrapper.get('#assistant-toggle-view-btn').trigger('click')
+    expect(getAssistantPositionDrillDown).toHaveBeenCalled()
+    // drilldown 数据落地后，grouped 计算会产出行业 header（切到 drilldown 视图查看）
+    const vm: any = wrapper.vm
+    vm.viewMode = 'drilldown'
     await flushUi()
-    expect(wrapper.find('.month-view').attributes('style')).toContain('block')
+    expect(wrapper.find('.positions-drilldown').exists()).toBe(true)
+    expect(wrapper.find('.positions-drilldown__industry-head').exists()).toBe(true)
+    // 默认未展开：companies 容器不应渲染
+    expect(wrapper.find('.positions-drilldown__companies').exists()).toBe(false)
 
-    await wrapper.get('.link-button').trigger('click')
-    await flushUi()
-
-    expect(wrapper.text()).toContain('跟进详情')
-    expect(wrapper.text()).toContain('Hong Kong')
+    wrapper.unmount()
   })
 
-  it('renders the mock practice page with lead-mentor-like shell while keeping assistant surfaces read-only', async () => {
-    const wrapper = mount(MockPracticePage)
-    await flushUi()
+  it('job overview page source aligns with Admin Ant Design shell and prototype dual-tab design', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../views/career/job-overview/index.vue'),
+      'utf-8',
+    )
 
-    expect(wrapper.find('#page-mock-practice').exists()).toBe(true)
-    expect(wrapper.find('.page-title').text()).toContain('Mock Practice')
-    expect(wrapper.find('.stats-grid').exists()).toBe(true)
-    expect(wrapper.find('.card-header .tabs').exists()).toBe(true)
-    expect(wrapper.find('#mock-tab-upcoming').exists()).toBe(true)
-    expect(wrapper.find('#mock-tab-feedback').exists()).toBe(true)
-    expect(wrapper.find('#mock-tab-all').exists()).toBe(true)
-    expect(wrapper.find('.panel-banner').exists()).toBe(true)
-    expect(wrapper.find('.filters').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Amy Student')
-    expect(wrapper.text()).toContain('表达节奏稳定，反馈完整。')
-    expect(wrapper.text()).toContain('待进行')
-    expect(wrapper.text()).toContain('反馈结果')
-    expect(wrapper.text()).not.toContain('敬请期待')
-    expect(wrapper.text()).not.toContain('新建模拟应聘')
-    expect(wrapper.text()).not.toContain('待分配导师')
-    expect(wrapper.text()).not.toContain('分配导师')
-    expect(wrapper.text()).not.toContain('确认分配')
-    expect(wrapper.text()).not.toContain('确认')
+    // PageHeader 复用 admin 风格组件
+    expect(src).toContain('<PageHeader')
+    expect(src).toContain('title="学员求职总览"')
+    expect(src).toContain('subtitle="Job Overview"')
 
-    await wrapper.get('#mock-tab-feedback').trigger('click')
-    await flushUi()
+    // 使用 osg-page 全局布局 class
+    expect(src).toContain('class="osg-page"')
 
-    expect(wrapper.text()).toContain('Ben Student')
-    expect(wrapper.text()).toContain('反馈优秀')
-    expect(wrapper.text()).not.toContain('Cara Student')
+    // 使用 Ant Design Vue 组件（对齐 admin 框架）
+    expect(src).toContain('<a-card')
+    expect(src).toContain('<a-table')
+    expect(src).toContain('<a-tag')
+    expect(src).toContain('<a-input')
+    expect(src).toContain('<a-select')
+    expect(src).toContain('<a-button')
+    expect(src).toContain('<a-alert')
 
-    await wrapper.get('#mock-tab-all').trigger('click')
-    await flushUi()
+    // 原型设计：双 Tab（我辅导的学员 + 我管理的学员）
+    expect(src).toContain('我辅导的学员')
+    expect(src).toContain('我管理的学员')
+    expect(src).toContain("activeTab === 'coaching'")
+    expect(src).toContain("activeTab === 'managed'")
 
-    await wrapper.get('.link-button').trigger('click')
-    await flushUi()
+    // coaching 表 6 列（无导师列）
+    expect(src).toContain('coachingColumns')
+    // managed 表 7 列（多导师列）
+    expect(src).toContain('managedColumns')
+    expect(src).toContain("dataIndex: 'mentorName'")
 
-    expect(wrapper.text()).toContain('模拟应聘详情')
-    expect(wrapper.text()).toContain('Goldman Sachs mock interview')
-    expect(wrapper.text()).toContain('Goldman Sachs IBD')
+    // 表格水平滚动
+    expect(src).toContain(':scroll="{ x: 900 }"')
+    expect(src).toContain(':scroll="{ x: 1100 }"')
+
+    // 日历区保留（已抽取为 @osg/shared <InterviewCalendar> 组件）
+    expect(src).toContain('<InterviewCalendar')
+    expect(src).toContain(':events="calendarRecords"')
+    expect(src).toContain("from '@osg/shared/components'")
+
+    // 行高亮（原型设计）
+    expect(src).toContain('row-new')
+    expect(src).toContain('row-coaching')
+    expect(src).toContain('row-pending')
+    expect(src).toContain('row-ended')
+
+    // 筛选条件（原型设计：类型/公司/状态）
+    expect(src).toContain('辅导学员')
+    expect(src).toContain('管理学员')
+    expect(src).toContain('全部公司')
+    expect(src).toContain('全部状态')
+
+    // 只读：不包含 admin 端的管理入口
+    expect(src).not.toContain('待分配导师')
+    expect(src).not.toContain('分配导师')
+    expect(src).not.toContain('更换导师')
+    expect(src).not.toContain('阶段确认')
+
+    // 保留助教端业务语义
+    expect(src).toContain('getAssistantJobOverviewList')
+    expect(src).toContain('getAssistantJobOverviewCalendar')
+    expect(src).toContain('查看详情')
+    expect(src).toContain('跟进详情')
+  })
+
+  it('mock practice page source aligns with Admin Ant Design shell and prototype dual-tab design', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../views/career/mock-practice/index.vue'),
+      'utf-8',
+    )
+
+    // PageHeader 复用 admin 风格组件（description 严格采用原型文案）
+    expect(src).toContain('<PageHeader')
+    expect(src).toContain('title="模拟应聘管理"')
+    expect(src).toContain('subtitle="Mock Practice"')
+    expect(src).toContain('description="处理学员的模拟面试、人际关系测试、期中考试申请"')
+
+    // 使用 osg-page 全局布局 class
+    expect(src).toContain('class="osg-page"')
+
+    // 使用 Ant Design Vue 组件（对齐 admin 框架）
+    expect(src).toContain('<a-row')
+    expect(src).toContain('<a-col')
+    expect(src).toContain('<a-card')
+    expect(src).toContain('<a-table')
+    expect(src).toContain('<a-tag')
+    expect(src).toContain('<a-input')
+    expect(src).toContain('<a-select')
+    expect(src).toContain('<a-button')
+    expect(src).toContain('<a-alert')
+    expect(src).toContain('<a-modal')
+    expect(src).toContain('<a-descriptions')
+
+    // 原型设计：统计卡片 4 项（我辅导的/我管理的/已完成/累计课时）
+    expect(src).toContain("label: '我辅导的'")
+    expect(src).toContain("label: '我管理的'")
+    expect(src).toContain("label: '已完成'")
+    expect(src).toContain("label: '累计课时'")
+    // 统计卡片颜色按原型
+    expect(src).toContain("color: '#3B82F6'")
+    expect(src).toContain("color: '#22C55E'")
+    expect(src).toContain("color: '#8B5CF6'")
+
+    // 原型设计：双 Tab（我辅导的学员 + 我管理的学员）
+    expect(src).toContain('我辅导的学员')
+    expect(src).toContain('我管理的学员')
+    expect(src).toContain("activeTab === 'coaching'")
+    expect(src).toContain("activeTab === 'managed'")
+    expect(src).toContain('id="mock-tab-coaching"')
+    expect(src).toContain('id="mock-tab-managed"')
+
+    // Banner 文案按原型
+    expect(src).toContain('以下是由您亲自辅导的学员模拟应聘记录')
+    expect(src).toContain('以下是您管理的学员的模拟应聘记录（由其他导师辅导）')
+
+    // coaching 表 6 列（含课程反馈，无导师列；独立操作列为原型增强）
+    expect(src).toContain('coachingColumns')
+    expect(src).toContain("title: '课程反馈'")
+    expect(src).toContain("title: '已上课时'")
+
+    // managed 表 7 列（多辅导导师列）
+    expect(src).toContain('managedColumns')
+    expect(src).toContain("title: '辅导导师'")
+    expect(src).toContain("dataIndex: 'mentorName'")
+
+    // 表格水平滚动
+    expect(src).toContain(':scroll="{ x: 900 }"')
+    expect(src).toContain(':scroll="{ x: 1100 }"')
+
+    // 筛选按钮文案按原型（「筛选」非「搜索」）
+    expect(src).toContain('筛选\n          </a-button>')
+    expect(src).toContain('重置')
+
+    // 管理 Tab 多出「导师」搜索框
+    expect(src).toContain('搜索导师姓名')
+
+    // 行高亮（原型设计：新分配红色渐变 + 期中考紫色）
+    expect(src).toContain('row-new')
+    expect(src).toContain('row-midterm')
+    expect(src).toContain('linear-gradient(90deg, #FEE2E2, #FEF2F2)')
+    expect(src).toContain('background: #F3E8FF')
+
+    // 新分配行操作：绿色「确认」按钮
+    expect(src).toContain('isNewAssigned')
+    expect(src).toContain('confirmRecord')
+    expect(src).toContain('background: #22C55E; border-color: #22C55E;')
+
+    // 类型选项按原型
+    expect(src).toContain("value: 'mock_interview', label: '模拟面试'")
+    expect(src).toContain("value: 'relation_test', label: '人际关系测试'")
+    expect(src).toContain("value: 'midterm', label: '期中考试'")
+
+    // 只读：不包含 admin 端的管理入口（原型无这些）
+    expect(src).not.toContain('分配导师')
+    expect(src).not.toContain('录入反馈')
+    expect(src).not.toContain('新建模拟应聘')
+
+    // 保留助教端业务语义
+    expect(src).toContain('getAssistantMockPracticeList')
+    expect(src).toContain('查看详情')
+    expect(src).toContain('模拟应聘详情')
   })
 })

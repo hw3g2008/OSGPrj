@@ -10,6 +10,7 @@ const apiMocks = vi.hoisted(() => ({
   getLeadMentorJobOverviewDetail: vi.fn(),
   assignLeadMentorJobOverviewMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
+  getLeadMentorJobOverviewCalendar: vi.fn(),
 }))
 
 const messageMocks = vi.hoisted(() => ({
@@ -192,6 +193,7 @@ describe('lead-mentor job overview real flow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     installListMocks()
+    apiMocks.getLeadMentorJobOverviewCalendar.mockResolvedValue([])
     apiMocks.getLeadMentorJobOverviewDetail.mockResolvedValue(detailRow)
     apiMocks.assignLeadMentorJobOverviewMentor.mockResolvedValue({
       applicationId: 7001,
