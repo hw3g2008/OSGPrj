@@ -4,7 +4,9 @@
 - **作者**：Cascade（与用户协作制定）
 - **状态**：🚀 进行中（路线 A · 以 Assistant antd 为 SSOT）
   - ✅ Phase 1 已完成（2026-04-24）
-  - ⏳ Phase 2 / 3 / 4 待启动
+  - 🔄 **Phase 2 战略转向**（2026-04-24）：不再独立 antd 化 Mentor，改为直接走 shared 抽取 + 三端接入
+  - 📄 **Phase 3 + 4 被接管**：`@/Users/hw/workspace/OSGPrj/docs/architecture/job-overview-unification/03-shared-extraction-plan.md` 细化并合并 Phase 3+4 为"原子组件抽取"模式
+  - ✅ StageTag 已抽并三端接入（commit `e5bd8f56`，见 03 方案文档 §2.1）
 - **范围**：Assistant / Lead-Mentor / Mentor 三端的"学员求职总览"（job-overview）页面
 - **关联路线图**：`docs/architecture/2026-04-24-shared-frontend-roadmap.md`
 - **前置已完成**：
