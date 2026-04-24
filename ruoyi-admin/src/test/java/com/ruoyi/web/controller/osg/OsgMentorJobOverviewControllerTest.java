@@ -29,10 +29,10 @@ import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.service.IOsgLeadMentorJobOverviewService;
 
 @ExtendWith(MockitoExtension.class)
-class OsgJobOverviewMentorControllerTest
+class OsgMentorJobOverviewControllerTest
 {
     @InjectMocks
-    private OsgJobOverviewController controller;
+    private OsgMentorJobOverviewController controller;
 
     @Mock
     private IOsgLeadMentorJobOverviewService leadMentorJobOverviewService;

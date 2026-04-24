@@ -30,7 +30,7 @@ import com.ruoyi.system.service.impl.OsgIdentityResolver;
 import com.ruoyi.system.service.impl.OsgJobOverviewServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
-class OsgJobOverviewControllerTest
+class OsgAdminJobOverviewControllerTest
 {
     @Mock
     private OsgJobApplicationMapper jobApplicationMapper;
@@ -41,7 +41,7 @@ class OsgJobOverviewControllerTest
     @Mock
     private OsgIdentityResolver identityResolver;
 
-    private OsgJobOverviewController controller;
+    private OsgAdminJobOverviewController controller;
 
     private List<OsgJobApplication> applications;
 
@@ -55,7 +55,7 @@ class OsgJobOverviewControllerTest
         ReflectionTestUtils.setField(service, "coachingMapper", coachingMapper);
         ReflectionTestUtils.setField(service, "identityResolver", identityResolver);
 
-        controller = new OsgJobOverviewController();
+        controller = new OsgAdminJobOverviewController();
         ReflectionTestUtils.setField(controller, "jobOverviewService", service);
 
         applications = new ArrayList<>(buildApplications());
