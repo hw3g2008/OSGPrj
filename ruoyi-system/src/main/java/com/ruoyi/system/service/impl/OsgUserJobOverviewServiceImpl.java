@@ -26,10 +26,10 @@ import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
-import com.ruoyi.system.service.IOsgLeadMentorJobOverviewService;
+import com.ruoyi.system.service.IOsgUserJobOverviewService;
 
 @Service
-public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOverviewService
+public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
 {
     private static final String SCOPE_PENDING = "pending";
     private static final String SCOPE_COACHING = "coaching";
@@ -49,8 +49,15 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
     @Autowired
     private OsgStudentMapper studentMapper;
 
+    // ===== Lead-Mentor 端 =====
+
     @Override
-    public List<Map<String, Object>> selectOverviewList(String scope, OsgJobApplication query, Long currentUserId)
+    public List<Map<String, Object>> listByLeadMentor(String scope, OsgJobApplication query, Long leadMentorId)
+    {
+        return selectOverviewListInternal(scope, query, leadMentorId);
+    }
+
+    private List<Map<String, Object>> selectOverviewListInternal(String scope, OsgJobApplication query, Long currentUserId)
     {
         String resolvedScope = normalizeScope(scope);
         List<OsgJobApplication> rows = selectScopedApplications(resolvedScope, query, currentUserId);
@@ -63,7 +70,18 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
     }
 
     @Override
-    public Map<String, Object> selectOverviewDetail(Long applicationId, Long currentUserId)
+    public Map<String, Object> detailForLeadMentor(Long applicationId, Long leadMentorId)
+    {
+        return detailForCoachingUser(applicationId, leadMentorId);
+    }
+
+    @Override
+    public Map<String, Object> detailForMentor(Long applicationId, Long mentorId)
+    {
+        return detailForCoachingUser(applicationId, mentorId);
+    }
+
+    private Map<String, Object> detailForCoachingUser(Long applicationId, Long currentUserId)
     {
         OsgJobApplication application = requireAccessibleApplication(applicationId, currentUserId);
         return toOverviewPayload(application, coachingMapper.selectCoachingByApplicationId(applicationId));
@@ -158,6 +176,8 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
         return result;
     }
 
+    // ===== Mentor 专用操作 =====
+
     @Override
     public Map<String, Object> confirmCoaching(Long applicationId, Long currentUserId, String operator)
     {
@@ -196,7 +216,18 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
     }
 
     @Override
-    public List<Map<String, Object>> selectCalendarEvents(Long currentUserId)
+    public List<Map<String, Object>> calendarForLeadMentor(Long leadMentorId)
+    {
+        return calendarForCoachingUser(leadMentorId);
+    }
+
+    @Override
+    public List<Map<String, Object>> calendarForMentor(Long mentorId)
+    {
+        return calendarForCoachingUser(mentorId);
+    }
+
+    private List<Map<String, Object>> calendarForCoachingUser(Long currentUserId)
     {
         if (currentUserId == null)
         {
@@ -798,5 +829,208 @@ public class OsgLeadMentorJobOverviewServiceImpl implements IOsgLeadMentorJobOve
             return fallback;
         }
         return value;
+    }
+
+    // ===== Assistant 端（源自原 OsgAssistantJobOverviewServiceImpl）=====
+
+    @Override
+    public List<Map<String, Object>> listByAssistant(OsgJobApplication query, Long assistantId)
+    {
+        List<OsgStudent> students = studentMapper.selectStudentList(buildAssistantStudentQuery(assistantId));
+        if (students.isEmpty())
+        {
+            return List.of();
+        }
+
+        List<Long> studentIds = students.stream()
+            .map(OsgStudent::getStudentId)
+            .toList();
+
+        List<OsgJobApplication> applications = jobApplicationMapper.selectByStudentIds(studentIds);
+        if (query != null)
+        {
+            applications = filterAssistantApplications(applications, query);
+        }
+
+        return applications.stream()
+            .sorted(Comparator.comparing(OsgJobApplication::getSubmittedAt, Comparator.nullsLast(Date::compareTo)).reversed())
+            .map(this::toAssistantOverviewRow)
+            .toList();
+    }
+
+    @Override
+    public Map<String, Object> detailForAssistant(Long applicationId, Long assistantId)
+    {
+        OsgJobApplication application = jobApplicationMapper.selectJobApplicationByApplicationId(applicationId);
+        if (application == null)
+        {
+            return Map.of();
+        }
+
+        if (!isAssistantOfStudent(application.getStudentId(), assistantId))
+        {
+            return Map.of();
+        }
+
+        return toAssistantOverviewRow(application);
+    }
+
+    @Override
+    public List<Map<String, Object>> calendarForAssistant(Long assistantId)
+    {
+        List<OsgStudent> students = studentMapper.selectStudentList(buildAssistantStudentQuery(assistantId));
+        if (students.isEmpty())
+        {
+            return List.of();
+        }
+
+        List<Long> studentIds = students.stream()
+            .map(OsgStudent::getStudentId)
+            .toList();
+
+        List<OsgJobApplication> applications = jobApplicationMapper.selectByStudentIds(studentIds);
+
+        return applications.stream()
+            .filter(app -> app.getInterviewTime() != null)
+            .sorted(Comparator.comparing(OsgJobApplication::getInterviewTime, Comparator.nullsLast(Date::compareTo)))
+            .map(this::toAssistantCalendarRow)
+            .toList();
+    }
+
+    private OsgStudent buildAssistantStudentQuery(Long assistantId)
+    {
+        OsgStudent student = new OsgStudent();
+        student.setAssistantId(assistantId);
+        return student;
+    }
+
+    private boolean isAssistantOfStudent(Long studentId, Long assistantId)
+    {
+        if (studentId == null)
+        {
+            return false;
+        }
+        List<OsgStudent> students = studentMapper.selectStudentList(buildAssistantStudentQuery(assistantId));
+        return students.stream().anyMatch(s -> studentId.equals(s.getStudentId()));
+    }
+
+    private List<OsgJobApplication> filterAssistantApplications(List<OsgJobApplication> applications, OsgJobApplication query)
+    {
+        return applications.stream().filter(app -> {
+            if (query.getStudentName() != null && !query.getStudentName().isBlank())
+            {
+                String name = app.getStudentName();
+                if (name == null || !name.toLowerCase().contains(query.getStudentName().toLowerCase()))
+                {
+                    return false;
+                }
+            }
+            if (query.getCompanyName() != null && !query.getCompanyName().isBlank())
+            {
+                String company = app.getCompanyName();
+                if (company == null || !company.toLowerCase().contains(query.getCompanyName().toLowerCase()))
+                {
+                    return false;
+                }
+            }
+            if (query.getCurrentStage() != null && !query.getCurrentStage().isBlank())
+            {
+                String stage = app.getCurrentStage();
+                if (stage == null || !stage.equalsIgnoreCase(query.getCurrentStage()))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }).toList();
+    }
+
+    private Map<String, Object> toAssistantOverviewRow(OsgJobApplication app)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", app.getApplicationId());
+        row.put("studentId", app.getStudentId());
+        row.put("studentName", app.getStudentName());
+        row.put("company", app.getCompanyName());
+        row.put("position", app.getPositionName());
+        row.put("location", firstText(app.getCity(), app.getRegion()));
+        row.put("interviewStage", app.getCurrentStage());
+        row.put("interviewTime", app.getInterviewTime());
+        row.put("coachingStatus", toAssistantLegacyCoachingStatus(app.getCoachingStatus()));
+        row.put("result", toAssistantLegacyResult(app.getCurrentStage()));
+        row.put("createTime", app.getSubmittedAt());
+        return row;
+    }
+
+    private Map<String, Object> toAssistantCalendarRow(OsgJobApplication app)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", app.getApplicationId());
+        row.put("studentName", app.getStudentName());
+        row.put("company", app.getCompanyName());
+        row.put("position", app.getPositionName());
+        row.put("location", firstText(app.getCity(), app.getRegion()));
+        row.put("interviewTime", app.getInterviewTime());
+        row.put("interviewStage", app.getCurrentStage());
+        row.put("coachingStatus", toAssistantLegacyCoachingStatus(app.getCoachingStatus()));
+        row.put("result", toAssistantLegacyResult(app.getCurrentStage()));
+        return row;
+    }
+
+    private String toAssistantLegacyCoachingStatus(String coachingStatus)
+    {
+        if (coachingStatus == null)
+        {
+            return "none";
+        }
+        String normalized = coachingStatus.trim().toLowerCase();
+        if (normalized.isEmpty() || "new".equals(normalized) || "none".equals(normalized) || "待审批".equals(coachingStatus) || "pending".equals(normalized))
+        {
+            return "new";
+        }
+        if ("辅导中".equals(coachingStatus) || "coaching".equals(normalized))
+        {
+            return "coaching";
+        }
+        return "none";
+    }
+
+    private String toAssistantLegacyResult(String currentStage)
+    {
+        if (currentStage == null)
+        {
+            return null;
+        }
+        String normalized = currentStage.trim().toLowerCase();
+        if ("offer".equals(normalized))
+        {
+            return "offer";
+        }
+        if ("rejected".equals(normalized) || "拒绝".equals(currentStage))
+        {
+            return "rejected";
+        }
+        if ("withdrawn".equals(normalized) || "withdraw".equals(normalized))
+        {
+            return "cancelled";
+        }
+        return null;
+    }
+
+    private String firstText(String primary, String fallback)
+    {
+        if (primary != null && !primary.isBlank())
+        {
+            return primary;
+        }
+        return fallback != null ? fallback : "";
+    }
+
+    // ===== Mentor 端列表查询（委托 coaching scope）=====
+
+    @Override
+    public List<Map<String, Object>> listByMentor(OsgJobApplication query, Long mentorId)
+    {
+        return selectOverviewListInternal(SCOPE_COACHING, query, mentorId);
     }
 }
