@@ -76,7 +76,7 @@
               <div><strong>{{ record.company || '-' }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.position || '-' }} · {{ record.location || '地区待补充' }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'interviewStage'">
-              <a-tag :color="stageColor(record.interviewStage)">{{ record.interviewStage || '未更新' }}</a-tag>
+              <StageTag :stage="record.interviewStage" />
             </template>
             <template v-else-if="column.dataIndex === 'interviewTime'">
               <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="font-size: 11px; color: var(--muted);">{{ formatScheduleHint(record.interviewTime) }}</div></div>
@@ -118,7 +118,7 @@
               <div><strong>{{ record.company || '-' }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.position || '-' }} · {{ record.location || '地区待补充' }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'interviewStage'">
-              <a-tag :color="stageColor(record.interviewStage)">{{ record.interviewStage || '未更新' }}</a-tag>
+              <StageTag :stage="record.interviewStage" />
             </template>
             <template v-else-if="column.dataIndex === 'interviewTime'">
               <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="font-size: 11px; color: var(--muted);">{{ formatScheduleHint(record.interviewTime) }}</div></div>
@@ -160,7 +160,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
-import { InterviewCalendar } from '@osg/shared/components'
+import { InterviewCalendar, StageTag } from '@osg/shared/components'
 import {
   getAssistantJobOverviewCalendar,
   getAssistantJobOverviewList,
@@ -278,18 +278,6 @@ function formatScheduleHint(value?: string) {
   if (day < 0) return '已过面试时间'
   if (day === 0) return '今天'
   return `还剩 ${day} 天`
-}
-
-function stageColor(stage?: string): string {
-  const s = (stage || '').toLowerCase()
-  if (s.includes('offer')) return 'green'
-  if (s.includes('reject') || s.includes('拒绝')) return 'red'
-  if (s.includes('withdrawn') || s.includes('放弃')) return 'default'
-  if (s.includes('case') || s.includes('super')) return 'orange'
-  if (s.includes('first') || s.includes('second') || s.includes('final')) return 'gold'
-  if (s.includes('hirevue')) return 'blue'
-  if (s.includes('投递')) return 'purple'
-  return 'blue'
 }
 
 function coachingColor(status?: string): string {

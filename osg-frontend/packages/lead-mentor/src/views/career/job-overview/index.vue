@@ -98,7 +98,7 @@
                   <div class="student-meta">{{ record.role }}</div>
                 </template>
                 <template v-else-if="column.key === 'stage'">
-                  <a-tag :color="record.stageTone">{{ record.stage }}</a-tag>
+                  <StageTag :stage="record.stage" />
                 </template>
                 <template v-else-if="column.key === 'interviewAt'">
                   <span>{{ record.interviewAt }}</span>
@@ -158,7 +158,7 @@
                 </template>
                 <template v-else-if="column.key === 'stage'">
                   <div class="table-stack">
-                    <a-tag :color="record.stageTone">{{ record.stage }}</a-tag>
+                    <StageTag :stage="record.stage" />
                     <span v-if="record.stageMeta" class="stage-meta">{{ record.stageMeta }}</span>
                   </div>
                 </template>
@@ -235,7 +235,7 @@
                 </template>
                 <template v-else-if="column.key === 'stage'">
                   <div class="table-stack">
-                    <a-tag :color="record.stageTone">{{ record.stage }}</a-tag>
+                    <StageTag :stage="record.stage" />
                     <span v-if="record.stageMeta" class="stage-meta">{{ record.stageMeta }}</span>
                   </div>
                 </template>
@@ -317,7 +317,7 @@ import {
   type LeadMentorJobOverviewListItem,
   type LeadMentorJobOverviewListParams,
 } from '@osg/shared/api'
-import { InterviewCalendar } from '@osg/shared/components'
+import { InterviewCalendar, StageTag } from '@osg/shared/components'
 import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
 
