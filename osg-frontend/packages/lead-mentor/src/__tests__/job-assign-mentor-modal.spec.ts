@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { createApp, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
+import Antd from 'ant-design-vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 const apiMocks = vi.hoisted(() => ({
@@ -29,17 +30,27 @@ vi.mock('@osg/shared/utils', () => ({
   getToken: vi.fn(() => 'lead-mentor-token'),
 }))
 
-vi.mock('ant-design-vue', () => ({
-  message: {
-    info: vi.fn(),
-    error: vi.fn(),
-  },
-}))
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
+  return {
+    ...actual,
+    message: {
+      info: vi.fn(),
+      error: vi.fn(),
+      success: vi.fn(),
+    },
+  }
+})
 
 async function flushUi() {
   await nextTick()
   await new Promise((resolve) => setTimeout(resolve, 0))
   await nextTick()
+}
+
+function isTabPaneActive(panel: HTMLElement | null | undefined): boolean {
+  const tabpane = panel?.closest<HTMLElement>('.ant-tabs-tabpane')
+  return !!tabpane?.classList.contains('ant-tabs-tabpane-active')
 }
 
 async function loadAssignMentorModal() {
@@ -110,6 +121,7 @@ async function mountJobOverviewPage() {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 
@@ -237,7 +249,7 @@ describe('lead-mentor assign mentor modal contract', () => {
       await flushUi()
 
       const pendingPanel = page.container.querySelector<HTMLElement>('#lm-job-content-pending')
-      expect(pendingPanel?.style.display).toBe('block')
+      expect(isTabPaneActive(pendingPanel)).toBe(true)
 
       const pendingAssignButton = Array.from(pendingPanel?.querySelectorAll<HTMLButtonElement>('button') || []).find(
         (button) => button.textContent?.includes('分配导师'),

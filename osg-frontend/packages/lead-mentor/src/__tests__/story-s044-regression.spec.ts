@@ -1,6 +1,7 @@
 import { createApp, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
+import Antd from 'ant-design-vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import StudentListPage from '../views/teaching/students/index.vue'
 import JobOverviewPage from '../views/career/job-overview/index.vue'
@@ -31,9 +32,13 @@ vi.mock('@osg/shared/utils', () => ({
   getToken: vi.fn(() => 'lead-mentor-token'),
 }))
 
-vi.mock('ant-design-vue', () => ({
-  message: messageMocks,
-}))
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
+  return {
+    ...actual,
+    message: messageMocks,
+  }
+})
 
 const storyRows = [
   {
@@ -98,6 +103,7 @@ async function mountStory(initialPath = '/teaching/students') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 
@@ -182,7 +188,7 @@ describe('S-044 story regression skeleton', () => {
 
       const reloaded = await mountStory('/career/job-overview?studentName=Luna%20Xu')
       try {
-        expect(reloaded.container.querySelector<HTMLInputElement>('input.form-input')?.value).toBe('Luna Xu')
+        expect(reloaded.container.querySelector<HTMLInputElement>('input[placeholder="搜索学员姓名..."]')?.value).toBe('Luna Xu')
         expect(apiMocks.getLeadMentorJobOverviewList).toHaveBeenCalledWith({ scope: 'managed', studentName: 'Luna Xu' })
       } finally {
         reloaded.unmount()

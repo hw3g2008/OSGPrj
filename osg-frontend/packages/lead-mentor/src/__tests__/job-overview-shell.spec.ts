@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { createApp, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
+import Antd from 'ant-design-vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 const apiMocks = vi.hoisted(() => ({
@@ -32,17 +33,33 @@ vi.mock('@osg/shared/utils', () => ({
   getToken: vi.fn(() => 'lead-mentor-token'),
 }))
 
-vi.mock('ant-design-vue', () => ({
-  message: {
-    info: vi.fn(),
-    error: vi.fn(),
-  },
-}))
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
+  return {
+    ...actual,
+    message: {
+      info: vi.fn(),
+      error: vi.fn(),
+      success: vi.fn(),
+    },
+  }
+})
 
 async function flushUi() {
   await nextTick()
   await new Promise((resolve) => setTimeout(resolve, 0))
   await nextTick()
+}
+
+function findTab(container: ParentNode, text: string): HTMLElement | null {
+  return Array.from(container.querySelectorAll<HTMLElement>('.ant-tabs-tab')).find((el) =>
+    el.textContent?.includes(text),
+  ) || null
+}
+
+function isTabPaneActive(panel: HTMLElement | null | undefined): boolean {
+  const tabpane = panel?.closest<HTMLElement>('.ant-tabs-tabpane')
+  return !!tabpane?.classList.contains('ant-tabs-tabpane-active')
 }
 
 async function loadJobOverviewPage() {
@@ -74,6 +91,7 @@ async function mountJobOverviewPage(initialPath = '/career/job-overview') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 
@@ -170,7 +188,7 @@ describe('lead-mentor job overview shell contract', () => {
       expect(page.container.querySelector('.osg-ic__toolbar')).toBeTruthy()
       expect(page.container.textContent).toContain('学员面试安排')
       expect(apiMocks.getLeadMentorJobOverviewCalendar).toHaveBeenCalled()
-      expect(page.container.querySelector<HTMLInputElement>('input.form-input')?.placeholder).toBe('搜索学员姓名...')
+      expect(page.container.querySelector<HTMLInputElement>('input[placeholder="搜索学员姓名..."]')?.placeholder).toBe('搜索学员姓名...')
       expect(page.container.textContent).toContain('全部类型')
       expect(page.container.textContent).toContain('全部公司')
       expect(page.container.textContent).toContain('全部状态')
@@ -183,7 +201,7 @@ describe('lead-mentor job overview shell contract', () => {
       expect(page.container.querySelector('#lm-job-tab-pending')).toBeTruthy()
       expect(page.container.querySelector('#lm-job-tab-coaching')).toBeTruthy()
       expect(page.container.querySelector('#lm-job-tab-managed')).toBeTruthy()
-      expect(page.container.querySelectorAll('.table').length).toBeGreaterThanOrEqual(3)
+      expect(page.container.querySelectorAll('.ant-table').length).toBeGreaterThanOrEqual(3)
     } finally {
       page.unmount()
     }
@@ -193,9 +211,9 @@ describe('lead-mentor job overview shell contract', () => {
     const page = await mountJobOverviewPage()
 
     try {
-      const pendingButton = page.container.querySelector<HTMLButtonElement>('#lm-job-tab-pending')
-      const coachingButton = page.container.querySelector<HTMLButtonElement>('#lm-job-tab-coaching')
-      const managedButton = page.container.querySelector<HTMLButtonElement>('#lm-job-tab-managed')
+      const pendingButton = findTab(page.container, '待分配导师')
+      const coachingButton = findTab(page.container, '我辅导的学员')
+      const managedButton = findTab(page.container, '我管理的学员')
       const pendingPanel = page.container.querySelector<HTMLElement>('#lm-job-content-pending')
       const coachingPanel = page.container.querySelector<HTMLElement>('#lm-job-content-coaching')
       const managedPanel = page.container.querySelector<HTMLElement>('#lm-job-content-managed')
@@ -206,24 +224,24 @@ describe('lead-mentor job overview shell contract', () => {
       expect(pendingButton).toBeTruthy()
       expect(coachingButton).toBeTruthy()
       expect(managedButton).toBeTruthy()
-      expect(pendingPanel?.style.display).toBe('none')
-      expect(coachingPanel?.style.display).not.toBe('none')
-      expect(managedPanel?.style.display).toBe('none')
+      expect(isTabPaneActive(pendingPanel)).toBe(false)
+      expect(isTabPaneActive(coachingPanel)).toBe(true)
+      expect(isTabPaneActive(managedPanel)).toBe(false)
       expect(overviewNav?.classList.contains('active')).toBe(true)
 
       pendingButton?.click()
       await flushUi()
 
-      expect(pendingPanel?.style.display).toBe('block')
-      expect(coachingPanel?.style.display).toBe('none')
-      expect(managedPanel?.style.display).toBe('none')
+      expect(isTabPaneActive(pendingPanel)).toBe(true)
+      expect(isTabPaneActive(coachingPanel)).toBe(false)
+      expect(isTabPaneActive(managedPanel)).toBe(false)
 
       managedButton?.click()
       await flushUi()
 
-      expect(pendingPanel?.style.display).toBe('none')
-      expect(coachingPanel?.style.display).toBe('none')
-      expect(managedPanel?.style.display).toBe('block')
+      expect(isTabPaneActive(pendingPanel)).toBe(false)
+      expect(isTabPaneActive(coachingPanel)).toBe(false)
+      expect(isTabPaneActive(managedPanel)).toBe(true)
       expect(overviewNav?.classList.contains('active')).toBe(true)
     } finally {
       page.unmount()
