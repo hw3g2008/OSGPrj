@@ -11,83 +11,7 @@
       </button>
     </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-body" style="padding:12px 16px">
-        <div class="calendar-bar">
-          <div class="calendar-title">
-            <i class="mdi mdi-calendar-month" />
-            学员面试安排
-          </div>
-          <div class="calendar-days">
-            <div
-              v-for="day in calendarWeekDays"
-              :key="`${calendarMonthLabel}-${day.label}-${day.day}`"
-              class="calendar-day"
-              :class="day.class"
-              @click="openCalendarHighlight(day.event)"
-            >
-              <div class="calendar-day-label">{{ day.label }}</div>
-              <div class="calendar-day-num">{{ day.day }}</div>
-            </div>
-          </div>
-          <div class="calendar-nav">
-            <button type="button" class="btn btn-text btn-sm calendar-arrow" @click="shiftCalendarMonth(-1)">
-              <i class="mdi mdi-chevron-left" />
-            </button>
-            <span class="calendar-month">{{ calendarMonthLabel }}</span>
-            <button type="button" class="btn btn-text btn-sm calendar-arrow" @click="shiftCalendarMonth(1)">
-              <i class="mdi mdi-chevron-right" />
-            </button>
-          </div>
-          <button
-            id="mentor-toggle-view-btn"
-            type="button"
-            class="btn btn-text btn-sm"
-            style="margin-left:auto;font-size:11px"
-            @click="toggleCalendarExpansion"
-          >
-            <i :class="expandCalendar ? 'mdi mdi-calendar-collapse-horizontal' : 'mdi mdi-calendar-expand-horizontal'" />
-            {{ expandCalendar ? '收起' : '展开' }}
-          </button>
-        </div>
-      </div>
-
-      <div v-if="expandCalendar" class="card-body calendar-expanded" style="border-top:1px solid #E2E8F0;padding-top:16px">
-        <div class="calendar-legend">
-          <div><span class="legend-dot legend-dot--interview" />面试</div>
-          <div><span class="legend-dot legend-dot--class" />辅导课</div>
-          <div><span class="legend-dot legend-dot--today" />今天</div>
-        </div>
-
-        <div style="margin-top:12px">
-          <div style="font-weight:600;font-size:13px;color:#1E293B;margin-bottom:12px">
-            <i class="mdi mdi-calendar-clock" style="margin-right:6px;color:#7399C6" />
-            本周学员面试安排
-          </div>
-
-          <div v-if="visibleCalendarEvents.length" class="calendar-event-list">
-            <div
-              v-for="event in visibleCalendarEvents"
-              :key="`${event.id}-${event.day}-${event.studentName}`"
-              class="calendar-event"
-              :style="{ borderLeftColor: event.color }"
-              @click="openCalendarHighlight(event)"
-            >
-              <div class="event-date">
-                <div class="event-day">{{ event.day }}</div>
-                <div class="event-weekday">{{ event.weekday }}</div>
-              </div>
-              <div class="event-info">
-                <div class="event-title">{{ event.studentName }} - {{ event.company }} {{ event.stage }}</div>
-                <div class="event-time">{{ formatCalendarEventTime(event.time) }} · {{ event.position }} · {{ event.location }}</div>
-              </div>
-              <span class="tag" :class="event.tagClass">{{ event.badge }}</span>
-            </div>
-          </div>
-          <div v-else class="empty-state">当前月份暂无安排</div>
-        </div>
-      </div>
-    </div>
+    <InterviewCalendar :events="allCalendarEvents" @event-click="openCalendarHighlight" />
 
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-value" style="color:#EF4444">{{ stats.newCount }}</div><div class="stat-label">新分配</div></div>
@@ -354,6 +278,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, inject, type Ref } from 'vue'
 import { http } from '@osg/shared/utils/request'
+import { InterviewCalendar } from '@osg/shared/components'
+import {
+  getMentorJobOverviewCalendar,
+  type LeadMentorCalendarRecord,
+} from '@osg/shared/api'
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
@@ -381,21 +310,6 @@ interface JobOverviewRow {
   recruitmentCycle?: string
 }
 
-interface CalendarEvent {
-  id: number
-  studentName: string
-  company: string
-  stage: string
-  time: string
-  position: string
-  location: string
-  color?: string
-  day?: number
-  weekday?: string
-  badge?: string
-  tagClass?: string
-}
-
 interface DetailRecord {
   date: string
   label: string
@@ -406,10 +320,9 @@ interface DetailRecord {
   tagTone: string
 }
 
-const expandCalendar = ref(false)
 const allRows = ref<JobOverviewRow[]>([])
 const persistentRowAnchors = ref<Map<number, string>>(new Map())
-const allCalendarEvents = ref<CalendarEvent[]>([])
+const allCalendarEvents = ref<LeadMentorCalendarRecord[]>([])
 const selectedRow = ref<JobOverviewRow | null>(null)
 const showAllRecords = ref(false)
 const studentDetailRecords = ref<DetailRecord[]>([])
@@ -418,12 +331,9 @@ const draftKeyword = ref('')
 const activeKeyword = ref('')
 const selectedCompany = ref('')
 const selectedStatus = ref('')
-const calendarMonthOffset = ref(0)
-const calendarAnchorMonth = ref<Date | null>(null)
 const mentorNavBadges = inject<MentorNavBadgeState | null>(MENTOR_NAV_BADGE_KEY, null)
 
 const companies = ['Goldman Sachs', 'JP Morgan', 'McKinsey', 'Google', 'Morgan Stanley']
-const weekdayLabels = ['日', '一', '二', '三', '四', '五', '六']
 
 const statusLabelMap: Record<string, string> = {
   new: '新申请',
@@ -470,45 +380,10 @@ const stats = computed(() => {
   return totals
 })
 
-const calendarMonthDate = computed(() => {
-  const anchor = calendarAnchorMonth.value || new Date()
-  return addMonths(anchor, calendarMonthOffset.value)
-})
-
-const calendarMonthLabel = computed(() => `${calendarMonthDate.value.getMonth() + 1}月`)
 const recentRecords = computed(() => studentDetailRecords.value.slice(0, 3))
 const fullRecords = computed(() => studentDetailRecords.value)
 
-const visibleCalendarEvents = computed(() =>
-  allCalendarEvents.value.filter((event) => isSameMonth(new Date(event.time), calendarMonthDate.value)),
-)
-
-const calendarWeekDays = computed(() => buildCalendarWeek(calendarMonthDate.value, visibleCalendarEvents.value))
-
 const jobDetailPreview = computed(() => createJobDetailPreview(selectedRow.value))
-
-function addMonths(date: Date, offset: number) {
-  const next = new Date(date)
-  next.setMonth(next.getMonth() + offset)
-  return next
-}
-
-function parseDateValue(value?: string) {
-  if (!value) return null
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date
-}
-
-function pickEarliestAnchorDate(values: Array<string | undefined>) {
-  return values
-    .map((value) => parseDateValue(value))
-    .filter((value): value is Date => value !== null)
-    .sort((left, right) => left.getTime() - right.getTime())[0] || null
-}
-
-function isSameMonth(left: Date, right: Date) {
-  return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth()
-}
 
 function isSameDay(left: Date, right: Date) {
   return (
@@ -518,44 +393,7 @@ function isSameDay(left: Date, right: Date) {
   )
 }
 
-function buildCalendarWeek(baseMonth: Date, events: CalendarEvent[]) {
-  const anchorDay = events.length ? Math.max(1, Math.min(...events.map((event) => new Date(event.time).getDate())) - 1) : 1
-  const start = new Date(baseMonth.getFullYear(), baseMonth.getMonth(), anchorDay)
-  return Array.from({ length: 7 }, (_, index) => {
-    const current = new Date(start)
-    current.setDate(start.getDate() + index)
-    const matchingEventIndex = events.findIndex((event) => isSameDay(new Date(event.time), current))
-    const matchingEvent = matchingEventIndex >= 0 ? events[matchingEventIndex] : undefined
-    return {
-      label: weekdayLabels[current.getDay()],
-      day: current.getDate(),
-      hasEvent: matchingEventIndex >= 0,
-      event: matchingEvent,
-      class: [
-        isSameDay(current, new Date()) ? 'today' : '',
-        matchingEventIndex === 0 ? 'warning-bg' : '',
-        matchingEventIndex === 1 ? 'danger-bg' : '',
-        matchingEventIndex >= 2 ? 'info-bg' : '',
-      ]
-        .filter(Boolean)
-        .join(' '),
-      badge: matchingEventIndex === 0 ? '明天' : matchingEventIndex === 1 ? '后天' : matchingEventIndex >= 2 ? '4天后' : '',
-      tagClass: matchingEventIndex === 0 ? 'warning' : matchingEventIndex === 1 ? 'danger' : 'info',
-    }
-  })
-}
-
 function formatInterviewTime(value?: string) {
-  if (!value) return '-'
-  return new Date(value).toLocaleDateString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function formatCalendarEventTime(value?: string) {
   if (!value) return '-'
   return new Date(value).toLocaleDateString('zh-CN', {
     month: '2-digit',
@@ -670,15 +508,6 @@ function normalizeDetailRecord(record: Record<string, any>): DetailRecord {
   }
 }
 
-function normalizeCalendarEvent(record: Record<string, any>): CalendarEvent {
-  return {
-    ...record,
-    color: record.color || '#7399C6',
-    badge: record.badge || '',
-    tagClass: record.tagClass || 'warning',
-  } as CalendarEvent
-}
-
 function rowClass(row: JobOverviewRow) {
   return {
     'row-new': row.coachingStatus === 'new',
@@ -704,21 +533,13 @@ function applySearch() {
   activeKeyword.value = draftKeyword.value.trim()
 }
 
-function toggleCalendarExpansion() {
-  expandCalendar.value = !expandCalendar.value
-}
-
-function shiftCalendarMonth(offset: number) {
-  calendarMonthOffset.value += offset
-}
-
-function openCalendarHighlight(event?: CalendarEvent) {
+function openCalendarHighlight(event: LeadMentorCalendarRecord) {
   if (!event) return
   const matched = filteredRows.value.find(
     (row) =>
       row.studentName === event.studentName ||
       row.company === event.company ||
-      (row.interviewTime && isSameDay(new Date(row.interviewTime), new Date(event.time))),
+      (row.interviewTime && event.interviewTime && isSameDay(new Date(row.interviewTime), new Date(event.interviewTime))),
   )
   if (matched) openJobDetail(matched)
 }
@@ -799,7 +620,7 @@ async function handleExport() {
       params: buildQueryParams(),
       responseType: 'blob',
     })
-    downloadBlob(`学员求职总览-${calendarMonthLabel.value}.xlsx`, blob as Blob)
+    downloadBlob(`学员求职总览.xlsx`, blob as Blob)
   } catch {}
 }
 
@@ -809,17 +630,10 @@ onMounted(async () => {
   } catch {}
 
   try {
-    const res = await http.get('/api/mentor/job-overview/calendar')
-    const rows = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
-    allCalendarEvents.value = rows.map((record: Record<string, any>) => normalizeCalendarEvent(record))
+    const rows = await getMentorJobOverviewCalendar()
+    allCalendarEvents.value = Array.isArray(rows) ? rows : []
   } catch {}
 
-  const earliestAnchor = pickEarliestAnchorDate([
-    ...allRows.value.map((row) => row.interviewTime),
-    ...allCalendarEvents.value.map((event) => event.time),
-  ])
-  if (earliestAnchor) calendarAnchorMonth.value = earliestAnchor
-  if (!calendarAnchorMonth.value) calendarAnchorMonth.value = new Date()
   void mentorNavBadges?.refreshJobBadge?.()
 })
 </script>
@@ -831,33 +645,6 @@ onMounted(async () => {
 .page-sub { font-size:14px; color:#64748B; margin-top:6px; }
 .card { background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(115,153,198,0.12); margin-bottom:20px; }
 .card-body { padding:22px; }
-.calendar-bar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-.calendar-title { display:flex; align-items:center; gap:6px; font-weight:600; font-size:13px; color:#7399C6; }
-.calendar-days { display:flex; gap:6px; flex:1; flex-wrap:wrap; }
-.calendar-day { text-align:center; padding:4px 8px; border-radius:6px; background:#F8FAFC; min-width:36px; cursor:default; }
-.calendar-day.today { background:#7399C6; color:#fff; }
-.calendar-day.warning-bg { background:#FEF3C7; cursor:pointer; }
-.calendar-day.danger-bg { background:#FEE2E2; cursor:pointer; }
-.calendar-day.info-bg { background:#DBEAFE; cursor:pointer; }
-.calendar-day-label { font-size:9px; }
-.calendar-day-num { font-size:14px; font-weight:700; }
-.calendar-nav { display:flex; align-items:center; gap:6px; }
-.calendar-month { font-size:12px; min-width:48px; text-align:center; color:#1E293B; font-weight:600; }
-.calendar-arrow { padding:2px; min-width:28px; }
-.calendar-legend { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; }
-.calendar-legend > div { display:flex; align-items:center; gap:6px; font-size:11px; }
-.legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
-.legend-dot--interview { background:#EF4444; }
-.legend-dot--class { background:#3B82F6; }
-.legend-dot--today { background:#7399C6; }
-.calendar-event-list { display:flex; flex-direction:column; gap:10px; }
-.calendar-event { display:flex; align-items:center; gap:12px; padding:12px; background:#fff; border-radius:8px; border:1px solid #E2E8F0; border-left:4px solid; }
-.event-date { min-width:50px; text-align:center; }
-.event-day { font-size:20px; font-weight:700; }
-.event-weekday { font-size:10px; color:#94A3B8; }
-.event-info { flex:1; }
-.event-title { font-weight:600; font-size:13px; }
-.event-time { font-size:11px; color:#94A3B8; }
 .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
 .stat-card { background:#fff; border-radius:12px; padding:16px; text-align:center; box-shadow:0 4px 24px rgba(115,153,198,0.12); }
 .stat-value { font-size:28px; font-weight:700; }

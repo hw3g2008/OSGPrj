@@ -10,8 +10,8 @@ export type CalendarTone = 'today' | 'danger' | 'info' | 'default'
 /** 面试日历事件（所有端共享最小集） */
 export interface InterviewEvent {
   id: number
-  /** ISO 8601 时间串，如 "2026-04-23 15:00:00" */
-  interviewTime: string
+  /** ISO 8601 时间串，如 "2026-04-23 15:00:00"。后端 calendar endpoint 过滤了 null，但复用到 list 场景时可能为空，故声明为可选；composable 内已兜底 */
+  interviewTime?: string
   studentName?: string
   company?: string
   position?: string

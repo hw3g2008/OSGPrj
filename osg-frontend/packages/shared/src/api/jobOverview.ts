@@ -86,3 +86,7 @@ export function acknowledgeLeadMentorJobOverviewStage(applicationId: number) {
 export function getLeadMentorJobOverviewCalendar() {
   return http.get<LeadMentorCalendarRecord[]>('/lead-mentor/job-overview/calendar')
 }
+
+export function getMentorJobOverviewCalendar() {
+  return http.get<LeadMentorCalendarRecord[]>('/api/mentor/job-overview/calendar')
+}

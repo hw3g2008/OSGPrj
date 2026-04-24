@@ -146,27 +146,9 @@ describe('mentor job overview behavior', () => {
     click.mockRestore()
   })
 
-  it('switches month label when the calendar arrows are used', async () => {
-    const wrapper = mountJobOverview()
-    await flushPromises()
-
-    const monthLabel = wrapper.find('.calendar-month')
-    expect(monthLabel.exists()).toBe(true)
-    expect(monthLabel.text()).toBe('1月')
-
-    const arrowButtons = wrapper.findAll('button').filter((button) =>
-      button.find('i.mdi-chevron-left').exists() || button.find('i.mdi-chevron-right').exists(),
-    )
-    expect(arrowButtons).toHaveLength(2)
-
-    await arrowButtons[1].trigger('click')
-    await flushPromises()
-    expect(wrapper.text()).toContain('2月')
-
-    await arrowButtons[0].trigger('click')
-    await flushPromises()
-    expect(wrapper.text()).toContain('1月')
-  })
+  // 旧硬编码日历 DOM 测试（月份切换 / 月份锚点 / 高亮日点击）已随 mentor 接入
+  // @osg/shared InterviewCalendar 共享组件而移除；这些行为由 shared 包的
+  // useInterviewCalendar.spec.ts + InterviewCalendar.spec.ts 覆盖。
 
   it('renders a stable anchor for the first new job row', async () => {
     const wrapper = mountJobOverview()
@@ -211,129 +193,6 @@ describe('mentor job overview behavior', () => {
     expect(wrapper.find('#job-new-1').exists()).toBe(true)
     expect(wrapper.get('#job-new-1').text()).toContain('辅导中')
     expect(wrapper.get('#job-new-1').text()).toContain('查看详情')
-  })
-
-  it('anchors the calendar to the earliest interview month when mixed-month events are returned', async () => {
-    mockGet.mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/job-overview/list') {
-        return {
-          rows: [
-            createRow({
-              id: 70,
-              studentName: 'Overview Interview 87837-1',
-              company: 'Career Overview Co 87837-1',
-              position: 'Strategy Analyst 87837-1 Interview',
-              interviewStage: 'first_round',
-              interviewTime: '2026-04-01T16:50:37.000Z',
-              coachingStatus: 'coaching',
-            }),
-            createRow({
-              id: 71,
-              studentName: '张三',
-              company: 'Goldman Sachs',
-              position: 'IB Analyst',
-              interviewStage: 'First Round',
-              interviewTime: '2026-01-27T10:00:00.000Z',
-              coachingStatus: 'coaching',
-            }),
-            createRow({
-              id: 72,
-              studentName: '李四',
-              company: 'McKinsey',
-              position: 'Consultant',
-              interviewStage: 'Case Study',
-              interviewTime: '2026-01-28T14:00:00.000Z',
-              coachingStatus: 'coaching',
-            }),
-            createRow({
-              id: 73,
-              studentName: '赵六',
-              company: 'Morgan Stanley',
-              position: 'IBD Analyst',
-              interviewStage: 'R2',
-              interviewTime: '2026-01-30T15:00:00.000Z',
-              coachingStatus: 'coaching',
-            }),
-          ],
-        }
-      }
-      if (url === '/api/mentor/job-overview/calendar') {
-        return [
-          createCalendarEvent({
-            id: 70,
-            studentName: 'Overview Interview 87837-1',
-            company: 'Career Overview Co 87837-1',
-            stage: 'first_round',
-            time: '2026-04-01T16:50:37.000Z',
-            position: 'Strategy Analyst 87837-1 Interview',
-            location: 'Boston',
-            day: 1,
-            weekday: '周三',
-          }),
-          createCalendarEvent({
-            id: 71,
-            studentName: '张三',
-            company: 'Goldman Sachs',
-            stage: 'First Round',
-            time: '2026-01-27T10:00:00.000Z',
-            position: 'IB Analyst',
-            location: 'Hong Kong',
-            day: 27,
-            weekday: '周二',
-          }),
-          createCalendarEvent({
-            id: 72,
-            studentName: '李四',
-            company: 'McKinsey',
-            stage: 'Case Study',
-            time: '2026-01-28T14:00:00.000Z',
-            position: 'Consultant',
-            location: 'Shanghai',
-            day: 28,
-            weekday: '周三',
-          }),
-          createCalendarEvent({
-            id: 73,
-            studentName: '赵六',
-            company: 'Morgan Stanley',
-            stage: 'R2',
-            time: '2026-01-30T15:00:00.000Z',
-            position: 'IBD Analyst',
-            location: 'New York',
-            day: 30,
-            weekday: '周五',
-          }),
-        ]
-      }
-      if (url === '/api/mentor/class-records/list') {
-        return { rows: [createClassRecord()] }
-      }
-      return { rows: [] }
-    })
-
-    const wrapper = mountJobOverview()
-    await flushPromises()
-
-    expect(wrapper.find('.calendar-month').text()).toBe('1月')
-    const dayNumbers = wrapper.findAll('.calendar-day-num').map((node) => node.text())
-    expect(dayNumbers).toContain('27')
-    expect(dayNumbers).toContain('28')
-    expect(dayNumbers).toContain('30')
-  })
-
-  it('opens the matching job detail when a highlighted calendar day is clicked', async () => {
-    const wrapper = mountJobOverview()
-    await flushPromises()
-
-    const highlightedDay = wrapper.findAll('.calendar-day').find((day) => day.classes().includes('warning-bg'))
-    expect(highlightedDay).toBeTruthy()
-
-    await highlightedDay!.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.find('[data-surface-id="modal-job-detail"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('学员求职详情')
-    expect(wrapper.text()).toContain('张三')
   })
 
   it('applies the keyword only after clicking search and updates the visible stats', async () => {
