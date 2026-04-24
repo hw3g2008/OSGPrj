@@ -27,10 +27,10 @@ import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
 
 @ExtendWith(MockitoExtension.class)
-class OsgLeadMentorJobOverviewServiceImplTest
+class OsgUserJobOverviewServiceImplTest
 {
     @InjectMocks
-    private OsgLeadMentorJobOverviewServiceImpl service;
+    private OsgUserJobOverviewServiceImpl service;
 
     @Mock
     private OsgJobApplicationMapper jobApplicationMapper;
@@ -168,7 +168,7 @@ class OsgLeadMentorJobOverviewServiceImplTest
         when(coachingMapper.selectCoachingList(any(OsgCoaching.class))).thenReturn(List.of());
         when(studentMapper.selectStudentByStudentIds(List.of(3010L))).thenReturn(List.of(student));
 
-        List<Map<String, Object>> rows = service.selectOverviewList("coaching", new OsgJobApplication(), 920L);
+        List<Map<String, Object>> rows = service.listByLeadMentor("coaching", new OsgJobApplication(), 920L);
 
         assertEquals(1, rows.size());
         assertEquals(7010L, rows.get(0).get("applicationId"));

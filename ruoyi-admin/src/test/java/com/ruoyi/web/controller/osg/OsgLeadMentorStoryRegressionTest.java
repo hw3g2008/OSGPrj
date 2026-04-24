@@ -38,7 +38,7 @@ import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.domain.OsgPosition;
 import com.ruoyi.system.service.IOsgClassRecordService;
-import com.ruoyi.system.service.IOsgLeadMentorJobOverviewService;
+import com.ruoyi.system.service.IOsgUserJobOverviewService;
 import com.ruoyi.system.service.IOsgLeadMentorMockPracticeService;
 import com.ruoyi.system.service.IOsgLeadMentorPositionService;
 import com.ruoyi.system.service.IOsgLeadMentorStudentService;
@@ -87,7 +87,7 @@ class OsgLeadMentorStoryRegressionTest
     private IOsgLeadMentorPositionService leadMentorPositionService;
 
     @Mock
-    private IOsgLeadMentorJobOverviewService leadMentorJobOverviewService;
+    private IOsgUserJobOverviewService userJobOverviewService;
 
     @Mock
     private IOsgLeadMentorMockPracticeService leadMentorMockPracticeService;
@@ -285,7 +285,7 @@ class OsgLeadMentorStoryRegressionTest
         securityMock.when(SecurityUtils::getUserId).thenReturn(810L);
 
         when(leadMentorAccessService.hasLeadMentorAccess(user)).thenReturn(true);
-        when(leadMentorJobOverviewService.selectOverviewList(eq("managed"), any(OsgJobApplication.class), eq(810L)))
+        when(userJobOverviewService.listByLeadMentor(eq("managed"), any(OsgJobApplication.class), eq(810L)))
             .thenReturn(List.of(
                 Map.of(
                     "applicationId", 7003L,
@@ -295,7 +295,7 @@ class OsgLeadMentorStoryRegressionTest
                     "stageUpdated", true
                 )
             ));
-        when(leadMentorJobOverviewService.selectOverviewDetail(7002L, 810L))
+        when(userJobOverviewService.detailForLeadMentor(7002L, 810L))
             .thenReturn(new HashMap<>(Map.of(
                 "applicationId", 7002L,
                 "studentName", "Bob",
@@ -304,13 +304,13 @@ class OsgLeadMentorStoryRegressionTest
                 "hoursUsed", 6,
                 "feedbackSummary", "拆分 case study 讲解后通过率提升"
             )));
-        when(leadMentorJobOverviewService.assignMentors(eq(7002L), any(Map.class), eq(810L), eq("leadmentor_jobs")))
+        when(userJobOverviewService.assignMentors(eq(7002L), any(Map.class), eq(810L), eq("leadmentor_jobs")))
             .thenReturn(new HashMap<>(Map.of(
                 "applicationId", 7002L,
                 "coachingStatus", "辅导中",
                 "mentorNames", "Jerry Li, Mike Wang"
             )));
-        when(leadMentorJobOverviewService.acknowledgeStageUpdate(7003L, 810L, "leadmentor_jobs"))
+        when(userJobOverviewService.acknowledgeStageUpdate(7003L, 810L, "leadmentor_jobs"))
             .thenReturn(new HashMap<>(Map.of(
                 "applicationId", 7003L,
                 "currentStage", "Second Round",
@@ -374,7 +374,7 @@ class OsgLeadMentorStoryRegressionTest
         securityMock.when(SecurityUtils::getUserId).thenReturn(810L);
 
         when(leadMentorAccessService.hasLeadMentorAccess(user)).thenReturn(true);
-        when(leadMentorJobOverviewService.selectOverviewList(eq("managed"), any(OsgJobApplication.class), eq(810L)))
+        when(userJobOverviewService.listByLeadMentor(eq("managed"), any(OsgJobApplication.class), eq(810L)))
             .thenReturn(
                 List.of(Map.of("applicationId", 7003L, "studentName", "Cindy", "stageUpdated", true)),
                 List.of(Map.of("applicationId", 7003L, "studentName", "Cindy", "stageUpdated", false))

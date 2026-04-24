@@ -19,7 +19,7 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgJobApplication;
-import com.ruoyi.system.service.IOsgLeadMentorJobOverviewService;
+import com.ruoyi.system.service.IOsgUserJobOverviewService;
 import com.ruoyi.system.service.impl.OsgLeadMentorAccessService;
 
 @RestController
@@ -29,7 +29,7 @@ public class OsgLeadMentorJobOverviewController extends BaseController
     private static final String ACCESS_DENIED_MESSAGE = "该账号无班主任端访问权限";
 
     @Autowired
-    private IOsgLeadMentorJobOverviewService leadMentorJobOverviewService;
+    private IOsgUserJobOverviewService userJobOverviewService;
 
     @Autowired
     private OsgLeadMentorAccessService leadMentorAccessService;
@@ -44,7 +44,7 @@ public class OsgLeadMentorJobOverviewController extends BaseController
 
         try
         {
-            List<Map<String, Object>> rows = leadMentorJobOverviewService.selectOverviewList(scope, query, getUserId());
+            List<Map<String, Object>> rows = userJobOverviewService.listByLeadMentor(scope, query, getUserId());
             return AjaxResult.success().put("rows", rows);
         }
         catch (ServiceException ex)
@@ -63,7 +63,7 @@ public class OsgLeadMentorJobOverviewController extends BaseController
 
         try
         {
-            List<Map<String, Object>> rows = leadMentorJobOverviewService.selectCalendarEvents(getUserId());
+            List<Map<String, Object>> rows = userJobOverviewService.calendarForLeadMentor(getUserId());
             return success(rows);
         }
         catch (ServiceException ex)
@@ -82,7 +82,7 @@ public class OsgLeadMentorJobOverviewController extends BaseController
 
         try
         {
-            return AjaxResult.success(leadMentorJobOverviewService.selectOverviewDetail(applicationId, getUserId()));
+            return AjaxResult.success(userJobOverviewService.detailForLeadMentor(applicationId, getUserId()));
         }
         catch (ServiceException ex)
         {
@@ -100,7 +100,7 @@ public class OsgLeadMentorJobOverviewController extends BaseController
 
         try
         {
-            Map<String, Object> result = leadMentorJobOverviewService.assignMentors(applicationId, body, getUserId(), resolveOperator());
+            Map<String, Object> result = userJobOverviewService.assignMentors(applicationId, body, getUserId(), resolveOperator());
             return AjaxResult.success(result);
         }
         catch (ServiceException ex)
@@ -119,7 +119,7 @@ public class OsgLeadMentorJobOverviewController extends BaseController
 
         try
         {
-            return AjaxResult.success(leadMentorJobOverviewService.acknowledgeStageUpdate(applicationId, getUserId(), resolveOperator()));
+            return AjaxResult.success(userJobOverviewService.acknowledgeStageUpdate(applicationId, getUserId(), resolveOperator()));
         }
         catch (ServiceException ex)
         {

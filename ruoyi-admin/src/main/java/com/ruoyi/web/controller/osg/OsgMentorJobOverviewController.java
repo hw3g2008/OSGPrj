@@ -23,7 +23,7 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.file.FileUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.OsgJobApplication;
-import com.ruoyi.system.service.IOsgLeadMentorJobOverviewService;
+import com.ruoyi.system.service.IOsgUserJobOverviewService;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
@@ -31,14 +31,14 @@ import jakarta.servlet.http.HttpServletResponse;
  * 由 OsgJobOverviewController（拆分前）抽取的 mentor 端方法构成。
  * URL 前缀：/api/mentor/job-overview/*
  * <p>
- * 注：Service 依赖 IOsgLeadMentorJobOverviewService 为 M0.1 保留，M0.2 将重命名为 IOsgJobOverviewService。
+ * Service 依赖 IOsgUserJobOverviewService（M0.2 完成三端 Service 合并，Assistant+LM+Mentor 共用）。
  */
 @RestController
 @RequestMapping("/api/mentor/job-overview")
 public class OsgMentorJobOverviewController extends BaseController
 {
     @Autowired
-    private IOsgLeadMentorJobOverviewService leadMentorJobOverviewService;
+    private IOsgUserJobOverviewService userJobOverviewService;
 
     @GetMapping("/list")
     public TableDataInfo mentorList(OsgJobApplication query)
@@ -47,7 +47,7 @@ public class OsgMentorJobOverviewController extends BaseController
         {
             startPage();
         }
-        List<Map<String, Object>> rows = leadMentorJobOverviewService.selectOverviewList("coaching", query, SecurityUtils.getUserId()).stream()
+        List<Map<String, Object>> rows = userJobOverviewService.listByMentor(query, SecurityUtils.getUserId()).stream()
             .map(this::toLegacyMentorOverviewRow)
             .toList();
         return getDataTable(rows);
@@ -56,14 +56,14 @@ public class OsgMentorJobOverviewController extends BaseController
     @PutMapping("/{id}/confirm")
     public AjaxResult confirm(@PathVariable Long id)
     {
-        return AjaxResult.success(leadMentorJobOverviewService.confirmCoaching(id, SecurityUtils.getUserId(), resolveOperator()));
+        return AjaxResult.success(userJobOverviewService.confirmCoaching(id, SecurityUtils.getUserId(), resolveOperator()));
     }
 
     @GetMapping("/calendar")
     public AjaxResult calendar()
     {
         OsgJobApplication query = buildMentorQueryFromRequest();
-        List<Map<String, Object>> rows = leadMentorJobOverviewService.selectOverviewList("coaching", query, SecurityUtils.getUserId()).stream()
+        List<Map<String, Object>> rows = userJobOverviewService.listByMentor(query, SecurityUtils.getUserId()).stream()
             .map(this::toLegacyCalendarEvent)
             .filter(event -> event.get("time") != null)
             .toList();
@@ -74,7 +74,7 @@ public class OsgMentorJobOverviewController extends BaseController
     public void mentorExport(HttpServletResponse response, OsgJobApplication query)
     {
         prepareExportResponse(response, "学员求职总览.xlsx");
-        List<JobOverviewExportRow> exportRows = leadMentorJobOverviewService.selectOverviewList("coaching", query, SecurityUtils.getUserId()).stream()
+        List<JobOverviewExportRow> exportRows = userJobOverviewService.listByMentor(query, SecurityUtils.getUserId()).stream()
             .map(this::toLegacyMentorOverviewRow)
             .map(JobOverviewExportRow::fromMentorLegacy)
             .toList();

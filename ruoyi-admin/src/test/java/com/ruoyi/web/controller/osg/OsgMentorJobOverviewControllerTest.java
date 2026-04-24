@@ -26,7 +26,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgJobApplication;
-import com.ruoyi.system.service.IOsgLeadMentorJobOverviewService;
+import com.ruoyi.system.service.IOsgUserJobOverviewService;
 
 @ExtendWith(MockitoExtension.class)
 class OsgMentorJobOverviewControllerTest
@@ -35,7 +35,7 @@ class OsgMentorJobOverviewControllerTest
     private OsgMentorJobOverviewController controller;
 
     @Mock
-    private IOsgLeadMentorJobOverviewService leadMentorJobOverviewService;
+    private IOsgUserJobOverviewService userJobOverviewService;
 
     private MockedStatic<SecurityUtils> securityMock;
 
@@ -55,7 +55,7 @@ class OsgMentorJobOverviewControllerTest
     @Test
     void mentorListShouldAdaptMainChainRowsIntoLegacyPayload()
     {
-        when(leadMentorJobOverviewService.selectOverviewList(eq("coaching"), any(OsgJobApplication.class), eq(100L)))
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(100L)))
             .thenReturn(List.of(Map.of(
                 "applicationId", 7L,
                 "studentId", 843L,
@@ -80,13 +80,13 @@ class OsgMentorJobOverviewControllerTest
         assertEquals("Shanghai", rows.get(0).get("location"));
         assertEquals("Round 1", rows.get(0).get("interviewStage"));
         assertEquals("new", rows.get(0).get("coachingStatus"));
-        verify(leadMentorJobOverviewService).selectOverviewList(eq("coaching"), any(OsgJobApplication.class), eq(100L));
+        verify(userJobOverviewService).listByMentor(any(OsgJobApplication.class), eq(100L));
     }
 
     @Test
     void confirmShouldPersistMainChainConfirmation()
     {
-        when(leadMentorJobOverviewService.confirmCoaching(5L, 100L, "system"))
+        when(userJobOverviewService.confirmCoaching(5L, 100L, "system"))
             .thenReturn(Map.of(
                 "applicationId", 5L,
                 "coachingStatus", "coaching"
@@ -99,13 +99,13 @@ class OsgMentorJobOverviewControllerTest
         Map<String, Object> data = (Map<String, Object>) result.get("data");
         assertEquals(5L, data.get("applicationId"));
         assertEquals("coaching", data.get("coachingStatus"));
-        verify(leadMentorJobOverviewService).confirmCoaching(5L, 100L, "system");
+        verify(userJobOverviewService).confirmCoaching(5L, 100L, "system");
     }
 
     @Test
     void calendarShouldExposeLegacyEventShapeFromMainChainRows()
     {
-        when(leadMentorJobOverviewService.selectOverviewList(eq("coaching"), any(OsgJobApplication.class), eq(100L)))
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(100L)))
             .thenReturn(Collections.singletonList(buildCalendarRow()));
 
         AjaxResult result = controller.calendar();
@@ -120,7 +120,7 @@ class OsgMentorJobOverviewControllerTest
         assertTrue(data.get(0).containsKey("day"));
         assertTrue(data.get(0).containsKey("weekday"));
         assertTrue(data.get(0).containsKey("color"));
-        verify(leadMentorJobOverviewService).selectOverviewList(eq("coaching"), any(OsgJobApplication.class), eq(100L));
+        verify(userJobOverviewService).listByMentor(any(OsgJobApplication.class), eq(100L));
     }
 
     private Map<String, Object> buildCalendarRow()

@@ -15,14 +15,14 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgJobApplication;
-import com.ruoyi.system.service.IOsgAssistantJobOverviewService;
+import com.ruoyi.system.service.IOsgUserJobOverviewService;
 
 @RestController
 @RequestMapping("/assistant/job-overview")
 public class OsgAssistantJobOverviewController extends BaseController
 {
     @Autowired
-    private IOsgAssistantJobOverviewService assistantJobOverviewService;
+    private IOsgUserJobOverviewService userJobOverviewService;
 
     @GetMapping("/list")
     public AjaxResult list(
@@ -39,7 +39,7 @@ public class OsgAssistantJobOverviewController extends BaseController
             query.setCompanyName(companyName);
             query.setCurrentStage(currentStage);
 
-            List<Map<String, Object>> rows = assistantJobOverviewService.selectOverviewList(query, userId);
+            List<Map<String, Object>> rows = userJobOverviewService.listByAssistant(query, userId);
 
             if (coachingStatus != null && !coachingStatus.isBlank())
             {
@@ -62,7 +62,7 @@ public class OsgAssistantJobOverviewController extends BaseController
         try
         {
             Long userId = getUserId();
-            List<Map<String, Object>> rows = assistantJobOverviewService.selectCalendarEvents(userId);
+            List<Map<String, Object>> rows = userJobOverviewService.calendarForAssistant(userId);
             return success(rows);
         }
         catch (ServiceException ex)
@@ -77,7 +77,7 @@ public class OsgAssistantJobOverviewController extends BaseController
         try
         {
             Long userId = getUserId();
-            Map<String, Object> detail = assistantJobOverviewService.selectOverviewDetail(applicationId, userId);
+            Map<String, Object> detail = userJobOverviewService.detailForAssistant(applicationId, userId);
             if (detail == null || detail.isEmpty())
             {
                 return AjaxResult.error("记录不存在或无权访问");

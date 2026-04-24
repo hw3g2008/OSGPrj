@@ -44,7 +44,7 @@ import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.service.impl.OsgLeadMentorAccessService;
-import com.ruoyi.system.service.impl.OsgLeadMentorJobOverviewServiceImpl;
+import com.ruoyi.system.service.impl.OsgUserJobOverviewServiceImpl;
 
 @WebMvcTest(controllers = OsgLeadMentorJobOverviewController.class)
 @AutoConfigureMockMvc(addFilters = true)
@@ -55,7 +55,7 @@ import com.ruoyi.system.service.impl.OsgLeadMentorJobOverviewServiceImpl;
     LogoutSuccessHandlerImpl.class,
     JwtAuthenticationTokenFilter.class,
     PermitAllUrlProperties.class,
-    OsgLeadMentorJobOverviewServiceImpl.class
+    OsgUserJobOverviewServiceImpl.class
 })
 class OsgLeadMentorJobOverviewControllerTest
 {
