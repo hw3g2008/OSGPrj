@@ -44,14 +44,14 @@ public class OsgPositionServiceImpl implements IOsgPositionService
 {
     private static final Logger log = LoggerFactory.getLogger(OsgPositionServiceImpl.class);
     private static final ZoneId ZONE_ID = ZoneId.systemDefault();
-    private static final String DICT_POSITION_CATEGORY = "osg_position_category";
+    private static final String DICT_POSITION_CATEGORY = "osg_job_category";
     private static final String DICT_POSITION_DISPLAY_STATUS = "osg_position_display_status";
     private static final String DICT_POSITION_INDUSTRY = "osg_company_type";
     private static final String DICT_POSITION_COMPANY = "osg_company_name";
     private static final String DICT_RECRUITMENT_CYCLE = "osg_recruit_cycle";
     private static final String DICT_PROJECT_YEAR = "osg_project_year";
-    private static final String DICT_POSITION_REGION = "osg_position_region";
-    private static final String DICT_POSITION_CITY = "osg_position_city";
+    private static final String DICT_POSITION_REGION = "osg_region";
+    private static final String DICT_POSITION_CITY = "osg_city";
     private static final String DICT_POSITION_PROCESS_GLOSSARY = "osg_position_process_glossary";
     private static final String DICT_POSITION_PUBLISH_PRESET = "osg_position_publish_preset";
     private static final String DICT_POSITION_UI_COPY = "osg_position_ui_copy";
@@ -199,15 +199,14 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     {
         ensurePositionReferenceData();
 
-        List<OsgPosition> rows = selectPositionList(new OsgPosition());
         Map<String, Object> meta = new LinkedHashMap<>();
-        meta.put("categories", buildMergedOptions(distinctValues(rows, OsgPosition::getPositionCategory), DICT_POSITION_CATEGORY));
-        meta.put("displayStatuses", buildMergedOptions(distinctValues(rows, OsgPosition::getDisplayStatus), DICT_POSITION_DISPLAY_STATUS));
-        meta.put("industries", buildMergedOptions(distinctValues(rows, OsgPosition::getIndustry), DICT_POSITION_INDUSTRY));
+        meta.put("categories", buildStaticOptions(DICT_POSITION_CATEGORY));
+        meta.put("displayStatuses", buildStaticOptions(DICT_POSITION_DISPLAY_STATUS));
+        meta.put("industries", buildStaticOptions(DICT_POSITION_INDUSTRY));
         meta.put("recruitmentCycles", buildStaticOptions(DICT_RECRUITMENT_CYCLE));
-        meta.put("projectYears", buildMergedOptions(distinctValues(rows, OsgPosition::getProjectYear), DICT_PROJECT_YEAR));
-        meta.put("regions", buildMergedOptions(distinctValues(rows, OsgPosition::getRegion), DICT_POSITION_REGION));
-        meta.put("citiesByRegion", buildCitiesByRegion(rows));
+        meta.put("projectYears", buildStaticOptions(DICT_PROJECT_YEAR));
+        meta.put("regions", buildStaticOptions(DICT_POSITION_REGION));
+        meta.put("citiesByRegion", buildCitiesByRegionFromDict());
         meta.put("publishPresets", buildStaticOptions(DICT_POSITION_PUBLISH_PRESET));
         meta.put("processGlossary", buildStaticOptions(DICT_POSITION_PROCESS_GLOSSARY));
 
@@ -437,35 +436,10 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             }
 
             seedStaticDicts(List.of(
-                new DictSeed(DICT_POSITION_CATEGORY, "summer", "暑期实习", 1L, null, null, null),
-                new DictSeed(DICT_POSITION_CATEGORY, "fulltime", "全职招聘", 2L, null, null, null),
-                new DictSeed(DICT_POSITION_CATEGORY, "offcycle", "非常规周期", 3L, null, null, null),
-                new DictSeed(DICT_POSITION_CATEGORY, "spring", "春季实习", 4L, null, null, null),
-                new DictSeed(DICT_POSITION_CATEGORY, "events", "招聘活动", 5L, null, null, null),
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "visible", "展示中", 1L, "success", null, null),
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "hidden", "已隐藏", 2L, "muted", null, null),
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "expired", "已过期", 3L, "danger", null, null),
-                new DictSeed(DICT_PROJECT_YEAR, "2024", "2024", 1L, null, null, null),
-                new DictSeed(DICT_PROJECT_YEAR, "2025", "2025", 2L, null, null, null),
-                new DictSeed(DICT_PROJECT_YEAR, "2026", "2026", 3L, null, null, null),
-                new DictSeed(DICT_PROJECT_YEAR, "2027", "2027", 4L, null, null, null),
-                new DictSeed(DICT_POSITION_REGION, "na", "北美", 1L, null, null, null),
-                new DictSeed(DICT_POSITION_REGION, "eu", "欧洲", 2L, null, null, null),
-                new DictSeed(DICT_POSITION_REGION, "ap", "亚太", 3L, null, null, null),
-                new DictSeed(DICT_POSITION_REGION, "cn", "中国大陆", 4L, null, null, null),
-                new DictSeed(DICT_POSITION_CITY, "New York", "New York", 1L, null, "na", null),
-                new DictSeed(DICT_POSITION_CITY, "San Francisco", "San Francisco", 2L, null, "na", null),
-                new DictSeed(DICT_POSITION_CITY, "Chicago", "Chicago", 3L, null, "na", null),
-                new DictSeed(DICT_POSITION_CITY, "Boston", "Boston", 4L, null, "na", null),
-                new DictSeed(DICT_POSITION_CITY, "London", "London", 5L, null, "eu", null),
-                new DictSeed(DICT_POSITION_CITY, "Frankfurt", "Frankfurt", 6L, null, "eu", null),
-                new DictSeed(DICT_POSITION_CITY, "Hong Kong", "Hong Kong", 7L, null, "ap", null),
-                new DictSeed(DICT_POSITION_CITY, "Singapore", "Singapore", 8L, null, "ap", null),
-                new DictSeed(DICT_POSITION_CITY, "Tokyo", "Tokyo", 9L, null, "ap", null),
-                new DictSeed(DICT_POSITION_CITY, "Shanghai", "Shanghai", 10L, null, "cn", null),
-                new DictSeed(DICT_POSITION_CITY, "Beijing", "Beijing", 11L, null, "cn", null),
-                new DictSeed(DICT_POSITION_CITY, "St Louis", "St Louis", 12L, null, "na", null),
-                new DictSeed(DICT_POSITION_PUBLISH_PRESET, "week", "本周", 1L, null, null, null),
+                new DictSeed(DICT_POSITION_PUBLISH_PRESET, "week", "本周", 1L, null, null, null), 
                 new DictSeed(DICT_POSITION_PUBLISH_PRESET, "month", "本月", 2L, null, null, null),
                 new DictSeed(DICT_POSITION_PUBLISH_PRESET, "quarter", "近三个月", 3L, null, null, null),
                 new DictSeed(DICT_POSITION_PROCESS_GLOSSARY, "OA", "Online Assessment", 1L, null, null, null),
@@ -541,17 +515,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
 
     private Map<String, List<Map<String, Object>>> buildCitiesByRegion(List<OsgPosition> rows)
     {
-        Map<String, List<Map<String, Object>>> cities = new LinkedHashMap<>();
-        for (SysDictData item : loadDictItems(DICT_POSITION_CITY))
-        {
-            String parent = defaultText(item.getListClass(), item.getRemark());
-            if (!StringUtils.hasText(parent))
-            {
-                continue;
-            }
-            cities.computeIfAbsent(parent, ignored -> new ArrayList<>())
-                .add(option(item.getDictValue(), item.getDictLabel(), item.getCssClass(), parent, item.getRemark()));
-        }
+        Map<String, List<Map<String, Object>>> cities = buildCitiesByRegionFromDict();
 
         for (OsgPosition row : rows)
         {
@@ -567,6 +531,47 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             }
         }
         return cities;
+    }
+
+    private Map<String, List<Map<String, Object>>> buildCitiesByRegionFromDict()
+    {
+        Map<String, List<Map<String, Object>>> cities = new LinkedHashMap<>();
+        for (SysDictData item : loadDictItems(DICT_POSITION_CITY))
+        {
+            String parent = defaultText(item.getListClass(), null);
+            if (!StringUtils.hasText(parent))
+            {
+                parent = extractParentValue(item.getRemark());
+            }
+            if (!StringUtils.hasText(parent))
+            {
+                continue;
+            }
+            cities.computeIfAbsent(parent, ignored -> new ArrayList<>())
+                .add(option(item.getDictValue(), item.getDictLabel(), item.getCssClass(), parent, item.getRemark()));
+        }
+        return cities;
+    }
+
+    private String extractParentValue(String remark)
+    {
+        if (!StringUtils.hasText(remark) || !remark.contains("parentValue"))
+        {
+            return null;
+        }
+        try
+        {
+            int idx = remark.indexOf("\"parentValue\"");
+            int colon = remark.indexOf(':', idx);
+            int quote1 = remark.indexOf('"', colon);
+            int quote2 = remark.indexOf('"', quote1 + 1);
+            if (quote1 >= 0 && quote2 > quote1)
+            {
+                return remark.substring(quote1 + 1, quote2);
+            }
+        }
+        catch (Exception ignored) {}
+        return null;
     }
 
     private List<String> buildUploadSteps(Map<String, SysDictData> uiCopy)

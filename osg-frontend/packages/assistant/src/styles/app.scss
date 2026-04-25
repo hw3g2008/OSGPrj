@@ -9,3 +9,17 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: normal;
 }
+
+// ── Page layout base (aligned with Admin global.scss) ──
+.osg-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+// ── Ant Design table cell word-wrap (global) ──
+.ant-table-cell {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}

@@ -1,330 +1,489 @@
 <template>
-  <section id="page-myclass" class="class-records-page">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          课程记录
-          <span class="page-title-en">Class Records</span>
-        </h1>
-        <p class="page-sub">
-          查看已分配课程记录、审核状态和反馈摘要，快速完成教学跟进与课程回顾。
-        </p>
-      </div>
+  <div class="osg-page">
+    <PageHeader
+      title="课程记录"
+      subtitle="Class Records"
+      :description="scopeDescription"
+    >
+      <template #actions>
+        <a-button type="primary" @click="openReportModal">
+          <template #icon><PlusOutlined /></template>
+          上报课程记录
+        </a-button>
+      </template>
+    </PageHeader>
 
-      <div class="page-header__actions">
-        <span class="status-pill">课程总览</span>
-        <span class="readonly-pill">只读查看 / 反馈摘要</span>
-      </div>
-    </div>
-
-    <section class="flow-banner">
-      <div class="flow-banner__header">
-        <h2>课程记录流程</h2>
-        <p>围绕课程执行、记录审核和反馈回看，帮助助教快速识别待处理课程。</p>
-      </div>
-      <div class="flow-banner__steps">
-        <span v-for="step in flowSteps" :key="step" class="flow-step">{{ step }}</span>
-      </div>
-    </section>
-
-    <section class="summary-grid">
-      <article v-for="card in summaryCards" :key="card.label" class="summary-card">
-        <span class="summary-card__label">{{ card.label }}</span>
-        <strong class="summary-card__value" :class="card.valueClass">{{ card.value }}</strong>
-        <span class="summary-card__hint">{{ card.hint }}</span>
-      </article>
-    </section>
-
-    <section class="toolbar-card">
-      <div class="toolbar-card__row">
-        <label class="toolbar-field toolbar-field--wide">
-          <span class="toolbar-field__label">搜索课程 / 学员</span>
-          <input
-            id="assistant-class-records-keyword"
-            v-model.trim="filters.keyword"
-            class="form-input"
-            type="text"
-            placeholder="搜索学员、导师或课程内容"
-            @keydown.enter.prevent="handleSearch"
+    <a-tabs
+      v-model:activeKey="activeScope"
+      class="scope-tabs"
+      @change="handleScopeChange"
+    >
+      <a-tab-pane key="mine">
+        <template #tab>
+          <span>我的申报</span>
+          <a-badge
+            v-if="scopeCount('mine') > 0"
+            :count="scopeCount('mine')"
+            :number-style="{ backgroundColor: '#1D4ED8' }"
+            class="tab-badge"
           />
-        </label>
+        </template>
+      </a-tab-pane>
+      <a-tab-pane key="managed">
+        <template #tab>
+          <span>我管理的学员</span>
+          <a-badge
+            v-if="scopeCount('managed') > 0"
+            :count="scopeCount('managed')"
+            :number-style="{ backgroundColor: '#7C3AED' }"
+            class="tab-badge"
+          />
+        </template>
+      </a-tab-pane>
+    </a-tabs>
 
-        <label class="toolbar-field">
-          <span class="toolbar-field__label">审核状态</span>
-          <select v-model="filters.status" class="form-select">
-            <option value="">全部状态</option>
-            <option value="pending">待审核</option>
-            <option value="approved">已通过</option>
-            <option value="rejected">已驳回</option>
-          </select>
-        </label>
+    <a-alert type="info" show-icon class="flow-alert">
+      <template #message>
+        <a-space wrap :size="[12, 8]">
+          <span class="flow-alert__title">课程记录流程</span>
+          <a-tag v-for="(step, idx) in flowSteps" :key="step" color="blue">
+            {{ idx + 1 }}. {{ step }}
+          </a-tag>
+        </a-space>
+      </template>
+    </a-alert>
 
-        <label class="toolbar-field">
-          <span class="toolbar-field__label">申报角色</span>
-          <select v-model="filters.reporterRole" class="form-select">
-            <option value="">全部角色</option>
-            <option v-for="option in reporterRoleOptions" :key="option" :value="option">
-              {{ reporterRoleLabel(option) }}
-            </option>
-          </select>
-        </label>
-
-        <label class="toolbar-field">
-          <span class="toolbar-field__label">辅导类型</span>
-          <select v-model="filters.coachingType" class="form-select">
-            <option value="">全部类型</option>
-            <option v-for="option in coachingTypeOptions" :key="option" :value="option">
-              {{ coachingTypeLabel(option) }}
-            </option>
-          </select>
-        </label>
-      </div>
-
-      <div class="toolbar-card__meta">
-        <span class="toolbar-chip">课程审核</span>
-        <span class="toolbar-chip">反馈摘要</span>
-        <span class="toolbar-chip">时长与费用</span>
-        <button
-          id="assistant-class-records-search"
-          type="button"
-          class="primary-button"
-          @click="handleSearch"
-        >
-          应用筛选
-        </button>
-        <button
-          id="assistant-class-records-reset"
-          type="button"
-          class="ghost-button"
-          @click="resetFilters"
-        >
-          重置
-        </button>
-      </div>
-    </section>
-
-
-    <section v-if="errorMessage" class="state-card state-card--error">
-      <h2>课程记录加载失败</h2>
-      <p>{{ errorMessage }}</p>
-      <button type="button" class="ghost-button" @click="loadRecords">重新加载</button>
-    </section>
-
-    <section v-else-if="loading" class="state-card">
-      <h2>课程记录加载中</h2>
-      <p>正在读取课程记录、审核状态和反馈摘要，请稍候。</p>
-    </section>
-
-    <section v-else-if="filteredRecords.length === 0" class="state-card">
-      <h2>当前筛选下暂无课程记录</h2>
-      <p>可以清空关键词或筛选条件，再次查看全部课程记录。</p>
-    </section>
-
-    <div v-else class="content-grid">
-      <section class="panel-card panel-card--table">
-        <header class="panel-card__header">
-          <div>
-            <h2>课程记录列表</h2>
-            <p>默认按上课时间倒序显示，便于优先查看最近课程和待审核记录。</p>
-          </div>
-        </header>
-
-        <div class="panel-card__body">
-          <table class="data-table class-records-table">
-            <thead>
-              <tr>
-                <th>课程信息</th>
-                <th>学员 / 导师</th>
-                <th>辅导内容</th>
-                <th>上课时间</th>
-                <th>时长 / 费用</th>
-                <th>状态</th>
-                <th>详情</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="record in filteredRecords"
-                :key="record.recordId"
-                data-class-record-row
-                :class="{ 'is-active': selectedRecord?.recordId === record.recordId }"
-              >
-                <td>
-                  <div class="table-primary">{{ record.courseContent || '未填写课程内容' }}</div>
-                  <div class="table-muted">{{ record.recordCode || `#R${record.recordId}` }}</div>
-                </td>
-                <td>
-                  <div class="table-primary">{{ record.studentName || '未命名学员' }}</div>
-                  <div class="table-muted">{{ mentorDisplay(record) }}</div>
-                </td>
-                <td>
-                  <span class="table-tag table-tag--info">{{ coachingTypeLabel(record.coachingType) }}</span>
-                  <div class="table-muted">{{ reporterRoleLabel(record.reporterRole) }}</div>
-                </td>
-                <td>
-                  <div class="table-primary">{{ formatDateTime(record.classDate || record.submittedAt) }}</div>
-                  <div class="table-muted">提交于 {{ formatDateTime(record.submittedAt) }}</div>
-                </td>
-                <td>
-                  <div class="table-primary">{{ formatHours(record.durationHours) }}</div>
-                  <div class="table-muted">{{ formatFee(record.courseFee) }}</div>
-                </td>
-                <td>
-                  <span class="table-tag" :class="statusToneClass(record.status)">
-                    {{ statusLabel(record.status) }}
-                  </span>
-                  <div class="table-muted">{{ ratingSummary(record.studentRating) }}</div>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    class="link-button"
-                    @click="selectRecord(record.recordId)"
-                  >
-                    查看详情
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <aside class="panel-card panel-card--detail">
-        <header class="panel-card__header">
-          <div>
-            <h2>课程详情</h2>
-            <p>查看当前课程的审核状态、反馈摘要和课程信息。</p>
-          </div>
-        </header>
-
-        <div v-if="selectedRecord" class="panel-card__body detail-card">
-          <div class="detail-grid">
-            <div>
-              <span class="detail-label">课程内容</span>
-              <div class="detail-value">{{ selectedRecord.courseContent || '未填写课程内容' }}</div>
-            </div>
-            <div>
-              <span class="detail-label">辅导类型</span>
-              <div class="detail-value">{{ coachingTypeLabel(selectedRecord.coachingType) }}</div>
-            </div>
-            <div>
-              <span class="detail-label">学员</span>
-              <div class="detail-value">{{ selectedRecord.studentName || '未命名学员' }}</div>
-            </div>
-            <div>
-              <span class="detail-label">导师</span>
-              <div class="detail-value">{{ selectedRecord.mentorName || '未分配导师' }}</div>
-            </div>
-            <div>
-              <span class="detail-label">申报角色</span>
-              <div class="detail-value">{{ reporterRoleLabel(selectedRecord.reporterRole) }}</div>
-            </div>
-            <div>
-              <span class="detail-label">审核状态</span>
-              <div class="detail-value">{{ statusLabel(selectedRecord.status) }}</div>
-            </div>
-            <div>
-              <span class="detail-label">上课时间</span>
-              <div class="detail-value">{{ formatDateTime(selectedRecord.classDate || selectedRecord.submittedAt) }}</div>
-            </div>
-            <div>
-              <span class="detail-label">课时 / 费用</span>
-              <div class="detail-value">{{ formatHours(selectedRecord.durationHours) }} · {{ formatFee(selectedRecord.courseFee) }}</div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <span class="detail-label">学员评价</span>
-            <div class="detail-panel">{{ ratingSummary(selectedRecord.studentRating) }}</div>
-          </div>
-
-          <div class="detail-section">
-            <span class="detail-label">反馈摘要</span>
-            <div class="detail-panel">{{ feedbackSummary(selectedRecord.reviewRemark) }}</div>
-          </div>
-        </div>
-
-        <div v-else class="panel-card__body panel-card__body--state">
-          选择一条课程记录后，可在这里查看课程详情与反馈摘要。
-        </div>
-      </aside>
+    <div class="stats-row">
+      <a-card
+        v-for="card in summaryCards"
+        :key="card.key"
+        :bordered="false"
+        class="stat-card"
+      >
+        <a-statistic
+          :title="card.label"
+          :value="card.value"
+          :value-style="valueStyleMap[card.key]"
+        />
+      </a-card>
     </div>
-  </section>
+
+    <a-card :bordered="false" class="filter-card">
+      <div class="filters">
+        <a-input
+          id="assistant-class-records-keyword"
+          v-model:value="filters.keyword"
+          placeholder="搜索学员姓名/ID"
+          allow-clear
+          style="width: 180px"
+          @press-enter="handleSearch"
+        >
+          <template #prefix>
+            <SearchOutlined style="color: #94A3B8" />
+          </template>
+        </a-input>
+
+        <a-select
+          v-model:value="filters.coachingType"
+          placeholder="辅导类型"
+          allow-clear
+          style="width: 140px"
+          :options="coachingTypeSelectOptions"
+        />
+
+        <a-select
+          v-model:value="filters.courseContent"
+          placeholder="课程内容"
+          allow-clear
+          style="width: 180px"
+          :options="courseContentSelectOptions"
+        />
+
+        <a-select
+          v-model:value="filters.reporterRole"
+          placeholder="申报人"
+          allow-clear
+          style="width: 120px"
+          :options="reporterRoleSelectOptions"
+        />
+
+        <a-range-picker
+          v-model:value="filters.classDateRange"
+          value-format="YYYY-MM-DD"
+          style="width: 240px"
+        />
+
+        <a-button id="assistant-class-records-search" type="primary" @click="handleSearch">
+          <template #icon><SearchOutlined /></template>
+          搜索
+        </a-button>
+        <a-button id="assistant-class-records-reset" type="text" @click="resetFilters">
+          <template #icon><ReloadOutlined /></template>
+          重置
+        </a-button>
+      </div>
+    </a-card>
+
+    <a-alert
+      v-if="errorMessage"
+      type="error"
+      show-icon
+      :message="'课程记录加载失败'"
+      :description="errorMessage"
+      class="error-alert"
+    >
+      <template #action>
+        <a-button size="small" type="link" @click="loadRecords">重新加载</a-button>
+      </template>
+    </a-alert>
+
+    <a-card v-else :bordered="false" :body-style="{ padding: 0 }" class="table-card">
+      <a-tabs v-model:activeKey="activeTab" class="status-tabs" @change="handleTabChange">
+        <a-tab-pane v-for="tab in tabList" :key="tab.key">
+          <template #tab>
+            <span>{{ tab.label }}</span>
+            <a-badge
+              v-if="tabCount(tab.key) > 0"
+              :count="tabCount(tab.key)"
+              :number-style="{ backgroundColor: tab.badgeColor }"
+              class="tab-badge"
+            />
+          </template>
+        </a-tab-pane>
+      </a-tabs>
+
+      <a-table
+        :columns="columns"
+        :data-source="filteredRecords"
+        :loading="loading"
+        :pagination="tablePagination"
+        :scroll="{ x: 'max-content' }"
+        :locale="{ emptyText: '当前筛选下暂无课程记录' }"
+        :row-class-name="rowClassName"
+        row-key="recordId"
+        :row-attrs="() => ({ 'data-class-record-row': '' })"
+        size="middle"
+        @change="handleTableChange"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'recordId'">
+            <a-tag color="blue">#{{ record.recordCode || `R${record.recordId}` }}</a-tag>
+          </template>
+
+          <template v-else-if="column.key === 'student'">
+            <div class="cell-stack">
+              <strong class="name-text">{{ record.studentName || '-' }}</strong>
+              <span class="muted-id">ID: {{ record.studentId }}</span>
+            </div>
+          </template>
+
+          <template v-else-if="column.key === 'reporter'">
+            <div class="cell-stack">
+              <strong class="name-text">{{ record.mentorName || '-' }}</strong>
+              <span class="muted-id">{{ reporterRoleLabel(record.reporterRole) }}</span>
+            </div>
+          </template>
+
+          <template v-else-if="column.key === 'coachingType'">
+            <a-tag v-if="record.coachingType" :color="coachingTypeColor(record.coachingType)">
+              {{ record.coachingType }}
+            </a-tag>
+            <span v-else class="muted-id">-</span>
+          </template>
+
+          <template v-else-if="column.key === 'courseContent'">
+            <a-tag :style="contentTagStyle(record)">
+              {{ record.courseContent || '-' }}
+            </a-tag>
+          </template>
+
+          <template v-else-if="column.key === 'classDate'">
+            <span>{{ formatClassDate(record.classDate) }}</span>
+          </template>
+
+          <template v-else-if="column.key === 'durationHours'">
+            <span>{{ formatHours(record.durationHours) }}</span>
+          </template>
+
+          <template v-else-if="column.key === 'courseFee'">
+            <span class="fee-text">{{ formatFee(record.courseFee) }}</span>
+          </template>
+
+          <template v-else-if="column.key === 'studentRating'">
+            <a-tag v-if="record.studentRating" color="green">
+              ⭐ {{ record.studentRating }}
+            </a-tag>
+            <span v-else class="muted-id">-</span>
+          </template>
+
+          <template v-else-if="column.key === 'status'">
+            <a-tag :color="statusTagColor(record.status)">
+              {{ statusLabel(record.status) }}
+            </a-tag>
+          </template>
+
+          <template v-else-if="column.key === 'action'">
+            <a-button type="link" size="small" @click="openDetail(record)">
+              {{ record.status === 'rejected' ? '查看原因' : '查看详情' }}
+            </a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
+
+    <a-modal
+      v-model:open="detailVisible"
+      :title="selectedRecord?.status === 'rejected' ? '驳回原因' : '课程记录详情'"
+      :footer="null"
+      :width="720"
+      @cancel="closeDetail"
+    >
+      <a-descriptions v-if="selectedRecord" :column="2" bordered size="small">
+        <a-descriptions-item label="记录ID">
+          {{ selectedRecord.recordCode || `#R${selectedRecord.recordId}` }}
+        </a-descriptions-item>
+        <a-descriptions-item label="学员">
+          {{ selectedRecord.studentName || '-' }}
+          <span class="muted-id">（ID: {{ selectedRecord.studentId }}）</span>
+        </a-descriptions-item>
+        <a-descriptions-item label="申报人">
+          {{ selectedRecord.mentorName || '-' }} / {{ reporterRoleLabel(selectedRecord.reporterRole) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="辅导内容">
+          <a-tag v-if="selectedRecord.coachingType" :color="coachingTypeColor(selectedRecord.coachingType)">
+            {{ selectedRecord.coachingType }}
+          </a-tag>
+          <span v-else class="muted-id">-</span>
+        </a-descriptions-item>
+        <a-descriptions-item label="课程内容">
+          <a-tag :style="contentTagStyle(selectedRecord)">
+            {{ selectedRecord.courseContent || '-' }}
+          </a-tag>
+        </a-descriptions-item>
+        <a-descriptions-item label="上课日期">
+          {{ formatClassDate(selectedRecord.classDate) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="时长">
+          {{ formatHours(selectedRecord.durationHours) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="课时费">
+          {{ formatFee(selectedRecord.courseFee) }}
+        </a-descriptions-item>
+        <a-descriptions-item
+          v-if="selectedRecord.classStatus === 'absent'"
+          label="旷课备注"
+          :span="2"
+        >
+          {{ extractAbsenceRemark(selectedRecord.comments) || '未填写' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="学员评价" :span="2">
+          <a-tag v-if="selectedRecord.studentRating" color="green">
+            ⭐ {{ selectedRecord.studentRating }}
+          </a-tag>
+          <span v-else>-</span>
+        </a-descriptions-item>
+        <a-descriptions-item label="审核状态" :span="2">
+          <a-tag :color="statusTagColor(selectedRecord.status)">
+            {{ statusLabel(selectedRecord.status) }}
+          </a-tag>
+        </a-descriptions-item>
+        <a-descriptions-item
+          v-if="selectedRecord.status === 'rejected'"
+          label="驳回原因"
+          :span="2"
+        >
+          {{ selectedRecord.reviewRemark || '（未填写驳回原因）' }}
+        </a-descriptions-item>
+        <a-descriptions-item v-else label="反馈摘要" :span="2">
+          {{ selectedRecord.reviewRemark || '暂无反馈摘要' }}
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-modal>
+
+    <AssistantClassReportFlowModal
+      v-model:open="reportModalOpen"
+      @submitted="handleReportSubmitted"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
+import PageHeader from '@/components/PageHeader.vue'
+import AssistantClassReportFlowModal from './AssistantClassReportFlowModal.vue'
 import {
   getAssistantClassRecordList,
   getAssistantClassRecordStats,
+  type AssistantClassRecordFilters,
   type AssistantClassRecordRow,
   type AssistantClassRecordStats,
 } from '@osg/shared/api'
 
+const STORAGE_KEY = 'osg-assistant-class-records-state-v1'
+
 interface FilterState {
   keyword: string
-  status: string
-  reporterRole: string
-  coachingType: string
+  coachingType: string | undefined
+  courseContent: string | undefined
+  reporterRole: string | undefined
+  classDateRange: string[] | null
 }
 
+interface TabDef {
+  key: string
+  label: string
+  badgeColor: string
+}
+
+// ── State ──
 const loading = ref(true)
 const errorMessage = ref('')
 const records = ref<AssistantClassRecordRow[]>([])
 const stats = ref<AssistantClassRecordStats | null>(null)
-const selectedRecordId = ref<number | null>(null)
+const activeScope = ref<string>('mine')
+const activeTab = ref<string>('all')
+const detailVisible = ref(false)
+const selectedRecord = ref<AssistantClassRecordRow | null>(null)
+const reportModalOpen = ref(false)
+const pagination = reactive({ current: 1, pageSize: 10 })
 let latestLoadRequestId = 0
 
 const filters = reactive<FilterState>({
   keyword: '',
-  status: '',
-  reporterRole: '',
-  coachingType: '',
+  coachingType: undefined,
+  courseContent: undefined,
+  reporterRole: undefined,
+  classDateRange: [],
 })
 
-
-const defaultFlowSteps = [
-  '课程执行',
-  '记录提交',
-  '审核处理',
-  '反馈回看',
+// ── Tabs ──
+const tabList: TabDef[] = [
+  { key: 'all', label: '全部', badgeColor: '#94A3B8' },
+  { key: 'pending', label: '待审核', badgeColor: '#F59E0B' },
+  { key: 'approved', label: '已通过', badgeColor: '#22C55E' },
+  { key: 'rejected', label: '已驳回', badgeColor: '#EF4444' },
 ]
+
+// ── Select Options ──
+// value 为数据库真实 raw key（osg_class_record.course_type），传给后端 SQL 直接过滤
+const coachingTypeSelectOptions = [
+  { value: 'job_coaching', label: '岗位辅导' },
+  { value: 'mock_practice', label: '模拟应聘' },
+  { value: 'basic_course', label: '基础课程' },
+]
+
+// value 为数据库真实 raw key（osg_class_record.class_status），label 对齐弹窗 jobContentOptions / basicContentOptions
+const courseContentSelectOptions = [
+  { value: 'technical', label: '技术的' },
+  { value: 'behavioral', label: '行为训练' },
+  { value: 'resume_update', label: '简历更新' },
+  { value: 'mock_interview', label: '模拟面试的课程' },
+  { value: 'networking_midterm', label: '人际关系的课程' },
+  { value: 'mock_midterm', label: '模拟期中考试' },
+  { value: 'case_prep', label: '咨询案例准备' },
+  { value: 'other', label: '其他' },
+  { value: 'absent', label: '旷课' },
+]
+
+const reporterRoleSelectOptions = [
+  { value: 'mentor', label: '导师' },
+  { value: 'headteacher', label: '班主任' },
+  { value: 'assistant', label: '助教' },
+]
+
+// ── Flow steps fallback ──
+const defaultFlowSteps = ['课程执行', '记录提交', '审核处理', '反馈回看']
 
 const flowSteps = computed(() => {
   const steps = stats.value?.flowSteps?.filter(Boolean) || []
   return steps.length ? steps : defaultFlowSteps
 })
 
-const reporterRoleOptions = computed(() =>
-  Array.from(new Set(records.value.map((record) => record.reporterRole).filter(Boolean))) as string[],
-)
+const scopeDescription = computed(() => {
+  return activeScope.value === 'mine'
+    ? '查看我申报的课程记录、审核状态和反馈摘要'
+    : '查看我管理学员的课程记录、审核状态和反馈摘要'
+})
 
-const coachingTypeOptions = computed(() =>
-  Array.from(new Set(records.value.map((record) => record.coachingType).filter(Boolean))) as string[],
-)
+// ── Table columns ──
+const columns: TableColumnsType<AssistantClassRecordRow> = [
+  { title: '记录ID', key: 'recordId', width: 110 },
+  { title: '学员', key: 'student', width: 140 },
+  { title: '申报人', key: 'reporter', width: 140 },
+  { title: '辅导内容', key: 'coachingType', width: 120 },
+  { title: '课程内容', key: 'courseContent', width: 160 },
+  { title: '上课日期', key: 'classDate', width: 120 },
+  { title: '时长', key: 'durationHours', width: 80 },
+  { title: '课时费', key: 'courseFee', width: 100 },
+  { title: '学员评价', key: 'studentRating', width: 110 },
+  { title: '审核状态', key: 'status', width: 100 },
+  { title: '操作', key: 'action', width: 110, fixed: 'right' },
+]
 
+// ── Stats value styles ──
+const valueStyleMap: Record<string, Record<string, string>> = {
+  all: { color: '#1E293B' },
+  pending: { color: '#F59E0B' },
+  approved: { color: '#22C55E' },
+  settlement: { color: '#1D4ED8' },
+}
+
+// ── Course content color Map (key = Chinese label, 对齐弹窗 + 后端 toCourseContentLabel) ──
+const contentTagStyleMap: Record<string, Record<string, string>> = {
+  '技术的': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' },
+  '行为训练': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' },
+  '简历更新': { background: '#FEF3C7', color: '#92400E', border: 'none' },
+  '模拟面试的课程': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' },
+  '人际关系的课程': { background: '#EDE9FE', color: '#5B21B6', border: 'none' },
+  '模拟期中考试': { background: '#F59E0B', color: '#FFFFFF', border: 'none' },
+  '咨询案例准备': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' },
+  '其他': { background: '#F1F5F9', color: '#475569', border: 'none' },
+  '旷课': { background: '#FEE2E2', color: '#B91C1C', border: 'none' },
+}
+
+// ── Computed ──
 const filteredRecords = computed(() => {
   const keyword = filters.keyword.trim().toLowerCase()
+  const range = Array.isArray(filters.classDateRange) ? filters.classDateRange : []
+  const [rangeStart, rangeEnd] = range
 
   return [...records.value]
     .filter((record) => {
       const matchesKeyword =
         !keyword ||
-        [
-          record.studentName,
-          record.mentorName,
-          record.courseContent,
-          record.recordCode,
-        ]
+        [record.studentName, record.mentorName, record.recordCode]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(keyword))
 
+      const matchesCoaching =
+        !filters.coachingType ||
+        coachingTypeToRaw(record.coachingType) === filters.coachingType
+
+      const matchesContent =
+        !filters.courseContent ||
+        courseContentToRaw(record.courseContent) === filters.courseContent
+
+      const matchesReporter =
+        !filters.reporterRole ||
+        reporterRoleToRaw(record.reporterRole) === filters.reporterRole
+
+      const recordDate = String(record.classDate || '').slice(0, 10)
+      const matchesDateRange =
+        (!rangeStart || recordDate >= rangeStart) &&
+        (!rangeEnd || recordDate <= rangeEnd)
+
+      const matchesTab =
+        activeTab.value === 'all' || normalizeStatus(record.status) === activeTab.value
+
       return (
         matchesKeyword &&
-        (!filters.status || normalizeStatus(record.status) === filters.status) &&
-        (!filters.reporterRole || record.reporterRole === filters.reporterRole) &&
-        (!filters.coachingType || record.coachingType === filters.coachingType)
+        matchesCoaching &&
+        matchesContent &&
+        matchesReporter &&
+        matchesDateRange &&
+        matchesTab
       )
     })
     .sort((left, right) =>
@@ -334,63 +493,48 @@ const filteredRecords = computed(() => {
     )
 })
 
-const selectedRecord = computed(
-  () => filteredRecords.value.find((record) => record.recordId === selectedRecordId.value) || null,
-)
+const tablePagination = computed<TablePaginationConfig>(() => ({
+  current: pagination.current,
+  pageSize: pagination.pageSize,
+  total: filteredRecords.value.length,
+  showSizeChanger: true,
+  showTotal: (total: number) => `共 ${total} 条`,
+  pageSizeOptions: ['10', '20', '50'],
+}))
 
 const summaryCards = computed(() => {
   const current = stats.value
-  const fallbackRecords = filteredRecords.value
-
-  const totalCount = current?.totalCount ?? fallbackRecords.length
+  const fallback = records.value
+  const totalCount = current?.totalCount ?? fallback.length
   const pendingCount =
     current?.pendingCount ??
-    fallbackRecords.filter((record) => normalizeStatus(record.status) === 'pending').length
+    fallback.filter((record) => normalizeStatus(record.status) === 'pending').length
   const approvedCount =
     current?.approvedCount ??
-    fallbackRecords.filter((record) => normalizeStatus(record.status) === 'approved').length
-  const rejectedCount =
-    current?.rejectedCount ??
-    fallbackRecords.filter((record) => normalizeStatus(record.status) === 'rejected').length
+    fallback.filter((record) => normalizeStatus(record.status) === 'approved').length
 
   return [
+    { key: 'all', label: '全部课程', value: totalCount },
+    { key: 'pending', label: '待审核', value: pendingCount },
+    { key: 'approved', label: '已通过', value: approvedCount },
     {
-      label: '全部课程',
-      value: String(totalCount),
-      hint: '当前账号下可查看的课程记录总数',
-      valueClass: '',
-    },
-    {
-      label: '待审核',
-      value: String(pendingCount),
-      hint: '仍需重点关注的课程记录',
-      valueClass: 'summary-card__value--warning',
-    },
-    {
-      label: '已通过',
-      value: String(approvedCount),
-      hint: '已完成审核的课程记录',
-      valueClass: 'summary-card__value--success',
-    },
-    {
+      key: 'settlement',
       label: '待结算金额',
       value: formatFee(current?.pendingSettlementAmount || 0),
-      hint: rejectedCount > 0 ? `另有 ${rejectedCount} 条记录待补充后再处理` : '当前记录可继续跟进后续处理',
-      valueClass: 'summary-card__value--accent',
     },
   ]
 })
 
+// ── Normalize / Label ──
 function normalizeStatus(status?: string | null) {
   const normalized = String(status || '').trim().toLowerCase()
   if (
     normalized.includes('completed') ||
     normalized.includes('done') ||
-    normalized.includes('finish')
+    normalized.includes('finish') ||
+    normalized.includes('approved') ||
+    normalized.includes('通过')
   ) {
-    return 'approved'
-  }
-  if (normalized.includes('approved') || normalized.includes('通过')) {
     return 'approved'
   }
   if (normalized.includes('rejected') || normalized.includes('驳回')) {
@@ -401,655 +545,393 @@ function normalizeStatus(status?: string | null) {
 
 function statusLabel(status?: string | null) {
   const normalized = normalizeStatus(status)
-  if (normalized === 'approved') {
-    return '已通过'
-  }
-  if (normalized === 'rejected') {
-    return '已驳回'
-  }
+  if (normalized === 'approved') return '已通过'
+  if (normalized === 'rejected') return '已驳回'
   return '待审核'
 }
 
-function statusToneClass(status?: string | null) {
+function statusTagColor(status?: string | null) {
   const normalized = normalizeStatus(status)
-  if (normalized === 'approved') {
-    return 'table-tag--success'
-  }
-  if (normalized === 'rejected') {
-    return 'table-tag--danger'
-  }
-  return 'table-tag--warning'
+  if (normalized === 'approved') return 'green'
+  if (normalized === 'rejected') return 'red'
+  return 'orange'
 }
 
 function reporterRoleLabel(role?: string | null) {
   const normalized = String(role || '').trim().toLowerCase()
-  if (!normalized) {
-    return '未标注角色'
-  }
-  if (normalized.includes('assistant') || normalized.includes('助教')) {
-    return '助教'
-  }
-  if (normalized.includes('headteacher') || normalized.includes('班主任')) {
-    return '班主任'
-  }
-  if (normalized.includes('mentor') || normalized.includes('导师')) {
-    return '导师'
-  }
+  if (!normalized) return '-'
+  if (normalized.includes('assistant') || normalized.includes('助教')) return '助教'
+  if (normalized.includes('headteacher') || normalized.includes('班主任')) return '班主任'
+  if (normalized.includes('mentor') || normalized.includes('导师')) return '导师'
   return String(role)
 }
 
-function coachingTypeLabel(type?: string | null) {
-  const normalized = String(type || '').trim().toLowerCase()
-  if (!normalized) {
-    return '未标注类型'
-  }
-  if (normalized.includes('mock') || normalized.includes('模拟')) {
-    return '模拟应聘'
-  }
-  if (normalized.includes('position') || normalized.includes('岗位')) {
-    return '岗位辅导'
-  }
-  if (normalized.includes('course') || normalized.includes('课程')) {
-    return '课程辅导'
-  }
-  return String(type)
+function reporterRoleToRaw(role?: string | null) {
+  const label = reporterRoleLabel(role)
+  if (label === '助教') return 'assistant'
+  if (label === '班主任') return 'headteacher'
+  if (label === '导师') return 'mentor'
+  return ''
 }
 
-function formatDateTime(value?: string | null) {
-  if (!value) {
-    return '未安排'
-  }
+function coachingTypeToRaw(coachingType?: string | null) {
+  const normalized = String(coachingType || '').trim()
+  if (normalized === '岗位辅导') return 'job_coaching'
+  if (normalized === '模拟应聘') return 'mock_practice'
+  if (normalized === '基础课程') return 'basic_course'
+  return ''
+}
 
+function courseContentToRaw(courseContent?: string | null) {
+  const normalized = String(courseContent || '').trim()
+  const match = courseContentSelectOptions.find((option) => option.label === normalized)
+  return match?.value || ''
+}
+
+// ── Tag color helpers ──
+function coachingTypeColor(coachingType?: string | null) {
+  const normalized = String(coachingType || '').trim()
+  if (normalized === '岗位辅导') return 'blue'
+  if (normalized === '模拟应聘') return 'green'
+  if (normalized === '基础课程') return 'purple'
+  return undefined
+}
+
+function contentTagStyle(record: AssistantClassRecordRow) {
+  const label = String(record.courseContent || '').trim()
+  return contentTagStyleMap[label] || {}
+}
+
+function rowClassName(record: AssistantClassRecordRow) {
+  return normalizeStatus(record.status) === 'rejected' ? 'rejected-row' : ''
+}
+
+// tab badge 计数：基于 stats（全局统计）而非 records（当前 tab 过滤后的列表），
+// 以保证切 tab 时 badge 保持稳定。stats 由 loadStats 在不传 tab 的前提下拉取。
+function tabCount(tabKey: string) {
+  const s = stats.value
+  if (!s) return 0
+  if (tabKey === 'all') return s.totalCount ?? 0
+  if (tabKey === 'pending') return s.pendingCount ?? 0
+  if (tabKey === 'approved') return s.approvedCount ?? 0
+  if (tabKey === 'rejected') return s.rejectedCount ?? 0
+  return 0
+}
+
+function scopeCount(scopeKey: string) {
+  const s = stats.value
+  if (!s) return 0
+  if (scopeKey === 'mine') return s.mineCount ?? 0
+  if (scopeKey === 'managed') return s.managedCount ?? 0
+  return 0
+}
+
+// ── Formatters ──
+function formatClassDate(value?: string | null) {
+  if (!value) return '-'
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return String(value).replace('T', ' ').slice(0, 16)
-  }
-
-  const year = parsed.getFullYear()
+  if (Number.isNaN(parsed.getTime())) return String(value).slice(0, 10)
   const month = String(parsed.getMonth() + 1).padStart(2, '0')
   const date = String(parsed.getDate()).padStart(2, '0')
-  const hours = String(parsed.getHours()).padStart(2, '0')
-  const minutes = String(parsed.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${date} ${hours}:${minutes}`
+  const year = parsed.getFullYear()
+  return `${month}/${date}/${year}`
 }
 
 function formatHours(value?: number | null) {
-  if (value == null) {
-    return '--'
-  }
+  if (value == null) return '--'
   return `${value}h`
 }
 
+function extractAbsenceRemark(comments?: string | null): string {
+  if (!comments) return ''
+  const match = comments.match(/旷课备注:\s*([^\n]*)/)
+  return match ? match[1].trim() : ''
+}
+
 function formatFee(value?: string | number | null) {
-  if (value == null || value === '') {
-    return '¥0'
-  }
+  if (value == null || value === '') return '¥0'
   const amount = Number(value)
-  if (Number.isNaN(amount)) {
-    return `¥${value}`
-  }
+  if (Number.isNaN(amount)) return `¥${value}`
   return `¥${amount.toLocaleString('zh-CN')}`
 }
 
-function ratingSummary(value?: string | null) {
-  if (!value) {
-    return '暂无学员评价'
+// ── Handlers ──
+function openDetail(record: AssistantClassRecordRow) {
+  selectedRecord.value = record
+  detailVisible.value = true
+}
+
+function closeDetail() {
+  detailVisible.value = false
+}
+
+function openReportModal() {
+  reportModalOpen.value = true
+}
+
+async function handleReportSubmitted() {
+  if (activeTab.value === 'approved' || activeTab.value === 'rejected') {
+    activeTab.value = 'pending'
   }
-  return `学员评价：${value}`
-}
-
-function feedbackSummary(value?: string | null) {
-  if (!value) {
-    return '当前记录暂无反馈备注，可继续关注后续审核结果。'
-  }
-  return value
-}
-
-function mentorDisplay(record: AssistantClassRecordRow) {
-  const mentorName = record.mentorName || '未分配导师'
-  return `${mentorName} · ${reporterRoleLabel(record.reporterRole)}`
-}
-
-function selectRecord(recordId: number) {
-  selectedRecordId.value = recordId
-}
-
-async function loadRecords() {
-  const requestId = ++latestLoadRequestId
-  loading.value = true
-  errorMessage.value = ''
-  stats.value = null
-
-  try {
-    const keyword = filters.keyword || undefined
-    void loadStats(keyword, requestId)
-    const listResponse = await getAssistantClassRecordList({ keyword })
-
-    if (requestId !== latestLoadRequestId) {
-      return
-    }
-
-    records.value = listResponse.rows || []
-
-    const availableIds = new Set(records.value.map((record) => record.recordId))
-    if (!selectedRecordId.value || !availableIds.has(selectedRecordId.value)) {
-      selectedRecordId.value = records.value[0]?.recordId ?? null
-    }
-  } catch (error: any) {
-    if (requestId !== latestLoadRequestId) {
-      return
-    }
-    errorMessage.value = error?.message || '课程记录暂时无法加载，请稍后重试。'
-  } finally {
-    if (requestId === latestLoadRequestId) {
-      loading.value = false
-    }
-  }
-}
-
-async function loadStats(keyword: string | undefined, requestId: number) {
-  try {
-    const statsResponse = await getAssistantClassRecordStats({ keyword })
-    if (requestId !== latestLoadRequestId) {
-      return
-    }
-    stats.value = statsResponse
-  } catch {
-    if (requestId === latestLoadRequestId) {
-      stats.value = null
-    }
-  }
+  pagination.current = 1
+  persistState()
+  await loadRecords()
 }
 
 async function handleSearch() {
+  pagination.current = 1
+  persistState()
   await loadRecords()
 }
 
 async function resetFilters() {
   filters.keyword = ''
-  filters.status = ''
-  filters.reporterRole = ''
-  filters.coachingType = ''
+  filters.coachingType = undefined
+  filters.courseContent = undefined
+  filters.reporterRole = undefined
+  filters.classDateRange = []
+  pagination.current = 1
+  persistState()
   await loadRecords()
 }
 
+async function handleTabChange() {
+  pagination.current = 1
+  persistState()
+  await loadRecords()
+}
+
+async function handleScopeChange() {
+  pagination.current = 1
+  persistState()
+  await loadRecords()
+}
+
+function handleTableChange(config: TablePaginationConfig) {
+  pagination.current = config.current || 1
+  pagination.pageSize = config.pageSize || 10
+  persistState()
+}
+
+// ── Persistence ──
+function persistState() {
+  try {
+    const payload = {
+      filters: { ...filters },
+      activeScope: activeScope.value,
+      activeTab: activeTab.value,
+      pagination: { ...pagination },
+    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  } catch {
+    // ignore localStorage errors (quota / privacy mode)
+  }
+}
+
+function restoreState() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (!raw) return
+    const payload = JSON.parse(raw)
+    if (payload && typeof payload === 'object') {
+      if (payload.filters) Object.assign(filters, payload.filters)
+      // 归一化：a-select 的 v-model 必须是 undefined 才显示 placeholder（空串会被 AntDv 识别为“已选空值”）
+      if (filters.coachingType === '') filters.coachingType = undefined
+      if (filters.courseContent === '') filters.courseContent = undefined
+      if (filters.reporterRole === '') filters.reporterRole = undefined
+      if (payload.activeScope) activeScope.value = payload.activeScope
+      if (payload.activeTab) activeTab.value = payload.activeTab
+      if (payload.pagination) Object.assign(pagination, payload.pagination)
+    }
+  } catch {
+    // ignore parse errors
+  }
+}
+
+// ── Query param builder ──
+// 前端 concept → 后端参数名（OsgAssistantClassRecordController.list 接收）：
+//   coachingType  → courseType     (DB osg_class_record.course_type: job_coaching / mock_practice / basic_course)
+//   courseContent → classStatus    (DB osg_class_record.class_status: technical / behavioral / resume_update / mock_interview / networking_midterm / mock_midterm / case_prep / other / absent)
+//   reporterRole  → courseSource   (申报人角色 raw key。如 mentor / headteacher / assistant)
+//   activeTab     → tab            (状态 Tab。'all' 时不传，非 all 传并驱动后端 SQL过滤)
+function buildQueryParams(): AssistantClassRecordFilters {
+  const range = Array.isArray(filters.classDateRange) ? filters.classDateRange : []
+  const [rangeStart, rangeEnd] = range
+  return {
+    keyword: filters.keyword || undefined,
+    courseType: filters.coachingType || undefined,
+    classStatus: filters.courseContent || undefined,
+    courseSource: filters.reporterRole || undefined,
+    tab: activeTab.value !== 'all' ? activeTab.value : undefined,
+    classDateStart: rangeStart || undefined,
+    classDateEnd: rangeEnd || undefined,
+    scope: activeScope.value as 'mine' | 'managed',
+  }
+}
+
+// ── Data loading ──
+async function loadRecords() {
+  const requestId = ++latestLoadRequestId
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const params = buildQueryParams()
+    // stats 应反映当前筛选下的全局 tab 分布，所以传给 loadStats 的 params 必须剥离 tab。
+    // 其它筛选条件（keyword/courseType/classStatus/courseSource/classDate*）保留。
+    const { tab: _ignoredTab, ...statsParams } = params
+    void loadStats(statsParams, requestId)
+    const listResponse = await getAssistantClassRecordList(params)
+
+    if (requestId !== latestLoadRequestId) return
+    records.value = listResponse.rows || []
+  } catch (error: any) {
+    if (requestId !== latestLoadRequestId) return
+    errorMessage.value = error?.message || '课程记录暂时无法加载，请稍后重试。'
+  } finally {
+    if (requestId === latestLoadRequestId) loading.value = false
+  }
+}
+
+async function loadStats(
+  params: AssistantClassRecordFilters,
+  requestId: number,
+) {
+  try {
+    const statsResponse = await getAssistantClassRecordStats(params)
+    if (requestId !== latestLoadRequestId) return
+    stats.value = statsResponse
+  } catch {
+    if (requestId === latestLoadRequestId) stats.value = null
+  }
+}
 
 onMounted(() => {
+  restoreState()
   void loadRecords()
 })
 </script>
 
 <style scoped lang="scss">
-.class-records-page {
-  display: grid;
-  gap: 24px;
-  color: #1f2937;
+// ── 根容器：对齐助教端公共样式（styles/app.scss 定义 .osg-page flex column gap:16px） ──
+.osg-page {
+  display: block;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 28px 30px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #f7fafc 0%, #eef4ff 100%);
-  border: 1px solid #d8e4f5;
+// ── Flow alert banner ──
+.flow-alert {
+  margin-bottom: 8px;
+
+  &__title {
+    font-weight: 600;
+    color: #1d4ed8;
+    margin-right: 4px;
+  }
 }
 
-.page-title {
-  margin: 0;
-  font-size: 30px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.page-title-en {
-  margin-left: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.page-sub {
-  margin: 12px 0 0;
-  max-width: 680px;
-  line-height: 1.7;
-  color: #475569;
-}
-
-.page-header__actions {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.status-pill,
-.readonly-pill,
-.toolbar-chip,
-.table-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-pill {
-  padding: 10px 14px;
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.readonly-pill {
-  padding: 10px 14px;
-  background: #ecfdf5;
-  color: #047857;
-}
-
-.flow-banner,
-.toolbar-card,
-.panel-card,
-.state-card,
-.editor-card {
-  border-radius: 24px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
-}
-
-.flow-banner {
-  display: grid;
-  gap: 18px;
-  padding: 24px 28px;
-}
-
-.flow-banner__header h2,
-.panel-card__header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.flow-banner__header p,
-.panel-card__header p,
-.state-card p {
-  margin: 8px 0 0;
-  color: #64748b;
-  line-height: 1.6;
-}
-
-.flow-banner__steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.flow-step {
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid #dbe4f0;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.summary-grid {
+// ── Stats row（4 张统计卡） ──
+.stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
-}
-
-.summary-card {
-  display: grid;
-  gap: 10px;
-  padding: 22px;
-  border-radius: 20px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
-}
-
-.summary-card__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.summary-card__value {
-  font-size: 30px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.summary-card__value--warning {
-  color: #d97706;
-}
-
-.summary-card__value--success {
-  color: #059669;
-}
-
-.summary-card__value--accent {
-  color: #1d4ed8;
-}
-
-.summary-card__hint {
-  font-size: 13px;
-  line-height: 1.6;
-  color: #94a3b8;
-}
-
-.toolbar-card {
-  display: grid;
-  gap: 18px;
-  padding: 24px 28px;
-}
-
-.editor-card {
-  display: grid;
-  gap: 0;
-}
-
-.editor-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
   margin-bottom: 16px;
 }
 
-.toolbar-card__row {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
-  gap: 14px;
+.stat-card {
+  :deep(.ant-statistic-title) {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+  }
 }
 
-.toolbar-field {
-  display: grid;
-  gap: 8px;
+// ── Filter card（对齐助教端公共约定） ──
+.filter-card {
+  margin-bottom: 16px;
 }
 
-.toolbar-field__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #475569;
-}
-
-.form-input,
-.form-select {
-  width: 100%;
-  min-height: 44px;
-  border-radius: 14px;
-  border: 1px solid #d7dee9;
-  background: #fff;
-  padding: 0 14px;
-  color: #111827;
-  font-size: 14px;
-}
-
-.form-input:focus,
-.form-select:focus {
-  outline: none;
-  border-color: #7c9cc9;
-  box-shadow: 0 0 0 3px rgba(124, 156, 201, 0.16);
-}
-
-.toolbar-card__meta {
+.filters {
   display: flex;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
 }
 
-.toolbar-chip {
-  padding: 8px 12px;
-  background: #eff6ff;
-  color: #315b96;
+// ── Error alert（对齐助教端公共约定） ──
+.error-alert {
+  margin-bottom: 16px;
 }
 
-.primary-button,
-.ghost-button,
-.link-button {
-  border: 0;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
+// ── Table card（对齐助教端公共约定） ──
+.table-card {
+  margin-bottom: 16px;
 }
 
-.primary-button,
-.ghost-button {
-  min-height: 42px;
-  padding: 0 16px;
-}
-
-.primary-button {
-  background: #2f5e9d;
-  color: #fff;
-}
-
-.ghost-button {
-  background: #eef2f7;
-  color: #334155;
-}
-
-.form-textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid #d7dee9;
+.scope-tabs {
+  margin-bottom: 16px;
   background: #fff;
-  color: #111827;
-  font-size: 14px;
-  box-sizing: border-box;
-  resize: vertical;
-}
+  border-radius: 8px;
 
-.form-textarea:focus {
-  outline: none;
-  border-color: #7c9cc9;
-  box-shadow: 0 0 0 3px rgba(124, 156, 201, 0.16);
-}
-
-.editor-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.state-card {
-  padding: 28px 30px;
-}
-
-.state-card h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.state-card--error {
-  border-color: #fecaca;
-  background: #fff7f7;
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
-  gap: 20px;
-  align-items: start;
-}
-
-.panel-card--table,
-.panel-card--detail {
-  min-width: 0;
-}
-
-.panel-card__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px 24px 0;
-}
-
-.panel-card__body {
-  padding: 20px 24px 24px;
-}
-
-.panel-card--table .panel-card__body {
-  overflow-x: auto;
-}
-
-.panel-card__body--state {
-  color: #64748b;
-  line-height: 1.7;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.class-records-table {
-  min-width: 860px;
-}
-
-.data-table th,
-.data-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #edf2f7;
-  text-align: left;
-  vertical-align: top;
-}
-
-.data-table th {
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
-}
-
-.data-table tbody tr {
-  transition: background 0.2s ease;
-}
-
-.data-table tbody tr:hover,
-.data-table tbody tr.is-active {
-  background: #f8fbff;
-}
-
-.table-primary {
-  font-weight: 600;
-  color: #111827;
-}
-
-.table-muted {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.table-tag {
-  padding: 7px 10px;
-}
-
-.table-tag--info {
-  background: #e0f2fe;
-  color: #0f766e;
-}
-
-.table-tag--success {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.table-tag--warning {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.table-tag--danger {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.link-button {
-  background: transparent;
-  color: #2f5e9d;
-  padding: 0;
-}
-
-.detail-card {
-  display: grid;
-  gap: 18px;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 16px;
-}
-
-.detail-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.detail-value {
-  color: #111827;
-  line-height: 1.6;
-}
-
-.detail-section {
-  display: grid;
-  gap: 8px;
-}
-
-.detail-panel {
-  padding: 16px;
-  border-radius: 16px;
-  background: #f8fafc;
-  color: #334155;
-  line-height: 1.7;
-}
-
-@media (max-width: 1200px) {
-  .summary-grid,
-  .toolbar-card__row,
-  .content-grid,
-  .editor-grid {
-    grid-template-columns: 1fr;
+  :deep(.ant-tabs-nav) {
+    padding: 0 16px;
+    margin-bottom: 0;
   }
+}
 
-  .detail-grid {
-    grid-template-columns: 1fr;
+.status-tabs {
+  padding: 0 16px;
+  border-bottom: 1px solid #e5e7eb;
+
+  :deep(.ant-tabs-nav) {
+    margin-bottom: 0;
+  }
+}
+
+.tab-badge {
+  margin-left: 8px;
+}
+
+// ── Table cell 内部堆叠布局 ──
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name-text {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.muted-id {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.fee-text {
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
+// ── 驳回行高亮（红色点缀） ──
+:deep(.rejected-row) {
+  background-color: rgba(239, 68, 68, 0.04);
+
+  &:hover > td {
+    background-color: rgba(239, 68, 68, 0.08) !important;
+  }
+}
+
+// ── 响应式 ──
+@media (max-width: 1200px) {
+  .stats-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .page-header,
-  .toolbar-card,
-  .panel-card__header,
-  .panel-card__body,
-  .state-card {
-    padding-left: 18px;
-    padding-right: 18px;
-  }
-
-  .page-header {
-    flex-direction: column;
-  }
-
-  .data-table {
-    display: block;
-    overflow-x: auto;
+  .stats-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

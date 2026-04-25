@@ -1,148 +1,155 @@
 <template>
-  <div id="page-student-list" class="page-student-list">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          学员列表
-          <span class="page-title-en">Student List</span>
-        </h1>
-        <p class="page-sub">查看我教的学员和助教为我的全部学员信息、服务状态与课程进度</p>
+  <div class="osg-page">
+    <PageHeader
+      title="学员列表"
+      subtitle="Student List"
+      description="查看我教的学员和助教为我的全部学员信息及求职数据"
+    />
+
+    <a-card :bordered="false" class="filter-card">
+      <div class="filters">
+        <a-input
+          id="assistant-students-keyword"
+          v-model:value="filters.keyword"
+          placeholder="搜索姓名"
+          allow-clear
+          style="width: 180px"
+          @press-enter="handleSearch"
+        >
+          <template #prefix>
+            <SearchOutlined style="color: #94A3B8" />
+          </template>
+        </a-input>
+        <!-- TODO: 待后端支持「关系类型」字段后补充「学员类型」筛选（我教的学员 / 助教为我） -->
+        <a-input
+          v-model:value="filters.school"
+          placeholder="学校"
+          allow-clear
+          style="width: 160px"
+          @press-enter="handleSearch"
+        />
+        <a-select
+          v-model:value="filters.majorDirection"
+          placeholder="主攻方向"
+          allow-clear
+          style="width: 140px"
+          :options="majorDirectionSelectOptions"
+        />
+        <a-select
+          v-model:value="filters.accountStatus"
+          placeholder="账号状态"
+          allow-clear
+          style="width: 140px"
+          :options="accountStatusOptions"
+        />
+        <a-button id="assistant-students-search" type="primary" @click="handleSearch">
+          <template #icon><SearchOutlined /></template>
+          搜索
+        </a-button>
+        <a-button id="assistant-students-reset" type="text" @click="resetFilters">
+          <template #icon><ReloadOutlined /></template>
+          重置
+        </a-button>
       </div>
-    </div>
+    </a-card>
 
-    <section class="filters">
-      <input
-        id="assistant-students-keyword"
-        v-model.trim="filters.keyword"
-        class="form-input"
-        type="text"
-        placeholder="搜索姓名"
-        @keydown.enter.prevent="handleSearch"
-      />
-      <select v-model="filters.school" class="form-select">
-        <option value="">学校</option>
-        <option v-for="school in schoolOptions" :key="school" :value="school">
-          {{ school }}
-        </option>
-      </select>
-      <select v-model="filters.majorDirection" class="form-select">
-        <option value="">主攻方向</option>
-        <option v-for="direction in majorDirectionOptions" :key="direction" :value="direction">
-          {{ direction }}
-        </option>
-      </select>
-      <select v-model="filters.accountStatus" class="form-select">
-        <option value="">账号状态</option>
-        <option value="0">正常</option>
-        <option value="1">冻结</option>
-        <option value="2">已结束</option>
-        <option value="3">退款</option>
-      </select>
-      <button id="assistant-students-search" type="button" class="btn" @click="handleSearch">
-        搜索
-      </button>
-      <button id="assistant-students-reset" type="button" class="btn btn-text" @click="resetFilters">
-        重置
-      </button>
-    </section>
+    <a-alert
+      v-if="errorMessage"
+      type="error"
+      show-icon
+      :message="'学员列表加载失败'"
+      :description="errorMessage"
+      class="error-alert"
+    >
+      <template #action>
+        <a-button size="small" type="link" @click="loadStudents">重新加载</a-button>
+      </template>
+    </a-alert>
 
-    <section v-if="errorMessage" class="state-card state-card--error">
-      <h2>学员列表加载失败</h2>
-      <p>{{ errorMessage }}</p>
-      <button type="button" class="btn btn-text" @click="loadStudents">重新加载</button>
-    </section>
-
-    <section v-else-if="loading" class="state-card">
-      <h2>学员列表加载中</h2>
-      <p>正在读取学员清单与筛选结果，请稍候。</p>
-    </section>
-
-    <section v-else class="card">
-      <div class="card-body">
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>英文姓名</th>
-                <th>邮箱</th>
-                <th>班主任</th>
-                <th>学校</th>
-                <th>主攻方向</th>
-                <th>求职目标</th>
-                <th>求职辅导</th>
-                <th>基础课</th>
-                <th>模拟应聘</th>
-                <th>剩余课时</th>
-                <th>账号状态</th>
-                <th>服务状态</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="student in students" :key="student.studentId" data-student-row>
-                <td>{{ student.studentId }}</td>
-                <td class="name-cell">
-                  <strong class="name-text">{{ student.studentName || '-' }}</strong>
-                </td>
-                <td class="email-cell">{{ student.email || '-' }}</td>
-                <td>{{ formatMentor(student.leadMentorName) }}</td>
-                <td>{{ student.school || '-' }}</td>
-                <td>
-                  <span class="direction-tag" :class="directionToneClass(student.majorDirection)">
-                    {{ student.majorDirection || '-' }}
-                  </span>
-                </td>
-                <td>{{ student.targetPosition || '-' }}</td>
-                <td class="metric metric--delivery">{{ formatCount(student.jobCoachingCount) }}</td>
-                <td class="metric metric--interview">{{ formatCount(student.basicCourseCount) }}</td>
-                <td class="metric metric--offer">{{ formatCount(student.mockInterviewCount) }}</td>
-                <td class="remaining-hours" :class="remainingHoursToneClass(student.remainingHours)">
-                  {{ formatHours(student.remainingHours) }}
-                </td>
-                <td>
-                  <span class="status-tag" :class="accountStatusToneClass(student.accountStatus)">
-                    {{ formatAccountStatus(student.accountStatus) }}
-                  </span>
-                </td>
-                <td>
-                  <div class="status-stack">
-                    <span class="status-tag" :class="contractStatusToneClass(student.contractStatus, student.isBlacklisted)">
-                      {{ formatContractStatus(student.contractStatus, student.isBlacklisted) }}
-                    </span>
-                    <span v-if="student.pendingReview" class="status-tag status-tag--warning">待审核</span>
-                    <span v-if="formatReminder(student) !== '当前暂无额外提醒'" class="status-hint">
-                      {{ formatReminder(student) }}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <button type="button" class="btn btn-link" @click="handleViewJob(student)">查看求职</button>
-                </td>
-              </tr>
-              <tr v-if="!students.length">
-                <td colspan="14" class="empty-state">暂无可查看学员</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <div v-if="!loading && !errorMessage" class="page-footer">
-      <span class="page-total">共 {{ total }} 条记录</span>
-      <div class="pagination">
-        <button type="button" class="pager-btn" :disabled="!hasPrev" @click="goPrev">上一页</button>
-        <button type="button" class="pager-btn pager-btn--active">{{ pagination.current }}</button>
-        <button type="button" class="pager-btn" :disabled="!hasNext" @click="goNext">下一页</button>
-      </div>
-    </div>
+    <a-card v-else :bordered="false" :body-style="{ padding: 0 }" class="table-card">
+      <a-table
+        :columns="columns"
+        :data-source="students"
+        :loading="loading"
+        :pagination="tablePagination"
+        :scroll="{ x: 'max-content' }"
+        :locale="{ emptyText: '暂无可查看学员' }"
+        row-key="studentId"
+        :row-attrs="() => ({ 'data-student-row': '' })"
+        size="middle"
+        @change="handleTableChange"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'studentId'">
+            <a-tag color="blue">#{{ record.studentId }}</a-tag>
+          </template>
+          <template v-else-if="column.key === 'studentName'">
+            <strong class="name-text">{{ record.studentName || '-' }}</strong>
+          </template>
+          <template v-else-if="column.key === 'email'">
+            <span class="email-cell">{{ record.email || '-' }}</span>
+          </template>
+          <template v-else-if="column.key === 'leadMentorName'">
+            <span>{{ formatMentor(record.leadMentorName) }}</span>
+          </template>
+          <template v-else-if="column.key === 'school'">
+            <a-tooltip :title="record.school || '-'">
+              <span class="ellipsis-cell">{{ record.school || '-' }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.key === 'majorDirection'">
+            <span class="direction-tag" :class="directionToneClass(record.majorDirection)">
+              {{ record.majorDirection || '-' }}
+            </span>
+          </template>
+          <template v-else-if="column.key === 'jobCoachingCount'">
+            <span class="metric metric--delivery">{{ formatCount(record.jobCoachingCount) }}</span>
+          </template>
+          <template v-else-if="column.key === 'basicCourseCount'">
+            <span class="metric metric--interview">{{ formatCount(record.basicCourseCount) }}</span>
+          </template>
+          <template v-else-if="column.key === 'mockInterviewCount'">
+            <span class="metric metric--offer">{{ formatCount(record.mockInterviewCount) }}</span>
+          </template>
+          <template v-else-if="column.key === 'remainingHours'">
+            <strong class="remaining-hours" :class="remainingHoursToneClass(record.remainingHours)">
+              {{ formatHours(record.remainingHours) }}
+            </strong>
+          </template>
+          <template v-else-if="column.key === 'targetPosition'">
+            <span>{{ record.targetPosition || '-' }}</span>
+          </template>
+          <template v-else-if="column.key === 'contractStatus'">
+            <div class="status-stack">
+              <span class="status-tag" :class="contractStatusToneClass(record.contractStatus, record.isBlacklisted)">
+                {{ formatContractStatus(record.contractStatus, record.isBlacklisted) }}
+              </span>
+              <span v-if="record.pendingReview" class="status-tag status-tag--warning">待审核</span>
+              <span v-if="formatReminder(record) !== '当前暂无额外提醒'" class="status-hint">
+                {{ formatReminder(record) }}
+              </span>
+            </div>
+          </template>
+          <template v-else-if="column.key === 'accountStatus'">
+            <span class="status-tag" :class="accountStatusToneClass(record.accountStatus)">
+              {{ formatAccountStatus(record.accountStatus) }}
+            </span>
+          </template>
+          <template v-else-if="column.key === 'action'">
+            <a-button type="link" size="small" @click="handleViewJob(record)">查看求职</a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import type { TablePaginationConfig } from 'ant-design-vue'
+import PageHeader from '@/components/PageHeader.vue'
 import {
   getAssistantStudentList,
   type AssistantStudentListItem,
@@ -188,17 +195,44 @@ const pagination = reactive({
   pageSize: 8,
 })
 
-const schoolOptions = computed(() =>
-  Array.from(new Set(students.value.map((student) => student.school).filter(Boolean))) as string[],
-)
+const majorDirectionSelectOptions = computed(() => {
+  const dynamic = Array.from(
+    new Set(students.value.map((student) => student.majorDirection).filter(Boolean)),
+  ) as string[]
+  return dynamic.map((direction) => ({ value: direction, label: direction }))
+})
 
-const majorDirectionOptions = computed(() =>
-  Array.from(new Set(students.value.map((student) => student.majorDirection).filter(Boolean))) as string[],
-)
+const accountStatusOptions = [
+  { value: '0', label: '正常' },
+  { value: '1', label: '冻结' },
+  { value: '2', label: '已结束' },
+  { value: '3', label: '退款' },
+]
 
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pagination.pageSize)))
-const hasPrev = computed(() => pagination.current > 1)
-const hasNext = computed(() => pagination.current < totalPages.value)
+const columns = [
+  { title: 'ID', key: 'studentId', dataIndex: 'studentId', width: 96 },
+  { title: '英文姓名', key: 'studentName', dataIndex: 'studentName', width: 140 },
+  { title: '邮箱', key: 'email', dataIndex: 'email', width: 200, ellipsis: true },
+  { title: '班主任', key: 'leadMentorName', dataIndex: 'leadMentorName', width: 120 },
+  { title: '学校', key: 'school', dataIndex: 'school', width: 160, ellipsis: true },
+  { title: '主攻方向', key: 'majorDirection', dataIndex: 'majorDirection', width: 120 },
+  { title: '求职辅导', key: 'jobCoachingCount', dataIndex: 'jobCoachingCount', width: 100, align: 'center' as const },
+  { title: '基础课', key: 'basicCourseCount', dataIndex: 'basicCourseCount', width: 90, align: 'center' as const },
+  { title: '模拟应聘', key: 'mockInterviewCount', dataIndex: 'mockInterviewCount', width: 100, align: 'center' as const },
+  { title: '剩余课时', key: 'remainingHours', dataIndex: 'remainingHours', width: 110, align: 'center' as const },
+  { title: '求职目标', key: 'targetPosition', dataIndex: 'targetPosition', width: 140, ellipsis: true },
+  { title: '服务状态', key: 'contractStatus', dataIndex: 'contractStatus', width: 160 },
+  { title: '账号状态', key: 'accountStatus', dataIndex: 'accountStatus', width: 110 },
+  { title: '操作', key: 'action', width: 110, fixed: 'right' as const },
+]
+
+const tablePagination = computed<TablePaginationConfig>(() => ({
+  current: pagination.current,
+  pageSize: pagination.pageSize,
+  total: total.value,
+  showSizeChanger: false,
+  showTotal: (t: number) => `共 ${t} 条记录`,
+}))
 
 function normalizePersistedState(value: unknown): StudentFilterState | null {
   if (!value || typeof value !== 'object') {
@@ -427,19 +461,14 @@ async function resetFilters() {
   await loadStudents()
 }
 
-async function goPrev() {
-  if (!hasPrev.value) {
+async function handleTableChange(config: TablePaginationConfig) {
+  const nextPage = Number(config.current || 1)
+  const nextSize = Number(config.pageSize || pagination.pageSize)
+  if (nextPage === pagination.current && nextSize === pagination.pageSize) {
     return
   }
-  pagination.current -= 1
-  await loadStudents()
-}
-
-async function goNext() {
-  if (!hasNext.value) {
-    return
-  }
-  pagination.current += 1
+  pagination.current = nextPage
+  pagination.pageSize = nextSize
   await loadStudents()
 }
 
@@ -450,168 +479,46 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.page-student-list {
+.osg-page {
   display: block;
 }
 
-.page-header {
-  margin-bottom: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.page-title-en {
-  margin-left: 8px;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.page-sub {
-  margin-top: 8px;
-  color: var(--text2);
-  font-size: 14px;
+.filter-card {
+  margin-bottom: 16px;
 }
 
 .filters {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
   flex-wrap: wrap;
   align-items: center;
 }
 
-.form-input,
-.form-select {
-  height: 46px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--text);
-  font-size: 14px;
-  box-shadow: 0 10px 24px rgba(148, 163, 184, 0.08);
+.error-alert {
+  margin-bottom: 16px;
 }
 
-.form-input {
-  width: 160px;
-  padding: 0 14px;
-}
-
-.form-select {
-  min-width: 128px;
-  padding: 0 36px 0 12px;
-  appearance: none;
-  background: #fff
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")
-    no-repeat right 12px center;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 42px;
-  padding: 10px 20px;
-  border: 0;
-  border-radius: 10px;
-  background: #fff;
-  color: #5b7fab;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 10px 24px rgba(148, 163, 184, 0.08);
-  cursor: pointer;
-}
-
-.btn-text {
-  padding: 10px 12px;
-  color: #7399c6;
-  box-shadow: none;
-  background: transparent;
-}
-
-.btn-link {
-  height: auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #7399c6;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: none;
-}
-
-.btn:disabled {
-  cursor: not-allowed;
-}
-
-.card,
-.state-card {
-  margin-bottom: 20px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: var(--card-shadow);
-  overflow: hidden;
-}
-
-.card-body {
-  padding: 0;
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 13px;
-  min-width: 1400px;
-}
-
-.table th,
-.table td {
-  padding: 16px 14px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-
-.table th {
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: left;
-  background: #f8fbff;
-  white-space: nowrap;
-}
-
-.table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.name-cell {
-  min-width: 116px;
+.table-card {
+  margin-bottom: 16px;
 }
 
 .name-text {
-  color: #7399c6;
+  color: var(--primary, #7399c6);
+  font-weight: 700;
 }
 
 .email-cell {
-  min-width: 160px;
   font-size: 12px;
   color: #475569;
+}
+
+.ellipsis-cell {
+  display: inline-block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 .direction-tag,
@@ -619,8 +526,8 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
-  padding: 0 12px;
+  min-height: 26px;
+  padding: 0 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
@@ -668,11 +575,11 @@ onMounted(() => {
 }
 
 .remaining-hours--warning {
-  color: var(--danger);
+  color: var(--danger, #ef4444);
 }
 
 .remaining-hours--muted {
-  color: var(--muted);
+  color: var(--muted, #9ca3af);
 }
 
 .status-tag--active {
@@ -711,102 +618,6 @@ onMounted(() => {
 .status-hint {
   font-size: 12px;
   line-height: 1.5;
-  color: var(--muted);
-}
-
-.empty-state {
-  color: var(--muted);
-  text-align: center;
-}
-
-.page-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.page-total {
-  color: #94a3b8;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.pagination {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pager-btn {
-  min-width: 48px;
-  height: 34px;
-  padding: 0 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #fff;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.pager-btn:disabled {
-  opacity: 1;
-}
-
-.pager-btn--active {
-  min-width: 36px;
-  background: #7399c6;
-  border-color: #7399c6;
-  color: #fff;
-}
-
-.state-card {
-  display: grid;
-  gap: 8px;
-  padding: 28px;
-}
-
-.state-card--error {
-  border: 1px solid rgba(239, 68, 68, 0.14);
-  background: #fff7f7;
-}
-
-@media (max-width: 960px) {
-  .filters {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .form-input,
-  .form-select,
-  .btn,
-  .btn-text {
-    width: 100%;
-  }
-
-  .page-footer {
-    align-items: stretch;
-  }
-
-  .pagination {
-    justify-content: flex-end;
-  }
-}
-
-@media (max-width: 720px) {
-  .filters {
-    grid-template-columns: 1fr;
-  }
-
-  .page-header {
-    flex-direction: column;
-  }
-
-  .table th,
-  .table td {
-    padding: 12px 10px;
-  }
+  color: var(--muted, #9ca3af);
 }
 </style>

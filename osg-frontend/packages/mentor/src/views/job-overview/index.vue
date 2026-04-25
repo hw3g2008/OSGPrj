@@ -1,156 +1,156 @@
 <template>
-  <div id="page-job-overview">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">学员求职总览 <span class="page-title-en">Job Overview</span></h1>
-        <p class="page-sub">查看我辅导学员的求职进度</p>
-      </div>
-      <button type="button" class="btn btn-outline" @click="handleExport">
-        <i class="mdi mdi-export" />
-        导出
-      </button>
-    </div>
-
-    <InterviewCalendar :events="allCalendarEvents" @event-click="openCalendarHighlight" />
-
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-value" style="color:#EF4444">{{ stats.newCount }}</div><div class="stat-label">新分配</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:#3B82F6">{{ stats.pendingCount }}</div><div class="stat-label">待进行</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:#22C55E">{{ stats.completedCount }}</div><div class="stat-label">已完成</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:#94A3B8">{{ stats.cancelledCount }}</div><div class="stat-label">已取消</div></div>
-    </div>
-
-    <div class="filter-bar">
-      <input
-        v-model="draftKeyword"
-        class="form-input"
-        style="width:180px"
-        placeholder="搜索学员姓名..."
-        @keydown.enter.prevent="applySearch"
-      />
-      <select v-model="selectedCompany" class="form-select">
-        <option value="">全部公司</option>
-        <option v-for="c in companies" :key="c">{{ c }}</option>
-      </select>
-      <select v-model="selectedStatus" class="form-select">
-        <option value="">全部状态</option>
-        <option value="new">新申请</option>
-        <option value="coaching">面试中</option>
-        <option value="completed">已完成</option>
-        <option value="cancelled">已取消</option>
-      </select>
-      <button type="button" class="btn btn-outline" @click="applySearch">
-        <i class="mdi mdi-magnify" />
-        搜索
-      </button>
-    </div>
-
-    <div class="card">
-      <div class="card-body" style="padding:0">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>学员</th>
-              <th>公司/岗位</th>
-              <th>阶段</th>
-              <th>面试时间</th>
-              <th>辅导状态</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in filteredRows" :key="row.id" :id="rowDomId(row)" :class="rowClass(row)">
-              <td>
-                <div class="student-cell">
-                  <div class="avatar" :style="{ background: avatarColor(row) }">{{ row.studentName?.[0] || '?' }}</div>
-                  <div>
-                    <div class="student-name">{{ row.studentName }}</div>
-                    <div class="text-muted text-sm">ID: {{ row.studentId }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <div class="company-name" :style="{ color: row.coachingStatus === 'new' ? '#EF4444' : '' }">{{ row.company }}</div>
-                <div class="text-muted text-sm">{{ row.position }} · {{ row.location }}</div>
-              </td>
-              <td><span class="tag" :class="stageClass(row)">{{ row.interviewStage || '-' }}</span></td>
-              <td>
-                <div v-if="row.interviewTime" :class="{ 'text-danger': row.coachingStatus !== 'completed' }">
-                  {{ formatInterviewTime(row.interviewTime) }}
-                </div>
-                <div v-else class="text-muted">-</div>
-              </td>
-              <td>
-                <span v-if="row.coachingStatus === 'new'" class="tag pulse-tag"><i class="mdi mdi-bell-ring" /> 新申请</span>
-                <span v-else-if="row.coachingStatus === 'coaching'" class="tag coaching-tag"><i class="mdi mdi-school" /> 辅导中</span>
-                <span v-else class="text-muted">-</span>
-              </td>
-              <td>
-                <button
-                  v-if="row.coachingStatus === 'new'"
-                  type="button"
-                  class="btn btn-confirm"
-                  @click="confirmJob(row)"
-                >
-                  <i class="mdi mdi-check" />
-                  确认
-                </button>
-                <button
-                  v-else-if="row.coachingStatus === 'coaching'"
-                  type="button"
-                  class="btn btn-text btn-sm"
-                  data-surface-trigger="modal-job-detail"
-                  @click="openJobDetail(row)"
-                >
-                  查看详情
-                </button>
-                <span v-else class="text-muted">--</span>
-              </td>
-            </tr>
-            <tr v-if="filteredRows.length === 0">
-              <td colspan="6" class="empty-state">暂无匹配记录</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div
-      v-if="selectedRow"
-      class="modal job-detail-modal"
-      data-surface-id="modal-job-detail"
-    >
-      <button
-        type="button"
-        class="job-detail-backdrop"
-        aria-label="关闭学员求职详情弹层"
-        @click="closeJobDetail"
-      />
-      <div
-        class="job-detail-shell modal-content"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="job-detail-modal-title"
-      >
-        <div class="job-detail-header modal-header">
-          <span id="job-detail-modal-title" class="job-detail-title modal-title">
-            <i class="mdi mdi-briefcase-search" />
-            学员求职详情
-          </span>
-          <button
-            type="button"
-            class="modal-close"
-            aria-label="关闭学员求职详情弹层"
-            @click="closeJobDetail"
-          >
-            ×
-          </button>
+  <a-config-provider :auto-insert-space-in-button="false">
+    <div id="page-job-overview" class="osg-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">学员求职总览 <span class="page-title-en">Job Overview</span></h1>
+          <p class="page-sub">查看我辅导学员的求职进度</p>
         </div>
+        <a-button @click="handleExport">
+          <template #icon><ExportOutlined /></template>
+          导出
+        </a-button>
+      </div>
 
-        <div class="job-detail-body modal-body">
+      <InterviewCalendar :events="allCalendarEvents" @event-click="openCalendarHighlight" />
+
+      <a-row :gutter="16" class="stats-row">
+        <a-col :span="6">
+          <a-card :bordered="false" class="stat-card">
+            <a-statistic title="新分配" :value="stats.newCount" :value-style="{ color: '#EF4444' }" />
+          </a-card>
+        </a-col>
+        <a-col :span="6">
+          <a-card :bordered="false" class="stat-card">
+            <a-statistic title="待进行" :value="stats.pendingCount" :value-style="{ color: '#3B82F6' }" />
+          </a-card>
+        </a-col>
+        <a-col :span="6">
+          <a-card :bordered="false" class="stat-card">
+            <a-statistic title="已完成" :value="stats.completedCount" :value-style="{ color: '#22C55E' }" />
+          </a-card>
+        </a-col>
+        <a-col :span="6">
+          <a-card :bordered="false" class="stat-card">
+            <a-statistic title="已取消" :value="stats.cancelledCount" :value-style="{ color: '#94A3B8' }" />
+          </a-card>
+        </a-col>
+      </a-row>
+
+      <div class="filter-row">
+        <a-input
+          v-model:value="draftKeyword"
+          placeholder="搜索学员姓名..."
+          allow-clear
+          style="width: 180px"
+          @press-enter="applySearch"
+        />
+        <a-select
+          v-model:value="selectedCompany"
+          placeholder="全部公司"
+          allow-clear
+          style="width: 140px"
+        >
+          <a-select-option v-for="c in companies" :key="c" :value="c">{{ c }}</a-select-option>
+        </a-select>
+        <a-select
+          v-model:value="selectedStatus"
+          placeholder="全部状态"
+          allow-clear
+          style="width: 140px"
+        >
+          <a-select-option value="new">新申请</a-select-option>
+          <a-select-option value="coaching">面试中</a-select-option>
+          <a-select-option value="completed">已完成</a-select-option>
+          <a-select-option value="cancelled">已取消</a-select-option>
+        </a-select>
+        <a-button type="primary" @click="applySearch">
+          <template #icon><SearchOutlined /></template>
+          搜索
+        </a-button>
+      </div>
+
+      <a-card :bordered="false" class="table-card">
+        <a-table
+          :columns="jobColumns"
+          :data-source="filteredRows"
+          :row-key="(record) => record.id"
+          :pagination="false"
+          :row-class-name="(record) => rowClass(record)"
+          :locale="{ emptyText: '暂无匹配记录' }"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'student'">
+              <div class="student-cell">
+                <div class="avatar" :style="{ background: avatarColor(record) }">{{ record.studentName?.[0] || '?' }}</div>
+                <div>
+                  <div class="student-name">{{ record.studentName }}</div>
+                  <div class="text-muted text-sm">ID: {{ record.studentId }}</div>
+                </div>
+              </div>
+            </template>
+            <template v-else-if="column.key === 'company'">
+              <div class="company-name" :style="{ color: record.coachingStatus === 'new' ? '#EF4444' : '' }">{{ record.company }}</div>
+              <div class="text-muted text-sm">{{ record.position }} · {{ record.location }}</div>
+            </template>
+            <template v-else-if="column.key === 'stage'">
+              <StageTag :stage="record.interviewStage" fallback="-" />
+            </template>
+            <template v-else-if="column.key === 'interviewTime'">
+              <span v-if="record.interviewTime" :class="{ 'text-danger': record.coachingStatus !== 'completed' }">
+                {{ formatInterviewTime(record.interviewTime) }}
+              </span>
+              <span v-else class="text-muted">-</span>
+            </template>
+            <template v-else-if="column.key === 'coachingStatus'">
+              <a-tag v-if="record.coachingStatus === 'new'" color="red">
+                <template #icon><BellOutlined /></template>
+                新申请
+              </a-tag>
+              <a-tag v-else-if="record.coachingStatus === 'coaching'" color="purple">
+                <template #icon><BookOutlined /></template>
+                辅导中
+              </a-tag>
+              <span v-else class="text-muted">-</span>
+            </template>
+            <template v-else-if="column.key === 'actions'">
+              <a-button
+                v-if="record.coachingStatus === 'new'"
+                type="primary"
+                size="small"
+                class="btn-confirm"
+                @click="confirmJob(record)"
+              >
+                确认
+              </a-button>
+              <a-button
+                v-else-if="record.coachingStatus === 'coaching'"
+                type="link"
+                size="small"
+                data-surface-trigger="modal-job-detail"
+                @click="openJobDetail(record)"
+              >
+                查看详情
+              </a-button>
+              <span v-else class="text-muted">--</span>
+            </template>
+          </template>
+        </a-table>
+      </a-card>
+
+      <a-modal
+        :open="selectedRow !== null"
+        title="学员求职详情"
+        :width="720"
+        :footer="null"
+        wrap-class-name="job-detail-modal"
+        :root-class-name="'job-detail-modal-root'"
+        @cancel="closeJobDetail"
+      >
+        <template v-if="selectedRow">
           <section class="hero-card">
             <div class="hero-block">
-              <div class="hero-label"><i class="mdi mdi-account" /> 学员信息</div>
+              <div class="hero-label"><UserOutlined /> 学员信息</div>
               <div class="hero-student">
                 <div class="hero-avatar">{{ jobDetailPreview.studentName }}</div>
                 <div>
@@ -160,7 +160,7 @@
               </div>
             </div>
             <div class="hero-block">
-              <div class="hero-label"><i class="mdi mdi-domain" /> 申请岗位</div>
+              <div class="hero-label"><BankOutlined /> 申请岗位</div>
               <div class="hero-value hero-value--brand">{{ jobDetailPreview.companyName }}</div>
               <div class="hero-meta hero-meta--body">{{ jobDetailPreview.positionName }}</div>
               <div class="hero-meta hero-meta--body">招聘周期: <span>{{ jobDetailPreview.recruitmentCycle }}</span></div>
@@ -168,117 +168,94 @@
           </section>
 
           <section class="modal-section">
-            <div class="section-title"><i class="mdi mdi-timeline-clock" /> 求职进度</div>
-            <div class="timeline">
-              <div class="timeline-step">
-                <div class="timeline-badge timeline-badge--done"><i class="mdi mdi-check" /></div>
-                <div class="timeline-copy">已投递<span>01/05</span></div>
-              </div>
-              <div class="timeline-line timeline-line--done" />
-              <div class="timeline-step">
-                <div class="timeline-badge timeline-badge--done"><i class="mdi mdi-check" /></div>
-                <div class="timeline-copy">HireVue<span>01/10</span></div>
-              </div>
-              <div class="timeline-line timeline-line--done" />
-              <div class="timeline-step">
-                <div class="timeline-badge timeline-badge--current"><i class="mdi mdi-clock" /></div>
-                <div class="timeline-copy timeline-copy--current">First Round<span>当前</span></div>
-              </div>
-              <div class="timeline-line" />
-              <div class="timeline-step timeline-step--future">
-                <div class="timeline-badge timeline-badge--future"><i class="mdi mdi-circle-outline" /></div>
-                <div class="timeline-copy">Final</div>
-              </div>
-              <div class="timeline-line" />
-              <div class="timeline-step timeline-step--future">
-                <div class="timeline-badge timeline-badge--future"><i class="mdi mdi-circle-outline" /></div>
-                <div class="timeline-copy">Offer</div>
-              </div>
-            </div>
+            <div class="section-title"><ClockCircleOutlined /> 求职进度</div>
+            <a-steps :current="2" size="small" progress-dot>
+              <a-step title="已投递" description="01/05" />
+              <a-step title="HireVue" description="01/10" />
+              <a-step title="First Round" description="当前" />
+              <a-step title="Final" />
+              <a-step title="Offer" />
+            </a-steps>
 
-            <div class="interview-card">
-              <i class="mdi mdi-calendar-clock" />
-              <div>
-                <div>面试时间: <span>{{ jobDetailPreview.interviewTime }}</span></div>
-                <div>{{ jobDetailPreview.countdownText }}</div>
-              </div>
-            </div>
+            <a-alert
+              type="warning"
+              show-icon
+              :message="`面试时间: ${jobDetailPreview.interviewTime}`"
+              :description="jobDetailPreview.countdownText"
+              style="margin-top: 16px"
+            />
           </section>
 
           <section class="modal-section">
-            <div class="section-title section-title--purple"><i class="mdi mdi-school" /> 辅导信息</div>
-            <div class="coaching-grid">
-              <article class="coaching-card"><div>辅导状态</div><strong>{{ jobDetailPreview.coachingStatus }}</strong></article>
-              <article class="coaching-card"><div>分配导师</div><strong>{{ jobDetailPreview.mentorName }}</strong></article>
-              <article class="coaching-card"><div>已上课时</div><strong>{{ jobDetailPreview.lessonHours }}</strong></article>
-              <article class="coaching-card"><div>申请时间</div><strong>{{ jobDetailPreview.applyTime }}</strong></article>
-            </div>
+            <div class="section-title section-title--purple"><BookOutlined /> 辅导信息</div>
+            <a-row :gutter="12">
+              <a-col :span="6"><a-card size="small" class="coaching-card">
+                <a-statistic title="辅导状态" :value="jobDetailPreview.coachingStatus" />
+              </a-card></a-col>
+              <a-col :span="6"><a-card size="small" class="coaching-card">
+                <a-statistic title="分配导师" :value="jobDetailPreview.mentorName" />
+              </a-card></a-col>
+              <a-col :span="6"><a-card size="small" class="coaching-card">
+                <a-statistic title="已上课时" :value="jobDetailPreview.lessonHours" />
+              </a-card></a-col>
+              <a-col :span="6"><a-card size="small" class="coaching-card">
+                <a-statistic title="申请时间" :value="jobDetailPreview.applyTime" />
+              </a-card></a-col>
+            </a-row>
           </section>
 
           <section class="modal-section">
             <div class="section-head">
-              <div class="section-title section-title--green"><i class="mdi mdi-book-open-variant" /> 课程记录 (最近3条)</div>
-              <button type="button" class="btn btn-text btn-sm" style="font-size:11px" @click="showAllRecords = true">
+              <div class="section-title section-title--green"><ReadOutlined /> 课程记录 (最近3条)</div>
+              <a-button type="link" size="small" @click="showAllRecords = true">
                 查看全部
-                <i class="mdi mdi-arrow-right" />
-              </button>
+                <template #icon><ArrowRightOutlined /></template>
+              </a-button>
             </div>
-            <div class="records">
-              <div v-if="studentDetailRecordsLoading" class="empty-state">课程记录加载中...</div>
-              <div v-else-if="!recentRecords.length" class="empty-state">暂无课程记录</div>
-              <article
-                v-for="record in recentRecords"
-                :key="`${record.date}-${record.label}`"
-                class="record-item"
-                :class="record.tone"
-              >
-                <span class="record-date">{{ record.date }}</span>
-                <span class="record-tag" :class="record.tagTone">{{ record.label }}</span>
-                <span class="record-hours">{{ record.hours }}</span>
-                <span class="record-summary">{{ record.summary }}</span>
-                <span class="record-grade" :class="record.tagTone">{{ record.grade }}</span>
-              </article>
-            </div>
-
-            <div v-if="showAllRecords" class="full-records">
-              <div class="full-records-title">完整课程记录</div>
-              <div class="records">
-                <div v-if="studentDetailRecordsLoading" class="empty-state">课程记录加载中...</div>
-                <div v-else-if="!fullRecords.length" class="empty-state">暂无课程记录</div>
-                <article
-                  v-for="record in fullRecords"
-                  :key="`${record.date}-${record.label}`"
-                  class="record-item"
-                  :class="record.tone"
-                >
-                  <span class="record-date">{{ record.date }}</span>
-                  <span class="record-tag" :class="record.tagTone">{{ record.label }}</span>
-                  <span class="record-hours">{{ record.hours }}</span>
-                  <span class="record-summary">{{ record.summary }}</span>
-                  <span class="record-grade" :class="record.tagTone">{{ record.grade }}</span>
-                </article>
-              </div>
-            </div>
+            <a-list
+              :data-source="showAllRecords ? fullRecords : recentRecords"
+              :loading="studentDetailRecordsLoading"
+              :locale="{ emptyText: '暂无课程记录' }"
+              size="small"
+            >
+              <template #renderItem="{ item }">
+                <a-list-item class="record-item" :class="item.tone">
+                  <span class="record-date">{{ item.date }}</span>
+                  <a-tag :class="item.tagTone" class="record-tag">{{ item.label }}</a-tag>
+                  <span class="record-hours">{{ item.hours }}</span>
+                  <span class="record-summary">{{ item.summary }}</span>
+                  <a-tag :class="item.tagTone" class="record-grade">{{ item.grade }}</a-tag>
+                </a-list-item>
+              </template>
+            </a-list>
           </section>
 
           <section class="modal-section modal-section--notes">
-            <div class="section-title section-title--amber"><i class="mdi mdi-note-text" /> 学员备注</div>
-            <div class="notes-card">{{ jobDetailPreview.notes }}</div>
+            <div class="section-title section-title--amber"><FileTextOutlined /> 学员备注</div>
+            <a-typography-paragraph class="notes-card">{{ jobDetailPreview.notes }}</a-typography-paragraph>
           </section>
-        </div>
-
-        <div class="job-detail-footer modal-footer">
-          <button type="button" class="btn btn-outline" @click="closeJobDetail">关闭</button>
-        </div>
-      </div>
+        </template>
+      </a-modal>
     </div>
-  </div>
+  </a-config-provider>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, inject, type Ref } from 'vue'
+import {
+  ArrowRightOutlined,
+  BankOutlined,
+  BellOutlined,
+  BookOutlined,
+  ClockCircleOutlined,
+  ExportOutlined,
+  FileTextOutlined,
+  ReadOutlined,
+  SearchOutlined,
+  UserOutlined,
+} from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
-import { InterviewCalendar } from '@osg/shared/components'
+import { InterviewCalendar, StageTag } from '@osg/shared/components'
 import {
   getMentorJobOverviewCalendar,
   type LeadMentorCalendarRecord,
@@ -508,12 +485,12 @@ function normalizeDetailRecord(record: Record<string, any>): DetailRecord {
   }
 }
 
-function rowClass(row: JobOverviewRow) {
-  return {
-    'row-new': row.coachingStatus === 'new',
-    'row-coaching': row.coachingStatus === 'coaching',
-    'row-ended': row.result === 'offer' || row.result === 'rejected',
-  }
+function rowClass(row: JobOverviewRow): string {
+  return [
+    row.coachingStatus === 'new' && 'row-new',
+    row.coachingStatus === 'coaching' && 'row-coaching',
+    (row.result === 'offer' || row.result === 'rejected') && 'row-ended',
+  ].filter(Boolean).join(' ')
 }
 
 function avatarColor(row: JobOverviewRow) {
@@ -521,9 +498,14 @@ function avatarColor(row: JobOverviewRow) {
   return colors[row.id % colors.length]
 }
 
-function stageClass(row: JobOverviewRow) {
-  return row.result === 'offer' ? 'success' : row.result === 'rejected' ? 'danger' : 'warning'
-}
+const jobColumns = [
+  { title: '学员', key: 'student', dataIndex: 'studentName' },
+  { title: '公司/岗位', key: 'company', dataIndex: 'company' },
+  { title: '阶段', key: 'stage', dataIndex: 'interviewStage', width: 100 },
+  { title: '面试时间', key: 'interviewTime', dataIndex: 'interviewTime', width: 140 },
+  { title: '辅导状态', key: 'coachingStatus', dataIndex: 'coachingStatus', width: 120 },
+  { title: '操作', key: 'actions', width: 110 },
+]
 
 function rowDomId(row: JobOverviewRow) {
   return visibleNewRowAnchors.value.get(row.id) || persistentRowAnchors.value.get(row.id)
@@ -643,51 +625,30 @@ onMounted(async () => {
 .page-title { font-size:26px; font-weight:700; color:#1E293B; }
 .page-title-en { font-size:14px; color:#94A3B8; font-weight:400; margin-left:8px; }
 .page-sub { font-size:14px; color:#64748B; margin-top:6px; }
-.card { background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(115,153,198,0.12); margin-bottom:20px; }
-.card-body { padding:22px; }
-.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
-.stat-card { background:#fff; border-radius:12px; padding:16px; text-align:center; box-shadow:0 4px 24px rgba(115,153,198,0.12); }
-.stat-value { font-size:28px; font-weight:700; }
-.stat-label { font-size:12px; color:#94A3B8; }
-.filter-bar { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
-.form-input { padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; }
-.form-select { padding:10px 12px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; width:140px; }
-.table { width:100%; border-collapse:collapse; font-size:13px; }
-.table th,.table td { padding:14px 16px; text-align:left; border-bottom:1px solid #E2E8F0; }
-.table th { font-weight:600; color:#64748B; font-size:12px; text-transform:uppercase; background:#F8FAFC; }
+
+.stats-row { margin-bottom:20px; }
+.stat-card { text-align:center; box-shadow:0 4px 24px rgba(115,153,198,0.12); border-radius:12px; }
+
+.filter-row { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+
+.table-card { margin-bottom:20px; border-radius:16px; box-shadow:0 4px 24px rgba(115,153,198,0.12); }
+
 .student-cell { display:flex; align-items:center; gap:10px; }
-.avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:12px; }
+.avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:12px; flex-shrink:0; }
 .student-name { font-weight:600; }
 .company-name { font-weight:600; }
-.tag { display:inline-flex; padding:5px 12px; border-radius:20px; font-size:11px; font-weight:600; align-items:center; gap:2px; }
-.tag.success { background:#D1FAE5; color:#065F46; }
-.tag.warning { background:#FEF3C7; color:#92400E; }
-.tag.danger { background:#FEE2E2; color:#991B1B; }
-.tag.info { background:#DBEAFE; color:#1E40AF; }
-.pulse-tag { background:#EF4444; color:#fff; animation:pulse 1.5s ease-in-out infinite; }
-.coaching-tag { background:#8B5CF6; color:#fff; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
-.row-new { background:linear-gradient(90deg,#FEE2E2,#FEF2F2); border-left:4px solid #EF4444; }
-.row-coaching { background:#F3E8FF; }
-.row-ended { opacity:0.7; }
-.btn { padding:10px 20px; border-radius:10px; font-size:14px; font-weight:500; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; }
-.btn-outline { background:#fff; color:#64748B; border:1px solid #E2E8F0; }
-.btn-text { background:transparent; color:#7399C6; padding:6px 12px; }
-.btn-sm { padding:6px 12px; font-size:13px; }
-.btn-confirm { background:#22C55E; color:#fff; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px; }
+
 .text-muted { color:#94A3B8; }
 .text-sm { font-size:11px; }
 .text-danger { color:#EF4444; font-weight:600; font-size:12px; }
-.empty-state { text-align:center; color:#94A3B8; padding:24px 16px; }
-.calendar-expanded { border-top:1px solid #E2E8F0; }
-.job-detail-modal { position:fixed; inset:0; z-index:60; }
-.job-detail-backdrop { position:absolute; inset:0; background:rgba(15,23,42,0.42); border:none; width:100%; height:100%; }
-.job-detail-shell { position:relative; margin:4vh auto; max-width:720px; max-height:92vh; overflow:hidden; border-radius:16px; background:#fff; box-shadow:0 24px 80px rgba(15,23,42,0.24); display:flex; flex-direction:column; }
-.job-detail-header { background:linear-gradient(135deg,#3B82F6,#1D4ED8); border-radius:16px 16px 0 0; color:#fff; }
-.job-detail-title { color:#fff; }
-.job-detail-title .mdi { margin-right:8px; }
-.job-detail-body { padding:0; max-height:75vh; overflow-y:auto; }
-.hero-card { padding:20px; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); display:flex; gap:20px; }
+
+/* antd a-table row hover/bg overrides (保留原有视觉：new=红渐变, coaching=紫, ended=低透明) */
+:deep(.ant-table-row.row-new > td) { background:linear-gradient(90deg,#FEE2E2,#FEF2F2); border-left:4px solid #EF4444; }
+:deep(.ant-table-row.row-coaching > td) { background:#F3E8FF; }
+:deep(.ant-table-row.row-ended > td) { opacity:0.7; }
+
+/* Modal 内部自定义样式 */
+.hero-card { padding:20px; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); display:flex; gap:20px; margin:-24px -24px 0; }
 .hero-block { flex:1; }
 .hero-label { font-size:12px; color:#3B82F6; font-weight:600; margin-bottom:8px; display:flex; gap:4px; align-items:center; }
 .hero-student { display:flex; align-items:center; gap:12px; }
@@ -696,45 +657,33 @@ onMounted(async () => {
 .hero-value--brand { color:#1E40AF; }
 .hero-meta { font-size:12px; color:#64748B; }
 .hero-meta--body { font-size:13px; color:#64748B; margin-top:2px; }
-.modal-section { padding:20px; border-bottom:1px solid #E2E8F0; }
+
+.modal-section { padding:20px 0; border-bottom:1px solid #E2E8F0; }
 .modal-section--notes { border-bottom:none; }
 .section-title { font-size:13px; font-weight:600; color:#1E293B; margin-bottom:16px; display:flex; align-items:center; gap:6px; }
 .section-title--purple { color:#6D28D9; }
 .section-title--green { color:#16A34A; }
 .section-title--amber { color:#B45309; }
-.timeline { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-.timeline-step { display:flex; align-items:center; gap:6px; }
-.timeline-badge { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; }
-.timeline-badge--done { background:#22C55E; }
-.timeline-badge--current { background:#F59E0B; }
-.timeline-badge--future { background:#E5E7EB; color:#9CA3AF; }
-.timeline-copy { font-size:12px; display:flex; flex-direction:column; gap:2px; }
-.timeline-copy span { color:#94A3B8; font-size:10px; }
-.timeline-copy--current { font-weight:600; color:#F59E0B; }
-.timeline-line { width:30px; height:2px; background:#E5E7EB; }
-.timeline-line--done { background:#22C55E; }
-.interview-card { background:#FEF3C7; border-radius:8px; padding:12px; display:flex; align-items:center; gap:12px; color:#92400E; }
-.interview-card i { font-size:24px; color:#F59E0B; }
-.coaching-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-.coaching-card { background:#F3E8FF; border-radius:8px; padding:12px; text-align:center; }
-.coaching-card div { font-size:11px; color:#7C3AED; margin-bottom:4px; }
-.coaching-card strong { color:#6D28D9; }
 .section-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
-.records { display:flex; flex-direction:column; gap:8px; }
-.record-item { display:flex; align-items:center; gap:12px; padding:10px 12px; background:#F8FAFC; border-radius:8px; border-left:3px solid #E2E8F0; flex-wrap:wrap; }
+
+.coaching-card :deep(.ant-card-body) { background:#F3E8FF; border-radius:8px; text-align:center; }
+.coaching-card :deep(.ant-statistic-title) { color:#7C3AED; font-size:11px; }
+.coaching-card :deep(.ant-statistic-content) { color:#6D28D9; font-size:14px; font-weight:700; }
+
+.record-item { background:#F8FAFC; border-radius:8px; border-left:3px solid #E2E8F0; padding:10px 12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 .record-item--green { border-left-color:#22C55E; }
 .record-item--blue { border-left-color:#3B82F6; }
 .record-item--purple { border-left-color:#8B5CF6; }
 .record-date { font-size:11px; color:#94A3B8; min-width:50px; }
-.record-tag { font-size:10px; padding:2px 8px; border-radius:999px; }
-.record-tag--green { background:#DCFCE7; color:#166534; }
-.record-tag--blue { background:#DBEAFE; color:#1E40AF; }
-.record-tag--purple { background:#F3E8FF; color:#7C3AED; }
+.record-tag, .record-grade { font-size:10px; border-radius:999px; }
+.record-tag--green { background:#DCFCE7 !important; color:#166534 !important; border-color:#DCFCE7 !important; }
+.record-tag--blue { background:#DBEAFE !important; color:#1E40AF !important; border-color:#DBEAFE !important; }
+.record-tag--purple { background:#F3E8FF !important; color:#7C3AED !important; border-color:#F3E8FF !important; }
 .record-hours { font-size:11px; color:#94A3B8; }
 .record-summary { font-size:12px; flex:1; min-width:180px; }
-.record-grade { font-size:9px; padding:2px 8px; border-radius:999px; }
-.full-records { margin-top:16px; padding-top:16px; border-top:1px solid #E2E8F0; }
-.full-records-title { font-size:12px; font-weight:600; color:#1E293B; margin-bottom:10px; }
-.notes-card { background:#FFFBEB; border-radius:8px; padding:12px; font-size:13px; color:#92400E; line-height:1.6; }
-.job-detail-footer { background:#F8FAFC; border-radius:0 0 16px 16px; justify-content:flex-end; }
+
+.notes-card { background:#FFFBEB !important; border-radius:8px; padding:12px; font-size:13px; color:#92400E !important; line-height:1.6; margin:0 !important; }
+
+.btn-confirm { background:#22C55E !important; border-color:#22C55E !important; }
+.btn-confirm:hover { background:#16A34A !important; border-color:#16A34A !important; }
 </style>

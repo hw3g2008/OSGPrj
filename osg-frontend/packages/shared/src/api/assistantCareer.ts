@@ -80,7 +80,7 @@ export function getAssistantPositionStats(filters: AssistantPositionFilters = {}
 }
 
 export function getAssistantPositionDrillDown(filters: AssistantPositionFilters = {}) {
-  return http.get<{ rows: AssistantPositionIndustry[] }>('/assistant/positions/drill-down', {
+  return http.get<AssistantPositionIndustry[]>('/assistant/positions/drill-down', {
     params: toRequestParams(filters as Record<string, string | number | undefined>),
   })
 }

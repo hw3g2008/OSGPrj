@@ -19,12 +19,12 @@ export default defineConfig({
     }
   },
   server: {
-    port: 4000,
+    port: 3001,
     host: '0.0.0.0',
     proxy: apiProxy,
   },
   preview: {
-    port: 4000,
+    port: 3001,
     host: '0.0.0.0',
     proxy: apiProxy,
   },

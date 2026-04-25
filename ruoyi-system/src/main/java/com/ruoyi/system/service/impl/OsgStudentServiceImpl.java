@@ -397,7 +397,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         student.setTargetRegion(asText(firstPresent(source, "targetRegion", "jobRegion")));
         student.setRecruitmentCycle(asCsv(firstPresent(source, "recruitmentCycle", "recruitmentCycles")));
         student.setMajorDirection(asCsv(firstPresent(source, "majorDirection", "majorDirections")));
-        student.setSubDirection(asText(firstPresent(source, "subDirection")));
+        student.setSubDirection(asCsv(firstPresent(source, "subDirection", "subDirections")));
         student.setLeadMentorId(asLong(firstPresent(source, "leadMentorId", "leadMentorIds")));
         student.setAssistantId(asLong(firstPresent(source, "assistantId", "assistantIds")));
         student.setAccountStatus(asText(firstPresent(source, "accountStatus")));
@@ -514,10 +514,6 @@ public class OsgStudentServiceImpl implements IOsgStudentService
             throw new ServiceException("学员基本信息不完整");
         }
         validateAccountEmail(student.getEmail());
-        if (isBlank(student.getSchool()) || isBlank(student.getMajor()) || student.getGraduationYear() == null)
-        {
-            throw new ServiceException("学业信息不完整");
-        }
         if (isBlank(student.getTargetRegion()) || isBlank(student.getRecruitmentCycle())
             || isBlank(student.getMajorDirection()) || isBlank(student.getSubDirection()))
         {

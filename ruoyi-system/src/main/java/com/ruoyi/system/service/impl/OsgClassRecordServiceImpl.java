@@ -177,7 +177,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     public List<Map<String, Object>> selectAssistantClassRecordList(String keyword, Long assistantUserId)
     {
-        return selectAssistantClassRecordList(keyword, null, null, null, null, null, null, assistantUserId);
+        return selectAssistantClassRecordList(keyword, null, null, null, null, null, null, assistantUserId, null);
     }
 
     public List<Map<String, Object>> selectAssistantClassRecordList(String keyword,
@@ -189,9 +189,22 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
                                                                     Date classDateEnd,
                                                                     Long assistantUserId)
     {
-        List<OsgClassRecord> rows = filterAssistantOwnedRows(
+        return selectAssistantClassRecordList(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd, assistantUserId, null);
+    }
+
+    public List<Map<String, Object>> selectAssistantClassRecordList(String keyword,
+                                                                    String courseType,
+                                                                    String classStatus,
+                                                                    String courseSource,
+                                                                    String tab,
+                                                                    Date classDateStart,
+                                                                    Date classDateEnd,
+                                                                    Long assistantUserId,
+                                                                    String scope)
+    {
+        List<OsgClassRecord> rows = filterByScope(
             selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd),
-            assistantUserId
+            scope, assistantUserId
         );
         if (rows.isEmpty())
         {
@@ -241,7 +254,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     public Map<String, Object> selectAssistantClassRecordStats(String keyword, Long assistantUserId)
     {
-        return selectAssistantClassRecordStats(keyword, null, null, null, null, null, null, assistantUserId);
+        return selectAssistantClassRecordStats(keyword, null, null, null, null, null, null, assistantUserId, null);
     }
 
     public Map<String, Object> selectAssistantClassRecordStats(String keyword,
@@ -253,10 +266,21 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
                                                                Date classDateEnd,
                                                                Long assistantUserId)
     {
-        List<OsgClassRecord> rows = filterAssistantOwnedRows(
-            selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd),
-            assistantUserId
-        );
+        return selectAssistantClassRecordStats(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd, assistantUserId, null);
+    }
+
+    public Map<String, Object> selectAssistantClassRecordStats(String keyword,
+                                                               String courseType,
+                                                               String classStatus,
+                                                               String courseSource,
+                                                               String tab,
+                                                               Date classDateStart,
+                                                               Date classDateEnd,
+                                                               Long assistantUserId,
+                                                               String scope)
+    {
+        List<OsgClassRecord> allRows = selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd);
+        List<OsgClassRecord> rows = filterByScope(allRows, scope, assistantUserId);
         Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
         BigDecimal pendingSettlementAmount = rows.stream()
             .filter(row -> Objects.equals(normalizeReviewStatus(row.getStatus()), STATUS_PENDING))
@@ -264,12 +288,17 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             .reduce(BigDecimal.ZERO, BigDecimal::add)
             .setScale(1, RoundingMode.HALF_UP);
 
+        int mineCount = filterByScope(allRows, "mine", assistantUserId).size();
+        int managedCount = filterAssistantOwnedRows(allRows, assistantUserId).size();
+
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("totalCount", rows.size());
         summary.put("pendingCount", countByStatus(rows, STATUS_PENDING));
         summary.put("approvedCount", countByStatus(rows, STATUS_APPROVED));
         summary.put("rejectedCount", countByStatus(rows, STATUS_REJECTED));
         summary.put("pendingSettlementAmount", pendingSettlementAmount.toPlainString());
+        summary.put("mineCount", mineCount);
+        summary.put("managedCount", managedCount);
         summary.put("flowSteps", List.of(
             "学员申请岗位/模拟应聘",
             "班主任分配导师",
@@ -506,6 +535,22 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             .toList();
     }
 
+    private List<OsgClassRecord> filterByScope(List<OsgClassRecord> rows, String scope, Long assistantUserId)
+    {
+        if ("mine".equals(scope))
+        {
+            if (assistantUserId == null || rows == null || rows.isEmpty())
+            {
+                return Collections.emptyList();
+            }
+            return rows.stream()
+                .filter(row -> Objects.equals(row.getMentorId(), assistantUserId)
+                    && "assistant".equals(row.getCourseSource()))
+                .toList();
+        }
+        return filterAssistantOwnedRows(rows, assistantUserId);
+    }
+
     private void validateLeadMentorCreate(OsgClassRecord record)
     {
         if (record == null)
@@ -520,21 +565,26 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         {
             throw new ServiceException("上课日期不能为空");
         }
-        if (record.getDurationHours() == null || record.getDurationHours() <= 0)
-        {
-            throw new ServiceException("学习时长不能为空");
-        }
-        if (record.getCourseType() == null || record.getCourseType().isBlank())
-        {
-            throw new ServiceException("课程类型不能为空");
-        }
         if (record.getClassStatus() == null || record.getClassStatus().isBlank())
         {
             throw new ServiceException("课程内容不能为空");
         }
-        if (record.getFeedbackContent() == null || record.getFeedbackContent().isBlank())
+        // absent(旷课) 场景：学员未到场，无 courseType/durationHours/feedbackContent 可言
+        boolean isAbsent = "absent".equalsIgnoreCase(record.getClassStatus());
+        if (!isAbsent)
         {
-            throw new ServiceException("课程反馈不能为空");
+            if (record.getDurationHours() == null || record.getDurationHours() <= 0)
+            {
+                throw new ServiceException("学习时长不能为空");
+            }
+            if (record.getCourseType() == null || record.getCourseType().isBlank())
+            {
+                throw new ServiceException("课程类型不能为空");
+            }
+            if (record.getFeedbackContent() == null || record.getFeedbackContent().isBlank())
+            {
+                throw new ServiceException("课程反馈不能为空");
+            }
         }
     }
 
@@ -554,6 +604,14 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         if (record.getUpdateBy() == null || record.getUpdateBy().isBlank())
         {
             record.setUpdateBy(record.getCreateBy());
+        }
+        // absent 记录：事实上不存在的字段必须 NULL 化（防御性，不信任前端）
+        if ("absent".equalsIgnoreCase(record.getClassStatus()))
+        {
+            record.setCourseType(null);
+            record.setDurationHours(null);
+            record.setFeedbackContent(null);
+            record.setTopics(null);
         }
     }
 
@@ -682,6 +740,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         payload.put("coachingType", toCoachingTypeLabel(row.getCourseType()));
         payload.put("courseType", row.getCourseType());
         payload.put("courseContent", toCourseContentLabel(row.getClassStatus()));
+        payload.put("classStatus", row.getClassStatus());
         payload.put("reporterRole", toReporterRoleLabel(row.getCourseSource()));
         payload.put("classDate", row.getClassDate());
         payload.put("durationHours", row.getDurationHours());
@@ -689,6 +748,8 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         payload.put("studentRating", row.getRate());
         payload.put("status", normalizeReviewStatus(row.getStatus()));
         payload.put("reviewRemark", row.getReviewRemark());
+        payload.put("feedbackContent", row.getFeedbackContent());
+        payload.put("comments", row.getComments());
         payload.put("submittedAt", row.getSubmittedAt());
         return payload;
     }
@@ -747,9 +808,18 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     private String toCoachingTypeLabel(String courseType)
     {
-        if ("mock_practice".equalsIgnoreCase(defaultText(courseType, "")))
+        if (courseType == null || courseType.isBlank())
+        {
+            return null;
+        }
+        String normalized = courseType.trim().toLowerCase();
+        if ("mock_practice".equals(normalized))
         {
             return "模拟应聘";
+        }
+        if ("basic_course".equals(normalized))
+        {
+            return "基础课程";
         }
         return "岗位辅导";
     }
@@ -761,13 +831,15 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             return "其他";
         }
         return switch (classStatus.trim().toLowerCase()) {
-            case "resume_revision" -> "新简历";
+            case "technical" -> "技术的";
+            case "behavioral" -> "行为训练";
             case "resume_update" -> "简历更新";
-            case "case_prep" -> "Case准备";
-            case "mock_interview" -> "模拟面试";
-            case "networking_midterm" -> "人际关系期中考试";
+            case "mock_interview" -> "模拟面试的课程";
+            case "networking_midterm" -> "人际关系的课程";
             case "mock_midterm" -> "模拟期中考试";
-            case "behavioral" -> "Behavioral";
+            case "case_prep" -> "咨询案例准备";
+            case "other" -> "其他";
+            case "absent" -> "旷课";
             default -> classStatus;
         };
     }

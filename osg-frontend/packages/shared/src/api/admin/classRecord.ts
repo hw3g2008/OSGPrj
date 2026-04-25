@@ -8,9 +8,10 @@ export interface ClassRecordRow {
   studentName: string
   mentorId: number
   mentorName: string
-  coachingType: string
+  coachingType?: string | null
   courseType?: string | null
   courseContent: string
+  classStatus?: string | null
   reporterRole: string
   classDate?: string | null
   durationHours?: number | null
@@ -18,6 +19,8 @@ export interface ClassRecordRow {
   studentRating?: string | null
   status: string
   reviewRemark?: string | null
+  feedbackContent?: string | null
+  comments?: string | null
   submittedAt?: string | null
 }
 
@@ -28,6 +31,8 @@ export interface ClassRecordStats {
   rejectedCount: number
   pendingSettlementAmount: string
   flowSteps: string[]
+  mineCount?: number
+  managedCount?: number
 }
 
 export interface ClassRecordFilters {
@@ -38,6 +43,7 @@ export interface ClassRecordFilters {
   tab?: string
   classDateStart?: string
   classDateEnd?: string
+  scope?: 'mine' | 'managed'
 }
 
 const toParams = (filters: ClassRecordFilters = {}) => {

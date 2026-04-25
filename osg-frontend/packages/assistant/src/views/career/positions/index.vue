@@ -1,376 +1,445 @@
 <template>
-  <div id="page-positions" class="page-positions">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          岗位信息
-          <span class="page-title-en">Job Tracker</span>
-        </h1>
-        <p class="page-sub">追踪岗位池与助教学员申请情况，保留只读查看与关联学员明细</p>
-      </div>
+  <div class="osg-page page-positions">
+    <PageHeader
+      title="岗位信息"
+      subtitle="Job Tracker"
+      description="追踪各大公司招聘岗位与我的学员求职进度（只读）"
+    >
+      <template #actions>
+        <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
+          <a-radio-button value="list">
+            <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px" />列表视图
+          </a-radio-button>
+          <a-radio-button value="drilldown">
+            <i class="mdi mdi-file-tree" style="margin-right: 4px" />下钻视图
+          </a-radio-button>
+        </a-radio-group>
+      </template>
+    </PageHeader>
 
-      <div class="view-switcher">
-        <button type="button" class="sort-button" @click="noopSort">
-          <i class="mdi mdi-sort-variant" aria-hidden="true" />
-          排序
-        </button>
-        <button
-          id="lead-view-drilldown"
-          type="button"
-          class="btn btn-sm"
-          :class="{ 'btn--active': viewMode === 'drilldown' }"
-          @click="viewMode = 'drilldown'"
-        >
-          <i class="mdi mdi-file-tree" aria-hidden="true" />
-          下钻视图
-        </button>
-        <button
-          id="lead-view-list"
-          type="button"
-          class="btn btn-sm"
-          :class="{ 'btn--active': viewMode === 'list' }"
-          @click="viewMode = 'list'"
-        >
-          <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
-          列表视图
-        </button>
+    <div class="stats-row">
+      <div v-for="card in statsCards" :key="card.key" class="stats-row__item">
+        <a-card :bordered="false" :body-style="{ padding: '16px', textAlign: 'center' }">
+          <a-statistic
+            :title="card.label"
+            :value="card.value"
+            :value-style="{ color: card.color, fontSize: '24px', fontWeight: 700 }"
+          />
+        </a-card>
       </div>
     </div>
 
-    <section class="card">
-      <div class="card-body">
-        <div class="filter-row">
-          <select v-model="filters.category" class="form-select" aria-label="岗位分类">
-            <option value="">全部分类</option>
-            <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
+    <a-card :bordered="false" style="margin-top: 12px">
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 10px; flex-wrap: wrap">
+        <a-form-item>
+          <a-select
+            v-model:value="filters.category"
+            placeholder="全部分类"
+            allow-clear
+            style="width: 140px"
+          >
+            <a-select-option v-for="option in categoryOptions" :key="option.value" :value="option.value">
               {{ option.label }}
-            </option>
-          </select>
-
-          <select v-model="filters.industry" class="form-select" aria-label="行业">
-            <option value="">全部行业</option>
-            <option v-for="option in industryOptions" :key="option" :value="option">
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select
+            v-model:value="filters.industry"
+            placeholder="全部行业"
+            allow-clear
+            show-search
+            style="width: 160px"
+          >
+            <a-select-option v-for="option in industryOptions" :key="option" :value="option">
+              {{ resolveIndustryGroupMeta(option).label }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select
+            v-model:value="filters.companyName"
+            placeholder="全部公司"
+            allow-clear
+            show-search
+            style="width: 180px"
+          >
+            <a-select-option v-for="option in companyOptions" :key="option" :value="option">
               {{ option }}
-            </option>
-          </select>
-
-          <select v-model="filters.companyName" class="form-select form-select--wide" aria-label="公司">
-            <option value="">全部公司</option>
-            <option v-for="option in companyOptions" :key="option" :value="option">
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select
+            v-model:value="filters.region"
+            placeholder="全部地区"
+            allow-clear
+            style="width: 140px"
+          >
+            <a-select-option v-for="option in regionOptions" :key="option" :value="option">
               {{ option }}
-            </option>
-          </select>
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-input
+            id="assistant-positions-keyword"
+            v-model:value="filters.keyword"
+            placeholder="搜索岗位/公司/城市..."
+            allow-clear
+            style="width: 200px"
+          />
+        </a-form-item>
+        <a-form-item>
+          <a-space>
+            <a-button @click="handleReset">重置</a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
 
-          <select v-model="filters.region" class="form-select" aria-label="地区">
-            <option value="">全部地区</option>
-            <option v-for="option in regionOptions" :key="option" :value="option">
-              {{ option }}
-            </option>
-          </select>
+      <a-spin :spinning="loading" tip="正在加载岗位数据...">
+        <a-alert
+          v-if="errorMessage"
+          type="error"
+          show-icon
+          :message="errorMessage"
+          style="margin-bottom: 12px"
+        >
+          <template #action>
+            <a-button size="small" type="primary" @click="loadPositions">重新加载</a-button>
+          </template>
+        </a-alert>
 
-          <div class="search-box">
-            <i class="mdi mdi-magnify" aria-hidden="true" />
-            <input
-              id="assistant-positions-keyword"
-              v-model.trim="filters.keyword"
-              class="form-input"
-              type="text"
-              placeholder="搜索岗位名称..."
-            />
-          </div>
-        </div>
-      </div>
-    </section>
+        <template v-if="viewMode === 'drilldown'">
+          <a-empty
+            v-if="!loading && !groupedPositions.length"
+            description="当前筛选条件下暂无岗位数据"
+          />
 
-    <section v-if="errorMessage" class="state-card state-card--error">
-      <h2>岗位数据加载失败</h2>
-      <p>{{ errorMessage }}</p>
-      <button type="button" class="btn btn-outline" @click="loadPositions">重新加载</button>
-    </section>
+          <div v-else class="positions-drilldown">
+            <section
+              v-for="industry in groupedPositions"
+              :key="industry.industryId"
+              class="positions-drilldown__industry"
+            >
+              <button
+                type="button"
+                :class="['positions-drilldown__industry-head', `positions-drilldown__industry-head--${industry.tone}`]"
+                :aria-expanded="expandedIndustries.has(industry.industryId)"
+                @click="toggleIndustry(industry.industryId)"
+              >
+                <div class="positions-drilldown__industry-main">
+                  <i
+                    :class="['mdi', expandedIndustries.has(industry.industryId) ? 'mdi-chevron-down' : 'mdi-chevron-right']"
+                    :style="{ color: toneTextColor[industry.tone] || '#64748b' }"
+                    aria-hidden="true"
+                  />
+                  <i
+                    :class="['mdi', industry.iconClass]"
+                    :style="{ color: toneTextColor[industry.tone] || '#64748b' }"
+                    aria-hidden="true"
+                  />
+                  <strong :style="{ color: toneTextColor[industry.tone] || '#64748b' }">
+                    {{ industry.industry }}
+                  </strong>
+                  <span
+                    :style="{
+                      background: toneTextColor[industry.tone] || '#64748b',
+                      color: '#fff',
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                      fontSize: '11px'
+                    }"
+                  >
+                    {{ industry.companyCount }} 家公司
+                  </span>
+                  <a-tag color="purple">{{ industry.positionCount }} 个岗位</a-tag>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <a-tag color="green">{{ industry.openCount }} 开放</a-tag>
+                  <a-tag v-if="industry.positionCount - industry.openCount > 0" color="default">
+                    {{ industry.positionCount - industry.openCount }} 已关闭
+                  </a-tag>
+                  <span
+                    :style="{
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: toneTextColor[industry.tone] || '#64748b'
+                    }"
+                  >
+                    我的学员 {{ industry.studentCount }}
+                  </span>
+                </div>
+              </button>
 
-    <section v-else-if="loading" class="state-card">
-      <h2>岗位数据加载中</h2>
-      <p>正在读取岗位池与关联学员关系，请稍候。</p>
-    </section>
-
-    <section v-else-if="filteredPositions.length === 0" class="state-card">
-      <h2>当前筛选下暂无岗位</h2>
-      <p>可以清空关键词或筛选条件，查看完整岗位池。</p>
-    </section>
-
-    <template v-else>
-      <section
-        id="lead-position-drilldown"
-        class="card"
-        :style="{ display: viewMode === 'drilldown' ? 'block' : 'none' }"
-      >
-        <div class="card-body card-body--drilldown">
-          <article v-for="industry in groupedPositions" :key="industry.industry" class="category-section">
-            <button type="button" class="category-header" :style="industry.headerStyle">
-              <div class="category-title-group">
-                <i class="mdi mdi-chevron-down category-icon" aria-hidden="true" />
-                <i class="mdi category-kind-icon" :class="industry.iconClass" aria-hidden="true" />
-                <span class="category-title" :style="{ color: industry.accentColor }">{{ industry.industry }}</span>
-                <span class="category-badge" :style="{ background: industry.accentColor }">{{ industry.companyCount }} 家公司</span>
-                <span class="category-badge category-badge--success">{{ industry.positionCount }} 个岗位</span>
-              </div>
-              <span class="category-summary" :style="{ color: industry.accentColor }">
-                助教学员: {{ industry.studentCount }}人
-              </span>
-            </button>
-
-            <div class="category-content" :style="{ display: 'block' }">
-              <article v-for="company in industry.companies" :key="company.companyName" class="company-section">
-                <div class="company-header" role="button" tabindex="0">
-                  <div class="company-header__main">
-                    <i class="mdi mdi-chevron-down company-icon" aria-hidden="true" />
-                    <div class="company-logo" :style="{ background: company.logoColor }">{{ company.logoText }}</div>
-                    <div class="company-meta">
-                      <div class="company-name">{{ company.companyName }}</div>
-                      <div class="company-locations">{{ company.locations }}</div>
-                    </div>
-                  </div>
-
-                  <div class="company-actions">
-                    <span class="company-count">
-                      <strong>{{ company.positionCount }}</strong>
-                      个岗位
-                    </span>
+              <div
+                v-if="expandedIndustries.has(industry.industryId)"
+                class="positions-drilldown__companies"
+              >
+                <section
+                  v-for="company in industry.companies"
+                  :key="`${industry.industryId}-${company.companyName}`"
+                  class="positions-drilldown__company"
+                >
+                  <div class="positions-drilldown__company-head">
                     <button
-                      v-if="company.studentCount > 0"
                       type="button"
-                      class="company-link"
-                      @click.stop="openCompanyStudents(company)"
+                      class="positions-drilldown__company-main-button"
+                      :aria-expanded="isCompanyExpanded(industry.industryId, company.companyName)"
+                      @click="toggleCompany(industry.industryId, company.companyName)"
                     >
-                      {{ formatStudentLabel(company.studentCount) }}
-                    </button>
-                    <span v-else class="company-link company-link--muted">0人</span>
-                    <a
-                      v-if="company.companyWebsite"
-                      class="btn btn-outline btn-sm btn-outline--tiny"
-                      :href="company.companyWebsite"
-                      target="_blank"
-                      rel="noreferrer"
-                      @click.stop
-                    >
-                      <i class="mdi mdi-web" aria-hidden="true" />
-                      官网
-                    </a>
-                  </div>
-                </div>
-
-                <div class="company-content" :style="{ display: 'block' }">
-                  <div class="table-wrap">
-                    <table class="table">
-                      <thead>
-                        <tr>
-                          <th>岗位名称</th>
-                          <th>岗位分类</th>
-                          <th>部门</th>
-                          <th>地区</th>
-                          <th>招聘周期</th>
-                          <th>发布时间</th>
-                          <th>状态</th>
-                          <th>我的学员</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="job in company.positions" :key="job.positionId">
-                          <td class="table-cell-title">
-                            <a
-                              v-if="job.positionUrl"
-                              class="text-link"
-                              :href="job.positionUrl"
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              {{ job.positionName }}
-                              <i class="mdi mdi-open-in-new" aria-hidden="true" />
-                            </a>
-                            <span v-else>{{ job.positionName }}</span>
-                          </td>
-                          <td>{{ categoryLabelMap[job.positionCategory] || job.positionCategory || '-' }}</td>
-                          <td>{{ job.department || '-' }}</td>
-                          <td>{{ formatLocation(job) }}</td>
-                          <td>
-                            <span class="tag" :class="cycleTone(job.recruitmentCycle)">{{ job.recruitmentCycle || '-' }}</span>
-                          </td>
-                          <td>{{ formatDate(job.publishTime) }}</td>
-                          <td>
-                            <span class="tag" :class="statusToneClass(job.displayStatus)">
-                              {{ displayStatusLabel(job.displayStatus) }}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              v-if="Number(job.studentCount || 0) > 0"
-                              type="button"
-                              class="student-link"
-                              @click="openStudents(job)"
-                            >
-                              {{ formatStudentLabel(Number(job.studentCount || 0)) }}
-                            </button>
-                            <span v-else class="student-link student-link--muted">0人</span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </article>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section
-        id="lead-position-list"
-        class="card"
-        :style="{ display: viewMode === 'list' ? 'block' : 'none' }"
-      >
-        <div class="card-body card-body--list">
-          <div class="table-wrap">
-            <table class="table list-table">
-              <thead>
-                <tr>
-                  <th>岗位名称</th>
-                  <th>公司</th>
-                  <th>行业</th>
-                  <th>岗位分类</th>
-                  <th>地区</th>
-                  <th>招聘周期</th>
-                  <th>发布时间</th>
-                  <th>状态</th>
-                  <th>我的学员</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="job in filteredPositions" :key="job.positionId">
-                  <td class="table-cell-title">
-                    <a
-                      v-if="job.positionUrl"
-                      class="text-link text-link--strong"
-                      :href="job.positionUrl"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {{ job.positionName }}
-                      <i class="mdi mdi-open-in-new" aria-hidden="true" />
-                    </a>
-                    <span v-else>{{ job.positionName }}</span>
-                  </td>
-                  <td>
-                    <div class="company-listing">
-                      <div class="company-logo company-logo--small" :style="{ background: resolveCompanyColor(job.companyName) }">
-                        {{ buildLogoText(job.companyName) }}
+                      <i
+                        :class="['mdi', isCompanyExpanded(industry.industryId, company.companyName) ? 'mdi-chevron-down' : 'mdi-chevron-right']"
+                        aria-hidden="true"
+                      />
+                      <div
+                        :class="['positions-drilldown__company-logo', `positions-drilldown__company-logo--${industry.tone}`]"
+                      >
+                        {{ company.logoText }}
                       </div>
+                      <div class="positions-drilldown__company-meta">
+                        <strong>{{ company.companyName }}</strong>
+                        <span>{{ company.locations || '—' }}</span>
+                      </div>
+                    </button>
+                    <a-space>
+                      <a-tag>{{ company.positionCount }} 个岗位</a-tag>
+                      <a-button
+                        v-if="company.studentCount > 0"
+                        type="link"
+                        size="small"
+                        @click="openCompanyStudents(company)"
+                      >
+                        {{ company.studentCount }}人
+                      </a-button>
+                      <span v-else style="color: #94a3b8; font-size: 12px">0人</span>
                       <a
-                        v-if="job.companyWebsite"
-                        class="company-external"
-                        :href="job.companyWebsite"
+                        v-if="company.companyWebsite"
+                        :href="company.companyWebsite"
                         target="_blank"
                         rel="noreferrer"
+                        style="font-size: 12px"
                       >
-                        {{ job.companyName }}
-                        <i class="mdi mdi-open-in-new" aria-hidden="true" />
+                        <i class="mdi mdi-web" aria-hidden="true" /> 官网
                       </a>
-                      <span v-else>{{ job.companyName }}</span>
-                    </div>
-                  </td>
-                  <td><span class="tag" :class="`industry-${resolveIndustryGroupMeta(job.industry).tone}`">{{ resolveIndustryGroupMeta(job.industry).label || '-' }}</span></td>
-                  <td>{{ categoryLabelMap[job.positionCategory] || job.positionCategory || '-' }}</td>
-                  <td>{{ formatLocation(job) }}</td>
-                  <td><span class="tag" :class="cycleTone(job.recruitmentCycle)">{{ job.recruitmentCycle || '-' }}</span></td>
-                  <td>{{ formatDate(job.publishTime) }}</td>
-                  <td>
-                    <span class="tag" :class="statusToneClass(job.displayStatus)">
-                      {{ displayStatusLabel(job.displayStatus) }}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      v-if="Number(job.studentCount || 0) > 0"
-                      type="button"
-                      class="student-link"
-                      @click="openStudents(job)"
+                    </a-space>
+                  </div>
+
+                  <div
+                    v-if="isCompanyExpanded(industry.industryId, company.companyName)"
+                    class="positions-drilldown__position-list"
+                  >
+                    <a-table
+                      :columns="drilldownColumns"
+                      :data-source="company.positions"
+                      :row-key="(r: PositionRecord) => r.positionId"
+                      :pagination="false"
+                      size="small"
+                      :scroll="{ x: 1000 }"
                     >
-                      {{ formatStudentLabel(Number(job.studentCount || 0)) }}
-                    </button>
-                    <span v-else class="student-link student-link--muted">0人</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                      <template #bodyCell="{ column, record }">
+                        <template v-if="column.dataIndex === 'positionName'">
+                          <a
+                            v-if="record.positionUrl"
+                            :href="record.positionUrl"
+                            target="_blank"
+                            rel="noreferrer"
+                            style="font-weight: 600"
+                          >
+                            {{ record.positionName }}
+                            <i class="mdi mdi-open-in-new" style="font-size: 11px" aria-hidden="true" />
+                          </a>
+                          <span v-else>{{ record.positionName }}</span>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'positionCategory'">
+                          {{ categoryLabelMap[record.positionCategory] || record.positionCategory || '-' }}
+                        </template>
+                        <template v-else-if="column.dataIndex === 'department'">
+                          {{ record.department || '-' }}
+                        </template>
+                        <template v-else-if="column.dataIndex === 'location'">
+                          {{ formatLocation(record) }}
+                        </template>
+                        <template v-else-if="column.dataIndex === 'recruitmentCycle'">
+                          <a-tag :color="cycleTagColor(record.recruitmentCycle)">
+                            {{ record.recruitmentCycle || '-' }}
+                          </a-tag>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'publishTime'">
+                          {{ formatDate(record.publishTime) }}
+                        </template>
+                        <template v-else-if="column.dataIndex === 'displayStatus'">
+                          <a-tag :color="statusTagColor(record.displayStatus)">
+                            {{ displayStatusLabel(record.displayStatus) }}
+                          </a-tag>
+                        </template>
+                        <template v-else-if="column.dataIndex === 'studentCount'">
+                          <a-button
+                            v-if="Number(record.studentCount || 0) > 0"
+                            type="link"
+                            size="small"
+                            @click="openStudents(record)"
+                          >
+                            {{ record.studentCount }}人
+                          </a-button>
+                          <span v-else style="color: #94a3b8">0人</span>
+                        </template>
+                      </template>
+                    </a-table>
+                  </div>
+                </section>
+              </div>
+            </section>
           </div>
-        </div>
-      </section>
-    </template>
+        </template>
 
-    <div class="page-footer-stats">
-      <span>
-        共
-        <strong>{{ filteredPositions.length }}</strong>
-        个岗位
-      </span>
-      <span class="footer-indicator footer-indicator--open">
-        <i class="mdi mdi-circle-small" aria-hidden="true" />
-        开放中 {{ openPositionCount }}
-      </span>
-      <span class="footer-indicator footer-indicator--students">
-        <i class="mdi mdi-circle-small" aria-hidden="true" />
-        我的学员 {{ linkedStudentCount }}人
-      </span>
-    </div>
+        <template v-else>
+          <a-table
+            :columns="listColumns"
+            :data-source="filteredPositions"
+            :row-key="(r: PositionRecord) => r.positionId"
+            :pagination="tablePagination"
+            :locale="{ emptyText: '当前筛选条件下暂无岗位数据' }"
+            :scroll="{ x: 1400 }"
+            @change="handleTableChange"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'positionName'">
+                <a
+                  v-if="record.positionUrl"
+                  :href="record.positionUrl"
+                  target="_blank"
+                  rel="noreferrer"
+                  style="font-weight: 600"
+                >
+                  {{ record.positionName }}
+                  <i class="mdi mdi-open-in-new" style="font-size: 11px" aria-hidden="true" />
+                </a>
+                <span v-else>{{ record.positionName }}</span>
+              </template>
+              <template v-else-if="column.dataIndex === 'companyName'">
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <div
+                    :class="['positions-drilldown__company-logo', `positions-drilldown__company-logo--${resolveIndustryGroupMeta(record.industry).tone}`]"
+                  >
+                    {{ buildLogoText(record.companyName) }}
+                  </div>
+                  <a
+                    v-if="record.companyWebsite"
+                    :href="record.companyWebsite"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {{ record.companyName }}
+                  </a>
+                  <span v-else>{{ record.companyName }}</span>
+                </div>
+              </template>
+              <template v-else-if="column.dataIndex === 'industry'">
+                <a-tag :class="`industry-tag industry-${resolveIndustryGroupMeta(record.industry).tone}`">
+                  {{ resolveIndustryGroupMeta(record.industry).label || '-' }}
+                </a-tag>
+              </template>
+              <template v-else-if="column.dataIndex === 'positionCategory'">
+                {{ categoryLabelMap[record.positionCategory] || record.positionCategory || '-' }}
+              </template>
+              <template v-else-if="column.dataIndex === 'location'">
+                {{ formatLocation(record) }}
+              </template>
+              <template v-else-if="column.dataIndex === 'recruitmentCycle'">
+                <a-tag :color="cycleTagColor(record.recruitmentCycle)">
+                  {{ record.recruitmentCycle || '-' }}
+                </a-tag>
+              </template>
+              <template v-else-if="column.dataIndex === 'publishTime'">
+                {{ formatDate(record.publishTime) }}
+              </template>
+              <template v-else-if="column.dataIndex === 'displayStatus'">
+                <a-tag :color="statusTagColor(record.displayStatus)">
+                  {{ displayStatusLabel(record.displayStatus) }}
+                </a-tag>
+              </template>
+              <template v-else-if="column.dataIndex === 'studentCount'">
+                <a-button
+                  v-if="Number(record.studentCount || 0) > 0"
+                  type="link"
+                  size="small"
+                  @click="openStudents(record)"
+                >
+                  {{ record.studentCount }}人
+                </a-button>
+                <span v-else style="color: #94a3b8">0人</span>
+              </template>
+            </template>
+          </a-table>
+        </template>
 
-    <div v-if="studentModal.visible" class="modal-backdrop" @click.self="closeStudents">
-      <section class="modal-card">
-        <header class="modal-card__header">
-          <div>
-            <h2>关联学员</h2>
-            <p>{{ studentModal.position?.positionName || '-' }} · {{ studentModal.position?.companyName || '-' }}</p>
-          </div>
-          <button type="button" class="icon-button" @click="closeStudents">关闭</button>
-        </header>
+        <div class="positions-footer">
+          <span>
+            共
+            <strong>{{ filteredPositions.length }}</strong>
+            个岗位
+          </span>
+          <span class="positions-footer__indicator positions-footer__indicator--open">
+            <i class="mdi mdi-circle-small" aria-hidden="true" />
+            开放中 {{ openPositionCount }}
+          </span>
+          <span class="positions-footer__indicator positions-footer__indicator--closed">
+            <i class="mdi mdi-circle-small" aria-hidden="true" />
+            已关闭 {{ closedPositionCount }}
+          </span>
+          <span class="positions-footer__indicator positions-footer__indicator--students">
+            <i class="mdi mdi-circle-small" aria-hidden="true" />
+            我的学员 {{ linkedStudentCount }}人
+          </span>
+        </div>
+      </a-spin>
+    </a-card>
 
-        <div v-if="studentModal.loading" class="modal-card__body modal-card__body--state">
-          正在读取关联学员...
-        </div>
-        <div v-else-if="studentModal.error" class="modal-card__body modal-card__body--state">
-          {{ studentModal.error }}
-        </div>
-        <div v-else-if="studentModal.rows.length === 0" class="modal-card__body modal-card__body--state">
-          当前岗位暂无可展示的关联学员明细。
-        </div>
-        <div v-else class="modal-card__body">
-          <table class="table list-table">
-            <thead>
-              <tr>
-                <th>学员</th>
-                <th>当前状态</th>
-                <th>已用课时</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in studentModal.rows" :key="`${row.studentId}-${row.positionName}`">
-                <td>
-                  <div class="student-name">{{ row.studentName }}</div>
-                  <div class="student-meta">ID: {{ row.studentId }}</div>
-                </td>
-                <td>
-                  <span class="tag" :class="statusToneClass(row.statusTone)">{{ row.status }}</span>
-                </td>
-                <td>{{ row.usedHours }} h</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+    <a-modal
+      v-model:open="studentModal.visible"
+      :footer="null"
+      width="720px"
+      :title="studentModalTitle"
+      @cancel="closeStudents"
+    >
+      <a-spin :spinning="studentModal.loading" tip="正在读取关联学员...">
+        <a-alert
+          v-if="studentModal.error"
+          type="error"
+          :message="studentModal.error"
+          show-icon
+          style="margin-bottom: 12px"
+        />
+        <a-table
+          :columns="studentColumns"
+          :data-source="studentModal.rows"
+          :row-key="(r: AssistantPositionStudent) => `${r.studentId}-${r.positionName}`"
+          :pagination="false"
+          :locale="{ emptyText: '当前岗位暂无可展示的关联学员明细' }"
+          size="small"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.dataIndex === 'studentName'">
+              <div style="font-weight: 600">{{ record.studentName }}</div>
+              <div style="color: #94a3b8; font-size: 12px">ID: {{ record.studentId }}</div>
+            </template>
+            <template v-else-if="column.dataIndex === 'status'">
+              <a-tag :color="studentStatusColor(record.statusTone)">{{ record.status }}</a-tag>
+            </template>
+            <template v-else-if="column.dataIndex === 'usedHours'">
+              {{ record.usedHours }} h
+            </template>
+          </template>
+        </a-table>
+      </a-spin>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import PageHeader from '@/components/PageHeader.vue'
 import {
   getAssistantPositionDrillDown,
   getAssistantPositionStudents,
@@ -406,69 +475,70 @@ interface GroupedCompany {
   companyType?: string
   companyWebsite?: string
   logoText: string
-  logoColor: string
   positionCount: number
+  openCount: number
   studentCount: number
   locations: string
   positions: PositionRecord[]
 }
 
 interface GroupedIndustry {
+  industryId: string
   industry: string
+  tone: string
+  iconClass: string
   companyCount: number
   positionCount: number
+  openCount: number
   studentCount: number
   companies: GroupedCompany[]
-  iconClass: string
-  accentColor: string
-  headerStyle: Record<string, string>
 }
 
-const FALLBACK_INDUSTRY_META = {
-  tone: 'slate',
-  icon: 'mdi-briefcase',
-  label: '未归类',
-} as const
+const FALLBACK_TONE = 'slate'
+const FALLBACK_ICON = 'mdi-briefcase'
+
+const toneTextColor: Record<string, string> = {
+  gold: '#92400E',
+  violet: '#7C3AED',
+  blue: '#1D4ED8',
+  amber: '#D97706',
+  teal: '#0F766E',
+  indigo: '#4F46E5',
+  slate: '#64748b',
+}
 
 const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
 
-interface IndustryGroupMeta {
-  id: string
-  label: string
-  tone: string
-  icon: string
-}
-
-function resolveIndustryGroupMeta(industryRaw: string): IndustryGroupMeta {
+function resolveIndustryGroupMeta(industryRaw: string) {
   const trimmed = industryRaw?.trim() || ''
   const match = industryMeta.value.find((m) => m.value === trimmed)
   if (match) {
     return {
       id: match.value,
       label: match.label,
-      tone: match.tone ?? FALLBACK_INDUSTRY_META.tone,
-      icon: match.icon ?? FALLBACK_INDUSTRY_META.icon,
+      tone: match.tone ?? FALLBACK_TONE,
+      icon: match.icon ?? FALLBACK_ICON,
     }
   }
   return {
     id: trimmed || 'uncategorized',
-    label: trimmed || FALLBACK_INDUSTRY_META.label,
-    tone: FALLBACK_INDUSTRY_META.tone,
-    icon: FALLBACK_INDUSTRY_META.icon,
+    label: trimmed || '未归类',
+    tone: FALLBACK_TONE,
+    icon: FALLBACK_ICON,
   }
 }
 
-const viewMode = ref<ViewMode>('drilldown')
+const viewMode = ref<ViewMode>('list')
 const loading = ref(true)
 const errorMessage = ref('')
 const allPositions = ref<PositionRecord[]>([])
 
 const filters = reactive({
   keyword: '',
-  category: '',
-  industry: '',
-  companyName: '',
-  region: '',
+  category: undefined as string | undefined,
+  industry: undefined as string | undefined,
+  companyName: undefined as string | undefined,
+  region: undefined as string | undefined,
 })
 
 const studentModal = reactive<{
@@ -493,6 +563,48 @@ const categoryLabelMap: Record<string, string> = {
   events: '招聘活动',
 }
 
+const expandedIndustries = ref(new Set<string>())
+const expandedCompanies = ref(new Set<string>())
+
+const tablePagination = reactive({
+  current: 1,
+  pageSize: 20,
+  total: 0,
+  showSizeChanger: true,
+  showQuickJumper: true,
+  pageSizeOptions: ['10', '20', '50', '100'],
+  showTotal: (total: number) => `共 ${total} 条`,
+})
+
+const drilldownColumns = [
+  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 260, ellipsis: false },
+  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 100 },
+  { title: '部门', dataIndex: 'department', key: 'department', width: 100 },
+  { title: '地区', dataIndex: 'location', key: 'location', width: 120 },
+  { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 120 },
+  { title: '发布时间', dataIndex: 'publishTime', key: 'publishTime', width: 110 },
+  { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 100 },
+  { title: '我的学员', dataIndex: 'studentCount', key: 'studentCount', width: 100 },
+]
+
+const listColumns = [
+  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, fixed: 'left', ellipsis: false },
+  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 220 },
+  { title: '行业', dataIndex: 'industry', key: 'industry', width: 140 },
+  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 110 },
+  { title: '地区', dataIndex: 'location', key: 'location', width: 140 },
+  { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 120 },
+  { title: '发布时间', dataIndex: 'publishTime', key: 'publishTime', width: 110 },
+  { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 100 },
+  { title: '我的学员', dataIndex: 'studentCount', key: 'studentCount', width: 110, fixed: 'right' },
+]
+
+const studentColumns = [
+  { title: '学员', dataIndex: 'studentName', key: 'studentName' },
+  { title: '当前状态', dataIndex: 'status', key: 'status', width: 140 },
+  { title: '已用课时', dataIndex: 'usedHours', key: 'usedHours', width: 110 },
+]
+
 const filteredPositions = computed(() =>
   allPositions.value.filter((position) => {
     const keyword = filters.keyword.trim().toLowerCase()
@@ -513,30 +625,43 @@ const filteredPositions = computed(() =>
 )
 
 const categoryOptions = computed(() =>
-  Array.from(new Set(allPositions.value.map((position) => position.positionCategory)))
+  Array.from(new Set(allPositions.value.map((p) => p.positionCategory)))
     .filter(Boolean)
     .map((value) => ({ value, label: categoryLabelMap[value] || value })),
 )
 
 const industryOptions = computed(() =>
-  Array.from(new Set(allPositions.value.map((position) => position.industry))).filter(Boolean),
+  Array.from(new Set(allPositions.value.map((p) => p.industry))).filter(Boolean),
 )
 
 const companyOptions = computed(() =>
-  Array.from(new Set(allPositions.value.map((position) => position.companyName))).filter(Boolean),
+  Array.from(new Set(allPositions.value.map((p) => p.companyName))).filter(Boolean),
 )
 
 const regionOptions = computed(() =>
-  Array.from(new Set(allPositions.value.map((position) => position.region))).filter(Boolean),
+  Array.from(new Set(allPositions.value.map((p) => p.region))).filter(Boolean),
 )
 
+const isOpenStatus = (status?: string) => status === 'visible' || status === 'success'
+
 const openPositionCount = computed(
-  () => filteredPositions.value.filter((position) => position.displayStatus === 'visible').length,
+  () => filteredPositions.value.filter((p) => isOpenStatus(p.displayStatus)).length,
+)
+
+const closedPositionCount = computed(
+  () => filteredPositions.value.filter((p) => !isOpenStatus(p.displayStatus)).length,
 )
 
 const linkedStudentCount = computed(() =>
-  filteredPositions.value.reduce((sum, position) => sum + Number(position.studentCount || 0), 0),
+  filteredPositions.value.reduce((sum, p) => sum + Number(p.studentCount || 0), 0),
 )
+
+const statsCards = computed(() => [
+  { key: 'total', label: '总岗位', value: filteredPositions.value.length, color: '#6b6ef7' },
+  { key: 'open', label: '开放中', value: openPositionCount.value, color: '#22c55e' },
+  { key: 'closed', label: '已关闭', value: closedPositionCount.value, color: '#94a3b8' },
+  { key: 'students', label: '我的学员', value: linkedStudentCount.value, color: '#3b82f6' },
+])
 
 const groupedPositions = computed<GroupedIndustry[]>(() => {
   const industries = new Map<string, GroupedIndustry>()
@@ -544,18 +669,18 @@ const groupedPositions = computed<GroupedIndustry[]>(() => {
   filteredPositions.value.forEach((position) => {
     const industryKey = position.industry || '未归类行业'
     const meta = resolveIndustryGroupMeta(industryKey)
-    const industry = industries.get(industryKey) || {
-      industry: meta.label,
-      companyCount: 0,
-      positionCount: 0,
-      studentCount: 0,
-      companies: [],
-      iconClass: meta.icon,
-      accentColor: `var(--industry-${meta.tone}, #4b5563)`,
-      headerStyle: {
-        background: '#f3f4f6',
-      },
-    }
+    const industry =
+      industries.get(industryKey) || {
+        industryId: industryKey,
+        industry: meta.label,
+        tone: meta.tone,
+        iconClass: meta.icon,
+        companyCount: 0,
+        positionCount: 0,
+        openCount: 0,
+        studentCount: 0,
+        companies: [] as GroupedCompany[],
+      }
 
     let company = industry.companies.find((entry) => entry.companyName === position.companyName)
     if (!company) {
@@ -564,8 +689,8 @@ const groupedPositions = computed<GroupedIndustry[]>(() => {
         companyType: position.companyType,
         companyWebsite: position.companyWebsite,
         logoText: buildLogoText(position.companyName),
-        logoColor: resolveCompanyColor(position.companyName),
         positionCount: 0,
+        openCount: 0,
         studentCount: 0,
         locations: '',
         positions: [],
@@ -575,9 +700,13 @@ const groupedPositions = computed<GroupedIndustry[]>(() => {
 
     company.positions.push(position)
     company.positionCount += 1
+    if (isOpenStatus(position.displayStatus)) {
+      company.openCount += 1
+      industry.openCount += 1
+    }
     company.studentCount += Number(position.studentCount || 0)
     company.locations = Array.from(
-      new Set(company.positions.map((entry) => formatLocation(entry)).filter(Boolean)),
+      new Set(company.positions.map((entry) => formatLocation(entry)).filter((v) => v && v !== '-')),
     ).join(', ')
 
     industry.positionCount += 1
@@ -589,9 +718,15 @@ const groupedPositions = computed<GroupedIndustry[]>(() => {
     .map((industry) => ({
       ...industry,
       companyCount: industry.companies.length,
-      companies: industry.companies.sort((left, right) => left.companyName.localeCompare(right.companyName)),
+      companies: industry.companies.sort((a, b) => a.companyName.localeCompare(b.companyName)),
     }))
-    .sort((left, right) => left.industry.localeCompare(right.industry))
+    .sort((a, b) => a.industry.localeCompare(b.industry))
+})
+
+const studentModalTitle = computed(() => {
+  const p = studentModal.position
+  if (!p) return '关联学员'
+  return `关联学员 · ${p.positionName || '-'} · ${p.companyName || '-'}`
 })
 
 function flattenIndustries(industries: AssistantPositionIndustry[]): PositionRecord[] {
@@ -609,9 +744,7 @@ function flattenIndustries(industries: AssistantPositionIndustry[]): PositionRec
 }
 
 function formatDate(value?: string) {
-  if (!value) {
-    return '-'
-  }
+  if (!value) return '-'
   return value.slice(0, 10)
 }
 
@@ -620,50 +753,39 @@ function formatLocation(position: PositionRecord) {
 }
 
 function displayStatusLabel(status?: string) {
-  if (status === 'visible') {
-    return '展示中'
-  }
-  if (status === 'hidden') {
-    return '已隐藏'
-  }
-  if (status === 'expired') {
-    return '已过期'
-  }
+  if (status === 'visible') return '展示中'
+  if (status === 'hidden') return '已隐藏'
+  if (status === 'expired') return '已过期'
   return status || '未标注'
 }
 
-function statusToneClass(status?: string) {
-  if (status === 'visible' || status === 'success') {
-    return 'success'
-  }
-  if (status === 'warning') {
-    return 'warning'
-  }
-  if (status === 'danger' || status === 'hidden' || status === 'expired') {
-    return 'danger'
-  }
-  if (status === 'info') {
-    return 'info'
-  }
-  return 'neutral'
+function statusTagColor(status?: string) {
+  if (status === 'visible' || status === 'success') return 'green'
+  if (status === 'warning') return 'orange'
+  if (status === 'danger' || status === 'hidden' || status === 'expired') return 'red'
+  if (status === 'info') return 'blue'
+  return 'default'
 }
 
-function cycleTone(cycle?: string) {
-  return cycle?.toLowerCase().includes('off') ? 'neutral' : 'info'
+function cycleTagColor(cycle?: string) {
+  return cycle?.toLowerCase().includes('off') ? 'default' : 'purple'
 }
 
-/* industryTone / industryIcon / industryColor / industryGradient 已删除
- * 行业元数据统一由 resolveIndustryGroupMeta() + useIndustryMeta 提供 */
+function studentStatusColor(tone?: string) {
+  if (tone === 'success') return 'green'
+  if (tone === 'warning') return 'orange'
+  if (tone === 'danger') return 'red'
+  if (tone === 'info') return 'blue'
+  return 'default'
+}
 
 function buildLogoText(companyName: string) {
-  const parts = companyName
+  const parts = (companyName || '')
     .split(/\s+/)
     .map((part) => part.replace(/[^A-Za-z0-9]/g, ''))
     .filter(Boolean)
 
-  if (!parts.length) {
-    return 'OSG'
-  }
+  if (!parts.length) return 'OSG'
 
   return parts
     .slice(0, 3)
@@ -671,22 +793,37 @@ function buildLogoText(companyName: string) {
     .join('')
 }
 
-function resolveCompanyColor(companyName: string) {
-  const normalized = companyName.trim().toLowerCase()
-  if (normalized.includes('goldman')) {
-    return 'var(--primary)'
-  }
-  if (normalized.includes('morgan')) {
-    return '#1E40AF'
-  }
-  if (normalized.includes('mckinsey')) {
-    return '#7C3AED'
-  }
-  return '#64748B'
+function toggleIndustry(industryId: string) {
+  const next = new Set(expandedIndustries.value)
+  if (next.has(industryId)) next.delete(industryId)
+  else next.add(industryId)
+  expandedIndustries.value = next
 }
 
-function formatStudentLabel(count: number) {
-  return `${count}人`
+function toggleCompany(industryId: string, companyName: string) {
+  const key = `${industryId}::${companyName}`
+  const next = new Set(expandedCompanies.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  expandedCompanies.value = next
+}
+
+function isCompanyExpanded(industryId: string, companyName: string) {
+  return expandedCompanies.value.has(`${industryId}::${companyName}`)
+}
+
+function handleTableChange(pag: { current?: number; pageSize?: number }) {
+  tablePagination.current = pag.current ?? 1
+  tablePagination.pageSize = pag.pageSize ?? 20
+}
+
+function handleReset() {
+  filters.keyword = ''
+  filters.category = undefined
+  filters.industry = undefined
+  filters.companyName = undefined
+  filters.region = undefined
+  tablePagination.current = 1
 }
 
 async function loadPositions() {
@@ -695,7 +832,7 @@ async function loadPositions() {
 
   try {
     const result = await getAssistantPositionDrillDown()
-    allPositions.value = flattenIndustries(result.rows)
+    allPositions.value = flattenIndustries(result)
   } catch (error: any) {
     errorMessage.value = error?.message || '岗位列表暂时无法加载，请稍后重试。'
   } finally {
@@ -722,14 +859,8 @@ async function openStudents(position: PositionRecord) {
 
 function openCompanyStudents(company: GroupedCompany) {
   const position = company.positions.find((entry) => Number(entry.studentCount || 0) > 0)
-  if (!position) {
-    return
-  }
+  if (!position) return
   void openStudents(position)
-}
-
-function noopSort() {
-  return undefined
 }
 
 function closeStudents() {
@@ -747,554 +878,176 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.page-positions {
-  display: block;
-}
-
-.page-header {
-  margin-bottom: 24px;
+.stats-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
-.page-title {
+.stats-row__item {
+  flex: 1;
+  min-width: 0;
+}
+
+.positions-drilldown {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.page-title-en {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.page-sub {
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--text2);
-}
-
-.view-switcher {
-  display: flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 6px;
-  background: var(--bg);
-}
-
-.sort-button,
-.btn {  border: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.sort-button {
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text2);
-}
-
-.btn--active {  background: var(--primary);
-  color: #fff;
-}
-
-.btn-outline {
-  background: #fff;
-  color: var(--text2);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.btn-outline--tiny {
-  padding: 2px 8px;
-  font-size: 10px;
-}
-
-.card,
-.state-card,
-.modal-card {
-  margin-bottom: 16px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: var(--card-shadow);
-}
-
-.card-body {
-  padding: 12px 16px;
-}
-
-.card-body--drilldown {
-  padding: 16px;
-}
-
-.card-body--list {
-  padding: 0;
-}
-
-.filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.form-select,
-.form-input {
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--text);
-  font-size: 11px;
-}
-
-.form-select {
-  width: 100px;
-  padding: 0 8px;
-}
-
-.form-select--wide {
-  width: 120px;
-}
-
-.search-box {
-  position: relative;
-  margin-left: auto;
-}
-
-.search-box .mdi {
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.form-input {
-  width: 180px;
-  padding: 0 14px 0 28px;
-}
-
-.state-card {
-  display: grid;
-  gap: 8px;
-  padding: 28px;
-  color: var(--text2);
-}
-
-.state-card--error {
-  border: 1px solid rgba(239, 68, 68, 0.14);
-  background: #fff7f7;
-}
-
-.category-section {
-  margin-bottom: 12px;
-}
-
-.category-header,
-.company-header {
-  width: 100%;
-  border: 0;
-  cursor: pointer;
-  text-align: left;
-}
-
-.category-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-radius: 8px;
-}
-
-.category-title-group {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
 }
 
-.category-icon {
-  font-size: 20px;
-  color: inherit;
+.positions-drilldown__industry {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 12px rgba(134, 148, 196, 0.08);
+  overflow: hidden;
 }
 
-.category-kind-icon {
-  font-size: 18px;
-  color: inherit;
+.positions-drilldown__industry-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  padding: 12px 16px;
+  text-align: left;
+  cursor: pointer;
 }
 
-.category-title {
+.positions-drilldown__industry-head--gold   { background: linear-gradient(90deg, #fff1bf 0%, #fffdf6 100%); }
+.positions-drilldown__industry-head--violet { background: linear-gradient(90deg, #f2e7ff 0%, #f8f5ff 100%); }
+.positions-drilldown__industry-head--blue   { background: linear-gradient(90deg, #ddebff 0%, #f8fbff 100%); }
+.positions-drilldown__industry-head--amber  { background: linear-gradient(90deg, #fff2c9 0%, #fffdf6 100%); }
+.positions-drilldown__industry-head--teal   { background: linear-gradient(90deg, #ccfbf1 0%, #f0fdfa 100%); }
+.positions-drilldown__industry-head--indigo { background: linear-gradient(90deg, #e0e7ff 0%, #f5f7ff 100%); }
+.positions-drilldown__industry-head--slate  { background: linear-gradient(90deg, #edf2f7 0%, #f8fafc 100%); }
+
+.positions-drilldown__industry-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.positions-drilldown__industry-main strong {
   font-size: 15px;
+}
+
+.positions-drilldown__companies {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 16px;
+}
+
+.positions-drilldown__company {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.positions-drilldown__company-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #fff;
+}
+
+.positions-drilldown__company-main-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.positions-drilldown__company-meta strong {
+  display: block;
+  color: #1f2937;
+}
+
+.positions-drilldown__company-meta span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.positions-drilldown__company-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.positions-drilldown__company-logo--gold   { background: #a85a18; }
+.positions-drilldown__company-logo--violet { background: #7c3aed; }
+.positions-drilldown__company-logo--blue   { background: #2563eb; }
+.positions-drilldown__company-logo--amber  { background: #d97706; }
+.positions-drilldown__company-logo--teal   { background: #0f766e; }
+.positions-drilldown__company-logo--indigo { background: #4f46e5; }
+.positions-drilldown__company-logo--slate  { background: #64748b; }
+
+.positions-drilldown__position-list {
+  margin-left: 44px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.industry-tag {
+  border: 0;
+  color: #fff !important;
+}
+
+.industry-tag.industry-gold   { background: #a85a18 !important; }
+.industry-tag.industry-violet { background: #7c3aed !important; }
+.industry-tag.industry-blue   { background: #2563eb !important; }
+.industry-tag.industry-amber  { background: #d97706 !important; }
+.industry-tag.industry-teal   { background: #0f766e !important; }
+.industry-tag.industry-indigo { background: #4f46e5 !important; }
+.industry-tag.industry-slate  { background: #64748b !important; }
+
+.positions-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0 0;
+  color: #6e80a4;
+  font-size: 13px;
   font-weight: 600;
 }
 
-.category-badge,
-.tag {
+.positions-footer__indicator {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-}
-
-.category-badge {
-  color: #fff;
-  font-size: 11px;
-}
-
-.category-badge--success,
-.success {
-  background: #22c55e;
-  color: #fff;
-}
-
-.category-summary {
-  font-size: 12px;
-}
-
-.category-content {
-  margin-top: 8px;
-  padding-left: 20px;
-}
-
-.company-section {
-  margin-bottom: 8px;
-}
-
-.company-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.company-header__main,
-.company-actions,
-.company-listing {
-  display: flex;
-  align-items: center;
-}
-
-.company-header__main {
-  gap: 10px;
-}
-
-.company-actions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.company-icon {
-  font-size: 18px;
-  color: var(--muted);
-}
-
-.company-logo {
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.company-logo--small {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  font-size: 9px;
-}
-
-.company-meta {
-  display: flex;
-  flex-direction: column;
   gap: 2px;
 }
 
-.company-name,
-.student-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
+.positions-footer__indicator--open    { color: #22c55e; }
+.positions-footer__indicator--closed  { color: #94a3b8; }
+.positions-footer__indicator--students { color: #3b82f6; }
 
-.company-locations,
-.student-meta {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.company-count strong {
-  color: var(--primary);
-}
-
-.company-link,
-.student-link,
-.text-link {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-  color: var(--primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.company-link--muted,
-.student-link--muted {
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.company-content {
-  margin-top: 6px;
-  margin-left: 42px;
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  margin: 0;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 12px;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.table thead {
-  background: var(--bg);
-}
-
-.table th,
-.table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  text-align: left;
-  white-space: nowrap;
-}
-
-.list-table th,
-.list-table td {
-  padding: 12px 16px;
-}
-
-.table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.table-cell-title {
-  min-width: 180px;
-}
-
-.text-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.text-link--strong {
-  font-weight: 600;
-}
-
-.company-external {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text);
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.company-listing {
-  gap: 8px;
-}
-
-.info {
-  background: #dbeafe;
-  color: #2563eb;
-}
-
-.neutral {
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-.industry-gold,
-.industry-violet,
-.industry-blue,
-.industry-amber,
-.industry-teal,
-.industry-indigo,
-.industry-slate {
-  background: #f3f4f6;
-  color: #4b5563;
-}
-
-.warning {
-  background: rgba(245, 158, 11, 0.14);
-  color: #b45309;
-}
-
-.danger {
-  background: rgba(239, 68, 68, 0.12);
-  color: #b91c1c;
-}
-
-.page-footer-stats {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-  margin-top: 16px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.page-footer-stats strong {
-  color: var(--text);
-}
-
-.footer-indicator {
-  display: inline-flex;
-  align-items: center;
-  font-size: 12px;
-}
-
-.footer-indicator .mdi {
-  font-size: 16px;
-}
-
-.footer-indicator--open {
-  color: #16a34a;
-}
-
-.footer-indicator--students {
-  color: var(--primary);
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 23, 42, 0.35);
-  padding: 20px;
-}
-
-.modal-card {
-  width: min(820px, 100%);
-  max-height: calc(100vh - 40px);
-  overflow: auto;
-}
-
-.modal-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px 24px 18px;
-  border-bottom: 1px solid var(--border);
-}
-
-.modal-card__header h2,
-.modal-card__header p {
-  margin: 0;
-}
-
-.modal-card__header p {
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--text2);
-}
-
-.modal-card__body {
-  padding: 20px 24px 24px;
-}
-
-.modal-card__body--state,
-.icon-button {
-  color: var(--text2);
-}
-
-.icon-button {
-  border: 0;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-@media (max-width: 1100px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-box {
-    margin-left: 0;
-  }
-}
-
-@media (max-width: 900px) {
-  .filter-row {
-    align-items: stretch;
-  }
-
-  .search-box,
-  .form-select,
-  .form-select--wide,
-  .form-input {
-    width: 100%;
-  }
-
-  .company-header {
+@media (max-width: 1120px) {
+  .positions-drilldown__industry-head,
+  .positions-drilldown__company-head {
     flex-direction: column;
     align-items: flex-start;
   }
-
-  .company-actions {
-    justify-content: flex-start;
-  }
-
-  .company-content,
-  .category-content {
+  .positions-drilldown__position-list {
     margin-left: 0;
-    padding-left: 0;
   }
 }
 </style>

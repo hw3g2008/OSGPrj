@@ -11,11 +11,12 @@ export type AssistantClassRecordStats = ClassRecordStats
 
 export interface AssistantClassRecordCreatePayload {
   studentId: number
-  courseType: string
   classStatus: string
   classDate: string
-  durationHours: number
-  feedbackContent: string
+  // absent(旷课) 场景下不存在以下字段，后端允许 NULL：
+  courseType?: string
+  durationHours?: number
+  feedbackContent?: string
   topics?: string
   comments?: string
 }

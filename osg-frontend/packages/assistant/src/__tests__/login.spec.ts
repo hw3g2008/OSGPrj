@@ -25,6 +25,7 @@ function createTestRouter() {
     routes: [
       { path: '/login', name: 'Login', component: LoginPage },
       { path: '/home', name: 'Home', component: { template: '<div>Home</div>' } },
+      { path: '/career/positions', name: 'CareerPositions', component: { template: '<div>Positions</div>' } },
       { path: '/forgot-password', name: 'ForgotPassword', component: { template: '<div>Forgot</div>' } },
     ],
   })
@@ -139,7 +140,7 @@ describe('assistant login page', () => {
     })
     expect(setToken).toHaveBeenCalledWith('assistant-token')
     expect(setUser).toHaveBeenCalledWith(assistantUser)
-    expect(router.currentRoute.value.fullPath).toBe('/home')
+    expect(router.currentRoute.value.fullPath).toBe('/career/positions')
   })
 
   it('honors a safe redirect query after login succeeds', async () => {

@@ -132,8 +132,122 @@ class OsgClassRecordServiceImplAssistantScopeTest
         verify(staffMapper).selectStaffByStaffIds(List.of(501L));
     }
 
+    @Test
+    void selectAssistantClassRecordList_scope_mine_filters_by_mentor_id_and_course_source()
+    {
+        OsgClassRecord mineRecord = buildRecordWithSource(51L, 920L, 7001L, "Mine Student", "pending", 1.0, "assistant");
+        OsgClassRecord mentorRecord = buildRecordWithSource(52L, 920L, 7002L, "Mentor Student", "pending", 1.0, "mentor");
+        OsgClassRecord otherAssistant = buildRecordWithSource(53L, 921L, 7003L, "Other Assistant", "pending", 1.0, "assistant");
+
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class))).thenReturn(List.of(mineRecord, mentorRecord, otherAssistant));
+        when(staffMapper.selectStaffByStaffIds(List.of(920L))).thenReturn(List.of(buildStaff(920L, 300)));
+
+        List<Map<String, Object>> rows = service.selectAssistantClassRecordList(
+            null, null, null, null, null, null, null, 920L, "mine");
+
+        assertEquals(1, rows.size());
+        assertEquals(51L, rows.get(0).get("recordId"));
+    }
+
+    @Test
+    void selectAssistantClassRecordList_scope_managed_keeps_ownership_logic()
+    {
+        OsgClassRecord owned = buildRecordWithSource(61L, 401L, 8001L, "Owned", "pending", 1.0, "mentor");
+        OsgClassRecord foreign = buildRecordWithSource(62L, 402L, 8002L, "Foreign", "pending", 1.0, "assistant");
+
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class))).thenReturn(List.of(owned, foreign));
+        when(studentMapper.selectStudentByStudentIds(anyList())).thenReturn(List.of(
+            buildStudent(8001L, 940L),
+            buildStudent(8002L, 941L)
+        ));
+        when(staffMapper.selectStaffByStaffIds(List.of(401L))).thenReturn(List.of(buildStaff(401L, 300)));
+
+        List<Map<String, Object>> rows = service.selectAssistantClassRecordList(
+            null, null, null, null, null, null, null, 940L, "managed");
+
+        assertEquals(1, rows.size());
+        assertEquals(61L, rows.get(0).get("recordId"));
+    }
+
+    @Test
+    void selectAssistantClassRecordList_scope_null_equals_managed()
+    {
+        OsgClassRecord owned = buildRecordWithSource(71L, 401L, 9001L, "Owned", "approved", 1.5, "mentor");
+        OsgClassRecord foreign = buildRecordWithSource(72L, 402L, 9002L, "Foreign", "pending", 1.0, "assistant");
+
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class))).thenReturn(List.of(owned, foreign));
+        when(studentMapper.selectStudentByStudentIds(anyList())).thenReturn(List.of(
+            buildStudent(9001L, 950L),
+            buildStudent(9002L, 951L)
+        ));
+        when(staffMapper.selectStaffByStaffIds(List.of(401L))).thenReturn(List.of(buildStaff(401L, 300)));
+
+        List<Map<String, Object>> rowsNull = service.selectAssistantClassRecordList(
+            null, null, null, null, null, null, null, 950L, null);
+
+        assertEquals(1, rowsNull.size());
+        assertEquals(71L, rowsNull.get(0).get("recordId"));
+    }
+
+    @Test
+    void selectAssistantClassRecordStats_returns_mine_count_and_managed_count()
+    {
+        OsgClassRecord mineOwned = buildRecordWithSource(81L, 960L, 10001L, "Mine Owned", "pending", 2.0, "assistant");
+        OsgClassRecord mentorOwned = buildRecordWithSource(82L, 401L, 10002L, "Mentor Owned", "approved", 1.0, "mentor");
+        OsgClassRecord foreign = buildRecordWithSource(83L, 402L, 10003L, "Foreign", "pending", 1.0, "assistant");
+
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class))).thenReturn(List.of(mineOwned, mentorOwned, foreign));
+        when(studentMapper.selectStudentByStudentIds(anyList())).thenReturn(List.of(
+            buildStudent(10001L, 960L),
+            buildStudent(10002L, 960L),
+            buildStudent(10003L, 961L)
+        ));
+        when(staffMapper.selectStaffByStaffIds(anyList())).thenReturn(List.of(
+            buildStaff(960L, 300), buildStaff(401L, 250)
+        ));
+
+        Map<String, Object> stats = service.selectAssistantClassRecordStats(
+            null, null, null, null, null, null, null, 960L, "managed");
+
+        assertEquals(2, stats.get("totalCount"));
+        assertEquals(1, stats.get("mineCount"));
+        assertEquals(2, stats.get("managedCount"));
+    }
+
+    @Test
+    void selectAssistantClassRecordStats_mine_count_unaffected_by_scope_param()
+    {
+        OsgClassRecord mineOwned = buildRecordWithSource(91L, 970L, 11001L, "Mine", "pending", 1.0, "assistant");
+        OsgClassRecord mentorOwned = buildRecordWithSource(92L, 401L, 11002L, "Mentor", "approved", 1.0, "mentor");
+
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class))).thenReturn(List.of(mineOwned, mentorOwned));
+        when(studentMapper.selectStudentByStudentIds(anyList())).thenReturn(List.of(
+            buildStudent(11001L, 970L),
+            buildStudent(11002L, 970L)
+        ));
+        when(staffMapper.selectStaffByStaffIds(anyList())).thenReturn(List.of(
+            buildStaff(970L, 300), buildStaff(401L, 250)
+        ));
+
+        Map<String, Object> statsMine = service.selectAssistantClassRecordStats(
+            null, null, null, null, null, null, null, 970L, "mine");
+        Map<String, Object> statsManaged = service.selectAssistantClassRecordStats(
+            null, null, null, null, null, null, null, 970L, "managed");
+
+        assertEquals(statsMine.get("mineCount"), statsManaged.get("mineCount"));
+        assertEquals(statsMine.get("managedCount"), statsManaged.get("managedCount"));
+        assertEquals(1, statsMine.get("mineCount"));
+        assertEquals(2, statsMine.get("managedCount"));
+    }
+
     private OsgClassRecord buildRecord(Long recordId, Long mentorId, Long studentId, String studentName, String status,
                                        double durationHours)
+    {
+        return buildRecordWithSource(recordId, mentorId, studentId, studentName, status, durationHours, "assistant");
+    }
+
+    private OsgClassRecord buildRecordWithSource(Long recordId, Long mentorId, Long studentId, String studentName,
+                                                 String status, double durationHours, String courseSource)
     {
         OsgClassRecord record = new OsgClassRecord();
         record.setRecordId(recordId);
@@ -143,7 +257,7 @@ class OsgClassRecordServiceImplAssistantScopeTest
         record.setStudentId(studentId);
         record.setStudentName(studentName);
         record.setCourseType("position_coaching");
-        record.setCourseSource("assistant");
+        record.setCourseSource(courseSource);
         record.setClassStatus("case_prep");
         record.setStatus(status);
         record.setDurationHours(durationHours);

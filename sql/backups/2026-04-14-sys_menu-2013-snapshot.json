@@ -1,0 +1,64 @@
+{
+  "captured_at": "2026-04-14 23:05:02 +0800",
+  "source": {
+    "host": "47.94.213.128",
+    "port": 23306,
+    "database": "ry-vue",
+    "table": "sys_menu",
+    "menu_id": 2013
+  },
+  "row": {
+    "menu_id": 2013,
+    "menu_name": "基础数据管理",
+    "parent_id": 2001,
+    "order_num": 3,
+    "path": "base-data",
+    "component": "admin/permission/baseData/index",
+    "query": "",
+    "route_name": "",
+    "is_frame": 1,
+    "is_cache": 0,
+    "menu_type": "C",
+    "visible": "0",
+    "status": "0",
+    "perms": "admin:base-data:list",
+    "icon": "#",
+    "create_by": "admin",
+    "create_time": "2026-03-08 15:28:31",
+    "update_by": "",
+    "update_time": null,
+    "remark": "基础数据管理菜单"
+  },
+  "linked_role_ids": [
+    1,
+    2,
+    4,
+    134
+  ],
+  "linked_roles": [
+    {
+      "role_id": 1,
+      "role_name": "超级管理员",
+      "role_key": "super_admin",
+      "status": "0"
+    },
+    {
+      "role_id": 2,
+      "role_name": "文员2",
+      "role_key": "clerk",
+      "status": "0"
+    },
+    {
+      "role_id": 4,
+      "role_name": "会计",
+      "role_key": "accountant",
+      "status": "0"
+    },
+    {
+      "role_id": 134,
+      "role_name": "e2e-1774845074",
+      "role_key": "e2e-1774845069",
+      "status": "0"
+    }
+  ]
+}

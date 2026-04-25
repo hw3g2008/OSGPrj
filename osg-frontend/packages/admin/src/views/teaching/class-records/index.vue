@@ -35,7 +35,7 @@
     </div>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" style="margin-bottom: 16px">
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
           <a-input v-model:value="keyword" placeholder="搜索学员/申报人..." allow-clear style="width: 180px" data-field-name="搜索" @pressEnter="loadData" />
         </a-form-item>
@@ -63,14 +63,12 @@
             <a-select-option value="assistant">助教</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item>
-          <a-input v-model:value="filterDateStart" type="date" style="width: 140px" data-field-name="上课日期开始" />
-        </a-form-item>
-        <a-form-item>
-          <span style="line-height: 32px; color: #64748b">~</span>
-        </a-form-item>
-        <a-form-item>
-          <a-input v-model:value="filterDateEnd" type="date" style="width: 140px" data-field-name="上课日期结束" />
+        <a-form-item label="上课日期">
+          <a-space>
+            <a-date-picker v-model:value="filterDateStart" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期开始" />
+            <span>~</span>
+            <a-date-picker v-model:value="filterDateEnd" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期结束" />
+          </a-space>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadData">
@@ -192,9 +190,9 @@ const recordColumns = [
 ]
 
 const keyword = ref('')
-const filterCoachingType = ref('')
-const filterCourseContent = ref('')
-const filterReporterRole = ref('')
+const filterCoachingType = ref<string | undefined>(undefined)
+const filterCourseContent = ref<string | undefined>(undefined)
+const filterReporterRole = ref<string | undefined>(undefined)
 const filterDateStart = ref('')
 const filterDateEnd = ref('')
 const activeTab = ref('all')

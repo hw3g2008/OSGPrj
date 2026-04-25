@@ -147,7 +147,7 @@ function resolveRedirectTarget() {
   if (typeof redirect === 'string' && redirect.startsWith('/')) {
     return redirect
   }
-  return '/home'
+  return '/career/positions'
 }
 
 async function handleLogin() {

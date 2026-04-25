@@ -58,7 +58,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: MainLayout,
-    redirect: '/home',
+    redirect: '/career/positions',
     children: [
       {
         path: 'home',

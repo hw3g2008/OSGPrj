@@ -7,6 +7,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['./src/__tests__/setup.ts'],
+    // tests/e2e 目录是 Playwright E2E，由 playwright test 单独执行；
+    // vitest 默认会把 *.spec.ts 扫进来，必须排除以免 Playwright 运行时报冲突
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
   },
   resolve: {
     alias: {

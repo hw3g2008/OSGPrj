@@ -40,7 +40,8 @@ public class OsgAssistantClassRecordController extends BaseController
                               @RequestParam(value = "courseSource", required = false) String courseSource,
                               @RequestParam(value = "tab", required = false) String tab,
                               @RequestParam(value = "classDateStart", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateStart,
-                              @RequestParam(value = "classDateEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateEnd)
+                              @RequestParam(value = "classDateEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateEnd,
+                              @RequestParam(value = "scope", required = false) String scope)
     {
         if (!hasAssistantAccess())
         {
@@ -52,7 +53,7 @@ public class OsgAssistantClassRecordController extends BaseController
 
         List<Map<String, Object>> rows = classRecordService.selectAssistantClassRecordList(
             keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd,
-            SecurityUtils.getUserId()
+            SecurityUtils.getUserId(), scope
         );
         return getDataTable(rows);
     }
@@ -64,7 +65,8 @@ public class OsgAssistantClassRecordController extends BaseController
                             @RequestParam(value = "courseSource", required = false) String courseSource,
                             @RequestParam(value = "tab", required = false) String tab,
                             @RequestParam(value = "classDateStart", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateStart,
-                            @RequestParam(value = "classDateEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateEnd)
+                            @RequestParam(value = "classDateEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateEnd,
+                            @RequestParam(value = "scope", required = false) String scope)
     {
         if (!hasAssistantAccess())
         {
@@ -73,7 +75,7 @@ public class OsgAssistantClassRecordController extends BaseController
 
         return AjaxResult.success(classRecordService.selectAssistantClassRecordStats(
             keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd,
-            SecurityUtils.getUserId()
+            SecurityUtils.getUserId(), scope
         ));
     }
 
