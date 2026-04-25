@@ -113,7 +113,7 @@ Phase 4: 三端接入
   - Mentor ⚠️（已接入，但 working tree 带着 antd 化中间态未 commit）
 - **验证**：Assistant 106 passed / LM 115 passed / Mentor 接入正确但基线 6 fail 与本改动无关
 
-#### 2.2 CoachingStatusTag ⏳ 待抽
+#### 2.2 CoachingStatusTag ✅ 已完成（commit `pending`）
 
 - **职责**：辅导状态 antd Tag（辅导中 / 待进行 / 新申请 / 未跟进 等）
 - **Assistant 锚点**：`@/Users/hw/workspace/OSGPrj/osg-frontend/packages/assistant/src/views/career/job-overview/index.vue:283-289`（`coachingColor` 函数）+ template L84-86
@@ -290,7 +290,7 @@ Phase 4: 三端接入
 | # | 组件 | 优先级 | 状态 | Commit | Assistant | LM | Mentor |
 |---|---|---|---|---|---|---|---|
 | 2.1 | `StageTag` | P0 | ✅ | `e5bd8f56` | ✅ | ✅ | ⚠️ 待 commit |
-| 2.2 | `CoachingStatusTag` | P0 | ⏳ | — | — | — | — |
+| 2.2 | `CoachingStatusTag` | P0 | ✅ | M1.1.2 | ✅ | ⊘ (LM 不用 tag) | ✅ |
 | 2.3 | `StudentAvatarCell` | P0 | ⏳ | — | — | — | — |
 | 2.4 | `CompanyPositionCell` | P0 | ⏳ | — | — | — | — |
 | 2.5 | `InterviewTimeCell` | P0 | ⏳ | — | — | — | — |
@@ -355,7 +355,8 @@ Mentor `@/Users/hw/workspace/OSGPrj/osg-frontend/packages/mentor/src/views/job-o
 
 ### 7.1 当前进度
 - ✅ StageTag 已抽并三端接入（Assistant / LM commit；Mentor 挂在 working tree）
-- ⏳ 下一个：**CoachingStatusTag**
+- ✅ CoachingStatusTag 已抽取并三端接入（Assistant + Mentor 接入，LM 用 `<strong>` 文本不适用）
+- ⏳ 下一个：**StudentAvatarCell**
 
 ### 7.2 CoachingStatusTag 执行前置
 

@@ -105,15 +105,12 @@
               <span v-else class="text-muted">-</span>
             </template>
             <template v-else-if="column.key === 'coachingStatus'">
-              <a-tag v-if="record.coachingStatus === 'new'" color="red">
-                <template #icon><BellOutlined /></template>
-                新申请
-              </a-tag>
-              <a-tag v-else-if="record.coachingStatus === 'coaching'" color="purple">
-                <template #icon><BookOutlined /></template>
-                辅导中
-              </a-tag>
-              <span v-else class="text-muted">-</span>
+              <CoachingStatusTag :status="record.coachingStatus" text-mode="normalized" fallback="-">
+                <template #icon>
+                  <BellOutlined v-if="record.coachingStatus === 'new'" />
+                  <BookOutlined v-else-if="record.coachingStatus === 'coaching'" />
+                </template>
+              </CoachingStatusTag>
             </template>
             <template v-else-if="column.key === 'actions'">
               <a-button
@@ -258,7 +255,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
-import { InterviewCalendar, StageTag } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag } from '@osg/shared/components'
 import {
   getMentorJobOverviewCalendar,
   type LeadMentorCalendarRecord,

@@ -82,7 +82,7 @@
               <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="font-size: 11px; color: var(--muted);">{{ formatScheduleHint(record.interviewTime) }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'coachingStatus'">
-              <a-tag :color="coachingColor(record.coachingStatus)">{{ record.coachingStatus || '未申请' }}</a-tag>
+              <CoachingStatusTag :status="record.coachingStatus" fallback="未申请" />
             </template>
             <template v-else-if="column.dataIndex === 'action'">
               <a-button type="link" size="small" class="link-button" @click="selectedId = record.id">查看详情</a-button>
@@ -124,7 +124,7 @@
               <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="font-size: 11px; color: var(--muted);">{{ formatScheduleHint(record.interviewTime) }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'coachingStatus'">
-              <a-tag :color="coachingColor(record.coachingStatus)">{{ record.coachingStatus || '未申请' }}</a-tag>
+              <CoachingStatusTag :status="record.coachingStatus" fallback="未申请" />
             </template>
             <template v-else-if="column.dataIndex === 'mentorName'">
               <div><strong>{{ record.mentorName || '待分配' }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.mentorBackground || '信息待补充' }}</div></div>
@@ -160,7 +160,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { InterviewCalendar, StageTag } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag } from '@osg/shared/components'
 import {
   getAssistantJobOverviewCalendar,
   getAssistantJobOverviewList,
@@ -278,14 +278,6 @@ function formatScheduleHint(value?: string) {
   if (day < 0) return '已过面试时间'
   if (day === 0) return '今天'
   return `还剩 ${day} 天`
-}
-
-function coachingColor(status?: string): string {
-  const s = (status || '').toLowerCase()
-  if (s.includes('辅导') || s.includes('coach')) return 'purple'
-  if (s.includes('待') || s.includes('pending')) return 'orange'
-  if (s.includes('新') || s.includes('new')) return 'red'
-  return 'default'
 }
 
 function rowClassName(record: ExtendedRecord): string {

@@ -36,3 +36,26 @@ export function resolveStageColor(stage?: string | null): string {
   if (s.includes('投递')) return 'purple'
   return 'blue'
 }
+
+/**
+ * 按辅导状态字符串解析 antd Tag 的 color
+ *
+ * SSOT：以 Assistant 端 coachingColor() 为基准
+ *
+ * 规则（按优先级匹配，大小写不敏感）：
+ * - 辅导 / coaching → purple
+ * - 待 / pending → orange
+ * - 新 / new → red
+ * - 默认 → default
+ *
+ * 备注：
+ * - LM 端有 stageUpdated → blue 修饰，但 LM 用 <strong> 而非 <a-tag>，不影响本函数
+ * - Mentor 端的 'new' / 'coaching' enum 值通过 includes 自然命中
+ */
+export function resolveCoachingStatusColor(status?: string | null): string {
+  const s = (status || '').toLowerCase().trim()
+  if (s.includes('辅导') || s.includes('coach')) return 'purple'
+  if (s.includes('待') || s.includes('pending')) return 'orange'
+  if (s.includes('新') || s.includes('new')) return 'red'
+  return 'default'
+}
