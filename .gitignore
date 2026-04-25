@@ -65,8 +65,9 @@ coverage/
 .vite/
 
 ######################################################################
-# 日志
+# 日志（顶层 logs/ 是运行时产物，业务源代码须 un-ignore）
 logs/
+!osg-frontend/packages/admin/src/views/profile/logs/
 
 # Docker deploy secrets（仅保留模板与说明）
 deploy/secrets/*
