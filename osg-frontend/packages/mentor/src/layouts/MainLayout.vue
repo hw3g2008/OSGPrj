@@ -76,6 +76,7 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Modal } from 'ant-design-vue'
 
 import { http } from '@osg/shared/utils/request'
 import { clearAuth, getUser } from '@osg/shared/utils'
@@ -260,10 +261,15 @@ provide<MentorNavBadgeState>(MENTOR_NAV_BADGE_KEY, {
 })
 
 function handleLogout() {
-  if (window.confirm('确定要退出登录吗？')) {
-    clearAuth()
-    void router.push('/login')
-  }
+  Modal.confirm({
+    title: '确定要退出登录吗？',
+    okText: '确定',
+    cancelText: '取消',
+    onOk: () => {
+      clearAuth()
+      void router.push('/login')
+    },
+  })
   showUserMenu.value = false
 }
 

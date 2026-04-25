@@ -72,6 +72,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Modal } from 'ant-design-vue'
 
 import { clearAuth, getUser } from '@osg/shared/utils'
 
@@ -298,10 +299,15 @@ function openProfile() {
 
 function handleLogout() {
   showUserMenu.value = false
-  if (window.confirm('确定要退出登录吗？')) {
-    clearAuth()
-    void router.push('/login')
-  }
+  Modal.confirm({
+    title: '确定要退出登录吗？',
+    okText: '确定',
+    cancelText: '取消',
+    onOk: () => {
+      clearAuth()
+      void router.push('/login')
+    },
+  })
 }
 </script>
 
@@ -498,8 +504,10 @@ function handleLogout() {
 
 .main {
   flex: 1;
+  min-width: 0;
   min-height: 100vh;
   margin-left: 260px;
+  overflow-x: hidden;
   background: var(--bg);
   padding: 28px;
 }

@@ -16,6 +16,13 @@ vi.mock('ant-design-vue', () => ({
   message: {
     info: vi.fn(),
   },
+  Modal: {
+    confirm: vi.fn((options: any) => {
+      // 模拟用户点击“确定”，立即触发 onOk
+      options?.onOk?.()
+      return {} as any
+    }),
+  },
 }))
 
 import { message } from 'ant-design-vue'
@@ -109,7 +116,7 @@ describe('S-040 story regression skeleton', () => {
   })
 
   it('keeps the route-highlight state after remount and still supports logout', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    // Modal.confirm 已由顶部 vi.mock 提供，点击 logout 后会自动触发 onOk
     const firstMount = await mountStoryPage()
 
     try {
@@ -136,7 +143,6 @@ describe('S-040 story regression skeleton', () => {
       expect(clearAuth).toHaveBeenCalled()
       expect(secondMount.router.currentRoute.value.fullPath).toBe('/login')
     } finally {
-      confirmSpy.mockRestore()
       secondMount.unmount()
     }
   })

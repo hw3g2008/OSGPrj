@@ -1,6 +1,7 @@
 import { createApp, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Modal } from 'ant-design-vue'
 
 import MainLayout from '../layouts/MainLayout.vue'
 
@@ -80,7 +81,7 @@ async function flushUi() {
   await nextTick()
 }
 
-async function mountShell(initialPath = '/home') {
+async function mountShell(initialPath = '/career/positions') {
   const router = createTestRouter()
   await router.push(initialPath)
   await router.isReady()
@@ -119,27 +120,22 @@ describe('assistant main layout', () => {
 
     try {
       expect(page.container.querySelector('.sidebar-logo')?.textContent).toContain('OSG Assistant')
-      expect(page.container.querySelectorAll('.nav-section')).toHaveLength(6)
+      // 本期 assistant 端仅 4 个 IA 分组：求职/学员/教学/个人
+      // Finance/Resources 两组所有 item 均 hidden，filteredNavigationGroups 过滤后整组消失
+      expect(page.container.querySelectorAll('.nav-section')).toHaveLength(4)
       expect(page.container.textContent).toContain('Career')
       expect(page.container.textContent).toContain('Students')
       expect(page.container.textContent).toContain('Teaching')
-      expect(page.container.textContent).toContain('Finance')
-      expect(page.container.textContent).toContain('Resources')
       expect(page.container.textContent).toContain('Profile')
+      // Finance / Resources 本期不在范围，不应出现在 sidebar
+      expect(page.container.textContent).not.toContain('Finance')
+      expect(page.container.textContent).not.toContain('Resources')
       expect(page.container.textContent).toContain('Positions')
       expect(page.container.textContent).toContain('Job Overview')
       expect(page.container.textContent).toContain('Mock Practice')
       expect(page.container.textContent).toContain('Student List')
-      expect(page.container.textContent).toContain('Communication')
       expect(page.container.textContent).toContain('Class Records')
-      expect(page.container.textContent).toContain('Settlement')
-      expect(page.container.textContent).toContain('Expense')
-      expect(page.container.textContent).toContain('Files')
-      expect(page.container.textContent).toContain('Online Test')
-      expect(page.container.textContent).toContain('Interview Bank')
       expect(page.container.textContent).toContain('Schedule')
-      expect(page.container.textContent).toContain('Notice')
-      expect(page.container.textContent).toContain('FAQ')
       expect(page.container.querySelector('.user-card')?.textContent).toContain('Amy')
       expect(page.container.querySelector('.user-card')?.textContent).toContain('Assistant')
     } finally {
@@ -148,34 +144,39 @@ describe('assistant main layout', () => {
   })
 
   it('switches routes from the sidebar and keeps the active state after remount', async () => {
-    const firstMount = await mountShell('/home')
+    const firstMount = await mountShell('/career/positions')
 
     try {
-      const targetNav = findByText(firstMount.container, '.nav-item', 'Expense')
+      // 本期范围内的 Teaching 组 Class Records 作为切换目标（Expense 所属 Finance 组已下线）
+      const targetNav = findByText(firstMount.container, '.nav-item', 'Class Records')
       expect(targetNav).toBeTruthy()
 
       targetNav?.click()
       await flushUi()
 
-      expect(firstMount.router.currentRoute.value.fullPath).toBe('/expense')
-      expect(firstMount.container.querySelector('.nav-item.active')?.textContent).toContain('Expense')
+      expect(firstMount.router.currentRoute.value.fullPath).toBe('/class-records')
+      expect(firstMount.container.querySelector('.nav-item.active')?.textContent).toContain('Class Records')
     } finally {
       firstMount.unmount()
     }
 
-    const secondMount = await mountShell('/expense')
+    const secondMount = await mountShell('/class-records')
 
     try {
-      expect(secondMount.router.currentRoute.value.fullPath).toBe('/expense')
-      expect(secondMount.container.querySelector('.nav-item.active')?.textContent).toContain('Expense')
+      expect(secondMount.router.currentRoute.value.fullPath).toBe('/class-records')
+      expect(secondMount.container.querySelector('.nav-item.active')?.textContent).toContain('Class Records')
     } finally {
       secondMount.unmount()
     }
   })
 
   it('opens the user menu and clears auth when logout is confirmed', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const page = await mountShell('/home')
+    // Mock antd Modal.confirm: 立即触发 onOk，模拟用户点击“确定”
+    const confirmSpy = vi.spyOn(Modal, 'confirm').mockImplementation((options: any) => {
+      options?.onOk?.()
+      return {} as any
+    })
+    const page = await mountShell('/career/positions')
 
     try {
       const userCard = page.container.querySelector<HTMLElement>('.user-card')

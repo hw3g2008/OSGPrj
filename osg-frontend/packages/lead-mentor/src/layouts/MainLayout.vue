@@ -68,7 +68,7 @@
 <script setup lang="ts">
 import { computed, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { Modal, message } from 'ant-design-vue'
 import { clearAuth, getUser } from '@osg/shared/utils'
 
 interface NavigationItem {
@@ -287,10 +287,15 @@ const handleSettingsClick = () => {
 
 const handleLogout = () => {
   showUserMenu.value = false
-  if (window.confirm('确定要退出登录吗？')) {
-    clearAuth()
-    router.push('/login')
-  }
+  Modal.confirm({
+    title: '确定要退出登录吗？',
+    okText: '确定',
+    cancelText: '取消',
+    onOk: () => {
+      clearAuth()
+      router.push('/login')
+    },
+  })
 }
 </script>
 

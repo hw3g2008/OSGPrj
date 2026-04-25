@@ -16,6 +16,13 @@ vi.mock('ant-design-vue', () => ({
   message: {
     info: vi.fn(),
   },
+  Modal: {
+    confirm: vi.fn((options: any) => {
+      // 模拟用户点击“确定”，立即触发 onOk
+      options?.onOk?.()
+      return {} as any
+    }),
+  },
 }))
 
 import { message } from 'ant-design-vue'
@@ -139,7 +146,7 @@ describe('lead-mentor upcoming navigation toast flow', () => {
   })
 
   it('keeps sidebar logout clearing auth and returning to login', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    // Modal.confirm 已由顶部 vi.mock 提供，点击 logout 后会自动触发 onOk
     const page = await mountShellPage()
 
     try {
@@ -158,7 +165,6 @@ describe('lead-mentor upcoming navigation toast flow', () => {
       expect(clearAuth).toHaveBeenCalled()
       expect(page.router.currentRoute.value.fullPath).toBe('/login')
     } finally {
-      confirmSpy.mockRestore()
       page.unmount()
     }
   })
