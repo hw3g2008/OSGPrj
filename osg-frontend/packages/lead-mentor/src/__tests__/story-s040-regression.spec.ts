@@ -116,12 +116,13 @@ describe('S-040 story regression skeleton', () => {
   })
 
   it('keeps the route-highlight state after remount and still supports logout', async () => {
+    // M0.4 Step 4.4: home entry removed per Step 4.1 product decision; navigationGroups
+    // no longer carries a path == '/home' item, so no nav-item is active when mounted at /home.
     // Modal.confirm 已由顶部 vi.mock 提供，点击 logout 后会自动触发 onOk
     const firstMount = await mountStoryPage()
 
     try {
       expect(firstMount.router.currentRoute.value.fullPath).toBe('/home')
-      expect(firstMount.container.querySelector('.nav-item.active')?.textContent).toContain('首页 Home')
     } finally {
       firstMount.unmount()
     }
@@ -130,7 +131,6 @@ describe('S-040 story regression skeleton', () => {
 
     try {
       expect(secondMount.router.currentRoute.value.fullPath).toBe('/home')
-      expect(secondMount.container.querySelector('.nav-item.active')?.textContent).toContain('首页 Home')
 
       const userCard = secondMount.container.querySelector<HTMLElement>('.user-card')
       userCard?.click()

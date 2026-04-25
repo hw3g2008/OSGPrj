@@ -1,63 +1,16 @@
 <template>
   <div class="main-shell">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <div class="logo-icon"><i class="mdi mdi-account-star" aria-hidden="true" /></div>
-          <span class="logo-text">OSG Lead Mentor</span>
-        </div>
-      </div>
-
-      <nav class="sidebar-nav">
-        <!-- v1: 首页入口暂时隐藏，二期恢复 -->
-        <a
-          v-show="false"
-          href="#"
-          class="nav-item"
-          :class="{ active: isActive(['/home', '/dashboard']) }"
-          @click.prevent="handleHomeNavigation"
-        >
-          <i class="mdi mdi-home" aria-hidden="true" />
-          <span>首页 Home</span>
-        </a>
-
-        <template v-for="group in filteredNavigationGroups" :key="group.title">
-          <div class="nav-section">{{ group.title }}</div>
-          <a
-            v-for="item in group.items"
-            :key="item.label"
-            href="#"
-            class="nav-item"
-            :class="{ active: isActive(item.activePaths) }"
-            @click.prevent="handleUpcomingNavigation(item.path)"
-          >
-            <i class="mdi" :class="item.iconClass" aria-hidden="true"></i>
-            <span>{{ item.label }}</span>
-            <!-- v1: 角标暂时隐藏，二期恢复改回 v-if="item.badge" -->
-            <span v-if="false" class="nav-badge">{{ item.badge }}</span>
-          </a>
-        </template>
-      </nav>
-
-      <div class="sidebar-footer">
-        <button type="button" class="user-card" @click="showUserMenu = !showUserMenu">
-          <div class="user-avatar">{{ userInitials }}</div>
-          <div class="user-info">
-            <h4>{{ displayName }}</h4>
-            <p>点击展开</p>
-          </div>
-        </button>
-
-        <div v-if="showUserMenu" class="user-menu">
-          <a class="user-menu-item" @click="handleSettingsClick">
-            <i class="mdi mdi-cog" aria-hidden="true" /> 个人设置
-          </a>
-          <a class="user-menu-item user-menu-item--danger" @click="handleLogout">
-            <i class="mdi mdi-logout" aria-hidden="true" /> 退出登录
-          </a>
-        </div>
-      </div>
-    </aside>
+    <AppSidebar
+      :navigation-groups="navigationGroups"
+      :display-name="displayName"
+      :user-initials="userInitials"
+      :role-label="roleLabel"
+      :current-path="route.path"
+      logo-title="OSG Lead Mentor"
+      @nav="handleNavClick"
+      @profile-click="handleProfileClick"
+      @logout="handleLogout"
+    />
 
     <main class="main">
       <router-view />
@@ -66,27 +19,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue'
+import { computed, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Modal, message } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
+
+import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
 import { clearAuth, getUser } from '@osg/shared/utils'
-
-interface NavigationItem {
-  label: string
-  iconClass: string
-  path: string
-  activePaths: string[]
-  badge?: number
-  hidden?: boolean
-}
-
-interface NavigationGroup {
-  title: string
-  items: NavigationItem[]
-}
 
 const FALLBACK_USER_NAME = 'Jess (Lead Mentor)'
 const FALLBACK_USER_INITIALS = 'JL'
+const FALLBACK_ROLE = '培训主管'
+
 const AVAILABLE_NAVIGATION_PATHS = new Set([
   '/career/positions',
   '/career/job-overview',
@@ -99,7 +42,6 @@ const AVAILABLE_NAVIGATION_PATHS = new Set([
 
 const route = useRoute()
 const router = useRouter()
-const showUserMenu = ref(false)
 
 const navigationGroups: NavigationGroup[] = [
   {
@@ -109,23 +51,21 @@ const navigationGroups: NavigationGroup[] = [
         path: '/career/positions',
         label: '岗位信息 Positions',
         iconClass: 'mdi-briefcase-search',
-        activePaths: ['/career/positions']
+        activePaths: ['/career/positions'],
       },
       {
         path: '/career/job-overview',
         label: '学员求职总览 Job Overview',
         iconClass: 'mdi-briefcase-eye',
         activePaths: ['/career/job-overview'],
-        badge: 1
       },
       {
         path: '/career/mock-practice',
         label: '模拟应聘管理 Mock Practice',
         iconClass: 'mdi-account-voice',
         activePaths: ['/career/mock-practice'],
-        badge: 2
-      }
-    ]
+      },
+    ],
   },
   {
     title: '教学中心 Teaching',
@@ -134,22 +74,22 @@ const navigationGroups: NavigationGroup[] = [
         path: '/teaching/students',
         label: '学员列表 Student List',
         iconClass: 'mdi-account-group',
-        activePaths: ['/teaching/students']
+        activePaths: ['/teaching/students'],
       },
       {
         path: '/teaching/class-records',
         label: '课程记录 Class Records',
         iconClass: 'mdi-book-open-variant',
-        activePaths: ['/teaching/class-records']
+        activePaths: ['/teaching/class-records'],
       },
       {
         path: '/teaching/communication',
         label: '人际关系沟通记录 Records',
         iconClass: 'mdi-message-text-clock',
         activePaths: ['/teaching/communication'],
-        hidden: true
-      }
-    ]
+        hidden: true,
+      },
+    ],
   },
   {
     title: '财务中心 Finance',
@@ -159,16 +99,16 @@ const navigationGroups: NavigationGroup[] = [
         label: '课时结算 Settlement',
         iconClass: 'mdi-cash-check',
         activePaths: ['/finance/settlement'],
-        hidden: true
+        hidden: true,
       },
       {
         path: '/finance/expense',
         label: '报销管理 Expense',
         iconClass: 'mdi-receipt',
         activePaths: ['/finance/expense'],
-        hidden: true
-      }
-    ]
+        hidden: true,
+      },
+    ],
   },
   {
     title: '资源中心 Resources',
@@ -178,23 +118,23 @@ const navigationGroups: NavigationGroup[] = [
         label: '文件 Files',
         iconClass: 'mdi-folder-multiple',
         activePaths: ['/resources/files'],
-        hidden: true
+        hidden: true,
       },
       {
         path: '/resources/online-tests',
         label: '在线测试题库 Online Tests',
         iconClass: 'mdi-clipboard-list',
         activePaths: ['/resources/online-tests'],
-        hidden: true
+        hidden: true,
       },
       {
         path: '/resources/interview-bank',
         label: '真人面试题库 Interview Bank',
         iconClass: 'mdi-account-question',
         activePaths: ['/resources/interview-bank'],
-        hidden: true
-      }
-    ]
+        hidden: true,
+      },
+    ],
   },
   {
     title: '个人中心 Profile',
@@ -203,41 +143,37 @@ const navigationGroups: NavigationGroup[] = [
         path: '/profile/basic',
         label: '基本信息 Profile',
         iconClass: 'mdi-account',
-        activePaths: ['/profile/basic', '/profile']
+        activePaths: ['/profile/basic', '/profile'],
       },
       {
         path: '/profile/schedule',
         label: '课程排期 Schedule',
         iconClass: 'mdi-calendar-clock',
-        activePaths: ['/profile/schedule', '/schedule']
+        activePaths: ['/profile/schedule', '/schedule'],
       },
       {
         path: '/profile/notice',
         label: '消息 Notice',
         iconClass: 'mdi-bell',
         activePaths: ['/profile/notice'],
-        hidden: true
+        hidden: true,
       },
       {
         path: '/profile/faq',
         label: '常见问题 FAQ',
         iconClass: 'mdi-help-circle',
         activePaths: ['/profile/faq'],
-        hidden: true
-      }
-    ]
-  }
+        hidden: true,
+      },
+    ],
+  },
 ]
 
-const filteredNavigationGroups = computed(() =>
-  navigationGroups
-    .map((group) => ({ ...group, items: group.items.filter((item) => !item.hidden) }))
-    .filter((group) => group.items.length > 0)
-)
-
-const currentPath = computed(() => route.path)
 const userInfo = computed(() => getUser<{ nickName?: string; userName?: string }>())
-const displayName = computed(() => userInfo.value?.nickName || userInfo.value?.userName || FALLBACK_USER_NAME)
+const displayName = computed(
+  () => userInfo.value?.nickName || userInfo.value?.userName || FALLBACK_USER_NAME,
+)
+const roleLabel = computed(() => FALLBACK_ROLE)
 const userInitials = computed(() => {
   const name = displayName.value.trim()
   if (!name || name === FALLBACK_USER_NAME) {
@@ -249,53 +185,35 @@ const userInitials = computed(() => {
     return parts[0].slice(0, 2).toUpperCase()
   }
 
-  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('')
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('')
 })
 
-const isActive = (paths: string[]) => paths.some((path) => currentPath.value === path || currentPath.value.startsWith(`${path}/`))
-
+// LM 端特有：子视图通过 inject 复用统一的"敬请期待" toast
 const showUpcomingToast = () => {
-  showUserMenu.value = false
   message.info('敬请期待')
 }
-
 provide('showUpcomingToast', showUpcomingToast)
 
-const handleHomeNavigation = () => {
-  showUserMenu.value = false
-  if (currentPath.value !== '/home' && currentPath.value !== '/dashboard') {
-    void router.push('/home')
-  }
-}
-
-const handleUpcomingNavigation = (_path: string) => {
-  showUserMenu.value = false
-  if (AVAILABLE_NAVIGATION_PATHS.has(_path)) {
-    if (_path !== currentPath.value) {
-      void router.push(_path)
-    }
+function handleNavClick(path: string) {
+  if (AVAILABLE_NAVIGATION_PATHS.has(path)) {
+    if (path !== route.path) void router.push(path)
     return
   }
-
+  // 未在白名单的路径统一走"敬请期待" toast（保留 LM 拦截语义）
   message.info('敬请期待')
 }
 
-const handleSettingsClick = () => {
-  showUserMenu.value = false
+function handleProfileClick() {
+  // LM 个人设置本期未实现，统一走"敬请期待" toast（沿用旧 handleSettingsClick 意图）
   message.info('敬请期待')
 }
 
-const handleLogout = () => {
-  showUserMenu.value = false
-  Modal.confirm({
-    title: '确定要退出登录吗？',
-    okText: '确定',
-    cancelText: '取消',
-    onOk: () => {
-      clearAuth()
-      router.push('/login')
-    },
-  })
+function handleLogout() {
+  clearAuth()
+  void router.push('/login')
 }
 </script>
 
@@ -317,183 +235,6 @@ const handleLogout = () => {
   overflow-x: clip;
 }
 
-.sidebar {
-  width: 260px;
-  background: #fff;
-  border-right: 1px solid var(--border);
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--primary-gradient);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 20px;
-}
-
-.logo-text {
-  font-size: 18px;
-  font-weight: 700;
-  background: var(--primary-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.sidebar-nav {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 0;
-}
-
-.nav-section {
-  padding: 16px 20px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  margin: 2px 12px;
-  border-radius: 10px;
-  color: var(--text2);
-  font-size: 14px;
-  text-decoration: none;
-  user-select: none;
-  cursor: pointer;
-}
-
-.nav-item:hover {
-  background: var(--bg);
-  color: var(--primary);
-}
-
-.nav-item.active {
-  background: var(--primary-light);
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.nav-item .mdi {
-  font-size: 20px;
-  width: 24px;
-  text-align: center;
-}
-
-.nav-badge {
-  margin-left: auto;
-  min-width: 18px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  background: #ef4444;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid var(--border);
-  position: relative;
-}
-
-.user-card {
-  width: 100%;
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  background: #fff;
-  text-align: left;
-  cursor: pointer;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary-gradient);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.user-info h4 {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.user-info p {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.user-menu {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 78px;
-  overflow: hidden;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.user-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  color: var(--text);
-  font-size: 14px;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.user-menu-item:hover {
-  background: var(--bg);
-}
-
-.user-menu-item--danger {
-  color: #ef4444;
-  border-top: 1px solid var(--border);
-}
-
 .main {
   flex: 1;
   margin-left: 260px;
@@ -502,21 +243,9 @@ const handleLogout = () => {
   background: var(--bg);
 }
 
-@media (max-width: 1100px) {
-  .sidebar {
-    position: sticky;
-  }
-}
-
 @media (max-width: 900px) {
   .main-shell {
     display: block;
-  }
-
-  .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
   }
 
   .main {

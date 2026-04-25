@@ -110,22 +110,8 @@ describe('lead-mentor upcoming navigation toast flow', () => {
     }
   })
 
-  it('navigates back to /home when clicking the sidebar home entry from another page', async () => {
-    const page = await mountShellPage('/career/positions')
-
-    try {
-      const homeNav = findElementByText(page.container, '.nav-item', '首页 Home')
-      expect(homeNav).toBeTruthy()
-
-      homeNav?.click()
-      await flushUi()
-
-      expect(message.info).not.toHaveBeenCalled()
-      expect(page.router.currentRoute.value.fullPath).toBe('/home')
-    } finally {
-      page.unmount()
-    }
-  })
+  // case removed (M0.4 Step 4.4): sidebar home entry was deleted per Step 4.1 product decision;
+  // see plan §9.1 retrospective — Home 入口本期不落地，应直接删除占位.
 
   it('uses the same upcoming toast path for home quick entries', async () => {
     const page = await mountShellPage()

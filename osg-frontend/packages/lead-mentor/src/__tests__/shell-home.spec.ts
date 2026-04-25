@@ -16,16 +16,19 @@ const homeSource = homeExists ? fs.readFileSync(homePath, 'utf-8') : ''
 
 describe('lead-mentor shell and home source contract', () => {
   it('keeps the prototype sidebar shell instead of the ant header shell', () => {
-    expect(layoutSource).toContain('class="sidebar"')
-    expect(layoutSource).toContain('class="sidebar-nav"')
+    // M0.4 Step 4.4: sidebar shell now provided by @osg/shared/components AppSidebar.
+    // Source contract verifies wrapper still composes AppSidebar (not antd layout shell).
+    expect(layoutSource).toContain('<AppSidebar')
+    expect(layoutSource).toContain("from '@osg/shared/components'")
     expect(layoutSource).toContain('class="main"')
     expect(layoutSource).not.toContain('<a-layout-header')
     expect(layoutSource).not.toContain('<a-layout-sider')
   })
 
   it('keeps the prototype navigation groups and wording for S-040', () => {
+    // M0.4 Step 4.4: '首页 Home' removed per Step 4.1 product decision (home entry not in V1).
+    // '退出登录' moved to @osg/shared AppSidebar; verified via AppSidebar reference in case 1.
     const expectedLabels = [
-      '首页 Home',
       '求职中心 Career',
       '岗位信息 Positions',
       '学员求职总览 Job Overview',
@@ -38,8 +41,7 @@ describe('lead-mentor shell and home source contract', () => {
       '资源中心 Resources',
       '在线测试题库 Online Tests',
       '个人中心 Profile',
-      '课程排期 Schedule',
-      '退出登录'
+      '课程排期 Schedule'
     ]
 
     for (const label of expectedLabels) {
@@ -87,8 +89,12 @@ describe('lead-mentor shell and home source contract', () => {
   })
 
   it('keeps the sidebar footer user affordance for logout', () => {
+    // M0.4 Step 4.4: '点击展开' / '退出登录' template moved to @osg/shared AppSidebar;
+    // wrapper now passes role-label '培训主管' and logo-title 'OSG Lead Mentor' as props,
+    // and clearAuth still owned by handleLogout in this layout.
     expect(layoutSource).toContain('Jess (Lead Mentor)')
-    expect(layoutSource).toContain('点击展开')
-    expect(layoutSource).toContain('退出登录')
+    expect(layoutSource).toContain('OSG Lead Mentor')
+    expect(layoutSource).toContain('培训主管')
+    expect(layoutSource).toContain('clearAuth')
   })
 })
