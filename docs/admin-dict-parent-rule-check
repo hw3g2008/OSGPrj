@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""Verify admin-dict parent-rule documentation and registry alignment.
+
+This script materializes the check referenced by the active admin-dict
+test-case and traceability assets for parent/child dict relationships.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+from urllib import error, request
+
+
+DEFAULTS = {
+    "admin_base_api": "http://47.94.213.128:3005/api",
+    "redis_host": "47.94.213.128",
+    "redis_port": "26379",
+    "redis_password": "redis123456",
+    "username": "admin",
+    "password": "Osg@2026",
+    "srs_path": "osg-spec-docs/docs/02-requirements/srs/admin-dict.md",
+}
+
+
+def http_json(url: str, method: str = "GET", payload: dict | None = None, headers: dict | None = None) -> dict:
+    data = None
+    req_headers = {"Content-Type": "application/json"}
+    if headers:
+        req_headers.update(headers)
+    if payload is not None:
+        data = json.dumps(payload).encode("utf-8")
+    req = request.Request(url, data=data, headers=req_headers, method=method)
+    try:
+        with request.urlopen(req, timeout=20) as resp:
+            body = resp.read().decode("utf-8")
+            return json.loads(body)
+    except error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"HTTP {exc.code} for {method} {url}: {body}") from exc
+
+
+def get_captcha_code(host: str, port: str, password: str, uuid: str) -> str:
+    key = f"captcha_codes:{uuid}"
+    cmd = ["redis-cli", "-h", host, "-p", port, "-a", password, "--raw", "GET", key]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    code = result.stdout.strip().strip('"')
+    if not code:
+        raise RuntimeError(f"captcha code not found for uuid={uuid}")
+    return code
+
+
+def assert_success(response: dict, context: str) -> None:
+    if response.get("code") != 200:
+        raise RuntimeError(f"{context} failed: {response}")
+
+
+def run_check(args: argparse.Namespace) -> None:
+    captcha = http_json(f"{args.admin_base_api}/captchaImage")
+    uuid = captcha.get("uuid")
+    if not uuid:
+        raise RuntimeError(f"captchaImage missing uuid: {captcha}")
+    code = get_captcha_code(args.redis_host, args.redis_port, args.redis_password, uuid)
+
+    login = http_json(
+        f"{args.admin_base_api}/login",
+        method="POST",
+        payload={
+            "username": args.username,
+            "password": args.password,
+            "code": code,
+            "uuid": uuid,
+        },
+    )
+    assert_success(login, "login")
+    token = login.get("token")
+    if not token:
+        raise RuntimeError(f"login missing token: {login}")
+
+    registry = http_json(
+        f"{args.admin_base_api}/system/admin-dict/registry",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert_success(registry, "registry")
+    groups = registry.get("data") or []
+    all_types = {
+        item["dict_type"]: item
+        for group in groups
+        for item in (group.get("dict_types") or [])
+    }
+    if all_types.get("osg_company_name", {}).get("has_parent") is not True:
+        raise RuntimeError("osg_company_name.has_parent is not true")
+    if all_types.get("osg_city", {}).get("parent_dict_type") != "osg_region":
+        raise RuntimeError("osg_city.parent_dict_type is not osg_region")
+    if all_types.get("osg_sub_direction", {}).get("parent_dict_type") != "osg_major_direction":
+        raise RuntimeError("osg_sub_direction.parent_dict_type is not osg_major_direction")
+
+    text = Path(args.srs_path).read_text()
+    for token_text in ["remark.parentValue", "缺失父值选择", "重名或语义重复值"]:
+        if token_text not in text:
+            raise RuntimeError(f"missing token in SRS: {token_text}")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Check admin-dict parent-rule runtime/doc alignment")
+    parser.add_argument("--admin-base-api", default=os.getenv("ADMIN_BASE_API", DEFAULTS["admin_base_api"]))
+    parser.add_argument("--redis-host", default=os.getenv("REDIS_HOST", DEFAULTS["redis_host"]))
+    parser.add_argument("--redis-port", default=os.getenv("REDIS_PORT", DEFAULTS["redis_port"]))
+    parser.add_argument("--redis-password", default=os.getenv("REDIS_PASSWORD", DEFAULTS["redis_password"]))
+    parser.add_argument("--username", default=os.getenv("ADMIN_USERNAME", DEFAULTS["username"]))
+    parser.add_argument("--password", default=os.getenv("ADMIN_PASSWORD", DEFAULTS["password"]))
+    parser.add_argument("--srs-path", default=os.getenv("ADMIN_DICT_SRS_PATH", DEFAULTS["srs_path"]))
+    parser.add_argument("--dry-run", action="store_true", help="Print resolved config and exit")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    if args.dry_run:
+        print(
+            json.dumps(
+                {
+                    "admin_base_api": args.admin_base_api,
+                    "redis_host": args.redis_host,
+                    "redis_port": args.redis_port,
+                    "srs_path": args.srs_path,
+                    "username": args.username,
+                },
+                ensure_ascii=False,
+            )
+        )
+        return 0
+    run_check(args)
+    print("PASS: admin-dict-parent-rule-check")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as exc:  # pragma: no cover - runtime guard script
+        print(f"FAIL: {exc}", file=sys.stderr)
+        raise SystemExit(1)

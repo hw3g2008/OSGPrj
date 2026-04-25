@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Verify admin-dict test-case and traceability asset consistency."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+
+DEFAULTS = {
+    "cases_path": "osg-spec-docs/tasks/testing/admin-dict-test-cases.yaml",
+    "story_path": "osg-spec-docs/tasks/stories/S-048.yaml",
+    "matrix_path": "osg-spec-docs/tasks/testing/admin-dict-traceability-matrix.md",
+}
+
+
+def load_yaml(path: Path) -> object:
+    try:
+        import yaml  # type: ignore
+    except ModuleNotFoundError as exc:
+        raise RuntimeError("PyYAML is required for admin-dict-traceability-check") from exc
+    return yaml.safe_load(path.read_text())
+
+
+def run_check(args: argparse.Namespace) -> None:
+    cases = load_yaml(Path(args.cases_path))
+    if not isinstance(cases, list):
+        raise RuntimeError(f"expected list of test cases, got: {type(cases).__name__}")
+    if len(cases) != 21:
+        raise RuntimeError(f"expected 21 test cases, got {len(cases)}")
+
+    story = load_yaml(Path(args.story_path))
+    if not isinstance(story, dict):
+        raise RuntimeError("story yaml is not a mapping")
+    expected = {"T-232", "T-233", "T-234", "T-235", "T-236"}
+    tickets = set(story.get("tickets") or [])
+    if not expected.issubset(tickets):
+        raise RuntimeError(f"story missing expected tickets: expected={expected}, actual={tickets}")
+
+    matrix = Path(args.matrix_path).read_text()
+    for ticket_id in expected:
+        if ticket_id not in matrix:
+            raise RuntimeError(f"traceability matrix missing ticket id: {ticket_id}")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Check admin-dict traceability assets")
+    parser.add_argument("--cases-path", default=os.getenv("ADMIN_DICT_CASES_PATH", DEFAULTS["cases_path"]))
+    parser.add_argument("--story-path", default=os.getenv("ADMIN_DICT_STORY_PATH", DEFAULTS["story_path"]))
+    parser.add_argument("--matrix-path", default=os.getenv("ADMIN_DICT_MATRIX_PATH", DEFAULTS["matrix_path"]))
+    parser.add_argument("--dry-run", action="store_true", help="Print resolved config and exit")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    if args.dry_run:
+        print(
+            json.dumps(
+                {
+                    "cases_path": args.cases_path,
+                    "story_path": args.story_path,
+                    "matrix_path": args.matrix_path,
+                },
+                ensure_ascii=False,
+            )
+        )
+        return 0
+    run_check(args)
+    print("PASS: admin-dict-traceability-check")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as exc:  # pragma: no cover - runtime/doc guard script
+        print(f"FAIL: {exc}", file=sys.stderr)
+        raise SystemExit(1)

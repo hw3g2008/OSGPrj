@@ -2,10 +2,26 @@
 
 > 原型: admin.html → page-class-records (L3837-3970) + modal-audit (L10186-10278)
 > PRD: 11-admin-class-records.md + 05-admin-reports.md
+> 代码审核日期: 2026-04-22
 
 ---
 
-## 一、问题总览
+## ✅ 代码审核结论：Admin 端所有问题已在代码中修复
+
+| 批次 | 状态 | 说明 |
+|------|------|------|
+| A1 操作列互斥 | ✅ 已修 | `index.vue` L136 `v-if="record.status === 'pending'"` |
+| A2 审核弹窗补全 | ✅ 已修 | 8字段 + 黄色背景 + 2×4 grid + feedbackContent + attachments + 驳回原因对齐 + bug fixes |
+| A3 详情弹窗补全 | ✅ 已修 | 8字段 + rate⭐/courseFee¥ + feedbackContent + attachments + 审核结果 + bug fixes |
+| A5 附件展示 | ✅ 已修 | 两个弹窗均有 attachments section + download |
+| A6 公司名展示 | ✅ 已修 | 列表页 L119 + 两个弹窗 L39 均有 coachingCompany 条件渲染 |
+
+> 注：courseFee / coachingCompany / attachments 字段取决于后端是否已返回数据（shared.md S1-S3），
+> 前端已就绪，后端就绪后自动生效。
+
+---
+
+## 一、问题总览（以下为排查记录，保留供参考）
 
 ### 原型有两个页面共享课程记录数据
 
@@ -191,19 +207,12 @@ Header: "课程记录详情 #recordId" + × 关闭
 
 ## 三、Admin 端执行顺序
 
-### Phase 1 — 独立修复（无外部依赖）
+### ✅ 全部已完成（代码已修复，2026-04-22 审核确认）
 
-| 批次 | 内容 |
+| 批次 | 状态 |
 |------|------|
-| **A1** | 操作列互斥 + 驳回原因选项对齐 (§2.1) |
-| **A2** | 审核弹窗内容补全 + courseSource/courseType bug (§2.2) |
-| **A3** | 详情弹窗内容补全 + rate/courseFee + courseSource/courseType bug (§2.3) |
-
-> A2/A3 中课时费字段依赖 shared.md §1（后端 toPayload 补 courseFee），需先完成或同步进行。
-
-### Phase 4 — 补全（依赖 shared 基础设施）
-
-| 批次 | 内容 | 依赖 |
-|------|------|------|
-| **A5** | 审核弹窗 + 详情弹窗附件展示 (§2.5) | shared.md §2 |
-| **A6** | 列表页 + 弹窗公司名展示 (§2.6) | shared.md §3 |
+| **A1** 操作列互斥 + 驳回原因对齐 | ✅ 已修 |
+| **A2** 审核弹窗内容补全 + bug fixes | ✅ 已修 |
+| **A3** 详情弹窗内容补全 + bug fixes | ✅ 已修 |
+| **A5** 附件展示 | ✅ 前端已就绪（等后端 S2） |
+| **A6** 公司名展示 | ✅ 前端已就绪（等后端 S3） |
