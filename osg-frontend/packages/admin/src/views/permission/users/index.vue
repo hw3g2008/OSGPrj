@@ -1,8 +1,8 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title="后台用户管理"
-      subtitle="Admin Users"
+      title-zh="后台用户管理"
+      title-en="Admin Users"
       description="管理后台系统用户账号、角色结构与登录状态，让权限治理像一份可审计台账。"
     >
       <template #actions>
@@ -208,7 +208,7 @@ import { message, Modal } from 'ant-design-vue'
 import { getUserList, getUserDetail, changeUserStatus, getRoleOptions as fetchRoleOptions } from '@/api/user'
 import UserModal from './components/UserModal.vue'
 import ResetPwdModal from './components/ResetPwdModal.vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 

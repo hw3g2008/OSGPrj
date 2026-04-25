@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="欢迎回来，管理员" :description="`今天是 ${todayStr}`">
+    <PageHeader title-zh="欢迎回来，管理员" :description="`今天是 ${todayStr}`">
       <template #actions>
         <a-button @click="fetchAll">
           <template #icon><ReloadOutlined /></template>
@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ReloadOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   getDashboardStats,
   getDashboardTodos,

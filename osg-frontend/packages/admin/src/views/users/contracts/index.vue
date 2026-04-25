@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="合同管理" subtitle="Contract" description="查看所有合同记录，为老学员续签添加新合同。新增学员时的合同信息会自动同步到此处。">
+    <PageHeader title-zh="合同管理" title-en="Contract" description="查看所有合同记录，为老学员续签添加新合同。新增学员时的合同信息会自动同步到此处。">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-contract" data-surface-sample-key="contracts-add-entry" @click="handleRenewEntry()">
           <template #icon><PlusOutlined /></template>
@@ -161,7 +161,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import ContractDetailModal from './components/ContractDetailModal.vue'
 import ContractStatusChangeModal from './components/ContractStatusChangeModal.vue'
 import ContractBlacklistModal from './components/ContractBlacklistModal.vue'

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="学生自添岗位" subtitle="Student Added Positions" description="审核学生手动添加的岗位，通过后加入公共岗位库">
+    <PageHeader title-zh="学生自添岗位" title-en="Student Added Positions" description="审核学生手动添加的岗位，通过后加入公共岗位库">
       <template #actions>
         <a-space>
           <a-tag color="orange">{{ pendingCount }} 条待审核</a-tag>
@@ -138,7 +138,7 @@ import {
 import { getPositionMeta, type PositionMetaOption } from '@osg/shared/api/admin/position'
 import RejectPositionModal from './components/RejectPositionModal.vue'
 import ReviewPositionModal from './components/ReviewPositionModal.vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 
 const positionColumns = [
   { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 280 },

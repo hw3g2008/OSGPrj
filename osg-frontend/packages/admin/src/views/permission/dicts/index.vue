@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="字典管理" description="管理系统基础配置字典数据" />
+    <PageHeader title-zh="字典管理" description="管理系统基础配置字典数据" />
 
     <div class="category-cards">
       <a-button
@@ -158,7 +158,7 @@ import {
   type AdminDictRegistryGroup,
 } from '@/api/adminDict'
 import BaseDataModal from './components/BaseDataModal.vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 

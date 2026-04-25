@@ -1,8 +1,8 @@
 <template>
   <div id="page-roles" class="osg-page">
     <PageHeader
-      title="权限配置"
-      subtitle="Roles & Permissions"
+      title-zh="权限配置"
+      title-en="Roles & Permissions"
       description="配置后台角色能访问的功能模块"
     >
       <template #actions>
@@ -146,7 +146,7 @@ import { getPermissionColor, getPermissionColorConfig } from '@osg/shared/utils/
 import type { PermissionColorType } from '@osg/shared/utils/permissionColors'
 import RoleModal from './components/RoleModal.vue'
 import RoleMenuTreeModal from './components/RoleMenuTreeModal.vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { normalizeMenuTree } from './menuTree'
 import dayjs from 'dayjs'

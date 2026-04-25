@@ -1,6 +1,6 @@
 <template>
   <section class="osg-page">
-    <PageHeader title="投诉建议" description="处理学员提交的投诉和建议" />
+    <PageHeader title-zh="投诉建议" description="处理学员提交的投诉和建议" />
 
     <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
       <a-form-item>
@@ -88,7 +88,7 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   getComplaintList,
   updateComplaintStatus,

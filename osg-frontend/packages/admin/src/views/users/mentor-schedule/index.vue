@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="导师排期管理" subtitle="Mentor Schedule" description="监控排期填写情况，协调导师资源">
+    <PageHeader title-zh="导师排期管理" title-en="Mentor Schedule" description="监控排期填写情况，协调导师资源">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><DownloadOutlined /></template>
@@ -129,7 +129,7 @@ import {
   type WeekScope,
 } from '@osg/shared/api/admin/schedule'
 import EditScheduleModal from './components/EditScheduleModal.vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 
 const scheduleColumns = [
   { title: '导师', dataIndex: 'staffName', key: 'staffName', width: 200 },

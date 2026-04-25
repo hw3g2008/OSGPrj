@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="真人面试题库" subtitle="Interview Bank" description="管理真人面试问题集锦，按面试阶段和类型分类">
+    <PageHeader title-zh="真人面试题库" title-en="Interview Bank" description="管理真人面试问题集锦，按面试阶段和类型分类">
       <template #actions>
         <a-button v-if="activeTab === 'banks'" type="primary" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>
@@ -124,7 +124,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import InterviewBankFormModal from './components/InterviewBankFormModal.vue'
 import {
   createInterviewBank,

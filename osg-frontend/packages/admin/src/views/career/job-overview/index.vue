@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="学员求职总览" subtitle="Job Overview" description="查看全部学员的求职进度，管理导师和题库分配">
+    <PageHeader title-zh="学员求职总览" title-en="Job Overview" description="查看全部学员的求职进度，管理导师和题库分配">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><ExportOutlined /></template>
@@ -185,7 +185,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import AssignMentorModal from './components/AssignMentorModal.vue'
 import {
   assignMentors,

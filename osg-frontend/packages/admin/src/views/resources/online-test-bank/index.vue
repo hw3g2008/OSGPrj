@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="在线测试题库" subtitle="Online Test Bank" description="管理HireVue、Pymetrics、SHL等在线测试资源">
+    <PageHeader title-zh="在线测试题库" title-en="Online Test Bank" description="管理HireVue、Pymetrics、SHL等在线测试资源">
       <template #actions>
         <a-button v-if="activeTab === 'banks'" type="primary" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>
@@ -119,7 +119,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import TestBankFormModal from './components/TestBankFormModal.vue'
 import {
   createTestBank,

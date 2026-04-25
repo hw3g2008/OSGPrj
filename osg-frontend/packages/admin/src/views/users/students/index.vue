@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="学员列表" subtitle="Student List" description="管理学员信息、合同信息，支持各端查看和维护学员数据">
+    <PageHeader title-zh="学员列表" title-en="Student List" description="管理学员信息、合同信息，支持各端查看和维护学员数据">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-student" @click="openAddStudentModal">
           <template #icon><PlusOutlined /></template>
@@ -212,7 +212,7 @@ import {
 } from '@osg/shared/api/admin/contract'
 import { getToken } from '@osg/shared/utils'
 import { http } from '@osg/shared/utils/request'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import AddStudentModal from './components/AddStudentModal.vue'
 import BlacklistModal from './components/BlacklistModal.vue'
 import EditStudentModal from './components/EditStudentModal.vue'

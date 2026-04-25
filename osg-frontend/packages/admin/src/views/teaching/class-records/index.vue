@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="课程记录" subtitle="Class Records" description="查看所有学员的课程记录，审核导师/班主任/助教提交的上课记录">
+    <PageHeader title-zh="课程记录" title-en="Class Records" description="查看所有学员的课程记录，审核导师/班主任/助教提交的上课记录">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><ExportOutlined /></template>
@@ -173,7 +173,7 @@ import {
 import { approveReport, getReportDetail, rejectReport, type ReportRow } from '@osg/shared/api/admin/report'
 import ClassRecordDetailModal from './components/ClassRecordDetailModal.vue'
 import ClassRecordReviewModal from './components/ClassRecordReviewModal.vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 
 const recordColumns = [
   { title: '记录ID', dataIndex: 'recordId', key: 'recordId', width: 90 },

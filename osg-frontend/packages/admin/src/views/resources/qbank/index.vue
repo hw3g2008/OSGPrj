@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="题库管理" subtitle="Question Bank" description="组织和分发题库文件夹，支持授权和过期时间">
+    <PageHeader title-zh="题库管理" title-en="Question Bank" description="组织和分发题库文件夹，支持授权和过期时间">
       <template #actions>
         <a-button type="primary" @click="openCreateModal">
           <template #icon><FolderAddOutlined /></template>
@@ -63,7 +63,7 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { FolderAddOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import QbankFolderModal from './components/QbankFolderModal.vue'
 import {
   createQbankFolder,

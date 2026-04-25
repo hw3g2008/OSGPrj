@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="文件管理" subtitle="File Management" description="管理学习文件">
+    <PageHeader title-zh="文件管理" title-en="File Management" description="管理学习文件">
       <template #actions>
         <a-button type="primary" @click="showNewFolderModal = true">
           <template #icon><FolderAddOutlined /></template>
@@ -65,7 +65,7 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { FolderAddOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import NewFolderModal from './components/NewFolderModal.vue'
 import FileAuthModal from './components/FileAuthModal.vue'
 import {

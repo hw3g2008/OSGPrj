@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="面试真题审核" subtitle="Question Review" description="审核学员提交的面试真题，通过后自动开放给相同申请的学生">
+    <PageHeader title-zh="面试真题审核" title-en="Question Review" description="审核学员提交的面试真题，通过后自动开放给相同申请的学生">
       <template #actions>
         <a-button @click="message.success('已导出当前筛选结果')">
           <template #icon><ExportOutlined /></template>
@@ -121,7 +121,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import QuestionReviewModal from './components/QuestionReviewModal.vue'
 import {
   batchApproveQuestions,

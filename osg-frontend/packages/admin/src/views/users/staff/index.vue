@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="导师列表" subtitle="Mentor List" description="管理导师和班主任账户，录入信息开通账号">
+    <PageHeader title-zh="导师列表" title-en="Mentor List" description="管理导师和班主任账户，录入信息开通账号">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-staff" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>
@@ -220,7 +220,7 @@ import {
 } from '@osg/shared/api/admin/staff'
 import { http } from '@osg/shared/utils/request'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import MentorStudentsModal from './components/MentorStudentsModal.vue'
 import StaffDetailModal from './components/StaffDetailModal.vue'
 import StaffFormModal from './components/StaffFormModal.vue'

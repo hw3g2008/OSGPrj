@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="岗位管理" subtitle="Job Tracker" description="管理各大公司招聘岗位信息，支持批量导入和学员关联追踪">
+    <PageHeader title-zh="岗位管理" title-en="Job Tracker" description="管理各大公司招聘岗位信息，支持批量导入和学员关联追踪">
       <template #actions>
         <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
@@ -285,7 +285,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { DownloadOutlined, ExportOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { getToken } from '@osg/shared/utils'
 import {
   createPosition,

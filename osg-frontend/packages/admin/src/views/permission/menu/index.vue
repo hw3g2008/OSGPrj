@@ -1,6 +1,6 @@
 <template>
   <div id="page-menu" class="osg-page">
-    <PageHeader title="菜单管理" subtitle="Menu Management" description="管理系统菜单结构，包括目录、页面菜单和按钮权限的配置">
+    <PageHeader title-zh="菜单管理" title-en="Menu Management" description="管理系统菜单结构，包括目录、页面菜单和按钮权限的配置">
       <template #actions>
         <a-button>
           <template #icon><i class="mdi mdi-unfold-more-horizontal" aria-hidden="true"></i></template>
@@ -115,7 +115,7 @@ import {
   type MenuMutationPayload,
 } from '@osg/shared/api/admin/menu'
 import MenuFormModal from './components/MenuFormModal.vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 
 const menuFormVisible = ref(false)
 const dataList = ref<MenuListItem[]>([])

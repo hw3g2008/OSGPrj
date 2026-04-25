@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="模拟应聘管理" subtitle="Mock Practice" description="管理所有学员的模拟面试、人际关系测试、期中考试申请">
+    <PageHeader title-zh="模拟应聘管理" title-en="Mock Practice" description="管理所有学员的模拟面试、人际关系测试、期中考试申请">
       <template #actions>
         <a-space>
           <a-tag color="orange">{{ stats.pendingCount }} 条待处理</a-tag>
@@ -180,7 +180,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import AssignMockModal from './components/AssignMockModal.vue'
 import MockFeedbackModal from './components/MockFeedbackModal.vue'
 import {

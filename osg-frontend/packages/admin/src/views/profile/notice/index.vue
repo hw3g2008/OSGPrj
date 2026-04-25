@@ -1,6 +1,6 @@
 <template>
   <section class="osg-page">
-    <PageHeader title="通知管理" description="向学员和导师发送通知">
+    <PageHeader title-zh="通知管理" description="向学员和导师发送通知">
       <template #actions>
         <a-button type="primary" @click="showSendNoticeModal = true">
           <template #icon><BellOutlined /></template>
@@ -84,7 +84,7 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { BellOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import type { Dayjs } from 'dayjs'
 import SendNoticeModal from './components/SendNoticeModal.vue'
 import {

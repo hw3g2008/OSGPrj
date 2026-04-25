@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="报销管理" subtitle="Expense Management" description="审核导师报销申请，支持新建报销与处理流转">
+    <PageHeader title-zh="报销管理" title-en="Expense Management" description="审核导师报销申请，支持新建报销与处理流转">
       <template #actions>
         <a-button type="primary" @click="showNewExpenseModal = true">
           <template #icon><PlusOutlined /></template>
@@ -73,7 +73,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import NewExpenseModal from './components/NewExpenseModal.vue'
 import {
   createExpense,

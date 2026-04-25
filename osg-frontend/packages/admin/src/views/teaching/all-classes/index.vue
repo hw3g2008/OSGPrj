@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="全部课程" subtitle="All Classes" description="查看和管理所有课程记录（导师、班主任、助教均可提交）">
+    <PageHeader title-zh="全部课程" title-en="All Classes" description="查看和管理所有课程记录（导师、班主任、助教均可提交）">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>
@@ -129,7 +129,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import ClassDetailModal from './components/ClassDetailModal.vue'
 import {
   getAllClassesDetail,

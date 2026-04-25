@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="课时审核" subtitle="Reports" description="审核导师提交的课时记录，所有课程记录自动同步">
+    <PageHeader title-zh="课时审核" title-en="Reports" description="审核导师提交的课时记录，所有课程记录自动同步">
       <template #actions>
         <a-button @click="handleExportPlaceholder">
           <template #icon><ExportOutlined /></template>
@@ -148,7 +148,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { CheckOutlined, CloseOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import ReviewDetailModal from './components/ReviewDetailModal.vue'
 import {
   approveReport,

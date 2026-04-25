@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="课程反馈" subtitle="Feedback" description="查看导师对学员的评估反馈（仅显示Prep Feedback、Networking、Mock Midterm三种类型）">
+    <PageHeader title-zh="课程反馈" title-en="Feedback" description="查看导师对学员的评估反馈（仅显示Prep Feedback、Networking、Mock Midterm三种类型）">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>
@@ -152,7 +152,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { getFeedbackList, type FeedbackRow, type FeedbackStats, type FeedbackTab } from '@osg/shared/api/admin/feedback'
 
 const prepColumns = [

@@ -1,6 +1,6 @@
 <template>
   <section class="osg-page">
-    <PageHeader title="邮件作业" subtitle="Mail Job" description="批量邮件发送管理">
+    <PageHeader title-zh="邮件作业" title-en="Mail Job" description="批量邮件发送管理">
       <template #actions>
         <a-button type="primary" @click="showNewMailJobModal = true">
           <template #icon><MailOutlined /></template>
@@ -117,7 +117,7 @@
 import { onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { MailOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import type { Dayjs } from 'dayjs'
 import NewMailJobModal from './components/NewMailJobModal.vue'
 import {

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="财务结算" subtitle="Settlement" description="管理导师课时费支付，支持单条与批量标记已支付">
+    <PageHeader title-zh="财务结算" title-en="Settlement" description="管理导师课时费支付，支持单条与批量标记已支付">
       <template #actions>
         <a-button @click="loadData">
           <template #icon><ExportOutlined /></template>
@@ -122,7 +122,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import MarkPaidModal from './components/MarkPaidModal.vue'
 import {
   batchPayFinanceSettlement,
