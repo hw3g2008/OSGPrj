@@ -78,7 +78,7 @@
             <a-table
               :columns="pendingColumns"
               :data-source="pendingRows"
-              :row-key="(r) => r.applicationId"
+              :row-key="(r: PendingRow) => r.applicationId"
               :pagination="false"
               :scroll="{ x: 1100 }"
               :row-class-name="() => 'row-highlight row-highlight--warning'"
@@ -137,10 +137,10 @@
             <a-table
               :columns="coachingColumns"
               :data-source="coachingRows"
-              :row-key="(r) => r.applicationId"
+              :row-key="(r: OverviewRow) => r.applicationId"
               :pagination="false"
               :scroll="{ x: 1000 }"
-              :row-class-name="(record) => `row-highlight ${record.rowTone || ''}`.trim()"
+              :row-class-name="(record: OverviewRow) => `row-highlight ${record.rowTone || ''}`.trim()"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'studentName'">
@@ -214,10 +214,10 @@
             <a-table
               :columns="managedColumns"
               :data-source="managedRows"
-              :row-key="(r) => r.applicationId"
+              :row-key="(r: OverviewRow) => r.applicationId"
               :pagination="false"
               :scroll="{ x: 1100 }"
-              :row-class-name="(record) => `row-highlight ${record.rowTone || ''}`.trim()"
+              :row-class-name="(record: OverviewRow) => `row-highlight ${record.rowTone || ''}`.trim()"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'studentName'">

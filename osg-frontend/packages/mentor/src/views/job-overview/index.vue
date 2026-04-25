@@ -74,9 +74,9 @@
         <a-table
           :columns="jobColumns"
           :data-source="filteredRows"
-          :row-key="(record) => record.id"
+          :row-key="(record: JobOverviewRow) => record.id"
           :pagination="false"
-          :row-class-name="(record) => rowClass(record)"
+          :row-class-name="(record: JobOverviewRow) => rowClass(record)"
           :locale="{ emptyText: '暂无匹配记录' }"
         >
           <template #bodyCell="{ column, record }">
