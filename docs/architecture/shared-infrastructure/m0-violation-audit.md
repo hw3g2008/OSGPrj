@@ -105,3 +105,23 @@ done
 ## 6. 后续更新
 
 当发现新违反项 → 补充到 §2 违反项总表 + 调整 §3 清理计划 + 更新 memory。
+
+## 7. M0.6 OverlaySurfaceModal 决策（2026-04-26）
+
+**判据**：路线图 §4.1 表格条件 "如果三端都用"。
+
+| 端 | 是否使用 OverlaySurfaceModal | 备注 |
+|---|---|---|
+| Assistant | ✅ 1 个组件（AssistantClassReportFlowModal）| 391 行本地 fork |
+| Lead-Mentor | ❌ 不用 | — |
+| Mentor | ❌ 不用 | — |
+| Admin (Vue3) | ✅ 5 个组件 | 385 行本地 fork（与 Assistant 实现差异主要在主题色 CSS 变量）|
+
+**结论**：三端覆盖率 33%（仅 Assistant），不满足 "三端都用" 条件 → **M0.6 跳过**（不抽 shared）。
+
+**理由**：
+1. 三端中仅 1 端使用，反模式判据触发（抽出后 LM/Mentor 不会接入）
+2. Admin/Assistant 的实现差异主要在主题色变量层（设计上已为各端独立 fork）
+3. Assistant 单一使用场景（1 个组件），抽 shared 收益 vs 维护成本不划算
+
+**未来重启条件**：如 LM 或 Mentor 在后续子 Epic 中新增 Modal 需求且与 OverlaySurfaceModal 模式一致，可触发 M0.6 补做（按 §1.6.1 D5 升级触发器逻辑处理）。
