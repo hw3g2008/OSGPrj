@@ -1,11 +1,10 @@
 <template>
   <div id="page-mock-practice">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">模拟应聘管理 <span class="page-title-en">Mock Practice</span></h1>
-        <p class="page-sub">查看分配给我的模拟面试、人际关系测试、期中考试</p>
-      </div>
-    </div>
+    <PageHeader
+      title-zh="模拟应聘管理"
+      title-en="Mock Practice"
+      description="查看分配给我的模拟面试、人际关系测试、期中考试"
+    />
 
     <!-- 统计 -->
     <div class="stats-grid">
@@ -174,6 +173,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, type Ref } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { http } from '@osg/shared/utils/request'
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')

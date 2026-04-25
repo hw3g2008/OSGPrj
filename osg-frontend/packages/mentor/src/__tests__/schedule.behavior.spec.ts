@@ -46,7 +46,8 @@ describe('SchedulePage', () => {
     await flushPromises()
 
     expect(wrapper.find('#page-schedule').exists()).toBe(true)
-    expect(wrapper.find('.page-title').text()).toContain('我的排期')
+    // PageHeader 已迁移到 @osg/shared（D-Naming = BEM）
+    expect(wrapper.find('.page-header__title').text()).toContain('我的排期')
     expect(wrapper.find('#this-week-unfilled').exists()).toBe(true)
     expect(wrapper.find('#mentor-next-weekly-hours').exists()).toBe(true)
 

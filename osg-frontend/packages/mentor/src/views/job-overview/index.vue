@@ -1,16 +1,18 @@
 <template>
   <a-config-provider :auto-insert-space-in-button="false">
     <div id="page-job-overview" class="osg-page">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">学员求职总览 <span class="page-title-en">Job Overview</span></h1>
-          <p class="page-sub">查看我辅导学员的求职进度</p>
-        </div>
-        <a-button @click="handleExport">
-          <template #icon><ExportOutlined /></template>
-          导出
-        </a-button>
-      </div>
+      <PageHeader
+        title-zh="学员求职总览"
+        title-en="Job Overview"
+        description="查看我辅导学员的求职进度"
+      >
+        <template #actions>
+          <a-button @click="handleExport">
+            <template #icon><ExportOutlined /></template>
+            导出
+          </a-button>
+        </template>
+      </PageHeader>
 
       <InterviewCalendar :events="allCalendarEvents" @event-click="openCalendarHighlight" />
 
@@ -242,6 +244,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, inject, type Ref } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   ArrowRightOutlined,
   BankOutlined,

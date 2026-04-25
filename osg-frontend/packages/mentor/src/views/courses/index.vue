@@ -1,12 +1,14 @@
 <template>
   <div id="page-myclass">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">课程记录 <span class="page-title-en">Class Records</span></h1>
-        <p class="page-sub">查看和上报课程记录</p>
-      </div>
-      <button class="btn btn-primary" @click="showReportModal = true"><i class="mdi mdi-plus" /> 上报课程记录</button>
-    </div>
+    <PageHeader
+      title-zh="课程记录"
+      title-en="Class Records"
+      description="查看和上报课程记录"
+    >
+      <template #actions>
+        <button class="btn btn-primary" @click="showReportModal = true"><i class="mdi mdi-plus" /> 上报课程记录</button>
+      </template>
+    </PageHeader>
 
     <!-- Tabs -->
     <div class="tabs">
@@ -274,6 +276,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { http } from '@osg/shared/utils/request'
 import ReportModal from './components/ReportModal.vue'
 

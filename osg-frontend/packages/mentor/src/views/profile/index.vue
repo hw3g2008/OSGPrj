@@ -1,9 +1,14 @@
 <template>
   <div id="page-profile">
-    <div class="page-header">
-      <div><h1 class="page-title">基本信息 <span class="page-title-en">Profile</span></h1><p class="page-sub">查看和管理您的个人信息</p></div>
-      <button class="btn btn-primary" @click="showEditModal = true"><i class="mdi mdi-pencil" /> 编辑信息</button>
-    </div>
+    <PageHeader
+      title-zh="基本信息"
+      title-en="Profile"
+      description="查看和管理您的个人信息"
+    >
+      <template #actions>
+        <button class="btn btn-primary" @click="showEditModal = true"><i class="mdi mdi-pencil" /> 编辑信息</button>
+      </template>
+    </PageHeader>
 
     <!-- 核心信息 -->
     <div class="section section-core">
@@ -127,6 +132,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { http } from '@osg/shared/utils/request'
 
 const profile = ref<any>({})

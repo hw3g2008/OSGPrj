@@ -1,8 +1,6 @@
 <template>
   <div>
-    <div class="page-header">
-      <h1 class="page-title">{{ title }}</h1>
-    </div>
+    <PageHeader :title-zh="title" />
     <div class="placeholder-card">
       <i class="mdi mdi-clock-outline placeholder-icon" />
       <h2 class="placeholder-title">敬请期待</h2>
@@ -13,12 +11,12 @@
 </template>
 
 <script setup lang="ts">
+import { PageHeader } from '@osg/shared/components/PageHeader'
+
 defineProps<{ title: string }>()
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 24px; }
-.page-title { font-size: 26px; font-weight: 700; color: #1E293B; }
 .placeholder-card {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 80px 40px; background: #E8F0F8; border-radius: 16px; text-align: center;

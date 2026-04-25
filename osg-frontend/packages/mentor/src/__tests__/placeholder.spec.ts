@@ -7,7 +7,8 @@ describe('PlaceholderPage', () => {
     const wrapper = mount(PlaceholderPage, {
       props: { title: '课时结算' }
     })
-    expect(wrapper.find('.page-title').text()).toBe('课时结算')
+    // PageHeader 已迁移到 @osg/shared（D-Naming = BEM）
+    expect(wrapper.find('.page-header__title').text()).toBe('课时结算')
   })
 
   it('shows "敬请期待" text', () => {
