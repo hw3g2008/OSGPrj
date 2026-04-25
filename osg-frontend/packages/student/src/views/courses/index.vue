@@ -13,46 +13,45 @@
         </div>
       </template>
 
-      <div class="reminder-banner">
-        <i class="mdi mdi-bell-ring reminder-banner__icon" aria-hidden="true"></i>
-        <div class="reminder-banner__copy">
-          <div class="reminder-banner__title">
-            <i class="mdi mdi-new-box reminder-banner__title-icon" aria-hidden="true"></i>
-            {{ classRecordsMeta.reminderBanner.title }}
-          </div>
-          <div class="reminder-banner__desc">
-            {{ classRecordsMeta.reminderBanner.leadText }}
-            <strong>{{ classRecordsMeta.reminderBanner.mentorName }}</strong>
-            {{ classRecordsMeta.reminderBanner.middleText }}
-            <strong>{{ classRecordsMeta.reminderBanner.newRecordCount }}</strong>
-            {{ classRecordsMeta.reminderBanner.suffixText }}
-          </div>
-        </div>
-        <a-button size="small" class="reminder-banner__action" @click="goToEvaluate">
-          {{ classRecordsMeta.reminderBanner.ctaLabel }}
-        </a-button>
-      </div>
+      <a-alert
+        v-if="classRecordsMeta.reminderBanner.title"
+        type="success"
+        show-icon
+        banner
+        closable
+        class="reminder-banner"
+      >
+        <template #message><strong>{{ classRecordsMeta.reminderBanner.title }}</strong></template>
+        <template #description>
+          {{ classRecordsMeta.reminderBanner.leadText }}
+          <strong>{{ classRecordsMeta.reminderBanner.mentorName }}</strong>
+          {{ classRecordsMeta.reminderBanner.middleText }}
+          <strong>{{ classRecordsMeta.reminderBanner.newRecordCount }}</strong>
+          {{ classRecordsMeta.reminderBanner.suffixText }}
+        </template>
+        <template #action>
+          <a-button type="primary" size="small" @click="goToEvaluate">
+            {{ classRecordsMeta.reminderBanner.ctaLabel }}
+          </a-button>
+        </template>
+      </a-alert>
 
-      <div class="courses-tabs" role="tablist" aria-label="Class record tabs">
-        <button
+      <a-tabs v-model:active-key="activeTab" class="courses-tabs">
+        <a-tab-pane
           v-for="tab in classRecordsMeta.tabDefinitions"
           :key="tab.key"
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === tab.key"
-          class="courses-tab"
-          :class="{ 'courses-tab--active': activeTab === tab.key }"
-          @click="activeTab = tab.key"
         >
-          <span>{{ tab.label || tab.displayLabel }}</span>
-          <span
-            v-if="tab.key === 'pending' && tab.count > 0"
-            class="courses-tab__count"
-          >
-            {{ tab.count }}
-          </span>
-        </button>
-      </div>
+          <template #tab>
+            {{ tab.label || tab.displayLabel }}
+            <a-badge
+              v-if="tab.key === 'pending' && tab.count > 0"
+              :count="tab.count"
+              :number-style="{ backgroundColor: '#f59e0b' }"
+              :offset="[6, -2]"
+            />
+          </template>
+        </a-tab-pane>
+      </a-tabs>
 
       <div class="card">
         <div class="card-body">
@@ -715,84 +714,11 @@ onMounted(() => {
 
   .reminder-banner {
     margin-bottom: 20px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-  }
-
-  .reminder-banner__icon {
-    color: #059669;
-    font-size: 28px;
-    flex-shrink: 0;
-  }
-
-  .reminder-banner__copy {
-    flex: 1;
-  }
-
-  .reminder-banner__title {
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #065f46;
-    font-size: 16px;
-    font-weight: 600;
-  }
-
-  .reminder-banner__title-icon {
-    font-size: 18px;
-  }
-
-  .reminder-banner__desc {
-    color: #047857;
-    font-size: 13px;
-  }
-
-  .reminder-banner__action {
-    background: #059669;
-    color: #fff;
   }
 
   .courses-tabs {
-    display: inline-flex;
-    padding: 4px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    background: #f8fafc;
-  }
-
-  .courses-tab {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    background: transparent;
-    color: #64748b;
-    font-size: 14px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-  }
-
-  .courses-tab--active {
-    background: #fff;
-    color: #7399c6;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  }
-
-  .courses-tab__count {
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: #fef3c7;
-    color: #92400e;
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1;
+    margin-bottom: 8px;
   }
 
   .card {

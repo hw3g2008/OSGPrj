@@ -4,7 +4,7 @@ import Antd from 'ant-design-vue'
 import App from './App.vue'
 import router from './router'
 import 'ant-design-vue/dist/reset.css'
-import '../../admin/node_modules/@mdi/font/css/materialdesignicons.css'
+import '@mdi/font/css/materialdesignicons.css'
 import './styles/global.scss'
 
 const app = createApp(App)

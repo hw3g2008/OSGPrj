@@ -23,17 +23,18 @@
       </div>
     </div>
 
-    <div class="permission-notice">
-      <InfoCircleOutlined />
-      <span>
+    <a-alert type="info" show-icon class="permission-notice">
+      <template #message>
         根据您的求职意向，当前展示 <strong>{{ intentSummary.recruitmentCycle }}</strong> 招聘周期、
         <strong>{{ intentSummary.targetRegion }}</strong> 地区、
         <strong>{{ intentSummary.primaryDirection }}</strong> 主攻方向的岗位信息
-      </span>
-      <a class="modify-intent" @click="router.push('/profile')">
-        修改求职意向 <RightOutlined />
-      </a>
-    </div>
+      </template>
+      <template #action>
+        <a-button type="link" size="small" @click="router.push('/profile')">
+          修改求职意向 <RightOutlined />
+        </a-button>
+      </template>
+    </a-alert>
 
     <a-card :bordered="false" class="filter-card">
       <div class="filter-controls">

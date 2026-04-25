@@ -48,6 +48,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Modal, message } from 'ant-design-vue'
 import { normalizeStudentPath } from '@/navigation/access'
 import { PHASE1_VISIBLE_PATHS } from '@/navigation/phase1'
 import { logout } from '@osg/shared/api'
@@ -259,14 +260,23 @@ const navigate = (path: string) => {
   }
 }
 
-const handleLogout = async () => {
-  try {
-    await logout()
-  } catch {
-    // Ignore API failures and always clear local auth state.
-  }
-  clearAuth()
-  router.push('/login')
+const handleLogout = () => {
+  Modal.confirm({
+    title: '确认退出',
+    content: '确定要退出登录吗？',
+    okText: '确定',
+    cancelText: '取消',
+    async onOk() {
+      try {
+        await logout()
+      } catch {
+        // Ignore API failures and always clear local auth state.
+      }
+      clearAuth()
+      message.success('已退出登录')
+      router.push('/login')
+    },
+  })
 }
 </script>
 

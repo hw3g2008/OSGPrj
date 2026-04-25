@@ -11,70 +11,72 @@
         </div>
       </template>
 
-      <section class="pending-banner">
-        <div class="pending-content">
-          <h4>{{ pendingBannerTitle }}</h4>
-          <p>{{ pendingBannerText }}</p>
-        </div>
-        <a-button @click="pendingOpen = true">查看详情</a-button>
-      </section>
+      <a-alert
+        class="pending-banner"
+        :type="pendingChanges.length > 0 ? 'warning' : 'info'"
+        show-icon
+      >
+        <template #message><strong>{{ pendingBannerTitle }}</strong></template>
+        <template #description>{{ pendingBannerText }}</template>
+        <template #action>
+          <a-button @click="pendingOpen = true">查看详情</a-button>
+        </template>
+      </a-alert>
 
-      <section class="profile-card">
+      <a-card class="profile-card" :bordered="false">
         <div class="profile-head">
-          <div class="avatar">{{ avatarInitials }}</div>
-          <div>
+          <a-avatar :size="84" :style="{ backgroundColor: 'var(--primary)', fontSize: '28px', fontWeight: 800 }">{{ avatarInitials }}</a-avatar>
+          <div class="profile-head__text">
             <h3>{{ profile.fullName }}</h3>
-            <p>Student ID: {{ profile.studentCode }} · {{ profile.statusLabel }}</p>
+            <a-space :size="8" wrap>
+              <span>Student ID: {{ profile.studentCode }}</span>
+              <a-tag color="success">{{ profile.statusLabel }}</a-tag>
+            </a-space>
           </div>
         </div>
 
-        <div class="info-section">
-          <div class="section-chip">核心信息</div>
-          <div class="info-grid four-columns">
-            <div class="info-card"><span>英文姓名</span><strong>{{ profile.englishName }}</strong></div>
-            <div class="info-card"><span>性别</span><strong>{{ profile.sexLabel }}</strong></div>
-            <div class="info-card wide"><span>邮箱</span><strong>{{ profile.email }}</strong></div>
-          </div>
-        </div>
+        <a-card title="核心信息" :bordered="false" size="small" class="info-block">
+          <a-descriptions :column="{ xs: 1, sm: 2, md: 3 }" :colon="false">
+            <a-descriptions-item label="英文姓名">{{ profile.englishName }}</a-descriptions-item>
+            <a-descriptions-item label="性别">{{ profile.sexLabel }}</a-descriptions-item>
+            <a-descriptions-item label="邮箱">{{ profile.email }}</a-descriptions-item>
+          </a-descriptions>
+        </a-card>
 
-        <div class="info-section">
-          <div class="section-chip secondary">导师配置</div>
-          <div class="info-grid two-columns">
-            <div class="info-card"><span>班主任</span><strong>{{ profile.leadMentor }}</strong></div>
-            <div class="info-card"><span>助教</span><strong>{{ profile.assistantName }}</strong></div>
-          </div>
-        </div>
+        <a-card title="导师配置" :bordered="false" size="small" class="info-block">
+          <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
+            <a-descriptions-item label="班主任">{{ profile.leadMentor }}</a-descriptions-item>
+            <a-descriptions-item label="助教">{{ profile.assistantName }}</a-descriptions-item>
+          </a-descriptions>
+        </a-card>
 
-        <div class="info-section">
-          <div class="section-chip tertiary">学业信息</div>
-          <div class="info-grid four-columns">
-            <div class="info-card"><span>学校</span><strong>{{ profile.school }}</strong></div>
-            <div class="info-card"><span>专业</span><strong>{{ profile.major }}</strong></div>
-            <div class="info-card"><span>毕业年份</span><strong>{{ profile.graduationYear }}</strong></div>
-            <div class="info-card"><span>高中</span><strong>{{ profile.highSchool }}</strong></div>
-            <div class="info-card"><span>是否读研或延毕</span><strong>{{ profile.postgraduatePlan }}</strong></div>
-            <div class="info-card"><span>签证</span><strong>{{ profile.visaStatus }}</strong></div>
-          </div>
-        </div>
+        <a-card title="学业信息" :bordered="false" size="small" class="info-block">
+          <a-descriptions :column="{ xs: 1, sm: 2, md: 3 }" :colon="false">
+            <a-descriptions-item label="学校">{{ profile.school }}</a-descriptions-item>
+            <a-descriptions-item label="专业">{{ profile.major }}</a-descriptions-item>
+            <a-descriptions-item label="毕业年份">{{ profile.graduationYear }}</a-descriptions-item>
+            <a-descriptions-item label="高中">{{ profile.highSchool }}</a-descriptions-item>
+            <a-descriptions-item label="是否读研或延毕">{{ profile.postgraduatePlan }}</a-descriptions-item>
+            <a-descriptions-item label="签证">{{ profile.visaStatus }}</a-descriptions-item>
+          </a-descriptions>
+        </a-card>
 
-        <div class="info-section">
-          <div class="section-chip warning">求职方向</div>
-          <div class="info-grid two-columns">
-            <div class="info-card"><span>求职地区</span><strong>{{ profile.targetRegion }}</strong></div>
-            <div class="info-card"><span>招聘周期</span><strong>{{ profile.recruitmentCycle }}</strong></div>
-            <div class="info-card"><span>主攻方向</span><strong>{{ profile.primaryDirection }}</strong></div>
-            <div class="info-card"><span>子方向</span><strong>{{ profile.secondaryDirection }}</strong></div>
-          </div>
-        </div>
+        <a-card title="求职方向" :bordered="false" size="small" class="info-block">
+          <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
+            <a-descriptions-item label="求职地区">{{ profile.targetRegion }}</a-descriptions-item>
+            <a-descriptions-item label="招聘周期">{{ profile.recruitmentCycle }}</a-descriptions-item>
+            <a-descriptions-item label="主攻方向">{{ profile.primaryDirection }}</a-descriptions-item>
+            <a-descriptions-item label="子方向">{{ profile.secondaryDirection }}</a-descriptions-item>
+          </a-descriptions>
+        </a-card>
 
-        <div class="info-section">
-          <div class="section-chip success">联系方式</div>
-          <div class="info-grid two-columns">
-            <div class="info-card"><span>电话</span><strong>{{ profile.phone }}</strong></div>
-            <div class="info-card"><span>微信ID</span><strong>{{ profile.wechatId }}</strong></div>
-          </div>
-        </div>
-      </section>
+        <a-card title="联系方式" :bordered="false" size="small" class="info-block">
+          <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
+            <a-descriptions-item label="电话">{{ profile.phone }}</a-descriptions-item>
+            <a-descriptions-item label="微信ID">{{ profile.wechatId }}</a-descriptions-item>
+          </a-descriptions>
+        </a-card>
+      </a-card>
     </OsgPageContainer>
 
     <a-modal
@@ -323,33 +325,12 @@ onMounted(() => {
 }
 
 .pending-banner {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  padding: 18px 20px;
   margin-bottom: 20px;
 }
 
-.pending-content {
-  h4 {
-    margin: 0 0 6px;
-    color: #92400e;
-  }
-
-  p {
-    margin: 0;
-    color: #78350f;
-  }
-}
-
 .profile-card {
-  border: 1px solid #dbe5f0;
   border-radius: 20px;
   background: #fff;
-  padding: 24px;
 }
 
 .profile-head {
@@ -357,95 +338,23 @@ onMounted(() => {
   gap: 18px;
   align-items: center;
   padding-bottom: 24px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
   margin-bottom: 24px;
+}
+
+.profile-head__text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 
   h3 {
-    margin: 0 0 6px;
+    margin: 0;
     font-size: 22px;
   }
-
-  p {
-    margin: 0;
-    color: #64748b;
-  }
 }
 
-.avatar {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 28px;
-  font-weight: 800;
-}
-
-.info-section {
-  margin-bottom: 20px;
-}
-
-.section-chip {
-  display: inline-block;
-  margin-bottom: 12px;
-  border-radius: 999px;
-  background: #2563eb;
-  color: #fff;
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.secondary {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.tertiary {
-  background: #e8f0f8;
-  color: #1d4ed8;
-}
-
-.warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.info-grid {
-  display: grid;
-  gap: 16px;
-}
-
-.four-columns {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.two-columns {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.info-card {
-  border-radius: 14px;
-  background: #f8fafc;
-  padding: 14px 16px;
-  display: grid;
-  gap: 6px;
-
-  span {
-    color: #64748b;
-    font-size: 12px;
-  }
-}
-
-.wide {
-  grid-column: span 2;
+.info-block {
+  margin-bottom: 16px;
 }
 
 .modal-tip {
@@ -593,21 +502,14 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .page-header,
-  .pending-banner,
   .profile-head {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .four-columns,
-  .two-columns,
   .form-grid,
   .pending-diff {
     grid-template-columns: 1fr;
-  }
-
-  .wide {
-    grid-column: span 1;
   }
 }
 </style>

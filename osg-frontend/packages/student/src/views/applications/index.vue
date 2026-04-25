@@ -326,21 +326,21 @@
 
             <label v-if="progressForm.hirevueType === 'vi'" id="update-vi-fields" class="rich-form-field rich-form-field--full">
               <span>VI 链接 <span class="field-required">*</span></span>
-              <input v-model="progressForm.viLink" class="native-form-input" placeholder="请输入 Video Interview 链接" />
+              <a-input v-model:value="progressForm.viLink" placeholder="请输入 Video Interview 链接" />
             </label>
 
             <template v-if="progressForm.hirevueType === 'ot'">
               <label id="update-ot-fields" class="rich-form-field">
                 <span>OT 链接 <span class="field-required">*</span></span>
-                <input v-model="progressForm.otLink" class="native-form-input" placeholder="请输入 Online Test 链接" />
+                <a-input v-model:value="progressForm.otLink" placeholder="请输入 Online Test 链接" />
               </label>
               <label class="rich-form-field">
                 <span>登录账号 <span class="field-required">*</span></span>
-                <input v-model="progressForm.otAccount" class="native-form-input" placeholder="账号" />
+                <a-input v-model:value="progressForm.otAccount" placeholder="账号" />
               </label>
               <label class="rich-form-field">
                 <span>登录密码 <span class="field-required">*</span></span>
-                <input v-model="progressForm.otPassword" class="native-form-input" placeholder="密码" />
+                <a-input-password v-model:value="progressForm.otPassword" placeholder="密码" />
               </label>
             </template>
 
@@ -421,11 +421,11 @@
             </label>
             <label class="rich-form-field">
               <span>意向导师 <span class="field-optional">(选填)</span></span>
-              <input id="update-prefer-mentor" v-model="progressForm.preferMentor" class="native-form-input" placeholder="如有特别想要的导师，请填写导师姓名" />
+              <a-input id="update-prefer-mentor" v-model:value="progressForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
             </label>
             <label class="rich-form-field">
               <span>排除导师 <span class="field-optional">(选填)</span></span>
-              <input id="update-exclude-mentor" v-model="progressForm.excludeMentor" class="native-form-input" placeholder="如有不想选择的导师，请填写导师姓名" />
+              <a-input id="update-exclude-mentor" v-model:value="progressForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
             </label>
           </div>
         </div>
