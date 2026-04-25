@@ -362,7 +362,7 @@ class OsgLeadMentorStoryRegressionTest
         assertEquals(HttpStatus.FORBIDDEN, listResult.get("code"));
         assertEquals(HttpStatus.FORBIDDEN, detailResult.get("code"));
         assertEquals("该账号无班主任端访问权限", listResult.get("msg"));
-        verifyNoInteractions(leadMentorJobOverviewService);
+        verifyNoInteractions(userJobOverviewService);
     }
 
     @Test
