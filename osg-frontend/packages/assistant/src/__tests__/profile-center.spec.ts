@@ -90,7 +90,8 @@ describe('assistant personal center pages', () => {
     await flushUi()
 
     expect(wrapper.find('#page-profile').exists()).toBe(true)
-    expect(wrapper.find('.page-title').text()).toContain('Profile')
+    // Page title 已迁移到 shared PageHeader 组件，BEM 类名 .page-header__title
+    expect(wrapper.find('.page-header__title').text()).toContain('Profile')
     expect(wrapper.text()).toContain('Amy Assistant')
     expect(wrapper.text()).toContain('amy.assistant@example.com')
     expect(wrapper.text()).not.toContain('敬请期待')

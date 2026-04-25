@@ -1,14 +1,10 @@
 <template>
   <div id="page-schedule" class="page-schedule">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          我的排期
-          <span class="page-title-en">My Schedule</span>
-        </h1>
-        <p class="page-sub">设置助教可用时间，每周保存后会同步下一次刷新结果。</p>
-      </div>
-    </div>
+    <PageHeader
+      title-zh="我的排期"
+      title-en="My Schedule"
+      description="设置助教可用时间，每周保存后会同步下一次刷新结果。"
+    />
 
     <section class="schedule-banner" aria-label="排期提醒">
       <div class="schedule-banner__icon">
@@ -171,6 +167,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   getAssistantCurrentSchedule,
   getAssistantLastWeekSchedule,

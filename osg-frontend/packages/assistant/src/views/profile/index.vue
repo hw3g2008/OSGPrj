@@ -1,17 +1,11 @@
 <template>
   <div id="page-profile" class="profile-page">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          基本信息
-          <span class="page-title-en">Profile</span>
-        </h1>
-        <p class="page-sub">
-          查看当前账号资料、联系方式与登录信息，并在需要时更新常用联系字段。
-        </p>
-      </div>
-
-      <div class="page-header__actions">
+    <PageHeader
+      title-zh="基本信息"
+      title-en="Profile"
+      description="查看当前账号资料、联系方式与登录信息，并在需要时更新常用联系字段。"
+    >
+      <template #actions>
         <span class="status-pill">资料概览</span>
         <button
           id="assistant-profile-edit"
@@ -21,8 +15,8 @@
         >
           编辑资料
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <section v-if="errorMessage" class="state-card state-card--error">
       <h2>资料加载失败</h2>
@@ -225,6 +219,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   getAssistantProfile,
   updateAssistantProfile,

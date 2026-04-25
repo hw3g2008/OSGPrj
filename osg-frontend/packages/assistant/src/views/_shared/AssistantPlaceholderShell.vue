@@ -1,15 +1,10 @@
 <template>
   <div :id="pageId" class="assistant-page" data-page-shell>
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">
-          {{ title }}
-          <span class="page-title-en">{{ titleEn }}</span>
-        </h1>
-        <p class="page-sub">{{ description }}</p>
-      </div>
-      <span class="status-pill">{{ statusText }}</span>
-    </header>
+    <PageHeader :title-zh="title" :title-en="titleEn" :description="description">
+      <template #actions>
+        <span class="status-pill">{{ statusText }}</span>
+      </template>
+    </PageHeader>
 
     <section class="placeholder-card">
       <div class="placeholder-icon">
@@ -28,6 +23,7 @@
 
 <script setup lang="ts">
 import '@mdi/font/css/materialdesignicons.css'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 
 withDefaults(
   defineProps<{
@@ -53,34 +49,6 @@ withDefaults(
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.page-title {
-  margin: 0;
-  color: #1e293b;
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.page-title-en {
-  margin-left: 8px;
-  color: #94a3b8;
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.page-sub {
-  margin: 6px 0 0;
-  color: #64748b;
-  font-size: 14px;
 }
 
 .status-pill {
@@ -138,9 +106,4 @@ withDefaults(
   font-size: 14px;
 }
 
-@media (max-width: 900px) {
-  .page-header {
-    flex-direction: column;
-  }
-}
 </style>
