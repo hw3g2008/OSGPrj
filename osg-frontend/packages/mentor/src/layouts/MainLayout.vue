@@ -409,9 +409,9 @@ onMounted(() => {
   width: 100%;
   align-items: center;
   gap: 12px;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--primary-light);
+  background: #fff;
   padding: 12px;
   text-align: left;
   cursor: pointer;

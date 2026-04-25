@@ -428,13 +428,13 @@ const handleLogout = () => {
 
 .user-card {
   width: 100%;
-  border: 0;
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px;
   border-radius: 12px;
-  background: var(--primary-light);
+  background: #fff;
   text-align: left;
   cursor: pointer;
 }

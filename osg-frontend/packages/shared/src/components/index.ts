@@ -1,7 +1,8 @@
 // 公共组件导出
 export { default as OsgHeader } from './OsgHeader.vue'
 export { default as OsgFooter } from './OsgFooter.vue'
-export { default as OsgSidebar } from './OsgSidebar.vue'
 export { default as OsgPageContainer } from './OsgPageContainer.vue'
 export { default as InterviewCalendar } from './InterviewCalendar.vue'
 export { default as StageTag } from './StageTag.vue'
+export { default as AppSidebar } from './AppSidebar/AppSidebar.vue'
+export type { NavigationItem, NavigationGroup } from './AppSidebar/types'
