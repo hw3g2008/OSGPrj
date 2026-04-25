@@ -1,0 +1,169 @@
+[
+  {
+    "name": "login",
+    "path": "/login",
+    "final_url": "http://localhost:3004/login",
+    "redirected_to_login": false,
+    "console_errors": [],
+    "console_warnings": [],
+    "screenshot_main": "/Users/hw/workspace/OSGPrj/e2e-review/assistant/login-main.png"
+  },
+  {
+    "name": "forgot-password",
+    "path": "/forgot-password",
+    "final_url": "http://localhost:3004/forgot-password",
+    "redirected_to_login": false,
+    "console_errors": [],
+    "console_warnings": [],
+    "screenshot_main": "/Users/hw/workspace/OSGPrj/e2e-review/assistant/forgot-password-main.png"
+  },
+  {
+    "name": "home",
+    "path": "/home",
+    "final_url": "http://localhost:3004/home",
+    "redirected_to_login": false,
+    "console_errors": [],
+    "console_warnings": [],
+    "screenshot_main": "/Users/hw/workspace/OSGPrj/e2e-review/assistant/home-main.png"
+  },
+  {
+    "name": "career-positions",
+    "path": "/career/positions",
+    "final_url": "http://localhost:3004/login",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "career-job-overview",
+    "path": "/career/job-overview",
+    "final_url": "http://localhost:3004/login?redirect=/career/job-overview",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "career-mock-practice",
+    "path": "/career/mock-practice",
+    "final_url": "http://localhost:3004/login?redirect=/career/mock-practice",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "students",
+    "path": "/students",
+    "final_url": "http://localhost:3004/login?redirect=/students",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "communication",
+    "path": "/communication",
+    "final_url": "http://localhost:3004/login?redirect=/communication",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "class-records",
+    "path": "/class-records",
+    "final_url": "http://localhost:3004/login?redirect=/class-records",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "settlement",
+    "path": "/settlement",
+    "final_url": "http://localhost:3004/login?redirect=/settlement",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "expense",
+    "path": "/expense",
+    "final_url": "http://localhost:3004/login?redirect=/expense",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "files",
+    "path": "/files",
+    "final_url": "http://localhost:3004/login?redirect=/files",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "online-test-bank",
+    "path": "/online-test-bank",
+    "final_url": "http://localhost:3004/login?redirect=/online-test-bank",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "interview-bank",
+    "path": "/interview-bank",
+    "final_url": "http://localhost:3004/login?redirect=/interview-bank",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "profile",
+    "path": "/profile",
+    "final_url": "http://localhost:3004/login?redirect=/profile",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "schedule",
+    "path": "/schedule",
+    "final_url": "http://localhost:3004/login?redirect=/schedule",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "notice",
+    "path": "/notice",
+    "final_url": "http://localhost:3004/login?redirect=/notice",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "faq",
+    "path": "/faq",
+    "final_url": "http://localhost:3004/login?redirect=/faq",
+    "redirected_to_login": true,
+    "console_errors": [],
+    "console_warnings": [],
+    "result": "REDIRECTED_TO_LOGIN"
+  },
+  {
+    "name": "login-page",
+    "path": "/login",
+    "screenshot_main": "/Users/hw/workspace/OSGPrj/e2e-review/assistant/login-page.png"
+  }
+]
