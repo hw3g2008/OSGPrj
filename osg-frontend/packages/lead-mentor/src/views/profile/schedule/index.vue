@@ -1,14 +1,10 @@
 <template>
   <div id="page-schedule" class="page-schedule" data-page="profile-schedule">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          我的排期
-          <span class="page-title-en">My Schedule</span>
-        </h1>
-        <p class="page-sub">设置您的可用时间，每周日前需更新下周排期</p>
-      </div>
-    </div>
+    <PageHeader
+      title-zh="我的排期"
+      title-en="My Schedule"
+      description="设置您的可用时间，每周日前需更新下周排期"
+    />
 
     <section class="schedule-banner" aria-label="排期提醒">
       <div class="schedule-banner__icon">
@@ -212,6 +208,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { message } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import {

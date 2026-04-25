@@ -1,14 +1,10 @@
 <template>
   <div id="page-mock-practice" class="page-mock-practice">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          模拟应聘管理
-          <span class="page-title-en">Mock Practice</span>
-        </h1>
-        <p class="page-sub">处理学员的模拟面试、人际关系测试、期中考试申请</p>
-      </div>
-    </div>
+    <PageHeader
+      title-zh="模拟应聘管理"
+      title-en="Mock Practice"
+      description="处理学员的模拟面试、人际关系测试、期中考试申请"
+    />
 
     <section class="stats-grid" aria-label="mock practice stats">
       <article v-for="item in statsCards" :key="item.label" class="card stats-card">
@@ -392,6 +388,7 @@
 </template>
 
 <script setup lang="ts">
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { message } from 'ant-design-vue'
 import { computed, inject, nextTick, onMounted, ref } from 'vue'
 import {

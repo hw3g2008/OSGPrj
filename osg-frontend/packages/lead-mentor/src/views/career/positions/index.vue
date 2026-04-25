@@ -1,15 +1,12 @@
 <template>
   <div id="page-positions" class="page-positions">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          岗位信息
-          <span class="page-title-en">Job Tracker</span>
-        </h1>
-        <p class="page-sub">追踪各大公司招聘岗位信息，查看我的学员申请情况</p>
-      </div>
-
-      <div class="view-switcher">
+    <PageHeader
+      title-zh="岗位信息"
+      title-en="Job Tracker"
+      description="追踪各大公司招聘岗位信息，查看我的学员申请情况"
+    >
+      <template #actions>
+        <div class="view-switcher">
         <button
           id="lead-view-drilldown"
           type="button"
@@ -30,8 +27,9 @@
           <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
           列表视图
         </button>
-      </div>
-    </div>
+        </div>
+      </template>
+    </PageHeader>
 
     <section class="card">
       <div class="card-body">
@@ -379,6 +377,7 @@
 </template>
 
 <script setup lang="ts">
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { message } from 'ant-design-vue'
 import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
 import {

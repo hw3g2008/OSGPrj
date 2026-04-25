@@ -1,24 +1,22 @@
 <template>
   <div id="page-myclass" class="page-class-records">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          课程记录
-          <span class="page-title-en">Class Records</span>
-        </h1>
-        <p class="page-sub">查看和上报课程记录（包括我的申报和我管理的学员）</p>
-      </div>
-
-      <button
-        type="button"
-        class="btn btn-primary"
-        data-surface-trigger="modal-lm-report"
-        @click="openReportModal()"
-      >
-        <i class="mdi mdi-plus" aria-hidden="true" />
-        上报课程记录
-      </button>
-    </div>
+    <PageHeader
+      title-zh="课程记录"
+      title-en="Class Records"
+      description="查看和上报课程记录（包括我的申报和我管理的学员）"
+    >
+      <template #actions>
+        <button
+          type="button"
+          class="btn btn-primary"
+          data-surface-trigger="modal-lm-report"
+          @click="openReportModal()"
+        >
+          <i class="mdi mdi-plus" aria-hidden="true" />
+          上报课程记录
+        </button>
+      </template>
+    </PageHeader>
 
     <div class="scope-switch">
       <button
@@ -323,6 +321,7 @@
 
 <script setup lang="ts">
 import { computed, inject, reactive, ref } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { message } from 'ant-design-vue'
 import type {
   LeadMentorClassRecordCreatePayload,

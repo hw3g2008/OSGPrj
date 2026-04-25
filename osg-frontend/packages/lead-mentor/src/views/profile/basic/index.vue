@@ -1,24 +1,23 @@
 <template>
   <div id="page-profile" class="page-profile" data-page="profile-basic">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          基本信息
-          <span class="page-title-en">Profile</span>
-        </h1>
-        <p class="page-sub">查看和管理您的个人信息</p>
-      </div>
-      <button
-        type="button"
-        class="btn btn-primary"
-        data-surface-trigger="modal-lead-edit-profile"
-        :disabled="!profile || isLoading"
-        @click="openEditModal"
-      >
-        <i class="mdi mdi-pencil" aria-hidden="true" />
-        编辑信息
-      </button>
-    </div>
+    <PageHeader
+      title-zh="基本信息"
+      title-en="Profile"
+      description="查看和管理您的个人信息"
+    >
+      <template #actions>
+        <button
+          type="button"
+          class="btn btn-primary"
+          data-surface-trigger="modal-lead-edit-profile"
+          :disabled="!profile || isLoading"
+          @click="openEditModal"
+        >
+          <i class="mdi mdi-pencil" aria-hidden="true" />
+          编辑信息
+        </button>
+      </template>
+    </PageHeader>
 
     <div v-if="isLoading" class="page-feedback">
       <i class="mdi mdi-loading mdi-spin" aria-hidden="true" />
@@ -146,6 +145,7 @@
 </template>
 
 <script setup lang="ts">
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { message } from 'ant-design-vue'
 import { computed, onMounted, ref } from 'vue'
 import {

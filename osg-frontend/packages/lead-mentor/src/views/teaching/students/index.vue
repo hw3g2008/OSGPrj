@@ -1,14 +1,10 @@
 <template>
   <div id="page-student-list" class="page-student-list">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          学员列表
-          <span class="page-title-en">Student List</span>
-        </h1>
-        <p class="page-sub">查看我教的学员和班主任为我的全部学员信息及求职数据</p>
-      </div>
-    </div>
+    <PageHeader
+      title-zh="学员列表"
+      title-en="Student List"
+      description="查看我教的学员和班主任为我的全部学员信息及求职数据"
+    />
 
     <section class="filters">
       <input
@@ -142,6 +138,7 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, reactive, ref } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {

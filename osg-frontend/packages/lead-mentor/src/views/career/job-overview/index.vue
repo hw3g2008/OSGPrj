@@ -1,20 +1,18 @@
 <template>
   <a-config-provider :auto-insert-space-in-button="false">
   <div id="page-job-overview" class="osg-page">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          学员求职总览
-          <span class="page-title-en">Job Overview</span>
-        </h1>
-        <p class="page-sub">查看我辅导和管理的学员求职进度</p>
-      </div>
-
-      <a-button @click="showUpcomingToast()">
-        <template #icon><ExportOutlined /></template>
-        导出
-      </a-button>
-    </div>
+    <PageHeader
+      title-zh="学员求职总览"
+      title-en="Job Overview"
+      description="查看我辅导和管理的学员求职进度"
+    >
+      <template #actions>
+        <a-button @click="showUpcomingToast()">
+          <template #icon><ExportOutlined /></template>
+          导出
+        </a-button>
+      </template>
+    </PageHeader>
 
     <InterviewCalendar :events="calendarEvents" />
 
@@ -297,6 +295,7 @@
 
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, reactive, ref } from 'vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
