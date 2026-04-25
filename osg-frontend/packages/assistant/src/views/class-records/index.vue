@@ -1,8 +1,8 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title="课程记录"
-      subtitle="Class Records"
+      title-zh="课程记录"
+      title-en="Class Records"
       :description="scopeDescription"
     >
       <template #actions>
@@ -311,7 +311,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import AssistantClassReportFlowModal from './AssistantClassReportFlowModal.vue'
 import {
   getAssistantClassRecordList,

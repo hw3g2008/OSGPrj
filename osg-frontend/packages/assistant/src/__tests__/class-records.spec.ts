@@ -9,17 +9,17 @@ describe('assistant class records page', () => {
       'utf-8',
     )
 
-    // ── CR-1~3: PageHeader + 根容器 ──
+    // ── CR-1~3: PageHeader + 根容器（已迁移到 @osg/shared，D-Bilingual P1） ──
     expect(src).toContain('<PageHeader')
-    expect(src).toContain('title="课程记录"')
-    expect(src).toContain('subtitle="Class Records"')
+    expect(src).toContain('title-zh="课程记录"')
+    expect(src).toContain('title-en="Class Records"')
     expect(src).toContain(':description="scopeDescription"')
 
     // ── CR-2: 使用 osg-page 全局布局 class（对齐助教端公共样式）──
     expect(src).toContain('class="osg-page"')
 
     // ── CR-2: import PageHeader + 图标 + AntDv types ──
-    expect(src).toContain("import PageHeader from '@/components/PageHeader.vue'")
+    expect(src).toContain("import { PageHeader } from '@osg/shared/components/PageHeader'")
     expect(src).toContain('SearchOutlined')
     expect(src).toContain('ReloadOutlined')
     expect(src).toContain('TableColumnsType')

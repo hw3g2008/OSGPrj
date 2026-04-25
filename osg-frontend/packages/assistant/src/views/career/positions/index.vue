@@ -1,8 +1,8 @@
 <template>
   <div class="osg-page page-positions">
     <PageHeader
-      title="岗位信息"
-      subtitle="Job Tracker"
+      title-zh="岗位信息"
+      title-en="Job Tracker"
       description="追踪各大公司招聘岗位与我的学员求职进度（只读）"
     >
       <template #actions>
@@ -439,7 +439,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   getAssistantPositionDrillDown,
   getAssistantPositionStudents,

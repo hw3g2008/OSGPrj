@@ -246,10 +246,11 @@ describe('assistant career pages', () => {
       'utf-8',
     )
 
-    // PageHeader 复用 admin 风格组件
+    // PageHeader 迁移到 @osg/shared 后的新接口（D-Bilingual P1）
     expect(src).toContain('<PageHeader')
-    expect(src).toContain('title="岗位信息"')
-    expect(src).toContain('subtitle="Job Tracker"')
+    expect(src).toContain('title-zh="岗位信息"')
+    expect(src).toContain('title-en="Job Tracker"')
+    expect(src).toContain("from '@osg/shared/components/PageHeader'")
 
     // 使用 Ant Design Vue 组件（对齐 admin 框架）
     expect(src).toContain('<a-radio-group')
@@ -352,10 +353,11 @@ describe('assistant career pages', () => {
       'utf-8',
     )
 
-    // PageHeader 复用 admin 风格组件
+    // PageHeader 迁移到 @osg/shared 后的新接口（D-Bilingual P1）
     expect(src).toContain('<PageHeader')
-    expect(src).toContain('title="学员求职总览"')
-    expect(src).toContain('subtitle="Job Overview"')
+    expect(src).toContain('title-zh="学员求职总览"')
+    expect(src).toContain('title-en="Job Overview"')
+    expect(src).toContain("from '@osg/shared/components/PageHeader'")
 
     // 使用 osg-page 全局布局 class
     expect(src).toContain('class="osg-page"')
@@ -421,11 +423,12 @@ describe('assistant career pages', () => {
       'utf-8',
     )
 
-    // PageHeader 复用 admin 风格组件（description 严格采用原型文案）
+    // PageHeader 迁移到 @osg/shared 后的新接口（D-Bilingual P1）、description 严格采用原型文案
     expect(src).toContain('<PageHeader')
-    expect(src).toContain('title="模拟应聘管理"')
-    expect(src).toContain('subtitle="Mock Practice"')
+    expect(src).toContain('title-zh="模拟应聘管理"')
+    expect(src).toContain('title-en="Mock Practice"')
     expect(src).toContain('description="处理学员的模拟面试、人际关系测试、期中考试申请"')
+    expect(src).toContain("from '@osg/shared/components/PageHeader'")
 
     // 使用 osg-page 全局布局 class
     expect(src).toContain('class="osg-page"')

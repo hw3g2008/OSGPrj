@@ -1,8 +1,8 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title="学员列表"
-      subtitle="Student List"
+      title-zh="学员列表"
+      title-en="Student List"
       description="查看我教的学员和助教为我的全部学员信息及求职数据"
     />
 
@@ -149,7 +149,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import type { TablePaginationConfig } from 'ant-design-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   getAssistantStudentList,
   type AssistantStudentListItem,

@@ -9,17 +9,17 @@ describe('assistant student list page', () => {
       'utf-8',
     )
 
-    // SL-1: PageHeader 复用 admin 风格组件（description 严格采用原型文案）
+    // SL-1: PageHeader 迁移到 @osg/shared 后的新接口（D-Bilingual P1）；description 严格采用原型文案
     expect(src).toContain('<PageHeader')
-    expect(src).toContain('title="学员列表"')
-    expect(src).toContain('subtitle="Student List"')
+    expect(src).toContain('title-zh="学员列表"')
+    expect(src).toContain('title-en="Student List"')
     expect(src).toContain('description="查看我教的学员和助教为我的全部学员信息及求职数据"')
 
     // SL-1: 使用 osg-page 全局布局 class
     expect(src).toContain('class="osg-page"')
 
     // SL-2: import PageHeader + 图标
-    expect(src).toContain("import PageHeader from '@/components/PageHeader.vue'")
+    expect(src).toContain("import { PageHeader } from '@osg/shared/components/PageHeader'")
     expect(src).toContain('SearchOutlined')
     expect(src).toContain('ReloadOutlined')
 

@@ -1,8 +1,8 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title="模拟应聘管理"
-      subtitle="Mock Practice"
+      title-zh="模拟应聘管理"
+      title-en="Mock Practice"
       description="处理学员的模拟面试、人际关系测试、期中考试申请"
     />
 
@@ -254,7 +254,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { CheckOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   getAssistantMockPracticeList,
   type AssistantMockPracticeRecord,

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title="学员求职总览" subtitle="Job Overview" description="查看我辅导和管理的学员求职进度">
+    <PageHeader title-zh="学员求职总览" title-en="Job Overview" description="查看我辅导和管理的学员求职进度">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>
@@ -159,7 +159,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { PageHeader } from '@osg/shared/components/PageHeader'
 import { InterviewCalendar, StageTag } from '@osg/shared/components'
 import {
   getAssistantJobOverviewCalendar,
