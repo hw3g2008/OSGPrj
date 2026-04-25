@@ -1,88 +1,69 @@
 <template>
-  <div class="app-layout">
+  <div class="main-shell">
     <aside class="sidebar">
-      <!-- Header -->
       <div class="sidebar-header">
         <div class="sidebar-logo">
-          <div class="logo-icon"><i class="mdi mdi-account-tie" /></div>
+          <div class="logo-icon">
+            <i class="mdi mdi-account-tie" aria-hidden="true" />
+          </div>
           <span class="logo-text">OSG Mentor</span>
         </div>
       </div>
 
-      <!-- Nav -->
       <nav class="sidebar-nav">
         <!-- v1: 首页入口暂时隐藏，二期恢复 -->
-        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/dashboard' }" @click="navigate('/dashboard')">
-          <i class="mdi mdi-home" /><span>首页 Home</span>
+        <a
+          v-show="false"
+          href="#"
+          class="nav-item"
+          :class="{ active: isActive(['/dashboard']) }"
+          @click.prevent="navigate('/dashboard')"
+        >
+          <i class="mdi mdi-home" aria-hidden="true" />
+          <span>首页 Home</span>
         </a>
 
-        <div class="nav-section">教学中心 TEACHING</div>
-        <a class="nav-item" :class="{ active: currentPath === '/courses' }" @click="navigate('/courses')">
-          <i class="mdi mdi-book-open-variant" /><span>课程记录 Class Records</span>
-        </a>
-        <!-- v1: 人际关系沟通记录暂时隐藏，二期恢复 -->
-        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/communication' }" @click="navigate('/communication')">
-          <i class="mdi mdi-message-text-clock" /><span>人际关系沟通记录 Records</span>
-        </a>
-
-        <div class="nav-section">求职中心 JOB CENTER</div>
-        <a class="nav-item" :class="{ active: currentPath === '/job-overview' }" @click="navigate('/job-overview')">
-          <i class="mdi mdi-briefcase-search" /><span>学员求职总览 Job Overview</span>
-          <!-- v1: 角标暂时隐藏 -->
-          <span v-if="false" class="nav-badge">{{ jobBadge }}</span>
-        </a>
-        <a class="nav-item" :class="{ active: currentPath === '/mock-practice' }" @click="navigate('/mock-practice')">
-          <i class="mdi mdi-account-voice" /><span>模拟应聘管理 Mock Practice</span>
-          <!-- v1: 角标暂时隐藏 -->
-          <span v-if="false" class="nav-badge">{{ mockBadge }}</span>
-        </a>
-
-        <!-- v1: 财务中心暂时隐藏，二期恢复 -->
-        <div v-show="false" class="nav-section">财务中心 FINANCE</div>
-        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/settlement' }" @click="navigate('/settlement')">
-          <i class="mdi mdi-cash-check" /><span>课时结算 Settlement</span>
-        </a>
-        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/expense' }" @click="navigate('/expense')">
-          <i class="mdi mdi-receipt" /><span>报销管理 Expense</span>
-        </a>
-
-        <div class="nav-section">个人中心 PROFILE</div>
-        <a class="nav-item" :class="{ active: currentPath === '/profile' }" @click="navigate('/profile')">
-          <i class="mdi mdi-account" /><span>基本信息 Profile</span>
-        </a>
-        <a class="nav-item" :class="{ active: currentPath === '/schedule' }" @click="navigate('/schedule')">
-          <i class="mdi mdi-calendar-clock" /><span>课程排期 Schedule</span>
-        </a>
-        <!-- v1: 消息和常见问题暂时隐藏，二期恢复 -->
-        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/notice' }" @click="navigate('/notice')">
-          <i class="mdi mdi-bell" /><span>消息 Notice</span>
-        </a>
-        <a v-show="false" class="nav-item" :class="{ active: currentPath === '/faq' }" @click="navigate('/faq')">
-          <i class="mdi mdi-help-circle" /><span>常见问题 FAQ</span>
-        </a>
+        <template v-for="group in filteredNavigationGroups" :key="group.title">
+          <div class="nav-section">{{ group.title }}</div>
+          <a
+            v-for="item in group.items"
+            :key="item.path"
+            href="#"
+            class="nav-item"
+            :class="{ active: isActive(item.activePaths) }"
+            @click.prevent="navigate(item.path)"
+          >
+            <i class="mdi" :class="item.iconClass" aria-hidden="true" />
+            <span>{{ item.label }}</span>
+            <!-- v1: 角标暂时隐藏，二期恢复改回 v-if="item.badge" -->
+            <span v-if="false" class="nav-badge">{{ item.badge }}</span>
+          </a>
+        </template>
       </nav>
 
-      <!-- Footer -->
       <div class="sidebar-footer">
-        <div class="user-card" @click="showUserMenu = !showUserMenu">
+        <button type="button" class="user-card" @click="showUserMenu = !showUserMenu">
           <div class="user-avatar">{{ userInitials }}</div>
           <div class="user-info">
             <h4>{{ userName }}</h4>
             <p>点击展开</p>
           </div>
-        </div>
+        </button>
+
         <div v-if="showUserMenu" class="user-menu">
-          <a class="user-menu-item" @click="navigate('/profile'); showUserMenu = false">
-            <i class="mdi mdi-cog" /> 个人设置
+          <a class="user-menu-item" @click="openProfile">
+            <i class="mdi mdi-cog" aria-hidden="true" />
+            个人设置
           </a>
           <a class="user-menu-item user-menu-item--danger" @click="handleLogout">
-            <i class="mdi mdi-logout" /> 退出登录
+            <i class="mdi mdi-logout" aria-hidden="true" />
+            退出登录
           </a>
         </div>
       </div>
     </aside>
 
-    <main class="main-content">
+    <main class="main">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -93,10 +74,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide, type Ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, onMounted, provide, ref, type Ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
 import { http } from '@osg/shared/utils/request'
-import { getUser, clearAuth } from '@osg/shared/utils'
+import { clearAuth, getUser } from '@osg/shared/utils'
+
+interface NavigationItem {
+  path: string
+  label: string
+  iconClass: string
+  activePaths: string[]
+  badge?: number
+  hidden?: boolean
+}
+
+interface NavigationGroup {
+  title: string
+  items: NavigationItem[]
+}
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
@@ -107,22 +103,133 @@ type MentorNavBadgeState = {
   refreshMockBadge: () => Promise<void>
 }
 
-const router = useRouter()
+const FALLBACK_NAME = 'Mentor'
+
 const route = useRoute()
+const router = useRouter()
 const showUserMenu = ref(false)
 const jobBadge = ref(0)
 const mockBadge = ref(0)
 
-const currentPath = computed(() => route.path)
-const user = getUser<{ nickName?: string; userName?: string }>()
-const userName = computed(() => user?.nickName || user?.userName || 'Mentor')
+const userInfo = computed(() => getUser<{ nickName?: string; userName?: string }>())
+const userName = computed(() => userInfo.value?.nickName || userInfo.value?.userName || FALLBACK_NAME)
 const userInitials = computed(() => {
-  const name = userName.value
-  return name.length >= 2 ? name.substring(0, 2).toUpperCase() : name.toUpperCase()
+  const source = (userName.value || FALLBACK_NAME).trim()
+  if (!source) return 'ME'
+  const compact = source.replace(/\s+/g, '')
+  return compact.slice(0, 2).toUpperCase()
 })
 
+// 动态 badge 通过 computed 依赖 jobBadge.value / mockBadge.value，
+// 响应式自动生效（badge 刷新后 navigationGroups 会重新计算）
+const navigationGroups = computed<NavigationGroup[]>(() => [
+  {
+    title: '教学中心 TEACHING',
+    items: [
+      {
+        path: '/courses',
+        label: '课程记录 Class Records',
+        iconClass: 'mdi-book-open-variant',
+        activePaths: ['/courses'],
+      },
+      {
+        path: '/communication',
+        label: '人际关系沟通记录 Records',
+        iconClass: 'mdi-message-text-clock',
+        activePaths: ['/communication'],
+        hidden: true,
+      },
+    ],
+  },
+  {
+    title: '求职中心 JOB CENTER',
+    items: [
+      {
+        path: '/job-overview',
+        label: '学员求职总览 Job Overview',
+        iconClass: 'mdi-briefcase-search',
+        activePaths: ['/job-overview'],
+        badge: jobBadge.value > 0 ? jobBadge.value : undefined,
+      },
+      {
+        path: '/mock-practice',
+        label: '模拟应聘管理 Mock Practice',
+        iconClass: 'mdi-account-voice',
+        activePaths: ['/mock-practice'],
+        badge: mockBadge.value > 0 ? mockBadge.value : undefined,
+      },
+    ],
+  },
+  {
+    title: '财务中心 FINANCE',
+    items: [
+      {
+        path: '/settlement',
+        label: '课时结算 Settlement',
+        iconClass: 'mdi-cash-check',
+        activePaths: ['/settlement'],
+        hidden: true,
+      },
+      {
+        path: '/expense',
+        label: '报销管理 Expense',
+        iconClass: 'mdi-receipt',
+        activePaths: ['/expense'],
+        hidden: true,
+      },
+    ],
+  },
+  {
+    title: '个人中心 PROFILE',
+    items: [
+      {
+        path: '/profile',
+        label: '基本信息 Profile',
+        iconClass: 'mdi-account',
+        activePaths: ['/profile'],
+      },
+      {
+        path: '/schedule',
+        label: '课程排期 Schedule',
+        iconClass: 'mdi-calendar-clock',
+        activePaths: ['/schedule'],
+      },
+      {
+        path: '/notice',
+        label: '消息 Notice',
+        iconClass: 'mdi-bell',
+        activePaths: ['/notice'],
+        hidden: true,
+      },
+      {
+        path: '/faq',
+        label: '常见问题 FAQ',
+        iconClass: 'mdi-help-circle',
+        activePaths: ['/faq'],
+        hidden: true,
+      },
+    ],
+  },
+])
+
+const filteredNavigationGroups = computed(() =>
+  navigationGroups.value
+    .map((group) => ({ ...group, items: group.items.filter((item) => !item.hidden) }))
+    .filter((group) => group.items.length > 0)
+)
+
+function isActive(paths: string[]) {
+  return paths.some((path) => route.path === path || route.path.startsWith(`${path}/`))
+}
+
 function navigate(path: string) {
-  router.push(path)
+  showUserMenu.value = false
+  if (route.path === path) return
+  void router.push(path)
+}
+
+function openProfile() {
+  navigate('/profile')
 }
 
 async function refreshJobBadge() {
@@ -155,7 +262,7 @@ provide<MentorNavBadgeState>(MENTOR_NAV_BADGE_KEY, {
 function handleLogout() {
   if (window.confirm('确定要退出登录吗？')) {
     clearAuth()
-    router.push('/login')
+    void router.push('/login')
   }
   showUserMenu.value = false
 }
@@ -166,72 +273,227 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.app-layout { display: flex; min-height: 100vh; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+<style scoped lang="scss">
+.main-shell {
+  --primary: #7399c6;
+  --primary-light: #e8f0f8;
+  --primary-gradient: linear-gradient(135deg, #7399c6 0%, #9bb8d9 100%);
+  --text: #1e293b;
+  --text2: #64748b;
+  --muted: #94a3b8;
+  --border: #e2e8f0;
+  --bg: #f8fafc;
+
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
 
 .sidebar {
-  width: 260px; background: #fff; border-right: 1px solid #E2E8F0;
-  position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
-  display: flex; flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  width: 260px;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: #fff;
 }
-.sidebar-header { padding: 20px; border-bottom: 1px solid #E2E8F0; }
-.sidebar-logo { display: flex; align-items: center; gap: 10px; }
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .logo-icon {
-  width: 40px; height: 40px;
-  background: linear-gradient(135deg, #7399C6 0%, #9BB8D9 100%);
-  border-radius: 12px; display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 20px;
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--primary-gradient);
+  color: #fff;
+  font-size: 20px;
 }
+
 .logo-text {
-  font-size: 18px; font-weight: 700;
-  background: linear-gradient(135deg, #7399C6 0%, #9BB8D9 100%);
-  background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background: var(--primary-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
-.nav-section { padding: 16px 20px 8px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; }
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.nav-section {
+  padding: 16px 20px 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .nav-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 20px; margin: 2px 12px;
-  color: #64748B; font-size: 14px; cursor: pointer; border-radius: 10px;
-  text-decoration: none; user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 12px;
+  border-radius: 10px;
+  padding: 12px 20px;
+  color: var(--text2);
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
 }
-.nav-item:hover { background: #F8FAFC; color: #7399C6; }
-.nav-item.active { background: #E8F0F8; color: #7399C6; font-weight: 600; }
-.nav-item .mdi { font-size: 20px; width: 24px; text-align: center; }
+
+.nav-item:hover {
+  background: var(--bg);
+  color: var(--primary);
+}
+
+.nav-item.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.nav-item .mdi {
+  width: 24px;
+  text-align: center;
+  font-size: 20px;
+}
+
 .nav-badge {
-  background: #EF4444; color: #fff; padding: 2px 6px; border-radius: 10px;
-  font-size: 10px; font-weight: 600; margin-left: auto;
+  margin-left: auto;
+  min-width: 18px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
 }
 
-.sidebar-footer { padding: 16px; border-top: 1px solid #E2E8F0; position: relative; }
+.sidebar-footer {
+  position: relative;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
 .user-card {
-  display: flex; align-items: center; gap: 12px; padding: 12px;
-  background: #E8F0F8; border-radius: 12px; cursor: pointer;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary-light);
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  font: inherit;
+  color: inherit;
 }
+
+.user-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .user-avatar {
-  width: 40px; height: 40px;
-  background: linear-gradient(135deg, #7399C6 0%, #9BB8D9 100%);
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 700; font-size: 14px;
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
 }
-.user-info h4 { font-size: 14px; font-weight: 600; color: #1E293B; }
-.user-info p { font-size: 12px; color: #94A3B8; }
+
+.user-info h4 {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.user-info p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .user-menu {
-  position: absolute; bottom: 78px; left: 16px; right: 16px;
-  background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  overflow: hidden; z-index: 100;
+  position: absolute;
+  right: 16px;
+  bottom: 78px;
+  left: 16px;
+  overflow: hidden;
+  z-index: 100;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
 .user-menu-item {
-  display: flex; align-items: center; gap: 8px; padding: 12px 16px;
-  color: #1E293B; cursor: pointer; font-size: 14px; text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
 }
-.user-menu-item:hover { background: #F8FAFC; }
-.user-menu-item--danger { color: #EF4444; border-top: 1px solid #E2E8F0; }
 
-.main-content { flex: 1; margin-left: 260px; padding: 28px; min-height: 100vh; background: #F8FAFC; }
+.user-menu-item:hover {
+  background: var(--bg);
+}
 
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.fade-enter-from { opacity: 0; transform: translateY(10px); }
-.fade-leave-to { opacity: 0; }
+.user-menu-item--danger {
+  border-top: 1px solid var(--border);
+  color: #ef4444;
+}
+
+.main {
+  flex: 1;
+  min-height: 100vh;
+  margin-left: 260px;
+  background: var(--bg);
+  padding: 28px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
