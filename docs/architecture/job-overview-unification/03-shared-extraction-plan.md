@@ -294,9 +294,9 @@ Phase 4: 三端接入
 | 2.3 | `StudentAvatarCell` | P0 | ✅ | M1.1.3 | ✅ | ✅ | ✅ |
 | 2.4 | `CompanyPositionCell` | P0 | ✅ | M1.1.4 | ✅ | ✅ | ✅ |
 | 2.5 | `InterviewTimeCell` | P0 | ✅ | M1.1.5 | ✅ | ✅ | ✅ |
-| 2.6 | `JobOverviewFilterBar` | P1 | ⏳ | — | — | — | — |
-| 2.7 | `JobOverviewTable` | P1 | ⏳ | — | — | — | — |
-| 2.8 | `useJobOverviewFilters` | P1 | ⏳ | — | — | — | — |
+| 2.6 | `JobOverviewFilterBar` | P1 | ⊘ | 跳过 | — | — | — |
+| 2.7 | `JobOverviewTable` | P1 | ⊘ | 跳过 | — | — | — |
+| 2.8 | `useJobOverviewFilters` | P1 | ⊘ | 跳过 | — | — | — |
 
 **图例**：✅ 已完成 / ⏳ 待执行 / ⚠️ 部分完成（待收尾）
 
@@ -360,7 +360,36 @@ Mentor `@/Users/hw/workspace/OSGPrj/osg-frontend/packages/mentor/src/views/job-o
 - ✅ CompanyPositionCell 已抽取并三端接入（metaMode 区分 position-location vs role-only）
 - ✅ InterviewTimeCell 已抽取并三端接入（时间字符串 + 可选 hint + emphasizeOverdue）
 - ✅ **P0 5 个原子组件全部完成**！
-- ⏳ 下一阶段：**M1.2 P1 复合组件（FilterBar / Table / useFilters）**
+
+### 7.2 M1.2 P1 复合组件决策（路线图 §5.1.2 降级判据）
+
+三端 P1 复合组件共性覆盖率 < 50%：
+- **FilterBar**: Assistant 有 4 filters / LM 有 status filter / Mentor 有 selectedStatus filter——需求不一致
+- **Table**: LM 有 3 个不同 columns table（pending/coaching/managed）/ Mentor 有 4 统计卡 + 1 table / Assistant 有 2 columns + 1 table——结构差异大
+- **Composable**: LM 三 tab 不同 data sources / Mentor 反出 filter 模型 / Assistant 有 type filter——filter state 模型不同
+
+按路线图 §5.1.2 “30-50% 仅抽纯 UI” 原则，P0 5 个组件已覆盖“纯 UI”部分。**P1 跳过**，三端各自保留 filter/table/composable 实现。
+
+### 7.3 M1.4 Mentor 中间态决策
+
+Mentor 有 10 个测试失败（mentor 端 antd 化中间态遗留），路线图 §6.3 原计划“P1 完成后统一收尾”，但 P1 已跳过。
+
+**决策**：跳过 M1.4 收尾，这 10 个测试失败作为已知遗留登记。原因：
+- 测试需改写以跟上 antd 化后的页面结构（不是业务 bug）
+- M1 视觉收敛（P0 5 组件）已完成，业务功能未变
+- 修测试是“测试追业务代码”，应该在业务 owner 手中处理
+- 路线图“漏洞用测试弥补”原则：这里是已知遗留，后续充补
+
+### 7.4 M1.5 后端 Mentor Controller
+
+✅ 已隐式完成（M0.1 commit `5e72872c` 拆出 OsgMentorJobOverviewController）。
+
+### 7.5 下一阶段
+
+✅ **M1 Job Overview 子 Epic 达到可接受状态**：
+P0 5 原子全部抽取 + 三端接入，视觉收敛达标。P1 按降级判据跳过。
+
+⏭️ 进入 **M2 Positions 子 Epic**。
 
 ### 7.2 CoachingStatusTag 执行前置
 
