@@ -293,7 +293,7 @@ Phase 4: 三端接入
 | 2.2 | `CoachingStatusTag` | P0 | ✅ | M1.1.2 | ✅ | ⊘ (LM 不用 tag) | ✅ |
 | 2.3 | `StudentAvatarCell` | P0 | ✅ | M1.1.3 | ✅ | ✅ | ✅ |
 | 2.4 | `CompanyPositionCell` | P0 | ✅ | M1.1.4 | ✅ | ✅ | ✅ |
-| 2.5 | `InterviewTimeCell` | P0 | ⏳ | — | — | — | — |
+| 2.5 | `InterviewTimeCell` | P0 | ✅ | M1.1.5 | ✅ | ✅ | ✅ |
 | 2.6 | `JobOverviewFilterBar` | P1 | ⏳ | — | — | — | — |
 | 2.7 | `JobOverviewTable` | P1 | ⏳ | — | — | — | — |
 | 2.8 | `useJobOverviewFilters` | P1 | ⏳ | — | — | — | — |
@@ -358,7 +358,9 @@ Mentor `@/Users/hw/workspace/OSGPrj/osg-frontend/packages/mentor/src/views/job-o
 - ✅ CoachingStatusTag 已抽取并三端接入（Assistant + Mentor 接入，LM 用 `<strong>` 文本不适用）
 - ✅ StudentAvatarCell 已抽取并三端接入（各端保留自己颜色算法通过 backgroundColor prop）
 - ✅ CompanyPositionCell 已抽取并三端接入（metaMode 区分 position-location vs role-only）
-- ⏳ 下一个：**InterviewTimeCell**（P0 最后一个）
+- ✅ InterviewTimeCell 已抽取并三端接入（时间字符串 + 可选 hint + emphasizeOverdue）
+- ✅ **P0 5 个原子组件全部完成**！
+- ⏳ 下一阶段：**M1.2 P1 复合组件（FilterBar / Table / useFilters）**
 
 ### 7.2 CoachingStatusTag 执行前置
 

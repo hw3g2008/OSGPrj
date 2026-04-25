@@ -101,10 +101,10 @@
               <StageTag :stage="record.interviewStage" fallback="-" />
             </template>
             <template v-else-if="column.key === 'interviewTime'">
-              <span v-if="record.interviewTime" :class="{ 'text-danger': record.coachingStatus !== 'completed' }">
-                {{ formatInterviewTime(record.interviewTime) }}
-              </span>
-              <span v-else class="text-muted">-</span>
+              <InterviewTimeCell
+                :time="record.interviewTime ? formatInterviewTime(record.interviewTime) : ''"
+                :emphasize-overdue="!!record.interviewTime && record.coachingStatus !== 'completed'"
+              />
             </template>
             <template v-else-if="column.key === 'coachingStatus'">
               <CoachingStatusTag :status="record.coachingStatus" text-mode="normalized" fallback="-">
@@ -257,7 +257,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
-import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
 import {
   getMentorJobOverviewCalendar,
   type LeadMentorCalendarRecord,

@@ -76,7 +76,7 @@
               <StageTag :stage="record.interviewStage" />
             </template>
             <template v-else-if="column.dataIndex === 'interviewTime'">
-              <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="font-size: 11px; color: var(--muted);">{{ formatScheduleHint(record.interviewTime) }}</div></div>
+              <InterviewTimeCell :time="formatDateTime(record.interviewTime)" :hint="formatScheduleHint(record.interviewTime)" />
             </template>
             <template v-else-if="column.dataIndex === 'coachingStatus'">
               <CoachingStatusTag :status="record.coachingStatus" fallback="未申请" />
@@ -115,7 +115,7 @@
               <StageTag :stage="record.interviewStage" />
             </template>
             <template v-else-if="column.dataIndex === 'interviewTime'">
-              <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="font-size: 11px; color: var(--muted);">{{ formatScheduleHint(record.interviewTime) }}</div></div>
+              <InterviewTimeCell :time="formatDateTime(record.interviewTime)" :hint="formatScheduleHint(record.interviewTime)" />
             </template>
             <template v-else-if="column.dataIndex === 'coachingStatus'">
               <CoachingStatusTag :status="record.coachingStatus" fallback="未申请" />
@@ -154,7 +154,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
 import {
   getAssistantJobOverviewCalendar,
   getAssistantJobOverviewList,

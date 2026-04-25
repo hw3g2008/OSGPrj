@@ -96,7 +96,7 @@
                   <StageTag :stage="record.stage" />
                 </template>
                 <template v-else-if="column.key === 'interviewAt'">
-                  <span>{{ record.interviewAt }}</span>
+                  <InterviewTimeCell :time="record.interviewAt" />
                 </template>
                 <template v-else-if="column.key === 'mentorDemand'">
                   <span class="accent">{{ record.mentorDemand }}</span>
@@ -155,10 +155,11 @@
                   </div>
                 </template>
                 <template v-else-if="column.key === 'interviewAt'">
-                  <div class="table-stack">
-                    <strong :class="{ 'text-danger': record.deadlineTone === 'danger' }">{{ record.interviewAt }}</strong>
-                    <span class="student-meta">{{ record.deadlineHint }}</span>
-                  </div>
+                  <InterviewTimeCell
+                    :time="record.interviewAt"
+                    :hint="record.deadlineHint"
+                    :emphasize-overdue="record.deadlineTone === 'danger'"
+                  />
                 </template>
                 <template v-else-if="column.key === 'status'">
                   <a-tag :color="record.statusTone">{{ record.status }}</a-tag>
@@ -229,10 +230,7 @@
                   </div>
                 </template>
                 <template v-else-if="column.key === 'interviewAt'">
-                  <div class="table-stack">
-                    <strong>{{ record.interviewAt }}</strong>
-                    <span class="student-meta">{{ record.deadlineHint }}</span>
-                  </div>
+                  <InterviewTimeCell :time="record.interviewAt" :hint="record.deadlineHint" />
                 </template>
                 <template v-else-if="column.key === 'status'">
                   <a-tag :color="record.statusTone">{{ record.status }}</a-tag>
@@ -307,7 +305,7 @@ import {
   type LeadMentorJobOverviewListItem,
   type LeadMentorJobOverviewListParams,
 } from '@osg/shared/api'
-import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
 import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
 
