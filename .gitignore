@@ -85,12 +85,27 @@ deploy/secrets/*
 # E2E/视觉校验运行产物（不入库）
 osg-frontend/playwright-report/
 osg-frontend/test-results/
+osg-frontend/packages/*/test-results/
+osg-frontend/packages/*/playwright-report/
 osg-frontend/tmp-capture-login.js
 screenshots/
 
 ######################################################################
-# 根目录截图（原型参考图，不入库）
+# 根目录截图（原型参考图与 E2E 临时截图，不入库）
 /*.png
+/*.jpeg
+/*.jpg
+/*.gif
+/*.webp
+
+# E2E review 截图（仅保留脚本与审查报告，截图不入库）
+e2e-review/**/*.png
+e2e-review/**/*.jpg
+e2e-review/**/*.jpeg
+
+# 工具运行时产物
+runtime/
+.bytro
 
 .worktrees/
 tmp/
