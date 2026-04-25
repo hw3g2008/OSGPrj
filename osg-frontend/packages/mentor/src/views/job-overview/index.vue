@@ -90,8 +90,12 @@
               />
             </template>
             <template v-else-if="column.key === 'company'">
-              <div class="company-name" :style="{ color: record.coachingStatus === 'new' ? '#EF4444' : '' }">{{ record.company }}</div>
-              <div class="text-muted text-sm">{{ record.position }} · {{ record.location }}</div>
+              <CompanyPositionCell
+                :company="record.company"
+                :position="record.position"
+                :location="record.location"
+                :highlight="record.coachingStatus === 'new'"
+              />
             </template>
             <template v-else-if="column.key === 'stage'">
               <StageTag :stage="record.interviewStage" fallback="-" />
@@ -253,7 +257,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
-import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell } from '@osg/shared/components'
 import {
   getMentorJobOverviewCalendar,
   type LeadMentorCalendarRecord,

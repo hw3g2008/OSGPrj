@@ -292,7 +292,7 @@ Phase 4: 三端接入
 | 2.1 | `StageTag` | P0 | ✅ | `e5bd8f56` | ✅ | ✅ | ⚠️ 待 commit |
 | 2.2 | `CoachingStatusTag` | P0 | ✅ | M1.1.2 | ✅ | ⊘ (LM 不用 tag) | ✅ |
 | 2.3 | `StudentAvatarCell` | P0 | ✅ | M1.1.3 | ✅ | ✅ | ✅ |
-| 2.4 | `CompanyPositionCell` | P0 | ⏳ | — | — | — | — |
+| 2.4 | `CompanyPositionCell` | P0 | ✅ | M1.1.4 | ✅ | ✅ | ✅ |
 | 2.5 | `InterviewTimeCell` | P0 | ⏳ | — | — | — | — |
 | 2.6 | `JobOverviewFilterBar` | P1 | ⏳ | — | — | — | — |
 | 2.7 | `JobOverviewTable` | P1 | ⏳ | — | — | — | — |
@@ -357,7 +357,8 @@ Mentor `@/Users/hw/workspace/OSGPrj/osg-frontend/packages/mentor/src/views/job-o
 - ✅ StageTag 已抽并三端接入（Assistant / LM commit；Mentor 挂在 working tree）
 - ✅ CoachingStatusTag 已抽取并三端接入（Assistant + Mentor 接入，LM 用 `<strong>` 文本不适用）
 - ✅ StudentAvatarCell 已抽取并三端接入（各端保留自己颜色算法通过 backgroundColor prop）
-- ⏳ 下一个：**CompanyPositionCell**
+- ✅ CompanyPositionCell 已抽取并三端接入（metaMode 区分 position-location vs role-only）
+- ⏳ 下一个：**InterviewTimeCell**（P0 最后一个）
 
 ### 7.2 CoachingStatusTag 执行前置
 

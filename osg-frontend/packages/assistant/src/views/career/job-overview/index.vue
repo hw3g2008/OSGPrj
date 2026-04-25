@@ -70,7 +70,7 @@
               <StudentAvatarCell :name="record.studentName" :id="record.studentId" />
             </template>
             <template v-else-if="column.dataIndex === 'company'">
-              <div><strong>{{ record.company || '-' }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.position || '-' }} · {{ record.location || '地区待补充' }}</div></div>
+              <CompanyPositionCell :company="record.company" :position="record.position" :location="record.location" />
             </template>
             <template v-else-if="column.dataIndex === 'interviewStage'">
               <StageTag :stage="record.interviewStage" />
@@ -109,7 +109,7 @@
               <StudentAvatarCell :name="record.studentName" :id="record.studentId" />
             </template>
             <template v-else-if="column.dataIndex === 'company'">
-              <div><strong>{{ record.company || '-' }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.position || '-' }} · {{ record.location || '地区待补充' }}</div></div>
+              <CompanyPositionCell :company="record.company" :position="record.position" :location="record.location" />
             </template>
             <template v-else-if="column.dataIndex === 'interviewStage'">
               <StageTag :stage="record.interviewStage" />
@@ -154,7 +154,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell } from '@osg/shared/components'
 import {
   getAssistantJobOverviewCalendar,
   getAssistantJobOverviewList,

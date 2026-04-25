@@ -90,8 +90,7 @@
                   />
                 </template>
                 <template v-else-if="column.key === 'company'">
-                  <div class="company-name">{{ record.company }}</div>
-                  <div class="student-meta">{{ record.role }}</div>
+                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" />
                 </template>
                 <template v-else-if="column.key === 'stage'">
                   <StageTag :stage="record.stage" />
@@ -147,8 +146,7 @@
                   />
                 </template>
                 <template v-else-if="column.key === 'company'">
-                  <div class="company-name" :class="record.companyTone">{{ record.company }}</div>
-                  <div class="student-meta">{{ record.role }}</div>
+                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" :tone-class="record.companyTone" />
                 </template>
                 <template v-else-if="column.key === 'stage'">
                   <div class="table-stack">
@@ -222,8 +220,7 @@
                   />
                 </template>
                 <template v-else-if="column.key === 'company'">
-                  <div class="company-name" :class="record.companyTone">{{ record.company }}</div>
-                  <div class="student-meta">{{ record.role }}</div>
+                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" :tone-class="record.companyTone" />
                 </template>
                 <template v-else-if="column.key === 'stage'">
                   <div class="table-stack">
@@ -310,7 +307,7 @@ import {
   type LeadMentorJobOverviewListItem,
   type LeadMentorJobOverviewListParams,
 } from '@osg/shared/api'
-import { InterviewCalendar, StageTag, StudentAvatarCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell } from '@osg/shared/components'
 import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
 
