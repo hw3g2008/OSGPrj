@@ -1,9 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import Antd from 'ant-design-vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import JobOverviewPage from '@/views/job-overview/index.vue'
 import MockPracticePage from '@/views/mock-practice/index.vue'
+
+// jsdom 不带 window.matchMedia，antd 的 Row/Col 响应式 grid 依赖它
+if (!window.matchMedia) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  })
+}
 
 vi.mock('@osg/shared/utils/request', () => ({
   http: {
@@ -47,7 +65,7 @@ async function mountAt(path: string) {
 
   const wrapper = mount({ template: '<router-view />' }, {
     global: {
-      plugins: [router],
+      plugins: [router, Antd],
     },
   })
 
