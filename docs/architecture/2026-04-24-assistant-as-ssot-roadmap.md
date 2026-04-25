@@ -64,6 +64,31 @@
   - ❌ **不**抽 Admin 端到任何子 Epic
 - **理由**：Admin 使用 `ruoyi-ui/`（Vue2 + Element UI），三端 Assistant/LM/Mentor 使用 `osg-frontend/packages/*`（Vue3 + Ant Design Vue），技术栈不兼容无法共用前端组件
 
+#### 0.4.1 区分两个 admin 物理位置（v1.2 澄清）
+
+> **历史背景**：v1.0 / v1.1 起草时，OSG 工程实际存在**两个 admin 前端代码库**。本节（v1.2 增补）显式区分以避免子 Epic 实施时歧义。
+
+| 物理位置 | 技术栈 | 端口 | 与 SSOT 对齐关系 |
+|---|---|---|---|
+| `ruoyi-ui/`（Vue2 老前端） | Vue 2 + Element UI + Vue CLI | 8080 | ❌ **不对齐**（技术栈不兼容） |
+| `osg-frontend/packages/admin/`（Vue3 新前端） | Vue 3 + Ant Design Vue + TypeScript + Vite | 3005 | ✅ **同栈**，按 case 评估纳入子 Epic 范围 |
+
+**澄清**：上述 §0.4 "Admin 端不是 SSOT 对齐目标" 的"Admin 端"**特指 `ruoyi-ui/` Vue2 老前端**。`osg-frontend/packages/admin/`（Vue3）与 Assistant / LM / Mentor 同栈，可视各 M0.x 子节点的共性覆盖率与改造工作量决定是否纳入实施范围。
+
+**事实依据（实测）**：
+- `osg-frontend/packages/admin/vite.config.ts`、`tsconfig.json`、`vitest.config.ts` 均已配置 `@osg/shared` 别名
+- 现有 12 个 admin 文件已从 `@osg/shared` import（如 `api/user.ts` / `api/role.ts` / `stores/user.ts` / `router/index.ts`）
+- 已具备同栈端共用 shared 组件的物理基础
+
+#### 0.4.2 决策细则
+
+- ✅ Vue3 `osg-frontend/packages/admin/` 在 M0.x 子节点中**视共性覆盖率决定是否纳入实施范围**：
+  - 若现有组件与 SSOT 三端**一字不差或差异极小**（如 fork），优先纳入以消除认知债
+  - 若组件与三端差异显著、改造成本超过收益，本期可不纳入，登记为后续技术债
+- ✅ 案例：M0.5 PageHeader — `admin/src/components/PageHeader.vue`（65 行）与 Assistant 端 `PageHeader.vue`（66 行）实测一字不差（仅 `margin-bottom` 极小差异），按 §0.4.1 标准纳入 M0.5 范围 C-1（详见 `docs/architecture/shared-infrastructure/m0.5-step1-pageheader-extraction-plan.md` §2.2）
+- ❌ ruoyi-ui Vue2 端始终不纳入任何前端 shared 抽取
+- ❌ 不为 ruoyi-ui Vue2 端做新功能，仅运维保留
+
 ### 0.5 前置假设（本路线图的成立前提）
 
 以下假设必须成立，本路线图才有效。**如果假设被打破，本路线图暂停并重新评估**：
@@ -713,7 +738,8 @@ docs/architecture/<module>-unification/
 |---|---|---|
 | v1.0 | 2026-04-24 | 初版（451 行）：战略背景、5 条原则、路线图 M0-M6、关联文档 |
 | v1.1 | 2026-04-24 | `/validate-doc` Round 1-4 + Step 3 全面修订（710 行）：<br>- §0.4 Admin scope 明确（不在 SSOT 对齐范围）<br>- §0.5 前置假设 PA-1~PA-5<br>- §1.6 决策可逆性总表（Round 4 cascade，含 D3/D4/D5/D9/D11 升级触发器）<br>- §2.4 粒度约束（每页 P0+P1 ≤ 15 组件）<br>- §3.2 修正动作表压缩（避免与 §4.1 M0 重复）<br>- §4.0 子 Epic 依赖图 + 并发约束 + SSOT drift 处理<br>- §4.1.1 M0.0 全量存量违反项审计 + §4.1.2 MainLayout 降级策略 + §4.1.3 M0 acceptance 标准<br>- §5.1.1 子文档章节升级为 §0-§5（SSOT 合理性审查 + Assistant 快照）<br>- §5.1.2 <30% 推迟后再评估机制<br>- §5.1.4 review 模板化<br>- §7.2 补 SSOT 漂移 / 端降级 / 子 Epic 废弃 / SSOT 稳定性打破 4 条风险<br>- §7.4 Mentor 方案 A 前提评估 + §7.5 端参与度降级 + §7.6 子 Epic 中途废弃<br>- §9.2 M0 执行入口压缩（避免与 §4.1 重复）<br>- 一致性修正：§3.2 "详见 §6.1" 错引 / §5.1.1 章节编号歧义 / §4.2 M1.4 子文档引用歧义 |
+| v1.2 | 2026-04-25 | M0.5 Phase 1 拍板配套修订：<br>- §0.4.1 区分 Vue2 `ruoyi-ui/` 与 Vue3 `osg-frontend/packages/admin/`（v1.0/v1.1 起草时未显式区分，导致 M0.5 范围讨论中歧义）<br>- §0.4.2 决策细则：Vue3 admin 按各 M0.x 子节点共性覆盖率决定是否纳入；ruoyi-ui Vue2 始终不纳入<br>- 引入 M0.5 PageHeader 案例：admin/PageHeader.vue 与 Asst PageHeader.vue 一字不差，按 §0.4.1 标准纳入 M0.5 范围 C-1<br>- 实测事实：admin 已配 `@osg/shared` 别名，12 个 admin 文件已 import 自 shared，物理基础具备 |
 
 ---
 
-*文档结束。v1.1 `/validate-doc` 4 轮思辨 + 一致性校验通过。下一步：§9.1 启动条件 check → M0 启动。*
+*文档结束。v1.2 = v1.1 (`/validate-doc` 4 轮思辨通过) + M0.5 Phase 1 拍板配套修订。下一步：M0.5 Phase 2 启动。*
