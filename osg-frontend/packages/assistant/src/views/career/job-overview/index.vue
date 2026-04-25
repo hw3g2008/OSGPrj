@@ -67,10 +67,7 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="avatar" :style="{ background: resolveAvatarColor(record.studentName) }">{{ avatarText(record.studentName) }}</div>
-                <div><div style="font-weight: 600;">{{ record.studentName || '-' }}</div><div style="font-size: 11px; color: var(--muted);">ID: {{ record.studentId || '-' }}</div></div>
-              </div>
+              <StudentAvatarCell :name="record.studentName" :id="record.studentId" />
             </template>
             <template v-else-if="column.dataIndex === 'company'">
               <div><strong>{{ record.company || '-' }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.position || '-' }} · {{ record.location || '地区待补充' }}</div></div>
@@ -109,10 +106,7 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="avatar" :style="{ background: resolveAvatarColor(record.studentName) }">{{ avatarText(record.studentName) }}</div>
-                <div><div style="font-weight: 600;">{{ record.studentName || '-' }}</div><div style="font-size: 11px; color: var(--muted);">ID: {{ record.studentId || '-' }}</div></div>
-              </div>
+              <StudentAvatarCell :name="record.studentName" :id="record.studentId" />
             </template>
             <template v-else-if="column.dataIndex === 'company'">
               <div><strong>{{ record.company || '-' }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.position || '-' }} · {{ record.location || '地区待补充' }}</div></div>
@@ -160,7 +154,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { InterviewCalendar, StageTag, CoachingStatusTag } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell } from '@osg/shared/components'
 import {
   getAssistantJobOverviewCalendar,
   getAssistantJobOverviewList,
@@ -252,15 +246,6 @@ const companyOptions = computed(() =>
 const stageOptions = computed(() =>
   Array.from(new Set(records.value.map((record) => record.interviewStage).filter(Boolean))) as string[],
 )
-
-function avatarText(name?: string) {
-  return (name || '学').slice(0, 1)
-}
-
-function resolveAvatarColor(name?: string) {
-  const seed = (name || 'assistant').length % 4
-  return ['#2563eb', '#7c3aed', '#0891b2', '#ea580c'][seed]
-}
 
 function formatDateTime(value?: string) {
   if (!value) return '未安排'

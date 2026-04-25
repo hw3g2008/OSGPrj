@@ -83,13 +83,11 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'student'">
-              <div class="student-cell">
-                <div class="avatar" :style="{ background: avatarColor(record) }">{{ record.studentName?.[0] || '?' }}</div>
-                <div>
-                  <div class="student-name">{{ record.studentName }}</div>
-                  <div class="text-muted text-sm">ID: {{ record.studentId }}</div>
-                </div>
-              </div>
+              <StudentAvatarCell
+                :name="record.studentName"
+                :id="record.studentId"
+                :background-color="avatarColor(record)"
+              />
             </template>
             <template v-else-if="column.key === 'company'">
               <div class="company-name" :style="{ color: record.coachingStatus === 'new' ? '#EF4444' : '' }">{{ record.company }}</div>
@@ -255,7 +253,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
-import { InterviewCalendar, StageTag, CoachingStatusTag } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell } from '@osg/shared/components'
 import {
   getMentorJobOverviewCalendar,
   type LeadMentorCalendarRecord,

@@ -59,3 +59,25 @@ export function resolveCoachingStatusColor(status?: string | null): string {
   if (s.includes('新') || s.includes('new')) return 'red'
   return 'default'
 }
+
+/**
+ * 学员头像背景色（SSOT 默认 palette）
+ *
+ * SSOT：以 Assistant 端 resolveAvatarColor() 为基准，4 色循环
+ * - palette: ['#2563eb', '#7c3aed', '#0891b2', '#ea580c']
+ * - seed = (name || 'assistant').length % 4
+ *
+ * LM/Mentor 如有自定义颜色规则，由各端传 backgroundColor prop 覆盖。
+ */
+export const STUDENT_AVATAR_PALETTE: readonly string[] = [
+  '#2563eb',
+  '#7c3aed',
+  '#0891b2',
+  '#ea580c',
+]
+
+export function resolveAvatarColor(name?: string | null): string {
+  const raw = String(name ?? '').trim() || 'assistant'
+  const seed = raw.length % STUDENT_AVATAR_PALETTE.length
+  return STUDENT_AVATAR_PALETTE[seed]
+}

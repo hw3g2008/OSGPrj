@@ -83,13 +83,11 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'studentName'">
-                  <div class="student-cell">
-                    <div class="avatar" :style="{ background: record.avatarColor }">{{ record.studentName }}</div>
-                    <div>
-                      <div class="student-name">{{ record.studentName }}</div>
-                      <div class="student-meta">ID: {{ record.studentId }}</div>
-                    </div>
-                  </div>
+                  <StudentAvatarCell
+                    :name="record.studentName"
+                    :id="record.studentId"
+                    :background-color="record.avatarColor"
+                  />
                 </template>
                 <template v-else-if="column.key === 'company'">
                   <div class="company-name">{{ record.company }}</div>
@@ -142,13 +140,11 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'studentName'">
-                  <div class="student-cell">
-                    <div class="avatar" :style="{ background: record.avatarColor }">{{ record.studentName }}</div>
-                    <div>
-                      <div class="student-name">{{ record.studentName }}</div>
-                      <div class="student-meta">ID: {{ record.studentId }}</div>
-                    </div>
-                  </div>
+                  <StudentAvatarCell
+                    :name="record.studentName"
+                    :id="record.studentId"
+                    :background-color="record.avatarColor"
+                  />
                 </template>
                 <template v-else-if="column.key === 'company'">
                   <div class="company-name" :class="record.companyTone">{{ record.company }}</div>
@@ -219,13 +215,11 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'studentName'">
-                  <div class="student-cell">
-                    <div class="avatar" :style="{ background: record.avatarColor }">{{ record.studentName }}</div>
-                    <div>
-                      <div class="student-name">{{ record.studentName }}</div>
-                      <div class="student-meta">ID: {{ record.studentId }}</div>
-                    </div>
-                  </div>
+                  <StudentAvatarCell
+                    :name="record.studentName"
+                    :id="record.studentId"
+                    :background-color="record.avatarColor"
+                  />
                 </template>
                 <template v-else-if="column.key === 'company'">
                   <div class="company-name" :class="record.companyTone">{{ record.company }}</div>
@@ -316,7 +310,7 @@ import {
   type LeadMentorJobOverviewListItem,
   type LeadMentorJobOverviewListParams,
 } from '@osg/shared/api'
-import { InterviewCalendar, StageTag } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, StudentAvatarCell } from '@osg/shared/components'
 import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
 
