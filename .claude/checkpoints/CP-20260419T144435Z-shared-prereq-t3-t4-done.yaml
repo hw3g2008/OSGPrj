@@ -1,0 +1,102 @@
+id: CP-20260419T144435Z-shared-prereq-t3-t4-done
+created_at: '2026-04-19T14:44:35Z'
+trigger: manual
+title: 共享前置任务 T3+T4 落地完成
+
+state_snapshot:
+  current_story: null
+  current_ticket: null
+  current_requirement: shared-prerequisites
+  workflow:
+    current_step: T3_T4_completed
+    next_step: T1_T2_migration  # 或用户自选
+
+context_summary:
+  goal: |
+    为 4 份端文档（student/mentor/lead-mentor/assistant）的标准化实施解除共享前置阻塞。
+    方案：把 PageHeader / OverlaySurfaceModal / useIndustryMeta / 后端字典共享外观
+    统一收到 @osg/shared + ruoyi-admin 的 DictFacadeController。
+
+  documentation:
+    master_plan: docs/plans/2026-04-19-shared-prerequisites-plan.md
+    status: 经 5 轮审查收敛，严重/中等偏离归零，771 行
+    review_history:
+      - R1-R2: 初稿
+      - R3: 挖出 4🔴 + 2🟡 + 4🟢
+      - R4: 挖出 2🔴 + 3🟡 + 3🟢（含方案 I 引入）
+      - R5: 挖出 0🔴 + 0🟡 + 2🟢（术语表 + import 风格）→ 判定收敛
+
+  decisions:
+    - T3 方案 I 确定：新建 DictFacadeController（/dict/:typeCode）而非复用 /system/*
+    - 双重防护：类型白名单（SHARED_DICT_WHITELIST）+ 字段级 DTO 裁剪
+    - T4 useIndustryMeta 使用进程内缓存（cached + fetching 双状态防并发）
+    - 字段映射：后端 dictValue/dictLabel/cssClass/listClass/remark → 前端 PositionMetaOption
+
+completed_tasks:
+  - T3_backend_facade:
+      file: ruoyi-admin/src/main/java/com/ruoyi/web/controller/common/DictFacadeController.java
+      lines: 88
+      verification:
+        - mvn -pl ruoyi-admin compile -am -DskipTests -o  # BUILD SUCCESS
+        - grep whitelist osg_company_type = 2 (≥1 ✓)
+        - grep @PreAuthorize = 0 (=0 ✓)
+        - grep extends BaseController = 1 (=1 ✓)
+  - T4_frontend_composable:
+      files:
+        - osg-frontend/packages/shared/src/composables/useIndustryMeta.ts  # 新建 92 行
+        - osg-frontend/packages/shared/src/composables/index.ts           # +1 行 export
+      verification:
+        - typescript@5.3.3 tsc --noEmit (shared 范围)  # exit 0, 无错
+        - rg http.get.*/dict/ useIndustryMeta.ts | wc -l = 1 (≥1 ✓)
+        - rg http.get.*/common/dict/ shared | wc -l = 0 (=0 ✓)
+        - grep useIndustryMeta index.ts = 1 (≥1 ✓)
+
+hidden_bugs_fixed_during_landing:
+  - id: O
+    description: 代码用链式换行 http\n.get(...)，§9 单行正则匹配不到
+    fix: useIndustryMeta.ts:54 改为单行 http.get(...)
+  - id: P
+    description: 注释里 "@PreAuthorize" 字面量让 "无 @PreAuthorize" 验收误报
+    fix: 改为"不加方法级鉴权注解"；§5.5 骨架同步修
+
+pending_tasks:
+  - T1_PageHeader_migration:
+      priority: low  # admin 专属，4 端不依赖
+      estimated: 30-60 min
+      ref_count: 29
+      approach: 6 步安全流程（cp → build → 改引用 → build → rm）
+      details: 前置文档 §3
+  - T2_OverlaySurfaceModal_migration:
+      priority: low
+      estimated: 1-2h
+      ref_count: 47
+      details: 前置文档 §4
+  - T5_admin_ref_migration:
+      priority: auto  # T1+T2 顺带完成
+  - T6_4_end_docs_pointers:
+      priority: done  # 用户确认已完成
+
+working_memory:
+  files_modified:
+    - ruoyi-admin/src/main/java/com/ruoyi/web/controller/common/DictFacadeController.java [NEW]
+    - osg-frontend/packages/shared/src/composables/useIndustryMeta.ts [NEW]
+    - osg-frontend/packages/shared/src/composables/index.ts [ADD 1 line]
+    - docs/plans/2026-04-19-shared-prerequisites-plan.md [R5 修 M+N+P：术语表 +4 条、Java import 逐个化、注释措辞]
+  files_clean:
+    - no .bak residue
+    - no /tmp/shared-typecheck.json residue
+  background_processes: none  # admin 全量 tsc 已 kill
+  test_status:
+    backend: mvn compile PASS
+    frontend_shared: tsc PASS
+    frontend_admin_full: skipped (耗时过长，与新增代码无关)
+    smoke_test: not_run (需后端运行起来用 curl 验证，见 §9 第 8 条注释)
+
+next_session_entry_points:
+  - option_A: 继续 T1（PageHeader 迁移）
+  - option_B: 继续 T2（OverlaySurfaceModal 迁移）
+  - option_C: T1+T2 合并一次 PR 推进
+  - option_D: 直接启动 4 端任一端的标准化实施（T3+T4 已解锁）
+  - option_E: 做一次后端 smoke test（启动服务 + 3 条 curl）
+
+blockers: []

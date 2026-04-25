@@ -6,8 +6,8 @@ prototype_file: "osg-spec-docs/source/prototype/admin.html"
 prototype_lines_total: 10121
 
 # 覆盖默认命令
-build_command: "pnpm --dir osg-frontend/packages/admin build"
-lint_command: "cd osg-frontend && pnpm lint"
+build_command: "pnpm --dir ${frontend.package_dir} build"
+lint_command: "pnpm --dir ${frontend.package_dir} lint"
 
 # 组件映射表（原型 class → Vue 组件）
 component_map:
@@ -31,7 +31,7 @@ zones:
   # ─── Zone 1: 用户中心 ───
   - name: "用户中心"
     id: users
-    vue_dir: "osg-frontend/packages/admin/src/views/users/"
+    vue_dir: "${frontend.package_dir}/src/views/users/"
     pages:
       - page_id: students
         label: "学员管理"
@@ -102,7 +102,7 @@ zones:
   # ─── Zone 2: 求职中心 ───
   - name: "求职中心"
     id: career
-    vue_dir: "osg-frontend/packages/admin/src/views/career/"
+    vue_dir: "${frontend.package_dir}/src/views/career/"
     pages:
       - page_id: positions
         label: "岗位管理"
@@ -182,7 +182,7 @@ zones:
   # ─── Zone 3: 教学中心 ───
   - name: "教学中心"
     id: teaching
-    vue_dir: "osg-frontend/packages/admin/src/views/teaching/"
+    vue_dir: "${frontend.package_dir}/src/views/teaching/"
     pages:
       - page_id: all-classes
         label: "全部课程"
@@ -251,7 +251,7 @@ zones:
   # ─── Zone 4: 个人中心 ───
   - name: "个人中心"
     id: profile
-    vue_dir: "osg-frontend/packages/admin/src/views/profile/"
+    vue_dir: "${frontend.package_dir}/src/views/profile/"
     pages:
       - page_id: notice
         label: "通知管理"

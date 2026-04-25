@@ -745,7 +745,7 @@ def run_verification(ticket, config):
 
     elif ticket.type in ("frontend", "frontend-ui"):
         # 前端：test + build + E2E（从 ticket.allowed_paths 推导 pkg_dir）
-        pkg_dir = resolve_frontend_pkg_dir(ticket)  # e.g. "osg-frontend/packages/admin"
+        pkg_dir = resolve_frontend_pkg_dir(ticket)  # e.g. "${frontend.package_dir}"
         module = resolve_module_name(ticket)  # e.g. "permission"
         if ticket.type == "frontend":
             cmd = f"pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full"
@@ -780,7 +780,7 @@ def run_regression_test(ticket, config):
 
     # 前端全量测试（如果当前 Ticket 是前端类型）
     if ticket.type in ("frontend", "frontend-ui"):
-        pkg_dir = resolve_frontend_pkg_dir(ticket)  # e.g. "osg-frontend/packages/admin"
+        pkg_dir = resolve_frontend_pkg_dir(ticket)  # e.g. "${frontend.package_dir}"
         frontend_test = bash(f"pnpm --dir {pkg_dir} test")  # vitest run
         if frontend_test.exit_code != 0:
             failures.append(f"前端全量测试失败: {extract_failure_summary(frontend_test)}")
@@ -1080,7 +1080,7 @@ def validate_evidence_command(command: str) -> bool:
 | type | 验证命令 | 成功条件 |
 |------|----------|----------|
 | backend | `${config.commands.test}` 或 `mvn test -Dtest={TestClass}` | exit_code = 0 |
-| database | `mvn compile -pl ruoyi-admin -am` (至少编译通过) | exit_code = 0 |
+| database | `mvn compile -pl ${backend.project_dir} -am` (至少编译通过) | exit_code = 0 |
 | test | `${config.commands.test}` 或指定测试类 | exit_code = 0 且测试通过 |
 | frontend | `pnpm --dir {pkg_dir} test && pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full` | 三个命令 exit_code = 0 |
 | frontend-ui | `pnpm --dir {pkg_dir} build && bash bin/e2e-api-gate.sh {module} full` | 两个命令 exit_code = 0 |

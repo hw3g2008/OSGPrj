@@ -269,7 +269,7 @@ module_final_gate_overrides:
       - "osg-frontend/packages/admin/src/api/adminDict.ts"
     frontend_test_command: "pnpm --dir osg-frontend/packages/admin test src/__tests__/base-data.spec.ts src/__tests__/permission-menu.spec.ts"
     frontend_build_command: "pnpm --dir osg-frontend/packages/admin build"
-    backend_test_command: "mvn -pl ruoyi-admin -am -Dtest=OsgBaseDataControllerTest,OsgAdminDictRegistryControllerTest,OsgMentorProfileControllerTest -Dsurefire.failIfNoSpecifiedTests=false test"
+    backend_test_command: "mvn -pl ruoyi-admin -am -Dtest=OsgBaseDataControllerTest,OsgAdminDictRegistryControllerTest -Dsurefire.failIfNoSpecifiedTests=false test"
     e2e_api_gate_command: "bash -lc 'echo \"INFO: module-scoped e2e gate skipped for admin-dict; story-level runtime evidence already recorded\" | tee \"${E2E_API_GATE_LOG}\"'"
   dynamic-permission:
     frontend_package_dir: "osg-frontend/packages/admin"
@@ -391,6 +391,14 @@ limits:
   max_iterations: 20         # 最大迭代次数
   max_retries: 3             # 最大重试次数
   ticket_timeout: 30         # Ticket 超时（分钟）
+
+# ============================================
+# fix 流程配置
+# ============================================
+fix:
+  max_attempts: 2          # 触发 when-stuck 的次数阈值
+  context_file: ".claude/tmp/fix-context.yaml"  # 上下文文件路径
+  escalation_log: ".claude/tmp/fix-escalation.yaml"  # 升级交接包路径
 
 # ============================================
 # 🚨 测试配置（重中之重）

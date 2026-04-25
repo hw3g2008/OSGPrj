@@ -28,8 +28,12 @@ bash bin/run-backend-dev.sh deploy/.env.dev
 ## 执行步骤
 
 1. 执行 `bash bin/run-backend-dev.sh deploy/.env.dev --check-only`
-2. 若通过，再执行 `bash bin/run-backend-dev.sh deploy/.env.dev`
-3. `--check-only` 必须同时校验目标端口空闲；若端口已被占用，必须先处理占用进程，不能直接重启第二个 backend
+2. 若 `--check-only` 报端口 28080 已被占用：
+   - 用 `lsof -ti:28080` 获取占用进程 PID
+   - 执行 `kill <PID>` 强制关闭旧进程
+   - 等待 3 秒后重新执行 `--check-only` 确认端口已释放
+3. 若通过，再执行 `bash bin/run-backend-dev.sh deploy/.env.dev`
+4. 不允许在旧进程仍在运行时直接启动第二个 backend
 4. 验证：
 
 ```bash

@@ -60,7 +60,7 @@ prototype_file: "osg-spec-docs/source/prototype/admin.html"
 zones:
   - name: "用户中心"
     id: users
-    vue_dir: "osg-frontend/packages/admin/src/views/users/"
+    vue_dir: "${frontend.package_dir}/src/views/users/"
     pages:
       - page_id: page-students
         prototype_lines: [502, 832]

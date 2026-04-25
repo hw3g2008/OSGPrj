@@ -111,11 +111,11 @@ Before generating the manifest layer, resolve real route paths from the frontend
 
 For each supported end, the router file location is:
 
-- `admin` -> `osg-frontend/packages/admin/src/router/index.ts`
-- `student` -> `osg-frontend/packages/student/src/router/index.ts`
-- `mentor` -> `osg-frontend/packages/mentor/src/router/index.ts`
-- `lead-mentor` -> `osg-frontend/packages/lead-mentor/src/router/index.ts`
-- `assistant` -> `osg-frontend/packages/assistant/src/router/index.ts`
+- `admin` -> `${frontend.package_dir}/src/router/index.ts`
+- `student` -> `${frontend.package_dir}/src/router/index.ts`
+- `mentor` -> `${frontend.package_dir}/src/router/index.ts`
+- `lead-mentor` -> `${frontend.package_dir}/src/router/index.ts`
+- `assistant` -> `${frontend.package_dir}/src/router/index.ts`
 
 Extract from the router file:
 

@@ -1,9 +1,8 @@
 ---
-name: debugging
-description: "Use when encountering errors or failures - systematic debugging following 4-phase process"
 metadata:
   invoked-by: "agent"
   auto-execute: "true"
+  related-skills: "verification-before-completion, when-stuck, fix"
 ---
 
 # Debugging Skill
@@ -77,19 +76,23 @@ metadata:
     └── 假设错误 ──→ 新假设
 ```
 
-### Phase 4: 实施修复
+### Phase 4: Fix Plan 生成
 
 ```
-[实施修复]
+[生成 Fix Plan]
     │
     ▼
-[验证修复]
-    │ - 原问题解决
-    │ - 没有新问题
+[输出 Fix Plan]
+    │ - root_cause：一句话根因 + 代码位置 + 证据
+    │ - fix_plan：最小修改方案（文件 + 具体变更 + 最小化理由）
+    │ - impact：影响范围 + 回归风险评估
+    │ - evidence：为什么这个方案正确的证据链
     │
     ▼
-[记录根因]
+[返回给调用者]
 ```
+
+**注意**：此阶段**仅生成 Fix Plan**，不执行代码实施。代码实施由调用者（`fix` skill Phase 3）负责。
 
 ## 三次失败规则
 
@@ -192,5 +195,12 @@ def debug(error):
 
 - 禁止随机修改
 - 禁止跳过复现步骤
-- 三次失败必须升级
+- 三次失败必须升级（假设级别内部重试，上限 3 次）
 - 必须记录所有尝试
+- **被 `fix` skill 调用时**：输出格式必须包含 `root_cause` / `fix_plan` / `impact` / `evidence` 四个字段
+
+## 升级语义说明
+
+**debugging 的三次失败**：是**假设级别的内部重试**（同一 hypothesis 的不同验证路径），不触发 `when-stuck`。三次失败后返回 `status: escalate` 给调用者。
+
+**fix 的升级触发**：是 `attempt_count` 级别的全局重试（换 hypothesis），`attempt_count ≥ 2` 才触发 `when-stuck`。两套升级规则各自独立，不可混淆。

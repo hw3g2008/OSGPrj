@@ -99,16 +99,16 @@ commands:
 commands:
   frontend:
     # 运行所有测试
-    test: "cd osg-frontend && pnpm test"
+    test: "pnpm --dir ${frontend.package_dir} test"
 
     # 运行指定测试文件
-    test_single: "cd osg-frontend && pnpm test {testFile}"
+    test_single: "pnpm --dir ${frontend.package_dir} test {testFile}"
 
     # 运行测试并生成覆盖率报告
-    test_coverage: "cd osg-frontend && pnpm test:coverage"
+    test_coverage: "pnpm --dir ${frontend.package_dir} test:coverage"
 
     # 覆盖率报告路径
-    coverage_report: "osg-frontend/coverage/index.html"
+    coverage_report: "${frontend.package_dir}/coverage/index.html"
 ```
 
 ---

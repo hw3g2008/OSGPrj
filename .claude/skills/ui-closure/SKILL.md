@@ -607,12 +607,12 @@ def module_closure(module, zones_def):
 
     # ─── Phase 7: Full Build + Lint ───
     build_cmd = zones_def.get("build_command",
-        f"pnpm --dir osg-frontend/packages/{module} build")
+        f"pnpm --dir {frontend_package_dir} build")
     result = Bash(build_cmd)
     if result.exit_code != 0:
         STOP("Build 失败")
 
-    lint_cmd = zones_def.get("lint_command", "cd osg-frontend && pnpm lint")
+    lint_cmd = zones_def.get("lint_command", "pnpm --dir ${frontend.package_dir} lint")
     Bash(lint_cmd)
 
     # ─── Phase 8: RPIV UI Gate（继承 final-gate） ───
@@ -783,8 +783,8 @@ module: admin
 prototype_file: "osg-spec-docs/source/prototype/admin.html"
 
 # 可选：覆盖默认命令
-build_command: "pnpm --dir osg-frontend/packages/admin build"
-lint_command: "cd osg-frontend && pnpm lint"
+build_command: "pnpm --dir ${frontend.package_dir} build"
+lint_command: "pnpm --dir ${frontend.package_dir} lint"
 
 # 可选：组件映射表（原型 class → Vue 组件）
 component_map:
@@ -804,7 +804,7 @@ component_map:
 zones:
   - name: "用户中心"
     id: users
-    vue_dir: "osg-frontend/packages/admin/src/views/users/"
+    vue_dir: "${frontend.package_dir}/src/views/users/"
     pages:
       - page_id: students
         label: "学员管理"

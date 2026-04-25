@@ -269,7 +269,7 @@ def verify_story(story_id):
         if has_frontend_tickets(story):
             # 使用 testing.commands.frontend.test_coverage（已修正为子包直接调用）
             frontend_cmd = config.testing.commands.frontend.test_coverage
-            # 或直接: pnpm --dir osg-frontend/packages/admin test --coverage
+            # 或直接: pnpm --dir ${frontend.package_dir} test --coverage
             frontend_result = bash(frontend_cmd)
             if frontend_result.exit_code != 0:
                 issues.append(("full_test", "frontend",

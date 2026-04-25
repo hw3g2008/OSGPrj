@@ -198,7 +198,7 @@ T-001:
   estimate: 3m
   allowed_paths:
     modify:
-      - "ruoyi-admin/src/main/java/**/controller/LoginController.java"
+      - "${backend.project_dir}/src/main/java/**/controller/LoginController.java"
 
 T-002:
   title: "实现登录接口逻辑"
@@ -207,7 +207,7 @@ T-002:
   dependencies: [T-001]
   allowed_paths:
     modify:
-      - "ruoyi-admin/src/main/java/**/controller/LoginController.java"
+      - "${backend.project_dir}/src/main/java/**/controller/LoginController.java"
 
 T-003:
   title: "创建 LoginService 接口"
@@ -232,7 +232,7 @@ T-005:
   estimate: 5m
   allowed_paths:
     modify:
-      - "osg-frontend/packages/student/src/views/Login.vue"
+      - "${frontend.package_dir}/src/views/Login.vue"
 
 T-006:
   title: "实现登录 API 调用"
@@ -241,7 +241,7 @@ T-006:
   dependencies: [T-005]
   allowed_paths:
     modify:
-      - "osg-frontend/packages/shared/src/api/auth.ts"
+      - "${frontend.source}/shared/src/api/auth.ts"
 
 T-007:
   title: "编写登录单元测试"
@@ -250,7 +250,7 @@ T-007:
   dependencies: [T-002, T-004]
   allowed_paths:
     modify:
-      - "ruoyi-admin/src/test/java/**/controller/LoginControllerTest.java"
+      - "${backend.project_dir}/src/test/java/**/controller/LoginControllerTest.java"
 ```
 
 ## 执行伪代码
