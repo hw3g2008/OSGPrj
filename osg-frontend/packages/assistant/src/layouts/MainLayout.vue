@@ -1,67 +1,16 @@
 <template>
   <div class="main-shell">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <div class="logo-icon">
-            <i class="mdi mdi-account-star" aria-hidden="true" />
-          </div>
-          <span class="logo-text">OSG Assistant</span>
-        </div>
-      </div>
-
-      <nav class="sidebar-nav">
-        <!-- v1: 首页入口暂时隐藏，二期恢复 -->
-        <a
-          v-show="false"
-          href="#"
-          class="nav-item"
-          :class="{ active: isActive(['/home']) }"
-          @click.prevent="navigate('/home')"
-        >
-          <i class="mdi mdi-home" aria-hidden="true" />
-          <span>首页 Home</span>
-        </a>
-
-        <template v-for="group in filteredNavigationGroups" :key="group.title">
-          <div class="nav-section">{{ group.title }}</div>
-          <a
-            v-for="item in group.items"
-            :key="item.path"
-            href="#"
-            class="nav-item"
-            :class="{ active: isActive(item.activePaths) }"
-            @click.prevent="navigate(item.path)"
-          >
-            <i class="mdi" :class="item.iconClass" aria-hidden="true" />
-            <span>{{ item.label }}</span>
-            <!-- v1: 角标暂时隐藏，二期恢复改回 v-if="item.badge" -->
-            <span v-if="false" class="nav-badge">{{ item.badge }}</span>
-          </a>
-        </template>
-      </nav>
-
-      <div class="sidebar-footer">
-        <button type="button" class="user-card" @click="showUserMenu = !showUserMenu">
-          <div class="user-avatar">{{ userInitials }}</div>
-          <div class="user-info">
-            <h4>{{ displayName }}</h4>
-            <p>{{ roleLabel }}</p>
-          </div>
-        </button>
-
-        <div v-if="showUserMenu" class="user-menu">
-          <a class="user-menu-item" @click="openProfile">
-            <i class="mdi mdi-account-cog" aria-hidden="true" />
-            个人设置 Profile
-          </a>
-          <a class="user-menu-item user-menu-item--danger" @click="handleLogout">
-            <i class="mdi mdi-logout" aria-hidden="true" />
-            退出登录 Logout
-          </a>
-        </div>
-      </div>
-    </aside>
+    <AppSidebar
+      :navigation-groups="navigationGroups"
+      :display-name="displayName"
+      :user-initials="userInitials"
+      :role-label="roleLabel"
+      :current-path="route.path"
+      logo-title="OSG Assistant"
+      @nav="handleNavClick"
+      @profile-click="handleProfileClick"
+      @logout="handleLogout"
+    />
 
     <main class="main">
       <router-view />
@@ -70,27 +19,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Modal } from 'ant-design-vue'
 
+import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
 import { clearAuth, getUser } from '@osg/shared/utils'
 
 import '@mdi/font/css/materialdesignicons.css'
-
-interface NavigationItem {
-  path: string
-  label: string
-  iconClass: string
-  activePaths: string[]
-  badge?: number
-  hidden?: boolean
-}
-
-interface NavigationGroup {
-  title: string
-  items: NavigationItem[]
-}
 
 const FALLBACK_NAME = 'Assistant User'
 const FALLBACK_ROLE = 'Assistant'
@@ -110,14 +45,12 @@ const navigationGroups: NavigationGroup[] = [
         label: '学员求职总览 Job Overview',
         iconClass: 'mdi-briefcase-eye',
         activePaths: ['/career/job-overview'],
-        badge: 1,
       },
       {
         path: '/career/mock-practice',
         label: '模拟应聘管理 Mock Practice',
         iconClass: 'mdi-account-voice',
         activePaths: ['/career/mock-practice'],
-        badge: 2,
       },
     ],
   },
@@ -215,7 +148,6 @@ const navigationGroups: NavigationGroup[] = [
         label: '消息 Notice',
         iconClass: 'mdi-bell-outline',
         activePaths: ['/notice'],
-        badge: 2,
         hidden: true,
       },
       {
@@ -229,15 +161,8 @@ const navigationGroups: NavigationGroup[] = [
   },
 ]
 
-const filteredNavigationGroups = computed(() =>
-  navigationGroups
-    .map((group) => ({ ...group, items: group.items.filter((item) => !item.hidden) }))
-    .filter((group) => group.items.length > 0)
-)
-
 const route = useRoute()
 const router = useRouter()
-const showUserMenu = ref(false)
 
 const userInfo = computed(() =>
   getUser<{
@@ -281,33 +206,18 @@ const userInitials = computed(() => {
   return compact.slice(0, 2).toUpperCase()
 })
 
-function isActive(paths: string[]) {
-  return paths.some((path) => route.path === path || route.path.startsWith(`${path}/`))
-}
-
-function navigate(path: string) {
-  showUserMenu.value = false
-  if (route.path === path) {
-    return
-  }
+function handleNavClick(path: string) {
+  if (route.path === path) return
   void router.push(path)
 }
 
-function openProfile() {
-  navigate('/profile')
+function handleProfileClick() {
+  void router.push('/profile')
 }
 
 function handleLogout() {
-  showUserMenu.value = false
-  Modal.confirm({
-    title: '确定要退出登录吗？',
-    okText: '确定',
-    cancelText: '取消',
-    onOk: () => {
-      clearAuth()
-      void router.push('/login')
-    },
-  })
+  clearAuth()
+  void router.push('/login')
 }
 </script>
 
@@ -328,180 +238,6 @@ function handleLogout() {
   overflow-x: clip;
 }
 
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 20;
-  display: flex;
-  width: 260px;
-  flex-direction: column;
-  border-right: 1px solid var(--border);
-  background: #fff;
-}
-
-.sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo-icon {
-  display: flex;
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: var(--primary-gradient);
-  color: #fff;
-  font-size: 20px;
-}
-
-.logo-text {
-  background: var(--primary-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.sidebar-nav {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 0;
-}
-
-.nav-section {
-  padding: 16px 20px 8px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 2px 12px;
-  border-radius: 10px;
-  padding: 12px 20px;
-  color: var(--text2);
-  font-size: 14px;
-  text-decoration: none;
-  user-select: none;
-}
-
-.nav-item:hover {
-  background: var(--bg);
-  color: var(--primary);
-}
-
-.nav-item.active {
-  background: var(--primary-light);
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.nav-item .mdi {
-  width: 24px;
-  text-align: center;
-  font-size: 20px;
-}
-
-.nav-badge {
-  margin-left: auto;
-  min-width: 18px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  background: #ef4444;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.sidebar-footer {
-  position: relative;
-  padding: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.user-card {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #fff;
-  padding: 12px;
-  text-align: left;
-}
-
-.user-avatar {
-  display: flex;
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--primary-gradient);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.user-info h4 {
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.user-info p {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.user-menu {
-  position: absolute;
-  right: 16px;
-  bottom: 78px;
-  left: 16px;
-  overflow: hidden;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.user-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  color: var(--text);
-  font-size: 14px;
-  text-decoration: none;
-}
-
-.user-menu-item:hover {
-  background: var(--bg);
-}
-
-.user-menu-item--danger {
-  border-top: 1px solid var(--border);
-  color: #ef4444;
-}
-
 .main {
   flex: 1;
   min-width: 0;
@@ -515,12 +251,6 @@ function handleLogout() {
 @media (max-width: 900px) {
   .main-shell {
     display: block;
-  }
-
-  .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
   }
 
   .main {
