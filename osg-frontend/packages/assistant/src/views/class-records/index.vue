@@ -54,18 +54,13 @@
     </a-alert>
 
     <div class="stats-row">
-      <a-card
+      <StatCard
         v-for="card in summaryCards"
         :key="card.key"
-        :bordered="false"
-        class="stat-card"
-      >
-        <a-statistic
-          :title="card.label"
-          :value="card.value"
-          :value-style="valueStyleMap[card.key]"
-        />
-      </a-card>
+        :label="card.label"
+        :value="card.value"
+        :color="statColorMap[card.key]"
+      />
     </div>
 
     <a-card :bordered="false" class="filter-card">
@@ -308,7 +303,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { ClassRecordStatusTag } from '@osg/shared/components'
+import { ClassRecordStatusTag, StatCard } from '@osg/shared/components'
 import AssistantClassReportFlowModal from './AssistantClassReportFlowModal.vue'
 import {
   getAssistantClassRecordList,
@@ -420,11 +415,11 @@ const columns: TableColumnsType<AssistantClassRecordRow> = [
 ]
 
 // ── Stats value styles ──
-const valueStyleMap: Record<string, Record<string, string>> = {
-  all: { color: '#1E293B' },
-  pending: { color: '#F59E0B' },
-  approved: { color: '#22C55E' },
-  settlement: { color: '#1D4ED8' },
+const statColorMap: Record<string, string> = {
+  all: '#1E293B',
+  pending: '#F59E0B',
+  approved: '#22C55E',
+  settlement: '#1D4ED8',
 }
 
 // ── Course content color Map (key = Chinese label, 对齐弹窗 + 后端 toCourseContentLabel) ──
@@ -818,14 +813,6 @@ onMounted(() => {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 16px;
-}
-
-.stat-card {
-  :deep(.ant-statistic-title) {
-    color: #64748b;
-    font-size: 13px;
-    font-weight: 600;
-  }
 }
 
 // ── Filter card（对齐助教端公共约定） ──

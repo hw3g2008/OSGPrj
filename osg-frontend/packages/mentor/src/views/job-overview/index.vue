@@ -17,26 +17,10 @@
       <InterviewCalendar :events="allCalendarEvents" @event-click="openCalendarHighlight" />
 
       <a-row :gutter="16" class="stats-row">
-        <a-col :span="6">
-          <a-card :bordered="false" class="stat-card">
-            <a-statistic title="新分配" :value="stats.newCount" :value-style="{ color: '#EF4444' }" />
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card :bordered="false" class="stat-card">
-            <a-statistic title="待进行" :value="stats.pendingCount" :value-style="{ color: '#3B82F6' }" />
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card :bordered="false" class="stat-card">
-            <a-statistic title="已完成" :value="stats.completedCount" :value-style="{ color: '#22C55E' }" />
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card :bordered="false" class="stat-card">
-            <a-statistic title="已取消" :value="stats.cancelledCount" :value-style="{ color: '#94A3B8' }" />
-          </a-card>
-        </a-col>
+        <a-col :span="6"><StatCard label="新分配" :value="stats.newCount" color="#EF4444" /></a-col>
+        <a-col :span="6"><StatCard label="待进行" :value="stats.pendingCount" color="#3B82F6" /></a-col>
+        <a-col :span="6"><StatCard label="已完成" :value="stats.completedCount" color="#22C55E" /></a-col>
+        <a-col :span="6"><StatCard label="已取消" :value="stats.cancelledCount" color="#94A3B8" /></a-col>
       </a-row>
 
       <div class="filter-row">
@@ -257,7 +241,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
-import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell, StatCard } from '@osg/shared/components'
 import {
   getMentorJobOverviewCalendar,
   type LeadMentorCalendarRecord,
@@ -629,7 +613,6 @@ onMounted(async () => {
 .page-sub { font-size:14px; color:#64748B; margin-top:6px; }
 
 .stats-row { margin-bottom:20px; }
-.stat-card { text-align:center; box-shadow:0 4px 24px rgba(115,153,198,0.12); border-radius:12px; }
 
 .filter-row { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
 

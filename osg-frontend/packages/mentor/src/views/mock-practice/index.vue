@@ -8,30 +8,10 @@
 
     <!-- 统计 -->
     <a-row :gutter="16" class="stats-grid">
-      <a-col :span="6">
-        <a-card :bordered="false" class="stat-card">
-          <div class="stat-value" style="color:#EF4444">{{ stats.newCount }}</div>
-          <div class="stat-label">新分配</div>
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card :bordered="false" class="stat-card">
-          <div class="stat-value" style="color:#3B82F6">{{ stats.pendingCount }}</div>
-          <div class="stat-label">待进行</div>
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card :bordered="false" class="stat-card">
-          <div class="stat-value" style="color:#22C55E">{{ stats.completedCount }}</div>
-          <div class="stat-label">已完成</div>
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card :bordered="false" class="stat-card">
-          <div class="stat-value" style="color:#94A3B8">{{ stats.cancelledCount }}</div>
-          <div class="stat-label">已取消</div>
-        </a-card>
-      </a-col>
+      <a-col :span="6"><StatCard label="新分配" :value="stats.newCount" color="#EF4444" /></a-col>
+      <a-col :span="6"><StatCard label="待进行" :value="stats.pendingCount" color="#3B82F6" /></a-col>
+      <a-col :span="6"><StatCard label="已完成" :value="stats.completedCount" color="#22C55E" /></a-col>
+      <a-col :span="6"><StatCard label="已取消" :value="stats.cancelledCount" color="#94A3B8" /></a-col>
     </a-row>
 
     <!-- 列表 -->
@@ -250,7 +230,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, type Ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { PracticeTypeTag } from '@osg/shared/components'
+import { PracticeTypeTag, StatCard } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
@@ -411,10 +391,6 @@ onMounted(() => {
 
 <style scoped>
 .stats-grid{margin-bottom:20px}
-.stat-card{text-align:center;box-shadow:0 4px 24px rgba(115,153,198,0.12);border-radius:12px}
-.stat-card :deep(.ant-card-body){padding:16px}
-.stat-value{font-size:28px;font-weight:700}
-.stat-label{font-size:12px;color:#94A3B8}
 .filter-bar :deep(.ant-form-item){margin-bottom:0;margin-right:12px}
 .student-cell{display:flex;align-items:center;gap:10px}
 .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px}
