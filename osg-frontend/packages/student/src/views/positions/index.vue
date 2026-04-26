@@ -177,7 +177,7 @@
                       </template>
 
                       <template v-else-if="column.key === 'actions'">
-                        <a-space :size="6" wrap>
+                        <a-space :size="10" wrap>
                           <a-button
                             size="small"
                             :type="record.applied ? 'primary' : 'default'"
@@ -236,7 +236,8 @@
           :data-source="filteredPositions"
           :pagination="{ pageSize: 10 }"
           :row-key="(record: PositionRecord) => record.id"
-          :scroll="{ x: 1240 }"
+          :scroll="{ x: 1050 }"
+          class="positions-table"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'title'">
@@ -272,7 +273,7 @@
             </template>
 
             <template v-else-if="column.key === 'actions'">
-              <a-space :size="6">
+              <a-space :size="10" class="action-space">
                 <a-button
                   size="small"
                   class="applied-btn"
@@ -346,7 +347,7 @@
             </template>
 
             <template v-else-if="column.key === 'actions'">
-              <a-space :size="6">
+              <a-space :size="10">
                 <a-button size="small" @click="toggleFavorite(record)">取消收藏</a-button>
                 <a-button size="small" :type="record.applied ? 'primary' : 'default'" @click="handleAppliedButton(record)">
                   {{ record.applied ? '已投递' : '投递' }}
@@ -875,18 +876,18 @@ const positionColumns = [
   { title: '招聘周期', dataIndex: 'recruitCycle', width: 130 },
   { title: '发布时间', dataIndex: 'publishDate', width: 100 },
   { title: '截止时间', dataIndex: 'deadline', width: 100 },
-  { title: '操作', key: 'actions', width: 240, fixed: 'right' }
+  { title: '操作', key: 'actions', width: 260, fixed: 'right' }
 ]
 
 const listColumns = [
   { title: '岗位名称', key: 'title', width: 220, fixed: 'left' },
-  { title: '公司', key: 'companyCell', width: 160 },
-  { title: '行业', key: 'industryCell', width: 140 },
-  { title: '岗位分类', key: 'category', width: 110 },
-  { title: '地区', dataIndex: 'location', width: 100 },
-  { title: '招聘周期', key: 'recruitCycleCell', width: 130 },
-  { title: '截止时间', key: 'deadlineCell', width: 110 },
-  { title: '操作', key: 'actions', width: 200, fixed: 'right' }
+  { title: '公司', key: 'companyCell', width: 120 },
+  { title: '行业', key: 'industryCell', width: 100 },
+  { title: '岗位分类', key: 'category', width: 100 },
+  { title: '地区', dataIndex: 'location', width: 90 },
+  { title: '招聘周期', key: 'recruitCycleCell', width: 100 },
+  { title: '截止时间', key: 'deadlineCell', width: 100 },
+  { title: '操作', key: 'actions', width: 220 }
 ]
 
 const favoriteColumns = [
@@ -1908,26 +1909,48 @@ watch(
     }
   }
 
+  .positions-table {
+    :deep(.ant-table-cell-fix-right-first::after) {
+      box-shadow: inset 10px 0 8px -8px rgba(0, 0, 0, 0.08);
+    }
+  }
+
   .progress-stage-select {
-    min-width: 110px;
+    min-width: 132px;
 
     :deep(.ant-select-selector) {
       background: #fef3c7 !important;
-      border-color: #f59e0b !important;
+      border: 1px solid #f59e0b !important;
       color: #92400e !important;
       font-weight: 600;
-      font-size: 11px;
-      border-radius: 6px;
-      padding: 0 8px !important;
+      font-size: 12px;
+      border-radius: 6px !important;
+      padding: 0 28px 0 12px !important;
+      height: 24px !important;
+      line-height: 22px !important;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(245, 158, 11, 0.15);
     }
 
     :deep(.ant-select-arrow) {
       color: #92400e;
+      right: 10px;
     }
 
     :deep(.ant-select-selection-item) {
       color: #92400e !important;
+      line-height: 22px !important;
     }
+
+    &:hover :deep(.ant-select-selector) {
+      border-color: #d97706 !important;
+      background: #fde68a !important;
+    }
+  }
+
+  .action-space {
+    align-items: center;
   }
 
   .industry-section {
