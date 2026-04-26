@@ -310,7 +310,7 @@ import { useCoachingStatusMap } from '@osg/shared/composables'
 import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
 
-const { resolve: resolveCoachingStatus } = useCoachingStatusMap()
+const { resolveCoachingTone } = useCoachingStatusMap()
 
 const pendingColumns = [
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
@@ -778,7 +778,7 @@ function toOverviewRow(row: LeadMentorJobOverviewListItem): OverviewRow {
     deadlineHint: buildCountdownText(row.interviewTime),
     deadlineTone: resolveDeadlineTone(row.interviewTime),
     status: row.coachingStatus || '待更新',
-    statusTone: resolveCoachingStatus(row.coachingStatus, row.stageUpdated).color,
+    statusTone: resolveCoachingTone(row.coachingStatus, row.stageUpdated),
     stageUpdated: Boolean(row.stageUpdated),
     rowTone: resolveRowTone(row),
     mentorName: row.mentorNames || row.mentorName || (row.assignedStatus === 'pending' ? '待分配' : '-'),
