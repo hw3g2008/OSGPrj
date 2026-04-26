@@ -12,9 +12,9 @@
         <div class="warning-title"><i class="mdi mdi-alert" /> 您本周未填写排期，无法被安排课程！</div>
         <div class="warning-desc">请立即填写本周排期，否则将影响您的课时收入</div>
       </div>
-      <button class="btn btn-danger" type="button" @click="focusCurrentWeek">
-        <i class="mdi mdi-calendar-edit" /> 立即填写
-      </button>
+      <a-button type="primary" danger @click="focusCurrentWeek">
+        <i class="mdi mdi-calendar-edit" style="margin-right:4px" />立即填写
+      </a-button>
     </div>
 
     <div class="status-card" :class="{ 'border-danger': !hasFilledCurrentWeek, 'border-success': hasFilledCurrentWeek }">
@@ -72,9 +72,9 @@
             >
             <span class="text-muted">小时</span>
             <div class="hour-shortcuts">
-              <button class="btn btn-outline btn-sm" type="button" @click="setCurrentHours(5)">5h</button>
-              <button class="btn btn-outline btn-sm" type="button" @click="setCurrentHours(10)">10h</button>
-              <button class="btn btn-outline btn-sm" type="button" @click="setCurrentHours(20)">20h</button>
+              <a-button size="small" @click="setCurrentHours(5)">5h</a-button>
+              <a-button size="small" @click="setCurrentHours(10)">10h</a-button>
+              <a-button size="small" @click="setCurrentHours(20)">20h</a-button>
             </div>
           </div>
         </div>
@@ -94,9 +94,9 @@
         </div>
 
         <div class="form-actions">
-          <button class="btn btn-primary current-submit" type="button" @click="submitCurrentWeek">
-            <i class="mdi mdi-check-circle" /> 提交本周排期
-          </button>
+          <a-button type="primary" class="current-submit" @click="submitCurrentWeek">
+            <i class="mdi mdi-check-circle" style="margin-right:4px" />提交本周排期
+          </a-button>
         </div>
       </div>
     </div>
@@ -125,10 +125,10 @@
             >
             <span class="text-muted">小时</span>
             <div class="hour-shortcuts">
-              <button class="btn btn-outline btn-sm" type="button" @click="setNextHours(5)">5h</button>
-              <button class="btn btn-outline btn-sm" type="button" @click="setNextHours(10)">10h</button>
-              <button class="btn btn-outline btn-sm" type="button" @click="setNextHours(15)">15h</button>
-              <button class="btn btn-outline btn-sm" type="button" @click="setNextHours(20)">20h</button>
+              <a-button size="small" @click="setNextHours(5)">5h</a-button>
+              <a-button size="small" @click="setNextHours(10)">10h</a-button>
+              <a-button size="small" @click="setNextHours(15)">15h</a-button>
+              <a-button size="small" @click="setNextHours(20)">20h</a-button>
             </div>
           </div>
         </div>
@@ -149,31 +149,40 @@
 
         <div class="form-group">
           <label class="form-label">备注（可选）</label>
-          <textarea
-            v-model="nextWeek.note"
-            class="form-textarea"
-            rows="2"
+          <a-textarea
+            v-model:value="nextWeek.note"
+            :rows="2"
             placeholder="如有特殊情况请在此说明，例如：元旦假期安排"
           />
         </div>
 
         <div class="form-actions split">
-          <button class="btn btn-primary next-submit" type="button" @click="saveNextWeek">
-            <i class="mdi mdi-check" /> 保存下周排期
-          </button>
-          <button class="btn btn-outline" type="button" @click="resetNextWeek">重置</button>
+          <a-button type="primary" class="next-submit" @click="saveNextWeek">
+            <i class="mdi mdi-check" style="margin-right:4px" />保存下周排期
+          </a-button>
+          <a-button @click="resetNextWeek">重置</a-button>
         </div>
       </div>
     </div>
 
-    <div v-if="feedbackModal.visible" id="modal-mentor-schedule-feedback" class="modal active" @click.self="closeFeedbackModal">
-      <div class="modal-content" :class="feedbackModal.tone === 'error' ? 'modal-content--error' : 'modal-content--success'" style="max-width:480px">
+    <a-modal
+      v-model:open="feedbackModal.visible"
+      :width="480"
+      :footer="null"
+      :title="null"
+      :closable="false"
+      :body-style="{ padding: 0 }"
+      :get-container="false"
+      :destroy-on-close="true"
+      @cancel="closeFeedbackModal"
+    >
+      <div id="modal-mentor-schedule-feedback" :class="feedbackModal.tone === 'error' ? 'modal-content--error' : 'modal-content--success'">
         <div class="modal-header" :class="feedbackModal.tone === 'error' ? 'modal-header--error' : 'modal-header--success'">
           <span class="modal-title">
             <i :class="feedbackModal.tone === 'error' ? 'mdi mdi-alert-circle' : 'mdi mdi-check-circle'" />
             {{ feedbackModal.title }}
           </span>
-          <button class="modal-close" @click="closeFeedbackModal">×</button>
+          <button class="modal-close" type="button" @click="closeFeedbackModal">×</button>
         </div>
         <div class="modal-body">
           <div class="success-card">
@@ -184,10 +193,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" type="button" @click="closeFeedbackModal">知道了</button>
+          <a-button type="primary" class="btn-primary" @click="closeFeedbackModal">知道了</a-button>
         </div>
       </div>
-    </div>
+    </a-modal>
   </div>
 </template>
 

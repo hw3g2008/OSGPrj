@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import Antd from 'ant-design-vue'
 import SchedulePage from '@/views/schedule/index.vue'
 
 vi.mock('@osg/shared/utils/request', () => ({
@@ -19,11 +20,12 @@ import { http } from '@osg/shared/utils/request'
 import { getUser } from '@osg/shared/utils'
 
 function mountSchedulePage() {
-  return mount(SchedulePage)
+  return mount(SchedulePage, { global: { plugins: [Antd] } })
 }
 
 function getButtonTexts(wrapper: ReturnType<typeof mount>) {
-  return wrapper.findAll('button').map((button) => button.text().replace(/\s+/g, ' ').trim())
+  // Normalize all whitespace (including AntD's auto-inserted gap between two-character CJK button labels like "重 置")
+  return wrapper.findAll('button').map((button) => button.text().replace(/\s+/g, ''))
 }
 
 describe('SchedulePage', () => {
@@ -130,7 +132,7 @@ describe('SchedulePage', () => {
     await wrapper.find('#mentor-next-weekly-hours').setValue('20')
     await wrapper.find('textarea').setValue('元旦假期安排')
 
-    const resetButton = wrapper.findAll('button').find((button) => button.text().includes('重置'))
+    const resetButton = wrapper.findAll('button').find((button) => button.text().replace(/\s+/g, '').includes('重置'))
     expect(resetButton).toBeTruthy()
     await resetButton!.trigger('click')
 
