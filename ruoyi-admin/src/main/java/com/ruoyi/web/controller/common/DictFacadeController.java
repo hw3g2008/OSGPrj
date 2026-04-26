@@ -19,15 +19,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 字典共享外观（方案 I / T3）
+ * Dict facade for cross-endpoint sharing (Scheme II: prefix allow + endpoint blacklist).
  *
- * <p>管理（写）仍在 /system/dict/*，admin 专属。本接口只开放"读"给所有登录用户，依靠：</p>
+ * <p>Write operations stay under /system/dict/* (admin-only). This facade exposes read-only
+ * access to all authenticated users with three layers of protection:</p>
  * <ul>
- *   <li>白名单（类型级）：防止非业务字典被泄露（如 sys_normal_disable）</li>
- *   <li>DTO 裁剪（字段级）：防止泄露 createBy/updateBy 等管理元数据</li>
+ *   <li>Prefix allow: open all osg_* business dicts by default (sys_* system dicts blocked).</li>
+ *   <li>Endpoint blacklist: block endpoint-private prefixes
+ *       (osg_student_, osg_mentor_, osg_lead_mentor_, osg_assistant_).</li>
+ *   <li>DTO trimming: only return 5 display fields, no createBy/updateBy admin metadata.</li>
  * </ul>
  *
- * <p>设计依据：docs/plans/2026-04-19-shared-prerequisites-plan.md §5.5</p>
+ * <p>Benefit: when admin adds a new osg_* business dict, all endpoints can consume it
+ * with zero java/restart change.</p>
+ *
+ * <p>Design ref: docs/plans/2026-04-19-shared-prerequisites-plan.md section 5.5</p>
  *
  * @author OSG
  */
@@ -35,37 +41,42 @@ import java.util.stream.Collectors;
 @RequestMapping("/dict")
 public class DictFacadeController extends BaseController
 {
-    /** 业务方批准的跨角色共享字典白名单 */
-    private static final Set<String> SHARED_DICT_WHITELIST = Set.of(
-        "osg_company_type",
-        "osg_company_name",
-        "osg_job_category",
-        "osg_recruit_cycle",
-        "osg_region",
-        "osg_city",
-        "osg_major_direction",
-        "osg_sub_direction"
-        // 未来新增示例（需业务方 review 后加入）：
-        // "osg_school",
-        // "osg_course_type"
+    /** Business dict prefix (admin-managed business dicts all start with osg_). */
+    private static final String BUSINESS_DICT_PREFIX = "osg_";
+
+    /**
+     * Endpoint-private dict prefixes: dicts under these prefixes hold a single endpoint's
+     * UI copy and status enums; they are not shared cross-endpoint. Calls return error
+     * and the client should use the endpoint-local business API instead.
+     */
+    private static final Set<String> ENDPOINT_PRIVATE_PREFIXES = Set.of(
+        "osg_student_",
+        "osg_mentor_",
+        "osg_lead_mentor_",
+        "osg_assistant_"
     );
 
     @Autowired
     private ISysDictTypeService dictTypeService;
 
     /**
-     * 查询共享字典
-     * <p>不加方法级鉴权注解，依靠 SecurityConfig 的 anyRequest().authenticated() 校验登录。</p>
+     * Query a shared dict by typeCode.
      *
-     * @param typeCode 字典类型编码（如 osg_company_type）
-     * @return 裁剪后的字典数据列表
+     * <p>No method-level auth annotation: relies on SecurityConfig anyRequest().authenticated().</p>
+     *
+     * @param typeCode dict type code (e.g. osg_company_type)
+     * @return trimmed dict data list
      */
     @GetMapping("/{typeCode}")
     public AjaxResult getShared(@PathVariable String typeCode)
     {
-        if (!SHARED_DICT_WHITELIST.contains(typeCode))
+        if (typeCode == null || !typeCode.startsWith(BUSINESS_DICT_PREFIX))
         {
-            return AjaxResult.error("字典类型 [" + typeCode + "] 未开放跨角色共享");
+            return AjaxResult.error("dict type [" + typeCode + "] is not a business dict and cannot be shared");
+        }
+        if (isEndpointPrivate(typeCode))
+        {
+            return AjaxResult.error("dict type [" + typeCode + "] is endpoint-private; use the endpoint-local business API");
         }
         List<SysDictData> raw = dictTypeService.selectDictDataByType(typeCode);
         List<Map<String, String>> trimmed = Optional.ofNullable(raw)
@@ -77,7 +88,23 @@ public class DictFacadeController extends BaseController
     }
 
     /**
-     * 只返回前端展示需要的 5 个字段，避免泄露 admin 管理元数据
+     * Whether the dict type is endpoint-private (osg_student_/osg_mentor_/osg_lead_mentor_/osg_assistant_).
+     * Such dicts hold endpoint-specific UI copy and state enums, unsuitable for cross-endpoint sharing.
+     */
+    private boolean isEndpointPrivate(String typeCode)
+    {
+        for (String prefix : ENDPOINT_PRIVATE_PREFIXES)
+        {
+            if (typeCode.startsWith(prefix))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Return only the 5 display fields needed by the frontend; do not leak admin management metadata.
      */
     private Map<String, String> toSharedDto(SysDictData d)
     {

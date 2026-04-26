@@ -48,8 +48,15 @@
             {{ option.label }}
           </a-select-option>
         </a-select>
-        <a-select v-model:value="filters.company" placeholder="全部公司" class="filter-select filter-select-company" allow-clear>
-          <a-select-option v-for="option in filterOptions.companies" :key="option.value" :value="option.value">
+        <a-select
+          v-model:value="filters.company"
+          placeholder="全部公司"
+          class="filter-select filter-select-company"
+          allow-clear
+          show-search
+          option-filter-prop="label"
+        >
+          <a-select-option v-for="option in filterOptions.companies" :key="option.value" :value="option.value" :label="option.label">
             {{ option.label }}
           </a-select-option>
         </a-select>
@@ -378,7 +385,7 @@
             </a-form-item>
             <a-form-item label="项目时间" required class="manual-field">
               <a-select v-model:value="manualForm.projectYear" placeholder="请选择">
-                <a-select-option v-for="year in PROJECT_YEARS" :key="year" :value="year">{{ year }}</a-select-option>
+                <a-select-option v-for="year in projectYearDict" :key="year.value" :value="year.value">{{ year.label }}</a-select-option>
               </a-select>
             </a-form-item>
             <a-form-item label="截止日期（选填）" class="manual-field">
@@ -713,8 +720,11 @@ const FALLBACK_INDUSTRY_META = {
 
 const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
 const { items: cycleDict, load: loadCycleDict } = useDictFacade('osg_recruit_cycle')
+const { items: projectYearDict, load: loadProjectYearDict } = useDictFacade('osg_project_year')
 const { items: regionDict, load: loadRegionDict } = useDictFacade('osg_region')
 const { items: cityDict, load: loadCityDict } = useDictFacade('osg_city')
+const { items: categoryDict, load: loadCategoryDict } = useDictFacade('osg_job_category')
+const { items: companyDict, load: loadCompanyDict } = useDictFacade('osg_company_name')
 
 function resolveIndustryMeta(industryRaw: string) {
   const trimmed = industryRaw?.trim() || ''
@@ -793,8 +803,6 @@ const COMPANY_TYPES = computed(() =>
     : [{ value: 'other_company', label: '其他公司' }]
 )
 
-// PROJECT_YEARS 保留硬编码：admin 字典中暂未定义 osg_project_year
-const PROJECT_YEARS = ['2024', '2025', '2026', '2027']
 
 const manualForm = ref({
   category: undefined as string | undefined,
@@ -1109,6 +1117,19 @@ async function loadPositionMeta() {
   intentSummary.value = payload.intentSummary
   filterOptions.value = payload.filterOptions
 
+  // 字典统一：能用 admin 的全部走 admin 字典
+  // record 的 category/company/location 字段值是 label（如 "Summer Analyst" / "SIG" / "New York"），
+  // 因此 select option 的 value 也用 dict.label 对齐，保证筛选比对工作。
+  if (categoryDict.value.length) {
+    filterOptions.value.categories = categoryDict.value.map((d) => ({ value: d.label, label: d.label }))
+  }
+  if (companyDict.value.length) {
+    filterOptions.value.companies = companyDict.value.map((d) => ({ value: d.label, label: d.label }))
+  }
+  if (cityDict.value.length) {
+    filterOptions.value.locations = cityDict.value.map((d) => ({ value: d.label, label: d.label }))
+  }
+
   const methodMap: Record<string, string> = {
     '官网投递': 'official',
     '内推': 'referral',
@@ -1312,12 +1333,18 @@ async function submitCoachingApplication() {
   message.success('辅导申请已提交')
 }
 
-onMounted(() => {
-  void loadIndustryMeta()
-  void loadCycleDict()
-  void loadRegionDict()
-  void loadCityDict()
-  void Promise.all([loadPositions(), loadPositionMeta()])
+onMounted(async () => {
+  // 先加载所有 admin 共享字典；loadPositionMeta 依赖 categoryDict/companyDict/cityDict 已就绪
+  await Promise.all([
+    loadIndustryMeta(),
+    loadCycleDict(),
+    loadProjectYearDict(),
+    loadRegionDict(),
+    loadCityDict(),
+    loadCategoryDict(),
+    loadCompanyDict()
+  ])
+  await Promise.all([loadPositions(), loadPositionMeta()])
 })
 
 watch(
