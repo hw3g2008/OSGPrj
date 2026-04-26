@@ -66,28 +66,19 @@
           <span class="history-count">共 2 条记录</span>
         </div>
         <div class="table-shell">
-          <table class="record-table">
-            <thead>
-              <tr>
-                <th>分析时间</th>
-                <th>文件名</th>
-                <th>AI评分</th>
-                <th>状态</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in aiResumeHistory" :key="item.fileName">
-                <td>{{ item.analyzedAt }}</td>
-                <td>{{ item.fileName }}</td>
-                <td>{{ item.score }}</td>
-                <td>{{ item.status }}</td>
-                <td>
-                  <a-button type="link" size="small" @click="openReport(item)">查看报告</a-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <a-table
+            :columns="historyColumns"
+            :data-source="aiResumeHistory"
+            :pagination="false"
+            :row-key="(record: any) => record.fileName"
+            class="record-table"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'action'">
+                <a-button type="link" size="small" @click="openReport(record)">查看报告</a-button>
+              </template>
+            </template>
+          </a-table>
         </div>
       </section>
     </OsgPageContainer>
@@ -148,6 +139,14 @@ type AiResumeHistoryItem = {
   score: string
   status: string
 }
+
+const historyColumns = [
+  { title: '分析时间', dataIndex: 'analyzedAt', key: 'analyzedAt' },
+  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
+  { title: 'AI评分', dataIndex: 'score', key: 'score' },
+  { title: '状态', dataIndex: 'status', key: 'status' },
+  { title: '操作', key: 'action' },
+]
 
 const aiResumeHistory: AiResumeHistoryItem[] = [
   {

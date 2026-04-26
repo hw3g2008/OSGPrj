@@ -13,24 +13,13 @@
       </div>
 
       <div class="table-shell">
-        <table class="record-table">
-          <thead>
-            <tr>
-              <th>NAME</th>
-              <th>TYPE</th>
-              <th>SIZE</th>
-              <th>UPLOAD TIME</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in fileItems" :key="item.name">
-              <td>{{ item.name }}</td>
-              <td>{{ item.type }}</td>
-              <td>{{ item.size }}</td>
-              <td>{{ item.uploadedAt }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="fileColumns"
+          :data-source="fileItems"
+          :pagination="false"
+          :row-key="(record: any) => record.name"
+          class="record-table"
+        />
       </div>
     </OsgPageContainer>
   </div>
@@ -38,6 +27,13 @@
 
 <script setup lang="ts">
 import { OsgPageContainer } from '@osg/shared/components'
+
+const fileColumns = [
+  { title: 'NAME', dataIndex: 'name', key: 'name' },
+  { title: 'TYPE', dataIndex: 'type', key: 'type' },
+  { title: 'SIZE', dataIndex: 'size', key: 'size' },
+  { title: 'UPLOAD TIME', dataIndex: 'uploadedAt', key: 'uploadedAt' },
+]
 
 const fileTypeOptions = [
   { value: 'pdf', label: 'PDF' },

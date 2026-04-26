@@ -22,25 +22,22 @@
       </div>
 
       <div class="table-shell">
-        <table class="record-table">
-          <thead>
-            <tr>
-              <th v-for="column in currentColumns" :key="column">{{ column }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in currentRows" :key="row.actionId">
-              <td v-for="column in currentColumns" :key="`${row.actionId}-${column}`">
-                <template v-if="column === 'Action'">
-                  <a-button type="link" size="small" @click="openDetail(row)">View</a-button>
-                </template>
-                <template v-else>
-                  <span v-html="row[column]"></span>
-                </template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="antColumns"
+          :data-source="currentRows"
+          :pagination="false"
+          :row-key="(record: any) => record.actionId"
+          class="record-table"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'Action'">
+              <a-button type="link" size="small" @click="openDetail(record)">View</a-button>
+            </template>
+            <template v-else>
+              <span v-html="record[column.key]"></span>
+            </template>
+          </template>
+        </a-table>
       </div>
     </OsgPageContainer>
 
@@ -229,6 +226,9 @@ const activeDetail = ref<FeedbackRow | null>(null)
 
 const currentColumns = computed(() => tabColumns[activeTab.value])
 const currentRows = computed(() => tabRows[activeTab.value])
+const antColumns = computed(() =>
+  currentColumns.value.map((c: string) => ({ title: c, key: c }))
+)
 
 const openDetail = (row: FeedbackRow) => {
   activeDetail.value = row

@@ -33,26 +33,13 @@
         <section class="panel">
           <div class="panel-title">最近课程记录</div>
           <div class="table-shell">
-            <table class="record-table">
-              <thead>
-                <tr>
-                  <th>日期</th>
-                  <th>课程类型</th>
-                  <th>导师</th>
-                  <th>时长</th>
-                  <th>状态</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in restrictedHomeRows" :key="row.date + row.courseType">
-                  <td>{{ row.date }}</td>
-                  <td>{{ row.courseType }}</td>
-                  <td>{{ row.mentor }}</td>
-                  <td>{{ row.duration }}</td>
-                  <td>{{ row.status }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <a-table
+              :columns="homeColumns"
+              :data-source="restrictedHomeRows"
+              :pagination="false"
+              :row-key="(record: any) => record.date + record.courseType"
+              class="record-table"
+            />
           </div>
         </section>
 
@@ -69,28 +56,13 @@
         <section class="panel">
           <div class="panel-title">我的课程</div>
           <div class="table-shell">
-            <table class="record-table">
-              <thead>
-                <tr>
-                  <th>日期</th>
-                  <th>时间</th>
-                  <th>课程类型</th>
-                  <th>导师</th>
-                  <th>时长</th>
-                  <th>状态</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in restrictedClassRows" :key="row.date + row.time">
-                  <td>{{ row.date }}</td>
-                  <td>{{ row.time }}</td>
-                  <td>{{ row.courseType }}</td>
-                  <td>{{ row.mentor }}</td>
-                  <td>{{ row.duration }}</td>
-                  <td>{{ row.status }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <a-table
+              :columns="classColumns"
+              :data-source="restrictedClassRows"
+              :pagination="false"
+              :row-key="(record: any) => record.date + record.time"
+              class="record-table"
+            />
           </div>
         </section>
       </template>
@@ -99,26 +71,19 @@
         <section class="panel">
           <div class="panel-title">课程反馈</div>
           <div class="table-shell">
-            <table class="record-table">
-              <thead>
-                <tr>
-                  <th>日期</th>
-                  <th>课程类型</th>
-                  <th>导师</th>
-                  <th>评价</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in restrictedFeedbackRows" :key="row.date + row.courseType">
-                  <td>{{ row.date }}</td>
-                  <td>{{ row.courseType }}</td>
-                  <td>{{ row.mentor }}</td>
-                  <td>{{ row.rating }}</td>
-                  <td><a-button type="link" size="small">查看详情</a-button></td>
-                </tr>
-              </tbody>
-            </table>
+            <a-table
+              :columns="feedbackColumns"
+              :data-source="restrictedFeedbackRows"
+              :pagination="false"
+              :row-key="(record: any) => record.date + record.courseType"
+              class="record-table"
+            >
+              <template #bodyCell="{ column }">
+                <template v-if="column.key === 'action'">
+                  <a-button type="link" size="small">查看详情</a-button>
+                </template>
+              </template>
+            </a-table>
           </div>
         </section>
       </template>
@@ -131,6 +96,31 @@ import { ref } from 'vue'
 import { OsgPageContainer } from '@osg/shared/components'
 
 const activeTab = ref<'home' | 'myclass' | 'feedback'>('home')
+
+const homeColumns = [
+  { title: '日期', dataIndex: 'date', key: 'date' },
+  { title: '课程类型', dataIndex: 'courseType', key: 'courseType' },
+  { title: '导师', dataIndex: 'mentor', key: 'mentor' },
+  { title: '时长', dataIndex: 'duration', key: 'duration' },
+  { title: '状态', dataIndex: 'status', key: 'status' },
+]
+
+const classColumns = [
+  { title: '日期', dataIndex: 'date', key: 'date' },
+  { title: '时间', dataIndex: 'time', key: 'time' },
+  { title: '课程类型', dataIndex: 'courseType', key: 'courseType' },
+  { title: '导师', dataIndex: 'mentor', key: 'mentor' },
+  { title: '时长', dataIndex: 'duration', key: 'duration' },
+  { title: '状态', dataIndex: 'status', key: 'status' },
+]
+
+const feedbackColumns = [
+  { title: '日期', dataIndex: 'date', key: 'date' },
+  { title: '课程类型', dataIndex: 'courseType', key: 'courseType' },
+  { title: '导师', dataIndex: 'mentor', key: 'mentor' },
+  { title: '评价', dataIndex: 'rating', key: 'rating' },
+  { title: '操作', key: 'action' },
+]
 
 const restrictedHomeRows = [
   { date: '2025-12-15', courseType: '模拟面试', mentor: 'Jerry Li', duration: '1.5h', status: '已完成' },

@@ -162,32 +162,26 @@
         <span class="card-inline-hint">
           记录 <strong>{{ practiceRecords.length }}</strong>
         </span>
-        <button type="button" class="header-link" @click="$router.push('/feedback')">查看全部 →</button>
+        <a-button type="link" class="header-link" @click="$router.push('/feedback')">查看全部 →</a-button>
       </div>
       <div class="card-body card-body-no-padding">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>日期</th>
-              <th>Mentor</th>
-              <th>类型</th>
-              <th>状态</th>
-              <th>Performance</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in mockScores" :key="`${row.date}-${row.mentor}-${row.type}`">
-              <td>{{ row.date }}</td>
-              <td>{{ row.mentor }}</td>
-              <td>{{ row.type }}</td>
-              <td class="score-cell" :class="row.scoreTone">{{ row.score }}</td>
-              <td><span class="tag" :class="row.tagTone">{{ row.tag }}</span></td>
-            </tr>
-            <tr v-if="mockScores.length === 0">
-              <td colspan="5" class="empty-cell">暂无模拟应聘记录</td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="mockScoreColumns"
+          :data-source="mockScores"
+          :pagination="false"
+          :row-key="(record: any) => `${record.date}-${record.mentor}-${record.type}`"
+          class="dashboard-table"
+        >
+          <template #emptyText><div class="empty-cell">暂无模拟应聘记录</div></template>
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'score'">
+              <span class="score-cell" :class="record.scoreTone">{{ record.score }}</span>
+            </template>
+            <template v-else-if="column.key === 'tag'">
+              <span class="tag" :class="record.tagTone">{{ record.tag }}</span>
+            </template>
+          </template>
+        </a-table>
       </div>
     </div>
 
@@ -219,34 +213,28 @@
         <span class="card-inline-hint">
           实时摘要 <strong>{{ resumeRows.length }}</strong>
         </span>
-        <button type="button" class="header-link" @click="$router.push('/resume')">管理简历 →</button>
+        <a-button type="link" class="header-link" @click="$router.push('/resume')">管理简历 →</a-button>
       </div>
       <div class="card-body card-body-no-padding">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>版本</th>
-              <th>文件名</th>
-              <th>指导导师</th>
-              <th>更新时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="resume in resumeRows" :key="resume.fileName">
-              <td>
-                <span v-if="resume.versionTone" class="tag" :class="resume.versionTone">
-                  {{ resume.version }}
-                </span>
-                <span v-else>{{ resume.version }}</span>
-              </td>
-              <td>{{ resume.fileName }}</td>
-              <td>{{ resume.mentor }}</td>
-              <td>{{ resume.updatedAt }}</td>
-              <td><button type="button" class="btn btn-text btn-sm" @click="$router.push('/resume')">查看</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="resumeColumns"
+          :data-source="resumeRows"
+          :pagination="false"
+          :row-key="(record: any) => record.fileName"
+          class="dashboard-table"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'version'">
+              <span v-if="record.versionTone" class="tag" :class="record.versionTone">
+                {{ record.version }}
+              </span>
+              <span v-else>{{ record.version }}</span>
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/resume')">查看</a-button>
+            </template>
+          </template>
+        </a-table>
       </div>
     </div>
 
@@ -256,36 +244,26 @@
         <span class="card-inline-hint">
           累计 <strong>{{ applicationsPreview.length }}</strong> 次
         </span>
-        <button type="button" class="header-link" @click="$router.push('/questions')">查看全部 →</button>
+        <a-button type="link" class="header-link" @click="$router.push('/questions')">查看全部 →</a-button>
       </div>
       <div class="card-body card-body-no-padding">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>日期</th>
-              <th>公司</th>
-              <th>办公室</th>
-              <th>岗位</th>
-              <th>项目</th>
-              <th>轮次</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="interview in applicationsPreview" :key="`${interview.company}-${interview.role}`">
-              <td>{{ interview.date }}</td>
-              <td class="company-cell">{{ interview.company }}</td>
-              <td>{{ interview.office }}</td>
-              <td>{{ interview.role }}</td>
-              <td>{{ interview.program }}</td>
-              <td>{{ interview.round }}</td>
-              <td><button type="button" class="btn btn-text btn-sm" @click="$router.push('/job-tracking')">详情</button></td>
-            </tr>
-            <tr v-if="applicationsPreview.length === 0">
-              <td colspan="7" class="empty-cell">暂无真实面试记录</td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="interviewColumns"
+          :data-source="applicationsPreview"
+          :pagination="false"
+          :row-key="(record: any) => `${record.company}-${record.role}`"
+          class="dashboard-table"
+        >
+          <template #emptyText><div class="empty-cell">暂无真实面试记录</div></template>
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'company'">
+              <span class="company-cell">{{ record.company }}</span>
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/job-tracking')">详情</a-button>
+            </template>
+          </template>
+        </a-table>
       </div>
     </div>
 
@@ -312,24 +290,24 @@
         <span class="card-title">快捷操作 Quick Actions</span>
       </div>
       <div class="card-body">
-        <div class="quick-actions">
-          <button type="button" class="btn btn-primary" @click="$router.push('/courses')">
-            <i class="mdi mdi-book-open-variant" aria-hidden="true"></i>
+        <a-space :size="12" wrap class="quick-actions">
+          <a-button type="primary" size="large" class="btn btn-primary" @click="$router.push('/courses')">
+            <template #icon><BookOutlined /></template>
             我的课程
-          </button>
-          <button type="button" class="btn btn-outline" @click="$router.push('/questions')">
-            <i class="mdi mdi-file-document-edit" aria-hidden="true"></i>
+          </a-button>
+          <a-button size="large" class="btn btn-outline" @click="$router.push('/questions')">
+            <template #icon><FileTextOutlined /></template>
             填写面试真题
-          </button>
-          <button type="button" class="btn btn-outline" @click="$router.push('/netlog')">
-            <i class="mdi mdi-account-group" aria-hidden="true"></i>
+          </a-button>
+          <a-button size="large" class="btn btn-outline" @click="$router.push('/netlog')">
+            <template #icon><TeamOutlined /></template>
             填写沟通记录
-          </button>
-          <button type="button" class="btn btn-outline" @click="$router.push('/positions')">
-            <i class="mdi mdi-briefcase-search" aria-hidden="true"></i>
+          </a-button>
+          <a-button size="large" class="btn btn-outline" @click="$router.push('/positions')">
+            <template #icon><SearchOutlined /></template>
             岗位信息
-          </button>
-        </div>
+          </a-button>
+        </a-space>
       </div>
     </div>
   </div>
@@ -337,6 +315,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import {
+  BookOutlined,
+  FileTextOutlined,
+  SearchOutlined,
+  TeamOutlined,
+} from '@ant-design/icons-vue'
 import {
   getStudentApplicationsMeta,
   getStudentClassRecordsMeta,
@@ -355,6 +339,32 @@ import {
   type StudentPositionRecord,
   type StudentProfileRecord,
 } from '@osg/shared/api'
+
+const mockScoreColumns = [
+  { title: '日期', dataIndex: 'date', key: 'date' },
+  { title: 'Mentor', dataIndex: 'mentor', key: 'mentor' },
+  { title: '类型', dataIndex: 'type', key: 'type' },
+  { title: '状态', key: 'score' },
+  { title: 'Performance', key: 'tag' },
+]
+
+const resumeColumns = [
+  { title: '版本', key: 'version' },
+  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
+  { title: '指导导师', dataIndex: 'mentor', key: 'mentor' },
+  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: '操作', key: 'action' },
+]
+
+const interviewColumns = [
+  { title: '日期', dataIndex: 'date', key: 'date' },
+  { title: '公司', key: 'company' },
+  { title: '办公室', dataIndex: 'office', key: 'office' },
+  { title: '岗位', dataIndex: 'role', key: 'role' },
+  { title: '项目', dataIndex: 'program', key: 'program' },
+  { title: '轮次', dataIndex: 'round', key: 'round' },
+  { title: '操作', key: 'action' },
+]
 
 const profile = reactive<StudentProfileRecord>({
   studentCode: '-',

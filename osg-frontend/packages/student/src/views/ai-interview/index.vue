@@ -50,30 +50,19 @@
       <section class="history-card">
         <div class="history-head">分析历史</div>
         <div class="table-shell">
-          <table class="record-table">
-            <thead>
-              <tr>
-                <th>文件名</th>
-                <th>公司</th>
-                <th>面试轮次</th>
-                <th>综合评分</th>
-                <th>分析时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in interviewHistory" :key="item.fileName">
-                <td>{{ item.fileName }}</td>
-                <td>{{ item.company }}</td>
-                <td>{{ item.round }}</td>
-                <td>{{ item.score }}</td>
-                <td>{{ item.analyzedAt }}</td>
-                <td>
-                  <a-button type="link" size="small" @click="openDetail(item)">查看详情</a-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <a-table
+            :columns="historyColumns"
+            :data-source="interviewHistory"
+            :pagination="false"
+            :row-key="(record: any) => record.fileName"
+            class="record-table"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'action'">
+                <a-button type="link" size="small" @click="openDetail(record)">查看详情</a-button>
+              </template>
+            </template>
+          </a-table>
         </div>
       </section>
     </OsgPageContainer>
@@ -131,6 +120,15 @@ type InterviewHistoryItem = {
   analyzedAt: string
   report: string
 }
+
+const historyColumns = [
+  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
+  { title: '公司', dataIndex: 'company', key: 'company' },
+  { title: '面试轮次', dataIndex: 'round', key: 'round' },
+  { title: '综合评分', dataIndex: 'score', key: 'score' },
+  { title: '分析时间', dataIndex: 'analyzedAt', key: 'analyzedAt' },
+  { title: '操作', key: 'action' },
+]
 
 const interviewHistory: InterviewHistoryItem[] = [
   {

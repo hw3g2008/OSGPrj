@@ -30,69 +30,64 @@
         <h2 class="login-title">欢迎回来</h2>
         <p class="login-subtitle">请登录您的学员账号</p>
 
-        <div id="login-error" class="login-error" :class="{ show: Boolean(loginError) }">
-          <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
-          <span>{{ loginError }}</span>
-        </div>
+        <a-alert
+          v-if="loginError"
+          id="login-error"
+          type="error"
+          show-icon
+          :message="loginError"
+          class="login-error login-error--show"
+        />
 
-        <form class="login-form" @submit.prevent="handleLogin">
-          <div class="form-group">
-            <label for="login-username">用户名</label>
-            <input
+        <a-form class="login-form" layout="vertical" @submit.prevent="handleLogin">
+          <a-form-item
+            label="用户名"
+            :validate-status="fieldErrors.username ? 'error' : ''"
+            :help="fieldErrors.username"
+          >
+            <a-input
               id="login-username"
-              v-model="formState.username"
-              :class="inputClass(fieldErrors.username)"
-              type="text"
+              v-model:value="formState.username"
+              size="large"
               placeholder="请输入用户名"
               autocomplete="username"
-              @input="clearFieldError('username')"
-            >
-            <p class="field-error" :class="{ show: Boolean(fieldErrors.username) }">
-              {{ fieldErrors.username }}
-            </p>
-          </div>
+              @update:value="clearFieldError('username')"
+            />
+          </a-form-item>
 
-          <div class="form-group">
-            <label for="login-password">密码</label>
-            <div class="pwd-wrapper">
-              <input
-                id="login-password"
-                v-model="formState.password"
-                :class="inputClass(fieldErrors.password)"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="请输入密码"
-                autocomplete="current-password"
-                @input="clearFieldError('password')"
-              >
-              <button
-                type="button"
-                class="pwd-toggle"
-                @click="showPassword = !showPassword"
-              >
-                <i
-                  class="mdi"
-                  :class="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                  aria-hidden="true"
-                ></i>
-              </button>
-            </div>
-            <p class="field-error" :class="{ show: Boolean(fieldErrors.password) }">
-              {{ fieldErrors.password }}
-            </p>
-          </div>
+          <a-form-item
+            label="密码"
+            :validate-status="fieldErrors.password ? 'error' : ''"
+            :help="fieldErrors.password"
+          >
+            <a-input-password
+              id="login-password"
+              v-model:value="formState.password"
+              size="large"
+              placeholder="请输入密码"
+              autocomplete="current-password"
+              @update:value="clearFieldError('password')"
+            />
+          </a-form-item>
 
           <div class="login-links">
-            <label>
-              <input v-model="formState.remember" type="checkbox">
-              记住我
-            </label>
+            <a-checkbox v-model:checked="formState.remember">记住我</a-checkbox>
             <router-link to="/forgot-password">忘记密码？</router-link>
           </div>
 
-          <button id="login-btn" type="submit" class="login-btn" :disabled="loading">
+          <a-button
+            id="login-btn"
+            type="primary"
+            html-type="submit"
+            class="login-btn"
+            block
+            size="large"
+            :loading="loading"
+            @click="handleLogin"
+          >
             {{ loading ? '登录中...' : '登 录' }}
-          </button>
-        </form>
+          </a-button>
+        </a-form>
 
         <div class="copyright">
           备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">冀ICP备17000879号-4</a>
@@ -119,7 +114,6 @@ const route = useRoute()
 
 const loading = ref(false)
 const loginError = ref('')
-const showPassword = ref(false)
 const fieldErrors = reactive<Record<string, string>>({
   username: '',
   password: ''
@@ -130,8 +124,6 @@ const formState = reactive({
   password: '',
   remember: false
 })
-
-const inputClass = (error: string) => ['form-input', { error: Boolean(error) }]
 
 const clearFieldError = (field: string) => {
   loginError.value = ''
@@ -304,77 +296,33 @@ const handleLogin = async () => {
 }
 
 .login-error {
-  padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 10px;
-  color: #991b1b;
-  font-size: 13px;
   margin-bottom: 16px;
-  display: none;
-  align-items: center;
-  gap: 8px;
-
-  &.show {
-    display: flex;
-  }
 }
 
-.form-group {
-  margin-bottom: 18px;
+.login-form {
+  // 统一表单项间距，匹配原型
+  :deep(.ant-form-item) {
+    margin-bottom: 18px;
+  }
 
-  label {
-    display: block;
+  :deep(.ant-form-item-label > label) {
     font-size: 13px;
     font-weight: 600;
-    margin-bottom: 6px;
     color: var(--text2);
+    height: auto;
+    padding-bottom: 6px;
   }
-}
 
-.form-input {
-  width: 100%;
-  padding: 14px 16px;
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  font-size: 15px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  :deep(.ant-input-affix-wrapper),
+  :deep(.ant-input) {
+    border-radius: 12px;
+    border-width: 2px;
+  }
 
-  &:focus {
-    outline: none;
+  :deep(.ant-input-affix-wrapper-focused),
+  :deep(.ant-input:focus) {
     border-color: var(--primary);
     box-shadow: 0 0 0 4px var(--primary-light);
-  }
-
-  &.error {
-    border-color: #ef4444;
-  }
-}
-
-.pwd-wrapper {
-  position: relative;
-}
-
-.pwd-toggle {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.field-error {
-  color: #ef4444;
-  font-size: 12px;
-  margin-top: 4px;
-  display: none;
-
-  &.show {
-    display: block;
   }
 }
 
@@ -411,15 +359,14 @@ const handleLogin = async () => {
 }
 
 .login-btn {
-  width: 100%;
-  padding: 16px;
-  background: var(--primary-gradient);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+  height: 52px !important;
+  padding: 16px !important;
+  background: var(--primary-gradient) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
   box-shadow: 0 4px 15px rgba(115, 153, 198, 0.4);
   transition: transform 0.2s ease;
 
@@ -428,8 +375,7 @@ const handleLogin = async () => {
   }
 
   &:disabled {
-    background: var(--muted);
-    cursor: not-allowed;
+    background: var(--muted) !important;
     transform: none;
   }
 }

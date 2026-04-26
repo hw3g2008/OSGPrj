@@ -18,28 +18,19 @@
       </div>
 
       <div class="table-shell">
-        <table class="record-table">
-          <thead>
-            <tr>
-              <th>题库名称</th>
-              <th>公司</th>
-              <th>类型</th>
-              <th>题目数</th>
-              <th>更新时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in questionBanks" :key="item.name">
-              <td>{{ item.name }}</td>
-              <td>{{ item.company }}</td>
-              <td>{{ item.type }}</td>
-              <td>{{ item.count }}</td>
-              <td>{{ item.updatedAt }}</td>
-              <td><a-button type="link" size="small">查看</a-button></td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="bankColumns"
+          :data-source="questionBanks"
+          :pagination="false"
+          :row-key="(record: any) => record.name"
+          class="record-table"
+        >
+          <template #bodyCell="{ column }">
+            <template v-if="column.key === 'action'">
+              <a-button type="link" size="small">查看</a-button>
+            </template>
+          </template>
+        </a-table>
       </div>
     </OsgPageContainer>
   </div>
@@ -60,6 +51,15 @@ const typeOptions = [
   { value: 'pymetrics', label: 'Pymetrics' },
   { value: 'shl', label: 'SHL' },
   { value: 'kf', label: 'Korn Ferry' }
+]
+
+const bankColumns = [
+  { title: '题库名称', dataIndex: 'name', key: 'name' },
+  { title: '公司', dataIndex: 'company', key: 'company' },
+  { title: '类型', dataIndex: 'type', key: 'type' },
+  { title: '题目数', dataIndex: 'count', key: 'count' },
+  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: '操作', key: 'action' },
 ]
 
 const questionBanks = [

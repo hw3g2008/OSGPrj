@@ -19,30 +19,19 @@
       </div>
 
       <div class="table-shell">
-        <table class="record-table">
-          <thead>
-            <tr>
-              <th>题库名称</th>
-              <th>面试阶段</th>
-              <th>类型</th>
-              <th>行业</th>
-              <th>题目数</th>
-              <th>更新时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in interviewQuestionBanks" :key="item.name">
-              <td>{{ item.name }}</td>
-              <td>{{ item.stage }}</td>
-              <td>{{ item.type }}</td>
-              <td>{{ item.industry }}</td>
-              <td>{{ item.count }}</td>
-              <td>{{ item.updatedAt }}</td>
-              <td><a-button type="link" size="small">查看</a-button></td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="bankColumns"
+          :data-source="interviewQuestionBanks"
+          :pagination="false"
+          :row-key="(record: any) => record.name"
+          class="record-table"
+        >
+          <template #bodyCell="{ column }">
+            <template v-if="column.key === 'action'">
+              <a-button type="link" size="small">查看</a-button>
+            </template>
+          </template>
+        </a-table>
       </div>
     </OsgPageContainer>
   </div>
@@ -68,6 +57,16 @@ const industryOptions = [
   { value: 'ib', label: 'Investment Banking' },
   { value: 'consulting', label: 'Consulting' },
   { value: 'pevc', label: 'PE/VC' }
+]
+
+const bankColumns = [
+  { title: '题库名称', dataIndex: 'name', key: 'name' },
+  { title: '面试阶段', dataIndex: 'stage', key: 'stage' },
+  { title: '类型', dataIndex: 'type', key: 'type' },
+  { title: '行业', dataIndex: 'industry', key: 'industry' },
+  { title: '题目数', dataIndex: 'count', key: 'count' },
+  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: '操作', key: 'action' },
 ]
 
 const interviewQuestionBanks = [

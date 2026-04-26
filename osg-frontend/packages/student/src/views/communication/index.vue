@@ -17,30 +17,31 @@
       </div>
 
       <div class="table-shell">
-        <table class="record-table">
-          <thead>
-            <tr>
-              <th>记录人</th>
-              <th>沟通方式</th>
-              <th>沟通时间</th>
-              <th>沟通内容</th>
-              <th>跟进事项</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="record in communicationRecords" :key="record.id">
-              <td><strong>{{ record.owner }}</strong></td>
-              <td><a-tag :color="record.methodColor">{{ record.method }}</a-tag></td>
-              <td>{{ record.time }}</td>
-              <td class="ellipsis">{{ record.summary }}</td>
-              <td><a-tag :color="record.followUpColor">{{ record.followUp }}</a-tag></td>
-              <td>
-                <a-button type="link" size="small" @click="openDetail(record)">详情</a-button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="recordColumns"
+          :data-source="communicationRecords"
+          :pagination="false"
+          :row-key="(record: any) => record.id"
+          class="record-table"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'owner'">
+              <strong>{{ record.owner }}</strong>
+            </template>
+            <template v-else-if="column.key === 'method'">
+              <a-tag :color="record.methodColor">{{ record.method }}</a-tag>
+            </template>
+            <template v-else-if="column.key === 'summary'">
+              <span class="ellipsis">{{ record.summary }}</span>
+            </template>
+            <template v-else-if="column.key === 'followUp'">
+              <a-tag :color="record.followUpColor">{{ record.followUp }}</a-tag>
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <a-button type="link" size="small" @click="openDetail(record)">详情</a-button>
+            </template>
+          </template>
+        </a-table>
       </div>
     </OsgPageContainer>
 
@@ -82,6 +83,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const recordColumns = [
+  { title: '记录人', key: 'owner' },
+  { title: '沟通方式', key: 'method' },
+  { title: '沟通时间', dataIndex: 'time', key: 'time' },
+  { title: '沟通内容', key: 'summary' },
+  { title: '跟进事项', key: 'followUp' },
+  { title: '操作', key: 'action' },
+]
 
 type CommunicationRecord = {
   id: string

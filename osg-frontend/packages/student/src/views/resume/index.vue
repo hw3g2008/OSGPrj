@@ -60,31 +60,20 @@
           <span class="version-count">共 4 个版本</span>
         </div>
         <div class="table-shell">
-          <table class="record-table">
-            <thead>
-              <tr>
-                <th>版本</th>
-                <th>文件名</th>
-                <th>来源</th>
-                <th>更新时间</th>
-                <th>大小</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in resumeVersions" :key="item.fileName">
-                <td>{{ item.version }}</td>
-                <td>{{ item.fileName }}</td>
-                <td>{{ item.source }}</td>
-                <td>{{ item.updatedAt }}</td>
-                <td>{{ item.size }}</td>
-                <td>
-                  <a-button type="link" size="small" @click="openPreview(item)">预览</a-button>
-                  <a-button type="link" size="small">下载</a-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <a-table
+            :columns="versionColumns"
+            :data-source="resumeVersions"
+            :pagination="false"
+            :row-key="(record: any) => record.fileName"
+            class="record-table"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'action'">
+                <a-button type="link" size="small" @click="openPreview(record)">预览</a-button>
+                <a-button type="link" size="small">下载</a-button>
+              </template>
+            </template>
+          </a-table>
         </div>
       </section>
     </OsgPageContainer>
@@ -112,6 +101,15 @@
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const versionColumns = [
+  { title: '版本', dataIndex: 'version', key: 'version' },
+  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
+  { title: '来源', dataIndex: 'source', key: 'source' },
+  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: '大小', dataIndex: 'size', key: 'size' },
+  { title: '操作', key: 'action' },
+]
 
 type ResumeVersion = {
   version: string

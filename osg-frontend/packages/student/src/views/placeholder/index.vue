@@ -1,14 +1,20 @@
 <template>
   <div class="placeholder-page">
     <OsgPageContainer :title="title">
-      <div class="placeholder-card">
-        <div class="placeholder-eyebrow">{{ COMING_SOON_TOAST }}</div>
+      <a-card :bordered="false" class="placeholder-card">
+        <a-tag color="blue" class="placeholder-eyebrow">{{ COMING_SOON_TOAST }}</a-tag>
         <p class="placeholder-subtitle">{{ subtitle }}</p>
-        <p v-if="requestedPath" class="placeholder-path">已保留路由：{{ requestedPath }}</p>
+        <a-alert
+          v-if="requestedPath"
+          type="info"
+          show-icon
+          :message="`已保留路由：${requestedPath}`"
+          class="placeholder-path"
+        />
         <p class="placeholder-note">
           当前页面会在后续需求中逐步开放，本次先保留导航与路由承接，避免误入未交付功能。
         </p>
-      </div>
+      </a-card>
     </OsgPageContainer>
   </div>
 </template>

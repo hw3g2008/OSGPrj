@@ -10,16 +10,16 @@
         </div>
       </template>
 
-      <div class="faq-list">
-        <article v-for="item in faqItems" :key="item.question" class="faq-item">
-          <button type="button" class="faq-question" @click="toggle(item.question)">
-            {{ item.question }}
-          </button>
-          <div v-show="openQuestion === item.question" class="faq-answer">
-            {{ item.answer }}
-          </div>
-        </article>
-      </div>
+      <a-collapse v-model:activeKey="openQuestion" accordion class="faq-list">
+        <a-collapse-panel
+          v-for="item in faqItems"
+          :key="item.question"
+          :header="item.question"
+          class="faq-item"
+        >
+          <p class="faq-answer">{{ item.answer }}</p>
+        </a-collapse-panel>
+      </a-collapse>
     </OsgPageContainer>
   </div>
 </template>
@@ -59,11 +59,7 @@ const faqItems = [
   }
 ]
 
-const openQuestion = ref('如何申请课程/Staffing Request？')
-
-const toggle = (question: string) => {
-  openQuestion.value = openQuestion.value === question ? '' : question
-}
+const openQuestion = ref<string | undefined>('如何申请课程/Staffing Request？')
 </script>
 
 <style scoped lang="scss">
@@ -84,30 +80,37 @@ const toggle = (question: string) => {
 }
 
 .faq-list {
-  display: grid;
-  gap: 12px;
+  // a-collapse 增强：取消默认外边框，让 .faq-item 独立圈边
+  background: transparent !important;
+  border: 0 !important;
 }
 
 .faq-item {
-  border: 1px solid #dbe5f0;
-  border-radius: 16px;
+  margin-bottom: 12px;
+  background: #f8fafc !important;
+  border: 1px solid #dbe5f0 !important;
+  border-radius: 16px !important;
   overflow: hidden;
-}
 
-.faq-question {
-  width: 100%;
-  border: 0;
-  background: #f8fafc;
-  padding: 18px 20px;
-  text-align: left;
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  cursor: pointer;
+  :deep(.ant-collapse-header) {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 18px 20px;
+  }
+
+  :deep(.ant-collapse-content) {
+    background: #fff;
+    border-top: 1px solid #dbe5f0;
+  }
+
+  :deep(.ant-collapse-content-box) {
+    padding: 18px 20px;
+  }
 }
 
 .faq-answer {
-  padding: 18px 20px;
+  margin: 0;
   color: #475569;
   line-height: 1.8;
 }

@@ -274,26 +274,31 @@
 
             <template v-else-if="column.key === 'actions'">
               <div class="action-cell">
-                <button
+                <a-button
+                  size="small"
                   class="action-text-btn"
                   :class="record.applied ? 'action-text-btn--applied' : 'action-text-btn--default'"
-                  type="button"
                   @click="handleAppliedButton(record)"
                 >
-                  <CheckCircleFilled v-if="record.applied" />
-                  <CheckOutlined v-else />
-                  <span>{{ record.applied ? '已投递' : '投递' }}</span>
-                </button>
+                  <template #icon>
+                    <CheckCircleFilled v-if="record.applied" />
+                    <CheckOutlined v-else />
+                  </template>
+                  {{ record.applied ? '已投递' : '投递' }}
+                </a-button>
                 <a-tooltip :title="record.favorited ? '已收藏点击取消' : '添加到收藏'">
-                  <button
+                  <a-button
+                    size="small"
+                    shape="circle"
                     class="action-icon-btn"
                     :class="record.favorited ? 'action-icon-btn--star' : 'action-icon-btn--star-off'"
                     @click="toggleFavorite(record)"
-                    type="button"
                   >
-                    <StarFilled v-if="record.favorited" />
-                    <StarOutlined v-else />
-                  </button>
+                    <template #icon>
+                      <StarFilled v-if="record.favorited" />
+                      <StarOutlined v-else />
+                    </template>
+                  </a-button>
                 </a-tooltip>
                 <a-select
                   v-if="record.applied"
@@ -304,15 +309,15 @@
                   placeholder="选择阶段"
                   @change="(val: string) => updateProgressInline(record, val)"
                 />
-                <button
+                <a-button
                   v-else
+                  size="small"
                   class="action-coaching-btn"
-                  type="button"
                   @click="openCoachingModal(record)"
                 >
-                  <i class="mdi mdi-school" aria-hidden="true"></i>
-                  <span>申请辅导</span>
-                </button>
+                  <template #icon><i class="mdi mdi-school" aria-hidden="true"></i></template>
+                  申请辅导
+                </a-button>
               </div>
             </template>
           </template>
