@@ -293,6 +293,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where application_id = #{applicationId}
     </update>
 
+    <delete id="deleteJobApplicationByApplicationId" parameterType="Long">
+        delete from osg_job_application where application_id = #{applicationId}
+    </delete>
+
     <update id="updateJobApplicationCoaching" parameterType="OsgJobApplication">
         update osg_job_application
         <set>

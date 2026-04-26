@@ -273,28 +273,28 @@
             </template>
 
             <template v-else-if="column.key === 'actions'">
-              <a-space :size="10" class="action-space">
-                <a-button
-                  size="small"
-                  class="applied-btn"
-                  :class="record.applied ? 'applied-btn--on' : 'applied-btn--off'"
+              <div class="action-cell">
+                <button
+                  class="action-text-btn"
+                  :class="record.applied ? 'action-text-btn--applied' : 'action-text-btn--default'"
+                  type="button"
                   @click="handleAppliedButton(record)"
                 >
                   <CheckCircleFilled v-if="record.applied" />
                   <CheckOutlined v-else />
-                  {{ record.applied ? '已投递' : '投递' }}
-                </a-button>
-                <a-button
-                  size="small"
-                  shape="circle"
-                  class="fav-btn"
-                  :class="record.favorited ? 'fav-btn--on' : 'fav-btn--off'"
-                  :title="record.favorited ? '已收藏' : '收藏'"
-                  @click="toggleFavorite(record)"
-                >
-                  <StarFilled v-if="record.favorited" />
-                  <StarOutlined v-else />
-                </a-button>
+                  <span>{{ record.applied ? '已投递' : '投递' }}</span>
+                </button>
+                <a-tooltip :title="record.favorited ? '已收藏点击取消' : '添加到收藏'">
+                  <button
+                    class="action-icon-btn"
+                    :class="record.favorited ? 'action-icon-btn--star' : 'action-icon-btn--star-off'"
+                    @click="toggleFavorite(record)"
+                    type="button"
+                  >
+                    <StarFilled v-if="record.favorited" />
+                    <StarOutlined v-else />
+                  </button>
+                </a-tooltip>
                 <a-select
                   v-if="record.applied"
                   :value="record.progressStage"
@@ -304,17 +304,16 @@
                   placeholder="选择阶段"
                   @change="(val: string) => updateProgressInline(record, val)"
                 />
-                <a-button
+                <button
                   v-else
-                  size="small"
-                  type="primary"
-                  class="coaching-btn"
+                  class="action-coaching-btn"
+                  type="button"
                   @click="openCoachingModal(record)"
                 >
-                  <template #icon><i class="mdi mdi-school" aria-hidden="true"></i></template>
-                  申请辅导
-                </a-button>
-              </a-space>
+                  <i class="mdi mdi-school" aria-hidden="true"></i>
+                  <span>申请辅导</span>
+                </button>
+              </div>
             </template>
           </template>
         </a-table>
@@ -1915,6 +1914,117 @@ watch(
     }
   }
 
+  .action-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .action-text-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+
+    &--default {
+      background: #ffffff;
+      border-color: #d1d5db;
+      color: #6b7280;
+
+      &:hover {
+        border-color: #22c55e;
+        color: #22c55e;
+        box-shadow: 0 2px 6px rgba(34, 197, 94, 0.15);
+      }
+    }
+
+    &--applied {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-color: #16a34a;
+      color: #ffffff;
+
+      &:hover {
+        background: linear-gradient(135deg, #16a34a, #15803d);
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+      }
+    }
+  }
+
+  .action-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    font-size: 14px;
+    transition: all 0.18s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    &--star-off {
+      background: #ffffff;
+      border-color: #f59e0b;
+      color: #f59e0b;
+
+      &:hover {
+        background: #fef3c7;
+      }
+    }
+
+    &--star {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      border-color: #d97706;
+      color: #ffffff;
+    }
+  }
+
+  .action-coaching-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+
+    &:hover {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+    }
+
+    .mdi {
+      font-size: 14px;
+    }
+  }
+
   .progress-stage-select {
     min-width: 132px;
 
@@ -1926,8 +2036,8 @@ watch(
       font-size: 12px;
       border-radius: 6px !important;
       padding: 0 28px 0 12px !important;
-      height: 24px !important;
-      line-height: 22px !important;
+      height: 28px !important;
+      line-height: 26px !important;
       display: flex;
       align-items: center;
       box-shadow: 0 1px 2px rgba(245, 158, 11, 0.15);
@@ -1940,17 +2050,13 @@ watch(
 
     :deep(.ant-select-selection-item) {
       color: #92400e !important;
-      line-height: 22px !important;
+      line-height: 26px !important;
     }
 
     &:hover :deep(.ant-select-selector) {
       border-color: #d97706 !important;
       background: #fde68a !important;
     }
-  }
-
-  .action-space {
-    align-items: center;
   }
 
   .industry-section {

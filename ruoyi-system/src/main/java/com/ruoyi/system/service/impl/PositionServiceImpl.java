@@ -323,7 +323,18 @@ public class PositionServiceImpl implements IPositionService
         LocalDate normalizedDate = appliedFlag ? parseRequiredDate(appliedDate) : null;
         String normalizedMethod = appliedFlag ? defaultString(method, "官网投递") : null;
         String normalizedNote = appliedFlag ? defaultString(note, "") : "";
-        int mainRows = upsertMainApplication(positionId, position, userId, "applied", normalizedNote, normalizedDate, "none", null, 0);
+
+        int mainRows;
+        if (appliedFlag)
+        {
+            mainRows = upsertMainApplication(positionId, position, userId, "applied", normalizedNote, normalizedDate, "none", null, 0);
+        }
+        else
+        {
+            // 取消投递：删除 main_application 中对应记录，避免 list 时仍显示已投递
+            mainRows = deleteMainApplicationIfPresent(positionId, position, userId);
+        }
+
         if (position.shadowCompatible())
         {
             return studentJobPositionMapper.upsertApplyState(
@@ -337,6 +348,21 @@ public class PositionServiceImpl implements IPositionService
                     "");
         }
         return mainRows;
+    }
+
+    private int deleteMainApplicationIfPresent(Long positionId, PositionReference positionReference, Long userId)
+    {
+        OsgStudent student = identityResolver.resolveStudentByUserId(userId);
+        Map<String, Object> position = positionReference.position();
+        String companyName = stringValue(position.get("company"));
+        String positionName = stringValue(position.get("title"));
+        OsgJobApplication existing = jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(
+                student.getStudentId(), companyName, positionName);
+        if (existing == null || existing.getApplicationId() == null)
+        {
+            return 0;
+        }
+        return jobApplicationMapper.deleteJobApplicationByApplicationId(existing.getApplicationId());
     }
 
     /**
