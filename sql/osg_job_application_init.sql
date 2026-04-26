@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS osg_job_application (
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_by VARCHAR(64) NULL,
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    remark VARCHAR(255) NULL,
+    remark VARCHAR(2000) NULL,
     CONSTRAINT fk_job_application_student FOREIGN KEY (student_id) REFERENCES osg_student (student_id),
     CONSTRAINT fk_job_application_position FOREIGN KEY (position_id) REFERENCES osg_position (position_id)
 );

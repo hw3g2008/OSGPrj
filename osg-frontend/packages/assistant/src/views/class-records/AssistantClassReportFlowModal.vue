@@ -251,10 +251,13 @@
               </template>
               <a-upload-dragger
                 v-model:file-list="form.resumeBeforeFiles"
-                :before-upload="() => false"
+                :action="resumeUploadAction"
+                :headers="resumeUploadHeaders"
+                name="file"
                 :max-count="1"
                 accept=".pdf,.doc,.docx"
                 class="resume-dragger"
+                @change="handleResumeBeforeUpload"
               >
                 <p class="resume-dragger__icon">
                   <InboxOutlined />
@@ -271,10 +274,13 @@
               </template>
               <a-upload-dragger
                 v-model:file-list="form.resumeAfterFiles"
-                :before-upload="() => false"
+                :action="resumeUploadAction"
+                :headers="resumeUploadHeaders"
+                name="file"
                 :max-count="1"
                 accept=".pdf,.doc,.docx"
                 class="resume-dragger"
+                @change="handleResumeAfterUpload"
               >
                 <p class="resume-dragger__icon">
                   <InboxOutlined />
@@ -507,6 +513,7 @@ import {
   getAssistantStudentList,
   type AssistantClassRecordCreatePayload,
 } from '@osg/shared/api'
+import { getToken } from '@osg/shared/utils'
 import {
   isMidtermContext,
   isMockInterviewContext,
@@ -537,6 +544,8 @@ interface FormState {
   feedbackContent: string
   resumeBeforeFiles: UploadFile[]
   resumeAfterFiles: UploadFile[]
+  resumeBeforeUrl: string
+  resumeAfterUrl: string
   mockPurpose: string
   mockConcepts: string
   mockWeakTopics: string
@@ -638,6 +647,8 @@ function createDefaultForm(): FormState {
     feedbackContent: '',
     resumeBeforeFiles: [],
     resumeAfterFiles: [],
+    resumeBeforeUrl: '',
+    resumeAfterUrl: '',
     mockPurpose: '',
     mockConcepts: '',
     mockWeakTopics: '',
@@ -651,6 +662,48 @@ function createDefaultForm(): FormState {
 }
 
 const form = reactive<FormState>(createDefaultForm())
+
+// 简历附件真实上传配置（与岗位页同款 ruoyi /common/upload 实现）
+const resumeUploadAction = '/api/common/upload'
+const resumeUploadHeaders = computed(() => ({
+  Authorization: `Bearer ${getToken()}`
+}))
+
+function extractUploadedUrl(file: any): string {
+  return file?.response?.url || file?.response?.fileName || ''
+}
+
+function handleResumeBeforeUpload(info: { file: any }) {
+  if (info.file?.status === 'done') {
+    const url = extractUploadedUrl(info.file)
+    if (url) {
+      form.resumeBeforeUrl = url
+      message.success('原简历上传成功')
+    } else {
+      message.error('原简历上传响应缺少 url，请重试')
+    }
+  } else if (info.file?.status === 'error') {
+    message.error('原简历上传失败，请重试')
+  } else if (info.file?.status === 'removed') {
+    form.resumeBeforeUrl = ''
+  }
+}
+
+function handleResumeAfterUpload(info: { file: any }) {
+  if (info.file?.status === 'done') {
+    const url = extractUploadedUrl(info.file)
+    if (url) {
+      form.resumeAfterUrl = url
+      message.success('修改后简历上传成功')
+    } else {
+      message.error('修改后简历上传响应缺少 url，请重试')
+    }
+  } else if (info.file?.status === 'error') {
+    message.error('修改后简历上传失败，请重试')
+  } else if (info.file?.status === 'removed') {
+    form.resumeAfterUrl = ''
+  }
+}
 
 // ── Rules ──
 const formRules: Record<string, Rule[]> = {

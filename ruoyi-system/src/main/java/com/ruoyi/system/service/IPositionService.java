@@ -87,6 +87,23 @@ public interface IPositionService
     public int requestCoaching(Long positionId, String stage, String mentorCount, String note, Long userId);
 
     /**
+     * 提交岗位辅导申请（含 HireVue / 常规两套模板的扩展字段）。
+     *
+     * 用于学生在岗位列表里点击"申请辅导"时提交完整模板：
+     * - 当 stage = hirevue：必填 hirevueType / viLink|otLink+otAccount+otPassword / hirevueDeadline / inviteScreenshotName / mentorHelp
+     * - 其它 stage：必填 interviewTime；选填 mentorCount / preferMentor / excludeMentor
+     *
+     * 扩展字段会按 buildManualPositionRemark 同款规则序列化为 key=value 文本，并拼到 note 后写入主申请 remark，
+     * 方便班主任与后台管理员通过现有列表查看完整诉求。
+     *
+     * @param positionId 岗位ID
+     * @param params 请求参数（详见上方说明）
+     * @param userId 用户ID
+     * @return 结果
+     */
+    public int requestCoaching(Long positionId, Map<String, Object> params, Long userId);
+
+    /**
      * 手动添加岗位
      * 
      * @param category 岗位分类

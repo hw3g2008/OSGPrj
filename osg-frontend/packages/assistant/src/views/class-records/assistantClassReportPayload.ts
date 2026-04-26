@@ -31,6 +31,8 @@ export interface ReportFormSnapshot {
   midtermProgress: string
   resumeBeforeFiles: Array<{ name?: string }>
   resumeAfterFiles: Array<{ name?: string }>
+  resumeBeforeUrl?: string
+  resumeAfterUrl?: string
 }
 
 // ── Payload enum mapping ──
@@ -130,8 +132,14 @@ export function resolveComments(
   if (form.resumeBeforeFiles.length > 0 && form.resumeBeforeFiles[0].name) {
     segments.push(`原简历: ${form.resumeBeforeFiles[0].name}`)
   }
+  if (form.resumeBeforeUrl) {
+    segments.push(`原简历URL: ${form.resumeBeforeUrl}`)
+  }
   if (form.resumeAfterFiles.length > 0 && form.resumeAfterFiles[0].name) {
     segments.push(`修改后简历: ${form.resumeAfterFiles[0].name}`)
+  }
+  if (form.resumeAfterUrl) {
+    segments.push(`修改后简历URL: ${form.resumeAfterUrl}`)
   }
 
   return segments.length > 0 ? segments.join('\n') : undefined

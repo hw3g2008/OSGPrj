@@ -506,10 +506,15 @@
               </a-form-item>
               <a-form-item label="上传邀请邮件截图" required class="manual-field manual-field--full">
                 <a-upload
+                  :action="uploadAction"
+                  :headers="uploadHeaders"
+                  name="file"
                   accept="image/*"
-                  :before-upload="handleManualHirevueUpload"
+                  :max-count="1"
+                  :file-list="manualHirevueFileList"
                   :show-upload-list="false"
                   class="upload-dropzone upload-dropzone--compact"
+                  @change="handleManualHirevueUpload"
                 >
                   <CloudUploadOutlined class="upload-dropzone__icon" />
                   <span class="upload-dropzone__title">点击上传截图</span>
@@ -635,12 +640,14 @@
       ok-text="提交申请"
       cancel-text="取消"
       destroy-on-close
+      :width="650"
+      class="coaching-apply-modal"
       @ok="submitCoachingApplication"
     >
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
-          <i class="mdi mdi-school" aria-hidden="true" style="color: #7c3aed; font-size: 16px"></i>
-          <span>申请面试辅导</span>
+          <i class="mdi mdi-briefcase-plus" aria-hidden="true" style="color: #1d4ed8; font-size: 16px"></i>
+          <span>岗位申请</span>
         </span>
       </template>
       <div v-if="selectedPosition" class="modal-job-card coaching-card">
@@ -648,26 +655,115 @@
         <div class="modal-job-sub">{{ selectedPosition.title }} · {{ selectedPosition.location }}</div>
       </div>
       <a-form layout="vertical">
-        <a-form-item label="当前面试阶段" required>
-          <a-select
-            v-model:value="coachingForm.stage"
-            show-search
-            option-filter-prop="label"
-            placeholder="请选择当前阶段"
-            :options="filterOptions.coachingStages"
-          />
+        <a-form-item label="你现在处于什么阶段？" required>
+          <a-select v-model:value="coachingForm.stage" placeholder="请选择面试阶段">
+            <a-select-option value="hirevue">HireVue or Online Test（在线测试）</a-select-option>
+            <a-select-option value="screening">Screening Call (Phone Screen / HR Screen / Initial Call / Recruiter Call)</a-select-option>
+            <a-select-option value="first">First Round</a-select-option>
+            <a-select-option value="second">Second Round</a-select-option>
+            <a-select-option value="third">Third Round and Beyond</a-select-option>
+            <a-select-option value="case">Case Study Round</a-select-option>
+            <a-select-option value="superday">Superday / Assessment Centre / AC</a-select-option>
+          </a-select>
         </a-form-item>
-        <a-form-item label="导师数量" required>
-          <a-select
-            v-model:value="coachingForm.mentorCount"
-            show-search
-            option-filter-prop="label"
-            placeholder="请选择导师数量"
-            :options="filterOptions.mentorCounts"
+
+        <div v-if="coachingIsHirevue" class="manual-hirevue-card">
+          <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
+          <a-form-item label="请选择类型" required>
+            <a-radio-group v-model:value="coachingForm.hirevueType" class="inline-radios">
+              <a-radio value="vi">VI (Video Interview)</a-radio>
+              <a-radio value="ot">OT (Online Test)</a-radio>
+            </a-radio-group>
+          </a-form-item>
+          <a-form-item v-if="coachingForm.hirevueType === 'vi'" label="VI 链接" required>
+            <a-input v-model:value="coachingForm.viLink" placeholder="请输入 Video Interview 链接" />
+          </a-form-item>
+          <template v-if="coachingForm.hirevueType === 'ot'">
+            <a-form-item label="OT 链接" required>
+              <a-input v-model:value="coachingForm.otLink" placeholder="请输入 Online Test 链接" />
+            </a-form-item>
+            <div class="manual-section-grid">
+              <a-form-item label="登录账号" required class="manual-field">
+                <a-input v-model:value="coachingForm.otAccount" placeholder="账号" />
+              </a-form-item>
+              <a-form-item label="登录密码" required class="manual-field">
+                <a-input-password v-model:value="coachingForm.otPassword" placeholder="密码" />
+              </a-form-item>
+            </div>
+          </template>
+          <a-form-item label="截止时间" required extra="请填写 VI/OT 的截止时间">
+            <a-date-picker
+              v-model:value="coachingForm.hirevueDeadline"
+              show-time
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DDTHH:mm"
+              style="width:100%"
+              placeholder="选择截止日期与时间"
+            />
+          </a-form-item>
+          <a-form-item label="上传邀请邮件截图" required>
+            <a-upload
+              :action="uploadAction"
+              :headers="uploadHeaders"
+              name="file"
+              accept="image/*"
+              :max-count="1"
+              :file-list="coachingHirevueFileList"
+              :show-upload-list="false"
+              class="upload-dropzone upload-dropzone--compact"
+              @change="handleCoachingHirevueUpload"
+            >
+              <CloudUploadOutlined class="upload-dropzone__icon" />
+              <span class="upload-dropzone__title">点击上传截图</span>
+              <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+              <span v-if="coachingForm.inviteScreenshotName" class="upload-dropzone__file">{{ coachingForm.inviteScreenshotName }}</span>
+            </a-upload>
+          </a-form-item>
+          <a-form-item label="是否需要导师协助？" required>
+            <a-radio-group v-model:value="coachingForm.mentorHelp" class="inline-radios">
+              <a-radio value="yes">是，需要导师协助</a-radio>
+              <a-radio value="no">否，仅需题库权限</a-radio>
+            </a-radio-group>
+          </a-form-item>
+        </div>
+
+        <template v-if="coachingShowInterview">
+          <a-form-item label="该阶段的面试时间" required extra="请填写该阶段面试的具体时间，方便导师安排辅导">
+            <a-date-picker
+              v-model:value="coachingForm.interviewTime"
+              show-time
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DDTHH:mm"
+              style="width:100%"
+              placeholder="选择面试日期与时间"
+            />
+          </a-form-item>
+          <a-form-item label="你期望有几个导师辅导？（选填）">
+            <a-select v-model:value="coachingForm.mentorCount" placeholder="请选择" allow-clear>
+              <a-select-option value="0">0 位（不需要导师）</a-select-option>
+              <a-select-option value="1">1 位导师</a-select-option>
+              <a-select-option value="2">2 位导师</a-select-option>
+              <a-select-option value="3">3 位导师</a-select-option>
+            </a-select>
+          </a-form-item>
+          <div class="manual-section-grid">
+            <a-form-item label="意向导师（选填）" class="manual-field">
+              <a-input v-model:value="coachingForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
+            </a-form-item>
+            <a-form-item label="排除导师（选填）" class="manual-field">
+              <a-input v-model:value="coachingForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
+            </a-form-item>
+          </div>
+          <a-alert
+            type="success"
+            show-icon
+            message="申请将流转至班主任和后台管理员，他们都有权限为您分配导师。"
+            class="coaching-info-alert"
           />
-        </a-form-item>
-        <a-form-item label="备注说明">
-          <a-textarea v-model:value="coachingForm.note" :rows="3" placeholder="如有特殊辅导需求，请在这里补充" />
+        </template>
+
+        <a-form-item label="备注说明（选填）">
+          <a-textarea v-model:value="coachingForm.note" :rows="2" placeholder="如有其他需求或说明，请在此填写..." />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -678,6 +774,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import type { UploadChangeParam } from 'ant-design-vue'
 import {
   createStudentManualPosition,
   getStudentPositionMeta,
@@ -692,6 +789,7 @@ import {
   type StudentPositionRecord
 } from '@osg/shared/api'
 import { useIndustryMeta, useDictFacade } from '@osg/shared'
+import { getToken } from '@osg/shared/utils'
 import {
   AppstoreOutlined,
   CheckCircleFilled,
@@ -825,6 +923,15 @@ const COMPANY_TYPES = computed(() =>
 )
 
 
+// 邀请邮件截图通用上传配置（与 admin 端合同附件同款 ruoyi /common/upload 实现）。
+// manualForm 与 coachingForm 共用 action/headers，fileList 各自维护避免互相覆盖。
+const uploadAction = '/api/common/upload'
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${getToken()}`
+}))
+const manualHirevueFileList = ref<any[]>([])
+const coachingHirevueFileList = ref<any[]>([])
+
 const manualForm = ref({
   category: undefined as string | undefined,
   title: '',
@@ -847,6 +954,7 @@ const manualForm = ref({
   otPassword: '',
   hirevueDeadline: '',
   inviteScreenshotName: '',
+  inviteScreenshotUrl: '',
   mentorHelp: undefined as string | undefined,
   interviewTime: '',
   mentorCount: undefined as string | undefined,
@@ -868,9 +976,26 @@ const appliedForm = ref({
 
 const coachingForm = ref({
   stage: undefined as string | undefined,
+  hirevueType: undefined as string | undefined,
+  viLink: '',
+  otLink: '',
+  otAccount: '',
+  otPassword: '',
+  hirevueDeadline: '',
+  inviteScreenshotName: '',
+  inviteScreenshotUrl: '',
+  mentorHelp: undefined as string | undefined,
+  interviewTime: '',
   mentorCount: undefined as string | undefined,
+  preferMentor: '',
+  excludeMentor: '',
   note: ''
 })
+
+const coachingIsHirevue = computed(() => coachingForm.value.stage === 'hirevue')
+const coachingShowInterview = computed(
+  () => !!coachingForm.value.stage && coachingForm.value.stage !== 'hirevue'
+)
 
 const positionColumns = [
   { title: '岗位名称', key: 'title', width: 240 },
@@ -890,6 +1015,7 @@ const listColumns = [
   { title: '岗位分类', key: 'category', width: 100 },
   { title: '地区', dataIndex: 'location', width: 90 },
   { title: '招聘周期', key: 'recruitCycleCell', width: 100 },
+  { title: '发布时间', dataIndex: 'publishDate', width: 100 },
   { title: '截止时间', key: 'deadlineCell', width: 100 },
   { title: '操作', key: 'actions', width: 220 }
 ]
@@ -926,9 +1052,36 @@ function onManualRegionChange() {
   manualForm.value.city = undefined
 }
 
-function handleManualHirevueUpload(file: File) {
-  manualForm.value.inviteScreenshotName = file.name ?? ''
-  return false
+function handleManualHirevueUpload(info: UploadChangeParam) {
+  manualHirevueFileList.value = info.fileList.slice(-1)
+  if (info.file.status === 'done') {
+    const url = info.file.response?.url || info.file.response?.fileName
+    if (url) {
+      manualForm.value.inviteScreenshotName = info.file.name ?? ''
+      manualForm.value.inviteScreenshotUrl = url
+      message.success('邀请邮件截图上传成功')
+    } else {
+      message.error('上传响应缺少 url，请重试')
+    }
+  } else if (info.file.status === 'error') {
+    message.error('上传失败，请重试')
+  }
+}
+
+function handleCoachingHirevueUpload(info: UploadChangeParam) {
+  coachingHirevueFileList.value = info.fileList.slice(-1)
+  if (info.file.status === 'done') {
+    const url = info.file.response?.url || info.file.response?.fileName
+    if (url) {
+      coachingForm.value.inviteScreenshotName = info.file.name ?? ''
+      coachingForm.value.inviteScreenshotUrl = url
+      message.success('邀请邮件截图上传成功')
+    } else {
+      message.error('上传响应缺少 url，请重试')
+    }
+  } else if (info.file.status === 'error') {
+    message.error('上传失败，请重试')
+  }
 }
 
 const categoryOptionsByValue = computed(() => optionMap(filterOptions.value.categories))
@@ -1113,6 +1266,7 @@ function openManualAddModal() {
     otPassword: '',
     hirevueDeadline: '',
     inviteScreenshotName: '',
+    inviteScreenshotUrl: '',
     mentorHelp: undefined,
     interviewTime: '',
     mentorCount: undefined,
@@ -1120,6 +1274,7 @@ function openManualAddModal() {
     excludeMentor: '',
     note: ''
   }
+  manualHirevueFileList.value = []
   manualAddOpen.value = true
 }
 
@@ -1180,9 +1335,22 @@ function openCoachingModal(record: PositionRecord) {
   setSelectedPosition(record)
   coachingForm.value = {
     stage: undefined,
+    hirevueType: undefined,
+    viLink: '',
+    otLink: '',
+    otAccount: '',
+    otPassword: '',
+    hirevueDeadline: '',
+    inviteScreenshotName: '',
+    inviteScreenshotUrl: '',
+    mentorHelp: undefined,
+    interviewTime: '',
     mentorCount: undefined,
+    preferMentor: '',
+    excludeMentor: '',
     note: ''
   }
+  coachingHirevueFileList.value = []
   coachingModalOpen.value = true
 }
 
@@ -1271,6 +1439,7 @@ async function submitManualPosition() {
     otPassword: f.needCoaching && f.hirevueType === 'ot' ? f.otPassword : undefined,
     hirevueDeadline: f.needCoaching && f.coachingStage === 'hirevue' ? f.hirevueDeadline : undefined,
     inviteScreenshotName: f.inviteScreenshotName || undefined,
+    inviteScreenshotUrl: f.inviteScreenshotUrl || undefined,
     mentorHelp: f.needCoaching && f.coachingStage === 'hirevue' ? f.mentorHelp : undefined,
     interviewTime: f.needCoaching && f.coachingStage !== 'hirevue' ? f.interviewTime : undefined,
     preferMentor: f.needCoaching ? f.preferMentor || undefined : undefined,
@@ -1343,21 +1512,62 @@ async function submitCoachingApplication() {
     return
   }
 
-  if (!coachingForm.value.stage) {
+  const f = coachingForm.value
+
+  if (!f.stage) {
     message.error('请选择当前面试阶段')
     return
   }
 
-  if (!coachingForm.value.mentorCount) {
-    message.error('请选择导师数量')
-    return
+  if (f.stage === 'hirevue') {
+    if (!f.hirevueType) {
+      message.error('请选择 VI 或 OT 类型')
+      return
+    }
+    if (f.hirevueType === 'vi' && !f.viLink) {
+      message.error('请填写 VI 链接')
+      return
+    }
+    if (f.hirevueType === 'ot' && (!f.otLink || !f.otAccount || !f.otPassword)) {
+      message.error('请完整填写 OT 链接、账号和密码')
+      return
+    }
+    if (!f.hirevueDeadline) {
+      message.error('请填写截止时间')
+      return
+    }
+    if (!f.inviteScreenshotUrl) {
+      message.error('请上传邀请邮件截图')
+      return
+    }
+    if (!f.mentorHelp) {
+      message.error('请选择是否需要导师协助')
+      return
+    }
+  } else {
+    if (!f.interviewTime) {
+      message.error('请填写该阶段的面试时间')
+      return
+    }
   }
 
   await requestStudentPositionCoaching({
     positionId: selectedPosition.value.id,
-    stage: coachingForm.value.stage,
-    mentorCount: coachingForm.value.mentorCount,
-    note: coachingForm.value.note
+    stage: f.stage,
+    mentorCount: f.stage !== 'hirevue' ? (f.mentorCount || '0') : undefined,
+    note: f.note || undefined,
+    hirevueType: f.stage === 'hirevue' ? f.hirevueType : undefined,
+    viLink: f.hirevueType === 'vi' ? f.viLink : undefined,
+    otLink: f.hirevueType === 'ot' ? f.otLink : undefined,
+    otAccount: f.hirevueType === 'ot' ? f.otAccount : undefined,
+    otPassword: f.hirevueType === 'ot' ? f.otPassword : undefined,
+    hirevueDeadline: f.stage === 'hirevue' ? f.hirevueDeadline : undefined,
+    inviteScreenshotName: f.stage === 'hirevue' ? f.inviteScreenshotName || undefined : undefined,
+    inviteScreenshotUrl: f.stage === 'hirevue' ? f.inviteScreenshotUrl || undefined : undefined,
+    mentorHelp: f.stage === 'hirevue' ? f.mentorHelp : undefined,
+    interviewTime: f.stage !== 'hirevue' ? f.interviewTime : undefined,
+    preferMentor: f.preferMentor || undefined,
+    excludeMentor: f.excludeMentor || undefined
   })
   await loadPositions()
   coachingModalOpen.value = false

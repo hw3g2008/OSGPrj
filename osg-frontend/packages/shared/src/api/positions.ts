@@ -177,8 +177,20 @@ export function updateStudentPositionProgress(data: {
 export function requestStudentPositionCoaching(data: {
   positionId: number
   stage: string
-  mentorCount: string
-  note: string
+  mentorCount?: string
+  note?: string
+  hirevueType?: string
+  viLink?: string
+  otLink?: string
+  otAccount?: string
+  otPassword?: string
+  hirevueDeadline?: string
+  inviteScreenshotName?: string
+  inviteScreenshotUrl?: string
+  mentorHelp?: string
+  interviewTime?: string
+  preferMentor?: string
+  excludeMentor?: string
 }): Promise<void> {
   return http.post('/student/position/coaching', data)
 }
@@ -207,6 +219,7 @@ export function createStudentManualPosition(data: {
   otPassword?: string
   hirevueDeadline?: string
   inviteScreenshotName?: string
+  inviteScreenshotUrl?: string
   mentorHelp?: string
   interviewTime?: string
   preferMentor?: string

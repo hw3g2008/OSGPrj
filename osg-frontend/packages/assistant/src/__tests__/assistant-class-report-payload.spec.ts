@@ -287,4 +287,18 @@ describe('resolveComments', () => {
     expect(result).toContain('原简历: original.pdf')
     expect(result).toContain('修改后简历: updated.pdf')
   })
+
+  it('serializes resume URLs to comments when uploaded', () => {
+    const form = baseForm({
+      courseTypeUi: 'job-coaching',
+      jobContentType: 'resume_update',
+      resumeBeforeFiles: [{ name: 'original.pdf' }],
+      resumeAfterFiles: [{ name: 'updated.pdf' }],
+      resumeBeforeUrl: 'http://127.0.0.1:28080/profile/upload/2026/04/27/original_xxx.pdf',
+      resumeAfterUrl: 'http://127.0.0.1:28080/profile/upload/2026/04/27/updated_yyy.pdf',
+    })
+    const result = resolveComments(form, performanceOptions)
+    expect(result).toContain('原简历URL: http://127.0.0.1:28080/profile/upload/2026/04/27/original_xxx.pdf')
+    expect(result).toContain('修改后简历URL: http://127.0.0.1:28080/profile/upload/2026/04/27/updated_yyy.pdf')
+  })
 })

@@ -3,6 +3,7 @@ package com.ruoyi.system.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -227,6 +228,131 @@ class PositionServiceImplTest
         assertEquals(2, patch.getRequestedMentorCount());
         assertEquals("希望有投行导师", patch.getRemark());
         verify(studentJobPositionMapper).upsertCoachingState(501L, 838L, "pending", "first", "2 位导师", "希望有投行导师");
+    }
+
+    @Test
+    void requestCoachingExtendedHirevuePathSerializesAllFieldsToRemark()
+    {
+        OsgJobApplication existing = new OsgJobApplication();
+        existing.setApplicationId(9001L);
+        existing.setStudentId(12766L);
+        existing.setCompanyName("Goldman Sachs");
+        existing.setPositionName("Summer Analyst");
+
+        when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
+        when(positionMapper.selectPositionByPositionId(501L)).thenReturn(publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York"));
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(12766L, "Goldman Sachs", "Summer Analyst")).thenReturn(existing);
+        when(jobApplicationMapper.updateJobApplicationCoaching(any(OsgJobApplication.class))).thenReturn(1);
+        when(studentJobPositionMapper.upsertCoachingState(eq(501L), eq(838L), eq("pending"), eq("hirevue"), eq("0"), any())).thenReturn(1);
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("stage", "hirevue");
+        params.put("hirevueType", "vi");
+        params.put("viLink", "https://hirevue.example.com/abc");
+        params.put("hirevueDeadline", "2026-03-30T15:00");
+        params.put("inviteScreenshotName", "invite.png");
+        params.put("inviteScreenshotUrl", "http://localhost:28080/profile/upload/2026/04/26/invite.png");
+        params.put("mentorHelp", "yes");
+        params.put("note", "希望尽快安排");
+
+        int rows = service.requestCoaching(501L, params, 838L);
+
+        assertEquals(1, rows);
+        ArgumentCaptor<String> remarkCaptor = ArgumentCaptor.forClass(String.class);
+        verify(studentJobPositionMapper).upsertCoachingState(eq(501L), eq(838L), eq("pending"), eq("hirevue"), eq("0"), remarkCaptor.capture());
+        String remark = remarkCaptor.getValue();
+        assertTrue(remark.contains("needCoaching=yes"), remark);
+        assertTrue(remark.contains("stage=hirevue"), remark);
+        assertTrue(remark.contains("hirevueType=vi"), remark);
+        assertTrue(remark.contains("viLink=https://hirevue.example.com/abc"), remark);
+        assertTrue(remark.contains("hirevueDeadline=2026-03-30T15:00"), remark);
+        assertTrue(remark.contains("inviteScreenshot=invite.png"), remark);
+        assertTrue(remark.contains("inviteScreenshotUrl=http://localhost:28080/profile/upload/2026/04/26/invite.png"), remark);
+        assertTrue(remark.contains("mentorHelp=yes"), remark);
+        assertTrue(remark.contains("note=希望尽快安排"), remark);
+    }
+
+    @Test
+    void requestCoachingExtendedRegularPathSerializesInterviewTimeAndMentorPreferences()
+    {
+        OsgJobApplication existing = new OsgJobApplication();
+        existing.setApplicationId(9001L);
+        existing.setStudentId(12766L);
+        existing.setCompanyName("Goldman Sachs");
+        existing.setPositionName("Summer Analyst");
+
+        when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
+        when(positionMapper.selectPositionByPositionId(501L)).thenReturn(publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York"));
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(12766L, "Goldman Sachs", "Summer Analyst")).thenReturn(existing);
+        when(jobApplicationMapper.updateJobApplicationCoaching(any(OsgJobApplication.class))).thenReturn(1);
+        when(studentJobPositionMapper.upsertCoachingState(eq(501L), eq(838L), eq("pending"), eq("first"), eq("2"), any())).thenReturn(1);
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("stage", "first");
+        params.put("interviewTime", "2026-04-01T10:30");
+        params.put("mentorCount", "2");
+        params.put("preferMentor", "Jerry Li");
+        params.put("excludeMentor", "Tom Z");
+        params.put("note", "希望有投行导师");
+
+        int rows = service.requestCoaching(501L, params, 838L);
+
+        assertEquals(1, rows);
+        ArgumentCaptor<String> remarkCaptor = ArgumentCaptor.forClass(String.class);
+        verify(studentJobPositionMapper).upsertCoachingState(eq(501L), eq(838L), eq("pending"), eq("first"), eq("2"), remarkCaptor.capture());
+        String remark = remarkCaptor.getValue();
+        assertTrue(remark.contains("needCoaching=yes"), remark);
+        assertTrue(remark.contains("stage=first"), remark);
+        assertTrue(remark.contains("interviewTime=2026-04-01T10:30"), remark);
+        assertTrue(remark.contains("mentorCount=2"), remark);
+        assertTrue(remark.contains("preferMentor=Jerry Li"), remark);
+        assertTrue(remark.contains("excludeMentor=Tom Z"), remark);
+        assertTrue(remark.contains("note=希望有投行导师"), remark);
+    }
+
+    @Test
+    void requestCoachingExtendedThrowsWhenHirevueTypeMissing()
+    {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("stage", "hirevue");
+        params.put("hirevueDeadline", "2026-03-30T15:00");
+        params.put("inviteScreenshotName", "invite.png");
+        params.put("inviteScreenshotUrl", "http://localhost:28080/profile/upload/2026/04/26/invite.png");
+        params.put("mentorHelp", "yes");
+
+        ServiceException ex = assertThrows(ServiceException.class, () -> service.requestCoaching(501L, params, 838L));
+        assertEquals("请选择 HireVue / OT 类型", ex.getMessage());
+        verify(studentJobPositionMapper, never()).upsertCoachingState(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void requestCoachingExtendedThrowsWhenInviteScreenshotUrlMissingForHirevue()
+    {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("stage", "hirevue");
+        params.put("hirevueType", "vi");
+        params.put("viLink", "https://hirevue.example.com/abc");
+        params.put("hirevueDeadline", "2026-03-30T15:00");
+        params.put("inviteScreenshotName", "invite.png");
+        params.put("mentorHelp", "yes");
+
+        ServiceException ex = assertThrows(ServiceException.class, () -> service.requestCoaching(501L, params, 838L));
+        assertEquals("请上传邀请邮件截图", ex.getMessage());
+        verify(studentJobPositionMapper, never()).upsertCoachingState(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void requestCoachingExtendedThrowsWhenInterviewTimeMissingForNonHirevue()
+    {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("stage", "first");
+        params.put("preferMentor", "Jerry Li");
+
+        ServiceException ex = assertThrows(ServiceException.class, () -> service.requestCoaching(501L, params, 838L));
+        assertEquals("请填写该阶段的面试时间", ex.getMessage());
+        verify(studentJobPositionMapper, never()).upsertCoachingState(any(), any(), any(), any(), any(), any());
     }
 
     @Test

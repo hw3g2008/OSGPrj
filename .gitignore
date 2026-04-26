@@ -110,5 +110,6 @@ runtime/
 
 .worktrees/
 tmp/
+.tmp/
 ruoyi-admin/null/
 org/springframework/

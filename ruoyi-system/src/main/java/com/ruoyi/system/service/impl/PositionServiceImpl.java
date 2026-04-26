@@ -85,7 +85,8 @@ public class PositionServiceImpl implements IPositionService
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 4L, "Second Round", "second", "orange", null, "岗位进度"),
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 5L, "Case Study", "case", "gold", null, "岗位进度"),
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 6L, "Offer", "offer", "green", null, "岗位进度"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 7L, "已拒绝", "rejected", "red", null, "岗位进度"));
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 7L, "已拒绝", "rejected", "red", null, "岗位进度"),
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 8L, "主动放弃", "withdraw", "default", null, "岗位进度"));
 
     private static final List<DictSeed> COACHING_STAGE_SEEDS = List.of(
             new DictSeed(DICT_TYPE_POSITION_COACHING_STAGE, 1L, "HireVue / Online Test", "hirevue", null, null, "辅导阶段"),
@@ -425,6 +426,114 @@ public class PositionServiceImpl implements IPositionService
     }
 
     /**
+     * 提交岗位辅导申请（含 HireVue / 常规两套模板扩展字段）。
+     *
+     * 校验规则与 createManualPosition 中"需要辅导"分支保持一致：
+     * - stage = hirevue：必填 hirevueType / viLink|otLink+otAccount+otPassword / hirevueDeadline / inviteScreenshotName / mentorHelp
+     * - 其它 stage：必填 interviewTime；mentorCount 选填，缺省按 0 处理
+     *
+     * 扩展字段会通过 buildManualPositionRemark 序列化为多行 key=value 文本，
+     * 与原 note 一起写入主申请 remark，便于班主任 / 后台管理员在统一列表查看完整诉求。
+     */
+    @Override
+    public int requestCoaching(Long positionId, Map<String, Object> params, Long userId)
+    {
+        if (params == null)
+        {
+            throw new ServiceException("请提供辅导申请参数");
+        }
+        String stage = stringValue(params.get("stage"));
+        String mentorCount = stringValue(params.get("mentorCount"));
+        String note = stringValue(params.get("note"));
+        String hirevueType = stringValue(params.get("hirevueType"));
+        String viLink = stringValue(params.get("viLink"));
+        String otLink = stringValue(params.get("otLink"));
+        String otAccount = stringValue(params.get("otAccount"));
+        String otPassword = stringValue(params.get("otPassword"));
+        String hirevueDeadline = stringValue(params.get("hirevueDeadline"));
+        String inviteScreenshotName = stringValue(params.get("inviteScreenshotName"));
+        String inviteScreenshotUrl = stringValue(params.get("inviteScreenshotUrl"));
+        String mentorHelp = stringValue(params.get("mentorHelp"));
+        String interviewTime = stringValue(params.get("interviewTime"));
+        String preferMentor = stringValue(params.get("preferMentor"));
+        String excludeMentor = stringValue(params.get("excludeMentor"));
+
+        if (!StringUtils.hasText(stage))
+        {
+            throw new ServiceException("请选择当前面试阶段");
+        }
+        if ("hirevue".equals(stage))
+        {
+            if (!StringUtils.hasText(hirevueType))
+            {
+                throw new ServiceException("请选择 HireVue / OT 类型");
+            }
+            if ("vi".equals(hirevueType) && !StringUtils.hasText(viLink))
+            {
+                throw new ServiceException("请填写 VI 链接");
+            }
+            if ("ot".equals(hirevueType))
+            {
+                if (!StringUtils.hasText(otLink))
+                {
+                    throw new ServiceException("请填写 OT 链接");
+                }
+                if (!StringUtils.hasText(otAccount))
+                {
+                    throw new ServiceException("请填写 OT 登录账号");
+                }
+                if (!StringUtils.hasText(otPassword))
+                {
+                    throw new ServiceException("请填写 OT 登录密码");
+                }
+            }
+            if (!StringUtils.hasText(hirevueDeadline))
+            {
+                throw new ServiceException("请填写 HireVue / OT 截止时间");
+            }
+            if (!StringUtils.hasText(inviteScreenshotUrl))
+            {
+                throw new ServiceException("请上传邀请邮件截图");
+            }
+            if (!StringUtils.hasText(mentorHelp))
+            {
+                throw new ServiceException("请选择是否需要导师协助");
+            }
+        }
+        else
+        {
+            if (!StringUtils.hasText(interviewTime))
+            {
+                throw new ServiceException("请填写该阶段的面试时间");
+            }
+        }
+
+        String extendedRemark = buildManualPositionRemark(
+                true,
+                stage,
+                mentorCount,
+                note,
+                hirevueType,
+                viLink,
+                otLink,
+                otAccount,
+                otPassword,
+                hirevueDeadline,
+                inviteScreenshotName,
+                inviteScreenshotUrl,
+                mentorHelp,
+                interviewTime,
+                preferMentor,
+                excludeMentor);
+
+        // mentorCount 在新模板里为选填（HireVue 分支无该字段；常规分支可选 0/1/2/3）。
+        // 旧 overload 仍要求非空，因此这里显式归一为 "0" 表示"不需要导师"。
+        String normalizedMentorCount = StringUtils.hasText(mentorCount) ? mentorCount : "0";
+
+        return requestCoaching(positionId, stage, normalizedMentorCount, extendedRemark, userId);
+    }
+
+    /**
      * 手动添加岗位
      */
     @Override
@@ -453,6 +562,7 @@ public class PositionServiceImpl implements IPositionService
         String otPassword = stringValue(params.get("otPassword"));
         String hirevueDeadline = stringValue(params.get("hirevueDeadline"));
         String inviteScreenshotName = stringValue(params.get("inviteScreenshotName"));
+        String inviteScreenshotUrl = stringValue(params.get("inviteScreenshotUrl"));
         String mentorHelp = stringValue(params.get("mentorHelp"));
         String interviewTime = stringValue(params.get("interviewTime"));
         String preferMentor = stringValue(params.get("preferMentor"));
@@ -509,7 +619,7 @@ public class PositionServiceImpl implements IPositionService
                 {
                     throw new ServiceException("请填写 HireVue / OT 截止时间");
                 }
-                if (!StringUtils.hasText(inviteScreenshotName))
+                if (!StringUtils.hasText(inviteScreenshotUrl))
                 {
                     throw new ServiceException("请上传邀请邮件截图");
                 }
@@ -581,6 +691,7 @@ public class PositionServiceImpl implements IPositionService
                 otPassword,
                 hirevueDeadline,
                 inviteScreenshotName,
+                inviteScreenshotUrl,
                 mentorHelp,
                 interviewTime,
                 preferMentor,
@@ -1866,6 +1977,7 @@ public class PositionServiceImpl implements IPositionService
             String otPassword,
             String hirevueDeadline,
             String inviteScreenshotName,
+            String inviteScreenshotUrl,
             String mentorHelp,
             String interviewTime,
             String preferMentor,
@@ -1908,6 +2020,10 @@ public class PositionServiceImpl implements IPositionService
                 if (StringUtils.hasText(inviteScreenshotName))
                 {
                     lines.add("inviteScreenshot=" + inviteScreenshotName.trim());
+                }
+                if (StringUtils.hasText(inviteScreenshotUrl))
+                {
+                    lines.add("inviteScreenshotUrl=" + inviteScreenshotUrl.trim());
                 }
                 if (StringUtils.hasText(mentorHelp))
                 {
@@ -2007,7 +2123,7 @@ public class PositionServiceImpl implements IPositionService
 
     private String resolveApplicationBucket(String stage)
     {
-        if ("offer".equals(stage) || "rejected".equals(stage))
+        if ("offer".equals(stage) || "rejected".equals(stage) || "withdraw".equals(stage))
         {
             return "completed";
         }

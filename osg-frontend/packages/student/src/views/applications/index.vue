@@ -376,9 +376,12 @@
             <a-form-item label="上传邀请邮件截图" required class="rich-form-field">
               <Upload
                 id="update-hirevue-upload"
+                v-model:file-list="progressHirevueFileList"
+                :action="uploadAction"
+                :headers="uploadHeaders"
+                name="file"
                 accept="image/*"
                 :max-count="1"
-                :before-upload="() => false"
                 @change="handleUpdateHirevueUpload"
               >
                 <label class="upload-dropzone upload-dropzone--compact">
@@ -536,6 +539,7 @@ import {
   SendOutlined,
 } from '@ant-design/icons-vue'
 import { OsgPageContainer } from '@osg/shared/components'
+import { getToken } from '@osg/shared/utils'
 import {
   getStudentApplicationsMeta,
   listStudentApplications,
@@ -564,6 +568,7 @@ interface ApplyStageForm {
   otPassword: string
   hirevueDeadline: string
   inviteScreenshotName: string
+  inviteScreenshotUrl: string
   mentorHelp: string
   interviewTime: string
   mentorCount: string
@@ -635,7 +640,8 @@ const stageToneMap: Record<string, StageTone> = {
   case: { background: '#FEF3C7', borderColor: '#F59E0B', color: '#92400E' },
   superday: { background: '#FEE2E2', borderColor: '#EF4444', color: '#991B1B' },
   offer: { background: '#DCFCE7', borderColor: '#22C55E', color: '#166534' },
-  rejected: { background: '#F3F4F6', borderColor: '#9CA3AF', color: '#6B7280' }
+  rejected: { background: '#F3F4F6', borderColor: '#9CA3AF', color: '#6B7280' },
+  withdraw: { background: '#F3F4F6', borderColor: '#9CA3AF', color: '#6B7280' }
 }
 
 const appliedForm = ref({
@@ -782,7 +788,7 @@ const progressStageOptions = computed<StageOption[]>(() => {
     }
   })
 
-  const order = ['applied', 'hirevue', 'screening', 'first', 'second', 'third', 'case', 'superday', 'offer', 'rejected']
+  const order = ['applied', 'hirevue', 'screening', 'first', 'second', 'third', 'case', 'superday', 'offer', 'rejected', 'withdraw']
   return Array.from(merged.values()).sort((left, right) => order.indexOf(left.value) - order.indexOf(right.value))
 })
 const stageLabelByValue = computed(() => new Map(progressStageOptions.value.map((option) => [option.value, option.label])))
@@ -848,6 +854,7 @@ function openInterviewModal(id: number) {
 
 function openProgressModal(record: StudentApplicationRecord) {
   selectedApplicationId.value = record.id
+  progressHirevueFileList.value = []
   progressForm.value = {
     ...defaultApplyStageForm(),
     stage: record.stage,
@@ -1006,6 +1013,7 @@ function defaultApplyStageForm(): ApplyStageForm {
     otPassword: '',
     hirevueDeadline: '',
     inviteScreenshotName: '',
+    inviteScreenshotUrl: '',
     mentorHelp: '',
     interviewTime: '',
     mentorCount: '',
@@ -1015,8 +1023,30 @@ function defaultApplyStageForm(): ApplyStageForm {
   }
 }
 
-function handleUpdateHirevueUpload(info: { file: { name?: string } }) {
-  progressForm.value.inviteScreenshotName = info.file.name || ''
+// 邀请邮件截图真实上传配置（与岗位页同款 ruoyi /common/upload 实现）
+const uploadAction = '/api/common/upload'
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${getToken()}`
+}))
+const progressHirevueFileList = ref<any[]>([])
+
+function handleUpdateHirevueUpload(info: { file: any; fileList?: any[] }) {
+  progressHirevueFileList.value = info.fileList || []
+  if (info.file?.status === 'done') {
+    const url = info.file.response?.url || info.file.response?.fileName
+    if (url) {
+      progressForm.value.inviteScreenshotName = info.file.name ?? ''
+      progressForm.value.inviteScreenshotUrl = url
+      message.success('邀请邮件截图上传成功')
+    } else {
+      message.error('上传响应缺少 url，请重试')
+    }
+  } else if (info.file?.status === 'error') {
+    message.error('邀请邮件截图上传失败，请重试')
+  } else if (info.file?.status === 'removed') {
+    progressForm.value.inviteScreenshotName = ''
+    progressForm.value.inviteScreenshotUrl = ''
+  }
 }
 
 function renderModalTitle(Icon: any, text: string) {
@@ -1055,7 +1085,10 @@ function buildStageNote(form: ApplyStageForm) {
       lines.push(`截止时间：${form.hirevueDeadline}`)
     }
     if (form.inviteScreenshotName) {
-      lines.push(`截图：${form.inviteScreenshotName}`)
+      lines.push(`inviteScreenshot=${form.inviteScreenshotName}`)
+    }
+    if (form.inviteScreenshotUrl) {
+      lines.push(`inviteScreenshotUrl=${form.inviteScreenshotUrl}`)
     }
     if (form.mentorHelp) {
       lines.push(`导师协助：${form.mentorHelp === 'yes' ? '是' : '否'}`)
@@ -1109,7 +1142,7 @@ function validateHirevueFields(form: ApplyStageForm) {
     message.error('请填写 HireVue / OT 截止时间')
     return false
   }
-  if (!form.inviteScreenshotName) {
+  if (!form.inviteScreenshotUrl) {
     message.error('请上传邀请邮件截图')
     return false
   }
