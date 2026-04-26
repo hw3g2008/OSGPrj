@@ -66,14 +66,11 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'student'">
-            <div class="student-cell">
-              <div class="avatar" :style="{ background: avatarColor(record) }">{{ record.studentName?.[0] || '?' }}</div>
-              <div>
-                <strong>{{ record.studentName }}</strong>
-                <br />
-                <span class="text-muted text-sm">ID: {{ record.studentId }}</span>
-              </div>
-            </div>
+            <StudentAvatarCell
+              :name="record.studentName"
+              :id="record.studentId"
+              :background-color="avatarColor(record)"
+            />
           </template>
           <template v-else-if="column.key === 'practiceType'">
             <PracticeTypeTag :practice-type="record.practiceType" show-icon />
@@ -134,7 +131,12 @@
             <div class="detail-hero-card detail-hero-student">
               <div class="section-caption">学员信息</div>
               <div class="detail-hero-main">
-                <div class="detail-hero-avatar">{{ detailModal.record?.studentName?.[0] || '?' }}</div>
+                <StudentInitialAvatar
+                  :name="detailModal.record?.studentName"
+                  :size="48"
+                  color="#3B82F6"
+                  fallback="?"
+                />
                 <div>
                   <div class="detail-hero-name">{{ detailModal.record?.studentName || '-' }}</div>
                   <div class="detail-hero-meta">ID: {{ detailModal.record?.studentId || '-' }}</div>
@@ -230,7 +232,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, type Ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { PracticeTypeTag, StatCard } from '@osg/shared/components'
+import { PracticeTypeTag, StatCard, StudentAvatarCell, StudentInitialAvatar } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
@@ -392,8 +394,6 @@ onMounted(() => {
 <style scoped>
 .stats-grid{margin-bottom:20px}
 .filter-bar :deep(.ant-form-item){margin-bottom:0;margin-right:12px}
-.student-cell{display:flex;align-items:center;gap:10px}
-.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px}
 .pulse-tag{animation:pulse 1.5s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
 :deep(.row-new) > td{background:linear-gradient(90deg,#FEE2E2,#FEF2F2) !important}
@@ -415,9 +415,7 @@ onMounted(() => {
 .detail-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;padding:20px 0 12px}
 .detail-hero-card{background:linear-gradient(180deg,#F8FAFC,#EEF4FF);border:1px solid #E2E8F0;border-radius:16px;padding:16px}
 .detail-hero-student{background:linear-gradient(180deg,#EFF6FF,#DBEAFE)}
-.detail-hero-main{display:flex;align-items:center;gap:12px}
-.detail-hero-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#3B82F6;color:#fff;font-weight:700;font-size:16px}
-.detail-hero-name{font-size:16px;font-weight:700;color:#1E293B}
+.detail-hero-main{display:flex;align-items:center;gap:12px}.detail-hero-name{font-size:16px;font-weight:700;color:#1E293B}
 .detail-hero-title{font-size:16px;font-weight:700;color:#1E40AF;margin-bottom:4px}
 .detail-hero-meta{font-size:12px;color:#64748B;line-height:1.6}
 .section-caption{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#1E293B;margin-bottom:12px}

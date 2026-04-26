@@ -137,7 +137,11 @@
             <div class="hero-block">
               <div class="hero-label"><UserOutlined /> 学员信息</div>
               <div class="hero-student">
-                <div class="hero-avatar">{{ jobDetailPreview.studentName }}</div>
+                <StudentInitialAvatar
+                  :name="jobDetailPreview.studentName"
+                  :size="48"
+                  color="#3B82F6"
+                />
                 <div>
                   <div class="hero-value">{{ jobDetailPreview.studentName }}</div>
                   <div class="hero-meta">ID: {{ jobDetailPreview.studentId }} · 班主任: {{ jobDetailPreview.leadMentorName }}</div>
@@ -241,7 +245,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
-import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell, StatCard } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, CoachingStatusTag, StudentAvatarCell, StudentInitialAvatar, CompanyPositionCell, InterviewTimeCell, StatCard } from '@osg/shared/components'
 import {
   getMentorJobOverviewCalendar,
   type LeadMentorCalendarRecord,
@@ -637,7 +641,6 @@ onMounted(async () => {
 .hero-block { flex:1; }
 .hero-label { font-size:12px; color:#3B82F6; font-weight:600; margin-bottom:8px; display:flex; gap:4px; align-items:center; }
 .hero-student { display:flex; align-items:center; gap:12px; }
-.hero-avatar { width:48px; height:48px; background:#3B82F6; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:16px; }
 .hero-value { font-weight:700; font-size:16px; color:#1E293B; }
 .hero-value--brand { color:#1E40AF; }
 .hero-meta { font-size:12px; color:#64748B; }
