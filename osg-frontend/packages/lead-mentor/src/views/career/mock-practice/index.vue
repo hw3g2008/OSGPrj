@@ -88,10 +88,7 @@
                   </div>
                 </template>
                 <template v-else-if="column.key === 'practiceType'">
-                  <span class="tag" :class="record.typeTone">
-                    <i class="mdi" :class="record.typeIcon" aria-hidden="true" />
-                    {{ record.practiceType }}
-                  </span>
+                  <PracticeTypeTag :practice-type="record.practiceType" show-icon />
                 </template>
                 <template v-else-if="column.key === 'appliedAt'">
                   <span class="date-text">{{ record.appliedAt }}</span>
@@ -192,10 +189,7 @@
                   </div>
                 </template>
                 <template v-else-if="column.key === 'practiceType'">
-                  <span class="tag" :class="record.typeTone">
-                    <i class="mdi" :class="record.typeIcon" aria-hidden="true" />
-                    {{ record.practiceType }}
-                  </span>
+                  <PracticeTypeTag :practice-type="record.practiceType" show-icon />
                 </template>
                 <template v-else-if="column.key === 'appliedAt'">
                   <span class="date-text">{{ record.appliedAt }}</span>
@@ -327,10 +321,7 @@
                   </div>
                 </template>
                 <template v-else-if="column.key === 'practiceType'">
-                  <span class="tag" :class="record.typeTone">
-                    <i class="mdi" :class="record.typeIcon" aria-hidden="true" />
-                    {{ record.practiceType }}
-                  </span>
+                  <PracticeTypeTag :practice-type="record.practiceType" show-icon />
                 </template>
                 <template v-else-if="column.key === 'appliedAt'">
                   <span class="date-text">{{ record.appliedAt }}</span>
@@ -387,6 +378,7 @@
 
 <script setup lang="ts">
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { PracticeTypeTag } from '@osg/shared/components'
 import { message } from 'ant-design-vue'
 import {
   BookOutlined,

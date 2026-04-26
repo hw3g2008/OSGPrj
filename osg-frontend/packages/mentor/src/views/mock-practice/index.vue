@@ -96,9 +96,7 @@
             </div>
           </template>
           <template v-else-if="column.key === 'practiceType'">
-            <a-tag :color="typeTagColor(record.practiceType)">
-              <i :class="typeIcon(record.practiceType)" /> {{ typeLabel(record.practiceType) }}
-            </a-tag>
+            <PracticeTypeTag :practice-type="record.practiceType" show-icon />
           </template>
           <template v-else-if="column.key === 'assignedTime'">
             <span class="text-sm">{{ formatDate(record.assignedTime) }}</span>
@@ -252,6 +250,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, type Ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { PracticeTypeTag } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
@@ -297,8 +296,6 @@ function rowDomId(record: any) { return rowAnchors.value.get(record.practiceId ?
 function rowClass(r: any) { return { 'row-new': r.status === 'new', 'row-midterm': r.practiceType === 'midterm' } }
 function avatarColor(r: any) { const c = ['#7399C6','#F59E0B','#3B82F6','#22C55E','#8B5CF6']; return c[(r.id ?? r.practiceId ?? 0) % c.length] }
 function typeClass(t: string) { return { mock_interview: 'info', relation_test: 'warning', midterm: 'purple' }[t] || 'info' }
-function typeTagColor(t: string) { return { mock_interview: 'blue', relation_test: 'orange', midterm: 'purple' }[t] || 'blue' }
-function typeIcon(t: string) { return { mock_interview: 'mdi mdi-account-voice', relation_test: 'mdi mdi-account-group', midterm: 'mdi mdi-file-document-edit' }[t] || '' }
 function typeLabel(t: string) { return { mock_interview: '模拟面试', relation_test: '人际关系测试', midterm: '期中考试' }[t] || t }
 function feedbackColor(l: string) { return { excellent: 'text-success', good: 'text-warning' }[l] || '' }
 function feedbackLabel(l: string) { return { excellent: '优秀', good: '良好', average: '一般', poor: '较差' }[l] || l }

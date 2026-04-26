@@ -91,7 +91,7 @@
               </div>
             </template>
             <template v-else-if="column.dataIndex === 'practiceType'">
-              <a-tag :color="practiceTypeColor(record.practiceType)">{{ practiceTypeLabel(record.practiceType) }}</a-tag>
+              <PracticeTypeTag :practice-type="record.practiceType" />
             </template>
             <template v-else-if="column.dataIndex === 'submittedAt'">
               <span style="font-size: 12px;">{{ formatDateTime(record.submittedAt) }}</span>
@@ -178,7 +178,7 @@
               </div>
             </template>
             <template v-else-if="column.dataIndex === 'practiceType'">
-              <a-tag :color="practiceTypeColor(record.practiceType)">{{ practiceTypeLabel(record.practiceType) }}</a-tag>
+              <PracticeTypeTag :practice-type="record.practiceType" />
             </template>
             <template v-else-if="column.dataIndex === 'submittedAt'">
               <span style="font-size: 12px;">{{ formatDateTime(record.submittedAt) }}</span>
@@ -255,6 +255,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { CheckOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { PracticeTypeTag } from '@osg/shared/components'
 import {
   getAssistantMockPracticeList,
   type AssistantMockPracticeRecord,
@@ -392,6 +393,8 @@ function rowClassName(record: AssistantMockPracticeRecord): string {
   return ''
 }
 
+// @deprecated PracticeTypeLabel 已迁移至 @osg/shared/utils/practiceTone resolvePracticeTypeLabel。
+// 仅 modal/detail 场景仍需要纯函数调用时保留；表格渲染走 PracticeTypeTag。
 function practiceTypeLabel(value?: string) {
   const labels: Record<string, string> = {
     mock_interview: '模拟面试',
