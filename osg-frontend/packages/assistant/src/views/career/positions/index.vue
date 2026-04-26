@@ -120,25 +120,12 @@
           />
         </template>
 
-        <div class="positions-footer">
-          <span>
-            共
-            <strong>{{ filteredPositions.length }}</strong>
-            个岗位
-          </span>
-          <span class="positions-footer__indicator positions-footer__indicator--open">
-            <i class="mdi mdi-circle-small" aria-hidden="true" />
-            开放中 {{ openPositionCount }}
-          </span>
-          <span class="positions-footer__indicator positions-footer__indicator--closed">
-            <i class="mdi mdi-circle-small" aria-hidden="true" />
-            已关闭 {{ closedPositionCount }}
-          </span>
-          <span class="positions-footer__indicator positions-footer__indicator--students">
-            <i class="mdi mdi-circle-small" aria-hidden="true" />
-            我的学员 {{ linkedStudentCount }}人
-          </span>
-        </div>
+        <PositionsFooter
+          :total="filteredPositions.length"
+          :open="openPositionCount"
+          :closed="closedPositionCount"
+          :students="linkedStudentCount"
+        />
       </a-spin>
     </a-card>
 
@@ -194,6 +181,7 @@ import {
 } from '@osg/shared/api'
 import {
   useIndustryMeta,
+  PositionsFooter,
   PositionsListTable,
   PositionsDrilldown,
   resolveDeadlineTone,
@@ -806,25 +794,6 @@ onMounted(() => {
   background: #fff;
 }
 
-.positions-footer {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 0 0;
-  color: #6e80a4;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.positions-footer__indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.positions-footer__indicator--open    { color: #22c55e; }
-.positions-footer__indicator--closed  { color: #94a3b8; }
-.positions-footer__indicator--students { color: #3b82f6; }
 
 @media (max-width: 1120px) {
   .positions-drilldown__industry-head,
