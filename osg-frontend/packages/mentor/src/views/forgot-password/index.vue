@@ -37,7 +37,7 @@
                 :class="{ error: emailError }"
                 @keydown.enter.prevent="sendCode"
               />
-              <p v-if="emailError" class="field-error">请输入有效的邮箱地址</p>
+              <p v-if="emailError" class="field-error">{{ emailError }}</p>
             </div>
             <button type="button" class="fp-btn" :disabled="sending" @click="sendCode">{{ sending ? '发送中...' : '发送验证码' }}</button>
           </div>
@@ -61,7 +61,7 @@
               <p v-if="codeError" class="field-error">验证码错误</p>
             </div>
             <button type="button" class="fp-btn" @click="verifyCode">验证</button>
-            <p class="countdown">{{ countdown > 0 ? `${countdown}秒后可重新发送` : '' }}<a v-if="countdown <= 0" href="#" @click.prevent="sendCode">重新发送</a></p>
+            <p class="countdown">{{ countdown > 0 ? `${countdown}秒后可重新发送` : '' }}<a v-if="!resendMeta.disabled" href="#" @click.prevent="handleResend">{{ resendMeta.label }}</a></p>
           </div>
         </div>
 
@@ -119,90 +119,72 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, toRefs } from 'vue'
 import { sendResetCode, verifyResetCode as verifyResetCodeApi, resetPassword as resetPasswordApi } from '@/api/auth'
+import { useForgotPasswordFlow } from '@osg/shared/composables'
 
-const step = ref(1)
-const email = ref('')
-const code = ref('')
-const resetToken = ref('')
-const newPwd = ref('')
-const confirmPwd = ref('')
-const emailError = ref(false)
-const codeError = ref(false)
-const confirmError = ref(false)
-const sending = ref(false)
-const showPwd1 = ref(false)
-const showPwd2 = ref(false)
-const alertMsg = ref('')
-const alertType = ref<'error' | 'success'>('error')
-const countdown = ref(0)
-const strengthLevel = ref(0)
+// M6: 业务逻辑由 shared composable 接管。
+// mentor API 签名与 shared 不同（mentor 用 positional args / shared 用 object payload），
+// 在 endpoints 里包装一层适配。
+const {
+  currentStep: step,
+  sendingCode: sending,
+  emailError,
+  codeError,
+  confirmError,
+  showNewPassword: showPwd1,
+  showConfirmPassword: showPwd2,
+  step1Form,
+  step2Form,
+  step3Form,
+  errorMessage,
+  successMessage,
+  countdown,
+  maskedEmail,
+  passwordStrength,
+  resendMeta,
+  handleSendCode: sendCode,
+  handleVerifyCode: verifyCode,
+  handleResendCode: handleResend,
+  handleResetPassword: resetPassword,
+} = useForgotPasswordFlow({
+  endpoints: {
+    sendCode: ({ email }) => sendResetCode(email),
+    verifyCode: async ({ email, code }) => {
+      const data = await verifyResetCodeApi(email, code)
+      if (!data?.resetToken) throw new Error('reset token missing')
+      return { resetToken: data.resetToken }
+    },
+    resetPassword: ({ email, password, resetToken }) =>
+      resetPasswordApi(email, resetToken, password),
+  },
+})
 
+// 把 reactive forms 拆成独立 Ref，保留 mentor 模板原 v-model 命名
+const { email } = toRefs(step1Form)
+const { code } = toRefs(step2Form)
+const { newPassword: newPwd, confirmPassword: confirmPwd } = toRefs(step3Form)
+
+// 视图层兼容映射（保留 mentor 现有模板字段命名 + CSS class）
 const stepDescs = ['请输入您的注册邮箱', '请输入验证码', '请设置新密码']
 
-const maskedEmail = computed(() => {
-  if (!email.value) return ''
-  const [local, domain] = email.value.split('@')
-  return `${local[0]}***@${domain}`
-})
-const strengthClass = computed(() => ['', 'weak', 'medium', 'strong'][strengthLevel.value] || '')
-const strengthLabel = computed(() => ['密码强度', '弱', '中', '强'][strengthLevel.value] || '密码强度')
+// alertMsg + alertType 是 mentor 单一提示通道；shared 拆为 errorMessage / successMessage，
+// 这里合并回 mentor 风格（success 优先级低，error 覆盖）。
+const alertMsg = computed(() => errorMessage.value || successMessage.value)
+const alertType = computed<'error' | 'success'>(() =>
+  errorMessage.value ? 'error' : 'success',
+)
 
+// 密码强度 className：shared 返回 'strength-weak/medium/strong'，mentor CSS 用 'weak/medium/strong'。
+// 去前缀适配。
+const strengthClass = computed(() =>
+  passwordStrength.value.className.replace(/^strength-/, ''),
+)
+const strengthLabel = computed(() => passwordStrength.value.text)
+
+// 模板里 @input="checkStrength" 钩子：shared 的 passwordStrength 是 computed，无需手动触发
 function checkStrength() {
-  const p = newPwd.value
-  if (!p) { strengthLevel.value = 0; return }
-  let score = 0
-  if (p.length >= 8) score++
-  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) score++
-  if (/\d/.test(p) && /[^A-Za-z0-9]/.test(p)) score++
-  strengthLevel.value = Math.min(score, 3)
-}
-
-let timer: ReturnType<typeof setInterval> | null = null
-function startCountdown() {
-  countdown.value = 60
-  if (timer) clearInterval(timer)
-  timer = setInterval(() => { if (--countdown.value <= 0 && timer) clearInterval(timer) }, 1000)
-}
-
-async function sendCode() {
-  emailError.value = false; alertMsg.value = ''
-  if (!email.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { emailError.value = true; return }
-  sending.value = true
-  try {
-    await sendResetCode(email.value)
-    resetToken.value = ''
-    alertMsg.value = '验证码已发送'; alertType.value = 'success'
-    step.value = 2; startCountdown()
-  } catch (error: any) { alertMsg.value = error?.message || '发送失败，请重试'; alertType.value = 'error' }
-  finally { sending.value = false }
-}
-
-async function verifyCode() {
-  codeError.value = false; alertMsg.value = ''
-  if (code.value.length !== 6) { codeError.value = true; return }
-  try {
-    const data = await verifyResetCodeApi(email.value, code.value)
-    if (!data?.resetToken) throw new Error('reset token missing')
-    resetToken.value = data.resetToken
-    step.value = 3
-  } catch (error: any) {
-    codeError.value = true
-    alertMsg.value = error?.message || '验证失败'
-    alertType.value = 'error'
-  }
-}
-
-async function resetPassword() {
-  confirmError.value = false; alertMsg.value = ''
-  if (newPwd.value !== confirmPwd.value) { confirmError.value = true; return }
-  if (newPwd.value.length < 8) { alertMsg.value = '密码至少8位'; alertType.value = 'error'; return }
-  if (!resetToken.value) { alertMsg.value = '重置令牌不能为空'; alertType.value = 'error'; return }
-  try {
-    await resetPasswordApi(email.value, resetToken.value, newPwd.value)
-    step.value = 4
-  } catch (error: any) { alertMsg.value = error?.message || '重置失败，请重试'; alertType.value = 'error' }
+  /* no-op：strength 已经是 computed */
 }
 </script>
 

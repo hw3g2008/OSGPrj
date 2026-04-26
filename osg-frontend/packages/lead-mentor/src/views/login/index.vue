@@ -275,6 +275,13 @@ import {
   verifyResetCode,
 } from '@osg/shared/api'
 import { clearAuth, setToken, setUser } from '@osg/shared/utils'
+// M6: 接入 shared 忘记密码工具函数（替代本地内联实现）
+import {
+  maskForgotPasswordEmail,
+  validateForgotPasswordCode,
+  validateForgotPasswordEmail,
+  validateForgotPasswordPassword,
+} from '@osg/shared/utils/forgotPasswordHelpers'
 
 type ForgotPasswordStep = 'step-email' | 'step-code' | 'step-reset' | 'step-success'
 
@@ -321,17 +328,10 @@ const forgotPasswordAlert = reactive<{
 })
 let forgotPasswordTimer: ReturnType<typeof setInterval> | null = null
 
-const maskedForgotPasswordEmail = computed(() => {
-  const email = forgotPasswordForm.email.trim()
-  if (!email.includes('@')) {
-    return ''
-  }
-  const [local, domain] = email.split('@')
-  if (!local || !domain) {
-    return ''
-  }
-  return `${local[0]}***@${domain}`
-})
+// M6: 替代本地内联 maskEmail（迁移至 shared/utils/forgotPasswordHelpers）
+const maskedForgotPasswordEmail = computed(() =>
+  maskForgotPasswordEmail(forgotPasswordForm.email),
+)
 
 const handleLogin = async () => {
   errorMessage.value = ''
@@ -459,7 +459,9 @@ const handleVerifyResetCode = async () => {
   clearForgotPasswordAlert()
 
   const code = forgotPasswordForm.code.trim()
-  if (!/^\d{6}$/.test(code)) {
+  // M6: shared validateForgotPasswordCode 仅校验长度=6（更宽松，不限定纯数字）。
+  // 后端会再做格式 / 内容校验。
+  if (validateForgotPasswordCode(code)) {
     forgotPasswordErrors.code = '请输入6位验证码'
     return
   }
@@ -484,7 +486,9 @@ const handleResetPassword = async () => {
   clearForgotPasswordErrors()
   clearForgotPasswordAlert()
 
-  if (!/^(?=.*[A-Za-z])(?=.*\d).{8,20}$/.test(forgotPasswordForm.newPassword)) {
+  // M6: 用 shared validateForgotPasswordPassword（同样的 8-20 + 字母 + 数字规则）
+  const passwordError = validateForgotPasswordPassword(forgotPasswordForm.newPassword)
+  if (passwordError) {
     forgotPasswordErrors.newPassword = '请输入8-20位且包含字母和数字的新密码'
     return
   }

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import ForgotPasswordPage from '@/views/forgot-password/index.vue'
 
@@ -46,15 +45,16 @@ describe('ForgotPasswordPage', () => {
 
     await wrapper.get('input[placeholder="请输入注册邮箱"]').setValue('hw3g2008@outlook.com')
     await wrapper.get('.fp-btn').trigger('click')
-    await nextTick()
+    await flushPromises()
 
     await wrapper.get('input[placeholder="请输入6位验证码"]').setValue('332020')
     await wrapper.get('.fp-btn').trigger('click')
-    await nextTick()
+    await flushPromises()
 
     await wrapper.get('input[placeholder="请输入新密码"]').setValue('admin12345')
     await wrapper.get('input[placeholder="请再次输入新密码"]').setValue('admin12345')
     await wrapper.get('.fp-btn').trigger('click')
+    await flushPromises()
 
     expect(mockPost).toHaveBeenNthCalledWith(1, '/mentor/forgot-password/send-code', {
       email: 'hw3g2008@outlook.com'
