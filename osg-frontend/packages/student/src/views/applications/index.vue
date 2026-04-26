@@ -10,109 +10,11 @@
         </div>
       </template>
 
-      <a-card :bordered="false" class="schedule-card">
-        <div class="schedule-row">
-          <div class="schedule-title">
-            <CalendarOutlined />
-            <span>面试安排</span>
-          </div>
-          <div class="schedule-month-nav">
-            <a-button type="text" size="small" @click="shiftCalendarMonth(-1)">‹</a-button>
-            <span class="schedule-month-label">{{ scheduleMonthLabel }}</span>
-            <a-button type="text" size="small" @click="shiftCalendarMonth(1)">›</a-button>
-          </div>
-          <span data-testid="schedule-summary-chip-total" class="summary-chip">本月 {{ monthlyCount }} 场</span>
-          <span data-testid="schedule-summary-chip-week" class="summary-chip summary-chip--muted">本周 {{ weeklyCount }} 场</span>
-          <div class="schedule-sep"></div>
-          <div class="schedule-week" data-testid="schedule-week-grid">
-            <div
-              v-for="day in scheduleWeekCells"
-              :key="day.key"
-              data-testid="schedule-week-cell"
-              class="day-chip"
-              :class="{ 'today-chip': day.isToday, [day.eventClass || '']: !!day.eventClass }"
-              :style="day.hasEvent ? { cursor: 'pointer' } : {}"
-              @click="day.eventId ? openInterviewModal(day.eventId) : undefined"
-            >
-              <div class="day-chip__weekday">{{ day.weekdayShort }}</div>
-              <div class="day-chip__number">{{ day.dayLabel }}</div>
-            </div>
-          </div>
-          <div class="schedule-flex-gap"></div>
-          <div class="schedule-events">
-            <a-tag
-              v-for="event in scheduleItems"
-              :key="`pill-${event.id}`"
-              :color="event.accentClass === 'danger-chip' ? 'red' : event.accentClass === 'warning-chip' ? 'orange' : 'blue'"
-              style="cursor:pointer"
-              @click="openInterviewModal(event.id)"
-            >
-              <span>{{ event.dayLabel }}日</span>
-              <span>{{ event.shortLabel }}</span>
-            </a-tag>
-            <span v-if="!scheduleItems.length" style="color:#94a3b8;font-size:11px">暂无面试安排</span>
-          </div>
-          <a-button size="small" class="btn-expand" @click="calendarExpanded = !calendarExpanded">
-            <template #icon><CalendarOutlined /></template>
-            {{ calendarExpanded ? '收起' : '展开' }}
-          </a-button>
-        </div>
-
-        <div v-if="calendarExpanded" class="schedule-expanded">
-          <div class="cal-legend">
-            <span class="cal-legend-item"><span class="cal-dot cal-dot--red"></span>面试</span>
-            <span class="cal-legend-item"><span class="cal-dot cal-dot--blue"></span>辅导课</span>
-            <span class="cal-legend-item"><span class="cal-today-marker"></span>今天</span>
-          </div>
-          <div class="cal-grid">
-            <div
-              v-for="weekday in ['一','二','三','四','五','六','日']"
-              :key="`ch-${weekday}`"
-              class="cal-header-cell"
-            >{{ weekday }}</div>
-            <div
-              v-for="cell in calendarMonthCells"
-              :key="cell.key"
-              class="cal-cell"
-              :class="{
-                'cal-cell--today': cell.isToday,
-                'cal-cell--has-event': cell.hasEvent,
-                'cal-cell--empty': cell.dayNumber === null
-              }"
-              :style="cell.hasEvent ? { cursor: 'pointer' } : {}"
-              @click="cell.eventId ? openInterviewModal(cell.eventId) : undefined"
-            >
-              <span v-if="cell.dayNumber !== null" class="cal-cell__number">{{ cell.dayNumber }}</span>
-              <span v-if="cell.dotClass" class="cal-dot" :class="cell.dotClass"></span>
-            </div>
-          </div>
-          <div class="expanded-list">
-            <div v-if="!scheduleItems.length" class="expanded-empty">本月暂无面试安排</div>
-            <div
-              v-for="event in scheduleItems"
-              :key="`expanded-${event.id}`"
-              class="expanded-item"
-              :class="event.borderClass"
-            >
-              <div class="expanded-date">
-                <strong>{{ event.dayLabel }}</strong>
-                <span>{{ event.weekdayLabel }}</span>
-              </div>
-              <div class="expanded-detail">
-                <div>{{ event.title }}</div>
-                <span>{{ event.position }} · {{ event.location }}</span>
-              </div>
-              <div class="expanded-right">
-                <span
-                  class="type-badge"
-                  :class="(event.accentClass === 'danger-chip' || event.accentClass === 'warning-chip') ? 'type-badge--interview' : 'type-badge--coaching'"
-                >{{ event.accentClass === 'info-chip' ? '辅导课' : '面试' }}</span>
-                <span class="expanded-time">{{ event.timeLabel }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </a-card>
+      <InterviewCalendar
+        title="面试安排"
+        :events="calendarEvents"
+        @event-click="handleCalendarEventClick"
+      />
 
       <a-card :bordered="false" class="filter-card">
         <a-space :size="12" wrap>
@@ -159,25 +61,32 @@
         </a-space>
       </a-card>
 
-      <a-space :size="10" class="applications-tab-strip">
-        <a-button
-          v-for="tab in tabDefs"
-          :key="tab.key"
-          shape="round"
-          size="large"
-          class="tab-pill"
-          :class="[`tab-pill--${tab.key}`, { [`tab-pill--active-${tab.tone}`]: activeTab === tab.key }]"
-          :type="activeTab === tab.key && tab.tone === 'primary' ? 'primary' : 'default'"
-          @click="activeTab = tab.key"
+      <a-card :bordered="false" class="applications-table-card" :body-style="{ padding: 0 }">
+        <div class="applications-tab-header">
+          <div class="applications-tab-pills">
+            <button
+              v-for="tab in tabDefs"
+              :key="tab.key"
+              type="button"
+              class="app-tab"
+              :class="{ 'app-tab--active': activeTab === tab.key }"
+              @click="activeTab = tab.key"
+            >
+              <component :is="tab.icon" class="app-tab__icon" />
+              <span>{{ tab.label }}</span>
+              <span class="app-tab__count" :class="`app-tab__count--${tab.tone}`">{{ tab.count }}</span>
+            </button>
+          </div>
+        </div>
+        <a-table
+          :columns="columns"
+          :data-source="visibleApplications"
+          :pagination="tablePagination"
+          row-key="id"
+          :scroll="{ x: 'max-content' }"
+          :row-class-name="rowClassName"
+          @change="handleTableChange"
         >
-          <component :is="tab.icon" />
-          <span>{{ tab.label }}</span>
-          <span class="tab-pill__count">{{ tab.count }}</span>
-        </a-button>
-      </a-space>
-
-      <a-card :bordered="false">
-        <a-table :columns="columns" :data-source="visibleApplications" :pagination="false" row-key="id" :scroll="{ x: 1120 }" :row-class-name="rowClassName">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'job'">
               <div class="job-cell">
@@ -281,8 +190,8 @@
       </template>
       <div class="rich-modal-shell rich-modal-shell--compact">
         <div class="interview-detail-card">
-          <div class="modal-heading">{{ selectedInterview?.title }}</div>
-          <div class="modal-sub">{{ selectedInterview?.modalTime }}</div>
+          <div class="modal-heading">{{ selectedInterviewTitle }}</div>
+          <div class="modal-sub">{{ selectedInterviewModalTime }}</div>
         </div>
       </div>
     </a-modal>
@@ -521,7 +430,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h, onMounted, ref } from 'vue'
+import { computed, h, onMounted, reactive, ref, watch } from 'vue'
+import type { TablePaginationConfig } from 'ant-design-vue'
 import { message, DatePicker, Upload } from 'ant-design-vue'
 import {
   CalendarOutlined,
@@ -538,14 +448,14 @@ import {
   SearchOutlined,
   SendOutlined,
 } from '@ant-design/icons-vue'
-import { OsgPageContainer } from '@osg/shared/components'
+import { InterviewCalendar, OsgPageContainer } from '@osg/shared/components'
+import type { InterviewEvent } from '@osg/shared/types'
 import { getToken } from '@osg/shared/utils'
 import {
   getStudentApplicationsMeta,
   listStudentApplications,
   requestStudentPositionCoaching,
   type StudentApplicationsMeta,
-  type StudentApplicationScheduleItem,
   updateStudentPositionApply,
   updateStudentPositionProgress,
   type StudentApplicationRecord
@@ -587,8 +497,6 @@ const applicationsActionTriggers = [
 ] as const
 
 const activeTab = ref<TabKey>('all')
-const calendarExpanded = ref(false)
-const calendarMonthOffset = ref(0)
 const selectedApplicationId = ref<number | null>(null)
 const selectedInterviewId = ref<number | null>(null)
 const interviewStages = ['screening', 'first', 'second', 'third', 'case', 'superday']
@@ -669,7 +577,7 @@ const columns = computed(() => {
     { title: '辅导状态', key: 'coachingStatus', width: 120 },
     { title: '导师', key: 'mentor', width: 140 },
     { title: '课时/反馈', key: 'hoursFeedback', width: 130 },
-    { title: '操作', key: 'actions', width: 140 }
+    { title: '操作', key: 'actions', width: 160, fixed: 'right' as const }
   ]
 })
 
@@ -681,99 +589,24 @@ const selectedApplicationBadge = computed(() => {
   return fallback ? fallback.slice(0, 2).toUpperCase() : 'JP'
 })
 
-const scheduleItems = computed<StudentApplicationScheduleItem[]>(() => applicationsMeta.value.schedule)
-const scheduleMonthLabel = computed(() => {
-  const base = new Date()
-  const display = new Date(base.getFullYear(), base.getMonth() + calendarMonthOffset.value, 1)
-  return `${display.getFullYear()}年${display.getMonth() + 1}月`
-})
+const calendarEvents = computed<InterviewEvent[]>(() =>
+  applications.value
+    .filter((record) => !!record.interviewAt)
+    .map((record) => ({
+      id: record.id,
+      interviewTime: record.interviewAt,
+      studentName: '',
+      company: record.company,
+      position: record.position,
+      location: record.location,
+      interviewStage: record.stageLabel,
+      coachingStatus: record.coachingStatus
+    }))
+)
 
-// Always anchor the week strip to today (or the equivalent day in the displayed month)
-const scheduleWeekAnchor = computed(() => {
-  const today = new Date()
-  return new Date(today.getFullYear(), today.getMonth() + calendarMonthOffset.value, today.getDate())
-})
-
-const scheduleWeekCells = computed(() => {
-  const weekdayShorts = ['一', '二', '三', '四', '五', '六', '日']
-  const today = new Date()
-  const anchor = scheduleWeekAnchor.value
-  const jsDay = anchor.getDay()
-  const mondayOffset = jsDay === 0 ? -6 : 1 - jsDay
-  const monday = new Date(anchor)
-  monday.setDate(anchor.getDate() + mondayOffset)
-
-  return weekdayShorts.map((short, index) => {
-    const cellDate = new Date(monday)
-    cellDate.setDate(monday.getDate() + index)
-    const dayNumber = cellDate.getDate()
-    const dayStr = String(dayNumber)
-    const isToday = cellDate.getFullYear() === today.getFullYear()
-      && cellDate.getMonth() === today.getMonth()
-      && dayNumber === today.getDate()
-    const matchingEvent = scheduleItems.value.find((item) => parseInt(item.dayLabel, 10) === dayNumber)
-    return {
-      key: `${short}-${cellDate.getTime()}`,
-      weekday: `周${short}`,
-      weekdayShort: short,
-      dayLabel: dayStr,
-      isToday,
-      hasEvent: !!matchingEvent,
-      eventClass: matchingEvent?.accentClass || '',
-      eventId: matchingEvent?.id ?? null
-    }
-  })
-})
-
-const monthlyCount = computed(() => {
-  if (calendarMonthOffset.value !== 0) return 0
-  return scheduleItems.value.length
-})
-
-const weeklyCount = computed(() => {
-  const weekDayNumbers = new Set(scheduleWeekCells.value.map((cell) => parseInt(cell.dayLabel, 10)))
-  return scheduleItems.value.filter((item) => weekDayNumbers.has(parseInt(item.dayLabel, 10))).length
-})
-
-const calendarMonthCells = computed(() => {
-  const base = new Date()
-  const displayDate = new Date(base.getFullYear(), base.getMonth() + calendarMonthOffset.value, 1)
-  const displayYear = displayDate.getFullYear()
-  const displayMonth = displayDate.getMonth()
-  const daysInMonth = new Date(displayYear, displayMonth + 1, 0).getDate()
-  const firstDow = displayDate.getDay()
-  const startPad = firstDow === 0 ? 6 : firstDow - 1
-  const today = new Date()
-
-  type CalCell = {
-    key: string
-    dayNumber: number | null
-    isToday: boolean
-    dotClass: string
-    eventId: number | null
-    hasEvent: boolean
-  }
-
-  const cells: CalCell[] = []
-  for (let i = 0; i < startPad; i++) {
-    cells.push({ key: `ep-${i}`, dayNumber: null, isToday: false, dotClass: '', eventId: null, hasEvent: false })
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const ev = scheduleItems.value.find((item) => parseInt(item.dayLabel, 10) === d)
-    const isToday = displayYear === today.getFullYear() && displayMonth === today.getMonth() && d === today.getDate()
-    const dotClass = ev
-      ? (ev.accentClass === 'danger-chip' || ev.accentClass === 'warning-chip' ? 'cal-dot--red' : 'cal-dot--blue')
-      : ''
-    cells.push({ key: `d-${d}`, dayNumber: d, isToday, dotClass, eventId: ev?.id ?? null, hasEvent: !!ev })
-  }
-  const remainder = cells.length % 7
-  if (remainder !== 0) {
-    for (let i = 0; i < 7 - remainder; i++) {
-      cells.push({ key: `et-${i}`, dayNumber: null, isToday: false, dotClass: '', eventId: null, hasEvent: false })
-    }
-  }
-  return cells
-})
+function handleCalendarEventClick(event: InterviewEvent) {
+  openInterviewModal(event.id)
+}
 
 const progressStageOptions = computed<StageOption[]>(() => {
   const merged = new Map<string, StageOption>()
@@ -794,16 +627,28 @@ const progressStageOptions = computed<StageOption[]>(() => {
 const stageLabelByValue = computed(() => new Map(progressStageOptions.value.map((option) => [option.value, option.label])))
 const showUpdateInterviewFields = computed(() => interviewStages.includes(progressForm.value.stage))
 
-const selectedInterview = computed(() =>
-  scheduleItems.value.find((record) => record.id === selectedInterviewId.value) ?? null
+const selectedInterviewApplication = computed(() =>
+  applications.value.find((record) => record.id === selectedInterviewId.value) ?? null
 )
-const interviewModalWrapClass = computed(() => {
-  const tone = selectedInterview.value?.accentClass === 'danger-chip'
-    ? 'danger'
-    : selectedInterview.value?.accentClass === 'warning-chip'
-      ? 'warning'
-      : 'info'
 
+const selectedInterviewTitle = computed(() => {
+  const app = selectedInterviewApplication.value
+  if (!app) return ''
+  return `${app.company} - ${app.stageLabel}`
+})
+
+const selectedInterviewModalTime = computed(() => {
+  const app = selectedInterviewApplication.value
+  if (!app?.interviewAt) return ''
+  const iso = String(app.interviewAt).replace(' ', 'T')
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return app.interviewAt
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`
+})
+
+const interviewModalWrapClass = computed(() => {
+  const tone = selectedInterviewApplication.value?.coachingStatus === 'coaching' ? 'info' : 'danger'
   return `applications-modal applications-modal--interview applications-modal--${tone}`
 })
 
@@ -837,6 +682,34 @@ const visibleApplications = computed(() => {
       .includes(keyword)
   })
 })
+
+// 客户端分页（与 assistant/lead-mentor『position』页一致的规范）
+const tablePagination = reactive<TablePaginationConfig>({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showSizeChanger: true,
+  showQuickJumper: true,
+  pageSizeOptions: ['10', '20', '50', '100'],
+  showTotal: (total: number) => `共 ${total} 条`
+})
+
+watch(
+  visibleApplications,
+  (rows) => {
+    tablePagination.total = rows.length
+    const maxPage = Math.max(1, Math.ceil(rows.length / Number(tablePagination.pageSize ?? 10)))
+    if (Number(tablePagination.current ?? 1) > maxPage) {
+      tablePagination.current = maxPage
+    }
+  },
+  { immediate: true }
+)
+
+function handleTableChange(pag: TablePaginationConfig) {
+  tablePagination.current = pag.current ?? 1
+  tablePagination.pageSize = pag.pageSize ?? Number(tablePagination.pageSize ?? 10)
+}
 
 async function loadApplications() {
   const [applicationsResponse, metaResponse] = await Promise.all([
@@ -898,10 +771,6 @@ function stageDropdownChanged(record: StudentApplicationRecord, nextStage: strin
     ...record,
     stage: nextStage
   })
-}
-
-function shiftCalendarMonth(offset: number) {
-  calendarMonthOffset.value += offset
 }
 
 function applyFilters() {
@@ -1168,216 +1037,120 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
 
 <style scoped lang="scss">
 .applications-page {
-  .schedule-card,
+  // 原型卡片：16px 圆角 + 柔和投影（适用于页面中所有 a-card：日历、筛选、表格）
+  :deep(.ant-card) {
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(115, 153, 198, 0.12);
+  }
+
   .filter-card {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+
+    :deep(.ant-card-body) {
+      padding: 12px 16px;
+    }
   }
 
-  .schedule-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  .applications-table-card {
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .applications-tab-header {
+    padding: 12px 16px;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  // 原型双层 tab：外层灰底容器 + 内层小 tab
+  .applications-tab-pills {
+    display: inline-flex;
     flex-wrap: wrap;
+    gap: 4px;
+    padding: 3px;
+    background: #f8fafc;
+    border-radius: 6px;
   }
 
-  .schedule-month-nav {
+  .app-tab {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-  }
-
-  .month-nav-btn {
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 700;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
     color: #64748b;
-    padding: 0 4px;
-    line-height: 1;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.3;
+    transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .month-nav-btn:hover {
+  .app-tab:hover {
     color: #1e293b;
   }
 
-  .schedule-month-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #334155;
-    white-space: nowrap;
-  }
-
-  .summary-chip {
-    font-size: 11px;
-    font-weight: 500;
-    color: #334155;
-    white-space: nowrap;
-  }
-
-  .summary-chip--muted {
-    color: #94a3b8;
-  }
-
-  .schedule-sep {
-    width: 1px;
-    height: 20px;
-    background: #e2e8f0;
-    flex: none;
-  }
-
-  .schedule-flex-gap {
-    flex: 1;
-  }
-
-  .schedule-week {
-    display: flex;
-    gap: 4px;
-  }
-
-  .day-chip {
-    min-width: 36px;
-    padding: 4px 8px;
-    text-align: center;
-    border: 0;
-    border-radius: 6px;
-    background: #f8fafc;
-    color: #334155;
-  }
-
-  .day-chip__weekday {
-    font-size: 9px;
-    color: #94a3b8;
-    font-weight: 500;
-  }
-
-  .day-chip__number {
+  .app-tab__icon {
     font-size: 14px;
-    font-weight: 600;
+    line-height: 1;
   }
 
-  .danger-chip .day-chip__weekday {
-    color: #991b1b;
-  }
-
-  .danger-chip .day-chip__number {
-    color: #ef4444;
-  }
-
-  .warning-chip .day-chip__weekday {
-    color: #92400e;
-    font-weight: 500;
-  }
-
-  .warning-chip .day-chip__number {
-    color: #f59e0b;
-    font-weight: 700;
-  }
-
-  .today-chip {
+  .app-tab--active {
     background: var(--primary, #7399c6);
     color: #fff;
   }
 
-  .today-chip .day-chip__weekday {
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .today-chip .day-chip__number {
+  .app-tab--active:hover {
     color: #fff;
-    font-weight: 700;
   }
 
-  .applications-tab-strip {
-    display: flex;
-    margin-bottom: 16px;
-  }
-
-  .tab-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding-inline: 18px;
-    font-size: 14px;
-    font-weight: 600;
-
-    .anticon {
-      font-size: 16px;
-      line-height: 1;
-    }
-  }
-
-  .tab-pill--active-success {
-    background: #22c55e !important;
-    border-color: #22c55e !important;
-    color: #fff !important;
-
-    &:hover,
-    &:focus {
-      background: #16a34a !important;
-      border-color: #16a34a !important;
-      color: #fff !important;
-    }
-  }
-
-  .tab-pill--active-warning {
-    background: #f59e0b !important;
-    border-color: #f59e0b !important;
-    color: #fff !important;
-
-    &:hover,
-    &:focus {
-      background: #d97706 !important;
-      border-color: #d97706 !important;
-      color: #fff !important;
-    }
-  }
-
-  .tab-pill--active-muted {
-    background: #6b7280 !important;
-    border-color: #6b7280 !important;
-    color: #fff !important;
-
-    &:hover,
-    &:focus {
-      background: #4b5563 !important;
-      border-color: #4b5563 !important;
-      color: #fff !important;
-    }
-  }
-
-  .tab-pill__count {
+  .app-tab__count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 22px;
-    height: 22px;
-    padding: 0 7px;
-    border-radius: 11px;
-    background: rgba(255, 255, 255, 0.85);
-    color: #1e293b;
-    font-size: 12px;
+    min-width: 18px;
+    height: 16px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 10px;
     font-weight: 700;
     line-height: 1;
+    color: #fff;
     margin-left: 2px;
   }
 
-  // 未高亮状态下的 badge：在白底 pill 里为色底填充
-  .tab-pill--all:not(.tab-pill--active-primary) .tab-pill__count {
+  // 未高亮状态：count 彩色标识保留语义（全部/已投递/面试中/已结束）
+  .app-tab:not(.app-tab--active) .app-tab__count--primary {
     background: var(--primary, #7399c6);
-    color: #fff;
   }
-  .tab-pill--applied:not(.tab-pill--active-success) .tab-pill__count {
+  .app-tab:not(.app-tab--active) .app-tab__count--success {
     background: #22c55e;
-    color: #fff;
   }
-  .tab-pill--ongoing:not(.tab-pill--active-warning) .tab-pill__count {
+  .app-tab:not(.app-tab--active) .app-tab__count--warning {
     background: #f59e0b;
-    color: #fff;
   }
-  .tab-pill--completed:not(.tab-pill--active-muted) .tab-pill__count {
+  .app-tab:not(.app-tab--active) .app-tab__count--muted {
     background: #6b7280;
-    color: #fff;
+  }
+
+  // 高亮状态 count 半透明白
+  .app-tab--active .app-tab__count {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  // 表头：对齐原型的浅灰底小字样式
+  .applications-table-card :deep(.ant-table-thead > tr > th) {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .applications-table-card :deep(.ant-table-thead > tr > th::before) {
+    display: none;
   }
 
   .stage-tag {
@@ -1417,19 +1190,6 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
 
   .action-stage-select :deep(.ant-select-selection-item) {
     line-height: 26px !important;
-  }
-
-  .btn-ended {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 14px;
-    border-radius: 6px;
-    background: #f3f4f6;
-    border: none;
-    color: #6b7280;
-    font-size: 11px;
-    cursor: not-allowed;
   }
 
   .modal-stage-select {
@@ -1641,256 +1401,6 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
     font-weight: 600;
   }
 
-  .schedule-summary {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .schedule-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--primary, #7399c6);
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .event-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border: 0;
-    border-radius: 6px;
-    background: #f8fafc;
-    color: #334155;
-    cursor: pointer;
-    font-size: 11px;
-  }
-
-  .event-pill__date {
-    font-weight: 600;
-  }
-
-  .danger-chip {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-
-  .warning-chip {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  .info-chip {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  .schedule-events {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  /* Calendar grid */
-  .cal-legend {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 12px;
-    padding-top: 4px;
-  }
-
-  .cal-legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: #475569;
-  }
-
-  .cal-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex: none;
-  }
-
-  .cal-dot--red {
-    background: #ef4444;
-  }
-
-  .cal-dot--blue {
-    background: #3b82f6;
-  }
-
-  .cal-today-marker {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    background: var(--primary, #7399c6);
-    flex: none;
-  }
-
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
-    margin-bottom: 16px;
-  }
-
-  .cal-header-cell {
-    text-align: center;
-    font-size: 10px;
-    font-weight: 600;
-    color: #94a3b8;
-    padding: 4px 0;
-  }
-
-  .cal-cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    min-height: 40px;
-    border-radius: 6px;
-    background: #f8fafc;
-    padding: 4px 2px;
-  }
-
-  .cal-cell--empty {
-    background: transparent;
-  }
-
-  .cal-cell--today {
-    background: var(--primary, #7399c6);
-  }
-
-  .cal-cell--today .cal-cell__number {
-    color: #fff;
-    font-weight: 700;
-  }
-
-  .cal-cell--today .cal-dot {
-    background: rgba(255, 255, 255, 0.85);
-  }
-
-  .cal-cell--has-event:not(.cal-cell--today) {
-    background: #f0f4ff;
-  }
-
-  .cal-cell__number {
-    font-size: 12px;
-    font-weight: 500;
-    color: #334155;
-    line-height: 1;
-  }
-
-  .btn-expand {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    flex: none;
-    border: none;
-    background: none;
-    color: #64748b;
-    font-size: 11px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .btn-expand:hover {
-    color: #334155;
-  }
-
-  .schedule-expanded {
-    margin-top: 16px;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 16px;
-  }
-
-  .expanded-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .expanded-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px;
-    background: #fff;
-  }
-
-  .expanded-right {
-    margin-left: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    flex: none;
-  }
-
-  .type-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .type-badge--interview {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-
-  .type-badge--coaching {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  .expanded-time {
-    font-size: 11px;
-    color: #64748b;
-    white-space: nowrap;
-  }
-
-  .danger-border {
-    border-left: 4px solid #ef4444;
-  }
-
-  .warning-border {
-    border-left: 4px solid #f59e0b;
-  }
-
-  .info-border {
-    border-left: 4px solid #3b82f6;
-  }
-
-  .expanded-date {
-    min-width: 50px;
-    text-align: center;
-  }
-
-  .expanded-date strong {
-    display: block;
-    font-size: 20px;
-  }
-
-  .expanded-date span,
-  .expanded-detail span,
   .job-position,
   .interview-cell span,
   .mentor-cell span,
@@ -2410,28 +1920,4 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
   }
 }
 
-@media (max-width: 900px) {
-  .applications-page {
-    .schedule-row {
-      gap: 8px;
-    }
-
-    .schedule-week {
-      flex-wrap: wrap;
-    }
-
-    .schedule-events {
-      width: 100%;
-      flex-wrap: wrap;
-    }
-
-    .pill-tabs {
-      flex-wrap: wrap;
-    }
-
-    .progress-form-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-}
 </style>
