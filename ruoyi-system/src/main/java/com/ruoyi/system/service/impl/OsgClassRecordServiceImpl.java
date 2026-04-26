@@ -309,6 +309,64 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         return summary;
     }
 
+    public List<Map<String, Object>> selectLeadMentorClassRecordList(String keyword,
+                                                                    String courseType,
+                                                                    String classStatus,
+                                                                    String courseSource,
+                                                                    String tab,
+                                                                    Date classDateStart,
+                                                                    Date classDateEnd,
+                                                                    Long leadMentorUserId)
+    {
+        List<OsgClassRecord> rows = filterLeadMentorOwnedRows(
+            selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd),
+            leadMentorUserId
+        );
+        if (rows.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
+        return mapPreservingPage(rows, row -> toClassRecordPayload(row, hourlyRates));
+    }
+
+    public Map<String, Object> selectLeadMentorClassRecordStats(String keyword,
+                                                                String courseType,
+                                                                String classStatus,
+                                                                String courseSource,
+                                                                String tab,
+                                                                Date classDateStart,
+                                                                Date classDateEnd,
+                                                                Long leadMentorUserId)
+    {
+        List<OsgClassRecord> rows = filterLeadMentorOwnedRows(
+            selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd),
+            leadMentorUserId
+        );
+        Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
+        BigDecimal pendingSettlementAmount = rows.stream()
+            .filter(row -> Objects.equals(normalizeReviewStatus(row.getStatus()), STATUS_PENDING))
+            .map(row -> resolveCourseFee(row, hourlyRates))
+            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            .setScale(1, RoundingMode.HALF_UP);
+
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("totalCount", rows.size());
+        summary.put("pendingCount", countByStatus(rows, STATUS_PENDING));
+        summary.put("approvedCount", countByStatus(rows, STATUS_APPROVED));
+        summary.put("rejectedCount", countByStatus(rows, STATUS_REJECTED));
+        summary.put("pendingSettlementAmount", pendingSettlementAmount.toPlainString());
+        summary.put("flowSteps", List.of(
+            "学员申请岗位/模拟应聘",
+            "班主任分配导师",
+            "导师上课并申报记录",
+            "后台审核",
+            "结算中心转账"
+        ));
+        return summary;
+    }
+
     @Override
     public Map<String, Object> selectReportSummary(String keyword, String courseType, String courseSource, String tab)
     {
@@ -522,6 +580,44 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
         Set<Long> scopedStudentIds = students.stream()
             .filter(student -> Objects.equals(student.getAssistantId(), assistantUserId))
+            .map(OsgStudent::getStudentId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        if (scopedStudentIds.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        return rows.stream()
+            .filter(row -> scopedStudentIds.contains(row.getStudentId()))
+            .toList();
+    }
+
+    private List<OsgClassRecord> filterLeadMentorOwnedRows(List<OsgClassRecord> rows, Long leadMentorUserId)
+    {
+        if (leadMentorUserId == null || rows == null || rows.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        List<Long> studentIds = rows.stream()
+            .map(OsgClassRecord::getStudentId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+        if (studentIds.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        List<OsgStudent> students = studentMapper.selectStudentByStudentIds(studentIds);
+        if (students == null || students.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        Set<Long> scopedStudentIds = students.stream()
+            .filter(student -> Objects.equals(student.getLeadMentorId(), leadMentorUserId))
             .map(OsgStudent::getStudentId)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
