@@ -11,3 +11,14 @@ export { default as InterviewTimeCell } from './InterviewTimeCell.vue'
 export { default as AppSidebar } from './AppSidebar/AppSidebar.vue'
 export type { NavigationItem, NavigationGroup } from './AppSidebar/types'
 export { default as PageHeader } from './PageHeader/PageHeader.vue'
+export { default as PositionsFooter } from './positions/PositionsFooter.vue'
+export { default as PositionsListTable } from './positions/PositionsListTable.vue'
+export { default as PositionsDrilldown } from './positions/PositionsDrilldown.vue'
+export type {
+  IndustryTone,
+  DeadlineTone,
+  PositionTableRow,
+  PositionCompanyGroup,
+  PositionIndustryGroup,
+} from './positions/types'
+export { INDUSTRY_TONE_TEXT_COLOR } from './positions/types'
