@@ -145,6 +145,31 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
     }, 1000)
   }
 
+  /**
+   * 完整复位整个流程状态（form + step + 倒计时 + token + 错误）。
+   * 主要用于 modal 关闭后再次打开时清空残留状态。
+   */
+  const reset = () => {
+    currentStep.value = 1
+    sendingCode.value = false
+    verifying.value = false
+    resetting.value = false
+    errorMessage.value = ''
+    successMessage.value = ''
+    emailError.value = ''
+    codeError.value = ''
+    confirmError.value = ''
+    showNewPassword.value = false
+    showConfirmPassword.value = false
+    resetToken.value = ''
+    step1Form.email = ''
+    step2Form.code = ''
+    step3Form.newPassword = ''
+    step3Form.confirmPassword = ''
+    countdown.value = countdownSeconds
+    stopCountdown()
+  }
+
   // ── Actions ──
   const handleSendCode = async () => {
     resetMessages()
@@ -288,6 +313,7 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
     startCountdown,
     stopCountdown,
     resetMessages,
+    reset,
   }
 }
 

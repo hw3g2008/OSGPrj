@@ -70,3 +70,48 @@ afterEach(() => {
   localStorageImpl.clear()
   sessionStorageImpl.clear()
 })
+
+// ============================================================
+// antd 在 jsdom 下需要的 polyfill（与 mentor / lead-mentor setup 等价）
+// - matchMedia: antd responsiveObserve
+// - ResizeObserver: antd Table / Tabs / Modal
+// - IntersectionObserver: 部分 antd 组件
+// ============================================================
+if (typeof window !== 'undefined') {
+  if (!window.matchMedia) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).matchMedia = (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })
+  }
+
+  if (typeof (globalThis as any).ResizeObserver === 'undefined') {
+    class ResizeObserverStub {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    ;(globalThis as any).ResizeObserver = ResizeObserverStub
+    ;(window as any).ResizeObserver = ResizeObserverStub
+  }
+
+  if (typeof (globalThis as any).IntersectionObserver === 'undefined') {
+    class IntersectionObserverStub {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return []
+      }
+    }
+    ;(globalThis as any).IntersectionObserver = IntersectionObserverStub
+    ;(window as any).IntersectionObserver = IntersectionObserverStub
+  }
+}
