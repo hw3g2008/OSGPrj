@@ -112,9 +112,7 @@
             <span class="metric metric--offer">{{ formatCount(record.mockInterviewCount) }}</span>
           </template>
           <template v-else-if="column.key === 'remainingHours'">
-            <strong class="remaining-hours" :class="remainingHoursToneClass(record.remainingHours)">
-              {{ formatHours(record.remainingHours) }}
-            </strong>
+            <RemainingHoursCell :hours="record.remainingHours" />
           </template>
           <template v-else-if="column.key === 'targetPosition'">
             <span>{{ record.targetPosition || '-' }}</span>
@@ -148,7 +146,7 @@ import { useRouter } from 'vue-router'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import type { TablePaginationConfig } from 'ant-design-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { StudentStatusTag } from '@osg/shared/components'
+import { StudentStatusTag, RemainingHoursCell } from '@osg/shared/components'
 import {
   getAssistantStudentList,
   type AssistantStudentListItem,
@@ -297,11 +295,6 @@ function formatCount(value?: number) {
   return Number(value ?? 0)
 }
 
-function formatHours(value?: number) {
-  const safeValue = Number(value ?? 0)
-  return Number.isInteger(safeValue) ? `${safeValue}h` : `${safeValue.toFixed(1)}h`
-}
-
 function formatMentor(value?: string) {
   return value && value.trim() ? value : '待补充班主任'
 }
@@ -347,17 +340,6 @@ function directionToneClass(value?: string) {
     return 'direction-tag--quant'
   }
   return 'direction-tag--finance'
-}
-
-function remainingHoursToneClass(value?: number) {
-  const safeValue = Number(value ?? 0)
-  if (safeValue >= 8) {
-    return 'remaining-hours--success'
-  }
-  if (safeValue > 0) {
-    return 'remaining-hours--warning'
-  }
-  return 'remaining-hours--muted'
 }
 
 function isLowHours(student: AssistantStudentListItem) {

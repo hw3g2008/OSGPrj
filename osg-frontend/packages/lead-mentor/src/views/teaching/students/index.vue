@@ -101,7 +101,7 @@
                 <td class="metric metric--delivery">{{ row.applyCount }}</td>
                 <td class="metric metric--interview">{{ row.interviewCount }}</td>
                 <td class="metric metric--offer">{{ row.offerCount }}</td>
-                <td class="remaining-hours" :class="row.remainingTone">{{ row.remainingHours }}</td>
+                <td><RemainingHoursCell :hours="row.rawRemainingHours" /></td>
                 <td>
                   <StudentStatusTag
                     :account-status="row.rawAccountStatus"
@@ -142,7 +142,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { StudentStatusTag } from '@osg/shared/components'
+import { StudentStatusTag, RemainingHoursCell } from '@osg/shared/components'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -170,8 +170,7 @@ interface StudentRow {
   applyCount: number
   interviewCount: number
   offerCount: number
-  remainingHours: string
-  remainingTone: string
+  rawRemainingHours: number
   rawAccountStatus: string
   accountStatusLabel: string
 }
@@ -217,8 +216,7 @@ const studentRows = computed<StudentRow[]>(() =>
     applyCount: Number(row.applyCount ?? 0),
     interviewCount: Number(row.interviewCount ?? 0),
     offerCount: Number(row.offerCount ?? 0),
-    remainingHours: formatHours(row.remainingHours),
-    remainingTone: resolveRemainingTone(row.remainingHours),
+    rawRemainingHours: Number(row.remainingHours ?? 0),
     rawAccountStatus: String(row.accountStatus ?? ''),
     accountStatusLabel: String(row.accountStatusLabel ?? ''),
   })),
@@ -326,21 +324,6 @@ function resolveDirectionTone(direction?: string) {
   return 'direction-tag--finance'
 }
 
-function resolveRemainingTone(remainingHours?: number) {
-  const value = Number(remainingHours ?? 0)
-  if (value >= 8) {
-    return 'remaining-hours--success'
-  }
-  if (value > 0) {
-    return 'remaining-hours--warning'
-  }
-  return 'remaining-hours--danger'
-}
-
-function formatHours(value?: number) {
-  const resolved = Number(value ?? 0)
-  return Number.isInteger(resolved) ? `${resolved}h` : `${resolved.toFixed(1)}h`
-}
 
 </script>
 

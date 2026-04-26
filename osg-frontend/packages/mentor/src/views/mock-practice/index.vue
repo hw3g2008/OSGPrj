@@ -295,7 +295,6 @@ function resetFilters() {
 function rowDomId(record: any) { return rowAnchors.value.get(record.practiceId ?? record.id) || '' }
 function rowClass(r: any) { return { 'row-new': r.status === 'new', 'row-midterm': r.practiceType === 'midterm' } }
 function avatarColor(r: any) { const c = ['#7399C6','#F59E0B','#3B82F6','#22C55E','#8B5CF6']; return c[(r.id ?? r.practiceId ?? 0) % c.length] }
-function typeClass(t: string) { return { mock_interview: 'info', relation_test: 'warning', midterm: 'purple' }[t] || 'info' }
 function typeLabel(t: string) { return { mock_interview: '模拟面试', relation_test: '人际关系测试', midterm: '期中考试' }[t] || t }
 function feedbackColor(l: string) { return { excellent: 'text-success', good: 'text-warning' }[l] || '' }
 function feedbackLabel(l: string) { return { excellent: '优秀', good: '良好', average: '一般', poor: '较差' }[l] || l }
