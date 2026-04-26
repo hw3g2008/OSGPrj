@@ -217,9 +217,7 @@
           </template>
 
           <template v-else-if="column.key === 'status'">
-            <a-tag :color="statusTagColor(record.status)">
-              {{ statusLabel(record.status) }}
-            </a-tag>
+            <ClassRecordStatusTag :status="record.status" />
           </template>
 
           <template v-else-if="column.key === 'action'">
@@ -283,9 +281,7 @@
           <span v-else>-</span>
         </a-descriptions-item>
         <a-descriptions-item label="审核状态" :span="2">
-          <a-tag :color="statusTagColor(selectedRecord.status)">
-            {{ statusLabel(selectedRecord.status) }}
-          </a-tag>
+          <ClassRecordStatusTag :status="selectedRecord.status" />
         </a-descriptions-item>
         <a-descriptions-item
           v-if="selectedRecord.status === 'rejected'"
@@ -312,6 +308,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { ClassRecordStatusTag } from '@osg/shared/components'
 import AssistantClassReportFlowModal from './AssistantClassReportFlowModal.vue'
 import {
   getAssistantClassRecordList,
@@ -541,20 +538,6 @@ function normalizeStatus(status?: string | null) {
     return 'rejected'
   }
   return 'pending'
-}
-
-function statusLabel(status?: string | null) {
-  const normalized = normalizeStatus(status)
-  if (normalized === 'approved') return '已通过'
-  if (normalized === 'rejected') return '已驳回'
-  return '待审核'
-}
-
-function statusTagColor(status?: string | null) {
-  const normalized = normalizeStatus(status)
-  if (normalized === 'approved') return 'green'
-  if (normalized === 'rejected') return 'red'
-  return 'orange'
 }
 
 function reporterRoleLabel(role?: string | null) {

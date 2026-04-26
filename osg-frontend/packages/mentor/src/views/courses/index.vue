@@ -88,7 +88,7 @@
           <template v-else-if="column.key === 'durationHours'">{{ record.durationHours }}h</template>
           <template v-else-if="column.key === 'totalFee'">¥{{ record.totalFee }}</template>
           <template v-else-if="column.key === 'reviewStatus'">
-            <a-tag :color="statusTagColor(record.reviewStatus)">{{ statusLabel(record.reviewStatus) }}</a-tag>
+            <ClassRecordStatusTag :status="record.reviewStatus" />
           </template>
           <template v-else-if="column.key === 'studentEvaluation'">
             <a-tag v-if="evaluationTag(record)" :color="evaluationTagColor(record)">{{ evaluationTag(record)?.text }}</a-tag>
@@ -376,6 +376,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { ClassRecordStatusTag } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
 import ReportModal from './components/ReportModal.vue'
 
@@ -482,9 +483,6 @@ function contentTagColor(t: string) {
     '基础课程': 'blue',
   }[t] || 'blue'
 }
-function statusTagColor(s: string) {
-  return { pending: 'orange', approved: 'green', rejected: 'red' }[s] || 'default'
-}
 function evaluationTagColor(record: Record<string, any>) {
   const tag = evaluationTag(record)
   return tag?.className === 'success' ? 'green' : tag?.className === 'warning' ? 'orange' : 'default'
@@ -520,7 +518,6 @@ function contentLabel(t: string) {
     other: '其他',
   }[normalized] || t
 }
-function statusLabel(s: string) { return { pending: '待审核', approved: '已通过', rejected: '已驳回' }[s] || s }
 function evaluationTag(record: Record<string, any>) {
   if (record.studentEvaluation !== '' && record.studentEvaluation != null) {
     return { text: `⭐ ${record.studentEvaluation}`, className: 'success' }

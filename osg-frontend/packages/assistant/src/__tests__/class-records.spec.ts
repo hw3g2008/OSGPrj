@@ -180,8 +180,11 @@ describe('assistant class records page', () => {
     // ── CR-22: 上课日期 MM/DD/YYYY 格式 ──
     expect(src).toContain('formatClassDate')
 
-    // ── CR-24: 审核状态 tag 色值（orange/green/red） ──
-    expect(src).toContain('statusTagColor')
+    // ── CR-24: 审核状态由 shared ClassRecordStatusTag 接管（M4 P3+P4）──
+    // 替代原 statusTagColor + statusLabel 本地函数
+    expect(src).toContain("import { ClassRecordStatusTag } from '@osg/shared/components'")
+    expect(src).toContain('<ClassRecordStatusTag :status="record.status" />')
+    expect(src).toContain('<ClassRecordStatusTag :status="selectedRecord.status" />')
 
     // ── CR-32: Modal Descriptions column=2 span 平衡（审核状态独占行避免 AntDv warning） ──
     expect(src).toContain('<a-descriptions-item label="审核状态" :span="2">')

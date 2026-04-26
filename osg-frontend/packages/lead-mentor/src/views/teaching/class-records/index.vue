@@ -141,7 +141,7 @@
                   <td>{{ row.classDate }}</td>
                   <td>{{ row.duration }}</td>
                   <td>{{ row.feeLabel }}</td>
-                  <td><span class="tag" :class="row.statusTone">{{ row.statusLabel }}</span></td>
+                  <td><ClassRecordStatusTag :status="row.status" :label="row.statusLabel" /></td>
                   <td>
                     <span v-if="row.ratingLabel" class="tag tag--success">{{ row.ratingLabel }}</span>
                     <span v-else class="meta-text">-</span>
@@ -267,7 +267,7 @@
                   <td><span class="tag" :class="row.contentTone">{{ row.contentLabel }}</span></td>
                   <td>{{ row.classDate }}</td>
                   <td>{{ row.duration }}</td>
-                  <td><span class="tag" :class="row.statusTone">{{ row.statusLabel }}</span></td>
+                  <td><ClassRecordStatusTag :status="row.status" :label="row.statusLabel" /></td>
                   <td>
                     <span v-if="row.ratingLabel" class="tag tag--success">{{ row.ratingLabel }}</span>
                     <span v-else class="meta-text">-</span>
@@ -322,6 +322,7 @@
 <script setup lang="ts">
 import { computed, inject, reactive, ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { ClassRecordStatusTag } from '@osg/shared/components'
 import { message } from 'ant-design-vue'
 import type {
   LeadMentorClassRecordCreatePayload,
