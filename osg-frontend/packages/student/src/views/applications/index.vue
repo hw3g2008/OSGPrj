@@ -52,10 +52,10 @@
             </a-tag>
             <span v-if="!scheduleItems.length" style="color:#94a3b8;font-size:11px">暂无面试安排</span>
           </div>
-          <button class="btn-expand" @click="calendarExpanded = !calendarExpanded">
-            <CalendarOutlined />
+          <a-button size="small" class="btn-expand" @click="calendarExpanded = !calendarExpanded">
+            <template #icon><CalendarOutlined /></template>
             {{ calendarExpanded ? '收起' : '展开' }}
-          </button>
+          </a-button>
         </div>
 
         <div v-if="calendarExpanded" class="schedule-expanded">
@@ -274,9 +274,9 @@
             <CalendarOutlined class="modal-title-icon" aria-hidden="true" />
             <span class="modal-title-text">面试安排</span>
           </span>
-          <button class="interview-modal-closebtn" @click="interviewModalOpen = false">
-            <CloseOutlined />
-          </button>
+          <a-button type="text" shape="circle" class="interview-modal-closebtn" @click="interviewModalOpen = false">
+            <template #icon><CloseOutlined /></template>
+          </a-button>
         </div>
       </template>
       <div class="rich-modal-shell rich-modal-shell--compact">
@@ -299,7 +299,7 @@
       destroy-on-close
       @ok="saveProgress"
     >
-      <div id="modal-update-result" class="rich-modal-shell">
+      <a-form id="modal-update-result" layout="vertical" :model="progressForm" class="rich-modal-shell">
         <div v-if="selectedApplication" class="modal-job-card progress-card">
           <div class="modal-job-mark">{{ selectedApplicationBadge }}</div>
           <div>
@@ -307,14 +307,17 @@
             <div class="modal-job-sub">{{ selectedApplication.position }} · {{ selectedApplication.location }}</div>
           </div>
         </div>
-        <label class="rich-form-field rich-form-field--full">
-          <span>当前面试阶段 <span class="field-required">*</span></span>
+        <a-form-item
+          label="当前面试阶段"
+          required
+          class="rich-form-field rich-form-field--full"
+          extra="选择阶段后，页面会切换到对应的 HireVue 或面试辅导分段内容。"
+        >
           <a-select
             id="update-stage-select"
             v-model:value="progressForm.stage"
             placeholder="请选择当前阶段"
             :style="selectStageTone(progressForm.stage)"
-            style="width: 120px"
           >
             <a-select-option
               v-for="option in stageDropdownOptions(progressForm.stage)"
@@ -324,8 +327,7 @@
               {{ option.label }}
             </a-select-option>
           </a-select>
-          <span class="field-helper">选择阶段后，页面会切换到对应的 HireVue 或面试辅导分段内容。</span>
-        </label>
+        </a-form-item>
 
         <div v-if="progressForm.stage === 'hirevue'" id="update-hirevue-fields" class="rich-form-card rich-form-card--subtle">
           <div class="rich-form-header rich-form-header--subtle">
@@ -333,36 +335,35 @@
             <p class="rich-form-help">复用岗位页的紫色模态样式、说明文案和上传入口。</p>
           </div>
           <div class="rich-form-stack">
-            <div class="rich-form-field rich-form-field--full">
-              <span>请选择类型 <span class="field-required">*</span></span>
+            <a-form-item label="请选择类型" required class="rich-form-field rich-form-field--full">
               <a-radio-group v-model:value="progressForm.hirevueType">
                 <a-radio value="vi">VI (Video Interview)</a-radio>
                 <a-radio value="ot">OT (Online Test)</a-radio>
               </a-radio-group>
-            </div>
+            </a-form-item>
 
-            <label v-if="progressForm.hirevueType === 'vi'" id="update-vi-fields" class="rich-form-field rich-form-field--full">
-              <span>VI 链接 <span class="field-required">*</span></span>
+            <a-form-item v-if="progressForm.hirevueType === 'vi'" id="update-vi-fields" label="VI 链接" required class="rich-form-field rich-form-field--full">
               <a-input v-model:value="progressForm.viLink" placeholder="请输入 Video Interview 链接" />
-            </label>
+            </a-form-item>
 
             <template v-if="progressForm.hirevueType === 'ot'">
-              <label id="update-ot-fields" class="rich-form-field">
-                <span>OT 链接 <span class="field-required">*</span></span>
+              <a-form-item id="update-ot-fields" label="OT 链接" required class="rich-form-field">
                 <a-input v-model:value="progressForm.otLink" placeholder="请输入 Online Test 链接" />
-              </label>
-              <label class="rich-form-field">
-                <span>登录账号 <span class="field-required">*</span></span>
+              </a-form-item>
+              <a-form-item label="登录账号" required class="rich-form-field">
                 <a-input v-model:value="progressForm.otAccount" placeholder="账号" />
-              </label>
-              <label class="rich-form-field">
-                <span>登录密码 <span class="field-required">*</span></span>
+              </a-form-item>
+              <a-form-item label="登录密码" required class="rich-form-field">
                 <a-input-password v-model:value="progressForm.otPassword" placeholder="密码" />
-              </label>
+              </a-form-item>
             </template>
 
-            <label class="rich-form-field">
-              <span>截止时间 <span class="field-required">*</span></span>
+            <a-form-item
+              label="截止时间"
+              required
+              class="rich-form-field"
+              extra="请填写 VI/OT 的截止时间，系统会一并写入进度说明。"
+            >
               <DatePicker
                 id="update-hirevue-deadline"
                 v-model:value="progressForm.hirevueDeadline"
@@ -371,10 +372,8 @@
                 value-format="YYYY-MM-DDTHH:mm"
                 style="width: 100%"
               />
-              <span class="field-helper">请填写 VI/OT 的截止时间，系统会一并写入进度说明。</span>
-            </label>
-            <label class="rich-form-field">
-              <span>上传邀请邮件截图 <span class="field-required">*</span></span>
+            </a-form-item>
+            <a-form-item label="上传邀请邮件截图" required class="rich-form-field">
               <Upload
                 id="update-hirevue-upload"
                 accept="image/*"
@@ -389,14 +388,13 @@
                   <span v-if="progressForm.inviteScreenshotName" class="upload-dropzone__file">{{ progressForm.inviteScreenshotName }}</span>
                 </label>
               </Upload>
-            </label>
-            <div class="rich-form-field rich-form-field--full">
-              <span>是否需要导师协助？ <span class="field-required">*</span></span>
+            </a-form-item>
+            <a-form-item label="是否需要导师协助？" required class="rich-form-field rich-form-field--full">
               <a-radio-group v-model:value="progressForm.mentorHelp">
                 <a-radio value="yes">是，需要导师协助</a-radio>
                 <a-radio value="no">否，仅需题库权限</a-radio>
               </a-radio-group>
-            </div>
+            </a-form-item>
           </div>
         </div>
 
@@ -406,8 +404,12 @@
             <p class="rich-form-help">保持岗位页同款分段节奏，先确认导师数量与时间，再补充偏好。</p>
           </div>
           <div class="rich-form-stack">
-            <label class="rich-form-field">
-              <span>需要几个导师？ <span class="field-required">*</span></span>
+            <a-form-item
+              label="需要几个导师？"
+              required
+              class="rich-form-field"
+              extra="根据面试难度，您可申请 1-3 位导师进行模拟面试。"
+            >
               <a-select
                 id="mentor-count-select"
                 v-model:value="progressForm.mentorCount"
@@ -422,10 +424,13 @@
                   {{ option.label }}
                 </a-select-option>
               </a-select>
-              <span class="field-helper">根据面试难度，您可申请 1-3 位导师进行模拟面试。</span>
-            </label>
-            <label class="rich-form-field">
-              <span>面试时间 <span class="field-required">*</span></span>
+            </a-form-item>
+            <a-form-item
+              label="面试时间"
+              required
+              class="rich-form-field"
+              extra="请填写该轮面试的具体时间，系统会同步写入进度说明。"
+            >
               <DatePicker
                 id="update-interview-time"
                 v-model:value="progressForm.interviewTime"
@@ -434,24 +439,20 @@
                 value-format="YYYY-MM-DDTHH:mm"
                 style="width: 100%"
               />
-              <span class="field-helper">请填写该轮面试的具体时间，系统会同步写入进度说明。</span>
-            </label>
-            <label class="rich-form-field">
-              <span>意向导师 <span class="field-optional">(选填)</span></span>
+            </a-form-item>
+            <a-form-item label="意向导师（选填）" class="rich-form-field">
               <a-input id="update-prefer-mentor" v-model:value="progressForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
-            </label>
-            <label class="rich-form-field">
-              <span>排除导师 <span class="field-optional">(选填)</span></span>
+            </a-form-item>
+            <a-form-item label="排除导师（选填）" class="rich-form-field">
               <a-input id="update-exclude-mentor" v-model:value="progressForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
-            </label>
+            </a-form-item>
           </div>
         </div>
 
-        <label class="rich-form-field rich-form-field--full">
-          <span>备注 <span class="field-optional">(选填)</span></span>
+        <a-form-item label="备注（选填）" class="rich-form-field rich-form-field--full">
           <a-textarea v-model:value="progressForm.note" :rows="2" placeholder="其他需要说明的内容..." />
-        </label>
-      </div>
+        </a-form-item>
+      </a-form>
     </a-modal>
 
     <a-modal
@@ -466,7 +467,7 @@
       destroy-on-close
       @ok="confirmApplied"
     >
-      <div id="modal-mark-applied" class="rich-modal-shell">
+      <a-form id="modal-mark-applied" layout="vertical" :model="appliedForm" class="rich-modal-shell">
         <div v-if="selectedApplication" class="modal-job-card applied-card">
           <div class="modal-job-mark">{{ selectedApplicationBadge }}</div>
           <div>
@@ -474,38 +475,44 @@
             <div class="modal-job-sub">{{ selectedApplication.position }} · {{ selectedApplication.location }}</div>
           </div>
         </div>
-        <label class="rich-form-field rich-form-field--full">
-          <span class="field-label-inline"><CalendarOutlined />投递时间 <span class="field-required">*</span></span>
+        <a-form-item required class="rich-form-field rich-form-field--full">
+          <template #label>
+            <span class="field-label-inline"><CalendarOutlined />投递时间</span>
+          </template>
           <DatePicker
-              id="applied-date"
-              v-model:value="appliedForm.date"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              style="width: 100%"
-            />
-        </label>
-        <label class="rich-form-field rich-form-field--full">
-          <span class="field-label-inline"><SendOutlined />投递方式</span>
+            id="applied-date"
+            v-model:value="appliedForm.date"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item class="rich-form-field rich-form-field--full">
+          <template #label>
+            <span class="field-label-inline"><SendOutlined />投递方式</span>
+          </template>
           <a-select
-              id="applied-method"
-              v-model:value="appliedForm.method"
-              placeholder="请选择投递方式"
-              style="width: 100%"
+            id="applied-method"
+            v-model:value="appliedForm.method"
+            placeholder="请选择投递方式"
+            style="width: 100%"
+          >
+            <a-select-option
+              v-for="option in applicationsMeta.filterOptions.applyMethods"
+              :key="`apply-method-${option.value}`"
+              :value="option.value"
             >
-              <a-select-option
-                v-for="option in applicationsMeta.filterOptions.applyMethods"
-                :key="`apply-method-${option.value}`"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </a-select-option>
-            </a-select>
-        </label>
-        <label class="rich-form-field rich-form-field--full">
-          <span class="field-label-inline"><FileTextOutlined />备注（选填）</span>
+              {{ option.label }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item class="rich-form-field rich-form-field--full">
+          <template #label>
+            <span class="field-label-inline"><FileTextOutlined />备注（选填）</span>
+          </template>
           <a-textarea v-model:value="appliedForm.note" :rows="2" placeholder="如：投递了哪个部门、使用了谁的内推等" />
-        </label>
-      </div>
+        </a-form-item>
+      </a-form>
     </a-modal>
   </div>
 </template>
@@ -1482,15 +1489,39 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
   }
 
   .rich-form-field {
-    display: grid;
-    gap: 7px;
     color: #334155;
     font-size: 13px;
-    align-content: start;
   }
 
   .rich-form-field--full {
     grid-column: 1 / -1;
+  }
+
+  .rich-modal-shell :deep(.ant-form-item),
+  .rich-form-stack :deep(.ant-form-item) {
+    margin-bottom: 0;
+  }
+
+  .rich-modal-shell :deep(.ant-form-item-label),
+  .rich-form-stack :deep(.ant-form-item-label) {
+    padding-bottom: 6px;
+
+    > label {
+      color: #334155;
+      font-size: 13px;
+      font-weight: 500;
+      height: auto;
+    }
+  }
+
+  .rich-modal-shell :deep(.ant-form-item-explain),
+  .rich-modal-shell :deep(.ant-form-item-extra),
+  .rich-form-stack :deep(.ant-form-item-explain),
+  .rich-form-stack :deep(.ant-form-item-extra) {
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 4px;
   }
 
   .inline-radio-group {

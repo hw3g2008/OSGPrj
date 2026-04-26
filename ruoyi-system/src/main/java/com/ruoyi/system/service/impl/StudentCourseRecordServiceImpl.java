@@ -176,10 +176,31 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
                     : dictLabel(pageCopy, "rateActionLabel", "评价"));
             record.put("actionKind", rated ? "detail" : "rate");
             record.put("detailTitle", resolveDetailTitle(rated, contentMeta, pageCopy));
+            record.put("detailKind", resolveDetailKind(courseContent));
+            record.put("mentorFeedback", defaultString(stringValue(record.get("feedbackContent")),
+                    defaultString(stringValue(record.get("ratingFeedback")), "")));
             record.put("tab", rated ? "evaluated" : "pending");
             record.put("newBadgeLabel", dictLabel(pageCopy, "newBadgeLabel", "NEW"));
         }
         return records;
+    }
+
+    private String resolveDetailKind(String courseContent)
+    {
+        String normalized = defaultString(courseContent, "").trim();
+        if ("模拟面试".equals(normalized))
+        {
+            return "mock";
+        }
+        if ("人际关系期中考试".equals(normalized))
+        {
+            return "networking";
+        }
+        if ("模拟期中考试".equals(normalized))
+        {
+            return "midterm";
+        }
+        return "coaching";
     }
 
     @Override
@@ -311,6 +332,7 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
             record.put("ratingScoreValue", defaultString(row.getRate(), ""));
             record.put("ratingTags", defaultString(row.getTopics(), ""));
             record.put("ratingFeedback", defaultString(row.getComments(), ""));
+            record.put("feedbackContent", defaultString(row.getFeedbackContent(), ""));
             projected.add(record);
         }
         return projected;

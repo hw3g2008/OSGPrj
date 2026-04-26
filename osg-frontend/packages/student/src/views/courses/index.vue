@@ -234,13 +234,65 @@
             </div>
           </div>
         </section>
+
+        <section class="detail-section-card">
+          <div class="detail-section-card__title">
+            <i class="mdi mdi-clipboard-text-outline" aria-hidden="true"></i>
+            详细信息
+          </div>
+          <div class="detail-feedback-card" style="background: #fff; border: 1px solid #e2e8f0">
+            <template v-if="currentCourse?.detailKind === 'mock'">
+              <div v-if="currentCourse?.mockPurpose" style="margin-bottom: 10px">
+                <strong>模拟面试目的：</strong>{{ currentCourse.mockPurpose }}
+              </div>
+              <div v-if="currentCourse?.mockTopics" style="margin-bottom: 10px">
+                <strong>涉及概念和主题：</strong>{{ currentCourse.mockTopics }}
+              </div>
+              <div v-if="currentCourse?.mockImprovements" style="margin-bottom: 10px">
+                <strong>需要改进的方面：</strong>{{ currentCourse.mockImprovements }}
+              </div>
+              <div v-if="currentCourse?.mentorRatingLabel">
+                <strong>导师评价：</strong>{{ currentCourse.mentorRatingEmoji || '' }} {{ currentCourse.mentorRatingLabel }}
+              </div>
+            </template>
+
+            <template v-else-if="currentCourse?.detailKind === 'networking'">
+              <div v-if="currentCourse?.networkingScores && currentCourse.networkingScores.length" class="detail-info-list">
+                <div v-for="item in currentCourse.networkingScores" :key="item.itemName" class="detail-info-row">
+                  <span>{{ item.itemName }}</span>
+                  <strong>{{ item.score }}/{{ item.maxScore }}{{ item.label ? ` · ${item.label}` : '' }}</strong>
+                </div>
+              </div>
+              <div v-if="currentCourse?.mentorRecommendation" style="margin-top: 10px">
+                <strong>导师推荐：</strong>{{ currentCourse.mentorRecommendation }}
+              </div>
+            </template>
+
+            <template v-else-if="currentCourse?.detailKind === 'midterm'">
+              <div v-if="currentCourse?.examScoreLabel" style="margin-bottom: 10px">
+                <strong>考试得分：</strong>{{ currentCourse.examScoreLabel }}
+              </div>
+              <div v-if="currentCourse?.examQuestions" style="margin-bottom: 10px; white-space: pre-line; line-height: 1.7">
+                <strong>逐题分析：</strong><br />{{ currentCourse.examQuestions }}
+              </div>
+              <div v-if="currentCourse?.studentProgressSummary" style="margin-top: 10px">
+                <strong>学生进度评估：</strong>{{ currentCourse.studentProgressSummary }}
+              </div>
+            </template>
+
+            <template v-else>
+              <div style="color: #64748b">暂无更多详情字段。</div>
+            </template>
+          </div>
+        </section>
+
         <section class="detail-section-card detail-section-card--feedback">
           <div class="detail-section-card__title">
             <i class="mdi mdi-comment-text-outline" aria-hidden="true"></i>
             课程反馈
           </div>
           <div class="detail-feedback-card">
-            {{ currentCourse?.ratingFeedback || '当前还没有填写详细反馈，完成反馈后会在这里显示。' }}
+            {{ currentCourse?.mentorFeedback || currentCourse?.ratingFeedback || '当前还没有填写详细反馈，完成反馈后会在这里显示。' }}
           </div>
           <div
             v-if="currentCourse?.ratingTags"
@@ -290,31 +342,31 @@
         <a-form layout="vertical">
           <a-form-item :label="classRecordsMeta.ratingDialog.scoreLabel">
             <div class="rating-button-row">
-              <button
+              <a-button
                 v-for="score in ratingButtons"
                 :key="score"
-                type="button"
+                shape="circle"
                 class="rating-star-button"
                 :class="{ 'rating-star-button--active': rateForm.rating !== null && score <= rateForm.rating }"
                 @click="setRating(score)"
               >
                 ⭐
-              </button>
+              </a-button>
               <span id="rating-text" class="rating-text">{{ ratingText }}</span>
             </div>
           </a-form-item>
           <a-form-item :label="classRecordsMeta.ratingDialog.tagLabel">
             <div class="rating-tag-chip-list">
-              <button
+              <a-button
                 v-for="option in classRecordsMeta.ratingDialog.tagOptions"
                 :key="option.value"
-                type="button"
+                size="small"
                 class="rating-tag-chip"
                 :class="{ 'rating-tag-chip--active': rateForm.tags.includes(option.value) }"
                 @click="toggleRateTag(option.value)"
               >
                 {{ option.label }}
-              </button>
+              </a-button>
             </div>
             <div class="rating-tag-chip-hint">
               {{ rateForm.tags.length > 0 ? `已选择 ${rateForm.tags.length} 项标签` : classRecordsMeta.ratingDialog.tagPlaceholder }}

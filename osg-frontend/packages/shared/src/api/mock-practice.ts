@@ -16,6 +16,18 @@ export interface StudentPracticeRecord {
   status: string
   statusValue: string
   statusColor: string
+
+  scheduledAt?: string
+  assignedMentors?: string
+  mentorCount?: number
+  requestReason?: string
+
+  feedbackRating?: number
+  feedbackRatingMax?: number
+  feedbackRatingLabel?: string
+  feedbackDetail?: string
+  feedbackImprovements?: string
+  mentorRecommendation?: string
 }
 
 export interface StudentClassRequestRecord {

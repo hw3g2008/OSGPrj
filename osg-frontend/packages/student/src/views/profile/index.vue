@@ -52,21 +52,51 @@
 
         <a-card title="学业信息" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2, md: 3 }" :colon="false">
-            <a-descriptions-item label="学校">{{ profile.school }}</a-descriptions-item>
-            <a-descriptions-item label="专业">{{ profile.major }}</a-descriptions-item>
-            <a-descriptions-item label="毕业年份">{{ profile.graduationYear }}</a-descriptions-item>
-            <a-descriptions-item label="高中">{{ profile.highSchool }}</a-descriptions-item>
-            <a-descriptions-item label="是否读研或延毕">{{ profile.postgraduatePlan }}</a-descriptions-item>
-            <a-descriptions-item label="签证">{{ profile.visaStatus }}</a-descriptions-item>
+            <a-descriptions-item label="学校">
+              <span class="field-value">{{ profile.school }}</span>
+              <a-tag v-if="pendingFieldKeys.has('school')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="专业">
+              <span class="field-value">{{ profile.major }}</span>
+              <a-tag v-if="pendingFieldKeys.has('major')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="毕业年份">
+              <span class="field-value">{{ profile.graduationYear }}</span>
+              <a-tag v-if="pendingFieldKeys.has('graduationYear')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="高中">
+              <span class="field-value">{{ profile.highSchool }}</span>
+              <a-tag v-if="pendingFieldKeys.has('highSchool')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="是否读研或延毕">
+              <span class="field-value">{{ profile.postgraduatePlan }}</span>
+              <a-tag v-if="pendingFieldKeys.has('postgraduatePlan')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="签证">
+              <span class="field-value">{{ profile.visaStatus }}</span>
+              <a-tag v-if="pendingFieldKeys.has('visaStatus')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
           </a-descriptions>
         </a-card>
 
         <a-card title="求职方向" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
-            <a-descriptions-item label="求职地区">{{ profile.targetRegion }}</a-descriptions-item>
-            <a-descriptions-item label="招聘周期">{{ profile.recruitmentCycle }}</a-descriptions-item>
-            <a-descriptions-item label="主攻方向">{{ profile.primaryDirection }}</a-descriptions-item>
-            <a-descriptions-item label="子方向">{{ profile.secondaryDirection }}</a-descriptions-item>
+            <a-descriptions-item label="求职地区">
+              <span class="field-value">{{ profile.targetRegion }}</span>
+              <a-tag v-if="pendingFieldKeys.has('targetRegion')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="招聘周期">
+              <span class="field-value">{{ profile.recruitmentCycle }}</span>
+              <a-tag v-if="pendingFieldKeys.has('recruitmentCycle')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="主攻方向">
+              <span class="field-value">{{ profile.primaryDirection }}</span>
+              <a-tag v-if="pendingFieldKeys.has('primaryDirection')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="子方向">
+              <span class="field-value">{{ profile.secondaryDirection }}</span>
+              <a-tag v-if="pendingFieldKeys.has('secondaryDirection')" color="warning" class="field-pending-tag">待审核</a-tag>
+            </a-descriptions-item>
           </a-descriptions>
         </a-card>
 
@@ -230,6 +260,9 @@ const pendingBannerText = computed(() =>
     ? '学业信息和求职方向的修改需要后台审核，请耐心等待'
     : '学业信息和求职方向的修改会进入后台审核队列，联系方式修改后直接生效。'
 )
+const pendingFieldKeys = computed(
+  () => new Set(pendingChanges.value.map((change) => change.fieldKey))
+)
 const avatarInitials = computed(() => {
   const initials = profile.fullName
     .split(/\s+/)
@@ -322,6 +355,18 @@ onMounted(() => {
 .page-sub {
   margin: 10px 0 0;
   color: #64748b;
+}
+
+.field-value {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.field-pending-tag {
+  margin-left: 8px;
+  vertical-align: middle;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .pending-banner {

@@ -1,5 +1,14 @@
 import { http } from '../utils/request'
 
+export type StudentClassRecordDetailKind = 'coaching' | 'mock' | 'networking' | 'midterm'
+
+export interface StudentClassRecordNetworkingScore {
+  itemName: string
+  score: number
+  maxScore: number
+  label?: string
+}
+
 export interface StudentClassRecord {
   recordId: string
   coachingType: string
@@ -19,10 +28,26 @@ export interface StudentClassRecord {
   actionLabel: string
   actionKind: 'rate' | 'detail'
   detailTitle: string
+  detailKind?: StudentClassRecordDetailKind
   tab: 'pending' | 'evaluated'
   ratingTags: string
   ratingFeedback: string
   newBadgeLabel: string
+
+  mentorFeedback?: string
+
+  mockPurpose?: string
+  mockTopics?: string
+  mockImprovements?: string
+  mentorRatingEmoji?: string
+  mentorRatingLabel?: string
+
+  networkingScores?: StudentClassRecordNetworkingScore[]
+  mentorRecommendation?: string
+
+  examScoreLabel?: string
+  examQuestions?: string
+  studentProgressSummary?: string
 }
 
 export function listStudentClassRecords(): Promise<{ records: StudentClassRecord[] }> {

@@ -125,6 +125,25 @@
                 <span>{{ record.feedbackHint }}</span>
               </div>
             </template>
+
+            <template v-else-if="column.key === 'action'">
+              <a-button
+                v-if="record.statusValue === 'completed'"
+                type="link"
+                size="small"
+                @click="openFeedbackDetail(record)"
+              >
+                <i class="mdi mdi-comment-check" style="margin-right: 4px"></i>查看反馈
+              </a-button>
+              <a-button
+                v-else
+                type="link"
+                size="small"
+                @click="openApplicationDetail(record)"
+              >
+                <i class="mdi mdi-eye" style="margin-right: 4px"></i>查看申请
+              </a-button>
+            </template>
           </template>
         </a-table>
       </a-card>
@@ -228,6 +247,112 @@
       </div>
     </a-modal>
 
+    <a-modal
+      v-model:open="applicationDetailOpen"
+      title="申请详情"
+      :width="540"
+      :footer="null"
+      @cancel="closeApplicationDetail"
+    >
+      <div v-if="selectedRecord" class="application-detail">
+        <div class="application-detail__header">
+          <div>
+            <div class="application-detail__title">{{ selectedRecord.type }}</div>
+            <div class="application-detail__sub">申请ID: {{ selectedRecord.id }}</div>
+          </div>
+          <a-tag :color="selectedRecord.statusColor">{{ selectedRecord.status }}</a-tag>
+        </div>
+
+        <div class="application-detail__grid">
+          <div class="application-detail__field">
+            <div class="application-detail__field-label">申请时间</div>
+            <div class="application-detail__field-value">{{ selectedRecord.appliedAt || '-' }}</div>
+          </div>
+          <div class="application-detail__field">
+            <div class="application-detail__field-label">预约时间</div>
+            <div class="application-detail__field-value">{{ selectedRecord.scheduledAt || '待安排' }}</div>
+          </div>
+          <div class="application-detail__field">
+            <div class="application-detail__field-label">分配导师</div>
+            <div class="application-detail__field-value">
+              {{ selectedRecord.assignedMentors || selectedRecord.mentor || '待分配' }}
+            </div>
+          </div>
+          <div class="application-detail__field">
+            <div class="application-detail__field-label">导师数量</div>
+            <div class="application-detail__field-value">
+              {{ selectedRecord.mentorCount ? `${selectedRecord.mentorCount}位` : '-' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="application-detail__reason">
+          <div class="application-detail__field-label">申请内容</div>
+          <p>{{ selectedRecord.requestReason || selectedRecord.content || '暂无补充说明。' }}</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+        <a-button @click="closeApplicationDetail">关闭</a-button>
+      </div>
+    </a-modal>
+
+    <a-modal
+      v-model:open="feedbackDetailOpen"
+      title="导师反馈"
+      :width="640"
+      :footer="null"
+      @cancel="closeFeedbackDetail"
+    >
+      <div v-if="selectedRecord" class="feedback-detail">
+        <div class="feedback-detail__header">
+          <div>
+            <div class="feedback-detail__title">{{ selectedRecord.type }}</div>
+            <div class="feedback-detail__sub">
+              {{ selectedRecord.appliedAt || '-' }}
+              <template v-if="selectedRecord.mentor"> · 导师：{{ selectedRecord.mentor }}</template>
+            </div>
+          </div>
+          <a-tag :color="selectedRecord.statusColor">{{ selectedRecord.status }}</a-tag>
+        </div>
+
+        <div v-if="typeof selectedRecord.feedbackRating === 'number'" class="feedback-detail__rating">
+          <div class="feedback-detail__rating-score">
+            <strong>{{ selectedRecord.feedbackRating }}</strong>
+            <span>/ {{ selectedRecord.feedbackRatingMax || 5 }} 分</span>
+          </div>
+          <div class="feedback-detail__rating-divider"></div>
+          <div class="feedback-detail__rating-copy">
+            <div class="feedback-detail__rating-label">{{ selectedRecord.feedbackRatingLabel || '已评分' }}</div>
+            <div class="feedback-detail__rating-hint">{{ selectedRecord.feedbackHint }}</div>
+          </div>
+        </div>
+
+        <section v-if="selectedRecord.feedbackDetail || selectedRecord.feedback" class="feedback-detail__section">
+          <div class="feedback-detail__section-title">
+            <i class="mdi mdi-comment-text" aria-hidden="true"></i>详细反馈
+          </div>
+          <p>{{ selectedRecord.feedbackDetail || selectedRecord.feedback }}</p>
+        </section>
+
+        <section v-if="selectedRecord.feedbackImprovements" class="feedback-detail__section feedback-detail__section--amber">
+          <div class="feedback-detail__section-title">
+            <i class="mdi mdi-lightbulb" aria-hidden="true"></i>改进建议
+          </div>
+          <p style="white-space: pre-line">{{ selectedRecord.feedbackImprovements }}</p>
+        </section>
+
+        <div v-if="selectedRecord.mentorRecommendation" class="feedback-detail__recommendation">
+          <i class="mdi mdi-check-circle" aria-hidden="true"></i>
+          <span>{{ selectedRecord.mentorRecommendation }}</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+        <a-button @click="closeFeedbackDetail">关闭</a-button>
+      </div>
+    </a-modal>
+
   </div>
 </template>
 
@@ -252,7 +377,8 @@ const practiceColumns = [
   { title: '申请时间', dataIndex: 'appliedAt', key: 'appliedAt', width: 140 },
   { title: '导师', dataIndex: 'mentor', key: 'mentor', width: 180 },
   { title: '已上课时', dataIndex: 'hours', key: 'hours', width: 110 },
-  { title: '课程反馈', dataIndex: 'feedback', key: 'feedback', width: 220 }
+  { title: '课程反馈', dataIndex: 'feedback', key: 'feedback', width: 220 },
+  { title: '操作', key: 'action', width: 140, fixed: 'right' as const }
 ]
 
 const practiceFilters = ref({
@@ -266,6 +392,29 @@ const practiceModalOpen = ref(false)
 const currentPracticeModal = ref<PracticeModalKey | null>(null)
 const practiceSubmitting = ref(false)
 const practiceRecords = ref<StudentPracticeRecord[]>([])
+const applicationDetailOpen = ref(false)
+const feedbackDetailOpen = ref(false)
+const selectedRecord = ref<StudentPracticeRecord | null>(null)
+
+const openApplicationDetail = (record: StudentPracticeRecord) => {
+  selectedRecord.value = record
+  applicationDetailOpen.value = true
+}
+
+const closeApplicationDetail = () => {
+  applicationDetailOpen.value = false
+  selectedRecord.value = null
+}
+
+const openFeedbackDetail = (record: StudentPracticeRecord) => {
+  selectedRecord.value = record
+  feedbackDetailOpen.value = true
+}
+
+const closeFeedbackDetail = () => {
+  feedbackDetailOpen.value = false
+  selectedRecord.value = null
+}
 const mockPracticeMeta = ref<StudentMockPracticeMeta>({
   pageSummary: {
     titleZh: '',
@@ -749,6 +898,153 @@ onMounted(() => {
     color: var(--modal-accent);
   }
 
+  .application-detail__header,
+  .feedback-detail__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .application-detail__title,
+  .feedback-detail__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .application-detail__sub,
+  .feedback-detail__sub {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .application-detail__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .application-detail__field {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+  }
+
+  .application-detail__field-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  .application-detail__field-value {
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .application-detail__reason {
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+
+    p {
+      margin: 8px 0 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e293b;
+    }
+  }
+
+  .feedback-detail__rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    border-radius: 12px;
+    color: #166534;
+
+    strong {
+      font-size: 40px;
+      font-weight: 700;
+    }
+
+    span {
+      font-size: 13px;
+    }
+  }
+
+  .feedback-detail__rating-divider {
+    width: 1px;
+    height: 48px;
+    background: #86efac;
+  }
+
+  .feedback-detail__rating-label {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .feedback-detail__rating-hint {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  .feedback-detail__section {
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    background: #fafafa;
+
+    p {
+      margin: 8px 0 0;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #1e293b;
+    }
+  }
+
+  .feedback-detail__section--amber {
+    background: #fef3c7;
+    border-color: #fde68a;
+    color: #92400e;
+  }
+
+  .feedback-detail__section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #0f172a;
+
+    .mdi {
+      color: inherit;
+    }
+  }
+
+  .feedback-detail__recommendation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 10px;
+    font-weight: 600;
+
+    .mdi {
+      font-size: 20px;
+    }
+  }
 }
 
 @media (max-width: 1200px) {

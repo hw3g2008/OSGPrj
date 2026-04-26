@@ -25,40 +25,25 @@
       </div>
 
       <div class="table-shell">
-        <table class="record-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>课程类型</th>
-              <th>导师</th>
-              <th>课时</th>
-              <th>上课日期</th>
-              <th>来源</th>
-              <th>我的评价</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in filteredRows" :key="row.id">
-              <td>{{ row.id }}</td>
-              <td>{{ row.courseType }}</td>
-              <td>{{ row.mentor }}</td>
-              <td>{{ row.duration }}</td>
-              <td>{{ row.date }}</td>
-              <td>{{ row.source }}</td>
-              <td>{{ row.rate }}</td>
-              <td>
-                <a-button
-                  :type="row.status === '待评价' ? 'primary' : 'default'"
-                  size="small"
-                  @click="openRate(row)"
-                >
-                  {{ row.actionLabel }}
-                </a-button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <a-table
+          :columns="reportColumns"
+          :data-source="filteredRows"
+          :pagination="false"
+          :row-key="(record: any) => record.id"
+          class="record-table"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'action'">
+              <a-button
+                :type="record.status === '待评价' ? 'primary' : 'default'"
+                size="small"
+                @click="openRate(record)"
+              >
+                {{ record.actionLabel }}
+              </a-button>
+            </template>
+          </template>
+        </a-table>
       </div>
     </OsgPageContainer>
 
@@ -72,26 +57,35 @@
           </div>
         </div>
 
-        <div class="rating-block">
-          <div class="rating-title">整体评分</div>
-          <div class="rating-actions">
-            <a-button
-              v-for="score in [1, 2, 3, 4, 5]"
-              :key="score"
-              :type="rating >= score ? 'primary' : 'default'"
-              @click="rating = score"
-            >
-              ⭐
-            </a-button>
-            <span class="rating-text">{{ ratingText }}</span>
-          </div>
-        </div>
+        <a-form layout="vertical" class="rate-form">
+          <a-form-item label="整体评分" required>
+            <div class="rating-actions">
+              <a-button
+                v-for="score in [1, 2, 3, 4, 5]"
+                :key="score"
+                :type="rating >= score ? 'primary' : 'default'"
+                @click="rating = score"
+              >
+                ⭐
+              </a-button>
+              <span class="rating-text">{{ ratingText }}</span>
+            </div>
+          </a-form-item>
 
-        <div class="tag-grid">
-          <a-tag v-for="tag in rateTags" :key="tag" color="blue">{{ tag }}</a-tag>
-        </div>
+          <a-form-item label="评价标签（可多选）">
+            <div class="tag-grid">
+              <a-tag v-for="tag in rateTags" :key="tag" color="blue">{{ tag }}</a-tag>
+            </div>
+          </a-form-item>
 
-        <a-textarea v-model:value="feedbackText" :rows="4" placeholder="请详细描述您的上课体验、导师表现以及改进建议..." />
+          <a-form-item label="详细反馈" required>
+            <a-textarea
+              v-model:value="feedbackText"
+              :rows="4"
+              placeholder="请详细描述您的上课体验、导师表现以及改进建议..."
+            />
+          </a-form-item>
+        </a-form>
       </div>
 
       <div class="dialog-actions">
@@ -105,6 +99,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const reportColumns = [
+  { title: 'ID', dataIndex: 'id', key: 'id' },
+  { title: '课程类型', dataIndex: 'courseType', key: 'courseType' },
+  { title: '导师', dataIndex: 'mentor', key: 'mentor' },
+  { title: '课时', dataIndex: 'duration', key: 'duration' },
+  { title: '上课日期', dataIndex: 'date', key: 'date' },
+  { title: '来源', dataIndex: 'source', key: 'source' },
+  { title: '我的评价', dataIndex: 'rate', key: 'rate' },
+  { title: '操作', key: 'action' },
+]
 
 type ReportRow = {
   id: string
@@ -296,16 +301,6 @@ const openRate = (row: ReportRow) => {
   margin-top: 4px;
   color: #64748b;
   font-size: 13px;
-}
-
-.rating-block {
-  display: grid;
-  gap: 10px;
-}
-
-.rating-title {
-  font-weight: 700;
-  color: #334155;
 }
 
 .rating-actions {
