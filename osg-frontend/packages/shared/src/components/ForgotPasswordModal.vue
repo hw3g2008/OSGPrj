@@ -7,16 +7,21 @@
     :destroy-on-close="true"
     centered
     wrap-class-name="osg-forgot-password-modal"
+    :body-style="{ padding: '4px 26px 26px' }"
     @update:open="onOpenChange"
   >
     <template #title>
-      <span class="osg-fp-title">
+      <span class="osg-fp-title" data-surface-part="header">
         <i class="mdi mdi-key" aria-hidden="true"></i>
         <span>找回密码</span>
       </span>
     </template>
 
-    <div class="osg-fp-body">
+    <div
+      class="osg-fp-body"
+      data-surface-id="modal-forgot-password"
+      data-surface-part="shell"
+    >
       <!-- 3 step dots progress (原型 SSOT 三个圆点) -->
       <div class="osg-fp-dots" aria-hidden="true">
         <div

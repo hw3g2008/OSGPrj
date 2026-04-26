@@ -50,11 +50,14 @@ test.describe('Assistant Login Shell @assistant @ui-smoke @ui-only', () => {
     await page.locator('.pwd-toggle').click()
     await expect(passwordInput).toHaveAttribute('type', 'password')
 
-    await page.locator('.login-links a').click()
-    await expect(page).toHaveURL(/\/forgot-password/)
-    await expect(page.locator('.login-title')).toBeVisible()
-    await expect(page.locator('.steps')).toBeVisible()
-    await expect(page.locator('.back-link')).toBeVisible()
+    // M6 P5: forgot-password 从独立 page 纠偏为 login 内嵌 modal（严格按原型 SSOT）
+    // 点击触发 modal，URL 不变化，不再跳转 /forgot-password 路由
+    await page.locator('[data-surface-trigger="modal-forgot-password"]').click()
+    await expect(
+      page.locator('[data-surface-id="modal-forgot-password"]').first(),
+    ).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('#fp-email')).toBeVisible()
+    await expect(page.locator('#fp-send-code-btn')).toBeVisible()
   })
 })
 
