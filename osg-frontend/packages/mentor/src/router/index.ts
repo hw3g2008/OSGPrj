@@ -11,12 +11,6 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '登录', public: true }
   },
   {
-    path: '/forgot-password',
-    name: 'ForgotPassword',
-    component: () => import('@/views/forgot-password/index.vue'),
-    meta: { title: '忘记密码', public: true }
-  },
-  {
     path: '/',
     component: MainLayout,
     redirect: '/dashboard',

@@ -95,18 +95,38 @@
         </div>
 
         <div class="login-links">
-          忘记密码？<router-link to="/forgot-password">点击重置</router-link>
+          忘记密码？
+          <a
+            href="javascript:void(0)"
+            class="link-anchor"
+            data-surface-trigger="modal-forgot-password"
+            @click.prevent="openForgotPassword"
+          >
+            点击重置
+          </a>
         </div>
       </div>
     </div>
+
+    <ForgotPasswordModal
+      v-model:open="forgotPasswordOpen"
+      :endpoints="forgotPasswordEndpoints"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { login, getInfo } from '@/api/auth'
+import {
+  login,
+  getInfo,
+  sendResetCode,
+  verifyResetCode as verifyResetCodeApi,
+  resetPassword as resetPasswordApi,
+} from '@/api/auth'
 import { setToken, setUser } from '@osg/shared/utils'
+import { ForgotPasswordModal } from '@osg/shared/components'
 
 const router = useRouter()
 const route = useRoute()
@@ -115,6 +135,31 @@ const showPassword = ref(false)
 const errorMsg = ref('')
 const formState = reactive({ username: '', password: '' })
 const errors = reactive({ username: '', password: '' })
+
+// M6 P5: forgot-password 业务逻辑由 shared <ForgotPasswordModal> 接管。
+// mentor API 用 positional args，在 endpoints 中适配为 object payload。
+const forgotPasswordOpen = ref(false)
+const forgotPasswordEndpoints = {
+  sendCode: ({ email }: { email: string }) => sendResetCode(email),
+  verifyCode: async ({ email, code }: { email: string; code: string }) => {
+    const data = await verifyResetCodeApi(email, code)
+    if (!data?.resetToken) throw new Error('reset token missing')
+    return { resetToken: data.resetToken }
+  },
+  resetPassword: ({
+    email,
+    password,
+    resetToken,
+  }: {
+    email: string
+    password: string
+    resetToken: string
+  }) => resetPasswordApi(email, resetToken, password),
+}
+
+function openForgotPassword() {
+  forgotPasswordOpen.value = true
+}
 
 const handleLogin = async () => {
   errors.username = ''
