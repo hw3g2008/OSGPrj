@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import Antd from 'ant-design-vue'
 import { http } from '@osg/shared/utils/request'
 import ProfilePage from '@/views/profile/index.vue'
+
+const mountOptions = { global: { plugins: [Antd] } }
 
 vi.mock('@osg/shared/utils/request', () => ({
   http: {
@@ -29,7 +32,7 @@ describe('mentor profile page behavior', () => {
   })
 
   it('keeps the edit modal region linkage aligned with SSOT', async () => {
-    const wrapper = mount(ProfilePage)
+    const wrapper = mount(ProfilePage, mountOptions)
     await flushPromises()
 
     await wrapper.get('#page-profile button').trigger('click')
@@ -54,7 +57,7 @@ describe('mentor profile page behavior', () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
     vi.mocked(http.put).mockResolvedValueOnce({ code: 200 })
 
-    const wrapper = mount(ProfilePage)
+    const wrapper = mount(ProfilePage, mountOptions)
     await flushPromises()
 
     await wrapper.get('#page-profile button').trigger('click')

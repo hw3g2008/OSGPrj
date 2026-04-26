@@ -6,7 +6,9 @@
       description="查看和管理您的个人信息"
     >
       <template #actions>
-        <button class="btn btn-primary" @click="showEditModal = true"><i class="mdi mdi-pencil" /> 编辑信息</button>
+        <a-button type="primary" @click="showEditModal = true">
+          <i class="mdi mdi-pencil" style="margin-right:4px" />编辑信息
+        </a-button>
       </template>
     </PageHeader>
 
@@ -16,7 +18,7 @@
       <div class="info-grid grid-4">
         <div class="info-item"><span class="info-label">英文名</span><div class="info-value bold">{{ profile.nickName || '-' }}</div></div>
         <div class="info-item"><span class="info-label">性别</span><div class="info-value">{{ profile.sex === '0' ? 'Male' : 'Female' }}</div></div>
-        <div class="info-item"><span class="info-label">类型</span><div><span class="tag info">导师</span></div></div>
+        <div class="info-item"><span class="info-label">类型</span><div><a-tag color="blue">导师</a-tag></div></div>
         <div class="info-item"><span class="info-label">邮箱</span><div class="info-value">{{ profile.email || '-' }}</div></div>
       </div>
     </div>
@@ -38,7 +40,7 @@
         <span class="lock-hint"><i class="mdi mdi-lock" /> 如需修改请联系后台文员</span>
       </div>
       <div class="info-grid grid-2">
-        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">主攻方向</span><div><span class="tag purple">咨询 Consulting</span></div></div>
+        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">主攻方向</span><div><a-tag color="purple">咨询 Consulting</a-tag></div></div>
         <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">二级方向</span><div class="info-value">Strategy Consulting</div></div>
       </div>
     </div>
@@ -47,25 +49,35 @@
     <div class="section">
       <div class="section-badge badge-blue"><i class="mdi mdi-book-open-variant" /> 课程信息</div>
       <div class="info-grid grid-2">
-        <div class="info-item bg-white"><span class="info-label">可授课程类型</span><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span class="tag info">模拟面试</span><span class="tag info">简历修改</span><span class="tag info">案例分析</span></div></div>
+        <div class="info-item bg-white"><span class="info-label">可授课程类型</span><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><a-tag color="blue">模拟面试</a-tag><a-tag color="blue">简历修改</a-tag><a-tag color="blue">案例分析</a-tag></div></div>
         <div class="info-item bg-white"><span class="info-label">课单价 <span class="text-muted text-sm">(不可修改)</span></span><div class="fee-value">¥600/h</div></div>
       </div>
     </div>
 
     <!-- 编辑弹窗 -->
-    <div v-if="showEditModal" id="modal-mentor-edit-profile" class="modal active" @click.self="showEditModal = false">
-      <div class="modal-content" style="max-width:600px">
-        <div class="modal-header"><span class="modal-title"><i class="mdi mdi-account-edit" /> 编辑个人信息</span><button class="modal-close" @click="showEditModal = false">×</button></div>
+    <a-modal
+      v-model:open="showEditModal"
+      :width="600"
+      :footer="null"
+      :title="null"
+      :closable="false"
+      :body-style="{ padding: 0 }"
+      :get-container="false"
+      :destroy-on-close="true"
+      @cancel="showEditModal = false"
+    >
+      <div id="modal-mentor-edit-profile">
+        <div class="modal-header"><span class="modal-title"><i class="mdi mdi-account-edit" /> 编辑个人信息</span><button class="modal-close" type="button" @click="showEditModal = false">×</button></div>
         <div class="modal-body">
           <div class="edit-notice"><i class="mdi mdi-information" /> 修改信息后，后台文员将收到提醒通知。<br/><span style="color:#EF4444">注意：主攻方向、二级方向和课单价不可自行修改。</span></div>
           <div class="edit-section">
             <div class="section-badge badge-green"><i class="mdi mdi-pencil" /> 可修改信息</div>
             <div class="form-grid">
-              <div class="form-group"><label class="form-label">英文名 <span class="req">*</span></label><input v-model="editForm.nickName" class="form-input" /></div>
+              <div class="form-group"><label class="form-label">英文名 <span class="req">*</span></label><a-input v-model:value="editForm.nickName" /></div>
               <div class="form-group"><label class="form-label">性别 <span class="req">*</span></label><select v-model="editForm.sex" class="form-select full"><option value="0">Male</option><option value="1">Female</option></select></div>
-              <div class="form-group"><label class="form-label">手机号 <span class="req">*</span></label><input v-model="editForm.phonenumber" class="form-input" /></div>
-              <div class="form-group"><label class="form-label">微信号</label><input v-model="editForm.remark" class="form-input" /></div>
-              <div class="form-group"><label class="form-label">邮箱 <span class="req">*</span></label><input v-model="editForm.email" type="email" class="form-input" /></div>
+              <div class="form-group"><label class="form-label">手机号 <span class="req">*</span></label><a-input v-model:value="editForm.phonenumber" /></div>
+              <div class="form-group"><label class="form-label">微信号</label><a-input v-model:value="editForm.remark" /></div>
+              <div class="form-group"><label class="form-label">邮箱 <span class="req">*</span></label><a-input v-model:value="editForm.email" type="email" /></div>
               <div class="form-group"><label class="form-label">所属地区 <span class="req">*</span></label>
                 <div style="display:flex;gap:8px">
                   <select id="mentor-region-area" v-model="editForm.region" class="form-select" style="width:50%" @change="editForm.city = ''">
@@ -79,15 +91,30 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer"><button class="btn btn-outline" @click="showEditModal = false">取消</button><button class="btn btn-primary" @click="saveProfile"><i class="mdi mdi-check" /> 保存修改</button></div>
+        <div class="modal-footer">
+          <a-button @click="showEditModal = false">取消</a-button>
+          <a-button type="primary" class="btn-primary" style="margin-left:8px" @click="saveProfile">
+            <i class="mdi mdi-check" style="margin-right:4px" />保存修改
+          </a-button>
+        </div>
       </div>
-    </div>
+    </a-modal>
 
-    <div v-if="showSaveConfirmModal" id="modal-mentor-profile-save-confirm" class="modal active" @click.self="closeSaveConfirmModal">
-      <div class="modal-content modal-content--confirm" style="max-width:560px">
+    <a-modal
+      v-model:open="showSaveConfirmModal"
+      :width="560"
+      :footer="null"
+      :title="null"
+      :closable="false"
+      :body-style="{ padding: 0 }"
+      :get-container="false"
+      :destroy-on-close="true"
+      @cancel="closeSaveConfirmModal"
+    >
+      <div id="modal-mentor-profile-save-confirm" class="modal-content--confirm">
         <div class="modal-header">
           <span class="modal-title"><i class="mdi mdi-check-decagram" /> 确认提交变更</span>
-          <button class="modal-close" @click="closeSaveConfirmModal">×</button>
+          <button class="modal-close" type="button" @click="closeSaveConfirmModal">×</button>
         </div>
         <div class="modal-body">
           <div class="save-summary">
@@ -104,17 +131,29 @@
           <div class="save-hint">确认后，系统会真实创建一条变更请求，等待后台文员处理。</div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" @click="closeSaveConfirmModal">返回修改</button>
-          <button class="btn btn-primary" @click="submitSaveProfile"><i class="mdi mdi-cloud-upload" /> 确认保存</button>
+          <a-button @click="closeSaveConfirmModal">返回修改</a-button>
+          <a-button type="primary" class="btn-primary" style="margin-left:8px" @click="submitSaveProfile">
+            <i class="mdi mdi-cloud-upload" style="margin-right:4px" />确认保存
+          </a-button>
         </div>
       </div>
-    </div>
+    </a-modal>
 
-    <div v-if="showSaveSuccessModal" id="modal-mentor-profile-save-success" class="modal active" @click.self="closeSaveSuccessModal">
-      <div class="modal-content modal-content--success" style="max-width:480px">
+    <a-modal
+      v-model:open="showSaveSuccessModal"
+      :width="480"
+      :footer="null"
+      :title="null"
+      :closable="false"
+      :body-style="{ padding: 0 }"
+      :get-container="false"
+      :destroy-on-close="true"
+      @cancel="closeSaveSuccessModal"
+    >
+      <div id="modal-mentor-profile-save-success" class="modal-content--success">
         <div class="modal-header modal-header--success">
           <span class="modal-title"><i class="mdi mdi-check-circle" /> 保存成功</span>
-          <button class="modal-close" @click="closeSaveSuccessModal">×</button>
+          <button class="modal-close" type="button" @click="closeSaveSuccessModal">×</button>
         </div>
         <div class="modal-body">
           <div class="success-card">
@@ -123,10 +162,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" @click="closeSaveSuccessModal">知道了</button>
+          <a-button type="primary" class="btn-primary" @click="closeSaveSuccessModal">知道了</a-button>
         </div>
       </div>
-    </div>
+    </a-modal>
   </div>
 </template>
 
