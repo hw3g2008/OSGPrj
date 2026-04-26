@@ -17,7 +17,7 @@ import {
   validateForgotPasswordCode,
   validateForgotPasswordConfirmation,
   validateForgotPasswordPassword,
-} from '@/views/forgot-password/forgot-password-workflow'
+} from '@osg/shared/utils/forgotPasswordHelpers'
 import { resetPassword, sendResetCode, verifyResetCode } from '@osg/shared/api'
 
 function createTestRouter() {

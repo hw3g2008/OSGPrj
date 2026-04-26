@@ -138,176 +138,39 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, ref } from 'vue'
 import { resetPassword, sendResetCode, verifyResetCode } from '@osg/shared/api'
-import {
-  getForgotPasswordResendMeta,
-  getForgotPasswordStepDescription,
-  getPasswordStrengthMeta,
-  maskForgotPasswordEmail,
-  validateForgotPasswordCode,
-  validateForgotPasswordConfirmation,
-  validateForgotPasswordPassword
-} from './forgot-password-workflow'
+import { useForgotPasswordFlow } from '@osg/shared/composables'
 
-const currentStep = ref(1)
-const sendingCode = ref(false)
-const verifying = ref(false)
-const resetting = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
-const countdown = ref(60)
-const emailError = ref('')
-const codeError = ref('')
-const confirmError = ref('')
-const resetToken = ref('')
-
-let countdownTimer: ReturnType<typeof setInterval> | null = null
-
-const step1Form = reactive({ email: '' })
-const step2Form = reactive({ code: '' })
-const step3Form = reactive({ newPassword: '', confirmPassword: '' })
-
-const maskedEmail = computed(() => maskForgotPasswordEmail(step1Form.email))
-const stepDescription = computed(() => getForgotPasswordStepDescription(currentStep.value))
-const passwordStrength = computed(() => getPasswordStrengthMeta(step3Form.newPassword))
-const resendMeta = computed(() => getForgotPasswordResendMeta(countdown.value))
-
-const countdownText = computed(() => {
-  if (countdown.value > 0) {
-    return `${countdown.value}秒后可重新发送`
-  }
-  return '验证码已过期，可重新发送'
-})
-
-const resetMessages = () => {
-  errorMessage.value = ''
-  successMessage.value = ''
-}
-
-const validEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-
-const startCountdown = () => {
-  countdown.value = 60
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-  }
-
-  countdownTimer = setInterval(() => {
-    countdown.value -= 1
-    if (countdown.value <= 0) {
-      countdown.value = 0
-      if (countdownTimer) {
-        clearInterval(countdownTimer)
-        countdownTimer = null
-      }
-    }
-  }, 1000)
-}
-
-const handleSendCode = async () => {
-  resetMessages()
-  emailError.value = ''
-
-  if (!validEmail(step1Form.email)) {
-    emailError.value = '请输入有效的邮箱地址'
-    return
-  }
-
-  sendingCode.value = true
-  try {
-    await sendResetCode({ email: step1Form.email.trim() })
-    successMessage.value = '我们会往您的注册邮箱发送验证码，请查收'
-    step2Form.code = ''
-    currentStep.value = 2
-    startCountdown()
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '发送失败，请重试'
-  } finally {
-    sendingCode.value = false
-  }
-}
-
-const handleVerifyCode = async () => {
-  resetMessages()
-  codeError.value = ''
-  const nextCodeError = validateForgotPasswordCode(step2Form.code)
-  if (nextCodeError) {
-    codeError.value = nextCodeError
-    return
-  }
-
-  verifying.value = true
-  try {
-    const result = await verifyResetCode({
-      email: step1Form.email.trim(),
-      code: step2Form.code.trim()
-    })
-    resetToken.value = result.resetToken
-    currentStep.value = 3
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '验证失败'
-  } finally {
-    verifying.value = false
-  }
-}
-
-const handleResendCode = async () => {
-  if (resendMeta.value.disabled || sendingCode.value) {
-    return
-  }
-
-  resetMessages()
-  sendingCode.value = true
-  try {
-    await sendResetCode({ email: step1Form.email.trim() })
-    successMessage.value = '验证码已重新发送'
-    startCountdown()
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '重新发送失败，请重试'
-  } finally {
-    sendingCode.value = false
-  }
-}
-
-const handleResetPassword = async () => {
-  resetMessages()
-  confirmError.value = ''
-
-  const mismatchError = validateForgotPasswordConfirmation(
-    step3Form.newPassword,
-    step3Form.confirmPassword
-  )
-  if (mismatchError) {
-    confirmError.value = mismatchError
-    return
-  }
-
-  const passwordError = validateForgotPasswordPassword(step3Form.newPassword)
-  if (passwordError) {
-    errorMessage.value = passwordError
-    return
-  }
-
-  resetting.value = true
-  try {
-    await resetPassword({
-      email: step1Form.email.trim(),
-      password: step3Form.newPassword,
-      resetToken: resetToken.value
-    })
-    currentStep.value = 4
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '重置失败，请重试'
-  } finally {
-    resetting.value = false
-  }
-}
-
-onBeforeUnmount(() => {
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-  }
+// M6: 业务逻辑由 shared composable 接管（5 端共用）。
+// student 端仅注入端特定 API endpoints + 本地视觉骨架。
+const {
+  currentStep,
+  sendingCode,
+  verifying,
+  resetting,
+  errorMessage,
+  successMessage,
+  emailError,
+  codeError,
+  confirmError,
+  step1Form,
+  step2Form,
+  step3Form,
+  maskedEmail,
+  stepDescription,
+  passwordStrength,
+  resendMeta,
+  countdownText,
+  handleSendCode,
+  handleVerifyCode,
+  handleResendCode,
+  handleResetPassword,
+} = useForgotPasswordFlow({
+  endpoints: {
+    sendCode: (payload) => sendResetCode(payload),
+    verifyCode: (payload) => verifyResetCode(payload),
+    resetPassword: (payload) => resetPassword(payload),
+  },
 })
 </script>
 

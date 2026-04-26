@@ -10,7 +10,7 @@ import {
   validateForgotPasswordCode,
   validateForgotPasswordConfirmation,
   validateForgotPasswordPassword
-} from '../views/forgot-password/forgot-password-workflow'
+} from '@osg/shared/utils/forgotPasswordHelpers'
 
 const forgotPasswordViewSource = fs.readFileSync(
   path.resolve(__dirname, '../views/forgot-password/index.vue'),
@@ -30,7 +30,7 @@ describe('student forgot password workflow', () => {
 
   describe('getForgotPasswordStepDescription', () => {
     it('describes the first three steps and clears the success state copy', () => {
-      expect(getForgotPasswordStepDescription(1)).toBe('请输入您的注册邮箱')
+      expect(getForgotPasswordStepDescription(1)).toBe('请输入您注册时使用的邮箱，我们将发送验证码')
       expect(getForgotPasswordStepDescription(2)).toBe('请输入验证码')
       expect(getForgotPasswordStepDescription(3)).toBe('请设置新密码')
       expect(getForgotPasswordStepDescription(4)).toBe('')
@@ -71,7 +71,7 @@ describe('student forgot password workflow', () => {
 
   describe('validators', () => {
     it('requires a full six-digit verification code', () => {
-      expect(validateForgotPasswordCode('12345')).toBe('请输入6位验证码')
+      expect(validateForgotPasswordCode('12345')).toBe('请输入 6 位验证码')
       expect(validateForgotPasswordCode('123456')).toBe('')
     })
 
@@ -82,10 +82,10 @@ describe('student forgot password workflow', () => {
 
     it('matches the shared backend password rules before submit', () => {
       expect(validateForgotPasswordPassword('')).toBe('请输入新密码')
-      expect(validateForgotPasswordPassword('short1')).toBe('密码长度需为8-20字符')
+      expect(validateForgotPasswordPassword('short1')).toBe('密码长度需为 8-20 字符')
       expect(validateForgotPasswordPassword('12345678')).toBe('密码需包含字母')
       expect(validateForgotPasswordPassword('Password')).toBe('密码需包含数字')
-      expect(validateForgotPasswordPassword('VeryLongPassword123456789')).toBe('密码长度需为8-20字符')
+      expect(validateForgotPasswordPassword('VeryLongPassword123456789')).toBe('密码长度需为 8-20 字符')
       expect(validateForgotPasswordPassword('Abcd1234')).toBe('')
     })
   })
@@ -115,7 +115,8 @@ describe('student forgot password workflow', () => {
       expect(forgotPasswordViewSource).toContain('sendResetCode')
       expect(forgotPasswordViewSource).toContain('verifyResetCode')
       expect(forgotPasswordViewSource).toContain('resetPassword')
-      expect(forgotPasswordViewSource).toContain('validateForgotPasswordPassword')
+      // M6: 业务逻辑迁移到 shared composable，view 不再直接 import 校验函数
+      expect(forgotPasswordViewSource).toContain("import { useForgotPasswordFlow } from '@osg/shared/composables'")
     })
   })
 })
