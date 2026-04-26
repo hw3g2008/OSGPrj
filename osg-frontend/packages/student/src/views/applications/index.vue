@@ -148,22 +148,33 @@
               {{ option.label }}
             </a-select-option>
           </a-select>
-          <a-button type="primary" @click="applyFilters">搜索</a-button>
-          <a-button @click="resetFilters">重置</a-button>
+          <a-button type="primary" @click="applyFilters">
+            <template #icon><SearchOutlined /></template>
+            搜索
+          </a-button>
+          <a-button @click="resetFilters">
+            <template #icon><ReloadOutlined /></template>
+            重置
+          </a-button>
         </a-space>
       </a-card>
 
-      <a-radio-group v-model:value="activeTab">
-        <a-radio-button
+      <a-space :size="10" class="applications-tab-strip">
+        <a-button
           v-for="tab in tabDefs"
           :key="tab.key"
-          :value="tab.key"
+          shape="round"
+          size="large"
+          class="tab-pill"
+          :class="[`tab-pill--${tab.key}`, { [`tab-pill--active-${tab.tone}`]: activeTab === tab.key }]"
+          :type="activeTab === tab.key && tab.tone === 'primary' ? 'primary' : 'default'"
+          @click="activeTab = tab.key"
         >
-          <component :is="tab.icon" style="margin-right:4px" />
-          {{ tab.label }}
-          <span class="pill-tab__badge" :style="tab.badgeStyle">{{ tab.count }}</span>
-        </a-radio-button>
-      </a-radio-group>
+          <component :is="tab.icon" />
+          <span>{{ tab.label }}</span>
+          <span class="tab-pill__count">{{ tab.count }}</span>
+        </a-button>
+      </a-space>
 
       <a-card :bordered="false">
         <a-table :columns="columns" :data-source="visibleApplications" :pagination="false" row-key="id" :scroll="{ x: 1120 }" :row-class-name="rowClassName">
@@ -177,7 +188,9 @@
 
             <template v-else-if="column.key === 'stage'">
               <div v-if="activeTab === 'applied'" class="status-cell">
-                <span class="stage-tag" :style="stageTagStyle(record.stage)">{{ record.stageLabel }}</span>
+                <span class="stage-tag stage-tag--applied-bucket">
+                  <CheckCircleFilled style="margin-right:3px" />{{ record.stageLabel }}
+                </span>
                 <span style="font-size:10px;color:#64748b">{{ record.applyMethod || '' }}</span>
               </div>
               <span v-else class="stage-tag" :style="stageTagStyle(record.stage)">{{ record.stageLabel }}</span>
@@ -191,7 +204,11 @@
             </template>
 
             <template v-else-if="column.key === 'coachingStatus'">
-              <a-tag :color="record.coachingColor">{{ record.coachingStatusLabel }}</a-tag>
+              <a-tag :color="record.coachingColor" class="coaching-tag-school">
+                <ReadOutlined v-if="record.coachingStatus === 'coaching'" />
+                <ClockCircleOutlined v-else-if="record.coachingStatus === 'pending'" />
+                <span>{{ record.coachingStatusLabel }}</span>
+              </a-tag>
             </template>
 
             <template v-else-if="column.key === 'mentor'">
@@ -219,9 +236,9 @@
               <a-select
                 v-else
                 :id="`action-stage-select-${record.id}`"
-                v-model:value="record.stage"
+                :value="record.stage"
                 size="small"
-                style="width: 120px"
+                class="action-stage-select"
                 :style="selectStageTone(record.stage)"
                 @change="stageDropdownChanged(record, $event)"
               >
@@ -498,6 +515,7 @@ import { computed, h, onMounted, ref } from 'vue'
 import { message, DatePicker, Upload } from 'ant-design-vue'
 import {
   CalendarOutlined,
+  CheckCircleFilled,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseOutlined,
@@ -505,6 +523,9 @@ import {
   EditOutlined,
   FileTextOutlined,
   OrderedListOutlined,
+  ReadOutlined,
+  ReloadOutlined,
+  SearchOutlined,
   SendOutlined,
 } from '@ant-design/icons-vue'
 import { OsgPageContainer } from '@osg/shared/components'
@@ -616,11 +637,12 @@ const appliedForm = ref({
   note: ''
 })
 
-const tabDefs = computed(() => [
-  { key: 'all' as TabKey, label: '全部', icon: OrderedListOutlined, count: applicationsMeta.value.tabCounts.all, badgeStyle: { background: 'rgba(255,255,255,0.3)', color: '#fff' } },
-  { key: 'applied' as TabKey, label: '已投递', icon: SendOutlined, count: applicationsMeta.value.tabCounts.applied, badgeStyle: { background: '#22C55E', color: '#fff' } },
-  { key: 'ongoing' as TabKey, label: '面试中', icon: ClockCircleOutlined, count: applicationsMeta.value.tabCounts.ongoing, badgeStyle: { background: '#F59E0B', color: '#fff' } },
-  { key: 'completed' as TabKey, label: '已结束', icon: CheckCircleOutlined, count: applicationsMeta.value.tabCounts.completed, badgeStyle: { background: '#6B7280', color: '#fff' } },
+type TabTone = 'primary' | 'success' | 'warning' | 'muted'
+const tabDefs = computed<{ key: TabKey; label: string; icon: typeof OrderedListOutlined; count: number; tone: TabTone }[]>(() => [
+  { key: 'all', label: '全部', icon: OrderedListOutlined, count: applicationsMeta.value.tabCounts.all, tone: 'primary' },
+  { key: 'applied', label: '已投递', icon: SendOutlined, count: applicationsMeta.value.tabCounts.applied, tone: 'success' },
+  { key: 'ongoing', label: '面试中', icon: ClockCircleOutlined, count: applicationsMeta.value.tabCounts.ongoing, tone: 'warning' },
+  { key: 'completed', label: '已结束', icon: CheckCircleOutlined, count: applicationsMeta.value.tabCounts.completed, tone: 'muted' },
 ])
 
 const columns = computed(() => {
@@ -1226,40 +1248,96 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
     font-weight: 700;
   }
 
-  .pill-tabs {
+  .applications-tab-strip {
     display: flex;
-    gap: 4px;
-    background: #f1f5f9;
-    padding: 3px;
-    border-radius: 6px;
     margin-bottom: 16px;
   }
 
-  .pill-tab {
+  .tab-pill {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 6px 14px;
-    font-size: 12px;
-    border-radius: 4px;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    cursor: pointer;
-    font-weight: 500;
-    white-space: nowrap;
+    gap: 6px;
+    padding-inline: 18px;
+    font-size: 14px;
+    font-weight: 600;
+
+    .anticon {
+      font-size: 16px;
+      line-height: 1;
+    }
   }
 
-  .pill-tab--active {
+  .tab-pill--active-success {
+    background: #22c55e !important;
+    border-color: #22c55e !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background: #16a34a !important;
+      border-color: #16a34a !important;
+      color: #fff !important;
+    }
+  }
+
+  .tab-pill--active-warning {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background: #d97706 !important;
+      border-color: #d97706 !important;
+      color: #fff !important;
+    }
+  }
+
+  .tab-pill--active-muted {
+    background: #6b7280 !important;
+    border-color: #6b7280 !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background: #4b5563 !important;
+      border-color: #4b5563 !important;
+      color: #fff !important;
+    }
+  }
+
+  .tab-pill__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: 2px;
+  }
+
+  // 未高亮状态下的 badge：在白底 pill 里为色底填充
+  .tab-pill--all:not(.tab-pill--active-primary) .tab-pill__count {
     background: var(--primary, #7399c6);
     color: #fff;
   }
-
-  .pill-tab__badge {
-    padding: 1px 6px;
-    border-radius: 8px;
-    font-size: 10px;
-    margin-left: 4px;
+  .tab-pill--applied:not(.tab-pill--active-success) .tab-pill__count {
+    background: #22c55e;
+    color: #fff;
+  }
+  .tab-pill--ongoing:not(.tab-pill--active-warning) .tab-pill__count {
+    background: #f59e0b;
+    color: #fff;
+  }
+  .tab-pill--completed:not(.tab-pill--active-muted) .tab-pill__count {
+    background: #6b7280;
+    color: #fff;
   }
 
   .stage-tag {
@@ -1271,18 +1349,34 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
     white-space: nowrap;
   }
 
+  // 已投递 tab 内 stage tag 是绿底白字 + ✓（原型对齐）
+  .stage-tag--applied-bucket {
+    background: #22c55e;
+    color: #fff;
+  }
+
+  // 辅导状态颜色（不同于 a-tag default）
+  .coaching-tag-school {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
   .action-stage-select {
-    min-width: 110px;
-    height: 28px;
-    padding: 4px 24px 4px 8px;
-    font-size: 10px;
+    min-width: 130px;
+    width: 100%;
+  }
+
+  .action-stage-select :deep(.ant-select-selector) {
+    height: 28px !important;
+    padding: 0 24px 0 8px !important;
+    border-radius: 6px !important;
+    font-size: 11px;
     font-weight: 600;
-    border-radius: 6px;
-    border-width: 1px;
-    border-style: solid;
-    outline: none;
-    cursor: pointer;
-    appearance: auto;
+  }
+
+  .action-stage-select :deep(.ant-select-selection-item) {
+    line-height: 26px !important;
   }
 
   .btn-ended {
