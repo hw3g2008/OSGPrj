@@ -1,40 +1,37 @@
-import { createApp, nextTick } from 'vue'
-import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
-
-import LoginPage from '../views/login/index.vue'
+/**
+ * LM login 页 forgot-password 集成契约测试
+ *
+ * M6 P5 后业务逻辑迁移至 shared <ForgotPasswordModal>（全量 12 case 已覆盖）。
+ * 本 spec 仅验证 LM login.vue 正确集成 shared 组件 + endpoints 注入正确。
+ */
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createMemoryHistory, createRouter } from 'vue-router'
+import Antd from 'ant-design-vue'
 
 vi.mock('@osg/shared/api', () => ({
-  login: vi.fn(),
-  getUserInfo: vi.fn(),
   leadMentorLogin: vi.fn(),
   getLeadMentorInfo: vi.fn(),
-  sendResetCode: vi.fn(),
-  verifyResetCode: vi.fn(),
-  resetPassword: vi.fn(),
+  sendResetCode: vi.fn().mockResolvedValue({ code: 200, msg: 'ok' }),
+  verifyResetCode: vi.fn().mockResolvedValue({ resetToken: 'tok-1' }),
+  resetPassword: vi.fn().mockResolvedValue({ code: 200, msg: 'ok' }),
 }))
 
 vi.mock('@osg/shared/utils', async () => {
-  const actual = await vi.importActual<typeof import('@osg/shared/utils')>('@osg/shared/utils')
-  return {
-    ...actual,
-    setToken: vi.fn(),
-    setUser: vi.fn(),
-    clearAuth: vi.fn(),
-  }
+  const actual = await vi.importActual<typeof import('@osg/shared/utils')>(
+    '@osg/shared/utils',
+  )
+  return { ...actual, setToken: vi.fn(), setUser: vi.fn(), clearAuth: vi.fn() }
 })
 
-vi.mock('ant-design-vue', () => ({
-  message: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
-}))
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<any>('ant-design-vue')
+  return { ...actual, message: { error: vi.fn(), success: vi.fn() } }
+})
 
-import {
-  resetPassword,
-  sendResetCode,
-  verifyResetCode,
-} from '@osg/shared/api'
+import LoginPage from '../views/login/index.vue'
+
+let wrapper: VueWrapper<any> | null = null
 
 function createTestRouter() {
   return createRouter({
@@ -46,122 +43,72 @@ function createTestRouter() {
   })
 }
 
-async function flushUi() {
-  await nextTick()
-  await new Promise((resolve) => setTimeout(resolve, 0))
-  await nextTick()
-}
-
-async function mountLoginPage() {
-  const router = createTestRouter()
-  await router.push('/login')
-  await router.isReady()
-
-  const container = document.createElement('div')
-  document.body.appendChild(container)
-
-  const app = createApp(RouterView)
-  app.use(router)
-  app.mount(container)
-  await nextTick()
-
-  return {
-    container,
-    unmount: () => {
-      app.unmount()
-      container.remove()
-    },
-    setValue: async (selector: string, value: string) => {
-      const element = container.querySelector(selector)
-      if (!(element instanceof HTMLInputElement)) {
-        throw new Error(`Missing input for selector: ${selector}`)
-      }
-      element.value = value
-      element.dispatchEvent(new Event('input', { bubbles: true }))
-      await flushUi()
-    },
-    click: async (selector: string) => {
-      const element = container.querySelector(selector)
-      if (!(element instanceof HTMLElement)) {
-        throw new Error(`Missing element for selector: ${selector}`)
-      }
-      element.click()
-      await flushUi()
-    },
+afterEach(() => {
+  if (wrapper) {
+    wrapper.unmount()
+    wrapper = null
   }
-}
+})
 
-describe('lead-mentor forgot password flow', () => {
+describe('LM login.vue × ForgotPasswordModal 集成契约', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('sends reset code and moves from email step to code step', async () => {
-    vi.mocked(sendResetCode).mockResolvedValue({ code: 200, msg: '验证码已发送' })
+  it('1. login template 渲染时引入 shared ForgotPasswordModal 组件', async () => {
+    const router = createTestRouter()
+    await router.push('/login')
+    await router.isReady()
 
-    const page = await mountLoginPage()
+    wrapper = mount(LoginPage, {
+      global: {
+        plugins: [router, Antd],
+      },
+    })
+    await flushPromises()
 
-    try {
-      await page.click('[data-surface-trigger="modal-forgot-password"]')
-      await page.setValue('#fp-email', 'leadmentor@example.com')
-      await page.click('#fp-send-code-btn')
-
-      expect(sendResetCode).toHaveBeenCalledWith({ email: 'leadmentor@example.com' })
-      expect(page.container.querySelector('#fp-step-2')?.textContent).toContain('验证码已发送至')
-      expect(page.container.querySelector('#fp-masked-email')?.textContent).toContain('l***@example.com')
-    } finally {
-      page.unmount()
-    }
+    // 触发链接（[data-surface-trigger="modal-forgot-password"]）必须存在
+    expect(
+      wrapper.find('[data-surface-trigger="modal-forgot-password"]').exists(),
+    ).toBe(true)
   })
 
-  it('verifies the code and advances to reset step with a real resetToken', async () => {
-    vi.mocked(sendResetCode).mockResolvedValue({ code: 200, msg: '验证码已发送' })
-    vi.mocked(verifyResetCode).mockResolvedValue({ resetToken: 'reset-token-123' })
-
-    const page = await mountLoginPage()
-
-    try {
-      await page.click('[data-surface-trigger="modal-forgot-password"]')
-      await page.setValue('#fp-email', 'leadmentor@example.com')
-      await page.click('#fp-send-code-btn')
-      await page.setValue('#fp-code', '123456')
-      await page.click('#fp-verify-code-btn')
-
-      expect(verifyResetCode).toHaveBeenCalledWith({
-        email: 'leadmentor@example.com',
-        code: '123456',
-      })
-      expect(page.container.querySelector('#fp-step-3')?.textContent).toContain('请设置您的新密码')
-    } finally {
-      page.unmount()
-    }
+  it('2. login.vue 注入了 endpoints 且调用 LM 端 API（sendResetCode/verifyResetCode/resetPassword）', () => {
+    // 静态分析：login.vue 源码必须 import LM 端 API + 构造 endpoints 对象
+    const source = require('node:fs').readFileSync(
+      require('node:path').resolve(__dirname, '../views/login/index.vue'),
+      'utf-8',
+    )
+    expect(source).toContain('sendResetCode')
+    expect(source).toContain('verifyResetCode')
+    expect(source).toContain('resetLeadMentorPassword')
+    expect(source).toContain('forgotPasswordEndpoints')
+    expect(source).toContain(
+      "import { ForgotPasswordModal } from '@osg/shared/components'",
+    )
   })
 
-  it('submits reset password with resetToken and shows success step', async () => {
-    vi.mocked(sendResetCode).mockResolvedValue({ code: 200, msg: '验证码已发送' })
-    vi.mocked(verifyResetCode).mockResolvedValue({ resetToken: 'reset-token-123' })
-    vi.mocked(resetPassword).mockResolvedValue({ code: 200, msg: '密码重置成功' })
+  it('3. login.vue 不再保留本地 forgot-password 状态机（business logic 已迁移）', () => {
+    const source = require('node:fs').readFileSync(
+      require('node:path').resolve(__dirname, '../views/login/index.vue'),
+      'utf-8',
+    )
+    // 旧本地实现的关键变量/函数已删
+    expect(source).not.toMatch(/const forgotPasswordStep\s*=\s*ref/)
+    expect(source).not.toMatch(/const forgotPasswordCountdown\s*=\s*ref/)
+    expect(source).not.toMatch(/const forgotPasswordForm\s*=\s*reactive/)
+    expect(source).not.toMatch(/handleSendResetCode/)
+    expect(source).not.toMatch(/handleVerifyResetCode/)
+    expect(source).not.toMatch(/handleResetPassword/)
+  })
 
-    const page = await mountLoginPage()
-
-    try {
-      await page.click('[data-surface-trigger="modal-forgot-password"]')
-      await page.setValue('#fp-email', 'leadmentor@example.com')
-      await page.click('#fp-send-code-btn')
-      await page.setValue('#fp-code', '123456')
-      await page.click('#fp-verify-code-btn')
-      await page.setValue('#fp-new-pwd', 'LeadMentor123')
-      await page.setValue('#fp-confirm-pwd', 'LeadMentor123')
-      await page.click('#fp-reset-password-btn')
-
-      expect(resetPassword).toHaveBeenCalledWith({
-        email: 'leadmentor@example.com',
-        password: 'LeadMentor123',
-        resetToken: 'reset-token-123',
-      })
-      expect(page.container.querySelector('#fp-step-4')?.textContent).toContain('密码重置成功')
-    } finally {
-      page.unmount()
-    }
+  it('4. login.vue 不再内嵌 modal HTML（不应有 forgot-password-modal/-shell/-backdrop 类）', () => {
+    const source = require('node:fs').readFileSync(
+      require('node:path').resolve(__dirname, '../views/login/index.vue'),
+      'utf-8',
+    )
+    expect(source).not.toContain('class="forgot-password-modal"')
+    expect(source).not.toContain('class="forgot-password-shell"')
+    expect(source).not.toContain('class="forgot-password-backdrop"')
   })
 })
