@@ -25,7 +25,10 @@ describe('assistant login entry contract', () => {
     expect(source).toContain('class="pwd-wrapper"')
     expect(source).toContain('id="login-password"')
     expect(source).toContain('id="pwd-eye"')
-    expect(source).toContain('to="/forgot-password"')
+    // M6 P5: forgot-password 从独立 page 纠偏为 modal 形态（严格按原型 SSOT）
+    // 入口从 router-link 改为触发 modal
+    expect(source).toContain('data-surface-trigger="modal-forgot-password"')
+    expect(source).toContain('<ForgotPasswordModal')
   })
 
   it('does not keep demo credentials or static success state in source', () => {

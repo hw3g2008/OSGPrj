@@ -22,7 +22,7 @@ describe('assistant router navigation', () => {
       expect.arrayContaining([
         '/',
         '/login',
-        '/forgot-password',
+        // M6 P5: /forgot-password 路由删除，forgot-password 从独立 page 纠偏为 login 内嵌 modal
         '/home',
         '/career/positions',
         '/career/job-overview',
@@ -56,15 +56,8 @@ describe('assistant router navigation', () => {
     expect(router.currentRoute.value.fullPath).toBe('/login?redirect=/expense')
   })
 
-  it('allows anonymous visitors to open /forgot-password directly', async () => {
-    const router = await loadRouterWithToken(null)
-
-    await router.push('/forgot-password')
-    await router.isReady()
-
-    expect(router.currentRoute.value.name).toBe('ForgotPassword')
-    expect(router.currentRoute.value.fullPath).toBe('/forgot-password')
-  })
+  // M6 P5: /forgot-password 路由删除（纠偏为 login 内嵌 modal）
+  // 不再需要匹配任何 forgot-password URL
 
   it('keeps authenticated users inside protected real and placeholder routes', async () => {
     const router = await loadRouterWithToken('assistant-token')

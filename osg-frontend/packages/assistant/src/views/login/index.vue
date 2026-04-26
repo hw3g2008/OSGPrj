@@ -95,10 +95,23 @@
         </div>
 
         <div class="login-links">
-          忘记密码？<router-link to="/forgot-password">点击重置</router-link>
+          忘记密码？
+          <a
+            href="javascript:void(0)"
+            class="link-anchor"
+            data-surface-trigger="modal-forgot-password"
+            @click.prevent="openForgotPassword"
+          >
+            点击重置
+          </a>
         </div>
       </div>
     </section>
+
+    <ForgotPasswordModal
+      v-model:open="forgotPasswordOpen"
+      :endpoints="forgotPasswordEndpoints"
+    />
   </div>
 </template>
 
@@ -106,8 +119,15 @@
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import '@mdi/font/css/materialdesignicons.css'
-import { assistantLogin, getAssistantInfo } from '@osg/shared/api'
+import {
+  assistantLogin,
+  getAssistantInfo,
+  resetPassword,
+  sendResetCode,
+  verifyResetCode,
+} from '@osg/shared/api'
 import { removeToken, removeUser, setToken, setUser } from '@osg/shared/utils'
+import { ForgotPasswordModal } from '@osg/shared/components'
 
 type FieldKey = 'username' | 'password'
 
@@ -125,6 +145,20 @@ const errors = reactive<Record<FieldKey, string>>({
   username: '',
   password: '',
 })
+
+// M6 P5: forgot-password 业务逻辑由 shared <ForgotPasswordModal> 接管。
+// 本端仅注入 endpoints (sendCode/verifyCode/resetPassword)。
+const forgotPasswordOpen = ref(false)
+const forgotPasswordEndpoints = {
+  sendCode: (payload: { email: string }) => sendResetCode(payload),
+  verifyCode: (payload: { email: string; code: string }) => verifyResetCode(payload),
+  resetPassword: (payload: { email: string; password: string; resetToken: string }) =>
+    resetPassword(payload),
+}
+
+function openForgotPassword() {
+  forgotPasswordOpen.value = true
+}
 
 function clearFieldError(field: FieldKey) {
   errors[field] = ''
