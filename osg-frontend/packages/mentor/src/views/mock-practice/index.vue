@@ -7,71 +7,149 @@
     />
 
     <!-- 统计 -->
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-value" style="color:#EF4444">{{ stats.newCount }}</div><div class="stat-label">新分配</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:#3B82F6">{{ stats.pendingCount }}</div><div class="stat-label">待进行</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:#22C55E">{{ stats.completedCount }}</div><div class="stat-label">已完成</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:#94A3B8">{{ stats.cancelledCount }}</div><div class="stat-label">已取消</div></div>
-    </div>
+    <a-row :gutter="16" class="stats-grid">
+      <a-col :span="6">
+        <a-card :bordered="false" class="stat-card">
+          <div class="stat-value" style="color:#EF4444">{{ stats.newCount }}</div>
+          <div class="stat-label">新分配</div>
+        </a-card>
+      </a-col>
+      <a-col :span="6">
+        <a-card :bordered="false" class="stat-card">
+          <div class="stat-value" style="color:#3B82F6">{{ stats.pendingCount }}</div>
+          <div class="stat-label">待进行</div>
+        </a-card>
+      </a-col>
+      <a-col :span="6">
+        <a-card :bordered="false" class="stat-card">
+          <div class="stat-value" style="color:#22C55E">{{ stats.completedCount }}</div>
+          <div class="stat-label">已完成</div>
+        </a-card>
+      </a-col>
+      <a-col :span="6">
+        <a-card :bordered="false" class="stat-card">
+          <div class="stat-value" style="color:#94A3B8">{{ stats.cancelledCount }}</div>
+          <div class="stat-label">已取消</div>
+        </a-card>
+      </a-col>
+    </a-row>
 
     <!-- 列表 -->
-    <div class="card">
-      <div class="card-header">
-        <div class="filter-bar">
-          <span class="filter-label">类型:</span>
-          <select v-model="filters.type" class="filter-select" @change="applyFilters"><option value="">全部类型</option><option value="mock_interview">模拟面试</option><option value="relation_test">人际关系测试</option><option value="midterm">期中考试</option></select>
-          <span class="filter-label">状态:</span>
-          <select v-model="filters.status" class="filter-select" @change="applyFilters"><option value="">全部状态</option><option value="new">新分配</option><option value="pending">待进行</option><option value="completed">已完成</option><option value="cancelled">已取消</option></select>
-          <span class="filter-label">学员:</span>
-          <input v-model="filters.keyword" type="text" placeholder="搜索学员姓名/ID" class="filter-input" @input="applyFilters" />
-          <button class="btn btn-sm btn-primary" @click="applyFilters"><i class="mdi mdi-magnify" /> 筛选</button>
-          <button class="btn btn-text btn-sm" @click="resetFilters"><i class="mdi mdi-refresh" /> 重置</button>
-        </div>
-      </div>
-      <div class="card-body" style="padding:0">
-        <table class="table">
-          <thead><tr><th>学员</th><th>类型</th><th>分配时间</th><th>状态</th><th>已上课时</th><th>课程反馈</th></tr></thead>
-          <tbody>
-            <tr v-if="!filteredList.length">
-              <td colspan="6">
-                <div class="empty-state">暂无匹配的模拟应聘记录</div>
-              </td>
-            </tr>
-            <tr v-for="r in filteredList" :id="rowDomId(r)" :key="r.id" :class="rowClass(r)">
-              <td><div class="student-cell"><div class="avatar" :style="{ background: avatarColor(r) }">{{ r.studentName?.[0] || '?' }}</div><div><strong>{{ r.studentName }}</strong><br/><span class="text-muted text-sm">ID: {{ r.studentId }}</span></div></div></td>
-              <td><span class="tag" :class="typeClass(r.practiceType)"><i :class="typeIcon(r.practiceType)" /> {{ typeLabel(r.practiceType) }}</span></td>
-              <td><span class="text-sm">{{ formatDate(r.assignedTime) }}</span></td>
-              <td>
-                <span v-if="r.status === 'new'" class="tag pulse-tag"><i class="mdi mdi-bell-ring" /> 新分配</span>
-                <span v-else-if="r.status === 'pending'" class="tag info">待进行</span>
-                <span v-else-if="r.status === 'completed'" class="tag success">已完成</span>
-                <span v-else-if="r.status === 'cancelled'" class="tag">已取消</span>
-                <span v-else class="text-muted">{{ r.status }}</span>
-              </td>
-              <td><span v-if="r.totalHours" style="font-weight:600;color:#7399C6">{{ r.totalHours }}h</span><span v-else class="text-muted">-</span></td>
-              <td>
-                <template v-if="r.status === 'new'">
-                  <button class="btn-confirm" @click="confirmMock(r)"><i class="mdi mdi-check" /> 确认</button>
-                </template>
-                <template v-else-if="r.status === 'completed' && r.feedbackLevel">
-                  <div :class="feedbackColor(r.feedbackLevel)" style="font-size:12px;font-weight:500">{{ feedbackLabel(r.feedbackLevel) }}</div>
-                  <div class="text-muted text-sm">{{ r.feedbackNote }}</div>
-                </template>
-                <template v-else>
-                  <button class="btn btn-text btn-sm" @click="showDetail(r)">查看详情</button>
-                </template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <a-card :bordered="false">
+      <a-form layout="inline" class="filter-bar" style="margin-bottom: 16px">
+        <a-form-item label="类型">
+          <a-select v-model:value="filters.type" style="width:140px" @change="applyFilters">
+            <a-select-option value="">全部类型</a-select-option>
+            <a-select-option value="mock_interview">模拟面试</a-select-option>
+            <a-select-option value="relation_test">人际关系测试</a-select-option>
+            <a-select-option value="midterm">期中考试</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="状态">
+          <a-select v-model:value="filters.status" style="width:140px" @change="applyFilters">
+            <a-select-option value="">全部状态</a-select-option>
+            <a-select-option value="new">新分配</a-select-option>
+            <a-select-option value="pending">待进行</a-select-option>
+            <a-select-option value="completed">已完成</a-select-option>
+            <a-select-option value="cancelled">已取消</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="学员">
+          <a-input
+            v-model:value="filters.keyword"
+            placeholder="搜索学员姓名/ID"
+            style="width:200px"
+            allow-clear
+            @input="applyFilters"
+          />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" @click="applyFilters">
+            <i class="mdi mdi-magnify" style="margin-right:4px" />筛选
+          </a-button>
+        </a-form-item>
+        <a-form-item>
+          <a-button type="link" @click="resetFilters">
+            <i class="mdi mdi-refresh" style="margin-right:4px" />重置
+          </a-button>
+        </a-form-item>
+      </a-form>
 
-    <div v-if="detailModal.visible" id="modal-job-detail" class="modal active" @click.self="closeDetailModal">
-      <div class="modal-content modal-detail">
+      <a-table
+        :columns="columns"
+        :data-source="filteredList"
+        :pagination="false"
+        :row-key="(r: any) => r.id"
+        :custom-row="customRow"
+        :locale="{ emptyText: '暂无匹配的模拟应聘记录' }"
+        size="middle"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'student'">
+            <div class="student-cell">
+              <div class="avatar" :style="{ background: avatarColor(record) }">{{ record.studentName?.[0] || '?' }}</div>
+              <div>
+                <strong>{{ record.studentName }}</strong>
+                <br />
+                <span class="text-muted text-sm">ID: {{ record.studentId }}</span>
+              </div>
+            </div>
+          </template>
+          <template v-else-if="column.key === 'practiceType'">
+            <a-tag :color="typeTagColor(record.practiceType)">
+              <i :class="typeIcon(record.practiceType)" /> {{ typeLabel(record.practiceType) }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'assignedTime'">
+            <span class="text-sm">{{ formatDate(record.assignedTime) }}</span>
+          </template>
+          <template v-else-if="column.key === 'status'">
+            <a-tag v-if="record.status === 'new'" color="red" class="pulse-tag">
+              <i class="mdi mdi-bell-ring" /> 新分配
+            </a-tag>
+            <a-tag v-else-if="record.status === 'pending'" color="blue">待进行</a-tag>
+            <a-tag v-else-if="record.status === 'completed'" color="green">已完成</a-tag>
+            <a-tag v-else-if="record.status === 'cancelled'">已取消</a-tag>
+            <span v-else class="text-muted">{{ record.status }}</span>
+          </template>
+          <template v-else-if="column.key === 'totalHours'">
+            <span v-if="record.totalHours" style="font-weight:600;color:#7399C6">{{ record.totalHours }}h</span>
+            <span v-else class="text-muted">-</span>
+          </template>
+          <template v-else-if="column.key === 'feedback'">
+            <template v-if="record.status === 'new'">
+              <a-button type="primary" size="small" class="btn-confirm" @click="confirmMock(record)">
+                <i class="mdi mdi-check" style="margin-right:4px" />确认
+              </a-button>
+            </template>
+            <template v-else-if="record.status === 'completed' && record.feedbackLevel">
+              <div :class="feedbackColor(record.feedbackLevel)" style="font-size:12px;font-weight:500">{{ feedbackLabel(record.feedbackLevel) }}</div>
+              <div class="text-muted text-sm">{{ record.feedbackNote }}</div>
+            </template>
+            <template v-else>
+              <a-button type="link" size="small" @click="showDetail(record)">查看详情</a-button>
+            </template>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
+
+    <a-modal
+      v-model:open="detailModal.visible"
+      :width="760"
+      :footer="null"
+      :title="null"
+      :closable="false"
+      :body-style="{ padding: 0 }"
+      :get-container="false"
+      :destroy-on-close="true"
+      wrap-class-name="mock-detail-modal"
+      @cancel="closeDetailModal"
+    >
+      <div id="modal-job-detail" class="modal-detail">
         <div class="modal-header">
           <span class="modal-title"><i class="mdi mdi-briefcase-search" /> 学员求职详情</span>
-          <button class="modal-close" @click="closeDetailModal">×</button>
+          <button class="modal-close" type="button" @click="closeDetailModal">×</button>
         </div>
         <div class="modal-body modal-detail-body">
           <div class="detail-hero">
@@ -140,7 +218,7 @@
           <div class="detail-section">
             <div class="detail-section-head">
               <div class="section-caption"><i class="mdi mdi-book-open-variant" /> 课程记录 (最近3条)</div>
-              <button class="btn btn-text btn-sm section-action" type="button">查看全部</button>
+              <a-button type="link" size="small" class="section-action">查看全部</a-button>
             </div>
             <div class="record-list">
               <div class="record-item">
@@ -164,10 +242,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" @click="closeDetailModal">关闭</button>
+          <a-button type="primary" @click="closeDetailModal">关闭</a-button>
         </div>
       </div>
-    </div>
+    </a-modal>
   </div>
 </template>
 
@@ -197,6 +275,20 @@ const stats = computed(() => {
 
 const filteredList = computed(() => list.value)
 
+const columns = [
+  { title: '学员', key: 'student' },
+  { title: '类型', key: 'practiceType', dataIndex: 'practiceType' },
+  { title: '分配时间', key: 'assignedTime', dataIndex: 'assignedTime' },
+  { title: '状态', key: 'status', dataIndex: 'status' },
+  { title: '已上课时', key: 'totalHours', dataIndex: 'totalHours' },
+  { title: '课程反馈', key: 'feedback' },
+]
+
+function customRow(record: any) {
+  const id = rowDomId(record)
+  return id ? { id, class: rowClass(record) } : { class: rowClass(record) }
+}
+
 function resetFilters() {
   filters.value = { type: '', status: '', keyword: '' }
   applyFilters()
@@ -205,6 +297,7 @@ function rowDomId(record: any) { return rowAnchors.value.get(record.practiceId ?
 function rowClass(r: any) { return { 'row-new': r.status === 'new', 'row-midterm': r.practiceType === 'midterm' } }
 function avatarColor(r: any) { const c = ['#7399C6','#F59E0B','#3B82F6','#22C55E','#8B5CF6']; return c[(r.id ?? r.practiceId ?? 0) % c.length] }
 function typeClass(t: string) { return { mock_interview: 'info', relation_test: 'warning', midterm: 'purple' }[t] || 'info' }
+function typeTagColor(t: string) { return { mock_interview: 'blue', relation_test: 'orange', midterm: 'purple' }[t] || 'blue' }
 function typeIcon(t: string) { return { mock_interview: 'mdi mdi-account-voice', relation_test: 'mdi mdi-account-group', midterm: 'mdi mdi-file-document-edit' }[t] || '' }
 function typeLabel(t: string) { return { mock_interview: '模拟面试', relation_test: '人际关系测试', midterm: '期中考试' }[t] || t }
 function feedbackColor(l: string) { return { excellent: 'text-success', good: 'text-warning' }[l] || '' }
@@ -321,27 +414,32 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-header{margin-bottom:24px}.page-title{font-size:26px;font-weight:700;color:#1E293B}.page-title-en{font-size:14px;color:#94A3B8;font-weight:400;margin-left:8px}.page-sub{font-size:14px;color:#64748B;margin-top:6px}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}.stat-card{background:#fff;border-radius:12px;padding:16px;text-align:center;box-shadow:0 4px 24px rgba(115,153,198,0.12)}.stat-value{font-size:28px;font-weight:700}.stat-label{font-size:12px;color:#94A3B8}
-.card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(115,153,198,0.12);margin-bottom:20px}.card-header{padding:12px 16px;border-bottom:1px solid #E2E8F0}.card-body{padding:22px}
-.filter-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.filter-label{font-size:12px;color:#94A3B8}.filter-select{padding:4px 8px;border:1px solid #E2E8F0;border-radius:4px;font-size:12px}.filter-input{padding:4px 8px;border:1px solid #E2E8F0;border-radius:4px;font-size:12px;width:140px}
-.table{width:100%;border-collapse:collapse;font-size:13px}.table th,.table td{padding:14px 16px;text-align:left;border-bottom:1px solid #E2E8F0}.table th{font-weight:600;color:#64748B;font-size:12px;text-transform:uppercase;background:#F8FAFC}
-.empty-state{padding:28px 16px;text-align:center;color:#94A3B8;font-size:14px}
-.student-cell{display:flex;align-items:center;gap:10px}.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px}
-.tag{display:inline-flex;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;align-items:center;gap:4px}.tag.info{background:#DBEAFE;color:#1E40AF}.tag.warning{background:#FEF3C7;color:#92400E}.tag.success{background:#D1FAE5;color:#065F46}.tag.purple{background:#F3E8FF;color:#7C3AED}
-.pulse-tag{background:#EF4444;color:#fff;animation:pulse 1.5s ease-in-out infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
-.row-new{background:linear-gradient(90deg,#FEE2E2,#FEF2F2);border-left:4px solid #EF4444}.row-midterm{background:#F3E8FF}
-.btn{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}.btn-primary{background:#7399C6;color:#fff}.btn-text{background:transparent;color:#7399C6;padding:6px 12px}.btn-sm{padding:4px 12px;font-size:12px}
-.btn-confirm{background:#22C55E;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px}
-.text-muted{color:#94A3B8}.text-sm{font-size:11px}.text-success{color:#059669}.text-warning{color:#F59E0B}
-.modal{position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal-content{width:min(640px,100%);background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 64px rgba(15,23,42,0.2)}
-.modal-detail{width:min(760px,100%)}
+.stats-grid{margin-bottom:20px}
+.stat-card{text-align:center;box-shadow:0 4px 24px rgba(115,153,198,0.12);border-radius:12px}
+.stat-card :deep(.ant-card-body){padding:16px}
+.stat-value{font-size:28px;font-weight:700}
+.stat-label{font-size:12px;color:#94A3B8}
+.filter-bar :deep(.ant-form-item){margin-bottom:0;margin-right:12px}
+.student-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px}
+.pulse-tag{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+:deep(.row-new) > td{background:linear-gradient(90deg,#FEE2E2,#FEF2F2) !important}
+:deep(.row-new) > td:first-child{border-left:4px solid #EF4444}
+:deep(.row-midterm) > td{background:#F3E8FF !important}
+.btn-confirm{background:#22C55E !important;border-color:#22C55E !important}
+.btn-confirm:hover{background:#16A34A !important;border-color:#16A34A !important}
+.text-muted{color:#94A3B8}
+.text-sm{font-size:11px}
+.text-success{color:#059669}
+.text-warning{color:#F59E0B}
+.modal-detail{background:#fff;border-radius:20px;overflow:hidden}
 .modal-header{padding:20px 24px;background:linear-gradient(135deg,#7399C6,#5A7BA3);color:#fff;display:flex;align-items:center;justify-content:space-between}
 .modal-title{display:inline-flex;align-items:center;gap:8px;font-size:18px;font-weight:700}
 .modal-close{width:36px;height:36px;border:none;border-radius:10px;background:rgba(255,255,255,0.16);color:#fff;font-size:20px;cursor:pointer}
 .modal-body{padding:24px}
 .modal-detail-body{padding:0 24px 24px}
+.modal-footer{padding:16px 24px;display:flex;justify-content:flex-end;border-top:1px solid #E2E8F0}
 .detail-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;padding:20px 0 12px}
 .detail-hero-card{background:linear-gradient(180deg,#F8FAFC,#EEF4FF);border:1px solid #E2E8F0;border-radius:16px;padding:16px}
 .detail-hero-student{background:linear-gradient(180deg,#EFF6FF,#DBEAFE)}
@@ -364,5 +462,4 @@ onMounted(() => {
 .record-date{font-size:12px;font-weight:700;color:#64748B;margin-bottom:4px}
 .record-body{font-size:13px;color:#334155;line-height:1.6}
 .detail-note{background:#FFFBEB;border-radius:12px;padding:14px 16px;font-size:13px;color:#92400E;line-height:1.7}
-.detail-panel{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#334155;line-height:1.7;white-space:pre-wrap}
 </style>

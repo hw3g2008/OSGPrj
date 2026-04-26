@@ -1,6 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import Antd, { Select as ASelect } from 'ant-design-vue'
 import MockPracticePage from '@/views/mock-practice/index.vue'
+
+const mountOptions = { global: { plugins: [Antd] } }
+
+async function setSelect(wrapper: ReturnType<typeof mount>, index: number, value: string) {
+  const selects = wrapper.findAllComponents(ASelect)
+  expect(selects[index], `expected ASelect at index ${index}`).toBeTruthy()
+  await selects[index].vm.$emit('update:value', value)
+  await selects[index].vm.$emit('change', value, null)
+  await flushPromises()
+}
 
 type MockPracticeRow = {
   practiceId: number
@@ -111,7 +122,10 @@ function buildMockList(params: Record<string, string> | undefined) {
 }
 
 function getButton(wrapper: ReturnType<typeof mount>, label: string) {
-  const button = wrapper.findAll('button').find((candidate) => candidate.text().includes(label))
+  const normalized = label.replace(/\s/g, '')
+  const button = wrapper.findAll('button').find((candidate) =>
+    candidate.text().replace(/\s/g, '').includes(normalized),
+  )
   expect(button, `expected to find button with label containing ${label}`).toBeTruthy()
   return button!
 }
@@ -145,20 +159,17 @@ describe('mentor mock-practice behavior', () => {
       return { rows: [] }
     })
 
-    const wrapper = mount(MockPracticePage)
+    const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
 
     expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
     expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
 
-    const selects = wrapper.findAll('select')
-    await selects[0].setValue('relation_test')
-    await flushPromises()
+    await setSelect(wrapper, 0, 'relation_test')
     expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
     expect(wrapper.text()).not.toContain('Mock Ack Ready 87837-1')
 
-    await selects[1].setValue('completed')
-    await flushPromises()
+    await setSelect(wrapper, 1, 'completed')
     expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
 
     const keywordInput = wrapper.get('input[placeholder="搜索学员姓名/ID"]')
@@ -178,7 +189,7 @@ describe('mentor mock-practice behavior', () => {
   })
 
   it('submits keyword filters and shows an empty state when there is no match', async () => {
-    const wrapper = mount(MockPracticePage)
+    const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
 
     expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
@@ -208,27 +219,24 @@ describe('mentor mock-practice behavior', () => {
   })
 
   it('refreshes the task list immediately when the visible filters change', async () => {
-    const wrapper = mount(MockPracticePage)
+    const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
 
-    const [typeSelect, statusSelect] = wrapper.findAll('select')
     const keywordInput = wrapper.get('input[placeholder="搜索学员姓名/ID"]')
 
     expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
     expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
 
-    await typeSelect.setValue('mock_interview')
-    await flushPromises()
+    await setSelect(wrapper, 0, 'mock_interview')
     expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
     expect(wrapper.text()).not.toContain('Mock Scheduled 87837-1')
 
-    await typeSelect.setValue('')
-    await statusSelect.setValue('completed')
-    await flushPromises()
+    await setSelect(wrapper, 0, '')
+    await setSelect(wrapper, 1, 'completed')
     expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
     expect(wrapper.text()).not.toContain('Mock Ack Ready 87837-1')
 
-    await statusSelect.setValue('')
+    await setSelect(wrapper, 1, '')
     await keywordInput.setValue('Mock Ack')
     await flushPromises()
     expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
@@ -249,7 +257,7 @@ describe('mentor mock-practice behavior', () => {
     })
     vi.mocked(http.put).mockResolvedValueOnce({ code: 200 })
 
-    const wrapper = mount(MockPracticePage)
+    const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
 
     expect(wrapper.find('#mock-new-1').exists()).toBe(true)
@@ -265,7 +273,7 @@ describe('mentor mock-practice behavior', () => {
   })
 
   it('normalizes scheduled rows, opens the full detail modal, and closes via the visible control', async () => {
-    const wrapper = mount(MockPracticePage)
+    const wrapper = mount(MockPracticePage, { ...mountOptions, attachTo: document.body })
     await flushPromises()
 
     const firstRow = wrapper.find('tbody tr')
@@ -284,9 +292,9 @@ describe('mentor mock-practice behavior', () => {
     expect(wrapper.text()).toContain('辅导信息')
     expect(wrapper.text()).toContain('课程记录 (最近3条)')
     expect(wrapper.text()).toContain('学员备注')
-    expect(getButton(wrapper, '关闭').exists()).toBe(true)
 
-    await getButton(wrapper, '关闭').trigger('click')
+    const closeButton = getButton(wrapper, '关闭')
+    await closeButton.trigger('click')
     await flushPromises()
 
     expect(wrapper.text()).not.toContain('学员求职详情')
@@ -325,7 +333,7 @@ describe('mentor mock-practice behavior', () => {
       return {}
     })
 
-    const wrapper = mount(MockPracticePage)
+    const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
 
     expect(wrapper.find('#mock-new-1').exists()).toBe(true)
