@@ -79,13 +79,11 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
-                  <div class="student-cell">
-                    <div class="avatar" :style="{ background: record.avatarColor }">{{ record.avatar }}</div>
-                    <div>
-                      <div class="student-name">{{ record.studentName }}</div>
-                      <div class="student-meta">ID: {{ record.studentId }}</div>
-                    </div>
-                  </div>
+                  <StudentAvatarCell
+                    :name="record.studentName"
+                    :id="record.studentId"
+                    :background-color="record.avatarColor"
+                  />
                 </template>
                 <template v-else-if="column.key === 'practiceType'">
                   <PracticeTypeTag :practice-type="record.practiceType" show-icon />
@@ -180,13 +178,11 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
-                  <div class="student-cell">
-                    <div class="avatar" :style="{ background: record.avatarColor }">{{ record.avatar }}</div>
-                    <div>
-                      <div class="student-name">{{ record.studentName }}</div>
-                      <div class="student-meta">ID: {{ record.studentId }}</div>
-                    </div>
-                  </div>
+                  <StudentAvatarCell
+                    :name="record.studentName"
+                    :id="record.studentId"
+                    :background-color="record.avatarColor"
+                  />
                 </template>
                 <template v-else-if="column.key === 'practiceType'">
                   <PracticeTypeTag :practice-type="record.practiceType" show-icon />
@@ -312,13 +308,11 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
-                  <div class="student-cell">
-                    <div class="avatar" :style="{ background: record.avatarColor }">{{ record.avatar }}</div>
-                    <div>
-                      <div class="student-name">{{ record.studentName }}</div>
-                      <div class="student-meta">ID: {{ record.studentId }}</div>
-                    </div>
-                  </div>
+                  <StudentAvatarCell
+                    :name="record.studentName"
+                    :id="record.studentId"
+                    :background-color="record.avatarColor"
+                  />
                 </template>
                 <template v-else-if="column.key === 'practiceType'">
                   <PracticeTypeTag :practice-type="record.practiceType" show-icon />
@@ -378,7 +372,7 @@
 
 <script setup lang="ts">
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { PracticeTypeTag } from '@osg/shared/components'
+import { PracticeTypeTag, StudentAvatarCell } from '@osg/shared/components'
 import { message } from 'ant-design-vue'
 import {
   BookOutlined,
@@ -1008,31 +1002,10 @@ function buildMentorCode(name?: string) {
   box-shadow: inset 4px 0 0 #EF4444;
 }
 
-/* ---- 学员单元格（保留原型样式） ---- */
-.student-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-}
-.student-name,
+/* ---- mentor-stack 在其他 cell 还用 ---- */
 .mentor-stack__name {
   color: var(--text);
   font-weight: 600;
-}
-.student-meta {
-  color: var(--muted);
-  font-size: 11px;
 }
 .date-text {
   font-size: 12px;
