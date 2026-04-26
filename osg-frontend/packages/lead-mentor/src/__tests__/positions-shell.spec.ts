@@ -3,6 +3,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createApp, nextTick, ref } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
+import Antd from 'ant-design-vue'
 
 import MainLayout from '../layouts/MainLayout.vue'
 import PositionMyStudentsModal from '../components/PositionMyStudentsModal.vue'
@@ -47,20 +48,30 @@ vi.mock('@osg/shared/utils', () => ({
 vi.mock('@osg/shared/api', () => apiMocks)
 
 // mock shared 主入口，避免 useIndustryMeta 真发网络请求（走 axios + localStorage 会在 jsdom 中失败）
-vi.mock('@osg/shared', () => ({
-  useIndustryMeta: () => ({
-    meta: ref(industryMetaFixture),
-    loading: ref(false),
-    load: vi.fn().mockResolvedValue(undefined),
-  }),
-}))
+// 用 importActual 保留 PositionsListTable / PositionsDrilldown / PositionsFooter 真实组件
+vi.mock('@osg/shared', async () => {
+  const actual = await vi.importActual<typeof import('@osg/shared')>('@osg/shared')
+  return {
+    ...actual,
+    useIndustryMeta: () => ({
+      meta: ref(industryMetaFixture),
+      loading: ref(false),
+      load: vi.fn().mockResolvedValue(undefined),
+    }),
+  }
+})
 
-vi.mock('ant-design-vue', () => ({
-  message: {
-    info: vi.fn(),
-    error: vi.fn(),
-  },
-}))
+// 用 importActual 保留 a-table / a-select / a-radio-button 等真实组件，只覆盖 message
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
+  return {
+    ...actual,
+    message: {
+      info: vi.fn(),
+      error: vi.fn(),
+    },
+  }
+})
 
 /**
  * positionRowsFixture 设计（覆盖双路径）：
@@ -187,6 +198,7 @@ async function mountPositionsPage(initialPath = '/career/positions') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 
@@ -222,6 +234,7 @@ async function mountModal() {
     },
   })
 
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 
@@ -257,10 +270,11 @@ describe('lead-mentor positions shell contract', () => {
       expect(page.container.textContent).toContain('Job Tracker')
       expect(page.container.textContent).toContain('下钻视图')
       expect(page.container.textContent).toContain('列表视图')
-      expect(page.container.textContent).toContain('全部分类')
-      expect(page.container.textContent).toContain('全部行业')
-      expect(page.container.textContent).toContain('全部公司')
-      expect(page.container.textContent).toContain('全部地区')
+      // a-select placeholder 渲染到 attribute（jsdom 不在 textContent 里），改查 innerHTML
+      expect(page.container.innerHTML).toContain('全部分类')
+      expect(page.container.innerHTML).toContain('全部行业')
+      expect(page.container.innerHTML).toContain('全部公司')
+      expect(page.container.innerHTML).toContain('全部地区')
       // industries 行业 label：bulge_bracket 走字典命中显示"Bulge Bracket"，其他走 fallback 显示原字符串
       expect(page.container.textContent).toContain('Bulge Bracket')
       expect(page.container.textContent).toContain('Consulting')
@@ -270,14 +284,22 @@ describe('lead-mentor positions shell contract', () => {
       expect(page.container.textContent).toContain('Google')
       expect(page.container.textContent).toContain('官网')
       expect(page.container.textContent).toContain('个岗位')
-      expect(page.container.querySelectorAll('.table').length).toBeGreaterThanOrEqual(2)
+      // antd 表格不使用 .table class，改查 .ant-table。
+      // 默认 list 视图：list panel 含 1 个 .ant-table（visible）；drilldown panel display:none 但 DOM 存在，
+      // 不过 PositionsDrilldown 嵌套表只在公司展开时渲染（默认无展开），故仅 list 1 个 .ant-table。
+      expect(page.container.querySelectorAll('.ant-table').length).toBeGreaterThanOrEqual(1)
 
       // 新 CSS class 契约（对齐字典 css_class 字段，禁用按老 value 命名的 class）
-      // 字典命中路径：bulge_bracket → industry-gold
-      expect(page.container.querySelector('.industry-gold')).toBeTruthy()
-      // Fallback 路径：未命中字典 → industry-slate（Consulting/Tech 老字符串）
-      expect(page.container.querySelector('.industry-slate')).toBeTruthy()
-      // 老 class 已废除，不应出现在渲染结果
+      // 共享 PositionsListTable / PositionsDrilldown 用 tone-based class（osg-industry-tag--{tone} / osg-positions-drilldown__industry-head--{tone}）
+      // 字典命中路径：bulge_bracket → tone=gold
+      expect(
+        page.container.querySelector('.osg-industry-tag--gold, .osg-positions-drilldown__industry-head--gold'),
+      ).toBeTruthy()
+      // Fallback 路径：未命中字典 → tone=slate（Consulting/Tech 老字符串）
+      expect(
+        page.container.querySelector('.osg-industry-tag--slate, .osg-positions-drilldown__industry-head--slate'),
+      ).toBeTruthy()
+      // 老 value-based class 已废除（改为 tone-based），不应出现在渲染结果
       expect(page.container.querySelector('.industry-bank')).toBeFalsy()
       expect(page.container.querySelector('.industry-consulting')).toBeFalsy()
       expect(page.container.querySelector('.industry-tech')).toBeFalsy()
@@ -290,37 +312,55 @@ describe('lead-mentor positions shell contract', () => {
     const page = await mountPositionsPage()
 
     try {
-      const drilldownButton = Array.from(page.container.querySelectorAll<HTMLButtonElement>('button')).find(
-        (button) => button.textContent?.includes('下钻视图'),
-      )
-      const listButton = Array.from(page.container.querySelectorAll<HTMLButtonElement>('button')).find(
-        (button) => button.textContent?.includes('列表视图'),
-      )
+      // a-radio-button 渲染为 <label class="ant-radio-button-wrapper"> 包裹 <input type="radio">，按 ID 直接定位 input
+      const drilldownInput = page.container.querySelector<HTMLInputElement>(
+        '#lead-view-drilldown input[type="radio"]',
+      ) ?? page.container.querySelector<HTMLInputElement>('#lead-view-drilldown')
+      const listInput = page.container.querySelector<HTMLInputElement>(
+        '#lead-view-list input[type="radio"]',
+      ) ?? page.container.querySelector<HTMLInputElement>('#lead-view-list')
+      const drilldownLabel = page.container.querySelector<HTMLLabelElement>('label[id="lead-view-drilldown"], #lead-view-drilldown')
+      const listLabel = page.container.querySelector<HTMLLabelElement>('label[id="lead-view-list"], #lead-view-list')
       const drilldownPanel = page.container.querySelector<HTMLElement>('#lead-position-drilldown')
       const listPanel = page.container.querySelector<HTMLElement>('#lead-position-list')
       const positionsNav = Array.from(page.container.querySelectorAll<HTMLElement>('.nav-item')).find((item) =>
         item.textContent?.includes('岗位信息 Positions'),
       )
 
-      expect(drilldownButton).toBeTruthy()
-      expect(listButton).toBeTruthy()
+      expect(drilldownLabel ?? drilldownInput).toBeTruthy()
+      expect(listLabel ?? listInput).toBeTruthy()
       expect(drilldownPanel).toBeTruthy()
       expect(listPanel).toBeTruthy()
       expect(positionsNav?.classList.contains('active')).toBe(true)
+      // LM 默认 list 视图（与 Asst 一致）：list panel 可见、drilldown panel display:none
+      expect(listPanel?.style.display).not.toBe('none')
+      expect(drilldownPanel?.style.display).toBe('none')
+
+      // 切换到 drilldown 视图：antd radio v-model 监听 <input> change 事件
+      const drilldownRadio = page.container.querySelector<HTMLInputElement>('#lead-view-drilldown input[type="radio"]')
+      const listRadio = page.container.querySelector<HTMLInputElement>('#lead-view-list input[type="radio"]')
+      if (drilldownRadio) {
+        drilldownRadio.checked = true
+        drilldownRadio.dispatchEvent(new Event('change', { bubbles: true }))
+      } else {
+        ;(drilldownLabel ?? drilldownInput)?.click()
+      }
+      await flushUi()
+
       expect(drilldownPanel?.style.display).not.toBe('none')
       expect(listPanel?.style.display).toBe('none')
 
-      listButton?.click()
+      // 切回 list 视图
+      if (listRadio) {
+        listRadio.checked = true
+        listRadio.dispatchEvent(new Event('change', { bubbles: true }))
+      } else {
+        ;(listLabel ?? listInput)?.click()
+      }
       await flushUi()
 
+      expect(listPanel?.style.display).not.toBe('none')
       expect(drilldownPanel?.style.display).toBe('none')
-      expect(listPanel?.style.display).toBe('block')
-
-      drilldownButton?.click()
-      await flushUi()
-
-      expect(drilldownPanel?.style.display).toBe('block')
-      expect(listPanel?.style.display).toBe('none')
       expect(positionsNav?.classList.contains('active')).toBe(true)
     } finally {
       page.unmount()

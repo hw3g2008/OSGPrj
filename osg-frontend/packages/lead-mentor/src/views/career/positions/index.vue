@@ -6,367 +6,122 @@
       description="追踪各大公司招聘岗位信息，查看我的学员申请情况"
     >
       <template #actions>
-        <div class="view-switcher">
-        <button
-          id="lead-view-drilldown"
-          type="button"
-          class="btn btn-sm"
-          :class="{ 'btn--active': viewMode === 'drilldown' }"
-          @click="viewMode = 'drilldown'"
-        >
-          <i class="mdi mdi-file-tree" aria-hidden="true" />
-          下钻视图
-        </button>
-        <button
-          id="lead-view-list"
-          type="button"
-          class="btn btn-sm"
-          :class="{ 'btn--active': viewMode === 'list' }"
-          @click="viewMode = 'list'"
-        >
-          <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
-          列表视图
-        </button>
-        </div>
+        <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
+          <a-radio-button value="list" id="lead-view-list">
+            <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px" aria-hidden="true" />列表视图
+          </a-radio-button>
+          <a-radio-button value="drilldown" id="lead-view-drilldown">
+            <i class="mdi mdi-file-tree" style="margin-right: 4px" aria-hidden="true" />下钻视图
+          </a-radio-button>
+        </a-radio-group>
       </template>
     </PageHeader>
 
-    <section class="card">
-      <div class="card-body">
-        <div class="filter-row">
-          <select
-            v-model="filters.positionCategory"
-            class="form-select"
-            aria-label="岗位分类"
+    <a-card :bordered="false" style="margin-top: 12px">
+      <a-form layout="inline" style="margin-bottom: 16px; gap: 10px; flex-wrap: wrap">
+        <a-form-item>
+          <a-select
+            v-model:value="filters.positionCategory"
+            placeholder="全部分类"
+            allow-clear
+            style="width: 140px"
             :disabled="isLoading"
             @change="handleFilterChange"
           >
-            <option value="">全部分类</option>
-            <option
-              v-for="option in filterOptions.categories"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-
-          <select
-            v-model="filters.industry"
-            class="form-select"
-            aria-label="行业"
+            <a-select-option v-for="option in filterOptions.categories" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select
+            v-model:value="filters.industry"
+            placeholder="全部行业"
+            allow-clear
+            show-search
+            option-filter-prop="label"
+            style="width: 160px"
             :disabled="isLoading"
             @change="handleFilterChange"
           >
-            <option value="">全部行业</option>
-            <option
-              v-for="option in filterOptions.industries"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-
-          <select
-            v-model="filters.companyName"
-            class="form-select form-select--wide"
-            aria-label="公司"
+            <a-select-option v-for="option in filterOptions.industries" :key="option.value" :value="option.value" :label="option.label">{{ option.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select
+            v-model:value="filters.companyName"
+            placeholder="全部公司"
+            allow-clear
+            show-search
+            option-filter-prop="label"
+            style="width: 200px"
             :disabled="isLoading"
             @change="handleFilterChange"
           >
-            <option value="">全部公司</option>
-            <option
-              v-for="option in filterOptions.companies"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-
-          <select
-            v-model="filters.region"
-            class="form-select"
-            aria-label="地区"
+            <a-select-option v-for="option in filterOptions.companies" :key="option.value" :value="option.value" :label="option.label">{{ option.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select
+            v-model:value="filters.region"
+            placeholder="全部地区"
+            allow-clear
+            style="width: 140px"
             :disabled="isLoading"
             @change="handleFilterChange"
           >
-            <option value="">全部地区</option>
-            <option
-              v-for="option in filterOptions.regions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
+            <a-select-option v-for="option in filterOptions.regions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-input
+            v-model:value="filters.keyword"
+            placeholder="搜索岗位名称..."
+            allow-clear
+            style="width: 200px"
+            :disabled="isLoading"
+            @change="handleFilterChange"
+            @press-enter="handleFilterChange"
+          >
+            <template #prefix><SearchOutlined style="color: rgba(0, 0, 0, 0.45)" /></template>
+          </a-input>
+        </a-form-item>
+      </a-form>
 
-          <div class="search-box">
-            <i class="mdi mdi-magnify" aria-hidden="true" />
-            <input
-              v-model.trim="filters.keyword"
-              class="form-input"
-              type="text"
-              placeholder="搜索岗位名称..."
-              :disabled="isLoading"
-              @change="handleFilterChange"
-              @keyup.enter="handleFilterChange"
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section
-      id="lead-position-drilldown"
-      class="card"
-      :style="{ display: viewMode === 'drilldown' ? 'block' : 'none' }"
-    >
-      <div class="card-body card-body--drilldown">
-        <article
-          v-for="category in categories"
-          :key="category.id"
-          class="category-section"
+      <a-spin :spinning="isLoading" tip="正在加载岗位数据...">
+        <div
+          id="lead-position-drilldown"
+          v-show="viewMode === 'drilldown'"
         >
-          <button
-            type="button"
-            class="category-header"
-            :class="`industry-${category.tone}`"
-            :aria-expanded="isCategoryOpen(category.id)"
-            @click="toggleCategory(category.id)"
-          >
-            <div class="category-title-group">
-              <i
-                class="mdi category-icon"
-                :class="isCategoryOpen(category.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"
-                aria-hidden="true"
-              />
-              <i class="mdi category-kind-icon" :class="category.icon" aria-hidden="true" />
-              <span class="category-title">{{ category.label }}</span>
-              <span class="category-badge">{{ category.companySummary }}</span>
-              <span class="category-badge category-badge--success">{{ category.positionSummary }}</span>
-            </div>
-            <span class="category-summary">{{ category.studentSummary }}</span>
-          </button>
-
-          <div
-            :id="`lead-content-${category.id}`"
-            class="category-content"
-            :style="{ display: isCategoryOpen(category.id) ? 'block' : 'none' }"
-          >
-            <article
-              v-for="company in category.companies"
-              :key="company.id"
-              class="company-section"
-            >
-              <div
-                class="company-header"
-                role="button"
-                tabindex="0"
-                :aria-expanded="isCompanyOpen(company.id)"
-                @click="toggleCompany(company.id)"
-                @keydown.enter.prevent="toggleCompany(company.id)"
-                @keydown.space.prevent="toggleCompany(company.id)"
-              >
-                <div class="company-header__main">
-                  <i
-                    class="mdi company-icon"
-                    :class="isCompanyOpen(company.id) ? 'mdi-chevron-down' : 'mdi-chevron-right'"
-                    aria-hidden="true"
-                  />
-                  <div class="company-logo" :style="{ background: company.logoColor }">{{ company.logoText }}</div>
-                  <div class="company-meta">
-                    <div class="company-name">{{ company.name }}</div>
-                    <div class="company-locations">{{ company.locations }}</div>
-                  </div>
-                </div>
-
-                <div class="company-actions">
-                  <span class="company-count">
-                    <strong>{{ company.positionCount }}</strong>
-                    个岗位
-                  </span>
-                  <button
-                    v-if="company.studentCount > 0"
-                    type="button"
-                    class="company-link"
-                    data-surface-trigger="modal-position-mystudents"
-                    @click.stop="openCompanyStudentsModal(company)"
-                  >
-                    {{ formatStudentLabel(company.studentCount) }}
-                  </button>
-                  <span v-else class="company-link company-link--muted">0人</span>
-                  <a
-                    class="btn btn-outline btn-sm btn-outline--tiny"
-                    :href="company.officialUrl"
-                    target="_blank"
-                    rel="noreferrer"
-                    @click.stop
-                  >
-                    <i class="mdi mdi-web" aria-hidden="true" />
-                    官网
-                  </a>
-                </div>
-              </div>
-
-              <div
-                :id="`lead-content-${company.id}`"
-                class="company-content"
-                :style="{ display: isCompanyOpen(company.id) ? 'block' : 'none' }"
-              >
-                <div class="table-wrap">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>岗位名称</th>
-                        <th>岗位分类</th>
-                        <th>部门</th>
-                        <th>地区</th>
-                        <th>招聘周期</th>
-                        <th>发布时间</th>
-                        <th>截止时间</th>
-                        <th>我的学员</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="job in company.jobs" :key="job.id">
-                        <td class="table-cell-title">
-                          <button type="button" class="text-link" @click="handleJobLinkClick">
-                            {{ job.title }}
-                            <i class="mdi mdi-open-in-new" aria-hidden="true" />
-                          </button>
-                        </td>
-                        <td>{{ job.jobType }}</td>
-                        <td>{{ job.location }}</td>
-                        <td>
-                          <span class="tag" :class="job.cycleTone">{{ job.cycleLabel }}</span>
-                        </td>
-                        <td>{{ job.recruitYear }}</td>
-                        <td>{{ job.publishDate }}</td>
-                        <td>
-                          <span :class="{ 'deadline-closed': job.deadlineTone === 'closed', 'deadline-open': job.deadlineTone === 'urgent' }">
-                            {{ job.deadline }}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            v-if="job.studentCount > 0"
-                            type="button"
-                            class="student-link"
-                            data-surface-trigger="modal-position-mystudents"
-                            @click="openJobStudentsModal(job)"
-                          >
-                            {{ formatStudentLabel(job.studentCount) }}
-                          </button>
-                          <span v-else class="student-link student-link--muted">0人</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </article>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section
-      id="lead-position-list"
-      class="card"
-      :style="{ display: viewMode === 'list' ? 'block' : 'none' }"
-    >
-      <div class="card-body card-body--list">
-        <div class="table-wrap">
-          <table class="table list-table">
-            <thead>
-              <tr>
-                <th>岗位名称</th>
-                <th>公司</th>
-                <th>行业</th>
-                <th>岗位分类</th>
-                <th>地区</th>
-                <th>招聘周期</th>
-                <th>
-                  <button type="button" class="sort-button" @click="togglePublishSort">
-                    发布时间
-                    <i class="mdi" :class="publishSortIcon" aria-hidden="true" />
-                  </button>
-                </th>
-                <th>截止时间</th>
-                <th>我的学员</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="job in orderedListJobs" :key="job.id">
-                <td class="table-cell-title">
-                  <button type="button" class="text-link text-link--strong" @click="handleJobLinkClick">
-                    {{ job.title }}
-                    <i class="mdi mdi-open-in-new" aria-hidden="true" />
-                  </button>
-                </td>
-                <td>
-                  <div class="company-listing">
-                    <div class="company-logo company-logo--small" :style="{ background: job.logoColor }">{{ job.logoText }}</div>
-                    <a class="company-external" :href="job.officialUrl" target="_blank" rel="noreferrer">
-                      {{ job.companyName }}
-                      <i class="mdi mdi-open-in-new" aria-hidden="true" />
-                    </a>
-                  </div>
-                </td>
-                <td>
-                  <span class="tag" :class="job.industryTone">{{ job.industry }}</span>
-                </td>
-                <td>{{ job.jobType }}</td>
-                <td>{{ job.location }}</td>
-                <td>
-                  <span class="tag" :class="job.cycleTone">{{ job.cycleLabel }}</span>
-                </td>
-                <td>{{ job.publishDate }}</td>
-                <td>
-                  <span :class="{ 'deadline-closed': job.deadlineTone === 'closed', 'deadline-open': job.deadlineTone === 'urgent' }">
-                    {{ job.deadline }}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    v-if="job.studentCount > 0"
-                    type="button"
-                    class="student-link"
-                    data-surface-trigger="modal-position-mystudents"
-                    @click="openJobStudentsModal(job)"
-                  >
-                    {{ formatStudentLabel(job.studentCount) }}
-                  </button>
-                  <span v-else class="student-link student-link--muted">0人</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <PositionsDrilldown
+            :industries="mappedDrilldownIndustries"
+            :expanded-industries="expandedIndustriesSet"
+            :expanded-companies="expandedCompaniesSet"
+            @toggle-industry="toggleCategory"
+            @toggle-company="handleDrilldownToggleCompany"
+            @open-company-students="handleDrilldownOpenCompanyStudents"
+            @open-position-students="handleDrilldownOpenPositionStudents"
+          />
         </div>
-      </div>
-    </section>
 
-    <div class="page-footer-stats">
-      <span>
-        共
-        <strong>{{ footerStats.total }}</strong>
-        个岗位
-      </span>
-      <span class="footer-indicator footer-indicator--open">
-        <i class="mdi mdi-circle-small" aria-hidden="true" />
-        开放中 {{ footerStats.open }}
-      </span>
-      <span class="footer-indicator footer-indicator--closed">
-        <i class="mdi mdi-circle-small" aria-hidden="true" />
-        已关闭 {{ footerStats.closed }}
-      </span>
-      <span class="footer-indicator footer-indicator--students">
-        <i class="mdi mdi-circle-small" aria-hidden="true" />
-        我的学员 {{ footerStats.students }}人
-      </span>
-    </div>
+        <div
+          id="lead-position-list"
+          v-show="viewMode === 'list'"
+        >
+          <PositionsListTable
+            :positions="mappedListRows"
+            :pagination="tablePagination"
+            @change="handleTableChange"
+            @open-students="handleListOpenStudents"
+          />
+        </div>
+
+        <PositionsFooter
+          :total="footerStats.total"
+          :open="footerStats.open"
+          :closed="footerStats.closed"
+          :students="footerStats.students"
+        />
+      </a-spin>
+    </a-card>
 
     <PositionMyStudentsModal
       :model-value="isMyStudentsModalOpen"
@@ -379,7 +134,8 @@
 <script setup lang="ts">
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { message } from 'ant-design-vue'
-import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
+import { SearchOutlined } from '@ant-design/icons-vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import {
   getLeadMentorPositionList,
   getLeadMentorPositionMeta,
@@ -390,7 +146,16 @@ import {
   type LeadMentorPositionMetaOption,
   type LeadMentorPositionStudentRow,
 } from '@osg/shared/api'
-import { useIndustryMeta } from '@osg/shared'
+import {
+  useIndustryMeta,
+  PositionsFooter,
+  PositionsListTable,
+  PositionsDrilldown,
+  type PositionTableRow,
+  type PositionIndustryGroup,
+  type PositionCompanyGroup,
+  type IndustryTone,
+} from '@osg/shared'
 import PositionMyStudentsModal, {
   type PositionMyStudentRecord,
   type PositionMyStudentsPreview,
@@ -482,8 +247,7 @@ const COMPANY_COLORS: Record<string, string> = {
   'google': '#EA4335',
 }
 
-const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
-const viewMode = ref<ViewMode>('drilldown')
+const viewMode = ref<ViewMode>('list')
 const publishSortDirection = ref<'default' | 'asc' | 'desc'>('default')
 const expandedCategories = ref<string[]>([])
 const expandedCompanies = ref<string[]>([])
@@ -499,10 +263,10 @@ const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
 const positionRows = ref<LeadMentorPositionListItem[]>([])
 const positionMeta = ref<LeadMentorPositionMeta | null>(null)
 const filters = reactive<LeadMentorPositionListParams>({
-  positionCategory: '',
-  industry: '',
-  companyName: '',
-  region: '',
+  positionCategory: undefined,
+  industry: undefined,
+  companyName: undefined,
+  region: undefined,
   keyword: '',
 })
 
@@ -649,15 +413,78 @@ const orderedListJobs = computed(() => {
   }
   return items
 })
-const publishSortIcon = computed(() => {
-  if (publishSortDirection.value === 'asc') {
-    return 'mdi-sort-ascending'
-  }
-  if (publishSortDirection.value === 'desc') {
-    return 'mdi-sort-descending'
-  }
-  return 'mdi-swap-vertical'
+// tone (industry CSS class 或 cycle keyword) → antd a-tag 预设颜色
+const TONE_TO_ANTD_COLOR: Record<string, string> = {
+  'industry-gold': 'gold',
+  'industry-violet': 'purple',
+  'industry-blue': 'blue',
+  'industry-amber': 'orange',
+  'industry-teal': 'cyan',
+  'industry-indigo': 'geekblue',
+  'industry-slate': 'default',
+  info: 'blue',
+  neutral: 'default',
+}
+
+const toAntdTagColor = (tone: string): string => TONE_TO_ANTD_COLOR[tone] ?? 'default'
+
+// 把 LM 内部 PositionJob[] 转成共享 PositionsListTable 期望的 PositionTableRow[]
+// 字段映射：title→positionName / officialUrl→companyWebsite / jobType→positionCategory / cycleLabel→recruitmentCycle / cycleTone→recruitmentCycleTone / publishDate→publishTime / recruitYear→projectYear
+// industryTone：LM 内部用 'industry-amber' 这种带前缀的 CSS class 名；共享组件期望纯 tone 名（'amber' 等）
+function stripIndustryPrefix(tone: string): IndustryTone {
+  const stripped = tone.startsWith('industry-') ? tone.slice('industry-'.length) : tone
+  return (stripped as IndustryTone) || 'slate'
+}
+const mappedListRows = computed<PositionTableRow[]>(() =>
+  orderedListJobs.value.map((job) => ({
+    positionId: job.positionId,
+    positionName: job.title,
+    companyName: job.companyName,
+    companyWebsite: job.officialUrl,
+    logoText: job.logoText,
+    // 不传 logoColor：让共享组件按 industryTone 7 色配色（原型一致行为）
+    industry: job.industry,
+    industryTone: stripIndustryPrefix(job.industryTone),
+    positionCategory: job.jobType || '-',
+    location: job.location,
+    recruitmentCycle: job.cycleLabel,
+    recruitmentCycleTone: toAntdTagColor(job.cycleTone),
+    projectYear: job.recruitYear,
+    publishTime: job.publishDate,
+    deadline: job.deadline,
+    deadlineTone: job.deadlineTone,
+    studentCount: job.studentCount,
+  })),
+)
+
+// list 视图分页（与 Asst 一致：客户端分页）
+const tablePagination = reactive({
+  current: 1,
+  pageSize: 20,
+  total: 0,
+  showSizeChanger: true,
+  showQuickJumper: true,
+  pageSizeOptions: ['10', '20', '50', '100'],
+  showTotal: (total: number) => `共 ${total} 条`,
 })
+
+watch(
+  mappedListRows,
+  (rows) => {
+    tablePagination.total = rows.length
+  },
+  { immediate: true },
+)
+
+function handleTableChange(pagination: { current?: number; pageSize?: number }) {
+  tablePagination.current = pagination.current ?? 1
+  tablePagination.pageSize = pagination.pageSize ?? 20
+}
+
+function handleListOpenStudents(row: PositionTableRow) {
+  const job = orderedListJobs.value.find((j) => j.positionId === row.positionId)
+  if (job) openJobStudentsModal(job)
+}
 
 watch(
   categories,
@@ -697,14 +524,80 @@ const toggleCompany = (companyId: string) => {
     : [...expandedCompanies.value, companyId]
 }
 
-const togglePublishSort = () => {
-  if (publishSortDirection.value === 'default') {
-    publishSortDirection.value = 'asc'
-  } else if (publishSortDirection.value === 'asc') {
-    publishSortDirection.value = 'desc'
-  } else {
-    publishSortDirection.value = 'asc'
+// 共享 PositionsDrilldown 期望 Set<string>，LM 用 string[] 维护展开状态
+const expandedIndustriesSet = computed(() => new Set(expandedCategories.value))
+const expandedCompaniesSet = computed(() => new Set(expandedCompanies.value))
+
+// industryTone：LM 内部用 'gold/violet/...' 纯 tone 名（与共享组件期望一致），无需剥离前缀
+function lmStripPrefix(tone: string): IndustryTone {
+  const stripped = tone.startsWith('industry-') ? tone.slice('industry-'.length) : tone
+  return (stripped as IndustryTone) || 'slate'
+}
+
+// 把 LM 内部 PositionCategory[] 转成共享 PositionsDrilldown 的 PositionIndustryGroup[]
+const mappedDrilldownIndustries = computed<PositionIndustryGroup[]>(() =>
+  categories.value.map((category) => {
+    const positionCount = category.companies.reduce((sum, c) => sum + c.jobs.length, 0)
+    const studentCount = category.companies.reduce((sum, c) => sum + c.studentCount, 0)
+    const tone = lmStripPrefix(category.tone)
+    return {
+      id: category.id,
+      label: category.label,
+      tone,
+      icon: category.icon,
+      companyCount: category.companies.length,
+      positionCount,
+      studentCount,
+      companies: category.companies.map<PositionCompanyGroup>((company) => ({
+        id: company.id,
+        name: company.name,
+        locations: company.locations,
+        logoText: company.logoText,
+        // 不传 logoColor：让共享组件按 industryTone 7 色配色（避免 LM 旧 COMPANY_COLORS 灰色 fallback 覆盖 industry tone）
+        officialUrl: company.officialUrl,
+        positionCount: company.positionCount,
+        studentCount: company.studentCount,
+        positions: company.jobs.map<PositionTableRow>((job) => ({
+          positionId: job.positionId,
+          positionName: job.title,
+          companyName: job.companyName,
+          companyWebsite: job.officialUrl,
+          logoText: job.logoText,
+          industry: job.industry,
+          industryTone: lmStripPrefix(job.industryTone),
+          positionCategory: job.jobType || '-',
+          location: job.location,
+          recruitmentCycle: job.cycleLabel,
+          recruitmentCycleTone: toAntdTagColor(job.cycleTone),
+          projectYear: job.recruitYear,
+          publishTime: job.publishDate,
+          deadline: job.deadline,
+          deadlineTone: job.deadlineTone,
+          studentCount: job.studentCount,
+        })),
+      })),
+    }
+  }),
+)
+
+function handleDrilldownToggleCompany(_industryId: string, companyId: string) {
+  toggleCompany(companyId)
+}
+
+function handleDrilldownOpenCompanyStudents(company: PositionCompanyGroup) {
+  // 从原始 categories 中找回 PositionCompany 调用 openCompanyStudentsModal
+  for (const category of categories.value) {
+    const original = category.companies.find((c) => c.id === company.id)
+    if (original) {
+      openCompanyStudentsModal(original)
+      return
+    }
   }
+}
+
+function handleDrilldownOpenPositionStudents(row: PositionTableRow) {
+  const job = allJobs.value.find((j) => j.positionId === row.positionId)
+  if (job) openJobStudentsModal(job)
 }
 
 const buildListParams = (): LeadMentorPositionListParams => {
@@ -750,7 +643,6 @@ const loadPageData = async () => {
   await Promise.all([loadPositionMeta(), loadPositions()])
 }
 
-const formatStudentLabel = (count: number) => `${count}人`
 const handleFilterChange = () => {
   void loadPositions()
 }
@@ -794,8 +686,6 @@ const openCompanyStudentsModal = (company: PositionCompany) => {
 
   void openJobStudentsModal(jobWithStudents)
 }
-
-const handleJobLinkClick = () => showUpcomingToast()
 
 onMounted(() => {
   void loadIndustryMeta()
@@ -1386,42 +1276,6 @@ function resolveCompanyColor(companyName: string) {
 .sort-button .mdi {
   font-size: 12px;
   color: var(--muted);
-}
-
-.page-footer-stats {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-  margin-top: 16px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.page-footer-stats strong {
-  color: var(--text);
-}
-
-.footer-indicator {
-  display: inline-flex;
-  align-items: center;
-  font-size: 12px;
-}
-
-.footer-indicator .mdi {
-  font-size: 16px;
-}
-
-.footer-indicator--open {
-  color: #16a34a;
-}
-
-.footer-indicator--closed {
-  color: var(--muted);
-}
-
-.footer-indicator--students {
-  color: var(--primary);
 }
 
 @media (max-width: 1100px) {

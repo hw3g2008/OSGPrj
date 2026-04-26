@@ -23,12 +23,18 @@ const industryMetaFixture = [
   { value: 'other_company', label: '其他公司', tone: 'slate', icon: 'mdi-briefcase' },
 ]
 
-vi.mock('@osg/shared', () => ({
-  useIndustryMeta: () => ({
-    meta: { value: industryMetaFixture },
-    load: vi.fn().mockResolvedValue(industryMetaFixture),
-  }),
-}))
+// 用 importActual 保留 PositionsListTable / PositionsDrilldown / PositionsFooter 真实组件
+// （与 LM positions-shell.spec.ts 对齐，M2 共享组件抽取后必需）
+vi.mock('@osg/shared', async () => {
+  const actual = await vi.importActual<typeof import('@osg/shared')>('@osg/shared')
+  return {
+    ...actual,
+    useIndustryMeta: () => ({
+      meta: { value: industryMetaFixture },
+      load: vi.fn().mockResolvedValue(industryMetaFixture),
+    }),
+  }
+})
 
 const {
   getAssistantPositionDrillDown,
@@ -258,7 +264,9 @@ describe('assistant career pages', () => {
     expect(src).toContain('<a-table')
     expect(src).toContain('<a-modal')
     expect(src).toContain('<a-spin')
-    expect(src).toContain('<a-statistic')
+    // <a-statistic> 已抽到共享 PositionsFooter；page 通过 PositionsListTable / PositionsDrilldown 引用
+    expect(src).toContain('<PositionsListTable')
+    expect(src).toContain('<PositionsDrilldown')
 
     // 下钻视图：与 admin 一致的两级折叠（使用 Set + toggle 函数）
     expect(src).toContain('expandedIndustries')
@@ -271,16 +279,15 @@ describe('assistant career pages', () => {
 
     // 列表视图：分页 + 水平滚动（解决"左右不能滑动"）
     expect(src).toContain(':pagination="tablePagination"')
-    expect(src).toContain(':scroll="{ x: 1400 }"')
+    // :scroll="{ x: 1400 }" 已随 a-table 抽到共享 PositionsListTable，page source 不再直接含有
     expect(src).toContain('showSizeChanger: true')
 
     // 默认视图 = 列表（不是全展开下钻）
     expect(src).toContain("ref<ViewMode>('list')")
 
-    // 统计卡片（对齐 admin）
-    expect(src).toContain('statsCards')
-    expect(src).toContain("key: 'open'")
-    expect(src).toContain("key: 'closed'")
+    // 统计已改用 inline positions-footer 实现（不再用 statsCards 数组配置）
+    expect(src).toContain('positions-footer__indicator--open')
+    expect(src).toContain('positions-footer__indicator--closed')
 
     // 只读：不包含 admin 端的管理入口
     expect(src).not.toContain('新增岗位')
@@ -292,11 +299,10 @@ describe('assistant career pages', () => {
     expect(src).not.toContain('分配导师')
     expect(src).not.toContain('更换导师')
 
-    // 保留 assistant 行业 tone 色系（不与 admin 对齐颜色）
-    expect(src).toContain('industry-gold')
-    expect(src).toContain('industry-teal')
-    expect(src).toContain('industry-indigo')
-    expect(src).toContain('industry-slate')
+    // 行业 tone 色系已抽到共享 useIndustryMeta + positionsTone 工具，
+    // 共享组件渲染时使用 osg-industry-tag--{tone} / osg-positions-drilldown__industry-head--{tone}
+    // page source 不再直接含 'industry-gold' 等字面值（参见 LM positions-shell.spec.ts 同步）
+    // 此处仅断言 page 仍引用 useIndustryMeta hook（line 309 已覆盖）
 
     // 保留助教端业务语义
     expect(src).toContain('我的学员')
@@ -339,10 +345,11 @@ describe('assistant career pages', () => {
     const vm: any = wrapper.vm
     vm.viewMode = 'drilldown'
     await flushUi()
-    expect(wrapper.find('.positions-drilldown').exists()).toBe(true)
-    expect(wrapper.find('.positions-drilldown__industry-head').exists()).toBe(true)
+    // 共享 PositionsDrilldown 用 osg- 前缀防命名冲突（M2 抽取后必需）
+    expect(wrapper.find('.osg-positions-drilldown').exists()).toBe(true)
+    expect(wrapper.find('.osg-positions-drilldown__industry-head').exists()).toBe(true)
     // 默认未展开：companies 容器不应渲染
-    expect(wrapper.find('.positions-drilldown__companies').exists()).toBe(false)
+    expect(wrapper.find('.osg-positions-drilldown__companies').exists()).toBe(false)
 
     wrapper.unmount()
   })
@@ -365,7 +372,8 @@ describe('assistant career pages', () => {
     // 使用 Ant Design Vue 组件（对齐 admin 框架）
     expect(src).toContain('<a-card')
     expect(src).toContain('<a-table')
-    expect(src).toContain('<a-tag')
+    // <a-tag> 已抽到共享 StageTag / CoachingStatusTag cell
+    expect(src).toContain('<StageTag')
     expect(src).toContain('<a-input')
     expect(src).toContain('<a-select')
     expect(src).toContain('<a-button')

@@ -17,18 +17,6 @@
       </template>
     </PageHeader>
 
-    <div class="stats-row">
-      <div v-for="card in statsCards" :key="card.key" class="stats-row__item">
-        <a-card :bordered="false" :body-style="{ padding: '16px', textAlign: 'center' }">
-          <a-statistic
-            :title="card.label"
-            :value="card.value"
-            :value-style="{ color: card.color, fontSize: '24px', fontWeight: 700 }"
-          />
-        </a-card>
-      </div>
-    </div>
-
     <a-card :bordered="false" style="margin-top: 12px">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 10px; flex-wrap: wrap">
         <a-form-item>
@@ -111,267 +99,25 @@
         </a-alert>
 
         <template v-if="viewMode === 'drilldown'">
-          <a-empty
-            v-if="!loading && !groupedPositions.length"
-            description="当前筛选条件下暂无岗位数据"
+          <PositionsDrilldown
+            :industries="mappedDrilldownIndustries"
+            :expanded-industries="expandedIndustries"
+            :expanded-companies="expandedCompanies"
+            @toggle-industry="toggleIndustry"
+            @toggle-company="handleDrilldownToggleCompany"
+            @open-company-students="handleDrilldownOpenCompanyStudents"
+            @open-position-students="handleDrilldownOpenPositionStudents"
           />
-
-          <div v-else class="positions-drilldown">
-            <section
-              v-for="industry in groupedPositions"
-              :key="industry.industryId"
-              class="positions-drilldown__industry"
-            >
-              <button
-                type="button"
-                :class="['positions-drilldown__industry-head', `positions-drilldown__industry-head--${industry.tone}`]"
-                :aria-expanded="expandedIndustries.has(industry.industryId)"
-                @click="toggleIndustry(industry.industryId)"
-              >
-                <div class="positions-drilldown__industry-main">
-                  <i
-                    :class="['mdi', expandedIndustries.has(industry.industryId) ? 'mdi-chevron-down' : 'mdi-chevron-right']"
-                    :style="{ color: toneTextColor[industry.tone] || '#64748b' }"
-                    aria-hidden="true"
-                  />
-                  <i
-                    :class="['mdi', industry.iconClass]"
-                    :style="{ color: toneTextColor[industry.tone] || '#64748b' }"
-                    aria-hidden="true"
-                  />
-                  <strong :style="{ color: toneTextColor[industry.tone] || '#64748b' }">
-                    {{ industry.industry }}
-                  </strong>
-                  <span
-                    :style="{
-                      background: toneTextColor[industry.tone] || '#64748b',
-                      color: '#fff',
-                      padding: '2px 8px',
-                      borderRadius: '10px',
-                      fontSize: '11px'
-                    }"
-                  >
-                    {{ industry.companyCount }} 家公司
-                  </span>
-                  <a-tag color="purple">{{ industry.positionCount }} 个岗位</a-tag>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px">
-                  <a-tag color="green">{{ industry.openCount }} 开放</a-tag>
-                  <a-tag v-if="industry.positionCount - industry.openCount > 0" color="default">
-                    {{ industry.positionCount - industry.openCount }} 已关闭
-                  </a-tag>
-                  <span
-                    :style="{
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      color: toneTextColor[industry.tone] || '#64748b'
-                    }"
-                  >
-                    我的学员 {{ industry.studentCount }}
-                  </span>
-                </div>
-              </button>
-
-              <div
-                v-if="expandedIndustries.has(industry.industryId)"
-                class="positions-drilldown__companies"
-              >
-                <section
-                  v-for="company in industry.companies"
-                  :key="`${industry.industryId}-${company.companyName}`"
-                  class="positions-drilldown__company"
-                >
-                  <div class="positions-drilldown__company-head">
-                    <button
-                      type="button"
-                      class="positions-drilldown__company-main-button"
-                      :aria-expanded="isCompanyExpanded(industry.industryId, company.companyName)"
-                      @click="toggleCompany(industry.industryId, company.companyName)"
-                    >
-                      <i
-                        :class="['mdi', isCompanyExpanded(industry.industryId, company.companyName) ? 'mdi-chevron-down' : 'mdi-chevron-right']"
-                        aria-hidden="true"
-                      />
-                      <div
-                        :class="['positions-drilldown__company-logo', `positions-drilldown__company-logo--${industry.tone}`]"
-                      >
-                        {{ company.logoText }}
-                      </div>
-                      <div class="positions-drilldown__company-meta">
-                        <strong>{{ company.companyName }}</strong>
-                        <span>{{ company.locations || '—' }}</span>
-                      </div>
-                    </button>
-                    <a-space>
-                      <a-tag>{{ company.positionCount }} 个岗位</a-tag>
-                      <a-button
-                        v-if="company.studentCount > 0"
-                        type="link"
-                        size="small"
-                        @click="openCompanyStudents(company)"
-                      >
-                        {{ company.studentCount }}人
-                      </a-button>
-                      <span v-else style="color: #94a3b8; font-size: 12px">0人</span>
-                      <a
-                        v-if="company.companyWebsite"
-                        :href="company.companyWebsite"
-                        target="_blank"
-                        rel="noreferrer"
-                        style="font-size: 12px"
-                      >
-                        <i class="mdi mdi-web" aria-hidden="true" /> 官网
-                      </a>
-                    </a-space>
-                  </div>
-
-                  <div
-                    v-if="isCompanyExpanded(industry.industryId, company.companyName)"
-                    class="positions-drilldown__position-list"
-                  >
-                    <a-table
-                      :columns="drilldownColumns"
-                      :data-source="company.positions"
-                      :row-key="(r: PositionRecord) => r.positionId"
-                      :pagination="false"
-                      size="small"
-                      :scroll="{ x: 1000 }"
-                    >
-                      <template #bodyCell="{ column, record }">
-                        <template v-if="column.dataIndex === 'positionName'">
-                          <a
-                            v-if="record.positionUrl"
-                            :href="record.positionUrl"
-                            target="_blank"
-                            rel="noreferrer"
-                            style="font-weight: 600"
-                          >
-                            {{ record.positionName }}
-                            <i class="mdi mdi-open-in-new" style="font-size: 11px" aria-hidden="true" />
-                          </a>
-                          <span v-else>{{ record.positionName }}</span>
-                        </template>
-                        <template v-else-if="column.dataIndex === 'positionCategory'">
-                          {{ categoryLabelMap[record.positionCategory] || record.positionCategory || '-' }}
-                        </template>
-                        <template v-else-if="column.dataIndex === 'department'">
-                          {{ record.department || '-' }}
-                        </template>
-                        <template v-else-if="column.dataIndex === 'location'">
-                          {{ formatLocation(record) }}
-                        </template>
-                        <template v-else-if="column.dataIndex === 'recruitmentCycle'">
-                          <a-tag :color="cycleTagColor(record.recruitmentCycle)">
-                            {{ record.recruitmentCycle || '-' }}
-                          </a-tag>
-                        </template>
-                        <template v-else-if="column.dataIndex === 'publishTime'">
-                          {{ formatDate(record.publishTime) }}
-                        </template>
-                        <template v-else-if="column.dataIndex === 'displayStatus'">
-                          <a-tag :color="statusTagColor(record.displayStatus)">
-                            {{ displayStatusLabel(record.displayStatus) }}
-                          </a-tag>
-                        </template>
-                        <template v-else-if="column.dataIndex === 'studentCount'">
-                          <a-button
-                            v-if="Number(record.studentCount || 0) > 0"
-                            type="link"
-                            size="small"
-                            @click="openStudents(record)"
-                          >
-                            {{ record.studentCount }}人
-                          </a-button>
-                          <span v-else style="color: #94a3b8">0人</span>
-                        </template>
-                      </template>
-                    </a-table>
-                  </div>
-                </section>
-              </div>
-            </section>
-          </div>
         </template>
 
+
         <template v-else>
-          <a-table
-            :columns="listColumns"
-            :data-source="filteredPositions"
-            :row-key="(r: PositionRecord) => r.positionId"
+          <PositionsListTable
+            :positions="mappedListRows"
             :pagination="tablePagination"
-            :locale="{ emptyText: '当前筛选条件下暂无岗位数据' }"
-            :scroll="{ x: 1400 }"
             @change="handleTableChange"
-          >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.dataIndex === 'positionName'">
-                <a
-                  v-if="record.positionUrl"
-                  :href="record.positionUrl"
-                  target="_blank"
-                  rel="noreferrer"
-                  style="font-weight: 600"
-                >
-                  {{ record.positionName }}
-                  <i class="mdi mdi-open-in-new" style="font-size: 11px" aria-hidden="true" />
-                </a>
-                <span v-else>{{ record.positionName }}</span>
-              </template>
-              <template v-else-if="column.dataIndex === 'companyName'">
-                <div style="display: flex; align-items: center; gap: 8px">
-                  <div
-                    :class="['positions-drilldown__company-logo', `positions-drilldown__company-logo--${resolveIndustryGroupMeta(record.industry).tone}`]"
-                  >
-                    {{ buildLogoText(record.companyName) }}
-                  </div>
-                  <a
-                    v-if="record.companyWebsite"
-                    :href="record.companyWebsite"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {{ record.companyName }}
-                  </a>
-                  <span v-else>{{ record.companyName }}</span>
-                </div>
-              </template>
-              <template v-else-if="column.dataIndex === 'industry'">
-                <a-tag :class="`industry-tag industry-${resolveIndustryGroupMeta(record.industry).tone}`">
-                  {{ resolveIndustryGroupMeta(record.industry).label || '-' }}
-                </a-tag>
-              </template>
-              <template v-else-if="column.dataIndex === 'positionCategory'">
-                {{ categoryLabelMap[record.positionCategory] || record.positionCategory || '-' }}
-              </template>
-              <template v-else-if="column.dataIndex === 'location'">
-                {{ formatLocation(record) }}
-              </template>
-              <template v-else-if="column.dataIndex === 'recruitmentCycle'">
-                <a-tag :color="cycleTagColor(record.recruitmentCycle)">
-                  {{ record.recruitmentCycle || '-' }}
-                </a-tag>
-              </template>
-              <template v-else-if="column.dataIndex === 'publishTime'">
-                {{ formatDate(record.publishTime) }}
-              </template>
-              <template v-else-if="column.dataIndex === 'displayStatus'">
-                <a-tag :color="statusTagColor(record.displayStatus)">
-                  {{ displayStatusLabel(record.displayStatus) }}
-                </a-tag>
-              </template>
-              <template v-else-if="column.dataIndex === 'studentCount'">
-                <a-button
-                  v-if="Number(record.studentCount || 0) > 0"
-                  type="link"
-                  size="small"
-                  @click="openStudents(record)"
-                >
-                  {{ record.studentCount }}人
-                </a-button>
-                <span v-else style="color: #94a3b8">0人</span>
-              </template>
-            </template>
-          </a-table>
+            @open-students="handleListOpenStudents"
+          />
         </template>
 
         <div class="positions-footer">
@@ -446,7 +192,16 @@ import {
   type AssistantPositionIndustry,
   type AssistantPositionStudent,
 } from '@osg/shared/api'
-import { useIndustryMeta } from '@osg/shared'
+import {
+  useIndustryMeta,
+  PositionsListTable,
+  PositionsDrilldown,
+  resolveDeadlineTone,
+  type PositionTableRow,
+  type PositionIndustryGroup,
+  type PositionCompanyGroup,
+  type IndustryTone,
+} from '@osg/shared'
 
 type ViewMode = 'drilldown' | 'list'
 
@@ -496,16 +251,6 @@ interface GroupedIndustry {
 
 const FALLBACK_TONE = 'slate'
 const FALLBACK_ICON = 'mdi-briefcase'
-
-const toneTextColor: Record<string, string> = {
-  gold: '#92400E',
-  violet: '#7C3AED',
-  blue: '#1D4ED8',
-  amber: '#D97706',
-  teal: '#0F766E',
-  indigo: '#4F46E5',
-  slate: '#64748b',
-}
 
 const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
 
@@ -576,29 +321,6 @@ const tablePagination = reactive({
   showTotal: (total: number) => `共 ${total} 条`,
 })
 
-const drilldownColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 260, ellipsis: false },
-  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 100 },
-  { title: '部门', dataIndex: 'department', key: 'department', width: 100 },
-  { title: '地区', dataIndex: 'location', key: 'location', width: 120 },
-  { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 120 },
-  { title: '发布时间', dataIndex: 'publishTime', key: 'publishTime', width: 110 },
-  { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 100 },
-  { title: '我的学员', dataIndex: 'studentCount', key: 'studentCount', width: 100 },
-]
-
-const listColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, fixed: 'left', ellipsis: false },
-  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 220 },
-  { title: '行业', dataIndex: 'industry', key: 'industry', width: 140 },
-  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 110 },
-  { title: '地区', dataIndex: 'location', key: 'location', width: 140 },
-  { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 120 },
-  { title: '发布时间', dataIndex: 'publishTime', key: 'publishTime', width: 110 },
-  { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 100 },
-  { title: '我的学员', dataIndex: 'studentCount', key: 'studentCount', width: 110, fixed: 'right' },
-]
-
 const studentColumns = [
   { title: '学员', dataIndex: 'studentName', key: 'studentName' },
   { title: '当前状态', dataIndex: 'status', key: 'status', width: 140 },
@@ -656,12 +378,40 @@ const linkedStudentCount = computed(() =>
   filteredPositions.value.reduce((sum, p) => sum + Number(p.studentCount || 0), 0),
 )
 
-const statsCards = computed(() => [
-  { key: 'total', label: '总岗位', value: filteredPositions.value.length, color: '#6b6ef7' },
-  { key: 'open', label: '开放中', value: openPositionCount.value, color: '#22c55e' },
-  { key: 'closed', label: '已关闭', value: closedPositionCount.value, color: '#94a3b8' },
-  { key: 'students', label: '我的学员', value: linkedStudentCount.value, color: '#3b82f6' },
-])
+// 把 PositionRecord[] 转成共享 PositionsListTable 期望的 PositionTableRow[]
+// （增强字段：industryTone / categoryLabel / location / deadlineTone / logoText 等）
+const mappedListRows = computed<PositionTableRow[]>(() =>
+  filteredPositions.value.map((record) => {
+    const meta = resolveIndustryGroupMeta(record.industry)
+    return {
+      positionId: record.positionId,
+      positionName: record.positionName,
+      positionUrl: record.positionUrl,
+      companyName: record.companyName,
+      companyWebsite: record.companyWebsite,
+      logoText: buildLogoText(record.companyName),
+      industry: meta.label,
+      industryTone: meta.tone as IndustryTone,
+      positionCategory: categoryLabelMap[record.positionCategory] || record.positionCategory || '-',
+      department: record.department,
+      location: formatLocation(record),
+      recruitmentCycle: record.recruitmentCycle,
+      recruitmentCycleTone: cycleTagColor(record.recruitmentCycle),
+      projectYear: record.projectYear,
+      publishTime: formatDate(record.publishTime),
+      deadline: formatDate(record.deadline),
+      deadlineTone: resolveDeadlineTone(record.deadline),
+      studentCount: record.studentCount,
+    }
+  }),
+)
+
+function handleListOpenStudents(row: PositionTableRow) {
+  const position = filteredPositions.value.find((p) => p.positionId === row.positionId)
+  if (position) {
+    void openStudents(position)
+  }
+}
 
 const groupedPositions = computed<GroupedIndustry[]>(() => {
   const industries = new Map<string, GroupedIndustry>()
@@ -723,6 +473,75 @@ const groupedPositions = computed<GroupedIndustry[]>(() => {
     .sort((a, b) => a.industry.localeCompare(b.industry))
 })
 
+// 把 Asst 内部 GroupedIndustry[] 转成共享 PositionsDrilldown 的 PositionIndustryGroup[]
+const mappedDrilldownIndustries = computed<PositionIndustryGroup[]>(() =>
+  groupedPositions.value.map((industry) => ({
+    id: industry.industryId,
+    label: industry.industry,
+    tone: (industry.tone as IndustryTone) || 'slate',
+    icon: industry.iconClass,
+    companyCount: industry.companyCount,
+    positionCount: industry.positionCount,
+    studentCount: industry.studentCount,
+    companies: industry.companies.map((company) => ({
+      id: `${industry.industryId}::${company.companyName}`,
+      name: company.companyName,
+      locations: company.locations,
+      logoText: company.logoText,
+      officialUrl: company.companyWebsite,
+      positionCount: company.positionCount,
+      studentCount: company.studentCount,
+      positions: company.positions.map((position) => mapPositionToTableRow(position, industry.tone as IndustryTone)),
+    })),
+  })),
+)
+
+function mapPositionToTableRow(record: PositionRecord, tone: IndustryTone): PositionTableRow {
+  return {
+    positionId: record.positionId,
+    positionName: record.positionName,
+    positionUrl: record.positionUrl,
+    companyName: record.companyName,
+    companyWebsite: record.companyWebsite,
+    logoText: buildLogoText(record.companyName),
+    industry: record.industry,
+    industryTone: tone,
+    positionCategory: categoryLabelMap[record.positionCategory] || record.positionCategory || '-',
+    department: record.department,
+    location: formatLocation(record),
+    recruitmentCycle: record.recruitmentCycle,
+    recruitmentCycleTone: cycleTagColor(record.recruitmentCycle),
+    projectYear: record.projectYear,
+    publishTime: formatDate(record.publishTime),
+    deadline: formatDate(record.deadline),
+    deadlineTone: resolveDeadlineTone(record.deadline),
+    studentCount: record.studentCount,
+  }
+}
+
+function handleDrilldownToggleCompany(industryId: string, companyId: string) {
+  // companyId 形如 "industryId::companyName"，从中拆出 companyName 调用原 toggleCompany
+  const prefix = `${industryId}::`
+  const companyName = companyId.startsWith(prefix) ? companyId.slice(prefix.length) : companyId
+  toggleCompany(industryId, companyName)
+}
+
+function handleDrilldownOpenCompanyStudents(company: PositionCompanyGroup) {
+  // 从原始 groupedPositions 中找回 GroupedCompany 调用原 openCompanyStudents
+  for (const industry of groupedPositions.value) {
+    const original = industry.companies.find((c) => `${industry.industryId}::${c.companyName}` === company.id)
+    if (original) {
+      void openCompanyStudents(original)
+      return
+    }
+  }
+}
+
+function handleDrilldownOpenPositionStudents(row: PositionTableRow) {
+  const position = filteredPositions.value.find((p) => p.positionId === row.positionId)
+  if (position) void openStudents(position)
+}
+
 const studentModalTitle = computed(() => {
   const p = studentModal.position
   if (!p) return '关联学员'
@@ -750,21 +569,6 @@ function formatDate(value?: string) {
 
 function formatLocation(position: PositionRecord) {
   return [position.region, position.city].filter(Boolean).join(' / ') || '-'
-}
-
-function displayStatusLabel(status?: string) {
-  if (status === 'visible') return '展示中'
-  if (status === 'hidden') return '已隐藏'
-  if (status === 'expired') return '已过期'
-  return status || '未标注'
-}
-
-function statusTagColor(status?: string) {
-  if (status === 'visible' || status === 'success') return 'green'
-  if (status === 'warning') return 'orange'
-  if (status === 'danger' || status === 'hidden' || status === 'expired') return 'red'
-  if (status === 'info') return 'blue'
-  return 'default'
 }
 
 function cycleTagColor(cycle?: string) {
@@ -806,10 +610,6 @@ function toggleCompany(industryId: string, companyName: string) {
   if (next.has(key)) next.delete(key)
   else next.add(key)
   expandedCompanies.value = next
-}
-
-function isCompanyExpanded(industryId: string, companyName: string) {
-  return expandedCompanies.value.has(`${industryId}::${companyName}`)
 }
 
 function handleTableChange(pag: { current?: number; pageSize?: number }) {
@@ -878,15 +678,14 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.stats-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 4px;
+.deadline-urgent {
+  color: #ef4444;
+  font-weight: 600;
 }
 
-.stats-row__item {
-  flex: 1;
-  min-width: 0;
+.deadline-closed {
+  color: #94a3b8;
+  text-decoration: line-through;
 }
 
 .positions-drilldown {
@@ -982,12 +781,12 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   color: #fff;
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -1006,19 +805,6 @@ onMounted(() => {
   overflow: hidden;
   background: #fff;
 }
-
-.industry-tag {
-  border: 0;
-  color: #fff !important;
-}
-
-.industry-tag.industry-gold   { background: #a85a18 !important; }
-.industry-tag.industry-violet { background: #7c3aed !important; }
-.industry-tag.industry-blue   { background: #2563eb !important; }
-.industry-tag.industry-amber  { background: #d97706 !important; }
-.industry-tag.industry-teal   { background: #0f766e !important; }
-.industry-tag.industry-indigo { background: #4f46e5 !important; }
-.industry-tag.industry-slate  { background: #64748b !important; }
 
 .positions-footer {
   display: flex;

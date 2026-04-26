@@ -237,9 +237,11 @@ function handleLogout() {
 
 .main {
   flex: 1;
+  min-width: 0;
   margin-left: 260px;
   min-height: 100vh;
   padding: 28px;
+  overflow-x: hidden;
   background: var(--bg);
 }
 
