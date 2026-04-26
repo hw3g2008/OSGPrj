@@ -460,27 +460,43 @@ grep -rn 'IOsgLeadMentorJobOverviewService\|IOsgAssistantJobOverviewService\|IOs
 ### 4.3 M2 Positions 子 Epic
 
 **工作量**：2-3 周
-**子文档**：`docs/architecture/positions-unification/`（待创建）
+**子文档**：`docs/architecture/positions-unification/00-epic-overview.md`
 
-预期产出（沿用 M1 模式）：
-- 前端：原子组件（如 `<PositionCompanyCell>` / `<RecruitmentCycleTag>` / `<AppliedCountBadge>` 等）+ 复合结构（`<PositionFilterBar>` / `<PositionTable>`）
-- 后端：Controller 已独立（三端已有），Service 统一重命名
+| 阶段 | 内容 | 状态 | 输出 |
+|---|---|---|---|
+| M2.0 | Quick assessment | ✅ 完成 | 共性 30-40%，决策"仅抽纯 UI 组件" |
+| M2.1 | LM/Asst 视觉对齐（共享组件抽取）| ✅ **完成（2026-04-26）** | `PositionsFooter` / `PositionsListTable` / `PositionsDrilldown` / `positionsTone.ts` / `positions/types.ts`，LM 1465→1170 / Asst 1053→890 |
+| M2.2 | Mentor 端接入 | ⏳ 待启动 | Mentor 端无 positions 页（参与度降级触发） |
+| M2.3 | Admin / Student 端接入 | ⏳ 待启动 | 与 LM/Asst 一致后再评估 |
+
+详见 `docs/architecture/2026-04-26-lm-asst-commonality-quantification.md` §4.2。
 
 ### 4.4 M3 Mock Practice 子 Epic
 
 **工作量**：2 周
-**子文档**：`docs/architecture/mock-practice-unification/`（待创建）
+**子文档**：`docs/architecture/mock-practice-unification/00-epic-overview.md`
+
+| 阶段 | 内容 | 状态 | 输出 |
+|---|---|---|---|
+| M3.0 | Quick assessment | ✅ 完成 | 共性 30-40%（admin/asst antd ✅ / mentor 旧 HTML / LM 旧 HTML） |
+| M3.1 | LM antd 化 + 与 Asst 视觉对齐 | ✅ **完成（2026-04-26）** | LM 1283→1102，三 tab 筛选接通后端，单测全绿 |
+| M3.2 | Mentor 端 antd 化 | ⏳ 待启动 | 旧 HTML class 需迁移 |
+| M3.3 | Admin / Student 端共享组件接入 | ⏳ 待启动 | — |
 
 ### 4.5 M4 Class Records 子 Epic
 
 **工作量**：3-4 周
 **注意**：已有 `docs/plans/class-records-fix/` 修复计划，本 Epic 需协调
-**子文档**：`docs/architecture/class-records-unification/`（待创建）
+**子文档**：`docs/architecture/class-records-unification/00-epic-overview.md`
+
+> ⚠️ **LM 端阻塞**（2026-04-26）：LM 后端只有 `createLeadMentorClassRecord`（POST 上报），缺 `getLeadMentorClassRecordList` / `getLeadMentorClassRecordStats` GET 端点。前端无法独立合并 LM/Asst，需先解锁后端 list/stats GET。详见 `docs/architecture/2026-04-26-lm-asst-commonality-quantification.md` §3.2 / §6.2。
 
 ### 4.6 M5 Students 子 Epic
 
 **工作量**：2-3 周
-**子文档**：`docs/architecture/students-unification/`（待创建）
+**子文档**：`docs/architecture/students-unification/00-epic-overview.md`
+
+> ⚠️ **后端 schema 双端分歧**（2026-04-26）：LM `LeadMentorStudentListItem` (relations[]/applyCount/interviewCount/offerCount) 与 Asst `StudentListItem` (contractStatus/isBlacklisted/jobCoachingCount/...) 字段不重叠，业务视角不同（班主任 vs 助教）。前端无法独立合并，需先后端做 `OsgStudentBasic + Extension` schema 对齐。详见 `docs/architecture/2026-04-26-lm-asst-commonality-quantification.md` §3.2 / §6.2。
 
 ### 4.7 M6 边缘页面（待定，逐个决策）
 
@@ -488,8 +504,8 @@ grep -rn 'IOsgLeadMentorJobOverviewService\|IOsgAssistantJobOverviewService\|IOs
 
 | 页面 | 三端情况（待调研）| 决策时机 | 候选决策 |
 |---|---|---|---|
-| `schedule` | 三端都有日程页 | M5 完成后 | 🟡 待定 |
-| `profile` | 三端都有个人信息 | M5 完成后 | 🟡 待定（端差异大，可能不做）|
+| `schedule` | LM 双周 + slot-key 模型 vs Asst 单周 + 字符串描述（业务模型完全不同） | 已评估（2026-04-26）| 🟡 **不做**：业务模型本质差异，强合代价 > 收益。详见 `2026-04-26-lm-asst-commonality-quantification.md` §3.2 |
+| `profile` | LM staff 模型（hourlyRate / 变更审核流程）vs Asst sys_user 模型（loginIp / avatar / 直接 update）| 已评估（2026-04-26）| 🟡 **不做**：业务模型本质差异（staff vs sys_user）。详见同上 |
 | `materials` | 未确认三端都有 | M5 完成后 | 🟡 待定 |
 | `feedback` | 未确认三端都有 | M5 完成后 | 🟡 待定 |
 
