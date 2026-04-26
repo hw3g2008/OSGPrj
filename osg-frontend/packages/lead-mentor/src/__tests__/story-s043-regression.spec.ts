@@ -1,4 +1,5 @@
 import { createApp, nextTick } from 'vue'
+import Antd from 'ant-design-vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -29,9 +30,13 @@ vi.mock('@osg/shared/utils', () => ({
   getToken: vi.fn(() => 'lead-mentor-token'),
 }))
 
-vi.mock('ant-design-vue', () => ({
-  message: messageMocks,
-}))
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
+  return {
+    ...actual,
+    message: messageMocks,
+  }
+})
 
 interface ScopeState {
   pending: Array<Record<string, unknown>>
@@ -233,6 +238,7 @@ async function mountStoryPage(initialPath = '/career/mock-practice') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 

@@ -3,6 +3,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createApp, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
+import Antd from 'ant-design-vue'
 
 import MainLayout from '../layouts/MainLayout.vue'
 
@@ -139,13 +140,17 @@ vi.mock('@osg/shared/utils', () => ({
   getToken: vi.fn(() => 'lead-mentor-token'),
 }))
 
-vi.mock('ant-design-vue', () => ({
-  message: {
-    info: vi.fn(),
-    error: vi.fn(),
-    success: vi.fn(),
-  },
-}))
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
+  return {
+    ...actual,
+    message: {
+      info: vi.fn(),
+      error: vi.fn(),
+      success: vi.fn(),
+    },
+  }
+})
 
 async function flushUi() {
   await nextTick()
@@ -182,6 +187,7 @@ async function mountMockPracticePage(initialPath = '/career/mock-practice') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 
@@ -225,13 +231,13 @@ describe('lead-mentor mock practice shell contract', () => {
       expect(page.container.textContent).toContain('重置')
       expect(page.container.textContent).toContain('分配导师')
       expect(page.container.textContent).toContain('确认')
-      expect(page.container.querySelectorAll('.table').length).toBeGreaterThanOrEqual(3)
-      const inputs = page.container.querySelectorAll<HTMLInputElement>('input')
-      expect(inputs).toHaveLength(4)
-      expect(inputs[0]?.placeholder).toBe('搜索学员姓名/ID')
-      expect(inputs[1]?.placeholder).toBe('搜索学员姓名/ID')
-      expect(inputs[2]?.placeholder).toBe('搜索学员姓名/ID')
-      expect(inputs[3]?.placeholder).toBe('搜索导师姓名')
+      // antd: 3 个 tab pane 各含 1 个 a-table → 共至少 3 个 .ant-table 容器
+      expect(page.container.querySelectorAll('.ant-table').length).toBeGreaterThanOrEqual(3)
+      // 三个 tab 都有「搜索学员姓名/ID」输入框 + managed tab 多一个「搜索导师姓名」
+      const inputs = page.container.querySelectorAll<HTMLInputElement>('input[type="text"]')
+      const placeholders = Array.from(inputs).map((el) => el.placeholder)
+      expect(placeholders.filter((p) => p === '搜索学员姓名/ID').length).toBe(3)
+      expect(placeholders).toContain('搜索导师姓名')
     } finally {
       page.unmount()
     }
@@ -241,37 +247,42 @@ describe('lead-mentor mock practice shell contract', () => {
     const page = await mountMockPracticePage()
 
     try {
-      const pendingButton = page.container.querySelector<HTMLButtonElement>('#mock-tab-pending')
-      const coachingButton = page.container.querySelector<HTMLButtonElement>('#mock-tab-mycoaching')
-      const managedButton = page.container.querySelector<HTMLButtonElement>('#mock-tab-mymanage')
-      const pendingPanel = page.container.querySelector<HTMLElement>('#mock-content-pending')
-      const coachingPanel = page.container.querySelector<HTMLElement>('#mock-content-mycoaching')
-      const managedPanel = page.container.querySelector<HTMLElement>('#mock-content-mymanage')
+      // antd a-tab-pane 切换：通过 .ant-tabs-tab 的 .ant-tabs-tab-active class 判断当前激活
+      // tab label span（带 #mock-tab-xxx id）的祖先 .ant-tabs-tab 反映状态
+      const pendingLabel = page.container.querySelector<HTMLElement>('#mock-tab-pending')
+      const coachingLabel = page.container.querySelector<HTMLElement>('#mock-tab-mycoaching')
+      const managedLabel = page.container.querySelector<HTMLElement>('#mock-tab-mymanage')
+      const pendingTab = pendingLabel?.closest<HTMLElement>('.ant-tabs-tab')
+      const coachingTab = coachingLabel?.closest<HTMLElement>('.ant-tabs-tab')
+      const managedTab = managedLabel?.closest<HTMLElement>('.ant-tabs-tab')
       const mockPracticeNav = Array.from(page.container.querySelectorAll<HTMLElement>('.nav-item')).find((item) =>
         item.textContent?.includes('模拟应聘管理 Mock Practice'),
       )
 
-      expect(pendingButton).toBeTruthy()
-      expect(coachingButton).toBeTruthy()
-      expect(managedButton).toBeTruthy()
-      expect(pendingPanel?.style.display).toBe('none')
-      expect(coachingPanel?.style.display).not.toBe('none')
-      expect(managedPanel?.style.display).toBe('none')
+      expect(pendingLabel).toBeTruthy()
+      expect(coachingLabel).toBeTruthy()
+      expect(managedLabel).toBeTruthy()
+      // 默认 activeTab = 'mycoaching'（保持原行为）
+      expect(coachingTab?.classList.contains('ant-tabs-tab-active')).toBe(true)
+      expect(pendingTab?.classList.contains('ant-tabs-tab-active')).toBe(false)
+      expect(managedTab?.classList.contains('ant-tabs-tab-active')).toBe(false)
       expect(mockPracticeNav?.classList.contains('active')).toBe(true)
 
-      pendingButton?.click()
+      // 切换到 pending：点 .ant-tabs-tab 容器
+      pendingTab?.click()
       await flushUi()
 
-      expect(pendingPanel?.style.display).toBe('block')
-      expect(coachingPanel?.style.display).toBe('none')
-      expect(managedPanel?.style.display).toBe('none')
+      expect(pendingTab?.classList.contains('ant-tabs-tab-active')).toBe(true)
+      expect(coachingTab?.classList.contains('ant-tabs-tab-active')).toBe(false)
+      expect(managedTab?.classList.contains('ant-tabs-tab-active')).toBe(false)
 
-      managedButton?.click()
+      // 切换到 managed
+      managedTab?.click()
       await flushUi()
 
-      expect(pendingPanel?.style.display).toBe('none')
-      expect(coachingPanel?.style.display).toBe('none')
-      expect(managedPanel?.style.display).toBe('block')
+      expect(pendingTab?.classList.contains('ant-tabs-tab-active')).toBe(false)
+      expect(coachingTab?.classList.contains('ant-tabs-tab-active')).toBe(false)
+      expect(managedTab?.classList.contains('ant-tabs-tab-active')).toBe(true)
       expect(mockPracticeNav?.classList.contains('active')).toBe(true)
     } finally {
       page.unmount()

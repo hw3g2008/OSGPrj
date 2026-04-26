@@ -1,4 +1,5 @@
 import { createApp, nextTick } from 'vue'
+import Antd from 'ant-design-vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import type { LeadMentorMockPracticeItem } from '@osg/shared/api'
 
@@ -14,8 +15,8 @@ const apiMocks = vi.hoisted(() => ({
 }))
 
 const messageMocks = vi.hoisted(() => ({
-  error: vi.fn(),
   info: vi.fn(),
+  error: vi.fn(),
   success: vi.fn(),
 }))
 
@@ -30,9 +31,13 @@ vi.mock('@osg/shared/utils', () => ({
   getToken: vi.fn(() => 'lead-mentor-token'),
 }))
 
-vi.mock('ant-design-vue', () => ({
-  message: messageMocks,
-}))
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
+  return {
+    ...actual,
+    message: messageMocks,
+  }
+})
 
 const statsFixture = {
   pendingCount: 1,
@@ -190,6 +195,7 @@ async function mountMockPracticePage(initialPath = '/career/mock-practice') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 

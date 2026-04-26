@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createApp, nextTick } from 'vue'
+import Antd from 'ant-design-vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -111,13 +112,17 @@ vi.mock('@osg/shared/utils', () => ({
   getToken: vi.fn(() => 'lead-mentor-token'),
 }))
 
-vi.mock('ant-design-vue', () => ({
-  message: {
-    info: vi.fn(),
-    error: vi.fn(),
-    success: vi.fn(),
-  },
-}))
+vi.mock('ant-design-vue', async () => {
+  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
+  return {
+    ...actual,
+    message: {
+      info: vi.fn(),
+      error: vi.fn(),
+      success: vi.fn(),
+    },
+  }
+})
 
 async function flushUi() {
   await nextTick()
@@ -195,6 +200,7 @@ async function mountMockPracticePage() {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 
