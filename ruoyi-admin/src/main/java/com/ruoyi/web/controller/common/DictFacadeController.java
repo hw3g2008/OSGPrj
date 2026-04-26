@@ -37,10 +37,17 @@ public class DictFacadeController extends BaseController
 {
     /** 业务方批准的跨角色共享字典白名单 */
     private static final Set<String> SHARED_DICT_WHITELIST = Set.of(
-        "osg_company_type"
+        "osg_company_type",
+        "osg_company_name",
+        "osg_job_category",
+        "osg_recruit_cycle",
+        "osg_region",
+        "osg_city",
+        "osg_major_direction",
+        "osg_sub_direction"
         // 未来新增示例（需业务方 review 后加入）：
-        // "osg_student_major",
-        // "osg_mentor_direction"
+        // "osg_school",
+        // "osg_course_type"
     );
 
     @Autowired

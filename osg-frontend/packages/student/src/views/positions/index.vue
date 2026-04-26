@@ -7,13 +7,13 @@
       </div>
       <div class="header-actions">
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small" class="view-toggle">
-          <a-radio-button value="drilldown">
-            <template #icon><AppstoreOutlined /></template>
-            下钻视图
-          </a-radio-button>
           <a-radio-button value="list">
             <template #icon><UnorderedListOutlined /></template>
             列表视图
+          </a-radio-button>
+          <a-radio-button value="drilldown">
+            <template #icon><AppstoreOutlined /></template>
+            下钻视图
           </a-radio-button>
         </a-radio-group>
         <a-button type="primary" @click="openManualAddModal">
@@ -67,10 +67,30 @@
       </div>
     </a-card>
 
-    <a-segmented v-model:value="activeTab" :options="[
-      { label: '全部岗位', value: 'all' },
-      { label: () => h('span', ['我的收藏', favoritePositions.length > 0 ? h('span', { class: 'content-tab-badge' }, ` ${favoritePositions.length}`) : null]), value: 'favorites' }
-    ]" block class="content-tab-strip" />
+    <a-space :size="10" class="content-tab-strip">
+      <a-button
+        shape="round"
+        size="large"
+        class="tab-pill"
+        :class="{ 'tab-pill--active-primary': activeTab === 'all' }"
+        :type="activeTab === 'all' ? 'primary' : 'default'"
+        @click="activeTab = 'all'"
+      >
+        <i class="mdi mdi-briefcase-outline" aria-hidden="true"></i>
+        <span>全部岗位</span>
+      </a-button>
+      <a-button
+        shape="round"
+        size="large"
+        class="tab-pill"
+        :class="{ 'tab-pill--active-warning': activeTab === 'favorites' }"
+        @click="activeTab = 'favorites'"
+      >
+        <i class="mdi mdi-star" aria-hidden="true"></i>
+        <span>我的收藏</span>
+        <span v-if="favoritePositions.length > 0" class="content-tab-badge">{{ favoritePositions.length }}</span>
+      </a-button>
+    </a-space>
 
     <div
       v-if="activeTab === 'all'"
@@ -200,7 +220,7 @@
           :data-source="filteredPositions"
           :pagination="{ pageSize: 10 }"
           :row-key="(record: PositionRecord) => record.id"
-          :scroll="{ x: 1100 }"
+          :scroll="{ x: 1240 }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'title'">
@@ -210,16 +230,66 @@
               </a>
             </template>
 
+            <template v-else-if="column.key === 'companyCell'">
+              <div class="company-cell">
+                <div class="company-logo-mini" :style="{ background: getCompanyBrandColor(record.companyKey) }">{{ record.companyCode }}</div>
+                <span class="company-name-text">{{ record.company }}</span>
+              </div>
+            </template>
+
+            <template v-else-if="column.key === 'industryCell'">
+              <a-tag :color="resolveIndustryMeta(record.industry).tone" class="industry-tag">
+                {{ record.industryLabel || record.industry }}
+              </a-tag>
+            </template>
+
             <template v-else-if="column.key === 'category'">
               <a-tag :color="getCategoryColor(record.category)">{{ record.categoryText }}</a-tag>
             </template>
 
+            <template v-else-if="column.key === 'recruitCycleCell'">
+              <a-tag color="processing">{{ record.recruitCycle }}</a-tag>
+            </template>
+
+            <template v-else-if="column.key === 'deadlineCell'">
+              <span :class="deadlineToneClass(record.deadline)">{{ record.deadline || '--' }}</span>
+            </template>
+
             <template v-else-if="column.key === 'actions'">
               <a-space :size="6">
-                <a-button size="small" :type="record.applied ? 'primary' : 'default'" @click="handleAppliedButton(record)">
+                <a-button
+                  size="small"
+                  class="applied-btn"
+                  :class="record.applied ? 'applied-btn--on' : 'applied-btn--off'"
+                  @click="handleAppliedButton(record)"
+                >
+                  <CheckCircleFilled v-if="record.applied" />
+                  <CheckOutlined v-else />
                   {{ record.applied ? '已投递' : '投递' }}
                 </a-button>
-                <a-button size="small" @click="openProgressModal(record)">进度</a-button>
+                <a-button
+                  size="small"
+                  shape="circle"
+                  class="fav-btn"
+                  :class="record.favorited ? 'fav-btn--on' : 'fav-btn--off'"
+                  :title="record.favorited ? '已收藏' : '收藏'"
+                  @click="toggleFavorite(record)"
+                >
+                  <StarFilled v-if="record.favorited" />
+                  <StarOutlined v-else />
+                </a-button>
+                <a-button
+                  size="small"
+                  :type="record.applied ? 'default' : 'primary'"
+                  :class="record.applied ? '' : 'coaching-btn'"
+                  @click="record.applied ? openProgressModal(record) : openCoachingModal(record)"
+                >
+                  <template #icon>
+                    <FileTextOutlined v-if="record.applied" />
+                    <i v-else class="mdi mdi-school" aria-hidden="true"></i>
+                  </template>
+                  {{ record.applied ? '进度' : '申请辅导' }}
+                </a-button>
               </a-space>
             </template>
           </template>
@@ -275,218 +345,220 @@
       destroy-on-close
       @ok="submitManualPosition"
     >
-      <div class="manual-add-tip">
-        <InfoCircleOutlined />
-        找不到想申请的岗位？填写以下信息手动添加到您的求职列表
-      </div>
+      <a-alert
+        type="info"
+        show-icon
+        message="找不到想申请的岗位？填写以下信息手动添加到您的求职列表"
+        class="manual-add-tip"
+      />
 
-      <div class="manual-section">
-        <div class="manual-section-title">基本信息</div>
-        <div class="manual-section-grid">
-          <div class="manual-field">
-            <label class="manual-label">岗位分类 <span class="req">*</span></label>
-            <a-select v-model:value="manualForm.category" placeholder="请选择" style="width:100%">
-              <a-select-option v-for="option in filterOptions.categories" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </a-select-option>
-            </a-select>
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">岗位名称 <span class="req">*</span></label>
-            <a-input v-model:value="manualForm.title" placeholder="如：IB Analyst" />
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">部门 <span class="optional">（选填）</span></label>
-            <a-input v-model:value="manualForm.department" placeholder="如：IBD / S&T" />
-          </div>
-          <div class="manual-field manual-field--span2">
-            <label class="manual-label">招聘周期 <span class="req">*</span></label>
-            <a-checkbox-group v-model:value="manualForm.recruitmentCycles" class="cycle-checkboxes">
-              <a-checkbox v-for="cycle in RECRUITMENT_CYCLES" :key="cycle" :value="cycle" class="cycle-checkbox">
-                {{ cycle }}
-              </a-checkbox>
-            </a-checkbox-group>
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">项目时间 <span class="req">*</span></label>
-            <a-select v-model:value="manualForm.projectYear" placeholder="请选择" style="width:100%">
-              <a-select-option v-for="year in PROJECT_YEARS" :key="year" :value="year">{{ year }}</a-select-option>
-            </a-select>
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">截止日期 <span class="optional">（选填）</span></label>
-            <a-input v-model:value="manualForm.deadline" type="date" style="width:100%" />
-          </div>
-        </div>
-      </div>
-
-      <div class="manual-section">
-        <div class="manual-section-title">公司信息</div>
-        <div class="manual-section-grid">
-          <div class="manual-field">
-            <label class="manual-label">公司名称 <span class="req">*</span></label>
-            <a-input v-model:value="manualForm.company" placeholder="如：Goldman Sachs" />
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">公司类别 <span class="req">*</span></label>
-            <a-select v-model:value="manualForm.companyType" placeholder="请选择" style="width:100%">
-              <a-select-option v-for="t in COMPANY_TYPES" :key="t.value" :value="t.value">{{ t.label }}</a-select-option>
-            </a-select>
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">大区 <span class="req">*</span></label>
-            <a-select v-model:value="manualForm.region" placeholder="请选择" style="width:100%" @change="onManualRegionChange">
-              <a-select-option v-for="r in REGIONS" :key="r.value" :value="r.value">{{ r.label }}</a-select-option>
-            </a-select>
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">城市 <span class="req">*</span></label>
-            <a-select v-model:value="manualForm.city" placeholder="请先选择大区" style="width:100%" :disabled="!manualForm.region">
-              <a-select-option v-for="city in manualCityOptions" :key="city" :value="city">{{ city }}</a-select-option>
-            </a-select>
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">公司官网 <span class="req">*</span></label>
-            <a-input v-model:value="manualForm.website" placeholder="https://..." />
-          </div>
-          <div class="manual-field">
-            <label class="manual-label">岗位链接 <span class="req">*</span></label>
-            <a-input v-model:value="manualForm.link" placeholder="https://..." />
-          </div>
-        </div>
-      </div>
-
-      <div class="manual-section">
-        <div class="manual-section-title">辅导需求</div>
-        <a-radio-group v-model:value="manualForm.needCoaching" class="manual-coaching-options">
-          <a-radio :value="false" class="coaching-radio">暂不需要辅导，仅添加到追踪列表</a-radio>
-          <a-radio :value="true" class="coaching-radio">需要辅导，同时申请导师辅导</a-radio>
-        </a-radio-group>
-
-        <div v-if="manualForm.needCoaching" class="manual-coaching-fields">
-          <div class="manual-field manual-field--full">
-            <label class="manual-label">你现在处于什么阶段？ <span class="req">*</span></label>
-            <a-select v-model:value="manualForm.coachingStage" placeholder="请选择面试阶段" style="width:100%">
-              <a-select-option value="hirevue">HireVue or Online Test（在线测试）</a-select-option>
-              <a-select-option value="screening">Screening Call</a-select-option>
-              <a-select-option value="first">First Round</a-select-option>
-              <a-select-option value="second">Second Round</a-select-option>
-              <a-select-option value="third">Third Round and Beyond</a-select-option>
-              <a-select-option value="case">Case Study Round</a-select-option>
-              <a-select-option value="superday">Superday / Assessment Centre / AC</a-select-option>
-            </a-select>
-          </div>
-
-          <div v-if="manualCoachingIsHirevue" class="manual-hirevue-card">
-            <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
-            <div class="manual-field manual-field--full">
-              <label class="manual-label">请选择类型 <span class="req">*</span></label>
-              <a-radio-group v-model:value="manualForm.hirevueType" class="inline-radios">
-                <a-radio value="vi">VI (Video Interview)</a-radio>
-                <a-radio value="ot">OT (Online Test)</a-radio>
-              </a-radio-group>
-            </div>
-            <div v-if="manualForm.hirevueType === 'vi'" class="manual-field manual-field--full">
-              <label class="manual-label">VI 链接 <span class="req">*</span></label>
-              <a-input v-model:value="manualForm.viLink" placeholder="请输入 Video Interview 链接" />
-            </div>
-            <template v-if="manualForm.hirevueType === 'ot'">
-              <div class="manual-field manual-field--full">
-                <label class="manual-label">OT 链接 <span class="req">*</span></label>
-                <a-input v-model:value="manualForm.otLink" placeholder="请输入 Online Test 链接" />
-              </div>
-              <div class="manual-section-grid">
-                <div class="manual-field">
-                  <label class="manual-label">登录账号 <span class="req">*</span></label>
-                  <a-input v-model:value="manualForm.otAccount" placeholder="账号" />
-                </div>
-                <div class="manual-field">
-                  <label class="manual-label">登录密码 <span class="req">*</span></label>
-                  <a-input v-model:value="manualForm.otPassword" placeholder="密码" />
-                </div>
-              </div>
-            </template>
-            <div class="manual-field manual-field--full">
-              <label class="manual-label">截止时间 <span class="req">*</span></label>
-              <a-input v-model:value="manualForm.hirevueDeadline" type="datetime-local" style="width:100%" />
-              <span class="field-helper">请填写 VI/OT 的截止时间</span>
-            </div>
-            <div class="manual-field manual-field--full">
-              <label class="manual-label">上传邀请邮件截图 <span class="req">*</span></label>
-              <a-upload
-                accept="image/*"
-                :before-upload="handleManualHirevueUpload"
-                :show-upload-list="false"
-                class="upload-dropzone upload-dropzone--compact"
-              >
-                <CloudUploadOutlined class="upload-dropzone__icon" />
-                <span class="upload-dropzone__title">点击上传截图</span>
-                <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
-                <span v-if="manualForm.inviteScreenshotName" class="upload-dropzone__file">{{ manualForm.inviteScreenshotName }}</span>
-              </a-upload>
-            </div>
-            <div class="manual-field manual-field--full">
-              <label class="manual-label">是否需要导师协助？ <span class="req">*</span></label>
-              <a-radio-group v-model:value="manualForm.mentorHelp" class="inline-radios">
-                <a-radio value="yes">是，需要导师协助</a-radio>
-                <a-radio value="no">否，仅需题库权限</a-radio>
-              </a-radio-group>
-            </div>
-          </div>
-
-          <template v-if="manualCoachingShowInterview">
-            <div class="manual-field manual-field--full">
-              <label class="manual-label">该阶段的面试时间 <span class="req">*</span></label>
-              <a-input v-model:value="manualForm.interviewTime" type="datetime-local" style="width:100%" />
-              <span class="field-helper">请填写该阶段面试的具体时间，方便导师安排辅导</span>
-            </div>
-            <div class="manual-field manual-field--full">
-              <label class="manual-label">你期望有几个导师辅导？ <span class="optional">（选填）</span></label>
-              <a-select v-model:value="manualForm.mentorCount" placeholder="请选择" style="width:100%">
-                <a-select-option v-for="option in filterOptions.mentorCounts" :key="option.value" :value="option.value">
+      <a-form layout="vertical" class="manual-form">
+        <div class="manual-section">
+          <div class="manual-section-title">基本信息</div>
+          <div class="manual-section-grid">
+            <a-form-item label="岗位分类" required class="manual-field">
+              <a-select v-model:value="manualForm.category" placeholder="请选择">
+                <a-select-option v-for="option in filterOptions.categories" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </a-select-option>
               </a-select>
-            </div>
-            <div class="manual-section-grid">
-              <div class="manual-field">
-                <label class="manual-label">意向导师 <span class="optional">（选填）</span></label>
-                <a-input v-model:value="manualForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
-              </div>
-              <div class="manual-field">
-                <label class="manual-label">排除导师 <span class="optional">（选填）</span></label>
-                <a-input v-model:value="manualForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
-              </div>
-            </div>
-          </template>
-
-          <div class="manual-field manual-field--full">
-            <label class="manual-label">备注说明 <span class="optional">（选填）</span></label>
-            <a-textarea v-model:value="manualForm.note" :rows="2" placeholder="如有其他需求或说明，请在此填写..." />
+            </a-form-item>
+            <a-form-item label="岗位名称" required class="manual-field">
+              <a-input v-model:value="manualForm.title" placeholder="如：IB Analyst" />
+            </a-form-item>
+            <a-form-item label="部门（选填）" class="manual-field">
+              <a-input v-model:value="manualForm.department" placeholder="如：IBD / S&T" />
+            </a-form-item>
+            <a-form-item label="招聘周期" required class="manual-field manual-field--span2">
+              <a-checkbox-group v-model:value="manualForm.recruitmentCycles" class="cycle-checkboxes">
+                <a-checkbox v-for="cycle in cycleDict" :key="cycle.value" :value="cycle.value" class="cycle-checkbox">
+                  {{ cycle.label }}
+                </a-checkbox>
+              </a-checkbox-group>
+            </a-form-item>
+            <a-form-item label="项目时间" required class="manual-field">
+              <a-select v-model:value="manualForm.projectYear" placeholder="请选择">
+                <a-select-option v-for="year in PROJECT_YEARS" :key="year" :value="year">{{ year }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="截止日期（选填）" class="manual-field">
+              <a-date-picker v-model:value="manualForm.deadline" value-format="YYYY-MM-DD" style="width:100%" placeholder="选择日期" />
+            </a-form-item>
           </div>
         </div>
-      </div>
+
+        <div class="manual-section">
+          <div class="manual-section-title">公司信息</div>
+          <div class="manual-section-grid">
+            <a-form-item label="公司名称" required class="manual-field">
+              <a-auto-complete
+                v-model:value="manualForm.company"
+                :options="filterOptions.companies"
+                :filter-option="filterCompanyOption"
+                placeholder="搜索或输入公司名称"
+              />
+            </a-form-item>
+            <a-form-item label="公司类别" required class="manual-field">
+              <a-select v-model:value="manualForm.companyType" placeholder="请选择">
+                <a-select-option v-for="t in COMPANY_TYPES" :key="t.value" :value="t.value">{{ t.label }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="大区" required class="manual-field">
+              <a-select v-model:value="manualForm.region" placeholder="请选择" @change="onManualRegionChange">
+                <a-select-option v-for="r in regionDict" :key="r.value" :value="r.value">{{ r.label }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="城市" required class="manual-field">
+              <a-select v-model:value="manualForm.city" placeholder="请先选择大区" :disabled="!manualForm.region">
+                <a-select-option v-for="city in manualCityOptions" :key="city.value" :value="city.value">{{ city.label }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="公司官网" required class="manual-field">
+              <a-input v-model:value="manualForm.website" placeholder="https://..." />
+            </a-form-item>
+            <a-form-item label="岗位链接" required class="manual-field">
+              <a-input v-model:value="manualForm.link" placeholder="https://..." />
+            </a-form-item>
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-section-title">辅导需求</div>
+          <a-radio-group v-model:value="manualForm.needCoaching" class="manual-coaching-options">
+            <a-radio :value="false" class="coaching-radio">暂不需要辅导，仅添加到追踪列表</a-radio>
+            <a-radio :value="true" class="coaching-radio">需要辅导，同时申请导师辅导</a-radio>
+          </a-radio-group>
+
+          <div v-if="manualForm.needCoaching" class="manual-coaching-fields">
+            <a-form-item label="你现在处于什么阶段？" required class="manual-field manual-field--full">
+              <a-select v-model:value="manualForm.coachingStage" placeholder="请选择面试阶段">
+                <a-select-option value="hirevue">HireVue or Online Test（在线测试）</a-select-option>
+                <a-select-option value="screening">Screening Call</a-select-option>
+                <a-select-option value="first">First Round</a-select-option>
+                <a-select-option value="second">Second Round</a-select-option>
+                <a-select-option value="third">Third Round and Beyond</a-select-option>
+                <a-select-option value="case">Case Study Round</a-select-option>
+                <a-select-option value="superday">Superday / Assessment Centre / AC</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <div v-if="manualCoachingIsHirevue" class="manual-hirevue-card">
+              <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
+              <a-form-item label="请选择类型" required class="manual-field manual-field--full">
+                <a-radio-group v-model:value="manualForm.hirevueType" class="inline-radios">
+                  <a-radio value="vi">VI (Video Interview)</a-radio>
+                  <a-radio value="ot">OT (Online Test)</a-radio>
+                </a-radio-group>
+              </a-form-item>
+              <a-form-item v-if="manualForm.hirevueType === 'vi'" label="VI 链接" required class="manual-field manual-field--full">
+                <a-input v-model:value="manualForm.viLink" placeholder="请输入 Video Interview 链接" />
+              </a-form-item>
+              <template v-if="manualForm.hirevueType === 'ot'">
+                <a-form-item label="OT 链接" required class="manual-field manual-field--full">
+                  <a-input v-model:value="manualForm.otLink" placeholder="请输入 Online Test 链接" />
+                </a-form-item>
+                <div class="manual-section-grid">
+                  <a-form-item label="登录账号" required class="manual-field">
+                    <a-input v-model:value="manualForm.otAccount" placeholder="账号" />
+                  </a-form-item>
+                  <a-form-item label="登录密码" required class="manual-field">
+                    <a-input-password v-model:value="manualForm.otPassword" placeholder="密码" />
+                  </a-form-item>
+                </div>
+              </template>
+              <a-form-item label="截止时间" required class="manual-field manual-field--full" extra="请填写 VI/OT 的截止时间">
+                <a-date-picker
+                  v-model:value="manualForm.hirevueDeadline"
+                  show-time
+                  format="YYYY-MM-DD HH:mm"
+                  value-format="YYYY-MM-DDTHH:mm"
+                  style="width:100%"
+                  placeholder="选择截止日期与时间"
+                />
+              </a-form-item>
+              <a-form-item label="上传邀请邮件截图" required class="manual-field manual-field--full">
+                <a-upload
+                  accept="image/*"
+                  :before-upload="handleManualHirevueUpload"
+                  :show-upload-list="false"
+                  class="upload-dropzone upload-dropzone--compact"
+                >
+                  <CloudUploadOutlined class="upload-dropzone__icon" />
+                  <span class="upload-dropzone__title">点击上传截图</span>
+                  <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+                  <span v-if="manualForm.inviteScreenshotName" class="upload-dropzone__file">{{ manualForm.inviteScreenshotName }}</span>
+                </a-upload>
+              </a-form-item>
+              <a-form-item label="是否需要导师协助？" required class="manual-field manual-field--full">
+                <a-radio-group v-model:value="manualForm.mentorHelp" class="inline-radios">
+                  <a-radio value="yes">是，需要导师协助</a-radio>
+                  <a-radio value="no">否，仅需题库权限</a-radio>
+                </a-radio-group>
+              </a-form-item>
+            </div>
+
+            <template v-if="manualCoachingShowInterview">
+              <a-form-item label="该阶段的面试时间" required class="manual-field manual-field--full" extra="请填写该阶段面试的具体时间，方便导师安排辅导">
+                <a-date-picker
+                  v-model:value="manualForm.interviewTime"
+                  show-time
+                  format="YYYY-MM-DD HH:mm"
+                  value-format="YYYY-MM-DDTHH:mm"
+                  style="width:100%"
+                  placeholder="选择面试日期与时间"
+                />
+              </a-form-item>
+              <a-form-item label="你期望有几个导师辅导？（选填）" class="manual-field manual-field--full">
+                <a-select v-model:value="manualForm.mentorCount" placeholder="请选择">
+                  <a-select-option v-for="option in filterOptions.mentorCounts" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+              <div class="manual-section-grid">
+                <a-form-item label="意向导师（选填）" class="manual-field">
+                  <a-input v-model:value="manualForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
+                </a-form-item>
+                <a-form-item label="排除导师（选填）" class="manual-field">
+                  <a-input v-model:value="manualForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
+                </a-form-item>
+              </div>
+            </template>
+
+            <a-form-item label="备注说明（选填）" class="manual-field manual-field--full">
+              <a-textarea v-model:value="manualForm.note" :rows="2" placeholder="如有其他需求或说明，请在此填写..." />
+            </a-form-item>
+          </div>
+        </div>
+      </a-form>
     </a-modal>
 
     <a-modal
       v-model:open="progressModalOpen"
-      title="记录岗位进度"
       ok-text="保存进度"
       cancel-text="取消"
       destroy-on-close
       @ok="submitProgressUpdate"
     >
+      <template #title>
+        <span style="display:inline-flex;align-items:center;gap:8px">
+          <FileTextOutlined />
+          <span>记录岗位进度</span>
+        </span>
+      </template>
       <div v-if="selectedPosition" class="modal-job-card progress-card">
         <div class="modal-job-title">{{ selectedPosition.company }}</div>
         <div class="modal-job-sub">{{ selectedPosition.title }} · {{ selectedPosition.location }}</div>
       </div>
       <a-form layout="vertical">
-        <a-form-item label="当前阶段">
-          <a-select v-model:value="progressForm.stage">
-            <a-select-option v-for="option in filterOptions.progressStages" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
+        <a-form-item label="当前阶段" required>
+          <a-select
+            v-model:value="progressForm.stage"
+            show-search
+            option-filter-prop="label"
+            placeholder="选择阶段"
+            :options="filterOptions.progressStages"
+          />
         </a-form-item>
         <a-form-item label="备注">
           <a-textarea v-model:value="progressForm.note" :rows="3" placeholder="记录这一轮的关键进展或提醒" />
@@ -496,26 +568,33 @@
 
     <a-modal
       v-model:open="appliedModalOpen"
-      title="标记已投递"
       ok-text="确认投递"
       cancel-text="取消"
       destroy-on-close
       @ok="submitAppliedMark"
     >
+      <template #title>
+        <span style="display:inline-flex;align-items:center;gap:8px">
+          <CheckCircleFilled style="color: #22c55e" />
+          <span>标记已投递</span>
+        </span>
+      </template>
       <div v-if="selectedPosition" class="modal-job-card applied-card">
         <div class="modal-job-title">{{ selectedPosition.company }}</div>
         <div class="modal-job-sub">{{ selectedPosition.title }} · {{ selectedPosition.location }}</div>
       </div>
       <a-form layout="vertical">
-        <a-form-item label="投递日期">
-          <a-input v-model:value="appliedForm.date" type="date" />
+        <a-form-item label="投递日期" required>
+          <a-date-picker v-model:value="appliedForm.date" value-format="YYYY-MM-DD" style="width:100%" placeholder="选择投递日期" />
         </a-form-item>
-        <a-form-item label="投递方式">
-          <a-select v-model:value="appliedForm.method">
-            <a-select-option v-for="option in filterOptions.applyMethods" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
+        <a-form-item label="投递方式" required>
+          <a-select
+            v-model:value="appliedForm.method"
+            show-search
+            option-filter-prop="label"
+            placeholder="选择投递方式"
+            :options="filterOptions.applyMethods"
+          />
         </a-form-item>
         <a-form-item label="备注">
           <a-textarea v-model:value="appliedForm.note" :rows="3" placeholder="如：投递了哪个部门或是否有内推" />
@@ -525,30 +604,39 @@
 
     <a-modal
       v-model:open="coachingModalOpen"
-      title="申请面试辅导"
       ok-text="提交申请"
       cancel-text="取消"
       destroy-on-close
       @ok="submitCoachingApplication"
     >
+      <template #title>
+        <span style="display:inline-flex;align-items:center;gap:8px">
+          <i class="mdi mdi-school" aria-hidden="true" style="color: #7c3aed; font-size: 16px"></i>
+          <span>申请面试辅导</span>
+        </span>
+      </template>
       <div v-if="selectedPosition" class="modal-job-card coaching-card">
         <div class="modal-job-title">{{ selectedPosition.company }}</div>
         <div class="modal-job-sub">{{ selectedPosition.title }} · {{ selectedPosition.location }}</div>
       </div>
       <a-form layout="vertical">
-        <a-form-item label="当前面试阶段">
-          <a-select v-model:value="coachingForm.stage" placeholder="请选择当前阶段">
-            <a-select-option v-for="option in filterOptions.coachingStages" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
+        <a-form-item label="当前面试阶段" required>
+          <a-select
+            v-model:value="coachingForm.stage"
+            show-search
+            option-filter-prop="label"
+            placeholder="请选择当前阶段"
+            :options="filterOptions.coachingStages"
+          />
         </a-form-item>
-        <a-form-item label="导师数量">
-          <a-select v-model:value="coachingForm.mentorCount" placeholder="请选择导师数量">
-            <a-select-option v-for="option in filterOptions.mentorCounts" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
+        <a-form-item label="导师数量" required>
+          <a-select
+            v-model:value="coachingForm.mentorCount"
+            show-search
+            option-filter-prop="label"
+            placeholder="请选择导师数量"
+            :options="filterOptions.mentorCounts"
+          />
         </a-form-item>
         <a-form-item label="备注说明">
           <a-textarea v-model:value="coachingForm.note" :rows="3" placeholder="如有特殊辅导需求，请在这里补充" />
@@ -559,7 +647,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -575,7 +663,7 @@ import {
   type StudentPositionOption,
   type StudentPositionRecord
 } from '@osg/shared/api'
-import { useIndustryMeta } from '@osg/shared'
+import { useIndustryMeta, useDictFacade } from '@osg/shared'
 import {
   AppstoreOutlined,
   CheckCircleFilled,
@@ -583,7 +671,6 @@ import {
   CloudUploadOutlined,
   ExportOutlined,
   FileTextOutlined,
-  InfoCircleOutlined,
   PlusOutlined,
   RightOutlined,
   StarFilled,
@@ -625,6 +712,9 @@ const FALLBACK_INDUSTRY_META = {
 } as const
 
 const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
+const { items: cycleDict, load: loadCycleDict } = useDictFacade('osg_recruit_cycle')
+const { items: regionDict, load: loadRegionDict } = useDictFacade('osg_region')
+const { items: cityDict, load: loadCityDict } = useDictFacade('osg_city')
 
 function resolveIndustryMeta(industryRaw: string) {
   const trimmed = industryRaw?.trim() || ''
@@ -661,7 +751,7 @@ const positionsActionTriggers = [
   { actionId: 'favorite-coaching-2', label: 'McKinsey / 申请辅导' }
 ] as const
 
-const viewMode = ref<ViewMode>('drilldown')
+const viewMode = ref<ViewMode>('list')
 const activeTab = ref<TabKey>('all')
 const activeCategories = ref<string[]>([])
 const expandedCompanies = ref<string[]>([])
@@ -697,28 +787,13 @@ const filterOptions = ref<StudentPositionMeta['filterOptions']>({
   mentorCounts: []
 })
 
-const RECRUITMENT_CYCLES = ['2024 Summer', '2024 Full-time', '2025 Summer', '2025 Full-time', '2026 Summer', '2026 Full-time']
-
-const CITY_OPTIONS: Record<string, string[]> = {
-  na: ['New York', 'San Francisco', 'Houston', 'Boston', 'Toronto'],
-  eu: ['London', 'Paris', 'Frankfurt', 'Zurich'],
-  ap: ['Hong Kong', 'Singapore', 'Tokyo', 'Sydney'],
-  cn: ['Beijing', 'Shanghai', 'Shenzhen', 'Guangzhou']
-}
-
 const COMPANY_TYPES = computed(() =>
   industryMeta.value.length
     ? industryMeta.value.map((m) => ({ value: m.value, label: m.label }))
     : [{ value: 'other_company', label: '其他公司' }]
 )
 
-const REGIONS = [
-  { value: 'na', label: '🌎 北美' },
-  { value: 'eu', label: '🌍 欧洲' },
-  { value: 'ap', label: '🌏 亚太' },
-  { value: 'cn', label: '🇨🇳 中国大陆' }
-]
-
+// PROJECT_YEARS 保留硬编码：admin 字典中暂未定义 osg_project_year
 const PROJECT_YEARS = ['2024', '2025', '2026', '2027']
 
 const manualForm = ref({
@@ -780,12 +855,14 @@ const positionColumns = [
 ]
 
 const listColumns = [
-  { title: '岗位名称', key: 'title', width: 220 },
-  { title: '公司', dataIndex: 'company', width: 150 },
+  { title: '岗位名称', key: 'title', width: 220, fixed: 'left' },
+  { title: '公司', key: 'companyCell', width: 160 },
+  { title: '行业', key: 'industryCell', width: 140 },
   { title: '岗位分类', key: 'category', width: 110 },
-  { title: '地区', dataIndex: 'location', width: 110 },
-  { title: '截止时间', dataIndex: 'deadline', width: 120 },
-  { title: '操作', key: 'actions', width: 180 }
+  { title: '地区', dataIndex: 'location', width: 100 },
+  { title: '招聘周期', key: 'recruitCycleCell', width: 130 },
+  { title: '截止时间', key: 'deadlineCell', width: 110 },
+  { title: '操作', key: 'actions', width: 200, fixed: 'right' }
 ]
 
 const favoriteColumns = [
@@ -804,9 +881,12 @@ const selectedPosition = computed(() =>
 
 /* industryIconComponents 已删除 — icon 统一由 resolveIndustryMeta() 从字典取 MDI class */
 
-const manualCityOptions = computed(() =>
-  manualForm.value.region ? (CITY_OPTIONS[manualForm.value.region] ?? []) : []
-)
+// 城市字典按 parentValue 过滤（admin osg_city.remark = {"parentValue":"<region.value>"}）
+const manualCityOptions = computed(() => {
+  const region = manualForm.value.region
+  if (!region) return [] as { value: string; label: string }[]
+  return cityDict.value.filter((c) => c.parentValue === region)
+})
 
 const manualCoachingIsHirevue = computed(() => manualForm.value.coachingStage === 'hirevue')
 const manualCoachingShowInterview = computed(() =>
@@ -928,6 +1008,18 @@ function getCategoryColor(category: PositionRecord['category']) {
 
 function getCompanyBrandColor(companyKey: string) {
   return companyOptionsByValue.value.get(companyKey)?.brandColor ?? '#4F46E5'
+}
+
+function filterCompanyOption(input: string, option: { label?: string; value?: string } | unknown) {
+  const label = (option as { label?: string })?.label ?? ''
+  return label.toLowerCase().includes(String(input ?? '').toLowerCase())
+}
+
+function deadlineToneClass(deadline: string | undefined | null) {
+  const v = (deadline ?? '').trim()
+  if (!v || v === '--' || v === '-') return 'deadline-muted'
+  if (isDeadlineClosed(v)) return 'deadline-closed'
+  return 'deadline-default'
 }
 
 function isDeadlineClosed(deadline: string) {
@@ -1222,6 +1314,9 @@ async function submitCoachingApplication() {
 
 onMounted(() => {
   void loadIndustryMeta()
+  void loadCycleDict()
+  void loadRegionDict()
+  void loadCityDict()
   void Promise.all([loadPositions(), loadPositionMeta()])
 })
 
@@ -1585,52 +1680,179 @@ watch(
   }
 
   .content-tab-strip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+    display: flex;
     margin-bottom: 16px;
-    border-radius: 6px;
-    padding: 3px;
-    background: #f1f5f9;
   }
 
-  .content-tab-trigger {
+  .tab-pill {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    border: 0;
-    border-radius: 4px;
-    padding: 6px 14px;
-    background: transparent;
-    color: #334155;
-    font-size: 12px;
+    padding-inline: 18px;
+    font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
+
+    .mdi {
+      font-size: 16px;
+      line-height: 1;
+    }
   }
 
-  .content-tab-trigger--active {
-    background: #2563eb;
-    color: #fff;
+  .tab-pill--active-warning {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background: #d97706 !important;
+      border-color: #d97706 !important;
+      color: #fff !important;
+    }
+
+    .mdi {
+      color: #fff;
+    }
   }
 
   .content-tab-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 6px;
-    border-radius: 8px;
-    background: #f59e0b;
-    color: #fff;
-    font-size: 10px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 11px;
+    background: #fff;
+    color: #f59e0b;
+    font-size: 12px;
     font-weight: 700;
     line-height: 1;
+    margin-left: 2px;
   }
 
-  .content-tab-trigger--active .content-tab-badge {
-    background: rgba(255, 255, 255, 0.2);
+  .tab-pill:not(.tab-pill--active-warning) .content-tab-badge {
+    background: #f59e0b;
+    color: #fff;
+  }
+
+  // ----- 列表视图色调（与原型对齐） -----
+  .company-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .company-logo-mini {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+  }
+
+  .company-name-text {
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .industry-tag {
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .deadline-default {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .deadline-muted {
+    color: var(--muted);
+  }
+
+  .deadline-closed {
+    color: var(--muted);
+    text-decoration: line-through;
+  }
+
+  .applied-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .applied-btn--on {
+    background: #22c55e !important;
+    border-color: #22c55e !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background: #16a34a !important;
+      border-color: #16a34a !important;
+      color: #fff !important;
+    }
+  }
+
+  .applied-btn--off {
+    background: #fff;
+    border-color: #d1d5db;
+    color: #6b7280;
+
+    &:hover,
+    &:focus {
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+  }
+
+  .fav-btn--on {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background: #d97706 !important;
+      border-color: #d97706 !important;
+      color: #fff !important;
+    }
+  }
+
+  .fav-btn--off {
+    background: #fff !important;
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+
+    &:hover,
+    &:focus {
+      background: #fff7ed !important;
+      border-color: #d97706 !important;
+      color: #d97706 !important;
+    }
+  }
+
+  .coaching-btn {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+    border-color: #7c3aed !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
+      border-color: #6d28d9 !important;
+      color: #fff !important;
+    }
+
+    .mdi {
+      color: #fff;
+    }
   }
 
   .industry-section {
