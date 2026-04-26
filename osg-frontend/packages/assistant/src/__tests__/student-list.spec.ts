@@ -133,11 +133,15 @@ describe('assistant student list page', () => {
     expect(src).toContain('formatCount')
     expect(src).toContain('formatHours')
     expect(src).toContain('formatMentor')
-    expect(src).toContain('formatAccountStatus')
     expect(src).toContain('formatContractStatus')
     expect(src).toContain('formatReminder')
     expect(src).toContain('directionToneClass')
     expect(src).toContain('remainingHoursToneClass')
+
+    // SL-14b: 账号状态由 shared StudentStatusTag 接管（M5 P1+P2）
+    // 替代原 formatAccountStatus / accountStatusToneClass 本地函数
+    expect(src).toContain("import { StudentStatusTag } from '@osg/shared/components'")
+    expect(src).toContain('<StudentStatusTag :account-status="record.accountStatus" />')
 
     // SL-16: localStorage 持久化保留
     expect(src).toContain('assistant-student-list-state')

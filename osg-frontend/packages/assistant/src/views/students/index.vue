@@ -131,9 +131,7 @@
             </div>
           </template>
           <template v-else-if="column.key === 'accountStatus'">
-            <span class="status-tag" :class="accountStatusToneClass(record.accountStatus)">
-              {{ formatAccountStatus(record.accountStatus) }}
-            </span>
+            <StudentStatusTag :account-status="record.accountStatus" />
           </template>
           <template v-else-if="column.key === 'action'">
             <a-button type="link" size="small" @click="handleViewJob(record)">查看求职</a-button>
@@ -150,6 +148,7 @@ import { useRouter } from 'vue-router'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import type { TablePaginationConfig } from 'ant-design-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { StudentStatusTag } from '@osg/shared/components'
 import {
   getAssistantStudentList,
   type AssistantStudentListItem,
@@ -305,29 +304,6 @@ function formatHours(value?: number) {
 
 function formatMentor(value?: string) {
   return value && value.trim() ? value : '待补充班主任'
-}
-
-function formatAccountStatus(value?: string) {
-  if (value === '1') {
-    return '冻结'
-  }
-  if (value === '2') {
-    return '已结束'
-  }
-  if (value === '3') {
-    return '退款'
-  }
-  return '正常'
-}
-
-function accountStatusToneClass(value?: string) {
-  if (value === '1') {
-    return 'status-tag--frozen'
-  }
-  if (value === '2' || value === '3') {
-    return 'status-tag--muted'
-  }
-  return 'status-tag--active'
 }
 
 function formatContractStatus(value?: string, isBlacklisted?: boolean) {

@@ -103,7 +103,10 @@
                 <td class="metric metric--offer">{{ row.offerCount }}</td>
                 <td class="remaining-hours" :class="row.remainingTone">{{ row.remainingHours }}</td>
                 <td>
-                  <span class="status-tag" :class="row.statusTone">{{ row.accountStatus }}</span>
+                  <StudentStatusTag
+                    :account-status="row.rawAccountStatus"
+                    :label="row.accountStatusLabel"
+                  />
                 </td>
                 <td>
                   <button
@@ -139,6 +142,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { StudentStatusTag } from '@osg/shared/components'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -168,8 +172,8 @@ interface StudentRow {
   offerCount: number
   remainingHours: string
   remainingTone: string
-  accountStatus: string
-  statusTone: string
+  rawAccountStatus: string
+  accountStatusLabel: string
 }
 
 interface SelectOption {
@@ -215,8 +219,8 @@ const studentRows = computed<StudentRow[]>(() =>
     offerCount: Number(row.offerCount ?? 0),
     remainingHours: formatHours(row.remainingHours),
     remainingTone: resolveRemainingTone(row.remainingHours),
-    accountStatus: row.accountStatusLabel || formatAccountStatus(row.accountStatus),
-    statusTone: resolveStatusTone(row.accountStatus),
+    rawAccountStatus: String(row.accountStatus ?? ''),
+    accountStatusLabel: String(row.accountStatusLabel ?? ''),
   })),
 )
 
@@ -333,18 +337,11 @@ function resolveRemainingTone(remainingHours?: number) {
   return 'remaining-hours--danger'
 }
 
-function resolveStatusTone(accountStatus?: string) {
-  return accountStatus === '1' ? 'status-tag--frozen' : 'status-tag--active'
-}
-
 function formatHours(value?: number) {
   const resolved = Number(value ?? 0)
   return Number.isInteger(resolved) ? `${resolved}h` : `${resolved.toFixed(1)}h`
 }
 
-function formatAccountStatus(accountStatus?: string) {
-  return accountStatus === '1' ? '冻结' : '正常'
-}
 </script>
 
 <style scoped lang="scss">
