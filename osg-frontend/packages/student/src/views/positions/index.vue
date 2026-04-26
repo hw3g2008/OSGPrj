@@ -195,9 +195,18 @@
                               <StarOutlined v-else />
                             </template>
                           </a-button>
-                          <a-button size="small" @click="record.applied ? openProgressModal(record) : openCoachingModal(record)">
-                            <template #icon><FileTextOutlined /></template>
-                            {{ record.applied ? '进度' : '申请辅导' }}
+                          <a-select
+                            v-if="record.applied"
+                            :value="record.progressStage"
+                            :options="filterOptions.progressStages"
+                            class="progress-stage-select"
+                            size="small"
+                            placeholder="选择阶段"
+                            @change="(val: string) => updateProgressInline(record, val)"
+                          />
+                          <a-button v-else size="small" type="primary" class="coaching-btn" @click="openCoachingModal(record)">
+                            <template #icon><i class="mdi mdi-school" aria-hidden="true"></i></template>
+                            申请辅导
                           </a-button>
                         </a-space>
                       </template>
@@ -285,17 +294,24 @@
                   <StarFilled v-if="record.favorited" />
                   <StarOutlined v-else />
                 </a-button>
-                <a-button
+                <a-select
+                  v-if="record.applied"
+                  :value="record.progressStage"
+                  :options="filterOptions.progressStages"
+                  class="progress-stage-select"
                   size="small"
-                  :type="record.applied ? 'default' : 'primary'"
-                  :class="record.applied ? '' : 'coaching-btn'"
-                  @click="record.applied ? openProgressModal(record) : openCoachingModal(record)"
+                  placeholder="选择阶段"
+                  @change="(val: string) => updateProgressInline(record, val)"
+                />
+                <a-button
+                  v-else
+                  size="small"
+                  type="primary"
+                  class="coaching-btn"
+                  @click="openCoachingModal(record)"
                 >
-                  <template #icon>
-                    <FileTextOutlined v-if="record.applied" />
-                    <i v-else class="mdi mdi-school" aria-hidden="true"></i>
-                  </template>
-                  {{ record.applied ? '进度' : '申请辅导' }}
+                  <template #icon><i class="mdi mdi-school" aria-hidden="true"></i></template>
+                  申请辅导
                 </a-button>
               </a-space>
             </template>
@@ -1145,15 +1161,6 @@ function setSelectedPosition(record: PositionRecord) {
   selectedPositionId.value = record.id
 }
 
-function openProgressModal(record: PositionRecord) {
-  setSelectedPosition(record)
-  progressForm.value = {
-    stage: record.progressStage || 'applied',
-    note: record.progressNote
-  }
-  progressModalOpen.value = true
-}
-
 function openAppliedModal(record: PositionRecord) {
   setSelectedPosition(record)
   appliedForm.value = {
@@ -1283,6 +1290,25 @@ async function submitProgressUpdate() {
   await loadPositions()
   progressModalOpen.value = false
   message.success('岗位进度已更新')
+}
+
+async function updateProgressInline(record: PositionRecord, stage: string) {
+  if (!stage || stage === record.progressStage) return
+  try {
+    await updateStudentPositionProgress({
+      positionId: record.id,
+      stage,
+      notes: record.progressNote || ''
+    })
+    // 原地更新，避免重拉整个列表造成闪烁
+    const target = positions.value.find((p) => p.id === record.id)
+    if (target) target.progressStage = stage
+    const stageLabel = filterOptions.value.progressStages.find((o) => o.value === stage)?.label || stage
+    message.success(`已更新为${stageLabel}`)
+  } catch (err) {
+    // 失败时重拉恢复反馈
+    await loadPositions()
+  }
 }
 
 async function submitAppliedMark() {
@@ -1879,6 +1905,28 @@ watch(
 
     .mdi {
       color: #fff;
+    }
+  }
+
+  .progress-stage-select {
+    min-width: 110px;
+
+    :deep(.ant-select-selector) {
+      background: #fef3c7 !important;
+      border-color: #f59e0b !important;
+      color: #92400e !important;
+      font-weight: 600;
+      font-size: 11px;
+      border-radius: 6px;
+      padding: 0 8px !important;
+    }
+
+    :deep(.ant-select-arrow) {
+      color: #92400e;
+    }
+
+    :deep(.ant-select-selection-item) {
+      color: #92400e !important;
     }
   }
 

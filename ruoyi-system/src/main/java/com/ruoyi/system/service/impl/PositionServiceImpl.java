@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -999,8 +1000,10 @@ public class PositionServiceImpl implements IPositionService
     private List<Map<String, Object>> buildStaticOptions(String dictType)
     {
         List<Map<String, Object>> options = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         for (SysDictData item : resolveDictRows(null, dictType))
         {
+            if (!seen.add(item.getDictValue())) continue;
             options.add(option(item.getDictValue(), item.getDictLabel(), item.getCssClass(), item.getListClass(), item.getDictSort()));
         }
         return options;
@@ -1009,8 +1012,10 @@ public class PositionServiceImpl implements IPositionService
     private List<Map<String, Object>> buildStaticOptions(Map<String, List<SysDictData>> prefetchedDicts, String dictType)
     {
         List<Map<String, Object>> options = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         for (SysDictData item : resolveDictRows(prefetchedDicts, dictType))
         {
+            if (!seen.add(item.getDictValue())) continue;
             options.add(option(item.getDictValue(), item.getDictLabel(), item.getCssClass(), item.getListClass(), item.getDictSort()));
         }
         return options;
