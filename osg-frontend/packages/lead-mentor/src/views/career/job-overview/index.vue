@@ -306,8 +306,11 @@ import {
   type LeadMentorJobOverviewListParams,
 } from '@osg/shared/api'
 import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
+import { useCoachingStatusMap } from '@osg/shared/composables'
 import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
+
+const { resolve: resolveCoachingStatus } = useCoachingStatusMap()
 
 const pendingColumns = [
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
@@ -775,7 +778,7 @@ function toOverviewRow(row: LeadMentorJobOverviewListItem): OverviewRow {
     deadlineHint: buildCountdownText(row.interviewTime),
     deadlineTone: resolveDeadlineTone(row.interviewTime),
     status: row.coachingStatus || '待更新',
-    statusTone: resolveStatusTone(row.coachingStatus, row.stageUpdated),
+    statusTone: resolveCoachingStatus(row.coachingStatus, row.stageUpdated).color,
     stageUpdated: Boolean(row.stageUpdated),
     rowTone: resolveRowTone(row),
     mentorName: row.mentorNames || row.mentorName || (row.assignedStatus === 'pending' ? '待分配' : '-'),
@@ -835,23 +838,6 @@ function resolveStageTone(stage?: string) {
   return 'blue'
 }
 
-function resolveStatusTone(status?: string, stageUpdated?: boolean) {
-  if (stageUpdated) {
-    return 'blue'
-  }
-
-  const normalized = status?.toLowerCase() || ''
-  if (normalized.includes('辅导')) {
-    return 'purple'
-  }
-  if (normalized.includes('待')) {
-    return 'gold'
-  }
-  if (normalized.includes('未')) {
-    return 'default'
-  }
-  return 'default'
-}
 
 function resolveRowTone(row: LeadMentorJobOverviewListItem) {
   if (row.stageUpdated) {
