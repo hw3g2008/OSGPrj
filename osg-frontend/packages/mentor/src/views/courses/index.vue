@@ -6,80 +6,120 @@
       description="查看和上报课程记录"
     >
       <template #actions>
-        <button class="btn btn-primary" @click="showReportModal = true"><i class="mdi mdi-plus" /> 上报课程记录</button>
+        <a-button type="primary" @click="showReportModal = true">
+          <i class="mdi mdi-plus" style="margin-right:4px" />上报课程记录
+        </a-button>
       </template>
     </PageHeader>
 
     <!-- Tabs -->
-    <div class="tabs">
-      <button v-for="tab in tabs" :key="tab.key" class="tab" :class="{ active: activeTab === tab.key }" @click="activeTab = tab.key">
+    <a-radio-group v-model:value="activeTab" button-style="solid" class="tabs-radio" style="margin-bottom:20px">
+      <a-radio-button v-for="tab in tabs" :key="tab.key" :value="tab.key">
         {{ tab.label }}
-        <span v-if="tab.badge" class="tag warning" style="margin-left:4px">{{ tab.badge }}</span>
-      </button>
-    </div>
+        <a-badge v-if="tab.badge" :count="tab.badge" :number-style="{ backgroundColor: '#F59E0B' }" :offset="[8, -4]" />
+      </a-radio-button>
+    </a-radio-group>
 
-    <!-- 筛选 -->
-    <div class="card">
-      <div class="card-body">
-        <div class="filter-bar">
-          <input v-model="filters.keyword" class="form-input" placeholder="搜索学员姓名/ID..." style="width:180px" />
-          <select v-model="filters.coachingType" class="form-select filter-select">
-            <option value="">辅导类型</option>
-            <option value="job_coaching">岗位辅导</option>
-            <option value="mock_interview">模拟应聘</option>
-          </select>
-          <select v-model="filters.contentType" class="form-select filter-select">
-            <option value="">课程内容</option>
-            <option v-for="ct in contentTypes" :key="ct" :value="ct">{{ ct }}</option>
-          </select>
-          <select v-model="filters.timeRange" class="form-select filter-select">
-            <option value="">时间范围</option>
-            <option value="this_week">本周</option>
-            <option value="last_week">上周</option>
-            <option value="this_month">本月</option>
-          </select>
-          <button class="btn btn-outline btn-sm" @click="resetFilters"><i class="mdi mdi-filter-variant" /> 重置</button>
-        </div>
-      </div>
-      <!-- 表格 -->
-      <div class="card-body" style="padding:0">
-        <table class="table">
-          <thead>
-            <tr><th>记录ID</th><th>学员</th><th>辅导内容</th><th>课程内容</th><th>上课日期</th><th>时长</th><th>课时费</th><th>审核状态</th><th>学员评价</th><th>操作</th></tr>
-          </thead>
-          <tbody>
-            <tr v-for="r in filteredRecords" :key="r.id">
-              <td>{{ r.recordNo }}</td>
-              <td><strong>{{ r.studentName || '学员' }}</strong><br/><span class="text-muted text-sm">ID: {{ r.studentId }}</span></td>
-              <td><span class="tag" :class="coachingTagClass(r.coachingType)">{{ coachingLabel(r.coachingType) }}</span><br/><span class="text-sm">{{ r.contentDetail || '' }}</span></td>
-              <td><span class="tag" :class="contentTagClass(r.contentType)">{{ r.contentType }}</span></td>
-              <td>{{ formatDate(r.classDate) }}</td>
-              <td>{{ r.durationHours }}h</td>
-              <td>¥{{ r.totalFee }}</td>
-              <td><span class="tag" :class="statusClass(r.reviewStatus)">{{ statusLabel(r.reviewStatus) }}</span></td>
-              <td>
-                <span v-if="evaluationTag(r)" class="tag" :class="evaluationTag(r)?.className">{{ evaluationTag(r)?.text }}</span>
-                <span v-else class="text-muted">-</span>
-              </td>
-              <td>
-                <button v-if="r.reviewStatus === 'rejected'" class="btn btn-text btn-sm" @click="showReject(r)">查看原因</button>
-                <button v-else class="btn btn-text btn-sm" @click="showDetail(r)">查看详情</button>
-              </td>
-            </tr>
-            <tr v-if="filteredRecords.length === 0"><td colspan="10" style="text-align:center;color:#94A3B8;padding:40px">暂无数据</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- 筛选 + 表格 -->
+    <a-card :bordered="false">
+      <a-form layout="inline" class="filter-bar" style="margin-bottom: 16px">
+        <a-form-item>
+          <a-input
+            v-model:value="filters.keyword"
+            placeholder="搜索学员姓名/ID..."
+            allow-clear
+            style="width:200px"
+          />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.coachingType" placeholder="辅导类型" style="width:140px" allow-clear>
+            <a-select-option value="">辅导类型</a-select-option>
+            <a-select-option value="job_coaching">岗位辅导</a-select-option>
+            <a-select-option value="mock_interview">模拟应聘</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.contentType" placeholder="课程内容" style="width:160px" allow-clear>
+            <a-select-option value="">课程内容</a-select-option>
+            <a-select-option v-for="ct in contentTypes" :key="ct" :value="ct">{{ ct }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.timeRange" placeholder="时间范围" style="width:140px" allow-clear>
+            <a-select-option value="">时间范围</a-select-option>
+            <a-select-option value="this_week">本周</a-select-option>
+            <a-select-option value="last_week">上周</a-select-option>
+            <a-select-option value="this_month">本月</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-button @click="resetFilters">
+            <i class="mdi mdi-filter-variant" style="margin-right:4px" />重置
+          </a-button>
+        </a-form-item>
+      </a-form>
+
+      <a-table
+        :columns="columns"
+        :data-source="filteredRecords"
+        :pagination="false"
+        :row-key="(r: any) => r.id"
+        :locale="{ emptyText: '暂无数据' }"
+        size="middle"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'recordNo'">{{ record.recordNo }}</template>
+          <template v-else-if="column.key === 'student'">
+            <div>
+              <strong>{{ record.studentName || '学员' }}</strong>
+              <br />
+              <span class="text-muted text-sm">ID: {{ record.studentId }}</span>
+            </div>
+          </template>
+          <template v-else-if="column.key === 'coachingType'">
+            <a-tag :color="coachingTagColor(record.coachingType)">{{ coachingLabel(record.coachingType) }}</a-tag>
+            <br v-if="record.contentDetail" />
+            <span v-if="record.contentDetail" class="text-sm">{{ record.contentDetail }}</span>
+          </template>
+          <template v-else-if="column.key === 'contentType'">
+            <a-tag :color="contentTagColor(record.contentType)">{{ record.contentType }}</a-tag>
+          </template>
+          <template v-else-if="column.key === 'classDate'">{{ formatDate(record.classDate) }}</template>
+          <template v-else-if="column.key === 'durationHours'">{{ record.durationHours }}h</template>
+          <template v-else-if="column.key === 'totalFee'">¥{{ record.totalFee }}</template>
+          <template v-else-if="column.key === 'reviewStatus'">
+            <a-tag :color="statusTagColor(record.reviewStatus)">{{ statusLabel(record.reviewStatus) }}</a-tag>
+          </template>
+          <template v-else-if="column.key === 'studentEvaluation'">
+            <a-tag v-if="evaluationTag(record)" :color="evaluationTagColor(record)">{{ evaluationTag(record)?.text }}</a-tag>
+            <span v-else class="text-muted">-</span>
+          </template>
+          <template v-else-if="column.key === 'actions'">
+            <a-button v-if="record.reviewStatus === 'rejected'" type="link" size="small" @click="showReject(record)">查看原因</a-button>
+            <a-button v-else type="link" size="small" @click="showDetail(record)">查看详情</a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <!-- 上报弹窗 -->
     <ReportModal v-if="showReportModal" @close="showReportModal = false" @submitted="onReportSubmitted" />
 
-    <div v-if="detailModal.visible" id="modal-class-detail" class="modal active" @click.self="closeDetailModal">
-      <div class="modal-content">
+    <a-modal
+      v-model:open="detailModal.visible"
+      :width="720"
+      :footer="null"
+      :title="null"
+      :closable="false"
+      :body-style="{ padding: 0 }"
+      :get-container="false"
+      :destroy-on-close="true"
+      @cancel="closeDetailModal"
+    >
+      <div id="modal-class-detail">
         <div class="modal-header">
           <span class="modal-title"><i class="mdi mdi-file-document-outline" /> 课程记录详情</span>
-          <button class="modal-close" @click="closeDetailModal">×</button>
+          <button class="modal-close" type="button" @click="closeDetailModal">×</button>
         </div>
         <div class="modal-body">
           <div class="detail-grid">
@@ -114,13 +154,23 @@
           </div>
         </div>
       </div>
-    </div>
+    </a-modal>
 
-    <div v-if="rejectModal.visible" id="modal-class-reject" class="modal active" @click.self="closeRejectModal">
-      <div class="modal-content modal-content--narrow">
+    <a-modal
+      v-model:open="rejectModal.visible"
+      :width="520"
+      :footer="null"
+      :title="null"
+      :closable="false"
+      :body-style="{ padding: 0 }"
+      :get-container="false"
+      :destroy-on-close="true"
+      @cancel="closeRejectModal"
+    >
+      <div id="modal-class-reject">
         <div class="modal-header modal-header--reject">
           <span class="modal-title"><i class="mdi mdi-alert-circle" /> 课程审核驳回</span>
-          <button class="modal-close" @click="closeRejectModal">×</button>
+          <button class="modal-close" type="button" @click="closeRejectModal">×</button>
         </div>
         <div class="modal-body">
           <div class="reject-summary">
@@ -148,22 +198,32 @@
             <div class="detail-panel detail-panel--danger">{{ rejectModal.reason || '暂无驳回原因' }}</div>
           </div>
           <div class="reject-meta">
-            <div>审核人：课时审核员 Admin</div>
-            <div>驳回时间：{{ rejectModal.record?.reviewedAt ? formatDate(rejectModal.record.reviewedAt) : '12/11/2025 10:30' }}</div>
+            <div>审核人:课时审核员 Admin</div>
+            <div>驳回时间:{{ rejectModal.record?.reviewedAt ? formatDate(rejectModal.record.reviewedAt) : '12/11/2025 10:30' }}</div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" @click="closeRejectModal">关闭</button>
-          <button class="btn btn-primary" @click="openConfirmModalFromReject">重新提交</button>
+          <a-button @click="closeRejectModal">关闭</a-button>
+          <a-button type="primary" style="margin-left:8px" @click="openConfirmModalFromReject">重新提交</a-button>
         </div>
       </div>
-    </div>
+    </a-modal>
 
-    <div v-if="showConfirmModal" id="modal-class-confirm" class="modal active" @click.self="closeConfirmModal">
-      <div class="modal-content modal-content--confirm">
+    <a-modal
+      v-model:open="showConfirmModal"
+      :width="750"
+      :footer="null"
+      :title="null"
+      :closable="false"
+      :body-style="{ padding: 0 }"
+      :get-container="false"
+      :destroy-on-close="true"
+      @cancel="closeConfirmModal"
+    >
+      <div id="modal-class-confirm">
         <div class="modal-header modal-header--confirm">
           <span class="modal-title"><i class="mdi mdi-check-circle" /> 确认课程并填写反馈</span>
-          <button class="modal-close" @click="closeConfirmModal">×</button>
+          <button class="modal-close" type="button" @click="closeConfirmModal">×</button>
         </div>
         <div class="modal-body">
           <div class="confirm-meta">
@@ -184,7 +244,12 @@
           <div class="form-grid confirm-grid">
             <div class="form-group">
               <label class="form-label">课程类型<span class="req">*</span></label>
-              <select id="confirm-class-type" v-model="confirmClassType" class="form-select" @change="switchConfirmFeedbackForm(confirmClassType)">
+              <select
+                id="confirm-class-type"
+                v-model="confirmClassType"
+                class="form-select"
+                @change="switchConfirmFeedbackForm(confirmClassType)"
+              >
                 <option value="">请选择课程类型</option>
                 <option value="mock_interview">模拟面试</option>
                 <option value="mock_midterm">模拟期中考试</option>
@@ -227,11 +292,20 @@
             <div class="confirm-feedback-banner confirm-feedback-banner--mock">入职面试辅导反馈</div>
             <div class="form-group">
               <label class="form-label">面试公司/岗位<span class="req">*</span></label>
-              <input id="confirm-company-position" v-model="confirmCompanyOrPosition" class="form-input" placeholder="如：Goldman Sachs / IB Analyst">
+              <a-input
+                id="confirm-company-position"
+                v-model:value="confirmCompanyOrPosition"
+                placeholder="如:Goldman Sachs / IB Analyst"
+              />
             </div>
             <div class="form-group">
               <label class="form-label">辅导内容<span class="req">*</span></label>
-              <textarea id="confirm-feedback" v-model="confirmFeedback" class="form-textarea" rows="3" placeholder="请描述本次辅导的主要内容"></textarea>
+              <a-textarea
+                id="confirm-feedback"
+                v-model:value="confirmFeedback"
+                :rows="3"
+                placeholder="请描述本次辅导的主要内容"
+              />
             </div>
           </div>
 
@@ -239,11 +313,20 @@
             <div class="confirm-feedback-banner confirm-feedback-banner--regular">笔试辅导反馈</div>
             <div class="form-group">
               <label class="form-label">笔试公司/岗位<span class="req">*</span></label>
-              <input id="confirm-company-position" v-model="confirmCompanyOrPosition" class="form-input" placeholder="如：McKinsey / Business Analyst">
+              <a-input
+                id="confirm-company-position"
+                v-model:value="confirmCompanyOrPosition"
+                placeholder="如:McKinsey / Business Analyst"
+              />
             </div>
             <div class="form-group">
               <label class="form-label">辅导内容<span class="req">*</span></label>
-              <textarea id="confirm-feedback" v-model="confirmFeedback" class="form-textarea" rows="3" placeholder="请描述本次辅导的主要内容"></textarea>
+              <a-textarea
+                id="confirm-feedback"
+                v-model:value="confirmFeedback"
+                :rows="3"
+                placeholder="请描述本次辅导的主要内容"
+              />
             </div>
           </div>
 
@@ -251,7 +334,12 @@
             <div class="confirm-feedback-banner confirm-feedback-banner--networking">人脉拓展反馈模板</div>
             <div class="form-group">
               <label class="form-label">拓展情况<span class="req">*</span></label>
-              <textarea id="confirm-feedback" v-model="confirmFeedback" class="form-textarea" rows="3" placeholder="请描述本次人脉拓展的情况"></textarea>
+              <a-textarea
+                id="confirm-feedback"
+                v-model:value="confirmFeedback"
+                :rows="3"
+                placeholder="请描述本次人脉拓展的情况"
+              />
             </div>
           </div>
 
@@ -259,18 +347,29 @@
             <div class="confirm-feedback-banner confirm-feedback-banner--resume">简历修改反馈模板</div>
             <div class="form-group">
               <label class="form-label">修改要点<span class="req">*</span></label>
-              <textarea id="confirm-feedback" v-model="confirmFeedback" class="form-textarea" rows="3" placeholder="请描述本次简历修改的主要内容"></textarea>
+              <a-textarea
+                id="confirm-feedback"
+                v-model:value="confirmFeedback"
+                :rows="3"
+                placeholder="请描述本次简历修改的主要内容"
+              />
             </div>
           </div>
         </div>
         <div class="modal-footer modal-footer--confirm">
-          <button class="btn btn-outline" @click="closeConfirmModal">取消</button>
-          <button class="btn btn-primary" :disabled="!confirmCanSubmit || confirmSubmitting" @click="submitConfirm">
+          <a-button @click="closeConfirmModal">取消</a-button>
+          <a-button
+            type="primary"
+            style="margin-left:8px"
+            :loading="confirmSubmitting"
+            :disabled="!confirmCanSubmit || confirmSubmitting"
+            @click="submitConfirm"
+          >
             {{ confirmSubmitting ? '提交中...' : '确认并提交反馈' }}
-          </button>
+          </a-button>
         </div>
       </div>
-    </div>
+    </a-modal>
   </div>
 </template>
 
@@ -356,6 +455,41 @@ const filteredRecords = computed(() => {
   return list
 })
 
+const columns = [
+  { title: '记录ID', key: 'recordNo', dataIndex: 'recordNo' },
+  { title: '学员', key: 'student' },
+  { title: '辅导内容', key: 'coachingType' },
+  { title: '课程内容', key: 'contentType' },
+  { title: '上课日期', key: 'classDate', dataIndex: 'classDate' },
+  { title: '时长', key: 'durationHours', dataIndex: 'durationHours' },
+  { title: '课时费', key: 'totalFee', dataIndex: 'totalFee' },
+  { title: '审核状态', key: 'reviewStatus' },
+  { title: '学员评价', key: 'studentEvaluation' },
+  { title: '操作', key: 'actions' },
+]
+
+function coachingTagColor(t: string) {
+  return { job_coaching: 'blue', mock_interview: 'green', networking: 'purple', mock_midterm: 'orange' }[t] || 'blue'
+}
+function contentTagColor(t: string) {
+  return {
+    '模拟面试': 'green',
+    '模拟期中考试': 'orange',
+    '人际关系期中考试': 'purple',
+    '简历更新': 'blue',
+    'Case准备': 'blue',
+    '笔试辅导': 'orange',
+    '基础课程': 'blue',
+  }[t] || 'blue'
+}
+function statusTagColor(s: string) {
+  return { pending: 'orange', approved: 'green', rejected: 'red' }[s] || 'default'
+}
+function evaluationTagColor(record: Record<string, any>) {
+  const tag = evaluationTag(record)
+  return tag?.className === 'success' ? 'green' : tag?.className === 'warning' ? 'orange' : 'default'
+}
+
 function resetFilters() {
   filters.value = { keyword: '', coachingType: '', contentType: '', timeRange: '' }
   activeTab.value = 'all'
@@ -363,7 +497,6 @@ function resetFilters() {
 }
 function formatDate(d: string) { return d ? new Date(d).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '' }
 function coachingLabel(t: string) { return { job_coaching: '岗位辅导', mock_interview: '模拟应聘', networking: '人际关系', mock_midterm: '模拟期中', basic: '基础课程', basic_course: '基础课程' }[t] || t }
-function coachingTagClass(t: string) { return { job_coaching: 'info', mock_interview: 'success', networking: 'purple', mock_midterm: 'warning' }[t] || 'info' }
 function contentLabel(t: string) {
   const normalized = String(t ?? '').trim().replace(/-/g, '_').toLowerCase()
   return {
@@ -387,18 +520,6 @@ function contentLabel(t: string) {
     other: '其他',
   }[normalized] || t
 }
-function contentTagClass(t: string) {
-  return {
-    '模拟面试': 'success',
-    '模拟期中考试': 'warning',
-    '人际关系期中考试': 'purple',
-    '简历更新': 'info',
-    'Case准备': 'info',
-    '笔试辅导': 'warning',
-    '基础课程': 'info',
-  }[t] || 'info'
-}
-function statusClass(s: string) { return { pending: 'warning', approved: 'success', rejected: 'danger' }[s] || '' }
 function statusLabel(s: string) { return { pending: '待审核', approved: '已通过', rejected: '已驳回' }[s] || s }
 function evaluationTag(record: Record<string, any>) {
   if (record.studentEvaluation !== '' && record.studentEvaluation != null) {
@@ -639,69 +760,46 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-header { margin-bottom:24px; display:flex; justify-content:space-between; align-items:flex-start; }
-.page-title { font-size:26px; font-weight:700; color:#1E293B; }
-.page-title-en { font-size:14px; color:#94A3B8; font-weight:400; margin-left:8px; }
-.page-sub { font-size:14px; color:#64748B; margin-top:6px; }
-.btn { padding:10px 20px; border-radius:10px; font-size:14px; font-weight:500; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; }
-.btn-primary { background:linear-gradient(135deg,#7399C6,#9BB8D9); color:#fff; box-shadow:0 4px 12px rgba(115,153,198,0.3); }
-.btn-outline { background:#fff; color:#64748B; border:1px solid #E2E8F0; }
-.btn-text { background:transparent; color:#7399C6; padding:6px 12px; }
-.btn-sm { padding:6px 12px; font-size:13px; }
-.tabs { display:inline-flex; background:#F8FAFC; border-radius:12px; padding:4px; margin-bottom:20px; }
-.tab { padding:10px 20px; border:none; background:transparent; font-size:14px; color:#64748B; cursor:pointer; border-radius:10px; font-weight:500; }
-.tab.active { background:#fff; color:#7399C6; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
-.card { background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(115,153,198,0.12); margin-bottom:20px; }
-.card-body { padding:22px; }
-.filter-bar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-.form-input { padding:12px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; }
-.form-input:focus { border-color:#7399C6; box-shadow:0 0 0 4px #E8F0F8; }
-.form-select { padding:10px 36px 10px 12px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; background:#fff; appearance:none; cursor:pointer; }
-.filter-select { width:auto; min-width:max-content; }
-.table { width:100%; border-collapse:collapse; }
-.table th,.table td { padding:14px 16px; text-align:left; border-bottom:1px solid #E2E8F0; font-size:14px; }
-.table th { font-weight:600; color:#64748B; font-size:12px; text-transform:uppercase; background:#F8FAFC; }
-.table tbody tr:hover { background:#F8FAFC; }
-.tag { display:inline-flex; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; }
-.tag.success { background:#D1FAE5; color:#065F46; }
-.tag.warning { background:#FEF3C7; color:#92400E; }
-.tag.danger { background:#FEE2E2; color:#991B1B; }
-.tag.info { background:#DBEAFE; color:#1E40AF; }
-.tag.purple { background:#E8F0F8; color:#5A7BA3; }
-.text-muted { color:#94A3B8; }
-.text-sm { font-size:12px; }
-.modal { position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
-.modal-content { width:min(720px, 100%); background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 24px 64px rgba(15,23,42,0.2); }
-.modal-content--narrow { width:min(520px, 100%); }
-.modal-content--confirm { width:min(750px, 100%); }
-.modal-header { padding:20px 24px; background:linear-gradient(135deg,#7399C6,#5A7BA3); color:#fff; display:flex; align-items:center; justify-content:space-between; }
-.modal-header--reject { background:#FEE2E2; color:#DC2626; }
-.modal-header--confirm { background:linear-gradient(135deg,#7399C6,#5A7BA3); color:#fff; }
-.modal-title { display:inline-flex; align-items:center; gap:8px; font-size:18px; font-weight:700; }
-.modal-close { width:36px; height:36px; border:none; border-radius:10px; background:rgba(255,255,255,0.16); color:#fff; font-size:20px; cursor:pointer; }
-.modal-footer--confirm { background:#F8FAFC; }
-.modal-body { padding:24px; }
-.reject-summary { background:#FEF2F2; border-radius:12px; padding:16px; margin-bottom:20px; }
-.reject-summary-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
-.reject-summary-label, .confirm-meta-label { display:block; color:#94A3B8; font-size:12px; }
-.reject-summary-value, .confirm-meta-value { font-weight:600; margin-top:4px; color:#1E293B; }
-.reject-reason { margin-bottom:16px; }
-.reject-reason-title, .confirm-feedback-title { font-size:14px; font-weight:600; margin-bottom:12px; color:#DC2626; display:flex; align-items:center; gap:6px; }
-.reject-meta { color:#94A3B8; font-size:13px; margin-top:16px; display:grid; gap:6px; }
-.confirm-meta { background:#E8F0F8; border-radius:12px; padding:16px; margin-bottom:20px; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
-.confirm-divider { margin:20px 0; border:none; border-top:1px solid #E2E8F0; }
-.confirm-feedback-default { text-align:center; padding:32px; color:#94A3B8; background:#FAFAFA; border-radius:12px; border:1px dashed #E2E8F0; }
-.confirm-feedback-icon { font-size:48px; opacity:0.5; }
-.confirm-feedback-banner { padding:12px; border-radius:8px; margin-bottom:16px; font-size:14px; }
-.confirm-feedback-banner--mock { background:#F3E8FF; color:#7C3AED; }
-.confirm-feedback-banner--regular { background:#FFF7ED; color:#EA580C; }
-.confirm-feedback-banner--networking { background:#ECFDF5; color:#059669; }
-.confirm-feedback-banner--resume { background:#EFF6FF; color:#1D4ED8; }
-.detail-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; }
-.detail-item { background:#F8FAFC; border-radius:12px; padding:16px; }
-.detail-label { display:block; font-size:12px; font-weight:600; color:#64748B; margin-bottom:6px; }
-.detail-value { font-size:14px; color:#1E293B; line-height:1.6; }
-.detail-section { margin-top:20px; }
-.detail-panel { background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:16px; color:#334155; line-height:1.7; white-space:pre-wrap; }
-.detail-panel--danger { background:#FEF2F2; border-color:#FECACA; color:#991B1B; }
+.tabs-radio :deep(.ant-radio-button-wrapper){padding:0 16px}
+.filter-bar :deep(.ant-form-item){margin-bottom:0;margin-right:12px}
+.text-muted{color:#94A3B8}
+.text-sm{font-size:12px}
+.form-grid{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px}
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:13px;font-weight:600;color:#1E293B;margin-bottom:6px}
+.form-input{padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;width:100%}
+.form-input:focus{border-color:#7399C6;box-shadow:0 0 0 4px #E8F0F8}
+.form-select{padding:8px 36px 8px 12px;border:1px solid #E2E8F0;border-radius:8px;font-size:14px;background:#fff;appearance:none;cursor:pointer;width:100%}
+.req{color:#EF4444;margin-left:2px}
+.modal-header{padding:20px 24px;background:linear-gradient(135deg,#7399C6,#5A7BA3);color:#fff;display:flex;align-items:center;justify-content:space-between}
+.modal-header--reject{background:#FEE2E2;color:#DC2626}
+.modal-header--confirm{background:linear-gradient(135deg,#7399C6,#5A7BA3);color:#fff}
+.modal-title{display:inline-flex;align-items:center;gap:8px;font-size:18px;font-weight:700}
+.modal-close{width:36px;height:36px;border:none;border-radius:10px;background:rgba(255,255,255,0.16);color:#fff;font-size:20px;cursor:pointer}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;display:flex;justify-content:flex-end;border-top:1px solid #E2E8F0}
+.modal-footer--confirm{background:#F8FAFC}
+.reject-summary{background:#FEF2F2;border-radius:12px;padding:16px;margin-bottom:20px}
+.reject-summary-grid{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:12px}
+.reject-summary-label,.confirm-meta-label{display:block;color:#94A3B8;font-size:12px}
+.reject-summary-value,.confirm-meta-value{font-weight:600;margin-top:4px;color:#1E293B}
+.reject-reason{margin-bottom:16px}
+.reject-reason-title,.confirm-feedback-title{font-size:14px;font-weight:600;margin-bottom:12px;color:#DC2626;display:flex;align-items:center;gap:6px}
+.reject-meta{color:#94A3B8;font-size:13px;margin-top:16px;display:grid;gap:6px}
+.confirm-meta{background:#E8F0F8;border-radius:12px;padding:16px;margin-bottom:20px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:12px}
+.confirm-divider{margin:20px 0;border:none;border-top:1px solid #E2E8F0}
+.confirm-feedback-default{text-align:center;padding:32px;color:#94A3B8;background:#FAFAFA;border-radius:12px;border:1px dashed #E2E8F0}
+.confirm-feedback-icon{font-size:48px;opacity:0.5}
+.confirm-feedback-banner{padding:12px;border-radius:8px;margin-bottom:16px;font-size:14px}
+.confirm-feedback-banner--mock{background:#F3E8FF;color:#7C3AED}
+.confirm-feedback-banner--regular{background:#FFF7ED;color:#EA580C}
+.confirm-feedback-banner--networking{background:#ECFDF5;color:#059669}
+.confirm-feedback-banner--resume{background:#EFF6FF;color:#1D4ED8}
+.detail-grid{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px}
+.detail-item{background:#F8FAFC;border-radius:12px;padding:16px}
+.detail-label{display:block;font-size:12px;font-weight:600;color:#64748B;margin-bottom:6px}
+.detail-value{font-size:14px;color:#1E293B;line-height:1.6}
+.detail-section{margin-top:20px}
+.detail-panel{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#334155;line-height:1.7;white-space:pre-wrap}
+.detail-panel--danger{background:#FEF2F2;border-color:#FECACA;color:#991B1B}
 </style>

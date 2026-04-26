@@ -1,6 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import Antd, { Select as ASelect } from 'ant-design-vue'
 import CoursesPage from '@/views/courses/index.vue'
+
+const mountOptions = { global: { plugins: [Antd] } }
+
+async function setSelect(wrapper: ReturnType<typeof mount>, index: number, value: string) {
+  const selects = wrapper.findAllComponents(ASelect)
+  expect(selects[index], `expected ASelect at index ${index}`).toBeTruthy()
+  await selects[index].vm.$emit('update:value', value)
+  await selects[index].vm.$emit('change', value, null)
+  await flushPromises()
+}
+
+async function setSelectByContainer(wrapper: ReturnType<typeof mount>, containerSelector: string, value: any) {
+  const container = wrapper.find(containerSelector)
+  expect(container.exists(), `expected container ${containerSelector}`).toBe(true)
+  const select = container.findComponent(ASelect)
+  expect(select.exists(), `expected ASelect in ${containerSelector}`).toBeTruthy()
+  await select.vm.$emit('update:value', value)
+  await select.vm.$emit('change', value, null)
+  await flushPromises()
+}
+
+function findButton(wrapper: ReturnType<typeof mount>, label: string) {
+  const normalized = label.replace(/\s/g, '')
+  return wrapper.findAll('button').find((b) => b.text().replace(/\s/g, '').includes(normalized))
+}
 
 vi.mock('@osg/shared/utils/request', () => ({
   http: {
@@ -61,7 +87,7 @@ describe('mentor courses behavior', () => {
       return { rows: [] }
     })
 
-    const wrapper = mount(CoursesPage)
+    const wrapper = mount(CoursesPage, mountOptions)
     await flushPromises()
 
     expect(wrapper.text()).toContain('Student 12')
@@ -70,7 +96,7 @@ describe('mentor courses behavior', () => {
     await keywordInput.setValue('Student 1')
     await flushPromises()
 
-    await wrapper.findAll('button').find((button) => button.text().includes('重置'))!.trigger('click')
+    await findButton(wrapper, '重置')!.trigger('click')
     await flushPromises()
 
     expect(wrapper.text()).toContain('Student 12')
@@ -101,12 +127,11 @@ describe('mentor courses behavior', () => {
       return { rows: [] }
     })
 
-    const wrapper = mount(CoursesPage)
+    const wrapper = mount(CoursesPage, mountOptions)
     await flushPromises()
 
-    const selects = wrapper.findAll('select')
-    await selects[1].setValue('模拟面试')
-    await flushPromises()
+    // contentType is ASelect[1] (filters: coachingType=0, contentType=1, timeRange=2)
+    await setSelect(wrapper, 1, '模拟面试')
 
     expect(wrapper.text()).toContain('Mock Interview Student')
     expect(wrapper.text()).not.toContain('Basic Course Student')
@@ -120,17 +145,17 @@ describe('mentor courses behavior', () => {
       return { rows: [] }
     })
 
-    const wrapper = mount(CoursesPage)
+    const wrapper = mount(CoursesPage, mountOptions)
     await flushPromises()
 
-    const rejectButton = wrapper.findAll('button').find((button) => button.text() === '查看原因')
+    const rejectButton = findButton(wrapper, '查看原因')
     expect(rejectButton).toBeTruthy()
 
     await rejectButton!.trigger('click')
     await flushPromises()
 
     expect(wrapper.text()).toContain('课程审核驳回')
-    expect(wrapper.text()).toContain('关闭')
+    expect(wrapper.text().replace(/\s/g, '')).toContain('关闭')
     expect(wrapper.text()).toContain('重新提交')
   })
 
@@ -142,14 +167,14 @@ describe('mentor courses behavior', () => {
       return { rows: [] }
     })
 
-    const wrapper = mount(CoursesPage)
+    const wrapper = mount(CoursesPage, mountOptions)
     await flushPromises()
 
-    const rejectButton = wrapper.findAll('button').find((button) => button.text() === '查看原因')
+    const rejectButton = findButton(wrapper, '查看原因')
     await rejectButton!.trigger('click')
     await flushPromises()
 
-    const resubmitButton = wrapper.findAll('button').find((button) => button.text() === '重新提交')
+    const resubmitButton = findButton(wrapper, '重新提交')
     expect(resubmitButton).toBeTruthy()
 
     await resubmitButton!.trigger('click')
@@ -170,12 +195,12 @@ describe('mentor courses behavior', () => {
     vi.mocked(http.post).mockResolvedValue({ code: 200 })
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
 
-    const wrapper = mount(CoursesPage)
+    const wrapper = mount(CoursesPage, mountOptions)
     await flushPromises()
 
-    await wrapper.findAll('button').find((button) => button.text() === '查看原因')!.trigger('click')
+    await findButton(wrapper, '查看原因')!.trigger('click')
     await flushPromises()
-    await wrapper.findAll('button').find((button) => button.text() === '重新提交')!.trigger('click')
+    await findButton(wrapper, '重新提交')!.trigger('click')
     await flushPromises()
 
     await wrapper.get('#confirm-class-type').setValue('mock_interview')
@@ -186,7 +211,7 @@ describe('mentor courses behavior', () => {
     await wrapper.get('#confirm-feedback').setValue('重新提交后的真实反馈')
     await flushPromises()
 
-    await wrapper.findAll('button').find((button) => button.text().includes('确认并提交反馈'))!.trigger('click')
+    await findButton(wrapper, '确认并提交反馈')!.trigger('click')
     await flushPromises()
 
     expect(http.post).toHaveBeenCalledWith('/api/mentor/class-records', expect.objectContaining({
@@ -212,10 +237,10 @@ describe('mentor courses behavior', () => {
       return { rows: [] }
     })
 
-    const wrapper = mount(CoursesPage)
+    const wrapper = mount(CoursesPage, mountOptions)
     await flushPromises()
 
-    const reportButton = wrapper.findAll('button').find((button) => button.text().includes('上报课程记录'))
+    const reportButton = findButton(wrapper, '上报课程记录')
     expect(reportButton).toBeTruthy()
 
     await reportButton!.trigger('click')
@@ -224,8 +249,7 @@ describe('mentor courses behavior', () => {
     expect(wrapper.find('#modal-mentor-report').exists()).toBe(true)
     expect(wrapper.find('#report-student').exists()).toBe(true)
 
-    await wrapper.get('#report-student').setValue('58472')
-    await flushPromises()
+    await setSelectByContainer(wrapper, '#report-student', '58472')
 
     expect(wrapper.find('#mentor-class-datetime').exists()).toBe(true)
     expect(wrapper.find('#mentor-student-status').exists()).toBe(true)
@@ -244,8 +268,7 @@ describe('mentor courses behavior', () => {
     expect(wrapper.find('#mentor-job-select').exists()).toBe(true)
     expect(wrapper.find('#mentor-job-content-type').exists()).toBe(true)
 
-    await wrapper.get('#mentor-job-content-select').setValue('resume-update')
-    await flushPromises()
+    await setSelectByContainer(wrapper, '#mentor-job-content-select', 'resume-update')
 
     expect(wrapper.find('#feedback-resume').exists()).toBe(true)
     expect(wrapper.find('#feedback-resume input[type="file"]').exists()).toBe(true)
