@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import Antd from 'ant-design-vue'
 import CoursesPage from '@/views/courses/index.vue'
 import JobOverviewPage from '@/views/job-overview/index.vue'
 import ReportModal from '@/views/courses/components/ReportModal.vue'
@@ -87,16 +88,28 @@ describe('mentor page interactions', () => {
     })
     vi.mocked(http.post).mockResolvedValue({})
 
-    const wrapper = mount(ReportModal)
+    const { Select: ASelect } = await import('ant-design-vue')
+
+    const wrapper = mount(ReportModal, { global: { plugins: [Antd] } })
     await flushPromises()
 
-    await wrapper.get('select').setValue('843')
+    const studentSelect = wrapper.find('#report-student').findComponent(ASelect)
+    await studentSelect.vm.$emit('update:value', '843')
+    await studentSelect.vm.$emit('change', '843', null)
+    await flushPromises()
+
     await wrapper.get('input[type="date"]').setValue('2026-03-21')
     await wrapper.get('input[type="number"]').setValue('1')
-    await wrapper.get('input[type="radio"][value="job_coaching"]').setValue()
+    // Note: radio value in template is 'job-coaching'; backend payload is 'job_coaching' (mapped via mapCourseTypeForBackend)
+    await wrapper.get('input[type="radio"][value="job-coaching"]').setValue()
     await flushPromises()
     await wrapper.get('textarea').setValue('browser ui smoke feedback')
-    await wrapper.get('.btn-primary').trigger('click')
+
+    const submitBtn = wrapper.findAll('button').find((b) =>
+      b.text().replace(/\s/g, '').includes('提交记录'),
+    )
+    expect(submitBtn).toBeTruthy()
+    await submitBtn!.trigger('click')
 
     expect(http.post).toHaveBeenCalledWith('/api/mentor/class-records', {
       studentId: 843,
@@ -130,13 +143,15 @@ describe('mentor page interactions', () => {
       return { rows: [] }
     })
 
-    const wrapper = mount(CoursesPage)
+    const wrapper = mount(CoursesPage, { global: { plugins: [Antd] } })
     await flushPromises()
 
     expect(wrapper.text()).toContain('待审核')
     expect(wrapper.text()).toContain('¥1200')
 
-    const detailButton = wrapper.findAll('button').find((button) => button.text() === '查看详情')
+    const detailButton = wrapper.findAll('button').find((button) =>
+      button.text().replace(/\s/g, '').includes('查看详情'),
+    )
     expect(detailButton).toBeTruthy()
 
     await detailButton!.trigger('click')
@@ -157,10 +172,12 @@ describe('mentor page interactions', () => {
       ]
     })
 
-    const wrapper = mount(CoursesPage)
+    const wrapper = mount(CoursesPage, { global: { plugins: [Antd] } })
     await flushPromises()
 
-    const rejectButton = wrapper.findAll('button').find((button) => button.text() === '查看原因')
+    const rejectButton = wrapper.findAll('button').find((button) =>
+      button.text().replace(/\s/g, '').includes('查看原因'),
+    )
     expect(rejectButton).toBeTruthy()
 
     await rejectButton!.trigger('click')
@@ -203,10 +220,13 @@ describe('mentor page interactions', () => {
     })
     vi.mocked(http.put).mockResolvedValue({})
 
-    const wrapper = mount(MockPracticePage)
+    const wrapper = mount(MockPracticePage, { global: { plugins: [Antd] } })
     await flushPromises()
 
-    const confirmButton = wrapper.findAll('button').find((button) => button.text().includes('确认'))
+    const matchText = (text: string, label: string) =>
+      text.replace(/\s/g, '').includes(label.replace(/\s/g, ''))
+
+    const confirmButton = wrapper.findAll('button').find((button) => matchText(button.text(), '确认'))
     expect(confirmButton).toBeTruthy()
     await confirmButton!.trigger('click')
     await flushPromises()
@@ -214,12 +234,12 @@ describe('mentor page interactions', () => {
     expect(http.put).toHaveBeenCalledWith('/api/mentor/mock-practice/42/confirm')
     expect(wrapper.text()).toContain('待进行')
 
-    const detailButton = wrapper.findAll('button').find((button) => button.text() === '查看详情')
+    const detailButton = wrapper.findAll('button').find((button) => matchText(button.text(), '查看详情'))
     expect(detailButton).toBeTruthy()
     await detailButton!.trigger('click')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('模拟应聘详情')
+    expect(wrapper.text()).toContain('学员求职详情')
     expect(wrapper.text()).toContain('请帮我做一次模拟面试')
   })
 })

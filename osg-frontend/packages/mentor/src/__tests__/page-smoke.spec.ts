@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import Antd from 'ant-design-vue'
 import CoursesPage from '@/views/courses/index.vue'
 import JobOverviewPage from '@/views/job-overview/index.vue'
 import MockPracticePage from '@/views/mock-practice/index.vue'
 import ProfilePage from '@/views/profile/index.vue'
 import SchedulePage from '@/views/schedule/index.vue'
+
+const antdMountOptions = { global: { plugins: [Antd] } }
 
 vi.mock('@osg/shared/utils/request', () => ({
   http: {
@@ -66,7 +69,7 @@ describe('mentor page smoke', () => {
   })
 
   it('renders the mock practice page shell', async () => {
-    const wrapper = mount(MockPracticePage)
+    const wrapper = mount(MockPracticePage, antdMountOptions)
     await flushPromises()
 
     expect(wrapper.text()).toContain('模拟应聘管理')
@@ -82,10 +85,10 @@ describe('mentor page smoke', () => {
   })
 
   it('renders the schedule page shell', async () => {
-    const wrapper = mount(SchedulePage)
+    const wrapper = mount(SchedulePage, antdMountOptions)
     await flushPromises()
 
     expect(wrapper.text()).toContain('我的排期')
-    expect(wrapper.text()).toContain('保存排期')
+    expect(wrapper.text()).toContain('保存下周排期')
   })
 })
