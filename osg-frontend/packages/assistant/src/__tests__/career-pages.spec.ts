@@ -285,9 +285,9 @@ describe('assistant career pages', () => {
     // 默认视图 = 列表（不是全展开下钻）
     expect(src).toContain("ref<ViewMode>('list')")
 
-    // 统计已改用 inline positions-footer 实现（不再用 statsCards 数组配置）
-    expect(src).toContain('positions-footer__indicator--open')
-    expect(src).toContain('positions-footer__indicator--closed')
+    // 统计已接入 shared PositionsFooter 组件（M2 followup commit 15257ed9）
+    expect(src).toContain('<PositionsFooter')
+    expect(src).toContain('PositionsFooter,')
 
     // 只读：不包含 admin 端的管理入口
     expect(src).not.toContain('新增岗位')

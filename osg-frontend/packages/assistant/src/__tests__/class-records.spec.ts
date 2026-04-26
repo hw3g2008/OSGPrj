@@ -39,7 +39,8 @@ describe('assistant class records page', () => {
     expect(src).toContain('<a-range-picker')
     expect(src).toContain('<a-modal')
     expect(src).toContain('<a-descriptions')
-    expect(src).toContain('<a-statistic')
+    // <a-statistic> 已抽到共享 StatCard 组件（A-02 commit 58ab40f2）
+    expect(src).toContain('<StatCard')
     expect(src).toContain('<a-space')
 
     // ── CR-37~38: Flow banner（a-alert type=info + 动态 flowSteps） ──
@@ -51,18 +52,18 @@ describe('assistant class records page', () => {
     expect(src).toContain("'审核处理'")
     expect(src).toContain("'反馈回看'")
 
-    // ── CR-4~5: 4 张统计卡 + valueStyleMap ──
+    // ── CR-4~5: 4 张统计卡 + statColorMap（A-02 commit 58ab40f2 后改名 valueStyleMap → statColorMap，driving shared <StatCard>） ──
     expect(src).toContain('summaryCards')
-    expect(src).toContain('valueStyleMap')
+    expect(src).toContain('statColorMap')
     expect(src).toContain("key: 'all', label: '全部课程'")
     expect(src).toContain("key: 'pending', label: '待审核'")
     expect(src).toContain("key: 'approved', label: '已通过'")
     expect(src).toContain("label: '待结算金额'")
     // 4 个卡片对应 4 种色值
-    expect(src).toContain("color: '#1E293B'") // all
-    expect(src).toContain("color: '#F59E0B'") // pending
-    expect(src).toContain("color: '#22C55E'") // approved
-    expect(src).toContain("color: '#1D4ED8'") // settlement
+    expect(src).toContain("'#1E293B'") // all
+    expect(src).toContain("'#F59E0B'") // pending
+    expect(src).toContain("'#22C55E'") // approved
+    expect(src).toContain("'#1D4ED8'") // settlement
 
     // ── CR-6: 筛选卡（对齐助教端公共约定） ──
     expect(src).toContain('class="filter-card"')
@@ -182,7 +183,8 @@ describe('assistant class records page', () => {
 
     // ── CR-24: 审核状态由 shared ClassRecordStatusTag 接管（M4 P3+P4）──
     // 替代原 statusTagColor + statusLabel 本地函数
-    expect(src).toContain("import { ClassRecordStatusTag } from '@osg/shared/components'")
+    // M4 P4 仅 ClassRecordStatusTag；A-02 commit 58ab40f2 后多带 StatCard
+    expect(src).toContain("import { ClassRecordStatusTag, StatCard } from '@osg/shared/components'")
     expect(src).toContain('<ClassRecordStatusTag :status="record.status" />')
     expect(src).toContain('<ClassRecordStatusTag :status="selectedRecord.status" />')
 

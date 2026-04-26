@@ -82,13 +82,7 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="avatar" :style="{ background: resolveAvatarColor(record.studentName) }">{{ avatarText(record.studentName) }}</div>
-                <div>
-                  <div style="font-weight: 600;">{{ record.studentName || '-' }}</div>
-                  <div style="font-size: 11px; color: var(--muted);">ID: {{ record.studentId || '-' }}</div>
-                </div>
-              </div>
+              <StudentAvatarCell :name="record.studentName" :id="record.studentId" />
             </template>
             <template v-else-if="column.dataIndex === 'practiceType'">
               <PracticeTypeTag :practice-type="record.practiceType" />
@@ -169,13 +163,7 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="avatar" :style="{ background: resolveAvatarColor(record.studentName) }">{{ avatarText(record.studentName) }}</div>
-                <div>
-                  <div style="font-weight: 600;">{{ record.studentName || '-' }}</div>
-                  <div style="font-size: 11px; color: var(--muted);">ID: {{ record.studentId || '-' }}</div>
-                </div>
-              </div>
+              <StudentAvatarCell :name="record.studentName" :id="record.studentId" />
             </template>
             <template v-else-if="column.dataIndex === 'practiceType'">
               <PracticeTypeTag :practice-type="record.practiceType" />
@@ -255,7 +243,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { CheckOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { PracticeTypeTag } from '@osg/shared/components'
+import { PracticeTypeTag, StudentAvatarCell } from '@osg/shared/components'
 import {
   getAssistantMockPracticeList,
   type AssistantMockPracticeRecord,
@@ -393,27 +381,6 @@ function rowClassName(record: AssistantMockPracticeRecord): string {
   return ''
 }
 
-// @deprecated PracticeTypeLabel 已迁移至 @osg/shared/utils/practiceTone resolvePracticeTypeLabel。
-// 仅 modal/detail 场景仍需要纯函数调用时保留；表格渲染走 PracticeTypeTag。
-function practiceTypeLabel(value?: string) {
-  const labels: Record<string, string> = {
-    mock_interview: '模拟面试',
-    communication_test: '沟通测试',
-    relation_test: '人际关系测试',
-    midterm: '期中考试',
-    midterm_exam: '期中考试',
-  }
-  if (!value) return '未标注'
-  return labels[value] || value
-}
-
-function practiceTypeColor(value?: string): string {
-  const v = String(value || '').toLowerCase()
-  if (v === 'communication_test' || v === 'relation_test') return 'orange'
-  if (v === 'midterm' || v === 'midterm_exam') return 'purple'
-  return 'blue'
-}
-
 function statusLabel(value?: string) {
   const labels: Record<string, string> = {
     new: '新分配',
@@ -463,18 +430,6 @@ function formatDateTime(value?: string | null) {
   const hour = String(parsed.getHours()).padStart(2, '0')
   const minute = String(parsed.getMinutes()).padStart(2, '0')
   return `${month}/${day} ${hour}:${minute}`
-}
-
-function avatarText(name?: string | null) {
-  return String(name || '学').trim().slice(0, 1) || '学'
-}
-
-function resolveAvatarColor(seed?: string | null) {
-  const palette = ['#3B82F6', '#F59E0B', '#22C55E', '#8B5CF6', '#EC4899', '#10B981']
-  const source = String(seed || '').trim()
-  if (!source) return palette[0]
-  const hash = Array.from(source).reduce((total, char) => total + char.charCodeAt(0), 0)
-  return palette[hash % palette.length]
 }
 
 function resetFilters() {
@@ -562,19 +517,6 @@ onMounted(() => {
   gap: 12px;
   align-items: center;
   margin-bottom: 16px;
-}
-
-/* ---- 头像 ---- */
-.avatar {
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 /* ---- 行高亮（原型设计） ---- */

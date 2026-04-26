@@ -55,6 +55,25 @@ describe('student applications source contract', () => {
     }
   })
 
+  it('keeps the prototype-level filter and list card hierarchy', () => {
+    const filterIndex = applicationsSource.indexOf('class="filter-card"')
+    const listCardIndex = applicationsSource.indexOf('class="applications-list-card"')
+    const listHeaderIndex = applicationsSource.indexOf('class="applications-list-header"')
+    const tabStripIndex = applicationsSource.indexOf('class="applications-tab-strip"')
+    const tableBodyIndex = applicationsSource.indexOf('class="applications-table-body"')
+
+    expect(filterIndex).toBeGreaterThan(-1)
+    expect(listCardIndex).toBeGreaterThan(-1)
+    expect(listHeaderIndex).toBeGreaterThan(-1)
+    expect(tabStripIndex).toBeGreaterThan(-1)
+    expect(tableBodyIndex).toBeGreaterThan(-1)
+
+    expect(filterIndex).toBeLessThan(listCardIndex)
+    expect(listCardIndex).toBeLessThan(listHeaderIndex)
+    expect(listHeaderIndex).toBeLessThan(tabStripIndex)
+    expect(tabStripIndex).toBeLessThan(tableBodyIndex)
+  })
+
   // [本期不落地] 面试安排、更新申请进度 等 S-005 行为
   it.skip('defines the modal and action trigger coverage required by story S-005', () => {
     const triggerMatches = applicationsSource.match(/actionId:/g) ?? []
