@@ -52,8 +52,8 @@
             show-search
             style="width: 180px"
           >
-            <a-select-option v-for="option in companyOptions" :key="option" :value="option">
-              {{ option }}
+            <a-select-option v-for="option in companyOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -64,8 +64,8 @@
             allow-clear
             style="width: 140px"
           >
-            <a-select-option v-for="option in regionOptions" :key="option" :value="option">
-              {{ option }}
+            <a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -173,6 +173,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
 import {
   getAssistantPositionDrillDown,
   getAssistantPositionStudents,
@@ -344,12 +345,22 @@ const industryOptions = computed(() =>
   Array.from(new Set(allPositions.value.map((p) => p.industry))).filter(Boolean),
 )
 
+// dict-ssot-remediation §4：公司 / 地区筛选下拉 = 字典 ∪ positions 行数据动态聚合值
+const { items: companyDictOptions, load: loadCompanyDict } = useDictFacade('osg_company_name')
+const { items: regionDictOptions, load: loadRegionDict } = useDictFacade('osg_region')
+
 const companyOptions = computed(() =>
-  Array.from(new Set(allPositions.value.map((p) => p.companyName))).filter(Boolean),
+  mergeDictWithExistingValues(
+    companyDictOptions.value,
+    Array.from(new Set(allPositions.value.map((p) => p.companyName))).filter(Boolean) as string[]
+  )
 )
 
 const regionOptions = computed(() =>
-  Array.from(new Set(allPositions.value.map((p) => p.region))).filter(Boolean),
+  mergeDictWithExistingValues(
+    regionDictOptions.value,
+    Array.from(new Set(allPositions.value.map((p) => p.region))).filter(Boolean) as string[]
+  )
 )
 
 const isOpenStatus = (status?: string) => status === 'visible' || status === 'success'
@@ -661,6 +672,8 @@ function closeStudents() {
 
 onMounted(() => {
   void loadIndustryMeta()
+  void loadCompanyDict().catch(() => undefined)
+  void loadRegionDict().catch(() => undefined)
   void loadPositions()
 })
 </script>

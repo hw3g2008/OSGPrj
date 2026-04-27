@@ -40,7 +40,7 @@
           </a-select>
           <a-select v-model:value="filters.companyType" placeholder="全部公司类型" style="width: 160px" allow-clear>
             <a-select-option
-              v-for="option in applicationsMeta.filterOptions.companyTypes"
+              v-for="option in mergedCompanyTypeOptions"
               :key="`company-type-${option.value}`"
               :value="option.value"
             >
@@ -448,6 +448,7 @@ import {
 import { InterviewCalendar } from '@osg/shared/components'
 import type { InterviewEvent } from '@osg/shared/types'
 import { getToken } from '@osg/shared/utils'
+import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
 import {
   getStudentApplicationsMeta,
   listStudentApplications,
@@ -459,6 +460,15 @@ import {
 } from '@osg/shared/api'
 // §D.4 学生端用 SSOT composable 派生辅导状态显示，停止依赖后端 coachingStatusLabel/coachingColor 固化字段
 import { deriveApplicationStatus } from '@osg/shared/composables'
+
+// dict-ssot-remediation §4：公司类型筛选下拉 = 字典 osg_company_type ∪ 后端返回的历史实际值。
+const { items: companyTypeDictOptions, load: loadCompanyTypeDict } = useDictFacade('osg_company_type')
+const mergedCompanyTypeOptions = computed(() =>
+  mergeDictWithExistingValues(
+    companyTypeDictOptions.value,
+    applicationsMeta.value.filterOptions.companyTypes
+  )
+)
 
 /**
  * §D.4 + D.3 用 composable 派生展示态（SSOT，单一来源），不再读后端固化字段。
@@ -886,6 +896,8 @@ async function confirmApplied() {
 }
 
 async function bootstrapPage() {
+  // 字典加载失败不阻断主流程：合并策略会降级为只用后端返回的历史值
+  void loadCompanyTypeDict().catch(() => undefined)
   try {
     await loadApplications()
   } catch {

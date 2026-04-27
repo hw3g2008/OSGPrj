@@ -56,22 +56,20 @@ describe('student applications source contract', () => {
   })
 
   it('keeps the prototype-level filter and list card hierarchy', () => {
+    // 模板已重构为 filter-card → applications-table-card（含 applications-tab-header 与 a-table）
     const filterIndex = applicationsSource.indexOf('class="filter-card"')
-    const listCardIndex = applicationsSource.indexOf('class="applications-list-card"')
-    const listHeaderIndex = applicationsSource.indexOf('class="applications-list-header"')
-    const tabStripIndex = applicationsSource.indexOf('class="applications-tab-strip"')
-    const tableBodyIndex = applicationsSource.indexOf('class="applications-table-body"')
+    const tableCardIndex = applicationsSource.indexOf('class="applications-table-card"')
+    const tabHeaderIndex = applicationsSource.indexOf('class="applications-tab-header"')
+    const tableIndex = applicationsSource.indexOf('<a-table')
 
     expect(filterIndex).toBeGreaterThan(-1)
-    expect(listCardIndex).toBeGreaterThan(-1)
-    expect(listHeaderIndex).toBeGreaterThan(-1)
-    expect(tabStripIndex).toBeGreaterThan(-1)
-    expect(tableBodyIndex).toBeGreaterThan(-1)
+    expect(tableCardIndex).toBeGreaterThan(-1)
+    expect(tabHeaderIndex).toBeGreaterThan(-1)
+    expect(tableIndex).toBeGreaterThan(-1)
 
-    expect(filterIndex).toBeLessThan(listCardIndex)
-    expect(listCardIndex).toBeLessThan(listHeaderIndex)
-    expect(listHeaderIndex).toBeLessThan(tabStripIndex)
-    expect(tabStripIndex).toBeLessThan(tableBodyIndex)
+    expect(filterIndex).toBeLessThan(tableCardIndex)
+    expect(tableCardIndex).toBeLessThan(tabHeaderIndex)
+    expect(tabHeaderIndex).toBeLessThan(tableIndex)
   })
 
   // [本期不落地] 面试安排、更新申请进度 等 S-005 行为

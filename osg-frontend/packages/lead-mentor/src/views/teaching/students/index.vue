@@ -26,7 +26,7 @@
       <select v-model="filters.school" class="form-select">
         <option value="">学校</option>
         <option
-          v-for="option in meta.schools"
+          v-for="option in mergedSchoolOptions"
           :key="option.value"
           :value="option.value"
         >
@@ -36,7 +36,7 @@
       <select v-model="filters.direction" class="form-select">
         <option value="">主攻方向</option>
         <option
-          v-for="option in meta.majorDirections"
+          v-for="option in mergedMajorDirectionOptions"
           :key="option.value"
           :value="option.value"
         >
@@ -143,6 +143,7 @@
 import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { StudentStatusTag, RemainingHoursCell } from '@osg/shared/components'
+import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -254,7 +255,20 @@ const loadRows = async () => {
   rows.value = Array.isArray(response?.rows) ? response.rows : []
 }
 
+// dict-ssot-remediation §4：学校 / 主攻方向筛选下拉 = 字典 ∪ meta 历史聚合值
+const { items: schoolDictOptions, load: loadSchoolDict } = useDictFacade('osg_school')
+const { items: majorDirectionDictOptions, load: loadMajorDirectionDict } = useDictFacade('osg_major_direction')
+const mergedSchoolOptions = computed(() =>
+  mergeDictWithExistingValues(schoolDictOptions.value, meta.schools)
+)
+const mergedMajorDirectionOptions = computed(() =>
+  mergeDictWithExistingValues(majorDirectionDictOptions.value, meta.majorDirections)
+)
+
 const loadPage = async () => {
+  // 字典加载失败不阻断主流程：合并策略 ∪ 会降级为只用 meta 历史值
+  void loadSchoolDict().catch(() => undefined)
+  void loadMajorDirectionDict().catch(() => undefined)
   try {
     await Promise.all([loadMeta(), loadRows()])
   } catch (_error) {

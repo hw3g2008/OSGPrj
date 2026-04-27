@@ -133,6 +133,7 @@
 
 <script setup lang="ts">
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
@@ -270,11 +271,21 @@ const filters = reactive<LeadMentorPositionListParams>({
   keyword: '',
 })
 
+// dict-ssot-remediation §4：公司 / 地区筛选下拉 = 字典 ∪ positionMeta 历史聚合值
+const { items: companyDictOptions, load: loadCompanyDict } = useDictFacade('osg_company_name')
+const { items: regionDictOptions, load: loadRegionDict } = useDictFacade('osg_region')
+
 const filterOptions = computed<FilterOptions>(() => ({
   categories: positionMeta.value?.categories ?? [],
   industries: positionMeta.value?.industries ?? [],
-  companies: positionMeta.value?.companies ?? [],
-  regions: positionMeta.value?.regions ?? [],
+  companies: mergeDictWithExistingValues(
+    companyDictOptions.value,
+    positionMeta.value?.companies ?? []
+  ) as FilterOptions['companies'],
+  regions: mergeDictWithExistingValues(
+    regionDictOptions.value,
+    positionMeta.value?.regions ?? []
+  ) as FilterOptions['regions'],
 }))
 
 const categoryLabelMap = computed(() => buildLabelMap(positionMeta.value?.categories ?? []))
@@ -689,6 +700,8 @@ const openCompanyStudentsModal = (company: PositionCompany) => {
 
 onMounted(() => {
   void loadIndustryMeta()
+  void loadCompanyDict().catch(() => undefined)
+  void loadRegionDict().catch(() => undefined)
   void loadPageData()
 })
 

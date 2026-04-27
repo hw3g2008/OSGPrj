@@ -24,6 +24,24 @@ const messageMocks = vi.hoisted(() => ({
 vi.mock('@osg/shared/api', () => apiMocks)
 
 vi.mock('@osg/shared/utils', () => ({
+  mergeDictWithExistingValues: (dict: any[] = [], existing: any[] = []) => {
+    const seen = new Set<string>()
+    const out: any[] = []
+    for (const o of dict ?? []) {
+      if (!o || !o.value) continue
+      if (seen.has(o.value)) continue
+      seen.add(o.value)
+      out.push(o)
+    }
+    for (const raw of existing ?? []) {
+      const v = typeof raw === 'string' ? raw : raw?.value
+      if (!v) continue
+      if (seen.has(v)) continue
+      seen.add(v)
+      out.push(typeof raw === 'string' ? { value: raw, label: raw } : raw)
+    }
+    return out
+  },
   getUser: vi.fn(() => ({
     nickName: 'Jess (Lead Mentor)',
     userName: 'leadmentor',

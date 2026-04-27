@@ -121,16 +121,56 @@
       <section class="profile-modal-section">
         <div class="edit-section-title">以下信息修改需后台审核</div>
         <div class="form-grid">
-          <a-form-item label="学校" class="form-item"><a-input v-model:value="editForm.school" /></a-form-item>
+          <a-form-item label="学校" class="form-item">
+            <a-select
+              v-model:value="editForm.school"
+              show-search
+              mode="combobox"
+              :options="schoolOptions"
+              placeholder="请选择或输入学校"
+            />
+          </a-form-item>
           <a-form-item label="专业" class="form-item"><a-input v-model:value="editForm.major" /></a-form-item>
           <a-form-item label="毕业年份" class="form-item"><a-input v-model:value="editForm.graduationYear" /></a-form-item>
           <a-form-item label="高中" class="form-item"><a-input v-model:value="editForm.highSchool" placeholder="选填" /></a-form-item>
           <a-form-item label="是否读研或延毕" class="form-item"><a-select v-model:value="editForm.postgraduatePlan" :options="yesNoOptions" /></a-form-item>
           <a-form-item label="签证" class="form-item"><a-input v-model:value="editForm.visaStatus" /></a-form-item>
-          <a-form-item label="招聘周期" class="form-item"><a-input v-model:value="editForm.recruitmentCycle" /></a-form-item>
-          <a-form-item label="求职地区" class="form-item"><a-input v-model:value="editForm.targetRegion" /></a-form-item>
-          <a-form-item label="主攻方向" class="form-item"><a-input v-model:value="editForm.primaryDirection" /></a-form-item>
-          <a-form-item label="子方向" class="form-item"><a-input v-model:value="editForm.secondaryDirection" /></a-form-item>
+          <a-form-item label="招聘周期" class="form-item">
+            <a-select
+              v-model:value="editForm.recruitmentCycle"
+              show-search
+              mode="combobox"
+              :options="recruitCycleOptions"
+              placeholder="请选择或输入招聘周期"
+            />
+          </a-form-item>
+          <a-form-item label="求职地区" class="form-item">
+            <a-select
+              v-model:value="editForm.targetRegion"
+              show-search
+              mode="combobox"
+              :options="regionOptions"
+              placeholder="请选择或输入求职地区"
+            />
+          </a-form-item>
+          <a-form-item label="主攻方向" class="form-item">
+            <a-select
+              v-model:value="editForm.primaryDirection"
+              show-search
+              mode="combobox"
+              :options="majorDirectionOptions"
+              placeholder="请选择或输入主攻方向"
+            />
+          </a-form-item>
+          <a-form-item label="子方向" class="form-item">
+            <a-select
+              v-model:value="editForm.secondaryDirection"
+              show-search
+              mode="combobox"
+              :options="subDirectionOptions"
+              placeholder="请选择或输入子方向"
+            />
+          </a-form-item>
         </div>
       </section>
 
@@ -197,6 +237,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { OsgPageContainer } from '@osg/shared/components'
+import { useDictFacade } from '@osg/shared'
 import {
   getStudentProfile,
   updateStudentProfile,
@@ -204,6 +245,13 @@ import {
   type StudentProfileUpdatePayload,
   type StudentPendingProfileChange
 } from '@osg/shared/api'
+
+// 字典单源：本表单中与 Admin osg_* 字典语义对齐的字段统一走 useDictFacade，免重复维护
+const { items: schoolOptions, load: loadSchools } = useDictFacade('osg_school')
+const { items: recruitCycleOptions, load: loadRecruitCycles } = useDictFacade('osg_recruit_cycle')
+const { items: regionOptions, load: loadRegions } = useDictFacade('osg_region')
+const { items: majorDirectionOptions, load: loadMajorDirections } = useDictFacade('osg_major_direction')
+const { items: subDirectionOptions, load: loadSubDirections } = useDictFacade('osg_sub_direction')
 
 const yesNoOptions = [
   { value: '是', label: '是' },
@@ -297,6 +345,14 @@ function applyProfileView(payload: { profile: StudentProfileRecord; pendingChang
 function openEdit() {
   syncEditForm()
   editOpen.value = true
+  // 按需拉取字典（useDictFacade 内部已去重）；任一字典加载失败都不会阻断弹窗打开
+  void Promise.all([
+    loadSchools().catch(() => undefined),
+    loadRecruitCycles().catch(() => undefined),
+    loadRegions().catch(() => undefined),
+    loadMajorDirections().catch(() => undefined),
+    loadSubDirections().catch(() => undefined)
+  ])
 }
 
 function displayPendingValue(value: string) {
@@ -335,6 +391,12 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+.profile-page :deep(.osg-page-container__content) {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
