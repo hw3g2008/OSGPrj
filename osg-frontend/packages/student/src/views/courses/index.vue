@@ -1,178 +1,174 @@
 <template>
   <div id="page-myclass" class="courses-page" :data-action-trigger-count="courseRecords.length">
-    <OsgPageContainer>
-      <template #header>
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">
-              <span class="page-title__zh">{{ classRecordsMeta.pageSummary.titleZh }}</span>
-              <span class="page-title__en">{{ classRecordsMeta.pageSummary.titleEn }}</span>
-            </h1>
-            <p class="page-sub">{{ classRecordsMeta.pageSummary.subtitle }}</p>
-          </div>
-        </div>
-      </template>
-
-      <a-alert
-        v-if="classRecordsMeta.reminderBanner.title"
-        type="success"
-        show-icon
-        banner
-        closable
-        class="reminder-banner"
-      >
-        <template #message><strong>{{ classRecordsMeta.reminderBanner.title }}</strong></template>
-        <template #description>
-          {{ classRecordsMeta.reminderBanner.leadText }}
-          <strong>{{ classRecordsMeta.reminderBanner.mentorName }}</strong>
-          {{ classRecordsMeta.reminderBanner.middleText }}
-          <strong>{{ classRecordsMeta.reminderBanner.newRecordCount }}</strong>
-          {{ classRecordsMeta.reminderBanner.suffixText }}
-        </template>
-        <template #action>
-          <a-button type="primary" size="small" @click="goToEvaluate">
-            {{ classRecordsMeta.reminderBanner.ctaLabel }}
-          </a-button>
-        </template>
-      </a-alert>
-
-      <a-tabs v-model:active-key="activeTab" class="courses-tabs">
-        <a-tab-pane
-          v-for="tab in classRecordsMeta.tabDefinitions"
-          :key="tab.key"
-        >
-          <template #tab>
-            {{ tab.label || tab.displayLabel }}
-            <a-badge
-              v-if="tab.key === 'pending' && tab.count > 0"
-              :count="tab.count"
-              :number-style="{ backgroundColor: '#f59e0b' }"
-              :offset="[6, -2]"
-            />
-          </template>
-        </a-tab-pane>
-      </a-tabs>
-
-      <div class="card">
-        <div class="card-body">
-          <div class="filters-row">
-          <a-input
-            v-model:value="filters.keyword"
-            :placeholder="classRecordsMeta.filters.keywordPlaceholder"
-            class="filters-row__search"
-          />
-          <a-select
-            v-model:value="filters.coachingType"
-            :placeholder="classRecordsMeta.filters.coachingTypePlaceholder"
-            allow-clear
-            class="filters-row__select"
-          >
-            <a-select-option
-              v-for="option in classRecordsMeta.filters.coachingTypeOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
-          <a-select
-            v-model:value="filters.courseContent"
-            :placeholder="classRecordsMeta.filters.courseContentPlaceholder"
-            allow-clear
-            class="filters-row__select"
-          >
-            <a-select-option
-              v-for="option in classRecordsMeta.filters.courseContentOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
-          <a-select
-            v-model:value="filters.timeRange"
-            :placeholder="classRecordsMeta.filters.timeRangePlaceholder"
-            allow-clear
-            class="filters-row__select"
-          >
-            <a-select-option
-              v-for="option in classRecordsMeta.filters.timeRangeOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </a-select-option>
-          </a-select>
-            <a-button size="small" class="filters-row__reset" @click="resetFilters">
-              <template #icon><FilterOutlined /></template>
-              {{ classRecordsMeta.filters.resetLabel }}
-            </a-button>
-          </div>
-        </div>
-        <div class="card-body card-body--table">
-          <a-table
-            :data-source="visibleCourses"
-            :columns="courseColumns"
-            :pagination="{ pageSize: 10 }"
-            row-key="recordId"
-            :scroll="{ x: 1080 }"
-            size="middle"
-          >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'coachingDetail'">
-                <div class="coaching-cell">
-                  <span class="record-tag" :class="mapTagTone(record.coachingTagColor)">
-                    {{ record.coachingType }}
-                  </span>
-                  <span>{{ record.coachingDetail }}</span>
-                </div>
-              </template>
-
-              <template v-else-if="column.dataIndex === 'courseContent'">
-                <span class="record-tag" :class="mapTagTone(record.contentTagColor)">
-                  {{ record.courseContent }}
-                </span>
-              </template>
-
-              <template v-else-if="column.dataIndex === 'mentor'">
-                <div class="mentor-cell">
-                  <div>{{ record.mentor }}</div>
-                  <span>{{ record.mentorRole }}</span>
-                </div>
-              </template>
-
-              <template v-else-if="column.dataIndex === 'classDate'">
-                <div class="date-cell">
-                  <strong>{{ record.classDate }}</strong>
-                  <span
-                    v-if="record.isNew"
-                    class="record-tag record-tag--success record-tag--tiny"
-                  >
-                    {{ record.newBadgeLabel }}
-                  </span>
-                </div>
-              </template>
-
-              <template v-else-if="column.dataIndex === 'ratingLabel'">
-                <span class="record-tag" :class="mapTagTone(record.ratingColor)">
-                  {{ record.ratingLabel }}
-                </span>
-              </template>
-
-              <template v-else-if="column.key === 'action'">
-                <a-button
-                  size="small"
-                  :type="record.actionKind === 'rate' ? 'primary' : 'default'"
-                  @click="openCourseAction(record)"
-                >
-                  {{ record.actionLabel }}
-                </a-button>
-              </template>
-            </template>
-          </a-table>
-        </div>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">
+          <span class="page-title__zh">{{ classRecordsMeta.pageSummary.titleZh }}</span>
+          <span class="page-title__en">{{ classRecordsMeta.pageSummary.titleEn }}</span>
+        </h1>
+        <p class="page-sub">{{ classRecordsMeta.pageSummary.subtitle }}</p>
       </div>
-    </OsgPageContainer>
+    </div>
+
+    <a-alert
+      v-if="classRecordsMeta.reminderBanner.title"
+      type="success"
+      show-icon
+      banner
+      closable
+      class="reminder-banner"
+    >
+      <template #message><strong>{{ classRecordsMeta.reminderBanner.title }}</strong></template>
+      <template #description>
+        {{ classRecordsMeta.reminderBanner.leadText }}
+        <strong>{{ classRecordsMeta.reminderBanner.mentorName }}</strong>
+        {{ classRecordsMeta.reminderBanner.middleText }}
+        <strong>{{ classRecordsMeta.reminderBanner.newRecordCount }}</strong>
+        {{ classRecordsMeta.reminderBanner.suffixText }}
+      </template>
+      <template #action>
+        <a-button type="primary" size="small" @click="goToEvaluate">
+          {{ classRecordsMeta.reminderBanner.ctaLabel }}
+        </a-button>
+      </template>
+    </a-alert>
+
+    <a-tabs v-model:active-key="activeTab" class="courses-tabs">
+      <a-tab-pane
+        v-for="tab in classRecordsMeta.tabDefinitions"
+        :key="tab.key"
+      >
+        <template #tab>
+          {{ tab.label || tab.displayLabel }}
+          <a-badge
+            v-if="tab.key === 'pending' && tab.count > 0"
+            :count="tab.count"
+            :number-style="{ backgroundColor: '#f59e0b' }"
+            :offset="[6, -2]"
+          />
+        </template>
+      </a-tab-pane>
+    </a-tabs>
+
+    <a-card :bordered="false" class="filter-card">
+      <a-space :size="12" wrap>
+        <a-input
+          v-model:value="filters.keyword"
+          :placeholder="classRecordsMeta.filters.keywordPlaceholder"
+          class="filters-row__search"
+        />
+        <a-select
+          v-model:value="filters.coachingType"
+          :placeholder="classRecordsMeta.filters.coachingTypePlaceholder"
+          allow-clear
+          class="filters-row__select"
+        >
+          <a-select-option
+            v-for="option in classRecordsMeta.filters.coachingTypeOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </a-select-option>
+        </a-select>
+        <a-select
+          v-model:value="filters.courseContent"
+          :placeholder="classRecordsMeta.filters.courseContentPlaceholder"
+          allow-clear
+          class="filters-row__select"
+        >
+          <a-select-option
+            v-for="option in classRecordsMeta.filters.courseContentOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </a-select-option>
+        </a-select>
+        <a-select
+          v-model:value="filters.timeRange"
+          :placeholder="classRecordsMeta.filters.timeRangePlaceholder"
+          allow-clear
+          class="filters-row__select"
+        >
+          <a-select-option
+            v-for="option in classRecordsMeta.filters.timeRangeOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </a-select-option>
+        </a-select>
+        <a-button class="filters-row__reset" @click="resetFilters">
+          <template #icon><FilterOutlined /></template>
+          {{ classRecordsMeta.filters.resetLabel }}
+        </a-button>
+      </a-space>
+    </a-card>
+
+    <a-card :bordered="false" class="courses-table-card" :body-style="{ padding: 0 }">
+      <a-table
+        :data-source="visibleCourses"
+        :columns="courseColumns"
+        :pagination="{ pageSize: 10 }"
+        row-key="recordId"
+        :row-class-name="rowClassName"
+        :scroll="{ x: 1080 }"
+        size="middle"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'coachingDetail'">
+            <div class="coaching-cell">
+              <span class="record-tag" :class="mapTagTone(record.coachingTagColor)">
+                {{ record.coachingType }}
+              </span>
+              <span>{{ record.coachingDetail }}</span>
+            </div>
+          </template>
+
+          <template v-else-if="column.dataIndex === 'courseContent'">
+            <span class="record-tag" :class="mapTagTone(record.contentTagColor)">
+              {{ record.courseContent }}
+            </span>
+          </template>
+
+          <template v-else-if="column.dataIndex === 'mentor'">
+            <div class="mentor-cell">
+              <div>{{ record.mentor }}</div>
+              <span>{{ record.mentorRole }}</span>
+            </div>
+          </template>
+
+          <template v-else-if="column.dataIndex === 'classDate'">
+            <div class="date-cell">
+              <strong>{{ record.classDate }}</strong>
+              <span
+                v-if="record.isNew"
+                class="record-tag record-tag--success record-tag--tiny"
+              >
+                {{ record.newBadgeLabel }}
+              </span>
+            </div>
+          </template>
+
+          <template v-else-if="column.dataIndex === 'ratingLabel'">
+            <span class="record-tag" :class="mapTagTone(record.ratingColor)">
+              {{ record.ratingLabel }}
+            </span>
+          </template>
+
+          <template v-else-if="column.key === 'action'">
+            <a-button
+              size="small"
+              :type="record.actionKind === 'rate' ? 'primary' : 'default'"
+              @click="openCourseAction(record)"
+            >
+              {{ record.actionLabel }}
+            </a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
     <a-modal
       v-model:open="detailVisible"
@@ -395,7 +391,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { FilterOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import { OsgPageContainer } from '@osg/shared/components'
 import {
   getStudentClassRecordsMeta,
   listStudentClassRecords,
@@ -428,6 +423,9 @@ const filters = ref({
   courseContent: undefined as string | undefined,
   timeRange: undefined as string | undefined
 })
+
+const rowClassName = (record: StudentClassRecord) =>
+  record.actionKind === 'rate' ? 'row-pending' : ''
 
 const rateForm = ref({
   rating: null as number | null,
@@ -725,20 +723,175 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .courses-page {
-  :deep(.osg-page-container) {
-    padding: 0;
+  // === 布局：block + margin ===
+  > .page-header {
+    margin-bottom: 20px;
   }
 
-  :deep(.osg-page-container__header) {
-    margin-bottom: 24px;
+  > .reminder-banner,
+  > .courses-tabs,
+  > :deep(.ant-card) {
+    margin-bottom: 16px;
   }
 
-  :deep(.osg-page-container__content) {
-    padding: 0;
-    background: transparent;
-    border-radius: 0;
+  // === a-card 强阴影（保留 8px 圆角）原型 L10 var(--card-shadow) ===
+  > :deep(.ant-card) {
+    border: 0;
+    box-shadow: 0 4px 24px rgba(115, 153, 198, 0.12);
   }
 
+  // === filter card 内部 padding（原型 L66 .card-body padding 22px）===
+  .filter-card :deep(.ant-card-body) {
+    padding: 22px 22px 24px;
+  }
+
+  // === filter input / select 原型样式：40px 高 + 2px 边框 + 10px 圆角 + 蓝光 focus（原型 L102-105）===
+  .filter-card {
+    :deep(.ant-input),
+    :deep(.ant-select-selector) {
+      height: 40px !important;
+      border: 2px solid #e2e8f0 !important;
+      border-radius: 10px !important;
+      box-shadow: none !important;
+      font-size: 14px !important;
+    }
+
+    :deep(.ant-input) {
+      padding: 0 14px !important;
+    }
+
+    :deep(.ant-select-selector) {
+      padding: 0 12px !important;
+      align-items: center;
+      display: flex;
+    }
+
+    :deep(.ant-select-single .ant-select-selector .ant-select-selection-item),
+    :deep(.ant-select-single .ant-select-selector .ant-select-selection-placeholder) {
+      line-height: 36px;
+    }
+
+    :deep(.ant-input:focus),
+    :deep(.ant-input-focused),
+    :deep(.ant-select-focused .ant-select-selector) {
+      border-color: #7399c6 !important;
+      box-shadow: 0 0 0 4px #e8f0f8 !important;
+    }
+  }
+
+  // === filter 重置按钮 40px 高（与 input 对齐，原型 L651）===
+  .filters-row__reset {
+    height: 40px;
+  }
+
+  // === courses-table-card overflow 防圆角被表格切到 ===
+  .courses-table-card {
+    overflow: hidden;
+  }
+
+  // === a-tabs pill 样式（原型 L73-75）===
+  > .courses-tabs {
+    :deep(.ant-tabs-nav) {
+      margin-bottom: 0;
+
+      &::before {
+        display: none;
+      }
+    }
+
+    :deep(.ant-tabs-nav-wrap) {
+      display: inline-flex;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    :deep(.ant-tabs-tab) {
+      padding: 10px 20px !important;
+      margin: 0 !important;
+      border-radius: 10px !important;
+      color: #64748b;
+      font-weight: 500;
+      transition: all 0.2s;
+
+      &:not(.ant-tabs-tab-active):hover {
+        color: #7399c6;
+      }
+    }
+
+    :deep(.ant-tabs-tab-active) {
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    :deep(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+      color: #7399c6 !important;
+      font-weight: 600;
+    }
+
+    :deep(.ant-tabs-ink-bar) {
+      display: none;
+    }
+  }
+
+  // === reminder banner 绿色渐变 + 12px 圆角（原型 L628）===
+  .reminder-banner {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    border: none;
+    border-radius: 12px;
+    padding: 16px 20px;
+
+    :deep(.ant-alert-icon) {
+      color: #059669;
+      font-size: 24px;
+    }
+
+    :deep(.ant-alert-message) {
+      color: #065f46;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    :deep(.ant-alert-description) {
+      color: #047857;
+      font-size: 13px;
+    }
+
+    :deep(.ant-btn-primary) {
+      background: #059669;
+      border-color: #059669;
+
+      &:hover,
+      &:focus {
+        background: #047857 !important;
+        border-color: #047857 !important;
+      }
+    }
+  }
+
+  // === 待评价行高亮（原型 L661/L671 背景 #ECFDF5）===
+  .courses-table-card :deep(.ant-table-tbody) > tr.row-pending > td {
+    background: #ecfdf5;
+  }
+
+  .courses-table-card :deep(.ant-table-tbody) > tr.row-pending:hover > td {
+    background: #d1fae5;
+  }
+
+  // === btn-primary 渐变 + 阴影（原型 L89）===
+  .courses-table-card :deep(.ant-btn-primary) {
+    background: linear-gradient(135deg, #7399c6 0%, #9bb8d9 100%);
+    border-color: #7399c6;
+    box-shadow: 0 4px 12px rgba(115, 153, 198, 0.3);
+
+    &:hover,
+    &:focus {
+      background: linear-gradient(135deg, #5a7ba3 0%, #7399c6 100%) !important;
+      border-color: #5a7ba3 !important;
+    }
+  }
+
+  // === 以下保留不变：page-title / btn / filters-row 宽度 ===
   .page-title {
     display: flex;
     align-items: baseline;
@@ -764,30 +917,6 @@ onMounted(() => {
     font-size: 14px;
   }
 
-  .reminder-banner {
-    margin-bottom: 20px;
-    border-radius: 12px;
-  }
-
-  .courses-tabs {
-    margin-bottom: 8px;
-  }
-
-  .card {
-    margin-bottom: 20px;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 4px 24px rgba(115, 153, 198, 0.12);
-  }
-
-  .card-body {
-    padding: 22px;
-  }
-
-  .card-body--table {
-    padding: 0;
-  }
-
   .btn {
     display: inline-flex;
     align-items: center;
@@ -810,13 +939,6 @@ onMounted(() => {
     border: 1px solid #e2e8f0;
   }
 
-  .filters-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-  }
-
   .filters-row__search {
     width: 180px;
   }
@@ -824,41 +946,6 @@ onMounted(() => {
   .filters-row__select {
     width: auto;
     min-width: max-content;
-  }
-
-  .filters-row__reset {
-    height: 40px;
-  }
-
-  .filters-row__reset .mdi {
-    font-size: 16px;
-  }
-
-  .filters-row :deep(.ant-input),
-  .filters-row :deep(.ant-select-selector) {
-    height: 40px !important;
-    border: 2px solid #e2e8f0 !important;
-    border-radius: 10px !important;
-    background: #fff !important;
-    box-shadow: none !important;
-    font-size: 14px !important;
-  }
-
-  .filters-row :deep(.ant-input) {
-    padding-inline: 14px !important;
-  }
-
-  .filters-row :deep(.ant-select-selector) {
-    padding-inline: 12px 36px !important;
-  }
-
-  .filters-row :deep(.ant-select-selection-placeholder),
-  .filters-row :deep(.ant-input::placeholder) {
-    color: #64748b;
-  }
-
-  .filters-row :deep(.ant-select-arrow) {
-    color: #64748b;
   }
 
   .courses-table {

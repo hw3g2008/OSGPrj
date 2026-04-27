@@ -1,14 +1,11 @@
 <template>
   <div id="page-job-tracking" class="applications-page" :data-action-trigger-count="applicationsActionTriggers.length">
-    <OsgPageContainer>
-      <template #header>
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">{{ applicationsMeta.pageSummary.titleZh }} <span>{{ applicationsMeta.pageSummary.titleEn }}</span></h1>
-            <p class="page-sub">{{ applicationsMeta.pageSummary.subtitle }}</p>
-          </div>
-        </div>
-      </template>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ applicationsMeta.pageSummary.titleZh }} <span>{{ applicationsMeta.pageSummary.titleEn }}</span></h1>
+        <p class="page-sub">{{ applicationsMeta.pageSummary.subtitle }}</p>
+      </div>
+    </div>
 
       <InterviewCalendar
         title="面试安排"
@@ -163,7 +160,6 @@
           </template>
         </a-table>
       </a-card>
-    </OsgPageContainer>
 
     <a-modal
       v-model:open="interviewModalOpen"
@@ -448,7 +444,7 @@ import {
   SearchOutlined,
   SendOutlined,
 } from '@ant-design/icons-vue'
-import { InterviewCalendar, OsgPageContainer } from '@osg/shared/components'
+import { InterviewCalendar } from '@osg/shared/components'
 import type { InterviewEvent } from '@osg/shared/types'
 import { getToken } from '@osg/shared/utils'
 import {
@@ -545,10 +541,10 @@ const stageToneMap: Record<string, StageTone> = {
   first: { background: '#FEF3C7', borderColor: '#F59E0B', color: '#92400E' },
   second: { background: '#FEF3C7', borderColor: '#F59E0B', color: '#92400E' },
   third: { background: '#FEF3C7', borderColor: '#F59E0B', color: '#92400E' },
-  case: { background: '#FEF3C7', borderColor: '#F59E0B', color: '#92400E' },
+  case: { background: '#F59E0B', borderColor: '#F59E0B', color: '#fff' },
   superday: { background: '#FEE2E2', borderColor: '#EF4444', color: '#991B1B' },
   offer: { background: '#DCFCE7', borderColor: '#22C55E', color: '#166534' },
-  rejected: { background: '#F3F4F6', borderColor: '#9CA3AF', color: '#6B7280' },
+  rejected: { background: '#FEE2E2', borderColor: '#EF4444', color: '#991B1B' },
   withdraw: { background: '#F3F4F6', borderColor: '#9CA3AF', color: '#6B7280' }
 }
 
@@ -1037,23 +1033,21 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
 
 <style scoped lang="scss">
 .applications-page {
-  // 原型卡片：16px 圆角 + 柔和投影（适用于页面中所有 a-card：日历、筛选、表格）
-  :deep(.ant-card) {
-    border: 0;
-    border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(115, 153, 198, 0.12);
+  > .page-header {
+    margin-bottom: 20px;
+  }
+
+  > :deep(.ant-card) {
+    margin-bottom: 16px;
   }
 
   .filter-card {
-    margin-bottom: 20px;
-
     :deep(.ant-card-body) {
-      padding: 12px 16px;
+      padding: 12px 16px 20px;
     }
   }
 
   .applications-table-card {
-    margin-bottom: 20px;
     overflow: hidden;
   }
 
