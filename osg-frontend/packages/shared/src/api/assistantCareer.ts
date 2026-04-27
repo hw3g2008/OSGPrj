@@ -104,3 +104,58 @@ export function getAssistantMockPracticeList(filters: AssistantMockPracticeFilte
     params: toRequestParams(filters),
   })
 }
+
+/* ===== §C.6 asst 端业务接口（确认收徒 / 确认阶段更新 / 模拟应聘确认 / 模拟应聘签收） ===== */
+
+/**
+ * §C.4 asst 端确认收徒（asst 自己被分配为辅导者时的接收入口）。
+ */
+export function confirmAssistantJobOverviewCoaching(applicationId: number) {
+  return http.put(`/assistant/job-overview/${applicationId}/confirm-coaching`)
+}
+
+/**
+ * §C.4 asst 端确认 LM 推送的阶段更新（消除 stageUpdated 标记）。
+ */
+export function acknowledgeAssistantJobOverviewStage(applicationId: number) {
+  return http.post(`/assistant/job-overview/${applicationId}/ack-stage-update`)
+}
+
+/**
+ * §C.4 asst 端模拟应聘 confirm（导师确认收徒后调用）。
+ */
+export function confirmAssistantMockPractice(practiceId: number) {
+  return http.put(`/assistant/mock-practice/${practiceId}/confirm`)
+}
+
+/**
+ * §C.4 asst 端模拟应聘 acknowledge-assignment（asst 收到推送后的签收）。
+ */
+export function acknowledgeAssistantMockPracticeAssignment(practiceId: number) {
+  return http.post(`/assistant/mock-practice/${practiceId}/acknowledge-assignment`)
+}
+
+/**
+ * §A.0.3 asst 端拉取活跃辅导对象（前端课程记录提交表单做下拉源）。
+ */
+export interface MyTargetsResponse {
+  coachings: Array<{
+    applicationId: number
+    studentId?: number
+    studentName?: string
+    companyName?: string
+    positionName?: string
+    status?: string
+  }>
+  practices: Array<{
+    practiceId: number
+    studentId?: number
+    studentName?: string
+    practiceType?: string
+    status?: string
+    requestContent?: string
+  }>
+}
+export function getAssistantMyTargets() {
+  return http.get<MyTargetsResponse>('/assistant/job-overview/my-targets')
+}

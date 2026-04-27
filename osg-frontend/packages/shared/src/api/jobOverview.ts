@@ -83,6 +83,20 @@ export function acknowledgeLeadMentorJobOverviewStage(applicationId: number) {
   return http.post(`/lead-mentor/job-overview/${applicationId}/ack-stage-update`)
 }
 
+/**
+ * §C.5 LM 端确认收徒（LM 自己被分配为辅导者时的接收入口）。
+ */
+export function confirmLeadMentorJobOverviewCoaching(applicationId: number) {
+  return http.put(`/lead-mentor/job-overview/${applicationId}/confirm-coaching`)
+}
+
+/**
+ * §A.0.3 LM 端拉取活跃辅导对象（前端课程记录提交表单做下拉源）。
+ */
+export function getLeadMentorMyTargets() {
+  return http.get('/lead-mentor/job-overview/my-targets')
+}
+
 export function getLeadMentorJobOverviewCalendar() {
   return http.get<LeadMentorCalendarRecord[]>('/lead-mentor/job-overview/calendar')
 }

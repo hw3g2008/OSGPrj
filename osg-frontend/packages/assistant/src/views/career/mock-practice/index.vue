@@ -246,6 +246,7 @@ import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PracticeTypeTag, StudentAvatarCell } from '@osg/shared/components'
 import {
   getAssistantMockPracticeList,
+  confirmAssistantMockPractice,
   type AssistantMockPracticeRecord,
 } from '@osg/shared/api'
 
@@ -443,9 +444,16 @@ function handleSearch() {
   void loadRecords()
 }
 
-function confirmRecord(record: AssistantMockPracticeRecord) {
-  confirmedIds.value.add(record.practiceId)
-  message.success(`已确认：${record.studentName || '学员'}`)
+async function confirmRecord(record: AssistantMockPracticeRecord) {
+  // §C.6 接入后端 PUT /assistant/mock-practice/{id}/confirm
+  try {
+    await confirmAssistantMockPractice(record.practiceId)
+    confirmedIds.value.add(record.practiceId)
+    message.success(`已确认：${record.studentName || '学员'}`)
+    void loadRecords()
+  } catch (error: any) {
+    message.error(error?.message || '确认失败，请稍后重试')
+  }
 }
 
 function openDetail(record: AssistantMockPracticeRecord) {
