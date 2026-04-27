@@ -75,8 +75,7 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
             new DictSeed(DICT_TYPE_PAGE_COPY, 41L, "导师", "detailMentorLabel", null, null, "详情文案"),
             new DictSeed(DICT_TYPE_PAGE_COPY, 42L, "上课日期", "detailClassDateLabel", null, null, "详情文案"),
             new DictSeed(DICT_TYPE_PAGE_COPY, 43L, "时长", "detailDurationLabel", null, null, "详情文案"),
-            new DictSeed(DICT_TYPE_PAGE_COPY, 44L, "NEW", "newBadgeLabel", null, null, "状态文案"),
-            new DictSeed(DICT_TYPE_PAGE_COPY, 45L, "Jerry Li", "reminderFallbackMentor", null, null, "提醒文案"));
+            new DictSeed(DICT_TYPE_PAGE_COPY, 44L, "NEW", "newBadgeLabel", null, null, "状态文案"));
 
     private static final List<DictSeed> TAB_SEEDS = List.of(
             new DictSeed(DICT_TYPE_TAB, 1L, "全部", "all", null, null, "Tab 文案"),
@@ -131,7 +130,7 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("pageSummary", buildPageSummary(pageCopy));
-        payload.put("reminderBanner", buildReminderBanner(records, pageCopy));
+        payload.put("reminderBanner", buildReminderBanner(pageCopy));
         payload.put("tabDefinitions", buildTabDefinitions(records));
         payload.put("filters", buildFilters(records, pageCopy));
         payload.put("tableHeaders", buildTableHeaders(pageCopy));
@@ -435,23 +434,21 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
         return summary;
     }
 
-    private Map<String, Object> buildReminderBanner(List<Map<String, Object>> records, Map<String, SysDictData> pageCopy)
+    /**
+     * 构造"新增课程记录"提醒 banner 的静态文案。
+     *
+     * <p>banner 的动态字段（导师名 / 待评价记录数）已下放到前端，
+     * 由前端基于 listStudentClassRecords 返回的 records 自行计算 isNew=true 的条目，
+     * 与下方表格保持单一数据源、永不漂移。
+     * 因此本方法不再需要 records 参数，也不再读取 dict 中的 reminderFallbackMentor。</p>
+     */
+    private Map<String, Object> buildReminderBanner(Map<String, SysDictData> pageCopy)
     {
-        long newRecordCount = records.stream().filter(this::isNewRecord).count();
-        String mentorName = records.stream()
-                .filter(this::isNewRecord)
-                .map(record -> stringValue(record.get("mentor")))
-                .filter(StringUtils::hasText)
-                .findFirst()
-                .orElse(dictLabel(pageCopy, "reminderFallbackMentor", "Jerry Li"));
-
         Map<String, Object> banner = new LinkedHashMap<>();
         banner.put("iconLabel", dictLabel(pageCopy, "reminderIconLabel", "CR"));
         banner.put("title", dictLabel(pageCopy, "reminderTitle", "新增课程记录"));
         banner.put("leadText", dictLabel(pageCopy, "reminderLeadText", "导师"));
-        banner.put("mentorName", mentorName);
         banner.put("middleText", dictLabel(pageCopy, "reminderMiddleText", "为您填报了"));
-        banner.put("newRecordCount", newRecordCount);
         banner.put("suffixText", dictLabel(pageCopy, "reminderSuffixText", "条新的上课记录，请及时评价"));
         banner.put("ctaLabel", dictLabel(pageCopy, "reminderCtaLabel", "去评价"));
         return banner;
@@ -565,11 +562,6 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
             return contentMeta.getRemark();
         }
         return dictLabel(pageCopy, "detailDefaultTitle", "课程详情");
-    }
-
-    private boolean isNewRecord(Map<String, Object> record)
-    {
-        return "true".equalsIgnoreCase(stringValue(record.get("isNew"))) || "1".equals(stringValue(record.get("isNew")));
     }
 
     private void syncReferenceData()

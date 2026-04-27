@@ -10,9 +10,7 @@ const mockClassRecordsMeta = {
     iconLabel: 'CR',
     title: '新增课程记录',
     leadText: '导师',
-    mentorName: 'Jerry Li',
     middleText: '为您填报了',
-    newRecordCount: 2,
     suffixText: '条新的上课记录，请及时评价',
     ctaLabel: '去评价'
   },

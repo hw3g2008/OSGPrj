@@ -10,8 +10,12 @@
       </div>
     </div>
 
+    <!--
+      Banner 的导师名 / 待评记录数直接由前端基于 courseRecords (list 接口) 计算（见 newRecordCount / firstNewRecordMentor），
+      meta 接口仅提供静态文案，确保 banner 与下方表格基于同一数据源、永不漂移。
+    -->
     <a-alert
-      v-if="classRecordsMeta.reminderBanner.title"
+      v-if="newRecordCount > 0"
       type="success"
       show-icon
       banner
@@ -21,9 +25,9 @@
       <template #message><strong>{{ classRecordsMeta.reminderBanner.title }}</strong></template>
       <template #description>
         {{ classRecordsMeta.reminderBanner.leadText }}
-        <strong>{{ classRecordsMeta.reminderBanner.mentorName }}</strong>
+        <strong>{{ firstNewRecordMentor }}</strong>
         {{ classRecordsMeta.reminderBanner.middleText }}
-        <strong>{{ classRecordsMeta.reminderBanner.newRecordCount }}</strong>
+        <strong>{{ newRecordCount }}</strong>
         {{ classRecordsMeta.reminderBanner.suffixText }}
       </template>
       <template #action>
@@ -134,7 +138,7 @@
 
           <template v-else-if="column.dataIndex === 'mentor'">
             <div class="mentor-cell">
-              <div>{{ record.mentor }}</div>
+              <div>{{ formatMentorDisplay(record.mentor) }}</div>
               <span>{{ record.mentorRole }}</span>
             </div>
           </template>
@@ -172,219 +176,286 @@
 
     <a-modal
       v-model:open="detailVisible"
-      :title="currentCourse?.detailTitle || ''"
-      :width="620"
+      :width="600"
       :footer="null"
-      :wrap-class-name="`modal-accent ${detailToneClass}`"
+      :closable="false"
+      wrap-class-name="course-log-modal"
       @cancel="detailVisible = false"
     >
-      <div class="detail-stack">
-        <div v-if="currentCourse" class="detail-summary-card">
-          <div class="detail-summary-card__avatar">{{ mentorInitials(currentCourse.mentor) }}</div>
-          <div class="detail-summary-card__copy">
-            <strong>{{ currentCourse.mentor }}</strong>
-            <span>{{ currentCourse.mentorRole }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
-            <div class="detail-summary-card__tags">
-              <span class="record-tag" :class="mapTagTone(currentCourse.coachingTagColor)">
-                {{ currentCourse.coachingType }}
-              </span>
-              <span class="record-tag" :class="mapTagTone(currentCourse.contentTagColor)">
-                {{ currentCourse.courseContent }}
-              </span>
-            </div>
-          </div>
-          <a-tag :color="currentCourse.ratingColor">{{ currentCourse.ratingLabel }}</a-tag>
+      <header v-if="currentCourse" class="course-log__header">
+        <div class="course-log__top">
+          <span class="course-log__rec-id">{{ currentCourse.recordId }}</span>
+          <span class="course-log__top-sep">·</span>
+          <span class="course-log__top-tag">{{ currentCourse.coachingType }}</span>
+          <span class="course-log__top-sep">·</span>
+          <span class="course-log__top-tag course-log__top-tag--muted">{{ currentCourse.courseContent }}</span>
+          <button
+            class="course-log__close"
+            type="button"
+            aria-label="关闭"
+            @click="detailVisible = false"
+          >
+            <i class="mdi mdi-close" aria-hidden="true"></i>
+          </button>
         </div>
-        <section class="detail-section-card">
-          <div class="detail-section-card__title">
-            <i class="mdi mdi-information-outline" aria-hidden="true"></i>
-            课程信息
-          </div>
-          <div class="detail-info-list">
-            <div class="detail-info-row">
-              <span>{{ classRecordsMeta.detailDialog.fields.recordId }}</span>
-              <strong>{{ currentCourse?.recordId }}</strong>
-            </div>
-            <div class="detail-info-row">
-              <span>{{ classRecordsMeta.detailDialog.fields.coachingDetail }}</span>
-              <strong>{{ currentCourse?.coachingDetail }}</strong>
-            </div>
-            <div class="detail-info-row">
-              <span>{{ classRecordsMeta.detailDialog.fields.courseContent }}</span>
-              <strong>{{ currentCourse?.courseContent }}</strong>
-            </div>
-            <div class="detail-info-row">
-              <span>{{ classRecordsMeta.detailDialog.fields.mentor }}</span>
-              <strong>{{ currentCourse?.mentor }} · {{ currentCourse?.mentorRole }}</strong>
-            </div>
-            <div class="detail-info-row">
-              <span>{{ classRecordsMeta.detailDialog.fields.classDate }}</span>
-              <strong>{{ currentCourse?.classDate }}</strong>
-            </div>
-            <div class="detail-info-row">
-              <span>{{ classRecordsMeta.detailDialog.fields.duration }}</span>
-              <strong>{{ currentCourse?.duration }}</strong>
-            </div>
-            <div class="detail-info-row">
-              <span>当前评价</span>
-              <strong>{{ detailRatingSummary }}</strong>
-            </div>
-          </div>
-        </section>
+        <h2 class="course-log__mentor">{{ formatMentorDisplay(currentCourse.mentor) }}</h2>
+        <p class="course-log__meta">
+          <span>{{ currentCourse.mentorRole }}</span>
+          <span class="course-log__meta-dot">·</span>
+          <span>{{ currentCourse.classDate }}</span>
+          <span class="course-log__meta-dot">·</span>
+          <span>{{ currentCourse.duration }}</span>
+          <span v-if="currentCourse.ratingLabel" class="course-log__meta-rating">
+            <i class="mdi mdi-star" aria-hidden="true"></i>
+            {{ currentCourse.ratingLabel }}
+          </span>
+        </p>
+      </header>
 
-        <section class="detail-section-card">
-          <div class="detail-section-card__title">
-            <i class="mdi mdi-clipboard-text-outline" aria-hidden="true"></i>
-            详细信息
-          </div>
-          <div class="detail-feedback-card" style="background: #fff; border: 1px solid #e2e8f0">
-            <template v-if="currentCourse?.detailKind === 'mock'">
-              <div v-if="currentCourse?.mockPurpose" style="margin-bottom: 10px">
-                <strong>模拟面试目的：</strong>{{ currentCourse.mockPurpose }}
-              </div>
-              <div v-if="currentCourse?.mockTopics" style="margin-bottom: 10px">
-                <strong>涉及概念和主题：</strong>{{ currentCourse.mockTopics }}
-              </div>
-              <div v-if="currentCourse?.mockImprovements" style="margin-bottom: 10px">
-                <strong>需要改进的方面：</strong>{{ currentCourse.mockImprovements }}
-              </div>
-              <div v-if="currentCourse?.mentorRatingLabel">
-                <strong>导师评价：</strong>{{ currentCourse.mentorRatingEmoji || '' }} {{ currentCourse.mentorRatingLabel }}
-              </div>
-            </template>
+      <section v-if="currentCourse" class="course-log__body">
+        <!-- 课程信息 definition list -->
+        <div class="course-log__section">
+          <div class="course-log__section-label">课程信息</div>
+          <dl class="course-log__deflist">
+            <div class="course-log__deflist-row">
+              <dt>{{ classRecordsMeta.detailDialog.fields.recordId }}</dt>
+              <dd class="course-log__deflist-mono">{{ currentCourse.recordId }}</dd>
+            </div>
+            <div class="course-log__deflist-row">
+              <dt>{{ classRecordsMeta.detailDialog.fields.coachingDetail }}</dt>
+              <dd>{{ currentCourse.coachingDetail }}</dd>
+            </div>
+            <div class="course-log__deflist-row">
+              <dt>{{ classRecordsMeta.detailDialog.fields.courseContent }}</dt>
+              <dd>{{ currentCourse.courseContent }}</dd>
+            </div>
+            <div class="course-log__deflist-row">
+              <dt>{{ classRecordsMeta.detailDialog.fields.mentor }}</dt>
+              <dd>{{ formatMentorDisplay(currentCourse.mentor) }} · {{ currentCourse.mentorRole }}</dd>
+            </div>
+            <div class="course-log__deflist-row">
+              <dt>{{ classRecordsMeta.detailDialog.fields.classDate }}</dt>
+              <dd>{{ currentCourse.classDate }}</dd>
+            </div>
+            <div class="course-log__deflist-row">
+              <dt>{{ classRecordsMeta.detailDialog.fields.duration }}</dt>
+              <dd>{{ currentCourse.duration }}</dd>
+            </div>
+            <div class="course-log__deflist-row">
+              <dt>当前评价</dt>
+              <dd>{{ detailRatingSummary }}</dd>
+            </div>
+          </dl>
+        </div>
 
-            <template v-else-if="currentCourse?.detailKind === 'networking'">
-              <div v-if="currentCourse?.networkingScores && currentCourse.networkingScores.length" class="detail-info-list">
-                <div v-for="item in currentCourse.networkingScores" :key="item.itemName" class="detail-info-row">
-                  <span>{{ item.itemName }}</span>
-                  <strong>{{ item.score }}/{{ item.maxScore }}{{ item.label ? ` · ${item.label}` : '' }}</strong>
-                </div>
-              </div>
-              <div v-if="currentCourse?.mentorRecommendation" style="margin-top: 10px">
-                <strong>导师推荐：</strong>{{ currentCourse.mentorRecommendation }}
-              </div>
-            </template>
+        <!-- 课程详细（mock / networking / midterm）：只有真实有内容才渲染 -->
+        <div v-if="hasCourseDetailContent" class="course-log__section">
+          <div class="course-log__section-label">详细信息</div>
 
-            <template v-else-if="currentCourse?.detailKind === 'midterm'">
-              <div v-if="currentCourse?.examScoreLabel" style="margin-bottom: 10px">
-                <strong>考试得分：</strong>{{ currentCourse.examScoreLabel }}
+          <template v-if="currentCourse.detailKind === 'mock'">
+            <dl class="course-log__deflist course-log__deflist--stacked">
+              <div v-if="currentCourse.mockPurpose" class="course-log__stacked-row">
+                <dt>模拟面试目的</dt>
+                <dd>{{ currentCourse.mockPurpose }}</dd>
               </div>
-              <div v-if="currentCourse?.examQuestions" style="margin-bottom: 10px; white-space: pre-line; line-height: 1.7">
-                <strong>逐题分析：</strong><br />{{ currentCourse.examQuestions }}
+              <div v-if="currentCourse.mockTopics" class="course-log__stacked-row">
+                <dt>涉及概念和主题</dt>
+                <dd>{{ currentCourse.mockTopics }}</dd>
               </div>
-              <div v-if="currentCourse?.studentProgressSummary" style="margin-top: 10px">
-                <strong>学生进度评估：</strong>{{ currentCourse.studentProgressSummary }}
+              <div v-if="currentCourse.mockImprovements" class="course-log__stacked-row">
+                <dt>需要改进的方面</dt>
+                <dd>{{ currentCourse.mockImprovements }}</dd>
               </div>
-            </template>
+              <div v-if="currentCourse.mentorRatingLabel" class="course-log__stacked-row">
+                <dt>导师评价</dt>
+                <dd>{{ currentCourse.mentorRatingEmoji || '' }} {{ currentCourse.mentorRatingLabel }}</dd>
+              </div>
+            </dl>
+          </template>
 
-            <template v-else>
-              <div style="color: #64748b">暂无更多详情字段。</div>
-            </template>
-          </div>
-        </section>
+          <template v-else-if="currentCourse.detailKind === 'networking'">
+            <dl
+              v-if="currentCourse.networkingScores?.length"
+              class="course-log__deflist"
+            >
+              <div
+                v-for="item in currentCourse.networkingScores"
+                :key="item.itemName"
+                class="course-log__deflist-row"
+              >
+                <dt>{{ item.itemName }}</dt>
+                <dd>
+                  <span class="course-log__deflist-mono">{{ item.score }} / {{ item.maxScore }}</span>
+                  <span v-if="item.label" class="course-log__deflist-tail">· {{ item.label }}</span>
+                </dd>
+              </div>
+            </dl>
+            <div v-if="currentCourse.mentorRecommendation" class="course-log__stacked-row">
+              <dt>导师推荐</dt>
+              <dd>{{ currentCourse.mentorRecommendation }}</dd>
+            </div>
+          </template>
 
-        <section class="detail-section-card detail-section-card--feedback">
-          <div class="detail-section-card__title">
-            <i class="mdi mdi-comment-text-outline" aria-hidden="true"></i>
-            课程反馈
-          </div>
-          <div class="detail-feedback-card">
-            {{ currentCourse?.mentorFeedback || currentCourse?.ratingFeedback || '当前还没有填写详细反馈，完成反馈后会在这里显示。' }}
-          </div>
+          <template v-else-if="currentCourse.detailKind === 'midterm'">
+            <dl class="course-log__deflist course-log__deflist--stacked">
+              <div v-if="currentCourse.examScoreLabel" class="course-log__stacked-row">
+                <dt>考试得分</dt>
+                <dd>{{ currentCourse.examScoreLabel }}</dd>
+              </div>
+              <div v-if="currentCourse.examQuestions" class="course-log__stacked-row">
+                <dt>逐题分析</dt>
+                <dd class="course-log__preline">{{ currentCourse.examQuestions }}</dd>
+              </div>
+              <div v-if="currentCourse.studentProgressSummary" class="course-log__stacked-row">
+                <dt>学生进度评估</dt>
+                <dd>{{ currentCourse.studentProgressSummary }}</dd>
+              </div>
+            </dl>
+          </template>
+        </div>
+
+        <!-- 导师反馈 quote -->
+        <div class="course-log__section">
+          <div class="course-log__section-label">课程反馈</div>
+          <blockquote class="course-log__quote">
+            {{ currentCourse.mentorFeedback || currentCourse.ratingFeedback || '当前还没有填写详细反馈，完成反馈后会在这里显示。' }}
+          </blockquote>
           <div
-            v-if="currentCourse?.ratingTags"
-            class="detail-feedback-tags"
+            v-if="currentCourse.ratingTags"
+            class="course-log__tags"
           >
             <span
               v-for="tag in currentCourse.ratingTags.split(',').filter(Boolean)"
               :key="tag"
-              class="detail-feedback-tag"
+              class="course-log__tag"
             >
               {{ tag }}
             </span>
           </div>
-        </section>
-      </div>
-      <div class="profile-modal__footer" style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px">
-        <a-button @click="detailVisible = false">{{ classRecordsMeta.detailDialog.closeLabel }}</a-button>
-        <a-button type="primary" @click="handleDetailConfirm">
+        </div>
+      </section>
+
+      <footer class="course-log__footer">
+        <a-button class="course-log__btn course-log__btn--ghost" @click="detailVisible = false">
+          {{ classRecordsMeta.detailDialog.closeLabel }}
+        </a-button>
+        <a-button
+          type="primary"
+          class="course-log__btn course-log__btn--primary"
+          @click="handleDetailConfirm"
+        >
           {{ classRecordsMeta.detailDialog.confirmLabel }}
         </a-button>
-      </div>
+      </footer>
     </a-modal>
 
+    <!-- ============= 评分弹窗（与详情同套简约风格） ============= -->
     <a-modal
       v-model:open="rateVisible"
-      :title="classRecordsMeta.ratingDialog.title"
-      :width="550"
+      :width="560"
       :footer="null"
-      wrap-class-name="modal-accent modal-accent--amber"
+      :closable="false"
+      wrap-class-name="course-log-modal"
       @cancel="rateVisible = false"
     >
-      <div class="rate-stack">
-        <div v-if="currentCourse" class="rate-course-card">
-          <div class="rate-course-card__avatar">{{ mentorInitials(currentCourse.mentor) }}</div>
-          <div class="rate-course-card__copy">
-            <strong>{{ currentCourse.mentor }}</strong>
-            <span>{{ currentCourse.mentorRole }} · {{ currentCourse.classDate }} · {{ currentCourse.duration }}</span>
-            <div class="rate-course-card__tags">
-              <span class="record-tag" :class="mapTagTone(currentCourse.coachingTagColor)">
-                {{ currentCourse.coachingType }}
-              </span>
-              <span class="record-tag" :class="mapTagTone(currentCourse.contentTagColor)">
-                {{ currentCourse.courseContent }}
-              </span>
-            </div>
-          </div>
+      <header v-if="currentCourse" class="course-log__header">
+        <div class="course-log__top">
+          <span class="course-log__rec-id">{{ currentCourse.recordId }}</span>
+          <span class="course-log__top-sep">·</span>
+          <span class="course-log__top-tag">{{ classRecordsMeta.ratingDialog.title }}</span>
+          <button
+            class="course-log__close"
+            type="button"
+            aria-label="关闭"
+            @click="rateVisible = false"
+          >
+            <i class="mdi mdi-close" aria-hidden="true"></i>
+          </button>
         </div>
-        <a-form layout="vertical">
-          <a-form-item :label="classRecordsMeta.ratingDialog.scoreLabel">
-            <div class="rating-button-row">
-              <a-button
+        <h2 class="course-log__mentor">{{ formatMentorDisplay(currentCourse.mentor) }}</h2>
+        <p class="course-log__meta">
+          <span>{{ currentCourse.mentorRole }}</span>
+          <span class="course-log__meta-dot">·</span>
+          <span>{{ currentCourse.classDate }}</span>
+          <span class="course-log__meta-dot">·</span>
+          <span>{{ currentCourse.duration }}</span>
+          <span>·</span>
+          <span>{{ currentCourse.coachingType }} / {{ currentCourse.courseContent }}</span>
+        </p>
+      </header>
+
+      <section class="course-log__body">
+        <!-- 整体评分 -->
+        <div class="course-log__section">
+          <div class="course-log__section-label">整体评分</div>
+          <div class="course-log__form-row">
+            <div class="course-log__stars">
+              <button
                 v-for="score in ratingButtons"
                 :key="score"
-                shape="circle"
-                class="rating-star-button"
-                :class="{ 'rating-star-button--active': rateForm.rating !== null && score <= rateForm.rating }"
+                type="button"
+                class="course-log__star"
+                :class="{ 'course-log__star--active': rateForm.rating !== null && score <= rateForm.rating }"
+                :aria-label="`${score} 星`"
                 @click="setRating(score)"
               >
-                ⭐
-              </a-button>
-              <span id="rating-text" class="rating-text">{{ ratingText }}</span>
+                <i class="mdi mdi-star" aria-hidden="true"></i>
+              </button>
             </div>
-          </a-form-item>
-          <a-form-item :label="classRecordsMeta.ratingDialog.tagLabel">
-            <div class="rating-tag-chip-list">
-              <a-button
-                v-for="option in classRecordsMeta.ratingDialog.tagOptions"
-                :key="option.value"
-                size="small"
-                class="rating-tag-chip"
-                :class="{ 'rating-tag-chip--active': rateForm.tags.includes(option.value) }"
-                @click="toggleRateTag(option.value)"
-              >
-                {{ option.label }}
-              </a-button>
-            </div>
-            <div class="rating-tag-chip-hint">
-              {{ rateForm.tags.length > 0 ? `已选择 ${rateForm.tags.length} 项标签` : classRecordsMeta.ratingDialog.tagPlaceholder }}
-            </div>
-          </a-form-item>
-          <a-form-item :label="classRecordsMeta.ratingDialog.feedbackLabel">
+            <span v-if="rateForm.rating" class="course-log__stars-label">
+              <strong>{{ rateForm.rating }}</strong>{{ ratingDescriptionText }}
+            </span>
+            <span v-else class="course-log__stars-hint">点击星星给本节课打分</span>
+          </div>
+        </div>
+
+        <!-- 评价标签 -->
+        <div class="course-log__section">
+          <div class="course-log__section-label">评价标签</div>
+          <div class="course-log__chips">
+            <button
+              v-for="option in classRecordsMeta.ratingDialog.tagOptions"
+              :key="option.value"
+              type="button"
+              class="course-log__chip"
+              :class="{ 'course-log__chip--active': rateForm.tags.includes(option.value) }"
+              @click="toggleRateTag(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+          <div class="course-log__chip-hint">
+            {{ rateForm.tags.length > 0
+              ? `已选择 ${rateForm.tags.length} 项标签`
+              : classRecordsMeta.ratingDialog.tagPlaceholder }}
+          </div>
+        </div>
+
+        <!-- 详细反馈 -->
+        <div class="course-log__section">
+          <div class="course-log__section-label">详细反馈</div>
+          <div class="course-log__textarea-wrap">
             <a-textarea
               v-model:value="rateForm.feedback"
               :rows="4"
               :placeholder="classRecordsMeta.ratingDialog.feedbackPlaceholder"
             />
-          </a-form-item>
-        </a-form>
-      </div>
-      <div class="profile-modal__footer" style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px">
-        <a-button @click="rateVisible = false">{{ classRecordsMeta.ratingDialog.cancelLabel }}</a-button>
-        <a-button type="primary" @click="submitRate">
+          </div>
+        </div>
+      </section>
+
+      <footer class="course-log__footer">
+        <a-button class="course-log__btn course-log__btn--ghost" @click="rateVisible = false">
+          {{ classRecordsMeta.ratingDialog.cancelLabel }}
+        </a-button>
+        <a-button
+          type="primary"
+          class="course-log__btn course-log__btn--primary"
+          @click="submitRate"
+        >
           {{ classRecordsMeta.ratingDialog.submitLabel }}
         </a-button>
-      </div>
+      </footer>
     </a-modal>
   </div>
 </template>
@@ -452,6 +523,47 @@ const ratingText = computed(() => {
   return `${rateForm.value.rating}分 - ${ratingDescriptions[rateForm.value.rating]}`
 })
 
+// 用于新的 course-log 评分弹窗：分离"X分"前缀和" - 描述"后缀
+// 模板里 <strong>{{ rating }}</strong>{{ ratingDescriptionText }}
+const ratingDescriptionText = computed(() => {
+  if (rateForm.value.rating === null) {
+    return ''
+  }
+  const desc = ratingDescriptions[rateForm.value.rating]
+  return desc ? `分 · ${desc}` : '分'
+})
+
+// ============================================================
+// 顶部"新增课程记录"提醒 banner 的动态字段
+// 直接从 courseRecords（list 接口数据）计算，不依赖 meta 接口冗余的同名字段，
+// 保证 banner 与下方表格永远基于同一份数据，不会出现"banner 说 N 条但表里 M 条"的不一致。
+// 同时彻底规避 meta 后端 fallback 出来的占位 mentor（"Jerry Li" 死种子）。
+// isNew 来自后端 listStudentClassRecords 返回字段：评分为空 → 该条记录尚未被学生评价
+// ============================================================
+const newRecordsList = computed(() =>
+  courseRecords.value.filter((r) => r.isNew),
+)
+
+const newRecordCount = computed(() => newRecordsList.value.length)
+
+/**
+ * 格式化导师显示名：
+ * 后端可能返回邮箱格式（如 alex.ren@osg-staff.local），
+ * 给学生看的页面只需要 @ 之前的部分（alex.ren）即可。
+ * 已经是普通名字（含中文）的输入原样返回。
+ */
+function formatMentorDisplay(name?: string | null): string {
+  const raw = (name ?? '').trim()
+  if (!raw) return ''
+  const at = raw.indexOf('@')
+  return at > 0 ? raw.slice(0, at) : raw
+}
+
+const firstNewRecordMentor = computed(() => {
+  const first = newRecordsList.value[0]
+  return formatMentorDisplay(first?.mentor)
+})
+
 const detailToneClass = computed(() => {
   switch (currentCourse.value?.detailKind) {
     case 'mock':
@@ -478,6 +590,23 @@ const detailRatingSummary = computed(() => {
   return `${score}分 · ${currentCourse.value.ratingLabel}`
 })
 
+// 课程详细 section 是否有任何可见内容（避免空 section）
+const hasCourseDetailContent = computed(() => {
+  const c = currentCourse.value
+  if (!c) return false
+
+  if (c.detailKind === 'mock') {
+    return !!(c.mockPurpose || c.mockTopics || c.mockImprovements || c.mentorRatingLabel)
+  }
+  if (c.detailKind === 'networking') {
+    return !!((c.networkingScores && c.networkingScores.length) || c.mentorRecommendation)
+  }
+  if (c.detailKind === 'midterm') {
+    return !!(c.examScoreLabel || c.examQuestions || c.studentProgressSummary)
+  }
+  return false
+})
+
 const visibleCourses = computed(() => {
   const keyword = filters.value.keyword.trim().toLowerCase()
 
@@ -489,9 +618,12 @@ const visibleCourses = computed(() => {
 
     const matchesKeyword =
       keyword.length === 0 ||
-      [record.mentor, record.coachingDetail, record.recordId].some((value) =>
-        value.toLowerCase().includes(keyword)
-      )
+      [
+        record.mentor,
+        formatMentorDisplay(record.mentor), // 让用户搜显示名（去 @ 后的部分）也能命中
+        record.coachingDetail,
+        record.recordId,
+      ].some((value) => (value ?? '').toLowerCase().includes(keyword))
 
     const matchesCoachingType =
       !filters.value.coachingType || record.coachingType === filters.value.coachingType
@@ -514,9 +646,7 @@ function createDefaultMeta(): StudentClassRecordsMeta {
       iconLabel: '',
       title: '',
       leadText: '',
-      mentorName: '',
       middleText: '',
-      newRecordCount: 0,
       suffixText: '',
       ctaLabel: ''
     },
@@ -1038,6 +1168,7 @@ onMounted(() => {
   .mentor-cell {
     display: flex;
     flex-direction: column;
+    align-items: flex-start; // 防止 inline tag 被 column flex 默认的 stretch 拉满列宽
     gap: 4px;
   }
 
@@ -1303,6 +1434,583 @@ onMounted(() => {
     .detail-info-row {
       align-items: flex-start;
       flex-direction: column;
+    }
+  }
+}
+</style>
+
+<!-- ============================================================
+     Course Log —— 课程详情弹窗（简约但不简单）
+     设计原则：减法 / 留白 / 排版做层次 / 不堆叠 card
+     用 unscoped 因为 a-modal 通过 teleport 渲染到 document.body
+     ============================================================ -->
+<style lang="scss">
+.course-log-modal {
+  // 与原型色板一致（osg-spec-docs/source/prototype/index.html）
+  // primary #7399C6 / primary-dark #5A7BA3 / primary-light #E8F0F8
+  --log-ink: #1e293b;
+  --log-ink-soft: #475569;
+  --log-ink-mute: #94a3b8;
+  --log-rule: #ebeef3;
+  --log-rule-soft: #f5f7fa;
+  --log-accent: #5a7ba3;
+  --log-accent-light: #7399c6;
+  --log-accent-soft: #e8f0f8;
+  --log-accent-tint: rgba(115, 153, 198, 0.10);
+  --log-paper: #fff;
+
+  // ============== Modal 外壳重置：纯白纸感 ==============
+  .ant-modal-content {
+    overflow: hidden;
+    padding: 0;
+    border-radius: 16px;
+    background: var(--log-paper);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.6) inset,
+      0 24px 56px -22px rgba(15, 23, 42, 0.28),
+      0 6px 18px -8px rgba(15, 23, 42, 0.12);
+  }
+
+  .ant-modal-body {
+    padding: 0 !important;
+  }
+
+  // ============== Header（极简） ==============
+  .course-log__header {
+    padding: 24px 32px 18px;
+    border-bottom: 1px solid var(--log-rule);
+  }
+
+  .course-log__top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    color: var(--log-ink-mute);
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+
+  .course-log__rec-id {
+    color: var(--log-accent);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  .course-log__top-sep {
+    color: #cbd5e1;
+  }
+
+  .course-log__top-tag {
+    color: var(--log-ink-soft);
+    font-family: 'PingFang SC', 'Source Han Sans SC', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .course-log__top-tag--muted {
+    color: var(--log-ink-mute);
+  }
+
+  .course-log__close {
+    margin-left: auto;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--log-ink-mute);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s ease;
+
+    .mdi {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    &:hover {
+      background: var(--log-rule-soft);
+      color: var(--log-ink);
+    }
+  }
+
+  .course-log__mentor {
+    margin: 0 0 6px;
+    color: var(--log-ink);
+    font-family: 'PingFang SC', 'Source Han Sans SC', system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.012em;
+    line-height: 1.3;
+  }
+
+  .course-log__meta {
+    margin: 0;
+    color: var(--log-ink-soft);
+    font-size: 13px;
+    line-height: 1.65;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .course-log__meta-dot {
+    color: #cbd5e1;
+  }
+
+  .course-log__meta-rating {
+    margin-left: 4px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+    border: 1px solid #fde68a;
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+
+    .mdi {
+      font-size: 13px;
+      color: #f59e0b;
+    }
+  }
+
+  // ============== Body ==============
+  .course-log__body {
+    padding: 8px 32px;
+    max-height: 60vh;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar { width: 6px; }
+    &::-webkit-scrollbar-thumb {
+      background: var(--log-rule);
+      border-radius: 3px;
+    }
+  }
+
+  .course-log__section {
+    padding: 18px 0;
+
+    & + .course-log__section {
+      border-top: 1px dashed var(--log-rule);
+    }
+
+    &:last-child {
+      padding-bottom: 4px;
+    }
+  }
+
+  .course-log__section-label {
+    margin-bottom: 14px;
+    color: var(--log-accent);
+    font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: var(--log-accent);
+      vertical-align: middle;
+      transform: translateY(-1px);
+    }
+  }
+
+  // ============== Definition list（label 左，value 右） ==============
+  .course-log__deflist {
+    margin: 0;
+    padding: 0;
+
+    .course-log__deflist-row {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 16px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--log-rule-soft);
+      align-items: baseline;
+
+      &:last-child {
+        border-bottom: 0;
+      }
+
+      dt {
+        color: var(--log-ink-mute);
+        font-size: 12.5px;
+        font-weight: 500;
+        line-height: 1.5;
+      }
+
+      dd {
+        margin: 0;
+        color: var(--log-ink);
+        font-size: 13.5px;
+        font-weight: 500;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  // 堆叠模式：label 在上，value 在下（适合长 value）
+  .course-log__deflist--stacked {
+    .course-log__stacked-row {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--log-rule-soft);
+
+      &:last-child {
+        border-bottom: 0;
+      }
+
+      dt {
+        margin-bottom: 6px;
+        color: var(--log-ink-mute);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+      }
+
+      dd {
+        margin: 0;
+        color: var(--log-ink);
+        font-size: 13.5px;
+        line-height: 1.7;
+      }
+    }
+  }
+
+  // 单独使用的 stacked-row（在 networking 里）
+  .course-log__stacked-row {
+    padding: 12px 0 0;
+    margin-top: 12px;
+    border-top: 1px dashed var(--log-rule);
+
+    dt {
+      margin-bottom: 6px;
+      color: var(--log-ink-mute);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    dd {
+      margin: 0;
+      color: var(--log-ink);
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+  }
+
+  .course-log__deflist-mono {
+    font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--log-accent);
+    font-weight: 600;
+  }
+
+  .course-log__deflist-tail {
+    margin-left: 6px;
+    color: var(--log-ink-soft);
+    font-weight: 400;
+  }
+
+  .course-log__preline {
+    white-space: pre-line;
+  }
+
+  // ============== Quote 反馈 ==============
+  .course-log__quote {
+    position: relative;
+    margin: 0;
+    padding: 4px 0 4px 18px;
+    color: var(--log-ink);
+    font-size: 14px;
+    font-style: normal;
+    line-height: 1.75;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      left: 0;
+      width: 3px;
+      border-radius: 2px;
+      background: var(--log-accent);
+      opacity: 0.5;
+    }
+  }
+
+  // ============== Tag pills ==============
+  .course-log__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .course-log__tag {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--log-accent-soft);
+    color: var(--log-accent);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  // ============== Footer ==============
+  .course-log__footer {
+    padding: 16px 32px 22px;
+    border-top: 1px solid var(--log-rule);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: linear-gradient(180deg, transparent 0%, var(--log-rule-soft) 100%);
+  }
+
+  .course-log__btn {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  .course-log__btn--ghost {
+    background: transparent;
+    border-color: var(--log-rule);
+    color: var(--log-ink-soft);
+
+    &:hover {
+      border-color: var(--log-ink-mute);
+      color: var(--log-ink);
+      background: #fff;
+    }
+  }
+
+  .course-log__btn--primary.ant-btn-primary {
+    background: linear-gradient(135deg, #7399c6 0%, #5a7ba3 100%) !important;
+    border-color: var(--log-accent) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px -4px rgba(115, 153, 198, 0.55);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background: linear-gradient(135deg, #5a7ba3 0%, #486889 100%) !important;
+      border-color: #486889 !important;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px -4px rgba(90, 123, 163, 0.6);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px -2px rgba(90, 123, 163, 0.5);
+    }
+  }
+
+  // ============================================================
+  // 评分弹窗（rate）扩展：复用骨架，body 是表单
+  // ============================================================
+  .course-log__form-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  // 5 颗星按钮
+  .course-log__stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 14px;
+  }
+
+  .course-log__star {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--log-rule);
+    border-radius: 9px;
+    background: #fff;
+    color: #cbd5e1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s ease;
+
+    .mdi {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    &:hover {
+      border-color: #fcd34d;
+      color: #f59e0b;
+      background: #fffbeb;
+      transform: translateY(-1px);
+    }
+
+    &.course-log__star--active {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-color: #fcd34d;
+      color: #f59e0b;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 1px 2px rgba(245, 158, 11, 0.15);
+    }
+  }
+
+  .course-log__stars-label {
+    color: var(--log-ink);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.5;
+
+    strong {
+      color: #b45309;
+      font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+  }
+
+  .course-log__stars-hint {
+    color: var(--log-ink-mute);
+    font-size: 12.5px;
+    font-style: italic;
+  }
+
+  // Tag chip 选择
+  .course-log__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .course-log__chip {
+    height: auto;
+    padding: 6px 12px;
+    border: 1px solid var(--log-rule);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--log-ink-soft);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    &:hover {
+      border-color: var(--log-accent-light);
+      color: var(--log-accent);
+      background: var(--log-accent-tint);
+    }
+
+    &.course-log__chip--active {
+      border-color: var(--log-accent);
+      background: var(--log-accent-soft);
+      color: var(--log-accent);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(90, 123, 163, 0.12);
+
+      &::before {
+        content: '✓';
+        margin-right: 4px;
+        font-weight: 700;
+      }
+    }
+  }
+
+  .course-log__chip-hint {
+    margin-top: 8px;
+    color: var(--log-ink-mute);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  // 表单字段标签
+  .course-log__field-label {
+    margin-bottom: 10px;
+    color: var(--log-ink);
+    font-size: 13px;
+    font-weight: 600;
+
+    .course-log__required {
+      color: #e11d48;
+      margin-left: 2px;
+    }
+
+    .course-log__field-hint {
+      margin-left: 8px;
+      color: var(--log-ink-mute);
+      font-size: 11.5px;
+      font-weight: 400;
+    }
+  }
+
+  // Textarea 包装
+  .course-log__textarea-wrap {
+    position: relative;
+
+    textarea.ant-input {
+      padding: 12px 14px;
+      border: 1px solid var(--log-rule);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--log-ink);
+      font-size: 13.5px;
+      line-height: 1.65;
+      resize: vertical;
+      transition: all 0.18s ease;
+
+      &::placeholder {
+        color: var(--log-ink-mute);
+      }
+
+      &:hover {
+        border-color: var(--log-accent-light);
+      }
+
+      &:focus {
+        border-color: var(--log-accent);
+        box-shadow: 0 0 0 3px var(--log-accent-tint);
+      }
+    }
+  }
+
+  // ============== 移动端 ==============
+  @media (max-width: 640px) {
+    .course-log__header,
+    .course-log__body,
+    .course-log__footer {
+      padding-left: 22px;
+      padding-right: 22px;
+    }
+
+    .course-log__mentor {
+      font-size: 19px;
+    }
+
+    .course-log__deflist .course-log__deflist-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+
+      dt { font-size: 11.5px; }
     }
   }
 }

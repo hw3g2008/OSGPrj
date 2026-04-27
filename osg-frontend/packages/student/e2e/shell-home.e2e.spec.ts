@@ -161,9 +161,7 @@ test.beforeEach(async ({ page }) => {
             iconLabel: 'CR',
             title: '新增课程记录',
             leadText: '导师',
-            mentorName: 'Test Lead Mentor',
             middleText: '为您填报了',
-            newRecordCount: 1,
             suffixText: '条新的上课记录，请及时评价',
             ctaLabel: '去评价'
           },

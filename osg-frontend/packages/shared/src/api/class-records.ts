@@ -60,13 +60,17 @@ export interface StudentClassRecordsMeta {
     titleEn: string
     subtitle: string
   }
+  /**
+   * "新增课程记录"提醒 banner 的静态文案。
+   * 注意：动态字段（导师名 / 待评价记录数）由前端基于 listStudentClassRecords
+   * 返回的 records 中 isNew=true 的条目自行计算，不通过此接口下发，
+   * 以保证 banner 与下方表格基于同一数据源、永不漂移。
+   */
   reminderBanner: {
     iconLabel: string
     title: string
     leadText: string
-    mentorName: string
     middleText: string
-    newRecordCount: number
     suffixText: string
     ctaLabel: string
   }
