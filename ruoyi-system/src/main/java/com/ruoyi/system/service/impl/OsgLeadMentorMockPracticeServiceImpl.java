@@ -377,7 +377,7 @@ public class OsgLeadMentorMockPracticeServiceImpl implements IOsgLeadMentorMockP
         payload.put("requestedMentorCount", defaultNumber(practice.getRequestedMentorCount()));
         payload.put("preferredMentorNames", defaultText(practice.getPreferredMentorNames()));
         payload.put("status", defaultText(practice.getStatus(), STATUS_PENDING));
-        payload.put("statusLabel", statusLabel(practice.getStatus()));
+        // §D.3 已移除 statusLabel 固化字段输出；前端改用 deriveMockPracticeStatus composable 派生（SSOT）
         payload.put("mentorIds", splitCsv(practice.getMentorIds()));
         payload.put("mentorNames", defaultText(practice.getMentorNames()));
         payload.put("mentorBackgrounds", defaultText(practice.getMentorBackgrounds()));
@@ -514,19 +514,6 @@ public class OsgLeadMentorMockPracticeServiceImpl implements IOsgLeadMentorMockP
             case 6 -> "周六";
             case 7 -> "周日";
             default -> "未知";
-        };
-    }
-
-    private String statusLabel(String status)
-    {
-        return switch (normalize(status))
-        {
-            case STATUS_PENDING -> "待分配";
-            case "scheduled" -> "新分配";
-            case STATUS_CONFIRMED -> "已确认";
-            case "completed" -> "已完成";
-            case "cancelled" -> "已取消";
-            default -> defaultText(status, "-");
         };
     }
 

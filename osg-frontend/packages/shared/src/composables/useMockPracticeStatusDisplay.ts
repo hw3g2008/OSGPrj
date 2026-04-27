@@ -11,17 +11,23 @@
  * - completed 已完成    (success / green)
  * - cancelled 已取消    (default / gray)
  *
- * 与后端字段口径一致：
- * - status ∈ { 'pending' | 'scheduled' | 'confirmed' | 'completed' | 'cancelled' }
+ * 与后端字段口径一致，兼容两套枚举：
+ * - 数据库 raw status ∈ { 'pending' | 'scheduled' | 'confirmed' | 'completed' | 'cancelled' }
+ *   （osg_mock_practice.status 列的实际值，见 OsgMockPracticeServiceImpl.STATUS_*）
+ * - 派生 statusValue ∈ { 'pending' | 'assigned' | 'coaching' | 'completed' | 'cancelled' }
+ *   （StudentMockPracticeServiceImpl.toPracticeStatusValue 做过一次映射）
  * - plannedHours: §E.1/E.2 后端 toPayload 输出（requestedMentorCount × 字典）
  *
  * 派生规则（按优先级匹配）：
  * 1. status='cancelled' → cancelled
  * 2. status='completed' → completed（终态显式）
  * 3. completedHours >= plannedHours 且 plannedHours > 0 → completed（派生）
- * 4. status='confirmed' 且 completedHours > 0 → coaching（mentor 已开始上课）
- * 5. status in ('scheduled','confirmed') → assigned（已分配但未开始）
- * 6. 兜底 → pending
+ * 4. status='coaching'（派生值直接命中）→ coaching
+ * 5. status in ('scheduled','confirmed') 且 completedHours > 0 → coaching（mentor 已开始上课）
+ * 6. status='assigned'（派生值直接命中）→ assigned
+ * 7. status in ('scheduled','confirmed') → assigned（已分配但未开始）
+ * 8. status='submitted' → pending（数据库另一个别名）
+ * 9. 兜底 → pending
  *
  * 引用方：assistant / mentor / lead-mentor / admin / student 五端 mock-practice 列表/详情页
  */
@@ -72,13 +78,19 @@ export function deriveMockPracticeStatus(
   // 3. 已完成（派生：completedHours >= plannedHours 且 plannedHours > 0）
   if (planned > 0 && completed >= planned) return makeDisplay('completed')
 
-  // 4. 辅导中（mentor 已开始上课但未完成）
-  if (status === 'confirmed' && completed > 0) return makeDisplay('coaching')
+  // 4. 辅导中（派生值直接命中）
+  if (status === 'coaching') return makeDisplay('coaching')
 
-  // 5. 已分配（已分配导师但未开始）
+  // 5. 辅导中（数据库 raw：mentor 已开始上课但未完成）
+  if ((status === 'confirmed' || status === 'scheduled') && completed > 0) return makeDisplay('coaching')
+
+  // 6. 已分配（派生值直接命中）
+  if (status === 'assigned') return makeDisplay('assigned')
+
+  // 7. 已分配（数据库 raw：已分配导师但未开始）
   if (status === 'scheduled' || status === 'confirmed') return makeDisplay('assigned')
 
-  // 6. 兜底（pending 或未知）
+  // 8. 兜底（pending / submitted / 未知）
   return makeDisplay('pending')
 }
 

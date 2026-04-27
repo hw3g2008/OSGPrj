@@ -57,7 +57,6 @@ const pendingRows: LeadMentorMockPracticeItem[] = [
     requestedMentorCount: 2,
     preferredMentorNames: 'Jerry Li, Mike Chen',
     status: 'pending',
-    statusLabel: '待分配',
     submittedAt: '2026-03-21T10:00:00Z',
   },
 ]
@@ -70,7 +69,6 @@ const coachingRows: LeadMentorMockPracticeItem[] = [
     practiceType: '人际关系测试',
     requestContent: 'Leadership Test',
     status: 'scheduled',
-    statusLabel: '新分配',
     mentorIds: [810, 9201],
     mentorNames: 'Jess, Amy',
     mentorBackgrounds: 'Lead Mentor / Morgan Stanley',
@@ -84,7 +82,6 @@ const coachingRows: LeadMentorMockPracticeItem[] = [
     practiceType: '期中考试',
     requestContent: 'Midterm Review',
     status: 'completed',
-    statusLabel: '已完成',
     mentorNames: 'Jerry Li',
     completedHours: 2,
     completedHoursLabel: '2h',
@@ -103,7 +100,6 @@ const managedRows: LeadMentorMockPracticeItem[] = [
     requestedMentorCount: 2,
     preferredMentorNames: 'Jerry Li, Mike Chen',
     status: 'pending',
-    statusLabel: '待分配',
     submittedAt: '2026-03-21T10:00:00Z',
   },
   {
@@ -113,7 +109,6 @@ const managedRows: LeadMentorMockPracticeItem[] = [
     practiceType: '人际关系测试',
     requestContent: 'Leadership Test',
     status: 'scheduled',
-    statusLabel: '新分配',
     mentorNames: 'Jess, Amy',
     mentorBackgrounds: 'Lead Mentor / Morgan Stanley',
     submittedAt: '2026-03-22T11:00:00Z',
@@ -129,7 +124,6 @@ const assignDetail: LeadMentorMockPracticeItem = {
   requestedMentorCount: 2,
   preferredMentorNames: 'Jerry Li, Mike Chen',
   status: 'pending',
-  statusLabel: '待分配',
   submittedAt: '2026-03-21T10:00:00Z',
   mentorOptions: [
     {
@@ -156,7 +150,6 @@ const feedbackDetail: LeadMentorMockPracticeItem = {
   practiceType: '期中考试',
   requestContent: 'Midterm Review',
   status: 'completed',
-  statusLabel: '已完成',
   mentorNames: 'Jerry Li',
   mentorBackgrounds: 'Goldman Sachs IBD · 5年',
   completedHours: 2,
@@ -250,7 +243,6 @@ describe('lead-mentor mock practice real flow', () => {
     apiMocks.acknowledgeLeadMentorMockPractice.mockResolvedValue({
       practiceId: 9002,
       status: 'confirmed',
-      statusLabel: '已确认',
     })
   })
 
@@ -314,7 +306,6 @@ describe('lead-mentor mock practice real flow', () => {
           ? {
               ...row,
               status: 'scheduled',
-              statusLabel: '新分配',
               mentorNames: 'Jerry Li, Mike Chen',
               mentorBackgrounds: 'Goldman Sachs IBD · 5年 / McKinsey · 4年',
             }
@@ -323,7 +314,6 @@ describe('lead-mentor mock practice real flow', () => {
       return {
         practiceId: 9001,
         status: 'scheduled',
-        statusLabel: '新分配',
         mentorNames: 'Jerry Li, Mike Chen',
         mentorBackgrounds: 'Goldman Sachs IBD · 5年 / McKinsey · 4年',
       }
@@ -391,13 +381,12 @@ describe('lead-mentor mock practice real flow', () => {
     apiMocks.acknowledgeLeadMentorMockPractice.mockImplementation(async () => {
       scopedRows.coaching = scopedRows.coaching.map((row) =>
         row.practiceId === 9002
-          ? { ...row, status: 'confirmed', statusLabel: '已确认', isNewAssignment: false }
+          ? { ...row, status: 'confirmed', isNewAssignment: false }
           : row,
       )
       return {
         practiceId: 9002,
         status: 'confirmed',
-        statusLabel: '已确认',
       }
     })
 

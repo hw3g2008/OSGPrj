@@ -339,6 +339,8 @@ import {
   type StudentPositionRecord,
   type StudentProfileRecord,
 } from '@osg/shared/api'
+// §D.3 dashboard 卡片接入 SSOT composable，停止依赖后端 coachingStatusLabel 固化字段
+import { deriveApplicationStatus } from '@osg/shared/composables'
 
 const mockScoreColumns = [
   { title: '日期', dataIndex: 'date', key: 'date' },
@@ -578,7 +580,8 @@ const applicationsPreview = computed(() =>
     company: item.company || '-',
     office: item.location || '-',
     role: item.position || '-',
-    program: item.coachingStatusLabel || '-',
+    // §D.3 用 composable 派生（取代后端 coachingStatusLabel）
+    program: deriveApplicationStatus({ coachingStatus: item.coachingStatus }).label || '-',
     round: item.stageLabel || '-',
   })),
 )

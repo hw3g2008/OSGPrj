@@ -96,8 +96,6 @@ test.beforeEach(async ({ page }) => {
               interviewTime: '2026-03-20 09:00',
               interviewHint: '线上',
               coachingStatus: 'coaching',
-              coachingStatusLabel: '辅导中',
-              coachingColor: 'gold',
               mentor: 'Test Lead Mentor',
               mentorMeta: 'Lead Mentor',
               hoursFeedback: '2h',

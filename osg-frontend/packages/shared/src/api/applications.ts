@@ -14,8 +14,7 @@ export interface StudentApplicationRecord {
   interviewTime: string
   interviewHint: string
   coachingStatus: 'coaching' | 'pending' | 'none'
-  coachingStatusLabel: string
-  coachingColor: string
+  // §D.3 已移除 coachingStatusLabel / coachingColor 固化字段；前端用 deriveApplicationStatus composable 派生 SSOT
   mentor: string
   mentorMeta: string
   hoursFeedback: string

@@ -29,8 +29,7 @@ export interface StudentPositionRecord {
   reviewStatus?: string
   reviewStatusLabel?: string
   coachingStatus?: string
-  coachingStatusLabel?: string
-  coachingColor?: string
+  // §D.3 已移除 coachingStatusLabel / coachingColor 固化字段；前端用 deriveApplicationStatus composable 派生 SSOT
   appliedDate?: string
   applyMethod?: string
   requirements?: string

@@ -351,23 +351,15 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
                 record.put("typeColor", defaultString(stringValue(record.get("typeColor")), "blue"));
             }
 
+            // §D.3 保留 statusValue（派生值）供前端筛选；status 保留数据库 raw 枚举，
+            // 前端改用 deriveMockPracticeStatus composable 派生 label/tone（SSOT）
             String statusValue = stringValue(record.get("statusValue"));
             if (!StringUtils.hasText(statusValue))
             {
                 statusValue = stringValue(record.get("status"));
             }
             record.put("statusValue", statusValue);
-            SysDictData practiceStatus = practiceStatusDict.get(statusValue);
-            if (practiceStatus != null)
-            {
-                record.put("status", defaultString(practiceStatus.getDictLabel(), statusValue));
-                record.put("statusColor", defaultString(practiceStatus.getCssClass(), "default"));
-            }
-            else
-            {
-                record.put("status", toPracticeStatusLabel(statusValue));
-                record.put("statusColor", defaultString(stringValue(record.get("statusColor")), "default"));
-            }
+            // 不再输出 statusLabel / statusColor 固化字段
         }
         return practiceRecords;
     }
@@ -891,17 +883,7 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
         };
     }
 
-    private String toPracticeStatusLabel(String statusValue)
-    {
-        return switch (defaultString(statusValue, "")) {
-            case "pending" -> "待分配导师";
-            case "assigned" -> "已分配导师";
-            case "coaching" -> "辅导中";
-            case "completed" -> "已完成";
-            case "cancelled" -> "已取消";
-            default -> statusValue;
-        };
-    }
+    // §D.3 已移除 toPracticeStatusLabel：label 派生职责转移到前端 deriveMockPracticeStatus composable
 
 
     private Long toRequestId(Object requestId)

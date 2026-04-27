@@ -161,7 +161,7 @@ export interface LeadMentorMockPracticeItem {
   requestedMentorCount?: number
   preferredMentorNames?: string
   status: string
-  statusLabel?: string
+  // §D.3 已移除 statusLabel 固化字段；前端用 deriveMockPracticeStatus composable 派生 SSOT
   mentorIds?: number[]
   mentorNames?: string
   mentorBackgrounds?: string

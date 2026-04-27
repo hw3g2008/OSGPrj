@@ -157,7 +157,7 @@
               <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: #64748b; font-size: 12px">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'coachingStatus'">
-              <a-tag :color="coachingColor(record.coachingStatus)">{{ record.coachingStatus || '未申请' }}</a-tag>
+              <a-tag :color="resolveCoachingTagColor(record.coachingStatus)">{{ resolveCoachingTagLabel(record.coachingStatus) }}</a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'mentorName'">
               <div><strong>{{ record.mentorName || record.leadMentorName || '待分配' }}</strong><div style="color: #64748b; font-size: 12px">{{ record.mentorBackground || (record.assignedStatus === 'assigned' ? '导师信息待补充' : '未分配导师') }}</div></div>
@@ -205,6 +205,8 @@ import {
 } from '@osg/shared/api/admin/jobOverview'
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 import { useStandardClientPagination } from '@osg/shared'
+// §D.3 admin job-overview 接入 SSOT composable 派生辅导状态展示
+import { deriveApplicationStatus } from '@osg/shared/composables'
 
 type ActiveTab = 'pending' | 'all'
 
@@ -470,10 +472,22 @@ function stageColor(stage?: string): string {
   }
 }
 
-function coachingColor(status?: string): string {
-  if (status === '辅导中') return 'purple'
-  if (status === '待审批') return 'orange'
-  return 'default'
+// §D.3 admin job-overview 改用 SSOT composable，删除本地硬编码 coachingColor 函数
+function resolveCoachingTagColor(status?: string): string {
+  const display = deriveApplicationStatus({ coachingStatus: status })
+  switch (display.tone) {
+    case 'info': return 'purple'
+    case 'warning': return 'orange'
+    case 'danger': return 'red'
+    case 'success': return 'green'
+    default: return 'default'
+  }
+}
+
+function resolveCoachingTagLabel(status?: string): string {
+  // none / 未填 → '未申请'，其他走 composable 派生
+  if (!status || status === 'none') return '未申请'
+  return deriveApplicationStatus({ coachingStatus: status }).label || '未申请'
 }
 
 function allRowClassName(record: JobOverviewRow): string {

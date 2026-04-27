@@ -695,7 +695,8 @@ function toPracticeRow(row: LeadMentorMockPracticeItem, scope: ScopeKey): Practi
     typeIcon: typeUi.typeIcon,
     appliedAt: formatDateTime(row.submittedAt, 'MM/DD HH:mm'),
     rowTone: typeUi.rowTone,
-    status: row.statusLabel || row.status || '-',
+    // §D.3 SSOT：通过 deriveMockPracticeStatus 派生 label，不再读后端 statusLabel
+    status: deriveMockPracticeStatus({ status: row.status, completedHours: row.completedHours }).label || row.status || '-',
     statusTone: statusUi.statusTone,
     statusIcon: statusUi.statusIcon,
     hours: scope === 'managed' ? (row.completedHoursLabel || '-') : (row.completedHoursLabel || ''),
@@ -740,7 +741,8 @@ function buildFeedbackPreview(detail: LeadMentorMockPracticeItem): MockFeedbackP
     companyName: detail.requestContent || '-',
     sessionTime: formatDateTime(detail.scheduledAt || detail.submittedAt, 'YYYY-MM-DD HH:mm'),
     mentorName: detail.mentorNames || '-',
-    status: detail.statusLabel || detail.status || '-',
+    // §D.3 SSOT：详情 status 走 composable 派生
+    status: deriveMockPracticeStatus({ status: detail.status, completedHours: detail.completedHours }).label || detail.status || '-',
     score: normalizeScore(detail.feedbackRating),
     scoreLabel: resolveFeedbackTitle(detail),
     actualDuration: detail.completedHoursLabel || '-',
@@ -824,7 +826,7 @@ function resolveStatusUi(row: LeadMentorMockPracticeItem) {
   return { statusTone: toneClass, statusIcon: iconMap[display.value] || 'mdi-clock-outline' }
 }
 
-function resolveFeedbackTitle(row: Pick<LeadMentorMockPracticeItem, 'feedbackRating' | 'statusLabel' | 'status'>) {
+function resolveFeedbackTitle(row: Pick<LeadMentorMockPracticeItem, 'feedbackRating' | 'status' | 'completedHours'>) {
   const rating = normalizeScore(row.feedbackRating)
   if (rating >= 5) {
     return '优秀'
@@ -835,7 +837,8 @@ function resolveFeedbackTitle(row: Pick<LeadMentorMockPracticeItem, 'feedbackRat
   if (rating >= 3) {
     return '待改进'
   }
-  return row.statusLabel || row.status || '待反馈'
+  // §D.3 SSOT：兜底走 composable 派生
+  return deriveMockPracticeStatus({ status: row.status, completedHours: row.completedHours }).label || row.status || '待反馈'
 }
 
 function resolveFeedbackTone(rating?: number) {

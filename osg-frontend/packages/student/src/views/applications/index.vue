@@ -461,7 +461,7 @@ import {
 import { deriveApplicationStatus } from '@osg/shared/composables'
 
 /**
- * §D.4 用 composable 派生展示态。优先用前端派生，后端固化字段做兜底（向后兼容）。
+ * §D.4 + D.3 用 composable 派生展示态（SSOT，单一来源），不再读后端固化字段。
  */
 function getApplicationCoachingDisplay(record: StudentApplicationRecord) {
   const display = deriveApplicationStatus({
@@ -469,9 +469,9 @@ function getApplicationCoachingDisplay(record: StudentApplicationRecord) {
     // student 端 row 暂未含 assignStatus，仅传 coachingStatus（composable 会兜底为 pending）
   })
   return {
-    label: display.label || record.coachingStatusLabel || '-',
+    label: display.label || '-',
     // a-tag color 兼容 antdv 内建色名，用 composable tone 直接映射
-    color: mapToneToAntdColor(display.tone) || record.coachingColor || 'default',
+    color: mapToneToAntdColor(display.tone),
   }
 }
 

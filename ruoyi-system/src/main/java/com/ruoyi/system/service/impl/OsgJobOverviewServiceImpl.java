@@ -320,7 +320,8 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         }
         else
         {
-            String fallbackStatus = defaultNumber(application.getRequestedMentorCount()) > 0 ? "待审批" : "未申请";
+            // §D.3：fallback 也输出 raw 英文枚举值，前端 composable 统一派生 label
+            String fallbackStatus = defaultNumber(application.getRequestedMentorCount()) > 0 ? "pending" : "none";
             payload.put("coachingStatus", defaultText(application.getCoachingStatus(), fallbackStatus));
             payload.put("mentorName", null);
             payload.put("mentorBackground", null);

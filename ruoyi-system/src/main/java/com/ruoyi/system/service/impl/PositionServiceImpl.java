@@ -247,7 +247,7 @@ public class PositionServiceImpl implements IPositionService
         List<Map<String, Object>> applications = jobApplicationMapper.selectStudentApplicationRecords(studentId);
 
         Map<String, SysDictData> stageDict = loadDictValueMap(DICT_TYPE_POSITION_PROGRESS_STAGE);
-        Map<String, SysDictData> coachingStatusDict = loadDictValueMap(DICT_TYPE_APPLICATION_COACHING_STATUS);
+        // §D.3 已移除 coachingStatusDict 加载：coaching label 派生职责转移到前端 composable
         Map<String, SysDictData> industryDict = loadDictValueMap(DICT_TYPE_POSITION_INDUSTRY);
 
         for (Map<String, Object> application : applications)
@@ -267,12 +267,8 @@ public class PositionServiceImpl implements IPositionService
                 application.put("stageColor", defaultString(stageMeta.getCssClass(), stringValue(application.get("stageColor"))));
             }
 
-            SysDictData coachingMeta = coachingStatusDict.get(coachingStatus);
-            if (coachingMeta != null)
-            {
-                application.put("coachingStatusLabel", defaultString(coachingMeta.getDictLabel(), coachingStatus));
-                application.put("coachingColor", defaultString(coachingMeta.getCssClass(), stringValue(application.get("coachingColor"))));
-            }
+            // §D.3 已移除 coachingStatusLabel / coachingColor 固化字段输出；
+            // 前端改用 deriveApplicationStatus composable 基于 coachingStatus / assignStatus 派生 label/tone（SSOT）
 
             SysDictData companyTypeMeta = industryDict.get(companyType);
             if (companyTypeMeta != null)
@@ -874,8 +870,7 @@ public class PositionServiceImpl implements IPositionService
             position.put("progressStage", defaultString(stringValue(applicationRow.get("stage")), stringValue(position.get("progressStage"))));
             position.put("progressNote", defaultString(stringValue(applicationRow.get("progressNote")), ""));
             position.put("coachingStatus", defaultString(stringValue(applicationRow.get("coachingStatus")), "none"));
-            position.put("coachingStatusLabel", defaultString(stringValue(applicationRow.get("coachingStatusLabel")), ""));
-            position.put("coachingColor", defaultString(stringValue(applicationRow.get("coachingColor")), ""));
+            // §D.3 不再输出 coachingStatusLabel / coachingColor；前端用 composable 派生
         }
     }
 
