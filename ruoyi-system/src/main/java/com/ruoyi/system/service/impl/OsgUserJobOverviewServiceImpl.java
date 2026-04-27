@@ -106,6 +106,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         Date now = new Date();
 
         OsgCoaching coaching = coachingMapper.selectCoachingByApplicationId(applicationId);
+        boolean isReassignment = (coaching != null);
         if (coaching == null)
         {
             coaching = new OsgCoaching();
@@ -117,7 +118,8 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         coaching.setMentorIds(mentorUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         coaching.setMentorNames(mentorNamesText);
         coaching.setMentorName(mentorNames.isEmpty() ? null : mentorNames.get(0));
-        coaching.setStatus("辅导中");
+        // §F1：新分配后 status='assigned'，等辅导者 confirm 才转 'coaching'
+        coaching.setStatus("assigned");
         coaching.setTotalHours(defaultNumber(coaching.getTotalHours()));
         coaching.setAssignNote(assignNote);
         coaching.setAssignedAt(now);
@@ -132,10 +134,20 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             throw new ServiceException("导师分配保存失败");
         }
 
+        // §F1 重新分配裁决：清空老辅导者的 confirm 记录，避免新辅导者看到“已确认”卡死
+        if (isReassignment)
+        {
+            coachingMapper.resetConfirmationByApplicationId(applicationId, operator);
+        }
+
         OsgJobApplication patch = new OsgJobApplication();
         patch.setApplicationId(applicationId);
         patch.setAssignStatus("assigned");
-        patch.setCoachingStatus("辅导中");
+        // §F1：不再设 coachingStatus='辅导中'；重新分配场景重置为 'none'
+        if (isReassignment)
+        {
+            patch.setCoachingStatus("none");
+        }
         patch.setUpdateBy(operator);
         patch.setRemark(assignNote);
         if (jobApplicationMapper.updateJobApplicationAssignment(patch) <= 0)
@@ -145,7 +157,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("applicationId", applicationId);
-        result.put("coachingStatus", "辅导中");
+        result.put("coachingStatus", isReassignment ? "none" : "assigned");
         result.put("mentorIds", mentorUserIds);
         result.put("mentorNames", mentorNamesText);
         result.put("assignNote", assignNote);
@@ -197,21 +209,26 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             throw new ServiceException("辅导记录不存在");
         }
 
-        OsgCoaching patch = new OsgCoaching();
-        patch.setCoachingId(coaching.getCoachingId());
-        patch.setStatus("辅导中");
-        patch.setConfirmedAt(new Date());
-        patch.setUpdateBy(operator);
-        patch.setRemark("mentor confirmed coaching");
-        if (coachingMapper.updateCoaching(patch) <= 0)
+        // §C.1 原子 SQL 防并发竞态 + 防重复 confirm（bug 1 修复）
+        int affected = coachingMapper.confirmCoachingIfPending(applicationId, operator);
+        if (affected == 0)
         {
-            throw new ServiceException("辅导确认保存失败");
+            throw new ServiceException("该申请已被确认");
         }
 
+        // §C.1 bug 2 修复：写 osg_job_application.coachingStatus='coaching'
+        OsgJobApplication appPatch = new OsgJobApplication();
+        appPatch.setApplicationId(applicationId);
+        appPatch.setCoachingStatus("coaching");
+        appPatch.setUpdateBy(operator);
+        appPatch.setRemark("mentor confirmed coaching");
+        jobApplicationMapper.updateJobApplicationAssignment(appPatch);
+
+        Date confirmedAt = new Date();
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("applicationId", applicationId);
         result.put("coachingStatus", "coaching");
-        result.put("confirmedAt", patch.getConfirmedAt());
+        result.put("confirmedAt", confirmedAt);
         return result;
     }
 
@@ -542,7 +559,8 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
 
         if (coaching != null)
         {
-            payload.put("coachingStatus", defaultText(coaching.getStatus(), "辅导中"));
+            // §B.1：默认值为英文 enum 'assigned'（不再使用中文“辅导中”）
+            payload.put("coachingStatus", defaultText(coaching.getStatus(), "assigned"));
             payload.put("mentorName", defaultText(coaching.getMentorName(), coaching.getMentorNames()));
             payload.put("mentorNames", defaultText(coaching.getMentorNames(), coaching.getMentorName()));
             payload.put("mentorBackground", defaultText(coaching.getMentorBackground()));

@@ -136,4 +136,33 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where coaching_id = #{coachingId}
     </update>
 
+    <!-- §A.1 课时审核回写：原子 SQL 防并发竞态 -->
+    <update id="incrementTotalHours">
+        update osg_coaching
+        set total_hours = COALESCE(total_hours, 0) + #{durationHours},
+            update_time = sysdate()
+        where application_id = #{applicationId}
+    </update>
+
+    <!-- §A.2 / §F1 重新分配场景：清空 confirmed_at + 重置 status='assigned' -->
+    <update id="resetConfirmationByApplicationId">
+        update osg_coaching
+        set confirmed_at = NULL,
+            status = 'assigned',
+            update_by = #{operator},
+            update_time = sysdate()
+        where application_id = #{applicationId}
+    </update>
+
+    <!-- §C.1 confirmCoaching 原子 SQL：仅当 confirmed_at IS NULL 时更新（防并发竞态 + 防重复 confirm） -->
+    <update id="confirmCoachingIfPending">
+        update osg_coaching
+        set confirmed_at = sysdate(),
+            status = 'coaching',
+            update_by = #{operator},
+            update_time = sysdate()
+        where application_id = #{applicationId}
+          and confirmed_at IS NULL
+    </update>
+
 </mapper>

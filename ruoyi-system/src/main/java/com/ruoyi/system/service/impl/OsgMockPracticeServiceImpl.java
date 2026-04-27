@@ -70,6 +70,48 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
         return mockPracticeMapper.updateMentorMockPracticeStatus(record);
     }
 
+    /**
+     * §C.1 共用方法：辅导者确认接受 mock-practice 分配。
+     * 鉴权：currentUserId 必须在 mentor_ids CSV 中（mentor / asst / lead-mentor 三端共用）。
+     * 原子 SQL 防并发竞态 + 防重复 confirm（status='scheduled' → 'confirmed'）。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> confirmAssignment(Long practiceId, Long currentUserId, String operator)
+    {
+        if (practiceId == null)
+        {
+            throw new ServiceException("practiceId不能为空");
+        }
+        OsgMockPractice persisted = requireMentorOwnedPractice(practiceId, currentUserId);
+
+        // 原子 SQL：仅当 status='scheduled' 时才更新为 'confirmed'
+        int affected = mockPracticeMapper.confirmAssignmentIfScheduled(practiceId, operator);
+        if (affected == 0)
+        {
+            throw new ServiceException("该应聘已被确认或状态不可确认");
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("practiceId", practiceId);
+        result.put("status", "confirmed");
+        result.put("studentId", persisted.getStudentId());
+        return result;
+    }
+
+    /**
+     * §C.1 共用方法：辅导者确认已知悉 mock-practice 分配。
+     * 仅当 status='scheduled' 时记录 ack（实际上沿用 confirmAssignment 同样的状态变迁，但语义上是 ack 而非 confirm）。
+     * 当前实现：与 confirmAssignment 等价（均把 status 推进到 'confirmed'）。
+     * LM 端独立 service IOsgLeadMentorMockPracticeService.acknowledgeAssignment 见 §9.3 技术债章节。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> acknowledgeAssignment(Long practiceId, Long currentUserId, String operator)
+    {
+        return confirmAssignment(practiceId, currentUserId, operator);
+    }
+
     @Override
     public Map<String, Object> selectMockPracticeStats(String keyword, String practiceType, String status)
     {

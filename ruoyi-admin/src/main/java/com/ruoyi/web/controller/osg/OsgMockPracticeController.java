@@ -77,15 +77,12 @@ public class OsgMockPracticeController extends BaseController
     @PutMapping("/api/mentor/mock-practice/{id}/confirm")
     public AjaxResult confirm(@PathVariable Long id)
     {
-        OsgMockPractice record = new OsgMockPractice();
-        record.setPracticeId(id);
-        record.setCurrentMentorId(SecurityUtils.getUserId());
-        record.setStatus("confirmed");
+        // §C.2 改造：调共用 IOsgMockPracticeService.confirmAssignment（原子 SQL 防并发）
         try
         {
-            return toAjax(mockPracticeService.confirmMentorMockPractice(record));
+            return AjaxResult.success(mockPracticeService.confirmAssignment(id, SecurityUtils.getUserId(), resolveOperator()));
         }
-        catch (ServiceException ex)
+        catch (com.ruoyi.common.exception.ServiceException ex)
         {
             return AjaxResult.error(ex.getMessage());
         }

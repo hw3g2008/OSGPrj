@@ -39,6 +39,8 @@ public class OsgClassRecord extends BaseEntity
     private Date classDateStart;
     private Date classDateEnd;
     private Long studentPositionId;
+    private Long practiceId;
+    private Long applicationId;
 
     public Long getRecordId()
     {
@@ -340,6 +342,26 @@ public class OsgClassRecord extends BaseEntity
         this.studentPositionId = studentPositionId;
     }
 
+    public Long getPracticeId()
+    {
+        return practiceId;
+    }
+
+    public void setPracticeId(Long practiceId)
+    {
+        this.practiceId = practiceId;
+    }
+
+    public Long getApplicationId()
+    {
+        return applicationId;
+    }
+
+    public void setApplicationId(Long applicationId)
+    {
+        this.applicationId = applicationId;
+    }
+
     @Override
     public String toString()
     {
@@ -366,6 +388,8 @@ public class OsgClassRecord extends BaseEntity
             .append("overdueFlag", getOverdueFlag())
             .append("remark", getRemark())
             .append("studentPositionId", getStudentPositionId())
+            .append("practiceId", getPracticeId())
+            .append("applicationId", getApplicationId())
             .toString();
     }
 }

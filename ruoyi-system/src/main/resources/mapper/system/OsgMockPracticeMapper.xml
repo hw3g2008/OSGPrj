@@ -192,4 +192,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where practice_id = #{practiceId}
     </update>
 
+    <!-- §A.1 课时审核回写：原子 SQL 防并发竞态 -->
+    <update id="incrementCompletedHours">
+        update osg_mock_practice
+        set completed_hours = COALESCE(completed_hours, 0) + #{durationHours},
+            update_time = sysdate()
+        where practice_id = #{practiceId}
+    </update>
+
+    <!-- §C.1 confirmAssignment 原子 SQL：仅当 status='scheduled' 时更新为 'confirmed'（防并发竞态 + 防重复 confirm） -->
+    <update id="confirmAssignmentIfScheduled">
+        update osg_mock_practice
+        set status = 'confirmed',
+            update_by = #{operator},
+            update_time = sysdate()
+        where practice_id = #{practiceId}
+          and status = 'scheduled'
+    </update>
+
 </mapper>

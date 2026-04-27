@@ -187,7 +187,8 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         coaching.setMentorIds(mentorUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         coaching.setMentorNames(mentorNamesText);
         coaching.setMentorName(mentorNames.isEmpty() ? null : mentorNames.get(0));
-        coaching.setStatus("辅导中");
+        // §F1：admin 端分配后 osg_coaching.status='assigned'，等辅导者 confirm 才转 'coaching'
+        coaching.setStatus("assigned");
         coaching.setTotalHours(defaultNumber(coaching.getTotalHours()));
         coaching.setAssignNote(assignNote);
         coaching.setAssignedAt(now);
@@ -205,7 +206,7 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         OsgJobApplication assignment = new OsgJobApplication();
         assignment.setApplicationId(applicationId);
         assignment.setAssignStatus("assigned");
-        assignment.setCoachingStatus("辅导中");
+        // §F1：不再设 coachingStatus；保持数据库原值（初始 'none' 或 §B 迁移后的英文枚举）
         assignment.setUpdateBy(operator);
         assignment.setRemark(assignNote);
         if (jobApplicationMapper.updateJobApplicationAssignment(assignment) <= 0)
@@ -216,7 +217,8 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("applicationId", applicationId);
         result.put("status", "assigned");
-        result.put("coachingStatus", "辅导中");
+        // §F1：assignMentors 后 coachingStatus 仍为 'none'（等辅导者 confirm 才转）
+        result.put("coachingStatus", "none");
         result.put("mentorIds", mentorUserIds);
         result.put("mentorNames", mentorNamesText);
         result.put("assignNote", assignNote);
@@ -309,7 +311,8 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
 
         if (coaching != null)
         {
-            payload.put("coachingStatus", defaultText(coaching.getStatus(), "辅导中"));
+            // §B.1：默认值为英文 enum 'assigned'
+            payload.put("coachingStatus", defaultText(coaching.getStatus(), "assigned"));
             payload.put("mentorName", defaultText(coaching.getMentorName(), coaching.getMentorNames()));
             payload.put("mentorBackground", defaultText(coaching.getMentorBackground(), "-"));
             payload.put("hoursUsed", defaultNumber(coaching.getTotalHours()));
@@ -358,7 +361,8 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         payload.put("datasetLabel", "待分配导师");
         payload.put("leadMentorName", row.get("leadMentorName"));
         payload.put("mentorName", null);
-        payload.put("coachingStatus", "待分配");
+        // §B.1：coachingStatus 为 raw 枚举值，用英文 'pending'（label 由前端 composable 映射）
+        payload.put("coachingStatus", "pending");
         payload.put("requestedMentorCount", row.get("requestedMentorCount"));
         payload.put("preferredMentorNames", row.get("preferredMentorNames"));
         payload.put("hoursUsed", 0);

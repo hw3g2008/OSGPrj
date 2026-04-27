@@ -100,6 +100,7 @@ class OsgUserJobOverviewServiceImplTest
     @Test
     void confirmCoachingShouldUpdateConfirmedAtAndReturnLegacyStatus()
     {
+        // §C.1：原子 SQL 防并发竞态 + 写 osg_job_application.coachingStatus='coaching'
         OsgJobApplication application = new OsgJobApplication();
         application.setApplicationId(7002L);
         application.setStudentId(3002L);
@@ -110,26 +111,59 @@ class OsgUserJobOverviewServiceImplTest
         coaching.setCoachingId(8001L);
         coaching.setApplicationId(7002L);
         coaching.setStudentId(3002L);
-        coaching.setStatus("待审批");
+        coaching.setStatus("assigned");
         coaching.setMentorId(810L);
         coaching.setMentorIds("810");
 
         when(jobApplicationMapper.selectJobApplicationByApplicationId(7002L)).thenReturn(application);
         when(coachingMapper.selectCoachingByApplicationId(7002L)).thenReturn(coaching);
         when(coachingMapper.selectCoachingList(any(OsgCoaching.class))).thenReturn(List.of(coaching));
-        when(coachingMapper.updateCoaching(any(OsgCoaching.class))).thenReturn(1);
+        when(coachingMapper.confirmCoachingIfPending(7002L, "mentor_user")).thenReturn(1);
 
         Map<String, Object> result = service.confirmCoaching(7002L, 810L, "mentor_user");
 
         assertEquals(7002L, result.get("applicationId"));
         assertEquals("coaching", result.get("coachingStatus"));
+        assertNotNull(result.get("confirmedAt"));
 
-        ArgumentCaptor<OsgCoaching> captor = ArgumentCaptor.forClass(OsgCoaching.class);
-        verify(coachingMapper).updateCoaching(captor.capture());
-        assertEquals(8001L, captor.getValue().getCoachingId());
-        assertEquals("辅导中", captor.getValue().getStatus());
-        assertEquals("mentor_user", captor.getValue().getUpdateBy());
-        assertNotNull(captor.getValue().getConfirmedAt());
+        // 验证原子 SQL 被调用一次
+        verify(coachingMapper).confirmCoachingIfPending(7002L, "mentor_user");
+
+        // §C.1 bug 2 修复：验证 osg_job_application.coachingStatus='coaching' 被写入
+        ArgumentCaptor<OsgJobApplication> appCaptor = ArgumentCaptor.forClass(OsgJobApplication.class);
+        verify(jobApplicationMapper).updateJobApplicationAssignment(appCaptor.capture());
+        assertEquals(7002L, appCaptor.getValue().getApplicationId());
+        assertEquals("coaching", appCaptor.getValue().getCoachingStatus());
+        assertEquals("mentor_user", appCaptor.getValue().getUpdateBy());
+    }
+
+    @Test
+    void confirmCoachingShouldRejectRepeatedConfirm()
+    {
+        // §C.1 bug 1 修复：原子 SQL 返回 affected=0 表示已被 confirm，应抛业务异常
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(7002L);
+        application.setStudentId(3002L);
+
+        OsgCoaching coaching = new OsgCoaching();
+        coaching.setCoachingId(8001L);
+        coaching.setApplicationId(7002L);
+        coaching.setStudentId(3002L);
+        coaching.setStatus("coaching");
+        coaching.setMentorIds("810");
+        coaching.setConfirmedAt(new Date()); // 已 confirmed
+
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(7002L)).thenReturn(application);
+        when(coachingMapper.selectCoachingByApplicationId(7002L)).thenReturn(coaching);
+        when(coachingMapper.selectCoachingList(any(OsgCoaching.class))).thenReturn(List.of(coaching));
+        when(coachingMapper.confirmCoachingIfPending(7002L, "mentor_user")).thenReturn(0);
+
+        ServiceException error = assertThrows(ServiceException.class,
+            () -> service.confirmCoaching(7002L, 810L, "mentor_user"));
+        assertEquals("该申请已被确认", error.getMessage());
+
+        // 验证 jobApplicationMapper 不被调用（抛错前已退出）
+        verify(jobApplicationMapper, org.mockito.Mockito.never()).updateJobApplicationAssignment(any());
     }
 
     @Test

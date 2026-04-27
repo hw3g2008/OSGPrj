@@ -32,6 +32,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
         <result property="studentPositionId" column="student_position_id"/>
+        <result property="practiceId" column="practice_id"/>
+        <result property="applicationId" column="application_id"/>
     </resultMap>
 
     <sql id="selectClassRecordColumns">
@@ -61,7 +63,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update_by,
         update_time,
         remark,
-        student_position_id
+        student_position_id,
+        practice_id,
+        application_id
     </sql>
 
     <select id="selectClassRecordByRecordId" parameterType="Long" resultMap="OsgClassRecordResult">
@@ -189,7 +193,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_by,
             update_time,
             remark,
-            student_position_id
+            student_position_id,
+            practice_id,
+            application_id
         ) values (
             #{classId},
             #{mentorId},
@@ -215,7 +221,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{updateBy},
             sysdate(),
             #{remark},
-            #{studentPositionId}
+            #{studentPositionId},
+            #{practiceId},
+            #{applicationId}
         )
     </insert>
 
@@ -243,7 +251,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_by,
             update_time,
             del_flag,
-            student_position_id
+            student_position_id,
+            practice_id,
+            application_id
         ) values (
             #{classId},
             #{mentorId},
@@ -267,7 +277,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{updateBy},
             sysdate(),
             '0',
-            #{studentPositionId}
+            #{studentPositionId},
+            #{practiceId},
+            #{applicationId}
         )
     </insert>
 

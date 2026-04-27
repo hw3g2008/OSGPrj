@@ -17,4 +17,16 @@ public interface IOsgMockPracticeService
     OsgMockPractice selectMentorMockPracticeById(Long id);
 
     int confirmMentorMockPractice(OsgMockPractice record);
+
+    /**
+     * §C.1 共用 service 方法：辅导者（mentor / asst / lead-mentor）确认接受 mock-practice 分配。
+     * 用原子 SQL 防并发竞态（status='scheduled' → 'confirmed'，已 confirmed 时 affected=0 抛业务异常）。
+     */
+    Map<String, Object> confirmAssignment(Long practiceId, Long currentUserId, String operator);
+
+    /**
+     * §C.1 共用 service 方法：辅导者（mentor / asst / lead-mentor）确认已知悉 mock-practice 分配。
+     * 与 IOsgLeadMentorMockPracticeService.acknowledgeAssignment 等价，本轮新增以统一调用入口。
+     */
+    Map<String, Object> acknowledgeAssignment(Long practiceId, Long currentUserId, String operator);
 }

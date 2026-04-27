@@ -21,11 +21,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgClassRecordAttachment;
+import com.ruoyi.system.domain.OsgCoaching;
+import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.domain.OsgStudentPosition;
 import com.ruoyi.system.mapper.OsgClassRecordAttachmentMapper;
 import com.ruoyi.system.mapper.OsgClassRecordMapper;
+import com.ruoyi.system.mapper.OsgCoachingMapper;
+import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.mapper.OsgStudentPositionMapper;
@@ -53,6 +57,12 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     @Autowired
     private OsgStudentPositionMapper studentPositionMapper;
 
+    @Autowired
+    private OsgCoachingMapper coachingMapper;
+
+    @Autowired
+    private OsgMockPracticeMapper mockPracticeMapper;
+
     @Override
     public List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord record)
     {
@@ -71,6 +81,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     public Map<String, Object> createLeadMentorClassRecord(OsgClassRecord record)
     {
         validateLeadMentorCreate(record);
+        validateCourseSourceLink(record);
 
         OsgStudent student = requireManagedStudent(record.getStudentId(), record.getMentorId());
         record.setStudentName(student.getStudentName());
@@ -88,6 +99,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     public Map<String, Object> createAssistantClassRecord(OsgClassRecord record)
     {
         validateLeadMentorCreate(record);
+        validateCourseSourceLink(record);
 
         OsgStudent student = requireAssistantOwnedStudent(record.getStudentId(), record.getMentorId());
         record.setStudentName(student.getStudentName());
@@ -118,6 +130,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         {
             record.setCourseSource("mentor");
         }
+        validateCourseSourceLink(record);
         normalizeCreateDefaults(record);
         return classRecordMapper.insertMentorClassRecord(record);
     }
@@ -484,8 +497,50 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         {
             throw new ServiceException("课时审核更新失败");
         }
+        // §A.1 审核通过时回写上游主链 completedHours / totalHours
+        if (Objects.equals(targetStatus, STATUS_APPROVED))
+        {
+            writeBackToMainline(record);
+        }
         Map<Long, BigDecimal> hourlyRates = loadHourlyRates(List.of(record));
         return toPayload(record, null, hourlyRates);
+    }
+
+    /**
+     * §A.1 审核通过时回写上游主链：mock_practice.completed_hours / coaching.total_hours。
+     * 用原子 SQL（COALESCE + +）规避并发竞态。事务在 reviewRecord 调用方持有，
+     * 这里抛出异常会触发整个事务回滚。
+     */
+    private void writeBackToMainline(OsgClassRecord record)
+    {
+        if (record == null || record.getDurationHours() == null || record.getDurationHours() <= 0)
+        {
+            return;
+        }
+        Long practiceId = record.getPracticeId();
+        Long applicationId = record.getApplicationId();
+        if (practiceId == null && applicationId == null)
+        {
+            // 历史数据无关联：跳过回写（向前兼容；§F5 拒绝补刷历史）
+            return;
+        }
+        if (practiceId != null)
+        {
+            int affected = mockPracticeMapper.incrementCompletedHours(practiceId, record.getDurationHours());
+            if (affected <= 0)
+            {
+                throw new ServiceException("回写模拟应聘 completedHours 失败");
+            }
+        }
+        else
+        {
+            BigDecimal duration = BigDecimal.valueOf(record.getDurationHours());
+            int affected = coachingMapper.incrementTotalHours(applicationId, duration);
+            if (affected <= 0)
+            {
+                throw new ServiceException("回写辅导记录 totalHours 失败");
+            }
+        }
     }
 
     private String resolveReviewRemark(String targetStatus, Map<String, Object> payload)
@@ -645,6 +700,81 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
                 .toList();
         }
         return filterAssistantOwnedRows(rows, assistantUserId);
+    }
+
+    /**
+     * §A.0.2 检验课时记录与上游主链（模拟应聘 / 真实岗位申请）的关联。
+     * 向后兼容：practiceId 与 applicationId 都为 null 时跳过校验（§A.0.4 前端表单上线后
+     * 应强制传一个）。传了一个以后才走：二选一 + studentId 一致性 + mentor_ids CSV 权限。
+     */
+    private void validateCourseSourceLink(OsgClassRecord record)
+    {
+        if (record == null)
+        {
+            return;
+        }
+        Long practiceId = record.getPracticeId();
+        Long applicationId = record.getApplicationId();
+        if (practiceId == null && applicationId == null)
+        {
+            // 向后兼容：现有前端未传该字段时不报错；A.0.4 上线后由前端强制
+            return;
+        }
+        if (practiceId != null && applicationId != null)
+        {
+            throw new ServiceException("practiceId 与 applicationId 不能同时填写，二选一");
+        }
+        Long currentMentorId = record.getMentorId();
+        Long studentIdInRecord = record.getStudentId();
+        if (practiceId != null)
+        {
+            OsgMockPractice practice = mockPracticeMapper.selectMockPracticeByPracticeId(practiceId);
+            if (practice == null)
+            {
+                throw new ServiceException("模拟应聘记录不存在");
+            }
+            if (studentIdInRecord != null && !Objects.equals(practice.getStudentId(), studentIdInRecord))
+            {
+                throw new ServiceException("课时记录的学员与模拟应聘学员不一致");
+            }
+            if (!isUserInCsv(practice.getMentorIds(), currentMentorId))
+            {
+                throw new ServiceException("无权为该模拟应聘提交课时记录");
+            }
+        }
+        else
+        {
+            OsgCoaching coaching = coachingMapper.selectCoachingByApplicationId(applicationId);
+            if (coaching == null)
+            {
+                throw new ServiceException("辅导记录不存在");
+            }
+            if (studentIdInRecord != null && !Objects.equals(coaching.getStudentId(), studentIdInRecord))
+            {
+                throw new ServiceException("课时记录的学员与辅导申请学员不一致");
+            }
+            if (!isUserInCsv(coaching.getMentorIds(), currentMentorId))
+            {
+                throw new ServiceException("无权为该辅导申请提交课时记录");
+            }
+        }
+    }
+
+    private boolean isUserInCsv(String csv, Long userId)
+    {
+        if (csv == null || csv.isBlank() || userId == null)
+        {
+            return false;
+        }
+        String target = String.valueOf(userId);
+        for (String token : csv.split(","))
+        {
+            if (target.equals(token.trim()))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateLeadMentorCreate(OsgClassRecord record)
