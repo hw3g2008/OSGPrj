@@ -30,6 +30,14 @@ vi.mock('ant-design-vue', () => ({
   },
 }))
 
+vi.mock('@osg/shared/api', async (importOriginal) => {
+  const original: Record<string, unknown> = await importOriginal()
+  const { mockLeadMentorClassRecordsApi } = await import(
+    './__fixtures__/leadMentorClassRecords'
+  )
+  return { ...original, ...mockLeadMentorClassRecordsApi() }
+})
+
 async function flushUi() {
   await nextTick()
   await new Promise((resolve) => setTimeout(resolve, 0))

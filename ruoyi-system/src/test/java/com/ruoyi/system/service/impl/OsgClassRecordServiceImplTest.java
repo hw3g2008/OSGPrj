@@ -190,6 +190,85 @@ class OsgClassRecordServiceImplTest
         assertEquals("驳回原因不能为空", error.getMessage());
     }
 
+    @Test
+    void selectLeadMentorClassRecordListWithMineScopeFiltersToOwnClerkRecords()
+    {
+        // Lead mentor user_id = 7777
+        // mine = mentor_id == 7777 AND course_source == 'clerk'
+        OsgClassRecord mineRow = buildRow(11L, "学员A", "Lead Mentor", "job_coaching", "case_prep", "clerk", "approved", 2D,
+            LocalDateTime.of(2026, 4, 28, 10, 0));
+        mineRow.setMentorId(7777L);
+        OsgClassRecord otherSourceRow = buildRow(12L, "学员B", "Lead Mentor", "job_coaching", "case_prep", "mentor", "approved", 2D,
+            LocalDateTime.of(2026, 4, 28, 11, 0));
+        otherSourceRow.setMentorId(7777L);
+        OsgClassRecord otherMentorRow = buildRow(13L, "学员C", "Other", "job_coaching", "case_prep", "clerk", "approved", 2D,
+            LocalDateTime.of(2026, 4, 28, 12, 0));
+        otherMentorRow.setMentorId(8888L);
+
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class)))
+            .thenReturn(List.of(mineRow, otherSourceRow, otherMentorRow));
+
+        List<Map<String, Object>> rows = service.selectLeadMentorClassRecordList(
+            null, null, null, null, null, null, null, 7777L, "mine");
+
+        assertEquals(1, rows.size());
+        assertEquals(11L, rows.get(0).get("recordId"));
+    }
+
+    @Test
+    void selectLeadMentorClassRecordListWithManagedScopeFiltersToManagedStudents()
+    {
+        // managed = student.lead_mentor_id == 7777
+        OsgClassRecord managedRow = buildRow(21L, "Managed Stu", "Some Mentor", "job_coaching", "case_prep", "mentor", "approved", 2D,
+            LocalDateTime.of(2026, 4, 28, 10, 0));
+        managedRow.setStudentId(1021L);
+        OsgClassRecord notManagedRow = buildRow(22L, "Other Stu", "Some Mentor", "job_coaching", "case_prep", "mentor", "approved", 2D,
+            LocalDateTime.of(2026, 4, 28, 11, 0));
+        notManagedRow.setStudentId(1022L);
+
+        com.ruoyi.system.domain.OsgStudent managedStudent = new com.ruoyi.system.domain.OsgStudent();
+        managedStudent.setStudentId(1021L);
+        managedStudent.setLeadMentorId(7777L);
+        com.ruoyi.system.domain.OsgStudent notManagedStudent = new com.ruoyi.system.domain.OsgStudent();
+        notManagedStudent.setStudentId(1022L);
+        notManagedStudent.setLeadMentorId(9999L);
+
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class)))
+            .thenReturn(List.of(managedRow, notManagedRow));
+        when(studentMapper.selectStudentByStudentIds(any()))
+            .thenReturn(List.of(managedStudent, notManagedStudent));
+
+        List<Map<String, Object>> rows = service.selectLeadMentorClassRecordList(
+            null, null, null, null, null, null, null, 7777L, "managed");
+
+        assertEquals(1, rows.size());
+        assertEquals(21L, rows.get(0).get("recordId"));
+    }
+
+    @Test
+    void selectLeadMentorClassRecordListWithNullScopeFallsBackToManagedFiltering()
+    {
+        // scope=null/empty → 与 managed 等价（向后兼容）
+        OsgClassRecord managedRow = buildRow(31L, "Managed Stu", "Some Mentor", "job_coaching", "case_prep", "mentor", "approved", 2D,
+            LocalDateTime.of(2026, 4, 28, 10, 0));
+        managedRow.setStudentId(1031L);
+
+        com.ruoyi.system.domain.OsgStudent managedStudent = new com.ruoyi.system.domain.OsgStudent();
+        managedStudent.setStudentId(1031L);
+        managedStudent.setLeadMentorId(7777L);
+
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class)))
+            .thenReturn(List.of(managedRow));
+        when(studentMapper.selectStudentByStudentIds(any()))
+            .thenReturn(List.of(managedStudent));
+
+        List<Map<String, Object>> rows = service.selectLeadMentorClassRecordList(
+            null, null, null, null, null, null, null, 7777L);
+
+        assertEquals(1, rows.size());
+        assertEquals(31L, rows.get(0).get("recordId"));
+    }
+
     private static OsgClassRecord buildRow(Long recordId,
                                            String studentName,
                                            String mentorName,

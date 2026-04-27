@@ -331,9 +331,23 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
                                                                     Date classDateEnd,
                                                                     Long leadMentorUserId)
     {
-        List<OsgClassRecord> rows = filterLeadMentorOwnedRows(
+        return selectLeadMentorClassRecordList(keyword, courseType, classStatus, courseSource,
+            tab, classDateStart, classDateEnd, leadMentorUserId, null);
+    }
+
+    public List<Map<String, Object>> selectLeadMentorClassRecordList(String keyword,
+                                                                    String courseType,
+                                                                    String classStatus,
+                                                                    String courseSource,
+                                                                    String tab,
+                                                                    Date classDateStart,
+                                                                    Date classDateEnd,
+                                                                    Long leadMentorUserId,
+                                                                    String scope)
+    {
+        List<OsgClassRecord> rows = filterByLeadMentorScope(
             selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd),
-            leadMentorUserId
+            scope, leadMentorUserId
         );
         if (rows.isEmpty())
         {
@@ -353,10 +367,22 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
                                                                 Date classDateEnd,
                                                                 Long leadMentorUserId)
     {
-        List<OsgClassRecord> rows = filterLeadMentorOwnedRows(
-            selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd),
-            leadMentorUserId
-        );
+        return selectLeadMentorClassRecordStats(keyword, courseType, classStatus, courseSource,
+            tab, classDateStart, classDateEnd, leadMentorUserId, null);
+    }
+
+    public Map<String, Object> selectLeadMentorClassRecordStats(String keyword,
+                                                                String courseType,
+                                                                String classStatus,
+                                                                String courseSource,
+                                                                String tab,
+                                                                Date classDateStart,
+                                                                Date classDateEnd,
+                                                                Long leadMentorUserId,
+                                                                String scope)
+    {
+        List<OsgClassRecord> allRows = selectRows(keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd);
+        List<OsgClassRecord> rows = filterByLeadMentorScope(allRows, scope, leadMentorUserId);
         Map<Long, BigDecimal> hourlyRates = loadHourlyRates(rows);
         BigDecimal pendingSettlementAmount = rows.stream()
             .filter(row -> Objects.equals(normalizeReviewStatus(row.getStatus()), STATUS_PENDING))
@@ -364,12 +390,17 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             .reduce(BigDecimal.ZERO, BigDecimal::add)
             .setScale(1, RoundingMode.HALF_UP);
 
+        int mineCount = filterByLeadMentorScope(allRows, "mine", leadMentorUserId).size();
+        int managedCount = filterLeadMentorOwnedRows(allRows, leadMentorUserId).size();
+
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("totalCount", rows.size());
         summary.put("pendingCount", countByStatus(rows, STATUS_PENDING));
         summary.put("approvedCount", countByStatus(rows, STATUS_APPROVED));
         summary.put("rejectedCount", countByStatus(rows, STATUS_REJECTED));
         summary.put("pendingSettlementAmount", pendingSettlementAmount.toPlainString());
+        summary.put("mineCount", mineCount);
+        summary.put("managedCount", managedCount);
         summary.put("flowSteps", List.of(
             "学员申请岗位/模拟应聘",
             "班主任分配导师",
@@ -378,6 +409,22 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             "结算中心转账"
         ));
         return summary;
+    }
+
+    private List<OsgClassRecord> filterByLeadMentorScope(List<OsgClassRecord> rows, String scope, Long leadMentorUserId)
+    {
+        if ("mine".equals(scope))
+        {
+            if (leadMentorUserId == null || rows == null || rows.isEmpty())
+            {
+                return Collections.emptyList();
+            }
+            return rows.stream()
+                .filter(row -> Objects.equals(row.getMentorId(), leadMentorUserId)
+                    && "clerk".equals(row.getCourseSource()))
+                .toList();
+        }
+        return filterLeadMentorOwnedRows(rows, leadMentorUserId);
     }
 
     @Override

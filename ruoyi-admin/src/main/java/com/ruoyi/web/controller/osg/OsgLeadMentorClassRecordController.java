@@ -44,7 +44,8 @@ public class OsgLeadMentorClassRecordController extends BaseController
                               @RequestParam(value = "courseSource", required = false) String courseSource,
                               @RequestParam(value = "tab", required = false) String tab,
                               @RequestParam(value = "classDateStart", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateStart,
-                              @RequestParam(value = "classDateEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateEnd)
+                              @RequestParam(value = "classDateEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateEnd,
+                              @RequestParam(value = "scope", required = false) String scope)
     {
         if (!hasLeadMentorAccess())
         {
@@ -56,7 +57,7 @@ public class OsgLeadMentorClassRecordController extends BaseController
 
         List<Map<String, Object>> rows = classRecordService.selectLeadMentorClassRecordList(
             keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd,
-            SecurityUtils.getUserId()
+            SecurityUtils.getUserId(), scope
         );
         return getDataTable(rows);
     }
@@ -68,7 +69,8 @@ public class OsgLeadMentorClassRecordController extends BaseController
                             @RequestParam(value = "courseSource", required = false) String courseSource,
                             @RequestParam(value = "tab", required = false) String tab,
                             @RequestParam(value = "classDateStart", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateStart,
-                            @RequestParam(value = "classDateEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateEnd)
+                            @RequestParam(value = "classDateEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date classDateEnd,
+                            @RequestParam(value = "scope", required = false) String scope)
     {
         if (!hasLeadMentorAccess())
         {
@@ -77,7 +79,7 @@ public class OsgLeadMentorClassRecordController extends BaseController
 
         return AjaxResult.success(classRecordService.selectLeadMentorClassRecordStats(
             keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd,
-            SecurityUtils.getUserId()
+            SecurityUtils.getUserId(), scope
         ));
     }
 

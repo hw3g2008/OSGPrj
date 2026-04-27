@@ -320,16 +320,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, ref } from 'vue'
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { ClassRecordStatusTag } from '@osg/shared/components'
 import { message } from 'ant-design-vue'
 import type {
   LeadMentorClassRecordCreatePayload,
   LeadMentorClassRecordCreateResponse,
+  LeadMentorClassRecordRow,
+  LeadMentorClassRecordStats,
   LeadMentorStudentListItem,
 } from '@osg/shared/api'
-import { createLeadMentorClassRecord, getLeadMentorStudentList } from '@osg/shared/api'
+import {
+  createLeadMentorClassRecord,
+  getLeadMentorClassRecordList,
+  getLeadMentorClassRecordStats,
+  getLeadMentorStudentList,
+} from '@osg/shared/api'
 import LeadMentorClassDetailModal from '@/components/LeadMentorClassDetailModal.vue'
 import LeadMentorClassDetailNetworkingModal from '@/components/LeadMentorClassDetailNetworkingModal.vue'
 import LeadMentorClassDetailRegularModal from '@/components/LeadMentorClassDetailRegularModal.vue'
@@ -499,251 +506,6 @@ const scopeSections: Record<ScopeKey, ScopeSection> = {
   },
 }
 
-const initialMineRows: ClassRecordRow[] = [
-  {
-    recordId: '#R231780',
-    studentName: '张三',
-    studentId: '12766',
-    coachingLabel: '岗位辅导',
-    coachingTone: 'tag--info',
-    coachingDetail: 'Goldman Sachs · IB Analyst',
-    contentLabel: 'Case准备',
-    contentTone: 'tag--case',
-    classDate: '01/25/2026',
-    duration: '2h',
-    feeLabel: '¥1000',
-    status: 'pending',
-    statusLabel: '待审核',
-    statusTone: 'tag--warning',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail',
-  },
-  {
-    recordId: '#R231779',
-    studentName: '李四',
-    studentId: '12890',
-    coachingLabel: '模拟应聘',
-    coachingTone: 'tag--success',
-    coachingDetail: '模拟面试 · First Round',
-    contentLabel: '模拟面试',
-    contentTone: 'tag--success',
-    classDate: '01/24/2026',
-    duration: '1.5h',
-    feeLabel: '¥750',
-    status: 'pending',
-    statusLabel: '待审核',
-    statusTone: 'tag--warning',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail-regular',
-  },
-  {
-    recordId: '#R231778',
-    studentName: '王五',
-    studentId: '12901',
-    coachingLabel: '岗位辅导',
-    coachingTone: 'tag--info',
-    coachingDetail: 'Google · SWE',
-    contentLabel: '简历更新',
-    contentTone: 'tag--resume',
-    classDate: '01/20/2026',
-    duration: '1h',
-    feeLabel: '¥500',
-    status: 'approved',
-    statusLabel: '已通过',
-    statusTone: 'tag--success',
-    ratingLabel: '⭐ 5.0',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail-resume',
-  },
-  {
-    recordId: '#R231777',
-    studentName: '赵六',
-    studentId: '12902',
-    coachingLabel: '模拟应聘',
-    coachingTone: 'tag--success',
-    coachingDetail: '人际关系期中考试',
-    contentLabel: '人际关系期中考试',
-    contentTone: 'tag--purple',
-    classDate: '01/18/2026',
-    duration: '1h',
-    feeLabel: '¥500',
-    status: 'approved',
-    statusLabel: '已通过',
-    statusTone: 'tag--success',
-    ratingLabel: '⭐ 4.5',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail-networking',
-  },
-  {
-    recordId: '#R231770',
-    studentName: '钱七',
-    studentId: '12903',
-    coachingLabel: '岗位辅导',
-    coachingTone: 'tag--info',
-    coachingDetail: 'McKinsey · Consultant',
-    contentLabel: 'Case准备',
-    contentTone: 'tag--case',
-    classDate: '01/10/2026',
-    duration: '1h',
-    feeLabel: '¥500',
-    status: 'rejected',
-    statusLabel: '已驳回',
-    statusTone: 'tag--danger',
-    actionLabel: '查看原因',
-    actionSurface: 'modal-class-reject',
-  },
-]
-
-const initialManagedRows: ClassRecordRow[] = [
-  {
-    recordId: '#R231785',
-    studentName: '张三',
-    studentId: '12766',
-    reporterName: 'Jerry Li',
-    coachingLabel: '岗位辅导',
-    coachingTone: 'tag--info',
-    coachingDetail: 'Goldman Sachs',
-    contentLabel: '新简历',
-    contentTone: 'tag--info',
-    classDate: '01/26/2026',
-    duration: '2h',
-    status: 'pending',
-    statusLabel: '待审核',
-    statusTone: 'tag--warning',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail-resume',
-  },
-  {
-    recordId: '#R231784',
-    studentName: '李四',
-    studentId: '12890',
-    reporterName: 'Mike Chen',
-    coachingLabel: '模拟应聘',
-    coachingTone: 'tag--success',
-    coachingDetail: '模拟面试',
-    contentLabel: '模拟面试',
-    contentTone: 'tag--success',
-    classDate: '01/25/2026',
-    duration: '1.5h',
-    status: 'pending',
-    statusLabel: '待审核',
-    statusTone: 'tag--warning',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail',
-  },
-  {
-    recordId: '#R231783',
-    studentName: '王五',
-    studentId: '12901',
-    reporterName: 'Sarah Wang',
-    coachingLabel: '岗位辅导',
-    coachingTone: 'tag--info',
-    coachingDetail: 'Google',
-    contentLabel: 'Technical',
-    contentTone: 'tag--case',
-    classDate: '01/24/2026',
-    duration: '1h',
-    status: 'pending',
-    statusLabel: '待审核',
-    statusTone: 'tag--warning',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail-regular',
-  },
-  {
-    recordId: '#R231782',
-    studentName: '赵六',
-    studentId: '12902',
-    reporterName: 'Jerry Li',
-    coachingLabel: '模拟应聘',
-    coachingTone: 'tag--success',
-    coachingDetail: '模拟期中考试',
-    contentLabel: '模拟期中考试',
-    contentTone: 'tag--midterm',
-    classDate: '01/22/2026',
-    duration: '1.5h',
-    status: 'approved',
-    statusLabel: '已通过',
-    statusTone: 'tag--success',
-    ratingLabel: '⭐ 4.8',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail',
-  },
-  {
-    recordId: '#R231781',
-    studentName: '钱七',
-    studentId: '12903',
-    reporterName: 'Mike Chen',
-    coachingLabel: '岗位辅导',
-    coachingTone: 'tag--info',
-    coachingDetail: 'McKinsey',
-    contentLabel: 'Case准备',
-    contentTone: 'tag--case',
-    classDate: '01/20/2026',
-    duration: '2h',
-    status: 'approved',
-    statusLabel: '已通过',
-    statusTone: 'tag--success',
-    ratingLabel: '待评价',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail-regular',
-  },
-  {
-    recordId: '#R231776',
-    studentName: '张三',
-    studentId: '12766',
-    reporterName: 'Jerry Li',
-    coachingLabel: '岗位辅导',
-    coachingTone: 'tag--info',
-    coachingDetail: 'Goldman Sachs',
-    contentLabel: '简历更新',
-    contentTone: 'tag--resume',
-    classDate: '01/15/2026',
-    duration: '1h',
-    status: 'approved',
-    statusLabel: '已通过',
-    statusTone: 'tag--success',
-    ratingLabel: '⭐ 5.0',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail-resume',
-  },
-  {
-    recordId: '#R231775',
-    studentName: '李四',
-    studentId: '12890',
-    reporterName: 'Sarah Wang',
-    coachingLabel: '模拟应聘',
-    coachingTone: 'tag--success',
-    coachingDetail: '人际关系期中考试',
-    contentLabel: '人际关系期中考试',
-    contentTone: 'tag--purple',
-    classDate: '01/12/2026',
-    duration: '1h',
-    status: 'approved',
-    statusLabel: '已通过',
-    statusTone: 'tag--success',
-    ratingLabel: '⭐ 4.5',
-    actionLabel: '查看详情',
-    actionSurface: 'modal-class-detail-networking',
-  },
-  {
-    recordId: '#R231771',
-    studentName: '王五',
-    studentId: '12901',
-    reporterName: 'Mike Chen',
-    coachingLabel: '岗位辅导',
-    coachingTone: 'tag--info',
-    coachingDetail: 'Google',
-    contentLabel: 'Behavioral',
-    contentTone: 'tag--case',
-    classDate: '01/08/2026',
-    duration: '1h',
-    status: 'rejected',
-    statusLabel: '已驳回',
-    statusTone: 'tag--danger',
-    actionLabel: '查看原因',
-    actionSurface: 'modal-class-reject',
-  },
-]
 
 const contentLabelMap: Record<string, string> = {
   resume_revision: '新简历',
@@ -785,8 +547,11 @@ const activeStatuses = reactive<Record<ScopeKey, StatusKey>>({
   mine: 'all',
   managed: 'all',
 })
-const mineRows = ref<ClassRecordRow[]>([...initialMineRows])
-const managedRows = ref<ClassRecordRow[]>([...initialManagedRows])
+const mineRows = ref<ClassRecordRow[]>([])
+const managedRows = ref<ClassRecordRow[]>([])
+const statsSummary = ref<LeadMentorClassRecordStats | null>(null)
+const isLoadingRecords = ref(false)
+const loadErrorMessage = ref('')
 const reportStudentOptions = ref<ReportStudentOption[]>([])
 const reportStudentsLoading = ref(false)
 const reportStudentsLoaded = ref(false)
@@ -903,6 +668,68 @@ function resolveCoachingDetail(payload: LeadMentorClassRecordCreateResponse) {
   return '班主任真实申报'
 }
 
+function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
+  const coachingMeta = resolveCoachingMeta(row.courseType ?? '')
+  const contentMeta = resolveContentMeta(row.classStatus ?? '')
+  const status = normalizeKey(row.status)
+  const normalizedStatus = status === 'approved' || status === 'rejected' ? status : 'pending'
+  const statusMeta =
+    normalizedStatus === 'approved'
+      ? { statusLabel: '已通过', statusTone: 'tag--success' }
+      : normalizedStatus === 'rejected'
+        ? { statusLabel: '已驳回', statusTone: 'tag--danger' }
+        : { statusLabel: '待审核', statusTone: 'tag--warning' }
+
+  return {
+    recordId: formatRecordId(row.recordId),
+    studentName: row.studentName ?? '',
+    studentId: String(row.studentId ?? ''),
+    coachingLabel: coachingMeta.coachingLabel,
+    coachingTone: coachingMeta.coachingTone,
+    coachingDetail: row.feedbackContent?.split('\n').find((line) => line.trim())?.trim() ?? '—',
+    contentLabel: contentMeta.contentLabel,
+    contentTone: contentMeta.contentTone,
+    classDate: row.classDate ? formatDisplayDate(row.classDate) : '—',
+    duration: row.durationHours != null ? formatDuration(row.durationHours) : '—',
+    feeLabel: row.courseFee ? `¥${row.courseFee}` : undefined,
+    status: normalizedStatus,
+    statusLabel: statusMeta.statusLabel,
+    statusTone: statusMeta.statusTone,
+    ratingLabel: row.studentRating ? `⭐ ${row.studentRating}` : undefined,
+    reporterName: row.mentorName ?? undefined,
+    actionLabel: normalizedStatus === 'rejected' ? '查看原因' : '查看详情',
+    actionSurface: normalizedStatus === 'rejected' ? 'modal-class-reject' : resolveActionSurface(row.classStatus ?? ''),
+  }
+}
+
+async function loadRows() {
+  if (isLoadingRecords.value) return
+  isLoadingRecords.value = true
+  loadErrorMessage.value = ''
+  try {
+    const tab = activeStatuses[activeScope.value]
+    const filters = {
+      tab: tab !== 'all' ? tab : undefined,
+      scope: activeScope.value,
+    }
+    const [listResponse, statsResponse] = await Promise.all([
+      getLeadMentorClassRecordList(filters),
+      getLeadMentorClassRecordStats({ scope: activeScope.value }),
+    ])
+    const mappedRows = (listResponse.rows ?? []).map(buildRowFromList)
+    if (activeScope.value === 'mine') {
+      mineRows.value = mappedRows
+    } else {
+      managedRows.value = mappedRows
+    }
+    statsSummary.value = statsResponse
+  } catch (error) {
+    loadErrorMessage.value = error instanceof Error ? error.message : '加载课程记录失败'
+  } finally {
+    isLoadingRecords.value = false
+  }
+}
+
 function buildCreatedRow(payload: LeadMentorClassRecordCreateResponse): ClassRecordRow {
   const coachingMeta = resolveCoachingMeta(payload.courseType)
   const contentMeta = resolveContentMeta(payload.classStatus)
@@ -984,6 +811,7 @@ async function handleReportSubmit(payload: LeadMentorClassRecordCreatePayload) {
     reportPrefillStudentId.value = null
     isReportModalOpen.value = false
     message.success(`已提交课程记录 ${createdMineRow.recordId}，等待审核`)
+    void loadRows()
   } catch (error) {
     message.error(error instanceof Error ? error.message : '课程记录提交失败')
   } finally {
@@ -1165,6 +993,24 @@ function createRejectPreview(row: ClassRecordRow): ClassRejectPreview {
     rejectedAt: '12/11/2025 10:30',
   }
 }
+
+onMounted(() => {
+  void loadRows()
+})
+
+watch(
+  () => activeScope.value,
+  () => {
+    void loadRows()
+  },
+)
+
+watch(
+  () => [activeStatuses.mine, activeStatuses.managed],
+  () => {
+    void loadRows()
+  },
+)
 </script>
 
 <style scoped lang="scss">

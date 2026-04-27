@@ -3,10 +3,17 @@ import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
 import ClassRecordsPage from '../views/teaching/class-records/index.vue'
+import {
+  managedRowFixtures,
+  mineRowFixtures,
+  statsFixture,
+} from './__fixtures__/leadMentorClassRecords'
 
 const apiMocks = vi.hoisted(() => ({
   getLeadMentorStudentList: vi.fn(),
   createLeadMentorClassRecord: vi.fn(),
+  getLeadMentorClassRecordList: vi.fn(),
+  getLeadMentorClassRecordStats: vi.fn(),
 }))
 
 const messageMocks = vi.hoisted(() => ({
@@ -88,6 +95,11 @@ describe('S-045 story regression skeleton', () => {
         },
       ],
     })
+    apiMocks.getLeadMentorClassRecordList.mockImplementation((filters: { scope?: string } = {}) => {
+      const rows = filters.scope === 'managed' ? managedRowFixtures : mineRowFixtures
+      return Promise.resolve({ rows, total: rows.length })
+    })
+    apiMocks.getLeadMentorClassRecordStats.mockResolvedValue(statsFixture)
     apiMocks.createLeadMentorClassRecord.mockResolvedValue({
       recordId: 6051,
       mentorId: 810,

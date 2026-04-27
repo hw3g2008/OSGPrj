@@ -1,4 +1,9 @@
 import { http } from '../utils/request'
+import {
+  type ClassRecordFilters,
+  type ClassRecordRow,
+  type ClassRecordStats,
+} from './admin/classRecord'
 
 export type StudentClassRecordDetailKind = 'coaching' | 'mock' | 'networking' | 'midterm'
 
@@ -177,4 +182,38 @@ export function createLeadMentorClassRecord(data: LeadMentorClassRecordCreatePay
   return http.post<LeadMentorClassRecordCreateResponse>('/lead-mentor/class-records', data, {
     skipErrorMessage: true,
   })
+}
+
+export type LeadMentorClassRecordFilters = ClassRecordFilters
+export type LeadMentorClassRecordRow = ClassRecordRow
+export type LeadMentorClassRecordStats = ClassRecordStats
+
+const toLeadMentorParams = (filters: LeadMentorClassRecordFilters = {}) => {
+  const params: Record<string, string> = {}
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params[key] = String(value)
+    }
+  })
+  return params
+}
+
+export function getLeadMentorClassRecordList(filters: LeadMentorClassRecordFilters = {}) {
+  return http.get<{ rows: LeadMentorClassRecordRow[]; total: number }>(
+    '/lead-mentor/class-records/list',
+    {
+      params: toLeadMentorParams(filters),
+      timeout: 60000,
+    },
+  )
+}
+
+export function getLeadMentorClassRecordStats(filters: LeadMentorClassRecordFilters = {}) {
+  return http.get<LeadMentorClassRecordStats>(
+    '/lead-mentor/class-records/stats',
+    {
+      params: toLeadMentorParams(filters),
+      timeout: 60000,
+    },
+  )
 }
