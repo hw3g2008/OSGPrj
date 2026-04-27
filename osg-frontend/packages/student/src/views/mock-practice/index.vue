@@ -740,6 +740,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .mock-practice-page {
+  :deep(.osg-page-container__content) {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+
   .page-subtitle {
     margin: -8px 0 24px;
     color: #6b7280;
