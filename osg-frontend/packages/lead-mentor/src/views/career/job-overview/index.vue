@@ -306,11 +306,34 @@ import {
   type LeadMentorJobOverviewListParams,
 } from '@osg/shared/api'
 import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
-import { useCoachingStatusMap } from '@osg/shared/composables'
+import { useCoachingStatusMap, deriveApplicationStatus } from '@osg/shared/composables'
 import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
 
 const { resolveCoachingTone } = useCoachingStatusMap()
+
+/**
+ * §D.2 LM job-overview 行的 status display 派生：
+ * - 优先 deriveApplicationStatus（assignStatus + coachingStatus 两入参）
+ * - stageUpdated=true 时仍走老 useCoachingStatusMap 走 'blue' 高亮，保持业务行为
+ */
+function deriveOverviewStatusDisplay(row: LeadMentorJobOverviewListItem): { label: string; tone: string } {
+  // stageUpdated 高亮分支保留旧行为
+  if (row.stageUpdated) {
+    return {
+      label: row.coachingStatus || '待更新',
+      tone: 'blue',
+    }
+  }
+  const display = deriveApplicationStatus({
+    assignStatus: row.assignedStatus,
+    coachingStatus: row.coachingStatus,
+  })
+  return {
+    label: row.coachingStatus || display.label,
+    tone: resolveCoachingTone(row.coachingStatus, false),
+  }
+}
 
 const pendingColumns = [
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
@@ -777,8 +800,9 @@ function toOverviewRow(row: LeadMentorJobOverviewListItem): OverviewRow {
     interviewAt: formatDateTime(row.interviewTime),
     deadlineHint: buildCountdownText(row.interviewTime),
     deadlineTone: resolveDeadlineTone(row.interviewTime),
-    status: row.coachingStatus || '待更新',
-    statusTone: resolveCoachingTone(row.coachingStatus, row.stageUpdated),
+    // §D.2 派生 status 展示（双轨制，stageUpdated 高亮保留旧行为）
+    status: deriveOverviewStatusDisplay(row).label,
+    statusTone: deriveOverviewStatusDisplay(row).tone,
     stageUpdated: Boolean(row.stageUpdated),
     rowTone: resolveRowTone(row),
     mentorName: row.mentorNames || row.mentorName || (row.assignedStatus === 'pending' ? '待分配' : '-'),

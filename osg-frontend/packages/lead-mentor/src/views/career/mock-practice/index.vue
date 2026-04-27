@@ -394,6 +394,8 @@ import {
   type LeadMentorMockPracticeScope,
   type LeadMentorMockPracticeStats,
 } from '@osg/shared/api'
+// §D.2 LM mock-practice 状态显示接入 SSOT composable
+import { deriveMockPracticeStatus } from '@osg/shared/composables'
 import AssignMockModal, { type AssignMockPreview } from '@/components/AssignMockModal.vue'
 import LeadMockFeedbackModal, { type MockFeedbackPreview } from '@/components/LeadMockFeedbackModal.vue'
 
@@ -783,22 +785,43 @@ function resolveTypeUi(practiceType?: string) {
   return { typeTone: 'tag--info', typeIcon: 'mdi-clipboard-text', rowTone: 'mock-row--blue' }
 }
 
+/**
+ * §D.2 LM mock-practice 状态显示派生（接入 SSOT composable）
+ *
+ * tone 映射：composable 5 态 → LM 现有 tag 类名（tag--success/info/warning/danger/muted）
+ * 保留 isNewAssignment 高亮分支（业务特有，覆盖 SSOT 派生）
+ */
 function resolveStatusUi(row: LeadMentorMockPracticeItem) {
   if (row.isNewAssignment) {
     return { statusTone: 'tag--danger', statusIcon: 'mdi-bell-ring' }
   }
 
-  const normalized = (row.status || '').trim().toLowerCase()
-  if (normalized === 'completed') {
-    return { statusTone: 'tag--success', statusIcon: 'mdi-check-circle' }
+  const display = deriveMockPracticeStatus({
+    status: row.status,
+    completedHours: row.completedHours,
+    // plannedHours 未出现于 LeadMentorMockPracticeItem，留空让 composable 兑底
+  })
+
+  // tone 映射 composable → LM tag class
+  const toneClassMap: Record<'success' | 'info' | 'warning' | 'danger' | 'default', string> = {
+    success: 'tag--success',
+    info: 'tag--info',
+    warning: 'tag--warning',
+    danger: 'tag--danger',
+    default: 'tag--muted',
   }
-  if (normalized === 'confirmed') {
-    return { statusTone: 'tag--info', statusIcon: 'mdi-check-decagram' }
+  const toneClass = toneClassMap[display.tone]
+
+  // icon 派生：基于 5 态
+  const iconMap: Record<'pending' | 'assigned' | 'coaching' | 'completed' | 'cancelled', string> = {
+    completed: 'mdi-check-circle',
+    coaching: 'mdi-check-decagram',
+    cancelled: 'mdi-close-circle',
+    assigned: 'mdi-clock-outline',
+    pending: 'mdi-clock-outline',
   }
-  if (normalized === 'cancelled') {
-    return { statusTone: 'tag--muted', statusIcon: 'mdi-close-circle' }
-  }
-  return { statusTone: 'tag--info', statusIcon: 'mdi-clock-outline' }
+
+  return { statusTone: toneClass, statusIcon: iconMap[display.value] || 'mdi-clock-outline' }
 }
 
 function resolveFeedbackTitle(row: Pick<LeadMentorMockPracticeItem, 'feedbackRating' | 'statusLabel' | 'status'>) {

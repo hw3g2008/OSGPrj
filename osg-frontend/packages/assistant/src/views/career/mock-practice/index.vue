@@ -249,6 +249,8 @@ import {
   confirmAssistantMockPractice,
   type AssistantMockPracticeRecord,
 } from '@osg/shared/api'
+// §D.2 asst mock-practice 状态显示接入 SSOT composable
+import { deriveMockPracticeStatus } from '@osg/shared/composables'
 
 type ActiveTab = 'coaching' | 'managed'
 
@@ -382,29 +384,34 @@ function rowClassName(record: AssistantMockPracticeRecord): string {
   return ''
 }
 
+/**
+ * §D.2 asst mock-practice 状态显示派生（接入 SSOT composable）
+ *
+ * deriveMockPracticeStatus 输出 5 态 + tone（success/info/warning/danger/default）
+ * 这里把 tone 映射到 a-tag 内建色名，保留对原有特殊值（'new'/'new_assigned'/'ongoing'）的兼容。
+ */
 function statusLabel(value?: string) {
-  const labels: Record<string, string> = {
-    new: '新分配',
-    new_assigned: '新分配',
-    pending: '待进行',
-    scheduled: '待进行',
-    ongoing: '进行中',
-    confirmed: '已确认',
-    completed: '已完成',
-    cancelled: '已取消',
-  }
   if (!value) return '未标注'
-  return labels[value] || value
+  // 特殊兼容值（不在 composable 5 态中）
+  if (value === 'new' || value === 'new_assigned') return '新分配'
+  if (value === 'ongoing') return '进行中'
+  const display = deriveMockPracticeStatus({ status: value })
+  return display.label
 }
 
 function statusColor(value?: string): string {
   const v = String(value || '').toLowerCase()
+  // 特殊兼容值
   if (v === 'new' || v === 'new_assigned') return 'red'
-  if (v === 'completed') return 'green'
-  if (v === 'cancelled') return 'default'
   if (v === 'ongoing') return 'blue'
-  if (v === 'pending' || v === 'scheduled') return 'orange'
-  return 'blue'
+  const display = deriveMockPracticeStatus({ status: v })
+  switch (display.tone) {
+    case 'danger': return 'red'
+    case 'warning': return 'orange'
+    case 'info': return 'blue'
+    case 'success': return 'green'
+    default: return 'default'
+  }
 }
 
 function feedbackLabel(value?: number | null) {

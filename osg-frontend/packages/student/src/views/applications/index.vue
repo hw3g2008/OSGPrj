@@ -110,10 +110,11 @@
             </template>
 
             <template v-else-if="column.key === 'coachingStatus'">
-              <a-tag :color="record.coachingColor" class="coaching-tag-school">
+              <!-- §D.4 改用 composable 派生 label/color -->
+              <a-tag :color="getApplicationCoachingDisplay(record).color" class="coaching-tag-school">
                 <ReadOutlined v-if="record.coachingStatus === 'coaching'" />
                 <ClockCircleOutlined v-else-if="record.coachingStatus === 'pending'" />
-                <span>{{ record.coachingStatusLabel }}</span>
+                <span>{{ getApplicationCoachingDisplay(record).label }}</span>
               </a-tag>
             </template>
 
@@ -456,6 +457,34 @@ import {
   updateStudentPositionProgress,
   type StudentApplicationRecord
 } from '@osg/shared/api'
+// §D.4 学生端用 SSOT composable 派生辅导状态显示，停止依赖后端 coachingStatusLabel/coachingColor 固化字段
+import { deriveApplicationStatus } from '@osg/shared/composables'
+
+/**
+ * §D.4 用 composable 派生展示态。优先用前端派生，后端固化字段做兜底（向后兼容）。
+ */
+function getApplicationCoachingDisplay(record: StudentApplicationRecord) {
+  const display = deriveApplicationStatus({
+    coachingStatus: record.coachingStatus,
+    // student 端 row 暂未含 assignStatus，仅传 coachingStatus（composable 会兜底为 pending）
+  })
+  return {
+    label: display.label || record.coachingStatusLabel || '-',
+    // a-tag color 兼容 antdv 内建色名，用 composable tone 直接映射
+    color: mapToneToAntdColor(display.tone) || record.coachingColor || 'default',
+  }
+}
+
+function mapToneToAntdColor(tone: 'danger' | 'warning' | 'info' | 'success' | 'default') {
+  // a-tag 内建色名：success / processing / error / warning / default
+  switch (tone) {
+    case 'danger': return 'error'
+    case 'warning': return 'warning'
+    case 'info': return 'processing'
+    case 'success': return 'success'
+    default: return 'default'
+  }
+}
 
 type TabKey = 'all' | 'applied' | 'ongoing' | 'completed'
 type StageTone = { background: string; borderColor: string; color: string }

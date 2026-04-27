@@ -65,6 +65,8 @@
 import { computed } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { MockPracticeListItem } from '@osg/shared/api/admin/mockPractice'
+// §D.2 admin mock-practice 反馈模态状态显示接入 SSOT composable
+import { deriveMockPracticeStatus } from '@osg/shared/composables'
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -90,12 +92,15 @@ const practiceTypeLabel = computed(() => {
   return '模拟应聘'
 })
 
+/** §D.2 接入 deriveMockPracticeStatus（保留 'scheduled' → '已安排' 兼容映射） */
 const statusLabel = computed(() => {
   const value = props.row?.status
   if (value === 'scheduled') return '已安排'
-  if (value === 'completed') return '已完成'
-  if (value === 'cancelled') return '已取消'
-  return '待处理'
+  const display = deriveMockPracticeStatus({
+    status: value,
+    completedHours: props.row?.completedHours,
+  })
+  return display.label || '待处理'
 })
 
 const feedbackRatingLabel = computed(() => {
