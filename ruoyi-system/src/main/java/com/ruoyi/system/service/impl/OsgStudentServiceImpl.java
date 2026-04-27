@@ -398,8 +398,8 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         student.setRecruitmentCycle(asCsv(firstPresent(source, "recruitmentCycle", "recruitmentCycles")));
         student.setMajorDirection(asCsv(firstPresent(source, "majorDirection", "majorDirections")));
         student.setSubDirection(asCsv(firstPresent(source, "subDirection", "subDirections")));
-        student.setLeadMentorId(asLong(firstPresent(source, "leadMentorId", "leadMentorIds")));
-        student.setAssistantId(asLong(firstPresent(source, "assistantId", "assistantIds")));
+        student.setLeadMentorId(resolveStaffToUserId(asLong(firstPresent(source, "leadMentorId", "leadMentorIds")), null));
+        student.setAssistantId(resolveStaffToUserId(asLong(firstPresent(source, "assistantId", "assistantIds")), null));
         student.setAccountStatus(asText(firstPresent(source, "accountStatus")));
         student.setRemark(mergeRemark(asText(firstPresent(source, "remark")), buildStudyRemark(source)));
         return student;

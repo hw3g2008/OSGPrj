@@ -38,7 +38,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         (
             select count(1)
             from osg_student stu
-            where stu.lead_mentor_id = s.staff_id or stu.assistant_id = s.staff_id
+            where stu.lead_mentor_id in (select u.user_id from sys_user u where lower(trim(u.email)) = lower(trim(s.email)))
+               or stu.assistant_id in (select u.user_id from sys_user u where lower(trim(u.email)) = lower(trim(s.email)))
         ) as student_count,
         s.account_status,
         s.create_by,
