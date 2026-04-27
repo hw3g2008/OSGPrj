@@ -162,20 +162,60 @@
         </a-radio-group>
       </div>
 
-      <!-- 岗位辅导：岗位选择 -->
+      <!-- 岗位辅导：岗位选择（§A.0.4 从 my-targets.coachings 动态读取） -->
       <div v-if="showJobCoachingFields" class="selection-panel selection-panel--blue">
-        <a-form-item name="positionLabel" class="report-modal__compact">
+        <a-form-item name="applicationId" class="report-modal__compact">
           <template #label>
             <span class="report-modal__label report-modal__label--primary">
               <BankOutlined /> 选择申请辅导的岗位<span class="report-modal__required">*</span>
             </span>
           </template>
           <a-select
-            v-model:value="form.positionLabel"
+            v-model:value="form.applicationId"
             placeholder="请选择岗位"
             :disabled="submitting"
-            :options="positionOptions"
-          />
+            allow-clear
+            @change="onApplicationSelect"
+          >
+            <a-select-option
+              v-for="c in studentCoachingOptions"
+              :key="c.applicationId"
+              :value="c.applicationId"
+            >
+              {{ c.companyName || '—' }} · {{ c.positionName || '—' }}
+            </a-select-option>
+            <a-select-option v-if="studentCoachingOptions.length === 0" :value="undefined" disabled>
+              当前学员暂无活跃辅导岗位
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+      </div>
+
+      <!-- §A.0.4 模拟应聘课程类型时显示 practiceId 下拉 -->
+      <div v-if="showPracticeIdSelect" class="selection-panel selection-panel--blue">
+        <a-form-item name="practiceId" class="report-modal__compact">
+          <template #label>
+            <span class="report-modal__label report-modal__label--primary">
+              <TeamOutlined /> 选择关联的模拟应聘<span class="report-modal__required">*</span>
+            </span>
+          </template>
+          <a-select
+            v-model:value="form.practiceId"
+            placeholder="请选择模拟应聘记录"
+            :disabled="submitting"
+            allow-clear
+          >
+            <a-select-option
+              v-for="p in studentPracticeOptions"
+              :key="p.practiceId"
+              :value="p.practiceId"
+            >
+              #{{ p.practiceId }} · {{ p.practiceType || '未知类型' }}
+            </a-select-option>
+            <a-select-option v-if="studentPracticeOptions.length === 0" :value="undefined" disabled>
+              当前学员暂无活跃模拟应聘
+            </a-select-option>
+          </a-select>
         </a-form-item>
       </div>
 
@@ -511,6 +551,7 @@ import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import {
   createAssistantClassRecord,
   getAssistantStudentList,
+  getAssistantMyTargets,
   type AssistantClassRecordCreatePayload,
 } from '@osg/shared/api'
 import { getToken } from '@osg/shared/utils'
@@ -555,6 +596,10 @@ interface FormState {
   midtermScore: number | undefined
   midtermAnalysis: string
   midtermProgress: string
+  /** §A.0.4 关联的求职辅导 application_id（job-coaching） */
+  applicationId: number | undefined
+  /** §A.0.4 关联的模拟应聘 practice_id（mock-* / networking / mock-midterm） */
+  practiceId: number | undefined
 }
 
 const props = defineProps<Props>()
@@ -573,11 +618,7 @@ const courseTypes: Array<{ value: CourseTypeUi; label: string; description: stri
   { value: 'basic', label: '基础课程', description: '基础课程', color: 'geekblue' },
 ]
 
-const positionOptions = [
-  { value: 'Goldman Sachs · IB Analyst · Hong Kong', label: 'Goldman Sachs · IB Analyst · Hong Kong' },
-  { value: 'Morgan Stanley · IBD Analyst · New York', label: 'Morgan Stanley · IBD Analyst · New York' },
-  { value: 'McKinsey · Business Analyst · Shanghai', label: 'McKinsey · Business Analyst · Shanghai' },
-]
+// §A.0.4 hardcoded positionOptions 移除，改用 my-targets 加载的 activeCoachings 动态生成下拉
 
 const jobContentOptions = [
   { value: 'technical', label: '技术的' },
@@ -633,6 +674,23 @@ const submitting = ref(false)
 const studentsLoading = ref(false)
 const studentOptions = ref<{ value: number; label: string }[]>([])
 
+/** §A.0.4 my-targets 加载状态 */
+interface MyTargetCoaching {
+  applicationId: number
+  studentId?: number
+  studentName?: string
+  companyName?: string
+  positionName?: string
+}
+interface MyTargetPractice {
+  practiceId: number
+  studentId?: number
+  studentName?: string
+  practiceType?: string
+}
+const activeCoachings = ref<MyTargetCoaching[]>([])
+const activePractices = ref<MyTargetPractice[]>([])
+
 function createDefaultForm(): FormState {
   return {
     studentId: undefined,
@@ -658,6 +716,9 @@ function createDefaultForm(): FormState {
     midtermScore: undefined,
     midtermAnalysis: '',
     midtermProgress: '',
+    // §A.0.4
+    applicationId: undefined,
+    practiceId: undefined,
   }
 }
 
@@ -768,6 +829,49 @@ async function loadStudents() {
   }
 }
 
+/** §A.0.4 加载 my-targets（可选的 application / practice 下拉） */
+async function loadMyTargets() {
+  try {
+    const res = await getAssistantMyTargets()
+    activeCoachings.value = (res?.coachings ?? []) as MyTargetCoaching[]
+    activePractices.value = (res?.practices ?? []) as MyTargetPractice[]
+  } catch {
+    activeCoachings.value = []
+    activePractices.value = []
+  }
+}
+
+/** §A.0.4 当前学员可选的求职辅导（同步 my-targets） */
+const studentCoachingOptions = computed(() => {
+  if (form.studentId == null) return [] as MyTargetCoaching[]
+  return activeCoachings.value.filter((c) => c.studentId === form.studentId)
+})
+
+/** §A.0.4 当前学员可选的模拟应聘（同步 my-targets） */
+const studentPracticeOptions = computed(() => {
+  if (form.studentId == null) return [] as MyTargetPractice[]
+  return activePractices.value.filter((p) => p.studentId === form.studentId)
+})
+
+/** §A.0.4 是否应显示 practiceId 下拉（mock-* 课程类型） */
+const showPracticeIdSelect = computed(() => {
+  if (form.attendanceStatus !== 'attended') return false
+  const ct = form.courseTypeUi
+  return ct === 'mock-interview' || ct === 'networking' || ct === 'mock-midterm'
+})
+
+/** §A.0.4 选中 application 后同步 positionLabel（向后兼容） */
+function onApplicationSelect(applicationId: number | undefined) {
+  if (applicationId == null) {
+    form.positionLabel = ''
+    return
+  }
+  const c = studentCoachingOptions.value.find((row) => row.applicationId === applicationId)
+  if (c) {
+    form.positionLabel = `${c.companyName || ''} · ${c.positionName || ''}`.trim()
+  }
+}
+
 watch(
   () => props.open,
   (isOpen) => {
@@ -775,6 +879,7 @@ watch(
       Object.assign(form, createDefaultForm())
       formRef.value?.clearValidate()
       loadStudents()
+      loadMyTargets()
     }
   },
 )
@@ -822,6 +927,11 @@ async function handleSubmit() {
     }
     const comments = resolveCommentsFn(form, performanceOptions)
     if (comments) payload.comments = comments
+    // §A.0.4 关联辅导对象 ID（后端 OsgClassRecord 已有此二字段）
+    if (!isAbsent) {
+      if (form.applicationId != null) payload.applicationId = form.applicationId
+      if (form.practiceId != null) payload.practiceId = form.practiceId
+    }
 
     await createAssistantClassRecord(payload)
 

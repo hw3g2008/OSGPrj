@@ -106,11 +106,40 @@
         <div v-if="form.studentId && form.studentStatus === 'normal' && form.coachingType === 'job-coaching'" id="mentor-job-select" class="form-group" style="margin-top:16px">
           <div class="job-card">
             <label class="form-label" style="color:#1E40AF"><i class="mdi mdi-briefcase" /> 选择申请辅导的岗位 <span class="req">*</span></label>
-            <a-select v-model:value="form.jobPosition" placeholder="请选择岗位" style="width:100%;margin-top:8px" allow-clear>
-              <a-select-option value="">请选择岗位</a-select-option>
-              <a-select-option value="gs-ib">Goldman Sachs · IB Analyst · Hong Kong</a-select-option>
-              <a-select-option value="ms-ibd">Morgan Stanley · IBD Analyst · New York</a-select-option>
-              <a-select-option value="mckinsey">McKinsey · Business Analyst · Shanghai</a-select-option>
+            <!-- §A.0.4 改用 my-targets.coachings 真实数据，value 为 applicationId -->
+            <a-select
+              v-model:value="form.applicationId"
+              placeholder="请选择岗位"
+              style="width:100%;margin-top:8px"
+              allow-clear
+              @change="onApplicationSelect"
+            >
+              <a-select-option v-for="c in studentCoachingOptions" :key="c.applicationId" :value="c.applicationId">
+                {{ c.companyName || '—' }} · {{ c.positionName || '—' }}
+              </a-select-option>
+              <a-select-option v-if="studentCoachingOptions.length === 0" :value="undefined" disabled>
+                当前学员暂无活跃辅导岗位
+              </a-select-option>
+            </a-select>
+          </div>
+        </div>
+
+        <!-- §A.0.4 模拟应聘类型时显示 practiceId 下拉（mock-interview / networking / mock-midterm） -->
+        <div v-if="form.studentId && form.studentStatus === 'normal' && showPracticeIdSelect" id="mentor-practice-select" class="form-group" style="margin-top:16px">
+          <div class="job-card">
+            <label class="form-label" style="color:#7C3AED"><i class="mdi mdi-account-tie-voice" /> 选择关联的模拟应聘 <span class="req">*</span></label>
+            <a-select
+              v-model:value="form.practiceId"
+              placeholder="请选择模拟应聘记录"
+              style="width:100%;margin-top:8px"
+              allow-clear
+            >
+              <a-select-option v-for="p in studentPracticeOptions" :key="p.practiceId" :value="p.practiceId">
+                #{{ p.practiceId }} · {{ p.practiceType || '未知类型' }}
+              </a-select-option>
+              <a-select-option v-if="studentPracticeOptions.length === 0" :value="undefined" disabled>
+                当前学员暂无活跃模拟应聘
+              </a-select-option>
             </a-select>
           </div>
         </div>
@@ -273,12 +302,30 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { http } from '@osg/shared/utils/request'
+import { getMentorMyTargets } from '@/api/jobOverview'
 
 const emit = defineEmits<{ close: []; submitted: [] }>()
 
 const students = ref<any[]>([])
 const hourlyRate = ref(600)
 const submitting = ref(false)
+
+/** §A.0.4 mentor 端 my-targets：activeCoachings = job-coaching 下拉源，activePractices = mock-* 下拉源 */
+interface MyTargetCoaching {
+  applicationId: number
+  studentId?: number
+  studentName?: string
+  companyName?: string
+  positionName?: string
+}
+interface MyTargetPractice {
+  practiceId: number
+  studentId?: number
+  studentName?: string
+  practiceType?: string
+}
+const activeCoachings = ref<MyTargetCoaching[]>([])
+const activePractices = ref<MyTargetPractice[]>([])
 
 const form = ref({
   studentId: '',
@@ -295,6 +342,33 @@ const form = ref({
   originalResumeName: '',
   updatedResumeName: '',
   jobPosition: '',
+  /** §A.0.4 后端 OsgClassRecord 已有此两个字段，提交时一并回写 */
+  applicationId: undefined as number | undefined,
+  practiceId: undefined as number | undefined,
+})
+
+/**
+ * §A.0.4 当前学员可选的求职辅导（同步 my-targets）。
+ */
+const studentCoachingOptions = computed(() => {
+  const sid = form.value.studentId ? Number(form.value.studentId) : null
+  if (!sid) return [] as MyTargetCoaching[]
+  return activeCoachings.value.filter((c) => c.studentId === sid)
+})
+
+/**
+ * §A.0.4 当前学员可选的模拟应聘（同步 my-targets）。
+ */
+const studentPracticeOptions = computed(() => {
+  const sid = form.value.studentId ? Number(form.value.studentId) : null
+  if (!sid) return [] as MyTargetPractice[]
+  return activePractices.value.filter((p) => p.studentId === sid)
+})
+
+/** §A.0.4 当前是否需要显示 practiceId 下拉（coachingType 是模拟应聘类） */
+const showPracticeIdSelect = computed(() => {
+  const ct = form.value.coachingType
+  return ct === 'mock-interview' || ct === 'networking' || ct === 'mock-midterm'
 })
 
 const courseTypes = [
@@ -391,6 +465,21 @@ function onStudentSelect() {
   form.value.jobPosition = ''
   form.value.originalResumeName = ''
   form.value.updatedResumeName = ''
+  // §A.0.4 切换学员后清空 application/practice 关联
+  form.value.applicationId = undefined
+  form.value.practiceId = undefined
+}
+
+/** §A.0.4 选中 applicationId 后同步 jobPosition 字段（兼容现有 payload + 测试） */
+function onApplicationSelect(applicationId: number | undefined) {
+  if (applicationId == null) {
+    form.value.jobPosition = ''
+    return
+  }
+  const c = studentCoachingOptions.value.find((row) => row.applicationId === applicationId)
+  if (c) {
+    form.value.jobPosition = `${c.companyName || ''} · ${c.positionName || ''}`.trim()
+  }
 }
 
 function onStudentStatusChange(status: string) {
@@ -404,6 +493,9 @@ function onStudentStatusChange(status: string) {
     form.value.jobPosition = ''
     form.value.originalResumeName = ''
     form.value.updatedResumeName = ''
+    // §A.0.4
+    form.value.applicationId = undefined
+    form.value.practiceId = undefined
   }
 }
 
@@ -411,12 +503,18 @@ function onCourseTypeChange(value: string) {
   form.value.coachingType = value
   if (value !== 'job-coaching') {
     form.value.jobPosition = ''
+    // §A.0.4 切到非 job-coaching 时清空 applicationId
+    form.value.applicationId = undefined
   }
   if (value !== 'job-coaching') {
     form.value.contentType = ''
   }
   if (value === 'mock-interview' || value === 'networking' || value === 'mock-midterm' || value === 'basic') {
     form.value.feedback = ''
+  }
+  // §A.0.4 切到非 mock-* 时清空 practiceId
+  if (value !== 'mock-interview' && value !== 'networking' && value !== 'mock-midterm') {
+    form.value.practiceId = undefined
   }
 }
 
@@ -492,6 +590,9 @@ async function handleSubmit() {
       score: form.value.score,
       progress: form.value.progress,
       jobPosition: form.value.jobPosition,
+      // §A.0.4 关联到具体的辅导对象（OsgClassRecord 已有此两字段）
+      applicationId: form.value.applicationId,
+      practiceId: form.value.practiceId,
     })
     try {
       window.alert('课程记录已提交！\n\n等待后台审核后将同步到学员端。')
@@ -512,6 +613,19 @@ onMounted(async () => {
     students.value = res.rows || res || []
   } catch {
     students.value = []
+  }
+
+  // §A.0.4 加载 my-targets，供 applicationId / practiceId 下拉
+  try {
+    const res = (await getMentorMyTargets()) as {
+      coachings?: MyTargetCoaching[]
+      practices?: MyTargetPractice[]
+    }
+    activeCoachings.value = res?.coachings ?? []
+    activePractices.value = res?.practices ?? []
+  } catch {
+    activeCoachings.value = []
+    activePractices.value = []
   }
 })
 </script>

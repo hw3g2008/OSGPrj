@@ -170,10 +170,39 @@
             选择申请辅导的岗位
             <span class="required">*</span>
           </label>
-          <select v-model="form.positionLabel" class="form-select">
-            <option value="">请选择岗位</option>
-            <option v-for="position in positionOptions" :key="position" :value="position">
-              {{ position }}
+          <!-- §A.0.4 改用 my-targets.coachings 真实数据，绑定 applicationId -->
+          <select v-model.number="form.applicationId" class="form-select" @change="onApplicationSelect">
+            <option :value="undefined">请选择岗位</option>
+            <option
+              v-for="c in studentCoachingOptions"
+              :key="c.applicationId"
+              :value="c.applicationId"
+            >
+              {{ c.companyName || '—' }} · {{ c.positionName || '—' }}
+            </option>
+            <option v-if="studentCoachingOptions.length === 0" :value="undefined" disabled>
+              当前学员暂无活跃辅导岗位
+            </option>
+          </select>
+        </div>
+
+        <!-- §A.0.4 模拟应聘类型展示 practiceId 下拉 -->
+        <div v-if="showPracticeIdSelect" class="form-group form-group--compact">
+          <label class="form-label">
+            选择关联的模拟应聘
+            <span class="required">*</span>
+          </label>
+          <select v-model.number="form.practiceId" class="form-select">
+            <option :value="undefined">请选择模拟应聘记录</option>
+            <option
+              v-for="p in studentPracticeOptions"
+              :key="p.practiceId"
+              :value="p.practiceId"
+            >
+              #{{ p.practiceId }} · {{ p.practiceType || '未知类型' }}
+            </option>
+            <option v-if="studentPracticeOptions.length === 0" :value="undefined" disabled>
+              当前学员暂无活跃模拟应聘
             </option>
           </select>
         </div>
@@ -397,9 +426,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import type { LeadMentorClassRecordCreatePayload } from '@osg/shared/api'
+import { getLeadMentorMyTargets, type LeadMentorClassRecordCreatePayload } from '@osg/shared/api'
 
 interface ReportStudentOption {
   value: string
@@ -429,6 +458,25 @@ interface ReportFormState {
   midtermScore: string
   midtermAnalysis: string
   midtermProgress: string
+  /** §A.0.4 关联的求职辅导 application_id（job-coaching） */
+  applicationId: number | undefined
+  /** §A.0.4 关联的模拟应聘 practice_id（mock-*） */
+  practiceId: number | undefined
+}
+
+/** §A.0.4 my-targets 加载状态定义 */
+interface MyTargetCoaching {
+  applicationId: number
+  studentId?: number
+  studentName?: string
+  companyName?: string
+  positionName?: string
+}
+interface MyTargetPractice {
+  practiceId: number
+  studentId?: number
+  studentName?: string
+  practiceType?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -459,11 +507,7 @@ const courseTypes = [
   { value: 'basic', label: '基础课程', description: '基础课程', tone: 'tag--indigo' },
 ] as const
 
-const positionOptions = [
-  'Goldman Sachs · IB Analyst · Hong Kong',
-  'Morgan Stanley · IBD Analyst · New York',
-  'McKinsey · Business Analyst · Shanghai',
-]
+// §A.0.4 hardcoded positionOptions 移除，改用 my-targets 动态加载
 
 const jobContentOptions = [
   { value: 'technical', label: '技术的' },
@@ -515,6 +559,24 @@ const progressOptions = [
   '不适用 - 入学时间太短',
 ]
 
+// §A.0.4 my-targets 加载 state
+const activeCoachings = ref<MyTargetCoaching[]>([])
+const activePractices = ref<MyTargetPractice[]>([])
+
+async function loadMyTargets() {
+  try {
+    const res = (await getLeadMentorMyTargets()) as {
+      coachings?: MyTargetCoaching[]
+      practices?: MyTargetPractice[]
+    }
+    activeCoachings.value = res?.coachings ?? []
+    activePractices.value = res?.practices ?? []
+  } catch {
+    activeCoachings.value = []
+    activePractices.value = []
+  }
+}
+
 function createDefaultForm(prefillStudentId?: string | null): ReportFormState {
   return {
     studentId: prefillStudentId ?? '',
@@ -526,6 +588,8 @@ function createDefaultForm(prefillStudentId?: string | null): ReportFormState {
     positionLabel: 'Goldman Sachs · IB Analyst · Hong Kong',
     jobContentType: 'case_prep',
     basicContentType: 'technical',
+    applicationId: undefined,
+    practiceId: undefined,
     feedbackContent: '',
     mockPurpose: '',
     mockConcepts: '',
@@ -544,6 +608,39 @@ const form = reactive<ReportFormState>(createDefaultForm(props.prefillStudentId)
 const usesJobContent = computed(() => form.courseType === 'job-coaching')
 const usesBasicContent = computed(() => form.courseType === 'basic')
 
+/** §A.0.4 当前学员可选的求职辅导 */
+const studentCoachingOptions = computed<MyTargetCoaching[]>(() => {
+  const sid = form.studentId ? Number(form.studentId) : null
+  if (!sid) return []
+  return activeCoachings.value.filter((c) => c.studentId === sid)
+})
+
+/** §A.0.4 当前学员可选的模拟应聘 */
+const studentPracticeOptions = computed<MyTargetPractice[]>(() => {
+  const sid = form.studentId ? Number(form.studentId) : null
+  if (!sid) return []
+  return activePractices.value.filter((p) => p.studentId === sid)
+})
+
+/** §A.0.4 mock-* 课程类型时展示 practiceId 下拉 */
+const showPracticeIdSelect = computed(() => {
+  const ct = form.courseType
+  return ct === 'mock-interview' || ct === 'networking' || ct === 'mock-midterm'
+})
+
+/** §A.0.4 选中 application 后同步 positionLabel（向后兼容） */
+function onApplicationSelect() {
+  const aid = form.applicationId
+  if (aid == null) {
+    form.positionLabel = ''
+    return
+  }
+  const c = studentCoachingOptions.value.find((row) => row.applicationId === aid)
+  if (c) {
+    form.positionLabel = `${c.companyName || ''} · ${c.positionName || ''}`.trim()
+  }
+}
+
 watch(
   () => props.modelValue,
   (open) => {
@@ -551,6 +648,7 @@ watch(
       return
     }
     Object.assign(form, createDefaultForm(props.prefillStudentId))
+    loadMyTargets()
   },
 )
 
@@ -661,7 +759,7 @@ function handleSubmit() {
     return
   }
 
-  emit('submit', {
+  const payload: LeadMentorClassRecordCreatePayload = {
     studentId: Number(form.studentId),
     classDate: toSubmitClassDate(form.classDate),
     durationHours: Number(form.durationHours),
@@ -670,7 +768,12 @@ function handleSubmit() {
     feedbackContent: form.feedbackContent.trim(),
     topics: resolveTopics(),
     comments: resolveComments(),
-  })
+  }
+  // §A.0.4 关联辅导对象 ID
+  if (form.applicationId != null) payload.applicationId = form.applicationId
+  if (form.practiceId != null) payload.practiceId = form.practiceId
+
+  emit('submit', payload)
 }
 </script>
 

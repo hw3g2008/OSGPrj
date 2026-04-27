@@ -57,10 +57,18 @@ describe('AssistantClassReportFlowModal (prototype-aligned)', () => {
 
   it('contains job-coaching branch fields (position + jobContent)', () => {
     expect(src).toContain('showJobCoachingFields')
-    expect(src).toContain('v-model:value="form.positionLabel"')
+    // §A.0.4 岗位下拉改用 my-targets.coachings 真实数据，绑定 applicationId
+    expect(src).toContain('v-model:value="form.applicationId"')
     expect(src).toContain('v-model:value="form.jobContentType"')
-    expect(src).toContain('positionOptions')
+    expect(src).toContain('studentCoachingOptions')
     expect(src).toContain('jobContentOptions')
+  })
+
+  // §A.0.4 mock-* 课程类型展示 practiceId 下拉
+  it('shows practiceId selector for mock practice course types', () => {
+    expect(src).toContain('showPracticeIdSelect')
+    expect(src).toContain('v-model:value="form.practiceId"')
+    expect(src).toContain('studentPracticeOptions')
   })
 
   it('contains basic-course branch (basicContentType select)', () => {

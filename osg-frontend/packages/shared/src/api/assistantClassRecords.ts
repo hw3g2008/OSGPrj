@@ -19,6 +19,10 @@ export interface AssistantClassRecordCreatePayload {
   feedbackContent?: string
   topics?: string
   comments?: string
+  /** §A.0.4 关联的求职辅导 application_id（job-coaching 课程类型时） */
+  applicationId?: number
+  /** §A.0.4 关联的模拟应聘 practice_id（mock-* 课程类型时） */
+  practiceId?: number
 }
 
 export interface AssistantClassRecordCreateResponse {
