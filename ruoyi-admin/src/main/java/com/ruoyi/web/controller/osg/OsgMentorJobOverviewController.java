@@ -10,6 +10,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,6 +58,25 @@ public class OsgMentorJobOverviewController extends BaseController
     public AjaxResult confirm(@PathVariable Long id)
     {
         return AjaxResult.success(userJobOverviewService.confirmCoaching(id, SecurityUtils.getUserId(), resolveOperator()));
+    }
+
+    /**
+     * §C.3 mentor 端确认 LM 推送的阶段更新（消除 stageUpdated 标记）。
+     * 与 LM 端 ack-stage-update 等价，但限定 mentor 鉴权（service 层走 listByMentor 视角）。
+     */
+    @PostMapping("/{id}/ack-stage-update")
+    public AjaxResult acknowledgeStageUpdate(@PathVariable Long id)
+    {
+        return AjaxResult.success(userJobOverviewService.acknowledgeStageUpdate(id, SecurityUtils.getUserId(), resolveOperator()));
+    }
+
+    /**
+     * §A.0.3 mentor 端列出当前活跃的辅导对象（前端课程记录提交表单做下拉源）。
+     */
+    @GetMapping("/my-targets")
+    public AjaxResult myTargets()
+    {
+        return AjaxResult.success(userJobOverviewService.listMyTargets(SecurityUtils.getUserId()));
     }
 
     @GetMapping("/calendar")

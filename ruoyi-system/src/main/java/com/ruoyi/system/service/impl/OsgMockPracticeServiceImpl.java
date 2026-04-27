@@ -12,11 +12,13 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
+import com.ruoyi.system.mapper.SysDictDataMapper;
 import com.ruoyi.system.service.IOsgMockPracticeService;
 
 @Service
@@ -27,6 +29,11 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
     private static final String STATUS_COMPLETED = "completed";
     private static final String STATUS_CANCELLED = "cancelled";
 
+    /** §E.1 plannedHours 字典 type */
+    private static final String DICT_TYPE_PRACTICE_PLANNED_HOURS = "osg_practice_planned_hours";
+    /** §E.1 字典缺失/解析失败时的兜底默认值（每位导师 1.0 课时） */
+    private static final double DEFAULT_PRACTICE_PLANNED_HOURS_PER_MENTOR = 1.0;
+
     @Autowired
     private OsgMockPracticeMapper mockPracticeMapper;
 
@@ -35,6 +42,9 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
 
     @Autowired
     private OsgIdentityResolver identityResolver;
+
+    @Autowired
+    private SysDictDataMapper sysDictDataMapper;
 
     @Override
     public List<OsgMockPractice> selectMentorMockPracticeList(OsgMockPractice query)
@@ -300,11 +310,58 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
         payload.put("mentorBackgrounds", row.getMentorBackgrounds());
         payload.put("scheduledAt", row.getScheduledAt());
         payload.put("completedHours", row.getCompletedHours());
+        // §E.2 派生 plannedHours raw 字段（前端 composable 取此值做 "已完成" 派生展示）
+        payload.put("plannedHours", computePlannedHours(row.getPracticeType(), row.getRequestedMentorCount()));
         payload.put("feedbackRating", row.getFeedbackRating());
         payload.put("feedbackSummary", row.getFeedbackSummary());
         payload.put("submittedAt", row.getSubmittedAt());
         payload.put("note", row.getRemark());
         return payload;
+    }
+
+    /**
+     * §E.1 / §E.2 计算 plannedHours：
+     * - 公式：plannedHours = requestedMentorCount × 字典中该 practiceType 的每位导师标准课时数
+     * - 字典缺失或 parseFloat 失败时 fallback 到 DEFAULT_PRACTICE_PLANNED_HOURS_PER_MENTOR
+     * - requestedMentorCount 为 null 或 0 时返回 0
+     */
+    private double computePlannedHours(String practiceType, Integer requestedMentorCount)
+    {
+        int mentorCount = requestedMentorCount == null ? 0 : requestedMentorCount;
+        if (mentorCount <= 0)
+        {
+            return 0.0;
+        }
+        double perMentorHours = resolvePerMentorPlannedHours(practiceType);
+        return mentorCount * perMentorHours;
+    }
+
+    private double resolvePerMentorPlannedHours(String practiceType)
+    {
+        if (practiceType == null || practiceType.isBlank())
+        {
+            return DEFAULT_PRACTICE_PLANNED_HOURS_PER_MENTOR;
+        }
+        try
+        {
+            List<SysDictData> rows = sysDictDataMapper.selectDictDataByType(DICT_TYPE_PRACTICE_PLANNED_HOURS);
+            if (rows == null || rows.isEmpty())
+            {
+                return DEFAULT_PRACTICE_PLANNED_HOURS_PER_MENTOR;
+            }
+            for (SysDictData dict : rows)
+            {
+                if (practiceType.equalsIgnoreCase(dict.getDictValue()))
+                {
+                    return Double.parseDouble(dict.getDictLabel());
+                }
+            }
+        }
+        catch (RuntimeException ex)
+        {
+            // 字典 label 不是合法数值（NumberFormatException）或字典查询失败 → fallback 默认值
+        }
+        return DEFAULT_PRACTICE_PLANNED_HOURS_PER_MENTOR;
     }
 
     private Long toLong(Object value)

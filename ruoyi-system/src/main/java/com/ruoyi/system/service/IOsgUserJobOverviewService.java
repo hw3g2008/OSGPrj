@@ -95,4 +95,12 @@ public interface IOsgUserJobOverviewService
      * 导师确认收徒（confirm coaching）。
      */
     Map<String, Object> confirmCoaching(Long applicationId, Long mentorId, String operator);
+
+    /**
+     * §A.0.3 列出当前辅导者负责的活跃辅导对象（前端课程记录提交表单做下拉选择源）。
+     * 返回 { coachings: [...], practices: [...] }：
+     * - coachings：当前用户在 mentor_ids CSV 中、osg_coaching.status in ('coaching','assigned') 的辅导记录
+     * - practices：当前用户在 mentor_ids CSV 中、osg_mock_practice.status in ('confirmed','scheduled') 的模拟应聘
+     */
+    Map<String, Object> listMyTargets(Long currentUserId);
 }

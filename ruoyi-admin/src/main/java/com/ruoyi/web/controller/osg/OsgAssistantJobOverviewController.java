@@ -6,6 +6,8 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -87,6 +89,67 @@ public class OsgAssistantJobOverviewController extends BaseController
         catch (ServiceException ex)
         {
             return AjaxResult.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * §C.4 asst 端确认收徒（confirm coaching）。
+     * 设计：asst 是 mentor 助教，部分场景下 asst 可代 mentor confirm，复用共用 service。
+     */
+    @PutMapping("/{applicationId}/confirm-coaching")
+    public AjaxResult confirmCoaching(@PathVariable Long applicationId)
+    {
+        try
+        {
+            return AjaxResult.success(userJobOverviewService.confirmCoaching(applicationId, getUserId(), resolveOperator()));
+        }
+        catch (ServiceException ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * §C.4 asst 端确认 LM 推送的阶段更新（消除 stageUpdated 标记）。
+     */
+    @PostMapping("/{applicationId}/ack-stage-update")
+    public AjaxResult acknowledgeStageUpdate(@PathVariable Long applicationId)
+    {
+        try
+        {
+            return AjaxResult.success(userJobOverviewService.acknowledgeStageUpdate(applicationId, getUserId(), resolveOperator()));
+        }
+        catch (ServiceException ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * §A.0.3 asst 端列出当前活跃的辅导对象（前端课程记录提交表单做下拉源）。
+     */
+    @GetMapping("/my-targets")
+    public AjaxResult myTargets()
+    {
+        try
+        {
+            return AjaxResult.success(userJobOverviewService.listMyTargets(getUserId()));
+        }
+        catch (ServiceException ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
+    }
+
+    private String resolveOperator()
+    {
+        try
+        {
+            return getUsername();
+        }
+        catch (ServiceException ex)
+        {
+            return "system";
         }
     }
 }

@@ -22,9 +22,11 @@ import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.OsgCoaching;
 import com.ruoyi.system.domain.OsgJobApplication;
+import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
+import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.service.IOsgUserJobOverviewService;
 
@@ -48,6 +50,9 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
 
     @Autowired
     private OsgStudentMapper studentMapper;
+
+    @Autowired
+    private OsgMockPracticeMapper mockPracticeMapper;
 
     // ===== Lead-Mentor 端 =====
 
@@ -230,6 +235,115 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         result.put("coachingStatus", "coaching");
         result.put("confirmedAt", confirmedAt);
         return result;
+    }
+
+    /**
+     * §A.0.3 列出当前辅导者负责的活跃辅导对象（前端课程记录提交表单做下拉源）。
+     */
+    @Override
+    public Map<String, Object> listMyTargets(Long currentUserId)
+    {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("coachings", listMyCoachings(currentUserId));
+        result.put("practices", listMyPractices(currentUserId));
+        return result;
+    }
+
+    private List<Map<String, Object>> listMyCoachings(Long currentUserId)
+    {
+        if (currentUserId == null)
+        {
+            return List.of();
+        }
+        List<OsgCoaching> coachings = coachingMapper.selectCoachingList(new OsgCoaching());
+        if (coachings == null || coachings.isEmpty())
+        {
+            return List.of();
+        }
+        List<OsgCoaching> filtered = coachings.stream()
+            .filter(row -> row.getApplicationId() != null)
+            .filter(row -> matchesMentorRelation(row, currentUserId))
+            .filter(row -> {
+                String status = row.getStatus();
+                return "coaching".equals(status) || "assigned".equals(status);
+            })
+            .toList();
+        if (filtered.isEmpty())
+        {
+            return List.of();
+        }
+        // 批量查 application 拿 studentName/companyName/positionName
+        List<Long> applicationIds = filtered.stream()
+            .map(OsgCoaching::getApplicationId)
+            .toList();
+        Map<Long, OsgJobApplication> applicationMap = applicationIds.stream()
+            .map(id -> jobApplicationMapper.selectJobApplicationByApplicationId(id))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toMap(OsgJobApplication::getApplicationId, row -> row, (a, b) -> a, LinkedHashMap::new));
+        return filtered.stream()
+            .map(coaching -> {
+                Map<String, Object> payload = new LinkedHashMap<>();
+                payload.put("applicationId", coaching.getApplicationId());
+                payload.put("studentId", coaching.getStudentId());
+                payload.put("status", coaching.getStatus());
+                OsgJobApplication application = applicationMap.get(coaching.getApplicationId());
+                if (application != null)
+                {
+                    payload.put("studentName", application.getStudentName());
+                    payload.put("companyName", application.getCompanyName());
+                    payload.put("positionName", application.getPositionName());
+                }
+                return payload;
+            })
+            .toList();
+    }
+
+    private List<Map<String, Object>> listMyPractices(Long currentUserId)
+    {
+        if (currentUserId == null)
+        {
+            return List.of();
+        }
+        List<OsgMockPractice> practices = mockPracticeMapper.selectMockPracticeList(new OsgMockPractice());
+        if (practices == null || practices.isEmpty())
+        {
+            return List.of();
+        }
+        return practices.stream()
+            .filter(row -> row.getPracticeId() != null)
+            .filter(row -> isUserInCsv(row.getMentorIds(), currentUserId))
+            .filter(row -> {
+                String status = row.getStatus();
+                return "confirmed".equals(status) || "scheduled".equals(status);
+            })
+            .map(row -> {
+                Map<String, Object> payload = new LinkedHashMap<>();
+                payload.put("practiceId", row.getPracticeId());
+                payload.put("studentId", row.getStudentId());
+                payload.put("studentName", row.getStudentName());
+                payload.put("practiceType", row.getPracticeType());
+                payload.put("status", row.getStatus());
+                payload.put("requestContent", row.getRequestContent());
+                return payload;
+            })
+            .toList();
+    }
+
+    private boolean isUserInCsv(String csv, Long userId)
+    {
+        if (csv == null || csv.isBlank() || userId == null)
+        {
+            return false;
+        }
+        String target = String.valueOf(userId);
+        for (String token : csv.split(","))
+        {
+            if (target.equals(token.trim()))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

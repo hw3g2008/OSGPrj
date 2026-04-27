@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -120,6 +121,48 @@ public class OsgLeadMentorJobOverviewController extends BaseController
         try
         {
             return AjaxResult.success(userJobOverviewService.acknowledgeStageUpdate(applicationId, getUserId(), resolveOperator()));
+        }
+        catch (ServiceException ex)
+        {
+            return handleServiceException(ex);
+        }
+    }
+
+    /**
+     * §C.5 LM 端确认收徒（confirm coaching）。
+     * 设计：LM 自己也可被分配为辅导者，故需要 confirm 入口。复用 mentor 端 confirmCoaching 共用 service 方法。
+     */
+    @PutMapping("/{applicationId}/confirm-coaching")
+    public AjaxResult confirmCoaching(@PathVariable Long applicationId)
+    {
+        if (!hasLeadMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+
+        try
+        {
+            return AjaxResult.success(userJobOverviewService.confirmCoaching(applicationId, getUserId(), resolveOperator()));
+        }
+        catch (ServiceException ex)
+        {
+            return handleServiceException(ex);
+        }
+    }
+
+    /**
+     * §A.0.3 LM 端列出当前活跃的辅导对象（前端课程记录提交表单做下拉源）。
+     */
+    @GetMapping("/my-targets")
+    public AjaxResult myTargets()
+    {
+        if (!hasLeadMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+        try
+        {
+            return AjaxResult.success(userJobOverviewService.listMyTargets(getUserId()));
         }
         catch (ServiceException ex)
         {

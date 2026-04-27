@@ -33,6 +33,8 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
     private static final String DICT_TYPE_PRACTICE_STATUS = "osg_student_mock_practice_status";
     private static final String DICT_TYPE_PRACTICE_RANGE = "osg_student_mock_practice_range";
     private static final String DICT_TYPE_PRACTICE_MENTOR_COUNT = "osg_student_mock_practice_mentor_count";
+    /** §E.1 plannedHours 字典：dict_value=practiceType，dict_label=每位导师标准课时数（字符串） */
+    private static final String DICT_TYPE_PRACTICE_PLANNED_HOURS = "osg_practice_planned_hours";
     private static final String DICT_TYPE_REQUEST_COPY = "osg_student_mock_request_page_copy";
     private static final String DICT_TYPE_REQUEST_TAB = "osg_student_mock_request_tab";
     private static final String DICT_TYPE_REQUEST_TYPE = "osg_student_mock_request_type";
@@ -97,6 +99,16 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             new DictSeed(DICT_TYPE_PRACTICE_MENTOR_COUNT, 1L, "1位导师", "1位导师", null, null, "导师数量"),
             new DictSeed(DICT_TYPE_PRACTICE_MENTOR_COUNT, 2L, "2位导师", "2位导师", null, null, "导师数量"),
             new DictSeed(DICT_TYPE_PRACTICE_MENTOR_COUNT, 3L, "3位导师", "3位导师", null, null, "导师数量"));
+
+    /**
+     * §E.1 plannedHours 字典种子：dict_value=practiceType，dict_label=每位导师标准课时数（字符串）。
+     * 公式：plannedHours = mock_practice.requestedMentorCount × dict_label.parseFloat
+     * 字典缺失时由后端代码 fallback 到 DEFAULT_PRACTICE_PLANNED_HOURS_PER_MENTOR（5 端共用兜底）。
+     */
+    private static final List<DictSeed> PRACTICE_PLANNED_HOURS_SEEDS = List.of(
+            new DictSeed(DICT_TYPE_PRACTICE_PLANNED_HOURS, 1L, "1.0", "mock", null, null, "模拟面试每位导师标准课时数"),
+            new DictSeed(DICT_TYPE_PRACTICE_PLANNED_HOURS, 2L, "0.5", "networking", null, null, "人际关系测试每位导师标准课时数"),
+            new DictSeed(DICT_TYPE_PRACTICE_PLANNED_HOURS, 3L, "1.5", "midterm", null, null, "期中考试每位导师标准课时数"));
 
     private static final List<DictSeed> REQUEST_COPY_SEEDS = List.of(
             new DictSeed(DICT_TYPE_REQUEST_COPY, 1L, "课程申请", "titleZh", null, null, "页面文案"),
@@ -446,6 +458,7 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             seedStaticDicts(PRACTICE_STATUS_SEEDS);
             seedStaticDicts(PRACTICE_RANGE_SEEDS);
             seedStaticDicts(PRACTICE_MENTOR_COUNT_SEEDS);
+            seedStaticDicts(PRACTICE_PLANNED_HOURS_SEEDS);  // §E.1
             seedStaticDicts(REQUEST_COPY_SEEDS);
             seedStaticDicts(REQUEST_TAB_SEEDS);
             seedStaticDicts(REQUEST_TYPE_SEEDS);
