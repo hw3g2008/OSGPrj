@@ -22,7 +22,7 @@
           @click="openPracticeModal(entry.id)"
         >
           <div class="practice-card__icon" :style="{ background: entry.gradient }">
-            {{ entry.badge }}
+            <i class="mdi" :class="practiceCardIcon(entry.id)" aria-hidden="true"></i>
           </div>
           <h3 class="practice-card__title">{{ entry.title }}</h3>
           <p class="practice-card__desc">{{ entry.description }}</p>
@@ -38,6 +38,12 @@
       </div>
 
       <a-card :title="mockPracticeMeta.practiceSection.recordsTitle" :bordered="false" class="records-card">
+        <template #title>
+          <span class="records-card__title">
+            <i class="mdi mdi-history" aria-hidden="true"></i>
+            {{ mockPracticeMeta.practiceSection.recordsTitle }}
+          </span>
+        </template>
         <div class="records-toolbar">
           <a-input
             v-model:value="practiceFilters.keyword"
@@ -102,10 +108,14 @@
           :pagination="false"
           row-key="id"
           :scroll="{ x: 1080 }"
+          :row-class-name="practiceRowClass"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'type'">
-              <a-tag :color="record.typeColor">{{ record.type }}</a-tag>
+              <a-tag :color="record.typeColor" class="type-tag">
+                <i class="mdi" :class="practiceTypeIcon(record.typeValue)" aria-hidden="true"></i>
+                {{ record.type }}
+              </a-tag>
             </template>
 
             <template v-else-if="column.key === 'mentor'">
@@ -155,6 +165,7 @@
       :title="practiceModalTitle"
       :width="560"
       :footer="null"
+      :wrap-class-name="`modal-accent ${practiceModalToneClass}`"
       @cancel="closePracticeModal"
     >
       <div class="practice-dialog__summary-card">
@@ -252,6 +263,7 @@
       title="申请详情"
       :width="540"
       :footer="null"
+      wrap-class-name="modal-accent"
       @cancel="closeApplicationDetail"
     >
       <div v-if="selectedRecord" class="application-detail">
@@ -302,6 +314,7 @@
       title="导师反馈"
       :width="640"
       :footer="null"
+      wrap-class-name="modal-accent modal-accent--green"
       @cancel="closeFeedbackDetail"
     >
       <div v-if="selectedRecord" class="feedback-detail">
@@ -530,6 +543,36 @@ const visiblePracticeRecords = computed(() => {
   })
 })
 
+const PRACTICE_ICON_MAP: Record<string, string> = {
+  mock: 'mdi-account-voice',
+  networking: 'mdi-account-group',
+  midterm: 'mdi-file-document-edit'
+}
+
+const practiceCardIcon = (id: string) => PRACTICE_ICON_MAP[id] || 'mdi-clipboard-text-outline'
+
+const practiceTypeIcon = (typeValue: string) =>
+  PRACTICE_ICON_MAP[typeValue] || 'mdi-clipboard-text-outline'
+
+const PRACTICE_ROW_TONE: Record<string, string> = {
+  mock: 'practice-row--mock',
+  networking: 'practice-row--networking',
+  midterm: 'practice-row--midterm'
+}
+
+const practiceRowClass = (record: StudentPracticeRecord) =>
+  PRACTICE_ROW_TONE[record.typeValue] || ''
+
+const PRACTICE_MODAL_TONE: Record<string, string> = {
+  mock: '',
+  networking: 'modal-accent--orange',
+  midterm: 'modal-accent--violet'
+}
+
+const practiceModalToneClass = computed(() =>
+  PRACTICE_MODAL_TONE[currentPracticeModal.value || 'mock'] ?? ''
+)
+
 const buttonStyleForCard = (entry: StudentMockPracticeCard) => {
   if (entry.buttonType === 'default' && entry.buttonColor) {
     return {
@@ -739,6 +782,11 @@ onMounted(() => {
     font-size: 20px;
     font-weight: 700;
     letter-spacing: 0.08em;
+
+    .mdi {
+      font-size: 32px;
+      line-height: 1;
+    }
   }
 
   .practice-card__title {
@@ -765,6 +813,58 @@ onMounted(() => {
   .records-card {
     border-radius: 20px;
     box-shadow: 0 18px 36px rgba(15, 23, 42, 0.05);
+  }
+
+  .records-card__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f172a;
+    font-weight: 600;
+
+    .mdi {
+      color: var(--primary);
+      font-size: 18px;
+    }
+  }
+
+  .type-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+
+    .mdi {
+      font-size: 14px;
+    }
+  }
+
+  // === 行底色：根据 typeValue 区分（原型 page-mock-practice 行 #F0F9FF / #FFFBEB / #F3E8FF） ===
+  :deep(.ant-table-tbody) > tr.practice-row--mock > td {
+    background: #f0f9ff;
+  }
+
+  :deep(.ant-table-tbody) > tr.practice-row--mock:hover > td {
+    background: #e0f2fe;
+  }
+
+  :deep(.ant-table-tbody) > tr.practice-row--networking > td {
+    background: #fffbeb;
+  }
+
+  :deep(.ant-table-tbody) > tr.practice-row--networking:hover > td {
+    background: #fef3c7;
+  }
+
+  :deep(.ant-table-tbody) > tr.practice-row--midterm > td {
+    background: #f3e8ff;
+  }
+
+  :deep(.ant-table-tbody) > tr.practice-row--midterm:hover > td {
+    background: #e9d5ff;
   }
 
   .records-toolbar {

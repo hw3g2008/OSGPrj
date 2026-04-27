@@ -175,6 +175,7 @@
       :title="currentCourse?.detailTitle || ''"
       :width="620"
       :footer="null"
+      :wrap-class-name="`modal-accent ${detailToneClass}`"
       @cancel="detailVisible = false"
     >
       <div class="detail-stack">
@@ -317,6 +318,7 @@
       :title="classRecordsMeta.ratingDialog.title"
       :width="550"
       :footer="null"
+      wrap-class-name="modal-accent modal-accent--amber"
       @cancel="rateVisible = false"
     >
       <div class="rate-stack">
@@ -448,6 +450,19 @@ const ratingText = computed(() => {
   }
 
   return `${rateForm.value.rating}分 - ${ratingDescriptions[rateForm.value.rating]}`
+})
+
+const detailToneClass = computed(() => {
+  switch (currentCourse.value?.detailKind) {
+    case 'mock':
+      return 'modal-accent--green'
+    case 'networking':
+      return 'modal-accent--purple'
+    case 'midterm':
+      return 'modal-accent--amber'
+    default:
+      return ''
+  }
 })
 
 const detailRatingSummary = computed(() => {

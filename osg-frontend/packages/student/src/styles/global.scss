@@ -55,3 +55,115 @@ button {
 .mdi {
   line-height: 1;
 }
+
+/* ============================================================
+ * Modal accent themes
+ * 用法：<a-modal :wrap-class-name="`modal-accent modal-accent--${tone}`" />
+ * tone: blue (默认) | green | amber | purple | violet
+ * 给 a-modal 头部加上原型一致的渐变色块 + 白字标题 + 白色关闭按钮，
+ * 同时把 --modal-accent / --modal-card-bg 等 CSS 变量传给 modal 内部
+ * 的卡片样式（详情卡 / 评价标签 / 摘要等）。
+ * ============================================================ */
+.modal-accent {
+  --modal-accent: #7399c6;
+  --modal-accent-soft: #e8f0f8;
+  --modal-accent-strong: #5a7ba3;
+  --modal-accent-highlight: #9bb8d9;
+  --modal-card-bg: #f8fafc;
+  --modal-card-border: #e2e8f0;
+  --modal-header-from: #7399c6;
+  --modal-header-to: #9bb8d9;
+
+  .ant-modal-content {
+    overflow: hidden;
+    padding: 0;
+    border-radius: 16px;
+  }
+
+  .ant-modal-header {
+    margin: 0 !important;
+    padding: 18px 24px !important;
+    background: linear-gradient(135deg, var(--modal-header-from), var(--modal-header-to)) !important;
+    border-bottom: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+
+  .ant-modal-title {
+    color: #fff !important;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .ant-modal-close {
+    top: 14px;
+    color: #fff !important;
+  }
+
+  .ant-modal-close:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+  }
+
+  .ant-modal-close-x {
+    color: #fff;
+    font-size: 18px;
+  }
+
+  .ant-modal-body {
+    padding: 24px !important;
+  }
+}
+
+.modal-accent--green {
+  --modal-accent: #16a34a;
+  --modal-accent-soft: #d1fae5;
+  --modal-accent-strong: #15803d;
+  --modal-accent-highlight: #22c55e;
+  --modal-card-bg: #f0fdf4;
+  --modal-card-border: #bbf7d0;
+  --modal-header-from: #22c55e;
+  --modal-header-to: #16a34a;
+}
+
+.modal-accent--amber {
+  --modal-accent: #d97706;
+  --modal-accent-soft: #fef3c7;
+  --modal-accent-strong: #b45309;
+  --modal-accent-highlight: #fbbf24;
+  --modal-card-bg: #fffbeb;
+  --modal-card-border: #fde68a;
+  --modal-header-from: #f59e0b;
+  --modal-header-to: #d97706;
+}
+
+.modal-accent--purple {
+  --modal-accent: #7c3aed;
+  --modal-accent-soft: #f3e8ff;
+  --modal-accent-strong: #6d28d9;
+  --modal-accent-highlight: #a78bfa;
+  --modal-card-bg: #faf5ff;
+  --modal-card-border: #e9d5ff;
+  --modal-header-from: #8b5cf6;
+  --modal-header-to: #7c3aed;
+}
+
+.modal-accent--violet {
+  --modal-accent: #7c3aed;
+  --modal-accent-soft: #f3e8ff;
+  --modal-accent-strong: #6d28d9;
+  --modal-accent-highlight: #a78bfa;
+  --modal-card-bg: #faf5ff;
+  --modal-card-border: #e9d5ff;
+  --modal-header-from: #8b5cf6;
+  --modal-header-to: #a78bfa;
+}
+
+.modal-accent--orange {
+  --modal-accent: #d97706;
+  --modal-accent-soft: #fef3c7;
+  --modal-accent-strong: #b45309;
+  --modal-accent-highlight: #fbbf24;
+  --modal-card-bg: #fffbeb;
+  --modal-card-border: #fde68a;
+  --modal-header-from: #f59e0b;
+  --modal-header-to: #fbbf24;
+}

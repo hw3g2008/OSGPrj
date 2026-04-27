@@ -30,64 +30,84 @@
         <h2 class="login-title">欢迎回来</h2>
         <p class="login-subtitle">请登录您的学员账号</p>
 
-        <a-alert
+        <div
           v-if="loginError"
           id="login-error"
-          type="error"
-          show-icon
-          :message="loginError"
           class="login-error login-error--show"
-        />
+          role="alert"
+        >
+          <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
+          <span>{{ loginError }}</span>
+        </div>
 
-        <a-form class="login-form" layout="vertical" @submit.prevent="handleLogin">
-          <a-form-item
-            label="用户名"
-            :validate-status="fieldErrors.username ? 'error' : ''"
-            :help="fieldErrors.username"
-          >
-            <a-input
-              id="login-username"
-              v-model:value="formState.username"
-              size="large"
-              placeholder="请输入用户名"
-              autocomplete="username"
-              @update:value="clearFieldError('username')"
-            />
-          </a-form-item>
+        <form class="login-form" novalidate @submit.prevent="handleLogin">
+          <div class="form-group" :class="{ 'has-error': !!fieldErrors.username }">
+            <label class="form-label" for="login-username">用户名</label>
+            <div class="input-wrapper">
+              <i class="mdi mdi-account-outline input-icon" aria-hidden="true"></i>
+              <input
+                id="login-username"
+                v-model="formState.username"
+                type="text"
+                class="form-input form-input--with-icon"
+                placeholder="请输入用户名"
+                autocomplete="username"
+                spellcheck="false"
+                @input="clearFieldError('username')"
+              />
+            </div>
+            <p v-if="fieldErrors.username" class="form-error-text">{{ fieldErrors.username }}</p>
+          </div>
 
-          <a-form-item
-            label="密码"
-            :validate-status="fieldErrors.password ? 'error' : ''"
-            :help="fieldErrors.password"
-          >
-            <a-input-password
-              id="login-password"
-              v-model:value="formState.password"
-              size="large"
-              placeholder="请输入密码"
-              autocomplete="current-password"
-              @update:value="clearFieldError('password')"
-            />
-          </a-form-item>
+          <div class="form-group" :class="{ 'has-error': !!fieldErrors.password }">
+            <label class="form-label" for="login-password">密码</label>
+            <div class="pwd-wrapper">
+              <i class="mdi mdi-lock-outline input-icon" aria-hidden="true"></i>
+              <input
+                id="login-password"
+                v-model="formState.password"
+                :type="showPassword ? 'text' : 'password'"
+                class="form-input form-input--with-icon form-input--with-toggle"
+                placeholder="请输入密码"
+                autocomplete="current-password"
+                spellcheck="false"
+                @input="clearFieldError('password')"
+              />
+              <button
+                type="button"
+                class="pwd-toggle"
+                tabindex="-1"
+                :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+                :aria-pressed="showPassword"
+                @click="showPassword = !showPassword"
+              >
+                <i
+                  class="mdi"
+                  :class="showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </div>
+            <p v-if="fieldErrors.password" class="form-error-text">{{ fieldErrors.password }}</p>
+          </div>
 
           <div class="login-links">
-            <a-checkbox v-model:checked="formState.remember">记住我</a-checkbox>
+            <label class="remember-me">
+              <input v-model="formState.remember" type="checkbox" />
+              <span>记住我</span>
+            </label>
             <router-link to="/forgot-password">忘记密码？</router-link>
           </div>
 
-          <a-button
+          <button
             id="login-btn"
-            type="primary"
-            html-type="submit"
+            type="submit"
             class="login-btn"
-            block
-            size="large"
-            :loading="loading"
-            @click="handleLogin"
+            :disabled="loading"
           >
-            {{ loading ? '登录中...' : '登 录' }}
-          </a-button>
-        </a-form>
+            <span>{{ loading ? '登录中...' : '登 录' }}</span>
+          </button>
+        </form>
 
         <div class="copyright">
           备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">冀ICP备17000879号-4</a>
@@ -114,6 +134,7 @@ const route = useRoute()
 
 const loading = ref(false)
 const loginError = ref('')
+const showPassword = ref(false)
 const fieldErrors = reactive<Record<string, string>>({
   username: '',
   password: ''
@@ -296,34 +317,182 @@ const handleLogin = async () => {
 }
 
 .login-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.5;
+
+  .mdi {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
 }
 
+/* ============================================================
+ * 原生表单样式（form-group / pwd-wrapper / pwd-toggle）
+ * 用 padding-left:44px 给左侧图标留位、padding-right:44px 给右侧
+ * 切换按钮留位，光标永远不会贴到图标，避免之前 a-input-password
+ * 出现的「光标顶到眼睛图标」问题。
+ * ============================================================ */
 .login-form {
-  // 统一表单项间距，匹配原型
-  :deep(.ant-form-item) {
-    margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.input-wrapper,
+.pwd-wrapper {
+  position: relative;
+  display: block;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.form-input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+
+  &::placeholder {
+    color: var(--muted);
   }
 
-  :deep(.ant-form-item-label > label) {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text2);
-    height: auto;
-    padding-bottom: 6px;
+  &:hover:not(:disabled):not(:focus) {
+    border-color: #cbd5e1;
   }
 
-  :deep(.ant-input-affix-wrapper),
-  :deep(.ant-input) {
-    border-radius: 12px;
-    border-width: 2px;
-  }
-
-  :deep(.ant-input-affix-wrapper-focused),
-  :deep(.ant-input:focus) {
+  &:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 4px var(--primary-light);
   }
+
+  &:disabled {
+    background: #f8fafc;
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+}
+
+.form-input--with-icon {
+  padding-left: 44px;
+}
+
+.form-input--with-toggle {
+  padding-right: 44px;
+}
+
+/* 让 input focus 时左侧图标也变主色 */
+.input-wrapper:focus-within .input-icon,
+.pwd-wrapper:focus-within .input-icon {
+  color: var(--primary);
+}
+
+.pwd-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+  transition: color 0.2s ease, background-color 0.2s ease;
+
+  .mdi {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  &:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+}
+
+/* 字段错误状态 */
+.form-group.has-error {
+  .form-input {
+    border-color: var(--danger);
+
+    &:focus {
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+    }
+  }
+
+  .input-icon {
+    color: var(--danger);
+  }
+}
+
+.form-error-text {
+  margin: 6px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* 浏览器自动填充时去掉黄色背景，保持白底 */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  box-shadow: 0 0 0 1000px #fff inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .login-links {
@@ -342,41 +511,62 @@ const handleLogin = async () => {
       text-decoration: underline;
     }
   }
+}
 
-  label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text2);
-    cursor: pointer;
-  }
+.remember-me {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text2);
+  cursor: pointer;
+  user-select: none;
 
   input[type='checkbox'] {
     width: 16px;
     height: 16px;
     accent-color: var(--primary);
+    cursor: pointer;
   }
 }
 
 .login-btn {
-  height: 52px !important;
-  padding: 16px !important;
-  background: var(--primary-gradient) !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 12px !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  background: var(--primary-gradient);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
   box-shadow: 0 4px 15px rgba(115, 153, 198, 0.4);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(115, 153, 198, 0.5);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   &:disabled {
-    background: var(--muted) !important;
+    background: var(--muted);
+    cursor: not-allowed;
+    opacity: 0.85;
     transform: none;
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
   }
 }
 
@@ -389,6 +579,26 @@ const handleLogin = async () => {
   a {
     color: var(--text2);
     text-decoration: none;
+
+    &:hover {
+      color: var(--primary);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-left {
+    padding: 40px 24px;
+    flex: none;
+  }
+
+  .login-right {
+    width: 100%;
+    border-radius: 24px 24px 0 0;
   }
 }
 </style>
