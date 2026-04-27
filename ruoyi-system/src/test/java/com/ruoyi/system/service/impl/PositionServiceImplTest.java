@@ -534,6 +534,60 @@ class PositionServiceImplTest
         verify(jobApplicationMapper, never()).insertJobApplication(any());
     }
 
+    @Test
+    void updateApplyStatusFalseSoftDeletesByMarkingWithdrawn()
+    {
+        OsgJobApplication existing = new OsgJobApplication();
+        existing.setApplicationId(9101L);
+        existing.setStudentId(12766L);
+        existing.setCurrentStage("applied");
+
+        when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
+        when(studentJobPositionMapper.upsertApplyState(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
+        when(positionMapper.selectPositionByPositionId(501L)).thenReturn(publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York"));
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(12766L, "Goldman Sachs", "Summer Analyst")).thenReturn(existing);
+        when(jobApplicationMapper.updateJobApplicationStage(any(OsgJobApplication.class))).thenReturn(1);
+
+        int rows = service.updateApplyStatus(501L, false, null, null, null, 838L);
+
+        assertEquals(1, rows);
+        ArgumentCaptor<OsgJobApplication> captor = ArgumentCaptor.forClass(OsgJobApplication.class);
+        verify(jobApplicationMapper).updateJobApplicationStage(captor.capture());
+        OsgJobApplication patch = captor.getValue();
+        assertEquals(9101L, patch.getApplicationId());
+        assertEquals("withdrawn", patch.getCurrentStage());
+        assertEquals("学生取消投递标记", patch.getRemark());
+        assertEquals("838", patch.getUpdateBy());
+        verify(jobApplicationMapper, never()).insertJobApplication(any());
+    }
+
+    @Test
+    void updateApplyStatusTrueAfterWithdrawnReusesExistingRow()
+    {
+        OsgJobApplication existing = new OsgJobApplication();
+        existing.setApplicationId(9101L);
+        existing.setStudentId(12766L);
+        existing.setCurrentStage("withdrawn");
+
+        when(studentJobPositionMapper.countVisiblePosition(501L, 838L)).thenReturn(1);
+        when(studentJobPositionMapper.upsertApplyState(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
+        when(positionMapper.selectPositionByPositionId(501L)).thenReturn(publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York"));
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectLatestByStudentAndCompanyAndPosition(12766L, "Goldman Sachs", "Summer Analyst")).thenReturn(existing);
+        when(jobApplicationMapper.updateJobApplicationStage(any(OsgJobApplication.class))).thenReturn(1);
+
+        int rows = service.updateApplyStatus(501L, true, "2026-04-28", "官网投递", "重新投递", 838L);
+
+        assertEquals(1, rows);
+        ArgumentCaptor<OsgJobApplication> captor = ArgumentCaptor.forClass(OsgJobApplication.class);
+        verify(jobApplicationMapper).updateJobApplicationStage(captor.capture());
+        OsgJobApplication patch = captor.getValue();
+        assertEquals(9101L, patch.getApplicationId());
+        assertEquals("applied", patch.getCurrentStage());
+        verify(jobApplicationMapper, never()).insertJobApplication(any());
+    }
+
     private OsgStudent student(Long studentId, String studentName)
     {
         OsgStudent student = new OsgStudent();

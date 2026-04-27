@@ -359,7 +359,12 @@ public class PositionServiceImpl implements IPositionService
         {
             return 0;
         }
-        return jobApplicationMapper.deleteJobApplicationByApplicationId(existing.getApplicationId());
+        OsgJobApplication patch = new OsgJobApplication();
+        patch.setApplicationId(existing.getApplicationId());
+        patch.setCurrentStage("withdrawn");
+        patch.setUpdateBy(String.valueOf(userId));
+        patch.setRemark("学生取消投递标记");
+        return jobApplicationMapper.updateJobApplicationStage(patch);
     }
 
     /**

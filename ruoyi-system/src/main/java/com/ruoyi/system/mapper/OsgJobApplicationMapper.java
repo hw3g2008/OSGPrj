@@ -27,6 +27,4 @@ public interface OsgJobApplicationMapper
     int updateJobApplicationStage(OsgJobApplication jobApplication);
 
     int updateJobApplicationCoaching(OsgJobApplication jobApplication);
-
-    int deleteJobApplicationByApplicationId(@Param("applicationId") Long applicationId);
 }

@@ -153,6 +153,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from osg_job_application app
         left join osg_position position_ref on position_ref.position_id = app.position_id
         where app.student_id = #{userId}
+          and app.current_stage != 'withdrawn'
         order by app.submitted_at desc, app.application_id desc
     </select>
 
@@ -170,9 +171,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="companyName != null and companyName != ''">
                 and company_name = #{companyName}
             </if>
-            <if test="currentStage != null and currentStage != ''">
-                and current_stage = #{currentStage}
-            </if>
+            <choose>
+                <when test="currentStage != null and currentStage != ''">
+                    and current_stage = #{currentStage}
+                </when>
+                <otherwise>
+                    and current_stage != 'withdrawn'
+                </otherwise>
+            </choose>
             <if test="leadMentorId != null">
                 and lead_mentor_id = #{leadMentorId}
             </if>
@@ -215,6 +221,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <foreach collection="studentIds" item="sid" open="(" separator="," close=")">
             #{sid}
         </foreach>
+        and current_stage != 'withdrawn'
         order by submitted_at desc, application_id desc
     </select>
 
@@ -292,10 +299,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </set>
         where application_id = #{applicationId}
     </update>
-
-    <delete id="deleteJobApplicationByApplicationId" parameterType="Long">
-        delete from osg_job_application where application_id = #{applicationId}
-    </delete>
 
     <update id="updateJobApplicationCoaching" parameterType="OsgJobApplication">
         update osg_job_application
