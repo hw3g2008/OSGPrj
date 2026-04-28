@@ -1,4 +1,5 @@
 <template>
+  <a-config-provider :auto-insert-space-in-button="false">
   <div
     v-if="modelValue && preview"
     class="job-detail-modal modal"
@@ -36,39 +37,51 @@
       </div>
 
       <div class="job-detail-body modal-body" data-surface-part="body">
-        <section class="hero-card">
-          <div class="hero-block">
-            <div class="hero-label">
-              <i class="mdi mdi-account" aria-hidden="true" />
-              学员信息
-            </div>
-            <div class="hero-student">
-              <div id="jd-student-avatar" class="hero-avatar">{{ preview.studentName }}</div>
-              <div>
-                <div id="jd-student-name" class="hero-value">{{ preview.studentName }}</div>
-                <div class="hero-meta">
-                  ID:
-                  <span id="jd-student-id">{{ preview.studentId }}</span>
-                  · 班主任:
-                  <span id="jd-lead-mentor">{{ preview.leadMentorName }}</span>
+        <a-row :gutter="16" class="hero-row">
+          <a-col :xs="24" :md="12">
+            <div class="hero-card hero-card--student">
+              <div class="hero-label">
+                <i class="mdi mdi-account" aria-hidden="true" />
+                学员信息
+              </div>
+              <div class="hero-student">
+                <a-avatar
+                  id="jd-student-avatar"
+                  class="hero-avatar"
+                  :size="48"
+                  :style="{ backgroundColor: '#3b82f6' }"
+                >
+                  {{ studentInitial }}
+                </a-avatar>
+                <div class="hero-student-info">
+                  <div id="jd-student-name" class="hero-value" :title="preview.studentName">
+                    {{ preview.studentName }}
+                  </div>
+                  <div class="hero-meta">
+                    ID: <span id="jd-student-id">{{ preview.studentId }}</span>
+                    · 班主任: <span id="jd-lead-mentor">{{ preview.leadMentorName }}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </a-col>
 
-          <div class="hero-block">
-            <div class="hero-label">
-              <i class="mdi mdi-domain" aria-hidden="true" />
-              申请岗位
+          <a-col :xs="24" :md="12">
+            <div class="hero-card hero-card--position">
+              <div class="hero-label">
+                <i class="mdi mdi-domain" aria-hidden="true" />
+                申请岗位
+              </div>
+              <div id="jd-company" class="hero-value hero-value--brand" :title="preview.companyName">
+                {{ preview.companyName }}
+              </div>
+              <div id="jd-position" class="hero-meta hero-meta--body">{{ preview.positionName }}</div>
+              <div class="hero-meta hero-meta--body">
+                招聘周期: <span id="jd-cycle">{{ preview.recruitmentCycle }}</span>
+              </div>
             </div>
-            <div id="jd-company" class="hero-value hero-value--brand">{{ preview.companyName }}</div>
-            <div id="jd-position" class="hero-meta hero-meta--body">{{ preview.positionName }}</div>
-            <div class="hero-meta hero-meta--body">
-              招聘周期:
-              <span id="jd-cycle">{{ preview.recruitmentCycle }}</span>
-            </div>
-          </div>
-        </section>
+          </a-col>
+        </a-row>
 
         <section class="modal-section">
           <div class="section-title">
@@ -76,51 +89,21 @@
             求职进度
           </div>
 
-          <div class="timeline">
-            <div class="timeline-step">
-              <div class="timeline-badge timeline-badge--done">
-                <i class="mdi mdi-check" aria-hidden="true" />
-              </div>
-              <div class="timeline-copy">已投递<span>01/05</span></div>
-            </div>
-            <div class="timeline-line timeline-line--done" />
-            <div class="timeline-step">
-              <div class="timeline-badge timeline-badge--done">
-                <i class="mdi mdi-check" aria-hidden="true" />
-              </div>
-              <div class="timeline-copy">HireVue<span>01/10</span></div>
-            </div>
-            <div class="timeline-line timeline-line--done" />
-            <div class="timeline-step">
-              <div class="timeline-badge timeline-badge--current">
-                <i class="mdi mdi-clock" aria-hidden="true" />
-              </div>
-              <div class="timeline-copy timeline-copy--current">First Round<span>当前</span></div>
-            </div>
-            <div class="timeline-line" />
-            <div class="timeline-step timeline-step--future">
-              <div class="timeline-badge timeline-badge--future">
-                <i class="mdi mdi-circle-outline" aria-hidden="true" />
-              </div>
-              <div class="timeline-copy">Final</div>
-            </div>
-            <div class="timeline-line" />
-            <div class="timeline-step timeline-step--future">
-              <div class="timeline-badge timeline-badge--future">
-                <i class="mdi mdi-circle-outline" aria-hidden="true" />
-              </div>
-              <div class="timeline-copy">Offer</div>
-            </div>
-          </div>
+          <a-steps
+            :current="2"
+            size="small"
+            class="job-steps"
+            label-placement="vertical"
+            :items="stepItems"
+          />
 
           <div class="interview-card">
             <i class="mdi mdi-calendar-clock" aria-hidden="true" />
-            <div>
-              <div>
-                面试时间:
-                <span id="jd-interview-time">{{ preview.interviewTime }}</span>
+            <div class="interview-card__body">
+              <div class="interview-card__title">
+                面试时间: <span id="jd-interview-time">{{ preview.interviewTime }}</span>
               </div>
-              <div id="jd-countdown">{{ preview.countdownText }}</div>
+              <div id="jd-countdown" class="interview-card__meta">{{ preview.countdownText }}</div>
             </div>
           </div>
         </section>
@@ -131,24 +114,34 @@
             辅导信息
           </div>
 
-          <div class="coaching-grid">
-            <article class="coaching-card">
-              <div>辅导状态</div>
-              <strong id="jd-coaching-status">{{ preview.coachingStatus }}</strong>
-            </article>
-            <article class="coaching-card">
-              <div>分配导师</div>
-              <strong id="jd-mentor">{{ preview.mentorName }}</strong>
-            </article>
-            <article class="coaching-card">
-              <div>已上课时</div>
-              <strong id="jd-hours">{{ preview.lessonHours }}</strong>
-            </article>
-            <article class="coaching-card">
-              <div>申请时间</div>
-              <strong id="jd-apply-time">{{ preview.applyTime }}</strong>
-            </article>
-          </div>
+          <a-row :gutter="[12, 12]" class="coaching-row">
+            <a-col :xs="12" :sm="6">
+              <div class="coaching-card">
+                <div class="coaching-card__label">辅导状态</div>
+                <strong id="jd-coaching-status" class="coaching-card__value">
+                  {{ preview.coachingStatus }}
+                </strong>
+              </div>
+            </a-col>
+            <a-col :xs="12" :sm="6">
+              <div class="coaching-card">
+                <div class="coaching-card__label">分配导师</div>
+                <strong id="jd-mentor" class="coaching-card__value">{{ preview.mentorName }}</strong>
+              </div>
+            </a-col>
+            <a-col :xs="12" :sm="6">
+              <div class="coaching-card">
+                <div class="coaching-card__label">已上课时</div>
+                <strong id="jd-hours" class="coaching-card__value">{{ preview.lessonHours }}</strong>
+              </div>
+            </a-col>
+            <a-col :xs="12" :sm="6">
+              <div class="coaching-card">
+                <div class="coaching-card__label">申请时间</div>
+                <strong id="jd-apply-time" class="coaching-card__value">{{ preview.applyTime }}</strong>
+              </div>
+            </a-col>
+          </a-row>
         </section>
 
         <section class="modal-section">
@@ -158,10 +151,10 @@
               课程记录 (最近3条)
             </div>
 
-            <button type="button" class="btn btn-text btn-sm" @click="emit('request-view-all')">
+            <a-button type="link" size="small" class="view-all-btn" @click="emit('request-view-all')">
               查看全部
               <i class="mdi mdi-arrow-right" aria-hidden="true" />
-            </button>
+            </a-button>
           </div>
 
           <div class="records">
@@ -172,10 +165,14 @@
               :class="record.tone"
             >
               <span class="record-date">{{ record.date }}</span>
-              <span class="record-tag" :class="record.tagTone">{{ record.label }}</span>
+              <a-tag class="record-tag" :class="record.tagTone" :bordered="false">
+                {{ record.label }}
+              </a-tag>
               <span class="record-hours">{{ record.hours }}</span>
               <span class="record-summary">{{ record.summary }}</span>
-              <span class="record-grade" :class="record.tagTone">{{ record.grade }}</span>
+              <a-tag class="record-grade" :class="record.tagTone" :bordered="false">
+                {{ record.grade }}
+              </a-tag>
             </article>
           </div>
         </section>
@@ -190,22 +187,27 @@
       </div>
 
       <div class="job-detail-footer modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeModal">关闭</button>
-        <button
-          type="button"
-          class="btn job-detail-action"
+        <a-button class="footer-btn" @click="closeModal">关闭</a-button>
+        <a-button
+          type="primary"
+          class="footer-btn job-detail-action"
           data-surface-trigger="modal-assign-mentor"
           @click="emit('request-mentor-change')"
         >
-          <i class="mdi mdi-account-switch" aria-hidden="true" />
+          <template #icon>
+            <i class="mdi mdi-account-switch" aria-hidden="true" />
+          </template>
           更换导师
-        </button>
+        </a-button>
       </div>
     </div>
   </div>
+  </a-config-provider>
 </template>
 
 <script setup lang="ts">
+import { computed, h } from 'vue'
+
 export interface JobDetailPreview {
   studentName: string
   studentId: string
@@ -232,7 +234,7 @@ interface CourseRecord {
   tagTone: string
 }
 
-defineProps<{
+const props = defineProps<{
   modelValue: boolean
   preview: JobDetailPreview | null
 }>()
@@ -244,6 +246,49 @@ const emit = defineEmits<{
 }>()
 
 const titleId = 'job-detail-modal-title'
+
+const studentInitial = computed(() => {
+  const name = props.preview?.studentName?.trim() ?? ''
+  if (!name) return ''
+  const ascii = /^[\x00-\x7F]+$/.test(name)
+  if (ascii) {
+    const parts = name.split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    }
+    return name.slice(0, 2).toUpperCase()
+  }
+  return name.slice(0, 1)
+})
+
+const stepIcon = (cls: string) =>
+  h('i', { class: `mdi ${cls}`, 'aria-hidden': 'true' })
+
+const stepItems = [
+  {
+    title: '已投递',
+    description: '01/05',
+    icon: stepIcon('mdi-check'),
+  },
+  {
+    title: 'HireVue',
+    description: '01/10',
+    icon: stepIcon('mdi-check'),
+  },
+  {
+    title: 'First Round',
+    description: '当前',
+    icon: stepIcon('mdi-clock'),
+  },
+  {
+    title: 'Final',
+    description: ' ',
+  },
+  {
+    title: 'Offer',
+    description: ' ',
+  },
+]
 
 const records: CourseRecord[] = [
   {
@@ -300,10 +345,12 @@ const closeModal = () => {
 .job-detail-shell {
   position: relative;
   z-index: 1;
-  width: min(90%, 700px);
+  width: min(92%, 760px);
   max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
 }
@@ -312,9 +359,8 @@ const closeModal = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 26px;
+  padding: 20px 24px;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  border-radius: 16px 16px 0 0;
 }
 
 .job-detail-title {
@@ -327,65 +373,87 @@ const closeModal = () => {
 
 .job-detail-title .mdi-briefcase-search {
   margin-right: 8px;
+  font-size: 20px;
 }
 
 .modal-close {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: 0;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
   color: #fff;
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.32);
+  }
 }
 
 .job-detail-body {
-  max-height: 75vh;
+  flex: 1;
   overflow-y: auto;
-  padding: 26px;
+  padding: 20px 24px 24px;
+  background: #fff;
+}
+
+.hero-row {
+  margin: 0 0 4px !important;
 }
 
 .hero-card {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-  margin: -26px -26px 0;
-  padding: 20px;
+  height: 100%;
+  padding: 16px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #eff6ff, #dbeafe);
 }
 
+.hero-card--position {
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+}
+
 .hero-label {
-  margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
   font-size: 12px;
   font-weight: 600;
   color: #3b82f6;
+}
+
+.hero-card--position .hero-label {
+  color: #4f46e5;
 }
 
 .hero-student {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .hero-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #3b82f6;
-  color: #fff;
+  flex-shrink: 0;
   font-size: 16px;
   font-weight: 700;
+}
+
+.hero-student-info {
+  min-width: 0;
+  flex: 1;
 }
 
 .hero-value {
   font-size: 16px;
   font-weight: 700;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hero-value--brand {
@@ -396,19 +464,24 @@ const closeModal = () => {
   margin-top: 4px;
   font-size: 12px;
   color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hero-meta--body {
   font-size: 13px;
+  color: var(--text2);
 }
 
 .modal-section {
-  padding: 20px;
+  padding: 20px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .modal-section--notes {
   border-bottom: 0;
+  padding-bottom: 4px;
 }
 
 .section-head {
@@ -429,6 +502,10 @@ const closeModal = () => {
   color: var(--text);
 }
 
+.section-head .section-title {
+  margin-bottom: 0;
+}
+
 .section-title--purple {
   color: #6d28d9;
 }
@@ -441,150 +518,96 @@ const closeModal = () => {
   color: #b45309;
 }
 
-.timeline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
+.job-steps {
+  margin: 4px 0 16px;
 
-.timeline-step {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+  :deep(.ant-steps-item-icon) {
+    .mdi {
+      font-size: 14px;
+    }
+  }
 
-.timeline-step--future {
-  opacity: 0.55;
-}
+  :deep(.ant-steps-item-title) {
+    font-size: 13px;
+  }
 
-.timeline-badge {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 10px;
-}
-
-.timeline-badge--done {
-  background: #22c55e;
-}
-
-.timeline-badge--current {
-  background: #f59e0b;
-}
-
-.timeline-badge--future {
-  background: #e5e7eb;
-  color: #9ca3af;
-}
-
-.timeline-copy {
-  font-size: 12px;
-  color: var(--text);
-}
-
-.timeline-copy span {
-  display: block;
-  font-size: 10px;
-  color: var(--muted);
-}
-
-.timeline-copy--current {
-  color: #f59e0b;
-  font-weight: 600;
-}
-
-.timeline-line {
-  width: 30px;
-  height: 2px;
-  background: #e5e7eb;
-}
-
-.timeline-line--done {
-  background: #22c55e;
+  :deep(.ant-steps-item-description) {
+    font-size: 11px;
+    color: var(--muted);
+  }
 }
 
 .interview-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  background: #fef3c7;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
   color: #92400e;
 }
 
 .interview-card .mdi-calendar-clock {
-  font-size: 24px;
-  color: #f59e0b;
+  flex-shrink: 0;
+  font-size: 26px;
+  color: #d97706;
 }
 
-.interview-card div:first-child {
+.interview-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.interview-card__title {
   font-size: 13px;
   font-weight: 600;
+  color: #92400e;
 }
 
-#jd-countdown {
-  margin-top: 4px;
-  font-size: 11px;
+.interview-card__meta {
+  font-size: 12px;
   color: #b45309;
 }
 
-.coaching-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
 .coaching-card {
-  padding: 12px;
-  border-radius: 8px;
-  background: #f3e8ff;
+  height: 100%;
+  padding: 14px 12px;
+  border-radius: 10px;
+  background: #f5f3ff;
   text-align: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.12);
+  }
 }
 
-.coaching-card div {
-  margin-bottom: 4px;
-  font-size: 11px;
+.coaching-card__label {
+  margin-bottom: 6px;
+  font-size: 12px;
   color: #7c3aed;
 }
 
-.coaching-card strong {
-  color: #6d28d9;
+.coaching-card__value {
+  display: block;
+  font-size: 15px;
+  color: #5b21b6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.btn {
+.view-all-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
-  border: 0;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-}
+  gap: 4px;
+  padding: 0 4px;
 
-.btn-outline {
-  background: #fff;
-  color: var(--text2);
-  border: 1px solid var(--border);
-}
-
-.btn-text {
-  padding: 6px 12px;
-  background: transparent;
-  color: var(--primary);
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 11px;
+  .mdi {
+    font-size: 14px;
+  }
 }
 
 .records {
@@ -597,8 +620,8 @@ const closeModal = () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
   background: #f8fafc;
   border-left: 3px solid transparent;
 }
@@ -615,24 +638,35 @@ const closeModal = () => {
   border-left-color: #8b5cf6;
 }
 
-.record-date,
+.record-date {
+  flex-shrink: 0;
+  min-width: 42px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .record-hours {
-  min-width: 50px;
-  font-size: 11px;
+  flex-shrink: 0;
+  min-width: 32px;
+  font-size: 12px;
   color: var(--muted);
 }
 
 .record-summary {
   flex: 1;
-  font-size: 12px;
+  min-width: 0;
+  font-size: 13px;
   color: var(--text);
 }
 
 .record-tag,
 .record-grade {
-  padding: 4px 8px;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 2px 10px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -652,11 +686,12 @@ const closeModal = () => {
 }
 
 .notes-card {
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
   background: #fffbeb;
+  border-left: 3px solid #f59e0b;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #92400e;
 }
 
@@ -664,23 +699,29 @@ const closeModal = () => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 18px 26px;
+  padding: 16px 24px;
   background: #f8fafc;
+  border-top: 1px solid var(--border);
+}
+
+.footer-btn {
+  min-width: 96px;
 }
 
 .job-detail-action {
   background: #8b5cf6;
-  color: #fff;
+  border-color: #8b5cf6;
+
+  &:hover,
+  &:focus {
+    background: #7c3aed !important;
+    border-color: #7c3aed !important;
+  }
 }
 
-@media (max-width: 768px) {
-  .hero-card,
-  .coaching-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .timeline {
-    align-items: flex-start;
+@media (max-width: 640px) {
+  .job-detail-shell {
+    width: 96%;
   }
 
   .record-item {

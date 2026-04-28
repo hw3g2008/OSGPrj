@@ -30,6 +30,48 @@
   // 阴影
   --osg-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --osg-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+  // 滚动条
+  --osg-scrollbar-size: 10px;
+  --osg-scrollbar-thumb: rgba(15, 23, 42, 0.22);
+  --osg-scrollbar-thumb-hover: rgba(15, 23, 42, 0.38);
+  --osg-scrollbar-thumb-active: rgba(15, 23, 42, 0.55);
+  --osg-scrollbar-track: transparent;
+
+  // Firefox（scrollbar-width / scrollbar-color 是继承属性，写在 :root 即可全局生效）
+  scrollbar-width: thin;
+  scrollbar-color: var(--osg-scrollbar-thumb) var(--osg-scrollbar-track);
+}
+
+// WebKit / Chromium / Safari 全局滚动条
+*::-webkit-scrollbar {
+  width: var(--osg-scrollbar-size);
+  height: var(--osg-scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--osg-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--osg-scrollbar-thumb);
+  border-radius: 999px;
+  // 用透明 border + padding-box 制造 thumb 与轨道间距，视觉上更瘦更精致
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.18s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--osg-scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--osg-scrollbar-thumb-active);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 // 重置样式

@@ -21,6 +21,7 @@ export { default as StatCard } from './StatCard.vue'
 export { default as PositionsFooter } from './positions/PositionsFooter.vue'
 export { default as PositionsListTable } from './positions/PositionsListTable.vue'
 export { default as PositionsDrilldown } from './positions/PositionsDrilldown.vue'
+export { default as AppWatermark } from './AppWatermark.vue'
 export type {
   IndustryTone,
   DeadlineTone,

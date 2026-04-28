@@ -111,7 +111,13 @@
 
           <fieldset class="position-form-modal__field" data-field-name="截止日期">
             <span>截止日期 <small>(选填)</small></span>
-            <a-input v-model:value="form.deadline" type="date" aria-label="截止日期" />
+            <a-date-picker
+              v-model:value="form.deadline"
+              placeholder="选择截止日期"
+              value-format="YYYY-MM-DD"
+              aria-label="截止日期"
+              style="width: 100%"
+            />
           </fieldset>
 
           <fieldset class="position-form-modal__field" data-field-name="截止文案">
@@ -128,11 +134,27 @@
             <div class="position-form-modal__display-stack">
               <fieldset class="position-form-modal__field" data-field-name="开始时间">
                 <span>开始时间 <em>*</em></span>
-                <a-input v-model:value="form.displayStartTime" type="datetime-local" aria-label="开始时间" />
+                <a-date-picker
+                  v-model:value="form.displayStartTime"
+                  show-time
+                  placeholder="选择开始时间"
+                  value-format="YYYY-MM-DDTHH:mm"
+                  format="YYYY-MM-DD HH:mm"
+                  aria-label="开始时间"
+                  style="width: 100%"
+                />
               </fieldset>
               <fieldset class="position-form-modal__field" data-field-name="结束时间">
                 <span>结束时间 <em>*</em></span>
-                <a-input v-model:value="form.displayEndTime" type="datetime-local" aria-label="结束时间" />
+                <a-date-picker
+                  v-model:value="form.displayEndTime"
+                  show-time
+                  placeholder="选择结束时间"
+                  value-format="YYYY-MM-DDTHH:mm"
+                  format="YYYY-MM-DD HH:mm"
+                  aria-label="结束时间"
+                  style="width: 100%"
+                />
               </fieldset>
             </div>
           </fieldset>
@@ -180,7 +202,7 @@
 
         <fieldset class="position-form-modal__field position-form-modal__status-field">
           <span>岗位状态</span>
-          <a-select v-model:value="form.displayStatus">
+          <a-select v-model:value="form.displayStatus" placeholder="请选择">
             <a-select-option v-for="option in statusOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </fieldset>
@@ -210,6 +232,7 @@
 import { computed, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useUserStore } from '@/stores/user'
 import type { PositionListItem, PositionMeta, PositionMetaOption, PositionPayload } from '@osg/shared/api/admin/position'
 
 const props = defineProps<{
@@ -225,20 +248,22 @@ const emit = defineEmits<{
   submit: [payload: PositionPayload]
 }>()
 
+const userStore = useUserStore()
+
 const form = reactive({
-  positionCategory: '',
+  positionCategory: undefined as string | undefined,
   positionName: '',
   department: '',
   companyName: '',
-  companyType: '',
+  companyType: undefined as string | undefined,
   companyWebsite: '',
-  region: '',
-  city: '',
-  projectYear: '',
+  region: undefined as string | undefined,
+  city: undefined as string | undefined,
+  projectYear: undefined as string | undefined,
   displayStatus: 'visible',
   displayStartTime: '',
   displayEndTime: '',
-  deadline: '',
+  deadline: undefined as string | undefined,
   deadlineText: '',
   positionUrl: '',
   applicationNote: '',
@@ -259,7 +284,7 @@ const recruitmentCycleOptions = computed(() => props.meta.recruitmentCycles || [
 const projectYearOptions = computed(() => props.meta.projectYears || [])
 const regionOptions = computed(() => props.meta.regions || [])
 const statusOptions = computed(() => props.meta.displayStatuses || [])
-const currentCityOptions = computed<PositionMetaOption[]>(() => props.meta.citiesByRegion?.[form.region] || [])
+const currentCityOptions = computed<PositionMetaOption[]>(() => (form.region ? props.meta.citiesByRegion?.[form.region] || [] : []))
 const companyAutoCompleteOptions = computed(() => props.companyOptions.map((item) => ({ value: item })))
 const displayStatusMap = computed(() => new Map(statusOptions.value.map((option) => [option.value, option.label])))
 
@@ -288,23 +313,23 @@ const resetForm = () => {
   const now = new Date()
   const end = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)
 
-  form.positionCategory = seed.positionCategory || ''
+  form.positionCategory = seed.positionCategory || undefined
   form.positionName = seed.positionName || ''
   form.department = seed.department || ''
   form.companyName = seed.companyName || ''
-  form.companyType = seed.companyType || seed.industry || ''
+  form.companyType = seed.companyType || seed.industry || undefined
   form.companyWebsite = seed.companyWebsite || ''
-  form.region = seed.region || ''
-  form.city = seed.city || ''
-  form.projectYear = seed.projectYear || ''
+  form.region = seed.region || undefined
+  form.city = seed.city || undefined
+  form.projectYear = seed.projectYear || undefined
   form.displayStatus = seed.displayStatus || 'visible'
   form.displayStartTime = toDateTimeLocal(seed.displayStartTime) || now.toISOString().slice(0, 16)
   form.displayEndTime = toDateTimeLocal(seed.displayEndTime) || end.toISOString().slice(0, 16)
-  form.deadline = toDateValue(seed.deadline)
-  form.deadlineText = seed.deadlineText || ''
+  form.deadline = toDateValue(seed.deadline) || undefined
+  form.deadlineText = seed.deadlineText || (isEditing.value ? '' : 'Rolling ASAP')
   form.positionUrl = seed.positionUrl || ''
   form.applicationNote = seed.applicationNote || ''
-  form.createBy = seed.createBy || ''
+  form.createBy = seed.createBy || (isEditing.value ? '' : userStore.userInfo?.userName || '')
   form.recruitmentCycles = normalizeCycles(seed.recruitmentCycle)
 }
 
@@ -340,16 +365,16 @@ const handleSubmit = () => {
 
   emit('submit', {
     positionId: props.position?.positionId,
-    positionCategory: form.positionCategory,
+    positionCategory: form.positionCategory!,
     companyName: form.companyName,
     companyType: form.companyType || undefined,
     companyWebsite: form.companyWebsite || undefined,
     positionName: form.positionName,
     department: form.department || undefined,
-    region: form.region,
+    region: form.region!,
     city: form.city || undefined,
     recruitmentCycle: form.recruitmentCycles.join(','),
-    projectYear: form.projectYear,
+    projectYear: form.projectYear!,
     displayStatus: form.displayStatus,
     displayStartTime: form.displayStartTime,
     displayEndTime: form.displayEndTime,

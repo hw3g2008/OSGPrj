@@ -85,6 +85,7 @@ async function mountModal() {
     },
   })
 
+  app.use(Antd)
   app.mount(container)
   await flushUi()
 

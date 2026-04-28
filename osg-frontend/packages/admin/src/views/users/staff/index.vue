@@ -90,9 +90,19 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'staffName'">
-            <a-button type="link" size="small" style="padding: 0; font-weight: 600" data-surface-trigger="modal-staff-detail" :data-surface-sample-key="`staff-${record.staffId}`" @click="openStaffDetail(record)">
-              {{ record.staffName }}
-            </a-button>
+            <a-tooltip v-if="record.staffName" :title="record.staffName" placement="topLeft">
+              <a-button
+                type="link"
+                size="small"
+                class="staff-name-link"
+                data-surface-trigger="modal-staff-detail"
+                :data-surface-sample-key="`staff-${record.staffId}`"
+                @click="openStaffDetail(record)"
+              >
+                {{ record.staffName }}
+              </a-button>
+            </a-tooltip>
+            <span v-else>-</span>
           </template>
           <template v-else-if="column.dataIndex === 'contact'">
             <div style="display: flex; flex-direction: column; gap: 2px">
@@ -104,15 +114,31 @@
             <a-tag :color="record.staffType === 'lead_mentor' ? 'blue' : 'purple'">{{ formatType(record.staffType) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'majorDirection'">
-            <a-tag :color="getDirectionColor(record.majorDirection)">{{ record.majorDirection || '-' }}</a-tag>
+            <a-tooltip v-if="record.majorDirection" :title="record.majorDirection" placement="topLeft">
+              <a-tag
+                :color="getDirectionColor(record.majorDirection)"
+                style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle"
+              >
+                {{ record.majorDirection }}
+              </a-tag>
+            </a-tooltip>
+            <span v-else>-</span>
           </template>
           <template v-else-if="column.dataIndex === 'subDirection'">
-            {{ record.subDirection || '-' }}
+            <a-tooltip v-if="record.subDirection" :title="record.subDirection" placement="topLeft">
+              <span>{{ record.subDirection }}</span>
+            </a-tooltip>
+            <span v-else>-</span>
           </template>
           <template v-else-if="column.dataIndex === 'region'">
-            <div style="display: flex; flex-direction: column; gap: 2px">
-              <span style="font-weight: 600">{{ getRegionEmoji(record.region) }} {{ record.region || '-' }}</span>
-              <span style="font-size: 12px; color: #64748b">{{ record.city || '-' }}</span>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+              <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                <template v-if="record.region">
+                  <template v-if="getRegionEmoji(record.region)">{{ getRegionEmoji(record.region) }} </template>{{ record.region }}
+                </template>
+                <template v-else>-</template>
+              </span>
+              <span style="font-size: 12px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.city || '-' }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'hourlyRate'">
@@ -459,16 +485,19 @@ const getDirectionColor = (direction?: string) => {
 }
 
 const getRegionEmoji = (region?: string) => {
-  if (region?.includes('北美')) {
+  if (!region) {
+    return ''
+  }
+  if (region.includes('北美')) {
     return '🌎'
   }
-  if (region?.includes('欧洲')) {
+  if (region.includes('欧洲')) {
     return '🌍'
   }
-  if (region?.includes('亚太')) {
+  if (region.includes('亚太')) {
     return '🌏'
   }
-  return '🇨🇳'
+  return ''
 }
 
 const formatHourlyRate = (hourlyRate?: number) => {
@@ -549,5 +578,24 @@ const closeResetPasswordModal = () => {
 }
 :deep(.row-blacklist) {
   background: #fef2f2;
+}
+:deep(.staff-name-link.ant-btn) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  font-weight: 600;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:deep(.staff-name-link.ant-btn > span) {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 </style>
