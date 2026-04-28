@@ -18,6 +18,7 @@ export interface StudentPositionRecord {
   industry: string
   sourceType?: 'global' | 'manual'
   favorited: boolean
+  favoritedAt?: string
   applied: boolean
   progressStage: string
   progressNote: string

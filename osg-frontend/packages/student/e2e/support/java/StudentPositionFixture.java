@@ -134,6 +134,7 @@ public class StudentPositionFixture {
               user_id bigint not null,
               position_id bigint not null,
               favorited char(1) not null default '0',
+              favorited_at datetime null,
               applied char(1) not null default '0',
               applied_at datetime null,
               apply_method varchar(64) null,
@@ -155,6 +156,7 @@ public class StudentPositionFixture {
         ensureColumn(connection, STATE_TABLE, "user_id", "alter table " + STATE_TABLE + " add column user_id bigint not null");
         ensureColumn(connection, STATE_TABLE, "position_id", "alter table " + STATE_TABLE + " add column position_id bigint not null");
         ensureColumn(connection, STATE_TABLE, "favorited", "alter table " + STATE_TABLE + " add column favorited char(1) not null default '0'");
+        ensureColumn(connection, STATE_TABLE, "favorited_at", "alter table " + STATE_TABLE + " add column favorited_at datetime null");
         ensureColumn(connection, STATE_TABLE, "applied", "alter table " + STATE_TABLE + " add column applied char(1) not null default '0'");
         ensureColumn(connection, STATE_TABLE, "applied_at", "alter table " + STATE_TABLE + " add column applied_at datetime null");
         ensureColumn(connection, STATE_TABLE, "apply_method", "alter table " + STATE_TABLE + " add column apply_method varchar(64) null");

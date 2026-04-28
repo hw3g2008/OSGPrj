@@ -88,7 +88,7 @@ fi
 
 read_config_value() {
   local python_expr="$1"
-  python3 - "${CONFIG_PATH}" "${python_expr}" <<'PY'
+  python3 - "${CONFIG_PATH}" "${python_expr}" <<'PY' | tr -d '\r'
 import pathlib
 import sys
 import yaml
@@ -175,12 +175,12 @@ if [[ -n "${RUNTIME_CONTRACT}" ]]; then
     echo "FAIL: runtime contract not found: ${RUNTIME_CONTRACT}" >&2
     exit 1
   fi
-  python3 .claude/skills/workflow-engine/tests/runtime_contract_guard.py --contract "${RUNTIME_CONTRACT}"
+  python3 .claude/skills/workflow-engine/tests/runtime_contract_guard.py --contract "${RUNTIME_CONTRACT}" 2>&1 | tr -d '\r'
 fi
 
 extract_jdbc_host_port() {
   local url="$1"
-  python3 - "$url" <<'PY'
+  python3 - "$url" <<'PY' | tr -d '\r'
 import re
 import sys
 url = sys.argv[1]

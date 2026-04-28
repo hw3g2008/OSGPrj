@@ -74,30 +74,31 @@
       </div>
     </a-card>
 
-    <a-space :size="10" class="content-tab-strip">
-      <a-button
-        shape="round"
-        size="large"
-        class="tab-pill"
-        :class="{ 'tab-pill--active-primary': activeTab === 'all' }"
-        :type="activeTab === 'all' ? 'primary' : 'default'"
+    <div class="content-tab-strip" role="tablist">
+      <button
+        type="button"
+        class="content-tab-pill"
+        :class="{ 'content-tab-pill--active': activeTab === 'all' }"
+        role="tab"
+        :aria-selected="activeTab === 'all'"
         @click="activeTab = 'all'"
       >
-        <i class="mdi mdi-briefcase-outline" aria-hidden="true"></i>
+        <i class="mdi mdi-briefcase-search" aria-hidden="true"></i>
         <span>全部岗位</span>
-      </a-button>
-      <a-button
-        shape="round"
-        size="large"
-        class="tab-pill"
-        :class="{ 'tab-pill--active-warning': activeTab === 'favorites' }"
+      </button>
+      <button
+        type="button"
+        class="content-tab-pill"
+        :class="{ 'content-tab-pill--active': activeTab === 'favorites' }"
+        role="tab"
+        :aria-selected="activeTab === 'favorites'"
         @click="activeTab = 'favorites'"
       >
-        <i class="mdi mdi-star" aria-hidden="true"></i>
+        <i class="mdi mdi-star content-tab-pill-star" aria-hidden="true"></i>
         <span>我的收藏</span>
         <span v-if="favoritePositions.length > 0" class="content-tab-badge">{{ favoritePositions.length }}</span>
-      </a-button>
-    </a-space>
+      </button>
+    </div>
 
     <div
       v-if="activeTab === 'all'"
@@ -250,22 +251,30 @@
             <template v-else-if="column.key === 'companyCell'">
               <div class="company-cell">
                 <div class="company-logo-mini" :style="{ background: getCompanyBrandColor(record.companyKey) }">{{ record.companyCode }}</div>
-                <span class="company-name-text">{{ record.company }}</span>
+                <a-tooltip :title="record.company" placement="topLeft">
+                  <span class="company-name-text">{{ record.company }}</span>
+                </a-tooltip>
               </div>
             </template>
 
             <template v-else-if="column.key === 'industryCell'">
-              <a-tag :color="resolveIndustryMeta(record.industry).tone" class="industry-tag">
-                {{ record.industryLabel || record.industry }}
-              </a-tag>
+              <a-tooltip :title="record.industryLabel || record.industry" placement="topLeft">
+                <span class="industry-pill" :class="`industry-pill--${resolveIndustryMeta(record.industry).tone}`">
+                  {{ record.industryLabel || record.industry }}
+                </span>
+              </a-tooltip>
             </template>
 
             <template v-else-if="column.key === 'category'">
-              <a-tag :color="getCategoryColor(record.category)">{{ record.categoryText }}</a-tag>
+              <a-tooltip :title="record.categoryText" placement="topLeft">
+                <a-tag :color="getCategoryColor(record.category)" class="cell-tag">{{ record.categoryText }}</a-tag>
+              </a-tooltip>
             </template>
 
             <template v-else-if="column.key === 'recruitCycleCell'">
-              <a-tag color="processing">{{ record.recruitCycle }}</a-tag>
+              <a-tooltip :title="record.recruitCycle" placement="topLeft">
+                <a-tag color="processing" class="cell-tag">{{ record.recruitCycle }}</a-tag>
+              </a-tooltip>
             </template>
 
             <template v-else-if="column.key === 'deadlineCell'">
@@ -332,11 +341,18 @@
       aria-labelledby="positions-tab-favorites"
     >
       <a-card :bordered="false" class="favorites-card">
+        <template #title>
+          <span class="favorites-card-title">
+            <i class="mdi mdi-star" aria-hidden="true"></i>
+            收藏的岗位
+          </span>
+        </template>
         <a-table
           :columns="favoriteColumns"
           :data-source="favoritePositions"
-          :pagination="false"
+          :pagination="{ pageSize: 10 }"
           :row-key="(record: PositionRecord) => `favorite-${record.id}`"
+          class="favorites-table"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'job'">
@@ -350,13 +366,38 @@
               <a-tag color="blue">{{ record.recruitCycle }}</a-tag>
             </template>
 
+            <template v-else-if="column.key === 'deadlineCell'">
+              <span :class="deadlineToneClass(record.deadline)">{{ record.deadline || '--' }}</span>
+            </template>
+
             <template v-else-if="column.key === 'actions'">
-              <a-space :size="10">
-                <a-button size="small" @click="toggleFavorite(record)">取消收藏</a-button>
-                <a-button size="small" :type="record.applied ? 'primary' : 'default'" @click="handleAppliedButton(record)">
-                  {{ record.applied ? '已投递' : '投递' }}
-                </a-button>
-                <a-button type="primary" size="small" @click="openCoachingModal(record)">申请辅导</a-button>
+              <a-space :size="2" class="fav-action-cell">
+                <a-tooltip title="取消收藏">
+                  <a-button
+                    type="text"
+                    size="small"
+                    class="fav-icon-btn fav-icon-btn--star"
+                    @click="toggleFavorite(record)"
+                  >
+                    <i class="mdi mdi-star" aria-hidden="true"></i>
+                  </a-button>
+                </a-tooltip>
+                <a-tooltip :title="record.applied ? '已投递（点击取消）' : '标记已投递'">
+                  <a-button
+                    type="text"
+                    size="small"
+                    class="fav-icon-btn"
+                    :class="record.applied ? 'fav-icon-btn--applied' : 'fav-icon-btn--apply'"
+                    @click="handleAppliedButton(record)"
+                  >
+                    <i
+                      class="mdi"
+                      :class="record.applied ? 'mdi-check-circle' : 'mdi-check-circle-outline'"
+                      aria-hidden="true"
+                    ></i>
+                  </a-button>
+                </a-tooltip>
+                <a-button type="primary" size="small" class="fav-coaching-btn" @click="openCoachingModal(record)">申请辅导</a-button>
               </a-space>
             </template>
           </template>
@@ -1022,12 +1063,12 @@ const listColumns = [
 
 const favoriteColumns = [
   { title: '公司/岗位', key: 'job' },
-  { title: '部门', dataIndex: 'department', width: 120 },
-  { title: '地区', dataIndex: 'location', width: 120 },
-  { title: '招聘周期', key: 'recruitCycle', width: 140 },
-  { title: '截止时间', dataIndex: 'deadline', width: 120 },
-  { title: '收藏时间', dataIndex: 'publishDate', width: 120 },
-  { title: '操作', key: 'actions', width: 240 }
+  { title: '部门', dataIndex: 'department', width: 110 },
+  { title: '地区', dataIndex: 'location', width: 100 },
+  { title: '招聘周期', key: 'recruitCycle', width: 110 },
+  { title: '截止时间', key: 'deadlineCell', width: 100 },
+  { title: '收藏时间', dataIndex: 'favoritedAt', width: 110 },
+  { title: '操作', key: 'actions', width: 160 }
 ]
 
 const selectedPosition = computed(() =>
@@ -1188,8 +1229,20 @@ function getCategoryColor(category: PositionRecord['category']) {
   return categoryOptionsByValue.value.get(category)?.color ?? 'blue'
 }
 
+const COMPANY_LOGO_FALLBACKS = [
+  '#4F46E5', '#0369A1', '#7C3AED', '#EA4335',
+  '#1E40AF', '#0F766E', '#B45309', '#DB2777',
+]
+
 function getCompanyBrandColor(companyKey: string) {
-  return companyOptionsByValue.value.get(companyKey)?.brandColor ?? '#4F46E5'
+  const meta = companyOptionsByValue.value.get(companyKey)
+  if (meta?.brandColor) return meta.brandColor
+  const key = companyKey ?? ''
+  let hash = 0
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) | 0
+  }
+  return COMPANY_LOGO_FALLBACKS[Math.abs(hash) % COMPANY_LOGO_FALLBACKS.length]
 }
 
 function filterCompanyOption(input: string, option: { label?: string; value?: string } | unknown) {
@@ -1201,24 +1254,36 @@ function deadlineToneClass(deadline: string | undefined | null) {
   const v = (deadline ?? '').trim()
   if (!v || v === '--' || v === '-') return 'deadline-muted'
   if (isDeadlineClosed(v)) return 'deadline-closed'
+  if (isDeadlineUrgent(v)) return 'deadline-urgent'
   return 'deadline-default'
 }
 
 function isDeadlineClosed(deadline: string) {
-  if (!/^\d{2}-\d{2}$/.test(deadline)) {
-    return false
-  }
+  const target = parseDeadline(deadline)
+  if (target === null) return false
+  return target < Date.now()
+}
 
+function isDeadlineUrgent(deadline: string) {
+  const target = parseDeadline(deadline)
+  if (target === null) return false
+  const now = Date.now()
+  const diff = target - now
+  return diff > 0 && diff <= 7 * 24 * 3600 * 1000
+}
+
+function parseDeadline(deadline: string): number | null {
+  if (!/^\d{2}-\d{2}$/.test(deadline)) {
+    return null
+  }
   const [monthText, dayText] = deadline.split('-')
   const month = Number(monthText)
   const day = Number(dayText)
   if (!Number.isInteger(month) || !Number.isInteger(day)) {
-    return false
+    return null
   }
-
   const now = new Date()
-  const deadlineDate = new Date(now.getFullYear(), month - 1, day, 23, 59, 59, 999)
-  return deadlineDate.getTime() < now.getTime()
+  return new Date(now.getFullYear(), month - 1, day, 23, 59, 59, 999).getTime()
 }
 
 function toggleCompany(companyKey: string) {
@@ -1375,8 +1440,19 @@ async function toggleFavorite(record: PositionRecord) {
     favorited: nextFavorited
   })
   const target = positions.value.find((p) => p.id === record.id)
-  if (target) target.favorited = nextFavorited
+  if (target) {
+    target.favorited = nextFavorited
+    target.favoritedAt = nextFavorited ? formatToday() : '--'
+  }
   message.success(nextFavorited ? '已收藏！可在“我的收藏”中查看。' : '已取消收藏')
+}
+
+function formatToday() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 async function submitManualPosition() {
@@ -1948,67 +2024,72 @@ watch(
   }
 
   .content-tab-strip {
-    display: flex;
+    display: inline-flex;
+    gap: 4px;
+    background: #f3f4f6;
+    padding: 3px;
+    border-radius: 6px;
+    width: fit-content;
     margin-bottom: 16px;
   }
 
-  .tab-pill {
+  .content-tab-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding-inline: 18px;
-    font-size: 14px;
-    font-weight: 600;
+    gap: 4px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text, #1f2937);
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.4;
+    transition: background 0.15s ease, color 0.15s ease;
 
     .mdi {
-      font-size: 16px;
+      font-size: 14px;
       line-height: 1;
+    }
+
+    &:hover {
+      background: rgba(15, 23, 42, 0.06);
     }
   }
 
-  .tab-pill--active-warning {
-    background: #f59e0b !important;
-    border-color: #f59e0b !important;
-    color: #fff !important;
+  .content-tab-pill--active {
+    background: var(--primary, #7399c6);
+    color: #fff;
 
-    &:hover,
-    &:focus {
-      background: #d97706 !important;
-      border-color: #d97706 !important;
-      color: #fff !important;
+    &:hover {
+      background: var(--primary-dark, #5a7ba3);
     }
+  }
 
-    .mdi {
-      color: #fff;
-    }
+  .content-tab-pill-star {
+    color: #f59e0b;
   }
 
   .content-tab-badge {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    min-width: 22px;
-    height: 22px;
-    padding: 0 7px;
-    border-radius: 11px;
-    background: #fff;
-    color: #f59e0b;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-    margin-left: 2px;
-  }
-
-  .tab-pill:not(.tab-pill--active-warning) .content-tab-badge {
     background: #f59e0b;
     color: #fff;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 4px;
+    line-height: 1.4;
   }
 
   // ----- 列表视图色调（与原型对齐） -----
   .company-cell {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
   }
 
   .company-logo-mini {
@@ -2028,12 +2109,53 @@ watch(
   .company-name-text {
     font-weight: 500;
     color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
   }
 
   .industry-tag {
     font-size: 11px;
     font-weight: 600;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+
+  .cell-tag {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .industry-pill {
+    display: inline-block;
+    max-width: 100%;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.6;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .industry-pill--gold   { background: #fef3c7; color: #92400e; }
+  .industry-pill--violet { background: #ede9fe; color: #6d28d9; }
+  .industry-pill--blue   { background: #dbeafe; color: #1d4ed8; }
+  .industry-pill--amber  { background: #fef3c7; color: #b45309; }
+  .industry-pill--teal   { background: #ccfbf1; color: #0f766e; }
+  .industry-pill--indigo { background: #e0e7ff; color: #4338ca; }
+  .industry-pill--slate  { background: #f1f5f9; color: #475569; }
 
   .deadline-default {
     color: var(--text);
@@ -2047,6 +2169,95 @@ watch(
   .deadline-closed {
     color: var(--muted);
     text-decoration: line-through;
+  }
+
+  .deadline-urgent {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  .favorites-card {
+    :deep(.ant-card-head) {
+      background: #fef3c7;
+      border-bottom: 1px solid #fde68a;
+      min-height: 40px;
+      padding-inline: 16px;
+    }
+
+    :deep(.ant-card-head-title) {
+      padding-block: 8px;
+    }
+  }
+
+  .favorites-card-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #92400e;
+    font-weight: 600;
+    font-size: 14px;
+
+    .mdi {
+      color: #f59e0b;
+      font-size: 16px;
+      line-height: 1;
+    }
+  }
+
+  .favorites-table :deep(.ant-table-cell) {
+    font-size: 13px;
+  }
+
+  .fav-action-cell {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .fav-icon-btn {
+    padding: 0 4px;
+    height: 24px;
+    line-height: 1;
+    vertical-align: middle;
+
+    .mdi {
+      font-size: 18px;
+      line-height: 1;
+    }
+  }
+
+  .fav-icon-btn--star {
+    color: #f59e0b;
+
+    &:hover,
+    &:focus {
+      color: #d97706;
+      background: transparent;
+    }
+  }
+
+  .fav-icon-btn--apply {
+    color: var(--muted, #6b7280);
+
+    &:hover,
+    &:focus {
+      color: #16a34a;
+      background: transparent;
+    }
+  }
+
+  .fav-icon-btn--applied {
+    color: #16a34a;
+
+    &:hover,
+    &:focus {
+      color: #15803d;
+      background: transparent;
+    }
+  }
+
+  .fav-coaching-btn {
+    padding-inline: 10px;
+    font-size: 12px;
   }
 
   .applied-btn {

@@ -30,6 +30,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             p.industry as industry,
             p.source_type as sourceType,
             case when coalesce(s.favorited, '0') = '1' then true else false end as favorited,
+            coalesce(date_format(s.favorited_at, '%Y-%m-%d'), '--') as favoritedAt,
             case when coalesce(s.applied, '0') = '1' then true else false end as applied,
             coalesce(s.progress_stage, 'applied') as progressStage,
             coalesce(s.progress_note, '') as progressNote,
@@ -136,14 +137,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into osg_student_job_position_state (
             user_id,
             position_id,
-            favorited
+            favorited,
+            favorited_at
         ) values (
             #{userId},
             #{positionId},
-            #{favorited}
+            #{favorited},
+            case when #{favorited} = '1' then sysdate() else null end
         )
         on duplicate key update
-            favorited = values(favorited)
+            favorited = values(favorited),
+            favorited_at = case when values(favorited) = '1' then sysdate() else null end
     </insert>
 
     <insert id="upsertApplyState">
