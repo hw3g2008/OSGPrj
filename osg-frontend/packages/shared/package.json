@@ -10,6 +10,7 @@
     "./components": "./src/components/index.ts",
     "./utils": "./src/utils/index.ts",
     "./api": "./src/api/index.ts",
+    "./composables": "./src/composables/index.ts",
     "./types": "./src/types/index.ts",
     "./styles": "./src/styles/index.scss"
   },

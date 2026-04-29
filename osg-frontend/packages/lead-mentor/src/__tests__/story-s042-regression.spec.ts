@@ -10,7 +10,45 @@ const apiMocks = vi.hoisted(() => ({
   getLeadMentorJobOverviewDetail: vi.fn(),
   assignLeadMentorJobOverviewMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
+  getLeadMentorMentorList: vi.fn(async () => ({
+    rows: [
+      {
+        staffId: 9001,
+        staffName: 'Jerry Li',
+        majorDirection: 'finance',
+        subDirection: 'investment_banking',
+        region: 'HK',
+        city: 'Hong Kong',
+        studentCount: 1,
+        scheduleStatus: 'available',
+      },
+      {
+        staffId: 9002,
+        staffName: 'Mike Wang',
+        majorDirection: 'finance',
+        subDirection: 'investment_banking',
+        region: 'HK',
+        city: 'Hong Kong',
+        studentCount: 2,
+        scheduleStatus: 'available',
+      },
+    ],
+  })),
 }))
+
+vi.mock('@osg/shared/composables', async () => {
+  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
+    '@osg/shared/composables',
+  )
+  return {
+    ...actual,
+    useDictFacade: () => ({
+      items: { value: [] },
+      loading: { value: false },
+      load: vi.fn(async () => undefined),
+    }),
+  }
+})
 
 const messageMocks = vi.hoisted(() => ({
   error: vi.fn(),
@@ -262,6 +300,15 @@ describe('S-042 story regression skeleton', () => {
 
       const assignModal = page.container.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]')
       expect(assignModal?.textContent).toContain('为学员匹配辅导导师')
+
+      // 真实导师列表来自 mock 的 /lead-mentor/mentor/list；勾选两位后再确认
+      const mentorItems = Array.from(
+        assignModal?.querySelectorAll<HTMLButtonElement>('.mentor-item') || [],
+      )
+      mentorItems.find((item) => item.textContent?.includes('Jerry Li'))?.click()
+      mentorItems.find((item) => item.textContent?.includes('Mike Wang'))?.click()
+      await flushUi()
+
       findButtonByText(assignModal || page.container, '确认匹配')?.click()
       await flushUi()
 
@@ -335,7 +382,14 @@ describe('S-042 story regression skeleton', () => {
       await flushUi()
       findButtonByText(firstMount.container.querySelector('#lm-job-content-pending') || firstMount.container, '分配导师')?.click()
       await flushUi()
-      findButtonByText(firstMount.container.querySelector('[data-surface-id="modal-assign-mentor"]') || firstMount.container, '确认匹配')?.click()
+
+      const assignModal = firstMount.container.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]')
+      const mentorItems = Array.from(assignModal?.querySelectorAll<HTMLButtonElement>('.mentor-item') || [])
+      mentorItems.find((item) => item.textContent?.includes('Jerry Li'))?.click()
+      mentorItems.find((item) => item.textContent?.includes('Mike Wang'))?.click()
+      await flushUi()
+
+      findButtonByText(assignModal || firstMount.container, '确认匹配')?.click()
       await flushUi()
 
       firstMount.container.querySelector<HTMLButtonElement>('#lm-job-tab-managed')?.click()

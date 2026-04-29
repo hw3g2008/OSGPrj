@@ -307,7 +307,10 @@ import {
 } from '@osg/shared/api'
 import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
 import { useCoachingStatusMap, deriveApplicationStatus } from '@osg/shared/composables'
-import AssignMentorModal, { type AssignMentorPreview } from '@/components/AssignMentorModal.vue'
+import AssignMentorModal, {
+  type AssignMentorConfirmPayload,
+  type AssignMentorPreview,
+} from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
 
 const { resolveCoachingTone } = useCoachingStatusMap()
@@ -405,24 +408,12 @@ interface OverviewRow {
   raw: LeadMentorJobOverviewListItem
 }
 
-interface MentorDirectoryEntry {
-  id: number
-  name: string
-}
-
 interface JobOverviewFilters {
   studentName: string
   typeFilter: '' | 'coaching' | 'managed'
   companyName: string
   currentStage: string
 }
-
-const MENTOR_DIRECTORY: MentorDirectoryEntry[] = [
-  { id: 9001, name: 'Jerry Li' },
-  { id: 9002, name: 'Mike Wang' },
-  { id: 9003, name: 'Sarah Chen' },
-  { id: 9004, name: 'Tom Zhang' },
-]
 
 const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
 const route = useRoute()
@@ -636,13 +627,12 @@ const handleRequestMentorChange = () => {
   isAssignMentorModalOpen.value = true
 }
 
-const handleConfirmAssignMentor = async () => {
+const handleConfirmAssignMentor = async (payload: AssignMentorConfirmPayload) => {
   if (!activeAssignApplicationId.value) {
     message.error('导师匹配上下文丢失')
     return
   }
 
-  const payload = collectAssignPayload()
   if (!payload.mentorIds.length) {
     message.error('请至少选择1位导师')
     return
@@ -760,29 +750,6 @@ async function syncJobDetailStage(stage: string) {
     return
   }
   currentStageNode.innerHTML = `${escapeHtml(stage || '-')}<span>当前</span>`
-}
-
-function collectAssignPayload() {
-  const modal = document.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]')
-  const selectedNames = Array.from(
-    modal?.querySelectorAll<HTMLElement>('.mentor-item--selected .mentor-item__name') ?? [],
-  )
-    .flatMap((node) =>
-      MENTOR_DIRECTORY
-        .filter((mentor) => node.textContent?.includes(mentor.name))
-        .map((mentor) => mentor.name),
-    )
-  const mentorNames = Array.from(new Set(selectedNames))
-  const mentorIds = mentorNames
-    .map((name) => MENTOR_DIRECTORY.find((mentor) => mentor.name === name)?.id)
-    .filter((id): id is number => typeof id === 'number')
-  const assignNote = modal?.querySelector<HTMLTextAreaElement>('textarea')?.value?.trim() || ''
-
-  return {
-    mentorIds,
-    mentorNames,
-    assignNote,
-  }
 }
 
 function toOverviewRow(row: LeadMentorJobOverviewListItem): OverviewRow {

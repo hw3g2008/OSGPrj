@@ -1,191 +1,250 @@
 <template>
-  <div
-    v-if="modelValue && preview"
-    class="assign-mentor-modal modal"
-    data-surface-id="modal-assign-mentor"
-  >
-    <button
-      type="button"
-      class="assign-mentor-backdrop"
-      data-surface-part="backdrop"
-      aria-label="关闭导师匹配弹层"
-      @click="closeModal"
-    />
-
-    <div
-      class="assign-mentor-shell modal-content"
-      data-surface-part="shell"
-      role="dialog"
-      aria-modal="true"
-      :aria-labelledby="titleId"
+  <a-config-provider :auto-insert-space-in-button="false">
+    <a-modal
+      :open="modelValue && !!preview"
+      :width="720"
+      :footer="null"
+      :closable="false"
+      :body-style="bodyStyle"
+      :wrap-class-name="wrapClassName"
+      :mask-closable="true"
+      destroy-on-close
+      centered
+      @cancel="closeModal"
     >
-      <div class="assign-mentor-header modal-header" data-surface-part="header">
-        <span :id="titleId" class="assign-mentor-title modal-title">
-          <i class="mdi mdi-account-star" aria-hidden="true" />
-          为学员匹配辅导导师
-        </span>
-        <button
-          type="button"
-          class="modal-close"
-          data-surface-part="close-control"
-          aria-label="关闭导师匹配弹层"
-          @click="closeModal"
-        >
-          ×
-        </button>
-      </div>
+      <div
+        class="assign-mentor-shell"
+        data-surface-id="modal-assign-mentor"
+        role="dialog"
+        :aria-labelledby="titleId"
+      >
+        <span class="assign-mentor-anchor" data-surface-part="shell" aria-hidden="true" />
 
-      <div class="assign-mentor-body modal-body" data-surface-part="body">
-        <section class="student-card">
-          <div class="student-card__main">
-            <div class="student-avatar">{{ preview.studentName }}</div>
-            <div>
-              <div class="student-card__name">
-                {{ preview.studentName }}
-                <span class="student-card__meta">(ID: {{ preview.studentId }})</span>
-              </div>
-              <div class="student-card__sub">{{ preview.companyName }} · {{ preview.positionName }}</div>
+        <header class="assign-mentor-header" data-surface-part="header">
+          <span :id="titleId" class="assign-mentor-title">
+            <i class="mdi mdi-account-star" aria-hidden="true" />
+            为学员匹配辅导导师
+          </span>
+          <a-button
+            type="text"
+            class="assign-mentor-close"
+            data-surface-part="close-control"
+            aria-label="关闭导师匹配弹层"
+            @click="closeModal"
+          >
+            <template #icon><CloseOutlined /></template>
+          </a-button>
+        </header>
+
+        <section v-if="preview" class="assign-mentor-body" data-surface-part="body">
+          <a-card :bordered="false" class="student-card">
+            <a-row :gutter="[16, 12]" align="middle">
+              <a-col flex="56px">
+                <a-avatar :size="48" :style="{ background: '#8b5cf6' }">
+                  {{ initial(preview.studentName) }}
+                </a-avatar>
+              </a-col>
+              <a-col flex="auto">
+                <div class="student-card__name">
+                  {{ preview.studentName }}
+                  <span class="student-card__meta">(ID: {{ preview.studentId }})</span>
+                </div>
+                <div class="student-card__sub">
+                  {{ preview.companyName }} · {{ preview.positionName }}
+                </div>
+              </a-col>
+            </a-row>
+
+            <a-divider class="student-card__divider" />
+
+            <a-row :gutter="[16, 12]" class="student-grid">
+              <a-col :xs="24" :sm="8">
+                <span class="student-grid__label">面试阶段</span>
+                <strong>{{ preview.interviewStage }}</strong>
+              </a-col>
+              <a-col :xs="24" :sm="8">
+                <span class="student-grid__label">面试时间</span>
+                <strong>{{ preview.interviewTime }}</strong>
+              </a-col>
+              <a-col :xs="24" :sm="8">
+                <span class="student-grid__label">需求导师</span>
+                <strong class="student-grid__accent">{{ preview.mentorDemand }}</strong>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <span class="student-grid__label">意向导师</span>
+                <strong class="student-grid__success">{{ preview.preferredMentor }}</strong>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <span class="student-grid__label">排除导师</span>
+                <strong class="student-grid__danger">{{ preview.excludedMentor }}</strong>
+              </a-col>
+            </a-row>
+          </a-card>
+
+          <div class="form-group">
+            <div class="form-label">筛选导师</div>
+            <a-row :gutter="[12, 12]" class="filter-row">
+              <a-col :xs="24" :sm="12" :md="6">
+                <a-select
+                  v-model:value="filters.scheduleStatus"
+                  placeholder="全部排期状态"
+                  allow-clear
+                  style="width: 100%;"
+                  :options="scheduleStatusOptions"
+                />
+              </a-col>
+              <a-col :xs="24" :sm="12" :md="6">
+                <a-select
+                  v-model:value="filters.majorDirection"
+                  placeholder="全部主攻方向"
+                  allow-clear
+                  style="width: 100%;"
+                  :options="majorDirectionOptions"
+                  @change="handleMajorDirectionChange"
+                />
+              </a-col>
+              <a-col :xs="24" :sm="12" :md="6">
+                <a-select
+                  v-model:value="filters.subDirection"
+                  placeholder="全部子方向"
+                  allow-clear
+                  style="width: 100%;"
+                  :options="filteredSubDirectionOptions"
+                />
+              </a-col>
+              <a-col :xs="24" :sm="12" :md="6">
+                <a-input
+                  v-model:value="filters.keyword"
+                  placeholder="搜索导师姓名..."
+                  allow-clear
+                >
+                  <template #prefix><SearchOutlined /></template>
+                </a-input>
+              </a-col>
+            </a-row>
+            <div class="filter-hint">
+              <FilterOutlined />
+              共找到 <strong>{{ filteredMentors.length }}</strong> 位导师
             </div>
           </div>
 
-          <div class="student-grid">
-            <article>
-              <span>面试阶段</span>
-              <strong>{{ preview.interviewStage }}</strong>
-            </article>
-            <article>
-              <span>面试时间</span>
-              <strong>{{ preview.interviewTime }}</strong>
-            </article>
-            <article>
-              <span>需求导师</span>
-              <strong class="student-grid__accent">{{ preview.mentorDemand }}</strong>
-            </article>
+          <div class="form-group">
+            <div class="form-label">
+              选择导师
+              <span class="form-label__meta">(可多选)</span>
+            </div>
+
+            <a-spin :spinning="loadingMentors">
+              <a-empty
+                v-if="filteredMentors.length === 0 && !loadingMentors"
+                description="暂无符合条件的导师"
+                class="mentor-empty"
+              />
+              <a-list v-else class="mentor-list" :data-source="filteredMentors" :split="false">
+                <template #renderItem="{ item }">
+                  <a-list-item
+                    class="mentor-item"
+                    :class="{ 'mentor-item--selected': isSelected(item.staffId) }"
+                    @click="toggleMentor(item)"
+                  >
+                    <div class="mentor-item__main">
+                      <a-checkbox
+                        :checked="isSelected(item.staffId)"
+                        @click.stop
+                        @change="toggleMentor(item)"
+                      />
+                      <a-avatar
+                        :size="40"
+                        :style="{ background: avatarColor(item.staffName) }"
+                      >
+                        {{ initial(item.staffName) }}
+                      </a-avatar>
+                      <div class="mentor-item__copy">
+                        <div class="mentor-item__name">
+                          {{ item.staffName }}
+                          <a-tag color="purple" class="mentor-item__badge">
+                            {{ formatDirection(item) }}
+                          </a-tag>
+                        </div>
+                        <div class="mentor-item__sub">{{ formatLocation(item) }}</div>
+                      </div>
+                      <div class="mentor-item__meta">
+                        <a-tag :color="scheduleTone(item.scheduleStatus)">
+                          {{ scheduleLabel(item.scheduleStatus) }}
+                        </a-tag>
+                        <div class="mentor-item__hours">学员 {{ item.studentCount ?? 0 }} 人</div>
+                      </div>
+                    </div>
+                  </a-list-item>
+                </template>
+              </a-list>
+            </a-spin>
+
+            <div class="selection-hint">
+              <InfoCircleOutlined />
+              已选择 <strong>{{ selected.length }}</strong> 位导师
+            </div>
           </div>
 
-          <div class="student-grid student-grid--secondary">
-            <article>
-              <span>意向导师</span>
-              <strong class="student-grid__success">{{ preview.preferredMentor }}</strong>
-            </article>
-            <article>
-              <span>排除导师</span>
-              <strong class="student-grid__danger">{{ preview.excludedMentor }}</strong>
-            </article>
+          <div class="form-group form-group--last">
+            <div class="form-label">
+              备注
+              <span class="form-label__meta">(选填)</span>
+            </div>
+            <a-textarea
+              v-model:value="assignNote"
+              :rows="2"
+              placeholder="给导师的特别说明，如学员背景、重点辅导内容等..."
+            />
           </div>
         </section>
 
-        <div class="form-group">
-          <label class="form-label">筛选导师</label>
-          <div class="filter-row">
-            <select v-model="scheduleFilter" class="form-select">
-              <option value="available">有空闲时间</option>
-              <option value="">全部排期状态</option>
-              <option value="busy">排期紧张</option>
-            </select>
-            <select v-model="mainDirection" class="form-select">
-              <option value="">全部主攻方向</option>
-              <option value="ib">Investment Bank</option>
-              <option value="consulting">Consulting</option>
-              <option value="tech">Tech</option>
-              <option value="pe">PE/VC</option>
-            </select>
-            <select v-model="subDirection" class="form-select">
-              <option value="">全部子方向</option>
-              <option value="m&a">M&A</option>
-              <option value="dcm">DCM</option>
-              <option value="ecm">ECM</option>
-              <option value="s&t">S&T</option>
-              <option value="research">Research</option>
-            </select>
-            <input
-              v-model="mentorKeyword"
-              class="form-input"
-              type="text"
-              placeholder="搜索导师姓名..."
-            />
-          </div>
-          <div class="filter-hint">
-            <i class="mdi mdi-filter" aria-hidden="true" />
-            已按"有空闲时间 + Investment Bank"筛选，共找到 <strong>3</strong> 位导师
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            选择导师
-            <span class="form-label__meta">(可多选)</span>
-          </label>
-
-          <div class="mentor-list">
-            <button
-              v-for="mentor in mentorOptions"
-              :key="mentor.id"
-              type="button"
-              class="mentor-item"
-              :class="{
-                'mentor-item--selected': selectedMentorIds.includes(mentor.id),
-                'mentor-item--muted': mentor.tone === 'muted',
-              }"
-              @click="toggleMentor(mentor.id)"
-            >
-              <input
-                class="mentor-item__checkbox"
-                type="checkbox"
-                :checked="selectedMentorIds.includes(mentor.id)"
-                aria-label="选择导师"
-                @click.stop="toggleMentor(mentor.id)"
-              />
-              <div class="mentor-item__avatar" :style="{ background: mentor.avatarColor }">
-                {{ mentor.avatarLabel }}
-              </div>
-              <div class="mentor-item__copy">
-                <div class="mentor-item__name">
-                  {{ mentor.name }}
-                  <span class="mentor-item__badge">{{ mentor.badge }}</span>
-                </div>
-                <div class="mentor-item__sub">{{ mentor.summary }}</div>
-              </div>
-              <div class="mentor-item__meta">
-                <span class="mentor-item__status" :class="mentor.statusTone">{{ mentor.status }}</span>
-                <div class="mentor-item__hours">{{ mentor.hours }}</div>
-              </div>
-            </button>
-          </div>
-
-          <div class="selection-hint">
-            <i class="mdi mdi-information" aria-hidden="true" />
-            已选择 <strong>{{ selectedMentorIds.length }}</strong> 位导师
-          </div>
-        </div>
-
-        <div class="form-group form-group--last">
-          <label class="form-label">
-            备注
-            <span class="form-label__meta">(选填)</span>
-          </label>
-          <textarea
-            v-model="notes"
-            class="form-input form-input--textarea"
-            rows="2"
-            placeholder="给导师的特别说明，如学员背景、重点辅导内容等..."
-          />
-        </div>
+        <footer class="assign-mentor-footer">
+          <a-button @click="closeModal">取消</a-button>
+          <a-button type="primary" class="assign-mentor-action" @click="handleConfirm">
+            <template #icon><CheckOutlined /></template>
+            确认匹配
+          </a-button>
+        </footer>
       </div>
-
-      <div class="assign-mentor-footer modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeModal">取消</button>
-        <button type="button" class="btn assign-mentor-action" @click="emit('confirm-match')">
-          <i class="mdi mdi-check" aria-hidden="true" />
-          确认匹配
-        </button>
-      </div>
-    </div>
-  </div>
+    </a-modal>
+  </a-config-provider>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import {
+  Avatar as AAvatar,
+  Button as AButton,
+  Card as ACard,
+  Checkbox as ACheckbox,
+  Col as ACol,
+  ConfigProvider as AConfigProvider,
+  Divider as ADivider,
+  Empty as AEmpty,
+  Input as AInput,
+  List as AList,
+  ListItem as AListItem,
+  Modal as AModal,
+  Row as ARow,
+  Select as ASelect,
+  Spin as ASpin,
+  Tag as ATag,
+  Textarea as ATextarea,
+  message,
+} from 'ant-design-vue'
+import {
+  CheckOutlined,
+  CloseOutlined,
+  FilterOutlined,
+  InfoCircleOutlined,
+  SearchOutlined,
+} from '@ant-design/icons-vue'
+import {
+  getLeadMentorMentorList,
+  type LeadMentorMentorOption,
+} from '@osg/shared/api'
+import { useDictFacade } from '@osg/shared/composables'
 
 export interface AssignMentorPreview {
   studentName: string
@@ -199,133 +258,228 @@ export interface AssignMentorPreview {
   excludedMentor: string
 }
 
-interface MentorOption {
-  id: string
-  name: string
-  badge: string
-  summary: string
-  status: string
-  statusTone: string
-  hours: string
-  avatarColor: string
-  avatarLabel: string
-  tone?: 'muted'
+export interface AssignMentorConfirmPayload {
+  mentorIds: number[]
+  mentorNames: string[]
+  assignNote: string
 }
 
-defineProps<{
+const props = defineProps<{
   modelValue: boolean
   preview: AssignMentorPreview | null
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  'confirm-match': []
+  'confirm-match': [payload: AssignMentorConfirmPayload]
 }>()
 
 const titleId = 'assign-mentor-modal-title'
-const scheduleFilter = ref('available')
-const mainDirection = ref('')
-const subDirection = ref('')
-const mentorKeyword = ref('')
-const notes = ref('')
-const selectedMentorIds = ref<string[]>(['jerry-li', 'mike-wang'])
+const wrapClassName = 'assign-mentor-modal-wrap'
+const bodyStyle = { padding: '0' }
 
-const mentorOptions: MentorOption[] = [
-  {
-    id: 'jerry-li',
-    name: 'Jerry Li',
-    badge: 'IB · M&A',
-    summary: 'Goldman Sachs Ex-VP · 5年经验',
-    status: '有空闲',
-    statusTone: 'mentor-item__status--success',
-    hours: '本周: 8h',
-    avatarColor: 'var(--primary)',
-    avatarLabel: 'Jerry',
+const filters = ref({
+  scheduleStatus: undefined as string | undefined,
+  majorDirection: undefined as string | undefined,
+  subDirection: undefined as string | undefined,
+  keyword: '',
+})
+const assignNote = ref('')
+const selected = ref<LeadMentorMentorOption[]>([])
+const mentors = ref<LeadMentorMentorOption[]>([])
+const loadingMentors = ref(false)
+
+const { items: scheduleDictOptions, load: loadScheduleDict } = useDictFacade('osg_schedule_status')
+const { items: majorDirectionDictOptions, load: loadMajorDirectionDict } =
+  useDictFacade('osg_major_direction')
+const { items: subDirectionDictOptions, load: loadSubDirectionDict } =
+  useDictFacade('osg_sub_direction')
+
+const scheduleStatusOptions = computed(() =>
+  scheduleDictOptions.value.map((item) => ({ value: item.value, label: item.label })),
+)
+const majorDirectionOptions = computed(() =>
+  majorDirectionDictOptions.value.map((item) => ({ value: item.value, label: item.label })),
+)
+const filteredSubDirectionOptions = computed(() => {
+  const parent = filters.value.majorDirection
+  return subDirectionDictOptions.value
+    .filter((item) => !parent || item.parentValue === parent)
+    .map((item) => ({ value: item.value, label: item.label }))
+})
+
+const filteredMentors = computed(() => {
+  const keyword = filters.value.keyword.trim().toLowerCase()
+  if (!keyword) {
+    return mentors.value
+  }
+  return mentors.value.filter((mentor) =>
+    (mentor.staffName || '').toLowerCase().includes(keyword),
+  )
+})
+
+const fetchMentors = async () => {
+  loadingMentors.value = true
+  try {
+    const response = await getLeadMentorMentorList({
+      majorDirection: filters.value.majorDirection,
+      subDirection: filters.value.subDirection,
+      scheduleStatus: filters.value.scheduleStatus,
+    })
+    mentors.value = Array.isArray(response?.rows) ? response.rows : []
+  } catch (_error) {
+    mentors.value = []
+    message.error('导师列表加载失败')
+  } finally {
+    loadingMentors.value = false
+  }
+}
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (!open) {
+      return
+    }
+    selected.value = []
+    assignNote.value = ''
+    void loadScheduleDict().catch(() => undefined)
+    void loadMajorDirectionDict().catch(() => undefined)
+    void loadSubDirectionDict().catch(() => undefined)
+    void fetchMentors()
   },
-  {
-    id: 'mike-wang',
-    name: 'Mike Wang',
-    badge: 'IB · ECM',
-    summary: 'Morgan Stanley · 3年经验',
-    status: '有空闲',
-    statusTone: 'mentor-item__status--success',
-    hours: '本周: 6h',
-    avatarColor: '#22c55e',
-    avatarLabel: 'Mike',
+  { immediate: true },
+)
+
+watch(
+  () => [filters.value.scheduleStatus, filters.value.majorDirection, filters.value.subDirection],
+  () => {
+    if (props.modelValue) {
+      void fetchMentors()
+    }
   },
-  {
-    id: 'sarah-chen',
-    name: 'Sarah Chen',
-    badge: 'IB · DCM',
-    summary: 'JP Morgan · 4年经验',
-    status: '有空闲',
-    statusTone: 'mentor-item__status--success',
-    hours: '本周: 4h',
-    avatarColor: '#f59e0b',
-    avatarLabel: 'Sarah',
-  },
-  {
-    id: 'tom-zhang',
-    name: 'Tom Zhang',
-    badge: 'IB · S&T',
-    summary: 'Citi · 2年经验',
-    status: '排期紧张',
-    statusTone: 'mentor-item__status--warning',
-    hours: '本周: 1h',
-    avatarColor: '#6b7280',
-    avatarLabel: 'Tom',
-    tone: 'muted',
-  },
-]
+)
+
+const handleMajorDirectionChange = () => {
+  filters.value.subDirection = undefined
+}
+
+const isSelected = (staffId: number) => selected.value.some((item) => item.staffId === staffId)
+
+const toggleMentor = (mentor: LeadMentorMentorOption) => {
+  if (isSelected(mentor.staffId)) {
+    selected.value = selected.value.filter((item) => item.staffId !== mentor.staffId)
+    return
+  }
+  selected.value = [...selected.value, mentor]
+}
 
 const closeModal = () => {
   emit('update:modelValue', false)
 }
 
-const toggleMentor = (mentorId: string) => {
-  if (selectedMentorIds.value.includes(mentorId)) {
-    selectedMentorIds.value = selectedMentorIds.value.filter((id) => id !== mentorId)
+const handleConfirm = () => {
+  if (selected.value.length === 0) {
+    message.error('请至少选择1位导师')
     return
   }
-  selectedMentorIds.value = [...selectedMentorIds.value, mentorId]
+  emit('confirm-match', {
+    mentorIds: selected.value.map((item) => item.staffId),
+    mentorNames: selected.value.map((item) => item.staffName),
+    assignNote: assignNote.value.trim(),
+  })
+}
+
+const initial = (name?: string | null) => {
+  if (!name) return '?'
+  const trimmed = name.trim()
+  return trimmed ? trimmed.charAt(0).toUpperCase() : '?'
+}
+
+const avatarColor = (name?: string | null) => {
+  const palette = ['#8b5cf6', '#22c55e', '#f59e0b', '#3b82f6', '#ef4444', '#0ea5e9']
+  const seed = (name || '').charCodeAt(0) || 0
+  return palette[seed % palette.length]
+}
+
+const formatDirection = (mentor: LeadMentorMentorOption) => {
+  const major = lookupLabel(majorDirectionDictOptions.value, mentor.majorDirection)
+  const sub = lookupLabel(subDirectionDictOptions.value, mentor.subDirection)
+  if (major && sub) return `${major} · ${sub}`
+  return major || sub || '方向待补充'
+}
+
+const formatLocation = (mentor: LeadMentorMentorOption) => {
+  const parts = [mentor.region, mentor.city].filter(Boolean)
+  if (parts.length === 0) {
+    return '所在地待补充'
+  }
+  return parts.join(' · ')
+}
+
+const lookupLabel = (
+  list: ReadonlyArray<{ value: string; label: string }>,
+  value?: string | null,
+) => {
+  if (!value) return ''
+  const found = list.find((item) => item.value === value)
+  return found ? found.label : value
+}
+
+const scheduleLabel = (status?: string) => {
+  if (!status) return '未知'
+  const dictLabel = lookupLabel(scheduleDictOptions.value, status)
+  return dictLabel || status
+}
+
+const scheduleTone = (status?: string) => {
+  switch (status) {
+    case 'available':
+      return 'green'
+    case 'busy':
+      return 'orange'
+    case 'normal':
+      return 'blue'
+    default:
+      return 'default'
+  }
 }
 </script>
 
+<style lang="scss">
+.assign-mentor-modal-wrap .ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 0;
+}
+.assign-mentor-modal-wrap .ant-modal-body {
+  padding: 0;
+}
+</style>
+
 <style scoped lang="scss">
-.assign-mentor-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
-.assign-mentor-backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: rgba(15, 23, 42, 0.5);
-}
-
 .assign-mentor-shell {
   position: relative;
-  z-index: 1;
-  width: min(100%, 650px);
-  max-height: min(90vh, 840px);
-  overflow: hidden;
-  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
   background: #fff;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+  max-height: 86vh;
+}
+
+.assign-mentor-anchor {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 .assign-mentor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 26px;
+  padding: 18px 24px;
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  flex-shrink: 0;
 }
 
 .assign-mentor-title {
@@ -337,98 +491,73 @@ const toggleMentor = (mentorId: string) => {
   font-weight: 700;
 }
 
-.modal-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
+.assign-mentor-close {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.assign-mentor-close:hover {
+  background: rgba(255, 255, 255, 0.28) !important;
 }
 
 .assign-mentor-body {
-  max-height: 70vh;
+  flex: 1;
   overflow-y: auto;
-  padding: 26px;
+  padding: 24px;
 }
 
 .student-card {
   margin-bottom: 20px;
+  background: #f5f3ff;
   border-radius: 12px;
-  background: #f3e8ff;
+}
+
+.student-card :deep(.ant-card-body) {
   padding: 16px;
 }
 
-.student-card__main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.student-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 999px;
-  background: #8b5cf6;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
+.student-card__divider {
+  margin: 12px 0;
+  border-color: rgba(139, 92, 246, 0.18);
 }
 
 .student-card__name {
   font-size: 15px;
   font-weight: 600;
+  color: #111827;
 }
 
 .student-card__meta {
-  margin-left: 4px;
+  margin-left: 6px;
   font-size: 12px;
-  color: var(--muted);
+  color: #6b7280;
+  font-weight: 400;
 }
 
 .student-card__sub {
+  margin-top: 2px;
   font-size: 13px;
-  color: var(--muted);
+  color: #6b7280;
 }
 
-.student-grid {
-  display: flex;
-  gap: 16px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(139, 92, 246, 0.2);
-}
-
-.student-grid--secondary article {
-  flex: 1;
-}
-
-.student-grid article {
-  min-width: 0;
-}
-
-.student-grid span {
+.student-grid__label {
   display: block;
   margin-bottom: 4px;
   font-size: 11px;
-  color: var(--muted);
+  color: #6b7280;
 }
 
 .student-grid strong {
   font-size: 13px;
   font-weight: 600;
+  color: #111827;
 }
 
 .student-grid__accent {
-  color: var(--primary);
+  color: #8b5cf6;
 }
 
 .student-grid__success {
@@ -440,7 +569,7 @@ const toggleMentor = (mentorId: string) => {
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .form-group--last {
@@ -448,50 +577,21 @@ const toggleMentor = (mentorId: string) => {
 }
 
 .form-label {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--text2);
+  margin-bottom: 8px;
   font-size: 13px;
   font-weight: 600;
+  color: #1f2937;
 }
 
 .form-label__meta {
   margin-left: 4px;
-  color: var(--muted);
   font-size: 12px;
   font-weight: 400;
+  color: #9ca3af;
 }
 
 .filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   margin-bottom: 8px;
-}
-
-.form-select,
-.form-input {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--text);
-  font-size: 14px;
-}
-
-.form-select {
-  width: 130px;
-  padding: 10px 36px 10px 12px;
-}
-
-.form-input {
-  width: 140px;
-  padding: 12px 14px;
-}
-
-.form-input--textarea {
-  width: 100%;
-  min-height: 72px;
-  resize: none;
 }
 
 .filter-hint,
@@ -499,62 +599,50 @@ const toggleMentor = (mentorId: string) => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .selection-hint {
   margin-top: 8px;
-  font-size: 12px;
 }
 
 .mentor-list {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: #fff;
+}
+
+.mentor-list :deep(.ant-list-item) {
+  padding: 0;
+  border: 0;
 }
 
 .mentor-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  background: #fff;
-  padding: 12px 16px;
-  text-align: left;
   cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .mentor-item:last-child {
   border-bottom: 0;
 }
 
+.mentor-item:hover {
+  background: #faf5ff;
+}
+
 .mentor-item--selected {
   background: #f0fdf4;
 }
 
-.mentor-item--muted {
-  opacity: 0.6;
-}
-
-.mentor-item__checkbox {
-  width: 18px;
-  height: 18px;
-  accent-color: #8b5cf6;
-}
-
-.mentor-item__avatar {
-  display: inline-flex;
+.mentor-item__main {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
 }
 
 .mentor-item__copy {
@@ -563,118 +651,58 @@ const toggleMentor = (mentorId: string) => {
 }
 
 .mentor-item__name {
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
   font-weight: 600;
+  color: #111827;
 }
 
 .mentor-item__badge {
-  margin-left: 4px;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #4f46e5;
-  padding: 2px 6px;
-  font-size: 9px;
+  font-size: 11px;
+  margin-right: 0;
 }
 
 .mentor-item__sub {
   margin-top: 2px;
-  color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .mentor-item__meta {
   text-align: right;
-}
-
-.mentor-item__status {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 10px;
-}
-
-.mentor-item__status--success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.mentor-item__status--warning {
-  background: #fef3c7;
-  color: #92400e;
+  flex-shrink: 0;
+  min-width: 88px;
 }
 
 .mentor-item__hours {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 10px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.mentor-empty {
+  padding: 32px 0;
 }
 
 .assign-mentor-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 18px 26px;
-  background: #f8fafc;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.btn-outline {
-  background: #fff;
-  color: var(--text2);
-  box-shadow: inset 0 0 0 1px var(--border);
+  padding: 16px 24px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .assign-mentor-action {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+  border: 0 !important;
 }
 
-@media (max-width: 768px) {
-  .assign-mentor-modal {
-    padding: 16px;
-  }
-
-  .assign-mentor-shell {
-    width: 100%;
-  }
-
-  .assign-mentor-body {
-    padding: 20px;
-  }
-
-  .student-grid {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .filter-row {
-    flex-direction: column;
-  }
-
-  .form-select,
-  .form-input {
-    width: 100%;
-  }
-
-  .mentor-item {
-    align-items: flex-start;
-  }
-
-  .mentor-item__meta {
-    min-width: 72px;
-  }
+.assign-mentor-action:hover,
+.assign-mentor-action:focus {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
 }
 </style>

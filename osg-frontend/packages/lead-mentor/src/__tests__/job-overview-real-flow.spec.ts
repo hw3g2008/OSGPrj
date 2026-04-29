@@ -12,7 +12,45 @@ const apiMocks = vi.hoisted(() => ({
   assignLeadMentorJobOverviewMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
   getLeadMentorJobOverviewCalendar: vi.fn(),
+  getLeadMentorMentorList: vi.fn(async () => ({
+    rows: [
+      {
+        staffId: 9001,
+        staffName: 'Jerry Li',
+        majorDirection: 'finance',
+        subDirection: 'investment_banking',
+        region: 'HK',
+        city: 'Hong Kong',
+        studentCount: 1,
+        scheduleStatus: 'available',
+      },
+      {
+        staffId: 9002,
+        staffName: 'Mike Wang',
+        majorDirection: 'finance',
+        subDirection: 'investment_banking',
+        region: 'HK',
+        city: 'Hong Kong',
+        studentCount: 2,
+        scheduleStatus: 'available',
+      },
+    ],
+  })),
 }))
+
+vi.mock('@osg/shared/composables', async () => {
+  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
+    '@osg/shared/composables',
+  )
+  return {
+    ...actual,
+    useDictFacade: () => ({
+      items: { value: [] },
+      loading: { value: false },
+      load: vi.fn(async () => undefined),
+    }),
+  }
+})
 
 const messageMocks = vi.hoisted(() => ({
   error: vi.fn(),
@@ -309,6 +347,14 @@ describe('lead-mentor job overview real flow', () => {
 
       const assignModal = page.container.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]')
       expect(assignModal).toBeTruthy()
+
+      // 真实导师列表来自 /lead-mentor/mentor/list mock，需先勾选两位再确认
+      const mentorItems = Array.from(assignModal?.querySelectorAll<HTMLButtonElement>('.mentor-item') || [])
+      const jerryItem = mentorItems.find((item) => item.textContent?.includes('Jerry Li'))
+      const mikeItem = mentorItems.find((item) => item.textContent?.includes('Mike Wang'))
+      jerryItem?.click()
+      mikeItem?.click()
+      await flushUi()
 
       const confirmButton = assignModal?.querySelector<HTMLButtonElement>('.assign-mentor-action')
       expect(confirmButton).toBeTruthy()

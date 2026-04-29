@@ -17,6 +17,7 @@ export default defineConfig({
       '@osg/shared/components': resolve(__dirname, '../shared/src/components'),
       '@osg/shared/utils': resolve(__dirname, '../shared/src/utils'),
       '@osg/shared/api': resolve(__dirname, '../shared/src/api'),
+      '@osg/shared/composables': resolve(__dirname, '../shared/src/composables'),
       '@osg/shared/types': resolve(__dirname, '../shared/src/types')
     }
   },

@@ -13,7 +13,22 @@ const apiMocks = vi.hoisted(() => ({
   assignLeadMentorJobOverviewMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
   getLeadMentorJobOverviewCalendar: vi.fn(),
+  getLeadMentorMentorList: vi.fn(async () => ({ rows: [] })),
 }))
+
+vi.mock('@osg/shared/composables', async () => {
+  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
+    '@osg/shared/composables',
+  )
+  return {
+    ...actual,
+    useDictFacade: () => ({
+      items: { value: [] },
+      loading: { value: false },
+      load: vi.fn(async () => undefined),
+    }),
+  }
+})
 
 const routerSource = fs.readFileSync(
   path.resolve(__dirname, '../router/index.ts'),

@@ -12,7 +12,69 @@ const apiMocks = vi.hoisted(() => ({
   getLeadMentorJobOverviewDetail: vi.fn(),
   assignLeadMentorJobOverviewMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
+  getLeadMentorMentorList: vi.fn(async () => ({
+    rows: [
+      {
+        staffId: 9001,
+        staffName: 'Jerry Li',
+        majorDirection: 'finance',
+        subDirection: 'investment_banking',
+        region: 'HK',
+        city: 'Hong Kong',
+        hourlyRate: 1500,
+        studentCount: 1,
+        scheduleStatus: 'available',
+      },
+      {
+        staffId: 9002,
+        staffName: 'Mike Wang',
+        majorDirection: 'finance',
+        subDirection: 'investment_banking',
+        region: 'HK',
+        city: 'Hong Kong',
+        hourlyRate: 1400,
+        studentCount: 2,
+        scheduleStatus: 'available',
+      },
+      {
+        staffId: 9003,
+        staffName: 'Sarah Chen',
+        majorDirection: 'finance',
+        subDirection: 'investment_banking',
+        region: 'CN',
+        city: 'Shanghai',
+        hourlyRate: 1300,
+        studentCount: 4,
+        scheduleStatus: 'normal',
+      },
+      {
+        staffId: 9004,
+        staffName: 'Tom Zhang',
+        majorDirection: 'finance',
+        subDirection: 'investment_banking',
+        region: 'CN',
+        city: 'Beijing',
+        hourlyRate: 1200,
+        studentCount: 6,
+        scheduleStatus: 'busy',
+      },
+    ],
+  })),
 }))
+
+vi.mock('@osg/shared/composables', async () => {
+  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
+    '@osg/shared/composables',
+  )
+  return {
+    ...actual,
+    useDictFacade: () => ({
+      items: { value: [] },
+      loading: { value: false },
+      load: vi.fn(async () => undefined),
+    }),
+  }
+})
 
 const modalPath = path.resolve(__dirname, '../components/AssignMentorModal.vue')
 const modalExists = fs.existsSync(modalPath)

@@ -17,6 +17,7 @@ export default defineConfig({
       '@osg/shared/utils/request': resolve(__dirname, '../shared/src/utils/request'),
       '@osg/shared/api': resolve(__dirname, '../shared/src/api'),
       '@osg/shared/api/auth': resolve(__dirname, '../shared/src/api/auth'),
+      '@osg/shared/composables': resolve(__dirname, '../shared/src/composables'),
       '@osg/shared/types': resolve(__dirname, '../shared/src/types'),
       '@osg/shared/components': resolve(__dirname, '../shared/src/components'),
       '@osg/shared/styles': resolve(__dirname, '../shared/src/styles/index.scss'),

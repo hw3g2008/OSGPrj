@@ -12,7 +12,22 @@ const apiMocks = vi.hoisted(() => ({
   getLeadMentorJobOverviewDetail: vi.fn(),
   assignLeadMentorJobOverviewMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
+  getLeadMentorMentorList: vi.fn(async () => ({ rows: [] })),
 }))
+
+vi.mock('@osg/shared/composables', async () => {
+  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
+    '@osg/shared/composables',
+  )
+  return {
+    ...actual,
+    useDictFacade: () => ({
+      items: { value: [] },
+      loading: { value: false },
+      load: vi.fn(async () => undefined),
+    }),
+  }
+})
 
 const modalPath = path.resolve(__dirname, '../components/JobDetailModal.vue')
 const modalExists = fs.existsSync(modalPath)
