@@ -41,6 +41,17 @@
         />
       </a-form-item>
 
+      <a-form-item name="email" data-field-name="邮箱">
+        <template #label>
+          <span class="profile-modal__label">邮箱</span>
+        </template>
+        <a-input
+          v-model:value="formState.email"
+          placeholder="请输入邮箱"
+          allow-clear
+        />
+      </a-form-item>
+
       <div class="profile-modal__password-section">
         <div class="profile-modal__section-badge" data-content-part="status-banner">
           <span class="mdi mdi-lock-reset" aria-hidden="true" />
@@ -114,10 +125,19 @@ const saving = ref(false)
 const formState = reactive({
   name: '',
   account: '',
+  email: '',
   oldPassword: '',
   newPassword: '',
   confirmPassword: '',
 })
+
+const validateEmail = (_rule: any, value: string) => {
+  if (!value) return Promise.resolve()
+  if (!/^[\w.!#$%&'*+/=?^`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/.test(value)) {
+    return Promise.reject('请输入有效的邮箱地址')
+  }
+  return Promise.resolve()
+}
 
 const hasPasswordChange = computed(() =>
   Boolean(formState.oldPassword || formState.newPassword || formState.confirmPassword),
@@ -147,6 +167,7 @@ const validateConfirm = (_rule: any, value: string) => {
 
 const rules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  email: [{ validator: validateEmail, trigger: 'blur' }],
   oldPassword: [{ validator: validateOldPassword, trigger: 'blur' }],
   newPassword: [{ validator: validatePassword, trigger: 'blur' }],
   confirmPassword: [{ validator: validateConfirm, trigger: 'blur' }],
@@ -165,6 +186,7 @@ const syncFormState = async () => {
 
   formState.name = userStore.userInfo?.nickName || ''
   formState.account = userStore.userInfo?.userName || ''
+  formState.email = userStore.userInfo?.email || ''
   resetPasswordFields()
 
   await nextTick()
@@ -199,7 +221,7 @@ const handleSave = async () => {
 
     await http.put('/system/user/profile', {
       nickName: formState.name,
-      email: userStore.userInfo?.email || '',
+      email: formState.email,
       phonenumber: userStore.userInfo?.phonenumber || '',
       sex: userStore.userInfo?.sex,
     }, {
