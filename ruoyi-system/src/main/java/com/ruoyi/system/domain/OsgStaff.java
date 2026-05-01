@@ -17,11 +17,17 @@ public class OsgStaff extends BaseEntity
 
     private String phone;
 
+    private String gender;
+
+    private String wechatId;
+
     private String staffType;
 
     private String majorDirection;
 
     private String subDirection;
+
+    private String courseTypes;
 
     private String region;
 
@@ -71,6 +77,36 @@ public class OsgStaff extends BaseEntity
     public void setPhone(String phone)
     {
         this.phone = phone;
+    }
+
+    public String getGender()
+    {
+        return gender;
+    }
+
+    public void setGender(String gender)
+    {
+        this.gender = gender;
+    }
+
+    public String getWechatId()
+    {
+        return wechatId;
+    }
+
+    public void setWechatId(String wechatId)
+    {
+        this.wechatId = wechatId;
+    }
+
+    public String getCourseTypes()
+    {
+        return courseTypes;
+    }
+
+    public void setCourseTypes(String courseTypes)
+    {
+        this.courseTypes = courseTypes;
     }
 
     public String getStaffType()
@@ -161,9 +197,12 @@ public class OsgStaff extends BaseEntity
             .append("staffName", getStaffName())
             .append("email", getEmail())
             .append("phone", getPhone())
+            .append("gender", getGender())
+            .append("wechatId", getWechatId())
             .append("staffType", getStaffType())
             .append("majorDirection", getMajorDirection())
             .append("subDirection", getSubDirection())
+            .append("courseTypes", getCourseTypes())
             .append("region", getRegion())
             .append("city", getCity())
             .append("hourlyRate", getHourlyRate())

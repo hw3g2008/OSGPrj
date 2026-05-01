@@ -30,3 +30,4 @@ export type {
   PositionIndustryGroup,
 } from './positions/types'
 export { INDUSTRY_TONE_TEXT_COLOR } from './positions/types'
+export { MultiSelect } from './MultiSelect'

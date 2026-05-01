@@ -9,9 +9,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="staffName" column="staff_name"/>
         <result property="email" column="email"/>
         <result property="phone" column="phone"/>
+        <result property="gender" column="gender"/>
+        <result property="wechatId" column="wechat_id"/>
         <result property="staffType" column="staff_type"/>
         <result property="majorDirection" column="major_direction"/>
         <result property="subDirection" column="sub_direction"/>
+        <result property="courseTypes" column="course_types"/>
         <result property="region" column="region"/>
         <result property="city" column="city"/>
         <result property="hourlyRate" column="hourly_rate"/>
@@ -29,9 +32,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         s.staff_name,
         s.email,
         s.phone,
+        s.gender,
+        s.wechat_id,
         s.staff_type,
         s.major_direction,
         s.sub_direction,
+        s.course_types,
         s.region,
         s.city,
         s.hourly_rate,
@@ -79,7 +85,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and s.staff_type = #{staffType}
             </if>
             <if test="majorDirection != null and majorDirection != ''">
-                and s.major_direction = #{majorDirection}
+                and FIND_IN_SET(#{majorDirection}, s.major_direction) > 0
             </if>
             <if test="accountStatus != null and accountStatus != ''">
                 and s.account_status = #{accountStatus}
@@ -95,9 +101,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             staff_name,
             email,
             <if test="phone != null and phone != ''">phone,</if>
+            <if test="gender != null and gender != ''">gender,</if>
+            <if test="wechatId != null and wechatId != ''">wechat_id,</if>
             staff_type,
             <if test="majorDirection != null and majorDirection != ''">major_direction,</if>
             <if test="subDirection != null and subDirection != ''">sub_direction,</if>
+            <if test="courseTypes != null and courseTypes != ''">course_types,</if>
             <if test="region != null and region != ''">region,</if>
             <if test="city != null and city != ''">city,</if>
             hourly_rate,
@@ -113,9 +122,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{staffName},
             #{email},
             <if test="phone != null and phone != ''">#{phone},</if>
+            <if test="gender != null and gender != ''">#{gender},</if>
+            <if test="wechatId != null and wechatId != ''">#{wechatId},</if>
             #{staffType},
             <if test="majorDirection != null and majorDirection != ''">#{majorDirection},</if>
             <if test="subDirection != null and subDirection != ''">#{subDirection},</if>
+            <if test="courseTypes != null and courseTypes != ''">#{courseTypes},</if>
             <if test="region != null and region != ''">#{region},</if>
             <if test="city != null and city != ''">#{city},</if>
             #{hourlyRate},
@@ -134,9 +146,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="staffName != null and staffName != ''">staff_name = #{staffName},</if>
             <if test="email != null and email != ''">email = #{email},</if>
             <if test="phone != null">phone = #{phone},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="wechatId != null">wechat_id = #{wechatId},</if>
             <if test="staffType != null and staffType != ''">staff_type = #{staffType},</if>
             <if test="majorDirection != null">major_direction = #{majorDirection},</if>
             <if test="subDirection != null">sub_direction = #{subDirection},</if>
+            <if test="courseTypes != null">course_types = #{courseTypes},</if>
             <if test="region != null">region = #{region},</if>
             <if test="city != null">city = #{city},</if>
             <if test="hourlyRate != null">hourly_rate = #{hourlyRate},</if>

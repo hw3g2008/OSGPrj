@@ -2,11 +2,18 @@ package com.ruoyi.web.controller.osg;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ruoyi.common.core.domain.entity.SysDictData;
+import com.ruoyi.system.service.ISysDictTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,8 +42,13 @@ public class OsgStaffController extends BaseController
 {
     private static final String STAFF_ROLE_ACCESS = "@ss.hasPermi('admin:staff:list')";
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Autowired
     private OsgStaffServiceImpl staffService;
+
+    @Autowired
+    private ISysDictTypeService dictTypeService;
 
     @PreAuthorize(STAFF_ROLE_ACCESS)
     @GetMapping("/list")
@@ -101,6 +113,11 @@ public class OsgStaffController extends BaseController
         {
             return AjaxResult.error(validationError);
         }
+        String dictError = validateDictValues(staff);
+        if (dictError != null)
+        {
+            return AjaxResult.error(dictError);
+        }
 
         String operator = getUsername();
         staff.setAccountStatus(defaultText(resolveStoredAccountStatus(asText(body.get("accountStatus"))), "active"));
@@ -138,6 +155,11 @@ public class OsgStaffController extends BaseController
         if (validationError != null)
         {
             return AjaxResult.error(validationError);
+        }
+        String dictError = validateDictValues(staff);
+        if (dictError != null)
+        {
+            return AjaxResult.error(dictError);
         }
 
         staff.setStaffId(staffId);
@@ -300,9 +322,12 @@ public class OsgStaffController extends BaseController
         row.put("staffName", staff.getStaffName());
         row.put("email", staff.getEmail());
         row.put("phone", staff.getPhone());
+        row.put("gender", staff.getGender());
+        row.put("wechatId", staff.getWechatId());
         row.put("staffType", staff.getStaffType());
         row.put("majorDirection", staff.getMajorDirection());
         row.put("subDirection", staff.getSubDirection());
+        row.put("courseTypes", staff.getCourseTypes());
         row.put("region", staff.getRegion());
         row.put("city", staff.getCity());
         row.put("hourlyRate", staff.getHourlyRate());
@@ -376,9 +401,12 @@ public class OsgStaffController extends BaseController
         staff.setStaffName(asText(body.get("staffName")));
         staff.setEmail(asText(body.get("email")));
         staff.setPhone(asText(body.get("phone")));
+        staff.setGender(asText(body.get("gender")));
+        staff.setWechatId(asText(body.get("wechatId")));
         staff.setStaffType(asText(body.get("staffType")));
         staff.setMajorDirection(asText(body.get("majorDirection")));
         staff.setSubDirection(asText(body.get("subDirection")));
+        staff.setCourseTypes(asText(body.get("courseTypes")));
         staff.setRegion(asText(body.get("region")));
         staff.setCity(asText(body.get("city")));
         staff.setHourlyRate(asDecimal(body.get("hourlyRate")));
@@ -418,14 +446,161 @@ public class OsgStaffController extends BaseController
         return null;
     }
 
+    /**
+     * 字典值合法性兜底校验：新建/编辑提交时，所有字典字段必须命中字典 value；
+     * city / subDirection 还需 parentValue 与 region / majorDirection 一一匹配。
+     * 老数据不回扫，仅在写入路径上拦截。
+     */
+    private String validateDictValues(OsgStaff staff)
+    {
+        Set<String> regionValues = dictValueSet("osg_region");
+        if (!regionValues.contains(staff.getRegion()))
+        {
+            return "地区不是合法字典值，请重新选择";
+        }
+
+        Map<String, String> cityToParent = dictParentMap("osg_city");
+        String cityParent = cityToParent.get(staff.getCity());
+        if (cityParent == null)
+        {
+            return "城市不是合法字典值，请重新选择";
+        }
+        if (!staff.getRegion().equals(cityParent))
+        {
+            return "城市与所选地区不匹配";
+        }
+
+        Set<String> majorValues = dictValueSet("osg_major_direction");
+        Set<String> majorSet = splitCsv(staff.getMajorDirection());
+        if (majorSet.isEmpty())
+        {
+            return "主攻方向不能为空";
+        }
+        for (String v : majorSet)
+        {
+            if (!majorValues.contains(v))
+            {
+                return "主攻方向包含非法字典值: " + v;
+            }
+        }
+
+        if (staff.getSubDirection() != null && !staff.getSubDirection().isBlank())
+        {
+            Map<String, String> subToParent = dictParentMap("osg_sub_direction");
+            for (String v : splitCsv(staff.getSubDirection()))
+            {
+                String parent = subToParent.get(v);
+                if (parent == null)
+                {
+                    return "子方向包含非法字典值: " + v;
+                }
+                if (!majorSet.contains(parent))
+                {
+                    return "子方向 [" + v + "] 与所选主攻方向不匹配";
+                }
+            }
+        }
+
+        if (staff.getCourseTypes() != null && !staff.getCourseTypes().isBlank())
+        {
+            Set<String> courseValues = dictValueSet("osg_course_type");
+            for (String v : splitCsv(staff.getCourseTypes()))
+            {
+                if (!courseValues.contains(v))
+                {
+                    return "可授课程类型包含非法字典值: " + v;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private Set<String> dictValueSet(String dictType)
+    {
+        List<SysDictData> rows = dictTypeService.selectDictDataByType(dictType);
+        if (rows == null || rows.isEmpty())
+        {
+            return Collections.emptySet();
+        }
+        Set<String> values = new HashSet<>(rows.size());
+        for (SysDictData d : rows)
+        {
+            if (d.getDictValue() != null)
+            {
+                values.add(d.getDictValue());
+            }
+        }
+        return values;
+    }
+
+    /** 字典 value → parentValue（来自 remark JSON 的 parentValue 字段，缺失则为 ""）。 */
+    private Map<String, String> dictParentMap(String dictType)
+    {
+        List<SysDictData> rows = dictTypeService.selectDictDataByType(dictType);
+        if (rows == null || rows.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+        Map<String, String> map = new HashMap<>(rows.size() * 2);
+        for (SysDictData d : rows)
+        {
+            if (d.getDictValue() == null)
+            {
+                continue;
+            }
+            map.put(d.getDictValue(), parseParentValue(d.getRemark()));
+        }
+        return map;
+    }
+
+    private String parseParentValue(String remark)
+    {
+        if (remark == null || remark.isBlank())
+        {
+            return "";
+        }
+        try
+        {
+            Map<?, ?> json = OBJECT_MAPPER.readValue(remark, Map.class);
+            Object pv = json.get("parentValue");
+            return pv instanceof String s ? s : "";
+        }
+        catch (Exception ex)
+        {
+            return "";
+        }
+    }
+
+    private Set<String> splitCsv(String csv)
+    {
+        if (csv == null || csv.isBlank())
+        {
+            return Collections.emptySet();
+        }
+        Set<String> set = new LinkedHashSet<>();
+        for (String s : Arrays.asList(csv.split(",")))
+        {
+            String t = s.trim();
+            if (!t.isEmpty())
+            {
+                set.add(t);
+            }
+        }
+        return set;
+    }
+
     private OsgStaff mergeExisting(OsgStaff existing, OsgStaff update)
     {
         existing.setStaffName(defaultText(update.getStaffName(), existing.getStaffName()));
         existing.setEmail(defaultText(update.getEmail(), existing.getEmail()));
         existing.setPhone(update.getPhone());
+        existing.setGender(defaultText(update.getGender(), existing.getGender()));
+        existing.setWechatId(defaultText(update.getWechatId(), existing.getWechatId()));
         existing.setStaffType(defaultText(update.getStaffType(), existing.getStaffType()));
         existing.setMajorDirection(update.getMajorDirection());
         existing.setSubDirection(update.getSubDirection());
+        existing.setCourseTypes(defaultText(update.getCourseTypes(), existing.getCourseTypes()));
         existing.setRegion(update.getRegion());
         existing.setCity(update.getCity());
         existing.setHourlyRate(update.getHourlyRate());

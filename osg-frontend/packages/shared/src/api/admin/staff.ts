@@ -15,9 +15,12 @@ export interface StaffListItem {
   staffName: string
   email?: string
   phone?: string
+  gender?: string
+  wechatId?: string
   staffType?: string
   majorDirection?: string
   subDirection?: string
+  courseTypes?: string
   region?: string
   city?: string
   hourlyRate?: number
@@ -39,6 +42,7 @@ export interface StaffPayload {
   staffName: string
   email: string
   phone?: string
+  gender?: string
   staffType: string
   wechatId?: string
   majorDirection: string

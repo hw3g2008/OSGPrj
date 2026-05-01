@@ -36,7 +36,7 @@
         </a-form-item>
         <a-form-item>
           <a-select v-model:value="filters.majorDirection" placeholder="全部方向" allow-clear style="width: 130px">
-            <a-select-option v-for="direction in majorDirectionOptions" :key="direction" :value="direction">{{ direction }}</a-select-option>
+            <a-select-option v-for="opt in majorDirectionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -114,31 +114,35 @@
             <a-tag :color="record.staffType === 'lead_mentor' ? 'blue' : 'purple'">{{ formatType(record.staffType) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'majorDirection'">
-            <a-tooltip v-if="record.majorDirection" :title="record.majorDirection" placement="topLeft">
+            <template v-if="splitField(record.majorDirection).length">
               <a-tag
-                :color="getDirectionColor(record.majorDirection)"
-                style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle"
+                v-for="v in splitField(record.majorDirection)"
+                :key="v"
+                :color="getDirectionColor(v)"
+                style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; margin-bottom: 2px"
               >
-                {{ record.majorDirection }}
+                {{ dictLabel(majorItems, v) }}
               </a-tag>
-            </a-tooltip>
+            </template>
             <span v-else>-</span>
           </template>
           <template v-else-if="column.dataIndex === 'subDirection'">
-            <a-tooltip v-if="record.subDirection" :title="record.subDirection" placement="topLeft">
-              <span>{{ record.subDirection }}</span>
-            </a-tooltip>
+            <template v-if="splitField(record.subDirection).length">
+              <span :title="splitField(record.subDirection).map((v) => dictLabel(subItems, v)).join('、')">
+                {{ splitField(record.subDirection).map((v) => dictLabel(subItems, v)).join('、') }}
+              </span>
+            </template>
             <span v-else>-</span>
           </template>
           <template v-else-if="column.dataIndex === 'region'">
             <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
               <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
                 <template v-if="record.region">
-                  <template v-if="getRegionEmoji(record.region)">{{ getRegionEmoji(record.region) }} </template>{{ record.region }}
+                  <template v-if="getRegionEmoji(record.region)">{{ getRegionEmoji(record.region) }} </template>{{ dictLabel(regionItems, record.region) }}
                 </template>
                 <template v-else>-</template>
               </span>
-              <span style="font-size: 12px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.city || '-' }}</span>
+              <span style="font-size: 12px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.city ? dictLabel(cityItems, record.city) : '-' }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'hourlyRate'">
@@ -245,6 +249,7 @@ import {
   type StaffPayload
 } from '@osg/shared/api/admin/staff'
 import { http } from '@osg/shared/utils/request'
+import { useDictFacade, type DictFacadeOption } from '@osg/shared/composables/useDictFacade'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import MentorStudentsModal from './components/MentorStudentsModal.vue'
@@ -252,6 +257,19 @@ import StaffDetailModal from './components/StaffDetailModal.vue'
 import StaffFormModal from './components/StaffFormModal.vue'
 import StaffStatusModal from './components/StaffStatusModal.vue'
 import { staffColumns, staffBlacklistColumns } from './columns'
+
+const { items: regionItems, load: loadRegion } = useDictFacade('osg_region')
+const { items: cityItems, load: loadCity } = useDictFacade('osg_city')
+const { items: majorItems, load: loadMajor } = useDictFacade('osg_major_direction')
+const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
+
+/** value→label 查询；查不到（历史中文数据）原样返回，保证旧数据可读 */
+const dictLabel = (items: DictFacadeOption[], val?: string) =>
+  val ? (items.find((i) => i.value === val)?.label ?? val) : '-'
+
+/** 把后端逗号分隔串拆数组；空值返回 [] */
+const splitField = (val?: string): string[] =>
+  val ? val.split(',').map((s) => s.trim()).filter(Boolean) : []
 
 type StaffTabKey = 'normal' | 'blacklist'
 type StaffActionKey = 'detail' | 'edit' | 'resetPassword' | 'freeze' | 'restore' | 'blacklist' | 'remove'
@@ -307,9 +325,7 @@ const tablePagination = computed(() => ({
   showSizeChanger: false,
   showTotal: (total: number) => `共 ${total} 条记录`
 }))
-const majorDirectionOptions = computed(() =>
-  Array.from(new Set(rows.value.map((row) => row.majorDirection).filter((value): value is string => Boolean(value))))
-)
+const majorDirectionOptions = computed(() => majorItems.value)
 
 const activeColumns = computed(() =>
   selectedTab.value === 'blacklist' ? staffBlacklistColumns : staffColumns
@@ -342,6 +358,10 @@ const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
 
 onMounted(() => {
   void loadRows()
+  void loadRegion()
+  void loadCity()
+  void loadMajor()
+  void loadSub()
 })
 
 const handleSearch = () => {
@@ -477,26 +497,21 @@ const formatType = (staffType?: string) => {
   return '导师'
 }
 
+/** 字典 value 优先匹配，不命中再按中文兜底（兼容历史数据） */
 const getDirectionColor = (direction?: string) => {
-  if (direction?.includes('量化')) return 'purple'
-  if (direction?.includes('咨询')) return 'blue'
-  if (direction?.includes('科技')) return 'orange'
+  if (!direction) return 'cyan'
+  if (direction === 'quant' || direction.includes('量化')) return 'purple'
+  if (direction === 'consulting' || direction.includes('咨询')) return 'blue'
+  if (direction === 'tech' || direction.includes('科技')) return 'orange'
+  if (direction === 'computer_science') return 'magenta'
   return 'cyan'
 }
 
 const getRegionEmoji = (region?: string) => {
-  if (!region) {
-    return ''
-  }
-  if (region.includes('北美')) {
-    return '🌎'
-  }
-  if (region.includes('欧洲')) {
-    return '🌍'
-  }
-  if (region.includes('亚太')) {
-    return '🌏'
-  }
+  if (!region) return ''
+  if (region === 'na' || region.includes('北美')) return '🌎'
+  if (region === 'eu' || region.includes('欧洲')) return '🌍'
+  if (region === 'apac' || region.includes('亚太')) return '🌏'
   return ''
 }
 

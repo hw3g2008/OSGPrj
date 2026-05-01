@@ -252,14 +252,14 @@ onBeforeUnmount(() => {
     :deep(.ant-input-affix-wrapper),
     :deep(.ant-input-number),
     :deep(textarea.ant-input) {
-      padding: 12px 14px;
+      padding: 10px 14px;
       border: 2px solid var(--border, #E2E8F0);
       border-radius: 10px;
       background: #fff;
       box-shadow: none;
       color: var(--text, #1E293B);
       font-size: 14px;
-      line-height: 20px;
+      line-height: 24px;
     }
 
     :deep(.ant-input:hover),
@@ -276,7 +276,7 @@ onBeforeUnmount(() => {
     }
 
     :deep(.ant-input-affix-wrapper) {
-      min-height: 44px;
+      min-height: 48px;
     }
 
     :deep(.ant-input-affix-wrapper > input.ant-input) {
@@ -296,8 +296,8 @@ onBeforeUnmount(() => {
     :deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector),
     :deep(.ant-picker),
     :deep(.ant-input-number) {
-      min-height: 44px;
-      padding: 12px 14px;
+      min-height: 48px;
+      padding: 10px 14px;
       border: 2px solid var(--border, #E2E8F0);
       border-radius: 10px;
       box-shadow: none;
@@ -305,12 +305,12 @@ onBeforeUnmount(() => {
     }
 
     :deep(.ant-select-selector) {
-      padding: 12px 14px;
+      padding: 10px 14px;
     }
 
     :deep(.ant-select-single .ant-select-selection-item),
     :deep(.ant-select-single .ant-select-selection-placeholder) {
-      line-height: 20px;
+      line-height: 24px;
     }
 
     :deep(.ant-select-arrow) {

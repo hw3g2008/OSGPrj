@@ -57,7 +57,7 @@
         </article>
         <article class="staff-detail-modal__card">
           <span>主攻方向</span>
-          <strong>{{ detail?.majorDirection || '-' }}</strong>
+          <strong>{{ renderCsvLabels(detail?.majorDirection, majorItems) }}</strong>
         </article>
         <article class="staff-detail-modal__card">
           <span>当前学员数</span>
@@ -83,15 +83,15 @@
           </div>
           <div class="staff-detail-modal__detail-cell">
             <dt>地区</dt>
-            <dd>{{ detail?.region || '-' }}</dd>
+            <dd>{{ dictLabel(regionItems, detail?.region) }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
             <dt>城市</dt>
-            <dd>{{ detail?.city || '-' }}</dd>
+            <dd>{{ dictLabel(cityItems, detail?.city) }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
             <dt>子方向</dt>
-            <dd>{{ detail?.subDirection || '-' }}</dd>
+            <dd>{{ renderCsvLabels(detail?.subDirection, subItems) }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
             <dt>课时单价</dt>
@@ -170,6 +170,26 @@ import {
   type StaffChangeRequestItem,
   type StaffDetailItem,
 } from '@osg/shared/api/admin/staff'
+import { useDictFacade, type DictFacadeOption } from '@osg/shared/composables/useDictFacade'
+
+const { items: regionItems, load: loadRegion } = useDictFacade('osg_region')
+const { items: cityItems, load: loadCity } = useDictFacade('osg_city')
+const { items: majorItems, load: loadMajor } = useDictFacade('osg_major_direction')
+const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
+
+/** value→label；查不到（历史中文）原样返回 */
+const dictLabel = (items: DictFacadeOption[], val?: string) =>
+  val ? (items.find((i) => i.value === val)?.label ?? val) : '-'
+
+const splitField = (val?: string): string[] =>
+  val ? val.split(',').map((s) => s.trim()).filter(Boolean) : []
+
+/** 把后端 csv 串展示为「中文1、中文2」 */
+const renderCsvLabels = (val: string | undefined, items: DictFacadeOption[]) => {
+  const arr = splitField(val)
+  if (!arr.length) return '-'
+  return arr.map((v) => dictLabel(items, v)).join('、')
+}
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -235,6 +255,10 @@ watch(
   () => {
     if (props.visible) {
       detailTab.value = 'profile'
+      void loadRegion()
+      void loadCity()
+      void loadMajor()
+      void loadSub()
     }
     void loadDetail()
   },

@@ -123,41 +123,29 @@
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
             <a-form-item label="主攻方向">
-              <a-select
+              <MultiSelect
                 v-model:value="form.majorDirections"
-                mode="multiple"
                 :options="majorItems"
-                :field-names="{ label: 'label', value: 'value' }"
-                :max-tag-count="'responsive'"
                 placeholder="请选择，可多选"
-                allow-clear
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="子方向">
-              <a-select
+              <MultiSelect
                 v-model:value="form.subDirections"
-                mode="multiple"
                 :options="filteredSubOptions"
-                :field-names="{ label: 'label', value: 'value' }"
-                :max-tag-count="'responsive'"
                 :placeholder="form.majorDirections.length ? '请选择，可多选' : '请先选择主攻方向'"
                 :disabled="!form.majorDirections.length"
-                allow-clear
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="可授课程类型">
-              <a-select
+              <MultiSelect
                 v-model:value="form.courseTypes"
-                mode="multiple"
                 :options="courseItems"
-                :field-names="{ label: 'label', value: 'value' }"
-                :max-tag-count="'responsive'"
                 placeholder="请选择，可多选"
-                allow-clear
               />
             </a-form-item>
           </a-col>
@@ -204,6 +192,7 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { MultiSelect } from '@osg/shared/components'
 import type { StaffListItem, StaffPayload } from '@osg/shared/api/admin/staff'
 import {
   splitPhone,
