@@ -1,11 +1,13 @@
 -- osg_country_code: 国际电话区号字典
 -- 用途：导师表单手机号前缀下拉，数据可由客户在系统字典管理页面编辑
 
--- 1. 字典类型
+-- 1. 字典类型（含 remark 元数据，用于注册到 job 分类下）
 INSERT INTO sys_dict_type (dict_id, dict_name, dict_type, status, create_by, create_time, remark, css_class)
 VALUES
-    (seq_dict_type.nextval, '国际电话区号', 'osg_country_code', '0', 'admin', sysdate(), '导师手机号前缀', NULL)
-ON DUPLICATE KEY UPDATE dict_name = VALUES(dict_name), status = '0', update_time = sysdate();
+    (seq_dict_type.nextval, '国际电话区号', 'osg_country_code', '0', 'admin', sysdate(),
+     '{"groupKey":"job","groupLabel":"岗位相关","order":6,"icon":"mdi mdi-phone","iconColor":"#52c41a","iconBg":"#f6ffed","tabOrder":10}',
+     NULL)
+ON DUPLICATE KEY UPDATE dict_name = VALUES(dict_name), status = '0', remark = VALUES(remark), update_time = sysdate();
 
 -- 2. 字典数据（dict_value = 区号，dict_label = 显示文本）
 -- 前端默认显示"请选择区号"占位项，无预设默认值
