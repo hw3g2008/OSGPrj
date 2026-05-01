@@ -229,7 +229,7 @@ public class OsgBaseDataController extends BaseController
     {
         return switch (dictType)
         {
-            case "osg_job_category", "osg_company_type", "osg_company_name", "osg_region", "osg_city", "osg_recruit_cycle" -> "job";
+            case "osg_job_category", "osg_company_type", "osg_company_name", "osg_region", "osg_city", "osg_recruit_cycle", "osg_country_code" -> "job";
             case "osg_school", "osg_major_direction", "osg_sub_direction" -> "student";
             case "osg_course_type" -> "course";
             case "osg_expense_type" -> "finance";

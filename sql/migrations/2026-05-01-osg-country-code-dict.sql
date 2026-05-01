@@ -8,9 +8,9 @@ VALUES
 ON DUPLICATE KEY UPDATE dict_name = VALUES(dict_name), status = '0', update_time = sysdate();
 
 -- 2. 字典数据（dict_value = 区号，dict_label = 显示文本）
--- is_default = 'Y' 的为中国大陆，作为默认选中
+-- 前端默认显示"请选择区号"占位项，无预设默认值
 INSERT INTO sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
-SELECT seq_dict_data.nextval, 1, '中国大陆', '+86', 'osg_country_code', NULL, NULL, 'Y', '0', 'admin', sysdate(), NULL FROM DUAL
+SELECT seq_dict_data.nextval, 1, '中国大陆', '+86', 'osg_country_code', NULL, NULL, 'N', '0', 'admin', sysdate(), NULL FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'osg_country_code' AND dict_value = '+86');
 
 INSERT INTO sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)

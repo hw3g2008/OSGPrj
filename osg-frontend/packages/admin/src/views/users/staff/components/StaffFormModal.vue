@@ -249,16 +249,12 @@ const DEFAULT_INITIAL_PASSWORD = 'Osg@2026'
 
 /** 国际电话区号下拉选项（从字典加载，支持客户编辑） */
 const phoneCountryOptions = computed(() => {
-  return countryCodeItems.value.map((item) => ({
+  const items = countryCodeItems.value.map((item) => ({
     value: item.value,
     label: `+${item.value} ${item.label}`,
   }))
-})
-
-/** 从字典中找默认区号（is_default='Y'），找不到则 fallback 为 +86 */
-const defaultCountryCode = computed(() => {
-  const found = countryCodeItems.value.find((item) => item.cssClass === 'Y' || item.remark === 'default')
-  return found?.value ?? '+86'
+  // 第一项为占位提示
+  return [{ value: '', label: '请选择区号' }, ...items]
 })
 
 const filterPhoneCountryOption = (input: string, option: { label: string; value: string }) => {
@@ -273,7 +269,7 @@ const form = reactive({
   staffName: '',
   email: '',
   phone: '',
-  phoneCountryCode: DEFAULT_PHONE_COUNTRY_CODE,
+  phoneCountryCode: '', // 默认"请选择区号"
   staffType: undefined as string | undefined,
   gender: undefined as string | undefined,
   wechatId: '',
@@ -320,7 +316,8 @@ const resetForm = () => {
   form.staffName = props.staff?.staffName || ''
   form.email = props.staff?.email || ''
   const parsedPhone = splitPhone(props.staff?.phone)
-  form.phoneCountryCode = parsedPhone.countryCode
+  // 编辑时：复用已有区号；新建时：显示"请选择区号"
+  form.phoneCountryCode = isEditing.value ? parsedPhone.countryCode : ''
   form.phone = parsedPhone.number
   form.staffType = props.staff?.staffType || undefined
   form.gender = props.staff?.gender || undefined
