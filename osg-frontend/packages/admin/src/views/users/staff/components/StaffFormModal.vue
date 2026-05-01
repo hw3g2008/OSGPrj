@@ -249,9 +249,10 @@ const DEFAULT_INITIAL_PASSWORD = 'Osg@2026'
 
 /** 国际电话区号下拉选项（从字典加载，支持客户编辑） */
 const phoneCountryOptions = computed(() => {
+  // dict_value 已包含 + 前缀（如 "+86"），直接拼接 label
   const items = countryCodeItems.value.map((item) => ({
     value: item.value,
-    label: `+${item.value} ${item.label}`,
+    label: `${item.value} ${item.label}`,
   }))
   // 第一项为占位提示
   return [{ value: '', label: '请选择区号' }, ...items]
