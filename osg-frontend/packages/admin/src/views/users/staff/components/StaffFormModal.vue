@@ -16,14 +16,19 @@
       </div>
     </template>
 
+    <div class="staff-form-modal__grid">
     <!-- Section 1: 核心信息 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--primary">核心信息</div>
       <a-form layout="vertical">
-        <a-row :gutter="16">
+        <a-row :gutter="[20, 0]">
           <a-col :span="12">
             <a-form-item label="姓名">
-              <a-input v-model:value="form.staffName" placeholder="请输入英文名" />
+              <a-input
+                ref="staffNameInputRef"
+                v-model:value="form.staffName"
+                placeholder="请输入英文名"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -58,10 +63,23 @@
         <span class="mdi mdi-phone" aria-hidden="true" /> 联系方式
       </div>
       <a-form layout="vertical">
-        <a-row :gutter="16">
+        <a-row :gutter="[20, 0]">
           <a-col :span="12">
             <a-form-item label="手机号">
-              <a-input v-model:value="form.phone" placeholder="请输入手机号" />
+              <div class="phone-input-group">
+                <a-select
+                  v-model:value="form.phoneCountryCode"
+                  :options="phoneCountryOptions"
+                  class="phone-input-group__code"
+                  :show-search="true"
+                  :filter-option="filterPhoneCountryOption"
+                />
+                <a-input
+                  v-model:value="form.phone"
+                  class="phone-input-group__number"
+                  placeholder="请输入手机号"
+                />
+              </div>
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -71,14 +89,25 @@
           </a-col>
           <a-col :span="12">
             <a-form-item label="地区">
-              <a-select v-model:value="form.region" placeholder="请选择">
-                <a-select-option v-for="option in regionOptions" :key="option" :value="option">{{ option }}</a-select-option>
-              </a-select>
+              <a-select
+                v-model:value="form.region"
+                :options="regionItems"
+                :field-names="{ label: 'label', value: 'value' }"
+                placeholder="请选择"
+                allow-clear
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="城市">
-              <a-input v-model:value="form.city" placeholder="请输入城市" />
+              <a-select
+                v-model:value="form.city"
+                :options="filteredCityOptions"
+                :field-names="{ label: 'label', value: 'value' }"
+                :placeholder="form.region ? '请选择' : '请先选择地区'"
+                :disabled="!form.region"
+                allow-clear
+              />
             </a-form-item>
           </a-col>
         </a-row>
@@ -91,24 +120,45 @@
         <span class="mdi mdi-target" aria-hidden="true" /> 专业方向
       </div>
       <a-form layout="vertical">
-        <a-row :gutter="16">
+        <a-row :gutter="[20, 0]">
           <a-col :span="12">
             <a-form-item label="主攻方向">
-              <a-select v-model:value="form.majorDirection" placeholder="请选择">
-                <a-select-option v-for="option in majorDirectionOptions" :key="option" :value="option">{{ option }}</a-select-option>
-              </a-select>
+              <a-select
+                v-model:value="form.majorDirections"
+                mode="multiple"
+                :options="majorItems"
+                :field-names="{ label: 'label', value: 'value' }"
+                :max-tag-count="'responsive'"
+                placeholder="请选择，可多选"
+                allow-clear
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="子方向">
-              <a-select v-model:value="form.subDirection" :placeholder="subDirectionOptions.length ? '请选择' : '请先选择主攻方向'">
-                <a-select-option v-for="option in subDirectionOptions" :key="option" :value="option">{{ option }}</a-select-option>
-              </a-select>
+              <a-select
+                v-model:value="form.subDirections"
+                mode="multiple"
+                :options="filteredSubOptions"
+                :field-names="{ label: 'label', value: 'value' }"
+                :max-tag-count="'responsive'"
+                :placeholder="form.majorDirections.length ? '请选择，可多选' : '请先选择主攻方向'"
+                :disabled="!form.majorDirections.length"
+                allow-clear
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="可授课程类型">
-              <a-input v-model:value="form.courseTypes" placeholder="请输入可授课程类型" />
+              <a-select
+                v-model:value="form.courseTypes"
+                mode="multiple"
+                :options="courseItems"
+                :field-names="{ label: 'label', value: 'value' }"
+                :max-tag-count="'responsive'"
+                placeholder="请选择，可多选"
+                allow-clear
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -125,7 +175,7 @@
         <span class="mdi mdi-shield-account" aria-hidden="true" /> 账号信息
       </div>
       <a-form layout="vertical">
-        <a-row :gutter="16">
+        <a-row :gutter="[20, 0]">
           <a-col :span="12">
             <a-form-item label="登录账号">
               <a-input v-model:value="form.loginAccount" placeholder="请输入登录账号" />
@@ -139,6 +189,7 @@
         </a-row>
       </a-form>
     </section>
+    </div>
 
     <template #footer>
       <a-button @click="handleClose">取消</a-button>
@@ -150,10 +201,38 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { StaffListItem, StaffPayload } from '@osg/shared/api/admin/staff'
+import {
+  splitPhone,
+  joinPhone,
+} from '@osg/shared/utils'
+import { useDictFacade } from '@osg/shared/composables/useDictFacade'
+
+const { items: regionItems, load: loadRegion } = useDictFacade('osg_region')
+const { items: cityItems, load: loadCity } = useDictFacade('osg_city')
+const { items: majorItems, load: loadMajor } = useDictFacade('osg_major_direction')
+const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
+const { items: courseItems, load: loadCourse } = useDictFacade('osg_course_type')
+const { items: countryCodeItems, load: loadCountryCode } = useDictFacade('osg_country_code')
+
+const loadAllDicts = () => {
+  void loadRegion()
+  void loadCity()
+  void loadMajor()
+  void loadSub()
+  void loadCourse()
+  void loadCountryCode()
+}
+
+/** 把后端逗号分隔的字典 value 串解析为数组（兼容历史中文 label：原样保留） */
+const splitCsv = (val: unknown): string[] => {
+  if (Array.isArray(val)) return val.filter((v): v is string => typeof v === 'string' && v.length > 0)
+  if (typeof val === 'string' && val.trim()) return val.split(',').map((s) => s.trim()).filter(Boolean)
+  return []
+}
 
 const props = defineProps<{
   visible: boolean
@@ -167,27 +246,42 @@ const emit = defineEmits<{
 }>()
 
 const DEFAULT_INITIAL_PASSWORD = 'Osg@2026'
-const majorDirectionOptions = ['金融', '咨询', '科技', '量化']
-const subDirectionMap: Record<string, string[]> = {
-  金融: ['IB', 'PE', 'VC', 'S&T', 'AM', 'ER', 'IB 投行'],
-  咨询: ['Strategy', 'Operations', 'Transformation'],
-  科技: ['Product', 'Data', 'Software', 'AI', 'AI Product'],
-  量化: ['Quant Research', 'Quant Trading', 'Quant Dev'],
+
+/** 国际电话区号下拉选项（从字典加载，支持客户编辑） */
+const phoneCountryOptions = computed(() => {
+  return countryCodeItems.value.map((item) => ({
+    value: item.value,
+    label: `+${item.value} ${item.label}`,
+  }))
+})
+
+/** 从字典中找默认区号（is_default='Y'），找不到则 fallback 为 +86 */
+const defaultCountryCode = computed(() => {
+  const found = countryCodeItems.value.find((item) => item.cssClass === 'Y' || item.remark === 'default')
+  return found?.value ?? '+86'
+})
+
+const filterPhoneCountryOption = (input: string, option: { label: string; value: string }) => {
+  const keyword = input.trim().toLowerCase()
+  if (!keyword) return true
+  return option.label.toLowerCase().includes(keyword) || option.value.toLowerCase().includes(keyword)
 }
-const regionOptions = ['北美', '欧洲', '亚太', '中国大陆']
+
+const staffNameInputRef = ref<{ focus?: () => void } | null>(null)
 
 const form = reactive({
   staffName: '',
   email: '',
   phone: '',
-  staffType: '',
-  gender: '',
+  phoneCountryCode: DEFAULT_PHONE_COUNTRY_CODE,
+  staffType: undefined as string | undefined,
+  gender: undefined as string | undefined,
   wechatId: '',
-  majorDirection: '',
-  subDirection: '',
-  region: '',
-  city: '',
-  courseTypes: '',
+  majorDirections: [] as string[],
+  subDirections: [] as string[],
+  region: undefined as string | undefined,
+  city: undefined as string | undefined,
+  courseTypes: [] as string[],
   loginAccount: '',
   initialPassword: '',
   hourlyRate: '' as string | number
@@ -195,12 +289,17 @@ const form = reactive({
 
 const isEditing = computed(() => Boolean(props.staff?.staffId))
 const surfaceId = computed(() => (isEditing.value ? 'modal-edit-staff' : 'modal-add-staff'))
-const subDirectionOptions = computed(() => {
-  const options = subDirectionMap[form.majorDirection] ?? []
-  if (form.subDirection && !options.includes(form.subDirection)) {
-    return [...options, form.subDirection]
-  }
-  return options
+
+/** 城市按选中的 region 过滤；未选 region 时为空 */
+const filteredCityOptions = computed(() => {
+  if (!form.region) return []
+  return cityItems.value.filter((c) => c.parentValue === form.region)
+})
+
+/** 子方向按已选主攻方向（多个）联合过滤 */
+const filteredSubOptions = computed(() => {
+  if (!form.majorDirections.length) return []
+  return subItems.value.filter((s) => s.parentValue && form.majorDirections.includes(s.parentValue))
 })
 
 const avatarText = computed(() => {
@@ -220,19 +319,19 @@ const syncAccountDefaults = () => {
 const resetForm = () => {
   form.staffName = props.staff?.staffName || ''
   form.email = props.staff?.email || ''
-  form.phone = props.staff?.phone || ''
-  form.staffType = props.staff?.staffType || ''
-  form.gender = (props.staff as Record<string, unknown>)?.gender as string || ''
-  form.wechatId = (props.staff as Record<string, unknown>)?.wechatId as string || ''
-  form.majorDirection = props.staff?.majorDirection || ''
-  form.subDirection = props.staff?.subDirection || ''
-  form.region = props.staff?.region || ''
-  form.city = props.staff?.city || ''
-  form.courseTypes = Array.isArray((props.staff as Record<string, unknown>)?.courseTypes)
-    ? ((props.staff as Record<string, unknown>)?.courseTypes as string[]).join(', ')
-    : ((props.staff as Record<string, unknown>)?.courseTypes as string) || ''
-  form.loginAccount = (props.staff as Record<string, unknown>)?.loginAccount as string || ''
-  form.initialPassword = (props.staff as Record<string, unknown>)?.initialPassword as string || ''
+  const parsedPhone = splitPhone(props.staff?.phone)
+  form.phoneCountryCode = parsedPhone.countryCode
+  form.phone = parsedPhone.number
+  form.staffType = props.staff?.staffType || undefined
+  form.gender = props.staff?.gender || undefined
+  form.wechatId = props.staff?.wechatId || ''
+  form.majorDirections = splitCsv(props.staff?.majorDirection)
+  form.subDirections = splitCsv(props.staff?.subDirection)
+  form.region = props.staff?.region || undefined
+  form.city = props.staff?.city || undefined
+  form.courseTypes = splitCsv(props.staff?.courseTypes)
+  form.loginAccount = ''
+  form.initialPassword = ''
   form.hourlyRate = props.staff?.hourlyRate == null ? '' : String(props.staff.hourlyRate)
   syncAccountDefaults()
 }
@@ -242,21 +341,37 @@ watch(
   ([visible]) => {
     if (visible) {
       resetForm()
+      loadAllDicts()
+      nextTick(() => {
+        staffNameInputRef.value?.focus?.()
+      })
     }
   },
   { immediate: true }
 )
 
+/** 主攻方向变化 → 过滤掉不再合法的子方向。
+ *  仅清理「字典内已知子方向」中 parent 不匹配的；字典查不到的视为历史数据原样保留，
+ *  避免编辑旧导师时把历史的英文缩写（'IB'/'PE' 等）误删。 */
 watch(
-  () => form.majorDirection,
+  () => form.majorDirections,
+  (newDirs) => {
+    const validParents = new Set(newDirs)
+    form.subDirections = form.subDirections.filter((sub) => {
+      const item = subItems.value.find((i) => i.value === sub)
+      if (!item) return true
+      return item.parentValue ? validParents.has(item.parentValue) : true
+    })
+  }
+)
+
+/** 地区变化 → 清空城市（避免脏值）。
+ *  `!prev` 时跳过：resetForm 把 region 从 undefined 设到具体值时不应清掉同时被 reset 的 city。 */
+watch(
+  () => form.region,
   (next, prev) => {
-    if (!next || !prev || next === prev) {
-      return
-    }
-    if (subDirectionMap[next]?.includes(form.subDirection)) {
-      return
-    }
-    form.subDirection = ''
+    if (!next || !prev || next === prev) return
+    form.city = undefined
   }
 )
 
@@ -285,7 +400,7 @@ const handleSubmit = () => {
     message.error('请选择导师类型')
     return
   }
-  if (!form.majorDirection) {
+  if (!form.majorDirections.length) {
     message.error('请选择主攻方向')
     return
   }
@@ -293,8 +408,8 @@ const handleSubmit = () => {
     message.error('请选择地区')
     return
   }
-  if (!form.city.trim()) {
-    message.error('请填写城市')
+  if (!form.city) {
+    message.error('请选择城市')
     return
   }
   if (!hourlyRateText) {
@@ -306,14 +421,15 @@ const handleSubmit = () => {
     staffId: props.staff?.staffId,
     staffName: form.staffName.trim(),
     email: form.email.trim(),
-    phone: form.phone.trim() || undefined,
-    staffType: form.staffType,
+    phone: joinPhone(form.phoneCountryCode, form.phone),
+    gender: form.gender || undefined,
+    staffType: form.staffType as string,
     wechatId: form.wechatId.trim() || undefined,
-    majorDirection: form.majorDirection,
-    subDirection: form.subDirection.trim() || undefined,
-    region: form.region,
-    city: form.city.trim(),
-    courseTypes: form.courseTypes.trim() || undefined,
+    majorDirection: form.majorDirections.join(','),
+    subDirection: form.subDirections.length ? form.subDirections.join(',') : undefined,
+    region: form.region as string,
+    city: form.city as string,
+    courseTypes: form.courseTypes.length ? form.courseTypes.join(',') : undefined,
     loginAccount: form.loginAccount.trim() || undefined,
     initialPassword: form.initialPassword.trim() || undefined,
     hourlyRate: Number(hourlyRateText)
@@ -368,19 +484,21 @@ const handleSubmit = () => {
   font-weight: 700;
 }
 
-.staff-form-modal__body {
+/* OverlaySurfaceModal 的 body 是子组件渲染的，本组件 scoped class 选不到它，
+   只能依赖 OverlaySurfaceModal 自身 padding。section 间距交给本组件渲染的 grid wrapper 控制。 */
+
+/* ── Section cards ── */
+.staff-form-modal__grid {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  background: #f8fafc;
 }
 
-/* ── Section cards ── */
 .staff-form-modal__section {
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 20px;
+  padding: 22px 24px 4px;
 }
 
 /* ── Section badges ── */
@@ -392,7 +510,7 @@ const handleSubmit = () => {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .staff-form-modal__badge--primary {
@@ -410,10 +528,138 @@ const handleSubmit = () => {
   color: #92400E;
 }
 
-.staff-form-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+.staff-form-modal__badge--blue {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+/* ── 控件纵向节奏 ──
+   父组件 OverlaySurfaceModal 里有 `.ant-form-item:last-child { margin-bottom: 0 }`
+   而本表单中每个 form-item 在 a-col 里都是唯一子元素，会命中 :last-child；
+   `.ant-form-item-label { padding-bottom: 0 }` 同理。需要 !important 才能覆盖。 */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-form-item),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-form-item) {
+  margin-bottom: 20px !important;
+}
+
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-form-item-label),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-form-item-label) {
+  padding-bottom: 8px !important;
+}
+
+/* ── 控件高度统一 44px（含 select 单选/多选、input、input-number、affix-wrapper）──
+   父组件 OverlaySurfaceModal 用 :deep 把 selector / picker / input-number 设为 min-height: 48 + padding: 10 14，
+   选择器权重 (0,4,1) 比这里 (0,3,1) 高，必须 !important 才能压过去。 */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-number),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-number),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select .ant-select-selector),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select .ant-select-selector) {
+  height: 44px !important;
+  min-height: 44px !important;
+  box-sizing: border-box;
+}
+
+/* 控件横向 padding（input/selector 内文字距左边 14px） */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-number),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-number),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select .ant-select-selector),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select .ant-select-selector) {
+  padding: 0 14px !important;
+}
+
+/* a-select 外层容器去掉自身 padding，避免与 selector 双重叠加 */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select) {
+  padding: 0 !important;
+}
+
+/* select selector / affix-wrapper 用 flex 居中文字（含单选/多选） */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select .ant-select-selector),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select .ant-select-selector),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-affix-wrapper) {
+  display: flex;
+  align-items: center;
+}
+
+/* 普通 input：靠 line-height 让光标垂直居中 */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input) {
+  line-height: 40px !important;
+}
+
+/* 单选 select 的 selection-item / placeholder / search-input */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-item),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-item),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-placeholder),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-placeholder),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-search-input),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-search-input) {
+  line-height: 40px !important;
+  height: 40px !important;
+}
+
+/* 多选 select：placeholder / search input / overflow（标签容器）撑满 selector 高度 */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-placeholder),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-placeholder) {
+  line-height: 40px !important;
+  inset-inline-start: 14px !important;
+}
+
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-overflow),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-overflow) {
+  line-height: 40px !important;
+  align-items: center !important;
+}
+
+/* 多选 selection-item（已选标签）vertical 居中、紧凑 */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selection-item),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selection-item) {
+  height: 28px !important;
+  line-height: 26px !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* input-number 内部 input 撑满父容器，光标垂直居中（不改 wrapper 的 inline 显示，保留 handler 区域） */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-number .ant-input-number-input),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-number .ant-input-number-input) {
+  height: 40px !important;
+  line-height: 40px !important;
+  padding: 0 !important;
+}
+
+/* affix-wrapper 内嵌 input 去掉自身 padding 与 line-height 二次叠加 */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-affix-wrapper > input.ant-input),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-affix-wrapper > input.ant-input) {
+  height: auto !important;
+  line-height: 40px !important;
+}
+
+/* ── 手机号：区号 + 号码 分离布局 ── */
+.phone-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phone-input-group__code {
+  flex: 0 0 130px;
+}
+
+.phone-input-group__number {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 </style>
