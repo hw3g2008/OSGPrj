@@ -60,6 +60,22 @@
             </a-checkbox>
           </div>
         </fieldset>
+
+        <fieldset class="position-form-modal__cycle-wrap" data-field-name="对应学生主攻方向">
+          <span>对应学生主攻方向 <em>*</em> <small>(可多选)</small></span>
+          <div class="position-form-modal__cycle-list">
+            <a-checkbox
+              v-for="option in majorDirectionOptions"
+              :key="option.value"
+              :checked="form.targetMajors.includes(option.value)"
+              :data-major-value="option.value"
+              class="position-form-modal__cycle-option"
+              @change="toggleMajor(option.value)"
+            >
+              {{ option.label }}
+            </a-checkbox>
+          </div>
+        </fieldset>
       </section>
 
       <section class="position-form-modal__section">
@@ -268,7 +284,8 @@ const form = reactive({
   positionUrl: '',
   applicationNote: '',
   createBy: '',
-  recruitmentCycles: [] as string[]
+  recruitmentCycles: [] as string[],
+  targetMajors: [] as string[]
 })
 
 const isEditing = computed(() => Boolean(props.position?.positionId))
@@ -281,6 +298,7 @@ const surfaceId = computed(() => {
 const categoryOptions = computed(() => props.meta.categories || [])
 const companyTypeOptions = computed(() => props.meta.industries || [])
 const recruitmentCycleOptions = computed(() => props.meta.recruitmentCycles || [])
+const majorDirectionOptions = computed(() => props.meta.majorDirections || [])
 const projectYearOptions = computed(() => props.meta.projectYears || [])
 const regionOptions = computed(() => props.meta.regions || [])
 const statusOptions = computed(() => props.meta.displayStatuses || [])
@@ -331,6 +349,7 @@ const resetForm = () => {
   form.applicationNote = seed.applicationNote || ''
   form.createBy = seed.createBy || (isEditing.value ? '' : userStore.userInfo?.userName || '')
   form.recruitmentCycles = normalizeCycles(seed.recruitmentCycle)
+  form.targetMajors = normalizeCycles(seed.targetMajors)
 }
 
 const toggleCycle = (value: string) => {
@@ -339,6 +358,14 @@ const toggleCycle = (value: string) => {
     return
   }
   form.recruitmentCycles = [...form.recruitmentCycles, value]
+}
+
+const toggleMajor = (value: string) => {
+  if (form.targetMajors.includes(value)) {
+    form.targetMajors = form.targetMajors.filter((item) => item !== value)
+    return
+  }
+  form.targetMajors = [...form.targetMajors, value]
 }
 
 const formatDisplayStatus = (value: string) => {
@@ -358,6 +385,10 @@ const handleSubmit = () => {
     message.error('请至少选择一个招聘周期')
     return
   }
+  if (!form.targetMajors.length) {
+    message.error('请至少选择一个主攻方向')
+    return
+  }
   if (!form.displayStartTime || !form.displayEndTime) {
     message.error('请补全展示时间')
     return
@@ -374,6 +405,7 @@ const handleSubmit = () => {
     region: form.region!,
     city: form.city || undefined,
     recruitmentCycle: form.recruitmentCycles.join(','),
+    targetMajors: form.targetMajors.join(','),
     projectYear: form.projectYear!,
     displayStatus: form.displayStatus,
     displayStartTime: form.displayStartTime,

@@ -205,6 +205,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         meta.put("displayStatuses", buildStaticOptions(DICT_POSITION_DISPLAY_STATUS));
         meta.put("industries", buildStaticOptions(DICT_POSITION_INDUSTRY));
         meta.put("recruitmentCycles", buildStaticOptions(DICT_RECRUITMENT_CYCLE));
+        meta.put("majorDirections", buildStaticOptions(DICT_TARGET_MAJORS));
         meta.put("projectYears", buildStaticOptions(DICT_PROJECT_YEAR));
         meta.put("regions", buildStaticOptions(DICT_POSITION_REGION));
         meta.put("citiesByRegion", buildCitiesByRegionFromDict());

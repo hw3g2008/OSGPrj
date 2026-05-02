@@ -12,6 +12,7 @@ export interface PositionListParams {
   displayStatus?: string
   recruitmentCycle?: string
   projectYear?: string
+  targetMajors?: string
   beginDisplayStartTime?: string
   endDisplayStartTime?: string
 }
@@ -28,6 +29,7 @@ export interface PositionListItem {
   region: string
   city: string
   recruitmentCycle: string
+  targetMajors?: string
   projectYear: string
   publishTime?: string
   deadline?: string
@@ -67,6 +69,7 @@ export interface PositionMeta {
   displayStatuses: PositionMetaOption[]
   industries: PositionMetaOption[]
   recruitmentCycles: PositionMetaOption[]
+  majorDirections: PositionMetaOption[]
   projectYears: PositionMetaOption[]
   regions: PositionMetaOption[]
   citiesByRegion: Record<string, PositionMetaOption[]>
@@ -127,6 +130,7 @@ export interface PositionPayload {
   region: string
   city?: string
   recruitmentCycle: string
+  targetMajors: string
   projectYear: string
   displayStatus?: string
   displayStartTime: string

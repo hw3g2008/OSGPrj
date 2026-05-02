@@ -27,11 +27,6 @@ const actionDropdownSource = fs.readFileSync(
   'utf-8'
 )
 
-const directionCascadePath = path.resolve(
-  __dirname,
-  '../views/users/students/components/DirectionCascade.vue'
-)
-
 const editStudentModalPath = path.resolve(
   __dirname,
   '../views/users/students/components/EditStudentModal.vue'
@@ -131,16 +126,10 @@ describe('学员详情入口与编辑联动', () => {
     expect(addStudentModalSource).toContain('结束日期')
   })
 
-  it('keeps the direction cascade and searchable mentor selectors wired in the add-student modal', () => {
-    expect(addStudentModalSource).toContain("import DirectionCascade from './DirectionCascade.vue'")
-    expect(addStudentModalSource).toContain('<DirectionCascade')
+  it('wires the direction multiselect via osg_major_direction dict and keeps searchable mentor selectors in add-student modal', () => {
+    expect(addStudentModalSource).toContain("getAdminDictOptions('osg_major_direction')")
+    expect(addStudentModalSource).toContain('mode="multiple"')
     expect(addStudentModalSource).toContain('输入姓名搜索班主任')
     expect(addStudentModalSource).toContain('输入姓名搜索助教')
-
-    expect(fs.existsSync(directionCascadePath)).toBe(true)
-    const directionCascadeSource = fs.readFileSync(directionCascadePath, 'utf-8')
-    expect(directionCascadeSource).toContain('Finance / 金融')
-    expect(directionCascadeSource).toContain('IB / PE / VC / S&T / AM / ER')
-    expect(directionCascadeSource).toContain('请先选择主攻方向')
   })
 })

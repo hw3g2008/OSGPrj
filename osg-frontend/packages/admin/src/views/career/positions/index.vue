@@ -77,6 +77,18 @@
           </a-select>
         </a-form-item>
         <a-form-item>
+          <a-select
+            v-model:value="targetMajorsFilter"
+            mode="multiple"
+            placeholder="主攻方向"
+            allow-clear
+            style="width: 180px"
+            :options="meta.majorDirections"
+            :field-names="{ label: 'label', value: 'value' }"
+            @change="handleSearch"
+          />
+        </a-form-item>
+        <a-form-item>
           <a-select v-model:value="publishPreset" placeholder="展示起始" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.publishPresets" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
@@ -167,6 +179,12 @@
                             <span v-if="!splitCycles(position.recruitmentCycle).length">-</span>
                           </div>
                         </template>
+                        <template v-else-if="column.dataIndex === 'targetMajors'">
+                          <div class="positions-cycle-tags">
+                            <a-tag v-for="major in splitCycles(position.targetMajors)" :key="major" color="cyan">{{ formatMajor(major) }}</a-tag>
+                            <span v-if="!splitCycles(position.targetMajors).length">-</span>
+                          </div>
+                        </template>
                         <template v-else-if="column.dataIndex === 'displayStartTime'">{{ formatShortDate(position.displayStartTime) }}</template>
                         <template v-else-if="column.dataIndex === 'deadline'">
                           <template v-if="position.deadlineText">{{ position.deadlineText }}</template>
@@ -222,6 +240,12 @@
                 <div class="positions-cycle-tags">
                   <a-tag v-for="cycle in splitCycles(record.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
                   <span v-if="!splitCycles(record.recruitmentCycle).length">-</span>
+                </div>
+              </template>
+              <template v-else-if="column.dataIndex === 'targetMajors'">
+                <div class="positions-cycle-tags">
+                  <a-tag v-for="major in splitCycles(record.targetMajors)" :key="major" color="cyan">{{ formatMajor(major) }}</a-tag>
+                  <span v-if="!splitCycles(record.targetMajors).length">-</span>
                 </div>
               </template>
               <template v-else-if="column.dataIndex === 'displayStartTime'">{{ formatShortDate(record.displayStartTime) }}</template>
@@ -341,6 +365,7 @@ const drilldownColumns = [
   { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
   { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
   { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
+  { title: '主攻方向', dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
   { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
   { title: '截止时间', dataIndex: 'deadline', key: 'deadline', width: 80 },
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
@@ -357,6 +382,7 @@ const listColumns = [
   { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
   { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
   { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
+  { title: '主攻方向', dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
   { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
   { title: '截止时间', dataIndex: 'deadlineDisplay', key: 'deadlineDisplay', width: 100 },
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
@@ -370,6 +396,7 @@ const createEmptyMeta = (): PositionMeta => ({
   displayStatuses: [],
   industries: [],
   recruitmentCycles: [],
+  majorDirections: [],
   projectYears: [],
   regions: [],
   citiesByRegion: {},
@@ -415,8 +442,11 @@ const filters = reactive<PositionListParams>({
   companyName: undefined,
   city: undefined,
   displayStatus: undefined,
-  recruitmentCycle: undefined
+  recruitmentCycle: undefined,
+  targetMajors: undefined
 })
+
+const targetMajorsFilter = ref<string[]>([])
 
 const total = ref(0)
 
@@ -465,6 +495,7 @@ const categoryMap = computed(() => buildOptionMap(meta.value.categories))
 const statusMap = computed(() => buildOptionMap(meta.value.displayStatuses))
 const industryMap = computed(() => buildOptionMap(meta.value.industries))
 const cycleMap = computed(() => buildOptionMap(meta.value.recruitmentCycles))
+const majorMap = computed(() => buildOptionMap(meta.value.majorDirections))
 
 const sortedListRows = computed(() => {
   const rows = [...positions.value]
@@ -528,7 +559,8 @@ const toRequestParams = (): PositionListParams => {
     companyName: filters.companyName || undefined,
     city: filters.city || undefined,
     displayStatus: filters.displayStatus || undefined,
-    recruitmentCycle: filters.recruitmentCycle || undefined
+    recruitmentCycle: filters.recruitmentCycle || undefined,
+    targetMajors: targetMajorsFilter.value.length ? targetMajorsFilter.value.join(',') : undefined
   }
 
   return {
@@ -599,6 +631,7 @@ const handleReset = async () => {
   filters.city = undefined
   filters.displayStatus = undefined
   filters.recruitmentCycle = undefined
+  targetMajorsFilter.value = []
   publishPreset.value = undefined
   filters.pageNum = 1
   await loadPage()
@@ -784,6 +817,13 @@ const formatCycle = (value?: string) => {
     return '-'
   }
   return cycleMap.value.get(value)?.label || value
+}
+
+const formatMajor = (value?: string) => {
+  if (!value) {
+    return '-'
+  }
+  return majorMap.value.get(value)?.label || value
 }
 
 const formatShortDate = (value?: string) => {
