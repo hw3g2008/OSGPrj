@@ -31,6 +31,7 @@ import com.ruoyi.system.mapper.OsgStudentPositionMapper;
 import com.ruoyi.system.mapper.StudentJobPositionMapper;
 import com.ruoyi.system.mapper.StudentProfileMapper;
 import com.ruoyi.system.mapper.SysDictDataMapper;
+import com.ruoyi.system.service.IOsgStudentPositionVisibilityService;
 import com.ruoyi.system.service.IPositionService;
 
 /**
@@ -133,6 +134,9 @@ public class PositionServiceImpl implements IPositionService
 
     @Autowired
     private OsgIdentityResolver identityResolver;
+
+    @Autowired
+    private IOsgStudentPositionVisibilityService studentVisibilityService;
 
     /**
      * 查询岗位列表
@@ -722,11 +726,16 @@ public class PositionServiceImpl implements IPositionService
             positions.put(reviewId, toStudentPositionRow(reviewPosition, industryAliases, companyDictByLabel));
         }
 
+        OsgStudent currentStudent = tryResolveStudent(userId);
         OsgPosition query = new OsgPosition();
         query.setDisplayStatus(PUBLIC_DISPLAY_STATUS);
         for (OsgPosition publicPosition : positionMapper.selectVisiblePublicPositionList(query))
         {
             if (!isVisiblePublicPosition(publicPosition))
+            {
+                continue;
+            }
+            if (!studentVisibilityService.isVisibleToStudent(publicPosition, currentStudent))
             {
                 continue;
             }
@@ -1739,6 +1748,18 @@ public class PositionServiceImpl implements IPositionService
             return new PositionReference(fallbackPosition, false);
         }
         return null;
+    }
+
+    private OsgStudent tryResolveStudent(Long userId)
+    {
+        try
+        {
+            return identityResolver.resolveStudentByUserId(userId);
+        }
+        catch (ServiceException ex)
+        {
+            return null;
+        }
     }
 
     private boolean isVisiblePublicPosition(OsgPosition position)

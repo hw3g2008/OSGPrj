@@ -55,6 +55,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     private static final String DICT_POSITION_PROCESS_GLOSSARY = "osg_position_process_glossary";
     private static final String DICT_POSITION_PUBLISH_PRESET = "osg_position_publish_preset";
     private static final String DICT_POSITION_UI_COPY = "osg_position_ui_copy";
+    private static final String DICT_TARGET_MAJORS = "osg_major_direction";
 
     @Autowired
     private OsgPositionMapper positionMapper;
@@ -272,6 +273,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     public Map<String, Object> createPosition(Map<String, Object> body, String username)
     {
         OsgPosition position = buildPosition(body, true);
+        validateTargetMajors(position.getTargetMajors());
         position.setCreateBy(username);
         position.setUpdateBy(username);
         if (positionMapper.insertPosition(position) <= 0)
@@ -301,6 +303,10 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         OsgPosition position = buildPosition(body, false);
         position.setPositionId(positionId);
         position.setUpdateBy(username);
+        if (body.containsKey("targetMajors"))
+        {
+            validateTargetMajors(position.getTargetMajors());
+        }
         if (positionMapper.updatePosition(position) <= 0)
         {
             throw new ServiceException("岗位更新失败");
@@ -706,6 +712,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         position.setRegion(asText(body.get("region")));
         position.setCity(asText(body.get("city")));
         position.setRecruitmentCycle(asText(body.get("recruitmentCycle")));
+        position.setTargetMajors(asTargetMajorsCsv(body.get("targetMajors")));
         position.setProjectYear(asText(body.get("projectYear")));
         position.setPublishTime(asDate(body.get("publishTime")));
         position.setDeadline(asDate(body.get("deadline")));
@@ -727,6 +734,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             require(position.getCity(), "城市不能为空");
             require(position.getRecruitmentCycle(), "招聘周期不能为空");
             require(position.getProjectYear(), "项目时间不能为空");
+            require(position.getTargetMajors(), "主攻方向不能为空");
         }
 
         if (position.getPublishTime() == null)
@@ -1090,6 +1098,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         row.put("region", position.getRegion());
         row.put("city", position.getCity());
         row.put("recruitmentCycle", position.getRecruitmentCycle());
+        row.put("targetMajors", splitTargetMajors(position.getTargetMajors()));
         row.put("projectYear", position.getProjectYear());
         row.put("publishTime", position.getPublishTime());
         row.put("deadline", position.getDeadline());
@@ -1220,6 +1229,63 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             return "info";
         }
         return "default";
+    }
+
+    private String asTargetMajorsCsv(Object value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+        if (value instanceof Collection<?> coll)
+        {
+            return coll.stream()
+                .filter(Objects::nonNull)
+                .map(String::valueOf)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining(","));
+        }
+        return value.toString().trim();
+    }
+
+    private List<String> splitTargetMajors(String csv)
+    {
+        if (csv == null || csv.isBlank())
+        {
+            return new ArrayList<>();
+        }
+        return java.util.Arrays.stream(csv.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toList());
+    }
+
+    private void validateTargetMajors(String csv)
+    {
+        if (csv == null || csv.isBlank())
+        {
+            throw new ServiceException("主攻方向不能为空");
+        }
+        Set<String> submitted = java.util.Arrays.stream(csv.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (submitted.isEmpty())
+        {
+            throw new ServiceException("主攻方向不能为空");
+        }
+        Set<String> dictValues = sysDictDataMapper.selectDictDataByType(DICT_TARGET_MAJORS).stream()
+            .map(SysDictData::getDictValue)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+        for (String value : submitted)
+        {
+            if (!dictValues.contains(value))
+            {
+                throw new ServiceException("主攻方向含非法值：" + value);
+            }
+        }
     }
 
     private void require(String value, String message)

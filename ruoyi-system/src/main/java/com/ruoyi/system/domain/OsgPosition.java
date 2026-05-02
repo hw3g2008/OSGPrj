@@ -31,6 +31,9 @@ public class OsgPosition extends BaseEntity
 
     private String recruitmentCycle;
 
+    /** 对应学生主攻方向（多选 dict_value，逗号分隔，参考 osg_major_direction 字典） */
+    private String targetMajors;
+
     private String projectYear;
 
     private Date publishTime;
@@ -163,6 +166,16 @@ public class OsgPosition extends BaseEntity
         this.recruitmentCycle = recruitmentCycle;
     }
 
+    public String getTargetMajors()
+    {
+        return targetMajors;
+    }
+
+    public void setTargetMajors(String targetMajors)
+    {
+        this.targetMajors = targetMajors;
+    }
+
     public String getProjectYear()
     {
         return projectYear;
@@ -288,6 +301,7 @@ public class OsgPosition extends BaseEntity
             .append("region", getRegion())
             .append("city", getCity())
             .append("recruitmentCycle", getRecruitmentCycle())
+            .append("targetMajors", getTargetMajors())
             .append("projectYear", getProjectYear())
             .append("publishTime", getPublishTime())
             .append("deadline", getDeadline())

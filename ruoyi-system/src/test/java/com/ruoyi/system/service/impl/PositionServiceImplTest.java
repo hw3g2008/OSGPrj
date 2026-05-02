@@ -40,6 +40,7 @@ import com.ruoyi.system.mapper.OsgStudentPositionMapper;
 import com.ruoyi.system.mapper.StudentJobPositionMapper;
 import com.ruoyi.system.mapper.StudentProfileMapper;
 import com.ruoyi.system.mapper.SysDictDataMapper;
+import com.ruoyi.system.service.IOsgStudentPositionVisibilityService;
 
 @ExtendWith(MockitoExtension.class)
 class PositionServiceImplTest
@@ -67,6 +68,9 @@ class PositionServiceImplTest
 
     @Mock
     private OsgIdentityResolver identityResolver;
+
+    @Mock
+    private IOsgStudentPositionVisibilityService studentVisibilityService;
 
     @Test
     void updateApplyStatusCreatesMainApplicationRecord()
@@ -518,6 +522,87 @@ class PositionServiceImplTest
                     || "osg_student_position_company_brand".equals(dict.getDictType()))
         ));
         verify(sysDictDataMapper, atLeastOnce()).selectDictDataByTypes(anyList());
+    }
+
+    @Test
+    void selectPositionListIncludesPublicPositionWhenVisibilityAccepts()
+    {
+        OsgPosition pos = publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York");
+        OsgStudent stu = student(12766L, "Curl Stu");
+
+        when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(stu);
+        when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of());
+        when(positionMapper.selectVisiblePublicPositionList(any(OsgPosition.class))).thenReturn(List.of(pos));
+        when(studentVisibilityService.isVisibleToStudent(pos, stu)).thenReturn(true);
+        when(sysDictDataMapper.selectDictDataByTypes(anyList())).thenReturn(List.of());
+
+        List<Map<String, Object>> rows = service.selectPositionList(838L);
+
+        assertEquals(1, rows.size());
+        assertEquals(501L, ((Number) rows.get(0).get("id")).longValue());
+        verify(studentVisibilityService).isVisibleToStudent(pos, stu);
+    }
+
+    @Test
+    void selectPositionListFiltersPublicPositionWhenVisibilityRejectsButKeepsManualReview()
+    {
+        OsgPosition pos = publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York");
+        OsgStudent stu = student(12766L, "Curl Stu");
+
+        when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(stu);
+        when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of(reviewRow()));
+        when(positionMapper.selectVisiblePublicPositionList(any(OsgPosition.class))).thenReturn(List.of(pos));
+        when(studentVisibilityService.isVisibleToStudent(pos, stu)).thenReturn(false);
+        when(sysDictDataMapper.selectDictDataByTypes(anyList())).thenReturn(List.of());
+
+        List<Map<String, Object>> rows = service.selectPositionList(838L);
+
+        assertEquals(1, rows.size());
+        assertEquals("manual", rows.get(0).get("sourceType"));
+    }
+
+    @Test
+    void selectPositionListFiltersAllPublicWhenStudentResolveFailsButKeepsManualReview()
+    {
+        OsgPosition pos = publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York");
+
+        when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
+        when(identityResolver.resolveStudentByUserId(838L)).thenThrow(new ServiceException("学员主数据不存在，无法建立五端主链"));
+        when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of(reviewRow()));
+        when(positionMapper.selectVisiblePublicPositionList(any(OsgPosition.class))).thenReturn(List.of(pos));
+        when(sysDictDataMapper.selectDictDataByTypes(anyList())).thenReturn(List.of());
+
+        List<Map<String, Object>> rows = service.selectPositionList(838L);
+
+        assertEquals(1, rows.size());
+        assertEquals("manual", rows.get(0).get("sourceType"));
+        verify(studentVisibilityService).isVisibleToStudent(pos, null);
+    }
+
+    @Test
+    void selectPositionListKeepsOnlyVisiblePositionsWhenMixedHits()
+    {
+        OsgPosition hit1 = publicPosition(501L, "Goldman Sachs", "Summer Analyst", "New York");
+        OsgPosition miss = publicPosition(502L, "JPMorgan", "Analyst", "London");
+        OsgPosition hit2 = publicPosition(503L, "Morgan Stanley", "IBD Intern", "Hong Kong");
+        OsgStudent stu = student(12766L, "Curl Stu");
+
+        when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(stu);
+        when(studentPositionMapper.selectStudentPositionList(any(OsgStudentPosition.class))).thenReturn(List.of());
+        when(positionMapper.selectVisiblePublicPositionList(any(OsgPosition.class))).thenReturn(List.of(hit1, miss, hit2));
+        when(studentVisibilityService.isVisibleToStudent(hit1, stu)).thenReturn(true);
+        when(studentVisibilityService.isVisibleToStudent(miss, stu)).thenReturn(false);
+        when(studentVisibilityService.isVisibleToStudent(hit2, stu)).thenReturn(true);
+        when(sysDictDataMapper.selectDictDataByTypes(anyList())).thenReturn(List.of());
+
+        List<Map<String, Object>> rows = service.selectPositionList(838L);
+
+        assertEquals(2, rows.size());
+        assertEquals(501L, ((Number) rows.get(0).get("id")).longValue());
+        assertEquals(503L, ((Number) rows.get(1).get("id")).longValue());
     }
 
     @Test

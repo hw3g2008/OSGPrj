@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS osg_position (
   region               VARCHAR(32)    NOT NULL COMMENT '大区(na/eu/ap/cn)',
   city                 VARCHAR(64)    NOT NULL COMMENT '城市',
   recruitment_cycle    VARCHAR(64)    NOT NULL COMMENT '招聘周期(可多值逗号分隔)',
+  target_majors        VARCHAR(255)   NOT NULL DEFAULT '' COMMENT '对应学生主攻方向(多选 dict_value，逗号分隔，参考 osg_major_direction 字典)',
   project_year         VARCHAR(16)    NOT NULL COMMENT '项目时间/年份',
   publish_time         DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间',
   deadline             DATETIME       DEFAULT NULL COMMENT '截止时间',

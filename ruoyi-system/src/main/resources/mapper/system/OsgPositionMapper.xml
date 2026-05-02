@@ -16,6 +16,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="region" column="region"/>
         <result property="city" column="city"/>
         <result property="recruitmentCycle" column="recruitment_cycle"/>
+        <result property="targetMajors" column="target_majors"/>
         <result property="projectYear" column="project_year"/>
         <result property="publishTime" column="publish_time"/>
         <result property="deadline" column="deadline"/>
@@ -45,6 +46,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         p.region,
         p.city,
         p.recruitment_cycle,
+        p.target_majors,
         p.project_year,
         p.publish_time,
         p.deadline,
@@ -91,6 +93,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         p.region,
         p.city,
         p.recruitment_cycle,
+        p.target_majors,
         p.project_year,
         p.publish_time,
         p.deadline,
@@ -208,6 +211,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             region,
             city,
             recruitment_cycle,
+            target_majors,
             project_year,
             publish_time,
             <if test="deadline != null">deadline,</if>
@@ -234,6 +238,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{region},
             #{city},
             #{recruitmentCycle},
+            #{targetMajors,jdbcType=VARCHAR},
             #{projectYear},
             #{publishTime},
             <if test="deadline != null">#{deadline},</if>
@@ -264,6 +269,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="region != null and region != ''">region = #{region},</if>
             <if test="city != null and city != ''">city = #{city},</if>
             <if test="recruitmentCycle != null and recruitmentCycle != ''">recruitment_cycle = #{recruitmentCycle},</if>
+            <if test="targetMajors != null">target_majors = #{targetMajors,jdbcType=VARCHAR},</if>
             <if test="projectYear != null and projectYear != ''">project_year = #{projectYear},</if>
             <if test="publishTime != null">publish_time = #{publishTime},</if>
             <if test="deadline != null">deadline = #{deadline},</if>

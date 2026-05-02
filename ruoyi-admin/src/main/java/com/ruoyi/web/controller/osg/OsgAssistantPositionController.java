@@ -13,6 +13,7 @@ import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgPosition;
+import com.ruoyi.system.service.IOsgAssistantPositionVisibilityService;
 import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgPositionServiceImpl;
 
@@ -27,6 +28,19 @@ public class OsgAssistantPositionController extends BaseController
 
     @Autowired
     private OsgAssistantAccessService assistantAccessService;
+
+    @Autowired
+    private IOsgAssistantPositionVisibilityService assistantVisibilityService;
+
+    @GetMapping("/list")
+    public AjaxResult list()
+    {
+        if (!hasAssistantAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+        return AjaxResult.success(assistantVisibilityService.listForAssistant(getUserId()));
+    }
 
     @GetMapping("/stats")
     public AjaxResult stats(OsgPosition position)

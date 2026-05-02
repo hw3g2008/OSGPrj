@@ -350,13 +350,16 @@ class OsgPositionControllerTest
                       "displayStatus": "visible",
                       "displayStartTime": "2026-03-14T09:00:00",
                       "displayEndTime": "2026-06-30T23:59:59",
-                      "positionUrl": "https://careers.bytedance.com/backend-engineer"
+                      "positionUrl": "https://careers.bytedance.com/backend-engineer",
+                      "targetMajors": ["finance", "tech"]
                     }
                     """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.companyName").value("ByteDance"))
-                .andExpect(jsonPath("$.data.positionName").value("Backend Engineer"));
+                .andExpect(jsonPath("$.data.positionName").value("Backend Engineer"))
+                .andExpect(jsonPath("$.data.targetMajors[0]").value("finance"))
+                .andExpect(jsonPath("$.data.targetMajors[1]").value("tech"));
 
         Long createdId = positionRowsRef.get().stream()
             .filter(item -> "ByteDance".equals(item.getCompanyName()))
@@ -384,6 +387,87 @@ class OsgPositionControllerTest
                 .andExpect(jsonPath("$.rows[0].companyName").value("ByteDance"))
                 .andExpect(jsonPath("$.rows[0].displayStatus").value("hidden"))
                 .andExpect(jsonPath("$.rows[0].applicationNote").value("优先考虑有金融项目经验的候选人"));
+    }
+
+    @Test
+    void createShouldRejectEmptyTargetMajors() throws Exception
+    {
+        mockMvc.perform(post("/admin/position")
+                .header("Authorization", "Bearer position-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "positionCategory": "fulltime",
+                      "companyName": "ByteDance",
+                      "companyType": "swe_pm",
+                      "positionName": "Backend Engineer",
+                      "region": "ap",
+                      "city": "Singapore",
+                      "recruitmentCycle": "2026",
+                      "projectYear": "2026",
+                      "displayStatus": "visible",
+                      "targetMajors": []
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("主攻方向不能为空"));
+    }
+
+    @Test
+    void createShouldRejectUnknownTargetMajorDictValue() throws Exception
+    {
+        mockMvc.perform(post("/admin/position")
+                .header("Authorization", "Bearer position-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "positionCategory": "fulltime",
+                      "companyName": "ByteDance",
+                      "companyType": "swe_pm",
+                      "positionName": "Backend Engineer",
+                      "region": "ap",
+                      "city": "Singapore",
+                      "recruitmentCycle": "2026",
+                      "projectYear": "2026",
+                      "displayStatus": "visible",
+                      "targetMajors": ["finance", "unknown_xxx"]
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("主攻方向含非法值：unknown_xxx"));
+    }
+
+    @Test
+    void createShouldPersistJoinedTargetMajorsCsvToEntity() throws Exception
+    {
+        mockMvc.perform(post("/admin/position")
+                .header("Authorization", "Bearer position-admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "positionCategory": "fulltime",
+                      "companyName": "ByteDance",
+                      "companyType": "swe_pm",
+                      "positionName": "Backend Engineer",
+                      "region": "ap",
+                      "city": "Singapore",
+                      "recruitmentCycle": "2026",
+                      "projectYear": "2026",
+                      "displayStatus": "visible",
+                      "targetMajors": ["finance", "tech", "consulting"]
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.targetMajors.length()").value(3));
+
+        OsgPosition saved = positionRowsRef.get().stream()
+            .filter(item -> "ByteDance".equals(item.getCompanyName()))
+            .findFirst()
+            .orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("finance,tech,consulting", saved.getTargetMajors());
     }
 
     @Test
@@ -514,6 +598,7 @@ class OsgPositionControllerTest
         clone.setRegion(source.getRegion());
         clone.setCity(source.getCity());
         clone.setRecruitmentCycle(source.getRecruitmentCycle());
+        clone.setTargetMajors(source.getTargetMajors());
         clone.setProjectYear(source.getProjectYear());
         clone.setPublishTime(source.getPublishTime());
         clone.setDeadline(source.getDeadline());
@@ -607,6 +692,11 @@ class OsgPositionControllerTest
             ),
             "osg_position_process_glossary", List.of(
                 buildDict("osg_position_process_glossary", "OA", "Online Assessment", 1, null, null)
+            ),
+            "osg_major_direction", List.of(
+                buildDict("osg_major_direction", "finance", "金融 Finance", 1, null, null),
+                buildDict("osg_major_direction", "tech", "科技 Technology", 2, null, null),
+                buildDict("osg_major_direction", "consulting", "咨询 Consulting", 3, null, null)
             )
         );
     }
