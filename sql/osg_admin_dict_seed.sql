@@ -18,7 +18,9 @@ values
   ('主攻方向', 'osg_major_direction', '0', '{"groupKey":"student","groupLabel":"学员相关","icon":"mdi-account-school","iconColor":"#22C55E","iconBg":"#D1FAE5","order":20,"hasParent":false}', 'admin', sysdate()),
   ('子方向', 'osg_sub_direction', '0', '{"groupKey":"student","groupLabel":"学员相关","icon":"mdi-account-school","iconColor":"#22C55E","iconBg":"#D1FAE5","order":20,"hasParent":true,"parentDictType":"osg_major_direction"}', 'admin', sysdate()),
   ('课程类型', 'osg_course_type', '0', '{"groupKey":"course","groupLabel":"课程相关","icon":"mdi-book-open-variant","iconColor":"#F59E0B","iconBg":"#FEF3C7","order":30,"hasParent":false}', 'admin', sysdate()),
-  ('报销类型', 'osg_expense_type', '0', '{"groupKey":"finance","groupLabel":"财务相关","icon":"mdi-cash-multiple","iconColor":"#8B5CF6","iconBg":"#E0E7FF","order":40,"hasParent":false}', 'admin', sysdate());
+  ('报销类型', 'osg_expense_type', '0', '{"groupKey":"finance","groupLabel":"财务相关","icon":"mdi-cash-multiple","iconColor":"#8B5CF6","iconBg":"#E0E7FF","order":40,"hasParent":false}', 'admin', sysdate()),
+  ('擅长', 'osg_specialty', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":false}', 'admin', sysdate()),
+  ('评级', 'osg_rating', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":false}', 'admin', sysdate());
 
 -- Dict data
 insert into sys_dict_data (dict_sort, dict_label, dict_value, dict_type, is_default, status, remark, create_by, create_time)
@@ -103,7 +105,15 @@ values
   (60, '模拟应聘', 'mock_practice', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate()),
   (70, 'Networking', 'networking', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate()),
   (80, '期中考试', 'midterm_exam', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate()),
-  (90, '期中模考', 'mock_midterm', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate());
+  (90, '期中模考', 'mock_midterm', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate()),
+
+  (10, '初级', 'junior', 'osg_rating', 'N', '0', '{}', 'admin', sysdate()),
+  (20, '中级', 'middle', 'osg_rating', 'N', '0', '{}', 'admin', sysdate()),
+  (30, '高级', 'senior', 'osg_rating', 'N', '0', '{}', 'admin', sysdate()),
+  (40, '资深', 'expert', 'osg_rating', 'N', '0', '{}', 'admin', sysdate());
 
 -- osg_expense_type intentionally keeps only the dict type in phase 1 because
 -- the current formal expense table has no confirmed business values yet.
+-- osg_specialty intentionally keeps only the dict type because the operations
+-- team will populate keywords (e.g. "DCF 估值"/"Python 量化回测") via the
+-- admin dict-management page per the business pace.

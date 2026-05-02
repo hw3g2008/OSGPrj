@@ -29,11 +29,17 @@ public class OsgStaff extends BaseEntity
 
     private String courseTypes;
 
+    private String specialty;
+
+    private String companies;
+
     private String region;
 
     private String city;
 
     private BigDecimal hourlyRate;
+
+    private String rating;
 
     private Integer studentCount;
 
@@ -107,6 +113,36 @@ public class OsgStaff extends BaseEntity
     public void setCourseTypes(String courseTypes)
     {
         this.courseTypes = courseTypes;
+    }
+
+    public String getSpecialty()
+    {
+        return specialty;
+    }
+
+    public void setSpecialty(String specialty)
+    {
+        this.specialty = specialty;
+    }
+
+    public String getCompanies()
+    {
+        return companies;
+    }
+
+    public void setCompanies(String companies)
+    {
+        this.companies = companies;
+    }
+
+    public String getRating()
+    {
+        return rating;
+    }
+
+    public void setRating(String rating)
+    {
+        this.rating = rating;
     }
 
     public String getStaffType()
@@ -203,9 +239,12 @@ public class OsgStaff extends BaseEntity
             .append("majorDirection", getMajorDirection())
             .append("subDirection", getSubDirection())
             .append("courseTypes", getCourseTypes())
+            .append("specialty", getSpecialty())
+            .append("companies", getCompanies())
             .append("region", getRegion())
             .append("city", getCity())
             .append("hourlyRate", getHourlyRate())
+            .append("rating", getRating())
             .append("studentCount", getStudentCount())
             .append("accountStatus", getAccountStatus())
             .append("createBy", getCreateBy())

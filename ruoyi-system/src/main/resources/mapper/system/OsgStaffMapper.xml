@@ -15,9 +15,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="majorDirection" column="major_direction"/>
         <result property="subDirection" column="sub_direction"/>
         <result property="courseTypes" column="course_types"/>
+        <result property="specialty" column="specialty"/>
+        <result property="companies" column="companies"/>
         <result property="region" column="region"/>
         <result property="city" column="city"/>
         <result property="hourlyRate" column="hourly_rate"/>
+        <result property="rating" column="rating"/>
         <result property="studentCount" column="student_count"/>
         <result property="accountStatus" column="account_status"/>
         <result property="createBy" column="create_by"/>
@@ -38,9 +41,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         s.major_direction,
         s.sub_direction,
         s.course_types,
+        s.specialty,
+        s.companies,
         s.region,
         s.city,
         s.hourly_rate,
+        s.rating,
         (
             select count(1)
             from osg_student stu
@@ -107,9 +113,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="majorDirection != null and majorDirection != ''">major_direction,</if>
             <if test="subDirection != null and subDirection != ''">sub_direction,</if>
             <if test="courseTypes != null and courseTypes != ''">course_types,</if>
+            <if test="specialty != null and specialty != ''">specialty,</if>
+            <if test="companies != null and companies != ''">companies,</if>
             <if test="region != null and region != ''">region,</if>
             <if test="city != null and city != ''">city,</if>
             hourly_rate,
+            <if test="rating != null and rating != ''">rating,</if>
             account_status,
             <if test="createBy != null and createBy != ''">create_by,</if>
             create_time,
@@ -128,9 +137,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="majorDirection != null and majorDirection != ''">#{majorDirection},</if>
             <if test="subDirection != null and subDirection != ''">#{subDirection},</if>
             <if test="courseTypes != null and courseTypes != ''">#{courseTypes},</if>
+            <if test="specialty != null and specialty != ''">#{specialty},</if>
+            <if test="companies != null and companies != ''">#{companies},</if>
             <if test="region != null and region != ''">#{region},</if>
             <if test="city != null and city != ''">#{city},</if>
             #{hourlyRate},
+            <if test="rating != null and rating != ''">#{rating},</if>
             #{accountStatus},
             <if test="createBy != null and createBy != ''">#{createBy},</if>
             sysdate(),
@@ -152,9 +164,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="majorDirection != null">major_direction = #{majorDirection},</if>
             <if test="subDirection != null">sub_direction = #{subDirection},</if>
             <if test="courseTypes != null">course_types = #{courseTypes},</if>
+            <if test="specialty != null">specialty = #{specialty},</if>
+            <if test="companies != null">companies = #{companies},</if>
             <if test="region != null">region = #{region},</if>
             <if test="city != null">city = #{city},</if>
             <if test="hourlyRate != null">hourly_rate = #{hourlyRate},</if>
+            <if test="rating != null">rating = #{rating},</if>
             <if test="accountStatus != null and accountStatus != ''">account_status = #{accountStatus},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate(),

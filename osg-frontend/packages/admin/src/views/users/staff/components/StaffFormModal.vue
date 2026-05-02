@@ -596,6 +596,17 @@ const handleSubmit = () => {
   height: 40px !important;
 }
 
+/* 多选 select：解除 44px 死锁，按 tag 数量自动换行撑高（min-height 仍保 44 与单选齐高） */
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple),
+:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector),
+:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector) {
+  height: auto !important;
+  min-height: 44px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
 /* 多选 select：placeholder / search input / overflow（标签容器）撑满 selector 高度 */
 :global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-placeholder),
 :global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-placeholder) {

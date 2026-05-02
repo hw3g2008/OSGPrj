@@ -92,10 +92,8 @@
             <template #label>
               <span class="add-student-modal__label">班主任</span>
             </template>
-            <a-select
+            <MultiSelect
               v-model:value="formState.leadMentorIds"
-              mode="multiple"
-              show-search
               :filter-option="false"
               :loading="mentorLoading"
               :options="mentorSelectOptions"
@@ -109,10 +107,8 @@
             <template #label>
               <span class="add-student-modal__label">助教</span>
             </template>
-            <a-select
+            <MultiSelect
               v-model:value="formState.assistantIds"
-              mode="multiple"
-              show-search
               :filter-option="false"
               :loading="assistantLoading"
               :options="assistantSelectOptions"
@@ -249,12 +245,10 @@
                 <span class="add-student-modal__required">*</span>
               </span>
             </template>
-            <a-select
+            <MultiSelect
               v-model:value="formState.majorDirections"
-              mode="multiple"
               placeholder="可多选"
               :options="majorDirOptions"
-              show-search
             />
           </a-form-item>
 
@@ -265,12 +259,10 @@
                 <span class="add-student-modal__required">*</span>
               </span>
             </template>
-            <a-select
+            <MultiSelect
               v-model:value="formState.subDirections"
-              mode="multiple"
               placeholder="可多选"
               :options="subDirOptions"
-              show-search
             />
           </a-form-item>
         </div>
@@ -430,7 +422,12 @@
                 <span class="add-student-modal__required">*</span>
               </span>
             </template>
-            <a-date-picker v-model:value="formState.startDate" style="width: 100%" value-format="YYYY-MM-DD" />
+            <a-date-picker
+              v-model:value="formState.startDate"
+              style="width: 100%"
+              value-format="YYYY-MM-DD"
+              placeholder="请选择合同开始日期"
+            />
           </a-form-item>
 
           <a-form-item name="endDate" data-field-name="合同结束日期">
@@ -440,7 +437,12 @@
                 <span class="add-student-modal__required">*</span>
               </span>
             </template>
-            <a-date-picker v-model:value="formState.endDate" style="width: 100%" value-format="YYYY-MM-DD" />
+            <a-date-picker
+              v-model:value="formState.endDate"
+              style="width: 100%"
+              value-format="YYYY-MM-DD"
+              placeholder="请选择合同结束日期"
+            />
           </a-form-item>
 
           <a-form-item name="contractAttachment" data-field-name="合同附件" class="add-student-modal__field--wide">
@@ -499,6 +501,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { MultiSelect } from '@osg/shared/components'
 import { getStaffOptions, type StaffOption } from '@osg/shared/api/admin/staff'
 import { getAdminDictOptions } from '@/api/adminDict'
 import { getToken } from '@osg/shared/utils/storage'
@@ -509,8 +512,8 @@ interface AddStudentBasicInfo {
   email: string
   phone?: string
   wechat?: string
-  school: string
-  major: string
+  school?: string
+  major?: string
   highSchool?: string
   graduationYear?: number
   studyPlan: 'normal' | 'postgraduate' | 'deferred'
@@ -635,8 +638,8 @@ const formState = reactive<AddStudentBasicInfo>({
   email: '',
   phone: undefined,
   wechat: undefined,
-  school: '',
-  major: '',
+  school: undefined,
+  major: undefined,
   highSchool: undefined,
   graduationYear: undefined,
   studyPlan: 'normal',
@@ -683,8 +686,8 @@ const resetForm = () => {
   formState.email = props.initialValue?.email ?? ''
   formState.phone = props.initialValue?.phone
   formState.wechat = props.initialValue?.wechat
-  formState.school = props.initialValue?.school ?? ''
-  formState.major = props.initialValue?.major ?? ''
+  formState.school = props.initialValue?.school
+  formState.major = props.initialValue?.major
   formState.highSchool = props.initialValue?.highSchool
   formState.graduationYear = props.initialValue?.graduationYear
   formState.studyPlan = props.initialValue?.studyPlan ?? 'normal'
@@ -768,8 +771,8 @@ const createPayload = (): AddStudentBasicInfo => ({
   email: formState.email.trim(),
   phone: formState.phone,
   wechat: formState.wechat,
-  school: formState.school.trim(),
-  major: formState.major.trim(),
+  school: formState.school?.trim(),
+  major: formState.major?.trim(),
   highSchool: formState.highSchool,
   graduationYear: formState.graduationYear,
   studyPlan: formState.studyPlan,

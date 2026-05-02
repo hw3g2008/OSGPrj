@@ -30,6 +30,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.file.FileUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.OsgStaff;
@@ -72,6 +73,11 @@ public class OsgStaffController extends BaseController
         if (detail == null || detail.isEmpty())
         {
             return AjaxResult.error(HttpStatus.NOT_FOUND, "导师不存在");
+        }
+        // rating 仅超管可见：非超管直接剔除 key（满足 SRS AC-11，不是返回 null）
+        if (!SecurityUtils.isAdmin())
+        {
+            detail.remove("rating");
         }
         return AjaxResult.success(detail);
     }
@@ -328,9 +334,16 @@ public class OsgStaffController extends BaseController
         row.put("majorDirection", staff.getMajorDirection());
         row.put("subDirection", staff.getSubDirection());
         row.put("courseTypes", staff.getCourseTypes());
+        row.put("specialty", staff.getSpecialty());
+        row.put("companies", staff.getCompanies());
         row.put("region", staff.getRegion());
         row.put("city", staff.getCity());
         row.put("hourlyRate", staff.getHourlyRate());
+        // rating 仅超管可见：非超管不放入 key（SRS AC-04 / AC-11）
+        if (SecurityUtils.isAdmin())
+        {
+            row.put("rating", staff.getRating());
+        }
         row.put("studentCount", staff.getStudentCount());
         row.put("accountStatus", normalizeAccountStatus(staff.getAccountStatus()));
         row.put("isBlacklisted", isBlacklisted);
@@ -407,9 +420,16 @@ public class OsgStaffController extends BaseController
         staff.setMajorDirection(asText(body.get("majorDirection")));
         staff.setSubDirection(asText(body.get("subDirection")));
         staff.setCourseTypes(asText(body.get("courseTypes")));
+        staff.setSpecialty(asText(body.get("specialty")));
+        staff.setCompanies(asText(body.get("companies")));
         staff.setRegion(asText(body.get("region")));
         staff.setCity(asText(body.get("city")));
         staff.setHourlyRate(asDecimal(body.get("hourlyRate")));
+        // rating 仅超管可写，非超管即便提交也静默忽略（SRS §4.2 / DEC-005）
+        if (SecurityUtils.isAdmin())
+        {
+            staff.setRating(asText(body.get("rating")));
+        }
         return staff;
     }
 
@@ -513,6 +533,49 @@ public class OsgStaffController extends BaseController
             }
         }
 
+        if (staff.getSpecialty() != null && !staff.getSpecialty().isBlank())
+        {
+            Set<String> specialtyValues = splitCsv(staff.getSpecialty());
+            if (specialtyValues.size() > 20)
+            {
+                return "擅长最多选择 20 项";
+            }
+            Set<String> dictValues = dictValueSet("osg_specialty");
+            for (String v : specialtyValues)
+            {
+                if (!dictValues.contains(v))
+                {
+                    return "擅长包含非法字典值: " + v;
+                }
+            }
+        }
+
+        if (staff.getCompanies() != null && !staff.getCompanies().isBlank())
+        {
+            Set<String> companyValues = splitCsv(staff.getCompanies());
+            if (companyValues.size() > 10)
+            {
+                return "任职公司最多选择 10 家";
+            }
+            Set<String> dictValues = dictValueSet("osg_company_name");
+            for (String v : companyValues)
+            {
+                if (!dictValues.contains(v))
+                {
+                    return "任职公司包含非法字典值: " + v;
+                }
+            }
+        }
+
+        if (staff.getRating() != null && !staff.getRating().isBlank())
+        {
+            Set<String> ratingValues = dictValueSet("osg_rating");
+            if (!ratingValues.contains(staff.getRating()))
+            {
+                return "评级不是合法字典值，请重新选择";
+            }
+        }
+
         return null;
     }
 
@@ -601,9 +664,15 @@ public class OsgStaffController extends BaseController
         existing.setMajorDirection(update.getMajorDirection());
         existing.setSubDirection(update.getSubDirection());
         existing.setCourseTypes(defaultText(update.getCourseTypes(), existing.getCourseTypes()));
+        existing.setSpecialty(update.getSpecialty());
+        existing.setCompanies(update.getCompanies());
         existing.setRegion(update.getRegion());
         existing.setCity(update.getCity());
         existing.setHourlyRate(update.getHourlyRate());
+        if (update.getRating() != null)
+        {
+            existing.setRating(update.getRating());
+        }
         return existing;
     }
 

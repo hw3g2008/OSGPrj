@@ -215,9 +215,12 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         payload.put("staffType", staff.getStaffType());
         payload.put("majorDirection", staff.getMajorDirection());
         payload.put("subDirection", staff.getSubDirection());
+        payload.put("specialty", staff.getSpecialty());
+        payload.put("companies", staff.getCompanies());
         payload.put("region", staff.getRegion());
         payload.put("city", staff.getCity());
         payload.put("hourlyRate", staff.getHourlyRate());
+        payload.put("rating", staff.getRating());
         payload.put("studentCount", staff.getStudentCount());
         payload.put("accountStatus", normalizeAccountStatus(staff.getAccountStatus()));
         payload.put("isBlacklisted", selectBlacklistedStaffIds(List.of(staffId)).contains(staffId));

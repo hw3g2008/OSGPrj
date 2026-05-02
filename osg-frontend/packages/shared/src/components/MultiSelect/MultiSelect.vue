@@ -4,26 +4,19 @@
     mode="multiple"
     :options="options"
     :field-names="fieldNames"
-    :max-tag-count="'responsive'"
     :placeholder="placeholder"
     :disabled="disabled"
+    show-search
     allow-clear
   />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { SelectProps } from 'ant-design-vue'
-
-interface Option {
-  value: string
-  label: string
-  [key: string]: unknown
-}
 
 const props = withDefaults(defineProps<{
   value?: string[]
-  options?: Option[]
+  options?: readonly unknown[]
   placeholder?: string
   disabled?: boolean
   fieldNames?: { label: string; value: string }
