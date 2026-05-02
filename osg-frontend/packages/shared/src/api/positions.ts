@@ -97,6 +97,7 @@ export interface LeadMentorPositionListItem {
   applicationNote?: string
   studentCount?: number
   myStudentCount?: number
+  targetMajors?: string
 }
 
 export interface LeadMentorPositionMetaOption {

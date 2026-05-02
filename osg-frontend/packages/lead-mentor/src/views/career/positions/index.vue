@@ -194,6 +194,7 @@ interface PositionJob {
   officialUrl: string
   logoText: string
   logoColor: string
+  targetMajors?: string
 }
 
 interface PositionCompany {
@@ -465,6 +466,7 @@ const mappedListRows = computed<PositionTableRow[]>(() =>
     deadline: job.deadline,
     deadlineTone: job.deadlineTone,
     studentCount: job.studentCount,
+    targetMajors: job.targetMajors,
   })),
 )
 
@@ -742,6 +744,7 @@ function toPositionJob(
     officialUrl: row.companyWebsite || row.positionUrl || '',
     logoText: buildLogoText(companyName),
     logoColor: resolveCompanyColor(companyName),
+    targetMajors: row.targetMajors || undefined,
   }
 }
 

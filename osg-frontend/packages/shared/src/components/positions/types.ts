@@ -67,6 +67,10 @@ export interface PositionTableRow {
   deadlineTone?: DeadlineTone
   /** 我的学员数（点击数字打开 students modal） */
   studentCount?: number
+  /** 主攻方向（CSV，渲染为多 a-tag dict_label） */
+  targetMajors?: string
+  /** 命中该岗位的所带学生数（assistant 端聚合视图特有） */
+  myStudentCount?: number
 }
 
 /**

@@ -94,6 +94,25 @@
         <span v-else class="osg-positions-list-table__muted">0人</span>
       </template>
 
+      <template v-else-if="column.dataIndex === 'targetMajors' || column.key === 'targetMajors'">
+        <template v-if="record.targetMajors">
+          <a-tag v-for="m in splitCsv(record.targetMajors)" :key="m" color="cyan">{{ m }}</a-tag>
+        </template>
+        <span v-else class="osg-positions-list-table__muted">-</span>
+      </template>
+
+      <template v-else-if="column.dataIndex === 'myStudentCount' || column.key === 'myStudentCount'">
+        <a-button
+          v-if="Number(record.myStudentCount || 0) > 0"
+          type="link"
+          size="small"
+          @click="emit('openStudents', record)"
+        >
+          {{ record.myStudentCount }}人
+        </a-button>
+        <span v-else class="osg-positions-list-table__muted">0人</span>
+      </template>
+
       <!-- 其他列：优先父组件 slot 透传；没有 slot 时回退为 record[dataIndex] 文本 -->
       <template v-else>
         <slot name="bodyCell" :column="column" :record="record">
@@ -180,6 +199,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { title: '岗位分类', key: 'positionCategory', dataIndex: 'positionCategory', width: 110 },
   { title: '地区', key: 'location', dataIndex: 'location', width: 130 },
   { title: '招聘周期', key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
+  { title: '主攻方向', key: 'targetMajors', dataIndex: 'targetMajors', width: 140 },
   { title: '发布时间', key: 'publishTime', dataIndex: 'publishTime', width: 110 },
   { title: '截止时间', key: 'deadline', dataIndex: 'deadline', width: 110 },
   { title: '我的学员', key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
@@ -197,6 +217,11 @@ function handleChange(
 
 function resolveDeadlineToneClass(tone?: 'normal' | 'urgent' | 'closed'): string {
   return resolveDeadlineToneClassUtil(tone)
+}
+
+function splitCsv(value?: string): string[] {
+  if (!value) return []
+  return value.split(',').map((item) => item.trim()).filter(Boolean)
 }
 
 function resolveFallbackText(record: PositionTableRow, column: ColumnConfig): string {

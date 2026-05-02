@@ -21,13 +21,8 @@ export interface ApiResponse<T = any> {
   data: T
 }
 
-// 下拉选项
-export interface SelectOption {
-  label: string
-  value: string | number
-  disabled?: boolean
-  children?: SelectOption[]
-}
+// 通用类型定义（SelectOption 已由 utils/mergeDictWithExistingValues.ts 统一导出）
+export type { SelectOption } from '../utils/mergeDictWithExistingValues'
 
 // 菜单项
 export interface MenuItem {

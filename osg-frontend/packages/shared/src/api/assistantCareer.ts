@@ -11,6 +11,28 @@ export type AssistantPositionStats = PositionStats
 export type AssistantPositionIndustry = DrillDownIndustry
 export type AssistantPositionStudent = PositionStudentRow
 
+export interface AssistantPositionListItem {
+  positionId: number
+  positionCategory?: string
+  industry?: string
+  companyName?: string
+  companyType?: string
+  companyWebsite?: string
+  positionName?: string
+  department?: string
+  region?: string
+  city?: string
+  recruitmentCycle?: string
+  targetMajors?: string
+  projectYear?: string
+  publishTime?: string
+  deadline?: string
+  displayStatus?: string
+  positionUrl?: string
+  applicationNote?: string
+  myStudentCount: number
+}
+
 export interface AssistantJobOverviewRecord {
   id: number
   studentId?: number
@@ -81,6 +103,12 @@ export function getAssistantPositionStats(filters: AssistantPositionFilters = {}
 
 export function getAssistantPositionDrillDown(filters: AssistantPositionFilters = {}) {
   return http.get<AssistantPositionIndustry[]>('/assistant/positions/drill-down', {
+    params: toRequestParams(filters as Record<string, string | number | undefined>),
+  })
+}
+
+export function getAssistantPositionList(filters: AssistantPositionFilters = {}) {
+  return http.get<AssistantPositionListItem[]>('/assistant/positions/list', {
     params: toRequestParams(filters as Record<string, string | number | undefined>),
   })
 }

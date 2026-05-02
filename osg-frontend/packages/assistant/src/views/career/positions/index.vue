@@ -175,9 +175,9 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
 import {
-  getAssistantPositionDrillDown,
+  getAssistantPositionList,
   getAssistantPositionStudents,
-  type AssistantPositionIndustry,
+  type AssistantPositionListItem,
   type AssistantPositionStudent,
 } from '@osg/shared/api'
 import {
@@ -206,12 +206,14 @@ interface PositionRecord {
   region: string
   city: string
   recruitmentCycle: string
+  targetMajors?: string
   projectYear: string
   publishTime?: string
   deadline?: string
   displayStatus: string
   positionUrl?: string
   studentCount?: number
+  myStudentCount?: number
 }
 
 interface GroupedCompany {
@@ -515,6 +517,8 @@ function mapPositionToTableRow(record: PositionRecord, tone: IndustryTone): Posi
     deadline: formatDate(record.deadline),
     deadlineTone: resolveDeadlineTone(record.deadline),
     studentCount: record.studentCount,
+    targetMajors: record.targetMajors,
+    myStudentCount: record.myStudentCount,
   }
 }
 
@@ -546,20 +550,6 @@ const studentModalTitle = computed(() => {
   if (!p) return '关联学员'
   return `关联学员 · ${p.positionName || '-'} · ${p.companyName || '-'}`
 })
-
-function flattenIndustries(industries: AssistantPositionIndustry[]): PositionRecord[] {
-  return industries.flatMap((industry) =>
-    industry.companies.flatMap((company) =>
-      company.positions.map((position) => ({
-        ...position,
-        industry: position.industry || industry.industry,
-        companyName: position.companyName || company.companyName,
-        companyType: position.companyType || company.companyType,
-        companyWebsite: position.companyWebsite || company.companyWebsite,
-      })),
-    ),
-  )
-}
 
 function formatDate(value?: string) {
   if (!value) return '-'
@@ -630,12 +620,36 @@ async function loadPositions() {
   errorMessage.value = ''
 
   try {
-    const result = await getAssistantPositionDrillDown()
-    allPositions.value = flattenIndustries(result)
+    const result = await getAssistantPositionList()
+    allPositions.value = (result || []).map(mapListItemToRecord)
   } catch (error: any) {
     errorMessage.value = error?.message || '岗位列表暂时无法加载，请稍后重试。'
   } finally {
     loading.value = false
+  }
+}
+
+function mapListItemToRecord(item: AssistantPositionListItem): PositionRecord {
+  return {
+    positionId: item.positionId,
+    positionCategory: item.positionCategory || '',
+    industry: item.industry || '',
+    companyName: item.companyName || '',
+    companyType: item.companyType,
+    companyWebsite: item.companyWebsite,
+    positionName: item.positionName || '',
+    department: item.department,
+    region: item.region || '',
+    city: item.city || '',
+    recruitmentCycle: item.recruitmentCycle || '',
+    targetMajors: item.targetMajors,
+    projectYear: item.projectYear || '',
+    publishTime: item.publishTime,
+    deadline: item.deadline,
+    displayStatus: item.displayStatus || 'visible',
+    positionUrl: item.positionUrl,
+    studentCount: item.myStudentCount,
+    myStudentCount: item.myStudentCount,
   }
 }
 

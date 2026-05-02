@@ -152,6 +152,7 @@ public class OsgLeadMentorPositionServiceImpl implements IOsgLeadMentorPositionS
         row.put("displayStatus", defaultText(position.getDisplayStatus()));
         row.put("positionUrl", defaultText(position.getPositionUrl()));
         row.put("applicationNote", defaultText(position.getApplicationNote()));
+        row.put("targetMajors", defaultText(position.getTargetMajors()));
         row.put("studentCount", myStudentCount);
         row.put("myStudentCount", myStudentCount);
         return row;
