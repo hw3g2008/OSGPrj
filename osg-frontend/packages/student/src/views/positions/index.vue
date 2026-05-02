@@ -23,7 +23,18 @@
       </div>
     </div>
 
-    <a-alert type="info" show-icon class="permission-notice">
+    <a-alert v-if="isProfileIncomplete" type="warning" show-icon class="permission-notice">
+      <template #message>
+        您的求职意向尚未填写完整，无法为您筛选合适的岗位。请先到"求职意向"中补全
+        <strong>招聘周期 / 求职地区 / 主攻方向</strong> 三项后再返回此页查看岗位列表。
+      </template>
+      <template #action>
+        <a-button type="primary" size="small" @click="router.push('/profile')">
+          修改求职意向 <RightOutlined />
+        </a-button>
+      </template>
+    </a-alert>
+    <a-alert v-else type="info" show-icon class="permission-notice">
       <template #message>
         根据您的求职意向，当前展示 <strong>{{ intentSummary.recruitmentCycle }}</strong> 招聘周期、
         <strong>{{ intentSummary.targetRegion }}</strong> 地区、
@@ -35,6 +46,17 @@
         </a-button>
       </template>
     </a-alert>
+
+    <a-empty
+      v-if="isProfileIncomplete"
+      description="求职意向不完整，无法展示岗位"
+      class="profile-incomplete-empty"
+      style="padding: 60px 0"
+    >
+      <a-button type="primary" @click="router.push('/profile')">前往修改求职意向</a-button>
+    </a-empty>
+
+    <template v-else>
 
     <a-card :bordered="false" class="filter-card">
       <div class="filter-controls">
@@ -404,6 +426,7 @@
         </a-table>
       </a-card>
     </div>
+    </template>
 
     <a-modal
       v-model:open="manualAddOpen"
@@ -1128,6 +1151,13 @@ function handleCoachingHirevueUpload(info: UploadChangeParam) {
 const categoryOptionsByValue = computed(() => optionMap(filterOptions.value.categories))
 const industryOptionsByValue = computed(() => optionMap(filterOptions.value.industries))
 const companyOptionsByValue = computed(() => optionMap(filterOptions.value.companies))
+
+const isProfileIncomplete = computed(() => {
+  const blank = (v?: string) => !v || v === '-' || v.trim() === ''
+  return blank(intentSummary.value.recruitmentCycle)
+    || blank(intentSummary.value.targetRegion)
+    || blank(intentSummary.value.primaryDirection)
+})
 
 const filteredPositions = computed(() =>
   positions.value.filter((record) => {

@@ -137,29 +137,29 @@
           <a-form-item label="签证" class="form-item"><a-input v-model:value="editForm.visaStatus" /></a-form-item>
           <a-form-item label="招聘周期" class="form-item">
             <a-select
-              v-model:value="editForm.recruitmentCycle"
+              v-model:value="recruitmentCycles"
               show-search
-              mode="combobox"
+              mode="multiple"
               :options="recruitCycleOptions"
-              placeholder="请选择或输入招聘周期"
+              placeholder="请选择招聘周期（可多选）"
             />
           </a-form-item>
           <a-form-item label="求职地区" class="form-item">
             <a-select
-              v-model:value="editForm.targetRegion"
+              v-model:value="targetRegions"
               show-search
-              mode="combobox"
+              mode="multiple"
               :options="regionOptions"
-              placeholder="请选择或输入求职地区"
+              placeholder="请选择求职地区（可多选）"
             />
           </a-form-item>
           <a-form-item label="主攻方向" class="form-item">
             <a-select
-              v-model:value="editForm.primaryDirection"
+              v-model:value="primaryDirections"
               show-search
-              mode="combobox"
+              mode="multiple"
               :options="majorDirectionOptions"
-              placeholder="请选择或输入主攻方向"
+              placeholder="请选择主攻方向（可多选）"
             />
           </a-form-item>
           <a-form-item label="子方向" class="form-item">
@@ -283,6 +283,16 @@ const profile = reactive<StudentProfileRecord>({
   wechatId: '-'
 })
 const pendingChanges = ref<StudentPendingProfileChange[]>([])
+
+const splitCsv = (value: string | undefined | null): string[] => {
+  if (!value || value === '-') return []
+  return value.split(',').map(item => item.trim()).filter(Boolean)
+}
+
+const recruitmentCycles = ref<string[]>([])
+const targetRegions = ref<string[]>([])
+const primaryDirections = ref<string[]>([])
+
 const editForm = reactive<StudentProfileUpdatePayload>({
   school: '-',
   major: '-',
@@ -335,6 +345,9 @@ function syncEditForm() {
   editForm.secondaryDirection = profile.secondaryDirection
   editForm.phone = profile.phone
   editForm.wechatId = profile.wechatId
+  recruitmentCycles.value = splitCsv(profile.recruitmentCycle)
+  targetRegions.value = splitCsv(profile.targetRegion)
+  primaryDirections.value = splitCsv(profile.primaryDirection)
 }
 
 function applyProfileView(payload: { profile: StudentProfileRecord; pendingChanges: StudentPendingProfileChange[] }) {
@@ -374,7 +387,12 @@ async function saveProfile() {
     okType: 'primary',
     async onOk() {
       try {
-        const payload = await updateStudentProfile({ ...editForm })
+        const payload = await updateStudentProfile({
+          ...editForm,
+          recruitmentCycle: recruitmentCycles.value.join(','),
+          targetRegion: targetRegions.value.join(','),
+          primaryDirection: primaryDirections.value.join(',')
+        })
         applyProfileView(payload)
         editOpen.value = false
         message.success('保存成功！后台文员和班主任已收到您的信息变更通知。')
