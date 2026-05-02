@@ -99,6 +99,77 @@
           </div>
         </dl>
       </section>
+
+      <section class="staff-detail-modal__panel">
+        <header>
+          <div class="staff-detail-modal__badge staff-detail-modal__badge--amber">
+            <i class="mdi mdi-target" aria-hidden="true"></i> 专业能力
+          </div>
+        </header>
+        <dl class="staff-detail-modal__detail-grid">
+          <div class="staff-detail-modal__detail-cell" style="grid-column: 1 / -1">
+            <dt>擅长</dt>
+            <dd>
+              <template v-if="splitField(detail?.specialty).length">
+                <a-tag
+                  v-for="v in splitField(detail?.specialty)"
+                  :key="v"
+                  color="cyan"
+                  style="margin-bottom: 4px"
+                >
+                  {{ dictLabel(specialtyItems, v) }}
+                </a-tag>
+              </template>
+              <span v-else style="color: #94a3b8">暂无</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="staff-detail-modal__panel">
+        <header>
+          <div class="staff-detail-modal__badge staff-detail-modal__badge--purple">
+            <i class="mdi mdi-briefcase" aria-hidden="true"></i> 职业背景
+          </div>
+        </header>
+        <dl class="staff-detail-modal__detail-grid">
+          <div class="staff-detail-modal__detail-cell" style="grid-column: 1 / -1">
+            <dt>任职公司</dt>
+            <dd>
+              <template v-if="Object.keys(groupedCompanies).length">
+                <div v-for="(companies, industry) in groupedCompanies" :key="industry" style="margin-bottom: 8px">
+                  <span style="color: #64748b; font-size: 12px; margin-bottom: 4px; display: block">{{ industry }}</span>
+                  <span
+                    v-for="(company, idx) in companies"
+                    :key="company"
+                    style="display: inline-block; margin-right: 4px"
+                  >
+                    <a-tag color="blue">{{ company }}</a-tag>
+                  </span>
+                </div>
+              </template>
+              <span v-else style="color: #94a3b8">暂无</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section v-if="isSuperAdmin" class="staff-detail-modal__panel">
+        <header>
+          <div class="staff-detail-modal__badge staff-detail-modal__badge--orange">
+            <i class="mdi mdi-star" aria-hidden="true"></i> 内部评估
+          </div>
+        </header>
+        <dl class="staff-detail-modal__detail-grid">
+          <div class="staff-detail-modal__detail-cell">
+            <dt>评级</dt>
+            <dd>
+              <a-tag v-if="detail?.rating" color="gold">{{ dictLabel(ratingItems, detail.rating) }}</a-tag>
+              <span v-else style="color: #94a3b8">未评级</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
       </div>
 
       <section v-else class="staff-detail-modal__panel">
@@ -170,12 +241,19 @@ import {
   type StaffChangeRequestItem,
   type StaffDetailItem,
 } from '@osg/shared/api/admin/staff'
-import { useDictFacade, type DictFacadeOption } from '@osg/shared/composables/useDictFacade'
+import { useDictFacade, useIndustryMeta, type DictFacadeOption } from '@osg/shared/composables'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
 
 const { items: regionItems, load: loadRegion } = useDictFacade('osg_region')
 const { items: cityItems, load: loadCity } = useDictFacade('osg_city')
 const { items: majorItems, load: loadMajor } = useDictFacade('osg_major_direction')
 const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
+const { items: specialtyItems, load: loadSpecialty } = useDictFacade('osg_specialty')
+const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
+const { items: industryItems, load: loadIndustry } = useIndustryMeta()
 
 /** value→label；查不到（历史中文）原样返回 */
 const dictLabel = (items: DictFacadeOption[], val?: string) =>
@@ -190,6 +268,26 @@ const renderCsvLabels = (val: string | undefined, items: DictFacadeOption[]) => 
   if (!arr.length) return '-'
   return arr.map((v) => dictLabel(items, v)).join('、')
 }
+
+/** 按行业分组公司（用于详情展示） */
+const groupedCompanies = computed(() => {
+  const companyValues = splitField(detail.value?.companies)
+  if (!companyValues.length) return {}
+
+  const groups: Record<string, string[]> = {}
+  for (const v of companyValues) {
+    const company = industryItems.value.find((c) => c.value === v)
+    const industryValue = company?.parentValue
+    // parentValue 存的是行业 dictValue（如 "finance"），取其 label
+    const industryLabel = industryValue
+      ? (industryItems.value.find((i) => i.value === industryValue)?.label ?? industryValue)
+      : '其他'
+    if (!groups[industryLabel]) groups[industryLabel] = []
+    const companyLabel = dictLabel(industryItems.value, v)
+    if (!groups[industryLabel].includes(companyLabel)) groups[industryLabel].push(companyLabel)
+  }
+  return groups
+})
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -259,6 +357,9 @@ watch(
       void loadCity()
       void loadMajor()
       void loadSub()
+      void loadSpecialty()
+      void loadRating()
+      void loadIndustry()
     }
     void loadDetail()
   },
@@ -469,6 +570,16 @@ const formatHourlyRate = (hourlyRate?: number) => {
 .staff-detail-modal__badge--amber {
   background: #fef3c7;
   color: #92400e;
+}
+
+.staff-detail-modal__badge--purple {
+  background: #F3E8FF;
+  color: #6B21A8;
+}
+
+.staff-detail-modal__badge--orange {
+  background: #FFEDD5;
+  color: #9A3412;
 }
 
 .staff-detail-modal__detail-grid {

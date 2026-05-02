@@ -145,6 +145,18 @@
               <span style="font-size: 12px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.city ? dictLabel(cityItems, record.city) : '-' }}</span>
             </div>
           </template>
+          <template v-else-if="column.dataIndex === 'companies'">
+            <a-tooltip v-if="splitField(record.companies).length" :title="formatCompaniesTooltip(record.companies)" placement="topLeft">
+              <span>
+                {{ formatCompaniesPreview(record.companies) }}
+              </span>
+            </a-tooltip>
+            <span v-else style="color: #94a3b8">-</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'rating'">
+            <a-tag v-if="record.rating" color="gold">{{ dictLabel(ratingItems, record.rating) }}</a-tag>
+            <span v-else style="color: #94a3b8">-</span>
+          </template>
           <template v-else-if="column.dataIndex === 'hourlyRate'">
             <strong style="color: #0f766e">{{ formatHourlyRate(record.hourlyRate) }}</strong>
           </template>
@@ -249,19 +261,25 @@ import {
   type StaffPayload
 } from '@osg/shared/api/admin/staff'
 import { http } from '@osg/shared/utils/request'
-import { useDictFacade, type DictFacadeOption } from '@osg/shared/composables/useDictFacade'
+import { useDictFacade, useIndustryMeta, type DictFacadeOption } from '@osg/shared/composables'
+import { useUserStore } from '@/stores/user'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import MentorStudentsModal from './components/MentorStudentsModal.vue'
 import StaffDetailModal from './components/StaffDetailModal.vue'
 import StaffFormModal from './components/StaffFormModal.vue'
 import StaffStatusModal from './components/StaffStatusModal.vue'
-import { staffColumns, staffBlacklistColumns } from './columns'
+import { staffColumns, staffBlacklistColumns, staffColumnsWithRating } from './columns'
+
+const userStore = useUserStore()
+const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
 
 const { items: regionItems, load: loadRegion } = useDictFacade('osg_region')
 const { items: cityItems, load: loadCity } = useDictFacade('osg_city')
 const { items: majorItems, load: loadMajor } = useDictFacade('osg_major_direction')
 const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
+const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
+const { items: industryItems, load: loadIndustry } = useIndustryMeta()
 
 /** value→label 查询；查不到（历史中文数据）原样返回，保证旧数据可读 */
 const dictLabel = (items: DictFacadeOption[], val?: string) =>
@@ -328,7 +346,9 @@ const tablePagination = computed(() => ({
 const majorDirectionOptions = computed(() => majorItems.value)
 
 const activeColumns = computed(() =>
-  selectedTab.value === 'blacklist' ? staffBlacklistColumns : staffColumns
+  selectedTab.value === 'blacklist'
+    ? staffBlacklistColumns
+    : (isSuperAdmin.value ? staffColumnsWithRating : staffColumns)
 )
 
 const loadRows = async () => {
@@ -362,6 +382,8 @@ onMounted(() => {
   void loadCity()
   void loadMajor()
   void loadSub()
+  void loadRating()
+  void loadIndustry()
 })
 
 const handleSearch = () => {
@@ -490,6 +512,22 @@ const handleDetailReviewUpdated = () => {
 }
 
 const isBlacklisted = (row: StaffListItem) => Boolean(row.isBlacklisted)
+
+/** 列表公司列预览：前 2 家 + 等 N 家 */
+const formatCompaniesPreview = (companies?: string) => {
+  const arr = splitField(companies)
+  if (!arr.length) return ''
+  const previews = arr.slice(0, 2).map((v) => dictLabel(industryItems, v))
+  const label = previews.join('、')
+  return arr.length > 2 ? `${label} 等${arr.length}家` : label
+}
+
+/** 列表公司列 Tooltip：全量公司名称 */
+const formatCompaniesTooltip = (companies?: string) => {
+  const arr = splitField(companies)
+  if (!arr.length) return ''
+  return arr.map((v) => dictLabel(industryItems, v)).join('、')
+}
 
 const formatType = (staffType?: string) => {
   if (staffType === 'lead_mentor') return '班主任'

@@ -21,9 +21,12 @@ export interface StaffListItem {
   majorDirection?: string
   subDirection?: string
   courseTypes?: string
+  specialty?: string
+  companies?: string
   region?: string
   city?: string
   hourlyRate?: number
+  rating?: string
   studentCount?: number
   accountStatus?: string
   isBlacklisted?: boolean
@@ -50,6 +53,9 @@ export interface StaffPayload {
   region: string
   city: string
   courseTypes?: string
+  specialty?: string
+  companies?: string
+  rating?: string
   loginAccount?: string
   initialPassword?: string
   hourlyRate: number

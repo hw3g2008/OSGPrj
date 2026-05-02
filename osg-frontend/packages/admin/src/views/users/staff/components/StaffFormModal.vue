@@ -150,8 +150,72 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
+            <a-form-item label="擅长">
+              <MultiSelect
+                v-model:value="form.specialties"
+                :options="specialtyItems"
+                placeholder="请选择，可多选"
+                :max-tag-count="0"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
             <a-form-item label="课时单价">
               <a-input-number v-model:value="form.hourlyRate" :min="0" placeholder="请输入课时单价" style="width:100%" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </section>
+
+    <!-- Section 4: 职业背景 -->
+    <section class="staff-form-modal__section">
+      <div class="staff-form-modal__badge staff-form-modal__badge--purple">
+        <span class="mdi mdi-briefcase" aria-hidden="true" /> 职业背景
+      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="[20, 0]">
+          <a-col :span="12">
+            <a-form-item label="行业">
+              <MultiSelect
+                v-model:value="form.selectedIndustries"
+                :options="industryItems"
+                placeholder="请选择行业"
+                :max-tag-count="0"
+                @change="onIndustryChange"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="任职公司">
+              <MultiSelect
+                v-model:value="form.companies"
+                :options="filteredCompanyOptions"
+                :placeholder="form.selectedIndustries.length ? '请选择公司' : '请先选择行业'"
+                :disabled="!form.selectedIndustries.length"
+                :max-tag-count="0"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </section>
+
+    <section class="staff-form-modal__section" v-if="isSuperAdmin">
+      <div class="staff-form-modal__badge staff-form-modal__badge--orange">
+        <span class="mdi mdi-star" aria-hidden="true" /> 内部评估
+      </div>
+      <a-form layout="vertical">
+        <a-row :gutter="[20, 0]">
+          <a-col :span="12">
+            <a-form-item label="评级">
+              <a-select
+                v-model:value="form.rating"
+                :options="ratingItems"
+                :field-names="{ label: 'label', value: 'value' }"
+                placeholder="请选择评级"
+                allow-clear
+              />
             </a-form-item>
           </a-col>
         </a-row>
@@ -198,7 +262,11 @@ import {
   splitPhone,
   joinPhone,
 } from '@osg/shared/utils'
-import { useDictFacade } from '@osg/shared/composables/useDictFacade'
+import { useDictFacade, useIndustryMeta, type DictFacadeOption } from '@osg/shared/composables'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
 
 const { items: regionItems, load: loadRegion } = useDictFacade('osg_region')
 const { items: cityItems, load: loadCity } = useDictFacade('osg_city')
@@ -206,6 +274,9 @@ const { items: majorItems, load: loadMajor } = useDictFacade('osg_major_directio
 const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
 const { items: courseItems, load: loadCourse } = useDictFacade('osg_course_type')
 const { items: countryCodeItems, load: loadCountryCode } = useDictFacade('osg_country_code')
+const { items: specialtyItems, load: loadSpecialty } = useDictFacade('osg_specialty')
+const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
+const { items: industryItems, load: loadIndustry } = useIndustryMeta()
 
 const loadAllDicts = () => {
   void loadRegion()
@@ -214,6 +285,9 @@ const loadAllDicts = () => {
   void loadSub()
   void loadCourse()
   void loadCountryCode()
+  void loadSpecialty()
+  void loadRating()
+  void loadIndustry()
 }
 
 /** 把后端逗号分隔的字典 value 串解析为数组（兼容历史中文 label：原样保留） */
@@ -268,6 +342,10 @@ const form = reactive({
   region: undefined as string | undefined,
   city: undefined as string | undefined,
   courseTypes: [] as string[],
+  specialties: [] as string[],
+  selectedIndustries: [] as string[],
+  companies: [] as string[],
+  rating: undefined as string | undefined,
   loginAccount: '',
   initialPassword: '',
   hourlyRate: '' as string | number
@@ -287,6 +365,19 @@ const filteredSubOptions = computed(() => {
   if (!form.majorDirections.length) return []
   return subItems.value.filter((s) => s.parentValue && form.majorDirections.includes(s.parentValue))
 })
+
+/** 行业 → 公司联动：当前选中行业对应的公司列表 */
+const filteredCompanyOptions = computed(() => {
+  if (!form.selectedIndustries.length) return []
+  return industryItems.value.filter((c) => c.parentValue && form.selectedIndustries.includes(c.parentValue))
+})
+
+/** 行业变化 → 清空公司选项（保留已选但不在新行业内的公司会被过滤） */
+const onIndustryChange = () => {
+  form.companies = form.companies.filter((v) =>
+    industryItems.value.some((c) => c.value === v && form.selectedIndustries.includes(c.parentValue ?? ''))
+  )
+}
 
 const avatarText = computed(() => {
   const name = props.staff?.staffName?.trim()
@@ -317,10 +408,27 @@ const resetForm = () => {
   form.region = props.staff?.region || undefined
   form.city = props.staff?.city || undefined
   form.courseTypes = splitCsv(props.staff?.courseTypes)
+  form.specialties = splitCsv(props.staff?.specialty)
+  // companies: 从 CSV 解析后，尝试推断行业
+  form.companies = splitCsv(props.staff?.companies)
+  form.selectedIndustries = inferIndustriesFromCompanies(form.companies)
+  form.rating = props.staff?.rating || undefined
   form.loginAccount = ''
   form.initialPassword = ''
   form.hourlyRate = props.staff?.hourlyRate == null ? '' : String(props.staff.hourlyRate)
   syncAccountDefaults()
+}
+
+/** 根据已选公司反查行业列表（用于编辑回显） */
+const inferIndustriesFromCompanies = (companyValues: string[]): string[] => {
+  const industries = new Set<string>()
+  for (const v of companyValues) {
+    const company = industryItems.value.find((c) => c.value === v)
+    if (company?.parentValue) {
+      industries.add(company.parentValue)
+    }
+  }
+  return Array.from(industries)
 }
 
 watch(
@@ -403,6 +511,16 @@ const handleSubmit = () => {
     message.error('请填写课时单价')
     return
   }
+  // 前端校验：擅长最多 20 项
+  if (form.specialties.length > 20) {
+    message.error('擅长最多选择 20 项')
+    return
+  }
+  // 前端校验：任职公司最多 10 家
+  if (form.companies.length > 10) {
+    message.error('任职公司最多选择 10 家')
+    return
+  }
 
   emit('submit', {
     staffId: props.staff?.staffId,
@@ -417,6 +535,9 @@ const handleSubmit = () => {
     region: form.region as string,
     city: form.city as string,
     courseTypes: form.courseTypes.length ? form.courseTypes.join(',') : undefined,
+    specialty: form.specialties.length ? form.specialties.join(',') : undefined,
+    companies: form.companies.length ? form.companies.join(',') : undefined,
+    rating: form.rating,
     loginAccount: form.loginAccount.trim() || undefined,
     initialPassword: form.initialPassword.trim() || undefined,
     hourlyRate: Number(hourlyRateText)
@@ -518,6 +639,16 @@ const handleSubmit = () => {
 .staff-form-modal__badge--blue {
   background: #DBEAFE;
   color: #1E40AF;
+}
+
+.staff-form-modal__badge--purple {
+  background: #F3E8FF;
+  color: #6B21A8;
+}
+
+.staff-form-modal__badge--orange {
+  background: #FFEDD5;
+  color: #9A3412;
 }
 
 /* ── 控件纵向节奏 ──

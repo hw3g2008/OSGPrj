@@ -6,6 +6,24 @@ export const staffColumns = [
   { title: '主攻方向', dataIndex: 'majorDirection', key: 'majorDirection', width: 180, ellipsis: true },
   { title: '子方向', dataIndex: 'subDirection', key: 'subDirection', width: 110, ellipsis: true },
   { title: '所属地区', dataIndex: 'region', key: 'region', width: 130, ellipsis: true },
+  { title: '任职公司', dataIndex: 'companies', key: 'companies', width: 160 },
+  { title: '课单价', dataIndex: 'hourlyRate', key: 'hourlyRate', width: 80, align: 'center' as const },
+  { title: '学员数', dataIndex: 'studentCount', key: 'studentCount', width: 80, align: 'center' as const },
+  { title: '账号状态', dataIndex: 'accountStatus', key: 'accountStatus', width: 90 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 240, fixed: 'right' as const },
+]
+
+/** 超管可见的列（含评级列，按评级降序排序） */
+export const staffColumnsWithRating = [
+  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90 },
+  { title: '英文名', dataIndex: 'staffName', key: 'staffName', width: 130, ellipsis: true },
+  { title: '联系方式', dataIndex: 'contact', key: 'contact', width: 160 },
+  { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 80, align: 'center' as const },
+  { title: '主攻方向', dataIndex: 'majorDirection', key: 'majorDirection', width: 180, ellipsis: true },
+  { title: '子方向', dataIndex: 'subDirection', key: 'subDirection', width: 110, ellipsis: true },
+  { title: '所属地区', dataIndex: 'region', key: 'region', width: 130, ellipsis: true },
+  { title: '任职公司', dataIndex: 'companies', key: 'companies', width: 160 },
+  { title: '评级', dataIndex: 'rating', key: 'rating', width: 80, align: 'center' as const },
   { title: '课单价', dataIndex: 'hourlyRate', key: 'hourlyRate', width: 80, align: 'center' as const },
   { title: '学员数', dataIndex: 'studentCount', key: 'studentCount', width: 80, align: 'center' as const },
   { title: '账号状态', dataIndex: 'accountStatus', key: 'accountStatus', width: 90 },
