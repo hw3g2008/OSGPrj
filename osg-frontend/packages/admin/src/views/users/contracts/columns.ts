@@ -1,5 +1,6 @@
 export const contractColumns = [
   { title: '合同编号', dataIndex: 'contractNo', key: 'contractNo', width: 140 },
+  { title: '学员ID', dataIndex: 'studentId', key: 'studentId', width: 100 },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
   { title: '班主任', dataIndex: 'leadMentorName', key: 'leadMentorName', width: 100 },
   { title: '合同类型', dataIndex: 'contractType', key: 'contractType', width: 90, align: 'center' as const },

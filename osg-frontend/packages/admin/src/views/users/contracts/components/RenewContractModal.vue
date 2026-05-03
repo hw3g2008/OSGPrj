@@ -161,7 +161,7 @@
               </span>
             </template>
             <a-select v-model:value="form.renewalReason" placeholder="请选择续签原因">
-              <a-select-option v-for="option in renewalReasonOptions" :key="option" :value="option">{{ option }}</a-select-option>
+              <a-select-option v-for="option in renewalReasonOptions" :key="option.dictValue" :value="option.dictValue">{{ option.dictLabel }}</a-select-option>
             </a-select>
           </a-form-item>
 
@@ -227,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
@@ -237,19 +237,14 @@ import {
   type ContractListItem,
 } from '@osg/shared/api/admin/contract'
 import { getToken } from '@osg/shared/utils/storage'
+import { getAdminDictOptions, type AdminDictListRow } from '@/api/adminDict'
 
 interface StudentOption {
   studentId: number
   studentName: string
 }
 
-const renewalReasonOptions = [
-  '课时不足加课',
-  '合同到期续签',
-  '增加辅导内容',
-  '延长服务周期',
-  '其他原因',
-]
+const renewalReasonOptions = ref<AdminDictListRow[]>([])
 
 const props = defineProps<{
   visible: boolean
@@ -304,7 +299,7 @@ const studentInitials = computed(() => {
   if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
   return name.slice(0, 2).toUpperCase()
 })
-const requiresOtherReason = computed(() => form.renewalReason === '其他原因')
+const requiresOtherReason = computed(() => form.renewalReason === 'other')
 const surfaceId = computed(() => (presetContract.value ? 'modal-contract-renew' : 'modal-add-contract'))
 
 const resetForm = () => {
@@ -395,6 +390,10 @@ const handleSubmit = async () => {
     submitting.value = false
   }
 }
+
+onMounted(async () => {
+  renewalReasonOptions.value = await getAdminDictOptions('osg_renewal_reason')
+})
 
 watch(() => props.visible, (visible) => {
   if (visible) {

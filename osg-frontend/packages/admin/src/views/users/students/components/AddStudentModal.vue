@@ -577,8 +577,7 @@ const handleUploadChange = (info: UploadChangeParam) => {
 
 const genderOptions = [
   { label: '男', value: 'male' },
-  { label: '女', value: 'female' },
-  { label: '其他 / 未知', value: 'unknown' }
+  { label: '女', value: 'female' }
 ]
 
 const graduationYearOptions = computed(() =>
