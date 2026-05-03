@@ -156,13 +156,11 @@
           </a-col>
           <a-col :span="8">
             <a-form-item label="求职地区">
-              <a-select
+              <MultiSelect
                 v-model:value="form.targetRegion"
                 :disabled="submitting"
                 :options="regionOptions"
-                show-search
-                allow-clear
-                placeholder="请选择地区"
+                placeholder="可多选求职地区"
               />
             </a-form-item>
           </a-col>
@@ -209,6 +207,7 @@ import type { StudentListItem, UpdateStudentPayload } from '@osg/shared/api/admi
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 import { getAdminDictOptions } from '@/api/adminDict'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { MultiSelect } from '@osg/shared/components'
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -233,7 +232,7 @@ const form = reactive({
   targetPosition: '',
   major: '',
   graduationYear: '',
-  targetRegion: '',
+  targetRegion: [] as string[],
   phone: '',
   wechat: '',
   remark: '',
@@ -311,7 +310,7 @@ const syncForm = () => {
   form.graduationYear = (props.student as any)?.graduationYear ?? ''
   form.majorDirection = props.student?.majorDirection || ''
   form.targetPosition = props.student?.targetPosition || ''
-  form.targetRegion = (props.student as any)?.targetRegion || ''
+  form.targetRegion = (props.student as any)?.targetRegion?.split(',').filter(Boolean) ?? []
   form.phone = extraFields.phone || ''
   form.wechat = extraFields.wechat || ''
   form.remark = extraFields.remark || ''
@@ -395,7 +394,7 @@ const handleSubmit = () => {
     graduationYear: form.graduationYear ? Number(form.graduationYear) || undefined : undefined,
     majorDirection: form.majorDirection.trim() || undefined,
     subDirection: form.targetPosition.trim() || undefined,
-    targetRegion: form.targetRegion.trim() || undefined,
+    targetRegion: form.targetRegion.length ? [...form.targetRegion] : undefined,
     leadMentorId: form.leadMentorId,
     assistantId: form.assistantId,
   })

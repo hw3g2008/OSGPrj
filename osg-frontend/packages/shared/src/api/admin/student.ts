@@ -52,7 +52,7 @@ export interface UpdateStudentPayload {
   graduationYear?: number
   majorDirection?: string
   subDirection?: string
-  targetRegion?: string
+  targetRegion?: string[]
   leadMentorId?: number
   assistantId?: number
 }

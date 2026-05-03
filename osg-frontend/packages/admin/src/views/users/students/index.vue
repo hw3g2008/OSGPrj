@@ -268,7 +268,7 @@ interface AddStudentFormPayload {
   major: string
   graduationYear?: number
   studyPlan: 'normal' | 'postgraduate' | 'deferred'
-  targetRegion?: string
+  targetRegion: string[]
   recruitmentCycle: string[]
   majorDirections: string[]
   subDirection?: string

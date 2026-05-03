@@ -116,7 +116,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         update.setGraduationYear(defaultInteger(asInteger(payload.get("graduationYear")), existing.getGraduationYear()));
         update.setMajorDirection(defaultText(asText(payload.get("majorDirection")), existing.getMajorDirection()));
         update.setSubDirection(defaultText(asText(payload.get("subDirection")), existing.getSubDirection()));
-        update.setTargetRegion(defaultText(asText(payload.get("targetRegion")), existing.getTargetRegion()));
+        update.setTargetRegion(defaultText(asCsv(payload.get("targetRegion")), existing.getTargetRegion()));
         update.setRecruitmentCycle(defaultText(asCsv(payload.get("recruitmentCycle")), existing.getRecruitmentCycle()));
         update.setLeadMentorId(resolveStaffToUserId(asLong(payload.get("leadMentorId")), existing.getLeadMentorId()));
         update.setAssistantId(resolveStaffToUserId(asLong(payload.get("assistantId")), existing.getAssistantId()));
@@ -394,7 +394,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         student.setSchool(asText(firstPresent(source, "school")));
         student.setMajor(asText(firstPresent(source, "major")));
         student.setGraduationYear(asInteger(firstPresent(source, "graduationYear")));
-        student.setTargetRegion(asText(firstPresent(source, "targetRegion", "jobRegion")));
+        student.setTargetRegion(asCsv(firstPresent(source, "targetRegion", "jobRegion")));
         student.setRecruitmentCycle(asCsv(firstPresent(source, "recruitmentCycle", "recruitmentCycles")));
         student.setMajorDirection(asCsv(firstPresent(source, "majorDirection", "majorDirections")));
         student.setSubDirection(asCsv(firstPresent(source, "subDirection", "subDirections")));

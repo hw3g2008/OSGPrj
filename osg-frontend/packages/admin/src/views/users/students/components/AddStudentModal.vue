@@ -215,12 +215,10 @@
                 <span class="add-student-modal__required">*</span>
               </span>
             </template>
-            <a-select
+            <MultiSelect
               v-model:value="formState.targetRegion"
-              placeholder="请选择求职地区"
+              placeholder="可多选求职地区"
               :options="targetRegionOptions"
-              show-search
-              allow-clear
             />
           </a-form-item>
 
@@ -518,7 +516,7 @@ interface AddStudentBasicInfo {
   graduationYear?: number
   studyPlan: 'normal' | 'postgraduate' | 'deferred'
   visaStatus?: string
-  targetRegion?: string
+  targetRegion: string[]
   recruitmentCycle: string[]
   majorDirections: string[]
   subDirections: string[]
@@ -643,7 +641,7 @@ const formState = reactive<AddStudentBasicInfo>({
   graduationYear: undefined,
   studyPlan: 'normal',
   visaStatus: undefined,
-  targetRegion: undefined,
+  targetRegion: [],
   recruitmentCycle: [],
   majorDirections: [],
   subDirections: [],
@@ -668,7 +666,7 @@ const rules = {
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email' as const, message: '请输入正确的邮箱格式', trigger: 'blur' }
   ],
-  targetRegion: [{ required: true, message: '请选择求职地区', trigger: 'change' }],
+  targetRegion: [{ required: true, type: 'array' as const, min: 1, message: '请至少选择一个求职地区', trigger: 'change' }],
   recruitmentCycle: [{ required: true, type: 'array' as const, min: 1, message: '请至少选择一个招聘周期', trigger: 'change' }],
   currency: [{ required: true, message: '请选择币种', trigger: 'change' }],
   amountUsd: [{ required: true, message: '请输入美元金额', trigger: 'change' }],
@@ -691,7 +689,7 @@ const resetForm = () => {
   formState.graduationYear = props.initialValue?.graduationYear
   formState.studyPlan = props.initialValue?.studyPlan ?? 'normal'
   formState.visaStatus = props.initialValue?.visaStatus
-  formState.targetRegion = props.initialValue?.targetRegion
+  formState.targetRegion = props.initialValue?.targetRegion ?? []
   formState.recruitmentCycle = props.initialValue?.recruitmentCycle ?? []
   formState.majorDirections = props.initialValue?.majorDirections ?? []
   formState.subDirections = props.initialValue?.subDirections ?? []
