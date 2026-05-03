@@ -86,6 +86,7 @@
             <a-auto-complete
               v-model:value="form.companyName"
               :options="companyAutoCompleteOptions"
+              :filter-option="true"
               placeholder="搜索或输入公司名称"
             />
           </fieldset>
