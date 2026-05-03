@@ -402,8 +402,7 @@ public class OsgStudentController extends BaseController
                 formatCount(resolveActivityCount(activityCounts, student.getStudentId(), "mockInterviewCount")),
                 formatHours(contractSnapshot.get("remainingHours")),
                 reminder,
-                formatAccountStatus(defaultText(student.getAccountStatus(), "0")),
-                "详情/编辑/重置密码/冻结/恢复/加入黑名单/退费"
+                formatAccountStatus(defaultText(student.getAccountStatus(), "0"))
             ));
         }
         return rows;
@@ -627,7 +626,7 @@ public class OsgStudentController extends BaseController
         @Excel(name = "ID")
         private final Long studentId;
 
-        @Excel(name = "姓名")
+        @Excel(name = "英文姓名")
         private final String studentName;
 
         @Excel(name = "邮箱")
@@ -666,13 +665,10 @@ public class OsgStudentController extends BaseController
         @Excel(name = "账号状态")
         private final String accountStatus;
 
-        @Excel(name = "操作")
-        private final String actions;
-
         private StudentExportRow(Long studentId, String studentName, String email, String leadMentorName,
             String school, String majorDirection, String targetPosition, String totalHours,
             String jobCoachingCount, String basicCourseCount, String mockInterviewCount,
-            String remainingHours, String reminder, String accountStatus, String actions)
+            String remainingHours, String reminder, String accountStatus)
         {
             this.studentId = studentId;
             this.studentName = studentName;
@@ -688,7 +684,6 @@ public class OsgStudentController extends BaseController
             this.remainingHours = remainingHours;
             this.reminder = reminder;
             this.accountStatus = accountStatus;
-            this.actions = actions;
         }
     }
 }
