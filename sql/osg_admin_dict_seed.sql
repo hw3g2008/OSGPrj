@@ -17,6 +17,7 @@ values
   ('学校', 'osg_school', '0', '{"groupKey":"student","groupLabel":"学员相关","icon":"mdi-account-school","iconColor":"#22C55E","iconBg":"#D1FAE5","order":20,"hasParent":false}', 'admin', sysdate()),
   ('主攻方向', 'osg_major_direction', '0', '{"groupKey":"student","groupLabel":"学员相关","icon":"mdi-account-school","iconColor":"#22C55E","iconBg":"#D1FAE5","order":20,"hasParent":false}', 'admin', sysdate()),
   ('子方向', 'osg_sub_direction', '0', '{"groupKey":"student","groupLabel":"学员相关","icon":"mdi-account-school","iconColor":"#22C55E","iconBg":"#D1FAE5","order":20,"hasParent":true,"parentDictType":"osg_major_direction"}', 'admin', sysdate()),
+  ('签证状态', 'osg_visa_status', '0', '{"groupKey":"student","groupLabel":"学员相关","icon":"mdi-passport","iconColor":"#22C55E","iconBg":"#D1FAE5","order":20,"hasParent":false}', 'admin', sysdate()),
   ('课程类型', 'osg_course_type', '0', '{"groupKey":"course","groupLabel":"课程相关","icon":"mdi-book-open-variant","iconColor":"#F59E0B","iconBg":"#FEF3C7","order":30,"hasParent":false}', 'admin', sysdate()),
   ('报销类型', 'osg_expense_type', '0', '{"groupKey":"finance","groupLabel":"财务相关","icon":"mdi-cash-multiple","iconColor":"#8B5CF6","iconBg":"#E0E7FF","order":40,"hasParent":false}', 'admin', sysdate()),
   ('擅长', 'osg_specialty', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":false}', 'admin', sysdate()),
@@ -96,6 +97,10 @@ values
   (60, 'VC / Venture Capital', 'venture_capital', 'osg_sub_direction', 'N', '0', '{"parentValue":"finance"}', 'admin', sysdate()),
   (70, '软件工程 / Software Engineering', 'software_engineering', 'osg_sub_direction', 'N', '0', '{"parentValue":"computer_science"}', 'admin', sysdate()),
   (80, '量化研究 / Quant Research', 'quant_research', 'osg_sub_direction', 'N', '0', '{"parentValue":"quant"}', 'admin', sysdate()),
+
+  (10, '待确认', 'pending',   'osg_visa_status', 'N', '0', '{}', 'admin', sysdate()),
+  (20, '需要签证', 'required', 'osg_visa_status', 'N', '0', '{}', 'admin', sysdate()),
+  (30, '无需签证', 'not_required', 'osg_visa_status', 'N', '0', '{}', 'admin', sysdate()),
 
   (10, '求职辅导', 'job_coaching', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate()),
   (20, '模拟面试', 'mock_interview', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate()),

@@ -588,12 +588,6 @@ const graduationYearOptions = computed(() =>
   }).reverse()
 )
 
-const visaStatusOptions = [
-  { label: '待确认', value: 'pending' },
-  { label: '需要签证', value: 'required' },
-  { label: '无需签证', value: 'not_required' }
-]
-
 const mentorSelectOptions = computed(() =>
   mentorOptions.value.map(s => ({ label: s.label, value: s.value }))
 )
@@ -605,6 +599,7 @@ const assistantSelectOptions = computed(() =>
 const schoolOptions = ref<{ label: string; value: string }[]>([])
 const targetRegionOptions = ref<{ label: string; value: string }[]>([])
 const recruitmentCycleOptions = ref<{ label: string; value: string }[]>([])
+const visaStatusOptions = ref<{ label: string; value: string }[]>([])
 const majorDirOptions = ref<{ label: string; value: string }[]>([])
 const allSubDirItems = ref<{ label: string; value: string; parentValue?: string }[]>([])
 const subDirOptions = computed(() => {
@@ -615,16 +610,18 @@ const subDirOptions = computed(() => {
 })
 
 const loadDictOptions = async () => {
-  const [schools, regions, cycles, majors, subs] = await Promise.all([
+  const [schools, regions, cycles, majors, subs, visas] = await Promise.all([
     getAdminDictOptions('osg_school'),
     getAdminDictOptions('osg_region'),
     getAdminDictOptions('osg_recruit_cycle'),
     getAdminDictOptions('osg_major_direction'),
     getAdminDictOptions('osg_sub_direction'),
+    getAdminDictOptions('osg_visa_status'),
   ])
   schoolOptions.value = schools.map(d => ({ label: d.dictLabel, value: d.dictValue }))
   targetRegionOptions.value = regions.map(d => ({ label: d.dictLabel, value: d.dictValue }))
   recruitmentCycleOptions.value = cycles.map(d => ({ label: d.dictLabel, value: d.dictValue }))
+  visaStatusOptions.value = visas.map(d => ({ label: d.dictLabel, value: d.dictValue }))
   majorDirOptions.value = majors.map(d => ({ label: d.dictLabel, value: d.dictValue }))
   allSubDirItems.value = subs.map(d => ({ label: d.dictLabel, value: d.dictValue, parentValue: d.parentValue }))
 }

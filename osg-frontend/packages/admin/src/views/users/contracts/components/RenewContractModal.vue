@@ -182,7 +182,10 @@
         <div class="renew-contract-modal__grid">
           <a-form-item class="renew-contract-modal__field--wide">
             <template #label>
-              <span class="renew-contract-modal__label">合同附件</span>
+              <span class="renew-contract-modal__label">
+                合同附件
+                <span class="renew-contract-modal__required">*</span>
+              </span>
             </template>
             <a-upload-dragger
               :action="uploadAction"
@@ -196,8 +199,8 @@
               <p class="ant-upload-drag-icon">
                 <i class="mdi mdi-cloud-upload" style="font-size: 28px; color: #4f74ff"></i>
               </p>
-              <p class="ant-upload-text">点击或拖拽文件上传</p>
-              <p class="ant-upload-hint">支持 PDF 格式</p>
+              <p class="ant-upload-text">点击或拖拽上传 PDF</p>
+              <p class="ant-upload-hint">合同附件为必填项</p>
             </a-upload-dragger>
           </a-form-item>
 
@@ -361,6 +364,10 @@ const handleSubmit = async () => {
   }
   if (requiresOtherReason.value && !form.otherReason.trim()) {
     message.error('请填写其他原因说明')
+    return
+  }
+  if (!form.attachmentPath) {
+    message.error('请上传合同附件')
     return
   }
 
