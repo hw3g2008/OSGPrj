@@ -11,6 +11,7 @@ values
   ('岗位分类', 'osg_job_category', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":false}', 'admin', sysdate()),
   ('公司类别', 'osg_company_type', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":false}', 'admin', sysdate()),
   ('公司名称', 'osg_company_name', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":true,"parentDictType":"osg_company_type"}', 'admin', sysdate()),
+  ('部门', 'osg_position_department', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":false}', 'admin', sysdate()),
   ('大区', 'osg_region', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":false}', 'admin', sysdate()),
   ('城市', 'osg_city', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":true,"parentDictType":"osg_region"}', 'admin', sysdate()),
   ('招聘周期', 'osg_recruit_cycle', '0', '{"groupKey":"job","groupLabel":"求职相关","icon":"mdi-briefcase","iconColor":"#3B82F6","iconBg":"#DBEAFE","order":10,"hasParent":false}', 'admin', sysdate()),
@@ -45,6 +46,19 @@ values
   (40, 'McKinsey', 'mckinsey', 'osg_company_name', 'N', '0', '{"parentValue":"consulting"}', 'admin', sysdate()),
   (50, 'BCG', 'bcg', 'osg_company_name', 'N', '0', '{"parentValue":"consulting"}', 'admin', sysdate()),
   (60, 'Google', 'google', 'osg_company_name', 'N', '0', '{"parentValue":"tech"}', 'admin', sysdate()),
+
+  (10, 'IBD', 'ibd', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (20, 'Sales & Trading', 'sales_trading', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (30, 'Equity Research', 'equity_research', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (40, 'Asset Management', 'asset_management', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (50, 'Wealth Management', 'wealth_management', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (60, 'Corporate Finance', 'corporate_finance', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (70, 'Strategy', 'strategy', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (80, 'Consulting', 'consulting', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (90, 'Quant Research', 'quant_research', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (100, 'Software Engineering', 'software_engineering', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (110, 'Product Management', 'product_management', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
+  (120, 'Data Science', 'data_science', 'osg_position_department', 'N', '0', '{}', 'admin', sysdate()),
 
   (10, '北美', 'na', 'osg_region', 'N', '0', '{}', 'admin', sysdate()),
   (20, '欧洲', 'eu', 'osg_region', 'N', '0', '{}', 'admin', sysdate()),
@@ -112,6 +126,17 @@ values
   (80, '期中考试', 'midterm_exam', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate()),
   (90, '期中模考', 'mock_midterm', 'osg_course_type', 'N', '0', '{}', 'admin', sysdate()),
 
+  (10, 'DCF 估值', 'dcf_valuation', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (20, '三大表建模', 'three_statement_modeling', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (30, 'LBO 建模', 'lbo_modeling', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (40, 'Case Interview', 'case_interview', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (50, 'Behavior Interview', 'behavior_interview', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (60, 'OA 刷题', 'oa_practice', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (70, 'Resume 修改', 'resume_review', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (80, 'Networking', 'networking', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (90, 'Python 量化回测', 'python_quant_backtest', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+  (100, 'SQL 数据分析', 'sql_data_analysis', 'osg_specialty', 'N', '0', '{}', 'admin', sysdate()),
+
   (10, '初级', 'junior', 'osg_rating', 'N', '0', '{}', 'admin', sysdate()),
   (20, '中级', 'middle', 'osg_rating', 'N', '0', '{}', 'admin', sysdate()),
   (30, '高级', 'senior', 'osg_rating', 'N', '0', '{}', 'admin', sysdate()),
@@ -119,6 +144,5 @@ values
 
 -- osg_expense_type intentionally keeps only the dict type in phase 1 because
 -- the current formal expense table has no confirmed business values yet.
--- osg_specialty intentionally keeps only the dict type because the operations
--- team will populate keywords (e.g. "DCF 估值"/"Python 量化回测") via the
--- admin dict-management page per the business pace.
+-- osg_specialty now ships with baseline mentor keywords; operations can add
+-- or disable items from the admin dict-management page.

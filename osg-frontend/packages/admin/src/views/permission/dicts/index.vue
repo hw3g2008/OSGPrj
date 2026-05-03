@@ -194,19 +194,23 @@ const tabPresentationMap: Record<string, { createLabel: string; nameHeader: stri
   osg_job_category: { createLabel: '岗位分类', nameHeader: '分类名称' },
   osg_company_name: { createLabel: '公司/银行名称', nameHeader: '公司名称' },
   osg_company_type: { createLabel: '公司/银行类别', nameHeader: '类别名称' },
+  osg_position_department: { createLabel: '部门', nameHeader: '部门名称' },
   osg_region: { createLabel: '大区', nameHeader: '大区名称' },
   osg_city: { createLabel: '地区/城市', nameHeader: '城市名称' },
   osg_recruit_cycle: { createLabel: '招聘周期', nameHeader: '周期名称' },
   osg_school: { createLabel: '学校', nameHeader: '学校名称' },
   osg_major_direction: { createLabel: '方向', nameHeader: '方向名称' },
   osg_sub_direction: { createLabel: '子方向', nameHeader: '子方向名称' },
+  osg_visa_status: { createLabel: '签证状态', nameHeader: '签证状态' },
   osg_course_type: { createLabel: '课程类型', nameHeader: '课程类型' },
   osg_expense_type: { createLabel: '报销类型', nameHeader: '报销类型' },
+  osg_specialty: { createLabel: '擅长', nameHeader: '擅长名称' },
+  osg_rating: { createLabel: '评级', nameHeader: '评级名称' },
 }
 
 const categoryDescMap: Record<string, string> = {
-  job: '岗位分类、公司、地区、招聘周期',
-  student: '学校、主攻方向、子方向',
+  job: '岗位分类、公司、部门、地区、招聘周期、擅长、评级',
+  student: '学校、主攻方向、子方向、签证状态',
   course: '课程类型',
   finance: '报销类型',
 }

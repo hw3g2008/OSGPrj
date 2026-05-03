@@ -48,6 +48,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     private static final String DICT_POSITION_DISPLAY_STATUS = "osg_position_display_status";
     private static final String DICT_POSITION_INDUSTRY = "osg_company_type";
     private static final String DICT_POSITION_COMPANY = "osg_company_name";
+    private static final String DICT_POSITION_DEPARTMENT = "osg_position_department";
     private static final String DICT_RECRUITMENT_CYCLE = "osg_recruit_cycle";
     private static final String DICT_PROJECT_YEAR = "osg_project_year";
     private static final String DICT_POSITION_REGION = "osg_region";
@@ -204,6 +205,10 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         meta.put("categories", buildStaticOptions(DICT_POSITION_CATEGORY));
         meta.put("displayStatuses", buildStaticOptions(DICT_POSITION_DISPLAY_STATUS));
         meta.put("industries", buildStaticOptions(DICT_POSITION_INDUSTRY));
+        meta.put("departments", buildMergedOptions(
+            distinctValues(selectPositionList(new OsgPosition()), OsgPosition::getDepartment),
+            DICT_POSITION_DEPARTMENT
+        ));
         meta.put("recruitmentCycles", buildStaticOptions(DICT_RECRUITMENT_CYCLE));
         meta.put("majorDirections", buildStaticOptions(DICT_TARGET_MAJORS));
         meta.put("projectYears", buildStaticOptions(DICT_PROJECT_YEAR));

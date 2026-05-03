@@ -68,6 +68,7 @@ export interface PositionMeta {
   categories: PositionMetaOption[]
   displayStatuses: PositionMetaOption[]
   industries: PositionMetaOption[]
+  departments: PositionMetaOption[]
   recruitmentCycles: PositionMetaOption[]
   majorDirections: PositionMetaOption[]
   projectYears: PositionMetaOption[]

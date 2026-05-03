@@ -172,7 +172,7 @@
                           <div v-if="position.applicationNote" style="color: #f59e0b; font-size: 10px; margin-top: 2px">{{ position.applicationNote }}</div>
                         </template>
                         <template v-else-if="column.dataIndex === 'positionCategory'">{{ formatCategory(position.positionCategory) }}</template>
-                        <template v-else-if="column.dataIndex === 'department'">{{ position.department || '-' }}</template>
+                        <template v-else-if="column.dataIndex === 'department'">{{ formatDepartment(position.department) }}</template>
                         <template v-else-if="column.dataIndex === 'recruitmentCycle'">
                           <div class="positions-cycle-tags">
                             <a-tag v-for="cycle in splitCycles(position.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
@@ -235,6 +235,7 @@
                   <span>{{ formatIndustry(record.industry) }}</span>
                 </div>
               </template>
+              <template v-else-if="column.dataIndex === 'department'">{{ formatDepartment(record.department) }}</template>
               <template v-else-if="column.dataIndex === 'positionCategory'">{{ formatCategory(record.positionCategory) }}</template>
               <template v-else-if="column.dataIndex === 'recruitmentCycle'">
                 <div class="positions-cycle-tags">
@@ -395,6 +396,7 @@ const createEmptyMeta = (): PositionMeta => ({
   categories: [],
   displayStatuses: [],
   industries: [],
+  departments: [],
   recruitmentCycles: [],
   majorDirections: [],
   projectYears: [],
@@ -494,6 +496,7 @@ const buildOptionMap = (options: PositionMetaOption[]) =>
 const categoryMap = computed(() => buildOptionMap(meta.value.categories))
 const statusMap = computed(() => buildOptionMap(meta.value.displayStatuses))
 const industryMap = computed(() => buildOptionMap(meta.value.industries))
+const departmentMap = computed(() => buildOptionMap(meta.value.departments))
 const cycleMap = computed(() => buildOptionMap(meta.value.recruitmentCycles))
 const majorMap = computed(() => buildOptionMap(meta.value.majorDirections))
 
@@ -804,6 +807,8 @@ const getCompanyInitials = (companyName: string) =>
     .join('')
 
 const formatCategory = (value?: string) => categoryMap.value.get(value || '')?.label || value || '-'
+
+const formatDepartment = (value?: string) => departmentMap.value.get(value || '')?.label || value || '-'
 
 const formatStatus = (value?: string) => statusMap.value.get(value || '')?.label || value || '展示中'
 

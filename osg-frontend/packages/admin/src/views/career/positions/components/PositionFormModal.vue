@@ -34,7 +34,9 @@
 
           <fieldset class="position-form-modal__field" data-field-name="部门">
             <span>部门</span>
-            <a-input v-model:value="form.department" placeholder="如 Investment Banking Division" />
+            <a-select v-model:value="form.department" placeholder="请选择" allow-clear show-search>
+              <a-select-option v-for="option in departmentOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+            </a-select>
           </fieldset>
 
           <fieldset class="position-form-modal__field" data-field-name="项目时间">
@@ -298,6 +300,7 @@ const surfaceId = computed(() => {
 })
 const categoryOptions = computed(() => props.meta.categories || [])
 const companyTypeOptions = computed(() => props.meta.industries || [])
+const departmentOptions = computed(() => props.meta.departments || [])
 const recruitmentCycleOptions = computed(() => props.meta.recruitmentCycles || [])
 const majorDirectionOptions = computed(() => props.meta.majorDirections || [])
 const projectYearOptions = computed(() => props.meta.projectYears || [])

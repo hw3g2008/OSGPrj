@@ -194,14 +194,18 @@ public class OsgBaseDataController extends BaseController
             case "job_category" -> "osg_job_category";
             case "company_type" -> "osg_company_type";
             case "company_name" -> "osg_company_name";
+            case "position_department" -> "osg_position_department";
             case "region" -> "osg_region";
             case "city" -> "osg_city";
             case "recruit_cycle" -> "osg_recruit_cycle";
             case "school" -> "osg_school";
             case "major_direction" -> "osg_major_direction";
             case "sub_direction" -> "osg_sub_direction";
+            case "visa_status" -> "osg_visa_status";
             case "course_type" -> "osg_course_type";
             case "expense_type" -> "osg_expense_type";
+            case "specialty" -> "osg_specialty";
+            case "rating" -> "osg_rating";
             default -> null;
         };
     }
@@ -213,14 +217,18 @@ public class OsgBaseDataController extends BaseController
             case "osg_job_category" -> "job_category";
             case "osg_company_type" -> "company_type";
             case "osg_company_name" -> "company_name";
+            case "osg_position_department" -> "position_department";
             case "osg_region" -> "region";
             case "osg_city" -> "city";
             case "osg_recruit_cycle" -> "recruit_cycle";
             case "osg_school" -> "school";
             case "osg_major_direction" -> "major_direction";
             case "osg_sub_direction" -> "sub_direction";
+            case "osg_visa_status" -> "visa_status";
             case "osg_course_type" -> "course_type";
             case "osg_expense_type" -> "expense_type";
+            case "osg_specialty" -> "specialty";
+            case "osg_rating" -> "rating";
             default -> dictType;
         };
     }
@@ -229,8 +237,8 @@ public class OsgBaseDataController extends BaseController
     {
         return switch (dictType)
         {
-            case "osg_job_category", "osg_company_type", "osg_company_name", "osg_region", "osg_city", "osg_recruit_cycle", "osg_country_code" -> "job";
-            case "osg_school", "osg_major_direction", "osg_sub_direction" -> "student";
+            case "osg_job_category", "osg_company_type", "osg_company_name", "osg_position_department", "osg_region", "osg_city", "osg_recruit_cycle", "osg_country_code", "osg_specialty", "osg_rating" -> "job";
+            case "osg_school", "osg_major_direction", "osg_sub_direction", "osg_visa_status" -> "student";
             case "osg_course_type" -> "course";
             case "osg_expense_type" -> "finance";
             default -> "";
