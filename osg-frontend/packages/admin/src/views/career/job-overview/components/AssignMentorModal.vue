@@ -2,7 +2,7 @@
   <OverlaySurfaceModal
     :open="visible"
     surface-id="modal-assign-mentor"
-    width="780px"
+    width="720px"
     :body-class="['job-overview-assign-modal__body', 'assign-mentor-modal__body']"
     @cancel="handleClose"
   >
@@ -13,136 +13,171 @@
       </span>
     </template>
 
-    <section class="job-overview-assign-modal__hero assign-mentor-modal__hero">
-      <div class="job-overview-assign-modal__avatar assign-mentor-modal__avatar">{{ studentInitials }}</div>
-      <div class="job-overview-assign-modal__summary assign-mentor-modal__summary">
-        <strong>{{ row?.studentName || '待分配学员' }}</strong>
-        <span>ID {{ row?.studentId || '--' }}</span>
-        <span>{{ row?.companyName || '-' }} / {{ row?.positionName || '-' }}</span>
-      </div>
-      <div class="job-overview-assign-modal__meta assign-mentor-modal__meta">
-        <span class="job-overview-assign-modal__meta-chip assign-mentor-modal__meta-chip">建议分配 {{ requestedCount }} 位导师</span>
-        <span class="job-overview-assign-modal__meta-chip job-overview-assign-modal__meta-chip--accent assign-mentor-modal__meta-chip assign-mentor-modal__meta-chip--accent">
-          {{ preferredMentorLabel }}
-        </span>
-      </div>
-    </section>
+    <a-card
+      :bordered="false"
+      class="job-overview-assign-modal__hero assign-mentor-modal__hero student-card"
+    >
+      <a-row :gutter="[16, 12]" align="middle">
+        <a-col flex="56px">
+          <div class="student-card__avatar job-overview-assign-modal__avatar assign-mentor-modal__avatar">
+            {{ studentInitials }}
+          </div>
+        </a-col>
+        <a-col flex="auto">
+          <div class="student-card__name">
+            {{ row?.studentName || '待分配学员' }}
+            <span class="student-card__meta">(ID: {{ row?.studentId || '--' }})</span>
+          </div>
+          <div class="student-card__sub">
+            {{ row?.companyName || '-' }} · {{ row?.positionName || '-' }}
+          </div>
+        </a-col>
+      </a-row>
 
-    <section class="job-overview-assign-modal__panel">
-      <div class="job-overview-assign-modal__filters">
-        <label
-          class="job-overview-assign-modal__search"
-          data-field-name="导师搜索"
-          data-field-name-alias="分配导师弹窗导师搜索"
-        >
-          <span class="mdi mdi-magnify" aria-hidden="true"></span>
-          <input
-            v-model="keyword"
+      <a-divider class="student-card__divider" />
+
+      <a-row :gutter="[16, 12]" class="student-grid">
+        <a-col :xs="24" :sm="12">
+          <span class="student-grid__label">建议分配</span>
+          <strong class="student-grid__accent">{{ requestedCount }} 位导师</strong>
+        </a-col>
+        <a-col :xs="24" :sm="12">
+          <span class="student-grid__label">意向导师</span>
+          <strong class="student-grid__success">{{ preferredMentorLabel }}</strong>
+        </a-col>
+      </a-row>
+    </a-card>
+
+    <div class="form-group">
+      <div class="form-label">筛选导师</div>
+      <a-row
+        :gutter="[12, 12]"
+        class="job-overview-assign-modal__filters filter-row"
+      >
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-select
+            v-model:value="scope"
+            placeholder="全部范围"
+            allow-clear
+            style="width:100%"
+            :options="scopeOptions"
+            data-field-name="排期状态筛选"
+            data-field-name-alias="分配导师弹窗排期状态筛选"
+          />
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-select
+            v-model:value="majorDirection"
+            placeholder="全部主攻方向"
+            allow-clear
+            style="width:100%"
+            :options="majorDirectionOptions"
+            data-field-name="主攻方向筛选"
+            data-field-name-alias="分配导师弹窗主攻方向筛选"
+          />
+        </a-col>
+        <a-col :xs="24" :sm="24" :md="8">
+          <a-input
+            v-model:value="keyword"
+            placeholder="搜索导师姓名..."
+            allow-clear
             data-field-name="导师搜索"
             data-field-name-alias="分配导师弹窗导师搜索"
-            type="text"
-            placeholder="搜索导师姓名..."
-          />
-        </label>
-
-        <div
-          class="job-overview-assign-modal__scope"
-          data-field-name="排期状态筛选"
-          data-field-name-alias="分配导师弹窗排期状态筛选"
-        >
-          <a-button
-            v-for="option in scopeOptions"
-            :key="option.value"
-            :data-field-name="option.label"
-            :data-field-name-alias="`分配导师弹窗${option.label}`"
-            :type="scope === option.value ? 'primary' : 'default'"
-            size="small"
-            @click="scope = option.value"
           >
-            {{ option.label }}
-          </a-button>
-        </div>
-
-        <div
-          class="job-overview-assign-modal__scope"
-          data-field-name="主攻方向筛选"
-          data-field-name-alias="分配导师弹窗主攻方向筛选"
-        >
-          <a-button
-            v-for="option in majorDirectionOptions"
-            :key="option.value"
-            :data-field-name="option.label"
-            :data-field-name-alias="`分配导师弹窗${option.label}`"
-            :type="majorDirection === option.value ? 'primary' : 'default'"
-            size="small"
-            @click="majorDirection = option.value"
-          >
-            {{ option.label }}
-          </a-button>
-        </div>
+            <template #prefix><SearchOutlined /></template>
+          </a-input>
+        </a-col>
+      </a-row>
+      <div class="filter-hint">
+        <FilterOutlined />
+        共找到 <strong>{{ filteredMentorOptions.length }}</strong> 位导师
       </div>
+    </div>
 
-      <div
-        class="job-overview-assign-modal__mentor-list assign-mentor-modal__mentor-list"
-        data-field-name="子方向筛选"
-        data-field-name-alias="分配导师弹窗子方向筛选"
+    <div class="form-group">
+      <div class="form-label">
+        选择导师
+        <span class="form-label__meta">(可多选)</span>
+      </div>
+      <a-empty
+        v-if="!filteredMentorOptions.length"
+        description="当前没有可直接分配的导师候选"
+        class="job-overview-assign-modal__empty assign-mentor-modal__empty mentor-empty"
+      />
+      <a-list
+        v-else
+        class="job-overview-assign-modal__mentor-list assign-mentor-modal__mentor-list mentor-list"
+        :data-source="filteredMentorOptions"
+        :split="false"
       >
-        <template v-if="filteredMentorOptions.length">
-          <label
-            v-for="option in filteredMentorOptions"
-            :key="option.mentorId"
-            :class="[
-              'job-overview-assign-modal__mentor assign-mentor-modal__option',
-              {
-                'job-overview-assign-modal__mentor--selected assign-mentor-modal__option--selected': selectedMentorIds.includes(option.mentorId),
-                'job-overview-assign-modal__mentor--preferred assign-mentor-modal__option--preferred': option.preferred
-              }
-            ]"
+        <template #renderItem="{ item }">
+          <a-list-item
+            class="mentor-item"
+            :class="{
+              'mentor-item--selected': selectedMentorIds.includes(item.mentorId),
+              'mentor-item--preferred': item.preferred
+            }"
+            @click="toggleMentor(item.mentorId)"
           >
-            <a-checkbox
-              :checked="selectedMentorIds.includes(option.mentorId)"
-              :data-field-name="option.mentorName"
-              :data-field-name-alias="`分配导师弹窗${option.mentorName}`"
-              @change="toggleMentor(option.mentorId)"
-            />
-
-            <div class="job-overview-assign-modal__mentor-avatar">{{ getMentorInitials(option.mentorName) }}</div>
-
-            <div class="job-overview-assign-modal__mentor-copy assign-mentor-modal__option-copy">
-              <strong>{{ option.mentorName }}</strong>
-              <span>{{ option.hint || '可分配导师' }}</span>
+            <div class="mentor-item__main">
+              <a-checkbox
+                :checked="selectedMentorIds.includes(item.mentorId)"
+                :data-field-name="item.mentorName"
+                :data-field-name-alias="`分配导师弹窗${item.mentorName}`"
+                @click.stop
+                @change="toggleMentor(item.mentorId)"
+              />
+              <div class="mentor-item__avatar">{{ getMentorInitials(item.mentorName) }}</div>
+              <div class="mentor-item__copy">
+                <div class="mentor-item__name">
+                  <strong>{{ item.mentorName }}</strong>
+                  <a-tag
+                    v-if="item.preferred"
+                    color="blue"
+                    class="mentor-item__badge"
+                  >意向导师</a-tag>
+                </div>
+                <div class="mentor-item__sub">{{ item.hint || '可分配导师' }}</div>
+              </div>
             </div>
-
-            <span v-if="option.preferred" class="job-overview-assign-modal__mentor-flag assign-mentor-modal__preferred-flag">意向导师</span>
-          </label>
+          </a-list-item>
         </template>
-        <div v-else class="job-overview-assign-modal__empty assign-mentor-modal__empty">当前没有可直接分配的导师候选。</div>
+      </a-list>
+      <div class="selection-hint">
+        <InfoCircleOutlined />
+        已选择 <strong>{{ selectedMentorIds.length }}</strong> 位导师
       </div>
-    </section>
+    </div>
 
-    <section
-      class="job-overview-assign-modal__note-field"
+    <div
+      class="form-group form-group--last job-overview-assign-modal__note-field"
       data-field-name="备注"
       data-field-name-alias="分配导师弹窗备注"
     >
-      <label class="job-overview-assign-modal__label">备注</label>
+      <div class="form-label">
+        备注
+        <span class="form-label__meta">(选填)</span>
+      </div>
       <a-textarea
         v-model:value="assignNote"
         data-field-name="备注"
         data-field-name-alias="分配导师弹窗备注"
-        :rows="4"
+        :rows="3"
         :maxlength="160"
         placeholder="给导师的特别说明，如学员背景、重点辅导内容等..."
       />
       <div class="job-overview-assign-modal__note-meta assign-mentor-modal__note-meta">
-        <span>已选择 {{ selectedMentorIds.length }} 位导师</span>
         <span>{{ assignNote.length }}/160</span>
       </div>
-    </section>
+    </div>
 
     <template #footer>
       <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :disabled="submitting || !selectedMentorIds.length" @click="handleSubmit">
+      <a-button
+        type="primary"
+        :disabled="submitting || !selectedMentorIds.length"
+        @click="handleSubmit"
+      >
         {{ submitting ? '提交中...' : '确认分配' }}
       </a-button>
     </template>
@@ -152,6 +187,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import {
+  FilterOutlined,
+  InfoCircleOutlined,
+  SearchOutlined
+} from '@ant-design/icons-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { UnassignedJobOverviewRow } from '@osg/shared/api/admin/jobOverview'
 
@@ -179,13 +219,12 @@ const emit = defineEmits<{
 }>()
 
 const keyword = ref('')
-const scope = ref<'all' | 'preferred' | 'recommended'>('all')
-const majorDirection = ref('all')
+const scope = ref<'preferred' | 'recommended' | undefined>(undefined)
+const majorDirection = ref<string | undefined>(undefined)
 const selectedMentorIds = ref<number[]>([])
 const assignNote = ref('')
 
 const scopeOptions = [
-  { value: 'all', label: '全部导师' },
   { value: 'preferred', label: '意向导师' },
   { value: 'recommended', label: '班主任推荐' }
 ] as const
@@ -199,13 +238,9 @@ const majorDirectionOptions = computed(() => {
     }
   })
 
-  return [
-    { value: 'all', label: '全部方向' },
-    ...[...values].sort((left, right) => left.localeCompare(right, 'zh-Hans-CN')).map((value) => ({
-      value,
-      label: value
-    }))
-  ]
+  return [...values]
+    .sort((left, right) => left.localeCompare(right, 'zh-Hans-CN'))
+    .map((value) => ({ value, label: value }))
 })
 
 const studentInitials = computed(() => {
@@ -225,7 +260,7 @@ const filteredMentorOptions = computed(() => {
     if (scope.value === 'recommended' && option.hint !== '班主任推荐') {
       return false
     }
-    if (majorDirection.value !== 'all' && resolveMajorDirection(option) !== majorDirection.value) {
+    if (majorDirection.value && resolveMajorDirection(option) !== majorDirection.value) {
       return false
     }
     if (!normalizedKeyword) {
@@ -241,16 +276,16 @@ watch(
   ([visible]) => {
     if (!visible) {
       keyword.value = ''
-      scope.value = 'all'
-      majorDirection.value = 'all'
+      scope.value = undefined
+      majorDirection.value = undefined
       selectedMentorIds.value = []
       assignNote.value = ''
       return
     }
 
     keyword.value = ''
-    scope.value = 'all'
-    majorDirection.value = 'all'
+    scope.value = undefined
+    majorDirection.value = undefined
     selectedMentorIds.value = props.mentorOptions
       .filter((option) => option.preferred)
       .slice(0, requestedCount.value)
@@ -310,16 +345,16 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
 
 .job-overview-assign-modal__hero,
 .assign-mentor-modal__hero {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: center;
-  padding: 18px 20px;
-  border-radius: 12px;
-  border: 1px solid #dbeafe;
+  margin-bottom: 4px;
   background: #eff6ff;
+  border-radius: 12px;
 }
 
+.job-overview-assign-modal__hero :deep(.ant-card-body) {
+  padding: 16px 18px;
+}
+
+.student-card__avatar,
 .job-overview-assign-modal__avatar,
 .assign-mentor-modal__avatar {
   display: inline-flex;
@@ -334,135 +369,142 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
   font-weight: 700;
 }
 
-.job-overview-assign-modal__summary,
-.assign-mentor-modal__summary {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.job-overview-assign-modal__summary strong {
-  color: #0f172a;
-  font-size: 16px;
-}
-
-.job-overview-assign-modal__summary span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.job-overview-assign-modal__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-.job-overview-assign-modal__meta-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.08);
-  color: #334155;
-  font-size: 12px;
+.student-card__name {
+  font-size: 15px;
   font-weight: 600;
+  color: #0f172a;
 }
 
-.job-overview-assign-modal__meta-chip--accent {
-  background: #eef2ff;
+.student-card__meta {
+  margin-left: 6px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.student-card__sub {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.student-card__divider {
+  margin: 12px 0;
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.student-grid__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.student-grid strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.student-grid__accent {
   color: #4f46e5;
 }
 
-.job-overview-assign-modal__panel {
+.student-grid__success {
+  color: #22c55e;
+}
+
+.form-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.job-overview-assign-modal__filters {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.job-overview-assign-modal__search {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 180px;
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.job-overview-assign-modal__search .mdi {
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-.job-overview-assign-modal__search input {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #0f172a;
-  font: inherit;
-}
-
-.job-overview-assign-modal__scope {
-  display: inline-flex;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
-.job-overview-assign-modal__summary-chip {
-  margin-left: auto;
-  color: #64748b;
+.form-group--last {
+  margin-bottom: 0;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.form-label__meta {
+  margin-left: 4px;
   font-size: 12px;
+  font-weight: 400;
+  color: #94a3b8;
 }
 
-.job-overview-assign-modal__summary-chip strong {
+.job-overview-assign-modal__filters,
+.filter-row {
+  margin: 0;
+}
+
+.filter-hint,
+.selection-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.filter-hint strong,
+.selection-hint strong {
   color: #4f46e5;
 }
 
 .job-overview-assign-modal__mentor-list,
-.assign-mentor-modal__mentor-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.job-overview-assign-modal__mentor,
-.assign-mentor-modal__option {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  min-height: 72px;
-  padding: 12px 14px;
-  border: 1px solid #dbe3ee;
+.assign-mentor-modal__mentor-list,
+.mentor-list {
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
+  overflow: hidden;
   background: #fff;
 }
 
-.job-overview-assign-modal__mentor--selected,
-.assign-mentor-modal__option--selected {
-  border-color: #6366f1;
+.mentor-list :deep(.ant-list-item) {
+  padding: 0;
+  border: 0;
+}
+
+.mentor-item {
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.mentor-item:last-child {
+  border-bottom: 0;
+}
+
+.mentor-item:hover {
+  background: #eff6ff;
+}
+
+.mentor-item--selected {
   background: #f8faff;
 }
 
-.job-overview-assign-modal__mentor--preferred,
-.assign-mentor-modal__option--preferred {
+.mentor-item--preferred {
   background: linear-gradient(145deg, rgba(238, 242, 255, 0.92), rgba(248, 250, 252, 0.96));
 }
 
-.job-overview-assign-modal__mentor-avatar {
+.mentor-item--preferred.mentor-item--selected {
+  background: #f8faff;
+}
+
+.mentor-item__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+}
+
+.mentor-item__avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -473,88 +515,64 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
   color: #fff;
   font-size: 11px;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
-.job-overview-assign-modal__mentor-copy strong {
-  display: block;
-  color: #0f172a;
-  font-size: 14px;
+.mentor-item__copy {
+  flex: 1;
+  min-width: 0;
 }
 
-.job-overview-assign-modal__mentor-copy span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.job-overview-assign-modal__mentor-flag,
-.assign-mentor-modal__preferred-flag {
-  display: inline-flex;
+.mentor-item__name {
+  display: flex;
   align-items: center;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #4f46e5;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 14px;
   font-weight: 600;
+  color: #0f172a;
+}
+
+.mentor-item__name strong {
+  color: #0f172a;
+}
+
+.mentor-item__badge {
+  font-size: 11px;
+  margin-right: 0;
+}
+
+.mentor-item__sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.mentor-empty,
+.job-overview-assign-modal__empty,
+.assign-mentor-modal__empty {
+  padding: 24px 0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
 }
 
 .job-overview-assign-modal__note-field {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.job-overview-assign-modal__label {
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 8px;
 }
 
 .job-overview-assign-modal__note-meta,
 .assign-mentor-modal__note-meta {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-end;
   color: #94a3b8;
   font-size: 12px;
 }
 
-.job-overview-assign-modal__empty,
-.assign-mentor-modal__empty {
-  padding: 18px;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 13px;
-  text-align: center;
-}
-
-@media (max-width: 860px) {
-  .job-overview-assign-modal__hero,
-  .assign-mentor-modal__hero {
-    grid-template-columns: 1fr;
-  }
-
-  .job-overview-assign-modal__meta {
-    align-items: flex-start;
-  }
-
-  .job-overview-assign-modal__summary-chip {
-    margin-left: 0;
-  }
-}
-
 @media (max-width: 640px) {
-  .job-overview-assign-modal__mentor,
-  .assign-mentor-modal__option {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .job-overview-assign-modal__mentor-flag,
-  .assign-mentor-modal__preferred-flag {
-    grid-column: span 2;
-    justify-self: start;
+  .student-grid > .ant-col {
+    width: 100%;
   }
 }
 </style>
