@@ -446,66 +446,25 @@
 
       <a-form layout="vertical" class="manual-form">
         <div class="manual-section">
-          <div class="manual-section-title">基本信息</div>
-          <div class="manual-section-grid">
-            <a-form-item label="岗位分类" required class="manual-field">
-              <a-select v-model:value="manualForm.category" placeholder="请选择">
-                <a-select-option v-for="option in filterOptions.categories" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-            <a-form-item label="岗位名称" required class="manual-field">
-              <a-input v-model:value="manualForm.title" placeholder="如：IB Analyst" />
-            </a-form-item>
-            <a-form-item label="部门（选填）" class="manual-field">
-              <a-input v-model:value="manualForm.department" placeholder="如：IBD / S&T" />
-            </a-form-item>
-            <a-form-item label="招聘周期" required class="manual-field manual-field--span2">
-              <a-checkbox-group v-model:value="manualForm.recruitmentCycles" class="cycle-checkboxes">
-                <a-checkbox v-for="cycle in cycleDict" :key="cycle.value" :value="cycle.value" class="cycle-checkbox">
-                  {{ cycle.label }}
-                </a-checkbox>
-              </a-checkbox-group>
-            </a-form-item>
-            <a-form-item label="项目时间" required class="manual-field">
-              <a-select v-model:value="manualForm.projectYear" placeholder="请选择">
-                <a-select-option v-for="year in projectYearDict" :key="year.value" :value="year.value">{{ year.label }}</a-select-option>
-              </a-select>
-            </a-form-item>
-            <a-form-item label="截止日期（选填）" class="manual-field">
-              <a-date-picker v-model:value="manualForm.deadline" value-format="YYYY-MM-DD" style="width:100%" placeholder="选择日期" />
-            </a-form-item>
-          </div>
-        </div>
-
-        <div class="manual-section">
           <div class="manual-section-title">公司信息</div>
           <div class="manual-section-grid">
-            <a-form-item label="公司名称" required class="manual-field">
-              <a-auto-complete
-                v-model:value="manualForm.company"
-                :options="filterOptions.companies"
-                :filter-option="filterCompanyOption"
-                placeholder="搜索或输入公司名称"
-              />
+            <a-form-item label="公司名称（选填）" class="manual-field">
+              <a-input v-model:value="manualForm.company" placeholder="请输入公司名称" />
             </a-form-item>
-            <a-form-item label="公司类别" required class="manual-field">
-              <a-select v-model:value="manualForm.companyType" placeholder="请选择">
-                <a-select-option v-for="t in COMPANY_TYPES" :key="t.value" :value="t.value">{{ t.label }}</a-select-option>
-              </a-select>
+            <a-form-item label="公司类别（选填）" class="manual-field">
+              <a-input v-model:value="manualForm.companyType" placeholder="如：投行、基金、咨询" />
             </a-form-item>
-            <a-form-item label="大区" required class="manual-field">
+            <a-form-item label="岗位地区（选填）" class="manual-field">
               <a-select v-model:value="manualForm.region" placeholder="请选择" @change="onManualRegionChange">
                 <a-select-option v-for="r in regionDict" :key="r.value" :value="r.value">{{ r.label }}</a-select-option>
               </a-select>
             </a-form-item>
-            <a-form-item label="城市" required class="manual-field">
-              <a-select v-model:value="manualForm.city" placeholder="请先选择大区" :disabled="!manualForm.region">
+            <a-form-item label="城市（选填）" class="manual-field">
+              <a-select v-model:value="manualForm.city" placeholder="请先选择岗位地区" :disabled="!manualForm.region">
                 <a-select-option v-for="city in manualCityOptions" :key="city.value" :value="city.value">{{ city.label }}</a-select-option>
               </a-select>
             </a-form-item>
-            <a-form-item label="公司官网" required class="manual-field">
+            <a-form-item label="公司官网（选填）" class="manual-field">
               <a-input v-model:value="manualForm.website" placeholder="https://..." />
             </a-form-item>
             <a-form-item label="岗位链接" required class="manual-field">
@@ -997,14 +956,8 @@ const manualHirevueFileList = ref<any[]>([])
 const coachingHirevueFileList = ref<any[]>([])
 
 const manualForm = ref({
-  category: undefined as string | undefined,
-  title: '',
-  department: '',
-  recruitmentCycles: [] as string[],
-  projectYear: undefined as string | undefined,
-  deadline: '',
   company: '',
-  companyType: undefined as string | undefined,
+  companyType: '',
   region: undefined as string | undefined,
   city: undefined as string | undefined,
   website: '',
@@ -1487,8 +1440,8 @@ function formatToday() {
 
 async function submitManualPosition() {
   const f = manualForm.value
-  if (!f.category || !f.title || !f.company || !f.city) {
-    message.error('请完整填写岗位分类、岗位名称、公司名称和城市')
+  if (!f.link) {
+    message.error('请填写岗位链接')
     return
   }
 
@@ -1523,18 +1476,13 @@ async function submitManualPosition() {
   }
 
   await createStudentManualPosition({
-    category: f.category,
-    title: f.title,
-    company: f.company,
+    company: f.company || undefined,
     location: f.city,
-    recruitmentCycle: f.recruitmentCycles.join(', ') || undefined,
-    projectYear: f.projectYear,
-    companyType: f.companyType,
+    companyType: f.companyType || undefined,
     region: f.region,
     city: f.city,
     website: f.website || undefined,
-    link: f.link || undefined,
-    deadline: f.deadline || undefined,
+    link: f.link,
     needCoaching: f.needCoaching,
     coachingStage: f.needCoaching ? f.coachingStage : undefined,
     mentorCount: f.needCoaching && f.coachingStage !== 'hirevue' ? (f.mentorCount || '0') : undefined,

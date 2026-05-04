@@ -573,20 +573,9 @@ public class PositionServiceImpl implements IPositionService
         String preferMentor = stringValue(params.get("preferMentor"));
         String excludeMentor = stringValue(params.get("excludeMentor"));
 
-        if (!StringUtils.hasText(category) || !StringUtils.hasText(title) || !StringUtils.hasText(company) || !StringUtils.hasText(location))
+        if (!StringUtils.hasText(link))
         {
-            throw new ServiceException("请填写所有必填字段");
-        }
-
-        if (!StringUtils.hasText(recruitmentCycle)
-                || !StringUtils.hasText(projectYear)
-                || !StringUtils.hasText(companyType)
-                || !StringUtils.hasText(region)
-                || !StringUtils.hasText(city)
-                || !StringUtils.hasText(website)
-                || !StringUtils.hasText(link))
-        {
-            throw new ServiceException("请填写所有必填字段");
+            throw new ServiceException("请填写岗位链接");
         }
 
         if (needCoaching)
