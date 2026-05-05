@@ -272,7 +272,7 @@ const userStore = useUserStore()
 const form = reactive({
   positionCategory: undefined as string | undefined,
   positionName: '',
-  department: '',
+  department: undefined as string | undefined,
   companyName: '',
   companyType: undefined as string | undefined,
   companyWebsite: '',
@@ -337,7 +337,7 @@ const resetForm = () => {
 
   form.positionCategory = seed.positionCategory || undefined
   form.positionName = seed.positionName || ''
-  form.department = seed.department || ''
+  form.department = seed.department || undefined
   form.companyName = seed.companyName || ''
   form.companyType = seed.companyType || seed.industry || undefined
   form.companyWebsite = seed.companyWebsite || ''
@@ -536,6 +536,24 @@ watch(
   min-inline-size: 0;
   font-size: 13px;
   color: #334155;
+}
+
+:deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector) {
+  padding: 0 14px;
+}
+
+:deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-search) {
+  inset-inline-start: 14px;
+  inset-inline-end: 14px;
+}
+
+:deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-search-input) {
+  height: 100%;
+}
+
+:deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-placeholder) {
+  inset-inline-start: 14px;
+  inset-inline-end: 14px;
 }
 
 .position-form-modal__field > span {
