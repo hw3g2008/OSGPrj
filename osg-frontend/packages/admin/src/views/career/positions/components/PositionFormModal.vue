@@ -100,10 +100,10 @@
             </a-select>
           </fieldset>
 
-          <fieldset class="position-form-modal__location-group" data-field-name="大区/城市">
+          <fieldset class="position-form-modal__location-group" data-field-name="岗位地区/城市">
             <div class="position-form-modal__location-grid">
-              <fieldset class="position-form-modal__field" data-field-name="大区">
-                <span>大区 <em>*</em></span>
+              <fieldset class="position-form-modal__field" data-field-name="岗位地区">
+                <span>岗位地区 <em>*</em></span>
                 <a-select v-model:value="form.region" placeholder="请选择">
                   <a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
                 </a-select>

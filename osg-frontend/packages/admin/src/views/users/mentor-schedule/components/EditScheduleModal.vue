@@ -446,7 +446,7 @@ $rose-100: #ffe4e6;
     position: absolute;
     inset: -2px;
     border-radius: 50%;
-    background: linear-gradient(135deg, $ink-800, $ink-900 60%, $indigo-500);
+    background: linear-gradient(135deg, $indigo-300, $indigo-600 58%, $indigo-500);
   }
 
   &__avatar-text {
@@ -456,7 +456,7 @@ $rose-100: #ffe4e6;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: $ink-900;
+    background: linear-gradient(135deg, $indigo-700 0%, $indigo-600 55%, $indigo-500 100%);
     color: #fff;
     font-size: 16px;
     font-weight: 700;
@@ -465,8 +465,8 @@ $rose-100: #ffe4e6;
 
   &__name {
     font-size: 16px;
-    font-weight: 700;
-    color: $ink-900;
+    font-weight: 600;
+    color: $slate-700;
     letter-spacing: 0.2px;
   }
 
@@ -483,7 +483,7 @@ $rose-100: #ffe4e6;
     padding: 2px 8px;
     border-radius: 6px;
     background: $slate-100;
-    color: $ink-800;
+    color: $slate-700;
     font-weight: 600;
     font-size: 11.5px;
     letter-spacing: 0.4px;
@@ -517,9 +517,9 @@ $rose-100: #ffe4e6;
 
   &__hours-num {
     font-size: 28px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
-    color: $ink-900;
+    color: $slate-700;
     font-feature-settings: "tnum";
     font-variant-numeric: tabular-nums;
   }
@@ -549,8 +549,8 @@ $rose-100: #ffe4e6;
     left: 4px;
     width: calc(50% - 4px);
     border-radius: 8px;
-    background: $ink-900;
-    box-shadow: 0 4px 12px -6px rgba(15, 23, 42, 0.5);
+    background: linear-gradient(135deg, $indigo-700 0%, $indigo-600 55%, $indigo-500 100%);
+    box-shadow: 0 4px 12px -6px rgba(79, 70, 229, 0.5);
     transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -572,7 +572,7 @@ $rose-100: #ffe4e6;
     color: $slate-500;
     transition: color 0.2s ease;
 
-    &:hover { color: $ink-800; }
+    &:hover { color: $slate-700; }
 
     &--active {
       color: #fff;
@@ -621,8 +621,8 @@ $rose-100: #ffe4e6;
 
   &__title {
     font-size: 14px;
-    font-weight: 700;
-    color: $ink-900;
+    font-weight: 600;
+    color: $slate-700;
     letter-spacing: 0.3px;
   }
 
@@ -669,9 +669,9 @@ $rose-100: #ffe4e6;
       height: 40px;
       padding: 0 10px;
       font-size: 22px;
-      font-weight: 800;
+      font-weight: 700;
       text-align: center;
-      color: $ink-900;
+      color: $slate-700;
       font-feature-settings: "tnum";
       font-variant-numeric: tabular-nums;
     }
@@ -738,11 +738,11 @@ $rose-100: #ffe4e6;
   }
 
   &--active {
-    background: $ink-900;
-    border-color: $ink-900;
+    background: linear-gradient(135deg, $indigo-700 0%, $indigo-600 55%, $indigo-500 100%);
+    border-color: $indigo-500;
     color: #fff;
 
-    &:hover { color: #fff; background: $ink-800; }
+    &:hover { color: #fff; background: linear-gradient(135deg, $indigo-700 0%, $indigo-600 55%, $indigo-500 100%); }
   }
 }
 
@@ -800,9 +800,9 @@ $rose-100: #ffe4e6;
 
   &__date {
     font-size: 26px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
-    color: $ink-900;
+    color: $slate-700;
     font-feature-settings: "tnum";
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.5px;
@@ -821,8 +821,8 @@ $rose-100: #ffe4e6;
 
   &__weekday {
     font-size: 13px;
-    font-weight: 700;
-    color: $ink-900;
+    font-weight: 600;
+    color: $slate-600;
     letter-spacing: 0.4px;
   }
 
@@ -1026,8 +1026,8 @@ $rose-100: #ffe4e6;
   &__title {
     display: block;
     font-size: 13.5px;
-    font-weight: 700;
-    color: $ink-900;
+    font-weight: 600;
+    color: $slate-700;
   }
 
   &__desc {

@@ -290,7 +290,7 @@ test.describe('Admin Positions Ticket Backfill @ticket-backfill', () => {
     await formModal.locator('.position-form-modal__cycle-option[data-cycle-value="2026 Summer"]').click()
     await formModal.getByPlaceholder('搜索或输入公司名称').fill(companyName)
     await formModal.locator('.position-form-modal__field').filter({ hasText: '公司类别' }).locator('select').selectOption('Tech')
-    await formModal.locator('.position-form-modal__field').filter({ hasText: '大区' }).locator('select').selectOption('ap')
+    await formModal.locator('.position-form-modal__field').filter({ hasText: '岗位地区' }).locator('select').selectOption('ap')
     await formModal.locator('.position-form-modal__field').filter({ hasText: '城市' }).locator('select').selectOption('Singapore')
     await formModal.getByPlaceholder('https://company.com/jobs/...').fill(`https://example.com/${suffix}`)
     await formModal.locator('textarea').fill('runtime create path')
