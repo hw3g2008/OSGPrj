@@ -13,6 +13,8 @@ import com.ruoyi.common.enums.UserStatus;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.service.ISysUserService;
 
 /**
@@ -34,6 +36,9 @@ public class UserDetailsServiceImpl implements UserDetailsService
     @Autowired
     private SysPermissionService permissionService;
 
+    @Autowired
+    private OsgStudentMapper osgStudentMapper;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
     {
@@ -52,6 +57,22 @@ public class UserDetailsServiceImpl implements UserDetailsService
         {
             log.info("登录用户：{} 已被停用.", username);
             throw new ServiceException(MessageUtils.message("user.blocked"));
+        }
+
+        OsgStudent student = osgStudentMapper.selectStudentByEmail(user.getUserName());
+        if (student != null)
+        {
+            String accountStatus = student.getAccountStatus();
+            if ("1".equals(accountStatus))
+            {
+                log.info("登录学员：{} 账号已冻结.", username);
+                throw new ServiceException(MessageUtils.message("student.account.frozen"));
+            }
+            if ("3".equals(accountStatus))
+            {
+                log.info("登录学员：{} 账号已退费.", username);
+                throw new ServiceException(MessageUtils.message("student.account.refunded"));
+            }
         }
 
         passwordService.validate(user);

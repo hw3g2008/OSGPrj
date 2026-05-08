@@ -12,13 +12,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="school" column="school"/>
         <result property="major" column="major"/>
         <result property="graduationYear" column="graduation_year"/>
+        <result property="graduationMonth" column="graduation_month"/>
         <result property="majorDirection" column="major_direction"/>
         <result property="subDirection" column="sub_direction"/>
         <result property="targetRegion" column="target_region"/>
         <result property="targetPosition" column="target_position"/>
         <result property="recruitmentCycle" column="recruitment_cycle"/>
         <result property="leadMentorId" column="lead_mentor_id"/>
+        <result property="leadMentorIds" column="lead_mentor_ids"/>
         <result property="assistantId" column="assistant_id"/>
+        <result property="assistantIds" column="assistant_ids"/>
         <result property="lastLoginTime" column="last_login_time"/>
         <result property="accountStatus" column="account_status"/>
         <result property="createBy" column="create_by"/>
@@ -29,9 +32,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectStudentColumns">
-        select student_id, student_name, email, gender, school, major, graduation_year,
+        select student_id, student_name, email, gender, school, major, graduation_year, graduation_month,
                major_direction, sub_direction, target_region, target_position, recruitment_cycle,
-               lead_mentor_id, assistant_id, last_login_time, account_status, create_by, create_time,
+               lead_mentor_id, lead_mentor_ids, assistant_id, assistant_ids,
+               last_login_time, account_status, create_by, create_time,
                update_by, update_time, remark
         from osg_student
     </sql>
@@ -44,6 +48,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectStudentByEmail" parameterType="String" resultMap="OsgStudentResult">
         <include refid="selectStudentColumns"/>
         where email = #{email}
+    </select>
+
+    <select id="selectStudentByUserId" parameterType="Long" resultMap="OsgStudentResult">
+        select s.student_id, s.student_name, s.email, s.gender, s.school, s.major, s.graduation_year, s.graduation_month,
+               s.major_direction, s.sub_direction, s.target_region, s.target_position, s.recruitment_cycle,
+               s.lead_mentor_id, s.lead_mentor_ids, s.assistant_id, s.assistant_ids,
+               s.last_login_time, s.account_status, s.create_by, s.create_time,
+               s.update_by, s.update_time, s.remark
+        from osg_student s
+        join sys_user u on u.user_name = s.email
+        where u.user_id = #{userId}
     </select>
 
     <select id="selectStudentByStudentIds" parameterType="list" resultMap="OsgStudentResult">
@@ -67,22 +82,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and email = #{email}
             </if>
             <if test="school != null and school != ''">
-                and school = #{school}
+                and FIND_IN_SET(#{school}, school)
             </if>
             <if test="graduationYear != null">
                 and graduation_year = #{graduationYear}
             </if>
             <if test="majorDirection != null and majorDirection != ''">
-                and major_direction = #{majorDirection}
+                and FIND_IN_SET(#{majorDirection}, major_direction)
             </if>
             <if test="recruitmentCycle != null and recruitmentCycle != ''">
-                and recruitment_cycle = #{recruitmentCycle}
+                and FIND_IN_SET(#{recruitmentCycle}, recruitment_cycle)
             </if>
             <if test="leadMentorId != null">
-                and lead_mentor_id = #{leadMentorId}
+                and (lead_mentor_id = #{leadMentorId} or FIND_IN_SET(#{leadMentorId}, lead_mentor_ids))
             </if>
             <if test="assistantId != null">
-                and assistant_id = #{assistantId}
+                and (assistant_id = #{assistantId} or FIND_IN_SET(#{assistantId}, assistant_ids))
             </if>
             <if test="accountStatus != null and accountStatus != ''">
                 and account_status = #{accountStatus}
@@ -101,13 +116,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="school != null and school != ''">school,</if>
             <if test="major != null and major != ''">major,</if>
             <if test="graduationYear != null">graduation_year,</if>
+            <if test="graduationMonth != null and graduationMonth != ''">graduation_month,</if>
             <if test="majorDirection != null and majorDirection != ''">major_direction,</if>
             <if test="subDirection != null and subDirection != ''">sub_direction,</if>
             <if test="targetRegion != null and targetRegion != ''">target_region,</if>
             <if test="targetPosition != null and targetPosition != ''">target_position,</if>
             <if test="recruitmentCycle != null and recruitmentCycle != ''">recruitment_cycle,</if>
             <if test="leadMentorId != null">lead_mentor_id,</if>
+            <if test="leadMentorIds != null and leadMentorIds != ''">lead_mentor_ids,</if>
             <if test="assistantId != null">assistant_id,</if>
+            <if test="assistantIds != null and assistantIds != ''">assistant_ids,</if>
             <if test="accountStatus != null and accountStatus != ''">account_status,</if>
             <if test="createBy != null and createBy != ''">create_by,</if>
             create_time,
@@ -123,13 +141,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="school != null and school != ''">#{school},</if>
             <if test="major != null and major != ''">#{major},</if>
             <if test="graduationYear != null">#{graduationYear},</if>
+            <if test="graduationMonth != null and graduationMonth != ''">#{graduationMonth},</if>
             <if test="majorDirection != null and majorDirection != ''">#{majorDirection},</if>
             <if test="subDirection != null and subDirection != ''">#{subDirection},</if>
             <if test="targetRegion != null and targetRegion != ''">#{targetRegion},</if>
             <if test="targetPosition != null and targetPosition != ''">#{targetPosition},</if>
             <if test="recruitmentCycle != null and recruitmentCycle != ''">#{recruitmentCycle},</if>
             <if test="leadMentorId != null">#{leadMentorId},</if>
+            <if test="leadMentorIds != null and leadMentorIds != ''">#{leadMentorIds},</if>
             <if test="assistantId != null">#{assistantId},</if>
+            <if test="assistantIds != null and assistantIds != ''">#{assistantIds},</if>
             <if test="accountStatus != null and accountStatus != ''">#{accountStatus},</if>
             <if test="createBy != null and createBy != ''">#{createBy},</if>
             sysdate(),
@@ -148,13 +169,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="school != null">school = #{school},</if>
             <if test="major != null">major = #{major},</if>
             <if test="graduationYear != null">graduation_year = #{graduationYear},</if>
+            <if test="graduationMonth != null">graduation_month = #{graduationMonth},</if>
             <if test="majorDirection != null">major_direction = #{majorDirection},</if>
             <if test="subDirection != null">sub_direction = #{subDirection},</if>
             <if test="targetRegion != null">target_region = #{targetRegion},</if>
             <if test="targetPosition != null">target_position = #{targetPosition},</if>
             <if test="recruitmentCycle != null">recruitment_cycle = #{recruitmentCycle},</if>
             <if test="leadMentorId != null">lead_mentor_id = #{leadMentorId},</if>
+            <if test="leadMentorIds != null">lead_mentor_ids = #{leadMentorIds},</if>
             <if test="assistantId != null">assistant_id = #{assistantId},</if>
+            <if test="assistantIds != null">assistant_ids = #{assistantIds},</if>
             <if test="accountStatus != null and accountStatus != ''">account_status = #{accountStatus},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             <if test="remark != null">remark = #{remark},</if>
