@@ -2,6 +2,7 @@ package com.ruoyi.web.controller.osg;
 
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.annotation.Excel;
+import com.ruoyi.common.annotation.Excel.ColumnType;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
@@ -27,9 +29,16 @@ import com.ruoyi.system.service.IOsgContractService;
 @RequestMapping("/admin/contract")
 public class OsgContractController extends BaseController
 {
-    private static final long MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024L;
+    private static final String[] ATTACHMENT_EXTENSIONS = { "pdf", "jpg", "jpeg", "png" };
 
-    private static final String[] PDF_EXTENSION = { "pdf" };
+    private static final Set<String> ATTACHMENT_MIME_WHITELIST = Set.of(
+        "application/pdf",
+        "image/jpeg",
+        "image/jpg",
+        "image/png"
+    );
+
+    private static final long ATTACHMENT_MAX_SIZE = 150L * 1024 * 1024;
 
     private static final String CONTRACT_ROLE_ACCESS = "@ss.hasPermi('admin:contracts:list')";
 
@@ -92,14 +101,19 @@ public class OsgContractController extends BaseController
         {
             return AjaxResult.error("附件不能为空");
         }
-        if (file.getSize() > MAX_ATTACHMENT_SIZE)
+        if (file.getSize() > ATTACHMENT_MAX_SIZE)
         {
-            return AjaxResult.error("合同附件不能超过10MB");
+            return AjaxResult.error("合同附件不能超过150MB");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ATTACHMENT_MIME_WHITELIST.contains(contentType.toLowerCase()))
+        {
+            return AjaxResult.error("仅支持 PDF / JPG / PNG 类型附件");
         }
 
         try
         {
-            String attachmentPath = FileUploadUtils.upload(RuoYiConfig.getUploadPath() + "/contracts", file, PDF_EXTENSION, true);
+            String attachmentPath = FileUploadUtils.upload(RuoYiConfig.getUploadPath() + "/contracts", file, ATTACHMENT_EXTENSIONS, true);
             Map<String, Object> persisted = contractId == null
                 ? Map.of("attachmentPath", attachmentPath)
                 : contractService.updateContractAttachment(contractId, attachmentPath, getUsername());
@@ -136,16 +150,16 @@ public class OsgContractController extends BaseController
         @Excel(name = "合同类型")
         private final String contractType;
 
-        @Excel(name = "合同金额")
+        @Excel(name = "合同金额", cellType = ColumnType.NUMERIC, scale = 2)
         private final java.math.BigDecimal contractAmount;
 
-        @Excel(name = "总课时")
+        @Excel(name = "总课时", cellType = ColumnType.NUMERIC)
         private final Integer totalHours;
 
-        @Excel(name = "已用课时")
+        @Excel(name = "已用课时", cellType = ColumnType.NUMERIC)
         private final java.math.BigDecimal usedHours;
 
-        @Excel(name = "剩余课时")
+        @Excel(name = "剩余课时", cellType = ColumnType.NUMERIC)
         private final java.math.BigDecimal remainingHours;
 
         @Excel(name = "开始日期", width = 20, dateFormat = "yyyy-MM-dd")
@@ -187,7 +201,7 @@ public class OsgContractController extends BaseController
                 contract.getStudentId(),
                 contract.getStudentName(),
                 contract.getLeadMentorName(),
-                contract.getContractType(),
+                mapContractType(contract.getContractType()),
                 contract.getContractAmount(),
                 contract.getTotalHours(),
                 contract.getUsedHours(),
@@ -195,8 +209,32 @@ public class OsgContractController extends BaseController
                 contract.getStartDate(),
                 contract.getEndDate(),
                 contract.getRenewalReason(),
-                contract.getContractStatus()
+                mapContractStatus(contract.getContractStatus())
             );
+        }
+
+        private static String mapContractStatus(String status)
+        {
+            if (status == null) return null;
+            switch (status)
+            {
+                case "active": return "有效";
+                case "expired": return "已结束";
+                case "cancelled": return "已作废";
+                default: return status;
+            }
+        }
+
+        private static String mapContractType(String type)
+        {
+            if (type == null) return "首签";
+            switch (type)
+            {
+                case "initial": return "首签";
+                case "renew": return "续签";
+                case "supplement": return "补充";
+                default: return "首签";
+            }
         }
     }
 }
