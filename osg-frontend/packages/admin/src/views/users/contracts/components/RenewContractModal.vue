@@ -89,6 +89,7 @@
               v-model:value="form.amountGbp"
               class="renew-contract-modal__number"
               :min="0"
+              :max="MAX_AMOUNT"
               :precision="2"
               :controls="false"
               placeholder="£ 请输入英镑金额"
@@ -106,6 +107,7 @@
               v-model:value="form.amountUsd"
               class="renew-contract-modal__number"
               :min="0"
+              :max="MAX_AMOUNT"
               :precision="2"
               :controls="false"
               :placeholder="form.currency === 'GBP' ? '$ 请输入美元等值金额' : '$ 请输入美元金额'"
@@ -123,6 +125,7 @@
               v-model:value="form.totalHours"
               class="renew-contract-modal__number"
               :min="1"
+              :max="MAX_CONTRACT_HOURS"
               :precision="0"
               :controls="false"
               placeholder="如 50（本次新增课时数）"
@@ -251,6 +254,7 @@ import {
 } from '@osg/shared/api/admin/contract'
 import { getStudentList } from '@osg/shared/api/admin/student'
 import { getToken } from '@osg/shared/utils/storage'
+import { MAX_AMOUNT, MAX_AMOUNT_MESSAGE, MAX_CONTRACT_HOURS, MAX_CONTRACT_HOURS_MESSAGE } from '@osg/shared/utils'
 import { getAdminDictOptions, type AdminDictListRow } from '@/api/adminDict'
 
 interface StudentOption {
@@ -410,6 +414,14 @@ const handleSubmit = async () => {
   }
   if (form.currency === 'GBP' && !form.amountGbp) {
     message.error('请输入英镑金额')
+    return
+  }
+  if ((form.amountUsd ?? 0) > MAX_AMOUNT || (form.amountGbp ?? 0) > MAX_AMOUNT) {
+    message.error(MAX_AMOUNT_MESSAGE)
+    return
+  }
+  if ((form.totalHours ?? 0) > MAX_CONTRACT_HOURS) {
+    message.error(MAX_CONTRACT_HOURS_MESSAGE)
     return
   }
   if (!form.startDate || !form.endDate) {

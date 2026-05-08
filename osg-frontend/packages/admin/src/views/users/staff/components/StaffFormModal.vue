@@ -3,7 +3,7 @@
     :open="visible"
     width="960px"
     :surface-id="surfaceId"
-    :body-class="'staff-form-modal__body'"
+    body-class="staff-form-modal__body osg-modal-form"
     @cancel="handleClose"
   >
     <template #title>
@@ -11,7 +11,7 @@
         <div v-if="isEditing" class="staff-form-modal__avatar">{{ avatarText }}</div>
         <span class="staff-form-modal__title-text">
           <span v-if="!isEditing" class="mdi mdi-account-plus" aria-hidden="true" style="margin-right:8px"></span>
-          {{ isEditing ? `编辑导师 - ${staff?.staffName || ''}` : '新增导师' }}
+          {{ isEditing ? `编辑导师 - ${staff?.staffName || ''}（ID: ${staff?.staffId ?? '-'}）` : '新增导师' }}
         </span>
       </div>
     </template>
@@ -89,12 +89,10 @@
           </a-col>
           <a-col :span="12">
             <a-form-item label="地区">
-              <a-select
-                v-model:value="form.region"
+              <MultiSelect
+                v-model:value="form.regions"
                 :options="regionItems"
-                :field-names="{ label: 'label', value: 'value' }"
-                placeholder="请选择"
-                allow-clear
+                placeholder="请选择，可多选"
               />
             </a-form-item>
           </a-col>
@@ -104,8 +102,8 @@
                 v-model:value="form.city"
                 :options="filteredCityOptions"
                 :field-names="{ label: 'label', value: 'value' }"
-                :placeholder="form.region ? '请选择' : '请先选择地区'"
-                :disabled="!form.region"
+                :placeholder="form.regions.length ? '请选择（选填）' : '请先选择地区'"
+                :disabled="!form.regions.length"
                 allow-clear
               />
             </a-form-item>
@@ -155,13 +153,14 @@
                 v-model:value="form.specialties"
                 :options="specialtyItems"
                 placeholder="请选择，可多选"
-                :max-tag-count="0"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="课时单价">
-              <a-input-number v-model:value="form.hourlyRate" :min="0" placeholder="请输入课时单价" style="width:100%" />
+            <a-form-item label="课时单价（USD/h）">
+              <a-input-number v-model:value="form.hourlyRate" :min="0" :max="MAX_AMOUNT" placeholder="如 200" style="width:100%">
+                <template #prefix>$</template>
+              </a-input-number>
             </a-form-item>
           </a-col>
         </a-row>
@@ -175,25 +174,12 @@
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
-          <a-col :span="12">
-            <a-form-item label="行业">
-              <MultiSelect
-                v-model:value="form.selectedIndustries"
-                :options="industryItems"
-                placeholder="请选择行业"
-                :max-tag-count="0"
-                @change="onIndustryChange"
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
+          <a-col :span="24">
             <a-form-item label="任职公司">
               <MultiSelect
                 v-model:value="form.companies"
-                :options="filteredCompanyOptions"
-                :placeholder="form.selectedIndustries.length ? '请选择公司' : '请先选择行业'"
-                :disabled="!form.selectedIndustries.length"
-                :max-tag-count="0"
+                :options="allCompanyOptions"
+                placeholder="请选择或搜索公司，可多选"
               />
             </a-form-item>
           </a-col>
@@ -215,6 +201,17 @@
                 :field-names="{ label: 'label', value: 'value' }"
                 placeholder="请选择评级"
                 allow-clear
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="24">
+            <a-form-item label="评语">
+              <a-textarea
+                v-model:value="form.ratingRemark"
+                :rows="3"
+                :maxlength="500"
+                show-count
+                placeholder="请输入评语（选填，仅超管可见可写）"
               />
             </a-form-item>
           </a-col>
@@ -261,8 +258,10 @@ import type { StaffListItem, StaffPayload } from '@osg/shared/api/admin/staff'
 import {
   splitPhone,
   joinPhone,
+  MAX_AMOUNT,
+  MAX_AMOUNT_MESSAGE,
 } from '@osg/shared/utils'
-import { useDictFacade, useIndustryMeta, type DictFacadeOption } from '@osg/shared/composables'
+import { useDictFacade } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -276,7 +275,7 @@ const { items: courseItems, load: loadCourse } = useDictFacade('osg_course_type'
 const { items: countryCodeItems, load: loadCountryCode } = useDictFacade('osg_country_code')
 const { items: specialtyItems, load: loadSpecialty } = useDictFacade('osg_specialty')
 const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
-const { items: industryItems, load: loadIndustry } = useIndustryMeta()
+const { items: companyItems, load: loadCompany } = useDictFacade('osg_company_name')
 
 const loadAllDicts = () => {
   void loadRegion()
@@ -287,7 +286,7 @@ const loadAllDicts = () => {
   void loadCountryCode()
   void loadSpecialty()
   void loadRating()
-  void loadIndustry()
+  void loadCompany()
 }
 
 /** 把后端逗号分隔的字典 value 串解析为数组（兼容历史中文 label：原样保留） */
@@ -310,15 +309,15 @@ const emit = defineEmits<{
 
 const DEFAULT_INITIAL_PASSWORD = 'Osg@2026'
 
-/** 国际电话区号下拉选项（从字典加载，支持客户编辑） */
+/** 国际电话区号下拉选项（从字典加载，区号取自 extra.callingCode） */
 const phoneCountryOptions = computed(() => {
-  // dict_value 已包含 + 前缀（如 "+86"），直接拼接 label
-  const items = countryCodeItems.value.map((item) => ({
-    value: item.value,
-    label: `${item.value} ${item.label}`,
-  }))
-  // 第一项为占位提示
-  return [{ value: '', label: '请选择区号' }, ...items]
+  const items = countryCodeItems.value
+    .map((item) => ({
+      value: item.extra?.callingCode || '',
+      label: `${item.extra?.callingCode ?? ''} ${item.label}`.trim(),
+    }))
+    .filter((opt) => opt.value)
+  return items.length ? items : [{ value: '+1', label: '+1 美国/加拿大' }]
 })
 
 const filterPhoneCountryOption = (input: string, option: { label: string; value: string }) => {
@@ -333,19 +332,19 @@ const form = reactive({
   staffName: '',
   email: '',
   phone: '',
-  phoneCountryCode: '', // 默认"请选择区号"
+  phoneCountryCode: '+1', // 默认美国/加拿大
   staffType: undefined as string | undefined,
   gender: undefined as string | undefined,
   wechatId: '',
   majorDirections: [] as string[],
   subDirections: [] as string[],
-  region: undefined as string | undefined,
+  regions: [] as string[],
   city: undefined as string | undefined,
   courseTypes: [] as string[],
   specialties: [] as string[],
-  selectedIndustries: [] as string[],
   companies: [] as string[],
   rating: undefined as string | undefined,
+  ratingRemark: '',
   loginAccount: '',
   initialPassword: '',
   hourlyRate: '' as string | number
@@ -354,10 +353,10 @@ const form = reactive({
 const isEditing = computed(() => Boolean(props.staff?.staffId))
 const surfaceId = computed(() => (isEditing.value ? 'modal-edit-staff' : 'modal-add-staff'))
 
-/** 城市按选中的 region 过滤；未选 region 时为空 */
+/** 城市按所有选中的 region 联合过滤；未选 region 时为空 */
 const filteredCityOptions = computed(() => {
-  if (!form.region) return []
-  return cityItems.value.filter((c) => c.parentValue === form.region)
+  if (!form.regions.length) return []
+  return cityItems.value.filter((c) => c.parentValue && form.regions.includes(c.parentValue))
 })
 
 /** 子方向按已选主攻方向（多个）联合过滤 */
@@ -366,18 +365,8 @@ const filteredSubOptions = computed(() => {
   return subItems.value.filter((s) => s.parentValue && form.majorDirections.includes(s.parentValue))
 })
 
-/** 行业 → 公司联动：当前选中行业对应的公司列表 */
-const filteredCompanyOptions = computed(() => {
-  if (!form.selectedIndustries.length) return []
-  return industryItems.value.filter((c) => c.parentValue && form.selectedIndustries.includes(c.parentValue))
-})
-
-/** 行业变化 → 清空公司选项（保留已选但不在新行业内的公司会被过滤） */
-const onIndustryChange = () => {
-  form.companies = form.companies.filter((v) =>
-    industryItems.value.some((c) => c.value === v && form.selectedIndustries.includes(c.parentValue ?? ''))
-  )
-}
+/** 任职公司全量：osg_company_name 字典 */
+const allCompanyOptions = computed(() => companyItems.value)
 
 const avatarText = computed(() => {
   const name = props.staff?.staffName?.trim()
@@ -397,38 +386,25 @@ const resetForm = () => {
   form.staffName = props.staff?.staffName || ''
   form.email = props.staff?.email || ''
   const parsedPhone = splitPhone(props.staff?.phone)
-  // 编辑时：复用已有区号；新建时：显示"请选择区号"
-  form.phoneCountryCode = isEditing.value ? parsedPhone.countryCode : ''
+  // 编辑时：复用已有区号；新建时：默认 +1 美国/加拿大
+  form.phoneCountryCode = isEditing.value ? parsedPhone.countryCode : '+1'
   form.phone = parsedPhone.number
   form.staffType = props.staff?.staffType || undefined
   form.gender = props.staff?.gender || undefined
   form.wechatId = props.staff?.wechatId || ''
   form.majorDirections = splitCsv(props.staff?.majorDirection)
   form.subDirections = splitCsv(props.staff?.subDirection)
-  form.region = props.staff?.region || undefined
+  form.regions = splitCsv(props.staff?.region)
   form.city = props.staff?.city || undefined
   form.courseTypes = splitCsv(props.staff?.courseTypes)
   form.specialties = splitCsv(props.staff?.specialty)
-  // companies: 从 CSV 解析后，尝试推断行业
   form.companies = splitCsv(props.staff?.companies)
-  form.selectedIndustries = inferIndustriesFromCompanies(form.companies)
   form.rating = props.staff?.rating || undefined
+  form.ratingRemark = props.staff?.ratingRemark || ''
   form.loginAccount = ''
   form.initialPassword = ''
   form.hourlyRate = props.staff?.hourlyRate == null ? '' : String(props.staff.hourlyRate)
   syncAccountDefaults()
-}
-
-/** 根据已选公司反查行业列表（用于编辑回显） */
-const inferIndustriesFromCompanies = (companyValues: string[]): string[] => {
-  const industries = new Set<string>()
-  for (const v of companyValues) {
-    const company = industryItems.value.find((c) => c.value === v)
-    if (company?.parentValue) {
-      industries.add(company.parentValue)
-    }
-  }
-  return Array.from(industries)
 }
 
 watch(
@@ -460,14 +436,19 @@ watch(
   }
 )
 
-/** 地区变化 → 清空城市（避免脏值）。
- *  `!prev` 时跳过：resetForm 把 region 从 undefined 设到具体值时不应清掉同时被 reset 的 city。 */
+/** 地区变化 → 若已选 city 不在剩余 region 范围内则清掉（避免脏值）。
+ *  仅在 prev 非空且发生缩减时清，避免 resetForm 期间误清。 */
 watch(
-  () => form.region,
+  () => form.regions,
   (next, prev) => {
-    if (!next || !prev || next === prev) return
-    form.city = undefined
-  }
+    if (!prev || !prev.length) return
+    if (!form.city) return
+    const cityItem = cityItems.value.find((c) => c.value === form.city)
+    if (cityItem?.parentValue && !next.includes(cityItem.parentValue)) {
+      form.city = undefined
+    }
+  },
+  { deep: true }
 )
 
 watch(
@@ -499,16 +480,16 @@ const handleSubmit = () => {
     message.error('请选择主攻方向')
     return
   }
-  if (!form.region) {
+  if (!form.regions.length) {
     message.error('请选择地区')
-    return
-  }
-  if (!form.city) {
-    message.error('请选择城市')
     return
   }
   if (!hourlyRateText) {
     message.error('请填写课时单价')
+    return
+  }
+  if (Number(hourlyRateText) > MAX_AMOUNT) {
+    message.error(MAX_AMOUNT_MESSAGE)
     return
   }
   // 前端校验：擅长最多 20 项
@@ -532,12 +513,13 @@ const handleSubmit = () => {
     wechatId: form.wechatId.trim() || undefined,
     majorDirection: form.majorDirections.join(','),
     subDirection: form.subDirections.length ? form.subDirections.join(',') : undefined,
-    region: form.region as string,
-    city: form.city as string,
+    region: form.regions.join(','),
+    city: form.city || undefined,
     courseTypes: form.courseTypes.length ? form.courseTypes.join(',') : undefined,
     specialty: form.specialties.length ? form.specialties.join(',') : undefined,
     companies: form.companies.length ? form.companies.join(',') : undefined,
     rating: form.rating,
+    ratingRemark: form.ratingRemark.trim() || undefined,
     loginAccount: form.loginAccount.trim() || undefined,
     initialPassword: form.initialPassword.trim() || undefined,
     hourlyRate: Number(hourlyRateText)
@@ -665,115 +647,9 @@ const handleSubmit = () => {
   padding-bottom: 8px !important;
 }
 
-/* ── 控件高度统一 44px（含 select 单选/多选、input、input-number、affix-wrapper）──
-   父组件 OverlaySurfaceModal 用 :deep 把 selector / picker / input-number 设为 min-height: 48 + padding: 10 14，
-   选择器权重 (0,4,1) 比这里 (0,3,1) 高，必须 !important 才能压过去。 */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-number),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-number),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select .ant-select-selector),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select .ant-select-selector) {
-  height: 44px !important;
-  min-height: 44px !important;
-  box-sizing: border-box;
-}
-
-/* 控件横向 padding（input/selector 内文字距左边 14px） */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-number),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-number),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select .ant-select-selector),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select .ant-select-selector) {
-  padding: 0 14px !important;
-}
-
-/* a-select 外层容器去掉自身 padding，避免与 selector 双重叠加 */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select) {
-  padding: 0 !important;
-}
-
-/* select selector / affix-wrapper 用 flex 居中文字（含单选/多选） */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select .ant-select-selector),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select .ant-select-selector),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-affix-wrapper),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-affix-wrapper) {
-  display: flex;
-  align-items: center;
-}
-
-/* 普通 input：靠 line-height 让光标垂直居中 */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input) {
-  line-height: 40px !important;
-}
-
-/* 单选 select 的 selection-item / placeholder / search-input */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-item),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-item),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-placeholder),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-placeholder),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-search-input),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-single .ant-select-selector .ant-select-selection-search-input) {
-  line-height: 40px !important;
-  height: 40px !important;
-}
-
-/* 多选 select：解除 44px 死锁，按 tag 数量自动换行撑高（min-height 仍保 44 与单选齐高） */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple),
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector) {
-  height: auto !important;
-  min-height: 44px !important;
-  padding-top: 6px !important;
-  padding-bottom: 6px !important;
-}
-
-/* 多选 select：placeholder / search input / overflow（标签容器）撑满 selector 高度 */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-placeholder),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-placeholder) {
-  line-height: 40px !important;
-  inset-inline-start: 14px !important;
-}
-
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-overflow),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selector .ant-select-selection-overflow) {
-  line-height: 40px !important;
-  align-items: center !important;
-}
-
-/* 多选 selection-item（已选标签）vertical 居中、紧凑 */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selection-item),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-select-multiple .ant-select-selection-item) {
-  height: 28px !important;
-  line-height: 26px !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-}
-
-/* input-number 内部 input 撑满父容器，光标垂直居中（不改 wrapper 的 inline 显示，保留 handler 区域） */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-number .ant-input-number-input),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-number .ant-input-number-input) {
-  height: 40px !important;
-  line-height: 40px !important;
-  padding: 0 !important;
-}
-
-/* affix-wrapper 内嵌 input 去掉自身 padding 与 line-height 二次叠加 */
-:global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-input-affix-wrapper > input.ant-input),
-:global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-input-affix-wrapper > input.ant-input) {
-  height: auto !important;
-  line-height: 40px !important;
-}
+/* 控件尺寸/圆角/边框由公共 .osg-modal-form 接管（body-class 已注入）。
+   见 docs/modal-form-style-guide.md §1-§3 与 packages/shared/src/styles/index.scss。
+   本组件只保留布局类样式（手机号区号 + 号码分组）。 */
 
 /* ── 手机号：区号 + 号码 分离布局 ── */
 .phone-input-group {

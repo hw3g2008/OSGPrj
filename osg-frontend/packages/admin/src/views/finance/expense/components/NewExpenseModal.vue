@@ -33,7 +33,14 @@
         </a-col>
         <a-col :span="12">
           <a-form-item label="金额">
-            <a-input v-model:value="form.expenseAmount" placeholder="金额" />
+            <a-input-number
+              v-model:value="amountInput"
+              :min="0"
+              :max="MAX_AMOUNT"
+              :precision="2"
+              placeholder="金额"
+              style="width:100%"
+            />
           </a-form-item>
         </a-col>
         <a-col :span="12">
@@ -62,8 +69,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
+import { message } from 'ant-design-vue'
 import type { CreateExpensePayload, ExpenseType } from '@osg/shared/api/admin/expense'
+import { MAX_AMOUNT, MAX_AMOUNT_MESSAGE } from '@osg/shared/utils'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
 const expenseTypes: ExpenseType[] = [
@@ -97,10 +106,12 @@ const initialForm = (): CreateExpensePayload => ({
 })
 
 const form = reactive<CreateExpensePayload>(initialForm())
+const amountInput = ref<number | undefined>(undefined)
 
 watch(() => props.modelValue, (open) => {
   if (!open) {
     Object.assign(form, initialForm())
+    amountInput.value = undefined
   }
 })
 
@@ -109,11 +120,16 @@ const close = () => {
 }
 
 const submit = () => {
+  // a-input-number :max 已会拦截超限输入，此处提交前再做一道兼险
+  if ((amountInput.value ?? 0) > MAX_AMOUNT) {
+    message.error(MAX_AMOUNT_MESSAGE)
+    return
+  }
   emit('confirm', {
     mentorId: Number(form.mentorId),
     mentorName: form.mentorName,
     expenseType: form.expenseType,
-    expenseAmount: form.expenseAmount,
+    expenseAmount: amountInput.value != null ? String(amountInput.value) : '',
     expenseDate: form.expenseDate,
     description: form.description,
     attachmentUrl: form.attachmentUrl || undefined

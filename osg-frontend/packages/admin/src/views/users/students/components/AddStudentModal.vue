@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="modal-add-student"
     width="880px"
-    :body-class="'add-student-modal__body'"
+    :body-class="'add-student-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>
@@ -132,12 +132,10 @@
             <template #label>
               <span class="add-student-modal__label">学校</span>
             </template>
-            <a-select
+            <MultiSelect
               v-model:value="formState.school"
               :options="schoolOptions"
-              placeholder="请选择学校"
-              show-search
-              allow-clear
+              placeholder="可多选学校（读研/双学位等）"
             />
           </a-form-item>
 
@@ -152,15 +150,18 @@
             />
           </a-form-item>
 
-          <a-form-item name="graduationYear" data-field-name="毕业年份">
+          <a-form-item name="graduationYear" data-field-name="毕业年月">
             <template #label>
-              <span class="add-student-modal__label">毕业年份</span>
+              <span class="add-student-modal__label">毕业年月</span>
             </template>
-            <a-select
-              v-model:value="formState.graduationYear"
-              placeholder="请选择毕业年份"
-              :options="graduationYearOptions"
-              show-search
+            <a-date-picker
+              v-model:value="graduationMonthValue"
+              picker="month"
+              format="YYYY-MM"
+              value-format="YYYY-MM"
+              :disabled-date="disabledGraduationMonth"
+              placeholder="请选择毕业年月"
+              style="width: 100%"
             />
           </a-form-item>
 
@@ -175,9 +176,9 @@
             />
           </a-form-item>
 
-          <a-form-item name="studyPlan" data-field-name="读研延毕">
+          <a-form-item name="studyPlan" data-field-name="学业状态">
             <template #label>
-              <span class="add-student-modal__label">读研延毕</span>
+              <span class="add-student-modal__label">学业状态</span>
             </template>
             <a-radio-group v-model:value="formState.studyPlan" class="add-student-modal__radio-group">
               <a-radio-button value="normal">正常毕业</a-radio-button>
@@ -281,11 +282,21 @@
                 <span class="add-student-modal__required">*</span>
               </span>
             </template>
-            <a-input
-              v-model:value="formState.phone"
-              placeholder="请输入联系电话"
-              allow-clear
-            />
+            <div class="phone-input-group">
+              <a-select
+                v-model:value="phoneCountryCode"
+                :options="phoneCountryOptions"
+                class="phone-input-group__code"
+                :show-search="true"
+                :filter-option="filterPhoneCountryOption"
+              />
+              <a-input
+                v-model:value="formState.phone"
+                class="phone-input-group__number"
+                placeholder="请输入联系电话"
+                allow-clear
+              />
+            </div>
           </a-form-item>
 
           <a-form-item name="wechat" data-field-name="微信">
@@ -295,6 +306,18 @@
             <a-input
               v-model:value="formState.wechat"
               placeholder="请输入微信号"
+              allow-clear
+            />
+          </a-form-item>
+
+          <a-form-item name="remark" data-field-name="备注" class="add-student-modal__field--wide">
+            <template #label>
+              <span class="add-student-modal__label">备注</span>
+            </template>
+            <a-textarea
+              v-model:value="formState.remark"
+              placeholder="选填，可填写学员相关补充说明"
+              :rows="2"
               allow-clear
             />
           </a-form-item>
@@ -373,6 +396,7 @@
               v-model:value="formState.amountGbp"
               class="add-student-modal__number"
               :min="0"
+              :max="MAX_AMOUNT"
               :precision="2"
               :controls="false"
               placeholder="£ 请输入英镑金额"
@@ -390,6 +414,7 @@
               v-model:value="formState.amountUsd"
               class="add-student-modal__number"
               :min="0"
+              :max="MAX_AMOUNT"
               :precision="2"
               :controls="false"
               :placeholder="formState.currency === 'GBP' ? '$ 请输入美元等值金额' : '$ 请输入美元金额'"
@@ -407,6 +432,7 @@
               v-model:value="formState.totalHours"
               class="add-student-modal__number"
               :min="1"
+              :max="MAX_CONTRACT_HOURS"
               :precision="0"
               :controls="false"
               placeholder="如 40"
@@ -445,21 +471,26 @@
 
           <a-form-item name="contractAttachment" data-field-name="合同附件" class="add-student-modal__field--wide">
             <template #label>
-              <span class="add-student-modal__label">合同附件</span>
+              <span class="add-student-modal__label">
+                合同附件
+                <span class="add-student-modal__required">*</span>
+              </span>
             </template>
             <a-upload-dragger
               :action="uploadAction"
               :headers="uploadHeaders"
               name="file"
+              accept=".pdf,.png,.jpg,.jpeg"
               :max-count="1"
               :file-list="fileList"
+              :before-upload="beforeContractUpload"
               @change="handleUploadChange"
             >
               <p class="ant-upload-drag-icon">
                 <i class="mdi mdi-cloud-upload" style="font-size: 28px; color: #4f74ff"></i>
               </p>
               <p class="ant-upload-text">点击或拖拽文件上传</p>
-              <p class="ant-upload-hint">支持 PDF、Word、图片等格式</p>
+              <p class="ant-upload-hint">仅支持 PDF / PNG / JPG / JPEG，单文件不超过 150MB</p>
             </a-upload-dragger>
           </a-form-item>
 
@@ -496,6 +527,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import dayjs, { type Dayjs } from 'dayjs'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
@@ -503,6 +535,8 @@ import { MultiSelect } from '@osg/shared/components'
 import { getStaffOptions, type StaffOption } from '@osg/shared/api/admin/staff'
 import { getAdminDictOptions } from '@/api/adminDict'
 import { getToken } from '@osg/shared/utils/storage'
+import { splitPhone, joinPhone, MAX_AMOUNT, MAX_AMOUNT_MESSAGE, MAX_CONTRACT_HOURS, MAX_CONTRACT_HOURS_MESSAGE } from '@osg/shared/utils'
+import { useDictFacade } from '@osg/shared/composables'
 
 interface AddStudentBasicInfo {
   studentName: string
@@ -510,7 +544,7 @@ interface AddStudentBasicInfo {
   email: string
   phone?: string
   wechat?: string
-  school?: string
+  school?: string[]
   major?: string
   highSchool?: string
   graduationYear?: number
@@ -532,6 +566,8 @@ interface AddStudentBasicInfo {
   initialPassword?: string
   contractAttachment?: string
   contractRemark?: string
+  remark?: string
+  graduationMonth?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -555,21 +591,78 @@ const mentorLoading = ref(false)
 const assistantLoading = ref(false)
 const currentYear = new Date().getFullYear()
 const fileList = ref<any[]>([])
+
+/** 区号默认 +1（美国/加拿大），用户可在下拉中切换 */
+const phoneCountryCode = ref<string>('+1')
+const { items: countryCodeItems, load: loadCountryCode } = useDictFacade('osg_country_code')
+const phoneCountryOptions = computed(() => {
+  // 区号取自字典 extra.callingCode（dict_value 用作国家 ISO 代码）
+  const items = countryCodeItems.value
+    .map((item) => ({
+      value: item.extra?.callingCode || '',
+      label: `${item.extra?.callingCode ?? ''} ${item.label}`.trim(),
+    }))
+    .filter((opt) => opt.value)
+  return items.length ? items : [{ value: '+1', label: '+1 美国/加拿大' }]
+})
+const filterPhoneCountryOption = (input: string, option: { label: string; value: string }) => {
+  const keyword = input.trim().toLowerCase()
+  if (!keyword) return true
+  return option.label.toLowerCase().includes(keyword) || option.value.toLowerCase().includes(keyword)
+}
 const uploadAction = '/api/common/upload'
 const uploadHeaders = computed(() => ({
   Authorization: `Bearer ${getToken()}`
 }))
 
+const MAX_CONTRACT_UPLOAD_MB = 150
+const MAX_CONTRACT_UPLOAD_BYTES = MAX_CONTRACT_UPLOAD_MB * 1024 * 1024
+
+const ALLOWED_CONTRACT_EXTS = /\.(pdf|png|jpe?g)$/i
+
+const beforeContractUpload = (file: File) => {
+  if (!ALLOWED_CONTRACT_EXTS.test(file.name || '')) {
+    message.error('仅支持 PDF / PNG / JPG / JPEG')
+    return false
+  }
+  if (file.size > MAX_CONTRACT_UPLOAD_BYTES) {
+    message.error(`文件超过 ${MAX_CONTRACT_UPLOAD_MB}MB（实际 ${(file.size / 1024 / 1024).toFixed(2)}MB）`)
+    return false
+  }
+  return true
+}
+
+const extractUploadErrorMessage = (info: UploadChangeParam) => {
+  const response = info.file.response as { msg?: string; message?: string; code?: number } | undefined
+  if (response?.msg) return response.msg
+  if (response?.message) return response.message
+  const errorObj = info.file.error as { message?: string; status?: number } | undefined
+  if (errorObj?.message) return errorObj.message
+  if (errorObj?.status) return `HTTP ${errorObj.status}`
+  return '请检查网络与文件格式'
+}
+
 const handleUploadChange = (info: UploadChangeParam) => {
   fileList.value = info.fileList.slice(-1)
   if (info.file.status === 'done') {
-    const url = info.file.response?.url || info.file.response?.fileName
+    const response = info.file.response as { url?: string; fileName?: string; code?: number; msg?: string } | undefined
+    if (response && response.code !== undefined && response.code !== 200) {
+      formState.contractAttachment = undefined
+      message.error(`上传失败：${response.msg || '后端返回错误'}`)
+      fileList.value = []
+      return
+    }
+    const url = response?.url || response?.fileName
     if (url) {
       formState.contractAttachment = url
       message.success('上传成功')
     }
   } else if (info.file.status === 'error') {
-    message.error('上传失败，请重试')
+    formState.contractAttachment = undefined
+    const detail = extractUploadErrorMessage(info)
+    console.error('[AddStudentModal] contract upload failed', info.file)
+    message.error(`上传失败：${detail}`)
+    fileList.value = []
   }
 }
 
@@ -578,15 +671,25 @@ const genderOptions = [
   { label: '女', value: 'female' }
 ]
 
-const graduationYearOptions = computed(() =>
-  Array.from({ length: 12 }, (_, index) => {
-    const value = currentYear - 4 + index
-    return {
-      label: `${value}`,
-      value
-    }
-  }).reverse()
-)
+const graduationMonthValue = ref<string | null>(null)
+
+watch(graduationMonthValue, (next) => {
+  if (!next) {
+    formState.graduationYear = undefined
+    return
+  }
+  // value-format="YYYY-MM" 让 v-model 收字符串；兼容偶发 dayjs 对象
+  formState.graduationYear = typeof next === 'string'
+    ? Number(next.slice(0, 4)) || undefined
+    : (next as Dayjs).year()
+})
+
+const disabledGraduationMonth = (current?: Dayjs) => {
+  if (!current) return false
+  const today = dayjs().startOf('month')
+  const max = today.add(3, 'year').endOf('month')
+  return current.isBefore(today) || current.isAfter(max)
+}
 
 const mentorSelectOptions = computed(() =>
   mentorOptions.value.map(s => ({ label: s.label, value: s.value }))
@@ -632,7 +735,7 @@ const formState = reactive<AddStudentBasicInfo>({
   email: '',
   phone: undefined,
   wechat: undefined,
-  school: undefined,
+  school: [],
   major: undefined,
   highSchool: undefined,
   graduationYear: undefined,
@@ -653,7 +756,8 @@ const formState = reactive<AddStudentBasicInfo>({
   endDate: undefined,
   initialPassword: undefined,
   contractAttachment: undefined,
-  contractRemark: undefined
+  contractRemark: undefined,
+  remark: undefined
 })
 
 const rules = {
@@ -666,9 +770,18 @@ const rules = {
   targetRegion: [{ required: true, type: 'array' as const, min: 1, message: '请至少选择一个求职地区', trigger: 'change' }],
   recruitmentCycle: [{ required: true, type: 'array' as const, min: 1, message: '请至少选择一个招聘周期', trigger: 'change' }],
   currency: [{ required: true, message: '请选择币种', trigger: 'change' }],
-  amountUsd: [{ required: true, message: '请输入美元金额', trigger: 'change' }],
-  amountGbp: [{ required: true, message: '请输入英镑金额', trigger: 'change' }],
-  totalHours: [{ required: true, message: '请输入课时', trigger: 'change' }],
+  amountUsd: [
+    { required: true, message: '请输入美元金额', trigger: 'change' },
+    { type: 'number' as const, max: MAX_AMOUNT, message: MAX_AMOUNT_MESSAGE, trigger: 'change' }
+  ],
+  amountGbp: [
+    { required: true, message: '请输入英镑金额', trigger: 'change' },
+    { type: 'number' as const, max: MAX_AMOUNT, message: MAX_AMOUNT_MESSAGE, trigger: 'change' }
+  ],
+  totalHours: [
+    { required: true, message: '请输入课时', trigger: 'change' },
+    { type: 'number' as const, max: MAX_CONTRACT_HOURS, message: MAX_CONTRACT_HOURS_MESSAGE, trigger: 'change' }
+  ],
   startDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
   endDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
   phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
@@ -678,9 +791,16 @@ const resetForm = () => {
   formState.studentName = props.initialValue?.studentName ?? ''
   formState.gender = props.initialValue?.gender
   formState.email = props.initialValue?.email ?? ''
-  formState.phone = props.initialValue?.phone
+  if (props.initialValue?.phone) {
+    const parsed = splitPhone(props.initialValue.phone)
+    phoneCountryCode.value = parsed.countryCode
+    formState.phone = parsed.number || undefined
+  } else {
+    phoneCountryCode.value = '+1'
+    formState.phone = undefined
+  }
   formState.wechat = props.initialValue?.wechat
-  formState.school = props.initialValue?.school
+  formState.school = props.initialValue?.school ?? []
   formState.major = props.initialValue?.major
   formState.highSchool = props.initialValue?.highSchool
   formState.graduationYear = props.initialValue?.graduationYear
@@ -702,6 +822,10 @@ const resetForm = () => {
   formState.initialPassword = props.initialValue?.initialPassword
   formState.contractAttachment = props.initialValue?.contractAttachment
   formState.contractRemark = props.initialValue?.contractRemark
+  formState.remark = props.initialValue?.remark
+  graduationMonthValue.value = props.initialValue?.graduationYear
+    ? `${props.initialValue.graduationYear}-06`
+    : null
   fileList.value = []
 }
 
@@ -719,6 +843,7 @@ watch(
     if (visible) {
       resetForm()
       await Promise.all([loadMentorOptions(), loadAssistantOptions(), loadDictOptions()])
+      void loadCountryCode()
     }
   }
 )
@@ -763,12 +888,13 @@ const createPayload = (): AddStudentBasicInfo => ({
   studentName: formState.studentName.trim(),
   gender: formState.gender,
   email: formState.email.trim(),
-  phone: formState.phone,
+  phone: joinPhone(phoneCountryCode.value, formState.phone),
   wechat: formState.wechat,
-  school: formState.school?.trim(),
+  school: formState.school?.length ? [...formState.school] : undefined,
   major: formState.major?.trim(),
   highSchool: formState.highSchool,
   graduationYear: formState.graduationYear,
+  graduationMonth: graduationMonthValue.value || undefined,
   studyPlan: formState.studyPlan,
   visaStatus: formState.visaStatus,
   targetRegion: formState.targetRegion,
@@ -786,7 +912,8 @@ const createPayload = (): AddStudentBasicInfo => ({
   endDate: formState.endDate,
   initialPassword: formState.initialPassword,
   contractAttachment: formState.contractAttachment,
-  contractRemark: formState.contractRemark
+  contractRemark: formState.contractRemark,
+  remark: formState.remark?.trim() || undefined
 })
 
 const handleSubmit = async () => {
@@ -799,6 +926,10 @@ const handleSubmit = async () => {
   }
   if (!formState.subDirections.length) {
     message.error('请至少选择一个子方向')
+    return
+  }
+  if (!formState.contractAttachment) {
+    message.error('请上传合同附件（PDF / PNG / JPG / JPEG）')
     return
   }
   emit('submit', createPayload())
@@ -1052,6 +1183,22 @@ const handleSubmit = async () => {
   grid-column: 1 / -1;
 }
 
+/* ── 手机号：区号 + 号码 分离布局（与 StaffFormModal 保持一致） ── */
+.phone-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phone-input-group__code {
+  flex: 0 0 130px;
+}
+
+.phone-input-group__number {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* ── Section badge pills ── */
 .add-student-modal__section-badge {
   display: inline-flex;
@@ -1213,4 +1360,8 @@ const handleSubmit = async () => {
   }
 }
 
+
+
 </style>
+
+<!-- 控件高度由 shared/styles/index.scss 的 .osg-modal-form 公共规则统一管控（5 端通用 36px） -->
