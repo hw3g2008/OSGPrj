@@ -672,7 +672,7 @@ const progressOptions = [
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const studentsLoading = ref(false)
-const studentOptions = ref<{ value: number; label: string }[]>([])
+const studentOptions = ref<{ value: number; label: string; accountStatus?: string; disabled?: boolean }[]>([])
 
 /** §A.0.4 my-targets 加载状态 */
 interface MyTargetCoaching {
@@ -818,10 +818,23 @@ async function loadStudents() {
   studentsLoading.value = true
   try {
     const response = await getAssistantStudentList({ pageNum: 1, pageSize: 999 })
-    studentOptions.value = (response.rows || []).map((s) => ({
-      value: s.studentId,
-      label: s.studentName || `学员${s.studentId}`,
-    }))
+    studentOptions.value = (response.rows || []).map((s) => {
+      // status=1 冻结 / status=3 退费 → 后端会拒绝申报，前端先 disable 防呆并加状态后缀
+      const blocked = s.accountStatus === '1' || s.accountStatus === '3'
+      const statusSuffix = s.accountStatus === '1'
+        ? '（冻结，不可申报）'
+        : s.accountStatus === '3'
+          ? '（已退费，不可申报）'
+          : s.accountStatus === '2'
+            ? '（已结束）'
+            : ''
+      return {
+        value: s.studentId,
+        label: `${s.studentName || `学员${s.studentId}`}${statusSuffix}`,
+        accountStatus: s.accountStatus,
+        disabled: blocked,
+      }
+    })
   } catch {
     studentOptions.value = []
   } finally {
