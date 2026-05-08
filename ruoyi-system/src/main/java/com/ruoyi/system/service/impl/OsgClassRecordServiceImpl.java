@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgClassRecordAttachment;
 import com.ruoyi.system.domain.OsgCoaching;
@@ -858,6 +859,33 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             {
                 throw new ServiceException("课程反馈不能为空");
             }
+        }
+        validateStudentAccountForClassRecord(record.getStudentId());
+    }
+
+    /**
+     * 学员账号状态守卫：
+     * - account_status=1（冻结）→ 抛 class_record.student.frozen
+     * - account_status=3（退费）→ 抛 class_record.student.refunded
+     * - 其他（0/2/黑名单）→ 通过（合同结束/黑名单不拦申报）
+     *
+     * 由 lead-mentor 与 assistant 申报路径共用（assistant 也走 validateLeadMentorCreate）。
+     */
+    private void validateStudentAccountForClassRecord(Long studentId)
+    {
+        OsgStudent student = studentMapper.selectStudentByStudentId(studentId);
+        if (student == null)
+        {
+            throw new ServiceException("学员不存在");
+        }
+        String accountStatus = student.getAccountStatus();
+        if ("1".equals(accountStatus))
+        {
+            throw new ServiceException(MessageUtils.message("class_record.student.frozen"));
+        }
+        if ("3".equals(accountStatus))
+        {
+            throw new ServiceException(MessageUtils.message("class_record.student.refunded"));
         }
     }
 
