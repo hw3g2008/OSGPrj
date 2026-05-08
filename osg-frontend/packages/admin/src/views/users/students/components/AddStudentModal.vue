@@ -400,6 +400,7 @@
               :precision="2"
               :controls="false"
               placeholder="£ 请输入英镑金额"
+              @change="(v: number | string | null) => clampAmount('amountGbp', v)"
             />
           </a-form-item>
 
@@ -418,6 +419,7 @@
               :precision="2"
               :controls="false"
               :placeholder="formState.currency === 'GBP' ? '$ 请输入美元等值金额' : '$ 请输入美元金额'"
+              @change="(v: number | string | null) => clampAmount('amountUsd', v)"
             />
           </a-form-item>
 
@@ -610,7 +612,7 @@ const filterPhoneCountryOption = (input: string, option: { label: string; value:
   if (!keyword) return true
   return option.label.toLowerCase().includes(keyword) || option.value.toLowerCase().includes(keyword)
 }
-const uploadAction = '/api/common/upload'
+const uploadAction = '/api/admin/contract/upload'
 const uploadHeaders = computed(() => ({
   Authorization: `Bearer ${getToken()}`
 }))
@@ -619,6 +621,15 @@ const MAX_CONTRACT_UPLOAD_MB = 150
 const MAX_CONTRACT_UPLOAD_BYTES = MAX_CONTRACT_UPLOAD_MB * 1024 * 1024
 
 const ALLOWED_CONTRACT_EXTS = /\.(pdf|png|jpe?g)$/i
+
+const clampAmount = (field: 'amountUsd' | 'amountGbp', value: number | string | null) => {
+  if (value == null || value === '') return
+  const num = typeof value === 'string' ? Number(value) : value
+  if (Number.isFinite(num) && num > MAX_AMOUNT) {
+    formState[field] = MAX_AMOUNT
+    message.warning(MAX_AMOUNT_MESSAGE)
+  }
+}
 
 const beforeContractUpload = (file: File) => {
   if (!ALLOWED_CONTRACT_EXTS.test(file.name || '')) {
@@ -652,7 +663,7 @@ const handleUploadChange = (info: UploadChangeParam) => {
       fileList.value = []
       return
     }
-    const url = response?.url || response?.fileName
+    const url = response?.url || (response as { attachmentPath?: string })?.attachmentPath || response?.fileName
     if (url) {
       formState.contractAttachment = url
       message.success('上传成功')

@@ -21,6 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="city" column="city"/>
         <result property="hourlyRate" column="hourly_rate"/>
         <result property="rating" column="rating"/>
+        <result property="ratingRemark" column="rating_remark"/>
         <result property="studentCount" column="student_count"/>
         <result property="accountStatus" column="account_status"/>
         <result property="createBy" column="create_by"/>
@@ -47,6 +48,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         s.city,
         s.hourly_rate,
         s.rating,
+        s.rating_remark,
         (
             select count(1)
             from osg_student stu
@@ -79,6 +81,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </select>
 
+    <select id="selectStaffByEmail" resultMap="OsgStaffResult">
+        select
+        <include refid="selectStaffColumns"/>
+        from osg_staff s
+        where lower(trim(s.email)) = lower(trim(#{email}))
+        limit 1
+    </select>
+
     <select id="selectStaffList" parameterType="OsgStaff" resultMap="OsgStaffResult">
         select
         <include refid="selectStaffColumns"/>
@@ -97,7 +107,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and s.account_status = #{accountStatus}
             </if>
         </where>
-        order by s.staff_id desc
+        order by s.create_time desc, s.staff_id desc
     </select>
 
     <insert id="insertStaff" parameterType="OsgStaff" useGeneratedKeys="true" keyProperty="staffId">
@@ -119,6 +129,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="city != null and city != ''">city,</if>
             hourly_rate,
             <if test="rating != null and rating != ''">rating,</if>
+            <if test="ratingRemark != null">rating_remark,</if>
             account_status,
             <if test="createBy != null and createBy != ''">create_by,</if>
             create_time,
@@ -143,6 +154,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="city != null and city != ''">#{city},</if>
             #{hourlyRate},
             <if test="rating != null and rating != ''">#{rating},</if>
+            <if test="ratingRemark != null">#{ratingRemark},</if>
             #{accountStatus},
             <if test="createBy != null and createBy != ''">#{createBy},</if>
             sysdate(),
@@ -170,6 +182,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="city != null">city = #{city},</if>
             <if test="hourlyRate != null">hourly_rate = #{hourlyRate},</if>
             <if test="rating != null">rating = #{rating},</if>
+            <if test="ratingRemark != null">rating_remark = #{ratingRemark},</if>
             <if test="accountStatus != null and accountStatus != ''">account_status = #{accountStatus},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate(),

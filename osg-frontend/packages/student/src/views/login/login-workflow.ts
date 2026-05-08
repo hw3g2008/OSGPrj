@@ -23,11 +23,19 @@ interface LoginDeps {
   notifySuccess: (message: string) => void
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export function validateLoginForm(formState: LoginFormState): LoginFieldErrors {
   const username = formState.username.trim()
+  let usernameError = ''
+  if (!username) {
+    usernameError = '请输入邮箱'
+  } else if (!EMAIL_RE.test(username)) {
+    usernameError = '邮箱格式不正确'
+  }
 
   return {
-    username: username ? '' : '请输入用户名',
+    username: usernameError,
     password: formState.password ? '' : '请输入密码'
   }
 }
@@ -82,7 +90,7 @@ export async function submitLogin(
 
     return { ok: true, loginError: '' }
   } catch (error) {
-    const loginError = error instanceof Error ? error.message : '用户名或密码错误'
+    const loginError = error instanceof Error ? error.message : '邮箱或密码错误'
 
     return {
       ok: false,

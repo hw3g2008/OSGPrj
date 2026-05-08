@@ -82,14 +82,11 @@ public class PositionServiceImpl implements IPositionService
             new DictSeed(DICT_TYPE_POSITION_APPLY_METHOD, 3L, "邮件投递", "邮件投递", null, null, "投递方式"));
 
     private static final List<DictSeed> PROGRESS_STAGE_SEEDS = List.of(
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 1L, "已投递", "applied", "blue", null, "岗位进度"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 2L, "HireVue / OT", "hirevue", "blue", null, "岗位进度"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 3L, "First Round", "first", "orange", null, "岗位进度"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 4L, "Second Round", "second", "orange", null, "岗位进度"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 5L, "Case Study", "case", "gold", null, "岗位进度"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 6L, "Offer", "offer", "green", null, "岗位进度"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 7L, "已拒绝", "rejected", "red", null, "岗位进度"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 8L, "主动放弃", "withdraw", "default", null, "岗位进度"));
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 1L, "已投递", "applied", "blue", null, "求职状态"),
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 2L, "面试中", "interviewing", "orange", null, "求职状态"),
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 3L, "拿到offer", "offer", "green", null, "求职状态"),
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 4L, "被拒绝", "rejected", "red", null, "求职状态"),
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 5L, "主动放弃", "withdraw", "default", null, "求职状态"));
 
     private static final List<DictSeed> COACHING_STAGE_SEEDS = List.of(
             new DictSeed(DICT_TYPE_POSITION_COACHING_STAGE, 1L, "HireVue / Online Test", "hirevue", null, null, "辅导阶段"),

@@ -62,22 +62,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             coalesce(s.progress_stage, 'applied') as stage,
             case coalesce(s.progress_stage, 'applied')
                 when 'applied' then '已投递'
-                when 'hirevue' then 'HireVue / OT'
-                when 'first' then 'First Round'
-                when 'second' then 'Second Round'
-                when 'case' then 'Case Study'
-                when 'offer' then 'Offer'
-                when 'rejected' then '已拒绝'
+                when 'interviewing' then '面试中'
+                when 'offer' then '拿到offer'
+                when 'rejected' then '被拒绝'
+                when 'withdraw' then '主动放弃'
                 else coalesce(s.progress_stage, 'applied')
             end as stageLabel,
             case coalesce(s.progress_stage, 'applied')
                 when 'applied' then 'blue'
-                when 'hirevue' then 'blue'
-                when 'first' then 'orange'
-                when 'second' then 'orange'
-                when 'case' then 'gold'
+                when 'interviewing' then 'orange'
                 when 'offer' then 'green'
                 when 'rejected' then 'red'
+                when 'withdraw' then 'default'
                 else 'default'
             end as stageColor,
             coalesce(date_format(s.interview_at, '%m/%d %H:%i'), '-') as interviewTime,
@@ -115,10 +111,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             case coalesce(s.progress_stage, 'applied')
                 when 'offer' then 3
                 when 'rejected' then 3
-                when 'hirevue' then 2
-                when 'first' then 2
-                when 'second' then 2
-                when 'case' then 2
+                when 'withdraw' then 3
+                when 'interviewing' then 2
                 else 1
             end asc,
             case when s.interview_at is null then 1 else 0 end asc,

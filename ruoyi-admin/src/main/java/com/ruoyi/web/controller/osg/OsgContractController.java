@@ -6,7 +6,9 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -92,7 +94,26 @@ public class OsgContractController extends BaseController
         }
     }
 
+    /**
+     * 原地更新合同（不产生新合同，仅更新当前 active 合同的字段）。
+     * 学员编辑弹窗中"合同区域"调用本接口。
+     */
     @PreAuthorize(CONTRACT_ROLE_ACCESS)
+    @PutMapping("/{contractId}")
+    public AjaxResult update(@PathVariable("contractId") Long contractId,
+                             @RequestBody Map<String, Object> body)
+    {
+        try
+        {
+            Map<String, Object> result = contractService.updateContract(contractId, body, getUsername());
+            return AjaxResult.success("合同已更新", result);
+        }
+        catch (ServiceException ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
+    }
+
     @PostMapping("/upload")
     public AjaxResult upload(@RequestParam("file") MultipartFile file,
                              @RequestParam(value = "contractId", required = false) Long contractId)

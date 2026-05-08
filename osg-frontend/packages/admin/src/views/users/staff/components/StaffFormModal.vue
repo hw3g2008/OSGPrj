@@ -227,12 +227,20 @@
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
             <a-form-item label="登录账号">
-              <a-input v-model:value="form.loginAccount" placeholder="请输入登录账号" />
+              <a-input
+                v-model:value="form.loginAccount"
+                :disabled="isEditing"
+                placeholder="请输入登录账号"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="初始密码">
-              <a-input v-model:value="form.initialPassword" placeholder="请输入初始密码" />
+              <a-input
+                v-model:value="form.initialPassword"
+                :disabled="isEditing"
+                placeholder="请输入初始密码"
+              />
             </a-form-item>
           </a-col>
         </a-row>
@@ -401,8 +409,13 @@ const resetForm = () => {
   form.companies = splitCsv(props.staff?.companies)
   form.rating = props.staff?.rating || undefined
   form.ratingRemark = props.staff?.ratingRemark || ''
-  form.loginAccount = ''
-  form.initialPassword = ''
+  if (isEditing.value) {
+    form.loginAccount = props.staff?.email || ''
+    form.initialPassword = '********'
+  } else {
+    form.loginAccount = ''
+    form.initialPassword = ''
+  }
   form.hourlyRate = props.staff?.hourlyRate == null ? '' : String(props.staff.hourlyRate)
   syncAccountDefaults()
 }
@@ -520,8 +533,8 @@ const handleSubmit = () => {
     companies: form.companies.length ? form.companies.join(',') : undefined,
     rating: form.rating,
     ratingRemark: form.ratingRemark.trim() || undefined,
-    loginAccount: form.loginAccount.trim() || undefined,
-    initialPassword: form.initialPassword.trim() || undefined,
+    loginAccount: isEditing.value ? undefined : form.loginAccount.trim() || undefined,
+    initialPassword: isEditing.value ? undefined : form.initialPassword.trim() || undefined,
     hourlyRate: Number(hourlyRateText)
   })
 }

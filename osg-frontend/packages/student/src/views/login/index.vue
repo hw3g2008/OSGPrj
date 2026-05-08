@@ -28,7 +28,7 @@
           <span>学员中心</span>
         </div>
         <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">请登录您的学员账号</p>
+        <p class="login-subtitle">使用邮箱登录学员账号</p>
 
         <div
           v-if="loginError"
@@ -42,16 +42,16 @@
 
         <form class="login-form" novalidate @submit.prevent="handleLogin">
           <div class="form-group" :class="{ 'has-error': !!fieldErrors.username }">
-            <label class="form-label" for="login-username">用户名</label>
+            <label class="form-label" for="login-username">邮箱</label>
             <div class="input-wrapper">
-              <i class="mdi mdi-account-outline input-icon" aria-hidden="true"></i>
+              <i class="mdi mdi-email-outline input-icon" aria-hidden="true"></i>
               <input
                 id="login-username"
                 v-model="formState.username"
-                type="text"
+                type="email"
                 class="form-input form-input--with-icon"
-                placeholder="请输入用户名"
-                autocomplete="username"
+                placeholder="请输入邮箱"
+                autocomplete="email"
                 spellcheck="false"
                 @input="clearFieldError('username')"
               />

@@ -41,7 +41,7 @@
         </div>
 
         <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用您的账号登录（导师）</p>
+        <p class="login-subtitle">使用邮箱登录（导师）</p>
 
         <!-- 错误横幅 -->
         <div v-if="errorMsg" class="login-error">
@@ -52,12 +52,12 @@
         <!-- 登录表单 -->
         <div class="login-form">
           <div class="form-group">
-            <label>用户名 / 邮箱</label>
+            <label>邮箱</label>
             <input
               v-model="formState.username"
-              type="text"
-              placeholder="请输入用户名或邮箱"
-              autocomplete="username"
+              type="email"
+              placeholder="请输入邮箱"
+              autocomplete="email"
               :class="{ error: errors.username }"
               @input="errors.username = ''"
               @keydown.enter.prevent="handleLogin"
@@ -127,6 +127,9 @@ import {
 } from '@/api/auth'
 import { setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
+import { useMustChangePassword } from '@osg/shared/composables'
+
+const { setMustChangePassword } = useMustChangePassword()
 
 const router = useRouter()
 const route = useRoute()
@@ -161,13 +164,18 @@ function openForgotPassword() {
   forgotPasswordOpen.value = true
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 const handleLogin = async () => {
   errors.username = ''
   errors.password = ''
   errorMsg.value = ''
 
-  if (!formState.username.trim()) {
-    errors.username = '请输入用户名或邮箱'
+  const trimmed = formState.username.trim()
+  if (!trimmed) {
+    errors.username = '请输入邮箱'
+  } else if (!EMAIL_RE.test(trimmed)) {
+    errors.username = '邮箱格式不正确'
   }
   if (!formState.password) {
     errors.password = '请输入密码'
@@ -188,9 +196,10 @@ const handleLogin = async () => {
       return
     }
     setUser(info.user)
+    setMustChangePassword(Boolean(info.mustChangePassword))
     router.push((route.query.redirect as string) || '/')
   } catch (e: any) {
-    errorMsg.value = e?.message || '用户名或密码错误'
+    errorMsg.value = e?.message || '邮箱或密码错误'
   } finally {
     loading.value = false
   }
