@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="合同管理" title-en="Contract" description="查看所有合同记录，为老学员续签添加新合同。新增学员时的合同信息会自动同步到此处。">
+    <PageHeader title-zh="合同管理" title-en="Contract">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-contract" data-surface-sample-key="contracts-add-entry" @click="handleRenewEntry()">
           <template #icon><PlusOutlined /></template>
@@ -40,6 +40,7 @@
             <a-select-option value="active">有效</a-select-option>
             <a-select-option value="expiring">即将到期</a-select-option>
             <a-select-option value="expired">已结束</a-select-option>
+            <a-select-option value="cancelled">已作废</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -104,7 +105,7 @@
             <span style="color: #566178; font-size: 12px">{{ formatDate(record.startDate) }} ~ {{ formatDate(record.endDate) }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'renewalReason'">
-            {{ record.renewalReason || '-' }}
+            {{ formatRenewalReason(record.renewalReason) || '-' }}
           </template>
           <template v-else-if="column.dataIndex === 'contractStatus'">
             <a-tag :color="getStatusColor(resolveStatus(record))">{{ formatContractStatus(resolveStatus(record)) }}</a-tag>
@@ -132,27 +133,12 @@
       :student-id="selectedContract?.studentId ?? null"
       :student-name="selectedContract?.studentName"
       @request-renew="handleRenewEntry(selectedContract || undefined)"
-      @request-status-change="handleStatusChangeEntry(selectedContract || undefined)"
-      @request-add-blacklist="handleAddBlacklistEntry(selectedContract || undefined)"
-      @request-remove-blacklist="handleRemoveBlacklistEntry(selectedContract || undefined)"
     />
     <RenewContractModal
       v-model:visible="renewVisible"
       :student-options="renewStudentOptions"
       :preset-contract="renewTarget"
       @submitted="handleRenewSubmitted"
-    />
-    <ContractStatusChangeModal
-      v-model:visible="statusChangeVisible"
-      :contract="statusChangeTarget"
-    />
-    <ContractBlacklistModal
-      v-model:visible="addBlacklistVisible"
-      :contract="addBlacklistTarget"
-    />
-    <ContractRemoveBlacklistModal
-      v-model:visible="removeBlacklistVisible"
-      :contract="removeBlacklistTarget"
     />
   </div>
 </template>
@@ -163,9 +149,6 @@ import { message } from 'ant-design-vue'
 import { ExportOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import ContractDetailModal from './components/ContractDetailModal.vue'
-import ContractStatusChangeModal from './components/ContractStatusChangeModal.vue'
-import ContractBlacklistModal from './components/ContractBlacklistModal.vue'
-import ContractRemoveBlacklistModal from './components/ContractRemoveBlacklistModal.vue'
 import RenewContractModal from './components/RenewContractModal.vue'
 import {
   getContractList,
@@ -175,6 +158,7 @@ import {
   type ContractStats,
 } from '@osg/shared/api/admin/contract'
 import { getToken } from '@osg/shared/utils'
+import { getAdminDictOptions } from '@/api/adminDict'
 import { contractColumns } from './columns'
 
 interface ContractFilters {
@@ -190,14 +174,8 @@ const contractRows = ref<ContractListItem[]>([])
 const loading = ref(false)
 const detailVisible = ref(false)
 const renewVisible = ref(false)
-const statusChangeVisible = ref(false)
-const addBlacklistVisible = ref(false)
-const removeBlacklistVisible = ref(false)
 const selectedContract = ref<ContractListItem | null>(null)
 const renewTarget = ref<ContractListItem | null>(null)
-const statusChangeTarget = ref<ContractListItem | null>(null)
-const addBlacklistTarget = ref<ContractListItem | null>(null)
-const removeBlacklistTarget = ref<ContractListItem | null>(null)
 const summaryStats = ref<ContractStats>({
   totalContracts: 0,
   activeContracts: 0,
@@ -350,21 +328,6 @@ const handleRenewEntry = (record?: ContractListItem) => {
   renewVisible.value = true
 }
 
-const handleStatusChangeEntry = (record?: ContractListItem) => {
-  statusChangeTarget.value = record || selectedContract.value || null
-  statusChangeVisible.value = true
-}
-
-const handleAddBlacklistEntry = (record?: ContractListItem) => {
-  addBlacklistTarget.value = record || selectedContract.value || null
-  addBlacklistVisible.value = true
-}
-
-const handleRemoveBlacklistEntry = (record?: ContractListItem) => {
-  removeBlacklistTarget.value = record || selectedContract.value || null
-  removeBlacklistVisible.value = true
-}
-
 const handleExport = async () => {
   if (loading.value) return
 
@@ -436,9 +399,27 @@ const formatContractType = (type?: string) => {
   return '首签'
 }
 
+const renewalReasonMap = ref<Record<string, string>>({})
+const loadRenewalReasonMap = async () => {
+  try {
+    const items = await getAdminDictOptions('osg_renewal_reason')
+    const map: Record<string, string> = {}
+    for (const it of items || []) {
+      if (it?.dictValue != null) map[String(it.dictValue)] = it.dictLabel || String(it.dictValue)
+    }
+    renewalReasonMap.value = map
+  } catch { /* ignore */ }
+}
+
+const formatRenewalReason = (value?: string | null) => {
+  if (!value) return ''
+  return renewalReasonMap.value[value] || value
+}
+
 const formatContractStatus = (status: string) => {
   if (status === 'expiring') return '即将到期'
   if (status === 'expired') return '已结束'
+  if (status === 'cancelled') return '已作废'
   return '有效'
 }
 
@@ -478,6 +459,7 @@ const getExportFilename = (contentDisposition?: string | null) => {
 }
 
 onMounted(async () => {
+  void loadRenewalReasonMap()
   await loadContracts()
 })
 </script>
