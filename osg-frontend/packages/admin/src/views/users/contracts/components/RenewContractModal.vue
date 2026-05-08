@@ -3,7 +3,7 @@
     :open="visible"
     :surface-id="surfaceId"
     width="720px"
-    :body-class="'renew-contract-modal__body'"
+    :body-class="'renew-contract-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>
@@ -37,8 +37,17 @@
               </div>
             </div>
           </template>
-          <a-select v-else v-model:value="form.studentId" placeholder="请选择学员">
-            <a-select-option v-for="option in studentOptions" :key="option.studentId" :value="String(option.studentId)">
+          <a-select
+            v-else
+            v-model:value="form.studentId"
+            placeholder="请输入学员姓名搜索"
+            show-search
+            :filter-option="false"
+            :loading="studentSearching"
+            :not-found-content="studentSearching ? '搜索中…' : '无匹配学员'"
+            @search="onStudentSearch"
+          >
+            <a-select-option v-for="option in remoteStudentOptions" :key="option.studentId" :value="String(option.studentId)">
               {{ option.studentName }} · ID {{ option.studentId }}
             </a-select-option>
           </a-select>
@@ -193,13 +202,14 @@
               name="file"
               :max-count="1"
               :file-list="fileList"
-              accept=".pdf,application/pdf"
+              accept=".pdf,.jpg,.jpeg,.png"
+              :before-upload="beforeUpload"
               @change="handleUploadChange"
             >
               <p class="ant-upload-drag-icon">
                 <i class="mdi mdi-cloud-upload" style="font-size: 28px; color: #4f74ff"></i>
               </p>
-              <p class="ant-upload-text">点击或拖拽上传 PDF</p>
+              <p class="ant-upload-text">点击或拖拽上传合同附件（PDF / JPG / PNG）</p>
               <p class="ant-upload-hint">合同附件为必填项</p>
             </a-upload-dragger>
           </a-form-item>
@@ -239,6 +249,7 @@ import {
   renewContract,
   type ContractListItem,
 } from '@osg/shared/api/admin/contract'
+import { getStudentList } from '@osg/shared/api/admin/student'
 import { getToken } from '@osg/shared/utils/storage'
 import { getAdminDictOptions, type AdminDictListRow } from '@/api/adminDict'
 
@@ -323,17 +334,64 @@ const resetForm = () => {
   fileList.value = []
 }
 
+const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+const MAX_SIZE_BYTES = 150 * 1024 * 1024
+
+const beforeUpload = (file: File) => {
+  if (!ALLOWED_MIME.includes(file.type)) {
+    message.error('仅支持 PDF / JPG / PNG 类型附件')
+    return false
+  }
+  if (file.size > MAX_SIZE_BYTES) {
+    message.error('单文件不超过 150MB')
+    return false
+  }
+  if (fileList.value.length >= 1) {
+    message.error('合同附件只允许上传 1 个')
+    return false
+  }
+  return true
+}
+
 const handleUploadChange = (info: UploadChangeParam) => {
   fileList.value = info.fileList.slice(-1)
   if (info.file.status === 'done') {
     const res = info.file.response
-    if (res?.data?.attachmentPath) {
-      form.attachmentPath = res.data.attachmentPath
+    const attachmentPath = res?.attachmentPath ?? res?.data?.attachmentPath
+    if (attachmentPath) {
+      form.attachmentPath = attachmentPath
       message.success('合同附件上传成功')
     }
   } else if (info.file.status === 'error') {
     message.error('附件上传失败')
   }
+}
+
+const remoteStudentOptions = ref<StudentOption[]>([])
+const studentSearching = ref(false)
+let studentSearchTimer: ReturnType<typeof setTimeout> | null = null
+let studentSearchSeq = 0
+
+const fetchStudentOptions = async (keyword: string) => {
+  const seq = ++studentSearchSeq
+  studentSearching.value = true
+  try {
+    const res = await getStudentList({ pageNum: 1, pageSize: 20, studentName: keyword || undefined })
+    if (seq !== studentSearchSeq) return
+    remoteStudentOptions.value = (res.rows || []).map((row) => ({
+      studentId: row.studentId,
+      studentName: row.studentName,
+    }))
+  } catch (e) {
+    if (seq === studentSearchSeq) remoteStudentOptions.value = []
+  } finally {
+    if (seq === studentSearchSeq) studentSearching.value = false
+  }
+}
+
+const onStudentSearch = (keyword: string) => {
+  if (studentSearchTimer) clearTimeout(studentSearchTimer)
+  studentSearchTimer = setTimeout(() => fetchStudentOptions(keyword.trim()), 300)
 }
 
 const handleClose = () => {
@@ -405,6 +463,10 @@ onMounted(async () => {
 watch(() => props.visible, (visible) => {
   if (visible) {
     resetForm()
+    if (!presetContract.value) {
+      remoteStudentOptions.value = []
+      fetchStudentOptions('')
+    }
   }
 }, { immediate: true })
 </script>

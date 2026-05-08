@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="modal-contract-detail"
     width="960px"
-    :body-class="'contract-detail-modal__body'"
+    :body-class="'contract-detail-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>
@@ -82,7 +82,7 @@
               </td>
               <td>{{ contract.remainingHours ?? contract.totalHours ?? 0 }} / {{ contract.totalHours ?? 0 }}h</td>
               <td>{{ formatDateRange(contract.startDate, contract.endDate) }}</td>
-              <td>{{ contract.renewalReason || '—' }}</td>
+              <td>{{ formatRenewalReason(contract.renewalReason) || '—' }}</td>
               <td>
                 <a v-if="contract.attachmentPath" :href="contract.attachmentPath" target="_blank" rel="noreferrer">查看附件</a>
                 <span v-else>—</span>
@@ -107,21 +107,6 @@
     </template>
 
     <template #footer>
-      <a-button
-        data-surface-trigger="modal-status-change"
-        data-surface-sample-key="contract-detail-status-change"
-        @click="emit('request-status-change')"
-      >状态修改</a-button>
-      <a-button
-        data-surface-trigger="modal-add-blacklist"
-        data-surface-sample-key="contract-detail-add-blacklist"
-        @click="emit('request-add-blacklist')"
-      >加入黑名单</a-button>
-      <a-button
-        data-surface-trigger="modal-remove-blacklist"
-        data-surface-sample-key="contract-detail-remove-blacklist"
-        @click="emit('request-remove-blacklist')"
-      >移出黑名单</a-button>
       <a-button @click="handleClose">关闭</a-button>
       <a-button
         type="primary"
@@ -139,6 +124,7 @@
 import { computed, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { getStudentContractDetail, type ContractDetailPayload, type ContractListItem } from '@osg/shared/api/admin/contract'
+import { getAdminDictOptions } from '@/api/adminDict'
 
 const props = defineProps<{
   visible: boolean
@@ -149,14 +135,28 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [value: boolean]
   'request-renew': []
-  'request-status-change': []
-  'request-add-blacklist': []
-  'request-remove-blacklist': []
 }>()
 
 const loading = ref(false)
 const loadError = ref('')
 const detail = ref<ContractDetailPayload | null>(null)
+const renewalReasonMap = ref<Record<string, string>>({})
+
+const loadDictMaps = async () => {
+  try {
+    const items = await getAdminDictOptions('osg_renewal_reason')
+    const map: Record<string, string> = {}
+    for (const it of items || []) {
+      if (it?.dictValue != null) map[String(it.dictValue)] = it.dictLabel || String(it.dictValue)
+    }
+    renewalReasonMap.value = map
+  } catch { /* ignore */ }
+}
+
+const formatRenewalReason = (value?: string | null) => {
+  if (!value) return ''
+  return renewalReasonMap.value[value] || value
+}
 
 const summary = computed(() => detail.value?.summary || {
   totalAmount: 0,
@@ -226,6 +226,9 @@ const isExpiring = (contract: ContractListItem) => {
 
 watch(() => [props.visible, props.studentId], () => {
   void loadDetail()
+  if (props.visible && Object.keys(renewalReasonMap.value).length === 0) {
+    void loadDictMaps()
+  }
 }, { immediate: true })
 </script>
 
