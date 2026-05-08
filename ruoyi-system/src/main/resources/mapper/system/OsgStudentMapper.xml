@@ -103,7 +103,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and account_status = #{accountStatus}
             </if>
         </where>
-        order by student_id desc
+        order by create_time desc, student_id desc
     </select>
 
     <insert id="insertStudent" parameterType="OsgStudent" useGeneratedKeys="true" keyProperty="studentId">
