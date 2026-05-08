@@ -47,7 +47,9 @@ import com.ruoyi.framework.security.handle.LogoutSuccessHandlerImpl;
 import com.ruoyi.framework.web.service.PermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.service.impl.OsgAssistantAccessService;
+import com.ruoyi.system.service.impl.OsgIdentityResolver;
 import com.ruoyi.system.service.impl.OsgStudentChangeRequestServiceImpl;
 import com.ruoyi.system.service.impl.OsgStudentServiceImpl;
 import com.ruoyi.system.service.ISysUserService;
@@ -78,6 +80,12 @@ class OsgStudentControllerTest
 
     @MockBean
     private ISysUserService userService;
+
+    @MockBean
+    private OsgIdentityResolver identityResolver;
+
+    @MockBean
+    private OsgStaffMapper staffMapper;
 
     @MockBean
     private TokenService tokenService;
@@ -505,6 +513,20 @@ class OsgStudentControllerTest
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.accountStatus").value("0"));
+    }
+
+    @Test
+    void changeStatusShouldResolveEndContractAction() throws Exception
+    {
+        when(studentService.changeStudentStatus(eq(1L), eq("2"), anyString())).thenReturn(1);
+
+        mockMvc.perform(put("/admin/student/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"studentId\":1,\"action\":\"end_contract\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("2"));
     }
 
     @Test

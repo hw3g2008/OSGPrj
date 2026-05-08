@@ -31,9 +31,12 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.impl.OsgAssistantAccessService;
+import com.ruoyi.system.service.impl.OsgIdentityResolver;
 import com.ruoyi.system.service.impl.OsgStudentChangeRequestServiceImpl;
 import com.ruoyi.system.service.impl.OsgStudentServiceImpl;
 
@@ -54,6 +57,12 @@ public class OsgStudentController extends BaseController
 
     @Autowired
     private OsgAssistantAccessService assistantAccessService;
+
+    @Autowired
+    private OsgIdentityResolver identityResolver;
+
+    @Autowired
+    private OsgStaffMapper staffMapper;
 
     @GetMapping("/list")
     public TableDataInfo list(OsgStudent student)
@@ -232,9 +241,33 @@ public class OsgStudentController extends BaseController
             row.put("studentId", student.getStudentId());
             row.put("studentName", student.getStudentName());
             row.put("email", student.getEmail());
-            row.put("leadMentorId", student.getLeadMentorId());
-            row.put("leadMentorName", formatMentorName(student.getLeadMentorId()));
+            // ── 班主任 / 助教字段 ──────────────────────────────────────────
+            // 数据库 osg_student.lead_mentor_ids / assistant_ids 存的是 sys_user.user_id；
+            // 单值字段（leadMentorId / leadMentorName）保留 user_id / sys_user.nick_name，
+            //   兼容 FilterBar 按 leadMentorId 过滤的查询逻辑（后端 mapper 按 user_id 查）。
+            // 数组字段（leadMentorIds[] / leadMentorNames[]）反向解析为 osg_staff.staff_id / staff_name，
+            //   保证前端学员编辑表单中下拉选项 (/admin/staff/list) 与回显的 ID 体系一致。
+            List<Long> leadMentorUserIds = mergeIds(student.getLeadMentorIds(), student.getLeadMentorId());
+            List<Long> assistantUserIds = mergeIds(student.getAssistantIds(), student.getAssistantId());
+            List<Long> leadMentorStaffIds = leadMentorUserIds.stream()
+                .map(identityResolver::resolveStaffIdByUserId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toList());
+            List<Long> assistantStaffIds = assistantUserIds.stream()
+                .map(identityResolver::resolveStaffIdByUserId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toList());
+            row.put("leadMentorId", leadMentorUserIds.isEmpty() ? null : leadMentorUserIds.get(0));
+            row.put("leadMentorName", leadMentorUserIds.isEmpty() ? "-" : formatMentorName(leadMentorUserIds.get(0)));
+            row.put("leadMentorIds", leadMentorStaffIds);
+            row.put("leadMentorNames", leadMentorStaffIds.stream().map(this::formatStaffName).collect(java.util.stream.Collectors.toList()));
+            row.put("assistantId", assistantUserIds.isEmpty() ? null : assistantUserIds.get(0));
+            row.put("assistantName", assistantUserIds.isEmpty() ? "-" : formatMentorName(assistantUserIds.get(0)));
+            row.put("assistantIds", assistantStaffIds);
+            row.put("assistantNames", assistantStaffIds.stream().map(this::formatStaffName).collect(java.util.stream.Collectors.toList()));
             row.put("school", student.getSchool());
+            row.put("graduationYear", student.getGraduationYear());
+            row.put("graduationMonth", student.getGraduationMonth());
             row.put("majorDirection", student.getMajorDirection());
             row.put("targetPosition", defaultText(student.getSubDirection(), "-"));
             row.put("totalHours", contractSnapshot.get("totalHours"));
@@ -248,6 +281,7 @@ public class OsgStudentController extends BaseController
             row.put("contractStatus", contractSnapshot.get("contractStatus"));
             row.put("contractDaysLeft", contractSnapshot.get("contractDaysLeft"));
             row.put("accountStatus", defaultText(student.getAccountStatus(), "0"));
+            row.put("remark", studentService.extractUserRemarkFromEntity(student));
             row.put("isBlacklisted", isBlacklisted);
             rows.add(row);
         }
@@ -422,6 +456,10 @@ public class OsgStudentController extends BaseController
         {
             return "3";
         }
+        if ("end_contract".equals(action))
+        {
+            return "2";
+        }
         if ("0".equals(accountStatus) || "1".equals(accountStatus) || "2".equals(accountStatus) || "3".equals(accountStatus))
         {
             return accountStatus;
@@ -567,6 +605,42 @@ public class OsgStudentController extends BaseController
             }
         }
         return result;
+    }
+
+    private List<Long> mergeIds(String csv, Long fallback)
+    {
+        List<Long> result = new ArrayList<>();
+        if (csv != null && !csv.isBlank())
+        {
+            for (String token : csv.split(","))
+            {
+                String trimmed = token.trim();
+                if (trimmed.isEmpty()) continue;
+                try
+                {
+                    Long id = Long.parseLong(trimmed);
+                    if (!result.contains(id)) result.add(id);
+                }
+                catch (NumberFormatException ignore)
+                {
+                    // skip malformed token
+                }
+            }
+        }
+        if (result.isEmpty() && fallback != null)
+        {
+            result.add(fallback);
+        }
+        return result;
+    }
+
+    private String formatStaffName(Long staffId)
+    {
+        if (staffId == null) return "-";
+        OsgStaff staff = staffMapper.selectStaffByStaffId(staffId);
+        if (staff == null) return String.valueOf(staffId);
+        String name = staff.getStaffName();
+        return name == null || name.isBlank() ? String.valueOf(staffId) : name;
     }
 
     private String formatMentorName(Long leadMentorId)
