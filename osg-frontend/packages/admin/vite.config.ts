@@ -3,7 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import { createApiProxyConfig } from '../../config/viteProxy'
 
-const apiProxy = createApiProxyConfig()
+const apiProxy = createApiProxyConfig({
+  passthroughPrefixes: ['/profile/upload'],
+})
 
 export default defineConfig({
   plugins: [vue()],
