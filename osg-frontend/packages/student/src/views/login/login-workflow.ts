@@ -10,9 +10,15 @@ export interface LoginFieldErrors {
 
 interface LoginDeps {
   login: (payload: LoginFormState) => Promise<{ token: string }>
-  getInfo: () => Promise<{ user: unknown }>
+  getInfo: () => Promise<{
+    user: unknown
+    mustChangePassword?: boolean
+    accountStatus?: string
+    blacklisted?: boolean
+  }>
   setToken: (token: string) => void
   setUser: (user: unknown) => void
+  setMustChangePassword?: (value: boolean) => void
   push: (target: string) => Promise<unknown> | unknown
   notifySuccess: (message: string) => void
 }
@@ -52,10 +58,27 @@ export async function submitLogin(
     deps.setToken(token)
 
     const userData = await deps.getInfo()
-    deps.setUser(userData.user)
+    // 把 accountStatus / blacklisted 一并塞进 user 对象，路由守卫从 getUser() 直接读取
+    const enrichedUser =
+      userData.user && typeof userData.user === 'object'
+        ? {
+            ...(userData.user as Record<string, unknown>),
+            accountStatus: userData.accountStatus ?? '0',
+            blacklisted: Boolean(userData.blacklisted),
+          }
+        : userData.user
+    deps.setUser(enrichedUser)
+    deps.setMustChangePassword?.(Boolean(userData.mustChangePassword))
 
     deps.notifySuccess('登录成功')
-    await deps.push(resolveLoginRedirect(redirect))
+    // 已结束 / 黑名单：跳 lock 页（reason 由路由守卫读取也可，这里登录直跳更直观）
+    if (userData.accountStatus === '2') {
+      await deps.push('/account-locked?reason=contract_ended')
+    } else if (userData.blacklisted) {
+      await deps.push('/account-locked?reason=blacklisted')
+    } else {
+      await deps.push(resolveLoginRedirect(redirect))
+    }
 
     return { ok: true, loginError: '' }
   } catch (error) {

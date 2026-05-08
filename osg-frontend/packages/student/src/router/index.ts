@@ -3,7 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { COMING_SOON_TOAST, isStudentPathAvailable, normalizeStudentPath } from '@/navigation/access'
 import { PHASE1_DEFAULT_PATH } from '@/navigation/phase1'
-import { getToken } from '@osg/shared/utils'
+import { getToken, getUser } from '@osg/shared/utils'
 
 const STUDENT_COMING_SOON_ROUTE_NAME = 'StudentComingSoon'
 const STUDENT_COMING_SOON_SUBTITLE = '当前页面不在本次学生端交付范围内。'
@@ -43,6 +43,13 @@ const routes: RouteRecordRaw[] = [
     name: 'ForgotPassword',
     component: () => import('@/views/forgot-password/index.vue'),
     meta: { title: '找回密码', public: true }
+  },
+  {
+    path: '/account-locked',
+    name: 'AccountLocked',
+    component: () => import('@/views/account-locked/index.vue'),
+    // public 让未登录也能直达；rolloutBypass 跳过 isStudentPathAvailable 灰度过滤
+    meta: { title: '账号已锁定', public: true, rolloutBypass: true }
   },
   {
     path: '/',
@@ -241,6 +248,8 @@ router.beforeEach((to, _from, next) => {
     next()
   } else if (!token) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
+  } else if (isAccountLocked(to)) {
+    next({ name: 'AccountLocked', query: { reason: resolveLockReason() } })
   } else if (to.path === '/' || to.meta.rolloutBypass) {
     next()
   } else if (!isStudentPathAvailable(to.path)) {
@@ -255,5 +264,31 @@ router.beforeEach((to, _from, next) => {
     next()
   }
 })
+
+/**
+ * 判断当前学员是否处于锁定态：account_status=2（已结束）或 黑名单。
+ *
+ * 守卫触发时 user 信息通常已由 login-workflow 写入 localStorage。
+ * 极端 case：若 getUser 返回 null（未走完登录、刷新前老 token），不拦截，
+ * 让后续接口由后端 ServiceException 兜底。
+ */
+function isAccountLocked(to: { name?: string | symbol | null }): boolean {
+  if (to.name === 'AccountLocked') {
+    return false
+  }
+  const user = getUser<{ accountStatus?: string; blacklisted?: boolean } | null>()
+  if (!user) {
+    return false
+  }
+  return user.accountStatus === '2' || user.blacklisted === true
+}
+
+function resolveLockReason(): 'contract_ended' | 'blacklisted' {
+  const user = getUser<{ accountStatus?: string; blacklisted?: boolean } | null>()
+  if (user?.accountStatus === '2') {
+    return 'contract_ended'
+  }
+  return 'blacklisted'
+}
 
 export default router

@@ -31,6 +31,7 @@ export function getInfo(): Promise<{
   roles: string[]
   permissions: string[]
   firstLogin: boolean
+  mustChangePassword?: boolean
 }> {
   return http.get('/getInfo')
 }
@@ -39,6 +40,7 @@ export function getLeadMentorInfo(): Promise<{
   user: UserInfo
   roles: string[]
   permissions: string[]
+  mustChangePassword?: boolean
 }> {
   return http.get('/lead-mentor/getInfo')
 }
@@ -47,8 +49,20 @@ export function getAssistantInfo(): Promise<{
   user: UserInfo
   roles: string[]
   permissions: string[]
+  mustChangePassword?: boolean
 }> {
   return http.get('/assistant/getInfo')
+}
+
+export function getStudentInfo(): Promise<{
+  user: UserInfo
+  roles: string[]
+  permissions: string[]
+  mustChangePassword?: boolean
+  accountStatus?: string
+  blacklisted?: boolean
+}> {
+  return http.get('/student/getInfo')
 }
 
 export const getUserInfo = getInfo

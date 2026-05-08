@@ -121,8 +121,9 @@
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { studentLogin, getInfo } from '@osg/shared/api'
+import { studentLogin, getStudentInfo as getInfo } from '@osg/shared/api'
 import { setToken, setUser } from '@osg/shared/utils'
+import { useMustChangePassword } from '@osg/shared/composables'
 import {
   hasLoginErrors,
   submitLogin,
@@ -178,6 +179,7 @@ const handleLogin = async () => {
       getInfo,
       setToken,
       setUser,
+      setMustChangePassword: useMustChangePassword().setMustChangePassword,
       push: (target: string) => router.push(target),
       notifySuccess: (text: string) => message.success(text)
     }

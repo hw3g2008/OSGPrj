@@ -65,9 +65,64 @@ describe('student login workflow', () => {
       expect(result).toEqual({ ok: true, loginError: '' })
       expect(login).toHaveBeenCalledWith({ username: 'student', password: 'secret' })
       expect(setToken).toHaveBeenCalledWith('token-1')
-      expect(setUser).toHaveBeenCalledWith({ userName: 'student' })
+      // accountStatus + blacklisted 一并塞进 user 对象，路由守卫从 getUser() 读取
+      expect(setUser).toHaveBeenCalledWith({
+        userName: 'student',
+        accountStatus: '0',
+        blacklisted: false,
+      })
       expect(notifySuccess).toHaveBeenCalledWith('登录成功')
       expect(push).toHaveBeenCalledWith('/applications')
+    })
+
+    it('redirects status=2 student to lock page with contract_ended reason', async () => {
+      const login = vi.fn().mockResolvedValue({ token: 'token-1' })
+      const getInfo = vi
+        .fn()
+        .mockResolvedValue({ user: { userName: 'ended-student' }, accountStatus: '2' })
+      const setToken = vi.fn()
+      const setUser = vi.fn()
+      const push = vi.fn()
+      const notifySuccess = vi.fn()
+
+      const result = await submitLogin(
+        { username: 'ended-student', password: 'secret' },
+        '/positions',
+        { login, getInfo, setToken, setUser, push, notifySuccess },
+      )
+
+      expect(result).toEqual({ ok: true, loginError: '' })
+      expect(setUser).toHaveBeenCalledWith({
+        userName: 'ended-student',
+        accountStatus: '2',
+        blacklisted: false,
+      })
+      expect(push).toHaveBeenCalledWith('/account-locked?reason=contract_ended')
+    })
+
+    it('redirects blacklisted student to lock page with blacklisted reason', async () => {
+      const login = vi.fn().mockResolvedValue({ token: 'token-1' })
+      const getInfo = vi
+        .fn()
+        .mockResolvedValue({ user: { userName: 'bl-student' }, accountStatus: '0', blacklisted: true })
+      const setToken = vi.fn()
+      const setUser = vi.fn()
+      const push = vi.fn()
+      const notifySuccess = vi.fn()
+
+      const result = await submitLogin(
+        { username: 'bl-student', password: 'secret' },
+        '/positions',
+        { login, getInfo, setToken, setUser, push, notifySuccess },
+      )
+
+      expect(result).toEqual({ ok: true, loginError: '' })
+      expect(setUser).toHaveBeenCalledWith({
+        userName: 'bl-student',
+        accountStatus: '0',
+        blacklisted: true,
+      })
+      expect(push).toHaveBeenCalledWith('/account-locked?reason=blacklisted')
     })
 
     it('returns the backend message when login fails', async () => {
@@ -94,8 +149,10 @@ describe('student login workflow', () => {
   })
 
   describe('login page source contract', () => {
-    it('uses the student-specific login entry while keeping shared getInfo', () => {
-      expect(loginViewSource).toContain("import { studentLogin, getInfo } from '@osg/shared/api'")
+    it('uses the student-specific login entry and student-scoped getInfo', () => {
+      expect(loginViewSource).toContain(
+        "import { studentLogin, getStudentInfo as getInfo } from '@osg/shared/api'",
+      )
     })
 
     // [本期不落地] 演示账号预填
