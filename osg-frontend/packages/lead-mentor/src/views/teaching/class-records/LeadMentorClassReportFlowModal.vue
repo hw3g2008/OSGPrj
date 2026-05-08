@@ -54,7 +54,12 @@
             :disabled="studentsLoading || submitting"
           >
             <option value="">{{ studentsLoading ? '学员加载中...' : '请选择学员' }}</option>
-            <option v-for="student in students" :key="student.value" :value="student.value">
+            <option
+              v-for="student in students"
+              :key="student.value"
+              :value="student.value"
+              :disabled="student.disabled"
+            >
               {{ student.label }}
             </option>
           </select>
@@ -433,6 +438,8 @@ import { getLeadMentorMyTargets, type LeadMentorClassRecordCreatePayload } from 
 interface ReportStudentOption {
   value: string
   label: string
+  accountStatus?: string
+  disabled?: boolean
 }
 
 type CourseTypeUi = 'job-coaching' | 'mock-interview' | 'networking' | 'mock-midterm' | 'basic'

@@ -483,6 +483,8 @@ interface ClassRejectPreview {
 interface ReportStudentOption {
   value: string
   label: string
+  accountStatus?: string
+  disabled?: boolean
 }
 
 const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
@@ -774,10 +776,23 @@ async function ensureReportStudentsLoaded(force = false) {
   reportStudentsLoading.value = true
   try {
     const { rows } = await getLeadMentorStudentList()
-    reportStudentOptions.value = (rows ?? []).map((student: LeadMentorStudentListItem) => ({
-      value: String(student.studentId),
-      label: `${student.studentName ?? `学员 ${student.studentId}`} (${student.studentId})`,
-    }))
+    reportStudentOptions.value = (rows ?? []).map((student: LeadMentorStudentListItem) => {
+      // status=1 冻结 / status=3 退费 → 后端会拒绝申报，前端先 disable 防呆并加状态后缀
+      const blocked = student.accountStatus === '1' || student.accountStatus === '3'
+      const statusSuffix = student.accountStatus === '1'
+        ? '（冻结，不可申报）'
+        : student.accountStatus === '3'
+          ? '（已退费，不可申报）'
+          : student.accountStatus === '2'
+            ? '（已结束）'
+            : ''
+      return {
+        value: String(student.studentId),
+        label: `${student.studentName ?? `学员 ${student.studentId}`} (${student.studentId})${statusSuffix}`,
+        accountStatus: student.accountStatus,
+        disabled: blocked,
+      }
+    })
     reportStudentsLoaded.value = true
   } catch {
     reportStudentOptions.value = []
