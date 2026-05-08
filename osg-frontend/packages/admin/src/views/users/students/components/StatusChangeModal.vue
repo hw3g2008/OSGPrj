@@ -71,7 +71,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
-type StatusAction = 'freeze' | 'refund' | 'restore'
+type StatusAction = 'freeze' | 'refund' | 'restore' | 'end_contract'
 
 const props = defineProps<{
   visible: boolean
@@ -112,6 +112,7 @@ const requiresReason = computed(() => props.action === 'freeze' || props.action 
 const targetStatusLabel = computed(() => {
   if (props.action === 'freeze') return '冻结'
   if (props.action === 'refund') return '退费'
+  if (props.action === 'end_contract') return '已结束'
   return '正常'
 })
 
@@ -122,17 +123,21 @@ const modalDescription = computed(() => {
   if (props.action === 'refund') {
     return '退费后，学员账号将被停用。'
   }
+  if (props.action === 'end_contract') {
+    return '结束合同后，学员仍可登录，但无法查看求职信息。导师不可申报课消，需续签合同后恢复。'
+  }
   return '恢复后，学员可正常登录和使用系统。'
 })
 
 const actionIcon = computed(() => {
   if (props.action === 'freeze') return 'mdi-snowflake'
   if (props.action === 'refund') return 'mdi-cash-refund'
+  if (props.action === 'end_contract') return 'mdi-file-document-remove'
   return 'mdi-check-circle'
 })
 
 const reasonOptions = computed(() => {
-  if (props.action === 'restore') return []
+  if (props.action === 'restore' || props.action === 'end_contract') return []
   return reasonOptionMap[props.action]
 })
 

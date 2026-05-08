@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="学员列表" title-en="Student List" description="管理学员信息、合同信息，支持各端查看和维护学员数据">
+    <PageHeader title-zh="学员列表" title-en="Student List">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-student" @click="openAddStudentModal">
           <template #icon><PlusOutlined /></template>
@@ -141,6 +141,7 @@
                       </template>
                       <template v-else>
                         <a-menu-item key="freeze">冻结</a-menu-item>
+                        <a-menu-item key="end_contract">结束合同</a-menu-item>
                         <a-menu-item key="blacklist"><span style="color: #92400E">加入黑名单</span></a-menu-item>
                       </template>
                       <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
@@ -207,8 +208,10 @@ import {
 } from '@osg/shared/api/admin/student'
 import {
   getStudentContractDetail,
+  updateContract,
   type ContractDetailPayload,
   type ContractListItem,
+  type UpdateContractPayload,
 } from '@osg/shared/api/admin/contract'
 import { getToken } from '@osg/shared/utils'
 import { http } from '@osg/shared/utils/request'
@@ -283,8 +286,8 @@ interface AddStudentFormPayload {
   endDate?: string
 }
 
-type StudentActionKey = 'detail' | 'edit' | 'resetPassword' | 'freeze' | 'restore' | 'blacklist' | 'refund'
-type StudentStatusAction = Extract<StudentActionKey, 'freeze' | 'restore' | 'refund'>
+type StudentActionKey = 'detail' | 'edit' | 'resetPassword' | 'freeze' | 'restore' | 'blacklist' | 'refund' | 'end_contract'
+type StudentStatusAction = Extract<StudentActionKey, 'freeze' | 'restore' | 'refund' | 'end_contract'>
 
 const studentList = ref<StudentListItem[]>([])
 const mentorOptions = ref<FilterOption[]>([])
@@ -601,10 +604,22 @@ const handleCreateStudent = async (payload: AddStudentFormPayload) => {
   }
 }
 
-const handleEditStudentSubmit = async (payload: UpdateStudentPayload) => {
+const handleEditStudentSubmit = async (
+  payload: UpdateStudentPayload,
+  contractPatch?: { contractId: number; payload: UpdateContractPayload }
+) => {
   try {
     editingStudent.value = true
     const updated = await updateStudent(payload)
+    // 学员主体保存成功后，再保存合同变更（仅当存在 patch）
+    let contractError: unknown = null
+    if (contractPatch) {
+      try {
+        await updateContract(contractPatch.contractId, contractPatch.payload)
+      } catch (err) {
+        contractError = err
+      }
+    }
     editStudentVisible.value = false
     if (selectedStudent.value?.studentId === updated.studentId) {
       selectedStudent.value = {
@@ -615,7 +630,12 @@ const handleEditStudentSubmit = async (payload: UpdateStudentPayload) => {
       }
     }
     await loadStudentList()
-    message.success('学员信息已更新')
+    if (contractError) {
+      const detail = (contractError as { message?: string })?.message || '请重试'
+      message.warning(`学员信息已更新，但合同更新失败：${detail}`)
+    } else {
+      message.success(contractPatch ? '学员信息与合同已更新' : '学员信息已更新')
+    }
   } finally {
     editingStudent.value = false
   }
@@ -812,7 +832,7 @@ const handleStudentAction = (action: StudentActionKey, record: StudentListItem) 
     return
   }
 
-  if (action === 'freeze' || action === 'restore' || action === 'refund') {
+  if (action === 'freeze' || action === 'restore' || action === 'refund' || action === 'end_contract') {
     selectedStudent.value = record
     pendingStatusAction.value = action
     statusChangeVisible.value = true

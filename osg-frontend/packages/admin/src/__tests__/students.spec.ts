@@ -132,4 +132,24 @@ describe('学员详情入口与编辑联动', () => {
     expect(addStudentModalSource).toContain('输入姓名搜索班主任')
     expect(addStudentModalSource).toContain('输入姓名搜索助教')
   })
+
+  it('exposes the end_contract status action wired through the dropdown, type chain and modal copy', () => {
+    // 操作下拉新菜单项
+    expect(studentsViewSource).toContain('<a-menu-item key="end_contract">结束合同</a-menu-item>')
+    // 类型链路
+    expect(studentsViewSource).toContain("'refund' | 'end_contract'")
+    expect(studentsViewSource).toContain("'freeze' | 'restore' | 'refund' | 'end_contract'")
+    // handleStudentAction 走 status modal 分支
+    expect(studentsViewSource).toContain("action === 'end_contract'")
+
+    // StatusChangeModal 接受 end_contract 并渲染对应文案
+    const statusModalSource = fs.readFileSync(
+      path.resolve(__dirname, '../views/users/students/components/StatusChangeModal.vue'),
+      'utf-8'
+    )
+    expect(statusModalSource).toContain("'freeze' | 'refund' | 'restore' | 'end_contract'")
+    expect(statusModalSource).toContain("props.action === 'end_contract'") // targetStatusLabel + description + icon + reasonOptions
+    expect(statusModalSource).toContain("已结束")
+    expect(statusModalSource).toContain("结束合同后，学员仍可登录")
+  })
 })
