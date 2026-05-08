@@ -21,12 +21,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.domain.OsgPosition;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.domain.OsgStudentPosition;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgPositionMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.mapper.OsgStudentPositionMapper;
 import com.ruoyi.system.mapper.StudentJobPositionMapper;
 import com.ruoyi.system.mapper.StudentProfileMapper;
@@ -138,12 +140,44 @@ public class PositionServiceImpl implements IPositionService
     @Autowired
     private IOsgStudentPositionVisibilityService studentVisibilityService;
 
+    @Autowired
+    private OsgStudentMapper osgStudentMapper;
+
+    @Autowired
+    private OsgStudentServiceImpl osgStudentService;
+
+    /**
+     * 学员账号状态守卫：合同结束(2) 与黑名单 → 拒绝访问求职信息。
+     * userId 非学员（无 osg_student.email 对应行）直接放行，由其他鉴权链路负责。
+     */
+    private void requireActiveStudentForPositionAccess(Long userId)
+    {
+        if (userId == null)
+        {
+            return;
+        }
+        OsgStudent student = osgStudentMapper.selectStudentByUserId(userId);
+        if (student == null)
+        {
+            return;
+        }
+        if ("2".equals(student.getAccountStatus()))
+        {
+            throw new ServiceException(MessageUtils.message("student.position.contract_ended"));
+        }
+        if (!osgStudentService.selectBlacklistedStudentIds(List.of(student.getStudentId())).isEmpty())
+        {
+            throw new ServiceException(MessageUtils.message("student.position.blacklisted"));
+        }
+    }
+
     /**
      * 查询岗位列表
      */
     @Override
     public List<Map<String, Object>> selectPositionList(Long userId)
     {
+        requireActiveStudentForPositionAccess(userId);
         Map<String, List<SysDictData>> prefetchedDicts = loadDictRowsByTypes(List.of(
                 DICT_TYPE_POSITION_CATEGORY,
                 DICT_TYPE_POSITION_INDUSTRY,
@@ -210,6 +244,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public Map<String, Object> selectPositionMeta(Long userId)
     {
+        requireActiveStudentForPositionAccess(userId);
         Map<String, List<SysDictData>> prefetchedDicts = loadDictRowsByTypes(List.of(
                 DICT_TYPE_POSITION_CATEGORY,
                 DICT_TYPE_POSITION_INDUSTRY,
@@ -319,6 +354,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int updateApplyStatus(Long positionId, Boolean applied, String appliedDate, String method, String note, Long userId)
     {
+        requireActiveStudentForPositionAccess(userId);
         PositionReference position = requireVisiblePosition(positionId, userId);
         boolean appliedFlag = Boolean.TRUE.equals(applied);
         LocalDate normalizedDate = appliedFlag ? parseRequiredDate(appliedDate) : null;
@@ -377,6 +413,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int updateFavoriteStatus(Long positionId, Boolean favorited, Long userId)
     {
+        requireActiveStudentForPositionAccess(userId);
         requireVisiblePosition(positionId, userId);
         return studentJobPositionMapper.upsertFavoriteState(positionId, userId, asFlag(Boolean.TRUE.equals(favorited)));
     }
@@ -387,6 +424,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int insertProgress(Long positionId, String stage, String notes, Long userId)
     {
+        requireActiveStudentForPositionAccess(userId);
         PositionReference position = requireVisiblePosition(positionId, userId);
         if (!StringUtils.hasText(stage))
         {
@@ -406,6 +444,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int requestCoaching(Long positionId, String stage, String mentorCount, String note, Long userId)
     {
+        requireActiveStudentForPositionAccess(userId);
         PositionReference position = requireVisiblePosition(positionId, userId);
         if (!StringUtils.hasText(stage))
         {
@@ -443,6 +482,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public int requestCoaching(Long positionId, Map<String, Object> params, Long userId)
     {
+        requireActiveStudentForPositionAccess(userId);
         if (params == null)
         {
             throw new ServiceException("请提供辅导申请参数");
@@ -544,6 +584,7 @@ public class PositionServiceImpl implements IPositionService
     @Override
     public Long createManualPosition(Map<String, Object> params, Long userId)
     {
+        requireActiveStudentForPositionAccess(userId);
         String category = stringValue(params.get("category"));
         String title = stringValue(params.get("title"));
         String company = stringValue(params.get("company"));
