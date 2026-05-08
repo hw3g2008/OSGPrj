@@ -36,6 +36,7 @@ import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.domain.OsgStudentPosition;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgPositionMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.mapper.OsgStudentPositionMapper;
 import com.ruoyi.system.mapper.StudentJobPositionMapper;
 import com.ruoyi.system.mapper.StudentProfileMapper;
@@ -71,6 +72,12 @@ class PositionServiceImplTest
 
     @Mock
     private IOsgStudentPositionVisibilityService studentVisibilityService;
+
+    @Mock
+    private OsgStudentMapper osgStudentMapper;
+
+    @Mock
+    private OsgStudentServiceImpl osgStudentService;
 
     @Test
     void updateApplyStatusCreatesMainApplicationRecord()
