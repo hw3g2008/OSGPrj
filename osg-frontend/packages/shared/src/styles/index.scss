@@ -31,6 +31,13 @@
   --osg-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --osg-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
 
+  // 弹窗表单控件统一规格（5 端通用：36px 高 / 光标与 placeholder 垂直居中）
+  --osg-modal-form-control-height: 36px;
+  --osg-modal-form-control-inner-height: 34px; // 减去 1px 上下 border
+  --osg-modal-form-control-padding-x: 11px;
+  --osg-modal-form-item-mb: 12px;
+  --osg-modal-form-label-font-size: 13px;
+
   // 滚动条
   --osg-scrollbar-size: 10px;
   --osg-scrollbar-thumb: rgba(15, 23, 42, 0.22);
@@ -95,6 +102,204 @@ a {
 
   &:hover {
     color: var(--osg-primary-hover);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 公共弹窗表单控件规范（5 端通用）
+// 用法：在 OverlaySurfaceModal 的 body-class 加上 `osg-modal-form`，
+// 所有 ant input / select / picker / input-number 自动 36px、光标与 placeholder 垂直居中。
+// 用 !important 是为了压过 antd in-form-item 的 large 默认 + OverlaySurfaceModal 自带的 min-height: 48px。
+// ════════════════════════════════════════════════════════════
+// 圆角/边框统一基准（与 MultiSelect 等公共组件渲染保持一致 = antd 默认 6px / 1px）
+$osg-mf-radius: 6px;
+$osg-mf-border-color: #d9d9d9;
+$osg-mf-border-color-hover: #4096ff;
+$osg-mf-border-color-focus: #4096ff;
+$osg-mf-focus-shadow: 0 0 0 2px rgba(64, 150, 255, 0.1);
+
+.osg-modal-form {
+  .ant-form-item {
+    margin-bottom: var(--osg-modal-form-item-mb) !important;
+  }
+
+  // ── 圆角与边框统一（覆盖 OverlaySurfaceModal 自带的 10px / 2px） ──
+  .ant-input,
+  .ant-input-affix-wrapper,
+  .ant-input-number,
+  .ant-picker,
+  textarea.ant-input,
+  .ant-select-single .ant-select-selector,
+  .ant-select-multiple .ant-select-selector {
+    border-radius: $osg-mf-radius !important;
+    border: 1px solid $osg-mf-border-color !important;
+    box-shadow: none !important;
+  }
+
+  // affix-wrapper 内嵌的 input 不要再单独画一层边/底/阴影/圆角，避免"双层边框"叠加视觉
+  .ant-input-affix-wrapper > input.ant-input,
+  .ant-input-affix-wrapper input.ant-input {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  // hover
+  .ant-input:hover,
+  .ant-input-affix-wrapper:hover,
+  .ant-input-number:hover,
+  .ant-picker:hover,
+  textarea.ant-input:hover,
+  .ant-select:hover .ant-select-selector {
+    border-color: $osg-mf-border-color-hover !important;
+  }
+
+  // focus
+  .ant-input:focus,
+  .ant-input-focused,
+  .ant-input-affix-wrapper-focused,
+  .ant-input-number-focused,
+  .ant-picker-focused,
+  .ant-select-focused .ant-select-selector,
+  .ant-select-open .ant-select-selector {
+    border-color: $osg-mf-border-color-focus !important;
+    box-shadow: $osg-mf-focus-shadow !important;
+  }
+
+
+  .ant-form-item-label > label {
+    height: auto;
+    font-size: var(--osg-modal-form-label-font-size);
+  }
+
+  // 普通 input / picker / affix-wrapper（外壳）
+  .ant-input,
+  .ant-input-affix-wrapper,
+  .ant-picker {
+    height: var(--osg-modal-form-control-height) !important;
+    min-height: var(--osg-modal-form-control-height) !important;
+    padding: 0 var(--osg-modal-form-control-padding-x) !important;
+    line-height: var(--osg-modal-form-control-inner-height);
+  }
+
+  // affix-wrapper 内嵌的 input：撑满外壳，不要再单独 height/padding
+  .ant-input-affix-wrapper > .ant-input,
+  .ant-input-affix-wrapper input.ant-input {
+    height: var(--osg-modal-form-control-inner-height) !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    line-height: var(--osg-modal-form-control-inner-height) !important;
+  }
+
+  // textarea：备注/合同备注等长文。allow-clear 时 antd 会把 textarea 包到 affix-wrapper 里，
+  // 外层 wrapper 默认会被前面的 input/affix-wrapper 通用规则锁成 36px，需要单独放开。
+  textarea.ant-input {
+    height: auto !important;
+    min-height: 80px !important;
+    padding: 8px var(--osg-modal-form-control-padding-x) !important;
+    line-height: 1.5 !important;
+    resize: vertical;
+  }
+
+  .ant-input-affix-wrapper.ant-input-affix-wrapper-textarea-with-clear-btn {
+    height: auto !important;
+    min-height: 80px !important;
+    padding: 0 !important;
+    align-items: stretch !important;
+  }
+
+  // textarea 在 affix-wrapper 内时：自身去边、撑满外层（避免内层 34px 而外层 80px 的视觉空隙）
+  .ant-input-affix-wrapper > textarea.ant-input,
+  .ant-input-affix-wrapper textarea.ant-input {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 64px !important;
+    padding: 8px var(--osg-modal-form-control-padding-x) !important;
+    line-height: 1.5 !important;
+    resize: vertical;
+  }
+
+  // input-number
+  .ant-input-number {
+    height: var(--osg-modal-form-control-height) !important;
+    min-height: var(--osg-modal-form-control-height) !important;
+    padding: 0 !important;
+    line-height: var(--osg-modal-form-control-inner-height);
+  }
+  .ant-input-number-input {
+    height: var(--osg-modal-form-control-inner-height) !important;
+    line-height: var(--osg-modal-form-control-inner-height) !important;
+    padding: 0 var(--osg-modal-form-control-padding-x) !important;
+  }
+
+  // input-number 带 prefix/suffix 时 antd 会包一层 .ant-input-number-affix-wrapper
+  // 外层 wrapper 已画边/圆角，内层 .ant-input-number 必须去边，避免双层边框（§4 已知坑）
+  .ant-input-number-affix-wrapper {
+    height: var(--osg-modal-form-control-height) !important;
+    min-height: var(--osg-modal-form-control-height) !important;
+    padding: 0 var(--osg-modal-form-control-padding-x) !important;
+    border-radius: $osg-mf-radius !important;
+    border: 1px solid $osg-mf-border-color;
+  }
+  .ant-input-number-affix-wrapper > .ant-input-number {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+  .ant-input-number-affix-wrapper:hover {
+    border-color: #4096ff;
+  }
+  .ant-input-number-affix-wrapper-focused {
+    border-color: #4096ff;
+    box-shadow: 0 0 0 2px rgba(64, 150, 255, 0.1);
+  }
+
+  // input-number hover 出现的上下增减箭头会溢出在框右侧外，视觉杂乱 — 弹窗内统一隐藏
+  .ant-input-number-handler-wrap {
+    display: none !important;
+  }
+
+  // picker 内部 input：line-height 与外壳一致，光标垂直居中
+  .ant-picker-input > input {
+    height: var(--osg-modal-form-control-inner-height) !important;
+    line-height: var(--osg-modal-form-control-inner-height) !important;
+  }
+
+  // select 外壳 min-height（OverlaySurfaceModal 默认强加 48px）
+  .ant-select {
+    min-height: var(--osg-modal-form-control-height) !important;
+  }
+
+  // single select
+  .ant-select-single .ant-select-selector {
+    height: var(--osg-modal-form-control-height) !important;
+    min-height: var(--osg-modal-form-control-height) !important;
+    padding: 0 var(--osg-modal-form-control-padding-x) !important;
+  }
+  .ant-select-single .ant-select-selector .ant-select-selection-search-input {
+    height: var(--osg-modal-form-control-inner-height) !important;
+    line-height: var(--osg-modal-form-control-inner-height) !important;
+  }
+  .ant-select-single .ant-select-selector .ant-select-selection-item,
+  .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+    line-height: var(--osg-modal-form-control-inner-height) !important;
+  }
+
+  // multi select
+  .ant-select-multiple .ant-select-selector {
+    min-height: var(--osg-modal-form-control-height) !important;
+    padding: 1px 4px !important;
+  }
+  .ant-select-multiple .ant-select-selection-search,
+  .ant-select-multiple .ant-select-selection-search-input,
+  .ant-select-multiple .ant-select-selection-placeholder {
+    line-height: calc(var(--osg-modal-form-control-height) - 8px) !important;
   }
 }
 

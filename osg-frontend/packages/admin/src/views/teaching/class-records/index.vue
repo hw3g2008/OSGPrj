@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="课程记录" title-en="Class Records" description="查看所有学员的课程记录，审核导师/班主任/助教提交的上课记录">
+    <PageHeader title-zh="课程记录" title-en="Class Records">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><ExportOutlined /></template>

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="课时审核" title-en="Reports" description="审核导师提交的课时记录，所有课程记录自动同步">
+    <PageHeader title-zh="课时审核" title-en="Reports">
       <template #actions>
         <a-button @click="handleExportPlaceholder">
           <template #icon><ExportOutlined /></template>

@@ -28,6 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.system.domain.OsgCoaching;
@@ -44,6 +47,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
 {
     private static final Logger log = LoggerFactory.getLogger(OsgPositionServiceImpl.class);
     private static final ZoneId ZONE_ID = ZoneId.systemDefault();
+    private static final ObjectMapper ATTACHMENT_MAPPER = new ObjectMapper();
     private static final String DICT_POSITION_CATEGORY = "osg_job_category";
     private static final String DICT_POSITION_DISPLAY_STATUS = "osg_position_display_status";
     private static final String DICT_POSITION_INDUSTRY = "osg_company_type";
@@ -88,7 +92,12 @@ public class OsgPositionServiceImpl implements IOsgPositionService
     public List<OsgPosition> selectPositionList(OsgPosition position)
     {
         List<OsgPosition> rows = positionMapper.selectPositionList(position);
-        return rows == null ? new ArrayList<>() : rows;
+        if (rows == null)
+        {
+            return new ArrayList<>();
+        }
+        rows.forEach(this::applyDerivedDisplayStatus);
+        return rows;
     }
 
     @Override
@@ -448,6 +457,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
             }
 
             seedStaticDicts(List.of(
+                new DictSeed(DICT_POSITION_DISPLAY_STATUS, "not_started", "未开始", 0L, "muted", "default", "派生子状态：展示开始时间晚于今日（DB 不存）"),
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "visible", "展示中", 1L, "success", null, null),
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "hidden", "已隐藏", 2L, "muted", null, null),
                 new DictSeed(DICT_POSITION_DISPLAY_STATUS, "expired", "已过期", 3L, "danger", null, null),
@@ -728,6 +738,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         position.setDisplayEndTime(asDate(body.get("displayEndTime")));
         position.setPositionUrl(asText(body.get("positionUrl")));
         position.setApplicationNote(asText(body.get("applicationNote")));
+        position.setApplicationAttachments(serializeAttachments(body.get("applicationAttachments")));
         position.setKeyword(asText(body.get("keyword")));
 
         if (validateRequired)
@@ -1114,7 +1125,10 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         row.put("displayEndTime", position.getDisplayEndTime());
         row.put("positionUrl", defaultText(position.getPositionUrl(), ""));
         row.put("applicationNote", defaultText(position.getApplicationNote(), ""));
+        row.put("applicationAttachments", deserializeAttachments(position.getApplicationAttachments()));
         row.put("studentCount", position.getStudentCount() == null ? 0 : position.getStudentCount());
+        row.put("createBy", defaultText(position.getCreateBy(), ""));
+        row.put("createTime", position.getCreateTime());
         return row;
     }
 
@@ -1128,7 +1142,79 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         {
             current.setApplicationNote(payload.getApplicationNote());
         }
+        if (payload.getApplicationAttachments() != null)
+        {
+            current.setApplicationAttachments(payload.getApplicationAttachments());
+        }
         return current;
+    }
+
+    /**
+     * T3.4 序列化附件列表为 JSON 字符串。接受 List 或已序列化字符串，空集合返回 null。
+     */
+    private String serializeAttachments(Object value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+        if (value instanceof String s)
+        {
+            return s.isBlank() ? null : s;
+        }
+        if (!(value instanceof Collection<?> c) || c.isEmpty())
+        {
+            return null;
+        }
+        try
+        {
+            return ATTACHMENT_MAPPER.writeValueAsString(c);
+        }
+        catch (JsonProcessingException ex)
+        {
+            throw new ServiceException("附件序列化失败: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * T3.4 反序列化附件 JSON 为 List Map（前端展示用）。失败时返回空列表，不抛异常。
+     */
+    private List<Map<String, Object>> deserializeAttachments(String json)
+    {
+        if (json == null || json.isBlank())
+        {
+            return new ArrayList<>();
+        }
+        try
+        {
+            return ATTACHMENT_MAPPER.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
+        }
+        catch (JsonProcessingException ex)
+        {
+            log.warn("应用附件 JSON 解析失败 attachments={}", json, ex);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * T3.8 派生子状态：visible + displayStartTime > 当前时间 → not_started。
+     * 注意：DB 永远不存 not_started，仅在内存层为前端展示派生。
+     */
+    private void applyDerivedDisplayStatus(OsgPosition row)
+    {
+        if (row == null || row.getDisplayStatus() == null)
+        {
+            return;
+        }
+        if (!"visible".equals(normalizeDisplayStatus(row.getDisplayStatus())))
+        {
+            return;
+        }
+        Date start = row.getDisplayStartTime();
+        if (start != null && start.after(currentSecond()))
+        {
+            row.setDisplayStatus("not_started");
+        }
     }
 
     private Date asDate(Object value)
@@ -1208,7 +1294,7 @@ public class OsgPositionServiceImpl implements IOsgPositionService
         String normalized = displayStatus.trim().toLowerCase(Locale.ROOT);
         return switch (normalized)
         {
-            case "visible", "hidden", "expired" -> normalized;
+            case "visible", "hidden", "expired", "not_started" -> normalized;
             case "0" -> "visible";
             case "1" -> "hidden";
             default -> normalized;

@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.osg;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +27,8 @@ import com.ruoyi.system.service.impl.OsgStaffServiceImpl;
 /**
  * LM 端导师下拉列表：用于"分配/更换导师"弹层的导师选择来源。
  *
- * <p>口径：osg_staff 中 staff_type='mentor' 且 account_status='active' 且未被加入黑名单的活跃导师。
+ * <p>口径：osg_staff 中 staff_type IN ('mentor', 'lead_mentor') 且 account_status='active'
+ * 且未被加入黑名单的活跃 staff（含班主任本人；班主任也可作为辅导导师候选）。
  * 字段返回 staffId / staffName / majorDirection / subDirection / region / city / hourlyRate /
  * studentCount / scheduleStatus（基于 studentCount 派生，对接前端 osg_schedule_status 字典）。</p>
  */
@@ -36,6 +38,9 @@ public class OsgLeadMentorMentorController extends BaseController
 {
     private static final String ACCESS_DENIED_MESSAGE = "该账号无班主任端访问权限";
     private static final String STAFF_TYPE_MENTOR = "mentor";
+    private static final String STAFF_TYPE_LEAD_MENTOR = "lead_mentor";
+    private static final List<String> ASSIGNABLE_STAFF_TYPES =
+            List.of(STAFF_TYPE_MENTOR, STAFF_TYPE_LEAD_MENTOR);
     private static final String ACCOUNT_STATUS_ACTIVE = "active";
 
     private static final String SCHEDULE_AVAILABLE = "available";
@@ -59,19 +64,29 @@ public class OsgLeadMentorMentorController extends BaseController
             return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
         }
 
-        OsgStaff query = new OsgStaff();
-        query.setStaffType(STAFF_TYPE_MENTOR);
-        query.setAccountStatus(ACCOUNT_STATUS_ACTIVE);
-        if (keyword != null && !keyword.isBlank())
+        List<OsgStaff> staffRows = new ArrayList<>();
+        Set<Long> seenStaffIds = new LinkedHashSet<>();
+        for (String staffType : ASSIGNABLE_STAFF_TYPES)
         {
-            query.setStaffName(keyword.trim());
+            OsgStaff query = new OsgStaff();
+            query.setStaffType(staffType);
+            query.setAccountStatus(ACCOUNT_STATUS_ACTIVE);
+            if (keyword != null && !keyword.isBlank())
+            {
+                query.setStaffName(keyword.trim());
+            }
+            if (majorDirection != null && !majorDirection.isBlank())
+            {
+                query.setMajorDirection(majorDirection.trim());
+            }
+            for (OsgStaff staff : staffService.selectStaffList(query))
+            {
+                if (staff.getStaffId() != null && seenStaffIds.add(staff.getStaffId()))
+                {
+                    staffRows.add(staff);
+                }
+            }
         }
-        if (majorDirection != null && !majorDirection.isBlank())
-        {
-            query.setMajorDirection(majorDirection.trim());
-        }
-
-        List<OsgStaff> staffRows = staffService.selectStaffList(query);
         Set<Long> blacklistedIds = new HashSet<>(
             staffService.selectBlacklistedStaffIds(extractStaffIds(staffRows)));
 

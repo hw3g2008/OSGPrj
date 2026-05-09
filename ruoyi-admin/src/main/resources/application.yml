@@ -25,6 +25,8 @@ server:
     uri-encoding: UTF-8
     # 连接数满后的排队数，默认为100
     accept-count: 1000
+    # 大附件上传：禁用 swallow 阈值（默认 2MB），允许扫描版合同 PDF（~100MB）整段透传
+    max-swallow-size: -1
     threads:
       # tomcat最大线程数，默认为200
       max: 800
@@ -58,10 +60,10 @@ spring:
   # 文件上传
   servlet:
     multipart:
-      # 单个文件大小
-      max-file-size: 10MB
+      # 单个文件大小（合同附件上限 150MB，覆盖扫描版 100 页 PDF）
+      max-file-size: 150MB
       # 设置总上传的文件大小
-      max-request-size: 20MB
+      max-request-size: 200MB
   # 服务模块
   devtools:
     restart:
@@ -97,8 +99,8 @@ token:
   header: Authorization
   # 令牌密钥
   secret: abcdefghijklmnopqrstuvwxyz
-  # 令牌有效期（默认30分钟）
-  expireTime: 30
+  # 令牌有效期（默认60分钟）
+  expireTime: 60
 
 # MyBatis配置
 mybatis:

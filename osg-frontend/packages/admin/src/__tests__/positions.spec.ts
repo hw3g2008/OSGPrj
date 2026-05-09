@@ -72,8 +72,6 @@ describe('岗位信息页面原型收口', () => {
     expect(source).toContain('positions-drilldown__position-list')
     expect(source).toContain('getIndustryTone')
     expect(source).toContain('getIndustryIcon')
-    expect(source).toContain('流程缩写')
-    expect(source).toContain('processGlossaryText')
   })
 
   it('keeps the desktop shell on prototype-sized typography and spacing tokens', () => {

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="所有学员的岗位追踪" title-en="Job Tracking" description="查看全部学员的求职申请进度">
+    <PageHeader title-zh="所有学员的岗位追踪" title-en="Job Tracking">
       <template #actions>
         <span style="color: #64748b; font-size: 13px">{{ rows.length }} 条岗位记录 · {{ stats.interviewingCount }} 条面试中</span>
       </template>

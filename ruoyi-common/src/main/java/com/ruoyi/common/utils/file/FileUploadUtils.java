@@ -24,9 +24,9 @@ import com.ruoyi.common.utils.uuid.Seq;
 public class FileUploadUtils
 {
     /**
-     * 默认大小 50M
+     * 默认大小 150M（与 spring.servlet.multipart.max-file-size 对齐，覆盖扫描版合同 PDF）
      */
-    public static final long DEFAULT_MAX_SIZE = 50 * 1024 * 1024L;
+    public static final long DEFAULT_MAX_SIZE = 150 * 1024 * 1024L;
 
     /**
      * 默认的文件名最大长度 100

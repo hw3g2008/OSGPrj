@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="报销管理" title-en="Expense Management" description="审核导师报销申请，支持新建报销与处理流转">
+    <PageHeader title-zh="报销管理" title-en="Expense Management">
       <template #actions>
         <a-button type="primary" @click="showNewExpenseModal = true">
           <template #icon><PlusOutlined /></template>

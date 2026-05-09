@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.osg;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,10 +75,11 @@ public class OsgStaffController extends BaseController
         {
             return AjaxResult.error(HttpStatus.NOT_FOUND, "导师不存在");
         }
-        // rating 仅超管可见：非超管直接剔除 key（满足 SRS AC-11，不是返回 null）
+        // rating / ratingRemark 仅超管可见：非超管直接剔除 key（T1.6 双层防护后端层）
         if (!SecurityUtils.isAdmin())
         {
             detail.remove("rating");
+            detail.remove("ratingRemark");
         }
         return AjaxResult.success(detail);
     }
@@ -339,10 +341,11 @@ public class OsgStaffController extends BaseController
         row.put("region", staff.getRegion());
         row.put("city", staff.getCity());
         row.put("hourlyRate", staff.getHourlyRate());
-        // rating 仅超管可见：非超管不放入 key（SRS AC-04 / AC-11）
+        // rating / ratingRemark 仅超管可见：非超管不放入 key（T1.6 双层防护后端层）
         if (SecurityUtils.isAdmin())
         {
             row.put("rating", staff.getRating());
+            row.put("ratingRemark", staff.getRatingRemark());
         }
         row.put("studentCount", staff.getStudentCount());
         row.put("accountStatus", normalizeAccountStatus(staff.getAccountStatus()));
@@ -425,10 +428,11 @@ public class OsgStaffController extends BaseController
         staff.setRegion(asText(body.get("region")));
         staff.setCity(asText(body.get("city")));
         staff.setHourlyRate(asDecimal(body.get("hourlyRate")));
-        // rating 仅超管可写，非超管即便提交也静默忽略（SRS §4.2 / DEC-005）
+        // rating / ratingRemark 仅超管可写：非超管即便提交也静默忽略（DEC-005 / T1.6 双层防护后端层）
         if (SecurityUtils.isAdmin())
         {
             staff.setRating(asText(body.get("rating")));
+            staff.setRatingRemark(asText(body.get("ratingRemark")));
         }
         return staff;
     }
@@ -455,10 +459,7 @@ public class OsgStaffController extends BaseController
         {
             return "region不能为空";
         }
-        if (staff.getCity() == null)
-        {
-            return "city不能为空";
-        }
+        // T1.7: city 选填
         if (staff.getHourlyRate() == null)
         {
             return "hourlyRate不能为空";
@@ -473,21 +474,34 @@ public class OsgStaffController extends BaseController
      */
     private String validateDictValues(OsgStaff staff)
     {
+        // T1.7: region 改 CSV 多值
         Set<String> regionValues = dictValueSet("osg_region");
-        if (!regionValues.contains(staff.getRegion()))
+        Set<String> regionSet = splitCsv(staff.getRegion());
+        if (regionSet.isEmpty())
         {
-            return "地区不是合法字典值，请重新选择";
+            return "地区不能为空";
+        }
+        for (String v : regionSet)
+        {
+            if (!regionValues.contains(v))
+            {
+                return "地区包含非法字典值: " + v;
+            }
         }
 
-        Map<String, String> cityToParent = dictParentMap("osg_city");
-        String cityParent = cityToParent.get(staff.getCity());
-        if (cityParent == null)
+        // T1.7: city 选填，但若填了必须与某个 region 匹配
+        if (staff.getCity() != null && !staff.getCity().isBlank())
         {
-            return "城市不是合法字典值，请重新选择";
-        }
-        if (!staff.getRegion().equals(cityParent))
-        {
-            return "城市与所选地区不匹配";
+            Map<String, String> cityToParent = dictParentMap("osg_city");
+            String cityParent = cityToParent.get(staff.getCity());
+            if (cityParent == null)
+            {
+                return "城市不是合法字典值，请重新选择";
+            }
+            if (!regionSet.contains(cityParent))
+            {
+                return "城市与所选地区不匹配";
+            }
         }
 
         Set<String> majorValues = dictValueSet("osg_major_direction");
@@ -673,6 +687,10 @@ public class OsgStaffController extends BaseController
         {
             existing.setRating(update.getRating());
         }
+        if (update.getRatingRemark() != null)
+        {
+            existing.setRatingRemark(update.getRatingRemark());
+        }
         return existing;
     }
 
@@ -746,11 +764,11 @@ public class OsgStaffController extends BaseController
         @Excel(name = "导师类型")
         private final String staffType;
 
-        @Excel(name = "主攻方向")
-        private final String majorDirection;
+        @Excel(name = "性别")
+        private final String gender;
 
-        @Excel(name = "子方向")
-        private final String subDirection;
+        @Excel(name = "微信")
+        private final String wechatId;
 
         @Excel(name = "邮箱")
         private final String email;
@@ -764,8 +782,29 @@ public class OsgStaffController extends BaseController
         @Excel(name = "城市")
         private final String city;
 
-        @Excel(name = "课时单价")
+        @Excel(name = "主攻方向")
+        private final String majorDirection;
+
+        @Excel(name = "子方向")
+        private final String subDirection;
+
+        @Excel(name = "可授课程")
+        private final String courseTypes;
+
+        @Excel(name = "擅长")
+        private final String specialty;
+
+        @Excel(name = "任职公司")
+        private final String companies;
+
+        @Excel(name = "课时单价(USD/h)")
         private final BigDecimal hourlyRate;
+
+        @Excel(name = "评级")
+        private final String rating;
+
+        @Excel(name = "评语")
+        private final String ratingRemark;
 
         @Excel(name = "学员数")
         private final Integer studentCount;
@@ -776,23 +815,36 @@ public class OsgStaffController extends BaseController
         @Excel(name = "名单标签")
         private final String blacklistStatus;
 
-        private StaffExportRow(Long staffId, String staffName, String staffType, String majorDirection,
-                               String subDirection, String email, String phone, String region, String city,
-                               BigDecimal hourlyRate, Integer studentCount, String accountStatus, String blacklistStatus)
+        @Excel(name = "创建时间", dateFormat = "yyyy-MM-dd HH:mm:ss")
+        private final Date createTime;
+
+        private StaffExportRow(Long staffId, String staffName, String staffType, String gender, String wechatId,
+                               String email, String phone, String region, String city, String majorDirection,
+                               String subDirection, String courseTypes, String specialty, String companies,
+                               BigDecimal hourlyRate, String rating, String ratingRemark, Integer studentCount,
+                               String accountStatus, String blacklistStatus, Date createTime)
         {
             this.staffId = staffId;
             this.staffName = staffName;
             this.staffType = staffType;
-            this.majorDirection = majorDirection;
-            this.subDirection = subDirection;
+            this.gender = gender;
+            this.wechatId = wechatId;
             this.email = email;
             this.phone = phone;
             this.region = region;
             this.city = city;
+            this.majorDirection = majorDirection;
+            this.subDirection = subDirection;
+            this.courseTypes = courseTypes;
+            this.specialty = specialty;
+            this.companies = companies;
             this.hourlyRate = hourlyRate;
+            this.rating = rating;
+            this.ratingRemark = ratingRemark;
             this.studentCount = studentCount;
             this.accountStatus = accountStatus;
             this.blacklistStatus = blacklistStatus;
+            this.createTime = createTime;
         }
 
         private static StaffExportRow from(Map<String, Object> row)
@@ -801,16 +853,24 @@ public class OsgStaffController extends BaseController
                 asLong(row.get("staffId")),
                 asText(row.get("staffName")),
                 asText(row.get("staffTypeLabel")),
-                asText(row.get("majorDirection")),
-                asText(row.get("subDirection")),
+                asText(row.get("gender")),
+                asText(row.get("wechatId")),
                 asText(row.get("email")),
                 asText(row.get("phone")),
                 asText(row.get("region")),
                 asText(row.get("city")),
+                asText(row.get("majorDirection")),
+                asText(row.get("subDirection")),
+                asText(row.get("courseTypes")),
+                asText(row.get("specialty")),
+                asText(row.get("companies")),
                 asDecimal(row.get("hourlyRate")),
+                asText(row.get("rating")),
+                asText(row.get("ratingRemark")),
                 asInteger(row.get("studentCount")),
                 asText(row.get("accountStatusLabel")),
-                asText(row.get("blacklistStatus"))
+                asText(row.get("blacklistStatus")),
+                asDate(row.get("createTime"))
             );
         }
 
@@ -840,6 +900,11 @@ public class OsgStaffController extends BaseController
         private static String asText(Object value)
         {
             return value == null ? null : String.valueOf(value);
+        }
+
+        private static Date asDate(Object value)
+        {
+            return value instanceof Date date ? date : null;
         }
     }
 }

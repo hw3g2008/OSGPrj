@@ -1,6 +1,6 @@
 <template>
   <section class="osg-page">
-    <PageHeader title-zh="投诉建议" description="处理学员提交的投诉和建议" />
+    <PageHeader title-zh="投诉建议" />
 
     <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
       <a-form-item>

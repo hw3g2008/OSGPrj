@@ -24,6 +24,9 @@ public class OsgAssistantAccessService
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private OsgStaffAccessGuard staffAccessGuard;
+
     public SysUser findUserByLogin(String login)
     {
         if (!StringUtils.hasText(login))
@@ -48,6 +51,11 @@ public class OsgAssistantAccessService
 
     public boolean hasAssistantAccess(SysUser user)
     {
+        // [T1.1] 黑名单先 + [T1.2] frozen 后：顶层短路，覆盖 admin / business ownership 路径
+        if (staffAccessGuard.isBlocked(user))
+        {
+            return false;
+        }
         return isActiveUser(user) && (user.isAdmin() || hasActiveAssistantStaff(user.getEmail()) || hasAssistantOwnership(user.getUserId()));
     }
 

@@ -192,3 +192,6 @@ public AjaxResult uploadAttachment(@RequestParam MultipartFile file) throws IOEx
 | 2026-05-08 | admin 合同管理 RenewContractModal / ContractDetailModal body-class 接入 `osg-modal-form`；ContractDetailModal 与 contracts/index.vue 续签原因走 `osg_renewal_reason` 字典 value→label | 修复合同续签弹窗控件未对齐基线、详情/列表显示字典 key 的问题 |
 | 2026-05-08 | admin 合同附件上传按 §7.3 双层校验：前端 `before-upload` 校验 MIME / 150MB / 1 文件，后端 OsgContractController 增加 MIME 白名单 + 150MB size 校验 | 取代仅扩展名白名单，符合 §7.3 强约束 |
 | 2026-05-08 | 新增 §7 行为强约束：多选 tag 全展示 / 字段级权限双层防护 / 附件上传双层校验。CLAUDE.md 弹窗规范小节同步加 §5/§6/§7 三条 | 后续所有弹窗实施需对齐；admin Bug 修复 T1.4 / T1.6 / T3.4 直接落地 |
+| 2026-05-08 | admin StaffFormModal / StaffDetailModal body-class 接入 `osg-modal-form`；删除 StaffFormModal scoped scss 中 44px / 14px padding / 40px line-height 等控件级 :global 覆盖（与 §3 第 3 条冲突，让公共基线 36px 接管） | T1 修复期间补齐基线，导师新增/编辑/详情弹窗与公共规范一致 |
+| 2026-05-08 | shared/styles/index.scss 增加 `.ant-input-number-affix-wrapper` 规则：外层套边 36/6/1px、内层 `.ant-input-number` 强制去边（§4 已知坑扩展到 input-number+prefix 变种） | 修 T1.9 课时单价 prefix `$` 双层边框；其他端用 input-number+prefix 同样受益 |
+| 2026-05-08 | 弹窗内 `.ant-input-number-handler-wrap` 统一 `display: none`（hover 出现的上下增减箭头会溢出框外，视觉杂乱） | 所有用 input-number 的弹窗自动隐藏增减箭头，需要纯键盘输入即可 |

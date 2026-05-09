@@ -47,8 +47,9 @@
         </template>
         <a-input
           v-model:value="formState.email"
-          placeholder="请输入邮箱"
-          allow-clear
+          class="profile-modal__read-only"
+          placeholder="未设置邮箱"
+          disabled
         />
       </a-form-item>
 
@@ -131,14 +132,6 @@ const formState = reactive({
   confirmPassword: '',
 })
 
-const validateEmail = (_rule: any, value: string) => {
-  if (!value) return Promise.resolve()
-  if (!/^[\w.!#$%&'*+/=?^`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/.test(value)) {
-    return Promise.reject('请输入有效的邮箱地址')
-  }
-  return Promise.resolve()
-}
-
 const hasPasswordChange = computed(() =>
   Boolean(formState.oldPassword || formState.newPassword || formState.confirmPassword),
 )
@@ -167,7 +160,6 @@ const validateConfirm = (_rule: any, value: string) => {
 
 const rules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  email: [{ validator: validateEmail, trigger: 'blur' }],
   oldPassword: [{ validator: validateOldPassword, trigger: 'blur' }],
   newPassword: [{ validator: validatePassword, trigger: 'blur' }],
   confirmPassword: [{ validator: validateConfirm, trigger: 'blur' }],
@@ -221,7 +213,7 @@ const handleSave = async () => {
 
     await http.put('/system/user/profile', {
       nickName: formState.name,
-      email: formState.email,
+      email: userStore.userInfo?.email || '',
       phonenumber: userStore.userInfo?.phonenumber || '',
       sex: userStore.userInfo?.sex,
     }, {

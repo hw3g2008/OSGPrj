@@ -175,4 +175,32 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where contract_id = #{contractId}
     </update>
 
+    <select id="selectContractById" parameterType="Long" resultMap="OsgContractResult">
+        select
+        <include refid="selectContractColumns"/>
+        from osg_contract c
+        left join osg_student s on s.student_id = c.student_id
+        left join sys_user u on u.user_id = s.lead_mentor_id
+        where c.contract_id = #{contractId}
+    </select>
+
+    <update id="updateContract" parameterType="OsgContract">
+        update osg_contract
+        <set>
+            <if test="contractAmount != null">contract_amount = #{contractAmount},</if>
+            <if test="totalHours != null">total_hours = #{totalHours},</if>
+            <if test="startDate != null">start_date = #{startDate},</if>
+            <if test="endDate != null">end_date = #{endDate},</if>
+            <if test="currency != null and currency != ''">currency = #{currency},</if>
+            <if test="amountUsd != null">amount_usd = #{amountUsd},</if>
+            <if test="amountGbp != null">amount_gbp = #{amountGbp},</if>
+            <if test="attachmentPath != null">attachment_path = #{attachmentPath},</if>
+            <if test="contractStatus != null and contractStatus != ''">contract_status = #{contractStatus},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where contract_id = #{contractId}
+    </update>
+
 </mapper>

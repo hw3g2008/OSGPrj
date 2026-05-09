@@ -41,6 +41,13 @@ public class OsgClassRecord extends BaseEntity
     private Long studentPositionId;
     private Long practiceId;
     private Long applicationId;
+    private String referenceType;
+    private Long referenceId;
+    private String memberStatus;
+    private String baseCourseCategory;
+    private String baseCourseTopics;
+    private String absentRemark;
+    private String screenshotUrls;
 
     public Long getRecordId()
     {
@@ -361,6 +368,27 @@ public class OsgClassRecord extends BaseEntity
     {
         this.applicationId = applicationId;
     }
+
+    public String getReferenceType() { return referenceType; }
+    public void setReferenceType(String referenceType) { this.referenceType = referenceType; }
+
+    public Long getReferenceId() { return referenceId; }
+    public void setReferenceId(Long referenceId) { this.referenceId = referenceId; }
+
+    public String getMemberStatus() { return memberStatus; }
+    public void setMemberStatus(String memberStatus) { this.memberStatus = memberStatus; }
+
+    public String getBaseCourseCategory() { return baseCourseCategory; }
+    public void setBaseCourseCategory(String baseCourseCategory) { this.baseCourseCategory = baseCourseCategory; }
+
+    public String getBaseCourseTopics() { return baseCourseTopics; }
+    public void setBaseCourseTopics(String baseCourseTopics) { this.baseCourseTopics = baseCourseTopics; }
+
+    public String getAbsentRemark() { return absentRemark; }
+    public void setAbsentRemark(String absentRemark) { this.absentRemark = absentRemark; }
+
+    public String getScreenshotUrls() { return screenshotUrls; }
+    public void setScreenshotUrls(String screenshotUrls) { this.screenshotUrls = screenshotUrls; }
 
     @Override
     public String toString()

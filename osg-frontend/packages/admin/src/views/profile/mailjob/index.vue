@@ -1,6 +1,6 @@
 <template>
   <section class="osg-page">
-    <PageHeader title-zh="邮件作业" title-en="Mail Job" description="批量邮件发送管理">
+    <PageHeader title-zh="邮件作业" title-en="Mail Job">
       <template #actions>
         <a-button type="primary" @click="showNewMailJobModal = true">
           <template #icon><MailOutlined /></template>

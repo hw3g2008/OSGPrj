@@ -52,10 +52,14 @@ import { Modal, message } from 'ant-design-vue'
 import { normalizeStudentPath } from '@/navigation/access'
 import { PHASE1_VISIBLE_PATHS } from '@/navigation/phase1'
 import { logout } from '@osg/shared/api'
+import { useIdleLogout } from '@osg/shared/composables'
 import { clearAuth, getUser } from '@osg/shared/utils'
 
 const route = useRoute()
 const router = useRouter()
+
+// 五端共享：无操作 60 分钟自动退出，活动节流 ping 续期
+useIdleLogout()
 
 interface MenuEntry {
   path: string

@@ -770,8 +770,17 @@ const buildContractPatch = (): { contractId: number; payload: UpdateContractPayl
   const patch: UpdateContractPayload = {}
   const origCurrency = (orig.currency || '').toUpperCase() === 'GBP' ? 'GBP' : 'USD'
   if (contractForm.currency !== origCurrency) patch.currency = contractForm.currency
-  if (contractForm.amountUsd !== orig.amountUsd) patch.amountUsd = contractForm.amountUsd
-  if (contractForm.amountGbp !== orig.amountGbp) patch.amountGbp = contractForm.amountGbp
+  // null/undefined 视为等价；未修改不纳入 patch（避免 JSON 序列化吞掉 undefined 导致空 body）
+  const formUsd = contractForm.amountUsd ?? null
+  const origUsd = orig.amountUsd ?? null
+  if (formUsd !== origUsd && contractForm.amountUsd !== undefined) {
+    patch.amountUsd = contractForm.amountUsd
+  }
+  const formGbp = contractForm.amountGbp ?? null
+  const origGbp = orig.amountGbp ?? null
+  if (formGbp !== origGbp && contractForm.amountGbp !== undefined) {
+    patch.amountGbp = contractForm.amountGbp
+  }
   // contractAmount 跟随 currency 自动取对应金额
   const newAmount = contractForm.currency === 'USD' ? contractForm.amountUsd : contractForm.amountGbp
   if (newAmount != null && newAmount !== orig.contractAmount) patch.contractAmount = newAmount

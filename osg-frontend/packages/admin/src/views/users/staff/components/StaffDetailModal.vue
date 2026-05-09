@@ -3,7 +3,7 @@
     :open="visible"
     :surface-id="surfaceId"
     width="960px"
-    :body-class="'staff-detail-modal__body'"
+    body-class="staff-detail-modal__body osg-modal-form"
     @cancel="handleClose"
   >
     <template #title>
@@ -83,7 +83,7 @@
           </div>
           <div class="staff-detail-modal__detail-cell">
             <dt>地区</dt>
-            <dd>{{ dictLabel(regionItems, detail?.region) }}</dd>
+            <dd>{{ renderCsvLabels(detail?.region, regionItems) }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
             <dt>城市</dt>
@@ -166,6 +166,13 @@
             <dd>
               <a-tag v-if="detail?.rating" color="gold">{{ dictLabel(ratingItems, detail.rating) }}</a-tag>
               <span v-else style="color: #94a3b8">未评级</span>
+            </dd>
+          </div>
+          <div class="staff-detail-modal__detail-cell" style="grid-column: 1 / -1">
+            <dt>评语</dt>
+            <dd>
+              <span v-if="detail?.ratingRemark" style="white-space: pre-wrap">{{ detail.ratingRemark }}</span>
+              <span v-else style="color: #94a3b8">暂无</span>
             </dd>
           </div>
         </dl>
@@ -399,7 +406,9 @@ const handleReject = async (requestId: number) => {
 }
 
 const formatType = (staffType?: string) => {
-  return staffType === 'lead_mentor' ? '班主任' : '导师'
+  if (staffType === 'lead_mentor') return '班主任'
+  if (staffType === 'assistant') return '助教'
+  return '导师'
 }
 
 const formatStatus = (accountStatus?: string) => {
@@ -410,7 +419,7 @@ const formatHourlyRate = (hourlyRate?: number) => {
   if (hourlyRate == null) {
     return '-'
   }
-  return `￥${hourlyRate}/h`
+  return `$${hourlyRate}/h`
 }
 </script>
 

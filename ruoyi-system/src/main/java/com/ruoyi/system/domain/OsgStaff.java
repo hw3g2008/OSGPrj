@@ -41,6 +41,8 @@ public class OsgStaff extends BaseEntity
 
     private String rating;
 
+    private String ratingRemark;
+
     private Integer studentCount;
 
     private String accountStatus;
@@ -145,6 +147,16 @@ public class OsgStaff extends BaseEntity
         this.rating = rating;
     }
 
+    public String getRatingRemark()
+    {
+        return ratingRemark;
+    }
+
+    public void setRatingRemark(String ratingRemark)
+    {
+        this.ratingRemark = ratingRemark;
+    }
+
     public String getStaffType()
     {
         return staffType;
@@ -245,6 +257,7 @@ public class OsgStaff extends BaseEntity
             .append("city", getCity())
             .append("hourlyRate", getHourlyRate())
             .append("rating", getRating())
+            .append("ratingRemark", getRatingRemark())
             .append("studentCount", getStudentCount())
             .append("accountStatus", getAccountStatus())
             .append("createBy", getCreateBy())

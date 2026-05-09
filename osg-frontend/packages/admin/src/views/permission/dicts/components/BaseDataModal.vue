@@ -32,8 +32,11 @@
         <a-input v-model:value="formState.dictLabel" :placeholder="`请输入${nameFieldLabel}`" />
       </a-form-item>
 
-      <a-form-item name="dictValue" data-field-name="字典键值" label="字典键值">
-        <a-input v-model:value="formState.dictValue" placeholder="请输入字典键值" />
+      <a-form-item name="dictValue" data-field-name="字典键值">
+        <template #label>
+          <span class="base-data-modal__label">字典键值<span class="base-data-modal__required">*</span></span>
+        </template>
+        <a-input v-model:value="formState.dictValue" placeholder="请输入字典键值（仅限英文/数字/下划线，以字母开头）" />
       </a-form-item>
 
       <a-form-item v-if="parentTabInfo" name="parentValue" :data-field-name="parentFieldLabel">
@@ -65,14 +68,31 @@
         <a-input v-model:value="formState.website" placeholder="请输入官网地址（选填）" />
       </a-form-item>
 
-      <!-- Fix 4: 国家/地区字段，school Tab 特有，供 Playwright 定位 -->
+      <!-- 国家/地区字段，school Tab 特有，下拉来自 osg_region 字典 -->
       <a-form-item
         v-if="props.tab === 'osg_school'"
         name="country"
         data-field-name="国家/地区"
         label="国家/地区"
       >
-        <a-input v-model:value="formState.country" placeholder="请输入国家/地区（选填）" />
+        <a-select
+          v-model:value="formState.country"
+          placeholder="请选择国家/地区"
+          allow-clear
+          :options="regionOptions"
+        />
+      </a-form-item>
+
+      <!-- 国际电话区号字段，country_code Tab 特有 -->
+      <a-form-item
+        v-if="props.tab === 'osg_country_code'"
+        name="callingCode"
+        data-field-name="国际区号"
+      >
+        <template #label>
+          <span class="base-data-modal__label">国际区号<span class="base-data-modal__required">*</span></span>
+        </template>
+        <a-input v-model:value="formState.callingCode" placeholder="例如 +86，必须以 + 开头加 1-4 位数字" />
       </a-form-item>
 
       <a-form-item label="排序" name="dictSort" data-field-name="排序">
@@ -123,6 +143,7 @@ const emit = defineEmits<{
 const formRef = ref()
 const loading = ref(false)
 const parentOptions = ref<any[]>([])
+const regionOptions = ref<{ value: string; label: string }[]>([])
 const surfaceIdMap: Record<string, { create: string; edit: string }> = {
   osg_recruit_cycle: { create: 'modal-new-program', edit: 'modal-edit-program' },
   osg_major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
@@ -139,6 +160,7 @@ const nameFieldLabelMap: Record<string, string> = {
   osg_sub_direction: '子方向名称',
   osg_course_type: '课程类型名称',
   osg_expense_type: '报销类型名称',
+  osg_country_code: '国家/地区',
 }
 const parentFieldLabelMap: Record<string, string> = {
   osg_company_name: '所属公司/银行类别',
@@ -180,7 +202,8 @@ const formState = reactive({
   parentValue: undefined as string | undefined,
   website: '',
   country: '',
-  type: ''
+  type: '',
+  callingCode: '',
 })
 
 const statusChecked = computed({
@@ -190,9 +213,27 @@ const statusChecked = computed({
 
 const rules = computed(() => ({
   dictLabel: [{ required: true, message: `请输入${nameFieldLabel.value}`, trigger: 'blur' }],
-  dictValue: [{ required: true, message: '请输入字典键值', trigger: 'blur' }],
+  // 字典键值是机器标识符，与后端 SQL 类型及代码 switch 联动；需严格限制为标识符格式
+  dictValue: [
+    { required: true, message: '请输入字典键值', trigger: 'blur' },
+    {
+      pattern: /^[A-Za-z][A-Za-z0-9_]*$/,
+      message: '字典键值只能是英文、数字或下划线，并以字母开头',
+      trigger: 'blur',
+    },
+  ],
   parentValue: parentTabInfo.value
     ? [{ required: true, message: `请选择${parentFieldLabel.value}`, trigger: 'change' }]
+    : [],
+  callingCode: props.tab === 'osg_country_code'
+    ? [
+        { required: true, message: '请输入国际区号', trigger: 'blur' },
+        {
+          pattern: /^\+\d{1,4}$/,
+          message: '区号必须以 + 开头，加 1-4 位数字（例如 +86）',
+          trigger: 'blur',
+        },
+      ]
     : [],
 }))
 
@@ -208,6 +249,21 @@ const loadParentOptions = async () => {
   }
 }
 
+const loadRegionOptions = async () => {
+  if (props.tab !== 'osg_school') {
+    regionOptions.value = []
+    return
+  }
+  try {
+    const rows = await getAdminDictOptions('osg_region')
+    regionOptions.value = (rows || [])
+      .filter((r: any) => r.status === '0')
+      .map((r: any) => ({ value: r.dictValue, label: r.dictLabel }))
+  } catch (error) {
+    regionOptions.value = []
+  }
+}
+
 const syncFormState = async () => {
   if (props.record) {
     formState.dictCode = props.record.dictCode
@@ -219,6 +275,7 @@ const syncFormState = async () => {
     formState.website = props.record.extra?.website || ''
     formState.country = props.record.extra?.country || ''
     formState.type = props.record.extra?.type || ''
+    formState.callingCode = props.record.extra?.callingCode || ''
   } else {
     formState.dictCode = undefined
     formState.dictLabel = ''
@@ -229,9 +286,10 @@ const syncFormState = async () => {
     formState.website = ''
     formState.country = ''
     formState.type = ''
+    formState.callingCode = ''
   }
 
-  await loadParentOptions()
+  await Promise.all([loadParentOptions(), loadRegionOptions()])
   await nextTick()
   formRef.value?.clearValidate?.()
 }
@@ -257,6 +315,7 @@ const handleSubmit = async () => {
     if (formState.website) extra.website = formState.website
     if (formState.country) extra.country = formState.country
     if (formState.type) extra.type = formState.type
+    if (formState.callingCode) extra.callingCode = formState.callingCode
     const remark = JSON.stringify({
       parentValue: formState.parentValue,
       extra,

@@ -18,6 +18,7 @@ import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.system.constant.OsgClassReportConstants;
 import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgClassRecordServiceImpl;
 
@@ -77,6 +78,31 @@ public class OsgAssistantClassRecordController extends BaseController
             keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd,
             SecurityUtils.getUserId(), scope
         ));
+    }
+
+    @GetMapping("/reportable-students")
+    public AjaxResult reportableStudents()
+    {
+        if (!hasAssistantAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+        // 参数顺序：(Long currentUserId, String end)
+        return AjaxResult.success(classRecordService.listReportableStudents(
+            SecurityUtils.getUserId(), OsgClassReportConstants.END_ASSISTANT));
+    }
+
+    @GetMapping("/reference-candidates")
+    public AjaxResult referenceCandidates(@RequestParam(value = "studentId", required = false) Long studentId,
+                                          @RequestParam(value = "referenceType", required = false) String referenceType)
+    {
+        if (!hasAssistantAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+        // 参数顺序：(Long currentUserId, String end, Long studentId, String refType)
+        return AjaxResult.success(classRecordService.listReferenceCandidates(
+            SecurityUtils.getUserId(), OsgClassReportConstants.END_ASSISTANT, studentId, referenceType));
     }
 
     private boolean hasAssistantAccess()

@@ -23,6 +23,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
+import { useIdleLogout } from '@osg/shared/composables'
 import { clearAuth, getUser } from '@osg/shared/utils'
 
 import '@mdi/font/css/materialdesignicons.css'
@@ -163,6 +164,9 @@ const navigationGroups: NavigationGroup[] = [
 
 const route = useRoute()
 const router = useRouter()
+
+// 五端共享：无操作 60 分钟自动退出，活动节流 ping 续期
+useIdleLogout()
 
 const userInfo = computed(() =>
   getUser<{

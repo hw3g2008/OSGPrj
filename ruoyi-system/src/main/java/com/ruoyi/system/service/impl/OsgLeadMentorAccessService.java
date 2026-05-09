@@ -24,6 +24,9 @@ public class OsgLeadMentorAccessService
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private OsgStaffAccessGuard staffAccessGuard;
+
     public SysUser findUserByLogin(String login)
     {
         if (!StringUtils.hasText(login))
@@ -48,6 +51,11 @@ public class OsgLeadMentorAccessService
 
     public boolean hasLeadMentorAccess(SysUser user)
     {
+        // [T1.1] 黑名单先 + [T1.2] frozen 后：顶层短路，覆盖 admin / clerk / business ownership 路径
+        if (staffAccessGuard.isBlocked(user))
+        {
+            return false;
+        }
         return isActiveUser(user)
                 && (user.isAdmin() || hasClerkRole(user) || hasActiveLeadMentorStaff(user.getEmail()) || hasLeadMentorBusinessOwnership(user.getUserId()));
     }

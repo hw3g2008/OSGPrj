@@ -22,6 +22,8 @@ export interface DictFacadeOption {
   remark?: string
   /** 从 remark JSON {"parentValue":"xxx"} 解析出的父字典 value（osg_city.parentValue=osg_region.value）*/
   parentValue?: string
+  /** 从 remark JSON {"extra":{...}} 解析出的扩展属性（如 osg_country_code.extra.callingCode = "+86"） */
+  extra?: Record<string, string>
 }
 
 const cacheByType: Record<string, DictFacadeOption[] | undefined> = {}
@@ -63,25 +65,26 @@ export function useDictFacade(typeCode: string) {
 }
 
 function dictItemToOption(d: SharedDictItem): DictFacadeOption {
+  const remarkJson = parseRemarkJson(d.remark)
   return {
     value: d.dictValue,
     label: d.dictLabel,
     cssClass: d.cssClass || undefined,
     listClass: d.listClass || undefined,
     remark: d.remark || undefined,
-    parentValue: parseParentValue(d.remark),
+    parentValue: typeof remarkJson?.parentValue === 'string' ? remarkJson.parentValue : undefined,
+    extra: remarkJson?.extra && typeof remarkJson.extra === 'object' ? remarkJson.extra : undefined,
   }
 }
 
 /**
  * 后端 remark 字段约定为 JSON 字符串（admin 字典种子写入）。
- * 例：{"parentValue":"na"} 表示父字典值为 'na'（osg_city.parentValue=osg_region.value）
+ * 例：{"parentValue":"na","extra":{"callingCode":"+86"}}
  */
-function parseParentValue(remark: string | null | undefined): string | undefined {
+function parseRemarkJson(remark: string | null | undefined): any {
   if (!remark) return undefined
   try {
-    const json = JSON.parse(remark)
-    return typeof json?.parentValue === 'string' ? json.parentValue : undefined
+    return JSON.parse(remark)
   } catch {
     return undefined
   }

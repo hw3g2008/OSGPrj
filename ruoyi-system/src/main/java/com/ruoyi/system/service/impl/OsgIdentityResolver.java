@@ -75,6 +75,35 @@ public class OsgIdentityResolver
         return userIds;
     }
 
+    /**
+     * 反向解析: sys_user.user_id -> osg_staff.staff_id
+     * 通过 sys_user.email 关联到 osg_staff.email。
+     * 找不到时返回 null（调用方负责过滤），不抛异常，避免列表/详情 API 因脏数据整体失败。
+     */
+    public Long resolveStaffIdByUserId(Long userId)
+    {
+        if (userId == null)
+        {
+            return null;
+        }
+        SysUser user = sysUserService.selectUserById(userId);
+        if (user == null)
+        {
+            return null;
+        }
+        String email = StringUtils.hasText(user.getEmail()) ? user.getEmail().trim() : null;
+        if (email == null && StringUtils.hasText(user.getUserName()))
+        {
+            email = user.getUserName().trim();
+        }
+        if (email == null || email.isBlank())
+        {
+            return null;
+        }
+        OsgStaff staff = staffMapper.selectStaffByEmail(email);
+        return staff == null ? null : staff.getStaffId();
+    }
+
     private SysUser requireUserAccount(Long userId)
     {
         if (userId == null)

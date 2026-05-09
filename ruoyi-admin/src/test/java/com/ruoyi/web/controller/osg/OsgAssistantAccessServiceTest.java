@@ -40,6 +40,9 @@ class OsgAssistantAccessServiceTest
     @Mock
     private JdbcTemplate jdbcTemplate;
 
+    @Mock
+    private OsgStaffAccessGuard staffAccessGuard;
+
     @Test
     void findUserByLoginReturnsUserNameMatchBeforeEmailLookup()
     {

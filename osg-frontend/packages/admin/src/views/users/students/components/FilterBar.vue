@@ -72,24 +72,22 @@
       />
     </div>
     <div class="students-filter-bar__actions">
-      <button type="button" class="filter-action-button filter-action-button--secondary" @click="emitSearch">
-        <i class="mdi mdi-magnify" aria-hidden="true"></i>
-        <span>搜索</span>
-      </button>
-      <button type="button" class="filter-action-button filter-action-button--text" @click="handleReset">
-        <i class="mdi mdi-refresh" aria-hidden="true"></i>
-        <span>重置</span>
-      </button>
-      <button type="button" class="filter-action-button filter-action-button--secondary" @click="emit('export')">
-        <i class="mdi mdi-export" aria-hidden="true"></i>
-        <span>导出</span>
-      </button>
+      <a-button type="primary" @click="emitSearch">
+        <template #icon><SearchOutlined /></template>
+        搜索
+      </a-button>
+      <a-button @click="handleReset">重置</a-button>
+      <a-button @click="emit('export')">
+        <template #icon><ExportOutlined /></template>
+        导出
+      </a-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { SearchOutlined, ExportOutlined } from '@ant-design/icons-vue'
 
 type FilterValue = string | number | undefined
 
@@ -240,67 +238,6 @@ const normalizeText = (value?: string) => {
 .students-filter-bar__control--select {
   width: auto;
   min-width: max-content;
-}
-
-.filter-action-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-
-  i {
-    font-size: 16px;
-  }
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.filter-action-button--primary {
-  background: var(--primary-gradient, linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%));
-  border: none;
-  color: #ffffff;
-
-  &:hover:not(:disabled) {
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-  }
-}
-
-.filter-action-button--secondary {
-  background: #ffffff;
-  border: 1px solid var(--border, #e2e8f0);
-  color: var(--text2, #64748b);
-
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-    border-color: #9ca3af;
-    color: var(--text, #1e293b);
-  }
-}
-
-.filter-action-button--text {
-  background: transparent;
-  color: var(--primary, #6366f1);
 }
 
 @media (max-width: 1200px) {

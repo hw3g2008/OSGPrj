@@ -1,5 +1,7 @@
 package com.ruoyi.system.service.impl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,10 +22,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.domain.OsgClassRecord;
+import com.ruoyi.system.service.ISysDictDataService;
 import com.ruoyi.system.domain.OsgCoaching;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
@@ -54,6 +59,12 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
     @Autowired
     private OsgMockPracticeMapper mockPracticeMapper;
 
+    @Autowired
+    private OsgClassRecordMapper classRecordMapper;
+
+    @Autowired
+    private ISysDictDataService dictDataService;
+
     // ===== Lead-Mentor 端 =====
 
     @Override
@@ -65,19 +76,34 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
     private List<Map<String, Object>> selectOverviewListInternal(String scope, OsgJobApplication query, Long currentUserId)
     {
         String resolvedScope = normalizeScope(scope);
+        OsgJobApplication normalizedQuery = normalizeQuery(query);
         List<OsgJobApplication> rows = selectScopedApplications(resolvedScope, query, currentUserId);
-        rows = filterRowsByQuery(rows, normalizeQuery(query));
+        rows = filterRowsByQuery(rows, normalizedQuery);
         Map<Long, OsgCoaching> coachingMap = selectCoachingMap();
-        return rows.stream()
+        List<Map<String, Object>> payloads = rows.stream()
             .sorted(Comparator.comparing(OsgJobApplication::getSubmittedAt, Comparator.nullsLast(Date::compareTo)).reversed())
             .map(row -> toOverviewPayload(row, coachingMap.get(row.getApplicationId())))
-            .toList();
+            .collect(Collectors.toList());
+        Boolean lessonReportedFilter = normalizedQuery.getLessonReported();
+        if (lessonReportedFilter != null)
+        {
+            payloads = payloads.stream()
+                .filter(p -> {
+                    Object lessonCount = p.get("lessonCount");
+                    boolean reported = lessonCount instanceof Integer && (Integer) lessonCount > 0;
+                    return reported == lessonReportedFilter;
+                })
+                .toList();
+        }
+        return payloads;
     }
 
     @Override
     public Map<String, Object> detailForLeadMentor(Long applicationId, Long leadMentorId)
     {
-        return detailForCoachingUser(applicationId, leadMentorId);
+        Map<String, Object> payload = detailForCoachingUser(applicationId, leadMentorId);
+        payload.put("classRecordsByMentor", buildClassRecordsByMentor(applicationId));
+        return payload;
     }
 
     @Override
@@ -139,7 +165,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             throw new ServiceException("导师分配保存失败");
         }
 
-        // §F1 重新分配裁决：清空老辅导者的 confirm 记录，避免新辅导者看到“已确认”卡死
+        // §F1 重新分配裁决：清空老辅导者的 confirm 记录，避免新辅导者看到"已确认"卡死
         if (isReassignment)
         {
             coachingMapper.resetConfirmationByApplicationId(applicationId, operator);
@@ -346,6 +372,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         return false;
     }
 
+    /** §3.4.1：lead_mentor_id 维度日历，严格限定 lead_mentor_id=当前用户，禁止扩大到 mentor_ids 视角。 */
     @Override
     public List<Map<String, Object>> calendarForLeadMentor(Long leadMentorId)
     {
@@ -358,6 +385,9 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         return calendarForCoachingUser(mentorId);
     }
 
+    /**
+     * 严格限定 lead_mentor_id=当前用户，禁止扩大到 mentor_ids 视角；§3.4.1 视角说明。
+     */
     private List<Map<String, Object>> calendarForCoachingUser(Long currentUserId)
     {
         if (currentUserId == null)
@@ -476,7 +506,6 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
                 .toList());
             return visibleRows.stream()
                 .filter(row -> coachingApplicationIds.contains(row.getApplicationId())
-                    || canManage(row, currentUserId)
                     || hasAssistantOwnership(row, currentUserId, studentMap))
                 .toList();
         }
@@ -613,10 +642,6 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         {
             return false;
         }
-        if (query.getStudentName() != null && !containsText(row.getStudentName(), query.getStudentName()))
-        {
-            return false;
-        }
         if (query.getCompanyName() != null && !Objects.equals(query.getCompanyName(), trimToNull(row.getCompanyName())))
         {
             return false;
@@ -637,10 +662,13 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         {
             return false;
         }
-        if (query.getKeyword() != null
-            && !containsText(row.getStudentName(), query.getKeyword())
-            && !containsText(row.getCompanyName(), query.getKeyword())
-            && !containsText(row.getPositionName(), query.getKeyword()))
+        if (query.getInterviewTimeStart() != null
+            && (row.getInterviewTime() == null || row.getInterviewTime().before(query.getInterviewTimeStart())))
+        {
+            return false;
+        }
+        if (query.getInterviewTimeEnd() != null
+            && (row.getInterviewTime() == null || row.getInterviewTime().after(query.getInterviewTimeEnd())))
         {
             return false;
         }
@@ -673,7 +701,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
 
         if (coaching != null)
         {
-            // §B.1：默认值为英文 enum 'assigned'（不再使用中文“辅导中”）
+            // §B.1：默认值为英文 enum 'assigned'（不再使用中文"辅导中"）
             payload.put("coachingStatus", defaultText(coaching.getStatus(), "assigned"));
             payload.put("mentorName", defaultText(coaching.getMentorName(), coaching.getMentorNames()));
             payload.put("mentorNames", defaultText(coaching.getMentorNames(), coaching.getMentorName()));
@@ -691,6 +719,13 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             payload.put("hoursUsed", 0);
             payload.put("feedbackSummary", "-");
         }
+
+        payload.put("cityLabel", resolveCityLabel(application.getCity()));
+        Map<String, Object> appStats = computeApplicationStats(application.getApplicationId());
+        payload.put("latestRating", appStats.get("latestRating"));
+        payload.put("lessonCount", appStats.get("lessonCount"));
+        payload.put("lessonReported", appStats.get("lessonReported"));
+
         return payload;
     }
 
@@ -701,13 +736,14 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         {
             return normalized;
         }
-        normalized.setStudentName(trimToNull(query.getStudentName()));
         normalized.setCompanyName(trimToNull(query.getCompanyName()));
         normalized.setCurrentStage(trimToNull(query.getCurrentStage()));
-        normalized.setKeyword(trimToNull(query.getKeyword()));
         normalized.setAssignStatus(trimToNull(query.getAssignStatus()));
         normalized.setMonth(normalizeMonth(trimToNull(query.getMonth())));
         normalized.setStatus(normalizeStatusFilter(firstText(query.getStatus(), query.getCoachingStatus())));
+        normalized.setInterviewTimeStart(query.getInterviewTimeStart());
+        normalized.setInterviewTimeEnd(query.getInterviewTimeEnd());
+        normalized.setLessonReported(query.getLessonReported());
         return normalized;
     }
 
@@ -1156,6 +1192,117 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             return primary;
         }
         return fallback != null ? fallback : "";
+    }
+
+    private List<Map<String, Object>> buildClassRecordsByMentor(Long applicationId)
+    {
+        if (applicationId == null)
+        {
+            return List.of();
+        }
+        List<OsgClassRecord> records = classRecordMapper.selectByApplicationReference(applicationId);
+        if (records == null || records.isEmpty())
+        {
+            return List.of();
+        }
+        Map<Long, List<OsgClassRecord>> byMentor = new LinkedHashMap<>();
+        for (OsgClassRecord r : records)
+        {
+            Long mentorId = r.getMentorId();
+            if (mentorId == null)
+            {
+                mentorId = 0L;
+            }
+            byMentor.computeIfAbsent(mentorId, k -> new ArrayList<>()).add(r);
+        }
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<Long, List<OsgClassRecord>> entry : byMentor.entrySet())
+        {
+            Long mentorId = entry.getKey();
+            List<OsgClassRecord> group = entry.getValue();
+            String mentorName = group.stream().map(OsgClassRecord::getMentorName).filter(Objects::nonNull).findFirst().orElse(null);
+            BigDecimal totalHours = group.stream()
+                .map(r -> r.getDurationHours() != null ? BigDecimal.valueOf(r.getDurationHours()) : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> ratingValues = group.stream()
+                .filter(r -> "normal".equals(r.getMemberStatus()))
+                .filter(r -> r.getRate() != null && !r.getRate().isBlank())
+                .map(r -> {
+                    try { return new BigDecimal(r.getRate()); }
+                    catch (NumberFormatException e) { return null; }
+                })
+                .filter(Objects::nonNull)
+                .toList();
+            BigDecimal avgRating = ratingValues.isEmpty() ? null
+                : ratingValues.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(ratingValues.size()), 2, RoundingMode.HALF_UP);
+            List<Map<String, Object>> recordList = group.stream()
+                .map(r -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("recordId", r.getRecordId());
+                    row.put("classDate", r.getClassDate());
+                    row.put("durationHours", r.getDurationHours());
+                    row.put("courseType", r.getCourseType());
+                    row.put("memberStatus", r.getMemberStatus());
+                    row.put("rate", r.getRate());
+                    row.put("feedbackContent", r.getFeedbackContent());
+                    return row;
+                })
+                .toList();
+            Map<String, Object> mentorGroup = new LinkedHashMap<>();
+            mentorGroup.put("mentorId", mentorId == 0L ? null : mentorId);
+            mentorGroup.put("mentorName", mentorName);
+            mentorGroup.put("totalHours", totalHours);
+            mentorGroup.put("avgRating", avgRating);
+            mentorGroup.put("records", recordList);
+            result.add(mentorGroup);
+        }
+        return result;
+    }
+
+    private Map<String, Object> computeApplicationStats(Long applicationId)
+    {
+        Map<String, Object> stats = new LinkedHashMap<>();
+        if (applicationId == null)
+        {
+            stats.put("latestRating", null);
+            stats.put("lessonCount", 0);
+            stats.put("lessonReported", false);
+            return stats;
+        }
+        List<OsgClassRecord> records = classRecordMapper.selectByApplicationReference(applicationId);
+        int lessonCount = records.size();
+        String latestRating = records.stream()
+            .filter(r -> "normal".equals(r.getMemberStatus()))
+            .filter(r -> r.getRate() != null && !r.getRate().isBlank())
+            .map(OsgClassRecord::getRate)
+            .findFirst()
+            .orElse(null);
+        stats.put("latestRating", latestRating);
+        stats.put("lessonCount", lessonCount);
+        stats.put("lessonReported", lessonCount > 0);
+        return stats;
+    }
+
+    private String resolveCityLabel(String cityValue)
+    {
+        return resolveCityLabel(cityValue, new java.util.HashMap<>());
+    }
+
+    private String resolveCityLabel(String cityValue, Map<String, String> dictCache)
+    {
+        if (cityValue == null || cityValue.isBlank())
+        {
+            return null;
+        }
+        if (dictCache.containsKey(cityValue))
+        {
+            return dictCache.get(cityValue);
+        }
+        String label = dictDataService.selectDictLabel("osg_city", cityValue);
+        String resolved = (label == null || label.isBlank()) ? cityValue : label;
+        dictCache.put(cityValue, resolved);
+        return resolved;
     }
 
     // ===== Mentor 端列表查询（委托 coaching scope）=====

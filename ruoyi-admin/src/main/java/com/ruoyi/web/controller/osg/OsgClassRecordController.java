@@ -22,6 +22,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.file.FileUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.system.constant.OsgClassReportConstants;
 import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.service.impl.OsgAssistantAccessService;
 import com.ruoyi.system.service.impl.OsgClassRecordServiceImpl;
@@ -175,6 +176,21 @@ public class OsgClassRecordController extends BaseController
         record.setMentorName(SecurityUtils.getUsername());
         record.setCreateBy(SecurityUtils.getUsername());
         return toAjax(classRecordService.createMentorClassRecord(record));
+    }
+
+    @GetMapping("/api/mentor/class-records/reportable-students")
+    public AjaxResult mentorReportableStudents()
+    {
+        return AjaxResult.success(classRecordService.listReportableStudents(
+            SecurityUtils.getUserId(), OsgClassReportConstants.END_MENTOR));
+    }
+
+    @GetMapping("/api/mentor/class-records/reference-candidates")
+    public AjaxResult mentorReferenceCandidates(@RequestParam(value = "studentId", required = false) Long studentId,
+                                                @RequestParam(value = "referenceType", required = false) String referenceType)
+    {
+        return AjaxResult.success(classRecordService.listReferenceCandidates(
+            SecurityUtils.getUserId(), OsgClassReportConstants.END_MENTOR, studentId, referenceType));
     }
 
     @PostMapping("/assistant/class-records")

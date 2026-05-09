@@ -1,6 +1,7 @@
 package com.ruoyi.system.domain;
 
 import java.util.Date;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.core.domain.BaseEntity;
@@ -50,6 +51,17 @@ public class OsgJobApplication extends BaseEntity
     private String status;
 
     private String keyword;
+
+    /** ISO yyyy-MM-dd HH:mm:ss，透传到 service matchesQuery 做范围过滤 */
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date interviewTimeStart;
+
+    /** ISO yyyy-MM-dd HH:mm:ss，透传到 service matchesQuery 做范围过滤 */
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date interviewTimeEnd;
+
+    /** Boolean.TRUE=仅已上报，Boolean.FALSE=仅未上报，null=不过滤 */
+    private Boolean lessonReported;
 
     public Long getApplicationId()
     {
@@ -261,6 +273,15 @@ public class OsgJobApplication extends BaseEntity
         this.keyword = keyword;
     }
 
+    public Date getInterviewTimeStart() { return interviewTimeStart; }
+    public void setInterviewTimeStart(Date interviewTimeStart) { this.interviewTimeStart = interviewTimeStart; }
+
+    public Date getInterviewTimeEnd() { return interviewTimeEnd; }
+    public void setInterviewTimeEnd(Date interviewTimeEnd) { this.interviewTimeEnd = interviewTimeEnd; }
+
+    public Boolean getLessonReported() { return lessonReported; }
+    public void setLessonReported(Boolean lessonReported) { this.lessonReported = lessonReported; }
+
     @Override
     public String toString()
     {
@@ -285,6 +306,9 @@ public class OsgJobApplication extends BaseEntity
             .append("submittedAt", getSubmittedAt())
             .append("month", getMonth())
             .append("status", getStatus())
+            .append("interviewTimeStart", getInterviewTimeStart())
+            .append("interviewTimeEnd", getInterviewTimeEnd())
+            .append("lessonReported", getLessonReported())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

@@ -1,0 +1,241 @@
+/* 学员表单弹窗共享样式（B1）— 与 AddStudentModal 视觉对齐 */
+
+.student-form-modal__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a2234;
+  font-family: 'Space Grotesk', 'Avenir Next', 'PingFang SC', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.student-form-modal__title-icon {
+  color: #4f74ff;
+  font-size: 18px;
+}
+
+.student-form-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+}
+
+.student-form-modal__part-title {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+
+  p {
+    margin: 4px 0 0;
+    font-size: 13px;
+  }
+}
+
+.student-form-modal__part-title-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    font-size: 18px;
+  }
+
+  strong {
+    font-size: 16px;
+    font-weight: 700;
+  }
+}
+
+.student-form-modal__part-title--blue {
+  background: linear-gradient(135deg, #eef3ff 0%, #f4f7ff 100%);
+  border: 1px solid rgba(79, 116, 255, 0.15);
+  color: #3f68ff;
+
+  p {
+    color: #546179;
+  }
+}
+
+.student-form-modal__part-title--amber {
+  background: linear-gradient(135deg, #fef9e7 0%, #fff8e1 100%);
+  border: 1px solid rgba(197, 106, 38, 0.15);
+  color: #92400e;
+
+  p {
+    color: #78716c;
+  }
+}
+
+.student-form-modal__section {
+  background: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.student-form-modal__section--highlight {
+  background: #fff;
+  border: 2px solid #4f74ff;
+}
+
+.student-form-modal__section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.student-form-modal__section-desc {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.student-form-modal__section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-form-modal__section-badge--primary {
+  background: #4f74ff;
+  color: #fff;
+}
+
+.student-form-modal__section-badge--indigo {
+  background: #edf2ff;
+  color: #3f68ff;
+}
+
+.student-form-modal__section-badge--blue {
+  background: #e8f0f8;
+  color: #3b6ea5;
+}
+
+.student-form-modal__section-badge--amber {
+  background: #fff2db;
+  color: #c56a26;
+}
+
+.student-form-modal__section-badge--green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.student-form-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+.student-form-modal__grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.student-form-modal__field--wide {
+  grid-column: 1 / -1;
+}
+
+.student-form-modal__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #1a2234;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.student-form-modal__required {
+  color: #dc2626;
+}
+
+.student-form-modal__radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  :deep(.ant-radio-button-wrapper) {
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    margin-inline-start: 0;
+    height: 30px;
+    padding-inline: 10px;
+    line-height: 28px;
+    font-size: 11px;
+  }
+
+  :deep(.ant-radio-button-wrapper:not(:first-child)::before) {
+    display: none;
+  }
+}
+
+.student-form-modal__checkbox-flat {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  :deep(.ant-checkbox-wrapper) {
+    font-size: 13px;
+    margin-inline-start: 0;
+  }
+}
+
+.student-form-modal__attachment-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px dashed rgba(79, 116, 255, 0.3);
+  border-radius: 10px;
+  background: #f8fbff;
+  font-size: 13px;
+}
+
+.student-form-modal__attachment-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+
+  i {
+    color: #4f74ff;
+    font-size: 18px;
+  }
+}
+
+.student-form-modal__attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #4f74ff;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.student-form-modal__attachment-empty {
+  color: #94a3b8;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* 控件尺寸由 shared/styles/index.scss 的 .osg-modal-form 公共规则统一管控（5 端通用 36px） */
+
+@media (max-width: 720px) {
+  .student-form-modal__grid,
+  .student-form-modal__grid--3 {
+    grid-template-columns: 1fr;
+  }
+}

@@ -2,10 +2,11 @@ import { http } from '../utils/request'
 
 export interface LeadMentorJobOverviewListParams {
   scope: 'pending' | 'coaching' | 'managed'
-  studentName?: string
   companyName?: string
   currentStage?: string
-  keyword?: string
+  interviewTimeStart?: string
+  interviewTimeEnd?: string
+  lessonReported?: boolean
 }
 
 export interface LeadMentorJobOverviewListItem {
@@ -30,6 +31,10 @@ export interface LeadMentorJobOverviewListItem {
   hoursUsed?: number
   feedbackSummary?: string | null
   submittedAt?: string
+  cityLabel?: string
+  latestRating?: string
+  lessonCount?: number
+  lessonReported?: boolean
 }
 
 export interface LeadMentorAssignMentorPayload {
@@ -51,13 +56,13 @@ export interface LeadMentorCalendarRecord {
 }
 
 const toRequestParams = <T extends object>(params: T) => {
-  const requestParams: Record<string, string | number> = {}
+  const requestParams: Record<string, string | number | boolean> = {}
 
   Object.entries(params as Record<string, unknown>).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') {
       return
     }
-    if (typeof value === 'string' || typeof value === 'number') {
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       requestParams[key] = value
     }
   })
@@ -71,8 +76,32 @@ export function getLeadMentorJobOverviewList(params: LeadMentorJobOverviewListPa
   })
 }
 
+export interface LeadMentorClassRecordDetailItem {
+  recordId: number
+  classDate: string
+  courseType?: string
+  memberStatus?: string
+  durationHours?: number
+  rate?: string
+  feedbackSummary?: string | null
+  referenceType?: string
+  referenceId?: number | null
+}
+
+export interface LeadMentorClassRecordMentorGroup {
+  mentorId: number
+  mentorName: string
+  totalHours: number
+  avgRating?: string | null
+  records: LeadMentorClassRecordDetailItem[]
+}
+
+export interface LeadMentorJobOverviewDetail extends LeadMentorJobOverviewListItem {
+  classRecordsByMentor?: LeadMentorClassRecordMentorGroup[]
+}
+
 export function getLeadMentorJobOverviewDetail(applicationId: number) {
-  return http.get<LeadMentorJobOverviewListItem>(`/lead-mentor/job-overview/${applicationId}`)
+  return http.get<LeadMentorJobOverviewDetail>(`/lead-mentor/job-overview/${applicationId}`)
 }
 
 export function assignLeadMentorJobOverviewMentor(applicationId: number, payload: LeadMentorAssignMentorPayload) {

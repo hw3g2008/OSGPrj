@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="在线测试题库" title-en="Online Test Bank" description="管理HireVue、Pymetrics、SHL等在线测试资源">
+    <PageHeader title-zh="在线测试题库" title-en="Online Test Bank">
       <template #actions>
         <a-button v-if="activeTab === 'banks'" type="primary" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>

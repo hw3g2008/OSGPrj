@@ -274,13 +274,22 @@ public class PositionServiceImpl implements IPositionService
     }
 
     /**
-     * 查询申请追踪列表
+     * 查询申请追踪列表（不带时间过滤，向后兼容）
      */
     @Override
     public List<Map<String, Object>> selectApplicationList(Long userId)
     {
+        return selectApplicationList(userId, null, null);
+    }
+
+    /**
+     * 查询申请追踪列表（T14: 支持按面试日历区间 [fromIso, toIso) 过滤）
+     */
+    @Override
+    public List<Map<String, Object>> selectApplicationList(Long userId, String fromIso, String toIso)
+    {
         Long studentId = identityResolver.resolveStudentIdByUserId(userId);
-        List<Map<String, Object>> applications = jobApplicationMapper.selectStudentApplicationRecords(studentId);
+        List<Map<String, Object>> applications = jobApplicationMapper.selectStudentApplicationRecords(studentId, fromIso, toIso);
 
         Map<String, SysDictData> stageDict = loadDictValueMap(DICT_TYPE_POSITION_PROGRESS_STAGE);
         // §D.3 已移除 coachingStatusDict 加载：coaching label 派生职责转移到前端 composable
@@ -832,7 +841,7 @@ public class PositionServiceImpl implements IPositionService
             return;
         }
 
-        List<Map<String, Object>> applicationRows = jobApplicationMapper.selectStudentApplicationRecords(studentId);
+        List<Map<String, Object>> applicationRows = jobApplicationMapper.selectStudentApplicationRecords(studentId, null, null);
         if (applicationRows == null || applicationRows.isEmpty())
         {
             return;
@@ -1747,7 +1756,7 @@ public class PositionServiceImpl implements IPositionService
             return null;
         }
 
-        List<Map<String, Object>> applications = jobApplicationMapper.selectStudentApplicationRecords(studentId);
+        List<Map<String, Object>> applications = jobApplicationMapper.selectStudentApplicationRecords(studentId, null, null);
         if (applications == null || applications.isEmpty())
         {
             return null;

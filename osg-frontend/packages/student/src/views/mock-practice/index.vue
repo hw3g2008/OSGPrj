@@ -195,7 +195,7 @@
             <template #label>
               <span class="coach-form__label">
                 <span class="coach-form__num">01</span>
-                <span class="coach-form__label-text">你为什么要做模拟面试？</span>
+                <span class="coach-form__label-text">你为什么要做面试测试？</span>
               </span>
             </template>
             <a-textarea
@@ -642,7 +642,7 @@ const practiceDialogConfig = computed(() => {
     subtitle: '提交申请后，班主任会尽快协助安排合适导师',
     noteTone: 'blue',
     noteTitle: '安排说明',
-    noteText: '模拟面试会根据您的目标公司、轮次和准备状态安排导师，请尽量补充完整背景信息以便更精准地分配。',
+    noteText: '面试测试会根据您的目标公司、轮次和准备状态安排导师，请尽量补充完整背景信息以便更精准地分配。',
     actionClass: 'practice-dialog__submit practice-dialog__submit--blue'
   }
 })
@@ -656,7 +656,7 @@ const COACH_HEADER_MAP: Record<string, {
   microcopy: string
 }> = {
   mock: {
-    eyebrow: 'MENTOR SESSION · 模拟面试',
+    eyebrow: 'MENTOR SESSION · 面试测试',
     title: '准备好直面面试官了吗？',
     subtitle: '与资深导师 1 对 1 演练，把每一次模拟都变成真实战场的预演。',
     microcopy: '提交后班主任通常 24 小时内回复并安排导师'
@@ -749,7 +749,7 @@ const submitPracticeRequest = async () => {
 
   if (practiceType === 'mock') {
     if (!practiceForm.value.reason.trim()) {
-      message.error('请填写模拟面试申请原因')
+      message.error('请填写面试测试申请原因')
       return
     }
 
@@ -774,7 +774,7 @@ const submitPracticeRequest = async () => {
     resetPracticeForm()
     await loadPageData()
     if (practiceType === 'mock') {
-      message.success('模拟面试申请已提交！班主任将尽快为您安排导师。')
+      message.success('面试测试申请已提交！班主任将尽快为您安排导师。')
       return
     }
 

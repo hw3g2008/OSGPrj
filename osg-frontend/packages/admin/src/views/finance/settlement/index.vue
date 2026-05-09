@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="财务结算" title-en="Settlement" description="管理导师课时费支付，支持单条与批量标记已支付">
+    <PageHeader title-zh="财务结算" title-en="Settlement">
       <template #actions>
         <a-button @click="loadData">
           <template #icon><ExportOutlined /></template>

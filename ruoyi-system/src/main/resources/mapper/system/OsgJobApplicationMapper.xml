@@ -74,7 +74,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         limit 1
     </select>
 
-    <select id="selectStudentApplicationRecords" parameterType="Long" resultType="java.util.LinkedHashMap">
+    <!-- T14: parameterType 改为 java.util.Map（兼容 @Param userId/fromIso/toIso） -->
+    <select id="selectStudentApplicationRecords" resultType="java.util.LinkedHashMap">
         select
             app.application_id as id,
             app.position_id as positionId,
@@ -152,8 +153,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             coalesce(app.remark, '') as progressNote
         from osg_job_application app
         left join osg_position position_ref on position_ref.position_id = app.position_id
-        where app.student_id = #{userId}
-          and app.current_stage != 'withdrawn'
+        <where>
+            app.student_id = #{userId}
+            and app.current_stage != 'withdrawn'
+            <!-- T14: 时间范围过滤 [fromIso, toIso)。
+                 优先按 interview_time 过滤；当 interview_time is null 时回退按 submitted_at。 -->
+            <if test="fromIso != null and fromIso != ''">
+                and (
+                    (app.interview_time is not null and app.interview_time &gt;= str_to_date(#{fromIso}, '%Y-%m-%d'))
+                    or (app.interview_time is null and app.submitted_at &gt;= str_to_date(#{fromIso}, '%Y-%m-%d'))
+                )
+            </if>
+            <if test="toIso != null and toIso != ''">
+                and (
+                    (app.interview_time is not null and app.interview_time &lt; str_to_date(#{toIso}, '%Y-%m-%d'))
+                    or (app.interview_time is null and app.submitted_at &lt; str_to_date(#{toIso}, '%Y-%m-%d'))
+                )
+            </if>
+        </where>
         order by app.submitted_at desc, app.application_id desc
     </select>
 

@@ -41,8 +41,13 @@ import com.ruoyi.framework.web.service.PermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.domain.OsgCoaching;
 import com.ruoyi.system.domain.OsgJobApplication;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
+import com.ruoyi.system.mapper.OsgMockPracticeMapper;
+import com.ruoyi.system.mapper.OsgStudentMapper;
+import com.ruoyi.system.service.ISysDictDataService;
+import com.ruoyi.system.service.impl.OsgIdentityResolver;
 import com.ruoyi.system.service.impl.OsgLeadMentorAccessService;
 import com.ruoyi.system.service.impl.OsgUserJobOverviewServiceImpl;
 
@@ -70,6 +75,21 @@ class OsgLeadMentorJobOverviewControllerTest
 
     @MockBean
     private OsgLeadMentorAccessService leadMentorAccessService;
+
+    @MockBean
+    private OsgClassRecordMapper classRecordMapper;
+
+    @MockBean
+    private OsgMockPracticeMapper mockPracticeMapper;
+
+    @MockBean
+    private OsgStudentMapper studentMapper;
+
+    @MockBean
+    private ISysDictDataService dictDataService;
+
+    @MockBean
+    private OsgIdentityResolver identityResolver;
 
     @MockBean
     private TokenService tokenService;
@@ -182,6 +202,8 @@ class OsgLeadMentorJobOverviewControllerTest
             return 1;
         });
 
+        org.mockito.Mockito.when(classRecordMapper.selectByApplicationReference(any())).thenReturn(List.of());
+
         org.mockito.Mockito.when(coachingMapper.selectCoachingList(any(OsgCoaching.class))).thenAnswer(invocation -> {
             OsgCoaching query = invocation.getArgument(0);
             return coachingRowsRef.get().stream()
@@ -256,6 +278,9 @@ class OsgLeadMentorJobOverviewControllerTest
             }).toList());
             return 1;
         });
+
+        org.mockito.Mockito.when(identityResolver.resolveUserIdByStaffId(9201L)).thenReturn(9001L);
+        org.mockito.Mockito.when(identityResolver.resolveUserIdByStaffId(9202L)).thenReturn(9002L);
     }
 
     @Test
@@ -319,7 +344,7 @@ class OsgLeadMentorJobOverviewControllerTest
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value(200))
             .andExpect(jsonPath("$.data.applicationId").value(7001))
-            .andExpect(jsonPath("$.data.coachingStatus").value("辅导中"))
+            .andExpect(jsonPath("$.data.coachingStatus").value("assigned"))
             .andExpect(jsonPath("$.data.mentorNames").value("Jerry Li, Mike Wang"));
 
         mockMvc.perform(get("/lead-mentor/job-overview/list")
@@ -362,6 +387,50 @@ class OsgLeadMentorJobOverviewControllerTest
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value(403))
             .andExpect(jsonPath("$.msg").value("该账号无班主任端访问权限"));
+    }
+
+    @Test
+    void calendarShouldRejectUsersWithoutLeadMentorAccess() throws Exception
+    {
+        mockMvc.perform(get("/lead-mentor/job-overview/calendar")
+                .header("Authorization", "Bearer outsider-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(403))
+            .andExpect(jsonPath("$.msg").value("该账号无班主任端访问权限"));
+    }
+
+    @Test
+    void detailShouldRejectUsersWithoutLeadMentorAccess() throws Exception
+    {
+        mockMvc.perform(get("/lead-mentor/job-overview/7002")
+                .header("Authorization", "Bearer outsider-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(403))
+            .andExpect(jsonPath("$.msg").value("该账号无班主任端访问权限"));
+    }
+
+    @Test
+    void listShouldBindLessonReportedParamAndFilterCorrectly() throws Exception
+    {
+        // lessonReported=false → only apps with no class records (none of 7001~7003 have records by default)
+        mockMvc.perform(get("/lead-mentor/job-overview/list")
+                .header("Authorization", "Bearer lead-mentor-token")
+                .param("scope", "managed")
+                .param("lessonReported", "false"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.rows.length()").value(3));
+    }
+
+    @Test
+    void calendarShouldReturnEventsLimitedToCurrentLeadMentor() throws Exception
+    {
+        // user 810L has apps 7001/7002/7003 (all have interviewTime set), app 7004 belongs to 999L
+        mockMvc.perform(get("/lead-mentor/job-overview/calendar")
+                .header("Authorization", "Bearer lead-mentor-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.length()").value(3));
     }
 
     private LoginUser buildLoginUser(Long userId, String roleKey)

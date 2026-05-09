@@ -26,6 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="displayEndTime" column="display_end_time"/>
         <result property="positionUrl" column="position_url"/>
         <result property="applicationNote" column="application_note"/>
+        <result property="applicationAttachments" column="application_attachments"/>
         <result property="studentCount" column="student_count"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
@@ -56,6 +57,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         p.display_end_time,
         p.position_url,
         p.application_note,
+        p.application_attachments,
         coalesce(ja.student_count, 0) as student_count,
         p.create_by,
         p.create_time,
@@ -103,6 +105,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         p.display_end_time,
         p.position_url,
         p.application_note,
+        p.application_attachments,
         p.create_by,
         p.create_time,
         p.update_by,
@@ -221,6 +224,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             display_end_time,
             <if test="positionUrl != null and positionUrl != ''">position_url,</if>
             <if test="applicationNote != null and applicationNote != ''">application_note,</if>
+            <if test="applicationAttachments != null and applicationAttachments != ''">application_attachments,</if>
             <if test="createBy != null and createBy != ''">create_by,</if>
             create_time,
             <if test="updateBy != null and updateBy != ''">update_by,</if>
@@ -248,6 +252,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{displayEndTime},
             <if test="positionUrl != null and positionUrl != ''">#{positionUrl},</if>
             <if test="applicationNote != null and applicationNote != ''">#{applicationNote},</if>
+            <if test="applicationAttachments != null and applicationAttachments != ''">#{applicationAttachments,jdbcType=VARCHAR},</if>
             <if test="createBy != null and createBy != ''">#{createBy},</if>
             sysdate(),
             <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
@@ -279,6 +284,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="displayEndTime != null">display_end_time = #{displayEndTime},</if>
             <if test="positionUrl != null">position_url = #{positionUrl},</if>
             <if test="applicationNote != null">application_note = #{applicationNote},</if>
+            <if test="applicationAttachments != null">application_attachments = #{applicationAttachments,jdbcType=VARCHAR},</if>
             <if test="createBy != null and createBy != ''">create_by = #{createBy},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate(),

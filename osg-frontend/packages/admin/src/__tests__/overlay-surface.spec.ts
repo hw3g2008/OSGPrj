@@ -280,13 +280,14 @@ describe('overlay surface framework contract', () => {
     expect(source).toContain('#label')
   })
 
-  it('renders user role selection with select-based modal fields instead of checkbox stacks', () => {
+  it('renders user role selection with multi-select checkbox panel for both create and edit', () => {
     const source = readSource(userModalPath)
     expect(source).toContain('data-content-part="field-group"')
     expect(source).toContain('data-content-part="supporting-text"')
     expect(source).not.toContain('<a-checkbox-group')
     expect(source).toContain('user-modal__grid')
-    expect(source).toContain('selectedRoleId')
+    expect(source).toContain('user-modal__role-panel')
+    expect(source).toContain('toggleRole')
     expect(source).toContain('mdi-account-plus')
   })
 
@@ -324,25 +325,20 @@ describe('overlay surface framework contract', () => {
     expect(source).toContain('margin-bottom: 2px')
   })
 
-  it('renders password reset warning content with custom surface markup instead of Ant alert defaults', () => {
+  it('renders password reset as a one-click default-password confirmation modal', () => {
     const source = readSource(resetPwdModalPath)
     expect(source).toContain('data-content-part="supporting-text"')
     expect(source).toContain('data-content-part="status-banner"')
-    expect(source).toContain('data-content-part="field-group"')
     expect(source).toContain('data-content-part="action-row"')
     expect(source).not.toContain('<a-alert')
+    expect(source).not.toContain('<a-input-password')
+    expect(source).not.toContain('confirmPassword')
     expect(source).toContain('reset-pwd-modal__warning')
     expect(source).toContain('mdi-lock-reset')
     expect(source).toContain('mdi-alert')
-    expect(source).toContain(':required-mark="false"')
-    expect(source).toContain('#label')
-    expect(source).toContain(':visibility-toggle="false"')
-    expect(source).not.toContain('class="reset-pwd-modal__supporting-text"')
-    expect(source).toContain('<p data-content-part="supporting-text">')
-    expect(source).toContain('.overlay-surface-modal__body.reset-pwd-modal__body .ant-form-item')
+    expect(source).toContain('Osg@2026')
+    expect(source).toContain('确认重置')
     expect(source).toContain('.overlay-surface-modal__footer .reset-pwd-modal__confirm-btn')
-    expect(source).toContain('background-color: var(--warning, #f59e0b) !important')
-    expect(source).toContain('border-color: var(--warning, #f59e0b) !important')
   })
 
   it('declares generic content-part contracts for proof-case overlay surfaces', () => {

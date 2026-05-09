@@ -82,7 +82,8 @@ export function deriveMockPracticeStatus(
   if (status === 'coaching') return makeDisplay('coaching')
 
   // 5. 辅导中（数据库 raw：mentor 已开始上课但未完成）
-  if ((status === 'confirmed' || status === 'scheduled') && completed > 0) return makeDisplay('coaching')
+  // plannedHours=null 代表辅导会话未建立，不能仅凭 completedHours > 0 派生 coaching
+  if ((status === 'confirmed' || status === 'scheduled') && completed > 0 && input?.plannedHours != null) return makeDisplay('coaching')
 
   // 6. 已分配（派生值直接命中）
   if (status === 'assigned') return makeDisplay('assigned')

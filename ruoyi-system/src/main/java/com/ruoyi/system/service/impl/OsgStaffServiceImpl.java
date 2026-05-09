@@ -221,6 +221,7 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         payload.put("city", staff.getCity());
         payload.put("hourlyRate", staff.getHourlyRate());
         payload.put("rating", staff.getRating());
+        payload.put("ratingRemark", staff.getRatingRemark());
         payload.put("studentCount", staff.getStudentCount());
         payload.put("accountStatus", normalizeAccountStatus(staff.getAccountStatus()));
         payload.put("isBlacklisted", selectBlacklistedStaffIds(List.of(staffId)).contains(staffId));
@@ -261,15 +262,23 @@ public class OsgStaffServiceImpl implements IOsgStaffService
             exportRow.put("phone", row.getPhone());
             exportRow.put("staffType", row.getStaffType());
             exportRow.put("staffTypeLabel", toStaffTypeLabel(row.getStaffType()));
+            exportRow.put("gender", row.getGender());
+            exportRow.put("wechatId", row.getWechatId());
             exportRow.put("majorDirection", row.getMajorDirection());
             exportRow.put("subDirection", row.getSubDirection());
+            exportRow.put("courseTypes", row.getCourseTypes());
+            exportRow.put("specialty", row.getSpecialty());
+            exportRow.put("companies", row.getCompanies());
             exportRow.put("region", row.getRegion());
             exportRow.put("city", row.getCity());
             exportRow.put("hourlyRate", row.getHourlyRate());
+            exportRow.put("rating", row.getRating());
+            exportRow.put("ratingRemark", row.getRatingRemark());
             exportRow.put("studentCount", row.getStudentCount());
             exportRow.put("accountStatus", normalizeAccountStatus(row.getAccountStatus()));
             exportRow.put("accountStatusLabel", toAccountStatusLabel(row.getAccountStatus()));
             exportRow.put("blacklistStatus", blacklisted ? "黑名单" : "正常");
+            exportRow.put("createTime", row.getCreateTime());
             payload.add(exportRow);
         }
         return payload;

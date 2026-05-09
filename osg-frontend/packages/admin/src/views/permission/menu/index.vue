@@ -1,13 +1,6 @@
 <template>
   <div id="page-menu" class="osg-page">
-    <PageHeader title-zh="菜单管理" title-en="Menu Management" description="管理系统菜单结构，包括目录、页面菜单和按钮权限的配置">
-      <template #actions>
-        <a-button>
-          <template #icon><i class="mdi mdi-unfold-more-horizontal" aria-hidden="true"></i></template>
-          展开全部
-        </a-button>
-      </template>
-    </PageHeader>
+    <PageHeader title-zh="菜单管理" title-en="Menu Management" />
 
     <a-card :bordered="false">
       <a-form layout="inline" style="gap: 10px; flex-wrap: wrap">

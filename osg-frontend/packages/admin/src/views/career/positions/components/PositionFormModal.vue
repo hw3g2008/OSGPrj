@@ -183,20 +183,42 @@
           <h4><span class="mdi mdi-account-edit" aria-hidden="true"></span>添加人</h4>
           <fieldset class="position-form-modal__field">
             <span class="position-form-modal__sr-only">添加人</span>
-            <a-input v-model:value="form.createBy" placeholder="新增时自动为当前登录用户；管理员可修改" />
+            <a-input v-model:value="form.createBy" disabled placeholder="自动带出当前登录用户" />
           </fieldset>
         </section>
 
         <section class="position-form-modal__section" data-field-name="投递备注">
           <h4><span class="mdi mdi-note-text" aria-hidden="true"></span>投递备注</h4>
-        <fieldset class="position-form-modal__field">
-          <span class="position-form-modal__sr-only">投递备注</span>
-          <a-textarea
-            v-model:value="form.applicationNote"
-            :rows="4"
-            placeholder="提醒学生投递时的注意事项..."
-          />
-        </fieldset>
+          <fieldset class="position-form-modal__field">
+            <span class="position-form-modal__sr-only">投递备注</span>
+            <a-textarea
+              v-model:value="form.applicationNote"
+              :rows="4"
+              placeholder="提醒学生投递时的注意事项..."
+            />
+          </fieldset>
+          <fieldset class="position-form-modal__field" data-field-name="投递备注附件">
+            <span>
+              附件
+              <small>(PDF / 图片 / GIF，单文件 ≤ 10MB，最多 5 个，总 ≤ 30MB)</small>
+            </span>
+            <a-upload
+              :action="ATTACHMENT_UPLOAD_ACTION"
+              :headers="attachmentUploadHeaders"
+              name="file"
+              :file-list="form.applicationAttachmentsFileList"
+              :max-count="ATTACHMENT_MAX_COUNT"
+              accept=".pdf,.jpg,.jpeg,.png,.gif,application/pdf,image/jpeg,image/png,image/gif"
+              :before-upload="handleAttachmentBeforeUpload"
+              :remove="handleAttachmentRemove"
+              @change="handleAttachmentChange"
+            >
+              <a-button>
+                <span class="mdi mdi-upload" aria-hidden="true" style="margin-right:4px"></span>
+                上传附件
+              </a-button>
+            </a-upload>
+          </fieldset>
         </section>
       </div>
 
@@ -250,9 +272,17 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import type { UploadChangeParam } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { useUserStore } from '@/stores/user'
-import type { PositionListItem, PositionMeta, PositionMetaOption, PositionPayload } from '@osg/shared/api/admin/position'
+import { getToken } from '@osg/shared/utils/storage'
+import type {
+  PositionAttachment,
+  PositionListItem,
+  PositionMeta,
+  PositionMetaOption,
+  PositionPayload
+} from '@osg/shared/api/admin/position'
 
 const props = defineProps<{
   visible: boolean
@@ -286,10 +316,23 @@ const form = reactive({
   deadlineText: '',
   positionUrl: '',
   applicationNote: '',
+  applicationAttachments: [] as PositionAttachment[],
+  applicationAttachmentsFileList: [] as any[],
   createBy: '',
   recruitmentCycles: [] as string[],
   targetMajors: [] as string[]
 })
+
+// T3.4 投递备注附件配置
+const ATTACHMENT_UPLOAD_ACTION = '/api/admin/position/attachment'
+const ATTACHMENT_MIME_WHITELIST = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+const ATTACHMENT_MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB
+const ATTACHMENT_MAX_TOTAL_BYTES = 30 * 1024 * 1024 // 30MB
+const ATTACHMENT_MAX_COUNT = 5
+
+const attachmentUploadHeaders = computed(() => ({
+  Authorization: `Bearer ${getToken() || ''}`
+}))
 
 const isEditing = computed(() => Boolean(props.position?.positionId))
 const isCompanyScopedCreate = computed(() => !isEditing.value && Boolean(props.defaults?.companyName))
@@ -348,9 +391,19 @@ const resetForm = () => {
   form.displayStartTime = toDateTimeLocal(seed.displayStartTime) || now.toISOString().slice(0, 16)
   form.displayEndTime = toDateTimeLocal(seed.displayEndTime) || end.toISOString().slice(0, 16)
   form.deadline = toDateValue(seed.deadline) || undefined
-  form.deadlineText = seed.deadlineText || (isEditing.value ? '' : 'Rolling ASAP')
+  form.deadlineText = seed.deadlineText || ''
   form.positionUrl = seed.positionUrl || ''
   form.applicationNote = seed.applicationNote || ''
+  form.applicationAttachments = Array.isArray(seed.applicationAttachments)
+    ? seed.applicationAttachments.map((item) => ({ ...item }))
+    : []
+  form.applicationAttachmentsFileList = form.applicationAttachments.map((item, idx) => ({
+    uid: `seed-${idx}-${item.url}`,
+    name: item.fileName,
+    status: 'done',
+    url: item.url,
+    response: { url: item.url, attachmentPath: item.attachmentPath, fileName: item.fileName, fileType: item.fileType, size: item.size }
+  }))
   form.createBy = seed.createBy || (isEditing.value ? '' : userStore.userInfo?.userName || '')
   form.recruitmentCycles = normalizeCycles(seed.recruitmentCycle)
   form.targetMajors = normalizeCycles(seed.targetMajors)
@@ -374,6 +427,65 @@ const toggleMajor = (value: string) => {
 
 const formatDisplayStatus = (value: string) => {
   return displayStatusMap.value.get(value) || '展示中'
+}
+
+// T3.4 附件上传：前端预校验（before-upload）
+const handleAttachmentBeforeUpload = (file: File) => {
+  if (!ATTACHMENT_MIME_WHITELIST.includes(file.type)) {
+    message.error('仅支持 PDF / JPG / PNG / GIF 类型附件')
+    return false
+  }
+  if (file.size > ATTACHMENT_MAX_SIZE_BYTES) {
+    message.error('单文件不能超过 10MB')
+    return false
+  }
+  if (form.applicationAttachments.length >= ATTACHMENT_MAX_COUNT) {
+    message.error(`最多上传 ${ATTACHMENT_MAX_COUNT} 个附件`)
+    return false
+  }
+  const totalSize = form.applicationAttachments.reduce((sum, item) => sum + (item.size || 0), 0)
+  if (totalSize + file.size > ATTACHMENT_MAX_TOTAL_BYTES) {
+    message.error('附件总大小不能超过 30MB')
+    return false
+  }
+  return true
+}
+
+// T3.4 附件上传：上传成功后写入 form.applicationAttachments
+const handleAttachmentChange = (info: UploadChangeParam) => {
+  form.applicationAttachmentsFileList = [...info.fileList]
+  if (info.file.status === 'done') {
+    const res: any = info.file.response
+    const url = res?.url ?? res?.data?.url
+    const attachmentPath = res?.attachmentPath ?? res?.data?.attachmentPath
+    const fileName = res?.fileName ?? res?.data?.fileName ?? info.file.name
+    const fileType = res?.fileType ?? res?.data?.fileType ?? info.file.type ?? ''
+    const size = Number(res?.size ?? res?.data?.size ?? info.file.size ?? 0)
+    if (!url) {
+      message.error('附件上传失败：未返回 url')
+      return
+    }
+    const exists = form.applicationAttachments.some((item) => item.url === url)
+    if (!exists) {
+      form.applicationAttachments = [
+        ...form.applicationAttachments,
+        { url, fileName, fileType, size, attachmentPath }
+      ]
+    }
+    message.success('附件上传成功')
+  } else if (info.file.status === 'error') {
+    const res: any = info.file.response
+    message.error(res?.msg || '附件上传失败')
+  }
+}
+
+// T3.4 附件移除：从 form.applicationAttachments 同步移除
+const handleAttachmentRemove = (file: any) => {
+  const url = file?.response?.url || file?.response?.data?.url || file?.url
+  if (url) {
+    form.applicationAttachments = form.applicationAttachments.filter((item) => item.url !== url)
+  }
+  return true
 }
 
 const handleClose = () => {
@@ -415,9 +527,10 @@ const handleSubmit = () => {
     displayStartTime: form.displayStartTime,
     displayEndTime: form.displayEndTime,
     deadline: form.deadline || undefined,
-    deadlineText: form.deadlineText || undefined,
+    deadlineText: form.deadline ? undefined : (form.deadlineText || undefined),
     positionUrl: form.positionUrl || undefined,
     applicationNote: form.applicationNote || undefined,
+    applicationAttachments: form.applicationAttachments.length ? form.applicationAttachments : undefined,
     createBy: form.createBy || undefined
   })
 }

@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="权限配置"
       title-en="Roles & Permissions"
-      description="配置后台角色能访问的功能模块"
     >
       <template #actions>
         <a-button
@@ -27,7 +26,7 @@
     >
       <template #description>
         <p style="margin: 0">
-          点击「编辑」修改角色名称和描述，点击「配置菜单树」管理角色可访问的功能模块。员工数为 0 的角色可删除。
+          点击「编辑」修改角色名称、描述及可访问的功能模块。员工数为 0 的角色可删除。
         </p>
       </template>
     </a-alert>
@@ -94,16 +93,6 @@
                 编辑
               </a-button>
               <a-button
-                v-hasPermi="'system:role:edit'"
-                type="link"
-                size="small"
-                data-surface-trigger="modal-role-menu-tree"
-                :data-surface-sample-key="record.roleKey"
-                @click="handleRoleTree(record)"
-              >
-                配置菜单树
-              </a-button>
-              <a-button
                 v-if="!record.userCount"
                 v-hasPermi="'system:role:remove'"
                 type="link"
@@ -126,26 +115,16 @@
       :menu-tree="menuTree"
       @success="loadRoleList"
     />
-
-    <RoleMenuTreeModal
-      v-model:visible="roleTreeVisible"
-      :role="currentRole"
-      :menu-tree="menuTree"
-      :checked-keys="currentRoleTreeKeys"
-      @submit="handleRoleTreeSubmit"
-      @success="loadRoleList"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { getRoleList, getMenuTree, deleteRole, getRoleMenuIds, updateRole } from '@/api/role'
+import { getRoleList, getMenuTree, deleteRole } from '@/api/role'
 import { getPermissionColor, getPermissionColorConfig } from '@osg/shared/utils/permissionColors'
 import type { PermissionColorType } from '@osg/shared/utils/permissionColors'
 import RoleModal from './components/RoleModal.vue'
-import RoleMenuTreeModal from './components/RoleMenuTreeModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { normalizeMenuTree } from './menuTree'
@@ -190,9 +169,7 @@ const onPageChange = (page: number) => {
   loadRoleList()
 }
 const modalVisible = ref(false)
-const roleTreeVisible = ref(false)
 const currentRole = ref<any>(null)
-const currentRoleTreeKeys = ref<number[]>([])
 
 const formatDate = (date: string) => {
   return date ? dayjs(date).format('MM/DD/YYYY') : '-'
@@ -282,19 +259,6 @@ const handleEdit = (record: any) => {
   modalVisible.value = true
 }
 
-const handleRoleTree = (record: any) => {
-  currentRole.value = record
-  currentRoleTreeKeys.value = []
-  roleTreeVisible.value = true
-  getRoleMenuIds(record.roleId)
-    .then((res) => {
-      currentRoleTreeKeys.value = res.checkedKeys || []
-    })
-    .catch(() => {
-      message.error('加载角色菜单树失败')
-    })
-}
-
 const handleDelete = (record: any) => {
   Modal.confirm({
     title: '确认删除',
@@ -317,28 +281,6 @@ onMounted(() => {
   loadRoleList()
   loadMenuTree()
 })
-
-const handleRoleTreeSubmit = async (menuIds: number[]) => {
-  if (!currentRole.value) {
-    return
-  }
-
-  try {
-    await updateRole({
-      roleId: currentRole.value.roleId,
-      roleName: currentRole.value.roleName,
-      roleKey: currentRole.value.roleKey,
-      status: currentRole.value.status || '0',
-      remark: currentRole.value.remark || '',
-      menuIds,
-    })
-    message.success('角色菜单树已保存')
-    currentRoleTreeKeys.value = menuIds
-    loadRoleList()
-  } catch (error) {
-    message.error('保存角色菜单树失败')
-  }
-}
 </script>
 
 <style scoped>

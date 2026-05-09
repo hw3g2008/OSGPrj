@@ -25,12 +25,22 @@ public interface IPositionService
     public Map<String, Object> selectPositionMeta(Long userId);
 
     /**
-     * 查询申请追踪列表
-     * 
+     * 查询申请追踪列表（不带时间过滤）
+     *
      * @param userId 用户ID
      * @return 申请追踪列表
      */
     public List<Map<String, Object>> selectApplicationList(Long userId);
+
+    /**
+     * 查询申请追踪列表（T14: 支持按面试日历区间过滤）
+     *
+     * @param userId  用户ID
+     * @param fromIso 起始日期（yyyy-MM-dd, 含），null/空表示不限
+     * @param toIso   结束日期（yyyy-MM-dd, 不含），null/空表示不限
+     * @return 申请追踪列表
+     */
+    public List<Map<String, Object>> selectApplicationList(Long userId, String fromIso, String toIso);
 
     /**
      * 查询申请追踪页元数据

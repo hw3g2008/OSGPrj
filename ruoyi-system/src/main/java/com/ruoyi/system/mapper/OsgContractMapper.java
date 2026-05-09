@@ -13,4 +13,8 @@ public interface OsgContractMapper
     public int insertContract(OsgContract contract);
 
     public int updateContractAttachment(OsgContract contract);
+
+    public OsgContract selectContractById(Long contractId);
+
+    public int updateContract(OsgContract contract);
 }

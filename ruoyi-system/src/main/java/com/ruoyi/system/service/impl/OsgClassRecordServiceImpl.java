@@ -21,8 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.system.domain.OsgClassRecord;
+import com.ruoyi.system.constant.OsgClassReportConstants;
 import com.ruoyi.system.domain.OsgClassRecordAttachment;
 import com.ruoyi.system.domain.OsgCoaching;
+import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStudent;
@@ -30,11 +32,19 @@ import com.ruoyi.system.domain.OsgStudentPosition;
 import com.ruoyi.system.mapper.OsgClassRecordAttachmentMapper;
 import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgCoachingMapper;
+import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.mapper.OsgStudentPositionMapper;
 import com.ruoyi.system.service.IOsgClassRecordService;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+import com.ruoyi.system.domain.dto.feedback.BaseCourseFeedback;
+import com.ruoyi.system.domain.dto.feedback.JobCoachingFeedback;
+import com.ruoyi.system.domain.dto.feedback.MidtermFeedback;
+import com.ruoyi.system.domain.dto.feedback.MockInterviewFeedback;
+import com.ruoyi.system.domain.dto.feedback.RelationFeedback;
 
 @Service
 public class OsgClassRecordServiceImpl implements IOsgClassRecordService
@@ -64,6 +74,12 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     @Autowired
     private OsgMockPracticeMapper mockPracticeMapper;
 
+    @Autowired
+    private OsgJobApplicationMapper jobApplicationMapper;
+
+    @Autowired
+    private OsgClassReportValidator classReportValidator;
+
     @Override
     public List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord record)
     {
@@ -87,6 +103,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         OsgStudent student = requireManagedStudent(record.getStudentId(), record.getMentorId());
         record.setStudentName(student.getStudentName());
         record.setCourseSource("clerk");
+        classReportValidator.validateSubmit(record, record.getMentorId(), OsgClassReportValidator.END_LEAD_MENTOR);
         normalizeCreateDefaults(record);
         if (classRecordMapper.insertMentorClassRecord(record) <= 0)
         {
@@ -105,6 +122,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         OsgStudent student = requireAssistantOwnedStudent(record.getStudentId(), record.getMentorId());
         record.setStudentName(student.getStudentName());
         record.setCourseSource("assistant");
+        classReportValidator.validateSubmit(record, record.getMentorId(), OsgClassReportValidator.END_ASSISTANT);
         normalizeCreateDefaults(record);
         if (classRecordMapper.insertMentorClassRecord(record) <= 0)
         {
@@ -132,6 +150,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             record.setCourseSource("mentor");
         }
         validateCourseSourceLink(record);
+        classReportValidator.validateSubmit(record, record.getMentorId(), OsgClassReportValidator.END_MENTOR);
         normalizeCreateDefaults(record);
         return classRecordMapper.insertMentorClassRecord(record);
     }
@@ -142,6 +161,329 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     {
         return classRecordMapper.updateMentorClassRecord(record);
     }
+
+    // ====================================================================
+    // S-055 §3.1 / §3.3 课消上报共用接口实现：listReportableStudents / listReferenceCandidates
+    // ====================================================================
+
+    @Override
+    public List<Map<String, Object>> listReportableStudents(Long currentUserId, String end)
+    {
+        if (currentUserId == null)
+        {
+            return Collections.emptyList();
+        }
+        String normalizedEnd = end == null ? "" : end.trim();
+        if (!OsgClassReportValidator.END_MENTOR.equalsIgnoreCase(normalizedEnd)
+            && !OsgClassReportValidator.END_LEAD_MENTOR.equalsIgnoreCase(normalizedEnd)
+            && !OsgClassReportValidator.END_ASSISTANT.equalsIgnoreCase(normalizedEnd))
+        {
+            throw new ServiceException("Unsupported class report end");
+        }
+
+        Set<Long> studentIds = collectReportableStudentIds(currentUserId, normalizedEnd);
+        if (studentIds.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        List<OsgStudent> students = studentMapper.selectStudentByStudentIds(new ArrayList<>(studentIds));
+        if (students == null || students.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        return students.stream()
+            .filter(s -> s.getStudentId() != null)
+            .sorted((a, b) -> {
+                String an = a.getStudentName() == null ? "" : a.getStudentName();
+                String bn = b.getStudentName() == null ? "" : b.getStudentName();
+                return an.compareTo(bn);
+            })
+            .map(s -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("studentId", s.getStudentId());
+                m.put("studentName", s.getStudentName());
+                m.put("id", s.getStudentId());
+                m.put("label", s.getStudentName());
+                return m;
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 计算 currentUserId 在指定 end 下可上报的 studentId 集合（DISTINCT）。
+     */
+    private Set<Long> collectReportableStudentIds(Long currentUserId, String end)
+    {
+        Set<Long> studentIds = new java.util.LinkedHashSet<>();
+        if (OsgClassReportValidator.END_MENTOR.equalsIgnoreCase(end))
+        {
+            // mentor: osg_coaching.mentor_ids 含 currentUserId  ∪  osg_mock_practice.mentor_ids 含 currentUserId
+            List<OsgCoaching> coachings = coachingMapper.selectCoachingList(new OsgCoaching());
+            if (coachings != null)
+            {
+                for (OsgCoaching c : coachings)
+                {
+                    if (c.getStudentId() != null && isUserInCsv(c.getMentorIds(), currentUserId))
+                    {
+                        studentIds.add(c.getStudentId());
+                    }
+                }
+            }
+            List<OsgMockPractice> practices = mockPracticeMapper.selectMockPracticeList(new OsgMockPractice());
+            if (practices != null)
+            {
+                for (OsgMockPractice p : practices)
+                {
+                    if (p.getStudentId() != null && isUserInCsv(p.getMentorIds(), currentUserId))
+                    {
+                        studentIds.add(p.getStudentId());
+                    }
+                }
+            }
+        }
+        else if (OsgClassReportValidator.END_LEAD_MENTOR.equalsIgnoreCase(end))
+        {
+            // lead-mentor: osg_job_application.lead_mentor_id=currentUserId  ∪  coaching.mentor_ids 含 currentUserId  ∪  student.lead_mentor_id/lead_mentor_ids
+            List<OsgJobApplication> apps = jobApplicationMapper.selectJobApplicationList(new OsgJobApplication());
+            if (apps != null)
+            {
+                for (OsgJobApplication a : apps)
+                {
+                    if (a.getStudentId() != null && Objects.equals(a.getLeadMentorId(), currentUserId))
+                    {
+                        studentIds.add(a.getStudentId());
+                    }
+                }
+            }
+            List<OsgCoaching> coachings = coachingMapper.selectCoachingList(new OsgCoaching());
+            if (coachings != null)
+            {
+                for (OsgCoaching c : coachings)
+                {
+                    if (c.getStudentId() != null && isUserInCsv(c.getMentorIds(), currentUserId))
+                    {
+                        studentIds.add(c.getStudentId());
+                    }
+                }
+            }
+            List<OsgStudent> all = studentMapper.selectStudentList(new OsgStudent());
+            if (all != null)
+            {
+                for (OsgStudent s : all)
+                {
+                    if (s.getStudentId() == null) continue;
+                    if (Objects.equals(s.getLeadMentorId(), currentUserId)
+                        || isUserInCsv(s.getLeadMentorIds(), currentUserId))
+                    {
+                        studentIds.add(s.getStudentId());
+                    }
+                }
+            }
+        }
+        else
+        {
+            // assistant: osg_student.assistant_id=currentUserId  ∪  FIND_IN_SET(currentUserId, assistant_ids)
+            List<OsgStudent> all = studentMapper.selectStudentList(new OsgStudent());
+            if (all != null)
+            {
+                for (OsgStudent s : all)
+                {
+                    if (s.getStudentId() == null) continue;
+                    if (Objects.equals(s.getAssistantId(), currentUserId)
+                        || isUserInCsv(s.getAssistantIds(), currentUserId))
+                    {
+                        studentIds.add(s.getStudentId());
+                    }
+                }
+            }
+        }
+        return studentIds;
+    }
+
+    @Override
+    public List<Map<String, Object>> listReferenceCandidates(Long currentUserId, String end, Long studentId, String refType)
+    {
+        if (currentUserId == null || studentId == null || refType == null || refType.isBlank())
+        {
+            return Collections.emptyList();
+        }
+        String normalizedEnd = end == null ? "" : end.trim();
+        if (!OsgClassReportValidator.END_MENTOR.equalsIgnoreCase(normalizedEnd)
+            && !OsgClassReportValidator.END_LEAD_MENTOR.equalsIgnoreCase(normalizedEnd)
+            && !OsgClassReportValidator.END_ASSISTANT.equalsIgnoreCase(normalizedEnd))
+        {
+            throw new ServiceException("Unsupported class report end");
+        }
+
+        // 跨学员防护：studentId 必须在当前 end 可上报范围内，否则返回 []
+        Set<Long> reportable = collectReportableStudentIds(currentUserId, normalizedEnd);
+        if (!reportable.contains(studentId))
+        {
+            return Collections.emptyList();
+        }
+
+        String type = refType.trim();
+        if (OsgClassReportConstants.REFERENCE_TYPE_APPLICATION.equals(type))
+        {
+            return buildApplicationCandidates(currentUserId, normalizedEnd, studentId);
+        }
+        if (OsgClassReportConstants.REFERENCE_TYPE_MOCK_INTERVIEW.equals(type)
+            || OsgClassReportConstants.REFERENCE_TYPE_RELATION_TEST.equals(type)
+            || OsgClassReportConstants.REFERENCE_TYPE_COMMUNICATION_TEST.equals(type))
+        {
+            return buildMockPracticeCandidates(currentUserId, normalizedEnd, studentId, type);
+        }
+        // base_course / 其它：无候选
+        return Collections.emptyList();
+    }
+
+    private List<Map<String, Object>> buildApplicationCandidates(Long currentUserId, String end, Long studentId)
+    {
+        List<OsgJobApplication> apps = jobApplicationMapper.selectByStudentIds(List.of(studentId));
+        if (apps == null || apps.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        // 按 end 过滤当前用户被分配
+        List<OsgJobApplication> visible = new ArrayList<>();
+        for (OsgJobApplication a : apps)
+        {
+            if (a.getApplicationId() == null) continue;
+            boolean assigned;
+            if (OsgClassReportValidator.END_MENTOR.equalsIgnoreCase(end))
+            {
+                OsgCoaching c = coachingMapper.selectCoachingByApplicationId(a.getApplicationId());
+                assigned = c != null && isUserInCsv(c.getMentorIds(), currentUserId);
+            }
+            else if (OsgClassReportValidator.END_LEAD_MENTOR.equalsIgnoreCase(end))
+            {
+                assigned = Objects.equals(a.getLeadMentorId(), currentUserId);
+            }
+            else
+            {
+                // assistant: studentId 已通过上层 reportable 校验即可
+                assigned = true;
+            }
+            if (assigned)
+            {
+                visible.add(a);
+            }
+        }
+        // 时间降序：按 interviewTime, 兜底 submittedAt
+        visible.sort((x, y) -> {
+            Date xt = x.getInterviewTime() != null ? x.getInterviewTime() : x.getSubmittedAt();
+            Date yt = y.getInterviewTime() != null ? y.getInterviewTime() : y.getSubmittedAt();
+            if (xt == null && yt == null) return 0;
+            if (xt == null) return 1;
+            if (yt == null) return -1;
+            return yt.compareTo(xt);
+        });
+        // 去重 + 拼装
+        Set<Long> seen = new java.util.HashSet<>();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (OsgJobApplication a : visible)
+        {
+            if (!seen.add(a.getApplicationId())) continue;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("referenceType", OsgClassReportConstants.REFERENCE_TYPE_APPLICATION);
+            m.put("referenceId", a.getApplicationId());
+            m.put("id", a.getApplicationId());
+            m.put("label", buildApplicationLabel(a));
+            Map<String, Object> raw = new LinkedHashMap<>();
+            raw.put("applicationId", a.getApplicationId());
+            raw.put("companyName", a.getCompanyName());
+            raw.put("positionName", a.getPositionName());
+            raw.put("currentStage", a.getCurrentStage());
+            raw.put("interviewTime", a.getInterviewTime());
+            m.put("raw", raw);
+            result.add(m);
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> buildMockPracticeCandidates(Long currentUserId, String end, Long studentId, String refType)
+    {
+        // refType 与 practice_type 一致
+        OsgMockPractice query = new OsgMockPractice();
+        query.setStudentId(studentId);
+        query.setPracticeType(refType);
+        List<OsgMockPractice> practices = mockPracticeMapper.selectMockPracticeList(query);
+        if (practices == null || practices.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        List<OsgMockPractice> visible = new ArrayList<>();
+        for (OsgMockPractice p : practices)
+        {
+            if (p.getPracticeId() == null) continue;
+            if (!Objects.equals(p.getStudentId(), studentId)) continue;
+            if (!refType.equals(p.getPracticeType())) continue;
+            boolean assigned;
+            if (OsgClassReportValidator.END_MENTOR.equalsIgnoreCase(end))
+            {
+                assigned = isUserInCsv(p.getMentorIds(), currentUserId);
+            }
+            else
+            {
+                // lead-mentor / assistant：studentId 已经通过 reportable 校验
+                assigned = true;
+            }
+            if (assigned)
+            {
+                visible.add(p);
+            }
+        }
+        visible.sort((x, y) -> {
+            Date xt = x.getSubmittedAt() != null ? x.getSubmittedAt() : x.getScheduledAt();
+            Date yt = y.getSubmittedAt() != null ? y.getSubmittedAt() : y.getScheduledAt();
+            if (xt == null && yt == null) return 0;
+            if (xt == null) return 1;
+            if (yt == null) return -1;
+            return yt.compareTo(xt);
+        });
+        Set<Long> seen = new java.util.HashSet<>();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (OsgMockPractice p : visible)
+        {
+            if (!seen.add(p.getPracticeId())) continue;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("referenceType", refType);
+            m.put("referenceId", p.getPracticeId());
+            m.put("id", p.getPracticeId());
+            m.put("label", buildMockPracticeLabel(p));
+            Map<String, Object> raw = new LinkedHashMap<>();
+            raw.put("practiceId", p.getPracticeId());
+            raw.put("practiceType", p.getPracticeType());
+            raw.put("submittedAt", p.getSubmittedAt());
+            raw.put("status", p.getStatus());
+            m.put("raw", raw);
+            result.add(m);
+        }
+        return result;
+    }
+
+    private String buildApplicationLabel(OsgJobApplication a)
+    {
+        String company = nullToDash(a.getCompanyName());
+        String pos = nullToDash(a.getPositionName());
+        String stage = nullToDash(a.getCurrentStage());
+        String interview = a.getInterviewTime() == null ? "-" : a.getInterviewTime().toString();
+        return company + " / " + pos + " / " + stage + " / " + interview;
+    }
+
+    private String buildMockPracticeLabel(OsgMockPractice p)
+    {
+        String type = nullToDash(p.getPracticeType());
+        String submitted = p.getSubmittedAt() == null ? "-" : p.getSubmittedAt().toString();
+        String status = nullToDash(p.getStatus());
+        return type + " / " + submitted + " / " + status;
+    }
+
+    private String nullToDash(String s)
+    {
+        return (s == null || s.isBlank()) ? "-" : s;
+    }
+
 
     public List<Map<String, Object>> selectClassRecordList(String keyword)
     {
@@ -1353,6 +1695,69 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         List<T> result = new ArrayList<>(source.size());
         for (S item : source) { result.add(mapper.apply(item)); }
         return result;
+    }
+
+
+    // ====================================================================
+    // T-523: serializeFeedback — 按 courseType 路由解析 5 类 feedback DTO
+    // ====================================================================
+
+    /**
+     * 按 courseType 路由解析 feedback JSON，校验 schemaVersion=1，并回写
+     * {@link OsgClassRecord#setFeedbackContent(String)}。
+     *
+     * @param courseType  课程类型
+     * @param feedbackMap 前端传入的 feedback JSON（Map 形式）
+     * @param record      待回写的课消记录
+     * @return 解析后的 feedback DTO（供调用方做进一步校验）
+     */
+    public Object serializeFeedback(String courseType, Map<String, Object> feedbackMap, OsgClassRecord record)
+    {
+        if (feedbackMap == null || feedbackMap.isEmpty())
+        {
+            return null;
+        }
+        String feedbackJson = JSON.toJSONString(feedbackMap);
+        JSONObject feedbackObj = JSON.parseObject(feedbackJson);
+
+        Integer schemaVersion = feedbackObj.getInteger("schemaVersion");
+        if (schemaVersion == null)
+        {
+            throw new ServiceException("feedbackContent 缺少 schemaVersion 字段");
+        }
+        if (schemaVersion != 1)
+        {
+            throw new ServiceException("feedbackContent schemaVersion 必须为 1，当前值：" + schemaVersion);
+        }
+
+        Object dto;
+        if (OsgClassReportConstants.COURSE_TYPE_JOB_COACHING.equals(courseType))
+        {
+            dto = feedbackObj.toJavaObject(JobCoachingFeedback.class);
+        }
+        else if (OsgClassReportConstants.COURSE_TYPE_MOCK_INTERVIEW.equals(courseType))
+        {
+            dto = feedbackObj.toJavaObject(MockInterviewFeedback.class);
+        }
+        else if (OsgClassReportConstants.COURSE_TYPE_RELATION_TEST.equals(courseType))
+        {
+            dto = feedbackObj.toJavaObject(RelationFeedback.class);
+        }
+        else if (OsgClassReportConstants.COURSE_TYPE_COMMUNICATION_TEST.equals(courseType))
+        {
+            dto = feedbackObj.toJavaObject(RelationFeedback.class);
+        }
+        else if (OsgClassReportConstants.COURSE_TYPE_BASE_COURSE.equals(courseType))
+        {
+            dto = feedbackObj.toJavaObject(BaseCourseFeedback.class);
+        }
+        else
+        {
+            throw new ServiceException("课程类型不支持 feedback 序列化：" + courseType);
+        }
+
+        record.setFeedbackContent(feedbackJson);
+        return dto;
     }
 
 }

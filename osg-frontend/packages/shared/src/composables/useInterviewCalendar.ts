@@ -1,15 +1,17 @@
 /**
- * useInterviewCalendar - 面试日历逻辑层（三端共用）
+ * useInterviewCalendar - 面试日历逻辑层（四端共用）
  *
- * SSOT：Assistant（2026-04-23 实现）+ 吸纳 Mentor 可切月能力。
+ * SSOT：Assistant（2026-04-23 实现）+ 吸纳 Mentor 可切月能力 +
+ *      T14（2026-05-08）增加按星期切换。
  *
  * 行为规约：
- * - 默认 monthOffset=0，折叠态显示当前月份 + 包含今天的周（周日~周六）
- * - 切月 shiftMonth(±1) 后：
- *   · 折叠态胶囊 = 该月 1 号所在周（周日~周六）
- *   · 展开 42 格 = 该月完整网格（6×7 跨月凑整周）
- *   · 事件列表 = 当前折叠周 7 天内的事件
- *   · 今天高亮仅在 iso === 今天真实日期时启用
+ * - 默认 viewMode='month'，monthOffset=0，折叠态显示当前月份 + 包含今天的周（周日~周六）
+ * - 月模式：shiftMonth(±1) 切月，折叠胶囊 = 该月 1 号所在周
+ * - 周模式：shiftWeek(±1) 切周（按周一开始，符合中文习惯）；
+ *   折叠胶囊 / 42 格 / 事件列表都基于当前周窗口推导。
+ * - 切到 month 模式时 weekOffset 重置为 0；切到 week 模式时 weekOffset 重置为 0。
+ * - 切月/切周后，currentRange 暴露当前显示的 [start, end) 区间，组件层 emit
+ *   'range-change'，供页面层联动 list API（按 interview_at 过滤）。
  *
  * 色彩语义（统一 4 态）：
  *   today   - 今天（深蓝实心，ant 'blue'）
@@ -30,9 +32,24 @@ import type {
 const WEEKDAYS_CN = ['日', '一', '二', '三', '四', '五', '六']
 const WEEKDAYS_FULL = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
+export type CalendarViewMode = 'month' | 'week'
+
+/** 当前显示的时间窗口（[start, end) 半开区间） */
+export interface CalendarRange {
+  start: Date
+  end: Date
+  mode: CalendarViewMode
+}
+
 function addMonths(date: Date, offset: number): Date {
   const next = new Date(date)
   next.setMonth(next.getMonth() + offset)
+  return next
+}
+
+function addDays(date: Date, offset: number): Date {
+  const next = new Date(date)
+  next.setDate(next.getDate() + offset)
   return next
 }
 
@@ -41,6 +58,22 @@ function localIsoDate(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${dd}`
+}
+
+/**
+ * 周一为起点的 weekStart（中文习惯）：
+ * - 周一 → 当天
+ * - 周二 → 回退 1 天
+ * - 周日 → 回退 6 天
+ */
+function getMondayWeekStart(d: Date): Date {
+  const next = new Date(d)
+  next.setHours(0, 0, 0, 0)
+  // getDay(): 0(日) 1(一) ... 6(六)；周一为 1
+  const day = next.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  next.setDate(next.getDate() + diff)
+  return next
 }
 
 function isCoachingStatus(status?: string): boolean {
@@ -55,49 +88,124 @@ function formatMonthDay(value?: string): string {
 }
 
 export interface UseInterviewCalendarReturn {
-  /** 当前切月偏移（通过 shiftMonth 修改；不建议直接写） */
+  /** 视图模式：'month' | 'week' */
+  viewMode: Ref<CalendarViewMode>
+  /** 当前切月偏移（月模式有效） */
   monthOffset: Ref<number>
+  /** 当前切周偏移（周模式有效） */
+  weekOffset: Ref<number>
   /** 月份文字 "X月" */
   currentMonthLabel: ComputedRef<string>
+  /** 周区间文字 "5月8日 ~ 5月14日" */
+  currentWeekLabel: ComputedRef<string>
+  /** 当前模式下的标题文字（月 → currentMonthLabel；周 → currentWeekLabel） */
+  currentRangeLabel: ComputedRef<string>
   /** 折叠态 7 格胶囊 */
   compactDays: ComputedRef<CompactDayView[]>
   /** 折叠态 summary 胶囊（最多 3 条） */
   summaryEvents: ComputedRef<SummaryEventView[]>
   /** 展开态 42 格月视图 */
   monthCells: ComputedRef<MonthCellView[]>
-  /** 本周事件列表（含距离标签） */
+  /** 当前周事件列表（含距离标签） */
   calendarItems: ComputedRef<CalendarItemView[]>
-  /** 切月：+1 下一月 / -1 上一月 */
+  /** 当前显示窗口（供页面层 emit 'range-change'） */
+  currentRange: ComputedRef<CalendarRange>
+  /** 切月：+1 下一月 / -1 上一月（月模式下生效） */
   shiftMonth: (offset: number) => void
+  /** 切周：+1 下一周 / -1 上一周（周模式下生效） */
+  shiftWeek: (offset: number) => void
+  /** 切换视图模式（'month' | 'week'）；切换时偏移归零 */
+  setViewMode: (mode: CalendarViewMode) => void
 }
 
 export function useInterviewCalendar(
   events: MaybeRefOrGetter<InterviewEvent[]>,
 ): UseInterviewCalendarReturn {
+  const viewMode = ref<CalendarViewMode>('month')
   const monthOffset = ref(0)
+  const weekOffset = ref(0)
 
   function shiftMonth(offset: number) {
     monthOffset.value += offset
   }
 
-  /** 锚点日期：当月 = 今天；非当月 = 该月 1 号 */
+  function shiftWeek(offset: number) {
+    weekOffset.value += offset
+  }
+
+  function setViewMode(mode: CalendarViewMode) {
+    if (mode === viewMode.value) return
+    viewMode.value = mode
+    monthOffset.value = 0
+    weekOffset.value = 0
+  }
+
+  /** 锚点日期：
+   * - month 模式：当月（offset=0）= 今天；其他月 = 该月 1 号
+   * - week  模式：基于今天 + weekOffset 周
+   */
   const currentMonthDate = computed(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    if (viewMode.value === 'week') {
+      // 周模式下，月视图锚点跟随当前周所在月
+      return addDays(getMondayWeekStart(today), weekOffset.value * 7)
+    }
     if (monthOffset.value === 0) return today
     const m = addMonths(today, monthOffset.value)
     return new Date(m.getFullYear(), m.getMonth(), 1)
   })
 
-  /** 折叠态「该周」的起点（周日） */
+  /**
+   * 折叠态/事件列表的「该周」起点：
+   * - month 模式：兼容旧行为 = 锚点日期所在周的「周日」（与历史 SSOT 一致）
+   * - week  模式：按周一为起点（中文习惯）
+   */
   const weekStartDate = computed(() => {
+    if (viewMode.value === 'week') {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return addDays(getMondayWeekStart(today), weekOffset.value * 7)
+    }
     const d = new Date(currentMonthDate.value)
     d.setHours(0, 0, 0, 0)
     d.setDate(d.getDate() - d.getDay())
     return d
   })
 
+  const weekEndDate = computed(() => {
+    const start = weekStartDate.value
+    const end = new Date(start)
+    end.setDate(start.getDate() + 7)
+    return end
+  })
+
   const currentMonthLabel = computed(() => `${currentMonthDate.value.getMonth() + 1}月`)
+
+  const currentWeekLabel = computed(() => {
+    const start = weekStartDate.value
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    return `${start.getMonth() + 1}月${start.getDate()}日 ~ ${end.getMonth() + 1}月${end.getDate()}日`
+  })
+
+  const currentRangeLabel = computed(() =>
+    viewMode.value === 'week' ? currentWeekLabel.value : currentMonthLabel.value,
+  )
+
+  const currentRange = computed<CalendarRange>(() => {
+    if (viewMode.value === 'week') {
+      return {
+        start: new Date(weekStartDate.value),
+        end: new Date(weekEndDate.value),
+        mode: 'week',
+      }
+    }
+    const anchor = currentMonthDate.value
+    const start = new Date(anchor.getFullYear(), anchor.getMonth(), 1)
+    const end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1)
+    return { start, end, mode: 'month' }
+  })
 
   const compactDays = computed<CompactDayView[]>(() => {
     const todayIso = localIsoDate(new Date())
@@ -134,8 +242,7 @@ export function useInterviewCalendar(
   const summaryEvents = computed<SummaryEventView[]>(() => {
     const weekStart = weekStartDate.value
     const weekStartIso = localIsoDate(weekStart)
-    const weekEnd = new Date(weekStart)
-    weekEnd.setDate(weekStart.getDate() + 7)
+    const weekEnd = weekEndDate.value
     const weekEndIso = localIsoDate(weekEnd)
     const list = toValue(events)
 
@@ -200,8 +307,7 @@ export function useInterviewCalendar(
     const todayTime = today.getTime()
     const weekStart = weekStartDate.value
     const weekStartIso = localIsoDate(weekStart)
-    const weekEnd = new Date(weekStart)
-    weekEnd.setDate(weekStart.getDate() + 7)
+    const weekEnd = weekEndDate.value
     const weekEndIso = localIsoDate(weekEnd)
     const list = toValue(events)
 
@@ -254,12 +360,19 @@ export function useInterviewCalendar(
   })
 
   return {
+    viewMode,
     monthOffset,
+    weekOffset,
     currentMonthLabel,
+    currentWeekLabel,
+    currentRangeLabel,
     compactDays,
     summaryEvents,
     monthCells,
     calendarItems,
+    currentRange,
     shiftMonth,
+    shiftWeek,
+    setViewMode,
   }
 }

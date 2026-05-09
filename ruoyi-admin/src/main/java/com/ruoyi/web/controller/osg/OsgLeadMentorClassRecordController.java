@@ -21,6 +21,7 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.system.constant.OsgClassReportConstants;
 import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.service.impl.OsgClassRecordServiceImpl;
 import com.ruoyi.system.service.impl.OsgLeadMentorAccessService;
@@ -81,6 +82,29 @@ public class OsgLeadMentorClassRecordController extends BaseController
             keyword, courseType, classStatus, courseSource, tab, classDateStart, classDateEnd,
             SecurityUtils.getUserId(), scope
         ));
+    }
+
+    @GetMapping("/reportable-students")
+    public AjaxResult reportableStudents()
+    {
+        if (!hasLeadMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+        return AjaxResult.success(classRecordService.listReportableStudents(
+            SecurityUtils.getUserId(), OsgClassReportConstants.END_LEAD_MENTOR));
+    }
+
+    @GetMapping("/reference-candidates")
+    public AjaxResult referenceCandidates(@RequestParam(value = "studentId", required = false) Long studentId,
+                                          @RequestParam(value = "referenceType", required = false) String referenceType)
+    {
+        if (!hasLeadMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+        return AjaxResult.success(classRecordService.listReferenceCandidates(
+            SecurityUtils.getUserId(), OsgClassReportConstants.END_LEAD_MENTOR, studentId, referenceType));
     }
 
     @PostMapping

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="导师排期管理" title-en="Mentor Schedule" description="监控排期填写情况，协调导师资源">
+    <PageHeader title-zh="导师排期管理" title-en="Mentor Schedule">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><DownloadOutlined /></template>
@@ -44,7 +44,7 @@
         <a-form-item>
           <a-select v-model:value="filters.staffType" placeholder="全部类型" allow-clear style="width: 120px" data-field-name="类型">
             <a-select-option value="lead_mentor">班主任</a-select-option>
-            <a-select-option value="mentor">专业导师</a-select-option>
+            <a-select-option value="mentor">导师</a-select-option>
             <a-select-option value="assistant">助教</a-select-option>
           </a-select>
         </a-form-item>
@@ -75,12 +75,11 @@
               <a-avatar :style="{ background: record.filled ? 'linear-gradient(135deg, #7399c6, #5a7ba3)' : '#dc2626', flexShrink: 0 }" :size="36">{{ getAvatarText(record.staffName) }}</a-avatar>
               <div>
                 <div :style="{ fontWeight: 600, color: record.filled ? 'var(--text)' : '#991b1b' }">{{ record.staffName }}</div>
-                <div style="font-size: 11px; color: var(--muted)">ID: {{ record.staffId }}</div>
               </div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'staffType'">
-            <a-tag :color="record.staffType === 'lead_mentor' ? 'blue' : 'purple'">{{ formatType(record.staffType) }}</a-tag>
+            <a-tag :color="getTypeColor(record.staffType)">{{ formatType(record.staffType) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'availableHours'">
             <strong :style="{ color: record.filled ? 'var(--primary)' : '#dc2626' }">
@@ -130,14 +129,7 @@ import {
 } from '@osg/shared/api/admin/schedule'
 import EditScheduleModal from './components/EditScheduleModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-
-const scheduleColumns = [
-  { title: '导师', dataIndex: 'staffName', key: 'staffName', width: 200 },
-  { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 90, align: 'center' as const },
-  { title: '可用时长', dataIndex: 'availableHours', key: 'availableHours', width: 80, align: 'center' as const },
-  { title: '可用时间', dataIndex: 'availableSlotLabels', key: 'availableSlotLabels' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 160 },
-]
+import { scheduleColumns } from './columns'
 
 const rows = ref<StaffScheduleListItem[]>([])
 const exporting = ref(false)
@@ -296,10 +288,15 @@ const getAvatarText = (staffName: string) =>
     .join('')
 
 const formatType = (staffType?: string) => {
-  if (staffType === 'lead_mentor') {
-    return '班主任'
-  }
-  return '专业导师'
+  if (staffType === 'lead_mentor') return '班主任'
+  if (staffType === 'assistant') return '助教'
+  return '导师'
+}
+
+const getTypeColor = (staffType?: string) => {
+  if (staffType === 'lead_mentor') return 'blue'
+  if (staffType === 'assistant') return 'cyan'
+  return 'purple'
 }
 
 const formatHours = (value?: number) => `${value ?? 0}h`

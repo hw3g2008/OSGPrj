@@ -77,6 +77,37 @@ export interface UploadContractAttachmentResult {
   url: string
 }
 
+/**
+ * 原地更新合同字段（不产生新合同）。
+ * 仅 contractStatus='active' 的合同可改；其他字段全部可选（局部更新）。
+ */
+export interface UpdateContractPayload {
+  contractAmount?: number
+  totalHours?: number
+  startDate?: string
+  endDate?: string
+  currency?: 'USD' | 'GBP'
+  amountUsd?: number
+  amountGbp?: number
+  attachmentPath?: string
+  remark?: string
+  contractStatus?: string
+}
+
+export interface UpdateContractResult {
+  contractId: number
+  contractAmount: number
+  totalHours: number
+  startDate: string
+  endDate: string
+  currency: string
+  amountUsd?: number
+  amountGbp?: number
+  attachmentPath?: string
+  contractStatus: string
+  remark?: string
+}
+
 export function getContractList(params: ContractListParams) {
   return http.get<{ rows: ContractListItem[]; total: number }>('/admin/contract/list', { params })
 }
@@ -91,6 +122,13 @@ export function getStudentContractDetail(studentId: number) {
 
 export function renewContract(payload: RenewContractPayload) {
   return http.post('/admin/contract/renew', payload)
+}
+
+/**
+ * 原地更新合同（不产生新合同）。仅 active 合同允许更新。
+ */
+export function updateContract(contractId: number, payload: UpdateContractPayload) {
+  return http.put<UpdateContractResult>(`/admin/contract/${contractId}`, payload)
 }
 
 export function uploadContractAttachment(file: File, contractId?: number) {

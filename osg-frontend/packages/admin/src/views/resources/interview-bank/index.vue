@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="真人面试题库" title-en="Interview Bank" description="管理真人面试问题集锦，按面试阶段和类型分类">
+    <PageHeader title-zh="真人面试题库" title-en="Interview Bank">
       <template #actions>
         <a-button v-if="activeTab === 'banks'" type="primary" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>

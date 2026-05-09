@@ -14,26 +14,9 @@
       </template>
     </PageHeader>
 
-    <InterviewCalendar :events="calendarEvents" />
+    <InterviewCalendar v-if="activeTab === 'managed'" :events="calendarEvents" />
 
     <div class="filter-row">
-      <a-input
-        v-model:value="filters.studentName"
-        placeholder="搜索学员姓名..."
-        allow-clear
-        style="width: 180px;"
-        @press-enter="handleSearch()"
-      />
-      <a-select
-        v-model:value="filters.typeFilter"
-        placeholder="全部类型"
-        style="width: 140px;"
-        @change="handleTypeFilterChange"
-      >
-        <a-select-option value="">全部类型</a-select-option>
-        <a-select-option value="coaching">辅导学员</a-select-option>
-        <a-select-option value="managed">管理学员</a-select-option>
-      </a-select>
       <a-select
         v-model:value="filters.companyName"
         placeholder="全部公司"
@@ -50,6 +33,26 @@
         <a-select-option value="">全部状态</a-select-option>
         <a-select-option v-for="stage in stageOptions" :key="stage" :value="stage">{{ stage }}</a-select-option>
       </a-select>
+      <a-range-picker
+        v-model:value="(interviewTimeRange as any)"
+        show-time
+        format="YYYY-MM-DD HH:mm:ss"
+        value-format="YYYY-MM-DD HH:mm:ss"
+        :placeholder="['面试开始', '面试结束']"
+        style="width: 360px;"
+        allow-clear
+      />
+      <a-select
+        v-if="activeTab === 'coaching'"
+        v-model:value="filters.lessonReported"
+        placeholder="是否上报课消"
+        data-testid="filter-lesson-reported"
+        style="width: 150px;"
+        allow-clear
+      >
+        <a-select-option :value="true">是</a-select-option>
+        <a-select-option :value="false">否</a-select-option>
+      </a-select>
       <a-button type="primary" @click="handleSearch()">
         <template #icon><SearchOutlined /></template>
         搜索
@@ -58,28 +61,28 @@
 
     <a-card :bordered="false" class="job-overview-card">
       <a-tabs v-model:active-key="activeTab">
-        <a-tab-pane key="pending" force-render>
+        <a-tab-pane key="managed" force-render>
           <template #tab>
-            <span id="lm-job-tab-pending" class="lm-job-tab-label lm-job-tab-label--pending">
-              <ClockCircleOutlined />
-              待分配导师
-              <span class="tab-count">{{ tabCounts.pending }}</span>
+            <span id="lm-job-tab-managed" class="lm-job-tab-label lm-job-tab-label--managed">
+              <TeamOutlined />
+              我管理的学员
+              <span class="tab-count tab-count--managed">{{ tabCounts.managed }}</span>
             </span>
           </template>
           <a-alert
-            type="warning"
+            type="info"
             show-icon
-            message="以下学员申请了辅导，需要您分配导师"
+            message="查看管理学员的求职进度，已确认状态刷新后保持一致"
             style="margin-bottom: 12px;"
           />
-          <div id="lm-job-content-pending">
+          <div id="lm-job-content-managed">
             <a-table
-              :columns="pendingColumns"
-              :data-source="pendingRows"
-              :row-key="(r: PendingRow) => r.applicationId"
+              :columns="managedColumns"
+              :data-source="managedRows"
+              :row-key="(r: OverviewRow) => r.applicationId"
               :pagination="false"
               :scroll="{ x: 1100 }"
-              :row-class-name="() => 'row-highlight row-highlight--warning'"
+              :row-class-name="(record: OverviewRow) => `row-highlight ${record.rowTone || ''}`.trim()"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'studentName'">
@@ -90,29 +93,47 @@
                   />
                 </template>
                 <template v-else-if="column.key === 'company'">
-                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" />
+                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" :tone-class="record.companyTone" />
                 </template>
                 <template v-else-if="column.key === 'stage'">
-                  <StageTag :stage="record.stage" />
+                  <div class="table-stack">
+                    <StageTag :stage="record.stage" />
+                    <span v-if="record.stageMeta" class="stage-meta">{{ record.stageMeta }}</span>
+                  </div>
                 </template>
                 <template v-else-if="column.key === 'interviewAt'">
-                  <InterviewTimeCell :time="record.interviewAt" />
+                  <InterviewTimeCell :time="record.interviewAt" :hint="record.deadlineHint" />
                 </template>
-                <template v-else-if="column.key === 'mentorDemand'">
-                  <span class="accent">{{ record.mentorDemand }}</span>
+                <template v-else-if="column.key === 'cityLabel'">
+                  <span>{{ record.cityLabel || '-' }}</span>
                 </template>
-                <template v-else-if="column.key === 'appliedAt'">
-                  <span>{{ record.appliedAt }}</span>
+                <template v-else-if="column.key === 'latestRating'">
+                  <span>{{ record.latestRating || '-' }}</span>
+                </template>
+                <template v-else-if="column.key === 'mentorName'">
+                  <div class="table-stack">
+                    <strong>{{ record.mentorName }}</strong>
+                    <span class="student-meta">{{ record.mentorMeta }}</span>
+                  </div>
                 </template>
                 <template v-else-if="column.key === 'action'">
                   <a-button
+                    v-if="record.stageUpdated"
                     size="small"
                     type="primary"
-                    data-surface-trigger="modal-assign-mentor"
-                    @click="openAssignMentorFromPending(record)"
+                    class="btn-acknowledge"
+                    @click="handleAcknowledgeStage(record)"
                   >
-                    <template #icon><UserAddOutlined /></template>
-                    分配导师
+                    确认
+                  </a-button>
+                  <a-button
+                    v-else
+                    type="link"
+                    size="small"
+                    data-surface-trigger="drawer-class-records"
+                    @click="openDetailDrawer(record)"
+                  >
+                    查看详情
                   </a-button>
                 </template>
               </template>
@@ -161,56 +182,70 @@
                     :emphasize-overdue="record.deadlineTone === 'danger'"
                   />
                 </template>
-                <template v-else-if="column.key === 'status'">
-                  <a-tag :color="record.statusTone">{{ record.status }}</a-tag>
+                <template v-else-if="column.key === 'cityLabel'">
+                  <span>{{ record.cityLabel || '-' }}</span>
+                </template>
+                <template v-else-if="column.key === 'lessonCount'">
+                  <span>{{ record.lessonCount ?? 0 }}</span>
                 </template>
                 <template v-else-if="column.key === 'action'">
-                  <a-button
-                    v-if="!record.stageUpdated"
-                    type="link"
-                    size="small"
-                    data-surface-trigger="modal-job-detail"
-                    @click="openJobDetail(record)"
-                  >
-                    查看详情
-                  </a-button>
-                  <a-button
-                    v-else
-                    size="small"
-                    type="primary"
-                    class="btn-acknowledge"
-                    @click="handleAcknowledgeStage(record)"
-                  >
-                    确认
-                  </a-button>
+                  <a-space>
+                    <a-button
+                      size="small"
+                      type="primary"
+                      ghost
+                      data-surface-trigger="modal-class-report"
+                      @click="openClassReportFromCoaching(record)"
+                    >
+                      上报课消
+                    </a-button>
+                    <a-button
+                      v-if="!record.stageUpdated"
+                      type="link"
+                      size="small"
+                      data-surface-trigger="modal-job-detail"
+                      @click="openJobDetail(record)"
+                    >
+                      查看详情
+                    </a-button>
+                    <a-button
+                      v-else
+                      size="small"
+                      type="primary"
+                      class="btn-acknowledge"
+                      @click="handleAcknowledgeStage(record)"
+                    >
+                      确认
+                    </a-button>
+                  </a-space>
                 </template>
               </template>
             </a-table>
           </div>
         </a-tab-pane>
 
-        <a-tab-pane key="managed" force-render>
+        <a-tab-pane key="pending" force-render>
           <template #tab>
-            <span id="lm-job-tab-managed" class="lm-job-tab-label lm-job-tab-label--managed">
-              <TeamOutlined />
-              我管理的学员
-              <span class="tab-count tab-count--managed">{{ tabCounts.managed }}</span>
+            <span id="lm-job-tab-pending" class="lm-job-tab-label lm-job-tab-label--pending">
+              <ClockCircleOutlined />
+              待分配导师
+              <span class="tab-count">{{ tabCounts.pending }}</span>
             </span>
           </template>
           <a-alert
-            type="info"
+            type="warning"
             show-icon
-            message="查看管理学员的求职进度，已确认状态刷新后保持一致"
+            message="以下学员申请了辅导，需要您分配导师"
             style="margin-bottom: 12px;"
           />
-          <div id="lm-job-content-managed">
+          <div id="lm-job-content-pending">
             <a-table
-              :columns="managedColumns"
-              :data-source="managedRows"
-              :row-key="(r: OverviewRow) => r.applicationId"
+              :columns="pendingColumns"
+              :data-source="pendingRows"
+              :row-key="(r: PendingRow) => r.applicationId"
               :pagination="false"
               :scroll="{ x: 1100 }"
-              :row-class-name="(record: OverviewRow) => `row-highlight ${record.rowTone || ''}`.trim()"
+              :row-class-name="() => 'row-highlight row-highlight--warning'"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'studentName'">
@@ -221,44 +256,29 @@
                   />
                 </template>
                 <template v-else-if="column.key === 'company'">
-                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" :tone-class="record.companyTone" />
+                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" />
                 </template>
                 <template v-else-if="column.key === 'stage'">
-                  <div class="table-stack">
-                    <StageTag :stage="record.stage" />
-                    <span v-if="record.stageMeta" class="stage-meta">{{ record.stageMeta }}</span>
-                  </div>
+                  <StageTag :stage="record.stage" />
                 </template>
                 <template v-else-if="column.key === 'interviewAt'">
-                  <InterviewTimeCell :time="record.interviewAt" :hint="record.deadlineHint" />
+                  <InterviewTimeCell :time="record.interviewAt" />
                 </template>
-                <template v-else-if="column.key === 'status'">
-                  <a-tag :color="record.statusTone">{{ record.status }}</a-tag>
+                <template v-else-if="column.key === 'cityLabel'">
+                  <span>{{ record.cityLabel || '-' }}</span>
                 </template>
-                <template v-else-if="column.key === 'mentorName'">
-                  <div class="table-stack">
-                    <strong>{{ record.mentorName }}</strong>
-                    <span class="student-meta">{{ record.mentorMeta }}</span>
-                  </div>
+                <template v-else-if="column.key === 'submittedAt'">
+                  <span>{{ record.submittedAt }}</span>
                 </template>
                 <template v-else-if="column.key === 'action'">
                   <a-button
-                    v-if="record.stageUpdated"
                     size="small"
                     type="primary"
-                    class="btn-acknowledge"
-                    @click="handleAcknowledgeStage(record)"
+                    data-surface-trigger="modal-assign-mentor"
+                    @click="openAssignMentorFromPending(record)"
                   >
-                    确认
-                  </a-button>
-                  <a-button
-                    v-else
-                    type="link"
-                    size="small"
-                    data-surface-trigger="modal-job-detail"
-                    @click="openJobDetail(record)"
-                  >
-                    查看详情
+                    <template #icon><UserAddOutlined /></template>
+                    分配导师
                   </a-button>
                 </template>
               </template>
@@ -278,12 +298,29 @@
       :preview="assignMentorPreview"
       @confirm-match="handleConfirmAssignMentor"
     />
+    <ClassRecordDetailDrawer
+      v-model:visible="isDetailDrawerOpen"
+      :application-id="detailDrawerApplicationId"
+      :groups="detailDrawerGroups"
+      :loading="detailDrawerLoading"
+    />
+    <LeadMentorClassReportFlowModal
+      v-model="classReportVisible"
+      :students="classReportStudents"
+      :submitting="isSubmittingClassReport"
+      :prefill-student-id="classReportPrefill?.prefilledStudentId ?? null"
+      :prefilled-student-name="classReportPrefill?.prefilledStudentName ?? null"
+      :prefilled-reference-type="classReportPrefill?.prefilledReferenceType ?? null"
+      :prefilled-reference-id="classReportPrefill?.prefilledReferenceId ?? null"
+      :readonly-fields="classReportPrefill?.readonlyFields ?? []"
+      @submit="handleClassReportSubmit"
+    />
   </div>
   </a-config-provider>
 </template>
 
 <script setup lang="ts">
-import { computed, inject, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
@@ -307,11 +344,15 @@ import {
 } from '@osg/shared/api'
 import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
 import { useCoachingStatusMap, deriveApplicationStatus } from '@osg/shared/composables'
+import { ClassRecordDetailDrawer } from '@osg/shared/components'
+import type { LeadMentorClassRecordMentorGroup } from '@osg/shared/components'
+import { createLeadMentorClassRecord, type LeadMentorClassRecordCreatePayload } from '@osg/shared/api'
 import AssignMentorModal, {
   type AssignMentorConfirmPayload,
   type AssignMentorPreview,
 } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
+import LeadMentorClassReportFlowModal from '../teaching/class-records/LeadMentorClassReportFlowModal.vue'
 
 const { resolveCoachingTone } = useCoachingStatusMap()
 
@@ -339,31 +380,36 @@ function deriveOverviewStatusDisplay(row: LeadMentorJobOverviewListItem): { labe
 }
 
 const pendingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
+  { title: '学生ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
+  { title: '姓名', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
   { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
-  { title: '阶段', dataIndex: 'stage', key: 'stage', width: 120 },
+  { title: '城市', dataIndex: 'cityLabel', key: 'cityLabel', width: 100 },
+  { title: '面试阶段', dataIndex: 'stage', key: 'stage', width: 130 },
   { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
-  { title: '需求导师', dataIndex: 'mentorDemand', key: 'mentorDemand', width: 120 },
-  { title: '申请时间', dataIndex: 'appliedAt', key: 'appliedAt', width: 120 },
+  { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 120 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 140, fixed: 'right' as const },
 ]
 
 const coachingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
+  { title: '学生ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
+  { title: '姓名', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
   { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
-  { title: '阶段', dataIndex: 'stage', key: 'stage', width: 130 },
+  { title: '城市', dataIndex: 'cityLabel', key: 'cityLabel', width: 100 },
+  { title: '面试阶段', dataIndex: 'stage', key: 'stage', width: 130 },
   { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
-  { title: '辅导状态', dataIndex: 'status', key: 'status', width: 120 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
+  { title: '已上报课消数', dataIndex: 'lessonCount', key: 'lessonCount', width: 120 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 150, fixed: 'right' as const },
 ]
 
 const managedColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
+  { title: '学生ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
+  { title: '姓名', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
   { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
-  { title: '阶段', dataIndex: 'stage', key: 'stage', width: 130 },
+  { title: '城市', dataIndex: 'cityLabel', key: 'cityLabel', width: 100 },
+  { title: '面试阶段', dataIndex: 'stage', key: 'stage', width: 130 },
   { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
-  { title: '辅导状态', dataIndex: 'status', key: 'status', width: 120 },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 140 },
+  { title: '最近评分', dataIndex: 'latestRating', key: 'latestRating', width: 100 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
 ]
 
@@ -380,7 +426,8 @@ interface PendingRow {
   stageTone: string
   interviewAt: string
   mentorDemand: string
-  appliedAt: string
+  submittedAt: string
+  cityLabel: string
   preferredMentorNames: string
   raw: LeadMentorJobOverviewListItem
 }
@@ -405,21 +452,38 @@ interface OverviewRow {
   rowTone?: string
   mentorName?: string
   mentorMeta?: string
+  cityLabel?: string
+  latestRating?: string | null
+  lessonCount?: number
   raw: LeadMentorJobOverviewListItem
 }
 
 interface JobOverviewFilters {
-  studentName: string
-  typeFilter: '' | 'coaching' | 'managed'
   companyName: string
   currentStage: string
+  lessonReported: boolean | undefined
 }
+
+const isDetailDrawerOpen = ref(false)
+const detailDrawerGroups = ref<LeadMentorClassRecordMentorGroup[]>([])
+const detailDrawerLoading = ref(false)
+const detailDrawerApplicationId = ref<number | null>(null)
+
+const classReportPrefill = ref<{
+  prefilledStudentId: string
+  prefilledStudentName: string
+  prefilledReferenceType: string
+  prefilledReferenceId: number
+  readonlyFields: string[]
+} | null>(null)
+const classReportStudents = ref<Array<{ value: string; label: string; disabled?: boolean }>>([])
+const isSubmittingClassReport = ref(false)
 
 const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
 const route = useRoute()
 const router = useRouter()
 
-const activeTab = ref<TabKey>('coaching')
+const activeTab = ref<TabKey>('managed')
 const isJobDetailModalOpen = ref(false)
 const isAssignMentorModalOpen = ref(false)
 const jobDetailPreview = ref<JobDetailPreview | null>(null)
@@ -432,11 +496,12 @@ const scopeRows = ref<Record<TabKey, LeadMentorJobOverviewListItem[]>>({
   coaching: [],
   managed: [],
 })
+const interviewTimeRange = ref<string[] | null>(null)
+
 const filters = reactive<JobOverviewFilters>({
-  studentName: '',
-  typeFilter: '',
   companyName: '',
   currentStage: '',
+  lessonReported: undefined,
 })
 
 const calendarEvents = ref<LeadMentorCalendarRecord[]>([])
@@ -485,7 +550,8 @@ const pendingRows = computed<PendingRow[]>(() =>
     stageTone: resolveStageTone(row.currentStage),
     interviewAt: formatDateTime(row.interviewTime),
     mentorDemand: formatMentorDemand(row.requestedMentorCount),
-    appliedAt: formatSubmittedAt(row.submittedAt),
+    submittedAt: formatSubmittedAt(row.submittedAt),
+    cityLabel: row.cityLabel || '-',
     preferredMentorNames: row.preferredMentorNames || row.mentorNames || '-',
     raw: row,
   })),
@@ -498,6 +564,38 @@ const coachingRows = computed<OverviewRow[]>(() =>
 const managedRows = computed<OverviewRow[]>(() =>
   scopeRows.value.managed.map((row) => toOverviewRow(row)),
 )
+
+const classReportVisible = ref(false)
+
+const openClassReportFromCoaching = (record: OverviewRow) => {
+  classReportPrefill.value = {
+    prefilledStudentId: String(record.raw.studentId ?? ''),
+    prefilledStudentName: record.studentName,
+    prefilledReferenceType: 'application',
+    prefilledReferenceId: record.applicationId,
+    readonlyFields: ['student', 'reference'],
+  }
+  classReportStudents.value = [
+    { value: String(record.raw.studentId ?? ''), label: record.studentName },
+  ]
+  classReportVisible.value = true
+}
+
+const handleClassReportSubmit = async (payload: LeadMentorClassRecordCreatePayload) => {
+  isSubmittingClassReport.value = true
+  try {
+    await createLeadMentorClassRecord(payload)
+    classReportVisible.value = false
+    classReportPrefill.value = null
+    const [coaching, managed] = await Promise.all([loadScope('coaching'), loadScope('managed')])
+    scopeRows.value = { ...scopeRows.value, coaching, managed }
+    message.success('课消记录已提交')
+  } catch {
+    message.error('课消记录提交失败')
+  } finally {
+    isSubmittingClassReport.value = false
+  }
+}
 
 const buildAssignMentorPreview = (payload: {
   studentName: string
@@ -523,9 +621,17 @@ const buildAssignMentorPreview = (payload: {
 
 const buildListParams = (scope: TabKey): LeadMentorJobOverviewListParams => ({
   scope,
-  studentName: filters.studentName || undefined,
   companyName: filters.companyName || undefined,
   currentStage: filters.currentStage || undefined,
+  interviewTimeStart: Array.isArray(interviewTimeRange.value) && interviewTimeRange.value[0]
+    ? interviewTimeRange.value[0]
+    : undefined,
+  interviewTimeEnd: Array.isArray(interviewTimeRange.value) && interviewTimeRange.value[1]
+    ? interviewTimeRange.value[1]
+    : undefined,
+  lessonReported: scope === 'coaching' && filters.lessonReported !== undefined
+    ? filters.lessonReported
+    : undefined,
 })
 
 const loadScope = async (scope: TabKey) => {
@@ -565,12 +671,6 @@ const handleSearch = async () => {
   await loadAllScopes()
 }
 
-const handleTypeFilterChange = () => {
-  if (filters.typeFilter) {
-    activeTab.value = filters.typeFilter
-  }
-}
-
 const openJobDetail = async (row: OverviewRow) => {
   try {
     const detail = await getLeadMentorJobOverviewDetail(row.applicationId)
@@ -583,6 +683,22 @@ const openJobDetail = async (row: OverviewRow) => {
     jobDetailPreview.value = null
     isJobDetailModalOpen.value = false
     message.error('求职详情加载失败')
+  }
+}
+
+const openDetailDrawer = async (row: OverviewRow) => {
+  detailDrawerApplicationId.value = row.applicationId
+  detailDrawerGroups.value = []
+  detailDrawerLoading.value = true
+  isDetailDrawerOpen.value = true
+  try {
+    const detail = await getLeadMentorJobOverviewDetail(row.applicationId)
+    detailDrawerGroups.value = detail.classRecordsByMentor ?? []
+  } catch {
+    message.error('课消详情加载失败')
+    isDetailDrawerOpen.value = false
+  } finally {
+    detailDrawerLoading.value = false
   }
 }
 
@@ -696,29 +812,41 @@ onMounted(() => {
   void loadCalendar()
 })
 
+watch(activeTab, (newTab) => {
+  if (newTab === 'managed') void loadCalendar()
+})
+
 function applyRouteFilters() {
-  filters.studentName = readQueryValue(route.query.studentName)
-  filters.typeFilter = normalizeTypeFilter(readQueryValue(route.query.typeFilter))
+  const tab = readQueryValue(route.query.tab)
+  if (tab === 'pending' || tab === 'coaching' || tab === 'managed') {
+    activeTab.value = tab
+  }
   filters.companyName = readQueryValue(route.query.companyName)
   filters.currentStage = readQueryValue(route.query.currentStage)
-  if (filters.typeFilter) {
-    activeTab.value = filters.typeFilter
-  }
+  const start = readQueryValue(route.query.interviewTimeStart)
+  const end = readQueryValue(route.query.interviewTimeEnd)
+  if (start && end) interviewTimeRange.value = [start, end]
 }
 
 async function syncRouteQuery() {
   const query: Record<string, string> = {}
-  if (filters.studentName) {
-    query.studentName = filters.studentName
-  }
-  if (filters.typeFilter) {
-    query.typeFilter = filters.typeFilter
+  if (activeTab.value !== 'managed') {
+    query.tab = activeTab.value
   }
   if (filters.companyName) {
     query.companyName = filters.companyName
   }
   if (filters.currentStage) {
     query.currentStage = filters.currentStage
+  }
+  if (Array.isArray(interviewTimeRange.value) && interviewTimeRange.value[0]) {
+    query.interviewTimeStart = interviewTimeRange.value[0]
+  }
+  if (Array.isArray(interviewTimeRange.value) && interviewTimeRange.value[1]) {
+    query.interviewTimeEnd = interviewTimeRange.value[1]
+  }
+  if (activeTab.value === 'coaching' && filters.lessonReported !== undefined) {
+    query.lessonReported = String(filters.lessonReported)
   }
   await router.replace({ path: route.path, query })
 }
@@ -774,6 +902,9 @@ function toOverviewRow(row: LeadMentorJobOverviewListItem): OverviewRow {
     rowTone: resolveRowTone(row),
     mentorName: row.mentorNames || row.mentorName || (row.assignedStatus === 'pending' ? '待分配' : '-'),
     mentorMeta: row.mentorBackground || '',
+    cityLabel: row.cityLabel || '-',
+    latestRating: row.latestRating || null,
+    lessonCount: row.lessonCount ?? 0,
     raw: row,
   }
 }
@@ -789,10 +920,6 @@ function readQueryValue(value: unknown) {
     return value[0] || ''
   }
   return typeof value === 'string' ? value : ''
-}
-
-function normalizeTypeFilter(value: string): '' | 'coaching' | 'managed' {
-  return value === 'coaching' || value === 'managed' ? value : ''
 }
 
 function resolveCompanyTone(companyName?: string) {

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="课程反馈" title-en="Feedback" description="查看导师对学员的评估反馈（仅显示Prep Feedback、Networking、Mock Midterm三种类型）">
+    <PageHeader title-zh="课程反馈" title-en="Feedback">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>

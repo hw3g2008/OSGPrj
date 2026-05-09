@@ -20,8 +20,10 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.OsgIdGenerator;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgContract;
+import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgContractMapper;
+import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.service.IOsgContractService;
 import com.ruoyi.system.service.ISysUserService;
@@ -54,6 +56,9 @@ public class OsgStudentServiceImpl implements IOsgStudentService
 
     @Autowired
     private OsgIdentityResolver identityResolver;
+
+    @Autowired
+    private OsgStaffMapper staffMapper;
 
     @Override
     public OsgStudent selectStudentByStudentId(Long studentId)
@@ -111,18 +116,41 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         update.setStudentId(studentId);
         update.setStudentName(defaultText(asText(payload.get("studentName")), existing.getStudentName()));
         update.setEmail(nextEmail);
-        update.setSchool(defaultText(asText(payload.get("school")), existing.getSchool()));
+        update.setSchool(defaultText(asCsv(payload.get("school")), existing.getSchool()));
         update.setMajor(defaultText(asText(payload.get("major")), existing.getMajor()));
-        update.setGraduationYear(defaultInteger(asInteger(payload.get("graduationYear")), existing.getGraduationYear()));
-        update.setMajorDirection(defaultText(asText(payload.get("majorDirection")), existing.getMajorDirection()));
-        update.setSubDirection(defaultText(asText(payload.get("subDirection")), existing.getSubDirection()));
+        Object updateGraduationRaw = firstPresent(payload, "graduationMonth", "graduationYear");
+        String updateGraduationMonth = parseGraduationMonth(updateGraduationRaw);
+        if (updateGraduationMonth == null)
+        {
+            updateGraduationMonth = existing.getGraduationMonth();
+        }
+        update.setGraduationMonth(updateGraduationMonth);
+        Integer derivedYear = parseYearFromMonth(updateGraduationMonth);
+        update.setGraduationYear(derivedYear != null ? derivedYear : existing.getGraduationYear());
+        update.setMajorDirection(defaultText(asCsv(firstPresent(payload, "majorDirections", "majorDirection")), existing.getMajorDirection()));
+        update.setSubDirection(defaultText(asCsv(firstPresent(payload, "subDirections", "subDirection")), existing.getSubDirection()));
         update.setTargetRegion(defaultText(asCsv(payload.get("targetRegion")), existing.getTargetRegion()));
-        update.setRecruitmentCycle(defaultText(asCsv(payload.get("recruitmentCycle")), existing.getRecruitmentCycle()));
-        update.setLeadMentorId(resolveStaffToUserId(asLong(payload.get("leadMentorId")), existing.getLeadMentorId()));
-        update.setAssistantId(resolveStaffToUserId(asLong(payload.get("assistantId")), existing.getAssistantId()));
+        update.setRecruitmentCycle(defaultText(asCsv(firstPresent(payload, "recruitmentCycle", "recruitmentCycles")), existing.getRecruitmentCycle()));
+        update.setRemark(mergeRemark(
+            defaultText(asText(payload.get("remark")), existing.getRemark()),
+            buildStudyRemark(payload)
+        ));
+        List<Long> leadMentorUserIds = resolveStaffIdsToUserIds(extractIdList(payload, "leadMentorIds", "leadMentorId"));
+        List<Long> assistantUserIds = resolveStaffIdsToUserIds(extractIdList(payload, "assistantIds", "assistantId"));
+        if (leadMentorUserIds.isEmpty() && existing.getLeadMentorId() != null)
+        {
+            leadMentorUserIds = List.of(existing.getLeadMentorId());
+        }
+        if (assistantUserIds.isEmpty() && existing.getAssistantId() != null)
+        {
+            assistantUserIds = List.of(existing.getAssistantId());
+        }
+        update.setLeadMentorId(leadMentorUserIds.isEmpty() ? null : leadMentorUserIds.get(0));
+        update.setLeadMentorIds(joinLongs(leadMentorUserIds));
+        update.setAssistantId(assistantUserIds.isEmpty() ? null : assistantUserIds.get(0));
+        update.setAssistantIds(joinLongs(assistantUserIds));
         update.setGender(defaultText(normalizeGender(asText(payload.get("gender"))), existing.getGender()));
         update.setAccountStatus(defaultText(asText(payload.get("accountStatus")), existing.getAccountStatus()));
-        update.setRemark(defaultText(asText(payload.get("remark")), existing.getRemark()));
         update.setUpdateBy(operator);
 
         if (studentMapper.updateStudent(update) <= 0)
@@ -312,8 +340,10 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         detail.put("email", student.getEmail());
         detail.put("gender", student.getGender());
         detail.put("school", student.getSchool());
+        detail.put("schools", splitCsv(student.getSchool()));
         detail.put("major", student.getMajor());
         detail.put("graduationYear", student.getGraduationYear());
+        detail.put("graduationMonth", student.getGraduationMonth());
         detail.put("targetRegion", student.getTargetRegion());
         detail.put("subDirection", student.getSubDirection());
         detail.put("accountStatus", student.getAccountStatus());
@@ -321,6 +351,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         detail.put("majorDirections", splitCsv(student.getMajorDirection()));
         detail.put("highSchool", firstNonBlank(remarkFields.get("highSchool")));
         detail.put("visaStatus", firstNonBlank(remarkFields.get("visaStatus")));
+        detail.put("remark", extractUserRemark(student.getRemark()));
         detail.put("mentor", buildMentorBlock(student));
         detail.put("academic", buildAcademicBlock(student, remarkFields));
         detail.put("jobDirection", buildJobDirectionBlock(student));
@@ -363,6 +394,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
             row.put("contractStatus", contract.getContractStatus());
             row.put("renewalReason", contract.getRenewalReason());
             row.put("attachmentPath", contract.getAttachmentPath());
+            row.put("remark", contract.getRemark());
             row.put("updateTime", contract.getUpdateTime());
             contracts.add(row);
 
@@ -391,15 +423,22 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         student.setStudentName(asText(firstPresent(source, "studentName", "englishName", "name")));
         student.setEmail(asText(firstPresent(source, "email", "loginEmail")));
         student.setGender(normalizeGender(asText(firstPresent(source, "gender", "sex"))));
-        student.setSchool(asText(firstPresent(source, "school")));
+        student.setSchool(asCsv(firstPresent(source, "school")));
         student.setMajor(asText(firstPresent(source, "major")));
-        student.setGraduationYear(asInteger(firstPresent(source, "graduationYear")));
+        Object graduationRaw = firstPresent(source, "graduationMonth", "graduationYear");
+        String graduationMonth = parseGraduationMonth(graduationRaw);
+        student.setGraduationMonth(graduationMonth);
+        student.setGraduationYear(parseYearFromMonth(graduationMonth));
         student.setTargetRegion(asCsv(firstPresent(source, "targetRegion", "jobRegion")));
         student.setRecruitmentCycle(asCsv(firstPresent(source, "recruitmentCycle", "recruitmentCycles")));
         student.setMajorDirection(asCsv(firstPresent(source, "majorDirection", "majorDirections")));
         student.setSubDirection(asCsv(firstPresent(source, "subDirection", "subDirections")));
-        student.setLeadMentorId(resolveStaffToUserId(asLong(firstPresent(source, "leadMentorId", "leadMentorIds")), null));
-        student.setAssistantId(resolveStaffToUserId(asLong(firstPresent(source, "assistantId", "assistantIds")), null));
+        List<Long> leadMentorUserIds = resolveStaffIdsToUserIds(extractIdList(source, "leadMentorIds", "leadMentorId"));
+        List<Long> assistantUserIds = resolveStaffIdsToUserIds(extractIdList(source, "assistantIds", "assistantId"));
+        student.setLeadMentorId(leadMentorUserIds.isEmpty() ? null : leadMentorUserIds.get(0));
+        student.setLeadMentorIds(joinLongs(leadMentorUserIds));
+        student.setAssistantId(assistantUserIds.isEmpty() ? null : assistantUserIds.get(0));
+        student.setAssistantIds(joinLongs(assistantUserIds));
         student.setAccountStatus(asText(firstPresent(source, "accountStatus")));
         student.setRemark(mergeRemark(asText(firstPresent(source, "remark")), buildStudyRemark(source)));
         return student;
@@ -426,7 +465,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         contract.setEndDate(asDate(firstPresent(source, "endDate")));
         contract.setRenewalReason(asText(firstPresent(source, "renewalReason")));
         contract.setContractStatus(asText(firstPresent(source, "contractStatus")));
-        contract.setAttachmentPath(asText(firstPresent(source, "attachmentPath", "contractAttachmentPath")));
+        contract.setAttachmentPath(asText(firstPresent(source, "attachmentPath", "contractAttachmentPath", "contractAttachment")));
         contract.setRemark(asText(firstPresent(source, "remark")));
         return contract;
     }
@@ -527,6 +566,10 @@ public class OsgStudentServiceImpl implements IOsgStudentService
             || contract.getStartDate() == null || contract.getEndDate() == null)
         {
             throw new ServiceException("合同信息不完整");
+        }
+        if (isBlank(contract.getAttachmentPath()))
+        {
+            throw new ServiceException("合同附件必传（PDF / PNG / JPG / JPEG）");
         }
     }
 
@@ -772,6 +815,11 @@ public class OsgStudentServiceImpl implements IOsgStudentService
     private String buildStudyRemark(Map<String, Object> source)
     {
         List<String> segments = new ArrayList<>();
+        String studyPlan = asText(firstPresent(source, "studyPlan"));
+        if (studyPlan != null)
+        {
+            segments.add("studyPlan=" + studyPlan);
+        }
         String postgraduate = asText(firstPresent(source, "postgraduateStatus", "isPostgraduate", "postgraduate"));
         if (postgraduate != null)
         {
@@ -781,6 +829,26 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         if (deferred != null)
         {
             segments.add("deferredGraduation=" + deferred);
+        }
+        String highSchool = asText(firstPresent(source, "highSchool"));
+        if (highSchool != null)
+        {
+            segments.add("highSchool=" + highSchool);
+        }
+        String visaStatus = asText(firstPresent(source, "visaStatus"));
+        if (visaStatus != null)
+        {
+            segments.add("visaStatus=" + visaStatus);
+        }
+        String wechat = asText(firstPresent(source, "wechat"));
+        if (wechat != null)
+        {
+            segments.add("wechat=" + wechat);
+        }
+        String phone = asText(firstPresent(source, "phone"));
+        if (phone != null)
+        {
+            segments.add("phone=" + phone);
         }
         if (segments.isEmpty())
         {
@@ -804,20 +872,196 @@ public class OsgStudentServiceImpl implements IOsgStudentService
 
     private Map<String, Object> buildMentorBlock(OsgStudent student)
     {
+        // 数据库 osg_student.lead_mentor_ids / assistant_ids 存的是 sys_user.user_id；
+        // 但前端 admin 学员表单的下拉选项 (/admin/staff/list) 使用 osg_staff.staff_id。
+        // 此处反向解析 user_id -> staff_id，保证编辑回显与下拉选项 ID 体系一致；
+        // 同时用 osg_staff.staff_name 渲染名字，与下拉显示一致。
+        List<Long> leadUserIds = mergeIdList(student.getLeadMentorIds(), student.getLeadMentorId());
+        List<Long> assistUserIds = mergeIdList(student.getAssistantIds(), student.getAssistantId());
+
+        List<Long> leadStaffIds = leadUserIds.stream()
+            .map(identityResolver::resolveStaffIdByUserId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        List<Long> assistStaffIds = assistUserIds.stream()
+            .map(identityResolver::resolveStaffIdByUserId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
         Map<String, Object> mentor = new LinkedHashMap<>();
-        mentor.put("leadMentorId", student.getLeadMentorId());
-        mentor.put("leadMentorName", resolveUserDisplayName(student.getLeadMentorId()));
-        mentor.put("assistantId", student.getAssistantId());
-        mentor.put("assistantName", resolveUserDisplayName(student.getAssistantId()));
+        mentor.put("leadMentorId", leadStaffIds.isEmpty() ? null : leadStaffIds.get(0));
+        mentor.put("leadMentorName", leadStaffIds.isEmpty() ? null : resolveStaffDisplayName(leadStaffIds.get(0)));
+        mentor.put("leadMentorIds", leadStaffIds);
+        mentor.put("leadMentorNames", leadStaffIds.stream().map(this::resolveStaffDisplayName).collect(Collectors.toList()));
+        mentor.put("assistantId", assistStaffIds.isEmpty() ? null : assistStaffIds.get(0));
+        mentor.put("assistantName", assistStaffIds.isEmpty() ? null : resolveStaffDisplayName(assistStaffIds.get(0)));
+        mentor.put("assistantIds", assistStaffIds);
+        mentor.put("assistantNames", assistStaffIds.stream().map(this::resolveStaffDisplayName).collect(Collectors.toList()));
         return mentor;
+    }
+
+    private String resolveStaffDisplayName(Long staffId)
+    {
+        if (staffId == null)
+        {
+            return null;
+        }
+        OsgStaff staff = staffMapper.selectStaffByStaffId(staffId);
+        if (staff == null)
+        {
+            return String.valueOf(staffId);
+        }
+        return staff.getStaffName() == null || staff.getStaffName().isBlank()
+            ? String.valueOf(staffId)
+            : staff.getStaffName();
+    }
+
+    private List<Long> extractIdList(Map<String, Object> source, String arrayKey, String singleKey)
+    {
+        List<Long> result = new ArrayList<>();
+        Object arrayValue = source == null ? null : source.get(arrayKey);
+        if (arrayValue instanceof Collection<?> collection)
+        {
+            for (Object item : collection)
+            {
+                Long id = asLong(item);
+                if (id != null && !result.contains(id))
+                {
+                    result.add(id);
+                }
+            }
+        }
+        else if (arrayValue instanceof Object[] array)
+        {
+            for (Object item : array)
+            {
+                Long id = asLong(item);
+                if (id != null && !result.contains(id))
+                {
+                    result.add(id);
+                }
+            }
+        }
+        if (result.isEmpty())
+        {
+            Long single = asLong(source == null ? null : source.get(singleKey));
+            if (single != null)
+            {
+                result.add(single);
+            }
+        }
+        return result;
+    }
+
+    private List<Long> resolveStaffIdsToUserIds(List<Long> staffIds)
+    {
+        if (staffIds == null || staffIds.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        List<Long> userIds = new ArrayList<>(staffIds.size());
+        for (Long id : staffIds)
+        {
+            Long resolved = resolveStaffToUserId(id, null);
+            if (resolved == null && sysUserService.selectUserById(id) != null)
+            {
+                // 兼容期: list/detail 返回 user_id 数组, 前端原样回传时直接当 user_id
+                resolved = id;
+            }
+            if (resolved != null && !userIds.contains(resolved))
+            {
+                userIds.add(resolved);
+            }
+        }
+        return userIds;
+    }
+
+    /**
+     * 解析毕业年月：接受 "YYYY-MM" / "YYYY-MM-DD" 字符串、Integer 年份；返回 "YYYY-MM"（年份输入默认 -06）。
+     */
+    private String parseGraduationMonth(Object raw)
+    {
+        if (raw == null) return null;
+        if (raw instanceof Number n)
+        {
+            return n.intValue() + "-06";
+        }
+        String text = String.valueOf(raw).trim();
+        if (text.isEmpty()) return null;
+        if (text.matches("^\\d{4}-\\d{2}.*"))
+        {
+            return text.substring(0, 7);
+        }
+        if (text.matches("^\\d{4}$"))
+        {
+            return text + "-06";
+        }
+        return null;
+    }
+
+    private Integer parseYearFromMonth(String yyyyMm)
+    {
+        if (yyyyMm == null || yyyyMm.length() < 4) return null;
+        try
+        {
+            return Integer.parseInt(yyyyMm.substring(0, 4));
+        }
+        catch (NumberFormatException ex)
+        {
+            return null;
+        }
+    }
+
+    private String joinLongs(List<Long> ids)
+    {
+        if (ids == null || ids.isEmpty())
+        {
+            return null;
+        }
+        return ids.stream().filter(Objects::nonNull).map(String::valueOf).collect(Collectors.joining(","));
+    }
+
+    private List<Long> mergeIdList(String csv, Long fallback)
+    {
+        List<Long> result = new ArrayList<>();
+        if (!isBlank(csv))
+        {
+            for (String token : csv.split(","))
+            {
+                String trimmed = token.trim();
+                if (trimmed.isEmpty())
+                {
+                    continue;
+                }
+                try
+                {
+                    Long id = Long.parseLong(trimmed);
+                    if (!result.contains(id))
+                    {
+                        result.add(id);
+                    }
+                }
+                catch (NumberFormatException ignore)
+                {
+                    // skip malformed token
+                }
+            }
+        }
+        if (result.isEmpty() && fallback != null)
+        {
+            result.add(fallback);
+        }
+        return result;
     }
 
     private Map<String, Object> buildAcademicBlock(OsgStudent student, Map<String, String> remarkFields)
     {
         Map<String, Object> academic = new LinkedHashMap<>();
         academic.put("school", student.getSchool());
+        academic.put("schools", splitCsv(student.getSchool()));
         academic.put("major", student.getMajor());
         academic.put("graduationYear", student.getGraduationYear());
+        academic.put("graduationMonth", student.getGraduationMonth());
         academic.put("studyPlan", defaultText(remarkFields.get("studyPlan"), remarkFields.get("postgraduate")));
         academic.put("deferredGraduation", remarkFields.get("deferredGraduation"));
         academic.put("highSchool", firstNonBlank(remarkFields.get("highSchool")));
@@ -877,6 +1121,37 @@ public class OsgStudentServiceImpl implements IOsgStudentService
             return String.valueOf(userId);
         }
         return firstNonBlank(user.getNickName(), user.getUserName(), String.valueOf(userId));
+    }
+
+    /**
+     * 暴露给 controller list 行使用：从 student 实体抽取用户备注
+     */
+    public String extractUserRemarkFromEntity(OsgStudent student)
+    {
+        return student == null ? null : extractUserRemark(student.getRemark());
+    }
+
+    /**
+     * 从合并 remark 中抽取纯用户备注（剔除 key=value 元数据段）
+     */
+    private String extractUserRemark(String remark)
+    {
+        if (isBlank(remark))
+        {
+            return null;
+        }
+        String normalized = remark.replace(" | ", ";");
+        List<String> userParts = new ArrayList<>();
+        for (String segment : normalized.split(";"))
+        {
+            String trimmed = segment.trim();
+            if (trimmed.isEmpty() || trimmed.contains("="))
+            {
+                continue;
+            }
+            userParts.add(trimmed);
+        }
+        return userParts.isEmpty() ? null : String.join("; ", userParts);
     }
 
     private Map<String, String> parseRemarkFields(String remark)

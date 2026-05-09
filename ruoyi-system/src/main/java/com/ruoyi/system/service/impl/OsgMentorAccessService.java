@@ -22,6 +22,9 @@ public class OsgMentorAccessService
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private OsgStaffAccessGuard staffAccessGuard;
+
     public SysUser findUserByLogin(String login)
     {
         if (!StringUtils.hasText(login))
@@ -46,11 +49,20 @@ public class OsgMentorAccessService
 
     public boolean hasMentorAccess(SysUser user)
     {
+        // [T1.1] 黑名单先 + [T1.2] frozen 后：顶层短路，覆盖 admin / business ownership 路径
+        if (staffAccessGuard.isBlocked(user))
+        {
+            return false;
+        }
         return isActiveUser(user) && (user.isAdmin() || hasMentorRole(user));
     }
 
     public Set<String> buildPortalRoles(SysUser user)
     {
+        if (staffAccessGuard.isBlocked(user))
+        {
+            return Collections.emptySet();
+        }
         if (!isActiveUser(user))
         {
             return Collections.emptySet();

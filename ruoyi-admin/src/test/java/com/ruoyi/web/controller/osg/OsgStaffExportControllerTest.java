@@ -45,10 +45,13 @@ class OsgStaffExportControllerTest
         try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(response.getContentAsByteArray())))
         {
             assertTrue(response.getContentAsByteArray().length > 0);
+            // T1.11：列顺序 = staffId/staffName/staffType/gender/wechatId/email/phone/region/city/
+            //              majorDirection/subDirection/courseTypes/specialty/companies/hourlyRate/
+            //              rating/ratingRemark/studentCount/accountStatus/blacklistStatus/createTime
             assertEquals("Diana", workbook.getSheetAt(0).getRow(1).getCell(1).getStringCellValue());
             assertEquals("组长导师", workbook.getSheetAt(0).getRow(1).getCell(2).getStringCellValue());
-            assertEquals("冻结", workbook.getSheetAt(0).getRow(1).getCell(11).getStringCellValue());
-            assertEquals("黑名单", workbook.getSheetAt(0).getRow(1).getCell(12).getStringCellValue());
+            assertEquals("冻结", workbook.getSheetAt(0).getRow(1).getCell(18).getStringCellValue());
+            assertEquals("黑名单", workbook.getSheetAt(0).getRow(1).getCell(19).getStringCellValue());
         }
     }
 

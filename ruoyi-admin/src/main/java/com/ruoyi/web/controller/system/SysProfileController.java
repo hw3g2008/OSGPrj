@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.config.RuoYiConfig;
+import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysUser;
@@ -134,6 +135,10 @@ public class SysProfileController extends BaseController
         if (!newPassword.matches(".*[a-zA-Z].*") || !newPassword.matches(".*\\d.*"))
         {
             return error("新密码必须包含字母和数字");
+        }
+        if (UserConstants.DEFAULT_PASSWORD.equals(newPassword))
+        {
+            return error("新密码不能与系统默认密码相同");
         }
         LoginUser loginUser = getLoginUser();
         Long userId = loginUser.getUserId();

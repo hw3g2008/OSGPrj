@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="字典管理" description="管理系统基础配置字典数据" />
+    <PageHeader title-zh="字典管理" />
 
     <div class="category-cards">
       <a-button
@@ -15,7 +15,6 @@
           <i class="mdi" :class="cat.iconClass" :style="{ color: cat.iconColor }" aria-hidden="true"></i>
         </span>
         <span class="category-card__label">{{ cat.label }}</span>
-        <span class="category-card__desc">{{ cat.description }}</span>
       </a-button>
     </div>
 
@@ -84,6 +83,17 @@
           <template v-else-if="column.dataIndex === 'parentLabel'">
             <a-tag v-if="record.parentValue" :color="parentTagColor(record.parentValue)">
               {{ parentOptionsMap[record.parentValue] || record.parentValue }}
+            </a-tag>
+            <span v-else style="color: #999">-</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'callingCode'">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600">
+              {{ record.extra?.callingCode || '-' }}
+            </span>
+          </template>
+          <template v-else-if="column.dataIndex === 'country'">
+            <a-tag v-if="record.extra?.country && regionLabelMap[record.extra.country]" color="blue">
+              {{ regionLabelMap[record.extra.country] }}
             </a-tag>
             <span v-else style="color: #999">-</span>
           </template>
@@ -206,13 +216,7 @@ const tabPresentationMap: Record<string, { createLabel: string; nameHeader: stri
   osg_expense_type: { createLabel: '报销类型', nameHeader: '报销类型' },
   osg_specialty: { createLabel: '擅长', nameHeader: '擅长名称' },
   osg_rating: { createLabel: '评级', nameHeader: '评级名称' },
-}
-
-const categoryDescMap: Record<string, string> = {
-  job: '岗位分类、公司、部门、地区、招聘周期、擅长、评级',
-  student: '学校、主攻方向、子方向、签证状态',
-  course: '课程类型',
-  finance: '报销类型',
+  osg_country_code: { createLabel: '国家/地区', nameHeader: '国家/地区' },
 }
 
 const categories = computed(() => {
@@ -222,7 +226,6 @@ const categories = computed(() => {
     .map(group => ({
       key: group.group_key,
       label: group.group_label,
-      description: categoryDescMap[group.group_key] ?? group.dict_types.map(item => item.dict_name).join('、'),
       iconClass: group.icon,
       iconBg: group.icon_bg,
       iconColor: group.icon_color,
@@ -247,6 +250,7 @@ const selectedCategory = ref('')
 const selectedTab = ref('')
 
 const parentOptionsMap = ref<Record<string, string>>({})
+const regionLabelMap = ref<Record<string, string>>({})
 
 const parentTagColor = (value: string): string => {
   const colorMap: Record<string, string> = {
@@ -279,6 +283,23 @@ const loadParentOptions = async () => {
   }
 }
 
+const loadRegionLabelMap = async () => {
+  if (selectedTab.value !== 'osg_school') {
+    regionLabelMap.value = {}
+    return
+  }
+  try {
+    const options = await getAdminDictOptions('osg_region')
+    const map: Record<string, string> = {}
+    for (const opt of options) {
+      if (opt.status === '0') map[opt.dictValue] = opt.dictLabel
+    }
+    regionLabelMap.value = map
+  } catch {
+    regionLabelMap.value = {}
+  }
+}
+
 const dictColumns = computed(() => {
   const base = [
     { title: 'ID', dataIndex: 'dictCode', key: 'dictCode', width: 80 },
@@ -287,6 +308,12 @@ const dictColumns = computed(() => {
   if (selectedTab.value === 'osg_company_name') {
     base.push({ title: '公司类别', dataIndex: 'parentLabel', key: 'parentLabel', width: 150 })
     base.push({ title: '官网地址', dataIndex: 'website', key: 'website', width: 220 })
+  } else if (selectedTab.value === 'osg_country_code') {
+    base.push({ title: '键值', dataIndex: 'dictValue', key: 'dictValue', width: 100 })
+    base.push({ title: '国际区号', dataIndex: 'callingCode', key: 'callingCode', width: 120 })
+  } else if (selectedTab.value === 'osg_school') {
+    base.push({ title: '键值', dataIndex: 'dictValue', key: 'dictValue' })
+    base.push({ title: '国家/地区', dataIndex: 'country', key: 'country', width: 140 })
   } else {
     base.push({ title: '键值', dataIndex: 'dictValue', key: 'dictValue' })
   }
@@ -344,6 +371,7 @@ watch(selectedTab, () => {
   pagination.current = 1
   searchName.value = ''
   void loadParentOptions()
+  void loadRegionLabelMap()
   loadDataList()
 })
 
@@ -449,18 +477,21 @@ onMounted(() => {
 <style scoped lang="scss">
 .category-cards {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* 所有分类卡片强制一排平分宽度；分组数变化时自适应（卡片随之变窄） */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
 .category-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 10px;
   height: auto;
-  padding: 16px;
-  border-radius: 16px;
+  padding: 10px 16px;
+  border-radius: 12px;
   background: #fff;
   box-shadow: var(--card-shadow);
   overflow: hidden;
@@ -480,28 +511,17 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin-bottom: 8px;
-  border-radius: 12px;
-  font-size: 24px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .category-card__label {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
-}
-
-.category-card__desc {
-  font-size: 12px;
-  color: var(--text2);
-  text-align: center;
-  line-height: 1.45;
-  width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .base-data-tabs {

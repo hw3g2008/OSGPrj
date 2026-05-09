@@ -20,3 +20,8 @@ export function updateUser(data: Partial<UserInfo>): Promise<void> {
 export function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
   return http.put('/system/user/profile/updatePwd', { oldPassword, newPassword })
 }
+
+// 首次登录 / 默认密码强制改密（无需旧密码）
+export function updateFirstLoginPwd(newPassword: string): Promise<void> {
+  return http.put('/system/user/profile/updateFirstLoginPwd', { newPassword })
+}

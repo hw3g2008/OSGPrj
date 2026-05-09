@@ -24,7 +24,7 @@
         <div class="esm-staff-card__meta">
           <span class="esm-staff-card__meta-chip">ID {{ record?.staffId }}</span>
           <span class="esm-staff-card__meta-dot" aria-hidden="true"></span>
-          <span>{{ record?.staffType === 'lead_mentor' ? '班主任' : '专业导师' }}</span>
+          <span>{{ formatStaffType(record?.staffType) }}</span>
           <span class="esm-staff-card__meta-dot" aria-hidden="true"></span>
           <span>{{ record?.majorDirection || '—' }}</span>
         </div>
@@ -111,10 +111,7 @@
         <fieldset
           v-for="day in weekdays"
           :key="day.value"
-          :class="[
-            'esm-day-row',
-            { 'esm-day-row--weekend': day.weekend, 'esm-day-row--holiday': day.holiday },
-          ]"
+          :class="['esm-day-row', { 'esm-day-row--weekend': day.weekend }]"
           :data-field-name="`${day.label}可用时段`"
         >
           <legend class="sr-only">{{ day.label }}可用时段</legend>
@@ -126,10 +123,10 @@
               <span class="esm-day-row__month">{{ day.monthLabel }}</span>
             </span>
             <span
-              v-if="day.weekend || day.holiday"
-              :class="['esm-day-row__tag', day.holiday ? 'esm-day-row__tag--holiday' : 'esm-day-row__tag--weekend']"
+              v-if="day.weekend"
+              class="esm-day-row__tag esm-day-row__tag--weekend"
             >
-              {{ day.holiday ? '节假日' : '周末' }}
+              周末
             </span>
           </div>
           <div class="esm-day-row__slots">
@@ -154,10 +151,6 @@
         <span class="esm-day-hint__legend">
           <span class="esm-day-hint__swatch esm-day-hint__swatch--weekend"></span>
           周末
-        </span>
-        <span class="esm-day-hint__legend">
-          <span class="esm-day-hint__swatch esm-day-hint__swatch--holiday"></span>
-          节假日
         </span>
       </div>
     </section>
@@ -231,6 +224,12 @@ const emit = defineEmits<{
 const quickHours = [5, 10, 15, 20]
 const errorMessage = ref('')
 
+const formatStaffType = (staffType?: string) => {
+  if (staffType === 'lead_mentor') return '班主任'
+  if (staffType === 'assistant') return '助教'
+  return '导师'
+}
+
 const weekRanges = { current: '03/09 - 03/15', next: '03/16 - 03/22' }
 const localWeek = ref<WeekScope>(props.weekScope)
 
@@ -249,7 +248,6 @@ const weekdays = computed(() => {
       dayNum: day,
       monthLabel: `${Number(month)}月`,
       weekend: i >= 5,
-      holiday: false,
     }
   })
 })
@@ -773,7 +771,6 @@ $rose-100: #ffe4e6;
 
   &--weekend { background: linear-gradient(90deg, $indigo-50 0%, transparent 40%); }
   &--weekend:hover { background: linear-gradient(90deg, $indigo-50 0%, $slate-50 60%); }
-  &--holiday { background: linear-gradient(90deg, $rose-100 0%, transparent 40%); }
 
   &__lead {
     position: relative;
@@ -796,7 +793,6 @@ $rose-100: #ffe4e6;
   }
 
   &--weekend &__rail { background: $indigo-400; }
-  &--holiday &__rail { background: $rose-500; }
 
   &__date {
     font-size: 26px;
@@ -810,7 +806,6 @@ $rose-100: #ffe4e6;
   }
 
   &--weekend &__date { color: $indigo-600; }
-  &--holiday &__date { color: #be123c; }
 
   &__meta {
     display: flex;
@@ -843,11 +838,6 @@ $rose-100: #ffe4e6;
     &--weekend {
       background: $indigo-100;
       color: $indigo-600;
-    }
-
-    &--holiday {
-      background: $rose-100;
-      color: #be123c;
     }
   }
 
@@ -947,7 +937,6 @@ $rose-100: #ffe4e6;
     border-radius: 3px;
 
     &--weekend { background: $indigo-400; }
-    &--holiday { background: $rose-500; }
   }
 }
 

@@ -24,6 +24,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 
 import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
+import { useIdleLogout } from '@osg/shared/composables'
 import { clearAuth, getUser } from '@osg/shared/utils'
 
 const FALLBACK_USER_NAME = 'Jess (Lead Mentor)'
@@ -42,6 +43,9 @@ const AVAILABLE_NAVIGATION_PATHS = new Set([
 
 const route = useRoute()
 const router = useRouter()
+
+// 五端共享：无操作 60 分钟自动退出，活动节流 ping 续期
+useIdleLogout()
 
 const navigationGroups: NavigationGroup[] = [
   {

@@ -10,6 +10,8 @@ public interface OsgStaffMapper
 
     public List<OsgStaff> selectStaffByStaffIds(@Param("staffIds") List<Long> staffIds);
 
+    public OsgStaff selectStaffByEmail(@Param("email") String email);
+
     public List<OsgStaff> selectStaffList(OsgStaff staff);
 
     public int insertStaff(OsgStaff staff);

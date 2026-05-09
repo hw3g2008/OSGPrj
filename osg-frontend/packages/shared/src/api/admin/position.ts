@@ -17,6 +17,14 @@ export interface PositionListParams {
   endDisplayStartTime?: string
 }
 
+export interface PositionAttachment {
+  url: string
+  fileName: string
+  fileType: string
+  size: number
+  attachmentPath?: string
+}
+
 export interface PositionListItem {
   positionId: number
   positionCategory: string
@@ -39,8 +47,10 @@ export interface PositionListItem {
   displayEndTime?: string
   positionUrl?: string
   applicationNote?: string
+  applicationAttachments?: PositionAttachment[]
   studentCount?: number
   createBy?: string
+  createTime?: string
 }
 
 export interface PositionStats {
@@ -140,6 +150,7 @@ export interface PositionPayload {
   deadlineText?: string
   positionUrl?: string
   applicationNote?: string
+  applicationAttachments?: PositionAttachment[]
   createBy?: string
 }
 

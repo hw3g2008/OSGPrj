@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="人际关系沟通记录" title-en="Communication Records" description="查看学员与导师/班主任的沟通历史记录">
+    <PageHeader title-zh="人际关系沟通记录" title-en="Communication Records">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="题库管理" title-en="Question Bank" description="组织和分发题库文件夹，支持授权和过期时间">
+    <PageHeader title-zh="题库管理" title-en="Question Bank">
       <template #actions>
         <a-button type="primary" @click="openCreateModal">
           <template #icon><FolderAddOutlined /></template>

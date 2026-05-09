@@ -16,6 +16,9 @@ public interface OsgClassRecordMapper
 
     List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord classRecord);
 
+    /** 按 reference_type='application' AND reference_id=applicationId 过滤的全部课消记录（含旷课、含 NULL rate） */
+    List<OsgClassRecord> selectByApplicationReference(@Param("applicationId") Long applicationId);
+
     OsgClassRecord selectMentorClassRecordById(Long recordId);
 
     int insertClassRecord(OsgClassRecord classRecord);

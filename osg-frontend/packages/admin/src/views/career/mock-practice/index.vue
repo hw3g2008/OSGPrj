@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="模拟应聘管理" title-en="Mock Practice" description="管理所有学员的模拟面试、人际关系测试、期中考试申请">
+    <PageHeader title-zh="模拟应聘管理" title-en="Mock Practice">
       <template #actions>
         <a-space>
           <a-tag color="orange">{{ stats.pendingCount }} 条待处理</a-tag>
@@ -25,7 +25,7 @@
         </a-form-item>
         <a-form-item>
           <a-select v-model:value="filters.practiceType" placeholder="全部类型" allow-clear style="width: 130px">
-            <a-select-option value="mock_interview">模拟面试</a-select-option>
+            <a-select-option value="mock_interview">面试测试</a-select-option>
             <a-select-option value="communication_test">人际关系测试</a-select-option>
             <a-select-option value="midterm_exam">期中考试</a-select-option>
           </a-select>
@@ -367,7 +367,7 @@ const handleFeedbackVisibleChange = (value: boolean) => {
 }
 
 function formatType(value: string) {
-  if (value === 'mock_interview') return '模拟面试'
+  if (value === 'mock_interview') return '面试测试'
   if (value === 'communication_test') return '人际关系测试'
   if (value === 'midterm_exam') return '期中考试'
   return '模拟应聘'

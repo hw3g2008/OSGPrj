@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="面试真题审核" title-en="Question Review" description="审核学员提交的面试真题，通过后自动开放给相同申请的学生">
+    <PageHeader title-zh="面试真题审核" title-en="Question Review">
       <template #actions>
         <a-button @click="message.success('已导出当前筛选结果')">
           <template #icon><ExportOutlined /></template>

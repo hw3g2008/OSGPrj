@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="岗位管理" title-en="Job Tracker" description="管理各大公司招聘岗位信息，支持批量导入和学员关联追踪">
+    <PageHeader title-zh="岗位管理" title-en="Job Tracker">
       <template #actions>
         <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
@@ -186,11 +186,12 @@
                           </div>
                         </template>
                         <template v-else-if="column.dataIndex === 'displayStartTime'">{{ formatShortDate(position.displayStartTime) }}</template>
+                        <template v-else-if="column.dataIndex === 'createTime'">{{ formatShortDate(position.createTime) }}</template>
                         <template v-else-if="column.dataIndex === 'deadline'">
-                          <template v-if="position.deadlineText">{{ position.deadlineText }}</template>
-                          <template v-else-if="position.deadline">
+                          <template v-if="position.deadline">
                             <span :style="isDeadlineSoon(position.deadline) ? { color: '#dc2626', fontWeight: 700 } : {}">{{ formatShortDate(position.deadline) }}</span>
                           </template>
+                          <template v-else-if="position.deadlineText">{{ position.deadlineText }}</template>
                           <template v-else>—</template>
                         </template>
                         <template v-else-if="column.dataIndex === 'displayStatus'">
@@ -250,11 +251,12 @@
                 </div>
               </template>
               <template v-else-if="column.dataIndex === 'displayStartTime'">{{ formatShortDate(record.displayStartTime) }}</template>
+              <template v-else-if="column.dataIndex === 'createTime'">{{ formatShortDate(record.createTime) }}</template>
               <template v-else-if="column.dataIndex === 'deadlineDisplay'">
-                <template v-if="record.deadlineText">{{ record.deadlineText }}</template>
-                <template v-else-if="record.deadline">
+                <template v-if="record.deadline">
                   <span :style="isDeadlineSoon(record.deadline) ? { color: '#dc2626', fontWeight: 700 } : {}">{{ formatShortDate(record.deadline) }}</span>
                 </template>
+                <template v-else-if="record.deadlineText">{{ record.deadlineText }}</template>
                 <template v-else>—</template>
               </template>
               <template v-else-if="column.dataIndex === 'displayStatus'">
@@ -279,8 +281,6 @@
         </div>
       </a-spin>
     </a-card>
-
-    <a-alert v-if="processGlossaryText" type="info" :message="`流程缩写：${processGlossaryText}`" />
 
     <PositionFormModal
       v-model:visible="formVisible"
@@ -348,7 +348,8 @@ const statColorMap: Record<string, string> = {
 const statusToneToColor: Record<string, string> = {
   success: 'green',
   muted: 'default',
-  danger: 'red'
+  danger: 'red',
+  default: 'default'
 }
 
 const toneTextColor: Record<string, string> = {
@@ -372,6 +373,7 @@ const drilldownColumns = [
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
   { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
   { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
+  { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
 ]
 
@@ -389,6 +391,7 @@ const listColumns = [
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
   { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
   { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
+  { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
 ]
 
@@ -514,10 +517,6 @@ const summary = computed(() => ({
   companyCount: new Set(positions.value.map((item) => item.companyName).filter(Boolean)).size,
   positionCount: positions.value.length
 }))
-
-const processGlossaryText = computed(() =>
-  meta.value.processGlossary.map((item) => `${item.value} = ${item.label}`).join(' · ')
-)
 
 const hasExpandedContext = () =>
   Boolean(

@@ -106,6 +106,9 @@ import {
 } from '@osg/shared/api'
 import { clearAuth, setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
+import { useMustChangePassword } from '@osg/shared/composables'
+
+const { setMustChangePassword } = useMustChangePassword()
 
 const featureTexts = [
   '学生端：一对一导师辅导',
@@ -160,6 +163,7 @@ const handleLogin = async () => {
       roles: userInfo.roles,
       permissions: userInfo.permissions,
     })
+    setMustChangePassword(Boolean(userInfo.mustChangePassword))
     message.success('登录成功')
     router.push((route.query.redirect as string) || '/')
   } catch (error: any) {

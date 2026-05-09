@@ -158,6 +158,33 @@
 | Vue | Vue 官方风格指南 + `.claude/project/rules/vue.md` |
 | SQL | `.claude/project/rules/sql.md` |
 | 测试 | `.claude/rules/testing.md` |
+| 弹窗 / 详情 | `docs/modal-form-style-guide.md`（5 端通用） |
+
+## 弹窗 / 详情统一规范（5 端强约束）
+
+任何 admin / assistant / lead-mentor / mentor / student 端的 `OverlaySurfaceModal` 弹窗与详情视图：
+
+1. **控件尺寸/圆角/边框** —— 必须套用公共 `.osg-modal-form` 类（`packages/shared/src/styles/index.scss`）：
+   - 高度 36px，圆角 6px，边框 1px solid #d9d9d9
+   - 光标与 placeholder 垂直居中（line-height 34px）
+   - textarea 至少 80px、可拖拽变高
+   - 用法：弹窗 `body-class="xxx-modal__body osg-modal-form"`
+2. **公共组件优先** —— 多选场景必须用 `@osg/shared/components` 的 `MultiSelect`，禁止自行 `<a-select mode="multiple">`。如新增公共组件圆角与基线不一致，**改公共组件，不改基线**。
+3. **字典字段显示** —— 详情/只读视图渲染字典字段必须 `dictValue → dictLabel`：
+   - 弹窗 visible 切到 true 时一次性 `loadDictMaps()` 构建 map
+   - 模板用 computed pill 数组，找不到 key 回退原值兜底
+   - 禁止在 `{{ }}` 里直接显示 key（如 `tech` / `apac` / `not_required`）
+4. **新增弹窗或详情前先读 `docs/modal-form-style-guide.md`**；改动后该文档"修改历史"章节同步追加一行。
+5. **多选 tag 全展示** —— `MultiSelect` 默认必须不折叠选中项（不出现 "+N"），保证用户能看到全部已选；如确需紧凑视图，加 tooltip 提供完整列表，且需在 PR 描述说明理由。
+6. **字段级权限必须双层防护** —— 仅特定角色可见/可写的字段（如「评语」仅超管、敏感费率字段等）：
+   - 前端 `v-if="isSuperAdmin"` 等控制可见性
+   - **后端 Service 层必须 server-side 校验**调用者权限（`SecurityUtils.isAdmin()` / `@PreAuthorize`），非授权角色即便绕过前端提交该字段也返回 403
+   - 前端 `v-if` 不可作为唯一防护
+7. **附件/文件上传** —— 弹窗内 `<a-upload>` 或自定义上传组件必须：
+   - 前端 `accept` + `before-upload` 校验文件类型 + 单文件大小 + 总数量
+   - 后端接口对真实 MIME 二次校验（`Files.probeContentType()` 或 Apache Tika，不只信 `Content-Type` header）
+   - 后端存储文件名用 `UUID + ext`，**不用原始 fileName**（防 path traversal）；返回响应中保留原 fileName 仅作展示
+   - 接口 `@PreAuthorize` 鉴权 + Spring Security 默认 CSRF
 
 ## 配置文件
 

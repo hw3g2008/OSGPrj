@@ -23,6 +23,8 @@ public class OsgStudent extends BaseEntity
 
     private Integer graduationYear;
 
+    private String graduationMonth;
+
     private String majorDirection;
 
     private String subDirection;
@@ -35,7 +37,11 @@ public class OsgStudent extends BaseEntity
 
     private Long leadMentorId;
 
+    private String leadMentorIds;
+
     private Long assistantId;
+
+    private String assistantIds;
 
     private Date lastLoginTime;
 
@@ -111,6 +117,16 @@ public class OsgStudent extends BaseEntity
         this.graduationYear = graduationYear;
     }
 
+    public String getGraduationMonth()
+    {
+        return graduationMonth;
+    }
+
+    public void setGraduationMonth(String graduationMonth)
+    {
+        this.graduationMonth = graduationMonth;
+    }
+
     public String getMajorDirection()
     {
         return majorDirection;
@@ -179,6 +195,26 @@ public class OsgStudent extends BaseEntity
     public void setAssistantId(Long assistantId)
     {
         this.assistantId = assistantId;
+    }
+
+    public String getLeadMentorIds()
+    {
+        return leadMentorIds;
+    }
+
+    public void setLeadMentorIds(String leadMentorIds)
+    {
+        this.leadMentorIds = leadMentorIds;
+    }
+
+    public String getAssistantIds()
+    {
+        return assistantIds;
+    }
+
+    public void setAssistantIds(String assistantIds)
+    {
+        this.assistantIds = assistantIds;
     }
 
     public Date getLastLoginTime()

@@ -29,14 +29,6 @@
     </div>
 
     <template v-else>
-      <div class="sdm-note" data-content-part="supporting-text">
-        <span class="mdi mdi-card-account-details-outline sdm-note__icon" aria-hidden="true"></span>
-        <div class="sdm-note__copy">
-          <strong>学员资料台账</strong>
-          <p>可查看资料、信息变更和合同信息，并从这里继续进入编辑或续签流程。</p>
-        </div>
-      </div>
-
       <div class="sdm-overview" data-content-part="student-detail-overview">
         <article class="sdm-overview__card">
           <span class="sdm-overview__label">账号状态</span>
@@ -44,11 +36,11 @@
         </article>
         <article class="sdm-overview__card">
           <span class="sdm-overview__label">求职地区</span>
-          <strong class="sdm-overview__value">{{ detail?.jobDirection?.targetRegion || detail?.targetRegion || '-' }}</strong>
+          <strong class="sdm-overview__value">{{ targetRegionPills.length ? targetRegionPills.join(' / ') : '-' }}</strong>
         </article>
         <article class="sdm-overview__card">
           <span class="sdm-overview__label">招聘周期</span>
-          <strong class="sdm-overview__value">{{ formatList(detail?.jobDirection?.recruitmentCycles || detail?.recruitmentCycles) }}</strong>
+          <strong class="sdm-overview__value">{{ recruitmentCyclePills.length ? recruitmentCyclePills.join(' / ') : '-' }}</strong>
         </article>
         <article class="sdm-overview__card">
           <span class="sdm-overview__label">剩余课时</span>
@@ -125,15 +117,27 @@
             <div class="sdm-field sdm-field" data-field-name="班主任">
               <span class="sdm-field__label">班主任</span>
               <div class="sdm-field__pills">
-                <span v-if="detail?.mentor?.leadMentorName" class="sdm-pill sdm-pill--indigo">{{ detail.mentor.leadMentorName }}</span>
-                <span v-else class="sdm-field__value">{{ detail?.mentor?.leadMentorId ?? '-' }}</span>
+                <template v-if="leadMentorPillNames.length">
+                  <span
+                    v-for="(name, idx) in leadMentorPillNames"
+                    :key="`lead-${idx}-${name}`"
+                    class="sdm-pill sdm-pill--indigo"
+                  >{{ name }}</span>
+                </template>
+                <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
             <div class="sdm-field sdm-field" data-field-name="助教">
               <span class="sdm-field__label">助教</span>
               <div class="sdm-field__pills">
-                <span v-if="detail?.mentor?.assistantName" class="sdm-pill sdm-pill--green">{{ detail.mentor.assistantName }}</span>
-                <span v-else class="sdm-field__value">{{ detail?.mentor?.assistantId ?? '-' }}</span>
+                <template v-if="assistantPillNames.length">
+                  <span
+                    v-for="(name, idx) in assistantPillNames"
+                    :key="`asst-${idx}-${name}`"
+                    class="sdm-pill sdm-pill--green"
+                  >{{ name }}</span>
+                </template>
+                <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
           </div>
@@ -147,27 +151,36 @@
           <div class="sdm-grid sdm-grid--4">
             <div class="sdm-field sdm-field" data-field-name="学校">
               <span class="sdm-field__label">学校</span>
-              <div class="sdm-field__value">{{ detail?.school || '-' }}</div>
+              <div class="sdm-field__pills">
+                <template v-if="schoolPills.length">
+                  <span
+                    v-for="(name, idx) in schoolPills"
+                    :key="`school-${idx}-${name}`"
+                    class="sdm-pill sdm-pill--blue"
+                  >{{ name }}</span>
+                </template>
+                <span v-else class="sdm-field__value">-</span>
+              </div>
             </div>
             <div class="sdm-field sdm-field" data-field-name="专业">
               <span class="sdm-field__label">专业</span>
               <div class="sdm-field__value">{{ detail?.major || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="毕业年份">
-              <span class="sdm-field__label">毕业年份</span>
-              <div class="sdm-field__value">{{ detail?.graduationYear ?? '-' }}</div>
+            <div class="sdm-field sdm-field" data-field-name="毕业年月">
+              <span class="sdm-field__label">毕业年月</span>
+              <div class="sdm-field__value">{{ detail?.graduationMonth || (detail?.graduationYear ? `${detail.graduationYear}-06` : '-') }}</div>
             </div>
             <div class="sdm-field sdm-field">
               <span class="sdm-field__label">高中</span>
               <div class="sdm-field__value">{{ detail?.academic?.highSchool || detail?.highSchool || '-' }}</div>
             </div>
             <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">是否读研或延毕</span>
+              <span class="sdm-field__label">学业状态</span>
               <div class="sdm-field__value">{{ formatStudyPlan(detail?.academic?.studyPlan, detail?.academic?.deferredGraduation) }}</div>
             </div>
             <div class="sdm-field sdm-field">
               <span class="sdm-field__label">签证</span>
-              <div class="sdm-field__value">{{ detail?.academic?.visaStatus || detail?.visaStatus || '-' }}</div>
+              <div class="sdm-field__value">{{ visaLabel }}</div>
             </div>
           </div>
         </section>
@@ -181,9 +194,9 @@
           <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="求职地区">
             <span class="sdm-field__label">求职地区</span>
             <div class="sdm-field__pills">
-              <span v-if="detail?.jobDirection?.targetRegion || detail?.targetRegion" class="sdm-pill sdm-pill--green">
-                {{ detail?.jobDirection?.targetRegion || detail?.targetRegion }}
-              </span>
+              <template v-if="targetRegionPills.length">
+                <span v-for="(name, idx) in targetRegionPills" :key="`region-${idx}-${name}`" class="sdm-pill sdm-pill--green">{{ name }}</span>
+              </template>
               <span v-else class="sdm-field__value">-</span>
             </div>
           </div>
@@ -191,12 +204,10 @@
           <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="招聘周期">
             <span class="sdm-field__label">招聘周期</span>
             <div class="sdm-field__pills">
-              <span
-                v-for="cycle in (detail?.jobDirection?.recruitmentCycles || detail?.recruitmentCycles || [])"
-                :key="cycle"
-                class="sdm-pill sdm-pill--blue"
-              >{{ cycle }}</span>
-              <span v-if="!(detail?.jobDirection?.recruitmentCycles || detail?.recruitmentCycles || []).length" class="sdm-field__value">-</span>
+              <template v-if="recruitmentCyclePills.length">
+                <span v-for="(name, idx) in recruitmentCyclePills" :key="`cycle-${idx}-${name}`" class="sdm-pill sdm-pill--blue">{{ name }}</span>
+              </template>
+              <span v-else class="sdm-field__value">-</span>
             </div>
           </div>
           <!-- 主攻方向 + 子方向 -->
@@ -204,18 +215,19 @@
             <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="主攻方向">
               <span class="sdm-field__label" style="color:var(--primary)">主攻方向</span>
               <div class="sdm-field__pills">
-                <span
-                  v-for="dir in (detail?.jobDirection?.majorDirections || detail?.majorDirections || [])"
-                  :key="dir"
-                  class="sdm-pill sdm-pill--purple"
-                >{{ dir }}</span>
-                <span v-if="!(detail?.jobDirection?.majorDirections || detail?.majorDirections || []).length" class="sdm-field__value">-</span>
+                <template v-if="majorDirectionPills.length">
+                  <span v-for="(name, idx) in majorDirectionPills" :key="`mdir-${idx}-${name}`" class="sdm-pill sdm-pill--purple">{{ name }}</span>
+                </template>
+                <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
             <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="子方向">
               <span class="sdm-field__label" style="color:var(--primary)">子方向</span>
               <div class="sdm-field__pills">
-                <span class="sdm-pill sdm-pill--sub">{{ detail?.jobDirection?.subDirection || detail?.subDirection || '-' }}</span>
+                <template v-if="subDirectionPills.length">
+                  <span v-for="(name, idx) in subDirectionPills" :key="`sdir-${idx}-${name}`" class="sdm-pill sdm-pill--sub">{{ name }}</span>
+                </template>
+                <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
           </div>
@@ -243,6 +255,11 @@
                 </span>
               </div>
             </div>
+          </div>
+
+          <div class="sdm-field sdm-field" data-field-name="备注" style="margin-top: 12px">
+            <span class="sdm-field__label">备注</span>
+            <div class="sdm-field__value" style="white-space: pre-wrap">{{ detail?.remark || '-' }}</div>
           </div>
         </section>
       </div>
@@ -297,6 +314,7 @@ import ChangeReviewTab from './ChangeReviewTab.vue'
 import ContractTab from './ContractTab.vue'
 import RenewContractModal from '../../contracts/components/RenewContractModal.vue'
 import type { ContractListItem } from '@osg/shared/api/admin/contract'
+import { getAdminDictOptions } from '@/api/adminDict'
 
 interface StudentContact {
   email?: string
@@ -307,8 +325,12 @@ interface StudentContact {
 interface StudentMentor {
   leadMentorId?: number
   leadMentorName?: string
+  leadMentorIds?: number[]
+  leadMentorNames?: string[]
   assistantId?: number
   assistantName?: string
+  assistantIds?: number[]
+  assistantNames?: string[]
 }
 
 interface StudentAcademic {
@@ -332,8 +354,10 @@ interface StudentDetailPayload {
   email?: string
   gender?: string
   school?: string
+  schools?: string[]
   major?: string
   graduationYear?: number
+  graduationMonth?: string
   highSchool?: string
   visaStatus?: string
   targetRegion?: string
@@ -345,6 +369,7 @@ interface StudentDetailPayload {
   mentor?: StudentMentor
   academic?: StudentAcademic
   jobDirection?: StudentJobDirection
+  remark?: string
 }
 
 interface ContractSummary {
@@ -439,6 +464,72 @@ const initials = computed(() => {
   const parts = name.split(/\s+/)
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
   return name.substring(0, 2).toUpperCase()
+})
+
+// ── 字典：key → label 映射（详情显示中文/英文官名而不是 key） ──
+type DictMap = Record<string, string>
+const dictMaps = ref<{
+  school: DictMap
+  region: DictMap
+  cycle: DictMap
+  majorDir: DictMap
+  subDir: DictMap
+  visa: DictMap
+}>({ school: {}, region: {}, cycle: {}, majorDir: {}, subDir: {}, visa: {} })
+
+const loadDictMaps = async () => {
+  const types: Array<[keyof typeof dictMaps.value, string]> = [
+    ['school', 'osg_school'],
+    ['region', 'osg_region'],
+    ['cycle', 'osg_recruit_cycle'],
+    ['majorDir', 'osg_major_direction'],
+    ['subDir', 'osg_sub_direction'],
+    ['visa', 'osg_visa_status'],
+  ]
+  await Promise.all(types.map(async ([key, type]) => {
+    try {
+      const items = await getAdminDictOptions(type)
+      const map: DictMap = {}
+      for (const it of items || []) {
+        if (it?.dictValue != null) map[String(it.dictValue)] = it.dictLabel || String(it.dictValue)
+      }
+      dictMaps.value[key] = map
+    } catch { /* ignore */ }
+  }))
+}
+
+const labelize = (map: DictMap, value?: string | null) => {
+  if (!value) return ''
+  return map[value] || value
+}
+
+const splitCsv = (csv?: string) => csv ? csv.split(',').map(v => v.trim()).filter(Boolean) : []
+
+const schoolPills = computed(() => {
+  const arr = detail.value?.schools?.length
+    ? detail.value.schools
+    : splitCsv(detail.value?.school)
+  return arr.map(v => labelize(dictMaps.value.school, v))
+})
+
+const targetRegionPills = computed(() => splitCsv(detail.value?.jobDirection?.targetRegion || detail.value?.targetRegion).map(v => labelize(dictMaps.value.region, v)))
+const recruitmentCyclePills = computed(() => (detail.value?.jobDirection?.recruitmentCycles || detail.value?.recruitmentCycles || []).map(v => labelize(dictMaps.value.cycle, v)))
+const majorDirectionPills = computed(() => (detail.value?.jobDirection?.majorDirections || detail.value?.majorDirections || []).map(v => labelize(dictMaps.value.majorDir, v)))
+const subDirectionPills = computed(() => splitCsv(detail.value?.jobDirection?.subDirection || detail.value?.subDirection).map(v => labelize(dictMaps.value.subDir, v)))
+const visaLabel = computed(() => labelize(dictMaps.value.visa, detail.value?.academic?.visaStatus || detail.value?.visaStatus) || '-')
+
+const leadMentorPillNames = computed(() => {
+  const names = detail.value?.mentor?.leadMentorNames || []
+  if (names.length) return names.filter(Boolean)
+  if (detail.value?.mentor?.leadMentorName) return [detail.value.mentor.leadMentorName]
+  return []
+})
+
+const assistantPillNames = computed(() => {
+  const names = detail.value?.mentor?.assistantNames || []
+  if (names.length) return names.filter(Boolean)
+  if (detail.value?.mentor?.assistantName) return [detail.value.mentor.assistantName]
+  return []
 })
 
 const statusColor = computed(() => {
@@ -547,6 +638,7 @@ watch(
   async ([visible]) => {
     if (visible) {
       activeTab.value = 'profile'
+      void loadDictMaps()
     }
     await loadStudentDetail()
   },

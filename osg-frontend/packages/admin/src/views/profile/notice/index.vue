@@ -1,6 +1,6 @@
 <template>
   <section class="osg-page">
-    <PageHeader title-zh="通知管理" description="向学员和导师发送通知">
+    <PageHeader title-zh="通知管理">
       <template #actions>
         <a-button type="primary" @click="showSendNoticeModal = true">
           <template #icon><BellOutlined /></template>

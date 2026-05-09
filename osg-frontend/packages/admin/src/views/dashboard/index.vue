@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="欢迎回来，管理员" :description="`今天是 ${todayStr}`">
+    <PageHeader title-zh="欢迎回来，管理员">
       <template #actions>
         <a-button @click="fetchAll">
           <template #icon><ReloadOutlined /></template>

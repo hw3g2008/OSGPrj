@@ -194,6 +194,131 @@ public class OsgContractServiceImpl implements IOsgContractService
         return result;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> updateContract(Long contractId, Map<String, Object> payload, String operator)
+    {
+        if (contractId == null)
+        {
+            throw new ServiceException("合同不能为空");
+        }
+        if (payload == null || payload.isEmpty())
+        {
+            throw new ServiceException("更新参数缺失");
+        }
+
+        OsgContract existing = contractMapper.selectContractById(contractId);
+        if (existing == null)
+        {
+            throw new ServiceException("合同不存在");
+        }
+        if (!"active".equalsIgnoreCase(asText(existing.getContractStatus())))
+        {
+            throw new ServiceException("仅当生效中（active）的合同允许编辑，请通过续签创建新合同");
+        }
+
+        OsgContract patch = new OsgContract();
+        patch.setContractId(contractId);
+
+        // 起止日期：允许只改其中一个，但联合校验后以"现行 + 修改"组合判定
+        LocalDate startDate = payload.containsKey("startDate") ? asDate(payload.get("startDate")) : asDate(existing.getStartDate());
+        LocalDate endDate = payload.containsKey("endDate") ? asDate(payload.get("endDate")) : asDate(existing.getEndDate());
+        if (payload.containsKey("startDate") && startDate == null)
+        {
+            throw new ServiceException("合同开始日期不能为空");
+        }
+        if (payload.containsKey("endDate") && endDate == null)
+        {
+            throw new ServiceException("合同结束日期不能为空");
+        }
+        if (startDate != null && endDate != null && endDate.isBefore(startDate))
+        {
+            throw new ServiceException("合同结束日期不能早于开始日期");
+        }
+        if (payload.containsKey("startDate"))
+        {
+            patch.setStartDate(Date.valueOf(startDate));
+        }
+        if (payload.containsKey("endDate"))
+        {
+            patch.setEndDate(Date.valueOf(endDate));
+        }
+
+        // 币种 + 金额：要么只传 contractAmount（保留 currency/amountUsd/amountGbp 旧值）；
+        // 要么传 currency + amountUsd/amountGbp（contractAmount 自动按 currency 取对应值）
+        if (payload.containsKey("currency"))
+        {
+            String currency = asText(payload.get("currency"));
+            if (isBlank(currency))
+            {
+                throw new ServiceException("币种不能为空");
+            }
+            patch.setCurrency(currency);
+        }
+        if (payload.containsKey("amountUsd"))
+        {
+            patch.setAmountUsd(asBigDecimalOrNull(payload.get("amountUsd")));
+        }
+        if (payload.containsKey("amountGbp"))
+        {
+            patch.setAmountGbp(asBigDecimalOrNull(payload.get("amountGbp")));
+        }
+        if (payload.containsKey("contractAmount"))
+        {
+            patch.setContractAmount(defaultAmount(payload.get("contractAmount")));
+        }
+
+        if (payload.containsKey("totalHours"))
+        {
+            Integer hours = defaultHours(payload.get("totalHours"), null);
+            if (hours == null || hours <= 0)
+            {
+                throw new ServiceException("总课时必须大于 0");
+            }
+            patch.setTotalHours(hours);
+        }
+
+        if (payload.containsKey("attachmentPath"))
+        {
+            patch.setAttachmentPath(asText(payload.get("attachmentPath")));
+        }
+        if (payload.containsKey("remark"))
+        {
+            patch.setRemark(asText(payload.get("remark")));
+        }
+        if (payload.containsKey("contractStatus"))
+        {
+            String nextStatus = asText(payload.get("contractStatus"));
+            if (isBlank(nextStatus))
+            {
+                throw new ServiceException("合同状态不能为空");
+            }
+            patch.setContractStatus(nextStatus);
+        }
+
+        patch.setUpdateBy(defaultText(operator, "system"));
+
+        if (contractMapper.updateContract(patch) <= 0)
+        {
+            throw new ServiceException("合同更新失败");
+        }
+
+        OsgContract refreshed = contractMapper.selectContractById(contractId);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("contractId", contractId);
+        result.put("contractAmount", refreshed.getContractAmount());
+        result.put("totalHours", refreshed.getTotalHours());
+        result.put("startDate", refreshed.getStartDate());
+        result.put("endDate", refreshed.getEndDate());
+        result.put("currency", refreshed.getCurrency());
+        result.put("amountUsd", refreshed.getAmountUsd());
+        result.put("amountGbp", refreshed.getAmountGbp());
+        result.put("attachmentPath", refreshed.getAttachmentPath());
+        result.put("contractStatus", refreshed.getContractStatus());
+        result.put("remark", refreshed.getRemark());
+        return result;
+    }
+
     private OsgContract defaultQuery(OsgContract contract)
     {
         return contract == null ? new OsgContract() : contract;

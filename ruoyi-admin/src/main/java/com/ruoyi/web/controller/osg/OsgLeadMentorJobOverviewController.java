@@ -35,6 +35,9 @@ public class OsgLeadMentorJobOverviewController extends BaseController
     @Autowired
     private OsgLeadMentorAccessService leadMentorAccessService;
 
+    /**
+     * 求职申请列表。②栏新增 interviewTimeStart/interviewTimeEnd/lessonReported（true=已上报，false=未上报）透传到 service 过滤。
+     */
     @GetMapping("/list")
     public AjaxResult list(String scope, OsgJobApplication query)
     {

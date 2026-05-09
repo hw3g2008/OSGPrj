@@ -75,22 +75,11 @@
         <template #label>
           <span class="user-modal__label">
             角色<span class="user-modal__required">*</span>
-            <span v-if="!isEdit" class="user-modal__meta">（可多选）</span>
+            <span class="user-modal__meta">（可多选）</span>
           </span>
         </template>
 
-        <a-select
-          v-if="isEdit"
-          v-model:value="selectedRoleId"
-          placeholder="请选择角色"
-          size="large"
-        >
-          <a-select-option v-for="role in roleOptions" :key="role.roleId" :value="role.roleId">
-            {{ role.roleName }}
-          </a-select-option>
-        </a-select>
-
-        <div v-else class="user-modal__role-panel">
+        <div class="user-modal__role-panel">
           <a-checkbox
             v-for="role in roleOptions"
             :key="role.roleId"
@@ -167,13 +156,6 @@ const formState = reactive({
   phonenumber: '',
   roleIds: [] as number[],
   remark: '',
-})
-
-const selectedRoleId = computed<number | undefined>({
-  get: () => formState.roleIds[0],
-  set: (value) => {
-    formState.roleIds = value ? [value] : []
-  },
 })
 
 const validateUsername = (_rule: any, value: string) => {

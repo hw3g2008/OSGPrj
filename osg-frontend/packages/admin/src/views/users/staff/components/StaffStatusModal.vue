@@ -149,7 +149,7 @@ const surfaceId = computed(() => {
 
 const modalTitle = computed(() => {
   if (props.action === 'freeze') {
-    return '禁用导师账号'
+    return '冻结导师账号'
   }
   if (props.action === 'restore') {
     return '解冻导师账号'
@@ -174,7 +174,7 @@ const reasonFieldName = computed(() => reasonLabel.value)
 
 const modalDescription = computed(() => {
   if (props.action === 'freeze') {
-    return '禁用后该导师账号将无法正常登录系统。'
+    return '冻结后该导师账号将无法正常登录系统。'
   }
   if (props.action === 'restore') {
     return '确认后该导师账号将恢复为正常可用状态。'
@@ -215,7 +215,7 @@ const reasonPlaceholder = computed(() => {
   if (props.action === 'restore') {
     return '请选择恢复原因'
   }
-  return '请选择禁用原因'
+  return '请选择冻结原因'
 })
 
 const rules = computed(() => ({

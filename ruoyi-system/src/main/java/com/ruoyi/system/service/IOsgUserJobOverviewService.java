@@ -45,17 +45,19 @@ public interface IOsgUserJobOverviewService
     /**
      * 班主任视角：查管辖学员的求职总览，按 scope 分组。
      * @param scope "pending"（待分配）/ "coaching"（辅导中）/ "managed"（已管理）
+     * <p>返回 Map 新增字段（T-302/T-303/T-304）：cityLabel / latestRating / lessonCount / lessonReported。
      */
     List<Map<String, Object>> listByLeadMentor(String scope, OsgJobApplication query, Long leadMentorId);
 
     /**
      * 班主任视角：求职申请详情。
      * 权限：application 必须通过 coaching 关系可被 leadMentorId 访问。
+     * <p>返回 Map 含 classRecordsByMentor（按 mentorId 分组课消，每组含 totalHours/avgRating，T-308 实现）。
      */
     Map<String, Object> detailForLeadMentor(Long applicationId, Long leadMentorId);
 
     /**
-     * 班主任视角：日历事件。
+     * 班主任视角：日历事件（lead_mentor_id 维度，与 ①栏面试日历事件源一致）。
      */
     List<Map<String, Object>> calendarForLeadMentor(Long leadMentorId);
 

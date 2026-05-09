@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import jakarta.servlet.http.HttpServletRequest;
+import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginUser;
@@ -41,6 +42,7 @@ import com.ruoyi.framework.security.handle.LogoutSuccessHandlerImpl;
 import com.ruoyi.framework.web.service.PermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.domain.OsgStaff;
+import com.ruoyi.system.service.ISysDictTypeService;
 import com.ruoyi.system.service.impl.OsgStaffServiceImpl;
 
 @WebMvcTest(controllers = OsgStaffController.class)
@@ -66,6 +68,9 @@ class OsgStaffControllerTest
 
     @MockBean
     private RedisCache redisCache;
+
+    @MockBean
+    private ISysDictTypeService dictTypeService;
 
     private final AtomicReference<List<OsgStaff>> staffRowsRef = new AtomicReference<>();
 
@@ -123,6 +128,42 @@ class OsgStaffControllerTest
             "staffId", 1L,
             "status", "pending"
         ));
+
+        // T1.6/T1.7：dictTypeService 兜底 stub，覆盖测试用例使用的合法字典值
+        when(dictTypeService.selectDictDataByType(anyString())).thenAnswer(inv -> {
+            String type = inv.getArgument(0);
+            return switch (type)
+            {
+                case "osg_region" -> List.of(
+                    dictRow("北美", "北美", null),
+                    dictRow("欧洲", "欧洲", null),
+                    dictRow("亚太", "亚太", null));
+                case "osg_city" -> List.of(
+                    dictRow("New York", "New York", "{\"parentValue\":\"北美\"}"),
+                    dictRow("San Francisco", "San Francisco", "{\"parentValue\":\"北美\"}"),
+                    dictRow("NY", "NY", "{\"parentValue\":\"北美\"}"),
+                    dictRow("London", "London", "{\"parentValue\":\"欧洲\"}"));
+                case "osg_major_direction" -> List.of(
+                    dictRow("金融", "金融", null),
+                    dictRow("咨询", "咨询", null),
+                    dictRow("科技", "科技", null));
+                case "osg_sub_direction" -> List.of(
+                    dictRow("IB 投行", "IB 投行", "{\"parentValue\":\"金融\"}"),
+                    dictRow("Strategy", "Strategy", "{\"parentValue\":\"咨询\"}"),
+                    dictRow("AI Product", "AI Product", "{\"parentValue\":\"科技\"}"));
+                case "osg_specialty", "osg_course_type", "osg_company_name", "osg_rating" -> List.of();
+                default -> List.of();
+            };
+        });
+    }
+
+    private static SysDictData dictRow(String label, String value, String remark)
+    {
+        SysDictData d = new SysDictData();
+        d.setDictLabel(label);
+        d.setDictValue(value);
+        d.setRemark(remark);
+        return d;
     }
 
     @Test
@@ -379,7 +420,7 @@ class OsgStaffControllerTest
         mockMvc.perform(get("/admin/staff/999")
                 .header("Authorization", "Bearer clerk-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.msg").value("导师不存在"));
     }
 
@@ -391,7 +432,7 @@ class OsgStaffControllerTest
         mockMvc.perform(get("/admin/staff/999")
                 .header("Authorization", "Bearer clerk-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.msg").value("导师不存在"));
     }
 
@@ -501,8 +542,60 @@ class OsgStaffControllerTest
     }
 
     @Test
-    void createShouldReturnErrorWhenCityMissing() throws Exception
+    void createShouldAcceptCsvRegion_T1_7() throws Exception
     {
+        // T1.7：region 改 CSV 多值
+        when(staffService.insertStaff(any(OsgStaff.class))).thenAnswer(inv -> {
+            OsgStaff s = inv.getArgument(0);
+            org.junit.jupiter.api.Assertions.assertEquals("北美,欧洲", s.getRegion());
+            return 1;
+        });
+        when(staffService.selectStaffByStaffId(anyLong())).thenReturn(null);
+
+        mockMvc.perform(post("/admin/staff")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "staffName": "Multi",
+                      "email": "multi@example.com",
+                      "staffType": "mentor",
+                      "majorDirection": "金融",
+                      "region": "北美,欧洲",
+                      "hourlyRate": 100
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void detailShouldExcludeRatingRemarkForNonAdmin_T1_6() throws Exception
+    {
+        // 非超管：detail 应剔除 ratingRemark
+        Map<String, Object> detail = new java.util.HashMap<>();
+        detail.put("staffId", 1L);
+        detail.put("staffName", "Diana");
+        detail.put("rating", "A");
+        detail.put("ratingRemark", "高潜力");
+        when(staffService.selectStaffDetail(1L)).thenReturn(detail);
+
+        // clerk role 走非超管路径
+        mockMvc.perform(get("/admin/staff/1")
+                .header("Authorization", "Bearer clerk-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.ratingRemark").doesNotExist())
+                .andExpect(jsonPath("$.data.rating").doesNotExist());
+    }
+
+    @Test
+    void createShouldAllowMissingCity_T1_7() throws Exception
+    {
+        // T1.7：city 改选填，缺失不再被拒绝；服务返回 1 即视为新增成功
+        when(staffService.insertStaff(any(OsgStaff.class))).thenReturn(1);
+        when(staffService.selectStaffByStaffId(anyLong())).thenReturn(null);
+
         mockMvc.perform(post("/admin/staff")
                 .header("Authorization", "Bearer clerk-token")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -517,8 +610,7 @@ class OsgStaffControllerTest
                     }
                     """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(500))
-                .andExpect(jsonPath("$.msg").value("city不能为空"));
+                .andExpect(jsonPath("$.code").value(200));
     }
 
     @Test

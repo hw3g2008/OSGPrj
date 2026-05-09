@@ -1,5 +1,6 @@
 const TOKEN_KEY = 'osg_token'
 const USER_KEY = 'osg_user'
+const MUST_CHANGE_PWD_KEY = 'osg_must_change_pwd'
 
 // Token 管理
 export function getToken(): string | null {
@@ -28,8 +29,22 @@ export function removeUser(): void {
   localStorage.removeItem(USER_KEY)
 }
 
+// 强制改密标志
+export function getMustChangePwd(): boolean {
+  return localStorage.getItem(MUST_CHANGE_PWD_KEY) === '1'
+}
+
+export function setMustChangePwd(value: boolean): void {
+  if (value) {
+    localStorage.setItem(MUST_CHANGE_PWD_KEY, '1')
+  } else {
+    localStorage.removeItem(MUST_CHANGE_PWD_KEY)
+  }
+}
+
 // 清除所有登录信息
 export function clearAuth(): void {
   removeToken()
   removeUser()
+  setMustChangePwd(false)
 }

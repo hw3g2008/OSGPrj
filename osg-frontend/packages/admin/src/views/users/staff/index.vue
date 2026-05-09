@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="导师列表" title-en="Mentor List" description="管理导师和班主任账户，录入信息开通账号">
+    <PageHeader title-zh="导师列表" title-en="Mentor List">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-staff" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>
@@ -32,6 +32,7 @@
           <a-select v-model:value="filters.staffType" placeholder="全部类型" allow-clear style="width: 120px">
             <a-select-option value="lead_mentor">班主任</a-select-option>
             <a-select-option value="mentor">导师</a-select-option>
+            <a-select-option value="assistant">助教</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -41,8 +42,8 @@
         </a-form-item>
         <a-form-item>
           <a-select v-model:value="filters.accountStatus" placeholder="全部状态" allow-clear style="width: 110px" data-field-name="状态">
-            <a-select-option value="0">激活</a-select-option>
-            <a-select-option value="1">禁用</a-select-option>
+            <a-select-option value="0">正常</a-select-option>
+            <a-select-option value="1">冻结</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -75,7 +76,7 @@
         style="margin-bottom: 16px"
       >
         <template #message><strong>黑名单导师限制说明</strong></template>
-        <template #description>黑名单中的导师<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能），但可以正常登录系统和进行其他操作</template>
+        <template #description>黑名单中的导师<strong>无法登录系统</strong>，且无法访问任何业务模块</template>
       </a-alert>
 
       <a-table
@@ -111,7 +112,7 @@
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'staffType'">
-            <a-tag :color="record.staffType === 'lead_mentor' ? 'blue' : 'purple'">{{ formatType(record.staffType) }}</a-tag>
+            <a-tag :color="getTypeColor(record.staffType)">{{ formatType(record.staffType) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'majorDirection'">
             <template v-if="splitField(record.majorDirection).length">
@@ -137,8 +138,8 @@
           <template v-else-if="column.dataIndex === 'region'">
             <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
               <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
-                <template v-if="record.region">
-                  <template v-if="getRegionEmoji(record.region)">{{ getRegionEmoji(record.region) }} </template>{{ dictLabel(regionItems, record.region) }}
+                <template v-if="splitField(record.region).length">
+                  {{ splitField(record.region).map((v) => dictLabel(regionItems, v)).join('、') }}
                 </template>
                 <template v-else>-</template>
               </span>
@@ -181,7 +182,7 @@
                   <a-menu @click="({ key }: { key: string }) => handleActionSelect(key as StaffActionKey, record)">
                     <a-menu-item key="resetPassword">重置密码</a-menu-item>
                     <a-menu-item :key="record.accountStatus === '1' ? 'restore' : 'freeze'">
-                      <span :style="{ color: record.accountStatus === '1' ? '#15803d' : '#b45309' }">{{ record.accountStatus === '1' ? '解冻' : '禁用' }}</span>
+                      <span :style="{ color: record.accountStatus === '1' ? '#15803d' : '#b45309' }">{{ record.accountStatus === '1' ? '解冻' : '冻结' }}</span>
                     </a-menu-item>
                     <a-menu-item :key="isBlacklisted(record) ? 'remove' : 'blacklist'">
                       <span style="color: #b91c1c">{{ isBlacklisted(record) ? '移出黑名单' : '加入黑名单' }}</span>
@@ -535,6 +536,12 @@ const formatType = (staffType?: string) => {
   return '导师'
 }
 
+const getTypeColor = (staffType?: string) => {
+  if (staffType === 'lead_mentor') return 'blue'
+  if (staffType === 'assistant') return 'cyan'
+  return 'purple'
+}
+
 /** 字典 value 优先匹配，不命中再按中文兜底（兼容历史数据） */
 const getDirectionColor = (direction?: string) => {
   if (!direction) return 'cyan'
@@ -545,19 +552,12 @@ const getDirectionColor = (direction?: string) => {
   return 'cyan'
 }
 
-const getRegionEmoji = (region?: string) => {
-  if (!region) return ''
-  if (region === 'na' || region.includes('北美')) return '🌎'
-  if (region === 'eu' || region.includes('欧洲')) return '🌍'
-  if (region === 'apac' || region.includes('亚太')) return '🌏'
-  return ''
-}
 
 const formatHourlyRate = (hourlyRate?: number) => {
   if (hourlyRate == null) {
     return '-'
   }
-  return `￥${hourlyRate}/h`
+  return `$${hourlyRate}/h`
 }
 
 const formatStudentCount = (studentCount?: number) => {
@@ -570,7 +570,7 @@ const formatStatus = (accountStatus?: string) => {
 
 const getStatusNote = (row: StaffListItem) => {
   if (row.accountStatus === '1') {
-    return '账号已禁用'
+    return '账号已冻结'
   }
   if (isBlacklisted(row)) {
     return '已加入黑名单'
@@ -607,7 +607,7 @@ const openFirstPendingReview = async () => {
 
 const resolveSuccessMessage = (action: StatusAction) => {
   if (action === 'freeze') {
-    return '导师账号已禁用'
+    return '导师账号已冻结'
   }
   if (action === 'restore') {
     return '导师账号已解冻'

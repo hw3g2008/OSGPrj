@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="后台用户管理"
       title-en="Admin Users"
-      description="管理后台系统用户账号、角色结构与登录状态，让权限治理像一份可审计台账。"
     >
       <template #actions>
         <a-statistic title="当前受管账号" :value="pagination.total" style="margin-right: 16px" />
@@ -17,15 +16,6 @@
         </a-button>
       </template>
     </PageHeader>
-
-    <a-row :gutter="16">
-      <a-col v-for="card in summaryCards" :key="card.key" :span="6">
-        <a-card size="small" :bordered="false" style="box-shadow: var(--card-shadow)">
-          <a-statistic :title="card.label" :value="card.value" />
-          <div style="font-size: 12px; color: var(--muted); margin-top: 4px">{{ card.meta }}</div>
-        </a-card>
-      </a-col>
-    </a-row>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <a-form layout="inline" data-field-name="后台用户管理页">
@@ -78,7 +68,6 @@
       <template #extra>
         <a-space>
           <a-tag>第 {{ pagination.current }} / {{ totalPages }} 页</a-tag>
-          <a-tag>{{ roleOptions.length }} 个可分配角色</a-tag>
         </a-space>
       </template>
       <a-table
@@ -155,7 +144,7 @@
               编辑
             </a-button>
             <a-button
-              v-if="record.status === '0'"
+              v-if="record.status === '0' && !record.admin"
               type="link"
               size="small"
               data-surface-trigger="modal-reset-password"
@@ -252,46 +241,6 @@ const roleTagColorMap: Record<string, string> = {
 const getRoleTagTone = (roleKey: string) => {
   return roleTagColorMap[roleKey] || 'info'
 }
-
-const summaryCards = computed(() => {
-  const rows = userList.value
-  const activeCount = rows.filter((record) => record.status === '0').length
-  const disabledCount = rows.filter((record) => record.status === '1').length
-  const privilegedCount = rows.filter((record) =>
-    record.admin || (record.roles || []).some((role: any) => role.roleKey === 'super_admin'),
-  ).length
-
-  return [
-    {
-      key: 'total',
-      tone: 'ink',
-      label: '台账总量',
-      value: pagination.total,
-      meta: '当前页与全量记录同步'
-    },
-    {
-      key: 'active',
-      tone: 'emerald',
-      label: '活跃账号',
-      value: activeCount,
-      meta: '可正常登录与执行操作'
-    },
-    {
-      key: 'disabled',
-      tone: 'amber',
-      label: '冻结账号',
-      value: disabledCount,
-      meta: '需要人工复核后再启用'
-    },
-    {
-      key: 'privileged',
-      tone: 'plum',
-      label: '高权限账号',
-      value: privilegedCount,
-      meta: '含系统账号与核心治理角色'
-    }
-  ]
-})
 
 const getUserInitials = (record: any) => {
   const base = String(record?.nickName || record?.userName || 'AD').trim()

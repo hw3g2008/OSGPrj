@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="文件管理" title-en="File Management" description="管理学习文件">
+    <PageHeader title-zh="文件管理" title-en="File Management">
       <template #actions>
         <a-button type="primary" @click="showNewFolderModal = true">
           <template #icon><FolderAddOutlined /></template>

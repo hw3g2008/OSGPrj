@@ -128,6 +128,9 @@ import {
 } from '@osg/shared/api'
 import { removeToken, removeUser, setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
+import { useMustChangePassword } from '@osg/shared/composables'
+
+const { setMustChangePassword } = useMustChangePassword()
 
 type FieldKey = 'username' | 'password'
 
@@ -210,6 +213,7 @@ async function handleLogin() {
     }
 
     setUser(info.user)
+    setMustChangePassword(Boolean(info.mustChangePassword))
     await router.push(resolveRedirectTarget())
   } catch (error: any) {
     removeToken()

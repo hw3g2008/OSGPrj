@@ -52,6 +52,9 @@ public class OsgPosition extends BaseEntity
 
     private String applicationNote;
 
+    /** 投递备注附件 JSON: [{url,fileName,fileType,size}] (T3.4) */
+    private String applicationAttachments;
+
     private Integer studentCount;
 
     private String keyword;
@@ -266,6 +269,16 @@ public class OsgPosition extends BaseEntity
         this.applicationNote = applicationNote;
     }
 
+    public String getApplicationAttachments()
+    {
+        return applicationAttachments;
+    }
+
+    public void setApplicationAttachments(String applicationAttachments)
+    {
+        this.applicationAttachments = applicationAttachments;
+    }
+
     public Integer getStudentCount()
     {
         return studentCount;
@@ -311,6 +324,7 @@ public class OsgPosition extends BaseEntity
             .append("displayEndTime", getDisplayEndTime())
             .append("positionUrl", getPositionUrl())
             .append("applicationNote", getApplicationNote())
+            .append("applicationAttachments", getApplicationAttachments())
             .append("studentCount", getStudentCount())
             .append("keyword", getKeyword())
             .append("createBy", getCreateBy())

@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="学生自添岗位" title-en="Student Added Positions" description="审核学生手动添加的岗位，通过后加入公共岗位库">
+    <PageHeader title-zh="学生自添岗位" title-en="Student Added Positions">
       <template #actions>
         <a-space>
           <a-tag color="orange">{{ pendingCount }} 条待审核</a-tag>

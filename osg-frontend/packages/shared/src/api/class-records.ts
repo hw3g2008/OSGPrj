@@ -5,6 +5,17 @@ import {
   type ClassRecordStats,
 } from './admin/classRecord'
 
+import {
+  type ClassReportPayload,
+  type ReferenceType,
+  type StudentOption,
+  type ReferenceOption,
+} from '../types/classReport'
+import {
+  type LeadMentorClassRecordMentorGroup,
+  getLeadMentorJobOverviewDetail,
+} from './jobOverview'
+
 export type StudentClassRecordDetailKind = 'coaching' | 'mock' | 'networking' | 'midterm'
 
 export interface StudentClassRecordNetworkingScore {
@@ -216,4 +227,188 @@ export function getLeadMentorClassRecordStats(filters: LeadMentorClassRecordFilt
       timeout: 60000,
     },
   )
+}
+
+// ============================================================================
+// §4A.1 三端共用上报 / 学员下拉 / 关联申请下拉 / 详情接口
+// 来源：docs/plans/2026-05-09-lead-mentor-job-overview-and-class-report-plan.md
+// ============================================================================
+
+/**
+ * 三端共用上报课消的端枚举。
+ * - mentor       → /mentor/class-records
+ * - lead-mentor  → /lead-mentor/class-records
+ * - assistant    → /assistant/class-records
+ */
+export type ClassReportEnd = 'mentor' | 'lead-mentor' | 'assistant'
+
+const resolveClassReportEndPrefix = (end: ClassReportEnd): string => {
+  switch (end) {
+    case 'mentor':
+      return '/mentor/class-records'
+    case 'lead-mentor':
+      return '/lead-mentor/class-records'
+    case 'assistant':
+      return '/assistant/class-records'
+    default: {
+      // 防御非法运行时调用（TS 编译期已拒绝非三端枚举）
+      throw new Error('Unsupported class report end')
+    }
+  }
+}
+
+/**
+ * §4A.1 三端共用上报课消
+ *
+ * 路由映射：
+ * - mentor       → POST /mentor/class-records
+ * - lead-mentor  → POST /lead-mentor/class-records
+ * - assistant    → POST /assistant/class-records
+ *
+ * payload 字段保持 camelCase，由 request 层按既有约定处理。
+ */
+export function submitClassReport(
+  end: ClassReportEnd,
+  payload: ClassReportPayload,
+): Promise<{ recordId: number }> {
+  const prefix = resolveClassReportEndPrefix(end)
+  return http.post<{ recordId: number }>(prefix, payload, {
+    skipErrorMessage: true,
+  })
+}
+
+interface RawListResponse<T> {
+  rows?: T[]
+  list?: T[]
+  data?: T[] | { rows?: T[]; list?: T[] }
+}
+
+const normalizeRows = <T>(resp: unknown): T[] => {
+  if (!resp) {
+    return []
+  }
+  if (Array.isArray(resp)) {
+    return resp as T[]
+  }
+  const obj = resp as RawListResponse<T>
+  if (Array.isArray(obj.rows)) {
+    return obj.rows
+  }
+  if (Array.isArray(obj.list)) {
+    return obj.list
+  }
+  if (obj.data) {
+    if (Array.isArray(obj.data)) {
+      return obj.data
+    }
+    if (Array.isArray((obj.data as { rows?: T[] }).rows)) {
+      return (obj.data as { rows: T[] }).rows
+    }
+    if (Array.isArray((obj.data as { list?: T[] }).list)) {
+      return (obj.data as { list: T[] }).list
+    }
+  }
+  return []
+}
+
+/**
+ * §4A.1 学员下拉源（按 end 切换路由）。
+ *
+ * 兼容后端三种包装：array / { rows } / { list }，统一返回 StudentOption[]。
+ * 空状态文案不在 API 层硬编码，由 useStudentScopeFinder 负责。
+ */
+export async function getReportableStudents(
+  end: ClassReportEnd,
+): Promise<StudentOption[]> {
+  const prefix = resolveClassReportEndPrefix(end)
+  const resp = await http.get<unknown>(`${prefix}/reportable-students`)
+  const rows = normalizeRows<Record<string, unknown>>(resp)
+  return rows
+    .map((row) => {
+      const studentId = Number(row.studentId ?? row.student_id ?? row.id ?? 0)
+      const studentName = String(
+        row.studentName ?? row.student_name ?? row.name ?? '',
+      )
+      const disabled = row.disabled as boolean | undefined
+      return { studentId, studentName, disabled }
+    })
+    .filter((item) => item.studentId > 0)
+}
+
+const buildReferenceLabel = (
+  refType: ReferenceType,
+  raw: Record<string, unknown>,
+): string => {
+  if (refType === 'application') {
+    const company = raw.companyName ?? raw.company ?? ''
+    const position = raw.positionName ?? raw.position ?? ''
+    const stage = raw.currentStage ?? raw.stage ?? ''
+    const interviewTime = raw.interviewTime ?? raw.interview_time ?? ''
+    return [company, position, stage, interviewTime].filter(Boolean).join(' / ')
+  }
+  // mock / relation / communication
+  const type = raw.type ?? raw.subType ?? ''
+  const submittedAt = raw.submittedAt ?? raw.submitted_at ?? ''
+  const status = raw.status ?? ''
+  return [type, submittedAt, status].filter(Boolean).join(' / ')
+}
+
+/**
+ * §4A.1 关联申请候选项下拉。
+ *
+ * - studentId 为空或 <=0 时不发请求并返回 []，避免脏请求
+ * - label 优先使用后端返回；缺失时按 refType 回退拼接
+ */
+export async function getReferenceCandidates(
+  end: ClassReportEnd,
+  studentId: number,
+  refType: ReferenceType,
+): Promise<ReferenceOption[]> {
+  if (!studentId || studentId <= 0) {
+    return []
+  }
+  const prefix = resolveClassReportEndPrefix(end)
+  const resp = await http.get<unknown>(`${prefix}/reference-candidates`, {
+    params: { studentId, refType },
+  })
+  const rows = normalizeRows<Record<string, unknown>>(resp)
+  return rows
+    .map((row) => {
+      const referenceId = Number(
+        row.referenceId ?? row.reference_id ?? row.id ?? 0,
+      )
+      const backendLabel = row.label as string | undefined
+      const label =
+        backendLabel && backendLabel.length > 0
+          ? backendLabel
+          : buildReferenceLabel(refType, row)
+      const disabled = row.disabled as boolean | undefined
+      return {
+        referenceType: refType,
+        referenceId,
+        label,
+        disabled,
+        raw: row,
+      }
+    })
+    .filter((item) => item.referenceId > 0)
+}
+
+/**
+ * §4A.1 上报课消详情（按导师分组）。
+ *
+ * 复用 getLeadMentorJobOverviewDetail，取 classRecordsByMentor 字段。
+ * - applicationId 非法（空或 <=0）→ 直接返回 []
+ * - 后端返回无 classRecordsByMentor → 返回 []
+ *
+ * 该函数供 ClassRecordDetailDrawer / S-054 详情查看复用，不引入 admin 端依赖。
+ */
+export async function getClassReportDetail(
+  applicationId: number,
+): Promise<LeadMentorClassRecordMentorGroup[]> {
+  if (!applicationId || applicationId <= 0) {
+    return []
+  }
+  const detail = await getLeadMentorJobOverviewDetail(applicationId)
+  return detail?.classRecordsByMentor ?? []
 }

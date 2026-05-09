@@ -14,8 +14,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+type MultiValue = (string | number)[]
+
 const props = withDefaults(defineProps<{
-  value?: string[]
+  value?: MultiValue
   options?: readonly unknown[]
   placeholder?: string
   disabled?: boolean
@@ -29,7 +31,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  'update:value': [value: string[]]
+  'update:value': [value: MultiValue]
 }>()
 
 const model = computed({

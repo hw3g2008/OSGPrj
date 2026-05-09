@@ -1,0 +1,523 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e8]: 󱢼
+        - generic [ref=e9]: OSG Admin
+      - navigation [ref=e10]:
+        - text: 󰋜
+        - generic [ref=e11]: 权限管理 Permission
+        - button "菜单管理" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: 󰙅
+          - generic [ref=e14]: 菜单管理
+        - button "权限配置" [ref=e15] [cursor=pointer]:
+          - generic [ref=e16]: 󰌆
+          - generic [ref=e17]: 权限配置
+        - button "后台用户管理" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: 󰢏
+          - generic [ref=e20]: 后台用户管理
+        - button "字典管理" [ref=e21] [cursor=pointer]:
+          - generic [ref=e22]: 󱙋
+          - generic [ref=e23]: 字典管理
+        - generic [ref=e24]: 用户中心 Users
+        - button "学生列表" [ref=e25] [cursor=pointer]:
+          - generic [ref=e26]: 󱨠
+          - generic [ref=e27]: 学生列表
+        - button "合同管理" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]: 󱧃
+          - generic [ref=e30]: 合同管理
+        - button "导师列表" [ref=e31] [cursor=pointer]:
+          - generic [ref=e32]: 󰳣
+          - generic [ref=e33]: 导师列表
+        - button "导师排期管理" [ref=e34] [cursor=pointer]:
+          - generic [ref=e35]: 󰃰
+          - generic [ref=e36]: 导师排期管理
+        - generic [ref=e37]: 求职中心 Career
+        - button "岗位信息" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: 󰨭
+          - generic [ref=e40]: 岗位信息
+        - button "学生自添岗位" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]: 󰨫
+          - generic [ref=e43]: 学生自添岗位
+        - button "学员求职总览" [ref=e44] [cursor=pointer]:
+          - generic [ref=e45]: 󱟙
+          - generic [ref=e46]: 学员求职总览
+        - button "模拟应聘管理" [ref=e47] [cursor=pointer]:
+          - generic [ref=e48]: 󰗋
+          - generic [ref=e49]: 模拟应聘管理
+        - generic [ref=e50]: 教学中心 Teaching
+        - button "课程记录" [ref=e51] [cursor=pointer]:
+          - generic [ref=e52]: 󱓷
+          - generic [ref=e53]: 课程记录
+        - generic [ref=e54]: 个人中心 Profile
+        - button "操作日志" [ref=e55] [cursor=pointer]:
+          - generic [ref=e56]: 󰋚
+          - generic [ref=e57]: 操作日志
+      - generic [ref=e58]:
+        - button "个人设置" [ref=e59] [cursor=pointer]
+        - button "SA admin 点击展开" [ref=e60] [cursor=pointer]:
+          - generic [ref=e61]: SA
+          - generic [ref=e62]:
+            - heading "admin" [level=4] [ref=e63]
+            - paragraph [ref=e64]: 点击展开
+    - main [ref=e66]:
+      - generic [ref=e67]:
+        - generic [ref=e68]:
+          - heading "导师列表Mentor List" [level=1] [ref=e70]
+          - button "plus 新增导师" [ref=e72] [cursor=pointer]:
+            - img "plus" [ref=e73]:
+              - img [ref=e74]
+            - generic [ref=e77]: 新增导师
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - textbox "搜索姓名/ID" [ref=e87]
+            - generic [ref=e94] [cursor=pointer]:
+              - generic [ref=e95]:
+                - combobox [ref=e97]
+                - generic: 全部类型
+              - generic:
+                - img:
+                  - img
+            - generic [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]:
+                - combobox [ref=e106]
+                - generic: 全部方向
+              - generic:
+                - img:
+                  - img
+            - generic [ref=e112] [cursor=pointer]:
+              - generic [ref=e113]:
+                - combobox [ref=e115]
+                - generic: 全部状态
+              - generic:
+                - img:
+                  - img
+            - generic [ref=e121]:
+              - button "search 搜索" [ref=e123] [cursor=pointer]:
+                - img "search" [ref=e124]:
+                  - img [ref=e125]
+                - generic [ref=e127]: 搜索
+              - button "export 导出" [ref=e129] [cursor=pointer]:
+                - img "export" [ref=e130]:
+                  - img [ref=e131]
+                - generic [ref=e133]: 导出
+          - generic [ref=e134]:
+            - tablist [ref=e135]:
+              - generic [ref=e137]:
+                - tab "正常列表 2 4" [selected] [ref=e139] [cursor=pointer]:
+                  - text: 正常列表
+                  - superscript [ref=e141]:
+                    - paragraph [ref=e143]: "2"
+                    - paragraph [ref=e145]: "4"
+                - tab "黑名单" [ref=e147] [cursor=pointer]: 黑名单
+            - generic:
+              - generic:
+                - tabpanel "正常列表 2 4"
+          - generic [ref=e150]:
+            - table [ref=e154]:
+              - rowgroup [ref=e169]:
+                - row "ID 英文名 联系方式 类型 主攻方向 子方向 所属地区 任职公司 评级 课单价 学员数 账号状态 操作" [ref=e170]:
+                  - columnheader "ID" [ref=e171]
+                  - columnheader "英文名" [ref=e172]
+                  - columnheader "联系方式" [ref=e173]
+                  - columnheader "类型" [ref=e174]
+                  - columnheader "主攻方向" [ref=e175]
+                  - columnheader "子方向" [ref=e176]
+                  - columnheader "所属地区" [ref=e177]
+                  - columnheader "任职公司" [ref=e178]
+                  - columnheader "评级" [ref=e179]
+                  - columnheader "课单价" [ref=e180]
+                  - columnheader "学员数" [ref=e181]
+                  - columnheader "账号状态" [ref=e182]
+                  - columnheader "操作" [ref=e183]
+              - rowgroup [ref=e184]:
+                - row "99902 Test Assistant test-assistant@osg-test.local 13800000002 助教 - - - - - - $0/h 7 学员 冻结 账号已冻结 详情 编辑 更多 down" [ref=e185]:
+                  - cell "99902" [ref=e186]
+                  - cell "Test Assistant" [ref=e187]:
+                    - button "Test Assistant" [ref=e188] [cursor=pointer]
+                  - cell "test-assistant@osg-test.local 13800000002" [ref=e190]:
+                    - generic [ref=e191]
+                  - cell "助教" [ref=e194]:
+                    - generic [ref=e195]: 助教
+                  - cell "-" [ref=e196]
+                  - cell "-" [ref=e197]
+                  - cell "- -" [ref=e198]:
+                    - generic [ref=e199]
+                  - cell "-" [ref=e202]
+                  - cell "-" [ref=e203]
+                  - cell "$0/h" [ref=e204]:
+                    - strong [ref=e205]: $0/h
+                  - cell "7 学员" [ref=e206]:
+                    - button "7 学员" [ref=e207] [cursor=pointer]
+                  - cell "冻结 账号已冻结" [ref=e209]:
+                    - generic [ref=e210]
+                  - cell "详情 编辑 更多 down" [ref=e213]:
+                    - generic [ref=e214]
+                - row "99901 Test Lead Mentor test-lead-mentor@osg-test.local 13800000001 班主任 - - - - - - $0/h 6 学员 正常 账号正常 详情 编辑 更多 down" [ref=e227]:
+                  - cell "99901" [ref=e228]
+                  - cell "Test Lead Mentor" [ref=e229]:
+                    - button "Test Lead Mentor" [ref=e230] [cursor=pointer]
+                  - cell "test-lead-mentor@osg-test.local 13800000001" [ref=e232]:
+                    - generic [ref=e233]
+                  - cell "班主任" [ref=e236]:
+                    - generic [ref=e237]: 班主任
+                  - cell "-" [ref=e238]
+                  - cell "-" [ref=e239]
+                  - cell "- -" [ref=e240]:
+                    - generic [ref=e241]
+                  - cell "-" [ref=e244]
+                  - cell "-" [ref=e245]
+                  - cell "$0/h" [ref=e246]:
+                    - strong [ref=e247]: $0/h
+                  - cell "6 学员" [ref=e248]:
+                    - button "6 学员" [ref=e249] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e251]:
+                    - generic [ref=e252]
+                  - cell "详情 编辑 更多 down" [ref=e255]:
+                    - generic [ref=e256]
+                - row "52502 yanyan 5259085@qq.com 13001985588 导师 咨询 Strategy 亚太 美国 - - $300/h 0 学员 正常 账号正常 详情 编辑 更多 down" [ref=e269]:
+                  - cell "52502" [ref=e270]
+                  - cell "yanyan" [ref=e271]:
+                    - button "yanyan" [ref=e272] [cursor=pointer]
+                  - cell "5259085@qq.com 13001985588" [ref=e274]:
+                    - generic [ref=e275]
+                  - cell "导师" [ref=e278]:
+                    - generic [ref=e279]: 导师
+                  - cell "咨询" [ref=e280]:
+                    - generic [ref=e281]: 咨询
+                  - cell "Strategy" [ref=e282]
+                  - cell "亚太 美国" [ref=e283]:
+                    - generic [ref=e284]
+                  - cell "-" [ref=e287]
+                  - cell "-" [ref=e288]
+                  - cell "$300/h" [ref=e289]:
+                    - strong [ref=e290]: $300/h
+                  - cell "0 学员" [ref=e291]:
+                    - button "0 学员" [ref=e292] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e294]:
+                    - generic [ref=e295]
+                  - cell "详情 编辑 更多 down" [ref=e298]:
+                    - generic [ref=e299]
+                - row "35353 yanyabanzhuren 525086@qq.com 13001985588 班主任 金融 AM 北美 ee - - $1000/h 1 学员 正常 账号正常 详情 编辑 更多 down" [ref=e312]:
+                  - cell "35353" [ref=e313]
+                  - cell "yanyabanzhuren" [ref=e314]:
+                    - button "yanyabanzhuren" [ref=e315] [cursor=pointer]
+                  - cell "525086@qq.com 13001985588" [ref=e317]:
+                    - generic [ref=e318]
+                  - cell "班主任" [ref=e321]:
+                    - generic [ref=e322]: 班主任
+                  - cell "金融" [ref=e323]:
+                    - generic [ref=e324]: 金融
+                  - cell "AM" [ref=e325]
+                  - cell "北美 ee" [ref=e326]:
+                    - generic [ref=e327]
+                  - cell "-" [ref=e330]
+                  - cell "-" [ref=e331]
+                  - cell "$1000/h" [ref=e332]:
+                    - strong [ref=e333]: $1000/h
+                  - cell "1 学员" [ref=e334]:
+                    - button "1 学员" [ref=e335] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e337]:
+                    - generic [ref=e338]
+                  - cell "详情 编辑 更多 down" [ref=e341]:
+                    - generic [ref=e342]
+                - row "34154 Alex Ren alex.ren@osg-staff.local 15021698933 导师 Physics and Mathematics RA - - - - $40/h 0 学员 正常 账号正常 详情 编辑 更多 down" [ref=e355]:
+                  - cell "34154" [ref=e356]
+                  - cell "Alex Ren" [ref=e357]:
+                    - button "Alex Ren" [ref=e358] [cursor=pointer]
+                  - cell "alex.ren@osg-staff.local 15021698933" [ref=e360]:
+                    - generic [ref=e361]
+                  - cell "导师" [ref=e364]:
+                    - generic [ref=e365]: 导师
+                  - cell "Physics and Mathematics" [ref=e366]:
+                    - generic [ref=e367]: Physics and Mathematics
+                  - cell "RA" [ref=e368]
+                  - cell "- -" [ref=e369]:
+                    - generic [ref=e370]
+                  - cell "-" [ref=e373]
+                  - cell "-" [ref=e374]
+                  - cell "$40/h" [ref=e375]:
+                    - strong [ref=e376]: $40/h
+                  - cell "0 学员" [ref=e377]:
+                    - button "0 学员" [ref=e378] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e380]:
+                    - generic [ref=e381]
+                  - cell "详情 编辑 更多 down" [ref=e384]:
+                    - generic [ref=e385]
+                - row "34151 Kevin Zhao kevin.zhao@osg-staff.local 15861863166(+86) 导师 Mathematics and Economics RA - - - - $40/h 0 学员 正常 账号正常 详情 编辑 更多 down" [ref=e398]:
+                  - cell "34151" [ref=e399]
+                  - cell "Kevin Zhao" [ref=e400]:
+                    - button "Kevin Zhao" [ref=e401] [cursor=pointer]
+                  - cell "kevin.zhao@osg-staff.local 15861863166(+86)" [ref=e403]:
+                    - generic [ref=e404]
+                  - cell "导师" [ref=e407]:
+                    - generic [ref=e408]: 导师
+                  - cell "Mathematics and Economics" [ref=e409]:
+                    - generic [ref=e410]: Mathematics and Economics
+                  - cell "RA" [ref=e411]
+                  - cell "- -" [ref=e412]:
+                    - generic [ref=e413]
+                  - cell "-" [ref=e416]
+                  - cell "-" [ref=e417]
+                  - cell "$40/h" [ref=e418]:
+                    - strong [ref=e419]: $40/h
+                  - cell "0 学员" [ref=e420]:
+                    - button "0 学员" [ref=e421] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e423]:
+                    - generic [ref=e424]
+                  - cell "详情 编辑 更多 down" [ref=e427]:
+                    - generic [ref=e428]
+                - row "34137 Yuji Fukuda yuji.fukuda@osg-staff.local 2133134455 导师 Cognitive Science RA - - - - $40/h 0 学员 正常 账号正常 详情 编辑 更多 down" [ref=e441]:
+                  - cell "34137" [ref=e442]
+                  - cell "Yuji Fukuda" [ref=e443]:
+                    - button "Yuji Fukuda" [ref=e444] [cursor=pointer]
+                  - cell "yuji.fukuda@osg-staff.local 2133134455" [ref=e446]:
+                    - generic [ref=e447]
+                  - cell "导师" [ref=e450]:
+                    - generic [ref=e451]: 导师
+                  - cell "Cognitive Science" [ref=e452]:
+                    - generic [ref=e453]: Cognitive Science
+                  - cell "RA" [ref=e454]
+                  - cell "- -" [ref=e455]:
+                    - generic [ref=e456]
+                  - cell "-" [ref=e459]
+                  - cell "-" [ref=e460]
+                  - cell "$40/h" [ref=e461]:
+                    - strong [ref=e462]: $40/h
+                  - cell "0 学员" [ref=e463]:
+                    - button "0 学员" [ref=e464] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e466]:
+                    - generic [ref=e467]
+                  - cell "详情 编辑 更多 down" [ref=e470]:
+                    - generic [ref=e471]
+                - row "34111 Stephen Guan stephen.guan@osg-staff.local 2136965596 导师 Business Administration RA - - - - $40/h 0 学员 正常 账号正常 详情 编辑 更多 down" [ref=e484]:
+                  - cell "34111" [ref=e485]
+                  - cell "Stephen Guan" [ref=e486]:
+                    - button "Stephen Guan" [ref=e487] [cursor=pointer]
+                  - cell "stephen.guan@osg-staff.local 2136965596" [ref=e489]:
+                    - generic [ref=e490]
+                  - cell "导师" [ref=e493]:
+                    - generic [ref=e494]: 导师
+                  - cell "Business Administration" [ref=e495]:
+                    - generic [ref=e496]: Business Administration
+                  - cell "RA" [ref=e497]
+                  - cell "- -" [ref=e498]:
+                    - generic [ref=e499]
+                  - cell "-" [ref=e502]
+                  - cell "-" [ref=e503]
+                  - cell "$40/h" [ref=e504]:
+                    - strong [ref=e505]: $40/h
+                  - cell "0 学员" [ref=e506]:
+                    - button "0 学员" [ref=e507] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e509]:
+                    - generic [ref=e510]
+                  - cell "详情 编辑 更多 down" [ref=e513]:
+                    - generic [ref=e514]
+                - row "34078 Kevin Li kevin.li@osg-staff.local 447464665050 导师 Chemistry UK RA - - - - $40/h 0 学员 正常 账号正常 详情 编辑 更多 down" [ref=e527]:
+                  - cell "34078" [ref=e528]
+                  - cell "Kevin Li" [ref=e529]:
+                    - button "Kevin Li" [ref=e530] [cursor=pointer]
+                  - cell "kevin.li@osg-staff.local 447464665050" [ref=e532]:
+                    - generic [ref=e533]
+                  - cell "导师" [ref=e536]:
+                    - generic [ref=e537]: 导师
+                  - cell "Chemistry" [ref=e538]:
+                    - generic [ref=e539]: Chemistry
+                  - cell "UK RA" [ref=e540]
+                  - cell "- -" [ref=e541]:
+                    - generic [ref=e542]
+                  - cell "-" [ref=e545]
+                  - cell "-" [ref=e546]
+                  - cell "$40/h" [ref=e547]:
+                    - strong [ref=e548]: $40/h
+                  - cell "0 学员" [ref=e549]:
+                    - button "0 学员" [ref=e550] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e552]:
+                    - generic [ref=e553]
+                  - cell "详情 编辑 更多 down" [ref=e556]:
+                    - generic [ref=e557]
+                - row "34040 Jerry Chen jerry.chen@osg-staff.local 8186191019 导师 Mathematics Econ RA - - - - $40/h 0 学员 正常 账号正常 详情 编辑 更多 down" [ref=e570]:
+                  - cell "34040" [ref=e571]
+                  - cell "Jerry Chen" [ref=e572]:
+                    - button "Jerry Chen" [ref=e573] [cursor=pointer]
+                  - cell "jerry.chen@osg-staff.local 8186191019" [ref=e575]:
+                    - generic [ref=e576]
+                  - cell "导师" [ref=e579]:
+                    - generic [ref=e580]: 导师
+                  - cell "Mathematics Econ" [ref=e581]:
+                    - generic [ref=e582]: Mathematics Econ
+                  - cell "RA" [ref=e583]
+                  - cell "- -" [ref=e584]:
+                    - generic [ref=e585]
+                  - cell "-" [ref=e588]
+                  - cell "-" [ref=e589]
+                  - cell "$40/h" [ref=e590]:
+                    - strong [ref=e591]: $40/h
+                  - cell "0 学员" [ref=e592]:
+                    - button "0 学员" [ref=e593] [cursor=pointer]
+                  - cell "正常 账号正常" [ref=e595]:
+                    - generic [ref=e596]
+                  - cell "详情 编辑 更多 down" [ref=e599]:
+                    - generic [ref=e600]
+            - list [ref=e613]:
+              - listitem [ref=e614]: 共 24 条记录
+              - listitem "上一页" [ref=e615]:
+                - button "left" [disabled] [ref=e616]:
+                  - img "left" [ref=e617]:
+                    - img [ref=e618]
+              - listitem "1" [ref=e620] [cursor=pointer]:
+                - generic [ref=e621]: "1"
+              - listitem "2" [ref=e622] [cursor=pointer]:
+                - generic [ref=e623]: "2"
+              - listitem "3" [ref=e624] [cursor=pointer]:
+                - generic [ref=e625]: "3"
+              - listitem "下一页" [ref=e626] [cursor=pointer]:
+                - button "right" [ref=e627]:
+                  - img "right" [ref=e628]:
+                    - img [ref=e629]
+  - dialog [ref=e1215]:
+    - generic [ref=e1217]:
+      - generic [ref=e1218]:
+        - generic [ref=e1221]:
+          - generic [ref=e1222]: 󰀔
+          - text: 新增导师
+        - button [ref=e1223] [cursor=pointer]:
+          - generic [ref=e1224]: ×
+      - generic [ref=e1226]:
+        - generic [ref=e1227]:
+          - generic [ref=e1228]: 核心信息
+          - generic [ref=e1230]:
+            - generic [ref=e1233]:
+              - generic "姓名" [ref=e1235]
+              - textbox "请输入英文名" [active] [ref=e1239]
+            - generic [ref=e1242]:
+              - generic "邮箱" [ref=e1244]
+              - textbox "请输入邮箱" [ref=e1248]
+            - generic [ref=e1251]:
+              - generic "类型" [ref=e1253]
+              - generic [ref=e1257] [cursor=pointer]:
+                - generic [ref=e1258]:
+                  - combobox [ref=e1260]
+                  - generic: 请选择
+                - generic:
+                  - img:
+                    - img
+            - generic [ref=e1263]:
+              - generic "性别" [ref=e1265]
+              - generic [ref=e1269] [cursor=pointer]:
+                - generic [ref=e1270]:
+                  - combobox [ref=e1272]
+                  - generic: 请选择
+                - generic:
+                  - img:
+                    - img
+        - generic [ref=e1273]:
+          - generic [ref=e1274]:
+            - generic [ref=e1275]: 󰏲
+            - text: 联系方式
+          - generic [ref=e1277]:
+            - generic [ref=e1280]:
+              - generic "手机号" [ref=e1282]
+              - generic [ref=e1286]:
+                - generic [ref=e1287] [cursor=pointer]:
+                  - generic [ref=e1288]:
+                    - combobox [ref=e1290]
+                    - generic "+1 美国/加拿大" [ref=e1291]
+                  - generic:
+                    - img
+                - textbox "请输入手机号" [ref=e1292]
+            - generic [ref=e1295]:
+              - generic "微信" [ref=e1297]
+              - textbox "请输入微信号" [ref=e1301]
+            - generic [ref=e1304]:
+              - generic "地区" [ref=e1306]
+              - generic [ref=e1311]:
+                - combobox [ref=e1315]
+                - generic: 请选择，可多选
+            - generic [ref=e1318]:
+              - generic "城市" [ref=e1320]
+              - generic [ref=e1324] [cursor=pointer]:
+                - generic [ref=e1325]:
+                  - combobox [disabled] [ref=e1327]
+                  - generic: 请先选择地区
+                - generic:
+                  - img:
+                    - img
+        - generic [ref=e1328]:
+          - generic [ref=e1329]:
+            - generic [ref=e1330]: 󰓾
+            - text: 专业方向
+          - generic [ref=e1332]:
+            - generic [ref=e1335]:
+              - generic "主攻方向" [ref=e1337]
+              - generic [ref=e1342]:
+                - combobox [ref=e1346]
+                - generic: 请选择，可多选
+            - generic [ref=e1349]:
+              - generic "子方向" [ref=e1351]
+              - generic [ref=e1356]:
+                - combobox [disabled] [ref=e1360]
+                - generic: 请先选择主攻方向
+            - generic [ref=e1363]:
+              - generic "可授课程类型" [ref=e1365]
+              - generic [ref=e1370]:
+                - combobox [ref=e1374]
+                - generic: 请选择，可多选
+            - generic [ref=e1377]:
+              - generic "擅长" [ref=e1379]
+              - generic [ref=e1384]:
+                - combobox [ref=e1388]
+                - generic: 请选择，可多选
+            - generic [ref=e1391]:
+              - generic "课时单价（USD/h）" [ref=e1393]
+              - generic [ref=e1397]:
+                - generic: $
+                - generic [ref=e1398]:
+                  - generic [ref=e1399]:
+                    - button "Increase Value" [ref=e1400] [cursor=pointer]
+                    - button "Decrease Value" [ref=e1404] [cursor=pointer]
+                  - spinbutton "如 200" [ref=e1409]
+        - generic [ref=e1410]:
+          - generic [ref=e1411]:
+            - generic [ref=e1412]: 󰃖
+            - text: 职业背景
+          - generic [ref=e1417]:
+            - generic "任职公司" [ref=e1419]
+            - generic [ref=e1424]:
+              - combobox [ref=e1428]
+              - generic: 请选择或搜索公司，可多选
+        - generic [ref=e1429]:
+          - generic [ref=e1430]:
+            - generic [ref=e1431]: 󰓎
+            - text: 内部评估
+          - generic [ref=e1433]:
+            - generic [ref=e1436]:
+              - generic "评级" [ref=e1438]
+              - generic [ref=e1442] [cursor=pointer]:
+                - generic [ref=e1443]:
+                  - combobox [ref=e1445]
+                  - generic: 请选择评级
+                - generic:
+                  - img:
+                    - img
+            - generic [ref=e1448]:
+              - generic "评语" [ref=e1450]
+              - generic [ref=e1454]:
+                - textbox "请输入评语（选填，仅超管可见可写）" [ref=e1455]
+                - text: 0 / 500
+        - generic [ref=e1456]:
+          - generic [ref=e1457]:
+            - generic [ref=e1458]: 󰢏
+            - text: 账号信息
+          - generic [ref=e1460]:
+            - generic [ref=e1463]:
+              - generic "登录账号" [ref=e1465]
+              - textbox "请输入登录账号" [ref=e1469]
+            - generic [ref=e1472]:
+              - generic "初始密码" [ref=e1474]
+              - textbox "请输入初始密码" [ref=e1478]: Osg@2026
+      - generic [ref=e1479]:
+        - button "取 消" [ref=e1480] [cursor=pointer]:
+          - generic [ref=e1481]: 取 消
+        - button "确定添加" [ref=e1482] [cursor=pointer]:
+          - generic [ref=e1483]: 确定添加

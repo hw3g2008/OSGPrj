@@ -144,7 +144,7 @@ const routes: RouteRecordRaw[] = [
         path: 'mock-practice',
         name: 'MockPractice',
         component: () => import('@/views/mock-practice/index.vue'),
-        meta: { title: '模拟面试' }
+        meta: { title: '面试测试' }
       },
       {
         path: 'request',

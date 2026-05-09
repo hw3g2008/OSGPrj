@@ -393,7 +393,7 @@ class PositionServiceImplTest
         appRow.put("progressNote", "进入 First Round");
 
         when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
-        when(jobApplicationMapper.selectStudentApplicationRecords(12766L)).thenReturn(List.of(appRow));
+        when(jobApplicationMapper.selectStudentApplicationRecords(12766L, null, null)).thenReturn(List.of(appRow));
         when(sysDictDataMapper.selectDictDataByType(any())).thenReturn(List.of());
 
         List<Map<String, Object>> rows = service.selectApplicationList(838L);
@@ -401,7 +401,7 @@ class PositionServiceImplTest
         assertEquals(1, rows.size());
         assertSame(appRow, rows.get(0));
         assertEquals("ongoing", rows.get(0).get("bucket"));
-        verify(jobApplicationMapper).selectStudentApplicationRecords(12766L);
+        verify(jobApplicationMapper).selectStudentApplicationRecords(12766L, null, null);
         verify(studentJobPositionMapper, never()).selectApplicationList(any());
     }
 

@@ -29,6 +29,7 @@
             <th>课时</th>
             <th>有效期</th>
             <th>状态</th>
+            <th>附件</th>
           </tr>
         </thead>
         <tbody>
@@ -50,6 +51,19 @@
               <span :class="['contract-tab__status', `contract-tab__status--${contract.contractStatus || 'normal'}`]">
                 {{ formatStatus(contract.contractStatus) }}
               </span>
+            </td>
+            <td>
+              <a
+                v-if="contract.attachmentPath"
+                :href="contract.attachmentPath"
+                target="_blank"
+                rel="noreferrer"
+                class="contract-tab__attachment-link"
+              >
+                <i class="mdi mdi-file-download-outline" aria-hidden="true"></i>
+                下载
+              </a>
+              <span v-else class="contract-tab__attachment-empty">-</span>
             </td>
           </tr>
         </tbody>
@@ -84,6 +98,7 @@ interface ContractRow {
   startDate?: string
   endDate?: string
   contractStatus?: string
+  attachmentPath?: string
 }
 
 defineProps<{
@@ -205,6 +220,28 @@ const formatStatus = (status?: string) => {
 .contract-tab__status--ended {
   background: #e5e7eb;
   color: #475569;
+}
+
+.contract-tab__attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #4f74ff;
+  font-size: 13px;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  i {
+    font-size: 16px;
+  }
+}
+
+.contract-tab__attachment-empty {
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .contract-tab__empty {

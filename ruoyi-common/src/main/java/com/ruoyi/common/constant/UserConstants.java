@@ -78,4 +78,10 @@ public class UserConstants
      */
     public static final int PASSWORD_MIN_LENGTH = 5;
     public static final int PASSWORD_MAX_LENGTH = 20;
+
+    /**
+     * 系统默认密码（管理员一键重置 / 新增账号初始密码）。
+     * 命中此密码的账号在登录后必须强制修改密码。
+     */
+    public static final String DEFAULT_PASSWORD = "Osg@2026";
 }

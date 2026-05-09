@@ -10,23 +10,43 @@
             type="text"
             size="small"
             class="osg-ic__month-arrow"
-            aria-label="上一月"
+            :aria-label="viewMode === 'week' ? '上一周' : '上一月'"
             @click="onShift(-1)"
           >
             <i class="mdi mdi-chevron-left" />
           </a-button>
-          <span class="osg-ic__month">{{ currentMonthLabel }}</span>
+          <span class="osg-ic__month">{{ currentRangeLabel }}</span>
           <a-button
             type="text"
             size="small"
             class="osg-ic__month-arrow"
-            aria-label="下一月"
+            :aria-label="viewMode === 'week' ? '下一周' : '下一月'"
             @click="onShift(1)"
           >
             <i class="mdi mdi-chevron-right" />
           </a-button>
         </div>
-        <span v-else class="osg-ic__month osg-ic__month--static">{{ currentMonthLabel }}</span>
+        <span v-else class="osg-ic__month osg-ic__month--static">{{ currentRangeLabel }}</span>
+
+        <!-- 月/星期 切换 tab -->
+        <div class="osg-ic__view-switch" role="tablist" aria-label="日历视图切换">
+          <button
+            type="button"
+            class="osg-ic__view-tab"
+            :class="{ 'osg-ic__view-tab--active': viewMode === 'month' }"
+            role="tab"
+            :aria-selected="viewMode === 'month'"
+            @click="onViewModeChange('month')"
+          >月</button>
+          <button
+            type="button"
+            class="osg-ic__view-tab"
+            :class="{ 'osg-ic__view-tab--active': viewMode === 'week' }"
+            role="tab"
+            :aria-selected="viewMode === 'week'"
+            @click="onViewModeChange('week')"
+          >星期</button>
+        </div>
       </div>
 
       <div class="osg-ic__divider" />
@@ -153,6 +173,7 @@
 <script setup lang="ts">
 import { ref, toRef, watch } from 'vue'
 import { useInterviewCalendar } from '../composables/useInterviewCalendar'
+import type { CalendarRange, CalendarViewMode } from '../composables/useInterviewCalendar'
 import type { InterviewEvent } from '../types/interviewCalendar'
 
 interface Props {
@@ -174,6 +195,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'event-click', event: InterviewEvent): void
   (e: 'month-change', offset: number): void
+  (e: 'view-mode-change', mode: CalendarViewMode): void
+  (e: 'range-change', range: CalendarRange): void
 }>()
 
 const WEEKDAYS_CN = ['日', '一', '二', '三', '四', '五', '六']
@@ -181,24 +204,52 @@ const WEEKDAYS_CN = ['日', '一', '二', '三', '四', '五', '六']
 const eventsRef = toRef(props, 'events')
 
 const {
+  viewMode,
   monthOffset,
+  weekOffset,
   currentMonthLabel,
+  currentWeekLabel,
+  currentRangeLabel,
   compactDays,
   summaryEvents,
   monthCells,
   calendarItems,
+  currentRange,
   shiftMonth,
+  shiftWeek,
+  setViewMode,
 } = useInterviewCalendar(eventsRef)
 
 const expanded = ref(props.defaultExpanded)
 
 function onShift(offset: number) {
-  shiftMonth(offset)
+  if (viewMode.value === 'week') {
+    shiftWeek(offset)
+  } else {
+    shiftMonth(offset)
+  }
+}
+
+function onViewModeChange(mode: CalendarViewMode) {
+  setViewMode(mode)
 }
 
 watch(monthOffset, (value) => {
-  emit('month-change', value)
+  // 月模式下保留旧的 month-change 事件以兼容已订阅页面
+  if (viewMode.value === 'month') emit('month-change', value)
 })
+
+watch(viewMode, (mode) => {
+  emit('view-mode-change', mode)
+})
+
+watch(
+  currentRange,
+  (range) => {
+    emit('range-change', range)
+  },
+  { immediate: false },
+)
 
 function formatHourMinute(value?: string) {
   if (!value) return '-'
@@ -207,7 +258,7 @@ function formatHourMinute(value?: string) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-defineExpose({ monthOffset, shiftMonth, expanded })
+defineExpose({ viewMode, monthOffset, weekOffset, shiftMonth, shiftWeek, setViewMode, expanded })
 </script>
 
 <style scoped>
@@ -263,6 +314,45 @@ defineExpose({ monthOffset, shiftMonth, expanded })
 .osg-ic__month--static {
   margin-left: 6px;
 }
+
+/* ---- 月/星期 切换 tab（与月切换按钮风格保持一致：小尺寸/灰底/激活高亮） ---- */
+.osg-ic__view-switch {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 2px;
+  background: var(--bg, #f1f5f9);
+  border-radius: 6px;
+  gap: 2px;
+}
+.osg-ic__view-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted, #64748b);
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.osg-ic__view-tab:hover {
+  color: var(--primary, #2563eb);
+}
+.osg-ic__view-tab--active {
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+.osg-ic__view-tab--active:hover {
+  color: #fff;
+}
+
 .osg-ic__divider {
   width: 1px;
   height: 24px;

@@ -91,8 +91,12 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
+import { useIdleLogout } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
 import ProfileModal from '@/components/ProfileModal.vue'
+
+// 五端共享：无操作 60 分钟自动退出，活动节流 ping 续期
+useIdleLogout()
 
 const userStore = useUserStore()
 const vueRouter = useRouter()

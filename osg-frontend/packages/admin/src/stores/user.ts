@@ -13,6 +13,7 @@ export const useUserStore = defineStore('user', () => {
   const routeMenus = ref<RuntimeRouteRecord[]>([])
   const routesLoaded = ref(false)
   const firstLogin = ref(false)
+  const mustChangePassword = ref(false)
 
   async function login(params: LoginParams) {
     const res = await loginApi(params)
@@ -29,6 +30,7 @@ export const useUserStore = defineStore('user', () => {
     routeMenus.value = Array.isArray(routers) ? routers : []
     routesLoaded.value = true
     firstLogin.value = res.firstLogin
+    mustChangePassword.value = Boolean(res.mustChangePassword)
     setUser(res.user)
   }
 
@@ -43,6 +45,7 @@ export const useUserStore = defineStore('user', () => {
       routeMenus.value = []
       routesLoaded.value = false
       firstLogin.value = false
+      mustChangePassword.value = false
       removeToken()
       removeUser()
     }
@@ -50,6 +53,10 @@ export const useUserStore = defineStore('user', () => {
 
   function setFirstLogin(value: boolean) {
     firstLogin.value = value
+  }
+
+  function setMustChangePassword(value: boolean) {
+    mustChangePassword.value = value
   }
 
   return {
@@ -60,9 +67,11 @@ export const useUserStore = defineStore('user', () => {
     routeMenus,
     routesLoaded,
     firstLogin,
+    mustChangePassword,
     login,
     fetchInfo,
     logout,
-    setFirstLogin
+    setFirstLogin,
+    setMustChangePassword
   }
 })
