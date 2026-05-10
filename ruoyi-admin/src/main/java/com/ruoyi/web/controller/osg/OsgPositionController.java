@@ -68,11 +68,42 @@ public class OsgPositionController extends BaseController
 
     @PreAuthorize(POSITION_ROLE_ACCESS)
     @GetMapping("/list")
-    public TableDataInfo list(OsgPosition position)
+    public TableDataInfo list(OsgPosition position,
+                              @RequestParam(required = false) String beginDisplayStartTime,
+                              @RequestParam(required = false) String endDisplayStartTime)
     {
+        applyDisplayStartTimeRange(position, beginDisplayStartTime, endDisplayStartTime);
         startPage();
         List<OsgPosition> rows = positionService.selectPositionList(position);
         return getDataTable(rows);
+    }
+
+    /**
+     * A-PS-012: 把前端「展示起始」预设算出的日期范围塞进 position.params，
+     * 让 mapper 里既有的 params.beginDisplayStartTime / endDisplayStartTime 生效。
+     * <p>不破坏其他端调用：其他端不传则 params 不动。</p>
+     */
+    private void applyDisplayStartTimeRange(OsgPosition position, String beginDisplayStartTime, String endDisplayStartTime)
+    {
+        if ((beginDisplayStartTime == null || beginDisplayStartTime.isEmpty())
+                && (endDisplayStartTime == null || endDisplayStartTime.isEmpty()))
+        {
+            return;
+        }
+        Map<String, Object> params = position.getParams();
+        if (params == null)
+        {
+            params = new java.util.HashMap<>();
+            position.setParams(params);
+        }
+        if (beginDisplayStartTime != null && !beginDisplayStartTime.isEmpty())
+        {
+            params.put("beginDisplayStartTime", beginDisplayStartTime);
+        }
+        if (endDisplayStartTime != null && !endDisplayStartTime.isEmpty())
+        {
+            params.put("endDisplayStartTime", endDisplayStartTime);
+        }
     }
 
     @GetMapping("/stats")

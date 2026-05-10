@@ -151,8 +151,25 @@ public class OsgPositionServiceImpl implements IOsgPositionService
                 Collectors.toList()
             ));
 
+        // A-PS-001: 按 industry 字典 dict_sort 顺序输出；不在字典内的（如 "Other"）放最后
+        List<String> dictOrder = loadDictItems(DICT_POSITION_INDUSTRY).stream()
+            .map(SysDictData::getDictValue)
+            .toList();
+        Map<String, Integer> dictRank = new LinkedHashMap<>();
+        for (int i = 0; i < dictOrder.size(); i++)
+        {
+            dictRank.put(dictOrder.get(i), i);
+        }
+        List<Map.Entry<String, List<OsgPosition>>> sortedEntries = new ArrayList<>(industryGroups.entrySet());
+        sortedEntries.sort((left, right) ->
+        {
+            int leftRank = dictRank.getOrDefault(left.getKey(), Integer.MAX_VALUE);
+            int rightRank = dictRank.getOrDefault(right.getKey(), Integer.MAX_VALUE);
+            return Integer.compare(leftRank, rightRank);
+        });
+
         List<Map<String, Object>> result = new ArrayList<>(industryGroups.size());
-        for (Map.Entry<String, List<OsgPosition>> industryEntry : industryGroups.entrySet())
+        for (Map.Entry<String, List<OsgPosition>> industryEntry : sortedEntries)
         {
             List<OsgPosition> industryRows = industryEntry.getValue();
             Map<String, List<OsgPosition>> companyGroups = industryRows.stream()
