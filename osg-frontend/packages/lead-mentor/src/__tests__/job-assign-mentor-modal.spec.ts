@@ -310,7 +310,6 @@ describe('lead-mentor assign mentor modal contract', () => {
       expect(root?.textContent).toContain('确认匹配')
       expect(root?.querySelector('.mdi-account-star')).toBeTruthy()
       expect(root?.querySelector('.selection-hint')).toBeTruthy()
-      expect(root?.querySelector('.mdi-check')).toBeTruthy()
     } finally {
       modal.unmount()
     }

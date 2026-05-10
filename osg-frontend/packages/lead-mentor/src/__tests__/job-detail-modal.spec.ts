@@ -93,6 +93,7 @@ async function mountModal() {
       leadMentorName: 'Jess',
       companyName: 'Goldman Sachs',
       positionName: 'IB Analyst · Hong Kong',
+      currentStage: 'First Round',
       recruitmentCycle: '2025 Summer',
       interviewTime: '01/18 10:00',
       countdownText: '还剩2天',

@@ -488,7 +488,6 @@ const isJobDetailModalOpen = ref(false)
 const isAssignMentorModalOpen = ref(false)
 const jobDetailPreview = ref<JobDetailPreview | null>(null)
 const assignMentorPreview = ref<AssignMentorPreview | null>(null)
-const detailCurrentStage = ref('')
 const activeAssignApplicationId = ref<number | null>(null)
 const activeAssignCoachingId = ref<number | null>(null)
 const activeAssignRequiredMentorCount = ref<number | null>(null)
@@ -665,11 +664,9 @@ const handleSearch = async () => {
 const openJobDetail = async (row: OverviewRow) => {
   try {
     const detail = await getLeadMentorJobOverviewDetail(row.applicationId)
-    detailCurrentStage.value = detail.currentStage || row.stage
     jobDetailPreview.value = buildJobDetailPreview(detail)
     isJobDetailModalOpen.value = true
     activeAssignSource.value = detail
-    await syncJobDetailStage(detailCurrentStage.value)
   } catch (_error) {
     jobDetailPreview.value = null
     isJobDetailModalOpen.value = false
@@ -732,7 +729,7 @@ const handleRequestMentorChange = () => {
     studentId: preview.studentId,
     companyName: preview.companyName,
     positionName: preview.positionName,
-    interviewStage: detailCurrentStage.value || source.currentStage || '-',
+    interviewStage: source.currentStage || preview.currentStage || '-',
     interviewTime: preview.interviewTime,
     mentorDemand: formatMentorDemand(source.requestedMentorCount),
     preferredMentor: source.mentorNames || source.preferredMentorNames || preview.mentorName,
@@ -870,6 +867,7 @@ function buildJobDetailPreview(row: LeadMentorJobOverviewListItem): JobDetailPre
     leadMentorName: row.leadMentorName || '待分配班主任',
     companyName: row.companyName || '-',
     positionName: row.positionName || '-',
+    currentStage: row.currentStage || '-',
     recruitmentCycle: [row.region, row.city].filter(Boolean).join(' · ') || '待更新',
     interviewTime: formatDateTime(row.interviewTime),
     countdownText: buildCountdownText(row.interviewTime),
@@ -879,17 +877,6 @@ function buildJobDetailPreview(row: LeadMentorJobOverviewListItem): JobDetailPre
     applyTime: formatShortDate(row.submittedAt),
     notes: row.feedbackSummary || `${row.studentName || '该学员'} 当前处于 ${row.currentStage || '待更新'} 阶段`,
   }
-}
-
-async function syncJobDetailStage(stage: string) {
-  await nextTick()
-  const currentStageNode = document.querySelector<HTMLElement>(
-    '[data-surface-id="modal-job-detail"] .timeline-copy--current',
-  )
-  if (!currentStageNode) {
-    return
-  }
-  currentStageNode.innerHTML = `${escapeHtml(stage || '-')}<span>当前</span>`
 }
 
 function toOverviewRow(row: LeadMentorJobOverviewListItem): OverviewRow {
@@ -1063,12 +1050,6 @@ function buildCountdownText(interviewTime?: string) {
   return `还剩${diffDays}天`
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-}
 </script>
 
 <style scoped lang="scss">

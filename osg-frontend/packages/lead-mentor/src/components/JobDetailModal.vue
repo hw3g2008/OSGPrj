@@ -214,6 +214,7 @@ export interface JobDetailPreview {
   leadMentorName: string
   companyName: string
   positionName: string
+  currentStage: string
   recruitmentCycle: string
   interviewTime: string
   countdownText: string
@@ -264,7 +265,7 @@ const studentInitial = computed(() => {
 const stepIcon = (cls: string) =>
   h('i', { class: `mdi ${cls}`, 'aria-hidden': 'true' })
 
-const stepItems = [
+const stepItems = computed(() => [
   {
     title: '已投递',
     description: '01/05',
@@ -276,7 +277,7 @@ const stepItems = [
     icon: stepIcon('mdi-check'),
   },
   {
-    title: 'First Round',
+    title: props.preview?.currentStage || '-',
     description: '当前',
     icon: stepIcon('mdi-clock'),
   },
@@ -288,7 +289,7 @@ const stepItems = [
     title: 'Offer',
     description: ' ',
   },
-]
+])
 
 const records: CourseRecord[] = [
   {
