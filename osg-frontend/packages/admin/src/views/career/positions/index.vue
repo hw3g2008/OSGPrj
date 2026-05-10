@@ -474,7 +474,7 @@ const statsCards = computed(() => [
   { key: 'open', label: '开放中', value: stats.value.openPositions, tone: 'success' },
   { key: 'closing', label: '即将截止', value: stats.value.closingSoonPositions, tone: 'warning' },
   { key: 'closed', label: '已关闭', value: stats.value.closedPositions, tone: 'muted' },
-  { key: 'students', label: '学员申请', value: stats.value.studentApplications, tone: 'info' }
+  { key: 'students', label: '投递学员', value: stats.value.studentApplications, tone: 'info' }
 ])
 
 const companyOptionValues = computed(() => companyOptions.value.map((item) => item.value))
