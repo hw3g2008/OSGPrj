@@ -18,7 +18,7 @@
           :step="1"
           :placeholder="`1-${item.max}`"
           style="width: 120px"
-          @update:value="(v) => updateScore(item.key, v)"
+          @update:value="updateScore(item.key, $event)"
         />
         <!-- T-517: description 始终渲染（占位 "TBD" 也正常显示，不报错），不用 v-if -->
         <div class="rating-row__desc">{{ item.description }}</div>
@@ -29,7 +29,7 @@
       <label class="form-label">是否推荐这位学生？</label>
       <a-radio-group
         :value="payload.recommendation"
-        @update:value="(v) => update('recommendation', v)"
+        @update:value="update('recommendation', $event)"
       >
         <a-radio value="yes">是</a-radio>
         <a-radio value="maybe">或许</a-radio>
@@ -56,7 +56,7 @@
         :value="payload.narrative"
         :rows="3"
         placeholder="可选：进一步补充本次课程反馈..."
-        @update:value="(v) => update('narrative', v)"
+        @update:value="update('narrative', $event)"
       />
     </div>
   </div>

@@ -70,6 +70,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         left join (
             select position_id, count(1) as student_count
             from osg_job_application
+            where current_stage &lt;&gt; 'cancelled'
             group by position_id
         ) ja on ja.position_id = p.position_id
     </sql>

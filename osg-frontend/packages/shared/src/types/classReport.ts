@@ -6,6 +6,7 @@ export type CourseType =
   | 'base_course'
 
 export type ReferenceType =
+  | 'job_coaching'
   | 'application'
   | 'mock_interview'
   | 'relation_test'

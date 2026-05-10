@@ -1,5 +1,62 @@
 import { http } from '../utils/request'
 
+export interface StudentApplicationCoachingRecord {
+  coachingId: number
+  applicationId: number
+  interviewStage: string
+  interviewStageLabel: string
+  interviewTime: string
+  city: string
+  cityLabel: string
+  companyInterviewer: string
+  requestedMentorCount?: number
+  requestNote: string
+  mentorId?: number
+  mentorName: string
+  mentorIds: string
+  mentorNames: string
+  status: string
+  latestRating: string
+  reportedLessonCount: number
+}
+
+export interface StudentApplicationCoachingPayload {
+  interviewStage: string
+  interviewTime?: string
+  city?: string
+  companyInterviewer?: string
+  requestedMentorCount?: string
+  requestNote?: string
+}
+
+export interface StudentApplicationCoachingUpdatePayload {
+  interviewTime?: string
+  companyInterviewer?: string
+}
+
+export interface StudentApplicationCoachingClassRecord {
+  recordId: number
+  classId: string
+  mentorName: string
+  classDate: string
+  durationHours?: number
+  memberStatus: string
+  rate: string
+  topics: string
+  comments: string
+  feedbackContent: string
+  referenceType: string
+  referenceId: number
+}
+
+export interface StudentApplicationCoachingClassRecordsResponse {
+  applicationId: number
+  coachingId: number
+  latestRating: string
+  reportedLessonCount: number
+  records: StudentApplicationCoachingClassRecord[]
+}
+
 export interface StudentApplicationRecord {
   id: number
   positionId: number
@@ -23,6 +80,7 @@ export interface StudentApplicationRecord {
   appliedDate: string
   applyMethod: string
   progressNote: string
+  coachings: StudentApplicationCoachingRecord[]
 }
 
 export interface StudentApplicationOption {
@@ -80,4 +138,26 @@ export function listStudentApplications(): Promise<{ applications: StudentApplic
 
 export function getStudentApplicationsMeta(): Promise<StudentApplicationsMeta> {
   return http.get('/student/application/meta')
+}
+
+export function requestStudentApplicationCoaching(
+  applicationId: number,
+  data: StudentApplicationCoachingPayload
+): Promise<{ coachingId: number; applicationId: number; status: string }> {
+  return http.post(`/student/applications/${applicationId}/coachings`, data)
+}
+
+export function updateStudentApplicationCoaching(
+  applicationId: number,
+  coachingId: number,
+  data: StudentApplicationCoachingUpdatePayload
+): Promise<{ coachingId: number; applicationId: number }> {
+  return http.put(`/student/applications/${applicationId}/coachings/${coachingId}`, data)
+}
+
+export function getStudentApplicationCoachingClassRecords(
+  applicationId: number,
+  coachingId: number
+): Promise<StudentApplicationCoachingClassRecordsResponse> {
+  return http.get(`/student/applications/${applicationId}/coachings/${coachingId}/class-records`)
 }

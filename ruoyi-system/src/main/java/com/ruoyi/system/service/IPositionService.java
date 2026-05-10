@@ -113,6 +113,12 @@ public interface IPositionService
      */
     public int requestCoaching(Long positionId, Map<String, Object> params, Long userId);
 
+    public Map<String, Object> requestApplicationCoaching(Long applicationId, Map<String, Object> params, Long userId);
+
+    public Map<String, Object> updateApplicationCoaching(Long applicationId, Long coachingId, Map<String, Object> params, Long userId);
+
+    public Map<String, Object> selectApplicationCoachingClassRecords(Long applicationId, Long coachingId, Long userId);
+
     /**
      * 手动添加岗位
      * 

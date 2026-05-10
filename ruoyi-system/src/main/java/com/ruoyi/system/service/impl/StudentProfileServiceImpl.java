@@ -54,12 +54,32 @@ public class StudentProfileServiceImpl implements IStudentProfileService
         Map<String, Object> profile = ensureProfile(userId);
         overlayApprovedMainStudent(profile, resolveMainStudent(userId));
         List<Map<String, Object>> pendingChanges = normalizePendingChanges(resolvePendingChanges(userId));
+        // FIX-07: 学生端无感审核 — 把 pending 中的新值覆盖到 profile，让学生立即看到自己改的值；
+        // admin 端审核流程不变（approve 落表 / reject 删 pending → 学生下次刷新回退到 DB 旧值）
+        overlayPendingChanges(profile, pendingChanges);
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("profile", normalizeProfile(profile));
         payload.put("pendingChanges", pendingChanges);
         payload.put("pendingCount", pendingChanges.size());
         return payload;
+    }
+
+    private void overlayPendingChanges(Map<String, Object> profile, List<Map<String, Object>> pendingChanges)
+    {
+        if (profile == null || pendingChanges == null || pendingChanges.isEmpty())
+        {
+            return;
+        }
+        for (Map<String, Object> change : pendingChanges)
+        {
+            String fieldKey = stringValue(change.get("fieldKey"));
+            String newValue = stringValue(change.get("newValue"));
+            if (StringUtils.isNotEmpty(fieldKey) && StringUtils.isNotEmpty(newValue))
+            {
+                profile.put(fieldKey, newValue);
+            }
+        }
     }
 
     @Override

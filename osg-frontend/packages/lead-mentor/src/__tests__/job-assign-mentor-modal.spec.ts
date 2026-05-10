@@ -62,19 +62,21 @@ const apiMocks = vi.hoisted(() => ({
   })),
 }))
 
-vi.mock('@osg/shared/composables', async () => {
-  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
-    '@osg/shared/composables',
-  )
-  return {
-    ...actual,
-    useDictFacade: () => ({
-      items: { value: [] },
-      loading: { value: false },
-      load: vi.fn(async () => undefined),
-    }),
-  }
-})
+vi.mock('@osg/shared/composables', () => ({
+  useIdleLogout: () => undefined,
+  useCoachingStatusMap: () => ({
+    items: { value: [] },
+    loading: { value: false },
+    load: vi.fn(async () => undefined),
+    resolveCoachingTone: () => 'blue',
+  }),
+  useDictFacade: () => ({
+    items: { value: [] },
+    loading: { value: false },
+    load: vi.fn(async () => undefined),
+  }),
+  deriveApplicationStatus: (status?: string) => status || 'pending',
+}))
 
 const modalPath = path.resolve(__dirname, '../components/AssignMentorModal.vue')
 const modalExists = fs.existsSync(modalPath)
@@ -108,6 +110,19 @@ async function flushUi() {
   await nextTick()
   await new Promise((resolve) => setTimeout(resolve, 0))
   await nextTick()
+}
+
+async function waitFor<T>(resolve: () => T | null | undefined | false, description: string, timeoutMs = 1000): Promise<T> {
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < timeoutMs) {
+    await flushUi()
+    const result = resolve()
+    if (result) {
+      return result
+    }
+    await new Promise((resolveTimeout) => setTimeout(resolveTimeout, 10))
+  }
+  throw new Error(`Timeout waiting for ${description}`)
 }
 
 function isTabPaneActive(panel: HTMLElement | null | undefined): boolean {
@@ -264,7 +279,10 @@ describe('lead-mentor assign mentor modal contract', () => {
     const modal = await mountModal()
 
     try {
-      const root = modal.container.querySelector('[data-surface-id="modal-assign-mentor"]')
+      const root = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]'),
+        'assign mentor modal',
+      )
       const shell = root?.querySelector('[data-surface-part="shell"]')
       const header = root?.querySelector('[data-surface-part="header"]')
       const body = root?.querySelector('[data-surface-part="body"]')
@@ -291,7 +309,7 @@ describe('lead-mentor assign mentor modal contract', () => {
       expect(root?.textContent).toContain('取消')
       expect(root?.textContent).toContain('确认匹配')
       expect(root?.querySelector('.mdi-account-star')).toBeTruthy()
-      expect(root?.querySelector('.mdi-information')).toBeTruthy()
+      expect(root?.querySelector('.selection-hint')).toBeTruthy()
       expect(root?.querySelector('.mdi-check')).toBeTruthy()
     } finally {
       modal.unmount()
@@ -321,11 +339,13 @@ describe('lead-mentor assign mentor modal contract', () => {
       pendingAssignButton?.click()
       await flushUi()
 
-      const firstModal = page.container.querySelector('[data-surface-id="modal-assign-mentor"]')
-      expect(firstModal).toBeTruthy()
-      expect(firstModal?.textContent).toContain('为学员匹配辅导导师')
+      const firstModal = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]'),
+        'first assign mentor modal',
+      )
+      expect(firstModal.textContent).toContain('为学员匹配辅导导师')
 
-      firstModal?.querySelector<HTMLButtonElement>('.modal-close')?.click()
+      firstModal.querySelector<HTMLButtonElement>('.assign-mentor-close')?.click()
       await flushUi()
 
       const coachingTab = page.container.querySelector<HTMLButtonElement>('#lm-job-tab-coaching')
@@ -340,10 +360,12 @@ describe('lead-mentor assign mentor modal contract', () => {
       detailTrigger?.click()
       await flushUi()
 
-      const detailModal = page.container.querySelector('[data-surface-id="modal-job-detail"]')
-      expect(detailModal).toBeTruthy()
+      const detailModal = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-job-detail"]'),
+        'job detail modal',
+      )
 
-      const mentorChangeButton = Array.from(detailModal?.querySelectorAll<HTMLButtonElement>('button') || []).find((button) =>
+      const mentorChangeButton = Array.from(detailModal.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
         button.textContent?.includes('更换导师'),
       )
       expect(mentorChangeButton).toBeTruthy()
@@ -351,11 +373,13 @@ describe('lead-mentor assign mentor modal contract', () => {
       mentorChangeButton?.click()
       await flushUi()
 
-      expect(page.container.querySelector('[data-surface-id="modal-job-detail"]')).toBeNull()
+      expect(document.body.querySelector('[data-surface-id="modal-job-detail"]')).toBeNull()
 
-      const secondModal = page.container.querySelector('[data-surface-id="modal-assign-mentor"]')
-      expect(secondModal).toBeTruthy()
-      expect(secondModal?.textContent).toContain('为学员匹配辅导导师')
+      const secondModal = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]'),
+        'second assign mentor modal',
+      )
+      expect(secondModal.textContent).toContain('为学员匹配辅导导师')
     } finally {
       page.unmount()
     }

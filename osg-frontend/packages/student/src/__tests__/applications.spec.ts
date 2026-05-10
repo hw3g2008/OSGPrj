@@ -72,6 +72,40 @@ describe('student applications source contract', () => {
     expect(tabHeaderIndex).toBeLessThan(tableIndex)
   })
 
+  it('renders application-level coachings as expandable child rows with application-scoped actions', () => {
+    const requiredTokens = [
+      ':expanded-row-render="renderApplicationCoachings"',
+      'application-coachings-panel',
+      'application-coaching-row',
+      'coaching.coachingId',
+      'openCoachingDetail(record, coaching)',
+      'openCoachingEdit(record, coaching)',
+      '暂无阶段辅导申请',
+    ]
+
+    for (const token of requiredTokens) {
+      expect(applicationsSource).toContain(token)
+    }
+  })
+
+  it('uses application-scoped coaching APIs instead of the legacy position-scoped coaching request path', () => {
+    const requiredTokens = [
+      'requestStudentApplicationCoaching',
+      'updateStudentApplicationCoaching',
+      'getStudentApplicationCoachingClassRecords',
+      'selectedCoaching',
+      'coachingDetailModalOpen',
+      'coachingEditModalOpen',
+      'saveCoachingEdit',
+    ]
+
+    for (const token of requiredTokens) {
+      expect(applicationsSource).toContain(token)
+    }
+
+    expect(applicationsSource).not.toContain('requestStudentPositionCoaching')
+  })
+
   // [本期不落地] 面试安排、更新申请进度 等 S-005 行为
   it.skip('defines the modal and action trigger coverage required by story S-005', () => {
     const triggerMatches = applicationsSource.match(/actionId:/g) ?? []

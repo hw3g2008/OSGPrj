@@ -107,7 +107,7 @@ public class OsgClassReportValidator
     /**
      * §5.2 规则 1：course_type 与 reference_type 一致性。（T-520）
      * <ul>
-     *   <li>job_coaching ↔ application</li>
+     *   <li>job_coaching ↔ job_coaching（指向 osg_coaching.coaching_id；旧 application 数据保留只读兼容）</li>
      *   <li>mock_interview ↔ mock_interview</li>
      *   <li>relation_test ↔ relation_test</li>
      *   <li>communication_test ↔ communication_test</li>
@@ -137,7 +137,9 @@ public class OsgClassReportValidator
         {
             throw new ServiceException("课程类型与关联类型不一致");
         }
-        if (!expected.equals(referenceType))
+        // Fix 5：job_coaching 课程类型在过渡期同时接受 job_coaching（新口径）与 application（旧口径），
+        // 其它课程类型仍按 expectedReferenceType 严格匹配。
+        if (!isReferenceTypeAllowed(courseType, referenceType))
         {
             throw new ServiceException("课程类型与关联类型不一致");
         }
@@ -217,8 +219,25 @@ public class OsgClassReportValidator
             // 基础课或缺省场景已在前置校验中处理
             return;
         }
-        if (OsgClassReportConstants.REFERENCE_TYPE_APPLICATION.equals(referenceType))
+        if (OsgClassReportConstants.REFERENCE_TYPE_JOB_COACHING.equals(referenceType))
         {
+            OsgCoaching coaching = coachingMapper.selectCoachingByCoachingId(referenceId);
+            if (coaching == null)
+            {
+                throw new ServiceException("辅导记录不存在");
+            }
+            if (!Objects.equals(coaching.getStudentId(), student.getStudentId()))
+            {
+                throw new ServiceException("关联记录不属于该学员");
+            }
+            if (END_MENTOR.equalsIgnoreCase(end) && !isUserInCsv(coaching.getMentorIds(), currentUserId))
+            {
+                throw new ServiceException("无权为该辅导申请提交课消");
+            }
+        }
+        else if (OsgClassReportConstants.REFERENCE_TYPE_APPLICATION.equals(referenceType))
+        {
+            // 兼容路径：旧前端/旧数据可能仍以 application 维度提交；以 application_id 取最新一条 coaching 校验。
             OsgCoaching coaching = coachingMapper.selectCoachingByApplicationId(referenceId);
             if (coaching == null)
             {
@@ -337,7 +356,7 @@ public class OsgClassReportValidator
     {
         if (OsgClassReportConstants.COURSE_TYPE_JOB_COACHING.equals(courseType))
         {
-            return OsgClassReportConstants.REFERENCE_TYPE_APPLICATION;
+            return OsgClassReportConstants.REFERENCE_TYPE_JOB_COACHING;
         }
         if (OsgClassReportConstants.COURSE_TYPE_MOCK_INTERVIEW.equals(courseType))
         {
@@ -352,6 +371,22 @@ public class OsgClassReportValidator
             return OsgClassReportConstants.REFERENCE_TYPE_COMMUNICATION_TEST;
         }
         return null;
+    }
+
+    /**
+     * §5.2 规则 1 兼容松弛：当 course_type=job_coaching 时，{@code job_coaching}（新口径）和
+     * {@code application}（旧口径）都视为 reference_type 一致性合法值。
+     * 严格态由 expectedReferenceType 控制，旧 application 提交将被该方法接受、走旧 ownership 分支。
+     */
+    private boolean isReferenceTypeAllowed(String courseType, String referenceType)
+    {
+        if (OsgClassReportConstants.COURSE_TYPE_JOB_COACHING.equals(courseType))
+        {
+            return OsgClassReportConstants.REFERENCE_TYPE_JOB_COACHING.equals(referenceType)
+                || OsgClassReportConstants.REFERENCE_TYPE_APPLICATION.equals(referenceType);
+        }
+        String expected = expectedReferenceType(courseType);
+        return expected != null && expected.equals(referenceType);
     }
 
     private boolean isUserInCsv(String csv, Long userId)

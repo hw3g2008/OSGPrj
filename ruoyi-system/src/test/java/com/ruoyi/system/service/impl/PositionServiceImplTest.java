@@ -1,6 +1,7 @@
 package com.ruoyi.system.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,10 +32,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.core.domain.entity.SysDictData;
+import com.ruoyi.system.domain.OsgClassRecord;
+import com.ruoyi.system.domain.OsgCoaching;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.domain.OsgPosition;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.domain.OsgStudentPosition;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
+import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgPositionMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
@@ -78,6 +84,12 @@ class PositionServiceImplTest
 
     @Mock
     private OsgStudentServiceImpl osgStudentService;
+
+    @Mock
+    private OsgCoachingMapper coachingMapper;
+
+    @Mock
+    private OsgClassRecordMapper classRecordMapper;
 
     @Test
     void updateApplyStatusCreatesMainApplicationRecord()
@@ -406,6 +418,303 @@ class PositionServiceImplTest
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void selectApplicationListAttachesCoachingsWithRatingsByCoachingReference()
+    {
+        Map<String, Object> appRow = new LinkedHashMap<>();
+        appRow.put("id", 9001L);
+        appRow.put("company", "Goldman Sachs");
+        appRow.put("position", "Summer Analyst");
+        appRow.put("location", "New York");
+        appRow.put("companyType", "ib");
+        appRow.put("stage", "first");
+        appRow.put("interviewAt", "2026-03-26 09:30:00");
+        appRow.put("coachingStatus", "pending");
+
+        OsgCoaching firstRound = new OsgCoaching();
+        firstRound.setCoachingId(7002L);
+        firstRound.setApplicationId(9001L);
+        firstRound.setStudentId(12766L);
+        firstRound.setInterviewStage("first");
+        firstRound.setInterviewTime(Timestamp.valueOf("2026-04-01 10:30:00"));
+        firstRound.setCity("New York");
+        firstRound.setCompanyInterviewer("Jane MD");
+        firstRound.setMentorNames("Jerry Li");
+        firstRound.setStatus("assigned");
+
+        OsgCoaching hirevue = new OsgCoaching();
+        hirevue.setCoachingId(7001L);
+        hirevue.setApplicationId(9001L);
+        hirevue.setStudentId(12766L);
+        hirevue.setInterviewStage("hirevue");
+        hirevue.setStatus("pending");
+
+        OsgClassRecord absentNewest = new OsgClassRecord();
+        absentNewest.setReferenceType("job_coaching");
+        absentNewest.setReferenceId(7002L);
+        absentNewest.setMemberStatus("absent");
+        absentNewest.setClassDate(Timestamp.valueOf("2026-04-08 10:30:00"));
+        absentNewest.setRate("1");
+
+        OsgClassRecord normalOlder = new OsgClassRecord();
+        normalOlder.setReferenceType("job_coaching");
+        normalOlder.setReferenceId(7002L);
+        normalOlder.setMemberStatus("normal");
+        normalOlder.setClassDate(Timestamp.valueOf("2026-04-02 10:30:00"));
+        normalOlder.setRate("5");
+
+        when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
+        when(jobApplicationMapper.selectStudentApplicationRecords(12766L, null, null)).thenReturn(List.of(appRow));
+        when(sysDictDataMapper.selectDictDataByType(any())).thenReturn(List.of(
+            dict(1L, "osg_student_position_coaching_stage", "first", "First Round", "辅导阶段"),
+            dict(2L, "osg_student_position_coaching_stage", "hirevue", "HireVue / Online Test", "辅导阶段")
+        ));
+        lenient().when(coachingMapper.selectCoachingList(argThat(query ->
+            query != null
+                && Long.valueOf(9001L).equals(query.getApplicationId())
+                && Long.valueOf(12766L).equals(query.getStudentId())
+        ))).thenReturn(List.of(firstRound, hirevue));
+        lenient().when(classRecordMapper.selectClassRecordList(argThat(query ->
+            query != null
+                && "job_coaching".equals(query.getReferenceType())
+                && Long.valueOf(7002L).equals(query.getReferenceId())
+        ))).thenReturn(List.of(absentNewest, normalOlder));
+        lenient().when(classRecordMapper.selectClassRecordList(argThat(query ->
+            query != null
+                && "job_coaching".equals(query.getReferenceType())
+                && Long.valueOf(7001L).equals(query.getReferenceId())
+        ))).thenReturn(List.of());
+
+        List<Map<String, Object>> rows = service.selectApplicationList(838L);
+
+        assertTrue(rows.get(0).containsKey("coachings"));
+        List<Map<String, Object>> coachings = (List<Map<String, Object>>) rows.get(0).get("coachings");
+        assertEquals(2, coachings.size());
+        assertEquals(7002L, coachings.get(0).get("coachingId"));
+        assertEquals("First Round", coachings.get(0).get("interviewStageLabel"));
+        assertEquals("2026-04-01 10:30:00", coachings.get(0).get("interviewTime"));
+        assertEquals("Jerry Li", coachings.get(0).get("mentorNames"));
+        assertEquals("5", coachings.get(0).get("latestRating"));
+        assertEquals(2, coachings.get(0).get("reportedLessonCount"));
+        assertEquals(7001L, coachings.get(1).get("coachingId"));
+        assertEquals(0, coachings.get(1).get("reportedLessonCount"));
+    }
+
+    @Test
+    void requestApplicationCoachingCreatesChildCoachingForOwnedApplication()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(9001L);
+        application.setStudentId(12766L);
+        application.setCurrentStage("first");
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("interviewStage", "first");
+        params.put("interviewTime", "2026-04-01T10:30");
+        params.put("city", "New York");
+        params.put("companyInterviewer", "Jane MD");
+        params.put("requestedMentorCount", "2");
+        params.put("requestNote", "希望有投行导师");
+
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(9001L)).thenReturn(application);
+        when(coachingMapper.insertCoaching(any(OsgCoaching.class))).thenAnswer(invocation -> {
+            OsgCoaching coaching = invocation.getArgument(0);
+            coaching.setCoachingId(7003L);
+            return 1;
+        });
+
+        Map<String, Object> result = service.requestApplicationCoaching(9001L, params, 838L);
+
+        assertEquals(7003L, result.get("coachingId"));
+        ArgumentCaptor<OsgCoaching> captor = ArgumentCaptor.forClass(OsgCoaching.class);
+        verify(coachingMapper).insertCoaching(captor.capture());
+        OsgCoaching saved = captor.getValue();
+        assertEquals(9001L, saved.getApplicationId());
+        assertEquals(12766L, saved.getStudentId());
+        assertEquals("first", saved.getInterviewStage());
+        assertEquals(Timestamp.valueOf("2026-04-01 10:30:00"), saved.getInterviewTime());
+        assertEquals("New York", saved.getCity());
+        assertEquals("Jane MD", saved.getCompanyInterviewer());
+        assertEquals(2, saved.getRequestedMentorCount());
+        assertEquals("希望有投行导师", saved.getRequestNote());
+        assertEquals("pending", saved.getStatus());
+        verify(jobApplicationMapper, never()).updateJobApplicationCoaching(any());
+    }
+
+    @Test
+    void requestApplicationCoachingRejectsOtherStudentApplication()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(9001L);
+        application.setStudentId(99999L);
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("interviewStage", "first");
+        params.put("interviewTime", "2026-04-01T10:30");
+
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(9001L)).thenReturn(application);
+
+        ServiceException ex = assertThrows(ServiceException.class, () -> service.requestApplicationCoaching(9001L, params, 838L));
+
+        assertEquals("无权访问该求职申请", ex.getMessage());
+        verify(coachingMapper, never()).insertCoaching(any());
+    }
+
+    @Test
+    void updateApplicationCoachingOnlyPatchesInterviewTimeAndCompanyInterviewer()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(9001L);
+        application.setStudentId(12766L);
+
+        OsgCoaching existing = new OsgCoaching();
+        existing.setCoachingId(7003L);
+        existing.setApplicationId(9001L);
+        existing.setStudentId(12766L);
+        existing.setInterviewStage("first");
+        existing.setRequestedMentorCount(2);
+        existing.setStatus("assigned");
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("interviewTime", "2026-04-02T11:00");
+        params.put("companyInterviewer", "John VP");
+        params.put("interviewStage", "second");
+        params.put("requestedMentorCount", "9");
+        params.put("status", "cancelled");
+
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(9001L)).thenReturn(application);
+        when(coachingMapper.selectCoachingByCoachingId(7003L)).thenReturn(existing);
+        when(coachingMapper.updateCoaching(any(OsgCoaching.class))).thenReturn(1);
+
+        Map<String, Object> result = service.updateApplicationCoaching(9001L, 7003L, params, 838L);
+
+        assertEquals(7003L, result.get("coachingId"));
+        ArgumentCaptor<OsgCoaching> captor = ArgumentCaptor.forClass(OsgCoaching.class);
+        verify(coachingMapper).updateCoaching(captor.capture());
+        OsgCoaching patch = captor.getValue();
+        assertEquals(7003L, patch.getCoachingId());
+        assertEquals(Timestamp.valueOf("2026-04-02 11:00:00"), patch.getInterviewTime());
+        assertEquals("John VP", patch.getCompanyInterviewer());
+        assertEquals("838", patch.getUpdateBy());
+        assertNull(patch.getInterviewStage());
+        assertNull(patch.getRequestedMentorCount());
+        assertNull(patch.getStatus());
+    }
+
+    @Test
+    void updateApplicationCoachingRejectsCoachingOutsideApplication()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(9001L);
+        application.setStudentId(12766L);
+
+        OsgCoaching existing = new OsgCoaching();
+        existing.setCoachingId(7003L);
+        existing.setApplicationId(9999L);
+        existing.setStudentId(12766L);
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("interviewTime", "2026-04-02T11:00");
+
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(9001L)).thenReturn(application);
+        when(coachingMapper.selectCoachingByCoachingId(7003L)).thenReturn(existing);
+
+        ServiceException ex = assertThrows(ServiceException.class, () -> service.updateApplicationCoaching(9001L, 7003L, params, 838L));
+
+        assertEquals("无权访问该辅导申请", ex.getMessage());
+        verify(coachingMapper, never()).updateCoaching(any());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void selectApplicationCoachingClassRecordsUsesCoachingReferenceOnly()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(9001L);
+        application.setStudentId(12766L);
+
+        OsgCoaching existing = new OsgCoaching();
+        existing.setCoachingId(7003L);
+        existing.setApplicationId(9001L);
+        existing.setStudentId(12766L);
+        existing.setInterviewStage("first");
+
+        OsgClassRecord normal = new OsgClassRecord();
+        normal.setRecordId(3001L);
+        normal.setClassId("CR-3001");
+        normal.setMentorName("Jerry Li");
+        normal.setClassDate(Timestamp.valueOf("2026-04-02 11:00:00"));
+        normal.setDurationHours(1.5D);
+        normal.setMemberStatus("normal");
+        normal.setRate("5");
+        normal.setTopics("Technical");
+        normal.setComments("Great");
+        normal.setReferenceType("job_coaching");
+        normal.setReferenceId(7003L);
+
+        OsgClassRecord absent = new OsgClassRecord();
+        absent.setRecordId(3002L);
+        absent.setClassId("CR-3002");
+        absent.setMentorName("Jerry Li");
+        absent.setClassDate(Timestamp.valueOf("2026-04-03 11:00:00"));
+        absent.setDurationHours(0.5D);
+        absent.setMemberStatus("absent");
+        absent.setRate("1");
+        absent.setReferenceType("job_coaching");
+        absent.setReferenceId(7003L);
+
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(9001L)).thenReturn(application);
+        when(coachingMapper.selectCoachingByCoachingId(7003L)).thenReturn(existing);
+        when(classRecordMapper.selectClassRecordList(argThat(query ->
+            query != null
+                && "job_coaching".equals(query.getReferenceType())
+                && Long.valueOf(7003L).equals(query.getReferenceId())
+                && Long.valueOf(12766L).equals(query.getStudentId())
+                && "approved".equals(query.getStatus())
+                && "0".equals(query.getDelFlag())
+        ))).thenReturn(List.of(absent, normal));
+
+        Map<String, Object> result = service.selectApplicationCoachingClassRecords(9001L, 7003L, 838L);
+
+        assertEquals(7003L, result.get("coachingId"));
+        assertEquals("5", result.get("latestRating"));
+        assertEquals(2, result.get("reportedLessonCount"));
+        List<Map<String, Object>> records = (List<Map<String, Object>>) result.get("records");
+        assertEquals(2, records.size());
+        assertEquals(3002L, records.get(0).get("recordId"));
+        assertEquals("absent", records.get(0).get("memberStatus"));
+        assertEquals(3001L, records.get(1).get("recordId"));
+        assertEquals("normal", records.get(1).get("memberStatus"));
+    }
+
+    @Test
+    void selectApplicationCoachingClassRecordsRejectsCoachingOutsideApplication()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(9001L);
+        application.setStudentId(12766L);
+
+        OsgCoaching existing = new OsgCoaching();
+        existing.setCoachingId(7003L);
+        existing.setApplicationId(9999L);
+        existing.setStudentId(12766L);
+
+        when(identityResolver.resolveStudentByUserId(838L)).thenReturn(student(12766L, "Curl Stu"));
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(9001L)).thenReturn(application);
+        when(coachingMapper.selectCoachingByCoachingId(7003L)).thenReturn(existing);
+
+        ServiceException ex = assertThrows(ServiceException.class, () -> service.selectApplicationCoachingClassRecords(9001L, 7003L, 838L));
+
+        assertEquals("无权访问该辅导申请", ex.getMessage());
+        verify(classRecordMapper, never()).selectClassRecordList(any());
+    }
+
+    @Test
     void createManualPositionCreatesPendingAdminReviewRecord()
     {
         when(sysDictDataMapper.selectDictDataByType(any())).thenReturn(List.of());
@@ -493,7 +802,7 @@ class PositionServiceImplTest
         Map<String, Object> row = rows.get(0);
         assertEquals("OpenAI", row.get("company"));
         assertEquals("OpenAI Intern", row.get("title"));
-        assertEquals("San Francisco", row.get("location"));
+        assertEquals("na", row.get("location"));
         assertEquals("manual", row.get("sourceType"));
     }
 

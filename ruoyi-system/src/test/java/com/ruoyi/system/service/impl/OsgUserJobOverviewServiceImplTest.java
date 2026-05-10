@@ -113,6 +113,34 @@ class OsgUserJobOverviewServiceImplTest
     }
 
     @Test
+    void assignMentorsRejectsWhenMentorCountDoesNotMatchCoachingRequest()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(7005L);
+        application.setStudentId(3005L);
+        application.setLeadMentorId(810L);
+
+        OsgCoaching coaching = new OsgCoaching();
+        coaching.setCoachingId(9005L);
+        coaching.setApplicationId(7005L);
+        coaching.setStudentId(3005L);
+        coaching.setRequestedMentorCount(2);
+
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(7005L)).thenReturn(application);
+        when(coachingMapper.selectCoachingByApplicationId(7005L)).thenReturn(coaching);
+
+        ServiceException error = assertThrows(ServiceException.class, () -> service.assignMentors(
+            7005L,
+            Map.of(
+                "mentorIds", List.of(9201L),
+                "mentorNames", List.of("Jerry Li")),
+            810L,
+            "leadmentor_jobs"));
+
+        assertEquals("导师数量必须等于申请导师数量", error.getMessage());
+    }
+
+    @Test
     void confirmCoachingShouldUpdateConfirmedAtAndReturnLegacyStatus()
     {
         // §C.1：原子 SQL 防并发竞态 + 写 osg_job_application.coachingStatus='coaching'
@@ -224,7 +252,116 @@ class OsgUserJobOverviewServiceImplTest
         assertEquals("Assistant Student", rows.get(0).get("studentName"));
     }
 
+    @Test
+    void listByLeadMentorReturnsOneRowPerCoachingForSameApplication()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(8301L);
+        application.setStudentId(4301L);
+        application.setLeadMentorId(810L);
+        application.setStudentName("Multi Coaching Student");
+        application.setCompanyName("Goldman Sachs");
+        application.setPositionName("Summer Analyst");
+        application.setCurrentStage("Application Parent Stage");
+        application.setSubmittedAt(new Date(1000L));
+
+        OsgCoaching firstRound = new OsgCoaching();
+        firstRound.setCoachingId(9301L);
+        firstRound.setApplicationId(8301L);
+        firstRound.setStudentId(4301L);
+        firstRound.setInterviewStage("First Round");
+        firstRound.setRequestedMentorCount(1);
+        firstRound.setStatus("pending");
+
+        OsgCoaching finalRound = new OsgCoaching();
+        finalRound.setCoachingId(9302L);
+        finalRound.setApplicationId(8301L);
+        finalRound.setStudentId(4301L);
+        finalRound.setInterviewStage("Final Round");
+        finalRound.setRequestedMentorCount(2);
+        finalRound.setStatus("pending");
+
+        when(jobApplicationMapper.selectJobApplicationList(any(OsgJobApplication.class))).thenReturn(List.of(application));
+        when(coachingMapper.selectCoachingList(any(OsgCoaching.class))).thenReturn(List.of(finalRound, firstRound));
+        org.mockito.Mockito.lenient().when(classRecordMapper.selectByApplicationReference(any())).thenReturn(List.of());
+
+        List<Map<String, Object>> rows = service.listByLeadMentor("managed", new OsgJobApplication(), 810L);
+
+        assertEquals(2, rows.size());
+        assertEquals(List.of(9302L, 9301L), rows.stream().map(row -> row.get("coachingId")).toList());
+        assertEquals(List.of("Final Round", "First Round"), rows.stream().map(row -> row.get("currentStage")).toList());
+    }
+
+    @Test
+    void listByLeadMentorComputesStatsByJobCoachingReference()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(8401L);
+        application.setStudentId(4401L);
+        application.setLeadMentorId(810L);
+        application.setStudentName("Stats Student");
+        application.setSubmittedAt(new Date(1000L));
+
+        OsgCoaching coaching = new OsgCoaching();
+        coaching.setCoachingId(9401L);
+        coaching.setApplicationId(8401L);
+        coaching.setStudentId(4401L);
+        coaching.setStatus("coaching");
+        coaching.setMentorIds("810");
+
+        OsgClassRecord applicationScopedRecord = new OsgClassRecord();
+        applicationScopedRecord.setMemberStatus("normal");
+        applicationScopedRecord.setRate("1");
+
+        OsgClassRecord coachingScopedRecord = new OsgClassRecord();
+        coachingScopedRecord.setMemberStatus("normal");
+        coachingScopedRecord.setRate("5");
+
+        when(jobApplicationMapper.selectJobApplicationList(any(OsgJobApplication.class))).thenReturn(List.of(application));
+        when(coachingMapper.selectCoachingList(any(OsgCoaching.class))).thenReturn(List.of(coaching));
+        org.mockito.Mockito.lenient().when(classRecordMapper.selectByApplicationReference(8401L)).thenReturn(List.of(applicationScopedRecord));
+        org.mockito.Mockito.lenient().when(classRecordMapper.selectByJobCoachingReference(9401L)).thenReturn(List.of(coachingScopedRecord));
+
+        List<Map<String, Object>> rows = service.listByLeadMentor("managed", new OsgJobApplication(), 810L);
+
+        assertEquals(1, rows.size());
+        assertEquals(9401L, rows.get(0).get("coachingId"));
+        assertEquals("5", rows.get(0).get("latestRating"));
+        assertEquals(1, rows.get(0).get("lessonCount"));
+        assertEquals(true, rows.get(0).get("lessonReported"));
+    }
+
+    @Test
+    void listByLeadMentorPendingScopeUsesPendingUnassignedCoaching()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(8501L);
+        application.setStudentId(4501L);
+        application.setLeadMentorId(810L);
+        application.setAssignStatus("assigned");
+        application.setRequestedMentorCount(0);
+        application.setSubmittedAt(new Date(1000L));
+
+        OsgCoaching pendingCoaching = new OsgCoaching();
+        pendingCoaching.setCoachingId(9501L);
+        pendingCoaching.setApplicationId(8501L);
+        pendingCoaching.setStudentId(4501L);
+        pendingCoaching.setStatus("pending");
+        pendingCoaching.setRequestedMentorCount(2);
+
+        when(jobApplicationMapper.selectJobApplicationList(any(OsgJobApplication.class))).thenReturn(List.of(application));
+        when(coachingMapper.selectCoachingList(any(OsgCoaching.class))).thenReturn(List.of(pendingCoaching));
+        org.mockito.Mockito.lenient().when(classRecordMapper.selectByApplicationReference(any())).thenReturn(List.of());
+
+        List<Map<String, Object>> rows = service.listByLeadMentor("pending", new OsgJobApplication(), 810L);
+
+        assertEquals(1, rows.size());
+        assertEquals(9501L, rows.get(0).get("coachingId"));
+        assertEquals(8501L, rows.get(0).get("applicationId"));
+    }
+
     // ===== TCS-T-302: computeApplicationStats =====
+
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> invokeComputeApplicationStats(Long applicationId) throws Exception
@@ -349,6 +486,7 @@ class OsgUserJobOverviewServiceImplTest
         application.setLeadMentorId(810L);
 
         OsgCoaching coaching = new OsgCoaching();
+        coaching.setCoachingId(9100L);
         coaching.setApplicationId(5100L);
         coaching.setStatus("coaching");
 
@@ -372,7 +510,7 @@ class OsgUserJobOverviewServiceImplTest
 
         when(jobApplicationMapper.selectJobApplicationByApplicationId(5100L)).thenReturn(application);
         when(coachingMapper.selectCoachingByApplicationId(5100L)).thenReturn(coaching);
-        when(classRecordMapper.selectByApplicationReference(5100L)).thenReturn(List.of(r1, r2));
+        when(classRecordMapper.selectByJobCoachingReference(9100L)).thenReturn(List.of(r1, r2));
 
         Map<String, Object> result = service.detailForLeadMentor(5100L, 810L);
 
@@ -401,6 +539,7 @@ class OsgUserJobOverviewServiceImplTest
         application.setLeadMentorId(810L);
 
         OsgCoaching coaching = new OsgCoaching();
+        coaching.setCoachingId(9200L);
         coaching.setApplicationId(5200L);
         coaching.setStatus("coaching");
         coaching.setMentorId(810L);
@@ -408,7 +547,7 @@ class OsgUserJobOverviewServiceImplTest
 
         when(jobApplicationMapper.selectJobApplicationByApplicationId(5200L)).thenReturn(application);
         when(coachingMapper.selectCoachingByApplicationId(5200L)).thenReturn(coaching);
-        when(classRecordMapper.selectByApplicationReference(5200L)).thenReturn(List.of());
+        when(classRecordMapper.selectByJobCoachingReference(9200L)).thenReturn(List.of());
 
         Map<String, Object> result = service.detailForLeadMentor(5200L, 810L);
 
@@ -416,6 +555,46 @@ class OsgUserJobOverviewServiceImplTest
         List<Map<String, Object>> groups = (List<Map<String, Object>>) result.get("classRecordsByMentor");
         assertNotNull(groups);
         assertEquals(0, groups.size());
+    }
+
+    @Test
+    void detailForLeadMentorUsesCurrentCoachingClassRecordsOnly()
+    {
+        OsgJobApplication application = new OsgJobApplication();
+        application.setApplicationId(5400L);
+        application.setStudentId(4400L);
+        application.setLeadMentorId(810L);
+
+        OsgCoaching coaching = new OsgCoaching();
+        coaching.setCoachingId(9400L);
+        coaching.setApplicationId(5400L);
+        coaching.setStatus("coaching");
+        coaching.setMentorId(810L);
+        coaching.setMentorIds("810");
+
+        OsgClassRecord coachingScopedRecord = new OsgClassRecord();
+        coachingScopedRecord.setRecordId(402L);
+        coachingScopedRecord.setMentorId(810L);
+        coachingScopedRecord.setMentorName("Right Mentor");
+        coachingScopedRecord.setDurationHours(2.0);
+        coachingScopedRecord.setMemberStatus("normal");
+        coachingScopedRecord.setRate("5");
+
+        when(jobApplicationMapper.selectJobApplicationByApplicationId(5400L)).thenReturn(application);
+        when(coachingMapper.selectCoachingByApplicationId(5400L)).thenReturn(coaching);
+        when(classRecordMapper.selectByJobCoachingReference(9400L)).thenReturn(List.of(coachingScopedRecord));
+
+        Map<String, Object> result = service.detailForLeadMentor(5400L, 810L);
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> groups = (List<Map<String, Object>>) result.get("classRecordsByMentor");
+        assertEquals(1, groups.size());
+        assertEquals("Right Mentor", groups.get(0).get("mentorName"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> records = (List<Map<String, Object>>) groups.get(0).get("records");
+        assertEquals(1, records.size());
+        assertEquals(402L, records.get(0).get("recordId"));
+        verify(classRecordMapper, org.mockito.Mockito.never()).selectByApplicationReference(5400L);
     }
 
     @Test
@@ -427,6 +606,7 @@ class OsgUserJobOverviewServiceImplTest
         application.setLeadMentorId(810L);
 
         OsgCoaching coaching = new OsgCoaching();
+        coaching.setCoachingId(9300L);
         coaching.setApplicationId(5300L);
         coaching.setStatus("coaching");
         coaching.setMentorId(810L);
@@ -450,7 +630,7 @@ class OsgUserJobOverviewServiceImplTest
 
         when(jobApplicationMapper.selectJobApplicationByApplicationId(5300L)).thenReturn(application);
         when(coachingMapper.selectCoachingByApplicationId(5300L)).thenReturn(coaching);
-        when(classRecordMapper.selectByApplicationReference(5300L)).thenReturn(List.of(absentRecord, normalRecord));
+        when(classRecordMapper.selectByJobCoachingReference(9300L)).thenReturn(List.of(absentRecord, normalRecord));
 
         Map<String, Object> result = service.detailForLeadMentor(5300L, 810L);
 
@@ -730,7 +910,7 @@ class OsgUserJobOverviewServiceImplTest
         when(jobApplicationMapper.selectJobApplicationList(any(OsgJobApplication.class)))
             .thenReturn(List.of(coached, notCoached));
         when(coachingMapper.selectCoachingList(any(OsgCoaching.class))).thenReturn(List.of(coaching));
-        when(classRecordMapper.selectByApplicationReference(any())).thenReturn(List.of());
+        org.mockito.Mockito.lenient().when(classRecordMapper.selectByApplicationReference(any())).thenReturn(List.of());
 
         List<Map<String, Object>> rows = service.listByLeadMentor("coaching", new OsgJobApplication(), 810L);
 

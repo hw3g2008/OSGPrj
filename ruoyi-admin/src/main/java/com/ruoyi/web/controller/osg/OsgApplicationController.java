@@ -4,7 +4,11 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.core.controller.BaseController;
@@ -15,7 +19,7 @@ import com.ruoyi.system.service.IPositionService;
  * 学员申请追踪接口（S-005 我的求职页）
  */
 @RestController
-@RequestMapping("/student/application")
+@RequestMapping({"/student/application", "/student/applications"})
 public class OsgApplicationController extends BaseController
 {
     @Autowired
@@ -47,5 +51,26 @@ public class OsgApplicationController extends BaseController
     {
         Long userId = getUserId();
         return success(positionService.selectApplicationMeta(userId));
+    }
+
+    @PostMapping("/{applicationId}/coachings")
+    public AjaxResult createCoaching(@PathVariable Long applicationId, @RequestBody Map<String, Object> params)
+    {
+        Long userId = getUserId();
+        return success(positionService.requestApplicationCoaching(applicationId, params, userId));
+    }
+
+    @PutMapping("/{applicationId}/coachings/{coachingId}")
+    public AjaxResult updateCoaching(@PathVariable Long applicationId, @PathVariable Long coachingId, @RequestBody Map<String, Object> params)
+    {
+        Long userId = getUserId();
+        return success(positionService.updateApplicationCoaching(applicationId, coachingId, params, userId));
+    }
+
+    @GetMapping("/{applicationId}/coachings/{coachingId}/class-records")
+    public AjaxResult classRecords(@PathVariable Long applicationId, @PathVariable Long coachingId)
+    {
+        Long userId = getUserId();
+        return success(positionService.selectApplicationCoachingClassRecords(applicationId, coachingId, userId));
     }
 }

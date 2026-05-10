@@ -75,14 +75,55 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
 
     private List<Map<String, Object>> selectOverviewListInternal(String scope, OsgJobApplication query, Long currentUserId)
     {
+        if (currentUserId == null)
+        {
+            return List.of();
+        }
         String resolvedScope = normalizeScope(scope);
         OsgJobApplication normalizedQuery = normalizeQuery(query);
-        List<OsgJobApplication> rows = selectScopedApplications(resolvedScope, query, currentUserId);
-        rows = filterRowsByQuery(rows, normalizedQuery);
-        Map<Long, OsgCoaching> coachingMap = selectCoachingMap();
-        List<Map<String, Object>> payloads = rows.stream()
-            .sorted(Comparator.comparing(OsgJobApplication::getSubmittedAt, Comparator.nullsLast(Date::compareTo)).reversed())
-            .map(row -> toOverviewPayload(row, coachingMap.get(row.getApplicationId())))
+        List<OsgJobApplication> applications = selectCandidateApplications(resolvedScope, query, currentUserId);
+        Map<Long, OsgJobApplication> applicationMap = toApplicationMap(applications);
+        List<OsgCoaching> coachings = selectAllCoachings();
+        if (SCOPE_COACHING.equals(resolvedScope))
+        {
+            applications = mergeApplications(applications, selectMissingApplications(coachings.stream()
+                .filter(row -> matchesMentorRelation(row, currentUserId))
+                .map(OsgCoaching::getApplicationId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new)), applications));
+            applicationMap = toApplicationMap(applications);
+        }
+        Map<Long, OsgStudent> studentMap = SCOPE_COACHING.equals(resolvedScope)
+            ? loadStudentMap(applications.stream().map(OsgJobApplication::getStudentId).filter(Objects::nonNull).toList())
+            : Map.of();
+
+        Set<Long> applicationsWithCoachingRows = new LinkedHashSet<>();
+        List<Map<String, Object>> payloads = new ArrayList<>();
+        for (OsgCoaching coaching : coachings)
+        {
+            if (coaching == null || coaching.getApplicationId() == null)
+            {
+                continue;
+            }
+            OsgJobApplication application = applicationMap.get(coaching.getApplicationId());
+            if (application == null || !matchesScope(resolvedScope, application, coaching, currentUserId)
+                || !matchesOverviewQuery(application, coaching, normalizedQuery))
+            {
+                continue;
+            }
+            applicationsWithCoachingRows.add(application.getApplicationId());
+            payloads.add(toOverviewPayload(application, coaching));
+        }
+
+        applications.stream()
+            .filter(row -> row != null && !applicationsWithCoachingRows.contains(row.getApplicationId()))
+            .filter(row -> matchesFallbackScope(resolvedScope, row, currentUserId, studentMap))
+            .filter(row -> matchesOverviewQuery(row, null, normalizedQuery))
+            .map(row -> toOverviewPayload(row, null))
+            .forEach(payloads::add);
+
+        payloads = payloads.stream()
+            .sorted(this::compareOverviewPayload)
             .collect(Collectors.toList());
         Boolean lessonReportedFilter = normalizedQuery.getLessonReported();
         if (lessonReportedFilter != null)
@@ -102,7 +143,17 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
     public Map<String, Object> detailForLeadMentor(Long applicationId, Long leadMentorId)
     {
         Map<String, Object> payload = detailForCoachingUser(applicationId, leadMentorId);
-        payload.put("classRecordsByMentor", buildClassRecordsByMentor(applicationId));
+        payload.put("classRecordsByMentor", buildClassRecordsByMentor(toLong(payload.get("coachingId"))));
+        return payload;
+    }
+
+    @Override
+    public Map<String, Object> detailForLeadMentorCoaching(Long coachingId, Long leadMentorId)
+    {
+        OsgCoaching coaching = requireAccessibleCoaching(coachingId, leadMentorId);
+        OsgJobApplication application = requireAccessibleApplication(coaching.getApplicationId(), leadMentorId);
+        Map<String, Object> payload = toOverviewPayload(application, coaching);
+        payload.put("classRecordsByMentor", buildClassRecordsByMentor(coachingId));
         return payload;
     }
 
@@ -122,10 +173,40 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
     public Map<String, Object> assignMentors(Long applicationId, Map<String, Object> payload, Long currentUserId, String operator)
     {
         OsgJobApplication application = requireManagedApplication(applicationId, currentUserId);
+        OsgCoaching coaching = coachingMapper.selectCoachingByApplicationId(applicationId);
+        if (coaching == null)
+        {
+            coaching = new OsgCoaching();
+            coaching.setApplicationId(applicationId);
+            coaching.setStudentId(application.getStudentId());
+            coaching.setCreateBy(operator);
+        }
+        return assignMentorsToCoaching(application, coaching, payload, operator);
+    }
+
+    @Override
+    public Map<String, Object> assignMentorsByCoaching(Long coachingId, Map<String, Object> payload, Long currentUserId, String operator)
+    {
+        OsgCoaching coaching = coachingMapper.selectCoachingByCoachingId(coachingId);
+        if (coaching == null)
+        {
+            throw new ServiceException("辅导申请不存在");
+        }
+        OsgJobApplication application = requireManagedApplication(coaching.getApplicationId(), currentUserId);
+        return assignMentorsToCoaching(application, coaching, payload, operator);
+    }
+
+    private Map<String, Object> assignMentorsToCoaching(OsgJobApplication application, OsgCoaching coaching, Map<String, Object> payload, String operator)
+    {
         List<Long> mentorIds = toLongList(payload.get("mentorIds"));
         if (mentorIds.isEmpty())
         {
             throw new ServiceException("请至少选择1位导师");
+        }
+        Integer requestedMentorCount = coaching.getRequestedMentorCount();
+        if (requestedMentorCount != null && requestedMentorCount > 0 && mentorIds.size() != requestedMentorCount)
+        {
+            throw new ServiceException("导师数量必须等于申请导师数量");
         }
         List<Long> mentorUserIds = mentorIds.stream()
             .map(identityResolver::resolveUserIdByStaffId)
@@ -136,15 +217,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         String assignNote = firstText(payload.get("assignNote"), payload.get("remark"));
         Date now = new Date();
 
-        OsgCoaching coaching = coachingMapper.selectCoachingByApplicationId(applicationId);
         boolean isReassignment = (coaching != null);
-        if (coaching == null)
-        {
-            coaching = new OsgCoaching();
-            coaching.setApplicationId(applicationId);
-            coaching.setStudentId(application.getStudentId());
-            coaching.setCreateBy(operator);
-        }
 
         coaching.setMentorIds(mentorUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         coaching.setMentorNames(mentorNamesText);
@@ -165,16 +238,14 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             throw new ServiceException("导师分配保存失败");
         }
 
-        // §F1 重新分配裁决：清空老辅导者的 confirm 记录，避免新辅导者看到"已确认"卡死
         if (isReassignment)
         {
-            coachingMapper.resetConfirmationByApplicationId(applicationId, operator);
+            coachingMapper.resetConfirmationByCoachingId(coaching.getCoachingId(), operator);
         }
 
         OsgJobApplication patch = new OsgJobApplication();
-        patch.setApplicationId(applicationId);
+        patch.setApplicationId(application.getApplicationId());
         patch.setAssignStatus("assigned");
-        // §F1：不再设 coachingStatus='辅导中'；重新分配场景重置为 'none'
         if (isReassignment)
         {
             patch.setCoachingStatus("none");
@@ -187,8 +258,9 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("applicationId", applicationId);
-        result.put("coachingStatus", isReassignment ? "none" : "assigned");
+        result.put("applicationId", application.getApplicationId());
+        result.put("coachingId", coaching.getCoachingId());
+        result.put("coachingStatus", "assigned");
         result.put("mentorIds", mentorUserIds);
         result.put("mentorNames", mentorNamesText);
         result.put("assignNote", assignNote);
@@ -417,7 +489,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         row.put("studentName", app.getStudentName());
         row.put("company", app.getCompanyName());
         row.put("position", app.getPositionName());
-        row.put("location", firstText(app.getCity(), app.getRegion()));
+        row.put("location", firstText(app.getRegion(), app.getCity()));
         row.put("interviewTime", app.getInterviewTime());
         row.put("interviewStage", app.getCurrentStage());
         row.put("coachingStatus", toLegacyCoachingStatus(app.getCoachingStatus()));
@@ -464,6 +536,162 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             return "cancelled";
         }
         return null;
+    }
+
+    private List<OsgJobApplication> selectCandidateApplications(String scope, OsgJobApplication rawQuery, Long currentUserId)
+    {
+        OsgJobApplication lookupQuery = buildApplicationLookupQuery(rawQuery);
+        if (SCOPE_PENDING.equals(scope) || SCOPE_MANAGED.equals(scope))
+        {
+            lookupQuery.setLeadMentorId(currentUserId);
+        }
+        List<OsgJobApplication> rows = jobApplicationMapper.selectJobApplicationList(lookupQuery);
+        return rows == null ? List.of() : rows;
+    }
+
+    private OsgJobApplication buildApplicationLookupQuery(OsgJobApplication rawQuery)
+    {
+        OsgJobApplication lookupQuery = normalizeQuery(rawQuery);
+        lookupQuery.setCurrentStage(null);
+        lookupQuery.setStatus(null);
+        lookupQuery.setMonth(null);
+        lookupQuery.setInterviewTimeStart(null);
+        lookupQuery.setInterviewTimeEnd(null);
+        lookupQuery.setLessonReported(null);
+        return lookupQuery;
+    }
+
+    private Map<Long, OsgJobApplication> toApplicationMap(List<OsgJobApplication> applications)
+    {
+        if (applications == null || applications.isEmpty())
+        {
+            return Map.of();
+        }
+        return applications.stream()
+            .filter(row -> row != null && row.getApplicationId() != null)
+            .collect(Collectors.toMap(OsgJobApplication::getApplicationId, row -> row, (first, second) -> first, LinkedHashMap::new));
+    }
+
+    private List<OsgCoaching> selectAllCoachings()
+    {
+        List<OsgCoaching> rows = coachingMapper.selectCoachingList(new OsgCoaching());
+        return rows == null ? List.of() : rows;
+    }
+
+    private boolean matchesScope(String scope, OsgJobApplication application, OsgCoaching coaching, Long currentUserId)
+    {
+        if (SCOPE_PENDING.equals(scope))
+        {
+            return isPendingCoachingAssignment(coaching);
+        }
+        if (SCOPE_COACHING.equals(scope))
+        {
+            return matchesMentorRelation(coaching, currentUserId);
+        }
+        return true;
+    }
+
+    private boolean matchesFallbackScope(String scope, OsgJobApplication application, Long currentUserId, Map<Long, OsgStudent> studentMap)
+    {
+        if (SCOPE_PENDING.equals(scope))
+        {
+            return isPendingAssignment(application);
+        }
+        if (SCOPE_COACHING.equals(scope))
+        {
+            return hasAssistantOwnership(application, currentUserId, studentMap);
+        }
+        return true;
+    }
+
+    private boolean isPendingCoachingAssignment(OsgCoaching coaching)
+    {
+        if (coaching == null)
+        {
+            return false;
+        }
+        String status = trimToNull(coaching.getStatus());
+        boolean pendingStatus = status == null
+            || "pending".equalsIgnoreCase(status)
+            || "new".equalsIgnoreCase(status)
+            || "待审批".equals(status);
+        return pendingStatus
+            && defaultNumber(coaching.getRequestedMentorCount()) > 0
+            && firstText(coaching.getMentorIds(), coaching.getMentorNames(), coaching.getMentorName()) == null;
+    }
+
+    private boolean matchesOverviewQuery(OsgJobApplication application, OsgCoaching coaching, OsgJobApplication query)
+    {
+        if (application == null)
+        {
+            return false;
+        }
+        if (query == null)
+        {
+            return true;
+        }
+        if (query.getCompanyName() != null && !Objects.equals(query.getCompanyName(), trimToNull(application.getCompanyName())))
+        {
+            return false;
+        }
+        if (query.getCurrentStage() != null && !Objects.equals(query.getCurrentStage(), trimToNull(resolveOverviewStage(application, coaching))))
+        {
+            return false;
+        }
+        if (query.getAssignStatus() != null && !Objects.equals(query.getAssignStatus(), trimToNull(application.getAssignStatus())))
+        {
+            return false;
+        }
+        Date interviewTime = resolveOverviewInterviewTime(application, coaching);
+        if (!matchesMonth(interviewTime, query.getMonth()))
+        {
+            return false;
+        }
+        if (!matchesOverviewStatus(application, coaching, query.getStatus()))
+        {
+            return false;
+        }
+        if (query.getInterviewTimeStart() != null
+            && (interviewTime == null || interviewTime.before(query.getInterviewTimeStart())))
+        {
+            return false;
+        }
+        if (query.getInterviewTimeEnd() != null
+            && (interviewTime == null || interviewTime.after(query.getInterviewTimeEnd())))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean matchesOverviewStatus(OsgJobApplication application, OsgCoaching coaching, String status)
+    {
+        String normalizedStatus = normalizeStatusFilter(status);
+        if (normalizedStatus == null)
+        {
+            return true;
+        }
+        String rowStatus = resolveStatusForQuery(application, coaching);
+        return normalizedStatus.equals(rowStatus);
+    }
+
+    private int compareOverviewPayload(Map<String, Object> left, Map<String, Object> right)
+    {
+        Date leftSubmittedAt = toDate(left.get("submittedAt"));
+        Date rightSubmittedAt = toDate(right.get("submittedAt"));
+        int submittedCompare = Comparator.nullsLast(Date::compareTo).compare(rightSubmittedAt, leftSubmittedAt);
+        if (submittedCompare != 0)
+        {
+            return submittedCompare;
+        }
+        Long leftCoachingId = toLong(left.get("coachingId"));
+        Long rightCoachingId = toLong(right.get("coachingId"));
+        return Comparator.nullsLast(Long::compareTo).compare(rightCoachingId, leftCoachingId);
+    }
+
+    private Date toDate(Object value)
+    {
+        return value instanceof Date date ? date : null;
     }
 
     private List<OsgJobApplication> selectScopedApplications(String scope, OsgJobApplication rawQuery, Long currentUserId)
@@ -564,6 +792,31 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             throw new ServiceException("无权操作该求职申请");
         }
         return application;
+    }
+
+    private OsgCoaching requireAccessibleCoaching(Long coachingId, Long currentUserId)
+    {
+        OsgCoaching coaching = coachingMapper.selectCoachingByCoachingId(coachingId);
+        if (coaching == null)
+        {
+            throw new ServiceException("辅导申请不存在");
+        }
+        if (coaching.getApplicationId() == null)
+        {
+            throw new ServiceException("辅导申请缺少求职申请");
+        }
+        OsgJobApplication application = jobApplicationMapper.selectJobApplicationByApplicationId(coaching.getApplicationId());
+        if (application == null)
+        {
+            throw new ServiceException("求职申请不存在");
+        }
+        if (!canManage(application, currentUserId)
+            && !hasAssistantOwnership(application, currentUserId)
+            && !matchesMentorRelation(coaching, currentUserId))
+        {
+            throw new ServiceException("无权访问该辅导申请");
+        }
+        return coaching;
     }
 
     private Map<Long, OsgCoaching> selectCoachingMap()
@@ -683,19 +936,22 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
     private Map<String, Object> toOverviewPayload(OsgJobApplication application, OsgCoaching coaching)
     {
         Map<String, Object> payload = new LinkedHashMap<>();
+        Long studentId = coaching != null && coaching.getStudentId() != null ? coaching.getStudentId() : application.getStudentId();
+        String city = resolveOverviewCity(application, coaching);
         payload.put("applicationId", application.getApplicationId());
-        payload.put("studentId", application.getStudentId());
+        payload.put("coachingId", coaching == null ? null : coaching.getCoachingId());
+        payload.put("studentId", studentId);
         payload.put("studentName", defaultText(application.getStudentName(), "-"));
         payload.put("companyName", defaultText(application.getCompanyName(), "-"));
         payload.put("positionName", defaultText(application.getPositionName(), "-"));
         payload.put("region", defaultText(application.getRegion()));
-        payload.put("city", defaultText(application.getCity()));
-        payload.put("currentStage", defaultText(application.getCurrentStage(), "-"));
-        payload.put("interviewTime", application.getInterviewTime());
+        payload.put("city", defaultText(city));
+        payload.put("currentStage", defaultText(resolveOverviewStage(application, coaching), "-"));
+        payload.put("interviewTime", resolveOverviewInterviewTime(application, coaching));
         payload.put("assignedStatus", defaultText(application.getAssignStatus()));
         payload.put("leadMentorName", defaultText(application.getLeadMentorName()));
         payload.put("stageUpdated", Boolean.TRUE.equals(application.getStageUpdated()));
-        payload.put("requestedMentorCount", defaultNumber(application.getRequestedMentorCount()));
+        payload.put("requestedMentorCount", resolveOverviewRequestedMentorCount(application, coaching));
         payload.put("preferredMentorNames", defaultText(application.getPreferredMentorNames()));
         payload.put("submittedAt", application.getSubmittedAt());
 
@@ -720,13 +976,37 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             payload.put("feedbackSummary", "-");
         }
 
-        payload.put("cityLabel", resolveCityLabel(application.getCity()));
-        Map<String, Object> appStats = computeApplicationStats(application.getApplicationId());
-        payload.put("latestRating", appStats.get("latestRating"));
-        payload.put("lessonCount", appStats.get("lessonCount"));
-        payload.put("lessonReported", appStats.get("lessonReported"));
+        payload.put("cityLabel", resolveCityLabel(city));
+        Map<String, Object> stats = coaching == null
+            ? computeApplicationStats(application.getApplicationId())
+            : computeCoachingStats(coaching.getCoachingId());
+        payload.put("latestRating", stats.get("latestRating"));
+        payload.put("lessonCount", stats.get("lessonCount"));
+        payload.put("lessonReported", stats.get("lessonReported"));
 
         return payload;
+    }
+
+    private String resolveOverviewStage(OsgJobApplication application, OsgCoaching coaching)
+    {
+        return coaching == null ? application.getCurrentStage() : firstText(coaching.getInterviewStage(), application.getCurrentStage());
+    }
+
+    private Date resolveOverviewInterviewTime(OsgJobApplication application, OsgCoaching coaching)
+    {
+        return coaching != null && coaching.getInterviewTime() != null ? coaching.getInterviewTime() : application.getInterviewTime();
+    }
+
+    private String resolveOverviewCity(OsgJobApplication application, OsgCoaching coaching)
+    {
+        return coaching == null ? application.getCity() : firstText(coaching.getCity(), application.getCity());
+    }
+
+    private Integer resolveOverviewRequestedMentorCount(OsgJobApplication application, OsgCoaching coaching)
+    {
+        return coaching != null && coaching.getRequestedMentorCount() != null
+            ? coaching.getRequestedMentorCount()
+            : defaultNumber(application.getRequestedMentorCount());
     }
 
     private OsgJobApplication normalizeQuery(OsgJobApplication query)
@@ -962,6 +1242,19 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         return null;
     }
 
+    private String resolveStatusForQuery(OsgJobApplication row, OsgCoaching coaching)
+    {
+        if (coaching != null)
+        {
+            String normalizedStatus = normalizeStatusFilter(coaching.getStatus());
+            if (normalizedStatus != null)
+            {
+                return normalizedStatus;
+            }
+        }
+        return resolveStatusForQuery(row);
+    }
+
     private String normalizeStatusFilter(String status)
     {
         String value = trimToNull(status);
@@ -1121,7 +1414,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         row.put("studentName", app.getStudentName());
         row.put("company", app.getCompanyName());
         row.put("position", app.getPositionName());
-        row.put("location", firstText(app.getCity(), app.getRegion()));
+        row.put("location", firstText(app.getRegion(), app.getCity()));
         row.put("interviewStage", app.getCurrentStage());
         row.put("interviewTime", app.getInterviewTime());
         row.put("coachingStatus", toAssistantLegacyCoachingStatus(app.getCoachingStatus()));
@@ -1137,7 +1430,7 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         row.put("studentName", app.getStudentName());
         row.put("company", app.getCompanyName());
         row.put("position", app.getPositionName());
-        row.put("location", firstText(app.getCity(), app.getRegion()));
+        row.put("location", firstText(app.getRegion(), app.getCity()));
         row.put("interviewTime", app.getInterviewTime());
         row.put("interviewStage", app.getCurrentStage());
         row.put("coachingStatus", toAssistantLegacyCoachingStatus(app.getCoachingStatus()));
@@ -1194,13 +1487,13 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         return fallback != null ? fallback : "";
     }
 
-    private List<Map<String, Object>> buildClassRecordsByMentor(Long applicationId)
+    private List<Map<String, Object>> buildClassRecordsByMentor(Long coachingId)
     {
-        if (applicationId == null)
+        if (coachingId == null)
         {
             return List.of();
         }
-        List<OsgClassRecord> records = classRecordMapper.selectByApplicationReference(applicationId);
+        List<OsgClassRecord> records = classRecordMapper.selectByJobCoachingReference(coachingId);
         if (records == null || records.isEmpty())
         {
             return List.of();
@@ -1262,15 +1555,31 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
 
     private Map<String, Object> computeApplicationStats(Long applicationId)
     {
-        Map<String, Object> stats = new LinkedHashMap<>();
         if (applicationId == null)
         {
-            stats.put("latestRating", null);
-            stats.put("lessonCount", 0);
-            stats.put("lessonReported", false);
-            return stats;
+            return emptyStats();
         }
         List<OsgClassRecord> records = classRecordMapper.selectByApplicationReference(applicationId);
+        return computeStatsFromRecords(records);
+    }
+
+    private Map<String, Object> computeCoachingStats(Long coachingId)
+    {
+        if (coachingId == null)
+        {
+            return emptyStats();
+        }
+        List<OsgClassRecord> records = classRecordMapper.selectByJobCoachingReference(coachingId);
+        return computeStatsFromRecords(records);
+    }
+
+    private Map<String, Object> computeStatsFromRecords(List<OsgClassRecord> records)
+    {
+        Map<String, Object> stats = new LinkedHashMap<>();
+        if (records == null)
+        {
+            records = List.of();
+        }
         int lessonCount = records.size();
         String latestRating = records.stream()
             .filter(r -> "normal".equals(r.getMemberStatus()))
@@ -1281,6 +1590,15 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         stats.put("latestRating", latestRating);
         stats.put("lessonCount", lessonCount);
         stats.put("lessonReported", lessonCount > 0);
+        return stats;
+    }
+
+    private Map<String, Object> emptyStats()
+    {
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("latestRating", null);
+        stats.put("lessonCount", 0);
+        stats.put("lessonReported", false);
         return stats;
     }
 

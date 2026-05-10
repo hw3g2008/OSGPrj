@@ -15,6 +15,18 @@ public class OsgCoaching extends BaseEntity
 
     private Long studentId;
 
+    private String interviewStage;
+
+    private Date interviewTime;
+
+    private String city;
+
+    private String companyInterviewer;
+
+    private Integer requestedMentorCount;
+
+    private String requestNote;
+
     private Long mentorId;
 
     private String mentorName;
@@ -65,6 +77,66 @@ public class OsgCoaching extends BaseEntity
     public void setStudentId(Long studentId)
     {
         this.studentId = studentId;
+    }
+
+    public String getInterviewStage()
+    {
+        return interviewStage;
+    }
+
+    public void setInterviewStage(String interviewStage)
+    {
+        this.interviewStage = interviewStage;
+    }
+
+    public Date getInterviewTime()
+    {
+        return interviewTime;
+    }
+
+    public void setInterviewTime(Date interviewTime)
+    {
+        this.interviewTime = interviewTime;
+    }
+
+    public String getCity()
+    {
+        return city;
+    }
+
+    public void setCity(String city)
+    {
+        this.city = city;
+    }
+
+    public String getCompanyInterviewer()
+    {
+        return companyInterviewer;
+    }
+
+    public void setCompanyInterviewer(String companyInterviewer)
+    {
+        this.companyInterviewer = companyInterviewer;
+    }
+
+    public Integer getRequestedMentorCount()
+    {
+        return requestedMentorCount;
+    }
+
+    public void setRequestedMentorCount(Integer requestedMentorCount)
+    {
+        this.requestedMentorCount = requestedMentorCount;
+    }
+
+    public String getRequestNote()
+    {
+        return requestNote;
+    }
+
+    public void setRequestNote(String requestNote)
+    {
+        this.requestNote = requestNote;
     }
 
     public Long getMentorId()
@@ -184,6 +256,12 @@ public class OsgCoaching extends BaseEntity
             .append("coachingId", getCoachingId())
             .append("applicationId", getApplicationId())
             .append("studentId", getStudentId())
+            .append("interviewStage", getInterviewStage())
+            .append("interviewTime", getInterviewTime())
+            .append("city", getCity())
+            .append("companyInterviewer", getCompanyInterviewer())
+            .append("requestedMentorCount", getRequestedMentorCount())
+            .append("requestNote", getRequestNote())
             .append("mentorId", getMentorId())
             .append("mentorName", getMentorName())
             .append("mentorIds", getMentorIds())

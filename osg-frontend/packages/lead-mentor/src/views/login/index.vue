@@ -26,7 +26,7 @@
         </div>
 
         <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用您的账号登录（主导师/班主任）</p>
+        <p class="login-subtitle">使用邮箱登录（主导师/班主任）</p>
 
         <div v-if="errorMessage" class="login-error" role="alert">
           <span class="mdi mdi-alert-circle error-icon" aria-hidden="true"></span>
@@ -35,13 +35,13 @@
 
         <form class="login-form" @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="login-username">用户名 / 邮箱</label>
+            <label for="login-username">邮箱</label>
             <input
               id="login-username"
               v-model.trim="formState.username"
-              type="text"
-              placeholder="请输入用户名或邮箱"
-              autocomplete="username"
+              type="email"
+              placeholder="请输入邮箱"
+              autocomplete="email"
             />
           </div>
 
@@ -141,7 +141,7 @@ const openForgotPassword = () => {
 const handleLogin = async () => {
   errorMessage.value = ''
   if (!formState.username || !formState.password) {
-    message.error('请输入用户名和密码')
+    message.error('请输入邮箱和密码')
     return
   }
 
@@ -168,7 +168,7 @@ const handleLogin = async () => {
     router.push((route.query.redirect as string) || '/')
   } catch (error: any) {
     clearAuth()
-    errorMessage.value = error?.message || '用户不存在/密码错误'
+    errorMessage.value = error?.message || '邮箱或密码错误'
   } finally {
     loading.value = false
   }

@@ -36,6 +36,12 @@ CREATE TABLE IF NOT EXISTS osg_coaching (
     coaching_id BIGINT PRIMARY KEY AUTO_INCREMENT,
     application_id BIGINT NOT NULL,
     student_id BIGINT NOT NULL,
+    interview_stage VARCHAR(64) NULL,
+    interview_time DATETIME NULL,
+    city VARCHAR(64) NULL,
+    company_interviewer VARCHAR(128) NULL,
+    requested_mentor_count INT NULL,
+    request_note VARCHAR(1000) NULL,
     mentor_id BIGINT NULL,
     mentor_name VARCHAR(64) NULL,
     mentor_ids VARCHAR(255) NULL,
@@ -56,5 +62,5 @@ CREATE TABLE IF NOT EXISTS osg_coaching (
     CONSTRAINT fk_coaching_student FOREIGN KEY (student_id) REFERENCES osg_student (student_id)
 );
 
-CREATE UNIQUE INDEX uk_coaching_application ON osg_coaching (application_id);
+CREATE INDEX idx_coaching_application ON osg_coaching (application_id);
 CREATE INDEX idx_coaching_status ON osg_coaching (status);

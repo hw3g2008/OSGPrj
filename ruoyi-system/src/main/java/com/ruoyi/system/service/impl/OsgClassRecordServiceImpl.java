@@ -323,8 +323,13 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         }
 
         String type = refType.trim();
+        if (OsgClassReportConstants.REFERENCE_TYPE_JOB_COACHING.equals(type))
+        {
+            return buildJobCoachingCandidates(currentUserId, normalizedEnd, studentId);
+        }
         if (OsgClassReportConstants.REFERENCE_TYPE_APPLICATION.equals(type))
         {
+            // 兼容路径：旧前端仍可能传 reference_type=application；保留直到全链路切换完成。
             return buildApplicationCandidates(currentUserId, normalizedEnd, studentId);
         }
         if (OsgClassReportConstants.REFERENCE_TYPE_MOCK_INTERVIEW.equals(type)
@@ -468,6 +473,103 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         String pos = nullToDash(a.getPositionName());
         String stage = nullToDash(a.getCurrentStage());
         String interview = a.getInterviewTime() == null ? "-" : a.getInterviewTime().toString();
+        return company + " / " + pos + " / " + stage + " / " + interview;
+    }
+
+    /**
+     * Fix 4：job_coaching reference 候选构建。
+     * 行维度 = osg_coaching（一个 application 可有多条），label 含公司/岗位/阶段/面试时间。
+     * 阶段优先用 coaching.interview_stage，回退到 application.current_stage。
+     * 面试时间优先用 coaching.interview_time，回退到 application.interview_time。
+     */
+    private List<Map<String, Object>> buildJobCoachingCandidates(Long currentUserId, String end, Long studentId)
+    {
+        OsgCoaching query = new OsgCoaching();
+        query.setStudentId(studentId);
+        List<OsgCoaching> coachings = coachingMapper.selectCoachingList(query);
+        if (coachings == null || coachings.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        List<OsgCoaching> visible = new ArrayList<>();
+        for (OsgCoaching c : coachings)
+        {
+            if (c.getCoachingId() == null) continue;
+            if (!Objects.equals(c.getStudentId(), studentId)) continue;
+            boolean assigned;
+            if (OsgClassReportValidator.END_MENTOR.equalsIgnoreCase(end))
+            {
+                assigned = isUserInCsv(c.getMentorIds(), currentUserId);
+            }
+            else if (OsgClassReportValidator.END_LEAD_MENTOR.equalsIgnoreCase(end))
+            {
+                OsgJobApplication app = c.getApplicationId() == null
+                    ? null
+                    : jobApplicationMapper.selectJobApplicationByApplicationId(c.getApplicationId());
+                assigned = app != null && Objects.equals(app.getLeadMentorId(), currentUserId);
+            }
+            else
+            {
+                // assistant：studentId 已通过 reportable 校验
+                assigned = true;
+            }
+            if (assigned)
+            {
+                visible.add(c);
+            }
+        }
+        // 按 coaching 自身 interview_time 倒序，回退到 coaching_id 倒序
+        visible.sort((x, y) -> {
+            Date xt = x.getInterviewTime();
+            Date yt = y.getInterviewTime();
+            if (xt != null && yt != null) return yt.compareTo(xt);
+            if (xt == null && yt == null) return Long.compare(
+                y.getCoachingId() == null ? 0L : y.getCoachingId(),
+                x.getCoachingId() == null ? 0L : x.getCoachingId());
+            if (xt == null) return 1;
+            return -1;
+        });
+        Set<Long> seen = new java.util.HashSet<>();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (OsgCoaching c : visible)
+        {
+            if (!seen.add(c.getCoachingId())) continue;
+            OsgJobApplication app = c.getApplicationId() == null
+                ? null
+                : jobApplicationMapper.selectJobApplicationByApplicationId(c.getApplicationId());
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("referenceType", OsgClassReportConstants.REFERENCE_TYPE_JOB_COACHING);
+            m.put("referenceId", c.getCoachingId());
+            m.put("id", c.getCoachingId());
+            m.put("label", buildJobCoachingLabel(c, app));
+            Map<String, Object> raw = new LinkedHashMap<>();
+            raw.put("coachingId", c.getCoachingId());
+            raw.put("applicationId", c.getApplicationId());
+            raw.put("companyName", app == null ? null : app.getCompanyName());
+            raw.put("positionName", app == null ? null : app.getPositionName());
+            raw.put("currentStage", c.getInterviewStage() != null
+                ? c.getInterviewStage()
+                : (app == null ? null : app.getCurrentStage()));
+            raw.put("interviewTime", c.getInterviewTime() != null
+                ? c.getInterviewTime()
+                : (app == null ? null : app.getInterviewTime()));
+            m.put("raw", raw);
+            result.add(m);
+        }
+        return result;
+    }
+
+    private String buildJobCoachingLabel(OsgCoaching c, OsgJobApplication app)
+    {
+        String company = nullToDash(app == null ? null : app.getCompanyName());
+        String pos = nullToDash(app == null ? null : app.getPositionName());
+        String stage = nullToDash(c.getInterviewStage() != null
+            ? c.getInterviewStage()
+            : (app == null ? null : app.getCurrentStage()));
+        Date when = c.getInterviewTime() != null
+            ? c.getInterviewTime()
+            : (app == null ? null : app.getInterviewTime());
+        String interview = when == null ? "-" : when.toString();
         return company + " / " + pos + " / " + stage + " / " + interview;
     }
 

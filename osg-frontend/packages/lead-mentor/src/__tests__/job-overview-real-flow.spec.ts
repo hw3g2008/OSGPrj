@@ -9,7 +9,9 @@ import JobOverviewPage from '../views/career/job-overview/index.vue'
 const apiMocks = vi.hoisted(() => ({
   getLeadMentorJobOverviewList: vi.fn(),
   getLeadMentorJobOverviewDetail: vi.fn(),
+  getLeadMentorJobOverviewCoachingDetail: vi.fn(),
   assignLeadMentorJobOverviewMentor: vi.fn(),
+  assignLeadMentorJobOverviewCoachingMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
   getLeadMentorJobOverviewCalendar: vi.fn(),
   getLeadMentorMentorList: vi.fn(async () => ({
@@ -38,19 +40,21 @@ const apiMocks = vi.hoisted(() => ({
   })),
 }))
 
-vi.mock('@osg/shared/composables', async () => {
-  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
-    '@osg/shared/composables',
-  )
-  return {
-    ...actual,
-    useDictFacade: () => ({
-      items: { value: [] },
-      loading: { value: false },
-      load: vi.fn(async () => undefined),
-    }),
-  }
-})
+vi.mock('@osg/shared/composables', () => ({
+  useIdleLogout: () => undefined,
+  useCoachingStatusMap: () => ({
+    items: { value: [] },
+    loading: { value: false },
+    load: vi.fn(async () => undefined),
+    resolveCoachingTone: () => 'blue',
+  }),
+  useDictFacade: () => ({
+    items: { value: [] },
+    loading: { value: false },
+    load: vi.fn(async () => undefined),
+  }),
+  deriveApplicationStatus: (status?: string) => status || 'pending',
+}))
 
 const messageMocks = vi.hoisted(() => ({
   error: vi.fn(),
@@ -186,6 +190,25 @@ async function flushUi() {
   await nextTick()
 }
 
+async function waitFor<T>(resolve: () => T | null | undefined | false, description: string, timeoutMs = 1000): Promise<T> {
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < timeoutMs) {
+    await flushUi()
+    const result = resolve()
+    if (result) {
+      return result
+    }
+    await new Promise((resolveTimeout) => setTimeout(resolveTimeout, 10))
+  }
+  throw new Error(`Timeout waiting for ${description}`)
+}
+
+function findButtonByText(container: ParentNode, text: string): HTMLButtonElement | null {
+  return Array.from(container.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
+    button.textContent?.includes(text),
+  ) || null
+}
+
 async function mountJobOverviewPage(initialPath = '/career/job-overview') {
   const router = createRouter({
     history: createMemoryHistory(),
@@ -244,6 +267,12 @@ describe('lead-mentor job overview real flow', () => {
       coachingStatus: '辅导中',
       mentorNames: 'Jerry Li, Mike Wang',
     })
+    apiMocks.assignLeadMentorJobOverviewCoachingMentor.mockResolvedValue({
+      applicationId: 7001,
+      coachingId: 9701,
+      coachingStatus: '辅导中',
+      mentorNames: 'Jerry Li, Mike Wang',
+    })
     apiMocks.acknowledgeLeadMentorJobOverviewStage.mockResolvedValue({
       applicationId: 7003,
       stageUpdated: false,
@@ -276,8 +305,8 @@ describe('lead-mentor job overview real flow', () => {
     const page = await mountJobOverviewPage()
 
     try {
-      const detailTrigger = Array.from(page.container.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
-        button.textContent?.includes('查看详情'),
+      const detailTrigger = page.container.querySelector<HTMLButtonElement>(
+        '[data-surface-trigger="modal-job-detail"]',
       )
       expect(detailTrigger).toBeTruthy()
 
@@ -286,11 +315,14 @@ describe('lead-mentor job overview real flow', () => {
 
       expect(apiMocks.getLeadMentorJobOverviewDetail).toHaveBeenCalledWith(7002)
 
-      const modal = page.container.querySelector('[data-surface-id="modal-job-detail"]')
-      expect(modal?.textContent).toContain('Case Study')
-      expect(modal?.textContent).toContain('Jess')
-      expect(modal?.textContent).toContain('6h')
-      expect(modal?.textContent).toContain('拆分 case study 讲解后通过率提升')
+      const modal = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-job-detail"]'),
+        'job detail modal',
+      )
+      expect(modal.textContent).toContain('Case Study')
+      expect(modal.textContent).toContain('Jess')
+      expect(modal.textContent).toContain('6h')
+      expect(modal.textContent).toContain('拆分 case study 讲解后通过率提升')
     } finally {
       page.unmount()
     }
@@ -345,18 +377,20 @@ describe('lead-mentor job overview real flow', () => {
       assignButton?.click()
       await flushUi()
 
-      const assignModal = page.container.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]')
-      expect(assignModal).toBeTruthy()
+      const assignModal = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]'),
+        'assign mentor modal',
+      )
 
       // 真实导师列表来自 /lead-mentor/mentor/list mock，需先勾选两位再确认
-      const mentorItems = Array.from(assignModal?.querySelectorAll<HTMLButtonElement>('.mentor-item') || [])
+      const mentorItems = Array.from(assignModal.querySelectorAll<HTMLButtonElement>('.mentor-item'))
       const jerryItem = mentorItems.find((item) => item.textContent?.includes('Jerry Li'))
       const mikeItem = mentorItems.find((item) => item.textContent?.includes('Mike Wang'))
       jerryItem?.click()
       mikeItem?.click()
       await flushUi()
 
-      const confirmButton = assignModal?.querySelector<HTMLButtonElement>('.assign-mentor-action')
+      const confirmButton = assignModal.querySelector<HTMLButtonElement>('.assign-mentor-action')
       expect(confirmButton).toBeTruthy()
       confirmButton?.click()
       await flushUi()
@@ -368,6 +402,97 @@ describe('lead-mentor job overview real flow', () => {
       })
       expect(messageMocks.success).toHaveBeenCalled()
       expect(pendingPanel?.textContent).not.toContain('Alice')
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('submits mentor assignment by coachingId when the pending row has coachingId', async () => {
+    apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
+      if (params.scope === 'pending') {
+        return { rows: [{ ...pendingRows[0], coachingId: 9701 }] }
+      }
+      if (params.scope === 'coaching') {
+        return { rows: coachingRows }
+      }
+      return { rows: managedRows }
+    })
+
+    const page = await mountJobOverviewPage()
+
+    try {
+      page.container.querySelector<HTMLButtonElement>('#lm-job-tab-pending')?.click()
+      const row = await waitFor(
+        () => page.container.querySelector<HTMLElement>('#lm-job-content-pending [data-row-key="9701"]'),
+        'pending coaching row',
+      )
+      findButtonByText(row, '分配导师')?.click()
+
+      const assignModal = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]'),
+        'assign mentor modal',
+      )
+      Array.from(assignModal.querySelectorAll<HTMLButtonElement>('.mentor-item')).find((item) =>
+        item.textContent?.includes('Jerry Li'),
+      )?.click()
+      Array.from(assignModal.querySelectorAll<HTMLButtonElement>('.mentor-item')).find((item) =>
+        item.textContent?.includes('Mike Wang'),
+      )?.click()
+      await flushUi()
+
+      findButtonByText(assignModal, '确认匹配')?.click()
+      await waitFor(
+        () => apiMocks.assignLeadMentorJobOverviewCoachingMentor.mock.calls.length > 0,
+        'coaching mentor assignment request',
+      )
+
+      expect(apiMocks.assignLeadMentorJobOverviewCoachingMentor).toHaveBeenCalledWith(9701, {
+        mentorIds: [9001, 9002],
+        mentorNames: ['Jerry Li', 'Mike Wang'],
+        assignNote: '',
+      })
+      expect(apiMocks.assignLeadMentorJobOverviewMentor).not.toHaveBeenCalledWith(7001, expect.anything())
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('blocks mentor assignment when selected mentor count does not match requested count', async () => {
+    apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
+      if (params.scope === 'pending') {
+        return { rows: [{ ...pendingRows[0], coachingId: 9701, requestedMentorCount: 2 }] }
+      }
+      if (params.scope === 'coaching') {
+        return { rows: coachingRows }
+      }
+      return { rows: managedRows }
+    })
+
+    const page = await mountJobOverviewPage()
+
+    try {
+      page.container.querySelector<HTMLButtonElement>('#lm-job-tab-pending')?.click()
+      const row = await waitFor(
+        () => page.container.querySelector<HTMLElement>('#lm-job-content-pending [data-row-key="9701"]'),
+        'pending coaching row',
+      )
+      findButtonByText(row, '分配导师')?.click()
+
+      const assignModal = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]'),
+        'assign mentor modal',
+      )
+      Array.from(assignModal.querySelectorAll<HTMLButtonElement>('.mentor-item')).find((item) =>
+        item.textContent?.includes('Jerry Li'),
+      )?.click()
+      await flushUi()
+
+      findButtonByText(assignModal, '确认匹配')?.click()
+      await flushUi()
+
+      expect(apiMocks.assignLeadMentorJobOverviewCoachingMentor).not.toHaveBeenCalled()
+      expect(apiMocks.assignLeadMentorJobOverviewMentor).not.toHaveBeenCalled()
+      expect(messageMocks.error).toHaveBeenCalledWith('导师数量必须等于申请导师数量')
     } finally {
       page.unmount()
     }

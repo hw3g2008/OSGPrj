@@ -129,7 +129,7 @@
                 <div style="display: flex; align-items: center; gap: 8px">
                   <a-tag color="green">{{ industry.openCount }} 开放</a-tag>
                   <a-tag v-if="industry.positionCount - industry.openCount > 0" color="default">{{ industry.positionCount - industry.openCount }} 已关闭</a-tag>
-                  <span :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ industry.studentCount }} 学员</span>
+                  <span :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ industry.studentCount }} 投递学员</span>
                 </div>
               </button>
 
@@ -371,7 +371,7 @@ const drilldownColumns = [
   { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
   { title: '截止时间', dataIndex: 'deadline', key: 'deadline', width: 80 },
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
-  { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
+  { title: '投递学员', dataIndex: 'studentCount', key: 'studentCount', width: 80 },
   { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
   { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
@@ -389,7 +389,7 @@ const listColumns = [
   { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
   { title: '截止时间', dataIndex: 'deadlineDisplay', key: 'deadlineDisplay', width: 100 },
   { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
-  { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
+  { title: '投递学员', dataIndex: 'studentCount', key: 'studentCount', width: 80 },
   { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
   { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 60 },

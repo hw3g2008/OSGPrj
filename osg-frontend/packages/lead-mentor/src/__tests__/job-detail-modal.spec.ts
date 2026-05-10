@@ -10,24 +10,28 @@ import MainLayout from '../layouts/MainLayout.vue'
 const apiMocks = vi.hoisted(() => ({
   getLeadMentorJobOverviewList: vi.fn(),
   getLeadMentorJobOverviewDetail: vi.fn(),
+  getLeadMentorJobOverviewCoachingDetail: vi.fn(),
   assignLeadMentorJobOverviewMentor: vi.fn(),
+  assignLeadMentorJobOverviewCoachingMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
   getLeadMentorMentorList: vi.fn(async () => ({ rows: [] })),
 }))
 
-vi.mock('@osg/shared/composables', async () => {
-  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
-    '@osg/shared/composables',
-  )
-  return {
-    ...actual,
-    useDictFacade: () => ({
-      items: { value: [] },
-      loading: { value: false },
-      load: vi.fn(async () => undefined),
-    }),
-  }
-})
+vi.mock('@osg/shared/composables', () => ({
+  useIdleLogout: () => undefined,
+  useCoachingStatusMap: () => ({
+    items: { value: [] },
+    loading: { value: false },
+    load: vi.fn(async () => undefined),
+    resolveCoachingTone: () => 'blue',
+  }),
+  useDictFacade: () => ({
+    items: { value: [] },
+    loading: { value: false },
+    load: vi.fn(async () => undefined),
+  }),
+  deriveApplicationStatus: (status?: string) => status || 'pending',
+}))
 
 const modalPath = path.resolve(__dirname, '../components/JobDetailModal.vue')
 const modalExists = fs.existsSync(modalPath)

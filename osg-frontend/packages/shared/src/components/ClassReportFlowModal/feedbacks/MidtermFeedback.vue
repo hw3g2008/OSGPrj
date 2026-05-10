@@ -9,7 +9,7 @@
         :step="1"
         placeholder="0"
         style="width: 160px"
-        @update:value="(v) => updateScore(v)"
+        @update:value="updateScore($event)"
       />
       <div v-if="scoreError" class="form-error">{{ scoreError }}</div>
     </div>
@@ -20,7 +20,7 @@
         :value="payload.questionAnalysis"
         :rows="4"
         placeholder="请详细分析学员在每道题目上的表现..."
-        @update:value="(v) => update('questionAnalysis', v)"
+        @update:value="update('questionAnalysis', $event)"
       />
     </div>
 
@@ -28,7 +28,7 @@
       <label class="form-label">学生进度评估</label>
       <a-radio-group
         :value="payload.progress"
-        @update:value="(v) => update('progress', v)"
+        @update:value="update('progress', $event)"
       >
         <a-radio
           v-for="opt in PROGRESS_OPTIONS"

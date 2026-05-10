@@ -339,7 +339,7 @@ const buildReferenceLabel = (
   refType: ReferenceType,
   raw: Record<string, unknown>,
 ): string => {
-  if (refType === 'application') {
+  if (refType === 'job_coaching' || refType === 'application') {
     const company = raw.companyName ?? raw.company ?? ''
     const position = raw.positionName ?? raw.position ?? ''
     const stage = raw.currentStage ?? raw.stage ?? ''

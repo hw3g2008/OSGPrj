@@ -13,6 +13,6 @@ export const positionColumns: PositionColumn[] = [
   { key: 'displayStartTime', label: '展示起始', sortable: true },
   { key: 'deadlineDisplay', label: '截止时间' },
   { key: 'displayStatus', label: '状态' },
-  { key: 'studentCount', label: '学员' },
+  { key: 'studentCount', label: '投递学员' },
   { key: 'actions', label: '操作' }
 ]

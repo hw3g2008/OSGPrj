@@ -82,6 +82,7 @@
           row-key="id"
           :scroll="{ x: 'max-content' }"
           :row-class-name="rowClassName"
+          :expanded-row-render="renderApplicationCoachings"
           @change="handleTableChange"
         >
           <template #bodyCell="{ column, record }">
@@ -133,30 +134,9 @@
             </template>
 
             <template v-else-if="column.key === 'actions'">
-              <a-button
-                v-if="record.bucket === 'completed'"
-                type="primary"
-                disabled
-              >
-                <CheckCircleOutlined /> 已结束
-              </a-button>
-              <a-select
-                v-else
-                :id="`action-stage-select-${record.id}`"
-                :value="record.stage"
-                size="small"
-                class="action-stage-select"
-                :style="selectStageTone(record.stage)"
-                @change="stageDropdownChanged(record, $event)"
-              >
-                <a-select-option
-                  v-for="option in stageDropdownOptions(record.stage)"
-                  :key="`action-option-${record.id}-${option.value}`"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </a-select-option>
-              </a-select>
+              <a-tag :color="record.stageColor || 'default'" class="readonly-stage-tag">
+                {{ record.stageLabel || record.stage }}
+              </a-tag>
             </template>
           </template>
         </a-table>
@@ -365,6 +345,81 @@
     </a-modal>
 
     <a-modal
+      v-model:open="coachingDetailModalOpen"
+      :title="renderModalTitle(ReadOutlined, '辅导详情')"
+      ok-text="确定"
+      centered
+      :width="620"
+      wrap-class-name="applications-modal applications-modal--info"
+      :mask-style="{ backdropFilter: 'blur(4px)' }"
+      :cancel-button-props="{ style: { display: 'none' } }"
+      destroy-on-close
+      @ok="coachingDetailModalOpen = false"
+    >
+      <div class="rich-modal-shell application-coaching-detail">
+        <div v-if="selectedCoaching" class="interview-detail-card">
+          <div class="modal-heading">{{ selectedCoaching.interviewStageLabel || selectedCoaching.interviewStage }}</div>
+          <div class="modal-sub">{{ selectedCoaching.interviewTime || '-' }} · {{ selectedCoaching.companyInterviewer || '公司面试官待补充' }}</div>
+          <div class="modal-sub">导师：{{ selectedCoaching.mentorNames || selectedCoaching.mentorName || '-' }} · 最新评分：{{ selectedCoaching.latestRating || '-' }} · 已上报课消：{{ selectedCoaching.reportedLessonCount || 0 }}</div>
+        </div>
+        <div class="application-coaching-record-list">
+          <div v-if="coachingClassRecords.length === 0" class="application-coachings-panel application-coachings-panel--empty">暂无课消记录</div>
+          <div
+            v-for="record in coachingClassRecords"
+            :key="record.recordId"
+            class="application-coaching-record"
+          >
+            <div>
+              <div class="application-coaching-record__title">{{ record.classId || `#${record.recordId}` }} · {{ record.mentorName || '-' }}</div>
+              <div class="application-coaching-record__meta">{{ record.classDate || '-' }} · {{ record.memberStatus || '-' }} · {{ record.durationHours || 0 }}h</div>
+            </div>
+            <div class="application-coaching-record__rating">评分：{{ record.rate || '-' }}</div>
+          </div>
+        </div>
+      </div>
+    </a-modal>
+
+    <a-modal
+      v-model:open="coachingEditModalOpen"
+      :title="renderModalTitle(EditOutlined, '修改辅导信息')"
+      ok-text="保存"
+      cancel-text="取消"
+      centered
+      :width="520"
+      wrap-class-name="applications-modal applications-modal--progress"
+      :mask-style="{ backdropFilter: 'blur(4px)' }"
+      destroy-on-close
+      @ok="saveCoachingEdit"
+    >
+      <a-form id="modal-edit-coaching" layout="vertical" :model="coachingEditForm" class="rich-modal-shell">
+        <div v-if="selectedCoaching" class="modal-job-card progress-card">
+          <div class="modal-job-mark">{{ selectedCoaching.interviewStageLabel?.slice(0, 2) || '辅导' }}</div>
+          <div>
+            <div class="modal-job-title">{{ selectedCoaching.interviewStageLabel || selectedCoaching.interviewStage }}</div>
+            <div class="modal-job-sub">{{ selectedCoachingApplication?.company }} · {{ selectedCoachingApplication?.position }}</div>
+          </div>
+        </div>
+        <a-form-item label="面试时间" class="rich-form-field rich-form-field--full">
+          <DatePicker
+            id="coaching-edit-interview-time"
+            v-model:value="coachingEditForm.interviewTime"
+            show-time
+            format="YYYY-MM-DD HH:mm"
+            value-format="YYYY-MM-DDTHH:mm"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="公司面试官" class="rich-form-field rich-form-field--full">
+          <a-input
+            id="coaching-edit-company-interviewer"
+            v-model:value="coachingEditForm.companyInterviewer"
+            placeholder="请输入公司面试官"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <a-modal
       v-model:open="appliedModalOpen"
       :title="renderModalTitle(CheckCircleOutlined, '标记已投递')"
       ok-text="确认投递"
@@ -451,10 +506,14 @@ import { getToken } from '@osg/shared/utils'
 import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
 import {
   getStudentApplicationsMeta,
+  getStudentApplicationCoachingClassRecords,
   listStudentApplications,
-  requestStudentPositionCoaching,
+  requestStudentApplicationCoaching,
   type StudentApplicationsMeta,
+  type StudentApplicationCoachingClassRecord,
+  type StudentApplicationCoachingRecord,
   updateStudentPositionApply,
+  updateStudentApplicationCoaching,
   updateStudentPositionProgress,
   type StudentApplicationRecord
 } from '@osg/shared/api'
@@ -539,6 +598,15 @@ const interviewStages = ['screening', 'first', 'second', 'third', 'case', 'super
 const interviewModalOpen = ref(false)
 const progressModalOpen = ref(false)
 const appliedModalOpen = ref(false)
+const coachingDetailModalOpen = ref(false)
+const coachingEditModalOpen = ref(false)
+const selectedCoachingApplicationId = ref<number | null>(null)
+const selectedCoaching = ref<StudentApplicationCoachingRecord | null>(null)
+const coachingClassRecords = ref<StudentApplicationCoachingClassRecord[]>([])
+const coachingEditForm = ref({
+  interviewTime: '',
+  companyInterviewer: ''
+})
 
 const filters = ref({
   keyword: '',
@@ -618,6 +686,9 @@ const columns = computed(() => {
 
 const selectedApplication = computed(() =>
   applications.value.find((record) => record.id === selectedApplicationId.value) ?? null
+)
+const selectedCoachingApplication = computed(() =>
+  applications.value.find((record) => record.id === selectedCoachingApplicationId.value) ?? null
 )
 const selectedApplicationBadge = computed(() => {
   const fallback = selectedApplication.value?.company?.trim()
@@ -760,17 +831,6 @@ function openInterviewModal(id: number) {
   interviewModalOpen.value = true
 }
 
-function openProgressModal(record: StudentApplicationRecord) {
-  selectedApplicationId.value = record.id
-  progressHirevueFileList.value = []
-  progressForm.value = {
-    ...defaultApplyStageForm(),
-    stage: record.stage,
-    note: record.progressNote || ''
-  }
-  progressModalOpen.value = true
-}
-
 function stageDropdownOptions(currentStage?: string) {
   const allOptions = progressStageOptions.value
   if (!currentStage || allOptions.some((option) => option.value === currentStage)) {
@@ -797,15 +857,28 @@ function rowClassName(record: StudentApplicationRecord) {
   return ''
 }
 
-function stageDropdownChanged(record: StudentApplicationRecord, nextStage: string) {
-  if (!nextStage || nextStage === record.stage) {
-    return
+function renderApplicationCoachings(record: StudentApplicationRecord) {
+  const coachings = record.coachings || []
+  if (coachings.length === 0) {
+    return h('div', { class: 'application-coachings-panel application-coachings-panel--empty' }, '暂无阶段辅导申请')
   }
 
-  openProgressModal({
-    ...record,
-    stage: nextStage
-  })
+  return h('div', { class: 'application-coachings-panel' }, coachings.map((coaching) =>
+    h('div', { key: coaching.coachingId, class: 'application-coaching-row' }, [
+      h('div', { class: 'application-coaching-row__main' }, [
+        h('div', { class: 'application-coaching-row__title' }, [
+          h('span', { class: 'stage-tag', style: stageTagStyle(coaching.interviewStage) }, coaching.interviewStageLabel || coaching.interviewStage),
+          h('span', { class: 'application-coaching-row__id' }, `#${coaching.coachingId}`)
+        ]),
+        h('div', { class: 'application-coaching-row__meta' }, `${coaching.interviewTime || '-'} · ${coaching.companyInterviewer || '公司面试官待补充'}`),
+        h('div', { class: 'application-coaching-row__meta' }, `导师：${coaching.mentorNames || coaching.mentorName || '-'} · 最新评分：${coaching.latestRating || '-'} · 已上报课消：${coaching.reportedLessonCount || 0}`)
+      ]),
+      h('div', { class: 'application-coaching-row__actions' }, [
+        h('button', { class: 'application-coaching-action', type: 'button', onClick: () => openCoachingDetail(record, coaching) }, '查看详情'),
+        h('button', { class: 'application-coaching-action application-coaching-action--edit', type: 'button', onClick: () => openCoachingEdit(record, coaching) }, '修改')
+      ])
+    ])
+  ))
 }
 
 function applyFilters() {
@@ -819,6 +892,58 @@ function resetFilters() {
     coachingStatus: undefined,
     companyType: undefined
   }
+}
+
+async function openCoachingDetail(record: StudentApplicationRecord, coaching: StudentApplicationCoachingRecord) {
+  selectedCoachingApplicationId.value = record.id
+  selectedCoaching.value = coaching
+  coachingClassRecords.value = []
+  coachingDetailModalOpen.value = true
+  try {
+    const detail = await getStudentApplicationCoachingClassRecords(record.id, coaching.coachingId)
+    coachingClassRecords.value = detail.records || []
+  } catch {
+    return
+  }
+}
+
+function openCoachingEdit(record: StudentApplicationRecord, coaching: StudentApplicationCoachingRecord) {
+  selectedCoachingApplicationId.value = record.id
+  selectedCoaching.value = coaching
+  coachingEditForm.value = {
+    interviewTime: toDatePickerMinute(coaching.interviewTime),
+    companyInterviewer: coaching.companyInterviewer || ''
+  }
+  coachingEditModalOpen.value = true
+}
+
+async function saveCoachingEdit() {
+  if (!selectedCoachingApplication.value || !selectedCoaching.value) {
+    return
+  }
+
+  try {
+    await updateStudentApplicationCoaching(
+      selectedCoachingApplication.value.id,
+      selectedCoaching.value.coachingId,
+      {
+        interviewTime: coachingEditForm.value.interviewTime,
+        companyInterviewer: coachingEditForm.value.companyInterviewer
+      }
+    )
+    await loadApplications()
+    coachingEditModalOpen.value = false
+    message.success('辅导信息已更新')
+  } catch {
+    return
+  }
+}
+
+function toDatePickerMinute(value?: string) {
+  if (!value || value === '-') {
+    return ''
+  }
+  return value.replace(' ', 'T').slice(0, 16)
 }
 
 async function saveProgress() {
@@ -841,18 +966,18 @@ async function saveProgress() {
     const note = buildStageNote(progressForm.value)
 
     if (progressForm.value.stage === 'hirevue' && progressForm.value.mentorHelp === 'yes') {
-      await requestStudentPositionCoaching({
-        positionId: selectedApplication.value.positionId,
-        stage: progressForm.value.stage,
-        mentorCount: '1',
-        note
+      await requestStudentApplicationCoaching(selectedApplication.value.id, {
+        interviewStage: progressForm.value.stage,
+        requestedMentorCount: '1',
+        requestNote: note
       })
     } else if (showUpdateInterviewFields.value) {
-      await requestStudentPositionCoaching({
-        positionId: selectedApplication.value.positionId,
-        stage: progressForm.value.stage,
-        mentorCount: progressForm.value.mentorCount,
-        note
+      await requestStudentApplicationCoaching(selectedApplication.value.id, {
+        interviewStage: progressForm.value.stage,
+        interviewTime: progressForm.value.interviewTime,
+        city: selectedApplication.value.location,
+        requestedMentorCount: progressForm.value.mentorCount,
+        requestNote: note
       })
     } else {
       await updateStudentPositionProgress({
@@ -1225,6 +1350,89 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
 
   .action-stage-select :deep(.ant-select-selection-item) {
     line-height: 26px !important;
+  }
+
+  .application-coachings-panel {
+    display: grid;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #f8fafc;
+  }
+
+  .application-coachings-panel--empty {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  .application-coaching-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .application-coaching-row__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .application-coaching-row__id,
+  .application-coaching-row__meta,
+  .application-coaching-record__meta {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  .application-coaching-row__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+
+  .application-coaching-action {
+    min-width: 64px;
+    height: 28px;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .application-coaching-action--edit {
+    border-color: #ddd6fe;
+    background: #f5f3ff;
+    color: #6d28d9;
+  }
+
+  .application-coaching-record-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .application-coaching-record {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .application-coaching-record__title,
+  .application-coaching-record__rating {
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 600;
   }
 
   .modal-stage-select {

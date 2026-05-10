@@ -11,7 +11,7 @@
         :value="payload.narrative"
         :rows="3"
         :placeholder="narrativePlaceholder"
-        @update:value="(v) => update('narrative', v)"
+        @update:value="update('narrative', $event)"
       />
     </div>
 
@@ -28,7 +28,7 @@
           slot-label="原简历"
           :max-size-mb="10"
           accept=".pdf,.doc,.docx"
-          @update:model-value="(url) => update('originalResumeUrl', url ?? '')"
+          @update:model-value="update('originalResumeUrl', $event ?? '')"
         />
       </div>
 
@@ -39,7 +39,7 @@
           slot-label="修改后简历"
           :max-size-mb="10"
           accept=".pdf,.doc,.docx"
-          @update:model-value="(url) => update('updatedResumeUrl', url ?? '')"
+          @update:model-value="update('updatedResumeUrl', $event ?? '')"
         />
       </div>
     </div>

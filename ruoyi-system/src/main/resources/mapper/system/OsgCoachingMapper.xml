@@ -8,6 +8,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <id property="coachingId" column="coaching_id"/>
         <result property="applicationId" column="application_id"/>
         <result property="studentId" column="student_id"/>
+        <result property="interviewStage" column="interview_stage"/>
+        <result property="interviewTime" column="interview_time"/>
+        <result property="city" column="city"/>
+        <result property="companyInterviewer" column="company_interviewer"/>
+        <result property="requestedMentorCount" column="requested_mentor_count"/>
+        <result property="requestNote" column="request_note"/>
         <result property="mentorId" column="mentor_id"/>
         <result property="mentorName" column="mentor_name"/>
         <result property="mentorIds" column="mentor_ids"/>
@@ -30,6 +36,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         coaching_id,
         application_id,
         student_id,
+        interview_stage,
+        interview_time,
+        city,
+        company_interviewer,
+        requested_mentor_count,
+        request_note,
         mentor_id,
         mentor_name,
         mentor_ids,
@@ -48,11 +60,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         remark
     </sql>
 
+    <select id="selectCoachingByCoachingId" parameterType="Long" resultMap="OsgCoachingResult">
+        select
+        <include refid="selectCoachingColumns"/>
+        from osg_coaching
+        where coaching_id = #{coachingId}
+    </select>
+
     <select id="selectCoachingByApplicationId" parameterType="Long" resultMap="OsgCoachingResult">
         select
         <include refid="selectCoachingColumns"/>
         from osg_coaching
         where application_id = #{applicationId}
+        order by coaching_id desc
+        limit 1
+    </select>
+
+    <select id="selectCoachingsByApplicationId" parameterType="Long" resultMap="OsgCoachingResult">
+        select
+        <include refid="selectCoachingColumns"/>
+        from osg_coaching
+        where application_id = #{applicationId}
+        order by coaching_id desc
     </select>
 
     <select id="selectCoachingList" parameterType="OsgCoaching" resultMap="OsgCoachingResult">
@@ -77,6 +106,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into osg_coaching (
             application_id,
             student_id,
+            interview_stage,
+            interview_time,
+            city,
+            company_interviewer,
+            requested_mentor_count,
+            request_note,
             mentor_id,
             mentor_name,
             mentor_ids,
@@ -96,6 +131,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         ) values (
             #{applicationId},
             #{studentId},
+            #{interviewStage},
+            #{interviewTime},
+            #{city},
+            #{companyInterviewer},
+            #{requestedMentorCount},
+            #{requestNote},
             #{mentorId},
             #{mentorName},
             #{mentorIds},
@@ -118,6 +159,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <update id="updateCoaching" parameterType="OsgCoaching">
         update osg_coaching
         <set>
+            <if test="interviewStage != null">interview_stage = #{interviewStage},</if>
+            <if test="interviewTime != null">interview_time = #{interviewTime},</if>
+            <if test="city != null">city = #{city},</if>
+            <if test="companyInterviewer != null">company_interviewer = #{companyInterviewer},</if>
+            <if test="requestedMentorCount != null">requested_mentor_count = #{requestedMentorCount},</if>
+            <if test="requestNote != null">request_note = #{requestNote},</if>
             <if test="mentorId != null">mentor_id = #{mentorId},</if>
             <if test="mentorName != null">mentor_name = #{mentorName},</if>
             <if test="mentorIds != null">mentor_ids = #{mentorIds},</if>
@@ -152,6 +199,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_by = #{operator},
             update_time = sysdate()
         where application_id = #{applicationId}
+    </update>
+
+    <update id="resetConfirmationByCoachingId">
+        update osg_coaching
+        set confirmed_at = NULL,
+            status = 'assigned',
+            update_by = #{operator},
+            update_time = sysdate()
+        where coaching_id = #{coachingId}
     </update>
 
     <!-- §C.1 confirmCoaching 原子 SQL：仅当 confirmed_at IS NULL 时更新（防并发竞态 + 防重复 confirm） -->

@@ -11,6 +11,7 @@ export interface LeadMentorJobOverviewListParams {
 
 export interface LeadMentorJobOverviewListItem {
   applicationId: number
+  coachingId?: number | null
   studentId: number
   studentName?: string
   companyName: string
@@ -104,8 +105,16 @@ export function getLeadMentorJobOverviewDetail(applicationId: number) {
   return http.get<LeadMentorJobOverviewDetail>(`/lead-mentor/job-overview/${applicationId}`)
 }
 
+export function getLeadMentorJobOverviewCoachingDetail(coachingId: number) {
+  return http.get<LeadMentorJobOverviewDetail>(`/lead-mentor/job-overview/coaching/${coachingId}`)
+}
+
 export function assignLeadMentorJobOverviewMentor(applicationId: number, payload: LeadMentorAssignMentorPayload) {
   return http.post(`/lead-mentor/job-overview/${applicationId}/assign-mentor`, payload)
+}
+
+export function assignLeadMentorJobOverviewCoachingMentor(coachingId: number, payload: LeadMentorAssignMentorPayload) {
+  return http.post(`/lead-mentor/job-overview/coaching/${coachingId}/assign-mentor`, payload)
 }
 
 export function acknowledgeLeadMentorJobOverviewStage(applicationId: number) {

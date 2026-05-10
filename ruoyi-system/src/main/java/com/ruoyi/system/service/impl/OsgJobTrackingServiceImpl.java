@@ -146,7 +146,7 @@ public class OsgJobTrackingServiceImpl implements IOsgJobTrackingService
         payload.put("mentorName", row.getLeadMentorName());
         payload.put("companyName", row.getCompanyName());
         payload.put("positionName", row.getPositionName());
-        payload.put("location", firstText(row.getCity(), row.getRegion()));
+        payload.put("location", firstText(row.getRegion(), row.getCity()));
         payload.put("trackingStatus", trackingStatus);
         payload.put("currentStage", row.getCurrentStage());
         payload.put("interviewStage", "interviewing".equals(trackingStatus) ? row.getCurrentStage() : null);

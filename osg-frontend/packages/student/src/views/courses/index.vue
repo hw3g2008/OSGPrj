@@ -515,14 +515,6 @@ const ratingDescriptions: Record<number, string> = {
   5: '非常棒'
 }
 
-const ratingText = computed(() => {
-  if (rateForm.value.rating === null) {
-    return '请选择'
-  }
-
-  return `${rateForm.value.rating}分 - ${ratingDescriptions[rateForm.value.rating]}`
-})
-
 // 用于新的 course-log 评分弹窗：分离"X分"前缀和" - 描述"后缀
 // 模板里 <strong>{{ rating }}</strong>{{ ratingDescriptionText }}
 const ratingDescriptionText = computed(() => {
@@ -562,19 +554,6 @@ function formatMentorDisplay(name?: string | null): string {
 const firstNewRecordMentor = computed(() => {
   const first = newRecordsList.value[0]
   return formatMentorDisplay(first?.mentor)
-})
-
-const detailToneClass = computed(() => {
-  switch (currentCourse.value?.detailKind) {
-    case 'mock':
-      return 'modal-accent--green'
-    case 'networking':
-      return 'modal-accent--purple'
-    case 'midterm':
-      return 'modal-accent--amber'
-    default:
-      return ''
-  }
 })
 
 const detailRatingSummary = computed(() => {
@@ -746,16 +725,6 @@ function mapTagTone(color?: string) {
     default:
       return 'record-tag--default'
   }
-}
-
-function mentorInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .map((segment) => segment.trim().charAt(0))
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'MT'
 }
 
 const goToEvaluate = () => {

@@ -267,6 +267,7 @@ export interface AssignMentorConfirmPayload {
 const props = defineProps<{
   modelValue: boolean
   preview: AssignMentorPreview | null
+  requiredMentorCount?: number | null
 }>()
 
 const emit = defineEmits<{
@@ -381,6 +382,10 @@ const closeModal = () => {
 const handleConfirm = () => {
   if (selected.value.length === 0) {
     message.error('请至少选择1位导师')
+    return
+  }
+  if (props.requiredMentorCount && props.requiredMentorCount > 0 && selected.value.length !== props.requiredMentorCount) {
+    message.error('导师数量必须等于申请导师数量')
     return
   }
   emit('confirm-match', {

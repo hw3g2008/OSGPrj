@@ -291,12 +291,10 @@
     </section>
 
     <LeadMentorClassReportFlowModal
-      v-model="isReportModalOpen"
-      :students="reportStudentOptions"
-      :students-loading="reportStudentsLoading"
-      :submitting="isSubmittingReport"
-      :prefill-student-id="reportPrefillStudentId"
-      @submit="handleReportSubmit"
+      :visible="isReportModalOpen"
+      :prefilled-student-id="reportPrefillStudentNumericId"
+      @update:visible="isReportModalOpen = $event"
+      @submitted="handleReportSubmitted"
     />
     <LeadMentorClassDetailModal v-model="isClassDetailModalOpen" :preview="activeClassDetailPreview" />
     <LeadMentorClassDetailResumeModal
@@ -325,14 +323,11 @@ import { PageHeader } from '@osg/shared/components/PageHeader'
 import { ClassRecordStatusTag } from '@osg/shared/components'
 import { message } from 'ant-design-vue'
 import type {
-  LeadMentorClassRecordCreatePayload,
-  LeadMentorClassRecordCreateResponse,
   LeadMentorClassRecordRow,
   LeadMentorClassRecordStats,
   LeadMentorStudentListItem,
 } from '@osg/shared/api'
 import {
-  createLeadMentorClassRecord,
   getLeadMentorClassRecordList,
   getLeadMentorClassRecordStats,
   getLeadMentorStudentList,
@@ -558,10 +553,12 @@ const reportStudentOptions = ref<ReportStudentOption[]>([])
 const reportStudentsLoading = ref(false)
 const reportStudentsLoaded = ref(false)
 const reportPrefillStudentId = ref<string | null>(null)
-const isSubmittingReport = ref(false)
 
 const mineTabs = computed(() => buildScopeTabs(mineRows.value))
 const managedTabs = computed(() => buildScopeTabs(managedRows.value))
+const reportPrefillStudentNumericId = computed(() =>
+  reportPrefillStudentId.value ? Number(reportPrefillStudentId.value) : undefined,
+)
 const visibleMineRows = computed(() => filterRows(mineRows.value, activeStatuses.mine))
 const visibleManagedRows = computed(() => filterRows(managedRows.value, activeStatuses.managed))
 
@@ -651,25 +648,6 @@ function resolveActionSurface(classStatus: string) {
   return 'modal-class-detail'
 }
 
-function resolveCoachingDetail(payload: LeadMentorClassRecordCreateResponse) {
-  const firstTopicLine = payload.topics?.split('\n').find((line) => line.trim())
-  if (firstTopicLine) {
-    return firstTopicLine.trim()
-  }
-
-  const normalizedStatus = normalizeKey(payload.classStatus)
-  if (normalizedStatus === 'mock_interview') {
-    return '模拟面试 · 班主任申报'
-  }
-  if (normalizedStatus === 'networking_midterm') {
-    return '人际关系期中考试'
-  }
-  if (normalizedStatus === 'mock_midterm') {
-    return '模拟期中考试'
-  }
-  return '班主任真实申报'
-}
-
 function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
   const coachingMeta = resolveCoachingMeta(row.courseType ?? '')
   const contentMeta = resolveContentMeta(row.classStatus ?? '')
@@ -732,42 +710,6 @@ async function loadRows() {
   }
 }
 
-function buildCreatedRow(payload: LeadMentorClassRecordCreateResponse): ClassRecordRow {
-  const coachingMeta = resolveCoachingMeta(payload.courseType)
-  const contentMeta = resolveContentMeta(payload.classStatus)
-  const status = normalizeKey(payload.status)
-  const normalizedStatus = status === 'approved' || status === 'rejected' ? status : 'pending'
-  const statusMeta =
-    normalizedStatus === 'approved'
-      ? { statusLabel: '已通过', statusTone: 'tag--success' }
-      : normalizedStatus === 'rejected'
-        ? { statusLabel: '已驳回', statusTone: 'tag--danger' }
-        : { statusLabel: '待审核', statusTone: 'tag--warning' }
-
-  return {
-    recordId: formatRecordId(payload.recordId),
-    studentName: payload.studentName,
-    studentId: String(payload.studentId),
-    coachingLabel: coachingMeta.coachingLabel,
-    coachingTone: coachingMeta.coachingTone,
-    coachingDetail: resolveCoachingDetail(payload),
-    contentLabel: contentMeta.contentLabel,
-    contentTone: contentMeta.contentTone,
-    classDate: formatDisplayDate(payload.classDate),
-    duration: formatDuration(payload.durationHours),
-    feeLabel: '待审核',
-    status: normalizedStatus,
-    statusLabel: statusMeta.statusLabel,
-    statusTone: statusMeta.statusTone,
-    actionLabel: normalizedStatus === 'rejected' ? '查看原因' : '查看详情',
-    actionSurface: normalizedStatus === 'rejected' ? 'modal-class-reject' : resolveActionSurface(payload.classStatus),
-  }
-}
-
-function upsertRows(rows: ClassRecordRow[], nextRow: ClassRecordRow) {
-  return [nextRow, ...rows.filter((row) => row.recordId !== nextRow.recordId)]
-}
-
 async function ensureReportStudentsLoaded(force = false) {
   if (reportStudentsLoaded.value && !force) {
     return
@@ -808,30 +750,14 @@ function openReportModal(prefillStudentId: string | null = null) {
   void ensureReportStudentsLoaded()
 }
 
-async function handleReportSubmit(payload: LeadMentorClassRecordCreatePayload) {
-  isSubmittingReport.value = true
-  try {
-    const created = await createLeadMentorClassRecord(payload)
-    const createdMineRow = buildCreatedRow(created)
-    const createdManagedRow: ClassRecordRow = {
-      ...createdMineRow,
-      reporterName: created.mentorName,
-    }
-
-    mineRows.value = upsertRows(mineRows.value, createdMineRow)
-    managedRows.value = upsertRows(managedRows.value, createdManagedRow)
-    activeScope.value = 'mine'
-    activeStatuses.mine = 'all'
-    activeStatuses.managed = 'all'
-    reportPrefillStudentId.value = null
-    isReportModalOpen.value = false
-    message.success(`已提交课程记录 ${createdMineRow.recordId}，等待审核`)
-    void loadRows()
-  } catch (error) {
-    message.error(error instanceof Error ? error.message : '课程记录提交失败')
-  } finally {
-    isSubmittingReport.value = false
-  }
+function handleReportSubmitted(recordId: number) {
+  activeScope.value = 'mine'
+  activeStatuses.mine = 'all'
+  activeStatuses.managed = 'all'
+  reportPrefillStudentId.value = null
+  isReportModalOpen.value = false
+  message.success(`已提交课程记录 ${recordId}，等待审核`)
+  void loadRows()
 }
 
 function handleRowAction(row: ClassRecordRow) {

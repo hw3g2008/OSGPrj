@@ -22,10 +22,14 @@ import org.springframework.util.StringUtils;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.MessageUtils;
+import com.ruoyi.system.domain.OsgClassRecord;
+import com.ruoyi.system.domain.OsgCoaching;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.domain.OsgPosition;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.domain.OsgStudentPosition;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
+import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgPositionMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
@@ -56,6 +60,7 @@ public class PositionServiceImpl implements IPositionService
     private static final String STUDENT_POSITION_STATUS_PENDING = "pending";
     private static final String STUDENT_POSITION_STATUS_APPROVED = "approved";
     private static final String STUDENT_POSITION_STATUS_REJECTED = "rejected";
+    private static final String REFERENCE_TYPE_JOB_COACHING = "job_coaching";
     private static final long PUBLIC_POSITION_VISIBILITY_GRACE_MILLIS = 1000L;
     private static final DateTimeFormatter APPLICATION_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter APPLICATION_WEEKDAY = DateTimeFormatter.ofPattern("EEE", Locale.CHINA);
@@ -127,6 +132,12 @@ public class PositionServiceImpl implements IPositionService
 
     @Autowired
     private OsgJobApplicationMapper jobApplicationMapper;
+
+    @Autowired
+    private OsgCoachingMapper coachingMapper;
+
+    @Autowired
+    private OsgClassRecordMapper classRecordMapper;
 
     @Autowired
     private OsgStudentPositionMapper studentPositionMapper;
@@ -293,6 +304,7 @@ public class PositionServiceImpl implements IPositionService
 
         Map<String, SysDictData> stageDict = loadDictValueMap(DICT_TYPE_POSITION_PROGRESS_STAGE);
         // §D.3 已移除 coachingStatusDict 加载：coaching label 派生职责转移到前端 composable
+        Map<String, SysDictData> coachingStageDict = loadDictValueMap(DICT_TYPE_POSITION_COACHING_STAGE);
         Map<String, SysDictData> industryDict = loadDictValueMap(DICT_TYPE_POSITION_INDUSTRY);
 
         for (Map<String, Object> application : applications)
@@ -323,9 +335,116 @@ public class PositionServiceImpl implements IPositionService
             }
 
             application.put("bucket", resolveApplicationBucket(stage));
+            application.put("coachings", buildApplicationCoachings(application, studentId, coachingStageDict));
         }
 
         return applications;
+    }
+
+    private List<Map<String, Object>> buildApplicationCoachings(Map<String, Object> application, Long studentId, Map<String, SysDictData> coachingStageDict)
+    {
+        Long applicationId = toLong(application.get("id"));
+        if (applicationId == null)
+        {
+            return List.of();
+        }
+
+        OsgCoaching query = new OsgCoaching();
+        query.setApplicationId(applicationId);
+        query.setStudentId(studentId);
+        List<OsgCoaching> coachings = coachingMapper.selectCoachingList(query);
+        if (coachings == null || coachings.isEmpty())
+        {
+            return List.of();
+        }
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (OsgCoaching coaching : coachings)
+        {
+            rows.add(toApplicationCoachingRow(coaching, coachingStageDict));
+        }
+        return rows;
+    }
+
+    private Map<String, Object> toApplicationCoachingRow(OsgCoaching coaching, Map<String, SysDictData> coachingStageDict)
+    {
+        List<OsgClassRecord> classRecords = loadCoachingClassRecords(coaching.getCoachingId(), coaching.getStudentId());
+        String stage = defaultString(coaching.getInterviewStage(), "");
+        SysDictData stageMeta = coachingStageDict.get(stage);
+        String city = defaultString(coaching.getCity(), "");
+
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("coachingId", coaching.getCoachingId());
+        row.put("applicationId", coaching.getApplicationId());
+        row.put("interviewStage", stage);
+        row.put("interviewStageLabel", stageMeta == null ? stage : defaultString(stageMeta.getDictLabel(), stage));
+        row.put("interviewTime", formatApplicationDateTime(coaching.getInterviewTime()));
+        row.put("city", city);
+        row.put("cityLabel", city);
+        row.put("companyInterviewer", defaultString(coaching.getCompanyInterviewer(), ""));
+        row.put("requestedMentorCount", coaching.getRequestedMentorCount());
+        row.put("requestNote", defaultString(coaching.getRequestNote(), ""));
+        row.put("mentorId", coaching.getMentorId());
+        row.put("mentorName", defaultString(coaching.getMentorName(), ""));
+        row.put("mentorIds", defaultString(coaching.getMentorIds(), ""));
+        row.put("mentorNames", defaultString(coaching.getMentorNames(), defaultString(coaching.getMentorName(), "")));
+        row.put("status", defaultString(coaching.getStatus(), "pending"));
+        row.put("latestRating", latestNormalRating(classRecords));
+        row.put("reportedLessonCount", classRecords.size());
+        return row;
+    }
+
+    private List<OsgClassRecord> loadCoachingClassRecords(Long coachingId, Long studentId)
+    {
+        if (coachingId == null)
+        {
+            return List.of();
+        }
+
+        OsgClassRecord query = new OsgClassRecord();
+        query.setReferenceType(REFERENCE_TYPE_JOB_COACHING);
+        query.setReferenceId(coachingId);
+        query.setStudentId(studentId);
+        query.setStatus("approved");
+        query.setDelFlag("0");
+        List<OsgClassRecord> rows = classRecordMapper.selectClassRecordList(query);
+        return rows == null ? List.of() : rows;
+    }
+
+    private String latestNormalRating(List<OsgClassRecord> classRecords)
+    {
+        return classRecords.stream()
+            .filter(record -> Objects.equals("normal", record.getMemberStatus()))
+            .filter(record -> StringUtils.hasText(record.getRate()))
+            .sorted((left, right) -> {
+                Date leftDate = left.getClassDate();
+                Date rightDate = right.getClassDate();
+                if (leftDate == null && rightDate == null)
+                {
+                    return 0;
+                }
+                if (leftDate == null)
+                {
+                    return 1;
+                }
+                if (rightDate == null)
+                {
+                    return -1;
+                }
+                return rightDate.compareTo(leftDate);
+            })
+            .map(OsgClassRecord::getRate)
+            .findFirst()
+            .orElse("");
+    }
+
+    private String formatApplicationDateTime(Date value)
+    {
+        if (value == null)
+        {
+            return "";
+        }
+        return APPLICATION_DATE_TIME.format(value.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
     }
 
     /**
@@ -582,6 +701,185 @@ public class PositionServiceImpl implements IPositionService
         String normalizedMentorCount = StringUtils.hasText(mentorCount) ? mentorCount : "0";
 
         return requestCoaching(positionId, stage, normalizedMentorCount, extendedRemark, userId);
+    }
+
+    @Override
+    public Map<String, Object> requestApplicationCoaching(Long applicationId, Map<String, Object> params, Long userId)
+    {
+        requireActiveStudentForPositionAccess(userId);
+        if (applicationId == null)
+        {
+            throw new ServiceException("请选择求职申请");
+        }
+        if (params == null)
+        {
+            throw new ServiceException("请提供辅导申请参数");
+        }
+
+        OsgStudent student = identityResolver.resolveStudentByUserId(userId);
+        OsgJobApplication application = jobApplicationMapper.selectJobApplicationByApplicationId(applicationId);
+        if (application == null)
+        {
+            throw new ServiceException("求职申请不存在");
+        }
+        if (!Objects.equals(student.getStudentId(), application.getStudentId()))
+        {
+            throw new ServiceException("无权访问该求职申请");
+        }
+
+        String stage = defaultString(stringValue(params.get("interviewStage")), stringValue(params.get("stage")));
+        if (!StringUtils.hasText(stage))
+        {
+            throw new ServiceException("请选择面试阶段");
+        }
+
+        OsgCoaching coaching = new OsgCoaching();
+        coaching.setApplicationId(applicationId);
+        coaching.setStudentId(student.getStudentId());
+        coaching.setInterviewStage(stage);
+        coaching.setInterviewTime(parseOptionalApplicationCoachingTime(stringValue(params.get("interviewTime"))));
+        coaching.setCity(defaultString(stringValue(params.get("city")), defaultString(application.getCity(), application.getRegion())));
+        coaching.setCompanyInterviewer(stringValue(params.get("companyInterviewer")));
+        coaching.setRequestedMentorCount(parseMentorCount(defaultString(stringValue(params.get("requestedMentorCount")), stringValue(params.get("mentorCount")))));
+        coaching.setRequestNote(defaultString(stringValue(params.get("requestNote")), stringValue(params.get("note"))));
+        coaching.setStatus("pending");
+        coaching.setTotalHours(0);
+        coaching.setCreateBy(String.valueOf(userId));
+        coaching.setUpdateBy(String.valueOf(userId));
+
+        int rows = coachingMapper.insertCoaching(coaching);
+        if (rows <= 0)
+        {
+            throw new ServiceException("辅导申请提交失败，请稍后重试");
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("coachingId", coaching.getCoachingId());
+        result.put("applicationId", applicationId);
+        result.put("status", coaching.getStatus());
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> updateApplicationCoaching(Long applicationId, Long coachingId, Map<String, Object> params, Long userId)
+    {
+        OsgStudent student = requireOwnedApplicationStudent(applicationId, userId);
+        if (coachingId == null)
+        {
+            throw new ServiceException("请选择辅导申请");
+        }
+        if (params == null)
+        {
+            throw new ServiceException("请提供辅导修改参数");
+        }
+
+        OsgCoaching existing = coachingMapper.selectCoachingByCoachingId(coachingId);
+        if (existing == null)
+        {
+            throw new ServiceException("辅导申请不存在");
+        }
+        if (!Objects.equals(applicationId, existing.getApplicationId())
+                || !Objects.equals(student.getStudentId(), existing.getStudentId()))
+        {
+            throw new ServiceException("无权访问该辅导申请");
+        }
+
+        OsgCoaching patch = new OsgCoaching();
+        patch.setCoachingId(coachingId);
+        if (params.containsKey("interviewTime"))
+        {
+            patch.setInterviewTime(parseOptionalApplicationCoachingTime(stringValue(params.get("interviewTime"))));
+        }
+        if (params.containsKey("companyInterviewer"))
+        {
+            patch.setCompanyInterviewer(stringValue(params.get("companyInterviewer")));
+        }
+        patch.setUpdateBy(String.valueOf(userId));
+
+        int rows = coachingMapper.updateCoaching(patch);
+        if (rows <= 0)
+        {
+            throw new ServiceException("辅导申请修改失败，请稍后重试");
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("coachingId", coachingId);
+        result.put("applicationId", applicationId);
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> selectApplicationCoachingClassRecords(Long applicationId, Long coachingId, Long userId)
+    {
+        OsgStudent student = requireOwnedApplicationStudent(applicationId, userId);
+        OsgCoaching coaching = requireOwnedCoaching(applicationId, coachingId, student.getStudentId());
+        List<OsgClassRecord> records = loadCoachingClassRecords(coaching.getCoachingId(), student.getStudentId());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("applicationId", applicationId);
+        result.put("coachingId", coachingId);
+        result.put("latestRating", latestNormalRating(records));
+        result.put("reportedLessonCount", records.size());
+        result.put("records", records.stream().map(this::toApplicationClassRecordRow).toList());
+        return result;
+    }
+
+    private OsgCoaching requireOwnedCoaching(Long applicationId, Long coachingId, Long studentId)
+    {
+        if (coachingId == null)
+        {
+            throw new ServiceException("请选择辅导申请");
+        }
+        OsgCoaching coaching = coachingMapper.selectCoachingByCoachingId(coachingId);
+        if (coaching == null)
+        {
+            throw new ServiceException("辅导申请不存在");
+        }
+        if (!Objects.equals(applicationId, coaching.getApplicationId())
+                || !Objects.equals(studentId, coaching.getStudentId()))
+        {
+            throw new ServiceException("无权访问该辅导申请");
+        }
+        return coaching;
+    }
+
+    private Map<String, Object> toApplicationClassRecordRow(OsgClassRecord record)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("recordId", record.getRecordId());
+        row.put("classId", defaultString(record.getClassId(), ""));
+        row.put("mentorName", defaultString(record.getMentorName(), ""));
+        row.put("classDate", formatApplicationDateTime(record.getClassDate()));
+        row.put("durationHours", record.getDurationHours());
+        row.put("memberStatus", defaultString(record.getMemberStatus(), ""));
+        row.put("rate", defaultString(record.getRate(), ""));
+        row.put("topics", defaultString(record.getTopics(), ""));
+        row.put("comments", defaultString(record.getComments(), ""));
+        row.put("feedbackContent", defaultString(record.getFeedbackContent(), ""));
+        row.put("referenceType", defaultString(record.getReferenceType(), ""));
+        row.put("referenceId", record.getReferenceId());
+        return row;
+    }
+
+    private OsgStudent requireOwnedApplicationStudent(Long applicationId, Long userId)
+    {
+        requireActiveStudentForPositionAccess(userId);
+        if (applicationId == null)
+        {
+            throw new ServiceException("请选择求职申请");
+        }
+
+        OsgStudent student = identityResolver.resolveStudentByUserId(userId);
+        OsgJobApplication application = jobApplicationMapper.selectJobApplicationByApplicationId(applicationId);
+        if (application == null)
+        {
+            throw new ServiceException("求职申请不存在");
+        }
+        if (!Objects.equals(student.getStudentId(), application.getStudentId()))
+        {
+            throw new ServiceException("无权访问该求职申请");
+        }
+        return student;
     }
 
     /**
@@ -1927,26 +2225,26 @@ public class PositionServiceImpl implements IPositionService
 
     private String publicPositionLocation(OsgPosition position)
     {
-        if (StringUtils.hasText(position.getCity()))
-        {
-            return position.getCity().trim();
-        }
         if (StringUtils.hasText(position.getRegion()))
         {
             return position.getRegion().trim();
+        }
+        if (StringUtils.hasText(position.getCity()))
+        {
+            return position.getCity().trim();
         }
         return "";
     }
 
     private String reviewPositionLocation(OsgStudentPosition position)
     {
-        if (StringUtils.hasText(position.getCity()))
-        {
-            return position.getCity().trim();
-        }
         if (StringUtils.hasText(position.getRegion()))
         {
             return position.getRegion().trim();
+        }
+        if (StringUtils.hasText(position.getCity()))
+        {
+            return position.getCity().trim();
         }
         return "";
     }
@@ -2019,6 +2317,27 @@ public class PositionServiceImpl implements IPositionService
         catch (DateTimeParseException error)
         {
             throw new ServiceException("截止日期格式不正确");
+        }
+    }
+
+    private Date parseOptionalApplicationCoachingTime(String dateTimeValue)
+    {
+        if (!StringUtils.hasText(dateTimeValue))
+        {
+            return null;
+        }
+        String normalized = dateTimeValue.trim().replace('T', ' ');
+        if (normalized.length() == 16)
+        {
+            normalized = normalized + ":00";
+        }
+        try
+        {
+            return java.sql.Timestamp.valueOf(LocalDateTime.parse(normalized, APPLICATION_DATE_TIME));
+        }
+        catch (DateTimeParseException error)
+        {
+            throw new ServiceException("面试时间格式不正确");
         }
     }
 

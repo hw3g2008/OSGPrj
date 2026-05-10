@@ -10,25 +10,29 @@ import MainLayout from '../layouts/MainLayout.vue'
 const apiMocks = vi.hoisted(() => ({
   getLeadMentorJobOverviewList: vi.fn(),
   getLeadMentorJobOverviewDetail: vi.fn(),
+  getLeadMentorJobOverviewCoachingDetail: vi.fn(),
   assignLeadMentorJobOverviewMentor: vi.fn(),
+  assignLeadMentorJobOverviewCoachingMentor: vi.fn(),
   acknowledgeLeadMentorJobOverviewStage: vi.fn(),
   getLeadMentorJobOverviewCalendar: vi.fn(),
   getLeadMentorMentorList: vi.fn(async () => ({ rows: [] })),
 }))
 
-vi.mock('@osg/shared/composables', async () => {
-  const actual = await vi.importActual<typeof import('@osg/shared/composables')>(
-    '@osg/shared/composables',
-  )
-  return {
-    ...actual,
-    useDictFacade: () => ({
-      items: { value: [] },
-      loading: { value: false },
-      load: vi.fn(async () => undefined),
-    }),
-  }
-})
+vi.mock('@osg/shared/composables', () => ({
+  useIdleLogout: () => undefined,
+  useCoachingStatusMap: () => ({
+    items: { value: [] },
+    loading: { value: false },
+    load: vi.fn(async () => undefined),
+    resolveCoachingTone: () => 'blue',
+  }),
+  useDictFacade: () => ({
+    items: { value: [] },
+    loading: { value: false },
+    load: vi.fn(async () => undefined),
+  }),
+  deriveApplicationStatus: (status?: string) => status || 'pending',
+}))
 
 const routerSource = fs.readFileSync(
   path.resolve(__dirname, '../router/index.ts'),
@@ -66,9 +70,28 @@ async function flushUi() {
   await nextTick()
 }
 
+async function waitFor<T>(resolve: () => T | null | undefined | false, description: string, timeoutMs = 1000): Promise<T> {
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < timeoutMs) {
+    await flushUi()
+    const result = resolve()
+    if (result) {
+      return result
+    }
+    await new Promise((resolveTimeout) => setTimeout(resolveTimeout, 10))
+  }
+  throw new Error(`Timeout waiting for ${description}`)
+}
+
 function findTab(container: ParentNode, text: string): HTMLElement | null {
   return Array.from(container.querySelectorAll<HTMLElement>('.ant-tabs-tab')).find((el) =>
     el.textContent?.includes(text),
+  ) || null
+}
+
+function findButtonByText(container: ParentNode, text: string): HTMLButtonElement | null {
+  return Array.from(container.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
+    button.textContent?.includes(text),
   ) || null
 }
 
@@ -203,8 +226,6 @@ describe('lead-mentor job overview shell contract', () => {
       expect(page.container.querySelector('.osg-ic__toolbar')).toBeTruthy()
       expect(page.container.textContent).toContain('学员面试安排')
       expect(apiMocks.getLeadMentorJobOverviewCalendar).toHaveBeenCalled()
-      expect(page.container.querySelector<HTMLInputElement>('input[placeholder="搜索学员姓名..."]')?.placeholder).toBe('搜索学员姓名...')
-      expect(page.container.textContent).toContain('全部类型')
       expect(page.container.textContent).toContain('全部公司')
       expect(page.container.textContent).toContain('全部状态')
       expect(page.container.textContent).toContain('待分配导师')
@@ -240,8 +261,8 @@ describe('lead-mentor job overview shell contract', () => {
       expect(coachingButton).toBeTruthy()
       expect(managedButton).toBeTruthy()
       expect(isTabPaneActive(pendingPanel)).toBe(false)
-      expect(isTabPaneActive(coachingPanel)).toBe(true)
-      expect(isTabPaneActive(managedPanel)).toBe(false)
+      expect(isTabPaneActive(coachingPanel)).toBe(false)
+      expect(isTabPaneActive(managedPanel)).toBe(true)
       expect(overviewNav?.classList.contains('active')).toBe(true)
 
       pendingButton?.click()
@@ -258,6 +279,102 @@ describe('lead-mentor job overview shell contract', () => {
       expect(isTabPaneActive(coachingPanel)).toBe(false)
       expect(isTabPaneActive(managedPanel)).toBe(true)
       expect(overviewNav?.classList.contains('active')).toBe(true)
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('uses coachingId as the table row key when one application has multiple coachings', async () => {
+    apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
+      if (params.scope !== 'managed') {
+        return { rows: [] }
+      }
+      return {
+        rows: [
+          {
+            applicationId: 7701,
+            coachingId: 9701,
+            studentId: 3701,
+            studentName: 'Multi Stage Student',
+            companyName: 'Goldman Sachs',
+            positionName: 'Summer Analyst',
+            currentStage: 'First Round',
+            interviewTime: '2026-03-26T09:30:00Z',
+            coachingStatus: 'pending',
+          },
+          {
+            applicationId: 7701,
+            coachingId: 9702,
+            studentId: 3701,
+            studentName: 'Multi Stage Student',
+            companyName: 'Goldman Sachs',
+            positionName: 'Summer Analyst',
+            currentStage: 'Final Round',
+            interviewTime: '2026-04-02T09:30:00Z',
+            coachingStatus: 'pending',
+          },
+        ],
+      }
+    })
+
+    const page = await mountJobOverviewPage()
+
+    try {
+      const managedPanel = page.container.querySelector<HTMLElement>('#lm-job-content-managed')
+      expect(managedPanel?.querySelector('[data-row-key="9701"]')?.textContent).toContain('First Round')
+      expect(managedPanel?.querySelector('[data-row-key="9702"]')?.textContent).toContain('Final Round')
+      expect(managedPanel?.querySelectorAll('[data-row-key="7701"]').length).toBe(0)
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('opens class record detail by coachingId instead of applicationId', async () => {
+    apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
+      if (params.scope !== 'managed') {
+        return { rows: [] }
+      }
+      return {
+        rows: [
+          {
+            applicationId: 7701,
+            coachingId: 9702,
+            studentId: 3701,
+            studentName: 'Multi Stage Student',
+            companyName: 'Goldman Sachs',
+            positionName: 'Summer Analyst',
+            currentStage: 'Final Round',
+            interviewTime: '2026-04-02T09:30:00Z',
+            coachingStatus: 'pending',
+          },
+        ],
+      }
+    })
+    apiMocks.getLeadMentorJobOverviewCoachingDetail.mockResolvedValue({
+      applicationId: 7701,
+      coachingId: 9702,
+      studentId: 3701,
+      companyName: 'Goldman Sachs',
+      positionName: 'Summer Analyst',
+      currentStage: 'Final Round',
+      classRecordsByMentor: [],
+    })
+
+    const page = await mountJobOverviewPage()
+
+    try {
+      const row = await waitFor(
+        () => page.container.querySelector<HTMLElement>('#lm-job-content-managed [data-row-key="9702"]'),
+        'managed coaching row',
+      )
+      findButtonByText(row, '查看详情')?.click()
+      await waitFor(
+        () => apiMocks.getLeadMentorJobOverviewCoachingDetail.mock.calls.length > 0,
+        'coaching detail request',
+      )
+
+      expect(apiMocks.getLeadMentorJobOverviewCoachingDetail).toHaveBeenCalledWith(9702)
+      expect(apiMocks.getLeadMentorJobOverviewDetail).not.toHaveBeenCalledWith(7701)
     } finally {
       page.unmount()
     }

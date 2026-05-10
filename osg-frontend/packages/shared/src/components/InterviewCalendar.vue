@@ -207,8 +207,6 @@ const {
   viewMode,
   monthOffset,
   weekOffset,
-  currentMonthLabel,
-  currentWeekLabel,
   currentRangeLabel,
   compactDays,
   summaryEvents,

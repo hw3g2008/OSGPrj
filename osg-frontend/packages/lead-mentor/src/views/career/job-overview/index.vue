@@ -79,7 +79,7 @@
             <a-table
               :columns="managedColumns"
               :data-source="managedRows"
-              :row-key="(r: OverviewRow) => r.applicationId"
+              :row-key="(r: OverviewRow) => r.coachingId ?? r.applicationId"
               :pagination="false"
               :scroll="{ x: 1100 }"
               :row-class-name="(record: OverviewRow) => `row-highlight ${record.rowTone || ''}`.trim()"
@@ -153,7 +153,7 @@
             <a-table
               :columns="coachingColumns"
               :data-source="coachingRows"
-              :row-key="(r: OverviewRow) => r.applicationId"
+              :row-key="(r: OverviewRow) => r.coachingId ?? r.applicationId"
               :pagination="false"
               :scroll="{ x: 1000 }"
               :row-class-name="(record: OverviewRow) => `row-highlight ${record.rowTone || ''}`.trim()"
@@ -242,7 +242,7 @@
             <a-table
               :columns="pendingColumns"
               :data-source="pendingRows"
-              :row-key="(r: PendingRow) => r.applicationId"
+              :row-key="(r: PendingRow) => r.coachingId ?? r.applicationId"
               :pagination="false"
               :scroll="{ x: 1100 }"
               :row-class-name="() => 'row-highlight row-highlight--warning'"
@@ -296,6 +296,7 @@
     <AssignMentorModal
       v-model="isAssignMentorModalOpen"
       :preview="assignMentorPreview"
+      :required-mentor-count="activeAssignRequiredMentorCount"
       @confirm-match="handleConfirmAssignMentor"
     />
     <ClassRecordDetailDrawer
@@ -305,15 +306,13 @@
       :loading="detailDrawerLoading"
     />
     <LeadMentorClassReportFlowModal
-      v-model="classReportVisible"
-      :students="classReportStudents"
-      :submitting="isSubmittingClassReport"
-      :prefill-student-id="classReportPrefill?.prefilledStudentId ?? null"
-      :prefilled-student-name="classReportPrefill?.prefilledStudentName ?? null"
-      :prefilled-reference-type="classReportPrefill?.prefilledReferenceType ?? null"
-      :prefilled-reference-id="classReportPrefill?.prefilledReferenceId ?? null"
-      :readonly-fields="classReportPrefill?.readonlyFields ?? []"
-      @submit="handleClassReportSubmit"
+      :visible="classReportVisible"
+      :prefilled-student-id="classReportPrefill?.prefilledStudentId"
+      :prefilled-reference-type="classReportPrefill?.prefilledReferenceType"
+      :prefilled-reference-id="classReportPrefill?.prefilledReferenceId"
+      :readonly-fields="classReportPrefill?.readonlyFields ?? emptyClassReportReadonlyFields"
+      @update:visible="classReportVisible = $event"
+      @submitted="handleClassReportSubmitted"
     />
   </div>
   </a-config-provider>
@@ -334,8 +333,10 @@ import {
 } from '@ant-design/icons-vue'
 import {
   acknowledgeLeadMentorJobOverviewStage,
+  assignLeadMentorJobOverviewCoachingMentor,
   assignLeadMentorJobOverviewMentor,
   getLeadMentorJobOverviewCalendar,
+  getLeadMentorJobOverviewCoachingDetail,
   getLeadMentorJobOverviewDetail,
   getLeadMentorJobOverviewList,
   type LeadMentorCalendarRecord,
@@ -346,13 +347,12 @@ import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell, In
 import { useCoachingStatusMap, deriveApplicationStatus } from '@osg/shared/composables'
 import { ClassRecordDetailDrawer } from '@osg/shared/components'
 import type { LeadMentorClassRecordMentorGroup } from '@osg/shared/components'
-import { createLeadMentorClassRecord, type LeadMentorClassRecordCreatePayload } from '@osg/shared/api'
 import AssignMentorModal, {
   type AssignMentorConfirmPayload,
   type AssignMentorPreview,
 } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
-import LeadMentorClassReportFlowModal from '../teaching/class-records/LeadMentorClassReportFlowModal.vue'
+import LeadMentorClassReportFlowModal from '../../teaching/class-records/LeadMentorClassReportFlowModal.vue'
 
 const { resolveCoachingTone } = useCoachingStatusMap()
 
@@ -417,6 +417,7 @@ type TabKey = 'pending' | 'coaching' | 'managed'
 
 interface PendingRow {
   applicationId: number
+  coachingId?: number | null
   studentName: string
   studentId: string
   avatarColor: string
@@ -434,6 +435,7 @@ interface PendingRow {
 
 interface OverviewRow {
   applicationId: number
+  coachingId?: number | null
   studentName: string
   studentId: string
   avatarColor: string
@@ -470,14 +472,12 @@ const detailDrawerLoading = ref(false)
 const detailDrawerApplicationId = ref<number | null>(null)
 
 const classReportPrefill = ref<{
-  prefilledStudentId: string
-  prefilledStudentName: string
-  prefilledReferenceType: string
+  prefilledStudentId: number
+  prefilledReferenceType: 'application' | 'job_coaching'
   prefilledReferenceId: number
-  readonlyFields: string[]
+  readonlyFields: Array<'student' | 'reference'>
 } | null>(null)
-const classReportStudents = ref<Array<{ value: string; label: string; disabled?: boolean }>>([])
-const isSubmittingClassReport = ref(false)
+const emptyClassReportReadonlyFields: Array<'student' | 'reference'> = []
 
 const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
 const route = useRoute()
@@ -490,6 +490,8 @@ const jobDetailPreview = ref<JobDetailPreview | null>(null)
 const assignMentorPreview = ref<AssignMentorPreview | null>(null)
 const detailCurrentStage = ref('')
 const activeAssignApplicationId = ref<number | null>(null)
+const activeAssignCoachingId = ref<number | null>(null)
+const activeAssignRequiredMentorCount = ref<number | null>(null)
 const activeAssignSource = ref<LeadMentorJobOverviewListItem | null>(null)
 const scopeRows = ref<Record<TabKey, LeadMentorJobOverviewListItem[]>>({
   pending: [],
@@ -541,6 +543,7 @@ const stageOptions = computed(() =>
 const pendingRows = computed<PendingRow[]>(() =>
   scopeRows.value.pending.map((row) => ({
     applicationId: row.applicationId,
+    coachingId: row.coachingId,
     studentName: row.studentName || '-',
     studentId: String(row.studentId ?? '-'),
     avatarColor: resolveAvatarColor(row.studentName),
@@ -569,32 +572,20 @@ const classReportVisible = ref(false)
 
 const openClassReportFromCoaching = (record: OverviewRow) => {
   classReportPrefill.value = {
-    prefilledStudentId: String(record.raw.studentId ?? ''),
-    prefilledStudentName: record.studentName,
+    prefilledStudentId: record.raw.studentId,
     prefilledReferenceType: 'application',
     prefilledReferenceId: record.applicationId,
     readonlyFields: ['student', 'reference'],
   }
-  classReportStudents.value = [
-    { value: String(record.raw.studentId ?? ''), label: record.studentName },
-  ]
   classReportVisible.value = true
 }
 
-const handleClassReportSubmit = async (payload: LeadMentorClassRecordCreatePayload) => {
-  isSubmittingClassReport.value = true
-  try {
-    await createLeadMentorClassRecord(payload)
-    classReportVisible.value = false
-    classReportPrefill.value = null
-    const [coaching, managed] = await Promise.all([loadScope('coaching'), loadScope('managed')])
-    scopeRows.value = { ...scopeRows.value, coaching, managed }
-    message.success('课消记录已提交')
-  } catch {
-    message.error('课消记录提交失败')
-  } finally {
-    isSubmittingClassReport.value = false
-  }
+const handleClassReportSubmitted = async () => {
+  classReportVisible.value = false
+  classReportPrefill.value = null
+  const [coaching, managed] = await Promise.all([loadScope('coaching'), loadScope('managed')])
+  scopeRows.value = { ...scopeRows.value, coaching, managed }
+  message.success('课消记录已提交')
 }
 
 const buildAssignMentorPreview = (payload: {
@@ -692,7 +683,9 @@ const openDetailDrawer = async (row: OverviewRow) => {
   detailDrawerLoading.value = true
   isDetailDrawerOpen.value = true
   try {
-    const detail = await getLeadMentorJobOverviewDetail(row.applicationId)
+    const detail = row.coachingId
+      ? await getLeadMentorJobOverviewCoachingDetail(row.coachingId)
+      : await getLeadMentorJobOverviewDetail(row.applicationId)
     detailDrawerGroups.value = detail.classRecordsByMentor ?? []
   } catch {
     message.error('课消详情加载失败')
@@ -704,6 +697,8 @@ const openDetailDrawer = async (row: OverviewRow) => {
 
 const openAssignMentorFromPending = (row: PendingRow) => {
   activeAssignApplicationId.value = row.applicationId
+  activeAssignCoachingId.value = row.coachingId ?? null
+  activeAssignRequiredMentorCount.value = row.raw.requestedMentorCount ?? null
   activeAssignSource.value = row.raw
   assignMentorPreview.value = buildAssignMentorPreview({
     studentName: row.studentName,
@@ -730,6 +725,8 @@ const handleRequestMentorChange = () => {
   }
 
   activeAssignApplicationId.value = source.applicationId
+  activeAssignCoachingId.value = source.coachingId ?? null
+  activeAssignRequiredMentorCount.value = source.requestedMentorCount ?? null
   assignMentorPreview.value = buildAssignMentorPreview({
     studentName: preview.studentName,
     studentId: preview.studentId,
@@ -753,15 +750,30 @@ const handleConfirmAssignMentor = async (payload: AssignMentorConfirmPayload) =>
     message.error('请至少选择1位导师')
     return
   }
+  if (
+    activeAssignRequiredMentorCount.value &&
+    activeAssignRequiredMentorCount.value > 0 &&
+    payload.mentorIds.length !== activeAssignRequiredMentorCount.value
+  ) {
+    message.error('导师数量必须等于申请导师数量')
+    return
+  }
 
   try {
-    await assignLeadMentorJobOverviewMentor(activeAssignApplicationId.value, payload)
+    const targetCoachingId = activeAssignCoachingId.value
+    await (targetCoachingId
+      ? assignLeadMentorJobOverviewCoachingMentor(targetCoachingId, payload)
+      : assignLeadMentorJobOverviewMentor(activeAssignApplicationId.value, payload))
+    const matchesAssignTarget = (entry: LeadMentorJobOverviewListItem) =>
+      targetCoachingId
+        ? entry.coachingId === targetCoachingId
+        : entry.applicationId === activeAssignApplicationId.value
     isAssignMentorModalOpen.value = false
     scopeRows.value = {
-      pending: scopeRows.value.pending.filter((entry) => entry.applicationId !== activeAssignApplicationId.value),
+      pending: scopeRows.value.pending.filter((entry) => !matchesAssignTarget(entry)),
       coaching: scopeRows.value.coaching,
       managed: scopeRows.value.managed.map((entry) =>
-        entry.applicationId === activeAssignApplicationId.value
+        matchesAssignTarget(entry)
           ? {
               ...entry,
               assignedStatus: 'assigned',
@@ -883,6 +895,7 @@ async function syncJobDetailStage(stage: string) {
 function toOverviewRow(row: LeadMentorJobOverviewListItem): OverviewRow {
   return {
     applicationId: row.applicationId,
+    coachingId: row.coachingId,
     studentName: row.studentName || '-',
     studentId: String(row.studentId ?? '-'),
     avatarColor: resolveAvatarColor(row.studentName),

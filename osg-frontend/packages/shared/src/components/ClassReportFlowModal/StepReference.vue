@@ -112,11 +112,11 @@ const isReferenceBranch = computed(() =>
   props.courseType === 'communication_test',
 )
 
-// referenceType 选项按 courseType 过滤：job_coaching → application；其它对齐 courseType
+// referenceType 选项按 courseType 过滤：job_coaching → job_coaching（指向 osg_coaching 阶段记录）；其它对齐 courseType
 const referenceTypeOptions = computed<{ value: ReferenceType; label: string }[]>(() => {
   switch (props.courseType) {
     case 'job_coaching':
-      return [{ value: 'application', label: '求职申请' }]
+      return [{ value: 'job_coaching', label: '求职辅导申请' }]
     case 'mock_interview':
       return [{ value: 'mock_interview', label: '模拟面试' }]
     case 'relation_test':

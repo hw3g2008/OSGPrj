@@ -500,7 +500,6 @@ import {
   getStudentMockPracticeMeta,
   createStudentPracticeRequest,
   getStudentMockPracticeOverview,
-  type StudentMockPracticeCard,
   type StudentMockPracticeMeta,
   type StudentPracticeRecord
 } from '@osg/shared/api'
@@ -604,14 +603,6 @@ const practiceForm = ref({
   preferredMentor: '',
   excludedMentor: '',
   remark: ''
-})
-
-const selectedPracticeCard = computed<StudentMockPracticeCard | null>(() =>
-  mockPracticeMeta.value.practiceCards.find((entry) => entry.id === currentPracticeModal.value) ?? null
-)
-
-const practiceModalTitle = computed(() => {
-  return selectedPracticeCard.value?.modalTitle ?? ''
 })
 
 const practiceDialogConfig = computed(() => {

@@ -7,7 +7,11 @@ import com.ruoyi.system.domain.OsgCoaching;
 
 public interface OsgCoachingMapper
 {
+    OsgCoaching selectCoachingByCoachingId(Long coachingId);
+
     OsgCoaching selectCoachingByApplicationId(Long applicationId);
+
+    List<OsgCoaching> selectCoachingsByApplicationId(Long applicationId);
 
     List<OsgCoaching> selectCoachingList(OsgCoaching coaching);
 
@@ -28,6 +32,9 @@ public interface OsgCoachingMapper
      */
     int resetConfirmationByApplicationId(@Param("applicationId") Long applicationId,
                                          @Param("operator") String operator);
+
+    int resetConfirmationByCoachingId(@Param("coachingId") Long coachingId,
+                                      @Param("operator") String operator);
 
     /**
      * §C.1 confirmCoaching 原子 SQL：仅当 confirmed_at IS NULL 时才更新。

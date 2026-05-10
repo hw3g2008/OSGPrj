@@ -39,6 +39,7 @@ import com.ruoyi.framework.security.handle.AuthenticationEntryPointImpl;
 import com.ruoyi.framework.security.handle.LogoutSuccessHandlerImpl;
 import com.ruoyi.framework.web.service.PermissionService;
 import com.ruoyi.framework.web.service.TokenService;
+import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgCoaching;
 import com.ruoyi.system.domain.OsgJobApplication;
 import com.ruoyi.system.mapper.OsgClassRecordMapper;
@@ -222,6 +223,14 @@ class OsgLeadMentorJobOverviewControllerTest
                 .orElse(null)
         );
 
+        org.mockito.Mockito.when(coachingMapper.selectCoachingByCoachingId(any())).thenAnswer(invocation ->
+            coachingRowsRef.get().stream()
+                .filter(item -> item.getCoachingId().equals(invocation.getArgument(0)))
+                .findFirst()
+                .map(this::cloneCoaching)
+                .orElse(null)
+        );
+
         org.mockito.Mockito.when(coachingMapper.insertCoaching(any(OsgCoaching.class))).thenAnswer(invocation -> {
             OsgCoaching coaching = cloneCoaching(invocation.getArgument(0));
             coaching.setCoachingId(coachingIdSequence.incrementAndGet());
@@ -314,6 +323,18 @@ class OsgLeadMentorJobOverviewControllerTest
     }
 
     @Test
+    void listShouldReturnCoachingIdForManagedCoachingRows() throws Exception
+    {
+        mockMvc.perform(get("/lead-mentor/job-overview/list")
+                .header("Authorization", "Bearer lead-mentor-token")
+                .param("scope", "managed"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.rows[0].applicationId").value(7002))
+            .andExpect(jsonPath("$.rows[0].coachingId").value(8001));
+    }
+
+    @Test
     void detailShouldReturnMergedStageMentorHoursAndFeedbackForScopedApplication() throws Exception
     {
         mockMvc.perform(get("/lead-mentor/job-overview/7002")
@@ -326,6 +347,30 @@ class OsgLeadMentorJobOverviewControllerTest
             .andExpect(jsonPath("$.data.mentorNames").value("Jess, Amy"))
             .andExpect(jsonPath("$.data.hoursUsed").value(6))
             .andExpect(jsonPath("$.data.feedbackSummary").value("拆分 case study 讲解后通过率提升"));
+    }
+
+    @Test
+    void detailShouldReturnCurrentCoachingClassRecordsByCoachingId() throws Exception
+    {
+        OsgClassRecord record = new OsgClassRecord();
+        record.setRecordId(10001L);
+        record.setMentorId(9201L);
+        record.setMentorName("Jess");
+        record.setDurationHours(1.5);
+        record.setMemberStatus("normal");
+        record.setRate("5");
+
+        org.mockito.Mockito.when(classRecordMapper.selectByJobCoachingReference(8001L)).thenReturn(List.of(record));
+
+        mockMvc.perform(get("/lead-mentor/job-overview/coaching/8001")
+                .header("Authorization", "Bearer lead-mentor-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.applicationId").value(7002))
+            .andExpect(jsonPath("$.data.coachingId").value(8001))
+            .andExpect(jsonPath("$.data.classRecordsByMentor.length()").value(1))
+            .andExpect(jsonPath("$.data.classRecordsByMentor[0].mentorName").value("Jess"))
+            .andExpect(jsonPath("$.data.classRecordsByMentor[0].records[0].recordId").value(10001));
     }
 
     @Test
@@ -358,6 +403,48 @@ class OsgLeadMentorJobOverviewControllerTest
             .findFirst()
             .orElseThrow();
         assertEquals("9001,9002", persisted.getMentorIds());
+    }
+
+    @Test
+    void assignMentorShouldUpdateOnlyTargetCoachingByCoachingId() throws Exception
+    {
+        coachingRowsRef.get().stream()
+            .filter(row -> Long.valueOf(8001L).equals(row.getCoachingId()))
+            .findFirst()
+            .ifPresent(row -> row.setRequestedMentorCount(2));
+        coachingRowsRef.get().stream()
+            .filter(row -> Long.valueOf(8002L).equals(row.getCoachingId()))
+            .findFirst()
+            .ifPresent(row -> row.setRequestedMentorCount(1));
+
+        mockMvc.perform(post("/lead-mentor/job-overview/coaching/8001/assign-mentor")
+                .header("Authorization", "Bearer lead-mentor-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "mentorIds": [9201, 9202],
+                      "mentorNames": ["Jess", "Jerry Li"],
+                      "assignNote": "Target coaching only"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.applicationId").value(7002))
+            .andExpect(jsonPath("$.data.coachingId").value(8001))
+            .andExpect(jsonPath("$.data.mentorIds[0]").value(9001))
+            .andExpect(jsonPath("$.data.mentorIds[1]").value(9002))
+            .andExpect(jsonPath("$.data.coachingStatus").value("assigned"));
+
+        assertEquals("9001,9002", coachingRowsRef.get().stream()
+            .filter(row -> Long.valueOf(8001L).equals(row.getCoachingId()))
+            .findFirst()
+            .orElseThrow()
+            .getMentorIds());
+        assertEquals("9202", coachingRowsRef.get().stream()
+            .filter(row -> Long.valueOf(8002L).equals(row.getCoachingId()))
+            .findFirst()
+            .orElseThrow()
+            .getMentorIds());
     }
 
     @Test
@@ -526,6 +613,7 @@ class OsgLeadMentorJobOverviewControllerTest
         target.setMentorBackground(source.getMentorBackground());
         target.setStatus(source.getStatus());
         target.setTotalHours(source.getTotalHours());
+        target.setRequestedMentorCount(source.getRequestedMentorCount());
         target.setFeedbackSummary(source.getFeedbackSummary());
         target.setAssignNote(source.getAssignNote());
         target.setAssignedAt(source.getAssignedAt());

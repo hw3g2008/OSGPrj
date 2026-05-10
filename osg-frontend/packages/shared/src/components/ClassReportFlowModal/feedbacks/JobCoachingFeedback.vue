@@ -6,7 +6,7 @@
         :value="payload.purpose"
         :rows="2"
         placeholder="请描述本次岗位辅导的目的..."
-        @update:value="(v) => update('purpose', v)"
+        @update:value="update('purpose', $event)"
       />
     </div>
 
@@ -16,7 +16,7 @@
         :value="payload.concepts"
         :rows="2"
         placeholder="请列出本次课程涉及的概念和主题..."
-        @update:value="(v) => update('concepts', v)"
+        @update:value="update('concepts', $event)"
       />
     </div>
 
@@ -26,7 +26,7 @@
         :value="payload.improvements"
         :rows="2"
         placeholder="请描述学员需要改进的方面..."
-        @update:value="(v) => update('improvements', v)"
+        @update:value="update('improvements', $event)"
       />
     </div>
 
@@ -34,7 +34,7 @@
       <label class="form-label">您如何评价这名学生的表现？</label>
       <a-radio-group
         :value="payload.performanceLevel"
-        @update:value="(v) => update('performanceLevel', v)"
+        @update:value="update('performanceLevel', $event)"
       >
         <a-radio
           v-for="opt in PERFORMANCE_OPTIONS"
@@ -53,7 +53,7 @@
         :value="payload.narrative"
         :rows="3"
         placeholder="可选：进一步补充本次课程反馈..."
-        @update:value="(v) => update('narrative', v)"
+        @update:value="update('narrative', $event)"
       />
     </div>
   </div>

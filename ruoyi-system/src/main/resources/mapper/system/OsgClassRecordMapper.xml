@@ -117,11 +117,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="courseSource != null and courseSource != ''">
                 and course_source = #{courseSource}
             </if>
+            <if test="studentId != null">
+                and student_id = #{studentId}
+            </if>
+            <if test="referenceType != null and referenceType != ''">
+                and reference_type = #{referenceType}
+            </if>
+            <if test="referenceId != null">
+                and reference_id = #{referenceId}
+            </if>
             <if test="classStatus != null and classStatus != ''">
                 and class_status = #{classStatus}
             </if>
             <if test="status != null and status != ''">
                 and status = #{status}
+            </if>
+            <if test="delFlag != null and delFlag != ''">
+                and del_flag = #{delFlag}
             </if>
             <if test="tab != null and tab != '' and tab != 'all'">
                 and status = #{tab}
@@ -191,6 +203,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by class_date desc
     </select>
 
+    <select id="selectByJobCoachingReference" parameterType="java.lang.Long" resultMap="OsgClassRecordResult">
+        select
+        <include refid="selectClassRecordColumns"/>
+        from osg_class_record
+        where reference_type = 'job_coaching'
+          and reference_id = #{coachingId}
+          and del_flag = '0'
+        order by class_date desc
+    </select>
+
     <insert id="insertClassRecord" parameterType="OsgClassRecord" useGeneratedKeys="true" keyProperty="recordId">
         insert into osg_class_record (
             class_id,
@@ -219,7 +241,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             remark,
             student_position_id,
             practice_id,
-            application_id
+            application_id,
+            reference_type,
+            reference_id,
+            member_status,
+            base_course_category,
+            base_course_topics,
+            absent_remark,
+            screenshot_urls
         ) values (
             #{classId},
             #{mentorId},
@@ -247,7 +276,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{remark},
             #{studentPositionId},
             #{practiceId},
-            #{applicationId}
+            #{applicationId},
+            #{referenceType},
+            #{referenceId},
+            #{memberStatus},
+            #{baseCourseCategory},
+            #{baseCourseTopics},
+            #{absentRemark},
+            #{screenshotUrls}
         )
     </insert>
 
@@ -277,7 +313,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             del_flag,
             student_position_id,
             practice_id,
-            application_id
+            application_id,
+            reference_type,
+            reference_id,
+            member_status,
+            base_course_category,
+            base_course_topics,
+            absent_remark,
+            screenshot_urls
         ) values (
             #{classId},
             #{mentorId},
@@ -303,7 +346,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             '0',
             #{studentPositionId},
             #{practiceId},
-            #{applicationId}
+            #{applicationId},
+            #{referenceType},
+            #{referenceId},
+            #{memberStatus},
+            #{baseCourseCategory},
+            #{baseCourseTopics},
+            #{absentRemark},
+            #{screenshotUrls}
         )
     </insert>
 

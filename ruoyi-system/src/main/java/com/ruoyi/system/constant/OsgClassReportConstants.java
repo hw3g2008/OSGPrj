@@ -23,6 +23,7 @@ public final class OsgClassReportConstants
 
     // ── 关联类型 ─────────────────────────────────────────────────────────────────
     public static final String REFERENCE_TYPE_APPLICATION = "application";
+    public static final String REFERENCE_TYPE_JOB_COACHING = "job_coaching";
     public static final String REFERENCE_TYPE_MOCK_INTERVIEW = "mock_interview";
     public static final String REFERENCE_TYPE_RELATION_TEST = "relation_test";
     public static final String REFERENCE_TYPE_COMMUNICATION_TEST = "communication_test";

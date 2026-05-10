@@ -56,6 +56,8 @@ public interface IOsgUserJobOverviewService
      */
     Map<String, Object> detailForLeadMentor(Long applicationId, Long leadMentorId);
 
+    Map<String, Object> detailForLeadMentorCoaching(Long coachingId, Long leadMentorId);
+
     /**
      * 班主任视角：日历事件（lead_mentor_id 维度，与 ①栏面试日历事件源一致）。
      */
@@ -85,6 +87,8 @@ public interface IOsgUserJobOverviewService
      * 班主任分配导师（单个申请）。
      */
     Map<String, Object> assignMentors(Long applicationId, Map<String, Object> payload, Long leadMentorId, String operator);
+
+    Map<String, Object> assignMentorsByCoaching(Long coachingId, Map<String, Object> payload, Long leadMentorId, String operator);
 
     /**
      * 班主任确认阶段更新（消除 stageUpdated 标记）。

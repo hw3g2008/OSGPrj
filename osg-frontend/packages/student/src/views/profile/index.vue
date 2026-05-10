@@ -11,18 +11,6 @@
         </div>
       </template>
 
-      <a-alert
-        class="pending-banner"
-        :type="pendingChanges.length > 0 ? 'warning' : 'info'"
-        show-icon
-      >
-        <template #message><strong>{{ pendingBannerTitle }}</strong></template>
-        <template #description>{{ pendingBannerText }}</template>
-        <template #action>
-          <a-button @click="pendingOpen = true">查看详情</a-button>
-        </template>
-      </a-alert>
-
       <a-card class="profile-card" :bordered="false">
         <div class="profile-head">
           <a-avatar :size="84" :style="{ backgroundColor: 'var(--primary)', fontSize: '28px', fontWeight: 800 }">{{ avatarInitials }}</a-avatar>
@@ -54,27 +42,21 @@
           <a-descriptions :column="{ xs: 1, sm: 2, md: 3 }" :colon="false">
             <a-descriptions-item label="学校">
               <span class="field-value">{{ profile.school }}</span>
-              <a-tag v-if="pendingFieldKeys.has('school')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="专业">
               <span class="field-value">{{ profile.major }}</span>
-              <a-tag v-if="pendingFieldKeys.has('major')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="毕业年份">
               <span class="field-value">{{ profile.graduationYear }}</span>
-              <a-tag v-if="pendingFieldKeys.has('graduationYear')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="高中">
               <span class="field-value">{{ profile.highSchool }}</span>
-              <a-tag v-if="pendingFieldKeys.has('highSchool')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="是否读研或延毕">
               <span class="field-value">{{ profile.postgraduatePlan }}</span>
-              <a-tag v-if="pendingFieldKeys.has('postgraduatePlan')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="签证">
               <span class="field-value">{{ profile.visaStatus }}</span>
-              <a-tag v-if="pendingFieldKeys.has('visaStatus')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
@@ -83,19 +65,15 @@
           <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
             <a-descriptions-item label="求职地区">
               <span class="field-value">{{ profile.targetRegion }}</span>
-              <a-tag v-if="pendingFieldKeys.has('targetRegion')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="招聘周期">
               <span class="field-value">{{ profile.recruitmentCycle }}</span>
-              <a-tag v-if="pendingFieldKeys.has('recruitmentCycle')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="主攻方向">
               <span class="field-value">{{ profile.primaryDirection }}</span>
-              <a-tag v-if="pendingFieldKeys.has('primaryDirection')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="子方向">
               <span class="field-value">{{ profile.secondaryDirection }}</span>
-              <a-tag v-if="pendingFieldKeys.has('secondaryDirection')" color="warning" class="field-pending-tag">待审核</a-tag>
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
@@ -116,10 +94,7 @@
       :footer="null"
       @cancel="editOpen = false"
     >
-      <div class="modal-tip">审核说明：核心信息、学业信息和求职方向的修改需要后台审核，联系方式修改后直接生效。</div>
-
       <section class="profile-modal-section">
-        <div class="edit-section-title">以下信息修改需后台审核</div>
         <div class="form-grid">
           <a-form-item label="学校" class="form-item">
             <a-select
@@ -175,7 +150,6 @@
       </section>
 
       <section class="profile-modal-section">
-        <div class="edit-section-title edit-section-title--success">以下信息修改后直接生效</div>
         <div class="form-grid form-grid--compact">
           <a-form-item label="电话" class="form-item"><a-input v-model:value="editForm.phone" /></a-form-item>
           <a-form-item label="微信ID" class="form-item"><a-input v-model:value="editForm.wechatId" /></a-form-item>
@@ -188,48 +162,6 @@
       </div>
     </a-modal>
 
-    <a-modal
-      v-model:open="pendingOpen"
-      title="待审核的信息变更"
-      :width="640"
-      :footer="null"
-      @cancel="pendingOpen = false"
-    >
-      <div class="modal-tip modal-tip--warning">审核期间原始信息仍保持生效，审核通过后系统会自动更新您的资料。</div>
-      <div class="pending-list">
-        <div v-if="pendingChanges.length === 0" class="pending-item pending-item--empty">
-          <div class="pending-head">
-            <a-tag color="default">暂无待审核</a-tag>
-          </div>
-          <div class="pending-body">当前没有待审核的信息变更。</div>
-        </div>
-        <div v-for="change in pendingChanges" :key="`${change.fieldKey}-${change.newValue}`" class="pending-item">
-          <div class="pending-head">
-            <div class="pending-head__meta">
-              <strong>{{ change.fieldLabel }}</strong>
-              <span>提交于 {{ change.submittedAt }}</span>
-            </div>
-            <a-tag color="warning">{{ change.status || '待审核' }}</a-tag>
-          </div>
-          <div class="pending-diff">
-            <div class="pending-diff__card">
-              <span>原值</span>
-              <strong>{{ displayPendingValue(change.oldValue) }}</strong>
-            </div>
-            <div class="pending-diff__arrow">
-              <i class="mdi mdi-arrow-right" aria-hidden="true"></i>
-            </div>
-            <div class="pending-diff__card pending-diff__card--next">
-              <span>申请值</span>
-              <strong>{{ displayPendingValue(change.newValue) }}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="profile-modal__footer" style="margin-top: 16px">
-        <a-button @click="pendingOpen = false">关闭</a-button>
-      </div>
-    </a-modal>
   </div>
 </template>
 
@@ -259,7 +191,6 @@ const yesNoOptions = [
 ]
 
 const editOpen = ref(false)
-const pendingOpen = ref(false)
 const profile = reactive<StudentProfileRecord>({
   studentCode: '-',
   fullName: '-',
@@ -308,19 +239,6 @@ const editForm = reactive<StudentProfileUpdatePayload>({
   wechatId: '-'
 })
 
-const pendingBannerTitle = computed(() =>
-  pendingChanges.value.length > 0
-    ? `您有 ${pendingChanges.value.length} 项信息变更正在审核中`
-    : '当前没有待审核的信息变更'
-)
-const pendingBannerText = computed(() =>
-  pendingChanges.value.length > 0
-    ? '学业信息和求职方向的修改需要后台审核，请耐心等待'
-    : '学业信息和求职方向的修改会进入后台审核队列，联系方式修改后直接生效。'
-)
-const pendingFieldKeys = computed(
-  () => new Set(pendingChanges.value.map((change) => change.fieldKey))
-)
 const avatarInitials = computed(() => {
   const initials = profile.fullName
     .split(/\s+/)
@@ -368,10 +286,6 @@ function openEdit() {
   ])
 }
 
-function displayPendingValue(value: string) {
-  return value?.trim() ? value : '未填写'
-}
-
 async function loadProfile() {
   const payload = await getStudentProfile()
   applyProfileView(payload)
@@ -381,7 +295,6 @@ async function loadProfile() {
 async function saveProfile() {
   Modal.confirm({
     title: '确认保存修改？',
-    content: '修改后，后台文员和班主任将收到提醒通知。',
     okText: '确认',
     cancelText: '取消',
     okType: 'primary',
@@ -395,7 +308,7 @@ async function saveProfile() {
         })
         applyProfileView(payload)
         editOpen.value = false
-        message.success('保存成功！后台文员和班主任已收到您的信息变更通知。')
+        message.success('保存成功')
       } catch {
         // error handled
       }

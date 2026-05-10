@@ -38,7 +38,7 @@
         </div>
 
         <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用您的账号登录（助教）</p>
+        <p class="login-subtitle">使用邮箱登录（助教）</p>
         <div class="login-role-tag">助教端</div>
 
         <div v-if="errorMessage" class="login-error">
@@ -48,13 +48,13 @@
 
         <div class="login-form">
           <div class="form-group">
-            <label for="login-username">用户名 / 邮箱</label>
+            <label for="login-username">邮箱</label>
             <input
               id="login-username"
               v-model="formState.username"
-              type="text"
-              placeholder="请输入用户名或邮箱"
-              autocomplete="username"
+              type="email"
+              placeholder="请输入邮箱"
+              autocomplete="email"
               :class="{ error: errors.username }"
               @input="clearFieldError('username')"
               @keydown.enter.prevent="handleLogin"
@@ -170,7 +170,7 @@ function clearFieldError(field: FieldKey) {
 
 function validateForm() {
   const username = formState.username.trim()
-  errors.username = username ? '' : '请输入用户名或邮箱'
+  errors.username = username ? '' : '请输入邮箱'
   errors.password = formState.password ? '' : '请输入密码'
   return !errors.username && !errors.password
 }
@@ -218,7 +218,7 @@ async function handleLogin() {
   } catch (error: any) {
     removeToken()
     removeUser()
-    errorMessage.value = error?.message || '用户名或密码错误'
+    errorMessage.value = error?.message || '邮箱或密码错误'
   } finally {
     loading.value = false
   }

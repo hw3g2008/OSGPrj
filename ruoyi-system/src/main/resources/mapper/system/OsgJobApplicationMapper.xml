@@ -155,7 +155,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         left join osg_position position_ref on position_ref.position_id = app.position_id
         <where>
             app.student_id = #{userId}
-            and app.current_stage != 'withdrawn'
+            <!-- 取消投递（cancelled）记录从「我的求职」列表移出；'withdrawn' 是 FIX-10 migration 前的历史脏数据，向后兼容一起排除 -->
+            and app.current_stage not in ('cancelled', 'withdrawn')
             <!-- T14: 时间范围过滤 [fromIso, toIso)。
                  优先按 interview_time 过滤；当 interview_time is null 时回退按 submitted_at。 -->
             <if test="fromIso != null and fromIso != ''">

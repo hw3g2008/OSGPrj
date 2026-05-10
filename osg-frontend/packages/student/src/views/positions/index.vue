@@ -201,17 +201,6 @@
 
                       <template v-else-if="column.key === 'actions'">
                         <a-space :size="10" wrap>
-                          <a-button
-                            size="small"
-                            :type="record.applied ? 'primary' : 'default'"
-                            @click="handleAppliedButton(record)"
-                          >
-                            <template #icon>
-                              <CheckCircleFilled v-if="record.applied" />
-                              <CheckOutlined v-else />
-                            </template>
-                            {{ record.applied ? '已投递' : '未投递' }}
-                          </a-button>
                           <a-button size="small" :type="record.favorited ? 'primary' : 'default'" @click="toggleFavorite(record)">
                             <template #icon>
                               <StarFilled v-if="record.favorited" />
@@ -219,18 +208,14 @@
                             </template>
                           </a-button>
                           <a-select
-                            v-if="record.applied"
-                            :value="record.progressStage"
+                            :value="record.applied ? record.progressStage : undefined"
                             :options="filterOptions.progressStages"
                             class="progress-stage-select"
                             size="small"
-                            placeholder="选择阶段"
-                            @change="(val: string) => updateProgressInline(record, val)"
+                            placeholder="求职状态"
+                            style="width: 110px"
+                            @change="(val: string) => handleActionStageChange(record, val)"
                           />
-                          <a-button v-else size="small" type="primary" class="coaching-btn" @click="openCoachingModal(record)">
-                            <template #icon><i class="mdi mdi-school" aria-hidden="true"></i></template>
-                            申请辅导
-                          </a-button>
                         </a-space>
                       </template>
                     </template>
@@ -305,18 +290,6 @@
 
             <template v-else-if="column.key === 'actions'">
               <div class="action-cell">
-                <a-button
-                  size="small"
-                  class="action-text-btn"
-                  :class="record.applied ? 'action-text-btn--applied' : 'action-text-btn--default'"
-                  @click="handleAppliedButton(record)"
-                >
-                  <template #icon>
-                    <CheckCircleFilled v-if="record.applied" />
-                    <CheckOutlined v-else />
-                  </template>
-                  {{ record.applied ? '已投递' : '投递' }}
-                </a-button>
                 <a-tooltip :title="record.favorited ? '已收藏点击取消' : '添加到收藏'">
                   <a-button
                     size="small"
@@ -332,23 +305,14 @@
                   </a-button>
                 </a-tooltip>
                 <a-select
-                  v-if="record.applied"
-                  :value="record.progressStage"
+                  :value="record.applied ? record.progressStage : undefined"
                   :options="filterOptions.progressStages"
                   class="progress-stage-select"
                   size="small"
-                  placeholder="选择阶段"
-                  @change="(val: string) => updateProgressInline(record, val)"
+                  placeholder="求职状态"
+                  style="width: 110px"
+                  @change="(val: string) => handleActionStageChange(record, val)"
                 />
-                <a-button
-                  v-else
-                  size="small"
-                  class="action-coaching-btn"
-                  @click="openCoachingModal(record)"
-                >
-                  <template #icon><i class="mdi mdi-school" aria-hidden="true"></i></template>
-                  申请辅导
-                </a-button>
               </div>
             </template>
           </template>
@@ -393,33 +357,37 @@
             </template>
 
             <template v-else-if="column.key === 'actions'">
-              <a-space :size="2" class="fav-action-cell">
-                <a-tooltip title="取消收藏">
+              <a-space :size="6" class="fav-action-cell">
+                <a-tooltip :title="record.favorited ? '取消收藏' : '收藏'">
                   <a-button
                     type="text"
                     size="small"
                     class="fav-icon-btn fav-icon-btn--star"
                     @click="toggleFavorite(record)"
                   >
-                    <i class="mdi mdi-star" aria-hidden="true"></i>
-                  </a-button>
-                </a-tooltip>
-                <a-tooltip :title="record.applied ? '已投递（点击取消）' : '标记已投递'">
-                  <a-button
-                    type="text"
-                    size="small"
-                    class="fav-icon-btn"
-                    :class="record.applied ? 'fav-icon-btn--applied' : 'fav-icon-btn--apply'"
-                    @click="handleAppliedButton(record)"
-                  >
                     <i
                       class="mdi"
-                      :class="record.applied ? 'mdi-check-circle' : 'mdi-check-circle-outline'"
+                      :class="record.favorited ? 'mdi-star' : 'mdi-star-outline'"
                       aria-hidden="true"
                     ></i>
                   </a-button>
                 </a-tooltip>
-                <a-button type="primary" size="small" class="fav-coaching-btn" @click="openCoachingModal(record)">申请辅导</a-button>
+                <a-select
+                  :value="record.applied ? record.progressStage : undefined"
+                  placeholder="求职状态"
+                  size="small"
+                  class="action-stage-select"
+                  style="width: 110px"
+                  @change="(val: string) => handleActionStageChange(record, val)"
+                >
+                  <a-select-option
+                    v-for="option in filterOptions.progressStages"
+                    :key="`stage-${record.id}-${option.value}`"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </a-select-option>
+                </a-select>
               </a-space>
             </template>
           </template>
@@ -816,7 +784,6 @@ import { getToken } from '@osg/shared/utils'
 import {
   AppstoreOutlined,
   CheckCircleFilled,
-  CheckOutlined,
   CloudUploadOutlined,
   ExportOutlined,
   FileTextOutlined,
@@ -861,8 +828,8 @@ const FALLBACK_INDUSTRY_META = {
 } as const
 
 const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
-const { items: cycleDict, load: loadCycleDict } = useDictFacade('osg_recruit_cycle')
-const { items: projectYearDict, load: loadProjectYearDict } = useDictFacade('osg_project_year')
+const { load: loadCycleDict } = useDictFacade('osg_recruit_cycle')
+const { load: loadProjectYearDict } = useDictFacade('osg_project_year')
 const { items: regionDict, load: loadRegionDict } = useDictFacade('osg_region')
 const { items: cityDict, load: loadCityDict } = useDictFacade('osg_city')
 const { items: categoryDict, load: loadCategoryDict } = useDictFacade('osg_job_category')
@@ -938,13 +905,6 @@ const filterOptions = ref<StudentPositionMeta['filterOptions']>({
   coachingStages: [],
   mentorCounts: []
 })
-
-const COMPANY_TYPES = computed(() =>
-  industryMeta.value.length
-    ? industryMeta.value.map((m) => ({ value: m.value, label: m.label }))
-    : [{ value: 'other_company', label: '其他公司' }]
-)
-
 
 // 邀请邮件截图通用上传配置（与 admin 端合同附件同款 ruoyi /common/upload 实现）。
 // manualForm 与 coachingForm 共用 action/headers，fileList 各自维护避免互相覆盖。
@@ -1228,11 +1188,6 @@ function getCompanyBrandColor(companyKey: string) {
   return COMPANY_LOGO_FALLBACKS[Math.abs(hash) % COMPANY_LOGO_FALLBACKS.length]
 }
 
-function filterCompanyOption(input: string, option: { label?: string; value?: string } | unknown) {
-  const label = (option as { label?: string })?.label ?? ''
-  return label.toLowerCase().includes(String(input ?? '').toLowerCase())
-}
-
 function deadlineToneClass(deadline: string | undefined | null) {
   const v = (deadline ?? '').trim()
   if (!v || v === '--' || v === '-') return 'deadline-muted'
@@ -1293,14 +1248,8 @@ function toggleIndustry(industryKey: string) {
 
 function openManualAddModal() {
   manualForm.value = {
-    category: undefined,
-    title: '',
-    department: '',
-    recruitmentCycles: [],
-    projectYear: undefined,
-    deadline: '',
     company: '',
-    companyType: undefined,
+    companyType: '',
     region: undefined,
     city: undefined,
     website: '',
@@ -1379,43 +1328,6 @@ function openAppliedModal(record: PositionRecord) {
   appliedModalOpen.value = true
 }
 
-function openCoachingModal(record: PositionRecord) {
-  setSelectedPosition(record)
-  coachingForm.value = {
-    stage: undefined,
-    hirevueType: undefined,
-    viLink: '',
-    otLink: '',
-    otAccount: '',
-    otPassword: '',
-    hirevueDeadline: '',
-    inviteScreenshotName: '',
-    inviteScreenshotUrl: '',
-    mentorHelp: undefined,
-    interviewTime: '',
-    mentorCount: undefined,
-    preferMentor: '',
-    excludeMentor: '',
-    note: ''
-  }
-  coachingHirevueFileList.value = []
-  coachingModalOpen.value = true
-}
-
-async function handleAppliedButton(record: PositionRecord) {
-  if (record.applied) {
-    await updateStudentPositionApply({
-      positionId: record.id,
-      applied: false
-    })
-    await loadPositions()
-    message.success(`已取消 ${record.company} ${record.title} 的投递标记`)
-    return
-  }
-
-  openAppliedModal(record)
-}
-
 async function toggleFavorite(record: PositionRecord) {
   const nextFavorited = !record.favorited
   await updateStudentPositionFavorite({
@@ -1476,8 +1388,10 @@ async function submitManualPosition() {
   }
 
   await createStudentManualPosition({
-    company: f.company || undefined,
-    location: f.city,
+    category: '',
+    title: '',
+    company: f.company,
+    location: f.city ?? f.region ?? '',
     companyType: f.companyType || undefined,
     region: f.region,
     city: f.city,
@@ -1518,6 +1432,42 @@ async function submitProgressUpdate() {
   await loadPositions()
   progressModalOpen.value = false
   message.success('岗位进度已更新')
+}
+
+async function handleActionStageChange(record: PositionRecord, nextStage: string) {
+  if (!nextStage) return
+
+  // 取消投递（FIX-11 落地前后端写 'withdrawn'，落地后写 'cancelled'；UI 兜底两个值）
+  if (nextStage === 'cancelled' || nextStage === 'withdrawn') {
+    if (!record.applied) {
+      message.info('该岗位尚未投递')
+      return
+    }
+    try {
+      await updateStudentPositionApply({
+        positionId: record.id,
+        applied: false
+      })
+      await loadPositions()
+      message.success(`已取消 ${record.company} ${record.title} 的投递`)
+    } catch {
+      // error handled by http layer
+    }
+    return
+  }
+
+  // 已投递：直接 inline 更新求职状态
+  if (record.applied) {
+    if (nextStage === record.progressStage) return
+    await updateProgressInline(record, nextStage)
+    return
+  }
+
+  // 未投递：先打开投递信息弹窗，提交后默认 progressStage='applied'；用户后续可再切其他状态
+  openAppliedModal(record)
+  if (nextStage !== 'applied') {
+    message.info('请先填写投递信息，提交后可继续切换其他状态')
+  }
 }
 
 async function updateProgressInline(record: PositionRecord, stage: string) {

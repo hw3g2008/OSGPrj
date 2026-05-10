@@ -94,6 +94,24 @@ public class OsgLeadMentorJobOverviewController extends BaseController
         }
     }
 
+    @GetMapping("/coaching/{coachingId}")
+    public AjaxResult detailByCoaching(@PathVariable Long coachingId)
+    {
+        if (!hasLeadMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+
+        try
+        {
+            return AjaxResult.success(userJobOverviewService.detailForLeadMentorCoaching(coachingId, getUserId()));
+        }
+        catch (ServiceException ex)
+        {
+            return handleServiceException(ex);
+        }
+    }
+
     @PostMapping("/{applicationId}/assign-mentor")
     public AjaxResult assignMentor(@PathVariable Long applicationId, @RequestBody Map<String, Object> body)
     {
@@ -105,6 +123,25 @@ public class OsgLeadMentorJobOverviewController extends BaseController
         try
         {
             Map<String, Object> result = userJobOverviewService.assignMentors(applicationId, body, getUserId(), resolveOperator());
+            return AjaxResult.success(result);
+        }
+        catch (ServiceException ex)
+        {
+            return handleServiceException(ex);
+        }
+    }
+
+    @PostMapping("/coaching/{coachingId}/assign-mentor")
+    public AjaxResult assignMentorByCoaching(@PathVariable Long coachingId, @RequestBody Map<String, Object> body)
+    {
+        if (!hasLeadMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+
+        try
+        {
+            Map<String, Object> result = userJobOverviewService.assignMentorsByCoaching(coachingId, body, getUserId(), resolveOperator());
             return AjaxResult.success(result);
         }
         catch (ServiceException ex)
