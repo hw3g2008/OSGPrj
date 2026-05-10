@@ -82,11 +82,19 @@ const isReadonlyStudent = computed(() =>
 
 const isStudentEmpty = computed(() => (props.students || []).length === 0)
 
+function buildStudentLabel(s: StudentOption): string {
+  const status = s.accountStatus
+  if (status === '1') return `${s.studentName}（冻结，不可申报）`
+  if (status === '3') return `${s.studentName}（已退费，不可申报）`
+  if (status === '2') return `${s.studentName}（已结束）`
+  return s.studentName
+}
+
 const studentOptions = computed(() =>
   (props.students || []).map((s) => ({
-    label: s.studentName,
+    label: buildStudentLabel(s),
     value: s.studentId,
-    disabled: s.disabled,
+    disabled: s.disabled || s.accountStatus === '1' || s.accountStatus === '3',
   })),
 )
 

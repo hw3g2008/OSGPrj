@@ -69,6 +69,28 @@
           <p>{{ preview.feedback }}</p>
         </section>
 
+        <section v-if="preview.classRecords?.length" class="content-card">
+          <div class="section-title section-title--primary">
+            <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
+            课消反馈
+          </div>
+          <div class="class-record-list">
+            <article
+              v-for="record in preview.classRecords"
+              :key="record.recordId"
+              class="class-record-item"
+            >
+              <div class="class-record-item__header">
+                <span>{{ record.classDate }}</span>
+                <span>{{ record.mentorName }}</span>
+                <span>{{ record.durationHours }}</span>
+                <span>{{ record.rate }}</span>
+              </div>
+              <p>{{ record.feedback }}</p>
+            </article>
+          </div>
+        </section>
+
         <section class="content-card content-card--warning">
           <div class="section-title section-title--warning">
             <i class="mdi mdi-lightbulb" aria-hidden="true" />
@@ -107,6 +129,16 @@ export interface MockFeedbackPreview {
   suggestions: string[]
   recommendation: string
   avatarColor?: string
+  classRecords?: Array<{
+    recordId: number
+    classDate: string
+    mentorName: string
+    durationHours: string
+    memberStatus: string
+    rate: string
+    feedback: string
+    status: string
+  }>
 }
 
 defineProps<{
@@ -289,6 +321,28 @@ const closeModal = () => {
 
 .content-card ul {
   padding-left: 20px;
+}
+
+.class-record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.class-record-item {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.class-record-item__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .section-title {

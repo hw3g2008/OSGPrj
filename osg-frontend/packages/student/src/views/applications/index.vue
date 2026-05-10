@@ -318,7 +318,7 @@
               label="面试时间"
               :required="!progressForm.interviewTimeUndetermined"
               class="rich-form-field"
-              extra="请填写该轮面试的具体时间，如尚未确定可勾选"未确定"。"
+              extra="请填写该轮面试的具体时间，如尚未确定可勾选&quot;未确定&quot;。"
             >
               <a-checkbox
                 id="update-interview-time-undetermined"

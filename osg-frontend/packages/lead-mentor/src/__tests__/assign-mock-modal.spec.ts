@@ -103,6 +103,19 @@ const apiMocks = vi.hoisted(() => {
 
 vi.mock('@osg/shared/api', () => apiMocks)
 
+vi.mock('@osg/shared/composables', () => ({
+  useIdleLogout: vi.fn(),
+  deriveMockPracticeStatus: (input: { status?: string; completedHours?: number }) => {
+    if (input.status === 'completed' || Number(input.completedHours ?? 0) > 0) {
+      return { label: '已完成', value: 'completed', tone: 'success' }
+    }
+    if (input.status === 'scheduled') {
+      return { label: '待进行', value: 'assigned', tone: 'info' }
+    }
+    return { label: '待分配', value: 'pending', tone: 'default' }
+  },
+}))
+
 vi.mock('@osg/shared/utils', () => ({
   getUser: vi.fn(() => ({
     nickName: 'Jess (Lead Mentor)',

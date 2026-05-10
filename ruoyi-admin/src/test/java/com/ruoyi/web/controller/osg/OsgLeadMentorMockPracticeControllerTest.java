@@ -41,14 +41,17 @@ import com.ruoyi.framework.security.handle.AuthenticationEntryPointImpl;
 import com.ruoyi.framework.security.handle.LogoutSuccessHandlerImpl;
 import com.ruoyi.framework.web.service.PermissionService;
 import com.ruoyi.framework.web.service.TokenService;
+import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStaffSchedule;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStaffScheduleMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
+import com.ruoyi.system.service.impl.OsgIdentityResolver;
 import com.ruoyi.system.service.impl.OsgLeadMentorAccessService;
 import com.ruoyi.system.service.impl.OsgLeadMentorMockPracticeServiceImpl;
 
@@ -81,7 +84,13 @@ class OsgLeadMentorMockPracticeControllerTest
     private OsgStaffScheduleMapper staffScheduleMapper;
 
     @MockBean
+    private OsgClassRecordMapper classRecordMapper;
+
+    @MockBean
     private OsgLeadMentorAccessService leadMentorAccessService;
+
+    @MockBean
+    private OsgIdentityResolver identityResolver;
 
     @MockBean
     private TokenService tokenService;
@@ -90,6 +99,7 @@ class OsgLeadMentorMockPracticeControllerTest
     private RedisCache redisCache;
 
     private final AtomicReference<List<OsgMockPractice>> practiceRowsRef = new AtomicReference<>();
+    private final AtomicReference<List<OsgClassRecord>> classRecordRowsRef = new AtomicReference<>();
     private final AtomicReference<Map<Long, OsgStudent>> studentRowsRef = new AtomicReference<>();
     private final AtomicReference<Map<Long, OsgStaff>> staffRowsRef = new AtomicReference<>();
     private final AtomicReference<Map<Long, List<OsgStaffSchedule>>> scheduleRowsRef = new AtomicReference<>();
@@ -104,6 +114,12 @@ class OsgLeadMentorMockPracticeControllerTest
             buildPractice(9003L, 3003L, "王五", "期中考试", "Midterm Review", 1, "Jerry Li", "completed", "9202", "Jerry Li", "Goldman Sachs IBD", "2026-03-20 14:00:00", "表现稳定，框架清晰", "2026-03-20 09:00:00"),
             buildPractice(9004L, 3004L, "赵六", "模拟面试", "McKinsey Case", 1, "Jess", "scheduled", "810", "Jess", "Lead Mentor", "2026-03-24 16:00:00", null, "2026-03-22 09:30:00"),
             buildPractice(9005L, 3005L, "孙七", "模拟面试", "JP Morgan Markets", 2, "Tom", "pending", null, null, null, null, null, "2026-03-23 08:30:00")
+        )));
+
+        classRecordRowsRef.set(new ArrayList<>(List.of(
+            buildClassRecord(7001L, 9003L, 3003L, "communication_test", "2026-03-19 10:00:00", "3", "normal"),
+            buildClassRecord(7002L, 9003L, 3003L, "communication_test", "2026-03-20 10:00:00", "4", "normal"),
+            buildClassRecord(7003L, 9002L, 3002L, "relation_test", "2026-03-21 10:00:00", "5", "normal")
         )));
 
         studentRowsRef.set(new LinkedHashMap<>(Map.of(
@@ -225,6 +241,19 @@ class OsgLeadMentorMockPracticeControllerTest
             cloneStaff(staffRowsRef.get().get(invocation.getArgument(0)))
         );
 
+        org.mockito.Mockito.when(identityResolver.resolveUserIdByStaffId(any())).thenAnswer(invocation -> {
+            Long staffId = invocation.getArgument(0);
+            if (Long.valueOf(9201L).equals(staffId))
+            {
+                return 9001L;
+            }
+            if (Long.valueOf(9202L).equals(staffId))
+            {
+                return 9002L;
+            }
+            return staffId;
+        });
+
         org.mockito.Mockito.when(staffScheduleMapper.selectStaffScheduleList(any(), any())).thenAnswer(invocation -> {
             Long staffId = invocation.getArgument(0);
             if (staffId == null)
@@ -233,6 +262,17 @@ class OsgLeadMentorMockPracticeControllerTest
             }
             return scheduleRowsRef.get().getOrDefault(staffId, List.of()).stream()
                 .map(this::cloneSchedule)
+                .toList();
+        });
+
+        org.mockito.Mockito.when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class))).thenAnswer(invocation -> {
+            OsgClassRecord query = invocation.getArgument(0);
+            return classRecordRowsRef.get().stream()
+                .filter(row -> query.getReferenceType() == null || query.getReferenceType().equals(row.getReferenceType()))
+                .filter(row -> query.getReferenceId() == null || query.getReferenceId().equals(row.getReferenceId()))
+                .filter(row -> query.getStudentId() == null || query.getStudentId().equals(row.getStudentId()))
+                .filter(row -> query.getDelFlag() == null || query.getDelFlag().equals(row.getDelFlag()))
+                .map(this::cloneClassRecord)
                 .toList();
         });
     }
@@ -287,6 +327,12 @@ class OsgLeadMentorMockPracticeControllerTest
             .andExpect(jsonPath("$.data.studentId").value(3003))
             .andExpect(jsonPath("$.data.feedbackSummary").value("表现稳定，框架清晰"))
             .andExpect(jsonPath("$.data.status").value("completed"))
+            .andExpect(jsonPath("$.data.referenceType").value("communication_test"))
+            .andExpect(jsonPath("$.data.referenceId").value(9003))
+            .andExpect(jsonPath("$.data.reportedLessonCount").value(2))
+            .andExpect(jsonPath("$.data.latestRating").value("4"))
+            .andExpect(jsonPath("$.data.classRecords.length()").value(2))
+            .andExpect(jsonPath("$.data.classRecords[0].recordId").value(7002))
             .andExpect(jsonPath("$.data.mentorOptions.length()").value(3))
             .andExpect(jsonPath("$.data.mentorOptions[0].mentorId").value(9201))
             .andExpect(jsonPath("$.data.mentorOptions[0].availabilityLabel").value("周二 AM, 周四 PM"));
@@ -333,6 +379,29 @@ class OsgLeadMentorMockPracticeControllerTest
             .findFirst()
             .orElseThrow();
         assertEquals("9001,9002", persisted.getMentorIds());
+    }
+
+    @Test
+    void assignRejectsMentorCountMismatch() throws Exception
+    {
+        mockMvc.perform(post("/lead-mentor/mock-practice/9001/assign")
+                .header("Authorization", "Bearer lead-mentor-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "mentorIds": [9201],
+                      "scheduledAt": "2026-03-25T09:30"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(400))
+            .andExpect(jsonPath("$.msg").value("分配导师数量必须等于申请导师数量"));
+
+        OsgMockPractice persisted = practiceRowsRef.get().stream()
+            .filter(item -> Long.valueOf(9001L).equals(item.getPracticeId()))
+            .findFirst()
+            .orElseThrow();
+        assertEquals("pending", persisted.getStatus());
     }
 
     @Test
@@ -432,6 +501,35 @@ class OsgLeadMentorMockPracticeControllerTest
         row.setSubmittedAt(parseTimestamp(submittedAt));
         row.setDelFlag("0");
         return row;
+    }
+
+    private OsgClassRecord buildClassRecord(
+        Long recordId,
+        Long practiceId,
+        Long studentId,
+        String referenceType,
+        String classDate,
+        String rate,
+        String memberStatus
+    )
+    {
+        OsgClassRecord record = new OsgClassRecord();
+        record.setRecordId(recordId);
+        record.setStudentId(studentId);
+        record.setStudentName("student-" + studentId);
+        record.setMentorId(9201L);
+        record.setMentorName("Jerry Li");
+        record.setReferenceType(referenceType);
+        record.setReferenceId(practiceId);
+        record.setPracticeId(practiceId);
+        record.setClassDate(parseTimestamp(classDate));
+        record.setDurationHours(1.5D);
+        record.setMemberStatus(memberStatus);
+        record.setRate(rate);
+        record.setFeedbackContent("feedback " + recordId);
+        record.setStatus("approved");
+        record.setDelFlag("0");
+        return record;
     }
 
     private OsgStudent buildStudent(Long studentId, String studentName, Long leadMentorId)
@@ -542,6 +640,31 @@ class OsgLeadMentorMockPracticeControllerTest
         clone.setWeekday(source.getWeekday());
         clone.setTimeSlot(source.getTimeSlot());
         clone.setIsAvailable(source.getIsAvailable());
+        return clone;
+    }
+
+    private OsgClassRecord cloneClassRecord(OsgClassRecord source)
+    {
+        if (source == null)
+        {
+            return null;
+        }
+        OsgClassRecord clone = new OsgClassRecord();
+        clone.setRecordId(source.getRecordId());
+        clone.setStudentId(source.getStudentId());
+        clone.setStudentName(source.getStudentName());
+        clone.setMentorId(source.getMentorId());
+        clone.setMentorName(source.getMentorName());
+        clone.setReferenceType(source.getReferenceType());
+        clone.setReferenceId(source.getReferenceId());
+        clone.setPracticeId(source.getPracticeId());
+        clone.setClassDate(source.getClassDate());
+        clone.setDurationHours(source.getDurationHours());
+        clone.setMemberStatus(source.getMemberStatus());
+        clone.setRate(source.getRate());
+        clone.setFeedbackContent(source.getFeedbackContent());
+        clone.setStatus(source.getStatus());
+        clone.setDelFlag(source.getDelFlag());
         return clone;
     }
 

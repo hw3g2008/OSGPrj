@@ -124,31 +124,29 @@
           <template v-else-if="column.dataIndex === 'action'">
             <a-space :size="4" wrap>
               <a-button type="link" size="small" :data-surface-trigger="getStudentDetailSurfaceId(record)" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentDetail(record)">详情</a-button>
-              <template v-if="!isEndedStatus(record) && !isRefundedStatus(record)">
-                <a-button type="link" size="small" data-surface-trigger="modal-edit-student-new" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentEdit(record)">编辑</a-button>
-                <a-tooltip v-if="isContractExpiring(record)" title="续签合同">
-                  <a-button type="text" size="small" :loading="renewContractLoadingId === record.studentId" style="color: #F59E0B" data-surface-trigger="modal-contract-renew" :data-surface-sample-key="`${getStudentSurfaceSampleKey(record)}-contract-renew`" @click="openStudentRenew(record)">
-                    <template #icon><FileTextOutlined /></template>
-                  </a-button>
-                </a-tooltip>
-                <a-dropdown v-else :trigger="['click']" placement="bottomRight">
-                  <a-button type="link" size="small">更多 <DownOutlined /></a-button>
-                  <template #overlay>
-                    <a-menu @click="({ key }: { key: string }) => handleStudentAction(key as StudentActionKey, record)">
-                      <a-menu-item key="resetPassword">重置密码</a-menu-item>
-                      <template v-if="record.accountStatus === '1'">
-                        <a-menu-item key="restore"><span style="color: var(--success)">恢复正常</span></a-menu-item>
-                      </template>
-                      <template v-else>
-                        <a-menu-item key="freeze">冻结</a-menu-item>
-                        <a-menu-item key="end_contract">结束合同</a-menu-item>
-                        <a-menu-item key="blacklist"><span style="color: #92400E">加入黑名单</span></a-menu-item>
-                      </template>
-                      <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
-                    </a-menu>
-                  </template>
-                </a-dropdown>
-              </template>
+              <a-button v-if="!isEndedStatus(record) && !isRefundedStatus(record)" type="link" size="small" data-surface-trigger="modal-edit-student-new" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentEdit(record)">编辑</a-button>
+              <a-tooltip v-if="!isEndedStatus(record) && !isRefundedStatus(record) && isContractExpiring(record)" title="续签合同">
+                <a-button type="text" size="small" :loading="renewContractLoadingId === record.studentId" style="color: #F59E0B" data-surface-trigger="modal-contract-renew" :data-surface-sample-key="`${getStudentSurfaceSampleKey(record)}-contract-renew`" @click="openStudentRenew(record)">
+                  <template #icon><FileTextOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-dropdown v-else :trigger="['click']" placement="bottomRight">
+                <a-button type="link" size="small">更多 <DownOutlined /></a-button>
+                <template #overlay>
+                  <a-menu @click="({ key }: { key: string }) => handleStudentAction(key as StudentActionKey, record)">
+                    <a-menu-item key="resetPassword">重置密码</a-menu-item>
+                    <template v-if="record.accountStatus !== '0'">
+                      <a-menu-item key="restore"><span style="color: var(--success)">恢复正常</span></a-menu-item>
+                    </template>
+                    <template v-else>
+                      <a-menu-item key="freeze">冻结</a-menu-item>
+                      <a-menu-item key="end_contract">结束合同</a-menu-item>
+                      <a-menu-item key="blacklist"><span style="color: #92400E">加入黑名单</span></a-menu-item>
+                    </template>
+                    <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
             </a-space>
           </template>
         </template>

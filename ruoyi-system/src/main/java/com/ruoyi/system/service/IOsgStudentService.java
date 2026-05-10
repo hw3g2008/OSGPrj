@@ -18,4 +18,6 @@ public interface IOsgStudentService
     public int deleteStudentByStudentIds(Long[] studentIds);
 
     public int deleteStudentByStudentId(Long studentId);
+
+    public List<Long> selectBlacklistedStudentIds(List<Long> studentIds);
 }

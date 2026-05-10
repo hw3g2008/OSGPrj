@@ -186,7 +186,7 @@ else
     local fb="$1"
     curl -s -X POST "$BASE_URL/lead-mentor/class-records" \
       -H "Authorization: Bearer $LM_TOKEN" -H 'Content-Type: application/json' \
-      -d "{\"studentId\":$STUDENT_ID,\"classDate\":\"2026-05-08\",\"classStatus\":\"completed\",\"durationHours\":1.0,\"courseType\":\"basic\",\"feedbackContent\":\"$fb\"}"
+      -d "{\"studentId\":$STUDENT_ID,\"classDate\":\"2026-05-08\",\"classStatus\":\"completed\",\"durationHours\":1.0,\"courseType\":\"base_course\",\"feedbackContent\":\"$fb\"}"
   }
   # 申 LM 1: status=0 → 成功 (code 200)
   set_status 0; set_blacklist_off
@@ -223,7 +223,7 @@ else
     local fb="$1"
     curl -s -X POST "$BASE_URL/assistant/class-records" \
       -H "Authorization: Bearer $AS_TOKEN" -H 'Content-Type: application/json' \
-      -d "{\"studentId\":$STUDENT_ID,\"classDate\":\"2026-05-08\",\"classStatus\":\"completed\",\"durationHours\":1.0,\"courseType\":\"basic\",\"feedbackContent\":\"$fb\"}"
+      -d "{\"studentId\":$STUDENT_ID,\"classDate\":\"2026-05-08\",\"classStatus\":\"completed\",\"durationHours\":1.0,\"courseType\":\"base_course\",\"feedbackContent\":\"$fb\"}"
   }
   set_status 0; set_blacklist_off
   RESP=$(post_as "${SENTINEL}_AS1")

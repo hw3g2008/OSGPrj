@@ -38,6 +38,7 @@ import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.mapper.OsgStudentPositionMapper;
 import com.ruoyi.system.service.IOsgClassRecordService;
+import com.ruoyi.system.service.IOsgStudentService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.system.domain.dto.feedback.BaseCourseFeedback;
@@ -79,6 +80,9 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     @Autowired
     private OsgClassReportValidator classReportValidator;
+
+    @Autowired
+    private IOsgStudentService studentService;
 
     @Override
     public List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord record)
@@ -191,6 +195,8 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         {
             return Collections.emptyList();
         }
+        Set<Long> blacklistedIds = new java.util.HashSet<>(
+            studentService.selectBlacklistedStudentIds(new ArrayList<>(studentIds)));
         return students.stream()
             .filter(s -> s.getStudentId() != null)
             .sorted((a, b) -> {
@@ -204,6 +210,8 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
                 m.put("studentName", s.getStudentName());
                 m.put("id", s.getStudentId());
                 m.put("label", s.getStudentName());
+                m.put("accountStatus", s.getAccountStatus());
+                m.put("isBlacklisted", blacklistedIds.contains(s.getStudentId()));
                 return m;
             })
             .collect(Collectors.toList());
@@ -1349,6 +1357,10 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         if (record.getUpdateBy() == null || record.getUpdateBy().isBlank())
         {
             record.setUpdateBy(record.getCreateBy());
+        }
+        if (record.getMemberStatus() == null || record.getMemberStatus().isBlank())
+        {
+            record.setMemberStatus(OsgClassReportConstants.MEMBER_STATUS_NORMAL);
         }
         // absent 记录：事实上不存在的字段必须 NULL 化（防御性，不信任前端）
         if ("absent".equalsIgnoreCase(record.getClassStatus()))

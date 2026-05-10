@@ -1,4 +1,4 @@
-import { createApp, nextTick } from 'vue'
+import { createApp, defineComponent, h, nextTick } from 'vue'
 import Antd from 'ant-design-vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import type { LeadMentorMockPracticeItem } from '@osg/shared/api'
@@ -21,6 +21,49 @@ const messageMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@osg/shared/api', () => apiMocks)
+
+vi.mock('@osg/shared/composables', () => ({
+  useIdleLogout: vi.fn(),
+  deriveMockPracticeStatus: (input: { status?: string; completedHours?: number }) => {
+    if (input.status === 'completed' || Number(input.completedHours ?? 0) > 0) {
+      return { label: '已完成', value: 'completed', tone: 'success' }
+    }
+    if (input.status === 'scheduled') {
+      return { label: '待进行', value: 'assigned', tone: 'info' }
+    }
+    if (input.status === 'confirmed') {
+      return { label: '进行中', value: 'coaching', tone: 'warning' }
+    }
+    if (input.status === 'cancelled') {
+      return { label: '已取消', value: 'cancelled', tone: 'danger' }
+    }
+    return { label: '待分配', value: 'pending', tone: 'default' }
+  },
+}))
+
+vi.mock('../views/teaching/class-records/LeadMentorClassReportFlowModal.vue', () => ({
+  default: defineComponent({
+    name: 'LeadMentorClassReportFlowModalStub',
+    props: {
+      visible: { type: Boolean, default: false },
+      prefilledStudentId: { type: Number, default: undefined },
+      prefilledReferenceType: { type: String, default: undefined },
+      prefilledReferenceId: { type: Number, default: undefined },
+      readonlyFields: { type: Array, default: () => [] },
+    },
+    emits: ['update:visible', 'submitted'],
+    setup(props) {
+      return () =>
+        h('div', {
+          'data-testid': 'lm-class-report-stub',
+          'data-visible': String(Boolean(props.visible)),
+          'data-prefilled-student-id': props.prefilledStudentId ?? '',
+          'data-prefilled-reference-type': props.prefilledReferenceType ?? '',
+          'data-prefilled-reference-id': props.prefilledReferenceId ?? '',
+        })
+    },
+  }),
+}))
 
 vi.mock('@osg/shared/utils', () => ({
   getUser: vi.fn(() => ({
@@ -156,6 +199,34 @@ const feedbackDetail: LeadMentorMockPracticeItem = {
   completedHoursLabel: '2h',
   feedbackRating: 4,
   feedbackSummary: '表现稳定，框架清晰',
+  reportedLessonCount: 2,
+  latestRating: '5',
+  referenceType: 'communication_test',
+  referenceId: 9003,
+  classRecords: [
+    {
+      recordId: 7002,
+      classDate: '2026-03-25T10:00:00Z',
+      mentorId: 9202,
+      mentorName: 'Jerry Li',
+      durationHours: 1.5,
+      memberStatus: 'normal',
+      rate: '5',
+      feedback: '第二次课消反馈：表达更稳定',
+      status: 'approved',
+    },
+    {
+      recordId: 7001,
+      classDate: '2026-03-24T10:00:00Z',
+      mentorId: 9202,
+      mentorName: 'Jerry Li',
+      durationHours: 1,
+      memberStatus: 'normal',
+      rate: '4',
+      feedback: '第一次课消反馈：需要补充结构化表达',
+      status: 'approved',
+    },
+  ],
   submittedAt: '2026-03-20T09:00:00Z',
   mentorOptions: [],
 }
@@ -246,22 +317,30 @@ describe('lead-mentor mock practice real flow', () => {
     })
   })
 
-  it('loads stats and all three scopes from the lead-mentor API instead of rendering the old static browser fixtures', async () => {
+  it('loads all three scopes without rendering the removed stats cards', async () => {
     const page = await mountMockPracticePage()
 
     try {
-      expect(apiMocks.getLeadMentorMockPracticeStats).toHaveBeenCalledTimes(1)
+      expect(apiMocks.getLeadMentorMockPracticeStats).not.toHaveBeenCalled()
       expect(apiMocks.getLeadMentorMockPracticeList).toHaveBeenCalledWith({ scope: 'pending' })
       expect(apiMocks.getLeadMentorMockPracticeList).toHaveBeenCalledWith({ scope: 'coaching' })
       expect(apiMocks.getLeadMentorMockPracticeList).toHaveBeenCalledWith({ scope: 'managed' })
+
+      const tabLabels = Array.from(page.container.querySelectorAll<HTMLElement>('.mock-tab-label')).map((item) =>
+        item.textContent?.replace(/\s+/g, ''),
+      )
+      expect(tabLabels[0]).toContain('我管理的学员')
+      expect(tabLabels[1]).toContain('我辅导的学员')
+      expect(tabLabels[2]).toContain('待分配导师')
 
       expect(page.container.textContent).toContain('Alice')
       expect(page.container.textContent).toContain('Bob')
       expect(page.container.textContent).toContain('Cindy')
       expect(page.container.textContent).not.toContain('孙八')
       expect(page.container.textContent).not.toContain('吴十')
-      expect(page.container.textContent).toContain('待处理')
-      expect(page.container.textContent).toContain('已安排')
+      expect(page.container.querySelector('[aria-label="mock practice stats"]')).toBeNull()
+      expect(page.container.textContent).not.toContain('待处理')
+      expect(page.container.textContent).not.toContain('已安排')
     } finally {
       page.unmount()
     }
@@ -285,7 +364,31 @@ describe('lead-mentor mock practice real flow', () => {
       expect(modal?.textContent).toContain('Cindy')
       expect(modal?.textContent).toContain('Jerry Li')
       expect(modal?.textContent).toContain('表现稳定，框架清晰')
-      expect(modal?.textContent).toContain('4')
+      expect(modal?.textContent).toContain('第二次课消反馈：表达更稳定')
+      expect(modal?.textContent).toContain('第一次课消反馈：需要补充结构化表达')
+      expect(modal?.textContent).toContain('5')
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('opens the class report flow from coaching rows with the practice reference prefilled', async () => {
+    const page = await mountMockPracticePage()
+
+    try {
+      const reportButton = Array.from(page.container.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
+        button.textContent?.includes('上报课消'),
+      )
+      expect(reportButton).toBeTruthy()
+
+      reportButton?.click()
+      await flushUi()
+
+      const stub = page.container.querySelector<HTMLElement>('[data-testid="lm-class-report-stub"]')
+      expect(stub?.dataset.visible).toBe('true')
+      expect(stub?.dataset.prefilledStudentId).toBe('3002')
+      expect(stub?.dataset.prefilledReferenceType).toBe('relation_test')
+      expect(stub?.dataset.prefilledReferenceId).toBe('9002')
     } finally {
       page.unmount()
     }
@@ -365,6 +468,39 @@ describe('lead-mentor mock practice real flow', () => {
       })
       expect(messageMocks.success).toHaveBeenCalled()
       expect(page.container.textContent).not.toContain('待分配导师1')
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('rejects assignment when selected mentor count does not match the requested mentor count', async () => {
+    const page = await mountMockPracticePage()
+
+    try {
+      page.container.querySelector<HTMLElement>('#mock-tab-pending')?.click()
+      await flushUi()
+
+      const assignTrigger = page.container.querySelector<HTMLButtonElement>('[data-surface-trigger="modal-assign-mock"]')
+      expect(assignTrigger).toBeTruthy()
+
+      assignTrigger?.click()
+      await flushUi()
+
+      const modal = page.container.querySelector('[data-surface-id="modal-assign-mock"]')
+      const datetimeInput = modal?.querySelector<HTMLInputElement>('input[type="datetime-local"]')
+      const confirmButton = modal?.querySelector<HTMLButtonElement>('.btn-primary')
+
+      if (datetimeInput) {
+        datetimeInput.value = '2026-03-25T09:30'
+        datetimeInput.dispatchEvent(new Event('input', { bubbles: true }))
+        datetimeInput.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+
+      confirmButton?.click()
+      await flushUi()
+
+      expect(apiMocks.assignLeadMentorMockPractice).not.toHaveBeenCalled()
+      expect(messageMocks.error).toHaveBeenCalledWith('分配导师数量必须等于申请导师数量')
     } finally {
       page.unmount()
     }

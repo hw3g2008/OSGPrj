@@ -152,6 +152,18 @@ export interface LeadMentorMockPracticeMentorOption {
   availableSlotCount?: number
 }
 
+export interface LeadMentorMockPracticeClassRecord {
+  recordId: number
+  classDate?: string
+  mentorId?: number
+  mentorName?: string
+  durationHours?: number
+  memberStatus?: string
+  rate?: string
+  feedback?: string
+  status?: string
+}
+
 export interface LeadMentorMockPracticeItem {
   practiceId: number
   studentId: number
@@ -172,6 +184,11 @@ export interface LeadMentorMockPracticeItem {
   feedbackSummary?: string
   submittedAt?: string
   note?: string
+  referenceType?: 'mock_interview' | 'relation_test' | 'communication_test'
+  referenceId?: number
+  reportedLessonCount?: number
+  latestRating?: string
+  classRecords?: LeadMentorMockPracticeClassRecord[]
   isNewAssignment?: boolean
   mentorOptions?: LeadMentorMockPracticeMentorOption[]
   allowedScopes?: LeadMentorMockPracticeScope[]

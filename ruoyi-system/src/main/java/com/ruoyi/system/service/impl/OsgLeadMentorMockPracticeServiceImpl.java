@@ -21,10 +21,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.constant.OsgClassReportConstants;
+import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStaffSchedule;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStaffScheduleMapper;
@@ -57,6 +60,9 @@ public class OsgLeadMentorMockPracticeServiceImpl implements IOsgLeadMentorMockP
     private OsgStaffScheduleMapper staffScheduleMapper;
 
     @Autowired
+    private OsgClassRecordMapper classRecordMapper;
+
+    @Autowired
     private OsgIdentityResolver identityResolver;
 
     @Override
@@ -87,6 +93,13 @@ public class OsgLeadMentorMockPracticeServiceImpl implements IOsgLeadMentorMockP
     {
         OsgMockPractice practice = requireAccessiblePractice(practiceId, currentUserId);
         Map<String, Object> payload = new LinkedHashMap<>(toPayload(practice));
+        String referenceType = resolveMockPracticeReferenceType(practice.getPracticeType());
+        List<OsgClassRecord> classRecords = selectClassRecords(practice, referenceType);
+        payload.put("referenceType", referenceType);
+        payload.put("referenceId", practice.getPracticeId());
+        payload.put("reportedLessonCount", classRecords.size());
+        payload.put("latestRating", resolveLatestRating(classRecords));
+        payload.put("classRecords", classRecords.stream().map(this::toClassRecordPayload).toList());
         payload.put("mentorOptions", selectMentorOptions(practice));
         payload.put("allowedScopes", resolveAccessibleScopes(practice, currentUserId));
         payload.put("canAssign", canManage(practice, currentUserId) && isPending(practice));
@@ -108,6 +121,11 @@ public class OsgLeadMentorMockPracticeServiceImpl implements IOsgLeadMentorMockP
         if (mentorIds.isEmpty())
         {
             throw new ServiceException("请至少选择1位导师");
+        }
+        int requestedMentorCount = defaultNumber(practice.getRequestedMentorCount());
+        if (requestedMentorCount > 0 && mentorIds.size() != requestedMentorCount)
+        {
+            throw new ServiceException("分配导师数量必须等于申请导师数量");
         }
 
         Date scheduledAt = toDate(payload == null ? null : payload.get("scheduledAt"));
@@ -389,6 +407,71 @@ public class OsgLeadMentorMockPracticeServiceImpl implements IOsgLeadMentorMockP
         payload.put("submittedAt", practice.getSubmittedAt());
         payload.put("note", defaultText(practice.getRemark()));
         payload.put("isNewAssignment", isScheduled(practice));
+        return payload;
+    }
+
+    private String resolveMockPracticeReferenceType(String practiceType)
+    {
+        String normalized = normalize(practiceType);
+        if (Objects.equals(normalized, "mock_interview") || Objects.equals(practiceType, "模拟面试"))
+        {
+            return OsgClassReportConstants.REFERENCE_TYPE_MOCK_INTERVIEW;
+        }
+        if (Objects.equals(normalized, "relation_test") || Objects.equals(practiceType, "人际关系测试"))
+        {
+            return OsgClassReportConstants.REFERENCE_TYPE_RELATION_TEST;
+        }
+        if (Objects.equals(normalized, "communication_test")
+            || Objects.equals(normalized, "midterm_exam")
+            || Objects.equals(practiceType, "期中考试"))
+        {
+            return OsgClassReportConstants.REFERENCE_TYPE_COMMUNICATION_TEST;
+        }
+        return normalized;
+    }
+
+    private List<OsgClassRecord> selectClassRecords(OsgMockPractice practice, String referenceType)
+    {
+        OsgClassRecord query = new OsgClassRecord();
+        query.setReferenceType(referenceType);
+        query.setReferenceId(practice.getPracticeId());
+        query.setStudentId(practice.getStudentId());
+        query.setDelFlag("0");
+        List<OsgClassRecord> rows = classRecordMapper.selectClassRecordList(query);
+        if (rows == null || rows.isEmpty())
+        {
+            return List.of();
+        }
+        return rows.stream()
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparing(OsgClassRecord::getClassDate, Comparator.nullsLast(Date::compareTo)).reversed()
+                .thenComparing(Comparator.comparing(OsgClassRecord::getRecordId, Comparator.nullsLast(Long::compareTo)).reversed()))
+            .toList();
+    }
+
+    private String resolveLatestRating(List<OsgClassRecord> classRecords)
+    {
+        return classRecords.stream()
+            .filter(record -> Objects.equals(normalize(record.getMemberStatus()), "normal"))
+            .map(OsgClassRecord::getRate)
+            .map(this::trimToNull)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    }
+
+    private Map<String, Object> toClassRecordPayload(OsgClassRecord record)
+    {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("recordId", record.getRecordId());
+        payload.put("classDate", record.getClassDate());
+        payload.put("mentorId", record.getMentorId());
+        payload.put("mentorName", record.getMentorName());
+        payload.put("durationHours", record.getDurationHours());
+        payload.put("memberStatus", record.getMemberStatus());
+        payload.put("rate", record.getRate());
+        payload.put("feedback", firstText(record.getFeedbackContent(), record.getComments()));
+        payload.put("status", record.getStatus());
         return payload;
     }
 

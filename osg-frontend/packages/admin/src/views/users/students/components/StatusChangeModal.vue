@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <div v-if="requiresReason" class="student-status-modal__form-area">
+    <div v-if="showFormArea" class="student-status-modal__form-area">
       <a-form
         ref="formRef"
         :model="formState"
@@ -32,7 +32,7 @@
         layout="vertical"
         :required-mark="false"
       >
-        <a-form-item name="reason" data-field-name="修改原因">
+        <a-form-item v-if="requiresReason" name="reason" data-field-name="修改原因">
           <template #label>
             <span class="student-status-modal__label">
               修改原因
@@ -108,6 +108,8 @@ const reasonOptionMap: Record<'freeze' | 'refund', { label: string; value: strin
 }
 
 const requiresReason = computed(() => props.action === 'freeze' || props.action === 'refund')
+
+const showFormArea = computed(() => requiresReason.value || props.action === 'end_contract')
 
 const targetStatusLabel = computed(() => {
   if (props.action === 'freeze') return '冻结'

@@ -7,6 +7,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.mockito.ArgumentCaptor;
+
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -39,6 +41,65 @@ class OsgClassRecordServiceImplTest
 
     @Mock
     private OsgStudentMapper studentMapper;
+
+    @Mock
+    private OsgClassReportValidator classReportValidator;
+
+    @Test
+    void createLeadMentorClassRecordShouldDefaultMemberStatusToNormalWhenAbsent()
+    {
+        OsgClassRecord record = new OsgClassRecord();
+        record.setStudentId(46706L);
+        record.setMentorId(101L);
+        record.setClassDate(Timestamp.valueOf(LocalDateTime.of(2026, 5, 8, 10, 0)));
+        record.setClassStatus("completed");
+        record.setDurationHours(1.0D);
+        record.setCourseType("base_course");
+        record.setFeedbackContent("test");
+        record.setCreateBy("lm_demo");
+        // memberStatus 故意不传：复现 BUG-001 — DB 列 NOT NULL 触发 500
+
+        com.ruoyi.system.domain.OsgStudent student = new com.ruoyi.system.domain.OsgStudent();
+        student.setStudentId(46706L);
+        student.setStudentName("Story1 Test");
+        student.setLeadMentorId(101L);
+        student.setAccountStatus("0");
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(student);
+        when(classRecordMapper.insertMentorClassRecord(any(OsgClassRecord.class))).thenReturn(1);
+
+        service.createLeadMentorClassRecord(record);
+
+        ArgumentCaptor<OsgClassRecord> captor = ArgumentCaptor.forClass(OsgClassRecord.class);
+        verify(classRecordMapper).insertMentorClassRecord(captor.capture());
+        assertEquals("normal", captor.getValue().getMemberStatus());
+    }
+
+    @Test
+    void createLeadMentorClassRecordShouldPreserveExplicitAbsentMemberStatus()
+    {
+        OsgClassRecord record = new OsgClassRecord();
+        record.setStudentId(46706L);
+        record.setMentorId(101L);
+        record.setClassDate(Timestamp.valueOf(LocalDateTime.of(2026, 5, 8, 10, 0)));
+        record.setClassStatus("absent");
+        record.setMemberStatus("absent");
+        record.setAbsentRemark("学员未到场");
+        record.setCreateBy("lm_demo");
+
+        com.ruoyi.system.domain.OsgStudent student = new com.ruoyi.system.domain.OsgStudent();
+        student.setStudentId(46706L);
+        student.setStudentName("Story1 Test");
+        student.setLeadMentorId(101L);
+        student.setAccountStatus("0");
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(student);
+        when(classRecordMapper.insertMentorClassRecord(any(OsgClassRecord.class))).thenReturn(1);
+
+        service.createLeadMentorClassRecord(record);
+
+        ArgumentCaptor<OsgClassRecord> captor = ArgumentCaptor.forClass(OsgClassRecord.class);
+        verify(classRecordMapper).insertMentorClassRecord(captor.capture());
+        assertEquals("absent", captor.getValue().getMemberStatus());
+    }
 
     @Test
     void createMentorClassRecordShouldForcePendingReviewState()

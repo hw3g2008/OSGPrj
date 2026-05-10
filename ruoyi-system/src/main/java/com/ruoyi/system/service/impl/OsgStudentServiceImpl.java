@@ -461,6 +461,10 @@ public class OsgStudentServiceImpl implements IOsgStudentService
             contract.setContractAmount(contract.getAmountUsd() == null ? BigDecimal.ZERO : contract.getAmountUsd());
         }
         contract.setTotalHours(asInteger(firstPresent(source, "totalHours", "studyHours")));
+        contract.setUsedHours(BigDecimal.ZERO);
+        contract.setRemainingHours(contract.getTotalHours() == null
+            ? BigDecimal.ZERO
+            : BigDecimal.valueOf(contract.getTotalHours()));
         contract.setStartDate(asDate(firstPresent(source, "startDate")));
         contract.setEndDate(asDate(firstPresent(source, "endDate")));
         contract.setRenewalReason(asText(firstPresent(source, "renewalReason")));

@@ -330,7 +330,11 @@ export async function getReportableStudents(
         row.studentName ?? row.student_name ?? row.name ?? '',
       )
       const disabled = row.disabled as boolean | undefined
-      return { studentId, studentName, disabled }
+      const accountStatusRaw = row.accountStatus ?? row.account_status
+      const accountStatus =
+        accountStatusRaw == null ? undefined : String(accountStatusRaw)
+      const isBlacklisted = Boolean(row.isBlacklisted ?? row.is_blacklisted ?? false)
+      return { studentId, studentName, disabled, accountStatus, isBlacklisted }
     })
     .filter((item) => item.studentId > 0)
 }

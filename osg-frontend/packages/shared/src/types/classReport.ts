@@ -136,6 +136,8 @@ export interface StudentOption {
   studentId: number
   studentName: string
   disabled?: boolean
+  accountStatus?: string
+  isBlacklisted?: boolean
 }
 
 /**
