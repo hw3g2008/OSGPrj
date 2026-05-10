@@ -47,24 +47,6 @@
       </a-card>
     </div>
 
-    <!-- 热门公司申请统计 -->
-    <a-card :bordered="false" size="small" :body-style="{ padding: '16px' }">
-      <template #title>
-        <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-office-building" style="color: var(--primary); margin-right: 6px;"></i>热门公司申请统计</span>
-      </template>
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
-        <div v-for="company in hotCompanies" :key="company.companyName" style="padding: 12px; background: #F8FAFC; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-          <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">{{ company.companyName }}</div>
-          <div style="display: flex; justify-content: center; gap: 12px; font-size: 11px;">
-            <span><strong style="color: #3B82F6;">{{ company.applicationCount }}</strong> 申请</span>
-            <span><strong style="color: #22C55E;">{{ company.offerCount }}</strong> Offer</span>
-          </div>
-          <div style="font-size: 10px; color: #22C55E; margin-top: 4px;">Offer率 {{ company.offerRate }}%</div>
-        </div>
-      </div>
-      <a-empty v-if="!hotCompanies.length" description="当前暂无热门公司统计" />
-    </a-card>
-
     <!-- 筛选条件（卡片外平铺） -->
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
       <a-input v-model:value="filters.studentName" placeholder="搜索学员姓名..." allow-clear style="width: 180px;" @press-enter="handleSearch" />
@@ -76,10 +58,6 @@
       </a-select>
       <a-select v-model:value="filters.leadMentorId" placeholder="全部班主任" allow-clear style="width: 140px;">
         <a-select-option v-for="option in mentorOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
-      </a-select>
-      <a-select v-model:value="filters.assignStatus" placeholder="分配状态" allow-clear style="width: 140px;">
-        <a-select-option value="pending">待分配</a-select-option>
-        <a-select-option value="assigned">已分配</a-select-option>
       </a-select>
       <a-button type="primary" @click="handleSearch">
         <template #icon><SearchOutlined /></template>
@@ -190,13 +168,11 @@ import AssignMentorModal from './components/AssignMentorModal.vue'
 import {
   assignMentors,
   exportJobOverview,
-  getHotCompanies,
   getJobOverviewFunnel,
   getJobOverviewList,
   getJobOverviewStats,
   getUnassignedJobOverviewList,
   updateJobOverviewStage,
-  type HotCompanyItem,
   type JobOverviewFilters,
   type JobOverviewFunnelNode,
   type JobOverviewRow,
@@ -259,8 +235,7 @@ const filters = reactive({
   studentName: '',
   companyName: undefined,
   currentStage: undefined,
-  leadMentorId: undefined,
-  assignStatus: undefined
+  leadMentorId: undefined
 })
 
 const stageOptions = [
@@ -276,10 +251,9 @@ const stageOptions = [
 ]
 
 const loading = ref(false)
-const activeTab = ref<ActiveTab>('pending')
+const activeTab = ref<ActiveTab>('all')
 const stats = ref<JobOverviewStats>({ ...defaultStats })
 const funnelRows = ref<JobOverviewFunnelNode[]>([])
-const hotCompanies = ref<HotCompanyItem[]>([])
 const allRows = ref<JobOverviewRow[]>([])
 const unassignedRows = ref<UnassignedJobOverviewRow[]>([])
 const unassignedPagination = useStandardClientPagination(() => unassignedRows.value.length)
@@ -295,8 +269,7 @@ const requestFilters = computed<JobOverviewFilters>(() => ({
   studentName: filters.studentName || undefined,
   companyName: filters.companyName || undefined,
   currentStage: filters.currentStage || undefined,
-  leadMentorId: filters.leadMentorId ? Number(filters.leadMentorId) : undefined,
-  assignStatus: filters.assignStatus || undefined
+  leadMentorId: filters.leadMentorId ? Number(filters.leadMentorId) : undefined
 }))
 
 const companyOptions = computed(() => {
@@ -352,10 +325,9 @@ const statsCards = computed(() => [
 async function loadDashboard() {
   loading.value = true
   try {
-    const [statsData, funnelData, hotCompanyData, listData, unassignedData] = await Promise.all([
+    const [statsData, funnelData, listData, unassignedData] = await Promise.all([
       getJobOverviewStats(requestFilters.value),
       getJobOverviewFunnel(requestFilters.value),
-      getHotCompanies(requestFilters.value),
       getJobOverviewList(requestFilters.value),
       getUnassignedJobOverviewList({
         studentName: requestFilters.value.studentName,
@@ -367,7 +339,6 @@ async function loadDashboard() {
 
     stats.value = { ...defaultStats, ...statsData }
     funnelRows.value = funnelData
-    hotCompanies.value = hotCompanyData
     allRows.value = listData.rows ?? []
     unassignedRows.value = unassignedData.rows ?? []
   } finally {
@@ -384,7 +355,6 @@ function handleReset() {
   filters.companyName = undefined
   filters.currentStage = undefined
   filters.leadMentorId = undefined
-  filters.assignStatus = undefined
   void loadDashboard()
 }
 
@@ -396,7 +366,6 @@ async function handleExport() {
       companyName: requestFilters.value.companyName,
       currentStage: requestFilters.value.currentStage,
       leadMentorId: requestFilters.value.leadMentorId,
-      assignStatus: requestFilters.value.assignStatus,
       tab: activeTab.value
     })
     message.success('求职总览导出成功')

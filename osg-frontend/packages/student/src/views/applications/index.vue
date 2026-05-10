@@ -297,7 +297,7 @@
               label="需要几个导师？"
               required
               class="rich-form-field"
-              extra="根据面试难度，您可申请 1-3 位导师进行模拟面试。"
+              extra="根据面试难度，您可申请 1-3 位导师进行面试测试。"
             >
               <a-select
                 id="mentor-count-select"

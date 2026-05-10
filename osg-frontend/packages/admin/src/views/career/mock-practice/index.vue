@@ -238,7 +238,7 @@ const filters = reactive({
 })
 
 const loading = ref(false)
-const activeTab = ref<ActiveTab>('pending')
+const activeTab = ref<ActiveTab>('all')
 const stats = ref<MockPracticeStats>({ ...defaultStats })
 const rows = ref<MockPracticeListItem[]>([])
 const assignableMentors = ref<StaffListItem[]>([])
@@ -315,7 +315,7 @@ const handleReset = () => {
   filters.keyword = ''
   filters.practiceType = undefined
   filters.status = undefined
-  activeTab.value = 'pending'
+  activeTab.value = 'all'
   void loadData()
 }
 

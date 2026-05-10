@@ -119,10 +119,10 @@ const communicationRecords: CommunicationRecord[] = [
     method: '微信',
     methodColor: 'processing',
     time: '01/18/2026 10:30',
-    summary: '讨论面试准备进度，建议增加模拟面试次数并提前整理近期 networking 收获。',
+    summary: '讨论面试准备进度，建议增加面试测试次数并提前整理近期 networking 收获。',
     followUp: '待跟进',
     followUpColor: 'gold',
-    followUpDetail: '本周补充 2 次模拟面试，并在下次辅导前回传最新岗位进展。'
+    followUpDetail: '本周补充 2 次面试测试，并在下次辅导前回传最新岗位进展。'
   },
   {
     id: 'COMM-002',

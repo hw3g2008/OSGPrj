@@ -158,7 +158,7 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">模拟面试得分 Mock Interview Scores</span>
+        <span class="card-title">面试测试得分 Mock Interview Scores</span>
         <span class="card-inline-hint">
           记录 <strong>{{ practiceRecords.length }}</strong>
         </span>

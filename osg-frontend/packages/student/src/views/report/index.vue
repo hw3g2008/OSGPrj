@@ -130,7 +130,7 @@ const sourceOptions = [
 
 const courseTypeOptions = [
   { value: 'interview', label: '入职面试' },
-  { value: 'mock', label: '模拟面试' },
+  { value: 'mock', label: '面试测试' },
   { value: 'written', label: '笔试辅导' },
   { value: 'midterm', label: '模拟期中' },
   { value: 'network', label: '人际关系' }
@@ -144,7 +144,7 @@ const rateStatusOptions = [
 const reportRows: ReportRow[] = [
   {
     id: '231776',
-    courseType: '模拟面试',
+    courseType: '面试测试',
     mentor: 'Jerry Li',
     duration: '1.5h',
     date: '12/28/2025',

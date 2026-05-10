@@ -188,7 +188,7 @@
         </button>
       </header>
 
-      <!-- ============= 模拟面试：4 字段编辑稿样式 ============= -->
+      <!-- ============= 面试测试：4 字段编辑稿样式 ============= -->
       <section v-if="currentPracticeModal === 'mock'" class="coach-modal__body">
         <a-form layout="vertical" class="coach-form">
           <a-form-item required class="coach-form__item">

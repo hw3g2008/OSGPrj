@@ -123,19 +123,19 @@ const feedbackColumns = [
 ]
 
 const restrictedHomeRows = [
-  { date: '2025-12-15', courseType: '模拟面试', mentor: 'Jerry Li', duration: '1.5h', status: '已完成' },
+  { date: '2025-12-15', courseType: '面试测试', mentor: 'Jerry Li', duration: '1.5h', status: '已完成' },
   { date: '2025-12-10', courseType: '简历修改', mentor: 'Test Lead Mentor', duration: '1h', status: '已完成' },
   { date: '2025-12-05', courseType: 'Case Study', mentor: 'Jerry Li', duration: '2h', status: '已完成' }
 ]
 
 const restrictedClassRows = [
-  { date: '2025-12-15', time: '14:00-15:30', courseType: '模拟面试', mentor: 'Jerry Li', duration: '1.5h', status: '已完成' },
+  { date: '2025-12-15', time: '14:00-15:30', courseType: '面试测试', mentor: 'Jerry Li', duration: '1.5h', status: '已完成' },
   { date: '2025-12-10', time: '10:00-11:00', courseType: '简历修改', mentor: 'Test Lead Mentor', duration: '1h', status: '已完成' },
   { date: '2025-12-05', time: '15:00-17:00', courseType: 'Case Study', mentor: 'Jerry Li', duration: '2h', status: '已完成' }
 ]
 
 const restrictedFeedbackRows = [
-  { date: '2025-12-15', courseType: '模拟面试', mentor: 'Jerry Li', rating: 'Great' },
+  { date: '2025-12-15', courseType: '面试测试', mentor: 'Jerry Li', rating: 'Great' },
   { date: '2025-12-10', courseType: '简历修改', mentor: 'Test Lead Mentor', rating: 'Great' },
   { date: '2025-12-05', courseType: 'Case Study', mentor: 'Jerry Li', rating: 'Good' }
 ]

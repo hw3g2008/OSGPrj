@@ -91,10 +91,10 @@ type NoticeItem = {
 const router = useRouter()
 const notices = ref<NoticeItem[]>([
   {
-    title: '模拟面试已安排',
+    title: '面试测试已安排',
     category: '课程通知',
-    summary: '您申请的模拟面试已安排，导师：Jerry Li，时间：01/18/2026 14:00',
-    detail: '您申请的模拟面试已安排成功，详情如下：分配导师 Jerry Li，预约时间 2026-01-18 14:00，模拟内容 Goldman Sachs IB 二面。',
+    summary: '您申请的面试测试已安排，导师：Jerry Li，时间：01/18/2026 14:00',
+    detail: '您申请的面试测试已安排成功，详情如下：分配导师 Jerry Li，预约时间 2026-01-18 14:00，模拟内容 Goldman Sachs IB 二面。',
     time: '10分钟前',
     read: false,
     filter: 'course'

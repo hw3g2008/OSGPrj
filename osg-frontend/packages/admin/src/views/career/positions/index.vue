@@ -62,7 +62,12 @@
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.city" placeholder="全部地区" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.region" placeholder="全部地区" allow-clear style="width: 120px" @change="handleSearch">
+            <a-select-option v-for="option in meta.regions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="filters.city" placeholder="全部城市" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in cityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
@@ -287,7 +292,7 @@
       :position="editingPosition"
       :defaults="createDefaults"
       :meta="meta"
-      :company-options="companyOptionValues"
+      :company-options="companyOptions"
       @submit="handleSavePosition"
     />
     <BatchUploadModal
@@ -445,6 +450,7 @@ const filters = reactive<PositionListParams>({
   positionCategory: undefined,
   industry: undefined,
   companyName: undefined,
+  region: undefined,
   city: undefined,
   displayStatus: undefined,
   recruitmentCycle: undefined,
@@ -476,8 +482,6 @@ const statsCards = computed(() => [
   { key: 'closed', label: '已关闭', value: stats.value.closedPositions, tone: 'muted' },
   { key: 'students', label: '投递学员', value: stats.value.studentApplications, tone: 'info' }
 ])
-
-const companyOptionValues = computed(() => companyOptions.value.map((item) => item.value))
 
 const cityOptions = computed<PositionMetaOption[]>(() => {
   const merged: PositionMetaOption[] = []
@@ -524,6 +528,7 @@ const hasExpandedContext = () =>
       || filters.positionCategory
       || filters.companyName
       || filters.industry
+      || filters.region
       || filters.city
       || filters.displayStatus
       || filters.recruitmentCycle
@@ -559,6 +564,7 @@ const toRequestParams = (): PositionListParams => {
     positionCategory: filters.positionCategory || undefined,
     industry: filters.industry || undefined,
     companyName: filters.companyName || undefined,
+    region: filters.region || undefined,
     city: filters.city || undefined,
     displayStatus: filters.displayStatus || undefined,
     recruitmentCycle: filters.recruitmentCycle || undefined,
@@ -630,6 +636,7 @@ const handleReset = async () => {
   filters.positionCategory = undefined
   filters.industry = undefined
   filters.companyName = undefined
+  filters.region = undefined
   filters.city = undefined
   filters.displayStatus = undefined
   filters.recruitmentCycle = undefined

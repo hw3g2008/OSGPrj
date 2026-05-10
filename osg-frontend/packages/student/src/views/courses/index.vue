@@ -255,7 +255,7 @@
           <template v-if="currentCourse.detailKind === 'mock'">
             <dl class="course-log__deflist course-log__deflist--stacked">
               <div v-if="currentCourse.mockPurpose" class="course-log__stacked-row">
-                <dt>模拟面试目的</dt>
+                <dt>面试测试目的</dt>
                 <dd>{{ currentCourse.mockPurpose }}</dd>
               </div>
               <div v-if="currentCourse.mockTopics" class="course-log__stacked-row">

@@ -90,6 +90,8 @@
               :options="companyAutoCompleteOptions"
               :filter-option="true"
               placeholder="搜索或输入公司名称"
+              @select="handleCompanySelect"
+              @change="handleCompanyChange"
             />
           </fieldset>
 
@@ -247,15 +249,6 @@
             <a-select-option v-for="option in statusOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </fieldset>
-
-        <div class="position-form-modal__status-actions">
-          <a-button size="small" @click="form.displayStatus = 'hidden'">
-            <span class="mdi mdi-eye-off" aria-hidden="true" style="margin-right:4px"></span>隐藏
-          </a-button>
-          <a-button size="small" type="primary" ghost @click="form.displayStatus = 'visible'">
-            <span class="mdi mdi-refresh" aria-hidden="true" style="margin-right:4px"></span>激活
-          </a-button>
-        </div>
       </section>
     </div>
 
@@ -278,6 +271,7 @@ import { useUserStore } from '@/stores/user'
 import { getToken } from '@osg/shared/utils/storage'
 import type {
   PositionAttachment,
+  PositionCompanyOption,
   PositionListItem,
   PositionMeta,
   PositionMetaOption,
@@ -289,7 +283,7 @@ const props = defineProps<{
   position?: PositionListItem | null
   defaults?: Partial<PositionPayload> | null
   meta: PositionMeta
-  companyOptions: string[]
+  companyOptions: PositionCompanyOption[]
 }>()
 
 const emit = defineEmits<{
@@ -350,7 +344,33 @@ const projectYearOptions = computed(() => props.meta.projectYears || [])
 const regionOptions = computed(() => props.meta.regions || [])
 const statusOptions = computed(() => props.meta.displayStatuses || [])
 const currentCityOptions = computed<PositionMetaOption[]>(() => (form.region ? props.meta.citiesByRegion?.[form.region] || [] : []))
-const companyAutoCompleteOptions = computed(() => props.companyOptions.map((item) => ({ value: item })))
+const companyAutoCompleteOptions = computed(() =>
+  props.companyOptions.map((item) => ({ value: item.value, label: item.label }))
+)
+
+const companyTypeMap = computed(
+  () =>
+    new Map(
+      props.companyOptions
+        .filter((item) => Boolean(item.companyType || item.industry))
+        .map((item) => [item.value, item.companyType || item.industry || ''])
+    )
+)
+
+const handleCompanySelect = (value: string) => {
+  const matched = companyTypeMap.value.get(value)
+  if (matched) {
+    form.companyType = matched
+  }
+}
+
+const handleCompanyChange = (value: string) => {
+  // 输入而非选中时，若与已知公司精确匹配，仍尝试自动带出 companyType
+  const matched = companyTypeMap.value.get(value)
+  if (matched && !form.companyType) {
+    form.companyType = matched
+  }
+}
 const displayStatusMap = computed(() => new Map(statusOptions.value.map((option) => [option.value, option.label])))
 
 const toDateTimeLocal = (value?: string) => {
