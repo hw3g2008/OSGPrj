@@ -7,11 +7,32 @@ const indexSource = fs.readFileSync(
   'utf-8',
 )
 
-describe('mentor job overview source contract (FIX-E strict mode)', () => {
-  it('declares exactly the 5 required columns: 学员/公司/岗位/面试状态/面试时间', () => {
+// Step3-F2 (2026-05-10): 升级 source contract — §5.2 mentor job-overview 要求 row 维度 = coaching、
+// 列扩到 8（学员/公司/岗位/城市/面试状态/面试时间/已上报课消数/操作）+ 上报课消按钮，并保留
+// 上一阶段 FIX-E 锁定的反向断言（不能有 InterviewCalendar / 查看详情 / confirm 入口）。
+describe('mentor job overview source contract (§5.2 strict mode)', () => {
+  it('declares the 8 required columns: 学员/公司/岗位/城市/面试状态/面试时间/已上报课消数/操作', () => {
     const matches = indexSource.match(/title:\s*'([^']+)'/g) || []
     const titles = matches.map((m) => m.replace(/title:\s*'([^']+)'/, '$1'))
-    expect(titles).toEqual(['学员', '公司', '岗位', '面试状态', '面试时间'])
+    expect(titles).toEqual(['学员', '公司', '岗位', '城市', '面试状态', '面试时间', '已上报课消数', '操作'])
+  })
+
+  it('exposes a 上报课消 action that opens the shared ReportModal with job_coaching prefill', () => {
+    // §5.2 上报课消按钮存在
+    expect(indexSource).toContain('上报课消')
+    // ReportModal 通过 mentor 现有 ../courses/components/ReportModal.vue 接入 shared ClassReportFlowModal
+    expect(indexSource).toContain("import ReportModal from '../courses/components/ReportModal.vue'")
+    // 预填走 job_coaching reference type
+    expect(indexSource).toContain("'job_coaching'")
+  })
+
+  it('uses coachingId as row-key with applicationId fallback', () => {
+    expect(indexSource).toMatch(/row-key=.*record\.coachingId\s*\?\?\s*record\.id/)
+  })
+
+  it('does not render the deprecated stats cards (statsCards 已按 Step 3 §5.2 删除)', () => {
+    expect(indexSource).not.toContain('stats-row')
+    expect(indexSource).not.toContain('StatCard')
   })
 
   it('does not import or render InterviewCalendar', () => {

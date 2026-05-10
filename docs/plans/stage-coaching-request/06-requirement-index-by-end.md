@@ -717,6 +717,162 @@ Root Cause / Current State：
 - 全部定向命令 exit code 0，关键 grep 锁定旧口径残留已清除，shared 改动不破坏其它端。
 - Step 2-A 闭环：F1（后端列表 coaching 行）+ F2（详情按 coachingId）+ F3（分配导师按 coachingId）+ F4（前端表格 coaching 行）+ F5（详情弹窗按 coachingId）+ F6（分配导师 coaching endpoint + 数量阻断 + sibling 隔离）+ F7（上报课消预填 job_coaching/coachingId）+ F8（总回归）全部 ✅。
 
+### 4.10 Step 2-B 短审计（2026-05-10）
+
+Current State:
+
+- 班主任端模拟应聘页面入口为 `osg-frontend/packages/lead-mentor/src/views/career/mock-practice/index.vue`，路由为 `/career/mock-practice`。
+- 页面当前仍渲染顶部统计卡片：`<a-row aria-label="mock practice stats">` + `statsCards`，与 Step 2-B「删除统计卡片」不一致。
+- 页面已有三栏数据结构，但顺序和默认栏不符合目标：当前 template 顺序为 `pending`（待分配导师）→ `mycoaching`（我辅导的学员）→ `mymanage`（我管理的学员），`activeTab` 默认值为 `mycoaching`；目标应为「我管理的学员 / 待辅导的学员 / 待分配导师」，默认第一栏。
+- 三栏表格 `row-key` 已使用 `practiceId`，符合模拟应聘「一条 practice 即一条业务记录」口径。
+- 当前筛选超出 Step 2-B 最小口径：除类型外，还存在学员、状态、导师筛选；Step 2-B 目标明确为「类型筛选」。
+- 当前「我管理的学员」与「待辅导的学员」的详情弹窗为 `LeadMockFeedbackModal`，数据来自 `getLeadMentorMockPracticeDetail(practiceId)` 返回的 `osg_mock_practice.feedbackRating/feedbackSummary/completedHours`，不是按 `practice_id` 查询多条 `osg_class_record` 课消反馈。
+- 当前班主任模拟应聘页面没有接入 `LeadMentorClassReportFlowModal`，也没有「上报课消」按钮；Step 2-B 要求「待辅导的学员」支持上报课消，并按 `practice_type -> reference_type` 预填并锁定 `reference_id=practiceId`。
+- shared API 当前只有 `getLeadMentorMockPracticeStats/list/detail/assign/acknowledge`，缺少按 `practiceId` 查询课消详情的显式 API，也缺少上报课消预填相关类型字段。
+- 后端入口为 `OsgLeadMentorMockPracticeController`，已有 `/stats`、`/list`、`/{practiceId}`、`/{practiceId}/assign`、`/{practiceId}/ack-assignment`。
+- 后端 service 为 `OsgLeadMentorMockPracticeServiceImpl`，当前 `selectPracticeDetail` 仅包装 `toPayload(practice)` + mentorOptions + allowedScopes；没有注入 `OsgClassRecordMapper`，没有按 `reference_type IN ('mock_interview','relation_test','communication_test') AND reference_id=practiceId` 读取课消记录。
+- 后端 `assignPractice` 当前只校验 `mentorIds` 非空和 `scheduledAt` 非空，没有校验 `mentorIds.size() == requestedMentorCount`；不符合 Step 2-B「分配导师数量限制」。
+- `OsgClassRecordMapper.selectClassRecordList` 已支持 `referenceType/referenceId/studentId/delFlag` 条件，可复用为模拟应聘课消详情与统计入口；`OsgClassRecordMapper` 暂无专用 `selectByMockPracticeReference` 方法。
+- 现有后端测试 `OsgLeadMentorMockPracticeServiceImplTest` 只覆盖「分配时 staffId 转 userId」一条；controller 测试覆盖三栏 scope、detail、assign、ack 和权限，但未覆盖课消详情、多条课消反馈、分配数量限制。
+- 现有前端测试 `mock-practice-real-flow.spec.ts` 仍断言加载 stats、旧默认/旧 tab 结构、旧 feedback modal 和不限制导师数量；`assign-mock-modal.spec.ts` 覆盖弹窗，但未覆盖数量必须等于申请导师数；没有 mock-practice 上报课消 prefill 集成测试。
+
+Root Cause:
+
+- Step 2-B 不是缺一个按钮，而是当前模拟应聘管理仍停留在「`osg_mock_practice` 自带 feedback 字段 + 顶部统计卡片 + 旧三栏顺序」的页面形态；课消详情和上报课消尚未接入 `practice_id` reference 口径，分配导师也缺少前后端一致的数量约束。
+
+Audit Answers:
+
+1. 当前页面是否还有统计卡片？是。`aria-label="mock practice stats"` 与 `statsCards` 仍存在。
+2. 当前是否是三栏？是，但顺序与默认栏不符合 Step 2-B。当前默认 `mycoaching`，目标默认「我管理的学员」。
+3. 当前 row key 是否为 `practiceId`？是。三张表均使用 `r.practiceId`。
+4. 当前详情是否按 `practice_id` 查课消？否。详情只读 `osg_mock_practice.feedback*` 单条摘要字段。
+5. 当前上报课消是否已接入？否。页面未使用 `LeadMentorClassReportFlowModal`。
+6. 当前分配导师是否有数量限制？否。前端只要求至少 1 位，后端也只要求非空。
+7. 当前测试 baseline 是什么？已有前后端测试可复用，但多数锁定旧统计卡片、旧详情和旧分配规则；Step 2-B 第一批应先补后端 RED，锁定 `practiceId` 课消详情/统计与导师数量限制。
+
+### 4.11 Step 2-B 小 fix 状态跟踪
+
+| 编号 | 小 fix | 状态 | 范围 | 验证/备注 |
+|---|---|---|---|---|
+| Step2B-F0 | 短审计 + 状态跟踪区 + 第一批 fix plan | ✅ 已完成 | 文档 | 已审计当前 mock-practice 页面、API、service、mapper、测试旧口径，并写入本状态表与第一批方案 |
+| Step2B-F1 | 后端按 practice_id 返回课消详情/统计 | ✅ 已完成 | backend | detail payload 已返回 `referenceType/referenceId/classRecords/reportedLessonCount/latestRating`，按模拟应聘 reference 类型 + `practiceId` 查询 |
+| Step2B-F2 | 后端分配导师数量限制 | ✅ 已完成 | backend | `assignPractice` 已强制 `mentorIds.size()==requestedMentorCount`，controller/service 测试覆盖 |
+| Step2B-F3 | 前端删除统计卡片 + 三栏顺序/默认栏收口 | ✅ 已完成 | frontend | 删除 stats UI，默认「我管理的学员」，三栏顺序已改为目标顺序，筛选已收敛为类型 |
+| Step2B-F4 | 课消详情弹窗按 practice_id 展示多条课消反馈 | ✅ 已完成 | frontend | 详情已从 mock feedback 摘要扩展到 `classRecords` 列表，按后端返回课消明细展示 |
+| Step2B-F5 | 待辅导栏上报课消预填 practice reference | ✅ 已完成 | frontend/shared integration | 已接入 `LeadMentorClassReportFlowModal`，按 `practiceType` 映射 `referenceType`，锁定 student/reference |
+| Step2B-F6 | 前端分配导师数量限制 | ✅ 已完成 | frontend | 页面提交前已阻断数量不等于 `requestedMentorCount`，并显示 Ant Design Vue `message.error` |
+| Step2B-F7 | 测试与回归 | ✅ 已完成 | all | 后端定向测试、LM mock-practice specs、LM build 均通过；关键 grep 见完成证据 |
+
+### 4.12 第一批 fix plan：Step2B-F1 + Step2B-F2
+
+#### Step2B-F1：后端按 practice_id 返回课消详情/统计
+
+Root Cause / Current State:
+
+- `selectPracticeDetail(practiceId, userId)` 当前只返回 `osg_mock_practice` 单行字段，详情弹窗显示的是 `feedbackRating/feedbackSummary/completedHours`，无法展示该 `practice_id` 下多条导师课消反馈。
+- 模拟应聘课消的正确锚点是：
+
+```text
+reference_type IN ('mock_interview', 'relation_test', 'communication_test')
+reference_id = practice_id
+```
+
+修改文件：
+
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/IOsgLeadMentorMockPracticeService.java`
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/impl/OsgLeadMentorMockPracticeServiceImpl.java`
+- `ruoyi-system/src/main/java/com/ruoyi/system/mapper/OsgClassRecordMapper.java`
+- `ruoyi-system/src/main/resources/mapper/system/OsgClassRecordMapper.xml`
+- `ruoyi-system/src/test/java/com/ruoyi/system/service/impl/OsgLeadMentorMockPracticeServiceImplTest.java`
+- `ruoyi-admin/src/test/java/com/ruoyi/web/controller/osg/OsgLeadMentorMockPracticeControllerTest.java`
+
+具体修改：
+
+- 在 `OsgLeadMentorMockPracticeServiceImpl` 注入 `OsgClassRecordMapper`。
+- 增加 `resolveMockPracticeReferenceType(practiceType)`，支持：
+  - `mock_interview` / `模拟面试` → `mock_interview`
+  - `relation_test` / `人际关系测试` → `relation_test`
+  - `communication_test` / `期中考试` / `midterm_exam` → `communication_test`
+- 增加按 `referenceType + practiceId` 查询课消记录的方法，可选择：
+  - 复用 `selectClassRecordList` 设置 `referenceType/referenceId/studentId/delFlag/status`；或
+  - 新增 `selectByReference(referenceType, referenceId)` mapper，避免 service 重复拼 query。
+- `selectPracticeDetail` 返回中追加：
+  - `referenceType`
+  - `referenceId`
+  - `reportedLessonCount`
+  - `latestRating`
+  - `classRecords`
+- `classRecords` 按 `class_date desc, record_id desc` 展示，字段至少包括：`recordId`、`classDate`、`mentorId`、`mentorName`、`durationHours`、`memberStatus`、`rate`、`feedback`、`status`。
+- `reportedLessonCount` 统计当前 `practiceId` 下对应 reference type 的课消记录，包含旷课。
+- `latestRating` 只取当前 `practiceId` 下 `member_status='normal'` 且 `rate` 非空的最新评分。
+- 保留原 `feedbackRating/feedbackSummary/completedHours` 兼容字段，不在第一批删除。
+
+验收标准：
+
+- 详情接口只返回当前 `practiceId` 下的模拟应聘课消记录，不串其它 practice。
+- 同一学生多个模拟应聘记录的课消数、最近评分、详情互不串。
+- 没有课消记录时返回 `classRecords: []`、`reportedLessonCount=0`。
+- 旧前端依赖的 `feedbackSummary` 等字段仍存在。
+
+建议 RED 用例：
+
+- `selectPracticeDetailReturnsClassRecordsByMockPracticeReference`
+- `selectPracticeDetailDoesNotMixOtherPracticeRecords`
+- `detailControllerReturnsClassRecordsAndReferenceType`
+
+#### Step2B-F2：后端分配导师数量限制
+
+Root Cause / Current State:
+
+- `assignPractice` 当前只要求 `mentorIds` 非空，没有使用 `requestedMentorCount` 做等量校验；用户需求明确要求「根据填写的分配导师数去分配」。
+
+修改文件：
+
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/impl/OsgLeadMentorMockPracticeServiceImpl.java`
+- `ruoyi-system/src/test/java/com/ruoyi/system/service/impl/OsgLeadMentorMockPracticeServiceImplTest.java`
+- `ruoyi-admin/src/test/java/com/ruoyi/web/controller/osg/OsgLeadMentorMockPracticeControllerTest.java`
+
+具体修改：
+
+- 在 `assignPractice` 中读取 `practice.getRequestedMentorCount()`。
+- 当 `requestedMentorCount > 0` 时，强制 `mentorIds.size() == requestedMentorCount`。
+- 数量不匹配时抛 `ServiceException("分配导师数量必须等于申请导师数量")`。
+- 保持现有 staffId → userId 转换逻辑不变，避免破坏 mentor relation 查询。
+
+验收标准：
+
+- `requestedMentorCount=2` 时选择 1 位或 3 位均失败。
+- `requestedMentorCount=2` 时选择 2 位成功，并继续持久化 userId CSV。
+- controller 返回业务错误，不更新 mock practice。
+
+建议 RED 用例：
+
+- `assignPracticeRejectsMentorCountMismatch`
+- `assignControllerRejectsMentorCountMismatch`
+
+验证命令：
+
+```bash
+mvn -pl ruoyi-system test -Dtest=OsgLeadMentorMockPracticeServiceImplTest -q
+mvn -pl ruoyi-admin -am test -Dtest=OsgLeadMentorMockPracticeControllerTest -Dsurefire.failIfNoSpecifiedTests=false -q
+mvn -pl ruoyi-admin -am -DskipTests compile -q
+```
+
+确认门：
+
+- Step2B-F1 + Step2B-F2 已由用户确认自动推进，并完成后端实现与验证。
+
+完成证据：
+
+- RED：`mvn -pl ruoyi-system test -Dtest=OsgLeadMentorMockPracticeServiceImplTest -q` 初次失败，失败点为 `referenceType=null` 与分配数量未按申请数阻断。
+- RED：`mvn -pl ruoyi-admin -am test -Dtest=OsgLeadMentorMockPracticeControllerTest -Dsurefire.failIfNoSpecifiedTests=false -q` 初次业务断言失败，失败点为 `$.data.referenceType` 缺失与数量不匹配仍返回 200。
+- GREEN：`mvn -pl ruoyi-system test -Dtest=OsgLeadMentorMockPracticeServiceImplTest -q` → exit code 0。
+- GREEN：`mvn -pl ruoyi-admin -am test -Dtest=OsgLeadMentorMockPracticeControllerTest -Dsurefire.failIfNoSpecifiedTests=false -q` → exit code 0。
+- Compile：`mvn -pl ruoyi-admin -am -DskipTests compile -q` → exit code 0。
+- Frontend RED：`pnpm --filter @osg/lead-mentor exec vitest run src/__tests__/mock-practice-real-flow.spec.ts` 初次业务断言失败，失败点为 stats API 仍调用、课消详情列表未展示、上报课消按钮缺失、导师数量不匹配仍调用 assign API。
+- Frontend GREEN：`pnpm --filter @osg/lead-mentor exec vitest run src/__tests__/mock-practice-real-flow.spec.ts src/__tests__/assign-mock-modal.spec.ts src/__tests__/mock-feedback-modal.spec.ts` → 3 files / 10 tests passed。
+- Frontend Build：`pnpm --filter @osg/lead-mentor build` → exit code 0，`✓ built in 9.89s`（仅保留 Vite chunk size warning 与 Sass legacy API warning）。
+
 ---
 
 ## 5. Step 3：导师端闭环
@@ -765,6 +921,168 @@ Root Cause / Current State：
 第三优先级。
 
 导师端强依赖前面的 `coaching_id` 与 shared 课消弹窗底座。
+
+### 5.7 Step 3 短审计（2026-05-10）
+
+Audit Scope:
+
+- 8 个锚点：mentor 端前端 job-overview vue / mock-practice vue / 后端 mentor job-overview controller / 后端 mentor mock-practice controller / service 层 listByMentor / shared ClassReportFlowModal lockHelpers / mentor vitest baseline / mentor 端是否有"分配导师"残留。
+
+Current State（按文件锚点）:
+
+- 前端 mentor job-overview：`osg-frontend/packages/mentor/src/views/job-overview/index.vue`（路径不在 `views/career/` 下，与 LM/Assistant 不同；不带 `<a-tabs>` 单视图）。
+  - 顶部仍有 4 张 statsCards（line 17-22）：新分配 / 待进行 / 已完成 / 已取消。Step 3 §5.2 不列统计卡片，但需求文段也未明确删除；按 LM/student 同质处理建议删除。
+  - 表格 `row-key` 走 `record.id`（line 42），且后端 controller `toLegacyMentorOverviewRow` 行 153 把 `id` 设为 `applicationId`，所以前端 row 维度仍是 application，不是 coaching。
+  - 列字段：学员 / 公司 / 岗位 / 面试状态 / 面试时间（line 156-162）。**缺 §5.2 要求的"城市"、"已上报课消数"两列**。
+  - 操作列：无；**缺"上报课消"入口**。
+  - 数据获取：`http.get('/api/mentor/job-overview/list')`，无 coachingId 透传；filter 仅 `selectedStatus`（status 派生自 `coachingStatus`）。
+- 前端 mentor mock-practice：`osg-frontend/packages/mentor/src/views/mock-practice/index.vue`（路径不在 `views/career/` 下）。
+  - 顶部 4 张 statsCards（line 10-15）：新分配 / 待进行 / 已完成 / 已取消。**§5.3 明确删除统计卡片，需删除**。
+  - 筛选项当前：类型 / 状态 / 学员关键字（line 20-44）。**§5.3 目标筛选：公司 / 面试阶段 / 面试时间 / 是否上报课消，完全不一致**。
+  - 列字段：学员 / 类型 / 分配时间 / 状态 / 已上课时 / 课程反馈（line 259-266）。**§5.3 目标列：学生 ID / 学生姓名 / 类型 / 分配时间 / 已上报课消数；多了状态/课程反馈，"已上课时" vs "已上报课消数" 语义近但口径不一致（前者是导师端字段 `totalHours`/`completedHours`，后者要按 `practice_id` 课消聚合）**。
+  - 操作列：`status === 'new'` 显示"确认"按钮（接受 LM 推送的分配）+ `else` 显示"查看详情"。**缺"上报课消"入口**。
+  - 详情弹窗：基于 `record.feedbackNote / record.requestContent` 等单行字段渲染（line 124-228），**未走"按 practice_id 多条课消"口径**（与 Step 2-B F4 LM 端已对齐的口径不一致）。
+- 后端 mentor job-overview：`@/Users/hw/workspace/OSGPrj/ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgMentorJobOverviewController.java`（独立 controller）
+  - `/api/mentor/job-overview/list` → `userJobOverviewService.listByMentor(query, userId)` → 经 `toLegacyMentorOverviewRow` 适配后返回。
+  - `toLegacyMentorOverviewRow` line 150-166：仅透出 `id (=applicationId) / studentId / studentName / mentorId / company / position / location / interviewStage / interviewTime / coachingStatus / result / createTime`。**丢弃 service 层已输出的 `coachingId` / `lessonCount` / `lessonReported` 三个字段**。
+  - 现有测试 `OsgMentorJobOverviewControllerTest` line 56-83 仅断言 `id == 7L (=applicationId)`、`location` 等老字段，未要求 `coachingId`；当前 baseline 通过（exit=0）。
+- 后端 mentor mock-practice：`@/Users/hw/workspace/OSGPrj/ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgMockPracticeController.java`（**共享类**，admin / mentor 两端方法挂在同一个 controller，违反 m0-violation-audit 但暂不重构）。
+  - mentor 端可用端点仅 2 个：
+    - `GET /api/mentor/mock-practice/list` → `mockPracticeService.selectMentorMockPracticeList(query)`，service 内部按 `query.currentMentorId = SecurityUtils.getUserId()` 过滤 `osg_mock_practice.mentor_ids` ✅。
+    - `PUT /api/mentor/mock-practice/{id}/confirm` → `mockPracticeService.confirmAssignment(...)`（原子 SQL 防并发，仅 status='scheduled' → 'confirmed'）✅。
+  - **未提供 mentor mock-practice detail 端点**；如果 §5.3 需要"上报课消"入口预填 + 已上报课消数统计，后端需要新增按 `practice_id` 返回 reference type + classRecords 的 detail 接口（或前端直接调 LM 端 detail 但要重做鉴权，不推荐）。
+- service 层 `OsgUserJobOverviewServiceImpl.listByMentor`：
+  - 复用 `selectOverviewListInternal(SCOPE_COACHING, query, userId, studentMap)` → `toOverviewPayload(application, coaching)`（line 936-988）。
+  - 已输出：`applicationId / coachingId / studentId / studentName / companyName / positionName / city / cityLabel / currentStage / interviewTime / latestRating / lessonCount / lessonReported`。
+  - **结论：service 层契约已完整，问题集中在 mentor controller adapter 与前端两层**。
+- shared `ClassReportFlowModal` + `lockHelpers.ts`：Step 2-A F7 已抽取，同时识别 `application | job_coaching`，并支持 `mock_interview / relation_test / communication_test` reference type 透传不强写。mentor 端 Step 3 接入时无需改 shared 层。
+- mentor 端 vitest baseline（按 memory 提示）：`page-interactions.spec.ts` 2 failed pre-existing，本次不在 Step 3 范围内修复，需在 F0 状态表标注豁免。
+- mentor 端是否有"分配导师"残留：vue 仅有"确认"按钮（接受 LM 推送），**无分配入口** ✅；§5.3 不要求分配能力，符合预期。
+
+Root Cause:
+
+- Step 2-A F1 在 service 层已经把求职总览行维度切到 coaching 并输出 coachingId/lessonCount/lessonReported；但 mentor controller 的 legacy adapter 在向前端转 payload 时丢弃了这三个字段，导致 mentor 端前端拿不到 coaching 锚点，也算不出"已上报课消数"。
+- mentor mock-practice 后端没有按 `practice_id` 取课消详情/统计的端点；前端"上报课消"入口缺失，且当前详情弹窗仍走旧 feedback 单行字段。
+- 前端两个 vue 都还停留在 stage-coaching-request 改造前的形态：statsCards、旧筛选、旧列、无上报课消入口。
+
+Audit Answers（对照 §5.2 / §5.3 / §5.4）:
+
+1. mentor job-overview 当前 row 维度是 coaching 还是 application？答：application（controller adapter 把 `applicationId` 当 row id）。
+2. mentor job-overview 当前是否有"上报课消"入口？答：无。
+3. mentor job-overview 当前是否有"已上报课消数"列？答：无。
+4. mentor mock-practice 当前是否有 statsCards？答：有（4 张）。
+5. mentor mock-practice 筛选当前是否符合 §5.3？答：完全不符；当前是类型/状态/学员关键字。
+6. mentor mock-practice 当前是否有"上报课消"入口？答：无（仅"确认"+"查看详情"）。
+7. mentor mock-practice 详情是否按 `practice_id` 多条课消？答：否（走 feedback 单行字段）。
+8. mentor 端是否有分配导师入口？答：无（符合预期）。
+9. service 层是否需要改？答：不需要（已输出 coachingId/lessonCount/lessonReported）。
+10. shared 层是否需要改？答：不需要（Step 2-A F7 已建好 lockHelpers）。
+11. mentor 端 vitest baseline 状态？答：page-interactions 2 failed pre-existing；其余通过。
+
+### 5.8 Step 3 小 fix 状态跟踪
+
+| 编号 | 小 fix | 状态 | 范围 | 验证/备注 |
+|---|---|---|---|---|
+| Step3-F0 | 短审计 + 状态跟踪区 + 第一批 fix plan | ✅ 已完成 | 文档 | §5.7 / §5.8 / §5.9 已落 |
+| Step3-F1 | 后端 mentor job-overview controller adapter 透出 coachingId + lessonCount + lessonReported | ✅ 已完成 | backend | RED 3/3 fail → GREEN 8/8 pass；`mvn -pl ruoyi-admin -am test -Dtest=OsgMentorJobOverviewControllerTest -q` exit=0；`mvn -pl ruoyi-admin -am -DskipTests compile -q` exit=0 |
+| Step3-F2 | 前端 mentor job-overview：删除 statsCards + row-key 切到 coachingId + 补"城市"/"已上报课消数" + "上报课消"入口 | ✅ 已完成 | frontend | source contract spec 升级到 §5.2 strict mode（保留 InterviewCalendar/查看详情/confirm 反向断言）；`pnpm --filter @osg/mentor exec vitest run src/__tests__/job-overview.behavior.spec.ts` 12/12 passed；mentor 端整体 64/64 passed（2 suites 失败 login/mentor-nav-badge 已通过 stash 对照确认为 pre-existing localStorage 配置问题，与 F2 无关） |
+| Step3-F3 | 后端 mentor mock-practice 新增 detail 端点（按 practice_id 返回 referenceType + classRecords + reportedLessonCount + latestRating） | ✅ 已完成 | backend | service 加 `selectMentorMockPracticeDetail(Long practiceId, Long currentUserId)` 走 `requireMentorOwnedPractice` 鉴权 + 按 reference_type+practice_id 聚合 class_record；controller 加 `GET /api/mentor/mock-practice/{id}` 复用 `SecurityUtils.getUserId()`；service test 7/7 pass、controller test 7/7 pass（4 旧 + 3 新 mentorDetail）、LM 同款回归 OsgLeadMentorMockPracticeServiceImplTest 3/3 + OsgLeadMentorMockPracticeControllerTest 6/6 pass；`mvn -pl ruoyi-system test -Dtest=OsgMockPracticeServiceImplTest,OsgLeadMentorMockPracticeServiceImplTest -q` exit=0；`mvn -pl ruoyi-admin -am test -Dtest=OsgLeadMentorMockPracticeControllerTest,OsgMockPracticeControllerTest,OsgMentorJobOverviewControllerTest -q` exit=0 |
+| Step3-F4 | 前端 mentor mock-practice：删除 statsCards + 改筛选为「公司/面试阶段/面试时间/是否上报课消」+ 改列为 §5.3 + "上报课消"入口 + 详情按 practice_id | ✅ 已完成 | frontend | source contract spec 完全重写为 §5.3 严格合同（7 个 it）；vue 删除 4 个 StatCard、本地详情 modal、"已上课时"/"课程反馈"/"状态"列；新筛选 4 个（公司 input + 面试阶段 select + 面试时间 RangePicker + 是否上报课消 select）；列改为 学生 ID/学生姓名/类型/分配时间/已上报课消数/操作；操作列：new 显示"确认"按钮 + 通用"上报课消"按钮，触发 ReportModal 预填 referenceType+referenceId+studentId；保留 confirm 流程 PUT `/api/mentor/mock-practice/{id}/confirm`。验证：`pnpm --filter @osg/mentor exec vitest run src/__tests__/mock-practice.behavior.spec.ts` 7/7 passed；mentor 整体 vitest 14/16 suites passed（2 failed login/mentor-nav-badge stash 对照确认 pre-existing localStorage 问题，与 F4 无关）；mentor build 仅剩 5 条 pre-existing TS 错误（stash 对照同一基线），F4 引入的 2 条 unused import 已修复 |
+| Step3-F5 | 课程排期按钮显示问题（§5.4 独立 UI fix） | ⏸ 暂缓（缺信息） | frontend | 05 §5.2 明确要求"截图/期望按钮文案/当前错误表现/浏览器宽度"才能执行；当前 mentor `views/schedule/index.vue` 共 7 个 a-button（立即填写、3 个时长 shortcut、提交本周排期、保存下周排期、重置、知道了）+ feedback `Modal` 关闭按钮，均为标准 antd 实现，未定位到结构性 bug。本批 Step 3 不硬猜修复，等用户提供具体复现 |
+| Step3-F6 | 测试与回归 + 跨端 grep | ✅ 已完成 | all | 见下方 §5.10 验证报告 |
+
+豁免说明：
+
+- mentor `page-interactions.spec.ts` 2 failed 为 pre-existing antd Phase 2 baseline 中间态，本 Step 3 不修复；F6 验证时通过 `git stash` 对照确认与 Step 3 改动无关。
+- mentor `login.spec.ts` / `mentor-nav-badge.spec.ts` 2 个 suite collect 阶段 fail（`localStorage.getItem is not a function`，由 `shared/src/utils/storage.ts` 间接调用）为 pre-existing vitest 环境配置问题，本 Step 3 不修复。
+- LM 端 vitest 29 个 suite collect fail 同根因（shared `useMustChangePassword` 触发 localStorage 调用），与 Step 3 无关；assistant 端 4 个 suite / 23 tests fail 通过 `git stash` baseline 对照确认 pre-existing。
+- ruoyi-system `OsgClassRecordServiceImplTest` 2 个 fail（`expected: <新简历> but was: <resume_revision>`）为 pre-existing dictionary label vs code 显示问题（baseline 已存在），与 Step 3 改动无关。
+
+### 5.9 第一批 fix plan：Step3-F1（后端 mentor controller 透出 coaching 锚点）
+
+#### Step3-F1：后端 mentor job-overview controller adapter 透出 coachingId + lessonCount + lessonReported
+
+Root Cause / Current State:
+
+- `OsgUserJobOverviewServiceImpl.toOverviewPayload` line 942/984/985 已经输出 `coachingId / lessonCount / lessonReported`，但 mentor controller 的 legacy adapter 不透传这三个字段。
+- 前端 `views/job-overview/index.vue` 接 `/api/mentor/job-overview/list` 拿到的 row 没有 coachingId，导致后续 F2 无法把 row-key 切到 coaching；也拿不到 lessonCount，无法显示"已上报课消数"。
+
+修改文件（**仅 2 个**）：
+
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgMentorJobOverviewController.java`
+- `ruoyi-admin/src/test/java/com/ruoyi/web/controller/osg/OsgMentorJobOverviewControllerTest.java`
+
+具体修改：
+
+- `toLegacyMentorOverviewRow` 在现有 11 个字段基础上追加：
+  - `coachingId` ← `row.get("coachingId")`（service 已输出）
+  - `applicationId` ← `row.get("applicationId")`（保留父字段，方便后续 F2 fallback）
+  - `lessonCount` ← `row.get("lessonCount")`
+  - `lessonReported` ← `row.get("lessonReported")`
+- 现有 `id ← applicationId` 字段**保留不变**，避免破坏 mentor 前端当前 `record.id` 用法；F2 才把前端 `row-key` 切换到 `coachingId ?? id`。
+- `toLegacyCalendarEvent`（calendar 端点）同步追加 `coachingId`，不破坏现有 calendar 字段。
+- 不动 `mentorList` / `confirm` / `acknowledgeStageUpdate` / `myTargets` / `mentorExport` 等其它 5 个端点行为。
+- 不动 service / mapper / 任何前端文件。
+
+影响范围：
+
+- `GET /api/mentor/job-overview/list` 返回 row 多 4 个字段；前端旧字段（`id / studentId / studentName / company / position / location / interviewStage / interviewTime / coachingStatus / result / createTime`）行为不变，前端不解析新字段时无副作用。
+- `GET /api/mentor/job-overview/calendar` 同理，多 1 个 `coachingId` 字段。
+- `GET /api/mentor/job-overview/export` Excel 列不变（基于现有 `JobOverviewExportRow.fromMentorLegacy` 映射），不引入回归。
+
+验收标准:
+
+- service mock 返回包含 `coachingId=7701, lessonCount=2, lessonReported=true` 的 row 时，`controller.mentorList(...)` 第一行 row 必须包含 `coachingId=7701, lessonCount=2, lessonReported=true, applicationId=<原 applicationId>`。
+- 当 service 返回的 row 缺 `coachingId`（legacy fallback）时，controller payload `coachingId == null`，其余字段不变。
+- 现有 11 个旧字段值与 baseline 完全一致。
+
+建议 RED 用例（Step3-F1 测试新增）:
+
+- `mentorListShouldExposeCoachingAnchorAndLessonStats`：service mock row 含 coachingId/lessonCount/lessonReported → 断言 controller 透出。
+- `mentorListShouldFallbackWhenCoachingIdMissing`：service mock row 缺 coachingId → 断言 controller `coachingId == null` 且不抛 NPE。
+- `mentorCalendarShouldExposeCoachingId`：calendar 同口径断言。
+
+验证命令:
+
+```bash
+mvn -pl ruoyi-admin -am test -Dtest=OsgMentorJobOverviewControllerTest -Dsurefire.failIfNoSpecifiedTests=false -q
+mvn -pl ruoyi-admin -am -DskipTests compile -q
+```
+
+确认门：
+
+- Step3-F1 等待用户确认后再实施代码改动；本节仅文档化方案。
+
+### 5.10 Step 3 F6 测试与回归报告（2026-05-10）
+
+#### 后端（Java / Maven）
+
+| 测试集合 | 命令 | 结果 |
+|---|---|---|
+| mock-practice service 全集 | `mvn -pl ruoyi-system test -Dtest=OsgMockPracticeServiceImplTest -q` | 7/7 passed exit=0 |
+| LM mock-practice service 回归 | `mvn -pl ruoyi-system test -Dtest=OsgLeadMentorMockPracticeServiceImplTest -q` | 3/3 passed exit=0 |
+| mentor job-overview controller | `mvn -pl ruoyi-admin -am test -Dtest=OsgMentorJobOverviewControllerTest -q` | 8/8 passed exit=0 |
+| mock-practice controller（含 3 新 mentorDetail） | `mvn -pl ruoyi-admin -am test -Dtest=OsgMockPracticeControllerTest -Dsurefire.failIfNoSpecifiedTests=false -q` | 7/7 passed exit=0 |
+| LM mock-practice controller 回归 | `mvn -pl ruoyi-admin -am test -Dtest=OsgLeadMentorMockPracticeControllerTest -Dsurefire.failIfNoSpecifiedTests=false` | 6/6 passed exit=0 |
+| LM job-overview controller 回归 | `mvn -pl ruoyi-admin -am test -Dtest=OsgLeadMentorJobOverviewControllerTest -Dsurefire.failIfNoSpecifiedTests=false` | 13/13 passed exit=0 |
+| admin reactor 编译 | `mvn -pl ruoyi-admin -am -DskipTests compile -q` | exit=0 |
+
+#### 前端（Vitest / pnpm）
+
+| 测试集合 | 命令 | 结果 |
+|---|---|---|
+| mentor mock-practice F4 合同 | `pnpm --filter @osg/mentor exec vitest run src/__tests__/mock-practice.behavior.spec.ts` | 7/7 passed |
+| mentor job-overview F2 合同 | `pnpm --filter @osg/mentor exec vitest run src/__tests__/job-overview.behavior.spec.ts` | 12/12 passed |
+| mentor 整体 vitest | `pnpm --filter @osg/mentor exec vitest run` | 14/16 suites passed，61/61 tests passed；2 failed suite (login/mentor-nav-badge) baseline 一致，pre-existing |
+| mentor build | `pnpm --filter @osg/mentor build` | 仍剩 5 条 pre-existing TS6133/TS2339（courses.behavior / page-interactions / login/index），stash 对照同一基线，Step 3 未引入新错误 |
+
+#### 跨端 grep 验证
+
+- mentor `views/job-overview/index.vue` `row-key` = `coachingId ?? id` ✅（§5.2 strict 合规）
+- mentor `views/mock-practice/index.vue` `row-key` = `practiceId ?? id` ✅（§5.3 合规，mock-practice 不是 coaching）
+- mentor `views/mock-practice/index.vue` 已删除 `stats-grid` / `StatCard` / 学员求职详情 modal ✅
+- mentor dashboard `stats-grid` 是导师 Dashboard 概览维度，与 §5.3 模拟应聘 statsCards 不冲突 ✅
+- 全部受影响代码路径未发现残留 `applicationId`-as-rowkey 用法 ✅
 
 ---
 

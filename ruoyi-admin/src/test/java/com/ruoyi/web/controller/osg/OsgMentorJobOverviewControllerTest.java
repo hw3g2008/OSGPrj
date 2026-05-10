@@ -2,6 +2,7 @@ package com.ruoyi.web.controller.osg;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -196,6 +197,89 @@ class OsgMentorJobOverviewControllerTest
         assertEquals(1, events300.size());
         assertEquals(102L, events300.get(0).get("id"));
         assertEquals("Co300", events300.get(0).get("company"));
+    }
+
+    @Test
+    void mentorListShouldExposeCoachingAnchorAndLessonStats()
+    {
+        // Step3-F1: service 已输出 coachingId/lessonCount/lessonReported；controller adapter 必须透传
+        Map<String, Object> serviceRow = new LinkedHashMap<>();
+        serviceRow.put("applicationId", 7L);
+        serviceRow.put("coachingId", 7701L);
+        serviceRow.put("studentId", 843L);
+        serviceRow.put("studentName", "Curl Student");
+        serviceRow.put("companyName", "Browser Smoke Capital 3");
+        serviceRow.put("positionName", "Consultant");
+        serviceRow.put("city", "Shanghai");
+        serviceRow.put("currentStage", "Round 1");
+        serviceRow.put("interviewTime", Timestamp.valueOf(LocalDateTime.of(2026, 3, 22, 9, 0)));
+        serviceRow.put("lessonCount", 2);
+        serviceRow.put("lessonReported", true);
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(100L)))
+            .thenReturn(Collections.singletonList(serviceRow));
+
+        TableDataInfo result = controller.mentorList(new OsgJobApplication());
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rows = (List<Map<String, Object>>) result.getRows();
+
+        assertEquals(1, rows.size());
+        // 旧字段保留：id 仍然 = applicationId（避免破坏 mentor 前端 record.id 用法）
+        assertEquals(7L, rows.get(0).get("id"));
+        // 新字段：coachingId / applicationId / lessonCount / lessonReported
+        assertEquals(7L, rows.get(0).get("applicationId"));
+        assertEquals(7701L, rows.get(0).get("coachingId"));
+        assertEquals(2, rows.get(0).get("lessonCount"));
+        assertEquals(true, rows.get(0).get("lessonReported"));
+    }
+
+    @Test
+    void mentorListShouldFallbackWhenCoachingIdMissing()
+    {
+        // Step3-F1: legacy fallback — service row 缺 coachingId（旧数据/无 coaching 行）时不抛 NPE
+        Map<String, Object> serviceRow = new LinkedHashMap<>();
+        serviceRow.put("applicationId", 9L);
+        serviceRow.put("coachingId", null);
+        serviceRow.put("studentId", 99L);
+        serviceRow.put("studentName", "Legacy Student");
+        serviceRow.put("companyName", "Legacy Co");
+        serviceRow.put("positionName", "Legacy Pos");
+        serviceRow.put("city", "Legacy City");
+        serviceRow.put("currentStage", "Round 0");
+        serviceRow.put("lessonCount", 0);
+        serviceRow.put("lessonReported", false);
+
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(100L)))
+            .thenReturn(Collections.singletonList(serviceRow));
+
+        TableDataInfo result = controller.mentorList(new OsgJobApplication());
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rows = (List<Map<String, Object>>) result.getRows();
+
+        assertEquals(1, rows.size());
+        assertEquals(9L, rows.get(0).get("id"));
+        assertEquals(9L, rows.get(0).get("applicationId"));
+        assertNull(rows.get(0).get("coachingId"));
+        assertEquals(0, rows.get(0).get("lessonCount"));
+        assertEquals(false, rows.get(0).get("lessonReported"));
+    }
+
+    @Test
+    void mentorCalendarShouldExposeCoachingId()
+    {
+        // Step3-F1: calendar 端点同步透出 coachingId，便于前端按 coaching 锚点对应日历事件
+        Map<String, Object> calendarRow = buildCalendarRow();
+        calendarRow.put("coachingId", 9999L);
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(100L)))
+            .thenReturn(Collections.singletonList(calendarRow));
+
+        AjaxResult result = controller.calendar();
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+        assertNotNull(data);
+        assertEquals(1, data.size());
+        assertEquals(7L, data.get(0).get("id"));
+        assertEquals(9999L, data.get(0).get("coachingId"));
     }
 
     private Map<String, Object> buildCalendarRowFor(long applicationId, String studentName, String companyName)

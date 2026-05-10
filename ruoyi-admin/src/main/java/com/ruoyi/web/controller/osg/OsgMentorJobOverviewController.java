@@ -151,6 +151,11 @@ public class OsgMentorJobOverviewController extends BaseController
     {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("id", row.get("applicationId"));
+        // Step3-F1: 透出 service 已输出的 coaching 锚点 + 课消统计（service 层 Step 2-A F1 已就绪）
+        payload.put("applicationId", row.get("applicationId"));
+        payload.put("coachingId", row.get("coachingId"));
+        payload.put("lessonCount", row.get("lessonCount"));
+        payload.put("lessonReported", row.get("lessonReported"));
         payload.put("studentId", row.get("studentId"));
         payload.put("studentName", row.get("studentName"));
         payload.put("mentorId", SecurityUtils.getUserId());
@@ -171,6 +176,8 @@ public class OsgMentorJobOverviewController extends BaseController
         String coachingStatus = toLegacyCoachingStatus(row);
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("id", row.get("applicationId"));
+        // Step3-F1: 透出 coachingId 给前端日历组件按 coaching 锚点展示
+        payload.put("coachingId", row.get("coachingId"));
         payload.put("studentName", row.get("studentName"));
         payload.put("company", row.get("companyName"));
         payload.put("position", row.get("positionName"));

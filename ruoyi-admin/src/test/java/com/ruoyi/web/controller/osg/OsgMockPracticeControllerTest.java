@@ -2,24 +2,34 @@ package com.ruoyi.web.controller.osg;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgMockPractice;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.service.impl.OsgIdentityResolver;
 import com.ruoyi.system.service.impl.OsgMockPracticeServiceImpl;
@@ -33,9 +43,16 @@ class OsgMockPracticeControllerTest
     @Mock
     private OsgIdentityResolver identityResolver;
 
+    /** Step3-F3: mentor detail 端点用，按 practice 聚合课消 */
+    @Mock
+    private OsgClassRecordMapper classRecordMapper;
+
     private OsgMockPracticeController controller;
 
     private List<OsgMockPractice> practices;
+
+    /** Step3-F3: mentorDetail 端点用 SecurityUtils.getUserId() 获取 mentorId */
+    private MockedStatic<SecurityUtils> securityMock;
 
     @BeforeEach
     void setUp()
@@ -43,6 +60,7 @@ class OsgMockPracticeControllerTest
         OsgMockPracticeServiceImpl service = new OsgMockPracticeServiceImpl();
         ReflectionTestUtils.setField(service, "mockPracticeMapper", mockPracticeMapper);
         ReflectionTestUtils.setField(service, "identityResolver", identityResolver);
+        ReflectionTestUtils.setField(service, "classRecordMapper", classRecordMapper);
 
         controller = new OsgMockPracticeController();
         ReflectionTestUtils.setField(controller, "mockPracticeService", service);
@@ -60,6 +78,18 @@ class OsgMockPracticeControllerTest
             .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(mockPracticeMapper.updateMockPracticeAssignment(any(OsgMockPractice.class)))
             .thenAnswer(invocation -> applyAssignment(invocation.getArgument(0)));
+
+        securityMock = Mockito.mockStatic(SecurityUtils.class);
+        // Step3-F3: 模拟真实未登录态 — getLoginUser() 抛 ServiceException，resolveOperator() 走 fallback "system"，
+        // 保持 assign/confirm 既有测试行为；具体测试如需有用户上下文，覆盖 stub getUserId/getLoginUser 即可。
+        securityMock.when(SecurityUtils::getLoginUser)
+            .thenThrow(new ServiceException("获取用户信息异常"));
+    }
+
+    @AfterEach
+    void tearDown()
+    {
+        securityMock.close();
     }
 
     @Test
@@ -122,6 +152,93 @@ class OsgMockPracticeControllerTest
 
         assertEquals(500, result.get("code"));
         assertEquals("该模拟应聘申请已安排，不能重复分配", result.get("msg"));
+    }
+
+    @Test
+    void mentorDetailShouldExposeReferenceAndClassRecords()
+    {
+        // Step3-F3: mentor 是 practice 的 mentor，detail 端点应返回 referenceType + classRecords + 统计字段
+        OsgMockPractice practice = new OsgMockPractice();
+        practice.setPracticeId(99L);
+        practice.setStudentId(801L);
+        practice.setStudentName("Alice");
+        practice.setPracticeType("mock_interview");
+        practice.setStatus("scheduled");
+        practice.setMentorIds("9101,9102");
+        when(mockPracticeMapper.selectMockPracticeByPracticeId(99L)).thenReturn(practice);
+
+        OsgClassRecord record = new OsgClassRecord();
+        record.setRecordId(7001L);
+        record.setMentorId(9101L);
+        record.setMentorName("Jess");
+        record.setMemberStatus("normal");
+        record.setRate("excellent");
+        record.setStatus("draft");
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class)))
+            .thenReturn(List.of(record));
+
+        securityMock.when(SecurityUtils::getUserId).thenReturn(9101L);
+
+        AjaxResult result = controller.mentorDetail(99L);
+
+        assertEquals(200, result.get("code"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) result.get("data");
+        assertNotNull(data);
+        assertEquals(99L, data.get("practiceId"));
+        assertEquals("mock_interview", data.get("referenceType"));
+        assertEquals(99L, data.get("referenceId"));
+        assertEquals(1, data.get("reportedLessonCount"));
+        assertEquals("excellent", data.get("latestRating"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> classRecords = (List<Map<String, Object>>) data.get("classRecords");
+        assertEquals(1, classRecords.size());
+        assertEquals(7001L, classRecords.get(0).get("recordId"));
+        assertEquals("Jess", classRecords.get(0).get("mentorName"));
+    }
+
+    @Test
+    void mentorDetailShouldRejectUnrelatedMentor()
+    {
+        // Step3-F3: mentor 不在 practice.mentor_ids 里 → 走 hasMentorRelation 校验失败，返回 500 + 业务错误信息
+        OsgMockPractice practice = new OsgMockPractice();
+        practice.setPracticeId(98L);
+        practice.setStudentId(802L);
+        practice.setMentorIds("9101");
+        when(mockPracticeMapper.selectMockPracticeByPracticeId(98L)).thenReturn(practice);
+
+        securityMock.when(SecurityUtils::getUserId).thenReturn(9999L);
+
+        AjaxResult result = controller.mentorDetail(98L);
+
+        assertEquals(500, result.get("code"));
+        assertEquals("无权确认该模拟应聘记录", result.get("msg"));
+    }
+
+    @Test
+    void mentorDetailShouldExposeEmptyClassRecordsWhenNoLessonsReported()
+    {
+        // Step3-F3: 还没上报过课消时 reportedLessonCount=0，latestRating=null，classRecords 为空数组
+        OsgMockPractice practice = new OsgMockPractice();
+        practice.setPracticeId(97L);
+        practice.setStudentId(803L);
+        practice.setPracticeType("mock_interview");
+        practice.setMentorIds("9101");
+        when(mockPracticeMapper.selectMockPracticeByPracticeId(97L)).thenReturn(practice);
+        when(classRecordMapper.selectClassRecordList(any(OsgClassRecord.class))).thenReturn(Collections.emptyList());
+
+        securityMock.when(SecurityUtils::getUserId).thenReturn(9101L);
+
+        AjaxResult result = controller.mentorDetail(97L);
+
+        assertEquals(200, result.get("code"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) result.get("data");
+        assertEquals(0, data.get("reportedLessonCount"));
+        assertEquals(null, data.get("latestRating"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> classRecords = (List<Map<String, Object>>) data.get("classRecords");
+        assertEquals(0, classRecords.size());
     }
 
     private List<OsgMockPractice> buildPractices()

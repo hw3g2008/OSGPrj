@@ -1,350 +1,186 @@
+/**
+ * Step3-F4 source contract spec：导师端模拟应聘管理一次性闭环。
+ * 对应 docs/plans/stage-coaching-request/06-requirement-index-by-end.md §5.3 / 04 §2.1-§2.4。
+ *
+ * 关键合同：
+ * - 不渲染统计卡片（StatCard 4 个全部移除）
+ * - 渲染 4 个筛选：公司 / 面试阶段 / 面试时间 / 是否上报课消
+ * - 列：学生 ID / 学生姓名 / 类型 / 分配时间 / 已上报课消数 / 操作
+ * - 操作"上报课消"按钮触发共享 ReportModal，预填 referenceType=mock_interview/relation_test/communication_test，referenceId=practiceId
+ * - new 行的"确认"入口保持工作（PUT /api/mentor/mock-practice/{id}/confirm）
+ *
+ * 反向断言：
+ * - 不渲染 a-row.stats-grid / 不渲染"已上课时"/"课程反馈"列 / 不渲染本地详情 modal "学员求职详情"
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import Antd, { Select as ASelect } from 'ant-design-vue'
+import Antd from 'ant-design-vue'
 import MockPracticePage from '@/views/mock-practice/index.vue'
 
 const mountOptions = { global: { plugins: [Antd] } }
-
-async function setSelect(wrapper: ReturnType<typeof mount>, index: number, value: string) {
-  const selects = wrapper.findAllComponents(ASelect)
-  expect(selects[index], `expected ASelect at index ${index}`).toBeTruthy()
-  await selects[index].vm.$emit('update:value', value)
-  await selects[index].vm.$emit('change', value, null)
-  await flushPromises()
-}
 
 type MockPracticeRow = {
   practiceId: number
   studentId: number
   studentName: string
   practiceType: string
-  requestContent?: string
-  requestedMentorCount?: number
-  preferredMentorNames?: string
-  status: string
-  mentorIds?: number[]
-  mentorNames?: string
-  mentorBackgrounds?: string
+  assignedTime?: string
   scheduledAt?: string
-  completedHours?: number
-  feedbackRating?: number | null
-  feedbackSummary?: string | null
-  submittedAt?: string
-  note?: string
+  status: string
+  lessonReported?: number
+  mentorIds?: number[]
 }
 
-const rows: MockPracticeRow[] = [
+const baseRows: MockPracticeRow[] = [
   {
     practiceId: 5105,
     studentId: 1012746878370,
     studentName: 'Mock Ack Ready 87837-1',
     practiceType: 'mock_interview',
-    requestContent: 'Runtime Mock Ack 87837-1',
-    requestedMentorCount: 1,
-    preferredMentorNames: 'mentor',
-    status: 'scheduled',
-    mentorIds: [837],
-    mentorNames: 'mentor',
-    mentorBackgrounds: 'Lead Mentor Runtime Coach',
+    assignedTime: '2026-03-28T16:20:37.000+08:00',
     scheduledAt: '2026-03-28T18:50:37.000+08:00',
-    completedHours: 0,
-    feedbackRating: null,
-    feedbackSummary: null,
-    submittedAt: '2026-03-28T16:20:37.000+08:00',
-    note: 'mock practice ack-ready runtime seed',
+    status: 'scheduled',
+    lessonReported: 1,
+    mentorIds: [837],
   },
   {
     practiceId: 5106,
     studentId: 1010746878372,
     studentName: 'Mock Scheduled 87837-1',
     practiceType: 'relation_test',
-    requestContent: 'communication_test',
-    requestedMentorCount: 1,
-    preferredMentorNames: 'mentor',
-    status: 'completed',
-    mentorIds: [837],
-    mentorNames: 'mentor',
-    mentorBackgrounds: 'Lead Mentor Runtime Coach',
+    assignedTime: '2026-03-28T11:50:37.000+08:00',
     scheduledAt: '2026-03-28T17:50:37.000+08:00',
-    completedHours: 2,
-    feedbackRating: 5,
-    feedbackSummary: 'Runtime feedback summary 87837-1',
-    submittedAt: '2026-03-28T11:50:37.000+08:00',
-    note: 'completed runtime seed',
+    status: 'completed',
+    lessonReported: 0,
+    mentorIds: [837],
   },
 ]
 
-function cloneRows() {
-  return rows.map((row) => ({ ...row }))
-}
-
-function normalizeStatus(status: string | undefined) {
-  if (status === 'scheduled') {
-    return 'pending'
-  }
-  if (status === 'confirmed') {
-    return 'pending'
-  }
-  return status || ''
-}
-
-function matchesKeyword(row: MockPracticeRow, keyword?: string) {
-  const normalized = (keyword || '').trim().toLowerCase()
-  if (!normalized) {
-    return true
-  }
-  return [
-    row.studentName,
-    String(row.studentId),
-    row.requestContent,
-    row.mentorNames,
-    row.note,
-    row.feedbackSummary,
-  ]
-    .filter(Boolean)
-    .some((value) => String(value).toLowerCase().includes(normalized))
-}
-
-function buildMockList(params: Record<string, string> | undefined) {
-  const keyword = params?.keyword
-  const practiceType = params?.practiceType
-  const status = params?.status
-
-  return cloneRows().filter((row) => {
-    if (practiceType && row.practiceType !== practiceType) {
-      return false
-    }
-    if (status && normalizeStatus(row.status) !== normalizeStatus(status)) {
-      return false
-    }
-    return matchesKeyword(row, keyword)
-  })
-}
-
-function getButton(wrapper: ReturnType<typeof mount>, label: string) {
-  const normalized = label.replace(/\s/g, '')
-  const button = wrapper.findAll('button').find((candidate) =>
-    candidate.text().replace(/\s/g, '').includes(normalized),
-  )
-  expect(button, `expected to find button with label containing ${label}`).toBeTruthy()
-  return button!
-}
-
 vi.mock('@osg/shared/utils/request', () => ({
   http: {
-    get: vi.fn(async (url: string, config?: { params?: Record<string, string> }) => {
+    get: vi.fn(async (url: string) => {
       if (url.includes('/api/mentor/mock-practice/list')) {
-        return { rows: buildMockList(config?.params), total: buildMockList(config?.params).length }
+        return { rows: baseRows.map((row) => ({ ...row })), total: baseRows.length }
       }
       return { rows: [] }
     }),
     post: vi.fn(),
-    put: vi.fn(),
+    put: vi.fn(async () => ({ code: 200 })),
     delete: vi.fn(),
   },
 }))
 
 import { http } from '@osg/shared/utils/request'
 
-describe('mentor mock-practice behavior', () => {
+describe('mentor mock-practice behavior (Step3-F4 strict)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it('refreshes the list when type, status, and keyword change', async () => {
-    vi.mocked(http.get).mockImplementation(async (url: string, config?: { params?: Record<string, string> }) => {
+    vi.mocked(http.get).mockImplementation(async (url: string) => {
       if (url.includes('/api/mentor/mock-practice/list')) {
-        return { rows: buildMockList(config?.params), total: buildMockList(config?.params).length }
+        return { rows: baseRows.map((row) => ({ ...row })), total: baseRows.length }
       }
       return { rows: [] }
     })
-
-    const wrapper = mount(MockPracticePage, mountOptions)
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
-    expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
-
-    await setSelect(wrapper, 0, 'relation_test')
-    expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
-    expect(wrapper.text()).not.toContain('Mock Ack Ready 87837-1')
-
-    await setSelect(wrapper, 1, 'completed')
-    expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
-
-    const keywordInput = wrapper.get('input[placeholder="搜索学员姓名/ID"]')
-    await keywordInput.setValue('Mock Scheduled')
-    await flushPromises()
-
-    expect(http.get).toHaveBeenCalledWith(
-      '/api/mentor/mock-practice/list',
-      expect.objectContaining({
-        params: expect.objectContaining({
-          practiceType: 'relation_test',
-          status: 'completed',
-          keyword: 'Mock Scheduled',
-        }),
-      }),
-    )
+    vi.mocked(http.put).mockResolvedValue({ code: 200 })
   })
 
-  it('submits keyword filters and shows an empty state when there is no match', async () => {
+  it('does not render the deprecated stats cards (新分配/待进行/已完成/已取消 全部移除)', async () => {
     const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
-
-    expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
-    expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
-
-    const keywordInput = wrapper.get('input[placeholder="搜索学员姓名/ID"]')
-    await keywordInput.setValue('Mock Ack')
-    await getButton(wrapper, '筛选').trigger('click')
-    await flushPromises()
-
-    expect(http.get).toHaveBeenCalledWith(
-      '/api/mentor/mock-practice/list',
-      expect.objectContaining({
-        params: expect.objectContaining({
-          keyword: 'Mock Ack',
-        }),
-      }),
-    )
-    expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
-    expect(wrapper.text()).not.toContain('Mock Scheduled 87837-1')
-
-    await keywordInput.setValue('No Match')
-    await getButton(wrapper, '筛选').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('暂无匹配的模拟应聘记录')
+    const html = wrapper.html()
+    expect(html).not.toContain('class="stats-grid"')
+    expect(html).not.toMatch(/<[^>]*data-stat-label[^>]*>新分配/)
+    // 严格反向断言：不再渲染"新分配"卡片标签 + "已取消"卡片标签作为统计卡片入口
+    const statCards = wrapper.findAll('.stat-card,[class*="StatCard"]')
+    expect(statCards.length).toBe(0)
   })
 
-  it('refreshes the task list immediately when the visible filters change', async () => {
+  it('renders the 4 required filters: 公司 / 面试阶段 / 面试时间 / 是否上报课消', async () => {
     const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
-
-    const keywordInput = wrapper.get('input[placeholder="搜索学员姓名/ID"]')
-
-    expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
-    expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
-
-    await setSelect(wrapper, 0, 'mock_interview')
-    expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
-    expect(wrapper.text()).not.toContain('Mock Scheduled 87837-1')
-
-    await setSelect(wrapper, 0, '')
-    await setSelect(wrapper, 1, 'completed')
-    expect(wrapper.text()).toContain('Mock Scheduled 87837-1')
-    expect(wrapper.text()).not.toContain('Mock Ack Ready 87837-1')
-
-    await setSelect(wrapper, 1, '')
-    await keywordInput.setValue('Mock Ack')
-    await flushPromises()
-    expect(wrapper.text()).toContain('Mock Ack Ready 87837-1')
-    expect(wrapper.text()).not.toContain('Mock Scheduled 87837-1')
+    const text = wrapper.text()
+    expect(text).toContain('公司')
+    expect(text).toContain('面试阶段')
+    expect(text).toContain('面试时间')
+    expect(text).toContain('是否上报课消')
+    // 反向断言：旧"学员"关键字搜索 / 旧"状态"select 已移除
+    expect(wrapper.find('input[placeholder="搜索学员姓名/ID"]').exists()).toBe(false)
   })
 
-  it('renders a stable anchor for the first new row and keeps it after confirm', async () => {
-    vi.mocked(http.get).mockImplementationOnce(async (url: string, config?: { params?: Record<string, string> }) => {
+  it('renders the required columns: 学生 ID / 学生姓名 / 类型 / 分配时间 / 已上报课消数 / 操作', async () => {
+    const wrapper = mount(MockPracticePage, mountOptions)
+    await flushPromises()
+    const headers = wrapper.findAll('thead th').map((th) => th.text().trim())
+    // 至少要包含 §5.3 列出的 6 列；顺序按 §5.3
+    expect(headers).toContain('学生 ID')
+    expect(headers).toContain('学生姓名')
+    expect(headers).toContain('类型')
+    expect(headers).toContain('分配时间')
+    expect(headers).toContain('已上报课消数')
+    expect(headers).toContain('操作')
+    // 反向断言：移除"已上课时"/"课程反馈"/"状态"列
+    expect(headers).not.toContain('已上课时')
+    expect(headers).not.toContain('课程反馈')
+    expect(headers).not.toContain('状态')
+  })
+
+  it('exposes a 上报课消 action that opens the shared ReportModal with referenceType + referenceId prefill', async () => {
+    const wrapper = mount(MockPracticePage, { ...mountOptions, attachTo: document.body })
+    await flushPromises()
+    const reportButton = wrapper.findAll('button').find((b) => b.text().includes('上报课消'))
+    expect(reportButton, 'expected to find 上报课消 button').toBeTruthy()
+    await reportButton!.trigger('click')
+    await flushPromises()
+    // a-modal 默认 teleport 到 document.body，attachTo=body 后从 body 取 modal DOM
+    const flowModalRoot = document.querySelector('[data-surface-id="shared-class-report-flow-modal"]')
+        || document.querySelector('.class-report-flow-modal')
+    expect(flowModalRoot, 'expected ClassReportFlowModal to be rendered after 上报课消 click').toBeTruthy()
+    wrapper.unmount()
+  })
+
+  it('preserves 确认 flow for new rows (PUT /api/mentor/mock-practice/{id}/confirm)', async () => {
+    vi.mocked(http.get).mockImplementationOnce(async (url: string) => {
       if (url.includes('/api/mentor/mock-practice/list')) {
         return {
-          rows: buildMockList(config?.params).map((row, index) =>
-            index === 0 ? { ...row, status: 'new' } : row,
-          ),
-          total: buildMockList(config?.params).length,
+          rows: baseRows.map((row, i) => (i === 0 ? { ...row, status: 'new' } : row)),
+          total: baseRows.length,
         }
       }
       return { rows: [] }
     })
-    vi.mocked(http.put).mockResolvedValueOnce({ code: 200 })
-
     const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
-
-    expect(wrapper.find('#mock-new-1').exists()).toBe(true)
-    expect(wrapper.get('#mock-new-1').text()).toContain('新分配')
-
-    await wrapper.get('#mock-new-1 button').trigger('click')
+    const confirmBtn = wrapper.findAll('button').find((b) => b.text().includes('确认'))
+    expect(confirmBtn, 'expected to find 确认 button on new row').toBeTruthy()
+    await confirmBtn!.trigger('click')
     await flushPromises()
-
     expect(http.put).toHaveBeenCalledWith('/api/mentor/mock-practice/5105/confirm')
-    expect(wrapper.find('#mock-new-1').exists()).toBe(true)
-    expect(wrapper.get('#mock-new-1').text()).toContain('待进行')
-    expect(wrapper.get('#mock-new-1').text()).toContain('查看详情')
   })
 
-  it('normalizes scheduled rows, opens the full detail modal, and closes via the visible control', async () => {
-    const wrapper = mount(MockPracticePage, { ...mountOptions, attachTo: document.body })
-    await flushPromises()
-
-    const firstRow = wrapper.find('tbody tr')
-    expect(firstRow.text()).toContain('待进行')
-    expect(firstRow.text()).not.toContain('scheduled')
-
-    const detailButton = wrapper.findAll('button').find((button) => button.text().includes('查看详情'))
-    expect(detailButton).toBeTruthy()
-    await detailButton!.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('学员求职详情')
-    expect(wrapper.text()).toContain('学员信息')
-    expect(wrapper.text()).toContain('申请岗位')
-    expect(wrapper.text()).toContain('求职进度')
-    expect(wrapper.text()).toContain('辅导信息')
-    expect(wrapper.text()).toContain('课程记录 (最近3条)')
-    expect(wrapper.text()).toContain('学员备注')
-
-    const closeButton = getButton(wrapper, '关闭')
-    await closeButton.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.text()).not.toContain('学员求职详情')
-  })
-
-  it('renders stable anchors for unread rows and preserves the first anchor after confirm', async () => {
-    const mockRows = [
-      {
-        practiceId: 42,
-        studentId: 843,
-        studentName: 'Mock Student A',
-        practiceType: 'mock_interview',
-        requestContent: 'Mock interview A',
-        status: 'new',
-      },
-      {
-        practiceId: 43,
-        studentId: 844,
-        studentName: 'Mock Student B',
-        practiceType: 'relation_test',
-        requestContent: 'Mock interview B',
-        status: 'new',
-      },
-    ]
-
-    vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url.includes('/api/mentor/mock-practice/list')) {
-        return { rows: mockRows.map((row) => ({ ...row })) }
-      }
-      return { rows: [] }
-    })
-    vi.mocked(http.put).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/mock-practice/42/confirm') {
-        mockRows[0].status = 'confirmed'
-      }
-      return {}
-    })
-
+  it('does not render the deprecated 学员求职详情 modal anywhere on the page', async () => {
     const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
+    const text = wrapper.text()
+    expect(text).not.toContain('学员求职详情')
+    expect(wrapper.findAll('button').find((b) => b.text().includes('查看详情'))).toBeFalsy()
+  })
 
-    expect(wrapper.find('#mock-new-1').exists()).toBe(true)
-    expect(wrapper.find('#mock-new-2').exists()).toBe(true)
-
-    await wrapper.get('#mock-new-1 button').trigger('click')
+  it('passes filter values into the list endpoint (company / practiceType / scheduledStart / scheduledEnd / reported)', async () => {
+    const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
-
-    expect(wrapper.find('#mock-new-1').exists()).toBe(true)
-    expect(wrapper.get('#mock-new-1').text()).toContain('待进行')
-    expect(wrapper.get('#mock-new-1').text()).toContain('查看详情')
-    expect(wrapper.find('#mock-new-2').exists()).toBe(true)
+    const triggerButton = wrapper.findAll('button').find((b) => b.text().includes('筛选'))
+    expect(triggerButton, 'expected 筛选 trigger').toBeTruthy()
+    await triggerButton!.trigger('click')
+    await flushPromises()
+    expect(http.get).toHaveBeenCalledWith(
+      '/api/mentor/mock-practice/list',
+      expect.objectContaining({
+        params: expect.objectContaining({
+          company: expect.any(String),
+          practiceType: expect.any(String),
+          reported: expect.any(String),
+        }),
+      }),
+    )
   })
 })

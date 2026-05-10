@@ -3,6 +3,7 @@ package com.ruoyi.system.service.impl;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,8 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.constant.OsgClassReportConstants;
+import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.domain.OsgMockPractice;
 import com.ruoyi.system.domain.OsgStudent;
+import com.ruoyi.system.mapper.OsgClassRecordMapper;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.mapper.SysDictDataMapper;
@@ -45,6 +49,10 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
 
     @Autowired
     private SysDictDataMapper sysDictDataMapper;
+
+    /** Step3-F3: mentor detail 端点用，按 reference_type+reference_id+student_id 聚合课消 */
+    @Autowired
+    private OsgClassRecordMapper classRecordMapper;
 
     @Override
     public List<OsgMockPractice> selectMentorMockPracticeList(OsgMockPractice query)
@@ -120,6 +128,107 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
     public Map<String, Object> acknowledgeAssignment(Long practiceId, Long currentUserId, String operator)
     {
         return confirmAssignment(practiceId, currentUserId, operator);
+    }
+
+    /**
+     * Step3-F3: mentor 端 mock-practice detail。
+     * 走 hasMentorRelation 关系校验；按 practice_id 聚合 osg_class_record 并产出 referenceType + classRecords + reportedLessonCount + latestRating。
+     * 与 LM detailForLeadMentor 同口径但鉴权域限定到 mentor。helper 方法（resolveMockPracticeReferenceType / selectMockPracticeClassRecords / resolveLatestRating / toClassRecordPayload）
+     * 与 OsgLeadMentorMockPracticeServiceImpl 同款实现，未来重构时可统一抽到 shared helper。
+     */
+    @Override
+    public Map<String, Object> selectMentorMockPracticeDetail(Long practiceId, Long currentUserId)
+    {
+        if (practiceId == null)
+        {
+            throw new ServiceException("practiceId不能为空");
+        }
+        OsgMockPractice practice = requireMentorOwnedPractice(practiceId, currentUserId);
+
+        Map<String, Object> payload = new LinkedHashMap<>(toPayload(practice));
+        String referenceType = resolveMockPracticeReferenceType(practice.getPracticeType());
+        List<OsgClassRecord> classRecords = selectMockPracticeClassRecords(practice, referenceType);
+        payload.put("referenceType", referenceType);
+        payload.put("referenceId", practice.getPracticeId());
+        payload.put("reportedLessonCount", classRecords.size());
+        payload.put("latestRating", resolveLatestRating(classRecords));
+        payload.put("classRecords", classRecords.stream().map(this::toClassRecordPayload).toList());
+        return payload;
+    }
+
+    private String resolveMockPracticeReferenceType(String practiceType)
+    {
+        String normalized = normalize(practiceType);
+        if (Objects.equals(normalized, "mock_interview") || Objects.equals(practiceType, "模拟面试"))
+        {
+            return OsgClassReportConstants.REFERENCE_TYPE_MOCK_INTERVIEW;
+        }
+        if (Objects.equals(normalized, "relation_test") || Objects.equals(practiceType, "人际关系测试"))
+        {
+            return OsgClassReportConstants.REFERENCE_TYPE_RELATION_TEST;
+        }
+        if (Objects.equals(normalized, "communication_test")
+            || Objects.equals(normalized, "midterm_exam")
+            || Objects.equals(practiceType, "期中考试"))
+        {
+            return OsgClassReportConstants.REFERENCE_TYPE_COMMUNICATION_TEST;
+        }
+        return normalized;
+    }
+
+    private List<OsgClassRecord> selectMockPracticeClassRecords(OsgMockPractice practice, String referenceType)
+    {
+        OsgClassRecord query = new OsgClassRecord();
+        query.setReferenceType(referenceType);
+        query.setReferenceId(practice.getPracticeId());
+        query.setStudentId(practice.getStudentId());
+        query.setDelFlag("0");
+        List<OsgClassRecord> rows = classRecordMapper.selectClassRecordList(query);
+        if (rows == null || rows.isEmpty())
+        {
+            return List.of();
+        }
+        return rows.stream()
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparing(OsgClassRecord::getClassDate, Comparator.nullsLast(Date::compareTo)).reversed()
+                .thenComparing(Comparator.comparing(OsgClassRecord::getRecordId, Comparator.nullsLast(Long::compareTo)).reversed()))
+            .toList();
+    }
+
+    private String resolveLatestRating(List<OsgClassRecord> classRecords)
+    {
+        return classRecords.stream()
+            .filter(record -> Objects.equals(normalize(record.getMemberStatus()), "normal"))
+            .map(OsgClassRecord::getRate)
+            .map(this::trimToNull)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    }
+
+    private Map<String, Object> toClassRecordPayload(OsgClassRecord record)
+    {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("recordId", record.getRecordId());
+        payload.put("classDate", record.getClassDate());
+        payload.put("mentorId", record.getMentorId());
+        payload.put("mentorName", record.getMentorName());
+        payload.put("durationHours", record.getDurationHours());
+        payload.put("memberStatus", record.getMemberStatus());
+        payload.put("rate", record.getRate());
+        payload.put("feedback", firstText(record.getFeedbackContent(), record.getComments()));
+        payload.put("status", record.getStatus());
+        return payload;
+    }
+
+    private String trimToNull(String value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     @Override

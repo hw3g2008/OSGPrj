@@ -14,13 +14,6 @@
         </template>
       </PageHeader>
 
-      <a-row :gutter="16" class="stats-row">
-        <a-col :span="6"><StatCard label="新分配" :value="stats.newCount" color="#EF4444" /></a-col>
-        <a-col :span="6"><StatCard label="待进行" :value="stats.pendingCount" color="#3B82F6" /></a-col>
-        <a-col :span="6"><StatCard label="已完成" :value="stats.completedCount" color="#22C55E" /></a-col>
-        <a-col :span="6"><StatCard label="已取消" :value="stats.cancelledCount" color="#94A3B8" /></a-col>
-      </a-row>
-
       <div class="filter-row">
         <a-select
           v-model:value="selectedStatus"
@@ -39,7 +32,7 @@
         <a-table
           :columns="jobColumns"
           :data-source="filteredRows"
-          :row-key="(record: JobOverviewRow) => record.id"
+          :row-key="(record: JobOverviewRow) => record.coachingId ?? record.id"
           :pagination="false"
           :row-class-name="(record: JobOverviewRow) => rowClass(record)"
           :locale="{ emptyText: '暂无匹配记录' }"
@@ -58,6 +51,9 @@
             <template v-else-if="column.key === 'position'">
               {{ record.position || '-' }}
             </template>
+            <template v-else-if="column.key === 'location'">
+              {{ record.location || '-' }}
+            </template>
             <template v-else-if="column.key === 'stage'">
               <StageTag :stage="record.interviewStage" fallback="-" />
             </template>
@@ -69,9 +65,31 @@
                 :emphasize-overdue="record.coachingStatus !== 'completed'"
               />
             </template>
+            <template v-else-if="column.key === 'lessonCount'">
+              <span class="lesson-count-text">{{ Number(record.lessonCount ?? 0) }}</span>
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <a-button
+                size="small"
+                type="primary"
+                :disabled="record.coachingId == null"
+                @click="openReportModalFor(record)"
+              >
+                上报课消
+              </a-button>
+            </template>
           </template>
         </a-table>
       </a-card>
+
+      <ReportModal
+        v-if="showReportModal"
+        :prefilled-student-id="reportPrefill?.studentId"
+        :prefilled-reference-type="reportPrefill?.referenceType"
+        :prefilled-reference-id="reportPrefill?.referenceId"
+        @close="closeReportModal"
+        @submitted="onReportSubmitted"
+      />
     </div>
   </a-config-provider>
 </template>
@@ -81,7 +99,9 @@ import { computed, onMounted, ref, inject, type Ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { ExportOutlined } from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
-import { StageTag, StudentAvatarCell, InterviewTimeCell, StatCard } from '@osg/shared/components'
+import { StageTag, StudentAvatarCell, InterviewTimeCell } from '@osg/shared/components'
+import type { ReferenceType } from '@osg/shared/types/classReport'
+import ReportModal from '../courses/components/ReportModal.vue'
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
@@ -92,36 +112,39 @@ type MentorNavBadgeState = {
 
 interface JobOverviewRow {
   id: number
+  // Step3-F2: coaching 锚点 + 课消统计（来自后端 Step3-F1 controller adapter 透出的字段）
+  coachingId?: number | null
+  applicationId?: number
   studentId: number
   studentName?: string
   company: string
   position: string
+  location?: string
   interviewStage?: string
   interviewTime?: string
   coachingStatus: string
   result?: string | null
+  lessonCount?: number
+  lessonReported?: boolean
 }
 
 const allRows = ref<JobOverviewRow[]>([])
 const selectedStatus = ref('')
 const mentorNavBadges = inject<MentorNavBadgeState | null>(MENTOR_NAV_BADGE_KEY, null)
 
+// Step3-F2: 上报课消弹窗状态 + 预填上下文
+const showReportModal = ref(false)
+const reportPrefill = ref<{
+  studentId: number
+  referenceType: ReferenceType
+  referenceId: number
+} | null>(null)
+
 const filteredRows = computed(() => {
   return allRows.value.filter((row) => {
     if (selectedStatus.value && row.coachingStatus !== selectedStatus.value) return false
     return true
   })
-})
-
-const stats = computed(() => {
-  const totals = { newCount: 0, pendingCount: 0, completedCount: 0, cancelledCount: 0 }
-  filteredRows.value.forEach((row) => {
-    if (row.coachingStatus === 'new') totals.newCount += 1
-    else if (row.coachingStatus === 'coaching') totals.pendingCount += 1
-    else if (row.coachingStatus === 'completed') totals.completedCount += 1
-    else if (row.coachingStatus === 'cancelled') totals.cancelledCount += 1
-  })
-  return totals
 })
 
 function formatInterviewTime(value: string) {
@@ -137,6 +160,12 @@ function normalizeJobOverview(record: Record<string, any>): JobOverviewRow {
   return {
     ...record,
     studentName: record.studentName || (record.studentId != null ? `学员${record.studentId}` : '待分配学员'),
+    // Step3-F2: 保留 coaching 锚点 + 课消统计 + 城市原值
+    coachingId: record.coachingId ?? null,
+    applicationId: record.applicationId ?? record.id,
+    location: record.location ?? '',
+    lessonCount: Number(record.lessonCount ?? 0),
+    lessonReported: Boolean(record.lessonReported),
   } as JobOverviewRow
 }
 
@@ -157,9 +186,39 @@ const jobColumns = [
   { title: '学员', key: 'student', dataIndex: 'studentName' },
   { title: '公司', key: 'company', dataIndex: 'company' },
   { title: '岗位', key: 'position', dataIndex: 'position' },
+  // Step3-F2: §5.2 新增字段
+  { title: '城市', key: 'location', dataIndex: 'location', width: 120 },
   { title: '面试状态', key: 'stage', dataIndex: 'interviewStage', width: 120 },
   { title: '面试时间', key: 'interviewTime', dataIndex: 'interviewTime', width: 160 },
+  { title: '已上报课消数', key: 'lessonCount', dataIndex: 'lessonCount', width: 130, align: 'center' as const },
+  { title: '操作', key: 'action', width: 120, fixed: 'right' as const },
 ]
+
+// Step3-F2: 打开上报课消弹窗，按 §5.2「上报课消预填当前 coaching_id」预填 job_coaching reference
+function openReportModalFor(record: JobOverviewRow) {
+  if (record.coachingId == null) {
+    return
+  }
+  reportPrefill.value = {
+    studentId: record.studentId,
+    referenceType: 'job_coaching' as ReferenceType,
+    referenceId: record.coachingId,
+  }
+  showReportModal.value = true
+}
+
+function closeReportModal() {
+  showReportModal.value = false
+  reportPrefill.value = null
+}
+
+async function onReportSubmitted() {
+  closeReportModal()
+  try {
+    await loadJobOverviewRows()
+  } catch {}
+  void mentorNavBadges?.refreshJobBadge?.()
+}
 
 async function loadJobOverviewRows() {
   const res = await http.get('/api/mentor/job-overview/list')
@@ -197,8 +256,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.stats-row { margin-bottom:20px; }
 .filter-row { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.lesson-count-text { font-weight:600; color:#3B82F6; }
 .table-card { margin-bottom:20px; border-radius:16px; box-shadow:0 4px 24px rgba(115,153,198,0.12); }
 
 .text-muted { color:#94A3B8; }

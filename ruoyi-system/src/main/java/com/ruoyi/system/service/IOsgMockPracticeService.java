@@ -29,4 +29,10 @@ public interface IOsgMockPracticeService
      * 与 IOsgLeadMentorMockPracticeService.acknowledgeAssignment 等价，本轮新增以统一调用入口。
      */
     Map<String, Object> acknowledgeAssignment(Long practiceId, Long currentUserId, String operator);
+
+    /**
+     * Step3-F3: mentor 端 mock-practice 详情，按 practice_id 返回 referenceType + classRecords + reportedLessonCount + latestRating。
+     * 与 LM detailForLeadMentor 同口径但走 mentor 关系校验（hasMentorRelation 而非 hasLeadMentorAssignment）。
+     */
+    Map<String, Object> selectMentorMockPracticeDetail(Long practiceId, Long currentUserId);
 }

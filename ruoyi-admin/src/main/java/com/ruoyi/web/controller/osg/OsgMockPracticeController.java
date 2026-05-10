@@ -88,6 +88,24 @@ public class OsgMockPracticeController extends BaseController
         }
     }
 
+    /**
+     * Step3-F3: mentor 端 mock-practice detail 端点。
+     * 走 mentor 关系校验（hasMentorRelation），返回 referenceType + classRecords + reportedLessonCount + latestRating，
+     * 给前端 §5.3 上报课消入口预填 + 已上报课消聚合显示用。
+     */
+    @GetMapping("/api/mentor/mock-practice/{id}")
+    public AjaxResult mentorDetail(@PathVariable Long id)
+    {
+        try
+        {
+            return AjaxResult.success(mockPracticeService.selectMentorMockPracticeDetail(id, SecurityUtils.getUserId()));
+        }
+        catch (ServiceException ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
+    }
+
     private String resolveOperator()
     {
         try
