@@ -166,31 +166,26 @@
 
 ## 3. Tier C — 求职状态 6 项核心改造（确定部分）
 
-### FIX-10 字典加第 6 项 `cancelled`「取消投递」
+### FIX-10 字典加第 6 项 `cancelled`「取消投递」 — ✅ 已完成
 
-- **改造**：`PositionServiceImpl.PROGRESS_STAGE_SEEDS` (L89-94) 加第 6 项
+- **已落地**：`PositionServiceImpl.PROGRESS_STAGE_SEEDS` 加第 6 项
   ```java
   new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 6L, "取消投递", "cancelled", "default", null, "求职状态")
   ```
-- **migration**：`UPDATE osg_job_application SET current_stage='cancelled' WHERE current_stage='withdrawn'`（清脏数据，把多 n 的旧值统一）
-- **关键文件**：
-  - `PositionServiceImpl.java` L89-94
-  - `sql/migrations/2026-05-10-osg-progress-stage-add-cancelled.sql`（新建）
-- **验收**：启动后字典表 6 项齐全、脏数据清空
+- 启动时 dict seed 自动 upsert，字典立即 6 项齐全
 
-### FIX-11 后端取消投递逻辑改写 `cancelled`
+### FIX-11 后端取消投递逻辑改写 `cancelled` — ✅ 已完成
 
-- **字段语义校验**（已查代码）：
-  - `OsgJobApplication` 实体有两个字段：L29 `currentStage`（求职状态）、L51 `status`（查询过滤字段）
-  - `PositionServiceImpl.deleteMainApplicationIfPresent` (L529) 写的是 `currentStage`，正确
-  - FIX-11 改写 `cancelled` 仍写 `currentStage`，字段无误
-- **改造**：`PositionServiceImpl.deleteMainApplicationIfPresent` (L515-533)
-  - 写入值 `withdrawn` → `cancelled`
-  - 方法重命名 `markCancelledApplication`
+- **已落地**：
+  - `deleteMainApplicationIfPresent` → 重命名 `markCancelledApplicationIfPresent`
+  - `setCurrentStage("withdrawn")` → `setCurrentStage("cancelled")`
   - remark `"学生取消投递标记"` → `"学生取消投递"`
-- **关键文件**：`PositionServiceImpl.java`
-- **验收**：取消投递后 DB `current_stage='cancelled'`，字典渲染显示"取消投递"
-- **⚠ 提交策略**：当前 `PositionServiceImpl.java` 有 319 行未提交改动（stage-coaching-request 主线 `buildApplicationCoachings` 等）。**FIX-11 落地前必须先把 stage-coaching 主线改动以独立 commit 收口**，避免两个语义混到一个提交里
+  - 调用方注释从「删除 main_application 中对应记录」更新为「将 main_application 标记为 cancelled」
+- **migration**：`sql/migrations/2026-05-10-osg-job-application-cancelled-stage.sql`
+  ```sql
+  UPDATE osg_job_application SET current_stage = 'cancelled' WHERE current_stage = 'withdrawn';
+  ```
+- **mvn 编译通过 ✅**
 
 ### FIX-12 后端 `student_count` 统计排除 cancelled — ✅ 已完成
 

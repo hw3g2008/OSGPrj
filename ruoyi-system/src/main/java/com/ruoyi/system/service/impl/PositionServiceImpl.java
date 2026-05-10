@@ -91,7 +91,8 @@ public class PositionServiceImpl implements IPositionService
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 2L, "面试中", "interviewing", "orange", null, "求职状态"),
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 3L, "拿到offer", "offer", "green", null, "求职状态"),
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 4L, "被拒绝", "rejected", "red", null, "求职状态"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 5L, "主动放弃", "withdraw", "default", null, "求职状态"));
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 5L, "主动放弃", "withdraw", "default", null, "求职状态"),
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 6L, "取消投递", "cancelled", "default", null, "求职状态"));
 
     private static final List<DictSeed> COACHING_STAGE_SEEDS = List.of(
             new DictSeed(DICT_TYPE_POSITION_COACHING_STAGE, 1L, "HireVue / Online Test", "hirevue", null, null, "辅导阶段"),
@@ -493,8 +494,8 @@ public class PositionServiceImpl implements IPositionService
         }
         else
         {
-            // 取消投递：删除 main_application 中对应记录，避免 list 时仍显示已投递
-            mainRows = deleteMainApplicationIfPresent(positionId, position, userId);
+            // 取消投递：将 main_application 标记为 cancelled，让「我的求职」过滤、岗位统计 -1
+            mainRows = markCancelledApplicationIfPresent(positionId, position, userId);
         }
 
         if (position.shadowCompatible())
@@ -512,7 +513,7 @@ public class PositionServiceImpl implements IPositionService
         return mainRows;
     }
 
-    private int deleteMainApplicationIfPresent(Long positionId, PositionReference positionReference, Long userId)
+    private int markCancelledApplicationIfPresent(Long positionId, PositionReference positionReference, Long userId)
     {
         OsgStudent student = identityResolver.resolveStudentByUserId(userId);
         Map<String, Object> position = positionReference.position();
@@ -526,9 +527,9 @@ public class PositionServiceImpl implements IPositionService
         }
         OsgJobApplication patch = new OsgJobApplication();
         patch.setApplicationId(existing.getApplicationId());
-        patch.setCurrentStage("withdrawn");
+        patch.setCurrentStage("cancelled");
         patch.setUpdateBy(String.valueOf(userId));
-        patch.setRemark("学生取消投递标记");
+        patch.setRemark("学生取消投递");
         return jobApplicationMapper.updateJobApplicationStage(patch);
     }
 
