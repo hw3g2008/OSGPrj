@@ -292,7 +292,7 @@
     </a-modal>
 
     <AssistantClassReportFlowModal
-      v-model:open="reportModalOpen"
+      v-model:visible="reportModalOpen"
       @submitted="handleReportSubmitted"
     />
   </div>
