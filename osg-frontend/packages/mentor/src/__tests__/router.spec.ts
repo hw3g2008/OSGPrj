@@ -26,7 +26,7 @@ function createTestRouter() {
       {
         path: '/',
         component: Layout,
-        redirect: '/dashboard',
+        redirect: '/courses',
         children: [
           { path: 'dashboard', name: 'Dashboard', component: Dashboard, meta: { title: '首页' } },
           { path: 'courses', name: 'Courses', component: Courses, meta: { title: '课程记录' } }

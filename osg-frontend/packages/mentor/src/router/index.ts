@@ -13,7 +13,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: MainLayout,
-    redirect: '/dashboard',
+    redirect: '/courses',
     children: [
       { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/dashboard/index.vue'), meta: { title: '首页' } },
       { path: 'courses', name: 'Courses', component: () => import('@/views/courses/index.vue'), meta: { title: '课程记录' } },
