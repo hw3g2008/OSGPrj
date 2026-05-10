@@ -22,14 +22,14 @@
 
 | 状态 | 数量 |
 |---|---|
-| ✅ DONE | 45 |
-| ▶ TODO | 27 |
-| ⚠ 部分 | 6 |
+| ✅ DONE | 54 |
+| ▶ TODO | 17 |
+| ⚠ 部分 | 7 |
 | ⏸ HOLD | 5 |
 | ❌ DROP | 4 |
 | 📐 RULE | 6 大类 |
 
-> **2026-05-11 第二轮清理**：完成 6 项纯单端 UI 改造（A-JO-001/002/003、A-MP-001、A-PS-003/009/015、ST-008 收尾），核对发现 9 项已 DONE 但状态未对齐（A-CT-001、A-CT-008、A-SF-005/012/013、A-SC-002、A-PS-005、ST-002、LM-005）。剩余 ▶ TODO 项多为后端逻辑修复（筛选/排序/导出/模板/审核流）或需用户提供复现路径（光标偏移/视图错位/菜单消失等）。
+> **2026-05-11 第三轮清理**：再清 9 项 —— 后端 A-PS-001（下钻按字典排序）+ A-PS-012（展示起始范围）实修；核对发现 A-ST-007/009/016、A-PS-016/017 已 DONE；A-ST-012 降级为 ⚠ 部分。剩余 17 项 ▶ TODO 全部需用户复现或后端 SQL 详细调试（A-PS-006/011/A-CT-005/006/007/A-SF-008/011 等）。
 
 **冲突仲裁**：5 条全部 close（见 §1）。
 
@@ -160,16 +160,16 @@
 | A-ST-004 | "读研研毕"字段改为"学业状态" | ✅ DONE | `AddStudentModal.vue:179` label="学业状态" |
 | A-ST-005 | 新增 - 合同附件改必传 | ⏸ HOLD | 依赖 A-ST-014 PDF 上传 bug 修复 |
 | A-ST-006 | 新增 - 合同附件 PDF 上传变红原因排查 | ▶ TODO | 与 A-ST-014 一并查 |
-| A-ST-007 | 详情 - 删除"学生资料台账"说明文字 | ▶ TODO | UI |
+| A-ST-007 | 详情 - 删除"学生资料台账"说明文字 | ✅ DONE | `StudentDetailModal.vue` 全文 grep「台账/说明/tip/description」零匹配 |
 | A-ST-008 | 新增/查看/编辑三页面布局/字段/顺序一致 | ▶ TODO | C-I 解读：读写权限按场景区分 |
-| A-ST-009 | 编辑/查看 - 班主任和助教多选项不显示 bug | ▶ TODO | 字段缺失 |
+| A-ST-009 | 编辑/查看 - 班主任和助教多选项不显示 bug | ✅ DONE | `EditStudentModal.vue:65-94` MultiSelect 已实装；`StudentDetailModal.vue:117-133` pill 形式展示 |
 | A-ST-010 | 编辑 - 账号状态可改（按 C-1 4 态）| ✅ DONE | 已实现 |
 | A-ST-011 | 提醒列：服务即将到期/已到期/课时即将耗尽(≤20)/课时已耗尽 | ⚠ 部分 | `columns.ts` 已有"提醒"列；4 种状态规则未落地 |
-| A-ST-012 | 详情/编辑看不了合同附件 bug | ▶ TODO | 文件预览 |
+| A-ST-012 | 详情/编辑看不了合同附件 bug | ⚠ 部分 | 前端入口在：`ContractTab.vue:56-65` 详情 tab 有下载链接 + `EditStudentModal.vue:410-428` upload-dragger file-list 回填；若仍看不到需后端验证 attachmentPath 字段数据 |
 | A-ST-013 | 新增 - 录入英镑没测试（货币字段）| ▶ TODO | 需要补测试 |
 | A-ST-014 | 新增 - 合同 PDF 上传失败 | ▶ TODO | 基础设施 bug，多处依赖 |
 | A-ST-015 | 新增 - 合同金额输入上限 | ✅ DONE | 已实现 (≤ 1M / ≤ 100K) |
-| A-ST-016 | 新增 - 必填字段缺失给提醒 | ▶ TODO | 表单校验 |
+| A-ST-016 | 新增 - 必填字段缺失给提醒 | ✅ DONE | `AddStudentModal.vue:933-945` `formRef.validate` + `message.error` 多字段兜底 |
 
 ### 3.3 合同管理
 
@@ -213,7 +213,7 @@
 
 | ID | 标题 | 状态 | 备注 |
 |---|---|---|---|
-| A-PS-001 | 下钻视图 - 公司类别按字典顺序排序 | ▶ TODO | 排序 |
+| A-PS-001 | 下钻视图 - 公司类别按字典顺序排序 | ✅ DONE | `OsgPositionServiceImpl.selectPositionDrillDown` 加载 `osg_company_type` 字典 dict_sort 作为 industry 输出顺序，未在字典内的项放最后 |
 | A-PS-002 | 下钻 + 列表 - 删除底部流程缩写行 | ▶ TODO | UI 删除 |
 | A-PS-003 | 新增 - 选择公司名称后自动带出公司类别 | ✅ DONE | `PositionFormModal.vue` 加 @select/@change 联动 + companyTypeMap 反查 + companyOptions prop 改为完整对象 |
 | A-PS-004 | 新增 - 投递备注支持文字+图片+PDF | ▶ TODO | 学生端展示规则待定 |
@@ -224,12 +224,12 @@
 | A-PS-009 | 编辑 - 删除"隐藏/激活"按钮（与下拉冗余）| ✅ DONE | `PositionFormModal.vue:251-258` 整段已删除（C-2 拍板）|
 | A-PS-010 | 已隐藏岗位 5 端可见性回归 | ▶ TODO | 配 C-2 学生侧灰显规则 |
 | A-PS-011 | 主攻方向筛选无效 | ▶ TODO | 筛选 bug |
-| A-PS-012 | 展示起始筛选不准确 | ▶ TODO | 筛选 bug |
+| A-PS-012 | 展示起始筛选不准确 | ✅ DONE | `OsgPositionController.list` 新增 `applyDisplayStartTimeRange`：把前端 begin/endDisplayStartTime 塞入 `position.params`，让 mapper 既有 `params.beginDisplayStartTime` 范围条件生效 |
 | A-PS-013 | 列表新增"添加日期"列 | ⚠ 部分 | `index.vue:189` 模板有 createTime，但 columns.ts 列定义不全 |
 | A-PS-014 | 「学员」列改「投递学员」 | ✅ DONE | columns 已改 |
 | A-PS-015 | 「全部地区」筛选项不对 + 加城市筛选 | ✅ DONE | `positions/index.vue:65-72` 「全部地区」绑 `filters.region` + 新增「全部城市」绑 `filters.city` |
-| A-PS-016 | 下载模板字段补齐：主攻方向 / 岗位地区 / 展示开始 / 展示结束 | ▶ TODO | 模板 |
-| A-PS-017 | 模板：去掉"添加人"字段（导入时取登录用户）| ▶ TODO | 模板 |
+| A-PS-016 | 下载模板字段补齐：主攻方向 / 岗位地区 / 展示开始 / 展示结束 | ✅ DONE | `OsgPositionController.PositionExportRow` 已含 `targetMajors / region / displayStartTime / displayEndTime` |
+| A-PS-017 | 模板：去掉"添加人"字段（导入时取登录用户）| ✅ DONE | `PositionExportRow` 字段集内无 "添加人" 列 |
 | A-PS-018 | 模板优化后再测试上传 | ⏸ HOLD | 依赖 A-PS-016/017 |
 | A-PS-019 | 导出信息缺失，与实际保持一致 | ▶ TODO | 导出 |
 
@@ -541,3 +541,4 @@
 | 2026-05-11 | 3 Agent 核对代码现状：12 条原标 TODO 实际已 DONE，6 条降级为 ⚠ 部分；总览统计修正 |
 | 2026-05-11 | RULE-D 自填岗位审核：核对发现框架已存在，方案改为最小改动「仅补合并分支」（修订 §9.1-9.5）|
 | 2026-05-11 | 第二轮单端 UI 清理：A-JO-001/002/003、A-MP-001、A-PS-003/009/015、ST-008 收尾；同步对齐 9 条已 DONE 但状态未更新的项 |
+| 2026-05-11 | 第三轮清理：后端 A-PS-001（下钻按字典排序）+ A-PS-012（展示起始范围）实修；核对 A-ST-007/009/016、A-PS-016/017 已 DONE；A-ST-012 降级 ⚠ 部分 |
