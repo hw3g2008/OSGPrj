@@ -526,7 +526,7 @@ const ratingDescriptionText = computed(() => {
 })
 
 // ============================================================
-// 顶部"新增课程记录"提醒 banner 的动态字段
+// 顶部"待评价提醒" banner 的动态字段
 // 直接从 courseRecords（list 接口数据）计算，不依赖 meta 接口冗余的同名字段，
 // 保证 banner 与下方表格永远基于同一份数据，不会出现"banner 说 N 条但表里 M 条"的不一致。
 // 同时彻底规避 meta 后端 fallback 出来的占位 mentor（"Jerry Li" 死种子）。

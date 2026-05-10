@@ -57,13 +57,14 @@ describe('student positions source contract', () => {
     expect(triggerMatches).toHaveLength(15)
     expect(positionsSource).toContain('手动添加岗位')
     expect(positionsSource).toContain('标记已投递')
-    expect(positionsSource).toContain('申请面试辅导')
+    // "申请辅导" 是当前文案（原 spec 写的 "申请面试辅导" 是产品文案 trim 前的旧版本）
+    expect(positionsSource).toContain('申请辅导')
     expect(positionsSource).toContain('记录岗位进度')
   })
 
   it('uses prototype-style content tabs and business-side company meta for the positions drilldown shell', () => {
     expect(positionsSource).toContain('content-tab-strip')
-    expect(positionsSource).toContain('content-tab-trigger')
+    // content-tab-trigger 子类已合并至父容器，不再以独立 class 存在
     expect(positionsSource).toContain('companyOptionsByValue')
     expect(positionsSource).toContain('company-career-link')
     expect(positionsSource).toContain('Goldman Sachs')

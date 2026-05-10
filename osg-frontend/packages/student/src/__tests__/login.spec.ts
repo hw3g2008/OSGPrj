@@ -17,20 +17,28 @@ describe('student login workflow', () => {
   describe('validateLoginForm', () => {
     it('returns both field errors when username and password are empty', () => {
       expect(validateLoginForm({ username: '', password: '' })).toEqual({
-        username: '请输入用户名',
+        username: '请输入邮箱',
         password: '请输入密码'
       })
     })
 
     it('treats whitespace username as empty', () => {
       expect(validateLoginForm({ username: '   ', password: 'secret' })).toEqual({
-        username: '请输入用户名',
+        username: '请输入邮箱',
         password: ''
       })
     })
 
-    it('passes when both fields are present', () => {
+    it('rejects non-email username with format error', () => {
+      // 学生/导师/班主任/助教四端登录统一用邮箱（admin 仍用用户名）
       expect(validateLoginForm({ username: 'student', password: 'secret' })).toEqual({
+        username: '邮箱格式不正确',
+        password: ''
+      })
+    })
+
+    it('passes when username is a valid email and password is present', () => {
+      expect(validateLoginForm({ username: 'stu@example.com', password: 'secret' })).toEqual({
         username: '',
         password: ''
       })

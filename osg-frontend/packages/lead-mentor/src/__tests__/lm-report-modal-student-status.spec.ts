@@ -7,17 +7,18 @@ const indexSource = fs.readFileSync(
   'utf-8',
 )
 
-const flowModalSource = fs.readFileSync(
-  path.resolve(__dirname, '../views/teaching/class-records/LeadMentorClassReportFlowModal.vue'),
+// shared 申报弹窗接口（StepBasicInfo）实际承载 disabled 透传：
+// LeadMentorClassReportFlowModal 重构为 shared ClassReportFlowModal 的薄封装后，
+// 类型扩展和 :disabled 绑定都下沉到 shared 包，本端只保留"父组件打 disabled 标记"测试。
+const stepBasicInfoSource = fs.readFileSync(
+  path.resolve(__dirname, '../../../shared/src/components/ClassReportFlowModal/StepBasicInfo.vue'),
   'utf-8',
 )
 
 describe('lead-mentor 申报弹窗：学员账号状态防呆', () => {
-  it('ReportStudentOption 类型扩展 accountStatus / disabled 字段', () => {
+  it('ReportStudentOption 类型扩展 accountStatus / disabled 字段（lead-mentor 父组件层）', () => {
     expect(indexSource).toContain('accountStatus?: string')
     expect(indexSource).toContain('disabled?: boolean')
-    expect(flowModalSource).toContain('accountStatus?: string')
-    expect(flowModalSource).toContain('disabled?: boolean')
   })
 
   it('loadReportStudents map 时按 accountStatus 标记 disabled + 状态后缀', () => {
@@ -28,7 +29,8 @@ describe('lead-mentor 申报弹窗：学员账号状态防呆', () => {
     expect(indexSource).toContain('disabled: blocked')
   })
 
-  it('原生 select option 透传 disabled 属性', () => {
-    expect(flowModalSource).toContain(':disabled="student.disabled"')
+  it('shared StepBasicInfo 学员下拉透传 disabled 属性', () => {
+    // shared StepBasicInfo 把 props.students[].disabled 写入 a-select-option 选项
+    expect(stepBasicInfoSource).toContain('disabled: s.disabled')
   })
 })

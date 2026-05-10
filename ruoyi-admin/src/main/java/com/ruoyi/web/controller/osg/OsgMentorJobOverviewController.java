@@ -116,11 +116,13 @@ public class OsgMentorJobOverviewController extends BaseController
 
     private String resolveOperator()
     {
+        // 防御：未登录上下文（getLoginUser 返回 null）会让 BaseController.getUsername() 抛 NPE，
+        // 兜底为 "system"，避免 confirm/ack-stage 等接口在异常请求下直接 500。
         try
         {
             return getUsername();
         }
-        catch (ServiceException ex)
+        catch (ServiceException | NullPointerException ex)
         {
             return "system";
         }
@@ -208,7 +210,9 @@ public class OsgMentorJobOverviewController extends BaseController
         {
             return "completed";
         }
-        return "coaching";
+        // 默认走"新分配"语义：coachingStatus 缺失 + 无 result = 后端推送给 mentor 但尚未被
+        // 确认的辅导任务。原先错误返 "coaching" 会让前端少打"红色高亮"，漏掉新任务提示。
+        return "new";
     }
 
     private String toLegacyResult(Map<String, Object> row)

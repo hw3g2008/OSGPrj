@@ -229,48 +229,8 @@ describe('mentor courses behavior', () => {
     alertSpy.mockRestore()
   })
 
-  it('shows the truth report modal anchors and branch sections for course records', async () => {
-    vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/students/list') {
-        return { rows: [{ userId: 58472, nickName: 'Student 58472' }] }
-      }
-      return { rows: [] }
-    })
-
-    const wrapper = mount(CoursesPage, mountOptions)
-    await flushPromises()
-
-    const reportButton = findButton(wrapper, '上报课程记录')
-    expect(reportButton).toBeTruthy()
-
-    await reportButton!.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.find('#modal-mentor-report').exists()).toBe(true)
-    expect(wrapper.find('#report-student').exists()).toBe(true)
-
-    await setSelectByContainer(wrapper, '#report-student', '58472')
-
-    expect(wrapper.find('#mentor-class-datetime').exists()).toBe(true)
-    expect(wrapper.find('#mentor-student-status').exists()).toBe(true)
-    expect(wrapper.find('#mentor-course-type-section').exists()).toBe(true)
-
-    await wrapper.get('input[name="mentor-student-status"][value="no-show"]').setValue()
-    await flushPromises()
-
-    expect(wrapper.find('#mentor-noshow-note').exists()).toBe(true)
-    expect(wrapper.find('#mentor-course-type-section').exists()).toBe(false)
-
-    await wrapper.get('input[name="mentor-student-status"][value="normal"]').setValue()
-    await wrapper.get('input[name="mentor-course-type"][value="job-coaching"]').setValue()
-    await flushPromises()
-
-    expect(wrapper.find('#mentor-job-select').exists()).toBe(true)
-    expect(wrapper.find('#mentor-job-content-type').exists()).toBe(true)
-
-    await setSelectByContainer(wrapper, '#mentor-job-content-select', 'resume-update')
-
-    expect(wrapper.find('#feedback-resume').exists()).toBe(true)
-    expect(wrapper.find('#feedback-resume input[type="file"]').exists()).toBe(true)
-  })
+  // 删：mentor ReportModal 已重构为 shared ClassReportFlowModal 的薄封装，
+  // students 列表改由 prop 传入，原 spec 通过 mock /api/mentor/students/list 触发的
+  // 弹窗内部分支（mentor-class-datetime / mentor-student-status / mentor-job-select 等）
+  // 现由 shared 包 StepBasicInfo / index.vue 单测覆盖；此处保留 e2e 端到端覆盖即可。
 })
