@@ -1128,6 +1128,193 @@ mvn -pl ruoyi-admin -am -DskipTests compile -q
 
 ---
 
+### 6.6 Step 4 短审计（2026-05-10）
+
+Audit Scope:
+
+- 前端：`osg-frontend/packages/assistant/src/views/career/job-overview/index.vue` + `osg-frontend/packages/assistant/src/views/career/mock-practice/index.vue`
+- 前端 shared：`osg-frontend/packages/shared/src/api/`（assistant API 入口确认）
+- 后端 controller：`OsgAssistantJobOverviewController` + `OsgAssistantMockPracticeController`
+- 后端 service：`OsgUserJobOverviewServiceImpl.listByAssistant / detailForAssistant / calendarForAssistant` + `OsgMockPracticeServiceImpl.selectMentorMockPracticeList / selectMentorMockPracticeDetail`
+- 测试：`osg-frontend/packages/assistant/src/__tests__/career-pages.spec.ts`（已钉死双 tab 结构）
+
+Current State:
+
+- assistant job-overview 仍是双 tab（「我辅导的学员」+「我管理的学员」）；row-key = `r.id`（即 `applicationId`）；列里只有阶段/面试时间/辅导状态/导师，**没有「最近评分」列**；详情区是表格行内的本地 `selectedRecord` 渲染，没有按 coaching 维度后端拉详情。
+- assistant mock-practice 仍保留 `statsCards` 4 卡（我辅导/我管理/已完成/累计课时）；双 tab 结构；筛选有 `practiceType + status + keyword + mentor` 四个条件；列含「已上课时/课程反馈/状态/操作」，**没有「已上报课消数」列**；详情弹窗只展示 `requestContent / feedbackSummary` 等行内字段，**没有按 `practiceId` 拉多条课消反馈**。
+- 后端 `listByAssistant` 走 application 维度短路实现（`buildAssistantStudentQuery → selectByStudentIds → toAssistantOverviewRow`），不复用 LM/mentor 已有的 `selectOverviewListInternal(SCOPE_*)` coaching-aware 链路；`toAssistantOverviewRow` 只返回 `id=applicationId / studentId / studentName / company / position / location / interviewStage / interviewTime / coachingStatus / result / createTime`，**缺 `coachingId / mentorName / latestRating / lessonReported`**。
+- 后端 `detailForAssistant(applicationId, ...)` 仍按 application 维度，与 §02 §5.1 要求的 coaching 维度不一致。
+- 后端 mock-practice：list 复用 `selectMentorMockPracticeList`（内部 `hasMentorRelation || hasAssistantOwnership` 已含 assistant 兜底）；detail 端点 assistant controller **完全未提供**。共享方法 `selectMentorMockPracticeDetail` 内部 `requireMentorOwnedPractice` 走 `hasMentorRelation` 严格门控，assistant 直接调会被拒。
+- 测试钉死：`career-pages.spec.ts:357-426` 断言 job-overview 双 tab + 6/7 列 + 我辅导/我管理两栏；`career-pages.spec.ts:428+` 断言 mock-practice 双 tab + statsCards 等结构性元素。Step 4 改造任何一项都会同步触发 spec 重写。
+
+Root Cause:
+
+- Step 1-3 把 LM/mentor 端推进到 coaching 锚点 + practice 详情聚合，assistant 端**没跟着前进**：job-overview 还停在 application 维度短路实现；mock-practice 还停在 statsCards + 双 tab 原型。
+- assistant detail 链路两处都不达标：job-overview 用前端本地 record；mock-practice 完全没有 detail 端点。
+- 后端 `IOsgUserJobOverviewService.listByAssistant / detailForAssistant` 是 assistant 专属方法（LM/mentor 不调用），可以**单端改造而不动多端联动语义**；但 `OsgMockPracticeServiceImpl.selectMentorMockPracticeDetail` 是多端共享方法（mentor controller 已用），改动它的 ownership 鉴权就属于"多端联动"——必须走"新增 assistant 专属方法"路径。
+
+Audit Answers:
+
+1. assistant job-overview 入口：`osg-frontend/packages/assistant/src/views/career/job-overview/index.vue`。
+2. 当前有双 tab（`activeTab = 'coaching' | 'managed'`），不是单栏「我管理的学员」。
+3. row-key 为 `(r) => r.id`，等价于后端 `toAssistantOverviewRow` 返回的 `id = applicationId`。**不是 coachingId**。
+4. 后端 payload 不返回 `coachingId`（见 `toAssistantOverviewRow` line 1409-1424）。
+5. 当前展示阶段、面试时间、辅导状态、导师（仅 managed tab）。**缺独立"城市"列**（被合并进 `<CompanyPositionCell>`），**缺"最近评分"列**。
+6. 最近评分前端表格目前不展示；后端 `toAssistantOverviewRow` 也没返回 `latestRating`。
+7. 详情前端用本地 `selectedRecord = filteredRecords.find(...)`，不调后端；后端 `detailForAssistant(applicationId, ...)` 是 application 维度。**不是 coachingId 锚点**。
+8. assistant mock-practice 入口：`osg-frontend/packages/assistant/src/views/career/mock-practice/index.vue`。
+9. statsCards 仍存在（4 张：我辅导/我管理/已完成/累计课时；line 9-17 + line 363-368）。
+10. 当前是双 tab（coaching + managed），**不是单栏「我管理的学员」**。
+11. 当前筛选有 `practiceType + status + keyword`（managed tab 多 `mentor` 模糊搜），**不是只有「类型」**。
+12. 当前列：学员/类型/申请时间/状态/(辅导导师)/已上课时/课程反馈/操作。**缺「已上报课消数」**；多余「已上课时/课程反馈/状态」与 Step 4 要求的列结构不符。
+13. 详情弹窗只渲染行内字段（`requestContent / feedbackSummary / scheduledAt / mentorNames / completedHours`），**不按 `practiceId` 拉多条课消反馈**。
+14. 当前能看到 mentorName（managed tab 列），**但看不到「已上报课消数」**——后端 `selectMentorMockPracticeList` payload 里没有该字段。
+15. 后端可复用能力盘点：
+    - mock-practice：`selectMentorMockPracticeDetail(practiceId, currentUserId)` 已能聚合 `referenceType + classRecords + reportedLessonCount + latestRating`，但内部 `hasMentorRelation` 严格门控——assistant 调会 403。**多端共享方法，禁止直接放宽鉴权**。
+    - mock-practice list：`selectMentorMockPracticeList` 已含 `hasMentorRelation || hasAssistantOwnership` 兜底，列表层 assistant 已能拿到管理范围；但 payload 字段缺 `reportedLessonCount`。
+    - job-overview list：`listByAssistant` 是 assistant 专属方法，可单端改造增字段，**不影响 LM/mentor**。
+    - job-overview detail：`detailForAssistant` 同上，可单端改造或新增 `detailForAssistantCoaching(coachingId, assistantId)`。
+    - 课消统计 helper（`buildClassRecordsByMentor / computeCoachingStats / classRecordMapper.selectByJobCoachingReference`）已存在于 `OsgUserJobOverviewServiceImpl`，可在 assistant 路径上调用，不动 LM/mentor 现有签名。
+16. 测试 baseline：
+    - `assistant/src/__tests__/career-pages.spec.ts` 共 5 个 it：positions 2 个 + job overview 1 个（line 357-426，钉死双 tab + 双列结构）+ mock practice 1 个（line 428+，钉死双 tab + statsCards）。Step 4 改造前必须重写后两个用例。
+    - `career-api-contract.spec.ts`（487B）—— 仅 API 契约 smoke。
+    - 后端：`OsgAssistantPositionController/Auth/Access` 三个 controller test + `OsgClassRecordServiceImplAssistantScopeTest`，**没有 assistant job-overview / mock-practice service 层 Java 测试**。
+
+---
+
+### 6.7 Step 4 小 fix 状态跟踪
+
+| 编号 | 小 fix | 状态 | 范围 | 验证/备注 |
+|---|---|---|---|---|
+| Step4-F0 | 短审计 + 状态跟踪区 + 第一批 fix plan | 待确认 | 文档 | 本文档 §6.6/§6.7/§6.8 |
+| Step4-F1 | 后端 assistant job-overview 按 `coaching_id` 透出列表/详情/最近评分/课消统计 | 待确认 | backend（assistant 专属方法，不动 LM/mentor 共享） | 在 `OsgUserJobOverviewServiceImpl` 内新增 / 改造 `listByAssistant / detailForAssistant`（或新增 `*Coaching` 变体），controller 同步 |
+| Step4-F2 | 前端 assistant job-overview 收口为单栏「我管理的学员」+ coaching row-key + 列表字段对齐 §02 §5.1 + 查看详情按 coachingId | 待确认 | frontend | 改 `views/career/job-overview/index.vue`；同步重写 `career-pages.spec.ts:357-426` |
+| Step4-F3 | 后端 assistant mock-practice 按 `practice_id` 返回详情/已上报课消数 | 待确认 | backend（新增 assistant 专属 detail 方法，**禁止改 mentor 共享 `selectMentorMockPracticeDetail`**） | 在 `OsgMockPracticeServiceImpl` 新增 `selectAssistantMockPracticeDetail` 走 `hasAssistantOwnership` 鉴权；list payload 增 `reportedLessonCount` |
+| Step4-F4 | 前端 assistant mock-practice 删除 statsCards + 单栏管理视角 + 类型筛选 + 列对齐 §04 §4 + 详情多条课消反馈 | 待确认 | frontend | 改 `views/career/mock-practice/index.vue`；同步重写 `career-pages.spec.ts:428+` |
+| Step4-F5 | 测试与回归 | 待确认 | all | 前端 vitest + 后端 mvn test；Step 6 跨端回归归档另算 |
+
+---
+
+### 6.8 第一批 fix plan：Step4-F1 + Step4-F2
+
+> **拆分理由**：F2 前端依赖 F1 后端透出 `coachingId / mentorName / latestRating / lessonReported`。两者必须捆绑，否则前端列空白。
+
+#### Step4-F1：后端 assistant job-overview 按 coaching 维度透出
+
+Root Cause / Current State:
+
+- `listByAssistant` 走 application 维度短路实现，不展开 coaching；payload 缺 `coachingId / mentorName / latestRating / lessonReported`。
+- `detailForAssistant(applicationId, ...)` 是 application 维度，与 §02 §5.1 不一致。
+- LM/mentor 端 `selectOverviewListInternal(SCOPE_*)` 已有完整 coaching-aware 链路；`buildClassRecordsByMentor / computeCoachingStats` 已能按 coachingId 计算课消统计与最近评分。
+
+修改文件（**只动 assistant 专属链路**）：
+
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/IOsgUserJobOverviewService.java` —— 接口签名增量
+- `ruoyi-system/src/main/java/com/ruoyi/system/service/impl/OsgUserJobOverviewServiceImpl.java` —— 实现
+- `ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/OsgAssistantJobOverviewController.java` —— controller 暴露 coaching 详情端点
+- `ruoyi-system/src/test/java/com/ruoyi/system/service/impl/OsgUserJobOverviewServiceImplAssistantCoachingTest.java`（新建）—— RED 用例
+
+具体修改：
+
+- `listByAssistant` 改造为 coaching-展开返回，每行对应一个 `coaching`：
+  - 仍以 `assistant_id` 关系筛 students；
+  - 对每个 student 的 application 关联其 coaching（`coachingMapper.selectCoachingList` 或按 applicationId 反查）；
+  - 每行 payload 包含：`coachingId / applicationId / studentId / studentName / company / position / city / interviewStage / interviewTime / mentorName / latestRating / lessonReported`；
+  - `latestRating` / `lessonReported` 调用已有 helper `computeCoachingStats(coachingId)`；
+  - 排序按 `submittedAt DESC`（与 mentor / LM 一致）。
+- 新增 `detailForAssistantCoaching(coachingId, assistantId)`：
+  - 校验 coaching 关联 application 的学生 `assistant_id == assistantId`；
+  - payload 复用 LM 的 `detailForLeadMentorCoaching` 输出口径（含 `classRecordsByMentor`），但鉴权域换成 assistant；
+  - 不动 `detailForAssistant(applicationId, ...)` 老方法，保留向后兼容（前端切到新端点后可再清理）。
+- controller 新增 `GET /assistant/job-overview/coachings/{coachingId}` 暴露上面方法；不动 `/{applicationId}` 老端点。
+
+影响范围:
+
+- assistant 端 list/detail payload 字段增量（前端 F2 同步消费）。
+- LM/mentor 端**完全不受影响**（不改 `listByLeadMentor / listByMentor / detailForLeadMentorCoaching`）。
+- 老端点 `GET /assistant/job-overview/{applicationId}` 保留可调，仅新写代码不用它。
+
+验收标准:
+
+- 给定 1 个 student（assistant_id = 当前 assistant），其下 1 个 application 关联 2 条 coaching（First Round / Second Round），`listByAssistant` 返回 2 行，`coachingId` 不串。
+- 每行 `latestRating` / `lessonReported` 来源限定到当前 `coachingId` 下的 `osg_class_record`（`reference_type = job_coaching`, `reference_id = coachingId`）。
+- `GET /assistant/job-overview/coachings/{coachingId}` 校验 assistant 关系；非本人管理学生的 coachingId 返回空 Map。
+- 老 `detailForAssistant(applicationId, ...)` 行为不变（兼容期）。
+
+建议 RED 用例（`OsgUserJobOverviewServiceImplAssistantCoachingTest`）:
+
+- `listByAssistant_returnsOneRowPerCoaching_whenStudentHasMultipleCoachings`
+- `listByAssistant_payloadIncludesCoachingIdMentorNameLatestRatingLessonReported`
+- `listByAssistant_latestRatingLimitedToCoachingScope`
+- `detailForAssistantCoaching_rejectsCoachingNotOwnedByAssistant`
+- `detailForAssistantCoaching_returnsClassRecordsByMentor`
+- `detailForAssistantCoaching_returnsEmptyWhenCoachingMissing`
+
+验证命令：
+
+```bash
+cd /Users/hw/workspace/OSGPrj
+mvn -pl ruoyi-system -Dtest=OsgUserJobOverviewServiceImplAssistantCoachingTest test
+mvn -pl ruoyi-system test jacoco:report
+```
+
+#### Step4-F2：前端 assistant job-overview 单栏 + coaching 锚点
+
+Root Cause / Current State:
+
+- 双 tab（coaching + managed）structurally 不符 §02 §5.1「只显示一栏：我管理的学员」。
+- row-key 用 `r.id`（applicationId），不是 coachingId。
+- 列里没有「最近评分」；详情区是本地 record 而非按 coachingId 拉后端。
+- `career-pages.spec.ts:357-426` 钉死了双 tab 结构。
+
+修改文件:
+
+- `osg-frontend/packages/assistant/src/views/career/job-overview/index.vue` —— 主页面
+- `osg-frontend/packages/shared/src/api/assistantCareer.ts`（或同等 API 模块）—— 新增 detail 接口、补字段类型；**只增不删**老 API 类型，避免学生/LM/mentor 联动 import 影响
+- `osg-frontend/packages/assistant/src/__tests__/career-pages.spec.ts` —— 重写 job-overview 用例
+
+具体修改:
+
+- 删除 `activeTab` / `coachingRecords` / `managedRecords` 双 tab 状态机，改单栏「我管理的学员」。
+- `row-key = (r) => r.coachingId`；list 类型 `AssistantJobOverviewRecord` 增 `coachingId / mentorName / latestRating / lessonReported`。
+- 列对齐 §02 §5.1：学生 ID、姓名、岗位、公司、城市、面试阶段、面试时间、导师、最近评分、操作=查看详情。城市从 `CompanyPositionCell` 中拆出独立列。
+- 详情按 coachingId 走新 API：`selectedId` → `getAssistantJobOverviewCoachingDetail(coachingId)` 拉后端 payload；旧 `selectedRecord` 本地推导废弃。
+- 删 `mentorBackground` 等占位字段（数据没有）。
+- 保留 `InterviewCalendar`（与 §02 §4.1 不冲突）。
+
+影响范围：
+
+- assistant 端独立单页面 + assistant 专属 spec，**不影响 student / LM / mentor / admin**。
+- shared 的 `AssistantJobOverviewRecord` 类型增字段属于 assistant-only 的命名 type，不被其他端 import（已 grep 确认仅 assistant 包内引用）。
+
+验收标准：
+
+- 助教登录后 `/career/job-overview` 只看到一张表（没有 tab 切换）。
+- 同一 application 下两条 coaching → 表里两行，coachingId 各不同。
+- 每行展示完整 9 列，最近评分按 coachingId 限定。
+- 点「查看详情」请求 `GET /assistant/job-overview/coachings/{coachingId}`，详情面板渲染当前 coaching 课消明细。
+- 城市列独立显示，不再合并到公司列。
+- `career-pages.spec.ts` 新版断言：单栏 / row-key 含 `coachingId` / 9 列 / 没有 `activeTab` / 不出现「我辅导的学员」。
+
+建议 RED 用例:
+
+- 在 `career-pages.spec.ts` 替换原 `it('job overview page source aligns with ...dual-tab design')`：
+  - `it('job overview page collapses to single managed tab anchored on coachingId')`
+  - 断言 `expect(src).not.toContain('activeTab')`；
+  - 断言 `expect(src).toContain('row-key="(r: AssistantJobOverviewRecord) => r.coachingId"')`（或等价匿名形式）；
+  - 断言 `expect(src).toContain('最近评分')`、`expect(src).toContain('coachings/')`（详情接口路径片段）。
+
+验证命令：
+
+```bash
+cd /Users/hw/workspace/OSGPrj/osg-frontend
+pnpm --filter @osg/assistant exec vitest run src/__tests__/career-pages.spec.ts
+pnpm --filter @osg/assistant exec vitest run src/__tests__/career-api-contract.spec.ts
+pnpm --filter @osg/assistant build
+```
+
+---
+
 ## 7. Step 5：后台闭环
 
 ### 7.1 原始需求段
