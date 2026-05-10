@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { createApp, nextTick } from 'vue'
+import { createApp, defineComponent, h, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import Antd from 'ant-design-vue'
@@ -42,6 +42,33 @@ const jobOverviewPath = path.resolve(__dirname, '../views/career/job-overview/in
 const jobOverviewExists = fs.existsSync(jobOverviewPath)
 
 vi.mock('@osg/shared/api', () => apiMocks)
+
+// Step2A-F7：用 stub 替换 LeadMentorClassReportFlowModal，在 DOM 上暴露 prefilled-* props，
+// 让 spec 可直接断言 LM 上层 openClassReportFromCoaching 的透传契约，
+// 同时避免在 jsdom 下深入 mount shared modal 触发 useStudentScopeFinder/useReferenceFinder
+// 真实分支（其内部逻辑已由 shared/__tests__/class-report-flow-modal-prefill.spec.ts 覆盖）。
+vi.mock('../views/teaching/class-records/LeadMentorClassReportFlowModal.vue', () => ({
+  default: defineComponent({
+    name: 'LeadMentorClassReportFlowModalStub',
+    props: {
+      visible: { type: Boolean, default: false },
+      prefilledStudentId: { type: Number, default: undefined },
+      prefilledReferenceType: { type: String, default: undefined },
+      prefilledReferenceId: { type: Number, default: undefined },
+      readonlyFields: { type: Array, default: () => [] },
+    },
+    setup(props) {
+      return () =>
+        h('div', {
+          'data-testid': 'lm-class-report-stub',
+          'data-visible': String(Boolean(props.visible)),
+          'data-prefilled-student-id': props.prefilledStudentId ?? '',
+          'data-prefilled-reference-type': props.prefilledReferenceType ?? '',
+          'data-prefilled-reference-id': props.prefilledReferenceId ?? '',
+        })
+    },
+  }),
+}))
 
 vi.mock('@osg/shared/utils', () => ({
   getUser: vi.fn(() => ({
@@ -375,6 +402,124 @@ describe('lead-mentor job overview shell contract', () => {
 
       expect(apiMocks.getLeadMentorJobOverviewCoachingDetail).toHaveBeenCalledWith(9702)
       expect(apiMocks.getLeadMentorJobOverviewDetail).not.toHaveBeenCalledWith(7701)
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('prefills class report with job_coaching + coachingId from coaching tab "上报课消" (Step2A-F7)', async () => {
+    apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
+      if (params.scope === 'coaching') {
+        return {
+          rows: [
+            {
+              applicationId: 7702,
+              coachingId: 9702,
+              studentId: 3002,
+              studentName: 'Bob',
+              companyName: 'McKinsey',
+              positionName: 'Business Analyst',
+              currentStage: 'Case Study',
+              interviewTime: '2026-03-28T14:00:00Z',
+              coachingStatus: '辅导中',
+              mentorName: 'Jess',
+              mentorNames: 'Jess',
+              hoursUsed: 6,
+            },
+          ],
+        }
+      }
+      return { rows: [] }
+    })
+
+    const page = await mountJobOverviewPage()
+
+    try {
+      const coachingTab = findTab(page.container, '我辅导的学员')
+      coachingTab?.click()
+      await flushUi()
+
+      const reportButton = await waitFor(
+        () => {
+          const panel = page.container.querySelector<HTMLElement>('#lm-job-content-coaching')
+          return findButtonByText(panel || page.container, '上报课消')
+        },
+        '上报课消 button',
+      )
+      reportButton.click()
+      await flushUi()
+
+      const stub = await waitFor(
+        () => {
+          const node = document.body.querySelector<HTMLElement>('[data-testid="lm-class-report-stub"]')
+          return node?.getAttribute('data-visible') === 'true' ? node : null
+        },
+        'lm class report stub visible',
+      )
+
+      // Step2A-F7：新口径：referenceType=job_coaching、referenceId=coachingId
+      expect(stub.getAttribute('data-prefilled-reference-type')).toBe('job_coaching')
+      expect(stub.getAttribute('data-prefilled-reference-id')).toBe('9702')
+      expect(stub.getAttribute('data-prefilled-student-id')).toBe('3002')
+    } finally {
+      page.unmount()
+    }
+  })
+
+  it('falls back to application + applicationId when coaching row has no coachingId (Step2A-F7 legacy)', async () => {
+    apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
+      if (params.scope === 'coaching') {
+        return {
+          rows: [
+            {
+              applicationId: 7703,
+              // 注意：故意不带 coachingId，模拟旧数据
+              studentId: 3003,
+              studentName: 'Cindy',
+              companyName: 'Google',
+              positionName: 'Product Strategy',
+              currentStage: 'Final Round',
+              interviewTime: '2026-04-02T09:30:00Z',
+              coachingStatus: '辅导中',
+              mentorName: 'Jess',
+              mentorNames: 'Jess',
+              hoursUsed: 4,
+            },
+          ],
+        }
+      }
+      return { rows: [] }
+    })
+
+    const page = await mountJobOverviewPage()
+
+    try {
+      const coachingTab = findTab(page.container, '我辅导的学员')
+      coachingTab?.click()
+      await flushUi()
+
+      const reportButton = await waitFor(
+        () => {
+          const panel = page.container.querySelector<HTMLElement>('#lm-job-content-coaching')
+          return findButtonByText(panel || page.container, '上报课消')
+        },
+        '上报课消 button (legacy)',
+      )
+      reportButton.click()
+      await flushUi()
+
+      const stub = await waitFor(
+        () => {
+          const node = document.body.querySelector<HTMLElement>('[data-testid="lm-class-report-stub"]')
+          return node?.getAttribute('data-visible') === 'true' ? node : null
+        },
+        'lm class report stub visible (legacy)',
+      )
+
+      // legacy fallback：referenceType=application、referenceId=applicationId
+      expect(stub.getAttribute('data-prefilled-reference-type')).toBe('application')
+      expect(stub.getAttribute('data-prefilled-reference-id')).toBe('7703')
+      expect(stub.getAttribute('data-prefilled-student-id')).toBe('3003')
     } finally {
       page.unmount()
     }

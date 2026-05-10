@@ -457,6 +457,113 @@ describe('lead-mentor job overview real flow', () => {
     }
   })
 
+  it('keeps sibling coaching of the same application untouched after assigning to one coaching', async () => {
+    const sharedApplicationId = 7701
+    const targetCoachingId = 9701
+    const siblingCoachingId = 9702
+    const pendingMultiCoachingRows: LeadMentorJobOverviewListItem[] = [
+      {
+        applicationId: sharedApplicationId,
+        coachingId: targetCoachingId,
+        studentId: 3701,
+        studentName: 'Multi Stage Student',
+        companyName: 'Goldman Sachs',
+        positionName: 'Summer Analyst',
+        currentStage: 'First Round',
+        interviewTime: '2026-03-26T09:30:00Z',
+        requestedMentorCount: 2,
+        preferredMentorNames: 'Jerry Li, Mike Wang',
+        coachingStatus: '待审批',
+        mentorNames: 'Jerry Li, Mike Wang',
+        assignedStatus: 'pending',
+        stageUpdated: false,
+      },
+      {
+        applicationId: sharedApplicationId,
+        coachingId: siblingCoachingId,
+        studentId: 3701,
+        studentName: 'Multi Stage Student',
+        companyName: 'Goldman Sachs',
+        positionName: 'Summer Analyst',
+        currentStage: 'Final Round',
+        interviewTime: '2026-04-02T09:30:00Z',
+        requestedMentorCount: 1,
+        preferredMentorNames: 'Amy Chen',
+        coachingStatus: '待审批',
+        mentorNames: 'Amy Chen',
+        assignedStatus: 'pending',
+        stageUpdated: false,
+      },
+    ]
+    const managedMultiCoachingRows: LeadMentorJobOverviewListItem[] = pendingMultiCoachingRows.map((row) => ({ ...row }))
+
+    apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
+      if (params.scope === 'pending') {
+        return { rows: pendingMultiCoachingRows }
+      }
+      if (params.scope === 'coaching') {
+        return { rows: [] }
+      }
+      return { rows: managedMultiCoachingRows }
+    })
+
+    const page = await mountJobOverviewPage()
+
+    try {
+      page.container.querySelector<HTMLButtonElement>('#lm-job-tab-pending')?.click()
+      const row = await waitFor(
+        () => page.container.querySelector<HTMLElement>(
+          `#lm-job-content-pending [data-row-key="${targetCoachingId}"]`,
+        ),
+        'target pending coaching row',
+      )
+      findButtonByText(row, '分配导师')?.click()
+
+      const assignModal = await waitFor(
+        () => document.body.querySelector<HTMLElement>('[data-surface-id="modal-assign-mentor"]'),
+        'assign mentor modal',
+      )
+      Array.from(assignModal.querySelectorAll<HTMLButtonElement>('.mentor-item')).find((item) =>
+        item.textContent?.includes('Jerry Li'),
+      )?.click()
+      Array.from(assignModal.querySelectorAll<HTMLButtonElement>('.mentor-item')).find((item) =>
+        item.textContent?.includes('Mike Wang'),
+      )?.click()
+      await flushUi()
+
+      findButtonByText(assignModal, '确认匹配')?.click()
+      await waitFor(
+        () => apiMocks.assignLeadMentorJobOverviewCoachingMentor.mock.calls.length > 0,
+        'coaching mentor assignment request',
+      )
+
+      expect(apiMocks.assignLeadMentorJobOverviewCoachingMentor).toHaveBeenCalledWith(targetCoachingId, {
+        mentorIds: [9001, 9002],
+        mentorNames: ['Jerry Li', 'Mike Wang'],
+        assignNote: '',
+      })
+      expect(apiMocks.assignLeadMentorJobOverviewCoachingMentor).not.toHaveBeenCalledWith(
+        siblingCoachingId,
+        expect.anything(),
+      )
+      expect(apiMocks.assignLeadMentorJobOverviewMentor).not.toHaveBeenCalled()
+
+      const managedTab = page.container.querySelector<HTMLButtonElement>('#lm-job-tab-managed')
+      managedTab?.click()
+      await flushUi()
+
+      const siblingRow = page.container.querySelector<HTMLElement>(
+        `#lm-job-content-managed [data-row-key="${siblingCoachingId}"]`,
+      )
+      expect(siblingRow?.textContent).toContain('Final Round')
+      expect(siblingRow?.textContent).toContain('Amy Chen')
+      expect(siblingRow?.textContent).not.toContain('Jerry Li')
+      expect(siblingRow?.textContent).not.toContain('Mike Wang')
+    } finally {
+      page.unmount()
+    }
+  })
+
   it('blocks mentor assignment when selected mentor count does not match requested count', async () => {
     apiMocks.getLeadMentorJobOverviewList.mockImplementation(async (params: { scope: string }) => {
       if (params.scope === 'pending') {

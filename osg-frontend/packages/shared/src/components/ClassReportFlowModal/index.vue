@@ -150,7 +150,7 @@
  * - 三端通用：mentor / lead-mentor / assistant
  * - 5 step v-show 切换：基本信息 / 课程类型 / 关联申请 / 学员状态 / 反馈评分
  * - 旷课分支：memberStatus=absent 时跳过 reference + feedback，durationHours 默认 0.5
- * - ②栏反推锁定：prefilledReferenceType=application + prefilledReferenceId 时锁 courseType=job_coaching
+ * - ②栏反推锁定：prefilledReferenceType=application | job_coaching + prefilledReferenceId 时锁 courseType=job_coaching；referenceType 透传，不强写
  * - T-514: rate 文本输入框，正常上课时必填，旷课时为 null
  * - T-515: 学员下拉为空时提交按钮 disabled
  * - T-508: RelationFeedback screenshotUrls 独立于 feedbackContent，落 screenshot_urls 列
@@ -178,6 +178,10 @@ import StepBasicInfo from './StepBasicInfo.vue'
 import StepCourseType from './StepCourseType.vue'
 import StepReference from './StepReference.vue'
 import StepMemberStatus from './StepMemberStatus.vue'
+import {
+  isReferenceCourseTypeLocked,
+  buildReferenceLockPatch,
+} from './lockHelpers'
 
 import JobCoachingFeedback from './feedbacks/JobCoachingFeedback.vue'
 import MockInterviewFeedback from './feedbacks/MockInterviewFeedback.vue'
@@ -237,11 +241,13 @@ const {
 } = useStudentScopeFinder(props.end)
 
 // 反推锁定 courseType=job_coaching
-const isCourseTypeLocked = computed(
-  () =>
-    props.prefilledReferenceType === 'application' &&
-    !!props.prefilledReferenceId &&
-    props.prefilledReferenceId > 0,
+// Step2A-F7：同时识别 application（旧 job_coaching 课消落库口径）与 job_coaching（osg_coaching 阶段记录新口径）。
+// 判定逻辑抽取到 ./lockHelpers.ts，供 shared __tests__ 纯函数单测。
+const isCourseTypeLocked = computed(() =>
+  isReferenceCourseTypeLocked(
+    props.prefilledReferenceType,
+    props.prefilledReferenceId,
+  ),
 )
 
 const isAbsent = computed(
@@ -447,11 +453,14 @@ watch(
       rateSubmitAttempted.value = false
       // 反推锁定：如果 prefilled application + applicationId，锁 courseType=job_coaching
       if (isCourseTypeLocked.value) {
+        // Step2A-F7：通过 buildReferenceLockPatch 保留 props.prefilledReferenceType 原值
+        // （job_coaching 或 application），不再强写 'application'
         formState.value = {
           ...formState.value,
-          courseType: 'job_coaching',
-          referenceType: 'application',
-          referenceId: props.prefilledReferenceId,
+          ...buildReferenceLockPatch(
+            props.prefilledReferenceType,
+            props.prefilledReferenceId,
+          ),
         }
       }
       if (props.prefilledStudentId) {

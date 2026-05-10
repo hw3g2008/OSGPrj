@@ -570,10 +570,14 @@ const managedRows = computed<OverviewRow[]>(() =>
 const classReportVisible = ref(false)
 
 const openClassReportFromCoaching = (record: OverviewRow) => {
+  // Step2A-F7：优先按 coaching 行预填 job_coaching/coachingId；旧数据无 coachingId 时回退到 application/applicationId
+  const coachingId = typeof record.coachingId === 'number' && record.coachingId > 0
+    ? record.coachingId
+    : null
   classReportPrefill.value = {
     prefilledStudentId: record.raw.studentId,
-    prefilledReferenceType: 'application',
-    prefilledReferenceId: record.applicationId,
+    prefilledReferenceType: coachingId ? 'job_coaching' : 'application',
+    prefilledReferenceId: coachingId ?? record.applicationId,
     readonlyFields: ['student', 'reference'],
   }
   classReportVisible.value = true
@@ -1013,7 +1017,7 @@ function formatShortDate(value?: string) {
 
 function formatDateTime(value?: string) {
   if (!value) {
-    return '待更新'
+    return '待定'
   }
 
   const date = new Date(value)

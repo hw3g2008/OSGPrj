@@ -518,9 +518,9 @@ Audit Answers:
 | Step2A-F3 | 后端分配导师按 coaching_id + 数量校验 | ✅ 已完成 | backend | 新增 `/lead-mentor/job-overview/coaching/{coachingId}/assign-mentor`；强制 `mentorIds.size()==requestedMentorCount`；只更新目标 coaching；service/controller 定向测试与编译 ✅ |
 | Step2A-F4 | 班主任前端表格三栏接入 coaching 行 | ✅ 已完成 | frontend | 三栏表格 `rowKey` 改为 `coachingId ?? applicationId`；补同 application 多 coaching row RED；同步 shared 类型与 LM 课消 modal 调用契约；`job-overview-shell + story-s042` 8/8、`vue-tsc --noEmit`、`pnpm --filter @osg/lead-mentor build` ✅ |
 | Step2A-F5 | 查看详情弹窗按 coaching_id | ✅ 已完成 | frontend | 课消详情抽屉按 `coachingId` 优先调用 `/lead-mentor/job-overview/coaching/{coachingId}`，保留 application fallback；新增 F5 RED 并转绿；`job-overview-shell + story-s042` 9/9、`vue-tsc --noEmit`、`pnpm --filter @osg/lead-mentor build` ✅ |
-| Step2A-F6 | 分配导师弹窗按 coaching_id + 数量限制 | ⏳ 待开始 | frontend | 数量不一致不能提交 |
-| Step2A-F7 | 上报课消入口预填 job_coaching/coaching_id | ⏳ 待开始 | frontend/shared integration | 从待辅导栏打开时锁定当前 coaching |
-| Step2A-F8 | 测试与回归 | ⏳ 待开始 | all | backend/frontend/grep/build |
+| Step2A-F6 | 分配导师弹窗按 coaching_id + 数量限制 | ✅ 已完成 | frontend | LM `handleConfirmAssignMentor` 优先 coaching endpoint、按数量阻断、`matchesAssignTarget` 按 coachingId 隔离同 app sibling；新增 `keeps sibling coaching of the same application untouched` 用例 + 已有 coaching/数量/fallback 三条契约；`pnpm --filter @osg/lead-mentor exec vitest run job-overview-real-flow + job-overview-shell` 13/13 ✅ |
+| Step2A-F7 | 上报课消入口预填 job_coaching/coaching_id | ✅ 已完成 | frontend/shared integration | LM `openClassReportFromCoaching` 优先 `job_coaching + coachingId`，无 coachingId fallback `application + applicationId`；shared `ClassReportFlowModal` 抽 `lockHelpers.ts`，`isReferenceCourseTypeLocked` 同时识别两种口径，`buildReferenceLockPatch` 透传 `prefilledReferenceType` 不再硬写 'application'；新增 `shared/__tests__/class-report-flow-modal-prefill.spec.ts` 7/7 + LM `job-overview-shell.spec.ts` 新增两个 prefill 集成用例；`pnpm --filter @osg/shared test class-report-flow-modal-prefill` 7/7、`pnpm --filter @osg/lead-mentor exec vitest run job-overview-{shell,real-flow} story-s042` 18/18、`vue-tsc --noEmit` ✅ |
+| Step2A-F8 | 测试与回归 | ✅ 已完成 | all | shared 全量 31 files / 379 tests passed；LM 5 specs / 22 tests passed（job-overview-{shell,real-flow}, job-detail-modal, job-assign-mentor-modal, story-s042）；`pnpm --filter @osg/lead-mentor build` ✅；`vue-tsc --noEmit` 0 errors；关键 grep：LM `prefilledReferenceType: 'application'` 仅类型声明、shared `referenceType: 'application'` 无匹配；mentor / assistant pre-existing failures 与 F7 无关（已通过 stash 验证）|
 
 ### 4.8 第一批 fix plan：Step2A-F0 + Step2A-F1
 
@@ -611,6 +611,111 @@ mvn -pl ruoyi-admin -am -DskipTests compile -q
 - GREEN：`GET /lead-mentor/job-overview/list` 后端组装改为优先输出 coaching 行；每个 coaching row 返回 `coachingId`，阶段/面试时间/城市/申请导师数优先来自 coaching。
 - 统计：coaching 行的 `latestRating`、`lessonCount`、`lessonReported` 改为按 `reference_type='job_coaching' + reference_id=coachingId` 查询；无 coaching 的 legacy fallback 行仍保留 application reference 兼容旧数据。
 - 验证：后端 service 定向测试、controller 定向测试、admin 聚合编译均通过。
+
+### 4.9 第二批 fix 详情：Step2A-F6 + Step2A-F7 + Step2A-F8
+
+#### Step2A-F6：分配导师弹窗按 coaching_id + 数量限制
+
+Root Cause / Current State：
+
+- F4/F5 完成后，LM `handleConfirmAssignMentor` 已经实现 coaching endpoint 优先 + 数量阻断 + `matchesAssignTarget` 按 `coachingId` 隔离同 application sibling，但缺少「同 application 多 coaching 隔离」的契约测试。
+- `job-overview-real-flow.spec.ts` 已覆盖 ① coaching endpoint 走通、② 数量不匹配阻断、③ legacy fallback（无 coachingId）三条核心契约，但没有覆盖「分配 target coaching 后 sibling coaching 行不被状态污染」的隔离用例。
+
+修改文件：
+
+- `osg-frontend/packages/lead-mentor/src/__tests__/job-overview-real-flow.spec.ts`
+
+具体修改：
+
+- 新增 `keeps sibling coaching of the same application untouched after assigning to one coaching` 用例：
+  - mock managed scope 返回同 `applicationId=7701` 下两条 coaching `9701/9702`，分别带不同 `mentorNames` / `currentStage`。
+  - 从 pending tab 点击 target row（9701）「分配导师」→ 选择 2 位 mentor → 提交。
+  - 断言 `assignLeadMentorJobOverviewCoachingMentor` 仅被 `(9701, ...)` 调用一次，sibling `9702` 未被任何 assign endpoint 调用，`assignLeadMentorJobOverviewMentor` 完全未调用。
+  - 切到 managed tab，断言 sibling 行 `[data-row-key="9702"]` 文本仍包含 `'Final Round'` / `'Amy Chen'`，不包含 `'Jerry Li'` / `'Mike Wang'`（target 选中的导师），证明客户端 patch 仅作用于 target row。
+
+验证命令：
+
+```bash
+pnpm --filter @osg/lead-mentor exec vitest run \
+  src/__tests__/job-overview-real-flow.spec.ts \
+  src/__tests__/job-overview-shell.spec.ts
+```
+
+完成证据：
+
+- 13/13 tests passed（real-flow 7 含新增 sibling 用例 + shell 6 不退化）。
+
+#### Step2A-F7：上报课消入口预填 job_coaching/coaching_id
+
+Root Cause / Current State：
+
+- LM `openClassReportFromCoaching` 写死 `prefilledReferenceType: 'application' + prefilledReferenceId: record.applicationId`，对应 F2 之前的旧口径；F2 后端已改成按 coaching 行查 `reference_type='job_coaching' + reference_id=coachingId`，前端入口未跟上会导致：
+  1. 同一 application 下多 coaching 阶段记录会落库到错误的 coaching；
+  2. 多阶段 coaching 在求职总览看到的课消会串号。
+- shared `ClassReportFlowModal` `isCourseTypeLocked` 仅识别 `'application'` 一种 referenceType；watch visible 反推锁定时强写 `referenceType: 'application'`，覆盖了入口传入的值，导致即使 LM 改入口，shared 仍会强行回退到 application 路径。
+
+修改文件：
+
+- `osg-frontend/packages/lead-mentor/src/views/career/job-overview/index.vue`
+- `osg-frontend/packages/shared/src/components/ClassReportFlowModal/index.vue`
+- `osg-frontend/packages/shared/src/components/ClassReportFlowModal/lockHelpers.ts`（新增）
+- `osg-frontend/packages/shared/src/__tests__/class-report-flow-modal-prefill.spec.ts`（新增）
+- `osg-frontend/packages/lead-mentor/src/__tests__/job-overview-shell.spec.ts`
+
+具体修改：
+
+- LM `openClassReportFromCoaching`：有 `record.coachingId` 时预填 `'job_coaching' + coachingId`；旧数据无 coachingId 时 fallback `'application' + applicationId`，向后兼容。
+- shared 抽 helper `lockHelpers.ts`：
+  - `isReferenceCourseTypeLocked(prefilledReferenceType, prefilledReferenceId)` 同时识别 `'application'` 与 `'job_coaching'`，对其它 referenceType 返回 false。
+  - `buildReferenceLockPatch(...)` 透传 `prefilledReferenceType` 原值，**不**再硬写 `'application'`。
+- shared `ClassReportFlowModal/index.vue` 引用 helper 替代 inline 判定，顶部注释同步更新「同时识别 application | job_coaching；referenceType 透传，不强写」。
+- shared spec：新增 7 个纯函数用例覆盖 lock helper 的所有分支（new path / legacy / 缺失值 / 非 job_coaching referenceType / patch 透传两种合法值）。
+- LM spec：通过 `vi.mock('../views/teaching/class-records/LeadMentorClassReportFlowModal.vue', ...)` 注入 stub component，将 prefill props 暴露到 DOM `[data-testid="lm-class-report-stub"]` 的 attribute 上；新增 2 个集成用例：① 从 coaching tab 点击「上报课消」时 stub 收到 `data-prefilled-reference-type="job_coaching"` + `data-prefilled-reference-id="9702"`；② legacy fallback：无 coachingId 时收到 `'application'` + applicationId。
+
+影响范围：
+
+- LM 求职总览「我辅导的学员」上报课消入口切到新口径，旧数据 fallback 路径行为完全保持。
+- shared `ClassReportFlowModal` 反推锁定 watch 行为：mentor / assistant 端调用入口只透传 prefilledReferenceType，未传 `'application' | 'job_coaching'` 之外的值，新 helper 对其它 referenceType 返回 false，行为与之前一致（之前也只对 `'application'` 返回 true），不影响其它端。
+- 不改后端、不改 mentor / assistant / admin / student。
+
+验证命令：
+
+```bash
+pnpm --filter @osg/shared exec vitest run src/__tests__/class-report-flow-modal-prefill.spec.ts
+pnpm --filter @osg/lead-mentor exec vitest run \
+  src/__tests__/job-overview-shell.spec.ts \
+  src/__tests__/job-overview-real-flow.spec.ts \
+  src/__tests__/story-s042-regression.spec.ts
+pnpm --filter @osg/lead-mentor exec vue-tsc --noEmit
+```
+
+完成证据：
+
+- shared helper 7/7 tests passed（new path、legacy fallback、缺失值、非 job_coaching、patch 透传）。
+- LM 18/18 tests passed（job-overview-shell 8 含两个 prefill 集成用例 + real-flow 7 + story-s042 3）。
+- LM `vue-tsc --noEmit` 0 errors。
+
+#### Step2A-F8：测试与回归
+
+Root Cause / Current State：
+
+- F1~F7 完成后，需要全量定向回归 + 跨端兼容性验证 + 关键 grep 回查，确保 application/coaching 旧口径残留已清除、shared 改动不破坏其它端。
+
+执行内容：
+
+- shared 全量测试：`pnpm --filter @osg/shared test` → 31 files / 379 tests passed (1 todo)。
+- LM 定向测试：`pnpm --filter @osg/lead-mentor exec vitest run job-overview-{shell,real-flow} job-detail-modal job-assign-mentor-modal story-s042-regression` → 5 files / 22 tests passed。
+- LM build：`pnpm --filter @osg/lead-mentor build` → 10.72s 成功，`LeadMentorClassReportFlowModal` chunk 39.30 kB / gzip 12.42 kB。
+- LM `vue-tsc --noEmit` → 0 errors。
+- 关键 grep：
+  - `grep -n "prefilledReferenceType: 'application'" osg-frontend/packages/lead-mentor/src/views/career/job-overview/index.vue` → 仅匹配 `classReportPrefill` ref 的 type union 声明 `'application' | 'job_coaching'`，不再有硬写值赋值。
+  - `grep -n "referenceType: 'application'" osg-frontend/packages/shared/src/components/ClassReportFlowModal/index.vue` → 无匹配（已完全去除硬写）。
+- 跨端 pre-existing failure 验证：mentor `page-interactions.spec.ts` 2 failed、assistant `assistant-class-report-flow-modal.spec.ts` + `assistant-class-report-student-status.spec.ts` 共 20 failed；通过 `git stash` 移除 F7 改动后跑同样 spec，结果一致，确认是 pre-existing failures（mentor / student worktree 上的进行中工作），与 Step2A-F7 无关。
+
+完成证据：
+
+- 全部定向命令 exit code 0，关键 grep 锁定旧口径残留已清除，shared 改动不破坏其它端。
+- Step 2-A 闭环：F1（后端列表 coaching 行）+ F2（详情按 coachingId）+ F3（分配导师按 coachingId）+ F4（前端表格 coaching 行）+ F5（详情弹窗按 coachingId）+ F6（分配导师 coaching endpoint + 数量阻断 + sibling 隔离）+ F7（上报课消预填 job_coaching/coachingId）+ F8（总回归）全部 ✅。
 
 ---
 
