@@ -128,50 +128,8 @@ describe('mentor nav badge state', () => {
     expect(mockNavItem.find('.nav-badge').text()).toBe('1')
   })
 
-  it('hides the job badge after confirming the only unread job row', async () => {
-    const jobRows = [
-      {
-        id: 7,
-        studentId: 843,
-        studentName: 'Job Student',
-        company: 'Browser Smoke Capital 3',
-        position: 'Consultant',
-        location: 'Shanghai',
-        interviewStage: 'Round 1',
-        coachingStatus: 'new',
-      },
-    ]
-
-    vi.mocked(http.get).mockImplementation(async (url: string, _options?: Record<string, any>) => {
-      if (url === '/api/mentor/job-overview/list') {
-        return { rows: jobRows.map((row) => ({ ...row })) }
-      }
-      if (url === '/api/mentor/job-overview/calendar') {
-        return []
-      }
-      if (url === '/api/mentor/class-records/list') {
-        return { rows: [] }
-      }
-      if (url === '/api/mentor/job-overview/export') {
-        return new Blob()
-      }
-      return { rows: [] }
-    })
-    vi.mocked(http.put).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/job-overview/7/confirm') {
-        jobRows[0].coachingStatus = 'coaching'
-      }
-      return {}
-    })
-
-    const wrapper = await mountAt('/job-overview')
-
-    const jobNavItem = findNavItem(wrapper, 'Job Overview')
-    expect(jobNavItem.find('.nav-badge').text()).toBe('1')
-
-    await wrapper.findAll('tbody tr').find((row) => row.text().includes('Job Student'))?.get('button').trigger('click')
-    await flushPromises()
-
-    expect(jobNavItem.find('.nav-badge').exists()).toBe(false)
-  })
+  // FIX-E：mentor 端 Job Overview 已改为只读 5 列，无"确认"按钮，
+  // 因此原"通过确认按钮使 job badge 消失"的覆盖路径不再适用。
+  // 班级排班/确认能力转由班主任端承担；mentor 端 badge 行为由 jobBadge 上游
+  // refreshJobBadge() 在 onMounted 时统一刷新（已在 nav 单测覆盖）。
 })

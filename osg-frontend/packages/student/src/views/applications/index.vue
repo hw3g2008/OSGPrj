@@ -316,16 +316,24 @@
             </a-form-item>
             <a-form-item
               label="面试时间"
-              required
+              :required="!progressForm.interviewTimeUndetermined"
               class="rich-form-field"
-              extra="请填写该轮面试的具体时间，系统会同步写入进度说明。"
+              extra="请填写该轮面试的具体时间，如尚未确定可勾选"未确定"。"
             >
+              <a-checkbox
+                id="update-interview-time-undetermined"
+                v-model:checked="progressForm.interviewTimeUndetermined"
+                style="margin-bottom: 6px"
+              >
+                未确定
+              </a-checkbox>
               <DatePicker
                 id="update-interview-time"
                 v-model:value="progressForm.interviewTime"
                 show-time
                 format="YYYY-MM-DD HH:mm"
                 value-format="YYYY-MM-DDTHH:mm"
+                :disabled="progressForm.interviewTimeUndetermined"
                 style="width: 100%"
               />
             </a-form-item>
@@ -575,6 +583,7 @@ interface ApplyStageForm {
   inviteScreenshotUrl: string
   mentorHelp: string
   interviewTime: string
+  interviewTimeUndetermined: boolean
   mentorCount: string
   preferMentor: string
   excludeMentor: string
@@ -974,7 +983,7 @@ async function saveProgress() {
     } else if (showUpdateInterviewFields.value) {
       await requestStudentApplicationCoaching(selectedApplication.value.id, {
         interviewStage: progressForm.value.stage,
-        interviewTime: progressForm.value.interviewTime,
+        interviewTime: progressForm.value.interviewTimeUndetermined ? null : progressForm.value.interviewTime,
         city: selectedApplication.value.location,
         requestedMentorCount: progressForm.value.mentorCount,
         requestNote: note
@@ -1047,6 +1056,7 @@ function defaultApplyStageForm(): ApplyStageForm {
     inviteScreenshotUrl: '',
     mentorHelp: '',
     interviewTime: '',
+    interviewTimeUndetermined: false,
     mentorCount: '',
     preferMentor: '',
     excludeMentor: '',
@@ -1125,7 +1135,9 @@ function buildStageNote(form: ApplyStageForm) {
       lines.push(`导师协助：${form.mentorHelp === 'yes' ? '是' : '否'}`)
     }
   } else if (interviewStages.includes(form.stage)) {
-    if (form.interviewTime) {
+    if (form.interviewTimeUndetermined) {
+      lines.push(`面试时间：未确定`)
+    } else if (form.interviewTime) {
       lines.push(`面试时间：${form.interviewTime}`)
     }
     if (form.mentorCount) {
@@ -1189,8 +1201,8 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
     message.error('请选择导师数量')
     return false
   }
-  if (!form.interviewTime) {
-    message.error('请填写该阶段的面试时间')
+  if (!form.interviewTimeUndetermined && !form.interviewTime) {
+    message.error('请填写该阶段的面试时间，或勾选"未确定"')
     return false
   }
   return true

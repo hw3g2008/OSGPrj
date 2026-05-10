@@ -123,6 +123,98 @@ class OsgMentorJobOverviewControllerTest
         verify(userJobOverviewService).listByMentor(any(OsgJobApplication.class), eq(100L));
     }
 
+    @Test
+    void mentorListShouldIsolateRowsAcrossDifferentMentorIds()
+    {
+        // FIX-F: 跨用户隔离 — controller 用 SecurityUtils.getUserId() 作为 listByMentor 的 mentorId 参数，
+        // 不同 mentor 必须各自只看到 service 按其 id 返回的行；不能跨用户泄漏
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(200L)))
+            .thenReturn(List.of(Map.of(
+                "applicationId", 1L,
+                "studentId", 11L,
+                "studentName", "Mentor200 Student",
+                "companyName", "Co200",
+                "positionName", "P200",
+                "city", "City200",
+                "currentStage", "Round 1",
+                "hoursUsed", 0,
+                "feedbackSummary", "-"
+            )));
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(300L)))
+            .thenReturn(List.of(Map.of(
+                "applicationId", 2L,
+                "studentId", 22L,
+                "studentName", "Mentor300 Student",
+                "companyName", "Co300",
+                "positionName", "P300",
+                "city", "City300",
+                "currentStage", "Final",
+                "hoursUsed", 0,
+                "feedbackSummary", "-"
+            )));
+
+        securityMock.when(SecurityUtils::getUserId).thenReturn(200L);
+        TableDataInfo result200 = controller.mentorList(new OsgJobApplication());
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rows200 = (List<Map<String, Object>>) result200.getRows();
+        assertEquals(1, rows200.size());
+        assertEquals(1L, rows200.get(0).get("id"));
+        assertEquals("Co200", rows200.get(0).get("company"));
+
+        securityMock.when(SecurityUtils::getUserId).thenReturn(300L);
+        TableDataInfo result300 = controller.mentorList(new OsgJobApplication());
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rows300 = (List<Map<String, Object>>) result300.getRows();
+        assertEquals(1, rows300.size());
+        assertEquals(2L, rows300.get(0).get("id"));
+        assertEquals("Co300", rows300.get(0).get("company"));
+
+        // 关键校验：每个 mentorId 都被以自己的 id（不是其他人的）传入 service
+        verify(userJobOverviewService).listByMentor(any(OsgJobApplication.class), eq(200L));
+        verify(userJobOverviewService).listByMentor(any(OsgJobApplication.class), eq(300L));
+    }
+
+    @Test
+    void calendarShouldIsolateEventsAcrossDifferentMentorIds()
+    {
+        // FIX-F: calendar 同样按 SecurityUtils.getUserId() 隔离，不能渲染他人事件
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(200L)))
+            .thenReturn(Collections.singletonList(buildCalendarRowFor(101L, "Mentor200 Student", "Co200")));
+        when(userJobOverviewService.listByMentor(any(OsgJobApplication.class), eq(300L)))
+            .thenReturn(Collections.singletonList(buildCalendarRowFor(102L, "Mentor300 Student", "Co300")));
+
+        securityMock.when(SecurityUtils::getUserId).thenReturn(200L);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> events200 = (List<Map<String, Object>>) controller.calendar().get("data");
+        assertEquals(1, events200.size());
+        assertEquals(101L, events200.get(0).get("id"));
+        assertEquals("Co200", events200.get(0).get("company"));
+
+        securityMock.when(SecurityUtils::getUserId).thenReturn(300L);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> events300 = (List<Map<String, Object>>) controller.calendar().get("data");
+        assertEquals(1, events300.size());
+        assertEquals(102L, events300.get(0).get("id"));
+        assertEquals("Co300", events300.get(0).get("company"));
+    }
+
+    private Map<String, Object> buildCalendarRowFor(long applicationId, String studentName, String companyName)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("applicationId", applicationId);
+        row.put("studentId", 800L + applicationId);
+        row.put("studentName", studentName);
+        row.put("companyName", companyName);
+        row.put("positionName", "Position");
+        row.put("city", "Hong Kong");
+        row.put("currentStage", "Round 1");
+        row.put("interviewTime", Timestamp.valueOf(LocalDateTime.of(2026, 3, 22, 9, 0)));
+        row.put("confirmedAt", Timestamp.valueOf(LocalDateTime.of(2026, 3, 21, 10, 0)));
+        row.put("hoursUsed", 1);
+        row.put("feedbackSummary", "feedback");
+        return row;
+    }
+
     private Map<String, Object> buildCalendarRow()
     {
         Map<String, Object> row = new LinkedHashMap<>();

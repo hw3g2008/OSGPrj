@@ -148,17 +148,60 @@ class OsgLeadMentorPositionControllerTest
     }
 
     @Test
-    void listShouldReturnVisibleRowsAcrossPlatformInPublishOrder() throws Exception
+    void listShouldReturnAllPositionsInPublishOrderAcrossDisplayStatuses() throws Exception
     {
+        // FIX-A: 班主任端列表与 admin 一致返回所有 displayStatus（含 hidden），
+        //        publishTime desc 顺序保持
         mockMvc.perform(get("/lead-mentor/positions/list")
                 .header("Authorization", "Bearer lead-mentor-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.rows.length()").value(2))
-                .andExpect(jsonPath("$.rows[0].positionId").value(101))
-                .andExpect(jsonPath("$.rows[1].positionId").value(103))
-                .andExpect(jsonPath("$.rows[0].companyName").value("Goldman Sachs"))
-                .andExpect(jsonPath("$.rows[1].companyName").value("McKinsey"));
+                .andExpect(jsonPath("$.rows.length()").value(3))
+                .andExpect(jsonPath("$.rows[0].positionId").value(102))
+                .andExpect(jsonPath("$.rows[0].displayStatus").value("hidden"))
+                .andExpect(jsonPath("$.rows[1].positionId").value(101))
+                .andExpect(jsonPath("$.rows[2].positionId").value(103));
+    }
+
+    @Test
+    void listRowShouldExposeAdminAlignedFields() throws Exception
+    {
+        // FIX-A: 字段对齐 — companyType 用真实 company_type（不再误用 industry），
+        //        deadlineText / displayStartTime / displayEndTime / applicationNote /
+        //        applicationAttachments / targetMajors / createBy / createTime 全部回传
+        org.mockito.Mockito.when(positionMapper.selectPositionList(any(OsgPosition.class)))
+            .thenAnswer(invocation -> {
+                OsgPosition row = new OsgPosition();
+                row.setPositionId(901L);
+                row.setIndustry("Investment Bank");
+                row.setCompanyName("GS");
+                row.setCompanyType("ib");
+                row.setPositionName("IB Analyst");
+                row.setPositionCategory("summer");
+                row.setRegion("apac");
+                row.setCity("Hong Kong");
+                row.setProjectYear("2026");
+                row.setRecruitmentCycle("Summer");
+                row.setDisplayStatus("visible");
+                row.setDeadlineText("rolling basis");
+                row.setApplicationNote("submit cover letter");
+                row.setApplicationAttachments("[{\"name\":\"jd.pdf\"}]");
+                row.setTargetMajors("finance,cs");
+                row.setCreateBy("admin");
+                row.setPublishTime(Timestamp.valueOf(LocalDateTime.parse("2026-03-18T08:00:00")));
+                return List.of(row);
+            });
+
+        mockMvc.perform(get("/lead-mentor/positions/list")
+                .header("Authorization", "Bearer lead-mentor-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rows.length()").value(1))
+                .andExpect(jsonPath("$.rows[0].companyType").value("ib"))
+                .andExpect(jsonPath("$.rows[0].deadlineText").value("rolling basis"))
+                .andExpect(jsonPath("$.rows[0].applicationNote").value("submit cover letter"))
+                .andExpect(jsonPath("$.rows[0].applicationAttachments").value("[{\"name\":\"jd.pdf\"}]"))
+                .andExpect(jsonPath("$.rows[0].targetMajors").value("finance,cs"))
+                .andExpect(jsonPath("$.rows[0].createBy").value("admin"));
     }
 
     @Test
@@ -178,13 +221,18 @@ class OsgLeadMentorPositionControllerTest
     @Test
     void listShouldExposeLeadMentorScopedCountsInsteadOfGlobalCounts() throws Exception
     {
+        // 排序：[102 hidden=0 students, 101 visible=1 student, 103 visible=1 student]
         mockMvc.perform(get("/lead-mentor/positions/list")
                 .header("Authorization", "Bearer lead-mentor-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rows[0].studentCount").value(1))
-                .andExpect(jsonPath("$.rows[0].myStudentCount").value(1))
+                .andExpect(jsonPath("$.rows[0].positionId").value(102))
+                .andExpect(jsonPath("$.rows[0].studentCount").value(0))
+                .andExpect(jsonPath("$.rows[1].positionId").value(101))
                 .andExpect(jsonPath("$.rows[1].studentCount").value(1))
-                .andExpect(jsonPath("$.rows[1].myStudentCount").value(1));
+                .andExpect(jsonPath("$.rows[1].myStudentCount").value(1))
+                .andExpect(jsonPath("$.rows[2].positionId").value(103))
+                .andExpect(jsonPath("$.rows[2].studentCount").value(1))
+                .andExpect(jsonPath("$.rows[2].myStudentCount").value(1));
     }
 
     @Test
@@ -197,9 +245,9 @@ class OsgLeadMentorPositionControllerTest
         mockMvc.perform(get("/lead-mentor/positions/list")
                 .header("Authorization", "Bearer lead-mentor-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rows[0].positionId").value(101))
-                .andExpect(jsonPath("$.rows[0].studentCount").value(1))
-                .andExpect(jsonPath("$.rows[0].myStudentCount").value(1));
+                .andExpect(jsonPath("$.rows[1].positionId").value(101))
+                .andExpect(jsonPath("$.rows[1].studentCount").value(1))
+                .andExpect(jsonPath("$.rows[1].myStudentCount").value(1));
     }
 
     @Test
@@ -215,10 +263,11 @@ class OsgLeadMentorPositionControllerTest
     @Test
     void listShouldReflectUpdatedScopedCountsOnSubsequentRequests() throws Exception
     {
+        // 排序：[102 hidden, 101 visible, 103 visible] — 103 在 rows[2]
         mockMvc.perform(get("/lead-mentor/positions/list")
                 .header("Authorization", "Bearer lead-mentor-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rows[1].myStudentCount").value(1));
+                .andExpect(jsonPath("$.rows[2].myStudentCount").value(1));
 
         List<OsgJobApplication> updated = new ArrayList<>(applicationRowsRef.get());
         updated.add(buildApplication(5004L, 3004L, 103L, 810L, "Dylan", "已投递", "辅导中", "2026-03-20 08:00:00"));
@@ -227,20 +276,23 @@ class OsgLeadMentorPositionControllerTest
         mockMvc.perform(get("/lead-mentor/positions/list")
                 .header("Authorization", "Bearer lead-mentor-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rows[1].myStudentCount").value(2))
-                .andExpect(jsonPath("$.rows[1].studentCount").value(2));
+                .andExpect(jsonPath("$.rows[2].myStudentCount").value(2))
+                .andExpect(jsonPath("$.rows[2].studentCount").value(2));
     }
 
     @Test
-    void metaShouldReturnVisibleFilterOptions() throws Exception
+    void metaShouldDeriveDisplayStatusesFromRealRows() throws Exception
     {
+        // FIX-A: displayStatuses 由数据派生（含 hidden + visible），与 admin meta 一致
         mockMvc.perform(get("/lead-mentor/positions/meta")
                 .header("Authorization", "Bearer lead-mentor-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.categories[0].value").value("fulltime"))
                 .andExpect(jsonPath("$.data.companies[0].value").value("Goldman Sachs"))
-                .andExpect(jsonPath("$.data.displayStatuses[0].value").value("visible"))
+                .andExpect(jsonPath("$.data.displayStatuses.length()").value(2))
+                .andExpect(jsonPath("$.data.displayStatuses[0].value").value("hidden"))
+                .andExpect(jsonPath("$.data.displayStatuses[1].value").value("visible"))
                 .andExpect(jsonPath("$.data.sortOptions[0].value").value("publishTime:desc"));
     }
 

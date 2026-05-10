@@ -96,7 +96,7 @@
 
       <template v-else-if="column.dataIndex === 'targetMajors' || column.key === 'targetMajors'">
         <template v-if="record.targetMajors">
-          <a-tag v-for="m in splitCsv(record.targetMajors)" :key="m" color="cyan">{{ m }}</a-tag>
+          <a-tag v-for="m in splitCsv(record.targetMajors)" :key="m" color="cyan">{{ majorDirectionMap?.[m] || m }}</a-tag>
         </template>
         <span v-else class="osg-positions-list-table__muted">-</span>
       </template>
@@ -173,11 +173,14 @@ const props = withDefaults(
     loading?: boolean
     /** 自定义列定义（覆盖默认 9 列）；不传时用 DEFAULT_COLUMNS */
     columns?: ColumnConfig[]
+    /** 主攻方向 dictValue→dictLabel map（osg_major_direction）；缺失时回退原值 */
+    majorDirectionMap?: Record<string, string>
   }>(),
   {
     pagination: false,
     loading: false,
     columns: undefined,
+    majorDirectionMap: undefined,
   },
 )
 

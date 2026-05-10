@@ -92,12 +92,21 @@ export interface LeadMentorPositionListItem {
   projectYear?: string
   publishTime?: string
   deadline?: string
+  // FIX-A: 与 admin 字段对齐
+  deadlineText?: string
+  displayStartTime?: string
+  displayEndTime?: string
   displayStatus?: string
   positionUrl?: string
   applicationNote?: string
+  applicationAttachments?: string
   studentCount?: number
   myStudentCount?: number
   targetMajors?: string
+  createBy?: string
+  createTime?: string
+  updateBy?: string
+  updateTime?: string
 }
 
 export interface LeadMentorPositionMetaOption {

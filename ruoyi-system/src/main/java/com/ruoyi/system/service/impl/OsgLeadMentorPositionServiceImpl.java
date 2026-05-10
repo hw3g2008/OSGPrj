@@ -25,8 +25,6 @@ import com.ruoyi.system.service.IOsgLeadMentorPositionService;
 @Service
 public class OsgLeadMentorPositionServiceImpl implements IOsgLeadMentorPositionService
 {
-    private static final String PUBLIC_DISPLAY_STATUS = "visible";
-
     @Autowired
     private OsgPositionMapper positionMapper;
 
@@ -52,7 +50,8 @@ public class OsgLeadMentorPositionServiceImpl implements IOsgLeadMentorPositionS
         List<OsgPosition> rows = positionMapper.selectPositionList(normalizeQuery(null));
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("categories", buildOptions(rows, OsgPosition::getPositionCategory));
-        payload.put("displayStatuses", List.of(option(PUBLIC_DISPLAY_STATUS, PUBLIC_DISPLAY_STATUS)));
+        // FIX-A: displayStatuses 由实际数据派生（同 admin 行为），不再硬编码 visible
+        payload.put("displayStatuses", buildOptions(rows, OsgPosition::getDisplayStatus));
         payload.put("industries", buildOptions(rows, OsgPosition::getIndustry));
         payload.put("companyTypes", buildOptions(rows, OsgPosition::getIndustry));
         payload.put("companies", buildOptions(rows, OsgPosition::getCompanyName));
@@ -104,9 +103,10 @@ public class OsgLeadMentorPositionServiceImpl implements IOsgLeadMentorPositionS
             normalized.setCity(trimToNull(query.getCity()));
             normalized.setRecruitmentCycle(trimToNull(query.getRecruitmentCycle()));
             normalized.setProjectYear(trimToNull(query.getProjectYear()));
+            normalized.setDisplayStatus(trimToNull(query.getDisplayStatus()));
             normalized.setParams(query.getParams());
         }
-        normalized.setDisplayStatus(PUBLIC_DISPLAY_STATUS);
+        // FIX-A: 不再强制 displayStatus="visible"，班主任端与后台一致全量可见
         return normalized;
     }
 
@@ -139,7 +139,8 @@ public class OsgLeadMentorPositionServiceImpl implements IOsgLeadMentorPositionS
         row.put("positionCategory", defaultText(position.getPositionCategory()));
         row.put("industry", defaultText(position.getIndustry()));
         row.put("companyName", defaultText(position.getCompanyName()));
-        row.put("companyType", defaultText(position.getIndustry()));
+        // FIX-A: companyType 取真正的 getCompanyType（修复原先错填为 industry 的 bug，与 admin 对齐）
+        row.put("companyType", defaultText(position.getCompanyType()));
         row.put("companyWebsite", defaultText(position.getCompanyWebsite()));
         row.put("positionName", defaultText(position.getPositionName()));
         row.put("department", defaultText(position.getDepartment()));
@@ -149,10 +150,19 @@ public class OsgLeadMentorPositionServiceImpl implements IOsgLeadMentorPositionS
         row.put("projectYear", defaultText(position.getProjectYear()));
         row.put("publishTime", position.getPublishTime());
         row.put("deadline", position.getDeadline());
+        // FIX-A: 与 admin 字段对齐 — 截止文案 / 展示起止 / 投递备注与附件 / 审计字段
+        row.put("deadlineText", defaultText(position.getDeadlineText()));
+        row.put("displayStartTime", position.getDisplayStartTime());
+        row.put("displayEndTime", position.getDisplayEndTime());
         row.put("displayStatus", defaultText(position.getDisplayStatus()));
         row.put("positionUrl", defaultText(position.getPositionUrl()));
         row.put("applicationNote", defaultText(position.getApplicationNote()));
+        row.put("applicationAttachments", defaultText(position.getApplicationAttachments()));
         row.put("targetMajors", defaultText(position.getTargetMajors()));
+        row.put("createBy", defaultText(position.getCreateBy()));
+        row.put("createTime", position.getCreateTime());
+        row.put("updateBy", defaultText(position.getUpdateBy()));
+        row.put("updateTime", position.getUpdateTime());
         row.put("studentCount", myStudentCount);
         row.put("myStudentCount", myStudentCount);
         return row;

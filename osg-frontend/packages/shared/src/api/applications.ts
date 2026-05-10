@@ -22,7 +22,7 @@ export interface StudentApplicationCoachingRecord {
 
 export interface StudentApplicationCoachingPayload {
   interviewStage: string
-  interviewTime?: string
+  interviewTime?: string | null
   city?: string
   companyInterviewer?: string
   requestedMentorCount?: string

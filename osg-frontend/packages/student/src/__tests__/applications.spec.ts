@@ -106,6 +106,18 @@ describe('student applications source contract', () => {
     expect(applicationsSource).not.toContain('requestStudentPositionCoaching')
   })
 
+  it('FIX-D: 面试时间支持"未确定"，提交时 interviewTime 置 null 透传', () => {
+    expect(applicationsSource).toContain('interviewTimeUndetermined')
+    expect(applicationsSource).toContain('id="update-interview-time-undetermined"')
+    expect(applicationsSource).toContain(':disabled="progressForm.interviewTimeUndetermined"')
+    expect(applicationsSource).toContain(':required="!progressForm.interviewTimeUndetermined"')
+    expect(applicationsSource).toContain(
+      'interviewTime: progressForm.value.interviewTimeUndetermined ? null : progressForm.value.interviewTime',
+    )
+    expect(applicationsSource).toContain('!form.interviewTimeUndetermined && !form.interviewTime')
+    expect(applicationsSource).toContain('面试时间：未确定')
+  })
+
   // [本期不落地] 面试安排、更新申请进度 等 S-005 行为
   it.skip('defines the modal and action trigger coverage required by story S-005', () => {
     const triggerMatches = applicationsSource.match(/actionId:/g) ?? []

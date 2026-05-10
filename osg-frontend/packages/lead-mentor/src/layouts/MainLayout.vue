@@ -72,7 +72,7 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    title: '教学中心 Teaching',
+    title: '学员中心 Student Center',
     items: [
       {
         path: '/teaching/students',
@@ -80,6 +80,11 @@ const navigationGroups: NavigationGroup[] = [
         iconClass: 'mdi-account-group',
         activePaths: ['/teaching/students'],
       },
+    ],
+  },
+  {
+    title: '教学中心 Teaching',
+    items: [
       {
         path: '/teaching/class-records',
         label: '课程记录 Class Records',

@@ -109,6 +109,7 @@
           <PositionsListTable
             :positions="mappedListRows"
             :pagination="tablePagination"
+            :major-direction-map="majorDirectionMap"
             @change="handleTableChange"
             @open-students="handleListOpenStudents"
           />
@@ -275,6 +276,20 @@ const filters = reactive<LeadMentorPositionListParams>({
 // dict-ssot-remediation §4：公司 / 地区筛选下拉 = 字典 ∪ positionMeta 历史聚合值
 const { items: companyDictOptions, load: loadCompanyDict } = useDictFacade('osg_company_name')
 const { items: regionDictOptions, load: loadRegionDict } = useDictFacade('osg_region')
+// FIX-C: 主攻方向字典回显（osg_major_direction），用于列表 a-tag 文本映射
+const { items: majorDirectionDictOptions, load: loadMajorDirectionDict } = useDictFacade('osg_major_direction')
+
+const regionDictMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const opt of regionDictOptions.value) map[opt.value] = opt.label
+  return map
+})
+
+const majorDirectionMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const opt of majorDirectionDictOptions.value) map[opt.value] = opt.label
+  return map
+})
 
 const filterOptions = computed<FilterOptions>(() => ({
   categories: positionMeta.value?.categories ?? [],
@@ -704,6 +719,7 @@ onMounted(() => {
   void loadIndustryMeta()
   void loadCompanyDict().catch(() => undefined)
   void loadRegionDict().catch(() => undefined)
+  void loadMajorDirectionDict().catch(() => undefined)
   void loadPageData()
 })
 
@@ -730,7 +746,13 @@ function toPositionJob(
     // industryTone 直接作为 CSS class 使用：`industry-${tone}`，绑定字典 css_class 字段
     industryTone: `industry-${industryMetaResolved.tone}`,
     jobType: categoryLabels[row.positionCategory] || row.positionCategory || '-',
-    location: row.department || row.city || row.region || '-',
+    // FIX-C: 地区优先取字典 label（osg_region），未命中则回退 department/city/原值
+    location:
+      regionDictMap.value[row.region ?? ''] ||
+      row.department ||
+      row.city ||
+      row.region ||
+      '-',
     cycleLabel: row.recruitmentCycle || row.projectYear || '-',
     cycleTone: resolveCycleTone(row.recruitmentCycle),
     recruitYear: row.projectYear || '-',

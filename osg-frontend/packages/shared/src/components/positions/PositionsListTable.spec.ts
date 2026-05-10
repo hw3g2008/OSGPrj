@@ -90,4 +90,17 @@ describe('PositionsListTable (smoke)', () => {
     })
     expect(wrapper.exists()).toBe(true)
   })
+
+  it('5. FIX-C: 接受 majorDirectionMap prop（dictValue→dictLabel 回显）', () => {
+    wrapper = mount(PositionsListTable, {
+      props: {
+        positions: [makeRow({ targetMajors: 'finance,cs' })],
+        majorDirectionMap: { finance: '金融', cs: '计算机' },
+      },
+      global: {
+        stubs: { 'a-table': true, 'a-tag': true, 'a-button': true, 'a-space': true },
+      },
+    })
+    expect(wrapper.exists()).toBe(true)
+  })
 })

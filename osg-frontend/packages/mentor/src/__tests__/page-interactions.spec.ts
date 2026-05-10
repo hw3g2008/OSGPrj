@@ -187,32 +187,8 @@ describe('mentor page interactions', () => {
     expect(wrapper.text()).toContain('需要补充课堂总结')
   })
 
-  it('renders a fallback student label and confirms new job overview rows', async () => {
-    vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/job-overview/list') {
-        return { rows: [createJobOverviewRow()] }
-      }
-      if (url === '/api/mentor/job-overview/calendar') {
-        return []
-      }
-      return { rows: [] }
-    })
-    vi.mocked(http.put).mockResolvedValue({})
-
-    const wrapper = mount(JobOverviewPage)
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('学员843')
-
-    const confirmButton = wrapper.findAll('button').find((button) => button.text().includes('确认'))
-    expect(confirmButton).toBeTruthy()
-
-    await confirmButton!.trigger('click')
-    await flushPromises()
-
-    expect(http.put).toHaveBeenCalledWith('/api/mentor/job-overview/7/confirm')
-    expect(wrapper.text()).toContain('辅导中')
-  })
+  // FIX-E: mentor 端 job overview 改为只读 5 列；fallback 名称 / 无确认按钮 由
+  // src/__tests__/job-overview.behavior.spec.ts 的源码契约覆盖。
 
   it('confirms mock practice with practiceId and opens the detail modal', async () => {
     vi.mocked(http.get).mockResolvedValue({
