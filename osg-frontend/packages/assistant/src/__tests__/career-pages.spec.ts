@@ -354,13 +354,13 @@ describe('assistant career pages', () => {
     wrapper.unmount()
   })
 
-  it('job overview page source aligns with Admin Ant Design shell and prototype dual-tab design', () => {
+  it('job overview page collapses to single managed tab anchored on coachingId', () => {
     const src = fs.readFileSync(
       path.resolve(__dirname, '../views/career/job-overview/index.vue'),
       'utf-8',
     )
 
-    // PageHeader 迁移到 @osg/shared 后的新接口（D-Bilingual P1）
+    // PageHeader（保留 D-Bilingual 接口）
     expect(src).toContain('<PageHeader')
     expect(src).toContain('title-zh="学员求职总览"')
     expect(src).toContain('title-en="Job Overview"')
@@ -369,50 +369,52 @@ describe('assistant career pages', () => {
     // 使用 osg-page 全局布局 class
     expect(src).toContain('class="osg-page"')
 
-    // 使用 Ant Design Vue 组件（对齐 admin 框架）
+    // Ant Design Vue 组件
     expect(src).toContain('<a-card')
     expect(src).toContain('<a-table')
-    // <a-tag> 已抽到共享 StageTag / CoachingStatusTag cell
     expect(src).toContain('<StageTag')
     expect(src).toContain('<a-input')
     expect(src).toContain('<a-select')
     expect(src).toContain('<a-button')
-    expect(src).toContain('<a-alert')
 
-    // 原型设计：双 Tab（我辅导的学员 + 我管理的学员）
-    expect(src).toContain('我辅导的学员')
+    // §02 §5.1：助教端只显示一栏「我管理的学员」，无双 tab 切换
     expect(src).toContain('我管理的学员')
-    expect(src).toContain("activeTab === 'coaching'")
-    expect(src).toContain("activeTab === 'managed'")
+    expect(src).not.toContain("activeTab === 'coaching'")
+    expect(src).not.toContain("activeTab === 'managed'")
+    expect(src).not.toContain('我辅导的学员')
+    expect(src).not.toContain('coachingColumns')
+    expect(src).not.toContain('managedColumns')
 
-    // coaching 表 6 列（无导师列）
-    expect(src).toContain('coachingColumns')
-    // managed 表 7 列（多导师列）
-    expect(src).toContain('managedColumns')
+    // row-key 优先 coachingId（fallback application id 兼容期）
+    expect(src).toContain('coachingId ?? record.id')
+
+    // §02 §5.1 列结构：学员 / 公司岗位 / 城市 / 面试阶段 / 面试时间 / 导师 / 最近评分 / 操作
+    expect(src).toContain("title: '城市'")
+    expect(src).toContain("dataIndex: 'location'")
+    expect(src).toContain("title: '导师'")
     expect(src).toContain("dataIndex: 'mentorName'")
+    expect(src).toContain("title: '最近评分'")
+    expect(src).toContain("dataIndex: 'latestRating'")
+    // 删除「辅导状态」列
+    expect(src).not.toContain("title: '辅导状态'")
+    expect(src).not.toContain("dataIndex: 'coachingStatus'")
 
-    // 表格水平滚动
-    expect(src).toContain(':scroll="{ x: 900 }"')
-    expect(src).toContain(':scroll="{ x: 1100 }"')
-
-    // 日历区保留（已抽取为 @osg/shared <InterviewCalendar> 组件）
+    // 日历区保留
     expect(src).toContain('<InterviewCalendar')
     expect(src).toContain(':events="calendarRecords"')
     expect(src).toContain("from '@osg/shared/components'")
 
-    // 行高亮（原型设计）
+    // 行高亮（保留视觉提示）
     expect(src).toContain('row-new')
     expect(src).toContain('row-coaching')
     expect(src).toContain('row-pending')
     expect(src).toContain('row-ended')
 
-    // 筛选条件（原型设计：类型/公司/状态）
-    expect(src).toContain('辅导学员')
-    expect(src).toContain('管理学员')
+    // 不再保留 type 筛选（双 tab 已删，下面 select 文案断言为子串："学员" 在标题里仍存在故不直接断言）
     expect(src).toContain('全部公司')
     expect(src).toContain('全部状态')
 
-    // 只读：不包含 admin 端的管理入口
+    // 只读：不包含 admin 端管理入口
     expect(src).not.toContain('待分配导师')
     expect(src).not.toContain('分配导师')
     expect(src).not.toContain('更换导师')
@@ -425,95 +427,72 @@ describe('assistant career pages', () => {
     expect(src).toContain('跟进详情')
   })
 
-  it('mock practice page source aligns with Admin Ant Design shell and prototype dual-tab design', () => {
+  it('mock practice page collapses to single managed tab without stats cards', () => {
     const src = fs.readFileSync(
       path.resolve(__dirname, '../views/career/mock-practice/index.vue'),
       'utf-8',
     )
 
-    // PageHeader 迁移到 @osg/shared 后的新接口（D-Bilingual P1）、description 严格采用原型文案
+    // PageHeader（保留原型文案）
     expect(src).toContain('<PageHeader')
     expect(src).toContain('title-zh="模拟应聘管理"')
     expect(src).toContain('title-en="Mock Practice"')
     expect(src).toContain('description="处理学员的模拟面试、人际关系测试、期中考试申请"')
     expect(src).toContain("from '@osg/shared/components/PageHeader'")
 
-    // 使用 osg-page 全局布局 class
     expect(src).toContain('class="osg-page"')
 
-    // 使用 Ant Design Vue 组件（对齐 admin 框架）
-    expect(src).toContain('<a-row')
-    expect(src).toContain('<a-col')
-    expect(src).toContain('<a-card')
-    expect(src).toContain('<a-table')
-    expect(src).toContain('<a-tag')
-    expect(src).toContain('<a-input')
-    expect(src).toContain('<a-select')
-    expect(src).toContain('<a-button')
-    expect(src).toContain('<a-alert')
-    expect(src).toContain('<a-modal')
-    expect(src).toContain('<a-descriptions')
+    // 删除统计卡片（§04 §4.1 删 statsCards）
+    expect(src).not.toContain('statsCards')
+    expect(src).not.toContain("label: '我辅导的'")
+    expect(src).not.toContain("label: '已完成'")
+    expect(src).not.toContain("label: '累计课时'")
 
-    // 原型设计：统计卡片 4 项（我辅导的/我管理的/已完成/累计课时）
-    expect(src).toContain("label: '我辅导的'")
-    expect(src).toContain("label: '我管理的'")
-    expect(src).toContain("label: '已完成'")
-    expect(src).toContain("label: '累计课时'")
-    // 统计卡片颜色按原型
-    expect(src).toContain("color: '#3B82F6'")
-    expect(src).toContain("color: '#22C55E'")
-    expect(src).toContain("color: '#8B5CF6'")
-
-    // 原型设计：双 Tab（我辅导的学员 + 我管理的学员）
-    expect(src).toContain('我辅导的学员')
+    // §04 §4.1：单栏「我管理的学员」，无双 tab
     expect(src).toContain('我管理的学员')
-    expect(src).toContain("activeTab === 'coaching'")
-    expect(src).toContain("activeTab === 'managed'")
-    expect(src).toContain('id="mock-tab-coaching"')
-    expect(src).toContain('id="mock-tab-managed"')
+    expect(src).not.toContain('我辅导的学员')
+    expect(src).not.toContain("activeTab === 'coaching'")
+    expect(src).not.toContain("activeTab === 'managed'")
+    expect(src).not.toContain('id="mock-tab-coaching"')
+    expect(src).not.toContain('id="mock-tab-managed"')
+    expect(src).not.toContain('coachingColumns')
+    expect(src).not.toContain('managedColumns')
 
-    // Banner 文案按原型
-    expect(src).toContain('以下是由您亲自辅导的学员模拟应聘记录')
-    expect(src).toContain('以下是您管理的学员的模拟应聘记录（由其他导师辅导）')
+    // 旧双栏 banner 文案删除
+    expect(src).not.toContain('以下是由您亲自辅导的学员模拟应聘记录')
+    expect(src).not.toContain('以下是您管理的学员的模拟应聘记录（由其他导师辅导）')
 
-    // coaching 表 6 列（含课程反馈，无导师列；独立操作列为原型增强）
-    expect(src).toContain('coachingColumns')
-    expect(src).toContain("title: '课程反馈'")
-    expect(src).toContain("title: '已上课时'")
+    // §04 §4.2 筛选只保留「类型」
+    expect(src).not.toContain('搜索导师姓名')
+    expect(src).not.toContain('搜索学员姓名/ID')
+    expect(src).not.toContain("placeholder=\"全部状态\"")
 
-    // managed 表 7 列（多辅导导师列）
-    expect(src).toContain('managedColumns')
-    expect(src).toContain("title: '辅导导师'")
-    expect(src).toContain("dataIndex: 'mentorName'")
+    // §04 §4.3 列：学生 ID / 学生姓名 / 类型 / 申请时间 / 辅导老师 / 已上报课消数 / 操作
+    expect(src).toContain("title: '学生 ID'")
+    expect(src).toContain("title: '学生姓名'")
+    expect(src).toContain("title: '类型'")
+    expect(src).toContain("title: '申请时间'")
+    expect(src).toContain("title: '辅导老师'")
+    expect(src).toContain("title: '已上报课消数'")
+    expect(src).toContain("dataIndex: 'reportedLessonCount'")
 
-    // 表格水平滚动
-    expect(src).toContain(':scroll="{ x: 900 }"')
-    expect(src).toContain(':scroll="{ x: 1100 }"')
+    // 旧列删除
+    expect(src).not.toContain("title: '已上课时'")
+    expect(src).not.toContain("title: '课程反馈'")
+    expect(src).not.toContain("dataIndex: 'completedHours'")
+    expect(src).not.toContain("dataIndex: 'feedback'")
 
-    // 筛选按钮文案按原型（「筛选」非「搜索」）
-    expect(src).toContain('筛选\n          </a-button>')
-    expect(src).toContain('重置')
+    // 「确认」按钮等仅 mentor 视角元素删除
+    expect(src).not.toContain('isNewAssigned')
+    expect(src).not.toContain('confirmRecord')
+    expect(src).not.toContain('confirmAssistantMockPractice')
 
-    // 管理 Tab 多出「导师」搜索框
-    expect(src).toContain('搜索导师姓名')
-
-    // 行高亮（原型设计：新分配红色渐变 + 期中考紫色）
-    expect(src).toContain('row-new')
-    expect(src).toContain('row-midterm')
-    expect(src).toContain('linear-gradient(90deg, #FEE2E2, #FEF2F2)')
-    expect(src).toContain('background: #F3E8FF')
-
-    // 新分配行操作：绿色「确认」按钮
-    expect(src).toContain('isNewAssigned')
-    expect(src).toContain('confirmRecord')
-    expect(src).toContain('background: #22C55E; border-color: #22C55E;')
-
-    // 类型选项按原型
+    // 类型选项保留
     expect(src).toContain("value: 'mock_interview', label: '模拟面试'")
     expect(src).toContain("value: 'relation_test', label: '人际关系测试'")
     expect(src).toContain("value: 'midterm', label: '期中考试'")
 
-    // 只读：不包含 admin 端的管理入口（原型无这些）
+    // 不包含 admin 入口
     expect(src).not.toContain('分配导师')
     expect(src).not.toContain('录入反馈')
     expect(src).not.toContain('新建模拟应聘')
