@@ -34,7 +34,7 @@
             @click="item.comingSoon ? message.info('敬请期待') : navigate(item.path)"
           >
             <span class="mdi" :class="item.iconClass" aria-hidden="true" />
-            <span>{{ item.title }}</span>
+            <OsgEllipsisText :text="item.title" class="nav-item__label" />
             <span v-if="false" class="nav-badge">{{ item.badge }}</span>
           </button>
         </template>
@@ -92,6 +92,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
 import { useIdleLogout } from '@osg/shared/composables'
+import { OsgEllipsisText } from '@osg/shared/components'
 import { useUserStore } from '@/stores/user'
 import ProfileModal from '@/components/ProfileModal.vue'
 
@@ -361,6 +362,11 @@ onBeforeUnmount(() => {
   font-size: 20px;
   line-height: 1;
   flex-shrink: 0;
+}
+
+.nav-item__label {
+  flex: 1;
+  min-width: 0;
 }
 
 .nav-item:hover {

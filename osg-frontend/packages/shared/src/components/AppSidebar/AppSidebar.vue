@@ -30,7 +30,7 @@
           @click.prevent="handleNavClick(item)"
         >
           <i class="mdi" :class="item.iconClass" aria-hidden="true" />
-          <span>{{ item.label }}</span>
+          <OsgEllipsisText :text="item.label" class="nav-item__label" />
           <span v-if="hasBadge(item)" class="nav-badge">{{ item.badge }}</span>
         </a>
       </template>
@@ -73,6 +73,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 
+import OsgEllipsisText from '../OsgEllipsisText/OsgEllipsisText.vue'
 import type { AppSidebarEmits, NavigationGroup, NavigationItem } from './types'
 
 const props = withDefaults(
@@ -277,6 +278,12 @@ onBeforeUnmount(() => {
   width: 24px;
   text-align: center;
   font-size: 20px;
+  flex-shrink: 0;
+}
+
+.nav-item__label {
+  flex: 1;
+  min-width: 0;
 }
 
 .nav-badge {
