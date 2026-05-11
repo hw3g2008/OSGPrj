@@ -18,7 +18,7 @@
     </div>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+      <a-form layout="inline" style="margin-bottom: var(--osg-toolbar-mb); gap: var(--osg-space-3); flex-wrap: wrap">
         <a-form-item label="日期">
           <a-space>
             <a-date-picker v-model:value="filters.startDate" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 140px" />
@@ -91,7 +91,7 @@
           <template v-else-if="column.dataIndex === 'contractAmount'">
             <template v-if="record.currency === 'GBP'">
               <div><strong>£{{ (record.amountGbp || 0).toLocaleString() }}</strong></div>
-              <div style="color: #9ca3af; font-size: 12px">${{ (record.amountUsd || 0).toLocaleString() }} 等值</div>
+              <div style="color: #9ca3af; font-size: var(--osg-font-size-sm)">${{ (record.amountUsd || 0).toLocaleString() }} 等值</div>
             </template>
             <template v-else>
               <strong>${{ (record.amountUsd || record.contractAmount || 0).toLocaleString() }}</strong>
@@ -99,10 +99,10 @@
           </template>
           <template v-else-if="column.dataIndex === 'totalHours'">
             <strong>{{ record.remainingHours ?? record.totalHours }}</strong>
-            <span style="color: #9ca3af; font-size: 12px"> / {{ record.totalHours }}h</span>
+            <span style="color: #9ca3af; font-size: var(--osg-font-size-sm)"> / {{ record.totalHours }}h</span>
           </template>
           <template v-else-if="column.dataIndex === 'period'">
-            <span style="color: #566178; font-size: 12px">{{ formatDate(record.startDate) }} ~ {{ formatDate(record.endDate) }}</span>
+            <span style="color: #566178; font-size: var(--osg-font-size-sm)">{{ formatDate(record.startDate) }} ~ {{ formatDate(record.endDate) }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'renewalReason'">
             {{ formatRenewalReason(record.renewalReason) || '-' }}

@@ -48,7 +48,7 @@
         v-if="selectedTab === 'blacklist'"
         type="warning"
         show-icon
-        style="margin-bottom: 16px"
+        style="margin-bottom: var(--osg-space-4)"
       >
         <template #message><strong>黑名单限制</strong></template>
         <template #description>黑名单学员可以正常登录学生端，但<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能）</template>
@@ -74,14 +74,14 @@
             </a-button>
           </template>
           <template v-else-if="column.dataIndex === 'email'">
-            <span style="color: #566178; font-size: 12px">{{ record.email || '-' }}</span>
+            <span style="color: #566178; font-size: var(--osg-font-size-sm)">{{ record.email || '-' }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'leadMentorName'">
-            <span style="color: #566178; font-size: 12px">{{ record.leadMentorName || '-' }}</span>
+            <span style="color: #566178; font-size: var(--osg-font-size-sm)">{{ record.leadMentorName || '-' }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'school'">
             <a-tooltip :title="record.school || '-'">
-              <span style="color: #566178; font-size: 12px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.school || '-' }}</span>
+              <span style="color: #566178; font-size: var(--osg-font-size-sm); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.school || '-' }}</span>
             </a-tooltip>
           </template>
           <template v-else-if="column.dataIndex === 'majorDirection'">
@@ -118,7 +118,7 @@
           <template v-else-if="column.dataIndex === 'accountStatus'">
             <div style="display: flex; flex-direction: column; gap: 4px">
               <a-tag :color="getStatusTagColor(record.accountStatus)">{{ formatStatus(record.accountStatus) }}</a-tag>
-              <span style="font-size: 11px; color: #9ca3af">{{ getStatusNote(record) }}</span>
+              <span style="font-size: var(--osg-font-size-xs); color: #9ca3af">{{ getStatusNote(record) }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'action'">

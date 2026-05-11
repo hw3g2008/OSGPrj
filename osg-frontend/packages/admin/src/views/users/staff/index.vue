@@ -24,7 +24,7 @@
     </a-alert>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" style="margin-bottom: 16px" data-field-name="导师管理页">
+      <a-form layout="inline" style="margin-bottom: var(--osg-toolbar-mb)" data-field-name="导师管理页">
         <a-form-item>
           <a-input v-model:value="filters.staffName" placeholder="搜索姓名/ID" allow-clear style="width: 180px" data-field-name="搜索框" @pressEnter="handleSearch" />
         </a-form-item>
@@ -73,7 +73,7 @@
         v-if="selectedTab === 'blacklist'"
         type="error"
         show-icon
-        style="margin-bottom: 16px"
+        style="margin-bottom: var(--osg-space-4)"
       >
         <template #message><strong>黑名单导师限制说明</strong></template>
         <template #description>黑名单中的导师<strong>无法登录系统</strong>，且无法访问任何业务模块</template>
@@ -107,8 +107,8 @@
           </template>
           <template v-else-if="column.dataIndex === 'contact'">
             <div style="display: flex; flex-direction: column; gap: 2px">
-              <span style="font-size: 12px; color: #64748b">{{ record.email || '-' }}</span>
-              <span style="font-size: 12px; color: #64748b">{{ record.phone || '-' }}</span>
+              <span style="font-size: var(--osg-font-size-sm); color: var(--text2, #64748b)">{{ record.email || '-' }}</span>
+              <span style="font-size: var(--osg-font-size-sm); color: var(--text2, #64748b)">{{ record.phone || '-' }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'staffType'">
@@ -143,7 +143,7 @@
                 </template>
                 <template v-else>-</template>
               </span>
-              <span style="font-size: 12px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.city ? dictLabel(cityItems, record.city) : '-' }}</span>
+              <span style="font-size: var(--osg-font-size-sm); color: var(--text2, #64748b); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.city ? dictLabel(cityItems, record.city) : '-' }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'companies'">
@@ -152,11 +152,11 @@
                 {{ formatCompaniesPreview(record.companies) }}
               </span>
             </a-tooltip>
-            <span v-else style="color: #94a3b8">-</span>
+            <span v-else style="color: var(--osg-text-muted)">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'rating'">
             <a-tag v-if="record.rating" color="gold">{{ dictLabel(ratingItems, record.rating) }}</a-tag>
-            <span v-else style="color: #94a3b8">-</span>
+            <span v-else style="color: var(--osg-text-muted)">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'hourlyRate'">
             <strong style="color: #0f766e">{{ formatHourlyRate(record.hourlyRate) }}</strong>
@@ -169,7 +169,7 @@
           <template v-else-if="column.dataIndex === 'accountStatus'">
             <div style="display: flex; flex-direction: column; gap: 4px">
               <a-tag :color="record.accountStatus === '1' ? 'orange' : 'green'">{{ formatStatus(record.accountStatus) }}</a-tag>
-              <span style="font-size: 11px; color: #94a3b8">{{ getStatusNote(record) }}</span>
+              <span style="font-size: var(--osg-font-size-xs); color: var(--osg-text-muted)">{{ getStatusNote(record) }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'action'">

@@ -2,7 +2,7 @@
   <div class="osg-page">
     <PageHeader title-zh="岗位管理" title-en="Job Tracker">
       <template #actions>
-        <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end">
+        <div style="display: flex; flex-direction: column; gap: var(--osg-toolbar-gap); align-items: flex-end">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
             <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
               <a-radio-button value="list">
@@ -12,7 +12,7 @@
                 <i class="mdi mdi-file-tree" style="margin-right: 4px"></i>下钻视图
               </a-radio-button>
             </a-radio-group>
-            <span v-if="meta.trafficSummary" style="color: #94a3b8; font-size: 12px">总浏览 {{ meta.trafficSummary.totalViews.toLocaleString('en-US') }} 次</span>
+            <span v-if="meta.trafficSummary" style="color: var(--osg-text-muted); font-size: var(--osg-font-size-sm)">总浏览 {{ meta.trafficSummary.totalViews.toLocaleString('en-US') }} 次</span>
           </div>
           <a-space wrap>
             <a-button :loading="downloading" @click="handleExport(false)">
@@ -45,7 +45,7 @@
     </div>
 
     <a-card :bordered="false">
-      <a-form layout="inline" style="margin-bottom: 16px; gap: 10px; flex-wrap: wrap">
+      <a-form layout="inline" style="margin-bottom: var(--osg-toolbar-mb); gap: var(--osg-toolbar-gap); flex-wrap: wrap">
         <a-form-item>
           <a-select v-model:value="filters.positionCategory" placeholder="全部分类" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.categories" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
@@ -163,7 +163,7 @@
                       <a-tag>{{ getVisibleCompanyPositions(industry.industry, company).length }} 个岗位</a-tag>
                       <a-tag color="green">{{ getVisibleCompanyStatusCount(industry.industry, company, 'open') }} 开放</a-tag>
                       <a-button type="link" size="small" @click="openStudentsModal(company.positions[0])">{{ company.studentCount }}人</a-button>
-                      <a v-if="company.companyWebsite" :href="company.companyWebsite" target="_blank" rel="noreferrer" style="font-size: 12px">
+                      <a v-if="company.companyWebsite" :href="company.companyWebsite" target="_blank" rel="noreferrer" style="font-size: var(--osg-font-size-sm)">
                         <i class="mdi mdi-web" aria-hidden="true" /> {{ company.companyName }} 官网
                       </a>
                     </a-space>
@@ -179,7 +179,7 @@
                       <template #bodyCell="{ column, record: position }">
                         <template v-if="column.dataIndex === 'positionName'">
                           <a v-if="position.positionUrl" :href="position.positionUrl" target="_blank" rel="noreferrer" style="font-weight: 700">
-                            {{ position.positionName }} <i class="mdi mdi-open-in-new" style="font-size: 11px" aria-hidden="true" />
+                            {{ position.positionName }} <i class="mdi mdi-open-in-new" style="font-size: var(--osg-font-size-xs)" aria-hidden="true" />
                           </a>
                           <span v-else>{{ position.positionName }}</span>
                           <div v-if="position.applicationNote" style="color: #f59e0b; font-size: 10px; margin-top: 2px">{{ position.applicationNote }}</div>
@@ -238,7 +238,7 @@
               <template v-if="column.dataIndex === 'positionName'">
                 <a-tooltip :title="record.positionName || '-'">
                   <a v-if="record.positionUrl" :href="record.positionUrl" target="_blank" rel="noreferrer" class="positions-list__cell-text positions-list__cell-link">
-                    {{ record.positionName }} <i class="mdi mdi-open-in-new" style="font-size: 11px" aria-hidden="true" />
+                    {{ record.positionName }} <i class="mdi mdi-open-in-new" style="font-size: var(--osg-font-size-xs)" aria-hidden="true" />
                   </a>
                   <span v-else class="positions-list__cell-text">{{ record.positionName }}</span>
                 </a-tooltip>
@@ -327,7 +327,7 @@
           </a-table>
         </template>
 
-        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; color: #6e80a4; font-size: 13px; font-weight: 600">
+        <div style="display: flex; align-items: center; gap: var(--osg-toolbar-gap); padding: 8px 0; color: #6e80a4; font-size: 13px; font-weight: 600">
           <span>共 {{ summary.companyCount }} 家公司</span>
           <span style="color: #c1cad9">|</span>
           <span style="color: #6b6ef7">● {{ summary.positionCount }} 个岗位</span>
