@@ -36,8 +36,8 @@ export interface PositionListItem {
   department?: string
   region: string
   city: string
-  recruitmentCycle: string
-  targetMajors?: string
+  recruitmentCycle: string | string[]
+  targetMajors?: string | string[]
   projectYear: string
   publishTime?: string
   deadline?: string

@@ -132,14 +132,15 @@
                   <a-tag color="purple">{{ industry.positionCount }} 个岗位</a-tag>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px">
-                  <a-tag color="green">{{ industry.openCount }} 开放</a-tag>
-                  <a-tag v-if="industry.positionCount - industry.openCount > 0" color="default">{{ industry.positionCount - industry.openCount }} 已关闭</a-tag>
-                  <span :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ industry.studentCount }} 投递学员</span>
+                  <a-tag class="positions-drilldown__filter-tag" color="green" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'open')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'open')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'open')">{{ getIndustryStatusCount(industry, 'open') }} 开放</a-tag>
+                  <a-tag v-if="getIndustryStatusCount(industry, 'not_started') > 0" class="positions-drilldown__filter-tag" color="blue" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'not_started')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'not_started')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'not_started')">{{ getIndustryStatusCount(industry, 'not_started') }} 未开始</a-tag>
+                  <a-tag v-if="getIndustryStatusCount(industry, 'closed') > 0" class="positions-drilldown__filter-tag" color="default" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'closed')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'closed')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'closed')">{{ getIndustryStatusCount(industry, 'closed') }} 已关闭</a-tag>
+                  <span class="positions-drilldown__filter-tag" :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'has_students')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'has_students')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'has_students')">{{ industry.studentCount }} 投递学员</span>
                 </div>
               </button>
 
               <div v-if="expandedIndustries.has(industry.industry)" class="positions-drilldown__companies">
-                <section v-for="company in industry.companies" :key="`${industry.industry}-${company.companyName}`" class="positions-drilldown__company">
+                <section v-for="company in getVisibleCompanies(industry)" :key="`${industry.industry}-${company.companyName}`" class="positions-drilldown__company">
                   <div class="positions-drilldown__company-head">
                     <button
                       type="button"
@@ -153,12 +154,12 @@
                       </div>
                       <div>
                         <strong>{{ company.companyName }}</strong>
-                        <span>{{ company.positionCount }} 个岗位</span>
+                        <span>{{ getVisibleCompanyPositions(industry.industry, company).length }} 个岗位</span>
                       </div>
                     </button>
                     <a-space>
-                      <a-tag>{{ company.positionCount }} 个岗位</a-tag>
-                      <a-tag color="green">{{ company.openCount }} 开放</a-tag>
+                      <a-tag>{{ getVisibleCompanyPositions(industry.industry, company).length }} 个岗位</a-tag>
+                      <a-tag color="green">{{ getVisibleCompanyStatusCount(industry.industry, company, 'open') }} 开放</a-tag>
                       <a-button type="link" size="small" @click="openStudentsModal(company.positions[0])">{{ company.studentCount }}人</a-button>
                       <a v-if="company.companyWebsite" :href="company.companyWebsite" target="_blank" rel="noreferrer" style="font-size: 12px">
                         <i class="mdi mdi-web" aria-hidden="true" /> {{ company.companyName }} 官网
@@ -167,7 +168,7 @@
                   </div>
 
                   <div v-if="isCompanyExpanded(industry.industry, company.companyName)" class="positions-drilldown__position-list">
-                    <a-table :columns="drilldownColumns" :data-source="company.positions" :row-key="(r: PositionListItem) => r.positionId" :pagination="false" size="small">
+                    <a-table :columns="drilldownColumns" :data-source="getVisibleCompanyPositions(industry.industry, company)" :row-key="(r: PositionListItem) => r.positionId" :pagination="false" size="small">
                       <template #bodyCell="{ column, record: position }">
                         <template v-if="column.dataIndex === 'positionName'">
                           <a v-if="position.positionUrl" :href="position.positionUrl" target="_blank" rel="noreferrer" style="font-weight: 700">
@@ -281,8 +282,9 @@
           <span>共 {{ summary.companyCount }} 家公司</span>
           <span style="color: #c1cad9">|</span>
           <span style="color: #6b6ef7">● {{ summary.positionCount }} 个岗位</span>
-          <span style="color: #22c55e">● {{ stats.openPositions }} 开放中</span>
-          <span style="color: #94a3b8">● {{ stats.closedPositions }} 已关闭</span>
+          <span style="color: #22c55e">● {{ drilldownStatusSummary.openPositions }} 开放中</span>
+          <span v-if="drilldownStatusSummary.notStartedPositions > 0" style="color: #3b82f6">● {{ drilldownStatusSummary.notStartedPositions }} 未开始</span>
+          <span style="color: #94a3b8">● {{ drilldownStatusSummary.closedPositions }} 已关闭</span>
         </div>
       </a-spin>
     </a-card>
@@ -400,6 +402,8 @@ const listColumns = [
   { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
 ]
 
+type DrilldownFilter = 'all' | 'open' | 'not_started' | 'closed' | 'has_students'
+
 const createEmptyMeta = (): PositionMeta => ({
   categories: [],
   displayStatuses: [],
@@ -442,6 +446,7 @@ const selectedPosition = ref<PositionListItem | null>(null)
 const createDefaults = ref<Partial<PositionPayload> | null>(null)
 const expandedIndustries = ref(new Set<string>())
 const expandedCompanies = ref(new Set<string>())
+const activeDrilldownFilters = ref<Record<string, DrilldownFilter>>({})
 
 const filters = reactive<PositionListParams>({
   pageNum: 1,
@@ -476,10 +481,11 @@ const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
 }
 
 const statsCards = computed(() => [
-  { key: 'total', label: '总岗位数', value: stats.value.totalPositions, tone: 'primary' },
-  { key: 'open', label: '开放中', value: stats.value.openPositions, tone: 'success' },
+  { key: 'total', label: '总岗位数', value: summary.value.positionCount, tone: 'primary' },
+  { key: 'open', label: '开放中', value: drilldownStatusSummary.value.openPositions, tone: 'success' },
   { key: 'closing', label: '即将截止', value: stats.value.closingSoonPositions, tone: 'warning' },
-  { key: 'closed', label: '已关闭', value: stats.value.closedPositions, tone: 'muted' },
+  { key: 'not-started', label: '未开始', value: drilldownStatusSummary.value.notStartedPositions, tone: 'info' },
+  { key: 'closed', label: '已关闭', value: drilldownStatusSummary.value.closedPositions, tone: 'muted' },
   { key: 'students', label: '投递学员', value: stats.value.studentApplications, tone: 'info' }
 ])
 
@@ -517,10 +523,41 @@ const sortedListRows = computed(() => {
   return rows
 })
 
+const getIndustryPositions = (industry: DrillDownIndustry) =>
+  industry.companies.flatMap((company) => company.positions)
+
+const normalizePositionStatus = (status?: string) => (status || '').trim().toLowerCase()
+
+const matchesDrilldownFilter = (position: PositionListItem, filter: DrilldownFilter) => {
+  const status = normalizePositionStatus(position.displayStatus)
+  if (filter === 'open') {
+    return status === 'visible'
+  }
+  if (filter === 'not_started') {
+    return status === 'not_started'
+  }
+  if (filter === 'closed') {
+    return status === 'hidden' || status === 'expired'
+  }
+  if (filter === 'has_students') {
+    return (position.studentCount || 0) > 0
+  }
+  return true
+}
+
 const summary = computed(() => ({
-  companyCount: new Set(positions.value.map((item) => item.companyName).filter(Boolean)).size,
-  positionCount: positions.value.length
+  companyCount: drillDownRows.value.reduce((total, industry) => total + industry.companyCount, 0),
+  positionCount: drillDownRows.value.reduce((total, industry) => total + industry.positionCount, 0)
 }))
+
+const drilldownStatusSummary = computed(() => {
+  const rows = drillDownRows.value.flatMap(getIndustryPositions)
+  return {
+    openPositions: rows.filter((position) => matchesDrilldownFilter(position, 'open')).length,
+    notStartedPositions: rows.filter((position) => matchesDrilldownFilter(position, 'not_started')).length,
+    closedPositions: rows.filter((position) => matchesDrilldownFilter(position, 'closed')).length
+  }
+})
 
 const hasExpandedContext = () =>
   Boolean(
@@ -578,6 +615,7 @@ const toRequestParams = (): PositionListParams => {
 }
 
 const syncExpandedState = (rows: DrillDownIndustry[]) => {
+  activeDrilldownFilters.value = {}
   if (!hasExpandedContext()) {
     expandedIndustries.value = new Set()
     expandedCompanies.value = new Set()
@@ -771,6 +809,10 @@ const handleExport = async (template: boolean) => {
 }
 
 const toggleIndustry = (industry: string) => {
+  activeDrilldownFilters.value = {
+    ...activeDrilldownFilters.value,
+    [industry]: 'all'
+  }
   const next = new Set(expandedIndustries.value)
   if (next.has(industry)) {
     next.delete(industry)
@@ -793,6 +835,43 @@ const toggleCompany = (industry: string, companyName: string) => {
 
 const isCompanyExpanded = (industry: string, companyName: string) =>
   expandedCompanies.value.has(`${industry}::${companyName}`)
+
+const expandIndustry = (industry: string) => {
+  const next = new Set(expandedIndustries.value)
+  next.add(industry)
+  expandedIndustries.value = next
+}
+
+const getIndustryFilter = (industry: string): DrilldownFilter =>
+  activeDrilldownFilters.value[industry] || 'all'
+
+const applyIndustryFilter = (industry: string, filter: DrilldownFilter) => {
+  activeDrilldownFilters.value = {
+    ...activeDrilldownFilters.value,
+    [industry]: filter
+  }
+  expandIndustry(industry)
+  const row = drillDownRows.value.find((item) => item.industry === industry)
+  if (row) {
+    const next = new Set(expandedCompanies.value)
+    row.companies
+      .filter((company) => company.positions.some((position) => matchesDrilldownFilter(position, filter)))
+      .forEach((company) => next.add(`${industry}::${company.companyName}`))
+    expandedCompanies.value = next
+  }
+}
+
+const getVisibleCompanyPositions = (industry: string, company: DrillDownCompany) =>
+  company.positions.filter((position) => matchesDrilldownFilter(position, getIndustryFilter(industry)))
+
+const getVisibleCompanies = (industry: DrillDownIndustry) =>
+  industry.companies.filter((company) => getVisibleCompanyPositions(industry.industry, company).length > 0)
+
+const getIndustryStatusCount = (industry: DrillDownIndustry, filter: DrilldownFilter) =>
+  getIndustryPositions(industry).filter((position) => matchesDrilldownFilter(position, filter)).length
+
+const getVisibleCompanyStatusCount = (industry: string, company: DrillDownCompany, filter: DrilldownFilter) =>
+  getVisibleCompanyPositions(industry, company).filter((position) => matchesDrilldownFilter(position, filter)).length
 
 const togglePublishSort = () => {
   publishSort.value = publishSort.value === 'desc' ? 'asc' : 'desc'
@@ -820,8 +899,12 @@ const formatStatus = (value?: string) => statusMap.value.get(value || '')?.label
 
 const getStatusTone = (value?: string) => statusMap.value.get(value || '')?.tone || 'success'
 
-const splitCycles = (value?: string) =>
-  (value || '').split(',').map((item) => item.trim()).filter(Boolean)
+const splitCycles = (value?: string | string[] | null) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean)
+  }
+  return (value || '').split(',').map((item) => item.trim()).filter(Boolean)
+}
 
 const formatCycle = (value?: string) => {
   if (!value) {
@@ -900,6 +983,9 @@ onMounted(() => {
 }
 .positions-drilldown__industry-main strong {
   font-size: 15px;
+}
+.positions-drilldown__filter-tag {
+  cursor: pointer;
 }
 .positions-drilldown__companies {
   display: flex;
