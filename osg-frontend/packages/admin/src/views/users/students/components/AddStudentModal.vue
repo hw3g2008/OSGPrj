@@ -930,20 +930,60 @@ const createPayload = (): AddStudentBasicInfo => ({
 const handleSubmit = async () => {
   const amountFields: string[] = ['currency', 'amountUsd']
   if (formState.currency === 'GBP') amountFields.push('amountGbp')
-  await formRef.value?.validate(['studentName', 'gender', 'email', 'phone', 'targetRegion', 'recruitmentCycle', ...amountFields, 'totalHours', 'startDate', 'endDate'])
-  if (!formState.majorDirections.length) {
-    message.error('请至少选择一个主攻方向')
+
+  const formFields = ['studentName', 'gender', 'email', 'phone', 'targetRegion', 'recruitmentCycle', ...amountFields, 'totalHours', 'startDate', 'endDate']
+
+  // 收集所有校验失败项，避免 first-fail 短路导致下方字段静默
+  const missingItems: string[] = []
+
+  // 1) a-form 内置校验：catch 失败字段，列入 missing
+  try {
+    await formRef.value?.validate(formFields)
+  } catch (err: any) {
+    const failedFields = Array.isArray(err?.errorFields) ? err.errorFields : []
+    failedFields.forEach((field: any) => {
+      const label = Array.isArray(field?.name) && field.name.length ? String(field.name[0]) : ''
+      if (label) {
+        missingItems.push(formFieldLabel(label))
+      }
+    })
+  }
+
+  // 2) 非 a-form 字段：手写校验，collect 模式而非 first-fail return
+  if (!formState.majorDirections.length) missingItems.push('主攻方向')
+  if (!formState.subDirections.length) missingItems.push('子方向')
+  if (!formState.contractAttachment) missingItems.push('合同附件')
+
+  if (missingItems.length === 0) {
+    emit('submit', createPayload())
     return
   }
-  if (!formState.subDirections.length) {
-    message.error('请至少选择一个子方向')
-    return
+
+  // 单项 → 具体提示；多项 → 汇总 toast
+  if (missingItems.length === 1) {
+    message.error(`请补充：${missingItems[0]}`)
+  } else {
+    message.error(`有 ${missingItems.length} 项必填项未填写，请检查：${missingItems.join('、')}`)
   }
-  if (!formState.contractAttachment) {
-    message.error('请上传合同附件（PDF / PNG / JPG / JPEG）')
-    return
+}
+
+/** 把字段技术名映射成用户可读 label，用于汇总 toast 文案 */
+function formFieldLabel(name: string): string {
+  const map: Record<string, string> = {
+    studentName: '英文姓名',
+    gender: '性别',
+    email: '邮箱',
+    phone: '联系电话',
+    targetRegion: '求职地区',
+    recruitmentCycle: '招聘周期',
+    currency: '币种',
+    amountUsd: '美元金额',
+    amountGbp: '英镑金额',
+    totalHours: '课时',
+    startDate: '合同开始日期',
+    endDate: '合同结束日期',
   }
-  emit('submit', createPayload())
+  return map[name] || name
 }
 </script>
 

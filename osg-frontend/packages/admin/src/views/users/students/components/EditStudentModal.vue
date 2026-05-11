@@ -416,7 +416,9 @@
               :max-count="1"
               :file-list="contractFileList"
               :before-upload="beforeContractUpload"
+              :show-upload-list="{ showDownloadIcon: true, showPreviewIcon: false, showRemoveIcon: true }"
               @change="handleContractUploadChange"
+              @download="handleContractDownload"
             >
               <p class="ant-upload-drag-icon">
                 <i class="mdi mdi-cloud-upload" style="font-size: 28px; color: #4f74ff"></i>
@@ -426,6 +428,14 @@
               </p>
               <p class="ant-upload-hint">仅支持 PDF / PNG / JPG / JPEG，单文件不超过 150MB</p>
             </a-upload-dragger>
+            <!-- A-ST-012: 显式展示现有附件下载链接，避免用户找不到 a-upload 内部下载图标 -->
+            <div v-if="contractForm.attachmentPath" class="student-form-modal__attachment-link">
+              <i class="mdi mdi-file-download-outline" aria-hidden="true"></i>
+              <span>当前附件：</span>
+              <a :href="resolveAttachmentUrl(contractForm.attachmentPath)" target="_blank" rel="noreferrer">
+                {{ extractAttachmentName(contractForm.attachmentPath) }}
+              </a>
+            </div>
           </a-form-item>
 
           <a-form-item data-field-name="合同备注" class="student-form-modal__field--wide">
@@ -673,9 +683,32 @@ const contractFileList = ref<ContractFileItem[]>([])
 
 const buildFileListFromPath = (path: string): ContractFileItem[] => {
   if (!path) return []
-  const segs = path.split('/')
-  const name = segs[segs.length - 1] || path
-  return [{ uid: `contract-${Date.now()}`, name, status: 'done', url: path }]
+  return [{ uid: `contract-${Date.now()}`, name: extractAttachmentName(path), status: 'done', url: resolveAttachmentUrl(path) }]
+}
+
+// A-ST-012: 附件相对路径（如 /profile/upload/contracts/xxx.pdf）拼接 backend URL 才能下载
+// nginx 已在 deploy/frontend/nginx.conf 加 location /profile/upload/ 代理到 backend
+function resolveAttachmentUrl(path: string): string {
+  if (!path) return ''
+  if (/^https?:\/\//i.test(path)) return path
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function extractAttachmentName(path: string): string {
+  if (!path) return ''
+  try {
+    const url = new URL(path, 'http://placeholder')
+    const segs = url.pathname.split('/')
+    return segs[segs.length - 1] || path
+  } catch {
+    const segs = path.split('/')
+    return segs[segs.length - 1] || path
+  }
+}
+
+function handleContractDownload(file: ContractFileItem) {
+  if (!file?.url) return
+  window.open(file.url, '_blank', 'noopener,noreferrer')
 }
 
 const MAX_CONTRACT_UPLOAD_MB = 150
@@ -1017,6 +1050,32 @@ const formatStatus = (status?: string) => {
 </style>
 
 <style scoped lang="scss">
+.student-form-modal__attachment-link {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4f74ff;
+
+  span {
+    color: #6b7280;
+  }
+
+  a {
+    color: #4f74ff;
+    text-decoration: underline;
+
+    &:hover {
+      color: #3a5bdb;
+    }
+  }
+
+  .mdi {
+    font-size: 16px;
+  }
+}
+
 .phone-input-group {
   display: flex;
   align-items: center;
