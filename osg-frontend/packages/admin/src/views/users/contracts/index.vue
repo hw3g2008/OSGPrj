@@ -17,8 +17,8 @@
       </div>
     </div>
 
-    <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" style="margin-bottom: var(--osg-toolbar-mb); gap: var(--osg-space-3); flex-wrap: wrap">
+    <a-card :bordered="false">
+      <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap">
         <a-form-item label="日期">
           <a-space>
             <a-date-picker v-model:value="filters.startDate" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 140px" />
@@ -62,7 +62,9 @@
           </a-space>
         </a-form-item>
       </a-form>
+    </a-card>
 
+    <a-card :bordered="false">
       <a-table
         :columns="contractColumns"
         :data-source="contractRows"

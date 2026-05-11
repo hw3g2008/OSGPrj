@@ -23,18 +23,20 @@
       </template>
     </a-alert>
 
-    <FilterBar
-      v-model="filters"
-      :mentor-options="mentorOptions"
-      :school-options="schoolOptions"
-      :graduation-year-options="graduationYearOptions"
-      :recruitment-cycle-options="recruitmentCycleOptions"
-      :major-direction-options="majorDirectionOptions"
-      @search="handleSearch"
-      @export="handleExport"
-    />
+    <a-card :bordered="false">
+      <FilterBar
+        v-model="filters"
+        :mentor-options="mentorOptions"
+        :school-options="schoolOptions"
+        :graduation-year-options="graduationYearOptions"
+        :recruitment-cycle-options="recruitmentCycleOptions"
+        :major-direction-options="majorDirectionOptions"
+        @search="handleSearch"
+        @export="handleExport"
+      />
+    </a-card>
 
-    <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
+    <a-card :bordered="false">
       <a-tabs v-model:activeKey="selectedTab" @change="(key: string) => handleTabChange(key as StudentTabKey)">
         <a-tab-pane v-for="tab in studentTabs" :key="tab.key">
           <template #tab>

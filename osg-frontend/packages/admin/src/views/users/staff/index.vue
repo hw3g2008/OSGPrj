@@ -23,8 +23,8 @@
       </template>
     </a-alert>
 
-    <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" style="margin-bottom: var(--osg-toolbar-mb)" data-field-name="导师管理页">
+    <a-card :bordered="false">
+      <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap" data-field-name="导师管理页">
         <a-form-item>
           <a-input v-model:value="filters.staffName" placeholder="搜索姓名/ID" allow-clear style="width: 180px" data-field-name="搜索框" @pressEnter="handleSearch" />
         </a-form-item>
@@ -59,7 +59,9 @@
           </a-space>
         </a-form-item>
       </a-form>
+    </a-card>
 
+    <a-card :bordered="false">
       <a-tabs v-model:activeKey="selectedTab">
         <a-tab-pane v-for="tab in tabs" :key="tab.key">
           <template #tab>

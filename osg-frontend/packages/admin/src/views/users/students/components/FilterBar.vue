@@ -204,7 +204,6 @@ const normalizeText = (value?: string) => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 

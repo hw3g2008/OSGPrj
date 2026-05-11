@@ -45,7 +45,7 @@
     </div>
 
     <a-card :bordered="false">
-      <a-form layout="inline" style="margin-bottom: var(--osg-toolbar-mb); gap: var(--osg-toolbar-gap); flex-wrap: wrap">
+      <a-form layout="inline" style="gap: var(--osg-toolbar-gap); flex-wrap: wrap">
         <a-form-item>
           <a-select v-model:value="filters.positionCategory" placeholder="全部分类" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.categories" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
@@ -111,7 +111,9 @@
           </a-space>
         </a-form-item>
       </a-form>
+    </a-card>
 
+    <a-card :bordered="false">
       <a-spin :spinning="loading" tip="正在加载岗位数据...">
         <template v-if="viewMode === 'drilldown'">
           <a-empty v-if="!loading && !drillDownRows.length" description="当前筛选条件下暂无岗位数据" />
