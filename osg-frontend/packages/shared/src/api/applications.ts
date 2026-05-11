@@ -80,6 +80,18 @@ export interface StudentApplicationRecord {
   appliedDate: string
   applyMethod: string
   progressNote: string
+  // RULE-A 学生端 8 字段：行业 / 岗位分类 / 地区 / 招聘周期 / 投递时间 / 求职状态
+  industry: string
+  industryLabel: string
+  positionCategory: string
+  categoryLabel: string
+  region: string
+  regionLabel: string
+  recruitmentCycle: string
+  submittedAt: string
+  applicationStatus: 'applied' | 'interviewing' | 'offer' | 'rejected' | 'withdraw'
+  applicationStatusLabel: string
+  applicationStatusColor: string
   coachings: StudentApplicationCoachingRecord[]
 }
 

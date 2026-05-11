@@ -265,9 +265,9 @@
             </template>
 
             <template v-else-if="column.key === 'industryCell'">
-              <a-tooltip :title="record.industryLabel || record.industry" placement="topLeft">
+              <a-tooltip :title="record.industryLabel || '-'" placement="topLeft">
                 <span class="industry-pill" :class="`industry-pill--${resolveIndustryMeta(record.industry).tone}`">
-                  {{ record.industryLabel || record.industry }}
+                  {{ record.industryLabel || '-' }}
                 </span>
               </a-tooltip>
             </template>
@@ -1437,8 +1437,8 @@ async function submitProgressUpdate() {
 async function handleActionStageChange(record: PositionRecord, nextStage: string) {
   if (!nextStage) return
 
-  // 取消投递（FIX-11 落地前后端写 'withdrawn'，落地后写 'cancelled'；UI 兜底两个值）
-  if (nextStage === 'cancelled' || nextStage === 'withdrawn') {
+  // 取消投递：投了又撤，清 applied，投递数 -1，从「我的求职」隐藏
+  if (nextStage === 'cancelled') {
     if (!record.applied) {
       message.info('该岗位尚未投递')
       return
@@ -1456,6 +1456,7 @@ async function handleActionStageChange(record: PositionRecord, nextStage: string
     return
   }
 
+  // 主动放弃：保持已投递，仅更新 progressStage='withdraw'，投递数不减
   // 已投递：直接 inline 更新求职状态
   if (record.applied) {
     if (nextStage === record.progressStage) return
@@ -1463,11 +1464,14 @@ async function handleActionStageChange(record: PositionRecord, nextStage: string
     return
   }
 
-  // 未投递：先打开投递信息弹窗，提交后默认 progressStage='applied'；用户后续可再切其他状态
-  openAppliedModal(record)
+  // 未投递岗位不可标记主动放弃 / 面试中 / offer / 被拒绝
   if (nextStage !== 'applied') {
-    message.info('请先填写投递信息，提交后可继续切换其他状态')
+    message.info('请先投递该岗位后，再切换其他状态')
+    return
   }
+
+  // 未投递且选「已投递」：打开投递信息弹窗
+  openAppliedModal(record)
 }
 
 async function updateProgressInline(record: PositionRecord, stage: string) {

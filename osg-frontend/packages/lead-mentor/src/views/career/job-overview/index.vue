@@ -92,8 +92,11 @@
                     :background-color="record.avatarColor"
                   />
                 </template>
+                <template v-else-if="column.key === 'position'">
+                  <span class="company-cell-text">{{ record.role || '-' }}</span>
+                </template>
                 <template v-else-if="column.key === 'company'">
-                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" :tone-class="record.companyTone" />
+                  <span class="company-cell-text">{{ record.company || '-' }}</span>
                 </template>
                 <template v-else-if="column.key === 'stage'">
                   <div class="table-stack">
@@ -166,8 +169,11 @@
                     :background-color="record.avatarColor"
                   />
                 </template>
+                <template v-else-if="column.key === 'position'">
+                  <span class="company-cell-text">{{ record.role || '-' }}</span>
+                </template>
                 <template v-else-if="column.key === 'company'">
-                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" :tone-class="record.companyTone" />
+                  <span class="company-cell-text">{{ record.company || '-' }}</span>
                 </template>
                 <template v-else-if="column.key === 'stage'">
                   <div class="table-stack">
@@ -255,8 +261,11 @@
                     :background-color="record.avatarColor"
                   />
                 </template>
+                <template v-else-if="column.key === 'position'">
+                  <span class="company-cell-text">{{ record.role || '-' }}</span>
+                </template>
                 <template v-else-if="column.key === 'company'">
-                  <CompanyPositionCell :company="record.company" :role="record.role" meta-mode="role-only" />
+                  <span class="company-cell-text">{{ record.company || '-' }}</span>
                 </template>
                 <template v-else-if="column.key === 'stage'">
                   <StageTag :stage="record.stage" />
@@ -343,7 +352,7 @@ import {
   type LeadMentorJobOverviewListItem,
   type LeadMentorJobOverviewListParams,
 } from '@osg/shared/api'
-import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, StudentAvatarCell, InterviewTimeCell } from '@osg/shared/components'
 import { useCoachingStatusMap, deriveApplicationStatus } from '@osg/shared/composables'
 import { ClassRecordDetailDrawer } from '@osg/shared/components'
 import type { LeadMentorClassRecordMentorGroup } from '@osg/shared/components'
@@ -382,7 +391,8 @@ function deriveOverviewStatusDisplay(row: LeadMentorJobOverviewListItem): { labe
 const pendingColumns = [
   { title: '学生ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
   { title: '姓名', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
+  { title: '岗位', dataIndex: 'position', key: 'position', width: 160 },
+  { title: '公司', dataIndex: 'company', key: 'company', width: 160 },
   { title: '城市', dataIndex: 'cityLabel', key: 'cityLabel', width: 100 },
   { title: '面试阶段', dataIndex: 'stage', key: 'stage', width: 130 },
   { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
@@ -393,7 +403,8 @@ const pendingColumns = [
 const coachingColumns = [
   { title: '学生ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
   { title: '姓名', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
+  { title: '岗位', dataIndex: 'position', key: 'position', width: 160 },
+  { title: '公司', dataIndex: 'company', key: 'company', width: 160 },
   { title: '城市', dataIndex: 'cityLabel', key: 'cityLabel', width: 100 },
   { title: '面试阶段', dataIndex: 'stage', key: 'stage', width: 130 },
   { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
@@ -404,7 +415,8 @@ const coachingColumns = [
 const managedColumns = [
   { title: '学生ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
   { title: '姓名', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
+  { title: '岗位', dataIndex: 'position', key: 'position', width: 160 },
+  { title: '公司', dataIndex: 'company', key: 'company', width: 160 },
   { title: '城市', dataIndex: 'cityLabel', key: 'cityLabel', width: 100 },
   { title: '面试阶段', dataIndex: 'stage', key: 'stage', width: 130 },
   { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },

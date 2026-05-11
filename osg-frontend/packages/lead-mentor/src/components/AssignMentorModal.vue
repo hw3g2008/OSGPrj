@@ -428,13 +428,13 @@ const lookupLabel = (
 ) => {
   if (!value) return ''
   const found = list.find((item) => item.value === value)
-  return found ? found.label : value
+  return found ? found.label : ''
 }
 
 const scheduleLabel = (status?: string) => {
   if (!status) return '未知'
-  const dictLabel = lookupLabel(scheduleDictOptions.value, status)
-  return dictLabel || status
+  const found = scheduleDictOptions.value.find((item) => item.value === status)
+  return found?.label || '-'
 }
 
 const scheduleTone = (status?: string) => {

@@ -66,12 +66,41 @@ public class OsgStudentPositionServiceImpl implements IOsgStudentPositionService
     {
         OsgStudentPosition request = requirePendingStudentPosition(studentPositionId);
         OsgStudent student = requireStudent(request.getStudentId());
-        OsgStudentPosition merged = mergeForApproval(request, payload);
 
-        if (isDuplicatePublicPosition(merged))
+        // RULE-D RD-001 合并分支：payload.mergeToPositionId 指定时不写新公共岗位，复用已有 positionId。
+        Long mergeToPositionId = resolveMergeToPositionId(payload);
+        if (mergeToPositionId != null)
         {
-            throw new ServiceException("岗位已存在公共岗位库，不能重复通过");
+            OsgPosition mergeTarget = positionMapper.selectPositionByPositionId(mergeToPositionId);
+            if (mergeTarget == null)
+            {
+                throw new ServiceException("合并目标岗位不存在");
+            }
+            request.setStatus(STATUS_APPROVED);
+            request.setReviewer(defaultText(reviewer, "system"));
+            request.setReviewedAt(new Date());
+            request.setPublicPositionId(mergeToPositionId);
+            request.setFlowStatus("yes".equals(defaultText(request.getHasCoachingRequest(), "no")) ? "queued_to_lead_mentor" : "public_only");
+            request.setUpdateBy(defaultText(reviewer, "system"));
+            if (student.getStudentName() != null)
+            {
+                request.setStudentName(student.getStudentName());
+            }
+
+            if (studentPositionMapper.updateStudentPositionReview(request) <= 0)
+            {
+                throw new ServiceException("学生自添岗位审核状态更新失败");
+            }
+
+            Map<String, Object> result = toPayload(request);
+            result.put("positionId", mergeToPositionId);
+            result.put("mergedToPositionId", mergeToPositionId);
+            return result;
         }
+
+        // RULE-D RD-001 新增分支：dedup 改 soft hint，不抛错；改由前端 radio 切换合并。
+        OsgStudentPosition merged = mergeForApproval(request, payload);
+        Long duplicatePositionId = findDuplicatePublicPositionId(merged);
 
         OsgPosition publicPosition = toPublicPosition(merged, reviewer);
         if (positionMapper.insertPosition(publicPosition) <= 0)
@@ -110,7 +139,65 @@ public class OsgStudentPositionServiceImpl implements IOsgStudentPositionService
 
         Map<String, Object> result = toPayload(request);
         result.put("positionId", publicPosition.getPositionId());
+        if (duplicatePositionId != null)
+        {
+            result.put("duplicateHintPositionId", duplicatePositionId);
+        }
         return result;
+    }
+
+    /**
+     * RULE-D RD-001：从 payload 解析 mergeToPositionId（合并目标岗位 ID）。
+     */
+    private Long resolveMergeToPositionId(Map<String, Object> payload)
+    {
+        if (payload == null)
+        {
+            return null;
+        }
+        Object value = payload.get("mergeToPositionId");
+        if (value == null)
+        {
+            return null;
+        }
+        try
+        {
+            return Long.valueOf(value.toString());
+        }
+        catch (NumberFormatException ex)
+        {
+            return null;
+        }
+    }
+
+    /**
+     * RULE-D RD-001：dedup soft hint，返回 dedup 命中的 publicPositionId（无重复则返回 null），不再 throw。
+     */
+    private Long findDuplicatePublicPositionId(OsgStudentPosition request)
+    {
+        List<OsgPosition> existing = positionMapper.selectPositionList(new OsgPosition());
+        if (existing == null || existing.isEmpty())
+        {
+            return null;
+        }
+        String candidateKey = buildDedupKey(
+            request.getCompanyName(),
+            request.getPositionName(),
+            request.getRegion(),
+            request.getCity(),
+            request.getProjectYear()
+        );
+        return existing.stream()
+            .filter(row -> Objects.equals(candidateKey, buildDedupKey(
+                row.getCompanyName(),
+                row.getPositionName(),
+                row.getRegion(),
+                row.getCity(),
+                row.getProjectYear()
+            )))
+            .map(OsgPosition::getPositionId)
+            .findFirst()
+            .orElse(null);
     }
 
     @Override
@@ -228,29 +315,6 @@ public class OsgStudentPositionServiceImpl implements IOsgStudentPositionService
             return deadline;
         }
         return Date.from(Instant.ofEpochMilli(visibleFrom.getTime()).plus(DEFAULT_PUBLIC_POSITION_VISIBLE_DAYS, ChronoUnit.DAYS));
-    }
-
-    private boolean isDuplicatePublicPosition(OsgStudentPosition request)
-    {
-        List<OsgPosition> existing = positionMapper.selectPositionList(new OsgPosition());
-        if (existing == null || existing.isEmpty())
-        {
-            return false;
-        }
-        String candidateKey = buildDedupKey(
-            request.getCompanyName(),
-            request.getPositionName(),
-            request.getRegion(),
-            request.getCity(),
-            request.getProjectYear()
-        );
-        return existing.stream().anyMatch(row -> Objects.equals(candidateKey, buildDedupKey(
-            row.getCompanyName(),
-            row.getPositionName(),
-            row.getRegion(),
-            row.getCity(),
-            row.getProjectYear()
-        )));
     }
 
     private Map<String, Object> toPayload(OsgStudentPosition request)

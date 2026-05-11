@@ -26,7 +26,52 @@
       </div>
     </section>
 
-    <div class="student-review-modal__sections">
+    <!-- RULE-D RD-002 合并/新增分支选择 -->
+    <section v-if="isPending" class="student-review-modal__mode" data-surface-part="review-mode">
+      <a-radio-group v-model:value="reviewMode" button-style="solid">
+        <a-radio-button value="create">新增公共岗位</a-radio-button>
+        <a-radio-button value="merge">合并到已有岗位</a-radio-button>
+      </a-radio-group>
+      <a-alert
+        v-if="reviewMode === 'create' && duplicateHintPositionId"
+        type="warning"
+        show-icon
+        class="student-review-modal__dup-hint"
+        message="检测到已有相同公司+岗位记录"
+      >
+        <template #description>
+          <span>已有岗位 ID #{{ duplicateHintPositionId }}。建议</span>
+          <a-button type="link" size="small" @click="switchToMergeWithHint">切换到「合并到已有岗位」</a-button>
+        </template>
+      </a-alert>
+    </section>
+
+    <!-- RULE-D RD-002 合并模式：搜索 + 选定已有公共岗位 -->
+    <section v-if="isPending && reviewMode === 'merge'" class="student-review-modal__merge">
+      <fieldset class="student-review-modal__field" data-field-name="合并目标岗位">
+        <span>合并到已有岗位 *</span>
+        <a-select
+          v-model:value="mergeToPositionId"
+          show-search
+          placeholder="按公司或岗位名搜索"
+          style="width: 100%"
+          :filter-option="false"
+          :options="mergeOptions"
+          :loading="mergeLoading"
+          @search="handleMergeSearch"
+        />
+      </fieldset>
+      <div v-if="selectedMergeOption" class="student-review-modal__merge-summary">
+        <div><strong>{{ selectedMergeOption.companyName }}</strong> · {{ selectedMergeOption.positionName }}</div>
+        <div class="student-review-modal__merge-meta">
+          <span v-if="selectedMergeOption.region">{{ selectedMergeOption.region }}</span>
+          <span v-if="selectedMergeOption.city">· {{ selectedMergeOption.city }}</span>
+          <span v-if="selectedMergeOption.recruitmentCycle">· {{ selectedMergeOption.recruitmentCycle }}</span>
+        </div>
+      </div>
+    </section>
+
+    <div v-show="reviewMode === 'create'" class="student-review-modal__sections">
       <section class="student-review-modal__section-card">
         <header class="student-review-modal__section-head">
           <div class="student-review-modal__section-title">
@@ -153,14 +198,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
-import type { ReviewStudentPositionPayload, StudentPositionListItem } from '@osg/shared/api/admin/studentPosition'
+import {
+  searchPublicPositionsForMerge,
+  type PublicPositionSearchItem,
+  type ReviewStudentPositionPayload,
+  type StudentPositionListItem,
+} from '@osg/shared/api/admin/studentPosition'
 
 const props = defineProps<{
   visible: boolean
   position?: StudentPositionListItem | null
+  duplicateHintPositionId?: number | null
 }>()
 
 const emit = defineEmits<{
@@ -168,6 +219,50 @@ const emit = defineEmits<{
   submit: [payload: ReviewStudentPositionPayload]
   requestReject: []
 }>()
+
+// RULE-D RD-002 合并/新增模式
+const reviewMode = ref<'create' | 'merge'>('create')
+const mergeToPositionId = ref<number | undefined>(undefined)
+const mergeLoading = ref(false)
+const mergeCandidates = ref<PublicPositionSearchItem[]>([])
+const mergeOptions = computed(() =>
+  mergeCandidates.value.map((item) => ({
+    value: item.positionId,
+    label: `${item.companyName} · ${item.positionName}${item.city ? ' · ' + item.city : ''}`,
+  }))
+)
+const selectedMergeOption = computed(() =>
+  mergeCandidates.value.find((item) => item.positionId === mergeToPositionId.value) || null
+)
+
+let mergeSearchHandle: ReturnType<typeof setTimeout> | null = null
+
+const handleMergeSearch = (keyword: string) => {
+  if (mergeSearchHandle) {
+    clearTimeout(mergeSearchHandle)
+  }
+  const text = keyword.trim()
+  if (!text) {
+    mergeCandidates.value = []
+    return
+  }
+  mergeSearchHandle = setTimeout(async () => {
+    mergeLoading.value = true
+    try {
+      const res = await searchPublicPositionsForMerge(text)
+      mergeCandidates.value = res.rows || []
+    } finally {
+      mergeLoading.value = false
+    }
+  }, 250)
+}
+
+const switchToMergeWithHint = () => {
+  reviewMode.value = 'merge'
+  if (props.duplicateHintPositionId) {
+    mergeToPositionId.value = props.duplicateHintPositionId
+  }
+}
 
 const categoryOptions = [
   { value: 'summer', label: '暑期实习' },
@@ -226,6 +321,9 @@ watch(
   (visible) => {
     if (visible) {
       resetForm()
+      reviewMode.value = 'create'
+      mergeToPositionId.value = undefined
+      mergeCandidates.value = []
     }
   }
 )
@@ -273,6 +371,17 @@ const handleRejectRequest = () => {
 }
 
 const handleSubmit = () => {
+  // RULE-D RD-002 合并分支：仅传 mergeToPositionId
+  if (reviewMode.value === 'merge') {
+    if (!mergeToPositionId.value) {
+      message.warning('请选择合并目标公共岗位')
+      return
+    }
+    emit('submit', { mergeToPositionId: mergeToPositionId.value })
+    return
+  }
+
+  // 新增分支：保留原校验
   const payload: ReviewStudentPositionPayload = {
     positionCategory: form.positionCategory.trim(),
     industry: form.industry.trim() || undefined,
@@ -402,6 +511,34 @@ const normalizeDateTimeLocal = (value: string) => {
 .student-review-modal__coaching {
   background: #eef2ff;
   color: #4f46e5;
+}
+
+.student-review-modal__mode,
+.student-review-modal__merge {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid #dbe3ee;
+  background: #f8fafc;
+}
+
+.student-review-modal__dup-hint {
+  border-radius: 8px;
+}
+
+.student-review-modal__merge-summary {
+  padding: 10px 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.student-review-modal__merge-meta {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
 }
 
 .student-review-modal__sections {

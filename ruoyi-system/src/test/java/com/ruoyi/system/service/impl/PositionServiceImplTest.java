@@ -418,6 +418,51 @@ class PositionServiceImplTest
     }
 
     @Test
+    void selectApplicationListAttachesRuleAFieldLabels()
+    {
+        Map<String, Object> appRow = new LinkedHashMap<>();
+        appRow.put("id", 9001L);
+        appRow.put("company", "Goldman Sachs");
+        appRow.put("position", "Summer Analyst");
+        appRow.put("location", "New York");
+        appRow.put("companyType", "ib");
+        appRow.put("stage", "first");
+        appRow.put("industry", "ib");
+        appRow.put("positionCategory", "summer");
+        appRow.put("region", "apac");
+        appRow.put("recruitmentCycle", "2027 Summer");
+        appRow.put("submittedAt", "2026-03-25");
+        appRow.put("applicationStatus", "interviewing");
+        appRow.put("coachingStatus", "none");
+
+        when(identityResolver.resolveStudentIdByUserId(838L)).thenReturn(12766L);
+        when(jobApplicationMapper.selectStudentApplicationRecords(12766L, null, null)).thenReturn(List.of(appRow));
+        when(sysDictDataMapper.selectDictDataByType("osg_company_type")).thenReturn(List.of(
+            dict(1L, "osg_company_type", "ib", "Investment Bank", "公司类型")
+        ));
+        when(sysDictDataMapper.selectDictDataByType("osg_student_position_category")).thenReturn(List.of(
+            dict(1L, "osg_student_position_category", "summer", "暑期实习", "岗位分类")
+        ));
+        when(sysDictDataMapper.selectDictDataByType("osg_region")).thenReturn(List.of(
+            dict(1L, "osg_region", "apac", "亚太 APAC", "地区")
+        ));
+        when(sysDictDataMapper.selectDictDataByType("osg_student_position_progress_stage")).thenReturn(List.of(
+            dict(1L, "osg_student_position_progress_stage", "interviewing", "面试中", "求职状态")
+        ));
+        // 兜底其它类型返回空
+        when(sysDictDataMapper.selectDictDataByType("osg_student_position_coaching_stage")).thenReturn(List.of());
+
+        List<Map<String, Object>> rows = service.selectApplicationList(838L);
+
+        assertEquals(1, rows.size());
+        Map<String, Object> row = rows.get(0);
+        assertEquals("Investment Bank", row.get("industryLabel"));
+        assertEquals("暑期实习", row.get("categoryLabel"));
+        assertEquals("亚太 APAC", row.get("regionLabel"));
+        assertEquals("面试中", row.get("applicationStatusLabel"));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void selectApplicationListAttachesCoachingsWithRatingsByCoachingReference()
     {

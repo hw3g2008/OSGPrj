@@ -8,32 +8,80 @@ const applicationsSource = fs.readFileSync(
 )
 
 describe('student applications source contract', () => {
-  it('keeps the applications title, four tabs, table columns, and real data wiring from the prototype shell', () => {
-    const expectedLabels = [
-      'applicationsMeta.pageSummary.titleZh',
-      'applicationsMeta.pageSummary.titleEn',
-      'applicationsMeta.pageSummary.subtitle',
-      '全部',
-      '已投递',
-      '面试中',
-      '已结束',
-      '公司/岗位',
-      '阶段',
-      '面试时间',
-      '辅导状态',
-      '导师',
-      '课时/反馈',
-      '操作'
-    ]
+  it('RULE-A 批次 2: 展示 8 字段 + 操作（不再有公司/岗位合并、辅导状态、导师、课时反馈列）', () => {
+    expect(applicationsSource).toContain('applicationsMeta.pageSummary.titleZh')
+    expect(applicationsSource).toContain('applicationsMeta.pageSummary.titleEn')
+    expect(applicationsSource).toContain('applicationsMeta.pageSummary.subtitle')
 
-    for (const label of expectedLabels) {
-      expect(applicationsSource).toContain(label)
+    // Tab 文案保留
+    expect(applicationsSource).toContain('全部')
+    expect(applicationsSource).toContain('已投递')
+    expect(applicationsSource).toContain('面试中')
+    expect(applicationsSource).toContain('已结束')
+
+    // 新 8 字段 + 操作列
+    const expectedColumns = [
+      "{ title: '岗位名称', key: 'positionName'",
+      "{ title: '公司', key: 'companyName'",
+      "{ title: '行业', key: 'industry'",
+      "{ title: '岗位分类', key: 'category'",
+      "{ title: '地区', key: 'region'",
+      "{ title: '招聘周期', key: 'recruitmentCycle'",
+      "{ title: '投递时间', key: 'submittedAt'",
+      "{ title: '求职状态', key: 'applicationStatus'",
+      "{ title: '操作', key: 'actions'"
+    ]
+    for (const col of expectedColumns) {
+      expect(applicationsSource).toContain(col)
+    }
+
+    // 旧列已移除
+    const removedColumns = [
+      "{ title: '公司/岗位', key: 'job'",
+      "{ title: '辅导状态', key: 'coachingStatus'",
+      "{ title: '导师', key: 'mentor'",
+      "{ title: '课时/反馈', key: 'hoursFeedback'"
+    ]
+    for (const col of removedColumns) {
+      expect(applicationsSource).not.toContain(col)
     }
 
     expect(applicationsSource).toContain('listStudentApplications')
     expect(applicationsSource).toContain('getStudentApplicationsMeta')
     expect(applicationsSource).toContain('updateStudentPositionApply')
-    expect(applicationsSource).toContain('updateStudentPositionProgress')
+    expect(applicationsSource).not.toContain('updateStudentPositionProgress')
+  })
+
+  it('RULE-A 批次 1: 操作列只有「申请辅导」按钮，且只能选 7 个面试阶段（含 hirevue）', () => {
+    // 操作列单按钮
+    expect(applicationsSource).toContain('openApplyCoachingModal(record)')
+    expect(applicationsSource).toContain('申请辅导')
+    expect(applicationsSource).toContain('apply-coaching-btn')
+
+    // 不再渲染只读 stage tag 作为操作列内容
+    expect(applicationsSource).not.toContain('readonly-stage-tag')
+
+    // interviewStages 含 hirevue + 7 阶段
+    expect(applicationsSource).toContain(
+      "const interviewStages = ['hirevue', 'screening', 'first', 'second', 'third', 'case', 'superday']"
+    )
+
+    // 弹窗标题改为「申请辅导」，不再有「更新状态 & 申请辅导」
+    expect(applicationsSource).toContain("'申请辅导'")
+    expect(applicationsSource).not.toContain('更新状态 & 申请辅导')
+
+    // stageDropdownOptions 限定 7 阶段
+    expect(applicationsSource).toContain('progressStageOptions.value.filter((option) => interviewStages.includes(option.value))')
+
+    // mentorHelp 字段已移除（求职列表进入弹窗即视为申请辅导）
+    expect(applicationsSource).not.toContain('progressForm.mentorHelp')
+    expect(applicationsSource).not.toContain('mentorHelp: string')
+  })
+
+  it('RULE-E 全局: 不允许 label || value 的英文兜底渲染', () => {
+    expect(applicationsSource).not.toContain('record.stageLabel || record.stage')
+    expect(applicationsSource).not.toContain('coaching.interviewStageLabel || coaching.interviewStage')
+    expect(applicationsSource).not.toContain('selectedCoaching.interviewStageLabel || selectedCoaching.interviewStage')
   })
 
   it('loads applications meta from backend instead of hardcoding delivery-critical filters and schedule summaries in Vue', () => {

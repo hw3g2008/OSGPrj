@@ -82,6 +82,31 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             app.company_name as company,
             app.position_name as position,
             coalesce(app.city, app.region, '') as location,
+            coalesce(position_ref.industry, '') as industry,
+            coalesce(position_ref.position_category, '') as positionCategory,
+            coalesce(position_ref.region, '') as region,
+            coalesce(position_ref.recruitment_cycle, '') as recruitmentCycle,
+            coalesce(date_format(app.submitted_at, '%Y-%m-%d'), '') as submittedAt,
+            case lower(app.current_stage)
+                when 'applied' then 'applied'
+                when 'hirevue' then 'interviewing'
+                when 'hirevue / ot' then 'interviewing'
+                when 'screening' then 'interviewing'
+                when 'screening_call' then 'interviewing'
+                when 'first' then 'interviewing'
+                when 'first_round' then 'interviewing'
+                when 'second' then 'interviewing'
+                when 'second_round' then 'interviewing'
+                when 'third' then 'interviewing'
+                when 'third_round' then 'interviewing'
+                when 'case' then 'interviewing'
+                when 'case_study' then 'interviewing'
+                when 'superday' then 'interviewing'
+                when 'offer' then 'offer'
+                when 'rejected' then 'rejected'
+                when 'withdraw' then 'withdraw'
+                else 'applied'
+            end as applicationStatus,
             case
                 when lower(coalesce(position_ref.industry, '')) like '%consult%' then 'consulting'
                 when lower(coalesce(position_ref.industry, '')) like '%tech%' then 'tech'

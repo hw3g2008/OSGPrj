@@ -16,16 +16,40 @@
 
       <div class="filter-row">
         <a-select
-          v-model:value="selectedStatus"
-          placeholder="全部面试状态"
+          v-model:value="filters.companyName"
+          placeholder="全部公司"
+          allow-clear
+          show-search
+          style="width: 180px"
+          :options="companyOptions"
+        />
+        <a-select
+          v-model:value="filters.currentStage"
+          placeholder="全部面试阶段"
           allow-clear
           style="width: 180px"
+          :options="stageOptions"
+        />
+        <a-range-picker
+          v-model:value="filters.interviewRange"
+          value-format="YYYY-MM-DD"
+          :placeholder="['面试开始', '面试结束']"
+          style="width: 280px"
+        />
+        <a-select
+          v-model:value="filters.lessonReported"
+          placeholder="是否上报课消"
+          allow-clear
+          style="width: 160px"
         >
-          <a-select-option value="new">新申请</a-select-option>
-          <a-select-option value="coaching">面试中</a-select-option>
-          <a-select-option value="completed">已完成</a-select-option>
-          <a-select-option value="cancelled">已取消</a-select-option>
+          <a-select-option :value="true">已上报</a-select-option>
+          <a-select-option :value="false">未上报</a-select-option>
         </a-select>
+        <a-button type="primary" @click="handleSearch">
+          <template #icon><SearchOutlined /></template>
+          搜索
+        </a-button>
+        <a-button @click="handleReset">重置</a-button>
       </div>
 
       <a-card :bordered="false" class="table-card">
@@ -95,9 +119,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, inject, type Ref } from 'vue'
+import { computed, onMounted, reactive, ref, inject, type Ref } from 'vue'
+import type { Dayjs } from 'dayjs'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { ExportOutlined } from '@ant-design/icons-vue'
+import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { http } from '@osg/shared/utils/request'
 import { StageTag, StudentAvatarCell, InterviewTimeCell } from '@osg/shared/components'
 import type { ReferenceType } from '@osg/shared/types/classReport'
@@ -129,8 +154,31 @@ interface JobOverviewRow {
 }
 
 const allRows = ref<JobOverviewRow[]>([])
-const selectedStatus = ref('')
+const filters = reactive({
+  companyName: undefined as string | undefined,
+  currentStage: undefined as string | undefined,
+  interviewRange: null as [Dayjs, Dayjs] | null,
+  lessonReported: undefined as boolean | undefined,
+})
 const mentorNavBadges = inject<MentorNavBadgeState | null>(MENTOR_NAV_BADGE_KEY, null)
+
+const companyOptions = computed(() => {
+  const names = new Set<string>()
+  allRows.value.forEach((row) => {
+    if (row.company) names.add(row.company)
+  })
+  return Array.from(names).map((value) => ({ value, label: value }))
+})
+
+const stageOptions = [
+  { value: 'hirevue', label: 'HireVue / Online Test' },
+  { value: 'screening', label: 'Screening Call' },
+  { value: 'first', label: 'First Round' },
+  { value: 'second', label: 'Second Round' },
+  { value: 'third', label: 'Third Round and Beyond' },
+  { value: 'case', label: 'Case Study Round' },
+  { value: 'superday', label: 'Superday / AC' },
+]
 
 // Step3-F2: 上报课消弹窗状态 + 预填上下文
 const showReportModal = ref(false)
@@ -142,10 +190,32 @@ const reportPrefill = ref<{
 
 const filteredRows = computed(() => {
   return allRows.value.filter((row) => {
-    if (selectedStatus.value && row.coachingStatus !== selectedStatus.value) return false
+    if (filters.companyName && row.company !== filters.companyName) return false
+    if (filters.currentStage && row.interviewStage !== filters.currentStage) return false
+    if (filters.lessonReported !== undefined && Boolean(row.lessonReported) !== filters.lessonReported) return false
+    if (filters.interviewRange && filters.interviewRange.length === 2) {
+      if (!row.interviewTime) return false
+      const ms = new Date(row.interviewTime).getTime()
+      const [start, end] = filters.interviewRange
+      if (Number.isFinite(ms)) {
+        if (ms < start.startOf('day').valueOf()) return false
+        if (ms > end.endOf('day').valueOf()) return false
+      }
+    }
     return true
   })
 })
+
+function handleSearch() {
+  // 当前为本地过滤；预留后端 list 调用入口，后端筛选参数透传需求由 Step3-F6 后端补齐
+}
+
+function handleReset() {
+  filters.companyName = undefined
+  filters.currentStage = undefined
+  filters.interviewRange = null
+  filters.lessonReported = undefined
+}
 
 function formatInterviewTime(value: string) {
   return new Date(value).toLocaleDateString('zh-CN', {
@@ -183,12 +253,13 @@ function avatarColor(row: JobOverviewRow) {
 }
 
 const jobColumns = [
-  { title: '学员', key: 'student', dataIndex: 'studentName' },
-  { title: '公司', key: 'company', dataIndex: 'company' },
-  { title: '岗位', key: 'position', dataIndex: 'position' },
-  // Step3-F2: §5.2 新增字段
-  { title: '城市', key: 'location', dataIndex: 'location', width: 120 },
-  { title: '面试状态', key: 'stage', dataIndex: 'interviewStage', width: 120 },
+  // RULE-A 导师端：学生ID / 学生姓名 / 岗位 / 公司 / 城市 / 面试阶段 / 面试时间 / 已上报课消数 + 操作
+  { title: '学生ID', key: 'studentId', dataIndex: 'studentId', width: 100, fixed: 'left' as const },
+  { title: '学生姓名', key: 'student', dataIndex: 'studentName', width: 140 },
+  { title: '岗位', key: 'position', dataIndex: 'position', width: 160 },
+  { title: '公司', key: 'company', dataIndex: 'company', width: 140 },
+  { title: '城市', key: 'location', dataIndex: 'location', width: 110 },
+  { title: '面试阶段', key: 'stage', dataIndex: 'interviewStage', width: 130 },
   { title: '面试时间', key: 'interviewTime', dataIndex: 'interviewTime', width: 160 },
   { title: '已上报课消数', key: 'lessonCount', dataIndex: 'lessonCount', width: 130, align: 'center' as const },
   { title: '操作', key: 'action', width: 120, fixed: 'right' as const },
@@ -240,7 +311,11 @@ function downloadBlob(filename: string, blob: Blob) {
 async function handleExport() {
   try {
     const blob = await http.get('/api/mentor/job-overview/export', {
-      params: { status: selectedStatus.value },
+      params: {
+        companyName: filters.companyName,
+        currentStage: filters.currentStage,
+        lessonReported: filters.lessonReported,
+      },
       responseType: 'blob',
     })
     downloadBlob(`学员求职总览.xlsx`, blob as Blob)

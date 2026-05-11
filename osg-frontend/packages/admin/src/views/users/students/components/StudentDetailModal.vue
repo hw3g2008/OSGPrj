@@ -680,7 +680,7 @@ const mapChangeRequestItem = (item: StudentChangeRequestItem): ChangeItem => {
   return {
     id: requestId ?? `${item.fieldKey || 'change'}-${item.requestedAt || 'unknown'}`,
     requestId,
-    field: item.fieldLabel || item.fieldKey || '未命名字段',
+    field: item.fieldLabel || '未命名字段',
     before: item.beforeValue || '-',
     after: item.afterValue || '-',
     requestedAt: formatTimestamp(item.requestedAt),

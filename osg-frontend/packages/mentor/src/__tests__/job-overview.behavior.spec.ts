@@ -7,22 +7,57 @@ const indexSource = fs.readFileSync(
   'utf-8',
 )
 
-// Step3-F2 (2026-05-10): 升级 source contract — §5.2 mentor job-overview 要求 row 维度 = coaching、
-// 列扩到 8（学员/公司/岗位/城市/面试状态/面试时间/已上报课消数/操作）+ 上报课消按钮，并保留
-// 上一阶段 FIX-E 锁定的反向断言（不能有 InterviewCalendar / 查看详情 / confirm 入口）。
-describe('mentor job overview source contract (§5.2 strict mode)', () => {
-  it('declares the 8 required columns: 学员/公司/岗位/城市/面试状态/面试时间/已上报课消数/操作', () => {
+// RULE-A 批次 3 (2026-05-11): 导师端学员求职总览升级为 9 列 + 4 项筛选。
+// - 列：学生ID / 学生姓名 / 岗位 / 公司 / 城市 / 面试阶段 / 面试时间 / 已上报课消数 / 操作
+// - 筛选：公司 / 面试阶段 / 面试时间 / 是否上报课消
+// - 列名修正：「面试状态」→「面试阶段」
+describe('mentor job overview source contract (RULE-A 批次 3)', () => {
+  it('declares the 9 required columns with 学生ID 列 fixed left', () => {
     const matches = indexSource.match(/title:\s*'([^']+)'/g) || []
     const titles = matches.map((m) => m.replace(/title:\s*'([^']+)'/, '$1'))
-    expect(titles).toEqual(['学员', '公司', '岗位', '城市', '面试状态', '面试时间', '已上报课消数', '操作'])
+    expect(titles).toEqual([
+      '学生ID',
+      '学生姓名',
+      '岗位',
+      '公司',
+      '城市',
+      '面试阶段',
+      '面试时间',
+      '已上报课消数',
+      '操作',
+    ])
   })
 
-  it('exposes a 上报课消 action that opens the shared ReportModal with job_coaching prefill', () => {
-    // §5.2 上报课消按钮存在
+  it('first column 学生ID is fixed left', () => {
+    expect(indexSource).toContain("{ title: '学生ID', key: 'studentId'")
+    expect(indexSource).toMatch(/title:\s*'学生ID'[^}]*fixed:\s*'left'/s)
+  })
+
+  it('column name is 面试阶段, not 面试状态', () => {
+    expect(indexSource).toContain("title: '面试阶段'")
+    expect(indexSource).not.toMatch(/title:\s*'面试状态'/)
+  })
+
+  it('exposes 4 filter controls: 公司 / 面试阶段 / 面试时间 / 是否上报课消', () => {
+    expect(indexSource).toContain('placeholder="全部公司"')
+    expect(indexSource).toContain('placeholder="全部面试阶段"')
+    expect(indexSource).toContain('placeholder="是否上报课消"')
+    // 面试时间用 a-range-picker
+    expect(indexSource).toContain('<a-range-picker')
+    // 搜索按钮存在
+    expect(indexSource).toContain('搜索')
+  })
+
+  it('filters reactive state includes 4 filter fields', () => {
+    expect(indexSource).toContain('companyName:')
+    expect(indexSource).toContain('currentStage:')
+    expect(indexSource).toContain('interviewRange:')
+    expect(indexSource).toContain('lessonReported:')
+  })
+
+  it('exposes 上报课消 action with job_coaching prefill', () => {
     expect(indexSource).toContain('上报课消')
-    // ReportModal 通过 mentor 现有 ../courses/components/ReportModal.vue 接入 shared ClassReportFlowModal
     expect(indexSource).toContain("import ReportModal from '../courses/components/ReportModal.vue'")
-    // 预填走 job_coaching reference type
     expect(indexSource).toContain("'job_coaching'")
   })
 
@@ -30,7 +65,7 @@ describe('mentor job overview source contract (§5.2 strict mode)', () => {
     expect(indexSource).toMatch(/row-key=.*record\.coachingId\s*\?\?\s*record\.id/)
   })
 
-  it('does not render the deprecated stats cards (statsCards 已按 Step 3 §5.2 删除)', () => {
+  it('does not render the deprecated stats cards', () => {
     expect(indexSource).not.toContain('stats-row')
     expect(indexSource).not.toContain('StatCard')
   })
@@ -49,14 +84,6 @@ describe('mentor job overview source contract (§5.2 strict mode)', () => {
     expect(indexSource).not.toContain('/confirm')
   })
 
-  it('exposes only the 面试状态 filter — no keyword search, no company select', () => {
-    expect(indexSource).not.toContain('搜索学员姓名')
-    expect(indexSource).not.toContain('全部公司')
-    expect(indexSource).toContain("placeholder=\"全部面试状态\"")
-    const selectMatches = indexSource.match(/<a-select(?!-)/g) || []
-    expect(selectMatches).toHaveLength(1)
-  })
-
   it('falls back interviewTime to 待定 when null', () => {
     expect(indexSource).toContain('待定')
     expect(indexSource).toMatch(/!record\.interviewTime/)
@@ -70,8 +97,10 @@ describe('mentor job overview source contract (§5.2 strict mode)', () => {
     expect(indexSource).toContain('查看分配给我的学员求职进度')
   })
 
-  it('exports current list with status param only (no keyword/company)', () => {
-    expect(indexSource).toMatch(/params:\s*\{\s*status:\s*selectedStatus\.value\s*\}/)
+  it('exports current list with 4 filter params', () => {
+    expect(indexSource).toContain('companyName: filters.companyName')
+    expect(indexSource).toContain('currentStage: filters.currentStage')
+    expect(indexSource).toContain('lessonReported: filters.lessonReported')
   })
 
   it('loads only the list endpoint on mount (no calendar fetch)', () => {

@@ -86,57 +86,49 @@
           @change="handleTableChange"
         >
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'job'">
-              <div class="job-cell">
-                <div class="job-company">{{ record.company }}</div>
-                <div class="job-position">{{ record.position }} · {{ record.location }}</div>
-              </div>
+            <template v-if="column.key === 'positionName'">
+              <span class="position-cell">{{ record.position || '-' }}</span>
             </template>
 
-            <template v-else-if="column.key === 'stage'">
-              <div v-if="activeTab === 'applied'" class="status-cell">
-                <span class="stage-tag stage-tag--applied-bucket">
-                  <CheckCircleFilled style="margin-right:3px" />{{ record.stageLabel }}
-                </span>
-                <span style="font-size:10px;color:#64748b">{{ record.applyMethod || '' }}</span>
-              </div>
-              <span v-else class="stage-tag" :style="stageTagStyle(record.stage)">{{ record.stageLabel }}</span>
+            <template v-else-if="column.key === 'companyName'">
+              <span class="company-cell-text">{{ record.company || '-' }}</span>
             </template>
 
-            <template v-else-if="column.key === 'interviewTime'">
-              <div class="interview-cell">
-                <div>{{ activeTab === 'applied' ? (record.appliedDate || '-') : record.interviewTime }}</div>
-                <span>{{ activeTab === 'applied' ? (record.interviewHint || record.applyMethod || '-') : record.interviewHint }}</span>
-              </div>
+            <template v-else-if="column.key === 'industry'">
+              <span>{{ record.industryLabel || '-' }}</span>
             </template>
 
-            <template v-else-if="column.key === 'coachingStatus'">
-              <!-- §D.4 改用 composable 派生 label/color -->
-              <a-tag :color="getApplicationCoachingDisplay(record).color" class="coaching-tag-school">
-                <ReadOutlined v-if="record.coachingStatus === 'coaching'" />
-                <ClockCircleOutlined v-else-if="record.coachingStatus === 'pending'" />
-                <span>{{ getApplicationCoachingDisplay(record).label }}</span>
+            <template v-else-if="column.key === 'category'">
+              <span>{{ record.categoryLabel || '-' }}</span>
+            </template>
+
+            <template v-else-if="column.key === 'region'">
+              <span>{{ record.regionLabel || '-' }}</span>
+            </template>
+
+            <template v-else-if="column.key === 'recruitmentCycle'">
+              <span>{{ record.recruitmentCycle || '-' }}</span>
+            </template>
+
+            <template v-else-if="column.key === 'submittedAt'">
+              <span>{{ record.submittedAt || '-' }}</span>
+            </template>
+
+            <template v-else-if="column.key === 'applicationStatus'">
+              <a-tag :color="record.applicationStatusColor || 'default'" class="application-status-tag">
+                {{ record.applicationStatusLabel || '-' }}
               </a-tag>
-            </template>
-
-            <template v-else-if="column.key === 'mentor'">
-              <div class="mentor-cell">
-                <div>{{ record.mentor }}</div>
-                <span>{{ record.mentorMeta }}</span>
-              </div>
-            </template>
-
-            <template v-else-if="column.key === 'hoursFeedback'">
-              <div class="feedback-cell">
-                <div>{{ record.hoursFeedback }}</div>
-                <span>{{ record.feedback }}</span>
-              </div>
             </template>
 
             <template v-else-if="column.key === 'actions'">
-              <a-tag :color="record.stageColor || 'default'" class="readonly-stage-tag">
-                {{ record.stageLabel || record.stage }}
-              </a-tag>
+              <a-button
+                type="primary"
+                size="small"
+                class="apply-coaching-btn"
+                @click="openApplyCoachingModal(record)"
+              >
+                申请辅导
+              </a-button>
             </template>
           </template>
         </a-table>
@@ -175,7 +167,7 @@
 
     <a-modal
       v-model:open="progressModalOpen"
-      :title="renderModalTitle(EditOutlined, '更新状态 & 申请辅导')"
+      :title="renderModalTitle(EditOutlined, '申请辅导')"
       ok-text="提交"
       cancel-text="取消"
       centered
@@ -278,12 +270,6 @@
                 </label>
               </Upload>
             </a-form-item>
-            <a-form-item label="是否需要导师协助？" required class="rich-form-field rich-form-field--full">
-              <a-radio-group v-model:value="progressForm.mentorHelp">
-                <a-radio value="yes">是，需要导师协助</a-radio>
-                <a-radio value="no">否，仅需题库权限</a-radio>
-              </a-radio-group>
-            </a-form-item>
           </div>
         </div>
 
@@ -366,7 +352,7 @@
     >
       <div class="rich-modal-shell application-coaching-detail">
         <div v-if="selectedCoaching" class="interview-detail-card">
-          <div class="modal-heading">{{ selectedCoaching.interviewStageLabel || selectedCoaching.interviewStage }}</div>
+          <div class="modal-heading">{{ selectedCoaching.interviewStageLabel || '-' }}</div>
           <div class="modal-sub">{{ selectedCoaching.interviewTime || '-' }} · {{ selectedCoaching.companyInterviewer || '公司面试官待补充' }}</div>
           <div class="modal-sub">导师：{{ selectedCoaching.mentorNames || selectedCoaching.mentorName || '-' }} · 最新评分：{{ selectedCoaching.latestRating || '-' }} · 已上报课消：{{ selectedCoaching.reportedLessonCount || 0 }}</div>
         </div>
@@ -403,7 +389,7 @@
         <div v-if="selectedCoaching" class="modal-job-card progress-card">
           <div class="modal-job-mark">{{ selectedCoaching.interviewStageLabel?.slice(0, 2) || '辅导' }}</div>
           <div>
-            <div class="modal-job-title">{{ selectedCoaching.interviewStageLabel || selectedCoaching.interviewStage }}</div>
+            <div class="modal-job-title">{{ selectedCoaching.interviewStageLabel || '-' }}</div>
             <div class="modal-job-sub">{{ selectedCoachingApplication?.company }} · {{ selectedCoachingApplication?.position }}</div>
           </div>
         </div>
@@ -495,7 +481,6 @@ import type { TablePaginationConfig } from 'ant-design-vue'
 import { message, DatePicker, Upload } from 'ant-design-vue'
 import {
   CalendarOutlined,
-  CheckCircleFilled,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseOutlined,
@@ -522,13 +507,9 @@ import {
   type StudentApplicationCoachingRecord,
   updateStudentPositionApply,
   updateStudentApplicationCoaching,
-  updateStudentPositionProgress,
   type StudentApplicationRecord
 } from '@osg/shared/api'
-// §D.4 学生端用 SSOT composable 派生辅导状态显示，停止依赖后端 coachingStatusLabel/coachingColor 固化字段
-import { deriveApplicationStatus } from '@osg/shared/composables'
 
-// dict-ssot-remediation §4：公司类型筛选下拉 = 字典 osg_company_type ∪ 后端返回的历史实际值。
 const { items: companyTypeDictOptions, load: loadCompanyTypeDict } = useDictFacade('osg_company_type')
 const mergedCompanyTypeOptions = computed(() =>
   mergeDictWithExistingValues(
@@ -536,32 +517,6 @@ const mergedCompanyTypeOptions = computed(() =>
     applicationsMeta.value.filterOptions.companyTypes
   )
 )
-
-/**
- * §D.4 + D.3 用 composable 派生展示态（SSOT，单一来源），不再读后端固化字段。
- */
-function getApplicationCoachingDisplay(record: StudentApplicationRecord) {
-  const display = deriveApplicationStatus({
-    coachingStatus: record.coachingStatus,
-    // student 端 row 暂未含 assignStatus，仅传 coachingStatus（composable 会兜底为 pending）
-  })
-  return {
-    label: display.label || '-',
-    // a-tag color 兼容 antdv 内建色名，用 composable tone 直接映射
-    color: mapToneToAntdColor(display.tone),
-  }
-}
-
-function mapToneToAntdColor(tone: 'danger' | 'warning' | 'info' | 'success' | 'default') {
-  // a-tag 内建色名：success / processing / error / warning / default
-  switch (tone) {
-    case 'danger': return 'error'
-    case 'warning': return 'warning'
-    case 'info': return 'processing'
-    case 'success': return 'success'
-    default: return 'default'
-  }
-}
 
 type TabKey = 'all' | 'applied' | 'ongoing' | 'completed'
 type StageTone = { background: string; borderColor: string; color: string }
@@ -581,7 +536,6 @@ interface ApplyStageForm {
   hirevueDeadline: string
   inviteScreenshotName: string
   inviteScreenshotUrl: string
-  mentorHelp: string
   interviewTime: string
   interviewTimeUndetermined: boolean
   mentorCount: string
@@ -602,7 +556,7 @@ const applicationsActionTriggers = [
 const activeTab = ref<TabKey>('all')
 const selectedApplicationId = ref<number | null>(null)
 const selectedInterviewId = ref<number | null>(null)
-const interviewStages = ['screening', 'first', 'second', 'third', 'case', 'superday']
+const interviewStages = ['hirevue', 'screening', 'first', 'second', 'third', 'case', 'superday']
 
 const interviewModalOpen = ref(false)
 const progressModalOpen = ref(false)
@@ -679,17 +633,17 @@ const tabDefs = computed<{ key: TabKey; label: string; icon: typeof OrderedListO
 ])
 
 const columns = computed(() => {
-  const stageTitle = activeTab.value === 'applied' ? '投递状态' : '阶段'
-  const timeTitle = activeTab.value === 'applied' ? '投递时间' : '面试时间'
-
+  // RULE-A 学生端 8 字段 + 操作
   return [
-    { title: '公司/岗位', key: 'job', width: 220 },
-    { title: stageTitle, key: 'stage', width: 140 },
-    { title: timeTitle, key: 'interviewTime', width: 160 },
-    { title: '辅导状态', key: 'coachingStatus', width: 120 },
-    { title: '导师', key: 'mentor', width: 140 },
-    { title: '课时/反馈', key: 'hoursFeedback', width: 130 },
-    { title: '操作', key: 'actions', width: 160, fixed: 'right' as const }
+    { title: '岗位名称', key: 'positionName', width: 180 },
+    { title: '公司', key: 'companyName', width: 140 },
+    { title: '行业', key: 'industry', width: 100 },
+    { title: '岗位分类', key: 'category', width: 110 },
+    { title: '地区', key: 'region', width: 100 },
+    { title: '招聘周期', key: 'recruitmentCycle', width: 110 },
+    { title: '投递时间', key: 'submittedAt', width: 110 },
+    { title: '求职状态', key: 'applicationStatus', width: 110 },
+    { title: '操作', key: 'actions', width: 120, fixed: 'right' as const }
   ]
 })
 
@@ -841,12 +795,18 @@ function openInterviewModal(id: number) {
 }
 
 function stageDropdownOptions(currentStage?: string) {
-  const allOptions = progressStageOptions.value
-  if (!currentStage || allOptions.some((option) => option.value === currentStage)) {
-    return allOptions
+  const sevenStages = progressStageOptions.value.filter((option) => interviewStages.includes(option.value))
+  if (!currentStage || sevenStages.some((option) => option.value === currentStage)) {
+    return sevenStages
   }
 
-  return [{ value: currentStage, label: currentStage }, ...allOptions]
+  return [{ value: currentStage, label: currentStage }, ...sevenStages]
+}
+
+function openApplyCoachingModal(record: StudentApplicationRecord) {
+  selectedApplicationId.value = record.id
+  progressForm.value = defaultApplyStageForm()
+  progressModalOpen.value = true
 }
 
 function selectStageTone(stage?: string): StageTone {
@@ -876,7 +836,7 @@ function renderApplicationCoachings(record: StudentApplicationRecord) {
     h('div', { key: coaching.coachingId, class: 'application-coaching-row' }, [
       h('div', { class: 'application-coaching-row__main' }, [
         h('div', { class: 'application-coaching-row__title' }, [
-          h('span', { class: 'stage-tag', style: stageTagStyle(coaching.interviewStage) }, coaching.interviewStageLabel || coaching.interviewStage),
+          h('span', { class: 'stage-tag', style: stageTagStyle(coaching.interviewStage) }, coaching.interviewStageLabel || '-'),
           h('span', { class: 'application-coaching-row__id' }, `#${coaching.coachingId}`)
         ]),
         h('div', { class: 'application-coaching-row__meta' }, `${coaching.interviewTime || '-'} · ${coaching.companyInterviewer || '公司面试官待补充'}`),
@@ -974,25 +934,19 @@ async function saveProgress() {
   try {
     const note = buildStageNote(progressForm.value)
 
-    if (progressForm.value.stage === 'hirevue' && progressForm.value.mentorHelp === 'yes') {
+    if (progressForm.value.stage === 'hirevue') {
       await requestStudentApplicationCoaching(selectedApplication.value.id, {
         interviewStage: progressForm.value.stage,
         requestedMentorCount: '1',
         requestNote: note
       })
-    } else if (showUpdateInterviewFields.value) {
+    } else {
       await requestStudentApplicationCoaching(selectedApplication.value.id, {
         interviewStage: progressForm.value.stage,
         interviewTime: progressForm.value.interviewTimeUndetermined ? null : progressForm.value.interviewTime,
         city: selectedApplication.value.location,
         requestedMentorCount: progressForm.value.mentorCount,
         requestNote: note
-      })
-    } else {
-      await updateStudentPositionProgress({
-        positionId: selectedApplication.value.positionId,
-        stage: progressForm.value.stage,
-        notes: note
       })
     }
     await loadApplications()
@@ -1054,7 +1008,6 @@ function defaultApplyStageForm(): ApplyStageForm {
     hirevueDeadline: '',
     inviteScreenshotName: '',
     inviteScreenshotUrl: '',
-    mentorHelp: '',
     interviewTime: '',
     interviewTimeUndetermined: false,
     mentorCount: '',
@@ -1131,9 +1084,6 @@ function buildStageNote(form: ApplyStageForm) {
     if (form.inviteScreenshotUrl) {
       lines.push(`inviteScreenshotUrl=${form.inviteScreenshotUrl}`)
     }
-    if (form.mentorHelp) {
-      lines.push(`导师协助：${form.mentorHelp === 'yes' ? '是' : '否'}`)
-    }
   } else if (interviewStages.includes(form.stage)) {
     if (form.interviewTimeUndetermined) {
       lines.push(`面试时间：未确定`)
@@ -1187,10 +1137,6 @@ function validateHirevueFields(form: ApplyStageForm) {
   }
   if (!form.inviteScreenshotUrl) {
     message.error('请上传邀请邮件截图')
-    return false
-  }
-  if (!form.mentorHelp) {
-    message.error('请选择是否需要导师协助')
     return false
   }
   return true

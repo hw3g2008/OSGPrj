@@ -135,6 +135,12 @@
 - 静置 1 小时无操作自动退出（已实现 `useIdleLogout`）
 - 所有时间使用美国时间（EST），页面给出 EST 提示
 - 5 端登录方式统一：邮箱 + 密码
+- **状态展示统一用字典中文 label**（2026-05-11 新增）：
+  - 所有 UI 上的状态字段（求职状态 / 辅导状态 / 面试阶段 / 课消状态 / 岗位状态 / 合同状态 等）一律渲染字典里的中文 label，**不允许露出英文 value**（如 `applied / interviewing / withdraw / hirevue / first_round / pending` 等）
+  - 后端必须为每个 status 字段附 `xxxLabel`（如 `stageLabel / applicationStatusLabel / coachingStatusLabel / interviewStageLabel`）
+  - 前端禁止 `record.xxxLabel || record.xxx` 这种 fallback 写法——找不到 label 时显示空或 `-`，不显示英文 value
+  - 字典 value 仅用于：API 入参出参、SQL 条件、前端状态机判断；**展示一律用 label**
+  - 涉及范围：5 端所有列表 / 弹窗 / 详情 / Tab / Tag / Badge / Dropdown，含求职总览、模拟应聘、课消上报、岗位列表、合同管理、用户管理等
 
 ### 📐 RULE-F 课程排期强制弹窗
 

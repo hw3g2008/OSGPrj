@@ -36,19 +36,30 @@ export interface StudentPositionListItem {
 }
 
 export interface ReviewStudentPositionPayload {
-  positionCategory: string
+  positionCategory?: string
   industry?: string
-  companyName: string
+  companyName?: string
   companyType?: string
   companyWebsite?: string
-  positionName: string
+  positionName?: string
   department?: string
-  region: string
-  city: string
-  recruitmentCycle: string
-  projectYear: string
+  region?: string
+  city?: string
+  recruitmentCycle?: string
+  projectYear?: string
   deadline?: string
   positionUrl?: string
+  // RULE-D RD-001 合并分支：指定时仅复用已有公共岗位 ID，不写新公共岗位。
+  mergeToPositionId?: number
+}
+
+export interface PublicPositionSearchItem {
+  positionId: number
+  companyName: string
+  positionName: string
+  region?: string
+  city?: string
+  recruitmentCycle?: string
 }
 
 export interface RejectStudentPositionPayload {
@@ -68,4 +79,14 @@ export function approveStudentPosition(studentPositionId: number, payload: Revie
 
 export function rejectStudentPosition(studentPositionId: number, payload: RejectStudentPositionPayload) {
   return http.put<StudentPositionListItem>(`/admin/student-position/${studentPositionId}/reject`, payload)
+}
+
+/**
+ * RULE-D RD-001 合并分支：按 公司+岗位 模糊搜索已有公共岗位用于合并选择。
+ * 复用 admin 通用岗位列表接口（带 companyName / positionName 模糊参数）。
+ */
+export function searchPublicPositionsForMerge(keyword: string) {
+  return http.get<{ rows: PublicPositionSearchItem[] }>('/admin/position/list', {
+    params: { keyword, pageSize: 20 }
+  })
 }

@@ -89,7 +89,7 @@ public class PositionServiceImpl implements IPositionService
     private static final List<DictSeed> PROGRESS_STAGE_SEEDS = List.of(
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 1L, "已投递", "applied", "blue", null, "求职状态"),
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 2L, "面试中", "interviewing", "orange", null, "求职状态"),
-            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 3L, "拿到offer", "offer", "green", null, "求职状态"),
+            new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 3L, "已录用", "offer", "green", null, "求职状态"),
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 4L, "被拒绝", "rejected", "red", null, "求职状态"),
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 5L, "主动放弃", "withdraw", "default", null, "求职状态"),
             new DictSeed(DICT_TYPE_POSITION_PROGRESS_STAGE, 6L, "取消投递", "cancelled", "default", null, "求职状态"));
@@ -307,6 +307,8 @@ public class PositionServiceImpl implements IPositionService
         // §D.3 已移除 coachingStatusDict 加载：coaching label 派生职责转移到前端 composable
         Map<String, SysDictData> coachingStageDict = loadDictValueMap(DICT_TYPE_POSITION_COACHING_STAGE);
         Map<String, SysDictData> industryDict = loadDictValueMap(DICT_TYPE_POSITION_INDUSTRY);
+        Map<String, SysDictData> categoryDict = loadDictValueMap(DICT_TYPE_POSITION_CATEGORY);
+        Map<String, SysDictData> regionDict = loadDictValueMap("osg_region");
 
         for (Map<String, Object> application : applications)
         {
@@ -334,6 +336,35 @@ public class PositionServiceImpl implements IPositionService
                 application.put("companyTypeLabel", defaultString(companyTypeMeta.getDictLabel(), companyType));
                 application.put("companyTypeIconKey", defaultString(companyTypeMeta.getCssClass(), ""));
             }
+
+            // RULE-A：附 industryLabel / categoryLabel / regionLabel / applicationStatusLabel
+            String industry = stringValue(application.get("industry"));
+            SysDictData industryMeta = industryDict.get(industry);
+            application.put("industryLabel", industryMeta != null
+                    ? defaultString(industryMeta.getDictLabel(), "")
+                    : "");
+
+            String positionCategory = stringValue(application.get("positionCategory"));
+            SysDictData categoryMeta = categoryDict.get(positionCategory);
+            application.put("categoryLabel", categoryMeta != null
+                    ? defaultString(categoryMeta.getDictLabel(), "")
+                    : "");
+
+            String region = stringValue(application.get("region"));
+            SysDictData regionMeta = regionDict.get(region);
+            application.put("regionLabel", regionMeta != null
+                    ? defaultString(regionMeta.getDictLabel(), "")
+                    : "");
+
+            String applicationStatus = stringValue(application.get("applicationStatus"));
+            // 求职状态 label 走 osg_student_position_progress_stage 字典（统一 6 态，cancelled 已被 SQL 过滤）
+            SysDictData applicationStatusMeta = stageDict.get(applicationStatus);
+            application.put("applicationStatusLabel", applicationStatusMeta != null
+                    ? defaultString(applicationStatusMeta.getDictLabel(), "")
+                    : "");
+            application.put("applicationStatusColor", applicationStatusMeta != null
+                    ? defaultString(applicationStatusMeta.getCssClass(), "default")
+                    : "default");
 
             application.put("bucket", resolveApplicationBucket(stage));
             application.put("coachings", buildApplicationCoachings(application, studentId, coachingStageDict));
@@ -1248,12 +1279,13 @@ public class PositionServiceImpl implements IPositionService
 
     private void syncPositionReferenceData(List<Map<String, Object>> positions)
     {
-        seedStaticDicts(CATEGORY_SEEDS);
+        seedStaticDicts(CATEGORY_SEEDS, false);
         // 不再 seed INDUSTRY_SEEDS，避免向 osg_company_type 注入老 value
-        seedStaticDicts(APPLY_METHOD_SEEDS);
-        seedStaticDicts(PROGRESS_STAGE_SEEDS);
-        seedStaticDicts(COACHING_STAGE_SEEDS);
-        seedStaticDicts(MENTOR_COUNT_SEEDS);
+        seedStaticDicts(APPLY_METHOD_SEEDS, false);
+        // PROGRESS_STAGE 是封闭枚举：旧 8 项 -> 新 6 项的迁移，需要 prune 清白名单外脏数据
+        seedStaticDicts(PROGRESS_STAGE_SEEDS, true);
+        seedStaticDicts(COACHING_STAGE_SEEDS, false);
+        seedStaticDicts(MENTOR_COUNT_SEEDS, false);
 
         for (Map<String, Object> position : positions)
         {
@@ -1368,11 +1400,51 @@ public class PositionServiceImpl implements IPositionService
         return toCompanyShortLabel(company) + " " + stageLabel;
     }
 
-    private void seedStaticDicts(List<DictSeed> seeds)
+    private void seedStaticDicts(List<DictSeed> seeds, boolean pruneStaleValues)
     {
         for (DictSeed seed : seeds)
         {
             upsertDictData(seed);
+        }
+        if (pruneStaleValues)
+        {
+            pruneStaleDictData(seeds);
+        }
+    }
+
+    /**
+     * 清除 sys_dict_data 中同 dict_type 下、value 不在 seed 白名单内的旧记录。
+     * 用于让 PROGRESS_STAGE_SEEDS 等强约束 seed 集合自洽，不依赖外部 SQL migration。
+     */
+    private void pruneStaleDictData(List<DictSeed> seeds)
+    {
+        if (seeds == null || seeds.isEmpty())
+        {
+            return;
+        }
+        Map<String, Set<String>> whitelistByType = new LinkedHashMap<>();
+        for (DictSeed seed : seeds)
+        {
+            whitelistByType
+                    .computeIfAbsent(seed.type(), key -> new HashSet<>())
+                    .add(seed.value());
+        }
+        for (Map.Entry<String, Set<String>> entry : whitelistByType.entrySet())
+        {
+            String dictType = entry.getKey();
+            Set<String> keep = entry.getValue();
+            List<Long> staleIds = new ArrayList<>();
+            for (SysDictData item : sysDictDataMapper.selectDictDataByType(dictType))
+            {
+                if (!keep.contains(item.getDictValue()))
+                {
+                    staleIds.add(item.getDictCode());
+                }
+            }
+            if (!staleIds.isEmpty())
+            {
+                sysDictDataMapper.deleteDictDataByIds(staleIds.toArray(new Long[0]));
+            }
         }
     }
 
