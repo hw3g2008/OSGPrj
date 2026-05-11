@@ -212,7 +212,8 @@ public class OsgContractServiceImpl implements IOsgContractService
         {
             throw new ServiceException("合同不存在");
         }
-        if (!"active".equalsIgnoreCase(asText(existing.getContractStatus())))
+        String existingStatus = asText(existing.getContractStatus());
+        if (!"active".equalsIgnoreCase(existingStatus) && !"normal".equalsIgnoreCase(existingStatus))
         {
             throw new ServiceException("仅当生效中（active）的合同允许编辑，请通过续签创建新合同");
         }

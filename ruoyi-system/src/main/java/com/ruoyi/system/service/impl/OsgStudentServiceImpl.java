@@ -37,7 +37,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
 
     private static final String DEFAULT_CONTRACT_TYPE = "initial";
 
-    private static final String DEFAULT_CONTRACT_STATUS = "normal";
+    private static final String DEFAULT_CONTRACT_STATUS = "active";
 
     @Autowired
     private OsgStudentMapper studentMapper;
