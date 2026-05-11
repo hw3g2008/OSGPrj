@@ -90,6 +90,54 @@ class OsgStaffServiceImplChangeRequestTest
     }
 
     @Test
+    void approveChangeRequestShouldApplyRegionAreaChangeAndMarkRequestApproved() throws Exception
+    {
+        OsgStaff staff = buildStaff();
+        when(jdbcTemplate.queryForList(any(String.class), any(Object[].class))).thenReturn(List.of(
+            changeRequestRow(10L, 1L, "regionArea", "所属地区", "北美", "欧洲", "pending", "mentor.user")));
+        when(staffMapper.selectStaffByStaffId(1L)).thenReturn(staff);
+        when(staffMapper.updateStaff(any(OsgStaff.class))).thenReturn(1);
+        when(sysUserService.selectUserByUserName("diana@example.com")).thenReturn(buildAccount());
+        when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> result = (Map<String, Object>) invoke(
+            "approveChangeRequest",
+            new Class<?>[] { Long.class, String.class },
+            10L,
+            "clerk");
+
+        assertEquals("approved", result.get("status"));
+        assertEquals("欧洲", staff.getRegion());
+        verify(staffMapper).updateStaff(any(OsgStaff.class));
+        verify(jdbcTemplate, atLeastOnce()).update(anyString(), any(Object[].class));
+    }
+
+    @Test
+    void approveChangeRequestShouldApplyRegionCityChangeAndMarkRequestApproved() throws Exception
+    {
+        OsgStaff staff = buildStaff();
+        when(jdbcTemplate.queryForList(any(String.class), any(Object[].class))).thenReturn(List.of(
+            changeRequestRow(10L, 1L, "regionCity", "所属城市", "New York", "London", "pending", "mentor.user")));
+        when(staffMapper.selectStaffByStaffId(1L)).thenReturn(staff);
+        when(staffMapper.updateStaff(any(OsgStaff.class))).thenReturn(1);
+        when(sysUserService.selectUserByUserName("diana@example.com")).thenReturn(buildAccount());
+        when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> result = (Map<String, Object>) invoke(
+            "approveChangeRequest",
+            new Class<?>[] { Long.class, String.class },
+            10L,
+            "clerk");
+
+        assertEquals("approved", result.get("status"));
+        assertEquals("London", staff.getCity());
+        verify(staffMapper).updateStaff(any(OsgStaff.class));
+        verify(jdbcTemplate, atLeastOnce()).update(anyString(), any(Object[].class));
+    }
+
+    @Test
     void rejectChangeRequestShouldMarkPendingRequestRejected() throws Exception
     {
         when(jdbcTemplate.queryForList(any(String.class), any(Object[].class))).thenReturn(List.of(

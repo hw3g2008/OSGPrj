@@ -140,7 +140,7 @@
                 <div v-for="(companies, industry) in groupedCompanies" :key="industry" style="margin-bottom: 8px">
                   <span style="color: #64748b; font-size: 12px; margin-bottom: 4px; display: block">{{ industry }}</span>
                   <span
-                    v-for="(company, idx) in companies"
+                    v-for="company in companies"
                     :key="company"
                     style="display: inline-block; margin-right: 4px"
                   >
@@ -260,7 +260,8 @@ const { items: majorItems, load: loadMajor } = useDictFacade('osg_major_directio
 const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
 const { items: specialtyItems, load: loadSpecialty } = useDictFacade('osg_specialty')
 const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
-const { items: industryItems, load: loadIndustry } = useIndustryMeta()
+const { items: companyItems, load: loadCompany } = useDictFacade('osg_company_name')
+const { meta: industryItems, load: loadIndustry } = useIndustryMeta()
 
 /** value→label；查不到（历史中文）原样返回 */
 const dictLabel = (items: DictFacadeOption[], val?: string) =>
@@ -283,14 +284,14 @@ const groupedCompanies = computed(() => {
 
   const groups: Record<string, string[]> = {}
   for (const v of companyValues) {
-    const company = industryItems.value.find((c) => c.value === v)
+    const company = companyItems.value.find((c) => c.value === v)
     const industryValue = company?.parentValue
     // parentValue 存的是行业 dictValue（如 "finance"），取其 label
     const industryLabel = industryValue
       ? (industryItems.value.find((i) => i.value === industryValue)?.label ?? industryValue)
       : '其他'
     if (!groups[industryLabel]) groups[industryLabel] = []
-    const companyLabel = dictLabel(industryItems.value, v)
+    const companyLabel = dictLabel(companyItems.value, v)
     if (!groups[industryLabel].includes(companyLabel)) groups[industryLabel].push(companyLabel)
   }
   return groups
@@ -366,6 +367,7 @@ watch(
       void loadSub()
       void loadSpecialty()
       void loadRating()
+      void loadCompany()
       void loadIndustry()
     }
     void loadDetail()

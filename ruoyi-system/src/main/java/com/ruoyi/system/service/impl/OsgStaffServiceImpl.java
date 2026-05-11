@@ -571,8 +571,8 @@ public class OsgStaffServiceImpl implements IOsgStaffService
             case "staffType" -> staff.setStaffType(request.getAfterValue());
             case "majorDirection" -> staff.setMajorDirection(request.getAfterValue());
             case "subDirection" -> staff.setSubDirection(request.getAfterValue());
-            case "region" -> staff.setRegion(request.getAfterValue());
-            case "city" -> staff.setCity(request.getAfterValue());
+            case "region", "regionArea" -> staff.setRegion(request.getAfterValue());
+            case "city", "regionCity" -> staff.setCity(request.getAfterValue());
             case "hourlyRate" -> staff.setHourlyRate(asDecimal(request.getAfterValue()));
             case "accountStatus" -> staff.setAccountStatus(request.getAfterValue());
             default -> throw new ServiceException("暂不支持该字段审核: " + request.getFieldKey());

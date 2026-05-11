@@ -262,7 +262,7 @@ import {
   type StaffPayload
 } from '@osg/shared/api/admin/staff'
 import { http } from '@osg/shared/utils/request'
-import { useDictFacade, useIndustryMeta, type DictFacadeOption } from '@osg/shared/composables'
+import { useDictFacade, type DictFacadeOption } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -280,7 +280,7 @@ const { items: cityItems, load: loadCity } = useDictFacade('osg_city')
 const { items: majorItems, load: loadMajor } = useDictFacade('osg_major_direction')
 const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
 const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
-const { items: industryItems, load: loadIndustry } = useIndustryMeta()
+const { items: companyItems, load: loadCompany } = useDictFacade('osg_company_name')
 
 /** value→label 查询；查不到（历史中文数据）原样返回，保证旧数据可读 */
 const dictLabel = (items: DictFacadeOption[], val?: string) =>
@@ -384,7 +384,7 @@ onMounted(() => {
   void loadMajor()
   void loadSub()
   void loadRating()
-  void loadIndustry()
+  void loadCompany()
 })
 
 const handleSearch = () => {
@@ -518,7 +518,7 @@ const isBlacklisted = (row: StaffListItem) => Boolean(row.isBlacklisted)
 const formatCompaniesPreview = (companies?: string) => {
   const arr = splitField(companies)
   if (!arr.length) return ''
-  const previews = arr.slice(0, 2).map((v) => dictLabel(industryItems, v))
+  const previews = arr.slice(0, 2).map((v) => dictLabel(companyItems.value, v))
   const label = previews.join('、')
   return arr.length > 2 ? `${label} 等${arr.length}家` : label
 }
@@ -527,7 +527,7 @@ const formatCompaniesPreview = (companies?: string) => {
 const formatCompaniesTooltip = (companies?: string) => {
   const arr = splitField(companies)
   if (!arr.length) return ''
-  return arr.map((v) => dictLabel(industryItems, v)).join('、')
+  return arr.map((v) => dictLabel(companyItems.value, v)).join('、')
 }
 
 const formatType = (staffType?: string) => {
