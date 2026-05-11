@@ -20,6 +20,8 @@ test.describe('A-AU-001 Admin Mentor Change Review', () => {
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/users/mentor-change-review', { waitUntil: 'networkidle', timeout: 30000 })
+    // 等待 filter card 渲染完成，避免后续 click 出现 race
+    await page.locator('.mcr-filter-form').first().waitFor({ state: 'visible', timeout: 10000 })
   })
 
   // ── AAU-001 : 页面加载 + PageHeader ──
@@ -42,7 +44,7 @@ test.describe('A-AU-001 Admin Mentor Change Review', () => {
 
   // ── AAU-003 : 状态筛选 ──
   test('AAU-003 状态筛选下拉含「待审核 / 已通过 / 已驳回」三项', async ({ page }) => {
-    const statusSelect = page.locator('.mcr-filter-form [placeholder="全部状态"]')
+    const statusSelect = page.locator('.mcr-filter-form .ant-select').first()
     await statusSelect.click()
     const dropdown = page.locator('.ant-select-dropdown:visible')
     await expect(dropdown.locator('text=待审核').first()).toBeVisible({ timeout: 5000 })
@@ -97,11 +99,13 @@ test.describe('A-AU-001 Admin Mentor Change Review', () => {
 
   // ── AAU-007 : 重置 → 状态筛选清空 ──
   test('AAU-007 重置按钮清空筛选条件', async ({ page }) => {
-    const statusSelect = page.locator('.mcr-filter-form [placeholder="全部状态"]')
+    const statusSelect = page.locator('.mcr-filter-form .ant-select').first()
     await statusSelect.click()
-    await page.locator('.ant-select-dropdown:visible text=已通过').click()
-    await page.locator('.mcr-filter-form button:has-text("重置")').click()
-    await page.waitForTimeout(300)
+    await page.locator('.ant-select-dropdown:visible .ant-select-item-option:has-text("已通过")').click()
+    await page.waitForTimeout(200)
+    // antd 按钮文本会被自动插入空格（auto-insert-space-in-button），用模糊匹配兜底
+    await page.locator('.mcr-filter-form button').filter({ hasText: /重\s*置/ }).first().click()
+    await page.waitForTimeout(500)
     const placeholder = await page.locator('.mcr-filter-form .ant-select-selection-placeholder').first().innerText().catch(() => '')
     expect(placeholder).toContain('全部状态')
     await ss(page, 'AAU-007-after-reset')
