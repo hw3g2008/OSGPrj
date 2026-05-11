@@ -387,11 +387,15 @@ const toDateValue = (value?: string) => {
   return value.slice(0, 10)
 }
 
-const normalizeCycles = (value?: string) =>
-  (value || '')
+const normalizeCycles = (value?: string | string[] | null) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean)
+  }
+  return (value || '')
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
+}
 
 const resetForm = () => {
   const seed = props.position || props.defaults || {}

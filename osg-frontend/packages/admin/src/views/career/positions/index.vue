@@ -118,26 +118,28 @@
 
           <div v-else class="positions-drilldown">
             <section v-for="industry in drillDownRows" :key="industry.industry" class="positions-drilldown__industry">
-              <button
-                type="button"
+              <div
                 :class="['positions-drilldown__industry-head', `positions-drilldown__industry-head--${getIndustryTone(industry.industry)}`]"
-                :aria-expanded="expandedIndustries.has(industry.industry)"
-                @click="toggleIndustry(industry.industry)"
               >
-                <div class="positions-drilldown__industry-main">
+                <button
+                  type="button"
+                  class="positions-drilldown__industry-main positions-drilldown__industry-toggle"
+                  :aria-expanded="expandedIndustries.has(industry.industry)"
+                  @click="toggleIndustry(industry.industry)"
+                >
                   <i :class="['mdi', expandedIndustries.has(industry.industry) ? 'mdi-chevron-down' : 'mdi-chevron-right']" :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" aria-hidden="true"></i>
                   <i :class="['mdi', getIndustryIcon(industry.industry)]" :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" aria-hidden="true"></i>
                   <strong :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ formatIndustry(industry.industry) }}</strong>
                   <span :style="{ background: toneTextColor[getIndustryTone(industry.industry) || 'slate'], color: '#fff', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }">{{ industry.companyCount }} 家公司</span>
                   <a-tag color="purple">{{ industry.positionCount }} 个岗位</a-tag>
-                </div>
+                </button>
                 <div style="display: flex; align-items: center; gap: 8px">
                   <a-tag class="positions-drilldown__filter-tag" color="green" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'open')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'open')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'open')">{{ getIndustryStatusCount(industry, 'open') }} 开放</a-tag>
                   <a-tag v-if="getIndustryStatusCount(industry, 'not_started') > 0" class="positions-drilldown__filter-tag" color="blue" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'not_started')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'not_started')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'not_started')">{{ getIndustryStatusCount(industry, 'not_started') }} 未开始</a-tag>
                   <a-tag v-if="getIndustryStatusCount(industry, 'closed') > 0" class="positions-drilldown__filter-tag" color="default" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'closed')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'closed')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'closed')">{{ getIndustryStatusCount(industry, 'closed') }} 已关闭</a-tag>
                   <span class="positions-drilldown__filter-tag" :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'has_students')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'has_students')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'has_students')">{{ industry.studentCount }} 投递学员</span>
                 </div>
-              </button>
+              </div>
 
               <div v-if="expandedIndustries.has(industry.industry)" class="positions-drilldown__companies">
                 <section v-for="company in getVisibleCompanies(industry)" :key="`${industry.industry}-${company.companyName}`" class="positions-drilldown__company">
@@ -169,6 +171,11 @@
 
                   <div v-if="isCompanyExpanded(industry.industry, company.companyName)" class="positions-drilldown__position-list">
                     <a-table :columns="drilldownColumns" :data-source="getVisibleCompanyPositions(industry.industry, company)" :row-key="(r: PositionListItem) => r.positionId" :pagination="false" size="small">
+                      <template #headerCell="{ column }">
+                        <span class="positions-drilldown__column-title">
+                          <span v-for="line in formatDrilldownColumnTitle(String(column.title || ''))" :key="line">{{ line }}</span>
+                        </span>
+                      </template>
                       <template #bodyCell="{ column, record: position }">
                         <template v-if="column.dataIndex === 'positionName'">
                           <a v-if="position.positionUrl" :href="position.positionUrl" target="_blank" rel="noreferrer" style="font-weight: 700">
@@ -226,13 +233,25 @@
         </template>
 
         <template v-else>
-          <a-table :columns="listColumns" :data-source="sortedListRows" :row-key="(r: PositionListItem) => r.positionId" :pagination="tablePagination" :locale="{ emptyText: '当前筛选条件下暂无岗位数据' }" :scroll="{ x: 1400 }" @change="handleTableChange">
+          <a-table class="positions-list-table" :columns="listColumns" :data-source="sortedListRows" :row-key="(r: PositionListItem) => r.positionId" :pagination="tablePagination" :locale="{ emptyText: '当前筛选条件下暂无岗位数据' }" :scroll="{ x: 1400 }" @change="handleTableChange">
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'positionName'">
-                <a v-if="record.positionUrl" :href="record.positionUrl" target="_blank" rel="noreferrer" style="font-weight: 700">
-                  {{ record.positionName }} <i class="mdi mdi-open-in-new" style="font-size: 11px" aria-hidden="true" />
-                </a>
-                <span v-else>{{ record.positionName }}</span>
+                <a-tooltip :title="record.positionName || '-'">
+                  <a v-if="record.positionUrl" :href="record.positionUrl" target="_blank" rel="noreferrer" class="positions-list__cell-text positions-list__cell-link">
+                    {{ record.positionName }} <i class="mdi mdi-open-in-new" style="font-size: 11px" aria-hidden="true" />
+                  </a>
+                  <span v-else class="positions-list__cell-text">{{ record.positionName }}</span>
+                </a-tooltip>
+              </template>
+              <template v-else-if="column.dataIndex === 'companyName'">
+                <a-tooltip :title="record.companyName || '-'">
+                  <span class="positions-list__cell-text">{{ record.companyName || '-' }}</span>
+                </a-tooltip>
+              </template>
+              <template v-else-if="column.dataIndex === 'companyType'">
+                <a-tooltip :title="record.companyType || '-'">
+                  <span class="positions-list__cell-text">{{ record.companyType || '-' }}</span>
+                </a-tooltip>
               </template>
               <template v-else-if="column.dataIndex === 'companyIndustry'">
                 <div style="display: flex; align-items: center; gap: 8px; text-align: left">
@@ -242,27 +261,52 @@
                   <span>{{ formatIndustry(record.industry) }}</span>
                 </div>
               </template>
-              <template v-else-if="column.dataIndex === 'department'">{{ formatDepartment(record.department) }}</template>
-              <template v-else-if="column.dataIndex === 'positionCategory'">{{ formatCategory(record.positionCategory) }}</template>
+              <template v-else-if="column.dataIndex === 'department'">
+                <a-tooltip :title="formatDepartment(record.department)">
+                  <span class="positions-list__cell-text">{{ formatDepartment(record.department) }}</span>
+                </a-tooltip>
+              </template>
+              <template v-else-if="column.dataIndex === 'positionCategory'">
+                <a-tooltip :title="formatCategory(record.positionCategory)">
+                  <span class="positions-list__cell-text">{{ formatCategory(record.positionCategory) }}</span>
+                </a-tooltip>
+              </template>
+              <template v-else-if="column.dataIndex === 'city'">
+                <a-tooltip :title="record.city || '-'">
+                  <span class="positions-list__cell-text">{{ record.city || '-' }}</span>
+                </a-tooltip>
+              </template>
               <template v-else-if="column.dataIndex === 'recruitmentCycle'">
-                <div class="positions-cycle-tags">
-                  <a-tag v-for="cycle in splitCycles(record.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
-                  <span v-if="!splitCycles(record.recruitmentCycle).length">-</span>
-                </div>
+                <a-tooltip :title="formatCycleTooltip(record.recruitmentCycle)">
+                  <div class="positions-list__tag-line">
+                    <a-tag v-for="cycle in splitCycles(record.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
+                    <span v-if="!splitCycles(record.recruitmentCycle).length">-</span>
+                  </div>
+                </a-tooltip>
               </template>
               <template v-else-if="column.dataIndex === 'targetMajors'">
-                <div class="positions-cycle-tags">
-                  <a-tag v-for="major in splitCycles(record.targetMajors)" :key="major" color="cyan">{{ formatMajor(major) }}</a-tag>
-                  <span v-if="!splitCycles(record.targetMajors).length">-</span>
-                </div>
+                <a-tooltip :title="formatMajorTooltip(record.targetMajors)">
+                  <div class="positions-list__tag-line">
+                    <a-tag v-for="major in splitCycles(record.targetMajors)" :key="major" color="cyan">{{ formatMajor(major) }}</a-tag>
+                    <span v-if="!splitCycles(record.targetMajors).length">-</span>
+                  </div>
+                </a-tooltip>
               </template>
-              <template v-else-if="column.dataIndex === 'displayStartTime'">{{ formatShortDate(record.displayStartTime) }}</template>
+              <template v-else-if="column.dataIndex === 'displayStartTime'">
+                {{ formatShortDate(record.displayStartTime) }}
+              </template>
               <template v-else-if="column.dataIndex === 'createTime'">{{ formatShortDate(record.createTime) }}</template>
               <template v-else-if="column.dataIndex === 'deadlineDisplay'">
                 <template v-if="record.deadline">
-                  <span :style="isDeadlineSoon(record.deadline) ? { color: '#dc2626', fontWeight: 700 } : {}">{{ formatShortDate(record.deadline) }}</span>
+                  <a-tooltip :title="formatShortDate(record.deadline)">
+                    <span class="positions-list__cell-text" :style="isDeadlineSoon(record.deadline) ? { color: '#dc2626', fontWeight: 700 } : {}">{{ formatShortDate(record.deadline) }}</span>
+                  </a-tooltip>
                 </template>
-                <template v-else-if="record.deadlineText">{{ record.deadlineText }}</template>
+                <template v-else-if="record.deadlineText">
+                  <a-tooltip :title="record.deadlineText">
+                    <span class="positions-list__cell-text">{{ record.deadlineText }}</span>
+                  </a-tooltip>
+                </template>
                 <template v-else>—</template>
               </template>
               <template v-else-if="column.dataIndex === 'displayStatus'">
@@ -270,6 +314,11 @@
               </template>
               <template v-else-if="column.dataIndex === 'studentCount'">
                 <a-button type="link" size="small" @click="openStudentsModal(record)">{{ record.studentCount || 0 }}人</a-button>
+              </template>
+              <template v-else-if="column.dataIndex === 'createBy'">
+                <a-tooltip :title="record.createBy || '-'">
+                  <span class="positions-list__cell-text">{{ record.createBy || '-' }}</span>
+                </a-tooltip>
               </template>
               <template v-else-if="column.dataIndex === 'action'">
                 <a-button type="link" size="small" @click="openEditModal(record)">编辑</a-button>
@@ -361,7 +410,9 @@ const statusToneToColor: Record<string, string> = {
 
 const toneTextColor: Record<string, string> = {
   gold: '#92400E',
+  indigo: '#4F46E5',
   violet: '#7C3AED',
+  teal: '#0F766E',
   blue: '#1D4ED8',
   amber: '#D97706',
   slate: '#64748b'
@@ -383,6 +434,13 @@ const drilldownColumns = [
   { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
 ]
+
+const formatDrilldownColumnTitle = (title: string) => {
+  if (title.length === 4) {
+    return [title.slice(0, 2), title.slice(2)]
+  }
+  return [title]
+}
 
 const listColumns = [
   { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
@@ -759,10 +817,11 @@ const handleBatchUpload = async (file: File) => {
 }
 
 const getExportFilename = (contentDisposition: string | null, template: boolean) => {
-  const matched = contentDisposition?.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/)
-  const raw = matched?.[1] || matched?.[2]
+  const utf8Match = contentDisposition?.match(/filename\*=UTF-8''([^;]+)/i)
+  const plainMatch = contentDisposition?.match(/filename="?([^";]+?)"?(?:;|$)/i)
+  const raw = utf8Match?.[1] || plainMatch?.[1]
   if (raw) {
-    return decodeURIComponent(raw)
+    return decodeURIComponent(raw.trim())
   }
   return template ? 'position-template.xlsx' : 'positions.xlsx'
 }
@@ -793,16 +852,29 @@ const handleExport = async (template: boolean) => {
       throw new Error('export failed')
     }
 
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const errJson = await response.json().catch(() => null)
+      throw new Error(errJson?.msg || '导出请求未通过认证，请重新登录')
+    }
+
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.download = getExportFilename(response.headers.get('content-disposition'), template)
+    link.rel = 'noopener'
+    link.style.display = 'none'
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
     message.success(template ? '模板下载成功' : '岗位导出成功')
-  } catch (_error) {
-    message.error(template ? '模板下载失败' : '岗位导出失败')
+  } catch (error) {
+    const reason = error instanceof Error && error.message && !['export failed'].includes(error.message)
+      ? error.message
+      : ''
+    message.error((template ? '模板下载失败' : '岗位导出失败') + (reason ? `：${reason}` : ''))
   } finally {
     downloading.value = false
   }
@@ -920,6 +992,16 @@ const formatMajor = (value?: string) => {
   return majorMap.value.get(value)?.label || value
 }
 
+const formatCycleTooltip = (value?: string | string[] | null) => {
+  const labels = splitCycles(value).map((item) => formatCycle(item))
+  return labels.length ? labels.join('、') : '-'
+}
+
+const formatMajorTooltip = (value?: string | string[] | null) => {
+  const labels = splitCycles(value).map((item) => formatMajor(item))
+  return labels.length ? labels.join('、') : '-'
+}
+
 const formatShortDate = (value?: string) => {
   if (!value) {
     return '—'
@@ -949,6 +1031,44 @@ onMounted(() => {
   word-break: break-word;
   overflow-wrap: break-word;
 }
+.positions-list-table :deep(.ant-table-thead > tr > th) {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.positions-list-table :deep(.ant-table-tbody > tr > td) {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.positions-list__cell-text {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.positions-list__cell-link {
+  font-weight: 700;
+}
+.positions-list__tag-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.positions-list__tag-line .ant-tag {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .positions-drilldown {
   display: flex;
   flex-direction: column;
@@ -969,10 +1089,11 @@ onMounted(() => {
   border: none;
   padding: 12px 16px;
   text-align: left;
-  cursor: pointer;
 }
 .positions-drilldown__industry-head--gold { background: linear-gradient(90deg, #fff1bf 0%, #fffdf6 100%); }
+.positions-drilldown__industry-head--indigo { background: linear-gradient(90deg, #e0e7ff 0%, #f8faff 100%); }
 .positions-drilldown__industry-head--violet { background: linear-gradient(90deg, #f2e7ff 0%, #f8f5ff 100%); }
+.positions-drilldown__industry-head--teal { background: linear-gradient(90deg, #ccfbf1 0%, #f6fffd 100%); }
 .positions-drilldown__industry-head--blue { background: linear-gradient(90deg, #ddebff 0%, #f8fbff 100%); }
 .positions-drilldown__industry-head--amber { background: linear-gradient(90deg, #fff2c9 0%, #fffdf6 100%); }
 .positions-drilldown__industry-head--slate { background: linear-gradient(90deg, #edf2f7 0%, #f8fafc 100%); }
@@ -983,6 +1104,13 @@ onMounted(() => {
 }
 .positions-drilldown__industry-main strong {
   font-size: 15px;
+}
+.positions-drilldown__industry-toggle {
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
 }
 .positions-drilldown__filter-tag {
   cursor: pointer;
@@ -1032,10 +1160,22 @@ onMounted(() => {
   flex-shrink: 0;
 }
 .positions-drilldown__company-logo--gold { background: #a85a18; }
+.positions-drilldown__company-logo--indigo { background: #4f46e5; }
 .positions-drilldown__company-logo--violet { background: #7c3aed; }
+.positions-drilldown__company-logo--teal { background: #0f766e; }
 .positions-drilldown__company-logo--blue { background: #2563eb; }
 .positions-drilldown__company-logo--amber { background: #d97706; }
 .positions-drilldown__company-logo--slate { background: #64748b; }
+.positions-drilldown__column-title {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.positions-drilldown__column-title span {
+  white-space: nowrap;
+}
 .positions-cycle-tags {
   display: inline-flex;
   flex-direction: column;
