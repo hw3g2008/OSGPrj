@@ -175,13 +175,12 @@ const emitSearch = () => {
 }
 
 const handleSelectChange = (field: keyof StudentFilterModel, value: FilterValue) => {
+  // 仅更新本地草稿；用户点搜索按钮才提交查询，避免多条件场景下连续触发
   draft[field] = value as never
-  emitSearch()
 }
 
 const handleClearText = (field: keyof StudentFilterModel) => {
   draft[field] = undefined as never
-  emitSearch()
 }
 
 const handleReset = () => {

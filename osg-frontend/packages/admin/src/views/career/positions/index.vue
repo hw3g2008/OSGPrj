@@ -47,37 +47,37 @@
     <a-card :bordered="false">
       <a-form layout="inline" style="gap: var(--osg-toolbar-gap); flex-wrap: wrap">
         <a-form-item>
-          <a-select v-model:value="filters.positionCategory" placeholder="全部分类" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.positionCategory" placeholder="全部分类" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.categories" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.industry" placeholder="公司类别" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.industry" placeholder="公司类别" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.industries" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px" show-search @change="handleSearch">
+          <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px" show-search>
             <a-select-option v-for="option in companyOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.region" placeholder="全部地区" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.region" placeholder="全部地区" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.regions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.city" placeholder="全部城市" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.city" placeholder="全部城市" allow-clear style="width: 120px">
             <a-select-option v-for="option in cityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.displayStatus" placeholder="全部状态" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.displayStatus" placeholder="全部状态" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.displayStatuses" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.recruitmentCycle" placeholder="招聘周期" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.recruitmentCycle" placeholder="招聘周期" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.recruitmentCycles" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
@@ -90,11 +90,10 @@
             style="width: 180px"
             :options="meta.majorDirections"
             :field-names="{ label: 'label', value: 'value' }"
-            @change="handleSearch"
           />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="publishPreset" placeholder="展示起始" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="publishPreset" placeholder="展示起始" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.publishPresets" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
