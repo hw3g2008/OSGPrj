@@ -43,42 +43,42 @@ defineProps<{
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--osg-page-header-row-gap);
+  margin-bottom: var(--osg-page-header-mb);
 }
 
 .page-header__text {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--osg-page-header-text-gap);
 }
 
 .page-header__title {
   margin: 0;
-  font-size: 26px;
-  font-weight: 700;
+  font-size: var(--osg-page-header-title-size);
+  font-weight: var(--osg-font-weight-bold);
   color: var(--text, #1E293B);
-  line-height: 1.3;
+  line-height: var(--osg-line-height-tight);
 }
 
 .page-header__title-en {
-  margin-left: 8px;
-  font-size: 14px;
-  font-weight: 400;
+  margin-left: var(--osg-space-2);
+  font-size: var(--osg-page-header-title-en-size);
+  font-weight: var(--osg-font-weight-regular);
   color: var(--muted, #94A3B8);
   /* 关键：不强制 uppercase，与 V1 内嵌端视觉一致 */
 }
 
 .page-header__desc {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--osg-page-header-desc-size);
   color: var(--text2, #64748B);
 }
 
 .page-header__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--osg-page-header-action-gap);
   flex-shrink: 0;
 }
 

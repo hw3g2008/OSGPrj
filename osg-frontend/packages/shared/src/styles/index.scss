@@ -15,6 +15,7 @@
   --osg-text-primary: #333333;
   --osg-text-secondary: #666666;
   --osg-text-disabled: #999999;
+  --osg-text-muted: #94a3b8;
   --osg-border-color: #d9d9d9;
   --osg-bg-color: #f5f5f5;
 
@@ -30,6 +31,63 @@
   // 阴影
   --osg-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --osg-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+  // ════════════════════════════════════════════════════════════
+  // 字号梯度（5 端通用，列表/页头/表格/工具栏统一引用）
+  // ════════════════════════════════════════════════════════════
+  --osg-font-size-xs: 11px;
+  --osg-font-size-sm: 12px;
+  --osg-font-size-base: 14px;
+  --osg-font-size-md: 15px;
+  --osg-font-size-lg: 16px;
+  --osg-font-size-xl: 20px;
+  --osg-font-size-2xl: 26px;
+
+  --osg-font-weight-regular: 400;
+  --osg-font-weight-medium: 500;
+  --osg-font-weight-semibold: 600;
+  --osg-font-weight-bold: 700;
+
+  --osg-line-height-tight: 1.3;
+  --osg-line-height-base: 1.5;
+
+  // ════════════════════════════════════════════════════════════
+  // 间距梯度（4px 基线）
+  // ════════════════════════════════════════════════════════════
+  --osg-space-1: 4px;
+  --osg-space-2: 8px;
+  --osg-space-3: 12px;
+  --osg-space-4: 16px;
+  --osg-space-5: 20px;
+  --osg-space-6: 24px;
+  --osg-space-7: 32px;
+
+  // ════════════════════════════════════════════════════════════
+  // 列表页布局 tokens（5 端通用）
+  // ════════════════════════════════════════════════════════════
+  --osg-list-page-padding-x: var(--osg-space-6);
+  --osg-list-page-padding-y: var(--osg-space-4);
+  --osg-list-page-gap: var(--osg-space-4);
+
+  // 页头
+  --osg-page-header-title-size: var(--osg-font-size-2xl);
+  --osg-page-header-title-en-size: var(--osg-font-size-base);
+  --osg-page-header-desc-size: var(--osg-font-size-base);
+  --osg-page-header-text-gap: 6px;
+  --osg-page-header-action-gap: var(--osg-space-2);
+  --osg-page-header-row-gap: var(--osg-space-4);
+  --osg-page-header-mb: var(--osg-space-6);
+
+  // 表格
+  --osg-table-header-font-size: var(--osg-font-size-base);
+  --osg-table-cell-font-size: var(--osg-font-size-base);
+  --osg-table-row-height: 48px;
+  --osg-table-cell-padding-x: var(--osg-space-4);
+  --osg-table-cell-padding-y: var(--osg-space-3);
+
+  // 工具栏 / 筛选条
+  --osg-toolbar-mb: var(--osg-space-4);
+  --osg-toolbar-gap: 10px;
 
   // 弹窗表单控件统一规格（5 端通用：36px 高 / 光标与 placeholder 垂直居中）
   --osg-modal-form-control-height: 36px;
