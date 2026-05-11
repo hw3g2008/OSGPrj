@@ -38,14 +38,40 @@ export const BASE_CATEGORY_OPTIONS = [
 export const ABSENT_DEFAULT_HOURS = 0.5
 
 /**
- * §3.5.3 人际关系反馈 - 5 项评分（description 文案 TBD，由 Agent C T-517 补充）
+ * §3.5.3 人际关系反馈 - 5 项评分
+ * description 为评分细则，供导师填写时参考；如产品给出标准文案可替换。
  */
 export const RELATION_RATING_ITEMS = [
-  { key: 'emailQuality', label: '电子邮件质量', max: 5, description: 'TBD' },
-  { key: 'etiquette', label: '礼仪', max: 5, description: 'TBD' },
-  { key: 'smallTalk', label: '闲聊', max: 10, description: 'TBD' },
-  { key: 'callQuality', label: '通话', max: 10, description: 'TBD' },
-  { key: 'thankYouEmail', label: '感谢邮件', max: 3, description: 'TBD' },
+  {
+    key: 'emailQuality',
+    label: '电子邮件质量',
+    max: 5,
+    description: '主题清晰、问候得当、自我介绍简洁、诉求明确、署名规范，整体格式与措辞专业度。',
+  },
+  {
+    key: 'etiquette',
+    label: '礼仪',
+    max: 5,
+    description: '准时到达、着装得体、举止专业、积极的肢体语言与眼神交流，互动中体现尊重。',
+  },
+  {
+    key: 'smallTalk',
+    label: '闲聊',
+    max: 10,
+    description: '寒暄自然顺畅、能快速找到共同话题、控制时长得当，能在闲聊中建立信任与连接。',
+  },
+  {
+    key: 'callQuality',
+    label: '通话',
+    max: 10,
+    description: '提问有深度与针对性、积极倾听并回应、回答清晰有重点、整体节奏把控得当。',
+  },
+  {
+    key: 'thankYouEmail',
+    label: '感谢邮件',
+    max: 3,
+    description: '24 小时内发送、内容精准回顾对话亮点、表达后续跟进意向，体现专业度与诚意。',
+  },
 ] as const
 
 /**

@@ -73,6 +73,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '导师排期管理', permission: 'admin:mentor-schedule:list' }
       },
       {
+        path: 'users/mentor-change-review',
+        name: 'MentorChangeReview',
+        component: () => import('@/views/users/mentor-change-review/index.vue'),
+        meta: { title: '导师资料变更审核', permission: 'admin:mentor-change-review:list' }
+      },
+      {
         path: 'career/positions',
         name: 'Positions',
         component: () => import('@/views/career/positions/index.vue'),

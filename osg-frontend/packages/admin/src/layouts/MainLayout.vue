@@ -141,6 +141,7 @@ const menuGroups: MenuGroup[] = [
       { path: '/users/contracts', title: '合同管理', permission: 'admin:contracts:list', iconClass: 'mdi-file-sign' },
       { path: '/users/staff', title: '导师列表', permission: 'admin:staff:list', iconClass: 'mdi-account-tie' },
       { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'admin:mentor-schedule:list', iconClass: 'mdi-calendar-clock' },
+      { path: '/users/mentor-change-review', title: '导师资料变更审核', permission: 'admin:mentor-change-review:list', iconClass: 'mdi-account-edit-outline' },
     ],
   },
   {
