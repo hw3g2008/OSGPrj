@@ -19,7 +19,7 @@
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
           <div v-for="card in statsCards" :key="card.key" :style="{ textAlign: 'center', padding: '12px', background: card.bg, borderRadius: '8px' }">
             <div :style="{ fontSize: '24px', fontWeight: 700, color: card.color }">{{ card.value }}</div>
-            <div style="font-size: 11px; color: #64748b;">{{ card.label }}</div>
+            <div style="font-size: var(--osg-font-size-xs); color: var(--text2, #64748b);">{{ card.label }}</div>
           </div>
         </div>
         <div style="display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px;">
@@ -47,23 +47,25 @@
       </a-card>
     </div>
 
-    <!-- 筛选条件（卡片外平铺） -->
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-      <a-input v-model:value="filters.studentName" placeholder="搜索学员姓名..." allow-clear style="width: 180px;" @press-enter="handleSearch" />
-      <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px;">
-        <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
-      </a-select>
-      <a-select v-model:value="filters.currentStage" placeholder="全部状态" allow-clear style="width: 140px;">
-        <a-select-option v-for="option in stageOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
-      </a-select>
-      <a-select v-model:value="filters.leadMentorId" placeholder="全部班主任" allow-clear style="width: 140px;">
-        <a-select-option v-for="option in mentorOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
-      </a-select>
-      <a-button type="primary" @click="handleSearch">
-        <template #icon><SearchOutlined /></template>
-        搜索
-      </a-button>
-    </div>
+    <!-- 筛选条件 -->
+    <a-card :bordered="false">
+      <div style="display: flex; gap: var(--osg-space-3); flex-wrap: wrap;">
+        <a-input v-model:value="filters.studentName" placeholder="搜索学员姓名..." allow-clear style="width: 180px;" @press-enter="handleSearch" />
+        <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px;">
+          <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
+        </a-select>
+        <a-select v-model:value="filters.currentStage" placeholder="全部状态" allow-clear style="width: 140px;">
+          <a-select-option v-for="option in stageOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+        </a-select>
+        <a-select v-model:value="filters.leadMentorId" placeholder="全部班主任" allow-clear style="width: 140px;">
+          <a-select-option v-for="option in mentorOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+        </a-select>
+        <a-button type="primary" @click="handleSearch">
+          <template #icon><SearchOutlined /></template>
+          搜索
+        </a-button>
+      </div>
+    </a-card>
 
     <!-- 学员求职列表 -->
     <a-card :bordered="false">
@@ -88,19 +90,19 @@
         <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedJobOverviewRow) => r.applicationId" :pagination="unassignedPagination" :loading="loading" :locale="{ emptyText: '当前没有待分配导师的岗位申请' }" :scroll="{ x: 1000 }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
-              <div><strong>{{ record.studentName || '-' }}</strong><div style="color: #64748b; font-size: 12px">ID: {{ record.studentId }}</div></div>
+              <div><strong>{{ record.studentName || '-' }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID: {{ record.studentId }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'companyName'">
-              <div><strong>{{ record.companyName }}</strong><div style="color: #64748b; font-size: 12px">{{ record.positionName }}</div></div>
+              <div><strong>{{ record.companyName }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.positionName }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'currentStage'">
               <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'interviewTime'">
-              <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: #64748b; font-size: 12px">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
+              <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'requestedMentorCount'">
-              <div><strong>{{ record.requestedMentorCount || 0 }} 位</strong><div style="color: #64748b; font-size: 12px">{{ record.preferredMentorNames || '暂无意向导师' }}</div></div>
+              <div><strong>{{ record.requestedMentorCount || 0 }} 位</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.preferredMentorNames || '暂无意向导师' }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'submittedAt'">
               {{ formatRelativeDate(record.submittedAt) }}
@@ -120,10 +122,10 @@
         <a-table :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="allListPagination" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 1200 }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
-              <div><strong>{{ record.studentName || '-' }}</strong><div style="color: #64748b; font-size: 12px">ID: {{ record.studentId }}</div></div>
+              <div><strong>{{ record.studentName || '-' }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID: {{ record.studentId }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'companyName'">
-              <div><strong>{{ record.companyName }}</strong><div style="color: #64748b; font-size: 12px">{{ record.positionName }} · {{ record.city || record.region || '地区待补充' }}</div></div>
+              <div><strong>{{ record.companyName }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.positionName }} · {{ record.city || record.region || '地区待补充' }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'currentStage'">
               <a-space>
@@ -132,16 +134,16 @@
               </a-space>
             </template>
             <template v-else-if="column.dataIndex === 'interviewTime'">
-              <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: #64748b; font-size: 12px">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
+              <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'coachingStatus'">
               <a-tag :color="resolveCoachingTagColor(record.coachingStatus)">{{ resolveCoachingTagLabel(record.coachingStatus) }}</a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'mentorName'">
-              <div><strong>{{ record.mentorName || record.leadMentorName || '待分配' }}</strong><div style="color: #64748b; font-size: 12px">{{ record.mentorBackground || (record.assignedStatus === 'assigned' ? '导师信息待补充' : '未分配导师') }}</div></div>
+              <div><strong>{{ record.mentorName || record.leadMentorName || '待分配' }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.mentorBackground || (record.assignedStatus === 'assigned' ? '导师信息待补充' : '未分配导师') }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'hoursUsed'">
-              <div><strong>{{ record.hoursUsed || 0 }}h</strong><div style="color: #64748b; font-size: 12px">{{ record.feedbackSummary || '暂无反馈' }}</div></div>
+              <div><strong>{{ record.hoursUsed || 0 }}h</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.feedbackSummary || '暂无反馈' }}</div></div>
             </template>
           </template>
         </a-table>

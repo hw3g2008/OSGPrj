@@ -13,13 +13,13 @@
       <a-col v-for="card in statCards" :key="card.key" :span="6">
         <a-card :bordered="false" :body-style="{ textAlign: 'center', background: card.bg, borderRadius: '12px' }">
           <a-statistic :title="card.label" :value="card.value" :value-style="{ fontWeight: 700 }" />
-          <div style="color: #64748b; font-size: 12px; margin-top: 4px">{{ card.meta }}</div>
+          <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm); margin-top: 4px">{{ card.meta }}</div>
         </a-card>
       </a-col>
     </a-row>
 
     <a-card :bordered="false">
-      <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
+      <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap">
         <a-form-item>
           <a-input v-model:value="filters.keyword" placeholder="搜索学员或申请内容" allow-clear style="width: 200px" @press-enter="handleSearch" />
         </a-form-item>
@@ -48,7 +48,9 @@
           </a-space>
         </a-form-item>
       </a-form>
+    </a-card>
 
+    <a-card :bordered="false">
       <a-tabs v-model:activeKey="activeTab" @change="(key: string) => switchTab(key as ActiveTab)">
         <a-tab-pane key="pending">
           <template #tab>
@@ -79,7 +81,7 @@
           <template v-if="column.dataIndex === 'studentName'">
             <div>
               <strong>{{ record.studentName || '未命名学员' }}</strong>
-              <div style="color: #64748b; font-size: 12px">ID {{ record.studentId }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID {{ record.studentId }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'practiceType'">
@@ -88,13 +90,13 @@
           <template v-else-if="column.dataIndex === 'requestContent'">
             <div>
               <strong>{{ record.requestContent }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ record.preferredMentorNames || '暂无意向导师' }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.preferredMentorNames || '暂无意向导师' }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'submittedAt'">
             <div>
               <strong>{{ formatRelativeTime(record.submittedAt) }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ formatDateTime(record.submittedAt) }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ formatDateTime(record.submittedAt) }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
@@ -118,7 +120,7 @@
           <template v-if="column.dataIndex === 'studentName'">
             <div>
               <strong>{{ record.studentName || '未命名学员' }}</strong>
-              <div style="color: #64748b; font-size: 12px">ID {{ record.studentId }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID {{ record.studentId }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'practiceType'">
@@ -127,19 +129,19 @@
           <template v-else-if="column.dataIndex === 'requestContent'">
             <div>
               <strong>{{ record.requestContent }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ formatDateTime(record.scheduledAt) }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ formatDateTime(record.scheduledAt) }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'submittedAt'">
             <div>
               <strong>{{ formatRelativeTime(record.submittedAt) }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ formatDateTime(record.submittedAt) }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ formatDateTime(record.submittedAt) }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'mentorNames'">
             <div>
               <strong>{{ record.mentorNames || '待分配' }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ record.mentorBackgrounds || '—' }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.mentorBackgrounds || '—' }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'status'">
@@ -151,7 +153,7 @@
           <template v-else-if="column.dataIndex === 'feedbackRating'">
             <div>
               <strong>{{ record.feedbackRating ? `${record.feedbackRating}/5` : '—' }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ record.feedbackSummary || '暂无反馈' }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.feedbackSummary || '暂无反馈' }}</div>
               <a-button v-if="record.feedbackSummary || record.feedbackRating" type="link" size="small" style="padding: 0" @click="openFeedbackModal(record)">查看反馈</a-button>
             </div>
           </template>

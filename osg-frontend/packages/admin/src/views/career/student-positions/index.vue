@@ -9,8 +9,8 @@
       </template>
     </PageHeader>
 
-    <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" style="margin-bottom: 16px">
+    <a-card :bordered="false">
+      <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap">
         <a-form-item>
           <a-select v-model:value="filters.status" style="width: 120px" data-field-name="状态">
             <a-select-option value="pending">待审核</a-select-option>
@@ -43,7 +43,9 @@
           </a-space>
         </a-form-item>
       </a-form>
+    </a-card>
 
+    <a-card :bordered="false">
       <a-table
         :columns="positionColumns"
         :data-source="rows"
@@ -62,7 +64,7 @@
               </a-avatar>
               <div style="display: flex; flex-direction: column; gap: 2px">
                 <strong>{{ record.companyName }}</strong>
-                <span style="font-size: 11px; color: #64748b">{{ record.positionName }}<template v-if="record.city"> · {{ record.city }}</template></span>
+                <span style="font-size: var(--osg-font-size-xs); color: var(--text2, #64748b)">{{ record.positionName }}<template v-if="record.city"> · {{ record.city }}</template></span>
                 <a v-if="record.positionUrl" :href="record.positionUrl" target="_blank" rel="noreferrer" style="font-size: 10px; color: #3b82f6">
                   {{ simplifyLink(record.positionUrl) }}
                 </a>
@@ -78,13 +80,13 @@
           <template v-else-if="column.dataIndex === 'studentName'">
             <div style="display: flex; flex-direction: column; gap: 2px">
               <strong>{{ record.studentName || '未命名学生' }}</strong>
-              <span style="font-size: 11px; color: #64748b">ID: {{ record.studentId }}</span>
+              <span style="font-size: var(--osg-font-size-xs); color: var(--text2, #64748b)">ID: {{ record.studentId }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'submittedAt'">
             <div style="display: flex; flex-direction: column; gap: 2px">
               <strong>{{ formatRelativeTime(record.submittedAt) }}</strong>
-              <span style="font-size: 11px; color: #64748b">{{ formatDateTime(record.submittedAt) }}</span>
+              <span style="font-size: var(--osg-font-size-xs); color: var(--text2, #64748b)">{{ formatDateTime(record.submittedAt) }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'status'">
