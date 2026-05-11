@@ -274,6 +274,9 @@ public class OsgPositionController extends BaseController
                        OsgPosition position,
                        @RequestParam(value = "template", required = false, defaultValue = "false") boolean template)
     {
+        String filename = template ? "position-template.xlsx" : "positions.xlsx";
+        response.setHeader("Content-Disposition", "attachment; filename=" + filename + "; filename*=UTF-8''" + filename);
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         if (template)
         {
             ExcelUtil<PositionImportTemplate> util = new ExcelUtil<>(PositionImportTemplate.class);

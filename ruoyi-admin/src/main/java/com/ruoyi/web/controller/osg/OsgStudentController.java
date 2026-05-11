@@ -219,6 +219,8 @@ public class OsgStudentController extends BaseController
     @GetMapping("/export")
     public void export(HttpServletResponse response, OsgStudent student)
     {
+        response.setHeader("Content-Disposition", "attachment; filename=students.xlsx; filename*=UTF-8''students.xlsx");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         List<OsgStudent> students = studentService.selectStudentList(student);
         Map<Long, Map<String, Integer>> activityCounts = studentService.selectStudentActivityCounts(extractStudentIds(students));
         List<Long> blacklistedIds = studentService.selectBlacklistedStudentIds(extractStudentIds(students));

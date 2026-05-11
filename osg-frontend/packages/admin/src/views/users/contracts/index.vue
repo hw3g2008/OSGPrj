@@ -354,16 +354,29 @@ const handleExport = async () => {
       throw new Error('导出请求失败')
     }
 
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const errJson = await response.json().catch(() => null)
+      throw new Error(errJson?.msg || '导出请求未通过认证，请重新登录')
+    }
+
     const blob = await response.blob()
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
     link.download = getExportFilename(response.headers.get('content-disposition'))
+    link.rel = 'noopener'
+    link.style.display = 'none'
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
     message.success('合同列表导出成功')
-  } catch (_error) {
-    message.error('合同列表导出失败')
+  } catch (error) {
+    const reason = error instanceof Error && error.message && !['导出请求失败'].includes(error.message)
+      ? error.message
+      : ''
+    message.error('合同列表导出失败' + (reason ? `：${reason}` : ''))
   }
 }
 

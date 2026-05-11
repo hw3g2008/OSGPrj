@@ -71,6 +71,8 @@ public class OsgContractController extends BaseController
     @GetMapping("/export")
     public void export(jakarta.servlet.http.HttpServletResponse response, OsgContract contract)
     {
+        response.setHeader("Content-Disposition", "attachment; filename=contracts.xlsx; filename*=UTF-8''contracts.xlsx");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         List<OsgContract> rows = contractService.selectContractList(contract);
         List<ContractExportRow> exportRows = rows.stream()
             .map(ContractExportRow::from)

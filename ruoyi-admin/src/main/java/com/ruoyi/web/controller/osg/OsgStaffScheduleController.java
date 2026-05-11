@@ -105,6 +105,8 @@ public class OsgStaffScheduleController extends BaseController
     public void export(HttpServletResponse response,
                        @RequestParam(value = "week", required = false) String week)
     {
+        response.setHeader("Content-Disposition", "attachment; filename=mentor-schedule.xlsx; filename*=UTF-8''mentor-schedule.xlsx");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         List<Map<String, Object>> rows = staffScheduleService.selectScheduleList(week);
         List<StaffScheduleExportRow> exportRows = new ArrayList<>(rows.size());
         for (Map<String, Object> row : rows)
