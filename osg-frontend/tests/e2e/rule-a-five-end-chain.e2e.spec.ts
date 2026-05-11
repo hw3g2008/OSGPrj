@@ -6,10 +6,10 @@ import {
   bindMentorshipToStudent,
   createTestStaff,
   createTestStudent,
-  defaultStaffUsername,
-  defaultStudentUsername,
-  deleteTestStaff,
-  deleteTestStudent,
+  softDeleteTestStaff,
+  softDeleteTestStudent,
+  staffLoginUsername,
+  studentLoginUsername,
   type AdminAuth,
   type SeededStaff,
   type SeededStudent,
@@ -78,10 +78,10 @@ test.describe('RULE-A 5 端联动主链（端到端，自带数据）', () => {
 
   test.afterAll(async () => {
     if (auth) {
-      if (student?.studentId) await deleteTestStudent(auth, student.studentId)
-      if (mentor?.staffId) await deleteTestStaff(auth, mentor.staffId)
-      if (leadMentor?.staffId) await deleteTestStaff(auth, leadMentor.staffId)
-      if (assistant?.staffId) await deleteTestStaff(auth, assistant.staffId)
+      if (student?.studentId) await softDeleteTestStudent(auth, student.studentId)
+      if (mentor?.staffId) await softDeleteTestStaff(auth, mentor.staffId)
+      if (leadMentor?.staffId) await softDeleteTestStaff(auth, leadMentor.staffId)
+      if (assistant?.staffId) await softDeleteTestStaff(auth, assistant.staffId)
     }
   })
 
@@ -105,7 +105,7 @@ test.describe('RULE-A 5 端联动主链（端到端，自带数据）', () => {
     try {
       // 学生登录（走 /api/student/login，需要 captcha；首版用直接 POST）
       const loginRes = await page.request.post(`${STUDENT_BASE}/api/student/login`, {
-        data: { username: defaultStudentUsername(student.studentId), password: student.password },
+        data: { username: studentLoginUsername(student), password: student.password },
       })
       const loginBody = await loginRes.json().catch(() => ({}))
       expect(loginRes.ok(), `student login: ${JSON.stringify(loginBody).slice(0, 300)}`).toBeTruthy()
@@ -142,7 +142,7 @@ test.describe('RULE-A 5 端联动主链（端到端，自带数据）', () => {
     const page = await ctx.newPage()
     try {
       const loginRes = await page.request.post(`${LEAD_MENTOR_BASE}/api/lead-mentor/login`, {
-        data: { username: defaultStaffUsername(leadMentor.staffId), password: leadMentor.password },
+        data: { username: staffLoginUsername(leadMentor), password: leadMentor.password },
       })
       const loginBody = await loginRes.json().catch(() => ({}))
       expect(loginRes.ok(), `lead-mentor login: ${JSON.stringify(loginBody).slice(0, 300)}`).toBeTruthy()
@@ -177,7 +177,7 @@ test.describe('RULE-A 5 端联动主链（端到端，自带数据）', () => {
     const page = await ctx.newPage()
     try {
       const loginRes = await page.request.post(`${MENTOR_BASE}/api/mentor/login`, {
-        data: { username: defaultStaffUsername(mentor.staffId), password: mentor.password },
+        data: { username: staffLoginUsername(mentor), password: mentor.password },
       })
       const loginBody = await loginRes.json().catch(() => ({}))
       expect(loginRes.ok(), `mentor login: ${JSON.stringify(loginBody).slice(0, 300)}`).toBeTruthy()
@@ -208,7 +208,7 @@ test.describe('RULE-A 5 端联动主链（端到端，自带数据）', () => {
     const page = await ctx.newPage()
     try {
       const loginRes = await page.request.post(`${ASSISTANT_BASE}/api/assistant/login`, {
-        data: { username: defaultStaffUsername(assistant.staffId), password: assistant.password },
+        data: { username: staffLoginUsername(assistant), password: assistant.password },
       })
       const loginBody = await loginRes.json().catch(() => ({}))
       expect(loginRes.ok(), `assistant login: ${JSON.stringify(loginBody).slice(0, 300)}`).toBeTruthy()

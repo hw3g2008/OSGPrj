@@ -55,7 +55,8 @@ export async function createTestStudent(
     studyPlan: 'normal',
     targetRegion: ['na'],
     recruitmentCycle: ['2026 Summer'],
-    majorDirections: ['ib'],
+    majorDirections: ['finance'],
+    subDirections: ['investment_banking'],
     leadMentorIds: [],
     assistantIds: [],
     currency: 'USD',
@@ -63,14 +64,17 @@ export async function createTestStudent(
     totalHours: 80,
     startDate: new Date().toISOString().slice(0, 10),
     endDate: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    attachmentPath: '/tmp/e2e-test-contract.pdf',
   }
   const response = await auth.request.post('/api/admin/student', {
     headers: { Authorization: `Bearer ${auth.token}` },
     data: payload,
   })
-  const body = await response.json()
-  expect(response.ok(), `create student ${options.name} should succeed: ${JSON.stringify(body).slice(0, 300)}`).toBeTruthy()
-  expect(body?.code, '/admin/student should return code=200').toBe(200)
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`/admin/student returned non-JSON: ${raw.slice(0, 500)}`) }
+  expect(response.ok(), `create student ${options.name}: HTTP ${response.status()}, body=${raw.slice(0, 500)}`).toBeTruthy()
+  expect(body?.code, `/admin/student should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
   const studentId = body?.data?.studentId ?? body?.studentId
   expect(studentId, `created student should expose studentId, body=${JSON.stringify(body).slice(0, 300)}`).toBeTruthy()
   return {
@@ -93,10 +97,10 @@ export async function createTestStaff(
     staffType: options.staffType,
     email: options.email,
     phone: `100${Math.floor(Math.random() * 1e8)}`.slice(0, 11),
-    majorDirection: 'ib',
-    subDirection: 'm_a',
+    majorDirection: 'finance',
+    subDirection: 'investment_banking',
     region: 'na',
-    city: 'New York',
+    city: 'new_york',
     hourlyRate: 80,
     accountStatus: 'active',
   }
@@ -104,9 +108,11 @@ export async function createTestStaff(
     headers: { Authorization: `Bearer ${auth.token}` },
     data: payload,
   })
-  const body = await response.json()
-  expect(response.ok(), `create staff ${options.name} should succeed: ${JSON.stringify(body).slice(0, 300)}`).toBeTruthy()
-  expect(body?.code, '/admin/staff should return code=200').toBe(200)
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`/admin/staff returned non-JSON: ${raw.slice(0, 500)}`) }
+  expect(response.ok(), `create staff ${options.name}: HTTP ${response.status()}, body=${raw.slice(0, 500)}`).toBeTruthy()
+  expect(body?.code, `/admin/staff should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
   const staffId = body?.staffId ?? body?.data?.staffId
   expect(staffId, `created staff should expose staffId, body=${JSON.stringify(body).slice(0, 300)}`).toBeTruthy()
   return {
@@ -140,31 +146,40 @@ export async function bindMentorshipToStudent(
 }
 
 /**
- * 拆迁后清理：删除测试学员（包含级联清理 contract / coaching / class_record）。
+ * 拆迁后清理：admin 端目前无 DELETE student / staff 端点，
+ * 改用 PUT /admin/students/status 把账号置为 refunded (3) 实现软删除。
+ * 邮箱已带 timestamp，二次跑不冲突，cleanup 失败不阻塞 e2e。
  */
-export async function deleteTestStudent(auth: AdminAuth, studentId: number) {
-  await auth.request.delete(`/api/admin/student/${studentId}`, {
-    headers: { Authorization: `Bearer ${auth.token}` },
-  })
+export async function softDeleteTestStudent(auth: AdminAuth, studentId: number) {
+  try {
+    await auth.request.put('/api/admin/students/status', {
+      headers: { Authorization: `Bearer ${auth.token}` },
+      data: { studentId, action: 'refund' },
+    })
+  } catch {
+    // ignore
+  }
+}
+
+export async function softDeleteTestStaff(auth: AdminAuth, staffId: number) {
+  try {
+    await auth.request.post('/api/admin/staff/change-request', {
+      headers: { Authorization: `Bearer ${auth.token}` },
+      data: { staffId, action: 'freeze' },
+    })
+  } catch {
+    // ignore
+  }
 }
 
 /**
- * 拆迁后清理：删除测试 staff。
+ * 学员 + staff 登录用 username = email（OsgStudentServiceImpl#createStudentAccount
+ * line 489 把 sysUser.userName 设置为 student.email；OsgStaffServiceImpl 同口径）。
  */
-export async function deleteTestStaff(auth: AdminAuth, staffId: number) {
-  await auth.request.delete(`/api/admin/staff/${staffId}`, {
-    headers: { Authorization: `Bearer ${auth.token}` },
-  })
+export function studentLoginUsername(student: SeededStudent): string {
+  return student.email
 }
 
-/**
- * 给 student 用户名约定：student-{studentId}（按 OsgStudentServiceImpl
- * createStudentWithContract 默认值。如不一致，需在 spec 中显式拿 username）。
- */
-export function defaultStudentUsername(studentId: number): string {
-  return `student${studentId}`
-}
-
-export function defaultStaffUsername(staffId: number): string {
-  return `staff${staffId}`
+export function staffLoginUsername(staff: SeededStaff): string {
+  return staff.email
 }
