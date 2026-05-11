@@ -3,8 +3,10 @@ package com.ruoyi.web.controller.osg;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.constant.HttpStatus;
@@ -55,7 +55,6 @@ public class OsgPositionController extends BaseController
         "image/gif"
     );
     private static final long ATTACHMENT_MAX_SIZE_BYTES = 10L * 1024 * 1024;
-    private static final ObjectMapper EXPORT_MAPPER = new ObjectMapper();
 
     @Autowired
     private OsgPositionServiceImpl positionService;
@@ -292,30 +291,13 @@ public class OsgPositionController extends BaseController
 
     private List<PositionExportRow> toExportRows(List<OsgPosition> rows)
     {
+        PositionExportReference reference = PositionExportReference.from(positionService.selectPositionMeta());
         List<PositionExportRow> exportRows = new ArrayList<>(rows.size());
         for (OsgPosition position : rows)
         {
-            exportRows.add(new PositionExportRow(position, countAttachments(position.getApplicationAttachments())));
+            exportRows.add(new PositionExportRow(position, reference));
         }
         return exportRows;
-    }
-
-    /** T3.17 派生附件数量（从 application_attachments JSON 解析） */
-    private int countAttachments(String json)
-    {
-        if (json == null || json.isBlank())
-        {
-            return 0;
-        }
-        try
-        {
-            List<Map<String, Object>> list = EXPORT_MAPPER.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-            return list == null ? 0 : list.size();
-        }
-        catch (Exception ex)
-        {
-            return 0;
-        }
     }
 
     private boolean hasPositionStatsAccess()
@@ -329,102 +311,158 @@ public class OsgPositionController extends BaseController
         return assistantAccessService.hasAssistantAccess(user);
     }
 
-    /**
-     * T3.17 岗位列表导出行（22 列）
-     * 顺序对齐 T3.15 模板 18 列 + 4 个派生/审计字段（attachmentsCount/displayStatus/createBy/createTime/studentCount）
-     */
     private static class PositionExportRow
     {
-        @Excel(name = "岗位分类")
-        private final String positionCategory;
-
         @Excel(name = "岗位名称")
         private final String positionName;
 
-        @Excel(name = "公司名称")
+        @Excel(name = "公司")
         private final String companyName;
 
         @Excel(name = "公司类别")
         private final String companyType;
 
-        @Excel(name = "公司官网", width = 30)
-        private final String companyWebsite;
-
-        @Excel(name = "岗位链接", width = 30)
-        private final String positionUrl;
-
         @Excel(name = "部门")
         private final String department;
 
-        @Excel(name = "地区")
-        private final String region;
+        @Excel(name = "岗位分类")
+        private final String positionCategory;
 
-        @Excel(name = "城市")
+        @Excel(name = "地区")
         private final String city;
 
         @Excel(name = "招聘周期")
         private final String recruitmentCycle;
 
-        @Excel(name = "对应主攻方向")
+        @Excel(name = "主攻方向")
         private final String targetMajors;
 
-        @Excel(name = "项目时间")
-        private final String projectYear;
+        @Excel(name = "展示起始")
+        private final String displayStartTime;
 
-        @Excel(name = "展示开始时间", width = 20, dateFormat = "yyyy-MM-dd HH:mm")
-        private final Date displayStartTime;
+        @Excel(name = "截止时间")
+        private final String deadlineDisplay;
 
-        @Excel(name = "展示结束时间", width = 20, dateFormat = "yyyy-MM-dd HH:mm")
-        private final Date displayEndTime;
-
-        @Excel(name = "截止日期", width = 20, dateFormat = "yyyy-MM-dd")
-        private final Date deadline;
-
-        @Excel(name = "截止文案")
-        private final String deadlineText;
-
-        @Excel(name = "投递备注")
-        private final String applicationNote;
-
-        @Excel(name = "附件数量")
-        private final Integer attachmentsCount;
-
-        @Excel(name = "岗位状态")
+        @Excel(name = "状态")
         private final String displayStatus;
+
+        @Excel(name = "投递学员")
+        private final String studentCount;
 
         @Excel(name = "添加人")
         private final String createBy;
 
-        @Excel(name = "添加日期", width = 20, dateFormat = "yyyy-MM-dd HH:mm")
-        private final Date createTime;
+        @Excel(name = "添加日期")
+        private final String createTime;
 
-        @Excel(name = "申请学员数")
-        private final Integer studentCount;
-
-        private PositionExportRow(OsgPosition p, int attachmentsCount)
+        private PositionExportRow(OsgPosition p, PositionExportReference reference)
         {
-            this.positionCategory = p.getPositionCategory();
-            this.positionName = p.getPositionName();
-            this.companyName = p.getCompanyName();
-            this.companyType = p.getCompanyType();
-            this.companyWebsite = p.getCompanyWebsite();
-            this.positionUrl = p.getPositionUrl();
-            this.department = p.getDepartment();
-            this.region = p.getRegion();
-            this.city = p.getCity();
-            this.recruitmentCycle = p.getRecruitmentCycle();
-            this.targetMajors = p.getTargetMajors();
-            this.projectYear = p.getProjectYear();
-            this.displayStartTime = p.getDisplayStartTime();
-            this.displayEndTime = p.getDisplayEndTime();
-            this.deadline = p.getDeadline();
-            this.deadlineText = p.getDeadlineText();
-            this.applicationNote = p.getApplicationNote();
-            this.attachmentsCount = attachmentsCount;
-            this.displayStatus = p.getDisplayStatus();
-            this.createBy = p.getCreateBy();
-            this.createTime = p.getCreateTime();
-            this.studentCount = p.getStudentCount() == null ? 0 : p.getStudentCount();
+            this.positionName = text(p.getPositionName(), "-");
+            this.companyName = text(p.getCompanyName(), "-");
+            this.companyType = text(p.getCompanyType(), "-");
+            this.department = reference.label(reference.departments, p.getDepartment(), "-");
+            this.positionCategory = reference.label(reference.categories, p.getPositionCategory(), "-");
+            this.city = text(p.getCity(), "-");
+            this.recruitmentCycle = reference.labels(reference.recruitmentCycles, p.getRecruitmentCycle());
+            this.targetMajors = reference.labels(reference.majorDirections, p.getTargetMajors());
+            this.displayStartTime = shortDate(p.getDisplayStartTime());
+            this.deadlineDisplay = p.getDeadline() == null ? text(p.getDeadlineText(), "—") : shortDate(p.getDeadline());
+            this.displayStatus = reference.label(reference.displayStatuses, p.getDisplayStatus(), "展示中");
+            this.studentCount = (p.getStudentCount() == null ? 0 : p.getStudentCount()) + "人";
+            this.createBy = text(p.getCreateBy(), "-");
+            this.createTime = shortDate(p.getCreateTime());
+        }
+
+        private static String text(String value, String fallback)
+        {
+            return value == null || value.isBlank() ? fallback : value;
+        }
+
+        private static String shortDate(Date value)
+        {
+            return value == null ? "—" : new SimpleDateFormat("MM-dd").format(value);
+        }
+    }
+
+    private static class PositionExportReference
+    {
+        private final Map<String, String> categories;
+        private final Map<String, String> departments;
+        private final Map<String, String> displayStatuses;
+        private final Map<String, String> recruitmentCycles;
+        private final Map<String, String> majorDirections;
+
+        private PositionExportReference(Map<String, String> categories,
+                                        Map<String, String> departments,
+                                        Map<String, String> displayStatuses,
+                                        Map<String, String> recruitmentCycles,
+                                        Map<String, String> majorDirections)
+        {
+            this.categories = categories;
+            this.departments = departments;
+            this.displayStatuses = displayStatuses;
+            this.recruitmentCycles = recruitmentCycles;
+            this.majorDirections = majorDirections;
+        }
+
+        private static PositionExportReference from(Map<String, Object> meta)
+        {
+            return new PositionExportReference(
+                optionLabels(meta.get("categories")),
+                optionLabels(meta.get("departments")),
+                optionLabels(meta.get("displayStatuses")),
+                optionLabels(meta.get("recruitmentCycles")),
+                optionLabels(meta.get("majorDirections"))
+            );
+        }
+
+        private static Map<String, String> optionLabels(Object source)
+        {
+            Map<String, String> labels = new LinkedHashMap<>();
+            if (source instanceof List<?> items)
+            {
+                for (Object item : items)
+                {
+                    if (item instanceof Map<?, ?> option)
+                    {
+                        Object value = option.get("value");
+                        Object label = option.get("label");
+                        if (value != null)
+                        {
+                            labels.put(String.valueOf(value), label == null ? String.valueOf(value) : String.valueOf(label));
+                        }
+                    }
+                }
+            }
+            return labels;
+        }
+
+        private String label(Map<String, String> labels, String value, String fallback)
+        {
+            if (value == null || value.isBlank())
+            {
+                return fallback;
+            }
+            return labels.getOrDefault(value, value);
+        }
+
+        private String labels(Map<String, String> labels, String value)
+        {
+            if (value == null || value.isBlank())
+            {
+                return "-";
+            }
+            String[] parts = value.split(",");
+            List<String> result = new ArrayList<>();
+            for (String part : parts)
+            {
+                String item = part.trim();
+                if (!item.isEmpty())
+                {
+                    result.add(labels.getOrDefault(item, item));
+                }
+            }
+            return result.isEmpty() ? "-" : String.join("、", result);
         }
     }
 

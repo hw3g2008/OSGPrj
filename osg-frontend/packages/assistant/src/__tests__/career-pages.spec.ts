@@ -366,14 +366,14 @@ describe('assistant career pages', () => {
     expect(src).toContain('title-en="Job Overview"')
     expect(src).toContain("from '@osg/shared/components/PageHeader'")
 
-    // 使用 osg-page 全局布局 class
-    expect(src).toContain('class="osg-page"')
+    // 使用 osg-page 全局布局 class（可叠加页面专属 class）
+    expect(src).toMatch(/class="osg-page(\s|")/)
 
     // Ant Design Vue 组件
     expect(src).toContain('<a-card')
     expect(src).toContain('<a-table')
     expect(src).toContain('<StageTag')
-    expect(src).toContain('<a-input')
+    expect(src).toContain('<a-range-picker')
     expect(src).toContain('<a-select')
     expect(src).toContain('<a-button')
 
@@ -388,7 +388,11 @@ describe('assistant career pages', () => {
     // row-key 优先 coachingId（fallback application id 兼容期）
     expect(src).toContain('coachingId ?? record.id')
 
-    // §02 §5.1 列结构：学员 / 公司岗位 / 城市 / 面试阶段 / 面试时间 / 导师 / 最近评分 / 操作
+    // RULE-A 助教端列：学生ID / 学员 / 岗位 / 公司（拆分）/ 城市 / 面试阶段 / 面试时间 / 导师 / 最近评分 / 操作
+    expect(src).toContain("title: '岗位'")
+    expect(src).toContain("dataIndex: 'position'")
+    expect(src).toContain("title: '公司'")
+    expect(src).toContain("dataIndex: 'company'")
     expect(src).toContain("title: '城市'")
     expect(src).toContain("dataIndex: 'location'")
     expect(src).toContain("title: '导师'")
@@ -423,6 +427,8 @@ describe('assistant career pages', () => {
     // 保留助教端业务语义
     expect(src).toContain('getAssistantJobOverviewList')
     expect(src).toContain('getAssistantJobOverviewCalendar')
+    expect(src).toContain('getAssistantJobOverviewDetail')
+    expect(src).toContain('OverlaySurfaceModal')
     expect(src).toContain('查看详情')
     expect(src).toContain('跟进详情')
   })

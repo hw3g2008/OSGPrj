@@ -158,7 +158,7 @@ public class OsgContractController extends BaseController
 
     private static class ContractExportRow
     {
-        @Excel(name = "合同号")
+        @Excel(name = "合同编号")
         private final String contractNo;
 
         @Excel(name = "学员ID")
@@ -173,8 +173,11 @@ public class OsgContractController extends BaseController
         @Excel(name = "合同类型")
         private final String contractType;
 
-        @Excel(name = "合同金额", cellType = ColumnType.NUMERIC, scale = 2)
-        private final java.math.BigDecimal contractAmount;
+        @Excel(name = "美元金额")
+        private final String amountUsd;
+
+        @Excel(name = "英镑金额")
+        private final String amountGbp;
 
         @Excel(name = "总课时", cellType = ColumnType.NUMERIC)
         private final Integer totalHours;
@@ -198,7 +201,7 @@ public class OsgContractController extends BaseController
         private final String contractStatus;
 
         private ContractExportRow(String contractNo, Long studentId, String studentName, String leadMentorName,
-            String contractType, java.math.BigDecimal contractAmount, Integer totalHours, java.math.BigDecimal usedHours,
+            String contractType, String amountUsd, String amountGbp, Integer totalHours, java.math.BigDecimal usedHours,
             java.math.BigDecimal remainingHours, java.util.Date startDate, java.util.Date endDate, String renewalReason,
             String contractStatus)
         {
@@ -207,7 +210,8 @@ public class OsgContractController extends BaseController
             this.studentName = studentName;
             this.leadMentorName = leadMentorName;
             this.contractType = contractType;
-            this.contractAmount = contractAmount;
+            this.amountUsd = amountUsd;
+            this.amountGbp = amountGbp;
             this.totalHours = totalHours;
             this.usedHours = usedHours;
             this.remainingHours = remainingHours;
@@ -225,7 +229,8 @@ public class OsgContractController extends BaseController
                 contract.getStudentName(),
                 contract.getLeadMentorName(),
                 mapContractType(contract.getContractType()),
-                contract.getContractAmount(),
+                formatMoney(contract.getAmountUsd(), "$"),
+                formatMoney(contract.getAmountGbp(), "£"),
                 contract.getTotalHours(),
                 contract.getUsedHours(),
                 contract.getRemainingHours(),
@@ -234,6 +239,15 @@ public class OsgContractController extends BaseController
                 contract.getRenewalReason(),
                 mapContractStatus(contract.getContractStatus())
             );
+        }
+
+        private static String formatMoney(java.math.BigDecimal value, String symbol)
+        {
+            if (value == null || value.compareTo(java.math.BigDecimal.ZERO) <= 0)
+            {
+                return "";
+            }
+            return symbol + value.stripTrailingZeros().toPlainString();
         }
 
         private static String mapContractStatus(String status)

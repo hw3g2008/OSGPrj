@@ -63,7 +63,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             case coalesce(s.progress_stage, 'applied')
                 when 'applied' then '已投递'
                 when 'interviewing' then '面试中'
-                when 'offer' then '拿到offer'
+                when 'offer' then '已录用'
                 when 'rejected' then '被拒绝'
                 when 'withdraw' then '主动放弃'
                 else coalesce(s.progress_stage, 'applied')

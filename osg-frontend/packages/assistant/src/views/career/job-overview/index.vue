@@ -1,5 +1,5 @@
 <template>
-  <div class="osg-page">
+  <div class="osg-page assistant-job-overview">
     <PageHeader title-zh="学员求职总览" title-en="Job Overview" description="查看我管理的学员求职进度">
       <template #actions>
         <a-button @click="handleExport">
@@ -12,20 +12,48 @@
     <!-- 面试日历 -->
     <InterviewCalendar :events="calendarRecords" />
 
-    <!-- 筛选条件 -->
-    <div class="filters-row">
-      <a-input v-model:value="filters.keyword" placeholder="搜索学员姓名..." allow-clear style="width: 180px;" @press-enter="handleSearch" />
-      <a-select v-model:value="filters.company" placeholder="全部公司" allow-clear style="width: 140px;">
-        <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
-      </a-select>
-      <a-select v-model:value="filters.stage" placeholder="全部状态" allow-clear style="width: 140px;">
-        <a-select-option v-for="option in stageOptions" :key="option" :value="option">{{ option }}</a-select-option>
-      </a-select>
-      <a-button type="primary" @click="handleSearch">
-        <template #icon><SearchOutlined /></template>
-        搜索
-      </a-button>
-    </div>
+    <!-- 筛选条件（卡片式） -->
+    <a-card :bordered="false" class="ajo-filter-card">
+      <a-form layout="vertical" :model="filters" class="ajo-filter-form">
+        <a-form-item label="公司">
+          <a-select
+            v-model:value="filters.companyName"
+            placeholder="全部公司"
+            allow-clear
+            show-search
+            :options="companyOptions.map((c) => ({ value: c, label: c }))"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="面试阶段">
+          <a-select
+            v-model:value="filters.currentStage"
+            placeholder="全部状态"
+            allow-clear
+            :options="stageOptions.map((s) => ({ value: s, label: s }))"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="面试时间">
+          <a-range-picker
+            v-model:value="filters.interviewRange"
+            value-format="YYYY-MM-DD"
+            :placeholder="['开始日期', '结束日期']"
+            style="width: 100%"
+            allow-clear
+          />
+        </a-form-item>
+        <a-form-item label=" " class="ajo-filter-form__actions">
+          <a-space>
+            <a-button type="primary" @click="handleSearch">
+              <template #icon><SearchOutlined /></template>
+              搜索
+            </a-button>
+            <a-button @click="handleReset">重置</a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
+    </a-card>
 
     <!-- 错误提示 -->
     <a-alert v-if="errorMessage" type="error" show-icon :message="errorMessage" style="border-radius: 8px;">
@@ -34,31 +62,43 @@
       </template>
     </a-alert>
 
-    <!-- 单栏：我管理的学员 -->
-    <a-card v-else :bordered="false">
+    <!-- 数据卡片 -->
+    <a-card v-else :bordered="false" class="ajo-data-card">
       <template #title>
-        <span class="page-title">我管理的学员 Managed Students</span>
+        <div class="ajo-data-card__title">
+          <span class="ajo-data-card__title-zh">我管理的学员</span>
+          <span class="ajo-data-card__title-en">Managed Students</span>
+          <a-tag class="ajo-data-card__count">{{ filteredRecords.length }}</a-tag>
+        </div>
       </template>
       <a-table
         id="assistant-job-content-readonly"
         :columns="columns"
         :data-source="filteredRecords"
-        :row-key="resolveRowKey"
+        :row-key="(record: ExtendedRecord) => (record.coachingId ?? record.id) as number"
         :loading="loading"
         :pagination="tablePagination"
-        :scroll="{ x: 1200 }"
+        :scroll="{ x: 1280 }"
         :row-class-name="(record: ExtendedRecord) => rowClassName(record)"
         :locale="{ emptyText: '当前暂无管理学员的求职记录' }"
+        class="ajo-table"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'studentName'">
             <StudentAvatarCell :name="record.studentName" :id="record.studentId" />
           </template>
+          <template v-else-if="column.dataIndex === 'position'">
+            <div class="ajo-cell-position">
+              <span>{{ record.position || record.positionName || '-' }}</span>
+            </div>
+          </template>
           <template v-else-if="column.dataIndex === 'company'">
-            <CompanyPositionCell :company="record.company" :position="record.position" />
+            <div class="ajo-cell-company">
+              <span class="ajo-cell-company__name">{{ record.company || record.companyName || '-' }}</span>
+            </div>
           </template>
           <template v-else-if="column.dataIndex === 'location'">
-            <span>{{ record.location || '-' }}</span>
+            <span>{{ record.cityLabel || '-' }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'interviewStage'">
             <StageTag :stage="record.interviewStage" />
@@ -67,99 +107,209 @@
             <InterviewTimeCell :time="formatDateTime(record.interviewTime)" :hint="formatScheduleHint(record.interviewTime)" />
           </template>
           <template v-else-if="column.dataIndex === 'mentorName'">
-            <span>{{ record.mentorName || '-' }}</span>
+            <span v-if="record.mentorNames || record.mentorName">{{ record.mentorNames || record.mentorName }}</span>
+            <span v-else class="ajo-muted">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'latestRating'">
-            <span v-if="record.latestRating" style="font-weight: 600; color: var(--primary);">{{ record.latestRating }}</span>
-            <span v-else style="color: var(--muted);">-</span>
+            <div v-if="record.latestRating" class="ajo-rating">
+              <StarFilled />
+              <span>{{ record.latestRating }}</span>
+            </div>
+            <span v-else class="ajo-muted">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" class="link-button" @click="selectedId = resolveRowKey(record)">查看详情</a-button>
+            <a-button type="link" size="small" class="ajo-link-button" @click="openDetail(record)">查看详情</a-button>
           </template>
         </template>
       </a-table>
     </a-card>
 
-    <!-- 跟进详情 -->
-    <a-card v-if="selectedRecord" :bordered="false" title="跟进详情">
-      <template #extra>
-        <span style="color: var(--muted); font-size: 12px;">{{ selectedRecord.studentName || '-' }}</span>
+    <!-- 跟进详情弹窗 -->
+    <OverlaySurfaceModal
+      :open="detailOpen"
+      surface-id="assistant-job-overview-detail"
+      title="跟进详情"
+      width="880px"
+      max-height="78vh"
+      variant="default"
+      body-class="ajo-detail-body"
+      @close="detailOpen = false"
+    >
+      <template #title>
+        <div class="ajo-detail-header">
+          <span class="ajo-detail-header__title">跟进详情</span>
+          <span v-if="detailRecord?.studentName" class="ajo-detail-header__sub">
+            {{ detailRecord.studentName }}
+            <template v-if="detailRecord.studentId">· ID: {{ detailRecord.studentId }}</template>
+          </span>
+        </div>
       </template>
-      <div class="detail-grid">
-        <div><span class="detail-label">学员</span><div class="detail-value">{{ selectedRecord.studentName || '-' }}</div></div>
-        <div><span class="detail-label">岗位</span><div class="detail-value">{{ selectedRecord.position || '-' }}</div></div>
-        <div><span class="detail-label">公司</span><div class="detail-value">{{ selectedRecord.company || '-' }}</div></div>
-        <div><span class="detail-label">城市</span><div class="detail-value">{{ selectedRecord.location || '-' }}</div></div>
-        <div><span class="detail-label">阶段</span><div class="detail-value">{{ selectedRecord.interviewStage || '未更新' }}</div></div>
-        <div><span class="detail-label">面试时间</span><div class="detail-value">{{ formatDateTime(selectedRecord.interviewTime) }}</div></div>
-        <div><span class="detail-label">导师</span><div class="detail-value">{{ selectedRecord.mentorName || '-' }}</div></div>
-        <div><span class="detail-label">最近评分</span><div class="detail-value">{{ selectedRecord.latestRating || '-' }}</div></div>
-      </div>
-    </a-card>
+
+      <a-spin :spinning="detailLoading">
+        <div v-if="detailRecord" class="ajo-detail">
+          <!-- 关键信息 -->
+          <section class="ajo-detail__summary">
+            <div class="ajo-detail__summary-grid">
+              <div class="ajo-detail__field">
+                <span class="ajo-detail__label">岗位</span>
+                <span class="ajo-detail__value">{{ detailRecord.position || detailRecord.positionName || '-' }}</span>
+              </div>
+              <div class="ajo-detail__field">
+                <span class="ajo-detail__label">公司</span>
+                <span class="ajo-detail__value">{{ detailRecord.company || detailRecord.companyName || '-' }}</span>
+              </div>
+              <div class="ajo-detail__field">
+                <span class="ajo-detail__label">城市</span>
+                <span class="ajo-detail__value">{{ detailRecord.cityLabel || detailRecord.location || '-' }}</span>
+              </div>
+              <div class="ajo-detail__field">
+                <span class="ajo-detail__label">面试阶段</span>
+                <span class="ajo-detail__value"><StageTag :stage="detailRecord.interviewStage" /></span>
+              </div>
+              <div class="ajo-detail__field">
+                <span class="ajo-detail__label">面试时间</span>
+                <span class="ajo-detail__value">{{ formatDateTime(detailRecord.interviewTime) }}</span>
+              </div>
+              <div class="ajo-detail__field">
+                <span class="ajo-detail__label">导师</span>
+                <span class="ajo-detail__value">{{ detailRecord.mentorNames || detailRecord.mentorName || '-' }}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- KPI -->
+          <section class="ajo-detail__metrics">
+            <div class="ajo-detail__metric ajo-detail__metric--hours">
+              <span class="ajo-detail__metric-label">总课时</span>
+              <span class="ajo-detail__metric-value">{{ detailTotals.totalHours }}<small>h</small></span>
+            </div>
+            <div class="ajo-detail__metric ajo-detail__metric--rating">
+              <span class="ajo-detail__metric-label">平均评分</span>
+              <span class="ajo-detail__metric-value">
+                <template v-if="detailTotals.avgRating !== null">
+                  <StarFilled />{{ detailTotals.avgRating }}
+                </template>
+                <template v-else>-</template>
+              </span>
+            </div>
+            <div class="ajo-detail__metric ajo-detail__metric--count">
+              <span class="ajo-detail__metric-label">课消条数</span>
+              <span class="ajo-detail__metric-value">{{ detailTotals.lessonCount }}</span>
+            </div>
+          </section>
+
+          <!-- 课消记录（按导师分组） -->
+          <section class="ajo-detail__records">
+            <div class="ajo-detail__records-title">课消记录</div>
+            <div v-if="!mentorGroups.length" class="ajo-detail__empty">该求职申请暂无课消记录</div>
+            <div v-for="group in mentorGroups" :key="group.mentorId ?? 'unknown'" class="ajo-mentor-card">
+              <div class="ajo-mentor-card__head">
+                <div class="ajo-mentor-card__avatar">{{ mentorInitial(group.mentorName) }}</div>
+                <div class="ajo-mentor-card__meta">
+                  <div class="ajo-mentor-card__name">{{ group.mentorName || '导师待补' }}</div>
+                  <div class="ajo-mentor-card__stats">
+                    <span><ClockCircleOutlined />共 {{ Number(group.totalHours || 0) }}h</span>
+                    <span v-if="group.avgRating !== null && group.avgRating !== undefined"><StarFilled />平均 {{ group.avgRating }}</span>
+                    <span><FileTextOutlined />{{ (group.records || []).length }} 条</span>
+                  </div>
+                </div>
+              </div>
+              <a-table
+                size="small"
+                :columns="recordColumns"
+                :data-source="sortedRecords(group.records || [])"
+                :row-key="(r: any) => r.recordId"
+                :pagination="false"
+                class="ajo-mentor-card__table"
+              >
+                <template #bodyCell="{ column, record }">
+                  <template v-if="column.key === 'memberStatus'">
+                    <a-tag :color="record.memberStatus === 'absent' ? 'red' : 'green'">
+                      {{ record.memberStatus === 'absent' ? '旷课' : '出席' }}
+                    </a-tag>
+                  </template>
+                  <template v-else-if="column.key === 'rate'">
+                    <span v-if="record.rate" class="ajo-rating"><StarFilled />{{ record.rate }}</span>
+                    <span v-else class="ajo-muted">-</span>
+                  </template>
+                  <template v-else-if="column.key === 'feedbackContent'">
+                    <span :title="record.feedbackContent || ''">{{ record.feedbackContent || '-' }}</span>
+                  </template>
+                </template>
+              </a-table>
+            </div>
+          </section>
+        </div>
+      </a-spin>
+    </OverlaySurfaceModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import {
+  ExportOutlined,
+  SearchOutlined,
+  StarFilled,
+  ClockCircleOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { InterviewCalendar, StageTag, StudentAvatarCell, CompanyPositionCell, InterviewTimeCell } from '@osg/shared/components'
+import { InterviewCalendar, StageTag, StudentAvatarCell, InterviewTimeCell } from '@osg/shared/components'
+import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import {
   getAssistantJobOverviewCalendar,
+  getAssistantJobOverviewDetail,
   getAssistantJobOverviewList,
+  type AssistantJobOverviewClassRecord,
+  type AssistantJobOverviewDetail,
+  type AssistantJobOverviewMentorGroup,
   type AssistantJobOverviewRecord,
 } from '@osg/shared/api'
 
 interface ExtendedRecord extends AssistantJobOverviewRecord {
   coachingId?: number
-  mentorName?: string
-  latestRating?: string | number | null
 }
 
 const columns = [
   { title: '学生 ID', dataIndex: 'studentId', key: 'studentId', width: 100, fixed: 'left' as const },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160 },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 170 },
+  { title: '岗位', dataIndex: 'position', key: 'position', width: 160 },
+  { title: '公司', dataIndex: 'company', key: 'company', width: 160 },
   { title: '城市', dataIndex: 'location', key: 'location', width: 110 },
   { title: '面试阶段', dataIndex: 'interviewStage', key: 'interviewStage', width: 130 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 140 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 120 },
+  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 150 },
+  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 140 },
   { title: '最近评分', dataIndex: 'latestRating', key: 'latestRating', width: 110 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 90, fixed: 'right' as const },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
+]
+
+const recordColumns = [
+  { title: '上课日期', dataIndex: 'classDate', key: 'classDate', width: 130 },
+  { title: '课程类型', dataIndex: 'courseType', key: 'courseType', width: 110 },
+  { title: '状态', dataIndex: 'memberStatus', key: 'memberStatus', width: 80 },
+  { title: '时长(h)', dataIndex: 'durationHours', key: 'durationHours', width: 80 },
+  { title: '评分', dataIndex: 'rate', key: 'rate', width: 90 },
+  { title: '反馈', dataIndex: 'feedbackContent', key: 'feedbackContent' },
 ]
 
 const loading = ref(true)
 const errorMessage = ref('')
 const records = ref<ExtendedRecord[]>([])
 const calendarRecords = ref<AssistantJobOverviewRecord[]>([])
-const selectedId = ref<string | number | null>(null)
+
+const detailOpen = ref(false)
+const detailLoading = ref(false)
+const detailRecord = ref<AssistantJobOverviewDetail | null>(null)
+const mentorGroups = ref<AssistantJobOverviewMentorGroup[]>([])
 
 const filters = reactive({
-  keyword: '',
-  company: undefined as string | undefined,
-  stage: undefined as string | undefined,
+  companyName: undefined as string | undefined,
+  currentStage: undefined as string | undefined,
+  interviewRange: undefined as [string, string] | undefined,
 })
 
-function resolveRowKey(record: ExtendedRecord): string | number {
-  return record.coachingId ?? record.id
-}
-
-const filteredRecords = computed(() =>
-  records.value.filter((record) => {
-    const keyword = (filters.keyword || '').trim().toLowerCase()
-    const matchesKeyword =
-      !keyword ||
-      [record.studentName, record.company, record.position]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(keyword))
-
-    return (
-      matchesKeyword &&
-      (!filters.company || record.company === filters.company) &&
-      (!filters.stage || record.interviewStage === filters.stage)
-    )
-  }),
-)
+const filteredRecords = computed(() => records.value)
 
 const tablePagination = computed(() => ({
   total: filteredRecords.value.length,
@@ -168,17 +318,44 @@ const tablePagination = computed(() => ({
   showTotal: (total: number) => `共 ${total} 条`,
 }))
 
-const selectedRecord = computed(
-  () => filteredRecords.value.find((record) => resolveRowKey(record) === selectedId.value) || null,
-)
-
 const companyOptions = computed(() =>
-  Array.from(new Set(records.value.map((record) => record.company).filter(Boolean))) as string[],
+  Array.from(
+    new Set(
+      records.value
+        .map((record) => record.company || record.companyName)
+        .filter((value): value is string => !!value),
+    ),
+  ),
 )
 
 const stageOptions = computed(() =>
-  Array.from(new Set(records.value.map((record) => record.interviewStage).filter(Boolean))) as string[],
+  Array.from(
+    new Set(
+      records.value
+        .map((record) => record.interviewStage)
+        .filter((value): value is string => !!value),
+    ),
+  ),
 )
+
+const detailTotals = computed(() => {
+  const groups = mentorGroups.value || []
+  const lessonCount = groups.reduce((sum, g) => sum + (g.records?.length || 0), 0)
+  const totalHours = groups.reduce((sum, g) => sum + Number(g.totalHours || 0), 0)
+  const allRatings = groups
+    .flatMap((g) => (g.records || []))
+    .filter((r) => r.memberStatus === 'normal' && r.rate)
+    .map((r) => Number(r.rate))
+    .filter((n) => !Number.isNaN(n))
+  const avgRating = allRatings.length
+    ? (allRatings.reduce((s, n) => s + n, 0) / allRatings.length).toFixed(2)
+    : null
+  return {
+    lessonCount,
+    totalHours: Number(totalHours.toFixed(2)),
+    avgRating,
+  }
+})
 
 function formatDateTime(value?: string) {
   if (!value) return '未安排'
@@ -199,17 +376,41 @@ function formatScheduleHint(value?: string) {
 }
 
 function rowClassName(record: ExtendedRecord): string {
-  const status = (record.coachingStatus || '').toLowerCase()
-  if (status.includes('新') || status.includes('new')) return 'row-new'
-  if (status.includes('辅导') || status.includes('coach')) return 'row-coaching'
-  if (status.includes('待') || status.includes('pending')) return 'row-pending'
   const stage = (record.interviewStage || '').toLowerCase()
-  if (stage.includes('offer') || stage.includes('reject') || stage.includes('withdrawn') || stage.includes('拒绝') || stage.includes('放弃')) return 'row-ended'
+  if (stage.includes('offer')) return 'row-coaching'
+  if (stage.includes('reject') || stage.includes('withdrawn') || stage.includes('withdraw') || stage.includes('cancel') || stage.includes('拒绝') || stage.includes('放弃')) {
+    return 'row-ended'
+  }
+  if (!record.interviewTime) return ''
+  const diff = new Date(record.interviewTime).getTime() - Date.now()
+  if (diff > 0 && diff <= 3 * 24 * 60 * 60 * 1000) return 'row-new'
+  if (diff > 0 && diff <= 14 * 24 * 60 * 60 * 1000) return 'row-pending'
   return ''
 }
 
 function handleSearch() {
   void loadOverview()
+}
+
+function handleReset() {
+  filters.companyName = undefined
+  filters.currentStage = undefined
+  filters.interviewRange = undefined
+  void loadOverview()
+}
+
+function mentorInitial(name?: string | null) {
+  if (!name) return '?'
+  const trimmed = name.trim()
+  return trimmed.charAt(0).toUpperCase() || '?'
+}
+
+function sortedRecords(records: AssistantJobOverviewClassRecord[]) {
+  return [...records].sort((a, b) => {
+    if (!a.classDate) return 1
+    if (!b.classDate) return -1
+    return String(b.classDate).localeCompare(String(a.classDate))
+  })
 }
 
 async function handleExport() {
@@ -219,7 +420,16 @@ async function handleExport() {
   const header = '学员,公司,岗位,城市,面试阶段,面试时间,导师,最近评分\n'
   const body = rows
     .map((r) =>
-      [r.studentName, r.company, r.position, r.location, r.interviewStage, r.interviewTime, r.mentorName, r.latestRating]
+      [
+        r.studentName,
+        r.company || r.companyName,
+        r.position || r.positionName,
+        r.cityLabel || r.location,
+        r.interviewStage,
+        r.interviewTime,
+        r.mentorNames || r.mentorName,
+        r.latestRating,
+      ]
         .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
         .join(','),
     )
@@ -238,10 +448,13 @@ async function loadOverview() {
   errorMessage.value = ''
 
   try {
+    const [start, end] = filters.interviewRange || []
     const [listResponse, calendarResponse] = await Promise.all([
       getAssistantJobOverviewList({
-        company: filters.company,
-        coachingStatus: filters.stage,
+        companyName: filters.companyName,
+        currentStage: filters.currentStage,
+        interviewTimeStart: start || undefined,
+        interviewTimeEnd: end || undefined,
       }),
       getAssistantJobOverviewCalendar(),
     ])
@@ -255,65 +468,308 @@ async function loadOverview() {
   }
 }
 
-watch(
-  filteredRecords,
-  (value) => {
-    if (!value.length) {
-      selectedId.value = null
-      return
+async function openDetail(record: ExtendedRecord) {
+  detailRecord.value = record as AssistantJobOverviewDetail
+  mentorGroups.value = []
+  detailOpen.value = true
+
+  const applicationId = (record.applicationId ?? record.id) as number | undefined
+  if (!applicationId) return
+
+  detailLoading.value = true
+  try {
+    const detail = await getAssistantJobOverviewDetail(applicationId)
+    if (detail) {
+      detailRecord.value = detail
+      mentorGroups.value = detail.classRecordsByMentor || []
     }
-    if (!value.some((record) => resolveRowKey(record) === selectedId.value)) {
-      selectedId.value = resolveRowKey(value[0])
-    }
-  },
-  { immediate: true },
-)
+  } catch (error: any) {
+    errorMessage.value = error?.message || '加载课消详情失败'
+  } finally {
+    detailLoading.value = false
+  }
+}
 
 onMounted(() => {
   void loadOverview()
 })
 </script>
 
-<style scoped>
-.page-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.filters-row {
+<style scoped lang="scss">
+.assistant-job-overview {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 16px;
 }
 
-:deep(.row-new) { background: linear-gradient(90deg, #FEE2E2, #FEF2F2); border-left: 4px solid #EF4444; }
-:deep(.row-coaching) { background: #F3E8FF; }
-:deep(.row-pending) { background: #FEF3C7; }
-:deep(.row-ended) { opacity: 0.7; }
-
-.detail-grid {
+.ajo-filter-card {
+  border-radius: 10px;
+  border: 1px solid #eef2f7;
+  background: #fff;
+}
+.ajo-filter-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: 1.2fr 1fr 1.4fr auto;
+  gap: 16px;
+  align-items: end;
 }
-.detail-label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 700;
-  color: var(--muted);
+.ajo-filter-form :deep(.ant-form-item) {
+  margin-bottom: 0;
+}
+.ajo-filter-form :deep(.ant-form-item-label > label) {
   font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  height: 22px;
 }
-.detail-value {
+.ajo-filter-form__actions :deep(.ant-form-item-label) {
+  visibility: hidden;
+}
+
+.ajo-data-card {
+  border-radius: 10px;
+  border: 1px solid #eef2f7;
+}
+.ajo-data-card :deep(.ant-card-head) {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 0 20px;
+  min-height: 52px;
+}
+.ajo-data-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
 }
-.link-button {
+.ajo-data-card__title-zh {
+  font-size: 15px;
+  color: #0f172a;
+}
+.ajo-data-card__title-en {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+.ajo-data-card__count {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.ajo-table :deep(.ant-table-thead > tr > th) {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+.ajo-table :deep(.ant-table-tbody > tr > td) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.ajo-cell-position {
+  font-weight: 600;
+  color: #1e293b;
+}
+.ajo-cell-company__name {
+  color: #4338ca;
+  font-weight: 500;
+}
+
+.ajo-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #f59e0b;
+  font-weight: 600;
+}
+.ajo-muted {
+  color: #94a3b8;
+}
+
+.ajo-link-button {
+  padding: 0;
+  font-weight: 500;
+}
+
+:deep(.row-new) { background: linear-gradient(90deg, #fff7ed 0%, #fffbeb 100%); }
+:deep(.row-coaching) { background: #ecfdf5; }
+:deep(.row-pending) { background: #f5f3ff; }
+:deep(.row-ended) { opacity: 0.6; }
+:deep(.row-new td),
+:deep(.row-coaching td),
+:deep(.row-pending td) { border-color: transparent !important; }
+
+/* Detail Modal */
+:deep(.ajo-detail-body) {
   padding: 0;
 }
+.ajo-detail-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.ajo-detail-header__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.ajo-detail-header__sub {
+  font-size: 12px;
+  color: #64748b;
+}
 
-@media (max-width: 900px) {
-  .detail-grid {
-    grid-template-columns: minmax(0, 1fr);
+.ajo-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 24px;
+  background: #f8fafc;
+}
+
+.ajo-detail__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 24px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #eef2f7;
+  padding: 16px 20px;
+}
+.ajo-detail__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ajo-detail__label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.ajo-detail__value {
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.ajo-detail__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.ajo-detail__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 18px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #eef2f7;
+}
+.ajo-detail__metric-label {
+  font-size: 12px;
+  color: #64748b;
+}
+.ajo-detail__metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  small {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
   }
+  :deep(.anticon) {
+    color: #f59e0b;
+    margin-right: 4px;
+    font-size: 16px;
+  }
+}
+.ajo-detail__metric--hours .ajo-detail__metric-value { color: #4338ca; }
+.ajo-detail__metric--rating .ajo-detail__metric-value { color: #f59e0b; }
+.ajo-detail__metric--count .ajo-detail__metric-value { color: #10b981; }
+
+.ajo-detail__records {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ajo-detail__records-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.ajo-detail__empty {
+  padding: 32px;
+  text-align: center;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px dashed #e2e8f0;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.ajo-mentor-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #eef2f7;
+  overflow: hidden;
+}
+.ajo-mentor-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, #eef2ff 0%, #fff 100%);
+  border-bottom: 1px solid #f1f5f9;
+}
+.ajo-mentor-card__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+.ajo-mentor-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.ajo-mentor-card__stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  :deep(.anticon) {
+    color: #94a3b8;
+  }
+}
+.ajo-mentor-card__table :deep(.ant-table-thead > tr > th) {
+  background: #f8fafc;
+  font-size: 12px;
+  color: #64748b;
+}
+
+@media (max-width: 1180px) {
+  .ajo-filter-form { grid-template-columns: 1fr 1fr; }
+  .ajo-detail__summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ajo-detail__metrics { grid-template-columns: 1fr; }
 }
 </style>

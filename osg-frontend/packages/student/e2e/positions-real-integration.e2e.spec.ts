@@ -265,7 +265,7 @@ test.describe('student positions real integration', () => {
 
     const progressDialog = page.getByRole('dialog', { name: /记录岗位进度/ })
     await progressDialog.locator('.ant-select-selector').click()
-    await page.locator('.ant-select-dropdown:visible').getByText('Offer', { exact: true }).click()
+    await page.locator('.ant-select-dropdown:visible').getByText('已录用', { exact: true }).click()
     await progressDialog.getByPlaceholder('记录这一轮的关键进展或提醒').fill('拿到 offer，等待确认')
     await progressDialog.getByRole('button', { name: '保存进度' }).click()
 

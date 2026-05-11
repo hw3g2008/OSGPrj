@@ -206,7 +206,7 @@ test.describe('student applications real integration', () => {
 
     const progressDialog = page.getByRole('dialog', { name: /更新申请进度/ })
     await progressDialog.locator('.ant-select-selector').click()
-    await page.locator('.ant-select-dropdown:visible').getByText('Offer', { exact: true }).click()
+    await page.locator('.ant-select-dropdown:visible').getByText('已录用', { exact: true }).click()
     await progressDialog.getByRole('button', { name: /保\s*存/ }).click()
 
     await expect
@@ -305,8 +305,8 @@ test.describe('student applications real integration', () => {
 
     await page.locator('.filter-card .ant-select-selector').first().click()
     const filterDropdown = page.locator('.ant-select-dropdown:visible').last()
-    await expect(filterDropdown.getByText('Offer', { exact: true }).first()).toBeVisible()
-    await expect(filterDropdown.getByText('已拒绝', { exact: true }).first()).toBeVisible()
+    await expect(filterDropdown.getByText('已录用', { exact: true }).first()).toBeVisible()
+    await expect(filterDropdown.getByText('被拒绝', { exact: true }).first()).toBeVisible()
     await page.keyboard.press('Escape')
 
     const jpmRow = page.locator('tr').filter({ hasText: 'JP Morgan' }).first()

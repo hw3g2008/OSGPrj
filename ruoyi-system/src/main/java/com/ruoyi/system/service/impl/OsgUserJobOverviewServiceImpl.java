@@ -1313,9 +1313,10 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             applications = filterAssistantApplications(applications, query);
         }
 
+        Map<Long, OsgCoaching> coachingByApp = selectCoachingMap();
         return applications.stream()
             .sorted(Comparator.comparing(OsgJobApplication::getSubmittedAt, Comparator.nullsLast(Date::compareTo)).reversed())
-            .map(this::toAssistantOverviewRow)
+            .map(app -> toAssistantOverviewRow(app, coachingByApp.get(app.getApplicationId())))
             .toList();
     }
 
@@ -1333,7 +1334,10 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             return Map.of();
         }
 
-        return toAssistantOverviewRow(application);
+        OsgCoaching coaching = coachingMapper.selectCoachingByApplicationId(applicationId);
+        Map<String, Object> detail = new LinkedHashMap<>(toAssistantOverviewRow(application, coaching));
+        detail.put("classRecordsByMentor", buildClassRecordsByMentor(coaching == null ? null : coaching.getCoachingId()));
+        return detail;
     }
 
     @Override
@@ -1402,25 +1406,35 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
                     return false;
                 }
             }
+            if (query.getInterviewTimeStart() != null
+                && (app.getInterviewTime() == null || app.getInterviewTime().before(query.getInterviewTimeStart())))
+            {
+                return false;
+            }
+            if (query.getInterviewTimeEnd() != null
+                && (app.getInterviewTime() == null || app.getInterviewTime().after(query.getInterviewTimeEnd())))
+            {
+                return false;
+            }
             return true;
         }).toList();
     }
 
-    private Map<String, Object> toAssistantOverviewRow(OsgJobApplication app)
+    private Map<String, Object> toAssistantOverviewRow(OsgJobApplication app, OsgCoaching coaching)
     {
-        Map<String, Object> row = new LinkedHashMap<>();
-        row.put("id", app.getApplicationId());
-        row.put("studentId", app.getStudentId());
-        row.put("studentName", app.getStudentName());
-        row.put("company", app.getCompanyName());
-        row.put("position", app.getPositionName());
-        row.put("location", firstText(app.getRegion(), app.getCity()));
-        row.put("interviewStage", app.getCurrentStage());
-        row.put("interviewTime", app.getInterviewTime());
-        row.put("coachingStatus", toAssistantLegacyCoachingStatus(app.getCoachingStatus()));
-        row.put("result", toAssistantLegacyResult(app.getCurrentStage()));
-        row.put("createTime", app.getSubmittedAt());
-        return row;
+        Map<String, Object> payload = new LinkedHashMap<>(toOverviewPayload(app, coaching));
+        // 助教端兼容字段（保留 legacy 旧前端可读）
+        payload.putIfAbsent("id", app.getApplicationId());
+        payload.put("company", payload.get("companyName"));
+        payload.put("position", payload.get("positionName"));
+        payload.put("location", firstText(app.getRegion(), app.getCity()));
+        payload.put("interviewStage", payload.get("currentStage"));
+        payload.put("coachingStatus", toAssistantLegacyCoachingStatus(
+            coaching == null ? app.getCoachingStatus() : coaching.getStatus()));
+        payload.put("result", toAssistantLegacyResult(
+            coaching == null ? app.getCurrentStage() : (String) payload.get("currentStage")));
+        payload.put("createTime", app.getSubmittedAt());
+        return payload;
     }
 
     private Map<String, Object> toAssistantCalendarRow(OsgJobApplication app)

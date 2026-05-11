@@ -177,17 +177,16 @@ describe('Admin 岗位管理 T3 修复（第二波 · T3.4/T3.8/T3.15/T3.17）',
     ])
   })
 
-  // ===== T3.17 PositionExportRow 22 列 =====
-  it('AC-T3.17 PositionExportRow 严格 22 列 + 字段顺序', () => {
+  // ===== PositionExportRow 14 列：导出对齐 Admin 岗位列表页面 =====
+  it('AC-export-page-aligned PositionExportRow 严格 14 列 + 字段顺序对齐页面列表', () => {
     const source = readSource(positionControllerPath)
     const tplMatch = source.match(/private static class PositionExportRow\s*\{([\s\S]*?)\n\s*\}/)
     expect(tplMatch).not.toBeNull()
     const tplBody = tplMatch![1]
     const excelNames = Array.from(tplBody.matchAll(/@Excel\(name = "([^"]+)"/g)).map((m) => m[1])
     expect(excelNames).toEqual([
-      '岗位分类', '岗位名称', '公司名称', '公司类别', '公司官网', '岗位链接', '部门', '地区', '城市',
-      '招聘周期', '对应主攻方向', '项目时间', '展示开始时间', '展示结束时间', '截止日期', '截止文案',
-      '投递备注', '附件数量', '岗位状态', '添加人', '添加日期', '申请学员数'
+      '岗位名称', '公司', '公司类别', '部门', '岗位分类', '地区', '招聘周期', '主攻方向',
+      '展示起始', '截止时间', '状态', '投递学员', '添加人', '添加日期'
     ])
   })
 })

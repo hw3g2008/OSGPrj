@@ -73,7 +73,7 @@
         :loading="loading"
         @change="handleTableChange"
         :locale="{ emptyText: '暂无合同数据' }"
-        :scroll="{ x: 1280 }"
+        :scroll="{ x: 1680 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'contractNo'">
@@ -90,21 +90,32 @@
           <template v-else-if="column.dataIndex === 'contractType'">
             <a-tag :color="getTypeColor(record.contractType)">{{ formatContractType(record.contractType) }}</a-tag>
           </template>
-          <template v-else-if="column.dataIndex === 'contractAmount'">
-            <template v-if="record.currency === 'GBP'">
-              <div><strong>£{{ (record.amountGbp || 0).toLocaleString() }}</strong></div>
-              <div style="color: #9ca3af; font-size: var(--osg-font-size-sm)">${{ (record.amountUsd || 0).toLocaleString() }} 等值</div>
+          <template v-else-if="column.dataIndex === 'amountUsd'">
+            <template v-if="record.amountUsd != null && Number(record.amountUsd) > 0">
+              <strong>${{ Number(record.amountUsd).toLocaleString() }}</strong>
             </template>
-            <template v-else>
-              <strong>${{ (record.amountUsd || record.contractAmount || 0).toLocaleString() }}</strong>
+            <span v-else style="color: #9ca3af">-</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'amountGbp'">
+            <template v-if="record.amountGbp != null && Number(record.amountGbp) > 0">
+              <strong>£{{ Number(record.amountGbp).toLocaleString() }}</strong>
             </template>
+            <span v-else style="color: #9ca3af">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'totalHours'">
-            <strong>{{ record.remainingHours ?? record.totalHours }}</strong>
-            <span style="color: #9ca3af; font-size: var(--osg-font-size-sm)"> / {{ record.totalHours }}h</span>
+            {{ record.totalHours ?? '-' }}
           </template>
-          <template v-else-if="column.dataIndex === 'period'">
-            <span style="color: #566178; font-size: var(--osg-font-size-sm)">{{ formatDate(record.startDate) }} ~ {{ formatDate(record.endDate) }}</span>
+          <template v-else-if="column.dataIndex === 'usedHours'">
+            {{ record.usedHours ?? '-' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'remainingHours'">
+            <strong>{{ record.remainingHours ?? '-' }}</strong>
+          </template>
+          <template v-else-if="column.dataIndex === 'startDate'">
+            {{ formatDate(record.startDate) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'endDate'">
+            {{ formatDate(record.endDate) }}
           </template>
           <template v-else-if="column.dataIndex === 'renewalReason'">
             {{ formatRenewalReason(record.renewalReason) || '-' }}

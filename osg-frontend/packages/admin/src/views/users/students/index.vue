@@ -31,6 +31,7 @@
         :graduation-year-options="graduationYearOptions"
         :recruitment-cycle-options="recruitmentCycleOptions"
         :major-direction-options="majorDirectionOptions"
+        :exporting="exporting"
         @search="handleSearch"
         @export="handleExport"
       />
@@ -418,7 +419,7 @@ const handleExport = async () => {
     })
 
     if (!response.ok) {
-      throw new Error('导出请求失败')
+      throw new Error(`导出请求失败 (HTTP ${response.status})`)
     }
 
     const contentType = response.headers.get('content-type') || ''
@@ -440,9 +441,8 @@ const handleExport = async () => {
     window.URL.revokeObjectURL(downloadUrl)
     message.success('学员列表导出成功')
   } catch (error) {
-    const reason = error instanceof Error && error.message && !['导出请求失败'].includes(error.message)
-      ? error.message
-      : ''
+    console.error('[student export] failed:', error)
+    const reason = error instanceof Error && error.message ? error.message : ''
     message.error('学员列表导出失败' + (reason ? `：${reason}` : ''))
   } finally {
     exporting.value = false

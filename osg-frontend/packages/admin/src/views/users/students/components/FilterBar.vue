@@ -77,7 +77,7 @@
         搜索
       </a-button>
       <a-button @click="handleReset">重置</a-button>
-      <a-button @click="emit('export')">
+      <a-button :loading="props.exporting" @click="handleExportClick">
         <template #icon><ExportOutlined /></template>
         导出
       </a-button>
@@ -114,13 +114,15 @@ const props = withDefaults(
     graduationYearOptions?: FilterOption[]
     recruitmentCycleOptions?: FilterOption[]
     majorDirectionOptions?: FilterOption[]
+    exporting?: boolean
   }>(),
   {
     mentorOptions: () => [],
     schoolOptions: () => [],
     graduationYearOptions: () => [],
     recruitmentCycleOptions: () => [],
-    majorDirectionOptions: () => []
+    majorDirectionOptions: () => [],
+    exporting: false
   }
 )
 
@@ -186,6 +188,10 @@ const handleClearText = (field: keyof StudentFilterModel) => {
 const handleReset = () => {
   syncDraft({})
   emitSearch()
+}
+
+const handleExportClick = () => {
+  emit('export')
 }
 
 const normalizeText = (value?: string) => {

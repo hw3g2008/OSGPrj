@@ -1,5 +1,8 @@
 package com.ruoyi.web.controller.osg;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +34,9 @@ public class OsgAssistantJobOverviewController extends BaseController
         @RequestParam(required = false) String studentName,
         @RequestParam(required = false) String companyName,
         @RequestParam(required = false) String currentStage,
-        @RequestParam(required = false) String coachingStatus)
+        @RequestParam(required = false) String coachingStatus,
+        @RequestParam(required = false) String interviewTimeStart,
+        @RequestParam(required = false) String interviewTimeEnd)
     {
         try
         {
@@ -40,6 +45,8 @@ public class OsgAssistantJobOverviewController extends BaseController
             query.setStudentName(studentName);
             query.setCompanyName(companyName);
             query.setCurrentStage(currentStage);
+            query.setInterviewTimeStart(parseRangeBoundary(interviewTimeStart, false));
+            query.setInterviewTimeEnd(parseRangeBoundary(interviewTimeEnd, true));
 
             List<Map<String, Object>> rows = userJobOverviewService.listByAssistant(query, userId);
 
@@ -151,5 +158,31 @@ public class OsgAssistantJobOverviewController extends BaseController
         {
             return "system";
         }
+    }
+
+    private Date parseRangeBoundary(String value, boolean endOfDay)
+    {
+        if (value == null || value.isBlank())
+        {
+            return null;
+        }
+        String trimmed = value.trim();
+        String[] patterns = {"yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd"};
+        for (String pattern : patterns)
+        {
+            try
+            {
+                Date parsed = new SimpleDateFormat(pattern).parse(trimmed);
+                if (pattern.equals("yyyy-MM-dd") && endOfDay)
+                {
+                    return new Date(parsed.getTime() + 24L * 60 * 60 * 1000 - 1);
+                }
+                return parsed;
+            }
+            catch (ParseException ignored)
+            {
+            }
+        }
+        return null;
     }
 }

@@ -35,16 +35,51 @@ export interface AssistantPositionListItem {
 
 export interface AssistantJobOverviewRecord {
   id: number
+  applicationId?: number
+  coachingId?: number
   studentId?: number
   studentName?: string
   mentorId?: number
+  mentorName?: string
+  mentorNames?: string
   company?: string
+  companyName?: string
   position?: string
+  positionName?: string
   location?: string
+  city?: string
+  cityLabel?: string
+  region?: string
   interviewStage?: string
+  currentStage?: string
   interviewTime?: string
   coachingStatus?: string
   result?: string
+  latestRating?: string | number | null
+  lessonCount?: number
+  lessonReported?: boolean
+}
+
+export interface AssistantJobOverviewClassRecord {
+  recordId?: number
+  classDate?: string
+  durationHours?: number | null
+  courseType?: string
+  memberStatus?: string
+  rate?: string | null
+  feedbackContent?: string | null
+}
+
+export interface AssistantJobOverviewMentorGroup {
+  mentorId?: number | null
+  mentorName?: string | null
+  totalHours?: number | null
+  avgRating?: number | null
+  records: AssistantJobOverviewClassRecord[]
+}
+
+export interface AssistantJobOverviewDetail extends AssistantJobOverviewRecord {
+  classRecordsByMentor?: AssistantJobOverviewMentorGroup[]
 }
 
 export interface AssistantMockPracticeRecord {
@@ -73,8 +108,11 @@ export interface AssistantTableResponse<T> {
 }
 
 interface AssistantJobOverviewFilters extends Record<string, string | number | undefined> {
-  company?: string
+  companyName?: string
+  currentStage?: string
   coachingStatus?: string
+  interviewTimeStart?: string
+  interviewTimeEnd?: string
 }
 
 interface AssistantMockPracticeFilters extends Record<string, string | number | undefined> {
@@ -125,6 +163,10 @@ export function getAssistantJobOverviewList(filters: AssistantJobOverviewFilters
 
 export function getAssistantJobOverviewCalendar() {
   return http.get<AssistantJobOverviewRecord[]>('/assistant/job-overview/calendar')
+}
+
+export function getAssistantJobOverviewDetail(applicationId: number) {
+  return http.get<AssistantJobOverviewDetail>(`/assistant/job-overview/${applicationId}`)
 }
 
 export function getAssistantMockPracticeList(filters: AssistantMockPracticeFilters = {}) {

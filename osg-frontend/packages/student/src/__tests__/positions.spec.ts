@@ -91,4 +91,17 @@ describe('student positions source contract', () => {
     expect(positionsSource).not.toContain("<a-select-option value=\"gs\">Goldman Sachs</a-select-option>")
     expect(positionsSource).not.toContain("<a-select-option value=\"ldn\">London</a-select-option>")
   })
+
+  it('separates cancelled (clear applied, count -1) from withdraw (keep applied, count unchanged)', () => {
+    // 取消投递分支：清 applied
+    expect(positionsSource).toMatch(/if \(nextStage === 'cancelled'\)/)
+    expect(positionsSource).toContain('updateStudentPositionApply')
+    // 必须不再把 withdraw / withdrawn 与 cancelled 合并
+    expect(positionsSource).not.toMatch(/nextStage === 'cancelled' \|\| nextStage === 'withdrawn'/)
+    expect(positionsSource).not.toMatch(/nextStage === 'withdrawn'/)
+    // 主动放弃走正常 inline 更新 progressStage（不调 updateStudentPositionApply）
+    expect(positionsSource).toContain('updateProgressInline')
+    // 未投递岗位不可标记除 applied 外的其他状态
+    expect(positionsSource).toContain('请先投递该岗位后')
+  })
 })
