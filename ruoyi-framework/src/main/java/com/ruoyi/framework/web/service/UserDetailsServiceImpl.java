@@ -62,16 +62,20 @@ public class UserDetailsServiceImpl implements UserDetailsService
         OsgStudent student = osgStudentMapper.selectStudentByEmail(user.getUserName());
         if (student != null)
         {
-            String accountStatus = student.getAccountStatus();
-            if ("1".equals(accountStatus))
-            {
-                log.info("登录学员：{} 账号已冻结.", username);
-                throw new ServiceException(MessageUtils.message("student.account.frozen"));
-            }
-            if ("3".equals(accountStatus))
+            // 退费是 lifecycle 终态 — 无论是否冻结，登录都拒。
+            // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3
+            if ("3".equals(student.getAccountStatus()))
             {
                 log.info("登录学员：{} 账号已退费.", username);
                 throw new ServiceException(MessageUtils.message("student.account.refunded"));
+            }
+            // 冻结改用独立 frozen 字段（与 lifecycle 正交）。
+            // 见 §13.2 / §13.5：UserDetailsServiceImpl 拦截 frozen=1，而非 accountStatus='1'。
+            Integer frozen = student.getFrozen();
+            if (frozen != null && frozen == 1)
+            {
+                log.info("登录学员：{} 账号已冻结.", username);
+                throw new ServiceException(MessageUtils.message("student.account.frozen"));
             }
         }
 

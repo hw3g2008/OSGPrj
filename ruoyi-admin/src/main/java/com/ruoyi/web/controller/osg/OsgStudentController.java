@@ -155,22 +155,44 @@ public class OsgStudentController extends BaseController
     {
         Long studentId = asLong(body.get("studentId"));
         String action = asText(body.get("action"));
-        String accountStatus = resolveAccountStatus(action, asText(body.get("accountStatus")));
-        if (studentId == null || accountStatus == null)
+        if (studentId == null)
         {
             return AjaxResult.error("参数缺失");
         }
 
-        int rows = studentService.changeStudentStatus(studentId, accountStatus, getUsername());
+        // 批次 7 + 7.5：拆分 accountStatus 与 frozen 两个独立维度。
+        // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.4
+        StudentStatusAction resolved = resolveStudentStatusAction(action, asText(body.get("accountStatus")));
+        if (resolved == null)
+        {
+            return AjaxResult.error("参数缺失");
+        }
+
+        // 当 frozen 维度不参与变更（refund / end_contract / 兼容裸 accountStatus）时走旧 3 参签名，
+        // 保持既有调用方与 mock stub 不破坏；frozen 维度涉及变更时走新 4 参签名。
+        int rows = resolved.frozen() == null
+            ? studentService.changeStudentStatus(studentId, resolved.accountStatus(), getUsername())
+            : studentService.changeStudentStatus(
+                studentId, resolved.accountStatus(), resolved.frozen(), getUsername());
         if (rows <= 0)
         {
             return AjaxResult.error("学员状态更新失败");
         }
 
-        return AjaxResult.success("学员状态已更新")
-            .put("studentId", studentId)
-            .put("accountStatus", accountStatus);
+        AjaxResult result = AjaxResult.success("学员状态已更新").put("studentId", studentId);
+        if (resolved.accountStatus() != null)
+        {
+            result.put("accountStatus", resolved.accountStatus());
+        }
+        if (resolved.frozen() != null)
+        {
+            result.put("frozen", resolved.frozen());
+        }
+        return result;
     }
+
+    /** 批次 7 + 7.5：把 action 翻译为 (accountStatus, frozen) 二元组。null 表示「不改」。 */
+    private record StudentStatusAction(String accountStatus, Integer frozen) {}
 
     @PreAuthorize(STUDENT_ROLE_ACCESS)
     @PostMapping("/blacklist")
@@ -283,6 +305,8 @@ public class OsgStudentController extends BaseController
             row.put("contractStatus", contractSnapshot.get("contractStatus"));
             row.put("contractDaysLeft", contractSnapshot.get("contractDaysLeft"));
             row.put("accountStatus", defaultText(student.getAccountStatus(), "0"));
+            // 批次 7 + 7.5：frozen 独立标记同步给前端列表（用于状态列双 tag 展示与操作菜单分支）。
+            row.put("frozen", student.getFrozen() == null ? 0 : student.getFrozen());
             row.put("remark", studentService.extractUserRemarkFromEntity(student));
             row.put("isBlacklisted", isBlacklisted);
             rows.add(row);
@@ -444,27 +468,43 @@ public class OsgStudentController extends BaseController
         return rows;
     }
 
-    private String resolveAccountStatus(String action, String accountStatus)
+    /**
+     * 批次 7 + 7.5：action → (accountStatus, frozen)。
+     * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.4
+     *
+     *   freeze       : frozen=1                        （不动 accountStatus）
+     *   unfreeze     : frozen=0                        （不动 accountStatus）
+     *   restore      : frozen=0                        （兼容旧 menu key，等价 unfreeze）
+     *   end_contract : accountStatus='2'               （不动 frozen）
+     *   refund       : accountStatus='3'               （不动 frozen）
+     *   rejoin       : accountStatus='0' + frozen=0    （退费学员重新加入，通常通过续签合同路径触发）
+     *   裸传 accountStatus : 兼容 legacy 调用（PageHeader 旧表单），仅写 accountStatus
+     */
+    private StudentStatusAction resolveStudentStatusAction(String action, String accountStatus)
     {
         if ("freeze".equals(action))
         {
-            return "1";
+            return new StudentStatusAction(null, 1);
         }
-        if ("restore".equals(action))
+        if ("unfreeze".equals(action) || "restore".equals(action))
         {
-            return "0";
+            return new StudentStatusAction(null, 0);
         }
         if ("refund".equals(action))
         {
-            return "3";
+            return new StudentStatusAction("3", null);
         }
         if ("end_contract".equals(action))
         {
-            return "2";
+            return new StudentStatusAction("2", null);
         }
-        if ("0".equals(accountStatus) || "1".equals(accountStatus) || "2".equals(accountStatus) || "3".equals(accountStatus))
+        if ("rejoin".equals(action))
         {
-            return accountStatus;
+            return new StudentStatusAction("0", 0);
+        }
+        if ("0".equals(accountStatus) || "2".equals(accountStatus) || "3".equals(accountStatus))
+        {
+            return new StudentStatusAction(accountStatus, null);
         }
         return null;
     }
@@ -484,6 +524,7 @@ public class OsgStudentController extends BaseController
 
     private String formatAccountStatus(String accountStatus)
     {
+        // 批次 7 + 7.5 重构后 accountStatus 不再含 '1'，旧导出兼容保留分支。
         return switch (accountStatus)
         {
             case "1" -> "冻结";

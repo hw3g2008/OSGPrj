@@ -228,13 +228,30 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         return result;
     }
 
-    public int changeStudentStatus(Long studentId, String accountStatus, String updateBy)
+    /**
+     * 批次 7 + 7.5：支持 accountStatus / frozen 任一字段独立刷新。
+     * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.4 / §13.5
+     *
+     * 任一参数为 null 即跳过该列；都为 null 则 throw（防止意外清空）。
+     */
+    public int changeStudentStatus(Long studentId, String accountStatus, Integer frozen, String updateBy)
     {
+        if (accountStatus == null && frozen == null)
+        {
+            throw new ServiceException("accountStatus / frozen 至少需提供一个");
+        }
         OsgStudent student = new OsgStudent();
         student.setStudentId(studentId);
         student.setAccountStatus(accountStatus);
+        student.setFrozen(frozen);
         student.setUpdateBy(updateBy);
-        return studentMapper.updateStudentStatus(student);
+        return studentMapper.updateStudentAccountFlags(student);
+    }
+
+    /** 兼容旧三参签名 — 仅刷 accountStatus，不动 frozen。 */
+    public int changeStudentStatus(Long studentId, String accountStatus, String updateBy)
+    {
+        return changeStudentStatus(studentId, accountStatus, null, updateBy);
     }
 
     public int updateStudentBlacklist(Long studentId, String action, String reason, Long operatorId)
@@ -347,6 +364,8 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         detail.put("targetRegion", student.getTargetRegion());
         detail.put("subDirection", student.getSubDirection());
         detail.put("accountStatus", student.getAccountStatus());
+        // 批次 7 + 7.5：frozen 是独立维度，详情页需要单独展示。
+        detail.put("frozen", student.getFrozen() == null ? 0 : student.getFrozen());
         detail.put("recruitmentCycles", splitCsv(student.getRecruitmentCycle()));
         detail.put("majorDirections", splitCsv(student.getMajorDirection()));
         detail.put("highSchool", firstNonBlank(remarkFields.get("highSchool")));

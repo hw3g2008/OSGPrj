@@ -170,6 +170,12 @@ public class PositionServiceImpl implements IPositionService
         {
             return;
         }
+        // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3 / §13.5
+        // 退费走兜底 — 即便登录已拦也保留服务端二次校验，防止 token 续期或缓存绕过。
+        if ("3".equals(student.getAccountStatus()))
+        {
+            throw new ServiceException(MessageUtils.message("student.position.refunded"));
+        }
         if ("2".equals(student.getAccountStatus()))
         {
             throw new ServiceException(MessageUtils.message("student.position.contract_ended"));

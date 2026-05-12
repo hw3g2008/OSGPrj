@@ -155,6 +155,12 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         }
         validateCourseSourceLink(record);
         classReportValidator.validateSubmit(record, record.getMentorId(), OsgClassReportValidator.END_MENTOR);
+        // 批次 7 + 7.5：mentor 端课消同样受 frozen / refunded 矩阵约束。
+        // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3
+        if (record != null)
+        {
+            validateStudentAccountForClassRecord(record.getStudentId());
+        }
         normalizeCreateDefaults(record);
         return classRecordMapper.insertMentorClassRecord(record);
     }
@@ -1316,11 +1322,12 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     }
 
     /**
-     * 学员账号状态守卫：
-     * - account_status=1（冻结）→ 抛 class_record.student.frozen
-     * - account_status=3（退费）→ 抛 class_record.student.refunded
-     * - 其他（0/2/黑名单）→ 通过（合同结束/黑名单不拦申报）
+     * 学员账号状态守卫（批次 7 + 7.5 重构后）：
+     * - account_status=3（退费）→ 抛 class_record.student.refunded（lifecycle 终态优先）
+     * - frozen=1（独立冻结标记）→ 抛 class_record.student.frozen
+     * - 其他（0/0、0/-、2/0：合同结束允许课消；黑名单不拦申报）→ 通过
      *
+     * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3 / §13.5。
      * 由 lead-mentor 与 assistant 申报路径共用（assistant 也走 validateLeadMentorCreate）。
      */
     private void validateStudentAccountForClassRecord(Long studentId)
@@ -1330,14 +1337,14 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         {
             throw new ServiceException("学员不存在");
         }
-        String accountStatus = student.getAccountStatus();
-        if ("1".equals(accountStatus))
-        {
-            throw new ServiceException(MessageUtils.message("class_record.student.frozen"));
-        }
-        if ("3".equals(accountStatus))
+        if ("3".equals(student.getAccountStatus()))
         {
             throw new ServiceException(MessageUtils.message("class_record.student.refunded"));
+        }
+        Integer frozen = student.getFrozen();
+        if (frozen != null && frozen == 1)
+        {
+            throw new ServiceException(MessageUtils.message("class_record.student.frozen"));
         }
     }
 
