@@ -490,7 +490,9 @@ class OsgStudentControllerTest
     @Test
     void changeStatusShouldResolveFreezeAction() throws Exception
     {
-        when(studentService.changeStudentStatus(eq(1L), eq("1"), anyString())).thenReturn(1);
+        // 批次 7 + 7.5：freeze 仅刷 frozen=1，不动 accountStatus。
+        // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.4
+        when(studentService.changeStudentStatus(eq(1L), eq(null), eq(1), anyString())).thenReturn(1);
 
         mockMvc.perform(put("/admin/student/status")
                 .header("Authorization", "Bearer clerk-token")
@@ -498,13 +500,14 @@ class OsgStudentControllerTest
                 .content("{\"studentId\":1,\"action\":\"freeze\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.accountStatus").value("1"));
+                .andExpect(jsonPath("$.frozen").value(1));
     }
 
     @Test
     void changeStatusShouldResolveRestoreAction() throws Exception
     {
-        when(studentService.changeStudentStatus(eq(1L), eq("0"), anyString())).thenReturn(1);
+        // 批次 7 + 7.5：restore 等价 unfreeze，仅刷 frozen=0
+        when(studentService.changeStudentStatus(eq(1L), eq(null), eq(0), anyString())).thenReturn(1);
 
         mockMvc.perform(put("/admin/student/status")
                 .header("Authorization", "Bearer clerk-token")
@@ -512,7 +515,38 @@ class OsgStudentControllerTest
                 .content("{\"studentId\":1,\"action\":\"restore\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.accountStatus").value("0"));
+                .andExpect(jsonPath("$.frozen").value(0));
+    }
+
+    @Test
+    void changeStatusShouldResolveUnfreezeAction() throws Exception
+    {
+        // 批次 7 + 7.5：新增 unfreeze action
+        when(studentService.changeStudentStatus(eq(1L), eq(null), eq(0), anyString())).thenReturn(1);
+
+        mockMvc.perform(put("/admin/student/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"studentId\":1,\"action\":\"unfreeze\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.frozen").value(0));
+    }
+
+    @Test
+    void changeStatusShouldResolveRejoinAction() throws Exception
+    {
+        // 批次 7.5：rejoin = accountStatus='0' + frozen=0
+        when(studentService.changeStudentStatus(eq(1L), eq("0"), eq(0), anyString())).thenReturn(1);
+
+        mockMvc.perform(put("/admin/student/status")
+                .header("Authorization", "Bearer clerk-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"studentId\":1,\"action\":\"rejoin\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.accountStatus").value("0"))
+                .andExpect(jsonPath("$.frozen").value(0));
     }
 
     @Test
@@ -570,7 +604,8 @@ class OsgStudentControllerTest
     @Test
     void changeStatusShouldReturnErrorWhenRowsNotAffected() throws Exception
     {
-        when(studentService.changeStudentStatus(eq(1L), eq("1"), anyString())).thenReturn(0);
+        // 批次 7 + 7.5：freeze 走 frozen 维度，mock 4-参签名
+        when(studentService.changeStudentStatus(eq(1L), eq(null), eq(1), anyString())).thenReturn(0);
 
         mockMvc.perform(put("/admin/student/status")
                 .header("Authorization", "Bearer clerk-token")
@@ -961,17 +996,17 @@ class OsgStudentControllerTest
     }
 
     @Test
-    void changeStatusShouldResolveDirectAccountStatus1() throws Exception
+    void changeStatusShouldRejectLegacyDirectAccountStatus1() throws Exception
     {
-        when(studentService.changeStudentStatus(eq(1L), eq("1"), anyString())).thenReturn(1);
-
+        // 批次 7 + 7.5：accountStatus='1' 已退役（拆为独立 frozen flag），
+        // 兼容 fallback 不再接受 '1'。见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2
         mockMvc.perform(put("/admin/student/status")
                 .header("Authorization", "Bearer clerk-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"studentId\":1,\"accountStatus\":\"1\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.accountStatus").value("1"));
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("参数缺失"));
     }
 
     @Test
@@ -1045,7 +1080,8 @@ class OsgStudentControllerTest
     @Test
     void changeStatusShouldHandleStringStudentId() throws Exception
     {
-        when(studentService.changeStudentStatus(eq(1L), eq("1"), anyString())).thenReturn(1);
+        // 批次 7 + 7.5：freeze 走 frozen=1 维度
+        when(studentService.changeStudentStatus(eq(1L), eq(null), eq(1), anyString())).thenReturn(1);
 
         mockMvc.perform(put("/admin/student/status")
                 .header("Authorization", "Bearer clerk-token")

@@ -93,10 +93,20 @@ class UserDetailsServiceImplTest
 
     private OsgStudent stubStudent(String accountStatus)
     {
+        return stubStudent(accountStatus, 0);
+    }
+
+    /**
+     * 批次 7 + 7.5：拆 accountStatus 与 frozen 后扩展 stub 支持双维度。
+     * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2
+     */
+    private OsgStudent stubStudent(String accountStatus, Integer frozen)
+    {
         OsgStudent student = new OsgStudent();
         student.setStudentId(46706L);
         student.setEmail(sysUser.getUserName());
         student.setAccountStatus(accountStatus);
+        student.setFrozen(frozen);
         return student;
     }
 
@@ -115,12 +125,24 @@ class UserDetailsServiceImplTest
     @Test
     void shouldRejectFrozenStudent()
     {
-        when(osgStudentMapper.selectStudentByEmail(sysUser.getUserName())).thenReturn(stubStudent("1"));
+        // 批次 7 + 7.5：frozen=1 拦截登录，与 accountStatus 维度正交
+        when(osgStudentMapper.selectStudentByEmail(sysUser.getUserName())).thenReturn(stubStudent("0", 1));
 
         ServiceException ex = assertThrows(ServiceException.class,
                 () -> userDetailsService.loadUserByUsername(sysUser.getUserName()));
         assertEquals("student.account.frozen", ex.getMessage());
         verify(passwordService, org.mockito.Mockito.never()).validate(any());
+    }
+
+    @Test
+    void shouldRejectContractEndedFrozenStudent()
+    {
+        // 矩阵 2/1：合同结束 + 冻结叠加 → 登录被拒（§13.3）
+        when(osgStudentMapper.selectStudentByEmail(sysUser.getUserName())).thenReturn(stubStudent("2", 1));
+
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> userDetailsService.loadUserByUsername(sysUser.getUserName()));
+        assertEquals("student.account.frozen", ex.getMessage());
     }
 
     @Test

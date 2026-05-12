@@ -38,11 +38,14 @@ import static org.mockito.Mockito.when;
 /**
  * 学员账号状态对申报课消的拦截分支（spec § 5.2 T4/T5）。
  *
- * 内核 validateStudentAccountForClassRecord 由 lead-mentor 与 assistant 申报路径共用：
- * - account_status=0 / 2 / 黑名单 → 通过（合同结束/黑名单不拦申报）
- * - account_status=1 → 抛 class_record.student.frozen
- * - account_status=3 → 抛 class_record.student.refunded
+ * 内核 validateStudentAccountForClassRecord 由 lead-mentor 与 assistant 申报路径共用
+ * （批次 7 + 7.5 后：mentor 端 createMentorClassRecord 也接入）：
+ * - account_status=0 / 2 + frozen=0 → 通过（合同结束/黑名单不拦申报）
+ * - frozen=1（无论 account_status 是 0 还是 2） → 抛 class_record.student.frozen
+ * - account_status=3 → 抛 class_record.student.refunded（lifecycle 终态优先于 frozen）
  * - studentId 不存在 → 抛 "学员不存在"
+ *
+ * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3 / §13.5
  *
  * 同时通过 createLeadMentorClassRecord / createAssistantClassRecord 两条入口
  * 各做一个 frozen 拦截整链路冒烟，确认两端真实复用同一私有方法。
@@ -125,12 +128,19 @@ class OsgClassRecordServiceImplStudentStatusTest
 
     private OsgStudent stub(String accountStatus, Long leadMentorId, Long assistantId)
     {
+        return stub(accountStatus, 0, leadMentorId, assistantId);
+    }
+
+    /** 批次 7 + 7.5：扩展 stub 支持独立 frozen 维度。 */
+    private OsgStudent stub(String accountStatus, Integer frozen, Long leadMentorId, Long assistantId)
+    {
         OsgStudent student = new OsgStudent();
         student.setStudentId(46706L);
         student.setStudentName("Story1 Test Student");
         student.setLeadMentorId(leadMentorId);
         student.setAssistantId(assistantId);
         student.setAccountStatus(accountStatus);
+        student.setFrozen(frozen);
         return student;
     }
 
@@ -152,9 +162,19 @@ class OsgClassRecordServiceImplStudentStatusTest
     }
 
     @Test
-    void shouldRejectWhenStatusFrozen()
+    void shouldRejectWhenFrozenFlagSet()
     {
-        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(stub("1", null, null));
+        // 批次 7 + 7.5：frozen 改用独立 boolean 字段，与 accountStatus 维度正交
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(stub("0", 1, null, null));
+        ServiceException ex = assertThrows(ServiceException.class, () -> invokeValidate(46706L));
+        assertEquals("class_record.student.frozen", ex.getMessage());
+    }
+
+    @Test
+    void shouldRejectWhenFrozenAndContractEnded()
+    {
+        // 矩阵 2/1：合同结束 + 冻结叠加 → 课消被拒（§13.3）
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(stub("2", 1, null, null));
         ServiceException ex = assertThrows(ServiceException.class, () -> invokeValidate(46706L));
         assertEquals("class_record.student.frozen", ex.getMessage());
     }
@@ -179,8 +199,9 @@ class OsgClassRecordServiceImplStudentStatusTest
     @Test
     void leadMentorCreateShouldRejectFrozenStudent()
     {
+        // 批次 7 + 7.5：accountStatus=0 + frozen=1 → lead-mentor 申报被拒
         OsgClassRecord record = baseRecord(12814L);
-        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(stub("1", 12814L, 12813L));
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(stub("0", 1, 12814L, 12813L));
 
         ServiceException ex = assertThrows(ServiceException.class, () -> service.createLeadMentorClassRecord(record));
         assertEquals("class_record.student.frozen", ex.getMessage());
