@@ -119,6 +119,15 @@ class OsgClassRecordServiceImplTest
         record.setReviewRemark("client injected");
         record.setReviewedAt(Timestamp.valueOf(LocalDateTime.of(2026, 3, 28, 11, 0)));
 
+        // 批次 7 + 7.5：mentor 路径接入 validateStudentAccountForClassRecord，
+        // 需要 stub 出 0/0 学员避免「学员不存在」拦截。
+        // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3 / §13.5
+        com.ruoyi.system.domain.OsgStudent student = new com.ruoyi.system.domain.OsgStudent();
+        student.setStudentId(7001L);
+        student.setStudentName("Mentor Flow Student");
+        student.setAccountStatus("0");
+        student.setFrozen(0);
+        when(studentMapper.selectStudentByStudentId(7001L)).thenReturn(student);
         when(classRecordMapper.insertMentorClassRecord(any(OsgClassRecord.class))).thenReturn(1);
 
         int inserted = service.createMentorClassRecord(record);
