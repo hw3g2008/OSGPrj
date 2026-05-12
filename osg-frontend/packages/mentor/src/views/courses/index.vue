@@ -143,14 +143,10 @@
               <span class="detail-label">上课日期</span>
               <div class="detail-value">{{ formatDate(detailModal.record?.classDate || '') }}</div>
             </div>
-            <div class="detail-item">
-              <span class="detail-label">课时费</span>
-              <div class="detail-value">¥{{ detailModal.record?.totalFee ?? '-' }}</div>
-            </div>
           </div>
           <div class="detail-section">
             <div class="detail-label">课程反馈</div>
-            <div class="detail-panel">{{ detailModal.record?.contentDetail || '暂无课程反馈' }}</div>
+            <div class="detail-panel">{{ summarizeFeedback(detailModal.record?.feedbackContent) || detailModal.record?.contentDetail || '暂无课程反馈' }}</div>
           </div>
         </div>
       </div>
@@ -456,6 +452,7 @@ const filteredRecords = computed(() => {
   return list
 })
 
+// 课时费列删除 — 用户需求「上报课程记录的页面，不显示最下方的课时费」（导师/班主任/助教三端统一）
 const columns = [
   { title: '记录ID', key: 'recordNo', dataIndex: 'recordNo' },
   { title: '学员', key: 'student' },
@@ -463,7 +460,6 @@ const columns = [
   { title: '课程内容', key: 'contentType' },
   { title: '上课日期', key: 'classDate', dataIndex: 'classDate' },
   { title: '时长', key: 'durationHours', dataIndex: 'durationHours' },
-  { title: '课时费', key: 'totalFee', dataIndex: 'totalFee' },
   { title: '审核状态', key: 'reviewStatus' },
   { title: '学员评价', key: 'studentEvaluation' },
   { title: '操作', key: 'actions' },
@@ -493,11 +489,27 @@ function resetFilters() {
   activeTab.value = 'all'
   records.value = summaryRecords.value
 }
-function formatDate(d: string) { return d ? new Date(d).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '' }
+function formatDate(d: string) {
+  if (!d) return ''
+  // 优先按字符串截前 10 位（避免 ISO 时区差导致日期偏移）
+  const s = String(d).trim()
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
+  const date = new Date(s)
+  if (Number.isNaN(date.getTime())) return s
+  return date.toISOString().slice(0, 10)
+}
 function coachingLabel(t: string) { return { job_coaching: '岗位辅导', mock_interview: '模拟应聘', networking: '人际关系', mock_midterm: '模拟期中', basic: '基础课程', basic_course: '基础课程' }[t] || t }
 function contentLabel(t: string) {
   const normalized = String(t ?? '').trim().replace(/-/g, '_').toLowerCase()
   return {
+    // RULE-E: 课程内容字典中文 label（覆盖 courseType / classStatus / courseSource 三个口径）
+    job_coaching: '岗位辅导',
+    relation_test: '人际关系',
+    communication_test: '人际关系',
+    networking: '人际关系',
+    midterm: '期中考试',
+    midterm_test: '期中考试',
+    base_course: '基础课程',
     resume_revision: '新简历',
     new_resume: '新简历',
     resume_update: '简历更新',
@@ -528,11 +540,30 @@ function evaluationTag(record: Record<string, any>) {
   return null
 }
 
+/**
+ * RULE-C: feedbackContent 后端存 JSON 字符串，UI 不能裸显示。
+ * 抽取 highlights / narrative / nextSteps 作为人类可读摘要。
+ */
+function summarizeFeedback(raw: unknown): string {
+  if (!raw) return ''
+  if (typeof raw !== 'string' && typeof raw !== 'object') return ''
+  let obj: any = raw
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (!trimmed.startsWith('{')) return trimmed
+    try { obj = JSON.parse(trimmed) } catch { return trimmed }
+  }
+  const parts = [obj?.highlights, obj?.narrative, obj?.improvements, obj?.nextSteps]
+    .filter((v) => typeof v === 'string' && v.trim().length > 0)
+  return parts.join(' · ').slice(0, 160)
+}
+
 function normalizeCourseRecord(record: Record<string, any>) {
   const durationHours = Number(record.durationHours ?? 0)
   const rate = Number(record.rate ?? record.hourlyRate ?? 0)
   const recordId = record.recordId ?? record.id
   const rawContentType = record.contentType ?? record.classStatus ?? record.courseType ?? record.courseSource ?? ''
+  const detailFallback = record.contentDetail ?? summarizeFeedback(record.feedbackContent) ?? record.comments ?? record.topics ?? record.reviewRemark ?? ''
   return {
     ...record,
     id: recordId,
@@ -540,7 +571,7 @@ function normalizeCourseRecord(record: Record<string, any>) {
     recordNo: record.recordNo ?? record.classId ?? (recordId ? `CR-${recordId}` : '-'),
     coachingType: record.coachingType ?? record.courseType ?? '',
     contentType: contentLabel(rawContentType),
-    contentDetail: record.contentDetail ?? record.feedbackContent ?? record.comments ?? record.topics ?? record.reviewRemark ?? '',
+    contentDetail: typeof detailFallback === 'string' ? detailFallback : '',
     reviewStatus: record.reviewStatus ?? record.status ?? '',
     totalFee: record.totalFee ?? (Number.isFinite(durationHours * rate) ? durationHours * rate : 0),
     studentEvaluation: resolveStudentEvaluation(record)

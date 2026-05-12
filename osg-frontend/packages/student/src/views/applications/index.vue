@@ -182,7 +182,7 @@
           <div class="modal-job-mark">{{ selectedApplicationBadge }}</div>
           <div>
             <div class="modal-job-title">{{ selectedApplication.company }}</div>
-            <div class="modal-job-sub">{{ selectedApplication.position }} · {{ selectedApplication.location }}</div>
+            <div class="modal-job-sub">{{ selectedApplication.position }} · {{ selectedApplication.regionLabel || selectedApplication.location }}</div>
           </div>
         </div>
         <a-form-item
@@ -430,7 +430,7 @@
           <div class="modal-job-mark">{{ selectedApplicationBadge }}</div>
           <div>
             <div class="modal-job-title">{{ selectedApplication.company }}</div>
-            <div class="modal-job-sub">{{ selectedApplication.position }} · {{ selectedApplication.location }}</div>
+            <div class="modal-job-sub">{{ selectedApplication.position }} · {{ selectedApplication.regionLabel || selectedApplication.location }}</div>
           </div>
         </div>
         <a-form-item required class="rich-form-field rich-form-field--full">
