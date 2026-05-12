@@ -121,7 +121,7 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { getRoleList, getMenuTree, deleteRole } from '@/api/role'
+import { getRoleList, getMenuTree, deleteRole, getRoleMenuIds } from '@/api/role'
 import { getPermissionColor, getPermissionColorConfig } from '@osg/shared/utils/permissionColors'
 import type { PermissionColorType } from '@osg/shared/utils/permissionColors'
 import RoleModal from './components/RoleModal.vue'

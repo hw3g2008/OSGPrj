@@ -239,6 +239,15 @@ describe('角色管理模块测试', () => {
       expect(rolesViewSource).toContain('loadRoleList()')
     })
 
+    // 防回归：getRoleMenuIds 必须在文件顶部 import，否则 loadRoleList 调用时
+    // 抛 ReferenceError，每个非超管角色的「权限模块」列都会渲染「权限加载失败」。
+    // 见 2026-05-12 admin 权限配置列表 UI bug 修复。
+    it('imports getRoleMenuIds alongside getRoleList / getMenuTree / deleteRole', () => {
+      expect(rolesViewSource).toContain('getRoleMenuIds')
+      // 必须出现在 import 语句中（不是仅仅在 loadRoleList 函数体里调用）
+      expect(rolesViewSource).toMatch(/import\s*\{[^}]*getRoleMenuIds[^}]*\}\s*from\s*['\"]@\/api\/role['\"]/)
+    })
+
     it('submits new roles with active status by default', () => {
       expect(roleModalSource).toContain("status: '0'")
     })
