@@ -47,6 +47,13 @@ public class OsgStudent extends BaseEntity
 
     private String accountStatus;
 
+    /**
+     * 是否冻结（与 accountStatus 维度正交的独立标记）
+     * 0 = 未冻结 / 1 = 已冻结
+     * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2
+     */
+    private Integer frozen;
+
     public Long getStudentId()
     {
         return studentId;
@@ -237,6 +244,16 @@ public class OsgStudent extends BaseEntity
         this.accountStatus = accountStatus;
     }
 
+    public Integer getFrozen()
+    {
+        return frozen;
+    }
+
+    public void setFrozen(Integer frozen)
+    {
+        this.frozen = frozen;
+    }
+
     @Override
     public String toString()
     {
@@ -255,6 +272,7 @@ public class OsgStudent extends BaseEntity
             .append("leadMentorId", getLeadMentorId())
             .append("assistantId", getAssistantId())
             .append("accountStatus", getAccountStatus())
+            .append("frozen", getFrozen())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())
