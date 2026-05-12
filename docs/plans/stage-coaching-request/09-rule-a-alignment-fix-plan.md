@@ -931,3 +931,173 @@ P2-4 导师端列名（独立）
 | 2026-05-12 01:25 | **批次 3.5 完成** — RD-001 后端 approveStudentPosition 加 mergeToPositionId 分支 + dedup 改 soft hint；RD-002 admin ReviewPositionModal 加合并/新增 radio + 公共岗位搜索；shared/api/admin/studentPosition.ts payload 类型 + searchPublicPositionsForMerge 接口；admin 构建 ✅ |
 | 2026-05-12 01:45 | **批次 4 完成** — §3.6 班主任端 3 栏 columns「公司/岗位」拆为「岗位」+「公司」两列 + 移除 CompanyPositionCell；§3.7 助教 KPI 已无（基线已删，跳过）；§3.8 助教后端字段已就绪；A-AU-001 admin 端导师变更审核：mapper 加 select/update + Service 加 list/approve/reject + 新增 OsgMentorProfileChangeReviewController；ruoyi-admin 编译 ✅ |
 | 2026-05-12 01:50 | 全端最终验证：student/mentor/lead-mentor/admin 4 端构建 ✅；定向测试 31/32（1 skip）✅；批次 5（CR-005 文案）/ 批次 6（Step 6 跨端）保留为产品文案 / 跨端 Playwright 阶段 |
+| 2026-05-12 14:30 | **批次 7 + 7.5 新增章节 §13**：学生账号状态机重构（冻结独立成 flag + 退费重新加入续签流程）|
+
+---
+
+## 13. 批次 7 + 7.5 学生账号状态机重构（2026-05-12 新需求）
+
+> **背景**：用户 2026-05-12 反馈两条核心 bug：
+> 1. 退费 (status=3) 学员无法重新加入（缺续签合同流程入口）
+> 2. 合同结束 (status=2) 与冻结 (status=1) 当前是同一字段互斥 enum，
+>    无法表达「合同结束 + 已冻结」叠加状态（影响课消是否能 log）
+
+### 13.1 当前状态机（待重构）
+
+`OsgStudent.accountStatus` 是 4 态单字段 enum：
+
+| value | 中文 | 当前行为 |
+|---|---|---|
+| `0` | 正常 | 能登录 / 看求职 / 课消 |
+| `1` | 冻结 | ❌ 拒登录（`UserDetailsServiceImpl:66`）/ ❌ 拒课消（`OsgClassRecordServiceImpl:1334`）|
+| `2` | 合同结束 | ✅ 能登录 / ❌ 求职（`PositionServiceImpl:173`）/ ✅ 能课消 |
+| `3` | 退费 | ❌ 拒登录 / ❌ 拒课消 / ⚠️ 求职鉴权漏拦（未触发因登录已拒，仍属潜在 bug） |
+
+互斥 enum 缺陷：
+
+- `1 冻结` 与 `2 合同结束` 不能并存
+- 退费学员没有"重新加入"回正常路径
+
+### 13.2 重构后状态模型
+
+**accountStatus 改为只表达 lifecycle**（去掉 1）：
+
+| value | 中文 | 含义 |
+|---|---|---|
+| `0` | 正常 | 在读 |
+| `2` | 合同结束 | 已结业 |
+| `3` | 退费 | 已退费 / 终态（可通过续签重新加入恢复为 0）|
+
+**新增独立 boolean 标记**：
+
+| 字段 | 含义 |
+|---|---|
+| `osg_student.frozen TINYINT DEFAULT 0` | 是否冻结（独立 flag，与 lifecycle 正交） |
+
+> **黑名单**仍走独立 `osg_student_blacklist` 表（不动），与 frozen 维度不同。
+
+### 13.3 行为矩阵（重构后）
+
+| accountStatus | frozen | 能登录 | 看求职 | 导师 log 课 | 列展示 |
+|---|---|---|---|---|---|
+| 0 正常 | 0 | ✅ | ✅ | ✅ | 「正常」 |
+| 0 正常 | 1 | ❌ frozen | — | ❌ frozen | 「冻结」 |
+| 2 合同结束 | 0 | ✅ | ❌ ended | ✅（有课时） | 「合同结束」 |
+| 2 合同结束 | 1 | ❌ frozen | — | ❌ frozen | 「合同结束 · 冻结」 |
+| 3 退费 | — | ❌ refunded | — | ❌ refunded | 「退费」 |
+
+**关键不变量**：
+
+- 「正常」状态下，`frozen` 是**独立**开关（freeze/unfreeze 不影响 lifecycle）
+- 「合同结束」状态下，`frozen` 是**关联**开关（合同结束允许课消，再冻结才彻底锁课消）
+- 「退费」状态下，`frozen` 字段**忽略**（lifecycle 已是终态）
+
+### 13.4 操作菜单（admin 端学生列表）
+
+| 当前状态 | 可见菜单项 | action 后端值 |
+|---|---|---|
+| 正常 (0/0) | **冻结** / 结束合同 / 退费 / 加入黑名单 | `freeze` / `end_contract` / `refund` / `blacklist` |
+| 正常·冻结 (0/1) | **解冻** / 结束合同 / 退费 | `unfreeze` / `end_contract` / `refund` |
+| 合同结束 (2/0) | **再冻结** / 退费 | `freeze` / `refund` |
+| 合同结束·冻结 (2/1) | **解冻** / 退费 | `unfreeze` / `refund` |
+| 退费 (3/–) | **重新加入** → 续签合同 | `rejoin`（带 contract payload） |
+
+> 操作语义清晰化：
+> - `freeze` / `unfreeze`：只切 `frozen` 列，**不动 accountStatus**
+> - `end_contract`：`accountStatus = 2`，**不动 frozen**
+> - `refund`：`accountStatus = 3`，**不动 frozen**
+> - `rejoin`：先创建新合同 → `accountStatus = 0` + `frozen = 0`
+
+### 13.5 鉴权改造点（后端）
+
+| 检查点 | 文件:行 | 当前 | 改后 |
+|---|---|---|---|
+| 登录拦截 | `UserDetailsServiceImpl.java:66` | `"1".equals(accountStatus)` | `student.frozen == 1` |
+| 登录拦截 | `UserDetailsServiceImpl.java:71` | `"3".equals(accountStatus)` | （保留） |
+| 求职可见 | `PositionServiceImpl.java:173` | `"2".equals(accountStatus)` | （保留）+ 增 `"3".equals(...)` 兜底 |
+| 课消 log | `OsgClassRecordServiceImpl.java:1334` | `"1".equals(accountStatus)` | `student.frozen == 1` |
+| 课消 log | `OsgClassRecordServiceImpl.java:1338` | `"3".equals(accountStatus)` | （保留） |
+| controller `resolveAccountStatus` | `OsgStudentController.java:447` | 4 action 映射 | 拆 freeze/unfreeze 独立路径 |
+
+### 13.6 「重新加入」流程（批次 7.5）
+
+```
+admin 端学生列表 退费行
+  → 点「重新加入」按钮
+  → 复用 RenewContractModal（已存在的续签合同弹窗）
+  → 提交时 payload 加 reactivateAccount=true
+  → 后端 /admin/contract/renew 创建新合同 + status='active'
+  → 触发 PUT /admin/students/status action='rejoin'
+  → 后端 service: accountStatus='0', frozen=0
+  → 返回成功 → admin 列表刷新，学员行回到「正常」状态
+  → 操作日志记录「学员 X 通过续签合同重新加入，新合同 Y」
+```
+
+### 13.7 DB Migration
+
+```sql
+-- 1. 加 frozen 列
+ALTER TABLE osg_student ADD COLUMN frozen TINYINT DEFAULT 0 COMMENT '是否冻结（独立标记）';
+
+-- 2. 把现有 status='1'（冻结）迁移到 status='0' + frozen=1
+UPDATE osg_student
+SET frozen = 1, account_status = '0'
+WHERE account_status = '1';
+
+-- 3. 操作日志（可选）
+INSERT INTO osg_audit_log (action, target_id, before, after, operator, op_time)
+SELECT 'frozen_split_migration', student_id, '{"accountStatus":"1"}',
+       '{"accountStatus":"0","frozen":1}', 'system', NOW()
+FROM osg_student WHERE frozen = 1;
+```
+
+### 13.8 前端 admin 改造点
+
+| 文件 | 改 |
+|---|---|
+| `admin/views/users/students/index.vue` | 操作菜单按 §13.4 重组；状态展示按 §13.3 双 tag |
+| `admin/views/users/students/columns.ts` | 状态列 customRender 输出 「正常」/「冻结」/「合同结束 · 冻结」等组合 |
+| `admin/views/users/students/components/StudentDetailModal.vue` | 显示 accountStatus + frozen 两个独立字段 |
+| `admin/views/users/students/components/RenewContractModal.vue` | 加可选 `reactivateAccount: true` 标记参数 |
+
+### 13.9 chain e2e 新增（批次 8）
+
+| Case | 验证 |
+|---|---|
+| CHAIN-15 合同结束·冻结叠加 | admin 把学员设为 ended → 再 freeze → 验证导师 log 课被拒；解冻后 → log 课允许 |
+| CHAIN-16 退费重新加入 | admin 退费学员 → 点「重新加入」→ 续签合同弹窗 → 提交 → 学员 accountStatus 回 0 + frozen=0 → 学员能登录 + 看求职 + 导师能 log 课 |
+| CHAIN-17 正常·冻结独立 | admin 把学员 freeze（不结束）→ 学员登录被拒 + 导师 log 课被拒；解冻后恢复正常 |
+
+### 13.10 工作量估算
+
+| 块 | 估时 |
+|---|---|
+| 后端 `frozen` 字段 + DB migration + entity / mapper.xml 同步 | 0.5 人日 |
+| 后端 access guard 4 个点改造 + `resolveAccountStatus` 拆 action | 0.5 人日 |
+| 后端 `rejoin` action 实现 + 续签合同 service 联动 | 0.5 人日 |
+| admin 前端菜单结构 + 状态展示 + RenewContractModal 集成 | 0.5 人日 |
+| chain e2e CHAIN-15/16/17 + 跑通 | 0.5 人日 |
+| 兼容历史数据 + 回归测试 | 0.5 人日 |
+| **合计** | **~3 人日** |
+
+### 13.11 风险 & 兼容性
+
+| 风险 | 应对 |
+|---|---|
+| 历史 status='1' 数据 migration 失败 / 漏迁 | migration 加 SELECT-then-UPDATE 校验 + 操作日志；可逆 |
+| 既有代码隐式依赖 status='1'（grep 漏） | 已 grep 出 5 处（见 §13.5）；改后跑全量 backend test |
+| 前端组件其它处显示 status=1 | grep `accountStatus.*1` 在前端 5 端全跑一遍清理 |
+| 续签合同流程目前要求"既存学员有 active 合同"才允许 | rejoin 走不同路径：先校验 status=3 → 创建合同（不要求既存合同）→ 激活账号 |
+| 黑名单与 frozen 重叠语义 | 维度不同：黑名单只禁求职，frozen 全禁。允许并存。|
+
+### 13.12 i18n / 文案补丁
+
+| key | 中文 |
+|---|---|
+| `student.account.frozen` | "账号已冻结，无法登录" |
+| `student.account.refunded` | "账号已退费，无法登录" |
+| `student.position.contract_ended` | "合同已结束，无法查看求职信息" |
+| `student.position.refunded` | "账号已退费，无法查看求职信息" |
+| `class_record.student.frozen` | "学员已冻结，无法上报课消" |
+| `class_record.student.refunded` | "学员已退费，无法上报课消" |
+| `student.rejoin.success` | "学员已通过续签合同重新加入" |
