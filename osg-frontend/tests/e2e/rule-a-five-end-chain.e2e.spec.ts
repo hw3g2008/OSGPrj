@@ -443,9 +443,9 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
     })
     expect(submitted.requestId).toBeTruthy()
 
-    // 验证 admin 端能查到这条 pending 模拟应聘
+    // 验证 admin 端能查到这条 pending 模拟应聘（不带 practiceType 过滤，后端存为 mock_interview）
     const testAuth = await adminAuth(request)
-    const listResp = await testAuth.request.get('/api/admin/mock-practice/list?pageSize=200&practiceType=mock', {
+    const listResp = await testAuth.request.get('/api/admin/mock-practice/list?pageSize=300', {
       headers: { Authorization: `Bearer ${testAuth.token}` },
     })
     const listBody = await listResp.json()
