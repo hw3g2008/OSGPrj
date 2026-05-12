@@ -200,9 +200,7 @@
             <span>{{ formatHours(record.durationHours) }}</span>
           </template>
 
-          <template v-else-if="column.key === 'courseFee'">
-            <span class="fee-text">{{ formatFee(record.courseFee) }}</span>
-          </template>
+          <!-- 课时费列已按需求删除（不显示课时费） -->
 
           <template v-else-if="column.key === 'studentRating'">
             <a-tag v-if="record.studentRating" color="green">
@@ -259,9 +257,7 @@
         <a-descriptions-item label="时长">
           {{ formatHours(selectedRecord.durationHours) }}
         </a-descriptions-item>
-        <a-descriptions-item label="课时费">
-          {{ formatFee(selectedRecord.courseFee) }}
-        </a-descriptions-item>
+        <!-- 课时费按需求不显示 -->
         <a-descriptions-item
           v-if="selectedRecord.classStatus === 'absent'"
           label="旷课备注"
@@ -408,7 +404,6 @@ const columns: TableColumnsType<AssistantClassRecordRow> = [
   { title: '课程内容', key: 'courseContent', width: 160 },
   { title: '上课日期', key: 'classDate', width: 120 },
   { title: '时长', key: 'durationHours', width: 80 },
-  { title: '课时费', key: 'courseFee', width: 100 },
   { title: '学员评价', key: 'studentRating', width: 110 },
   { title: '审核状态', key: 'status', width: 100 },
   { title: '操作', key: 'action', width: 110, fixed: 'right' },

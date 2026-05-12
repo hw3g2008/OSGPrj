@@ -116,7 +116,6 @@
                   <th>课程内容</th>
                   <th>上课日期</th>
                   <th>时长</th>
-                  <th>课时费</th>
                   <th>审核状态</th>
                   <th>学员评价</th>
                   <th>操作</th>
@@ -140,7 +139,6 @@
                   <td><span class="tag" :class="row.contentTone">{{ row.contentLabel }}</span></td>
                   <td>{{ row.classDate }}</td>
                   <td>{{ row.duration }}</td>
-                  <td>{{ row.feeLabel }}</td>
                   <td><ClassRecordStatusTag :status="row.status" :label="row.statusLabel" /></td>
                   <td>
                     <span v-if="row.ratingLabel" class="tag tag--success">{{ row.ratingLabel }}</span>
