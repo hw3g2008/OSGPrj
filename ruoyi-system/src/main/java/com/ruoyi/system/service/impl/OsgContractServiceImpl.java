@@ -154,6 +154,30 @@ public class OsgContractServiceImpl implements IOsgContractService
             throw new ServiceException("续签合同创建失败");
         }
 
+        // 批次 7.5「重新加入」：续签合同若带 reactivateAccount=true，且学员当前为退费态，
+        // 在同事务内把 accountStatus 置回 0、frozen 置 0，等价于一次原子重新加入。
+        // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6
+        boolean reactivateAccount = Boolean.TRUE.equals(payload.get("reactivateAccount"))
+            || "true".equalsIgnoreCase(String.valueOf(payload.get("reactivateAccount")));
+        boolean accountReactivated = false;
+        if (reactivateAccount)
+        {
+            if (!"3".equals(student.getAccountStatus()))
+            {
+                throw new ServiceException("仅退费学员可通过续签合同重新加入");
+            }
+            OsgStudent reactivate = new OsgStudent();
+            reactivate.setStudentId(studentId);
+            reactivate.setAccountStatus("0");
+            reactivate.setFrozen(0);
+            reactivate.setUpdateBy(defaultText(operator, "system"));
+            if (studentMapper.updateStudentAccountFlags(reactivate) <= 0)
+            {
+                throw new ServiceException("重新加入失败：账号状态刷新出错");
+            }
+            accountReactivated = true;
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("contractId", contract.getContractId());
         result.put("contractNo", contract.getContractNo());
@@ -163,6 +187,7 @@ public class OsgContractServiceImpl implements IOsgContractService
         result.put("contractStatus", contract.getContractStatus());
         result.put("renewalReason", contract.getRenewalReason());
         result.put("attachmentPath", contract.getAttachmentPath());
+        result.put("accountReactivated", accountReactivated);
         return result;
     }
 
