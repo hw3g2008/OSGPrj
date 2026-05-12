@@ -155,7 +155,7 @@
                     批次 7 + 7.5 操作菜单（§13.4 修订）：
                       0/0 正常        : 冻结 / 结束合同 / 退费 / 加入黑名单
                       0/1 正常·冻结   : 解冻 / 结束合同 / 退费
-                      2/0 合同结束     : 再冻结 / 重新加入            ← 续签合同走 reactivateAccount=true 回 0/0
+                      2/0 合同结束     : 冻结 / 重新加入              ← 续签合同走 reactivateAccount=true 回 0/0
                       2/1 合同结束·冻结: 解冻（→ 进 2/0 再决定续签/退费）
                       3/-  退费       : 重新加入
                     设计取舍：合同结束/退费 学员都走「重新加入」复用同一 RenewContractModal +
@@ -172,7 +172,7 @@
                       <a-menu-item v-if="!isEndedStatus(record)" key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
                     </template>
                     <template v-else-if="isEndedStatus(record)">
-                      <a-menu-item key="freeze">再冻结</a-menu-item>
+                      <a-menu-item key="freeze">冻结</a-menu-item>
                       <a-menu-item key="rejoin"><span style="color: var(--success)">重新加入</span></a-menu-item>
                     </template>
                     <template v-else>
