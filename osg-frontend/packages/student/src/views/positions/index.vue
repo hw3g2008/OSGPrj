@@ -284,6 +284,11 @@
               </a-tooltip>
             </template>
 
+            <template v-else-if="column.key === 'regionCell'">
+              <!-- RULE-E: 优先字典 label，兜底用 client-side regionDictMap 映射 location 英文 value 到中文 -->
+              <span>{{ regionDisplayLabel(record.regionLabel, record.location) }}</span>
+            </template>
+
             <template v-else-if="column.key === 'deadlineCell'">
               <span :class="deadlineToneClass(record.deadline)">{{ record.deadline || '--' }}</span>
             </template>
@@ -835,6 +840,15 @@ const { items: cityDict, load: loadCityDict } = useDictFacade('osg_city')
 const { items: categoryDict, load: loadCategoryDict } = useDictFacade('osg_job_category')
 const { items: companyDict, load: loadCompanyDict } = useDictFacade('osg_company_name')
 
+/** RULE-E: 地区 value → 字典中文 label，避免 'na' / 'asia-pacific' 等英文 raw 露出 */
+function regionDisplayLabel(regionLabel?: string, fallbackValue?: string): string {
+  if (regionLabel) return regionLabel
+  const v = (fallbackValue || '').trim()
+  if (!v) return '-'
+  const match = regionDict.value.find((item) => item.value === v)
+  return match?.label || v
+}
+
 function resolveIndustryMeta(industryRaw: string) {
   const trimmed = industryRaw?.trim() || ''
   const match = industryMeta.value.find((m) => m.value === trimmed)
@@ -990,7 +1004,7 @@ const listColumns = [
   { title: '公司', key: 'companyCell', width: 120 },
   { title: '行业', key: 'industryCell', width: 100 },
   { title: '岗位分类', key: 'category', width: 100 },
-  { title: '地区', dataIndex: 'location', width: 90 },
+  { title: '地区', key: 'regionCell', width: 90 },
   { title: '招聘周期', key: 'recruitCycleCell', width: 100 },
   { title: '发布时间', dataIndex: 'publishDate', width: 100 },
   { title: '截止时间', key: 'deadlineCell', width: 100 },

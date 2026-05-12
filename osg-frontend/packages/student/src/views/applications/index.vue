@@ -365,7 +365,7 @@
           >
             <div>
               <div class="application-coaching-record__title">{{ record.classId || `#${record.recordId}` }} · {{ record.mentorName || '-' }}</div>
-              <div class="application-coaching-record__meta">{{ record.classDate || '-' }} · {{ record.memberStatus || '-' }} · {{ record.durationHours || 0 }}h</div>
+              <div class="application-coaching-record__meta">{{ (record.classDate || '-').slice(0, 10) }} · {{ memberStatusLabel(record.memberStatus) }} · {{ record.durationHours || 0 }}h</div>
             </div>
             <div class="application-coaching-record__rating">评分：{{ record.rate || '-' }}</div>
           </div>
@@ -824,6 +824,13 @@ function rowClassName(record: StudentApplicationRecord) {
   if (record.coachingStatus === 'coaching') return 'row-coaching'
   if (record.coachingStatus === 'pending') return 'row-pending'
   return ''
+}
+
+// RULE-E：学员状态字典中文 label（normal/absent 字面值不允许 UI 露出）
+function memberStatusLabel(value?: string): string {
+  if (value === 'absent') return '旷课'
+  if (value === 'normal') return '出席'
+  return value || '-'
 }
 
 // antd-vue 4 expandedRowRender 是把 { record, index, indent, expanded } 作为单参数传入，
