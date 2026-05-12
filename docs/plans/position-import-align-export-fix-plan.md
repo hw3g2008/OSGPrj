@@ -241,12 +241,26 @@ private static class PositionImportTemplate
 **改动 1：模板文件提示文案**
 - "请使用系统提供的模板文件" → 改为 "可使用『下载模板』或直接使用『导出』生成的 Excel 文件"（如果该文案是字典字段 `DICT_POSITION_UI_COPY.upload_step_1` 则改字典数据，不改前端）
 
-**改动 2（R11 应对 / S2 修正）：对话框顶部固定说明文字**
+**改动 2（R11 应对 / S2 修正 / T1 终审修正）：对话框顶部固定说明文字**
 在「批量上传」对话框顶部固定显示一行：
 
 > ⚠️ 统计字段（投递学员 / 添加人 / 添加日期）将被忽略；批量上传仅支持新增，不支持修改已有岗位（修改请用单条编辑表单）。
 
-**实现**：在 index.vue 的 batch-upload 对话框 `<a-modal>` 内顶部加一段 `<div class="batch-upload-notice">` 文本。**不改 JS 逻辑**，纯静态文案。
+**实现（T1 终审修正）**：
+- **文件**：`@/Users/hw/workspace/OSGPrj/osg-frontend/packages/admin/src/views/career/positions/components/BatchUploadModal.vue`
+  > ⚠️ 「批量上传」对话框是独立子组件，**不在 index.vue 里**。`index.vue:350-355` 仅仅是使用了 `<BatchUploadModal>`。
+- **组件**：项目使用自定义的 `<OverlaySurfaceModal>`（包装了 ant-design-vue 的 modal），**不是 `<a-modal>`**。
+- **位置**：在 `BatchUploadModal.vue` 的 `<div class="batch-upload-modal__panel">`（line 16）内部顶端、`<div class="batch-upload-modal__dropzone">`（line 17）之前插入。
+- **代码**：
+  ```vue
+  <div class="batch-upload-modal__notice">
+    <span class="mdi mdi-alert" aria-hidden="true"></span>
+    <p>统计字段（投递学员 / 添加人 / 添加日期）将被忽略；批量上传仅支持新增，不支持修改已有岗位（修改请用单条编辑表单）。</p>
+  </div>
+  ```
+- **样式**：在该 vue 文件的 `<style>` 段加 `.batch-upload-modal__notice` 样式（背景色 + padding，参考现有 `.batch-upload-modal__rule` 样式风格，只将警示色从信息蓝调居为警告黄调）。
+
+**不改 JS 逻辑**，纯静态文案 + 一段 CSS。
 
 具体改不改先看 DICT 当前文案，方案确认后实施时核对。
 
@@ -256,7 +270,7 @@ private static class PositionImportTemplate
 
 放在 `ruoyi-system/src/test/java/com/ruoyi/system/service/impl/`。
 
-**测试用例**（最少 9 个）：
+**测试用例**（最少 10 个）：
 
 1. **导出文件直接导入闭环**：从 `selectPositionList` 取数据 → 模拟生成 14 列 Excel → 调 `batchUploadPositions` → 断言 `successCount == 0 / duplicateCount == N / failedCount == 0`（全部命中去重，无解析错误）
 2. **`MM-dd` 短日期解析**：单元格 `11-25` 能解析为当前年的 11-25
@@ -267,6 +281,13 @@ private static class PositionImportTemplate
 7. **岗位分类 label 含年份时正常导入**：positionCategory label="2026 暑期实习" → 抽到 2026 → 落库成功
 8. **岗位分类 label 不含年份时整行 reject**：positionCategory label="暑期实习" → reject，错误信息含"无法提取项目年份"（验证 R1.2/R2.2/R8 阻塞修复）
 9. **旧 18 列模板向后兼容**：用旧模板 Excel 仍能成功导入（沿用旧 alias）
+10. **B1 + B2 综合回归（T3 终审新增）**：构造 Excel 含 1 行非默认值的行——
+    - 输入：`displayStatus="已隐藏"` / `displayStartTime="2026-01-01"` / `positionCategory="2026 暑期实习"`
+    - 导入后从 DB 读出新插入记录，断言：
+      - `position.getDisplayStatus() == "hidden"`（验证 B1：line 874 硬编码 `"visible"` 已删除 + C1：label→value 反查生效）
+      - `position.getDisplayStartTime()` 是 2026-01-01（验证 B1：line 875 硬编码 `new Date()` 已删除）
+      - `position.getProjectYear() == "2026"`（验证 B2：rawCategory 传入 `inferProjectYear` 生效，不是拿 dict_value 如「summer」去抽年份）
+    - 此测试是 B1/B2 默认不修复时会夭的棘手场景。
 
 ---
 
@@ -384,7 +405,7 @@ WHERE dict_type = 'osg_job_category' AND status = '0'
 3. 不做任何修改，点「批量上传」选该文件
 4. **期望**：返回 `successCount=0 / duplicateCount=N / failedCount=0`；对话框顶部显示「统计字段将被忽略...」说明文字（C 段改动 2）
 5. 在 Excel 中改 1 行的「公司」或「岗位名称」使去重 key 变化
-6. 重新上传，**期望**：`successCount=1 / failedCount=0`
+6. 重新上传，**期望**：`successCount=1 / duplicateCount=N-1 / failedCount=0`（N-1 行去重 key 未变被跳过，1 行去重 key 变化被新增；T2 终审补充）
 
 > ⚠️ **闭环语义说明（I1 信息）**：`batchUploadPositions` 是 **insert-only**（@`/Users/hw/workspace/OSGPrj/ruoyi-system/src/main/java/com/ruoyi/system/service/impl/OsgPositionServiceImpl.java:426`）。第 5 步「改去重 key」实际触发**新增一条新记录**，原记录还在 DB 中（变成两条）。若需要修改已有岗位的字段，请用页面表单编辑（「批量上传」路径不支持 upsert）。
 
@@ -454,4 +475,16 @@ WHERE dict_type = 'osg_job_category' AND status = '0'
 | **S2** | Round 4 Tensions | 🟡 建议 | R11 应对策略改为纯前端对话框顶部固定说明文字（C 段改动 2），与「前端仅文案微调」声明一致；删除原「后端加 note + 前端不消费」的失效设计 |
 | **I1** | Round 4 Tensions | 🟢 信息 | 5.3 末尾加 insert-only 闭环语义说明，避免用户误以为是 upsert |
 
-**终审结论**：上轮遗漏的 5 项已全部修复。本轮修复需重跑 `/validate-doc` 终审确认无新引入问题。
+## 十、第 3 轮 `/validate-doc` 终审修正项
+
+> 校验时间：2026-05-11 23:35 终审；重点：本轮修复后是否引入新不一致 / 本轮新增描述与现状代码是否一致。
+
+| # | 来源 | 严重度 | 修正动作 |
+|---|---|---|---|
+| **T1** | 外部一致性 | 🟡 建议 | C 段改动 2 实施位置修正：从 `index.vue + <a-modal>` 改为 `BatchUploadModal.vue + <OverlaySurfaceModal>`。「批量上传」对话框是独立子组件 `@/Users/hw/workspace/OSGPrj/osg-frontend/packages/admin/src/views/career/positions/components/BatchUploadModal.vue`，不在 index.vue 里；使用项目自定义的 `<OverlaySurfaceModal>` 不是 `<a-modal>`。并补充插入位置、代码片段、样式说明。|
+| **T2** | 一致性 | 🟡 建议 | 5.3 第 6 步期望补全 `duplicateCount=N-1`（N-1 行未变被跳过，1 行去重 key 变化被新增）。|
+| **T3** | Round 4 Tensions | 🟡 建议 | 新增测试 10：B1 + B2 综合回归（验证 displayStatus / displayStartTime / projectYear 三个字段在修复后从 Excel 原始值正确落库，避免与原默认值 / dict_value 混淆）。|
+
+**终审结论**：
+- 上轮遗漏的 5 项已全部修复；本轮发现的 3 项建议级也已全部修复。
+- 阻塞级 = 0，可以进入实施。

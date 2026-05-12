@@ -826,7 +826,10 @@ function rowClassName(record: StudentApplicationRecord) {
   return ''
 }
 
-function renderApplicationCoachings(record: StudentApplicationRecord) {
+// antd-vue 4 expandedRowRender 是把 { record, index, indent, expanded } 作为单参数传入，
+// 不是 record 本身。早期实现误把 wrapper 当 record，导致展开行永远显示「暂无阶段辅导申请」。
+function renderApplicationCoachings(params: { record: StudentApplicationRecord } | StudentApplicationRecord) {
+  const record = (params as { record: StudentApplicationRecord }).record ?? (params as StudentApplicationRecord)
   const coachings = record.coachings || []
   if (coachings.length === 0) {
     return h('div', { class: 'application-coachings-panel application-coachings-panel--empty' }, '暂无阶段辅导申请')

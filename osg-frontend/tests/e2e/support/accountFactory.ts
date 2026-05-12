@@ -183,3 +183,150 @@ export function studentLoginUsername(student: SeededStudent): string {
 export function staffLoginUsername(staff: SeededStaff): string {
   return staff.email
 }
+
+export interface SeededPosition {
+  positionId: number
+  positionName: string
+  companyName: string
+}
+
+/**
+ * 调用 admin POST /api/admin/position 创建测试岗位（被学生投递用）。
+ * 必填：positionCategory / companyName / positionName / region / city /
+ *      recruitmentCycle / projectYear / targetMajors / industry。
+ */
+export async function createTestPosition(
+  auth: AdminAuth,
+  options: { positionName: string; companyName: string }
+): Promise<SeededPosition> {
+  const payload = {
+    positionCategory: 'summer',
+    companyName: options.companyName,
+    companyType: 'bulge_bracket',
+    industry: 'bulge_bracket',
+    positionName: options.positionName,
+    region: 'na',
+    city: 'new_york',
+    recruitmentCycle: '2026 Summer',
+    projectYear: '2026',
+    targetMajors: ['finance'],
+    displayStatus: 'visible',
+  }
+  const response = await auth.request.post('/api/admin/position', {
+    headers: { Authorization: `Bearer ${auth.token}` },
+    data: payload,
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`/admin/position non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `/admin/position should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  const positionId = body?.data?.positionId ?? body?.positionId
+  expect(positionId, `created position should expose positionId, body=${raw.slice(0, 500)}`).toBeTruthy()
+  return { positionId, positionName: options.positionName, companyName: options.companyName }
+}
+
+/**
+ * 学生 token 登录（loginWithoutCaptcha，无需 captcha）。
+ */
+export async function loginAsStudent(
+  request: APIRequestContext,
+  student: SeededStudent
+): Promise<{ token: string }> {
+  const response = await request.post('/api/student/login', {
+    data: { username: studentLoginUsername(student), password: student.password },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`student login non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.token ?? body?.data?.token, `student login should include token, body=${raw.slice(0, 500)}`).toBeTruthy()
+  return { token: body.token || body.data.token }
+}
+
+export async function loginAsStaff(
+  request: APIRequestContext,
+  staff: SeededStaff
+): Promise<{ token: string }> {
+  const path =
+    staff.staffType === 'mentor' ? '/api/mentor/login'
+    : staff.staffType === 'lead_mentor' ? '/api/lead-mentor/login'
+    : '/api/assistant/login'
+  const response = await request.post(path, {
+    data: { username: staffLoginUsername(staff), password: staff.password },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`${path} non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.token ?? body?.data?.token, `${path} should include token, body=${raw.slice(0, 500)}`).toBeTruthy()
+  return { token: body.token || body.data.token }
+}
+
+/**
+ * 学生 POST /student/position/apply 标记已投递（生成 osg_job_application）。
+ * 通过 admin proxy 用 student token。
+ */
+export async function studentApplyPosition(
+  request: APIRequestContext,
+  studentToken: string,
+  positionId: number
+): Promise<void> {
+  const response = await request.post('/api/student/position/apply', {
+    headers: { Authorization: `Bearer ${studentToken}` },
+    data: {
+      positionId,
+      applied: true,
+      date: new Date().toISOString().slice(0, 10),
+      method: 'online',
+    },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`student apply non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `student apply should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+}
+
+/**
+ * 拿到学生在「我的求职」列表的 application 行 id。
+ */
+export async function getStudentApplicationList(
+  request: APIRequestContext,
+  studentToken: string
+): Promise<Array<{ id: number; positionId: number; company: string; position: string }>> {
+  const response = await request.get('/api/student/application/list', {
+    headers: { Authorization: `Bearer ${studentToken}` },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`student application list non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `student application list should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  // 后端返回 { code, msg, data: { applications: [...] } }
+  return (body?.data?.applications ?? body?.data ?? body?.rows ?? []) as Array<{ id: number; positionId: number; company: string; position: string }>
+}
+
+/**
+ * 学生 POST /student/applications/{applicationId}/coachings 申请阶段辅导。
+ */
+export async function studentRequestCoaching(
+  request: APIRequestContext,
+  studentToken: string,
+  applicationId: number,
+  interviewStage: string = 'first',
+  requestedMentorCount: string = '1'
+): Promise<{ coachingId: number }> {
+  const response = await request.post(`/api/student/applications/${applicationId}/coachings`, {
+    headers: { Authorization: `Bearer ${studentToken}` },
+    data: {
+      interviewStage,
+      requestedMentorCount,
+      city: 'new_york',
+      interviewTime: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().slice(0, 16),
+      requestNote: 'e2e chain seed',
+    },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`request coaching non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `/student/applications/.../coachings should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  const coachingId = body?.data?.coachingId ?? body?.coachingId
+  expect(coachingId, `coaching should be created, body=${raw.slice(0, 500)}`).toBeTruthy()
+  return { coachingId }
+}
