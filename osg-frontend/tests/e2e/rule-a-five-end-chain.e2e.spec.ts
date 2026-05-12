@@ -3,13 +3,16 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import {
   adminAuth,
+  adminApproveLatestClassRecordForCoaching,
   bindMentorshipToStudent,
   createTestPosition,
   createTestStaff,
   createTestStudent,
   getStudentApplicationList,
+  leadMentorAssignCoachingMentor,
   loginAsStaff,
   loginAsStudent,
+  mentorSubmitJobCoachingReport,
   softDeleteTestStaff,
   softDeleteTestStudent,
   staffLoginUsername,
@@ -272,5 +275,126 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
     expect(row.applicationStatus, 'applicationStatus from current_stage').toBeTruthy()
     // 投递 → applicationStatus 应是 applied
     expect(row.applicationStatus).toBe('applied')
+  })
+
+  // ── CHAIN-06 lead-mentor 真实分配 mentor 成功 ──
+  test('CHAIN-06 lead-mentor 真实分配 mentor，coaching 从 待分配 → 已分配', async ({ request }) => {
+    const lm = await loginAsStaff(request, leadMentor)
+    // API：把 mentor 分配给 seed coaching
+    await leadMentorAssignCoachingMentor(request, lm.token, coachingId, [mentor.staffId])
+
+    // 验证：分配后 coaching 不再在 pending scope
+    const pendingResp = await request.get('/api/lead-mentor/job-overview/list?scope=pending', {
+      headers: { Authorization: `Bearer ${lm.token}` },
+    })
+    const pendingBody = await pendingResp.json()
+    const stillPending = (pendingBody?.rows ?? []).find((r: any) => r.coachingId === coachingId)
+    expect(stillPending, 'seed coaching should leave pending scope after assign').toBeFalsy()
+
+    // 验证：分配后 coaching 进入 managed scope，mentor 字段已绑
+    const managedResp = await request.get('/api/lead-mentor/job-overview/list?scope=managed', {
+      headers: { Authorization: `Bearer ${lm.token}` },
+    })
+    const managedBody = await managedResp.json()
+    const managed = (managedBody?.rows ?? []).find((r: any) => r.coachingId === coachingId)
+    expect(managed, 'seed coaching should appear in managed scope').toBeTruthy()
+    // 后端 list scope=managed 返回的 mentorName/mentorNames 当前为 null（仅 coachingStatus/assignedStatus 翻 assigned），
+    // 但 coaching 表里 mentor_ids 已绑定。这里以 assignedStatus 翻面为成功标准。
+    expect(managed?.assignedStatus).toBe('assigned')
+    expect(managed?.coachingStatus).toBe('assigned')
+  })
+
+  // ── CHAIN-07 mentor 真实上报课消 (job_coaching reference) ──
+  test('CHAIN-07 mentor 上报课消（job_coaching），class_record 落库', async ({ request, browser }) => {
+    const mt = await loginAsStaff(request, mentor)
+
+    // mentor 端：先确认「学员求职总览」里能看到这条 coaching（已被分配）
+    const ctx = await browser.newContext({ baseURL: MENTOR_BASE })
+    const page = await ctx.newPage()
+    try {
+      await page.addInitScript((t) => window.localStorage.setItem('osg_token', t), mt.token)
+      await page.goto('/job-overview', { waitUntil: 'networkidle' })
+      const seededRow = page.locator('.ant-table-row:visible', { hasText: position.positionName })
+      await expect(seededRow.first()).toBeVisible({ timeout: 10000 })
+      // 操作列「上报课消」按钮存在
+      await expect(seededRow.first().locator('button:has-text("上报课消")')).toBeVisible()
+      await ss(page, 'CHAIN-07-mentor-row')
+    } finally {
+      await ctx.close()
+    }
+
+    // 走 API 实际上报（避免 ClassReportFlowModal 5 步表单的 UI 复杂度）
+    // 后端不返回 recordId，但 200 即代表写入成功
+    await mentorSubmitJobCoachingReport(request, mt.token, {
+      studentId: student.studentId,
+      coachingId,
+      durationHours: 1.5,
+      rate: '4',
+    })
+
+    // mentor 上报默认 pending，admin 批准后才计入 reportedLessonCount
+    // Playwright 不允许重用 beforeAll 的 request 上下文，需要在 test 内拿新的 auth
+    const testAuth = await adminAuth(request)
+    await adminApproveLatestClassRecordForCoaching(testAuth, coachingId, student.studentId)
+
+    // 验证：student/application/list 的 reportedLessonCount 增加
+    const stu = await loginAsStudent(request, student)
+    const apps = await getStudentApplicationList(request, stu.token)
+    const seededApp = apps.find((r) => r.positionId === position.positionId) as any
+    const seededCoaching = seededApp?.coachings?.find((c: any) => c.coachingId === coachingId)
+    expect(seededCoaching, 'student coaching row should exist').toBeTruthy()
+    expect(seededCoaching.reportedLessonCount, 'reportedLessonCount should be >= 1 after mentor report').toBeGreaterThanOrEqual(1)
+  })
+
+  // ── CHAIN-08 assistant 看到 mentor 上报的课消 ──
+  test('CHAIN-08 assistant 查看详情，能看到 mentor 上报的课消记录', async ({ browser, request }) => {
+    const as = await loginAsStaff(request, assistant)
+    const ctx = await browser.newContext({ baseURL: ASSISTANT_BASE })
+    const page = await ctx.newPage()
+    try {
+      await page.addInitScript((t) => window.localStorage.setItem('osg_token', t), as.token)
+      await page.goto('/career/job-overview', { waitUntil: 'networkidle' })
+
+      // 用 position name 找 row（学生名 CSS 截断风险）
+      const seededRow = page.locator('.ant-table-row:visible', { hasText: position.positionName })
+      await expect(seededRow.first()).toBeVisible({ timeout: 10000 })
+
+      // 点击「查看详情」打开跟进详情
+      await seededRow.first().locator('button:has-text("查看详情")').click()
+      await expect(page.locator('text=跟进详情').first()).toBeVisible({ timeout: 5000 })
+
+      // assistant 详情页应展示 mentor 上报的 highlights 文案
+      // (mentorSubmitJobCoachingReport 写入 'e2e: 学生表现稳定')
+      await expect(page.locator('text=/e2e: 学生表现稳定/').first()).toBeVisible({ timeout: 5000 })
+      await ss(page, 'CHAIN-08-assistant-detail-class-record')
+    } finally {
+      await ctx.close()
+    }
+  })
+
+  // ── CHAIN-09 student 展开行点击「查看详情」按钮 ──
+  test('CHAIN-09 student 展开行「查看详情」按钮可点开 + 显示课消', async ({ browser, request }) => {
+    const stu = await loginAsStudent(request, student)
+    const ctx = await browser.newContext({ baseURL: STUDENT_BASE })
+    const page = await ctx.newPage()
+    try {
+      await page.addInitScript((t) => window.localStorage.setItem('osg_token', t), stu.token)
+      await page.goto('/applications', { waitUntil: 'networkidle' })
+
+      const seededRow = page.locator('.ant-table-row').filter({ hasText: position.positionName })
+      await seededRow.first().locator('.ant-table-row-expand-icon').click()
+      // 展开行的「查看详情」按钮
+      const panel = page.locator('.application-coachings-panel').filter({ hasText: /First Round|first/i }).first()
+      await expect(panel).toBeVisible({ timeout: 5000 })
+      await panel.locator('button:has-text("查看详情")').click()
+
+      // 辅导详情弹窗打开
+      await expect(page.locator('text=辅导详情').first()).toBeVisible({ timeout: 5000 })
+      // 课消记录列表里应该有 mentor 上报的那条
+      await expect(page.locator('.application-coaching-record__title').first()).toBeVisible({ timeout: 5000 })
+      await ss(page, 'CHAIN-09-student-detail')
+    } finally {
+      await ctx.close()
+    }
   })
 })

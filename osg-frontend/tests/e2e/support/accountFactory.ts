@@ -303,6 +303,122 @@ export async function getStudentApplicationList(
 }
 
 /**
+ * lead-mentor 分配 mentor（绕过 UI 直接 API，用于 chain seed）。
+ * 路径：POST /lead-mentor/job-overview/coaching/{coachingId}/assign-mentor
+ */
+export async function leadMentorAssignCoachingMentor(
+  request: APIRequestContext,
+  lmToken: string,
+  coachingId: number,
+  mentorStaffIds: number[]
+): Promise<void> {
+  const response = await request.post(
+    `/api/lead-mentor/job-overview/coaching/${coachingId}/assign-mentor`,
+    {
+      headers: { Authorization: `Bearer ${lmToken}` },
+      data: {
+        mentorIds: mentorStaffIds,
+        mentorNames: [],
+        assignNote: 'e2e chain assign',
+      },
+    },
+  )
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`assign-mentor non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `assign-mentor should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+}
+
+/**
+ * mentor 上报课消（job_coaching 类型）— 走 POST /mentor/class-records。
+ * 用于 CHAIN-07 / 08 seed，无需穿越复杂 5-step UI 表单。
+ */
+export async function mentorSubmitJobCoachingReport(
+  request: APIRequestContext,
+  mentorToken: string,
+  options: {
+    studentId: number
+    coachingId: number
+    durationHours?: number
+    rate?: string
+  }
+): Promise<{ recordId: number }> {
+  const payload = {
+    studentId: options.studentId,
+    classDate: new Date().toISOString().slice(0, 10),
+    durationHours: options.durationHours ?? 1.5,
+    courseType: 'job_coaching',
+    referenceType: 'job_coaching',
+    referenceId: options.coachingId,
+    memberStatus: 'normal',
+    rate: options.rate ?? '4',
+    // 后端 OsgClassRecord.feedbackContent 是 String 字段，存 JSON 字符串
+    feedbackContent: JSON.stringify({
+      schemaVersion: 1,
+      type: 'job_coaching',
+      ratings: {
+        preparation: 4,
+        communication: 5,
+        technical: 4,
+        confidence: 5,
+        overall: 4,
+      },
+      highlights: 'e2e: 学生表现稳定，逻辑清晰。',
+      improvements: 'e2e: 案例细节描述可更具体。',
+      nextSteps: 'e2e: 下次专注 case study 框架推演。',
+    }),
+  }
+  // OsgClassRecordController 的 @PostMapping 字面包含 "/api/"，nginx 剥 /api 后
+  // 后端会找不到，故走 /api/api/mentor/class-records（剥后 → /api/mentor/class-records 命中）。
+  const response = await request.post('/api/api/mentor/class-records', {
+    headers: { Authorization: `Bearer ${mentorToken}` },
+    data: payload,
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`class-records non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `mentor class-records should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  // 后端 add 走 toAjax(...) 不返回 recordId；用 -1 占位，下游不依赖该值
+  const recordId = body?.data?.recordId ?? body?.recordId ?? -1
+  return { recordId }
+}
+
+/**
+ * admin 拉课消列表查找指定 coaching 的 pending 记录 ID，
+ * 然后调 PUT /admin/report/{id}/approve 把它批准（避免 mentor add 默认 pending 影响下游统计）。
+ */
+export async function adminApproveLatestClassRecordForCoaching(
+  auth: AdminAuth,
+  coachingId: number,
+  studentId: number
+): Promise<{ recordId: number }> {
+  // admin/report/list 不暴露 referenceId，只能按 studentId + courseType=job_coaching 过滤
+  // 一个 e2e 学员只有一条 job_coaching 课消（chain 内只 submit 一次），不会撞
+  // tab=pending 拉所有 pending（不传 keyword，因为 keyword 不支持按 studentId 过滤）
+  const listResp = await auth.request.get('/api/admin/report/list?tab=pending&pageSize=200', {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  })
+  const raw = await listResp.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`/admin/report/list non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `/admin/report/list should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  const rows = (body?.rows ?? body?.data?.rows ?? []) as Array<{ recordId: number; studentId?: number; courseType?: string }>
+  const target = rows.find((r) => Number(r.studentId) === studentId && r.courseType === 'job_coaching')
+  expect(target, `pending class record for student ${studentId} not found (${rows.length} rows)`).toBeTruthy()
+  const recordId = target!.recordId
+
+  const approveResp = await auth.request.put(`/api/admin/report/${recordId}/approve`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+    data: {},
+  })
+  const approveRaw = await approveResp.text()
+  let approveBody: any
+  try { approveBody = JSON.parse(approveRaw) } catch { throw new Error(`approve non-JSON: ${approveRaw.slice(0, 500)}`) }
+  expect(approveBody?.code, `/admin/report/${recordId}/approve should return code=200, body=${approveRaw.slice(0, 500)}`).toBe(200)
+  return { recordId }
+}
+
+/**
  * 学生 POST /student/applications/{applicationId}/coachings 申请阶段辅导。
  */
 export async function studentRequestCoaching(
