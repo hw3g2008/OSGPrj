@@ -85,6 +85,7 @@ export interface LeadMentorClassRecordDetailItem {
   durationHours?: number
   rate?: string
   feedbackSummary?: string | null
+  feedbackContent?: string | object | null
   referenceType?: string
   referenceId?: number | null
 }

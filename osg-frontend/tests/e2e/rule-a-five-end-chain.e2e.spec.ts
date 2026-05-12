@@ -6,6 +6,8 @@ import {
   adminApproveLatestClassRecordForCoaching,
   adminApproveMentorChangeRequest,
   adminApproveStudentPositionMerge,
+  adminRejectMentorChangeRequest,
+  studentSubmitMockPracticeRequest,
   bindMentorshipToStudent,
   createTestPosition,
   createTestStaff,
@@ -430,6 +432,62 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
     expect(updated, `approved student-position ${result.studentPositionId} should be in list (${rows.length} rows)`).toBeTruthy()
     expect(updated?.status).toBe('approved')
     expect(Number(updated?.publicPositionId ?? updated?.positionId)).toBe(position.positionId)
+  })
+
+  // ── CHAIN-12 student 提交模拟应聘申请（RULE-B mock）+ 验证 mock_practice 落库 ──
+  test('CHAIN-12 student 提交模拟应聘 (mock) → osg_mock_practice 写入 pending', async ({ request }) => {
+    const stu = await loginAsStudent(request, student)
+    const submitted = await studentSubmitMockPracticeRequest(request, stu.token, {
+      type: 'mock',
+      mentorCount: '1',
+    })
+    expect(submitted.requestId).toBeTruthy()
+
+    // 验证 admin 端能查到这条 pending 模拟应聘
+    const testAuth = await adminAuth(request)
+    const listResp = await testAuth.request.get('/api/admin/mock-practice/list?pageSize=200&practiceType=mock', {
+      headers: { Authorization: `Bearer ${testAuth.token}` },
+    })
+    const listBody = await listResp.json()
+    const rows = (listBody?.rows ?? listBody?.data?.rows ?? []) as any[]
+    const target = rows.find((r: any) => Number(r.practiceId) === submitted.requestId)
+    expect(target, `practice ${submitted.requestId} should appear in admin list (${rows.length} rows)`).toBeTruthy()
+    expect(target?.status).toBe('pending')
+  })
+
+  // ── CHAIN-13 mentor 资料变更 reject 分支 ──
+  test('CHAIN-13 mentor 资料变更 reject 分支（A-AU-001 负向）', async ({ request }) => {
+    const mt = await loginAsStaff(request, mentor)
+    const submitted = await mentorSubmitProfileChange(request, mt.token, {
+      remark: `reject test ${stamp.slice(0, 4)}`,
+    })
+    const testAuth = await adminAuth(request)
+    await adminRejectMentorChangeRequest(testAuth, submitted.requestId, 'e2e: 信息不充分')
+
+    // 验证 rejected 列表里有
+    const listResp = await testAuth.request.get('/api/admin/mentor-profile-change/list?status=rejected', {
+      headers: { Authorization: `Bearer ${testAuth.token}` },
+    })
+    const listBody = await listResp.json()
+    const rows = Array.isArray(listBody?.data) ? listBody.data : (listBody?.rows ?? [])
+    const found = rows.find((r: any) => r.requestId === submitted.requestId)
+    expect(found?.status).toBe('rejected')
+    expect(String(found?.remark ?? '')).toContain('信息不充分')
+  })
+
+  // ── CHAIN-14 后台课程记录列表能看到已 approve 的 mentor 上报 (A-CR-001) ──
+  test('CHAIN-14 admin 端 /admin/report/list?tab=approved 含 mentor 上报记录', async ({ request }) => {
+    // CHAIN-07 已经 approve 一条 mentor 上报。这里直接验证 approved tab 含 studentId
+    const testAuth = await adminAuth(request)
+    const listResp = await testAuth.request.get('/api/admin/report/list?tab=approved&pageSize=200', {
+      headers: { Authorization: `Bearer ${testAuth.token}` },
+    })
+    const listBody = await listResp.json()
+    const rows = (listBody?.rows ?? []) as any[]
+    const target = rows.find((r: any) => Number(r.studentId) === student.studentId && r.courseType === 'job_coaching')
+    expect(target, `approved job_coaching record for student ${student.studentId} should be in approved tab`).toBeTruthy()
+    expect(target?.status).toBe('approved')
+    expect(Number(target?.mentorId)).toBeGreaterThan(0)
   })
 
   // ── CHAIN-11 mentor 提交资料变更 + admin 审核通过（A-AU-001） ──

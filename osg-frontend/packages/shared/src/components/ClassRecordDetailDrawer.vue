@@ -28,7 +28,13 @@
           class="crd-records-table"
         >
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'memberStatus'">
+            <template v-if="column.key === 'classDate'">
+              {{ formatDateOnly(record.classDate) }}
+            </template>
+            <template v-else-if="column.key === 'courseType'">
+              {{ courseTypeLabel(record.courseType) }}
+            </template>
+            <template v-else-if="column.key === 'memberStatus'">
               <a-tag :color="record.memberStatus === 'absent' ? 'red' : 'green'">
                 {{ record.memberStatus === 'absent' ? '旷课' : '出席' }}
               </a-tag>
@@ -37,7 +43,7 @@
               {{ record.rate || '-' }}
             </template>
             <template v-else-if="column.key === 'feedbackSummary'">
-              <span :title="record.feedbackSummary || ''">{{ record.feedbackSummary || '-' }}</span>
+              <span :title="resolveFeedbackSummary(record)">{{ resolveFeedbackSummary(record) || '-' }}</span>
             </template>
           </template>
         </a-table>
@@ -75,6 +81,47 @@ function sortedRecords(records: LeadMentorClassRecordDetailItem[]) {
     if (!b.classDate) return -1
     return b.classDate.localeCompare(a.classDate)
   })
+}
+
+/**
+ * 课消 ISO 日期 → 'YYYY-MM-DD' 展示
+ */
+function formatDateOnly(value?: string): string {
+  if (!value) return '-'
+  return value.slice(0, 10)
+}
+
+// 课程类型字典 value → 中文 label
+const COURSE_TYPE_LABEL_MAP: Record<string, string> = {
+  job_coaching: '岗位辅导',
+  mock_interview: '面试测试',
+  relation_test: '人际关系',
+  communication_test: '人际关系',
+  midterm: '期中考试',
+  midterm_test: '期中考试',
+  base_course: '基础课程',
+}
+
+function courseTypeLabel(value?: string): string {
+  if (!value) return '-'
+  return COURSE_TYPE_LABEL_MAP[value] || value
+}
+
+/**
+ * 反馈摘要兜底：若后端没生成 feedbackSummary，按已知 feedbackContent JSON shape
+ * 抽 highlights / narrative / improvements 前 60 字。
+ */
+function resolveFeedbackSummary(record: LeadMentorClassRecordDetailItem & { feedbackContent?: string | object }): string {
+  if (record.feedbackSummary) return record.feedbackSummary
+  const raw = (record as any).feedbackContent
+  if (!raw) return ''
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    const text = parsed?.highlights || parsed?.narrative || parsed?.improvements || parsed?.nextSteps || ''
+    return typeof text === 'string' ? text.slice(0, 120) : ''
+  } catch {
+    return ''
+  }
 }
 </script>
 

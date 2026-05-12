@@ -481,6 +481,50 @@ export async function adminApproveMentorChangeRequest(
   expect(body?.code, `mentor change approve code=200, body=${raw.slice(0, 500)}`).toBe(200)
 }
 
+export async function adminRejectMentorChangeRequest(
+  auth: AdminAuth,
+  requestId: number,
+  reason: string
+): Promise<void> {
+  const response = await auth.request.put(`/api/admin/mentor-profile-change/${requestId}/reject`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+    data: { reason },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`mentor change reject non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `mentor change reject code=200, body=${raw.slice(0, 500)}`).toBe(200)
+}
+
+/**
+ * 学生提交模拟应聘申请 (RULE-B)。
+ * type: mock | networking | midterm
+ */
+export async function studentSubmitMockPracticeRequest(
+  request: APIRequestContext,
+  studentToken: string,
+  options: { type: 'mock' | 'networking' | 'midterm'; mentorCount?: string }
+): Promise<{ requestId: number }> {
+  const response = await request.post('/api/student/mock-practice/practice-request', {
+    headers: { Authorization: `Bearer ${studentToken}` },
+    data: {
+      type: options.type,
+      reason: 'e2e chain seed',
+      mentorCount: options.mentorCount ?? '1',
+      preferredMentor: '',
+      excludedMentor: '',
+      remark: 'e2e auto submit',
+    },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`practice-request non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `practice-request code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  const requestId = body?.data?.requestId ?? body?.requestId
+  expect(requestId, `practice requestId should exist, body=${raw.slice(0, 500)}`).toBeTruthy()
+  return { requestId }
+}
+
 export async function adminApproveLatestClassRecordForCoaching(
   auth: AdminAuth,
   coachingId: number,
