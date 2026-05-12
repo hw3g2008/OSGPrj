@@ -310,15 +310,15 @@ export async function leadMentorAssignCoachingMentor(
   request: APIRequestContext,
   lmToken: string,
   coachingId: number,
-  mentorStaffIds: number[]
+  mentors: { staffId: number; staffName: string }[]
 ): Promise<void> {
   const response = await request.post(
     `/api/lead-mentor/job-overview/coaching/${coachingId}/assign-mentor`,
     {
       headers: { Authorization: `Bearer ${lmToken}` },
       data: {
-        mentorIds: mentorStaffIds,
-        mentorNames: [],
+        mentorIds: mentors.map((m) => m.staffId),
+        mentorNames: mentors.map((m) => m.staffName),
         assignNote: 'e2e chain assign',
       },
     },
@@ -387,6 +387,100 @@ export async function mentorSubmitJobCoachingReport(
  * admin 拉课消列表查找指定 coaching 的 pending 记录 ID，
  * 然后调 PUT /admin/report/{id}/approve 把它批准（避免 mentor add 默认 pending 影响下游统计）。
  */
+/**
+ * 学生 POST /student/position/manual 提交自添岗位。
+ */
+export async function studentSubmitManualPosition(
+  request: APIRequestContext,
+  studentToken: string,
+  options: { title: string; company: string; link: string }
+): Promise<void> {
+  const response = await request.post('/api/student/position/manual', {
+    headers: { Authorization: `Bearer ${studentToken}` },
+    data: {
+      category: 'summer',
+      title: options.title,
+      company: options.company,
+      companyType: 'bulge_bracket',
+      region: 'na',
+      city: 'new_york',
+      recruitmentCycle: '2026 Summer',
+      projectYear: '2026',
+      link: options.link,
+      needCoaching: false,
+    },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`student/position/manual non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `student/position/manual should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+}
+
+/**
+ * admin 拉自添岗位 pending 列表，按 studentId 找最新一条，调 PUT approve 合并到指定公共岗位。
+ */
+export async function adminApproveStudentPositionMerge(
+  auth: AdminAuth,
+  studentId: number,
+  mergeToPositionId: number
+): Promise<{ studentPositionId: number }> {
+  const listResp = await auth.request.get('/api/admin/student-position/list?status=pending&pageSize=200', {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  })
+  const raw = await listResp.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`student-position/list non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `student-position/list code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  const rows = (body?.rows ?? body?.data?.rows ?? []) as Array<{ studentPositionId: number; studentId: number; status: string }>
+  const target = rows.find((r) => Number(r.studentId) === studentId)
+  expect(target, `student-position pending for student ${studentId} not found (${rows.length} rows)`).toBeTruthy()
+  const studentPositionId = target!.studentPositionId
+  const approveResp = await auth.request.put(`/api/admin/student-position/${studentPositionId}/approve`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+    data: { mergeToPositionId },
+  })
+  const approveRaw = await approveResp.text()
+  let approveBody: any
+  try { approveBody = JSON.parse(approveRaw) } catch { throw new Error(`approve non-JSON: ${approveRaw.slice(0, 500)}`) }
+  expect(approveBody?.code, `student-position approve code=200, body=${approveRaw.slice(0, 500)}`).toBe(200)
+  return { studentPositionId }
+}
+
+/**
+ * mentor POST /mentor/profile/change-request 提交资料变更申请。
+ */
+export async function mentorSubmitProfileChange(
+  request: APIRequestContext,
+  mentorToken: string,
+  payload: { nickName?: string; phonenumber?: string; remark?: string }
+): Promise<{ requestId: number }> {
+  // OsgMentorProfileController 也是字面 /api/ 前缀 + PUT
+  const response = await request.put('/api/api/mentor/profile', {
+    headers: { Authorization: `Bearer ${mentorToken}` },
+    data: payload,
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`mentor profile change-request non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `mentor profile change-request code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  const requestId = body?.data?.requestId ?? body?.requestId
+  expect(requestId, `requestId should exist, body=${raw.slice(0, 500)}`).toBeTruthy()
+  return { requestId }
+}
+
+export async function adminApproveMentorChangeRequest(
+  auth: AdminAuth,
+  requestId: number
+): Promise<void> {
+  const response = await auth.request.put(`/api/admin/mentor-profile-change/${requestId}/approve`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`mentor change approve non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `mentor change approve code=200, body=${raw.slice(0, 500)}`).toBe(200)
+}
+
 export async function adminApproveLatestClassRecordForCoaching(
   auth: AdminAuth,
   coachingId: number,

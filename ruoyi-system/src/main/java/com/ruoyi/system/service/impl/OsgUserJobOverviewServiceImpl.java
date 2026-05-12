@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.OsgClassRecord;
 import com.ruoyi.system.service.ISysDictDataService;
@@ -33,6 +34,7 @@ import com.ruoyi.system.mapper.OsgCoachingMapper;
 import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgMockPracticeMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
+import com.ruoyi.system.mapper.SysUserMapper;
 import com.ruoyi.system.service.IOsgUserJobOverviewService;
 
 @Service
@@ -64,6 +66,9 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
 
     @Autowired
     private ISysDictDataService dictDataService;
+
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     // ===== Lead-Mentor 端 =====
 
@@ -213,6 +218,28 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
             .toList();
 
         List<String> mentorNames = toStringList(payload.get("mentorNames"));
+        // 防御：前端只传 mentorIds 不传 mentorNames 时，按 userId 反查 sys_user.nick_name
+        // 防止「我管理」列表出现 mentor 字段为 null 的展示态 bug
+        if (mentorNames.isEmpty() && !mentorUserIds.isEmpty())
+        {
+            mentorNames = new java.util.ArrayList<>();
+            for (Long userId : mentorUserIds)
+            {
+                SysUser user = userId == null ? null : sysUserMapper.selectUserById(userId);
+                if (user != null)
+                {
+                    String name = user.getNickName();
+                    if (name == null || name.isBlank())
+                    {
+                        name = user.getUserName();
+                    }
+                    if (name != null && !name.isBlank())
+                    {
+                        mentorNames.add(name);
+                    }
+                }
+            }
+        }
         String mentorNamesText = mentorNames.isEmpty() ? null : String.join(", ", mentorNames);
         String assignNote = firstText(payload.get("assignNote"), payload.get("remark"));
         Date now = new Date();

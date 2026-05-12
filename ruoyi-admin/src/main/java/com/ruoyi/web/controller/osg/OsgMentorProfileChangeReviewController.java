@@ -30,7 +30,7 @@ public class OsgMentorProfileChangeReviewController extends BaseController
     private OsgMentorProfileChangeRequestServiceImpl changeRequestService;
 
     @GetMapping("/list")
-    @PreAuthorize("@ss.hasAnyRoles('admin','clerk')")
+    @PreAuthorize("@ss.hasPermi('admin:staff:list')")
     public AjaxResult list(@RequestParam(value = "status", required = false) String status,
                            @RequestParam(value = "userId", required = false) Long userId)
     {
@@ -39,14 +39,14 @@ public class OsgMentorProfileChangeReviewController extends BaseController
     }
 
     @PutMapping("/{id}/approve")
-    @PreAuthorize("@ss.hasAnyRoles('admin','clerk')")
+    @PreAuthorize("@ss.hasPermi('admin:staff:list')")
     public AjaxResult approve(@PathVariable("id") Long requestId)
     {
         return AjaxResult.success(changeRequestService.approveChangeRequest(requestId, resolveOperator()));
     }
 
     @PutMapping("/{id}/reject")
-    @PreAuthorize("@ss.hasAnyRoles('admin','clerk')")
+    @PreAuthorize("@ss.hasPermi('admin:staff:list')")
     public AjaxResult reject(@PathVariable("id") Long requestId, @RequestBody Map<String, Object> payload)
     {
         String reason = payload == null ? null : asText(payload.get("reason"));

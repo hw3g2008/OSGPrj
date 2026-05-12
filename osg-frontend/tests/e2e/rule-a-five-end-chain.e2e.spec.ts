@@ -4,6 +4,8 @@ import * as path from 'node:path'
 import {
   adminAuth,
   adminApproveLatestClassRecordForCoaching,
+  adminApproveMentorChangeRequest,
+  adminApproveStudentPositionMerge,
   bindMentorshipToStudent,
   createTestPosition,
   createTestStaff,
@@ -13,6 +15,8 @@ import {
   loginAsStaff,
   loginAsStudent,
   mentorSubmitJobCoachingReport,
+  mentorSubmitProfileChange,
+  studentSubmitManualPosition,
   softDeleteTestStaff,
   softDeleteTestStudent,
   staffLoginUsername,
@@ -281,7 +285,9 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
   test('CHAIN-06 lead-mentor 真实分配 mentor，coaching 从 待分配 → 已分配', async ({ request }) => {
     const lm = await loginAsStaff(request, leadMentor)
     // API：把 mentor 分配给 seed coaching
-    await leadMentorAssignCoachingMentor(request, lm.token, coachingId, [mentor.staffId])
+    await leadMentorAssignCoachingMentor(request, lm.token, coachingId, [
+      { staffId: mentor.staffId, staffName: mentor.staffName },
+    ])
 
     // 验证：分配后 coaching 不再在 pending scope
     const pendingResp = await request.get('/api/lead-mentor/job-overview/list?scope=pending', {
@@ -298,10 +304,11 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
     const managedBody = await managedResp.json()
     const managed = (managedBody?.rows ?? []).find((r: any) => r.coachingId === coachingId)
     expect(managed, 'seed coaching should appear in managed scope').toBeTruthy()
-    // 后端 list scope=managed 返回的 mentorName/mentorNames 当前为 null（仅 coachingStatus/assignedStatus 翻 assigned），
-    // 但 coaching 表里 mentor_ids 已绑定。这里以 assignedStatus 翻面为成功标准。
     expect(managed?.assignedStatus).toBe('assigned')
     expect(managed?.coachingStatus).toBe('assigned')
+    // 后端修复后 mentorName/mentorNames 应该有值（不为 null）
+    const mentorNames = String(managed?.mentorNames ?? managed?.mentorName ?? '')
+    expect(mentorNames, `mentorNames should not be null/empty after assign, got '${mentorNames}'`).toContain(mentor.staffName)
   })
 
   // ── CHAIN-07 mentor 真实上报课消 (job_coaching reference) ──
@@ -396,5 +403,58 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
     } finally {
       await ctx.close()
     }
+  })
+
+  // ── CHAIN-10 student 自添岗位 + admin 合并审核（RULE-D RD-001~004） ──
+  test('CHAIN-10 自添岗位 → admin 合并到已有岗位（merge 分支）', async ({ request }) => {
+    const stu = await loginAsStudent(request, student)
+    // student 提交自添岗位
+    await studentSubmitManualPosition(request, stu.token, {
+      title: `Manual Pos ${stamp}`,
+      company: `Manual Co ${stamp}`,
+      link: 'https://example.com/manual-pos',
+    })
+
+    // admin approve 合并到已有 seed 岗位
+    const testAuth = await adminAuth(request)
+    const result = await adminApproveStudentPositionMerge(testAuth, student.studentId, position.positionId)
+    expect(result.studentPositionId).toBeTruthy()
+
+    // 验证 student 自添岗位 status=approved 且 publicPositionId = seed position
+    const listResp = await testAuth.request.get(`/api/admin/student-position/list?status=approved&pageSize=200`, {
+      headers: { Authorization: `Bearer ${testAuth.token}` },
+    })
+    const listBody = await listResp.json()
+    const rows = (listBody?.rows ?? listBody?.data?.rows ?? []) as any[]
+    const updated = rows.find((r: any) => Number(r.studentPositionId) === result.studentPositionId)
+    expect(updated, `approved student-position ${result.studentPositionId} should be in list (${rows.length} rows)`).toBeTruthy()
+    expect(updated?.status).toBe('approved')
+    expect(Number(updated?.publicPositionId ?? updated?.positionId)).toBe(position.positionId)
+  })
+
+  // ── CHAIN-11 mentor 提交资料变更 + admin 审核通过（A-AU-001） ──
+  test('CHAIN-11 mentor 提交资料变更 → admin approve → sys_user 写回', async ({ request }) => {
+    const mt = await loginAsStaff(request, mentor)
+    const newNickName = `mt_nick_${stamp.slice(0, 6)}`
+
+    const submitted = await mentorSubmitProfileChange(request, mt.token, {
+      nickName: newNickName,
+      remark: 'e2e test profile change',
+    })
+    expect(submitted.requestId).toBeTruthy()
+
+    // admin 审核通过
+    const testAuth = await adminAuth(request)
+    await adminApproveMentorChangeRequest(testAuth, submitted.requestId)
+
+    // 验证变更状态 = approved
+    const listResp = await testAuth.request.get('/api/admin/mentor-profile-change/list?status=approved', {
+      headers: { Authorization: `Bearer ${testAuth.token}` },
+    })
+    const listBody = await listResp.json()
+    const rows = Array.isArray(listBody?.data) ? listBody.data : (listBody?.rows ?? [])
+    const found = rows.find((r: any) => r.requestId === submitted.requestId)
+    expect(found, `request ${submitted.requestId} should appear in approved list`).toBeTruthy()
+    expect(found?.status).toBe('approved')
   })
 })
