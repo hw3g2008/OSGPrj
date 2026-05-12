@@ -6,7 +6,13 @@ import {
   adminApproveLatestClassRecordForCoaching,
   adminApproveMentorChangeRequest,
   adminApproveStudentPositionMerge,
+  adminEndStudentContract,
+  adminFreezeStudent,
+  adminGetStudentDetail,
+  adminRefundStudent,
   adminRejectMentorChangeRequest,
+  adminRenewStudentContract,
+  adminUnfreezeStudent,
   studentSubmitMockPracticeRequest,
   bindMentorshipToStudent,
   createTestPosition,
@@ -17,6 +23,7 @@ import {
   loginAsStaff,
   loginAsStudent,
   mentorSubmitJobCoachingReport,
+  mentorSubmitJobCoachingReportRaw,
   mentorSubmitProfileChange,
   studentSubmitManualPosition,
   softDeleteTestStaff,
@@ -514,5 +521,179 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
     const found = rows.find((r: any) => r.requestId === submitted.requestId)
     expect(found, `request ${submitted.requestId} should appear in approved list`).toBeTruthy()
     expect(found?.status).toBe('approved')
+  })
+
+  // ══════════════════════════════════════════════════════════════════════
+  // 批次 7 + 7.5 学生账号状态机重构：CHAIN-15/16/17
+  // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.9
+  //
+  //  account_status×frozen 矩阵（§13.3）：
+  //    0/0 正常        : 登录/求职/课消 全允许
+  //    0/1 正常·冻结    : frozen=1 拒登录 + 拒课消
+  //    2/0 合同结束     : 登录✅ / 求职❌ / 课消✅（有课时）
+  //    2/1 合同结束·冻结: frozen 关联，登录+课消全拒
+  //    3/- 退费         : lifecycle 终态，frozen 忽略
+  //
+  // 每个 CHAIN-1X 自建独立 student（避免污染 CHAIN-01..14 的 seed student），
+  // 复用主链已 seed 的 mentor / lead-mentor / coaching 框架；其中 CHAIN-15 走
+  // 「合同结束 + 冻结叠加」需要一个有效 coaching reference，沿用主链 coachingId。
+  // ══════════════════════════════════════════════════════════════════════
+
+  // ── CHAIN-15 合同结束·冻结叠加 → 课消被拒；解冻后允许 ──
+  test('CHAIN-15 合同结束·冻结叠加（2/1）→ mentor 课消被拒；unfreeze 后允许', async ({ request }) => {
+    const testAuth = await adminAuth(request)
+
+    // 1) end_contract → accountStatus='2', frozen 保持 0
+    await adminEndStudentContract(testAuth, student.studentId)
+    let detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'after end_contract accountStatus should be 2').toBe('2')
+    expect(Number(detail.frozen ?? 0), 'after end_contract frozen should remain 0').toBe(0)
+
+    // 2) freeze → frozen=1（叠加在 2 之上）
+    await adminFreezeStudent(testAuth, student.studentId)
+    detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'freeze 不动 accountStatus').toBe('2')
+    expect(Number(detail.frozen), 'freeze 后 frozen=1').toBe(1)
+
+    // 3) mentor 上报课消 → 应被 class_record.student.frozen 拦截
+    const mt = await loginAsStaff(request, mentor)
+    const rejected = await mentorSubmitJobCoachingReportRaw(request, mt.token, {
+      studentId: student.studentId,
+      coachingId,
+    })
+    // 后端 ServiceException 走 toAjax 返回 code != 200 + msg 含「冻结」
+    expect(rejected.body?.code, `frozen 时课消必须被拒，got body=${rejected.rawText.slice(0, 300)}`).not.toBe(200)
+    expect(String(rejected.body?.msg ?? ''), 'msg 应含「冻结」字样').toContain('冻结')
+
+    // 4) unfreeze → frozen=0；accountStatus 仍为 2
+    await adminUnfreezeStudent(testAuth, student.studentId)
+    detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus)).toBe('2')
+    expect(Number(detail.frozen ?? 0)).toBe(0)
+
+    // 5) 合同结束·未冻结：课消允许（§13.3 矩阵：2/0 课消✅有课时）
+    const ok = await mentorSubmitJobCoachingReportRaw(request, mt.token, {
+      studentId: student.studentId,
+      coachingId,
+    })
+    expect(ok.body?.code, `2/0 矩阵 mentor 课消应允许, got body=${ok.rawText.slice(0, 300)}`).toBe(200)
+
+    // 6) 恢复主链状态：重新加入 (rejoin) → 0/0，便于后续 CHAIN-16/17 起步干净
+    await adminRenewStudentContract(testAuth, {
+      studentId: student.studentId,
+      totalHours: 40,
+      amountUsd: 5000,
+      reactivateAccount: false,
+    })
+    // 续签后 accountStatus 仍为 2（不带 reactivateAccount），所以直接改 status='0'
+    // 用 PUT /admin/student/status 不动 frozen 的 endpoint。这里走 rejoin action：
+    await testAuth.request.put('/api/admin/student/status', {
+      headers: { Authorization: `Bearer ${testAuth.token}` },
+      data: { studentId: student.studentId, action: 'rejoin' },
+    })
+    detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'CHAIN-15 收尾恢复 0/0').toBe('0')
+    expect(Number(detail.frozen ?? 0)).toBe(0)
+  })
+
+  // ── CHAIN-16 退费 → 重新加入（续签合同 + reactivateAccount=true） ──
+  test('CHAIN-16 退费 → rejoin 续签合同 → 学员恢复登录 + 课消允许', async ({ request }) => {
+    const testAuth = await adminAuth(request)
+
+    // 1) 退费
+    await adminRefundStudent(testAuth, student.studentId)
+    let detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'after refund accountStatus=3').toBe('3')
+
+    // 2) 退费学员尝试登录 → 应拒
+    const refundedLogin = await request.post('/api/student/login', {
+      data: { username: studentLoginUsername(student), password: student.password },
+    })
+    const refundedBody = await refundedLogin.json().catch(() => ({}))
+    expect(refundedBody?.code, '退费态登录应被拒').not.toBe(200)
+    expect(String(refundedBody?.msg ?? ''), 'msg 应含「退费」').toContain('退费')
+
+    // 3) admin 走「续签合同 + reactivateAccount=true」原子重新加入
+    const renew = await adminRenewStudentContract(testAuth, {
+      studentId: student.studentId,
+      totalHours: 50,
+      amountUsd: 6000,
+      reactivateAccount: true,
+    })
+    expect(renew.accountReactivated, 'renewContract 返回 accountReactivated=true').toBe(true)
+
+    // 4) 验证 accountStatus=0, frozen=0
+    detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'rejoin 后 accountStatus 回 0').toBe('0')
+    expect(Number(detail.frozen ?? 0), 'rejoin 后 frozen=0').toBe(0)
+
+    // 5) 学员重新登录 → 应成功
+    const reLogin = await request.post('/api/student/login', {
+      data: { username: studentLoginUsername(student), password: student.password },
+    })
+    const reLoginBody = await reLogin.json().catch(() => ({}))
+    const reToken = reLoginBody?.token ?? reLoginBody?.data?.token
+    expect(reToken, `rejoin 后学员登录应成功, body=${JSON.stringify(reLoginBody).slice(0, 300)}`).toBeTruthy()
+
+    // 6) mentor 课消允许（0/0 矩阵）
+    const mt = await loginAsStaff(request, mentor)
+    const ok = await mentorSubmitJobCoachingReportRaw(request, mt.token, {
+      studentId: student.studentId,
+      coachingId,
+    })
+    expect(ok.body?.code, `0/0 矩阵 mentor 课消应允许, body=${ok.rawText.slice(0, 300)}`).toBe(200)
+  })
+
+  // ── CHAIN-17 正常·冻结独立：freeze 不影响 lifecycle ──
+  test('CHAIN-17 正常·冻结独立（0/1）→ 拒登录 + 拒课消；unfreeze 后恢复', async ({ request }) => {
+    const testAuth = await adminAuth(request)
+
+    // 前置：确保起步是 0/0（CHAIN-16 末尾应该是 0/0；CHAIN-17 独立 freeze 测试）
+    let detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'CHAIN-17 起步 accountStatus=0').toBe('0')
+    expect(Number(detail.frozen ?? 0), 'CHAIN-17 起步 frozen=0').toBe(0)
+
+    // 1) freeze（不结束合同）→ frozen=1，accountStatus 仍 0
+    await adminFreezeStudent(testAuth, student.studentId)
+    detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'freeze 不动 accountStatus').toBe('0')
+    expect(Number(detail.frozen), 'freeze 后 frozen=1').toBe(1)
+
+    // 2) 学员登录 → 应被拒（msg 含「冻结」）
+    const loginResp = await request.post('/api/student/login', {
+      data: { username: studentLoginUsername(student), password: student.password },
+    })
+    const loginBody = await loginResp.json().catch(() => ({}))
+    expect(loginBody?.code, '0/1 矩阵学员登录应被拒').not.toBe(200)
+    expect(String(loginBody?.msg ?? ''), 'msg 应含「冻结」').toContain('冻结')
+
+    // 3) mentor 课消 → 应被拒
+    const mt = await loginAsStaff(request, mentor)
+    const rejected = await mentorSubmitJobCoachingReportRaw(request, mt.token, {
+      studentId: student.studentId,
+      coachingId,
+    })
+    expect(rejected.body?.code, '0/1 矩阵 mentor 课消应被拒').not.toBe(200)
+    expect(String(rejected.body?.msg ?? ''), 'msg 应含「冻结」').toContain('冻结')
+
+    // 4) unfreeze → 0/0 恢复
+    await adminUnfreezeStudent(testAuth, student.studentId)
+    detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus)).toBe('0')
+    expect(Number(detail.frozen ?? 0)).toBe(0)
+
+    // 5) 学员重新登录 + mentor 课消 全 ok
+    const reLogin = await request.post('/api/student/login', {
+      data: { username: studentLoginUsername(student), password: student.password },
+    })
+    const reLoginBody = await reLogin.json().catch(() => ({}))
+    const reToken = reLoginBody?.token ?? reLoginBody?.data?.token
+    expect(reToken, `unfreeze 后学员登录应成功, body=${JSON.stringify(reLoginBody).slice(0, 300)}`).toBeTruthy()
+
+    const ok = await mentorSubmitJobCoachingReportRaw(request, mt.token, {
+      studentId: student.studentId,
+      coachingId,
+    })
+    expect(ok.body?.code, `0/0 矩阵 mentor 课消应允许, body=${ok.rawText.slice(0, 300)}`).toBe(200)
   })
 })

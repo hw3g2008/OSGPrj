@@ -147,18 +147,110 @@ export async function bindMentorshipToStudent(
 
 /**
  * 拆迁后清理：admin 端目前无 DELETE student / staff 端点，
- * 改用 PUT /admin/students/status 把账号置为 refunded (3) 实现软删除。
+ * 改用 PUT /admin/student/status 把账号置为 refunded (3) 实现软删除。
  * 邮箱已带 timestamp，二次跑不冲突，cleanup 失败不阻塞 e2e。
  */
 export async function softDeleteTestStudent(auth: AdminAuth, studentId: number) {
   try {
-    await auth.request.put('/api/admin/students/status', {
+    await auth.request.put('/api/admin/student/status', {
       headers: { Authorization: `Bearer ${auth.token}` },
       data: { studentId, action: 'refund' },
     })
   } catch {
     // ignore
   }
+}
+
+/**
+ * 批次 7 + 7.5 chain e2e 用：admin 端学员状态变更（freeze / unfreeze / end_contract / refund / rejoin）。
+ * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.4 / §13.9
+ */
+export async function adminChangeStudentStatus(
+  auth: AdminAuth,
+  studentId: number,
+  action: 'freeze' | 'unfreeze' | 'restore' | 'end_contract' | 'refund' | 'rejoin',
+): Promise<void> {
+  const response = await auth.request.put('/api/admin/student/status', {
+    headers: { Authorization: `Bearer ${auth.token}` },
+    data: { studentId, action },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`student/status non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `admin student/status action=${action} should return code=200, body=${raw.slice(0, 500)}`).toBe(200)
+}
+
+export async function adminFreezeStudent(auth: AdminAuth, studentId: number) {
+  return adminChangeStudentStatus(auth, studentId, 'freeze')
+}
+export async function adminUnfreezeStudent(auth: AdminAuth, studentId: number) {
+  return adminChangeStudentStatus(auth, studentId, 'unfreeze')
+}
+export async function adminEndStudentContract(auth: AdminAuth, studentId: number) {
+  return adminChangeStudentStatus(auth, studentId, 'end_contract')
+}
+export async function adminRefundStudent(auth: AdminAuth, studentId: number) {
+  return adminChangeStudentStatus(auth, studentId, 'refund')
+}
+
+/**
+ * admin 拉学员详情（验证 accountStatus / frozen）。
+ */
+export async function adminGetStudentDetail(
+  auth: AdminAuth,
+  studentId: number,
+): Promise<{ studentId: number; accountStatus?: string; frozen?: number }> {
+  const response = await auth.request.get(`/api/admin/student/${studentId}`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`/admin/student/${studentId} non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `/admin/student/${studentId} code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  return (body?.data ?? {}) as { studentId: number; accountStatus?: string; frozen?: number }
+}
+
+/**
+ * 批次 7.5「重新加入」chain e2e 用：admin POST /admin/contract/renew，可选 reactivateAccount=true。
+ * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6
+ */
+export async function adminRenewStudentContract(
+  auth: AdminAuth,
+  options: {
+    studentId: number
+    totalHours?: number
+    amountUsd?: number
+    startDate?: string
+    endDate?: string
+    renewalReason?: string
+    attachmentPath?: string
+    reactivateAccount?: boolean
+  },
+): Promise<{ contractId: number; accountReactivated: boolean }> {
+  const today = new Date().toISOString().slice(0, 10)
+  const oneYearLater = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().slice(0, 10)
+  const response = await auth.request.post('/api/admin/contract/renew', {
+    headers: { Authorization: `Bearer ${auth.token}` },
+    data: {
+      studentId: options.studentId,
+      currency: 'USD',
+      amountUsd: options.amountUsd ?? 5000,
+      contractAmount: options.amountUsd ?? 5000,
+      totalHours: options.totalHours ?? 40,
+      startDate: options.startDate ?? today,
+      endDate: options.endDate ?? oneYearLater,
+      renewalReason: options.renewalReason ?? '学员申请续费',
+      attachmentPath: options.attachmentPath ?? '/tmp/e2e-rejoin-contract.pdf',
+      reactivateAccount: options.reactivateAccount === true,
+    },
+  })
+  const raw = await response.text()
+  let body: any
+  try { body = JSON.parse(raw) } catch { throw new Error(`/admin/contract/renew non-JSON: ${raw.slice(0, 500)}`) }
+  expect(body?.code, `/admin/contract/renew code=200, body=${raw.slice(0, 500)}`).toBe(200)
+  const contractId = body?.data?.contractId ?? body?.contractId
+  const accountReactivated = body?.data?.accountReactivated === true || body?.accountReactivated === true
+  return { contractId, accountReactivated }
 }
 
 export async function softDeleteTestStaff(auth: AdminAuth, staffId: number) {
@@ -333,6 +425,43 @@ export async function leadMentorAssignCoachingMentor(
  * mentor 上报课消（job_coaching 类型）— 走 POST /mentor/class-records。
  * 用于 CHAIN-07 / 08 seed，无需穿越复杂 5-step UI 表单。
  */
+/**
+ * 批次 7 + 7.5 chain e2e 用：返回后端原始 body，不做 code=200 断言。
+ * 用于 CHAIN-15/17 验证「冻结时课消被拒」的负向用例。
+ */
+export async function mentorSubmitJobCoachingReportRaw(
+  request: APIRequestContext,
+  mentorToken: string,
+  options: { studentId: number; coachingId: number; durationHours?: number; rate?: string }
+): Promise<{ status: number; body: any; rawText: string }> {
+  const payload = {
+    studentId: options.studentId,
+    classDate: new Date().toISOString().slice(0, 10),
+    durationHours: options.durationHours ?? 1.5,
+    courseType: 'job_coaching',
+    referenceType: 'job_coaching',
+    referenceId: options.coachingId,
+    memberStatus: 'normal',
+    rate: options.rate ?? '4',
+    feedbackContent: JSON.stringify({
+      schemaVersion: 1,
+      type: 'job_coaching',
+      ratings: { preparation: 4, communication: 5, technical: 4, confidence: 5, overall: 4 },
+      highlights: 'e2e raw: 学生表现稳定。',
+      improvements: 'e2e raw: 细节可更具体。',
+      nextSteps: 'e2e raw: 案例框架推演。',
+    }),
+  }
+  const response = await request.post('/api/api/mentor/class-records', {
+    headers: { Authorization: `Bearer ${mentorToken}` },
+    data: payload,
+  })
+  const rawText = await response.text()
+  let body: any
+  try { body = JSON.parse(rawText) } catch { body = null }
+  return { status: response.status(), body, rawText }
+}
+
 export async function mentorSubmitJobCoachingReport(
   request: APIRequestContext,
   mentorToken: string,
