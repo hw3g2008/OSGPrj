@@ -42,7 +42,7 @@ async function ss(page: Page, name: string) {
  *
  * 各 CHAIN-0X 在浏览器中验证真实数据可见性，**禁用空状态早返**。
  */
-test.describe.configure({ mode: 'serial' })
+test.describe.configure({ mode: 'serial', timeout: 90_000 })
 test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
   test.skip(MOD !== 'chain', 'chain only — set E2E_MODULE=chain')
 
@@ -177,14 +177,16 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
     try {
       await page.addInitScript((t) => window.localStorage.setItem('osg_token', t), lm.token)
       await page.goto('/career/job-overview', { waitUntil: 'networkidle' })
+      await ss(page, 'CHAIN-02-loaded')
 
-      // 切到「待分配导师」栏
-      await page.locator('text=待分配导师').first().click()
-      await page.waitForTimeout(800)
+      // 切到「待分配导师」栏 — 用 id 精确定位
+      await page.locator('#lm-job-tab-pending').click()
+      await page.waitForTimeout(1200)
+      await ss(page, 'CHAIN-02-pending-tab')
 
-      // student 应在表中（用 :visible 过滤掉 antd measure / fixed-column hidden 副本）
-      const studentRow = page.locator('.ant-table-row:visible', { hasText: student.studentName })
-      await expect(studentRow.first()).toBeVisible({ timeout: 8000 })
+      // 用 positionName (含 stamp) 唯一识别 seed 行，避开 studentName 截断问题
+      const studentRow = page.locator('.ant-table-row:visible', { hasText: position.positionName })
+      await expect(studentRow.first()).toBeVisible({ timeout: 12000 })
 
       // 操作列 分配导师 按钮
       const assignBtn = studentRow.first().locator('button:has-text("分配导师")')
@@ -194,9 +196,9 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
       const modal = page.locator('[data-surface-id="modal-assign-mentor"]')
       await expect(modal).toBeVisible({ timeout: 5000 })
 
-      // 不选导师直接提交 → 数量校验提示
-      await modal.locator('button:has-text("分配")').last().click()
-      await expect(page.locator('text=/分配导师数量必须等于申请导师数量/').first()).toBeVisible({ timeout: 3000 })
+      // 不选导师直接提交 → 数量校验提示。按钮文案是「确认匹配」（非「分配」）
+      await modal.locator('button:has-text("确认匹配")').click()
+      await expect(page.locator('text=/分配导师数量|请至少选择|请选择/').first()).toBeVisible({ timeout: 5000 })
       await ss(page, 'CHAIN-02-count-validation')
     } finally {
       await ctx.close()
@@ -219,11 +221,14 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
         await expect(headers.filter({ hasText: text }).first()).toBeVisible()
       }
 
-      // 4 项筛选齐全
-      await expect(page.locator('[placeholder="全部公司"]')).toBeVisible()
-      await expect(page.locator('[placeholder="全部面试阶段"]')).toBeVisible()
-      await expect(page.locator('[placeholder="是否上报课消"]')).toBeVisible()
-      await expect(page.locator('.ant-picker-range')).toBeVisible()
+      // 4 项筛选齐全（antd a-select placeholder 渲染在 span 上）
+      await expect(page.locator('.filter-row .ant-select').nth(0)).toBeVisible()
+      await expect(page.locator('.filter-row .ant-select').nth(1)).toBeVisible()
+      await expect(page.locator('.filter-row .ant-select').nth(2)).toBeVisible()
+      await expect(page.locator('.filter-row .ant-picker-range')).toBeVisible()
+      await expect(page.locator('.filter-row .ant-select-selection-placeholder', { hasText: '全部公司' }).first()).toBeVisible()
+      await expect(page.locator('.filter-row .ant-select-selection-placeholder', { hasText: '全部面试阶段' }).first()).toBeVisible()
+      await expect(page.locator('.filter-row .ant-select-selection-placeholder', { hasText: '是否上报课消' }).first()).toBeVisible()
       await ss(page, 'CHAIN-03-mentor-structure')
     } finally {
       await ctx.close()

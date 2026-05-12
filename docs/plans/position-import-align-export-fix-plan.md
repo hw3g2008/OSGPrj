@@ -236,33 +236,26 @@ private static class PositionImportTemplate
 
 ### C. 前端（仅文案微调，不改逻辑）
 
-`osg-frontend/packages/admin/src/views/career/positions/index.vue` 中「批量上传」对话框：
+实际批量上传对话框组件位于：`osg-frontend/packages/admin/src/views/career/positions/components/BatchUploadModal.vue`（由 `index.vue:350-355` 挂载，使用 `<OverlaySurfaceModal>` 而非 antd `<a-modal>`）。
 
 **改动 1：模板文件提示文案**
-- "请使用系统提供的模板文件" → 改为 "可使用『下载模板』或直接使用『导出』生成的 Excel 文件"（如果该文案是字典字段 `DICT_POSITION_UI_COPY.upload_step_1` 则改字典数据，不改前端）
+- 「请使用系统提供的模板文件」 → 改为 「可使用『下载模板』或直接使用『导出』生成的 Excel 文件」。当前 `BatchUploadModal.vue:38-43` 的 `uploadSteps` 文案由父组件通过 prop `:upload-steps="meta.uploadSteps"` 注入，来源是后端 `DICT_POSITION_UI_COPY.upload_step_*`。**改字典数据，不改前端**。
 
-**改动 2（R11 应对 / S2 修正 / T1 终审修正）：对话框顶部固定说明文字**
-在「批量上传」对话框顶部固定显示一行：
+**改动 2（R11 应对 / S2 修正）：对话框面板顶部固定说明文字**
+在「批量上传」对话框面板顶部固定显示一行：
 
 > ⚠️ 统计字段（投递学员 / 添加人 / 添加日期）将被忽略；批量上传仅支持新增，不支持修改已有岗位（修改请用单条编辑表单）。
 
-**实现（T1 终审修正）**：
-- **文件**：`@/Users/hw/workspace/OSGPrj/osg-frontend/packages/admin/src/views/career/positions/components/BatchUploadModal.vue`
-  > ⚠️ 「批量上传」对话框是独立子组件，**不在 index.vue 里**。`index.vue:350-355` 仅仅是使用了 `<BatchUploadModal>`。
-- **组件**：项目使用自定义的 `<OverlaySurfaceModal>`（包装了 ant-design-vue 的 modal），**不是 `<a-modal>`**。
-- **位置**：在 `BatchUploadModal.vue` 的 `<div class="batch-upload-modal__panel">`（line 16）内部顶端、`<div class="batch-upload-modal__dropzone">`（line 17）之前插入。
-- **代码**：
-  ```vue
-  <div class="batch-upload-modal__notice">
-    <span class="mdi mdi-alert" aria-hidden="true"></span>
-    <p>统计字段（投递学员 / 添加人 / 添加日期）将被忽略；批量上传仅支持新增，不支持修改已有岗位（修改请用单条编辑表单）。</p>
-  </div>
-  ```
-- **样式**：在该 vue 文件的 `<style>` 段加 `.batch-upload-modal__notice` 样式（背景色 + padding，参考现有 `.batch-upload-modal__rule` 样式风格，只将警示色从信息蓝调居为警告黄调）。
+**实现位置**：`@/Users/hw/workspace/OSGPrj/osg-frontend/packages/admin/src/views/career/positions/components/BatchUploadModal.vue:16` —— 在 `<div class="batch-upload-modal__panel">` 第一行（dropzone 之前）插入：
 
-**不改 JS 逻辑**，纯静态文案 + 一段 CSS。
+```vue
+<div class="batch-upload-modal__notice">
+  <span class="mdi mdi-alert" aria-hidden="true"></span>
+  <p>统计字段（投递学员 / 添加人 / 添加日期）将被忽略；批量上传仅支持新增，不支持修改已有岗位（修改请用单条编辑表单）。</p>
+</div>
+```
 
-具体改不改先看 DICT 当前文案，方案确认后实施时核对。
+同时在 `<style scoped lang="scss">` 块追加 `.batch-upload-modal__notice` 样式（参考既有 `.batch-upload-modal__rule` 配色，建议改用警告色调）。**不改 JS / props / emits**，纯静态文案。
 
 ---
 
@@ -281,13 +274,12 @@ private static class PositionImportTemplate
 7. **岗位分类 label 含年份时正常导入**：positionCategory label="2026 暑期实习" → 抽到 2026 → 落库成功
 8. **岗位分类 label 不含年份时整行 reject**：positionCategory label="暑期实习" → reject，错误信息含"无法提取项目年份"（验证 R1.2/R2.2/R8 阻塞修复）
 9. **旧 18 列模板向后兼容**：用旧模板 Excel 仍能成功导入（沿用旧 alias）
-10. **B1 + B2 综合回归（T3 终审新增）**：构造 Excel 含 1 行非默认值的行——
-    - 输入：`displayStatus="已隐藏"` / `displayStartTime="2026-01-01"` / `positionCategory="2026 暑期实习"`
-    - 导入后从 DB 读出新插入记录，断言：
-      - `position.getDisplayStatus() == "hidden"`（验证 B1：line 874 硬编码 `"visible"` 已删除 + C1：label→value 反查生效）
-      - `position.getDisplayStartTime()` 是 2026-01-01（验证 B1：line 875 硬编码 `new Date()` 已删除）
-      - `position.getProjectYear() == "2026"`（验证 B2：rawCategory 传入 `inferProjectYear` 生效，不是拿 dict_value 如「summer」去抽年份）
-    - 此测试是 B1/B2 默认不修复时会夭的棘手场景。
+10. **B1 + B2 联合回归**：构造一行导出格式数据 —— 岗位分类 label=「2026 暑期实习」、展示起始=「2026-08-01」、状态=「展示中」，调用 `buildPositionFromRow` 后断言：
+   - `position.getDisplayStatus() == "visible"`（B1：未被 line 874-876 旧硬编码覆盖为 `"visible"`，而是来自字典反查；若硬编码未删，此处会因 displayStatus 来源不可分辨而通过——故需配合一条用例 10b 显式断言 `displayStatus="hidden"` 时不会被覆盖）
+   - `position.getDisplayStartTime()` 等于 `2026-08-01 00:00:00`（B1：未被覆盖为 `new Date()`）
+   - `position.getProjectYear() == "2026"`（B2：`inferProjectYear` 收到的是 rawCategory「2026 暑期实习」而非转换后的 dict_value「summer」）
+
+   **用例 10b（B1 反向断言）**：同 10，但状态 label 改为「已下线」→ 字典反查得 `hidden` → 断言 `position.getDisplayStatus() == "hidden"`。若 line 874-876 硬编码未删，此用例会失败（被覆盖为 `"visible"`），从而锁住 B1 回归。
 
 ---
 
@@ -354,9 +346,9 @@ WHERE dict_type = 'osg_job_category' AND status = '0'
 ### R11. 统计字段被 `_ignore` 静默丢弃（用户感知问题）
 **事实**：「投递学员/添加人/添加日期」三列即使用户在 Excel 中修改也会被忽略。
 
-**应对（S2 修正：改为纯前端文案）**：在「批量上传」对话框顶部固定显示说明文字（见 C 段改动 2）。
+**应对（S2 修正：改为纯前端文案）**：在「批量上传」对话框面板顶部固定显示说明文字（见 C 段改动 2，落点 `BatchUploadModal.vue:16` 的 `<OverlaySurfaceModal>` body 区域）。
 
-> 上轮方案曾考虑后端 `result.put("note", ...)`，但前端 @`/Users/hw/workspace/OSGPrj/osg-frontend/packages/admin/src/views/career/positions/index.vue:802-813` 不消费 `result.note`，会导致用户感知失效。改为前端对话框固定说明文字，与 C 段「仅文案微调」声明一致。
+> 上轮方案曾考虑后端 `result.put("note", ...)`，但前端 @`/Users/hw/workspace/OSGPrj/osg-frontend/packages/admin/src/views/career/positions/index.vue:803-813` 处理 `result` 时只读 `successCount / duplicateCount / failedCount / failedRows`，不消费 `result.note`，会导致用户感知失效。改为对话框内静态文案，与 C 段「仅文案微调」声明一致。
 
 ---
 
@@ -396,7 +388,7 @@ WHERE dict_type = 'osg_job_category' AND status = '0'
 
 ### 5.2 后端单测
 
-`mvn -pl ruoyi-system test -Dtest=OsgPositionServiceImplImportAlignTest` → **9/9 通过**
+`mvn -pl ruoyi-system test -Dtest=OsgPositionServiceImplImportAlignTest` → **11/11 通过**（D 段 10 个主用例 + 用例 10b 反向断言，合计 11）
 
 ### 5.3 实测闭环（手工）
 
@@ -404,8 +396,8 @@ WHERE dict_type = 'osg_job_category' AND status = '0'
 2. 在岗位页点「导出」拿到 `positions.xlsx`
 3. 不做任何修改，点「批量上传」选该文件
 4. **期望**：返回 `successCount=0 / duplicateCount=N / failedCount=0`；对话框顶部显示「统计字段将被忽略...」说明文字（C 段改动 2）
-5. 在 Excel 中改 1 行的「公司」或「岗位名称」使去重 key 变化
-6. 重新上传，**期望**：`successCount=1 / duplicateCount=N-1 / failedCount=0`（N-1 行去重 key 未变被跳过，1 行去重 key 变化被新增；T2 终审补充）
+5. 在 Excel 中改 1 行的「公司」或「岗位名称」使去重 key 变化（保持其它 N-1 行原样）
+6. 重新上传，**期望**：`successCount=1 / duplicateCount=N-1 / failedCount=0`（被改 key 的那行作为新记录插入，其余仍命中去重）
 
 > ⚠️ **闭环语义说明（I1 信息）**：`batchUploadPositions` 是 **insert-only**（@`/Users/hw/workspace/OSGPrj/ruoyi-system/src/main/java/com/ruoyi/system/service/impl/OsgPositionServiceImpl.java:426`）。第 5 步「改去重 key」实际触发**新增一条新记录**，原记录还在 DB 中（变成两条）。若需要修改已有岗位的字段，请用页面表单编辑（「批量上传」路径不支持 upsert）。
 
@@ -475,16 +467,18 @@ WHERE dict_type = 'osg_job_category' AND status = '0'
 | **S2** | Round 4 Tensions | 🟡 建议 | R11 应对策略改为纯前端对话框顶部固定说明文字（C 段改动 2），与「前端仅文案微调」声明一致；删除原「后端加 note + 前端不消费」的失效设计 |
 | **I1** | Round 4 Tensions | 🟢 信息 | 5.3 末尾加 insert-only 闭环语义说明，避免用户误以为是 upsert |
 
+**终审结论**：上轮遗漏的 5 项已全部修复。本轮修复需重跑 `/validate-doc` 终审确认无新引入问题。
+
+---
+
 ## 十、第 3 轮 `/validate-doc` 终审修正项
 
-> 校验时间：2026-05-11 23:35 终审；重点：本轮修复后是否引入新不一致 / 本轮新增描述与现状代码是否一致。
+> 校验时间：2026-05-12；校验重点：外部一致性（C 段前端落点）+ 验证期望值准确性 + 测试用例对 B1/B2 底层锁定。
 
 | # | 来源 | 严重度 | 修正动作 |
 |---|---|---|---|
-| **T1** | 外部一致性 | 🟡 建议 | C 段改动 2 实施位置修正：从 `index.vue + <a-modal>` 改为 `BatchUploadModal.vue + <OverlaySurfaceModal>`。「批量上传」对话框是独立子组件 `@/Users/hw/workspace/OSGPrj/osg-frontend/packages/admin/src/views/career/positions/components/BatchUploadModal.vue`，不在 index.vue 里；使用项目自定义的 `<OverlaySurfaceModal>` 不是 `<a-modal>`。并补充插入位置、代码片段、样式说明。|
-| **T2** | 一致性 | 🟡 建议 | 5.3 第 6 步期望补全 `duplicateCount=N-1`（N-1 行未变被跳过，1 行去重 key 变化被新增）。|
-| **T3** | Round 4 Tensions | 🟡 建议 | 新增测试 10：B1 + B2 综合回归（验证 displayStatus / displayStartTime / projectYear 三个字段在修复后从 Excel 原始值正确落库，避免与原默认值 / dict_value 混淆）。|
+| **T1** | 外部一致性 | 🟡 建议 | C 段改动 2 落点错误：原写 `index.vue` + `<a-modal>`，实际批量上传组件在 `BatchUploadModal.vue` 且使用 `<OverlaySurfaceModal>`（`index.vue:350-355` 挂载）。已同步修正 C 段改动 2 与 R11 中的文件路径与组件名，插入点明确为 `batch-upload-modal__panel` 顶部 |
+| **T2** | 5.3 验证期望值 | 🟡 建议 | 5.3 step 6 原仅写 `successCount=1 / failedCount=0`，遗漏 duplicateCount 期望值（只改 1 行，剩 N-1 行仍命中去重）。补为 `successCount=1 / duplicateCount=N-1 / failedCount=0`，与 step 5 「保持其他 N-1 行原样」表述一致 |
+| **T3** | 测试覆盖 | 🟡 建议 | D 段原 9 个用例未单独锁 B1/B2 联合场景，新增用例 10（主方向断言）+ 10b（反向断言，displayStatus=`hidden` 时不被硬编码覆盖），并同步修正 5.2 期望计数为 11/11 |
 
-**终审结论**：
-- 上轮遗漏的 5 项已全部修复；本轮发现的 3 项建议级也已全部修复。
-- 阻塞级 = 0，可以进入实施。
+**本轮结论**：3 项建议级修正均已落实。未发现新增阻塞级问题。方案可进入实施阶段。
