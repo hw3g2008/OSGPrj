@@ -9,7 +9,7 @@
     <template #title>
       <span class="renew-contract-modal__header-title">
         <span class="mdi mdi-file-document-plus renew-contract-modal__header-icon" aria-hidden="true"></span>
-        <span>续费/新增合同</span>
+        <span>{{ reactivateAccount ? '重新加入 · 续签合同' : '续费/新增合同' }}</span>
       </span>
     </template>
 
@@ -268,6 +268,12 @@ const props = defineProps<{
   visible: boolean
   studentOptions: StudentOption[]
   presetContract?: ContractListItem | null
+  /**
+   * 批次 7.5「重新加入」：true 时提交时附带 reactivateAccount=true，
+   * 后端在续签事务内把退费学员账号置回正常（accountStatus=0 + frozen=0）。
+   * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6
+   */
+  reactivateAccount?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -459,8 +465,10 @@ const handleSubmit = async () => {
       otherReason: form.otherReason.trim() || undefined,
       attachmentPath: form.attachmentPath || undefined,
       remark: form.remark.trim() || undefined,
+      // 批次 7.5：退费学员「重新加入」走该 flag，由后端在同事务内激活账号
+      reactivateAccount: props.reactivateAccount === true ? true : undefined,
     })
-    message.success('续签合同成功')
+    message.success(props.reactivateAccount ? '学员已通过续签合同重新加入' : '续签合同成功')
     emit('submitted')
     emit('update:visible', false)
   } finally {

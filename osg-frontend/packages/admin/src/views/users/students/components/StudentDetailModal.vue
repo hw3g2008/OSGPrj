@@ -249,10 +249,20 @@
             </div>
             <div class="sdm-field sdm-field" data-field-name="账号状态">
               <span class="sdm-field__label">账号状态</span>
-              <div>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px">
                 <span :class="['sdm-status-tag', `sdm-status-tag--${statusColor}`]">
                   {{ formatAccountStatus(detail?.accountStatus) }}
                 </span>
+                <!--
+                  批次 7 + 7.5：frozen 是独立维度，详情页与列表保持一致双 tag 展示。
+                  退费态忽略 frozen（lifecycle 已是终态）。
+                  见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3
+                -->
+                <span
+                  v-if="isFrozenDetail && detail?.accountStatus !== '3'"
+                  class="sdm-status-tag sdm-status-tag--blue"
+                  data-field-name="冻结标记"
+                >冻结</span>
               </div>
             </div>
           </div>
@@ -363,6 +373,11 @@ interface StudentDetailPayload {
   targetRegion?: string
   subDirection?: string
   accountStatus?: string
+  /**
+   * 批次 7 + 7.5：与 accountStatus 维度正交的独立冻结标记。
+   * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2
+   */
+  frozen?: number | string
   recruitmentCycles?: string[]
   majorDirections?: string[]
   contact?: StudentContact
@@ -530,6 +545,12 @@ const assistantPillNames = computed(() => {
   if (names.length) return names.filter(Boolean)
   if (detail.value?.mentor?.assistantName) return [detail.value.mentor.assistantName]
   return []
+})
+
+// 批次 7 + 7.5：frozen 是独立维度
+const isFrozenDetail = computed(() => {
+  const value = detail.value?.frozen
+  return value === 1 || value === '1'
 })
 
 const statusColor = computed(() => {
@@ -1113,6 +1134,12 @@ const formatCurrency = (value?: number, currency: string = 'USD') => {
 .sdm-status-tag--refunded {
   background: #FEE2E2;
   color: #991B1B;
+}
+
+/* 批次 7 + 7.5：frozen 是独立维度的辅 tag，与 lifecycle tag 并列展示。 */
+.sdm-status-tag--blue {
+  background: #DBEAFE;
+  color: #1E40AF;
 }
 
 /* ── Responsive ── */

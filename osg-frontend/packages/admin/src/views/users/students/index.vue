@@ -119,8 +119,15 @@
             <span v-else style="color: var(--muted)">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'accountStatus'">
+            <!--
+              批次 7 + 7.5 行为矩阵双 tag：accountStatus 与 frozen 维度正交。
+              见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3
+            -->
             <div style="display: flex; flex-direction: column; gap: 4px">
-              <a-tag :color="getStatusTagColor(record.accountStatus)">{{ formatStatus(record.accountStatus) }}</a-tag>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px">
+                <a-tag :color="getLifecycleTagColor(record.accountStatus)">{{ getLifecycleLabel(record.accountStatus) }}</a-tag>
+                <a-tag v-if="isFrozen(record) && !isRefundedStatus(record)" color="blue">冻结</a-tag>
+              </div>
               <span style="font-size: var(--osg-font-size-xs); color: #9ca3af">{{ getStatusNote(record) }}</span>
             </div>
           </template>
@@ -133,20 +140,37 @@
                   <template #icon><FileTextOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-dropdown v-else :trigger="['click']" placement="bottomRight">
+              <a-dropdown :trigger="['click']" placement="bottomRight">
                 <a-button type="link" size="small">更多 <DownOutlined /></a-button>
                 <template #overlay>
+                  <!--
+                    批次 7 + 7.5 操作菜单（§13.4）：
+                      0/0 正常        : 冻结 / 结束合同 / 退费 / 加入黑名单
+                      0/1 正常·冻结   : 解冻 / 结束合同 / 退费
+                      2/0 合同结束     : 再冻结 / 退费
+                      2/1 合同结束·冻结: 解冻 / 退费
+                      3/- 退费        : 重新加入 → 续签合同弹窗
+                  -->
                   <a-menu @click="({ key }: { key: string }) => handleStudentAction(key as StudentActionKey, record)">
                     <a-menu-item key="resetPassword">重置密码</a-menu-item>
-                    <template v-if="record.accountStatus !== '0'">
-                      <a-menu-item key="restore"><span style="color: var(--success)">恢复正常</span></a-menu-item>
+                    <template v-if="isRefundedStatus(record)">
+                      <a-menu-item key="rejoin"><span style="color: var(--success)">重新加入</span></a-menu-item>
+                    </template>
+                    <template v-else-if="isFrozen(record)">
+                      <a-menu-item key="unfreeze"><span style="color: var(--success)">解冻</span></a-menu-item>
+                      <a-menu-item v-if="!isEndedStatus(record)" key="end_contract">结束合同</a-menu-item>
+                      <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
+                    </template>
+                    <template v-else-if="isEndedStatus(record)">
+                      <a-menu-item key="freeze">再冻结</a-menu-item>
+                      <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
                     </template>
                     <template v-else>
                       <a-menu-item key="freeze">冻结</a-menu-item>
                       <a-menu-item key="end_contract">结束合同</a-menu-item>
                       <a-menu-item key="blacklist"><span style="color: #92400E">加入黑名单</span></a-menu-item>
+                      <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
                     </template>
-                    <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
                   </a-menu>
                 </template>
               </a-dropdown>
@@ -180,6 +204,7 @@
       v-model:visible="renewContractVisible"
       :student-options="renewStudentOptions"
       :preset-contract="renewContractPreset"
+      :reactivate-account="renewContractReactivate"
       @submitted="handleStudentContractRenewed"
     />
     <StatusChangeModal
@@ -287,8 +312,20 @@ interface AddStudentFormPayload {
   endDate?: string
 }
 
-type StudentActionKey = 'detail' | 'edit' | 'resetPassword' | 'freeze' | 'restore' | 'blacklist' | 'refund' | 'end_contract'
-type StudentStatusAction = Extract<StudentActionKey, 'freeze' | 'restore' | 'refund' | 'end_contract'>
+// 批次 7 + 7.5：拆 frozen 独立维度后菜单结构按 §13.4 重组。
+// rejoin 走「续签合同弹窗 + reactivateAccount=true」路径，不需经 status modal。
+type StudentActionKey =
+  | 'detail'
+  | 'edit'
+  | 'resetPassword'
+  | 'freeze'
+  | 'unfreeze'
+  | 'restore'
+  | 'blacklist'
+  | 'refund'
+  | 'end_contract'
+  | 'rejoin'
+type StudentStatusAction = Extract<StudentActionKey, 'freeze' | 'unfreeze' | 'restore' | 'refund' | 'end_contract'>
 
 const studentList = ref<StudentListItem[]>([])
 const mentorOptions = ref<FilterOption[]>([])
@@ -305,6 +342,8 @@ const editingStudent = ref(false)
 const renewContractVisible = ref(false)
 const renewContractLoadingId = ref<number | null>(null)
 const renewContractPreset = ref<ContractListItem | null>(null)
+// 批次 7.5：true 时 RenewContractModal 走「重新加入」入口（提交时附 reactivateAccount=true）
+const renewContractReactivate = ref(false)
 const renewableStudentIds = ref<Set<number>>(new Set())
 const statusChangeVisible = ref(false)
 const blacklistVisible = ref(false)
@@ -541,9 +580,45 @@ const openStudentRenew = async (record: StudentListItem) => {
       return
     }
     renewContractPreset.value = preset
+    renewContractReactivate.value = false
     renewContractVisible.value = true
   } catch (_error) {
     message.error('加载合同续签上下文失败')
+  } finally {
+    renewContractLoadingId.value = null
+  }
+}
+
+// 批次 7.5「重新加入」：退费学员复用续签合同弹窗，提交时附 reactivateAccount=true。
+// 即便无 active 合同也允许（renewContract 创建 contractType='renew' 新合同）。
+// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6
+const openStudentRejoin = async (record: StudentListItem) => {
+  try {
+    renewContractLoadingId.value = record.studentId
+    selectedStudent.value = record
+    let preset: ContractListItem | null = null
+    try {
+      const payload = await getStudentContractDetail(record.studentId)
+      preset = buildRenewPreset(record, payload)
+    } catch (_) {
+      preset = null
+    }
+    // 没有任何历史合同也允许重新加入（创建首份续签合同）
+    renewContractPreset.value =
+      preset ?? ({
+        contractId: 0,
+        contractNo: '',
+        studentId: record.studentId,
+        studentName: record.studentName,
+        contractType: 'renew',
+        contractAmount: 0,
+        totalHours: 0,
+        startDate: '',
+        endDate: '',
+        contractStatus: '',
+      } as ContractListItem)
+    renewContractReactivate.value = true
+    renewContractVisible.value = true
   } finally {
     renewContractLoadingId.value = null
   }
@@ -599,7 +674,12 @@ const renewStudentOptions = computed(() => {
 
 const handleStudentContractRenewed = async () => {
   renewContractVisible.value = false
+  const wasRejoin = renewContractReactivate.value
+  renewContractReactivate.value = false
   await loadStudentList()
+  if (wasRejoin) {
+    message.success('学员已通过续签合同重新加入')
+  }
 }
 
 const handleCreateStudent = async (payload: AddStudentFormPayload) => {
@@ -834,6 +914,13 @@ const isRefundedStatus = (record: StudentListItem) => {
   return record.accountStatus === '3'
 }
 
+// 批次 7 + 7.5：frozen 是与 accountStatus 维度正交的独立标记。
+// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2
+const isFrozen = (record: StudentListItem) => {
+  const value = (record as StudentListItem & { frozen?: number }).frozen
+  return value === 1 || (value as unknown as string) === '1'
+}
+
 const handleStudentAction = (action: StudentActionKey, record: StudentListItem) => {
   if (action === 'detail') {
     openStudentDetail(record)
@@ -845,10 +932,15 @@ const handleStudentAction = (action: StudentActionKey, record: StudentListItem) 
     return
   }
 
-  if (action === 'freeze' || action === 'restore' || action === 'refund' || action === 'end_contract') {
+  if (action === 'freeze' || action === 'unfreeze' || action === 'restore' || action === 'refund' || action === 'end_contract') {
     selectedStudent.value = record
     pendingStatusAction.value = action
     statusChangeVisible.value = true
+    return
+  }
+
+  if (action === 'rejoin') {
+    void openStudentRejoin(record)
     return
   }
 
@@ -913,42 +1005,38 @@ const getReminderTagColor = (reminder?: string) => {
   return 'blue'
 }
 
-const getStatusTagColor = (status?: string) => {
+// 批次 7 + 7.5：lifecycle 维度只保留 0/2/3。「1 冻结」改用独立 frozen 标记，
+// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2 / §13.3
+const getLifecycleTagColor = (status?: string) => {
   switch (status) {
-    case '1': return 'blue'
     case '2': return 'default'
     case '3': return 'red'
     default: return 'green'
   }
 }
 
-const getStatusNote = (record: StudentListItem) => {
-  if (isEndedStatus(record)) {
-    return '服务已结束'
+const getLifecycleLabel = (status?: string) => {
+  switch (status) {
+    case '2': return '合同结束'
+    case '3': return '退费'
+    default: return '正常'
   }
+}
+
+const getStatusNote = (record: StudentListItem) => {
   if (isRefundedStatus(record)) {
     return '已退费'
   }
-  if (record.accountStatus === '1') {
-    return '账号已冻结'
+  if (isFrozen(record)) {
+    return isEndedStatus(record) ? '合同结束 · 冻结' : '账号已冻结'
+  }
+  if (isEndedStatus(record)) {
+    return '服务已结束'
   }
   if (isPendingReview(record) || isLowHours(record) || isContractExpiring(record)) {
     return '需优先跟进'
   }
   return '服务中'
-}
-
-const formatStatus = (status?: string) => {
-  switch (status) {
-    case '1':
-      return '冻结'
-    case '2':
-      return '已结束'
-    case '3':
-      return '退费'
-    default:
-      return '正常'
-  }
 }
 
 const getReminderLabel = (record: StudentListItem) => {

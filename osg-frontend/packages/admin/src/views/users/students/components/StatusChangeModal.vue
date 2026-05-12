@@ -71,7 +71,9 @@
 import { computed, reactive, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 
-type StatusAction = 'freeze' | 'refund' | 'restore' | 'end_contract'
+// 批次 7 + 7.5：unfreeze 与 restore 等价（仅刷 frozen=0，不动 accountStatus）。
+// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.4
+type StatusAction = 'freeze' | 'unfreeze' | 'refund' | 'restore' | 'end_contract'
 
 const props = defineProps<{
   visible: boolean
@@ -113,6 +115,7 @@ const showFormArea = computed(() => requiresReason.value || props.action === 'en
 
 const targetStatusLabel = computed(() => {
   if (props.action === 'freeze') return '冻结'
+  if (props.action === 'unfreeze') return '解冻'
   if (props.action === 'refund') return '退费'
   if (props.action === 'end_contract') return '已结束'
   return '正常'
@@ -120,27 +123,32 @@ const targetStatusLabel = computed(() => {
 
 const modalDescription = computed(() => {
   if (props.action === 'freeze') {
-    return '冻结后，学员账号将被暂停，无法登录系统。可随时恢复正常状态。'
+    return '冻结后，学员账号将被暂停，无法登录系统。可随时解冻恢复。'
+  }
+  if (props.action === 'unfreeze') {
+    return '解冻后，学员可恢复登录与课消操作；lifecycle 状态保持不变。'
   }
   if (props.action === 'refund') {
-    return '退费后，学员账号将被停用。'
+    return '退费后，学员账号将被停用，可通过「重新加入」走续签合同流程恢复。'
   }
   if (props.action === 'end_contract') {
-    return '结束合同后，学员仍可登录，但无法查看求职信息。导师不可申报课消，需续签合同后恢复。'
+    return '结束合同后，学员仍可登录，但无法查看求职信息。导师可继续课消，需续签合同后恢复完整权限。'
   }
   return '恢复后，学员可正常登录和使用系统。'
 })
 
 const actionIcon = computed(() => {
   if (props.action === 'freeze') return 'mdi-snowflake'
+  if (props.action === 'unfreeze') return 'mdi-snowflake-off'
   if (props.action === 'refund') return 'mdi-cash-refund'
   if (props.action === 'end_contract') return 'mdi-file-document-remove'
   return 'mdi-check-circle'
 })
 
 const reasonOptions = computed(() => {
-  if (props.action === 'restore' || props.action === 'end_contract') return []
-  return reasonOptionMap[props.action]
+  if (props.action === 'restore' || props.action === 'unfreeze' || props.action === 'end_contract') return []
+  if (props.action === 'freeze' || props.action === 'refund') return reasonOptionMap[props.action]
+  return []
 })
 
 const rules = computed(() => ({

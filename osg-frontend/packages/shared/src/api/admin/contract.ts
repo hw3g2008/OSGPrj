@@ -69,6 +69,12 @@ export interface RenewContractPayload {
   otherReason?: string
   attachmentPath?: string
   remark?: string
+  /**
+   * 批次 7.5「重新加入」：true 时后端在同事务内把退费学员的
+   * accountStatus 置回 0 + frozen 置 0，等价于一次原子重新加入。
+   * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6
+   */
+  reactivateAccount?: boolean
 }
 
 export interface UploadContractAttachmentResult {
