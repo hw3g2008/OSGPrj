@@ -175,6 +175,7 @@ import ClassRecordDetailModal from './components/ClassRecordDetailModal.vue'
 import ClassRecordReviewModal from './components/ClassRecordReviewModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 
+// 课时费列删除 — 用户需求「上报课程记录的页面不显示课时费」（admin 端同样适用）
 const recordColumns = [
   { title: '记录ID', dataIndex: 'recordId', key: 'recordId', width: 90 },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
@@ -183,7 +184,6 @@ const recordColumns = [
   { title: '课程内容', dataIndex: 'courseContent', key: 'courseContent', width: 120 },
   { title: '上课日期', dataIndex: 'classDate', key: 'classDate', width: 110 },
   { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '课时费', dataIndex: 'courseFee', key: 'courseFee', width: 90 },
   { title: '学员评价', dataIndex: 'studentRating', key: 'studentRating', width: 90 },
   { title: '审核状态', dataIndex: 'status', key: 'status', width: 100 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
@@ -348,12 +348,14 @@ const handleExport = async () => {
 
 const formatDate = (value?: string | null) => {
   if (!value) return '--'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
+  const s = String(value).trim()
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
+  const date = new Date(s)
+  if (Number.isNaN(date.getTime())) return s
+  const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
-  const y = date.getFullYear()
-  return `${m}/${d}/${y}`
+  return `${y}-${m}-${d}`
 }
 
 const formatHours = (value?: number | null) => {
