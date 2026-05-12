@@ -199,9 +199,9 @@ class OsgContractServiceImplTest
     }
 
     @Test
-    void renewContractShouldRejectReactivateWhenStudentNotRefunded()
+    void renewContractShouldRejectReactivateWhenStudentIsNormal()
     {
-        // 覆盖 if (reactivateAccount) → if (!"3".equals(...)) throw 分支
+        // 覆盖 if (reactivateAccount) → 当前状态非 '2' 且 非 '3' 时 throw
         Long studentId = 7779L;
         when(studentMapper.selectStudentByStudentId(studentId))
             .thenReturn(stubStudentWithStatus(studentId, "0"));
@@ -212,10 +212,35 @@ class OsgContractServiceImplTest
 
         ServiceException ex = assertThrows(ServiceException.class, () ->
             service.renewContract(baseRenewPayload(studentId, Boolean.TRUE), "operator"));
-        assertEquals("仅退费学员可通过续签合同重新加入", ex.getMessage());
+        assertEquals("仅退费 / 合同结束学员可通过续签合同重新加入", ex.getMessage());
 
         // 未触发 updateStudentAccountFlags（rollback 期望由 @Transactional 兜底）
         verify(studentMapper, never()).updateStudentAccountFlags(any(OsgStudent.class));
+    }
+
+    @Test
+    void renewContractShouldReactivateContractEndedStudentToo()
+    {
+        // 合同结束 (status='2') 学员也可经续签 reactivateAccount=true 回到 0/0
+        // 见 §13.6 batch 7.5 修正：reactivate 不只限于退费
+        Long studentId = 77791L;
+        when(studentMapper.selectStudentByStudentId(studentId))
+            .thenReturn(stubStudentWithStatus(studentId, "2"));
+        when(contractMapper.insertContract(any(OsgContract.class))).thenAnswer(invocation -> {
+            ((OsgContract) invocation.getArgument(0)).setContractId(8006L);
+            return 1;
+        });
+        when(studentMapper.updateStudentAccountFlags(any(OsgStudent.class))).thenReturn(1);
+
+        Map<String, Object> result = service.renewContract(
+            baseRenewPayload(studentId, Boolean.TRUE), "operator");
+
+        assertEquals(Boolean.TRUE, result.get("accountReactivated"));
+        ArgumentCaptor<OsgStudent> captor = forClass(OsgStudent.class);
+        verify(studentMapper, times(1)).updateStudentAccountFlags(captor.capture());
+        OsgStudent flags = captor.getValue();
+        assertEquals("0", flags.getAccountStatus());
+        assertEquals(Integer.valueOf(0), flags.getFrozen());
     }
 
     @Test

@@ -151,6 +151,16 @@
                       2/1 合同结束·冻结: 解冻 / 退费
                       3/- 退费        : 重新加入 → 续签合同弹窗
                   -->
+                  <!--
+                    批次 7 + 7.5 操作菜单（§13.4 修订）：
+                      0/0 正常        : 冻结 / 结束合同 / 退费 / 加入黑名单
+                      0/1 正常·冻结   : 解冻 / 结束合同 / 退费
+                      2/0 合同结束     : 再冻结 / 重新加入            ← 续签合同走 reactivateAccount=true 回 0/0
+                      2/1 合同结束·冻结: 解冻（→ 进 2/0 再决定续签/退费）
+                      3/-  退费       : 重新加入
+                    设计取舍：合同结束/退费 学员都走「重新加入」复用同一 RenewContractModal +
+                    reactivateAccount=true 链路；2/1 必须先解冻避免冻结状态下意外续费。
+                  -->
                   <a-menu @click="({ key }: { key: string }) => handleStudentAction(key as StudentActionKey, record)">
                     <a-menu-item key="resetPassword">重置密码</a-menu-item>
                     <template v-if="isRefundedStatus(record)">
@@ -159,11 +169,11 @@
                     <template v-else-if="isFrozen(record)">
                       <a-menu-item key="unfreeze"><span style="color: var(--success)">解冻</span></a-menu-item>
                       <a-menu-item v-if="!isEndedStatus(record)" key="end_contract">结束合同</a-menu-item>
-                      <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
+                      <a-menu-item v-if="!isEndedStatus(record)" key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
                     </template>
                     <template v-else-if="isEndedStatus(record)">
                       <a-menu-item key="freeze">再冻结</a-menu-item>
-                      <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
+                      <a-menu-item key="rejoin"><span style="color: var(--success)">重新加入</span></a-menu-item>
                     </template>
                     <template v-else>
                       <a-menu-item key="freeze">冻结</a-menu-item>

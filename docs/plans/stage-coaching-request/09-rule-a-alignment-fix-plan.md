@@ -998,8 +998,8 @@ P2-4 导师端列名（独立）
 |---|---|---|
 | 正常 (0/0) | **冻结** / 结束合同 / 退费 / 加入黑名单 | `freeze` / `end_contract` / `refund` / `blacklist` |
 | 正常·冻结 (0/1) | **解冻** / 结束合同 / 退费 | `unfreeze` / `end_contract` / `refund` |
-| 合同结束 (2/0) | **再冻结** / 退费 | `freeze` / `refund` |
-| 合同结束·冻结 (2/1) | **解冻** / 退费 | `unfreeze` / `refund` |
+| 合同结束 (2/0) | **再冻结** / **重新加入** | `freeze` / `rejoin` |
+| 合同结束·冻结 (2/1) | **解冻** | `unfreeze`（→ 进 2/0 再决定续签 / 冻结） |
 | 退费 (3/–) | **重新加入** → 续签合同 | `rejoin`（带 contract payload） |
 
 > 操作语义清晰化：
@@ -1007,6 +1007,12 @@ P2-4 导师端列名（独立）
 > - `end_contract`：`accountStatus = 2`，**不动 frozen**
 > - `refund`：`accountStatus = 3`，**不动 frozen**
 > - `rejoin`：先创建新合同 → `accountStatus = 0` + `frozen = 0`
+>
+> **修订（2026-05-12 实现期反馈）**：合同结束 (2/0) 与退费 (3) 复用同一「重新加入」入口，
+> 都走 RenewContractModal + `reactivateAccount=true` 链路（renewContract 服务端校验放宽为
+> `status='2' || status='3'`）；2/1 不直接给续签入口，须先解冻进 2/0 再决定，避免冻结状态下
+> 意外续费。原版 §13.4 设计的 2/0 「再冻结/退费」缺续签出口，造成「合同结束 → 正常」闭环
+> 缺失。本次修订关闭闭环。
 
 ### 13.5 鉴权改造点（后端）
 
@@ -1021,17 +1027,27 @@ P2-4 导师端列名（独立）
 
 ### 13.6 「重新加入」流程（批次 7.5）
 
+适用：**合同结束 (2/0)** 与 **退费 (3/–)** 两种 lifecycle 终止态共用同一回归路径。
+不适用：合同结束·冻结 (2/1) 须先解冻 → 进 2/0 后再决定。
+
 ```
-admin 端学生列表 退费行
+admin 端学生列表 (合同结束行 或 退费行)
   → 点「重新加入」按钮
-  → 复用 RenewContractModal（已存在的续签合同弹窗）
+  → 复用 RenewContractModal（reactivate 模式 header 显示「重新加入 · 续签合同」）
   → 提交时 payload 加 reactivateAccount=true
-  → 后端 /admin/contract/renew 创建新合同 + status='active'
-  → 触发 PUT /admin/students/status action='rejoin'
-  → 后端 service: accountStatus='0', frozen=0
-  → 返回成功 → admin 列表刷新，学员行回到「正常」状态
-  → 操作日志记录「学员 X 通过续签合同重新加入，新合同 Y」
+  → 后端 POST /admin/contract/renew
+       ├─ 创建新合同 (contract_type='renew' + status='active')
+       ├─ 校验 student.accountStatus IN ('2','3')
+       │   （'0' 误传则抛「仅退费 / 合同结束学员可通过续签合同重新加入」）
+       └─ 同事务内 osg_student.account_status='0' + frozen=0
+  → 返回 { contractId, accountReactivated: true }
+  → admin 列表刷新，学员行回到「正常」状态
+  → 操作日志：合同结束来源 → 「续签合同恢复服务」；退费来源 → 「退费重新加入」
 ```
+
+**为何复用同一入口**：从产品语义看，合同结束与退费都是「lifecycle 已停止」状态，
+学员要回归学习都需要新合同 + 账号激活，业务流程一致。区别仅在「钱是否退回」，
+财务流程独立处理，不影响账号回归路径。
 
 ### 13.7 DB Migration
 
@@ -1067,6 +1083,7 @@ FROM osg_student WHERE frozen = 1;
 | CHAIN-15 合同结束·冻结叠加 | admin 把学员设为 ended → 再 freeze → 验证导师 log 课被拒；解冻后 → log 课允许 |
 | CHAIN-16 退费重新加入 | admin 退费学员 → 点「重新加入」→ 续签合同弹窗 → 提交 → 学员 accountStatus 回 0 + frozen=0 → 学员能登录 + 看求职 + 导师能 log 课 |
 | CHAIN-17 正常·冻结独立 | admin 把学员 freeze（不结束）→ 学员登录被拒 + 导师 log 课被拒；解冻后恢复正常 |
+| CHAIN-18 合同结束重新加入 | admin 把学员设为 ended (2/0) → 验证 2/0 仍能登录 → 点「重新加入」续签合同 (reactivateAccount=true) → 回 0/0 + 导师能 log 课 |
 
 ### 13.10 工作量估算
 
@@ -1087,7 +1104,7 @@ FROM osg_student WHERE frozen = 1;
 | 历史 status='1' 数据 migration 失败 / 漏迁 | migration 加 SELECT-then-UPDATE 校验 + 操作日志；可逆 |
 | 既有代码隐式依赖 status='1'（grep 漏） | 已 grep 出 5 处（见 §13.5）；改后跑全量 backend test |
 | 前端组件其它处显示 status=1 | grep `accountStatus.*1` 在前端 5 端全跑一遍清理 |
-| 续签合同流程目前要求"既存学员有 active 合同"才允许 | rejoin 走不同路径：先校验 status=3 → 创建合同（不要求既存合同）→ 激活账号 |
+| 续签合同流程目前要求"既存学员有 active 合同"才允许 | rejoin 走不同路径：校验 status ∈ ('2','3') → 创建合同（不要求既存合同）→ 激活账号 |
 | 黑名单与 frozen 重叠语义 | 维度不同：黑名单只禁求职，frozen 全禁。允许并存。|
 
 ### 13.12 i18n / 文案补丁

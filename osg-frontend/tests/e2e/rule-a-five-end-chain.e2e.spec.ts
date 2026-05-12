@@ -578,22 +578,66 @@ test.describe('RULE-A 5 端联动主链（端到端，硬断言）', () => {
     })
     expect(ok.body?.code, `2/0 矩阵 mentor 课消应允许, got body=${ok.rawText.slice(0, 300)}`).toBe(200)
 
-    // 6) 恢复主链状态：重新加入 (rejoin) → 0/0，便于后续 CHAIN-16/17 起步干净
-    await adminRenewStudentContract(testAuth, {
+    // 6) 收尾：合同结束学员走「重新加入」（reactivateAccount=true）原子回 0/0，
+    //    与后端 §13.6 修订后矩阵一致（status='2' 或 '3' 均可 reactivate）。
+    const renew = await adminRenewStudentContract(testAuth, {
       studentId: student.studentId,
       totalHours: 40,
       amountUsd: 5000,
-      reactivateAccount: false,
+      reactivateAccount: true,
     })
-    // 续签后 accountStatus 仍为 2（不带 reactivateAccount），所以直接改 status='0'
-    // 用 PUT /admin/student/status 不动 frozen 的 endpoint。这里走 rejoin action：
-    await testAuth.request.put('/api/admin/student/status', {
-      headers: { Authorization: `Bearer ${testAuth.token}` },
-      data: { studentId: student.studentId, action: 'rejoin' },
-    })
+    expect(renew.accountReactivated, 'renewContract 对合同结束学员也应返回 accountReactivated=true').toBe(true)
     detail = await adminGetStudentDetail(testAuth, student.studentId)
     expect(String(detail.accountStatus), 'CHAIN-15 收尾恢复 0/0').toBe('0')
     expect(Number(detail.frozen ?? 0)).toBe(0)
+  })
+
+  // ── CHAIN-18 合同结束 → 重新加入（续签合同 + reactivateAccount=true） ──
+  // 关闭闭环：合同自然到期后学员通过续签合同恢复正常服务。
+  // §13.4 修订菜单：2/0 状态可见「冻结 / 重新加入」两个出口（除重置密码外）。
+  test('CHAIN-18 合同结束 → 重新加入 续签合同 → 0/0 + 学员登录 + 课消允许', async ({ request }) => {
+    const testAuth = await adminAuth(request)
+
+    // 前置：上一轮 CHAIN-15 收尾应为 0/0；这里二次校验
+    let detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'CHAIN-18 起步 accountStatus=0').toBe('0')
+    expect(Number(detail.frozen ?? 0), 'CHAIN-18 起步 frozen=0').toBe(0)
+
+    // 1) 合同自然结束 → 2/0
+    await adminEndStudentContract(testAuth, student.studentId)
+    detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), 'end_contract 后 accountStatus=2').toBe('2')
+    expect(Number(detail.frozen ?? 0)).toBe(0)
+
+    // 2) 合同结束学员仍能登录（§13.3 矩阵 2/0 允许）
+    const endedLoginResp = await request.post('/api/student/login', {
+      data: { username: studentLoginUsername(student), password: student.password },
+    })
+    const endedLoginBody = await endedLoginResp.json().catch(() => ({}))
+    const endedToken = endedLoginBody?.token ?? endedLoginBody?.data?.token
+    expect(endedToken, '2/0 学员登录应成功（仅看不到求职）').toBeTruthy()
+
+    // 3) admin 走「重新加入」→ 续签合同 + reactivateAccount=true 原子回 0/0
+    const renew = await adminRenewStudentContract(testAuth, {
+      studentId: student.studentId,
+      totalHours: 60,
+      amountUsd: 8000,
+      reactivateAccount: true,
+    })
+    expect(renew.accountReactivated, '合同结束学员 reactivate 应返回 true').toBe(true)
+
+    // 4) 验证回到 0/0
+    detail = await adminGetStudentDetail(testAuth, student.studentId)
+    expect(String(detail.accountStatus), '重新加入后 accountStatus=0').toBe('0')
+    expect(Number(detail.frozen ?? 0)).toBe(0)
+
+    // 5) mentor 课消允许（0/0 矩阵）
+    const mt = await loginAsStaff(request, mentor)
+    const ok = await mentorSubmitJobCoachingReportRaw(request, mt.token, {
+      studentId: student.studentId,
+      coachingId,
+    })
+    expect(ok.body?.code, `0/0 矩阵 mentor 课消应允许, body=${ok.rawText.slice(0, 300)}`).toBe(200)
   })
 
   // ── CHAIN-16 退费 → 重新加入（续签合同 + reactivateAccount=true） ──
