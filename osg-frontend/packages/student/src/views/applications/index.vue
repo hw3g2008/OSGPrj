@@ -3,7 +3,6 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">{{ applicationsMeta.pageSummary.titleZh }} <span>{{ applicationsMeta.pageSummary.titleEn }}</span></h1>
-        <p class="page-sub">{{ applicationsMeta.pageSummary.subtitle }}</p>
       </div>
     </div>
 
@@ -165,18 +164,21 @@
       </div>
     </a-modal>
 
-    <a-modal
-      v-model:open="progressModalOpen"
-      :title="renderModalTitle(EditOutlined, '申请辅导')"
-      ok-text="提交"
-      cancel-text="取消"
-      centered
+    <OverlaySurfaceModal
+      :open="progressModalOpen"
+      surface-id="student-apply-coaching"
+      variant="accent"
       :width="580"
-      wrap-class-name="applications-modal applications-modal--progress"
-      :mask-style="{ backdropFilter: 'blur(4px)' }"
-      destroy-on-close
-      @ok="saveProgress"
+      shell-class="applications-modal applications-modal--progress"
+      body-class="osg-modal-form applications-modal applications-modal--progress"
+      @cancel="progressModalOpen = false"
     >
+      <template #title>
+        <span style="display:inline-flex;align-items:center;gap:8px">
+          <EditOutlined aria-hidden="true" />
+          <span>{{ '申请辅导' }}</span>
+        </span>
+      </template>
       <a-form id="modal-update-result" layout="vertical" :model="progressForm" class="rich-modal-shell">
         <div v-if="selectedApplication" class="modal-job-card progress-card">
           <div class="modal-job-mark">{{ selectedApplicationBadge }}</div>
@@ -336,7 +338,11 @@
           <a-textarea v-model:value="progressForm.note" :rows="2" placeholder="其他需要说明的内容..." />
         </a-form-item>
       </a-form>
-    </a-modal>
+      <template #footer>
+        <a-button @click="progressModalOpen = false">取消</a-button>
+        <a-button type="primary" @click="saveProgress">提交</a-button>
+      </template>
+    </OverlaySurfaceModal>
 
     <a-modal
       v-model:open="coachingDetailModalOpen"
@@ -493,7 +499,7 @@ import {
   SearchOutlined,
   SendOutlined,
 } from '@ant-design/icons-vue'
-import { InterviewCalendar } from '@osg/shared/components'
+import { InterviewCalendar, OverlaySurfaceModal } from '@osg/shared/components'
 import type { InterviewEvent } from '@osg/shared/types'
 import { getToken } from '@osg/shared/utils'
 import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
