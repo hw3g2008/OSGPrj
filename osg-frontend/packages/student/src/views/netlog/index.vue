@@ -59,7 +59,7 @@
       </div>
     </OsgPageContainer>
 
-    <a-modal v-model:open="detailOpen" title="沟通记录详情" :footer="null" width="620px">
+    <a-modal v-model:open="detailOpen" title="沟通记录详情" :footer="null" width="620px" wrap-class-name="osg-modal-form">
       <div v-if="activeLog" class="detail-grid">
         <div class="detail-row"><span class="detail-label">公司</span><span>{{ activeLog.company }}</span></div>
         <div class="detail-row"><span class="detail-label">对方姓名</span><span>{{ activeLog.person }}</span></div>
@@ -82,7 +82,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:open="createOpen" title="填写沟通记录" :footer="null" width="640px">
+    <a-modal v-model:open="createOpen" title="填写沟通记录" :footer="null" width="640px" wrap-class-name="osg-modal-form">
       <div class="form-grid">
         <a-form-item label="公司 Company" class="form-item">
           <a-input v-model:value="draftLog.company" placeholder="如：Goldman Sachs" />

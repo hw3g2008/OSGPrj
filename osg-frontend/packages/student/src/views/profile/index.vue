@@ -89,6 +89,7 @@
 
     <a-modal
       v-model:open="editOpen"
+      wrap-class-name="osg-modal-form"
       title="编辑基本信息"
       :width="620"
       :footer="null"

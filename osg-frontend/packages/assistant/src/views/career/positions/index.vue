@@ -131,6 +131,7 @@
 
     <a-modal
       v-model:open="studentModal.visible"
+      wrap-class-name="osg-modal-form"
       :footer="null"
       width="720px"
       :title="studentModalTitle"

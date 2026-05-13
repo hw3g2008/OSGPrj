@@ -57,6 +57,7 @@
     <!-- 编辑弹窗 -->
     <a-modal
       v-model:open="showEditModal"
+      wrap-class-name="osg-modal-form"
       :width="600"
       :footer="null"
       :title="null"
@@ -102,6 +103,7 @@
 
     <a-modal
       v-model:open="showSaveConfirmModal"
+      wrap-class-name="osg-modal-form"
       :width="560"
       :footer="null"
       :title="null"
@@ -141,6 +143,7 @@
 
     <a-modal
       v-model:open="showSaveSuccessModal"
+      wrap-class-name="osg-modal-form"
       :width="480"
       :footer="null"
       :title="null"

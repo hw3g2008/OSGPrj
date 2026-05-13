@@ -224,6 +224,7 @@
 
     <a-modal
       v-model:open="detailVisible"
+      wrap-class-name="osg-modal-form"
       :title="selectedRecord?.status === 'rejected' ? '驳回原因' : '课程记录详情'"
       :footer="null"
       :width="720"

@@ -164,7 +164,7 @@
       :width="currentPracticeModal === 'mock' ? 620 : 540"
       :footer="null"
       :closable="false"
-      :wrap-class-name="`practice-coach-modal ${practiceModalToneClass}`"
+      :wrap-class-name="`practice-coach-modal ${practiceModalToneClass} osg-modal-form`"
       @cancel="closePracticeModal"
     >
       <!-- ============= 自定义 Header：克制 + 编辑感 ============= -->
@@ -329,7 +329,7 @@
       :width="560"
       :footer="null"
       :closable="false"
-      wrap-class-name="practice-coach-modal practice-coach-modal--detail"
+      wrap-class-name="practice-coach-modal practice-coach-modal--detail osg-modal-form"
       @cancel="closeApplicationDetail"
     >
       <header v-if="selectedRecord" class="coach-modal__header">
@@ -400,7 +400,7 @@
       :width="640"
       :footer="null"
       :closable="false"
-      wrap-class-name="practice-coach-modal practice-coach-modal--feedback"
+      wrap-class-name="practice-coach-modal practice-coach-modal--feedback osg-modal-form"
       @cancel="closeFeedbackDetail"
     >
       <header v-if="selectedRecord" class="coach-modal__header">

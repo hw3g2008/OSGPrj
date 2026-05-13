@@ -56,7 +56,7 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="detailOpen" title="消息详情" :footer="null" width="620px">
+    <a-modal v-model:open="detailOpen" title="消息详情" :footer="null" width="620px" wrap-class-name="osg-modal-form">
       <div v-if="activeNotice" class="detail-stack">
         <div class="detail-banner">
           <div class="detail-title">{{ activeNotice.title }}</div>

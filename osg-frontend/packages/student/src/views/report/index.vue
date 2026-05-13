@@ -47,7 +47,7 @@
       </div>
     </OsgPageContainer>
 
-    <a-modal v-model:open="rateOpen" title="课程评价" :footer="null" width="620px">
+    <a-modal v-model:open="rateOpen" title="课程评价" :footer="null" width="620px" wrap-class-name="osg-modal-form">
       <div v-if="activeRow" class="rate-stack">
         <div class="mentor-card">
           <div class="avatar">JL</div>

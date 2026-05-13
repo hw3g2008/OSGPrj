@@ -78,7 +78,7 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="previewOpen" title="简历预览" :footer="null" width="760px">
+    <a-modal v-model:open="previewOpen" title="简历预览" :footer="null" width="760px" wrap-class-name="osg-modal-form">
       <div v-if="activePreview" class="preview-shell">
         <div class="preview-title">{{ activePreview.fileName }}</div>
         <div class="preview-meta">{{ activePreview.updatedAt }} · {{ activePreview.size }} · {{ activePreview.source }}</div>

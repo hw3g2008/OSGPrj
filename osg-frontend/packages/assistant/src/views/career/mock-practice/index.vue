@@ -74,6 +74,7 @@
     <!-- 详情弹窗：暂仅展示行内字段；按 practiceId 拉多条课消反馈待后端 detail 端点（Step4-F3）-->
     <a-modal
       v-model:open="detailModal.visible"
+      wrap-class-name="osg-modal-form"
       :title="detailModal.record ? `模拟应聘详情 · ${detailModal.record.studentName || '-'}` : '模拟应聘详情'"
       :footer="null"
       width="720px"

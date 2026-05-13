@@ -108,7 +108,7 @@
       </template>
     </OsgPageContainer>
 
-    <a-modal v-model:open="createOpen" title="填写真题" :footer="null" width="760px">
+    <a-modal v-model:open="createOpen" title="填写真题" :footer="null" width="760px" wrap-class-name="osg-modal-form">
       <div class="form-grid">
         <a-form-item label="公司 Company" class="form-item"><a-input placeholder="如：Goldman Sachs" /></a-form-item>
         <a-form-item label="部门 Division" class="form-item"><a-input placeholder="如：Investment Banking" /></a-form-item>
@@ -126,7 +126,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:open="viewOpen" title="面试真题" :footer="null" width="680px">
+    <a-modal v-model:open="viewOpen" title="面试真题" :footer="null" width="680px" wrap-class-name="osg-modal-form">
       <div v-if="activeAvailable" class="detail-stack">
         <div class="detail-grid">
           <div class="detail-card"><span>公司</span><strong>{{ activeAvailable.company }}</strong></div>
@@ -143,7 +143,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:open="pendingOpen" title="填写面试真题（来自入职面试申请）" :footer="null" width="760px">
+    <a-modal v-model:open="pendingOpen" title="填写面试真题（来自入职面试申请）" :footer="null" width="760px" wrap-class-name="osg-modal-form">
       <div v-if="activeSubmitted" class="detail-banner">
         以下信息来自您的入职面试申请，审核通过后将自动开放给相同申请（同公司、部门、办公地点、面试状态）的学生。
       </div>
@@ -162,7 +162,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:open="detailOpen" title="我的提交详情" :footer="null" width="680px">
+    <a-modal v-model:open="detailOpen" title="我的提交详情" :footer="null" width="680px" wrap-class-name="osg-modal-form">
       <div v-if="activeSubmitted" class="detail-stack">
         <div class="detail-grid">
           <div class="detail-card"><span>公司</span><strong>{{ activeSubmitted.company }}</strong></div>
@@ -180,7 +180,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:open="editOpen" title="编辑面试真题" :footer="null" width="760px">
+    <a-modal v-model:open="editOpen" title="编辑面试真题" :footer="null" width="760px" wrap-class-name="osg-modal-form">
       <div v-if="activeSubmitted" class="form-grid">
         <a-form-item label="公司 Company" class="form-item"><a-input :value="activeSubmitted.company" disabled /></a-form-item>
         <a-form-item label="部门 Division" class="form-item"><a-input :value="activeSubmitted.department" disabled /></a-form-item>

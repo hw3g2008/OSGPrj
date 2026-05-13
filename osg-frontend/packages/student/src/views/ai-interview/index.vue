@@ -67,7 +67,7 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="uploadOpen" title="上传面试素材" :footer="null" width="560px">
+    <a-modal v-model:open="uploadOpen" title="上传面试素材" :footer="null" width="560px" wrap-class-name="osg-modal-form">
       <div class="upload-stack">
         <p>支持上传录音或视频文件，用于生成 AI 面试分析结果。</p>
         <a-upload-dragger :show-upload-list="false" accept=".mp3,.mp4,.wav,.m4a">
@@ -82,7 +82,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:open="detailOpen" title="AI面试分析详情" :footer="null" width="680px">
+    <a-modal v-model:open="detailOpen" title="AI面试分析详情" :footer="null" width="680px" wrap-class-name="osg-modal-form">
       <div v-if="activeDetail" class="detail-stack">
         <div class="detail-summary">
           <div>

@@ -403,6 +403,7 @@
 
     <a-modal
       v-model:open="manualAddOpen"
+      wrap-class-name="osg-modal-form"
       title="手动添加岗位"
       ok-text="添加岗位"
       cancel-text="取消"
@@ -564,6 +565,7 @@
 
     <a-modal
       v-model:open="progressModalOpen"
+      wrap-class-name="osg-modal-form"
       ok-text="保存进度"
       cancel-text="取消"
       destroy-on-close
@@ -597,6 +599,7 @@
 
     <a-modal
       v-model:open="appliedModalOpen"
+      wrap-class-name="osg-modal-form"
       ok-text="确认投递"
       cancel-text="取消"
       destroy-on-close
@@ -633,6 +636,7 @@
 
     <a-modal
       v-model:open="coachingModalOpen"
+      wrap-class-name="osg-modal-form"
       ok-text="提交申请"
       cancel-text="取消"
       destroy-on-close

@@ -107,6 +107,7 @@
 
     <a-modal
       v-model:open="detailModal.visible"
+      wrap-class-name="osg-modal-form"
       :width="720"
       :footer="null"
       :title="null"
@@ -154,6 +155,7 @@
 
     <a-modal
       v-model:open="rejectModal.visible"
+      wrap-class-name="osg-modal-form"
       :width="520"
       :footer="null"
       :title="null"
@@ -207,6 +209,7 @@
 
     <a-modal
       v-model:open="showConfirmModal"
+      wrap-class-name="osg-modal-form"
       :width="750"
       :footer="null"
       :title="null"

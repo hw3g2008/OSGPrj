@@ -83,7 +83,7 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="uploadOpen" title="上传简历分析" :footer="null" width="560px">
+    <a-modal v-model:open="uploadOpen" title="上传简历分析" :footer="null" width="560px" wrap-class-name="osg-modal-form">
       <div class="upload-stack">
         <p>上传简历文件，生成 AI 简历分析结果。</p>
         <a-upload-dragger :show-upload-list="false" accept=".pdf,.doc,.docx">
@@ -97,7 +97,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:open="reportOpen" title="AI简历分析报告" :footer="null" width="760px">
+    <a-modal v-model:open="reportOpen" title="AI简历分析报告" :footer="null" width="760px" wrap-class-name="osg-modal-form">
       <div v-if="activeReport" class="report-grid">
         <div class="report-summary">
           <div class="report-title">{{ activeReport.fileName }}</div>

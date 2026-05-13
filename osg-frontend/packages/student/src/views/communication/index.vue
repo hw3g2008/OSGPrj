@@ -47,6 +47,7 @@
 
     <a-modal
       v-model:open="detailOpen"
+      wrap-class-name="osg-modal-form"
       title="沟通记录详情"
       :footer="null"
       width="620px"

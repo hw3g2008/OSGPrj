@@ -41,7 +41,7 @@
       </div>
     </OsgPageContainer>
 
-    <a-modal v-model:open="detailOpen" title="Feedback Detail" :footer="null" width="620px">
+    <a-modal v-model:open="detailOpen" title="Feedback Detail" :footer="null" width="620px" wrap-class-name="osg-modal-form">
       <div v-if="activeDetail" class="detail-stack">
         <div class="detail-banner">
           <div class="detail-title">{{ activeDetail.headline }}</div>

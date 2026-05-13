@@ -179,7 +179,7 @@
       :width="600"
       :footer="null"
       :closable="false"
-      wrap-class-name="course-log-modal"
+      wrap-class-name="course-log-modal osg-modal-form"
       @cancel="detailVisible = false"
     >
       <header v-if="currentCourse" class="course-log__header">
@@ -355,7 +355,7 @@
       :width="560"
       :footer="null"
       :closable="false"
-      wrap-class-name="course-log-modal"
+      wrap-class-name="course-log-modal osg-modal-form"
       @cancel="rateVisible = false"
     >
       <header v-if="currentCourse" class="course-log__header">

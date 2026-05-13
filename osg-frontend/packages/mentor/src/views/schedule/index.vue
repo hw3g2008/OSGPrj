@@ -167,6 +167,7 @@
 
     <a-modal
       v-model:open="feedbackModal.visible"
+      wrap-class-name="osg-modal-form"
       :width="480"
       :footer="null"
       :title="null"

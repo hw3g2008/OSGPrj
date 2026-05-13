@@ -276,7 +276,7 @@ const emit = defineEmits<{
 }>()
 
 const titleId = 'assign-mentor-modal-title'
-const wrapClassName = 'assign-mentor-modal-wrap'
+const wrapClassName = 'assign-mentor-modal-wrap osg-modal-form'
 const bodyStyle = { padding: '0' }
 
 const filters = ref({
