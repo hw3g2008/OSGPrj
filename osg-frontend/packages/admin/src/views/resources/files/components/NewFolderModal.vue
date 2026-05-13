@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import type { CreateFileFolderPayload } from '@osg/shared/api/admin/file'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const classOptions = ['All', '2024Fall', '2025Spring']
 

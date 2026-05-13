@@ -200,7 +200,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import {
   searchPublicPositionsForMerge,
   type PublicPositionSearchItem,

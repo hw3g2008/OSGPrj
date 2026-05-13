@@ -192,7 +192,7 @@ import {
   InfoCircleOutlined,
   SearchOutlined
 } from '@ant-design/icons-vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { UnassignedJobOverviewRow } from '@osg/shared/api/admin/jobOverview'
 
 interface AssignMentorOption {

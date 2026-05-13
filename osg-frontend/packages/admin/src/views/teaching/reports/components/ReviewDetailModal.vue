@@ -102,7 +102,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { ReportRow } from '@osg/shared/api/admin/report'
 
 const props = withDefaults(defineProps<{

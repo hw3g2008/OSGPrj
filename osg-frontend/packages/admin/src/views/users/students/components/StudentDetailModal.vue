@@ -319,7 +319,7 @@ import {
   getStudentChangeRequestList,
   type StudentChangeRequestItem
 } from '@osg/shared/api/admin/studentChangeRequest'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import ChangeReviewTab from './ChangeReviewTab.vue'
 import ContractTab from './ContractTab.vue'
 import RenewContractModal from '../../contracts/components/RenewContractModal.vue'

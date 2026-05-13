@@ -266,7 +266,7 @@
 import { computed, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import { useUserStore } from '@/stores/user'
 import { getToken } from '@osg/shared/utils/storage'
 import type {

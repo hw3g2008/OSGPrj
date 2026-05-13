@@ -108,7 +108,7 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { http } from '@osg/shared/utils'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import { useUserStore } from '@/stores/user'
 
 const props = defineProps<{

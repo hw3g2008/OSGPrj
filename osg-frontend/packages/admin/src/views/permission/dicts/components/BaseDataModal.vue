@@ -124,7 +124,7 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { createAdminDictItem, getAdminDictOptions, updateAdminDictItem } from '@/api/adminDict'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const props = defineProps<{
   visible: boolean

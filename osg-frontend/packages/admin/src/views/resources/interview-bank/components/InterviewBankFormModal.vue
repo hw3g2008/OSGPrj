@@ -74,7 +74,7 @@ import type {
   InterviewType,
   SaveInterviewBankPayload
 } from '@osg/shared/api/admin/interviewBank'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const interviewStageOptions: InterviewStage[] = ['Screening Call', 'First Round', 'Second Round', 'Superday']
 const interviewTypeOptions: InterviewType[] = ['Behavioral', 'Technical', 'Case']

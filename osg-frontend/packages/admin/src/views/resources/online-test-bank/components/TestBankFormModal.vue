@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import type { SaveTestBankPayload, TestBankRow, TestBankType } from '@osg/shared/api/admin/testBank'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const testTypeOptions: TestBankType[] = ['HireVue', 'Pymetrics', 'SHL']
 

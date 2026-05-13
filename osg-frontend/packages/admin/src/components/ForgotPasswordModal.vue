@@ -197,7 +197,7 @@ import { message } from 'ant-design-vue'
 import { CheckCircleFilled } from '@ant-design/icons-vue'
 import type { FormInstance, Rule } from 'ant-design-vue/es/form'
 import { sendResetCode, verifyResetCode, resetPassword } from '@/api/password'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 interface Props {
   visible: boolean

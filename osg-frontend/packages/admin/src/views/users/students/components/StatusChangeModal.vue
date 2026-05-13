@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 // 批次 7 + 7.5：unfreeze 与 restore 等价（仅刷 frozen=0，不动 accountStatus）。
 // 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.4

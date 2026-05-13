@@ -51,7 +51,7 @@
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { resetUserPwd } from '@/api/user'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const DEFAULT_PASSWORD = 'Osg@2026'
 

@@ -62,7 +62,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { RejectStudentPositionPayload, StudentPositionListItem } from '@osg/shared/api/admin/studentPosition'
 
 const props = defineProps<{

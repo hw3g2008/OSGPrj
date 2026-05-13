@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 interface PositionStudentRow {
   studentId: number

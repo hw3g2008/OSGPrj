@@ -247,7 +247,7 @@ import { computed, reactive, ref, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import {
   renewContract,
   type ContractListItem,

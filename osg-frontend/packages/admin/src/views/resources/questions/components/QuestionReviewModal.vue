@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { InterviewQuestionRow } from '@osg/shared/api/admin/question'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const props = defineProps<{
   modelValue: boolean

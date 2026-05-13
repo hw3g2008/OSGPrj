@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 const overlaySurfaceModalPath = path.resolve(
   __dirname,
-  '../components/OverlaySurfaceModal.vue'
+  '../../../shared/src/components/OverlaySurfaceModal.vue'
 )
 const loginViewPath = path.resolve(__dirname, '../views/login/index.vue')
 const rolesViewPath = path.resolve(__dirname, '../views/permission/roles/index.vue')

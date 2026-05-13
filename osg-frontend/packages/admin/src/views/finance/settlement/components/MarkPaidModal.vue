@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const props = withDefaults(defineProps<{
   modelValue: boolean

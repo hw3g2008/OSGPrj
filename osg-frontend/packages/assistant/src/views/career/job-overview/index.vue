@@ -256,7 +256,7 @@ import {
 } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { InterviewCalendar, StageTag, StudentAvatarCell, InterviewTimeCell } from '@osg/shared/components'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import {
   getAssistantJobOverviewCalendar,
   getAssistantJobOverviewDetail,

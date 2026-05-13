@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { ReportRow } from '@osg/shared/api/admin/report'
 
 defineProps<{

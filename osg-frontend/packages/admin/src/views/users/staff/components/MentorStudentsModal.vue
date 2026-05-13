@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { getStudentList, type StudentListItem } from '@osg/shared/api/admin/student'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const props = defineProps<{
   visible: boolean

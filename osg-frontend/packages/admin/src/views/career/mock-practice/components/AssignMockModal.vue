@@ -93,7 +93,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { MockPracticeListItem } from '@osg/shared/api/admin/mockPractice'
 
 interface MentorOption {

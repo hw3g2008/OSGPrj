@@ -271,7 +271,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { AllClassesDetail } from '@osg/shared/api/admin/allClasses'
 
 const props = withDefaults(defineProps<{

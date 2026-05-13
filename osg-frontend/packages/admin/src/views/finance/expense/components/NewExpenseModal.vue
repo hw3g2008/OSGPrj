@@ -73,7 +73,7 @@ import { reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { CreateExpensePayload, ExpenseType } from '@osg/shared/api/admin/expense'
 import { MAX_AMOUNT, MAX_AMOUNT_MESSAGE } from '@osg/shared/utils'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const expenseTypes: ExpenseType[] = [
   'Mentor Referral',

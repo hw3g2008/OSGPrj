@@ -260,7 +260,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import { MultiSelect } from '@osg/shared/components'
 import type { StaffListItem, StaffPayload } from '@osg/shared/api/admin/staff'
 import {

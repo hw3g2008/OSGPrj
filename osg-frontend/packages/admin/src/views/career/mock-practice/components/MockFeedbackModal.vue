@@ -63,7 +63,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { MockPracticeListItem } from '@osg/shared/api/admin/mockPractice'
 // §D.2 admin mock-practice 反馈模态状态显示接入 SSOT composable
 import { deriveMockPracticeStatus } from '@osg/shared/composables'

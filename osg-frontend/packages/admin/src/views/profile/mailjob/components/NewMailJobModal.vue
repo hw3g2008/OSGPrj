@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { SmtpServerRow } from '@osg/shared/api/admin/mailjob'
 
 const props = defineProps<{

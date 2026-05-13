@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { FileAuthType, FileRow, UpdateFileAuthPayload } from '@osg/shared/api/admin/file'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const classOptions = ['2024Fall', '2025Spring']
 

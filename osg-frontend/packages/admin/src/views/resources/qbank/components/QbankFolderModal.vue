@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import type { QbankAuthType, QbankFolderRow } from '@osg/shared/api/admin/qbank'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 const props = defineProps<{
   modelValue: boolean

@@ -96,7 +96,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { addRole, getRoleMenuIds, updateRole } from '@/api/role'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 
 type MenuNode = {
   id: number

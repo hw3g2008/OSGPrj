@@ -266,7 +266,7 @@ import {
 import { http } from '@osg/shared/utils/request'
 import { useDictFacade, type DictFacadeOption } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import MentorStudentsModal from './components/MentorStudentsModal.vue'
 import StaffDetailModal from './components/StaffDetailModal.vue'

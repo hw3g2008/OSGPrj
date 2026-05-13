@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { NoticeReceiverType } from '@osg/shared/api/admin/notice'
 
 const props = defineProps<{
