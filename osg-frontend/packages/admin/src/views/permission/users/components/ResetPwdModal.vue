@@ -3,7 +3,7 @@
     surface-id="modal-reset-password"
     :open="visible"
     width="460px"
-    body-class="reset-pwd-modal__body"
+    body-class="osg-modal-form reset-pwd-modal__body"
     @cancel="handleClose"
   >
     <template #title>

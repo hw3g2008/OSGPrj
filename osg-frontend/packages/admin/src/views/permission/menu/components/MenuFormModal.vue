@@ -4,6 +4,7 @@
     :open="visible"
     width="680px"
     max-height="90vh"
+    body-class="osg-modal-form"
     @cancel="handleClose"
   >
     <template #title>

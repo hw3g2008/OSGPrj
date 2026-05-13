@@ -4,7 +4,7 @@
     :open="visible"
     width="650px"
     max-height="calc(100vh - 80px)"
-    body-class="role-modal__body"
+    body-class="osg-modal-form role-modal__body"
     @cancel="handleClose"
   >
     <template #title>

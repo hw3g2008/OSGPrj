@@ -145,7 +145,7 @@ const loading = ref(false)
 const isEdit = computed(() => Boolean(props.user))
 const surfaceId = computed(() => (isEdit.value ? 'modal-edit-admin' : 'modal-add-admin'))
 const bodyClass = computed(() =>
-  isEdit.value ? 'user-modal__body user-modal__body--edit' : 'user-modal__body user-modal__body--create',
+  isEdit.value ? 'osg-modal-form user-modal__body user-modal__body--edit' : 'osg-modal-form user-modal__body user-modal__body--create',
 )
 
 const formState = reactive({
