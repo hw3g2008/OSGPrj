@@ -344,62 +344,147 @@
       </template>
     </OverlaySurfaceModal>
 
-    <a-modal
-      v-model:open="coachingDetailModalOpen"
-      :title="renderModalTitle(ReadOutlined, '辅导详情')"
-      ok-text="确定"
-      centered
-      :width="620"
-      wrap-class-name="applications-modal applications-modal--info"
-      :mask-style="{ backdropFilter: 'blur(4px)' }"
-      :cancel-button-props="{ style: { display: 'none' } }"
-      destroy-on-close
-      @ok="coachingDetailModalOpen = false"
+    <OverlaySurfaceModal
+      :open="coachingDetailModalOpen"
+      surface-id="student-coaching-detail"
+      variant="accent"
+      :width="640"
+      body-class="osg-modal-form student-coaching-modal__body"
+      @cancel="coachingDetailModalOpen = false"
     >
-      <div class="rich-modal-shell application-coaching-detail">
-        <div v-if="selectedCoaching" class="interview-detail-card">
-          <div class="modal-heading">{{ selectedCoaching.interviewStageLabel || '-' }}</div>
-          <div class="modal-sub">{{ selectedCoaching.interviewTime || '-' }} · {{ selectedCoaching.companyInterviewer || '公司面试官待补充' }}</div>
-          <div class="modal-sub">导师：{{ selectedCoaching.mentorNames || selectedCoaching.mentorName || '-' }} · 最新评分：{{ selectedCoaching.latestRating || '-' }} · 已上报课消：{{ selectedCoaching.reportedLessonCount || 0 }}</div>
-        </div>
-        <div class="application-coaching-record-list">
-          <div v-if="coachingClassRecords.length === 0" class="application-coachings-panel application-coachings-panel--empty">暂无课消记录</div>
-          <div
-            v-for="record in coachingClassRecords"
-            :key="record.recordId"
-            class="application-coaching-record"
-          >
-            <div>
-              <div class="application-coaching-record__title">{{ record.classId || `#${record.recordId}` }} · {{ record.mentorName || '-' }}</div>
-              <div class="application-coaching-record__meta">{{ (record.classDate || '-').slice(0, 10) }} · {{ memberStatusLabel(record.memberStatus) }} · {{ record.durationHours || 0 }}h</div>
-            </div>
-            <div class="application-coaching-record__rating">评分：{{ record.rate || '-' }}</div>
-          </div>
-        </div>
-      </div>
-    </a-modal>
+      <template #title>
+        <span style="display:inline-flex;align-items:center;gap:8px">
+          <ReadOutlined aria-hidden="true" />
+          <span>{{ '辅导详情' }}</span>
+        </span>
+      </template>
 
-    <a-modal
-      v-model:open="coachingEditModalOpen"
-      :title="renderModalTitle(EditOutlined, '修改辅导信息')"
-      ok-text="保存"
-      cancel-text="取消"
-      centered
-      :width="520"
-      wrap-class-name="applications-modal applications-modal--progress"
-      :mask-style="{ backdropFilter: 'blur(4px)' }"
-      destroy-on-close
-      @ok="saveCoachingEdit"
-    >
-      <a-form id="modal-edit-coaching" layout="vertical" :model="coachingEditForm" class="rich-modal-shell">
-        <div v-if="selectedCoaching" class="modal-job-card progress-card">
-          <div class="modal-job-mark">{{ selectedCoaching.interviewStageLabel?.slice(0, 2) || '辅导' }}</div>
-          <div>
-            <div class="modal-job-title">{{ selectedCoaching.interviewStageLabel || '-' }}</div>
-            <div class="modal-job-sub">{{ selectedCoachingApplication?.company }} · {{ selectedCoachingApplication?.position }}</div>
-          </div>
+      <section v-if="selectedCoaching" class="student-coaching-hero">
+        <span class="student-coaching-hero__accent" aria-hidden="true" />
+        <div class="student-coaching-hero__title-group">
+          <span class="stage-tag" :style="stageTagStyle(selectedCoaching.interviewStage)">{{ selectedCoaching.interviewStageLabel || '-' }}</span>
+          <span class="student-coaching-hero__id">#{{ selectedCoaching.coachingId }}</span>
         </div>
-        <a-form-item label="面试时间" class="rich-form-field rich-form-field--full">
+        <div class="student-coaching-hero__inline">
+          <span class="student-coaching-hero__inline-item">
+            <i class="mdi mdi-calendar-clock-outline" aria-hidden="true" />
+            <span :class="{ 'student-coaching-hero__muted': !selectedCoaching.interviewTime }">{{ selectedCoaching.interviewTime || '面试时间待安排' }}</span>
+          </span>
+          <span class="student-coaching-hero__inline-item">
+            <i class="mdi mdi-account-tie-voice-outline" aria-hidden="true" />
+            <span :class="{ 'student-coaching-hero__muted': !selectedCoaching.companyInterviewer }">{{ selectedCoaching.companyInterviewer || '公司面试官待补充' }}</span>
+          </span>
+        </div>
+        <dl class="student-coaching-hero__stats">
+          <div class="student-coaching-hero__stat">
+            <dt>辅导导师</dt>
+            <dd :class="{ 'student-coaching-hero__muted': !(selectedCoaching.mentorNames || selectedCoaching.mentorName) }">
+              {{ selectedCoaching.mentorNames || selectedCoaching.mentorName || '待匹配' }}
+            </dd>
+          </div>
+          <div class="student-coaching-hero__stat">
+            <dt>最新评分</dt>
+            <dd :class="selectedCoaching.latestRating ? 'student-coaching-hero__accent-value' : 'student-coaching-hero__muted'">
+              {{ selectedCoaching.latestRating || '未评分' }}
+            </dd>
+          </div>
+          <div class="student-coaching-hero__stat">
+            <dt>已上报课消</dt>
+            <dd>
+              <strong>{{ selectedCoaching.reportedLessonCount || 0 }}</strong>
+              <span class="student-coaching-hero__stat-unit"> 次</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="student-coaching-records">
+        <header class="student-coaching-records__head">
+          <span class="student-coaching-records__title">
+            <i class="mdi mdi-timeline-clock-outline" aria-hidden="true" />
+            课消时间线
+          </span>
+          <span class="student-coaching-records__count">{{ coachingClassRecords.length }} 条</span>
+        </header>
+        <div v-if="coachingClassRecords.length === 0" class="student-coaching-records__empty">
+          <i class="mdi mdi-history" aria-hidden="true" />
+          <span>暂无课消记录</span>
+        </div>
+        <ol v-else class="student-coaching-timeline">
+          <li
+            v-for="cls in coachingClassRecords"
+            :key="cls.recordId"
+            class="student-coaching-timeline__item"
+          >
+            <span class="student-coaching-timeline__dot" aria-hidden="true" />
+            <div class="student-coaching-timeline__card">
+              <div class="student-coaching-timeline__head">
+                <span class="student-coaching-timeline__class">{{ cls.classId || `#${cls.recordId}` }}</span>
+                <span class="student-coaching-timeline__mentor">{{ cls.mentorName || '-' }}</span>
+                <span :class="cls.rate ? 'student-coaching-timeline__rate' : 'student-coaching-timeline__rate student-coaching-timeline__rate--empty'">
+                  <i v-if="cls.rate" class="mdi mdi-star" aria-hidden="true" />
+                  {{ cls.rate || '未评分' }}
+                </span>
+              </div>
+              <div class="student-coaching-timeline__meta">
+                <span class="student-coaching-timeline__meta-item">
+                  <i class="mdi mdi-calendar-blank-outline" aria-hidden="true" />
+                  {{ (cls.classDate || '-').slice(0, 10) }}
+                </span>
+                <span
+                  class="student-coaching-timeline__meta-item"
+                  :class="cls.memberStatus !== 'normal' ? 'student-coaching-timeline__absent' : ''"
+                >
+                  <i class="mdi" :class="cls.memberStatus !== 'normal' ? 'mdi-account-alert-outline' : 'mdi-account-check-outline'" aria-hidden="true" />
+                  {{ memberStatusLabel(cls.memberStatus) }}
+                </span>
+                <span class="student-coaching-timeline__meta-item">
+                  <i class="mdi mdi-timer-sand" aria-hidden="true" />
+                  <strong>{{ cls.durationHours || 0 }}</strong>h
+                </span>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <template #footer>
+        <a-button type="primary" @click="coachingDetailModalOpen = false">关闭</a-button>
+      </template>
+    </OverlaySurfaceModal>
+
+    <OverlaySurfaceModal
+      :open="coachingEditModalOpen"
+      surface-id="student-coaching-edit"
+      variant="accent"
+      :width="520"
+      body-class="osg-modal-form student-coaching-modal__body"
+      @cancel="coachingEditModalOpen = false"
+    >
+      <template #title>
+        <span style="display:inline-flex;align-items:center;gap:8px">
+          <EditOutlined aria-hidden="true" />
+          <span>{{ '修改辅导信息' }}</span>
+        </span>
+      </template>
+
+      <a-form id="modal-edit-coaching" layout="vertical" :model="coachingEditForm">
+        <section v-if="selectedCoaching" class="student-coaching-context">
+          <span class="student-coaching-context__accent" aria-hidden="true" />
+          <div class="student-coaching-context__body">
+            <div class="student-coaching-context__title">
+              <span class="stage-tag" :style="stageTagStyle(selectedCoaching.interviewStage)">{{ selectedCoaching.interviewStageLabel || '-' }}</span>
+              <span class="student-coaching-context__id">#{{ selectedCoaching.coachingId }}</span>
+            </div>
+            <div class="student-coaching-context__sub">
+              <i class="mdi mdi-domain" aria-hidden="true" />
+              <strong>{{ selectedCoachingApplication?.company || '-' }}</strong>
+              <span class="student-coaching-context__dot">·</span>
+              <span>{{ selectedCoachingApplication?.position || '-' }}</span>
+            </div>
+          </div>
+        </section>
+        <a-form-item label="面试时间">
           <DatePicker
             id="coaching-edit-interview-time"
             v-model:value="coachingEditForm.interviewTime"
@@ -407,17 +492,23 @@
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DDTHH:mm"
             style="width: 100%"
+            placeholder="选择面试时间"
           />
         </a-form-item>
-        <a-form-item label="公司面试官" class="rich-form-field rich-form-field--full">
+        <a-form-item label="公司面试官">
           <a-input
             id="coaching-edit-company-interviewer"
             v-model:value="coachingEditForm.companyInterviewer"
-            placeholder="请输入公司面试官"
+            placeholder="请输入公司面试官姓名"
           />
         </a-form-item>
       </a-form>
-    </a-modal>
+
+      <template #footer>
+        <a-button @click="coachingEditModalOpen = false">取消</a-button>
+        <a-button type="primary" @click="saveCoachingEdit">保存</a-button>
+      </template>
+    </OverlaySurfaceModal>
 
     <a-modal
       v-model:open="appliedModalOpen"
@@ -845,25 +936,74 @@ function renderApplicationCoachings(params: { record: StudentApplicationRecord }
   const record = (params as { record: StudentApplicationRecord }).record ?? (params as StudentApplicationRecord)
   const coachings = record.coachings || []
   if (coachings.length === 0) {
-    return h('div', { class: 'application-coachings-panel application-coachings-panel--empty' }, '暂无阶段辅导申请')
+    return h('div', { class: 'application-coachings-panel application-coachings-panel--empty' }, [
+      h('i', { class: 'mdi mdi-calendar-blank-outline', 'aria-hidden': true }),
+      h('span', null, '暂无阶段辅导申请')
+    ])
   }
 
-  return h('div', { class: 'application-coachings-panel' }, coachings.map((coaching) =>
-    h('div', { key: coaching.coachingId, class: 'application-coaching-row' }, [
-      h('div', { class: 'application-coaching-row__main' }, [
-        h('div', { class: 'application-coaching-row__title' }, [
+  return h('div', { class: 'application-coachings-panel' }, coachings.map((coaching) => {
+    const mentor = coaching.mentorNames || coaching.mentorName || ''
+    const rating = coaching.latestRating || ''
+    const lessons = coaching.reportedLessonCount || 0
+    const interviewer = coaching.companyInterviewer || ''
+    const time = coaching.interviewTime || ''
+
+    return h('article', { key: coaching.coachingId, class: 'application-coaching-card' }, [
+      h('span', { class: 'application-coaching-card__accent', 'aria-hidden': 'true' }),
+      h('header', { class: 'application-coaching-card__head' }, [
+        h('div', { class: 'application-coaching-card__title-group' }, [
           h('span', { class: 'stage-tag', style: stageTagStyle(coaching.interviewStage) }, coaching.interviewStageLabel || '-'),
-          h('span', { class: 'application-coaching-row__id' }, `#${coaching.coachingId}`)
+          h('span', { class: 'application-coaching-card__id' }, `#${coaching.coachingId}`)
         ]),
-        h('div', { class: 'application-coaching-row__meta' }, `${coaching.interviewTime || '-'} · ${coaching.companyInterviewer || '公司面试官待补充'}`),
-        h('div', { class: 'application-coaching-row__meta' }, `导师：${coaching.mentorNames || coaching.mentorName || '-'} · 最新评分：${coaching.latestRating || '-'} · 已上报课消：${coaching.reportedLessonCount || 0}`)
+        h('nav', { class: 'application-coaching-card__actions' }, [
+          h('button', {
+            class: 'application-coaching-card__action',
+            type: 'button',
+            onClick: () => openCoachingDetail(record, coaching),
+          }, [
+            h('i', { class: 'mdi mdi-eye-outline', 'aria-hidden': 'true' }),
+            h('span', null, '查看详情'),
+          ]),
+          h('button', {
+            class: 'application-coaching-card__action application-coaching-card__action--edit',
+            type: 'button',
+            onClick: () => openCoachingEdit(record, coaching),
+          }, [
+            h('i', { class: 'mdi mdi-pencil-outline', 'aria-hidden': 'true' }),
+            h('span', null, '修改'),
+          ]),
+        ]),
       ]),
-      h('div', { class: 'application-coaching-row__actions' }, [
-        h('button', { class: 'application-coaching-action', type: 'button', onClick: () => openCoachingDetail(record, coaching) }, '查看详情'),
-        h('button', { class: 'application-coaching-action application-coaching-action--edit', type: 'button', onClick: () => openCoachingEdit(record, coaching) }, '修改')
-      ])
+      h('div', { class: 'application-coaching-card__inline' }, [
+        h('span', { class: 'application-coaching-card__inline-item' }, [
+          h('i', { class: 'mdi mdi-calendar-clock-outline', 'aria-hidden': 'true' }),
+          h('span', { class: time ? '' : 'application-coaching-card__muted' }, time || '面试时间待安排'),
+        ]),
+        h('span', { class: 'application-coaching-card__inline-item' }, [
+          h('i', { class: 'mdi mdi-account-tie-voice-outline', 'aria-hidden': 'true' }),
+          h('span', { class: interviewer ? '' : 'application-coaching-card__muted' }, interviewer || '公司面试官待补充'),
+        ]),
+      ]),
+      h('dl', { class: 'application-coaching-card__stats' }, [
+        h('div', { class: 'application-coaching-card__stat' }, [
+          h('dt', null, '辅导导师'),
+          h('dd', { class: mentor ? 'application-coaching-card__stat-value' : 'application-coaching-card__stat-value application-coaching-card__muted' }, mentor || '待匹配'),
+        ]),
+        h('div', { class: 'application-coaching-card__stat' }, [
+          h('dt', null, '最新评分'),
+          h('dd', { class: rating ? 'application-coaching-card__stat-value application-coaching-card__stat-value--accent' : 'application-coaching-card__stat-value application-coaching-card__muted' }, rating || '未评分'),
+        ]),
+        h('div', { class: 'application-coaching-card__stat' }, [
+          h('dt', null, '已上报课消'),
+          h('dd', { class: 'application-coaching-card__stat-value' }, [
+            h('strong', null, String(lessons)),
+            h('span', { class: 'application-coaching-card__stat-unit' }, ' 次'),
+          ]),
+        ]),
+      ]),
     ])
-  ))
+  }))
 }
 
 function applyFilters() {
@@ -1326,87 +1466,593 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
     line-height: 26px !important;
   }
 
-  .application-coachings-panel {
+  // ╭──────────────────────────────────────────────────────────────────╮
+  // │ 表格展开行：辅导记录卡片（Editorial timeline card）              │
+  // │ Vue 3 a-table :expanded-row-render 用 h() 渲染的 vnode 丢失      │
+  // │ scopeId，必须用 :global 让选择器穿透。                            │
+  // │ 视觉语言：白卡 + 左侧品牌渐变垂带 + 信息三层级（标题 → 行内 → 数据）│
+  // ╰──────────────────────────────────────────────────────────────────╯
+
+  :global(.application-coachings-panel) {
     display: grid;
-    gap: 10px;
-    padding: 12px 16px;
-    background: #f8fafc;
+    gap: 12px;
+    padding: 14px 18px 18px;
+    background: linear-gradient(180deg, #f5f9fd 0%, #fbfcfd 100%);
+    border-top: 1px dashed rgba(115, 153, 198, 0.28);
   }
 
-  .application-coachings-panel--empty {
-    color: #64748b;
-    font-size: 12px;
+  :global(.application-coachings-panel--empty) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 20px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-style: italic;
+    background: linear-gradient(180deg, #f5f9fd 0%, #fbfcfd 100%);
+    border-top: 1px dashed rgba(115, 153, 198, 0.28);
+  }
+  :global(.application-coachings-panel--empty .mdi) {
+    font-size: 18px;
+    color: rgba(115, 153, 198, 0.8);
   }
 
-  .application-coaching-row {
+  :global(.application-coaching-card) {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    gap: 12px;
+    padding: 14px 20px 14px 24px;
+    background: #fff;
+    border: 1px solid #e3edf7;
+    border-radius: 12px;
+    box-shadow:
+      0 1px 0 rgba(115, 153, 198, 0.04),
+      0 6px 18px -8px rgba(115, 153, 198, 0.18);
+    overflow: hidden;
+    transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+  }
+  :global(.application-coaching-card:hover) {
+    border-color: rgba(115, 153, 198, 0.55);
+    box-shadow:
+      0 1px 0 rgba(115, 153, 198, 0.05),
+      0 14px 28px -10px rgba(115, 153, 198, 0.28);
+  }
+
+  :global(.application-coaching-card__accent) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #7399c6 0%, #9bb8d9 60%, #b8cee2 100%);
+  }
+
+  :global(.application-coaching-card__head) {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #fff;
+    flex-wrap: wrap;
   }
-
-  .application-coaching-row__title {
-    display: flex;
+  :global(.application-coaching-card__title-group) {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 10px;
+    min-width: 0;
   }
-
-  .application-coaching-row__id,
-  .application-coaching-row__meta,
-  .application-coaching-record__meta {
-    color: #64748b;
+  :global(.application-coaching-card__id) {
+    font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
     font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+    letter-spacing: 0.02em;
   }
 
-  .application-coaching-row__actions {
-    display: flex;
+  :global(.application-coaching-card__actions) {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    flex: none;
   }
-
-  .application-coaching-action {
-    min-width: 64px;
-    height: 28px;
-    border: 1px solid #bfdbfe;
-    border-radius: 8px;
-    background: #eff6ff;
-    color: #2563eb;
+  :global(.application-coaching-card__action) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 14px;
+    border: 1px solid #c7d6ea;
+    border-radius: 999px;
+    background: #fff;
+    color: #5a7ba3;
     font-size: 12px;
     font-weight: 600;
+    line-height: 1;
     cursor: pointer;
+    transition: all 0.16s ease;
+  }
+  :global(.application-coaching-card__action .mdi) {
+    font-size: 14px;
+    line-height: 1;
+  }
+  :global(.application-coaching-card__action:hover) {
+    background: linear-gradient(180deg, #f5f9fd 0%, #eaf2fa 100%);
+    border-color: #7399c6;
+    color: #3a5a85;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px -4px rgba(115, 153, 198, 0.4);
+  }
+  :global(.application-coaching-card__action:active) {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  :global(.application-coaching-card__action--edit) {
+    background: linear-gradient(180deg, #faf7ff 0%, #f3edff 100%);
+    border-color: #d6c7eb;
+    color: #6d4ca3;
+  }
+  :global(.application-coaching-card__action--edit:hover) {
+    background: linear-gradient(180deg, #f3edff 0%, #e9deff 100%);
+    border-color: #a888d4;
+    color: #4d2f80;
+    box-shadow: 0 4px 10px -4px rgba(124, 92, 168, 0.4);
   }
 
-  .application-coaching-action--edit {
-    border-color: #ddd6fe;
-    background: #f5f3ff;
-    color: #6d28d9;
+  :global(.application-coaching-card__inline) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  :global(.application-coaching-card__inline-item) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  :global(.application-coaching-card__inline-item .mdi) {
+    font-size: 15px;
+    color: #7399c6;
+    line-height: 1;
   }
 
-  .application-coaching-record-list {
+  :global(.application-coaching-card__stats) {
     display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    padding: 12px 0 0;
+    border-top: 1px dashed #e3edf7;
+  }
+  :global(.application-coaching-card__stat) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 16px;
+    border-right: 1px solid #f0f5fa;
+  }
+  :global(.application-coaching-card__stat:last-child) {
+    border-right: none;
+    padding-right: 0;
+  }
+  :global(.application-coaching-card__stat dt) {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    margin: 0;
+  }
+  :global(.application-coaching-card__stat dd) {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.3;
+  }
+  :global(.application-coaching-card__stat-value--accent) {
+    color: #5a7ba3;
+  }
+  :global(.application-coaching-card__stat-value strong) {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+  :global(.application-coaching-card__stat-unit) {
+    font-size: 11px;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-left: 2px;
+  }
+  :global(.application-coaching-card__muted) {
+    color: #cbd5e1 !important;
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  @media (max-width: 720px) {
+    :global(.application-coaching-card__stats) {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    :global(.application-coaching-card__stat) {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 8px;
+      padding-right: 0;
+      border-right: none;
+      border-bottom: 1px dashed #f0f5fa;
+      padding-bottom: 8px;
+    }
+    :global(.application-coaching-card__stat:last-child) {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+
+  // ╭──────────────────────────────────────────────────────────────────╮
+  // │ 辅导详情 / 修改辅导信息 弹窗内容（OverlaySurfaceModal 内）        │
+  // │ 通过 Teleport 到 body，scoped 不可达 → 全部 :global()             │
+  // │ 设计语言：与展开行 coaching-card 一致（accent / stage / stats）   │
+  // ╰──────────────────────────────────────────────────────────────────╯
+
+  :global(.student-coaching-modal__body) {
+    display: grid;
+    gap: 18px;
+    padding: 22px 24px !important;
+  }
+
+  :global(.student-coaching-hero) {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    padding: 18px 20px 18px 26px;
+    background: linear-gradient(180deg, #f5f9fd 0%, #fbfcfd 100%);
+    border: 1px solid #e3edf7;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  :global(.student-coaching-hero__accent) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #7399c6 0%, #9bb8d9 60%, #b8cee2 100%);
+  }
+  :global(.student-coaching-hero__title-group) {
+    display: inline-flex;
+    align-items: center;
     gap: 10px;
   }
-
-  .application-coaching-record {
+  :global(.student-coaching-hero__id) {
+    font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+    letter-spacing: 0.02em;
+  }
+  :global(.student-coaching-hero__inline) {
     display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: #fff;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  :global(.student-coaching-hero__inline-item) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  :global(.student-coaching-hero__inline-item .mdi) {
+    font-size: 15px;
+    color: #7399c6;
+  }
+  :global(.student-coaching-hero__stats) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    padding: 12px 0 0;
+    border-top: 1px dashed rgba(115, 153, 198, 0.32);
+  }
+  :global(.student-coaching-hero__stat) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 16px;
+    border-right: 1px solid #e8f0f8;
+  }
+  :global(.student-coaching-hero__stat:last-child) {
+    border-right: none;
+    padding-right: 0;
+  }
+  :global(.student-coaching-hero__stat dt) {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    margin: 0;
+  }
+  :global(.student-coaching-hero__stat dd) {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.3;
+  }
+  :global(.student-coaching-hero__accent-value) {
+    color: #5a7ba3 !important;
+  }
+  :global(.student-coaching-hero__stat dd strong) {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+  :global(.student-coaching-hero__stat-unit) {
+    font-size: 11px;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-left: 2px;
+  }
+  :global(.student-coaching-hero__muted) {
+    color: #cbd5e1 !important;
+    font-style: italic;
+    font-weight: 500;
   }
 
-  .application-coaching-record__title,
-  .application-coaching-record__rating {
-    color: #0f172a;
+  :global(.student-coaching-records) {
+    display: grid;
+    gap: 12px;
+  }
+  :global(.student-coaching-records__head) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 4px;
+  }
+  :global(.student-coaching-records__title) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: 0.02em;
+  }
+  :global(.student-coaching-records__title .mdi) {
+    font-size: 16px;
+    color: #7399c6;
+  }
+  :global(.student-coaching-records__count) {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 10px;
+    background: linear-gradient(180deg, #eaf2fa 0%, #d8e6f3 100%);
+    color: #5a7ba3;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  :global(.student-coaching-records__empty) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 18px;
+    background: #fafbfc;
+    border: 1px dashed #d8e3ee;
+    border-radius: 12px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-style: italic;
+  }
+  :global(.student-coaching-records__empty .mdi) {
+    font-size: 18px;
+    color: rgba(115, 153, 198, 0.7);
+  }
+
+  :global(.student-coaching-timeline) {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0 0 0;
+    display: grid;
+    gap: 10px;
+    position: relative;
+  }
+  :global(.student-coaching-timeline)::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 12px;
+    bottom: 12px;
+    width: 1px;
+    background: linear-gradient(180deg, rgba(115, 153, 198, 0.5) 0%, rgba(115, 153, 198, 0.15) 100%);
+  }
+  :global(.student-coaching-timeline__item) {
+    position: relative;
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 12px;
+    align-items: stretch;
+  }
+  :global(.student-coaching-timeline__dot) {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    margin-top: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #7399c6;
+    box-shadow: 0 0 0 3px rgba(115, 153, 198, 0.12);
+    flex-shrink: 0;
+  }
+  :global(.student-coaching-timeline__card) {
+    background: #fff;
+    border: 1px solid #e3edf7;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: grid;
+    gap: 6px;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  }
+  :global(.student-coaching-timeline__card:hover) {
+    border-color: rgba(115, 153, 198, 0.55);
+    box-shadow: 0 4px 12px -4px rgba(115, 153, 198, 0.22);
+  }
+  :global(.student-coaching-timeline__head) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+  :global(.student-coaching-timeline__class) {
+    font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5a7ba3;
+    background: #eaf2fa;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  :global(.student-coaching-timeline__mentor) {
     font-size: 13px;
     font-weight: 600;
+    color: #1e293b;
+  }
+  :global(.student-coaching-timeline__rate) {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fff7e0 0%, #ffe9b0 100%);
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  :global(.student-coaching-timeline__rate .mdi) {
+    font-size: 13px;
+    color: #f59e0b;
+  }
+  :global(.student-coaching-timeline__rate--empty) {
+    background: #f4f6f9;
+    color: #94a3b8;
+    font-weight: 500;
+    font-style: italic;
+  }
+  :global(.student-coaching-timeline__meta) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  :global(.student-coaching-timeline__meta-item) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  :global(.student-coaching-timeline__meta-item .mdi) {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  :global(.student-coaching-timeline__meta-item strong) {
+    color: #1e293b;
+    font-weight: 700;
+  }
+  :global(.student-coaching-timeline__absent) {
+    color: #c2410c;
+  }
+  :global(.student-coaching-timeline__absent .mdi) {
+    color: #f97316 !important;
+  }
+
+  :global(.student-coaching-context) {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px 16px 14px 22px;
+    margin-bottom: 18px;
+    background: linear-gradient(180deg, #f5f9fd 0%, #fbfcfd 100%);
+    border: 1px solid #e3edf7;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  :global(.student-coaching-context__accent) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #7399c6 0%, #9bb8d9 60%, #b8cee2 100%);
+  }
+  :global(.student-coaching-context__body) {
+    display: grid;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+  :global(.student-coaching-context__title) {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  :global(.student-coaching-context__id) {
+    font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+  }
+  :global(.student-coaching-context__sub) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+  }
+  :global(.student-coaching-context__sub .mdi) {
+    font-size: 15px;
+    color: #7399c6;
+  }
+  :global(.student-coaching-context__sub strong) {
+    color: #1e293b;
+    font-weight: 600;
+  }
+  :global(.student-coaching-context__dot) {
+    color: #cbd5e1;
+  }
+
+  @media (max-width: 720px) {
+    :global(.student-coaching-hero__stats) {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    :global(.student-coaching-hero__stat) {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 8px;
+      padding-right: 0;
+      border-right: none;
+      border-bottom: 1px dashed #e8f0f8;
+      padding-bottom: 6px;
+    }
+    :global(.student-coaching-hero__stat:last-child) {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    :global(.student-coaching-timeline__rate) {
+      margin-left: 0;
+    }
   }
 
   .modal-stage-select {
