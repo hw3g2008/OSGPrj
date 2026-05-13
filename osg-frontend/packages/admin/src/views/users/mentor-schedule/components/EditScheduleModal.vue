@@ -4,6 +4,7 @@
     surface-id="mentor-schedule-edit-modal"
     variant="accent"
     width="820px"
+    body-class="osg-modal-form"
     @cancel="handleClose"
   >
     <template #title>
@@ -168,10 +169,6 @@
         class="esm-reason"
         placeholder="请填写调整原因，将同步通知给导师"
       />
-      <div v-if="errorMessage" class="esm-error" role="alert">
-        <span class="mdi mdi-alert-circle-outline" aria-hidden="true"></span>
-        {{ errorMessage }}
-      </div>
     </section>
 
     <!-- Notify -->
@@ -198,6 +195,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { message } from 'ant-design-vue'
 import type { StaffScheduleListItem, TimeSlot, WeekScope } from '@osg/shared/api/admin/schedule'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 
@@ -222,7 +220,6 @@ const emit = defineEmits<{
 }>()
 
 const quickHours = [5, 10, 15, 20]
-const errorMessage = ref('')
 
 const formatStaffType = (staffType?: string) => {
   if (staffType === 'lead_mentor') return '班主任'
@@ -287,7 +284,6 @@ const resetForm = () => {
   formState.reason = ''
   formState.notifyStaff = true
   formState.selectedSlotKeys = [...(props.record?.selectedSlotKeys ?? [])]
-  errorMessage.value = ''
 }
 
 watch(
@@ -321,14 +317,13 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!props.record?.staffId) {
-    errorMessage.value = '未找到导师信息，暂时无法保存。'
+    message.warning('未找到导师信息，暂时无法保存')
     return
   }
-  if (!formState.reason) {
-    errorMessage.value = '请填写调整原因。'
+  if (!formState.reason.trim()) {
+    message.warning('请填写调整原因')
     return
   }
-  errorMessage.value = ''
   emit('submit', {
     staffId: props.record.staffId,
     week: localWeek.value,
@@ -956,19 +951,6 @@ $rose-100: #ffe4e6;
     border-color: $indigo-400;
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
   }
-}
-
-.esm-error {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: $rose-100;
-  color: #be123c;
-  font-size: 12.5px;
-  font-weight: 600;
 }
 
 // ── Notify ──────────────────────────────────────────────

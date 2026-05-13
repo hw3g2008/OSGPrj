@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="student-blacklist-modal"
     width="500px"
-    :body-class="'student-blacklist-modal__body'"
+    :body-class="'student-blacklist-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>

@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="modal-class-record-detail"
     :width="760"
-    :body-class="'class-record-detail-modal__body'"
+    :body-class="'class-record-detail-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>

@@ -3,6 +3,7 @@
     :open="visible"
     width="800px"
     :surface-id="surfaceId"
+    body-class="osg-modal-form"
     @cancel="handleClose"
   >
     <template #title>

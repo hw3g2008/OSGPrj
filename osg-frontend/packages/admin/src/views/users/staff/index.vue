@@ -228,6 +228,7 @@
       :open="resetPasswordVisible"
       surface-id="staff-reset-password-modal"
       width="480px"
+      body-class="osg-modal-form"
       @cancel="closeResetPasswordModal"
     >
       <template #title>

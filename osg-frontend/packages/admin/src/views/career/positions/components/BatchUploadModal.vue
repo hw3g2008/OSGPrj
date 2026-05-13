@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="modal-position-upload"
     width="520px"
-    :body-class="'batch-upload-modal__body'"
+    :body-class="'batch-upload-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>

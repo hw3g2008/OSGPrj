@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page mentor-change-review">
-    <PageHeader title-zh="导师资料变更审核" title-en="Mentor Profile Change Review" description="审核导师端提交的资料变更申请" />
+    <PageHeader title-zh="导师资料变更审核" title-en="Mentor Profile Change Review" />
 
     <a-card :bordered="false" class="mcr-filter-card">
       <a-form layout="inline" :model="filters" class="mcr-filter-form">
@@ -110,7 +110,7 @@
       destroy-on-close
       @ok="handleRejectConfirm"
     >
-      <a-form layout="vertical" :model="rejectForm">
+      <a-form layout="vertical" :model="rejectForm" class="osg-modal-form">
         <a-form-item label="驳回原因" required>
           <a-textarea v-model:value="rejectForm.reason" placeholder="请输入驳回原因" :rows="4" />
         </a-form-item>

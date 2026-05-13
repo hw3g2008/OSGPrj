@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="modal-reject-position"
     width="560px"
-    :body-class="'student-reject-modal__body'"
+    :body-class="'student-reject-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>

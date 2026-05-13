@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="student-status-change-modal"
     width="480px"
-    :body-class="'student-status-modal__body'"
+    :body-class="'student-status-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>

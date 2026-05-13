@@ -3,7 +3,7 @@
     surface-id="modal-setting"
     :open="visible"
     width="520px"
-    body-class="profile-modal__body"
+    body-class="profile-modal__body osg-modal-form"
     @cancel="handleClose"
   >
     <template #title>

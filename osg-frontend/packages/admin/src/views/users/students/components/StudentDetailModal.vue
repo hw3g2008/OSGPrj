@@ -4,7 +4,7 @@
     :surface-id="surfaceId"
     width="960px"
     :shell-class="'sdm-shell'"
-    :body-class="'sdm-body'"
+    :body-class="'sdm-body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>

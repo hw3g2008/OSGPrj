@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="mock-practice-feedback-modal"
     width="720px"
-    :body-class="'mock-practice-feedback-modal__body'"
+    :body-class="'mock-practice-feedback-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>

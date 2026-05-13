@@ -7,6 +7,7 @@
     :closable="currentStep < 4"
     :mask-closable="false"
     width="450px"
+    body-class="osg-modal-form"
     @cancel="handleClose"
   >
     <template #title>
