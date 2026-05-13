@@ -82,14 +82,11 @@
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select
+          <MultiSelect
             v-model:value="targetMajorsFilter"
-            mode="multiple"
             placeholder="主攻方向"
-            allow-clear
             style="width: 180px"
             :options="meta.majorDirections"
-            :field-names="{ label: 'label', value: 'value' }"
           />
         </a-form-item>
         <a-form-item>
@@ -368,6 +365,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { DownloadOutlined, ExportOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { MultiSelect } from '@osg/shared/components'
 import { getToken } from '@osg/shared/utils'
 import {
   createPosition,

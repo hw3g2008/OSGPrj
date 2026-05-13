@@ -111,28 +111,22 @@
           <a-form-item label="是否读研或延毕" class="form-item"><a-select v-model:value="editForm.postgraduatePlan" :options="yesNoOptions" /></a-form-item>
           <a-form-item label="签证" class="form-item"><a-input v-model:value="editForm.visaStatus" /></a-form-item>
           <a-form-item label="招聘周期" class="form-item">
-            <a-select
+            <MultiSelect
               v-model:value="recruitmentCycles"
-              show-search
-              mode="multiple"
               :options="recruitCycleOptions"
               placeholder="请选择招聘周期（可多选）"
             />
           </a-form-item>
           <a-form-item label="求职地区" class="form-item">
-            <a-select
+            <MultiSelect
               v-model:value="targetRegions"
-              show-search
-              mode="multiple"
               :options="regionOptions"
               placeholder="请选择求职地区（可多选）"
             />
           </a-form-item>
           <a-form-item label="主攻方向" class="form-item">
-            <a-select
+            <MultiSelect
               v-model:value="primaryDirections"
-              show-search
-              mode="multiple"
               :options="majorDirectionOptions"
               placeholder="请选择主攻方向（可多选）"
             />
@@ -168,7 +162,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { OsgPageContainer } from '@osg/shared/components'
+import { OsgPageContainer, MultiSelect } from '@osg/shared/components'
 import { useDictFacade } from '@osg/shared'
 import {
   getStudentProfile,
