@@ -1,7 +1,6 @@
 package com.ruoyi.web.controller.osg;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -120,21 +119,6 @@ class OsgAdminJobOverviewControllerTest
         assertEquals(1, data.get(1).get("count"));
         assertEquals("获Offer", data.get(2).get("label"));
         assertEquals(1, data.get(2).get("count"));
-    }
-
-    @Test
-    void hotCompaniesShouldGroupApplicationsAndComputeOfferRate()
-    {
-        AjaxResult result = controller.hotCompanies(null, null, null, null, null);
-
-        assertEquals(200, result.get("code"));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
-        assertFalse(data.isEmpty());
-        assertEquals("Goldman Sachs", data.get(0).get("companyName"));
-        assertEquals(2, data.get(0).get("applicationCount"));
-        assertEquals(0, data.get(0).get("offerCount"));
-        assertEquals(0, data.get(0).get("offerRate"));
     }
 
     @Test

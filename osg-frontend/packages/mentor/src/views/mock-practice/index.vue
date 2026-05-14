@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="模拟应聘管理"
       title-en="Mock Practice"
-      description="查看分配给我的模拟面试、人际关系测试、期中考试"
     />
 
     <!-- 列表 -->
@@ -211,15 +210,16 @@ async function confirmMock(r: any) {
     const newCount = Array.from(rowAnchors.value.values()).filter((value) => value.startsWith('mock-new-')).length
     rowAnchors.value.set(rowId, `mock-new-${newCount + 1}`)
   }
-  try { await http.put(`/api/mentor/mock-practice/${practiceId}/confirm`); r.status = 'pending' } catch {}
+  try { await http.put(`/mentor/mock-practice/${practiceId}/confirm`); r.status = 'pending' } catch {}
   syncRowAnchors(list.value)
   try { await mentorNavBadges?.refreshMockBadge?.() } catch {}
 }
 
 function resolveReportReferenceType(practiceType: string | undefined): ReferenceType | undefined {
+  // 1:1 映射 DB osg_mock_practice.practice_type，禁止跨值改写
   if (practiceType === 'mock_interview' || practiceType === '模拟面试') return 'mock_interview'
-  if (practiceType === 'relation_test' || practiceType === '人际关系测试') return 'relation_test'
-  if (practiceType === 'communication_test' || practiceType === 'midterm_exam' || practiceType === '期中考试') return 'communication_test'
+  if (practiceType === 'communication_test' || practiceType === '人际关系测试') return 'communication_test'
+  if (practiceType === 'midterm_exam' || practiceType === '期中考试') return 'midterm_exam'
   return undefined
 }
 
@@ -240,7 +240,7 @@ function onReportSubmitted() {
 
 async function fetchListWithParams(params: Record<string, string>) {
   try {
-    const res = await http.get('/api/mentor/mock-practice/list', { params })
+    const res = await http.get('/mentor/mock-practice/list', { params })
     list.value = (res.rows || []).map((record: Record<string, any>) => normalizeMockPractice(record))
     syncRowAnchors(list.value)
   } catch {}

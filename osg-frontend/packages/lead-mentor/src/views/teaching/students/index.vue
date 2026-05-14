@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="学员列表"
       title-en="Student List"
-      description="查看我教的学员和班主任为我的全部学员信息及求职数据"
     />
 
     <section class="filters">

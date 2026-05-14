@@ -155,7 +155,7 @@ import {
 } from '@osg/shared/api/admin/jobTracking'
 
 const trackingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140 },
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
   { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 140 },
   { title: '岗位', dataIndex: 'positionName', key: 'positionName', width: 160 },

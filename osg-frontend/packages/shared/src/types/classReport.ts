@@ -11,16 +11,26 @@ export type ReferenceType =
   | 'mock_interview'
   | 'relation_test'
   | 'communication_test'
+  | 'midterm_exam'
 
 export type MemberStatus = 'normal' | 'absent'
 
+/**
+ * 基础课程二级类型。
+ * `resume` 是 UI 合并入口（"简历"），用户选完后通过 ResumeSubType 区分新建/更新，
+ * 提交后端时由 ClassReportFlowModal 派生为 `new_resume` 或 `resume_update`，DB 仍存原 enum。
+ * `new_resume` / `resume_update` 保留作为派生/兼容值，UI 不再直接选择。
+ */
 export type BaseCategory =
   | 'tech'
   | 'behavior'
-  | 'new_resume'
-  | 'resume_update'
+  | 'resume'           // UI 合并入口
+  | 'new_resume'       // 派生/兼容（旧数据）
+  | 'resume_update'    // 派生/兼容（旧数据）
   | 'case_study'
   | 'other'
+
+export type ResumeSubType = 'new' | 'update'
 
 /**
  * 求职辅导 / 模拟面试反馈 payload（5 项评分 + 选项 + 备注）
@@ -122,6 +132,8 @@ export interface ClassReportPayload {
   referenceId?: number
   baseCourseCategory?: BaseCategory
   baseCourseTopics?: string[]
+  /** D: UI 选择 baseCourseCategory='resume' 时的二级 radio（new/update），提交时派生为 new_resume/resume_update */
+  resumeSubType?: ResumeSubType
   memberStatus: MemberStatus
   absentRemark?: string
   rate?: string

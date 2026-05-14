@@ -168,7 +168,7 @@ import {
 } from './columns'
 
 const reportColumns = [
-  { title: 'ID', dataIndex: 'recordId', key: 'recordId', width: 70 },
+  { title: 'ID', dataIndex: 'recordId', key: 'recordId', width: 70, fixed: 'left' as const },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 130 },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
   { title: '课程类型', dataIndex: 'courseType', key: 'courseType', width: 120 },

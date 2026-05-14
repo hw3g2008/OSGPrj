@@ -106,7 +106,7 @@ const statusColorMap: Record<ExpenseRow['status'], string> = {
 }
 
 const expenseColumns = [
-  { title: 'ID', dataIndex: 'expenseId', key: 'expenseId', width: 70, customRender: ({ text }: { text: number }) => `#${text}` },
+  { title: 'ID', dataIndex: 'expenseId', key: 'expenseId', width: 70, customRender: ({ text }: { text: number }) => `#${text}`, fixed: 'left' as const },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
   { title: '报销类型', dataIndex: 'expenseType', key: 'expenseType', width: 120 },
   { title: '金额', dataIndex: 'expenseAmount', key: 'expenseAmount', width: 90 },
@@ -115,7 +115,7 @@ const expenseColumns = [
   { title: '附件', dataIndex: 'attachmentUrl', key: 'attachmentUrl', width: 70 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
   { title: '审核备注', dataIndex: 'reviewComment', key: 'reviewComment', width: 120 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
 ]
 
 const rows = ref<ExpenseRow[]>([])

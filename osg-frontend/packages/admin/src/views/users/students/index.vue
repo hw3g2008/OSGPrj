@@ -684,12 +684,8 @@ const renewStudentOptions = computed(() => {
 
 const handleStudentContractRenewed = async () => {
   renewContractVisible.value = false
-  const wasRejoin = renewContractReactivate.value
   renewContractReactivate.value = false
   await loadStudentList()
-  if (wasRejoin) {
-    message.success('学员已通过续签合同重新加入')
-  }
 }
 
 const handleCreateStudent = async (payload: AddStudentFormPayload) => {
@@ -1071,14 +1067,20 @@ onMounted(() => {
 </script>
 
 <style scoped>
-:deep(.row-pending-review) {
-  background: rgba(254, 240, 138, 0.6);
+:deep(.row-pending-review) > td,
+:deep(.row-pending-review) > td.ant-table-cell-fix-left,
+:deep(.row-pending-review) > td.ant-table-cell-fix-right {
+  background: rgba(254, 240, 138, 0.6) !important;
 }
-:deep(.row-low-hours) {
-  background: rgba(254, 226, 226, 0.5);
+:deep(.row-low-hours) > td,
+:deep(.row-low-hours) > td.ant-table-cell-fix-left,
+:deep(.row-low-hours) > td.ant-table-cell-fix-right {
+  background: rgba(254, 226, 226, 0.5) !important;
 }
-:deep(.row-contract-expiring) {
-  background: rgba(254, 249, 195, 0.6);
+:deep(.row-contract-expiring) > td,
+:deep(.row-contract-expiring) > td.ant-table-cell-fix-left,
+:deep(.row-contract-expiring) > td.ant-table-cell-fix-right {
+  background: rgba(254, 249, 195, 0.6) !important;
 }
 :deep(.row-ended) {
   opacity: 0.7;

@@ -25,8 +25,17 @@ class JobOverviewExportRow
     @Excel(name = "岗位")
     private final String positionName;
 
+    @Excel(name = "岗位地区")
+    private final String region;
+
+    @Excel(name = "城市")
+    private final String city;
+
     @Excel(name = "当前阶段")
     private final String currentStage;
+
+    @Excel(name = "阶段提醒")
+    private final String stageUpdatedLabel;
 
     @Excel(name = "面试时间", width = 20, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private final Object interviewTime;
@@ -42,6 +51,9 @@ class JobOverviewExportRow
 
     @Excel(name = "导师")
     private final String mentorName;
+
+    @Excel(name = "导师背景")
+    private final String mentorBackground;
 
     @Excel(name = "辅导状态")
     private final String coachingStatus;
@@ -62,23 +74,28 @@ class JobOverviewExportRow
     private final Object submittedAt;
 
     private JobOverviewExportRow(Long applicationId, Long studentId, String studentName, String companyName,
-                                 String positionName, String currentStage, Object interviewTime,
+                                 String positionName, String region, String city, String currentStage,
+                                 String stageUpdatedLabel, Object interviewTime,
                                  String assignedStatusLabel, String datasetLabel, String leadMentorName,
-                                 String mentorName, String coachingStatus, Integer requestedMentorCount,
-                                 String preferredMentorNames, Integer hoursUsed, String feedbackSummary,
-                                 Object submittedAt)
+                                 String mentorName, String mentorBackground, String coachingStatus,
+                                 Integer requestedMentorCount, String preferredMentorNames,
+                                 Integer hoursUsed, String feedbackSummary, Object submittedAt)
     {
         this.applicationId = applicationId;
         this.studentId = studentId;
         this.studentName = studentName;
         this.companyName = companyName;
         this.positionName = positionName;
+        this.region = region;
+        this.city = city;
         this.currentStage = currentStage;
+        this.stageUpdatedLabel = stageUpdatedLabel;
         this.interviewTime = interviewTime;
         this.assignedStatusLabel = assignedStatusLabel;
         this.datasetLabel = datasetLabel;
         this.leadMentorName = leadMentorName;
         this.mentorName = mentorName;
+        this.mentorBackground = mentorBackground;
         this.coachingStatus = coachingStatus;
         this.requestedMentorCount = requestedMentorCount;
         this.preferredMentorNames = preferredMentorNames;
@@ -95,12 +112,16 @@ class JobOverviewExportRow
             asText(row.get("studentName")),
             asText(row.get("companyName")),
             asText(row.get("positionName")),
+            asText(row.get("region")),
+            asText(row.get("city")),
             asText(row.get("currentStage")),
+            asText(row.get("stageUpdatedLabel")),
             row.get("interviewTime"),
             asText(row.get("assignedStatusLabel")),
             asText(row.get("datasetLabel")),
             asText(row.get("leadMentorName")),
             asText(row.get("mentorName")),
+            asText(row.get("mentorBackground")),
             asText(row.get("coachingStatus")),
             asInteger(row.get("requestedMentorCount")),
             asText(row.get("preferredMentorNames")),
@@ -118,12 +139,16 @@ class JobOverviewExportRow
             asText(row.get("studentName")),
             asText(row.get("company")),
             asText(row.get("position")),
+            null,
+            null,
             asText(row.get("interviewStage")),
+            "",
             row.get("interviewTime"),
             asText(row.get("coachingStatus")),
             "导师端",
             "",
             asText(row.get("mentorName")),
+            null,
             asText(row.get("coachingStatus")),
             null,
             "",

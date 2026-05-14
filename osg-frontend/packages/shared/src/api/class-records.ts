@@ -372,8 +372,11 @@ export async function getReferenceCandidates(
     return []
   }
   const prefix = resolveClassReportEndPrefix(end)
+  // §C7 修复：后端 controller @RequestParam 名为 referenceType（不是 refType），
+  // 之前传 refType 后端收不到 → service 立即返回 [] → 前端下拉只剩 prefill 的裸 ID。
+  // 同时保留 refType 别名兼容，万一某天后端改了参数名也不破坏。
   const resp = await http.get<unknown>(`${prefix}/reference-candidates`, {
-    params: { studentId, refType },
+    params: { studentId, referenceType: refType, refType },
   })
   const rows = normalizeRows<Record<string, unknown>>(resp)
   return rows

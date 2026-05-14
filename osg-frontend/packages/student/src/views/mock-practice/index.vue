@@ -8,7 +8,6 @@
               {{ mockPracticeMeta.pageSummary.titleZh }}
               <span>{{ mockPracticeMeta.pageSummary.titleEn }}</span>
             </h1>
-            <p class="page-sub">{{ mockPracticeMeta.pageSummary.subtitle }}</p>
           </div>
         </div>
       </template>

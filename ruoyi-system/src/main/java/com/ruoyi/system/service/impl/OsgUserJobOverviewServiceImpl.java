@@ -980,7 +980,8 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
         payload.put("stageUpdated", Boolean.TRUE.equals(application.getStageUpdated()));
         payload.put("requestedMentorCount", resolveOverviewRequestedMentorCount(application, coaching));
         payload.put("preferredMentorNames", defaultText(application.getPreferredMentorNames()));
-        payload.put("submittedAt", application.getSubmittedAt());
+        // §B5: 提交时间按 RULE-A 02 §4.3 锚到辅导申请 create_time，coaching 缺失时回退 application 投递时间
+        payload.put("submittedAt", resolveOverviewSubmittedAt(application, coaching));
 
         if (coaching != null)
         {
@@ -1022,6 +1023,14 @@ public class OsgUserJobOverviewServiceImpl implements IOsgUserJobOverviewService
     private Date resolveOverviewInterviewTime(OsgJobApplication application, OsgCoaching coaching)
     {
         return coaching != null && coaching.getInterviewTime() != null ? coaching.getInterviewTime() : application.getInterviewTime();
+    }
+
+    /** §B5: coaching 优先取 create_time（辅导申请提交时间），fallback application.submittedAt（岗位投递时间） */
+    private Date resolveOverviewSubmittedAt(OsgJobApplication application, OsgCoaching coaching)
+    {
+        return coaching != null && coaching.getCreateTime() != null
+            ? coaching.getCreateTime()
+            : application.getSubmittedAt();
     }
 
     private String resolveOverviewCity(OsgJobApplication application, OsgCoaching coaching)

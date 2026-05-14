@@ -77,15 +77,26 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'contractNo'">
-            <span style="font-family: monospace; font-weight: 600">{{ record.contractNo }}</span>
+            <a-tooltip :title="record.contractNo || '-'">
+              <span style="font-family: monospace; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.contractNo }}</span>
+            </a-tooltip>
           </template>
           <template v-else-if="column.dataIndex === 'studentName'">
-            <a-button type="link" size="small" style="padding: 0; font-weight: 600" data-surface-trigger="modal-contract-detail" :data-surface-sample-key="`contract-${record.contractId}`" @click="handleDetailEntry(record)">
-              {{ record.studentName || '-' }}
-            </a-button>
+            <a-tooltip :title="record.studentName || '-'">
+              <a
+                style="display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: #1677ff; cursor: pointer"
+                data-surface-trigger="modal-contract-detail"
+                :data-surface-sample-key="`contract-${record.contractId}`"
+                @click="handleDetailEntry(record)"
+              >
+                {{ record.studentName || '-' }}
+              </a>
+            </a-tooltip>
           </template>
           <template v-else-if="column.dataIndex === 'leadMentorName'">
-            {{ record.leadMentorName || '-' }}
+            <a-tooltip :title="record.leadMentorName || '-'">
+              <span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ record.leadMentorName || '-' }}</span>
+            </a-tooltip>
           </template>
           <template v-else-if="column.dataIndex === 'contractType'">
             <a-tag :color="getTypeColor(record.contractType)">{{ formatContractType(record.contractType) }}</a-tag>
@@ -118,7 +129,9 @@
             {{ formatDate(record.endDate) }}
           </template>
           <template v-else-if="column.dataIndex === 'renewalReason'">
-            {{ formatRenewalReason(record.renewalReason) || '-' }}
+            <a-tooltip :title="formatRenewalReason(record.renewalReason) || '-'">
+              <span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ formatRenewalReason(record.renewalReason) || '-' }}</span>
+            </a-tooltip>
           </template>
           <template v-else-if="column.dataIndex === 'contractStatus'">
             <a-tag :color="getStatusColor(resolveStatus(record))">{{ formatContractStatus(resolveStatus(record)) }}</a-tag>

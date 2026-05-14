@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="基本信息"
       title-en="Profile"
-      description="查看和管理您的个人信息"
     >
       <template #actions>
         <a-button type="primary" @click="showEditModal = true">
@@ -207,7 +206,7 @@ const regionCities: Record<string, Array<{ value: string; label: string }>> = {
 const cityOptions = computed(() => regionCities[editForm.value.region] || [])
 
 async function fetchProfile() {
-  try { profile.value = await http.get('/api/mentor/profile') } catch { profile.value = {} }
+  try { profile.value = await http.get('/mentor/profile') } catch { profile.value = {} }
   editForm.value = { ...profile.value, region: '', city: '' }
   saveErrorMessage.value = ''
 }
@@ -227,7 +226,7 @@ function closeSaveSuccessModal() {
 
 async function submitSaveProfile() {
   try {
-    await http.put('/api/mentor/profile', editForm.value)
+    await http.put('/mentor/profile', editForm.value)
     showSaveConfirmModal.value = false
     showEditModal.value = false
     showSaveSuccessModal.value = true

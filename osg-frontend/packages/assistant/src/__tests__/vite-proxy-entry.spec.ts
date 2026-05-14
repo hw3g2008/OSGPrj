@@ -50,12 +50,8 @@ describe('assistant vite proxy contract', () => {
     expect(proxy['/api/assistant/getInfo'].rewrite?.('/api/assistant/getInfo')).toBe('/assistant/getInfo')
   })
 
-  it('keeps mentor shared /api/mentor APIs on the backend /api/mentor namespace', async () => {
-    const proxy = await loadProxy()
-
-    expect(proxy['/api/mentor'].target).toBe('http://127.0.0.1:28080')
-    expect(proxy['/api/mentor'].rewrite?.('/api/mentor/profile') ?? '/api/mentor/profile').toBe('/api/mentor/profile')
-  })
+  // §B7: mentor controller mapping 已去 /api/ 前缀，assistant 端不再需要 /api/mentor passthrough。
+  //      跨端调用走默认 /api strip → backend /mentor/... 即可。
 
   it('keeps a generic /api proxy and preview parity for local verification', async () => {
     const loadedConfig = await loadConfigFromFile(

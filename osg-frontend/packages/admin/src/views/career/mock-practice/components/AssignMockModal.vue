@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="assign-mock-practice-modal"
     width="760px"
-    :body-class="['mock-practice-assign-modal__body', 'assign-mock-modal__body']"
+    :body-class="['mock-practice-assign-modal__body', 'assign-mock-modal__body', 'osg-modal-form']"
     @cancel="handleClose"
   >
     <template #title>
@@ -67,7 +67,14 @@
     <section class="mock-practice-assign-modal__schedule-grid">
       <label class="mock-practice-assign-modal__field">
         <span>预约时间</span>
-        <a-input v-model:value="scheduledAt" type="datetime-local" />
+        <a-date-picker
+          v-model:value="scheduledAt"
+          show-time
+          format="YYYY-MM-DD HH:mm"
+          value-format="YYYY-MM-DDTHH:mm"
+          placeholder="选择预约时间"
+          style="width: 100%"
+        />
       </label>
 
       <label class="mock-practice-assign-modal__field">

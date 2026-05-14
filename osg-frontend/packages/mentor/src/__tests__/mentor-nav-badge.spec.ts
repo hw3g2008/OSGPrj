@@ -105,13 +105,13 @@ describe('mentor nav badge state', () => {
     ]
 
     vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/mock-practice/list') {
+      if (url === '/mentor/mock-practice/list') {
         return { rows: mockRows.map((row) => ({ ...row })) }
       }
       return { rows: [] }
     })
     vi.mocked(http.put).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/mock-practice/42/confirm') {
+      if (url === '/mentor/mock-practice/42/confirm') {
         mockRows[0].status = 'pending'
       }
       return {}

@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">基本信息 <span>My Profile</span></h1>
-            <p class="page-sub">查看和修改您的个人信息</p>
           </div>
           <a-button type="primary" size="large" @click="openEdit">编辑信息</a-button>
         </div>
@@ -33,8 +32,18 @@
 
         <a-card title="导师配置" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
-            <a-descriptions-item label="班主任">{{ profile.leadMentor }}</a-descriptions-item>
-            <a-descriptions-item label="助教">{{ profile.assistantName }}</a-descriptions-item>
+            <a-descriptions-item label="班主任">
+              <template v-if="profile.leadMentorNames?.length">
+                <a-tag v-for="name in profile.leadMentorNames" :key="name" color="blue">{{ name }}</a-tag>
+              </template>
+              <template v-else>{{ profile.leadMentor }}</template>
+            </a-descriptions-item>
+            <a-descriptions-item label="助教">
+              <template v-if="profile.assistantNames?.length">
+                <a-tag v-for="name in profile.assistantNames" :key="name" color="cyan">{{ name }}</a-tag>
+              </template>
+              <template v-else>{{ profile.assistantName }}</template>
+            </a-descriptions-item>
           </a-descriptions>
         </a-card>
 
@@ -194,7 +203,9 @@ const profile = reactive<StudentProfileRecord>({
   sexLabel: '-',
   statusLabel: '正常',
   leadMentor: '-',
+  leadMentorNames: [],
   assistantName: '-',
+  assistantNames: [],
   school: '-',
   major: '-',
   graduationYear: '-',

@@ -35,7 +35,7 @@ import jakarta.servlet.http.HttpServletResponse;
  * Service 依赖 IOsgUserJobOverviewService（M0.2 完成三端 Service 合并，Assistant+LM+Mentor 共用）。
  */
 @RestController
-@RequestMapping("/api/mentor/job-overview")
+@RequestMapping("/mentor/job-overview")
 public class OsgMentorJobOverviewController extends BaseController
 {
     @Autowired
@@ -164,6 +164,7 @@ public class OsgMentorJobOverviewController extends BaseController
         payload.put("location", firstText(row.get("city"), row.get("region")));
         payload.put("interviewStage", row.get("currentStage"));
         payload.put("interviewTime", row.get("interviewTime"));
+        payload.put("stageUpdated", row.get("stageUpdated"));
         payload.put("coachingStatus", toLegacyCoachingStatus(row));
         payload.put("result", toLegacyResult(row));
         payload.put("createTime", row.get("submittedAt"));

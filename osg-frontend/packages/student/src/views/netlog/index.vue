@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">沟通记录 <span>Networking Log</span></h1>
-            <p class="page-sub">完成Network沟通后，请填写记录</p>
           </div>
         </div>
       </template>

@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="modal-assign-mentor"
     width="720px"
-    :body-class="['job-overview-assign-modal__body', 'assign-mentor-modal__body']"
+    :body-class="['job-overview-assign-modal__body', 'assign-mentor-modal__body', 'osg-modal-form']"
     @cancel="handleClose"
   >
     <template #title>
@@ -193,7 +193,7 @@ import {
   SearchOutlined
 } from '@ant-design/icons-vue'
 import { OverlaySurfaceModal } from '@osg/shared/components'
-import type { UnassignedJobOverviewRow } from '@osg/shared/api/admin/jobOverview'
+import type { UnassignedJobOverviewRow, UnassignedCoachingRow } from '@osg/shared/api/admin/jobOverview'
 
 interface AssignMentorOption {
   mentorId: number
@@ -205,7 +205,7 @@ interface AssignMentorOption {
 
 const props = withDefaults(defineProps<{
   visible: boolean
-  row?: UnassignedJobOverviewRow | null
+  row?: UnassignedJobOverviewRow | UnassignedCoachingRow | null
   mentorOptions: AssignMentorOption[]
   submitting?: boolean
 }>(), {

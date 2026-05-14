@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">我的简历 <span>My Resume</span></h1>
-            <p class="page-sub">管理您的简历版本，支持 PDF、Word 格式</p>
           </div>
           <a-button type="primary" size="large" @click="triggerUpload">上传新简历</a-button>
           <input

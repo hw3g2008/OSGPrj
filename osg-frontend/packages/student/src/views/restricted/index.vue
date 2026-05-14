@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">受限模式 <span>Restricted Mode</span></h1>
-            <p class="page-sub">账号状态受限时，仅保留有限可见页面作为静态占位。</p>
           </div>
         </div>
       </template>

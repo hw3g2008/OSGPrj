@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">AI简历分析 <span>AI Resume Analysis</span></h1>
-            <p class="page-sub">上传简历获取AI智能分析和改进建议</p>
           </div>
           <a-button type="primary" size="large" @click="uploadOpen = true">上传分析</a-button>
         </div>

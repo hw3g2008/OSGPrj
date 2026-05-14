@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="学员列表"
       title-en="Student List"
-      description="查看我教的学员和助教为我的全部学员信息及求职数据"
     />
 
     <a-card :bordered="false" class="filter-card">

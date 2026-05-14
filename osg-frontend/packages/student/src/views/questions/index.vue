@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">面试真题 <span>Interview Questions</span></h1>
-            <p class="page-sub">查看投递公司的真题，分享你的面试经历</p>
           </div>
           <a-button type="primary" size="large" @click="createOpen = true">填写真题</a-button>
         </div>

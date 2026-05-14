@@ -233,6 +233,67 @@ public class StudentProfileServiceImpl implements IStudentProfileService
             remarkFields.get("postgraduate"),
             remarkFields.get("studyPlan")));
         overlayValue(profile, "visaStatus", remarkFields.get("visaStatus"));
+
+        // §B2: 从 osg_student.lead_mentor_ids / assistant_ids 解析班主任 / 助教 user_id，
+        // 反查 sys_user.nick_name 注入到 profile，覆盖 osg_student_profile 的 dead column。
+        // 既保留单字符串字段做 fallback，也透出数组字段供前端 pill 渲染。
+        List<String> leadMentorNames = resolveStaffNames(parseCsvLongs(student.getLeadMentorIds()));
+        List<String> assistantNames = resolveStaffNames(parseCsvLongs(student.getAssistantIds()));
+        profile.put("leadMentor", leadMentorNames.isEmpty() ? "-" : String.join(", ", leadMentorNames));
+        profile.put("assistantName", assistantNames.isEmpty() ? "-" : String.join(", ", assistantNames));
+        profile.put("leadMentorNames", leadMentorNames);
+        profile.put("assistantNames", assistantNames);
+    }
+
+    private List<Long> parseCsvLongs(String csv)
+    {
+        if (StringUtils.isEmpty(csv))
+        {
+            return Collections.emptyList();
+        }
+        List<Long> ids = new ArrayList<>();
+        for (String token : csv.split(","))
+        {
+            String trimmed = token.trim();
+            if (trimmed.isEmpty())
+            {
+                continue;
+            }
+            try
+            {
+                ids.add(Long.parseLong(trimmed));
+            }
+            catch (NumberFormatException ignore)
+            {
+                // 跳过格式异常的脏数据，保持其它 id 解析继续
+            }
+        }
+        return ids;
+    }
+
+    private List<String> resolveStaffNames(List<Long> userIds)
+    {
+        if (userIds == null || userIds.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        List<String> names = new ArrayList<>(userIds.size());
+        for (Long uid : userIds)
+        {
+            SysUser user = userService.selectUserById(uid);
+            if (user == null)
+            {
+                continue;
+            }
+            String name = StringUtils.isNotEmpty(user.getNickName())
+                ? user.getNickName()
+                : user.getUserName();
+            if (StringUtils.isNotEmpty(name))
+            {
+                names.add(name);
+            }
+        }
+        return names;
     }
 
     private Map<String, Object> normalizeProfile(Map<String, Object> source)
@@ -246,6 +307,8 @@ public class StudentProfileServiceImpl implements IStudentProfileService
         profile.put("statusLabel", "正常");
         profile.put("leadMentor", stringValue(source.get("leadMentor")));
         profile.put("assistantName", stringValue(source.get("assistantName")));
+        profile.put("leadMentorNames", source.getOrDefault("leadMentorNames", Collections.emptyList()));
+        profile.put("assistantNames", source.getOrDefault("assistantNames", Collections.emptyList()));
         profile.put("school", stringValue(source.get("school")));
         profile.put("major", stringValue(source.get("major")));
         profile.put("graduationYear", stringValue(source.get("graduationYear")));

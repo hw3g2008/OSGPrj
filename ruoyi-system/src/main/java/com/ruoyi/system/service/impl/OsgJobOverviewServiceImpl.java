@@ -28,6 +28,27 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
 {
     private static final ZoneId ZONE_ID = ZoneId.systemDefault();
 
+    private static final Map<String, String> STAGE_LABELS = Map.ofEntries(
+        Map.entry("applied", "已投递"),
+        Map.entry("hirevue", "HireVue"),
+        Map.entry("first_round", "First Round"),
+        Map.entry("second_round", "Second Round"),
+        Map.entry("case_study", "Case Study"),
+        Map.entry("final", "Final"),
+        Map.entry("offer", "Offer"),
+        Map.entry("rejected", "已拒绝"),
+        Map.entry("withdrawn", "主动放弃")
+    );
+
+    private static final Map<String, String> COACHING_STATUS_LABELS = Map.of(
+        "none", "未申请",
+        "pending", "待分配导师",
+        "assigned", "已分配导师",
+        "coaching", "辅导中",
+        "completed", "已完成",
+        "cancelled", "已取消"
+    );
+
     @Autowired
     private OsgJobApplicationMapper jobApplicationMapper;
 
@@ -76,34 +97,6 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
     }
 
     @Override
-    public List<Map<String, Object>> selectHotCompanies(String studentName, String companyName, String currentStage, Long leadMentorId, String assignStatus)
-    {
-        List<OsgJobApplication> rows = selectApplications(studentName, companyName, currentStage, leadMentorId, assignStatus);
-        Map<String, List<OsgJobApplication>> grouped = rows.stream().collect(Collectors.groupingBy(
-            row -> defaultText(row.getCompanyName(), "-"),
-            LinkedHashMap::new,
-            Collectors.toList()
-        ));
-
-        return grouped.entrySet().stream()
-            .map(entry -> {
-                int applicationCount = entry.getValue().size();
-                int offerCount = (int) entry.getValue().stream().filter(row -> isStage(row, "offer")).count();
-                Map<String, Object> payload = new LinkedHashMap<>();
-                payload.put("companyName", entry.getKey());
-                payload.put("applicationCount", applicationCount);
-                payload.put("offerCount", offerCount);
-                payload.put("offerRate", percentOf(offerCount, applicationCount));
-                return payload;
-            })
-            .sorted(Comparator
-                .comparing((Map<String, Object> row) -> ((Integer) row.get("applicationCount"))).reversed()
-                .thenComparing(row -> String.valueOf(row.get("companyName"))))
-            .limit(5)
-            .toList();
-    }
-
-    @Override
     public List<Map<String, Object>> selectJobOverviewList(String studentName, String companyName, String currentStage, Long leadMentorId, String assignStatus)
     {
         List<OsgJobApplication> rows = selectApplications(studentName, companyName, currentStage, leadMentorId, assignStatus);
@@ -122,6 +115,171 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
             .sorted(Comparator.comparing(OsgJobApplication::getSubmittedAt, Comparator.nullsLast(Date::compareTo)).reversed())
             .map(this::toUnassignedPayload)
             .toList();
+    }
+
+    @Override
+    public List<Map<String, Object>> selectUnassignedCoachingList(String studentName, String companyName, Long leadMentorId)
+    {
+        // §B3 admin coaching 维度待分配列表：
+        //   1. 拉所有 coaching（status=pending + mentor_ids 为空 + requested_mentor_count > 0）
+        //   2. JOIN application/student 过滤 studentName/companyName/leadMentorId
+        //   3. 行维度 = coachingId，一条 application 多条 pending coaching 都展示
+        List<OsgCoaching> coachings = coachingMapper.selectCoachingList(new OsgCoaching());
+        if (coachings == null || coachings.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        // 拉 application（按 admin 端 unassigned 复用现有 SQL：studentName/companyName/leadMentorId 三选条件）
+        OsgJobApplication query = new OsgJobApplication();
+        query.setStudentName(studentName);
+        query.setCompanyName(companyName);
+        query.setLeadMentorId(leadMentorId);
+        List<OsgJobApplication> applications = jobApplicationMapper.selectJobApplicationList(query);
+        Map<Long, OsgJobApplication> applicationMap = applications == null ? Collections.emptyMap()
+            : applications.stream()
+                .filter(row -> row != null && row.getApplicationId() != null)
+                .collect(Collectors.toMap(OsgJobApplication::getApplicationId, row -> row, (a, b) -> a, LinkedHashMap::new));
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (OsgCoaching coaching : coachings)
+        {
+            if (!isPendingCoachingAssignment(coaching))
+            {
+                continue;
+            }
+            OsgJobApplication application = applicationMap.get(coaching.getApplicationId());
+            if (application == null)
+            {
+                continue;
+            }
+            result.add(toUnassignedCoachingPayload(application, coaching));
+        }
+        result.sort(Comparator.comparing(
+            (Map<String, Object> row) -> (Date) row.get("submittedAt"),
+            Comparator.nullsLast(Date::compareTo)).reversed());
+        return result;
+    }
+
+    private boolean isPendingCoachingAssignment(OsgCoaching coaching)
+    {
+        if (coaching == null)
+        {
+            return false;
+        }
+        String status = normalize(coaching.getStatus());
+        boolean pendingStatus = status == null || status.isEmpty()
+            || "pending".equals(status)
+            || "new".equals(status);
+        if (!pendingStatus)
+        {
+            return false;
+        }
+        if (defaultNumber(coaching.getRequestedMentorCount()) <= 0)
+        {
+            return false;
+        }
+        // mentor_ids / mentor_names / mentor_name 任意非空都视为已分配
+        return isBlank(coaching.getMentorIds())
+            && isBlank(coaching.getMentorNames())
+            && isBlank(coaching.getMentorName());
+    }
+
+    private boolean isBlank(String value)
+    {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private Map<String, Object> toUnassignedCoachingPayload(OsgJobApplication application, OsgCoaching coaching)
+    {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("coachingId", coaching.getCoachingId());
+        payload.put("applicationId", application.getApplicationId());
+        payload.put("studentId", application.getStudentId());
+        payload.put("studentName", application.getStudentName());
+        payload.put("companyName", application.getCompanyName());
+        payload.put("positionName", application.getPositionName());
+        payload.put("region", application.getRegion());
+        payload.put("city", coaching.getCity() != null ? coaching.getCity() : application.getCity());
+        // coaching 维度的核心字段：来自 coaching 不是 application
+        payload.put("interviewStage", coaching.getInterviewStage());
+        payload.put("interviewTime", coaching.getInterviewTime());
+        payload.put("requestedMentorCount", defaultNumber(coaching.getRequestedMentorCount()));
+        payload.put("companyInterviewer", coaching.getCompanyInterviewer());
+        payload.put("leadMentorName", application.getLeadMentorName());
+        payload.put("requestNote", coaching.getRequestNote());
+        payload.put("submittedAt", coaching.getCreateTime() != null ? coaching.getCreateTime() : application.getSubmittedAt());
+        return payload;
+    }
+
+    @Override
+    public Map<String, Object> assignMentorsByCoaching(Long coachingId, Map<String, Object> payload, String operator)
+    {
+        if (coachingId == null)
+        {
+            throw new ServiceException("coachingId不能为空");
+        }
+        OsgCoaching coaching = coachingMapper.selectCoachingByCoachingId(coachingId);
+        if (coaching == null)
+        {
+            throw new ServiceException("辅导申请不存在");
+        }
+        OsgJobApplication application = jobApplicationMapper.selectJobApplicationByApplicationId(coaching.getApplicationId());
+        if (application == null)
+        {
+            throw new ServiceException("求职申请不存在");
+        }
+
+        List<Long> mentorStaffIds = toLongList(payload.get("mentorIds"));
+        if (mentorStaffIds.isEmpty())
+        {
+            throw new ServiceException("请至少选择1位导师");
+        }
+        Integer requested = coaching.getRequestedMentorCount();
+        if (requested != null && requested > 0 && mentorStaffIds.size() != requested)
+        {
+            throw new ServiceException("导师数量必须等于申请导师数量");
+        }
+        List<Long> mentorUserIds = mentorStaffIds.stream()
+            .map(identityResolver::resolveUserIdByStaffId)
+            .toList();
+
+        List<String> mentorNames = toStringList(payload.get("mentorNames"));
+        String mentorNamesText = mentorNames.isEmpty() ? null : String.join(", ", mentorNames);
+        String assignNote = firstText(payload.get("assignNote"), payload.get("remark"));
+        Date now = new Date();
+
+        coaching.setMentorIds(mentorUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        coaching.setMentorNames(mentorNamesText);
+        coaching.setMentorName(mentorNames.isEmpty() ? null : mentorNames.get(0));
+        coaching.setStatus("assigned");
+        coaching.setTotalHours(defaultNumber(coaching.getTotalHours()));
+        coaching.setAssignNote(assignNote);
+        coaching.setAssignedAt(now);
+        coaching.setUpdateBy(operator);
+        coaching.setRemark(assignNote);
+
+        if (coachingMapper.updateCoaching(coaching) <= 0)
+        {
+            throw new ServiceException("分配导师保存失败");
+        }
+
+        // 同步 application.assign_status='assigned'（与旧逻辑一致），不动 coaching_status（§F1）
+        OsgJobApplication assignment = new OsgJobApplication();
+        assignment.setApplicationId(application.getApplicationId());
+        assignment.setAssignStatus("assigned");
+        assignment.setUpdateBy(operator);
+        assignment.setRemark(assignNote);
+        jobApplicationMapper.updateJobApplicationAssignment(assignment);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("coachingId", coachingId);
+        result.put("applicationId", application.getApplicationId());
+        result.put("status", "assigned");
+        result.put("mentorIds", mentorUserIds);
+        result.put("mentorNames", mentorNamesText);
+        result.put("assignNote", assignNote);
+        result.put("assignedAt", now);
+        return result;
     }
 
     public List<Map<String, Object>> selectJobOverviewExportRows(String studentName,
@@ -308,6 +466,7 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         payload.put("assignedStatus", application.getAssignStatus());
         payload.put("leadMentorName", application.getLeadMentorName());
         payload.put("stageUpdated", application.getStageUpdated());
+        payload.put("submittedAt", application.getSubmittedAt());
 
         if (coaching != null)
         {
@@ -339,6 +498,8 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         payload.put("studentName", application.getStudentName());
         payload.put("companyName", application.getCompanyName());
         payload.put("positionName", application.getPositionName());
+        payload.put("region", application.getRegion());
+        payload.put("city", application.getCity());
         payload.put("currentStage", application.getCurrentStage());
         payload.put("interviewTime", application.getInterviewTime());
         payload.put("requestedMentorCount", defaultNumber(application.getRequestedMentorCount()));
@@ -356,14 +517,17 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         payload.put("studentName", row.get("studentName"));
         payload.put("companyName", row.get("companyName"));
         payload.put("positionName", row.get("positionName"));
-        payload.put("currentStage", row.get("currentStage"));
+        payload.put("region", row.get("region"));
+        payload.put("city", row.get("city"));
+        payload.put("currentStage", toStageLabel(row.get("currentStage")));
         payload.put("interviewTime", row.get("interviewTime"));
         payload.put("assignedStatusLabel", "待分配");
         payload.put("datasetLabel", "待分配导师");
         payload.put("leadMentorName", row.get("leadMentorName"));
         payload.put("mentorName", null);
-        // §B.1：coachingStatus 为 raw 枚举值，用英文 'pending'（label 由前端 composable 映射）
-        payload.put("coachingStatus", "pending");
+        payload.put("mentorBackground", null);
+        payload.put("stageUpdatedLabel", "");
+        payload.put("coachingStatus", COACHING_STATUS_LABELS.get("pending"));
         payload.put("requestedMentorCount", row.get("requestedMentorCount"));
         payload.put("preferredMentorNames", row.get("preferredMentorNames"));
         payload.put("hoursUsed", 0);
@@ -380,18 +544,23 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
         payload.put("studentName", row.get("studentName"));
         payload.put("companyName", row.get("companyName"));
         payload.put("positionName", row.get("positionName"));
-        payload.put("currentStage", row.get("currentStage"));
+        payload.put("region", row.get("region"));
+        payload.put("city", row.get("city"));
+        payload.put("currentStage", toStageLabel(row.get("currentStage")));
         payload.put("interviewTime", row.get("interviewTime"));
         payload.put("assignedStatusLabel", toAssignedStatusLabel(row.get("assignedStatus")));
         payload.put("datasetLabel", "全部学员");
         payload.put("leadMentorName", row.get("leadMentorName"));
-        payload.put("mentorName", row.get("mentorName"));
-        payload.put("coachingStatus", row.get("coachingStatus"));
+        // 页面在 mentor 未分配时回退到 leadMentor，导出对齐这套兜底
+        payload.put("mentorName", coalesceText(row.get("mentorName"), row.get("leadMentorName")));
+        payload.put("mentorBackground", row.get("mentorBackground"));
+        payload.put("stageUpdatedLabel", toStageUpdatedLabel(row.get("stageUpdated")));
+        payload.put("coachingStatus", toCoachingStatusLabel(row.get("coachingStatus")));
         payload.put("requestedMentorCount", null);
         payload.put("preferredMentorNames", null);
         payload.put("hoursUsed", row.get("hoursUsed"));
         payload.put("feedbackSummary", row.get("feedbackSummary"));
-        payload.put("submittedAt", null);
+        payload.put("submittedAt", row.get("submittedAt"));
         return payload;
     }
 
@@ -504,6 +673,57 @@ public class OsgJobOverviewServiceImpl implements IOsgJobOverviewService
     {
         String normalized = normalize(assignedStatus == null ? null : String.valueOf(assignedStatus));
         return "assigned".equals(normalized) ? "已分配" : "待分配";
+    }
+
+    private String toStageLabel(Object stage)
+    {
+        if (stage == null)
+        {
+            return "";
+        }
+        String normalized = normalize(String.valueOf(stage));
+        if (normalized.isEmpty())
+        {
+            return "";
+        }
+        return STAGE_LABELS.getOrDefault(normalized, String.valueOf(stage));
+    }
+
+    private String toCoachingStatusLabel(Object status)
+    {
+        if (status == null)
+        {
+            return COACHING_STATUS_LABELS.get("none");
+        }
+        String normalized = normalize(String.valueOf(status));
+        if (normalized.isEmpty())
+        {
+            return COACHING_STATUS_LABELS.get("none");
+        }
+        return COACHING_STATUS_LABELS.getOrDefault(normalized, String.valueOf(status));
+    }
+
+    private String toStageUpdatedLabel(Object value)
+    {
+        if (value instanceof Boolean bool)
+        {
+            return bool ? "需确认" : "";
+        }
+        if (value == null)
+        {
+            return "";
+        }
+        return "true".equalsIgnoreCase(String.valueOf(value).trim()) ? "需确认" : "";
+    }
+
+    private String coalesceText(Object first, Object second)
+    {
+        String firstText = first == null ? "" : String.valueOf(first).trim();
+        if (!firstText.isEmpty())
+        {
+            return firstText;
+        }
+        return second == null ? null : String.valueOf(second);
     }
 
     private Long toLong(Object value)

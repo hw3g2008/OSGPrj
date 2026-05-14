@@ -134,7 +134,7 @@ import {
 } from '@osg/shared/api/admin/question'
 
 const questionColumns = [
-  { title: 'ID', dataIndex: 'questionCode', key: 'questionCode', width: 100 },
+  { title: 'ID', dataIndex: 'questionCode', key: 'questionCode', width: 100, fixed: 'left' as const },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
   { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 120 },
   { title: '部门', dataIndex: 'departmentName', key: 'departmentName', width: 100 },
@@ -143,7 +143,7 @@ const questionColumns = [
   { title: '题目数', dataIndex: 'questionCount', key: 'questionCount', width: 80 },
   { title: '来源', dataIndex: 'sourceType', key: 'sourceType', width: 110 },
   { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 90 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 90, fixed: 'right' as const },
 ]
 
 const tabs: Array<{ key: QuestionTab; label: string }> = [

@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">在线测试题库 <span>Online Test Bank</span></h1>
-            <p class="page-sub">HireVue、在线测评等在线测试资源</p>
           </div>
         </div>
       </template>

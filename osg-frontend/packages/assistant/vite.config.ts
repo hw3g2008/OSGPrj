@@ -3,9 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import { createApiProxyConfig } from '../../config/viteProxy'
 
+// §B7: mentor controller mapping 已去 /api/ 前缀，不再需要 /api/mentor passthrough。
+//      /assistant passthrough 保留，给 assistant 端跨命名空间调用（如有）使用。
 const apiProxy = createApiProxyConfig({
   authNamespace: 'assistant',
-  passthroughPrefixes: ['/api/mentor', '/assistant'],
+  passthroughPrefixes: ['/assistant'],
 })
 
 export default defineConfig({

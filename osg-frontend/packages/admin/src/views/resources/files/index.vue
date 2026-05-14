@@ -90,13 +90,13 @@ const fileTypeColorMap: Record<FileRow['fileType'], string> = {
 }
 
 const fileColumns = [
-  { title: 'ID', dataIndex: 'fileId', key: 'fileId', width: 80, customRender: ({ text }: { text: number }) => `#${text}` },
+  { title: 'ID', dataIndex: 'fileId', key: 'fileId', width: 80, customRender: ({ text }: { text: number }) => `#${text}`, fixed: 'left' as const },
   { title: '文件名', dataIndex: 'fileName', key: 'fileName', width: 200 },
   { title: '分类', dataIndex: 'className', key: 'className', width: 100 },
   { title: '大小', dataIndex: 'fileSize', key: 'fileSize', width: 100 },
   { title: '授权对象', dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 140 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
 ]
 
 const rows = ref<FileRow[]>([])

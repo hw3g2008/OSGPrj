@@ -27,6 +27,7 @@ public final class OsgClassReportConstants
     public static final String REFERENCE_TYPE_MOCK_INTERVIEW = "mock_interview";
     public static final String REFERENCE_TYPE_RELATION_TEST = "relation_test";
     public static final String REFERENCE_TYPE_COMMUNICATION_TEST = "communication_test";
+    public static final String REFERENCE_TYPE_MIDTERM_EXAM = "midterm_exam";
 
     // ── 基础课二级类型 ────────────────────────────────────────────────────────────
     public static final String BASE_CATEGORY_TECH = "tech";

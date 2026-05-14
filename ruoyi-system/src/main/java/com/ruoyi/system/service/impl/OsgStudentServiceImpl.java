@@ -23,6 +23,7 @@ import com.ruoyi.system.domain.OsgContract;
 import com.ruoyi.system.domain.OsgStaff;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgContractMapper;
+import com.ruoyi.system.mapper.OsgJobApplicationMapper;
 import com.ruoyi.system.mapper.OsgStaffMapper;
 import com.ruoyi.system.mapper.OsgStudentMapper;
 import com.ruoyi.system.service.IOsgContractService;
@@ -59,6 +60,9 @@ public class OsgStudentServiceImpl implements IOsgStudentService
 
     @Autowired
     private OsgStaffMapper staffMapper;
+
+    @Autowired
+    private OsgJobApplicationMapper jobApplicationMapper;
 
     @Override
     public OsgStudent selectStudentByStudentId(Long studentId)
@@ -156,6 +160,13 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         if (studentMapper.updateStudent(update) <= 0)
         {
             throw new ServiceException("学员信息更新失败");
+        }
+
+        // §B1: 学生班主任变更时，同步刷新该学生所有 application.lead_mentor_id，
+        // 否则班主任/助教端流转看不到该学生的辅导申请（osg_job_application.lead_mentor_id 与 osg_student.lead_mentor_id 不同步）
+        if (!Objects.equals(existing.getLeadMentorId(), update.getLeadMentorId()))
+        {
+            jobApplicationMapper.updateLeadMentorByStudent(studentId, update.getLeadMentorId());
         }
 
         syncStudentAccount(existing, update, operator);

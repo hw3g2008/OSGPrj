@@ -103,13 +103,13 @@ const showSendNoticeModal = ref(false)
 const activeNotice = ref<NoticeRow | null>(null)
 
 const columns = [
-  { title: 'ID', dataIndex: 'noticeId', key: 'noticeId' },
+  { title: 'ID', dataIndex: 'noticeId', key: 'noticeId', width: 120, fixed: 'left' as const },
   { title: '接收人', dataIndex: 'receiverLabel', key: 'receiverLabel' },
   { title: '类型', dataIndex: 'receiverType', key: 'receiverType' },
   { title: 'Tag', dataIndex: 'tag', key: 'tag' },
   { title: '标题', dataIndex: 'noticeTitle', key: 'noticeTitle' },
   { title: '更新时间', dataIndex: 'createTime', key: 'createTime' },
-  { title: '操作', dataIndex: 'action', key: 'action' }
+  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
 ]
 
 const loadNotices = async () => {

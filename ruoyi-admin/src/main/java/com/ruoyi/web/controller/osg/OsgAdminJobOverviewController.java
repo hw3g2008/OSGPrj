@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,17 +54,6 @@ public class OsgAdminJobOverviewController extends BaseController
                              @RequestParam(required = false) String assignStatus)
     {
         return AjaxResult.success(jobOverviewService.selectJobOverviewFunnel(studentName, companyName, currentStage, leadMentorId, assignStatus));
-    }
-
-    @PreAuthorize(JOB_OVERVIEW_ACCESS)
-    @GetMapping("/hot-companies")
-    public AjaxResult hotCompanies(@RequestParam(required = false) String studentName,
-                                   @RequestParam(required = false) String companyName,
-                                   @RequestParam(required = false) String currentStage,
-                                   @RequestParam(required = false) Long leadMentorId,
-                                   @RequestParam(required = false) String assignStatus)
-    {
-        return AjaxResult.success(jobOverviewService.selectHotCompanies(studentName, companyName, currentStage, leadMentorId, assignStatus));
     }
 
     @PreAuthorize(JOB_OVERVIEW_ACCESS)
@@ -124,6 +114,36 @@ public class OsgAdminJobOverviewController extends BaseController
             return AjaxResult.success("导师分配成功", result)
                 .put("status", result.get("status"))
                 .put("coachingStatus", result.get("coachingStatus"))
+                .put("mentorNames", result.get("mentorNames"));
+        }
+        catch (ServiceException ex)
+        {
+            return AjaxResult.error(ex.getMessage());
+        }
+    }
+
+    /** §B3: coaching 维度的待分配列表（一个 application 多条阶段级 coaching 全部展开为多行）*/
+    @PreAuthorize(JOB_OVERVIEW_ACCESS)
+    @GetMapping("/unassigned-coachings")
+    public AjaxResult unassignedCoachings(@RequestParam(required = false) String studentName,
+                                         @RequestParam(required = false) String companyName,
+                                         @RequestParam(required = false) Long leadMentorId)
+    {
+        List<Map<String, Object>> rows = jobOverviewService.selectUnassignedCoachingList(studentName, companyName, leadMentorId);
+        return AjaxResult.success().put("rows", rows);
+    }
+
+    /** §B3: 按 coachingId 精确分配导师，仅更新目标 coaching */
+    @PreAuthorize(JOB_OVERVIEW_ACCESS)
+    @PostMapping("/coaching/{coachingId}/assign-mentor")
+    public AjaxResult assignMentorByCoaching(@PathVariable Long coachingId, @RequestBody Map<String, Object> body)
+    {
+        try
+        {
+            Map<String, Object> result = jobOverviewService.assignMentorsByCoaching(coachingId, body, resolveOperator());
+            return AjaxResult.success("导师分配成功", result)
+                .put("coachingId", result.get("coachingId"))
+                .put("status", result.get("status"))
                 .put("mentorNames", result.get("mentorNames"));
         }
         catch (ServiceException ex)

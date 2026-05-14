@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">投诉与建议 <span>OSG Feedback Form</span></h1>
-            <p class="page-sub">请填写您对Mentor/RA/Lead Mentor的反馈</p>
           </div>
         </div>
       </template>

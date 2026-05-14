@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginBody;
@@ -68,7 +67,7 @@ public class OsgStudentAuthController
         ajax.put("user", user);
         ajax.put("roles", Collections.singleton("student"));
         ajax.put("permissions", Collections.emptySet());
-        ajax.put("mustChangePassword", SecurityUtils.matchesPassword(UserConstants.DEFAULT_PASSWORD, user.getPassword()));
+        ajax.put("mustChangePassword", "1".equals(user.getFirstLogin()));
 
         OsgStudent student = osgStudentMapper.selectStudentByEmail(user.getUserName());
         String accountStatus = "0";

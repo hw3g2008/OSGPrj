@@ -73,7 +73,9 @@ describe('mentor page smoke', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('模拟应聘管理')
-    expect(wrapper.find('input[placeholder="搜索学员姓名/ID"]').exists()).toBe(true)
+    // §baseline: mock-practice 筛选已按 RULE-B 改为「公司 / 类型 / 时间 / 是否上报课消」，
+    // 不再有"搜索学员姓名/ID"输入框；改为校验"请输入公司名称" placeholder 存在。
+    expect(wrapper.find('input[placeholder="请输入公司名称"]').exists()).toBe(true)
   })
 
   it('renders the profile page shell', async () => {

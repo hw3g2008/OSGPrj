@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page assistant-job-overview">
-    <PageHeader title-zh="学员求职总览" title-en="Job Overview" description="查看我管理的学员求职进度">
+    <PageHeader title-zh="学员求职总览" title-en="Job Overview">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>

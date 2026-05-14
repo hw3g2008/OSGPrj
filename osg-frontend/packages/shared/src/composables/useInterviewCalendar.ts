@@ -256,7 +256,7 @@ export function useInterviewCalendar(
       .slice(0, 3)
       .map((r) => ({
         label: formatMonthDay(r.interviewTime),
-        student: r.studentName || '-',
+        student: r.studentName || '',
         tagColor: isCoachingStatus(r.coachingStatus) ? 'processing' : 'red',
       }))
   })

@@ -301,8 +301,15 @@ const loadRegionLabelMap = async () => {
 }
 
 const dictColumns = computed(() => {
-  const base = [
-    { title: 'ID', dataIndex: 'dictCode', key: 'dictCode', width: 80 },
+  type DictTableColumn = {
+    title: string
+    dataIndex: string
+    key: string
+    width?: number
+    fixed?: 'left' | 'right'
+  }
+  const base: DictTableColumn[] = [
+    { title: 'ID', dataIndex: 'dictCode', key: 'dictCode', width: 80, fixed: 'left' },
     { title: currentNameHeader.value, dataIndex: 'dictLabel', key: 'dictLabel' },
   ]
   if (selectedTab.value === 'osg_company_name') {
@@ -321,7 +328,7 @@ const dictColumns = computed(() => {
     { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
     { title: '排序', dataIndex: 'dictSort', key: 'dictSort', width: 80 },
     { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
-    { title: '操作', dataIndex: 'action', key: 'action', width: 180 },
+    { title: '操作', dataIndex: 'action', key: 'action', width: 180, fixed: 'right' },
   )
   return base
 })

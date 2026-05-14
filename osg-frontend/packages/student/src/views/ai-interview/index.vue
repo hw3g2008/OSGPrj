@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">AI面试分析 <span>AI Interview Analysis</span></h1>
-            <p class="page-sub">上传面试录音或视频，获取AI智能分析和改进建议</p>
           </div>
           <a-button type="primary" size="large" @click="uploadOpen = true">上传面试</a-button>
         </div>

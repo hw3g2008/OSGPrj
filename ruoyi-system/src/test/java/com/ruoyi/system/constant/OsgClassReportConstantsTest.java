@@ -31,6 +31,7 @@ class OsgClassReportConstantsTest
         assertEquals("mock_interview", OsgClassReportConstants.REFERENCE_TYPE_MOCK_INTERVIEW);
         assertEquals("relation_test", OsgClassReportConstants.REFERENCE_TYPE_RELATION_TEST);
         assertEquals("communication_test", OsgClassReportConstants.REFERENCE_TYPE_COMMUNICATION_TEST);
+        assertEquals("midterm_exam", OsgClassReportConstants.REFERENCE_TYPE_MIDTERM_EXAM);
     }
 
     @Test

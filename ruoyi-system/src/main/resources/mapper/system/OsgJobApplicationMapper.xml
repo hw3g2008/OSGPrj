@@ -168,7 +168,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 when 'pending' then 'warning'
                 else 'default'
             end as coachingColor,
-            '-' as mentor,
+            coalesce(coaching_ref.mentor_name, '-') as mentor,
+            coalesce(coaching_ref.mentor_name, '') as mentorName,
+            coalesce(coaching_ref.mentor_names, coaching_ref.mentor_name, '') as mentorNames,
             '-' as mentorMeta,
             '-' as hoursFeedback,
             '-' as feedback,
@@ -178,6 +180,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             coalesce(app.remark, '') as progressNote
         from osg_job_application app
         left join osg_position position_ref on position_ref.position_id = app.position_id
+        left join osg_coaching coaching_ref on coaching_ref.application_id = app.application_id
         <where>
             app.student_id = #{userId}
             <!-- 取消投递（cancelled）记录从「我的求职」列表移出；'withdrawn' 是 FIX-10 migration 前的历史脏数据，向后兼容一起排除 -->
@@ -208,8 +211,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="positionId != null">
                 and position_id = #{positionId}
             </if>
+            <!-- §B4: studentName 入参语义扩展，匹配学员姓名/邮箱/学号三选一；参数名保留以兼容现有调用 -->
             <if test="studentName != null and studentName != ''">
-                and student_name like concat('%', #{studentName}, '%')
+                and (
+                    student_name like concat('%', #{studentName}, '%')
+                    or student_id in (
+                        select student_id from osg_student
+                        where email like concat('%', #{studentName}, '%')
+                           or cast(student_id as char) = #{studentName}
+                    )
+                )
             </if>
             <if test="companyName != null and companyName != ''">
                 and company_name = #{companyName}
@@ -355,6 +366,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_time = sysdate()
         </set>
         where application_id = #{applicationId}
+    </update>
+
+    <!-- §B1: 同步刷新该学生所有 application 的班主任 -->
+    <update id="updateLeadMentorByStudent">
+        update osg_job_application
+        set lead_mentor_id = #{leadMentorUserId},
+            update_time = sysdate()
+        where student_id = #{studentId}
+    </update>
+
+    <!-- §B1: 仅 NULL 时兜底补班主任，不覆盖已有值 -->
+    <update id="updateLeadMentorByApplicationIfNull">
+        update osg_job_application
+        set lead_mentor_id = #{leadMentorUserId},
+            update_time = sysdate()
+        where application_id = #{applicationId}
+          and lead_mentor_id is null
     </update>
 
 </mapper>

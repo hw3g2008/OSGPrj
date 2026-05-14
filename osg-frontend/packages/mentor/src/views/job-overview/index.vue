@@ -4,7 +4,6 @@
       <PageHeader
         title-zh="学员求职总览"
         title-en="Job Overview"
-        description="查看分配给我的学员求职进度"
       >
         <template #actions>
           <a-button @click="handleExport">
@@ -292,7 +291,7 @@ async function onReportSubmitted() {
 }
 
 async function loadJobOverviewRows() {
-  const res = await http.get('/api/mentor/job-overview/list')
+  const res = await http.get('/mentor/job-overview/list')
   const rows = Array.isArray(res?.rows) ? res.rows : []
   allRows.value = rows.map((record: Record<string, any>) => normalizeJobOverview(record))
 }
@@ -310,7 +309,7 @@ function downloadBlob(filename: string, blob: Blob) {
 
 async function handleExport() {
   try {
-    const blob = await http.get('/api/mentor/job-overview/export', {
+    const blob = await http.get('/mentor/job-overview/export', {
       params: {
         companyName: filters.companyName,
         currentStage: filters.currentStage,
@@ -337,7 +336,8 @@ onMounted(async () => {
 
 .text-muted { color:#94A3B8; }
 
-:deep(.ant-table-row.row-new > td) { background:linear-gradient(90deg,#FEE2E2,#FEF2F2); border-left:4px solid #EF4444; }
-:deep(.ant-table-row.row-coaching > td) { background:#F3E8FF; }
+/* §B6: 与 lead-mentor 端 row-highlight--* 样式对齐，去掉红色竖线，使用柔和单色背景 */
+:deep(.ant-table-row.row-new > td) { background:#fff7ed; }
+:deep(.ant-table-row.row-coaching > td) { background:#f3e8ff; }
 :deep(.ant-table-row.row-ended > td) { opacity:0.7; }
 </style>

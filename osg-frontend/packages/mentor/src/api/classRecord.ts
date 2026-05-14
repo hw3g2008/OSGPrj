@@ -34,13 +34,13 @@ export interface ClassRecordQuery {
 }
 
 export function listClassRecords(query?: ClassRecordQuery) {
-  return http.get<{ rows: ClassRecord[]; total: number }>('/api/mentor/class-records/list', { params: query })
+  return http.get<{ rows: ClassRecord[]; total: number }>('/mentor/class-records/list', { params: query })
 }
 
 export function getClassRecord(id: number) {
-  return http.get<ClassRecord>(`/api/mentor/class-records/${id}`)
+  return http.get<ClassRecord>(`/mentor/class-records/${id}`)
 }
 
 export function addClassRecord(data: Partial<ClassRecord>) {
-  return http.post('/api/mentor/class-records', data)
+  return http.post('/mentor/class-records', data)
 }

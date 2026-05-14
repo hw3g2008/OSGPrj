@@ -3,13 +3,10 @@ import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import { createApiProxyConfig } from '../../config/viteProxy'
 
-const apiProxy = createApiProxyConfig({
-  authNamespace: 'mentor',
-  passthroughPrefixes: ['/api/mentor'],
-  customRewritePrefixes: {
-    '/api/mentor/forgot-password': (path: string) => path.replace(/^\/api/, ''),
-  },
-})
+// §B7: mentor 端 controller mapping 已统一为 /mentor/...（不带 /api/ 前缀），
+// 与 lead-mentor / assistant / admin 一致。所有请求走默认 /api 兜底 strip 即可，
+// 不再需要 authNamespace / passthroughPrefixes / customRewritePrefixes 特殊处理。
+const apiProxy = createApiProxyConfig()
 
 export default defineConfig({
   plugins: [vue()],

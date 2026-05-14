@@ -177,7 +177,7 @@ const rowClassMap: Record<string, string> = {
 }
 
 const classColumns = [
-  { title: '课程ID', dataIndex: 'classId', key: 'classId', width: 80 },
+  { title: '课程ID', dataIndex: 'classId', key: 'classId', width: 80, fixed: 'left' as const },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
   { title: '课程类型', dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 110 },
@@ -186,7 +186,7 @@ const classColumns = [
   { title: '来源', dataIndex: 'sourceLabel', key: 'sourceLabel', width: 90 },
   { title: '状态', dataIndex: 'displayStatusLabel', key: 'displayStatusLabel', width: 80 },
   { title: '评价', dataIndex: 'rate', key: 'rate', width: 70 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
 ]
 
 const keyword = ref('')

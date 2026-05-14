@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">人际关系沟通记录 <span>Communication Records</span></h1>
-            <p class="page-sub">查看与导师/班主任的沟通历史记录</p>
           </div>
         </div>
       </template>

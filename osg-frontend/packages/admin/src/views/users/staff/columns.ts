@@ -1,5 +1,5 @@
 export const staffColumns = [
-  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90 },
+  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90, fixed: 'left' as const },
   { title: '英文名', dataIndex: 'staffName', key: 'staffName', width: 130, ellipsis: true },
   { title: '联系方式', dataIndex: 'contact', key: 'contact', width: 160 },
   { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 80, align: 'center' as const },
@@ -15,7 +15,7 @@ export const staffColumns = [
 
 /** 超管可见的列（含评级列，按评级降序排序） */
 export const staffColumnsWithRating = [
-  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90 },
+  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90, fixed: 'left' as const },
   { title: '英文名', dataIndex: 'staffName', key: 'staffName', width: 130, ellipsis: true },
   { title: '联系方式', dataIndex: 'contact', key: 'contact', width: 160 },
   { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 80, align: 'center' as const },
@@ -31,7 +31,7 @@ export const staffColumnsWithRating = [
 ]
 
 export const staffBlacklistColumns = [
-  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90 },
+  { title: 'ID', dataIndex: 'staffId', key: 'staffId', width: 90, fixed: 'left' as const },
   { title: '英文名', dataIndex: 'staffName', key: 'staffName', width: 130, ellipsis: true },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
   { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 80, align: 'center' as const },

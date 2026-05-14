@@ -66,7 +66,7 @@ public class OsgMockPracticeController extends BaseController
         }
     }
 
-    @GetMapping("/api/mentor/mock-practice/list")
+    @GetMapping("/mentor/mock-practice/list")
     public TableDataInfo mentorList(OsgMockPractice query)
     {
         startPage();
@@ -74,7 +74,7 @@ public class OsgMockPracticeController extends BaseController
         return getDataTable(mockPracticeService.selectMentorMockPracticeList(query));
     }
 
-    @PutMapping("/api/mentor/mock-practice/{id}/confirm")
+    @PutMapping("/mentor/mock-practice/{id}/confirm")
     public AjaxResult confirm(@PathVariable Long id)
     {
         // §C.2 改造：调共用 IOsgMockPracticeService.confirmAssignment（原子 SQL 防并发）
@@ -93,7 +93,7 @@ public class OsgMockPracticeController extends BaseController
      * 走 mentor 关系校验（hasMentorRelation），返回 referenceType + classRecords + reportedLessonCount + latestRating，
      * 给前端 §5.3 上报课消入口预填 + 已上报课消聚合显示用。
      */
-    @GetMapping("/api/mentor/mock-practice/{id}")
+    @GetMapping("/mentor/mock-practice/{id}")
     public AjaxResult mentorDetail(@PathVariable Long id)
     {
         try

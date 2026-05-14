@@ -131,13 +131,13 @@ import { normalizeMenuTree } from './menuTree'
 import dayjs from 'dayjs'
 
 const roleColumns = [
-  { title: 'ID', dataIndex: 'roleId', key: 'roleId', width: 80 },
+  { title: 'ID', dataIndex: 'roleId', key: 'roleId', width: 80, fixed: 'left' as const },
   { title: '角色名称', dataIndex: 'roleName', key: 'roleName' },
   { title: '角色描述', dataIndex: 'remark', key: 'remark' },
   { title: '权限模块', dataIndex: 'menuNames', key: 'menuNames', width: 300 },
   { title: '员工数', dataIndex: 'userCount', key: 'userCount', width: 80 },
   { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 220 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 220, fixed: 'right' as const },
 ]
 
 const pillStyle = (colorType: PermissionColorType) => {

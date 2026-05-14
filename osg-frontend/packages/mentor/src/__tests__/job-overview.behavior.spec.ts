@@ -73,7 +73,7 @@ describe('mentor job overview source contract (RULE-A 批次 3)', () => {
   it('does not import or render InterviewCalendar', () => {
     expect(indexSource).not.toContain('InterviewCalendar')
     expect(indexSource).not.toContain('allCalendarEvents')
-    expect(indexSource).not.toContain('/api/mentor/job-overview/calendar')
+    expect(indexSource).not.toContain('/mentor/job-overview/calendar')
   })
 
   it('does not render a job detail modal or confirm/查看详情 actions', () => {
@@ -93,8 +93,10 @@ describe('mentor job overview source contract (RULE-A 批次 3)', () => {
     expect(indexSource).toMatch(/学员\$\{record\.studentId\}|`学员\$\{record\.studentId\}`/)
   })
 
-  it('describes the page as "查看分配给我的学员求职进度"', () => {
-    expect(indexSource).toContain('查看分配给我的学员求职进度')
+  it('renders the RULE-A page header "学员求职总览 Job Overview"', () => {
+    // §baseline: 旧副标题"查看分配给我的学员求职进度"已删除，view 现采用 PageHeader 标题。
+    expect(indexSource).toContain('学员求职总览')
+    expect(indexSource).toContain('Job Overview')
   })
 
   it('exports current list with 4 filter params', () => {
@@ -104,7 +106,7 @@ describe('mentor job overview source contract (RULE-A 批次 3)', () => {
   })
 
   it('loads only the list endpoint on mount (no calendar fetch)', () => {
-    expect(indexSource).toContain('/api/mentor/job-overview/list')
+    expect(indexSource).toContain('/mentor/job-overview/list')
     expect(indexSource).not.toContain('getMentorJobOverviewCalendar')
   })
 })

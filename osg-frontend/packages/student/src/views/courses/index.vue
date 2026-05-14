@@ -6,7 +6,6 @@
           <span class="page-title__zh">{{ classRecordsMeta.pageSummary.titleZh }}</span>
           <span class="page-title__en">{{ classRecordsMeta.pageSummary.titleEn }}</span>
         </h1>
-        <p class="page-sub">{{ classRecordsMeta.pageSummary.subtitle }}</p>
       </div>
     </div>
 

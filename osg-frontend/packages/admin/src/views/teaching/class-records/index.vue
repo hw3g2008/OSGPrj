@@ -175,15 +175,15 @@ import ClassRecordDetailModal from './components/ClassRecordDetailModal.vue'
 import ClassRecordReviewModal from './components/ClassRecordReviewModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 
-// 课时费列删除 — 用户需求「上报课程记录的页面不显示课时费」（admin 端同样适用）
 const recordColumns = [
-  { title: '记录ID', dataIndex: 'recordId', key: 'recordId', width: 90 },
+  { title: '记录ID', dataIndex: 'recordId', key: 'recordId', width: 90, fixed: 'left' as const },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
   { title: '申报人', dataIndex: 'mentorName', key: 'mentorName', width: 120 },
   { title: '辅导内容', dataIndex: 'coachingType', key: 'coachingType', width: 130 },
   { title: '课程内容', dataIndex: 'courseContent', key: 'courseContent', width: 120 },
   { title: '上课日期', dataIndex: 'classDate', key: 'classDate', width: 110 },
   { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: '课时费', dataIndex: 'courseFee', key: 'courseFee', width: 100 },
   { title: '学员评价', dataIndex: 'studentRating', key: 'studentRating', width: 90 },
   { title: '审核状态', dataIndex: 'status', key: 'status', width: 100 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },

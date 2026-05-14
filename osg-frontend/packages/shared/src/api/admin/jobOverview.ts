@@ -27,13 +27,6 @@ export interface JobOverviewFunnelNode {
   rate: number
 }
 
-export interface HotCompanyItem {
-  companyName: string
-  applicationCount: number
-  offerCount: number
-  offerRate: number
-}
-
 export interface JobOverviewRow {
   applicationId: number
   studentId: number
@@ -66,6 +59,33 @@ export interface UnassignedJobOverviewRow {
   preferredMentorNames?: string
   leadMentorName?: string
   submittedAt?: string
+}
+
+/** §B3: coaching 维度待分配行（行主键 coachingId，时间字段来自 osg_coaching.create_time） */
+export interface UnassignedCoachingRow {
+  coachingId: number
+  applicationId: number
+  studentId: number
+  studentName?: string
+  companyName: string
+  positionName: string
+  region?: string
+  city?: string
+  interviewStage: string
+  interviewTime?: string | null
+  requestedMentorCount: number
+  companyInterviewer?: string | null
+  leadMentorName?: string | null
+  requestNote?: string | null
+  submittedAt?: string
+  /** 兼容：学生申请辅导时可能填的意向导师姓名（CSV）；coaching 维度暂未透出，保留位仅供前端 fallback */
+  preferredMentorNames?: string
+}
+
+export interface AssignMentorByCoachingPayload {
+  mentorIds: number[]
+  mentorNames?: string[]
+  assignNote?: string
 }
 
 export interface AssignMentorPayload {
@@ -112,12 +132,6 @@ export function getJobOverviewFunnel(filters: JobOverviewFilters = {}) {
   })
 }
 
-export function getHotCompanies(filters: JobOverviewFilters = {}) {
-  return http.get<HotCompanyItem[]>('/admin/job-overview/hot-companies', {
-    params: toRequestParams(filters)
-  })
-}
-
 export function getJobOverviewList(filters: JobOverviewFilters = {}) {
   return http.get<{ rows: JobOverviewRow[] }>('/admin/job-overview/list', {
     params: toRequestParams(filters)
@@ -128,6 +142,18 @@ export function getUnassignedJobOverviewList(filters: Omit<JobOverviewFilters, '
   return http.get<{ rows: UnassignedJobOverviewRow[] }>('/admin/job-overview/unassigned', {
     params: toRequestParams(filters)
   })
+}
+
+/** §B3: 后台 coaching 维度待分配列表，行主键 coachingId */
+export function getUnassignedCoachingList(filters: Omit<JobOverviewFilters, 'assignStatus' | 'currentStage'> = {}) {
+  return http.get<{ rows: UnassignedCoachingRow[] }>('/admin/job-overview/unassigned-coachings', {
+    params: toRequestParams(filters)
+  })
+}
+
+/** §B3: 按 coachingId 精确分配导师 */
+export function assignMentorsByCoaching(coachingId: number, payload: AssignMentorByCoachingPayload) {
+  return http.post(`/admin/job-overview/coaching/${coachingId}/assign-mentor`, payload)
 }
 
 export function exportJobOverview(filters: JobOverviewExportFilters = {}) {

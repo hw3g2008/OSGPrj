@@ -142,7 +142,7 @@ const sourceColorMap: Record<string, string> = {
 }
 
 const settlementColumns = [
-  { title: '课程ID', dataIndex: 'recordCode', key: 'recordCode', width: 100 },
+  { title: '课程ID', dataIndex: 'recordCode', key: 'recordCode', width: 100, fixed: 'left' as const },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
   { title: '课程类型', dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 100 },
@@ -152,7 +152,7 @@ const settlementColumns = [
   { title: '来源', dataIndex: 'source', key: 'source', width: 90 },
   { title: '状态', dataIndex: 'paymentStatus', key: 'paymentStatus', width: 80 },
   { title: '支付日期', dataIndex: 'paymentDate', key: 'paymentDate', width: 100 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 90 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 90, fixed: 'right' as const },
 ]
 
 const rows = ref<FinanceSettlementRow[]>([])

@@ -3,6 +3,7 @@ package com.ruoyi.system.service.impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +15,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.ruoyi.common.core.domain.entity.SysDictData;
+import com.ruoyi.system.mapper.SysDictDataMapper;
 import com.github.pagehelper.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -83,6 +86,15 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     @Autowired
     private IOsgStudentService studentService;
+
+    @Autowired
+    private SysDictDataMapper sysDictDataMapper;
+
+    // §C2: reference label 字典化常量 — 字典 type 名与 11-class-report-label-dict.sql 一致
+    private static final String DICT_INTERVIEW_STAGE = "osg_interview_stage";
+    private static final String DICT_PRACTICE_TYPE = "osg_practice_type";
+    private static final String DICT_MOCK_PRACTICE_STATUS = "osg_mock_practice_status";
+
 
     @Override
     public List<OsgClassRecord> selectMentorClassRecordList(OsgClassRecord record)
@@ -348,7 +360,8 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         }
         if (OsgClassReportConstants.REFERENCE_TYPE_MOCK_INTERVIEW.equals(type)
             || OsgClassReportConstants.REFERENCE_TYPE_RELATION_TEST.equals(type)
-            || OsgClassReportConstants.REFERENCE_TYPE_COMMUNICATION_TEST.equals(type))
+            || OsgClassReportConstants.REFERENCE_TYPE_COMMUNICATION_TEST.equals(type)
+            || OsgClassReportConstants.REFERENCE_TYPE_MIDTERM_EXAM.equals(type))
         {
             return buildMockPracticeCandidates(currentUserId, normalizedEnd, studentId, type);
         }
@@ -483,10 +496,11 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     private String buildApplicationLabel(OsgJobApplication a)
     {
+        // §C2: 阶段走 osg_interview_stage 字典中文 label；时间格式化为 yyyy-MM-dd HH:mm
         String company = nullToDash(a.getCompanyName());
         String pos = nullToDash(a.getPositionName());
-        String stage = nullToDash(a.getCurrentStage());
-        String interview = a.getInterviewTime() == null ? "-" : a.getInterviewTime().toString();
+        String stage = resolveDictLabel(DICT_INTERVIEW_STAGE, a.getCurrentStage());
+        String interview = formatDateForLabel(a.getInterviewTime());
         return company + " / " + pos + " / " + stage + " / " + interview;
     }
 
@@ -575,24 +589,63 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
 
     private String buildJobCoachingLabel(OsgCoaching c, OsgJobApplication app)
     {
+        // §C2: 阶段走 osg_interview_stage 字典；时间格式化 yyyy-MM-dd HH:mm
         String company = nullToDash(app == null ? null : app.getCompanyName());
         String pos = nullToDash(app == null ? null : app.getPositionName());
-        String stage = nullToDash(c.getInterviewStage() != null
+        String rawStage = c.getInterviewStage() != null
             ? c.getInterviewStage()
-            : (app == null ? null : app.getCurrentStage()));
+            : (app == null ? null : app.getCurrentStage());
+        String stage = resolveDictLabel(DICT_INTERVIEW_STAGE, rawStage);
         Date when = c.getInterviewTime() != null
             ? c.getInterviewTime()
             : (app == null ? null : app.getInterviewTime());
-        String interview = when == null ? "-" : when.toString();
+        String interview = formatDateForLabel(when);
         return company + " / " + pos + " / " + stage + " / " + interview;
     }
 
     private String buildMockPracticeLabel(OsgMockPractice p)
     {
-        String type = nullToDash(p.getPracticeType());
-        String submitted = p.getSubmittedAt() == null ? "-" : p.getSubmittedAt().toString();
-        String status = nullToDash(p.getStatus());
+        // §C2: 类型 / 状态走字典；提交时间格式化 yyyy-MM-dd HH:mm
+        String type = resolveDictLabel(DICT_PRACTICE_TYPE, p.getPracticeType());
+        String submitted = formatDateForLabel(p.getSubmittedAt());
+        String status = resolveDictLabel(DICT_MOCK_PRACTICE_STATUS, p.getStatus());
         return type + " / " + submitted + " / " + status;
+    }
+
+    /**
+     * §C2: 字典反查辅助方法。
+     * 找到则返回中文 label；字典 miss / value 为空时降级到原始 value（兜底 "-"），
+     * 不破坏现有行为，方便字典初始化前的灰度。
+     */
+    private String resolveDictLabel(String dictType, String dictValue)
+    {
+        if (dictValue == null || dictValue.isBlank())
+        {
+            return "-";
+        }
+        try
+        {
+            String label = sysDictDataMapper.selectDictLabel(dictType, dictValue);
+            if (label != null && !label.isBlank())
+            {
+                return label;
+            }
+        }
+        catch (RuntimeException ignore)
+        {
+            // 字典服务异常时不影响主流程
+        }
+        return dictValue;
+    }
+
+    private String formatDateForLabel(Date value)
+    {
+        if (value == null)
+        {
+            return "-";
+        }
+        // SimpleDateFormat 非线程安全，每次实例化
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm").format(value);
     }
 
     private String nullToDash(String s)
@@ -1598,6 +1651,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             case "technical" -> "技术的";
             case "behavioral" -> "行为训练";
             case "resume_update" -> "简历更新";
+            case "resume_revision" -> "新简历"; // baseline: spec 期望"新简历"，过去走 default 返回原值导致漂移
             case "mock_interview" -> "模拟面试的课程";
             case "networking_midterm" -> "人际关系的课程";
             case "mock_midterm" -> "模拟期中考试";

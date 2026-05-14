@@ -155,7 +155,7 @@ public class OsgClassRecordController extends BaseController
         }
     }
 
-    @GetMapping("/api/mentor/class-records/list")
+    @GetMapping("/mentor/class-records/list")
     public TableDataInfo mentorList(OsgClassRecord query)
     {
         startPage();
@@ -163,13 +163,13 @@ public class OsgClassRecordController extends BaseController
         return getDataTable(classRecordService.selectMentorClassRecordList(query));
     }
 
-    @GetMapping("/api/mentor/class-records/{id}")
+    @GetMapping("/mentor/class-records/{id}")
     public AjaxResult getInfo(@PathVariable Long id)
     {
         return success(classRecordService.selectMentorClassRecordById(id));
     }
 
-    @PostMapping("/api/mentor/class-records")
+    @PostMapping("/mentor/class-records")
     public AjaxResult add(@RequestBody OsgClassRecord record)
     {
         record.setMentorId(SecurityUtils.getUserId());
@@ -178,14 +178,14 @@ public class OsgClassRecordController extends BaseController
         return toAjax(classRecordService.createMentorClassRecord(record));
     }
 
-    @GetMapping("/api/mentor/class-records/reportable-students")
+    @GetMapping("/mentor/class-records/reportable-students")
     public AjaxResult mentorReportableStudents()
     {
         return AjaxResult.success(classRecordService.listReportableStudents(
             SecurityUtils.getUserId(), OsgClassReportConstants.END_MENTOR));
     }
 
-    @GetMapping("/api/mentor/class-records/reference-candidates")
+    @GetMapping("/mentor/class-records/reference-candidates")
     public AjaxResult mentorReferenceCandidates(@RequestParam(value = "studentId", required = false) Long studentId,
                                                 @RequestParam(value = "referenceType", required = false) String referenceType)
     {

@@ -141,5 +141,5 @@ export function getLeadMentorJobOverviewCalendar() {
 }
 
 export function getMentorJobOverviewCalendar() {
-  return http.get<LeadMentorCalendarRecord[]>('/api/mentor/job-overview/calendar')
+  return http.get<LeadMentorCalendarRecord[]>('/mentor/job-overview/calendar')
 }

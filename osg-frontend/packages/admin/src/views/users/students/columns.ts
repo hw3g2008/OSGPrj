@@ -1,5 +1,5 @@
 export const studentColumns = [
-  { title: 'ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
+  { title: 'ID', dataIndex: 'studentId', key: 'studentId', width: 80, fixed: 'left' as const },
   { title: '英文姓名', dataIndex: 'studentName', key: 'studentName', width: 120 },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 160 },
   { title: '班主任', dataIndex: 'leadMentorName', key: 'leadMentorName', width: 100 },
@@ -17,7 +17,7 @@ export const studentColumns = [
 ]
 
 export const blacklistColumns = [
-  { title: 'ID', dataIndex: 'studentId', key: 'studentId', width: 80 },
+  { title: 'ID', dataIndex: 'studentId', key: 'studentId', width: 80, fixed: 'left' as const },
   { title: '英文姓名', dataIndex: 'studentName', key: 'studentName', width: 120 },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 160 },
   { title: '班主任', dataIndex: 'leadMentorName', key: 'leadMentorName', width: 100 },

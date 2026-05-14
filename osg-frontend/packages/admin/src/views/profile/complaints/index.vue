@@ -101,13 +101,13 @@ const statusFilter = ref<string>('')
 const typeFilter = ref<string>('')
 
 const columns = [
-  { title: 'ID', dataIndex: 'complaintId', key: 'complaintId' },
+  { title: 'ID', dataIndex: 'complaintId', key: 'complaintId', width: 120, fixed: 'left' as const },
   { title: '学员', dataIndex: 'studentName', key: 'studentName' },
   { title: '类型', dataIndex: 'complaintType', key: 'complaintType' },
   { title: '标题', dataIndex: 'complaintTitle', key: 'complaintTitle' },
   { title: '提交时间', dataIndex: 'submitTime', key: 'submitTime' },
   { title: '状态', dataIndex: 'processStatus', key: 'processStatus' },
-  { title: '操作', dataIndex: 'action', key: 'action' }
+  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
 ]
 
 const typeLabelMap: Record<string, string> = {

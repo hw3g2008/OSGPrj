@@ -43,28 +43,17 @@ afterEach(() => {
 })
 
 describe('mentor vite proxy contract', () => {
-  it('rewrites mentor auth routes to the backend mentor namespace', async () => {
+  // §B7: 后端 controller mapping 已统一为 /mentor/...（不带 /api/ 前缀）。
+  // 前端 axios baseURL='/api' + url='/mentor/...' → 浏览器请求 /api/mentor/...，vite proxy
+  // 走 /api 默认 strip 后送到 backend /mentor/...，无需 mentor 端特殊路由配置。
+
+  it('strips /api prefix so backend receives /mentor/* namespace', async () => {
     const proxy = await loadProxy()
 
-    expect(proxy['/api/mentor/login'].target).toBe('http://127.0.0.1:28080')
-    expect(proxy['/api/mentor/login'].rewrite?.('/api/mentor/login')).toBe('/mentor/login')
-    expect(proxy['/api/mentor/getInfo'].rewrite?.('/api/mentor/getInfo')).toBe('/mentor/getInfo')
-  })
-
-  it('keeps mentor shared /api/mentor APIs on the backend /api/mentor namespace', async () => {
-    const proxy = await loadProxy()
-
-    expect(proxy['/api/mentor'].target).toBe('http://127.0.0.1:28080')
-    expect(proxy['/api/mentor'].rewrite?.('/api/mentor/profile') ?? '/api/mentor/profile').toBe('/api/mentor/profile')
-  })
-
-  it('rewrites forgot-password requests by stripping only the /api prefix', async () => {
-    const proxy = await loadProxy()
-
-    expect(proxy['/api/mentor/forgot-password'].target).toBe('http://127.0.0.1:28080')
-    expect(proxy['/api/mentor/forgot-password'].rewrite?.('/api/mentor/forgot-password/send-code')).toBe(
-      '/mentor/forgot-password/send-code',
-    )
+    expect(proxy['/api'].target).toBe('http://127.0.0.1:28080')
+    expect(proxy['/api'].rewrite?.('/api/mentor/login')).toBe('/mentor/login')
+    expect(proxy['/api'].rewrite?.('/api/mentor/class-records/reference-candidates')).toBe('/mentor/class-records/reference-candidates')
+    expect(proxy['/api'].rewrite?.('/api/mentor/forgot-password/send-code')).toBe('/mentor/forgot-password/send-code')
   })
 
   it('keeps preview proxy parity for local verification', async () => {

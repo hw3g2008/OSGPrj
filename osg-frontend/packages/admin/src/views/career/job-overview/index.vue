@@ -50,7 +50,7 @@
     <!-- 筛选条件 -->
     <a-card :bordered="false">
       <div style="display: flex; gap: var(--osg-space-3); flex-wrap: wrap;">
-        <a-input v-model:value="filters.studentName" placeholder="搜索学员姓名..." allow-clear style="width: 180px;" @press-enter="handleSearch" />
+        <a-input v-model:value="filters.studentName" placeholder="搜索学员姓名 / 邮箱 / 学号..." allow-clear style="width: 220px;" @press-enter="handleSearch" />
         <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px;">
           <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
         </a-select>
@@ -87,22 +87,28 @@
         <a-alert type="warning" show-icon style="margin-bottom: 12px; border-radius: 8px;">
           <template #message>以下学员申请了辅导，需要分配导师</template>
         </a-alert>
-        <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedJobOverviewRow) => r.applicationId" :pagination="unassignedPagination" :loading="loading" :locale="{ emptyText: '当前没有待分配导师的岗位申请' }" :scroll="{ x: 1000 }">
+        <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedCoachingRow) => r.coachingId" :pagination="unassignedPagination" :loading="loading" :locale="{ emptyText: '当前没有待分配导师的岗位申请' }" :scroll="{ x: 'max-content' }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
-              <div><strong>{{ record.studentName || '-' }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID: {{ record.studentId }}</div></div>
+              <div class="osg-student-cell">
+                <div class="osg-student-avatar" :style="{ background: studentAvatarColor(record.studentId) }">{{ studentInitials(record.studentName) }}</div>
+                <div>
+                  <div style="font-weight: 600;">{{ record.studentName || '-' }}</div>
+                  <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID: {{ record.studentId }}</div>
+                </div>
+              </div>
             </template>
             <template v-else-if="column.dataIndex === 'companyName'">
               <div><strong>{{ record.companyName }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.positionName }}</div></div>
             </template>
-            <template v-else-if="column.dataIndex === 'currentStage'">
-              <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
+            <template v-else-if="column.dataIndex === 'interviewStage'">
+              <a-tag :color="stageColor(record.interviewStage)">{{ formatStage(record.interviewStage) }}</a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'interviewTime'">
               <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'requestedMentorCount'">
-              <div><strong>{{ record.requestedMentorCount || 0 }} 位</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.preferredMentorNames || '暂无意向导师' }}</div></div>
+              <div><strong>{{ record.requestedMentorCount || 0 }} 位</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.companyInterviewer || '暂无意向导师' }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'submittedAt'">
               {{ formatRelativeDate(record.submittedAt) }}
@@ -119,19 +125,22 @@
         <a-alert type="info" show-icon style="margin-bottom: 12px; border-radius: 8px;">
           <template #message>查看全部学员的求职进度（只读）</template>
         </a-alert>
-        <a-table :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="allListPagination" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 1200 }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
+        <a-table :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="allListPagination" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 'max-content' }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
-              <div><strong>{{ record.studentName || '-' }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID: {{ record.studentId }}</div></div>
+              <div class="osg-student-cell">
+                <div class="osg-student-avatar" :style="{ background: studentAvatarColor(record.studentId) }">{{ studentInitials(record.studentName) }}</div>
+                <div>
+                  <div style="font-weight: 600;">{{ record.studentName || '-' }}</div>
+                  <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID: {{ record.studentId }}</div>
+                </div>
+              </div>
             </template>
             <template v-else-if="column.dataIndex === 'companyName'">
               <div><strong>{{ record.companyName }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.positionName }} · {{ record.city || record.region || '地区待补充' }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'currentStage'">
-              <a-space>
-                <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
-                <a-button v-if="record.stageUpdated" size="small" :loading="stageUpdatingId === record.applicationId" @click="handleStageConfirm(record)">确认</a-button>
-              </a-space>
+              <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'interviewTime'">
               <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
@@ -144,6 +153,13 @@
             </template>
             <template v-else-if="column.dataIndex === 'hoursUsed'">
               <div><strong>{{ record.hoursUsed || 0 }}h</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.feedbackSummary || '暂无反馈' }}</div></div>
+            </template>
+            <template v-else-if="column.dataIndex === 'action'">
+              <a-button v-if="record.stageUpdated" type="primary" size="small" :loading="stageUpdatingId === record.applicationId" @click="handleStageConfirm(record)">
+                <template #icon><i class="mdi mdi-check-circle" aria-hidden="true"></i></template>
+                确认
+              </a-button>
+              <span v-else style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">—</span>
             </template>
           </template>
         </a-table>
@@ -168,18 +184,18 @@ import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import AssignMentorModal from './components/AssignMentorModal.vue'
 import {
-  assignMentors,
+  assignMentorsByCoaching,
   exportJobOverview,
   getJobOverviewFunnel,
   getJobOverviewList,
   getJobOverviewStats,
-  getUnassignedJobOverviewList,
+  getUnassignedCoachingList,
   updateJobOverviewStage,
   type JobOverviewFilters,
   type JobOverviewFunnelNode,
   type JobOverviewRow,
   type JobOverviewStats,
-  type UnassignedJobOverviewRow
+  type UnassignedCoachingRow
 } from '@osg/shared/api/admin/jobOverview'
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 import { useStandardClientPagination } from '@osg/shared'
@@ -188,24 +204,26 @@ import { deriveApplicationStatus } from '@osg/shared/composables'
 
 type ActiveTab = 'pending' | 'all'
 
+// §B3: 待分配 Tab 切到 coaching 维度，阶段字段用 interviewStage、提交时间用 coaching.create_time
 const pendingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140 },
-  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 160 },
-  { title: '阶段', dataIndex: 'currentStage', key: 'currentStage', width: 100 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 130 },
-  { title: '需求导师', dataIndex: 'requestedMentorCount', key: 'requestedMentorCount', width: 140 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 100 },
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
+  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 200 },
+  { title: '阶段', dataIndex: 'interviewStage', key: 'interviewStage', width: 110 },
+  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 160 },
+  { title: '需求导师', dataIndex: 'requestedMentorCount', key: 'requestedMentorCount', width: 160 },
+  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 110 },
   { title: '操作', dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
 ]
 
 const allColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140 },
-  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 180 },
-  { title: '阶段', dataIndex: 'currentStage', key: 'currentStage', width: 130 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 130 },
-  { title: '辅导状态', dataIndex: 'coachingStatus', key: 'coachingStatus', width: 100 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 140 },
-  { title: '课时 / 反馈', dataIndex: 'hoursUsed', key: 'hoursUsed', width: 140 },
+  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
+  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 220 },
+  { title: '阶段', dataIndex: 'currentStage', key: 'currentStage', width: 150 },
+  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 160 },
+  { title: '辅导状态', dataIndex: 'coachingStatus', key: 'coachingStatus', width: 110 },
+  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 180 },
+  { title: '课时 / 反馈', dataIndex: 'hoursUsed', key: 'hoursUsed', width: 200 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 110, fixed: 'right' as const },
 ]
 
 interface AssignMentorOption {
@@ -253,17 +271,17 @@ const stageOptions = [
 ]
 
 const loading = ref(false)
-const activeTab = ref<ActiveTab>('all')
+const activeTab = ref<ActiveTab>('pending')
 const stats = ref<JobOverviewStats>({ ...defaultStats })
 const funnelRows = ref<JobOverviewFunnelNode[]>([])
 const allRows = ref<JobOverviewRow[]>([])
-const unassignedRows = ref<UnassignedJobOverviewRow[]>([])
+const unassignedRows = ref<UnassignedCoachingRow[]>([])
 const unassignedPagination = useStandardClientPagination(() => unassignedRows.value.length)
 const allListPagination = useStandardClientPagination(() => allRows.value.length)
 const assignableMentors = ref<StaffListItem[]>([])
 const assignMentorVisible = ref(false)
 const assignSubmitting = ref(false)
-const selectedAssignmentRow = ref<UnassignedJobOverviewRow | null>(null)
+const selectedAssignmentRow = ref<UnassignedCoachingRow | null>(null)
 const stageUpdatingId = ref<number | null>(null)
 const exporting = ref(false)
 
@@ -331,10 +349,10 @@ async function loadDashboard() {
       getJobOverviewStats(requestFilters.value),
       getJobOverviewFunnel(requestFilters.value),
       getJobOverviewList(requestFilters.value),
-      getUnassignedJobOverviewList({
+      // §B3: 后台「待分配」Tab 切到 coaching 维度，按 osg_coaching 行展示
+      getUnassignedCoachingList({
         studentName: requestFilters.value.studentName,
         companyName: requestFilters.value.companyName,
-        currentStage: requestFilters.value.currentStage,
         leadMentorId: requestFilters.value.leadMentorId
       })
     ])
@@ -378,7 +396,7 @@ async function handleExport() {
   }
 }
 
-function handleOpenAssignMentor(row: UnassignedJobOverviewRow) {
+function handleOpenAssignMentor(row: UnassignedCoachingRow) {
   selectedAssignmentRow.value = row
   assignMentorVisible.value = true
 }
@@ -395,8 +413,8 @@ async function handleAssignMentorSubmit(payload: AssignMentorSubmitPayload) {
 
   assignSubmitting.value = true
   try {
-    await assignMentors({
-      applicationId: selectedAssignmentRow.value.applicationId,
+    // §B3: 按 coachingId 精确分配，避免一个 application 多条 coaching 时分错对象
+    await assignMentorsByCoaching(selectedAssignmentRow.value.coachingId, {
       mentorIds: payload.mentorIds,
       mentorNames: payload.mentorNames,
       assignNote: payload.assignNote
@@ -512,6 +530,21 @@ function formatDelta(value?: string) {
   return value || '0%'
 }
 
+const AVATAR_PALETTE = ['#8B5CF6', '#3B82F6', '#F59E0B', '#22C55E', '#EC4899', '#06B6D4', '#EF4444', '#6366F1']
+
+function studentAvatarColor(id?: number | string) {
+  if (id === undefined || id === null || id === '') return AVATAR_PALETTE[0]
+  const num = Number(id)
+  const seed = Number.isFinite(num) ? Math.abs(num) : String(id).charCodeAt(0)
+  return AVATAR_PALETTE[seed % AVATAR_PALETTE.length]
+}
+
+function studentInitials(name?: string | null) {
+  const value = (name || '').trim()
+  if (!value) return '学员'
+  return value.slice(0, 2)
+}
+
 function splitMentorNames(value?: string | null) {
   return (value || '')
     .split(/[,，/]/)
@@ -550,4 +583,22 @@ onMounted(() => {
 }
 :deep(.row-updated) { background: rgba(239, 246, 255, 0.6); }
 :deep(.row-ended) { background: rgba(248, 250, 252, 0.8); }
+.osg-student-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.osg-student-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
 </style>

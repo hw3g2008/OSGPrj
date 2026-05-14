@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="课程记录"
       title-en="Class Records"
-      description="查看和上报课程记录"
     >
       <template #actions>
         <a-button type="primary" @click="showReportModal = true">
@@ -702,7 +701,7 @@ async function submitConfirm() {
     const duration = Number(confirmDuration.value)
     const rate = Number(confirmRecord.value.rate ?? 600) || 600
     const classStatus = mapConfirmClassStatus(confirmClassType.value)
-    await http.post('/api/mentor/class-records', {
+    await http.post('/mentor/class-records', {
       studentId: confirmRecord.value.studentId,
       studentName: confirmRecord.value.studentName,
       classDate: confirmDate.value,
@@ -733,7 +732,7 @@ async function showDetail(record: any) {
   let detailRecord = record
   if (recordId != null) {
     try {
-      detailRecord = normalizeCourseRecord(await http.get(`/api/mentor/class-records/${recordId}`))
+      detailRecord = normalizeCourseRecord(await http.get(`/mentor/class-records/${recordId}`))
     } catch {
       detailRecord = normalizeCourseRecord(record)
     }
@@ -756,7 +755,7 @@ async function fetchRecords() {
       records.value = summaryRecords.value
       return
     }
-    const res = await http.get('/api/mentor/class-records/list', {
+    const res = await http.get('/mentor/class-records/list', {
       params: { status: activeTab.value }
     })
     records.value = (res.rows || []).map((record: Record<string, any>) => normalizeCourseRecord(record))
@@ -765,7 +764,7 @@ async function fetchRecords() {
 
 async function fetchSummaryRecords() {
   try {
-    const res = await http.get('/api/mentor/class-records/list', {
+    const res = await http.get('/mentor/class-records/list', {
       params: fullListParams
     })
     summaryRecords.value = (res.rows || []).map((record: Record<string, any>) => normalizeCourseRecord(record))

@@ -67,19 +67,21 @@
         </a-tag>
       </div>
 
-      <div class="osg-ic__divider" />
+      <template v-if="hasSummary">
+        <div class="osg-ic__divider" />
 
-      <div class="osg-ic__summary">
-        <a-tag
-          v-for="item in summaryEvents"
-          :key="item.label"
-          :color="item.tagColor"
-          class="osg-ic__summary-tag"
-        >
-          <span class="osg-ic__summary-label">{{ item.label }}</span>
-          <span class="osg-ic__summary-student">{{ item.student }}</span>
-        </a-tag>
-      </div>
+        <div class="osg-ic__summary">
+          <a-tag
+            v-for="item in summaryEvents"
+            :key="item.label"
+            :color="item.tagColor"
+            class="osg-ic__summary-tag"
+          >
+            <span class="osg-ic__summary-label">{{ item.label }}</span>
+            <span v-if="item.student" class="osg-ic__summary-student">{{ item.student }}</span>
+          </a-tag>
+        </div>
+      </template>
 
       <a-button
         type="text"
@@ -171,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRef, watch } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { useInterviewCalendar } from '../composables/useInterviewCalendar'
 import type { CalendarRange, CalendarViewMode } from '../composables/useInterviewCalendar'
 import type { InterviewEvent } from '../types/interviewCalendar'
@@ -219,6 +221,7 @@ const {
 } = useInterviewCalendar(eventsRef)
 
 const expanded = ref(props.defaultExpanded)
+const hasSummary = computed(() => summaryEvents.value.some((item) => !!item.student))
 
 function onShift(offset: number) {
   if (viewMode.value === 'week') {

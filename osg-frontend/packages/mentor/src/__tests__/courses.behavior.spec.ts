@@ -13,16 +13,6 @@ async function setSelect(wrapper: ReturnType<typeof mount>, index: number, value
   await flushPromises()
 }
 
-async function setSelectByContainer(wrapper: ReturnType<typeof mount>, containerSelector: string, value: any) {
-  const container = wrapper.find(containerSelector)
-  expect(container.exists(), `expected container ${containerSelector}`).toBe(true)
-  const select = container.findComponent(ASelect)
-  expect(select.exists(), `expected ASelect in ${containerSelector}`).toBeTruthy()
-  await select.vm.$emit('update:value', value)
-  await select.vm.$emit('change', value, null)
-  await flushPromises()
-}
-
 function findButton(wrapper: ReturnType<typeof mount>, label: string) {
   const normalized = label.replace(/\s/g, '')
   return wrapper.findAll('button').find((b) => b.text().replace(/\s/g, '').includes(normalized))
@@ -78,7 +68,7 @@ describe('mentor courses behavior', () => {
     const fullRows = createCourseRows(12)
 
     vi.mocked(http.get).mockImplementation(async (url: string, options?: Record<string, any>) => {
-      if (url === '/api/mentor/class-records/list') {
+      if (url === '/mentor/class-records/list') {
         if (options?.params?.pageSize) {
           return { rows: fullRows }
         }
@@ -104,7 +94,7 @@ describe('mentor courses behavior', () => {
 
   it('filters mock interview rows by the displayed course content label', async () => {
     vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/class-records/list') {
+      if (url === '/mentor/class-records/list') {
         return {
           rows: [
             createCourseRow({
@@ -139,7 +129,7 @@ describe('mentor courses behavior', () => {
 
   it('shows the reject modal with the prototype header and actions', async () => {
     vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/class-records/list') {
+      if (url === '/mentor/class-records/list') {
         return { rows: [createCourseRow({ status: 'rejected', reviewRemark: '课程时长与学员反馈不符' })] }
       }
       return { rows: [] }
@@ -161,7 +151,7 @@ describe('mentor courses behavior', () => {
 
   it('opens the confirm modal after resubmitting from the reject modal', async () => {
     vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/class-records/list') {
+      if (url === '/mentor/class-records/list') {
         return { rows: [createCourseRow({ status: 'rejected', reviewRemark: '课程时长与学员反馈不符' })] }
       }
       return { rows: [] }
@@ -187,7 +177,7 @@ describe('mentor courses behavior', () => {
 
   it('submits a real resubmit payload from the confirm modal', async () => {
     vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/class-records/list') {
+      if (url === '/mentor/class-records/list') {
         return { rows: [createCourseRow({ status: 'rejected', reviewRemark: '课程时长与学员反馈不符' })] }
       }
       return { rows: [] }
@@ -214,7 +204,7 @@ describe('mentor courses behavior', () => {
     await findButton(wrapper, '确认并提交反馈')!.trigger('click')
     await flushPromises()
 
-    expect(http.post).toHaveBeenCalledWith('/api/mentor/class-records', expect.objectContaining({
+    expect(http.post).toHaveBeenCalledWith('/mentor/class-records', expect.objectContaining({
       studentId: 843,
       studentName: 'Course Student',
       classDate: '2026-03-21',
@@ -230,7 +220,7 @@ describe('mentor courses behavior', () => {
   })
 
   // 删：mentor ReportModal 已重构为 shared ClassReportFlowModal 的薄封装，
-  // students 列表改由 prop 传入，原 spec 通过 mock /api/mentor/students/list 触发的
+  // students 列表改由 prop 传入，原 spec 通过 mock /mentor/students/list 触发的
   // 弹窗内部分支（mentor-class-datetime / mentor-student-status / mentor-job-select 等）
   // 现由 shared 包 StepBasicInfo / index.vue 单测覆盖；此处保留 e2e 端到端覆盖即可。
 })

@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="基本信息"
       title-en="Profile"
-      description="查看和管理您的个人信息"
     >
       <template #actions>
         <button

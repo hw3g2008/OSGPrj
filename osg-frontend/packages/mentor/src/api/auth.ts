@@ -10,7 +10,7 @@ export function login(data: { username: string; password: string }) {
 }
 
 export function getInfo() {
-  return http.get<{ user: any; roles: string[]; permissions: string[] }>('/mentor/getInfo')
+  return http.get<{ user: any; roles: string[]; permissions: string[]; mustChangePassword?: boolean }>('/mentor/getInfo')
 }
 
 export function logout() {

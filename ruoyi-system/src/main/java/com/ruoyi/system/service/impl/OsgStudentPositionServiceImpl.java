@@ -103,6 +103,8 @@ public class OsgStudentPositionServiceImpl implements IOsgStudentPositionService
         Long duplicatePositionId = findDuplicatePublicPositionId(merged);
 
         OsgPosition publicPosition = toPublicPosition(merged, reviewer);
+        // T-targetMajors: osg_position.target_majors NOT NULL，approve 路径若 payload 不带则补空串避免 SQL 违反
+        publicPosition.setTargetMajors(defaultText(resolveText(payload, "targetMajors", null), ""));
         if (positionMapper.insertPosition(publicPosition) <= 0)
         {
             throw new ServiceException("公共岗位写入失败");

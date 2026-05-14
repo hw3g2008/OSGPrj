@@ -168,7 +168,7 @@
                   </div>
 
                   <div v-if="isCompanyExpanded(industry.industry, company.companyName)" class="positions-drilldown__position-list">
-                    <a-table :columns="drilldownColumns" :data-source="getVisibleCompanyPositions(industry.industry, company)" :row-key="(r: PositionListItem) => r.positionId" :pagination="false" size="small">
+                    <a-table :columns="drilldownColumns" :data-source="getVisibleCompanyPositions(industry.industry, company)" :row-key="(r: PositionListItem) => r.positionId" :pagination="false" size="small" :scroll="{ x: 'max-content' }">
                       <template #headerCell="{ column }">
                         <span class="positions-drilldown__column-title">
                           <span v-for="line in formatDrilldownColumnTitle(String(column.title || ''))" :key="line">{{ line }}</span>
@@ -186,7 +186,7 @@
                         <template v-else-if="column.dataIndex === 'department'">{{ formatDepartment(position.department) }}</template>
                         <template v-else-if="column.dataIndex === 'recruitmentCycle'">
                           <div class="positions-cycle-tags">
-                            <a-tag v-for="cycle in splitCycles(position.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
+                            <a-tag v-for="cycle in splitCycles(position.recruitmentCycle)" :key="cycle" color="blue">{{ formatCycle(cycle) }}</a-tag>
                             <span v-if="!splitCycles(position.recruitmentCycle).length">-</span>
                           </div>
                         </template>
@@ -243,13 +243,19 @@
               </template>
               <template v-else-if="column.dataIndex === 'companyName'">
                 <a-tooltip :title="record.companyName || '-'">
-                  <span class="positions-list__cell-text">{{ record.companyName || '-' }}</span>
+                  <div class="positions-list__company-cell">
+                    <div :class="['positions-drilldown__company-logo', `positions-drilldown__company-logo--${getIndustryTone(record.industry || record.companyType)}`]">
+                      {{ getCompanyInitials(record.companyName || '') || '—' }}
+                    </div>
+                    <span class="positions-list__cell-text">{{ record.companyName || '-' }}</span>
+                  </div>
                 </a-tooltip>
               </template>
               <template v-else-if="column.dataIndex === 'companyType'">
-                <a-tooltip :title="record.companyType || '-'">
-                  <span class="positions-list__cell-text">{{ record.companyType || '-' }}</span>
-                </a-tooltip>
+                <a-tag v-if="record.companyType" :color="industryTagColor(record.companyType)" style="font-size: 11px">
+                  {{ formatIndustry(record.companyType) }}
+                </a-tag>
+                <span v-else class="positions-list__cell-text">-</span>
               </template>
               <template v-else-if="column.dataIndex === 'companyIndustry'">
                 <div style="display: flex; align-items: center; gap: 8px; text-align: left">
@@ -277,7 +283,7 @@
               <template v-else-if="column.dataIndex === 'recruitmentCycle'">
                 <a-tooltip :title="formatCycleTooltip(record.recruitmentCycle)">
                   <div class="positions-list__tag-line">
-                    <a-tag v-for="cycle in splitCycles(record.recruitmentCycle)" :key="cycle" color="purple">{{ formatCycle(cycle) }}</a-tag>
+                    <a-tag v-for="cycle in splitCycles(record.recruitmentCycle)" :key="cycle" color="blue">{{ formatCycle(cycle) }}</a-tag>
                     <span v-if="!splitCycles(record.recruitmentCycle).length">-</span>
                   </div>
                 </a-tooltip>
@@ -419,7 +425,7 @@ const toneTextColor: Record<string, string> = {
 
 
 const drilldownColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
+  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false, fixed: 'left' as const },
   { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
   { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
   { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
@@ -431,7 +437,7 @@ const drilldownColumns = [
   { title: '投递学员', dataIndex: 'studentCount', key: 'studentCount', width: 80 },
   { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
   { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 60, fixed: 'right' as const },
 ]
 
 const formatDrilldownColumnTitle = (title: string) => {
@@ -442,7 +448,7 @@ const formatDrilldownColumnTitle = (title: string) => {
 }
 
 const listColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
+  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false, fixed: 'left' as const },
   { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 160 },
   { title: '公司类别', dataIndex: 'companyType', key: 'companyType', width: 100 },
   { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
@@ -456,7 +462,7 @@ const listColumns = [
   { title: '投递学员', dataIndex: 'studentCount', key: 'studentCount', width: 80 },
   { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
   { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 60, fixed: 'right' as const },
 ]
 
 type DrilldownFilter = 'all' | 'open' | 'not_started' | 'closed' | 'has_students'
@@ -952,6 +958,21 @@ const getIndustryMeta = (industry?: string) =>
   industryMap.value.get(industry || '') || { value: industry || 'Other', label: industry || 'Other', tone: 'slate', icon: 'mdi-briefcase-search' }
 
 const getIndustryTone = (industry?: string) => getIndustryMeta(industry).tone
+
+const industryToneToTagColor: Record<string, string> = {
+  gold: 'gold',
+  amber: 'gold',
+  indigo: 'purple',
+  violet: 'purple',
+  blue: 'blue',
+  teal: 'cyan',
+  slate: 'default'
+}
+
+const industryTagColor = (industry?: string) => {
+  const tone = getIndustryMeta(industry).tone || 'slate'
+  return industryToneToTagColor[tone] || 'default'
+}
 const getIndustryIcon = (industry?: string) => getIndustryMeta(industry).icon
 const formatIndustry = (industry?: string) => getIndustryMeta(industry).label
 
@@ -1050,6 +1071,22 @@ onMounted(() => {
 }
 .positions-list__cell-link {
   font-weight: 700;
+}
+.positions-list__company-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.positions-list__company-cell .positions-list__cell-text {
+  flex: 1;
+  min-width: 0;
+}
+.positions-list__company-cell .positions-drilldown__company-logo {
+  width: 24px;
+  height: 24px;
+  font-size: 9px;
+  border-radius: 4px;
 }
 .positions-list__tag-line {
   display: flex;

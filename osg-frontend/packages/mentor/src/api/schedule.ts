@@ -15,13 +15,13 @@ export interface MentorSchedule {
 }
 
 export function getCurrentSchedule() {
-  return http.get<MentorSchedule>('/api/mentor/schedule')
+  return http.get<MentorSchedule>('/mentor/schedule')
 }
 
 export function saveSchedule(data: MentorSchedule) {
-  return http.put('/api/mentor/schedule', data)
+  return http.put('/mentor/schedule', data)
 }
 
 export function getLastWeekSchedule() {
-  return http.get<MentorSchedule>('/api/mentor/schedule/last-week')
+  return http.get<MentorSchedule>('/mentor/schedule/last-week')
 }

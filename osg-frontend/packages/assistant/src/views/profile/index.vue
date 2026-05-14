@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="基本信息"
       title-en="Profile"
-      description="查看当前账号资料、联系方式与登录信息，并在需要时更新常用联系字段。"
     >
       <template #actions>
         <span class="status-pill">资料概览</span>

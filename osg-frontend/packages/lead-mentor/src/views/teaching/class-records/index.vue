@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="课程记录"
       title-en="Class Records"
-      description="查看和上报课程记录（包括我的申报和我管理的学员）"
     >
       <template #actions>
         <button

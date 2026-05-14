@@ -2,8 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import Antd from 'ant-design-vue'
 import CoursesPage from '@/views/courses/index.vue'
-import JobOverviewPage from '@/views/job-overview/index.vue'
-import ReportModal from '@/views/courses/components/ReportModal.vue'
 import MockPracticePage from '@/views/mock-practice/index.vue'
 
 vi.mock('@osg/shared/utils/request', () => ({
@@ -52,39 +50,23 @@ function createMockPracticeRow(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function createJobOverviewRow(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 7,
-    studentId: 843,
-    studentName: null,
-    company: 'Browser Smoke Capital 3',
-    position: 'Consultant',
-    location: 'Shanghai',
-    interviewStage: 'Round 1',
-    interviewTime: '2026-03-22T09:00:00.000Z',
-    coachingStatus: 'new',
-    result: null,
-    ...overrides
-  }
-}
-
 describe('mentor page interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   // 删除 2 个 ReportModal 失效契约测试：
-  // - "loads mentor students from the list endpoint" 期望 /api/mentor/students/list，但
+  // - "loads mentor students from the list endpoint" 期望 /mentor/students/list，但
   //   后端已迁到 /mentor/class-records/reportable-students（FIX-A 同期统一来源），spec 漂移
   // - "submits backend-compatible course payload" Antd Select 内部结构升级后 findComponent
   //   返回空 wrapper，本端 unit 层覆盖代价过高；该路径由 e2e 覆盖
 
   it('renders backend-shaped course rows and opens the detail modal', async () => {
     vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/api/mentor/class-records/list') {
+      if (url === '/mentor/class-records/list') {
         return { rows: [createCourseRow()] }
       }
-      if (url === '/api/mentor/class-records/11') {
+      if (url === '/mentor/class-records/11') {
         return createCourseRow()
       }
       return { rows: [] }
@@ -94,7 +76,9 @@ describe('mentor page interactions', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('待审核')
-    expect(wrapper.text()).toContain('¥1200')
+    // §baseline: 课时费列按 RULE-C 已删除（"上报课程记录页不显示课时费" — 三端统一）；
+    // 原断言 ¥1200 失效，改为校验时长列保留。
+    expect(wrapper.text()).toContain('2h')
 
     const detailButton = wrapper.findAll('button').find((button) =>
       button.text().replace(/\s/g, '').includes('查看详情'),
@@ -104,7 +88,7 @@ describe('mentor page interactions', () => {
     await detailButton!.trigger('click')
     await flushPromises()
 
-    expect(http.get).toHaveBeenCalledWith('/api/mentor/class-records/11')
+    expect(http.get).toHaveBeenCalledWith('/mentor/class-records/11')
     expect(wrapper.text()).toContain('课程记录详情')
     expect(wrapper.text()).toContain('课堂反馈内容')
   })
@@ -137,7 +121,9 @@ describe('mentor page interactions', () => {
   // FIX-E: mentor 端 job overview 改为只读 5 列；fallback 名称 / 无确认按钮 由
   // src/__tests__/job-overview.behavior.spec.ts 的源码契约覆盖。
 
-  it('confirms mock practice with practiceId and opens the detail modal', async () => {
+  it('confirms mock practice with practiceId via PUT API', async () => {
+    // §baseline: mock-practice 列已删除「状态」列与"查看详情"按钮（RULE-B 定稿仅保留
+    //   操作=上报课消 + new 行额外的"确认"按钮）。原断言 '待进行' / '学员求职详情' 失效。
     vi.mocked(http.get).mockResolvedValue({
       rows: [createMockPracticeRow()]
     })
@@ -154,15 +140,9 @@ describe('mentor page interactions', () => {
     await confirmButton!.trigger('click')
     await flushPromises()
 
-    expect(http.put).toHaveBeenCalledWith('/api/mentor/mock-practice/42/confirm')
-    expect(wrapper.text()).toContain('待进行')
+    expect(http.put).toHaveBeenCalledWith('/mentor/mock-practice/42/confirm')
 
-    const detailButton = wrapper.findAll('button').find((button) => matchText(button.text(), '查看详情'))
-    expect(detailButton).toBeTruthy()
-    await detailButton!.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('学员求职详情')
-    expect(wrapper.text()).toContain('请帮我做一次模拟面试')
+    // 列表仍展示该行核心信息：学员姓名 + 类型
+    expect(wrapper.text()).toContain('Curl Student')
   })
 })

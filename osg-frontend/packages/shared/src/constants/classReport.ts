@@ -24,15 +24,22 @@ export const MEMBER_STATUS = {
 } as const
 
 /**
- * §3.5.5 基础课程二级类型（6 选 1，硬编码）
+ * §3.5.5 基础课程二级类型（D 合并后 5 选 1）。
+ * 'new_resume' + 'resume_update' 合并为 'resume'；选完后由 RESUME_SUBTYPE_OPTIONS 决定
+ * 新建/更新，提交时由 ClassReportFlowModal 派生为旧 enum 写入后端，保持 DB 兼容。
  */
 export const BASE_CATEGORY_OPTIONS = [
   { value: 'tech', label: '技术' },
   { value: 'behavior', label: '行为训练' },
-  { value: 'new_resume', label: '新简历制作' },
-  { value: 'resume_update', label: '简历更新' },
+  { value: 'resume', label: '简历' },
   { value: 'case_study', label: '咨询案例准备' },
   { value: 'other', label: '其它' },
+] as const
+
+/** D: 选 baseCourseCategory='resume' 后的二级 radio */
+export const RESUME_SUBTYPE_OPTIONS = [
+  { value: 'new', label: '新简历制作' },
+  { value: 'update', label: '简历更新' },
 ] as const
 
 export const ABSENT_DEFAULT_HOURS = 0.5

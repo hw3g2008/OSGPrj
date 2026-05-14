@@ -137,22 +137,22 @@ const keyword = ref('')
 const dateRange = ref<[Dayjs, Dayjs] | null>(null)
 
 const jobColumns = [
-  { title: 'ID', dataIndex: 'jobId', key: 'jobId' },
+  { title: 'ID', dataIndex: 'jobId', key: 'jobId', width: 120, fixed: 'left' as const },
   { title: 'Title', dataIndex: 'jobTitle', key: 'jobTitle' },
   { title: 'Total | Pending | Success | Fail', dataIndex: 'stats', key: 'stats' },
   { title: 'Action By', dataIndex: 'actionBy', key: 'actionBy' },
   { title: 'Create Time', dataIndex: 'createTime', key: 'createTime' },
-  { title: '操作', dataIndex: 'action', key: 'action' }
+  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
 ]
 
 const smtpColumns = [
-  { title: 'ID', dataIndex: 'id', key: 'id' },
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 120, fixed: 'left' as const },
   { title: 'Server Name', dataIndex: 'serverName', key: 'serverName' },
   { title: 'Host', dataIndex: 'host', key: 'host' },
   { title: 'Port', dataIndex: 'port', key: 'port' },
   { title: 'Username', dataIndex: 'username', key: 'username' },
   { title: 'Status', dataIndex: 'status', key: 'status' },
-  { title: '操作', dataIndex: 'action', key: 'action' }
+  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
 ]
 
 const loadMailJobs = async () => {

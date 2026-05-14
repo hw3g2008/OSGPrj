@@ -91,7 +91,7 @@ const dateRange = ref<[Dayjs, Dayjs] | null>(null)
 const exporting = ref(false)
 
 const columns = [
-  { title: '时间', dataIndex: 'operateTime', key: 'operateTime' },
+  { title: '时间', dataIndex: 'operateTime', key: 'operateTime', width: 120, fixed: 'left' as const },
   { title: '操作人', dataIndex: 'operatorName', key: 'operatorName' },
   { title: '角色', dataIndex: 'roleLabel', key: 'roleLabel' },
   { title: '操作类型', dataIndex: 'operationType', key: 'operationType' },

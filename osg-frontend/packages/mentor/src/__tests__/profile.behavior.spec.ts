@@ -73,7 +73,7 @@ describe('mentor profile page behavior', () => {
     await wrapper.find('#modal-mentor-profile-save-confirm button.btn-primary').trigger('click')
     await flushPromises()
 
-    expect(http.put).toHaveBeenCalledWith('/api/mentor/profile', expect.objectContaining({
+    expect(http.put).toHaveBeenCalledWith('/mentor/profile', expect.objectContaining({
       nickName: 'Mentor D Chain',
       email: 'mentor-d-chain@osg.local',
     }))

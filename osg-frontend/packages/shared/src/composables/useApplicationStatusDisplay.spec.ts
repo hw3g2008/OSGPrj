@@ -23,6 +23,11 @@ describe('useApplicationStatusDisplay', () => {
       expect(r).toEqual({ value: 'assigned', label: '已分配导师', tone: 'warning' })
     })
 
+    it('coachingStatus=assigned → assigned（admin 分配完，等 mentor 确认）', () => {
+      const r = deriveApplicationStatus({ assignStatus: 'assigned', coachingStatus: 'assigned' })
+      expect(r).toEqual({ value: 'assigned', label: '已分配导师', tone: 'warning' })
+    })
+
     it('assignStatus=assigned 且 coaching=none → assigned', () => {
       const r = deriveApplicationStatus({ assignStatus: 'assigned', coachingStatus: 'none' })
       expect(r).toEqual({ value: 'assigned', label: '已分配导师', tone: 'warning' })

@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="模拟应聘管理"
       title-en="Mock Practice"
-      description="处理学员的模拟面试、人际关系测试、期中考试申请"
     />
 
     <a-card :bordered="false" :body-style="{ padding: 0 }" class="mock-tab-card">

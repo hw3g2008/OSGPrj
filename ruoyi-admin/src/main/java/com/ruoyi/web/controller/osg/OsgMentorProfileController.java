@@ -13,7 +13,7 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.impl.OsgMentorProfileChangeRequestServiceImpl;
 @RestController
-@RequestMapping("/api/mentor/profile")
+@RequestMapping("/mentor/profile")
 public class OsgMentorProfileController extends BaseController {
     @Autowired private ISysUserService userService;
     @Autowired private OsgMentorProfileChangeRequestServiceImpl mentorProfileChangeRequestService;

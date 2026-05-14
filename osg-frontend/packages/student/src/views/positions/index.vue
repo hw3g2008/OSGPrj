@@ -3,7 +3,6 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">岗位信息 <span class="page-title-en">Job Tracker</span></h1>
-        <p class="page-sub">追踪各大公司招聘岗位信息，记录您的申请进度</p>
       </div>
       <div class="header-actions">
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small" class="view-toggle">
@@ -422,6 +421,9 @@
         <div class="manual-section">
           <div class="manual-section-title">公司信息</div>
           <div class="manual-section-grid">
+            <a-form-item label="岗位名称" required class="manual-field manual-field--full">
+              <a-input v-model:value="manualForm.title" placeholder="如 Summer Analyst" :maxlength="128" />
+            </a-form-item>
             <a-form-item label="公司名称（选填）" class="manual-field">
               <a-input v-model:value="manualForm.company" placeholder="请输入公司名称" />
             </a-form-item>
@@ -934,6 +936,7 @@ const manualHirevueFileList = ref<any[]>([])
 const coachingHirevueFileList = ref<any[]>([])
 
 const manualForm = ref({
+  title: '',
   company: '',
   companyType: '',
   region: undefined as string | undefined,
@@ -1266,6 +1269,7 @@ function toggleIndustry(industryKey: string) {
 
 function openManualAddModal() {
   manualForm.value = {
+    title: '',
     company: '',
     companyType: '',
     region: undefined,
@@ -1370,6 +1374,10 @@ function formatToday() {
 
 async function submitManualPosition() {
   const f = manualForm.value
+  if (!f.title || !f.title.trim()) {
+    message.error('请填写岗位名称')
+    return
+  }
   if (!f.link) {
     message.error('请填写岗位链接')
     return
@@ -1407,7 +1415,7 @@ async function submitManualPosition() {
 
   await createStudentManualPosition({
     category: '',
-    title: '',
+    title: f.title.trim(),
     company: f.company,
     location: f.city ?? f.region ?? '',
     companyType: f.companyType || undefined,

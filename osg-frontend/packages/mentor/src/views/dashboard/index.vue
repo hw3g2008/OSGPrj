@@ -96,7 +96,7 @@
         <div class="section-head">
           <div>
             <h2>最近求职辅导</h2>
-            <p>来自 `/api/mentor/job-overview/list`</p>
+            <p>来自 `/mentor/job-overview/list`</p>
           </div>
         </div>
         <table class="data-table">
@@ -124,7 +124,7 @@
         <div class="section-head">
           <div>
             <h2>最近上报记录</h2>
-            <p>来自 `/api/mentor/class-records/list`</p>
+            <p>来自 `/mentor/class-records/list`</p>
           </div>
         </div>
         <table class="data-table">

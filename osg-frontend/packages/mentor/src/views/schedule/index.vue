@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="我的排期"
       title-en="My Schedule"
-      description="设置您的可用时间，每周日前需更新下周排期"
     />
 
     <div v-if="showReminder" class="warning-banner">
@@ -291,7 +290,7 @@ function getBackendBaseUrl() {
 }
 
 function getScheduleApiUrl() {
-  return `${getBackendBaseUrl()}/api/mentor/schedule`
+  return `${getBackendBaseUrl()}/mentor/schedule`
 }
 
 function toLocalDate(value: string | Date) {

@@ -3,7 +3,7 @@
     :open="visible"
     surface-id="modal-edit-student-position"
     width="860px"
-    :body-class="'student-review-modal__body'"
+    :body-class="'student-review-modal__body osg-modal-form'"
     @cancel="handleClose"
   >
     <template #title>
@@ -82,26 +82,30 @@
 
         <div class="student-review-modal__grid">
           <fieldset class="student-review-modal__field" data-field-name="岗位分类">
-            <span>岗位分类 *</span>
-            <a-select v-model:value="form.positionCategory" placeholder="请选择" :disabled="!isPending">
+            <span>岗位分类</span>
+            <a-select v-model:value="form.positionCategory" placeholder="请选择" allow-clear :disabled="!isPending">
               <a-select-option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
           <label class="student-review-modal__field" data-field-name="岗位名称">
-            <span>岗位名称 *</span>
+            <span>岗位名称</span>
             <a-input v-model:value="form.positionName" placeholder="如 Summer Analyst" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="部门">
+          <fieldset class="student-review-modal__field" data-field-name="部门">
             <span>部门</span>
-            <a-input v-model:value="form.department" placeholder="如 M&A / Global Markets" :disabled="!isPending" />
-          </label>
+            <a-select v-model:value="form.department" placeholder="请选择" allow-clear show-search :disabled="!isPending">
+              <a-select-option v-for="option in departmentOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+            </a-select>
+          </fieldset>
 
-          <label class="student-review-modal__field" data-field-name="项目时间">
-            <span>项目时间 *</span>
-            <a-input v-model:value="form.projectYear" placeholder="如 2026" :disabled="!isPending" />
-          </label>
+          <fieldset class="student-review-modal__field" data-field-name="项目时间">
+            <span>项目时间</span>
+            <a-select v-model:value="form.projectYear" placeholder="请选择" allow-clear :disabled="!isPending">
+              <a-select-option v-for="option in projectYearOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+            </a-select>
+          </fieldset>
 
           <label class="student-review-modal__field student-review-modal__field--wide" data-field-name="行业">
             <span>行业</span>
@@ -110,21 +114,29 @@
 
           <fieldset class="student-review-modal__field" data-field-name="截止日期">
             <span>截止日期</span>
-            <a-input v-model:value="form.deadline" type="datetime-local" :disabled="!isPending" />
+            <a-date-picker
+              v-model:value="form.deadline"
+              show-time
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DDTHH:mm"
+              placeholder="选择截止时间"
+              style="width: 100%"
+              :disabled="!isPending"
+            />
           </fieldset>
         </div>
 
         <fieldset class="student-review-modal__chip-group" data-field-name="招聘周期">
-          <span class="student-review-modal__chip-label">招聘周期 *</span>
+          <span class="student-review-modal__chip-label">招聘周期</span>
           <a-button
             v-for="option in recruitmentCycleOptions"
-            :key="option"
-            :type="selectedCycles.includes(option) ? 'primary' : 'default'"
+            :key="option.value"
+            :type="selectedCycles.includes(option.value) ? 'primary' : 'default'"
             size="small"
             :disabled="!isPending"
-            @click="toggleCycle(option)"
+            @click="toggleCycle(option.value)"
           >
-            {{ option }}
+            {{ option.label }}
           </a-button>
         </fieldset>
       </section>
@@ -139,26 +151,36 @@
 
         <div class="student-review-modal__grid">
           <label class="student-review-modal__field" data-field-name="公司名称">
-            <span>公司名称 *</span>
+            <span>公司名称</span>
             <a-input v-model:value="form.companyName" placeholder="公司名称" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="公司类别">
+          <fieldset class="student-review-modal__field" data-field-name="公司类别">
             <span>公司类别</span>
-            <a-input v-model:value="form.companyType" placeholder="如 bulge_bracket / consulting / swe_pm" :disabled="!isPending" />
-          </label>
+            <a-select v-model:value="form.companyType" placeholder="请选择" allow-clear :disabled="!isPending">
+              <a-select-option v-for="option in companyTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+            </a-select>
+          </fieldset>
 
-          <label class="student-review-modal__field" data-field-name="大区">
-            <span>大区 *</span>
-            <a-select v-model:value="form.region" placeholder="请选择" :disabled="!isPending">
+          <fieldset class="student-review-modal__field" data-field-name="大区">
+            <span>岗位地区</span>
+            <a-select v-model:value="form.region" placeholder="请选择" allow-clear :disabled="!isPending" @change="onRegionChange">
               <a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
-          </label>
+          </fieldset>
 
-          <label class="student-review-modal__field" data-field-name="城市">
-            <span>城市 *</span>
-            <a-input v-model:value="form.city" placeholder="如 Singapore" :disabled="!isPending" />
-          </label>
+          <fieldset class="student-review-modal__field" data-field-name="城市">
+            <span>城市</span>
+            <a-select
+              v-model:value="form.city"
+              :placeholder="form.region ? '请选择' : '请先选择岗位地区'"
+              allow-clear
+              show-search
+              :disabled="!isPending || !form.region"
+            >
+              <a-select-option v-for="option in cityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
+            </a-select>
+          </fieldset>
 
           <label class="student-review-modal__field" data-field-name="公司官网">
             <span>公司官网</span>
@@ -166,7 +188,7 @@
           </label>
 
           <label class="student-review-modal__field" data-field-name="岗位链接">
-            <span>岗位链接</span>
+            <span>岗位链接 *</span>
             <a-input v-model:value="form.positionUrl" placeholder="https://company.com/jobs/..." :disabled="!isPending" />
           </label>
         </div>
@@ -207,10 +229,12 @@ import {
   type ReviewStudentPositionPayload,
   type StudentPositionListItem,
 } from '@osg/shared/api/admin/studentPosition'
+import type { PositionMeta, PositionMetaOption } from '@osg/shared/api/admin/position'
 
 const props = defineProps<{
   visible: boolean
   position?: StudentPositionListItem | null
+  meta?: PositionMeta | null
   duplicateHintPositionId?: number | null
 }>()
 
@@ -264,54 +288,49 @@ const switchToMergeWithHint = () => {
   }
 }
 
-const categoryOptions = [
-  { value: 'summer', label: '暑期实习' },
-  { value: 'fulltime', label: '全职招聘' },
-  { value: 'offcycle', label: '非常规周期' },
-  { value: 'spring', label: '春季实习' },
-  { value: 'events', label: '招聘活动' }
-]
-
-const recruitmentCycleOptions = ['2024 Summer', '2025 Summer', '2026 Summer', '2025 Full-time', '2026 Full-time']
-
-const regionOptions = [
-  { value: 'na', label: '北美' },
-  { value: 'eu', label: '欧洲' },
-  { value: 'ap', label: '亚太' },
-  { value: 'cn', label: '中国大陆' }
-]
+const EMPTY_OPTIONS: PositionMetaOption[] = []
+const categoryOptions = computed<PositionMetaOption[]>(() => props.meta?.categories || EMPTY_OPTIONS)
+const companyTypeOptions = computed<PositionMetaOption[]>(() => props.meta?.industries || EMPTY_OPTIONS)
+const departmentOptions = computed<PositionMetaOption[]>(() => props.meta?.departments || EMPTY_OPTIONS)
+const recruitmentCycleOptions = computed<PositionMetaOption[]>(() => props.meta?.recruitmentCycles || EMPTY_OPTIONS)
+const projectYearOptions = computed<PositionMetaOption[]>(() => props.meta?.projectYears || EMPTY_OPTIONS)
+const regionOptions = computed<PositionMetaOption[]>(() => props.meta?.regions || EMPTY_OPTIONS)
+const cityOptions = computed<PositionMetaOption[]>(() => {
+  if (!form.region) return EMPTY_OPTIONS
+  return props.meta?.citiesByRegion?.[form.region] || EMPTY_OPTIONS
+})
 
 const form = reactive({
-  positionCategory: '',
+  positionCategory: undefined as string | undefined,
   industry: '',
   companyName: '',
-  companyType: '',
+  companyType: undefined as string | undefined,
   companyWebsite: '',
   positionName: '',
-  department: '',
-  region: '',
-  city: '',
+  department: undefined as string | undefined,
+  region: undefined as string | undefined,
+  city: undefined as string | undefined,
   recruitmentCycle: [] as string[],
-  projectYear: '',
+  projectYear: undefined as string | undefined,
   deadline: '',
   positionUrl: ''
 })
 
 const resetForm = () => {
-  form.positionCategory = props.position?.positionCategory || ''
+  form.positionCategory = props.position?.positionCategory || undefined
   form.industry = props.position?.industry || ''
   form.companyName = props.position?.companyName || ''
-  form.companyType = props.position?.companyType || ''
+  form.companyType = props.position?.companyType || undefined
   form.companyWebsite = props.position?.companyWebsite || ''
   form.positionName = props.position?.positionName || ''
-  form.department = props.position?.department || ''
-  form.region = props.position?.region || ''
-  form.city = props.position?.city || ''
+  form.department = props.position?.department || undefined
+  form.region = props.position?.region || undefined
+  form.city = props.position?.city || undefined
   form.recruitmentCycle = (props.position?.recruitmentCycle || '')
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
-  form.projectYear = props.position?.projectYear || ''
+  form.projectYear = props.position?.projectYear || undefined
   form.deadline = toDateTimeLocal(props.position?.deadline)
   form.positionUrl = props.position?.positionUrl || ''
 }
@@ -362,6 +381,14 @@ const toggleCycle = (value: string) => {
   form.recruitmentCycle = [...form.recruitmentCycle, value]
 }
 
+const onRegionChange = () => {
+  // 切换地区时，若当前城市不在新地区的字典内则清空
+  const next = cityOptions.value
+  if (!next.some((opt) => opt.value === form.city)) {
+    form.city = undefined
+  }
+}
+
 const handleClose = () => {
   emit('update:visible', false)
 }
@@ -381,34 +408,27 @@ const handleSubmit = () => {
     return
   }
 
-  // 新增分支：保留原校验
-  const payload: ReviewStudentPositionPayload = {
-    positionCategory: form.positionCategory.trim(),
-    industry: form.industry.trim() || undefined,
-    companyName: form.companyName.trim(),
-    companyType: form.companyType.trim() || undefined,
-    companyWebsite: form.companyWebsite.trim() || undefined,
-    positionName: form.positionName.trim(),
-    department: form.department.trim() || undefined,
-    region: form.region.trim(),
-    city: form.city.trim(),
-    recruitmentCycle: form.recruitmentCycle.join(', '),
-    projectYear: form.projectYear.trim(),
-    deadline: normalizeDateTimeLocal(form.deadline),
-    positionUrl: form.positionUrl.trim() || undefined
+  // 新增分支：仅 岗位链接 必填，对齐学生端
+  const positionUrl = form.positionUrl.trim()
+  if (!positionUrl) {
+    message.warning('请填写岗位链接')
+    return
   }
 
-  if (
-    !payload.positionCategory ||
-    !payload.companyName ||
-    !payload.positionName ||
-    !payload.region ||
-    !payload.city ||
-    !payload.recruitmentCycle ||
-    !payload.projectYear
-  ) {
-    message.warning('请先补齐岗位分类、公司、岗位、地区、招聘周期和项目时间')
-    return
+  const payload: ReviewStudentPositionPayload = {
+    positionCategory: form.positionCategory?.trim() || undefined,
+    industry: form.industry.trim() || undefined,
+    companyName: form.companyName.trim() || undefined,
+    companyType: form.companyType?.trim() || undefined,
+    companyWebsite: form.companyWebsite.trim() || undefined,
+    positionName: form.positionName.trim() || undefined,
+    department: form.department?.trim() || undefined,
+    region: form.region?.trim() || undefined,
+    city: form.city?.trim() || undefined,
+    recruitmentCycle: form.recruitmentCycle.join(', ') || undefined,
+    projectYear: form.projectYear?.trim() || undefined,
+    deadline: normalizeDateTimeLocal(form.deadline),
+    positionUrl
   }
 
   emit('submit', payload)

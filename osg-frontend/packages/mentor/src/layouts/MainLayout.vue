@@ -154,7 +154,7 @@ const navigationGroups = computed<NavigationGroup[]>(() => [
 
 async function refreshJobBadge() {
   try {
-    const res = await http.get('/api/mentor/job-overview/list')
+    const res = await http.get('/mentor/job-overview/list')
     const rows = Array.isArray((res as any)?.rows) ? (res as any).rows : []
     jobBadge.value = rows.filter((row: Record<string, any>) => row.coachingStatus === 'new').length
   } catch {
@@ -164,7 +164,7 @@ async function refreshJobBadge() {
 
 async function refreshMockBadge() {
   try {
-    const res = await http.get('/api/mentor/mock-practice/list')
+    const res = await http.get('/mentor/mock-practice/list')
     const rows = Array.isArray((res as any)?.rows) ? (res as any).rows : []
     mockBadge.value = rows.filter((row: Record<string, any>) => row.status === 'new').length
   } catch {

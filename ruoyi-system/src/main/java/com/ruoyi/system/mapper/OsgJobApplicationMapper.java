@@ -35,4 +35,18 @@ public interface OsgJobApplicationMapper
     int updateJobApplicationStage(OsgJobApplication jobApplication);
 
     int updateJobApplicationCoaching(OsgJobApplication jobApplication);
+
+    /**
+     * §B1: 学生班主任变更时，把该学生名下所有 application 的 lead_mentor_id 同步刷新。
+     * 全量同步（不按 stage 过滤）：表无 status 列，且已结束的 application 在 coaching/assign_status 层已被流转列表过滤。
+     */
+    int updateLeadMentorByStudent(@Param("studentId") Long studentId,
+            @Param("leadMentorUserId") Long leadMentorUserId);
+
+    /**
+     * §B1: service 入口惰性兜底回填。仅当目标 application 的 lead_mentor_id 还是 NULL 时才补值，
+     * 不覆盖任何已有班主任绑定。给 fixture/历史漏填的 application 提供自愈机会。
+     */
+    int updateLeadMentorByApplicationIfNull(@Param("applicationId") Long applicationId,
+            @Param("leadMentorUserId") Long leadMentorUserId);
 }

@@ -10,7 +10,7 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.OsgMentorSchedule;
 import com.ruoyi.system.service.IOsgMentorScheduleService;
 @RestController
-@RequestMapping("/api/mentor/schedule")
+@RequestMapping("/mentor/schedule")
 public class OsgMentorScheduleController extends BaseController {
     @Autowired private IOsgMentorScheduleService service;
 

@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">消息中心 <span>Notifications</span></h1>
-            <p class="page-sub">查看系统通知、课程提醒和导师消息</p>
           </div>
           <a-button @click="markAllRead">全部已读</a-button>
         </div>

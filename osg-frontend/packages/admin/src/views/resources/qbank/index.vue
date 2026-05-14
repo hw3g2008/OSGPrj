@@ -74,13 +74,13 @@ import {
 } from '@osg/shared/api/admin/qbank'
 
 const qbankColumns = [
-  { title: 'ID', dataIndex: 'fileId', key: 'fileId', width: 80, customRender: ({ text }: { text: number }) => `#${text}` },
+  { title: 'ID', dataIndex: 'fileId', key: 'fileId', width: 80, customRender: ({ text }: { text: number }) => `#${text}`, fixed: 'left' as const },
   { title: '名称', dataIndex: 'fileName', key: 'fileName', width: 200 },
   { title: '大小', dataIndex: 'fileSize', key: 'fileSize', width: 100 },
   { title: '授权对象', dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
   { title: '过期时间', dataIndex: 'expiryAt', key: 'expiryAt', width: 130 },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 140 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 100 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
 ]
 
 const rows = ref<QbankFolderRow[]>([])

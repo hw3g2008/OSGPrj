@@ -160,7 +160,16 @@ function update<K extends keyof ClassReportPayload>(
   key: K,
   value: ClassReportPayload[K],
 ): void {
-  emit('update:modelValue', { ...props.modelValue, [key]: value })
+  // D: 切换 baseCourseCategory 时如果不是 'resume' 类目，清掉 resumeSubType
+  const patch: Partial<ClassReportPayload> = { [key]: value }
+  if (key === 'baseCourseCategory' && value !== 'resume') {
+    patch.resumeSubType = undefined
+  }
+  // 切走 tech/behavior 时清 baseCourseTopics
+  if (key === 'baseCourseCategory' && value !== 'tech' && value !== 'behavior') {
+    patch.baseCourseTopics = undefined
+  }
+  emit('update:modelValue', { ...props.modelValue, ...patch })
 }
 
 function onReferenceTypeChange(next: ReferenceType): void {

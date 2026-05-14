@@ -9,20 +9,18 @@
       </template>
     </PageHeader>
 
-    <a-alert
-      v-if="unfilledCount > 0"
-      type="error"
-      show-icon
-      :message="`${unfilledCount} 位导师排期未填写`"
-      :description="selectedWeek === 'next' ? '请尽快补齐下周排期' : '距离截止还有 2 天'"
-    >
-      <template #action>
-        <a-button type="primary" danger size="small" @click="handleRemindAll">
-          <template #icon><SendOutlined /></template>
-          一键催促全部
-        </a-button>
-      </template>
-    </a-alert>
+    <div v-if="unfilledCount > 0" class="unfilled-banner" role="alert">
+      <span class="unfilled-banner__icon" aria-hidden="true">
+        <ExclamationCircleFilled />
+      </span>
+      <span class="unfilled-banner__title">{{ unfilledCount }} 位导师排期未填写</span>
+      <span class="unfilled-banner__desc">
+        {{ selectedWeek === 'next' ? '请尽快补齐下周排期' : '距离截止还有 2 天' }}
+      </span>
+      <button type="button" class="unfilled-banner__action" :disabled="reminding" @click="handleRemindAll">
+        {{ reminding ? '催促中...' : '一键催促全部' }}
+      </button>
+    </div>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <template #title>
@@ -72,9 +70,10 @@
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'staffName'">
             <div style="display: flex; align-items: center; gap: 12px">
-              <a-avatar :style="{ background: record.filled ? 'linear-gradient(135deg, #7399c6, #5a7ba3)' : '#dc2626', flexShrink: 0 }" :size="36">{{ getAvatarText(record.staffName) }}</a-avatar>
-              <div>
-                <div :style="{ fontWeight: 600, color: record.filled ? 'var(--text)' : '#991b1b' }">{{ record.staffName }}</div>
+              <a-avatar :style="{ background: 'linear-gradient(135deg, #7399c6, #5a7ba3)', flexShrink: 0 }" :size="36">{{ getAvatarText(record.staffName) }}</a-avatar>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <span style="font-weight: 600; color: var(--text)">{{ record.staffName }}</span>
+                <span v-if="!record.filled" class="unfilled-dot" aria-label="未填写排期" />
               </div>
             </div>
           </template>
@@ -82,22 +81,24 @@
             <a-tag :color="getTypeColor(record.staffType)">{{ formatType(record.staffType) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'availableHours'">
-            <strong :style="{ color: record.filled ? 'var(--primary)' : '#dc2626' }">
-              {{ record.filled ? formatHours(record.availableHours) : '-' }}
-            </strong>
+            <strong v-if="record.filled" style="color: var(--primary)">{{ formatHours(record.availableHours) }}</strong>
+            <span v-else style="color: var(--text-secondary, #9ca3af)">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'availableSlotLabels'">
             <div v-if="record.filled" style="display: flex; flex-wrap: wrap; gap: 4px">
               <a-tag v-for="label in record.availableSlotLabels" :key="label" :color="isWeekendSlot(label) ? 'green' : 'default'">{{ label }}</a-tag>
             </div>
-            <a-tag v-else color="error">未填写排期</a-tag>
+            <a-tag v-else color="warning">
+              <template #icon><ExclamationCircleOutlined /></template>
+              未填写排期
+            </a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space v-if="record.filled">
               <a-button type="link" size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-edit`" @click="openEditModal(record)">调整排期</a-button>
             </a-space>
             <a-space v-else>
-              <a-button type="primary" danger size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-fill`" @click="openEditModal(record)">代填排期</a-button>
+              <a-button type="primary" size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-fill`" @click="openEditModal(record)">代填排期</a-button>
               <a-button size="small" @click="handleRemindAll"><template #icon><SendOutlined /></template></a-button>
             </a-space>
           </template>
@@ -117,7 +118,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
-import { DownloadOutlined, SendOutlined } from '@ant-design/icons-vue'
+import { DownloadOutlined, ExclamationCircleFilled, ExclamationCircleOutlined, SendOutlined } from '@ant-design/icons-vue'
 import { getToken } from '@osg/shared/utils'
 import {
   getStaffScheduleList,
@@ -331,7 +332,80 @@ onMounted(() => {
 </script>
 
 <style scoped>
-:deep(.row-unfilled) {
-  background: #fef2f2;
+:deep(.row-unfilled) > td:first-child {
+  box-shadow: inset 3px 0 0 0 #dc2626;
+}
+
+.unfilled-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dc2626;
+  flex-shrink: 0;
+}
+
+.unfilled-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #fee2e2 0%, #fef2f2 60%, #fff5f5 100%);
+  border: 1px solid #fecaca;
+}
+
+.unfilled-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #fff;
+  font-size: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px -4px rgba(220, 38, 38, 0.5);
+}
+
+.unfilled-banner__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #991b1b;
+  letter-spacing: 0.3px;
+}
+
+.unfilled-banner__desc {
+  font-size: 13px;
+  color: #b91c1c;
+  opacity: 0.75;
+}
+
+.unfilled-banner__action {
+  margin-left: auto;
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px -2px rgba(220, 38, 38, 0.18);
+  transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.unfilled-banner__action:hover:not(:disabled) {
+  background: #fff5f5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -4px rgba(220, 38, 38, 0.28);
+}
+
+.unfilled-banner__action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

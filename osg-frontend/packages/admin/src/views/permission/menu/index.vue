@@ -118,13 +118,13 @@ const selectedStatus = ref<string | undefined>(undefined)
 const selectedMenuType = ref<string | undefined>(undefined)
 
 const treeColumns = [
-  { title: '菜单名称', dataIndex: 'menuName', key: 'menuName', width: 240 },
+  { title: '菜单名称', dataIndex: 'menuName', key: 'menuName', width: 240, fixed: 'left' as const },
   { title: '类型', dataIndex: 'menuType', key: 'menuType', width: 100 },
   { title: '排序', dataIndex: 'orderNum', key: 'orderNum', width: 80 },
   { title: '权限标识', dataIndex: 'perms', key: 'perms' },
   { title: '组件路径', dataIndex: 'component', key: 'component' },
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 160 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
 ]
 
 const resolveTypeLabel = (menuType: MenuListItem['menuType']) => {

@@ -202,13 +202,13 @@ import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 
 const userColumns = [
-  { title: 'ID', dataIndex: 'userId', key: 'userId', width: 80 },
+  { title: 'ID', dataIndex: 'userId', key: 'userId', width: 80, fixed: 'left' as const },
   { title: '账号身份', dataIndex: 'identity', key: 'identity' },
   { title: '联系方式', dataIndex: 'contact', key: 'contact' },
   { title: '角色矩阵', dataIndex: 'roles', key: 'roles' },
   { title: '账户状态', dataIndex: 'status', key: 'status', width: 120 },
   { title: '活跃记录', dataIndex: 'activity', key: 'activity' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 200 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 200, fixed: 'right' as const },
 ]
 
 const userList = ref<any[]>([])

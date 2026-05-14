@@ -1,9 +1,9 @@
 import { http } from '@osg/shared/utils/request'
 
 export function getMentorProfile() {
-  return http.get<any>('/api/mentor/profile')
+  return http.get<any>('/mentor/profile')
 }
 
 export function updateMentorProfile(data: any) {
-  return http.put('/api/mentor/profile', data)
+  return http.put('/mentor/profile', data)
 }

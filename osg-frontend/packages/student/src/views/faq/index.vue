@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">常见问题 <span>FAQ</span></h1>
-            <p class="page-sub">关于OSG学习平台的常见问题解答</p>
           </div>
         </div>
       </template>

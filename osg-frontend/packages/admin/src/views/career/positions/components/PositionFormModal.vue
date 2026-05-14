@@ -5,7 +5,7 @@
     width="680px"
     :max-height="'86vh'"
     :shell-class="'position-form-modal__shell'"
-    :body-class="'position-form-modal__body'"
+    :body-class="'position-form-modal__body osg-modal-form'"
     :footer-class="'position-form-modal__footer-shell'"
     @cancel="handleClose"
   >
@@ -673,24 +673,6 @@ watch(
   min-inline-size: 0;
   font-size: 13px;
   color: #334155;
-}
-
-:deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector) {
-  padding: 0 14px;
-}
-
-:deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-search) {
-  inset-inline-start: 14px;
-  inset-inline-end: 14px;
-}
-
-:deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-search-input) {
-  height: 100%;
-}
-
-:deep(.ant-select-single:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-placeholder) {
-  inset-inline-start: 14px;
-  inset-inline-end: 14px;
 }
 
 .position-form-modal__field > span {

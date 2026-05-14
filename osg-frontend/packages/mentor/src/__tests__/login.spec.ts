@@ -46,7 +46,8 @@ describe('LoginPage', () => {
   it('renders login form with username and password fields', () => {
     const wrapper = mountLogin()
     expect(wrapper.find('.login-page').exists()).toBe(true)
-    expect(wrapper.find('input[type="text"]').exists()).toBe(true)
+    // §baseline: 邮箱输入实际为 type=email（spec 之前断言 type=text，view 已升级）
+    expect(wrapper.find('input[type="email"]').exists()).toBe(true)
     expect(wrapper.find('input[type="password"]').exists()).toBe(true)
     expect(wrapper.find('.login-btn').exists()).toBe(true)
   })
@@ -77,12 +78,12 @@ describe('LoginPage', () => {
   it('shows error when username is empty on submit', async () => {
     const wrapper = mountLogin()
     await wrapper.find('.login-btn').trigger('click')
-    expect(wrapper.find('.field-error').text()).toBe('请输入用户名或邮箱')
+    expect(wrapper.find('.field-error').text()).toBe('请输入邮箱')
   })
 
   it('shows error when password is empty on submit', async () => {
     const wrapper = mountLogin()
-    await wrapper.find('input[type="text"]').setValue('testuser')
+    await wrapper.find('input[type="email"]').setValue('testuser@osg.test')
     await wrapper.find('.login-btn').trigger('click')
     expect(wrapper.find('.field-error').text()).toBe('请输入密码')
   })
@@ -97,11 +98,11 @@ describe('LoginPage', () => {
     const wrapper = mountLogin()
     await wrapper.find('.login-btn').trigger('click')
     expect(wrapper.find('.field-error').exists()).toBe(true)
-    await wrapper.find('input[type="text"]').setValue('a')
-    await wrapper.find('input[type="text"]').trigger('input')
+    await wrapper.find('input[type="email"]').setValue('a')
+    await wrapper.find('input[type="email"]').trigger('input')
     // The username error should be cleared after input
     const errors = wrapper.findAll('.field-error')
-    const usernameError = errors.find(e => e.text() === '请输入用户名或邮箱')
+    const usernameError = errors.find(e => e.text() === '请输入邮箱')
     expect(usernameError).toBeUndefined()
   })
 
@@ -125,13 +126,13 @@ describe('LoginPage', () => {
     router.push('/login')
     const wrapper = mount(LoginPage, { global: { plugins: [router] } })
 
-    await wrapper.find('input[type="text"]').setValue('testuser')
+    await wrapper.find('input[type="email"]').setValue('testuser@osg.test')
     await wrapper.find('.pwd-wrapper input').setValue('password123')
     await wrapper.find('.login-btn').trigger('click')
     await vi.dynamicImportSettled()
 
     expect(mockLogin).toHaveBeenCalledWith({
-      username: 'testuser',
+      username: 'testuser@osg.test',
       password: 'password123'
     })
   })
@@ -141,7 +142,7 @@ describe('LoginPage', () => {
     mockLogin.mockRejectedValue(new Error('用户名或密码错误'))
 
     const wrapper = mountLogin()
-    await wrapper.find('input[type="text"]').setValue('testuser')
+    await wrapper.find('input[type="email"]').setValue('testuser@osg.test')
     await wrapper.find('.pwd-wrapper input').setValue('wrongpass')
     await wrapper.find('.login-btn').trigger('click')
     await vi.dynamicImportSettled()
@@ -158,7 +159,7 @@ describe('LoginPage', () => {
     mockGetInfo.mockResolvedValue({ user: { name: 'Student' }, roles: ['student'], permissions: [] })
 
     const wrapper = mountLogin()
-    await wrapper.find('input[type="text"]').setValue('student')
+    await wrapper.find('input[type="email"]').setValue('student@osg.test')
     await wrapper.find('.pwd-wrapper input').setValue('pass')
     await wrapper.find('.login-btn').trigger('click')
     await vi.dynamicImportSettled()

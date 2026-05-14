@@ -53,7 +53,6 @@
         :row-key="(record: StudentPositionListItem) => record.studentPositionId"
         :loading="loading"
         :pagination="listPagination"
-        :row-class-name="(record: StudentPositionListItem) => record.status === 'pending' ? 'row-pending' : ''"
         :locale="{ emptyText: '当前筛选条件下暂无学生自添岗位' }"
       >
         <template #bodyCell="{ column, record }">
@@ -111,6 +110,7 @@
     <ReviewPositionModal
       v-model:visible="reviewVisible"
       :position="selectedRecord"
+      :meta="positionMeta"
       @submit="handleApprove"
       @request-reject="openRejectModal"
     />
@@ -137,21 +137,22 @@ import {
   type StudentPositionListItem,
   type StudentPositionListParams
 } from '@osg/shared/api/admin/studentPosition'
-import { getPositionMeta, type PositionMetaOption } from '@osg/shared/api/admin/position'
+import { getPositionMeta, type PositionMeta, type PositionMetaOption } from '@osg/shared/api/admin/position'
 import RejectPositionModal from './components/RejectPositionModal.vue'
 import ReviewPositionModal from './components/ReviewPositionModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 
 const positionColumns = [
-  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 280 },
+  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 280, fixed: 'left' as const },
   { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 180 },
   { title: '提交学生', dataIndex: 'studentName', key: 'studentName', width: 140 },
   { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 140 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 200 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 200, fixed: 'right' as const },
 ]
 
 const companyCategoryOptions = ref<PositionMetaOption[]>([])
+const positionMeta = ref<PositionMeta | null>(null)
 
 const rows = ref<StudentPositionListItem[]>([])
 const loading = ref(false)
@@ -183,8 +184,10 @@ const loadRows = async () => {
 const loadCompanyCategoryOptions = async () => {
   try {
     const meta = await getPositionMeta()
+    positionMeta.value = meta
     companyCategoryOptions.value = meta.industries || []
   } catch {
+    positionMeta.value = null
     companyCategoryOptions.value = []
   }
 }
@@ -311,7 +314,4 @@ const simplifyLink = (value: string) => {
 </script>
 
 <style scoped>
-:deep(.row-pending) {
-  background: #fef3c7;
-}
 </style>

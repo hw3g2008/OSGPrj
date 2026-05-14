@@ -156,7 +156,7 @@ import { PageHeader } from '@osg/shared/components/PageHeader'
 import { getFeedbackList, type FeedbackRow, type FeedbackStats, type FeedbackTab } from '@osg/shared/api/admin/feedback'
 
 const prepColumns = [
-  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70 },
+  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70, fixed: 'left' as const },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
   { title: '课程类型', dataIndex: 'courseType', key: 'courseType', width: 110 },
@@ -169,7 +169,7 @@ const prepColumns = [
 ]
 
 const networkingColumns = [
-  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70 },
+  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70, fixed: 'left' as const },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
   { title: '班主任', dataIndex: 'headTeacherName', key: 'headTeacherName', width: 100 },
@@ -183,7 +183,7 @@ const networkingColumns = [
 ]
 
 const mockColumns = [
-  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70 },
+  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70, fixed: 'left' as const },
   { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
   { title: '学员表现', dataIndex: 'performanceLabel', key: 'performanceLabel', width: 100 },

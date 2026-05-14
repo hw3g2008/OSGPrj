@@ -15,9 +15,9 @@ export interface StudentPosition {
 }
 
 export function listMentorStudents() {
-  return http.get<{ rows: Student[]; total: number }>('/api/mentor/students/list')
+  return http.get<{ rows: Student[]; total: number }>('/mentor/students/list')
 }
 
 export function listStudentPositions(studentId: number) {
-  return http.get<StudentPosition[]>(`/api/mentor/students/${studentId}/positions`)
+  return http.get<StudentPosition[]>(`/mentor/students/${studentId}/positions`)
 }

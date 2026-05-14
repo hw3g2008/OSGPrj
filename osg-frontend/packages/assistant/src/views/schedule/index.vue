@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="我的排期"
       title-en="My Schedule"
-      description="设置助教可用时间，每周保存后会同步下一次刷新结果。"
     />
 
     <section class="schedule-banner" aria-label="排期提醒">

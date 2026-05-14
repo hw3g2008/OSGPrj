@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">上课记录 <span>Class Report</span></h1>
-            <p class="page-sub">查看课程记录并进行评价反馈</p>
           </div>
         </div>
       </template>

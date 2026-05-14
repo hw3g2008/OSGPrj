@@ -70,8 +70,8 @@ export function deriveApplicationStatus(input: ApplicationStatusInput | null | u
   // 辅导中
   if (coaching === 'coaching') return makeDisplay('coaching')
 
-  // 已分配（assign=assigned 或 coachingStatus=pending 表示等待 mentor 确认）
-  if (coaching === 'pending' || assign === 'assigned') return makeDisplay('assigned')
+  // 已分配（coachingStatus=assigned 表示 admin 已分配；coachingStatus=pending 等待 mentor 确认；assign=assigned 兜底）
+  if (coaching === 'assigned' || coaching === 'pending' || assign === 'assigned') return makeDisplay('assigned')
 
   // 兜底
   return makeDisplay('pending')

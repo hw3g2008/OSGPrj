@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="模拟应聘管理"
       title-en="Mock Practice"
-      description="处理学员的模拟面试、人际关系测试、期中考试申请"
     />
 
     <!-- 错误提示 -->
@@ -178,7 +177,7 @@ function formatDateTime(value?: string | null) {
 
 function resolveReportedCount(record: AssistantMockPracticeRecord | null): number | null {
   if (!record) return null
-  const candidate = (record as Record<string, unknown>).reportedLessonCount
+  const candidate = (record as unknown as Record<string, unknown>).reportedLessonCount
   if (typeof candidate === 'number' && Number.isFinite(candidate)) return candidate
   return null
 }

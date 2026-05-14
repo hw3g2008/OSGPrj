@@ -4,7 +4,6 @@
     <PageHeader
       title-zh="学员求职总览"
       title-en="Job Overview"
-      description="查看我辅导和管理的学员求职进度"
     >
       <template #actions>
         <a-button @click="showUpcomingToast()">

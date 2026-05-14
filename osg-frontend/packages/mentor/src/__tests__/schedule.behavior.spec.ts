@@ -102,7 +102,7 @@ describe('SchedulePage', () => {
     await submitButton!.trigger('click')
     await flushPromises()
 
-    expect(http.put).toHaveBeenCalledWith(expect.stringContaining('/api/mentor/schedule'), expect.objectContaining({
+    expect(http.put).toHaveBeenCalledWith(expect.stringContaining('/mentor/schedule'), expect.objectContaining({
       weekStartDate: '2026-03-23',
       totalHours: 10,
     }))
@@ -148,7 +148,7 @@ describe('SchedulePage', () => {
     await saveButton!.trigger('click')
     await flushPromises()
 
-    expect(http.put).toHaveBeenCalledWith(expect.stringContaining('/api/mentor/schedule'), expect.objectContaining({
+    expect(http.put).toHaveBeenCalledWith(expect.stringContaining('/mentor/schedule'), expect.objectContaining({
       weekStartDate: '2026-03-30',
       totalHours: 15,
     }))

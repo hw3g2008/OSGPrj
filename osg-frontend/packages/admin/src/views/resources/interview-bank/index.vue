@@ -155,24 +155,24 @@ const typeColorMap: Record<string, string> = {
 }
 
 const bankColumns = [
-  { title: '题库名称', dataIndex: 'interviewBankName', key: 'interviewBankName', width: 200 },
+  { title: '题库名称', dataIndex: 'interviewBankName', key: 'interviewBankName', width: 200, fixed: 'left' as const },
   { title: '阶段', dataIndex: 'interviewStage', key: 'interviewStage', width: 120 },
   { title: '类型', dataIndex: 'interviewType', key: 'interviewType', width: 100 },
   { title: '行业', dataIndex: 'industryName', key: 'industryName', width: 130 },
   { title: '题目数', dataIndex: 'questionCount', key: 'questionCount', width: 80 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
   { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 130 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80 },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
 ]
 
 const applicationColumns = [
-  { title: '申请ID', dataIndex: 'applicationCode', key: 'applicationCode', width: 120 },
+  { title: '申请ID', dataIndex: 'applicationCode', key: 'applicationCode', width: 120, fixed: 'left' as const },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
   { title: '申请岗位', dataIndex: 'appliedPosition', key: 'appliedPosition', width: 150 },
   { title: '阶段', dataIndex: 'interviewStage', key: 'interviewStage', width: 120 },
   { title: '申请时间', dataIndex: 'applicationTime', key: 'applicationTime', width: 130 },
   { title: '来源', dataIndex: 'applicationSource', key: 'applicationSource', width: 110 },
-  { title: '操作', dataIndex: 'appAction', key: 'appAction', width: 100 },
+  { title: '操作', dataIndex: 'appAction', key: 'appAction', width: 100, fixed: 'right' as const },
 ]
 
 const activeTab = ref<InterviewBankTab>('banks')

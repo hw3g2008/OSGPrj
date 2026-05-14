@@ -87,7 +87,7 @@ import { PageHeader } from '@osg/shared/components/PageHeader'
 import { getCommunicationList, type CommunicationRow } from '@osg/shared/api/admin/communication'
 
 const commColumns = [
-  { title: 'ID', dataIndex: 'communicationId', key: 'communicationId', width: 70 },
+  { title: 'ID', dataIndex: 'communicationId', key: 'communicationId', width: 70, fixed: 'left' as const },
   { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
   { title: '记录人', dataIndex: 'recorderName', key: 'recorderName', width: 100 },
   { title: '沟通方式', dataIndex: 'communicationMethod', key: 'communicationMethod', width: 100 },

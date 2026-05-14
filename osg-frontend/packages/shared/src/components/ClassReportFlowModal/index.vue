@@ -4,28 +4,17 @@
     :width="800"
     :destroy-on-close="true"
     :mask-closable="false"
-    :body-style="{ maxHeight: '70vh', overflowY: 'auto' }"
+    :body-style="{ maxHeight: '85vh', overflowY: 'auto' }"
     :body-class="loading ? 'class-report-flow-modal__body osg-modal-form osg-modal-form--submitting' : 'class-report-flow-modal__body osg-modal-form'"
     title="上报课程记录"
     @update:open="onVisibleChange"
     @cancel="onCancel"
   >
     <div class="class-report-flow-modal" data-surface-id="shared-class-report-flow-modal">
-      <!-- Step 进度指示 -->
-      <div class="class-report-flow-modal__steps">
-        <div
-          v-for="(label, idx) in stepLabels"
-          :key="idx"
-          class="class-report-flow-modal__step"
-          :class="{ active: currentStep === idx, done: currentStep > idx }"
-        >
-          <span class="step-index">{{ idx + 1 }}</span>
-          <span class="step-label">{{ label }}</span>
-        </div>
-      </div>
+      <!-- §C3: 单屏滚动版 — 5 个 section 并列渲染，按字段依赖条件显示，不再用 step wizard -->
 
-      <!-- Step 1: 基本信息 -->
-      <div v-show="currentStep === 0">
+      <!-- ① 基本信息（学员 / 日期 / 时长，始终显示） -->
+      <section class="class-report-flow-modal__section">
         <StepBasicInfo
           :model-value="formState"
           :students="students"
@@ -34,57 +23,50 @@
           :readonly-fields="readonlyFieldsRef"
           @update:model-value="onFormPatch"
         />
-      </div>
+      </section>
 
-      <!-- Step 2: 课程类型 -->
-      <div v-show="currentStep === 1">
-        <StepCourseType
-          :model-value="formState.courseType"
-          :readonly="isCourseTypeLocked"
-          @update:model-value="(v) => onFormPatch({ ...formState, courseType: v })"
-          @change="onCourseTypeChange"
-        />
-      </div>
-
-      <!-- Step 3: 关联申请 / 基础课分支（旷课跳过） -->
-      <div v-show="currentStep === 2">
-        <div v-if="isAbsent" class="class-report-flow-modal__skip">
-          旷课分支：跳过关联申请选择
-        </div>
-        <StepReference
-          v-else
-          :model-value="formState"
-          :course-type="formState.courseType"
-          :student-id="formState.studentId"
-          :end="end"
-          :readonly-fields="readonlyFieldsRef"
-          @update:model-value="onFormPatch"
-        />
-      </div>
-
-      <!-- Step 4: 学员状态 -->
-      <div v-show="currentStep === 3">
+      <!-- ② 学员状态（正常 / 旷课，始终显示） -->
+      <section class="class-report-flow-modal__section">
         <StepMemberStatus
           :model-value="formState"
           @update:model-value="onFormPatch"
           @absent-toggle="onAbsentToggle"
         />
-      </div>
+      </section>
 
-      <!-- Step 5: 反馈 / 评分（旷课跳过） -->
-      <div v-show="currentStep === 4">
-        <div v-if="isAbsent" class="class-report-flow-modal__skip">
-          旷课分支：无需填写反馈与评分
-        </div>
-        <template v-else>
+      <!-- 正常上课分支：③ 课程类型 + ④ 关联申请 + ⑤ 反馈/评分 -->
+      <template v-if="!isAbsent">
+        <section class="class-report-flow-modal__section">
+          <StepCourseType
+            :model-value="formState.courseType"
+            :readonly="isCourseTypeLocked"
+            @update:model-value="(v) => onFormPatch({ ...formState, courseType: v })"
+            @change="onCourseTypeChange"
+          />
+        </section>
+
+        <section v-if="formState.courseType" class="class-report-flow-modal__section">
+          <StepReference
+            :model-value="formState"
+            :course-type="formState.courseType"
+            :student-id="formState.studentId"
+            :end="end"
+            :readonly-fields="readonlyFieldsRef"
+            @update:model-value="onFormPatch"
+          />
+        </section>
+
+        <section v-if="formState.courseType" class="class-report-flow-modal__section">
           <!-- T-508: RelationFeedback 需要独立传递 screenshotUrls -->
           <component
             :is="feedbackComponent"
             v-if="feedbackComponent"
             :model-value="(formState.feedbackContent as Record<string, unknown>) || {}"
             :base-course-category="formState.baseCourseCategory"
+            :resume-sub-type="formState.resumeSubType"
             :screenshot-urls="formState.courseType === 'relation_test' ? (formState.screenshotUrls ?? []) : undefined"
             @update:model-value="(v: any) => onFormPatch({ ...formState, feedbackContent: v })"
+            @update:resume-sub-type="(v: any) => onFormPatch({ ...formState, resumeSubType: v })"
             @update:screenshot-urls="(urls: string[]) => onFormPatch({ ...formState, screenshotUrls: urls })"
           />
 
@@ -101,8 +83,8 @@
             />
             <div v-if="rateError" class="rate-error">{{ rateError }}</div>
           </div>
-        </template>
-      </div>
+        </section>
+      </template>
 
       <!-- T-518: 后端错误用 a-alert 展示 -->
       <a-alert
@@ -118,19 +100,9 @@
 
     <template #footer>
       <a-space>
-        <a-button v-if="currentStep > 0" :disabled="loading" @click="goPrev">上一步</a-button>
         <a-button @click="onCancel">取消</a-button>
+        <!-- T-515 / §C3: 单屏版只有"取消 / 提交"，无 step 切换按钮 -->
         <a-button
-          v-if="currentStep < totalSteps - 1"
-          type="primary"
-          :disabled="!canGoNext"
-          @click="goNext"
-        >
-          下一步
-        </a-button>
-        <!-- T-515: 提交按钮 — 学员下拉为空时 disabled；T-518: loading 时显示"提交中..." -->
-        <a-button
-          v-else
           type="primary"
           :loading="loading"
           :disabled="!canSubmit || loading"
@@ -210,14 +182,10 @@ const emit = defineEmits<{
   submitted: [recordId: number]
 }>()
 
-const totalSteps = 5
-
-const stepLabels = ['基本信息', '课程类型', '关联申请', '学员状态', '反馈评分']
-
-// useClassReport 提供 formState / currentStep / loading / error / reset
+// §C3: 单屏滚动版改造后不再使用 step wizard。currentStep 由 composable 内部保留供 reset 用，
+//      此处不再消费；totalSteps 传 1 以兼容 composable 签名。
 const {
   formState,
-  currentStep,
   loading,
   error,
   reset,
@@ -225,7 +193,7 @@ const {
   prefilledStudentId: props.prefilledStudentId,
   prefilledReferenceType: props.prefilledReferenceType,
   prefilledReferenceId: props.prefilledReferenceId,
-  totalSteps,
+  totalSteps: 1,
 })
 
 // readonlyFields 单独维护（useClassReport 的 readonlyFields 字段不接受 'student'/'reference' 这些聚合 key）
@@ -285,33 +253,7 @@ const feedbackComponent = computed(() => {
   }
 })
 
-// 基础校验：每步是否可进入下一步
-const canGoNext = computed(() => {
-  if (currentStep.value === 0) {
-    const f = formState.value
-    return !!f.studentId && f.studentId > 0 && !!f.classDate && f.durationHours > 0
-  }
-  if (currentStep.value === 1) {
-    return !!formState.value.courseType
-  }
-  if (currentStep.value === 2) {
-    // T-512: base_course + normal 时校验三级题目必选规则（absent 时 goNext 会跳过此步）
-    if (!isAbsent.value && formState.value.courseType === 'base_course') {
-      const cat = formState.value.baseCourseCategory
-      if (!cat) return false
-      const topics = formState.value.baseCourseTopics || []
-      if (cat === 'tech') {
-        const required = topics.filter((t) => /^T(0[1-9]|1[0-9])$/.test(t))
-        if (required.length === 0) return false
-      }
-      if (cat === 'behavior') {
-        if (topics.length === 0) return false
-      }
-    }
-    return true
-  }
-  return true
-})
+// §C3: 单屏版无 step 切换，所有校验汇总到 canSubmit；删除 canGoNext。
 
 /**
  * T-514: 正常上课时 rate 必填（非空字符串）
@@ -325,14 +267,20 @@ const canSubmit = computed(() => {
   if (!f.studentId || f.studentId <= 0) return false
   if (!f.classDate) return false
   if (!f.durationHours || f.durationHours <= 0) return false
-  if (!f.courseType) return false
   if (!f.memberStatus) return false
-  if (isAbsent.value && !f.absentRemark) return false
-  // T-514: 正常上课时 rate 必填，旷课时跳过
-  if (!isAbsent.value) {
-    const rate = f.rate
-    if (!rate || rate.trim() === '') return false
+  // §C3 旷课分支：只校验备注，其它字段（课程类型/反馈/评分）按 RULE-C 不要求
+  if (isAbsent.value) {
+    if (!f.absentRemark) return false
+    return true
   }
+  // 正常上课：课程类型 + 评分必填
+  if (!f.courseType) return false
+  // D: base_course='resume' 类目下必须选 resumeSubType
+  if (f.courseType === 'base_course' && f.baseCourseCategory === 'resume' && !f.resumeSubType) {
+    return false
+  }
+  const rate = f.rate
+  if (!rate || rate.trim() === '') return false
   return true
 })
 
@@ -350,6 +298,8 @@ function onCourseTypeChange(next: CourseType, prev?: CourseType): void {
     referenceId: next === 'base_course' ? undefined : undefined,
     baseCourseCategory: next === 'base_course' ? formState.value.baseCourseCategory : undefined,
     baseCourseTopics: next === 'base_course' ? formState.value.baseCourseTopics : undefined,
+    // D: 切走 base_course 时清除 resumeSubType
+    resumeSubType: next === 'base_course' ? formState.value.resumeSubType : undefined,
     feedbackContent: undefined,
     // T-508: 切换课程类型时清除截图（截图仅属于人际关系）
     screenshotUrls: next === 'relation_test' ? formState.value.screenshotUrls : undefined,
@@ -374,22 +324,7 @@ function onAbsentToggle(isAbsentNext: boolean): void {
   }
 }
 
-function goNext(): void {
-  if (currentStep.value < totalSteps - 1) {
-    // absent 时跳过 step 2 (reference) 和 step 4 (feedback)
-    if (isAbsent.value && currentStep.value === 2) {
-      currentStep.value = 3
-      return
-    }
-    currentStep.value += 1
-  }
-}
-
-function goPrev(): void {
-  if (currentStep.value > 0) {
-    currentStep.value -= 1
-  }
-}
+// §C3: 单屏版无 step 切换，删除 goNext / goPrev。
 
 async function handleSubmit(): Promise<void> {
   // T-514: 标记提交尝试，触发 rate 校验提示
@@ -410,10 +345,22 @@ async function handleSubmit(): Promise<void> {
   loading.value = true
   error.value = null
   try {
+    // D: 合并 'resume' 类目 → 提交时按 resumeSubType 派生为后端 enum
+    const draft = { ...formState.value }
+    if (draft.baseCourseCategory === 'resume') {
+      const sub = draft.resumeSubType
+      if (sub === 'new') {
+        draft.baseCourseCategory = 'new_resume'
+      } else if (sub === 'update') {
+        draft.baseCourseCategory = 'resume_update'
+      }
+    }
+    // 不向后端透 resumeSubType（仅 UI 状态）
+    delete (draft as { resumeSubType?: unknown }).resumeSubType
     const payload: ClassReportPayload = {
-      ...formState.value,
+      ...draft,
       // T-414: 旷课时 rate 为 null
-      rate: isAbsent.value ? undefined : formState.value.rate,
+      rate: isAbsent.value ? undefined : draft.rate,
     }
     const resp = await submitClassReport(props.end, payload)
     const recordId = Number(resp?.recordId ?? 0)
@@ -492,58 +439,14 @@ onMounted(() => {
   gap: 16px;
 }
 
-.class-report-flow-modal__steps {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0 16px;
+/* §C3: 单屏版 section 分隔（取代旧的 step 进度条 + skip 提示） */
+.class-report-flow-modal__section {
+  padding-bottom: 16px;
   border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 8px;
 }
-
-.class-report-flow-modal__step {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #9ca3af;
-  font-size: 13px;
-
-  .step-index {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #e5e7eb;
-    color: #6b7280;
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  &.active {
-    color: #1f2937;
-    .step-index {
-      background: #2563eb;
-      color: #fff;
-    }
-  }
-
-  &.done {
-    color: #10b981;
-    .step-index {
-      background: #10b981;
-      color: #fff;
-    }
-  }
-}
-
-.class-report-flow-modal__skip {
-  padding: 16px;
-  text-align: center;
-  color: #6b7280;
-  background: #f9fafb;
-  border-radius: 6px;
+.class-report-flow-modal__section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .class-report-flow-modal__error {

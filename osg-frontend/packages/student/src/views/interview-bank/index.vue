@@ -5,7 +5,6 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">真人面试题库 <span>Interview Question Bank</span></h1>
-            <p class="page-sub">真人面试问题集锦，助力面试准备</p>
           </div>
         </div>
       </template>

@@ -956,6 +956,10 @@ public class PositionServiceImpl implements IPositionService
         String preferMentor = stringValue(params.get("preferMentor"));
         String excludeMentor = stringValue(params.get("excludeMentor"));
 
+        if (!StringUtils.hasText(title))
+        {
+            throw new ServiceException("请填写岗位名称");
+        }
         if (!StringUtils.hasText(link))
         {
             throw new ServiceException("请填写岗位链接");
@@ -1256,6 +1260,8 @@ public class PositionServiceImpl implements IPositionService
             position.put("progressStage", defaultString(stringValue(applicationRow.get("stage")), stringValue(position.get("progressStage"))));
             position.put("progressNote", defaultString(stringValue(applicationRow.get("progressNote")), ""));
             position.put("coachingStatus", defaultString(stringValue(applicationRow.get("coachingStatus")), "none"));
+            position.put("mentorName", defaultString(stringValue(applicationRow.get("mentorName")), ""));
+            position.put("mentorNames", defaultString(stringValue(applicationRow.get("mentorNames")), ""));
             // §D.3 不再输出 coachingStatusLabel / coachingColor；前端用 composable 派生
         }
     }
@@ -1994,6 +2000,12 @@ public class PositionServiceImpl implements IPositionService
                 throw new ServiceException("求职主链写入失败，请稍后重试");
             }
             return rows;
+        }
+
+        // §B1 兜底：fixture/历史漏填的 application.lead_mentor_id 在学生有班主任时自愈
+        if (existing.getLeadMentorId() == null && student.getLeadMentorId() != null)
+        {
+            jobApplicationMapper.updateLeadMentorByApplicationIfNull(existing.getApplicationId(), student.getLeadMentorId());
         }
 
         OsgJobApplication stagePatch = new OsgJobApplication();

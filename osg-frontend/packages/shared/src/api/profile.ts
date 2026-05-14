@@ -17,7 +17,9 @@ export interface StudentProfileRecord {
   sexLabel: string
   statusLabel: string
   leadMentor: string
+  leadMentorNames: string[]
   assistantName: string
+  assistantNames: string[]
   school: string
   major: string
   graduationYear: string

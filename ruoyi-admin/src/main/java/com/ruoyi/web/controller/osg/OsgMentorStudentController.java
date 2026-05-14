@@ -31,7 +31,7 @@ import com.ruoyi.system.service.ISysUserService;
  * 导师的学员列表 — 供上报课程弹窗选择学员用
  */
 @RestController
-@RequestMapping("/api/mentor/students")
+@RequestMapping("/mentor/students")
 public class OsgMentorStudentController extends BaseController
 {
     @Autowired

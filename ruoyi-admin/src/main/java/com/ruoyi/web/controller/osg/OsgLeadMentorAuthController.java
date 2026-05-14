@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.constant.HttpStatus;
-import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginBody;
@@ -84,7 +83,7 @@ public class OsgLeadMentorAuthController
         ajax.put("user", user);
         ajax.put("roles", leadMentorAccessService.buildPortalRoles(user));
         ajax.put("permissions", Collections.emptySet());
-        ajax.put("mustChangePassword", SecurityUtils.matchesPassword(UserConstants.DEFAULT_PASSWORD, user.getPassword()));
+        ajax.put("mustChangePassword", "1".equals(user.getFirstLogin()));
         return ajax;
     }
 

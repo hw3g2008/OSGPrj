@@ -3,7 +3,6 @@
     <PageHeader
       title-zh="岗位信息"
       title-en="Job Tracker"
-      description="追踪各大公司招聘岗位与我的学员求职进度（只读）"
     >
       <template #actions>
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small">

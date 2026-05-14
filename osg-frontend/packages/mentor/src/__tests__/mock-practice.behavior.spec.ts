@@ -7,7 +7,7 @@
  * - 渲染 4 个筛选：公司 / 面试阶段 / 面试时间 / 是否上报课消
  * - 列：学生 ID / 学生姓名 / 类型 / 分配时间 / 已上报课消数 / 操作
  * - 操作"上报课消"按钮触发共享 ReportModal，预填 referenceType=mock_interview/relation_test/communication_test，referenceId=practiceId
- * - new 行的"确认"入口保持工作（PUT /api/mentor/mock-practice/{id}/confirm）
+ * - new 行的"确认"入口保持工作（PUT /mentor/mock-practice/{id}/confirm）
  *
  * 反向断言：
  * - 不渲染 a-row.stats-grid / 不渲染"已上课时"/"课程反馈"列 / 不渲染本地详情 modal "学员求职详情"
@@ -59,7 +59,7 @@ const baseRows: MockPracticeRow[] = [
 vi.mock('@osg/shared/utils/request', () => ({
   http: {
     get: vi.fn(async (url: string) => {
-      if (url.includes('/api/mentor/mock-practice/list')) {
+      if (url.includes('/mentor/mock-practice/list')) {
         return { rows: baseRows.map((row) => ({ ...row })), total: baseRows.length }
       }
       return { rows: [] }
@@ -76,7 +76,7 @@ describe('mentor mock-practice behavior (Step3-F4 strict)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url.includes('/api/mentor/mock-practice/list')) {
+      if (url.includes('/mentor/mock-practice/list')) {
         return { rows: baseRows.map((row) => ({ ...row })), total: baseRows.length }
       }
       return { rows: [] }
@@ -138,9 +138,9 @@ describe('mentor mock-practice behavior (Step3-F4 strict)', () => {
     wrapper.unmount()
   })
 
-  it('preserves 确认 flow for new rows (PUT /api/mentor/mock-practice/{id}/confirm)', async () => {
+  it('preserves 确认 flow for new rows (PUT /mentor/mock-practice/{id}/confirm)', async () => {
     vi.mocked(http.get).mockImplementationOnce(async (url: string) => {
-      if (url.includes('/api/mentor/mock-practice/list')) {
+      if (url.includes('/mentor/mock-practice/list')) {
         return {
           rows: baseRows.map((row, i) => (i === 0 ? { ...row, status: 'new' } : row)),
           total: baseRows.length,
@@ -154,7 +154,7 @@ describe('mentor mock-practice behavior (Step3-F4 strict)', () => {
     expect(confirmBtn, 'expected to find 确认 button on new row').toBeTruthy()
     await confirmBtn!.trigger('click')
     await flushPromises()
-    expect(http.put).toHaveBeenCalledWith('/api/mentor/mock-practice/5105/confirm')
+    expect(http.put).toHaveBeenCalledWith('/mentor/mock-practice/5105/confirm')
   })
 
   it('does not render the deprecated 学员求职详情 modal anywhere on the page', async () => {
@@ -173,7 +173,7 @@ describe('mentor mock-practice behavior (Step3-F4 strict)', () => {
     await triggerButton!.trigger('click')
     await flushPromises()
     expect(http.get).toHaveBeenCalledWith(
-      '/api/mentor/mock-practice/list',
+      '/mentor/mock-practice/list',
       expect.objectContaining({
         params: expect.objectContaining({
           company: expect.any(String),
