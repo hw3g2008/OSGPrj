@@ -15,6 +15,7 @@
  *     validateForgotPasswordPassword,
  *   } from '@osg/shared/utils/forgotPasswordHelpers'
  */
+import { i18n } from '../i18n'
 
 /**
  * 将邮箱地址打码显示（保留首字母 + 域名）
@@ -45,9 +46,9 @@ export function maskForgotPasswordEmail(email: string): string {
  */
 export function getForgotPasswordStepDescription(step: number): string {
   const stepMap: Record<number, string> = {
-    1: '请输入您注册时使用的邮箱，我们将发送验证码',
-    2: '请输入验证码',
-    3: '请设置新密码',
+    1: i18n.global.t('please_enter_the_email_address_you_used_'),
+    2: i18n.global.t('please_enter_the_verification_code'),
+    3: i18n.global.t('please_set_your_new_password_2'),
     4: '',
   }
 
@@ -73,7 +74,7 @@ export function getForgotPasswordResendMeta(countdown: number): {
 
   return {
     disabled: false,
-    label: '重新发送',
+    label: i18n.global.t('resend'),
   }
 }
 
@@ -98,7 +99,7 @@ export function getPasswordStrengthMeta(password: string): {
   if (!password) {
     return {
       className: '',
-      text: '密码强度',
+      text: i18n.global.t('password_strength'),
     }
   }
 
@@ -133,7 +134,7 @@ export function getPasswordStrengthMeta(password: string): {
  * @returns 错误文案（空字符串表示通过）
  */
 export function validateForgotPasswordCode(code: string): string {
-  return code.trim().length === 6 ? '' : '请输入 6 位验证码'
+  return code.trim().length === 6 ? '' : i18n.global.t('please_enter_the_6_digit_verification_co_2')
 }
 
 /**
@@ -146,7 +147,7 @@ export function validateForgotPasswordConfirmation(
   confirmPassword: string,
 ): string {
   if (confirmPassword && newPassword !== confirmPassword) {
-    return '两次输入的密码不一致'
+    return i18n.global.t('the_passwords_entered_twice_are_inconsis')
   }
 
   return ''
@@ -159,19 +160,19 @@ export function validateForgotPasswordConfirmation(
  */
 export function validateForgotPasswordPassword(password: string): string {
   if (!password) {
-    return '请输入新密码'
+    return i18n.global.t('please_enter_new_password')
   }
 
   if (password.length < 8 || password.length > 20) {
-    return '密码长度需为 8-20 字符'
+    return i18n.global.t('password_must_be_8_20_characters_2')
   }
 
   if (!/[a-zA-Z]/.test(password)) {
-    return '密码需包含字母'
+    return i18n.global.t('password_must_contain_letters')
   }
 
   if (!/[0-9]/.test(password)) {
-    return '密码需包含数字'
+    return i18n.global.t('password_must_contain_numbers')
   }
 
   return ''

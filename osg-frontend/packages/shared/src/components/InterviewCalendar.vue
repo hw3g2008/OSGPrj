@@ -4,13 +4,13 @@
     <div class="osg-ic__toolbar">
       <div class="osg-ic__title-group">
         <i class="mdi mdi-calendar-month osg-ic__title-icon" />
-        <span class="osg-ic__title">{{ title }}</span>
+        <span class="osg-ic__title">{{ title || $t('student_interview_schedule') }}</span>
         <div v-if="showMonthNav" class="osg-ic__month-nav">
           <a-button
             type="text"
             size="small"
             class="osg-ic__month-arrow"
-            aria-label="上一月"
+            :aria-label="$t('previous_month')"
             @click="onShift(-1)"
           >
             <i class="mdi mdi-chevron-left" />
@@ -20,7 +20,7 @@
             type="text"
             size="small"
             class="osg-ic__month-arrow"
-            aria-label="下一月"
+            :aria-label="$t('next_month')"
             @click="onShift(1)"
           >
             <i class="mdi mdi-chevron-right" />
@@ -71,7 +71,7 @@
           class="mdi"
           :class="expanded ? 'mdi-calendar-collapse-horizontal' : 'mdi-calendar-expand-horizontal'"
         />
-        {{ expanded ? '收起' : '展开' }}
+        {{ expanded ? $t('collapse') : $t('expand') }}
       </a-button>
     </div>
 
@@ -116,10 +116,10 @@
       <div class="osg-ic__week-schedule">
         <div class="osg-ic__week-title">
           <i class="mdi mdi-calendar-clock" aria-hidden="true" />
-          本周学员面试安排
+          {{ $t('student_interview_schedule_this_week') }}
         </div>
         <slot v-if="!calendarItems.length" name="empty">
-          <div class="osg-ic__week-empty">本周暂无面试或辅导安排</div>
+          <div class="osg-ic__week-empty">{{ $t('no_interviews_or_coaching_sessions_sched') }}</div>
         </slot>
         <div
           v-for="item in calendarItems"
@@ -154,7 +154,6 @@
 import { ref, toRef, watch } from 'vue'
 import { useInterviewCalendar } from '../composables/useInterviewCalendar'
 import type { InterviewEvent } from '../types/interviewCalendar'
-
 interface Props {
   events: InterviewEvent[]
   /** 是否显示月份左右箭头（默认 true） */
@@ -168,7 +167,6 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   showMonthNav: true,
   defaultExpanded: false,
-  title: '学员面试安排',
 })
 
 const emit = defineEmits<{

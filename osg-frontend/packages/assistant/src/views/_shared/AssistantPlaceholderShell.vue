@@ -2,7 +2,7 @@
   <div :id="pageId" class="assistant-page" data-page-shell>
     <PageHeader :title-zh="title" :title-en="titleEn" :description="description">
       <template #actions>
-        <span class="status-pill">{{ statusText }}</span>
+        <span class="status-pill">{{ statusText || $t('stay_tuned') }}</span>
       </template>
     </PageHeader>
 
@@ -11,7 +11,7 @@
         <i class="mdi mdi-rocket-launch-outline" aria-hidden="true" />
       </div>
       <div class="placeholder-copy">
-        <h2>{{ cardTitle }}</h2>
+        <h2>{{ cardTitle || $t('stay_tuned') }}</h2>
         <p>{{ cardDescription }}</p>
       </div>
       <ul class="placeholder-list">
@@ -24,7 +24,6 @@
 <script setup lang="ts">
 import '@mdi/font/css/materialdesignicons.css'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-
 withDefaults(
   defineProps<{
     pageId: string
@@ -37,9 +36,7 @@ withDefaults(
     statusText?: string
   }>(),
   {
-    cardTitle: '敬请期待',
     cardDescription: '该页面已保留访问入口，完整内容将在后续版本开放。',
-    statusText: '敬请期待',
   },
 )
 </script>

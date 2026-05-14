@@ -18,6 +18,7 @@
  *   default - 普通日（灰，ant ''）
  */
 import { computed, ref, toValue, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
+import { i18n } from '../i18n'
 import type {
   CalendarItemView,
   CalendarTone,
@@ -28,7 +29,11 @@ import type {
 } from '../types/interviewCalendar'
 
 const WEEKDAYS_CN = ['日', '一', '二', '三', '四', '五', '六']
-const WEEKDAYS_FULL = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const getWeekdaysFull = () => [
+  i18n.global.t('sunday'), i18n.global.t('monday'), i18n.global.t('tuesday'),
+  i18n.global.t('wednesday'), i18n.global.t('thursday'), i18n.global.t('friday'),
+  i18n.global.t('saturday'),
+]
 
 function addMonths(date: Date, offset: number): Date {
   const next = new Date(date)
@@ -221,14 +226,14 @@ export function useInterviewCalendar(
         let tone: CalendarTone
         const coaching = isCoachingStatus(r.coachingStatus)
         if (daysDiff < 0) {
-          tag = '已过'
+          tag = i18n.global.t('past')
           tone = 'default'
         } else if (daysDiff === 0) {
-          tag = '今天'
+          tag = i18n.global.t('today')
           tone = 'today'
         } else {
-          if (daysDiff === 1) tag = '明天'
-          else if (daysDiff === 2) tag = '后天'
+          if (daysDiff === 1) tag = i18n.global.t('tomorrow')
+          else if (daysDiff === 2) tag = i18n.global.t('day_after_tomorrow')
           else tag = `${daysDiff}天后`
           tone = coaching ? 'info' : 'danger'
         }
@@ -247,7 +252,7 @@ export function useInterviewCalendar(
           tone,
           tag,
           tagColor,
-          weekday: WEEKDAYS_FULL[d.getDay()],
+          weekday: getWeekdaysFull()[d.getDay()],
           dateNum: String(d.getDate()),
         }
       })

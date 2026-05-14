@@ -1,30 +1,30 @@
-<template>
+﻿<template>
   <section class="osg-page">
-    <PageHeader title-zh="投诉建议" description="处理学员提交的投诉和建议" />
+    <PageHeader :title-zh="$t('complaints_and_suggestions')" :description="$t('handle_complaints_and_suggestions_submit')" />
 
     <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
       <a-form-item>
-        <a-input v-model:value="keyword" placeholder="搜索学员/内容..." allow-clear style="width: 200px" />
+        <a-input v-model:value="keyword" :placeholder="`${$t('search_student_content')}...`" allow-clear style="width: 200px" />
       </a-form-item>
       <a-form-item>
-        <a-select v-model:value="statusFilter" placeholder="全部状态" allow-clear style="width: 120px">
-          <a-select-option value="">全部状态</a-select-option>
-          <a-select-option value="pending">待处理</a-select-option>
-          <a-select-option value="processing">处理中</a-select-option>
-          <a-select-option value="completed">已完成</a-select-option>
+        <a-select v-model:value="statusFilter" :placeholder="$t('all_status')" allow-clear style="width: 120px">
+          <a-select-option value="">{{ $t('all_status') }}</a-select-option>
+          <a-select-option value="pending">{{ $t('pending') }}</a-select-option>
+          <a-select-option value="processing">{{ $t('processing') }}</a-select-option>
+          <a-select-option value="completed">{{ $t('completed') }}</a-select-option>
         </a-select>
       </a-form-item>
       <a-form-item>
-        <a-select v-model:value="typeFilter" placeholder="全部类型" allow-clear style="width: 120px">
-          <a-select-option value="">全部类型</a-select-option>
-          <a-select-option value="complaint">投诉</a-select-option>
-          <a-select-option value="suggestion">建议</a-select-option>
+        <a-select v-model:value="typeFilter" :placeholder="$t('all_types')" allow-clear style="width: 120px">
+          <a-select-option value="">{{ $t('all_types') }}</a-select-option>
+          <a-select-option value="complaint">{{ $t('complaint') }}</a-select-option>
+          <a-select-option value="suggestion">{{ $t('suggestion') }}</a-select-option>
         </a-select>
       </a-form-item>
       <a-form-item>
         <a-button type="primary" @click="loadComplaints">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ $t('search') }}
         </a-button>
       </a-form-item>
     </a-form>
@@ -67,7 +67,7 @@
               size="small"
               @click="handleProcess(record)"
             >
-              处理
+              {{ $t('handle') }}
             </a-button>
             <a-button
               v-else
@@ -75,7 +75,7 @@
               size="small"
               @click="handleView(record)"
             >
-              查看
+              {{ $t('view') }}
             </a-button>
           </template>
         </template>
@@ -94,7 +94,9 @@ import {
   updateComplaintStatus,
   type ComplaintRow
 } from '@osg/shared/api/admin/complaint'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const rows = ref<ComplaintRow[]>([])
 const keyword = ref('')
 const statusFilter = ref<string>('')
@@ -102,17 +104,17 @@ const typeFilter = ref<string>('')
 
 const columns = [
   { title: 'ID', dataIndex: 'complaintId', key: 'complaintId' },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName' },
-  { title: '类型', dataIndex: 'complaintType', key: 'complaintType' },
-  { title: '标题', dataIndex: 'complaintTitle', key: 'complaintTitle' },
-  { title: '提交时间', dataIndex: 'submitTime', key: 'submitTime' },
-  { title: '状态', dataIndex: 'processStatus', key: 'processStatus' },
-  { title: '操作', dataIndex: 'action', key: 'action' }
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName' },
+  { title: t('type'), dataIndex: 'complaintType', key: 'complaintType' },
+  { title: t('title'), dataIndex: 'complaintTitle', key: 'complaintTitle' },
+  { title: t('submission_time'), dataIndex: 'submitTime', key: 'submitTime' },
+  { title: t('status'), dataIndex: 'processStatus', key: 'processStatus' },
+  { title: t('operation'), dataIndex: 'action', key: 'action' }
 ]
 
 const typeLabelMap: Record<string, string> = {
-  complaint: '投诉',
-  suggestion: '建议'
+  complaint: t('complaint'),
+  suggestion: t('suggestion')
 }
 
 const typeColorMap: Record<string, string> = {
@@ -121,9 +123,9 @@ const typeColorMap: Record<string, string> = {
 }
 
 const statusLabelMap: Record<string, string> = {
-  pending: '待处理',
-  processing: '处理中',
-  completed: '已完成'
+  pending: t('pending'),
+  processing: t('processing'),
+  completed: t('completed')
 }
 
 const statusColorMap: Record<string, string> = {
@@ -137,7 +139,7 @@ const loadComplaints = async () => {
     const response = await getComplaintList()
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('投诉建议列表加载失败')
+    message.error(t('failed_to_load_complaint_and_suggestion_'))
   }
 }
 
@@ -145,7 +147,7 @@ const handleProcess = async (row: ComplaintRow) => {
   try {
     const nextStatus = row.processStatus === 'pending' ? 'processing' : 'completed'
     await updateComplaintStatus(row.complaintId, nextStatus)
-    message.success('状态更新成功')
+    message.success(t('status_updated_successfully'))
     await loadComplaints()
   } catch (_error) {
     // request util handles message
@@ -163,3 +165,4 @@ onMounted(() => {
 
 <style scoped>
 </style>
+

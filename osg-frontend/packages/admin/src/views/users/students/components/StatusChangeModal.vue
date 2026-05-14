@@ -9,7 +9,7 @@
     <template #title>
       <span class="student-status-modal__title">
         <span class="mdi mdi-account-cog student-status-modal__title-icon" aria-hidden="true"></span>
-        <span>修改学员状态</span>
+        <span>{{ $t('update_student_status') }}</span>
       </span>
     </template>
 
@@ -17,8 +17,7 @@
       <span class="mdi student-status-modal__intro-icon" :class="actionIcon" aria-hidden="true"></span>
       <div class="student-status-modal__intro-copy">
         <h3 class="student-status-modal__heading">
-          确定将 <span class="student-status-modal__name">{{ studentName || '学员姓名' }}</span> 的状态修改为
-          <span class="student-status-modal__target-status">{{ targetStatusLabel }}</span>？
+          {{ $t('confirm_student_status_change', { name: studentName || $t('student_name'), status: targetStatusLabel }) }}
         </h3>
         <p class="student-status-modal__desc">{{ modalDescription }}</p>
       </div>
@@ -32,37 +31,37 @@
         layout="vertical"
         :required-mark="false"
       >
-        <a-form-item name="reason" data-field-name="修改原因">
+        <a-form-item name="reason" :data-field-name="$t('reason_for_change')">
           <template #label>
             <span class="student-status-modal__label">
-              修改原因
+              {{ $t('reason_for_change') }}
               <span class="student-status-modal__required">*</span>
             </span>
           </template>
           <a-select
             v-model:value="formState.reason"
-            placeholder="请选择原因"
+            :placeholder="$t('please_select_a_reason')"
             :options="reasonOptions"
           />
         </a-form-item>
 
-        <a-form-item name="remark" data-field-name="备注说明">
+        <a-form-item name="remark" :data-field-name="$t('remarks_2')">
           <template #label>
-            <span class="student-status-modal__label">备注说明</span>
+            <span class="student-status-modal__label">{{ $t('remarks_2') }}</span>
           </template>
           <a-textarea
             v-model:value="formState.remark"
             :rows="2"
             :maxlength="200"
-            placeholder="选填，可填写详细说明"
+            :placeholder="$t('optional_additional_details_can_be_added')"
           />
         </a-form-item>
       </a-form>
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" @click="handleSubmit">确认修改</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" @click="handleSubmit">{{ $t('confirm_change') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -70,7 +69,9 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type StatusAction = 'freeze' | 'refund' | 'restore'
 
 const props = defineProps<{
@@ -92,37 +93,37 @@ const formState = reactive({
 
 const reasonOptionMap: Record<'freeze' | 'refund', { label: string; value: string }[]> = {
   freeze: [
-    { label: '学员申请暂停', value: '学员申请暂停' },
-    { label: '课时用完待续费', value: '课时用完待续费' },
-    { label: '违反服务协议', value: '违反服务协议' },
-    { label: '学员申请退费', value: '学员申请退费' },
-    { label: '其他原因', value: '其他原因' }
+    { label: t('student_requested_suspension'), value: t('student_requested_suspension') },
+    { label: t('hours_used_up_pending_renewal'), value: t('hours_used_up_pending_renewal') },
+    { label: t('violation_of_service_agreement'), value: t('violation_of_service_agreement') },
+    { label: t('student_requested_refund'), value: t('student_requested_refund') },
+    { label: t('other_reasons'), value: t('other_reasons') }
   ],
   refund: [
-    { label: '学员申请暂停', value: '学员申请暂停' },
-    { label: '课时用完待续费', value: '课时用完待续费' },
-    { label: '违反服务协议', value: '违反服务协议' },
-    { label: '学员申请退费', value: '学员申请退费' },
-    { label: '其他原因', value: '其他原因' }
+    { label: t('student_requested_suspension'), value: t('student_requested_suspension') },
+    { label: t('hours_used_up_pending_renewal'), value: t('hours_used_up_pending_renewal') },
+    { label: t('violation_of_service_agreement'), value: t('violation_of_service_agreement') },
+    { label: t('student_requested_refund'), value: t('student_requested_refund') },
+    { label: t('other_reasons'), value: t('other_reasons') }
   ]
 }
 
 const requiresReason = computed(() => props.action === 'freeze' || props.action === 'refund')
 
 const targetStatusLabel = computed(() => {
-  if (props.action === 'freeze') return '冻结'
-  if (props.action === 'refund') return '退费'
-  return '正常'
+  if (props.action === 'freeze') return t('frozen')
+  if (props.action === 'refund') return t('refund')
+  return t('active_3')
 })
 
 const modalDescription = computed(() => {
   if (props.action === 'freeze') {
-    return '冻结后，学员账号将被暂停，无法登录系统。可随时恢复正常状态。'
+    return t('student_freeze_status_description')
   }
   if (props.action === 'refund') {
-    return '退费后，学员账号将被停用。'
+    return t('student_refund_status_description')
   }
-  return '恢复后，学员可正常登录和使用系统。'
+  return t('student_restore_status_description')
 })
 
 const actionIcon = computed(() => {
@@ -137,7 +138,7 @@ const reasonOptions = computed(() => {
 })
 
 const rules = computed(() => ({
-  reason: requiresReason.value ? [{ required: true, message: '请选择原因', trigger: 'change' }] : []
+  reason: requiresReason.value ? [{ required: true, message: t('please_select_a_reason'), trigger: 'change' }] : []
 }))
 
 const resetForm = () => {

@@ -27,6 +27,12 @@ public class SysRole extends BaseEntity
     @Excel(name = "角色名称")
     private String roleName;
 
+    /** 角色名称 i18n 键（系统角色专用），为 null 时前端回落到 roleName 原样展示 */
+    private String i18nKey;
+
+    /** 角色描述 i18n 键（系统角色专用），为 null 时前端回落到 remark 原样展示 */
+    private String remarkI18nKey;
+
     /** 角色权限 */
     @Excel(name = "角色权限")
     private String roleKey;
@@ -107,6 +113,26 @@ public class SysRole extends BaseEntity
     public void setRoleName(String roleName)
     {
         this.roleName = roleName;
+    }
+
+    public String getI18nKey()
+    {
+        return i18nKey;
+    }
+
+    public void setI18nKey(String i18nKey)
+    {
+        this.i18nKey = i18nKey;
+    }
+
+    public String getRemarkI18nKey()
+    {
+        return remarkI18nKey;
+    }
+
+    public void setRemarkI18nKey(String remarkI18nKey)
+    {
+        this.remarkI18nKey = remarkI18nKey;
     }
 
     @NotBlank(message = "权限字符不能为空")

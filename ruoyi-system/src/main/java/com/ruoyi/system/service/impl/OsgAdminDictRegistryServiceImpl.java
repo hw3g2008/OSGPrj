@@ -76,6 +76,7 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
         Map<String, Object> group = new LinkedHashMap<>();
         group.put("group_key", groupKey);
         group.put("group_label", groupLabel);
+        group.put("group_i18n_key", deriveGroupI18nKey(groupKey));
         group.put("icon", asText(metadata.get("icon")));
         group.put("icon_color", asText(metadata.get("iconColor")));
         group.put("icon_bg", asText(metadata.get("iconBg")));
@@ -89,6 +90,7 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
         Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("dict_type", dictType.getDictType());
         entry.put("dict_name", dictType.getDictName());
+        entry.put("dict_name_i18n_key", deriveDictTypeI18nKey(dictType.getDictType()));
         entry.put("has_parent", Boolean.TRUE.equals(metadata.get("hasParent")));
         String parentDictType = asText(metadata.get("parentDictType"));
         if (StringUtils.isNotEmpty(parentDictType))
@@ -97,6 +99,37 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
         }
         entry.put("tab_order", extractTabOrderFromMetadata(metadata));
         return entry;
+    }
+
+    /**
+     * Derive a stable i18n key for a dict group from its logical groupKey.
+     * Convention: "dict_group_{groupKey}", e.g. job -> "dict_group_job".
+     * Frontend falls back to the raw Chinese group_label if the key is not translated.
+     */
+    static String deriveGroupI18nKey(String groupKey)
+    {
+        if (StringUtils.isEmpty(groupKey))
+        {
+            return null;
+        }
+        return "dict_group_" + groupKey.trim();
+    }
+
+    /**
+     * Derive a stable i18n key for a dict type's display name from its dict_type code.
+     * Convention: strip the OSG prefix, prepend "dict_type_".
+     * e.g. osg_job_category -> "dict_type_job_category". Frontend falls back to
+     * sys_dict_type.dict_name (Chinese) when the key is not translated.
+     */
+    static String deriveDictTypeI18nKey(String dictType)
+    {
+        if (StringUtils.isEmpty(dictType))
+        {
+            return null;
+        }
+        String trimmed = dictType.trim();
+        String suffix = trimmed.startsWith(OSG_DICT_PREFIX) ? trimmed.substring(OSG_DICT_PREFIX.length()) : trimmed;
+        return "dict_type_" + suffix;
     }
 
     private Map<String, Object> parseRemark(String remark)

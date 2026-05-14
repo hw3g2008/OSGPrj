@@ -34,15 +34,17 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 const stats = ref({ classes: 3, students: 45, mentors: 8, weekCourses: 32 })
 const classProgress = ref([
   { name: 'Java 就业班 01 期', progress: 75 },
   { name: 'Java 就业班 02 期', progress: 45 },
-  { name: '前端就业班 01 期', progress: 60 }
+  { name: t('frontend_employment_class_cohort_01'), progress: 60 }
 ])
 const todos = ref([
-  { type: '排课', content: '张同学本周缺少排课', color: 'orange' },
-  { type: '反馈', content: '3 位学员待学情评估', color: 'blue' },
-  { type: '结算', content: '2 月导师课时待确认', color: 'green' }
+  { type: t('schedule_sessions'), content: t('student_zhang_has_no_sessions_scheduled_'), color: 'orange' },
+  { type: t('feedback_2'), content: '3 位学员待学情评估', color: 'blue' },
+  { type: t('settlement'), content: '2 月导师课时待确认', color: 'green' }
 ])
 </script>

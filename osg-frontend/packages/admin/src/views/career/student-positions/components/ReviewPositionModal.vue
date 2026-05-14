@@ -16,13 +16,13 @@
     <section class="student-review-modal__hero">
       <div class="student-review-modal__avatar">{{ submitterInitials }}</div>
       <div class="student-review-modal__hero-copy">
-        <strong>{{ position?.studentName || '未命名学生' }}</strong>
+        <strong>{{ position?.studentName || $t('unnamed_student_2') }}</strong>
         <span>ID {{ position?.studentId || '--' }}</span>
         <span>{{ submittedLabel }}</span>
       </div>
       <div class="student-review-modal__hero-meta">
         <span :class="['student-review-modal__status', `student-review-modal__status--${statusTone}`]">{{ statusLabel }}</span>
-        <span v-if="position?.hasCoachingRequest === 'yes'" class="student-review-modal__coaching">有辅导申请</span>
+        <span v-if="position?.hasCoachingRequest === 'yes'" class="student-review-modal__coaching">{{ $t('has_coaching_request') }}</span>
       </div>
     </section>
 
@@ -31,46 +31,46 @@
         <header class="student-review-modal__section-head">
           <div class="student-review-modal__section-title">
             <span class="mdi mdi-briefcase-variant-outline" aria-hidden="true"></span>
-            <span>基本信息</span>
+            <span>{{ $t('basic_info') }}</span>
           </div>
         </header>
 
         <div class="student-review-modal__grid">
-          <fieldset class="student-review-modal__field" data-field-name="岗位分类">
-            <span>岗位分类 *</span>
-            <a-select v-model:value="form.positionCategory" placeholder="请选择" :disabled="!isPending">
+          <fieldset class="student-review-modal__field" :data-field-name="$t('job_classification')">
+            <span>{{ $t('job_classification') }} *</span>
+            <a-select v-model:value="form.positionCategory" :placeholder="$t('please_select')" :disabled="!isPending">
               <a-select-option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <label class="student-review-modal__field" data-field-name="岗位名称">
-            <span>岗位名称 *</span>
-            <a-input v-model:value="form.positionName" placeholder="如 Summer Analyst" :disabled="!isPending" />
+          <label class="student-review-modal__field" :data-field-name="$t('job_title')">
+            <span>{{ $t('job_title') }} *</span>
+            <a-input v-model:value="form.positionName" :placeholder="$t('example_summer_analyst')" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="部门">
-            <span>部门</span>
-            <a-input v-model:value="form.department" placeholder="如 M&A / Global Markets" :disabled="!isPending" />
+          <label class="student-review-modal__field" :data-field-name="$t('department')">
+            <span>{{ $t('department') }}</span>
+            <a-input v-model:value="form.department" :placeholder="$t('example_m_a_global_markets')" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="项目时间">
-            <span>项目时间 *</span>
-            <a-input v-model:value="form.projectYear" placeholder="如 2026" :disabled="!isPending" />
+          <label class="student-review-modal__field" :data-field-name="$t('program_period')">
+            <span>{{ $t('program_period') }} *</span>
+            <a-input v-model:value="form.projectYear" :placeholder="$t('example_year_2026')" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field student-review-modal__field--wide" data-field-name="行业">
-            <span>行业</span>
-            <a-input v-model:value="form.industry" placeholder="如 Bulge Bracket / Buyside / Consulting" :disabled="!isPending" />
+          <label class="student-review-modal__field student-review-modal__field--wide" :data-field-name="$t('industry')">
+            <span>{{ $t('industry') }}</span>
+            <a-input v-model:value="form.industry" :placeholder="$t('example_bulge_bracket_buyside_consulting')" :disabled="!isPending" />
           </label>
 
-          <fieldset class="student-review-modal__field" data-field-name="截止日期">
-            <span>截止日期</span>
+          <fieldset class="student-review-modal__field" :data-field-name="$t('deadline_2')">
+            <span>{{ $t('deadline_2') }}</span>
             <a-input v-model:value="form.deadline" type="datetime-local" :disabled="!isPending" />
           </fieldset>
         </div>
 
-        <fieldset class="student-review-modal__chip-group" data-field-name="招聘周期">
-          <span class="student-review-modal__chip-label">招聘周期 *</span>
+        <fieldset class="student-review-modal__chip-group" :data-field-name="$t('recruitment_cycle')">
+          <span class="student-review-modal__chip-label">{{ $t('recruitment_cycle') }} *</span>
           <a-button
             v-for="option in recruitmentCycleOptions"
             :key="option"
@@ -88,40 +88,40 @@
         <header class="student-review-modal__section-head">
           <div class="student-review-modal__section-title">
             <span class="mdi mdi-domain" aria-hidden="true"></span>
-            <span>公司信息</span>
+            <span>{{ $t('company_info') }}</span>
           </div>
         </header>
 
         <div class="student-review-modal__grid">
-          <label class="student-review-modal__field" data-field-name="公司名称">
-            <span>公司名称 *</span>
-            <a-input v-model:value="form.companyName" placeholder="公司名称" :disabled="!isPending" />
+          <label class="student-review-modal__field" :data-field-name="$t('company_name')">
+            <span>{{ $t('company_name') }} *</span>
+            <a-input v-model:value="form.companyName" :placeholder="$t('company_name')" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="公司类别">
-            <span>公司类别</span>
-            <a-input v-model:value="form.companyType" placeholder="如 bulge_bracket / consulting / swe_pm" :disabled="!isPending" />
+          <label class="student-review-modal__field" :data-field-name="$t('company_type')">
+            <span>{{ $t('company_type') }}</span>
+            <a-input v-model:value="form.companyType" :placeholder="$t('example_company_type_values')" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="大区">
-            <span>大区 *</span>
-            <a-select v-model:value="form.region" placeholder="请选择" :disabled="!isPending">
+          <label class="student-review-modal__field" :data-field-name="$t('region')">
+            <span>{{ $t('region') }} *</span>
+            <a-select v-model:value="form.region" :placeholder="$t('please_select')" :disabled="!isPending">
               <a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </label>
 
-          <label class="student-review-modal__field" data-field-name="城市">
-            <span>城市 *</span>
-            <a-input v-model:value="form.city" placeholder="如 Singapore" :disabled="!isPending" />
+          <label class="student-review-modal__field" :data-field-name="$t('city')">
+            <span>{{ $t('city') }} *</span>
+            <a-input v-model:value="form.city" :placeholder="$t('example_singapore')" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="公司官网">
-            <span>公司官网</span>
+          <label class="student-review-modal__field" :data-field-name="$t('company_website')">
+            <span>{{ $t('company_website') }}</span>
             <a-input v-model:value="form.companyWebsite" placeholder="https://company.com" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="岗位链接">
-            <span>岗位链接</span>
+          <label class="student-review-modal__field" :data-field-name="$t('position_link')">
+            <span>{{ $t('position_link') }}</span>
             <a-input v-model:value="form.positionUrl" placeholder="https://company.com/jobs/..." :disabled="!isPending" />
           </label>
         </div>
@@ -129,7 +129,7 @@
     </div>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button data-surface-part="cancel-control" @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button
         v-if="isPending"
         danger
@@ -138,7 +138,7 @@
         :data-surface-sample-key="props.position ? `student-position-${props.position.studentPositionId}` : 'student-position'"
         @click="handleRejectRequest"
       >
-        拒绝岗位
+        {{ $t('reject_position') }}
       </a-button>
       <a-button
         v-if="isPending"
@@ -146,7 +146,7 @@
         data-surface-part="confirm-control"
         @click="handleSubmit"
       >
-        保存并通过
+        {{ $t('save_and_approve') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -157,7 +157,9 @@ import { computed, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { ReviewStudentPositionPayload, StudentPositionListItem } from '@osg/shared/api/admin/studentPosition'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   position?: StudentPositionListItem | null
@@ -170,20 +172,20 @@ const emit = defineEmits<{
 }>()
 
 const categoryOptions = [
-  { value: 'summer', label: '暑期实习' },
-  { value: 'fulltime', label: '全职招聘' },
-  { value: 'offcycle', label: '非常规周期' },
-  { value: 'spring', label: '春季实习' },
-  { value: 'events', label: '招聘活动' }
+  { value: 'summer', label: t('summer_internship') },
+  { value: 'fulltime', label: t('full_time_recruitment') },
+  { value: 'offcycle', label: t('non_standard_cycle') },
+  { value: 'spring', label: t('spring_internship') },
+  { value: 'events', label: t('recruitment_event') }
 ]
 
 const recruitmentCycleOptions = ['2024 Summer', '2025 Summer', '2026 Summer', '2025 Full-time', '2026 Full-time']
 
 const regionOptions = [
-  { value: 'na', label: '北美' },
-  { value: 'eu', label: '欧洲' },
-  { value: 'ap', label: '亚太' },
-  { value: 'cn', label: '中国大陆' }
+  { value: 'na', label: t('north_america') },
+  { value: 'eu', label: t('europe') },
+  { value: 'ap', label: t('asia_pacific') },
+  { value: 'cn', label: t('mainland_china') }
 ]
 
 const form = reactive({
@@ -232,22 +234,22 @@ watch(
 
 const selectedCycles = computed(() => form.recruitmentCycle)
 const isPending = computed(() => props.position?.status === 'pending')
-const modalTitle = computed(() => (isPending.value ? '学生自添岗位编辑' : '学生自添岗位结果'))
+const modalTitle = computed(() => (isPending.value ? t('edit_student_submitted_position') : t('student_submitted_position_result')))
 
 const submitterInitials = computed(() => {
-  const value = props.position?.studentName || '学员'
+  const value = props.position?.studentName || t('student')
   return value.slice(0, 2).toUpperCase()
 })
 
 const submittedLabel = computed(() => {
-  if (!props.position?.submittedAt) return '提交时间待补充'
-  return `提交于 ${formatDateTime(props.position.submittedAt)}`
+  if (!props.position?.submittedAt) return t('submission_time_pending')
+  return t('submitted_at_time', { time: formatDateTime(props.position.submittedAt) })
 })
 
 const statusLabel = computed(() => {
-  if (props.position?.status === 'approved') return '已通过'
-  if (props.position?.status === 'rejected') return '已拒绝'
-  return '待审核'
+  if (props.position?.status === 'approved') return t('approved')
+  if (props.position?.status === 'rejected') return t('rejected')
+  return t('pending_review')
 })
 
 const statusTone = computed(() => {
@@ -298,7 +300,7 @@ const handleSubmit = () => {
     !payload.recruitmentCycle ||
     !payload.projectYear
   ) {
-    message.warning('请先补齐岗位分类、公司、岗位、地区、招聘周期和项目时间')
+    message.warning(t('please_complete_position_category_compan'))
     return
   }
 

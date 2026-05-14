@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="文件管理" title-en="File Management" description="管理学习文件">
+    <PageHeader :title-zh="$t('file_management')" title-en="File Management" :description="$t('manage_learning_files')">
       <template #actions>
         <a-button type="primary" @click="showNewFolderModal = true">
           <template #icon><FolderAddOutlined /></template>
-          新建文件夹
+          {{ $t('new_folder') }}
         </a-button>
       </template>
     </PageHeader>
@@ -12,17 +12,17 @@
     <a-card :bordered="false">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索文件名" allow-clear style="width: 200px" @press-enter="loadFiles" />
+          <a-input v-model:value="keyword" :placeholder="$t('search_file_name')" allow-clear style="width: 200px" @press-enter="loadFiles" />
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadFiles">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ $t('search') }}
           </a-button>
         </a-form-item>
       </a-form>
 
-      <a-table :columns="fileColumns" :data-source="rows" :row-key="(r: FileRow) => r.fileId" :pagination="false" :locale="{ emptyText: '暂无文件记录' }" :scroll="{ x: 800 }">
+      <a-table :columns="fileColumns" :data-source="rows" :row-key="(r: FileRow) => r.fileId" :pagination="false" :locale="{ emptyText: $t('no_file_records') }" :scroll="{ x: 800 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'fileName'">
             <div style="display: flex; align-items: center; gap: 10px">
@@ -40,7 +40,7 @@
             {{ formatTime(record.createTime) }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="openAuthModal(record)">授权</a-button>
+            <a-button type="link" size="small" @click="openAuthModal(record)">{{ $t('authorize') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -76,7 +76,9 @@ import {
   type FileRow,
   type UpdateFileAuthPayload
 } from '@osg/shared/api/admin/file'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const fileTypeIconMap: Record<FileRow['fileType'], string> = {
   folder: 'mdi-folder',
   pdf: 'mdi-file-pdf-box',
@@ -91,12 +93,12 @@ const fileTypeColorMap: Record<FileRow['fileType'], string> = {
 
 const fileColumns = [
   { title: 'ID', dataIndex: 'fileId', key: 'fileId', width: 80, customRender: ({ text }: { text: number }) => `#${text}` },
-  { title: '文件名', dataIndex: 'fileName', key: 'fileName', width: 200 },
-  { title: '分类', dataIndex: 'className', key: 'className', width: 100 },
-  { title: '大小', dataIndex: 'fileSize', key: 'fileSize', width: 100 },
-  { title: '授权对象', dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 140 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80 },
+  { title: t('file_name'), dataIndex: 'fileName', key: 'fileName', width: 200 },
+  { title: t('category'), dataIndex: 'className', key: 'className', width: 100 },
+  { title: t('size'), dataIndex: 'fileSize', key: 'fileSize', width: 100 },
+  { title: t('authorized_target'), dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
+  { title: t('created_at'), dataIndex: 'createTime', key: 'createTime', width: 140 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 80 },
 ]
 
 const rows = ref<FileRow[]>([])
@@ -111,7 +113,7 @@ const loadFiles = async () => {
     const response = await getFileList({ keyword: keyword.value || undefined })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('文件列表加载失败')
+    message.error(t('failed_to_load_file_list'))
   }
 }
 
@@ -120,7 +122,7 @@ const handleCreateFolder = async (payload: CreateFileFolderPayload) => {
   try {
     await createFileFolder(payload)
     showNewFolderModal.value = false
-    message.success('文件夹创建成功')
+    message.success(t('folder_created_successfully'))
     await loadFiles()
   } catch (_error) {
     // request helper handles messages
@@ -139,7 +141,7 @@ const handleUpdateAuth = async (payload: UpdateFileAuthPayload) => {
   try {
     await updateFileAuth(payload)
     showAuthModal.value = false
-    message.success('文件授权已更新')
+    message.success(t('file_authorization_updated'))
     await loadFiles()
   } catch (_error) {
     // request helper handles messages

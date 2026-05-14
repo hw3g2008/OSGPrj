@@ -9,20 +9,20 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-close-octagon-outline" aria-hidden="true"></span>
-        <span>拒绝岗位</span>
+        <span>{{ $t('reject_position') }}</span>
       </span>
     </template>
 
     <section class="student-reject-modal__hero">
-      <strong>{{ position?.studentName || '当前学生' }}</strong>
-      <span>拒绝后，该岗位不会加入公共岗位库，学生将收到审核结果通知。</span>
+      <strong>{{ position?.studentName || $t('current_student') }}</strong>
+      <span>{{ $t('after_rejection_this_position_will_not_b') }}。</span>
     </section>
 
-    <section class="student-reject-modal__section" data-field-name="拒绝原因">
+    <section class="student-reject-modal__section" :data-field-name="$t('rejection_reason')">
       <label class="student-reject-modal__label">
-        <span>拒绝原因 *</span>
+        <span>{{ $t('rejection_reason') }} *</span>
       </label>
-      <div class="student-reject-modal__reason-grid" data-field-name="拒绝原因">
+      <div class="student-reject-modal__reason-grid" :data-field-name="$t('rejection_reason')">
         <button
           v-for="option in reasonOptions"
           :key="option.value"
@@ -38,23 +38,23 @@
       </div>
     </section>
 
-    <section class="student-reject-modal__section" data-field-name="补充说明">
+    <section class="student-reject-modal__section" :data-field-name="$t('additional_notes')">
       <label class="student-reject-modal__label">
-        <span>补充说明</span>
+        <span>{{ $t('additional_notes') }}</span>
       </label>
       <a-textarea
         v-model:value="formState.note"
-        data-field-name="补充说明"
+        :data-field-name="$t('additional_notes')"
         :rows="4"
         :maxlength="120"
-        placeholder="可选，补充本次拒绝说明"
+        :placeholder="$t('optional_add_notes_for_this_rejection')"
       />
       <div class="student-reject-modal__meta">{{ formState.note.length }}/120</div>
     </section>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
-      <a-button danger data-surface-part="confirm-control" @click="handleSubmit">确认拒绝</a-button>
+      <a-button data-surface-part="cancel-control" @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button danger data-surface-part="confirm-control" @click="handleSubmit">{{ $t('confirm_rejection') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -64,7 +64,9 @@ import { reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { RejectStudentPositionPayload, StudentPositionListItem } from '@osg/shared/api/admin/studentPosition'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   position?: StudentPositionListItem | null
@@ -81,11 +83,11 @@ const formState = reactive({
 })
 
 const reasonOptions = [
-  { label: '岗位链接无法访问', value: '岗位链接无法访问' },
-  { label: '公司官网无此岗位', value: '公司官网无此岗位' },
-  { label: '信息与官方不符', value: '信息与官方不符' },
-  { label: '与现有岗位重复', value: '与现有岗位重复' },
-  { label: '其他', value: '其他' }
+  { label: t('position_link_is_inaccessible'), value: t('position_link_is_inaccessible') },
+  { label: t('position_not_found_on_company_website'), value: t('position_not_found_on_company_website') },
+  { label: t('information_does_not_match_official_sour'), value: t('information_does_not_match_official_sour') },
+  { label: t('duplicate_of_an_existing_position'), value: t('duplicate_of_an_existing_position') },
+  { label: t('other'), value: t('other') }
 ]
 
 watch(
@@ -105,7 +107,7 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!formState.reason) {
-    message.warning('请选择拒绝原因')
+    message.warning(t('please_select_a_rejection_reason'))
     return
   }
 

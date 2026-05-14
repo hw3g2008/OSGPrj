@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 学员 (students) 相关的颜色 / 色调工具
  *
  * 包含两组：
@@ -14,6 +14,8 @@
  * - '2' → 已结束（ended，#F3F4F6/#6B7280 灰）
  * - '3' → 退款（refunded，#F3F4F6/#6B7280 灰，asst 现实现延用）
  */
+
+import { i18n } from '../i18n'
 
 export type StudentStatusToneClass =
   | 'osg-student-status-tag--active'
@@ -55,10 +57,10 @@ export function resolveStudentStatusToneClass(
  */
 export function resolveStudentStatusLabel(status?: string | null): string {
   const v = String(status ?? '').trim()
-  if (v === '1') return '冻结'
-  if (v === '2') return '已结束'
-  if (v === '3') return '退款'
-  return '正常'
+  if (v === '1') return i18n.global.t('frozen')
+  if (v === '2') return i18n.global.t('ended')
+  if (v === '3') return i18n.global.t('refund_2')
+  return i18n.global.t('active_3')
 }
 
 // ────────────────────────────────────────────────────────────
@@ -116,3 +118,5 @@ export function formatRemainingHours(value?: number | string | null): string {
   const finalValue = Number.isFinite(safeValue) ? safeValue : 0
   return Number.isInteger(finalValue) ? `${finalValue}h` : `${finalValue.toFixed(1)}h`
 }
+
+

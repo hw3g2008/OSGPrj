@@ -9,32 +9,32 @@
     <template #title>
       <span class="contract-blacklist-modal__title">
         <span class="mdi mdi-account-cancel" aria-hidden="true"></span>
-        <span>加入黑名单</span>
+        <span>{{ $t('add_to_blacklist') }}</span>
       </span>
     </template>
 
     <div class="contract-blacklist-modal__intro">
       <strong>{{ targetLabel }}</strong>
-      <span>填写加入黑名单的原因与备注说明。</span>
+      <span>{{ $t('provide_reason_and_notes_for_adding_to_b') }}。</span>
     </div>
 
     <a-form layout="vertical">
-      <a-form-item label="原因选择">
-        <a-select v-model:value="form.reason" placeholder="请选择原因" @change="handleReasonChange">
+      <a-form-item :label="$t('select_reason')">
+        <a-select v-model:value="form.reason" :placeholder="$t('please_select_a_reason')" @change="handleReasonChange">
           <a-select-option v-for="option in reasonOptions" :key="option" :value="option">{{ option }}</a-select-option>
         </a-select>
       </a-form-item>
-      <a-form-item v-if="requiresOtherReason" label="其他原因说明">
-        <a-input v-model:value="form.otherReason" placeholder="请输入其他原因说明" />
+      <a-form-item v-if="requiresOtherReason" :label="$t('other_reason_details')">
+        <a-input v-model:value="form.otherReason" :placeholder="$t('please_enter_details_for_other_reason')" />
       </a-form-item>
-      <a-form-item label="备注说明">
-        <a-textarea v-model:value="form.remark" :rows="3" placeholder="可填写补充说明" />
+      <a-form-item :label="$t('remarks_2')">
+        <a-textarea v-model:value="form.remark" :rows="3" :placeholder="$t('optional_additional_notes')" />
       </a-form-item>
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" danger @click="handleSubmit">确认加入</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" danger @click="handleSubmit">{{ $t('confirm_2') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -44,7 +44,9 @@ import { computed, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { ContractListItem } from '@osg/shared/api/admin/contract'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   contract?: ContractListItem | null
@@ -55,7 +57,7 @@ const emit = defineEmits<{
   submitted: []
 }>()
 
-const reasonOptions = ['违规联系学员', '服务投诉升级', '合作终止', '其他原因']
+const reasonOptions = [t('unauthorized_contact_with_students'), t('service_complaint_escalation'), t('partnership_terminated'), t('other_reasons')]
 
 const form = reactive({
   reason: '',
@@ -64,11 +66,11 @@ const form = reactive({
 })
 
 const targetLabel = computed(() => {
-  if (!props.contract) return '当前合同'
-  return `${props.contract.studentName || '当前学员'} · ${props.contract.contractNo || props.contract.contractId}`
+  if (!props.contract) return t('current_contract')
+  return `${props.contract.studentName || t('current_student_2')} · ${props.contract.contractNo || props.contract.contractId}`
 })
 
-const requiresOtherReason = computed(() => form.reason === '其他原因')
+const requiresOtherReason = computed(() => form.reason === t('other_reasons'))
 
 const resetForm = () => {
   form.reason = ''
@@ -92,15 +94,15 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!form.reason) {
-    message.error('请选择原因')
+    message.error(t('please_select_a_reason'))
     return
   }
   if (requiresOtherReason.value && !form.otherReason.trim()) {
-    message.error('请填写其他原因说明')
+    message.error(t('please_fill_in_details_for_other_reason'))
     return
   }
   if (!form.remark.trim()) {
-    message.error('请填写备注说明')
+    message.error(t('please_fill_in_notes'))
     return
   }
   emit('submitted')

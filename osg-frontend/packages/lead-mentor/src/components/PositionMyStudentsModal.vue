@@ -8,7 +8,7 @@
       type="button"
       class="position-students-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭我的学员申请弹层"
+      :aria-label="$t('close_my_student_applications_dialog')"
       @click="closeModal"
     />
 
@@ -28,7 +28,7 @@
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭我的学员申请弹层"
+          :aria-label="$t('close_my_student_applications_dialog')"
           @click="closeModal"
         >
           ×
@@ -38,18 +38,18 @@
       <div class="position-students-body modal-body" data-surface-part="body">
         <div class="position-students-note">
           <i class="mdi mdi-information" aria-hidden="true" />
-          仅显示您管理的学员，您可以修改学员的求职状态
+          {{ $t('showing_only_students_you_manage_you_can') }}
         </div>
 
         <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
-                <th>学生ID</th>
-                <th>姓名</th>
-                <th>岗位</th>
-                <th>状态</th>
-                <th>已上课时</th>
+                <th>{{ $t('student_2') }}ID</th>
+                <th>{{ $t('name') }}</th>
+                <th>{{ $t('position') }}</th>
+                <th>{{ $t('status') }}</th>
+                <th>{{ $t('already_in_class') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -72,10 +72,10 @@
       </div>
 
       <div class="position-students-footer modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeModal">关闭</button>
+        <button type="button" class="btn btn-outline" @click="closeModal">{{ $t('close') }}</button>
         <button type="button" class="btn btn-primary" @click="closeModal">
           <i class="mdi mdi-check" aria-hidden="true" />
-          保存修改
+          {{ $t('save_changes') }}
         </button>
       </div>
     </div>

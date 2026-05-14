@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 模拟应聘 (mock-practice) 相关的颜色 / 色调工具
  *
  * SSOT：以原型 prototype/assistant.html + lead-mentor.html 模拟应聘列表「类型」列为基准
@@ -11,6 +11,7 @@
  * - 'midterm' / 'midterm_exam' / '期中考试' → 紫底白（#8B5CF6/#fff）+ mdi-file-document-edit
  * - 其他 / 空 → fallback 到 mock_interview（与 mentor 现实现 default 'blue' 一致）
  */
+import { i18n } from '../i18n'
 
 export type PracticeTypeNormalized =
   | 'mock_interview'
@@ -37,10 +38,10 @@ export function normalizePracticeType(
 ): PracticeTypeNormalized {
   const raw = String(value ?? '').trim()
   const v = raw.toLowerCase()
-  if (v === 'mock_interview' || raw === '模拟面试') return 'mock_interview'
-  if (v === 'relation_test' || raw === '人际关系测试') return 'relation_test'
-  if (v === 'communication_test' || raw === '沟通测试') return 'communication_test'
-  if (v === 'midterm' || v === 'midterm_exam' || raw === '期中考试') return 'midterm'
+  if (v === 'mock_interview' || raw === i18n.global.t('mock_interview')) return 'mock_interview'
+  if (v === 'relation_test' || raw === i18n.global.t('interpersonal_test')) return 'relation_test'
+  if (v === 'communication_test' || raw === i18n.global.t('communication_test')) return 'communication_test'
+  if (v === 'midterm' || v === 'midterm_exam' || raw === i18n.global.t('midterm_exam')) return 'midterm'
   return 'unknown'
 }
 
@@ -77,10 +78,10 @@ export function resolvePracticeTypeToneClass(
 export function resolvePracticeTypeLabel(value?: string | null): string {
   const raw = String(value ?? '').trim()
   const normalized = normalizePracticeType(raw)
-  if (normalized === 'mock_interview') return '模拟面试'
-  if (normalized === 'relation_test') return '人际关系测试'
-  if (normalized === 'communication_test') return '沟通测试'
-  if (normalized === 'midterm') return '期中考试'
+  if (normalized === 'mock_interview') return i18n.global.t('mock_interview')
+  if (normalized === 'relation_test') return i18n.global.t('interpersonal_test')
+  if (normalized === 'communication_test') return i18n.global.t('communication_test')
+  if (normalized === 'midterm') return i18n.global.t('midterm_exam')
   return raw
 }
 
@@ -102,3 +103,5 @@ export function resolvePracticeTypeIcon(value?: string | null): string {
   if (normalized === 'midterm') return 'mdi-file-document-edit'
   return ''
 }
+
+

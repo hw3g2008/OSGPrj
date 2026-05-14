@@ -1,25 +1,25 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="全部课程" title-en="All Classes" description="查看和管理所有课程记录（导师、班主任、助教均可提交）">
+    <PageHeader :title-zh="$t('all_courses')" title-en="All Classes" :description="`${$t('view_and_manage_all_course_records_submi')}）`">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ $t('export') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-alert type="info" show-icon style="margin-bottom: 0">
-      <template #message>课程审核与支付流程</template>
+      <template #message>{{ $t('course_review_and_payment_process') }}</template>
       <template #description>
         <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; align-items: center">
-          <a-tag>① 导师/班主任/助教提交</a-tag>
+          <a-tag>① {{ $t('submitted_by_mentor_class_advisor_ta') }}</a-tag>
           <span>→</span>
-          <a-tag color="orange">② 待审核</a-tag>
+          <a-tag color="orange">② {{ $t('pending_review') }}</a-tag>
           <span>→</span>
-          <a-tag color="blue">③ 未支付</a-tag>
+          <a-tag color="blue">③ {{ $t('unpaid') }}</a-tag>
           <span>→</span>
-          <a-tag color="green">④ 已支付</a-tag>
+          <a-tag color="green">④ {{ $t('paid') }}</a-tag>
         </div>
       </template>
     </a-alert>
@@ -36,38 +36,38 @@
 
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索学员/导师姓名..." allow-clear style="width: 200px" @press-enter="handleSearch" />
+          <a-input v-model:value="keyword" :placeholder="`${$t('search_student_mentor_name')}...`" allow-clear style="width: 200px" @press-enter="handleSearch" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterCourseType" placeholder="全部课程类型" allow-clear style="width: 150px">
-            <a-select-option value="onboarding_interview">入职面试</a-select-option>
-            <a-select-option value="mock_interview">模拟面试</a-select-option>
-            <a-select-option value="written_test">笔试辅导</a-select-option>
-            <a-select-option value="midterm_exam">模拟期中考试</a-select-option>
-            <a-select-option value="communication_midterm">人际关系期中考试</a-select-option>
-            <a-select-option value="qbank_request">题库申请</a-select-option>
+          <a-select v-model:value="filterCourseType" :placeholder="$t('all_course_types')" allow-clear style="width: 150px">
+            <a-select-option value="onboarding_interview">{{ $t('interview_2') }}</a-select-option>
+            <a-select-option value="mock_interview">{{ $t('mock_interview') }}</a-select-option>
+            <a-select-option value="written_test">{{ $t('written_test_coaching') }}</a-select-option>
+            <a-select-option value="midterm_exam">{{ $t('mock_midterm_exam') }}</a-select-option>
+            <a-select-option value="communication_midterm">{{ $t('networking_midterm_exam') }}</a-select-option>
+            <a-select-option value="qbank_request">{{ $t('question_bank_request') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterSource" placeholder="全部来源" allow-clear style="width: 120px">
-            <a-select-option value="mentor">导师端</a-select-option>
-            <a-select-option value="headteacher">班主任端</a-select-option>
-            <a-select-option value="assistant">助教端</a-select-option>
+          <a-select v-model:value="filterSource" :placeholder="$t('all_sources')" allow-clear style="width: 120px">
+            <a-select-option value="mentor">{{ $t('mentor_portal') }}</a-select-option>
+            <a-select-option value="headteacher">{{ $t('homeroom_teacher_portal') }}</a-select-option>
+            <a-select-option value="assistant">{{ $t('teaching_assistant_portal') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-date-picker v-model:value="filterDateStart" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+          <a-date-picker v-model:value="filterDateStart" :placeholder="$t('start_date_2')" value-format="YYYY-MM-DD" style="width: 130px" />
         </a-form-item>
         <a-form-item>
-          <a-date-picker v-model:value="filterDateEnd" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+          <a-date-picker v-model:value="filterDateEnd" :placeholder="$t('end_date_2')" value-format="YYYY-MM-DD" style="width: 130px" />
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ $t('search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ $t('reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -76,9 +76,9 @@
         :columns="classColumns"
         :data-source="rows"
         :row-key="(r: AllClassesRow) => r.recordId"
-        :locale="{ emptyText: '当前筛选下暂无课程记录' }"
+        :locale="{ emptyText: $t('no_course_records_under_current_filter') }"
         :scroll="{ x: 1100 }"
-        :pagination="{ current: currentPage, pageSize, total, simple: false, showTotal: (t: number) => `共 ${t} 条记录`, onChange: onPageChange }"
+        :pagination="{ current: currentPage, pageSize, total, simple: false, showTotal: (n: number) => `${t('in_total')} ${n} ${t('records')}`, onChange: onPageChange }"
         :row-class-name="(record: AllClassesRow) => rowClassMap[record.displayStatus] || ''"
       >
         <template #bodyCell="{ column, record }">
@@ -108,8 +108,8 @@
             <span v-else style="color: #94a3b8">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button v-if="record.displayStatus === 'pending'" type="primary" size="small" @click="openDetail(record.recordId)">审核</a-button>
-            <a-button v-else type="link" size="small" :danger="record.displayStatus === 'rejected'" @click="openDetail(record.recordId)">查看</a-button>
+            <a-button v-if="record.displayStatus === 'pending'" type="primary" size="small" @click="openDetail(record.recordId)">{{ $t('review') }}</a-button>
+            <a-button v-else type="link" size="small" :danger="record.displayStatus === 'rejected'" @click="openDetail(record.recordId)">{{ $t('view') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -139,7 +139,9 @@ import {
   type AllClassesSummary,
   type AllClassesTab
 } from '@osg/shared/api/admin/allClasses'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const tabBadgeColor: Record<string, string> = {
   all: '#1890ff',
   pending: '#faad14',
@@ -177,16 +179,16 @@ const rowClassMap: Record<string, string> = {
 }
 
 const classColumns = [
-  { title: '课程ID', dataIndex: 'classId', key: 'classId', width: 80 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
-  { title: '课程类型', dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 110 },
-  { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '日期', dataIndex: 'classDate', key: 'classDate', width: 100 },
-  { title: '来源', dataIndex: 'sourceLabel', key: 'sourceLabel', width: 90 },
-  { title: '状态', dataIndex: 'displayStatusLabel', key: 'displayStatusLabel', width: 80 },
-  { title: '评价', dataIndex: 'rate', key: 'rate', width: 70 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80 },
+  { title: 'Class ID', dataIndex: 'classId', key: 'classId', width: 80 },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: t('mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: t('course_type'), dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 110 },
+  { title: t('duration'), dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: t('date'), dataIndex: 'classDate', key: 'classDate', width: 100 },
+  { title: t('source'), dataIndex: 'sourceLabel', key: 'sourceLabel', width: 90 },
+  { title: t('status'), dataIndex: 'displayStatusLabel', key: 'displayStatusLabel', width: 80 },
+  { title: t('feedback'), dataIndex: 'rate', key: 'rate', width: 70 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 80 },
 ]
 
 const keyword = ref('')
@@ -209,15 +211,15 @@ const summary = ref<AllClassesSummary>({
   paidCount: 0,
   rejectedCount: 0,
   selectedTab: 'all',
-  flowSteps: ['导师/班主任/助教提交', '待审核', '未支付', '已支付']
+  flowSteps: [t('submitted_by_mentor_class_advisor_ta'), t('pending_review'), t('unpaid'), t('paid')]
 })
 
 const tabs = computed(() => ([
-  { key: 'all' as const, label: '全部', count: summary.value.allCount },
-  { key: 'pending' as const, label: '待审核', count: summary.value.pendingCount },
-  { key: 'unpaid' as const, label: '未支付', count: summary.value.unpaidCount },
-  { key: 'paid' as const, label: '已支付', count: summary.value.paidCount },
-  { key: 'rejected' as const, label: '已驳回', count: summary.value.rejectedCount }
+  { key: 'all' as const, label: t('all'), count: summary.value.allCount },
+  { key: 'pending' as const, label: t('pending_review'), count: summary.value.pendingCount },
+  { key: 'unpaid' as const, label: t('unpaid'), count: summary.value.unpaidCount },
+  { key: 'paid' as const, label: t('paid'), count: summary.value.paidCount },
+  { key: 'rejected' as const, label: t('rejected_3'), count: summary.value.rejectedCount }
 ]))
 
 const onPageChange = (page: number) => {
@@ -237,7 +239,7 @@ const loadData = async () => {
     summary.value = response.summary
     total.value = response.total ?? 0
   } catch (_error) {
-    message.error('全部课程加载失败')
+    message.error(t('failed_to_load_all_courses'))
   }
 }
 
@@ -268,24 +270,24 @@ const openDetail = async (recordId: number) => {
     detail.value = await getAllClassesDetail(recordId)
     detailVisible.value = true
   } catch (_error) {
-    message.error('课程详情加载失败')
+    message.error(t('failed_to_load_course_details'))
   }
 }
 
 const handleApprove = () => {
-  message.success('已通过审核')
+  message.success(t('review_approved'))
   detailVisible.value = false
   void loadData()
 }
 
 const handleReject = () => {
-  message.success('已驳回')
+  message.success(t('rejected_3'))
   detailVisible.value = false
   void loadData()
 }
 
 const handleExport = () => {
-  message.info('导出功能将在后续版本中接入')
+  message.info(t('export_feature_will_be_available_in_a_fu'))
 }
 
 const formatDate = (value?: string | null) => {
@@ -318,3 +320,4 @@ onMounted(() => {
   background: rgba(255, 247, 237, 0.6);
 }
 </style>
+

@@ -24,6 +24,10 @@ public class TreeSelect implements Serializable
     /** 节点名称 */
     private String label;
 
+    /** i18n 键，前端用于翻译，缺省时回落到 label */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String i18nKey;
+
     /** 节点禁用 */
     private boolean disabled = false;
 
@@ -48,6 +52,7 @@ public class TreeSelect implements Serializable
     {
         this.id = menu.getMenuId();
         this.label = menu.getMenuName();
+        this.i18nKey = menu.getI18nKey();
         this.children = menu.getChildren().stream().map(TreeSelect::new).collect(Collectors.toList());
     }
 
@@ -69,6 +74,16 @@ public class TreeSelect implements Serializable
     public void setLabel(String label)
     {
         this.label = label;
+    }
+
+    public String getI18nKey()
+    {
+        return i18nKey;
+    }
+
+    public void setI18nKey(String i18nKey)
+    {
+        this.i18nKey = i18nKey;
     }
 
     public boolean isDisabled()

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div id="login-page" class="login-page">
     <div class="login-accent login-accent-left"></div>
     <div class="login-accent login-accent-bottom"></div>
@@ -6,7 +6,7 @@
 
     <section class="login-left">
       <h1 class="platform-title">OSG Platform</h1>
-      <p class="platform-subtitle">职业培训一站式平台，学生与导师共同成长</p>
+      <p class="platform-subtitle">{{ $t('one_stop_career_training_platform_where_') }}</p>
 
       <div class="login-features">
         <div v-for="feature in featureTexts" :key="feature" class="login-feature">
@@ -25,8 +25,8 @@
           <span class="login-logo-text">OSG Lead Mentor</span>
         </div>
 
-        <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用您的账号登录（主导师/班主任）</p>
+        <h2 class="login-title">{{ $t('welcome_back') }}</h2>
+        <p class="login-subtitle">{{ $t('log_in_with_your_account_lead_mentor_cla') }}）</p>
 
         <div v-if="errorMessage" class="login-error" role="alert">
           <span class="mdi mdi-alert-circle error-icon" aria-hidden="true"></span>
@@ -35,30 +35,30 @@
 
         <form class="login-form" @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="login-username">用户名 / 邮箱</label>
+            <label for="login-username">{{ $t('username_email') }}</label>
             <input
               id="login-username"
               v-model.trim="formState.username"
               type="text"
-              placeholder="请输入用户名或邮箱"
+              :placeholder="$t('please_enter_your_username_or_email')"
               autocomplete="username"
             />
           </div>
 
           <div class="form-group">
-            <label for="login-password">密码</label>
+            <label for="login-password">{{ $t('password') }}</label>
             <div class="password-field">
               <input
                 id="login-password"
                 v-model="formState.password"
                 :type="passwordVisible ? 'text' : 'password'"
-                placeholder="请输入密码"
+                :placeholder="$t('please_enter_your_password')"
                 autocomplete="current-password"
               />
               <button
                 type="button"
                 class="visibility-toggle"
-                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                ::aria-label="`passwordVisible ? '${$t('hide_password')}' : '${$t('show_password')}'`"
                 @click="passwordVisible = !passwordVisible"
               >
                 <span id="pwd-eye" class="mdi mdi-eye toggle-icon" aria-hidden="true"></span>
@@ -68,19 +68,19 @@
 
           <button class="login-btn" type="submit" :disabled="loading">
             <span class="mdi mdi-login button-icon" aria-hidden="true"></span>
-            <span>{{ loading ? '登录中...' : '登 录' }}</span>
+            <span>{{ loading ? '登录中...' : $t('log_in') }}</span>
           </button>
         </form>
 
         <div class="login-links">
-          忘记密码？
+          {{ $t('forgot_password') }}？
           <a
             href="javascript:void(0)"
             class="link-anchor"
             data-surface-trigger="modal-forgot-password"
             @click.prevent="openForgotPassword"
           >
-            点击重置
+            {{ $t('click_to_reset') }}
           </a>
         </div>
       </div>
@@ -106,12 +106,14 @@ import {
 } from '@osg/shared/api'
 import { clearAuth, setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const featureTexts = [
-  '学生端：一对一导师辅导',
-  '导师端：高效课程管理',
-  '实时岗位信息共享',
-  '完善的学习资料库',
+  t('student_portal_one_on_one_mentor_coachin'),
+  t('mentor_portal_efficient_course_managemen'),
+  t('real_time_position_information_sharing'),
+  t('comprehensive_learning_resource_library'),
 ]
 
 const router = useRouter()
@@ -138,7 +140,7 @@ const openForgotPassword = () => {
 const handleLogin = async () => {
   errorMessage.value = ''
   if (!formState.username || !formState.password) {
-    message.error('请输入用户名和密码')
+    message.error(t('please_enter_your_username_and_password'))
     return
   }
 
@@ -152,7 +154,7 @@ const handleLogin = async () => {
     const userInfo = await getLeadMentorInfo()
     if (!userInfo.roles?.includes('lead-mentor') && !userInfo.roles?.includes('admin')) {
       clearAuth()
-      errorMessage.value = '该账号无班主任端访问权限'
+      errorMessage.value = t('this_account_does_not_have_access_to_the')
       return
     }
     setUser({
@@ -160,11 +162,11 @@ const handleLogin = async () => {
       roles: userInfo.roles,
       permissions: userInfo.permissions,
     })
-    message.success('登录成功')
+    message.success(t('login_successful'))
     router.push((route.query.redirect as string) || '/')
   } catch (error: any) {
     clearAuth()
-    errorMessage.value = error?.message || '用户不存在/密码错误'
+    errorMessage.value = error?.message || t('user_not_found_incorrect_password')
   } finally {
     loading.value = false
   }
@@ -517,3 +519,4 @@ const handleLogin = async () => {
   }
 }
 </style>
+

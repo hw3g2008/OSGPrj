@@ -1,32 +1,32 @@
-<template>
+﻿<template>
   <div id="page-netlog" class="netlog-page">
     <OsgPageContainer>
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">沟通记录 <span>Networking Log</span></h1>
-            <p class="page-sub">完成Network沟通后，请填写记录</p>
+            <h1 class="page-title">{{ $t('communication_records_2') }} <span>Networking Log</span></h1>
+            <p class="page-sub">{{ $t('after_completing_a_networking_conversati') }}</p>
           </div>
         </div>
       </template>
 
       <section class="action-hero">
         <div>
-          <h2>完成了一次沟通？</h2>
-          <p>记录你的Networking成果</p>
+          <h2>{{ $t('completed_a_conversation') }}？</h2>
+          <p>{{ $t('record_your_networking_results') }}</p>
         </div>
         <a-button type="primary" size="large" @click="openCreate">
-          填写记录
+          {{ $t('fill_in_log') }}
         </a-button>
       </section>
 
       <div class="card-shell">
         <div class="card-header">
-          <span>沟通记录 My Logs</span>
+          <span>{{ $t('communication_records_2') }} My Logs</span>
         </div>
         <div class="toolbar">
           <a-input placeholder="搜索公司/对方..." class="toolbar-input" />
-          <a-select class="toolbar-select" placeholder="级别" :options="levelOptions" />
+          <a-select class="toolbar-select" :placeholder="$t('level')" :options="levelOptions" />
           <a-date-picker class="toolbar-date" />
         </div>
 
@@ -35,11 +35,11 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>公司</th>
-                <th>对方</th>
-                <th>级别</th>
-                <th>时间</th>
-                <th>操作</th>
+                <th>{{ $t('company') }}</th>
+                <th>{{ $t('contact') }}</th>
+                <th>{{ $t('level') }}</th>
+                <th>{{ $t('time') }}</th>
+                <th>{{ $t('operation') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -50,7 +50,7 @@
                 <td>{{ item.level }}</td>
                 <td>{{ item.time }}</td>
                 <td>
-                  <a-button type="link" size="small" @click="openDetail(item)">查看</a-button>
+                  <a-button type="link" size="small" @click="openDetail(item)">{{ $t('view') }}</a-button>
                 </td>
               </tr>
             </tbody>
@@ -59,30 +59,30 @@
       </div>
     </OsgPageContainer>
 
-    <a-modal v-model:open="detailOpen" title="沟通记录详情" :footer="null" width="620px">
+    <a-modal v-model:open="detailOpen" :title="$t('communication_log_details')" :footer="null" width="620px">
       <div v-if="activeLog" class="detail-grid">
-        <div class="detail-row"><span class="detail-label">公司</span><span>{{ activeLog.company }}</span></div>
-        <div class="detail-row"><span class="detail-label">对方姓名</span><span>{{ activeLog.person }}</span></div>
-        <div class="detail-row"><span class="detail-label">级别</span><span>{{ activeLog.level }}</span></div>
-        <div class="detail-row"><span class="detail-label">沟通时间</span><span>{{ activeLog.time }}</span></div>
-        <div class="detail-row"><span class="detail-label">沟通方式</span><span>{{ activeLog.channel }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ $t('company') }}</span><span>{{ activeLog.company }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ $t('contact_name_2') }}</span><span>{{ activeLog.person }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ $t('level') }}</span><span>{{ activeLog.level }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ $t('communication_time') }}</span><span>{{ activeLog.time }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ $t('communication_method') }}</span><span>{{ activeLog.channel }}</span></div>
         <div class="detail-block">
-          <div class="detail-label">沟通内容</div>
+          <div class="detail-label">{{ $t('communication_content') }}</div>
           <div class="detail-box">{{ activeLog.notes }}</div>
         </div>
         <div class="detail-block">
-          <div class="detail-label">收获与总结</div>
+          <div class="detail-label">{{ $t('takeaways_summary') }}</div>
           <div class="detail-box detail-success">{{ activeLog.summary }}</div>
         </div>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="detailOpen = false">关闭</a-button>
-        <a-button type="primary" @click="editFromDetail">编辑</a-button>
+        <a-button @click="detailOpen = false">{{ $t('close') }}</a-button>
+        <a-button type="primary" @click="editFromDetail">{{ $t('edit') }}</a-button>
       </div>
     </a-modal>
 
-    <a-modal v-model:open="createOpen" title="填写沟通记录" :footer="null" width="640px">
+    <a-modal v-model:open="createOpen" :title="$t('fill_in_communication_log')" :footer="null" width="640px">
       <div class="form-grid">
         <a-form-item label="公司 Company" class="form-item">
           <a-input v-model:value="draftLog.company" placeholder="如：Goldman Sachs" />
@@ -100,16 +100,16 @@
           <a-date-picker class="full-width" />
         </a-form-item>
         <a-form-item label="沟通内容" class="form-item full-span">
-          <a-textarea v-model:value="draftLog.notes" :rows="4" placeholder="记录本次 networking 的沟通内容" />
+          <a-textarea v-model:value="draftLog.notes" :rows="4" :placeholder="$t('record_the_content_of_this_networking_co')" />
         </a-form-item>
         <a-form-item label="收获与总结" class="form-item full-span">
-          <a-textarea v-model:value="draftLog.summary" :rows="4" placeholder="总结你的收获、下一步行动和 follow-up" />
+          <a-textarea v-model:value="draftLog.summary" :rows="4" :placeholder="`${$t('summarize_your_takeaways_next_steps_and')} follow-up`" />
         </a-form-item>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="createOpen = false">取消</a-button>
-        <a-button type="primary" @click="createOpen = false">提交记录</a-button>
+        <a-button @click="createOpen = false">{{ $t('cancel') }}</a-button>
+        <a-button type="primary" @click="createOpen = false">{{ $t('submit_record') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -118,7 +118,9 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { OsgPageContainer } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type NetworkingLog = {
   actionId: string
   id: string
@@ -141,9 +143,9 @@ const levelOptions = [
 
 const channelOptions = [
   { value: 'LinkedIn', label: 'LinkedIn' },
-  { value: 'Phone', label: '电话' },
-  { value: 'Email', label: '邮件' },
-  { value: 'Meeting', label: '面谈' }
+  { value: 'Phone', label: t('phone') },
+  { value: 'Email', label: t('mail') },
+  { value: 'Meeting', label: t('in_person_meeting') }
 ]
 
 const networkingLogs: NetworkingLog[] = [
@@ -365,3 +367,4 @@ const editFromDetail = () => {
   margin-top: 24px;
 }
 </style>
+

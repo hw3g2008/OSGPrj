@@ -33,7 +33,7 @@
           <div class="user-avatar">{{ userInitials }}</div>
           <div class="user-info">
             <h4>{{ displayName }}</h4>
-            <p>点击退出登录</p>
+            <p>{{ $t('click_to_log_out') }}</p>
           </div>
         </button>
       </div>
@@ -53,7 +53,9 @@ import { normalizeStudentPath } from '@/navigation/access'
 import { PHASE1_VISIBLE_PATHS } from '@/navigation/phase1'
 import { logout } from '@osg/shared/api'
 import { clearAuth, getUser } from '@osg/shared/utils'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -262,10 +264,10 @@ const navigate = (path: string) => {
 
 const handleLogout = () => {
   Modal.confirm({
-    title: '确认退出',
+    title: t('confirm_to_exit'),
     content: '确定要退出登录吗？',
-    okText: '确定',
-    cancelText: '取消',
+    okText: t('ok'),
+    cancelText: t('cancel'),
     async onOk() {
       try {
         await logout()
@@ -273,7 +275,7 @@ const handleLogout = () => {
         // Ignore API failures and always clear local auth state.
       }
       clearAuth()
-      message.success('已退出登录')
+      message.success(t('logged_out'))
       router.push('/login')
     },
   })

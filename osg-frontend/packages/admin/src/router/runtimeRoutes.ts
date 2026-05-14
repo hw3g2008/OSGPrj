@@ -1,3 +1,7 @@
+import { i18n } from '@osg/shared'
+
+const t = (key: string) => i18n.global.t(key)
+
 export interface RuntimeRouteMeta {
   title?: string
   icon?: string
@@ -76,7 +80,7 @@ export function buildMenuGroupsFromRuntimeRouters(routes: RuntimeRouteRecord[]):
     .filter((route) => !route.hidden)
     .map((route) => {
       const fullPath = resolvePath('', route.path)
-      const title = route.meta?.title?.trim() || route.path || '未命名分组'
+      const title = route.meta?.title?.trim() || route.path || t('unnamed_group')
       const children = hasVisibleChildren(route)
         ? collectLeafItems(route.children || [], fullPath)
         : collectLeafItems([route], '')

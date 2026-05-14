@@ -1,27 +1,27 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="课程记录" title-en="Class Records" description="查看所有学员的课程记录，审核导师/班主任/助教提交的上课记录">
+    <PageHeader :title-zh="$t('course_records')" title-en="Class Records" :description="$t('view_all_students_course_records_and_rev')">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><ExportOutlined /></template>
-          {{ exporting ? '导出中...' : '导出' }}
+          {{ exporting ? $t('exporting') + '...' : $t('export') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-alert type="info" show-icon style="border-radius: 12px; background: linear-gradient(135deg, #eef2ff, #e0e7ff); border: none">
-      <template #message><strong>课程记录流程</strong></template>
+      <template #message><strong>{{ $t('course_record_process') }}</strong></template>
       <template #description>
         <a-space wrap>
-          <a-tag class="flow-tag--purple">① 学员申请岗位/模拟应聘</a-tag>
+          <a-tag class="flow-tag--purple">① {{ $t('student_applies_for_position_mock_interv') }}</a-tag>
           <span>→</span>
-          <a-tag class="flow-tag--purple">② 班主任分配导师</a-tag>
+          <a-tag class="flow-tag--purple">② {{ $t('class_advisor_assigns_mentor') }}</a-tag>
           <span>→</span>
-          <a-tag class="flow-tag--purple">③ 导师上课并申报记录</a-tag>
+          <a-tag class="flow-tag--purple">③ {{ $t('mentor_conducts_class_and_submits_record') }}</a-tag>
           <span>→</span>
-          <a-tag color="orange">④ 后台审核</a-tag>
+          <a-tag color="orange">④ {{ $t('backend_review') }}</a-tag>
           <span>→</span>
-          <a-tag color="green">⑤ 结算中心转账</a-tag>
+          <a-tag color="green">⑤ {{ $t('settlement_center_transfer') }}</a-tag>
         </a-space>
       </template>
     </a-alert>
@@ -37,43 +37,43 @@
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索学员/申报人..." allow-clear style="width: 180px" data-field-name="搜索" @pressEnter="loadData" />
+          <a-input v-model:value="keyword" :placeholder="`${$t('search_student_submitter')}...`" allow-clear style="width: 180px" :data-field-name="$t('search')" @pressEnter="loadData" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterCoachingType" placeholder="辅导类型" allow-clear style="width: 130px" data-field-name="辅导类型">
-            <a-select-option value="position_coaching">岗位辅导</a-select-option>
-            <a-select-option value="mock_application">模拟应聘</a-select-option>
+          <a-select v-model:value="filterCoachingType" :placeholder="$t('coaching_type')" allow-clear style="width: 130px" :data-field-name="$t('coaching_type')">
+            <a-select-option value="position_coaching">{{ $t('position_coaching') }}</a-select-option>
+            <a-select-option value="mock_application">{{ $t('mock_application') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterCourseContent" placeholder="课程内容" allow-clear style="width: 140px" data-field-name="课程内容">
-            <a-select-option value="new_resume">新简历</a-select-option>
-            <a-select-option value="resume_update">简历更新</a-select-option>
-            <a-select-option value="case_prep">Case准备</a-select-option>
-            <a-select-option value="mock_interview">模拟面试</a-select-option>
-            <a-select-option value="communication_midterm">人际关系期中考试</a-select-option>
-            <a-select-option value="midterm_exam">模拟期中考试</a-select-option>
-            <a-select-option value="other">其他</a-select-option>
+          <a-select v-model:value="filterCourseContent" :placeholder="$t('course_content')" allow-clear style="width: 140px" :data-field-name="$t('course_content')">
+            <a-select-option value="new_resume">{{ $t('new_resume') }}</a-select-option>
+            <a-select-option value="resume_update">{{ $t('resume_update') }}</a-select-option>
+            <a-select-option value="case_prep">Case{{ $t('preparation') }}</a-select-option>
+            <a-select-option value="mock_interview">{{ $t('mock_interview') }}</a-select-option>
+            <a-select-option value="communication_midterm">{{ $t('networking_midterm_exam') }}</a-select-option>
+            <a-select-option value="midterm_exam">{{ $t('mock_midterm_exam') }}</a-select-option>
+            <a-select-option value="other">{{ $t('other') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterReporterRole" placeholder="申报人角色" allow-clear style="width: 130px" data-field-name="申报人角色">
-            <a-select-option value="mentor">导师</a-select-option>
-            <a-select-option value="headteacher">班主任</a-select-option>
-            <a-select-option value="assistant">助教</a-select-option>
+          <a-select v-model:value="filterReporterRole" :placeholder="$t('submitter_role')" allow-clear style="width: 130px" :data-field-name="$t('submitter_role')">
+            <a-select-option value="mentor">{{ $t('mentor') }}</a-select-option>
+            <a-select-option value="headteacher">{{ $t('head_teacher') }}</a-select-option>
+            <a-select-option value="assistant">{{ $t('teaching_assistant') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="上课日期">
+        <a-form-item :label="$t('course_date')">
           <a-space>
-            <a-date-picker v-model:value="filterDateStart" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期开始" />
+            <a-date-picker v-model:value="filterDateStart" :placeholder="$t('start_date_2')" value-format="YYYY-MM-DD" style="width: 140px" :data-field-name="$t('course_start_date')" />
             <span>~</span>
-            <a-date-picker v-model:value="filterDateEnd" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期结束" />
+            <a-date-picker v-model:value="filterDateEnd" :placeholder="$t('end_date_2')" value-format="YYYY-MM-DD" style="width: 140px" :data-field-name="$t('course_end_date')" />
           </a-space>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadData">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ $t('search') }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -94,7 +94,7 @@
         :pagination="tablePagination"
         :loading="loading"
         :row-class-name="(record: ClassRecordRow) => record.status === 'pending' ? 'row-pending' : ''"
-        :locale="{ emptyText: '暂无课程记录' }"
+        :locale="{ emptyText: $t('no_course_records') }"
         :scroll="{ x: 1200 }"
         @change="handleTableChange"
       >
@@ -115,7 +115,7 @@
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'coachingType'">
-            <a-tag :color="record.coachingType === '模拟应聘' ? 'green' : 'blue'">{{ record.coachingType }}</a-tag>
+            <a-tag :color="record.coachingType === $t('mock_application') ? 'green' : 'blue'">{{ record.coachingType }}</a-tag>
             <div v-if="record.coachingCompany" style="font-size: 12px; color: #64748b; margin-top: 2px">{{ record.coachingCompany }}</div>
           </template>
           <template v-else-if="column.dataIndex === 'courseContent'">
@@ -133,8 +133,8 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space>
-              <a-button v-if="record.status === 'pending'" type="primary" size="small" data-surface-trigger="modal-class-record-review" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordReview(record)">课程审核</a-button>
-              <a-button v-if="record.status !== 'pending'" type="link" size="small" data-surface-trigger="modal-class-record-detail" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordDetail(record)">详情</a-button>
+              <a-button v-if="record.status === 'pending'" type="primary" size="small" data-surface-trigger="modal-class-record-review" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordReview(record)">{{ $t('course_review') }}</a-button>
+              <a-button v-if="record.status !== 'pending'" type="link" size="small" data-surface-trigger="modal-class-record-detail" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordDetail(record)">{{ $t('details') }}</a-button>
             </a-space>
           </template>
         </template>
@@ -174,19 +174,21 @@ import { approveReport, getReportDetail, rejectReport, type ReportRow } from '@o
 import ClassRecordDetailModal from './components/ClassRecordDetailModal.vue'
 import ClassRecordReviewModal from './components/ClassRecordReviewModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const recordColumns = [
-  { title: '记录ID', dataIndex: 'recordId', key: 'recordId', width: 90 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
-  { title: '申报人', dataIndex: 'mentorName', key: 'mentorName', width: 120 },
-  { title: '辅导内容', dataIndex: 'coachingType', key: 'coachingType', width: 130 },
-  { title: '课程内容', dataIndex: 'courseContent', key: 'courseContent', width: 120 },
-  { title: '上课日期', dataIndex: 'classDate', key: 'classDate', width: 110 },
-  { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '课时费', dataIndex: 'courseFee', key: 'courseFee', width: 90 },
-  { title: '学员评价', dataIndex: 'studentRating', key: 'studentRating', width: 90 },
-  { title: '审核状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
+  { title: 'Record ID', dataIndex: 'recordId', key: 'recordId', width: 90 },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: t('submitter'), dataIndex: 'mentorName', key: 'mentorName', width: 120 },
+  { title: t('coaching_content'), dataIndex: 'coachingType', key: 'coachingType', width: 130 },
+  { title: t('course_content'), dataIndex: 'courseContent', key: 'courseContent', width: 120 },
+  { title: t('course_date'), dataIndex: 'classDate', key: 'classDate', width: 110 },
+  { title: t('duration'), dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: t('session_fee'), dataIndex: 'courseFee', key: 'courseFee', width: 90 },
+  { title: t('student_feedback'), dataIndex: 'studentRating', key: 'studentRating', width: 90 },
+  { title: t('review_status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
 ]
 
 const keyword = ref('')
@@ -229,19 +231,19 @@ const statCards = computed(() => {
   const current = stats.value
   if (!current) return []
   return [
-    { label: '总记录数', value: String(current.totalCount), color: '#3b82f6' },
-    { label: '待审核', value: String(current.pendingCount), color: '#f59e0b' },
-    { label: '已通过', value: String(current.approvedCount), color: '#22c55e' },
-    { label: '已驳回', value: String(current.rejectedCount), color: '#ef4444' },
-    { label: '待结算金额', value: formatFee(current.pendingSettlementAmount), color: '#3b82f6' }
+    { label: t('total_records'), value: String(current.totalCount), color: '#3b82f6' },
+    { label: t('pending_review'), value: String(current.pendingCount), color: '#f59e0b' },
+    { label: t('approved'), value: String(current.approvedCount), color: '#22c55e' },
+    { label: t('rejected_3'), value: String(current.rejectedCount), color: '#ef4444' },
+    { label: t('pending_settlement_amount'), value: formatFee(current.pendingSettlementAmount), color: '#3b82f6' }
   ]
 })
 
 const tabList = computed(() => [
-  { key: 'all', label: '全部', badge: null, badgeTone: '' },
-  { key: 'pending', label: '待审核', badge: stats.value?.pendingCount || null, badgeTone: 'warning' },
-  { key: 'approved', label: '已通过', badge: null, badgeTone: '' },
-  { key: 'rejected', label: '已驳回', badge: null, badgeTone: '' }
+  { key: 'all', label: t('all'), badge: null, badgeTone: '' },
+  { key: 'pending', label: t('pending_review'), badge: stats.value?.pendingCount || null, badgeTone: 'warning' },
+  { key: 'approved', label: t('approved'), badge: null, badgeTone: '' },
+  { key: 'rejected', label: t('rejected_3'), badge: null, badgeTone: '' }
 ])
 
 const loadStats = async () => {
@@ -256,7 +258,7 @@ const loadData = async () => {
   try {
     await Promise.all([searchList(toFilters()), loadStats()])
   } catch (_error) {
-    message.error('课程记录加载失败')
+    message.error(t('failed_to_load_course_records'))
   }
 }
 
@@ -275,7 +277,7 @@ const loadRecordDetail = async (recordId: number) => {
     const response = await getReportDetail(recordId)
     selectedRecord.value = response
   } catch (_error) {
-    message.error('课程记录详情加载失败')
+    message.error(t('failed_to_load_course_record_details'))
   } finally {
     recordDetailLoading.value = false
   }
@@ -301,11 +303,11 @@ const handleReviewApprove = async (payload: { remark?: string }) => {
   reviewSubmitting.value = true
   try {
     await approveReport(selectedRecord.value.recordId, payload)
-    message.success('课时审核已通过')
+    message.success(t('class_hours_review_approved'))
     reviewVisible.value = false
     await refreshAfterMutation()
   } catch (_error) {
-    message.error('课时审核通过失败')
+    message.error(t('failed_to_approve_class_hours_review'))
   } finally {
     reviewSubmitting.value = false
   }
@@ -319,11 +321,11 @@ const handleReviewReject = async (payload: { remark?: string }) => {
   reviewSubmitting.value = true
   try {
     await rejectReport(selectedRecord.value.recordId, payload)
-    message.success('课时审核已驳回')
+    message.success(t('class_hours_review_rejected'))
     reviewVisible.value = false
     await refreshAfterMutation()
   } catch (_error) {
-    message.error('课时审核驳回失败')
+    message.error(t('failed_to_reject_class_hours_review'))
   } finally {
     reviewSubmitting.value = false
   }
@@ -338,9 +340,9 @@ const handleExport = async () => {
   try {
     exporting.value = true
     await exportClassRecords(toFilters())
-    message.success('课程记录导出成功')
+    message.success(t('course_records_exported_successfully'))
   } catch (_error) {
-    message.error('课程记录导出失败')
+    message.error(t('failed_to_export_course_records'))
   } finally {
     exporting.value = false
   }
@@ -368,9 +370,9 @@ const formatFee = (value?: string | number | null) => {
 }
 
 const statusLabel = (status: string) => {
-  if (status === 'approved') return '已通过'
-  if (status === 'rejected') return '已驳回'
-  return '待审核'
+  if (status === 'approved') return t('approved')
+  if (status === 'rejected') return t('rejected_3')
+  return t('pending_review')
 }
 
 const statusTagColor = (status: string) => {
@@ -408,3 +410,4 @@ onMounted(() => {
   border-color: #ddd6fe !important;
 }
 </style>
+

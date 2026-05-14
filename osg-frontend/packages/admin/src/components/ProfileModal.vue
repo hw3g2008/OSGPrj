@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     surface-id="modal-setting"
     :open="visible"
@@ -9,7 +9,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-cog" aria-hidden="true" />
-        <span>个人设置</span>
+        <span>{{ $t('personal_settings') }}</span>
       </span>
     </template>
 
@@ -22,32 +22,32 @@
       :required-mark="false"
       class="profile-modal__form"
     >
-      <a-form-item name="name" data-field-name="姓名">
+      <a-form-item name="name" :data-field-name="$t('name')">
         <template #label>
-          <span class="profile-modal__label">姓名<span class="profile-modal__required">*</span></span>
+          <span class="profile-modal__label">{{ $t('name') }}<span class="profile-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.name" placeholder="请输入姓名" allow-clear />
+        <a-input v-model:value="formState.name" :placeholder="$t('please_enter_name')" allow-clear />
       </a-form-item>
 
-      <a-form-item name="account" data-field-name="账号">
+      <a-form-item name="account" :data-field-name="$t('account_number')">
         <template #label>
-          <span class="profile-modal__label">账号</span>
+          <span class="profile-modal__label">{{ $t('account_number') }}</span>
         </template>
         <a-input
           v-model:value="formState.account"
           class="profile-modal__read-only"
-          placeholder="当前登录账号"
+          :placeholder="$t('current_login_account')"
           disabled
         />
       </a-form-item>
 
-      <a-form-item name="email" data-field-name="邮箱">
+      <a-form-item name="email" :data-field-name="$t('email')">
         <template #label>
-          <span class="profile-modal__label">邮箱</span>
+          <span class="profile-modal__label">{{ $t('email') }}</span>
         </template>
         <a-input
           v-model:value="formState.email"
-          placeholder="请输入邮箱"
+          :placeholder="$t('please_enter_your_email')"
           allow-clear
         />
       </a-form-item>
@@ -55,38 +55,38 @@
       <div class="profile-modal__password-section">
         <div class="profile-modal__section-badge" data-content-part="status-banner">
           <span class="mdi mdi-lock-reset" aria-hidden="true" />
-          <span>修改密码时需先填写旧密码</span>
+          <span>{{ $t('when_changing_the_password_you_need_to_f') }}</span>
         </div>
 
-        <a-form-item name="oldPassword" data-field-name="旧密码">
+        <a-form-item name="oldPassword" :data-field-name="$t('old_password')">
           <template #label>
-            <span class="profile-modal__label">旧密码</span>
+            <span class="profile-modal__label">{{ $t('old_password') }}</span>
           </template>
           <a-input-password
             v-model:value="formState.oldPassword"
-            placeholder="修改密码时请输入旧密码"
+            :placeholder="$t('please_enter_the_old_password_when_chang')"
             :visibility-toggle="false"
           />
         </a-form-item>
 
-        <a-form-item name="newPassword" data-field-name="新密码">
+        <a-form-item name="newPassword" :data-field-name="$t('new_password')">
           <template #label>
-            <span class="profile-modal__label">新密码</span>
+            <span class="profile-modal__label">{{ $t('new_password') }}</span>
           </template>
           <a-input-password
             v-model:value="formState.newPassword"
-            placeholder="8-20位，包含字母和数字"
+            :placeholder="`8-20${$t('bits_including_letters_and_numbers')}`"
             :visibility-toggle="false"
           />
         </a-form-item>
 
-        <a-form-item name="confirmPassword" data-field-name="确认密码">
+        <a-form-item name="confirmPassword" :data-field-name="$t('confirm_password')">
           <template #label>
-            <span class="profile-modal__label">确认密码</span>
+            <span class="profile-modal__label">{{ $t('confirm_password') }}</span>
           </template>
           <a-input-password
             v-model:value="formState.confirmPassword"
-            placeholder="请再次输入新密码"
+            :placeholder="$t('please_enter_new_password_again')"
             :visibility-toggle="false"
           />
         </a-form-item>
@@ -94,10 +94,10 @@
     </a-form>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button data-surface-part="cancel-control" @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button type="primary" :loading="saving" @click="handleSave">
         <span class="mdi mdi-check" aria-hidden="true" />
-        <span>保存</span>
+        <span>{{ $t('save') }}</span>
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -109,7 +109,9 @@ import { message } from 'ant-design-vue'
 import { http } from '@osg/shared/utils'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { useUserStore } from '@/stores/user'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
 }>()
@@ -134,7 +136,7 @@ const formState = reactive({
 const validateEmail = (_rule: any, value: string) => {
   if (!value) return Promise.resolve()
   if (!/^[\w.!#$%&'*+/=?^`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/.test(value)) {
-    return Promise.reject('请输入有效的邮箱地址')
+    return Promise.reject(t('please_enter_a_valid_email_address'))
   }
   return Promise.resolve()
 }
@@ -145,28 +147,28 @@ const hasPasswordChange = computed(() =>
 
 const validatePassword = (_rule: any, value: string) => {
   if (!hasPasswordChange.value && !value) return Promise.resolve()
-  if (!value) return Promise.reject('请输入新密码')
-  if (value.length < 8 || value.length > 20) return Promise.reject('密码长度需为8-20位')
-  if (!/[a-zA-Z]/.test(value)) return Promise.reject('密码需包含字母')
-  if (!/\d/.test(value)) return Promise.reject('密码需包含数字')
+  if (!value) return Promise.reject(t('please_enter_new_password'))
+  if (value.length < 8 || value.length > 20) return Promise.reject(t('password_length_needs_to_be_8_20_charact_2'))
+  if (!/[a-zA-Z]/.test(value)) return Promise.reject(t('password_must_contain_letters'))
+  if (!/\d/.test(value)) return Promise.reject(t('password_must_contain_numbers'))
   return Promise.resolve()
 }
 
 const validateOldPassword = (_rule: any, value: string) => {
   if (!hasPasswordChange.value && !value) return Promise.resolve()
-  if (!value) return Promise.reject('请输入旧密码')
+  if (!value) return Promise.reject(t('please_enter_old_password'))
   return Promise.resolve()
 }
 
 const validateConfirm = (_rule: any, value: string) => {
   if (!hasPasswordChange.value && !value) return Promise.resolve()
-  if (!value) return Promise.reject('请确认新密码')
-  if (value !== formState.newPassword) return Promise.reject('两次输入的密码不一致')
+  if (!value) return Promise.reject(t('please_confirm_new_password'))
+  if (value !== formState.newPassword) return Promise.reject(t('the_passwords_entered_twice_are_inconsis'))
   return Promise.resolve()
 }
 
 const rules = {
-  name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  name: [{ required: true, message: t('please_enter_name'), trigger: 'blur' }],
   email: [{ validator: validateEmail, trigger: 'blur' }],
   oldPassword: [{ validator: validateOldPassword, trigger: 'blur' }],
   newPassword: [{ validator: validatePassword, trigger: 'blur' }],
@@ -215,7 +217,7 @@ const handleSave = async () => {
         oldPassword: formState.oldPassword,
         newPassword: formState.newPassword,
       }, {
-        customErrorMessage: '密码修改失败，请检查输入信息',
+        customErrorMessage: t('password_modification_failed_please_chec'),
       })
     }
 
@@ -225,11 +227,11 @@ const handleSave = async () => {
       phonenumber: userStore.userInfo?.phonenumber || '',
       sex: userStore.userInfo?.sex,
     }, {
-      customErrorMessage: '个人资料修改失败，请检查输入信息',
+      customErrorMessage: t('profile_modification_failed_please_check'),
     })
 
     await userStore.fetchInfo()
-    message.success('保存成功')
+    message.success(t('saved_successfully'))
     handleClose()
   } catch (error: any) {
     if (error?.errorFields) return
@@ -280,3 +282,4 @@ const handleSave = async () => {
   background: #f8fafc;
 }
 </style>
+

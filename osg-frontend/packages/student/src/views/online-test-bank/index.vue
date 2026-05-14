@@ -4,17 +4,17 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">在线测试题库 <span>Online Test Bank</span></h1>
-            <p class="page-sub">HireVue、在线测评等在线测试资源</p>
+            <h1 class="page-title">{{ $t('online_test_question_bank') }} <span>Online Test Bank</span></h1>
+            <p class="page-sub">HireVue、{{ $t('online_assessments_and_other_online_test') }}</p>
           </div>
         </div>
       </template>
 
       <div class="toolbar">
         <a-input placeholder="搜索题库..." class="toolbar-input" />
-        <a-select class="toolbar-select" placeholder="公司" :options="companyOptions" />
-        <a-select class="toolbar-select" placeholder="类型" :options="typeOptions" />
-        <a-button>搜索</a-button>
+        <a-select class="toolbar-select" :placeholder="$t('company')" :options="companyOptions" />
+        <a-select class="toolbar-select" :placeholder="$t('type')" :options="typeOptions" />
+        <a-button>{{ $t('search') }}</a-button>
       </div>
 
       <div class="table-shell">
@@ -27,7 +27,7 @@
         >
           <template #bodyCell="{ column }">
             <template v-if="column.key === 'action'">
-              <a-button type="link" size="small">查看</a-button>
+              <a-button type="link" size="small">{{ $t('view') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -38,7 +38,9 @@
 
 <script setup lang="ts">
 import { OsgPageContainer } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const companyOptions = [
   { value: 'gs', label: 'Goldman Sachs' },
   { value: 'jpm', label: 'JP Morgan' },
@@ -54,12 +56,12 @@ const typeOptions = [
 ]
 
 const bankColumns = [
-  { title: '题库名称', dataIndex: 'name', key: 'name' },
-  { title: '公司', dataIndex: 'company', key: 'company' },
-  { title: '类型', dataIndex: 'type', key: 'type' },
-  { title: '题目数', dataIndex: 'count', key: 'count' },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
-  { title: '操作', key: 'action' },
+  { title: t('question_bank_name'), dataIndex: 'name', key: 'name' },
+  { title: t('company'), dataIndex: 'company', key: 'company' },
+  { title: t('type'), dataIndex: 'type', key: 'type' },
+  { title: t('question_count'), dataIndex: 'count', key: 'count' },
+  { title: t('updated_at'), dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: t('operation'), key: 'action' },
 ]
 
 const questionBanks = [

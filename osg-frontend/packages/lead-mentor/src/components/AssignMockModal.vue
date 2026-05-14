@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div
     v-if="modelValue && preview"
     class="assign-mock-modal modal"
@@ -8,7 +8,7 @@
       type="button"
       class="assign-mock-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭处理模拟应聘申请弹层"
+      :aria-label="$t('close_mock_interview_application_modal')"
       @click="closeModal"
     />
 
@@ -22,13 +22,13 @@
       <div class="assign-mock-header modal-header" data-surface-part="header">
         <span :id="titleId" class="assign-mock-title modal-title">
           <i class="mdi mdi-clipboard-check" aria-hidden="true" />
-          处理模拟应聘申请
+          {{ $t('process_mock_job_applications') }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭处理模拟应聘申请弹层"
+          :aria-label="$t('close_mock_interview_application_modal')"
           @click="closeModal"
         >
           ×
@@ -48,7 +48,7 @@
         </section>
 
         <section class="form-group">
-          <label class="form-label">分配导师 <span class="req">*</span></label>
+          <label class="form-label">{{ $t('assign_a_mentor') }} <span class="req">*</span></label>
           <div class="mentor-list">
             <label
               v-for="mentor in preview.mentorOptions"
@@ -67,28 +67,28 @@
         </section>
 
         <section class="form-group">
-          <label class="form-label">预约时间 <span class="req">*</span></label>
+          <label class="form-label">{{ $t('appointment_time') }} <span class="req">*</span></label>
           <input class="form-input" type="datetime-local" :value="preview.scheduledAt" />
         </section>
 
         <section class="form-group form-group--last">
           <label class="form-label">
-            备注说明
-            <span class="form-label__hint">(选填)</span>
+            {{ $t('remarks_2') }}
+            <span class="form-label__hint">({{ $t('optional') }})</span>
           </label>
           <textarea
             class="form-input form-input--textarea"
             rows="2"
-            placeholder="如有其他说明，请在此填写..."
+            :placeholder="`${$t('if_there_are_any_other_notes_please_fill')}...`"
           >{{ preview.note }}</textarea>
         </section>
       </div>
 
       <div class="assign-mock-footer modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeModal">取消</button>
+        <button type="button" class="btn btn-outline" @click="closeModal">{{ $t('cancel') }}</button>
         <button type="button" class="btn btn-primary" @click="emit('request-confirm')">
           <i class="mdi mdi-check" aria-hidden="true" />
-          确认安排
+          {{ $t('confirm_arrangement') }}
         </button>
       </div>
     </div>
@@ -385,3 +385,4 @@ const closeModal = () => {
   }
 }
 </style>
+

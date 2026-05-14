@@ -8,7 +8,7 @@
       type="button"
       class="class-reject-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭课程审核驳回弹层"
+      :aria-label="$t('close_course_review_rejection_dialog')"
       @click="closeModal"
     />
 
@@ -28,7 +28,7 @@
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭课程审核驳回弹层"
+          :aria-label="$t('close_course_review_rejection_dialog')"
           @click="closeModal"
         >
           ×
@@ -39,7 +39,7 @@
         <div class="class-reject-summary-card">
           <div class="class-reject-summary-grid">
             <div class="class-reject-summary-item">
-              <span class="class-reject-summary-label">学员</span>
+              <span class="class-reject-summary-label">{{ $t('student') }}</span>
               <div class="class-reject-summary-value">{{ preview.studentName }} ({{ preview.studentId }})</div>
             </div>
             <div class="class-reject-summary-item">
@@ -72,8 +72,8 @@
       </div>
 
       <div class="class-reject-footer modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeModal">关闭</button>
-        <button type="button" class="btn btn-primary" @click="handleResubmit">重新提交</button>
+        <button type="button" class="btn btn-outline" @click="closeModal">{{ $t('close') }}</button>
+        <button type="button" class="btn btn-primary" @click="handleResubmit">{{ $t('resubmit') }}</button>
       </div>
     </div>
   </div>

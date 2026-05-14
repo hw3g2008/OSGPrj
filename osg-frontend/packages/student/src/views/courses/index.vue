@@ -11,8 +11,8 @@
     </div>
 
     <!--
-      Banner 的导师名 / 待评记录数直接由前端基于 courseRecords (list 接口) 计算（见 newRecordCount / firstNewRecordMentor），
-      meta 接口仅提供静态文案，确保 banner 与下方表格基于同一数据源、永不漂移。
+      Banner {{ $t('mentor_name_pending_review_count_is_calc') }} newRecordCount / firstNewRecordMentor），
+      meta {{ $t('the_api_only_provides_static_copy_ensuri') }}。
     -->
     <a-alert
       v-if="newRecordCount > 0"
@@ -192,7 +192,7 @@
           <button
             class="course-log__close"
             type="button"
-            aria-label="关闭"
+            :aria-label="$t('close')"
             @click="detailVisible = false"
           >
             <i class="mdi mdi-close" aria-hidden="true"></i>
@@ -215,7 +215,7 @@
       <section v-if="currentCourse" class="course-log__body">
         <!-- 课程信息 definition list -->
         <div class="course-log__section">
-          <div class="course-log__section-label">课程信息</div>
+          <div class="course-log__section-label">{{ $t('session_information') }}</div>
           <dl class="course-log__deflist">
             <div class="course-log__deflist-row">
               <dt>{{ classRecordsMeta.detailDialog.fields.recordId }}</dt>
@@ -242,7 +242,7 @@
               <dd>{{ currentCourse.duration }}</dd>
             </div>
             <div class="course-log__deflist-row">
-              <dt>当前评价</dt>
+              <dt>{{ $t('current_review') }}</dt>
               <dd>{{ detailRatingSummary }}</dd>
             </div>
           </dl>
@@ -250,24 +250,24 @@
 
         <!-- 课程详细（mock / networking / midterm）：只有真实有内容才渲染 -->
         <div v-if="hasCourseDetailContent" class="course-log__section">
-          <div class="course-log__section-label">详细信息</div>
+          <div class="course-log__section-label">{{ $t('details_2') }}</div>
 
           <template v-if="currentCourse.detailKind === 'mock'">
             <dl class="course-log__deflist course-log__deflist--stacked">
               <div v-if="currentCourse.mockPurpose" class="course-log__stacked-row">
-                <dt>模拟面试目的</dt>
+                <dt>{{ $t('mock_interview_objective') }}</dt>
                 <dd>{{ currentCourse.mockPurpose }}</dd>
               </div>
               <div v-if="currentCourse.mockTopics" class="course-log__stacked-row">
-                <dt>涉及概念和主题</dt>
+                <dt>{{ $t('concepts_and_topics_covered_2') }}</dt>
                 <dd>{{ currentCourse.mockTopics }}</dd>
               </div>
               <div v-if="currentCourse.mockImprovements" class="course-log__stacked-row">
-                <dt>需要改进的方面</dt>
+                <dt>{{ $t('areas_for_improvement') }}</dt>
                 <dd>{{ currentCourse.mockImprovements }}</dd>
               </div>
               <div v-if="currentCourse.mentorRatingLabel" class="course-log__stacked-row">
-                <dt>导师评价</dt>
+                <dt>{{ $t('mentor_evaluation') }}</dt>
                 <dd>{{ currentCourse.mentorRatingEmoji || '' }} {{ currentCourse.mentorRatingLabel }}</dd>
               </div>
             </dl>
@@ -291,7 +291,7 @@
               </div>
             </dl>
             <div v-if="currentCourse.mentorRecommendation" class="course-log__stacked-row">
-              <dt>导师推荐</dt>
+              <dt>{{ $t('mentor_recommendation') }}</dt>
               <dd>{{ currentCourse.mentorRecommendation }}</dd>
             </div>
           </template>
@@ -299,15 +299,15 @@
           <template v-else-if="currentCourse.detailKind === 'midterm'">
             <dl class="course-log__deflist course-log__deflist--stacked">
               <div v-if="currentCourse.examScoreLabel" class="course-log__stacked-row">
-                <dt>考试得分</dt>
+                <dt>{{ $t('exam_score_2') }}</dt>
                 <dd>{{ currentCourse.examScoreLabel }}</dd>
               </div>
               <div v-if="currentCourse.examQuestions" class="course-log__stacked-row">
-                <dt>逐题分析</dt>
+                <dt>{{ $t('question_by_question_analysis') }}</dt>
                 <dd class="course-log__preline">{{ currentCourse.examQuestions }}</dd>
               </div>
               <div v-if="currentCourse.studentProgressSummary" class="course-log__stacked-row">
-                <dt>学生进度评估</dt>
+                <dt>{{ $t('student_progress_assessment') }}</dt>
                 <dd>{{ currentCourse.studentProgressSummary }}</dd>
               </div>
             </dl>
@@ -316,7 +316,7 @@
 
         <!-- 导师反馈 quote -->
         <div class="course-log__section">
-          <div class="course-log__section-label">课程反馈</div>
+          <div class="course-log__section-label">{{ $t('course_feedback') }}</div>
           <blockquote class="course-log__quote">
             {{ currentCourse.mentorFeedback || currentCourse.ratingFeedback || '当前还没有填写详细反馈，完成反馈后会在这里显示。' }}
           </blockquote>
@@ -366,7 +366,7 @@
           <button
             class="course-log__close"
             type="button"
-            aria-label="关闭"
+            :aria-label="$t('close')"
             @click="rateVisible = false"
           >
             <i class="mdi mdi-close" aria-hidden="true"></i>
@@ -387,7 +387,7 @@
       <section class="course-log__body">
         <!-- 整体评分 -->
         <div class="course-log__section">
-          <div class="course-log__section-label">整体评分</div>
+          <div class="course-log__section-label">{{ $t('overall_rating') }}</div>
           <div class="course-log__form-row">
             <div class="course-log__stars">
               <button
@@ -405,13 +405,13 @@
             <span v-if="rateForm.rating" class="course-log__stars-label">
               <strong>{{ rateForm.rating }}</strong>{{ ratingDescriptionText }}
             </span>
-            <span v-else class="course-log__stars-hint">点击星星给本节课打分</span>
+            <span v-else class="course-log__stars-hint">{{ $t('click_the_stars_to_rate_this_session') }}</span>
           </div>
         </div>
 
         <!-- 评价标签 -->
         <div class="course-log__section">
-          <div class="course-log__section-label">评价标签</div>
+          <div class="course-log__section-label">{{ $t('review_tags') }}</div>
           <div class="course-log__chips">
             <button
               v-for="option in classRecordsMeta.ratingDialog.tagOptions"
@@ -433,7 +433,7 @@
 
         <!-- 详细反馈 -->
         <div class="course-log__section">
-          <div class="course-log__section-label">详细反馈</div>
+          <div class="course-log__section-label">{{ $t('detailed_feedback') }}</div>
           <div class="course-log__textarea-wrap">
             <a-textarea
               v-model:value="rateForm.feedback"
@@ -471,7 +471,9 @@ import {
   type StudentClassRecord,
   type StudentClassRecordsMeta
 } from '@osg/shared/api'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const courseColumns = computed(() => [
   { title: classRecordsMeta.value.tableHeaders.recordId, dataIndex: 'recordId', width: 80 },
   { title: classRecordsMeta.value.tableHeaders.coachingDetail, dataIndex: 'coachingDetail', key: 'coachingDetail', width: 160 },
@@ -508,20 +510,12 @@ const rateForm = ref({
 
 const ratingButtons = [1, 2, 3, 4, 5] as const
 const ratingDescriptions: Record<number, string> = {
-  1: '很差',
-  2: '一般',
-  3: '还行',
-  4: '很好',
-  5: '非常棒'
+  1: t('poor_2'),
+  2: t('average'),
+  3: t('okay'),
+  4: t('great'),
+  5: t('excellent_4')
 }
-
-const ratingText = computed(() => {
-  if (rateForm.value.rating === null) {
-    return '请选择'
-  }
-
-  return `${rateForm.value.rating}分 - ${ratingDescriptions[rateForm.value.rating]}`
-})
 
 // 用于新的 course-log 评分弹窗：分离"X分"前缀和" - 描述"后缀
 // 模板里 <strong>{{ rating }}</strong>{{ ratingDescriptionText }}
@@ -564,19 +558,6 @@ const firstNewRecordMentor = computed(() => {
   return formatMentorDisplay(first?.mentor)
 })
 
-const detailToneClass = computed(() => {
-  switch (currentCourse.value?.detailKind) {
-    case 'mock':
-      return 'modal-accent--green'
-    case 'networking':
-      return 'modal-accent--purple'
-    case 'midterm':
-      return 'modal-accent--amber'
-    default:
-      return ''
-  }
-})
-
 const detailRatingSummary = computed(() => {
   if (!currentCourse.value) {
     return '-'
@@ -584,7 +565,7 @@ const detailRatingSummary = computed(() => {
 
   const score = Number(currentCourse.value.ratingScoreValue)
   if (!score) {
-    return '尚未评价'
+    return t('not_yet_reviewed')
   }
 
   return `${score}分 · ${currentCourse.value.ratingLabel}`
@@ -748,16 +729,6 @@ function mapTagTone(color?: string) {
   }
 }
 
-function mentorInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .map((segment) => segment.trim().charAt(0))
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'MT'
-}
-
 const goToEvaluate = () => {
   activeTab.value = 'pending'
 }
@@ -797,12 +768,12 @@ const submitRate = async () => {
   }
 
   if (rateForm.value.rating === null) {
-    message.error('请先选择整体评分')
+    message.error(t('please_select_an_overall_rating_first'))
     return
   }
 
   if (!rateForm.value.feedback.trim()) {
-    message.error('请填写详细反馈')
+    message.error(t('please_fill_in_detailed_feedback'))
     return
   }
 

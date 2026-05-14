@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="学员求职总览" title-en="Job Overview" description="查看我辅导和管理的学员求职进度">
+    <PageHeader title-zh="学员求职总览" title-en="Job Overview" :description="$t('view_job_search_progress_of_students_i_c')">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ $t('export') }}
         </a-button>
       </template>
     </PageHeader>
@@ -14,27 +14,27 @@
 
     <!-- 筛选条件 -->
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-      <a-input v-model:value="filters.keyword" placeholder="搜索学员姓名..." allow-clear style="width: 180px;" @press-enter="handleSearch" />
-      <a-select v-model:value="filters.type" placeholder="全部类型" allow-clear style="width: 140px;">
-        <a-select-option value="coaching">辅导学员</a-select-option>
-        <a-select-option value="managed">管理学员</a-select-option>
+      <a-input v-model:value="filters.keyword" :placeholder="`${$t('search_student_name')}...`" allow-clear style="width: 180px;" @press-enter="handleSearch" />
+      <a-select v-model:value="filters.type" :placeholder="$t('all_types')" allow-clear style="width: 140px;">
+        <a-select-option value="coaching">{{ $t('coached_students') }}</a-select-option>
+        <a-select-option value="managed">{{ $t('managed_students') }}</a-select-option>
       </a-select>
-      <a-select v-model:value="filters.company" placeholder="全部公司" allow-clear style="width: 140px;">
+      <a-select v-model:value="filters.company" :placeholder="$t('all_companies')" allow-clear style="width: 140px;">
         <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
       </a-select>
-      <a-select v-model:value="filters.stage" placeholder="全部状态" allow-clear style="width: 140px;">
+      <a-select v-model:value="filters.stage" :placeholder="$t('all_status')" allow-clear style="width: 140px;">
         <a-select-option v-for="option in stageOptions" :key="option" :value="option">{{ option }}</a-select-option>
       </a-select>
       <a-button type="primary" @click="handleSearch">
         <template #icon><SearchOutlined /></template>
-        搜索
+        {{ $t('search') }}
       </a-button>
     </div>
 
     <!-- 错误提示 -->
     <a-alert v-if="errorMessage" type="error" show-icon :message="errorMessage" style="border-radius: 8px;">
       <template #action>
-        <a-button size="small" @click="loadOverview">重新加载</a-button>
+        <a-button size="small" @click="loadOverview">{{ $t('reload') }}</a-button>
       </template>
     </a-alert>
 
@@ -63,7 +63,7 @@
           :pagination="coachingPagination"
           :scroll="{ x: 900 }"
           :row-class-name="(record: AssistantJobOverviewRecord) => rowClassName(record)"
-          :locale="{ emptyText: '当前暂无辅导中的学员求职记录' }"
+          :locale="{ emptyText: $t('no_active_job_search_records_for_coached') }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
@@ -79,10 +79,10 @@
               <InterviewTimeCell :time="formatDateTime(record.interviewTime)" :hint="formatScheduleHint(record.interviewTime)" />
             </template>
             <template v-else-if="column.dataIndex === 'coachingStatus'">
-              <CoachingStatusTag :status="record.coachingStatus" fallback="未申请" />
+              <CoachingStatusTag :status="record.coachingStatus" :fallback="$t('not_applied')" />
             </template>
             <template v-else-if="column.dataIndex === 'action'">
-              <a-button type="link" size="small" class="link-button" @click="selectedId = record.id">查看详情</a-button>
+              <a-button type="link" size="small" class="link-button" @click="selectedId = record.id">{{ $t('view_details') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -91,7 +91,7 @@
       <!-- 我管理的学员 -->
       <template v-else>
         <a-alert type="info" show-icon style="margin-bottom: 12px; border-radius: 8px;">
-          <template #message>查看管理学员的求职进度</template>
+          <template #message>{{ $t('view_job_search_progress_of_managed_stud') }}</template>
         </a-alert>
         <a-table
           id="assistant-job-content-readonly"
@@ -102,7 +102,7 @@
           :pagination="managedPagination"
           :scroll="{ x: 1100 }"
           :row-class-name="(record: AssistantJobOverviewRecord) => rowClassName(record)"
-          :locale="{ emptyText: '当前暂无管理学员的求职记录' }"
+          :locale="{ emptyText: $t('no_job_search_records_for_managed_studen') }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
@@ -118,13 +118,13 @@
               <InterviewTimeCell :time="formatDateTime(record.interviewTime)" :hint="formatScheduleHint(record.interviewTime)" />
             </template>
             <template v-else-if="column.dataIndex === 'coachingStatus'">
-              <CoachingStatusTag :status="record.coachingStatus" fallback="未申请" />
+              <CoachingStatusTag :status="record.coachingStatus" :fallback="$t('not_applied')" />
             </template>
             <template v-else-if="column.dataIndex === 'mentorName'">
-              <div><strong>{{ record.mentorName || '待分配' }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.mentorBackground || '信息待补充' }}</div></div>
+              <div><strong>{{ record.mentorName || $t('to_be_allocated') }}</strong><div style="font-size: 11px; color: var(--muted);">{{ record.mentorBackground || $t('info_pending') }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'action'">
-              <a-button type="link" size="small" class="link-button" @click="selectedId = record.id">查看详情</a-button>
+              <a-button type="link" size="small" class="link-button" @click="selectedId = record.id">{{ $t('view_details') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -132,19 +132,19 @@
     </a-card>
 
     <!-- 跟进详情 -->
-    <a-card v-if="selectedRecord" :bordered="false" title="跟进详情">
+    <a-card v-if="selectedRecord" :bordered="false" :title="$t('follow_up_details')">
       <template #extra>
         <span style="color: var(--muted); font-size: 12px;">{{ selectedRecord.studentName || '-' }}</span>
       </template>
       <div class="detail-grid">
-        <div><span class="detail-label">学员</span><div class="detail-value">{{ selectedRecord.studentName || '-' }}</div></div>
-        <div><span class="detail-label">岗位</span><div class="detail-value">{{ selectedRecord.position || '-' }}</div></div>
-        <div><span class="detail-label">公司</span><div class="detail-value">{{ selectedRecord.company || '-' }}</div></div>
-        <div><span class="detail-label">地点</span><div class="detail-value">{{ selectedRecord.location || '-' }}</div></div>
-        <div><span class="detail-label">阶段</span><div class="detail-value">{{ selectedRecord.interviewStage || '未更新' }}</div></div>
-        <div><span class="detail-label">面试时间</span><div class="detail-value">{{ formatDateTime(selectedRecord.interviewTime) }}</div></div>
-        <div><span class="detail-label">辅导状态</span><div class="detail-value">{{ selectedRecord.coachingStatus || '未跟进' }}</div></div>
-        <div><span class="detail-label">结果</span><div class="detail-value">{{ selectedRecord.result || '进行中' }}</div></div>
+        <div><span class="detail-label">{{ $t('student') }}</span><div class="detail-value">{{ selectedRecord.studentName || '-' }}</div></div>
+        <div><span class="detail-label">{{ $t('position') }}</span><div class="detail-value">{{ selectedRecord.position || '-' }}</div></div>
+        <div><span class="detail-label">{{ $t('company') }}</span><div class="detail-value">{{ selectedRecord.company || '-' }}</div></div>
+        <div><span class="detail-label">{{ $t('location') }}</span><div class="detail-value">{{ selectedRecord.location || '-' }}</div></div>
+        <div><span class="detail-label">{{ $t('stage') }}</span><div class="detail-value">{{ selectedRecord.interviewStage || $t('not_updated') }}</div></div>
+        <div><span class="detail-label">{{ $t('interview_time') }}</span><div class="detail-value">{{ formatDateTime(selectedRecord.interviewTime) }}</div></div>
+        <div><span class="detail-label">{{ $t('counseling_status') }}</span><div class="detail-value">{{ selectedRecord.coachingStatus || $t('not_followed_up') }}</div></div>
+        <div><span class="detail-label">{{ $t('result') }}</span><div class="detail-value">{{ selectedRecord.result || $t('in_progress') }}</div></div>
       </div>
     </a-card>
   </div>
@@ -160,7 +160,9 @@ import {
   getAssistantJobOverviewList,
   type AssistantJobOverviewRecord,
 } from '@osg/shared/api'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface ExtendedRecord extends AssistantJobOverviewRecord {
   mentorName?: string
   mentorBackground?: string
@@ -169,22 +171,22 @@ interface ExtendedRecord extends AssistantJobOverviewRecord {
 type ActiveTab = 'coaching' | 'managed'
 
 const coachingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
-  { title: '阶段', dataIndex: 'interviewStage', key: 'interviewStage', width: 130 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 140 },
-  { title: '辅导状态', dataIndex: 'coachingStatus', key: 'coachingStatus', width: 110 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 90, fixed: 'right' as const },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
+  { title: t('company_position'), dataIndex: 'company', key: 'company', width: 200 },
+  { title: t('stage'), dataIndex: 'interviewStage', key: 'interviewStage', width: 130 },
+  { title: t('interview_time'), dataIndex: 'interviewTime', key: 'interviewTime', width: 140 },
+  { title: t('counseling_status'), dataIndex: 'coachingStatus', key: 'coachingStatus', width: 110 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 90, fixed: 'right' as const },
 ]
 
 const managedColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
-  { title: '阶段', dataIndex: 'interviewStage', key: 'interviewStage', width: 130 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 140 },
-  { title: '辅导状态', dataIndex: 'coachingStatus', key: 'coachingStatus', width: 110 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 120 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 90, fixed: 'right' as const },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
+  { title: t('company_position'), dataIndex: 'company', key: 'company', width: 200 },
+  { title: t('stage'), dataIndex: 'interviewStage', key: 'interviewStage', width: 130 },
+  { title: t('interview_time'), dataIndex: 'interviewTime', key: 'interviewTime', width: 140 },
+  { title: t('counseling_status'), dataIndex: 'coachingStatus', key: 'coachingStatus', width: 110 },
+  { title: t('mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 120 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 90, fixed: 'right' as const },
 ]
 
 const loading = ref(true)
@@ -248,30 +250,30 @@ const stageOptions = computed(() =>
 )
 
 function formatDateTime(value?: string) {
-  if (!value) return '未安排'
+  if (!value) return t('not_scheduled')
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 function formatScheduleHint(value?: string) {
-  if (!value) return '尚未安排面试'
+  if (!value) return t('no_interview_scheduled')
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '时间待解析'
+  if (Number.isNaN(date.getTime())) return t('time_to_be_parsed')
   const diff = date.getTime() - Date.now()
   const day = Math.ceil(diff / (24 * 60 * 60 * 1000))
-  if (day < 0) return '已过面试时间'
-  if (day === 0) return '今天'
+  if (day < 0) return t('interview_time_has_passed')
+  if (day === 0) return t('today')
   return `还剩 ${day} 天`
 }
 
 function rowClassName(record: ExtendedRecord): string {
   const status = (record.coachingStatus || '').toLowerCase()
   if (status.includes('新') || status.includes('new')) return 'row-new'
-  if (status.includes('辅导') || status.includes('coach')) return 'row-coaching'
+  if (status.includes(t('coaching')) || status.includes('coach')) return 'row-coaching'
   if (status.includes('待') || status.includes('pending')) return 'row-pending'
   const stage = (record.interviewStage || '').toLowerCase()
-  if (stage.includes('offer') || stage.includes('reject') || stage.includes('withdrawn') || stage.includes('拒绝') || stage.includes('放弃')) return 'row-ended'
+  if (stage.includes('offer') || stage.includes('reject') || stage.includes('withdrawn') || stage.includes(t('reject')) || stage.includes(t('abandoned_2'))) return 'row-ended'
   return ''
 }
 
@@ -413,3 +415,4 @@ onMounted(() => {
   }
 }
 </style>
+

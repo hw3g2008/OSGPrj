@@ -35,15 +35,15 @@
     <section class="quick-actions-card">
       <div class="section-head">
         <div>
-          <h2>快捷操作</h2>
-          <p>直接进入当前最常用的工作页面</p>
+          <h2>{{ $t('quick_actions') }}</h2>
+          <p>{{ $t('go_directly_to_your_most_used_work_page') }}</p>
         </div>
       </div>
       <div class="quick-actions">
-        <button type="button" class="action-btn action-btn--primary" @click="$router.push('/courses')">上报课程</button>
-        <button type="button" class="action-btn" @click="$router.push('/job-overview')">查看学员</button>
-        <button type="button" class="action-btn" @click="$router.push('/schedule')">我的排期</button>
-        <button type="button" class="action-btn" @click="$router.push('/profile')">个人设置</button>
+        <button type="button" class="action-btn action-btn--primary" @click="$router.push('/courses')">{{ $t('submit_session') }}</button>
+        <button type="button" class="action-btn" @click="$router.push('/job-overview')">{{ $t('view_students') }}</button>
+        <button type="button" class="action-btn" @click="$router.push('/schedule')">{{ $t('my_schedule') }}</button>
+        <button type="button" class="action-btn" @click="$router.push('/profile')">{{ $t('personal_settings') }}</button>
       </div>
     </section>
 
@@ -51,25 +51,25 @@
       <article class="panel-card">
         <div class="section-head">
           <div>
-            <h2>本周工作概览</h2>
-            <p>来自真实业务接口的摘要统计</p>
+            <h2>{{ $t('this_weeks_work_overview') }}</h2>
+            <p>{{ $t('summary_statistics_from_live_business_ap') }}</p>
           </div>
         </div>
         <div class="overview-list">
           <div class="overview-item">
-            <span>求职辅导待确认</span>
+            <span>{{ $t('job_coaching_pending_confirmation') }}</span>
             <strong>{{ jobRows.length }}</strong>
           </div>
           <div class="overview-item">
-            <span>模拟应聘待处理</span>
+            <span>{{ $t('mock_interview_pending_action') }}</span>
             <strong>{{ mockRows.length }}</strong>
           </div>
           <div class="overview-item">
-            <span>课程记录待跟进</span>
+            <span>{{ $t('session_records_pending_follow_up') }}</span>
             <strong>{{ classRows.length }}</strong>
           </div>
           <div class="overview-item">
-            <span>本周排期小时</span>
+            <span>{{ $t('scheduled_hours_this_week') }}</span>
             <strong>{{ scheduleHours }}h</strong>
           </div>
         </div>
@@ -78,8 +78,8 @@
       <article class="panel-card">
         <div class="section-head">
           <div>
-            <h2>今日 / 本周安排</h2>
-            <p>排期与业务状态汇总</p>
+            <h2>{{ $t('today_this_weeks_schedule') }}</h2>
+            <p>{{ $t('schedule_and_business_status_summary') }}</p>
           </div>
         </div>
         <div class="schedule-summary">
@@ -95,16 +95,16 @@
       <article class="panel-card">
         <div class="section-head">
           <div>
-            <h2>最近求职辅导</h2>
-            <p>来自 `/api/mentor/job-overview/list`</p>
+            <h2>{{ $t('recent_job_coaching') }}</h2>
+            <p>{{ $t('from') }} `/api/mentor/job-overview/list`</p>
           </div>
         </div>
         <table class="data-table">
           <thead>
             <tr>
-              <th>学员</th>
-              <th>公司 / 岗位</th>
-              <th>阶段</th>
+              <th>{{ $t('student') }}</th>
+              <th>{{ $t('company_position_2') }}</th>
+              <th>{{ $t('stage') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -114,7 +114,7 @@
               <td>{{ row.interviewStage || '-' }}</td>
             </tr>
             <tr v-if="recentJobRows.length === 0">
-              <td colspan="3" class="empty-cell">当前暂无求职辅导记录</td>
+              <td colspan="3" class="empty-cell">{{ $t('no_job_coaching_records_available') }}</td>
             </tr>
           </tbody>
         </table>
@@ -123,16 +123,16 @@
       <article class="panel-card">
         <div class="section-head">
           <div>
-            <h2>最近上报记录</h2>
-            <p>来自 `/api/mentor/class-records/list`</p>
+            <h2>{{ $t('recent_submission_records') }}</h2>
+            <p>{{ $t('from') }} `/api/mentor/class-records/list`</p>
           </div>
         </div>
         <table class="data-table">
           <thead>
             <tr>
-              <th>记录ID</th>
-              <th>学员</th>
-              <th>类型</th>
+              <th>{{ $t('record') }}ID</th>
+              <th>{{ $t('student') }}</th>
+              <th>{{ $t('type') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -142,7 +142,7 @@
               <td>{{ row.contentType || row.coachingType || '-' }}</td>
             </tr>
             <tr v-if="recentClassRows.length === 0">
-              <td colspan="3" class="empty-cell">当前暂无课程上报记录</td>
+              <td colspan="3" class="empty-cell">{{ $t('no_session_submission_records_available') }}</td>
             </tr>
           </tbody>
         </table>
@@ -158,7 +158,9 @@ import { listJobOverview, type JobCoaching } from '@/api/jobOverview'
 import { listMockPractice, type MockPractice } from '@/api/mockPractice'
 import { getMentorProfile } from '@/api/profile'
 import { getCurrentSchedule, getLastWeekSchedule, type MentorSchedule } from '@/api/schedule'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const profile = reactive<Record<string, any>>({
   userName: '',
   nickName: '',
@@ -192,30 +194,30 @@ const pendingWorkCount = computed(() => jobRows.value.length + mockRows.value.le
 
 const statCards = computed(() => [
   {
-    label: '待上报',
+    label: t('pending_submission_2'),
     value: String(classRows.value.length),
-    hint: '课程记录待跟进',
+    hint: t('session_records_pending_follow_up'),
     icon: 'mdi-file-document-edit-outline',
     tone: 'tone-blue',
   },
   {
-    label: '待处理',
+    label: t('pending'),
     value: String(jobRows.value.length + mockRows.value.length),
-    hint: '求职与模拟应聘工作',
+    hint: t('job_search_and_mock_interview_tasks'),
     icon: 'mdi-briefcase-clock-outline',
     tone: 'tone-green',
   },
   {
-    label: '本周课时',
+    label: t('this_weeks_class_hours'),
     value: `${scheduleHours.value}h`,
     hint: `${activeScheduleDays.value} 天可用`,
     icon: 'mdi-calendar-clock-outline',
     tone: 'tone-amber',
   },
   {
-    label: '工作总览',
+    label: t('work_overview'),
     value: String(pendingWorkCount.value),
-    hint: '真实接口聚合',
+    hint: t('live_api_aggregation'),
     icon: 'mdi-chart-box-outline',
     tone: 'tone-purple',
   },
@@ -226,15 +228,15 @@ const scheduleRows = computed(() => {
   const last = lastWeekSchedule.value
   return [
     {
-      label: '当前周总课时',
-      value: current?.totalHours ? `${current.totalHours}h` : '未填写',
+      label: t('total_session_hours_this_week'),
+      value: current?.totalHours ? `${current.totalHours}h` : t('not_filled'),
     },
     {
-      label: '上周排期',
-      value: last?.totalHours ? `${last.totalHours}h` : '无历史数据',
+      label: t('last_weeks_schedule'),
+      value: last?.totalHours ? `${last.totalHours}h` : t('no_historical_data'),
     },
     {
-      label: '本周可用天数',
+      label: t('available_days_this_week'),
       value: `${activeScheduleDays.value} 天`,
     },
   ]

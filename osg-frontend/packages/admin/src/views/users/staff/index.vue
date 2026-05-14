@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="导师列表" title-en="Mentor List" description="管理导师和班主任账户，录入信息开通账号">
+    <PageHeader :title-zh="$t('mentor_list')" title-en="Mentor List" :description="$t('manage_mentor_and_homeroom_teacher_accou')">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-staff" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>
-          新增导师
+          {{ $t('add_mentor') }}
         </a-button>
       </template>
     </PageHeader>
@@ -13,47 +13,47 @@
       v-if="pendingReviewCount > 0"
       type="warning"
       show-icon
-      :message="`有 ${pendingReviewCount} 位导师的个人信息变更待审核`"
-      description="导师提交的银行信息、联系方式等变更需要您审核确认"
+      :message="`${pendingReviewCount} ${$t('mentor_s_have_pending_personal_informati')}`"
+      :description="$t('changes_to_bank_information_and_contact_')"
     >
       <template #action>
         <a-button type="primary" size="small" data-surface-trigger="modal-mentor-info-change" @click="handlePendingReviewEntry">
-          立即处理
+          {{ $t('handle_now') }}
         </a-button>
       </template>
     </a-alert>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" style="margin-bottom: 16px" data-field-name="导师管理页">
+      <a-form layout="inline" style="margin-bottom: 16px" :data-field-name="$t('mentor_management')">
         <a-form-item>
-          <a-input v-model:value="filters.staffName" placeholder="搜索姓名/ID" allow-clear style="width: 180px" data-field-name="搜索框" @pressEnter="handleSearch" />
+          <a-input v-model:value="filters.staffName" :placeholder="`${$t('search_by_name')}/ID`" allow-clear style="width: 180px" :data-field-name="$t('search_2')" @pressEnter="handleSearch" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.staffType" placeholder="全部类型" allow-clear style="width: 120px">
-            <a-select-option value="lead_mentor">班主任</a-select-option>
-            <a-select-option value="mentor">导师</a-select-option>
+          <a-select v-model:value="filters.staffType" :placeholder="$t('all_types')" allow-clear style="width: 120px">
+            <a-select-option value="lead_mentor">{{ $t('head_teacher') }}</a-select-option>
+            <a-select-option value="mentor">{{ $t('mentor') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.majorDirection" placeholder="全部方向" allow-clear style="width: 130px">
+          <a-select v-model:value="filters.majorDirection" :placeholder="$t('all_directions')" allow-clear style="width: 130px">
             <a-select-option v-for="opt in majorDirectionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.accountStatus" placeholder="全部状态" allow-clear style="width: 110px" data-field-name="状态">
-            <a-select-option value="0">激活</a-select-option>
-            <a-select-option value="1">禁用</a-select-option>
+          <a-select v-model:value="filters.accountStatus" :placeholder="$t('all_status')" allow-clear style="width: 110px" :data-field-name="$t('status')">
+            <a-select-option value="0">{{ $t('activate') }}</a-select-option>
+            <a-select-option value="1">{{ $t('disable') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ $t('search') }}
             </a-button>
             <a-button :loading="exporting" @click="handleExport">
               <template #icon><ExportOutlined /></template>
-              {{ exporting ? '导出中...' : '导出' }}
+              {{ exporting ? $t('exporting') + '...' : $t('export') }}
             </a-button>
           </a-space>
         </a-form-item>
@@ -74,8 +74,8 @@
         show-icon
         style="margin-bottom: 16px"
       >
-        <template #message><strong>黑名单导师限制说明</strong></template>
-        <template #description>黑名单中的导师<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能），但可以正常登录系统和进行其他操作</template>
+        <template #message><strong>{{ $t('blacklisted_mentor_restrictions') }}</strong></template>
+        <template #description>{{ $t('blacklisted_mentors') }}<strong>{{ $t('cannot_view_the_job_search_center_module') }}</strong>（{{ $t('including_position_info_interview_prepar') }}</template>
       </a-alert>
 
       <a-table
@@ -173,18 +173,18 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space :size="4" wrap>
-              <a-button type="link" size="small" data-surface-trigger="modal-staff-detail" :data-surface-sample-key="`staff-${record.staffId}`" @click="openStaffDetail(record)">详情</a-button>
-              <a-button type="link" size="small" data-surface-trigger="modal-edit-staff" :data-surface-sample-key="`staff-${record.staffId}`" @click="openEditModal(record)">编辑</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-staff-detail" :data-surface-sample-key="`staff-${record.staffId}`" @click="openStaffDetail(record)">{{ $t('details') }}</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-edit-staff" :data-surface-sample-key="`staff-${record.staffId}`" @click="openEditModal(record)">{{ $t('edit') }}</a-button>
               <a-dropdown :trigger="['click']" placement="bottomRight">
-                <a-button type="link" size="small">更多 <DownOutlined /></a-button>
+                <a-button type="link" size="small">{{ $t('more') }} <DownOutlined /></a-button>
                 <template #overlay>
                   <a-menu @click="({ key }: { key: string }) => handleActionSelect(key as StaffActionKey, record)">
-                    <a-menu-item key="resetPassword">重置密码</a-menu-item>
+                    <a-menu-item key="resetPassword">{{ $t('reset_password') }}</a-menu-item>
                     <a-menu-item :key="record.accountStatus === '1' ? 'restore' : 'freeze'">
-                      <span :style="{ color: record.accountStatus === '1' ? '#15803d' : '#b45309' }">{{ record.accountStatus === '1' ? '解冻' : '禁用' }}</span>
+                      <span :style="{ color: record.accountStatus === '1' ? '#15803d' : '#b45309' }">{{ record.accountStatus === '1' ? $t('unfreeze') : $t('disable') }}</span>
                     </a-menu-item>
                     <a-menu-item :key="isBlacklisted(record) ? 'remove' : 'blacklist'">
-                      <span style="color: #b91c1c">{{ isBlacklisted(record) ? '移出黑名单' : '加入黑名单' }}</span>
+                      <span style="color: #b91c1c">{{ isBlacklisted(record) ? $t('remove_from_blacklist') : $t('add_to_blacklist') }}</span>
                     </a-menu-item>
                   </a-menu>
                 </template>
@@ -228,17 +228,17 @@
       @cancel="closeResetPasswordModal"
     >
       <template #title>
-        <span style="font-weight: 700; color: var(--text)">重置密码成功</span>
+        <span style="font-weight: 700; color: var(--text)">{{ $t('password_reset_successfully') }}</span>
       </template>
 
       <div style="display: flex; flex-direction: column; gap: 10px; color: var(--text)">
-        <p style="margin: 0">登录账号：{{ resetPasswordResult?.loginAccount || '-' }}</p>
-        <p style="margin: 0">默认密码：{{ resetPasswordResult?.defaultPassword || '-' }}</p>
+        <p style="margin: 0">{{ $t('login_account') }}：{{ resetPasswordResult?.loginAccount || '-' }}</p>
+        <p style="margin: 0">{{ $t('default_password') }}：{{ resetPasswordResult?.defaultPassword || '-' }}</p>
       </div>
 
       <template #footer>
         <a-button type="primary" @click="closeResetPasswordModal">
-          知道了
+          {{ $t('got_it') }}
         </a-button>
       </template>
     </OverlaySurfaceModal>
@@ -270,7 +270,9 @@ import StaffDetailModal from './components/StaffDetailModal.vue'
 import StaffFormModal from './components/StaffFormModal.vue'
 import StaffStatusModal from './components/StaffStatusModal.vue'
 import { staffColumns, staffBlacklistColumns, staffColumnsWithRating } from './columns'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
 
@@ -294,8 +296,8 @@ type StaffActionKey = 'detail' | 'edit' | 'resetPassword' | 'freeze' | 'restore'
 type StatusAction = Extract<StaffActionKey, 'freeze' | 'restore' | 'blacklist' | 'remove'>
 
 const tabs: { key: StaffTabKey; label: string }[] = [
-  { key: 'normal', label: '正常列表' },
-  { key: 'blacklist', label: '黑名单' }
+  { key: 'normal', label: t('active_list') },
+  { key: 'blacklist', label: t('blacklist') }
 ]
 
 const rows = ref<StaffListItem[]>([])
@@ -334,14 +336,14 @@ const visibleRows = computed(() =>
 
 const blacklistedCount = computed(() => rows.value.filter((row) => isBlacklisted(row)).length)
 const normalCount = computed(() => Math.max(pagination.total - blacklistedCount.value, 0))
-const emptyStateText = computed(() => (selectedTab.value === 'blacklist' ? '暂无黑名单导师' : '暂无导师数据'))
+const emptyStateText = computed(() => (selectedTab.value === 'blacklist' ? t('no_blacklisted_mentors') : t('no_mentor_data_available')))
 const tablePagination = computed(() => ({
   current: pagination.current,
   pageSize: pagination.pageSize,
   total: pagination.total,
   simple: false,
   showSizeChanger: false,
-  showTotal: (total: number) => `共 ${total} 条记录`
+  showTotal: (total: number) => `${t('in_total')} ${total} ${t('records')}`
 }))
 const majorDirectionOptions = computed(() => majorItems.value)
 
@@ -366,7 +368,7 @@ const loadRows = async () => {
     pendingReviewCount.value = response.pendingReviewCount || 0
   } catch (error) {
     console.error(error)
-    message.error('导师列表加载失败')
+    message.error(t('failed_to_load_mentor_list'))
   }
 }
 
@@ -401,9 +403,9 @@ const handleExport = async () => {
       accountStatus: filters.accountStatus || undefined,
       tab: selectedTab.value
     })
-    message.success('导师列表导出成功')
+    message.success(t('mentor_list_exported_successfully'))
   } catch (_error) {
-    message.error('导师列表导出失败')
+    message.error(t('failed_to_export_mentor_list'))
   } finally {
     exporting.value = false
   }
@@ -490,10 +492,10 @@ const handleFormSubmit = async (payload: StaffPayload) => {
   try {
     if (payload.staffId) {
       await updateStaff(payload)
-      message.success('导师信息已更新')
+      message.success(t('mentor_information_updated'))
     } else {
       await createStaff(payload)
-      message.success('导师已新增')
+      message.success(t('mentor_added_successfully'))
     }
     formModalVisible.value = false
     editingStaff.value = null
@@ -501,7 +503,7 @@ const handleFormSubmit = async (payload: StaffPayload) => {
     await loadRows()
   } catch (error) {
     console.error(error)
-    message.error(payload.staffId ? '导师更新失败' : '导师新增失败')
+    message.error(payload.staffId ? t('failed_to_update_mentor') : t('failed_to_add_mentor'))
   } finally {
     formSubmitting.value = false
   }
@@ -519,7 +521,7 @@ const formatCompaniesPreview = (companies?: string) => {
   if (!arr.length) return ''
   const previews = arr.slice(0, 2).map((v) => dictLabel(industryItems, v))
   const label = previews.join('、')
-  return arr.length > 2 ? `${label} 等${arr.length}家` : label
+  return arr.length > 2 ? t('companies_total_suffix', { label, count: arr.length }) : label
 }
 
 /** 列表公司列 Tooltip：全量公司名称 */
@@ -530,26 +532,26 @@ const formatCompaniesTooltip = (companies?: string) => {
 }
 
 const formatType = (staffType?: string) => {
-  if (staffType === 'lead_mentor') return '班主任'
-  if (staffType === 'assistant') return '助教'
-  return '导师'
+  if (staffType === 'lead_mentor') return t('head_teacher')
+  if (staffType === 'assistant') return t('teaching_assistant')
+  return t('mentor')
 }
 
 /** 字典 value 优先匹配，不命中再按中文兜底（兼容历史数据） */
 const getDirectionColor = (direction?: string) => {
   if (!direction) return 'cyan'
-  if (direction === 'quant' || direction.includes('量化')) return 'purple'
-  if (direction === 'consulting' || direction.includes('咨询')) return 'blue'
-  if (direction === 'tech' || direction.includes('科技')) return 'orange'
+  if (direction === 'quant' || direction.includes(t('quantitative'))) return 'purple'
+  if (direction === 'consulting' || direction.includes(t('consulting'))) return 'blue'
+  if (direction === 'tech' || direction.includes(t('technology'))) return 'orange'
   if (direction === 'computer_science') return 'magenta'
   return 'cyan'
 }
 
 const getRegionEmoji = (region?: string) => {
   if (!region) return ''
-  if (region === 'na' || region.includes('北美')) return '🌎'
-  if (region === 'eu' || region.includes('欧洲')) return '🌍'
-  if (region === 'apac' || region.includes('亚太')) return '🌏'
+  if (region === 'na' || region.includes(t('north_america'))) return '🌎'
+  if (region === 'eu' || region.includes(t('europe'))) return '🌍'
+  if (region === 'apac' || region.includes(t('asia_pacific'))) return '🌏'
   return ''
 }
 
@@ -561,21 +563,21 @@ const formatHourlyRate = (hourlyRate?: number) => {
 }
 
 const formatStudentCount = (studentCount?: number) => {
-  return `${studentCount ?? 0} 学员`
+  return `${studentCount ?? 0} ${t('student')}`
 }
 
 const formatStatus = (accountStatus?: string) => {
-  return accountStatus === '1' ? '冻结' : '正常'
+  return accountStatus === '1' ? t('frozen') : t('active_3')
 }
 
 const getStatusNote = (row: StaffListItem) => {
   if (row.accountStatus === '1') {
-    return '账号已禁用'
+    return t('account_disabled')
   }
   if (isBlacklisted(row)) {
-    return '已加入黑名单'
+    return t('blacklisted')
   }
-  return '账号正常'
+  return t('account_active')
 }
 
 const openStaffDetail = (row: StaffListItem) => {
@@ -589,33 +591,33 @@ const openFirstPendingReview = async () => {
     const response = await getStaffChangeRequestList(undefined, 'pending')
     const firstPending = response.rows?.[0]
     if (!firstPending) {
-      message.info('当前没有可处理的导师记录')
+      message.info(t('no_mentor_records_available_to_process'))
       return
     }
 
     const existingRow = rows.value.find((row) => row.staffId === firstPending.staffId)
     selectedStaff.value = existingRow ?? {
       staffId: firstPending.staffId,
-      staffName: firstPending.staffName || `导师 ${firstPending.staffId}`,
+      staffName: firstPending.staffName || `${t('mentor')} ${firstPending.staffId}`,
     }
     detailModalVisible.value = true
   } catch (error) {
     console.error(error)
-    message.error('待审核导师信息加载失败')
+    message.error(t('failed_to_load_mentors_pending_review'))
   }
 }
 
 const resolveSuccessMessage = (action: StatusAction) => {
   if (action === 'freeze') {
-    return '导师账号已禁用'
+    return t('mentor_account_has_been_disabled')
   }
   if (action === 'restore') {
-    return '导师账号已解冻'
+    return t('mentor_account_has_been_unfrozen')
   }
   if (action === 'blacklist') {
-    return '导师已加入黑名单'
+    return t('mentor_has_been_blacklisted')
   }
-  return '导师已移出黑名单'
+  return t('mentor_has_been_removed_from_blacklist')
 }
 
 const closeResetPasswordModal = () => {
@@ -652,3 +654,4 @@ const closeResetPasswordModal = () => {
   vertical-align: bottom;
 }
 </style>
+

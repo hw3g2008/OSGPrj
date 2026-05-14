@@ -9,42 +9,42 @@
     <template #title>
       <span class="edit-student-modal__title">
         <span class="mdi mdi-account-edit edit-student-modal__title-icon" aria-hidden="true"></span>
-        <span>编辑学员</span>
+        <span>{{ $t('edit_student') }}</span>
       </span>
     </template>
 
     <div class="edit-student-modal__note" data-content-part="supporting-text">
       <span class="mdi mdi-card-account-details-outline edit-student-modal__note-icon" aria-hidden="true"></span>
       <div class="edit-student-modal__note-copy">
-        <strong>{{ student?.studentName || '待选择学员' }}</strong>
-        <p>ID {{ student?.studentId ?? '-' }} · {{ formatStatus(student?.accountStatus) }} · 可同步更新资料、导师归属与求职方向。</p>
+        <strong>{{ student?.studentName || $t('student_to_be_selected') }}</strong>
+        <p>ID {{ student?.studentId ?? '-' }} · {{ formatStatus(student?.accountStatus) }} · {{ $t('sync_update_of_profile_mentor_assignment') }}。</p>
       </div>
     </div>
 
     <section class="edit-student-modal__section edit-student-modal__section--primary">
-      <div class="edit-student-modal__badge edit-student-modal__badge--primary">核心信息</div>
+      <div class="edit-student-modal__badge edit-student-modal__badge--primary">{{ $t('core_information') }}</div>
       <a-form layout="vertical">
         <a-row :gutter="16">
           <a-col :span="6">
-            <a-form-item label="英文姓名">
+            <a-form-item :label="$t('english_name_2')">
               <a-input v-model:value="form.studentName" :disabled="submitting" />
             </a-form-item>
           </a-col>
           <a-col :span="6">
-            <a-form-item label="性别">
-              <a-select v-model:value="form.gender" :disabled="submitting" placeholder="请选择">
-                <a-select-option value="0">男</a-select-option>
-                <a-select-option value="1">女</a-select-option>
+            <a-form-item :label="$t('gender')">
+              <a-select v-model:value="form.gender" :disabled="submitting" :placeholder="$t('please_select')">
+                <a-select-option value="0">{{ $t('male') }}</a-select-option>
+                <a-select-option value="1">{{ $t('female') }}</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="6">
-            <a-form-item label="邮箱">
+            <a-form-item :label="$t('email')">
               <a-input v-model:value="form.email" :disabled="submitting" />
             </a-form-item>
           </a-col>
           <a-col :span="6">
-            <a-form-item label="账号状态">
+            <a-form-item :label="$t('account_status_2')">
               <a-input :value="formatStatus(student?.accountStatus)" readonly />
             </a-form-item>
           </a-col>
@@ -54,12 +54,12 @@
 
     <section class="edit-student-modal__section">
       <div class="edit-student-modal__badge edit-student-modal__badge--indigo">
-        <span class="mdi mdi-account-group" aria-hidden="true" /> 导师配置
+        <span class="mdi mdi-account-group" aria-hidden="true" /> {{ $t('mentor_configuration') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="班主任">
+            <a-form-item :label="$t('head_teacher')">
               <a-select
                 v-model:value="form.leadMentorId"
                 show-search
@@ -67,14 +67,14 @@
                 :loading="staffLoading"
                 :disabled="submitting"
                 :options="mentorSelectOptions"
-                placeholder="输入姓名搜索班主任"
+                :placeholder="$t('search_homeroom_teacher_by_name')"
                 allow-clear
                 @search="handleStaffSearch"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="助教">
+            <a-form-item :label="$t('teaching_assistant')">
               <a-select
                 v-model:value="form.assistantId"
                 show-search
@@ -82,7 +82,7 @@
                 :loading="staffLoading"
                 :disabled="submitting"
                 :options="assistantSelectOptions"
-                placeholder="输入姓名搜索助教"
+                :placeholder="$t('search_teaching_assistant_by_name')"
                 allow-clear
                 @search="handleStaffSearch"
               />
@@ -94,30 +94,30 @@
 
     <section class="edit-student-modal__section">
       <div class="edit-student-modal__badge edit-student-modal__badge--blue">
-        <span class="mdi mdi-school" aria-hidden="true" /> 学业信息
+        <span class="mdi mdi-school" aria-hidden="true" /> {{ $t('academic_information') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="16">
           <a-col :span="8">
-            <a-form-item label="学校">
+            <a-form-item :label="$t('school')">
               <a-select
                 v-model:value="form.school"
                 :disabled="submitting"
                 :options="schoolOptions"
                 show-search
                 allow-clear
-                placeholder="请选择学校"
+                :placeholder="$t('please_select_school')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="专业">
+            <a-form-item :label="$t('major')">
               <a-input v-model:value="form.major" :disabled="submitting" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="毕业年份">
-              <a-input v-model:value="form.graduationYear" :disabled="submitting" placeholder="如 2026" />
+            <a-form-item :label="$t('graduation_year')">
+              <a-input v-model:value="form.graduationYear" :disabled="submitting" :placeholder="$t('example_year_2026')" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -126,41 +126,41 @@
 
     <section class="edit-student-modal__section">
       <div class="edit-student-modal__badge edit-student-modal__badge--amber">
-        <span class="mdi mdi-target" aria-hidden="true" /> 求职方向
+        <span class="mdi mdi-target" aria-hidden="true" /> {{ $t('job_search_direction') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="16">
           <a-col :span="8">
-            <a-form-item label="主攻方向">
+            <a-form-item :label="$t('major_focus')">
               <a-select
                 v-model:value="form.majorDirection"
                 :disabled="submitting"
                 :options="majorDirOptions"
                 show-search
                 allow-clear
-                placeholder="请选择主攻方向"
+                :placeholder="$t('please_select_primary_direction')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="子方向">
+            <a-form-item :label="$t('sub_focus')">
               <a-select
                 v-model:value="form.targetPosition"
                 :disabled="submitting"
                 :options="subDirOptions"
                 show-search
                 allow-clear
-                placeholder="请选择子方向"
+                :placeholder="$t('please_select_sub_direction')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="求职地区">
+            <a-form-item :label="$t('job_search_region')">
               <MultiSelect
                 v-model:value="form.targetRegion"
                 :disabled="submitting"
                 :options="regionOptions"
-                placeholder="可多选求职地区"
+                :placeholder="$t('multiple_job_search_regions_can_be_selec')"
               />
             </a-form-item>
           </a-col>
@@ -170,23 +170,23 @@
 
     <section class="edit-student-modal__section">
       <div class="edit-student-modal__badge edit-student-modal__badge--green">
-        <span class="mdi mdi-phone" aria-hidden="true" /> 联系方式与备注
+        <span class="mdi mdi-phone" aria-hidden="true" /> {{ $t('contact_info_notes') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="16">
           <a-col :span="8">
-            <a-form-item label="电话">
-              <a-input v-model:value="form.phone" :disabled="submitting" placeholder="选填" />
+            <a-form-item :label="$t('phone')">
+              <a-input v-model:value="form.phone" :disabled="submitting" :placeholder="$t('optional')" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="微信">
-              <a-input v-model:value="form.wechat" :disabled="submitting" placeholder="选填" />
+            <a-form-item :label="$t('wechat')">
+              <a-input v-model:value="form.wechat" :disabled="submitting" :placeholder="$t('optional')" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="备注">
-              <a-input v-model:value="form.remark" :disabled="submitting" placeholder="选填" />
+            <a-form-item :label="$t('remarks')">
+              <a-input v-model:value="form.remark" :disabled="submitting" :placeholder="$t('optional')" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -194,8 +194,8 @@
     </section>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="handleSubmit">保存修改</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">{{ $t('save_changes') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -208,7 +208,9 @@ import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 import { getAdminDictOptions } from '@/api/adminDict'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { MultiSelect } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = withDefaults(defineProps<{
   visible: boolean
   student?: StudentListItem | null
@@ -287,7 +289,7 @@ const mergeCurrentOption = (staffType: 'lead_mentor' | 'assistant', staffId?: nu
     ...staffOptions.value,
     {
       staffId,
-      staffName: label || `${staffType === 'lead_mentor' ? '班主任' : '助教'} ${staffId}`,
+      staffName: label || `${staffType === 'lead_mentor' ? t('head_teacher') : t('teaching_assistant')} ${staffId}`,
       staffType,
     },
   ]
@@ -333,7 +335,7 @@ const loadStaffOptions = async (keyword = '') => {
     mergeCurrentOption('lead_mentor', props.student?.leadMentorId, props.student?.leadMentorName)
     mergeCurrentOption('assistant', props.student?.assistantId, props.student?.assistantName)
   } catch (_error) {
-    message.error('加载导师列表失败')
+    message.error(t('failed_to_load_mentor_list_2'))
   } finally {
     staffLoading.value = false
   }
@@ -373,15 +375,15 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!props.student?.studentId) {
-    message.error('未找到学员信息')
+    message.error(t('student_information_not_found'))
     return
   }
   if (!form.email.trim()) {
-    message.error('请填写邮箱')
+    message.error(t('please_enter_email_address'))
     return
   }
   if (!form.school.trim()) {
-    message.error('请填写学校')
+    message.error(t('please_enter_school'))
     return
   }
 
@@ -403,13 +405,13 @@ const handleSubmit = () => {
 const formatStatus = (status?: string) => {
   switch (status) {
     case '1':
-      return '冻结'
+      return t('frozen')
     case '2':
-      return '已结束'
+      return t('ended')
     case '3':
-      return '退费'
+      return t('refund')
     default:
-      return '正常'
+      return t('active_3')
   }
 }
 </script>

@@ -1,35 +1,35 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="岗位管理" title-en="Job Tracker" description="管理各大公司招聘岗位信息，支持批量导入和学员关联追踪">
+    <PageHeader :title-zh="$t('position_management')" title-en="Job Tracker" :description="$t('manage_recruitment_positions_across_comp')">
       <template #actions>
         <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
             <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
               <a-radio-button value="list">
-                <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px"></i>列表视图
+                <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px"></i>{{ $t('list_view') }}
               </a-radio-button>
               <a-radio-button value="drilldown">
-                <i class="mdi mdi-file-tree" style="margin-right: 4px"></i>下钻视图
+                <i class="mdi mdi-file-tree" style="margin-right: 4px"></i>{{ $t('drill_down_view') }}
               </a-radio-button>
             </a-radio-group>
-            <span v-if="meta.trafficSummary" style="color: #94a3b8; font-size: 12px">总浏览 {{ meta.trafficSummary.totalViews.toLocaleString('en-US') }} 次</span>
+            <span v-if="meta.trafficSummary" style="color: #94a3b8; font-size: 12px">{{ $t('total_views') }} {{ meta.trafficSummary.totalViews.toLocaleString('en-US') }} {{ $t('times') }}</span>
           </div>
           <a-space wrap>
             <a-button :loading="downloading" @click="handleExport(false)">
               <template #icon><ExportOutlined /></template>
-              导出
+              {{ $t('export') }}
             </a-button>
             <a-button @click="batchVisible = true">
               <template #icon><UploadOutlined /></template>
-              批量上传
+              {{ $t('bulk_upload') }}
             </a-button>
             <a-button :loading="downloading" @click="handleExport(true)">
               <template #icon><DownloadOutlined /></template>
-              下载模板
+              {{ $t('download_template') }}
             </a-button>
             <a-button type="primary" @click="openCreateModal()">
               <template #icon><PlusOutlined /></template>
-              新增岗位
+              {{ $t('add_position') }}
             </a-button>
           </a-space>
         </div>
@@ -47,32 +47,32 @@
     <a-card :bordered="false">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 10px; flex-wrap: wrap">
         <a-form-item>
-          <a-select v-model:value="filters.positionCategory" placeholder="全部分类" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.positionCategory" :placeholder="$t('all_categories')" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.categories" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.industry" placeholder="公司类别" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.industry" :placeholder="$t('company_type')" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.industries" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px" show-search @change="handleSearch">
+          <a-select v-model:value="filters.companyName" :placeholder="$t('all_companies')" allow-clear style="width: 140px" show-search @change="handleSearch">
             <a-select-option v-for="option in companyOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.city" placeholder="全部地区" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.city" :placeholder="$t('all_regions')" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in cityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.displayStatus" placeholder="全部状态" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.displayStatus" :placeholder="$t('all_status')" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.displayStatuses" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.recruitmentCycle" placeholder="招聘周期" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="filters.recruitmentCycle" :placeholder="$t('recruitment_cycle')" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.recruitmentCycles" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
@@ -80,7 +80,7 @@
           <a-select
             v-model:value="targetMajorsFilter"
             mode="multiple"
-            placeholder="主攻方向"
+            :placeholder="$t('major_focus')"
             allow-clear
             style="width: 180px"
             :options="meta.majorDirections"
@@ -89,27 +89,27 @@
           />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="publishPreset" placeholder="展示起始" allow-clear style="width: 120px" @change="handleSearch">
+          <a-select v-model:value="publishPreset" :placeholder="$t('show_start')" allow-clear style="width: 120px" @change="handleSearch">
             <a-select-option v-for="option in meta.publishPresets" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-input v-model:value="filters.keyword" placeholder="搜索岗位名称..." allow-clear style="width: 180px" @press-enter="handleSearch" />
+          <a-input v-model:value="filters.keyword" :placeholder="`${$t('search_position_name')}...`" allow-clear style="width: 180px" @press-enter="handleSearch" />
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ $t('search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ $t('reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
 
-      <a-spin :spinning="loading" tip="正在加载岗位数据...">
+      <a-spin :spinning="loading" :tip="`${$t('loading_position_data')}...`">
         <template v-if="viewMode === 'drilldown'">
-          <a-empty v-if="!loading && !drillDownRows.length" description="当前筛选条件下暂无岗位数据" />
+          <a-empty v-if="!loading && !drillDownRows.length" :description="$t('no_positions_found_under_current_filters')" />
 
           <div v-else class="positions-drilldown">
             <section v-for="industry in drillDownRows" :key="industry.industry" class="positions-drilldown__industry">
@@ -123,13 +123,13 @@
                   <i :class="['mdi', expandedIndustries.has(industry.industry) ? 'mdi-chevron-down' : 'mdi-chevron-right']" :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" aria-hidden="true"></i>
                   <i :class="['mdi', getIndustryIcon(industry.industry)]" :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" aria-hidden="true"></i>
                   <strong :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ formatIndustry(industry.industry) }}</strong>
-                  <span :style="{ background: toneTextColor[getIndustryTone(industry.industry) || 'slate'], color: '#fff', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }">{{ industry.companyCount }} 家公司</span>
-                  <a-tag color="purple">{{ industry.positionCount }} 个岗位</a-tag>
+                  <span :style="{ background: toneTextColor[getIndustryTone(industry.industry) || 'slate'], color: '#fff', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }">{{ industry.companyCount }} {{ $t('companies') }}</span>
+                  <a-tag color="purple">{{ industry.positionCount }} {{ $t('positions') }}</a-tag>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px">
-                  <a-tag color="green">{{ industry.openCount }} 开放</a-tag>
-                  <a-tag v-if="industry.positionCount - industry.openCount > 0" color="default">{{ industry.positionCount - industry.openCount }} 已关闭</a-tag>
-                  <span :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ industry.studentCount }} 学员</span>
+                  <a-tag color="green">{{ industry.openCount }} {{ $t('open') }}</a-tag>
+                  <a-tag v-if="industry.positionCount - industry.openCount > 0" color="default">{{ industry.positionCount - industry.openCount }} {{ $t('closed') }}</a-tag>
+                  <span :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ industry.studentCount }} {{ $t('student') }}</span>
                 </div>
               </button>
 
@@ -148,15 +148,15 @@
                       </div>
                       <div>
                         <strong>{{ company.companyName }}</strong>
-                        <span>{{ company.positionCount }} 个岗位</span>
+                        <span>{{ company.positionCount }} {{ $t('positions') }}</span>
                       </div>
                     </button>
                     <a-space>
-                      <a-tag>{{ company.positionCount }} 个岗位</a-tag>
-                      <a-tag color="green">{{ company.openCount }} 开放</a-tag>
-                      <a-button type="link" size="small" @click="openStudentsModal(company.positions[0])">{{ company.studentCount }}人</a-button>
+                      <a-tag>{{ company.positionCount }} {{ $t('positions') }}</a-tag>
+                      <a-tag color="green">{{ company.openCount }} {{ $t('open') }}</a-tag>
+                      <a-button type="link" size="small" @click="openStudentsModal(company.positions[0])">{{ company.studentCount }}{{ $t('people') }}</a-button>
                       <a v-if="company.companyWebsite" :href="company.companyWebsite" target="_blank" rel="noreferrer" style="font-size: 12px">
-                        <i class="mdi mdi-web" aria-hidden="true" /> {{ company.companyName }} 官网
+                        <i class="mdi mdi-web" aria-hidden="true" /> {{ company.companyName }} {{ $t('website') }}
                       </a>
                     </a-space>
                   </div>
@@ -197,10 +197,10 @@
                           <a-tag :color="statusToneToColor[getStatusTone(position.displayStatus)] || 'green'">{{ formatStatus(position.displayStatus) }}</a-tag>
                         </template>
                         <template v-else-if="column.dataIndex === 'studentCount'">
-                          <a-button type="link" size="small" @click="openStudentsModal(position)">{{ position.studentCount || 0 }}人</a-button>
+                          <a-button type="link" size="small" @click="openStudentsModal(position)">{{ position.studentCount || 0 }}{{ $t('people') }}</a-button>
                         </template>
                         <template v-else-if="column.dataIndex === 'action'">
-                          <a-button type="link" size="small" @click="openEditModal(position)">编辑</a-button>
+                          <a-button type="link" size="small" @click="openEditModal(position)">{{ $t('edit') }}</a-button>
                         </template>
                       </template>
                     </a-table>
@@ -208,7 +208,7 @@
                     <div style="display: flex; justify-content: flex-end; padding: 6px 10px">
                       <a-button size="small" @click="openCreateModal(industry, company)">
                         <template #icon><PlusOutlined /></template>
-                        {{ company.companyName }} 添加岗位
+                        {{ company.companyName }} {{ $t('add_position_2') }}
                       </a-button>
                     </div>
                   </div>
@@ -219,7 +219,7 @@
         </template>
 
         <template v-else>
-          <a-table :columns="listColumns" :data-source="sortedListRows" :row-key="(r: PositionListItem) => r.positionId" :pagination="tablePagination" :locale="{ emptyText: '当前筛选条件下暂无岗位数据' }" :scroll="{ x: 1400 }" @change="handleTableChange">
+          <a-table :columns="listColumns" :data-source="sortedListRows" :row-key="(r: PositionListItem) => r.positionId" :pagination="tablePagination" :locale="{ emptyText: $t('no_positions_found_under_current_filters') }" :scroll="{ x: 1400 }" @change="handleTableChange">
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'positionName'">
                 <a v-if="record.positionUrl" :href="record.positionUrl" target="_blank" rel="noreferrer" style="font-weight: 700">
@@ -261,26 +261,26 @@
                 <a-tag :color="statusToneToColor[getStatusTone(record.displayStatus)] || 'green'">{{ formatStatus(record.displayStatus) }}</a-tag>
               </template>
               <template v-else-if="column.dataIndex === 'studentCount'">
-                <a-button type="link" size="small" @click="openStudentsModal(record)">{{ record.studentCount || 0 }}人</a-button>
+                <a-button type="link" size="small" @click="openStudentsModal(record)">{{ record.studentCount || 0 }}{{ $t('people') }}</a-button>
               </template>
               <template v-else-if="column.dataIndex === 'action'">
-                <a-button type="link" size="small" @click="openEditModal(record)">编辑</a-button>
+                <a-button type="link" size="small" @click="openEditModal(record)">{{ $t('edit') }}</a-button>
               </template>
             </template>
           </a-table>
         </template>
 
         <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; color: #6e80a4; font-size: 13px; font-weight: 600">
-          <span>共 {{ summary.companyCount }} 家公司</span>
+          <span>{{ $t('in_total') }} {{ summary.companyCount }} {{ $t('companies') }}</span>
           <span style="color: #c1cad9">|</span>
-          <span style="color: #6b6ef7">● {{ summary.positionCount }} 个岗位</span>
-          <span style="color: #22c55e">● {{ stats.openPositions }} 开放中</span>
-          <span style="color: #94a3b8">● {{ stats.closedPositions }} 已关闭</span>
+          <span style="color: #6b6ef7">● {{ summary.positionCount }} {{ $t('positions') }}</span>
+          <span style="color: #22c55e">● {{ stats.openPositions }} {{ $t('open_2') }}</span>
+          <span style="color: #94a3b8">● {{ stats.closedPositions }} {{ $t('closed') }}</span>
         </div>
       </a-spin>
     </a-card>
 
-    <a-alert v-if="processGlossaryText" type="info" :message="`流程缩写：${processGlossaryText}`" />
+    <a-alert v-if="processGlossaryText" type="info" :message="`${$t('process_abbreviation')}: ${processGlossaryText}`" />
 
     <PositionFormModal
       v-model:visible="formVisible"
@@ -298,8 +298,8 @@
     />
     <PositionStudentsModal
       v-model:visible="studentsVisible"
-      :company-name="selectedPosition?.companyName || '公司'"
-      :position-name="selectedPosition?.positionName || '岗位'"
+      :company-name="selectedPosition?.companyName || $t('company')"
+      :position-name="selectedPosition?.positionName || $t('position')"
       :loading="studentsLoading"
       :rows="studentRows"
     />
@@ -336,7 +336,9 @@ import {
 import BatchUploadModal from './components/BatchUploadModal.vue'
 import PositionFormModal from './components/PositionFormModal.vue'
 import PositionStudentsModal from './components/PositionStudentsModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const statColorMap: Record<string, string> = {
   primary: '#6b6ef7',
   success: '#22c55e',
@@ -361,35 +363,35 @@ const toneTextColor: Record<string, string> = {
 
 
 const drilldownColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
-  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
-  { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
-  { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
-  { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
-  { title: '主攻方向', dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
-  { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
-  { title: '截止时间', dataIndex: 'deadline', key: 'deadline', width: 80 },
-  { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
-  { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
-  { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
+  { title: t('job_title'), dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
+  { title: t('job_classification'), dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
+  { title: t('department'), dataIndex: 'department', key: 'department', width: 80 },
+  { title: t('area'), dataIndex: 'city', key: 'city', width: 70 },
+  { title: t('recruitment_cycle'), dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
+  { title: t('major_focus'), dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
+  { title: t('show_start'), dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
+  { title: t('deadline'), dataIndex: 'deadline', key: 'deadline', width: 80 },
+  { title: t('status'), dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
+  { title: t('student'), dataIndex: 'studentCount', key: 'studentCount', width: 60 },
+  { title: t('added_by'), dataIndex: 'createBy', key: 'createBy', width: 90 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 60 },
 ]
 
 const listColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
-  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 160 },
-  { title: '公司类别', dataIndex: 'companyType', key: 'companyType', width: 100 },
-  { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
-  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
-  { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
-  { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
-  { title: '主攻方向', dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
-  { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
-  { title: '截止时间', dataIndex: 'deadlineDisplay', key: 'deadlineDisplay', width: 100 },
-  { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
-  { title: '学员', dataIndex: 'studentCount', key: 'studentCount', width: 60 },
-  { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 60 },
+  { title: t('job_title'), dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false },
+  { title: t('company'), dataIndex: 'companyName', key: 'companyName', width: 160 },
+  { title: t('company_type'), dataIndex: 'companyType', key: 'companyType', width: 100 },
+  { title: t('department'), dataIndex: 'department', key: 'department', width: 80 },
+  { title: t('job_classification'), dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
+  { title: t('area'), dataIndex: 'city', key: 'city', width: 70 },
+  { title: t('recruitment_cycle'), dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
+  { title: t('major_focus'), dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
+  { title: t('show_start'), dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
+  { title: t('deadline'), dataIndex: 'deadlineDisplay', key: 'deadlineDisplay', width: 100 },
+  { title: t('status'), dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
+  { title: t('student'), dataIndex: 'studentCount', key: 'studentCount', width: 60 },
+  { title: t('added_by'), dataIndex: 'createBy', key: 'createBy', width: 90 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 60 },
 ]
 
 const createEmptyMeta = (): PositionMeta => ({
@@ -457,7 +459,7 @@ const tablePagination = computed(() => ({
   pageSize: filters.pageSize,
   total: total.value,
   showSizeChanger: false,
-  showTotal: (value: number) => `共 ${value} 条记录`
+  showTotal: (value: number) => `${t('in_total')} ${value} ${t('records')}`
 }))
 
 const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
@@ -467,11 +469,11 @@ const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
 }
 
 const statsCards = computed(() => [
-  { key: 'total', label: '总岗位数', value: stats.value.totalPositions, tone: 'primary' },
-  { key: 'open', label: '开放中', value: stats.value.openPositions, tone: 'success' },
-  { key: 'closing', label: '即将截止', value: stats.value.closingSoonPositions, tone: 'warning' },
-  { key: 'closed', label: '已关闭', value: stats.value.closedPositions, tone: 'muted' },
-  { key: 'students', label: '学员申请', value: stats.value.studentApplications, tone: 'info' }
+  { key: 'total', label: t('total_positions'), value: stats.value.totalPositions, tone: 'primary' },
+  { key: 'open', label: t('open_2'), value: stats.value.openPositions, tone: 'success' },
+  { key: 'closing', label: t('closing_soon'), value: stats.value.closingSoonPositions, tone: 'warning' },
+  { key: 'closed', label: t('closed'), value: stats.value.closedPositions, tone: 'muted' },
+  { key: 'students', label: t('student_applications'), value: stats.value.studentApplications, tone: 'info' }
 ])
 
 const companyOptionValues = computed(() => companyOptions.value.map((item) => item.value))
@@ -615,7 +617,7 @@ const loadPage = async () => {
     drillDownRows.value = drillRes || []
     syncExpandedState(drillDownRows.value)
   } catch (_error) {
-    message.error('加载岗位数据失败')
+    message.error(t('failed_to_load_position_data'))
   } finally {
     loading.value = false
   }
@@ -668,7 +670,7 @@ const openStudentsModal = async (record: PositionListItem) => {
   try {
     studentRows.value = await getPositionStudents(record.positionId)
   } catch (_error) {
-    message.error('加载岗位申请学员失败')
+    message.error(t('failed_to_load_position_applicants'))
   } finally {
     studentsLoading.value = false
   }
@@ -678,16 +680,16 @@ const handleSavePosition = async (payload: PositionPayload) => {
   try {
     if (payload.positionId) {
       await updatePosition(payload)
-      message.success('岗位已更新')
+      message.success(t('position_updated'))
     } else {
       await createPosition(payload)
-      message.success('岗位已新增')
+      message.success(t('position_added'))
     }
     formVisible.value = false
     createDefaults.value = null
     await Promise.all([loadReferenceData(), loadPage()])
   } catch (_error) {
-    message.error(payload.positionId ? '岗位更新失败' : '岗位新增失败')
+    message.error(payload.positionId ? t('failed_to_update_position') : t('failed_to_add_position'))
   }
 }
 
@@ -698,19 +700,19 @@ const handleBatchUpload = async (file: File) => {
     await Promise.all([loadReferenceData(), loadPage()])
 
     const parts: string[] = []
-    if (result.successCount > 0) parts.push(`成功导入 ${result.successCount} 条`)
-    if (result.duplicateCount > 0) parts.push(`重复跳过 ${result.duplicateCount} 条`)
+    if (result.successCount > 0) parts.push(`${t('imported_successfully')} ${result.successCount}`)
+    if (result.duplicateCount > 0) parts.push(`${t('skipped_duplicate')} ${result.duplicateCount}`)
     if (result.failedCount > 0) {
       const reasons = result.failedRows.map((f) => f.reason).join('\n')
-      parts.push(`失败 ${result.failedCount} 条`)
-      message.warning(parts.join('，') + '\n\n失败明细:\n' + reasons, 10)
+      parts.push(`Failed: ${result.failedCount}`)
+      message.warning(parts.join(', ') + '\n\nDetails:\n' + reasons, 10)
     } else if (result.duplicateCount > 0) {
-      message.warning(parts.join('，'))
+      message.warning(parts.join(', '))
     } else {
-      message.success(parts.join('，') || `成功导入 ${result.successCount} 条岗位`)
+      message.success(parts.join(', ') || `${t('imported_successfully')} ${result.successCount} ${t('position_records')}`)
     }
   } catch (_error) {
-    message.error('岗位批量上传失败')
+    message.error(t('bulk_position_upload_failed'))
   }
 }
 
@@ -756,9 +758,9 @@ const handleExport = async (template: boolean) => {
     link.download = getExportFilename(response.headers.get('content-disposition'), template)
     link.click()
     window.URL.revokeObjectURL(url)
-    message.success(template ? '模板下载成功' : '岗位导出成功')
+    message.success(template ? t('template_downloaded') : t('positions_exported_successfully'))
   } catch (_error) {
-    message.error(template ? '模板下载失败' : '岗位导出失败')
+    message.error(template ? t('failed_to_download_template') : t('failed_to_export_positions'))
   } finally {
     downloading.value = false
   }
@@ -810,7 +812,7 @@ const formatCategory = (value?: string) => categoryMap.value.get(value || '')?.l
 
 const formatDepartment = (value?: string) => departmentMap.value.get(value || '')?.label || value || '-'
 
-const formatStatus = (value?: string) => statusMap.value.get(value || '')?.label || value || '展示中'
+const formatStatus = (value?: string) => statusMap.value.get(value || '')?.label || value || t('active')
 
 const getStatusTone = (value?: string) => statusMap.value.get(value || '')?.tone || 'success'
 
@@ -979,3 +981,4 @@ onMounted(() => {
   }
 }
 </style>
+

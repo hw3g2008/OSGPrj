@@ -1,36 +1,36 @@
-<template>
+﻿<template>
   <div id="page-positions" class="positions-page" :data-action-trigger-count="positionsActionTriggers.length">
     <div class="page-header">
       <div>
-        <h1 class="page-title">岗位信息 <span class="page-title-en">Job Tracker</span></h1>
-        <p class="page-sub">追踪各大公司招聘岗位信息，记录您的申请进度</p>
+        <h1 class="page-title">{{ $t('position_information') }} <span class="page-title-en">Job Tracker</span></h1>
+        <p class="page-sub">{{ $t('track_recruitment_positions_from_major_c') }}</p>
       </div>
       <div class="header-actions">
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small" class="view-toggle">
           <a-radio-button value="list">
             <template #icon><UnorderedListOutlined /></template>
-            列表视图
+            {{ $t('list_view') }}
           </a-radio-button>
           <a-radio-button value="drilldown">
             <template #icon><AppstoreOutlined /></template>
-            下钻视图
+            {{ $t('drill_down_view') }}
           </a-radio-button>
         </a-radio-group>
         <a-button type="primary" @click="openManualAddModal">
           <template #icon><PlusOutlined /></template>
-          手动添加
+          {{ $t('add_manually') }}
         </a-button>
       </div>
     </div>
 
     <a-alert v-if="isProfileIncomplete" type="warning" show-icon class="permission-notice">
       <template #message>
-        您的求职意向尚未填写完整，无法为您筛选合适的岗位。请先到"求职意向"中补全
-        <strong>招聘周期 / 求职地区 / 主攻方向</strong> 三项后再返回此页查看岗位列表。
+        {{ $t('your_job_search_preferences_are_incomple') }}
+        <strong>{{ $t('recruitment_cycle_target_region_primary_') }}</strong> 三项后再返回此页查看岗位列表。
       </template>
       <template #action>
         <a-button type="primary" size="small" @click="router.push('/profile')">
-          修改求职意向 <RightOutlined />
+          {{ $t('edit_job_search_preferences') }} <RightOutlined />
         </a-button>
       </template>
     </a-alert>
@@ -42,37 +42,37 @@
       </template>
       <template #action>
         <a-button type="link" size="small" @click="router.push('/profile')">
-          修改求职意向 <RightOutlined />
+          {{ $t('edit_job_search_preferences') }} <RightOutlined />
         </a-button>
       </template>
     </a-alert>
 
     <a-empty
       v-if="isProfileIncomplete"
-      description="求职意向不完整，无法展示岗位"
+      :description="$t('job_search_preferences_incomplete_cannot')"
       class="profile-incomplete-empty"
       style="padding: 60px 0"
     >
-      <a-button type="primary" @click="router.push('/profile')">前往修改求职意向</a-button>
+      <a-button type="primary" @click="router.push('/profile')">{{ $t('go_to_edit_job_search_preferences') }}</a-button>
     </a-empty>
 
     <template v-else>
 
     <a-card :bordered="false" class="filter-card">
       <div class="filter-controls">
-        <a-select v-model:value="filters.category" placeholder="全部分类" class="filter-select filter-select-category" allow-clear>
+        <a-select v-model:value="filters.category" :placeholder="$t('all_categories')" class="filter-select filter-select-category" allow-clear>
           <a-select-option v-for="option in filterOptions.categories" :key="option.value" :value="option.value">
             {{ option.label }}
           </a-select-option>
         </a-select>
-        <a-select v-model:value="filters.industry" placeholder="全部行业" class="filter-select filter-select-industry" allow-clear>
+        <a-select v-model:value="filters.industry" :placeholder="$t('all_industries')" class="filter-select filter-select-industry" allow-clear>
           <a-select-option v-for="option in filterOptions.industries" :key="option.value" :value="option.value">
             {{ option.label }}
           </a-select-option>
         </a-select>
         <a-select
           v-model:value="filters.company"
-          placeholder="全部公司"
+          :placeholder="$t('all_companies')"
           class="filter-select filter-select-company"
           allow-clear
           show-search
@@ -82,14 +82,14 @@
             {{ option.label }}
           </a-select-option>
         </a-select>
-        <a-select v-model:value="filters.location" placeholder="全部地区" class="filter-select filter-select-location" allow-clear>
+        <a-select v-model:value="filters.location" :placeholder="$t('all_regions')" class="filter-select filter-select-location" allow-clear>
           <a-select-option v-for="option in filterOptions.locations" :key="option.value" :value="option.value">
             {{ option.label }}
           </a-select-option>
         </a-select>
         <a-input-search
           v-model:value="filters.keyword"
-          placeholder="搜索岗位名称..."
+          :placeholder="`${$t('search_position_name')}...`"
           class="filter-search"
           search-button
         />
@@ -106,7 +106,7 @@
         @click="activeTab = 'all'"
       >
         <i class="mdi mdi-briefcase-search" aria-hidden="true"></i>
-        <span>全部岗位</span>
+        <span>{{ $t('all_positions') }}</span>
       </button>
       <button
         type="button"
@@ -117,7 +117,7 @@
         @click="activeTab = 'favorites'"
       >
         <i class="mdi mdi-star content-tab-pill-star" aria-hidden="true"></i>
-        <span>我的收藏</span>
+        <span>{{ $t('my_favorites') }}</span>
         <span v-if="favoritePositions.length > 0" class="content-tab-badge">{{ favoritePositions.length }}</span>
       </button>
     </div>
@@ -160,7 +160,7 @@
                     <span class="company-name">{{ company.companyName }}</span>
                   </div>
                   <div class="company-actions">
-                    <span class="company-count"><strong>{{ company.positions.length }}</strong> 个岗位</span>
+                    <span class="company-count"><strong>{{ company.positions.length }}</strong> {{ $t('positions') }}</span>
                     <a-button
                       size="small"
                       class="company-career-link"
@@ -170,7 +170,7 @@
                       @click.stop
                     >
                       <template #icon><ExportOutlined /></template>
-                      官网
+                      {{ $t('website') }}
                     </a-button>
                   </div>
                 </div>
@@ -210,7 +210,7 @@
                               <CheckCircleFilled v-if="record.applied" />
                               <CheckOutlined v-else />
                             </template>
-                            {{ record.applied ? '已投递' : '未投递' }}
+                            {{ record.applied ? $t('delivered') : $t('not_applied_2') }}
                           </a-button>
                           <a-button size="small" :type="record.favorited ? 'primary' : 'default'" @click="toggleFavorite(record)">
                             <template #icon>
@@ -224,12 +224,12 @@
                             :options="filterOptions.progressStages"
                             class="progress-stage-select"
                             size="small"
-                            placeholder="选择阶段"
+                            :placeholder="$t('select_stage')"
                             @change="(val: string) => updateProgressInline(record, val)"
                           />
                           <a-button v-else size="small" type="primary" class="coaching-btn" @click="openCoachingModal(record)">
                             <template #icon><i class="mdi mdi-school" aria-hidden="true"></i></template>
-                            申请辅导
+                            {{ $t('apply_for_coaching') }}
                           </a-button>
                         </a-space>
                       </template>
@@ -241,7 +241,7 @@
           </div>
 
           <div class="positions-summary">
-            <span class="summary-total">共 <strong>{{ filteredPositions.length }}</strong> 个岗位</span>
+            <span class="summary-total">共 <strong>{{ filteredPositions.length }}</strong> {{ $t('positions') }}</span>
             <span class="summary-open">
               <i class="mdi mdi-circle-small" aria-hidden="true"></i>
               开放中 {{ openPositionsCount }}
@@ -315,7 +315,7 @@
                     <CheckCircleFilled v-if="record.applied" />
                     <CheckOutlined v-else />
                   </template>
-                  {{ record.applied ? '已投递' : '投递' }}
+                  {{ record.applied ? $t('delivered') : $t('applied') }}
                 </a-button>
                 <a-tooltip :title="record.favorited ? '已收藏点击取消' : '添加到收藏'">
                   <a-button
@@ -337,7 +337,7 @@
                   :options="filterOptions.progressStages"
                   class="progress-stage-select"
                   size="small"
-                  placeholder="选择阶段"
+                  :placeholder="$t('select_stage')"
                   @change="(val: string) => updateProgressInline(record, val)"
                 />
                 <a-button
@@ -347,7 +347,7 @@
                   @click="openCoachingModal(record)"
                 >
                   <template #icon><i class="mdi mdi-school" aria-hidden="true"></i></template>
-                  申请辅导
+                  {{ $t('apply_for_coaching') }}
                 </a-button>
               </div>
             </template>
@@ -366,7 +366,7 @@
         <template #title>
           <span class="favorites-card-title">
             <i class="mdi mdi-star" aria-hidden="true"></i>
-            收藏的岗位
+            {{ $t('saved_positions_2') }}
           </span>
         </template>
         <a-table
@@ -419,7 +419,7 @@
                     ></i>
                   </a-button>
                 </a-tooltip>
-                <a-button type="primary" size="small" class="fav-coaching-btn" @click="openCoachingModal(record)">申请辅导</a-button>
+                <a-button type="primary" size="small" class="fav-coaching-btn" @click="openCoachingModal(record)">{{ $t('apply_for_coaching') }}</a-button>
               </a-space>
             </template>
           </template>
@@ -430,9 +430,9 @@
 
     <a-modal
       v-model:open="manualAddOpen"
-      title="手动添加岗位"
-      ok-text="添加岗位"
-      cancel-text="取消"
+      :title="$t('add_position_manually')"
+      :ok-text="$t('add_position_2')"
+      :cancel-text="$t('cancel')"
       :width="640"
       destroy-on-close
       @ok="submitManualPosition"
@@ -440,27 +440,27 @@
       <a-alert
         type="info"
         show-icon
-        message="找不到想申请的岗位？填写以下信息手动添加到您的求职列表"
+        :message="$t('cant_find_the_position_you_want_to_apply')"
         class="manual-add-tip"
       />
 
       <a-form layout="vertical" class="manual-form">
         <div class="manual-section">
-          <div class="manual-section-title">公司信息</div>
+          <div class="manual-section-title">{{ $t('company_info') }}</div>
           <div class="manual-section-grid">
             <a-form-item label="公司名称（选填）" class="manual-field">
-              <a-input v-model:value="manualForm.company" placeholder="请输入公司名称" />
+              <a-input v-model:value="manualForm.company" :placeholder="$t('please_enter_the_company_name')" />
             </a-form-item>
             <a-form-item label="公司类别（选填）" class="manual-field">
-              <a-input v-model:value="manualForm.companyType" placeholder="如：投行、基金、咨询" />
+              <a-input v-model:value="manualForm.companyType" :placeholder="$t('e_g_investment_bank_fund_consulting')" />
             </a-form-item>
             <a-form-item label="岗位地区（选填）" class="manual-field">
-              <a-select v-model:value="manualForm.region" placeholder="请选择" @change="onManualRegionChange">
+              <a-select v-model:value="manualForm.region" :placeholder="$t('please_select')" @change="onManualRegionChange">
                 <a-select-option v-for="r in regionDict" :key="r.value" :value="r.value">{{ r.label }}</a-select-option>
               </a-select>
             </a-form-item>
             <a-form-item label="城市（选填）" class="manual-field">
-              <a-select v-model:value="manualForm.city" placeholder="请先选择岗位地区" :disabled="!manualForm.region">
+              <a-select v-model:value="manualForm.city" :placeholder="$t('please_select_a_position_region_first')" :disabled="!manualForm.region">
                 <a-select-option v-for="city in manualCityOptions" :key="city.value" :value="city.value">{{ city.label }}</a-select-option>
               </a-select>
             </a-form-item>
@@ -474,16 +474,16 @@
         </div>
 
         <div class="manual-section">
-          <div class="manual-section-title">辅导需求</div>
+          <div class="manual-section-title">{{ $t('coaching_need') }}</div>
           <a-radio-group v-model:value="manualForm.needCoaching" class="manual-coaching-options">
-            <a-radio :value="false" class="coaching-radio">暂不需要辅导，仅添加到追踪列表</a-radio>
-            <a-radio :value="true" class="coaching-radio">需要辅导，同时申请导师辅导</a-radio>
+            <a-radio :value="false" class="coaching-radio">{{ $t('no_coaching_needed_for_now_add_to_tracki') }}</a-radio>
+            <a-radio :value="true" class="coaching-radio">{{ $t('coaching_needed_also_apply_for_mentor_co') }}</a-radio>
           </a-radio-group>
 
           <div v-if="manualForm.needCoaching" class="manual-coaching-fields">
             <a-form-item label="你现在处于什么阶段？" required class="manual-field manual-field--full">
-              <a-select v-model:value="manualForm.coachingStage" placeholder="请选择面试阶段">
-                <a-select-option value="hirevue">HireVue or Online Test（在线测试）</a-select-option>
+              <a-select v-model:value="manualForm.coachingStage" :placeholder="$t('please_select_interview_stage')">
+                <a-select-option value="hirevue">HireVue or Online Test（{{ $t('online_test') }}）</a-select-option>
                 <a-select-option value="screening">Screening Call</a-select-option>
                 <a-select-option value="first">First Round</a-select-option>
                 <a-select-option value="second">Second Round</a-select-option>
@@ -494,37 +494,37 @@
             </a-form-item>
 
             <div v-if="manualCoachingIsHirevue" class="manual-hirevue-card">
-              <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
+              <div class="manual-hirevue-title"><span>HireVue / Online Test {{ $t('information') }}</span></div>
               <a-form-item label="请选择类型" required class="manual-field manual-field--full">
                 <a-radio-group v-model:value="manualForm.hirevueType" class="inline-radios">
                   <a-radio value="vi">VI (Video Interview)</a-radio>
                   <a-radio value="ot">OT (Online Test)</a-radio>
                 </a-radio-group>
               </a-form-item>
-              <a-form-item v-if="manualForm.hirevueType === 'vi'" label="VI 链接" required class="manual-field manual-field--full">
-                <a-input v-model:value="manualForm.viLink" placeholder="请输入 Video Interview 链接" />
+              <a-form-item v-if="manualForm.hirevueType === 'vi'" :label="`VI ${$t('link')}`" required class="manual-field manual-field--full">
+                <a-input v-model:value="manualForm.viLink" :placeholder="$t('please_enter_the_video_interview_link')" />
               </a-form-item>
               <template v-if="manualForm.hirevueType === 'ot'">
                 <a-form-item label="OT 链接" required class="manual-field manual-field--full">
-                  <a-input v-model:value="manualForm.otLink" placeholder="请输入 Online Test 链接" />
+                  <a-input v-model:value="manualForm.otLink" :placeholder="$t('please_enter_the_online_test_link')" />
                 </a-form-item>
                 <div class="manual-section-grid">
                   <a-form-item label="登录账号" required class="manual-field">
-                    <a-input v-model:value="manualForm.otAccount" placeholder="账号" />
+                    <a-input v-model:value="manualForm.otAccount" :placeholder="$t('account_number')" />
                   </a-form-item>
                   <a-form-item label="登录密码" required class="manual-field">
-                    <a-input-password v-model:value="manualForm.otPassword" placeholder="密码" />
+                    <a-input-password v-model:value="manualForm.otPassword" :placeholder="$t('password')" />
                   </a-form-item>
                 </div>
               </template>
-              <a-form-item label="截止时间" required class="manual-field manual-field--full" extra="请填写 VI/OT 的截止时间">
+              <a-form-item label="截止时间" required class="manual-field manual-field--full" :extra="$t('please_fill_in_the_vi_ot_deadline')">
                 <a-date-picker
                   v-model:value="manualForm.hirevueDeadline"
                   show-time
                   format="YYYY-MM-DD HH:mm"
                   value-format="YYYY-MM-DDTHH:mm"
                   style="width:100%"
-                  placeholder="选择截止日期与时间"
+                  :placeholder="$t('select_deadline_date_and_time')"
                 />
               </a-form-item>
               <a-form-item label="上传邀请邮件截图" required class="manual-field manual-field--full">
@@ -540,32 +540,32 @@
                   @change="handleManualHirevueUpload"
                 >
                   <CloudUploadOutlined class="upload-dropzone__icon" />
-                  <span class="upload-dropzone__title">点击上传截图</span>
-                  <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+                  <span class="upload-dropzone__title">{{ $t('click_to_upload_screenshot') }}</span>
+                  <span class="upload-dropzone__helper">{{ $t('supports_jpg_and_png_formats') }}</span>
                   <span v-if="manualForm.inviteScreenshotName" class="upload-dropzone__file">{{ manualForm.inviteScreenshotName }}</span>
                 </a-upload>
               </a-form-item>
               <a-form-item label="是否需要导师协助？" required class="manual-field manual-field--full">
                 <a-radio-group v-model:value="manualForm.mentorHelp" class="inline-radios">
-                  <a-radio value="yes">是，需要导师协助</a-radio>
-                  <a-radio value="no">否，仅需题库权限</a-radio>
+                  <a-radio value="yes">{{ $t('yes_i_need_mentor_assistance') }}</a-radio>
+                  <a-radio value="no">{{ $t('no_i_only_need_question_bank_access') }}</a-radio>
                 </a-radio-group>
               </a-form-item>
             </div>
 
             <template v-if="manualCoachingShowInterview">
-              <a-form-item label="该阶段的面试时间" required class="manual-field manual-field--full" extra="请填写该阶段面试的具体时间，方便导师安排辅导">
+              <a-form-item label="该阶段的面试时间" required class="manual-field manual-field--full" :extra="$t('please_fill_in_the_specific_interview_ti')">
                 <a-date-picker
                   v-model:value="manualForm.interviewTime"
                   show-time
                   format="YYYY-MM-DD HH:mm"
                   value-format="YYYY-MM-DDTHH:mm"
                   style="width:100%"
-                  placeholder="选择面试日期与时间"
+                  :placeholder="$t('select_interview_date_and_time')"
                 />
               </a-form-item>
               <a-form-item label="你期望有几个导师辅导？（选填）" class="manual-field manual-field--full">
-                <a-select v-model:value="manualForm.mentorCount" placeholder="请选择">
+                <a-select v-model:value="manualForm.mentorCount" :placeholder="$t('please_select')">
                   <a-select-option v-for="option in filterOptions.mentorCounts" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </a-select-option>
@@ -573,16 +573,16 @@
               </a-form-item>
               <div class="manual-section-grid">
                 <a-form-item label="意向导师（选填）" class="manual-field">
-                  <a-input v-model:value="manualForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
+                  <a-input v-model:value="manualForm.preferMentor" :placeholder="$t('if_you_have_a_preferred_mentor_please_en')" />
                 </a-form-item>
                 <a-form-item label="排除导师（选填）" class="manual-field">
-                  <a-input v-model:value="manualForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
+                  <a-input v-model:value="manualForm.excludeMentor" :placeholder="$t('if_there_is_a_mentor_you_wish_to_exclude')" />
                 </a-form-item>
               </div>
             </template>
 
             <a-form-item label="备注说明（选填）" class="manual-field manual-field--full">
-              <a-textarea v-model:value="manualForm.note" :rows="2" placeholder="如有其他需求或说明，请在此填写..." />
+              <a-textarea v-model:value="manualForm.note" :rows="2" :placeholder="`${$t('if_you_have_any_other_requirements_or_no')}...`" />
             </a-form-item>
           </div>
         </div>
@@ -591,15 +591,15 @@
 
     <a-modal
       v-model:open="progressModalOpen"
-      ok-text="保存进度"
-      cancel-text="取消"
+      :ok-text="$t('save_progress')"
+      :cancel-text="$t('cancel')"
       destroy-on-close
       @ok="submitProgressUpdate"
     >
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
           <FileTextOutlined />
-          <span>记录岗位进度</span>
+          <span>{{ $t('record_position_progress') }}</span>
         </span>
       </template>
       <div v-if="selectedPosition" class="modal-job-card progress-card">
@@ -612,27 +612,27 @@
             v-model:value="progressForm.stage"
             show-search
             option-filter-prop="label"
-            placeholder="选择阶段"
+            :placeholder="$t('select_stage')"
             :options="filterOptions.progressStages"
           />
         </a-form-item>
         <a-form-item label="备注">
-          <a-textarea v-model:value="progressForm.note" :rows="3" placeholder="记录这一轮的关键进展或提醒" />
+          <a-textarea v-model:value="progressForm.note" :rows="3" :placeholder="$t('log_the_key_progress_or_reminders_for_th')" />
         </a-form-item>
       </a-form>
     </a-modal>
 
     <a-modal
       v-model:open="appliedModalOpen"
-      ok-text="确认投递"
-      cancel-text="取消"
+      :ok-text="$t('confirm_application')"
+      :cancel-text="$t('cancel')"
       destroy-on-close
       @ok="submitAppliedMark"
     >
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
           <CheckCircleFilled style="color: #22c55e" />
-          <span>标记已投递</span>
+          <span>{{ $t('mark_as_applied') }}</span>
         </span>
       </template>
       <div v-if="selectedPosition" class="modal-job-card applied-card">
@@ -641,27 +641,27 @@
       </div>
       <a-form layout="vertical">
         <a-form-item label="投递日期" required>
-          <a-date-picker v-model:value="appliedForm.date" value-format="YYYY-MM-DD" style="width:100%" placeholder="选择投递日期" />
+          <a-date-picker v-model:value="appliedForm.date" value-format="YYYY-MM-DD" style="width:100%" :placeholder="$t('select_application_date')" />
         </a-form-item>
         <a-form-item label="投递方式" required>
           <a-select
             v-model:value="appliedForm.method"
             show-search
             option-filter-prop="label"
-            placeholder="选择投递方式"
+            :placeholder="$t('select_application_method')"
             :options="filterOptions.applyMethods"
           />
         </a-form-item>
         <a-form-item label="备注">
-          <a-textarea v-model:value="appliedForm.note" :rows="3" placeholder="如：投递了哪个部门或是否有内推" />
+          <a-textarea v-model:value="appliedForm.note" :rows="3" :placeholder="$t('e_g_which_department_you_applied_to_or_w_2')" />
         </a-form-item>
       </a-form>
     </a-modal>
 
     <a-modal
       v-model:open="coachingModalOpen"
-      ok-text="提交申请"
-      cancel-text="取消"
+      :ok-text="$t('submit_application')"
+      :cancel-text="$t('cancel')"
       destroy-on-close
       :width="650"
       class="coaching-apply-modal"
@@ -670,7 +670,7 @@
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
           <i class="mdi mdi-briefcase-plus" aria-hidden="true" style="color: #1d4ed8; font-size: 16px"></i>
-          <span>岗位申请</span>
+          <span>{{ $t('position_applications') }}</span>
         </span>
       </template>
       <div v-if="selectedPosition" class="modal-job-card coaching-card">
@@ -679,8 +679,8 @@
       </div>
       <a-form layout="vertical">
         <a-form-item label="你现在处于什么阶段？" required>
-          <a-select v-model:value="coachingForm.stage" placeholder="请选择面试阶段">
-            <a-select-option value="hirevue">HireVue or Online Test（在线测试）</a-select-option>
+          <a-select v-model:value="coachingForm.stage" :placeholder="$t('please_select_interview_stage')">
+            <a-select-option value="hirevue">HireVue or Online Test（{{ $t('online_test') }}）</a-select-option>
             <a-select-option value="screening">Screening Call (Phone Screen / HR Screen / Initial Call / Recruiter Call)</a-select-option>
             <a-select-option value="first">First Round</a-select-option>
             <a-select-option value="second">Second Round</a-select-option>
@@ -691,26 +691,26 @@
         </a-form-item>
 
         <div v-if="coachingIsHirevue" class="manual-hirevue-card">
-          <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
+          <div class="manual-hirevue-title"><span>HireVue / Online Test {{ $t('information') }}</span></div>
           <a-form-item label="请选择类型" required>
             <a-radio-group v-model:value="coachingForm.hirevueType" class="inline-radios">
               <a-radio value="vi">VI (Video Interview)</a-radio>
               <a-radio value="ot">OT (Online Test)</a-radio>
             </a-radio-group>
           </a-form-item>
-          <a-form-item v-if="coachingForm.hirevueType === 'vi'" label="VI 链接" required>
-            <a-input v-model:value="coachingForm.viLink" placeholder="请输入 Video Interview 链接" />
+          <a-form-item v-if="coachingForm.hirevueType === 'vi'" :label="`VI ${$t('link')}`" required>
+            <a-input v-model:value="coachingForm.viLink" :placeholder="$t('please_enter_the_video_interview_link')" />
           </a-form-item>
           <template v-if="coachingForm.hirevueType === 'ot'">
             <a-form-item label="OT 链接" required>
-              <a-input v-model:value="coachingForm.otLink" placeholder="请输入 Online Test 链接" />
+              <a-input v-model:value="coachingForm.otLink" :placeholder="$t('please_enter_the_online_test_link')" />
             </a-form-item>
             <div class="manual-section-grid">
               <a-form-item label="登录账号" required class="manual-field">
-                <a-input v-model:value="coachingForm.otAccount" placeholder="账号" />
+                <a-input v-model:value="coachingForm.otAccount" :placeholder="$t('account_number')" />
               </a-form-item>
               <a-form-item label="登录密码" required class="manual-field">
-                <a-input-password v-model:value="coachingForm.otPassword" placeholder="密码" />
+                <a-input-password v-model:value="coachingForm.otPassword" :placeholder="$t('password')" />
               </a-form-item>
             </div>
           </template>
@@ -721,7 +721,7 @@
               format="YYYY-MM-DD HH:mm"
               value-format="YYYY-MM-DDTHH:mm"
               style="width:100%"
-              placeholder="选择截止日期与时间"
+              :placeholder="$t('select_deadline_date_and_time')"
             />
           </a-form-item>
           <a-form-item label="上传邀请邮件截图" required>
@@ -737,15 +737,15 @@
               @change="handleCoachingHirevueUpload"
             >
               <CloudUploadOutlined class="upload-dropzone__icon" />
-              <span class="upload-dropzone__title">点击上传截图</span>
-              <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+              <span class="upload-dropzone__title">{{ $t('click_to_upload_screenshot') }}</span>
+              <span class="upload-dropzone__helper">{{ $t('supports_jpg_and_png_formats') }}</span>
               <span v-if="coachingForm.inviteScreenshotName" class="upload-dropzone__file">{{ coachingForm.inviteScreenshotName }}</span>
             </a-upload>
           </a-form-item>
           <a-form-item label="是否需要导师协助？" required>
             <a-radio-group v-model:value="coachingForm.mentorHelp" class="inline-radios">
-              <a-radio value="yes">是，需要导师协助</a-radio>
-              <a-radio value="no">否，仅需题库权限</a-radio>
+              <a-radio value="yes">{{ $t('yes_i_need_mentor_assistance') }}</a-radio>
+              <a-radio value="no">{{ $t('no_i_only_need_question_bank_access') }}</a-radio>
             </a-radio-group>
           </a-form-item>
         </div>
@@ -758,35 +758,35 @@
               format="YYYY-MM-DD HH:mm"
               value-format="YYYY-MM-DDTHH:mm"
               style="width:100%"
-              placeholder="选择面试日期与时间"
+              :placeholder="$t('select_interview_date_and_time')"
             />
           </a-form-item>
           <a-form-item label="你期望有几个导师辅导？（选填）">
-            <a-select v-model:value="coachingForm.mentorCount" placeholder="请选择" allow-clear>
-              <a-select-option value="0">0 位（不需要导师）</a-select-option>
-              <a-select-option value="1">1 位导师</a-select-option>
-              <a-select-option value="2">2 位导师</a-select-option>
-              <a-select-option value="3">3 位导师</a-select-option>
+            <a-select v-model:value="coachingForm.mentorCount" :placeholder="$t('please_select')" allow-clear>
+              <a-select-option value="0">0 {{ $t('mentors_no_mentor_needed') }}）</a-select-option>
+              <a-select-option value="1">1 {{ $t('mentors') }}</a-select-option>
+              <a-select-option value="2">2 {{ $t('mentors') }}</a-select-option>
+              <a-select-option value="3">3 {{ $t('mentors') }}</a-select-option>
             </a-select>
           </a-form-item>
           <div class="manual-section-grid">
             <a-form-item label="意向导师（选填）" class="manual-field">
-              <a-input v-model:value="coachingForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
+              <a-input v-model:value="coachingForm.preferMentor" :placeholder="$t('if_you_have_a_preferred_mentor_please_en')" />
             </a-form-item>
             <a-form-item label="排除导师（选填）" class="manual-field">
-              <a-input v-model:value="coachingForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
+              <a-input v-model:value="coachingForm.excludeMentor" :placeholder="$t('if_there_is_a_mentor_you_wish_to_exclude')" />
             </a-form-item>
           </div>
           <a-alert
             type="success"
             show-icon
-            message="申请将流转至班主任和后台管理员，他们都有权限为您分配导师。"
+            :message="`${$t('the_application_will_be_sent_to_the_clas')}。`"
             class="coaching-info-alert"
           />
         </template>
 
         <a-form-item label="备注说明（选填）">
-          <a-textarea v-model:value="coachingForm.note" :rows="2" placeholder="如有其他需求或说明，请在此填写..." />
+          <a-textarea v-model:value="coachingForm.note" :rows="2" :placeholder="`${$t('if_you_have_any_other_requirements_or_no')}...`" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -826,7 +826,9 @@ import {
   StarOutlined,
   UnorderedListOutlined
 } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type ViewMode = 'drilldown' | 'list'
 type TabKey = 'all' | 'favorites'
 type IndustryKey = PositionRecord['industry']
@@ -857,12 +859,12 @@ const router = useRouter()
 const FALLBACK_INDUSTRY_META = {
   tone: 'slate',
   icon: 'mdi-briefcase',
-  label: '未归类',
+  label: t('uncategorized'),
 } as const
 
 const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
-const { items: cycleDict, load: loadCycleDict } = useDictFacade('osg_recruit_cycle')
-const { items: projectYearDict, load: loadProjectYearDict } = useDictFacade('osg_project_year')
+const { load: loadCycleDict } = useDictFacade('osg_recruit_cycle')
+const { load: loadProjectYearDict } = useDictFacade('osg_project_year')
 const { items: regionDict, load: loadRegionDict } = useDictFacade('osg_region')
 const { items: cityDict, load: loadCityDict } = useDictFacade('osg_city')
 const { items: categoryDict, load: loadCategoryDict } = useDictFacade('osg_job_category')
@@ -886,7 +888,7 @@ function resolveIndustryMeta(industryRaw: string) {
 }
 
 const positionsActionTriggers = [
-  { actionId: 'manual-add', label: '手动添加岗位' },
+  { actionId: 'manual-add', label: t('add_position_manually') },
   { actionId: 'drilldown-applied-1', label: 'Goldman Sachs / IB Analyst / 已投递' },
   { actionId: 'drilldown-favorite-1', label: 'Goldman Sachs / IB Analyst / 收藏' },
   { actionId: 'drilldown-progress-1', label: 'Goldman Sachs / IB Analyst / 进度' },
@@ -939,13 +941,6 @@ const filterOptions = ref<StudentPositionMeta['filterOptions']>({
   mentorCounts: []
 })
 
-const COMPANY_TYPES = computed(() =>
-  industryMeta.value.length
-    ? industryMeta.value.map((m) => ({ value: m.value, label: m.label }))
-    : [{ value: 'other_company', label: '其他公司' }]
-)
-
-
 // 邀请邮件截图通用上传配置（与 admin 端合同附件同款 ruoyi /common/upload 实现）。
 // manualForm 与 coachingForm 共用 action/headers，fileList 各自维护避免互相覆盖。
 const uploadAction = '/api/common/upload'
@@ -956,8 +951,14 @@ const manualHirevueFileList = ref<any[]>([])
 const coachingHirevueFileList = ref<any[]>([])
 
 const manualForm = ref({
+  category: undefined as string | undefined,
+  title: '',
+  department: '',
+  recruitmentCycles: [] as string[],
+  projectYear: undefined as string | undefined,
+  deadline: '',
   company: '',
-  companyType: '',
+  companyType: '' as string | undefined,
   region: undefined as string | undefined,
   city: undefined as string | undefined,
   website: '',
@@ -987,7 +988,7 @@ const progressForm = ref({
 
 const appliedForm = ref({
   date: '',
-  method: '官网投递',
+  method: t('official_website_application'),
   note: ''
 })
 
@@ -1015,36 +1016,36 @@ const coachingShowInterview = computed(
 )
 
 const positionColumns = [
-  { title: '岗位名称', key: 'title', width: 240 },
-  { title: '岗位分类', key: 'category', width: 110 },
-  { title: '部门', dataIndex: 'department', width: 100 },
-  { title: '地区', dataIndex: 'location', width: 110 },
-  { title: '招聘周期', dataIndex: 'recruitCycle', width: 130 },
-  { title: '发布时间', dataIndex: 'publishDate', width: 100 },
-  { title: '截止时间', dataIndex: 'deadline', width: 100 },
-  { title: '操作', key: 'actions', width: 260, fixed: 'right' }
+  { title: t('job_title'), key: 'title', width: 240 },
+  { title: t('job_classification'), key: 'category', width: 110 },
+  { title: t('department'), dataIndex: 'department', width: 100 },
+  { title: t('area'), dataIndex: 'location', width: 110 },
+  { title: t('recruitment_cycle'), dataIndex: 'recruitCycle', width: 130 },
+  { title: t('published_date'), dataIndex: 'publishDate', width: 100 },
+  { title: t('deadline'), dataIndex: 'deadline', width: 100 },
+  { title: t('operation'), key: 'actions', width: 260, fixed: 'right' }
 ]
 
 const listColumns = [
-  { title: '岗位名称', key: 'title', width: 220, fixed: 'left' },
-  { title: '公司', key: 'companyCell', width: 120 },
-  { title: '行业', key: 'industryCell', width: 100 },
-  { title: '岗位分类', key: 'category', width: 100 },
-  { title: '地区', dataIndex: 'location', width: 90 },
-  { title: '招聘周期', key: 'recruitCycleCell', width: 100 },
-  { title: '发布时间', dataIndex: 'publishDate', width: 100 },
-  { title: '截止时间', key: 'deadlineCell', width: 100 },
-  { title: '操作', key: 'actions', width: 220 }
+  { title: t('job_title'), key: 'title', width: 220, fixed: 'left' },
+  { title: t('company'), key: 'companyCell', width: 120 },
+  { title: t('industry'), key: 'industryCell', width: 100 },
+  { title: t('job_classification'), key: 'category', width: 100 },
+  { title: t('area'), dataIndex: 'location', width: 90 },
+  { title: t('recruitment_cycle'), key: 'recruitCycleCell', width: 100 },
+  { title: t('published_date'), dataIndex: 'publishDate', width: 100 },
+  { title: t('deadline'), key: 'deadlineCell', width: 100 },
+  { title: t('operation'), key: 'actions', width: 220 }
 ]
 
 const favoriteColumns = [
-  { title: '公司/岗位', key: 'job' },
-  { title: '部门', dataIndex: 'department', width: 110 },
-  { title: '地区', dataIndex: 'location', width: 100 },
-  { title: '招聘周期', key: 'recruitCycle', width: 110 },
-  { title: '截止时间', key: 'deadlineCell', width: 100 },
-  { title: '收藏时间', dataIndex: 'favoritedAt', width: 110 },
-  { title: '操作', key: 'actions', width: 160 }
+  { title: t('company_position'), key: 'job' },
+  { title: t('department'), dataIndex: 'department', width: 110 },
+  { title: t('area'), dataIndex: 'location', width: 100 },
+  { title: t('recruitment_cycle'), key: 'recruitCycle', width: 110 },
+  { title: t('deadline'), key: 'deadlineCell', width: 100 },
+  { title: t('date_saved'), dataIndex: 'favoritedAt', width: 110 },
+  { title: t('operation'), key: 'actions', width: 160 }
 ]
 
 const selectedPosition = computed(() =>
@@ -1076,12 +1077,12 @@ function handleManualHirevueUpload(info: UploadChangeParam) {
     if (url) {
       manualForm.value.inviteScreenshotName = info.file.name ?? ''
       manualForm.value.inviteScreenshotUrl = url
-      message.success('邀请邮件截图上传成功')
+      message.success(t('invitation_email_screenshot_uploaded_suc'))
     } else {
-      message.error('上传响应缺少 url，请重试')
+      message.error(t('upload_response_missing_url_please_try_a'))
     }
   } else if (info.file.status === 'error') {
-    message.error('上传失败，请重试')
+    message.error(t('upload_failed_please_try_again'))
   }
 }
 
@@ -1092,12 +1093,12 @@ function handleCoachingHirevueUpload(info: UploadChangeParam) {
     if (url) {
       coachingForm.value.inviteScreenshotName = info.file.name ?? ''
       coachingForm.value.inviteScreenshotUrl = url
-      message.success('邀请邮件截图上传成功')
+      message.success(t('invitation_email_screenshot_uploaded_suc'))
     } else {
-      message.error('上传响应缺少 url，请重试')
+      message.error(t('upload_response_missing_url_please_try_a'))
     }
   } else if (info.file.status === 'error') {
-    message.error('上传失败，请重试')
+    message.error(t('upload_failed_please_try_again'))
   }
 }
 
@@ -1228,10 +1229,7 @@ function getCompanyBrandColor(companyKey: string) {
   return COMPANY_LOGO_FALLBACKS[Math.abs(hash) % COMPANY_LOGO_FALLBACKS.length]
 }
 
-function filterCompanyOption(input: string, option: { label?: string; value?: string } | unknown) {
-  const label = (option as { label?: string })?.label ?? ''
-  return label.toLowerCase().includes(String(input ?? '').toLowerCase())
-}
+
 
 function deadlineToneClass(deadline: string | undefined | null) {
   const v = (deadline ?? '').trim()
@@ -1373,7 +1371,7 @@ function openAppliedModal(record: PositionRecord) {
   setSelectedPosition(record)
   appliedForm.value = {
     date: appliedForm.value.date || '',
-    method: '官网投递',
+    method: t('official_website_application'),
     note: ''
   }
   appliedModalOpen.value = true
@@ -1427,7 +1425,7 @@ async function toggleFavorite(record: PositionRecord) {
     target.favorited = nextFavorited
     target.favoritedAt = nextFavorited ? formatToday() : '--'
   }
-  message.success(nextFavorited ? '已收藏！可在“我的收藏”中查看。' : '已取消收藏')
+  message.success(nextFavorited ? '已收藏！可在“我的收藏”中查看。' : t('removed_from_saved'))
 }
 
 function formatToday() {
@@ -1441,43 +1439,45 @@ function formatToday() {
 async function submitManualPosition() {
   const f = manualForm.value
   if (!f.link) {
-    message.error('请填写岗位链接')
+    message.error(t('please_fill_in_the_position_link'))
     return
   }
 
   if (f.needCoaching) {
     if (!f.coachingStage) {
-      message.error('请选择当前面试阶段')
+      message.error(t('please_select_the_current_interview_stag'))
       return
     }
     if (f.coachingStage === 'hirevue') {
       if (!f.hirevueType) {
-        message.error('请选择 VI 或 OT 类型')
+        message.error(t('please_select_vi_or_ot_type'))
         return
       }
       if (f.hirevueType === 'vi' && !f.viLink) {
-        message.error('请填写 VI 链接')
+        message.error(t('please_enter_the_vi_link'))
         return
       }
       if (f.hirevueType === 'ot' && (!f.otLink || !f.otAccount || !f.otPassword)) {
-        message.error('请完整填写 OT 链接、账号和密码')
+        message.error(t('please_fill_in_the_complete_ot_link_acco'))
         return
       }
       if (!f.hirevueDeadline) {
-        message.error('请填写截止时间')
+        message.error(t('please_fill_in_the_deadline'))
         return
       }
     } else {
       if (!f.interviewTime) {
-        message.error('请填写面试时间')
+        message.error(t('please_fill_in_the_interview_time'))
         return
       }
     }
   }
 
   await createStudentManualPosition({
-    company: f.company || undefined,
-    location: f.city,
+    category: f.category || '',
+    title: f.title || '',
+    company: f.company || '',
+    location: f.city || '',
     companyType: f.companyType || undefined,
     region: f.region,
     city: f.city,
@@ -1502,7 +1502,7 @@ async function submitManualPosition() {
   })
   await Promise.all([loadPositions(), loadPositionMeta()])
   manualAddOpen.value = false
-  message.success('岗位已添加到您的追踪列表')
+  message.success(t('position_added_to_your_tracking_list'))
 }
 
 async function submitProgressUpdate() {
@@ -1517,7 +1517,7 @@ async function submitProgressUpdate() {
   })
   await loadPositions()
   progressModalOpen.value = false
-  message.success('岗位进度已更新')
+  message.success(t('position_progress_updated'))
 }
 
 async function updateProgressInline(record: PositionRecord, stage: string) {
@@ -1545,7 +1545,7 @@ async function submitAppliedMark() {
   }
 
   if (!appliedForm.value.date) {
-    message.error('请选择投递日期')
+    message.error(t('please_select_an_application_date'))
     return
   }
 
@@ -1558,7 +1558,7 @@ async function submitAppliedMark() {
   })
   await loadPositions()
   appliedModalOpen.value = false
-  message.success('已标记为已投递')
+  message.success(t('marked_as_applied'))
 }
 
 async function submitCoachingApplication() {
@@ -1569,38 +1569,38 @@ async function submitCoachingApplication() {
   const f = coachingForm.value
 
   if (!f.stage) {
-    message.error('请选择当前面试阶段')
+    message.error(t('please_select_the_current_interview_stag'))
     return
   }
 
   if (f.stage === 'hirevue') {
     if (!f.hirevueType) {
-      message.error('请选择 VI 或 OT 类型')
+      message.error(t('please_select_vi_or_ot_type'))
       return
     }
     if (f.hirevueType === 'vi' && !f.viLink) {
-      message.error('请填写 VI 链接')
+      message.error(t('please_enter_the_vi_link'))
       return
     }
     if (f.hirevueType === 'ot' && (!f.otLink || !f.otAccount || !f.otPassword)) {
-      message.error('请完整填写 OT 链接、账号和密码')
+      message.error(t('please_fill_in_the_complete_ot_link_acco'))
       return
     }
     if (!f.hirevueDeadline) {
-      message.error('请填写截止时间')
+      message.error(t('please_fill_in_the_deadline'))
       return
     }
     if (!f.inviteScreenshotUrl) {
-      message.error('请上传邀请邮件截图')
+      message.error(t('please_upload_the_invitation_email_scree'))
       return
     }
     if (!f.mentorHelp) {
-      message.error('请选择是否需要导师协助')
+      message.error(t('please_select_whether_you_need_mentor_as'))
       return
     }
   } else {
     if (!f.interviewTime) {
-      message.error('请填写该阶段的面试时间')
+      message.error(t('please_fill_in_the_interview_time_for_th'))
       return
     }
   }
@@ -1625,7 +1625,7 @@ async function submitCoachingApplication() {
   })
   await loadPositions()
   coachingModalOpen.value = false
-  message.success('辅导申请已提交')
+  message.success(t('coaching_application_submitted_2'))
 }
 
 onMounted(async () => {
@@ -2700,3 +2700,4 @@ watch(
   }
 }
 </style>
+

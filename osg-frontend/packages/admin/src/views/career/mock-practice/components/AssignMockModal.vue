@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :open="visible"
     surface-id="assign-mock-practice-modal"
@@ -9,19 +9,19 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-voice-outline" aria-hidden="true"></span>
-        <span>处理模拟应聘申请</span>
+        <span>{{ $t('process_mock_job_applications') }}</span>
       </span>
     </template>
 
     <section class="mock-practice-assign-modal__hero assign-mock-modal__hero">
       <div class="mock-practice-assign-modal__avatar assign-mock-modal__avatar">{{ studentInitials }}</div>
       <div class="mock-practice-assign-modal__summary assign-mock-modal__summary">
-        <strong>{{ row?.studentName || '待分配学员' }}</strong>
+        <strong>{{ row?.studentName || $t('students_to_be_assigned') }}</strong>
         <span>ID {{ row?.studentId || '--' }}</span>
         <span>{{ practiceTypeLabel }}</span>
       </div>
       <div class="mock-practice-assign-modal__meta assign-mock-modal__meta">
-        <span class="mock-practice-assign-modal__meta-chip assign-mock-modal__meta-chip">建议导师 {{ requestedCount }} 位</span>
+        <span class="mock-practice-assign-modal__meta-chip assign-mock-modal__meta-chip">{{ $t('mentor_requested_count', { count: requestedCount }) }}</span>
         <span class="mock-practice-assign-modal__meta-chip mock-practice-assign-modal__meta-chip--accent assign-mock-modal__meta-chip assign-mock-modal__meta-chip--accent">
           {{ preferredMentorLabel }}
         </span>
@@ -31,10 +31,10 @@
     <section class="mock-practice-assign-modal__panel">
       <header class="mock-practice-assign-modal__section-head">
         <div>
-          <h3>导师候选池</h3>
-          <p>意向导师优先默认勾选，可继续补充分配导师。</p>
+          <h3>{{ $t('mentor_candidate_pool') }}</h3>
+          <p>{{ $t('intended_tutors_are_given_priority_and_c') }}。</p>
         </div>
-        <span class="mock-practice-assign-modal__badge">支持多导师</span>
+        <span class="mock-practice-assign-modal__badge">{{ $t('support_multiple_tutors') }}</span>
       </header>
 
       <div v-if="mentorOptions.length" class="mock-practice-assign-modal__mentor-list assign-mock-modal__mentor-list">
@@ -58,33 +58,33 @@
             <strong>{{ option.mentorName }}</strong>
             <span>{{ option.mentorBackground }}</span>
           </div>
-          <span v-if="option.preferred" class="mock-practice-assign-modal__mentor-flag assign-mock-modal__preferred-flag">意向导师</span>
+          <span v-if="option.preferred" class="mock-practice-assign-modal__mentor-flag assign-mock-modal__preferred-flag">{{ $t('intended_mentor') }}</span>
         </label>
       </div>
-      <div v-else class="mock-practice-assign-modal__empty assign-mock-modal__empty">当前没有可分配导师，请先补充导师目录。</div>
+      <div v-else class="mock-practice-assign-modal__empty assign-mock-modal__empty">{{ $t('there_are_currently_no_tutors_available_') }}。</div>
     </section>
 
     <section class="mock-practice-assign-modal__schedule-grid">
       <label class="mock-practice-assign-modal__field">
-        <span>预约时间</span>
+        <span>{{ $t('appointment_time') }}</span>
         <a-input v-model:value="scheduledAt" type="datetime-local" />
       </label>
 
       <label class="mock-practice-assign-modal__field">
-        <span>备注说明</span>
+        <span>{{ $t('remarks_2') }}</span>
         <a-textarea
           v-model:value="note"
           :rows="4"
           :maxlength="160"
-          placeholder="例如：先安排行为面模拟，下一次补 technical drill。"
+          :placeholder="`${$t('for_example_arrange_behavioral_simulatio')} technical drill。`"
         />
       </label>
     </section>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button type="primary" :disabled="submitting" @click="handleSubmit">
-        {{ submitting ? '提交中...' : '确认安排' }}
+        {{ submitting ? $t('submitting') + '...' : $t('confirm_arrangement') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -95,7 +95,9 @@ import { computed, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { MockPracticeListItem } from '@osg/shared/api/admin/mockPractice'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface MentorOption {
   mentorId: number
   mentorName: string
@@ -129,12 +131,12 @@ const scheduledAt = ref('')
 const note = ref('')
 
 const studentInitials = computed(() => {
-  const value = props.row?.studentName || '学员'
+  const value = props.row?.studentName || t('student')
   return value.slice(0, 2).toUpperCase()
 })
 
 const requestedCount = computed(() => props.row?.requestedMentorCount || 1)
-const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || '暂无意向导师')
+const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || t('no_intention_of_mentoring_yet'))
 const practiceTypeLabel = computed(() => formatPracticeType(props.row?.practiceType))
 
 watch(
@@ -172,11 +174,11 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!selectedMentorIds.value.length) {
-    message.warning('请至少选择1位导师')
+    message.warning(t('please_select_at_least_1_tutor'))
     return
   }
   if (!scheduledAt.value) {
-    message.warning('请选择预约时间')
+    message.warning(t('please_select_an_appointment_time'))
     return
   }
 
@@ -191,10 +193,10 @@ const handleSubmit = () => {
 }
 
 function formatPracticeType(value?: string) {
-  if (value === 'mock_interview') return '模拟面试'
-  if (value === 'communication_test') return '人际关系测试'
-  if (value === 'midterm_exam') return '期中考试'
-  return '模拟应聘'
+  if (value === 'mock_interview') return t('mock_interview')
+  if (value === 'communication_test') return t('interpersonal_test')
+  if (value === 'midterm_exam') return t('midterm_exam')
+  return t('mock_application')
 }
 
 const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
@@ -430,3 +432,4 @@ const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()
   }
 }
 </style>
+

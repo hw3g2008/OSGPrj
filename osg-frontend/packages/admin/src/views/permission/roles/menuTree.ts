@@ -3,12 +3,14 @@ export interface RawMenuTreeNode {
   label?: string
   title?: string
   key?: string
+  i18nKey?: string
   children?: RawMenuTreeNode[]
 }
 
 export interface MenuTreeNode {
   id: number
   label: string
+  i18nKey?: string
   children?: MenuTreeNode[]
 }
 
@@ -20,6 +22,7 @@ export function normalizeMenuTree(nodes: RawMenuTreeNode[] = []): MenuTreeNode[]
   return nodes.map((node) => ({
     id: node.id,
     label: pickNodeLabel(node),
+    i18nKey: node.i18nKey,
     children: node.children?.length ? normalizeMenuTree(node.children) : undefined,
   }))
 }

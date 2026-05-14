@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div
     v-if="modelValue"
     class="lm-report-modal modal"
@@ -8,7 +8,7 @@
       type="button"
       class="lm-report-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭上报课程记录弹层"
+      :aria-label="$t('close_course_record_submission_dialog')"
       @click="closeModal"
     />
 
@@ -22,13 +22,13 @@
       <div class="lm-report-header modal-header" data-surface-part="header">
         <span :id="titleId" class="lm-report-title modal-title">
           <i class="mdi mdi-clipboard-text" aria-hidden="true" />
-          上报课程记录
+          {{ $t('submit_course_record') }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭上报课程记录弹层"
+          :aria-label="$t('close_course_record_submission_dialog')"
           @click="closeModal"
         >
           ×
@@ -38,13 +38,13 @@
       <div class="lm-report-body modal-body" data-surface-part="body">
         <div class="notice-banner">
           <i class="mdi mdi-information" aria-hidden="true" />
-          请在上课后填写课程记录和反馈，提交后需等待后台审核
+          {{ $t('please_fill_in_the_course_record_and_fee') }}
         </div>
 
         <div class="form-group">
           <label class="form-label">
             <i class="mdi mdi-numeric-1-circle" aria-hidden="true" />
-            选择学员
+            {{ $t('select_student') }}
             <span class="required">*</span>
           </label>
           <select
@@ -53,7 +53,7 @@
             data-report-field="student-id"
             :disabled="studentsLoading || submitting"
           >
-            <option value="">{{ studentsLoading ? '学员加载中...' : '请选择学员' }}</option>
+            <option value="">{{ studentsLoading ? '学员加载中...' : $t('please_select_a_student') }}</option>
             <option v-for="student in students" :key="student.value" :value="student.value">
               {{ student.label }}
             </option>
@@ -63,12 +63,12 @@
         <div class="form-group">
           <label class="form-label">
             <i class="mdi mdi-numeric-2-circle" aria-hidden="true" />
-            上课日期和时长
+            {{ $t('class_date_and_duration') }}
           </label>
           <div class="form-grid">
             <div class="form-group form-group--compact">
               <label class="form-label">
-                上课日期
+                {{ $t('course_date') }}
                 <span class="required">*</span>
               </label>
               <input
@@ -81,7 +81,7 @@
             </div>
             <div class="form-group form-group--compact">
               <label class="form-label">
-                学习时长
+                {{ $t('study_duration') }}
                 <span class="required">*</span>
               </label>
               <div class="inline-field">
@@ -94,7 +94,7 @@
                   step="0.5"
                   :disabled="submitting"
                 />
-                <span class="inline-field__suffix">小时</span>
+                <span class="inline-field__suffix">{{ $t('hours') }}</span>
               </div>
             </div>
           </div>
@@ -103,7 +103,7 @@
         <div class="form-group">
           <label class="form-label">
             <i class="mdi mdi-numeric-3-circle" aria-hidden="true" />
-            学员状态
+            {{ $t('student_status') }}
             <span class="required">*</span>
           </label>
           <div class="status-grid">
@@ -112,9 +112,9 @@
               <div class="status-card__copy">
                 <div class="status-card__title">
                   <i class="mdi mdi-check-circle" aria-hidden="true" />
-                  正常上课
+                  {{ $t('attended') }}
                 </div>
-                <div class="status-card__sub">学员按时参加课程</div>
+                <div class="status-card__sub">{{ $t('student_attended_class_on_time') }}</div>
               </div>
             </label>
             <label class="status-card status-card--danger" :class="{ 'status-card--selected': form.attendanceStatus === 'absent' }">
@@ -122,9 +122,9 @@
               <div class="status-card__copy">
                 <div class="status-card__title">
                   <i class="mdi mdi-account-off" aria-hidden="true" />
-                  旷课未到场
+                  {{ $t('absent') }}
                 </div>
-                <div class="status-card__sub">学员未参加课程</div>
+                <div class="status-card__sub">{{ $t('student_did_not_attend_class') }}</div>
               </div>
             </label>
           </div>
@@ -134,13 +134,13 @@
           <div class="form-group form-group--compact">
             <label class="form-label form-label--danger">
               <i class="mdi mdi-note-text" aria-hidden="true" />
-              旷课备注
+              {{ $t('absence_notes') }}
             </label>
             <textarea
               v-model="form.absenceRemark"
               class="form-textarea form-textarea--short"
               rows="2"
-              placeholder="请简要说明旷课情况（可选）..."
+              :placeholder="`${$t('briefly_describe_the_absence_optional')}）...`"
             />
           </div>
         </div>
@@ -148,7 +148,7 @@
         <div class="form-group">
           <label class="form-label">
             <i class="mdi mdi-numeric-4-circle" aria-hidden="true" />
-            课程类型
+            {{ $t('course_type') }}
             <span class="required">*</span>
           </label>
           <div class="course-type-list">
@@ -167,12 +167,12 @@
         <div class="selection-panel selection-panel--blue">
           <label class="form-label form-label--primary">
             <i class="mdi mdi-briefcase" aria-hidden="true" />
-            选择申请辅导的岗位
+            {{ $t('select_position_for_coaching_application') }}
             <span class="required">*</span>
           </label>
           <!-- §A.0.4 改用 my-targets.coachings 真实数据，绑定 applicationId -->
           <select v-model.number="form.applicationId" class="form-select" @change="onApplicationSelect">
-            <option :value="undefined">请选择岗位</option>
+            <option :value="undefined">{{ $t('please_select_a_position') }}</option>
             <option
               v-for="c in studentCoachingOptions"
               :key="c.applicationId"
@@ -181,7 +181,7 @@
               {{ c.companyName || '—' }} · {{ c.positionName || '—' }}
             </option>
             <option v-if="studentCoachingOptions.length === 0" :value="undefined" disabled>
-              当前学员暂无活跃辅导岗位
+              {{ $t('no_active_coaching_positions_for_this_st') }}
             </option>
           </select>
         </div>
@@ -189,20 +189,20 @@
         <!-- §A.0.4 模拟应聘类型展示 practiceId 下拉 -->
         <div v-if="showPracticeIdSelect" class="form-group form-group--compact">
           <label class="form-label">
-            选择关联的模拟应聘
+            {{ $t('select_associated_mock_interview') }}
             <span class="required">*</span>
           </label>
           <select v-model.number="form.practiceId" class="form-select">
-            <option :value="undefined">请选择模拟应聘记录</option>
+            <option :value="undefined">{{ $t('please_select_a_mock_interview_record') }}</option>
             <option
               v-for="p in studentPracticeOptions"
               :key="p.practiceId"
               :value="p.practiceId"
             >
-              #{{ p.practiceId }} · {{ p.practiceType || '未知类型' }}
+              #{{ p.practiceId }} · {{ p.practiceType || $t('unknown_type') }}
             </option>
             <option v-if="studentPracticeOptions.length === 0" :value="undefined" disabled>
-              当前学员暂无活跃模拟应聘
+              {{ $t('no_active_mock_interviews_for_this_stude') }}
             </option>
           </select>
         </div>
@@ -210,7 +210,7 @@
         <div class="form-group">
           <label class="form-label">
             <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
-            课程内容类型
+            {{ $t('course_content_type') }}
             <span class="required">*</span>
           </label>
           <select
@@ -219,7 +219,7 @@
             data-report-field="job-content"
             :disabled="!usesJobContent || submitting"
           >
-            <option value="">{{ usesJobContent ? '请选择课程内容类型' : '当前课程类型使用固定内容' }}</option>
+            <option value="">{{ usesJobContent ? $t('please_select_course_content_type') : $t('current_session_type_uses_fixed_content') }}</option>
             <option v-for="option in jobContentOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
         </div>
@@ -227,7 +227,7 @@
         <div class="form-group">
           <label class="form-label">
             <i class="mdi mdi-format-list-bulleted" aria-hidden="true" />
-            基础课内容类型
+            {{ $t('foundation_course_content_type') }}
             <span class="required">*</span>
           </label>
           <select
@@ -236,7 +236,7 @@
             data-report-field="basic-content"
             :disabled="!usesBasicContent || submitting"
           >
-            <option value="">{{ usesBasicContent ? '请选择基础课内容类型' : '当前课程类型不使用基础课内容' }}</option>
+            <option value="">{{ usesBasicContent ? $t('please_select_foundation_course_content_') : $t('current_session_type_does_not_use_base_c') }}</option>
             <option v-for="option in basicContentOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
         </div>
@@ -244,11 +244,11 @@
         <section class="feedback-card">
           <div class="feedback-card__badge">
             <i class="mdi mdi-comment-text" aria-hidden="true" />
-            课程反馈
+            {{ $t('course_feedback') }}
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              课程反馈
+              {{ $t('course_feedback') }}
               <span class="required">*</span>
             </label>
             <textarea
@@ -256,7 +256,7 @@
               class="form-textarea"
               data-report-field="feedback-content"
               rows="4"
-              placeholder="请详细描述本次课程内容和学员表现..."
+              :placeholder="`${$t('please_describe_the_course_content_and_s')}...`"
             />
           </div>
         </section>
@@ -264,34 +264,34 @@
         <section class="feedback-card">
           <div class="feedback-card__badge feedback-card__badge--blue">
             <i class="mdi mdi-file-document-edit" aria-hidden="true" />
-            简历更新反馈
+            {{ $t('resume_update_feedback') }}
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              课程反馈
+              {{ $t('course_feedback') }}
               <span class="required">*</span>
             </label>
-            <textarea v-model="form.feedbackContent" class="form-textarea" rows="3" placeholder="请描述简历修改的主要内容和建议..." />
+            <textarea v-model="form.feedbackContent" class="form-textarea" rows="3" :placeholder="`${$t('please_describe_the_main_changes_and_sug')}...`" />
           </div>
           <div class="form-grid">
             <div class="form-group form-group--compact">
               <label class="form-label">
-                上传原简历
+                {{ $t('upload_original_resume') }}
                 <span class="required">*</span>
               </label>
               <div class="upload-dropzone">
                 <i class="mdi mdi-upload" aria-hidden="true" />
-                <span>点击上传原简历</span>
+                <span>{{ $t('click_to_upload_original_resume') }}</span>
               </div>
             </div>
             <div class="form-group form-group--compact">
               <label class="form-label">
-                上传修改后简历
+                {{ $t('upload_revised_resume') }}
                 <span class="required">*</span>
               </label>
               <div class="upload-dropzone">
                 <i class="mdi mdi-upload" aria-hidden="true" />
-                <span>点击上传修改后简历</span>
+                <span>{{ $t('click_to_upload_revised_resume') }}</span>
               </div>
             </div>
           </div>
@@ -300,39 +300,39 @@
         <section class="feedback-card">
           <div class="feedback-card__badge feedback-card__badge--green">
             <i class="mdi mdi-account-voice" aria-hidden="true" />
-            模拟面试反馈
+            {{ $t('mock_interview_feedback') }}
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              课程反馈
+              {{ $t('course_feedback') }}
               <span class="required">*</span>
             </label>
-            <textarea v-model="form.feedbackContent" class="form-textarea" rows="3" placeholder="请详细描述学员在模拟面试中的表现..." />
+            <textarea v-model="form.feedbackContent" class="form-textarea" rows="3" :placeholder="`${$t('please_describe_the_students_performance')}...`" />
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              模拟面试的目的是什么？
+              {{ $t('what_is_the_purpose_of_this_mock_intervi') }}？
               <span class="required">*</span>
             </label>
-            <textarea v-model="form.mockPurpose" class="form-textarea form-textarea--short" rows="2" placeholder="请描述本次模拟面试的目的..." />
+            <textarea v-model="form.mockPurpose" class="form-textarea form-textarea--short" rows="2" :placeholder="`${$t('please_describe_the_purpose_of_this_mock')}...`" />
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              你们在这次课程中主要研究了哪些概念和主题？
+              {{ $t('what_concepts_and_topics_were_covered_in') }}？
               <span class="required">*</span>
             </label>
-            <textarea v-model="form.mockConcepts" class="form-textarea form-textarea--short" rows="2" placeholder="请列出本次课程涉及的概念和主题..." />
+            <textarea v-model="form.mockConcepts" class="form-textarea form-textarea--short" rows="2" :placeholder="`${$t('please_list_the_concepts_and_topics_cove')}...`" />
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              这名学生哪科考的不好？
+              {{ $t('which_subject_did_this_student_perform_p') }}？
               <span class="required">*</span>
             </label>
-            <textarea v-model="form.mockWeakTopics" class="form-textarea form-textarea--short" rows="2" placeholder="请描述学员需要改进的方面..." />
+            <textarea v-model="form.mockWeakTopics" class="form-textarea form-textarea--short" rows="2" :placeholder="`${$t('please_describe_the_areas_the_student_ne')}...`" />
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              您如何评价这名学生的表现？
+              {{ $t('how_would_you_evaluate_this_students_per') }}？
               <span class="required">*</span>
             </label>
             <div class="performance-grid">
@@ -348,34 +348,34 @@
         <section class="feedback-card">
           <div class="feedback-card__badge feedback-card__badge--purple">
             <i class="mdi mdi-account-group" aria-hidden="true" />
-            人际关系期中考试反馈
+            {{ $t('interpersonal_skills_midterm_feedback') }}
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              课程反馈
+              {{ $t('course_feedback') }}
               <span class="required">*</span>
             </label>
-            <textarea v-model="form.feedbackContent" class="form-textarea" rows="3" placeholder="请详细描述学员在人际关系测试中的表现..." />
+            <textarea v-model="form.feedbackContent" class="form-textarea" rows="3" :placeholder="`${$t('please_describe_the_students_performance_2')}...`" />
           </div>
           <div class="score-card">
             <div class="score-card__title">
               <i class="mdi mdi-star" aria-hidden="true" />
-              评分项目
+              {{ $t('scoring_items') }}
             </div>
             <div class="form-grid">
               <div v-for="field in networkingScores" :key="field.label" class="form-group form-group--compact">
                 <label class="form-label">{{ field.label }}</label>
                 <select v-model="form.networkingScoreMap[field.label]" class="form-select">
-                  <option value="">请选择</option>
+                  <option value="">{{ $t('please_select') }}</option>
                   <option v-for="option in field.options" :key="option" :value="option">{{ option }}</option>
                 </select>
               </div>
             </div>
           </div>
           <div class="form-group form-group--compact">
-            <label class="form-label">是否推荐这位学生？</label>
+            <label class="form-label">{{ $t('would_you_recommend_this_student') }}？</label>
             <select v-model="form.networkingRecommendation" class="form-select">
-              <option value="">请选择</option>
+              <option value="">{{ $t('please_select') }}</option>
               <option v-for="option in recommendationOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
@@ -384,30 +384,30 @@
         <section class="feedback-card">
           <div class="feedback-card__badge feedback-card__badge--amber">
             <i class="mdi mdi-school" aria-hidden="true" />
-            模拟期中考试反馈
+            {{ $t('mock_midterm_exam_feedback') }}
           </div>
           <div class="form-group form-group--compact">
             <label class="form-label">
-              课程反馈
+              {{ $t('course_feedback') }}
               <span class="required">*</span>
             </label>
-            <textarea v-model="form.feedbackContent" class="form-textarea" rows="3" placeholder="请详细描述学员在模拟期中考试中的表现..." />
+            <textarea v-model="form.feedbackContent" class="form-textarea" rows="3" :placeholder="`${$t('please_describe_the_students_performance_3')}...`" />
           </div>
           <div class="form-group form-group--compact">
-            <label class="form-label">该学生得了多少分？</label>
+            <label class="form-label">{{ $t('what_score_did_the_student_get') }}？</label>
             <div class="inline-field">
               <input v-model="form.midtermScore" class="form-input form-input--short" type="number" placeholder="0" min="0" max="100" />
               <span class="inline-field__suffix">分</span>
             </div>
           </div>
           <div class="form-group form-group--compact">
-            <label class="form-label">逐题分析</label>
-            <textarea v-model="form.midtermAnalysis" class="form-textarea" rows="4" placeholder="请详细分析学员在每道题目上的表现..." />
+            <label class="form-label">{{ $t('question_by_question_analysis') }}</label>
+            <textarea v-model="form.midtermAnalysis" class="form-textarea" rows="4" :placeholder="`${$t('please_analyze_the_students_performance_')}...`" />
           </div>
           <div class="form-group form-group--compact">
-            <label class="form-label">学生进度评估</label>
+            <label class="form-label">{{ $t('student_progress_assessment') }}</label>
             <select v-model="form.midtermProgress" class="form-select">
-              <option value="">请选择</option>
+              <option value="">{{ $t('please_select') }}</option>
               <option v-for="option in progressOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
@@ -415,10 +415,10 @@
       </div>
 
       <div class="lm-report-footer modal-footer">
-        <button type="button" class="btn btn-outline" :disabled="submitting" @click="closeModal">取消</button>
+        <button type="button" class="btn btn-outline" :disabled="submitting" @click="closeModal">{{ $t('cancel') }}</button>
         <button type="button" class="btn btn-primary" :disabled="submitting" @click="handleSubmit">
           <i class="mdi mdi-check" aria-hidden="true" />
-          {{ submitting ? '提交中...' : '提交记录' }}
+          {{ submitting ? '提交中...' : $t('submit_record') }}
         </button>
       </div>
     </div>
@@ -429,7 +429,9 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { getLeadMentorMyTargets, type LeadMentorClassRecordCreatePayload } from '@osg/shared/api'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface ReportStudentOption {
   value: string
   label: string
@@ -500,41 +502,41 @@ const emit = defineEmits<{
 const titleId = 'lead-mentor-class-report-title'
 
 const courseTypes = [
-  { value: 'job-coaching', label: '岗位辅导', description: '岗位辅导的课程', tone: 'tag--blue' },
-  { value: 'mock-interview', label: '模拟面试', description: '模拟面试的课程', tone: 'tag--green' },
-  { value: 'networking', label: '人际关系', description: '人际关系的课程', tone: 'tag--purple' },
-  { value: 'mock-midterm', label: '模拟期中', description: '模拟期中考试', tone: 'tag--amber' },
-  { value: 'basic', label: '基础课程', description: '基础课程', tone: 'tag--indigo' },
+  { value: 'job-coaching', label: t('position_coaching'), description: t('position_coaching_session'), tone: 'tag--blue' },
+  { value: 'mock-interview', label: t('mock_interview'), description: t('mock_interview_session'), tone: 'tag--green' },
+  { value: 'networking', label: t('interpersonal_skills'), description: t('interpersonal_skills_session'), tone: 'tag--purple' },
+  { value: 'mock-midterm', label: t('mock_midterm'), description: t('mock_midterm_exam'), tone: 'tag--amber' },
+  { value: 'basic', label: t('foundation_course_2'), description: t('foundation_course_2'), tone: 'tag--indigo' },
 ] as const
 
 // §A.0.4 hardcoded positionOptions 移除，改用 my-targets 动态加载
 
 const jobContentOptions = [
-  { value: 'technical', label: '技术的' },
-  { value: 'behavioral', label: '行为训练' },
-  { value: 'resume_revision', label: '新简历制作' },
-  { value: 'resume_update', label: '简历更新' },
-  { value: 'mock_interview', label: '模拟面试的课程' },
-  { value: 'networking_midterm', label: '人际关系的课程' },
-  { value: 'mock_midterm', label: '模拟期中考试' },
-  { value: 'case_prep', label: '咨询案例准备' },
-  { value: 'other', label: '其他' },
+  { value: 'technical', label: t('technical') },
+  { value: 'behavioral', label: t('behavioral_training') },
+  { value: 'resume_revision', label: t('new_resume_creation') },
+  { value: 'resume_update', label: t('resume_update') },
+  { value: 'mock_interview', label: t('mock_interview_session') },
+  { value: 'networking_midterm', label: t('interpersonal_skills_session') },
+  { value: 'mock_midterm', label: t('mock_midterm_exam') },
+  { value: 'case_prep', label: t('consulting_case_preparation') },
+  { value: 'other', label: t('other') },
 ]
 
 const basicContentOptions = [
-  { value: 'technical', label: '技术的' },
-  { value: 'behavioral', label: '行为训练' },
-  { value: 'resume_revision', label: '新简历制作' },
-  { value: 'resume_update', label: '简历更新' },
-  { value: 'case_prep', label: '咨询案例准备' },
-  { value: 'other', label: '其他' },
+  { value: 'technical', label: t('technical') },
+  { value: 'behavioral', label: t('behavioral_training') },
+  { value: 'resume_revision', label: t('new_resume_creation') },
+  { value: 'resume_update', label: t('resume_update') },
+  { value: 'case_prep', label: t('consulting_case_preparation') },
+  { value: 'other', label: t('other') },
 ]
 
 const performanceOptions = [
-  { value: 'disappointing', emoji: '😞', label: '令人失望' },
-  { value: 'good', emoji: '🙂', label: '好的' },
-  { value: 'great', emoji: '😊', label: '伟大的' },
-  { value: 'amazing', emoji: '🌟', label: '真棒' },
+  { value: 'disappointing', emoji: '😞', label: t('disappointing_2') },
+  { value: 'good', emoji: '🙂', label: t('good_2') },
+  { value: 'great', emoji: '😊', label: t('excellent_3') },
+  { value: 'amazing', emoji: '🌟', label: t('excellent_2') },
 ]
 
 const networkingScores = [
@@ -546,17 +548,17 @@ const networkingScores = [
 ]
 
 const recommendationOptions = [
-  '是的 - 我相信这位学生很适合我的团队',
-  '或许 - 如果他们能改进一下就好了',
-  '不 - 他们需要认真加强准备工作',
+  t('yes_i_believe_this_student_would_be_a_gr'),
+  t('maybe_if_they_could_improve_a_bit'),
+  t('no_they_need_to_seriously_strengthen_the'),
 ]
 
 const progressOptions = [
-  '非常棒 - 进展顺利，会取得好成绩',
-  '太好了 - 进展顺利',
-  '好的 - 需要在一些方面下功夫',
-  '令人失望 - 严重落后',
-  '不适用 - 入学时间太短',
+  t('outstanding_on_track_to_achieve_great_re'),
+  t('great_progressing_well'),
+  t('good_needs_work_in_some_areas'),
+  t('disappointing_significantly_behind'),
+  t('n_a_enrolled_too_recently'),
 ]
 
 // §A.0.4 my-targets 加载 state
@@ -739,23 +741,23 @@ function handleSubmit() {
   const classStatus = resolvePayloadClassStatus()
 
   if (!form.studentId) {
-    message.error('请选择学员')
+    message.error(t('please_select_a_student'))
     return
   }
   if (!form.classDate) {
-    message.error('请选择上课日期')
+    message.error(t('please_select_class_date'))
     return
   }
   if (!form.durationHours || Number(form.durationHours) <= 0) {
-    message.error('请输入有效的学习时长')
+    message.error(t('please_enter_a_valid_session_duration'))
     return
   }
   if (!classStatus) {
-    message.error('请选择课程内容类型')
+    message.error(t('please_select_course_content_type'))
     return
   }
   if (!form.feedbackContent.trim()) {
-    message.error('请填写课程反馈')
+    message.error(t('please_fill_in_course_feedback'))
     return
   }
 
@@ -1173,3 +1175,4 @@ function handleSubmit() {
   }
 }
 </style>
+

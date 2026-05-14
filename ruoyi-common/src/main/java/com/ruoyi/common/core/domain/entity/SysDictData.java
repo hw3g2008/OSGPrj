@@ -30,6 +30,9 @@ public class SysDictData extends BaseEntity
     @Excel(name = "字典标签")
     private String dictLabel;
 
+    /** 字典标签 i18n 键（系统枚举专用），为 null 时前端回落到 dictLabel 原样展示 */
+    private String i18nKey;
+
     /** 字典键值 */
     @Excel(name = "字典键值")
     private String dictValue;
@@ -82,6 +85,16 @@ public class SysDictData extends BaseEntity
     public void setDictLabel(String dictLabel)
     {
         this.dictLabel = dictLabel;
+    }
+
+    public String getI18nKey()
+    {
+        return i18nKey;
+    }
+
+    public void setI18nKey(String i18nKey)
+    {
+        this.i18nKey = i18nKey;
     }
 
     @NotBlank(message = "字典键值不能为空")

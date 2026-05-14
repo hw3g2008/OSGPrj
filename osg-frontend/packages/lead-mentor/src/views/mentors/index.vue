@@ -9,16 +9,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { OsgPageContainer } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 const loading = ref(false)
 const columns = [
-  { title: '姓名', dataIndex: 'name', key: 'name' },
-  { title: '专长', dataIndex: 'specialty', key: 'specialty' },
-  { title: '带教学员数', dataIndex: 'studentCount', key: 'studentCount' },
-  { title: '本月课时', dataIndex: 'monthHours', key: 'monthHours' },
-  { title: '评分', dataIndex: 'rating', key: 'rating' }
+  { title: t('name'), dataIndex: 'name', key: 'name' },
+  { title: t('expertise_2'), dataIndex: 'specialty', key: 'specialty' },
+  { title: t('students_under_mentorship'), dataIndex: 'studentCount', key: 'studentCount' },
+  { title: t('this_months_sessions'), dataIndex: 'monthHours', key: 'monthHours' },
+  { title: t('score'), dataIndex: 'rating', key: 'rating' }
 ]
 const mentors = ref([
-  { id: 1, name: '王老师', specialty: 'Java/Spring', studentCount: 6, monthHours: 48, rating: 4.8 },
-  { id: 2, name: '张老师', specialty: 'Java/微服务', studentCount: 5, monthHours: 42, rating: 4.9 }
+  { id: 1, name: t('mentor_wang'), specialty: 'Java/Spring', studentCount: 6, monthHours: 48, rating: 4.8 },
+  { id: 2, name: t('mentor_zhang'), specialty: 'Java/微服务', studentCount: 5, monthHours: 42, rating: 4.9 }
 ])
 </script>

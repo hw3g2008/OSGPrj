@@ -4,8 +4,8 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">投诉与建议 <span>OSG Feedback Form</span></h1>
-            <p class="page-sub">请填写您对Mentor/RA/Lead Mentor的反馈</p>
+            <h1 class="page-title">{{ $t('complaints_suggestions_2') }} <span>OSG Feedback Form</span></h1>
+            <p class="page-sub">{{ $t('please_provide_your_feedback_on_the_ment') }}</p>
           </div>
         </div>
       </template>
@@ -45,12 +45,12 @@
           </a-radio-group>
         </a-form-item>
         <a-form-item label="Please describe your experience with this person." class="form-item full-span">
-          <a-textarea :rows="5" placeholder="请详细描述您的体验和反馈" />
+          <a-textarea :rows="5" :placeholder="$t('please_describe_your_experience_and_feed')" />
         </a-form-item>
       </div>
 
       <div class="submit-row">
-        <a-button type="primary" size="large">提交反馈 Submit</a-button>
+        <a-button type="primary" size="large">{{ $t('submit_feedback') }} Submit</a-button>
       </div>
     </OsgPageContainer>
   </div>

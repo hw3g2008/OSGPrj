@@ -1,9 +1,9 @@
 <template>
   <div id="page-roles" class="osg-page">
     <PageHeader
-      title-zh="权限配置"
+      :title-zh="$t('permission_configuration')"
       title-en="Roles & Permissions"
-      description="配置后台角色能访问的功能模块"
+      :description="$t('configure_the_functional_modules_backend')"
     >
       <template #actions>
         <a-button
@@ -13,7 +13,7 @@
           @click="handleAdd"
         >
           <template #icon><PlusOutlined /></template>
-          新增角色
+          {{ $t('add_role') }}
         </a-button>
       </template>
     </PageHeader>
@@ -22,12 +22,12 @@
       type="info"
       show-icon
       banner
-      message="操作提示"
+      :message="$t('tips')"
       style="border-radius: 12px"
     >
       <template #description>
         <p style="margin: 0">
-          点击「编辑」修改角色名称和描述，点击「配置菜单树」管理角色可访问的功能模块。员工数为 0 的角色可删除。
+          {{ $t('click') }}「{{ $t('edit') }}」{{ $t('modify_role_name_and_description_click') }}「{{ $t('configure_menu_tree') }}」{{ $t('manage_functional_modules_accessible_by_') }}。
         </p>
       </template>
     </a-alert>
@@ -42,21 +42,21 @@
           current: pagination.current,
           pageSize: pagination.pageSize,
           total: pagination.total,
-          showTotal: (total: number) => `共 ${total} 条记录`,
+          showTotal: (total: number) => `${t('in_total')} ${total} ${t('records')}`,
           onChange: onPageChange,
         }"
         :loading="loading"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'roleName'">
-            <strong>{{ record.roleName }}</strong>
+            <strong>{{ resolveRoleDisplayName({ roleName: record.roleName, i18nKey: record.i18nKey }, t) }}</strong>
           </template>
           <template v-else-if="column.dataIndex === 'remark'">
-            <span style="color: var(--muted)">{{ record.remark || '-' }}</span>
+            <span style="color: var(--muted)">{{ resolveRoleDescription({ remark: record.remark, remarkI18nKey: record.remarkI18nKey }, t) || '-' }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'menuNames'">
             <template v-if="record.roleKey === 'super_admin'">
-              <span :style="pillStyle('purple')">全部权限</span>
+              <span :style="pillStyle('purple')">{{ $t('all_permissions') }}</span>
             </template>
             <template v-else>
               <span
@@ -72,14 +72,14 @@
             </template>
           </template>
           <template v-else-if="column.dataIndex === 'userCount'">
-            {{ record.userCount || 0 }}人
+            {{ record.userCount || 0 }}{{ $t('people') }}
           </template>
           <template v-else-if="column.dataIndex === 'updateTime'">
             {{ formatDate(record.updateTime) }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <template v-if="record.roleKey === 'super_admin'">
-              <span style="color: var(--muted); font-size: 12px">系统角色</span>
+              <span style="color: var(--muted); font-size: 12px">{{ $t('system_role') }}</span>
             </template>
             <template v-else>
               <a-button
@@ -91,7 +91,7 @@
                 :data-surface-sample-key="record.roleKey"
                 @click="handleEdit(record)"
               >
-                编辑
+                {{ $t('edit') }}
               </a-button>
               <a-button
                 v-hasPermi="'system:role:edit'"
@@ -101,7 +101,7 @@
                 :data-surface-sample-key="record.roleKey"
                 @click="handleRoleTree(record)"
               >
-                配置菜单树
+                {{ $t('configure_menu_tree') }}
               </a-button>
               <a-button
                 v-if="!record.userCount"
@@ -112,7 +112,7 @@
                 data-surface-part="delete-control"
                 @click="handleDelete(record)"
               >
-                删除
+                {{ $t('delete') }}
               </a-button>
             </template>
           </template>
@@ -149,16 +149,20 @@ import RoleMenuTreeModal from './components/RoleMenuTreeModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { normalizeMenuTree } from './menuTree'
+import { resolveMenuDisplayName } from '@osg/shared/utils/menuI18n'
+import { resolveRoleDisplayName, resolveRoleDescription } from '@osg/shared/utils/roleI18n'
 import dayjs from 'dayjs'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const roleColumns = [
   { title: 'ID', dataIndex: 'roleId', key: 'roleId', width: 80 },
-  { title: '角色名称', dataIndex: 'roleName', key: 'roleName' },
-  { title: '角色描述', dataIndex: 'remark', key: 'remark' },
-  { title: '权限模块', dataIndex: 'menuNames', key: 'menuNames', width: 300 },
-  { title: '员工数', dataIndex: 'userCount', key: 'userCount', width: 80 },
-  { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 220 },
+  { title: t('role_name'), dataIndex: 'roleName', key: 'roleName' },
+  { title: t('role_description'), dataIndex: 'remark', key: 'remark' },
+  { title: t('permission_modules'), dataIndex: 'menuNames', key: 'menuNames', width: 300 },
+  { title: t('members'), dataIndex: 'userCount', key: 'userCount', width: 80 },
+  { title: t('updated_at'), dataIndex: 'updateTime', key: 'updateTime' },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 220 },
 ]
 
 const pillStyle = (colorType: PermissionColorType) => {
@@ -215,7 +219,7 @@ const loadRoleList = async () => {
           // 超级管理员显示全部权限
           return {
             ...role,
-            menuNames: ['全部权限']
+            menuNames: [t('all_permissions')]
           }
         }
         
@@ -223,7 +227,7 @@ const loadRoleList = async () => {
           const menuRes = await getRoleMenuIds(role.roleId)
           const checkedSet = new Set(menuRes.checkedKeys || [])
           
-          // 收集被选中叶子所属的二级菜单名称（去重）
+          // 收集被选中叶子所属的二级菜单名称（去重，走 i18n resolver）
           const secondLevelNames: string[] = []
           const menus = menuRes.menus || []
           for (const top of menus) {
@@ -235,8 +239,13 @@ const loadRoleList = async () => {
               // 检查二级菜单本身或其下任意子项是否被选中
               const hasChecked = checkedSet.has(second.id) ||
                 (second.children || []).some((c: any) => checkedSet.has(c.id))
-              if (hasChecked && !secondLevelNames.includes(second.label)) {
-                secondLevelNames.push(second.label)
+              if (!hasChecked) continue
+              const display = resolveMenuDisplayName(
+                { menuName: second.label, i18nKey: second.i18nKey },
+                t
+              )
+              if (display && !secondLevelNames.includes(display)) {
+                secondLevelNames.push(display)
               }
             }
           }
@@ -244,12 +253,12 @@ const loadRoleList = async () => {
           
           return {
             ...role,
-            menuNames: menuNames.length > 0 ? menuNames : ['未分配权限']
+            menuNames: menuNames.length > 0 ? menuNames : [t('no_permissions_assigned')]
           }
         } catch {
           return {
             ...role,
-            menuNames: ['权限加载失败']
+            menuNames: [t('failed_to_load_permissions')]
           }
         }
       })
@@ -257,7 +266,7 @@ const loadRoleList = async () => {
     
     roleList.value = rolesWithMenus
   } catch (error) {
-    message.error('加载角色列表失败')
+    message.error(t('failed_to_load_role_list'))
   } finally {
     loading.value = false
   }
@@ -268,7 +277,7 @@ const loadMenuTree = async () => {
     const res = await getMenuTree()
     menuTree.value = normalizeMenuTree(res || [])
   } catch (error) {
-    console.error('加载菜单树失败', error)
+    console.error(t('failed_to_load_menu_tree'), error)
   }
 }
 
@@ -291,23 +300,23 @@ const handleRoleTree = (record: any) => {
       currentRoleTreeKeys.value = res.checkedKeys || []
     })
     .catch(() => {
-      message.error('加载角色菜单树失败')
+      message.error(t('failed_to_load_role_menu_tree'))
     })
 }
 
 const handleDelete = (record: any) => {
   Modal.confirm({
-    title: '确认删除',
-    content: '确定要删除该角色吗？删除后不可恢复。',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('confirm_delete'),
+    content: t('confirm_delete_role_content'),
+    okText: t('ok'),
+    cancelText: t('cancel'),
     onOk: async () => {
       try {
         await deleteRole(record.roleId)
-        message.success('角色删除成功')
+        message.success(t('role_deleted_successfully'))
         loadRoleList()
       } catch (error) {
-        message.error('删除失败')
+        message.error(t('delete_failed'))
       }
     }
   })
@@ -332,11 +341,11 @@ const handleRoleTreeSubmit = async (menuIds: number[]) => {
       remark: currentRole.value.remark || '',
       menuIds,
     })
-    message.success('角色菜单树已保存')
+    message.success(t('role_menu_tree_saved'))
     currentRoleTreeKeys.value = menuIds
     loadRoleList()
   } catch (error) {
-    message.error('保存角色菜单树失败')
+    message.error(t('failed_to_save_role_menu_tree'))
   }
 }
 </script>

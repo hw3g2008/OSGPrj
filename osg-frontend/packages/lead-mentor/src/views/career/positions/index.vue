@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div id="page-positions" class="page-positions">
     <PageHeader
-      title-zh="岗位信息"
+      :title-zh="$t('position_information')"
       title-en="Job Tracker"
-      description="追踪各大公司招聘岗位信息，查看我的学员申请情况"
+      :description="$t('track_job_openings_at_major_companies_an')"
     >
       <template #actions>
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
@@ -22,7 +22,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.positionCategory"
-            placeholder="全部分类"
+            :placeholder="$t('all_categories')"
             allow-clear
             style="width: 140px"
             :disabled="isLoading"
@@ -34,7 +34,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.industry"
-            placeholder="全部行业"
+            :placeholder="$t('all_industries')"
             allow-clear
             show-search
             option-filter-prop="label"
@@ -48,7 +48,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.companyName"
-            placeholder="全部公司"
+            :placeholder="$t('all_companies')"
             allow-clear
             show-search
             option-filter-prop="label"
@@ -62,7 +62,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.region"
-            placeholder="全部地区"
+            :placeholder="$t('all_regions')"
             allow-clear
             style="width: 140px"
             :disabled="isLoading"
@@ -74,7 +74,7 @@
         <a-form-item>
           <a-input
             v-model:value="filters.keyword"
-            placeholder="搜索岗位名称..."
+            :placeholder="`${$t('search_position_name')}...`"
             allow-clear
             style="width: 200px"
             :disabled="isLoading"
@@ -86,7 +86,7 @@
         </a-form-item>
       </a-form>
 
-      <a-spin :spinning="isLoading" tip="正在加载岗位数据...">
+      <a-spin :spinning="isLoading" :tip="`${$t('loading_position_data')}...`">
         <div
           id="lead-position-drilldown"
           v-show="viewMode === 'drilldown'"
@@ -162,6 +162,8 @@ import PositionMyStudentsModal, {
   type PositionMyStudentsPreview,
   type PositionStudentStatusTone,
 } from '@/components/PositionMyStudentsModal.vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 type ViewMode = 'drilldown' | 'list'
 type DeadlineTone = 'normal' | 'urgent' | 'closed'
@@ -237,7 +239,7 @@ interface FilterOptions {
 const FALLBACK_INDUSTRY_META = {
   tone: 'slate',
   icon: 'mdi-briefcase',
-  label: '未归类',
+  label: t('uncategorized'),
 } as const
 
 const COMPANY_COLORS: Record<string, string> = {
@@ -632,7 +634,7 @@ const loadPositionMeta = async () => {
     positionMeta.value = await getLeadMentorPositionMeta()
   } catch (_error) {
     positionMeta.value = null
-    message.error('岗位筛选项加载失败')
+    message.error(t('failed_to_load_position_filters'))
   }
 }
 
@@ -646,7 +648,7 @@ const loadPositions = async () => {
     positionRows.value = []
     activeStudentsPreview.value = null
     isMyStudentsModalOpen.value = false
-    message.error('岗位列表加载失败')
+    message.error(t('failed_to_load_position_list'))
   } finally {
     isLoading.value = false
   }
@@ -685,7 +687,7 @@ const openJobStudentsModal = async (job: PositionJob) => {
   } catch (_error) {
     activeStudentsPreview.value = null
     isMyStudentsModalOpen.value = false
-    message.error('我的学员申请加载失败')
+    message.error(t('failed_to_load_my_student_applications'))
   } finally {
     isStudentsLoading.value = false
   }
@@ -817,7 +819,7 @@ function toMyStudentRecord(
     studentId: String(row.studentId),
     studentName: row.studentName || '-',
     jobTitle: row.positionName || fallbackJobTitle,
-    statusLabel: row.currentStage || row.status || row.statusRemark || '未申请',
+    statusLabel: row.currentStage || row.status || row.statusRemark || t('not_applied'),
     statusTone: mapStudentTone(row.statusTone),
     lessonHours: `${row.usedHours ?? 0}h`,
   }
@@ -1333,3 +1335,4 @@ function resolveCompanyColor(companyName: string) {
   }
 }
 </style>
+

@@ -1,9 +1,9 @@
 <template>
   <div id="page-profile" class="page-profile" data-page="profile-basic">
     <PageHeader
-      title-zh="基本信息"
+      :title-zh="$t('basic_info')"
       title-en="Profile"
-      description="查看和管理您的个人信息"
+      :description="$t('view_and_manage_your_personal_informatio')"
     >
       <template #actions>
         <button
@@ -14,14 +14,14 @@
           @click="openEditModal"
         >
           <i class="mdi mdi-pencil" aria-hidden="true" />
-          编辑信息
+          {{ $t('edit_information') }}
         </button>
       </template>
     </PageHeader>
 
     <div v-if="isLoading" class="page-feedback">
       <i class="mdi mdi-loading mdi-spin" aria-hidden="true" />
-      正在同步班主任资料...
+      {{ $t('syncing_mentor_profile') }}...
     </div>
 
     <div v-else-if="loadError" class="page-feedback page-feedback--error">
@@ -41,25 +41,25 @@
 
     <section class="card card--core">
       <div class="card-head">
-        <span class="section-pill section-pill--primary">核心信息</span>
+        <span class="section-pill section-pill--primary">{{ $t('core_information') }}</span>
       </div>
       <div class="info-grid info-grid--four">
         <article class="info-item">
-          <span class="info-label">英文名</span>
+          <span class="info-label">{{ $t('english_name') }}</span>
           <div class="info-value info-value--strong">{{ displayName }}</div>
         </article>
         <article class="info-item">
-          <span class="info-label">性别</span>
+          <span class="info-label">{{ $t('gender') }}</span>
           <div class="info-value">{{ genderLabel }}</div>
         </article>
         <article class="info-item">
-          <span class="info-label">类型</span>
+          <span class="info-label">{{ $t('type') }}</span>
           <div class="info-value">
             <span class="type-tag">{{ typeLabel }}</span>
           </div>
         </article>
         <article class="info-item">
-          <span class="info-label">邮箱</span>
+          <span class="info-label">{{ $t('email') }}</span>
           <div class="info-value">{{ emailValue }}</div>
         </article>
       </div>
@@ -69,20 +69,20 @@
       <div class="card-head">
         <span class="section-pill section-pill--success">
           <i class="mdi mdi-phone" aria-hidden="true" />
-          联系方式
+          {{ $t('contact_info') }}
         </span>
       </div>
       <div class="info-grid info-grid--three">
         <article class="info-item">
-          <span class="info-label">手机号</span>
+          <span class="info-label">{{ $t('phone_number') }}</span>
           <div class="info-value">{{ phoneValue }}</div>
         </article>
         <article class="info-item">
-          <span class="info-label">微信号</span>
+          <span class="info-label">{{ $t('wechat_id') }}</span>
           <div class="info-value">{{ wechatValue }}</div>
         </article>
         <article class="info-item">
-          <span class="info-label">所属地区</span>
+          <span class="info-label">{{ $t('region_3') }}</span>
           <div class="info-value">{{ regionValue }}</div>
         </article>
       </div>
@@ -92,20 +92,20 @@
       <div class="card-head card-head--between">
         <span class="section-pill section-pill--warning">
           <i class="mdi mdi-target" aria-hidden="true" />
-          专业方向
+          {{ $t('specialization') }}
         </span>
         <span class="locked-tip">
           <i class="mdi mdi-lock" aria-hidden="true" />
-          如需修改请联系后台文员
+          {{ $t('contact_backend_staff_for_modifications') }}
         </span>
       </div>
       <div class="info-grid info-grid--two">
         <article class="info-item info-item--locked">
-          <span class="info-label info-label--accent">主攻方向</span>
+          <span class="info-label info-label--accent">{{ $t('major_focus') }}</span>
           <div class="info-value">{{ majorDirectionValue }}</div>
         </article>
         <article class="info-item info-item--locked">
-          <span class="info-label info-label--accent">二级方向</span>
+          <span class="info-label info-label--accent">{{ $t('secondary_focus') }}</span>
           <div class="info-value">{{ subDirectionValue }}</div>
         </article>
       </div>
@@ -115,20 +115,20 @@
       <div class="card-head">
         <span class="section-pill section-pill--info">
           <i class="mdi mdi-book-open-variant" aria-hidden="true" />
-          课程信息
+          {{ $t('session_information') }}
         </span>
       </div>
       <div class="info-grid info-grid--two">
         <article class="info-item">
-          <span class="info-label">可授课程类型</span>
+          <span class="info-label">{{ $t('teachable_course_types') }}</span>
           <div class="course-tags">
-            <span class="course-tag">以后台配置为准</span>
+            <span class="course-tag">{{ $t('subject_to_backend_configuration') }}</span>
           </div>
         </article>
         <article class="info-item">
           <span class="info-label">
-            课单价
-            <span class="info-label-note">(不可修改)</span>
+            {{ $t('hourly_rate') }}
+            <span class="info-label-note">({{ $t('not_editable') }})</span>
           </span>
           <div class="info-value info-value--locked">{{ hourlyRateValue }}</div>
         </article>
@@ -156,7 +156,9 @@ import {
   type LeadMentorProfileView,
 } from '@osg/shared/api'
 import LeadEditProfileModal, { type LeadEditProfileDraft } from '@/components/LeadEditProfileModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const isEditProfileModalOpen = ref(false)
 const profileView = ref<LeadMentorProfileView | null>(null)
 const isLoading = ref(true)
@@ -170,7 +172,7 @@ const latestPendingChange = computed(() => pendingChanges.value[0] ?? null)
 
 const displayText = (value: string | number | null | undefined) => {
   if (value === null || value === undefined) {
-    return '待完善'
+    return t('needs_completion')
   }
 
   const text = String(value).trim()
@@ -179,7 +181,7 @@ const displayText = (value: string | number | null | undefined) => {
 
 const displayName = computed(() => displayText(profile.value?.englishName))
 const genderLabel = computed(() => displayText(profile.value?.genderLabel))
-const typeLabel = computed(() => displayText(profile.value?.typeLabel || '班主任'))
+const typeLabel = computed(() => displayText(profile.value?.typeLabel || t('head_teacher')))
 const emailValue = computed(() => displayText(profile.value?.email))
 const phoneValue = computed(() => displayText(profile.value?.phone))
 const wechatValue = computed(() => displayText(profile.value?.wechatId))
@@ -188,7 +190,7 @@ const majorDirectionValue = computed(() => displayText(profile.value?.majorDirec
 const subDirectionValue = computed(() => displayText(profile.value?.subDirection))
 const hourlyRateValue = computed(() => {
   if (profile.value?.hourlyRate === null || profile.value?.hourlyRate === undefined) {
-    return '锁定字段，由后台维护'
+    return t('locked_field_maintained_by_backend')
   }
   return `¥${profile.value.hourlyRate}/h`
 })
@@ -216,7 +218,7 @@ const loadProfile = async () => {
   try {
     profileView.value = await getLeadMentorProfile()
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : '班主任资料加载失败'
+    loadError.value = error instanceof Error ? error.message : t('failed_to_load_mentor_profile')
   } finally {
     isLoading.value = false
   }

@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div id="page-myclass" class="page-class-records">
     <PageHeader
-      title-zh="课程记录"
+      :title-zh="$t('course_records')"
       title-en="Class Records"
-      description="查看和上报课程记录（包括我的申报和我管理的学员）"
+      :description="`${$t('view_and_submit_session_records_includin')}）`"
     >
       <template #actions>
         <button
@@ -13,7 +13,7 @@
           @click="openReportModal()"
         >
           <i class="mdi mdi-plus" aria-hidden="true" />
-          上报课程记录
+          {{ $t('submit_course_record') }}
         </button>
       </template>
     </PageHeader>
@@ -27,7 +27,7 @@
         @click="activeScope = 'mine'"
       >
         <i class="mdi mdi-account" aria-hidden="true" />
-        我的申报
+        {{ $t('my_submissions') }}
         <span class="scope-count">{{ mineRows.length }}</span>
       </button>
       <button
@@ -38,7 +38,7 @@
         @click="activeScope = 'managed'"
       >
         <i class="mdi mdi-account-group" aria-hidden="true" />
-        我管理的学员
+        {{ $t('students_i_manage') }}
         <span class="scope-count scope-count--muted">{{ managedRows.length }}</span>
       </button>
     </div>
@@ -100,7 +100,7 @@
             </select>
             <button type="button" class="btn btn-outline btn-sm btn-reset" @click="showUpcomingToast()">
               <i class="mdi mdi-filter-variant" aria-hidden="true" />
-              重置
+              {{ $t('reset') }}
             </button>
           </div>
         </div>
@@ -110,16 +110,16 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>记录ID</th>
-                  <th>学员</th>
-                  <th>辅导内容</th>
-                  <th>课程内容</th>
-                  <th>上课日期</th>
-                  <th>时长</th>
-                  <th>课时费</th>
-                  <th>审核状态</th>
-                  <th>学员评价</th>
-                  <th>操作</th>
+                  <th>{{ $t('record') }}ID</th>
+                  <th>{{ $t('student') }}</th>
+                  <th>{{ $t('coaching_content') }}</th>
+                  <th>{{ $t('course_content') }}</th>
+                  <th>{{ $t('course_date') }}</th>
+                  <th>{{ $t('duration') }}</th>
+                  <th>{{ $t('session_fee') }}</th>
+                  <th>{{ $t('review_status') }}</th>
+                  <th>{{ $t('student_feedback') }}</th>
+                  <th>{{ $t('operation') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -221,7 +221,7 @@
             </select>
             <button type="button" class="btn btn-outline btn-sm btn-reset" @click="showUpcomingToast()">
               <i class="mdi mdi-filter-variant" aria-hidden="true" />
-              重置
+              {{ $t('reset') }}
             </button>
           </div>
         </div>
@@ -231,16 +231,16 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>记录ID</th>
-                  <th>学员</th>
-                  <th>申报人</th>
-                  <th>辅导内容</th>
-                  <th>课程内容</th>
-                  <th>上课日期</th>
-                  <th>时长</th>
-                  <th>审核状态</th>
-                  <th>学员评价</th>
-                  <th>操作</th>
+                  <th>{{ $t('record') }}ID</th>
+                  <th>{{ $t('student') }}</th>
+                  <th>{{ $t('submitter') }}</th>
+                  <th>{{ $t('coaching_content') }}</th>
+                  <th>{{ $t('course_content') }}</th>
+                  <th>{{ $t('course_date') }}</th>
+                  <th>{{ $t('duration') }}</th>
+                  <th>{{ $t('review_status') }}</th>
+                  <th>{{ $t('student_feedback') }}</th>
+                  <th>{{ $t('operation') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,7 +255,7 @@
                   <td>
                     <div class="stack-cell">
                       <strong>{{ row.reporterName }}</strong>
-                      <span class="meta-text">导师</span>
+                      <span class="meta-text">{{ $t('mentor') }}</span>
                     </div>
                   </td>
                   <td>
@@ -343,7 +343,9 @@ import LeadMentorClassDetailRegularModal from '@/components/LeadMentorClassDetai
 import LeadMentorClassDetailResumeModal from '@/components/LeadMentorClassDetailResumeModal.vue'
 import LeadMentorClassRejectModal from '@/components/LeadMentorClassRejectModal.vue'
 import LeadMentorClassReportFlowModal from './LeadMentorClassReportFlowModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type ScopeKey = 'mine' | 'managed'
 type StatusKey = 'all' | 'pending' | 'approved' | 'rejected'
 
@@ -491,32 +493,32 @@ const scopeSections: Record<ScopeKey, ScopeSection> = {
   mine: {
     searchPlaceholder: '搜索学员姓名/ID...',
     filterOptions: {
-      coachingTypes: ['辅导类型', '岗位辅导', '模拟应聘'],
-      courseContents: ['课程内容', '新简历', '简历更新', 'Case准备', '模拟面试', '人际关系期中考试', '模拟期中考试', 'Behavioral', 'Technical', '其他'],
-      timeRanges: ['时间范围', '本周', '上周', '本月'],
+      coachingTypes: [t('coaching_type'), t('position_coaching'), t('mock_application')],
+      courseContents: [t('course_content'), t('new_resume'), t('resume_update'), 'Case准备', t('mock_interview'), t('networking_midterm_exam'), t('mock_midterm_exam'), 'Behavioral', 'Technical', t('other')],
+      timeRanges: [t('time_range'), t('this_week'), t('last_week'), t('this_month')],
     },
   },
   managed: {
     searchPlaceholder: '搜索学员姓名/ID...',
     filterOptions: {
-      reporters: ['申报人', 'Jerry Li', 'Mike Chen', 'Sarah Wang'],
-      coachingTypes: ['辅导类型', '岗位辅导', '模拟应聘'],
-      courseContents: ['课程内容', '新简历', '简历更新', 'Case准备', '模拟面试', '人际关系期中考试', '模拟期中考试', '其他'],
+      reporters: [t('submitter'), 'Jerry Li', 'Mike Chen', 'Sarah Wang'],
+      coachingTypes: [t('coaching_type'), t('position_coaching'), t('mock_application')],
+      courseContents: [t('course_content'), t('new_resume'), t('resume_update'), 'Case准备', t('mock_interview'), t('networking_midterm_exam'), t('mock_midterm_exam'), t('other')],
     },
   },
 }
 
 
 const contentLabelMap: Record<string, string> = {
-  resume_revision: '新简历',
-  resume_update: '简历更新',
+  resume_revision: t('new_resume'),
+  resume_update: t('resume_update'),
   case_prep: 'Case准备',
-  mock_interview: '模拟面试',
-  networking_midterm: '人际关系期中考试',
-  mock_midterm: '模拟期中考试',
+  mock_interview: t('mock_interview'),
+  networking_midterm: t('networking_midterm_exam'),
+  mock_midterm: t('mock_midterm_exam'),
   behavioral: 'Behavioral',
   technical: 'Technical',
-  other: '其他',
+  other: t('other'),
 }
 
 const contentToneMap: Record<string, string> = {
@@ -565,10 +567,10 @@ const visibleManagedRows = computed(() => filterRows(managedRows.value, activeSt
 
 function buildScopeTabs(rows: ClassRecordRow[]): ScopeTabConfig[] {
   return [
-    { value: 'all', label: '全部', count: rows.length },
-    { value: 'pending', label: '待审核', count: countRowsByStatus(rows, 'pending') },
-    { value: 'approved', label: '已通过', count: countRowsByStatus(rows, 'approved') },
-    { value: 'rejected', label: '已驳回', count: countRowsByStatus(rows, 'rejected') },
+    { value: 'all', label: t('all'), count: rows.length },
+    { value: 'pending', label: t('pending_review'), count: countRowsByStatus(rows, 'pending') },
+    { value: 'approved', label: t('approved'), count: countRowsByStatus(rows, 'approved') },
+    { value: 'rejected', label: t('rejected_3'), count: countRowsByStatus(rows, 'rejected') },
   ]
 }
 
@@ -616,13 +618,13 @@ function formatDuration(value: number) {
 function resolveCoachingMeta(courseType: string) {
   if (normalizeKey(courseType) === 'mock_practice') {
     return {
-      coachingLabel: '模拟应聘',
+      coachingLabel: t('mock_application'),
       coachingTone: 'tag--success',
     }
   }
 
   return {
-    coachingLabel: '岗位辅导',
+    coachingLabel: t('position_coaching'),
     coachingTone: 'tag--info',
   }
 }
@@ -657,15 +659,15 @@ function resolveCoachingDetail(payload: LeadMentorClassRecordCreateResponse) {
 
   const normalizedStatus = normalizeKey(payload.classStatus)
   if (normalizedStatus === 'mock_interview') {
-    return '模拟面试 · 班主任申报'
+    return t('mock_interview_mentor_submission')
   }
   if (normalizedStatus === 'networking_midterm') {
-    return '人际关系期中考试'
+    return t('networking_midterm_exam')
   }
   if (normalizedStatus === 'mock_midterm') {
-    return '模拟期中考试'
+    return t('mock_midterm_exam')
   }
-  return '班主任真实申报'
+  return t('mentor_actual_submission')
 }
 
 function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
@@ -675,10 +677,10 @@ function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
   const normalizedStatus = status === 'approved' || status === 'rejected' ? status : 'pending'
   const statusMeta =
     normalizedStatus === 'approved'
-      ? { statusLabel: '已通过', statusTone: 'tag--success' }
+      ? { statusLabel: t('approved'), statusTone: 'tag--success' }
       : normalizedStatus === 'rejected'
-        ? { statusLabel: '已驳回', statusTone: 'tag--danger' }
-        : { statusLabel: '待审核', statusTone: 'tag--warning' }
+        ? { statusLabel: t('rejected_3'), statusTone: 'tag--danger' }
+        : { statusLabel: t('pending_review'), statusTone: 'tag--warning' }
 
   return {
     recordId: formatRecordId(row.recordId),
@@ -697,7 +699,7 @@ function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
     statusTone: statusMeta.statusTone,
     ratingLabel: row.studentRating ? `⭐ ${row.studentRating}` : undefined,
     reporterName: row.mentorName ?? undefined,
-    actionLabel: normalizedStatus === 'rejected' ? '查看原因' : '查看详情',
+    actionLabel: normalizedStatus === 'rejected' ? '查看原因' : t('view_details'),
     actionSurface: normalizedStatus === 'rejected' ? 'modal-class-reject' : resolveActionSurface(row.classStatus ?? ''),
   }
 }
@@ -724,7 +726,7 @@ async function loadRows() {
     }
     statsSummary.value = statsResponse
   } catch (error) {
-    loadErrorMessage.value = error instanceof Error ? error.message : '加载课程记录失败'
+    loadErrorMessage.value = error instanceof Error ? error.message : t('failed_to_load_session_records')
   } finally {
     isLoadingRecords.value = false
   }
@@ -737,10 +739,10 @@ function buildCreatedRow(payload: LeadMentorClassRecordCreateResponse): ClassRec
   const normalizedStatus = status === 'approved' || status === 'rejected' ? status : 'pending'
   const statusMeta =
     normalizedStatus === 'approved'
-      ? { statusLabel: '已通过', statusTone: 'tag--success' }
+      ? { statusLabel: t('approved'), statusTone: 'tag--success' }
       : normalizedStatus === 'rejected'
-        ? { statusLabel: '已驳回', statusTone: 'tag--danger' }
-        : { statusLabel: '待审核', statusTone: 'tag--warning' }
+        ? { statusLabel: t('rejected_3'), statusTone: 'tag--danger' }
+        : { statusLabel: t('pending_review'), statusTone: 'tag--warning' }
 
   return {
     recordId: formatRecordId(payload.recordId),
@@ -753,11 +755,11 @@ function buildCreatedRow(payload: LeadMentorClassRecordCreateResponse): ClassRec
     contentTone: contentMeta.contentTone,
     classDate: formatDisplayDate(payload.classDate),
     duration: formatDuration(payload.durationHours),
-    feeLabel: '待审核',
+    feeLabel: t('pending_review'),
     status: normalizedStatus,
     statusLabel: statusMeta.statusLabel,
     statusTone: statusMeta.statusTone,
-    actionLabel: normalizedStatus === 'rejected' ? '查看原因' : '查看详情',
+    actionLabel: normalizedStatus === 'rejected' ? '查看原因' : t('view_details'),
     actionSurface: normalizedStatus === 'rejected' ? 'modal-class-reject' : resolveActionSurface(payload.classStatus),
   }
 }
@@ -813,7 +815,7 @@ async function handleReportSubmit(payload: LeadMentorClassRecordCreatePayload) {
     message.success(`已提交课程记录 ${createdMineRow.recordId}，等待审核`)
     void loadRows()
   } catch (error) {
-    message.error(error instanceof Error ? error.message : '课程记录提交失败')
+    message.error(error instanceof Error ? error.message : t('failed_to_submit_session_record'))
   } finally {
     isSubmittingReport.value = false
   }
@@ -861,26 +863,26 @@ function handleRejectResubmit() {
 
 function createMockInterviewDetailPreview(row: ClassRecordRow): ClassDetailPreview {
   return {
-    title: '模拟面试反馈详情',
+    title: t('mock_interview_feedback_details'),
     studentName: row.studentName,
     studentId: row.studentId,
     courseLabel: 'Mock Interview',
     classSchedule: `${row.classDate} 14:00`,
     duration: row.duration,
     scoreLabel: 'Great · 85分',
-    sectionTitle: '模拟面试反馈',
-    performanceLabel: '面试表现',
+    sectionTitle: t('mock_interview_feedback'),
+    performanceLabel: t('interview_performance'),
     performanceText:
       '学生在模拟面试中表现良好，回答问题逻辑清晰，表达流畅。对DCF和LBO基础知识掌握扎实，能够清晰解释估值方法。行为面试部分STAR法则运用得当。',
-    overallLabel: '综合评分',
+    overallLabel: t('overall_score'),
     overallValue: '4分 - 良好，稍加练习',
-    interviewTypeLabel: '面试类型',
-    interviewTypeValue: '技术面试',
-    suggestionLabel: '改进建议',
+    interviewTypeLabel: t('interview_type'),
+    interviewTypeValue: t('technical_interview'),
+    suggestionLabel: t('improvement_suggestions'),
     suggestionLines: [
-      '需要加强对TMT行业的了解',
-      '建议多准备一些高级LBO场景',
-      '注意控制回答时间，避免过度解释简单概念',
+      t('needs_to_strengthen_knowledge_of_the_tmt'),
+      t('recommend_preparing_more_advanced_lbo_sc'),
+      t('be_mindful_of_response_time_avoid_over_e'),
     ],
     mentorName: row.reporterName ?? 'Test Mentor',
     submittedAt: `${row.classDate} 16:30`,
@@ -889,27 +891,27 @@ function createMockInterviewDetailPreview(row: ClassRecordRow): ClassDetailPrevi
 
 function createResumeDetailPreview(row: ClassRecordRow): ClassDetailResumePreview {
   return {
-    title: '简历修改反馈详情',
+    title: t('resume_revision_feedback_details'),
     studentName: row.studentName,
     studentId: row.studentId,
     courseLabel: 'Resume Review',
     classSchedule: `${row.classDate} 10:00`,
     duration: row.duration,
     statusLabel: 'Great',
-    sectionTitle: '简历修改反馈',
-    changeLabel: '修改要点',
+    sectionTitle: t('resume_revision_feedback'),
+    changeLabel: t('key_revisions'),
     changeLines: [
-      '优化了工作经历描述，增加了量化数据',
-      '调整了项目经验排版，突出关键成果',
-      '精简了技能部分，删除不相关内容',
-      '修改了个人简介，更加突出求职意向',
+      t('optimized_work_experience_descriptions_w'),
+      t('adjusted_project_experience_layout_to_hi'),
+      t('streamlined_the_skills_section_by_removi'),
+      t('revised_personal_summary_to_better_refle'),
     ],
-    completionLabel: '完成度评估',
+    completionLabel: t('completion_assessment'),
     completionValue: '80% - 基本完成，需微调',
-    suggestionLabel: '后续建议',
+    suggestionLabel: t('follow_up_recommendations'),
     suggestionLines: [
-      '建议针对不同公司定制简历版本',
-      '可以增加一些咨询相关的课外活动',
+      t('recommend_tailoring_the_resume_for_diffe'),
+      t('consider_adding_consulting_related_extra'),
       '下次重点修改Cover Letter',
     ],
     mentorName: row.reporterName ?? 'Test Mentor',
@@ -919,26 +921,26 @@ function createResumeDetailPreview(row: ClassRecordRow): ClassDetailResumePrevie
 
 function createNetworkingDetailPreview(row: ClassRecordRow): ClassDetailNetworkingPreview {
   return {
-    title: '人脉拓展反馈详情',
+    title: t('networking_feedback_details'),
     studentName: row.studentName,
     studentId: row.studentId,
     courseLabel: 'Networking',
     classSchedule: `${row.classDate} 16:00`,
     duration: row.duration,
     statusLabel: 'Great',
-    sectionTitle: '人脉拓展反馈',
-    progressLabel: '拓展情况',
+    sectionTitle: t('networking_feedback'),
+    progressLabel: t('networking_summary'),
     progressText:
       '本次帮助学生联系了高盛IBD部门的VP，进行了30分钟的Coffee Chat。讨论了IBD的日常工作、招聘流程和面试准备建议。VP对学生印象良好，表示可以帮忙内推。',
-    contactNameLabel: '联系人姓名',
-    contactNameValue: '张经理',
-    contactRoleLabel: '联系人公司/职位',
+    contactNameLabel: t('contact_name'),
+    contactNameValue: t('manager_zhang'),
+    contactRoleLabel: t('contact_company_title'),
     contactRoleValue: '高盛 / VP',
-    followUpLabel: '后续跟进计划',
+    followUpLabel: t('follow_up_plan'),
     followUpLines: [
-      '一周后发送感谢邮件',
-      '准备内推申请材料',
-      '持续关注高盛招聘动态',
+      t('send_a_thank_you_email_in_one_week'),
+      t('prepare_referral_application_materials'),
+      t('continue_monitoring_goldman_sachs_recrui'),
     ],
     mentorName: row.reporterName ?? 'Test Mentor',
     submittedAt: `${row.classDate} 17:30`,
@@ -947,29 +949,29 @@ function createNetworkingDetailPreview(row: ClassRecordRow): ClassDetailNetworki
 
 function createRegularDetailPreview(row: ClassRecordRow): ClassDetailRegularPreview {
   return {
-    title: '常规辅导反馈详情',
+    title: t('regular_coaching_feedback_details'),
     studentName: row.studentName,
     studentId: row.studentId,
     courseLabel: 'Technical Training',
     classSchedule: `${row.classDate} 15:00`,
     duration: row.duration,
     statusLabel: 'Great · 88分',
-    sectionTitle: '常规辅导反馈',
-    lessonLabel: '上课内容',
+    sectionTitle: t('regular_coaching_feedback'),
+    lessonLabel: t('session_content'),
     lessonLines: [
-      '讲解了DCF估值模型的基础原理',
-      '练习了Excel建模，完成了一个简单的DCF模型',
-      '复习了财务报表分析的关键指标',
-      '介绍了可比公司分析方法',
+      t('covered_the_fundamental_principles_of_th'),
+      t('practiced_excel_modeling_and_completed_a'),
+      t('reviewed_key_metrics_for_financial_state'),
+      t('introduced_comparable_company_analysis_m'),
     ],
-    performanceLabel: '学生表现',
+    performanceLabel: t('student_performance_2'),
     performanceText:
       '学生学习态度认真，课堂参与度高。对财务概念理解较快，Excel操作熟练。但在WACC计算部分还需要加强理解。',
-    nextPlanLabel: '下次课程计划',
+    nextPlanLabel: t('next_session_plan'),
     nextPlanLines: [
-      '深入讲解WACC的计算方法',
-      '完成一个完整的LBO模型练习',
-      '布置课后作业：分析一家上市公司的财务报表',
+      t('deep_dive_into_wacc_calculation_methods'),
+      t('complete_a_full_lbo_model_exercise'),
+      t('assign_homework_analyze_the_financial_st'),
     ],
     mentorName: row.reporterName ?? 'Test Mentor',
     submittedAt: `${row.classDate} 17:30`,
@@ -978,16 +980,16 @@ function createRegularDetailPreview(row: ClassRecordRow): ClassDetailRegularPrev
 
 function createRejectPreview(row: ClassRecordRow): ClassRejectPreview {
   return {
-    title: '课程审核驳回',
+    title: t('session_review_rejected'),
     studentName: row.studentName,
     studentId: row.studentId,
-    courseTypeLabel: '课程类型',
+    courseTypeLabel: t('course_type'),
     courseTypeValue: 'Case Study',
-    classTimeLabel: '上课时间',
+    classTimeLabel: t('session_time'),
     classTimeValue: '12/10/2025 14:00',
-    submittedDurationLabel: '提交时长',
+    submittedDurationLabel: t('submitted_duration'),
     submittedDurationValue: '1.5h',
-    reasonTitle: '驳回原因',
+    reasonTitle: t('rejection_reason_2'),
     reasonText: '课程时长与学员反馈不符，学员反馈实际上课时间为1小时。请核实后重新提交。',
     reviewerName: '课时审核员 Admin',
     rejectedAt: '12/11/2025 10:30',
@@ -1333,3 +1335,4 @@ watch(
   }
 }
 </style>
+

@@ -8,23 +8,23 @@
     <!-- 左侧品牌区 -->
     <div class="login-left">
       <h1 class="login-left__title">OSG Platform</h1>
-      <p class="login-left__desc">职业培训一站式平台，学生与导师共同成长</p>
+      <p class="login-left__desc">{{ $t('one_stop_career_training_platform_where_') }}</p>
       <div class="login-features">
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>学生端：一对一导师辅导</span>
+          <span>{{ $t('student_portal_one_on_one_mentor_coachin') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>导师端：高效课程管理</span>
+          <span>{{ $t('mentor_portal_efficient_course_managemen') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>学员求职进度追踪</span>
+          <span>{{ $t('student_job_search_progress_tracking') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>完善的学习资料库</span>
+          <span>{{ $t('comprehensive_learning_resource_library') }}</span>
         </div>
       </div>
     </div>
@@ -40,8 +40,8 @@
           <span class="login-logo__text">OSG Mentor Center</span>
         </div>
 
-        <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用您的账号登录（导师）</p>
+        <h2 class="login-title">{{ $t('welcome_back') }}</h2>
+        <p class="login-subtitle">{{ $t('log_in_with_your_account_mentor') }}）</p>
 
         <!-- 错误横幅 -->
         <div v-if="errorMsg" class="login-error">
@@ -52,11 +52,11 @@
         <!-- 登录表单 -->
         <div class="login-form">
           <div class="form-group">
-            <label>用户名 / 邮箱</label>
+            <label>{{ $t('username_email') }}</label>
             <input
               v-model="formState.username"
               type="text"
-              placeholder="请输入用户名或邮箱"
+              :placeholder="$t('please_enter_your_username_or_email')"
               autocomplete="username"
               :class="{ error: errors.username }"
               @input="errors.username = ''"
@@ -66,12 +66,12 @@
           </div>
 
           <div class="form-group">
-            <label>密码</label>
+            <label>{{ $t('password') }}</label>
             <div class="pwd-wrapper">
               <input
                 v-model="formState.password"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="请输入密码"
+                :placeholder="$t('please_enter_your_password')"
                 autocomplete="current-password"
                 :class="{ error: errors.password }"
                 @input="errors.password = ''"
@@ -90,19 +90,19 @@
 
           <button type="button" class="login-btn" :disabled="loading" @click="handleLogin">
             <i v-if="!loading" class="mdi mdi-login" />
-            {{ loading ? '登录中...' : '登 录' }}
+            {{ loading ? '登录中...' : $t('log_in') }}
           </button>
         </div>
 
         <div class="login-links">
-          忘记密码？
+          {{ $t('forgot_password') }}？
           <a
             href="javascript:void(0)"
             class="link-anchor"
             data-surface-trigger="modal-forgot-password"
             @click.prevent="openForgotPassword"
           >
-            点击重置
+            {{ $t('click_to_reset') }}
           </a>
         </div>
       </div>
@@ -127,7 +127,9 @@ import {
 } from '@/api/auth'
 import { setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const loading = ref(false)
@@ -167,10 +169,10 @@ const handleLogin = async () => {
   errorMsg.value = ''
 
   if (!formState.username.trim()) {
-    errors.username = '请输入用户名或邮箱'
+    errors.username = t('please_enter_your_username_or_email')
   }
   if (!formState.password) {
-    errors.password = '请输入密码'
+    errors.password = t('please_enter_your_password')
   }
   if (errors.username || errors.password) return
 
@@ -183,14 +185,14 @@ const handleLogin = async () => {
     setToken(token)
     const info = await getInfo()
     if (!info.roles?.includes('mentor') && !info.roles?.includes('admin')) {
-      errorMsg.value = '该账号无导师端访问权限'
+      errorMsg.value = t('this_account_does_not_have_access_to_the_2')
       loading.value = false
       return
     }
     setUser(info.user)
     router.push((route.query.redirect as string) || '/')
   } catch (e: any) {
-    errorMsg.value = e?.message || '用户名或密码错误'
+    errorMsg.value = e?.message || t('incorrect_username_or_password')
   } finally {
     loading.value = false
   }

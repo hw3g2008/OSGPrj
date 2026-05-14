@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="学生自添岗位" title-en="Student Added Positions" description="审核学生手动添加的岗位，通过后加入公共岗位库">
+    <PageHeader :title-zh="$t('posts_created_by_students')" title-en="Student Added Positions" :description="$t('review_student_submitted_positions_appro')">
       <template #actions>
         <a-space>
-          <a-tag color="orange">{{ pendingCount }} 条待审核</a-tag>
-          <a-tag color="blue">{{ coachingCount }} 条有辅导申请</a-tag>
+          <a-tag color="orange">{{ pendingCount }} {{ $t('pending_review_2') }}</a-tag>
+          <a-tag color="blue">{{ coachingCount }} {{ $t('with_coaching_requests') }}</a-tag>
         </a-space>
       </template>
     </PageHeader>
@@ -12,34 +12,34 @@
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <a-form layout="inline" style="margin-bottom: 16px">
         <a-form-item>
-          <a-select v-model:value="filters.status" style="width: 120px" data-field-name="状态">
-            <a-select-option value="pending">待审核</a-select-option>
-            <a-select-option value="">全部状态</a-select-option>
-            <a-select-option value="approved">已通过</a-select-option>
-            <a-select-option value="rejected">已拒绝</a-select-option>
+          <a-select v-model:value="filters.status" style="width: 120px" :data-field-name="$t('status')">
+            <a-select-option value="pending">{{ $t('pending_review') }}</a-select-option>
+            <a-select-option value="">{{ $t('all_status') }}</a-select-option>
+            <a-select-option value="approved">{{ $t('approved') }}</a-select-option>
+            <a-select-option value="rejected">{{ $t('rejected') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.positionCategory" placeholder="全部类别" allow-clear style="width: 150px" data-field-name="类别">
+          <a-select v-model:value="filters.positionCategory" :placeholder="$t('all_types_2')" allow-clear style="width: 150px" :data-field-name="$t('type_2')">
             <a-select-option v-for="option in companyCategoryOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.hasCoachingRequest" placeholder="有无辅导申请" allow-clear style="width: 150px" data-field-name="辅导申请">
-            <a-select-option value="yes">有辅导申请</a-select-option>
-            <a-select-option value="no">无辅导申请</a-select-option>
+          <a-select v-model:value="filters.hasCoachingRequest" :placeholder="$t('coaching_request_status')" allow-clear style="width: 150px" :data-field-name="$t('coaching_request')">
+            <a-select-option value="yes">{{ $t('has_coaching_request') }}</a-select-option>
+            <a-select-option value="no">{{ $t('no_coaching_request') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-input v-model:value="filters.keyword" placeholder="搜索公司或岗位名称" allow-clear style="width: 200px" data-field-name="搜索框" @pressEnter="handleSearch" />
+          <a-input v-model:value="filters.keyword" :placeholder="$t('search_company_or_position_name')" allow-clear style="width: 200px" :data-field-name="$t('search_2')" @pressEnter="handleSearch" />
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ $t('search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ $t('reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -52,7 +52,7 @@
         :loading="loading"
         :pagination="listPagination"
         :row-class-name="(record: StudentPositionListItem) => record.status === 'pending' ? 'row-pending' : ''"
-        :locale="{ emptyText: '当前筛选条件下暂无学生自添岗位' }"
+        :locale="{ emptyText: $t('no_student_submitted_positions_under_cur') }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'companyName'">
@@ -72,12 +72,12 @@
           <template v-else-if="column.dataIndex === 'positionCategory'">
             <a-space>
               <a-tag :color="getCategoryColor(record.positionCategory)">{{ formatCategory(record.positionCategory) }}</a-tag>
-              <a-tag v-if="record.hasCoachingRequest === 'yes'" color="purple">有辅导申请</a-tag>
+              <a-tag v-if="record.hasCoachingRequest === 'yes'" color="purple">{{ $t('has_coaching_request') }}</a-tag>
             </a-space>
           </template>
           <template v-else-if="column.dataIndex === 'studentName'">
             <div style="display: flex; flex-direction: column; gap: 2px">
-              <strong>{{ record.studentName || '未命名学生' }}</strong>
+              <strong>{{ record.studentName || $t('unnamed_student_2') }}</strong>
               <span style="font-size: 11px; color: #64748b">ID: {{ record.studentId }}</span>
             </div>
           </template>
@@ -92,9 +92,9 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space>
-              <a-button type="link" size="small" data-surface-trigger="modal-edit-student-position" :data-surface-sample-key="`student-position-${record.studentPositionId}`" @click="openReviewModal(record)">编辑</a-button>
-              <a-button v-if="record.status === 'pending'" type="link" danger size="small" data-surface-trigger="modal-reject-position" :data-surface-sample-key="`student-position-${record.studentPositionId}`" @click="openRejectModal(record)">拒绝</a-button>
-              <a-button v-if="record.status !== 'pending'" type="link" size="small" @click="openReviewModal(record)">查看结果</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-edit-student-position" :data-surface-sample-key="`student-position-${record.studentPositionId}`" @click="openReviewModal(record)">{{ $t('edit') }}</a-button>
+              <a-button v-if="record.status === 'pending'" type="link" danger size="small" data-surface-trigger="modal-reject-position" :data-surface-sample-key="`student-position-${record.studentPositionId}`" @click="openRejectModal(record)">{{ $t('reject') }}</a-button>
+              <a-button v-if="record.status !== 'pending'" type="link" size="small" @click="openReviewModal(record)">{{ $t('view_result') }}</a-button>
             </a-space>
           </template>
         </template>
@@ -102,8 +102,8 @@
     </a-card>
 
     <a-alert type="info" show-icon>
-      <template #message><strong>审核说明</strong></template>
-      <template #description>岗位通过后将加入公共岗位库，其他学生可见。有辅导申请的岗位通过后，辅导申请将自动流转到班主任端进行导师分配。</template>
+      <template #message><strong>{{ $t('review_notes') }}</strong></template>
+      <template #description>{{ $t('approved_positions_will_be_added_to_the_') }}。</template>
     </a-alert>
 
     <ReviewPositionModal
@@ -139,14 +139,16 @@ import { getPositionMeta, type PositionMetaOption } from '@osg/shared/api/admin/
 import RejectPositionModal from './components/RejectPositionModal.vue'
 import ReviewPositionModal from './components/ReviewPositionModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const positionColumns = [
-  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 280 },
-  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 180 },
-  { title: '提交学生', dataIndex: 'studentName', key: 'studentName', width: 140 },
-  { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 140 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 200 },
+  { title: t('company_position'), dataIndex: 'companyName', key: 'companyName', width: 280 },
+  { title: t('job_classification'), dataIndex: 'positionCategory', key: 'positionCategory', width: 180 },
+  { title: t('submitting_student'), dataIndex: 'studentName', key: 'studentName', width: 140 },
+  { title: t('submission_time'), dataIndex: 'submittedAt', key: 'submittedAt', width: 140 },
+  { title: t('status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 200 },
 ]
 
 const companyCategoryOptions = ref<PositionMetaOption[]>([])
@@ -223,7 +225,7 @@ const handleApprove = async (payload: ReviewStudentPositionPayload) => {
   }
   await approveStudentPosition(selectedRecord.value.studentPositionId, payload)
   reviewVisible.value = false
-  message.success('学生自添岗位已通过审核')
+  message.success(t('student_submitted_position_approved'))
   await loadRows()
 }
 
@@ -233,7 +235,7 @@ const handleReject = async (payload: RejectStudentPositionPayload) => {
   }
   await rejectStudentPosition(selectedRecord.value.studentPositionId, payload)
   rejectVisible.value = false
-  message.success('学生自添岗位已拒绝')
+  message.success(t('student_submitted_position_rejected'))
   await loadRows()
 }
 
@@ -252,11 +254,11 @@ const getCompanyColor = (companyName?: string) => {
 
 const formatCategory = (value?: string) => {
   const mapping: Record<string, string> = {
-    summer: '暑期实习',
-    fulltime: '全职招聘',
-    offcycle: '非常规周期',
-    spring: '春季实习',
-    events: '招聘活动'
+    summer: t('summer_internship'),
+    fulltime: t('full_time_recruitment'),
+    offcycle: t('non_standard_cycle'),
+    spring: t('spring_internship'),
+    events: t('recruitment_event')
   }
   return mapping[value || ''] || value || '-'
 }
@@ -269,9 +271,9 @@ const getCategoryColor = (value?: string) => {
 }
 
 const formatStatus = (value?: string) => {
-  if (value === 'approved') return '已通过'
-  if (value === 'rejected') return '已拒绝'
-  return '待审核'
+  if (value === 'approved') return t('approved')
+  if (value === 'rejected') return t('rejected')
+  return t('pending_review')
 }
 
 const getStatusColor = (value?: string) => {
@@ -281,15 +283,15 @@ const getStatusColor = (value?: string) => {
 }
 
 const formatRelativeTime = (value?: string) => {
-  if (!value) return '刚刚提交'
+  if (!value) return t('just_submitted')
 
   const submitted = new Date(value).getTime()
-  if (Number.isNaN(submitted)) return '刚刚提交'
+  if (Number.isNaN(submitted)) return t('just_submitted')
 
   const diffHours = Math.max(0, Math.floor((Date.now() - submitted) / (1000 * 60 * 60)))
-  if (diffHours < 1) return '1 小时内'
-  if (diffHours < 24) return `${diffHours} 小时前`
-  return `${Math.floor(diffHours / 24)} 天前`
+  if (diffHours < 1) return `1 ${t('within_hours')}`
+  if (diffHours < 24) return `${diffHours} ${t('hours_ago')}`
+  return `${Math.floor(diffHours / 24)} ${t('days_ago')}`
 }
 
 const formatDateTime = (value?: string) => {

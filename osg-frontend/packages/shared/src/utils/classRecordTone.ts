@@ -10,6 +10,7 @@
  * - 'rejected' → 已驳回（danger，#FEE2E2/#991B1B 红）
  * - 其他 / 空 / null / undefined → fallback 到 pending（与 asst 现实现 normalizeStatus 一致）
  */
+import { i18n } from '../i18n'
 
 export type ClassRecordStatusToneClass =
   | 'osg-class-record-status-tag--pending'
@@ -60,7 +61,7 @@ export function resolveClassRecordStatusToneClass(
  */
 export function resolveClassRecordStatusLabel(status?: string | null): string {
   const normalized = normalizeClassRecordStatus(status)
-  if (normalized === 'approved') return '已通过'
-  if (normalized === 'rejected') return '已驳回'
-  return '待审核'
+  if (normalized === 'approved') return i18n.global.t('approved')
+  if (normalized === 'rejected') return i18n.global.t('rejected_3')
+  return i18n.global.t('pending_review')
 }

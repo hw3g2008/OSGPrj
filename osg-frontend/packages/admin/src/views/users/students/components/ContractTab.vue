@@ -2,19 +2,19 @@
   <section class="contract-tab">
     <div class="contract-tab__summary">
       <article class="contract-tab__summary-card">
-        <span>合同总金额</span>
+        <span>{{ $t('total_contract_amount') }}</span>
         <strong>{{ formatCurrency(summary.totalAmount, 'USD') }}</strong>
       </article>
       <article class="contract-tab__summary-card">
-        <span>总课时</span>
+        <span>{{ $t('total_hours') }}</span>
         <strong>{{ summary.totalHours }}h</strong>
       </article>
       <article class="contract-tab__summary-card">
-        <span>已用课时</span>
+        <span>{{ $t('used_hours') }}</span>
         <strong>{{ summary.usedHours }}h</strong>
       </article>
       <article class="contract-tab__summary-card">
-        <span>剩余课时</span>
+        <span>{{ $t('remaining_hours') }}</span>
         <strong>{{ summary.remainingHours }}h</strong>
       </article>
     </div>
@@ -23,12 +23,12 @@
       <table class="contract-tab__table">
         <thead>
           <tr>
-            <th>合同编号</th>
-            <th>类型</th>
-            <th>金额</th>
-            <th>课时</th>
-            <th>有效期</th>
-            <th>状态</th>
+            <th>{{ $t('contract_number') }}</th>
+            <th>{{ $t('type') }}</th>
+            <th>{{ $t('amount') }}</th>
+            <th>{{ $t('class_hours') }}</th>
+            <th>{{ $t('validity_period') }}</th>
+            <th>{{ $t('status') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -38,13 +38,13 @@
             <td>
               <template v-if="contract.currency === 'GBP'">
                 <div><strong>£{{ (contract.amountGbp || 0).toLocaleString() }}</strong></div>
-                <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} 等值</div>
+                <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} {{ $t('equivalent') }}</div>
               </template>
               <template v-else>
                 <strong>${{ (contract.amountUsd || contract.contractAmount || 0).toLocaleString() }}</strong>
               </template>
             </td>
-            <td>{{ contract.totalHours || 0 }}h / 剩余 {{ contract.remainingHours || 0 }}h</td>
+            <td>{{ contract.totalHours || 0 }}h / {{ $t('remaining') }} {{ contract.remainingHours || 0 }}h</td>
             <td>{{ formatDateRange(contract.startDate, contract.endDate) }}</td>
             <td>
               <span :class="['contract-tab__status', `contract-tab__status--${contract.contractStatus || 'normal'}`]">
@@ -57,12 +57,16 @@
     </div>
 
     <div v-else class="contract-tab__empty">
-      暂无合同记录。
+      {{ $t('no_contract_records') }}。
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 interface ContractSummary {
   totalAmount: number
   totalHours: number
@@ -94,7 +98,7 @@ defineProps<{
 const formatCurrency = (value?: number, currency: string = 'USD') => {
   const num = Number(value || 0)
   if (currency === 'GBP') return `£${num.toLocaleString()}`
-  return `$${num.toLocaleString()}`
+  return `${num.toLocaleString()}`
 }
 
 const formatDateRange = (startDate?: string, endDate?: string) => {
@@ -107,17 +111,17 @@ const formatDateRange = (startDate?: string, endDate?: string) => {
     if (isNaN(date.getTime())) return d
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   }
-  return `${fmt(startDate)} 至 ${fmt(endDate)}`
+  return `${fmt(startDate)} ${t('date_range_separator')} ${fmt(endDate)}`
 }
 
 const formatStatus = (status?: string) => {
   switch (status) {
     case 'ended':
-      return '已结束'
+      return t('ended')
     case 'draft':
-      return '草稿'
+      return t('draft')
     default:
-      return '正常'
+      return t('active_3')
   }
 }
 </script>

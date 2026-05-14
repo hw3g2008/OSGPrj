@@ -1,6 +1,7 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
+﻿import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { message } from 'ant-design-vue'
 import { getToken, removeToken } from './storage'
+import { i18n } from '../i18n'
 
 export interface AppRequestConfig extends AxiosRequestConfig {
   skipErrorMessage?: boolean
@@ -50,10 +51,10 @@ request.interceptors.response.use(
     if (code === 401) {
       if (!requestConfig?.skipAuthRedirect) {
         removeToken()
-        message.error('登录已过期，请重新登录')
+        message.error(i18n.global.t('session_expired_please_log_in_again'))
         window.location.href = '/login'
       }
-      return Promise.reject(new Error(msg || '未授权'))
+      return Promise.reject(new Error(msg || i18n.global.t('unauthorized')))
     }
 
     // 智能错误提示逻辑
@@ -63,14 +64,14 @@ request.interceptors.response.use(
         message.error(requestConfig.customErrorMessage)
       } else {
         // 默认使用后端返回的消息
-        message.error(msg || '请求失败')
+        message.error(msg || i18n.global.t('request_failed'))
       }
     }
-    return Promise.reject(new Error(msg || '请求失败'))
+    return Promise.reject(new Error(msg || i18n.global.t('request_failed')))
   },
   (error) => {
     const requestConfig = error.config as AppRequestConfig | undefined
-    const msg = error.response?.data?.msg || error.message || '网络错误'
+    const msg = error.response?.data?.msg || error.message || i18n.global.t('network_error')
     
     // 智能错误提示逻辑
     if (!requestConfig?.skipErrorMessage) {
@@ -103,3 +104,4 @@ export const http = {
 }
 
 export default request
+

@@ -104,7 +104,7 @@
             <a-space :size="12">
               <span style="font-size: 12px">
                 <strong style="color: #6b6ef7">{{ company.positionCount }}</strong>
-                个岗位
+                {{ $t('positions') }}
               </span>
               <a-button
                 v-if="company.studentCount > 0"
@@ -142,7 +142,7 @@
       </div>
     </section>
 
-    <a-empty v-if="!industries.length" description="当前筛选条件下暂无岗位数据" />
+    <a-empty v-if="!industries.length" :description="$t('no_positions_found_under_current_filters')" />
   </div>
 </template>
 
@@ -155,7 +155,9 @@ import {
   type PositionIndustryGroup,
   type PositionTableRow,
 } from './types'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 /**
  * PositionsDrilldown — 岗位下钻视图（行业 → 公司 → 岗位 三级嵌套）
  *
@@ -202,14 +204,14 @@ const emit = defineEmits<{
 
 /** drilldown 嵌套表 8 列定义（与原型一致：去掉 list 视图的"公司"和"行业"列） */
 const DRILLDOWN_COLUMNS: ColumnConfig[] = [
-  { title: '岗位名称', key: 'positionName', dataIndex: 'positionName', width: 240, fixed: 'left' },
-  { title: '岗位分类', key: 'positionCategory', dataIndex: 'positionCategory', width: 100 },
-  { title: '部门', key: 'department', dataIndex: 'department', width: 100 },
-  { title: '地区', key: 'location', dataIndex: 'location', width: 110 },
-  { title: '招聘周期', key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
-  { title: '发布时间', key: 'publishTime', dataIndex: 'publishTime', width: 100 },
-  { title: '截止时间', key: 'deadline', dataIndex: 'deadline', width: 100 },
-  { title: '我的学员', key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
+  { title: t('job_title'), key: 'positionName', dataIndex: 'positionName', width: 240, fixed: 'left' },
+  { title: t('job_classification'), key: 'positionCategory', dataIndex: 'positionCategory', width: 100 },
+  { title: t('department'), key: 'department', dataIndex: 'department', width: 100 },
+  { title: t('area'), key: 'location', dataIndex: 'location', width: 110 },
+  { title: t('recruitment_cycle'), key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
+  { title: t('published_date'), key: 'publishTime', dataIndex: 'publishTime', width: 100 },
+  { title: t('deadline'), key: 'deadline', dataIndex: 'deadline', width: 100 },
+  { title: t('my_students'), key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
 ]
 
 function isIndustryExpanded(industryId: string): boolean {

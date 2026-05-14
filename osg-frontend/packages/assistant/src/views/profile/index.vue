@@ -1,32 +1,32 @@
-<template>
+﻿<template>
   <div id="page-profile" class="profile-page">
     <PageHeader
-      title-zh="基本信息"
+      :title-zh="$t('basic_info')"
       title-en="Profile"
-      description="查看当前账号资料、联系方式与登录信息，并在需要时更新常用联系字段。"
+      :description="`${$t('view_current_account_profile_contact_inf')}。`"
     >
       <template #actions>
-        <span class="status-pill">资料概览</span>
+        <span class="status-pill">{{ $t('profile_overview') }}</span>
         <button
           id="assistant-profile-edit"
           type="button"
           class="primary-button"
           @click="openEditor"
         >
-          编辑资料
+          {{ $t('edit_profile') }}
         </button>
       </template>
     </PageHeader>
 
     <section v-if="errorMessage" class="state-card state-card--error">
-      <h2>资料加载失败</h2>
+      <h2>{{ $t('profile_load_failed') }}</h2>
       <p>{{ errorMessage }}</p>
-      <button type="button" class="ghost-button" @click="loadProfile">重新加载</button>
+      <button type="button" class="ghost-button" @click="loadProfile">{{ $t('reload') }}</button>
     </section>
 
     <section v-else-if="loading" class="state-card">
-      <h2>资料加载中</h2>
-      <p>正在读取当前账号的基本信息与联系方式，请稍候。</p>
+      <h2>{{ $t('loading_profile') }}</h2>
+      <p>{{ $t('loading_current_accounts_basic_info_and_') }}。</p>
     </section>
 
     <template v-else-if="profile">
@@ -41,7 +41,7 @@
 
         <div class="hero-card__actions">
           <span class="readonly-pill" :class="statusToneClass">{{ statusLabel }}</span>
-          <button type="button" class="ghost-button" @click="loadProfile">刷新资料</button>
+          <button type="button" class="ghost-button" @click="loadProfile">{{ $t('refresh_profile') }}</button>
         </div>
       </section>
 
@@ -52,24 +52,24 @@
 
       <section class="summary-grid">
         <article class="summary-card">
-          <span class="summary-card__label">账号状态</span>
+          <span class="summary-card__label">{{ $t('account_status_2') }}</span>
           <strong class="summary-card__value">{{ statusLabel }}</strong>
-          <span class="summary-card__hint">当前登录账号的可用状态</span>
+          <span class="summary-card__hint">{{ $t('current_login_account_availability_statu') }}</span>
         </article>
         <article class="summary-card">
-          <span class="summary-card__label">联系方式</span>
+          <span class="summary-card__label">{{ $t('contact_info') }}</span>
           <strong class="summary-card__value">{{ contactCompleteness }}</strong>
-          <span class="summary-card__hint">邮箱与手机号的填写完整度</span>
+          <span class="summary-card__hint">{{ $t('email_and_phone_number_completion_status') }}</span>
         </article>
         <article class="summary-card">
-          <span class="summary-card__label">最近登录</span>
+          <span class="summary-card__label">{{ $t('last_login_2') }}</span>
           <strong class="summary-card__value summary-card__value--small">{{ loginDateLabel }}</strong>
-          <span class="summary-card__hint">最近一次登录时间</span>
+          <span class="summary-card__hint">{{ $t('most_recent_login_time') }}</span>
         </article>
         <article class="summary-card">
-          <span class="summary-card__label">登录地址</span>
+          <span class="summary-card__label">{{ $t('login_address') }}</span>
           <strong class="summary-card__value summary-card__value--small">{{ loginIpLabel }}</strong>
-          <span class="summary-card__hint">最近一次登录 IP 信息</span>
+          <span class="summary-card__hint">{{ $t('most_recent_login_ip_information') }}</span>
         </article>
       </section>
 
@@ -77,35 +77,35 @@
         <section class="panel-card">
           <header class="panel-card__header">
             <div>
-              <h2>资料详情</h2>
-              <p>以下信息会用于账号展示、联系确认与内部协作识别。</p>
+              <h2>{{ $t('profile_details') }}</h2>
+              <p>{{ $t('the_following_information_is_used_for_ac') }}。</p>
             </div>
           </header>
 
           <div class="panel-card__body info-grid">
             <article class="info-item">
-              <span class="info-item__label">英文名</span>
-              <strong class="info-item__value">{{ profile.nickName || '未填写' }}</strong>
+              <span class="info-item__label">{{ $t('english_name') }}</span>
+              <strong class="info-item__value">{{ profile.nickName || $t('not_filled') }}</strong>
             </article>
             <article class="info-item">
-              <span class="info-item__label">性别</span>
+              <span class="info-item__label">{{ $t('gender') }}</span>
               <strong class="info-item__value">{{ sexLabel }}</strong>
             </article>
             <article class="info-item">
-              <span class="info-item__label">邮箱</span>
-              <strong class="info-item__value">{{ profile.email || '未填写' }}</strong>
+              <span class="info-item__label">{{ $t('email') }}</span>
+              <strong class="info-item__value">{{ profile.email || $t('not_filled') }}</strong>
             </article>
             <article class="info-item">
-              <span class="info-item__label">手机号</span>
-              <strong class="info-item__value">{{ profile.phonenumber || '未填写' }}</strong>
+              <span class="info-item__label">{{ $t('phone_number') }}</span>
+              <strong class="info-item__value">{{ profile.phonenumber || $t('not_filled') }}</strong>
             </article>
             <article class="info-item">
-              <span class="info-item__label">账号</span>
-              <strong class="info-item__value">{{ profile.userName || '未填写' }}</strong>
+              <span class="info-item__label">{{ $t('account_number') }}</span>
+              <strong class="info-item__value">{{ profile.userName || $t('not_filled') }}</strong>
             </article>
             <article class="info-item">
-              <span class="info-item__label">备注</span>
-              <strong class="info-item__value">{{ profile.remark || '未填写' }}</strong>
+              <span class="info-item__label">{{ $t('remarks') }}</span>
+              <strong class="info-item__value">{{ profile.remark || $t('not_filled') }}</strong>
             </article>
           </div>
         </section>
@@ -113,17 +113,17 @@
         <section class="panel-card panel-card--aside">
           <header class="panel-card__header">
             <div>
-              <h2>更新说明</h2>
-              <p>可直接修改常用联系字段。保存成功后，页面会自动同步最新结果。</p>
+              <h2>{{ $t('update_notes') }}</h2>
+              <p>{{ $t('you_can_directly_edit_common_contact_fie') }}。</p>
             </div>
           </header>
 
           <div class="panel-card__body panel-card__body--tips">
-            <div class="tip-chip">姓名展示</div>
-            <div class="tip-chip">联系方式</div>
-            <div class="tip-chip">登录信息</div>
+            <div class="tip-chip">{{ $t('display_name') }}</div>
+            <div class="tip-chip">{{ $t('contact_info') }}</div>
+            <div class="tip-chip">{{ $t('login_info') }}</div>
             <p class="tip-copy">
-              若资料提交失败，可先检查邮箱格式与手机号是否正确，再重新保存。
+              {{ $t('if_profile_submission_fails_check_that_e') }}。
             </p>
           </div>
         </section>
@@ -132,58 +132,58 @@
       <section v-if="showEditor" class="editor-card">
         <header class="panel-card__header">
           <div>
-            <h2>编辑资料</h2>
-            <p>修改后将立即提交到当前账号资料中。</p>
+            <h2>{{ $t('edit_profile') }}</h2>
+            <p>{{ $t('changes_will_be_submitted_to_the_current') }}。</p>
           </div>
         </header>
 
         <form class="panel-card__body editor-form" novalidate @submit.prevent="saveProfile">
           <div class="form-grid">
             <label class="form-field">
-              <span class="form-field__label">英文名</span>
+              <span class="form-field__label">{{ $t('english_name') }}</span>
               <input
                 id="assistant-profile-nick-name"
                 v-model.trim="draft.nickName"
                 class="form-input"
                 type="text"
                 maxlength="30"
-                placeholder="请输入英文名"
+                :placeholder="$t('please_enter_english_name')"
               />
               <span v-if="fieldErrors.nickName" class="field-error">{{ fieldErrors.nickName }}</span>
             </label>
 
             <label class="form-field">
-              <span class="form-field__label">性别</span>
+              <span class="form-field__label">{{ $t('gender') }}</span>
               <select id="assistant-profile-sex" v-model="draft.sex" class="form-select">
                 <option value="0">男</option>
                 <option value="1">女</option>
-                <option value="2">未设置</option>
+                <option value="2">{{ $t('not_set') }}</option>
               </select>
               <span v-if="fieldErrors.sex" class="field-error">{{ fieldErrors.sex }}</span>
             </label>
 
             <label class="form-field">
-              <span class="form-field__label">邮箱</span>
+              <span class="form-field__label">{{ $t('email') }}</span>
               <input
                 id="assistant-profile-email"
                 v-model.trim="draft.email"
                 class="form-input"
                 type="email"
                 maxlength="50"
-                placeholder="请输入邮箱"
+                :placeholder="$t('please_enter_your_email')"
               />
               <span v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email }}</span>
             </label>
 
             <label class="form-field">
-              <span class="form-field__label">手机号</span>
+              <span class="form-field__label">{{ $t('phone_number') }}</span>
               <input
                 id="assistant-profile-phone"
                 v-model.trim="draft.phonenumber"
                 class="form-input"
                 type="tel"
                 maxlength="11"
-                placeholder="请输入 11 位手机号"
+                :placeholder="$t('please_enter_an_11_digit_phone_number')"
               />
               <span v-if="fieldErrors.phonenumber" class="field-error">{{ fieldErrors.phonenumber }}</span>
             </label>
@@ -200,7 +200,7 @@
 
           <div class="editor-actions">
             <button id="assistant-profile-cancel" type="button" class="ghost-button" @click="closeEditor">
-              取消
+              {{ $t('cancel') }}
             </button>
             <button
               id="assistant-profile-save"
@@ -208,7 +208,7 @@
               class="primary-button"
               :disabled="saving"
             >
-              {{ saving ? '保存中...' : '保存修改' }}
+              {{ saving ? '保存中...' : $t('save_changes') }}
             </button>
           </div>
         </form>
@@ -226,7 +226,9 @@ import {
   type AssistantProfile,
   type AssistantProfileUpdatePayload,
 } from '@osg/shared/api'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface ProfileDraft {
   nickName: string
   email: string
@@ -272,11 +274,11 @@ const sexLabel = computed(() => {
     return '女'
   }
   if (profile.value?.sex === '2') {
-    return '未设置'
+    return t('not_set')
   }
   return '男'
 })
-const statusLabel = computed(() => (profile.value?.status === '1' ? '停用' : '正常'))
+const statusLabel = computed(() => (profile.value?.status === '1' ? '停用' : t('active_3')))
 const statusToneClass = computed(() =>
   profile.value?.status === '1' ? 'readonly-pill--danger' : 'readonly-pill--success',
 )
@@ -285,11 +287,11 @@ const contactCompleteness = computed(() => {
   return `${score}/2`
 })
 const loginDateLabel = computed(() => formatDateTime(profile.value?.loginDate))
-const loginIpLabel = computed(() => profile.value?.loginIp || '未记录')
+const loginIpLabel = computed(() => profile.value?.loginIp || t('not_recorded'))
 
 function formatDateTime(value?: string) {
   if (!value) {
-    return '未记录'
+    return t('not_recorded')
   }
 
   const parsed = new Date(value)
@@ -360,7 +362,7 @@ function validateProfile() {
   if (!valid) {
     editorNotice.value = {
       type: 'error',
-      title: '无法保存',
+      title: t('cannot_save'),
       text: '请先修正表单中的错误信息。',
     }
   } else {
@@ -405,13 +407,13 @@ async function saveProfile() {
     showEditor.value = false
     pageNotice.value = {
       type: 'success',
-      title: '保存成功',
+      title: t('saved_successfully'),
       text: '基本信息已更新，并同步显示最新内容。',
     }
   } catch (error: any) {
     editorNotice.value = {
       type: 'error',
-      title: '保存失败',
+      title: t('save_failed'),
       text: error?.message || '资料暂时无法保存，请稍后重试。',
     }
   } finally {
@@ -807,3 +809,4 @@ onMounted(() => {
   }
 }
 </style>
+

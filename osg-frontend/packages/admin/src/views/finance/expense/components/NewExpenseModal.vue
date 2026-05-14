@@ -8,55 +8,55 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-cash-plus" aria-hidden="true" />
-        <span>新建报销</span>
+        <span>{{ $t('new_expense') }}</span>
       </span>
     </template>
 
     <a-form layout="vertical">
       <a-row :gutter="16">
         <a-col :span="12">
-          <a-form-item label="导师 ID">
-            <a-input-number v-model:value="form.mentorId" :min="1" placeholder="导师" style="width:100%" />
+          <a-form-item :label="`${$t('mentor')} ID`">
+            <a-input-number v-model:value="form.mentorId" :min="1" :placeholder="$t('mentor')" style="width:100%" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="导师">
-            <a-input v-model:value="form.mentorName" placeholder="导师姓名" />
+          <a-form-item :label="$t('mentor')">
+            <a-input v-model:value="form.mentorName" :placeholder="$t('mentor_name')" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="报销类型">
+          <a-form-item :label="$t('expense_type')">
             <a-select v-model:value="form.expenseType">
               <a-select-option v-for="type in expenseTypes" :key="type" :value="type">{{ type }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="金额">
-            <a-input v-model:value="form.expenseAmount" placeholder="金额" />
+          <a-form-item :label="$t('amount')">
+            <a-input v-model:value="form.expenseAmount" :placeholder="$t('amount')" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="日期">
-            <a-input v-model:value="form.expenseDate" type="date" placeholder="日期" />
+          <a-form-item :label="$t('date')">
+            <a-input v-model:value="form.expenseDate" type="date" :placeholder="$t('date')" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="附件">
-            <a-input v-model:value="form.attachmentUrl" placeholder="附件" />
+          <a-form-item :label="$t('attachment')">
+            <a-input v-model:value="form.attachmentUrl" :placeholder="$t('attachment')" />
           </a-form-item>
         </a-col>
         <a-col :span="24">
-          <a-form-item label="说明">
-            <a-textarea v-model:value="form.description" :rows="4" placeholder="说明" />
+          <a-form-item :label="$t('description')">
+            <a-textarea v-model:value="form.description" :rows="4" :placeholder="$t('description')" />
           </a-form-item>
         </a-col>
       </a-row>
     </a-form>
 
     <template #footer>
-      <a-button @click="close">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="submit">创建报销</a-button>
+      <a-button @click="close">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="submit">{{ $t('create_expense') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>

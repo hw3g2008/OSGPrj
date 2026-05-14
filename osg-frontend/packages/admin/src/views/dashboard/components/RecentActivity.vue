@@ -3,9 +3,9 @@
     <div class="dashboard-card__header recent-activity__header">
       <span class="dashboard-card__title recent-activity__title-wrap">
         <span class="mdi mdi-history recent-activity__header-icon" />
-        <span>最近活动</span>
+        <span>{{ $t('recent_activities') }}</span>
       </span>
-      <a class="recent-activity__link" @click="router.push('/logs')">查看全部</a>
+      <a class="recent-activity__link" @click="router.push('/logs')">{{ $t('view_all') }}</a>
     </div>
     <div class="dashboard-card__body recent-activity__body">
       <div
@@ -28,7 +28,7 @@
         </div>
       </div>
       <div v-if="!activities || activities.length === 0" class="recent-activity__empty">
-        暂无活动记录
+        {{ $t('no_activity_records') }}
       </div>
     </div>
   </div>

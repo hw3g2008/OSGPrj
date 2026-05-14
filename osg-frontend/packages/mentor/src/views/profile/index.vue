@@ -1,9 +1,9 @@
 <template>
   <div id="page-profile">
     <PageHeader
-      title-zh="基本信息"
+      :title-zh="$t('basic_info')"
       title-en="Profile"
-      description="查看和管理您的个人信息"
+      :description="$t('view_and_manage_your_personal_informatio')"
     >
       <template #actions>
         <a-button type="primary" @click="showEditModal = true">
@@ -14,43 +14,43 @@
 
     <!-- 核心信息 -->
     <div class="section section-core">
-      <div class="section-badge badge-primary">核心信息</div>
+      <div class="section-badge badge-primary">{{ $t('core_information') }}</div>
       <div class="info-grid grid-4">
-        <div class="info-item"><span class="info-label">英文名</span><div class="info-value bold">{{ profile.nickName || '-' }}</div></div>
-        <div class="info-item"><span class="info-label">性别</span><div class="info-value">{{ profile.sex === '0' ? 'Male' : 'Female' }}</div></div>
-        <div class="info-item"><span class="info-label">类型</span><div><a-tag color="blue">导师</a-tag></div></div>
-        <div class="info-item"><span class="info-label">邮箱</span><div class="info-value">{{ profile.email || '-' }}</div></div>
+        <div class="info-item"><span class="info-label">{{ $t('english_name') }}</span><div class="info-value bold">{{ profile.nickName || '-' }}</div></div>
+        <div class="info-item"><span class="info-label">{{ $t('gender') }}</span><div class="info-value">{{ profile.sex === '0' ? 'Male' : 'Female' }}</div></div>
+        <div class="info-item"><span class="info-label">{{ $t('type') }}</span><div><a-tag color="blue">{{ $t('mentor') }}</a-tag></div></div>
+        <div class="info-item"><span class="info-label">{{ $t('email') }}</span><div class="info-value">{{ profile.email || '-' }}</div></div>
       </div>
     </div>
 
     <!-- 联系方式 -->
     <div class="section">
-      <div class="section-badge badge-green"><i class="mdi mdi-phone" /> 联系方式</div>
+      <div class="section-badge badge-green"><i class="mdi mdi-phone" /> {{ $t('contact_info') }}</div>
       <div class="info-grid grid-3">
-        <div class="info-item bg-white"><span class="info-label">手机号</span><div class="info-value">{{ profile.phonenumber || '-' }}</div></div>
-        <div class="info-item bg-white"><span class="info-label">微信号</span><div class="info-value">{{ profile.remark || '-' }}</div></div>
-        <div class="info-item bg-white"><span class="info-label">所属地区</span><div class="info-value">{{ profile.loginIp || '-' }}</div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ $t('phone_number') }}</span><div class="info-value">{{ profile.phonenumber || '-' }}</div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ $t('wechat_id') }}</span><div class="info-value">{{ profile.remark || '-' }}</div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ $t('region_3') }}</span><div class="info-value">{{ profile.loginIp || '-' }}</div></div>
       </div>
     </div>
 
     <!-- 专业方向 -->
     <div class="section">
       <div style="display:flex;align-items:center">
-        <div class="section-badge badge-orange"><i class="mdi mdi-target" /> 专业方向</div>
-        <span class="lock-hint"><i class="mdi mdi-lock" /> 如需修改请联系后台文员</span>
+        <div class="section-badge badge-orange"><i class="mdi mdi-target" /> {{ $t('specialization') }}</div>
+        <span class="lock-hint"><i class="mdi mdi-lock" /> {{ $t('contact_backend_staff_for_modifications') }}</span>
       </div>
       <div class="info-grid grid-2">
-        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">主攻方向</span><div><a-tag color="purple">咨询 Consulting</a-tag></div></div>
-        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">二级方向</span><div class="info-value">Strategy Consulting</div></div>
+        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">{{ $t('major_focus') }}</span><div><a-tag color="purple">{{ $t('consulting') }} Consulting</a-tag></div></div>
+        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">{{ $t('secondary_focus') }}</span><div class="info-value">Strategy Consulting</div></div>
       </div>
     </div>
 
     <!-- 课程信息 -->
     <div class="section">
-      <div class="section-badge badge-blue"><i class="mdi mdi-book-open-variant" /> 课程信息</div>
+      <div class="section-badge badge-blue"><i class="mdi mdi-book-open-variant" /> {{ $t('session_information') }}</div>
       <div class="info-grid grid-2">
-        <div class="info-item bg-white"><span class="info-label">可授课程类型</span><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><a-tag color="blue">模拟面试</a-tag><a-tag color="blue">简历修改</a-tag><a-tag color="blue">案例分析</a-tag></div></div>
-        <div class="info-item bg-white"><span class="info-label">课单价 <span class="text-muted text-sm">(不可修改)</span></span><div class="fee-value">¥600/h</div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ $t('teachable_course_types') }}</span><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><a-tag color="blue">{{ $t('mock_interview') }}</a-tag><a-tag color="blue">{{ $t('resume_revision') }}</a-tag><a-tag color="blue">{{ $t('case_analysis') }}</a-tag></div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ $t('hourly_rate') }} <span class="text-muted text-sm">({{ $t('not_editable') }})</span></span><div class="fee-value">¥600/h</div></div>
       </div>
     </div>
 
@@ -67,24 +67,24 @@
       @cancel="showEditModal = false"
     >
       <div id="modal-mentor-edit-profile">
-        <div class="modal-header"><span class="modal-title"><i class="mdi mdi-account-edit" /> 编辑个人信息</span><button class="modal-close" type="button" @click="showEditModal = false">×</button></div>
+        <div class="modal-header"><span class="modal-title"><i class="mdi mdi-account-edit" /> {{ $t('edit_personal_information') }}</span><button class="modal-close" type="button" @click="showEditModal = false">×</button></div>
         <div class="modal-body">
-          <div class="edit-notice"><i class="mdi mdi-information" /> 修改信息后，后台文员将收到提醒通知。<br/><span style="color:#EF4444">注意：主攻方向、二级方向和课单价不可自行修改。</span></div>
+          <div class="edit-notice"><i class="mdi mdi-information" /> {{ $t('after_updating_your_information_the_back') }}。<br/><span style="color:#EF4444">{{ $t('note_primary_focus_secondary_focus_and_s') }}。</span></div>
           <div class="edit-section">
-            <div class="section-badge badge-green"><i class="mdi mdi-pencil" /> 可修改信息</div>
+            <div class="section-badge badge-green"><i class="mdi mdi-pencil" /> {{ $t('editable_information') }}</div>
             <div class="form-grid">
-              <div class="form-group"><label class="form-label">英文名 <span class="req">*</span></label><a-input v-model:value="editForm.nickName" /></div>
-              <div class="form-group"><label class="form-label">性别 <span class="req">*</span></label><select v-model="editForm.sex" class="form-select full"><option value="0">Male</option><option value="1">Female</option></select></div>
-              <div class="form-group"><label class="form-label">手机号 <span class="req">*</span></label><a-input v-model:value="editForm.phonenumber" /></div>
-              <div class="form-group"><label class="form-label">微信号</label><a-input v-model:value="editForm.remark" /></div>
-              <div class="form-group"><label class="form-label">邮箱 <span class="req">*</span></label><a-input v-model:value="editForm.email" type="email" /></div>
-              <div class="form-group"><label class="form-label">所属地区 <span class="req">*</span></label>
+              <div class="form-group"><label class="form-label">{{ $t('english_name') }} <span class="req">*</span></label><a-input v-model:value="editForm.nickName" /></div>
+              <div class="form-group"><label class="form-label">{{ $t('gender') }} <span class="req">*</span></label><select v-model="editForm.sex" class="form-select full"><option value="0">Male</option><option value="1">Female</option></select></div>
+              <div class="form-group"><label class="form-label">{{ $t('phone_number') }} <span class="req">*</span></label><a-input v-model:value="editForm.phonenumber" /></div>
+              <div class="form-group"><label class="form-label">{{ $t('wechat_id') }}</label><a-input v-model:value="editForm.remark" /></div>
+              <div class="form-group"><label class="form-label">{{ $t('email') }} <span class="req">*</span></label><a-input v-model:value="editForm.email" type="email" /></div>
+              <div class="form-group"><label class="form-label">{{ $t('region_3') }} <span class="req">*</span></label>
                 <div style="display:flex;gap:8px">
                   <select id="mentor-region-area" v-model="editForm.region" class="form-select" style="width:50%" @change="editForm.city = ''">
-                    <option value="">选择大区</option><option value="north-america">🌎 北美</option><option value="europe">🌍 欧洲</option><option value="asia-pacific">🌏 亚太</option><option value="china">🇨🇳 中国大陆</option>
+                    <option value="">{{ $t('select_region') }}</option><option value="north-america">🌎 {{ $t('north_america') }}</option><option value="europe">🌍 {{ $t('europe') }}</option><option value="asia-pacific">🌏 {{ $t('asia_pacific') }}</option><option value="china">🇨🇳 {{ $t('mainland_china') }}</option>
                   </select>
                   <select id="mentor-region-city" v-model="editForm.city" class="form-select" style="width:50%">
-                    <option value="">选择城市</option><option v-for="c in cityOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
+                    <option value="">{{ $t('select_city') }}</option><option v-for="c in cityOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
                   </select>
                 </div>
               </div>
@@ -92,7 +92,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a-button @click="showEditModal = false">取消</a-button>
+          <a-button @click="showEditModal = false">{{ $t('cancel') }}</a-button>
           <a-button type="primary" class="btn-primary" style="margin-left:8px" @click="saveProfile">
             <i class="mdi mdi-check" style="margin-right:4px" />保存修改
           </a-button>
@@ -113,12 +113,12 @@
     >
       <div id="modal-mentor-profile-save-confirm" class="modal-content--confirm">
         <div class="modal-header">
-          <span class="modal-title"><i class="mdi mdi-check-decagram" /> 确认提交变更</span>
+          <span class="modal-title"><i class="mdi mdi-check-decagram" /> {{ $t('confirm_change_submission') }}</span>
           <button class="modal-close" type="button" @click="closeSaveConfirmModal">×</button>
         </div>
         <div class="modal-body">
           <div class="save-summary">
-            <div class="save-summary-title">本次提交将进入后台文员审核链路</div>
+            <div class="save-summary-title">{{ $t('this_submission_will_enter_the_backend_s') }}</div>
             <ul class="save-summary-list">
               <li>英文名：{{ editForm.nickName || '-' }}</li>
               <li>性别：{{ editForm.sex === '0' ? 'Male' : 'Female' }}</li>
@@ -128,10 +128,10 @@
             </ul>
           </div>
           <div v-if="saveErrorMessage" class="save-error">{{ saveErrorMessage }}</div>
-          <div class="save-hint">确认后，系统会真实创建一条变更请求，等待后台文员处理。</div>
+          <div class="save-hint">{{ $t('upon_confirmation_the_system_will_create') }}。</div>
         </div>
         <div class="modal-footer">
-          <a-button @click="closeSaveConfirmModal">返回修改</a-button>
+          <a-button @click="closeSaveConfirmModal">{{ $t('back_to_edit') }}</a-button>
           <a-button type="primary" class="btn-primary" style="margin-left:8px" @click="submitSaveProfile">
             <i class="mdi mdi-cloud-upload" style="margin-right:4px" />确认保存
           </a-button>
@@ -152,17 +152,17 @@
     >
       <div id="modal-mentor-profile-save-success" class="modal-content--success">
         <div class="modal-header modal-header--success">
-          <span class="modal-title"><i class="mdi mdi-check-circle" /> 保存成功</span>
+          <span class="modal-title"><i class="mdi mdi-check-circle" /> {{ $t('saved_successfully') }}</span>
           <button class="modal-close" type="button" @click="closeSaveSuccessModal">×</button>
         </div>
         <div class="modal-body">
           <div class="success-card">
             <div class="success-icon"><i class="mdi mdi-bell-ring" /></div>
-            <div class="success-text">保存成功！后台文员已收到您的信息变更通知。</div>
+            <div class="success-text">{{ $t('saved_successfully_backend_staff_have_be') }}。</div>
           </div>
         </div>
         <div class="modal-footer">
-          <a-button type="primary" class="btn-primary" @click="closeSaveSuccessModal">知道了</a-button>
+          <a-button type="primary" class="btn-primary" @click="closeSaveSuccessModal">{{ $t('got_it') }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -173,7 +173,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { http } from '@osg/shared/utils/request'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const profile = ref<any>({})
 const showEditModal = ref(false)
 const showSaveConfirmModal = ref(false)
@@ -230,7 +232,7 @@ async function submitSaveProfile() {
     showSaveSuccessModal.value = true
     fetchProfile()
   } catch {
-    saveErrorMessage.value = '保存失败，请稍后重试'
+    saveErrorMessage.value = t('save_failed_please_try_again_later')
   }
 }
 

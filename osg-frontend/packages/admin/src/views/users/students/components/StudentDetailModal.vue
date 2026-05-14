@@ -23,8 +23,8 @@
     <div v-if="!canView" class="sdm-guard">
       <span class="mdi mdi-shield-alert-outline" aria-hidden="true"></span>
       <div>
-        <strong>当前角色无权查看学员详情</strong>
-        <p>仅文员与超管允许打开学员详情弹窗。该限制会在组件接入列表页后直接生效。</p>
+        <strong>{{ $t('current_role_does_not_have_permission_to') }}</strong>
+        <p>{{ $t('only_clerks_and_super_admins_are_allowed') }}。</p>
       </div>
     </div>
 
@@ -32,26 +32,26 @@
       <div class="sdm-note" data-content-part="supporting-text">
         <span class="mdi mdi-card-account-details-outline sdm-note__icon" aria-hidden="true"></span>
         <div class="sdm-note__copy">
-          <strong>学员资料台账</strong>
-          <p>可查看资料、信息变更和合同信息，并从这里继续进入编辑或续签流程。</p>
+          <strong>{{ $t('student_profile_ledger') }}</strong>
+          <p>{{ $t('view_profile_information_changes_and_con') }}。</p>
         </div>
       </div>
 
       <div class="sdm-overview" data-content-part="student-detail-overview">
         <article class="sdm-overview__card">
-          <span class="sdm-overview__label">账号状态</span>
+          <span class="sdm-overview__label">{{ $t('account_status_2') }}</span>
           <strong class="sdm-overview__value">{{ formatAccountStatus(detail?.accountStatus) }}</strong>
         </article>
         <article class="sdm-overview__card">
-          <span class="sdm-overview__label">求职地区</span>
+          <span class="sdm-overview__label">{{ $t('job_search_region') }}</span>
           <strong class="sdm-overview__value">{{ detail?.jobDirection?.targetRegion || detail?.targetRegion || '-' }}</strong>
         </article>
         <article class="sdm-overview__card">
-          <span class="sdm-overview__label">招聘周期</span>
+          <span class="sdm-overview__label">{{ $t('recruitment_cycle') }}</span>
           <strong class="sdm-overview__value">{{ formatList(detail?.jobDirection?.recruitmentCycles || detail?.recruitmentCycles) }}</strong>
         </article>
         <article class="sdm-overview__card">
-          <span class="sdm-overview__label">剩余课时</span>
+          <span class="sdm-overview__label">{{ $t('remaining_hours') }}</span>
           <strong class="sdm-overview__value">{{ contractSummary.remainingHours }}h</strong>
         </article>
       </div>
@@ -63,7 +63,7 @@
           :key="tab.key"
           type="button"
           :class="['sdm-tabs__item', { 'sdm-tabs__item--active': activeTab === tab.key }]"
-          :aria-label="`学员详情弹窗${tab.label}`"
+          :aria-label="$t('student_detail_modal_tab', { tab: tab.label })"
           :data-tab="tab.key"
           :data-tab-text="tab.label"
           @click="activeTab = tab.key"
@@ -79,19 +79,19 @@
           :data-surface-sample-key="`student-${detail?.studentId || studentId}-contract-renew`"
           @click="renewVisible = true"
         >
-          合同续签
+          {{ $t('contract_renewal') }}
         </a-button>
-        <a-button @click="activeTab = 'changes'">信息变更</a-button>
-        <a-button @click="activeTab = 'contracts'">查看合同</a-button>
+        <a-button @click="activeTab = 'changes'">{{ $t('profile_change') }}</a-button>
+        <a-button @click="activeTab = 'contracts'">{{ $t('view_contract') }}</a-button>
       </div>
 
       <!-- Loading / Error -->
       <div v-if="loading" class="sdm-loading">
         <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-        <span>正在加载学员详情...</span>
+        <span>{{ $t('loading_student_details') }}...</span>
       </div>
       <div v-else-if="loadError" class="sdm-error">
-        <strong>详情加载失败</strong>
+        <strong>{{ $t('failed_to_load_details') }}</strong>
         <p>{{ loadError }}</p>
       </div>
 
@@ -99,18 +99,18 @@
       <div v-else-if="activeTab === 'profile'" class="sdm-content">
         <!-- 核心信息 -->
         <section class="sdm-section sdm-section--primary">
-          <div class="sdm-section__badge sdm-badge--primary">核心信息</div>
+          <div class="sdm-section__badge sdm-badge--primary">{{ $t('core_information') }}</div>
           <div class="sdm-grid sdm-grid--4">
             <div class="sdm-field">
-              <span class="sdm-field__label">英文姓名</span>
+              <span class="sdm-field__label">{{ $t('english_name_2') }}</span>
               <div class="sdm-field__value sdm-field__value--bold">{{ detail?.studentName || '-' }}</div>
             </div>
             <div class="sdm-field">
-              <span class="sdm-field__label">性别</span>
+              <span class="sdm-field__label">{{ $t('gender') }}</span>
               <div class="sdm-field__value">{{ formatGender(detail?.gender) }}</div>
             </div>
             <div class="sdm-field sdm-field--span2">
-              <span class="sdm-field__label">邮箱</span>
+              <span class="sdm-field__label">{{ $t('email') }}</span>
               <div class="sdm-field__value">{{ detail?.email || '-' }}</div>
             </div>
           </div>
@@ -119,18 +119,18 @@
         <!-- 导师配置 -->
         <section class="sdm-section">
           <div class="sdm-section__badge sdm-badge--indigo">
-            <i class="mdi mdi-account-group" aria-hidden="true"></i> 导师配置
+            <i class="mdi mdi-account-group" aria-hidden="true"></i> {{ $t('mentor_configuration') }}
           </div>
           <div class="sdm-grid sdm-grid--2">
-            <div class="sdm-field sdm-field" data-field-name="班主任">
-              <span class="sdm-field__label">班主任</span>
+            <div class="sdm-field sdm-field" :data-field-name="$t('head_teacher')">
+              <span class="sdm-field__label">{{ $t('head_teacher') }}</span>
               <div class="sdm-field__pills">
                 <span v-if="detail?.mentor?.leadMentorName" class="sdm-pill sdm-pill--indigo">{{ detail.mentor.leadMentorName }}</span>
                 <span v-else class="sdm-field__value">{{ detail?.mentor?.leadMentorId ?? '-' }}</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="助教">
-              <span class="sdm-field__label">助教</span>
+            <div class="sdm-field sdm-field" :data-field-name="$t('teaching_assistant')">
+              <span class="sdm-field__label">{{ $t('teaching_assistant') }}</span>
               <div class="sdm-field__pills">
                 <span v-if="detail?.mentor?.assistantName" class="sdm-pill sdm-pill--green">{{ detail.mentor.assistantName }}</span>
                 <span v-else class="sdm-field__value">{{ detail?.mentor?.assistantId ?? '-' }}</span>
@@ -142,31 +142,31 @@
         <!-- 学业信息 -->
         <section class="sdm-section">
           <div class="sdm-section__badge sdm-badge--blue">
-            <i class="mdi mdi-school" aria-hidden="true"></i> 学业信息
+            <i class="mdi mdi-school" aria-hidden="true"></i> {{ $t('academic_information') }}
           </div>
           <div class="sdm-grid sdm-grid--4">
-            <div class="sdm-field sdm-field" data-field-name="学校">
-              <span class="sdm-field__label">学校</span>
+            <div class="sdm-field sdm-field" :data-field-name="$t('school')">
+              <span class="sdm-field__label">{{ $t('school') }}</span>
               <div class="sdm-field__value">{{ detail?.school || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="专业">
-              <span class="sdm-field__label">专业</span>
+            <div class="sdm-field sdm-field" :data-field-name="$t('major')">
+              <span class="sdm-field__label">{{ $t('major') }}</span>
               <div class="sdm-field__value">{{ detail?.major || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="毕业年份">
-              <span class="sdm-field__label">毕业年份</span>
+            <div class="sdm-field sdm-field" :data-field-name="$t('graduation_year')">
+              <span class="sdm-field__label">{{ $t('graduation_year') }}</span>
               <div class="sdm-field__value">{{ detail?.graduationYear ?? '-' }}</div>
             </div>
             <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">高中</span>
+              <span class="sdm-field__label">{{ $t('high_school') }}</span>
               <div class="sdm-field__value">{{ detail?.academic?.highSchool || detail?.highSchool || '-' }}</div>
             </div>
             <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">是否读研或延毕</span>
+              <span class="sdm-field__label">{{ $t('graduate_study_or_extended_graduation') }}</span>
               <div class="sdm-field__value">{{ formatStudyPlan(detail?.academic?.studyPlan, detail?.academic?.deferredGraduation) }}</div>
             </div>
             <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">签证</span>
+              <span class="sdm-field__label">{{ $t('visa') }}</span>
               <div class="sdm-field__value">{{ detail?.academic?.visaStatus || detail?.visaStatus || '-' }}</div>
             </div>
           </div>
@@ -175,11 +175,11 @@
         <!-- 求职方向 -->
         <section class="sdm-section">
           <div class="sdm-section__badge sdm-badge--amber">
-            <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
+            <i class="mdi mdi-target" aria-hidden="true"></i> {{ $t('job_search_direction') }}
           </div>
           <!-- 求职地区 -->
-          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="求职地区">
-            <span class="sdm-field__label">求职地区</span>
+          <div class="sdm-field sdm-field" style="margin-bottom:12px" :data-field-name="$t('job_search_region')">
+            <span class="sdm-field__label">{{ $t('job_search_region') }}</span>
             <div class="sdm-field__pills">
               <span v-if="detail?.jobDirection?.targetRegion || detail?.targetRegion" class="sdm-pill sdm-pill--green">
                 {{ detail?.jobDirection?.targetRegion || detail?.targetRegion }}
@@ -188,8 +188,8 @@
             </div>
           </div>
           <!-- 招聘周期 -->
-          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="招聘周期">
-            <span class="sdm-field__label">招聘周期</span>
+          <div class="sdm-field sdm-field" style="margin-bottom:12px" :data-field-name="$t('recruitment_cycle')">
+            <span class="sdm-field__label">{{ $t('recruitment_cycle') }}</span>
             <div class="sdm-field__pills">
               <span
                 v-for="cycle in (detail?.jobDirection?.recruitmentCycles || detail?.recruitmentCycles || [])"
@@ -201,8 +201,8 @@
           </div>
           <!-- 主攻方向 + 子方向 -->
           <div class="sdm-grid sdm-grid--direction">
-            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="主攻方向">
-              <span class="sdm-field__label" style="color:var(--primary)">主攻方向</span>
+            <div class="sdm-field sdm-field sdm-field--bordered" :data-field-name="$t('major_focus')">
+              <span class="sdm-field__label" style="color:var(--primary)">{{ $t('major_focus') }}</span>
               <div class="sdm-field__pills">
                 <span
                   v-for="dir in (detail?.jobDirection?.majorDirections || detail?.majorDirections || [])"
@@ -212,8 +212,8 @@
                 <span v-if="!(detail?.jobDirection?.majorDirections || detail?.majorDirections || []).length" class="sdm-field__value">-</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="子方向">
-              <span class="sdm-field__label" style="color:var(--primary)">子方向</span>
+            <div class="sdm-field sdm-field sdm-field--bordered" :data-field-name="$t('sub_focus')">
+              <span class="sdm-field__label" style="color:var(--primary)">{{ $t('sub_focus') }}</span>
               <div class="sdm-field__pills">
                 <span class="sdm-pill sdm-pill--sub">{{ detail?.jobDirection?.subDirection || detail?.subDirection || '-' }}</span>
               </div>
@@ -224,19 +224,19 @@
         <!-- 联系方式 -->
         <section class="sdm-section">
           <div class="sdm-section__badge sdm-badge--green">
-            <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式
+            <i class="mdi mdi-phone" aria-hidden="true"></i> {{ $t('contact_info') }}
           </div>
           <div class="sdm-grid sdm-grid--3">
-            <div class="sdm-field sdm-field" data-field-name="电话">
-              <span class="sdm-field__label">电话</span>
+            <div class="sdm-field sdm-field" :data-field-name="$t('phone')">
+              <span class="sdm-field__label">{{ $t('phone') }}</span>
               <div class="sdm-field__value">{{ detail?.contact?.phone || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="微信">
-              <span class="sdm-field__label">微信</span>
+            <div class="sdm-field sdm-field" :data-field-name="$t('wechat')">
+              <span class="sdm-field__label">{{ $t('wechat') }}</span>
               <div class="sdm-field__value">{{ detail?.contact?.wechat || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="账号状态">
-              <span class="sdm-field__label">账号状态</span>
+            <div class="sdm-field sdm-field" :data-field-name="$t('account_status_2')">
+              <span class="sdm-field__label">{{ $t('account_status_2') }}</span>
               <div>
                 <span :class="['sdm-status-tag', `sdm-status-tag--${statusColor}`]">
                   {{ formatAccountStatus(detail?.accountStatus) }}
@@ -252,8 +252,8 @@
         v-else-if="activeTab === 'changes'"
         :pending-changes="pendingChanges"
         :history-changes="historyChanges"
-        @approve="handleChangeDecision('approve', $event)"
-        @reject="handleChangeDecision('reject', $event)"
+        @approve="handleChangeDecision()"
+        @reject="handleChangeDecision()"
       />
 
       <!-- Tab 3: 合同信息 -->
@@ -265,14 +265,14 @@
     </template>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button
         v-if="canView && studentId"
         type="primary"
         data-surface-trigger="modal-edit-student-new"
         @click="handleRequestEdit"
       >
-        编辑学员
+        {{ $t('edit_student') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -297,7 +297,9 @@ import ChangeReviewTab from './ChangeReviewTab.vue'
 import ContractTab from './ContractTab.vue'
 import RenewContractModal from '../../contracts/components/RenewContractModal.vue'
 import type { ContractListItem } from '@osg/shared/api/admin/contract'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface StudentContact {
   email?: string
   wechat?: string
@@ -412,9 +414,9 @@ const emit = defineEmits<{
 }>()
 
 const tabDefs = [
-  { key: 'profile', label: '基本信息', icon: 'mdi-account' },
-  { key: 'changes', label: '信息变更', icon: 'mdi-bell-ring' },
-  { key: 'contracts', label: '合同信息', icon: 'mdi-file-sign' }
+  { key: 'profile', label: t('basic_info'), icon: 'mdi-account' },
+  { key: 'changes', label: t('profile_change'), icon: 'mdi-bell-ring' },
+  { key: 'contracts', label: t('contract_information'), icon: 'mdi-file-sign' }
 ] as const
 
 const tabs = tabDefs
@@ -427,11 +429,11 @@ const contractPayload = ref<ContractPayload | null>(null)
 const pendingChanges = ref<ChangeItem[]>([])
 const historyChanges = ref<ChangeItem[]>([])
 
-const fallbackStudentName = computed(() => props.studentName || '学员详情')
+const fallbackStudentName = computed(() => props.studentName || t('student_details'))
 const modalTitle = computed(() => detail.value?.studentName || fallbackStudentName.value)
 const firstDirectionLabel = computed(() => {
   const directions = detail.value?.jobDirection?.majorDirections || detail.value?.majorDirections || []
-  return directions[0] || '方向待补充'
+  return directions[0] || t('direction_to_be_filled')
 })
 
 const initials = computed(() => {
@@ -443,10 +445,14 @@ const initials = computed(() => {
 
 const statusColor = computed(() => {
   switch (detail.value?.accountStatus) {
-    case '1': return 'frozen'
-    case '2': return 'ended'
-    case '3': return 'refunded'
-    default: return 'normal'
+    case '1':
+      return 'frozen'
+    case '2':
+      return 'ended'
+    case '3':
+      return 'refunded'
+    default:
+      return 'normal'
   }
 })
 
@@ -536,7 +542,8 @@ const loadStudentDetail = async () => {
     contractPayload.value = contractRes
     hydrateChangeRequests(changeRequestRes)
   } catch (error) {
-    loadError.value = '请稍后重试，或检查学员详情接口是否可用。'
+    loadError.value = t('student_detail_load_retry_message')
+
   } finally {
     loading.value = false
   }
@@ -588,11 +595,11 @@ const mapChangeRequestItem = (item: StudentChangeRequestItem): ChangeItem => {
   return {
     id: requestId ?? `${item.fieldKey || 'change'}-${item.requestedAt || 'unknown'}`,
     requestId,
-    field: item.fieldLabel || item.fieldKey || '未命名字段',
+    field: item.fieldLabel || item.fieldKey || t('unnamed_field'),
     before: item.beforeValue || '-',
     after: item.afterValue || '-',
     requestedAt: formatTimestamp(item.requestedAt),
-    requestedBy: item.requestedBy || '系统',
+    requestedBy: item.requestedBy || t('system'),
     note: item.remark || undefined,
     status: item.status,
     changeType: item.changeType || undefined
@@ -616,9 +623,9 @@ const formatList = (items?: string[]) => {
 const formatGender = (gender?: string) => {
   switch (gender) {
     case '0':
-      return '男'
+      return t('male')
     case '1':
-      return '女'
+      return t('female')
     default:
       return '-'
   }
@@ -627,37 +634,37 @@ const formatGender = (gender?: string) => {
 const formatAccountStatus = (status?: string) => {
   switch (status) {
     case '1':
-      return '冻结'
+      return t('frozen')
     case '2':
-      return '已结束'
+      return t('ended')
     case '3':
-      return '退费'
+      return t('refund')
     default:
-      return '正常'
+      return t('active_3')
   }
 }
 
 const formatStudyPlan = (studyPlan?: string, deferredGraduation?: string) => {
   if (deferredGraduation && deferredGraduation !== 'false') {
-    return '延毕'
+    return t('extended_study')
   }
   switch (studyPlan) {
     case 'postgraduate':
     case 'true':
-      return '读研'
+      return t('graduate_studies')
     case 'deferred':
-      return '延毕'
+      return t('extended_study')
     case 'normal':
-      return '正常毕业'
+      return t('normal_graduation')
     default:
-      return '正常毕业'
+      return t('normal_graduation')
   }
 }
 
 const formatCurrency = (value?: number, currency: string = 'USD') => {
   const num = Number(value || 0)
   if (currency === 'GBP') return `£${num.toLocaleString()}`
-  return `$${num.toLocaleString()}`
+  return `${num.toLocaleString()}`
 }
 </script>
 

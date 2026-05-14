@@ -25,10 +25,12 @@ import { message } from 'ant-design-vue'
 
 import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
 import { clearAuth, getUser } from '@osg/shared/utils'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const FALLBACK_USER_NAME = 'Jess (Lead Mentor)'
 const FALLBACK_USER_INITIALS = 'JL'
-const FALLBACK_ROLE = '培训主管'
+const FALLBACK_ROLE = t('training_supervisor')
 
 const AVAILABLE_NAVIGATION_PATHS = new Set([
   '/career/positions',
@@ -193,7 +195,7 @@ const userInitials = computed(() => {
 
 // LM 端特有：子视图通过 inject 复用统一的"敬请期待" toast
 const showUpcomingToast = () => {
-  message.info('敬请期待')
+  message.info(t('stay_tuned'))
 }
 provide('showUpcomingToast', showUpcomingToast)
 
@@ -203,12 +205,12 @@ function handleNavClick(path: string) {
     return
   }
   // 未在白名单的路径统一走"敬请期待" toast（保留 LM 拦截语义）
-  message.info('敬请期待')
+  message.info(t('stay_tuned'))
 }
 
 function handleProfileClick() {
   // LM 个人设置本期未实现，统一走"敬请期待" toast（沿用旧 handleSettingsClick 意图）
-  message.info('敬请期待')
+  message.info(t('stay_tuned'))
 }
 
 function handleLogout() {

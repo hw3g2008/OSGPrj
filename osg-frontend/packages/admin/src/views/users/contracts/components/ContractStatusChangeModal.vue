@@ -9,29 +9,29 @@
     <template #title>
       <span class="contract-status-change-modal__title">
         <span class="mdi mdi-swap-horizontal" aria-hidden="true"></span>
-        <span>合同状态修改</span>
+        <span>{{ $t('contract_status_change') }}</span>
       </span>
     </template>
 
     <div class="contract-status-change-modal__intro">
       <strong>{{ targetLabel }}</strong>
-      <span>填写本次状态修改的原因与备注说明。</span>
+      <span>{{ $t('provide_reason_and_notes_for_this_status') }}。</span>
     </div>
 
     <a-form layout="vertical">
-      <a-form-item label="状态修改原因">
-        <a-select v-model:value="form.reason" placeholder="请选择状态修改原因">
+      <a-form-item :label="$t('reason_for_status_change')">
+        <a-select v-model:value="form.reason" :placeholder="$t('please_select_a_reason_for_the_status_ch')">
           <a-select-option v-for="option in reasonOptions" :key="option" :value="option">{{ option }}</a-select-option>
         </a-select>
       </a-form-item>
-      <a-form-item label="备注说明">
-        <a-textarea v-model:value="form.remark" :rows="3" placeholder="可填写补充说明" />
+      <a-form-item :label="$t('remarks_2')">
+        <a-textarea v-model:value="form.remark" :rows="3" :placeholder="$t('optional_additional_notes')" />
       </a-form-item>
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" @click="handleSubmit">确认修改</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" @click="handleSubmit">{{ $t('confirm_change') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -41,7 +41,9 @@ import { computed, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { ContractListItem } from '@osg/shared/api/admin/contract'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   contract?: ContractListItem | null
@@ -52,7 +54,7 @@ const emit = defineEmits<{
   submitted: []
 }>()
 
-const reasonOptions = ['状态误判', '合同信息更正', '服务期限调整', '其他原因']
+const reasonOptions = [t('status_misjudgment'), t('contract_information_correction'), t('service_period_adjustment'), t('other_reasons')]
 
 const form = reactive({
   reason: '',
@@ -60,8 +62,8 @@ const form = reactive({
 })
 
 const targetLabel = computed(() => {
-  if (!props.contract) return '当前合同'
-  return `${props.contract.studentName || '当前学员'} · ${props.contract.contractNo || props.contract.contractId}`
+  if (!props.contract) return t('current_contract')
+  return `${props.contract.studentName || t('current_student_2')} · ${props.contract.contractNo || props.contract.contractId}`
 })
 
 const resetForm = () => {
@@ -79,11 +81,11 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!form.reason) {
-    message.error('请选择状态修改原因')
+    message.error(t('please_select_a_reason_for_the_status_ch'))
     return
   }
   if (!form.remark.trim()) {
-    message.error('请填写备注说明')
+    message.error(t('please_fill_in_notes'))
     return
   }
   emit('submitted')

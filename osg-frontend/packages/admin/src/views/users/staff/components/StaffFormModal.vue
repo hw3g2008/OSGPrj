@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :open="visible"
     width="960px"
@@ -11,7 +11,7 @@
         <div v-if="isEditing" class="staff-form-modal__avatar">{{ avatarText }}</div>
         <span class="staff-form-modal__title-text">
           <span v-if="!isEditing" class="mdi mdi-account-plus" aria-hidden="true" style="margin-right:8px"></span>
-          {{ isEditing ? `编辑导师 - ${staff?.staffName || ''}` : '新增导师' }}
+          {{ isEditing ? `${$t('edit_mentor')} - ${staff?.staffName || ''}` : $t('add_mentor') }}
         </span>
       </div>
     </template>
@@ -19,37 +19,37 @@
     <div class="staff-form-modal__grid">
     <!-- Section 1: 核心信息 -->
     <section class="staff-form-modal__section">
-      <div class="staff-form-modal__badge staff-form-modal__badge--primary">核心信息</div>
+      <div class="staff-form-modal__badge staff-form-modal__badge--primary">{{ $t('core_information') }}</div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="姓名">
+            <a-form-item :label="$t('name')">
               <a-input
                 ref="staffNameInputRef"
                 v-model:value="form.staffName"
-                placeholder="请输入英文名"
+                :placeholder="$t('please_enter_english_name')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="邮箱">
-              <a-input v-model:value="form.email" placeholder="请输入邮箱" />
+            <a-form-item :label="$t('email')">
+              <a-input v-model:value="form.email" :placeholder="$t('please_enter_your_email')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="类型">
-              <a-select v-model:value="form.staffType" placeholder="请选择">
-                <a-select-option value="mentor">导师</a-select-option>
-                <a-select-option value="lead_mentor">班主任</a-select-option>
-                <a-select-option value="assistant">助教</a-select-option>
+            <a-form-item :label="$t('type')">
+              <a-select v-model:value="form.staffType" :placeholder="$t('please_select')">
+                <a-select-option value="mentor">{{ $t('mentor') }}</a-select-option>
+                <a-select-option value="lead_mentor">{{ $t('head_teacher') }}</a-select-option>
+                <a-select-option value="assistant">{{ $t('teaching_assistant') }}</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="性别">
-              <a-select v-model:value="form.gender" placeholder="请选择">
-                <a-select-option value="0">男</a-select-option>
-                <a-select-option value="1">女</a-select-option>
+            <a-form-item :label="$t('gender')">
+              <a-select v-model:value="form.gender" :placeholder="$t('please_select')">
+                <a-select-option value="0">{{ $t('male') }}</a-select-option>
+                <a-select-option value="1">{{ $t('female') }}</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -60,12 +60,12 @@
     <!-- Section 2: 联系方式 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--green">
-        <span class="mdi mdi-phone" aria-hidden="true" /> 联系方式
+        <span class="mdi mdi-phone" aria-hidden="true" /> {{ $t('contact_info') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="手机号">
+            <a-form-item :label="$t('phone_number')">
               <div class="phone-input-group">
                 <a-select
                   v-model:value="form.phoneCountryCode"
@@ -77,34 +77,34 @@
                 <a-input
                   v-model:value="form.phone"
                   class="phone-input-group__number"
-                  placeholder="请输入手机号"
+                  :placeholder="$t('please_enter_phone_number')"
                 />
               </div>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="微信">
-              <a-input v-model:value="form.wechatId" placeholder="请输入微信号" />
+            <a-form-item :label="$t('wechat')">
+              <a-input v-model:value="form.wechatId" :placeholder="$t('please_enter_wechat_id')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="地区">
+            <a-form-item :label="$t('area')">
               <a-select
                 v-model:value="form.region"
                 :options="regionItems"
                 :field-names="{ label: 'label', value: 'value' }"
-                placeholder="请选择"
+                :placeholder="$t('please_select')"
                 allow-clear
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="城市">
+            <a-form-item :label="$t('city')">
               <a-select
                 v-model:value="form.city"
                 :options="filteredCityOptions"
                 :field-names="{ label: 'label', value: 'value' }"
-                :placeholder="form.region ? '请选择' : '请先选择地区'"
+                :placeholder="form.region ? $t('please_select') : $t('please_select_a_region_first')"
                 :disabled="!form.region"
                 allow-clear
               />
@@ -117,51 +117,51 @@
     <!-- Section 3: 专业方向 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--amber">
-        <span class="mdi mdi-target" aria-hidden="true" /> 专业方向
+        <span class="mdi mdi-target" aria-hidden="true" /> {{ $t('specialization') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="主攻方向">
+            <a-form-item :label="$t('major_focus')">
               <MultiSelect
                 v-model:value="form.majorDirections"
                 :options="majorItems"
-                placeholder="请选择，可多选"
+                :placeholder="$t('please_select_multiple_allowed')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="子方向">
+            <a-form-item :label="$t('sub_focus')">
               <MultiSelect
                 v-model:value="form.subDirections"
                 :options="filteredSubOptions"
-                :placeholder="form.majorDirections.length ? '请选择，可多选' : '请先选择主攻方向'"
+                :placeholder="form.majorDirections.length ? $t('please_select_multiple_allowed') : $t('please_select_primary_direction_first')"
                 :disabled="!form.majorDirections.length"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="可授课程类型">
+            <a-form-item :label="$t('teachable_course_types')">
               <MultiSelect
                 v-model:value="form.courseTypes"
                 :options="courseItems"
-                placeholder="请选择，可多选"
+                :placeholder="$t('please_select_multiple_allowed')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="擅长">
+            <a-form-item :label="$t('expertise')">
               <MultiSelect
                 v-model:value="form.specialties"
                 :options="specialtyItems"
-                placeholder="请选择，可多选"
+                :placeholder="$t('please_select_multiple_allowed')"
                 :max-tag-count="0"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="课时单价">
-              <a-input-number v-model:value="form.hourlyRate" :min="0" placeholder="请输入课时单价" style="width:100%" />
+            <a-form-item :label="$t('hourly_rate_2')">
+              <a-input-number v-model:value="form.hourlyRate" :min="0" :placeholder="$t('please_enter_hourly_rate')" style="width:100%" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -171,27 +171,27 @@
     <!-- Section 4: 职业背景 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--purple">
-        <span class="mdi mdi-briefcase" aria-hidden="true" /> 职业背景
+        <span class="mdi mdi-briefcase" aria-hidden="true" /> {{ $t('professional_background') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="行业">
+            <a-form-item :label="$t('industry')">
               <MultiSelect
                 v-model:value="form.selectedIndustries"
                 :options="industryItems"
-                placeholder="请选择行业"
+                :placeholder="$t('please_select_industry')"
                 :max-tag-count="0"
                 @change="onIndustryChange"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="任职公司">
+            <a-form-item :label="$t('company_2')">
               <MultiSelect
                 v-model:value="form.companies"
                 :options="filteredCompanyOptions"
-                :placeholder="form.selectedIndustries.length ? '请选择公司' : '请先选择行业'"
+                :placeholder="form.selectedIndustries.length ? $t('please_select_company') : $t('please_select_industry_first')"
                 :disabled="!form.selectedIndustries.length"
                 :max-tag-count="0"
               />
@@ -203,17 +203,17 @@
 
     <section class="staff-form-modal__section" v-if="isSuperAdmin">
       <div class="staff-form-modal__badge staff-form-modal__badge--orange">
-        <span class="mdi mdi-star" aria-hidden="true" /> 内部评估
+        <span class="mdi mdi-star" aria-hidden="true" /> {{ $t('internal_evaluation') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="评级">
+            <a-form-item :label="$t('rating')">
               <a-select
                 v-model:value="form.rating"
                 :options="ratingItems"
                 :field-names="{ label: 'label', value: 'value' }"
-                placeholder="请选择评级"
+                :placeholder="$t('please_select_rating')"
                 allow-clear
               />
             </a-form-item>
@@ -224,18 +224,18 @@
 
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--blue">
-        <span class="mdi mdi-shield-account" aria-hidden="true" /> 账号信息
+        <span class="mdi mdi-shield-account" aria-hidden="true" /> {{ $t('account_information') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="登录账号">
-              <a-input v-model:value="form.loginAccount" placeholder="请输入登录账号" />
+            <a-form-item :label="$t('login_account')">
+              <a-input v-model:value="form.loginAccount" :placeholder="$t('please_enter_login_account')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="初始密码">
-              <a-input v-model:value="form.initialPassword" placeholder="请输入初始密码" />
+            <a-form-item :label="$t('initial_password')">
+              <a-input v-model:value="form.initialPassword" :placeholder="$t('please_enter_initial_password')" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -244,9 +244,9 @@
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button type="primary" :loading="submitting" @click="handleSubmit">
-        {{ isEditing ? '保存修改' : '确定添加' }}
+        {{ isEditing ? $t('save_changes') : $t('confirm_add') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -264,7 +264,9 @@ import {
 } from '@osg/shared/utils'
 import { useDictFacade, useIndustryMeta, type DictFacadeOption } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
 
@@ -318,7 +320,7 @@ const phoneCountryOptions = computed(() => {
     label: `${item.value} ${item.label}`,
   }))
   // 第一项为占位提示
-  return [{ value: '', label: '请选择区号' }, ...items]
+  return [{ value: '', label: t('please_select_country_code') }, ...items]
 })
 
 const filterPhoneCountryOption = (input: string, option: { label: string; value: string }) => {
@@ -333,7 +335,7 @@ const form = reactive({
   staffName: '',
   email: '',
   phone: '',
-  phoneCountryCode: '', // 默认"请选择区号"
+  phoneCountryCode: '', // 默认t('please_select_country_code')
   staffType: undefined as string | undefined,
   gender: undefined as string | undefined,
   wechatId: '',
@@ -484,41 +486,41 @@ const handleClose = () => {
 const handleSubmit = () => {
   const hourlyRateText = String(form.hourlyRate ?? '').trim()
   if (!form.staffName.trim()) {
-    message.error('请填写导师姓名')
+    message.error(t('please_enter_mentor_name'))
     return
   }
   if (!form.email.trim()) {
-    message.error('请填写邮箱')
+    message.error(t('please_enter_email_address'))
     return
   }
   if (!form.staffType) {
-    message.error('请选择导师类型')
+    message.error(t('please_select_mentor_type'))
     return
   }
   if (!form.majorDirections.length) {
-    message.error('请选择主攻方向')
+    message.error(t('please_select_primary_direction'))
     return
   }
   if (!form.region) {
-    message.error('请选择地区')
+    message.error(t('please_select_region'))
     return
   }
   if (!form.city) {
-    message.error('请选择城市')
+    message.error(t('please_select_city'))
     return
   }
   if (!hourlyRateText) {
-    message.error('请填写课时单价')
+    message.error(t('please_enter_hourly_rate_2'))
     return
   }
   // 前端校验：擅长最多 20 项
   if (form.specialties.length > 20) {
-    message.error('擅长最多选择 20 项')
+    message.error(t('up_to_20_specialties_can_be_selected'))
     return
   }
   // 前端校验：任职公司最多 10 家
   if (form.companies.length > 10) {
-    message.error('任职公司最多选择 10 家')
+    message.error(t('up_to_10_companies_can_be_selected'))
     return
   }
 
@@ -792,3 +794,4 @@ const handleSubmit = () => {
 }
 
 </style>
+

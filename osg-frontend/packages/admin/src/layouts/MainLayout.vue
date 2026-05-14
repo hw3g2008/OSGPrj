@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="main-shell">
     <aside class="sidebar" data-testid="main-sidebar">
       <div class="sidebar-header">
@@ -20,7 +20,7 @@
           @click="navigate('/dashboard')"
         >
           <span class="mdi mdi-home" aria-hidden="true" />
-          <span>首页</span>
+          <span>{{ $t('home_page') }}</span>
         </button>
 
         <template v-for="group in filteredMenuGroups" :key="group.key">
@@ -31,7 +31,7 @@
             type="button"
             class="nav-item"
             :class="{ active: !item.comingSoon && isActive(item.path) }"
-            @click="item.comingSoon ? message.info('敬请期待') : navigate(item.path)"
+            @click="item.comingSoon ? message.info($t('stay_tuned')) : navigate(item.path)"
           >
             <span class="mdi" :class="item.iconClass" aria-hidden="true" />
             <span>{{ item.title }}</span>
@@ -47,26 +47,26 @@
           data-surface-trigger="modal-setting"
           @click="openProfileSettings"
         >
-          个人设置
+          {{ $t('personal_settings') }}
         </button>
         <button type="button" class="user-card" @click="toggleUserMenu">
           <div class="user-avatar">{{ userInitials }}</div>
           <div class="user-info">
             <h4>{{ displayName }}</h4>
-            <p>点击展开</p>
+            <p>{{ $t('click_to_expand') }}</p>
           </div>
         </button>
-        <div v-if="showUserMenu" class="user-menu" role="menu" aria-label="用户菜单">
+        <div v-if="showUserMenu" class="user-menu" role="menu" :aria-label="$t('user_menu')">
           <button
             type="button"
             class="user-menu-item"
             data-surface-trigger="modal-setting"
             @click="openProfileSettings"
           >
-            个人设置
+            {{ $t('personal_settings') }}
           </button>
           <button type="button" class="user-menu-item danger" @click="handleLogout">
-            退出登录
+            {{ $t('log_out') }}
           </button>
         </div>
       </div>
@@ -93,7 +93,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
 import { useUserStore } from '@/stores/user'
 import ProfileModal from '@/components/ProfileModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const vueRouter = useRouter()
 const route = useRoute()
@@ -120,68 +122,68 @@ const footerMenuRef = ref<HTMLElement | null>(null)
 const menuGroups: MenuGroup[] = [
   {
     key: 'permission',
-    title: '权限管理 Permission',
+    title: t('permission_management'),
     children: [
-      { path: '/permission/menu', title: '菜单管理', permission: 'system:menu:list', iconClass: 'mdi-file-tree' },
-      { path: '/permission/roles', title: '权限配置', permission: 'system:role:list', iconClass: 'mdi-key' },
-      { path: '/permission/users', title: '后台用户管理', permission: 'system:user:list', iconClass: 'mdi-shield-account' },
-      { path: '/permission/dicts', title: '字典管理', permission: 'system:dict:list', iconClass: 'mdi-database-cog' },
+      { path: '/permission/menu', title: t('menu_management'), permission: 'system:menu:list', iconClass: 'mdi-file-tree' },
+      { path: '/permission/roles', title: t('permission_configuration'), permission: 'system:role:list', iconClass: 'mdi-key' },
+      { path: '/permission/users', title: t('backend_user_management'), permission: 'system:user:list', iconClass: 'mdi-shield-account' },
+      { path: '/permission/dicts', title: t('dictionary_management'), permission: 'system:dict:list', iconClass: 'mdi-database-cog' },
     ],
   },
   {
     key: 'user-center',
-    title: '用户中心 Users',
+    title: t('user_center'),
     children: [
-      { path: '/users/students', title: '学生列表', permission: 'admin:students:list', iconClass: 'mdi-account-school', badge: 2 },
-      { path: '/users/contracts', title: '合同管理', permission: 'admin:contracts:list', iconClass: 'mdi-file-sign' },
-      { path: '/users/staff', title: '导师列表', permission: 'admin:staff:list', iconClass: 'mdi-account-tie' },
-      { path: '/users/mentor-schedule', title: '导师排期管理', permission: 'admin:mentor-schedule:list', iconClass: 'mdi-calendar-clock' },
+      { path: '/users/students', title: t('student_list'), permission: 'admin:students:list', iconClass: 'mdi-account-school', badge: 2 },
+      { path: '/users/contracts', title: t('contract_management'), permission: 'admin:contracts:list', iconClass: 'mdi-file-sign' },
+      { path: '/users/staff', title: t('mentor_list'), permission: 'admin:staff:list', iconClass: 'mdi-account-tie' },
+      { path: '/users/mentor-schedule', title: t('tutor_schedule_management'), permission: 'admin:mentor-schedule:list', iconClass: 'mdi-calendar-clock' },
     ],
   },
   {
     key: 'career',
-    title: '求职中心 Career',
+    title: t('job_search_center'),
     children: [
-      { path: '/career/positions', title: '岗位信息', permission: 'admin:positions:list', iconClass: 'mdi-briefcase-search' },
-      { path: '/career/student-positions', title: '学生自添岗位', permission: 'admin:student-positions:list', iconClass: 'mdi-briefcase-plus', badge: 3 },
-      { path: '/career/job-overview', title: '学员求职总览', permission: 'admin:job-overview:list', iconClass: 'mdi-briefcase-eye', badge: 8 },
-      { path: '/career/mock-practice', title: '模拟应聘管理', permission: 'admin:mock-practice:list', iconClass: 'mdi-account-voice', badge: 3 },
+      { path: '/career/positions', title: t('position_information'), permission: 'admin:positions:list', iconClass: 'mdi-briefcase-search' },
+      { path: '/career/student-positions', title: t('posts_created_by_students'), permission: 'admin:student-positions:list', iconClass: 'mdi-briefcase-plus', badge: 3 },
+      { path: '/career/job-overview', title: t('overview_of_student_job_search'), permission: 'admin:job-overview:list', iconClass: 'mdi-briefcase-eye', badge: 8 },
+      { path: '/career/mock-practice', title: t('simulated_application_management'), permission: 'admin:mock-practice:list', iconClass: 'mdi-account-voice', badge: 3 },
     ],
   },
   {
     key: 'teaching',
-    title: '教学中心 Teaching',
+    title: t('teaching_center'),
     children: [
-      { path: '/teaching/class-records', title: '课程记录', permission: 'admin:class-records:list', iconClass: 'mdi-book-open-variant' },
-      { path: '/teaching/communication', title: '人际关系沟通记录', permission: 'admin:communication:list', iconClass: 'mdi-message-text-clock', comingSoon: true },
+      { path: '/teaching/class-records', title: t('course_records'), permission: 'admin:class-records:list', iconClass: 'mdi-book-open-variant' },
+      { path: '/teaching/communication', title: t('interpersonal_communication_records'), permission: 'admin:communication:list', iconClass: 'mdi-message-text-clock', comingSoon: true },
     ],
   },
   {
     key: 'finance',
-    title: '财务中心 Finance',
+    title: t('financial_center'),
     children: [
-      { path: '/finance/settlement', title: '课时结算', permission: 'finance:settlement:list', iconClass: 'mdi-cash-check', comingSoon: true },
-      { path: '/finance/expense', title: '报销管理', permission: 'finance:expense:list', iconClass: 'mdi-receipt', comingSoon: true },
+      { path: '/finance/settlement', title: t('class_hour_settlement'), permission: 'finance:settlement:list', iconClass: 'mdi-cash-check', comingSoon: true },
+      { path: '/finance/expense', title: t('reimbursement_management'), permission: 'finance:expense:list', iconClass: 'mdi-receipt', comingSoon: true },
     ],
   },
   {
     key: 'resource',
-    title: '资源中心 Resources',
+    title: t('resource_center'),
     children: [
-      { path: '/resource/files', title: '文件', permission: 'resource:file:list', iconClass: 'mdi-folder', comingSoon: true },
-      { path: '/resource/online-test-bank', title: '在线测试题库', permission: 'resource:onlineTestBank:list', iconClass: 'mdi-monitor-cellphone', badge: 5, comingSoon: true },
-      { path: '/resource/interview-bank', title: '真人面试题库', permission: 'resource:interviewBank:list', iconClass: 'mdi-account-tie-voice', badge: 3, comingSoon: true },
-      { path: '/resource/questions', title: '面试真题', permission: 'resource:question:list', iconClass: 'mdi-file-document-edit', badge: 5, comingSoon: true },
+      { path: '/resource/files', title: t('file'), permission: 'resource:file:list', iconClass: 'mdi-folder', comingSoon: true },
+      { path: '/resource/online-test-bank', title: t('online_test_question_bank'), permission: 'resource:onlineTestBank:list', iconClass: 'mdi-monitor-cellphone', badge: 5, comingSoon: true },
+      { path: '/resource/interview-bank', title: t('real_person_interview_question_bank'), permission: 'resource:interviewBank:list', iconClass: 'mdi-account-tie-voice', badge: 3, comingSoon: true },
+      { path: '/resource/questions', title: t('real_interview_questions'), permission: 'resource:question:list', iconClass: 'mdi-file-document-edit', badge: 5, comingSoon: true },
     ],
   },
   {
     key: 'profile',
-    title: '个人中心 Profile',
+    title: t('personal_center'),
     children: [
-      { path: '/profile/mailjob', title: '邮件', permission: 'profile:mailjob:list', iconClass: 'mdi-email-outline', comingSoon: true },
-      { path: '/profile/notice', title: '消息管理', permission: 'profile:notice:list', iconClass: 'mdi-bell', comingSoon: true },
-      { path: '/profile/complaints', title: '投诉建议', permission: 'profile:complaint:list', iconClass: 'mdi-message-alert', comingSoon: true },
-      { path: '/profile/logs', title: '操作日志', permission: 'admin:logs:list', iconClass: 'mdi-history' },
+      { path: '/profile/mailjob', title: t('mail'), permission: 'profile:mailjob:list', iconClass: 'mdi-email-outline', comingSoon: true },
+      { path: '/profile/notice', title: t('message_management'), permission: 'profile:notice:list', iconClass: 'mdi-bell', comingSoon: true },
+      { path: '/profile/complaints', title: t('complaints_and_suggestions'), permission: 'profile:complaint:list', iconClass: 'mdi-message-alert', comingSoon: true },
+      { path: '/profile/logs', title: t('operation_log'), permission: 'admin:logs:list', iconClass: 'mdi-history' },
     ],
   },
 ]
@@ -202,7 +204,7 @@ const filteredMenuGroups = computed(() => {
     .filter((group) => group.children.length > 0)
 })
 
-const displayName = computed(() => userStore.userInfo?.nickName || userStore.userInfo?.userName || '超级管理员')
+const displayName = computed(() => userStore.userInfo?.nickName || userStore.userInfo?.userName || t('super_administrator'))
 const userInitials = computed(() => {
   if (userStore.permissions.includes('*:*:*')) return 'SA'
   const name = displayName.value.trim()
@@ -232,13 +234,13 @@ const openProfileSettings = () => {
 const handleLogout = () => {
   showUserMenu.value = false
   Modal.confirm({
-    title: '确认退出',
-    content: '确定要退出登录吗？',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('confirm_to_exit'),
+    content: t('confirm_logout_question'),
+    okText: t('ok'),
+    cancelText: t('cancel'),
     async onOk() {
       await userStore.logout()
-      message.success('已退出登录')
+      message.success(t('logged_out'))
       vueRouter.push('/login')
     },
   })
@@ -504,3 +506,4 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+

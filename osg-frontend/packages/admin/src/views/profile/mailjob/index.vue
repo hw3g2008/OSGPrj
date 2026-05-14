@@ -1,10 +1,10 @@
 <template>
   <section class="osg-page">
-    <PageHeader title-zh="邮件作业" title-en="Mail Job" description="批量邮件发送管理">
+    <PageHeader :title-zh="$t('email_jobs')" title-en="Mail Job" :description="$t('bulk_email_send_management')">
       <template #actions>
         <a-button type="primary" @click="showNewMailJobModal = true">
           <template #icon><MailOutlined /></template>
-          新建任务
+          {{ $t('new_task') }}
         </a-button>
       </template>
     </PageHeader>
@@ -57,7 +57,7 @@
                 {{ record.createTime }}
               </template>
               <template v-else-if="column.dataIndex === 'action'">
-                <a-button type="link" size="small">查看</a-button>
+                <a-button type="link" size="small">{{ $t('view') }}</a-button>
               </template>
             </template>
           </a-table>
@@ -95,8 +95,8 @@
                 </a-tag>
               </template>
               <template v-else-if="column.dataIndex === 'action'">
-                <a-button type="link" size="small">编辑</a-button>
-                <a-button type="link" size="small">测试</a-button>
+                <a-button type="link" size="small">{{ $t('edit') }}</a-button>
+                <a-button type="link" size="small">{{ $t('test') }}</a-button>
               </template>
             </template>
           </a-table>
@@ -127,7 +127,9 @@ import {
   type MailJobRow,
   type SmtpServerRow
 } from '@osg/shared/api/admin/mailjob'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const activeTab = ref<string>('jobList')
 const rows = ref<MailJobRow[]>([])
 const smtpServers = ref<SmtpServerRow[]>([])
@@ -142,7 +144,7 @@ const jobColumns = [
   { title: 'Total | Pending | Success | Fail', dataIndex: 'stats', key: 'stats' },
   { title: 'Action By', dataIndex: 'actionBy', key: 'actionBy' },
   { title: 'Create Time', dataIndex: 'createTime', key: 'createTime' },
-  { title: '操作', dataIndex: 'action', key: 'action' }
+  { title: t('operation'), dataIndex: 'action', key: 'action' }
 ]
 
 const smtpColumns = [
@@ -152,7 +154,7 @@ const smtpColumns = [
   { title: 'Port', dataIndex: 'port', key: 'port' },
   { title: 'Username', dataIndex: 'username', key: 'username' },
   { title: 'Status', dataIndex: 'status', key: 'status' },
-  { title: '操作', dataIndex: 'action', key: 'action' }
+  { title: t('operation'), dataIndex: 'action', key: 'action' }
 ]
 
 const loadMailJobs = async () => {
@@ -161,7 +163,7 @@ const loadMailJobs = async () => {
     rows.value = response.rows ?? []
     smtpServers.value = response.smtpServers ?? []
   } catch (_error) {
-    message.error('邮件作业列表加载失败')
+    message.error(t('failed_to_load_email_job_list'))
   }
 }
 
@@ -170,7 +172,7 @@ const handleCreateMailJob = async (payload: CreateMailJobPayload) => {
   try {
     await createMailJob(payload)
     showNewMailJobModal.value = false
-    message.success('邮件任务创建成功')
+    message.success(t('email_task_created_successfully'))
     await loadMailJobs()
   } catch (_error) {
     // request util handles error message

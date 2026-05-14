@@ -54,7 +54,7 @@
         >
           {{ record.industry }}
         </span>
-        <span v-else class="osg-positions-list-table__muted">未归类</span>
+        <span v-else class="osg-positions-list-table__muted">{{ $t('uncategorized') }}</span>
       </template>
 
       <template v-else-if="column.dataIndex === 'positionCategory' || column.key === 'positionCategory'">
@@ -132,7 +132,9 @@ import {
   resolveLogoToneClass,
   deadlineToneClass as resolveDeadlineToneClassUtil,
 } from '../../utils/positionsTone'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 /**
  * PositionsListTable — 岗位列表视图（list 模式）
  *
@@ -193,16 +195,16 @@ const emit = defineEmits<{
 }>()
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { title: '岗位名称', key: 'positionName', dataIndex: 'positionName', width: 240, fixed: 'left' },
-  { title: '公司', key: 'companyName', dataIndex: 'companyName', width: 200 },
-  { title: '行业', key: 'industry', dataIndex: 'industry', width: 130 },
-  { title: '岗位分类', key: 'positionCategory', dataIndex: 'positionCategory', width: 110 },
-  { title: '地区', key: 'location', dataIndex: 'location', width: 130 },
-  { title: '招聘周期', key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
-  { title: '主攻方向', key: 'targetMajors', dataIndex: 'targetMajors', width: 140 },
-  { title: '发布时间', key: 'publishTime', dataIndex: 'publishTime', width: 110 },
-  { title: '截止时间', key: 'deadline', dataIndex: 'deadline', width: 110 },
-  { title: '我的学员', key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
+  { title: t('job_title'), key: 'positionName', dataIndex: 'positionName', width: 240, fixed: 'left' },
+  { title: t('company'), key: 'companyName', dataIndex: 'companyName', width: 200 },
+  { title: t('industry'), key: 'industry', dataIndex: 'industry', width: 130 },
+  { title: t('job_classification'), key: 'positionCategory', dataIndex: 'positionCategory', width: 110 },
+  { title: t('area'), key: 'location', dataIndex: 'location', width: 130 },
+  { title: t('recruitment_cycle'), key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
+  { title: t('major_focus'), key: 'targetMajors', dataIndex: 'targetMajors', width: 140 },
+  { title: t('published_date'), key: 'publishTime', dataIndex: 'publishTime', width: 110 },
+  { title: t('deadline'), key: 'deadline', dataIndex: 'deadline', width: 110 },
+  { title: t('my_students'), key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
 ]
 
 const effectiveColumns = computed<ColumnConfig[]>(() => props.columns ?? DEFAULT_COLUMNS)

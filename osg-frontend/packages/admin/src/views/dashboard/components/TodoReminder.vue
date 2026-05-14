@@ -4,7 +4,7 @@
       <span class="mdi mdi-bell-ring todo-reminder__bell" />
     </div>
     <div class="todo-reminder__content">
-      <strong class="todo-reminder__title">待处理事项</strong>
+      <strong class="todo-reminder__title">{{ $t('to_do_items') }}</strong>
       <div class="todo-reminder__list">
         <a
           v-for="item in todos"
@@ -13,11 +13,11 @@
           @click="handleClick(item.route)"
         >
           <span class="mdi" :class="routeIconMap[item.route] || 'mdi-circle-small'" />
-          <span>{{ item.count }}条{{ item.label }}</span>
+          <span>{{ $t('item_count_with_label', { count: item.count, label: item.label }) }}</span>
         </a>
       </div>
     </div>
-    <button class="todo-reminder__btn" @click="handleViewAll">查看全部</button>
+    <button class="todo-reminder__btn" @click="handleViewAll">{{ $t('view_all') }}</button>
   </div>
 </template>
 

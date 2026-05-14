@@ -2,7 +2,7 @@
   <div id="page-home" class="page active dashboard-page">
     <div class="card student-profile-card">
       <div class="card-header">
-        <span class="card-title">学员信息 Student Profile</span>
+        <span class="card-title">{{ $t('student_information') }} Student Profile</span>
       </div>
       <div class="card-body">
         <div class="profile-grid">
@@ -15,23 +15,23 @@
             <div class="student-meta-grid">
               <div><i class="mdi mdi-school" aria-hidden="true"></i>{{ profile.school }} · {{ profile.major }}</div>
               <div><i class="mdi mdi-calendar" aria-hidden="true"></i>{{ profile.graduationYear }}届毕业</div>
-              <div><i class="mdi mdi-target" aria-hidden="true"></i><strong>主攻方向：</strong>{{ profile.primaryDirection }}</div>
+              <div><i class="mdi mdi-target" aria-hidden="true"></i><strong>{{ $t('major_focus') }}：</strong>{{ profile.primaryDirection }}</div>
               <div><i class="mdi mdi-email" aria-hidden="true"></i>{{ profile.email }}</div>
             </div>
           </div>
           <div class="mentor-section">
             <div class="mentor-label">
               <i class="mdi mdi-account-tie" aria-hidden="true"></i>
-              我的导师团队 My Mentors
+              {{ $t('my_mentor_team') }} My Mentors
             </div>
             <div class="mentor-stack">
               <div>
-                <div class="mentor-role">班主任 Lead Mentor</div>
+                <div class="mentor-role">{{ $t('head_teacher') }} Lead Mentor</div>
                 <div class="mentor-primary-card">
                   <div class="mentor-avatar">{{ leadMentorInitials }}</div>
                   <div>
-                    <div class="mentor-name">{{ profile.leadMentor || '待分配' }}</div>
-                    <div class="mentor-area">{{ profile.primaryDirection || '方向待更新' }}</div>
+                    <div class="mentor-name">{{ profile.leadMentor || $t('to_be_allocated') }}</div>
+                    <div class="mentor-area">{{ profile.primaryDirection || $t('direction_pending_update') }}</div>
                   </div>
                 </div>
               </div>
@@ -58,7 +58,7 @@
         <div class="analysis-header">
           <div>
             <div class="analysis-eyebrow">Learning Analysis Report</div>
-            <h2>学情分析报告</h2>
+            <h2>{{ $t('learning_progress_report') }}</h2>
           </div>
           <div class="analysis-updated">
             <i class="mdi mdi-clock-outline" aria-hidden="true"></i>
@@ -158,11 +158,11 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">模拟面试得分 Mock Interview Scores</span>
+        <span class="card-title">{{ $t('mock_interview_score') }} Mock Interview Scores</span>
         <span class="card-inline-hint">
           记录 <strong>{{ practiceRecords.length }}</strong>
         </span>
-        <a-button type="link" class="header-link" @click="$router.push('/feedback')">查看全部 →</a-button>
+        <a-button type="link" class="header-link" @click="$router.push('/feedback')">{{ $t('view_all') }} →</a-button>
       </div>
       <div class="card-body card-body-no-padding">
         <a-table
@@ -172,7 +172,7 @@
           :row-key="(record: any) => `${record.date}-${record.mentor}-${record.type}`"
           class="dashboard-table"
         >
-          <template #emptyText><div class="empty-cell">暂无模拟应聘记录</div></template>
+          <template #emptyText><div class="empty-cell">{{ $t('no_mock_interview_records_yet') }}</div></template>
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'score'">
               <span class="score-cell" :class="record.scoreTone">{{ record.score }}</span>
@@ -187,7 +187,7 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">基础课进度 Foundation Progress</span>
+        <span class="card-title">{{ $t('foundation_course_progress') }} Foundation Progress</span>
       </div>
       <div class="card-body">
         <div class="progress-grid">
@@ -209,11 +209,11 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">简历详情 Resume Details</span>
+        <span class="card-title">{{ $t('resume_details') }} Resume Details</span>
         <span class="card-inline-hint">
           实时摘要 <strong>{{ resumeRows.length }}</strong>
         </span>
-        <a-button type="link" class="header-link" @click="$router.push('/resume')">管理简历 →</a-button>
+        <a-button type="link" class="header-link" @click="$router.push('/resume')">{{ $t('manage_resume') }} →</a-button>
       </div>
       <div class="card-body card-body-no-padding">
         <a-table
@@ -231,7 +231,7 @@
               <span v-else>{{ record.version }}</span>
             </template>
             <template v-else-if="column.key === 'action'">
-              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/resume')">查看</a-button>
+              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/resume')">{{ $t('view') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -240,11 +240,11 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">真实面试记录 Real Interviews</span>
+        <span class="card-title">{{ $t('real_interview_records') }} Real Interviews</span>
         <span class="card-inline-hint">
           累计 <strong>{{ applicationsPreview.length }}</strong> 次
         </span>
-        <a-button type="link" class="header-link" @click="$router.push('/questions')">查看全部 →</a-button>
+        <a-button type="link" class="header-link" @click="$router.push('/questions')">{{ $t('view_all') }} →</a-button>
       </div>
       <div class="card-body card-body-no-padding">
         <a-table
@@ -254,13 +254,13 @@
           :row-key="(record: any) => `${record.company}-${record.role}`"
           class="dashboard-table"
         >
-          <template #emptyText><div class="empty-cell">暂无真实面试记录</div></template>
+          <template #emptyText><div class="empty-cell">{{ $t('no_real_interview_records_yet') }}</div></template>
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'company'">
               <span class="company-cell">{{ record.company }}</span>
             </template>
             <template v-else-if="column.key === 'action'">
-              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/job-tracking')">详情</a-button>
+              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/job-tracking')">{{ $t('details') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -287,25 +287,25 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">快捷操作 Quick Actions</span>
+        <span class="card-title">{{ $t('quick_actions') }} Quick Actions</span>
       </div>
       <div class="card-body">
         <a-space :size="12" wrap class="quick-actions">
           <a-button type="primary" size="large" class="btn btn-primary" @click="$router.push('/courses')">
             <template #icon><BookOutlined /></template>
-            我的课程
+            {{ $t('my_sessions') }}
           </a-button>
           <a-button size="large" class="btn btn-outline" @click="$router.push('/questions')">
             <template #icon><FileTextOutlined /></template>
-            填写面试真题
+            {{ $t('submit_interview_questions') }}
           </a-button>
           <a-button size="large" class="btn btn-outline" @click="$router.push('/netlog')">
             <template #icon><TeamOutlined /></template>
-            填写沟通记录
+            {{ $t('fill_in_communication_log') }}
           </a-button>
           <a-button size="large" class="btn btn-outline" @click="$router.push('/positions')">
             <template #icon><SearchOutlined /></template>
-            岗位信息
+            {{ $t('position_information') }}
           </a-button>
         </a-space>
       </div>
@@ -341,31 +341,33 @@ import {
 } from '@osg/shared/api'
 // §D.3 dashboard 卡片接入 SSOT composable，停止依赖后端 coachingStatusLabel 固化字段
 import { deriveApplicationStatus } from '@osg/shared/composables'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const mockScoreColumns = [
-  { title: '日期', dataIndex: 'date', key: 'date' },
+  { title: t('date'), dataIndex: 'date', key: 'date' },
   { title: 'Mentor', dataIndex: 'mentor', key: 'mentor' },
-  { title: '类型', dataIndex: 'type', key: 'type' },
-  { title: '状态', key: 'score' },
+  { title: t('type'), dataIndex: 'type', key: 'type' },
+  { title: t('status'), key: 'score' },
   { title: 'Performance', key: 'tag' },
 ]
 
 const resumeColumns = [
-  { title: '版本', key: 'version' },
-  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
-  { title: '指导导师', dataIndex: 'mentor', key: 'mentor' },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
-  { title: '操作', key: 'action' },
+  { title: t('version'), key: 'version' },
+  { title: t('file_name'), dataIndex: 'fileName', key: 'fileName' },
+  { title: t('supervising_mentor'), dataIndex: 'mentor', key: 'mentor' },
+  { title: t('updated_at'), dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: t('operation'), key: 'action' },
 ]
 
 const interviewColumns = [
-  { title: '日期', dataIndex: 'date', key: 'date' },
-  { title: '公司', key: 'company' },
-  { title: '办公室', dataIndex: 'office', key: 'office' },
-  { title: '岗位', dataIndex: 'role', key: 'role' },
-  { title: '项目', dataIndex: 'program', key: 'program' },
-  { title: '轮次', dataIndex: 'round', key: 'round' },
-  { title: '操作', key: 'action' },
+  { title: t('date'), dataIndex: 'date', key: 'date' },
+  { title: t('company'), key: 'company' },
+  { title: t('office'), dataIndex: 'office', key: 'office' },
+  { title: t('position'), dataIndex: 'role', key: 'role' },
+  { title: t('project'), dataIndex: 'program', key: 'program' },
+  { title: t('round'), dataIndex: 'round', key: 'round' },
+  { title: t('operation'), key: 'action' },
 ]
 
 const profile = reactive<StudentProfileRecord>({
@@ -374,7 +376,7 @@ const profile = reactive<StudentProfileRecord>({
   englishName: '-',
   email: '-',
   sexLabel: '-',
-  statusLabel: '正常',
+  statusLabel: t('active_3'),
   leadMentor: '-',
   assistantName: '-',
   school: '-',
@@ -393,9 +395,9 @@ const profile = reactive<StudentProfileRecord>({
 
 const applicationsMeta = reactive<StudentApplicationsMeta>({
   pageSummary: {
-    titleZh: '我的求职',
+    titleZh: t('my_job_search'),
     titleEn: 'My Applications',
-    subtitle: '查看您的岗位申请和面试安排',
+    subtitle: t('view_your_position_applications_and_inte'),
   },
   tabCounts: {
     all: 0,
@@ -416,17 +418,17 @@ const applicationsMeta = reactive<StudentApplicationsMeta>({
 
 const classRecordsMeta = reactive<StudentClassRecordsMeta>({
   pageSummary: {
-    titleZh: '课程记录',
+    titleZh: t('course_records'),
     titleEn: 'Class Records',
-    subtitle: '查看我的上课记录和导师反馈',
+    subtitle: t('view_my_class_records_and_mentor_feedbac'),
   },
   reminderBanner: {
     iconLabel: 'CR',
-    title: '新增课程记录',
-    leadText: '导师',
-    middleText: '为您填报了',
-    suffixText: '条新的上课记录，请及时评价',
-    ctaLabel: '去评价',
+    title: t('add_course_record'),
+    leadText: t('mentor'),
+    middleText: t('has_submitted_for_you'),
+    suffixText: t('new_class_records_please_review_promptly'),
+    ctaLabel: t('rate_now'),
   },
   tabDefinitions: [],
   filters: {
@@ -441,36 +443,36 @@ const classRecordsMeta = reactive<StudentClassRecordsMeta>({
   },
   tableHeaders: {
     recordId: '记录ID',
-    coachingDetail: '辅导内容',
-    courseContent: '课程内容',
-    mentor: '导师',
-    classDate: '上课日期',
-    duration: '时长',
-    rating: '我的评价',
-    action: '操作',
+    coachingDetail: t('coaching_content'),
+    courseContent: t('course_content'),
+    mentor: t('mentor'),
+    classDate: t('course_date'),
+    duration: t('duration'),
+    rating: t('my_review'),
+    action: t('operation'),
   },
   detailDialog: {
-    closeLabel: '关闭',
-    confirmLabel: '修改评价',
+    closeLabel: t('close'),
+    confirmLabel: t('edit_review'),
     fields: {
       recordId: '记录ID',
-      coachingDetail: '辅导内容',
-      courseContent: '课程内容',
-      mentor: '导师',
-      classDate: '上课日期',
-      duration: '时长',
+      coachingDetail: t('coaching_content'),
+      courseContent: t('course_content'),
+      mentor: t('mentor'),
+      classDate: t('course_date'),
+      duration: t('duration'),
     },
   },
   ratingDialog: {
-    title: '课程评价',
-    scoreLabel: '整体评分',
-    tagLabel: '评价标签',
-    feedbackLabel: '详细反馈',
+    title: t('course_review_2'),
+    scoreLabel: t('overall_rating'),
+    tagLabel: t('review_tags'),
+    feedbackLabel: t('detailed_feedback'),
     tagPlaceholder: '',
     feedbackPlaceholder: '',
-    cancelLabel: '取消',
-    submitLabel: '提交评价',
-    successMessage: '评价提交成功',
+    cancelLabel: t('cancel'),
+    submitLabel: t('submit_review'),
+    successMessage: t('review_submitted_successfully'),
     tagOptions: [],
   },
 })
@@ -559,7 +561,7 @@ const analysisNeedsWork = computed(() => {
   if (applicationsMeta.tabCounts.applied > 0) {
     return `已投递待推进 ${applicationsMeta.tabCounts.applied} 条`
   }
-  return '继续补充更多真实反馈'
+  return t('continue_adding_more_real_feedback')
 })
 
 const analysisStrengths = computed(() => {
@@ -569,7 +571,7 @@ const analysisStrengths = computed(() => {
   if (practiceRecords.value.length > 0) {
     return `${practiceRecords.value.length} 条模拟应聘已进入记录`
   }
-  return '基础资料与求职意向已同步'
+  return t('basic_profile_and_job_search_preferences')
 })
 
 const applicationsPreview = computed(() =>
@@ -657,7 +659,7 @@ const mentorNotes = computed(() => [
     date: analysisUpdatedText.value.replace('Updated ', '') || '-',
     copy:
       applicationsMeta.tabCounts.ongoing > 0
-        ? `当前共有 ${applicationsMeta.tabCounts.ongoing} 条进行中的求职记录，建议优先推进 ${applications.value[0]?.company || '重点岗位'} 的下一轮准备。`
+        ? `当前共有 ${applicationsMeta.tabCounts.ongoing} 条进行中的求职记录，建议优先推进 ${applications.value[0]?.company || t('key_positions')} 的下一轮准备。`
         : '当前暂无进行中的求职记录，建议先完善岗位收藏与申请动作。',
   },
   {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :open="visible"
     surface-id="modal-assign-mentor"
@@ -9,7 +9,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-plus-outline" aria-hidden="true"></span>
-        <span>分配导师</span>
+        <span>{{ $t('assign_a_mentor') }}</span>
       </span>
     </template>
 
@@ -25,7 +25,7 @@
         </a-col>
         <a-col flex="auto">
           <div class="student-card__name">
-            {{ row?.studentName || '待分配学员' }}
+            {{ row?.studentName || $t('students_to_be_assigned') }}
             <span class="student-card__meta">(ID: {{ row?.studentId || '--' }})</span>
           </div>
           <div class="student-card__sub">
@@ -38,18 +38,18 @@
 
       <a-row :gutter="[16, 12]" class="student-grid">
         <a-col :xs="24" :sm="12">
-          <span class="student-grid__label">建议分配</span>
-          <strong class="student-grid__accent">{{ requestedCount }} 位导师</strong>
+          <span class="student-grid__label">{{ $t('recommended_allocation') }}</span>
+          <strong class="student-grid__accent">{{ requestedCount }} {{ $t('mentors') }}</strong>
         </a-col>
         <a-col :xs="24" :sm="12">
-          <span class="student-grid__label">意向导师</span>
+          <span class="student-grid__label">{{ $t('intended_mentor') }}</span>
           <strong class="student-grid__success">{{ preferredMentorLabel }}</strong>
         </a-col>
       </a-row>
     </a-card>
 
     <div class="form-group">
-      <div class="form-label">筛选导师</div>
+      <div class="form-label">{{ $t('screening_tutors') }}</div>
       <a-row
         :gutter="[12, 12]"
         class="job-overview-assign-modal__filters filter-row"
@@ -57,32 +57,32 @@
         <a-col :xs="24" :sm="12" :md="8">
           <a-select
             v-model:value="scope"
-            placeholder="全部范围"
+            :placeholder="$t('full_range')"
             allow-clear
             style="width:100%"
             :options="scopeOptions"
-            data-field-name="排期状态筛选"
-            data-field-name-alias="分配导师弹窗排期状态筛选"
+            :data-field-name="$t('scheduling_status_filter')"
+            :data-field-name-alias="$t('assignment_tutor_pop_up_window_schedulin')"
           />
         </a-col>
         <a-col :xs="24" :sm="12" :md="8">
           <a-select
             v-model:value="majorDirection"
-            placeholder="全部主攻方向"
+            :placeholder="$t('all_main_directions_of_attack')"
             allow-clear
             style="width:100%"
             :options="majorDirectionOptions"
-            data-field-name="主攻方向筛选"
-            data-field-name-alias="分配导师弹窗主攻方向筛选"
+            :data-field-name="$t('filter_by_main_direction_of_attack')"
+            :data-field-name-alias="$t('assign_tutor_pop_up_window_to_select_mai')"
           />
         </a-col>
         <a-col :xs="24" :sm="24" :md="8">
           <a-input
             v-model:value="keyword"
-            placeholder="搜索导师姓名..."
+            :placeholder="`${$t('search_for_tutor_name')}...`"
             allow-clear
-            data-field-name="导师搜索"
-            data-field-name-alias="分配导师弹窗导师搜索"
+            :data-field-name="$t('tutor_search')"
+            :data-field-name-alias="$t('assign_tutor_pop_up_window_tutor_search')"
           >
             <template #prefix><SearchOutlined /></template>
           </a-input>
@@ -90,18 +90,18 @@
       </a-row>
       <div class="filter-hint">
         <FilterOutlined />
-        共找到 <strong>{{ filteredMentorOptions.length }}</strong> 位导师
+        {{ $t('found_mentors_count', { count: filteredMentorOptions.length }) }}
       </div>
     </div>
 
     <div class="form-group">
       <div class="form-label">
-        选择导师
-        <span class="form-label__meta">(可多选)</span>
+        {{ $t('choose_a_tutor') }}
+        <span class="form-label__meta">({{ $t('multiple_selections_possible') }})</span>
       </div>
       <a-empty
         v-if="!filteredMentorOptions.length"
-        description="当前没有可直接分配的导师候选"
+        :description="$t('there_are_currently_no_mentor_candidates')"
         class="job-overview-assign-modal__empty assign-mentor-modal__empty mentor-empty"
       />
       <a-list
@@ -123,7 +123,8 @@
               <a-checkbox
                 :checked="selectedMentorIds.includes(item.mentorId)"
                 :data-field-name="item.mentorName"
-                :data-field-name-alias="`分配导师弹窗${item.mentorName}`"
+                :data-field-name-alias="$t('assign_mentor_modal_mentor_name', { name: item.mentorName })"
+
                 @click.stop
                 @change="toggleMentor(item.mentorId)"
               />
@@ -135,9 +136,9 @@
                     v-if="item.preferred"
                     color="blue"
                     class="mentor-item__badge"
-                  >意向导师</a-tag>
+                  >{{ $t('intended_mentor') }}</a-tag>
                 </div>
-                <div class="mentor-item__sub">{{ item.hint || '可分配导师' }}</div>
+                <div class="mentor-item__sub">{{ item.hint || $t('assignable_mentors') }}</div>
               </div>
             </div>
           </a-list-item>
@@ -145,26 +146,26 @@
       </a-list>
       <div class="selection-hint">
         <InfoCircleOutlined />
-        已选择 <strong>{{ selectedMentorIds.length }}</strong> 位导师
+        {{ $t('selected_mentors_count', { count: selectedMentorIds.length }) }}
       </div>
     </div>
 
     <div
       class="form-group form-group--last job-overview-assign-modal__note-field"
-      data-field-name="备注"
-      data-field-name-alias="分配导师弹窗备注"
+      :data-field-name="$t('remarks')"
+      :data-field-name-alias="$t('assignment_instructor_pop_up_window_note')"
     >
       <div class="form-label">
-        备注
-        <span class="form-label__meta">(选填)</span>
+        {{ $t('remarks') }}
+        <span class="form-label__meta">({{ $t('optional') }})</span>
       </div>
       <a-textarea
         v-model:value="assignNote"
-        data-field-name="备注"
-        data-field-name-alias="分配导师弹窗备注"
+        :data-field-name="$t('remarks')"
+        :data-field-name-alias="$t('assignment_instructor_pop_up_window_note')"
         :rows="3"
         :maxlength="160"
-        placeholder="给导师的特别说明，如学员背景、重点辅导内容等..."
+        :placeholder="`${$t('special_instructions_for_tutors_such_as_')}...`"
       />
       <div class="job-overview-assign-modal__note-meta assign-mentor-modal__note-meta">
         <span>{{ assignNote.length }}/160</span>
@@ -172,13 +173,13 @@
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button
         type="primary"
         :disabled="submitting || !selectedMentorIds.length"
         @click="handleSubmit"
       >
-        {{ submitting ? '提交中...' : '确认分配' }}
+        {{ submitting ? $t('submitting') + '...' : $t('confirm_allocation') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -194,7 +195,9 @@ import {
 } from '@ant-design/icons-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { UnassignedJobOverviewRow } from '@osg/shared/api/admin/jobOverview'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface AssignMentorOption {
   mentorId: number
   mentorName: string
@@ -225,8 +228,8 @@ const selectedMentorIds = ref<number[]>([])
 const assignNote = ref('')
 
 const scopeOptions = [
-  { value: 'preferred', label: '意向导师' },
-  { value: 'recommended', label: '班主任推荐' }
+  { value: 'preferred', label: t('intended_mentor') },
+  { value: 'recommended', label: t('recommended_by_the_head_teacher') }
 ] as const
 
 const majorDirectionOptions = computed(() => {
@@ -244,12 +247,12 @@ const majorDirectionOptions = computed(() => {
 })
 
 const studentInitials = computed(() => {
-  const value = props.row?.studentName || '学员'
+  const value = props.row?.studentName || t('student')
   return value.slice(0, 2).toUpperCase()
 })
 
 const requestedCount = computed(() => props.row?.requestedMentorCount || 1)
-const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || '暂无学员意向导师')
+const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || t('there_are_currently_no_prospective_mento'))
 
 const filteredMentorOptions = computed(() => {
   const normalizedKeyword = keyword.value.trim().toLowerCase()
@@ -257,7 +260,7 @@ const filteredMentorOptions = computed(() => {
     if (scope.value === 'preferred' && !option.preferred) {
       return false
     }
-    if (scope.value === 'recommended' && option.hint !== '班主任推荐') {
+    if (scope.value === 'recommended' && option.hint !== t('recommended_by_the_head_teacher')) {
       return false
     }
     if (majorDirection.value && resolveMajorDirection(option) !== majorDirection.value) {
@@ -310,7 +313,7 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!selectedMentorIds.value.length) {
-    message.warning('请至少选择1位导师')
+    message.warning(t('please_select_at_least_1_tutor'))
     return
   }
 
@@ -576,3 +579,4 @@ const resolveMajorDirection = (option: AssignMentorOption) => {
   }
 }
 </style>
+

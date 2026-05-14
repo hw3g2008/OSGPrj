@@ -2,11 +2,11 @@
   <div class="career-page">
     <OsgPageContainer title="岗位信息 / Job Tracker">
       <div class="job-intent-section">
-        <span class="intent-label">求职意向：</span>
-        <a-tag color="blue">Java开发</a-tag>
-        <a-tag color="green">北京</a-tag>
+        <span class="intent-label">{{ $t('job_search_preferences') }}：</span>
+        <a-tag color="blue">Java{{ $t('development') }}</a-tag>
+        <a-tag color="green">{{ $t('beijing') }}</a-tag>
         <a-tag color="orange">15K-25K</a-tag>
-        <a class="modify-link" @click="$router.push('/profile')">修改求职意向</a>
+        <a class="modify-link" @click="$router.push('/profile')">{{ $t('edit_job_search_preferences') }}</a>
       </div>
 
       <a-row :gutter="24">
@@ -19,9 +19,9 @@
                 </template>
                 <template v-if="column.key === 'actions'">
                   <a-space>
-                    <a-button size="small" type="primary" ghost>已投递</a-button>
-                    <a-button size="small" :icon="h(StarOutlined)">收藏</a-button>
-                    <a-button size="small">记录进度</a-button>
+                    <a-button size="small" type="primary" ghost>{{ $t('delivered') }}</a-button>
+                    <a-button size="small" :icon="h(StarOutlined)">{{ $t('saved') }}</a-button>
+                    <a-button size="small">{{ $t('log_progress') }}</a-button>
                   </a-space>
                 </template>
               </template>
@@ -44,21 +44,23 @@
 import { ref, h } from 'vue'
 import { StarOutlined } from '@ant-design/icons-vue'
 import { OsgPageContainer } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const loading = ref(false)
 
 const columns = [
-  { title: '公司', dataIndex: 'company', key: 'company' },
-  { title: '岗位', dataIndex: 'position', key: 'position' },
-  { title: '投递时间', dataIndex: 'applyTime', key: 'applyTime' },
-  { title: '状态', key: 'status' },
-  { title: '操作', key: 'actions' }
+  { title: t('company'), dataIndex: 'company', key: 'company' },
+  { title: t('position'), dataIndex: 'position', key: 'position' },
+  { title: t('application_date'), dataIndex: 'applyTime', key: 'applyTime' },
+  { title: t('status'), key: 'status' },
+  { title: t('operation'), key: 'actions' }
 ]
 
 const applications = ref([
-  { id: 1, company: '阿里巴巴', position: 'Java 开发', applyTime: '2026-01-20', status: '面试中' },
-  { id: 2, company: '腾讯', position: '后端开发', applyTime: '2026-01-22', status: '已投递' },
-  { id: 3, company: '字节跳动', position: 'Java 开发', applyTime: '2026-01-25', status: '已通过' }
+  { id: 1, company: t('alibaba'), position: 'Java 开发', applyTime: '2026-01-20', status: t('during_the_interview') },
+  { id: 2, company: t('tencent'), position: t('backend_development'), applyTime: '2026-01-22', status: t('delivered') },
+  { id: 3, company: t('bytedance'), position: 'Java 开发', applyTime: '2026-01-25', status: t('approved') }
 ])
 
 const getStatusColor = (status: string) => {

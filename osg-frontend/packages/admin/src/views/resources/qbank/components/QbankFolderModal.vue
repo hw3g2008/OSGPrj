@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     surface-id="modal-qbank-folder"
     :open="modelValue"
@@ -8,7 +8,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-folder-cog-outline" aria-hidden="true" />
-        <span>{{ mode === 'create' ? '新建题库文件夹' : '编辑题库文件夹' }}</span>
+        <span>{{ mode === 'create' ? $t('new_question_bank_folder') : $t('edit_question_bank_folder') }}</span>
       </span>
     </template>
 
@@ -17,30 +17,30 @@
         <a-input v-model:value="form.folderName" placeholder="Folder Name" />
       </a-form-item>
 
-      <a-form-item label="授权类型">
+      <a-form-item :label="$t('authorization_type')">
         <a-select v-model:value="form.authType">
-          <a-select-option value="all">全部用户</a-select-option>
-          <a-select-option value="class">指定班级</a-select-option>
-          <a-select-option value="user">指定用户</a-select-option>
+          <a-select-option value="all">{{ $t('all_users') }}</a-select-option>
+          <a-select-option value="class">{{ $t('specific_class') }}</a-select-option>
+          <a-select-option value="user">{{ $t('specific_users') }}</a-select-option>
         </a-select>
       </a-form-item>
 
-      <a-form-item v-if="form.authType === 'class'" label="指定班级">
-        <a-input v-model:value="form.authorizedClasses" placeholder="例如：2024Fall, 2025Spring" />
+      <a-form-item v-if="form.authType === 'class'" :label="$t('specific_class')">
+        <a-input v-model:value="form.authorizedClasses" :placeholder="`${$t('for_example')}：2024Fall, 2025Spring`" />
       </a-form-item>
 
-      <a-form-item v-if="form.authType === 'user'" label="指定用户">
-        <a-input v-model:value="form.authorizedUsers" placeholder="例如：Alice Zhang, Bob Li" />
+      <a-form-item v-if="form.authType === 'user'" :label="$t('specific_users')">
+        <a-input v-model:value="form.authorizedUsers" :placeholder="`${$t('for_example')}：Alice Zhang, Bob Li`" />
       </a-form-item>
 
-      <a-form-item label="过期时间">
+      <a-form-item :label="$t('expiration_date')">
         <a-input v-model:value="form.expiryAt" type="datetime-local" />
       </a-form-item>
     </a-form>
 
     <template #footer>
-      <a-button @click="$emit('update:modelValue', false)">取消</a-button>
-      <a-button type="primary" :loading="submitting" :disabled="!form.folderName" @click="handleConfirm">保存</a-button>
+      <a-button @click="$emit('update:modelValue', false)">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" :disabled="!form.folderName" @click="handleConfirm">{{ $t('save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -113,3 +113,4 @@ const handleConfirm = () => {
   })
 }
 </script>
+

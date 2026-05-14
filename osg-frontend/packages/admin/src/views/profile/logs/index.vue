@@ -1,25 +1,25 @@
-<template>
+﻿<template>
   <section class="osg-page">
-    <PageHeader title-zh="操作日志" description="查看系统操作记录">
+    <PageHeader :title-zh="$t('operation_log')" :description="$t('view_system_operation_logs')">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><DownloadOutlined /></template>
-          导出日志
+          {{ $t('export_logs') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
       <a-form-item>
-        <a-input v-model:value="keyword" placeholder="搜索操作人/内容..." allow-clear style="width: 200px" />
+        <a-input v-model:value="keyword" :placeholder="`${$t('search_operator_content')}...`" allow-clear style="width: 200px" />
       </a-form-item>
       <a-form-item>
-        <a-select v-model:value="typeFilter" placeholder="全部类型" allow-clear style="width: 120px">
-          <a-select-option value="">全部类型</a-select-option>
-          <a-select-option value="登录">登录</a-select-option>
-          <a-select-option value="新增">新增</a-select-option>
-          <a-select-option value="修改">修改</a-select-option>
-          <a-select-option value="删除">删除</a-select-option>
+        <a-select v-model:value="typeFilter" :placeholder="$t('all_types')" allow-clear style="width: 120px">
+          <a-select-option value="">{{ $t('all_types') }}</a-select-option>
+          <a-select-option :value="$t('login')">{{ $t('login') }}</a-select-option>
+          <a-select-option :value="$t('add')">{{ $t('add') }}</a-select-option>
+          <a-select-option :value="$t('edit_2')">{{ $t('edit_2') }}</a-select-option>
+          <a-select-option :value="$t('delete')">{{ $t('delete') }}</a-select-option>
         </a-select>
       </a-form-item>
       <a-form-item>
@@ -28,7 +28,7 @@
       <a-form-item>
         <a-button type="primary" @click="loadLogs">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ $t('search') }}
         </a-button>
       </a-form-item>
     </a-form>
@@ -43,9 +43,9 @@
           pageSize: 15,
           simple: false,
           showSizeChanger: false,
-          showTotal: (total: number) => `共 ${total} 条记录`
+          showTotal: (total: number) => `${t('in_total')} ${total} ${t('records')}`
         }"
-        :locale="{ emptyText: '暂无操作日志' }"
+        :locale="{ emptyText: $t('no_operation_logs') }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'operateTime'">
@@ -83,7 +83,9 @@ import { DownloadOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import type { Dayjs } from 'dayjs'
 import { exportLogs, getLogList, type LogRow } from '@osg/shared/api/admin/log'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const rows = ref<LogRow[]>([])
 const keyword = ref('')
 const typeFilter = ref<string>('')
@@ -91,12 +93,12 @@ const dateRange = ref<[Dayjs, Dayjs] | null>(null)
 const exporting = ref(false)
 
 const columns = [
-  { title: '时间', dataIndex: 'operateTime', key: 'operateTime' },
-  { title: '操作人', dataIndex: 'operatorName', key: 'operatorName' },
-  { title: '角色', dataIndex: 'roleLabel', key: 'roleLabel' },
-  { title: '操作类型', dataIndex: 'operationType', key: 'operationType' },
-  { title: '操作内容', dataIndex: 'content', key: 'content' },
-  { title: 'IP地址', dataIndex: 'ipAddress', key: 'ipAddress' }
+  { title: t('time'), dataIndex: 'operateTime', key: 'operateTime' },
+  { title: t('operator'), dataIndex: 'operatorName', key: 'operatorName' },
+  { title: t('role'), dataIndex: 'roleLabel', key: 'roleLabel' },
+  { title: t('operation_type'), dataIndex: 'operationType', key: 'operationType' },
+  { title: t('operation_content'), dataIndex: 'content', key: 'content' },
+  { title: t('ip_address'), dataIndex: 'ipAddress', key: 'ipAddress' }
 ]
 
 const roleColorMap: Record<string, string> = {
@@ -107,10 +109,10 @@ const roleColorMap: Record<string, string> = {
 }
 
 const typeColorMap: Record<string, string> = {
-  '登录': 'processing',
-  '新增': 'success',
-  '修改': 'warning',
-  '删除': 'error'
+  [t('login')]: 'processing',
+  [t('add')]: 'success',
+  [t('edit_2')]: 'warning',
+  [t('delete')]: 'error'
 }
 
 const toLogFilters = () => ({
@@ -125,7 +127,7 @@ const loadLogs = async () => {
     const response = await getLogList(toLogFilters())
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('操作日志加载失败')
+    message.error(t('failed_to_load_operation_logs'))
   }
 }
 
@@ -133,9 +135,9 @@ const handleExport = async () => {
   try {
     exporting.value = true
     await exportLogs(toLogFilters())
-    message.success('操作日志导出成功')
+    message.success(t('operation_logs_exported_successfully'))
   } catch (_error) {
-    message.error('操作日志导出失败')
+    message.error(t('failed_to_export_operation_logs'))
   } finally {
     exporting.value = false
   }
@@ -148,3 +150,4 @@ onMounted(() => {
 
 <style scoped>
 </style>
+

@@ -1,3 +1,7 @@
+import { i18n } from '@osg/shared'
+
+const t = (key: string) => i18n.global.t(key)
+
 export interface PositionColumn {
   key: string
   label: string
@@ -5,14 +9,14 @@ export interface PositionColumn {
 }
 
 export const positionColumns: PositionColumn[] = [
-  { key: 'positionName', label: '岗位名称' },
-  { key: 'companyIndustry', label: '公司行业' },
-  { key: 'positionCategory', label: '岗位分类' },
-  { key: 'city', label: '地区' },
-  { key: 'recruitmentCycle', label: '招聘周期' },
-  { key: 'displayStartTime', label: '展示起始', sortable: true },
-  { key: 'deadlineDisplay', label: '截止时间' },
-  { key: 'displayStatus', label: '状态' },
-  { key: 'studentCount', label: '学员' },
-  { key: 'actions', label: '操作' }
+  { key: 'positionName', label: t('job_title') },
+  { key: 'companyIndustry', label: t('company_industry') },
+  { key: 'positionCategory', label: t('job_classification') },
+  { key: 'city', label: t('area') },
+  { key: 'recruitmentCycle', label: t('recruitment_cycle') },
+  { key: 'displayStartTime', label: t('show_start'), sortable: true },
+  { key: 'deadlineDisplay', label: t('deadline') },
+  { key: 'displayStatus', label: t('status') },
+  { key: 'studentCount', label: t('student') },
+  { key: 'actions', label: t('operation') }
 ]

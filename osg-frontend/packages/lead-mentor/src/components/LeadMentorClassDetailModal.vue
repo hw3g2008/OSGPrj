@@ -8,7 +8,7 @@
       type="button"
       class="class-detail-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭课程详情弹层"
+      :aria-label="$t('close_course_details_dialog')"
       @click="closeModal"
     />
 
@@ -28,7 +28,7 @@
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭课程详情弹层"
+          :aria-label="$t('close_course_details_dialog')"
           @click="closeModal"
         >
           ×
@@ -39,7 +39,7 @@
         <div class="class-detail-summary">
           <div>
             <div class="class-detail-student">
-              <span class="class-detail-muted">学员: </span>
+              <span class="class-detail-muted">{{ $t('student') }}: </span>
               <span class="class-detail-student-name">{{ preview.studentName }}</span>
               <span class="class-detail-student-id">{{ preview.studentId }}</span>
             </div>
@@ -80,7 +80,7 @@
 
         <div class="class-detail-footer-meta">
           <div>
-            <span>导师: </span>
+            <span>{{ $t('mentor') }}: </span>
             <span class="class-detail-footer-value">{{ preview.mentorName }}</span>
           </div>
           <div>提交时间: {{ preview.submittedAt }}</div>
@@ -88,7 +88,7 @@
       </div>
 
       <div class="class-detail-footer modal-footer">
-        <button type="button" class="btn btn-primary" @click="closeModal">关闭</button>
+        <button type="button" class="btn btn-primary" @click="closeModal">{{ $t('close') }}</button>
       </div>
     </div>
   </div>

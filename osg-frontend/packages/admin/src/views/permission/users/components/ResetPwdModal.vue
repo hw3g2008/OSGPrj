@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     surface-id="modal-reset-password"
     :open="visible"
@@ -9,26 +9,26 @@
     <template #title>
       <span class="reset-pwd-modal__title">
         <span class="mdi mdi-lock-reset reset-pwd-modal__title-icon" aria-hidden="true" />
-        <span>重置密码</span>
+        <span>{{ $t('reset_password') }}</span>
       </span>
     </template>
 
     <div class="reset-pwd-modal__warning" data-content-part="status-banner">
       <span class="mdi mdi-alert" aria-hidden="true" />
-      <p data-content-part="supporting-text">重置后该用户需使用新密码重新登录，建议立即同步通知对方。</p>
+      <p data-content-part="supporting-text">{{ $t('after_reset_the_user_must_log_in_with_th') }}。</p>
     </div>
 
     <div class="reset-pwd-modal__identity">
       <span class="reset-pwd-modal__identity-name">
-        {{ props.user?.nickName || props.user?.userName || '未选择用户' }}
+        {{ props.user?.nickName || props.user?.userName || $t('no_user_selected') }}
       </span>
       <span class="reset-pwd-modal__identity-account">@{{ props.user?.userName || 'unknown' }}</span>
     </div>
 
     <div class="reset-pwd-modal__policy">
-      <span>至少 8 位</span>
-      <span>必须包含字母</span>
-      <span>必须包含数字</span>
+      <span>{{ $t('at_least_8_characters') }}</span>
+      <span>{{ $t('must_contain_letters') }}</span>
+      <span>{{ $t('must_contain_numbers') }}</span>
     </div>
 
     <a-form
@@ -41,22 +41,22 @@
     >
       <a-form-item name="password">
         <template #label>
-          <span class="reset-pwd-modal__label">新密码<span class="reset-pwd-modal__required">*</span></span>
+          <span class="reset-pwd-modal__label">{{ $t('new_password') }}<span class="reset-pwd-modal__required">*</span></span>
         </template>
         <a-input-password
           v-model:value="formState.password"
-          placeholder="8-20字符，包含字母和数字"
+          :placeholder="`8-20${$t('characters_including_letters_and_numbers')}`"
           :visibility-toggle="false"
         />
       </a-form-item>
 
       <a-form-item name="confirmPassword">
         <template #label>
-          <span class="reset-pwd-modal__label">确认密码<span class="reset-pwd-modal__required">*</span></span>
+          <span class="reset-pwd-modal__label">{{ $t('confirm_password') }}<span class="reset-pwd-modal__required">*</span></span>
         </template>
         <a-input-password
           v-model:value="formState.confirmPassword"
-          placeholder="请再次输入新密码"
+          :placeholder="$t('please_enter_new_password_again')"
           :visibility-toggle="false"
         />
       </a-form-item>
@@ -65,7 +65,7 @@
     <template #footer>
       <div data-content-part="action-row" class="reset-pwd-modal__actions">
         <a-button class="reset-pwd-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose">
-          <span>取消</span>
+          <span>{{ $t('cancel') }}</span>
         </a-button>
         <a-button
           type="primary"
@@ -74,7 +74,7 @@
           @click="handleSubmit"
         >
           <span class="mdi mdi-check" aria-hidden="true" />
-          <span>确认重置</span>
+          <span>{{ $t('confirm_reset') }}</span>
         </a-button>
       </div>
     </template>
@@ -86,7 +86,9 @@ import { reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { resetUserPwd } from '@/api/user'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   user: any
@@ -106,16 +108,16 @@ const formState = reactive({
 })
 
 const validatePassword = (_rule: any, value: string) => {
-  if (!value) return Promise.reject('请输入新密码')
-  if (value.length < 8 || value.length > 20) return Promise.reject('密码长度8-20字符')
-  if (!/[a-zA-Z]/.test(value)) return Promise.reject('密码必须包含字母')
-  if (!/[0-9]/.test(value)) return Promise.reject('密码必须包含数字')
+  if (!value) return Promise.reject(t('please_enter_new_password'))
+  if (value.length < 8 || value.length > 20) return Promise.reject(t('password_must_be_8_20_characters'))
+  if (!/[a-zA-Z]/.test(value)) return Promise.reject(t('password_must_contain_letters_2'))
+  if (!/[0-9]/.test(value)) return Promise.reject(t('password_must_contain_numbers_2'))
   return Promise.resolve()
 }
 
 const validateConfirmPassword = (_rule: any, value: string) => {
-  if (!value) return Promise.reject('请再次输入新密码')
-  if (value !== formState.password) return Promise.reject('两次输入的密码不一致')
+  if (!value) return Promise.reject(t('please_enter_new_password_again'))
+  if (value !== formState.password) return Promise.reject(t('the_passwords_entered_twice_are_inconsis'))
   return Promise.resolve()
 }
 
@@ -151,10 +153,10 @@ const handleSubmit = async () => {
       userId: props.user.userId,
       password: formState.password,
     }, {
-      customErrorMessage: '密码重置失败，请检查输入'
+      customErrorMessage: t('password_reset_failed_please_check_your_')
     })
 
-    message.success('密码重置成功')
+    message.success(t('password_reset_successful'))
     emit('success')
     handleClose()
   } catch (error: any) {
@@ -331,3 +333,4 @@ const handleSubmit = async () => {
   color: #fff !important;
 }
 </style>
+

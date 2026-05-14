@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="字典管理" description="管理系统基础配置字典数据" />
+    <PageHeader :title-zh="$t('dictionary_management')" :description="$t('manage_system_base_configuration_diction')" />
 
     <div class="category-cards">
       <a-button
@@ -36,29 +36,29 @@
       </a-button>
     </div>
 
-    <div class="content-toolbar" data-field-name="基础数据页筛选区">
+    <div class="content-toolbar" :data-field-name="$t('base_data_filter_panel')">
       <div class="content-toolbar__search">
         <a-input
           v-model:value="searchName"
           style="width: 200px"
-          :data-field-name="`${currentTabLabel}搜索`"
-          :placeholder="`搜索${currentTabLabel}...`"
+          :data-field-name="$t('field_search_name', { field: currentTabLabel })"
+          :placeholder="$t('search_field_placeholder', { field: currentTabLabel })"
           allow-clear
           @pressEnter="handleSearch"
         />
         <a-button @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ $t('search') }}
         </a-button>
       </div>
       <a-button
         type="primary"
         :data-surface-trigger="currentAddSurfaceId"
-        :aria-label="`新增${currentAddLabel}`"
+        :aria-label="$t('add_field_aria', { field: currentAddLabel })"
         @click="handleAdd"
       >
         <template #icon><PlusOutlined /></template>
-        新增{{ currentAddLabel }}
+        {{ $t('add') }}{{ currentAddLabel }}
       </a-button>
     </div>
 
@@ -69,16 +69,16 @@
         :scroll="{ x: 'max-content' }"
         :row-key="(record: AdminDictListRow) => record.dictCode"
         :pagination="tablePagination"
-        :locale="{ emptyText: '暂无数据' }"
+        :locale="{ emptyText: $t('no_data_available') }"
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'dictLabel'">
-            <strong>{{ record.dictLabel }}</strong>
+            <strong>{{ resolveDictDisplayName({ label: record.dictLabel, i18nKey: record.i18nKey }, t) }}</strong>
           </template>
           <template v-else-if="column.dataIndex === 'status'">
             <a-tag :color="record.status === '0' ? 'success' : 'error'">
-              {{ record.status === '0' ? '启用' : '禁用' }}
+              {{ record.status === '0' ? $t('enable') : $t('disable') }}
             </a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'parentLabel'">
@@ -110,7 +110,7 @@
               :data-surface-sample-key="record.dictLabel"
               @click="handleEdit(record)"
             >
-              编辑
+              {{ $t('edit') }}
             </a-button>
             <a-button
               v-if="record.status === '0'"
@@ -119,7 +119,7 @@
               danger
               @click="handleDisable(record)"
             >
-              禁用
+              {{ $t('disable') }}
             </a-button>
             <a-button
               v-if="record.status === '1'"
@@ -127,7 +127,7 @@
               size="small"
               @click="handleEnable(record)"
             >
-              启用
+              {{ $t('enable') }}
             </a-button>
           </template>
         </template>
@@ -159,9 +159,12 @@ import {
 } from '@/api/adminDict'
 import BaseDataModal from './components/BaseDataModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { resolveDictDisplayName } from '@osg/shared/utils/dictI18n'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const dataList = ref<AdminDictListRow[]>([])
 const modalVisible = ref(false)
 const currentRecord = ref<AdminDictListRow | null>(null)
@@ -179,7 +182,7 @@ const tablePagination = computed(() => ({
   total: pagination.total,
   simple: false,
   showSizeChanger: false,
-  showTotal: (total: number) => `共 ${total} 条记录`,
+  showTotal: (total: number) => `${t('in_total')} ${total} ${t('records')}`,
 }))
 
 const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
@@ -191,56 +194,70 @@ const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
 const registryGroups = ref<AdminDictRegistryGroup[]>([])
 
 const tabPresentationMap: Record<string, { createLabel: string; nameHeader: string }> = {
-  osg_job_category: { createLabel: '岗位分类', nameHeader: '分类名称' },
-  osg_company_name: { createLabel: '公司/银行名称', nameHeader: '公司名称' },
-  osg_company_type: { createLabel: '公司/银行类别', nameHeader: '类别名称' },
-  osg_position_department: { createLabel: '部门', nameHeader: '部门名称' },
-  osg_region: { createLabel: '大区', nameHeader: '大区名称' },
-  osg_city: { createLabel: '地区/城市', nameHeader: '城市名称' },
-  osg_recruit_cycle: { createLabel: '招聘周期', nameHeader: '周期名称' },
-  osg_school: { createLabel: '学校', nameHeader: '学校名称' },
-  osg_major_direction: { createLabel: '方向', nameHeader: '方向名称' },
-  osg_sub_direction: { createLabel: '子方向', nameHeader: '子方向名称' },
-  osg_visa_status: { createLabel: '签证状态', nameHeader: '签证状态' },
-  osg_course_type: { createLabel: '课程类型', nameHeader: '课程类型' },
-  osg_expense_type: { createLabel: '报销类型', nameHeader: '报销类型' },
-  osg_specialty: { createLabel: '擅长', nameHeader: '擅长名称' },
-  osg_rating: { createLabel: '评级', nameHeader: '评级名称' },
+  osg_job_category: { createLabel: t('job_classification'), nameHeader: t('category_name') },
+  osg_company_name: { createLabel: t('company_bank_name'), nameHeader: t('company_name') },
+  osg_company_type: { createLabel: t('company_bank_type'), nameHeader: t('type_name') },
+  osg_position_department: { createLabel: t('department'), nameHeader: t('department_name') },
+  osg_region: { createLabel: t('region'), nameHeader: t('region_name') },
+  osg_city: { createLabel: t('region_city_2'), nameHeader: t('city_name') },
+  osg_recruit_cycle: { createLabel: t('recruitment_cycle'), nameHeader: t('cycle_name') },
+  osg_school: { createLabel: t('school'), nameHeader: t('school_name') },
+  osg_major_direction: { createLabel: t('focus'), nameHeader: t('focus_name') },
+  osg_sub_direction: { createLabel: t('sub_focus'), nameHeader: t('sub_focus_name') },
+  osg_visa_status: { createLabel: t('visa_status'), nameHeader: t('visa_status') },
+  osg_course_type: { createLabel: t('course_type'), nameHeader: t('course_type') },
+  osg_expense_type: { createLabel: t('expense_type'), nameHeader: t('expense_type') },
+  osg_specialty: { createLabel: t('expertise'), nameHeader: t('expertise_name') },
+  osg_rating: { createLabel: t('rating'), nameHeader: t('rating_name') },
 }
 
 const categoryDescMap: Record<string, string> = {
-  job: '岗位分类、公司、部门、地区、招聘周期、擅长、评级',
-  student: '学校、主攻方向、子方向、签证状态',
-  course: '课程类型',
-  finance: '报销类型',
+  job: t('position_category_company_department_reg'),
+  student: t('school_major_focus_sub_focus_visa_status'),
+  course: t('course_type'),
+  finance: t('expense_type'),
 }
 
 const categories = computed(() => {
   return registryGroups.value
     .slice()
     .sort((a, b) => a.order - b.order)
-    .map(group => ({
-      key: group.group_key,
-      label: group.group_label,
-      description: categoryDescMap[group.group_key] ?? group.dict_types.map(item => item.dict_name).join('、'),
-      iconClass: group.icon,
-      iconBg: group.icon_bg,
-      iconColor: group.icon_color,
-      tabs: group.dict_types.map(item => {
-        const presentation = tabPresentationMap[item.dict_type] ?? {
-          createLabel: item.dict_name,
-          nameHeader: `${item.dict_name}名称`,
-        }
-        return {
-          key: item.dict_type,
-          label: item.dict_name,
-          createLabel: presentation.createLabel,
-          nameHeader: presentation.nameHeader,
-          hasParent: item.has_parent,
-          parentTab: item.parent_dict_type,
-        }
-      }),
-    }))
+    .map(group => {
+      const resolvedGroupLabel = resolveDictDisplayName(
+        { label: group.group_label, i18nKey: group.group_i18n_key },
+        t,
+      )
+      return {
+        key: group.group_key,
+        label: resolvedGroupLabel,
+        description:
+          categoryDescMap[group.group_key] ??
+          group.dict_types
+            .map(item => resolveDictDisplayName({ label: item.dict_name, i18nKey: item.dict_name_i18n_key }, t))
+            .join('、'),
+        iconClass: group.icon,
+        iconBg: group.icon_bg,
+        iconColor: group.icon_color,
+        tabs: group.dict_types.map(item => {
+          const resolvedTabLabel = resolveDictDisplayName(
+            { label: item.dict_name, i18nKey: item.dict_name_i18n_key },
+            t,
+          )
+          const presentation = tabPresentationMap[item.dict_type] ?? {
+            createLabel: resolvedTabLabel,
+            nameHeader: t('field_name_header', { field: resolvedTabLabel }),
+          }
+          return {
+            key: item.dict_type,
+            label: resolvedTabLabel,
+            createLabel: presentation.createLabel,
+            nameHeader: presentation.nameHeader,
+            hasParent: item.has_parent,
+            parentTab: item.parent_dict_type,
+          }
+        }),
+      }
+    })
 })
 
 const selectedCategory = ref('')
@@ -268,7 +285,7 @@ const loadParentOptions = async () => {
       const options = await getAdminDictOptions(cfg.parentTab)
       const map: Record<string, string> = {}
       for (const opt of options) {
-        map[opt.dictValue] = opt.dictLabel
+        map[opt.dictValue] = resolveDictDisplayName({ label: opt.dictLabel, i18nKey: opt.i18nKey }, t)
       }
       parentOptionsMap.value = map
     } catch {
@@ -285,16 +302,16 @@ const dictColumns = computed(() => {
     { title: currentNameHeader.value, dataIndex: 'dictLabel', key: 'dictLabel' },
   ]
   if (selectedTab.value === 'osg_company_name') {
-    base.push({ title: '公司类别', dataIndex: 'parentLabel', key: 'parentLabel', width: 150 })
-    base.push({ title: '官网地址', dataIndex: 'website', key: 'website', width: 220 })
+    base.push({ title: t('company_type'), dataIndex: 'parentLabel', key: 'parentLabel', width: 150 })
+    base.push({ title: t('website_url'), dataIndex: 'website', key: 'website', width: 220 })
   } else {
-    base.push({ title: '键值', dataIndex: 'dictValue', key: 'dictValue' })
+    base.push({ title: t('key'), dataIndex: 'dictValue', key: 'dictValue' })
   }
   base.push(
-    { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-    { title: '排序', dataIndex: 'dictSort', key: 'dictSort', width: 80 },
-    { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
-    { title: '操作', dataIndex: 'action', key: 'action', width: 180 },
+    { title: t('status'), dataIndex: 'status', key: 'status', width: 80 },
+    { title: t('sort_order'), dataIndex: 'dictSort', key: 'dictSort', width: 80 },
+    { title: t('updated_at'), dataIndex: 'updateTime', key: 'updateTime' },
+    { title: t('operation'), dataIndex: 'action', key: 'action', width: 180 },
   )
   return base
 })
@@ -310,7 +327,7 @@ const currentTabConfig = computed(() => {
 
 const currentTabLabel = computed(() => currentTabConfig.value?.label ?? '')
 const currentAddLabel = computed(() => currentTabConfig.value?.createLabel ?? currentTabLabel.value)
-const currentNameHeader = computed(() => currentTabConfig.value?.nameHeader ?? '名称')
+const currentNameHeader = computed(() => currentTabConfig.value?.nameHeader ?? t('name_2'))
 const surfaceIdMap: Record<string, { create: string; edit: string }> = {
   osg_recruit_cycle: { create: 'modal-new-program', edit: 'modal-edit-program' },
   osg_major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
@@ -358,7 +375,7 @@ const loadRegistry = async () => {
     }
   } catch (error) {
     registryGroups.value = []
-    message.error('加载字典分类失败')
+    message.error(t('failed_to_load_dictionary_categories'))
   }
 }
 
@@ -374,7 +391,7 @@ const loadDataList = async () => {
     dataList.value = res.rows || []
     pagination.total = res.total || 0
   } catch (error) {
-    message.error('加载数据失败')
+    message.error(t('failed_to_load_data'))
   }
 }
 
@@ -395,10 +412,12 @@ const handleEdit = (record: AdminDictListRow) => {
 
 const handleDisable = (record: AdminDictListRow) => {
   Modal.confirm({
-    title: '确认禁用',
-    content: `确定要禁用「${record.dictLabel}」吗？`,
-    okText: '确定',
-    cancelText: '取消',
+    title: t('confirm_disable'),
+    content: t('confirm_disable_dict_item', {
+      name: resolveDictDisplayName({ label: record.dictLabel, i18nKey: record.i18nKey }, t),
+    }),
+    okText: t('ok'),
+    cancelText: t('cancel'),
     onOk: async () => {
       try {
         await updateAdminDictItem({
@@ -410,9 +429,9 @@ const handleDisable = (record: AdminDictListRow) => {
           status: '1',
           remark: record.remark,
         }, {
-          customErrorMessage: '禁用基础数据失败，请重试'
+          customErrorMessage: t('failed_to_disable_data_please_try_again')
         })
-        message.success('已禁用')
+        message.success(t('disabled'))
         loadDataList()
       } catch (error) {
         // 移除组件内的错误提示，让拦截器处理
@@ -432,9 +451,9 @@ const handleEnable = async (record: AdminDictListRow) => {
       status: '0',
       remark: record.remark,
     }, {
-      customErrorMessage: '启用基础数据失败，请重试'
+      customErrorMessage: t('failed_to_enable_data_please_try_again')
     })
-    message.success('已启用')
+    message.success(t('enabled'))
     loadDataList()
   } catch (error) {
     // 移除组件内的错误提示，让拦截器处理

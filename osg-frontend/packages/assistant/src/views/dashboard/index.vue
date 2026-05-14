@@ -22,9 +22,9 @@
       <a-col :span="12">
         <a-card title="快捷入口">
           <a-space direction="vertical" style="width: 100%">
-            <a-button type="primary" block @click="$router.push('/schedule')">排课协助</a-button>
-            <a-button block @click="$router.push('/students')">学员服务</a-button>
-            <a-button block @click="$router.push('/feedback')">反馈收集</a-button>
+            <a-button type="primary" block @click="$router.push('/schedule')">{{ $t('scheduling_assistance') }}</a-button>
+            <a-button block @click="$router.push('/students')">{{ $t('student_services') }}</a-button>
+            <a-button block @click="$router.push('/feedback')">{{ $t('feedback_collection') }}</a-button>
           </a-space>
         </a-card>
       </a-col>
@@ -34,11 +34,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 const stats = ref({ pendingSchedule: 5, todayConsult: 12, pendingMaterials: 3, pendingFeedback: 8 })
 const tasks = ref([
-  { content: '协助张同学约课', priority: '高', color: 'red' },
-  { content: '整理本周学习资料', priority: '中', color: 'orange' },
-  { content: '收集 01 期学员反馈', priority: '中', color: 'orange' },
-  { content: '更新面试题库', priority: '低', color: 'blue' }
+  { content: t('help_zhang_book_a_class'), priority: '高', color: 'red' },
+  { content: t('organize_this_weeks_study_materials'), priority: '中', color: 'orange' },
+  { content: t('collect_feedback_from_cohort_01_students'), priority: '中', color: 'orange' },
+  { content: t('update_interview_question_bank'), priority: '低', color: 'blue' }
 ])
 </script>

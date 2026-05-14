@@ -1,15 +1,15 @@
-<template>
+﻿<template>
   <a-config-provider :auto-insert-space-in-button="false">
     <div id="page-job-overview" class="osg-page">
       <PageHeader
-        title-zh="学员求职总览"
+        :title-zh="$t('overview_of_student_job_search')"
         title-en="Job Overview"
-        description="查看我辅导学员的求职进度"
+        :description="$t('view_job_search_progress_of_my_coached_s')"
       >
         <template #actions>
           <a-button @click="handleExport">
             <template #icon><ExportOutlined /></template>
-            导出
+            {{ $t('export') }}
           </a-button>
         </template>
       </PageHeader>
@@ -26,14 +26,14 @@
       <div class="filter-row">
         <a-input
           v-model:value="draftKeyword"
-          placeholder="搜索学员姓名..."
+          :placeholder="`${$t('search_student_name')}...`"
           allow-clear
           style="width: 180px"
           @press-enter="applySearch"
         />
         <a-select
           v-model:value="selectedCompany"
-          placeholder="全部公司"
+          :placeholder="$t('all_companies')"
           allow-clear
           style="width: 140px"
         >
@@ -41,18 +41,18 @@
         </a-select>
         <a-select
           v-model:value="selectedStatus"
-          placeholder="全部状态"
+          :placeholder="$t('all_status')"
           allow-clear
           style="width: 140px"
         >
-          <a-select-option value="new">新申请</a-select-option>
-          <a-select-option value="coaching">面试中</a-select-option>
-          <a-select-option value="completed">已完成</a-select-option>
-          <a-select-option value="cancelled">已取消</a-select-option>
+          <a-select-option value="new">{{ $t('new_application') }}</a-select-option>
+          <a-select-option value="coaching">{{ $t('during_the_interview') }}</a-select-option>
+          <a-select-option value="completed">{{ $t('completed') }}</a-select-option>
+          <a-select-option value="cancelled">{{ $t('canceled') }}</a-select-option>
         </a-select>
         <a-button type="primary" @click="applySearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ $t('search') }}
         </a-button>
       </div>
 
@@ -63,7 +63,7 @@
           :row-key="(record: JobOverviewRow) => record.id"
           :pagination="false"
           :row-class-name="(record: JobOverviewRow) => rowClass(record)"
-          :locale="{ emptyText: '暂无匹配记录' }"
+          :locale="{ emptyText: $t('no_matching_records') }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'student'">
@@ -106,7 +106,7 @@
                 class="btn-confirm"
                 @click="confirmJob(record)"
               >
-                确认
+                {{ $t('confirm') }}
               </a-button>
               <a-button
                 v-else-if="record.coachingStatus === 'coaching'"
@@ -115,7 +115,7 @@
                 data-surface-trigger="modal-job-detail"
                 @click="openJobDetail(record)"
               >
-                查看详情
+                {{ $t('view_details') }}
               </a-button>
               <span v-else class="text-muted">--</span>
             </template>
@@ -125,7 +125,7 @@
 
       <a-modal
         :open="selectedRow !== null"
-        title="学员求职详情"
+        :title="$t('student_job_search_details')"
         :width="720"
         :footer="null"
         wrap-class-name="job-detail-modal"
@@ -135,7 +135,7 @@
         <template v-if="selectedRow">
           <section class="hero-card">
             <div class="hero-block">
-              <div class="hero-label"><UserOutlined /> 学员信息</div>
+              <div class="hero-label"><UserOutlined /> {{ $t('student_information') }}</div>
               <div class="hero-student">
                 <StudentInitialAvatar
                   :name="jobDetailPreview.studentName"
@@ -149,19 +149,19 @@
               </div>
             </div>
             <div class="hero-block">
-              <div class="hero-label"><BankOutlined /> 申请岗位</div>
+              <div class="hero-label"><BankOutlined /> {{ $t('applied_position') }}</div>
               <div class="hero-value hero-value--brand">{{ jobDetailPreview.companyName }}</div>
               <div class="hero-meta hero-meta--body">{{ jobDetailPreview.positionName }}</div>
-              <div class="hero-meta hero-meta--body">招聘周期: <span>{{ jobDetailPreview.recruitmentCycle }}</span></div>
+              <div class="hero-meta hero-meta--body">{{ $t('recruitment_cycle') }}: <span>{{ jobDetailPreview.recruitmentCycle }}</span></div>
             </div>
           </section>
 
           <section class="modal-section">
-            <div class="section-title"><ClockCircleOutlined /> 求职进度</div>
+            <div class="section-title"><ClockCircleOutlined /> {{ $t('job_search_progress') }}</div>
             <a-steps :current="2" size="small" progress-dot>
               <a-step title="已投递" description="01/05" />
               <a-step title="HireVue" description="01/10" />
-              <a-step title="First Round" description="当前" />
+              <a-step title="First Round" :description="$t('current')" />
               <a-step title="Final" />
               <a-step title="Offer" />
             </a-steps>
@@ -176,7 +176,7 @@
           </section>
 
           <section class="modal-section">
-            <div class="section-title section-title--purple"><BookOutlined /> 辅导信息</div>
+            <div class="section-title section-title--purple"><BookOutlined /> {{ $t('coaching_info') }}</div>
             <a-row :gutter="12">
               <a-col :span="6"><a-card size="small" class="coaching-card">
                 <a-statistic title="辅导状态" :value="jobDetailPreview.coachingStatus" />
@@ -195,16 +195,16 @@
 
           <section class="modal-section">
             <div class="section-head">
-              <div class="section-title section-title--green"><ReadOutlined /> 课程记录 (最近3条)</div>
+              <div class="section-title section-title--green"><ReadOutlined /> {{ $t('course_records_latest_3') }})</div>
               <a-button type="link" size="small" @click="showAllRecords = true">
-                查看全部
+                {{ $t('view_all') }}
                 <template #icon><ArrowRightOutlined /></template>
               </a-button>
             </div>
             <a-list
               :data-source="showAllRecords ? fullRecords : recentRecords"
               :loading="studentDetailRecordsLoading"
-              :locale="{ emptyText: '暂无课程记录' }"
+              :locale="{ emptyText: $t('no_course_records') }"
               size="small"
             >
               <template #renderItem="{ item }">
@@ -220,7 +220,7 @@
           </section>
 
           <section class="modal-section modal-section--notes">
-            <div class="section-title section-title--amber"><FileTextOutlined /> 学员备注</div>
+            <div class="section-title section-title--amber"><FileTextOutlined /> {{ $t('student_notes') }}</div>
             <a-typography-paragraph class="notes-card">{{ jobDetailPreview.notes }}</a-typography-paragraph>
           </section>
         </template>
@@ -250,7 +250,9 @@ import {
   getMentorJobOverviewCalendar,
   type LeadMentorCalendarRecord,
 } from '@osg/shared/api'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
 type MentorNavBadgeState = {
@@ -303,10 +305,10 @@ const mentorNavBadges = inject<MentorNavBadgeState | null>(MENTOR_NAV_BADGE_KEY,
 const companies = ['Goldman Sachs', 'JP Morgan', 'McKinsey', 'Google', 'Morgan Stanley']
 
 const statusLabelMap: Record<string, string> = {
-  new: '新申请',
-  coaching: '面试中',
-  completed: '已完成',
-  cancelled: '已取消',
+  new: t('new_application'),
+  coaching: t('during_the_interview'),
+  completed: t('completed'),
+  cancelled: t('canceled'),
 }
 
 const filteredRows = computed(() => {
@@ -392,15 +394,15 @@ function buildCountdownText(value: string) {
 function createJobDetailPreview(row: JobOverviewRow | null) {
   const time = row?.interviewTime || row?.createTime
   return {
-    studentName: row?.studentName || '张三',
+    studentName: row?.studentName || t('zhang_san'),
     studentId: String(row?.studentId || '12766'),
     leadMentorName: row?.mentorName || 'Jess',
     companyName: row?.company || 'Goldman Sachs',
     positionName: `${row?.position || 'IB Analyst'}${row?.location ? ` · ${row.location}` : ''}`,
     recruitmentCycle: row?.recruitmentCycle || '2025 Summer',
     interviewTime: time ? formatInterviewTime(time) : '01/18 10:00',
-    countdownText: time ? buildCountdownText(time) : '还剩2天',
-    coachingStatus: statusLabelMap[row?.coachingStatus || 'coaching'] || '面试中',
+    countdownText: time ? buildCountdownText(time) : t('2_days_remaining'),
+    coachingStatus: statusLabelMap[row?.coachingStatus || 'coaching'] || t('during_the_interview'),
     mentorName: row?.mentorName || 'Jerry Li',
     lessonHours: row?.lessonHours || '8h',
     applyTime: formatApplyTime(row?.applyTime || row?.createTime),
@@ -419,7 +421,7 @@ function buildQueryParams() {
 function normalizeJobOverview(record: Record<string, any>): JobOverviewRow {
   return {
     ...record,
-    studentName: record.studentName || (record.studentId != null ? `学员${record.studentId}` : '待分配学员'),
+    studentName: record.studentName || (record.studentId != null ? `学员${record.studentId}` : t('students_to_be_assigned')),
     mentorName: record.mentorName || 'Jess',
     lessonHours: record.lessonHours || '8h',
     applyTime: record.applyTime || formatApplyTime(record.createTime),
@@ -429,22 +431,22 @@ function normalizeJobOverview(record: Record<string, any>): JobOverviewRow {
 
 function contentLabel(value: string) {
   return {
-    mock_interview: '模拟面试',
-    resume_update: '简历更新',
-    networking: '人际关系期中考试',
-    mock_midterm: '模拟期中考试',
-    basic_course: '基础课程',
-    written_test: '笔试辅导',
-  }[value] || value || '课程记录'
+    mock_interview: t('mock_interview'),
+    resume_update: t('resume_update'),
+    networking: t('networking_midterm_exam'),
+    mock_midterm: t('mock_midterm_exam'),
+    basic_course: t('foundation_course_2'),
+    written_test: t('written_test_coaching'),
+  }[value] || value || t('course_records')
 }
 
 function gradeLabel(value: unknown) {
   const rating = Number(value)
-  if (Number.isNaN(rating) || rating <= 0) return '待评价'
-  if (rating >= 5) return '优秀'
-  if (rating >= 4) return '良好'
-  if (rating >= 3) return '一般'
-  return '需改进'
+  if (Number.isNaN(rating) || rating <= 0) return t('pending_evaluation')
+  if (rating >= 5) return t('excellent')
+  if (rating >= 4) return t('good')
+  if (rating >= 3) return t('average')
+  return t('needs_improvement')
 }
 
 function gradeTone(value: unknown) {
@@ -468,7 +470,7 @@ function normalizeDetailRecord(record: Record<string, any>): DetailRecord {
     date: formatRecordDate(record.classDate),
     label: contentLabel(String(record.contentType ?? record.courseType ?? record.courseSource ?? '')),
     hours: `${Number(record.durationHours || 0)}h`,
-    summary: String(record.feedbackContent ?? record.contentDetail ?? record.reviewRemark ?? '暂无反馈'),
+    summary: String(record.feedbackContent ?? record.contentDetail ?? record.reviewRemark ?? t('no_feedback_yet')),
     grade: gradeLabel(record.feedbackRating ?? record.studentEvaluation),
     tone: recordTone(record.feedbackRating ?? record.studentEvaluation),
     tagTone: gradeTone(record.feedbackRating ?? record.studentEvaluation),
@@ -489,12 +491,12 @@ function avatarColor(row: JobOverviewRow) {
 }
 
 const jobColumns = [
-  { title: '学员', key: 'student', dataIndex: 'studentName' },
-  { title: '公司/岗位', key: 'company', dataIndex: 'company' },
-  { title: '阶段', key: 'stage', dataIndex: 'interviewStage', width: 100 },
-  { title: '面试时间', key: 'interviewTime', dataIndex: 'interviewTime', width: 140 },
-  { title: '辅导状态', key: 'coachingStatus', dataIndex: 'coachingStatus', width: 120 },
-  { title: '操作', key: 'actions', width: 110 },
+  { title: t('student'), key: 'student', dataIndex: 'studentName' },
+  { title: t('company_position'), key: 'company', dataIndex: 'company' },
+  { title: t('stage'), key: 'stage', dataIndex: 'interviewStage', width: 100 },
+  { title: t('interview_time'), key: 'interviewTime', dataIndex: 'interviewTime', width: 140 },
+  { title: t('counseling_status'), key: 'coachingStatus', dataIndex: 'coachingStatus', width: 120 },
+  { title: t('operation'), key: 'actions', width: 110 },
 ]
 
 function rowDomId(row: JobOverviewRow) {
@@ -675,3 +677,4 @@ onMounted(async () => {
 .btn-confirm { background:#22C55E !important; border-color:#22C55E !important; }
 .btn-confirm:hover { background:#16A34A !important; border-color:#16A34A !important; }
 </style>
+

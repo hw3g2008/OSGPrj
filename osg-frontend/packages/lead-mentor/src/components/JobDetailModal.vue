@@ -9,7 +9,7 @@
       type="button"
       class="job-detail-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭学员求职详情弹层"
+      :aria-label="$t('close_student_job_search_detail_modal')"
       @click="closeModal"
     />
 
@@ -23,13 +23,13 @@
       <div class="job-detail-header modal-header" data-surface-part="header">
         <span :id="titleId" class="job-detail-title modal-title">
           <i class="mdi mdi-briefcase-search" aria-hidden="true" />
-          学员求职详情
+          {{ $t('student_job_search_details') }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭学员求职详情弹层"
+          :aria-label="$t('close_student_job_search_detail_modal')"
           @click="closeModal"
         >
           ×
@@ -42,7 +42,7 @@
             <div class="hero-card hero-card--student">
               <div class="hero-label">
                 <i class="mdi mdi-account" aria-hidden="true" />
-                学员信息
+                {{ $t('student_information') }}
               </div>
               <div class="hero-student">
                 <a-avatar
@@ -70,7 +70,7 @@
             <div class="hero-card hero-card--position">
               <div class="hero-label">
                 <i class="mdi mdi-domain" aria-hidden="true" />
-                申请岗位
+                {{ $t('applied_position') }}
               </div>
               <div id="jd-company" class="hero-value hero-value--brand" :title="preview.companyName">
                 {{ preview.companyName }}
@@ -86,7 +86,7 @@
         <section class="modal-section">
           <div class="section-title">
             <i class="mdi mdi-timeline-clock" aria-hidden="true" />
-            求职进度
+            {{ $t('job_search_progress') }}
           </div>
 
           <a-steps
@@ -111,13 +111,13 @@
         <section class="modal-section">
           <div class="section-title section-title--purple">
             <i class="mdi mdi-school" aria-hidden="true" />
-            辅导信息
+            {{ $t('coaching_info') }}
           </div>
 
           <a-row :gutter="[12, 12]" class="coaching-row">
             <a-col :xs="12" :sm="6">
               <div class="coaching-card">
-                <div class="coaching-card__label">辅导状态</div>
+                <div class="coaching-card__label">{{ $t('counseling_status') }}</div>
                 <strong id="jd-coaching-status" class="coaching-card__value">
                   {{ preview.coachingStatus }}
                 </strong>
@@ -125,19 +125,19 @@
             </a-col>
             <a-col :xs="12" :sm="6">
               <div class="coaching-card">
-                <div class="coaching-card__label">分配导师</div>
+                <div class="coaching-card__label">{{ $t('assign_a_mentor') }}</div>
                 <strong id="jd-mentor" class="coaching-card__value">{{ preview.mentorName }}</strong>
               </div>
             </a-col>
             <a-col :xs="12" :sm="6">
               <div class="coaching-card">
-                <div class="coaching-card__label">已上课时</div>
+                <div class="coaching-card__label">{{ $t('already_in_class') }}</div>
                 <strong id="jd-hours" class="coaching-card__value">{{ preview.lessonHours }}</strong>
               </div>
             </a-col>
             <a-col :xs="12" :sm="6">
               <div class="coaching-card">
-                <div class="coaching-card__label">申请时间</div>
+                <div class="coaching-card__label">{{ $t('application_time') }}</div>
                 <strong id="jd-apply-time" class="coaching-card__value">{{ preview.applyTime }}</strong>
               </div>
             </a-col>
@@ -148,11 +148,11 @@
           <div class="section-head">
             <div class="section-title section-title--green">
               <i class="mdi mdi-book-open-variant" aria-hidden="true" />
-              课程记录 (最近3条)
+              {{ $t('course_records_latest_3') }})
             </div>
 
             <a-button type="link" size="small" class="view-all-btn" @click="emit('request-view-all')">
-              查看全部
+              {{ $t('view_all') }}
               <i class="mdi mdi-arrow-right" aria-hidden="true" />
             </a-button>
           </div>
@@ -180,14 +180,14 @@
         <section class="modal-section modal-section--notes">
           <div class="section-title section-title--amber">
             <i class="mdi mdi-note-text" aria-hidden="true" />
-            学员备注
+            {{ $t('student_notes') }}
           </div>
           <div id="jd-notes" class="notes-card">{{ preview.notes }}</div>
         </section>
       </div>
 
       <div class="job-detail-footer modal-footer">
-        <a-button class="footer-btn" @click="closeModal">关闭</a-button>
+        <a-button class="footer-btn" @click="closeModal">{{ $t('close') }}</a-button>
         <a-button
           type="primary"
           class="footer-btn job-detail-action"
@@ -197,7 +197,7 @@
           <template #icon>
             <i class="mdi mdi-account-switch" aria-hidden="true" />
           </template>
-          更换导师
+          {{ $t('change_mentor') }}
         </a-button>
       </div>
     </div>
@@ -207,7 +207,9 @@
 
 <script setup lang="ts">
 import { computed, h } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 export interface JobDetailPreview {
   studentName: string
   studentId: string
@@ -266,7 +268,7 @@ const stepIcon = (cls: string) =>
 
 const stepItems = [
   {
-    title: '已投递',
+    title: t('delivered'),
     description: '01/05',
     icon: stepIcon('mdi-check'),
   },
@@ -277,7 +279,7 @@ const stepItems = [
   },
   {
     title: 'First Round',
-    description: '当前',
+    description: t('current'),
     icon: stepIcon('mdi-clock'),
   },
   {
@@ -293,28 +295,28 @@ const stepItems = [
 const records: CourseRecord[] = [
   {
     date: '01/15',
-    label: '模拟面试',
+    label: t('mock_interview'),
     hours: '2h',
-    summary: '表现优秀，建议加强Valuation部分',
-    grade: '优秀',
+    summary: t('excellent_performance_recommend_strength'),
+    grade: t('excellent'),
     tone: 'record-item--green',
     tagTone: 'record-tag--green',
   },
   {
     date: '01/12',
-    label: '技术讲解',
+    label: t('technical_explanation'),
     hours: '2h',
     summary: '掌握DCF基础，需巩固LBO',
-    grade: '良好',
+    grade: t('good'),
     tone: 'record-item--blue',
     tagTone: 'record-tag--blue',
   },
   {
     date: '01/10',
-    label: '简历修改',
+    label: t('resume_revision'),
     hours: '1h',
-    summary: '完成简历优化，突出实习经历',
-    grade: '完成',
+    summary: t('completed_resume_optimization_highlighte'),
+    grade: t('completed_2'),
     tone: 'record-item--purple',
     tagTone: 'record-tag--purple',
   },

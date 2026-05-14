@@ -1,26 +1,26 @@
-<template>
+﻿<template>
   <div id="page-report" class="report-page">
     <OsgPageContainer>
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">上课记录 <span>Class Report</span></h1>
-            <p class="page-sub">查看课程记录并进行评价反馈</p>
+            <h1 class="page-title">{{ $t('class_records') }} <span>Class Report</span></h1>
+            <p class="page-sub">{{ $t('view_course_records_and_submit_feedback') }}</p>
           </div>
         </div>
       </template>
 
       <a-tabs v-model:activeKey="activeTab">
-        <a-tab-pane key="all" tab="全部" />
-        <a-tab-pane key="pending" tab="待评价" />
-        <a-tab-pane key="rated" tab="已评价" />
+        <a-tab-pane key="all" :tab="$t('all')" />
+        <a-tab-pane key="pending" :tab="$t('pending_evaluation')" />
+        <a-tab-pane key="rated" :tab="$t('rated')" />
       </a-tabs>
 
       <div class="toolbar">
         <a-input placeholder="搜索导师/课程..." class="toolbar-input" />
-        <a-select class="toolbar-select" placeholder="课程来源" :options="sourceOptions" />
-        <a-select class="toolbar-select" placeholder="课程类型" :options="courseTypeOptions" />
-        <a-select class="toolbar-select" placeholder="评价状态" :options="rateStatusOptions" />
+        <a-select class="toolbar-select" :placeholder="$t('course_source')" :options="sourceOptions" />
+        <a-select class="toolbar-select" :placeholder="$t('course_type')" :options="courseTypeOptions" />
+        <a-select class="toolbar-select" :placeholder="$t('review_status_2')" :options="rateStatusOptions" />
         <a-date-picker class="toolbar-date" />
       </div>
 
@@ -35,7 +35,7 @@
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'action'">
               <a-button
-                :type="record.status === '待评价' ? 'primary' : 'default'"
+                :type="record.status === $t('pending_evaluation') ? 'primary' : 'default'"
                 size="small"
                 @click="openRate(record)"
               >
@@ -47,7 +47,7 @@
       </div>
     </OsgPageContainer>
 
-    <a-modal v-model:open="rateOpen" title="课程评价" :footer="null" width="620px">
+    <a-modal v-model:open="rateOpen" :title="$t('course_review_2')" :footer="null" width="620px">
       <div v-if="activeRow" class="rate-stack">
         <div class="mentor-card">
           <div class="avatar">JL</div>
@@ -82,15 +82,15 @@
             <a-textarea
               v-model:value="feedbackText"
               :rows="4"
-              placeholder="请详细描述您的上课体验、导师表现以及改进建议..."
+              :placeholder="`${$t('please_describe_your_class_experience_me')}...`"
             />
           </a-form-item>
         </a-form>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="rateOpen = false">取消</a-button>
-        <a-button type="primary" @click="rateOpen = false">提交评价</a-button>
+        <a-button @click="rateOpen = false">{{ $t('cancel') }}</a-button>
+        <a-button type="primary" @click="rateOpen = false">{{ $t('submit_review') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -99,16 +99,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { OsgPageContainer } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const reportColumns = [
   { title: 'ID', dataIndex: 'id', key: 'id' },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType' },
-  { title: '导师', dataIndex: 'mentor', key: 'mentor' },
-  { title: '课时', dataIndex: 'duration', key: 'duration' },
-  { title: '上课日期', dataIndex: 'date', key: 'date' },
-  { title: '来源', dataIndex: 'source', key: 'source' },
-  { title: '我的评价', dataIndex: 'rate', key: 'rate' },
-  { title: '操作', key: 'action' },
+  { title: t('course_type'), dataIndex: 'courseType', key: 'courseType' },
+  { title: t('mentor'), dataIndex: 'mentor', key: 'mentor' },
+  { title: t('class_hours'), dataIndex: 'duration', key: 'duration' },
+  { title: t('course_date'), dataIndex: 'date', key: 'date' },
+  { title: t('source'), dataIndex: 'source', key: 'source' },
+  { title: t('my_review'), dataIndex: 'rate', key: 'rate' },
+  { title: t('operation'), key: 'action' },
 ]
 
 type ReportRow = {
@@ -119,65 +121,65 @@ type ReportRow = {
   date: string
   source: string
   rate: string
-  status: '待评价' | '已评价'
+  status: string
   actionLabel: string
 }
 
 const sourceOptions = [
-  { value: 'request', label: '我的申请' },
-  { value: 'mentor', label: '导师填报' }
+  { value: 'request', label: t('my_applications') },
+  { value: 'mentor', label: t('mentor_submission_2') }
 ]
 
 const courseTypeOptions = [
-  { value: 'interview', label: '入职面试' },
-  { value: 'mock', label: '模拟面试' },
-  { value: 'written', label: '笔试辅导' },
-  { value: 'midterm', label: '模拟期中' },
-  { value: 'network', label: '人际关系' }
+  { value: 'interview', label: t('interview_2') },
+  { value: 'mock', label: t('mock_interview') },
+  { value: 'written', label: t('written_test_coaching') },
+  { value: 'midterm', label: t('mock_midterm') },
+  { value: 'network', label: t('interpersonal_skills') }
 ]
 
 const rateStatusOptions = [
-  { value: 'pending', label: '待评价' },
-  { value: 'rated', label: '已评价' }
+  { value: 'pending', label: t('pending_evaluation') },
+  { value: 'rated', label: t('rated') }
 ]
 
 const reportRows: ReportRow[] = [
   {
     id: '231776',
-    courseType: '模拟面试',
+    courseType: t('mock_interview'),
     mentor: 'Jerry Li',
     duration: '1.5h',
     date: '12/28/2025',
-    source: '我的申请',
-    rate: '待评价',
-    status: '待评价',
-    actionLabel: '评价'
+    source: t('my_applications'),
+    rate: t('pending_evaluation'),
+    status: t('pending_evaluation'),
+    actionLabel: t('feedback')
   },
   {
     id: '231775',
-    courseType: '入职面试',
+    courseType: t('interview_2'),
     mentor: 'Test Lead Mentor',
     duration: '2.0h',
     date: '12/25/2025',
-    source: '导师填报',
+    source: t('mentor_submission_2'),
     rate: '已评价 ⭐4.5',
-    status: '已评价',
-    actionLabel: '重新评价'
+    status: t('rated'),
+    actionLabel: t('re_review')
   },
   {
     id: '214991',
-    courseType: '笔试辅导',
+    courseType: t('written_test_coaching'),
     mentor: 'Test Lead Mentor',
     duration: '1.0h',
     date: '12/20/2025',
-    source: '我的申请',
+    source: t('my_applications'),
     rate: '已评价 ⭐5.0',
-    status: '已评价',
-    actionLabel: '重新评价'
+    status: t('rated'),
+    actionLabel: t('re_review')
   }
 ]
 
-const rateTags = ['专业能力强', '耐心细致', '反馈及时', '收获很大', '准时守约']
+const rateTags = [t('strong_professional_skills'), t('patient_and_thorough'), t('timely_feedback'), t('very_insightful'), t('punctual_and_reliable')]
 const activeTab = ref<'all' | 'pending' | 'rated'>('all')
 const rateOpen = ref(false)
 const rating = ref(0)
@@ -186,11 +188,11 @@ const activeRow = ref<ReportRow | null>(null)
 
 const filteredRows = computed(() => {
   if (activeTab.value === 'pending') {
-    return reportRows.filter((row) => row.status === '待评价')
+    return reportRows.filter((row) => row.status === t('pending_evaluation'))
   }
 
   if (activeTab.value === 'rated') {
-    return reportRows.filter((row) => row.status === '已评价')
+    return reportRows.filter((row) => row.status === t('rated'))
   }
 
   return reportRows
@@ -198,12 +200,12 @@ const filteredRows = computed(() => {
 
 const ratingText = computed(() => {
   const texts = ['', '1分 - 很差', '2分 - 一般', '3分 - 还行', '4分 - 很好', '5分 - 非常棒']
-  return texts[rating.value] || '请选择'
+  return texts[rating.value] || t('please_select')
 })
 
 const openRate = (row: ReportRow) => {
   activeRow.value = row
-  rating.value = row.status === '待评价' ? 0 : 4
+  rating.value = row.status === t('pending_evaluation') ? 0 : 4
   feedbackText.value = ''
   rateOpen.value = true
 }
@@ -329,3 +331,4 @@ const openRate = (row: ReportRow) => {
   margin-top: 24px;
 }
 </style>
+

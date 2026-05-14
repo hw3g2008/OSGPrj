@@ -29,7 +29,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
 import { clearAuth, getUser } from '@osg/shared/utils'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
 type MentorNavBadgeState = {
@@ -56,7 +58,7 @@ const userInitials = computed(() => {
   const compact = source.replace(/\s+/g, '')
   return compact.slice(0, 2).toUpperCase()
 })
-const roleLabel = computed(() => '导师')
+const roleLabel = computed(() => t('mentor'))
 
 // 动态 badge 通过 computed 依赖 jobBadge.value / mockBadge.value，
 // 响应式自动生效（badge 刷新后 navigationGroups 会重新计算）。

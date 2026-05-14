@@ -1,16 +1,16 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="财务结算" title-en="Settlement" description="管理导师课时费支付，支持单条与批量标记已支付">
+    <PageHeader :title-zh="$t('financial_settlement')" title-en="Settlement" :description="$t('manage_mentor_session_fee_payments_with_')">
       <template #actions>
         <a-button @click="loadData">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ $t('export') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-alert type="warning" show-icon style="margin-bottom: 0">
-      <template #message>支付流程说明</template>
+      <template #message>{{ $t('payment_process_guide') }}</template>
       <template #description>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px">
           <a-tag v-for="step in flowSteps" :key="step" color="orange">{{ step }}</a-tag>
@@ -38,34 +38,34 @@
 
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索导师 / 学员" allow-clear style="width: 180px" @press-enter="loadData" />
+          <a-input v-model:value="keyword" :placeholder="$t('search_mentor_student')" allow-clear style="width: 180px" @press-enter="loadData" />
         </a-form-item>
         <a-form-item>
           <a-select v-model:value="source" style="width: 120px">
-            <a-select-option value="all">全部来源</a-select-option>
-            <a-select-option value="mentor">导师端</a-select-option>
-            <a-select-option value="clerk">班主任端</a-select-option>
-            <a-select-option value="assistant">助教端</a-select-option>
+            <a-select-option value="all">{{ $t('all_sources') }}</a-select-option>
+            <a-select-option value="mentor">{{ $t('mentor_portal') }}</a-select-option>
+            <a-select-option value="clerk">{{ $t('homeroom_teacher_portal') }}</a-select-option>
+            <a-select-option value="assistant">{{ $t('teaching_assistant_portal') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-date-picker v-model:value="startDate" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+          <a-date-picker v-model:value="startDate" :placeholder="$t('start_date_2')" value-format="YYYY-MM-DD" style="width: 130px" />
         </a-form-item>
         <a-form-item>
-          <a-date-picker v-model:value="endDate" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+          <a-date-picker v-model:value="endDate" :placeholder="$t('end_date_2')" value-format="YYYY-MM-DD" style="width: 130px" />
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadData">
             <template #icon><SearchOutlined /></template>
-            查询
+            {{ $t('search_3') }}
           </a-button>
         </a-form-item>
       </a-form>
 
       <div v-if="activeTab === 'unpaid'" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px">
-        <span v-if="selectedSettlementIds.length" style="color: #1890ff">已选择 {{ selectedSettlementIds.length }} 条，合计 {{ selectedAmount }}</span>
-        <span v-else style="color: #94a3b8">批量标记已支付</span>
-        <a-button v-if="selectedSettlementIds.length" type="primary" @click="openBatchPay">批量标记已支付</a-button>
+        <span v-if="selectedSettlementIds.length" style="color: #1890ff">{{ $t('selected') }} {{ selectedSettlementIds.length }} {{ $t('records_total') }} {{ selectedAmount }}</span>
+        <span v-else style="color: #94a3b8">{{ $t('mark_all_as_paid') }}</span>
+        <a-button v-if="selectedSettlementIds.length" type="primary" @click="openBatchPay">{{ $t('mark_all_as_paid') }}</a-button>
       </div>
 
       <a-table
@@ -73,7 +73,7 @@
         :data-source="rows"
         :row-key="(r: FinanceSettlementRow) => r.settlementId"
         :pagination="false"
-        :locale="{ emptyText: '暂无结算记录' }"
+        :locale="{ emptyText: $t('no_settlement_records') }"
         :scroll="{ x: 1300 }"
         :row-selection="activeTab === 'unpaid' ? { selectedRowKeys: selectedSettlementIds, onChange: onSelectChange } : undefined"
         :row-class-name="(record: FinanceSettlementRow) => selectedSettlementIds.includes(record.settlementId) ? 'row-selected' : ''"
@@ -101,8 +101,8 @@
             {{ record.paymentDate || '--' }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button v-if="record.paymentStatus === 'unpaid'" type="link" size="small" @click="openSinglePay(record)">标记支付</a-button>
-            <span v-else style="color: #94a3b8">查看</span>
+            <a-button v-if="record.paymentStatus === 'unpaid'" type="link" size="small" @click="openSinglePay(record)">{{ $t('mark_as_paid') }}</a-button>
+            <span v-else style="color: #94a3b8">{{ $t('view') }}</span>
           </template>
         </template>
       </a-table>
@@ -134,7 +134,9 @@ import {
   type FinanceSettlementStats,
   type FinanceSettlementTab
 } from '@osg/shared/api/admin/finance'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const sourceColorMap: Record<string, string> = {
   mentor: 'purple',
   clerk: 'green',
@@ -142,17 +144,17 @@ const sourceColorMap: Record<string, string> = {
 }
 
 const settlementColumns = [
-  { title: '课程ID', dataIndex: 'recordCode', key: 'recordCode', width: 100 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
-  { title: '课程类型', dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 100 },
-  { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '课时费', dataIndex: 'courseFee', key: 'courseFee', width: 90 },
-  { title: '日期', dataIndex: 'classDate', key: 'classDate', width: 100 },
-  { title: '来源', dataIndex: 'source', key: 'source', width: 90 },
-  { title: '状态', dataIndex: 'paymentStatus', key: 'paymentStatus', width: 80 },
-  { title: '支付日期', dataIndex: 'paymentDate', key: 'paymentDate', width: 100 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 90 },
+  { title: t('course_id'), dataIndex: 'recordCode', key: 'recordCode', width: 100 },
+  { title: t('mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 100 },
+  { title: t('course_type'), dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 100 },
+  { title: t('duration'), dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: t('session_fee'), dataIndex: 'courseFee', key: 'courseFee', width: 90 },
+  { title: t('date'), dataIndex: 'classDate', key: 'classDate', width: 100 },
+  { title: t('source'), dataIndex: 'source', key: 'source', width: 90 },
+  { title: t('status'), dataIndex: 'paymentStatus', key: 'paymentStatus', width: 80 },
+  { title: t('payment_date'), dataIndex: 'paymentDate', key: 'paymentDate', width: 100 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 90 },
 ]
 
 const rows = ref<FinanceSettlementRow[]>([])
@@ -167,14 +169,14 @@ const showMarkPaidModal = ref(false)
 const submitting = ref(false)
 const modalContext = ref<{ type: 'single' | 'batch'; row?: FinanceSettlementRow } | null>(null)
 
-const flowSteps = computed(() => stats.value?.flowSteps ?? ['审核通过', '未支付', '已支付'])
+const flowSteps = computed(() => stats.value?.flowSteps ?? [t('approved_2'), t('unpaid'), t('paid')])
 
 const statCards = computed(() => {
   const current = stats.value
   return [
-    { label: '未支付', value: formatFee(current?.unpaidAmount), bg: '#fffbeb', color: '#d97706' },
-    { label: '本月已支付', value: formatFee(current?.monthPaidAmount), bg: '#f0fdf4', color: '#16a34a' },
-    { label: '本周课程数', value: String(current?.weekClassCount ?? 0), bg: '#eff6ff', color: '#2563eb' }
+    { label: t('unpaid'), value: formatFee(current?.unpaidAmount), bg: '#fffbeb', color: '#d97706' },
+    { label: t('paid_this_month'), value: formatFee(current?.monthPaidAmount), bg: '#f0fdf4', color: '#16a34a' },
+    { label: t('courses_this_week'), value: String(current?.weekClassCount ?? 0), bg: '#eff6ff', color: '#2563eb' }
   ]
 })
 
@@ -186,8 +188,8 @@ const tabs = computed(() => {
   const unpaidCount = rows.value.filter((row) => row.paymentStatus === 'unpaid').length
   const paidCount = rows.value.filter((row) => row.paymentStatus === 'paid').length
   return [
-    { key: 'unpaid' as const, label: '未支付', count: unpaidCount },
-    { key: 'paid' as const, label: '已支付', count: paidCount }
+    { key: 'unpaid' as const, label: t('unpaid'), count: unpaidCount },
+    { key: 'paid' as const, label: t('paid'), count: paidCount }
   ]
 })
 
@@ -199,10 +201,10 @@ const selectedAmount = computed(() => {
 
 const modalSummaryLabel = computed(() => {
   if (modalContext.value?.type === 'batch') {
-    return `批量结算 ${selectedSettlementIds.value.length} 条记录`
+    return t('batch_settlement_records', { count: selectedSettlementIds.value.length })
   }
   const row = modalContext.value?.row
-  return row ? `${row.mentorName} · ${row.studentName}` : '单条结算'
+  return row ? `${row.mentorName} · ${row.studentName}` : t('single_settlement')
 })
 
 const modalAmount = computed(() => {
@@ -231,7 +233,7 @@ const loadData = async () => {
     stats.value = statsResponse
     selectedSettlementIds.value = selectedSettlementIds.value.filter((id) => rows.value.some((row) => row.settlementId === id))
   } catch (_error) {
-    message.error('课时结算加载失败')
+    message.error(t('failed_to_load_session_settlement_data'))
   }
 }
 
@@ -248,7 +250,7 @@ const openSinglePay = (row: FinanceSettlementRow) => {
 
 const openBatchPay = () => {
   if (!selectedSettlementIds.value.length) {
-    message.warning('请先选择至少一条未支付记录')
+    message.warning(t('please_select_at_least_one_unpaid_record'))
     return
   }
   modalContext.value = { type: 'batch' }
@@ -257,7 +259,7 @@ const openBatchPay = () => {
 
 const handleConfirmPaid = async (payload: { paymentDate: string; bankReferenceNo?: string; remark?: string }) => {
   if (!payload.paymentDate) {
-    message.warning('请填写支付日期')
+    message.warning(t('please_enter_the_payment_date'))
     return
   }
 

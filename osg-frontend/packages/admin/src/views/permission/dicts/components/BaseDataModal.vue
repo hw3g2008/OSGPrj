@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :surface-id="surfaceId"
     :open="visible"
@@ -13,7 +13,7 @@
           :class="isEdit ? 'mdi-database-edit' : 'mdi-database-plus'"
           aria-hidden="true"
         />
-        <span>{{ isEdit ? `编辑${tabLabel}` : `新增${tabLabel}` }}</span>
+        <span>{{ (isEdit ? $t('edit') : $t('add')) + tabLabel }}</span>
       </span>
     </template>
 
@@ -29,11 +29,11 @@
         <template #label>
           <span class="base-data-modal__label">{{ nameFieldLabel }}<span class="base-data-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.dictLabel" :placeholder="`请输入${nameFieldLabel}`" />
+        <a-input v-model:value="formState.dictLabel" :placeholder="$t('please_enter_field', { field: nameFieldLabel })" />
       </a-form-item>
 
-      <a-form-item name="dictValue" data-field-name="字典键值" label="字典键值">
-        <a-input v-model:value="formState.dictValue" placeholder="请输入字典键值" />
+      <a-form-item name="dictValue" :data-field-name="$t('dictionary_key')" :label="$t('dictionary_key')">
+        <a-input v-model:value="formState.dictValue" :placeholder="$t('please_enter_dictionary_key')" />
       </a-form-item>
 
       <a-form-item v-if="parentTabInfo" name="parentValue" :data-field-name="parentFieldLabel">
@@ -42,7 +42,7 @@
         </template>
         <a-select
           v-model:value="formState.parentValue"
-          :placeholder="`请选择${parentFieldLabel}`"
+          :placeholder="$t('please_select_field', { field: parentFieldLabel })"
           allow-clear
         >
           <a-select-option
@@ -59,43 +59,43 @@
       <a-form-item
         v-if="props.tab === 'osg_company_name'"
         name="website"
-        data-field-name="官网地址"
-        label="官网地址"
+        :data-field-name="$t('website_url')"
+        :label="$t('website_url')"
       >
-        <a-input v-model:value="formState.website" placeholder="请输入官网地址（选填）" />
+        <a-input v-model:value="formState.website" :placeholder="`${$t('enter_website_url_optional')}）`" />
       </a-form-item>
 
       <!-- Fix 4: 国家/地区字段，school Tab 特有，供 Playwright 定位 -->
       <a-form-item
         v-if="props.tab === 'osg_school'"
         name="country"
-        data-field-name="国家/地区"
-        label="国家/地区"
+        :data-field-name="$t('country_region')"
+        :label="$t('country_region')"
       >
-        <a-input v-model:value="formState.country" placeholder="请输入国家/地区（选填）" />
+        <a-input v-model:value="formState.country" :placeholder="`${$t('enter_country_region_optional')}）`" />
       </a-form-item>
 
-      <a-form-item label="排序" name="dictSort" data-field-name="排序">
+      <a-form-item :label="$t('sort_order')" name="dictSort" :data-field-name="$t('sort_order')">
         <a-input-number
           v-model:value="formState.dictSort"
           :min="0"
-          placeholder="数字越大越靠前"
+          :placeholder="$t('higher_number_higher_priority')"
           style="width: 100%"
         />
       </a-form-item>
 
-      <a-form-item label="状态" name="status" data-field-name="状态">
+      <a-form-item :label="$t('status')" name="status" :data-field-name="$t('status')">
         <a-switch
           v-model:checked="statusChecked"
-          checked-children="启用"
-          un-checked-children="禁用"
+          :checked-children="$t('enable')"
+          :un-checked-children="$t('disable')"
         />
       </a-form-item>
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="loading" @click="handleSubmit">保存</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="loading" @click="handleSubmit">{{ $t('save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -105,7 +105,9 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { createAdminDictItem, getAdminDictOptions, updateAdminDictItem } from '@/api/adminDict'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   category: string
@@ -129,21 +131,21 @@ const surfaceIdMap: Record<string, { create: string; edit: string }> = {
   osg_sub_direction: { create: 'modal-new-sub-direction', edit: 'modal-edit-sub-direction' },
 }
 const nameFieldLabelMap: Record<string, string> = {
-  osg_job_category: '分类名称',
-  osg_company_name: '公司/银行名称',
-  osg_region: '大区名称',
-  osg_city: '地区/城市名称',
-  osg_recruit_cycle: '周期名称',
-  osg_school: '学校名称',
-  osg_major_direction: '方向名称',
-  osg_sub_direction: '子方向名称',
-  osg_course_type: '课程类型名称',
-  osg_expense_type: '报销类型名称',
+  osg_job_category: t('category_name'),
+  osg_company_name: t('company_bank_name'),
+  osg_region: t('region_name'),
+  osg_city: t('region_city_name'),
+  osg_recruit_cycle: t('cycle_name'),
+  osg_school: t('school_name'),
+  osg_major_direction: t('focus_name'),
+  osg_sub_direction: t('sub_focus_name'),
+  osg_course_type: t('course_type_name'),
+  osg_expense_type: t('expense_type_name'),
 }
 const parentFieldLabelMap: Record<string, string> = {
-  osg_company_name: '所属公司/银行类别',
-  osg_city: '所属大区',
-  osg_sub_direction: '所属主攻方向',
+  osg_company_name: t('company_bank_category'),
+  osg_city: t('region_2'),
+  osg_sub_direction: t('major_focus_2'),
 }
 
 const isEdit = computed(() => !!props.record)
@@ -165,10 +167,10 @@ const parentTabInfo = computed(() => {
   return parentTab ? { key: cfg.parentTab, label: parentTab.label } : null
 })
 
-const nameFieldLabel = computed(() => nameFieldLabelMap[props.tab] ?? `${props.tabLabel}名称`)
+const nameFieldLabel = computed(() => nameFieldLabelMap[props.tab] ?? t('field_name_header', { field: props.tabLabel }))
 const parentFieldLabel = computed(() => {
   if (!parentTabInfo.value) return ''
-  return parentFieldLabelMap[props.tab] ?? `所属${parentTabInfo.value.label}`
+  return parentFieldLabelMap[props.tab] ?? t('parent_field_label', { field: parentTabInfo.value.label })
 })
 
 const formState = reactive({
@@ -189,10 +191,10 @@ const statusChecked = computed({
 })
 
 const rules = computed(() => ({
-  dictLabel: [{ required: true, message: `请输入${nameFieldLabel.value}`, trigger: 'blur' }],
-  dictValue: [{ required: true, message: '请输入字典键值', trigger: 'blur' }],
+  dictLabel: [{ required: true, message: t('please_enter_field', { field: nameFieldLabel.value }), trigger: 'blur' }],
+  dictValue: [{ required: true, message: t('please_enter_dictionary_key'), trigger: 'blur' }],
   parentValue: parentTabInfo.value
-    ? [{ required: true, message: `请选择${parentFieldLabel.value}`, trigger: 'change' }]
+    ? [{ required: true, message: t('please_select_field', { field: parentFieldLabel.value }), trigger: 'change' }]
     : [],
 }))
 
@@ -272,9 +274,9 @@ const handleSubmit = async () => {
         status: formState.status,
         remark,
       }, {
-        customErrorMessage: '字典项修改失败，请检查输入信息'
+        customErrorMessage: t('failed_to_update_dictionary_item_please_')
       })
-      message.success('修改成功')
+      message.success(t('updated_successfully'))
     } else {
       await createAdminDictItem({
         dictType: props.tab,
@@ -284,9 +286,9 @@ const handleSubmit = async () => {
         status: formState.status,
         remark,
       }, {
-        customErrorMessage: '字典项新增失败，请检查输入信息'
+        customErrorMessage: t('failed_to_add_dictionary_item_please_che')
       })
-      message.success('新增成功')
+      message.success(t('added_successfully'))
     }
 
     emit('success')
@@ -325,3 +327,4 @@ const handleSubmit = async () => {
 }
 
 </style>
+

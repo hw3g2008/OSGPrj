@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="osg-page">
     <PageHeader
-      title-zh="学员列表"
+      :title-zh="$t('student_list_2')"
       title-en="Student List"
-      description="查看我教的学员和助教为我的全部学员信息及求职数据"
+      :description="$t('view_all_student_info_and_job_search_dat')"
     />
 
     <a-card :bordered="false" class="filter-card">
@@ -11,7 +11,7 @@
         <a-input
           id="assistant-students-keyword"
           v-model:value="filters.keyword"
-          placeholder="搜索姓名"
+          :placeholder="$t('search_by_name')"
           allow-clear
           style="width: 180px"
           @press-enter="handleSearch"
@@ -23,32 +23,32 @@
         <!-- TODO: 待后端支持「关系类型」字段后补充「学员类型」筛选（我教的学员 / 助教为我） -->
         <a-input
           v-model:value="filters.school"
-          placeholder="学校"
+          :placeholder="$t('school')"
           allow-clear
           style="width: 160px"
           @press-enter="handleSearch"
         />
         <a-select
           v-model:value="filters.majorDirection"
-          placeholder="主攻方向"
+          :placeholder="$t('major_focus')"
           allow-clear
           style="width: 140px"
           :options="majorDirectionSelectOptions"
         />
         <a-select
           v-model:value="filters.accountStatus"
-          placeholder="账号状态"
+          :placeholder="$t('account_status_2')"
           allow-clear
           style="width: 140px"
           :options="accountStatusOptions"
         />
         <a-button id="assistant-students-search" type="primary" @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ $t('search') }}
         </a-button>
         <a-button id="assistant-students-reset" type="text" @click="resetFilters">
           <template #icon><ReloadOutlined /></template>
-          重置
+          {{ $t('reset') }}
         </a-button>
       </div>
     </a-card>
@@ -57,12 +57,12 @@
       v-if="errorMessage"
       type="error"
       show-icon
-      :message="'学员列表加载失败'"
+      ::message="`'${$t('student_list_load_failed')}'`"
       :description="errorMessage"
       class="error-alert"
     >
       <template #action>
-        <a-button size="small" type="link" @click="loadStudents">重新加载</a-button>
+        <a-button size="small" type="link" @click="loadStudents">{{ $t('reload') }}</a-button>
       </template>
     </a-alert>
 
@@ -73,7 +73,7 @@
         :loading="loading"
         :pagination="tablePagination"
         :scroll="{ x: 'max-content' }"
-        :locale="{ emptyText: '暂无可查看学员' }"
+        :locale="{ emptyText: $t('no_students_to_view') }"
         row-key="studentId"
         :row-attrs="() => ({ 'data-student-row': '' })"
         size="middle"
@@ -122,7 +122,7 @@
               <span class="status-tag" :class="contractStatusToneClass(record.contractStatus, record.isBlacklisted)">
                 {{ formatContractStatus(record.contractStatus, record.isBlacklisted) }}
               </span>
-              <span v-if="record.pendingReview" class="status-tag status-tag--warning">待审核</span>
+              <span v-if="record.pendingReview" class="status-tag status-tag--warning">{{ $t('pending_review') }}</span>
               <span v-if="formatReminder(record) !== '当前暂无额外提醒'" class="status-hint">
                 {{ formatReminder(record) }}
               </span>
@@ -132,7 +132,7 @@
             <StudentStatusTag :account-status="record.accountStatus" />
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-button type="link" size="small" @click="handleViewJob(record)">查看求职</a-button>
+            <a-button type="link" size="small" @click="handleViewJob(record)">{{ $t('view_job_search') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -151,7 +151,9 @@ import {
   getAssistantStudentList,
   type AssistantStudentListItem,
 } from '@osg/shared/api'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const router = useRouter()
 
 const handleViewJob = (row: AssistantStudentListItem) => {
@@ -200,27 +202,27 @@ const majorDirectionSelectOptions = computed(() => {
 })
 
 const accountStatusOptions = [
-  { value: '0', label: '正常' },
-  { value: '1', label: '冻结' },
-  { value: '2', label: '已结束' },
-  { value: '3', label: '退款' },
+  { value: '0', label: t('active_3') },
+  { value: '1', label: t('frozen') },
+  { value: '2', label: t('ended') },
+  { value: '3', label: t('refund_2') },
 ]
 
 const columns = [
   { title: 'ID', key: 'studentId', dataIndex: 'studentId', width: 96 },
-  { title: '英文姓名', key: 'studentName', dataIndex: 'studentName', width: 140 },
-  { title: '邮箱', key: 'email', dataIndex: 'email', width: 200, ellipsis: true },
-  { title: '班主任', key: 'leadMentorName', dataIndex: 'leadMentorName', width: 120 },
-  { title: '学校', key: 'school', dataIndex: 'school', width: 160, ellipsis: true },
-  { title: '主攻方向', key: 'majorDirection', dataIndex: 'majorDirection', width: 120 },
-  { title: '求职辅导', key: 'jobCoachingCount', dataIndex: 'jobCoachingCount', width: 100, align: 'center' as const },
-  { title: '基础课', key: 'basicCourseCount', dataIndex: 'basicCourseCount', width: 90, align: 'center' as const },
-  { title: '模拟应聘', key: 'mockInterviewCount', dataIndex: 'mockInterviewCount', width: 100, align: 'center' as const },
-  { title: '剩余课时', key: 'remainingHours', dataIndex: 'remainingHours', width: 110, align: 'center' as const },
-  { title: '求职目标', key: 'targetPosition', dataIndex: 'targetPosition', width: 140, ellipsis: true },
-  { title: '服务状态', key: 'contractStatus', dataIndex: 'contractStatus', width: 160 },
-  { title: '账号状态', key: 'accountStatus', dataIndex: 'accountStatus', width: 110 },
-  { title: '操作', key: 'action', width: 110, fixed: 'right' as const },
+  { title: t('english_name_2'), key: 'studentName', dataIndex: 'studentName', width: 140 },
+  { title: t('email'), key: 'email', dataIndex: 'email', width: 200, ellipsis: true },
+  { title: t('head_teacher'), key: 'leadMentorName', dataIndex: 'leadMentorName', width: 120 },
+  { title: t('school'), key: 'school', dataIndex: 'school', width: 160, ellipsis: true },
+  { title: t('major_focus'), key: 'majorDirection', dataIndex: 'majorDirection', width: 120 },
+  { title: t('job_search_coaching'), key: 'jobCoachingCount', dataIndex: 'jobCoachingCount', width: 100, align: 'center' as const },
+  { title: t('foundation_course'), key: 'basicCourseCount', dataIndex: 'basicCourseCount', width: 90, align: 'center' as const },
+  { title: t('mock_application'), key: 'mockInterviewCount', dataIndex: 'mockInterviewCount', width: 100, align: 'center' as const },
+  { title: t('remaining_hours'), key: 'remainingHours', dataIndex: 'remainingHours', width: 110, align: 'center' as const },
+  { title: t('job_search_goal'), key: 'targetPosition', dataIndex: 'targetPosition', width: 140, ellipsis: true },
+  { title: t('service_status'), key: 'contractStatus', dataIndex: 'contractStatus', width: 160 },
+  { title: t('account_status_2'), key: 'accountStatus', dataIndex: 'accountStatus', width: 110 },
+  { title: t('operation'), key: 'action', width: 110, fixed: 'right' as const },
 ]
 
 const tablePagination = computed<TablePaginationConfig>(() => ({
@@ -296,26 +298,26 @@ function formatCount(value?: number) {
 }
 
 function formatMentor(value?: string) {
-  return value && value.trim() ? value : '待补充班主任'
+  return value && value.trim() ? value : t('class_director_pending')
 }
 
 function formatContractStatus(value?: string, isBlacklisted?: boolean) {
   if (isBlacklisted || value === 'blacklist') {
-    return '黑名单'
+    return t('blacklist')
   }
   if (value === 'expiring') {
-    return '即将到期'
+    return t('expiring_soon')
   }
   if (value === 'expired') {
-    return '已到期'
+    return t('expired_2')
   }
   if (value === 'cancelled') {
-    return '已终止'
+    return t('terminated')
   }
   if (value === 'pending_review') {
-    return '待审核'
+    return t('pending_review')
   }
-  return '正常服务'
+  return t('active_service')
 }
 
 function contractStatusToneClass(value?: string, isBlacklisted?: boolean) {
@@ -348,7 +350,7 @@ function isLowHours(student: AssistantStudentListItem) {
 }
 
 function isContractExpiring(student: AssistantStudentListItem) {
-  return student.contractStatus === 'expiring' || String(student.reminder || '').includes('到期')
+  return student.contractStatus === 'expiring' || String(student.reminder || '').includes(t('expired'))
 }
 
 function formatReminder(student: AssistantStudentListItem) {
@@ -356,18 +358,18 @@ function formatReminder(student: AssistantStudentListItem) {
     return student.reminder
   }
   if (student.pendingReview) {
-    return '资料变更待审核'
+    return t('profile_change_pending_review')
   }
   if (student.isBlacklisted) {
-    return '当前学员已被纳入黑名单'
+    return t('this_student_has_been_blacklisted')
   }
   if (isLowHours(student)) {
-    return '剩余课时偏低，建议优先跟进'
+    return t('remaining_class_hours_are_low_follow_up_')
   }
   if (isContractExpiring(student)) {
-    return '合同即将到期'
+    return t('contract_expiring_soon')
   }
-  return '当前暂无额外提醒'
+  return t('no_additional_reminders_at_this_time')
 }
 
 async function loadStudents() {
@@ -579,3 +581,4 @@ onMounted(() => {
   color: var(--muted, #9ca3af);
 }
 </style>
+

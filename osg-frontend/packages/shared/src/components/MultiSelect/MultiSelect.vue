@@ -4,7 +4,7 @@
     mode="multiple"
     :options="options"
     :field-names="fieldNames"
-    :placeholder="placeholder"
+    :placeholder="placeholder || $t('please_select')"
     :disabled="disabled"
     show-search
     allow-clear
@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   value: () => [],
   options: () => [],
-  placeholder: '请选择',
+  placeholder: '',
   disabled: false,
   fieldNames: () => ({ label: 'label', value: 'value' })
 })

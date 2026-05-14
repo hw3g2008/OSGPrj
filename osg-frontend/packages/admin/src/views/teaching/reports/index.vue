@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="课时审核" title-en="Reports" description="审核导师提交的课时记录，所有课程记录自动同步">
+    <PageHeader :title-zh="$t('class_hours_review')" title-en="Reports" :description="$t('review_class_hour_records_submitted_by_m')">
       <template #actions>
         <a-button @click="handleExportPlaceholder">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ $t('export') }}
         </a-button>
       </template>
     </PageHeader>
@@ -12,12 +12,12 @@
     <!-- 超时提醒横幅 -->
     <a-alert v-if="summary.overtimeMentors.length" type="error" show-icon banner style="border-radius: 12px">
       <template #message>
-        <strong>超时提醒：以下导师本周上课时间超过6小时</strong>
+        <strong>{{ $t('overtime_alert_the_following_mentors_hav') }}</strong>
       </template>
       <template #description>
         <div style="display: flex; align-items: center; gap: 12px">
           <span>{{ overtimeMentorSummary }}</span>
-          <a-button size="small" danger @click="scrollToOvertime">查看详情</a-button>
+          <a-button size="small" danger @click="scrollToOvertime">{{ $t('view_details') }}</a-button>
         </div>
       </template>
     </a-alert>
@@ -26,29 +26,29 @@
       <!-- 筛选条件 -->
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="filters.keyword" placeholder="搜索导师/学员..." allow-clear style="width: 180px" @press-enter="handleSearch" />
+          <a-input v-model:value="filters.keyword" :placeholder="`${$t('search_mentor_student_2')}...`" allow-clear style="width: 180px" @press-enter="handleSearch" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.courseType" placeholder="课程类型" allow-clear style="width: 130px">
+          <a-select v-model:value="filters.courseType" :placeholder="$t('course_type')" allow-clear style="width: 130px">
             <a-select-option v-for="option in courseTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.courseSource" placeholder="课程来源" allow-clear style="width: 130px">
+          <a-select v-model:value="filters.courseSource" :placeholder="$t('course_source')" allow-clear style="width: 130px">
             <a-select-option v-for="option in courseSourceOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-date-picker v-model:value="filters.dateStart" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+            <a-date-picker v-model:value="filters.dateStart" :placeholder="$t('start_date_2')" value-format="YYYY-MM-DD" style="width: 130px" />
             <span>~</span>
-            <a-date-picker v-model:value="filters.dateEnd" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+            <a-date-picker v-model:value="filters.dateEnd" :placeholder="$t('end_date_2')" value-format="YYYY-MM-DD" style="width: 130px" />
           </a-space>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="handleSearch">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ $t('search') }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -67,13 +67,13 @@
       <a-space v-if="activeTab === 'pending'" style="margin-bottom: 12px">
         <a-button type="primary" size="small" :disabled="!selectedRowKeys.length" @click="handleBatchApprove">
           <template #icon><CheckOutlined /></template>
-          批量通过
+          {{ $t('batch_approve') }}
         </a-button>
         <a-button danger size="small" :disabled="!selectedRowKeys.length" @click="handleBatchReject">
           <template #icon><CloseOutlined /></template>
-          批量驳回
+          {{ $t('batch_reject') }}
         </a-button>
-        <span style="color: #64748b; font-size: 13px">已选择 <strong>{{ selectedRowKeys.length }}</strong> 条</span>
+        <span style="color: #64748b; font-size: 13px">{{ $t('selected_records_count', { count: selectedRowKeys.length }) }}</span>
       </a-space>
 
       <!-- 课时审核表格 -->
@@ -84,7 +84,7 @@
         :row-selection="activeTab === 'pending' ? { selectedRowKeys, onChange: onSelectChange, getCheckboxProps: (record: ReportRow) => ({ disabled: record.status !== 'pending' }) } : undefined"
         :pagination="false"
         :loading="loading"
-        :locale="{ emptyText: '当前筛选条件下暂无课时审核记录' }"
+        :locale="{ emptyText: $t('no_class_hours_review_records_under_curr') }"
         :scroll="{ x: 1200 }"
         :row-class-name="(record: ReportRow) => rowClassName(record)"
       >
@@ -92,8 +92,8 @@
           <template v-if="column.dataIndex === 'mentorName'">
             <div>
               <strong>{{ record.mentorName }}</strong>
-              <div v-if="record.weeklyHours && record.weeklyHours > 6" style="color: #dc2626; font-size: 11px">⚠ 本周{{ record.weeklyHours }}h</div>
-              <div v-else-if="record.pendingDays && record.pendingDays > 30" style="color: #be185d; font-size: 11px">⏰ 超过30天</div>
+              <div v-if="record.weeklyHours && record.weeklyHours > 6" style="color: #dc2626; font-size: 11px">⚠ {{ $t('this_week') }}{{ record.weeklyHours }}h</div>
+              <div v-else-if="record.pendingDays && record.pendingDays > 30" style="color: #be185d; font-size: 11px">⏰ {{ $t('over_30_days') }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'studentName'">
@@ -123,10 +123,10 @@
           <template v-else-if="column.dataIndex === 'action'">
             <a-space :size="4">
               <template v-if="record.status === 'pending'">
-                <a-button type="link" size="small" style="color: #22c55e" @click="handleQuickApprove(record)">通过</a-button>
-                <a-button type="link" size="small" danger @click="openReviewDetail(record)">驳回</a-button>
+                <a-button type="link" size="small" style="color: #22c55e" @click="handleQuickApprove(record)">{{ $t('approve') }}</a-button>
+                <a-button type="link" size="small" danger @click="openReviewDetail(record)">{{ $t('reject_2') }}</a-button>
               </template>
-              <a-button type="link" size="small" @click="openReviewDetail(record)">详情</a-button>
+              <a-button type="link" size="small" @click="openReviewDetail(record)">{{ $t('details') }}</a-button>
             </a-space>
           </template>
         </template>
@@ -166,18 +166,20 @@ import {
   reportTabs,
   statusMeta
 } from './columns'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const reportColumns = [
   { title: 'ID', dataIndex: 'recordId', key: 'recordId', width: 70 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 130 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType', width: 120 },
-  { title: '来源', dataIndex: 'courseSource', key: 'courseSource', width: 100 },
-  { title: '日期', dataIndex: 'classDate', key: 'classDate', width: 110 },
-  { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '本周累计', dataIndex: 'weeklyHours', key: 'weeklyHours', width: 90 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
+  { title: t('mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 130 },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: t('course_type'), dataIndex: 'courseType', key: 'courseType', width: 120 },
+  { title: t('source'), dataIndex: 'courseSource', key: 'courseSource', width: 100 },
+  { title: t('date'), dataIndex: 'classDate', key: 'classDate', width: 110 },
+  { title: t('duration'), dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: t('this_week_total'), dataIndex: 'weeklyHours', key: 'weeklyHours', width: 90 },
+  { title: t('status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
 ]
 
 type TabKey = 'all' | 'pending' | 'approved' | 'rejected'
@@ -264,7 +266,7 @@ const handleApprove = async (payload: { remark?: string }) => {
   submitting.value = true
   try {
     await approveReport(currentDetail.value.recordId, payload)
-    message.success('课时审核已通过')
+    message.success(t('class_hours_review_approved'))
     reviewDetailVisible.value = false
     await loadReports()
   } finally {
@@ -277,7 +279,7 @@ const handleReject = async (payload: { remark?: string }) => {
   submitting.value = true
   try {
     await rejectReport(currentDetail.value.recordId, payload)
-    message.success('课时审核已驳回')
+    message.success(t('class_hours_review_rejected'))
     reviewDetailVisible.value = false
     await loadReports()
   } finally {
@@ -289,7 +291,7 @@ const handleQuickApprove = async (row: ReportRow) => {
   submitting.value = true
   try {
     await approveReport(row.recordId, {})
-    message.success('课时审核已通过')
+    message.success(t('class_hours_review_approved'))
     await loadReports()
   } finally {
     submitting.value = false
@@ -300,8 +302,8 @@ const handleBatchApprove = async () => {
   if (!selectedRowKeys.value.length) return
   submitting.value = true
   try {
-    await batchApproveReport({ recordIds: selectedRowKeys.value, remark: '批量通过' })
-    message.success('批量通过完成')
+    await batchApproveReport({ recordIds: selectedRowKeys.value, remark: t('batch_approve') })
+    message.success(t('batch_approval_completed'))
     selectedRowKeys.value = []
     await loadReports()
   } finally {
@@ -313,8 +315,8 @@ const handleBatchReject = async () => {
   if (!selectedRowKeys.value.length) return
   submitting.value = true
   try {
-    await batchRejectReport({ recordIds: selectedRowKeys.value, remark: '批量驳回' })
-    message.success('批量驳回完成')
+    await batchRejectReport({ recordIds: selectedRowKeys.value, remark: t('batch_reject') })
+    message.success(t('batch_rejection_completed'))
     selectedRowKeys.value = []
     await loadReports()
   } finally {
@@ -353,7 +355,7 @@ const toneToColor = (tone: string): string => {
 }
 
 const handleExportPlaceholder = () => {
-  message.info('导出功能将在后续版本中接入')
+  message.info(t('export_feature_will_be_available_in_a_fu'))
 }
 
 const scrollToOvertime = () => {
@@ -371,3 +373,4 @@ onMounted(async () => {
 :deep(.row-pending) { background: #fef3c7; }
 :deep(.row-overdue) { background: linear-gradient(90deg, #fdf2f8, #fce7f3); box-shadow: inset 4px 0 0 #ec4899; }
 </style>
+

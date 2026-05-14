@@ -1,11 +1,11 @@
 <template>
-  <div class="students-filter-bar" data-field-name="学员管理页">
+  <div class="students-filter-bar" :data-field-name="$t('student_management_2')">
     <div class="students-filter-bar__filters">
       <a-input
         v-model:value="draft.studentName"
         class="students-filter-bar__control students-filter-bar__control--name"
-        data-field-name="搜索框"
-        placeholder="搜索姓名"
+        :data-field-name="$t('search_2')"
+        :placeholder="$t('search_by_name')"
         allow-clear
         @pressEnter="emitSearch"
         @clear="handleClearText('studentName')"
@@ -13,8 +13,8 @@
       <a-select
         v-model:value="draft.leadMentorId"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="班主任"
-        placeholder="班主任"
+        :data-field-name="$t('head_teacher')"
+        :placeholder="$t('head_teacher')"
         allow-clear
         :options="mentorOptions"
         @change="handleSelectChange('leadMentorId', $event)"
@@ -23,8 +23,8 @@
       <a-select
         v-model:value="draft.school"
         class="students-filter-bar__control students-filter-bar__control--school"
-        data-field-name="学校"
-        placeholder="学校"
+        :data-field-name="$t('school')"
+        :placeholder="$t('school')"
         allow-clear
         :options="schoolOptions"
         @change="handleSelectChange('school', $event)"
@@ -33,8 +33,8 @@
       <a-select
         v-model:value="draft.graduationYear"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="毕业年份"
-        placeholder="毕业年份"
+        :data-field-name="$t('graduation_year')"
+        :placeholder="$t('graduation_year')"
         allow-clear
         :options="graduationYearOptions"
         @change="handleSelectChange('graduationYear', $event)"
@@ -43,8 +43,8 @@
       <a-select
         v-model:value="draft.recruitmentCycle"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="项目时间"
-        placeholder="项目时间"
+        :data-field-name="$t('program_period')"
+        :placeholder="$t('program_period')"
         allow-clear
         :options="recruitmentCycleOptions"
         @change="handleSelectChange('recruitmentCycle', $event)"
@@ -53,8 +53,8 @@
       <a-select
         v-model:value="draft.majorDirection"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="主攻方向"
-        placeholder="主攻方向"
+        :data-field-name="$t('major_focus')"
+        :placeholder="$t('major_focus')"
         allow-clear
         :options="majorDirectionOptions"
         @change="handleSelectChange('majorDirection', $event)"
@@ -63,8 +63,8 @@
       <a-select
         v-model:value="draft.accountStatus"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="账号状态"
-        placeholder="账号状态"
+        :data-field-name="$t('account_status_2')"
+        :placeholder="$t('account_status_2')"
         allow-clear
         :options="statusOptions"
         @change="handleSelectChange('accountStatus', $event)"
@@ -74,15 +74,15 @@
     <div class="students-filter-bar__actions">
       <button type="button" class="filter-action-button filter-action-button--secondary" @click="emitSearch">
         <i class="mdi mdi-magnify" aria-hidden="true"></i>
-        <span>搜索</span>
+        <span>{{ $t('search') }}</span>
       </button>
       <button type="button" class="filter-action-button filter-action-button--text" @click="handleReset">
         <i class="mdi mdi-refresh" aria-hidden="true"></i>
-        <span>重置</span>
+        <span>{{ $t('reset') }}</span>
       </button>
       <button type="button" class="filter-action-button filter-action-button--secondary" @click="emit('export')">
         <i class="mdi mdi-export" aria-hidden="true"></i>
-        <span>导出</span>
+        <span>{{ $t('export') }}</span>
       </button>
     </div>
   </div>
@@ -90,7 +90,9 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type FilterValue = string | number | undefined
 
 interface FilterOption {
@@ -135,10 +137,10 @@ const emit = defineEmits<{
 const draft = reactive<StudentFilterModel>({})
 
 const statusOptions: FilterOption[] = [
-  { label: '正常', value: '0' },
-  { label: '冻结', value: '1' },
-  { label: '已结束', value: '2' },
-  { label: '退费', value: '3' }
+  { label: t('active_3'), value: '0' },
+  { label: t('frozen'), value: '1' },
+  { label: t('ended'), value: '2' },
+  { label: t('refund'), value: '3' }
 ]
 
 const syncDraft = (source: StudentFilterModel) => {

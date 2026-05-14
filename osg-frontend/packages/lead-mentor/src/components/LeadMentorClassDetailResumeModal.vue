@@ -8,7 +8,7 @@
       type="button"
       class="class-detail-resume-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭简历修改详情弹层"
+      :aria-label="$t('close_resume_revision_details_dialog')"
       @click="closeModal"
     />
 
@@ -28,7 +28,7 @@
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭简历修改详情弹层"
+          :aria-label="$t('close_resume_revision_details_dialog')"
           @click="closeModal"
         >
           ×
@@ -39,7 +39,7 @@
         <div class="class-detail-resume-summary">
           <div>
             <div class="class-detail-resume-student">
-              <span class="class-detail-resume-muted">学员: </span>
+              <span class="class-detail-resume-muted">{{ $t('student') }}: </span>
               <span class="class-detail-resume-student-name">{{ preview.studentName }}</span>
               <span class="class-detail-resume-student-id">{{ preview.studentId }}</span>
             </div>
@@ -78,7 +78,7 @@
 
         <div class="class-detail-resume-footer-meta">
           <div>
-            <span>导师: </span>
+            <span>{{ $t('mentor') }}: </span>
             <span class="class-detail-resume-footer-value">{{ preview.mentorName }}</span>
           </div>
           <div>提交时间: {{ preview.submittedAt }}</div>
@@ -86,7 +86,7 @@
       </div>
 
       <div class="class-detail-resume-footer modal-footer">
-        <button type="button" class="btn btn-primary" @click="closeModal">关闭</button>
+        <button type="button" class="btn btn-primary" @click="closeModal">{{ $t('close') }}</button>
       </div>
     </div>
   </div>

@@ -16,7 +16,7 @@
       <div class="staff-status-modal__icon-circle" :class="`staff-status-modal__icon-circle--${action}`">
         <span class="mdi" :class="actionIcon" aria-hidden="true"></span>
       </div>
-      <strong>{{ staffName || '当前导师' }}</strong>
+      <strong>{{ staffName || $t('current_mentor') }}</strong>
       <span>{{ modalDescription }}</span>
     </div>
 
@@ -30,7 +30,7 @@
       <label
         v-if="props.action === 'remove'"
         class="staff-status-modal__field"
-        data-field-name="移出原因"
+        :data-field-name="$t('removal_reason')"
       >
         <a-form-item name="reason" class="staff-status-modal__form-item">
           <span class="staff-status-modal__label">
@@ -63,34 +63,34 @@
         </a-form-item>
       </label>
 
-      <label v-if="formState.reason === 'other'" class="staff-status-modal__field" data-field-name="其他原因说明">
+      <label v-if="formState.reason === 'other'" class="staff-status-modal__field" :data-field-name="$t('other_reason_details')">
         <a-form-item name="otherReason" class="staff-status-modal__form-item">
-          <span class="staff-status-modal__label">其他原因说明</span>
+          <span class="staff-status-modal__label">{{ $t('other_reason_details') }}</span>
           <a-textarea
             v-model:value="formState.otherReason"
             :rows="3"
             :maxlength="120"
-            placeholder="请补充其他原因"
+            :placeholder="$t('please_provide_additional_reason')"
           />
         </a-form-item>
       </label>
 
-      <label class="staff-status-modal__field" data-field-name="备注说明">
+      <label class="staff-status-modal__field" :data-field-name="$t('remarks_2')">
         <a-form-item name="remark" class="staff-status-modal__form-item">
-          <span class="staff-status-modal__label">备注说明</span>
+          <span class="staff-status-modal__label">{{ $t('remarks_2') }}</span>
           <a-textarea
             v-model:value="formState.remark"
             :rows="3"
             :maxlength="120"
-            placeholder="可选，补充本次操作的背景说明"
+            :placeholder="$t('optional_add_background_context_for_this')"
           />
         </a-form-item>
       </label>
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="handleSubmit">确认</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">{{ $t('confirm') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -98,7 +98,9 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type StatusAction = 'freeze' | 'restore' | 'blacklist' | 'remove'
 
 const props = defineProps<{
@@ -122,16 +124,16 @@ const formState = reactive({
 
 const reasonOptionMap: Record<'freeze' | 'blacklist', { label: string; value: string }[]> = {
   freeze: [
-    { label: '导师申请暂停', value: 'staff_pause' },
-    { label: '服务质量问题', value: 'service_quality' },
-    { label: '违反服务协议', value: 'policy_violation' },
-    { label: '其他原因', value: 'other' }
+    { label: t('mentor_requested_suspension'), value: 'staff_pause' },
+    { label: t('service_quality_issue'), value: 'service_quality' },
+    { label: t('violation_of_service_agreement'), value: 'policy_violation' },
+    { label: t('other_reasons'), value: 'other' }
   ],
   blacklist: [
-    { label: '违规联系学员', value: 'contact_violation' },
-    { label: '严重服务投诉', value: 'service_complaint' },
-    { label: '合作终止', value: 'cooperation_end' },
-    { label: '其他原因', value: 'other' }
+    { label: t('unauthorized_contact_with_students'), value: 'contact_violation' },
+    { label: t('serious_service_complaint'), value: 'service_complaint' },
+    { label: t('partnership_terminated'), value: 'cooperation_end' },
+    { label: t('other_reasons'), value: 'other' }
   ]
 }
 
@@ -149,40 +151,40 @@ const surfaceId = computed(() => {
 
 const modalTitle = computed(() => {
   if (props.action === 'freeze') {
-    return '禁用导师账号'
+    return t('disable_mentor_account')
   }
   if (props.action === 'restore') {
-    return '解冻导师账号'
+    return t('unfreeze_mentor_account')
   }
   if (props.action === 'blacklist') {
-    return '加入黑名单'
+    return t('add_to_blacklist')
   }
-  return '移出黑名单'
+  return t('remove_from_blacklist')
 })
 
 const reasonLabel = computed(() => {
   if (props.action === 'remove') {
-    return '移出原因'
+    return t('removal_reason')
   }
   if (props.action === 'blacklist') {
-    return '原因选择'
+    return t('select_reason')
   }
-  return '状态修改原因'
+  return t('reason_for_status_change')
 })
 
 const reasonFieldName = computed(() => reasonLabel.value)
 
 const modalDescription = computed(() => {
   if (props.action === 'freeze') {
-    return '禁用后该导师账号将无法正常登录系统。'
+    return t('after_disabling_this_mentor_account_will')
   }
   if (props.action === 'restore') {
-    return '确认后该导师账号将恢复为正常可用状态。'
+    return t('upon_confirmation_this_mentor_account_wi')
   }
   if (props.action === 'blacklist') {
-    return '加入黑名单后，该导师将被限制使用后续相关模块能力。'
+    return t('after_blacklisting_this_mentor_will_be_r')
   }
-  return '确认后将解除该导师的黑名单状态。'
+  return t('upon_confirmation_this_mentors_blacklist')
 })
 
 const actionIcon = computed(() => {
@@ -207,19 +209,19 @@ const reasonOptions = computed(() => {
 
 const reasonPlaceholder = computed(() => {
   if (props.action === 'remove') {
-    return '请选择移出原因'
+    return t('please_select_a_removal_reason')
   }
   if (props.action === 'blacklist') {
-    return '请选择黑名单原因'
+    return t('please_select_blacklist_reason')
   }
   if (props.action === 'restore') {
-    return '请选择恢复原因'
+    return t('please_select_restoration_reason')
   }
-  return '请选择禁用原因'
+  return t('please_select_disable_reason')
 })
 
 const rules = computed(() => ({
-  reason: requiresReason.value ? [{ required: true, message: '请选择原因', trigger: 'change' }] : []
+  reason: requiresReason.value ? [{ required: true, message: t('please_select_a_reason'), trigger: 'change' }] : []
 }))
 
 const resetForm = () => {

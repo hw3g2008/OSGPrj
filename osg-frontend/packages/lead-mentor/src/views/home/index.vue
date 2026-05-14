@@ -1,7 +1,7 @@
 <template>
   <div id="page-home" class="page-home">
     <div class="home-heading">
-      <h1>下午好，Jess</h1>
+      <h1>{{ $t('good_afternoon') }}，Jess</h1>
     </div>
 
     <section class="summary-grid">
@@ -38,7 +38,7 @@
 
     <section class="card">
       <div class="card-header">
-        <span class="card-title">快捷入口</span>
+        <span class="card-title">{{ $t('quick_access') }}</span>
       </div>
       <div class="card-body">
         <div class="quick-grid">
@@ -63,7 +63,9 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface SummaryCard {
   label: string
   value: string
@@ -94,67 +96,67 @@ const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
 
 const summaryCards: SummaryCard[] = [
   {
-    label: '待排课程',
+    label: t('sessions_to_schedule'),
     value: '5',
     unit: '个',
-    footerText: '去分配导师',
+    footerText: t('assign_mentor'),
     footerIcon: 'mdi-arrow-right',
     tone: 'summary-card--amber'
   },
   {
-    label: '待确认课程',
+    label: t('courses_pending_confirmation'),
     value: '3',
     unit: '节',
-    footerText: '去确认反馈',
+    footerText: t('confirm_feedback'),
     footerIcon: 'mdi-arrow-right',
     tone: 'summary-card--rose'
   },
   {
     label: '本周收入（已结算）',
-    value: '$1,250',
-    footerText: '待结算 $320',
+    value: '¥1,250',
+    footerText: '待结算 ¥20',
     tone: 'summary-card--green'
   },
   {
-    label: '本周课时',
+    label: t('this_weeks_class_hours'),
     value: '12.5',
     unit: 'h',
-    footerText: '已完成 8节 · 待审核 2节',
+    footerText: t('completed_8_sessions_2_pending_review'),
     tone: 'summary-card--blue'
   }
 ]
 
 const statCards: StatCard[] = [
   {
-    label: '我的学员',
+    label: t('my_students'),
     value: '15',
     unit: '人',
     iconClass: 'mdi-account-multiple',
     tone: 'purple'
   },
   {
-    label: '本周排期',
-    value: '已填写',
+    label: t('this_week_schedule'),
+    value: t('submitted'),
     iconClass: 'mdi-calendar-check',
     tone: 'green',
     compactValue: true
   },
   {
-    label: '可用时间',
+    label: t('available_time'),
     value: '10',
     unit: 'h',
     iconClass: 'mdi-clock-outline',
     tone: 'blue'
   },
   {
-    label: '可用天数',
+    label: t('available_days'),
     value: '4',
     unit: '天',
     iconClass: 'mdi-calendar',
     tone: 'orange'
   },
   {
-    label: '可用导师',
+    label: t('available_mentors'),
     value: '8',
     unit: '人',
     iconClass: 'mdi-account-group',
@@ -164,34 +166,34 @@ const statCards: StatCard[] = [
 
 const quickEntries: QuickEntry[] = [
   {
-    label: '岗位申请',
+    label: t('position_applications'),
     meta: '8待处理',
     iconClass: 'mdi-briefcase-plus',
     tone: 'red',
     urgent: true
   },
   {
-    label: '排课管理',
+    label: t('schedule_management'),
     iconClass: 'mdi-clipboard-list',
     tone: 'amber'
   },
   {
-    label: '我的课程',
+    label: t('my_sessions'),
     iconClass: 'mdi-book-open-variant',
     tone: 'purple'
   },
   {
-    label: '我的学员',
+    label: t('my_students'),
     iconClass: 'mdi-account-multiple',
     tone: 'blue'
   },
   {
-    label: '我的排期',
+    label: t('my_schedule'),
     iconClass: 'mdi-calendar-clock',
     tone: 'green'
   },
   {
-    label: '报销管理',
+    label: t('reimbursement_management'),
     iconClass: 'mdi-receipt',
     tone: 'orange'
   }

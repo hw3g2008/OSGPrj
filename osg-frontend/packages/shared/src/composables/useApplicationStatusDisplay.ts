@@ -31,13 +31,15 @@ export interface ApplicationStatusDisplay {
   tone: 'danger' | 'warning' | 'info' | 'success' | 'default'
 }
 
-const LABEL_MAP: Record<ApplicationStatusDisplay['value'], string> = {
-  pending: '待分配导师',
-  assigned: '已分配导师',
-  coaching: '辅导中',
-  completed: '已完成',
-  cancelled: '已取消',
-}
+import { i18n } from '../i18n'
+
+const getLabelMap = (): Record<ApplicationStatusDisplay['value'], string> => ({
+  pending: i18n.global.t('tutor_to_be_assigned'),
+  assigned: i18n.global.t('mentor_assigned'),
+  coaching: i18n.global.t('coaching_in_progress'),
+  completed: i18n.global.t('completed'),
+  cancelled: i18n.global.t('canceled'),
+})
 
 const TONE_MAP: Record<ApplicationStatusDisplay['value'], ApplicationStatusDisplay['tone']> = {
   pending: 'danger',
@@ -78,7 +80,7 @@ export function deriveApplicationStatus(input: ApplicationStatusInput | null | u
 }
 
 function makeDisplay(value: ApplicationStatusDisplay['value']): ApplicationStatusDisplay {
-  return { value, label: LABEL_MAP[value], tone: TONE_MAP[value] }
+  return { value, label: getLabelMap()[value], tone: TONE_MAP[value] }
 }
 
 /**

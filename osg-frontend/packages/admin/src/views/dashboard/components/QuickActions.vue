@@ -3,7 +3,7 @@
     <div class="dashboard-card__header">
       <span class="dashboard-card__title quick-actions__title-wrap">
         <span class="mdi mdi-lightning-bolt quick-actions__title-icon" />
-        <span>快捷操作</span>
+        <span>{{ $t('quick_actions') }}</span>
       </span>
     </div>
     <div class="dashboard-card__body quick-actions__body">
@@ -21,15 +21,19 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 defineEmits<{
   (e: 'action', key: string): void
 }>()
 
+const { t } = useI18n()
+
 const actions = [
-  { key: 'add-student', icon: 'mdi-account-plus', label: '新增学员' },
-  { key: 'add-staff', icon: 'mdi-account-tie', label: '新增导师' },
-  { key: 'add-contract', icon: 'mdi-file-sign', label: '新增合同' },
-  { key: 'send-notice', icon: 'mdi-bell-plus', label: '发送通知' },
+  { key: 'add-student', icon: 'mdi-account-plus', label: t('new_students') },
+  { key: 'add-staff', icon: 'mdi-account-tie', label: t('add_mentor') },
+  { key: 'add-contract', icon: 'mdi-file-sign', label: t('add_contract') },
+  { key: 'send-notice', icon: 'mdi-bell-plus', label: t('send_notification') },
 ]
 </script>
 

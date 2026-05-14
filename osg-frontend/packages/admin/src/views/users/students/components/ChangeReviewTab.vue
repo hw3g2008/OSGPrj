@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <section class="crt">
     <!-- Blue Info Banner -->
     <div class="crt-banner">
       <i class="mdi mdi-information crt-banner__icon"></i>
-      <strong>审核说明：</strong>核心信息、学业信息和求职方向的修改需要后台审核，联系方式修改后直接生效。
+      <strong>{{ $t('review_notes') }}：</strong>{{ $t('changes_to_core_info_academic_info_and_j') }}。
     </div>
 
     <!-- Pending Changes Section -->
@@ -11,7 +11,7 @@
       <header class="crt-section__header">
         <div class="crt-section__title">
           <i class="mdi mdi-clock-alert crt-section__title-icon crt-section__title-icon--warning"></i>
-          <span>待审核的变更</span>
+          <span>{{ $t('pending_changes_2') }}</span>
           <span class="crt-badge crt-badge--danger">{{ pendingChanges.length }}</span>
         </div>
       </header>
@@ -32,14 +32,14 @@
           <!-- Value Comparison -->
           <div class="crt-comparison">
             <div class="crt-comparison__col">
-              <label class="crt-comparison__label">变更前</label>
+              <label class="crt-comparison__label">{{ $t('before_change') }}</label>
               <span class="crt-comparison__value crt-comparison__value--before">{{ item.before }}</span>
             </div>
             <div class="crt-comparison__arrow">
               <i class="mdi mdi-arrow-right"></i>
             </div>
             <div class="crt-comparison__col">
-              <label class="crt-comparison__label">变更后</label>
+              <label class="crt-comparison__label">{{ $t('after_change') }}</label>
               <span class="crt-comparison__value crt-comparison__value--after">{{ item.after }}</span>
             </div>
           </div>
@@ -52,7 +52,7 @@
               :disabled="activeRequestId === item.id"
               @click="handleDecision('approve', item)"
             >
-              {{ activeRequestId === item.id ? '处理中...' : '✓ 通过' }}
+              {{ activeRequestId === item.id ? $t('processing') + '...' : '✓ ' + $t('approve') }}
             </button>
             <button
               type="button"
@@ -60,14 +60,14 @@
               :disabled="activeRequestId === item.id"
               @click="handleDecision('reject', item)"
             >
-              {{ activeRequestId === item.id ? '处理中...' : '✗ 驳回' }}
+              {{ activeRequestId === item.id ? $t('processing') + '...' : '✗ ' + $t('reject_2') }}
             </button>
           </div>
         </div>
       </div>
 
       <div v-else class="crt-empty">
-        当前没有待审核的信息变更。
+        {{ $t('no_pending_information_changes') }}。
       </div>
     </article>
 
@@ -76,7 +76,7 @@
       <header class="crt-section__header">
         <div class="crt-section__title">
           <i class="mdi mdi-history crt-section__title-icon crt-section__title-icon--muted"></i>
-          <span>历史变更记录</span>
+          <span>{{ $t('change_history') }}</span>
         </div>
       </header>
 
@@ -84,12 +84,12 @@
         <table class="crt-history-table">
           <thead>
             <tr>
-              <th>变更类型</th>
-              <th>变更字段</th>
-              <th>变更前</th>
-              <th>变更后</th>
-              <th>变更时间</th>
-              <th>状态</th>
+              <th>{{ $t('change_type') }}</th>
+              <th>{{ $t('changed_field') }}</th>
+              <th>{{ $t('before_change') }}</th>
+              <th>{{ $t('after_change') }}</th>
+              <th>{{ $t('change_time') }}</th>
+              <th>{{ $t('status') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -115,7 +115,7 @@
       </div>
 
       <div v-else class="crt-empty">
-        还没有历史变更记录。
+        {{ $t('no_change_history_yet') }}。
       </div>
     </article>
   </section>
@@ -128,7 +128,9 @@ import {
   approveStudentChangeRequest,
   rejectStudentChangeRequest
 } from '@osg/shared/api/admin/studentChangeRequest'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface ChangeItem {
   id: string | number
   field: string
@@ -175,13 +177,13 @@ watch(
 const formatStatus = (status?: string) => {
   switch (status) {
     case 'auto_applied':
-      return '自动生效'
+      return t('auto_applied')
     case 'approved':
-      return '已通过'
+      return t('approved')
     case 'rejected':
-      return '已驳回'
+      return t('rejected_3')
     default:
-      return '已记录'
+      return t('recorded')
   }
 }
 
@@ -198,10 +200,11 @@ const handleDecision = async (action: 'approve' | 'reject', item: ChangeItem) =>
     }
 
     moveToHistory(action, item)
-    emit(action, item)
-    message.success(action === 'approve' ? '变更已通过' : '变更已驳回')
+    if (action === 'approve') emit('approve', item)
+    else emit('reject', item)
+    message.success(action === 'approve' ? t('change_approved') : t('change_rejected'))
   } catch (_error) {
-    message.error(action === 'approve' ? '变更通过失败' : '变更驳回失败')
+    message.error(action === 'approve' ? t('failed_to_approve_change') : t('failed_to_reject_change'))
   } finally {
     activeRequestId.value = null
   }
@@ -232,13 +235,13 @@ const moveToHistory = (action: 'approve' | 'reject', item: ChangeItem) => {
 const getCategoryLabel = (changeType?: string): string => {
   switch (changeType) {
     case 'academic':
-      return '学业信息'
+      return t('academic_information')
     case 'job_direction':
-      return '求职方向'
+      return t('job_search_direction')
     case 'contact':
-      return '联系方式'
+      return t('contact_info')
     default:
-      return '核心信息'
+      return t('core_information')
   }
 }
 

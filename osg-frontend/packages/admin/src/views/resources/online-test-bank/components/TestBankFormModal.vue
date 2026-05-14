@@ -8,39 +8,39 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-clipboard-text-outline" aria-hidden="true" />
-        <span>{{ mode === 'edit' ? '编辑题库' : '新增题库' }}</span>
+        <span>{{ mode === 'edit' ? $t('edit_question_bank') : $t('add_question_bank') }}</span>
       </span>
     </template>
 
     <a-form layout="vertical">
       <a-row :gutter="16">
         <a-col :span="12">
-          <a-form-item label="题库名称">
-            <a-input v-model:value="form.testBankName" placeholder="题库名称" />
+          <a-form-item :label="$t('question_bank_name')">
+            <a-input v-model:value="form.testBankName" :placeholder="$t('question_bank_name')" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="公司">
-            <a-input v-model:value="form.companyName" placeholder="公司" />
+          <a-form-item :label="$t('company')">
+            <a-input v-model:value="form.companyName" :placeholder="$t('company')" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="类型">
+          <a-form-item :label="$t('type')">
             <a-select v-model:value="form.testType">
               <a-select-option v-for="option in testTypeOptions" :key="option" :value="option">{{ option }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="题目数">
-            <a-input-number v-model:value="form.questionCount" :min="1" placeholder="题目数" style="width:100%" />
+          <a-form-item :label="$t('question_count')">
+            <a-input-number v-model:value="form.questionCount" :min="1" :placeholder="$t('question_count')" style="width:100%" />
           </a-form-item>
         </a-col>
         <a-col :span="24">
-          <a-form-item label="状态">
+          <a-form-item :label="$t('status')">
             <a-select v-model:value="form.status">
-              <a-select-option value="enabled">启用</a-select-option>
-              <a-select-option value="disabled">禁用</a-select-option>
+              <a-select-option value="enabled">{{ $t('enable') }}</a-select-option>
+              <a-select-option value="disabled">{{ $t('disable') }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -48,9 +48,9 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="close">取消</a-button>
+      <a-button @click="close">{{ $t('cancel') }}</a-button>
       <a-button type="primary" :loading="submitting" @click="submit">
-        {{ mode === 'edit' ? '保存修改' : '创建题库' }}
+        {{ mode === 'edit' ? $t('save_changes') : $t('create_question_bank') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>

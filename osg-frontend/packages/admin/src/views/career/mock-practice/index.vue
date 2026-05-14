@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="模拟应聘管理" title-en="Mock Practice" description="管理所有学员的模拟面试、人际关系测试、期中考试申请">
+    <PageHeader :title-zh="$t('simulated_application_management')" title-en="Mock Practice" :description="$t('manage_all_students_mock_interviews_inte')">
       <template #actions>
         <a-space>
-          <a-tag color="orange">{{ stats.pendingCount }} 条待处理</a-tag>
-          <a-tag color="blue">{{ stats.totalCount }} 条全部记录</a-tag>
+          <a-tag color="orange">{{ stats.pendingCount }} {{ $t('items_pending') }}</a-tag>
+          <a-tag color="blue">{{ stats.totalCount }} {{ $t('all_records') }}</a-tag>
         </a-space>
       </template>
     </PageHeader>
@@ -21,30 +21,30 @@
     <a-card :bordered="false">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="filters.keyword" placeholder="搜索学员或申请内容" allow-clear style="width: 200px" @press-enter="handleSearch" />
+          <a-input v-model:value="filters.keyword" :placeholder="$t('search_students_or_application_content')" allow-clear style="width: 200px" @press-enter="handleSearch" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.practiceType" placeholder="全部类型" allow-clear style="width: 130px">
-            <a-select-option value="mock_interview">模拟面试</a-select-option>
-            <a-select-option value="communication_test">人际关系测试</a-select-option>
-            <a-select-option value="midterm_exam">期中考试</a-select-option>
+          <a-select v-model:value="filters.practiceType" :placeholder="$t('all_types')" allow-clear style="width: 130px">
+            <a-select-option value="mock_interview">{{ $t('mock_interview') }}</a-select-option>
+            <a-select-option value="communication_test">{{ $t('interpersonal_test') }}</a-select-option>
+            <a-select-option value="midterm_exam">{{ $t('midterm_exam') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.status" placeholder="全部状态" allow-clear style="width: 120px">
-            <a-select-option value="pending">待处理</a-select-option>
-            <a-select-option value="scheduled">已安排</a-select-option>
-            <a-select-option value="completed">已完成</a-select-option>
-            <a-select-option value="cancelled">已取消</a-select-option>
+          <a-select v-model:value="filters.status" :placeholder="$t('all_status')" allow-clear style="width: 120px">
+            <a-select-option value="pending">{{ $t('pending') }}</a-select-option>
+            <a-select-option value="scheduled">{{ $t('arranged') }}</a-select-option>
+            <a-select-option value="completed">{{ $t('completed') }}</a-select-option>
+            <a-select-option value="cancelled">{{ $t('canceled') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ $t('search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ $t('reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -52,13 +52,13 @@
       <a-tabs v-model:activeKey="activeTab" @change="(key: string) => switchTab(key as ActiveTab)">
         <a-tab-pane key="pending">
           <template #tab>
-            待分配导师
+            {{ $t('tutor_to_be_assigned') }}
             <a-badge :count="stats.pendingCount" :number-style="{ backgroundColor: '#faad14' }" style="margin-left: 4px" />
           </template>
         </a-tab-pane>
         <a-tab-pane key="all">
           <template #tab>
-            全部记录
+            {{ $t('all_records_2') }}
             <a-badge :count="stats.totalCount" :number-style="{ backgroundColor: '#1890ff' }" style="margin-left: 4px" />
           </template>
         </a-tab-pane>
@@ -72,13 +72,13 @@
         :row-key="(r: MockPracticeListItem) => r.practiceId"
         :pagination="pendingPagination"
         :loading="loading"
-        :locale="{ emptyText: '当前筛选条件下暂无待分配导师的申请' }"
+        :locale="{ emptyText: $t('there_are_currently_no_applications_for__2') }"
         :scroll="{ x: 900 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'studentName'">
             <div>
-              <strong>{{ record.studentName || '未命名学员' }}</strong>
+              <strong>{{ record.studentName || $t('unnamed_student') }}</strong>
               <div style="color: #64748b; font-size: 12px">ID {{ record.studentId }}</div>
             </div>
           </template>
@@ -88,7 +88,7 @@
           <template v-else-if="column.dataIndex === 'requestContent'">
             <div>
               <strong>{{ record.requestContent }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ record.preferredMentorNames || '暂无意向导师' }}</div>
+              <div style="color: #64748b; font-size: 12px">{{ record.preferredMentorNames || $t('no_intention_of_mentoring_yet') }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'submittedAt'">
@@ -98,7 +98,7 @@
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="primary" size="small" @click="openAssignModal(record)">分配导师</a-button>
+            <a-button type="primary" size="small" @click="openAssignModal(record)">{{ $t('assign_a_mentor') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -111,13 +111,13 @@
         :row-key="(r: MockPracticeListItem) => r.practiceId"
         :pagination="allPagination"
         :loading="loading"
-        :locale="{ emptyText: '当前筛选条件下暂无模拟应聘记录' }"
+        :locale="{ emptyText: $t('there_are_no_simulated_application_recor') }"
         :scroll="{ x: 1200 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'studentName'">
             <div>
-              <strong>{{ record.studentName || '未命名学员' }}</strong>
+              <strong>{{ record.studentName || $t('unnamed_student') }}</strong>
               <div style="color: #64748b; font-size: 12px">ID {{ record.studentId }}</div>
             </div>
           </template>
@@ -138,7 +138,7 @@
           </template>
           <template v-else-if="column.dataIndex === 'mentorNames'">
             <div>
-              <strong>{{ record.mentorNames || '待分配' }}</strong>
+              <strong>{{ record.mentorNames || $t('to_be_allocated') }}</strong>
               <div style="color: #64748b; font-size: 12px">{{ record.mentorBackgrounds || '—' }}</div>
             </div>
           </template>
@@ -146,13 +146,13 @@
             <a-tag :color="statusColor(record.status)">{{ formatStatus(record.status) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'completedHours'">
-            {{ record.completedHours ?? 0 }} 小时
+            {{ record.completedHours ?? 0 }} {{ $t('hours') }}
           </template>
           <template v-else-if="column.dataIndex === 'feedbackRating'">
             <div>
               <strong>{{ record.feedbackRating ? `${record.feedbackRating}/5` : '—' }}</strong>
-              <div style="color: #64748b; font-size: 12px">{{ record.feedbackSummary || '暂无反馈' }}</div>
-              <a-button v-if="record.feedbackSummary || record.feedbackRating" type="link" size="small" style="padding: 0" @click="openFeedbackModal(record)">查看反馈</a-button>
+              <div style="color: #64748b; font-size: 12px">{{ record.feedbackSummary || $t('no_feedback_yet') }}</div>
+              <a-button v-if="record.feedbackSummary || record.feedbackRating" type="link" size="small" style="padding: 0" @click="openFeedbackModal(record)">{{ $t('view_feedback') }}</a-button>
             </div>
           </template>
         </template>
@@ -194,26 +194,28 @@ import {
 } from '@osg/shared/api/admin/mockPractice'
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 import { useStandardClientPagination } from '@osg/shared'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type ActiveTab = 'pending' | 'all'
 
 const pendingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 150 },
-  { title: '类型', dataIndex: 'practiceType', key: 'practiceType', width: 120 },
-  { title: '申请内容', dataIndex: 'requestContent', key: 'requestContent', width: 200 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 140 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 150 },
+  { title: t('type'), dataIndex: 'practiceType', key: 'practiceType', width: 120 },
+  { title: t('application_content'), dataIndex: 'requestContent', key: 'requestContent', width: 200 },
+  { title: t('application_time'), dataIndex: 'submittedAt', key: 'submittedAt', width: 140 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
 ]
 
 const allColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 150 },
-  { title: '类型', dataIndex: 'practiceType', key: 'practiceType', width: 120 },
-  { title: '申请内容', dataIndex: 'requestContent', key: 'requestContent', width: 180 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
-  { title: '导师', dataIndex: 'mentorNames', key: 'mentorNames', width: 140 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '已上课时', dataIndex: 'completedHours', key: 'completedHours', width: 90 },
-  { title: '课程反馈', dataIndex: 'feedbackRating', key: 'feedbackRating', width: 150 },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 150 },
+  { title: t('type'), dataIndex: 'practiceType', key: 'practiceType', width: 120 },
+  { title: t('application_content'), dataIndex: 'requestContent', key: 'requestContent', width: 180 },
+  { title: t('application_time'), dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
+  { title: t('mentor'), dataIndex: 'mentorNames', key: 'mentorNames', width: 140 },
+  { title: t('status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('already_in_class'), dataIndex: 'completedHours', key: 'completedHours', width: 90 },
+  { title: t('course_feedback'), dataIndex: 'feedbackRating', key: 'feedbackRating', width: 150 },
 ]
 
 interface MentorOption {
@@ -255,10 +257,10 @@ const requestFilters = computed<MockPracticeFilters>(() => ({
 }))
 
 const statCards = computed(() => [
-  { key: 'pending', label: '待处理', value: stats.value.pendingCount, meta: '待分配导师', tone: 'warning', icon: 'mdi-timer-sand', bg: '#fffbeb' },
-  { key: 'scheduled', label: '已安排', value: stats.value.scheduledCount, meta: '已锁定导师与时间', tone: 'info', icon: 'mdi-calendar-check', bg: '#eff6ff' },
-  { key: 'completed', label: '已完成', value: stats.value.completedCount, meta: '已产出反馈', tone: 'success', icon: 'mdi-check-decagram', bg: '#f0fdf4' },
-  { key: 'cancelled', label: '已取消', value: stats.value.cancelledCount, meta: '本轮未继续', tone: 'muted', icon: 'mdi-cancel', bg: '#f8fafc' }
+  { key: 'pending', label: t('pending'), value: stats.value.pendingCount, meta: t('tutor_to_be_assigned'), tone: 'warning', icon: 'mdi-timer-sand', bg: '#fffbeb' },
+  { key: 'scheduled', label: t('arranged'), value: stats.value.scheduledCount, meta: t('tutor_and_time_locked'), tone: 'info', icon: 'mdi-calendar-check', bg: '#eff6ff' },
+  { key: 'completed', label: t('completed'), value: stats.value.completedCount, meta: t('feedback_produced'), tone: 'success', icon: 'mdi-check-decagram', bg: '#f0fdf4' },
+  { key: 'cancelled', label: t('canceled'), value: stats.value.cancelledCount, meta: t('this_round_has_not_continued'), tone: 'muted', icon: 'mdi-cancel', bg: '#f8fafc' }
 ])
 
 const pendingRows = computed(() => rows.value.filter((row) => row.status === 'pending'))
@@ -271,7 +273,7 @@ const assignMentorOptions = computed<MentorOption[]>(() => {
   return assignableMentors.value.map((mentor) => ({
     mentorId: mentor.staffId,
     mentorName: mentor.staffName,
-    mentorBackground: [mentor.majorDirection, mentor.city].filter(Boolean).join(' / ') || '可分配导师',
+    mentorBackground: [mentor.majorDirection, mentor.city].filter(Boolean).join(' / ') || t('assignable_mentors'),
     preferred: preferredNames.includes(mentor.staffName)
   }))
 })
@@ -345,7 +347,7 @@ const handleAssignSubmit = async (payload: Omit<AssignMockPracticePayload, 'prac
       practiceId: selectedRow.value.practiceId,
       ...payload
     })
-    message.success('模拟应聘导师分配已完成')
+    message.success(t('mock_application_tutor_assignment_has_be'))
     assignVisible.value = false
     selectedRow.value = null
     await loadData()
@@ -367,10 +369,10 @@ const handleFeedbackVisibleChange = (value: boolean) => {
 }
 
 function formatType(value: string) {
-  if (value === 'mock_interview') return '模拟面试'
-  if (value === 'communication_test') return '人际关系测试'
-  if (value === 'midterm_exam') return '期中考试'
-  return '模拟应聘'
+  if (value === 'mock_interview') return t('mock_interview')
+  if (value === 'communication_test') return t('interpersonal_test')
+  if (value === 'midterm_exam') return t('midterm_exam')
+  return t('mock_application')
 }
 
 function typeColor(value: string): string {
@@ -388,11 +390,11 @@ function statusColor(value?: string): string {
 }
 
 function formatStatus(value?: string) {
-  if (value === 'pending') return '待处理'
-  if (value === 'scheduled') return '已安排'
-  if (value === 'completed') return '已完成'
-  if (value === 'cancelled') return '已取消'
-  return '未知'
+  if (value === 'pending') return t('pending')
+  if (value === 'scheduled') return t('arranged')
+  if (value === 'completed') return t('completed')
+  if (value === 'cancelled') return t('canceled')
+  return t('unknown')
 }
 
 function splitMentorNames(value?: string | null) {
@@ -416,13 +418,13 @@ function formatDateTime(value?: string | null) {
 }
 
 function formatRelativeTime(value?: string | null) {
-  if (!value) return '刚刚'
+  if (!value) return t('just_now')
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '刚刚'
+  if (Number.isNaN(date.getTime())) return t('just_now')
   const diffHours = Math.max(1, Math.round((Date.now() - date.getTime()) / 36e5))
-  if (diffHours < 24) return `${diffHours} 小时前`
+  if (diffHours < 24) return `${diffHours} ${t('hours_ago')}`
   const diffDays = Math.round(diffHours / 24)
-  return `${diffDays} 天前`
+  return `${diffDays} ${t('days_ago')}`
 }
 </script>
 

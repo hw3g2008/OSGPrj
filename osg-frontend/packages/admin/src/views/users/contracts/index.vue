@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="合同管理" title-en="Contract" description="查看所有合同记录，为老学员续签添加新合同。新增学员时的合同信息会自动同步到此处。">
+    <PageHeader :title-zh="$t('contract_management')" title-en="Contract" :description="`${$t('view_all_contract_records_and_renew_cont')}。`">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-contract" data-surface-sample-key="contracts-add-entry" @click="handleRenewEntry()">
           <template #icon><PlusOutlined /></template>
-          新增合同
+          {{ $t('add_contract') }}
         </a-button>
       </template>
     </PageHeader>
@@ -19,31 +19,31 @@
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
-        <a-form-item label="日期">
+        <a-form-item :label="$t('date')">
           <a-space>
-            <a-date-picker v-model:value="filters.startDate" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 140px" />
+            <a-date-picker v-model:value="filters.startDate" :placeholder="$t('start_date_2')" value-format="YYYY-MM-DD" style="width: 140px" />
             <span>~</span>
-            <a-date-picker v-model:value="filters.endDate" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 140px" />
+            <a-date-picker v-model:value="filters.endDate" :placeholder="$t('end_date_2')" value-format="YYYY-MM-DD" style="width: 140px" />
           </a-space>
         </a-form-item>
         <a-form-item>
-          <a-input v-model:value="filters.studentKeyword" placeholder="姓名或学员ID" allow-clear style="width: 180px" />
+          <a-input v-model:value="filters.studentKeyword" :placeholder="`${$t('name_or_student')}ID`" allow-clear style="width: 180px" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.contractType" placeholder="合同类型" allow-clear style="width: 120px">
-            <a-select-option value="initial">首签</a-select-option>
-            <a-select-option value="renew">续签</a-select-option>
+          <a-select v-model:value="filters.contractType" :placeholder="$t('contract_type')" allow-clear style="width: 120px">
+            <a-select-option value="initial">{{ $t('initial') }}</a-select-option>
+            <a-select-option value="renew">{{ $t('renewal') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.contractStatus" placeholder="合同状态" allow-clear style="width: 130px">
-            <a-select-option value="active">有效</a-select-option>
-            <a-select-option value="expiring">即将到期</a-select-option>
-            <a-select-option value="expired">已结束</a-select-option>
+          <a-select v-model:value="filters.contractStatus" :placeholder="$t('contract_status')" allow-clear style="width: 130px">
+            <a-select-option value="active">{{ $t('active_2') }}</a-select-option>
+            <a-select-option value="expiring">{{ $t('expiring_soon') }}</a-select-option>
+            <a-select-option value="expired">{{ $t('ended') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.leadMentorName" placeholder="班主任" allow-clear style="width: 120px">
+          <a-select v-model:value="filters.leadMentorName" :placeholder="$t('head_teacher')" allow-clear style="width: 120px">
             <a-select-option v-for="mentor in mentorOptions" :key="mentor" :value="mentor">{{ mentor }}</a-select-option>
           </a-select>
         </a-form-item>
@@ -51,12 +51,12 @@
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ $t('search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ $t('reset') }}</a-button>
             <a-button @click="handleExport">
               <template #icon><ExportOutlined /></template>
-              导出
+              {{ $t('export') }}
             </a-button>
           </a-space>
         </a-form-item>
@@ -69,7 +69,7 @@
         :pagination="tablePagination"
         :loading="loading"
         @change="handleTableChange"
-        :locale="{ emptyText: '暂无合同数据' }"
+        :locale="{ emptyText: $t('no_contract_data') }"
         :scroll="{ x: 1280 }"
       >
         <template #bodyCell="{ column, record }">
@@ -90,7 +90,7 @@
           <template v-else-if="column.dataIndex === 'contractAmount'">
             <template v-if="record.currency === 'GBP'">
               <div><strong>£{{ (record.amountGbp || 0).toLocaleString() }}</strong></div>
-              <div style="color: #9ca3af; font-size: 12px">${{ (record.amountUsd || 0).toLocaleString() }} 等值</div>
+              <div style="color: #9ca3af; font-size: 12px">${{ (record.amountUsd || 0).toLocaleString() }} {{ $t('equivalent') }}</div>
             </template>
             <template v-else>
               <strong>${{ (record.amountUsd || record.contractAmount || 0).toLocaleString() }}</strong>
@@ -111,17 +111,17 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space :size="4">
-              <a-button type="link" size="small" data-surface-trigger="modal-contract-detail" :data-surface-sample-key="`contract-${record.contractId}`" @click="handleDetailEntry(record)">详情</a-button>
-              <a-button type="link" size="small" data-surface-trigger="modal-contract-renew" :data-surface-sample-key="`contract-${record.contractId}-renew`" @click="handleRenewEntry(record)">续签合同</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-contract-detail" :data-surface-sample-key="`contract-${record.contractId}`" @click="handleDetailEntry(record)">{{ $t('details') }}</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-contract-renew" :data-surface-sample-key="`contract-${record.contractId}-renew`" @click="handleRenewEntry(record)">{{ $t('renew_contract') }}</a-button>
             </a-space>
           </template>
         </template>
         <template #footer>
           <a-space :size="24">
-            <span><strong>总金额:</strong> {{ formatCurrency(summary.totalAmount) }}</span>
-            <span><strong>总课时:</strong> {{ summary.totalHours }}h</span>
-            <span><strong>已用:</strong> {{ summary.usedHours }}h</span>
-            <span><strong>剩余:</strong> {{ summary.remainingHours }}h</span>
+            <span><strong>{{ $t('total_amount') }}:</strong> {{ formatCurrency(summary.totalAmount) }}</span>
+            <span><strong>{{ $t('total_hours') }}:</strong> {{ summary.totalHours }}h</span>
+            <span><strong>{{ $t('used') }}:</strong> {{ summary.usedHours }}h</span>
+            <span><strong>{{ $t('remaining') }}:</strong> {{ summary.remainingHours }}h</span>
           </a-space>
         </template>
       </a-table>
@@ -176,7 +176,9 @@ import {
 } from '@osg/shared/api/admin/contract'
 import { getToken } from '@osg/shared/utils'
 import { contractColumns } from './columns'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface ContractFilters {
   startDate: string
   endDate: string
@@ -227,7 +229,7 @@ const tablePagination = computed(() => ({
   pageSize: pageSize.value,
   total: total.value,
   showSizeChanger: true,
-  showTotal: (value: number) => `共 ${value} 条记录`
+  showTotal: (value: number) => `${t('in_total')} ${value} ${t('records')}`
 }))
 
 const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
@@ -269,11 +271,11 @@ const summary = computed(() =>
 
 const statsCards = computed(() => {
   return [
-    { key: 'total', label: '总合同数', value: String(summaryStats.value.totalContracts), tone: 'total', bg: '#eff3ff' },
-    { key: 'active', label: '有效合同', value: String(summaryStats.value.activeContracts), tone: 'active', bg: '#dcfce7' },
-    { key: 'expiring', label: '即将到期', value: String(summaryStats.value.expiringContracts), tone: 'expiring', bg: '#fef3c7' },
-    { key: 'ended', label: '已结束', value: String(summaryStats.value.endedContracts), tone: 'ended', bg: '#f3f4f6' },
-    { key: 'amount', label: '合同总金额', value: formatCurrency(Number(summaryStats.value.totalAmount || 0)), tone: 'amount', bg: '#dbeafe' },
+    { key: 'total', label: t('total_contracts'), value: String(summaryStats.value.totalContracts), tone: 'total', bg: '#eff3ff' },
+    { key: 'active', label: t('active_contracts'), value: String(summaryStats.value.activeContracts), tone: 'active', bg: '#dcfce7' },
+    { key: 'expiring', label: t('expiring_soon'), value: String(summaryStats.value.expiringContracts), tone: 'expiring', bg: '#fef3c7' },
+    { key: 'ended', label: t('ended'), value: String(summaryStats.value.endedContracts), tone: 'ended', bg: '#f3f4f6' },
+    { key: 'amount', label: t('total_contract_amount'), value: formatCurrency(Number(summaryStats.value.totalAmount || 0)), tone: 'amount', bg: '#dbeafe' },
   ]
 })
 
@@ -388,7 +390,7 @@ const handleExport = async () => {
     })
 
     if (!response.ok) {
-      throw new Error('导出请求失败')
+      throw new Error(t('export_request_failed'))
     }
 
     const blob = await response.blob()
@@ -398,9 +400,9 @@ const handleExport = async () => {
     link.download = getExportFilename(response.headers.get('content-disposition'))
     link.click()
     window.URL.revokeObjectURL(downloadUrl)
-    message.success('合同列表导出成功')
+    message.success(t('contract_list_exported_successfully'))
   } catch (_error) {
-    message.error('合同列表导出失败')
+    message.error(t('failed_to_export_contract_list'))
   }
 }
 
@@ -431,15 +433,15 @@ const resolveStatus = (record: ContractListItem) => {
 }
 
 const formatContractType = (type?: string) => {
-  if (type === 'renew') return '续签'
-  if (type === 'supplement') return '补充'
-  return '首签'
+  if (type === 'renew') return t('renewal')
+  if (type === 'supplement') return t('supplementary')
+  return t('initial')
 }
 
 const formatContractStatus = (status: string) => {
-  if (status === 'expiring') return '即将到期'
-  if (status === 'expired') return '已结束'
-  return '有效'
+  if (status === 'expiring') return t('expiring_soon')
+  if (status === 'expired') return t('ended')
+  return t('active_2')
 }
 
 const getTypeColor = (type?: string) => {
@@ -457,7 +459,7 @@ const getStatusColor = (status: string) => {
 const formatCurrency = (value?: number, curr: string = 'USD') => {
   const num = Number(value || 0)
   if (curr === 'GBP') return `£${num.toLocaleString()}`
-  return `$${num.toLocaleString()}`
+  return `${num.toLocaleString()}`
 }
 
 const formatDate = (value?: string) => {
@@ -484,3 +486,4 @@ onMounted(async () => {
 
 <style scoped>
 </style>
+

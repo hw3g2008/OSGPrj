@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div id="page-myclass">
     <PageHeader
-      title-zh="课程记录"
+      :title-zh="$t('course_records')"
       title-en="Class Records"
-      description="查看和上报课程记录"
+      :description="$t('view_and_submit_session_records')"
     >
       <template #actions>
         <a-button type="primary" @click="showReportModal = true">
@@ -26,30 +26,30 @@
         <a-form-item>
           <a-input
             v-model:value="filters.keyword"
-            placeholder="搜索学员姓名/ID..."
+            :placeholder="`${$t('search_student_name')}/ID...`"
             allow-clear
             style="width:200px"
           />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.coachingType" placeholder="辅导类型" style="width:140px" allow-clear>
-            <a-select-option value="">辅导类型</a-select-option>
-            <a-select-option value="job_coaching">岗位辅导</a-select-option>
-            <a-select-option value="mock_interview">模拟应聘</a-select-option>
+          <a-select v-model:value="filters.coachingType" :placeholder="$t('coaching_type')" style="width:140px" allow-clear>
+            <a-select-option value="">{{ $t('coaching_type') }}</a-select-option>
+            <a-select-option value="job_coaching">{{ $t('position_coaching') }}</a-select-option>
+            <a-select-option value="mock_interview">{{ $t('mock_application') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.contentType" placeholder="课程内容" style="width:160px" allow-clear>
-            <a-select-option value="">课程内容</a-select-option>
+          <a-select v-model:value="filters.contentType" :placeholder="$t('course_content')" style="width:160px" allow-clear>
+            <a-select-option value="">{{ $t('course_content') }}</a-select-option>
             <a-select-option v-for="ct in contentTypes" :key="ct" :value="ct">{{ ct }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.timeRange" placeholder="时间范围" style="width:140px" allow-clear>
-            <a-select-option value="">时间范围</a-select-option>
-            <a-select-option value="this_week">本周</a-select-option>
-            <a-select-option value="last_week">上周</a-select-option>
-            <a-select-option value="this_month">本月</a-select-option>
+          <a-select v-model:value="filters.timeRange" :placeholder="$t('time_range')" style="width:140px" allow-clear>
+            <a-select-option value="">{{ $t('time_range') }}</a-select-option>
+            <a-select-option value="this_week">{{ $t('this_week') }}</a-select-option>
+            <a-select-option value="last_week">{{ $t('last_week') }}</a-select-option>
+            <a-select-option value="this_month">{{ $t('this_month') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -64,14 +64,14 @@
         :data-source="filteredRecords"
         :pagination="false"
         :row-key="(r: any) => r.id"
-        :locale="{ emptyText: '暂无数据' }"
+        :locale="{ emptyText: $t('no_data_available') }"
         size="middle"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'recordNo'">{{ record.recordNo }}</template>
           <template v-else-if="column.key === 'student'">
             <div>
-              <strong>{{ record.studentName || '学员' }}</strong>
+              <strong>{{ record.studentName || $t('student') }}</strong>
               <br />
               <span class="text-muted text-sm">ID: {{ record.studentId }}</span>
             </div>
@@ -95,8 +95,8 @@
             <span v-else class="text-muted">-</span>
           </template>
           <template v-else-if="column.key === 'actions'">
-            <a-button v-if="record.reviewStatus === 'rejected'" type="link" size="small" @click="showReject(record)">查看原因</a-button>
-            <a-button v-else type="link" size="small" @click="showDetail(record)">查看详情</a-button>
+            <a-button v-if="record.reviewStatus === 'rejected'" type="link" size="small" @click="showReject(record)">{{ $t('view_reason') }}</a-button>
+            <a-button v-else type="link" size="small" @click="showDetail(record)">{{ $t('view_details') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -118,39 +118,39 @@
     >
       <div id="modal-class-detail">
         <div class="modal-header">
-          <span class="modal-title"><i class="mdi mdi-file-document-outline" /> 课程记录详情</span>
+          <span class="modal-title"><i class="mdi mdi-file-document-outline" /> {{ $t('course_record_details') }}</span>
           <button class="modal-close" type="button" @click="closeDetailModal">×</button>
         </div>
         <div class="modal-body">
           <div class="detail-grid">
             <div class="detail-item">
-              <span class="detail-label">记录编号</span>
+              <span class="detail-label">{{ $t('record_id') }}</span>
               <div class="detail-value">{{ detailModal.record?.recordNo || '-' }}</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">学员</span>
+              <span class="detail-label">{{ $t('student') }}</span>
               <div class="detail-value">{{ detailModal.record?.studentName || '-' }} ({{ detailModal.record?.studentId || '-' }})</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">辅导内容</span>
+              <span class="detail-label">{{ $t('coaching_content') }}</span>
               <div class="detail-value">{{ coachingLabel(detailModal.record?.coachingType || '') }}</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">课程内容</span>
+              <span class="detail-label">{{ $t('course_content') }}</span>
               <div class="detail-value">{{ detailModal.record?.contentType || '-' }}</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">上课日期</span>
+              <span class="detail-label">{{ $t('course_date') }}</span>
               <div class="detail-value">{{ formatDate(detailModal.record?.classDate || '') }}</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">课时费</span>
+              <span class="detail-label">{{ $t('session_fee') }}</span>
               <div class="detail-value">¥{{ detailModal.record?.totalFee ?? '-' }}</div>
             </div>
           </div>
           <div class="detail-section">
-            <div class="detail-label">课程反馈</div>
-            <div class="detail-panel">{{ detailModal.record?.contentDetail || '暂无课程反馈' }}</div>
+            <div class="detail-label">{{ $t('course_feedback') }}</div>
+            <div class="detail-panel">{{ detailModal.record?.contentDetail || $t('no_course_feedback') }}</div>
           </div>
         </div>
       </div>
@@ -169,42 +169,42 @@
     >
       <div id="modal-class-reject">
         <div class="modal-header modal-header--reject">
-          <span class="modal-title"><i class="mdi mdi-alert-circle" /> 课程审核驳回</span>
+          <span class="modal-title"><i class="mdi mdi-alert-circle" /> {{ $t('session_review_rejected') }}</span>
           <button class="modal-close" type="button" @click="closeRejectModal">×</button>
         </div>
         <div class="modal-body">
           <div class="reject-summary">
             <div class="reject-summary-grid">
               <div>
-                <span class="reject-summary-label">学员</span>
-                <div class="reject-summary-value">{{ rejectModal.record?.studentName || '学员' }} ({{ rejectModal.record?.studentId || '-' }})</div>
+                <span class="reject-summary-label">{{ $t('student') }}</span>
+                <div class="reject-summary-value">{{ rejectModal.record?.studentName || $t('student') }} ({{ rejectModal.record?.studentId || '-' }})</div>
               </div>
               <div>
-                <span class="reject-summary-label">课程类型</span>
+                <span class="reject-summary-label">{{ $t('course_type') }}</span>
                 <div class="reject-summary-value">{{ rejectModal.record?.contentType || rejectModal.record?.coachingType || '-' }}</div>
               </div>
               <div>
-                <span class="reject-summary-label">上课时间</span>
+                <span class="reject-summary-label">{{ $t('session_time') }}</span>
                 <div class="reject-summary-value">{{ formatDate(rejectModal.record?.classDate || '') }}</div>
               </div>
               <div>
-                <span class="reject-summary-label">提交时长</span>
+                <span class="reject-summary-label">{{ $t('submitted_duration') }}</span>
                 <div class="reject-summary-value">{{ rejectModal.record?.durationHours ? `${rejectModal.record.durationHours}h` : '-' }}</div>
               </div>
             </div>
           </div>
           <div class="reject-reason">
-            <div class="reject-reason-title"><i class="mdi mdi-close-circle" /> 驳回原因</div>
-            <div class="detail-panel detail-panel--danger">{{ rejectModal.reason || '暂无驳回原因' }}</div>
+            <div class="reject-reason-title"><i class="mdi mdi-close-circle" /> {{ $t('rejection_reason_2') }}</div>
+            <div class="detail-panel detail-panel--danger">{{ rejectModal.reason || $t('no_rejection_reason_provided') }}</div>
           </div>
           <div class="reject-meta">
-            <div>审核人:课时审核员 Admin</div>
+            <div>{{ $t('reviewer') }}:{{ $t('session_reviewer') }} Admin</div>
             <div>驳回时间:{{ rejectModal.record?.reviewedAt ? formatDate(rejectModal.record.reviewedAt) : '12/11/2025 10:30' }}</div>
           </div>
         </div>
         <div class="modal-footer">
-          <a-button @click="closeRejectModal">关闭</a-button>
-          <a-button type="primary" style="margin-left:8px" @click="openConfirmModalFromReject">重新提交</a-button>
+          <a-button @click="closeRejectModal">{{ $t('close') }}</a-button>
+          <a-button type="primary" style="margin-left:8px" @click="openConfirmModalFromReject">{{ $t('resubmit') }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -222,76 +222,76 @@
     >
       <div id="modal-class-confirm">
         <div class="modal-header modal-header--confirm">
-          <span class="modal-title"><i class="mdi mdi-check-circle" /> 确认课程并填写反馈</span>
+          <span class="modal-title"><i class="mdi mdi-check-circle" /> {{ $t('confirm_session_and_submit_feedback') }}</span>
           <button class="modal-close" type="button" @click="closeConfirmModal">×</button>
         </div>
         <div class="modal-body">
           <div class="confirm-meta">
             <div>
-              <span class="confirm-meta-label">学员</span>
-              <div class="confirm-meta-value">{{ confirmRecord?.studentName || '张三' }} ({{ confirmRecord?.studentId || '12766' }})</div>
+              <span class="confirm-meta-label">{{ $t('student') }}</span>
+              <div class="confirm-meta-value">{{ confirmRecord?.studentName || $t('zhang_san') }} ({{ confirmRecord?.studentId || '12766' }})</div>
             </div>
             <div>
-              <span class="confirm-meta-label">预约时间</span>
+              <span class="confirm-meta-label">{{ $t('appointment_time') }}</span>
               <div class="confirm-meta-value">{{ confirmRecord?.classDate ? formatDate(confirmRecord.classDate) : '12/18/2025 14:00' }}</div>
             </div>
             <div>
-              <span class="confirm-meta-label">公司/岗位</span>
+              <span class="confirm-meta-label">{{ $t('company_position') }}</span>
               <div class="confirm-meta-value">{{ confirmRecord?.contentType || 'Goldman Sachs / IB' }}</div>
             </div>
           </div>
 
           <div class="form-grid confirm-grid">
             <div class="form-group">
-              <label class="form-label">课程类型<span class="req">*</span></label>
+              <label class="form-label">{{ $t('course_type') }}<span class="req">*</span></label>
               <select
                 id="confirm-class-type"
                 v-model="confirmClassType"
                 class="form-select"
                 @change="switchConfirmFeedbackForm(confirmClassType)"
               >
-                <option value="">请选择课程类型</option>
-                <option value="mock_interview">模拟面试</option>
-                <option value="mock_midterm">模拟期中考试</option>
-                <option value="networking">人际关系期中考试</option>
-                <option value="written_test">笔试辅导</option>
-                <option value="resume_update">简历更新</option>
-                <option value="basic">基础课程</option>
+                <option value="">{{ $t('please_select_session_type') }}</option>
+                <option value="mock_interview">{{ $t('mock_interview') }}</option>
+                <option value="mock_midterm">{{ $t('mock_midterm_exam') }}</option>
+                <option value="networking">{{ $t('networking_midterm_exam') }}</option>
+                <option value="written_test">{{ $t('written_test_coaching') }}</option>
+                <option value="resume_update">{{ $t('resume_update') }}</option>
+                <option value="basic">{{ $t('foundation_course_2') }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">实际上课日期<span class="req">*</span></label>
+              <label class="form-label">{{ $t('actual_session_date') }}<span class="req">*</span></label>
               <input id="confirm-class-date" v-model="confirmDate" type="date" class="form-input" />
             </div>
             <div class="form-group">
-              <label class="form-label">实际上课时长（小时）<span class="req">*</span></label>
+              <label class="form-label">{{ $t('actual_session_duration_hours') }}）<span class="req">*</span></label>
               <input id="confirm-class-duration" v-model.number="confirmDuration" type="number" class="form-input" step="0.5" min="0.5" />
             </div>
             <div class="form-group">
-              <label class="form-label">学员表现<span class="req">*</span></label>
+              <label class="form-label">{{ $t('student_performance') }}<span class="req">*</span></label>
               <select id="confirm-student-performance" v-model="confirmPerformance" class="form-select">
-                <option value="">请选择</option>
-                <option>优秀</option>
-                <option>良好</option>
-                <option>一般</option>
-                <option>需改进</option>
+                <option value="">{{ $t('please_select') }}</option>
+                <option>{{ $t('excellent') }}</option>
+                <option>{{ $t('good') }}</option>
+                <option>{{ $t('average') }}</option>
+                <option>{{ $t('needs_improvement') }}</option>
               </select>
             </div>
           </div>
 
           <hr class="confirm-divider" />
 
-          <h4 class="confirm-feedback-title"><i class="mdi mdi-comment-text" /> 课程反馈</h4>
+          <h4 class="confirm-feedback-title"><i class="mdi mdi-comment-text" /> {{ $t('course_feedback') }}</h4>
 
           <div v-if="!confirmClassType" id="feedback-default" class="confirm-feedback-default">
             <i class="mdi mdi-file-document-outline confirm-feedback-icon" />
-            <p>请先选择课程类型，将显示对应的反馈表单</p>
+            <p>{{ $t('please_select_a_session_type_first_the_c') }}</p>
           </div>
 
           <div v-else-if="confirmFeedbackView === 'mock'" id="feedback-mock" class="confirm-feedback-panel">
-            <div class="confirm-feedback-banner confirm-feedback-banner--mock">入职面试辅导反馈</div>
+            <div class="confirm-feedback-banner confirm-feedback-banner--mock">{{ $t('onboarding_interview_coaching_feedback') }}</div>
             <div class="form-group">
-              <label class="form-label">面试公司/岗位<span class="req">*</span></label>
+              <label class="form-label">{{ $t('interview_company_position') }}<span class="req">*</span></label>
               <a-input
                 id="confirm-company-position"
                 v-model:value="confirmCompanyOrPosition"
@@ -299,20 +299,20 @@
               />
             </div>
             <div class="form-group">
-              <label class="form-label">辅导内容<span class="req">*</span></label>
+              <label class="form-label">{{ $t('coaching_content') }}<span class="req">*</span></label>
               <a-textarea
                 id="confirm-feedback"
                 v-model:value="confirmFeedback"
                 :rows="3"
-                placeholder="请描述本次辅导的主要内容"
+                :placeholder="$t('please_describe_the_main_content_of_this')"
               />
             </div>
           </div>
 
           <div v-else-if="confirmFeedbackView === 'regular'" id="feedback-regular" class="confirm-feedback-panel">
-            <div class="confirm-feedback-banner confirm-feedback-banner--regular">笔试辅导反馈</div>
+            <div class="confirm-feedback-banner confirm-feedback-banner--regular">{{ $t('written_test_coaching_feedback') }}</div>
             <div class="form-group">
-              <label class="form-label">笔试公司/岗位<span class="req">*</span></label>
+              <label class="form-label">{{ $t('written_test_company_position') }}<span class="req">*</span></label>
               <a-input
                 id="confirm-company-position"
                 v-model:value="confirmCompanyOrPosition"
@@ -320,44 +320,44 @@
               />
             </div>
             <div class="form-group">
-              <label class="form-label">辅导内容<span class="req">*</span></label>
+              <label class="form-label">{{ $t('coaching_content') }}<span class="req">*</span></label>
               <a-textarea
                 id="confirm-feedback"
                 v-model:value="confirmFeedback"
                 :rows="3"
-                placeholder="请描述本次辅导的主要内容"
+                :placeholder="$t('please_describe_the_main_content_of_this')"
               />
             </div>
           </div>
 
           <div v-else-if="confirmFeedbackView === 'networking'" id="feedback-networking" class="confirm-feedback-panel">
-            <div class="confirm-feedback-banner confirm-feedback-banner--networking">人脉拓展反馈模板</div>
+            <div class="confirm-feedback-banner confirm-feedback-banner--networking">{{ $t('networking_feedback_template') }}</div>
             <div class="form-group">
-              <label class="form-label">拓展情况<span class="req">*</span></label>
+              <label class="form-label">{{ $t('networking_summary') }}<span class="req">*</span></label>
               <a-textarea
                 id="confirm-feedback"
                 v-model:value="confirmFeedback"
                 :rows="3"
-                placeholder="请描述本次人脉拓展的情况"
+                :placeholder="$t('please_describe_the_networking_activity_')"
               />
             </div>
           </div>
 
           <div v-else id="feedback-resume" class="confirm-feedback-panel">
-            <div class="confirm-feedback-banner confirm-feedback-banner--resume">简历修改反馈模板</div>
+            <div class="confirm-feedback-banner confirm-feedback-banner--resume">{{ $t('resume_revision_feedback_template') }}</div>
             <div class="form-group">
-              <label class="form-label">修改要点<span class="req">*</span></label>
+              <label class="form-label">{{ $t('key_revisions') }}<span class="req">*</span></label>
               <a-textarea
                 id="confirm-feedback"
                 v-model:value="confirmFeedback"
                 :rows="3"
-                placeholder="请描述本次简历修改的主要内容"
+                :placeholder="$t('please_describe_the_key_changes_made_in_')"
               />
             </div>
           </div>
         </div>
         <div class="modal-footer modal-footer--confirm">
-          <a-button @click="closeConfirmModal">取消</a-button>
+          <a-button @click="closeConfirmModal">{{ $t('cancel') }}</a-button>
           <a-button
             type="primary"
             style="margin-left:8px"
@@ -365,7 +365,7 @@
             :disabled="!confirmCanSubmit || confirmSubmitting"
             @click="submitConfirm"
           >
-            {{ confirmSubmitting ? '提交中...' : '确认并提交反馈' }}
+            {{ confirmSubmitting ? '提交中...' : $t('confirm_and_submit_feedback') }}
           </a-button>
         </div>
       </div>
@@ -379,7 +379,9 @@ import { PageHeader } from '@osg/shared/components/PageHeader'
 import { ClassRecordStatusTag } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
 import ReportModal from './components/ReportModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const activeTab = ref('all')
 const showReportModal = ref(false)
 const showConfirmModal = ref(false)
@@ -390,7 +392,7 @@ const rejectModal = ref<{ visible: boolean; reason: string; record: any | null }
 const confirmRecord = ref<any | null>(null)
 const filters = ref({ keyword: '', coachingType: '', contentType: '', timeRange: '' })
 const fullListParams = { pageNum: 1, pageSize: 1000 }
-const contentTypes = ['新简历', '简历更新', 'Case准备', '模拟面试', '人际关系期中考试', '模拟期中考试', 'Behavioral', 'Technical', '其他']
+const contentTypes = [t('new_resume'), t('resume_update'), 'Case准备', t('mock_interview'), t('networking_midterm_exam'), t('mock_midterm_exam'), 'Behavioral', 'Technical', t('other')]
 const confirmClassType = ref('')
 const confirmDate = ref('')
 const confirmDuration = ref(1.5)
@@ -431,10 +433,10 @@ const confirmCanSubmit = computed(() => {
 const tabs = computed(() => {
   const pending = summaryRecords.value.filter(r => r.reviewStatus === 'pending').length
   return [
-    { key: 'all', label: '全部', badge: 0 },
-    { key: 'pending', label: '待审核', badge: pending || 0 },
-    { key: 'approved', label: '已通过', badge: 0 },
-    { key: 'rejected', label: '已驳回', badge: 0 },
+    { key: 'all', label: t('all'), badge: 0 },
+    { key: 'pending', label: t('pending_review'), badge: pending || 0 },
+    { key: 'approved', label: t('approved'), badge: 0 },
+    { key: 'rejected', label: t('rejected_3'), badge: 0 },
   ]
 })
 
@@ -458,15 +460,15 @@ const filteredRecords = computed(() => {
 
 const columns = [
   { title: '记录ID', key: 'recordNo', dataIndex: 'recordNo' },
-  { title: '学员', key: 'student' },
-  { title: '辅导内容', key: 'coachingType' },
-  { title: '课程内容', key: 'contentType' },
-  { title: '上课日期', key: 'classDate', dataIndex: 'classDate' },
-  { title: '时长', key: 'durationHours', dataIndex: 'durationHours' },
-  { title: '课时费', key: 'totalFee', dataIndex: 'totalFee' },
-  { title: '审核状态', key: 'reviewStatus' },
-  { title: '学员评价', key: 'studentEvaluation' },
-  { title: '操作', key: 'actions' },
+  { title: t('student'), key: 'student' },
+  { title: t('coaching_content'), key: 'coachingType' },
+  { title: t('course_content'), key: 'contentType' },
+  { title: t('course_date'), key: 'classDate', dataIndex: 'classDate' },
+  { title: t('duration'), key: 'durationHours', dataIndex: 'durationHours' },
+  { title: t('session_fee'), key: 'totalFee', dataIndex: 'totalFee' },
+  { title: t('review_status'), key: 'reviewStatus' },
+  { title: t('student_feedback'), key: 'studentEvaluation' },
+  { title: t('operation'), key: 'actions' },
 ]
 
 function coachingTagColor(t: string) {
@@ -494,36 +496,36 @@ function resetFilters() {
   records.value = summaryRecords.value
 }
 function formatDate(d: string) { return d ? new Date(d).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '' }
-function coachingLabel(t: string) { return { job_coaching: '岗位辅导', mock_interview: '模拟应聘', networking: '人际关系', mock_midterm: '模拟期中', basic: '基础课程', basic_course: '基础课程' }[t] || t }
-function contentLabel(t: string) {
-  const normalized = String(t ?? '').trim().replace(/-/g, '_').toLowerCase()
+function coachingLabel(key: string) { return { job_coaching: t('position_coaching'), mock_interview: t('mock_application'), networking: t('interpersonal_skills'), mock_midterm: t('mock_midterm'), basic: t('foundation_course_2'), basic_course: t('foundation_course_2') }[key] || key }
+function contentLabel(key: string) {
+  const normalized = String(key ?? '').trim().replace(/-/g, '_').toLowerCase()
   return {
-    resume_revision: '新简历',
-    new_resume: '新简历',
-    resume_update: '简历更新',
+    resume_revision: t('new_resume'),
+    new_resume: t('new_resume'),
+    resume_update: t('resume_update'),
     case_prep: 'Case准备',
-    mock_interview: '模拟面试',
-    mock_interview_content: '模拟面试',
-    networking_midterm: '人际关系期中考试',
-    networking_content: '人际关系期中考试',
-    mock_midterm: '模拟期中考试',
-    mock_midterm_content: '模拟期中考试',
-    written_test: '笔试辅导',
+    mock_interview: t('mock_interview'),
+    mock_interview_content: t('mock_interview'),
+    networking_midterm: t('networking_midterm_exam'),
+    networking_content: t('networking_midterm_exam'),
+    mock_midterm: t('mock_midterm_exam'),
+    mock_midterm_content: t('mock_midterm_exam'),
+    written_test: t('written_test_coaching'),
     technical: 'Technical',
     behavioral: 'Behavioral',
-    basic: '基础课程',
-    basic_course: '基础课程',
-    mentor_report: '课程上报',
-    student_request: '学员申请',
-    other: '其他',
-  }[normalized] || t
+    basic: t('foundation_course_2'),
+    basic_course: t('foundation_course_2'),
+    mentor_report: t('session_submission'),
+    student_request: t('student_applications'),
+    other: t('other'),
+  }[normalized] || key
 }
 function evaluationTag(record: Record<string, any>) {
   if (record.studentEvaluation !== '' && record.studentEvaluation != null) {
     return { text: `⭐ ${record.studentEvaluation}`, className: 'success' }
   }
   if (record.reviewStatus === 'approved') {
-    return { text: '待评价', className: 'warning' }
+    return { text: t('pending_evaluation'), className: 'warning' }
   }
   return null
 }
@@ -711,7 +713,7 @@ function showReject(record: any) {
   const normalizedRecord = normalizeCourseRecord(record)
   rejectModal.value = {
     visible: true,
-    reason: record.reviewRemark || record.remark || '暂无驳回原因',
+    reason: record.reviewRemark || record.remark || t('no_rejection_reason_provided'),
     record: normalizedRecord
   }
 }
@@ -800,3 +802,4 @@ onMounted(async () => {
 .detail-panel{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#334155;line-height:1.7;white-space:pre-wrap}
 .detail-panel--danger{background:#FEF2F2;border-color:#FECACA;color:#991B1B}
 </style>
+

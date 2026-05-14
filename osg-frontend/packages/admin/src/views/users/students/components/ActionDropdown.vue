@@ -1,7 +1,7 @@
 <template>
   <a-dropdown trigger="click" placement="bottomRight">
     <button type="button" class="btn-text-sm action-more-btn">
-      <span>更多 ▾</span>
+      <span>{{ $t('more') }} ▾</span>
     </button>
 
     <template #overlay>
@@ -17,11 +17,15 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 const actionItems = [
-  { key: 'freeze', label: '冻结' },
-  { key: 'restore', label: '恢复', tone: 'success' },
-  { key: 'blacklist', label: '加入黑名单', tone: 'warning' },
-  { key: 'refund', label: '退费', tone: 'danger' }
+  { key: 'freeze', label: t('frozen') },
+  { key: 'restore', label: t('restore'), tone: 'success' },
+  { key: 'blacklist', label: t('add_to_blacklist'), tone: 'warning' },
+  { key: 'refund', label: t('refund'), tone: 'danger' }
 ] as const
 
 type StudentActionKey = (typeof actionItems)[number]['key']

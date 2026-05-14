@@ -10,6 +10,7 @@ export interface MenuListItem {
   menuId: number
   parentId?: number
   menuName: string
+  i18nKey?: string
   menuType: 'M' | 'C' | 'F'
   orderNum?: number
   perms?: string
@@ -25,6 +26,7 @@ export interface MenuMutationPayload {
   menuId?: number
   parentId: number
   menuName: string
+  i18nKey?: string
   menuType: 'M' | 'C' | 'F'
   orderNum: number
   path?: string

@@ -8,30 +8,30 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-shield-key-outline" aria-hidden="true" />
-        <span>文件授权</span>
+        <span>{{ $t('file_authorization') }}</span>
       </span>
     </template>
 
-    <p style="margin:0 0 16px;color:#64748b">{{ row?.fileName || '当前文件' }} 的可访问范围设置。</p>
+    <p style="margin:0 0 16px;color:#64748b">{{ row?.fileName || $t('current_file') }} {{ $t('access_scope_settings') }}。</p>
 
     <a-form layout="vertical">
-      <a-form-item label="授权类型">
+      <a-form-item :label="$t('authorization_type')">
         <a-radio-group v-model:value="authType">
-          <a-radio value="all">全部用户</a-radio>
-          <a-radio value="class">指定班级</a-radio>
-          <a-radio value="user">指定用户</a-radio>
+          <a-radio value="all">{{ $t('all_users') }}</a-radio>
+          <a-radio value="class">{{ $t('specific_class') }}</a-radio>
+          <a-radio value="user">{{ $t('specific_users') }}</a-radio>
         </a-radio-group>
       </a-form-item>
 
-      <a-form-item v-if="authType === 'class'" label="班级范围">
+      <a-form-item v-if="authType === 'class'" :label="$t('class_scope')">
         <a-checkbox-group v-model:value="authorizedClasses" :options="classOptions" />
       </a-form-item>
 
       <template v-if="authType === 'user'">
-        <a-form-item label="添加用户">
+        <a-form-item :label="$t('add_user_2')">
           <div style="display:flex;gap:8px">
-            <a-input v-model:value="draftUser" placeholder="添加用户" style="flex:1" @press-enter="addUser" />
-            <a-button @click="addUser">添加</a-button>
+            <a-input v-model:value="draftUser" :placeholder="$t('add_user_2')" style="flex:1" @press-enter="addUser" />
+            <a-button @click="addUser">{{ $t('add_2') }}</a-button>
           </div>
         </a-form-item>
         <div v-if="authorizedUsers.length" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
@@ -41,8 +41,8 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="close">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="submit">保存授权</a-button>
+      <a-button @click="close">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="submit">{{ $t('save_permissions') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>

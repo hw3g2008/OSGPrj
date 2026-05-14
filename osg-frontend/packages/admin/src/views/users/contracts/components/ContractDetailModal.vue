@@ -11,37 +11,37 @@
         <div class="cdm-header__avatar">{{ avatarInitials }}</div>
         <div class="cdm-header__info">
           <span class="cdm-header__name">{{ modalTitle }}</span>
-          <div class="cdm-header__meta">ID: {{ studentId }} · {{ contracts.length }}份合同</div>
+          <div class="cdm-header__meta">ID: {{ studentId }} · {{ contracts.length }}{{ $t('contract_s') }}</div>
         </div>
       </div>
     </template>
 
     <div v-if="loading" class="contract-detail-modal__state">
       <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-      <span>正在加载合同记录...</span>
+      <span>{{ $t('loading_contract_records') }}...</span>
     </div>
 
     <div v-else-if="loadError" class="contract-detail-modal__state contract-detail-modal__state--error">
-      <strong>合同详情加载失败</strong>
+      <strong>{{ $t('failed_to_load_contract_details') }}</strong>
       <p>{{ loadError }}</p>
     </div>
 
     <template v-else>
       <section class="contract-detail-modal__summary">
         <article class="contract-detail-modal__summary-card">
-          <span>合同总金额</span>
+          <span>{{ $t('total_contract_amount') }}</span>
           <strong>{{ formatCurrency(summary.totalAmount) }}</strong>
         </article>
         <article class="contract-detail-modal__summary-card">
-          <span>剩余课时</span>
+          <span>{{ $t('remaining_hours') }}</span>
           <strong>{{ summary.remainingHours }}h</strong>
         </article>
         <article class="contract-detail-modal__summary-card">
-          <span>已用课时</span>
+          <span>{{ $t('used_hours') }}</span>
           <strong>{{ summary.usedHours }}h</strong>
         </article>
         <article class="contract-detail-modal__summary-card">
-          <span>总课时</span>
+          <span>{{ $t('total_hours') }}</span>
           <strong>{{ summary.totalHours }}h</strong>
         </article>
       </section>
@@ -50,15 +50,15 @@
         <table class="contract-detail-modal__table">
           <thead>
             <tr>
-              <th>合同ID</th>
-              <th>类型</th>
-              <th>金额</th>
-              <th>课时</th>
-              <th>有效期</th>
-              <th>续签原因</th>
-              <th>附件</th>
-              <th>更新时间</th>
-              <th>操作</th>
+              <th>{{ $t('contract') }}ID</th>
+              <th>{{ $t('type') }}</th>
+              <th>{{ $t('amount') }}</th>
+              <th>{{ $t('class_hours') }}</th>
+              <th>{{ $t('validity_period') }}</th>
+              <th>{{ $t('renewal_reason') }}</th>
+              <th>{{ $t('attachment') }}</th>
+              <th>{{ $t('updated_at') }}</th>
+              <th>{{ $t('operation') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -74,7 +74,7 @@
               <td>
                 <template v-if="contract.currency === 'GBP'">
                   <div><strong>£{{ (contract.amountGbp || 0).toLocaleString() }}</strong></div>
-                  <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} 等值</div>
+                  <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} {{ $t('equivalent') }}</div>
                 </template>
                 <template v-else>
                   <strong>${{ (contract.amountUsd || contract.contractAmount || 0).toLocaleString() }}</strong>
@@ -84,7 +84,7 @@
               <td>{{ formatDateRange(contract.startDate, contract.endDate) }}</td>
               <td>{{ contract.renewalReason || '—' }}</td>
               <td>
-                <a v-if="contract.attachmentPath" :href="contract.attachmentPath" target="_blank" rel="noreferrer">查看附件</a>
+                <a v-if="contract.attachmentPath" :href="contract.attachmentPath" target="_blank" rel="noreferrer">{{ $t('view_attachments') }}</a>
                 <span v-else>—</span>
               </td>
               <td>{{ formatDate(contract.updateTime || contract.endDate) }}</td>
@@ -95,7 +95,7 @@
                   :data-surface-sample-key="`contract-${contract.contractId}-renew`"
                   @click="emit('request-renew')"
                 >
-                  续签合同
+                  {{ $t('renew_contract') }}
                 </a-button>
               </td>
             </tr>
@@ -103,7 +103,7 @@
         </table>
       </div>
 
-      <div v-else class="contract-detail-modal__empty">暂无合同记录。</div>
+      <div v-else class="contract-detail-modal__empty">{{ $t('no_contract_records') }}。</div>
     </template>
 
     <template #footer>
@@ -111,25 +111,25 @@
         data-surface-trigger="modal-status-change"
         data-surface-sample-key="contract-detail-status-change"
         @click="emit('request-status-change')"
-      >状态修改</a-button>
+      >{{ $t('status_change') }}</a-button>
       <a-button
         data-surface-trigger="modal-add-blacklist"
         data-surface-sample-key="contract-detail-add-blacklist"
         @click="emit('request-add-blacklist')"
-      >加入黑名单</a-button>
+      >{{ $t('add_to_blacklist') }}</a-button>
       <a-button
         data-surface-trigger="modal-remove-blacklist"
         data-surface-sample-key="contract-detail-remove-blacklist"
         @click="emit('request-remove-blacklist')"
-      >移出黑名单</a-button>
-      <a-button @click="handleClose">关闭</a-button>
+      >{{ $t('remove_from_blacklist') }}</a-button>
+      <a-button @click="handleClose">{{ $t('close') }}</a-button>
       <a-button
         type="primary"
         data-surface-trigger="modal-contract-renew"
         data-surface-sample-key="contract-detail-renew"
         @click="emit('request-renew')"
       >
-        <span class="mdi mdi-refresh" aria-hidden="true" style="margin-right:4px"></span>续签合同
+        <span class="mdi mdi-refresh" aria-hidden="true" style="margin-right:4px"></span>{{ $t('renew_contract') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -139,7 +139,9 @@
 import { computed, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { getStudentContractDetail, type ContractDetailPayload, type ContractListItem } from '@osg/shared/api/admin/contract'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   studentId: number | null
@@ -166,7 +168,7 @@ const summary = computed(() => detail.value?.summary || {
 })
 
 const contracts = computed<ContractListItem[]>(() => detail.value?.contracts || [])
-const modalTitle = computed(() => `${props.studentName || '学员'}的合同记录`)
+const modalTitle = computed(() => t('contract_records_title', { name: props.studentName || t('student') }))
 
 const avatarInitials = computed(() => {
   const name = props.studentName?.trim()
@@ -186,7 +188,7 @@ const loadDetail = async () => {
     detail.value = await getStudentContractDetail(props.studentId)
   } catch (error) {
     detail.value = null
-    loadError.value = error instanceof Error ? error.message : '合同详情加载失败'
+    loadError.value = error instanceof Error ? error.message : t('failed_to_load_contract_details')
   } finally {
     loading.value = false
   }
@@ -199,16 +201,16 @@ const handleClose = () => {
 const formatCurrency = (value?: number, currency: string = 'USD') => {
   const num = Number(value || 0)
   if (currency === 'GBP') return `£${num.toLocaleString()}`
-  return `$${num.toLocaleString()}`
+  return `${num.toLocaleString()}`
 }
 
 const formatDate = (value?: string) => value ? value.slice(0, 10) : '-'
-const formatDateRange = (startDate?: string, endDate?: string) => `${formatDate(startDate)} 至 ${formatDate(endDate)}`
+const formatDateRange = (startDate?: string, endDate?: string) => `${formatDate(startDate)} ${t('date_range_separator')} ${formatDate(endDate)}`
 
 const formatType = (type?: string) => {
-  if (type === 'renew') return '续签'
-  if (type === 'supplement') return '补充'
-  return '首签'
+  if (type === 'renew') return t('renewal')
+  if (type === 'supplement') return t('supplementary')
+  return t('initial')
 }
 
 const typeBadgeClass = (type?: string) => {

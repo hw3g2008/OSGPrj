@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="osg-page">
     <PageHeader
-      title-zh="模拟应聘管理"
+      :title-zh="$t('simulated_application_management')"
       title-en="Mock Practice"
-      description="处理学员的模拟面试、人际关系测试、期中考试申请"
+      :description="$t('handle_student_mock_interview_interperso')"
     />
 
     <!-- 统计卡片 -->
@@ -19,7 +19,7 @@
     <!-- 错误提示 -->
     <a-alert v-if="errorMessage" type="error" show-icon :message="errorMessage" style="border-radius: 8px;">
       <template #action>
-        <a-button size="small" @click="loadRecords">重新加载</a-button>
+        <a-button size="small" @click="loadRecords">{{ $t('reload') }}</a-button>
       </template>
     </a-alert>
 
@@ -49,24 +49,24 @@
       <!-- 辅导 Tab -->
       <template v-if="activeTab === 'coaching'">
         <a-alert type="info" show-icon style="margin-bottom: 12px; border-radius: 8px;">
-          <template #message>以下是由您亲自辅导的学员模拟应聘记录</template>
+          <template #message>{{ $t('the_following_are_mock_interview_records') }}</template>
         </a-alert>
 
         <div class="filters-row">
-          <a-select v-model:value="filters.practiceType" placeholder="全部类型" allow-clear style="width: 140px;">
+          <a-select v-model:value="filters.practiceType" :placeholder="$t('all_types')" allow-clear style="width: 140px;">
             <a-select-option v-for="option in practiceTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
-          <a-select v-model:value="filters.status" placeholder="全部状态" allow-clear style="width: 130px;">
+          <a-select v-model:value="filters.status" :placeholder="$t('all_status')" allow-clear style="width: 130px;">
             <a-select-option v-for="option in coachingStatusOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
-          <a-input v-model:value="filters.keyword" placeholder="搜索学员姓名/ID" allow-clear style="width: 180px;" @press-enter="handleSearch" />
+          <a-input v-model:value="filters.keyword" :placeholder="`${$t('search_student_name')}/ID`" allow-clear style="width: 180px;" @press-enter="handleSearch" />
           <a-button type="primary" @click="handleSearch">
             <template #icon><SearchOutlined /></template>
-            筛选
+            {{ $t('filter') }}
           </a-button>
           <a-button type="text" @click="resetFilters">
             <template #icon><ReloadOutlined /></template>
-            重置
+            {{ $t('reset') }}
           </a-button>
         </div>
 
@@ -78,7 +78,7 @@
           :pagination="tablePagination(coachingRecords.length)"
           :scroll="{ x: 900 }"
           :row-class-name="(record: AssistantMockPracticeRecord) => rowClassName(record)"
-          :locale="{ emptyText: '当前筛选下没有可展示的模拟应聘记录' }"
+          :locale="{ emptyText: $t('no_mock_interview_records_to_display_und') }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
@@ -116,9 +116,9 @@
                   @click="confirmRecord(record)"
                 >
                   <template #icon><CheckOutlined /></template>
-                  确认
+                  {{ $t('confirm') }}
                 </a-button>
-                <a-button type="link" size="small" class="link-button" @click="openDetail(record)">查看详情</a-button>
+                <a-button type="link" size="small" class="link-button" @click="openDetail(record)">{{ $t('view_details') }}</a-button>
               </a-space>
             </template>
           </template>
@@ -128,25 +128,25 @@
       <!-- 管理 Tab -->
       <template v-else>
         <a-alert type="success" show-icon style="margin-bottom: 12px; border-radius: 8px;">
-          <template #message>以下是您管理的学员的模拟应聘记录（由其他导师辅导）</template>
+          <template #message>{{ $t('the_following_are_mock_interview_records_2') }}）</template>
         </a-alert>
 
         <div class="filters-row">
-          <a-select v-model:value="filters.practiceType" placeholder="全部类型" allow-clear style="width: 140px;">
+          <a-select v-model:value="filters.practiceType" :placeholder="$t('all_types')" allow-clear style="width: 140px;">
             <a-select-option v-for="option in practiceTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
-          <a-select v-model:value="filters.status" placeholder="全部状态" allow-clear style="width: 130px;">
+          <a-select v-model:value="filters.status" :placeholder="$t('all_status')" allow-clear style="width: 130px;">
             <a-select-option v-for="option in managedStatusOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
-          <a-input v-model:value="filters.keyword" placeholder="搜索学员姓名/ID" allow-clear style="width: 180px;" @press-enter="handleSearch" />
-          <a-input v-model:value="filters.mentor" placeholder="搜索导师姓名" allow-clear style="width: 150px;" @press-enter="handleSearch" />
+          <a-input v-model:value="filters.keyword" :placeholder="`${$t('search_student_name')}/ID`" allow-clear style="width: 180px;" @press-enter="handleSearch" />
+          <a-input v-model:value="filters.mentor" :placeholder="$t('search_for_tutor_name')" allow-clear style="width: 150px;" @press-enter="handleSearch" />
           <a-button type="primary" @click="handleSearch">
             <template #icon><SearchOutlined /></template>
-            筛选
+            {{ $t('filter') }}
           </a-button>
           <a-button type="text" @click="resetFilters">
             <template #icon><ReloadOutlined /></template>
-            重置
+            {{ $t('reset') }}
           </a-button>
         </div>
 
@@ -159,7 +159,7 @@
           :pagination="tablePagination(managedRecords.length)"
           :scroll="{ x: 1100 }"
           :row-class-name="(record: AssistantMockPracticeRecord) => rowClassName(record)"
-          :locale="{ emptyText: '当前筛选下没有可展示的模拟应聘记录' }"
+          :locale="{ emptyText: $t('no_mock_interview_records_to_display_und') }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
@@ -176,8 +176,8 @@
             </template>
             <template v-else-if="column.dataIndex === 'mentorName'">
               <div>
-                <div style="font-weight: 500;">{{ record.mentorNames || '待分配' }}</div>
-                <div style="font-size: 11px; color: var(--muted);">{{ record.mentorBackgrounds || '信息待补充' }}</div>
+                <div style="font-weight: 500;">{{ record.mentorNames || $t('to_be_allocated') }}</div>
+                <div style="font-size: 11px; color: var(--muted);">{{ record.mentorBackgrounds || $t('info_pending') }}</div>
               </div>
             </template>
             <template v-else-if="column.dataIndex === 'completedHours'">
@@ -194,7 +194,7 @@
               <span v-else style="color: var(--muted);">-</span>
             </template>
             <template v-else-if="column.dataIndex === 'action'">
-              <a-button type="link" size="small" class="link-button" @click="openDetail(record)">查看详情</a-button>
+              <a-button type="link" size="small" class="link-button" @click="openDetail(record)">{{ $t('view_details') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -204,7 +204,7 @@
     <!-- 详情弹窗 -->
     <a-modal
       v-model:open="detailModal.visible"
-      :title="detailModal.record ? `模拟应聘详情 · ${detailModal.record.studentName || '-'}` : '模拟应聘详情'"
+      :title="detailModal.record ? `模拟应聘详情 · ${detailModal.record.studentName || '-'}` : $t('mock_interview_details')"
       :footer="null"
       width="720px"
       :after-close="onDetailClosed"
@@ -213,17 +213,17 @@
         <a-descriptions :column="2" size="small" bordered>
           <a-descriptions-item label="状态">{{ statusLabel(detailModal.record.status) }}</a-descriptions-item>
           <a-descriptions-item label="安排时间">{{ formatDateTime(detailModal.record.scheduledAt || detailModal.record.submittedAt) }}</a-descriptions-item>
-          <a-descriptions-item label="导师">{{ detailModal.record.mentorNames || '暂未安排' }}</a-descriptions-item>
+          <a-descriptions-item label="导师">{{ detailModal.record.mentorNames || $t('not_yet_scheduled') }}</a-descriptions-item>
           <a-descriptions-item label="已完成课时">{{ detailModal.record.completedHours || 0 }} h</a-descriptions-item>
         </a-descriptions>
 
         <div class="detail-section">
-          <span class="detail-label">申请内容</span>
-          <div class="detail-panel">{{ detailModal.record.requestContent || '暂无申请内容' }}</div>
+          <span class="detail-label">{{ $t('application_content') }}</span>
+          <div class="detail-panel">{{ detailModal.record.requestContent || $t('no_application_content') }}</div>
         </div>
 
         <div class="detail-section">
-          <span class="detail-label">反馈摘要</span>
+          <span class="detail-label">{{ $t('feedback_summary') }}</span>
           <div class="detail-panel">{{ detailModal.record.feedbackSummary || '当前记录尚未回填反馈摘要。' }}</div>
         </div>
 
@@ -231,7 +231,7 @@
           type="info"
           show-icon
           style="margin-top: 16px; border-radius: 8px;"
-          message="这里汇总本次模拟应聘的申请内容、安排信息和反馈摘要，便于助教跟进后续沟通与复盘。"
+          :message="`${$t('this_section_summarizes_the_application_')}。`"
         />
       </template>
     </a-modal>
@@ -251,49 +251,51 @@ import {
 } from '@osg/shared/api'
 // §D.2 asst mock-practice 状态显示接入 SSOT composable
 import { deriveMockPracticeStatus } from '@osg/shared/composables'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type ActiveTab = 'coaching' | 'managed'
 
 const practiceTypeOptions = [
-  { value: 'mock_interview', label: '模拟面试' },
-  { value: 'communication_test', label: '沟通测试' },
-  { value: 'relation_test', label: '人际关系测试' },
-  { value: 'midterm', label: '期中考试' },
+  { value: 'mock_interview', label: t('mock_interview') },
+  { value: 'communication_test', label: t('communication_test') },
+  { value: 'relation_test', label: t('interpersonal_test') },
+  { value: 'midterm', label: t('midterm_exam') },
 ]
 
 const coachingStatusOptions = [
-  { value: 'new', label: '新分配' },
-  { value: 'pending', label: '待进行' },
-  { value: 'completed', label: '已完成' },
-  { value: 'cancelled', label: '已取消' },
+  { value: 'new', label: t('newly_assigned') },
+  { value: 'pending', label: t('pending_2') },
+  { value: 'completed', label: t('completed') },
+  { value: 'cancelled', label: t('canceled') },
 ]
 
 const managedStatusOptions = [
-  { value: 'pending', label: '待进行' },
-  { value: 'ongoing', label: '进行中' },
-  { value: 'completed', label: '已完成' },
-  { value: 'cancelled', label: '已取消' },
+  { value: 'pending', label: t('pending_2') },
+  { value: 'ongoing', label: t('in_progress') },
+  { value: 'completed', label: t('completed') },
+  { value: 'cancelled', label: t('canceled') },
 ]
 
 const coachingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 180, fixed: 'left' as const },
-  { title: '类型', dataIndex: 'practiceType', key: 'practiceType', width: 130 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 110 },
-  { title: '已上课时', dataIndex: 'completedHours', key: 'completedHours', width: 100 },
-  { title: '课程反馈', dataIndex: 'feedback', key: 'feedback', width: 200 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 170, fixed: 'right' as const },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 180, fixed: 'left' as const },
+  { title: t('type'), dataIndex: 'practiceType', key: 'practiceType', width: 130 },
+  { title: t('application_time'), dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
+  { title: t('status'), dataIndex: 'status', key: 'status', width: 110 },
+  { title: t('already_in_class'), dataIndex: 'completedHours', key: 'completedHours', width: 100 },
+  { title: t('course_feedback'), dataIndex: 'feedback', key: 'feedback', width: 200 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 170, fixed: 'right' as const },
 ]
 
 const managedColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 180, fixed: 'left' as const },
-  { title: '类型', dataIndex: 'practiceType', key: 'practiceType', width: 130 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 110 },
-  { title: '辅导导师', dataIndex: 'mentorName', key: 'mentorName', width: 150 },
-  { title: '已上课时', dataIndex: 'completedHours', key: 'completedHours', width: 100 },
-  { title: '课程反馈', dataIndex: 'feedback', key: 'feedback', width: 200 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 110, fixed: 'right' as const },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 180, fixed: 'left' as const },
+  { title: t('type'), dataIndex: 'practiceType', key: 'practiceType', width: 130 },
+  { title: t('application_time'), dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
+  { title: t('status'), dataIndex: 'status', key: 'status', width: 110 },
+  { title: t('coaching_mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 150 },
+  { title: t('already_in_class'), dataIndex: 'completedHours', key: 'completedHours', width: 100 },
+  { title: t('course_feedback'), dataIndex: 'feedback', key: 'feedback', width: 200 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 110, fixed: 'right' as const },
 ]
 
 const loading = ref(true)
@@ -361,10 +363,10 @@ const totalHours = computed(() =>
 )
 
 const statsCards = computed(() => [
-  { key: 'coaching', label: '我辅导的', value: coachingRecords.value.length, color: '#3B82F6' },
-  { key: 'managed', label: '我管理的', value: managedRecords.value.length, color: '#22C55E' },
-  { key: 'completed', label: '已完成', value: completedCount.value, color: '#8B5CF6' },
-  { key: 'hours', label: '累计课时', value: `${totalHours.value}h`, color: 'var(--primary)' },
+  { key: 'coaching', label: t('coached_by_me'), value: coachingRecords.value.length, color: '#3B82F6' },
+  { key: 'managed', label: t('managed_by_me'), value: managedRecords.value.length, color: '#22C55E' },
+  { key: 'completed', label: t('completed'), value: completedCount.value, color: '#8B5CF6' },
+  { key: 'hours', label: t('total_class_hours'), value: `${totalHours.value}h`, color: 'var(--primary)' },
 ])
 
 function isNewAssigned(record: AssistantMockPracticeRecord) {
@@ -391,10 +393,10 @@ function rowClassName(record: AssistantMockPracticeRecord): string {
  * 这里把 tone 映射到 a-tag 内建色名，保留对原有特殊值（'new'/'new_assigned'/'ongoing'）的兼容。
  */
 function statusLabel(value?: string) {
-  if (!value) return '未标注'
+  if (!value) return t('unlabeled')
   // 特殊兼容值（不在 composable 5 态中）
-  if (value === 'new' || value === 'new_assigned') return '新分配'
-  if (value === 'ongoing') return '进行中'
+  if (value === 'new' || value === 'new_assigned') return t('newly_assigned')
+  if (value === 'ongoing') return t('in_progress')
   const display = deriveMockPracticeStatus({ status: value })
   return display.label
 }
@@ -415,11 +417,11 @@ function statusColor(value?: string): string {
 }
 
 function feedbackLabel(value?: number | null) {
-  if (value == null) return '暂无评分'
-  if (value >= 5) return '表现优秀'
-  if (value >= 4) return '反馈良好'
-  if (value >= 3) return '反馈一般'
-  return '需补充反馈'
+  if (value == null) return t('no_rating_yet')
+  if (value >= 5) return t('excellent_performance')
+  if (value >= 4) return t('good_feedback')
+  if (value >= 3) return t('average_feedback')
+  return t('feedback_needed')
 }
 
 function feedbackColor(value?: number | null): string {
@@ -456,10 +458,10 @@ async function confirmRecord(record: AssistantMockPracticeRecord) {
   try {
     await confirmAssistantMockPractice(record.practiceId)
     confirmedIds.value.add(record.practiceId)
-    message.success(`已确认：${record.studentName || '学员'}`)
+    message.success(`已确认：${record.studentName || t('student')}`)
     void loadRecords()
   } catch (error: any) {
-    message.error(error?.message || '确认失败，请稍后重试')
+    message.error(error?.message || t('confirmation_failed_please_try_again_lat'))
   }
 }
 
@@ -578,3 +580,4 @@ onMounted(() => {
   }
 }
 </style>
+

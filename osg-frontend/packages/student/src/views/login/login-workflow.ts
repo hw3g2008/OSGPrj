@@ -1,3 +1,6 @@
+import { i18n } from '@osg/shared'
+const t = (key: string) => i18n.global.t(key)
+
 export interface LoginFormState {
   username: string
   password: string
@@ -21,8 +24,8 @@ export function validateLoginForm(formState: LoginFormState): LoginFieldErrors {
   const username = formState.username.trim()
 
   return {
-    username: username ? '' : '请输入用户名',
-    password: formState.password ? '' : '请输入密码'
+    username: username ? '' : t('please_enter_your_username'),
+    password: formState.password ? '' : t('please_enter_your_password')
   }
 }
 
@@ -54,12 +57,12 @@ export async function submitLogin(
     const userData = await deps.getInfo()
     deps.setUser(userData.user)
 
-    deps.notifySuccess('登录成功')
+    deps.notifySuccess(t('login_successful'))
     await deps.push(resolveLoginRedirect(redirect))
 
     return { ok: true, loginError: '' }
   } catch (error) {
-    const loginError = error instanceof Error ? error.message : '用户名或密码错误'
+    const loginError = error instanceof Error ? error.message : t('incorrect_username_or_password')
 
     return {
       ok: false,

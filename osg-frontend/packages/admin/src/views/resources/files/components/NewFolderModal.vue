@@ -8,7 +8,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-folder-plus-outline" aria-hidden="true" />
-        <span>新建文件夹</span>
+        <span>{{ $t('new_folder') }}</span>
       </span>
     </template>
 
@@ -24,8 +24,8 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="close">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="submit">创建文件夹</a-button>
+      <a-button @click="close">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="submit">{{ $t('create_folder') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>

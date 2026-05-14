@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="导师排期管理" title-en="Mentor Schedule" description="监控排期填写情况，协调导师资源">
+    <PageHeader :title-zh="$t('tutor_schedule_management')" title-en="Mentor Schedule" :description="$t('monitor_schedule_submissions_and_coordin')">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><DownloadOutlined /></template>
-          {{ exporting ? '导出中...' : '导出排期表' }}
+          {{ exporting ? $t('exporting') + '...' : $t('export_schedule') }}
         </a-button>
       </template>
     </PageHeader>
@@ -13,13 +13,13 @@
       v-if="unfilledCount > 0"
       type="error"
       show-icon
-      :message="`${unfilledCount} 位导师排期未填写`"
-      :description="selectedWeek === 'next' ? '请尽快补齐下周排期' : '距离截止还有 2 天'"
+      :message="$t('unfilled_mentor_schedule_count', { count: unfilledCount })"
+      :description="selectedWeek === 'next' ? $t('please_complete_next_weeks_schedule_as_s') : $t('2_days_until_the_deadline')"
     >
       <template #action>
         <a-button type="primary" danger size="small" @click="handleRemindAll">
           <template #icon><SendOutlined /></template>
-          一键催促全部
+          {{ $t('remind_all') }}
         </a-button>
       </template>
     </a-alert>
@@ -33,28 +33,28 @@
             </a-radio-button>
           </a-radio-group>
           <span style="font-size: 14px; font-weight: 600; color: var(--text)">
-            全部导师 ({{ rows.length }}人)
+            {{ $t('all_mentors') }} ({{ rows.length }}{{ $t('people') }})
           </span>
         </div>
       </template>
-      <a-form layout="inline" style="margin-bottom: 16px" data-field-name="导师排期管理页">
+      <a-form layout="inline" style="margin-bottom: 16px" :data-field-name="$t('mentor_schedule_management')">
         <a-form-item>
-          <a-input v-model:value="filters.keyword" placeholder="搜索导师姓名/ID..." allow-clear style="width: 200px" data-field-name="搜索框" />
+          <a-input v-model:value="filters.keyword" :placeholder="`${$t('search_for_tutor_name')}/ID...`" allow-clear style="width: 200px" :data-field-name="$t('search_2')" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.staffType" placeholder="全部类型" allow-clear style="width: 120px" data-field-name="类型">
-            <a-select-option value="lead_mentor">班主任</a-select-option>
-            <a-select-option value="mentor">专业导师</a-select-option>
-            <a-select-option value="assistant">助教</a-select-option>
+          <a-select v-model:value="filters.staffType" :placeholder="$t('all_types')" allow-clear style="width: 120px" :data-field-name="$t('type')">
+            <a-select-option value="lead_mentor">{{ $t('head_teacher') }}</a-select-option>
+            <a-select-option value="mentor">{{ $t('professional_mentor') }}</a-select-option>
+            <a-select-option value="assistant">{{ $t('teaching_assistant') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.weekday" placeholder="全部日期" allow-clear style="width: 110px" data-field-name="日期">
+          <a-select v-model:value="filters.weekday" :placeholder="$t('all_dates')" allow-clear style="width: 110px" :data-field-name="$t('date')">
             <a-select-option v-for="day in weekdays" :key="day.value" :value="String(day.value)">{{ day.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.timeSlot" placeholder="全部时段" allow-clear style="width: 110px" data-field-name="时段">
+          <a-select v-model:value="filters.timeSlot" :placeholder="$t('all_time_slots')" allow-clear style="width: 110px" :data-field-name="$t('time_slot')">
             <a-select-option v-for="slot in timeSlots" :key="slot.value" :value="slot.value">{{ slot.label }}</a-select-option>
           </a-select>
         </a-form-item>
@@ -67,7 +67,7 @@
         :row-key="(record: StaffScheduleListItem) => record.staffId"
         :pagination="schedulePagination"
         :row-class-name="(record: StaffScheduleListItem) => record.filled ? '' : 'row-unfilled'"
-        :locale="{ emptyText: '当前筛选条件下暂无排期数据' }"
+        :locale="{ emptyText: $t('no_schedule_data_under_current_filter') }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'staffName'">
@@ -91,14 +91,14 @@
             <div v-if="record.filled" style="display: flex; flex-wrap: wrap; gap: 4px">
               <a-tag v-for="label in record.availableSlotLabels" :key="label" :color="isWeekendSlot(label) ? 'green' : 'default'">{{ label }}</a-tag>
             </div>
-            <a-tag v-else color="error">未填写排期</a-tag>
+            <a-tag v-else color="error">{{ $t('schedule_not_submitted') }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space v-if="record.filled">
-              <a-button type="link" size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-edit`" @click="openEditModal(record)">调整排期</a-button>
+              <a-button type="link" size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-edit`" @click="openEditModal(record)">{{ $t('adjust_schedule') }}</a-button>
             </a-space>
             <a-space v-else>
-              <a-button type="primary" danger size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-fill`" @click="openEditModal(record)">代填排期</a-button>
+              <a-button type="primary" danger size="small" data-surface-trigger="mentor-schedule-edit-modal" :data-surface-sample-key="`mentor-schedule-${record.staffId}-fill`" @click="openEditModal(record)">{{ $t('fill_schedule_on_behalf') }}</a-button>
               <a-button size="small" @click="handleRemindAll"><template #icon><SendOutlined /></template></a-button>
             </a-space>
           </template>
@@ -130,13 +130,15 @@ import {
 } from '@osg/shared/api/admin/schedule'
 import EditScheduleModal from './components/EditScheduleModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const scheduleColumns = [
-  { title: '导师', dataIndex: 'staffName', key: 'staffName', width: 200 },
-  { title: '类型', dataIndex: 'staffType', key: 'staffType', width: 90, align: 'center' as const },
-  { title: '可用时长', dataIndex: 'availableHours', key: 'availableHours', width: 80, align: 'center' as const },
-  { title: '可用时间', dataIndex: 'availableSlotLabels', key: 'availableSlotLabels' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 160 },
+  { title: t('mentor'), dataIndex: 'staffName', key: 'staffName', width: 200 },
+  { title: t('type'), dataIndex: 'staffType', key: 'staffType', width: 90, align: 'center' as const },
+  { title: t('available_hours'), dataIndex: 'availableHours', key: 'availableHours', width: 80, align: 'center' as const },
+  { title: t('available_time'), dataIndex: 'availableSlotLabels', key: 'availableSlotLabels' },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 160 },
 ]
 
 const rows = ref<StaffScheduleListItem[]>([])
@@ -147,24 +149,24 @@ const selectedRecord = ref<StaffScheduleListItem | null>(null)
 const selectedWeek = ref<WeekScope>('current')
 
 const weekOptions: { value: WeekScope; label: string; range: string }[] = [
-  { value: 'current', label: '本周', range: '03/09 - 03/15' },
-  { value: 'next', label: '下周', range: '03/16 - 03/22' },
+  { value: 'current', label: t('this_week'), range: '03/09 - 03/15' },
+  { value: 'next', label: t('next_week'), range: '03/16 - 03/22' },
 ]
 
 const weekdays = [
-  { value: 1, label: '周一' },
-  { value: 2, label: '周二' },
-  { value: 3, label: '周三' },
-  { value: 4, label: '周四' },
-  { value: 5, label: '周五' },
-  { value: 6, label: '周六' },
-  { value: 7, label: '周日' },
+  { value: 1, label: t('monday') },
+  { value: 2, label: t('tuesday') },
+  { value: 3, label: t('wednesday') },
+  { value: 4, label: t('thursday') },
+  { value: 5, label: t('friday') },
+  { value: 6, label: t('saturday') },
+  { value: 7, label: t('sunday') },
 ]
 
 const timeSlots: { value: TimeSlot; label: string }[] = [
-  { value: 'morning', label: '上午' },
-  { value: 'afternoon', label: '下午' },
-  { value: 'evening', label: '晚上' },
+  { value: 'morning', label: t('morning') },
+  { value: 'afternoon', label: t('afternoon') },
+  { value: 'evening', label: t('evening') },
 ]
 
 const filters = reactive({
@@ -195,7 +197,7 @@ const schedulePagination = computed(() => ({
   pageSize: 10,
   showSizeChanger: false,
   total: visibleRows.value.length,
-  showTotal: (t: number) => `共 ${t} 条记录`,
+  showTotal: (n: number) => `${t('in_total')} ${n} ${t('records')}`,
   hideOnSinglePage: false
 }))
 
@@ -221,12 +223,12 @@ const handleRemindAll = async () => {
     reminding.value = true
     const result = await remindAllStaff({ week: selectedWeek.value })
     if (result.recipientCount > 0) {
-      message.success(`已提醒 ${result.recipientCount} 位导师补齐排期`)
+      message.success(t('mentor_schedule_reminded_count', { count: result.recipientCount }))
     } else {
-      message.info('当前无可提醒导师')
+      message.info(t('no_mentors_to_remind_at_the_moment'))
     }
   } catch (_error) {
-    message.error('催促导师失败')
+    message.error(t('failed_to_remind_mentors'))
   } finally {
     reminding.value = false
   }
@@ -246,7 +248,7 @@ const handleExport = async () => {
     })
 
     if (!response.ok) {
-      throw new Error('导出请求失败')
+      throw new Error(t('export_request_failed'))
     }
 
     const blob = await response.blob()
@@ -256,9 +258,9 @@ const handleExport = async () => {
     link.download = getExportFilename(response.headers.get('content-disposition'))
     link.click()
     window.URL.revokeObjectURL(downloadUrl)
-    message.success('导师排期导出成功')
+    message.success(t('mentor_schedule_exported_successfully'))
   } catch (_error) {
-    message.error('导师排期导出失败')
+    message.error(t('failed_to_export_mentor_schedule'))
   } finally {
     exporting.value = false
   }
@@ -279,11 +281,11 @@ const handleEditSubmit = async (payload: {
 }) => {
   try {
     await saveStaffSchedule(payload)
-    message.success('导师排期已保存')
+    message.success(t('mentor_schedule_saved'))
     editVisible.value = false
     await loadScheduleList()
   } catch (_error) {
-    message.error('导师排期保存失败')
+    message.error(t('failed_to_save_mentor_schedule'))
   }
 }
 
@@ -297,22 +299,22 @@ const getAvatarText = (staffName: string) =>
 
 const formatType = (staffType?: string) => {
   if (staffType === 'lead_mentor') {
-    return '班主任'
+    return t('head_teacher')
   }
-  return '专业导师'
+  return t('professional_mentor')
 }
 
 const formatHours = (value?: number) => `${value ?? 0}h`
 
-const isWeekendSlot = (label: string) => label.startsWith('周六') || label.startsWith('周日')
+const isWeekendSlot = (label: string) => label.startsWith(t('saturday')) || label.startsWith(t('sunday'))
 
 const getExportFilename = (contentDisposition: string | null) => {
   if (!contentDisposition) {
-    return '导师排期表.xlsx'
+    return t('mentor_schedule_export_filename')
   }
   const match = contentDisposition.match(/filename\\*=UTF-8''([^;]+)|filename="?([^"]+)"?/)
   const encoded = match?.[1] || match?.[2]
-  return encoded ? decodeURIComponent(encoded) : '导师排期表.xlsx'
+  return encoded ? decodeURIComponent(encoded) : t('mentor_schedule_export_filename')
 }
 
 onMounted(() => {
@@ -325,3 +327,4 @@ onMounted(() => {
   background: #fef2f2;
 }
 </style>
+

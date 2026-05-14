@@ -4,35 +4,35 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">消息中心 <span>Notifications</span></h1>
-            <p class="page-sub">查看系统通知、课程提醒和导师消息</p>
+            <h1 class="page-title">{{ $t('message_center') }} <span>Notifications</span></h1>
+            <p class="page-sub">{{ $t('view_system_notifications_course_reminde') }}</p>
           </div>
-          <a-button @click="markAllRead">全部已读</a-button>
+          <a-button @click="markAllRead">{{ $t('mark_all_as_read') }}</a-button>
         </div>
       </template>
 
       <div class="stat-grid">
         <button class="stat-card" type="button" @click="activeFilter = 'all'">
           <strong>12</strong>
-          <span>全部消息</span>
+          <span>{{ $t('all_messages') }}</span>
         </button>
         <button class="stat-card" type="button" @click="activeFilter = 'unread'">
           <strong>5</strong>
-          <span>未读消息</span>
+          <span>{{ $t('unread_messages') }}</span>
         </button>
         <button class="stat-card" type="button" @click="activeFilter = 'course'">
           <strong>4</strong>
-          <span>课程通知</span>
+          <span>{{ $t('course_notifications') }}</span>
         </button>
         <button class="stat-card" type="button" @click="activeFilter = 'system'">
           <strong>3</strong>
-          <span>系统通知</span>
+          <span>{{ $t('system_notifications') }}</span>
         </button>
       </div>
 
       <section class="notice-shell">
         <div class="notice-head">
-          <span>消息列表</span>
+          <span>{{ $t('message_list') }}</span>
           <a-select class="notice-filter" :value="activeFilter" :options="filterOptions" @change="activeFilter = $event" />
         </div>
 
@@ -46,7 +46,7 @@
           <div class="notice-main">
             <div class="notice-title-row">
               <strong>{{ item.title }}</strong>
-              <a-tag v-if="!item.read" color="error">未读</a-tag>
+              <a-tag v-if="!item.read" color="error">{{ $t('unread') }}</a-tag>
               <a-tag>{{ item.category }}</a-tag>
             </div>
             <p>{{ item.summary }}</p>
@@ -56,7 +56,7 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="detailOpen" title="消息详情" :footer="null" width="620px">
+    <a-modal v-model:open="detailOpen" :title="$t('message_details')" :footer="null" width="620px">
       <div v-if="activeNotice" class="detail-stack">
         <div class="detail-banner">
           <div class="detail-title">{{ activeNotice.title }}</div>
@@ -66,8 +66,8 @@
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="detailOpen = false">关闭</a-button>
-        <a-button type="primary" @click="goToMockPractice">查看详情</a-button>
+        <a-button @click="detailOpen = false">{{ $t('close') }}</a-button>
+        <a-button type="primary" @click="goToMockPractice">{{ $t('view_details') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -77,7 +77,9 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { OsgPageContainer } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type NoticeItem = {
   title: string
   category: string
@@ -91,8 +93,8 @@ type NoticeItem = {
 const router = useRouter()
 const notices = ref<NoticeItem[]>([
   {
-    title: '模拟面试已安排',
-    category: '课程通知',
+    title: t('mock_interview_scheduled'),
+    category: t('course_notifications'),
     summary: '您申请的模拟面试已安排，导师：Jerry Li，时间：01/18/2026 14:00',
     detail: '您申请的模拟面试已安排成功，详情如下：分配导师 Jerry Li，预约时间 2026-01-18 14:00，模拟内容 Goldman Sachs IB 二面。',
     time: '10分钟前',
@@ -100,17 +102,17 @@ const notices = ref<NoticeItem[]>([
     filter: 'course'
   },
   {
-    title: '导师反馈已提交',
-    category: '课程通知',
-    summary: '王导师已提交您的期中考试反馈，评分：4分（良好），点击查看详情',
+    title: t('mentor_feedback_submitted'),
+    category: t('course_notifications'),
+    summary: t('mentor_wang_has_submitted_feedback_for_y'),
     detail: '导师反馈已经同步到课程反馈页面，请及时查看并安排 follow-up 复盘。',
     time: '2小时前',
     read: false,
     filter: 'course'
   },
   {
-    title: '合同即将到期提醒',
-    category: '系统通知',
+    title: t('contract_expiry_reminder'),
+    category: t('system_notifications'),
     summary: '您的服务合同将于 30 天后到期，如需续签请联系班主任。',
     detail: '合同将在 02/17/2026 到期，如需续签请提前联系班主任安排后续流程。',
     time: '昨天 10:00',
@@ -119,7 +121,7 @@ const notices = ref<NoticeItem[]>([
   },
   {
     title: '欢迎加入OSG',
-    category: '系统通知',
+    category: t('system_notifications'),
     summary: '您的账号已激活，班主任 Test Lead Mentor 将为您提供服务。',
     detail: '欢迎加入 OSG Student。请先完成个人信息检查，并查看首页快捷操作。',
     time: '01/10/2026',
@@ -129,10 +131,10 @@ const notices = ref<NoticeItem[]>([
 ])
 
 const filterOptions = [
-  { value: 'all', label: '全部类型' },
-  { value: 'course', label: '课程通知' },
-  { value: 'system', label: '系统通知' },
-  { value: 'unread', label: '未读消息' }
+  { value: 'all', label: t('all_types') },
+  { value: 'course', label: t('course_notifications') },
+  { value: 'system', label: t('system_notifications') },
+  { value: 'unread', label: t('unread_messages') }
 ]
 
 const activeFilter = ref<'all' | 'course' | 'system' | 'unread'>('all')

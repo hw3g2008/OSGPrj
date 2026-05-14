@@ -3,7 +3,7 @@
     <div class="dashboard-card__header">
       <span class="dashboard-card__title student-status__title-wrap">
         <span class="mdi mdi-chart-pie student-status__title-icon" />
-        <span>学员状态</span>
+        <span>{{ $t('student_status') }}</span>
       </span>
     </div>
     <div v-if="data" class="dashboard-card__body student-status__body">
@@ -24,7 +24,7 @@
         </div>
       </div>
     </div>
-    <div v-else class="dashboard-card__body student-status__empty">暂无数据</div>
+    <div v-else class="dashboard-card__body student-status__empty">{{ $t('no_data_available') }}</div>
   </div>
 </template>
 

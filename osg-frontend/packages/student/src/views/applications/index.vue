@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div id="page-job-tracking" class="applications-page" :data-action-trigger-count="applicationsActionTriggers.length">
     <div class="page-header">
       <div>
@@ -8,7 +8,7 @@
     </div>
 
       <InterviewCalendar
-        title="面试安排"
+        :title="$t('interview_schedule')"
         :events="calendarEvents"
         @event-click="handleCalendarEventClick"
       />
@@ -17,10 +17,10 @@
         <a-space :size="12" wrap>
           <a-input
             v-model:value="filters.keyword"
-            placeholder="搜索公司/岗位..."
+            :placeholder="`${$t('search_company_position')}...`"
             style="width: 220px"
           />
-          <a-select v-model:value="filters.stage" placeholder="全部阶段" style="width: 140px" allow-clear>
+          <a-select v-model:value="filters.stage" :placeholder="$t('all_stages')" style="width: 140px" allow-clear>
             <a-select-option
               v-for="option in applicationsMeta.filterOptions.progressStages"
               :key="`stage-${option.value}`"
@@ -29,7 +29,7 @@
               {{ option.label }}
             </a-select-option>
           </a-select>
-          <a-select v-model:value="filters.coachingStatus" placeholder="全部辅导状态" style="width: 150px" allow-clear>
+          <a-select v-model:value="filters.coachingStatus" :placeholder="$t('all_coaching_status')" style="width: 150px" allow-clear>
             <a-select-option
               v-for="option in applicationsMeta.filterOptions.coachingStatuses"
               :key="`coaching-${option.value}`"
@@ -38,7 +38,7 @@
               {{ option.label }}
             </a-select-option>
           </a-select>
-          <a-select v-model:value="filters.companyType" placeholder="全部公司类型" style="width: 160px" allow-clear>
+          <a-select v-model:value="filters.companyType" :placeholder="$t('all_company_types')" style="width: 160px" allow-clear>
             <a-select-option
               v-for="option in mergedCompanyTypeOptions"
               :key="`company-type-${option.value}`"
@@ -49,11 +49,11 @@
           </a-select>
           <a-button type="primary" @click="applyFilters">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ $t('search') }}
           </a-button>
           <a-button @click="resetFilters">
             <template #icon><ReloadOutlined /></template>
-            重置
+            {{ $t('reset') }}
           </a-button>
         </a-space>
       </a-card>
@@ -164,7 +164,7 @@
 
     <a-modal
       v-model:open="interviewModalOpen"
-      ok-text="确定"
+      :ok-text="$t('ok')"
       centered
       :width="400"
       :closable="false"
@@ -178,7 +178,7 @@
         <div class="interview-modal-titlebar">
           <span class="modal-title-inline">
             <CalendarOutlined class="modal-title-icon" aria-hidden="true" />
-            <span class="modal-title-text">面试安排</span>
+            <span class="modal-title-text">{{ $t('interview_schedule') }}</span>
           </span>
           <a-button type="text" shape="circle" class="interview-modal-closebtn" @click="interviewModalOpen = false">
             <template #icon><CloseOutlined /></template>
@@ -195,9 +195,9 @@
 
     <a-modal
       v-model:open="progressModalOpen"
-      :title="renderModalTitle(EditOutlined, '更新状态 & 申请辅导')"
-      ok-text="提交"
-      cancel-text="取消"
+      :title="renderModalTitle(EditOutlined, `${$t('update_status')} & ${$t('apply_for_coaching')}`)"
+      :ok-text="$t('submit')"
+      :cancel-text="$t('cancel')"
       centered
       :width="580"
       wrap-class-name="applications-modal applications-modal--progress"
@@ -214,15 +214,15 @@
           </div>
         </div>
         <a-form-item
-          label="当前面试阶段"
+          :label="$t('current_interview_stage')"
           required
           class="rich-form-field rich-form-field--full"
-          extra="选择阶段后，页面会切换到对应的 HireVue 或面试辅导分段内容。"
+          :extra="`${$t('after_selecting_a_stage_the_page_will_sw')}。`"
         >
           <a-select
             id="update-stage-select"
             v-model:value="progressForm.stage"
-            placeholder="请选择当前阶段"
+            :placeholder="$t('please_select_the_current_stage')"
             :style="selectStageTone(progressForm.stage)"
           >
             <a-select-option
@@ -237,8 +237,8 @@
 
         <div v-if="progressForm.stage === 'hirevue'" id="update-hirevue-fields" class="rich-form-card rich-form-card--subtle">
           <div class="rich-form-header rich-form-header--subtle">
-            <h4 class="rich-form-title">HireVue / Online Test 信息</h4>
-            <p class="rich-form-help">复用岗位页的紫色模态样式、说明文案和上传入口。</p>
+            <h4 class="rich-form-title">HireVue / Online Test {{ $t('information') }}</h4>
+            <p class="rich-form-help">{{ $t('reuse_the_purple_modal_style_description') }}。</p>
           </div>
           <div class="rich-form-stack">
             <a-form-item label="请选择类型" required class="rich-form-field rich-form-field--full">
@@ -248,27 +248,27 @@
               </a-radio-group>
             </a-form-item>
 
-            <a-form-item v-if="progressForm.hirevueType === 'vi'" id="update-vi-fields" label="VI 链接" required class="rich-form-field rich-form-field--full">
-              <a-input v-model:value="progressForm.viLink" placeholder="请输入 Video Interview 链接" />
+            <a-form-item v-if="progressForm.hirevueType === 'vi'" id="update-vi-fields" :label="`VI ${$t('link')}`" required class="rich-form-field rich-form-field--full">
+              <a-input v-model:value="progressForm.viLink" :placeholder="$t('please_enter_the_video_interview_link')" />
             </a-form-item>
 
             <template v-if="progressForm.hirevueType === 'ot'">
-              <a-form-item id="update-ot-fields" label="OT 链接" required class="rich-form-field">
-                <a-input v-model:value="progressForm.otLink" placeholder="请输入 Online Test 链接" />
+              <a-form-item id="update-ot-fields" :label="`OT ${$t('link')}`" required class="rich-form-field">
+                <a-input v-model:value="progressForm.otLink" :placeholder="$t('please_enter_the_online_test_link')" />
               </a-form-item>
               <a-form-item label="登录账号" required class="rich-form-field">
-                <a-input v-model:value="progressForm.otAccount" placeholder="账号" />
+                <a-input v-model:value="progressForm.otAccount" :placeholder="$t('account_number')" />
               </a-form-item>
               <a-form-item label="登录密码" required class="rich-form-field">
-                <a-input-password v-model:value="progressForm.otPassword" placeholder="密码" />
+                <a-input-password v-model:value="progressForm.otPassword" :placeholder="$t('password')" />
               </a-form-item>
             </template>
 
             <a-form-item
-              label="截止时间"
+              :label="$t('deadline')"
               required
               class="rich-form-field"
-              extra="请填写 VI/OT 的截止时间，系统会一并写入进度说明。"
+              :extra="`${$t('please_fill_in_the_vi_ot_deadline_it_wil')}。`"
             >
               <DatePicker
                 id="update-hirevue-deadline"
@@ -292,16 +292,16 @@
               >
                 <label class="upload-dropzone upload-dropzone--compact">
                   <CloudUploadOutlined class="upload-dropzone__icon" />
-                  <span class="upload-dropzone__title">点击上传截图</span>
-                  <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+                  <span class="upload-dropzone__title">{{ $t('click_to_upload_screenshot') }}</span>
+                  <span class="upload-dropzone__helper">{{ $t('supports_jpg_and_png_formats') }}</span>
                   <span v-if="progressForm.inviteScreenshotName" class="upload-dropzone__file">{{ progressForm.inviteScreenshotName }}</span>
                 </label>
               </Upload>
             </a-form-item>
             <a-form-item label="是否需要导师协助？" required class="rich-form-field rich-form-field--full">
               <a-radio-group v-model:value="progressForm.mentorHelp">
-                <a-radio value="yes">是，需要导师协助</a-radio>
-                <a-radio value="no">否，仅需题库权限</a-radio>
+                <a-radio value="yes">{{ $t('yes_i_need_mentor_assistance') }}</a-radio>
+                <a-radio value="no">{{ $t('no_i_only_need_question_bank_access') }}</a-radio>
               </a-radio-group>
             </a-form-item>
           </div>
@@ -309,20 +309,20 @@
 
         <div v-else-if="showUpdateInterviewFields" id="update-interview-fields" class="rich-form-card rich-form-card--subtle">
           <div class="rich-form-header rich-form-header--subtle">
-            <h4 class="rich-form-title">面试 & 辅导信息</h4>
-            <p class="rich-form-help">保持岗位页同款分段节奏，先确认导师数量与时间，再补充偏好。</p>
+            <h4 class="rich-form-title">{{ $t('interview') }} & {{ $t('coaching_info') }}</h4>
+            <p class="rich-form-help">{{ $t('follow_the_same_section_rhythm_as_the_po') }}。</p>
           </div>
           <div class="rich-form-stack">
             <a-form-item
-              label="需要几个导师？"
+              :label="`${$t('how_many_mentors_do_you_need')}？`"
               required
               class="rich-form-field"
-              extra="根据面试难度，您可申请 1-3 位导师进行模拟面试。"
+              :extra="`${$t('depending_on_the_interview_difficulty_yo')}。`"
             >
               <a-select
                 id="mentor-count-select"
                 v-model:value="progressForm.mentorCount"
-                placeholder="请选择导师数量"
+                :placeholder="$t('please_select_the_number_of_mentors')"
                 style="width: 100%"
               >
                 <a-select-option
@@ -335,10 +335,10 @@
               </a-select>
             </a-form-item>
             <a-form-item
-              label="面试时间"
+              :label="$t('interview_time')"
               required
               class="rich-form-field"
-              extra="请填写该轮面试的具体时间，系统会同步写入进度说明。"
+              :extra="`${$t('please_fill_in_the_specific_time_for_thi')}。`"
             >
               <DatePicker
                 id="update-interview-time"
@@ -350,25 +350,25 @@
               />
             </a-form-item>
             <a-form-item label="意向导师（选填）" class="rich-form-field">
-              <a-input id="update-prefer-mentor" v-model:value="progressForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
+              <a-input id="update-prefer-mentor" v-model:value="progressForm.preferMentor" :placeholder="$t('if_you_have_a_preferred_mentor_please_en')" />
             </a-form-item>
             <a-form-item label="排除导师（选填）" class="rich-form-field">
-              <a-input id="update-exclude-mentor" v-model:value="progressForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
+              <a-input id="update-exclude-mentor" v-model:value="progressForm.excludeMentor" :placeholder="$t('if_there_is_a_mentor_you_wish_to_exclude')" />
             </a-form-item>
           </div>
         </div>
 
         <a-form-item label="备注（选填）" class="rich-form-field rich-form-field--full">
-          <a-textarea v-model:value="progressForm.note" :rows="2" placeholder="其他需要说明的内容..." />
+          <a-textarea v-model:value="progressForm.note" :rows="2" :placeholder="`${$t('any_other_information_to_provide')}...`" />
         </a-form-item>
       </a-form>
     </a-modal>
 
     <a-modal
       v-model:open="appliedModalOpen"
-      :title="renderModalTitle(CheckCircleOutlined, '标记已投递')"
-      ok-text="确认投递"
-      cancel-text="取消"
+      :title="renderModalTitle(CheckCircleOutlined, `${$t('mark_as_applied')}`)"
+      :ok-text="$t('confirm_application')"
+      :cancel-text="$t('cancel')"
       centered
       :width="450"
       wrap-class-name="applications-modal applications-modal--applied"
@@ -386,7 +386,7 @@
         </div>
         <a-form-item required class="rich-form-field rich-form-field--full">
           <template #label>
-            <span class="field-label-inline"><CalendarOutlined />投递时间</span>
+            <span class="field-label-inline"><CalendarOutlined />{{ $t('application_date') }}</span>
           </template>
           <DatePicker
             id="applied-date"
@@ -398,12 +398,12 @@
         </a-form-item>
         <a-form-item class="rich-form-field rich-form-field--full">
           <template #label>
-            <span class="field-label-inline"><SendOutlined />投递方式</span>
+            <span class="field-label-inline"><SendOutlined />{{ $t('application_method') }}</span>
           </template>
           <a-select
             id="applied-method"
             v-model:value="appliedForm.method"
-            placeholder="请选择投递方式"
+            :placeholder="$t('please_select_application_method')"
             style="width: 100%"
           >
             <a-select-option
@@ -417,9 +417,9 @@
         </a-form-item>
         <a-form-item class="rich-form-field rich-form-field--full">
           <template #label>
-            <span class="field-label-inline"><FileTextOutlined />备注（选填）</span>
+            <span class="field-label-inline"><FileTextOutlined />{{ $t('notes_optional_2') }}）</span>
           </template>
-          <a-textarea v-model:value="appliedForm.note" :rows="2" placeholder="如：投递了哪个部门、使用了谁的内推等" />
+          <a-textarea v-model:value="appliedForm.note" :rows="2" :placeholder="$t('e_g_which_department_you_applied_to_or_w')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -460,7 +460,9 @@ import {
 } from '@osg/shared/api'
 // §D.4 学生端用 SSOT composable 派生辅导状态显示，停止依赖后端 coachingStatusLabel/coachingColor 固化字段
 import { deriveApplicationStatus } from '@osg/shared/composables'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 // dict-ssot-remediation §4：公司类型筛选下拉 = 字典 osg_company_type ∪ 后端返回的历史实际值。
 const { items: companyTypeDictOptions, load: loadCompanyTypeDict } = useDictFacade('osg_company_type')
 const mergedCompanyTypeOptions = computed(() =>
@@ -595,24 +597,24 @@ const appliedForm = ref({
 
 type TabTone = 'primary' | 'success' | 'warning' | 'muted'
 const tabDefs = computed<{ key: TabKey; label: string; icon: typeof OrderedListOutlined; count: number; tone: TabTone }[]>(() => [
-  { key: 'all', label: '全部', icon: OrderedListOutlined, count: applicationsMeta.value.tabCounts.all, tone: 'primary' },
-  { key: 'applied', label: '已投递', icon: SendOutlined, count: applicationsMeta.value.tabCounts.applied, tone: 'success' },
-  { key: 'ongoing', label: '面试中', icon: ClockCircleOutlined, count: applicationsMeta.value.tabCounts.ongoing, tone: 'warning' },
-  { key: 'completed', label: '已结束', icon: CheckCircleOutlined, count: applicationsMeta.value.tabCounts.completed, tone: 'muted' },
+  { key: 'all', label: t('all'), icon: OrderedListOutlined, count: applicationsMeta.value.tabCounts.all, tone: 'primary' },
+  { key: 'applied', label: t('delivered'), icon: SendOutlined, count: applicationsMeta.value.tabCounts.applied, tone: 'success' },
+  { key: 'ongoing', label: t('during_the_interview'), icon: ClockCircleOutlined, count: applicationsMeta.value.tabCounts.ongoing, tone: 'warning' },
+  { key: 'completed', label: t('ended'), icon: CheckCircleOutlined, count: applicationsMeta.value.tabCounts.completed, tone: 'muted' },
 ])
 
 const columns = computed(() => {
-  const stageTitle = activeTab.value === 'applied' ? '投递状态' : '阶段'
-  const timeTitle = activeTab.value === 'applied' ? '投递时间' : '面试时间'
+  const stageTitle = activeTab.value === 'applied' ? '投递状态' : t('stage')
+  const timeTitle = activeTab.value === 'applied' ? '投递时间' : t('interview_time')
 
   return [
-    { title: '公司/岗位', key: 'job', width: 220 },
+    { title: t('company_position'), key: 'job', width: 220 },
     { title: stageTitle, key: 'stage', width: 140 },
     { title: timeTitle, key: 'interviewTime', width: 160 },
-    { title: '辅导状态', key: 'coachingStatus', width: 120 },
-    { title: '导师', key: 'mentor', width: 140 },
-    { title: '课时/反馈', key: 'hoursFeedback', width: 130 },
-    { title: '操作', key: 'actions', width: 160, fixed: 'right' as const }
+    { title: t('counseling_status'), key: 'coachingStatus', width: 120 },
+    { title: t('mentor'), key: 'mentor', width: 140 },
+    { title: t('session_feedback'), key: 'hoursFeedback', width: 130 },
+    { title: t('operation'), key: 'actions', width: 160, fixed: 'right' as const }
   ]
 })
 
@@ -826,7 +828,7 @@ async function saveProgress() {
     return
   }
   if (!progressForm.value.stage) {
-    message.error('请选择面试阶段')
+    message.error(t('please_select_interview_stage'))
     return
   }
   if (progressForm.value.stage === 'hirevue') {
@@ -875,7 +877,7 @@ async function confirmApplied() {
   }
 
   if (!appliedForm.value.date) {
-    message.error('请选择投递时间')
+    message.error(t('please_select_application_date'))
     return
   }
 
@@ -889,7 +891,7 @@ async function confirmApplied() {
     })
     await loadApplications()
     appliedModalOpen.value = false
-    message.success('已标记为已投递')
+    message.success(t('marked_as_applied'))
   } catch {
     return
   }
@@ -943,12 +945,12 @@ function handleUpdateHirevueUpload(info: { file: any; fileList?: any[] }) {
     if (url) {
       progressForm.value.inviteScreenshotName = info.file.name ?? ''
       progressForm.value.inviteScreenshotUrl = url
-      message.success('邀请邮件截图上传成功')
+      message.success(t('invitation_email_screenshot_uploaded_suc'))
     } else {
-      message.error('上传响应缺少 url，请重试')
+      message.error(t('upload_response_missing_url_please_try_a'))
     }
   } else if (info.file?.status === 'error') {
-    message.error('邀请邮件截图上传失败，请重试')
+    message.error(t('failed_to_upload_invitation_email_screen'))
   } else if (info.file?.status === 'removed') {
     progressForm.value.inviteScreenshotName = ''
     progressForm.value.inviteScreenshotUrl = ''
@@ -1023,37 +1025,37 @@ function buildStageNote(form: ApplyStageForm) {
 
 function validateHirevueFields(form: ApplyStageForm) {
   if (!form.hirevueType) {
-    message.error('请选择 HireVue / OT 类型')
+    message.error(t('please_select_hirevue_ot_type'))
     return false
   }
   if (form.hirevueType === 'vi' && !form.viLink.trim()) {
-    message.error('请填写 VI 链接')
+    message.error(t('please_enter_the_vi_link'))
     return false
   }
   if (form.hirevueType === 'ot') {
     if (!form.otLink.trim()) {
-      message.error('请填写 OT 链接')
+      message.error(t('please_enter_the_ot_link'))
       return false
     }
     if (!form.otAccount.trim()) {
-      message.error('请填写 OT 登录账号')
+      message.error(t('please_enter_the_ot_login_account'))
       return false
     }
     if (!form.otPassword.trim()) {
-      message.error('请填写 OT 登录密码')
+      message.error(t('please_enter_the_ot_login_password'))
       return false
     }
   }
   if (!form.hirevueDeadline) {
-    message.error('请填写 HireVue / OT 截止时间')
+    message.error(t('please_fill_in_the_hirevue_ot_deadline'))
     return false
   }
   if (!form.inviteScreenshotUrl) {
-    message.error('请上传邀请邮件截图')
+    message.error(t('please_upload_the_invitation_email_scree'))
     return false
   }
   if (!form.mentorHelp) {
-    message.error('请选择是否需要导师协助')
+    message.error(t('please_select_whether_you_need_mentor_as'))
     return false
   }
   return true
@@ -1061,11 +1063,11 @@ function validateHirevueFields(form: ApplyStageForm) {
 
 function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boolean) {
   if (requireMentorCount && !form.mentorCount) {
-    message.error('请选择导师数量')
+    message.error(t('please_select_the_number_of_mentors'))
     return false
   }
   if (!form.interviewTime) {
-    message.error('请填写该阶段的面试时间')
+    message.error(t('please_fill_in_the_interview_time_for_th'))
     return false
   }
   return true
@@ -1956,3 +1958,4 @@ function validateInterviewFields(form: ApplyStageForm, requireMentorCount: boole
 }
 
 </style>
+

@@ -7,7 +7,9 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AssistantPlaceholderShell from '../_shared/AssistantPlaceholderShell.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface PlaceholderContent {
   pageId: string
   title: string
@@ -23,12 +25,12 @@ const route = useRoute()
 
 const fallbackContent: PlaceholderContent = {
   pageId: 'page-coming-soon',
-  title: '敬请期待',
+  title: t('stay_tuned'),
   titleEn: 'Coming Soon',
   description: '当前功能正在准备中，完整内容将在后续版本开放。',
-  cardTitle: '功能即将上线',
+  cardTitle: t('feature_coming_soon'),
   cardDescription: '该页面已保留访问入口，后续版本会在这里提供完整内容。',
-  statusText: '敬请期待',
+  statusText: t('stay_tuned'),
   bullets: [
     '入口已保留，方便后续快速访问。',
     '当前版本暂未开放该功能。',

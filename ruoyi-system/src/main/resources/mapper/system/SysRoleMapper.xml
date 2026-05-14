@@ -7,6 +7,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<resultMap type="SysRole" id="SysRoleResult">
 		<id     property="roleId"             column="role_id"               />
 		<result property="roleName"           column="role_name"             />
+		<result property="i18nKey"            column="i18n_key"              />
+		<result property="remarkI18nKey"      column="remark_i18n_key"       />
 		<result property="roleKey"            column="role_key"              />
 		<result property="roleSort"           column="role_sort"             />
 		<result property="dataScope"          column="data_scope"            />
@@ -23,7 +25,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<sql id="selectRoleVo">
-	    select distinct r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.menu_check_strictly, r.dept_check_strictly,
+	    select distinct r.role_id, r.role_name, r.i18n_key, r.remark_i18n_key, r.role_key, r.role_sort, r.data_scope, r.menu_check_strictly, r.dept_check_strictly,
             r.status, r.del_flag, r.create_time, r.remark 
         from sys_role r
 	        left join sys_user_role ur on ur.role_id = r.role_id
@@ -32,7 +34,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </sql>
     
     <select id="selectRoleList" parameterType="SysRole" resultMap="SysRoleResult">
-		select distinct r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.menu_check_strictly, r.dept_check_strictly,
+		select distinct r.role_id, r.role_name, r.i18n_key, r.remark_i18n_key, r.role_key, r.role_sort, r.data_scope, r.menu_check_strictly, r.dept_check_strictly,
 			r.status, r.del_flag, r.create_time, r.remark,
 			(SELECT COUNT(*) FROM sys_user_role ur2 WHERE ur2.role_id = r.role_id) AS user_count
 		from sys_role r

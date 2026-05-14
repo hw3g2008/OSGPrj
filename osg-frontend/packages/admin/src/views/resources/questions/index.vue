@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="osg-page">
-    <PageHeader title-zh="面试真题审核" title-en="Question Review" description="审核学员提交的面试真题，通过后自动开放给相同申请的学生">
+    <PageHeader :title-zh="$t('interview_question_review')" title-en="Question Review" :description="$t('review_interview_questions_submitted_by_')">
       <template #actions>
-        <a-button @click="message.success('已导出当前筛选结果')">
+        <a-button @click="message.success($t('current_filtered_results_exported'))">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ $t('export') }}
         </a-button>
       </template>
     </PageHeader>
@@ -13,11 +13,11 @@
       v-if="pendingCount > 0"
       type="warning"
       show-icon
-      :message="`当前有 ${pendingCount} 条面试真题待审核，请及时处理`"
-      description="优先处理班主任流转过来的真题，审核通过后会自动开放给同公司 + 同部门 + 同办公地点 + 同面试状态 的学生。"
+      :message="$t('pending_interview_questions_count', { count: pendingCount })"
+      :description="$t('prioritize_questions_forwarded_by_the_cl')"
     >
       <template #action>
-        <a-button size="small" @click="activeTab = 'pending'">查看待审核</a-button>
+        <a-button size="small" @click="activeTab = 'pending'">{{ $t('view_pending_reviews') }}</a-button>
       </template>
     </a-alert>
 
@@ -33,38 +33,38 @@
 
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="filters.keyword" placeholder="搜索学员 / 公司 / 真题编号" allow-clear style="width: 200px" @press-enter="loadRows" />
+          <a-input v-model:value="filters.keyword" :placeholder="$t('search_student_company_question_id')" allow-clear style="width: 200px" @press-enter="loadRows" />
         </a-form-item>
         <a-form-item>
-          <a-input v-model:value="filters.companyName" placeholder="公司" allow-clear style="width: 120px" @press-enter="loadRows" />
+          <a-input v-model:value="filters.companyName" :placeholder="$t('company')" allow-clear style="width: 120px" @press-enter="loadRows" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.interviewRound" placeholder="全部轮次" allow-clear style="width: 120px">
+          <a-select v-model:value="filters.interviewRound" :placeholder="$t('all_rounds')" allow-clear style="width: 120px">
             <a-select-option v-for="round in interviewRoundOptions" :key="round" :value="round">{{ round }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-date-picker v-model:value="filters.beginDate" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+          <a-date-picker v-model:value="filters.beginDate" :placeholder="$t('start_date_2')" value-format="YYYY-MM-DD" style="width: 130px" />
         </a-form-item>
         <a-form-item>
-          <a-date-picker v-model:value="filters.endDate" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+          <a-date-picker v-model:value="filters.endDate" :placeholder="$t('end_date_2')" value-format="YYYY-MM-DD" style="width: 130px" />
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="loadRows">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ $t('search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ $t('reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
 
       <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
-        <a-button type="primary" :disabled="!canBatchReview" @click="reviewSelected('approved')">批量通过</a-button>
-        <a-button danger :disabled="!canBatchReview" @click="reviewSelected('rejected')">批量驳回</a-button>
-        <span style="color: #1890ff">已选择 {{ selectedIds.length }} 条</span>
-        <span style="margin-left: auto; font-size: 13px; color: #64748b">来源字典：入职面试申请 / 自主填写</span>
+        <a-button type="primary" :disabled="!canBatchReview" @click="reviewSelected('approved')">{{ $t('batch_approve') }}</a-button>
+        <a-button danger :disabled="!canBatchReview" @click="reviewSelected('rejected')">{{ $t('batch_reject') }}</a-button>
+        <span style="color: #1890ff">{{ $t('selected_records_count', { count: selectedIds.length }) }}</span>
+        <span style="margin-left: auto; font-size: 13px; color: #64748b">{{ $t('source_interview_application_self_submit') }}</span>
       </div>
 
       <a-table
@@ -72,7 +72,7 @@
         :data-source="rows"
         :row-key="(r: InterviewQuestionRow) => r.questionId"
         :pagination="false"
-        :locale="{ emptyText: '暂无面试真题记录' }"
+        :locale="{ emptyText: $t('no_interview_question_records') }"
         :scroll="{ x: 1300 }"
         :row-selection="activeTab === 'pending' ? { selectedRowKeys: selectedIds, onChange: onSelectChange } : undefined"
         :row-class-name="(record: InterviewQuestionRow) => record.reviewStatus === 'pending' ? 'row-pending' : ''"
@@ -89,23 +89,23 @@
             <strong>{{ record.companyName }}</strong>
           </template>
           <template v-else-if="column.dataIndex === 'questionCount'">
-            {{ record.questionCount }} 题
+            {{ $t('question_count_with_value', { count: record.questionCount }) }}
           </template>
           <template v-else-if="column.dataIndex === 'sourceType'">
-            <a-tag :color="record.sourceType === '入职面试申请' ? 'orange' : 'blue'">{{ record.sourceType }}</a-tag>
+            <a-tag :color="sourceTypeColor(record.sourceType)">{{ sourceTypeDisplay(record.sourceType) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'submittedAt'">
             {{ formatTime(record.submittedAt) }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button v-if="record.reviewStatus === 'pending'" type="link" size="small" @click="openReviewModal(record)">审核</a-button>
+            <a-button v-if="record.reviewStatus === 'pending'" type="link" size="small" @click="openReviewModal(record)">{{ $t('review') }}</a-button>
             <a-tag v-else :color="record.reviewStatus === 'approved' ? 'green' : 'red'">{{ reviewStatusLabel[record.reviewStatus] }}</a-tag>
           </template>
         </template>
       </a-table>
     </a-card>
 
-    <a-alert type="info" show-icon message="审核规则" description="审核通过后，面试真题将自动开放给满足以下条件的学生：同公司 + 同部门 + 同办公地点 + 同面试状态。" />
+    <a-alert type="info" show-icon :message="$t('review_rules')" :description="`${$t('once_approved_interview_questions_will_b')}。`" />
 
     <QuestionReviewModal
       v-model="showReviewModal"
@@ -130,33 +130,43 @@ import {
   type InterviewQuestionRow,
   type InterviewRound,
   type QuestionReviewStatus,
-  type QuestionTab
+  type QuestionTab,
+  QUESTION_SOURCE_TYPE_MAP
 } from '@osg/shared/api/admin/question'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
+const sourceTypeDisplay = (raw: string) => {
+  const entry = QUESTION_SOURCE_TYPE_MAP[raw]
+  return entry ? t(entry.i18nKey) : raw
+}
+const sourceTypeColor = (raw: string) => QUESTION_SOURCE_TYPE_MAP[raw]?.color ?? 'blue'
 
 const questionColumns = [
   { title: 'ID', dataIndex: 'questionCode', key: 'questionCode', width: 100 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
-  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 120 },
-  { title: '部门', dataIndex: 'departmentName', key: 'departmentName', width: 100 },
-  { title: '办公地点', dataIndex: 'officeLocation', key: 'officeLocation', width: 100 },
-  { title: '轮次', dataIndex: 'interviewRound', key: 'interviewRound', width: 80 },
-  { title: '题目数', dataIndex: 'questionCount', key: 'questionCount', width: 80 },
-  { title: '来源', dataIndex: 'sourceType', key: 'sourceType', width: 110 },
-  { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 90 },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: t('company'), dataIndex: 'companyName', key: 'companyName', width: 120 },
+  { title: t('department'), dataIndex: 'departmentName', key: 'departmentName', width: 100 },
+  { title: t('office_location'), dataIndex: 'officeLocation', key: 'officeLocation', width: 100 },
+  { title: t('round'), dataIndex: 'interviewRound', key: 'interviewRound', width: 80 },
+  { title: t('question_count'), dataIndex: 'questionCount', key: 'questionCount', width: 80 },
+  { title: t('source'), dataIndex: 'sourceType', key: 'sourceType', width: 110 },
+  { title: t('submission_time'), dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 90 },
 ]
 
 const tabs: Array<{ key: QuestionTab; label: string }> = [
-  { key: 'pending', label: '待审核' },
-  { key: 'approved', label: '已通过' },
-  { key: 'rejected', label: '已驳回' }
+  { key: 'pending', label: t('pending_review') },
+  { key: 'approved', label: t('approved') },
+  { key: 'rejected', label: t('rejected_3') }
 ]
 
 const interviewRoundOptions: InterviewRound[] = ['R1', 'R2', 'Final', 'Superday', 'HireVue']
 const reviewStatusLabel: Record<QuestionReviewStatus, string> = {
-  pending: '待审核',
-  approved: '已通过',
-  rejected: '已驳回'
+  pending: t('pending_review'),
+  approved: t('approved'),
+  rejected: t('rejected_3')
 }
 
 const activeTab = ref<QuestionTab>('pending')
@@ -194,7 +204,7 @@ const loadRows = async () => {
     pendingCount.value = response.pendingCount ?? 0
     selectedIds.value = []
   } catch (_error) {
-    message.error('面试真题列表加载失败')
+    message.error(t('failed_to_load_interview_question_list'))
   }
 }
 
@@ -220,13 +230,13 @@ const reviewSelected = async (target: 'approved' | 'rejected') => {
   try {
     if (target === 'approved')
     {
-      await batchApproveQuestions({ questionIds: selectedIds.value, reviewComment: '批量通过' })
-      message.success('批量通过成功')
+      await batchApproveQuestions({ questionIds: selectedIds.value, reviewComment: t('batch_approve') })
+      message.success(t('batch_approval_successful'))
     }
     else
     {
-      await batchRejectQuestions({ questionIds: selectedIds.value, reviewComment: '批量驳回' })
-      message.success('批量驳回成功')
+      await batchRejectQuestions({ questionIds: selectedIds.value, reviewComment: t('batch_reject') })
+      message.success(t('batch_rejection_successful'))
     }
     await loadRows()
   } catch (_error) {
@@ -244,7 +254,7 @@ const handleApprove = async (payload: { row: InterviewQuestionRow; reviewComment
       reviewComment: payload.reviewComment
     })
     showReviewModal.value = false
-    message.success('审核通过并已开放')
+    message.success(t('approved_and_shared'))
     await loadRows()
   } catch (_error) {
     // request util handles message
@@ -261,7 +271,7 @@ const handleReject = async (payload: { row: InterviewQuestionRow; reviewComment?
       reviewComment: payload.reviewComment
     })
     showReviewModal.value = false
-    message.success('已驳回该条真题')
+    message.success(t('this_question_has_been_rejected'))
     await loadRows()
   } catch (_error) {
     // request util handles message
@@ -289,3 +299,4 @@ onMounted(() => {
   background: rgba(254, 252, 232, 0.6);
 }
 </style>
+

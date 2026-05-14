@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :surface-id="surfaceId"
     :open="visible"
@@ -13,7 +13,7 @@
           :class="isEdit ? 'mdi-account-edit' : 'mdi-account-plus'"
           aria-hidden="true"
         />
-        <span>{{ isEdit ? '编辑用户' : '新增用户' }}</span>
+        <span>{{ isEdit ? $t('edit_user') : $t('add_user') }}</span>
       </span>
     </template>
 
@@ -21,8 +21,8 @@
       <span class="mdi mdi-shield-account user-modal__note-icon" aria-hidden="true" />
       <span>
         {{ isEdit
-          ? '编辑模式下可更新用户资料、角色与联系方式，用户名保持锁定。'
-          : '新增用户会同步生成默认密码，并将角色与资料直接写入后台台账。' }}
+          ? $t('in_edit_mode_you_can_update_user_profile')
+          : $t('adding_a_user_will_generate_a_default_pa') }}
       </span>
     </div>
 
@@ -38,51 +38,51 @@
       <a-form-item name="userName" class="user-modal__field">
         <template #label>
           <span class="user-modal__label">
-            用户名<span v-if="!isEdit" class="user-modal__required">*</span>
+            {{ $t('username') }}<span v-if="!isEdit" class="user-modal__required">*</span>
           </span>
         </template>
         <a-input
           v-model:value="formState.userName"
-          placeholder="4-20字符，仅字母数字下划线"
+          :placeholder="`4-20${$t('characters_letters_numbers_and_underscor')}`"
           :disabled="isEdit"
           :class="{ 'user-modal__input--disabled': isEdit }"
         />
-        <p class="user-modal__help">{{ isEdit ? '用户名不可修改' : '用户名创建后不可修改' }}</p>
+        <p class="user-modal__help">{{ isEdit ? $t('username_cannot_be_changed') : $t('username_cannot_be_modified_after_creati') }}</p>
       </a-form-item>
 
       <a-form-item name="nickName" class="user-modal__field">
         <template #label>
-          <span class="user-modal__label">姓名<span class="user-modal__required">*</span></span>
+          <span class="user-modal__label">{{ $t('name') }}<span class="user-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.nickName" placeholder="请输入真实姓名" />
+        <a-input v-model:value="formState.nickName" :placeholder="$t('please_enter_your_full_name')" />
       </a-form-item>
 
       <a-form-item name="email" class="user-modal__field">
         <template #label>
-          <span class="user-modal__label">邮箱<span class="user-modal__required">*</span></span>
+          <span class="user-modal__label">{{ $t('email') }}<span class="user-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.email" placeholder="用于接收通知和密码重置" />
+        <a-input v-model:value="formState.email" :placeholder="$t('used_for_notifications_and_password_rese')" />
       </a-form-item>
 
       <a-form-item name="phonenumber" class="user-modal__field">
         <template #label>
-          <span class="user-modal__label">手机号</span>
+          <span class="user-modal__label">{{ $t('phone_number') }}</span>
         </template>
-        <a-input v-model:value="formState.phonenumber" placeholder="选填" />
+        <a-input v-model:value="formState.phonenumber" :placeholder="$t('optional')" />
       </a-form-item>
 
       <a-form-item name="roleIds" class="user-modal__field user-modal__field--span-2">
         <template #label>
           <span class="user-modal__label">
-            角色<span class="user-modal__required">*</span>
-            <span v-if="!isEdit" class="user-modal__meta">（可多选）</span>
+            {{ $t('role') }}<span class="user-modal__required">*</span>
+            <span v-if="!isEdit" class="user-modal__meta">（{{ $t('multiple_selections_possible') }}）</span>
           </span>
         </template>
 
         <a-select
           v-if="isEdit"
           v-model:value="selectedRoleId"
-          placeholder="请选择角色"
+          :placeholder="$t('please_select_a_role')"
           size="large"
         >
           <a-select-option v-for="role in roleOptions" :key="role.roleId" :value="role.roleId">
@@ -102,24 +102,24 @@
         </div>
       </a-form-item>
 
-      <a-form-item v-if="!isEdit" data-field-name="初始密码" class="user-modal__field user-modal__field--span-2">
+      <a-form-item v-if="!isEdit" :data-field-name="$t('initial_password')" class="user-modal__field user-modal__field--span-2">
         <template #label>
-          <span class="user-modal__label">初始密码</span>
+          <span class="user-modal__label">{{ $t('initial_password') }}</span>
         </template>
         <div class="user-modal__default-password">
           <div class="user-modal__default-password-input">Osg@2026</div>
-          <span class="user-modal__default-password-tag">系统默认</span>
+          <span class="user-modal__default-password-tag">{{ $t('system_default') }}</span>
         </div>
-        <p class="user-modal__help">用户首次登录后需修改密码</p>
+        <p class="user-modal__help">{{ $t('user_must_change_password_after_first_lo') }}</p>
       </a-form-item>
 
       <a-form-item name="remark" class="user-modal__field user-modal__field--span-2">
         <template #label>
-          <span class="user-modal__label">备注</span>
+          <span class="user-modal__label">{{ $t('remarks') }}</span>
         </template>
         <a-textarea
           v-model:value="formState.remark"
-          placeholder="选填，最多200字"
+          :placeholder="$t('optional_max_200_characters')"
           :rows="3"
           :maxlength="200"
         />
@@ -127,8 +127,8 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="loading" @click="handleSubmit">保存</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="loading" @click="handleSubmit">{{ $t('save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -138,7 +138,9 @@ import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { addUser, updateUser } from '@/api/user'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   user: any
@@ -177,20 +179,20 @@ const selectedRoleId = computed<number | undefined>({
 })
 
 const validateUsername = (_rule: any, value: string) => {
-  if (!value) return Promise.reject('请输入用户名')
-  if (value.length < 4 || value.length > 20) return Promise.reject('用户名长度4-20字符')
-  if (!/^[a-zA-Z0-9_]+$/.test(value)) return Promise.reject('仅允许字母、数字和下划线')
+  if (!value) return Promise.reject(t('please_enter_your_username'))
+  if (value.length < 4 || value.length > 20) return Promise.reject(t('username_must_be_4_20_characters'))
+  if (!/^[a-zA-Z0-9_]+$/.test(value)) return Promise.reject(t('only_letters_numbers_and_underscores_are'))
   return Promise.resolve()
 }
 
 const rules = {
   userName: [{ required: true, validator: validateUsername, trigger: 'blur' }],
-  nickName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  nickName: [{ required: true, message: t('please_enter_name'), trigger: 'blur' }],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+    { required: true, message: t('please_enter_your_email'), trigger: 'blur' },
+    { type: 'email', message: t('please_enter_the_correct_email_format'), trigger: 'blur' },
   ],
-  roleIds: [{ required: true, message: '请选择角色', trigger: 'change', type: 'array' }],
+  roleIds: [{ required: true, message: t('please_select_a_role'), trigger: 'change', type: 'array' }],
 }
 
 const resetFormState = () => {
@@ -249,7 +251,7 @@ const handleSubmit = async () => {
         roleIds: formState.roleIds,
         remark: formState.remark || undefined,
       })
-      message.success('用户修改成功')
+      message.success(t('user_updated_successfully'))
     } else {
       await addUser({
         userName: formState.userName,
@@ -260,7 +262,7 @@ const handleSubmit = async () => {
         remark: formState.remark || undefined,
         password: 'Osg@2026',
       })
-      message.success('用户新增成功')
+      message.success(t('user_added_successfully'))
     }
 
     emit('success')
@@ -389,3 +391,4 @@ const handleSubmit = async () => {
 }
 
 </style>
+

@@ -3,7 +3,13 @@ import { http } from '../../utils/request'
 export type QuestionTab = 'pending' | 'approved' | 'rejected'
 export type InterviewRound = 'R1' | 'R2' | 'Final' | 'Superday' | 'HireVue'
 export type QuestionReviewStatus = 'pending' | 'approved' | 'rejected'
-export type QuestionSourceType = '入职面试申请' | '自主填写'
+export type QuestionSourceType = string
+
+// Backend returns Chinese labels as sourceType; map to i18n keys for display.
+export const QUESTION_SOURCE_TYPE_MAP: Record<string, { i18nKey: string; color: string }> = {
+  '入职面试申请': { i18nKey: 'interview_application', color: 'orange' },
+  '自主填写': { i18nKey: 'self_submitted', color: 'blue' },
+}
 
 export interface InterviewQuestionRow {
   questionId: number

@@ -3,6 +3,8 @@ import { http } from '@osg/shared/utils'
 export interface AdminDictRegistryTab {
   dict_type: string
   dict_name: string
+  /** stable i18n key derived from dict_type (e.g. dict_type_job_category). Falls back to dict_name when missing / untranslated. */
+  dict_name_i18n_key?: string
   has_parent: boolean
   parent_dict_type?: string
 }
@@ -10,6 +12,8 @@ export interface AdminDictRegistryTab {
 export interface AdminDictRegistryGroup {
   group_key: string
   group_label: string
+  /** stable i18n key derived from group_key (e.g. dict_group_job). Falls back to group_label when missing / untranslated. */
+  group_i18n_key?: string
   icon: string
   icon_color: string
   icon_bg: string
@@ -20,6 +24,8 @@ export interface AdminDictRegistryGroup {
 export interface AdminDictListRow {
   dictCode: number
   dictLabel: string
+  /** stable i18n key for system enum rows (e.g. dict_data_schedule_status_available); null for user-defined business data. Falls back to dictLabel as-is. */
+  i18nKey?: string | null
   dictValue: string
   dictType: string
   dictSort: number
@@ -48,6 +54,7 @@ function mapRow(row: any): AdminDictListRow {
   return {
     dictCode: Number(row?.dictCode ?? 0),
     dictLabel: row?.dictLabel ?? '',
+    i18nKey: row?.i18nKey ?? null,
     dictValue: row?.dictValue ?? '',
     dictType: row?.dictType ?? '',
     dictSort: Number(row?.dictSort ?? 100),

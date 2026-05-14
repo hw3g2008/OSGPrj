@@ -1,39 +1,39 @@
-<template>
+﻿<template>
   <div id="page-questions" class="questions-page">
     <OsgPageContainer>
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">面试真题 <span>Interview Questions</span></h1>
-            <p class="page-sub">查看投递公司的真题，分享你的面试经历</p>
+            <h1 class="page-title">{{ $t('real_interview_questions') }} <span>Interview Questions</span></h1>
+            <p class="page-sub">{{ $t('view_real_interview_questions_from_compa') }}</p>
           </div>
-          <a-button type="primary" size="large" @click="createOpen = true">填写真题</a-button>
+          <a-button type="primary" size="large" @click="createOpen = true">{{ $t('submit_questions') }}</a-button>
         </div>
       </template>
 
       <a-tabs v-model:activeKey="activeTab">
-        <a-tab-pane key="available" tab="已开放题库 3" />
-        <a-tab-pane key="mysubmit" tab="我的提交" />
+        <a-tab-pane key="available" :tab="`${$t('question_bank_open')} 3`" />
+        <a-tab-pane key="mysubmit" :tab="$t('my_submissions_2')" />
       </a-tabs>
 
       <template v-if="activeTab === 'available'">
         <div class="toolbar">
           <a-input placeholder="搜索公司..." class="toolbar-input" />
-          <a-select class="toolbar-select" placeholder="部门" :options="departmentOptions" />
-          <a-select class="toolbar-select" placeholder="轮次" :options="roundOptions" />
-          <a-button>重置</a-button>
+          <a-select class="toolbar-select" :placeholder="$t('department')" :options="departmentOptions" />
+          <a-select class="toolbar-select" :placeholder="$t('round')" :options="roundOptions" />
+          <a-button>{{ $t('reset') }}</a-button>
         </div>
         <div class="table-shell">
           <table class="record-table">
             <thead>
               <tr>
-                <th>公司</th>
-                <th>部门</th>
-                <th>地点</th>
-                <th>轮次</th>
-                <th>题目数</th>
-                <th>更新时间</th>
-                <th>操作</th>
+                <th>{{ $t('company') }}</th>
+                <th>{{ $t('department') }}</th>
+                <th>{{ $t('location') }}</th>
+                <th>{{ $t('round') }}</th>
+                <th>{{ $t('question_count') }}</th>
+                <th>{{ $t('updated_at') }}</th>
+                <th>{{ $t('operation') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -44,7 +44,7 @@
                 <td>{{ item.round }}</td>
                 <td>{{ item.count }}</td>
                 <td>{{ item.updatedAt }}</td>
-                <td><a-button type="primary" size="small" @click="openQuestionView(item)">查看</a-button></td>
+                <td><a-button type="primary" size="small" @click="openQuestionView(item)">{{ $t('view') }}</a-button></td>
               </tr>
             </tbody>
           </table>
@@ -54,21 +54,21 @@
       <template v-else>
         <div class="toolbar">
           <a-input placeholder="搜索公司..." class="toolbar-input" />
-          <a-select class="toolbar-select" placeholder="状态" :options="statusOptions" />
-          <a-button>重置</a-button>
+          <a-select class="toolbar-select" :placeholder="$t('status')" :options="statusOptions" />
+          <a-button>{{ $t('reset') }}</a-button>
         </div>
         <div class="table-shell">
           <table class="record-table">
             <thead>
               <tr>
-                <th>公司</th>
-                <th>部门</th>
-                <th>地点</th>
-                <th>轮次</th>
-                <th>题目数</th>
-                <th>状态</th>
-                <th>时间</th>
-                <th>操作</th>
+                <th>{{ $t('company') }}</th>
+                <th>{{ $t('department') }}</th>
+                <th>{{ $t('location') }}</th>
+                <th>{{ $t('round') }}</th>
+                <th>{{ $t('question_count') }}</th>
+                <th>{{ $t('status') }}</th>
+                <th>{{ $t('time') }}</th>
+                <th>{{ $t('operation') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -82,22 +82,22 @@
                 <td>{{ item.time }}</td>
                 <td class="action-cell">
                   <a-button
-                    v-if="item.status === '待填写'"
+                    v-if="item.status === $t('pending_submission')"
                     type="primary"
                     size="small"
                     @click="openPending(item)"
                   >
-                    填写
+                    {{ $t('fill_in') }}
                   </a-button>
                   <template v-else>
-                    <a-button size="small" @click="openDetail(item)">查看</a-button>
+                    <a-button size="small" @click="openDetail(item)">{{ $t('view') }}</a-button>
                     <a-button
                       v-if="item.canEdit"
                       type="link"
                       size="small"
                       @click="openEdit(item)"
                     >
-                      编辑
+                      {{ $t('edit') }}
                     </a-button>
                   </template>
                 </td>
@@ -108,7 +108,7 @@
       </template>
     </OsgPageContainer>
 
-    <a-modal v-model:open="createOpen" title="填写真题" :footer="null" width="760px">
+    <a-modal v-model:open="createOpen" :title="$t('submit_questions')" :footer="null" width="760px">
       <div class="form-grid">
         <a-form-item label="公司 Company" class="form-item"><a-input placeholder="如：Goldman Sachs" /></a-form-item>
         <a-form-item label="部门 Division" class="form-item"><a-input placeholder="如：Investment Banking" /></a-form-item>
@@ -117,35 +117,35 @@
         <a-form-item label="面试日期 Interview Date" class="form-item full-span"><a-date-picker class="full-width" /></a-form-item>
         <a-form-item label="面试官信息 Interviewer" class="form-item full-span"><a-input placeholder="如：John Smith, VP" /></a-form-item>
         <a-form-item label="面试题目 Questions" class="form-item full-span">
-          <a-textarea :rows="5" placeholder="请逐条填写面试题目" />
+          <a-textarea :rows="5" :placeholder="$t('please_fill_in_interview_questions_one_b')" />
         </a-form-item>
       </div>
       <div class="dialog-actions">
-        <a-button @click="createOpen = false">取消</a-button>
-        <a-button type="primary" @click="createOpen = false">提交真题</a-button>
+        <a-button @click="createOpen = false">{{ $t('cancel') }}</a-button>
+        <a-button type="primary" @click="createOpen = false">{{ $t('submit_questions_2') }}</a-button>
       </div>
     </a-modal>
 
-    <a-modal v-model:open="viewOpen" title="面试真题" :footer="null" width="680px">
+    <a-modal v-model:open="viewOpen" :title="$t('real_interview_questions')" :footer="null" width="680px">
       <div v-if="activeAvailable" class="detail-stack">
         <div class="detail-grid">
-          <div class="detail-card"><span>公司</span><strong>{{ activeAvailable.company }}</strong></div>
-          <div class="detail-card"><span>部门</span><strong>{{ activeAvailable.department }}</strong></div>
-          <div class="detail-card"><span>地点</span><strong>{{ activeAvailable.location }}</strong></div>
-          <div class="detail-card"><span>轮次</span><strong>{{ activeAvailable.round }}</strong></div>
+          <div class="detail-card"><span>{{ $t('company') }}</span><strong>{{ activeAvailable.company }}</strong></div>
+          <div class="detail-card"><span>{{ $t('department') }}</span><strong>{{ activeAvailable.department }}</strong></div>
+          <div class="detail-card"><span>{{ $t('location') }}</span><strong>{{ activeAvailable.location }}</strong></div>
+          <div class="detail-card"><span>{{ $t('round') }}</span><strong>{{ activeAvailable.round }}</strong></div>
         </div>
         <div class="question-list">
           <div class="question-item" v-for="question in availableQuestionItems" :key="question">{{ question }}</div>
         </div>
       </div>
       <div class="dialog-actions">
-        <a-button @click="viewOpen = false">关闭</a-button>
+        <a-button @click="viewOpen = false">{{ $t('close') }}</a-button>
       </div>
     </a-modal>
 
-    <a-modal v-model:open="pendingOpen" title="填写面试真题（来自入职面试申请）" :footer="null" width="760px">
+    <a-modal v-model:open="pendingOpen" :title="`${$t('submit_real_interview_questions_from_job')}）`" :footer="null" width="760px">
       <div v-if="activeSubmitted" class="detail-banner">
-        以下信息来自您的入职面试申请，审核通过后将自动开放给相同申请（同公司、部门、办公地点、面试状态）的学生。
+        {{ $t('the_following_information_is_from_your_j') }}。
       </div>
       <div class="form-grid">
         <a-form-item label="公司 Company" class="form-item"><a-input :value="activeSubmitted?.company" disabled /></a-form-item>
@@ -154,33 +154,33 @@
         <a-form-item label="面试状态 Status" class="form-item"><a-input :value="activeSubmitted?.status" disabled /></a-form-item>
         <a-form-item label="面试轮次 Round" class="form-item full-span"><a-select :options="roundDetailOptions" /></a-form-item>
         <a-form-item label="面试日期 Interview Date" class="form-item full-span"><a-date-picker class="full-width" /></a-form-item>
-        <a-form-item label="面试题目 Questions" class="form-item full-span"><a-textarea :rows="5" placeholder="请逐条填写面试题目" /></a-form-item>
+        <a-form-item label="面试题目 Questions" class="form-item full-span"><a-textarea :rows="5" :placeholder="$t('please_fill_in_interview_questions_one_b')" /></a-form-item>
       </div>
       <div class="dialog-actions">
-        <a-button @click="pendingOpen = false">取消</a-button>
-        <a-button type="primary" @click="pendingOpen = false">提交真题</a-button>
+        <a-button @click="pendingOpen = false">{{ $t('cancel') }}</a-button>
+        <a-button type="primary" @click="pendingOpen = false">{{ $t('submit_questions_2') }}</a-button>
       </div>
     </a-modal>
 
-    <a-modal v-model:open="detailOpen" title="我的提交详情" :footer="null" width="680px">
+    <a-modal v-model:open="detailOpen" :title="$t('my_submission_details')" :footer="null" width="680px">
       <div v-if="activeSubmitted" class="detail-stack">
         <div class="detail-grid">
-          <div class="detail-card"><span>公司</span><strong>{{ activeSubmitted.company }}</strong></div>
-          <div class="detail-card"><span>部门</span><strong>{{ activeSubmitted.department }}</strong></div>
-          <div class="detail-card"><span>地点</span><strong>{{ activeSubmitted.location }}</strong></div>
-          <div class="detail-card"><span>审核状态</span><strong>{{ activeSubmitted.status }}</strong></div>
+          <div class="detail-card"><span>{{ $t('company') }}</span><strong>{{ activeSubmitted.company }}</strong></div>
+          <div class="detail-card"><span>{{ $t('department') }}</span><strong>{{ activeSubmitted.department }}</strong></div>
+          <div class="detail-card"><span>{{ $t('location') }}</span><strong>{{ activeSubmitted.location }}</strong></div>
+          <div class="detail-card"><span>{{ $t('review_status') }}</span><strong>{{ activeSubmitted.status }}</strong></div>
         </div>
         <div class="question-list">
           <div class="question-item" v-for="question in submittedQuestionItems" :key="question">{{ question }}</div>
         </div>
       </div>
       <div class="dialog-actions">
-        <a-button @click="detailOpen = false">关闭</a-button>
-        <a-button type="primary" @click="openEdit(activeSubmitted)">编辑</a-button>
+        <a-button @click="detailOpen = false">{{ $t('close') }}</a-button>
+        <a-button type="primary" @click="openEdit(activeSubmitted)">{{ $t('edit') }}</a-button>
       </div>
     </a-modal>
 
-    <a-modal v-model:open="editOpen" title="编辑面试真题" :footer="null" width="760px">
+    <a-modal v-model:open="editOpen" :title="$t('edit_interview_questions')" :footer="null" width="760px">
       <div v-if="activeSubmitted" class="form-grid">
         <a-form-item label="公司 Company" class="form-item"><a-input :value="activeSubmitted.company" disabled /></a-form-item>
         <a-form-item label="部门 Division" class="form-item"><a-input :value="activeSubmitted.department" disabled /></a-form-item>
@@ -188,11 +188,11 @@
         <a-form-item label="审核状态" class="form-item"><a-input :value="activeSubmitted.status" disabled /></a-form-item>
         <a-form-item label="面试轮次 Round" class="form-item full-span"><a-select :options="roundDetailOptions" /></a-form-item>
         <a-form-item label="面试日期 Interview Date" class="form-item full-span"><a-date-picker class="full-width" /></a-form-item>
-        <a-form-item label="面试题目 Questions" class="form-item full-span"><a-textarea :rows="5" placeholder="请逐条补充或修改面试题目" /></a-form-item>
+        <a-form-item label="面试题目 Questions" class="form-item full-span"><a-textarea :rows="5" :placeholder="$t('please_add_or_edit_interview_questions_o')" /></a-form-item>
       </div>
       <div class="dialog-actions">
-        <a-button @click="editOpen = false">取消</a-button>
-        <a-button type="primary" @click="editOpen = false">保存修改</a-button>
+        <a-button @click="editOpen = false">{{ $t('cancel') }}</a-button>
+        <a-button type="primary" @click="editOpen = false">{{ $t('save_changes') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -201,7 +201,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { OsgPageContainer } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type AvailableQuestion = {
   actionId: string
   company: string
@@ -246,9 +248,9 @@ const roundDetailOptions = [
 ]
 
 const statusOptions = [
-  { value: 'pending', label: '待填写' },
-  { value: 'reviewing', label: '待审核' },
-  { value: 'approved', label: '已通过' }
+  { value: 'pending', label: t('pending_submission') },
+  { value: 'reviewing', label: t('pending_review') },
+  { value: 'approved', label: t('approved') }
 ]
 
 const availableQuestions: AvailableQuestion[] = [
@@ -258,11 +260,11 @@ const availableQuestions: AvailableQuestion[] = [
 ]
 
 const submittedQuestions: SubmittedQuestion[] = [
-  { actionId: 'question-pending-1', company: 'Goldman Sachs', department: 'Investment Banking', location: 'New York', round: '-', count: '-', status: '待填写', time: '12/28', canEdit: false },
-  { actionId: 'question-pending-2', company: 'Morgan Stanley', department: 'Sales & Trading', location: 'Hong Kong', round: '-', count: '-', status: '待填写', time: '12/25', canEdit: false },
-  { actionId: 'question-detail-1', company: 'JPMorgan', department: 'Asset Management', location: 'London', round: 'R1', count: '4题', status: '待审核', time: '12/28', canEdit: true },
-  { actionId: 'question-detail-2', company: 'Bain', department: 'Consulting', location: 'Boston', round: 'Final', count: '3题', status: '已通过', time: '12/20', canEdit: false },
-  { actionId: 'question-detail-3', company: 'McKinsey', department: 'Consulting', location: 'Chicago', round: 'R2', count: '5题', status: '已通过', time: '12/10', canEdit: false }
+  { actionId: 'question-pending-1', company: 'Goldman Sachs', department: 'Investment Banking', location: 'New York', round: '-', count: '-', status: t('pending_submission'), time: '12/28', canEdit: false },
+  { actionId: 'question-pending-2', company: 'Morgan Stanley', department: 'Sales & Trading', location: 'Hong Kong', round: '-', count: '-', status: t('pending_submission'), time: '12/25', canEdit: false },
+  { actionId: 'question-detail-1', company: 'JPMorgan', department: 'Asset Management', location: 'London', round: 'R1', count: '4题', status: t('pending_review'), time: '12/28', canEdit: true },
+  { actionId: 'question-detail-2', company: 'Bain', department: 'Consulting', location: 'Boston', round: 'Final', count: '3题', status: t('approved'), time: '12/20', canEdit: false },
+  { actionId: 'question-detail-3', company: 'McKinsey', department: 'Consulting', location: 'Chicago', round: 'R2', count: '5题', status: t('approved'), time: '12/10', canEdit: false }
 ]
 
 const availableQuestionItems = [
@@ -454,3 +456,4 @@ const openEdit = (item: SubmittedQuestion | null) => {
   margin-top: 24px;
 }
 </style>
+

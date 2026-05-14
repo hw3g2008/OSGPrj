@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<id     property="dictCode"   column="dict_code"   />
 		<result property="dictSort"   column="dict_sort"   />
 		<result property="dictLabel"  column="dict_label"  />
+		<result property="i18nKey"    column="i18n_key"    />
 		<result property="dictValue"  column="dict_value"  />
 		<result property="dictType"   column="dict_type"   />
 		<result property="cssClass"   column="css_class"   />
@@ -22,7 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<sql id="selectDictDataVo">
-        select dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark 
+        select dict_code, dict_sort, dict_label, i18n_key, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark 
 		from sys_dict_data
     </sql>
 
@@ -87,6 +88,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  		<set>
  			<if test="dictSort != null">dict_sort = #{dictSort},</if>
  			<if test="dictLabel != null and dictLabel != ''">dict_label = #{dictLabel},</if>
+ 			<if test="i18nKey != null">i18n_key = #{i18nKey},</if>
  			<if test="dictValue != null and dictValue != ''">dict_value = #{dictValue},</if>
  			<if test="dictType != null and dictType != ''">dict_type = #{dictType},</if>
  			<if test="cssClass != null">css_class = #{cssClass},</if>
@@ -108,6 +110,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  		insert into sys_dict_data(
  			<if test="dictSort != null">dict_sort,</if>
  			<if test="dictLabel != null and dictLabel != ''">dict_label,</if>
+ 			<if test="i18nKey != null and i18nKey != ''">i18n_key,</if>
  			<if test="dictValue != null and dictValue != ''">dict_value,</if>
  			<if test="dictType != null and dictType != ''">dict_type,</if>
  			<if test="cssClass != null and cssClass != ''">css_class,</if>
@@ -120,6 +123,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  		)values(
  		    <if test="dictSort != null">#{dictSort},</if>
  		    <if test="dictLabel != null and dictLabel != ''">#{dictLabel},</if>
+ 			<if test="i18nKey != null and i18nKey != ''">#{i18nKey},</if>
  			<if test="dictValue != null and dictValue != ''">#{dictValue},</if>
  			<if test="dictType != null and dictType != ''">#{dictType},</if>
  			<if test="cssClass != null and cssClass != ''">#{cssClass},</if>

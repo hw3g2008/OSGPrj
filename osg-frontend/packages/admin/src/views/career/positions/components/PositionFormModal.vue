@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :open="visible"
     :surface-id="surfaceId"
@@ -12,43 +12,43 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span :class="['mdi', isEditing ? 'mdi-briefcase-edit' : 'mdi-briefcase-plus']" aria-hidden="true"></span>
-        <span>{{ isEditing ? '编辑岗位' : '新增岗位' }}</span>
+        <span>{{ isEditing ? $t('edit_position') : $t('add_position') }}</span>
       </span>
     </template>
 
     <div class="position-form-modal__content">
       <section class="position-form-modal__section">
-        <h4><span class="mdi mdi-briefcase" aria-hidden="true"></span>基本信息</h4>
+        <h4><span class="mdi mdi-briefcase" aria-hidden="true"></span>{{ $t('basic_info') }}</h4>
         <div class="position-form-modal__grid">
-          <fieldset class="position-form-modal__field" data-field-name="岗位分类">
-            <span>岗位分类 <em>*</em></span>
-            <a-select v-model:value="form.positionCategory" placeholder="请选择">
+          <fieldset class="position-form-modal__field" :data-field-name="$t('job_classification')">
+            <span>{{ $t('job_classification') }} <em>*</em></span>
+            <a-select v-model:value="form.positionCategory" :placeholder="$t('please_select')">
               <a-select-option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="岗位名称">
-            <span>岗位名称 <em>*</em></span>
-            <a-input v-model:value="form.positionName" placeholder="如 Summer Analyst" />
+          <fieldset class="position-form-modal__field" :data-field-name="$t('job_title')">
+            <span>{{ $t('job_title') }} <em>*</em></span>
+            <a-input v-model:value="form.positionName" :placeholder="$t('example_summer_analyst')" />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="部门">
-            <span>部门</span>
-            <a-select v-model:value="form.department" placeholder="请选择" allow-clear show-search>
+          <fieldset class="position-form-modal__field" :data-field-name="$t('department')">
+            <span>{{ $t('department') }}</span>
+            <a-select v-model:value="form.department" :placeholder="$t('please_select')" allow-clear show-search>
               <a-select-option v-for="option in departmentOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="项目时间">
-            <span>项目时间 <em>*</em></span>
-            <a-select v-model:value="form.projectYear" placeholder="请选择">
+          <fieldset class="position-form-modal__field" :data-field-name="$t('program_period')">
+            <span>{{ $t('program_period') }} <em>*</em></span>
+            <a-select v-model:value="form.projectYear" :placeholder="$t('please_select')">
               <a-select-option v-for="option in projectYearOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
         </div>
 
-        <fieldset class="position-form-modal__cycle-wrap" data-field-name="招聘周期">
-          <span>招聘周期 <em>*</em> <small>(可多选)</small></span>
+        <fieldset class="position-form-modal__cycle-wrap" :data-field-name="$t('recruitment_cycle')">
+          <span>{{ $t('recruitment_cycle') }} <em>*</em> <small>({{ $t('multiple_selections_possible') }})</small></span>
           <div class="position-form-modal__cycle-list">
             <a-checkbox
               v-for="option in recruitmentCycleOptions"
@@ -63,8 +63,8 @@
           </div>
         </fieldset>
 
-        <fieldset class="position-form-modal__cycle-wrap" data-field-name="对应学生主攻方向">
-          <span>对应学生主攻方向 <em>*</em> <small>(可多选)</small></span>
+        <fieldset class="position-form-modal__cycle-wrap" :data-field-name="$t('students_major_focus')">
+          <span>{{ $t('students_major_focus') }} <em>*</em> <small>({{ $t('multiple_selections_possible') }})</small></span>
           <div class="position-form-modal__cycle-list">
             <a-checkbox
               v-for="option in majorDirectionOptions"
@@ -81,97 +81,97 @@
       </section>
 
       <section class="position-form-modal__section">
-        <h4><span class="mdi mdi-domain" aria-hidden="true"></span>公司信息</h4>
+        <h4><span class="mdi mdi-domain" aria-hidden="true"></span>{{ $t('company_info') }}</h4>
         <div class="position-form-modal__grid">
-          <fieldset class="position-form-modal__field" data-field-name="公司名称">
-            <span>公司名称 <em>*</em></span>
+          <fieldset class="position-form-modal__field" :data-field-name="$t('company_name')">
+            <span>{{ $t('company_name') }} <em>*</em></span>
             <a-auto-complete
               v-model:value="form.companyName"
               :options="companyAutoCompleteOptions"
               :filter-option="true"
-              placeholder="搜索或输入公司名称"
+              :placeholder="$t('search_or_enter_company_name')"
             />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="公司类别">
-            <span>公司类别</span>
-            <a-select v-model:value="form.companyType" placeholder="请选择" allow-clear>
+          <fieldset class="position-form-modal__field" :data-field-name="$t('company_type')">
+            <span>{{ $t('company_type') }}</span>
+            <a-select v-model:value="form.companyType" :placeholder="$t('please_select')" allow-clear>
               <a-select-option v-for="option in companyTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="position-form-modal__location-group" data-field-name="岗位地区/城市">
+          <fieldset class="position-form-modal__location-group" :data-field-name="$t('position_region_city')">
             <div class="position-form-modal__location-grid">
-              <fieldset class="position-form-modal__field" data-field-name="岗位地区">
-                <span>岗位地区 <em>*</em></span>
-                <a-select v-model:value="form.region" placeholder="请选择">
+              <fieldset class="position-form-modal__field" :data-field-name="$t('position_region')">
+                <span>{{ $t('position_region') }} <em>*</em></span>
+                <a-select v-model:value="form.region" :placeholder="$t('please_select')">
                   <a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
                 </a-select>
               </fieldset>
 
-              <fieldset class="position-form-modal__field" data-field-name="城市">
-                <span>城市</span>
-                <a-select v-model:value="form.city" :placeholder="form.region ? '请选择' : '请先选择地区'">
+              <fieldset class="position-form-modal__field" :data-field-name="$t('city')">
+                <span>{{ $t('city') }}</span>
+                <a-select v-model:value="form.city" :placeholder="form.region ? $t('please_select') : $t('please_select_a_region_first')">
                   <a-select-option v-for="option in currentCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
                 </a-select>
               </fieldset>
             </div>
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="公司官网">
-            <span>公司官网</span>
+          <fieldset class="position-form-modal__field" :data-field-name="$t('company_website')">
+            <span>{{ $t('company_website') }}</span>
             <a-input v-model:value="form.companyWebsite" placeholder="https://company.com" />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="岗位链接">
-            <span>岗位链接</span>
+          <fieldset class="position-form-modal__field" :data-field-name="$t('position_link')">
+            <span>{{ $t('position_link') }}</span>
             <a-input v-model:value="form.positionUrl" placeholder="https://company.com/jobs/..." />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="截止日期">
-            <span>截止日期 <small>(选填)</small></span>
+          <fieldset class="position-form-modal__field" :data-field-name="$t('deadline_2')">
+            <span>{{ $t('deadline_2') }} <small>({{ $t('optional') }})</small></span>
             <a-date-picker
               v-model:value="form.deadline"
-              placeholder="选择截止日期"
+              :placeholder="$t('select_deadline')"
               value-format="YYYY-MM-DD"
-              aria-label="截止日期"
+              :aria-label="$t('deadline_2')"
               style="width: 100%"
             />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="截止文案">
-            <span>截止文案 <small>(选填，如"Rolling")</small></span>
-            <a-input v-model:value="form.deadlineText" placeholder="如 Rolling、ASAP、Until Filled" aria-label="截止文案" />
+          <fieldset class="position-form-modal__field" :data-field-name="$t('deadline_note')">
+            <span>{{ $t('deadline_note') }} <small>({{ $t('optional_e_g') }}"Rolling")</small></span>
+            <a-input v-model:value="form.deadlineText" :placeholder="$t('example_deadline_text')" :aria-label="$t('deadline_note')" />
           </fieldset>
         </div>
       </section>
 
       <div class="position-form-modal__display-grid">
-        <section class="position-form-modal__section" data-field-name="展示时间">
-          <h4><span class="mdi mdi-clock-outline" aria-hidden="true"></span>展示时间</h4>
-          <fieldset class="position-form-modal__display-group" data-field-name="开始时间/结束时间">
+        <section class="position-form-modal__section" :data-field-name="$t('display_period')">
+          <h4><span class="mdi mdi-clock-outline" aria-hidden="true"></span>{{ $t('display_period') }}</h4>
+          <fieldset class="position-form-modal__display-group" :data-field-name="$t('start_date_end_date')">
             <div class="position-form-modal__display-stack">
-              <fieldset class="position-form-modal__field" data-field-name="开始时间">
-                <span>开始时间 <em>*</em></span>
+              <fieldset class="position-form-modal__field" :data-field-name="$t('start_date')">
+                <span>{{ $t('start_date') }} <em>*</em></span>
                 <a-date-picker
                   v-model:value="form.displayStartTime"
                   show-time
-                  placeholder="选择开始时间"
+                  :placeholder="$t('select_start_date')"
                   value-format="YYYY-MM-DDTHH:mm"
                   format="YYYY-MM-DD HH:mm"
-                  aria-label="开始时间"
+                  :aria-label="$t('start_date')"
                   style="width: 100%"
                 />
               </fieldset>
-              <fieldset class="position-form-modal__field" data-field-name="结束时间">
-                <span>结束时间 <em>*</em></span>
+              <fieldset class="position-form-modal__field" :data-field-name="$t('end_date')">
+                <span>{{ $t('end_date') }} <em>*</em></span>
                 <a-date-picker
                   v-model:value="form.displayEndTime"
                   show-time
-                  placeholder="选择结束时间"
+                  :placeholder="$t('select_end_date')"
                   value-format="YYYY-MM-DDTHH:mm"
                   format="YYYY-MM-DD HH:mm"
-                  aria-label="结束时间"
+                  :aria-label="$t('end_date')"
                   style="width: 100%"
                 />
               </fieldset>
@@ -179,22 +179,22 @@
           </fieldset>
         </section>
 
-        <section class="position-form-modal__section" data-field-name="添加人">
-          <h4><span class="mdi mdi-account-edit" aria-hidden="true"></span>添加人</h4>
+        <section class="position-form-modal__section" :data-field-name="$t('added_by')">
+          <h4><span class="mdi mdi-account-edit" aria-hidden="true"></span>{{ $t('added_by') }}</h4>
           <fieldset class="position-form-modal__field">
-            <span class="position-form-modal__sr-only">添加人</span>
-            <a-input v-model:value="form.createBy" placeholder="新增时自动为当前登录用户；管理员可修改" />
+            <span class="position-form-modal__sr-only">{{ $t('added_by') }}</span>
+            <a-input v-model:value="form.createBy" :placeholder="$t('defaults_to_current_logged_in_user_admin')" />
           </fieldset>
         </section>
 
-        <section class="position-form-modal__section" data-field-name="投递备注">
-          <h4><span class="mdi mdi-note-text" aria-hidden="true"></span>投递备注</h4>
+        <section class="position-form-modal__section" :data-field-name="$t('application_notes')">
+          <h4><span class="mdi mdi-note-text" aria-hidden="true"></span>{{ $t('application_notes') }}</h4>
         <fieldset class="position-form-modal__field">
-          <span class="position-form-modal__sr-only">投递备注</span>
+          <span class="position-form-modal__sr-only">{{ $t('application_notes') }}</span>
           <a-textarea
             v-model:value="form.applicationNote"
             :rows="4"
-            placeholder="提醒学生投递时的注意事项..."
+            :placeholder="`${$t('notes_to_remind_students_when_applying')}...`"
           />
         </fieldset>
         </section>
@@ -202,7 +202,7 @@
 
       <p class="position-form-modal__hint">
         <span class="mdi mdi-information-outline" aria-hidden="true"></span>
-        到达结束时间后自动归档
+        {{ $t('auto_archived_when_end_date_is_reached') }}
       </p>
 
       <section v-if="isEditing" class="position-form-modal__status-bar">
@@ -210,38 +210,38 @@
           <span class="mdi mdi-toggle-switch" aria-hidden="true"></span>
           <div>
             <div class="position-form-modal__status-label">
-              岗位状态：
+              {{ $t('position_status') }}：
               <span :class="['position-form-modal__status-tag', `position-form-modal__status-tag--${form.displayStatus}`]">
                 {{ formatDisplayStatus(form.displayStatus) }}
               </span>
             </div>
-            <div class="position-form-modal__status-note">隐藏后学员将无法看到此岗位</div>
+            <div class="position-form-modal__status-note">{{ $t('students_cannot_see_this_position_once_h') }}</div>
           </div>
         </div>
 
         <fieldset class="position-form-modal__field position-form-modal__status-field">
-          <span>岗位状态</span>
-          <a-select v-model:value="form.displayStatus" placeholder="请选择">
+          <span>{{ $t('position_status') }}</span>
+          <a-select v-model:value="form.displayStatus" :placeholder="$t('please_select')">
             <a-select-option v-for="option in statusOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </fieldset>
 
         <div class="position-form-modal__status-actions">
           <a-button size="small" @click="form.displayStatus = 'hidden'">
-            <span class="mdi mdi-eye-off" aria-hidden="true" style="margin-right:4px"></span>隐藏
+            <span class="mdi mdi-eye-off" aria-hidden="true" style="margin-right:4px"></span>{{ $t('hide') }}
           </a-button>
           <a-button size="small" type="primary" ghost @click="form.displayStatus = 'visible'">
-            <span class="mdi mdi-refresh" aria-hidden="true" style="margin-right:4px"></span>激活
+            <span class="mdi mdi-refresh" aria-hidden="true" style="margin-right:4px"></span>{{ $t('activate') }}
           </a-button>
         </div>
       </section>
     </div>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button data-surface-part="cancel-control" @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button type="primary" @click="handleSubmit">
         <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px"></span>
-        {{ isEditing ? '保存岗位' : '新增岗位' }}
+        {{ isEditing ? $t('save_position') : $t('add_position') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -253,7 +253,9 @@ import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import { useUserStore } from '@/stores/user'
 import type { PositionListItem, PositionMeta, PositionMetaOption, PositionPayload } from '@osg/shared/api/admin/position'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   position?: PositionListItem | null
@@ -373,7 +375,7 @@ const toggleMajor = (value: string) => {
 }
 
 const formatDisplayStatus = (value: string) => {
-  return displayStatusMap.value.get(value) || '展示中'
+  return displayStatusMap.value.get(value) || t('active')
 }
 
 const handleClose = () => {
@@ -382,19 +384,19 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!form.positionCategory || !form.positionName || !form.companyName || !form.region || !form.projectYear) {
-    message.error('请补全岗位分类、岗位名称、公司、地区和项目时间')
+    message.error(t('please_complete_position_category_name_c'))
     return
   }
   if (!form.recruitmentCycles.length) {
-    message.error('请至少选择一个招聘周期')
+    message.error(t('please_select_at_least_one_recruitment_c'))
     return
   }
   if (!form.targetMajors.length) {
-    message.error('请至少选择一个主攻方向')
+    message.error(t('please_select_at_least_one_major_focus'))
     return
   }
   if (!form.displayStartTime || !form.displayEndTime) {
-    message.error('请补全展示时间')
+    message.error(t('please_complete_the_display_period'))
     return
   }
 

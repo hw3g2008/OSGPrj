@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div id="page-mock-practice">
     <PageHeader
-      title-zh="模拟应聘管理"
+      :title-zh="$t('simulated_application_management')"
       title-en="Mock Practice"
-      description="查看分配给我的模拟面试、人际关系测试、期中考试"
+      :description="$t('view_mock_interviews_networking_tests_an')"
     />
 
     <!-- 统计 -->
@@ -19,25 +19,25 @@
       <a-form layout="inline" class="filter-bar" style="margin-bottom: 16px">
         <a-form-item label="类型">
           <a-select v-model:value="filters.type" style="width:140px" @change="applyFilters">
-            <a-select-option value="">全部类型</a-select-option>
-            <a-select-option value="mock_interview">模拟面试</a-select-option>
-            <a-select-option value="relation_test">人际关系测试</a-select-option>
-            <a-select-option value="midterm">期中考试</a-select-option>
+            <a-select-option value="">{{ $t('all_types') }}</a-select-option>
+            <a-select-option value="mock_interview">{{ $t('mock_interview') }}</a-select-option>
+            <a-select-option value="relation_test">{{ $t('interpersonal_test') }}</a-select-option>
+            <a-select-option value="midterm">{{ $t('midterm_exam') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="状态">
           <a-select v-model:value="filters.status" style="width:140px" @change="applyFilters">
-            <a-select-option value="">全部状态</a-select-option>
-            <a-select-option value="new">新分配</a-select-option>
-            <a-select-option value="pending">待进行</a-select-option>
-            <a-select-option value="completed">已完成</a-select-option>
-            <a-select-option value="cancelled">已取消</a-select-option>
+            <a-select-option value="">{{ $t('all_status') }}</a-select-option>
+            <a-select-option value="new">{{ $t('newly_assigned') }}</a-select-option>
+            <a-select-option value="pending">{{ $t('pending_2') }}</a-select-option>
+            <a-select-option value="completed">{{ $t('completed') }}</a-select-option>
+            <a-select-option value="cancelled">{{ $t('canceled') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="学员">
           <a-input
             v-model:value="filters.keyword"
-            placeholder="搜索学员姓名/ID"
+            :placeholder="`${$t('search_student_name')}/ID`"
             style="width:200px"
             allow-clear
             @input="applyFilters"
@@ -61,7 +61,7 @@
         :pagination="false"
         :row-key="(r: any) => r.id"
         :custom-row="customRow"
-        :locale="{ emptyText: '暂无匹配的模拟应聘记录' }"
+        :locale="{ emptyText: $t('no_matching_mock_interview_records') }"
         size="middle"
       >
         <template #bodyCell="{ column, record }">
@@ -82,9 +82,9 @@
             <a-tag v-if="record.status === 'new'" color="red" class="pulse-tag">
               <i class="mdi mdi-bell-ring" /> 新分配
             </a-tag>
-            <a-tag v-else-if="record.status === 'pending'" color="blue">待进行</a-tag>
-            <a-tag v-else-if="record.status === 'completed'" color="green">已完成</a-tag>
-            <a-tag v-else-if="record.status === 'cancelled'">已取消</a-tag>
+            <a-tag v-else-if="record.status === 'pending'" color="blue">{{ $t('pending_2') }}</a-tag>
+            <a-tag v-else-if="record.status === 'completed'" color="green">{{ $t('completed') }}</a-tag>
+            <a-tag v-else-if="record.status === 'cancelled'">{{ $t('canceled') }}</a-tag>
             <span v-else class="text-muted">{{ record.status }}</span>
           </template>
           <template v-else-if="column.key === 'totalHours'">
@@ -102,7 +102,7 @@
               <div class="text-muted text-sm">{{ record.feedbackNote }}</div>
             </template>
             <template v-else>
-              <a-button type="link" size="small" @click="showDetail(record)">查看详情</a-button>
+              <a-button type="link" size="small" @click="showDetail(record)">{{ $t('view_details') }}</a-button>
             </template>
           </template>
         </template>
@@ -123,13 +123,13 @@
     >
       <div id="modal-job-detail" class="modal-detail">
         <div class="modal-header">
-          <span class="modal-title"><i class="mdi mdi-briefcase-search" /> 学员求职详情</span>
+          <span class="modal-title"><i class="mdi mdi-briefcase-search" /> {{ $t('student_job_search_details') }}</span>
           <button class="modal-close" type="button" @click="closeDetailModal">×</button>
         </div>
         <div class="modal-body modal-detail-body">
           <div class="detail-hero">
             <div class="detail-hero-card detail-hero-student">
-              <div class="section-caption">学员信息</div>
+              <div class="section-caption">{{ $t('student_information') }}</div>
               <div class="detail-hero-main">
                 <StudentInitialAvatar
                   :name="detailModal.record?.studentName"
@@ -144,85 +144,85 @@
               </div>
             </div>
             <div class="detail-hero-card">
-              <div class="section-caption">申请岗位</div>
+              <div class="section-caption">{{ $t('applied_position') }}</div>
               <div class="detail-hero-title">{{ typeLabel(detailModal.record?.practiceType || '') }}</div>
-              <div class="detail-hero-meta">{{ detailModal.record?.requestContent || '暂无申请内容' }}</div>
+              <div class="detail-hero-meta">{{ detailModal.record?.requestContent || $t('no_application_content') }}</div>
               <div class="detail-hero-meta">申请导师数: {{ detailModal.record?.requestedMentorCount ?? '-' }}</div>
             </div>
           </div>
 
           <div class="detail-section">
-            <div class="section-caption"><i class="mdi mdi-timeline-clock" /> 求职进度</div>
+            <div class="section-caption"><i class="mdi mdi-timeline-clock" /> {{ $t('job_search_progress') }}</div>
             <div class="detail-grid">
               <div class="detail-item">
-                <span class="detail-label">当前状态</span>
+                <span class="detail-label">{{ $t('current_status') }}</span>
                 <div class="detail-value">{{ mockStatusLabel(detailModal.record?.status || '') }}</div>
               </div>
               <div class="detail-item">
-                <span class="detail-label">分配时间</span>
+                <span class="detail-label">{{ $t('assignment_time') }}</span>
                 <div class="detail-value">{{ formatDate(detailModal.record?.assignedTime || '') || '-' }}</div>
               </div>
               <div class="detail-item">
-                <span class="detail-label">预约时间</span>
+                <span class="detail-label">{{ $t('appointment_time') }}</span>
                 <div class="detail-value">{{ formatDate(detailModal.record?.scheduledAt || '') || '-' }}</div>
               </div>
               <div class="detail-item">
-                <span class="detail-label">提交时间</span>
+                <span class="detail-label">{{ $t('submission_time') }}</span>
                 <div class="detail-value">{{ formatDate(detailModal.record?.submittedAt || '') || '-' }}</div>
               </div>
             </div>
           </div>
 
           <div class="detail-section">
-            <div class="section-caption"><i class="mdi mdi-school" /> 辅导信息</div>
+            <div class="section-caption"><i class="mdi mdi-school" /> {{ $t('coaching_info') }}</div>
             <div class="detail-grid detail-grid-compact">
               <div class="detail-item">
-                <span class="detail-label">分配导师</span>
+                <span class="detail-label">{{ $t('assign_a_mentor') }}</span>
                 <div class="detail-value">{{ detailModal.record?.mentorNames || '-' }}</div>
               </div>
               <div class="detail-item">
-                <span class="detail-label">导师背景</span>
+                <span class="detail-label">{{ $t('mentor_background') }}</span>
                 <div class="detail-value">{{ detailModal.record?.mentorBackgrounds || '-' }}</div>
               </div>
               <div class="detail-item">
-                <span class="detail-label">已上课时</span>
+                <span class="detail-label">{{ $t('already_in_class') }}</span>
                 <div class="detail-value">{{ detailModal.record?.totalHours ? `${detailModal.record.totalHours}h` : '-' }}</div>
               </div>
               <div class="detail-item">
-                <span class="detail-label">课程反馈</span>
-                <div class="detail-value">{{ detailModal.record?.feedbackNote || '暂无反馈' }}</div>
+                <span class="detail-label">{{ $t('course_feedback') }}</span>
+                <div class="detail-value">{{ detailModal.record?.feedbackNote || $t('no_feedback_yet') }}</div>
               </div>
             </div>
           </div>
 
           <div class="detail-section">
             <div class="detail-section-head">
-              <div class="section-caption"><i class="mdi mdi-book-open-variant" /> 课程记录 (最近3条)</div>
-              <a-button type="link" size="small" class="section-action">查看全部</a-button>
+              <div class="section-caption"><i class="mdi mdi-book-open-variant" /> {{ $t('course_records_latest_3') }})</div>
+              <a-button type="link" size="small" class="section-action">{{ $t('view_all') }}</a-button>
             </div>
             <div class="record-list">
               <div class="record-item">
-                <div class="record-date">提交申请</div>
-                <div class="record-body">{{ detailModal.record?.requestContent || '暂无申请内容' }}</div>
+                <div class="record-date">{{ $t('submit_application') }}</div>
+                <div class="record-body">{{ detailModal.record?.requestContent || $t('no_application_content') }}</div>
               </div>
               <div class="record-item">
-                <div class="record-date">导师反馈</div>
-                <div class="record-body">{{ detailModal.record?.feedbackNote || '暂无反馈' }}</div>
+                <div class="record-date">{{ $t('mentor_feedback') }}</div>
+                <div class="record-body">{{ detailModal.record?.feedbackNote || $t('no_feedback_yet') }}</div>
               </div>
               <div class="record-item">
-                <div class="record-date">学员备注</div>
-                <div class="record-body">{{ detailModal.record?.note || '暂无备注' }}</div>
+                <div class="record-date">{{ $t('student_notes') }}</div>
+                <div class="record-body">{{ detailModal.record?.note || $t('no_notes') }}</div>
               </div>
             </div>
           </div>
 
           <div class="detail-section">
-            <div class="section-caption"><i class="mdi mdi-note-text" /> 学员备注</div>
-            <div class="detail-note">{{ detailModal.record?.note || '暂无备注' }}</div>
+            <div class="section-caption"><i class="mdi mdi-note-text" /> {{ $t('student_notes') }}</div>
+            <div class="detail-note">{{ detailModal.record?.note || $t('no_notes') }}</div>
           </div>
         </div>
         <div class="modal-footer">
-          <a-button type="primary" @click="closeDetailModal">关闭</a-button>
+          <a-button type="primary" @click="closeDetailModal">{{ $t('close') }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -234,7 +234,9 @@ import { ref, computed, onMounted, inject, type Ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PracticeTypeTag, StatCard, StudentAvatarCell, StudentInitialAvatar } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
 type MentorNavBadgeState = {
@@ -257,12 +259,12 @@ const stats = computed(() => {
 const filteredList = computed(() => list.value)
 
 const columns = [
-  { title: '学员', key: 'student' },
-  { title: '类型', key: 'practiceType', dataIndex: 'practiceType' },
-  { title: '分配时间', key: 'assignedTime', dataIndex: 'assignedTime' },
-  { title: '状态', key: 'status', dataIndex: 'status' },
-  { title: '已上课时', key: 'totalHours', dataIndex: 'totalHours' },
-  { title: '课程反馈', key: 'feedback' },
+  { title: t('student'), key: 'student' },
+  { title: t('type'), key: 'practiceType', dataIndex: 'practiceType' },
+  { title: t('assignment_time'), key: 'assignedTime', dataIndex: 'assignedTime' },
+  { title: t('status'), key: 'status', dataIndex: 'status' },
+  { title: t('already_in_class'), key: 'totalHours', dataIndex: 'totalHours' },
+  { title: t('course_feedback'), key: 'feedback' },
 ]
 
 function customRow(record: any) {
@@ -277,11 +279,11 @@ function resetFilters() {
 function rowDomId(record: any) { return rowAnchors.value.get(record.practiceId ?? record.id) || '' }
 function rowClass(r: any) { return { 'row-new': r.status === 'new', 'row-midterm': r.practiceType === 'midterm' } }
 function avatarColor(r: any) { const c = ['#7399C6','#F59E0B','#3B82F6','#22C55E','#8B5CF6']; return c[(r.id ?? r.practiceId ?? 0) % c.length] }
-function typeLabel(t: string) { return { mock_interview: '模拟面试', relation_test: '人际关系测试', midterm: '期中考试' }[t] || t }
+function typeLabel(key: string) { return { mock_interview: t('mock_interview'), relation_test: t('interpersonal_test'), midterm: t('midterm_exam') }[key] || key }
 function feedbackColor(l: string) { return { excellent: 'text-success', good: 'text-warning' }[l] || '' }
-function feedbackLabel(l: string) { return { excellent: '优秀', good: '良好', average: '一般', poor: '较差' }[l] || l }
+function feedbackLabel(l: string) { return { excellent: t('excellent'), good: t('good'), average: t('average'), poor: t('poor') }[l] || l }
 function formatDate(d: string) { return d ? new Date(d).toLocaleDateString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '' }
-function mockStatusLabel(status: string) { return { new: '新分配', pending: '待进行', scheduled: '待进行', confirmed: '待进行', completed: '已完成', cancelled: '已取消' }[status] || status }
+function mockStatusLabel(status: string) { return { new: t('newly_assigned'), pending: t('pending_2'), scheduled: t('pending_2'), confirmed: t('pending_2'), completed: t('completed'), cancelled: t('canceled') }[status] || status }
 
 function normalizeFeedbackLevel(rating: number | undefined) {
   if (rating == null) return ''
@@ -433,3 +435,4 @@ onMounted(() => {
 .record-body{font-size:13px;color:#334155;line-height:1.6}
 .detail-note{background:#FFFBEB;border-radius:12px;padding:14px 16px;font-size:13px;color:#92400E;line-height:1.7}
 </style>
+

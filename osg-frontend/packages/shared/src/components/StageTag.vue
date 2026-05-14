@@ -5,7 +5,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { resolveStageColor } from '../utils/jobOverviewTone'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 /**
  * 面试阶段标签（三端共用）
  *
@@ -24,7 +26,6 @@ const props = withDefaults(
   }>(),
   {
     stage: '',
-    fallback: '未更新',
   },
 )
 
@@ -32,6 +33,6 @@ const color = computed(() => resolveStageColor(props.stage))
 
 const displayText = computed(() => {
   const raw = String(props.stage ?? '').trim()
-  return raw || props.fallback
+  return raw || props.fallback || t('not_updated')
 })
 </script>

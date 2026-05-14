@@ -1,8 +1,24 @@
 import { http } from '@osg/shared/utils'
 
+export interface RoleListRow {
+  roleId: number
+  roleName: string
+  /** stable i18n key for roleName (system roles only); null for user-defined */
+  i18nKey?: string | null
+  roleKey: string
+  roleSort?: number
+  status?: string
+  remark?: string | null
+  /** stable i18n key for remark (system roles only); null for user-defined */
+  remarkI18nKey?: string | null
+  userCount?: number
+  updateTime?: string
+  [extra: string]: unknown
+}
+
 // 获取角色列表（分页）
 export function getRoleList(params: { pageNum: number; pageSize: number }) {
-  return http.get<{ rows: any[]; total: number }>('/system/role/list', { params })
+  return http.get<{ rows: RoleListRow[]; total: number }>('/system/role/list', { params })
 }
 
 // 新增角色（含 menuIds）

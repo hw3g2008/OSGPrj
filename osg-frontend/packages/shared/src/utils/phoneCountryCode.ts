@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 国际电话区号常量与工具函数。
  *
  * 设计目标：
@@ -6,6 +6,7 @@
  * - 提供 phone 字符串与 (countryCode, number) 的双向转换工具。
  * - 与系统现有约定对齐：DB 中 phone 整体存为 "+86 13001985588" 格式（区号 + 空格 + 号码）。
  */
+import { i18n } from '../i18n'
 
 export interface PhoneCountryCode {
   /** ITU E.164 区号，含 "+"，例如 "+86" */
@@ -17,14 +18,14 @@ export interface PhoneCountryCode {
 }
 
 export const PHONE_COUNTRY_CODES: readonly PhoneCountryCode[] = Object.freeze([
-  { code: '+86', label: '中国大陆', display: '+86 中国大陆' },
-  { code: '+852', label: '中国香港', display: '+852 中国香港' },
-  { code: '+853', label: '中国澳门', display: '+853 中国澳门' },
-  { code: '+886', label: '中国台湾', display: '+886 中国台湾' },
-  { code: '+1', label: '美国/加拿大', display: '+1 美国/加拿大' },
-  { code: '+44', label: '英国', display: '+44 英国' },
-  { code: '+65', label: '新加坡', display: '+65 新加坡' },
-  { code: '+61', label: '澳大利亚', display: '+61 澳大利亚' },
+  { code: '+86', label: i18n.global.t('mainland_china'), display: '+86 中国大陆' },
+  { code: '+852', label: i18n.global.t('hong_kong_china'), display: '+852 中国香港' },
+  { code: '+853', label: i18n.global.t('macao_china'), display: '+853 中国澳门' },
+  { code: '+886', label: i18n.global.t('taiwan_china'), display: '+886 中国台湾' },
+  { code: '+1', label: i18n.global.t('united_states_canada'), display: '+1 美国/加拿大' },
+  { code: '+44', label: i18n.global.t('united_kingdom'), display: '+44 英国' },
+  { code: '+65', label: i18n.global.t('singapore'), display: '+65 新加坡' },
+  { code: '+61', label: i18n.global.t('australia'), display: '+61 澳大利亚' },
 ])
 
 export const DEFAULT_PHONE_COUNTRY_CODE = '+86'
@@ -72,3 +73,5 @@ export function joinPhone(countryCode: string | null | undefined, number: string
   const code = (countryCode ?? '').trim() || DEFAULT_PHONE_COUNTRY_CODE
   return `${code} ${trimmedNumber}`
 }
+
+

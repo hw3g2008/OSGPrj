@@ -1,15 +1,15 @@
-<template>
+﻿<template>
   <a-config-provider :auto-insert-space-in-button="false">
   <div id="page-job-overview" class="osg-page">
     <PageHeader
-      title-zh="学员求职总览"
+      :title-zh="$t('overview_of_student_job_search')"
       title-en="Job Overview"
-      description="查看我辅导和管理的学员求职进度"
+      :description="$t('view_job_search_progress_of_students_i_c')"
     >
       <template #actions>
         <a-button @click="showUpcomingToast()">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ $t('export') }}
         </a-button>
       </template>
     </PageHeader>
@@ -19,40 +19,40 @@
     <div class="filter-row">
       <a-input
         v-model:value="filters.studentName"
-        placeholder="搜索学员姓名..."
+        :placeholder="`${$t('search_student_name')}...`"
         allow-clear
         style="width: 180px;"
         @press-enter="handleSearch()"
       />
       <a-select
         v-model:value="filters.typeFilter"
-        placeholder="全部类型"
+        :placeholder="$t('all_types')"
         style="width: 140px;"
         @change="handleTypeFilterChange"
       >
-        <a-select-option value="">全部类型</a-select-option>
-        <a-select-option value="coaching">辅导学员</a-select-option>
-        <a-select-option value="managed">管理学员</a-select-option>
+        <a-select-option value="">{{ $t('all_types') }}</a-select-option>
+        <a-select-option value="coaching">{{ $t('coached_students') }}</a-select-option>
+        <a-select-option value="managed">{{ $t('managed_students') }}</a-select-option>
       </a-select>
       <a-select
         v-model:value="filters.companyName"
-        placeholder="全部公司"
+        :placeholder="$t('all_companies')"
         style="width: 140px;"
       >
-        <a-select-option value="">全部公司</a-select-option>
+        <a-select-option value="">{{ $t('all_companies') }}</a-select-option>
         <a-select-option v-for="company in companyOptions" :key="company" :value="company">{{ company }}</a-select-option>
       </a-select>
       <a-select
         v-model:value="filters.currentStage"
-        placeholder="全部状态"
+        :placeholder="$t('all_status')"
         style="width: 140px;"
       >
-        <a-select-option value="">全部状态</a-select-option>
+        <a-select-option value="">{{ $t('all_status') }}</a-select-option>
         <a-select-option v-for="stage in stageOptions" :key="stage" :value="stage">{{ stage }}</a-select-option>
       </a-select>
       <a-button type="primary" @click="handleSearch()">
         <template #icon><SearchOutlined /></template>
-        搜索
+        {{ $t('search') }}
       </a-button>
     </div>
 
@@ -62,14 +62,14 @@
           <template #tab>
             <span id="lm-job-tab-pending" class="lm-job-tab-label lm-job-tab-label--pending">
               <ClockCircleOutlined />
-              待分配导师
+              {{ $t('tutor_to_be_assigned') }}
               <span class="tab-count">{{ tabCounts.pending }}</span>
             </span>
           </template>
           <a-alert
             type="warning"
             show-icon
-            message="以下学员申请了辅导，需要您分配导师"
+            :message="$t('the_following_students_have_applied_for__2')"
             style="margin-bottom: 12px;"
           />
           <div id="lm-job-content-pending">
@@ -112,7 +112,7 @@
                     @click="openAssignMentorFromPending(record)"
                   >
                     <template #icon><UserAddOutlined /></template>
-                    分配导师
+                    {{ $t('assign_a_mentor') }}
                   </a-button>
                 </template>
               </template>
@@ -124,7 +124,7 @@
           <template #tab>
             <span id="lm-job-tab-coaching" class="lm-job-tab-label lm-job-tab-label--coaching">
               <BookOutlined />
-              我辅导的学员
+              {{ $t('students_i_coach') }}
               <span class="tab-count">{{ tabCounts.coaching }}</span>
             </span>
           </template>
@@ -172,7 +172,7 @@
                     data-surface-trigger="modal-job-detail"
                     @click="openJobDetail(record)"
                   >
-                    查看详情
+                    {{ $t('view_details') }}
                   </a-button>
                   <a-button
                     v-else
@@ -181,7 +181,7 @@
                     class="btn-acknowledge"
                     @click="handleAcknowledgeStage(record)"
                   >
-                    确认
+                    {{ $t('confirm') }}
                   </a-button>
                 </template>
               </template>
@@ -193,14 +193,14 @@
           <template #tab>
             <span id="lm-job-tab-managed" class="lm-job-tab-label lm-job-tab-label--managed">
               <TeamOutlined />
-              我管理的学员
+              {{ $t('students_i_manage') }}
               <span class="tab-count tab-count--managed">{{ tabCounts.managed }}</span>
             </span>
           </template>
           <a-alert
             type="info"
             show-icon
-            message="查看管理学员的求职进度，已确认状态刷新后保持一致"
+            :message="$t('view_managed_students_job_search_progres')"
             style="margin-bottom: 12px;"
           />
           <div id="lm-job-content-managed">
@@ -249,7 +249,7 @@
                     class="btn-acknowledge"
                     @click="handleAcknowledgeStage(record)"
                   >
-                    确认
+                    {{ $t('confirm') }}
                   </a-button>
                   <a-button
                     v-else
@@ -258,7 +258,7 @@
                     data-surface-trigger="modal-job-detail"
                     @click="openJobDetail(record)"
                   >
-                    查看详情
+                    {{ $t('view_details') }}
                   </a-button>
                 </template>
               </template>
@@ -312,7 +312,9 @@ import AssignMentorModal, {
   type AssignMentorPreview,
 } from '@/components/AssignMentorModal.vue'
 import JobDetailModal, { type JobDetailPreview } from '@/components/JobDetailModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const { resolveCoachingTone } = useCoachingStatusMap()
 
 /**
@@ -324,7 +326,7 @@ function deriveOverviewStatusDisplay(row: LeadMentorJobOverviewListItem): { labe
   // stageUpdated 高亮分支保留旧行为
   if (row.stageUpdated) {
     return {
-      label: row.coachingStatus || '待更新',
+      label: row.coachingStatus || t('pending_update'),
       tone: 'blue',
     }
   }
@@ -339,32 +341,32 @@ function deriveOverviewStatusDisplay(row: LeadMentorJobOverviewListItem): { labe
 }
 
 const pendingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
-  { title: '阶段', dataIndex: 'stage', key: 'stage', width: 120 },
-  { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
-  { title: '需求导师', dataIndex: 'mentorDemand', key: 'mentorDemand', width: 120 },
-  { title: '申请时间', dataIndex: 'appliedAt', key: 'appliedAt', width: 120 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 140, fixed: 'right' as const },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
+  { title: t('company_position'), dataIndex: 'company', key: 'company', width: 200 },
+  { title: t('stage'), dataIndex: 'stage', key: 'stage', width: 120 },
+  { title: t('interview_time'), dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
+  { title: t('need_a_mentor'), dataIndex: 'mentorDemand', key: 'mentorDemand', width: 120 },
+  { title: t('application_time'), dataIndex: 'appliedAt', key: 'appliedAt', width: 120 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 140, fixed: 'right' as const },
 ]
 
 const coachingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
-  { title: '阶段', dataIndex: 'stage', key: 'stage', width: 130 },
-  { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
-  { title: '辅导状态', dataIndex: 'status', key: 'status', width: 120 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
+  { title: t('company_position'), dataIndex: 'company', key: 'company', width: 200 },
+  { title: t('stage'), dataIndex: 'stage', key: 'stage', width: 130 },
+  { title: t('interview_time'), dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
+  { title: t('counseling_status'), dataIndex: 'status', key: 'status', width: 120 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
 ]
 
 const managedColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'company', key: 'company', width: 200 },
-  { title: '阶段', dataIndex: 'stage', key: 'stage', width: 130 },
-  { title: '面试时间', dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
-  { title: '辅导状态', dataIndex: 'status', key: 'status', width: 120 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 140 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName', width: 160, fixed: 'left' as const },
+  { title: t('company_position'), dataIndex: 'company', key: 'company', width: 200 },
+  { title: t('stage'), dataIndex: 'stage', key: 'stage', width: 130 },
+  { title: t('interview_time'), dataIndex: 'interviewAt', key: 'interviewAt', width: 140 },
+  { title: t('counseling_status'), dataIndex: 'status', key: 'status', width: 120 },
+  { title: t('mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 140 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
 ]
 
 type TabKey = 'pending' | 'coaching' | 'managed'
@@ -547,7 +549,7 @@ const loadAllScopes = async () => {
     isAssignMentorModalOpen.value = false
     jobDetailPreview.value = null
     assignMentorPreview.value = null
-    message.error('求职总览加载失败')
+    message.error(t('failed_to_load_job_search_overview'))
   }
 }
 
@@ -582,7 +584,7 @@ const openJobDetail = async (row: OverviewRow) => {
   } catch (_error) {
     jobDetailPreview.value = null
     isJobDetailModalOpen.value = false
-    message.error('求职详情加载失败')
+    message.error(t('failed_to_load_job_search_details'))
   }
 }
 
@@ -609,7 +611,7 @@ const handleRequestMentorChange = () => {
   isJobDetailModalOpen.value = false
 
   if (!source || !preview) {
-    message.error('导师匹配上下文丢失')
+    message.error(t('mentor_matching_context_lost'))
     return
   }
 
@@ -629,12 +631,12 @@ const handleRequestMentorChange = () => {
 
 const handleConfirmAssignMentor = async (payload: AssignMentorConfirmPayload) => {
   if (!activeAssignApplicationId.value) {
-    message.error('导师匹配上下文丢失')
+    message.error(t('mentor_matching_context_lost'))
     return
   }
 
   if (!payload.mentorIds.length) {
-    message.error('请至少选择1位导师')
+    message.error(t('please_select_at_least_1_tutor'))
     return
   }
 
@@ -649,19 +651,19 @@ const handleConfirmAssignMentor = async (payload: AssignMentorConfirmPayload) =>
           ? {
               ...entry,
               assignedStatus: 'assigned',
-              coachingStatus: '辅导中',
+              coachingStatus: t('coaching_in_progress'),
               mentorNames: payload.mentorNames.join(', '),
               mentorName: payload.mentorNames[0] ?? entry.mentorName,
             }
           : entry,
       ),
     }
-    message.success('导师匹配已保存')
+    message.success(t('mentor_match_saved'))
     await nextTick()
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error('导师匹配保存失败')
+    message.error(t('failed_to_save_mentor_match'))
   }
 }
 
@@ -681,12 +683,12 @@ const handleAcknowledgeStage = async (row: OverviewRow) => {
           : entry,
       ),
     }
-    message.success('阶段更新已确认')
+    message.success(t('stage_update_confirmed'))
     await nextTick()
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error('阶段确认失败')
+    message.error(t('failed_to_confirm_stage'))
   }
 }
 
@@ -727,17 +729,17 @@ function buildJobDetailPreview(row: LeadMentorJobOverviewListItem): JobDetailPre
   return {
     studentName: row.studentName || '-',
     studentId: String(row.studentId ?? '-'),
-    leadMentorName: row.leadMentorName || '待分配班主任',
+    leadMentorName: row.leadMentorName || t('awaiting_mentor_assignment'),
     companyName: row.companyName || '-',
     positionName: row.positionName || '-',
-    recruitmentCycle: [row.region, row.city].filter(Boolean).join(' · ') || '待更新',
+    recruitmentCycle: [row.region, row.city].filter(Boolean).join(' · ') || t('pending_update'),
     interviewTime: formatDateTime(row.interviewTime),
     countdownText: buildCountdownText(row.interviewTime),
-    coachingStatus: row.coachingStatus || '待更新',
-    mentorName: row.mentorNames || row.mentorName || '待分配',
+    coachingStatus: row.coachingStatus || t('pending_update'),
+    mentorName: row.mentorNames || row.mentorName || t('to_be_allocated'),
     lessonHours: `${Number(row.hoursUsed ?? 0)}h`,
     applyTime: formatShortDate(row.submittedAt),
-    notes: row.feedbackSummary || `${row.studentName || '该学员'} 当前处于 ${row.currentStage || '待更新'} 阶段`,
+    notes: row.feedbackSummary || `${row.studentName || t('the_student')} 当前处于 ${row.currentStage || t('pending_update')} 阶段`,
   }
 }
 
@@ -823,7 +825,7 @@ function resolveStageTone(stage?: string) {
   if (normalized.includes('hirevue') || normalized.includes('assessment')) {
     return 'cyan'
   }
-  if (normalized.includes('投递')) {
+  if (normalized.includes(t('applied'))) {
     return 'geekblue'
   }
   return 'blue'
@@ -864,7 +866,7 @@ function formatMentorDemand(count?: number) {
   if ((count ?? 0) > 0) {
     return `${count} 位`
   }
-  return '需协助'
+  return t('needs_assistance')
 }
 
 function formatSubmittedAt(submittedAt?: string) {
@@ -873,7 +875,7 @@ function formatSubmittedAt(submittedAt?: string) {
 
 function formatShortDate(value?: string) {
   if (!value) {
-    return '待更新'
+    return t('pending_update')
   }
 
   const date = new Date(value)
@@ -886,7 +888,7 @@ function formatShortDate(value?: string) {
 
 function formatDateTime(value?: string) {
   if (!value) {
-    return '待更新'
+    return t('pending_update')
   }
 
   const date = new Date(value)
@@ -905,20 +907,20 @@ function formatDateTime(value?: string) {
 
 function buildCountdownText(interviewTime?: string) {
   if (!interviewTime) {
-    return '待更新'
+    return t('pending_update')
   }
 
   const date = new Date(interviewTime)
   if (Number.isNaN(date.getTime())) {
-    return '待更新'
+    return t('pending_update')
   }
 
   const diffDays = Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
   if (diffDays < 0) {
-    return '已结束'
+    return t('ended')
   }
   if (diffDays === 0) {
-    return '今天'
+    return t('today')
   }
   return `还剩${diffDays}天`
 }
@@ -1089,3 +1091,4 @@ function escapeHtml(value: string) {
   }
 }
 </style>
+

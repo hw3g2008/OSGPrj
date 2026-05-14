@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="osg-page page-positions">
     <PageHeader
-      title-zh="岗位信息"
+      :title-zh="$t('position_information')"
       title-en="Job Tracker"
-      description="追踪各大公司招聘岗位与我的学员求职进度（只读）"
+      :description="`${$t('track_company_job_postings_and_my_studen')}）`"
     >
       <template #actions>
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
@@ -22,7 +22,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.category"
-            placeholder="全部分类"
+            :placeholder="$t('all_categories')"
             allow-clear
             style="width: 140px"
           >
@@ -34,7 +34,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.industry"
-            placeholder="全部行业"
+            :placeholder="$t('all_industries')"
             allow-clear
             show-search
             style="width: 160px"
@@ -47,7 +47,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.companyName"
-            placeholder="全部公司"
+            :placeholder="$t('all_companies')"
             allow-clear
             show-search
             style="width: 180px"
@@ -60,7 +60,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.region"
-            placeholder="全部地区"
+            :placeholder="$t('all_regions')"
             allow-clear
             style="width: 140px"
           >
@@ -73,19 +73,19 @@
           <a-input
             id="assistant-positions-keyword"
             v-model:value="filters.keyword"
-            placeholder="搜索岗位/公司/城市..."
+            :placeholder="`${$t('search_positions_companies_cities')}...`"
             allow-clear
             style="width: 200px"
           />
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ $t('reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
 
-      <a-spin :spinning="loading" tip="正在加载岗位数据...">
+      <a-spin :spinning="loading" :tip="`${$t('loading_position_data')}...`">
         <a-alert
           v-if="errorMessage"
           type="error"
@@ -94,7 +94,7 @@
           style="margin-bottom: 12px"
         >
           <template #action>
-            <a-button size="small" type="primary" @click="loadPositions">重新加载</a-button>
+            <a-button size="small" type="primary" @click="loadPositions">{{ $t('reload') }}</a-button>
           </template>
         </a-alert>
 
@@ -136,7 +136,7 @@
       :title="studentModalTitle"
       @cancel="closeStudents"
     >
-      <a-spin :spinning="studentModal.loading" tip="正在读取关联学员...">
+      <a-spin :spinning="studentModal.loading" :tip="`${$t('loading_associated_students')}...`">
         <a-alert
           v-if="studentModal.error"
           type="error"
@@ -149,7 +149,7 @@
           :data-source="studentModal.rows"
           :row-key="(r: AssistantPositionStudent) => `${r.studentId}-${r.positionName}`"
           :pagination="false"
-          :locale="{ emptyText: '当前岗位暂无可展示的关联学员明细' }"
+          :locale="{ emptyText: $t('no_associated_student_details_available_') }"
           size="small"
         >
           <template #bodyCell="{ column, record }">
@@ -191,7 +191,9 @@ import {
   type PositionCompanyGroup,
   type IndustryTone,
 } from '@osg/shared'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type ViewMode = 'drilldown' | 'list'
 
 interface PositionRecord {
@@ -258,7 +260,7 @@ function resolveIndustryGroupMeta(industryRaw: string) {
   }
   return {
     id: trimmed || 'uncategorized',
-    label: trimmed || '未归类',
+    label: trimmed || t('uncategorized'),
     tone: FALLBACK_TONE,
     icon: FALLBACK_ICON,
   }
@@ -292,11 +294,11 @@ const studentModal = reactive<{
 })
 
 const categoryLabelMap: Record<string, string> = {
-  summer: '暑期实习',
-  fulltime: '全职招聘',
+  summer: t('summer_internship'),
+  fulltime: t('full_time_recruitment'),
   offcycle: 'Off-cycle',
-  spring: '春季实习',
-  events: '招聘活动',
+  spring: t('spring_internship'),
+  events: t('recruitment_event'),
 }
 
 const expandedIndustries = ref(new Set<string>())
@@ -313,9 +315,9 @@ const tablePagination = reactive({
 })
 
 const studentColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName' },
-  { title: '当前状态', dataIndex: 'status', key: 'status', width: 140 },
-  { title: '已用课时', dataIndex: 'usedHours', key: 'usedHours', width: 110 },
+  { title: t('student'), dataIndex: 'studentName', key: 'studentName' },
+  { title: t('current_status'), dataIndex: 'status', key: 'status', width: 140 },
+  { title: t('used_hours'), dataIndex: 'usedHours', key: 'usedHours', width: 110 },
 ]
 
 const filteredPositions = computed(() =>
@@ -418,7 +420,7 @@ const groupedPositions = computed<GroupedIndustry[]>(() => {
   const industries = new Map<string, GroupedIndustry>()
 
   filteredPositions.value.forEach((position) => {
-    const industryKey = position.industry || '未归类行业'
+    const industryKey = position.industry || t('uncategorized_industry')
     const meta = resolveIndustryGroupMeta(industryKey)
     const industry =
       industries.get(industryKey) || {
@@ -547,7 +549,7 @@ function handleDrilldownOpenPositionStudents(row: PositionTableRow) {
 
 const studentModalTitle = computed(() => {
   const p = studentModal.position
-  if (!p) return '关联学员'
+  if (!p) return t('associated_students')
   return `关联学员 · ${p.positionName || '-'} · ${p.companyName || '-'}`
 })
 
@@ -833,3 +835,4 @@ onMounted(() => {
   }
 }
 </style>
+

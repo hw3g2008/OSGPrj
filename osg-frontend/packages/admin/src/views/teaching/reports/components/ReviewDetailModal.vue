@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :open="visible"
     surface-id="report-review-detail-modal"
@@ -9,7 +9,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-file-document" aria-hidden="true" />
-        <span>课程反馈详情</span>
+        <span>{{ $t('course_feedback_details') }}</span>
         <span class="modal-title-sub">Report #{{ detail?.recordId || '--' }}</span>
       </span>
     </template>
@@ -17,15 +17,15 @@
     <!-- 基本信息 3x3 网格 -->
     <section class="info-grid">
       <div class="info-cell">
-        <span class="info-label">导师</span>
+        <span class="info-label">{{ $t('mentor') }}</span>
         <div class="info-value">{{ detail?.mentorName || '--' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">学员</span>
+        <span class="info-label">{{ $t('student') }}</span>
         <div class="info-value">{{ detail?.studentName || '--' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">状态</span>
+        <span class="info-label">{{ $t('status') }}</span>
         <div>
           <span :class="['status-tag', `status-tag--${statusTone(detail?.status)}`]">
             {{ formatStatus(detail?.status) }}
@@ -33,15 +33,15 @@
         </div>
       </div>
       <div class="info-cell">
-        <span class="info-label">课程类型</span>
+        <span class="info-label">{{ $t('course_type') }}</span>
         <div>{{ detail?.courseType || '--' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">日期</span>
+        <span class="info-label">{{ $t('date') }}</span>
         <div>{{ formatDate(detail?.classDate) }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">学习时长</span>
+        <span class="info-label">{{ $t('study_duration') }}</span>
         <div>{{ formatHours(detail?.durationHours) }}</div>
       </div>
       <div class="info-cell">
@@ -74,27 +74,27 @@
 
     <!-- 课程反馈内容 -->
     <section class="detail-section">
-      <label class="section-label">课程反馈内容</label>
-      <div class="section-content section-content--tall">{{ detail?.feedbackContent || '暂无课程反馈内容' }}</div>
+      <label class="section-label">{{ $t('course_feedback_content') }}</label>
+      <div class="section-content section-content--tall">{{ detail?.feedbackContent || $t('no_course_feedback_content') }}</div>
     </section>
 
     <!-- 审核备注 -->
     <section class="detail-section">
-      <label class="section-label">审核备注</label>
+      <label class="section-label">{{ $t('review_notes_2') }}</label>
       <a-textarea
         v-model:value="remark"
         :rows="3"
-        placeholder="输入审核备注（可选）"
+        :placeholder="`${$t('enter_review_notes_optional')}）`"
       />
     </section>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ $t('close') }}</a-button>
       <a-button danger :disabled="submitting" @click="handleReject">
-        <span class="mdi mdi-close" aria-hidden="true" style="margin-right:4px" />驳回
+        <span class="mdi mdi-close" aria-hidden="true" style="margin-right:4px" />{{ $t('reject_2') }}
       </a-button>
       <a-button type="primary" :disabled="submitting" @click="handleApprove">
-        <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px" />通过
+        <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px" />{{ $t('approve') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -246,3 +246,4 @@ const statusTone = (value?: string | null) => {
 }
 
 </style>
+

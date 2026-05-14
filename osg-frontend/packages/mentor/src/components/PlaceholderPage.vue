@@ -3,9 +3,9 @@
     <PageHeader :title-zh="title" />
     <div class="placeholder-card">
       <i class="mdi mdi-clock-outline placeholder-icon" />
-      <h2 class="placeholder-title">敬请期待</h2>
+      <h2 class="placeholder-title">{{ $t('stay_tuned') }}</h2>
       <p class="placeholder-en">Coming Soon</p>
-      <p class="placeholder-desc">功能正在开发中，请稍后再来</p>
+      <p class="placeholder-desc">{{ $t('feature_under_development_please_check_b') }}</p>
     </div>
   </div>
 </template>

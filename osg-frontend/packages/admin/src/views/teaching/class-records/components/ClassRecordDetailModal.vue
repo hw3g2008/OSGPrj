@@ -9,14 +9,14 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-file-document-outline" aria-hidden="true"></span>
-        <span>课程记录详情</span>
+        <span>{{ $t('course_record_details') }}</span>
         <span class="class-record-detail-modal__title-sub">#{{ detail?.recordId || '--' }}</span>
       </span>
     </template>
 
     <div v-if="loading" class="class-record-detail-modal__loading">
       <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-      <span>正在加载课程记录详情...</span>
+      <span>{{ $t('loading_course_record_details') }}...</span>
     </div>
 
     <template v-else>
@@ -27,61 +27,61 @@
         </div>
         <div class="class-record-detail-modal__grid">
           <div class="class-record-detail-modal__cell">
-            <span class="class-record-detail-modal__label">学员</span>
+            <span class="class-record-detail-modal__label">{{ $t('student') }}</span>
             <strong>{{ detail?.studentName || '--' }} <span v-if="detail?.studentId" class="class-record-detail-modal__sub-text">({{ detail.studentId }})</span></strong>
           </div>
           <div class="class-record-detail-modal__cell">
-            <span class="class-record-detail-modal__label">申报人</span>
+            <span class="class-record-detail-modal__label">{{ $t('submitter') }}</span>
             <strong>{{ detail?.mentorName || '--' }} <a-tag v-if="detail?.courseSource" size="small" color="blue">{{ normalizeSourceLabel(detail.courseSource) }}</a-tag></strong>
           </div>
           <div class="class-record-detail-modal__cell">
-            <span class="class-record-detail-modal__label">辅导内容</span>
+            <span class="class-record-detail-modal__label">{{ $t('coaching_content') }}</span>
             <strong>{{ normalizeCourseType(detail?.courseType) }}<span v-if="detail?.coachingCompany" class="class-record-detail-modal__company"> {{ detail.coachingCompany }}</span></strong>
           </div>
           <div class="class-record-detail-modal__cell">
-            <span class="class-record-detail-modal__label">课程内容</span>
+            <span class="class-record-detail-modal__label">{{ $t('course_content') }}</span>
             <strong><a-tag v-if="detail?.classStatus" color="processing">{{ detail.classStatus }}</a-tag><span v-else>--</span></strong>
           </div>
           <div class="class-record-detail-modal__cell">
-            <span class="class-record-detail-modal__label">上课日期</span>
+            <span class="class-record-detail-modal__label">{{ $t('course_date') }}</span>
             <strong>{{ formatDate(detail?.classDate) }}</strong>
           </div>
           <div class="class-record-detail-modal__cell">
-            <span class="class-record-detail-modal__label">时长</span>
-            <strong>{{ detail?.durationHours ? detail.durationHours + '小时' : '--' }}</strong>
+            <span class="class-record-detail-modal__label">{{ $t('duration') }}</span>
+            <strong>{{ detail?.durationHours ? detail.durationHours + $t('hours') : '--' }}</strong>
           </div>
           <div class="class-record-detail-modal__cell">
-            <span class="class-record-detail-modal__label">课时费</span>
+            <span class="class-record-detail-modal__label">{{ $t('session_fee') }}</span>
             <strong class="class-record-detail-modal__fee">{{ formatFee(detail?.courseFee) }}</strong>
           </div>
           <div class="class-record-detail-modal__cell">
-            <span class="class-record-detail-modal__label">提交时间</span>
+            <span class="class-record-detail-modal__label">{{ $t('submission_time') }}</span>
             <strong>{{ formatDateTime(detail?.submittedAt) }}</strong>
           </div>
         </div>
       </section>
 
       <section v-if="detail?.feedbackContent" class="class-record-detail-modal__section">
-        <span class="class-record-detail-modal__section-title">课程反馈</span>
+        <span class="class-record-detail-modal__section-title">{{ $t('course_feedback') }}</span>
         <div class="class-record-detail-modal__content">{{ detail.feedbackContent }}</div>
       </section>
 
       <section class="class-record-detail-modal__section">
-        <span class="class-record-detail-modal__section-title">附件</span>
+        <span class="class-record-detail-modal__section-title">{{ $t('attachment') }}</span>
         <div v-if="detail?.attachments && detail.attachments.length > 0" class="class-record-detail-modal__attachments">
           <div v-for="att in detail.attachments" :key="att.attachmentId" class="class-record-detail-modal__att-card" @click="handleDownload(att.filePath)">
             <span class="mdi mdi-file-pdf-box class-record-detail-modal__att-icon" aria-hidden="true"></span>
             <div class="class-record-detail-modal__att-info">
-              <span class="class-record-detail-modal__att-name">{{ att.fileName || '未命名文件' }}</span>
+              <span class="class-record-detail-modal__att-name">{{ att.fileName || $t('unnamed_file') }}</span>
               <span class="class-record-detail-modal__att-size">{{ formatFileSize(att.fileSize) }}</span>
             </div>
           </div>
         </div>
-        <div v-else class="class-record-detail-modal__empty">暂无附件</div>
+        <div v-else class="class-record-detail-modal__empty">{{ $t('no_attachments') }}</div>
       </section>
 
       <section v-if="detail?.rate" class="class-record-detail-modal__section">
-        <span class="class-record-detail-modal__section-title">学员评价</span>
+        <span class="class-record-detail-modal__section-title">{{ $t('student_feedback') }}</span>
         <div>⭐ {{ detail.rate }}</div>
       </section>
 
@@ -96,17 +96,17 @@
       </section>
 
       <section class="class-record-detail-modal__section">
-        <span class="class-record-detail-modal__section-title">审核结果</span>
+        <span class="class-record-detail-modal__section-title">{{ $t('review_result') }}</span>
         <div class="class-record-detail-modal__review-result">
           <a-tag :color="statusTagColor(detail?.status)">{{ formatStatus(detail?.status) }}</a-tag>
           <span v-if="detail?.reviewRemark" class="class-record-detail-modal__content">{{ detail.reviewRemark }}</span>
-          <span v-else style="color:#64748b">暂无审核备注</span>
+          <span v-else style="color:#64748b">{{ $t('no_review_notes') }}</span>
         </div>
       </section>
     </template>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ $t('close') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -114,7 +114,9 @@
 <script setup lang="ts">
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { ReportRow } from '@osg/shared/api/admin/report'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 defineProps<{
   visible: boolean
   detail?: ReportRow | null
@@ -136,9 +138,9 @@ const formatDate = (value?: string | null) => {
 
 const formatStatus = (value?: string | null) => {
   if (!value) return '--'
-  if (value === 'approved') return '已通过'
-  if (value === 'rejected') return '已驳回'
-  return '待审核'
+  if (value === 'approved') return t('approved')
+  if (value === 'rejected') return t('rejected_3')
+  return t('pending_review')
 }
 
 const statusTagColor = (value?: string | null) => {
@@ -149,16 +151,16 @@ const statusTagColor = (value?: string | null) => {
 
 const normalizeCourseType = (v?: string | null) => {
   if (!v) return '--'
-  if (v.toLowerCase().includes('mock') || v === 'mock_practice') return '模拟应聘'
-  if (v.toLowerCase().includes('position') || v === 'position_coaching') return '岗位辅导'
+  if (v.toLowerCase().includes('mock') || v === 'mock_practice') return t('mock_application')
+  if (v.toLowerCase().includes('position') || v === 'position_coaching') return t('position_coaching')
   return v
 }
 
 const normalizeSourceLabel = (v?: string | null) => {
   if (!v) return '--'
-  if (v === 'mentor') return '导师'
-  if (v === 'headteacher') return '班主任'
-  if (v === 'assistant') return '助教'
+  if (v === 'mentor') return t('mentor')
+  if (v === 'headteacher') return t('head_teacher')
+  if (v === 'assistant') return t('teaching_assistant')
   return v
 }
 

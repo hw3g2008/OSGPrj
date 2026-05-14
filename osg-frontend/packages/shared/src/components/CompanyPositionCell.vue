@@ -12,7 +12,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 /**
  * 公司 + 岗位 + 地点 cell（三端共用）
  *
@@ -55,7 +57,7 @@ const props = withDefaults(
     location: '',
     role: '',
     companyFallback: '-',
-    locationFallback: '地区待补充',
+    locationFallback: '',
     metaSeparator: ' · ',
     metaMode: 'position-location',
     highlight: false,
@@ -74,7 +76,7 @@ const metaText = computed(() => {
   }
   // position-location mode
   const pos = String(props.position ?? '').trim() || '-'
-  const loc = String(props.location ?? '').trim() || props.locationFallback
+  const loc = String(props.location ?? '').trim() || props.locationFallback || t('area_to_be_added')
   return `${pos}${props.metaSeparator}${loc}`
 })
 </script>

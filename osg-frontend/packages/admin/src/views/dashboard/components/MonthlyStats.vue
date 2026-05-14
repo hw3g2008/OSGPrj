@@ -3,7 +3,7 @@
     <div class="dashboard-card__header">
       <span class="dashboard-card__title monthly-stats__title-wrap">
         <span class="mdi mdi-calendar-month monthly-stats__title-icon" />
-        <span>本月统计</span>
+        <span>{{ $t('statistics_for_this_month') }}</span>
       </span>
     </div>
     <div v-if="data" class="dashboard-card__body monthly-stats__body">
@@ -16,14 +16,16 @@
         <span class="monthly-stats__value" :style="item.style">{{ item.value }}</span>
       </div>
     </div>
-    <div v-else class="dashboard-card__body monthly-stats__empty">暂无数据</div>
+    <div v-else class="dashboard-card__body monthly-stats__empty">{{ $t('no_data_available') }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { MonthlyStatsData } from '@/api/dashboard'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   data: MonthlyStatsData | null
 }>()
@@ -32,11 +34,11 @@ const items = computed(() => {
   const d = props.data
   if (!d) return []
   return [
-    { label: '新增学员', value: String(d.newStudents), style: {} },
-    { label: '新签合同', value: `$${d.newContracts.toLocaleString()}`, style: {} },
-    { label: '已审课时', value: `${d.approvedClassHours}条`, style: {} },
-    { label: '课时消耗', value: `${d.classHoursConsumed}h`, style: {} },
-    { label: '已结算金额', value: `$${d.settledAmount.toLocaleString()}`, style: { color: 'var(--success, #22C55E)' } },
+    { label: t('new_students'), value: String(d.newStudents), style: {} },
+    { label: t('new_contracts'), value: `${d.newContracts.toLocaleString()}`, style: {} },
+    { label: t('reviewed_hours'), value: t('record_count_with_value', { count: d.approvedClassHours }), style: {} },
+    { label: t('hours_used'), value: `${d.classHoursConsumed}h`, style: {} },
+    { label: t('settled_amount'), value: `${d.settledAmount.toLocaleString()}`, style: { color: 'var(--success, #22C55E)' } },
   ]
 })
 </script>

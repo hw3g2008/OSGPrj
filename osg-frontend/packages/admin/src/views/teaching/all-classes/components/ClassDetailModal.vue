@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :open="visible"
     surface-id="all-classes-detail-modal"
@@ -16,45 +16,45 @@
     <!-- 基本信息 3x3 网格 -->
     <section class="info-grid" :class="infoGridClass">
       <div class="info-cell">
-        <span class="info-label">课程ID</span>
+        <span class="info-label">{{ $t('course') }}ID</span>
         <div class="info-value info-value--bold">{{ detail?.classId || `C${detail?.recordId || '--'}` }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">提交来源</span>
+        <span class="info-label">{{ $t('submission_source') }}</span>
         <div>
           <span class="source-badge" :style="sourceBadgeStyle">{{ detail?.sourceLabel || '--' }}</span>
         </div>
       </div>
       <div class="info-cell">
-        <span class="info-label">状态</span>
+        <span class="info-label">{{ $t('status') }}</span>
         <div>
           <span class="status-tag" :class="`status-tag--${detail?.displayStatus}`">{{ detail?.displayStatusLabel || '--' }}</span>
         </div>
       </div>
       <div class="info-cell">
-        <span class="info-label">导师</span>
+        <span class="info-label">{{ $t('mentor') }}</span>
         <div class="info-value">{{ detail?.mentorName || '--' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">学员</span>
+        <span class="info-label">{{ $t('student') }}</span>
         <div class="info-value">{{ detail?.studentName || '--' }} {{ detail?.studentId ? `(ID: ${detail.studentId})` : '' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">课程类型</span>
+        <span class="info-label">{{ $t('course_type') }}</span>
         <div>
           <span class="type-tag" :class="courseTypeTagClass">{{ detail?.courseTypeLabel || '--' }}</span>
         </div>
       </div>
       <div class="info-cell">
-        <span class="info-label">上课日期</span>
+        <span class="info-label">{{ $t('course_date') }}</span>
         <div>{{ formatDate(detail?.classDate) }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">课时</span>
-        <div class="info-value info-value--bold">{{ detail?.durationHours != null ? `${detail.durationHours} 小时` : '--' }}</div>
+        <span class="info-label">{{ $t('class_hours') }}</span>
+        <div class="info-value info-value--bold">{{ detail?.durationHours != null ? `${detail.durationHours} ${$t('hours')}` : '--' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">课时费</span>
+        <span class="info-label">{{ $t('session_fee') }}</span>
         <div class="info-value info-value--fee" :class="{ 'info-value--strikethrough': detail?.displayStatus === 'rejected' }">
           {{ detail?.courseFee ? `$${detail.courseFee}` : '--' }}
         </div>
@@ -65,7 +65,7 @@
     <section v-if="detail?.topics && showTopicSection" class="detail-section">
       <label class="section-label">
         <span class="mdi mdi-tag section-label-icon" aria-hidden="true" />
-        课程主题
+        {{ $t('course_topic') }}
       </label>
       <div class="section-content">{{ detail.topics }}</div>
     </section>
@@ -74,33 +74,33 @@
     <section v-if="modalType === 'mock'" class="feedback-panel feedback-panel--mock">
       <div class="feedback-badge-row">
         <span class="feedback-badge feedback-badge--mock">
-          <span class="mdi mdi-comment-text" aria-hidden="true" /> 面试辅导反馈
+          <span class="mdi mdi-comment-text" aria-hidden="true" /> {{ $t('interview_coaching_feedback') }}
         </span>
       </div>
       <div class="feedback-meta-row">
         <div class="feedback-meta-item">
-          <span class="info-label">学员表现</span>
+          <span class="info-label">{{ $t('student_performance') }}</span>
           <div class="feedback-meta-value feedback-meta-value--success">{{ detail?.performanceLabel || '--' }}</div>
         </div>
         <div class="feedback-meta-item">
-          <span class="info-label">评分</span>
+          <span class="info-label">{{ $t('score') }}</span>
           <div class="feedback-meta-value feedback-meta-value--star">{{ detail?.rate ? `\u2B50 ${detail.rate}` : '--' }}</div>
         </div>
       </div>
       <div v-if="detail?.feedbackPurpose" class="feedback-field">
-        <label class="feedback-field-label">本次课程目的</label>
+        <label class="feedback-field-label">{{ $t('course_objectives') }}</label>
         <div class="feedback-field-content">{{ detail.feedbackPurpose }}</div>
       </div>
       <div v-if="detail?.feedbackKnowledge" class="feedback-field">
-        <label class="feedback-field-label">本次课程涉及的知识点</label>
+        <label class="feedback-field-label">{{ $t('knowledge_points_covered') }}</label>
         <div class="feedback-field-content" v-html="nl2br(detail.feedbackKnowledge)" />
       </div>
       <div v-if="detail?.feedbackImprovement" class="feedback-field">
-        <label class="feedback-field-label">学员需要改进的地方</label>
+        <label class="feedback-field-label">{{ $t('areas_for_student_improvement') }}</label>
         <div class="feedback-field-content" v-html="nl2br(detail.feedbackImprovement)" />
       </div>
       <div v-if="detail?.feedbackSuggestion" class="feedback-field">
-        <label class="feedback-field-label">后续建议</label>
+        <label class="feedback-field-label">{{ $t('follow_up_recommendations') }}</label>
         <div class="feedback-field-content">{{ detail.feedbackSuggestion }}</div>
       </div>
     </section>
@@ -109,19 +109,19 @@
     <section v-if="modalType === 'entry'" class="feedback-panel feedback-panel--entry">
       <div class="feedback-badge-row">
         <span class="feedback-badge feedback-badge--entry">
-          <span class="mdi mdi-briefcase" aria-hidden="true" /> 入职培训反馈
+          <span class="mdi mdi-briefcase" aria-hidden="true" /> {{ $t('onboarding_training_feedback') }}
         </span>
       </div>
       <div v-if="detail?.feedbackPurpose" class="feedback-field">
-        <label class="feedback-field-label">本次课程目的</label>
+        <label class="feedback-field-label">{{ $t('course_objectives') }}</label>
         <div class="feedback-field-content">{{ detail.feedbackPurpose }}</div>
       </div>
       <div v-if="detail?.feedbackKnowledge" class="feedback-field">
-        <label class="feedback-field-label">本次课程涉及的知识点</label>
+        <label class="feedback-field-label">{{ $t('knowledge_points_covered') }}</label>
         <div class="feedback-field-content" v-html="nl2br(detail.feedbackKnowledge)" />
       </div>
       <div v-if="detail?.feedbackSuggestion" class="feedback-field">
-        <label class="feedback-field-label">后续建议</label>
+        <label class="feedback-field-label">{{ $t('follow_up_recommendations') }}</label>
         <div class="feedback-field-content">{{ detail.feedbackSuggestion }}</div>
       </div>
     </section>
@@ -130,29 +130,29 @@
     <section v-if="modalType === 'midterm'" class="feedback-panel feedback-panel--midterm">
       <div class="feedback-badge-row">
         <span class="feedback-badge feedback-badge--midterm">
-          <span class="mdi mdi-school" aria-hidden="true" /> 模拟期中考试反馈
+          <span class="mdi mdi-school" aria-hidden="true" /> {{ $t('mock_midterm_exam_feedback') }}
         </span>
       </div>
       <div class="midterm-scores">
         <div class="midterm-score-card">
-          <div class="midterm-score-label">考试分数</div>
+          <div class="midterm-score-label">{{ $t('exam_score') }}</div>
           <div class="midterm-score-value midterm-score-value--amber">{{ detail?.examScore ?? '--' }}</div>
         </div>
         <div class="midterm-score-card">
-          <div class="midterm-score-label">学员表现</div>
+          <div class="midterm-score-label">{{ $t('student_performance') }}</div>
           <div class="midterm-score-value midterm-score-value--success">{{ detail?.performanceLabel || '--' }}</div>
         </div>
         <div class="midterm-score-card">
-          <div class="midterm-score-label">评分</div>
+          <div class="midterm-score-label">{{ $t('score') }}</div>
           <div class="midterm-score-value midterm-score-value--star">{{ detail?.rate ? `\u2B50 ${detail.rate}` : '--' }}</div>
         </div>
       </div>
       <div v-if="detail?.assessmentTopic" class="feedback-field">
-        <label class="feedback-field-label">考核题目</label>
+        <label class="feedback-field-label">{{ $t('assessment_questions') }}</label>
         <div class="feedback-field-content">{{ detail.assessmentTopic }}</div>
       </div>
       <div v-if="detail?.feedbackContent" class="feedback-field">
-        <label class="feedback-field-label">详细反馈</label>
+        <label class="feedback-field-label">{{ $t('detailed_feedback') }}</label>
         <div class="feedback-field-content">{{ detail.feedbackContent }}</div>
       </div>
     </section>
@@ -161,45 +161,45 @@
     <section v-if="modalType === 'networking'" class="feedback-panel feedback-panel--networking">
       <div class="feedback-badge-row">
         <span class="feedback-badge feedback-badge--networking">
-          <span class="mdi mdi-account-group" aria-hidden="true" /> 人际关系考核反馈
+          <span class="mdi mdi-account-group" aria-hidden="true" /> {{ $t('networking_assessment_feedback') }}
         </span>
       </div>
       <div class="networking-scores">
         <div class="networking-score-card">
-          <div class="networking-score-label">邮件质量</div>
+          <div class="networking-score-label">{{ $t('email_quality') }}</div>
           <div class="networking-score-value">{{ detail?.emailQuality ?? '--' }}<span class="networking-score-base">/5</span></div>
         </div>
         <div class="networking-score-card">
-          <div class="networking-score-label">邮件礼仪</div>
+          <div class="networking-score-label">{{ $t('email_etiquette') }}</div>
           <div class="networking-score-value">{{ detail?.etiquetteScore ?? '--' }}<span class="networking-score-base">/5</span></div>
         </div>
         <div class="networking-score-card">
-          <div class="networking-score-label">通话质量</div>
+          <div class="networking-score-label">{{ $t('call_quality') }}</div>
           <div class="networking-score-value">{{ detail?.callQuality ?? '--' }}<span class="networking-score-base">/10</span></div>
         </div>
         <div class="networking-score-card">
-          <div class="networking-score-label">自我介绍</div>
+          <div class="networking-score-label">{{ $t('self_introduction') }}</div>
           <div class="networking-score-value">{{ detail?.selfIntroScore ?? '--' }}<span class="networking-score-base">/10</span></div>
         </div>
         <div class="networking-score-card">
-          <div class="networking-score-label">感谢邮件</div>
+          <div class="networking-score-label">{{ $t('thank_you_email') }}</div>
           <div class="networking-score-value">{{ detail?.thankYouScore ?? '--' }}<span class="networking-score-base">/3</span></div>
         </div>
         <div class="networking-score-card">
-          <div class="networking-score-label">是否推荐</div>
+          <div class="networking-score-label">{{ $t('recommendation') }}</div>
           <div class="networking-score-value" :class="detail?.recommended ? 'networking-score-value--success' : ''">
-            {{ detail?.recommended ? '是' : '否' }}
+            {{ detail?.recommended ? 'Yes' : 'No' }}
           </div>
         </div>
       </div>
       <div v-if="detail?.feedbackContent" class="feedback-field">
-        <label class="feedback-field-label">补充说明</label>
+        <label class="feedback-field-label">{{ $t('additional_notes') }}</label>
         <div class="feedback-field-content">{{ detail.feedbackContent }}</div>
       </div>
       <!-- 支付信息 -->
       <div v-if="detail?.displayStatus === 'paid'" class="payment-info">
-        <span class="mdi mdi-check-circle" aria-hidden="true" /> 已支付
-        <span v-if="detail?.paidDate" class="payment-date">支付日期：{{ detail.paidDate }}</span>
+        <span class="mdi mdi-check-circle" aria-hidden="true" /> {{ $t('paid') }}
+        <span v-if="detail?.paidDate" class="payment-date">{{ $t('payment_date') }}：{{ detail.paidDate }}</span>
       </div>
     </section>
 
@@ -207,23 +207,23 @@
     <section v-if="modalType === 'written'" class="feedback-panel feedback-panel--written">
       <div class="feedback-badge-row">
         <span class="feedback-badge feedback-badge--written">
-          <span class="mdi mdi-pencil" aria-hidden="true" /> 笔试辅导反馈
+          <span class="mdi mdi-pencil" aria-hidden="true" /> {{ $t('written_test_coaching_feedback') }}
         </span>
       </div>
       <div v-if="detail?.feedbackPurpose" class="feedback-field">
-        <label class="feedback-field-label">本次课程目的</label>
+        <label class="feedback-field-label">{{ $t('course_objectives') }}</label>
         <div class="feedback-field-content">{{ detail.feedbackPurpose }}</div>
       </div>
       <div v-if="detail?.feedbackKnowledge" class="feedback-field">
-        <label class="feedback-field-label">本次课程涉及的知识点</label>
+        <label class="feedback-field-label">{{ $t('knowledge_points_covered') }}</label>
         <div class="feedback-field-content" v-html="nl2br(detail.feedbackKnowledge)" />
       </div>
       <div v-if="detail?.feedbackImprovement" class="feedback-field">
-        <label class="feedback-field-label">学员需要改进的地方</label>
+        <label class="feedback-field-label">{{ $t('areas_for_student_improvement') }}</label>
         <div class="feedback-field-content" v-html="nl2br(detail.feedbackImprovement)" />
       </div>
       <div v-if="detail?.feedbackSuggestion" class="feedback-field">
-        <label class="feedback-field-label">后续建议</label>
+        <label class="feedback-field-label">{{ $t('follow_up_recommendations') }}</label>
         <div class="feedback-field-content">{{ detail.feedbackSuggestion }}</div>
       </div>
     </section>
@@ -232,37 +232,37 @@
     <section v-if="modalType === 'rejected'" class="feedback-panel feedback-panel--rejected">
       <div class="feedback-badge-row">
         <span class="feedback-badge feedback-badge--rejected">
-          <span class="mdi mdi-close-circle" aria-hidden="true" /> 驳回原因
+          <span class="mdi mdi-close-circle" aria-hidden="true" /> {{ $t('rejection_reason_2') }}
         </span>
       </div>
       <div class="rejected-content">
-        {{ detail?.reviewRemark || '暂无驳回原因' }}
+        {{ detail?.reviewRemark || $t('no_rejection_reason_provided') }}
       </div>
       <div v-if="detail?.rejectedAt" class="rejected-meta">
-        <span class="mdi mdi-clock" aria-hidden="true" /> 驳回时间：{{ detail.rejectedAt }} | 审核人：{{ detail?.reviewerName || 'Admin' }}
+        <span class="mdi mdi-clock" aria-hidden="true" /> {{ $t('rejection_time') }}：{{ detail.rejectedAt }} | {{ $t('reviewer') }}：{{ detail?.reviewerName || 'Admin' }}
       </div>
     </section>
 
     <!-- 审核操作区 (entry / written 待审核) -->
     <section v-if="isPendingReview" class="review-section">
       <label class="review-label">
-        <span class="mdi mdi-comment-edit" aria-hidden="true" /> 审核备注
+        <span class="mdi mdi-comment-edit" aria-hidden="true" /> {{ $t('review_notes_2') }}
       </label>
       <a-textarea
         v-model:value="reviewRemark"
         :rows="2"
-        placeholder="输入审核备注（可选）"
+        :placeholder="$t('enter_review_notes_optional')"
       />
     </section>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ $t('close') }}</a-button>
       <template v-if="isPendingReview">
         <a-button danger @click="handleReject">
-          <span class="mdi mdi-close" aria-hidden="true" style="margin-right:4px" />驳回
+          <span class="mdi mdi-close" aria-hidden="true" style="margin-right:4px" />{{ $t('reject_2') }}
         </a-button>
         <a-button type="primary" @click="handleApprove">
-          <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px" />通过
+          <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px" />{{ $t('approve') }}
         </a-button>
       </template>
     </template>
@@ -273,7 +273,9 @@
 import { computed, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
 import type { AllClassesDetail } from '@osg/shared/api/admin/allClasses'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = withDefaults(defineProps<{
   visible: boolean
   detail?: AllClassesDetail | null
@@ -297,21 +299,21 @@ const modalType = computed(() => props.detail?.modalType || 'entry')
 
 const headerTitle = computed(() => {
   const titles: Record<string, string> = {
-    mock: '课程详情 - 模拟面试',
-    entry: '课程审核 - 入职面试',
-    midterm: '课程详情 - 模拟期中考试',
-    networking: '课程详情 - 人际关系期中考试',
-    written: '课程审核 - 笔试辅导',
-    rejected: '课程详情 - 已驳回'
+    mock: t('course_details_mock_interview'),
+    entry: t('course_review_interview'),
+    midterm: t('course_details_mock_midterm_exam'),
+    networking: t('course_details_networking_midterm_exam'),
+    written: t('course_review_written_test_coaching'),
+    rejected: t('course_details_rejected')
   }
   if (props.detail?.displayStatus === 'pending') {
     const reviewTitles: Record<string, string> = {
-      entry: '课程审核 - 入职面试',
-      written: '课程审核 - 笔试辅导'
+      entry: t('course_review_interview'),
+      written: t('course_review_written_test_coaching')
     }
-    return reviewTitles[modalType.value] || titles[modalType.value] || '课程详情'
+    return reviewTitles[modalType.value] || titles[modalType.value] || t('course_details')
   }
-  return titles[modalType.value] || '课程详情'
+  return titles[modalType.value] || t('course_details')
 })
 
 const headerGradientStyle = computed(() => {
@@ -698,3 +700,4 @@ const nl2br = (text: string) => {
 }
 
 </style>
+

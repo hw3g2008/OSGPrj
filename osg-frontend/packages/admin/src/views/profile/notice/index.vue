@@ -1,21 +1,21 @@
 <template>
   <section class="osg-page">
-    <PageHeader title-zh="通知管理" description="向学员和导师发送通知">
+    <PageHeader :title-zh="$t('notification_management')" :description="$t('send_notifications_to_students_and_mento')">
       <template #actions>
         <a-button type="primary" @click="showSendNoticeModal = true">
           <template #icon><BellOutlined /></template>
-          发送通知
+          {{ $t('send_notification') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
       <a-form-item>
-        <a-input v-model:value="keyword" placeholder="标题 / 接收人" allow-clear style="width: 200px" />
+        <a-input v-model:value="keyword" :placeholder="$t('title_recipient')" allow-clear style="width: 200px" />
       </a-form-item>
       <a-form-item>
-        <a-select v-model:value="receiverType" placeholder="类型" allow-clear style="width: 120px">
-          <a-select-option value="">类型</a-select-option>
+        <a-select v-model:value="receiverType" :placeholder="$t('type')" allow-clear style="width: 120px">
+          <a-select-option value="">{{ $t('type') }}</a-select-option>
           <a-select-option value="Lead">Lead</a-select-option>
           <a-select-option value="Mentor">Mentor</a-select-option>
           <a-select-option value="Student">Student</a-select-option>
@@ -27,7 +27,7 @@
       <a-form-item>
         <a-button type="primary" @click="loadNotices">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ $t('search') }}
         </a-button>
       </a-form-item>
     </a-form>
@@ -65,7 +65,7 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-button type="link" size="small" @click="activeNotice = record">
-              查看
+              {{ $t('view') }}
             </a-button>
           </template>
         </template>
@@ -93,7 +93,9 @@ import {
   type NoticeRow,
   type SendNoticePayload
 } from '@osg/shared/api/admin/notice'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const rows = ref<NoticeRow[]>([])
 const keyword = ref('')
 const receiverType = ref<string>('')
@@ -104,12 +106,12 @@ const activeNotice = ref<NoticeRow | null>(null)
 
 const columns = [
   { title: 'ID', dataIndex: 'noticeId', key: 'noticeId' },
-  { title: '接收人', dataIndex: 'receiverLabel', key: 'receiverLabel' },
-  { title: '类型', dataIndex: 'receiverType', key: 'receiverType' },
+  { title: t('recipient'), dataIndex: 'receiverLabel', key: 'receiverLabel' },
+  { title: t('type'), dataIndex: 'receiverType', key: 'receiverType' },
   { title: 'Tag', dataIndex: 'tag', key: 'tag' },
-  { title: '标题', dataIndex: 'noticeTitle', key: 'noticeTitle' },
-  { title: '更新时间', dataIndex: 'createTime', key: 'createTime' },
-  { title: '操作', dataIndex: 'action', key: 'action' }
+  { title: t('title'), dataIndex: 'noticeTitle', key: 'noticeTitle' },
+  { title: t('updated_at'), dataIndex: 'createTime', key: 'createTime' },
+  { title: t('operation'), dataIndex: 'action', key: 'action' }
 ]
 
 const loadNotices = async () => {
@@ -120,7 +122,7 @@ const loadNotices = async () => {
     })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('通知列表加载失败')
+    message.error(t('failed_to_load_notification_list'))
   }
 }
 
@@ -129,7 +131,7 @@ const handleSendNotice = async (payload: SendNoticePayload) => {
   try {
     await sendNotice(payload)
     showSendNoticeModal.value = false
-    message.success('通知发送成功')
+    message.success(t('notification_sent_successfully'))
     await loadNotices()
   } catch (_error) {
     // request util handles error message

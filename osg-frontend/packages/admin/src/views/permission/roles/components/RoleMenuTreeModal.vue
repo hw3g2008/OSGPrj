@@ -9,23 +9,23 @@
     <template #title>
       <span class="role-tree-modal__title">
         <span class="mdi mdi-account-key role-tree-modal__title-icon" aria-hidden="true" />
-        <span>配置菜单树</span>
+        <span>{{ $t('configure_menu_tree') }}</span>
       </span>
     </template>
 
     <div class="role-tree-modal__meta">
       <div class="role-tree-modal__meta-card">
-        <span class="role-tree-modal__meta-label">角色名称</span>
-        <strong>{{ role?.roleName || '未选择角色' }}</strong>
+        <span class="role-tree-modal__meta-label">{{ $t('role_name') }}</span>
+        <strong>{{ role?.roleName || $t('no_role_selected') }}</strong>
       </div>
       <div class="role-tree-modal__meta-card">
-        <span class="role-tree-modal__meta-label">角色 Key</span>
+        <span class="role-tree-modal__meta-label">{{ $t('role') }} Key</span>
         <strong>{{ role?.roleKey || '--' }}</strong>
       </div>
     </div>
 
     <p class="role-tree-modal__tip">
-      勾选目录会自动选中其下所有子菜单。取消目录勾选将同时移除子菜单权限。
+      {{ $t('selecting_a_directory_automatically_sele') }}。
     </p>
 
     <div id="role-menu-tree" class="role-tree-modal__tree" data-content-part="tree-shell">
@@ -39,8 +39,8 @@
             :checked="isGroupChecked(group)"
             @change="(e: any) => toggleGroup(group, e.target.checked)"
           >
-            <span class="mdi" :class="inferGroupIcon(group.label)" aria-hidden="true" />
-            <span>{{ group.label }}</span>
+            <span class="mdi" :class="inferGroupIcon(group)" aria-hidden="true" />
+            <span>{{ displayLabel(group) }}</span>
           </a-checkbox>
         </div>
 
@@ -52,7 +52,7 @@
                 @change="(e: any) => toggleNode(node.id, e.target.checked)"
               >
                 <span class="mdi mdi-view-list" aria-hidden="true" />
-                <span>{{ node.label }}</span>
+                <span>{{ displayLabel(node) }}</span>
               </a-checkbox>
             </div>
 
@@ -64,7 +64,7 @@
                 @change="(e: any) => toggleNode(child.id, e.target.checked)"
               >
                 <span class="mdi mdi-radiobox-marked" aria-hidden="true" />
-                <span>{{ child.label }}</span>
+                <span>{{ displayLabel(child) }}</span>
               </a-checkbox>
             </div>
           </template>
@@ -73,8 +73,8 @@
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" @click="handleSubmit">保存授权</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" @click="handleSubmit">{{ $t('save_permissions') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -82,12 +82,19 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { resolveMenuDisplayName } from '@osg/shared/utils/menuI18n'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type MenuNode = {
   id: number
   label: string
+  i18nKey?: string
   children?: MenuNode[]
 }
+
+const displayLabel = (node: MenuNode) =>
+  resolveMenuDisplayName({ menuName: node.label, i18nKey: node.i18nKey }, t)
 
 const props = defineProps<{
   visible: boolean
@@ -113,16 +120,25 @@ watch(
   { immediate: true },
 )
 
-function inferGroupIcon(label: string) {
-  if (label.includes('首页')) return 'mdi-home'
-  if (label.includes('权限')) return 'mdi-shield-key'
-  if (label.includes('用户')) return 'mdi-account-group'
-  if (label.includes('教学')) return 'mdi-book-open-variant'
-  if (label.includes('求职')) return 'mdi-briefcase'
-  if (label.includes('财务')) return 'mdi-cash'
-  if (label.includes('资源')) return 'mdi-folder'
-  if (label.includes('个人')) return 'mdi-account-circle'
-  if (label.includes('系统')) return 'mdi-cog'
+// Stable icon map dispatching on i18nKey (locale-independent).
+const GROUP_ICON_BY_I18N_KEY: Record<string, string> = {
+  home_page: 'mdi-home',
+  permission_management: 'mdi-shield-key',
+  permission_configuration: 'mdi-shield-key',
+  user_center: 'mdi-account-group',
+  backend_user_management: 'mdi-account-group',
+  job_search_center: 'mdi-briefcase',
+  teaching_center: 'mdi-book-open-variant',
+  financial_center: 'mdi-cash',
+  resource_center: 'mdi-folder',
+  personal_center: 'mdi-account-circle',
+}
+
+function inferGroupIcon(node: MenuNode) {
+  const key = node.i18nKey?.trim()
+  if (key && GROUP_ICON_BY_I18N_KEY[key]) {
+    return GROUP_ICON_BY_I18N_KEY[key]
+  }
   return 'mdi-circle-small'
 }
 

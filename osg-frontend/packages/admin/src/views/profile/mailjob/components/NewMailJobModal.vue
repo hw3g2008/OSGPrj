@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     surface-id="modal-new-mailjob"
     :open="modelValue"
@@ -8,27 +8,27 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-email-outline" aria-hidden="true" />
-        <span>新建邮件任务</span>
+        <span>{{ $t('new_email_task') }}</span>
       </span>
     </template>
     <a-form :label-col="{ span: 24 }" layout="vertical">
-      <a-form-item label="任务标题" required>
-        <a-input v-model:value="form.jobTitle" placeholder="输入任务标题" />
+      <a-form-item :label="$t('task_title')" required>
+        <a-input v-model:value="form.jobTitle" :placeholder="$t('enter_task_title')" />
       </a-form-item>
-      <a-form-item label="收件人" required>
-        <a-select v-model:value="form.recipientGroup" placeholder="选择收件人组...">
-          <a-select-option value="全部学员">全部学员</a-select-option>
-          <a-select-option value="全部导师">全部导师</a-select-option>
-          <a-select-option value="指定班级">指定班级</a-select-option>
+      <a-form-item :label="$t('recipients')" required>
+        <a-select v-model:value="form.recipientGroup" :placeholder="`${$t('select_recipient_group')}...`">
+          <a-select-option :value="$t('all_students')">{{ $t('all_students') }}</a-select-option>
+          <a-select-option :value="$t('all_mentors')">{{ $t('all_mentors') }}</a-select-option>
+          <a-select-option :value="$t('specific_class')">{{ $t('specific_class') }}</a-select-option>
         </a-select>
       </a-form-item>
-      <a-form-item label="邮件主题" required>
-        <a-input v-model:value="form.emailSubject" placeholder="输入邮件主题" />
+      <a-form-item :label="$t('email_subject')" required>
+        <a-input v-model:value="form.emailSubject" :placeholder="$t('enter_email_subject')" />
       </a-form-item>
-      <a-form-item label="邮件内容" required>
-        <a-textarea v-model:value="form.emailContent" :rows="5" placeholder="输入邮件内容" />
+      <a-form-item :label="$t('email_content')" required>
+        <a-textarea v-model:value="form.emailContent" :rows="5" :placeholder="$t('enter_email_content')" />
       </a-form-item>
-      <a-form-item label="SMTP服务器">
+      <a-form-item :label="`SMTP${$t('server')}`">
         <a-select v-model:value="form.smtpServerName">
           <a-select-option
             v-for="server in smtpServers"
@@ -41,8 +41,8 @@
       </a-form-item>
     </a-form>
     <template #footer>
-      <a-button @click="$emit('update:modelValue', false)">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="handleConfirm">创建并发送</a-button>
+      <a-button @click="$emit('update:modelValue', false)">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleConfirm">{{ $t('create_and_send') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -100,3 +100,4 @@ const handleConfirm = () => {
   })
 }
 </script>
+

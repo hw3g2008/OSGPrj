@@ -1,31 +1,31 @@
-<template>
+﻿<template>
   <div id="page-schedule" class="page-schedule">
     <PageHeader
-      title-zh="我的排期"
+      :title-zh="$t('my_schedule')"
       title-en="My Schedule"
-      description="设置助教可用时间，每周保存后会同步下一次刷新结果。"
+      :description="`${$t('set_ta_availability_changes_sync_on_the_')}。`"
     />
 
-    <section class="schedule-banner" aria-label="排期提醒">
+    <section class="schedule-banner" :aria-label="$t('schedule_reminder')">
       <div class="schedule-banner__icon">
         <i class="mdi mdi-calendar-alert" aria-hidden="true" />
       </div>
       <div class="schedule-banner__content">
         <div class="schedule-banner__title">
           <i class="mdi mdi-alert" aria-hidden="true" />
-          请及时维护本周排期
+          {{ $t('please_update_this_weeks_schedule_in_tim') }}
         </div>
         <div class="schedule-banner__sub">
           {{ hasAvailability ? '当前排期已同步，可继续微调后保存。' : '请至少选择一天可授课时间段。' }}
         </div>
       </div>
-      <span class="schedule-banner__tag">按真实状态更新</span>
+      <span class="schedule-banner__tag">{{ $t('update_based_on_actual_status') }}</span>
     </section>
 
     <section v-if="errorMessage" class="state-card state-card--error">
-      <h2>排期加载失败</h2>
+      <h2>{{ $t('schedule_load_failed') }}</h2>
       <p>{{ errorMessage }}</p>
-      <button type="button" class="btn btn-outline" @click="loadSchedule">重新加载</button>
+      <button type="button" class="btn btn-outline" @click="loadSchedule">{{ $t('reload') }}</button>
     </section>
 
     <template v-else-if="!loading">
@@ -42,15 +42,15 @@
             <div class="status-metrics">
               <div class="status-metric">
                 <div class="status-metric__value status-metric__value--hours">{{ totalHoursLabel }}</div>
-                <div class="status-metric__label">本周可用</div>
+                <div class="status-metric__label">{{ $t('available_this_week') }}</div>
               </div>
               <div class="status-metric">
                 <div class="status-metric__value status-metric__value--days">{{ availableDayCount }}</div>
-                <div class="status-metric__label">可用天数</div>
+                <div class="status-metric__label">{{ $t('available_days') }}</div>
               </div>
               <div class="status-metric">
-                <div class="status-metric__value status-metric__value--pending">{{ lastWeekAvailable ? '可复制' : '待完善' }}</div>
-                <div class="status-metric__label">排期状态</div>
+                <div class="status-metric__value status-metric__value--pending">{{ lastWeekAvailable ? $t('copyable') : $t('needs_completion') }}</div>
+                <div class="status-metric__label">{{ $t('schedule_status') }}</div>
               </div>
             </div>
           </div>
@@ -61,28 +61,28 @@
         <div class="card-header">
           <span class="card-title">
             <i class="mdi mdi-calendar-week" aria-hidden="true" />
-            本周排期
+            {{ $t('this_week_schedule') }}
           </span>
-          <span class="card-tag">只读视图</span>
+          <span class="card-tag">{{ $t('read_only_view') }}</span>
           <span class="card-range">{{ weekRangeLabel }}</span>
         </div>
         <div class="card-body">
           <div class="schedule-stats">
             <div class="schedule-stat">
               <div class="schedule-stat__value">{{ totalHoursLabel }}</div>
-              <div class="schedule-stat__label">可用时长</div>
+              <div class="schedule-stat__label">{{ $t('available_hours') }}</div>
             </div>
             <div class="schedule-stat">
               <div class="schedule-stat__value schedule-stat__value--success">{{ availableDayCount }}</div>
-              <div class="schedule-stat__label">可用天数</div>
+              <div class="schedule-stat__label">{{ $t('available_days') }}</div>
             </div>
           </div>
 
           <div class="readonly-block">
             <label class="form-label">
               <i class="mdi mdi-calendar-check" aria-hidden="true" />
-              已设置的可用时间
-              <span class="form-label-note">(只读)</span>
+              {{ $t('set_availability') }}
+              <span class="form-label-note">({{ $t('read_only') }})</span>
             </label>
             <div class="readonly-grid">
               <article v-for="day in dayOptions" :key="day.key" class="readonly-day">
@@ -98,11 +98,11 @@
         <div class="card-header card-header--warning">
           <span class="card-title card-title--warning">
             <i class="mdi mdi-calendar-arrow-right" aria-hidden="true" />
-            编辑排期
+            {{ $t('edit_schedule') }}
           </span>
           <span class="card-range card-range--warning">
             {{ weekRangeLabel }}
-            <span class="card-tag card-tag--warning">可保存</span>
+            <span class="card-tag card-tag--warning">{{ $t('saveable') }}</span>
           </span>
         </div>
         <div class="card-body">
@@ -120,7 +120,7 @@
           <div class="form-group">
             <label class="form-label form-label--large">
               <i class="mdi mdi-clock-outline" aria-hidden="true" />
-              本周总时长
+              {{ $t('total_hours_this_week') }}
               <span class="required-mark">*</span>
             </label>
             <div class="hours-row">
@@ -132,7 +132,7 @@
                 max="80"
                 class="form-input form-input--hours"
               />
-              <span class="hours-unit">小时</span>
+              <span class="hours-unit">{{ $t('hours') }}</span>
             </div>
           </div>
 
@@ -148,10 +148,10 @@
 
           <div class="form-footer">
             <button id="assistant-schedule-copy-last-week" type="button" class="btn btn-outline" :disabled="copyingLastWeek" @click="copyLastWeek">
-              {{ copyingLastWeek ? '复制中...' : '复制上周排期' }}
+              {{ copyingLastWeek ? '复制中...' : $t('copy_last_weeks_schedule') }}
             </button>
             <button id="assistant-schedule-save" type="button" class="btn btn-primary btn-primary--warning" :disabled="saving" @click="saveSchedule">
-              {{ saving ? '保存中...' : '保存排期' }}
+              {{ saving ? '保存中...' : $t('save_schedule') }}
             </button>
           </div>
         </div>
@@ -159,8 +159,8 @@
     </template>
 
     <section v-else class="state-card">
-      <h2>排期加载中</h2>
-      <p>正在读取本周排期与上一周可复制内容，请稍候。</p>
+      <h2>{{ $t('loading_schedule') }}</h2>
+      <p>{{ $t('loading_this_weeks_schedule_and_last_wee') }}。</p>
     </section>
   </div>
 </template>
@@ -174,7 +174,9 @@ import {
   saveAssistantSchedule,
   type AssistantSchedule,
 } from '@osg/shared/api'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface NoticeState {
   type: 'success' | 'error'
   title: string
@@ -184,21 +186,21 @@ interface NoticeState {
 type DayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 
 const dayOptions: Array<{ key: DayKey; label: string }> = [
-  { key: 'monday', label: '周一' },
-  { key: 'tuesday', label: '周二' },
-  { key: 'wednesday', label: '周三' },
-  { key: 'thursday', label: '周四' },
-  { key: 'friday', label: '周五' },
-  { key: 'saturday', label: '周六' },
-  { key: 'sunday', label: '周日' },
+  { key: 'monday', label: t('monday') },
+  { key: 'tuesday', label: t('tuesday') },
+  { key: 'wednesday', label: t('wednesday') },
+  { key: 'thursday', label: t('thursday') },
+  { key: 'friday', label: t('friday') },
+  { key: 'saturday', label: t('saturday') },
+  { key: 'sunday', label: t('sunday') },
 ]
 
 const slotOptions = [
-  { value: 'unavailable', label: '不可用' },
-  { value: 'morning', label: '上午' },
-  { value: 'afternoon', label: '下午' },
-  { value: 'evening', label: '晚上' },
-  { value: 'all_day', label: '全天' },
+  { value: 'unavailable', label: t('unavailable') },
+  { value: 'morning', label: t('morning') },
+  { value: 'afternoon', label: t('afternoon') },
+  { value: 'evening', label: t('evening') },
+  { value: 'all_day', label: t('all_day') },
 ]
 
 const loading = ref(true)
@@ -257,7 +259,7 @@ function normalizeSlotValue(value?: string) {
 }
 
 function slotLabel(value?: string) {
-  return slotOptions.find((option) => option.value === value)?.label || '不可用'
+  return slotOptions.find((option) => option.value === value)?.label || t('unavailable')
 }
 
 function hasSchedulePayload(value: AssistantSchedule | null | undefined) {
@@ -289,15 +291,15 @@ function validateSchedule() {
   scheduleNotice.value = null
   const totalHours = Number(schedule.totalHours || 0)
   if (!hasAvailability.value) {
-    scheduleNotice.value = { type: 'error', title: '无法保存', text: '请至少选择一天可授课时间段。' }
+    scheduleNotice.value = { type: 'error', title: t('cannot_save'), text: '请至少选择一天可授课时间段。' }
     return false
   }
   if (!Number.isFinite(totalHours) || totalHours <= 0) {
-    scheduleNotice.value = { type: 'error', title: '无法保存', text: '请填写大于 0 的本周总时长。' }
+    scheduleNotice.value = { type: 'error', title: t('cannot_save'), text: '请填写大于 0 的本周总时长。' }
     return false
   }
   if (totalHours > 80) {
-    scheduleNotice.value = { type: 'error', title: '无法保存', text: '本周总时长不能超过 80 小时。' }
+    scheduleNotice.value = { type: 'error', title: t('cannot_save'), text: '本周总时长不能超过 80 小时。' }
     return false
   }
   return true
@@ -328,13 +330,13 @@ async function copyLastWeek() {
     const source = lastWeekSnapshot.value || (await getAssistantLastWeekSchedule())
     lastWeekSnapshot.value = source
     if (!hasSchedulePayload(source)) {
-      scheduleNotice.value = { type: 'error', title: '暂无可复制内容', text: '上一周暂无排期记录，可直接手动填写本周排期。' }
+      scheduleNotice.value = { type: 'error', title: t('no_content_to_copy'), text: '上一周暂无排期记录，可直接手动填写本周排期。' }
       return
     }
     applySchedule({ ...(source as AssistantSchedule), id: schedule.id, mentorId: schedule.mentorId, weekStartDate: schedule.weekStartDate || currentWeekStart.value })
-    scheduleNotice.value = { type: 'success', title: '复制成功', text: '已载入上一周排期，可继续按本周实际情况微调。' }
+    scheduleNotice.value = { type: 'success', title: t('copied_successfully'), text: '已载入上一周排期，可继续按本周实际情况微调。' }
   } catch (error: any) {
-    scheduleNotice.value = { type: 'error', title: '复制失败', text: error?.message || '暂时无法读取上一周排期。' }
+    scheduleNotice.value = { type: 'error', title: t('copy_failed'), text: error?.message || '暂时无法读取上一周排期。' }
   } finally {
     copyingLastWeek.value = false
   }
@@ -346,9 +348,9 @@ async function saveSchedule() {
   try {
     await saveAssistantSchedule({ ...schedule, totalHours: Number(schedule.totalHours || 0), weekStartDate: schedule.weekStartDate || currentWeekStart.value })
     await loadSchedule()
-    scheduleNotice.value = { type: 'success', title: '保存成功', text: '课程排期已更新，刷新页面后仍会保留最新结果。' }
+    scheduleNotice.value = { type: 'success', title: t('saved_successfully'), text: '课程排期已更新，刷新页面后仍会保留最新结果。' }
   } catch (error: any) {
-    scheduleNotice.value = { type: 'error', title: '保存失败', text: error?.message || '排期暂时无法保存，请稍后重试。' }
+    scheduleNotice.value = { type: 'error', title: t('save_failed'), text: error?.message || '排期暂时无法保存，请稍后重试。' }
   } finally {
     saving.value = false
   }
@@ -707,3 +709,4 @@ onMounted(() => {
   .page-header { flex-direction: column; align-items: flex-start; }
 }
 </style>
+

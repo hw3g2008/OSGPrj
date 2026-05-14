@@ -4,34 +4,34 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">受限模式 <span>Restricted Mode</span></h1>
-            <p class="page-sub">账号状态受限时，仅保留有限可见页面作为静态占位。</p>
+            <h1 class="page-title">{{ $t('restricted_mode') }} <span>Restricted Mode</span></h1>
+            <p class="page-sub">{{ $t('when_the_account_is_restricted_only_limi') }}。</p>
           </div>
         </div>
       </template>
 
       <div class="status-banner">
         <div>
-          <h3>账号状态受限</h3>
-          <p>您的账号当前处于冻结状态，仅可查看课时管理相关功能。如有疑问请联系您的班主任。</p>
+          <h3>{{ $t('account_restricted') }}</h3>
+          <p>{{ $t('your_account_is_currently_frozen_you_can') }}。</p>
         </div>
       </div>
 
       <a-tabs v-model:activeKey="activeTab">
-        <a-tab-pane key="home" tab="首页" />
-        <a-tab-pane key="myclass" tab="我的课程" />
-        <a-tab-pane key="feedback" tab="课程反馈" />
+        <a-tab-pane key="home" :tab="$t('home_page')" />
+        <a-tab-pane key="myclass" :tab="$t('my_sessions')" />
+        <a-tab-pane key="feedback" :tab="$t('course_feedback')" />
       </a-tabs>
 
       <template v-if="activeTab === 'home'">
         <div class="stat-grid">
-          <div class="stat-card"><strong>15.5h</strong><span>剩余课时</span></div>
-          <div class="stat-card"><strong>24.5h</strong><span>已使用课时</span></div>
-          <div class="stat-card"><strong>40h</strong><span>合同总课时</span></div>
+          <div class="stat-card"><strong>15.5h</strong><span>{{ $t('remaining_hours') }}</span></div>
+          <div class="stat-card"><strong>24.5h</strong><span>{{ $t('sessions_used') }}</span></div>
+          <div class="stat-card"><strong>40h</strong><span>{{ $t('total_contract_sessions') }}</span></div>
         </div>
 
         <section class="panel">
-          <div class="panel-title">最近课程记录</div>
+          <div class="panel-title">{{ $t('recent_course_records') }}</div>
           <div class="table-shell">
             <a-table
               :columns="homeColumns"
@@ -45,16 +45,16 @@
 
         <section class="contact-card">
           <div>
-            <h4>联系班主任</h4>
-            <p>如需恢复账号或有其他问题，请联系班主任</p>
+            <h4>{{ $t('contact_class_advisor') }}</h4>
+            <p>{{ $t('if_you_need_to_restore_your_account_or_h') }}</p>
           </div>
-          <a-button type="primary">发送消息</a-button>
+          <a-button type="primary">{{ $t('send_message') }}</a-button>
         </section>
       </template>
 
       <template v-else-if="activeTab === 'myclass'">
         <section class="panel">
-          <div class="panel-title">我的课程</div>
+          <div class="panel-title">{{ $t('my_sessions') }}</div>
           <div class="table-shell">
             <a-table
               :columns="classColumns"
@@ -69,7 +69,7 @@
 
       <template v-else>
         <section class="panel">
-          <div class="panel-title">课程反馈</div>
+          <div class="panel-title">{{ $t('course_feedback') }}</div>
           <div class="table-shell">
             <a-table
               :columns="feedbackColumns"
@@ -80,7 +80,7 @@
             >
               <template #bodyCell="{ column }">
                 <template v-if="column.key === 'action'">
-                  <a-button type="link" size="small">查看详情</a-button>
+                  <a-button type="link" size="small">{{ $t('view_details') }}</a-button>
                 </template>
               </template>
             </a-table>
@@ -94,49 +94,51 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { OsgPageContainer } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const activeTab = ref<'home' | 'myclass' | 'feedback'>('home')
 
 const homeColumns = [
-  { title: '日期', dataIndex: 'date', key: 'date' },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType' },
-  { title: '导师', dataIndex: 'mentor', key: 'mentor' },
-  { title: '时长', dataIndex: 'duration', key: 'duration' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
+  { title: t('date'), dataIndex: 'date', key: 'date' },
+  { title: t('course_type'), dataIndex: 'courseType', key: 'courseType' },
+  { title: t('mentor'), dataIndex: 'mentor', key: 'mentor' },
+  { title: t('duration'), dataIndex: 'duration', key: 'duration' },
+  { title: t('status'), dataIndex: 'status', key: 'status' },
 ]
 
 const classColumns = [
-  { title: '日期', dataIndex: 'date', key: 'date' },
-  { title: '时间', dataIndex: 'time', key: 'time' },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType' },
-  { title: '导师', dataIndex: 'mentor', key: 'mentor' },
-  { title: '时长', dataIndex: 'duration', key: 'duration' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
+  { title: t('date'), dataIndex: 'date', key: 'date' },
+  { title: t('time'), dataIndex: 'time', key: 'time' },
+  { title: t('course_type'), dataIndex: 'courseType', key: 'courseType' },
+  { title: t('mentor'), dataIndex: 'mentor', key: 'mentor' },
+  { title: t('duration'), dataIndex: 'duration', key: 'duration' },
+  { title: t('status'), dataIndex: 'status', key: 'status' },
 ]
 
 const feedbackColumns = [
-  { title: '日期', dataIndex: 'date', key: 'date' },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType' },
-  { title: '导师', dataIndex: 'mentor', key: 'mentor' },
-  { title: '评价', dataIndex: 'rating', key: 'rating' },
-  { title: '操作', key: 'action' },
+  { title: t('date'), dataIndex: 'date', key: 'date' },
+  { title: t('course_type'), dataIndex: 'courseType', key: 'courseType' },
+  { title: t('mentor'), dataIndex: 'mentor', key: 'mentor' },
+  { title: t('feedback'), dataIndex: 'rating', key: 'rating' },
+  { title: t('operation'), key: 'action' },
 ]
 
 const restrictedHomeRows = [
-  { date: '2025-12-15', courseType: '模拟面试', mentor: 'Jerry Li', duration: '1.5h', status: '已完成' },
-  { date: '2025-12-10', courseType: '简历修改', mentor: 'Test Lead Mentor', duration: '1h', status: '已完成' },
-  { date: '2025-12-05', courseType: 'Case Study', mentor: 'Jerry Li', duration: '2h', status: '已完成' }
+  { date: '2025-12-15', courseType: t('mock_interview'), mentor: 'Jerry Li', duration: '1.5h', status: t('completed') },
+  { date: '2025-12-10', courseType: t('resume_revision'), mentor: 'Test Lead Mentor', duration: '1h', status: t('completed') },
+  { date: '2025-12-05', courseType: 'Case Study', mentor: 'Jerry Li', duration: '2h', status: t('completed') }
 ]
 
 const restrictedClassRows = [
-  { date: '2025-12-15', time: '14:00-15:30', courseType: '模拟面试', mentor: 'Jerry Li', duration: '1.5h', status: '已完成' },
-  { date: '2025-12-10', time: '10:00-11:00', courseType: '简历修改', mentor: 'Test Lead Mentor', duration: '1h', status: '已完成' },
-  { date: '2025-12-05', time: '15:00-17:00', courseType: 'Case Study', mentor: 'Jerry Li', duration: '2h', status: '已完成' }
+  { date: '2025-12-15', time: '14:00-15:30', courseType: t('mock_interview'), mentor: 'Jerry Li', duration: '1.5h', status: t('completed') },
+  { date: '2025-12-10', time: '10:00-11:00', courseType: t('resume_revision'), mentor: 'Test Lead Mentor', duration: '1h', status: t('completed') },
+  { date: '2025-12-05', time: '15:00-17:00', courseType: 'Case Study', mentor: 'Jerry Li', duration: '2h', status: t('completed') }
 ]
 
 const restrictedFeedbackRows = [
-  { date: '2025-12-15', courseType: '模拟面试', mentor: 'Jerry Li', rating: 'Great' },
-  { date: '2025-12-10', courseType: '简历修改', mentor: 'Test Lead Mentor', rating: 'Great' },
+  { date: '2025-12-15', courseType: t('mock_interview'), mentor: 'Jerry Li', rating: 'Great' },
+  { date: '2025-12-10', courseType: t('resume_revision'), mentor: 'Test Lead Mentor', rating: 'Great' },
   { date: '2025-12-05', courseType: 'Case Study', mentor: 'Jerry Li', rating: 'Good' }
 ]
 </script>

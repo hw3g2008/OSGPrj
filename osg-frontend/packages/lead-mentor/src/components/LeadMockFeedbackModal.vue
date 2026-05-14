@@ -8,7 +8,7 @@
       type="button"
       class="lead-mock-feedback-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭模拟反馈弹层"
+      :aria-label="$t('close_mock_feedback_dialog')"
       @click="closeModal"
     />
 
@@ -22,13 +22,13 @@
       <div class="lead-mock-feedback-header modal-header" data-surface-part="header">
         <span :id="titleId" class="lead-mock-feedback-title modal-title">
           <i class="mdi mdi-comment-check" aria-hidden="true" />
-          查看模拟反馈
+          {{ $t('view_simulation_feedback') }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭模拟反馈弹层"
+          :aria-label="$t('close_mock_feedback_dialog')"
           @click="closeModal"
         >
           ×
@@ -64,7 +64,7 @@
         <section class="content-card">
           <div class="section-title section-title--primary">
             <i class="mdi mdi-comment-text" aria-hidden="true" />
-            详细反馈
+            {{ $t('detailed_feedback') }}
           </div>
           <p>{{ preview.feedback }}</p>
         </section>
@@ -72,7 +72,7 @@
         <section class="content-card content-card--warning">
           <div class="section-title section-title--warning">
             <i class="mdi mdi-lightbulb" aria-hidden="true" />
-            改进建议
+            {{ $t('improvement_suggestions') }}
           </div>
           <ul>
             <li v-for="suggestion in preview.suggestions" :key="suggestion">{{ suggestion }}</li>
@@ -86,7 +86,7 @@
       </div>
 
       <div class="lead-mock-feedback-footer modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeModal">关闭</button>
+        <button type="button" class="btn btn-outline" @click="closeModal">{{ $t('close') }}</button>
       </div>
     </div>
   </div>

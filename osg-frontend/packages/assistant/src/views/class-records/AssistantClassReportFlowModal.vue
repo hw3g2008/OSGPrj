@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     surface-id="modal-assistant-class-report"
     :open="open"
@@ -9,12 +9,12 @@
     <template #title>
       <span class="report-modal__title">
         <FileTextOutlined aria-hidden="true" />
-        <span>上报课程记录</span>
+        <span>{{ $t('submit_course_record') }}</span>
       </span>
     </template>
 
     <a-alert type="info" show-icon class="report-modal__banner">
-      <template #message>请在上课后填写课程记录和反馈，提交后需等待后台审核</template>
+      <template #message>{{ $t('please_fill_in_the_course_record_and_fee') }}</template>
     </a-alert>
 
     <a-form
@@ -30,12 +30,12 @@
         <template #label>
           <span class="report-modal__label">
             <span class="report-modal__step-badge">1</span>
-            选择学员<span class="report-modal__required">*</span>
+            {{ $t('select_student') }}<span class="report-modal__required">*</span>
           </span>
         </template>
         <a-select
           v-model:value="form.studentId"
-          placeholder="请选择学员"
+          :placeholder="$t('please_select_a_student')"
           show-search
           :filter-option="filterStudentOption"
           :loading="studentsLoading"
@@ -53,11 +53,11 @@
           <a-col :span="form.attendanceStatus === 'absent' ? 24 : 12">
             <a-form-item name="classDate">
               <template #label>
-                <span class="report-modal__label">上课日期<span class="report-modal__required">*</span></span>
+                <span class="report-modal__label">{{ $t('course_date') }}<span class="report-modal__required">*</span></span>
               </template>
               <a-date-picker
                 v-model:value="form.classDate"
-                placeholder="请选择上课日期"
+                :placeholder="$t('please_select_class_date')"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
                 :disabled="submitting"
@@ -67,7 +67,7 @@
           <a-col v-if="form.attendanceStatus !== 'absent'" :span="12">
             <a-form-item name="durationHours">
               <template #label>
-                <span class="report-modal__label">学习时长<span class="report-modal__required">*</span></span>
+                <span class="report-modal__label">{{ $t('study_duration') }}<span class="report-modal__required">*</span></span>
               </template>
               <a-input-number
                 v-model:value="form.durationHours"
@@ -75,11 +75,11 @@
                 :max="8"
                 :step="0.5"
                 :precision="1"
-                placeholder="请输入学习时长"
+                :placeholder="$t('please_enter_study_duration')"
                 style="width: 100%"
                 :disabled="submitting"
               >
-                <template #addonAfter>小时</template>
+                <template #addonAfter>{{ $t('hours') }}</template>
               </a-input-number>
             </a-form-item>
           </a-col>
@@ -89,7 +89,7 @@
       <!-- Step 3: 学员状态 -->
       <div class="report-modal__section">
         <div class="report-modal__section-title">
-          <span class="report-modal__step-badge">3</span>学员状态<span class="report-modal__required">*</span>
+          <span class="report-modal__step-badge">3</span>{{ $t('student_status') }}<span class="report-modal__required">*</span>
         </div>
         <a-radio-group
           v-model:value="form.attendanceStatus"
@@ -105,7 +105,7 @@
               <div class="status-card__title">
                 <CheckCircleOutlined /> 正常上课
               </div>
-              <div class="status-card__sub">学员按时参加课程</div>
+              <div class="status-card__sub">{{ $t('student_attended_class_on_time') }}</div>
             </div>
           </label>
           <label
@@ -117,7 +117,7 @@
               <div class="status-card__title">
                 <UserDeleteOutlined /> 旷课未到场
               </div>
-              <div class="status-card__sub">学员未参加课程</div>
+              <div class="status-card__sub">{{ $t('student_did_not_attend_class') }}</div>
             </div>
           </label>
         </a-radio-group>
@@ -125,12 +125,12 @@
         <div v-if="form.attendanceStatus === 'absent'" class="warning-panel">
           <a-form-item class="report-modal__compact">
             <template #label>
-              <span class="report-modal__label report-modal__label--danger">旷课备注</span>
+              <span class="report-modal__label report-modal__label--danger">{{ $t('absence_notes') }}</span>
             </template>
             <a-textarea
               v-model:value="form.absenceRemark"
               :rows="2"
-              placeholder="请简要说明旷课情况（可选）..."
+              :placeholder="`${$t('briefly_describe_the_absence_optional')}）...`"
               :maxlength="200"
               show-count
               :disabled="submitting"
@@ -142,7 +142,7 @@
       <!-- Step 4: 课程类型 -->
       <div v-if="form.attendanceStatus !== 'absent'" class="report-modal__section">
         <div class="report-modal__section-title">
-          <span class="report-modal__step-badge">4</span>课程类型<span class="report-modal__required">*</span>
+          <span class="report-modal__step-badge">4</span>{{ $t('course_type') }}<span class="report-modal__required">*</span>
         </div>
         <a-radio-group
           v-model:value="form.courseTypeUi"
@@ -167,12 +167,12 @@
         <a-form-item name="applicationId" class="report-modal__compact">
           <template #label>
             <span class="report-modal__label report-modal__label--primary">
-              <BankOutlined /> 选择申请辅导的岗位<span class="report-modal__required">*</span>
+              <BankOutlined /> {{ $t('select_position_for_coaching_application') }}<span class="report-modal__required">*</span>
             </span>
           </template>
           <a-select
             v-model:value="form.applicationId"
-            placeholder="请选择岗位"
+            :placeholder="$t('please_select_a_position')"
             :disabled="submitting"
             allow-clear
             @change="onApplicationSelect"
@@ -185,7 +185,7 @@
               {{ c.companyName || '—' }} · {{ c.positionName || '—' }}
             </a-select-option>
             <a-select-option v-if="studentCoachingOptions.length === 0" :value="undefined" disabled>
-              当前学员暂无活跃辅导岗位
+              {{ $t('no_active_coaching_positions_for_this_st') }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -196,12 +196,12 @@
         <a-form-item name="practiceId" class="report-modal__compact">
           <template #label>
             <span class="report-modal__label report-modal__label--primary">
-              <TeamOutlined /> 选择关联的模拟应聘<span class="report-modal__required">*</span>
+              <TeamOutlined /> {{ $t('select_associated_mock_interview') }}<span class="report-modal__required">*</span>
             </span>
           </template>
           <a-select
             v-model:value="form.practiceId"
-            placeholder="请选择模拟应聘记录"
+            :placeholder="$t('please_select_a_mock_interview_record')"
             :disabled="submitting"
             allow-clear
           >
@@ -210,10 +210,10 @@
               :key="p.practiceId"
               :value="p.practiceId"
             >
-              #{{ p.practiceId }} · {{ p.practiceType || '未知类型' }}
+              #{{ p.practiceId }} · {{ p.practiceType || $t('unknown_type') }}
             </a-select-option>
             <a-select-option v-if="studentPracticeOptions.length === 0" :value="undefined" disabled>
-              当前学员暂无活跃模拟应聘
+              {{ $t('no_active_mock_interviews_for_this_stude') }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -222,11 +222,11 @@
       <!-- 岗位辅导：课程内容类型 -->
       <a-form-item v-if="showJobCoachingFields" name="jobContentType">
         <template #label>
-          <span class="report-modal__label">课程内容类型<span class="report-modal__required">*</span></span>
+          <span class="report-modal__label">{{ $t('course_content_type') }}<span class="report-modal__required">*</span></span>
         </template>
         <a-select
           v-model:value="form.jobContentType"
-          placeholder="请选择课程内容类型"
+          :placeholder="$t('please_select_course_content_type')"
           :disabled="submitting"
           :options="jobContentOptions"
         />
@@ -235,11 +235,11 @@
       <!-- 基础课程：内容类型 -->
       <a-form-item v-if="form.courseTypeUi === 'basic'" name="basicContentType">
         <template #label>
-          <span class="report-modal__label">基础课内容类型<span class="report-modal__required">*</span></span>
+          <span class="report-modal__label">{{ $t('foundation_course_content_type') }}<span class="report-modal__required">*</span></span>
         </template>
         <a-select
           v-model:value="form.basicContentType"
-          placeholder="请选择基础课内容类型"
+          :placeholder="$t('please_select_foundation_course_content_')"
           :disabled="submitting"
           :options="basicContentOptions"
         />
@@ -252,12 +252,12 @@
         </div>
         <a-form-item name="feedbackContent" class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">课程反馈<span class="report-modal__required">*</span></span>
+            <span class="report-modal__label">{{ $t('course_feedback') }}<span class="report-modal__required">*</span></span>
           </template>
           <a-textarea
             v-model:value="form.feedbackContent"
             :rows="4"
-            placeholder="请详细描述本次课程内容和学员表现..."
+            :placeholder="`${$t('please_describe_the_course_content_and_s')}...`"
             :maxlength="1000"
             show-count
             :disabled="submitting"
@@ -272,12 +272,12 @@
         </div>
         <a-form-item name="feedbackContent" class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">课程反馈<span class="report-modal__required">*</span></span>
+            <span class="report-modal__label">{{ $t('course_feedback') }}<span class="report-modal__required">*</span></span>
           </template>
           <a-textarea
             v-model:value="form.feedbackContent"
             :rows="3"
-            placeholder="请描述简历修改的主要内容和建议..."
+            :placeholder="`${$t('please_describe_the_main_changes_and_sug')}...`"
             :maxlength="1000"
             show-count
             :disabled="submitting"
@@ -287,7 +287,7 @@
           <a-col :span="12">
             <a-form-item class="report-modal__compact">
               <template #label>
-                <span class="report-modal__label">上传原简历</span>
+                <span class="report-modal__label">{{ $t('upload_original_resume') }}</span>
               </template>
               <a-upload-dragger
                 v-model:file-list="form.resumeBeforeFiles"
@@ -302,15 +302,15 @@
                 <p class="resume-dragger__icon">
                   <InboxOutlined />
                 </p>
-                <p class="resume-dragger__text">点击或拖拽上传原简历</p>
-                <p class="resume-dragger__hint">支持 PDF、Word 文档</p>
+                <p class="resume-dragger__text">{{ $t('click_or_drag_to_upload_original_resume') }}</p>
+                <p class="resume-dragger__hint">{{ $t('supports_pdf_and_word_documents') }}</p>
               </a-upload-dragger>
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item class="report-modal__compact">
               <template #label>
-                <span class="report-modal__label">上传修改后简历</span>
+                <span class="report-modal__label">{{ $t('upload_revised_resume') }}</span>
               </template>
               <a-upload-dragger
                 v-model:file-list="form.resumeAfterFiles"
@@ -325,8 +325,8 @@
                 <p class="resume-dragger__icon">
                   <InboxOutlined />
                 </p>
-                <p class="resume-dragger__text">点击或拖拽上传修改后简历</p>
-                <p class="resume-dragger__hint">支持 PDF、Word 文档</p>
+                <p class="resume-dragger__text">{{ $t('click_or_drag_to_upload_revised_resume') }}</p>
+                <p class="resume-dragger__hint">{{ $t('supports_pdf_and_word_documents') }}</p>
               </a-upload-dragger>
             </a-form-item>
           </a-col>
@@ -340,12 +340,12 @@
         </div>
         <a-form-item name="feedbackContent" class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">课程反馈<span class="report-modal__required">*</span></span>
+            <span class="report-modal__label">{{ $t('course_feedback') }}<span class="report-modal__required">*</span></span>
           </template>
           <a-textarea
             v-model:value="form.feedbackContent"
             :rows="3"
-            placeholder="请详细描述学员在模拟面试中的表现..."
+            :placeholder="`${$t('please_describe_the_students_performance')}...`"
             :maxlength="1000"
             show-count
             :disabled="submitting"
@@ -353,43 +353,43 @@
         </a-form-item>
         <a-form-item class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">模拟面试的目的</span>
+            <span class="report-modal__label">{{ $t('purpose_of_mock_interview') }}</span>
           </template>
           <a-textarea
             v-model:value="form.mockPurpose"
             :rows="2"
-            placeholder="请描述本次模拟面试的目的..."
+            :placeholder="`${$t('please_describe_the_purpose_of_this_mock')}...`"
             :maxlength="300"
             :disabled="submitting"
           />
         </a-form-item>
         <a-form-item class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">涉及的概念和主题</span>
+            <span class="report-modal__label">{{ $t('concepts_and_topics_covered') }}</span>
           </template>
           <a-textarea
             v-model:value="form.mockConcepts"
             :rows="2"
-            placeholder="请列出本次课程涉及的概念和主题..."
+            :placeholder="`${$t('please_list_the_concepts_and_topics_cove')}...`"
             :maxlength="300"
             :disabled="submitting"
           />
         </a-form-item>
         <a-form-item class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">学员需要改进的方面</span>
+            <span class="report-modal__label">{{ $t('areas_for_student_improvement_2') }}</span>
           </template>
           <a-textarea
             v-model:value="form.mockWeakTopics"
             :rows="2"
-            placeholder="请描述学员需要改进的方面..."
+            :placeholder="`${$t('please_describe_the_areas_the_student_ne')}...`"
             :maxlength="300"
             :disabled="submitting"
           />
         </a-form-item>
         <a-form-item class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">学员表现评价</span>
+            <span class="report-modal__label">{{ $t('student_performance_evaluation') }}</span>
           </template>
           <a-radio-group
             v-model:value="form.performanceRating"
@@ -417,12 +417,12 @@
         </div>
         <a-form-item name="feedbackContent" class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">课程反馈<span class="report-modal__required">*</span></span>
+            <span class="report-modal__label">{{ $t('course_feedback') }}<span class="report-modal__required">*</span></span>
           </template>
           <a-textarea
             v-model:value="form.feedbackContent"
             :rows="3"
-            placeholder="请详细描述学员在人际关系测试中的表现..."
+            :placeholder="`${$t('please_describe_the_students_performance_2')}...`"
             :maxlength="1000"
             show-count
             :disabled="submitting"
@@ -440,7 +440,7 @@
                 </template>
                 <a-select
                   v-model:value="form.networkingScoreMap[field.label]"
-                  placeholder="请选择"
+                  :placeholder="$t('please_select')"
                   :options="field.options.map((o) => ({ value: o, label: o }))"
                   :disabled="submitting"
                 />
@@ -450,11 +450,11 @@
         </div>
         <a-form-item class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">是否推荐这位学生？</span>
+            <span class="report-modal__label">{{ $t('would_you_recommend_this_student') }}？</span>
           </template>
           <a-select
             v-model:value="form.networkingRecommendation"
-            placeholder="请选择"
+            :placeholder="$t('please_select')"
             :options="recommendationOptions.map((o) => ({ value: o, label: o }))"
             :disabled="submitting"
           />
@@ -468,12 +468,12 @@
         </div>
         <a-form-item name="feedbackContent" class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">课程反馈<span class="report-modal__required">*</span></span>
+            <span class="report-modal__label">{{ $t('course_feedback') }}<span class="report-modal__required">*</span></span>
           </template>
           <a-textarea
             v-model:value="form.feedbackContent"
             :rows="3"
-            placeholder="请详细描述学员在模拟期中考试中的表现..."
+            :placeholder="`${$t('please_describe_the_students_performance_3')}...`"
             :maxlength="1000"
             show-count
             :disabled="submitting"
@@ -481,7 +481,7 @@
         </a-form-item>
         <a-form-item class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">该学生得了多少分？</span>
+            <span class="report-modal__label">{{ $t('what_score_did_the_student_get') }}？</span>
           </template>
           <a-input-number
             v-model:value="form.midtermScore"
@@ -496,23 +496,23 @@
         </a-form-item>
         <a-form-item class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">逐题分析</span>
+            <span class="report-modal__label">{{ $t('question_by_question_analysis') }}</span>
           </template>
           <a-textarea
             v-model:value="form.midtermAnalysis"
             :rows="4"
-            placeholder="请详细分析学员在每道题目上的表现..."
+            :placeholder="`${$t('please_analyze_the_students_performance_')}...`"
             :maxlength="1000"
             :disabled="submitting"
           />
         </a-form-item>
         <a-form-item class="report-modal__compact">
           <template #label>
-            <span class="report-modal__label">学生进度评估</span>
+            <span class="report-modal__label">{{ $t('student_progress_assessment') }}</span>
           </template>
           <a-select
             v-model:value="form.midtermProgress"
-            placeholder="请选择"
+            :placeholder="$t('please_select')"
             :options="progressOptions.map((o) => ({ value: o, label: o }))"
             :disabled="submitting"
           />
@@ -521,7 +521,7 @@
     </a-form>
 
     <template #footer>
-      <a-button :disabled="submitting" @click="handleClose">取消</a-button>
+      <a-button :disabled="submitting" @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button type="primary" :loading="submitting" @click="handleSubmit">
         <CheckOutlined /> 提交记录
       </a-button>
@@ -567,7 +567,9 @@ import {
   type AttendanceStatus,
   type CourseTypeUi,
 } from './assistantClassReportPayload'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface Props {
   open: boolean
 }
@@ -611,39 +613,39 @@ const emit = defineEmits<{
 
 // ── Options ──
 const courseTypes: Array<{ value: CourseTypeUi; label: string; description: string; color: string }> = [
-  { value: 'job-coaching', label: '岗位辅导', description: '岗位辅导的课程', color: 'blue' },
-  { value: 'mock-interview', label: '模拟面试', description: '模拟面试的课程', color: 'green' },
-  { value: 'networking', label: '人际关系', description: '人际关系的课程', color: 'purple' },
-  { value: 'mock-midterm', label: '模拟期中', description: '模拟期中考试', color: 'orange' },
-  { value: 'basic', label: '基础课程', description: '基础课程', color: 'geekblue' },
+  { value: 'job-coaching', label: t('position_coaching'), description: t('position_coaching_session'), color: 'blue' },
+  { value: 'mock-interview', label: t('mock_interview'), description: t('mock_interview_session'), color: 'green' },
+  { value: 'networking', label: t('interpersonal_skills'), description: t('interpersonal_skills_session'), color: 'purple' },
+  { value: 'mock-midterm', label: t('mock_midterm'), description: t('mock_midterm_exam'), color: 'orange' },
+  { value: 'basic', label: t('foundation_course_2'), description: t('foundation_course_2'), color: 'geekblue' },
 ]
 
 // §A.0.4 hardcoded positionOptions 移除，改用 my-targets 加载的 activeCoachings 动态生成下拉
 
 const jobContentOptions = [
-  { value: 'technical', label: '技术的' },
-  { value: 'behavioral', label: '行为训练' },
-  { value: 'resume_update', label: '简历更新' },
-  { value: 'mock_interview', label: '模拟面试的课程' },
-  { value: 'networking_midterm', label: '人际关系的课程' },
-  { value: 'mock_midterm', label: '模拟期中考试' },
-  { value: 'case_prep', label: '咨询案例准备' },
-  { value: 'other', label: '其他' },
+  { value: 'technical', label: t('technical') },
+  { value: 'behavioral', label: t('behavioral_training') },
+  { value: 'resume_update', label: t('resume_update') },
+  { value: 'mock_interview', label: t('mock_interview_session') },
+  { value: 'networking_midterm', label: t('interpersonal_skills_session') },
+  { value: 'mock_midterm', label: t('mock_midterm_exam') },
+  { value: 'case_prep', label: t('consulting_case_preparation') },
+  { value: 'other', label: t('other') },
 ]
 
 const basicContentOptions = [
-  { value: 'technical', label: '技术的' },
-  { value: 'behavioral', label: '行为训练' },
-  { value: 'resume_update', label: '简历更新' },
-  { value: 'case_prep', label: '咨询案例准备' },
-  { value: 'other', label: '其他' },
+  { value: 'technical', label: t('technical') },
+  { value: 'behavioral', label: t('behavioral_training') },
+  { value: 'resume_update', label: t('resume_update') },
+  { value: 'case_prep', label: t('consulting_case_preparation') },
+  { value: 'other', label: t('other') },
 ]
 
 const performanceOptions = [
-  { value: 'disappointing', emoji: '😞', label: '失望' },
-  { value: 'good', emoji: '🙂', label: '好的' },
-  { value: 'great', emoji: '😊', label: '很好' },
-  { value: 'amazing', emoji: '🌟', label: '真棒' },
+  { value: 'disappointing', emoji: '😞', label: t('disappointing') },
+  { value: 'good', emoji: '🙂', label: t('good_2') },
+  { value: 'great', emoji: '😊', label: t('great') },
+  { value: 'amazing', emoji: '🌟', label: t('excellent_2') },
 ]
 
 const networkingScores = [
@@ -655,17 +657,17 @@ const networkingScores = [
 ]
 
 const recommendationOptions = [
-  '是的 - 我相信这位学生很适合我的团队',
-  '或许 - 如果他们能改进一下就好了',
-  '不 - 他们需要认真加强准备工作',
+  t('yes_i_believe_this_student_would_be_a_gr'),
+  t('maybe_if_they_could_improve_a_bit'),
+  t('no_they_need_to_seriously_strengthen_the'),
 ]
 
 const progressOptions = [
-  '非常棒 - 进展顺利，会取得好成绩',
-  '太好了 - 进展顺利',
-  '好的 - 需要在一些方面下功夫',
-  '令人失望 - 严重落后',
-  '不适用 - 入学时间太短',
+  t('outstanding_on_track_to_achieve_great_re'),
+  t('great_progressing_well'),
+  t('good_needs_work_in_some_areas'),
+  t('disappointing_significantly_behind'),
+  t('n_a_enrolled_too_recently'),
 ]
 
 // ── State ──
@@ -739,12 +741,12 @@ function handleResumeBeforeUpload(info: { file: any }) {
     const url = extractUploadedUrl(info.file)
     if (url) {
       form.resumeBeforeUrl = url
-      message.success('原简历上传成功')
+      message.success(t('original_resume_uploaded_successfully'))
     } else {
-      message.error('原简历上传响应缺少 url，请重试')
+      message.error(t('original_resume_upload_response_missing_'))
     }
   } else if (info.file?.status === 'error') {
-    message.error('原简历上传失败，请重试')
+    message.error(t('original_resume_upload_failed_please_try'))
   } else if (info.file?.status === 'removed') {
     form.resumeBeforeUrl = ''
   }
@@ -755,12 +757,12 @@ function handleResumeAfterUpload(info: { file: any }) {
     const url = extractUploadedUrl(info.file)
     if (url) {
       form.resumeAfterUrl = url
-      message.success('修改后简历上传成功')
+      message.success(t('revised_resume_uploaded_successfully'))
     } else {
-      message.error('修改后简历上传响应缺少 url，请重试')
+      message.error(t('revised_resume_upload_response_missing_u'))
     }
   } else if (info.file?.status === 'error') {
-    message.error('修改后简历上传失败，请重试')
+    message.error(t('revised_resume_upload_failed_please_try_'))
   } else if (info.file?.status === 'removed') {
     form.resumeAfterUrl = ''
   }
@@ -768,13 +770,13 @@ function handleResumeAfterUpload(info: { file: any }) {
 
 // ── Rules ──
 const formRules: Record<string, Rule[]> = {
-  studentId: [{ required: true, message: '请选择学员', trigger: 'change' }],
-  classDate: [{ required: true, message: '请选择上课日期', trigger: 'change' }],
-  durationHours: [{ required: true, message: '请输入学习时长', trigger: 'change', type: 'number' }],
-  positionLabel: [{ required: true, message: '请选择岗位', trigger: 'change' }],
-  jobContentType: [{ required: true, message: '请选择课程内容类型', trigger: 'change' }],
-  basicContentType: [{ required: true, message: '请选择基础课内容类型', trigger: 'change' }],
-  feedbackContent: [{ required: true, message: '请填写课程反馈', trigger: 'blur' }],
+  studentId: [{ required: true, message: t('please_select_a_student'), trigger: 'change' }],
+  classDate: [{ required: true, message: t('please_select_class_date'), trigger: 'change' }],
+  durationHours: [{ required: true, message: t('please_enter_study_duration'), trigger: 'change', type: 'number' }],
+  positionLabel: [{ required: true, message: t('please_select_a_position'), trigger: 'change' }],
+  jobContentType: [{ required: true, message: t('please_select_course_content_type'), trigger: 'change' }],
+  basicContentType: [{ required: true, message: t('please_select_foundation_course_content_'), trigger: 'change' }],
+  feedbackContent: [{ required: true, message: t('please_fill_in_course_feedback'), trigger: 'blur' }],
 }
 
 // ── Computed: 反馈区切换逻辑 ──
@@ -898,7 +900,7 @@ async function handleSubmit() {
 
   const classStatus = resolvePayloadClassStatus(form)
   if (!classStatus) {
-    message.error('请选择课程内容类型')
+    message.error(t('please_select_course_content_type'))
     return
   }
 
@@ -935,11 +937,11 @@ async function handleSubmit() {
 
     await createAssistantClassRecord(payload)
 
-    message.success('课程记录已提交，等待后台审核')
+    message.success(t('course_record_submitted_awaiting_backend'))
     emit('submitted')
     emit('update:open', false)
   } catch (error: any) {
-    const msg = error?.response?.data?.msg || error?.message || '提交失败，请重试'
+    const msg = error?.response?.data?.msg || error?.message || t('submission_failed_please_try_again')
     message.error(msg)
   } finally {
     submitting.value = false
@@ -1265,3 +1267,4 @@ $asst-border: #e2e8f0;
   font-size: 12px;
 }
 </style>
+

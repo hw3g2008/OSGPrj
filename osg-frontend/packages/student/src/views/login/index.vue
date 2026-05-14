@@ -1,20 +1,20 @@
-<template>
+﻿<template>
   <div class="login-page">
     <div class="login-left">
       <h1>OSG</h1>
-      <p>One Strategy Group 求职辅导平台，助力您的职业发展</p>
+      <p>One Strategy Group {{ $t('job_search_coaching_platform_empowering_') }}</p>
       <div class="login-features">
         <div class="login-feature">
           <i class="mdi mdi-briefcase-check" aria-hidden="true"></i>
-          <span>专业求职辅导</span>
+          <span>{{ $t('professional_job_search_coaching') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-account-group" aria-hidden="true"></i>
-          <span>资深导师团队</span>
+          <span>{{ $t('senior_mentor_team') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-chart-line" aria-hidden="true"></i>
-          <span>全程进度跟踪</span>
+          <span>{{ $t('full_progress_tracking') }}</span>
         </div>
       </div>
     </div>
@@ -25,10 +25,10 @@
           <div class="login-logo-icon">
             <i class="mdi mdi-school" aria-hidden="true"></i>
           </div>
-          <span>学员中心</span>
+          <span>{{ $t('student_center') }}</span>
         </div>
-        <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">请登录您的学员账号</p>
+        <h2 class="login-title">{{ $t('welcome_back') }}</h2>
+        <p class="login-subtitle">{{ $t('please_log_in_to_your_student_account') }}</p>
 
         <div
           v-if="loginError"
@@ -42,7 +42,7 @@
 
         <form class="login-form" novalidate @submit.prevent="handleLogin">
           <div class="form-group" :class="{ 'has-error': !!fieldErrors.username }">
-            <label class="form-label" for="login-username">用户名</label>
+            <label class="form-label" for="login-username">{{ $t('username') }}</label>
             <div class="input-wrapper">
               <i class="mdi mdi-account-outline input-icon" aria-hidden="true"></i>
               <input
@@ -50,7 +50,7 @@
                 v-model="formState.username"
                 type="text"
                 class="form-input form-input--with-icon"
-                placeholder="请输入用户名"
+                :placeholder="$t('please_enter_your_username')"
                 autocomplete="username"
                 spellcheck="false"
                 @input="clearFieldError('username')"
@@ -60,7 +60,7 @@
           </div>
 
           <div class="form-group" :class="{ 'has-error': !!fieldErrors.password }">
-            <label class="form-label" for="login-password">密码</label>
+            <label class="form-label" for="login-password">{{ $t('password') }}</label>
             <div class="pwd-wrapper">
               <i class="mdi mdi-lock-outline input-icon" aria-hidden="true"></i>
               <input
@@ -68,7 +68,7 @@
                 v-model="formState.password"
                 :type="showPassword ? 'text' : 'password'"
                 class="form-input form-input--with-icon form-input--with-toggle"
-                placeholder="请输入密码"
+                :placeholder="$t('please_enter_your_password')"
                 autocomplete="current-password"
                 spellcheck="false"
                 @input="clearFieldError('password')"
@@ -77,7 +77,7 @@
                 type="button"
                 class="pwd-toggle"
                 tabindex="-1"
-                :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+                ::aria-label="`showPassword ? '${$t('hide_password')}' : '${$t('show_password')}'`"
                 :aria-pressed="showPassword"
                 @click="showPassword = !showPassword"
               >
@@ -94,9 +94,9 @@
           <div class="login-links">
             <label class="remember-me">
               <input v-model="formState.remember" type="checkbox" />
-              <span>记住我</span>
+              <span>{{ $t('remember_me') }}</span>
             </label>
-            <router-link to="/forgot-password">忘记密码？</router-link>
+            <router-link to="/forgot-password">{{ $t('forgot_password') }}？</router-link>
           </div>
 
           <button
@@ -105,12 +105,12 @@
             class="login-btn"
             :disabled="loading"
           >
-            <span>{{ loading ? '登录中...' : '登 录' }}</span>
+            <span>{{ loading ? '登录中...' : $t('log_in') }}</span>
           </button>
         </form>
 
         <div class="copyright">
-          备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">冀ICP备17000879号-4</a>
+          备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">{{ $t('ji_icp_no_17000879') }}-4</a>
         </div>
       </div>
     </div>
@@ -602,3 +602,4 @@ const handleLogin = async () => {
   }
 }
 </style>
+

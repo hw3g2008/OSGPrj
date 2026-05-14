@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     surface-id="modal-forgot-password"
     :open="visible"
@@ -12,7 +12,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-key" aria-hidden="true" />
-        <span>找回密码</span>
+        <span>{{ $t('retrieve_password') }}</span>
       </span>
     </template>
 
@@ -30,7 +30,7 @@
       </div>
 
       <div v-if="currentStep === 1" class="forgot-modal__step">
-        <p class="forgot-modal__hint" data-content-part="supporting-text">请输入您的注册邮箱，我们将发送验证码</p>
+        <p class="forgot-modal__hint" data-content-part="supporting-text">{{ $t('please_enter_your_registered_email_and_w') }}</p>
         <a-form
           ref="emailFormRef"
           data-content-part="field-group"
@@ -41,9 +41,9 @@
         >
           <a-form-item name="email">
             <template #label>
-              <label class="forgot-modal__label">邮箱地址 <span class="forgot-modal__required">*</span></label>
+              <label class="forgot-modal__label">{{ $t('email_address') }} <span class="forgot-modal__required">*</span></label>
             </template>
-            <a-input v-model:value="formState.email" placeholder="请输入注册邮箱" />
+            <a-input v-model:value="formState.email" :placeholder="$t('please_enter_your_registered_email_addre')" />
           </a-form-item>
         </a-form>
         <a-button
@@ -56,12 +56,12 @@
           @click="handleSendCode"
         >
           <span class="mdi mdi-email-fast" aria-hidden="true" />
-          <span>发送验证码</span>
+          <span>{{ $t('send_verification_code') }}</span>
         </a-button>
       </div>
 
       <div v-else-if="currentStep === 2" class="forgot-modal__step">
-        <p class="forgot-modal__hint forgot-modal__hint--compact" data-content-part="supporting-text">验证码已发送至</p>
+        <p class="forgot-modal__hint forgot-modal__hint--compact" data-content-part="supporting-text">{{ $t('verification_code_has_been_sent_to') }}</p>
         <p class="forgot-modal__masked-email" data-content-part="supporting-text">{{ maskedEmail }}</p>
         <a-form
           ref="codeFormRef"
@@ -73,12 +73,12 @@
         >
           <a-form-item name="code">
             <template #label>
-              <label class="forgot-modal__label">验证码 <span class="forgot-modal__required">*</span></label>
+              <label class="forgot-modal__label">{{ $t('verification_code') }} <span class="forgot-modal__required">*</span></label>
             </template>
             <div class="forgot-modal__code-row">
               <a-input
                 v-model:value="formState.code"
-                placeholder="请输入6位验证码"
+                :placeholder="$t('please_enter_the_6_digit_verification_co')"
                 size="large"
                 :maxlength="6"
               />
@@ -88,7 +88,7 @@
                 :disabled="countdown > 0"
                 @click="handleResendCode"
               >
-                {{ countdown > 0 ? `${countdown}s` : '重新发送' }}
+                {{ countdown > 0 ? `${countdown}s` : $t('resend') }}
               </a-button>
             </div>
           </a-form-item>
@@ -103,12 +103,12 @@
           @click="handleVerifyCode"
         >
           <span class="mdi mdi-check" aria-hidden="true" />
-          <span>验证</span>
+          <span>{{ $t('verify') }}</span>
         </a-button>
       </div>
 
       <div v-else-if="currentStep === 3" class="forgot-modal__step">
-        <p class="forgot-modal__hint" data-content-part="supporting-text">请设置您的新密码</p>
+        <p class="forgot-modal__hint" data-content-part="supporting-text">{{ $t('please_set_your_new_password') }}</p>
         <a-form
           ref="passwordFormRef"
           data-content-part="field-group"
@@ -119,22 +119,22 @@
         >
           <a-form-item name="password">
             <template #label>
-              <label class="forgot-modal__label">新密码 <span class="forgot-modal__required">*</span></label>
+              <label class="forgot-modal__label">{{ $t('new_password') }} <span class="forgot-modal__required">*</span></label>
             </template>
             <a-input-password
               v-model:value="formState.password"
-              placeholder="8-20位，包含字母和数字"
+              :placeholder="`8-20${$t('bits_including_letters_and_numbers')}`"
               size="large"
               :visibility-toggle="false"
             />
           </a-form-item>
           <a-form-item name="confirmPassword">
             <template #label>
-              <label class="forgot-modal__label">确认密码 <span class="forgot-modal__required">*</span></label>
+              <label class="forgot-modal__label">{{ $t('confirm_password') }} <span class="forgot-modal__required">*</span></label>
             </template>
             <a-input-password
               v-model:value="formState.confirmPassword"
-              placeholder="请再次输入新密码"
+              :placeholder="$t('please_enter_new_password_again')"
               size="large"
               :visibility-toggle="false"
             />
@@ -144,15 +144,15 @@
         <div class="forgot-modal__rules">
           <div class="forgot-modal__rule" :class="{ 'forgot-modal__rule--valid': passwordLength }">
             <CheckCircleFilled />
-            <span>8-20位字符</span>
+            <span>8-20{{ $t('bit_character') }}</span>
           </div>
           <div class="forgot-modal__rule" :class="{ 'forgot-modal__rule--valid': hasLetter }">
             <CheckCircleFilled />
-            <span>包含字母</span>
+            <span>{{ $t('contains_letters') }}</span>
           </div>
           <div class="forgot-modal__rule" :class="{ 'forgot-modal__rule--valid': hasNumber }">
             <CheckCircleFilled />
-            <span>包含数字</span>
+            <span>{{ $t('contains_numbers') }}</span>
           </div>
         </div>
 
@@ -166,7 +166,7 @@
           @click="handleResetPassword"
         >
           <span class="mdi mdi-lock-reset" aria-hidden="true" />
-          <span>重置密码</span>
+          <span>{{ $t('reset_password') }}</span>
         </a-button>
       </div>
 
@@ -174,8 +174,8 @@
         <div class="forgot-modal__success-badge">
           <CheckCircleFilled />
         </div>
-        <h3>密码重置成功</h3>
-        <p data-content-part="supporting-text">您的密码已成功重置，请使用新密码登录</p>
+        <h3>{{ $t('password_reset_successful') }}</h3>
+        <p data-content-part="supporting-text">{{ $t('your_password_has_been_reset_successfull') }}</p>
         <a-button
           data-content-part="action-row"
           type="primary"
@@ -184,7 +184,7 @@
           class="forgot-modal__primary-btn"
           @click="handleBackToLogin"
         >
-          返回登录
+          {{ $t('return_to_login') }}
         </a-button>
       </div>
     </div>
@@ -198,7 +198,9 @@ import { CheckCircleFilled } from '@ant-design/icons-vue'
 import type { FormInstance, Rule } from 'ant-design-vue/es/form'
 import { sendResetCode, verifyResetCode, resetPassword } from '@/api/password'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface Props {
   visible: boolean
 }
@@ -245,29 +247,29 @@ const hasNumber = computed(() => /[0-9]/.test(formState.password))
 
 const emailRules: Record<string, Rule[]> = {
   email: [
-    { required: true, message: '请输入邮箱地址' },
-    { type: 'email', message: '请输入正确的邮箱格式' },
+    { required: true, message: t('please_enter_your_email_address') },
+    { type: 'email', message: t('please_enter_the_correct_email_format') },
   ],
 }
 
 const codeRules: Record<string, Rule[]> = {
   code: [
-    { required: true, message: '请输入验证码' },
-    { len: 6, message: '验证码为6位' },
+    { required: true, message: t('please_enter_the_verification_code') },
+    { len: 6, message: t('verification_code_is_6_digits') },
   ],
 }
 
 const validatePassword = (_rule: Rule, value: string) => {
-  if (!value) return Promise.reject('请输入新密码')
-  if (value.length < 8 || value.length > 20) return Promise.reject('密码长度需为8-20字符')
-  if (!/[a-zA-Z]/.test(value)) return Promise.reject('密码需包含字母')
-  if (!/[0-9]/.test(value)) return Promise.reject('密码需包含数字')
+  if (!value) return Promise.reject(t('please_enter_new_password'))
+  if (value.length < 8 || value.length > 20) return Promise.reject(t('password_length_needs_to_be_8_20_charact'))
+  if (!/[a-zA-Z]/.test(value)) return Promise.reject(t('password_must_contain_letters'))
+  if (!/[0-9]/.test(value)) return Promise.reject(t('password_must_contain_numbers'))
   return Promise.resolve()
 }
 
 const validateConfirmPassword = (_rule: Rule, value: string) => {
-  if (!value) return Promise.reject('请再次输入新密码')
-  if (value !== formState.password) return Promise.reject('两次输入的密码不一致')
+  if (!value) return Promise.reject(t('please_enter_new_password_again'))
+  if (value !== formState.password) return Promise.reject(t('the_passwords_entered_twice_are_inconsis'))
   return Promise.resolve()
 }
 
@@ -304,12 +306,12 @@ const handleSendCode = async () => {
     await emailFormRef.value?.validate()
     loading.value = true
     await sendResetCode({ email: formState.email })
-    showForgotPasswordMessage('success', '我们会往您的注册邮箱发送验证码，请查收', FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
+    showForgotPasswordMessage('success', t('we_will_send_a_verification_code_to_your'), FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
     currentStep.value = 2
     startCountdown()
   } catch (error: any) {
     if (!error?.errorFields) {
-      showForgotPasswordMessage('error', error?.message || '发送失败', FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
+      showForgotPasswordMessage('error', error?.message || t('sending_failed'), FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
     }
   } finally {
     loading.value = false
@@ -320,10 +322,10 @@ const handleResendCode = async () => {
   loading.value = true
   try {
     await sendResetCode({ email: formState.email })
-    showForgotPasswordMessage('success', '我们会往您的注册邮箱发送验证码，请查收', FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
+    showForgotPasswordMessage('success', t('we_will_send_a_verification_code_to_your'), FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
     startCountdown()
   } catch (error: any) {
-    showForgotPasswordMessage('error', error?.message || '发送失败', FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
+    showForgotPasswordMessage('error', error?.message || t('sending_failed'), FORGOT_PASSWORD_MESSAGE_KEYS.sendCode)
   } finally {
     loading.value = false
   }
@@ -338,7 +340,7 @@ const handleVerifyCode = async () => {
     currentStep.value = 3
   } catch (error: any) {
     if (!error?.errorFields) {
-      showForgotPasswordMessage('error', error?.message || '验证失败', FORGOT_PASSWORD_MESSAGE_KEYS.verifyCode)
+      showForgotPasswordMessage('error', error?.message || t('authentication_failed'), FORGOT_PASSWORD_MESSAGE_KEYS.verifyCode)
     }
   } finally {
     loading.value = false
@@ -357,7 +359,7 @@ const handleResetPassword = async () => {
     currentStep.value = 4
   } catch (error: any) {
     if (!error?.errorFields) {
-      showForgotPasswordMessage('error', error?.message || '重置失败', FORGOT_PASSWORD_MESSAGE_KEYS.resetPassword)
+      showForgotPasswordMessage('error', error?.message || t('reset_failed'), FORGOT_PASSWORD_MESSAGE_KEYS.resetPassword)
     }
   } finally {
     loading.value = false
@@ -571,3 +573,4 @@ watch(
   line-height: normal !important;
 }
 </style>
+

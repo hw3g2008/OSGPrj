@@ -8,7 +8,7 @@
       type="button"
       class="lead-force-schedule-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭强制填写排期弹层"
+      :aria-label="$t('close_mandatory_schedule_entry_dialog')"
       @click="closeModal"
     />
 
@@ -23,25 +23,25 @@
         <div>
           <span :id="titleId" class="lead-force-schedule-title modal-title">
             <i class="mdi mdi-calendar-alert" aria-hidden="true" />
-            强制填写排期
+            {{ $t('schedule_entry_required') }}
           </span>
           <div class="lead-force-schedule-alert">
             <i class="mdi mdi-alert" aria-hidden="true" />
-            当前尚未提交下周排期，请立即补全可用时间
+            {{ $t('you_have_not_submitted_next_weeks_schedu') }}
           </div>
         </div>
       </div>
 
       <div class="lead-force-schedule-body modal-body" data-surface-part="body">
         <div class="lead-force-schedule-range">
-          <span class="lead-force-schedule-range__label">填写周期</span>
+          <span class="lead-force-schedule-range__label">{{ $t('schedule_period') }}</span>
           <strong>{{ weekRange }}</strong>
         </div>
 
         <div class="form-group">
           <label class="form-label">
             <i class="mdi mdi-clock-outline" aria-hidden="true" />
-            下周可上课时长 <span class="required-mark">*</span>
+            {{ $t('available_teaching_hours_next_week') }} <span class="required-mark">*</span>
           </label>
           <div class="force-hours-row">
             <input
@@ -52,12 +52,12 @@
               class="form-input"
               placeholder="10"
             />
-            <span class="force-hours-unit">小时</span>
+            <span class="force-hours-unit">{{ $t('hours') }}</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">每天可上课时间 <span class="required-mark">*</span></label>
+          <label class="form-label">{{ $t('daily_available_time') }} <span class="required-mark">*</span></label>
           <div class="force-day-grid">
             <article
               v-for="day in days"
@@ -70,7 +70,7 @@
                 <span class="force-day-card__date">{{ day.date }}</span>
               </div>
               <select v-model="formState.dailySlots[day.key]" class="form-select">
-                <option value="">请选择</option>
+                <option value="">{{ $t('please_select') }}</option>
                 <option
                   v-for="slot in SLOT_OPTIONS"
                   :key="`${day.key}-${slot.id}`"
@@ -87,7 +87,7 @@
       <div class="lead-force-schedule-footer modal-footer">
         <button type="button" class="btn btn-primary" @click="submitDraft">
           <i class="mdi mdi-check" aria-hidden="true" />
-          确认提交排期
+          {{ $t('confirm_schedule_submission') }}
         </button>
       </div>
     </div>

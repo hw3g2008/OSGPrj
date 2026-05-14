@@ -2,24 +2,24 @@
   <div class="forgot-page login-page">
     <div class="login-left">
       <h1>OSG</h1>
-      <p>One Strategy Group 求职辅导平台，助力您的职业发展</p>
+      <p>One Strategy Group {{ $t('job_search_coaching_platform_empowering_') }}</p>
     </div>
 
     <div class="login-right">
       <div class="login-box">
         <router-link to="/login" class="back-link">
           <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
-          返回登录
+          {{ $t('return_to_login') }}
         </router-link>
 
         <div class="login-logo">
           <div class="login-logo-icon">
             <i class="mdi mdi-key" aria-hidden="true"></i>
           </div>
-          <span>找回密码</span>
+          <span>{{ $t('retrieve_password') }}</span>
         </div>
 
-        <h2 class="login-title">重置密码</h2>
+        <h2 class="login-title">{{ $t('reset_password') }}</h2>
         <p class="login-subtitle">{{ stepDescription }}</p>
 
         <div class="steps">
@@ -40,16 +40,16 @@
         <div id="step-1" class="step-content" :class="{ active: currentStep === 1 }">
           <a-form @finish="handleSendCode">
             <div class="form-group">
-              <label class="form-label" for="forgot-email">邮箱地址</label>
+              <label class="form-label" for="forgot-email">{{ $t('email_address') }}</label>
               <a-input
                 v-model:value="step1Form.email"
-                placeholder="请输入注册邮箱"
+                :placeholder="$t('please_enter_your_registered_email_addre')"
                 autocomplete="email"
               ></a-input>
               <p class="field-error" :class="{ show: Boolean(emailError) }">{{ emailError }}</p>
             </div>
             <a-button id="send-btn" type="primary" class="login-btn" :loading="sendingCode" html-type="submit">
-              {{ sendingCode ? '发送中...' : '发送验证码' }}
+              {{ sendingCode ? '发送中...' : $t('send_verification_code') }}
             </a-button>
           </a-form>
         </div>
@@ -60,12 +60,12 @@
           </p>
           <a-form @finish="handleVerifyCode">
             <div class="form-group">
-              <label class="form-label" for="fp-code">验证码</label>
+              <label class="form-label" for="fp-code">{{ $t('verification_code') }}</label>
               <div class="input-row">
                 <a-input
                   v-model:value="step2Form.code"
                   :maxlength="6"
-                  placeholder="请输入6位验证码"
+                  :placeholder="$t('please_enter_the_6_digit_verification_co')"
                 ></a-input>
                 <a-button
                   id="fp-resend-btn"
@@ -80,7 +80,7 @@
               <p class="field-error" :class="{ show: Boolean(codeError) }">{{ codeError }}</p>
             </div>
             <a-button id="verify-btn" type="primary" class="login-btn" :loading="verifying" html-type="submit">
-              {{ verifying ? '验证中...' : '验证' }}
+              {{ verifying ? '验证中...' : $t('verify') }}
             </a-button>
             <p class="countdown-text">{{ countdownText }}</p>
           </a-form>
@@ -89,10 +89,10 @@
         <div id="step-3" class="step-content" :class="{ active: currentStep === 3 }">
           <a-form @finish="handleResetPassword">
             <div class="form-group">
-              <label class="form-label" for="new-password">新密码</label>
+              <label class="form-label" for="new-password">{{ $t('new_password') }}</label>
               <a-input-password
                   v-model:value="step3Form.newPassword"
-                  placeholder="请输入新密码"
+                  :placeholder="$t('please_enter_new_password')"
                   autocomplete="new-password"
                 ></a-input-password>
               <div class="password-strength">
@@ -104,18 +104,18 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="confirm-password">确认密码</label>
+              <label class="form-label" for="confirm-password">{{ $t('confirm_password') }}</label>
               <a-input-password
                   v-model:value="step3Form.confirmPassword"
                   :class="{ error: Boolean(confirmError) }"
-                  placeholder="请再次输入新密码"
+                  :placeholder="$t('please_enter_new_password_again')"
                   autocomplete="new-password"
                 ></a-input-password>
               <p class="field-error" :class="{ show: Boolean(confirmError) }">{{ confirmError }}</p>
             </div>
 
             <a-button id="reset-btn" type="primary" class="login-btn" :loading="resetting" html-type="submit">
-              {{ resetting ? '重置中...' : '重置密码' }}
+              {{ resetting ? '重置中...' : $t('reset_password') }}
             </a-button>
           </a-form>
         </div>
@@ -124,13 +124,13 @@
           <div class="success-icon">
             <i class="mdi mdi-check" aria-hidden="true"></i>
           </div>
-          <h3 class="success-title">密码重置成功</h3>
-          <p class="success-desc">您的密码已成功重置，请使用新密码登录</p>
-          <router-link to="/login" class="login-link">返回登录</router-link>
+          <h3 class="success-title">{{ $t('password_reset_successful') }}</h3>
+          <p class="success-desc">{{ $t('your_password_has_been_reset_successfull') }}</p>
+          <router-link to="/login" class="login-link">{{ $t('return_to_login') }}</router-link>
         </div>
 
         <div class="copyright">
-          备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">冀ICP备17000879号-4</a>
+          备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">{{ $t('ji_icp_no_17000879') }}-4</a>
         </div>
       </div>
     </div>

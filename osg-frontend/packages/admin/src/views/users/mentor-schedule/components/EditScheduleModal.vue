@@ -20,17 +20,17 @@
         <span class="esm-staff-card__avatar-text">{{ avatarText }}</span>
       </div>
       <div class="esm-staff-card__info">
-        <div class="esm-staff-card__name">{{ record?.staffName || '待选择导师' }}</div>
+        <div class="esm-staff-card__name">{{ record?.staffName || $t('select_mentor') }}</div>
         <div class="esm-staff-card__meta">
           <span class="esm-staff-card__meta-chip">ID {{ record?.staffId }}</span>
           <span class="esm-staff-card__meta-dot" aria-hidden="true"></span>
-          <span>{{ record?.staffType === 'lead_mentor' ? '班主任' : '专业导师' }}</span>
+          <span>{{ record?.staffType === 'lead_mentor' ? $t('head_teacher') : $t('professional_mentor') }}</span>
           <span class="esm-staff-card__meta-dot" aria-hidden="true"></span>
           <span>{{ record?.majorDirection || '—' }}</span>
         </div>
       </div>
       <div class="esm-staff-card__hours">
-        <div class="esm-staff-card__hours-label">{{ weekLabel }}可用时长</div>
+        <div class="esm-staff-card__hours-label">{{ weekLabel }}{{ $t('available_hours') }}</div>
         <div class="esm-staff-card__hours-value">
           <span class="esm-staff-card__hours-num">{{ formState.availableHours }}</span>
           <span class="esm-staff-card__hours-unit">h</span>
@@ -52,7 +52,7 @@
         :class="['esm-week-switch__tab', { 'esm-week-switch__tab--active': localWeek === 'current' }]"
         @click="localWeek = 'current'"
       >
-        <span class="esm-week-switch__label">本周</span>
+        <span class="esm-week-switch__label">{{ $t('this_week') }}</span>
         <span class="esm-week-switch__range">{{ weekRanges.current }}</span>
       </button>
       <button
@@ -62,16 +62,16 @@
         :class="['esm-week-switch__tab', { 'esm-week-switch__tab--active': localWeek === 'next' }]"
         @click="localWeek = 'next'"
       >
-        <span class="esm-week-switch__label">下周</span>
+        <span class="esm-week-switch__label">{{ $t('next_week') }}</span>
         <span class="esm-week-switch__range">{{ weekRanges.next }}</span>
       </button>
     </div>
 
     <!-- Hours input -->
-    <section class="esm-section" data-field-name="调整导师排期弹窗可上课时长">
+    <section class="esm-section" :data-field-name="$t('available_teaching_hours')">
       <header class="esm-section__head">
         <span class="esm-section__icon mdi mdi-clock-outline" aria-hidden="true"></span>
-        <span class="esm-section__title">可上课时长</span>
+        <span class="esm-section__title">{{ $t('available_teaching_hours_2') }}</span>
         <span class="esm-required" aria-hidden="true">*</span>
       </header>
       <div class="esm-hours">
@@ -83,9 +83,9 @@
             :controls="false"
             class="esm-hours__input"
           />
-          <span class="esm-hours__unit">小时 / 周</span>
+          <span class="esm-hours__unit">{{ $t('hours_week') }}</span>
         </div>
-        <div class="esm-hours__quick" role="group" aria-label="快捷选择">
+        <div class="esm-hours__quick" role="group" :aria-label="$t('quick_select')">
           <button
             v-for="value in quickHours"
             :key="value"
@@ -100,12 +100,12 @@
     </section>
 
     <!-- Day grid -->
-    <section class="esm-section" data-field-name="调整导师排期弹窗每天可上课时间">
+    <section class="esm-section" :data-field-name="$t('daily_available_teaching_hours')">
       <header class="esm-section__head">
         <span class="esm-section__icon mdi mdi-calendar-check" aria-hidden="true"></span>
-        <span class="esm-section__title">每天可上课时间</span>
+        <span class="esm-section__title">{{ $t('daily_available_time') }}</span>
         <span class="esm-required" aria-hidden="true">*</span>
-        <span class="esm-section__hint">可多选</span>
+        <span class="esm-section__hint">{{ $t('multiple_selections_possible') }}</span>
       </header>
       <div class="esm-day-list">
         <fieldset
@@ -115,9 +115,9 @@
             'esm-day-row',
             { 'esm-day-row--weekend': day.weekend, 'esm-day-row--holiday': day.holiday },
           ]"
-          :data-field-name="`${day.label}可用时段`"
+          :data-field-name="$t('available_time_slots_for_day', { day: day.label })"
         >
-          <legend class="sr-only">{{ day.label }}可用时段</legend>
+          <legend class="sr-only">{{ day.label }}{{ $t('available_time_slots') }}</legend>
           <div class="esm-day-row__lead">
             <span class="esm-day-row__rail" aria-hidden="true"></span>
             <span class="esm-day-row__date">{{ day.dayNum }}</span>
@@ -129,7 +129,7 @@
               v-if="day.weekend || day.holiday"
               :class="['esm-day-row__tag', day.holiday ? 'esm-day-row__tag--holiday' : 'esm-day-row__tag--weekend']"
             >
-              {{ day.holiday ? '节假日' : '周末' }}
+              {{ day.holiday ? $t('holidays') : $t('weekends') }}
             </span>
           </div>
           <div class="esm-day-row__slots">
@@ -153,11 +153,11 @@
       <div class="esm-day-hint">
         <span class="esm-day-hint__legend">
           <span class="esm-day-hint__swatch esm-day-hint__swatch--weekend"></span>
-          周末
+          {{ $t('weekends') }}
         </span>
         <span class="esm-day-hint__legend">
           <span class="esm-day-hint__swatch esm-day-hint__swatch--holiday"></span>
-          节假日
+          {{ $t('holidays') }}
         </span>
       </div>
     </section>
@@ -166,14 +166,14 @@
     <section class="esm-section">
       <header class="esm-section__head">
         <span class="esm-section__icon mdi mdi-note-text" aria-hidden="true"></span>
-        <span class="esm-section__title">调整原因</span>
+        <span class="esm-section__title">{{ $t('adjustment_reason') }}</span>
         <span class="esm-required" aria-hidden="true">*</span>
       </header>
       <a-textarea
         v-model:value="formState.reason"
         :rows="3"
         class="esm-reason"
-        placeholder="请填写调整原因，将同步通知给导师"
+        :placeholder="$t('please_enter_the_adjustment_reason_the_m')"
       />
       <div v-if="errorMessage" class="esm-error" role="alert">
         <span class="mdi mdi-alert-circle-outline" aria-hidden="true"></span>
@@ -182,22 +182,22 @@
     </section>
 
     <!-- Notify -->
-    <fieldset class="esm-notify-card" data-field-name="同步通知导师复选框">
-      <legend class="sr-only">同步通知导师</legend>
+    <fieldset class="esm-notify-card" :data-field-name="$t('notify_mentor')">
+      <legend class="sr-only">{{ $t('notify_mentor_2') }}</legend>
       <span class="esm-notify-card__icon mdi mdi-bell-ring-outline" aria-hidden="true"></span>
       <label class="esm-notify-label">
         <a-checkbox v-model:checked="formState.notifyStaff">
-          <span class="esm-notify-label__title">同步通知导师</span>
-          <span class="esm-notify-label__desc">调整后将发送邮件和站内消息通知该导师</span>
+          <span class="esm-notify-label__title">{{ $t('notify_mentor_2') }}</span>
+          <span class="esm-notify-label__desc">{{ $t('after_adjustment_an_email_and_in_app_not') }}</span>
         </a-checkbox>
       </label>
     </fieldset>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" class="esm-footer-btn" @click="handleClose">取消</a-button>
+      <a-button data-surface-part="cancel-control" class="esm-footer-btn" @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button type="primary" data-surface-part="confirm-control" class="esm-footer-btn esm-footer-btn--primary" @click="handleSubmit">
         <span class="mdi mdi-check" aria-hidden="true"></span>
-        保存并通知
+        {{ $t('save_and_notify') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -207,7 +207,9 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { StaffScheduleListItem, TimeSlot, WeekScope } from '@osg/shared/api/admin/schedule'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = withDefaults(defineProps<{
   visible: boolean
   record?: StaffScheduleListItem | null
@@ -236,7 +238,7 @@ const localWeek = ref<WeekScope>(props.weekScope)
 
 const currentWeekDates = ['03/10', '03/11', '03/12', '03/13', '03/14', '03/15', '03/16']
 const nextWeekDates = ['03/17', '03/18', '03/19', '03/20', '03/21', '03/22', '03/23']
-const dayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+const dayLabels = [t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday'), t('sunday')]
 
 const weekdays = computed(() => {
   const dates = localWeek.value === 'next' ? nextWeekDates : currentWeekDates
@@ -247,7 +249,7 @@ const weekdays = computed(() => {
       label: dayLabels[i],
       date,
       dayNum: day,
-      monthLabel: `${Number(month)}月`,
+      monthLabel: t('month_suffix', { month: Number(month) }),
       weekend: i >= 5,
       holiday: false,
     }
@@ -255,9 +257,9 @@ const weekdays = computed(() => {
 })
 
 const timeSlots: { value: TimeSlot; label: string; icon: string }[] = [
-  { value: 'morning', label: '上午', icon: 'mdi-weather-sunset-up' },
-  { value: 'afternoon', label: '下午', icon: 'mdi-white-balance-sunny' },
-  { value: 'evening', label: '晚上', icon: 'mdi-weather-night' },
+  { value: 'morning', label: t('morning'), icon: 'mdi-weather-sunset-up' },
+  { value: 'afternoon', label: t('afternoon'), icon: 'mdi-white-balance-sunny' },
+  { value: 'evening', label: t('evening'), icon: 'mdi-weather-night' },
 ]
 
 const formState = reactive({
@@ -279,9 +281,9 @@ const avatarText = computed(() => {
     .join('')
 })
 
-const weekLabel = computed(() => (localWeek.value === 'next' ? '下周排期' : '本周排期'))
+const weekLabel = computed(() => (localWeek.value === 'next' ? t('next_week_schedule') : t('this_week_schedule')))
 
-const modalTitle = computed(() => (props.record?.filled ? '调整导师排期' : '代填导师排期'))
+const modalTitle = computed(() => (props.record?.filled ? t('adjust_mentor_schedule') : t('fill_schedule_on_behalf_of_mentor')))
 
 const resetForm = () => {
   localWeek.value = props.weekScope
@@ -323,11 +325,11 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!props.record?.staffId) {
-    errorMessage.value = '未找到导师信息，暂时无法保存。'
+    errorMessage.value = t('mentor_information_not_found_unable_to_s')
     return
   }
   if (!formState.reason) {
-    errorMessage.value = '请填写调整原因。'
+    errorMessage.value = t('please_enter_adjustment_reason')
     return
   }
   errorMessage.value = ''

@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="欢迎回来，管理员" :description="`今天是 ${todayStr}`">
+    <PageHeader :title-zh="$t('welcome_back_admin')" :description="$t('admin_today_description', { date: todayStr })">
       <template #actions>
         <a-button @click="fetchAll">
           <template #icon><ReloadOutlined /></template>
-          刷新数据
+          {{ $t('refresh_data') }}
         </a-button>
       </template>
     </PageHeader>
@@ -55,6 +55,9 @@ import RecentActivity from './components/RecentActivity.vue'
 import QuickActions from './components/QuickActions.vue'
 import StudentStatus from './components/StudentStatus.vue'
 import MonthlyStats from './components/MonthlyStats.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const stats = ref<DashboardStats | null>(null)
 const todos = ref<TodoItem[] | null>(null)
@@ -64,8 +67,21 @@ const monthlyStats = ref<MonthlyStatsData | null>(null)
 
 const todayStr = computed(() => {
   const d = new Date()
-  const weekDays = ['日', '一', '二', '三', '四', '五', '六']
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 周${weekDays[d.getDay()]}`
+  const weekDays = [
+    'weekday_sunday',
+    'weekday_monday',
+    'weekday_tuesday',
+    'weekday_wednesday',
+    'weekday_thursday',
+    'weekday_friday',
+    'weekday_saturday'
+  ]
+  return t('admin_date_with_weekday', {
+    year: d.getFullYear(),
+    month: d.getMonth() + 1,
+    day: d.getDate(),
+    weekday: t(weekDays[d.getDay()])
+  })
 })
 
 async function fetchAll() {

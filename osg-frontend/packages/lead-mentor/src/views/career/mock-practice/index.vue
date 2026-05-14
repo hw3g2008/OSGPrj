@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div id="page-mock-practice" class="page-mock-practice osg-page">
     <PageHeader
-      title-zh="模拟应聘管理"
+      :title-zh="$t('simulated_application_management')"
       title-en="Mock Practice"
-      description="处理学员的模拟面试、人际关系测试、期中考试申请"
+      :description="$t('handle_student_mock_interview_interperso')"
     />
 
     <a-row :gutter="12" aria-label="mock practice stats">
@@ -22,7 +22,7 @@
           <template #tab>
             <span id="mock-tab-pending" class="mock-tab-label mock-tab-label--pending">
               <ClockCircleOutlined />
-              待分配导师
+              {{ $t('tutor_to_be_assigned') }}
               <span class="tab-count">{{ pendingRows.length }}</span>
             </span>
           </template>
@@ -30,7 +30,7 @@
             <a-alert
               type="warning"
               show-icon
-              message="以下学员申请了模拟应聘，需要分配导师"
+              :message="$t('the_following_students_have_requested_mo')"
               style="margin-bottom: 12px;"
             />
 
@@ -38,7 +38,7 @@
               <a-form-item label="类型">
                 <a-select
                   v-model:value="pendingFilters.practiceType"
-                  placeholder="全部类型"
+                  :placeholder="$t('all_types')"
                   allow-clear
                   style="width: 140px"
                   :options="practiceTypeOptions"
@@ -47,7 +47,7 @@
               <a-form-item label="学员">
                 <a-input
                   v-model:value="pendingFilters.keyword"
-                  placeholder="搜索学员姓名/ID"
+                  :placeholder="`${$t('search_student_name')}/ID`"
                   allow-clear
                   style="width: 180px"
                   @press-enter="handleSearch('pending')"
@@ -56,13 +56,13 @@
               <a-form-item>
                 <a-button type="primary" @click="handleSearch('pending')">
                   <template #icon><SearchOutlined /></template>
-                  筛选
+                  {{ $t('filter') }}
                 </a-button>
               </a-form-item>
               <a-form-item>
                 <a-button type="text" @click="handleReset('pending')">
                   <template #icon><ReloadOutlined /></template>
-                  重置
+                  {{ $t('reset') }}
                 </a-button>
               </a-form-item>
             </a-form>
@@ -75,7 +75,7 @@
               :loading="loading.pending"
               :scroll="{ x: 700 }"
               :row-class-name="(record: PracticeRow) => record.rowTone || ''"
-              :locale="{ emptyText: '暂无待分配的模拟应聘记录' }"
+              :locale="{ emptyText: $t('no_pending_mock_interview_assignments') }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
@@ -99,7 +99,7 @@
                     @click="openAssignMock(record.practiceId)"
                   >
                     <template #icon><UserAddOutlined /></template>
-                    分配导师
+                    {{ $t('assign_a_mentor') }}
                   </a-button>
                 </template>
               </template>
@@ -112,7 +112,7 @@
           <template #tab>
             <span id="mock-tab-mycoaching" class="mock-tab-label mock-tab-label--coaching">
               <BookOutlined />
-              我辅导的学员
+              {{ $t('students_i_coach') }}
               <span class="tab-count">{{ coachingRows.length }}</span>
             </span>
           </template>
@@ -120,7 +120,7 @@
             <a-alert
               type="info"
               show-icon
-              message="以下是由您亲自辅导的学员模拟应聘记录"
+              :message="$t('the_following_are_mock_interview_records')"
               style="margin-bottom: 12px;"
             />
 
@@ -128,7 +128,7 @@
               <a-form-item label="类型">
                 <a-select
                   v-model:value="coachingFilters.practiceType"
-                  placeholder="全部类型"
+                  :placeholder="$t('all_types')"
                   allow-clear
                   style="width: 140px"
                   :options="practiceTypeOptions"
@@ -137,7 +137,7 @@
               <a-form-item label="状态">
                 <a-select
                   v-model:value="coachingFilters.status"
-                  placeholder="全部状态"
+                  :placeholder="$t('all_status')"
                   allow-clear
                   style="width: 140px"
                   :options="coachingStatusOptions"
@@ -146,7 +146,7 @@
               <a-form-item label="学员">
                 <a-input
                   v-model:value="coachingFilters.keyword"
-                  placeholder="搜索学员姓名/ID"
+                  :placeholder="`${$t('search_student_name')}/ID`"
                   allow-clear
                   style="width: 180px"
                   @press-enter="handleSearch('coaching')"
@@ -155,13 +155,13 @@
               <a-form-item>
                 <a-button type="primary" @click="handleSearch('coaching')">
                   <template #icon><SearchOutlined /></template>
-                  筛选
+                  {{ $t('filter') }}
                 </a-button>
               </a-form-item>
               <a-form-item>
                 <a-button type="text" @click="handleReset('coaching')">
                   <template #icon><ReloadOutlined /></template>
-                  重置
+                  {{ $t('reset') }}
                 </a-button>
               </a-form-item>
             </a-form>
@@ -174,7 +174,7 @@
               :loading="loading.coaching"
               :scroll="{ x: 1100 }"
               :row-class-name="(record: PracticeRow) => record.rowTone || ''"
-              :locale="{ emptyText: '当前暂无辅导的模拟应聘记录' }"
+              :locale="{ emptyText: $t('no_mock_interview_records_under_coaching') }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
@@ -233,7 +233,7 @@
           <template #tab>
             <span id="mock-tab-mymanage" class="mock-tab-label mock-tab-label--managed">
               <TeamOutlined />
-              我管理的学员
+              {{ $t('students_i_manage') }}
               <span class="tab-count tab-count--managed">{{ managedRows.length }}</span>
             </span>
           </template>
@@ -241,7 +241,7 @@
             <a-alert
               type="success"
               show-icon
-              message="以下是您管理的学员的模拟应聘记录（由其他导师辅导）"
+              :message="`${$t('the_following_are_mock_interview_records_2')}）`"
               style="margin-bottom: 12px;"
             />
 
@@ -249,7 +249,7 @@
               <a-form-item label="类型">
                 <a-select
                   v-model:value="managedFilters.practiceType"
-                  placeholder="全部类型"
+                  :placeholder="$t('all_types')"
                   allow-clear
                   style="width: 140px"
                   :options="practiceTypeOptions"
@@ -258,7 +258,7 @@
               <a-form-item label="状态">
                 <a-select
                   v-model:value="managedFilters.status"
-                  placeholder="全部状态"
+                  :placeholder="$t('all_status')"
                   allow-clear
                   style="width: 140px"
                   :options="managedStatusOptions"
@@ -267,7 +267,7 @@
               <a-form-item label="学员">
                 <a-input
                   v-model:value="managedFilters.keyword"
-                  placeholder="搜索学员姓名/ID"
+                  :placeholder="`${$t('search_student_name')}/ID`"
                   allow-clear
                   style="width: 180px"
                   @press-enter="handleSearch('managed')"
@@ -276,7 +276,7 @@
               <a-form-item label="导师">
                 <a-input
                   v-model:value="managedFilters.mentor"
-                  placeholder="搜索导师姓名"
+                  :placeholder="$t('search_for_tutor_name')"
                   allow-clear
                   style="width: 160px"
                   @press-enter="handleSearch('managed')"
@@ -285,13 +285,13 @@
               <a-form-item>
                 <a-button type="primary" @click="handleSearch('managed')">
                   <template #icon><SearchOutlined /></template>
-                  筛选
+                  {{ $t('filter') }}
                 </a-button>
               </a-form-item>
               <a-form-item>
                 <a-button type="text" @click="handleReset('managed')">
                   <template #icon><ReloadOutlined /></template>
-                  重置
+                  {{ $t('reset') }}
                 </a-button>
               </a-form-item>
             </a-form>
@@ -304,7 +304,7 @@
               :loading="loading.managed"
               :scroll="{ x: 1200 }"
               :row-class-name="(record: PracticeRow) => record.rowTone || ''"
-              :locale="{ emptyText: '当前暂无管理学员的模拟应聘记录' }"
+              :locale="{ emptyText: $t('no_mock_interview_records_for_managed_st') }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
@@ -398,7 +398,9 @@ import {
 import { deriveMockPracticeStatus } from '@osg/shared/composables'
 import AssignMockModal, { type AssignMockPreview } from '@/components/AssignMockModal.vue'
 import LeadMockFeedbackModal, { type MockFeedbackPreview } from '@/components/LeadMockFeedbackModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type MockTab = 'pending' | 'mycoaching' | 'mymanage'
 type ScopeKey = LeadMentorMockPracticeScope
 
@@ -472,56 +474,56 @@ const coachingFilters = reactive<ScopeFilters>({})
 const managedFilters = reactive<ScopeFilters>({})
 
 const practiceTypeOptions = [
-  { value: '模拟面试', label: '模拟面试' },
-  { value: '人际关系测试', label: '人际关系测试' },
-  { value: '期中考试', label: '期中考试' },
+  { value: t('mock_interview'), label: t('mock_interview') },
+  { value: t('interpersonal_test'), label: t('interpersonal_test') },
+  { value: t('midterm_exam'), label: t('midterm_exam') },
 ]
 
 const coachingStatusOptions = [
-  { value: 'new_assignment', label: '新分配' },
-  { value: 'pending', label: '待进行' },
-  { value: 'completed', label: '已完成' },
-  { value: 'cancelled', label: '已取消' },
+  { value: 'new_assignment', label: t('newly_assigned') },
+  { value: 'pending', label: t('pending_2') },
+  { value: 'completed', label: t('completed') },
+  { value: 'cancelled', label: t('canceled') },
 ]
 
 const managedStatusOptions = [
-  { value: 'pending', label: '待进行' },
-  { value: 'ongoing', label: '进行中' },
-  { value: 'completed', label: '已完成' },
-  { value: 'cancelled', label: '已取消' },
+  { value: 'pending', label: t('pending_2') },
+  { value: 'ongoing', label: t('in_progress') },
+  { value: 'completed', label: t('completed') },
+  { value: 'cancelled', label: t('canceled') },
 ]
 
 const pendingColumns = [
-  { title: '学员', key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
-  { title: '类型', key: 'practiceType', dataIndex: 'practiceType', width: 160 },
-  { title: '申请时间', key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
-  { title: '操作', key: 'action', width: 140, fixed: 'right' as const },
+  { title: t('student'), key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
+  { title: t('type'), key: 'practiceType', dataIndex: 'practiceType', width: 160 },
+  { title: t('application_time'), key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
+  { title: t('operation'), key: 'action', width: 140, fixed: 'right' as const },
 ]
 
 const coachingColumns = [
-  { title: '学员', key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
-  { title: '类型', key: 'practiceType', dataIndex: 'practiceType', width: 160 },
-  { title: '申请时间', key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
-  { title: '状态', key: 'status', dataIndex: 'status', width: 130 },
-  { title: '已上课时', key: 'hours', dataIndex: 'hours', width: 110, align: 'center' as const },
-  { title: '课程反馈', key: 'feedback', dataIndex: 'feedback', width: 220 },
+  { title: t('student'), key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
+  { title: t('type'), key: 'practiceType', dataIndex: 'practiceType', width: 160 },
+  { title: t('application_time'), key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
+  { title: t('status'), key: 'status', dataIndex: 'status', width: 130 },
+  { title: t('already_in_class'), key: 'hours', dataIndex: 'hours', width: 110, align: 'center' as const },
+  { title: t('course_feedback'), key: 'feedback', dataIndex: 'feedback', width: 220 },
 ]
 
 const managedColumns = [
-  { title: '学员', key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
-  { title: '类型', key: 'practiceType', dataIndex: 'practiceType', width: 160 },
-  { title: '申请时间', key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
-  { title: '状态', key: 'status', dataIndex: 'status', width: 110 },
-  { title: '辅导导师', key: 'mentor', dataIndex: 'mentor', width: 180 },
-  { title: '已上课时', key: 'hours', dataIndex: 'hours', width: 110, align: 'center' as const },
-  { title: '课程反馈', key: 'feedback', dataIndex: 'feedback', width: 220 },
+  { title: t('student'), key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
+  { title: t('type'), key: 'practiceType', dataIndex: 'practiceType', width: 160 },
+  { title: t('application_time'), key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
+  { title: t('status'), key: 'status', dataIndex: 'status', width: 110 },
+  { title: t('coaching_mentor'), key: 'mentor', dataIndex: 'mentor', width: 180 },
+  { title: t('already_in_class'), key: 'hours', dataIndex: 'hours', width: 110, align: 'center' as const },
+  { title: t('course_feedback'), key: 'feedback', dataIndex: 'feedback', width: 220 },
 ]
 
 const statsCards = computed<StatsCard[]>(() => [
-  { label: '待处理', value: stats.value.pendingCount || 0, tone: 'stats-card__value--warning' },
-  { label: '已安排', value: stats.value.scheduledCount || 0, tone: 'stats-card__value--info' },
-  { label: '已完成', value: stats.value.completedCount || 0, tone: 'stats-card__value--success' },
-  { label: '已取消', value: stats.value.cancelledCount || 0, tone: 'stats-card__value--muted' },
+  { label: t('pending'), value: stats.value.pendingCount || 0, tone: 'stats-card__value--warning' },
+  { label: t('arranged'), value: stats.value.scheduledCount || 0, tone: 'stats-card__value--info' },
+  { label: t('completed'), value: stats.value.completedCount || 0, tone: 'stats-card__value--success' },
+  { label: t('canceled'), value: stats.value.cancelledCount || 0, tone: 'stats-card__value--muted' },
 ])
 
 const pendingRows = computed<PracticeRow[]>(() =>
@@ -583,7 +585,7 @@ const loadAllScopes = async () => {
     activeAssignDetail.value = null
     isFeedbackModalOpen.value = false
     selectedFeedback.value = null
-    message.error('模拟应聘数据加载失败')
+    message.error(t('failed_to_load_mock_interview_data'))
   }
 }
 
@@ -592,7 +594,7 @@ async function handleSearch(scope: ScopeKey) {
     const rows = await loadScope(scope)
     scopeRows.value = { ...scopeRows.value, [scope]: rows }
   } catch (_error) {
-    message.error('筛选失败，请稍后重试')
+    message.error(t('filter_failed_please_try_again_later'))
   }
 }
 
@@ -613,7 +615,7 @@ const openMockFeedback = async (practiceId: number) => {
   } catch (_error) {
     selectedFeedback.value = null
     isFeedbackModalOpen.value = false
-    message.error('模拟反馈加载失败')
+    message.error(t('failed_to_load_mock_feedback'))
   }
 }
 
@@ -629,47 +631,47 @@ const openAssignMock = async (practiceId: number) => {
     activeAssignDetail.value = null
     selectedAssignPreview.value = null
     isAssignMockModalOpen.value = false
-    message.error('模拟应聘详情加载失败')
+    message.error(t('failed_to_load_mock_interview_details'))
   }
 }
 
 const handleAssignMockConfirm = async () => {
   if (!activeAssignPracticeId.value || !activeAssignDetail.value) {
-    message.error('分配上下文丢失')
+    message.error(t('assignment_context_lost'))
     return
   }
 
   const payload = collectAssignPayload(activeAssignDetail.value)
   if (!payload.mentorIds.length) {
-    message.error('请至少选择1位导师')
+    message.error(t('please_select_at_least_1_tutor'))
     return
   }
   if (!payload.scheduledAt) {
-    message.error('预约时间不能为空')
+    message.error(t('appointment_time_cannot_be_empty'))
     return
   }
 
   try {
     await assignLeadMentorMockPractice(activeAssignPracticeId.value, payload)
     isAssignMockModalOpen.value = false
-    message.success('导师分配已保存')
+    message.success(t('mentor_assignment_saved'))
     await nextTick()
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error('导师分配保存失败')
+    message.error(t('failed_to_save_mentor_assignment'))
   }
 }
 
 const handleAcknowledgeAssignment = async (practiceId: number) => {
   try {
     await acknowledgeLeadMentorMockPractice(practiceId)
-    message.success('分配确认已保存')
+    message.success(t('assignment_confirmation_saved'))
     await nextTick()
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error('分配确认失败')
+    message.error(t('failed_to_confirm_assignment'))
   }
 }
 
@@ -707,7 +709,7 @@ function toPracticeRow(row: LeadMentorMockPracticeItem, scope: ScopeKey): Practi
     mentorMeta: row.mentorBackgrounds || '-',
     feedbackTitle,
     feedbackTone,
-    feedbackSummary: row.feedbackSummary || (row.isNewAssignment ? '等待导师确认' : '等待导师补充反馈'),
+    feedbackSummary: row.feedbackSummary || (row.isNewAssignment ? '等待导师确认' : t('awaiting_additional_mentor_feedback')),
     hasFeedback,
   }
 }
@@ -732,7 +734,7 @@ function buildAssignPreview(detail: LeadMentorMockPracticeItem): AssignMockPrevi
 }
 
 function buildFeedbackPreview(detail: LeadMentorMockPracticeItem): MockFeedbackPreview {
-  const feedbackSummary = detail.feedbackSummary || detail.note || '暂无反馈'
+  const feedbackSummary = detail.feedbackSummary || detail.note || t('no_feedback_yet')
   const suggestions = splitSuggestions(detail.note)
 
   return {
@@ -775,13 +777,13 @@ function collectAssignPayload(detail: LeadMentorMockPracticeItem) {
 
 function resolveTypeUi(practiceType?: string) {
   const normalized = (practiceType || '').trim()
-  if (normalized === '模拟面试') {
+  if (normalized === t('mock_interview')) {
     return { typeTone: 'tag--info', typeIcon: 'mdi-account-voice', rowTone: 'mock-row--blue' }
   }
-  if (normalized === '人际关系测试') {
+  if (normalized === t('interpersonal_test')) {
     return { typeTone: 'tag--warning', typeIcon: 'mdi-account-group', rowTone: 'mock-row--amber' }
   }
-  if (normalized === '期中考试') {
+  if (normalized === t('midterm_exam')) {
     return { typeTone: 'tag--purple', typeIcon: 'mdi-file-document-edit', rowTone: 'mock-row--purple' }
   }
   return { typeTone: 'tag--info', typeIcon: 'mdi-clipboard-text', rowTone: 'mock-row--blue' }
@@ -829,16 +831,16 @@ function resolveStatusUi(row: LeadMentorMockPracticeItem) {
 function resolveFeedbackTitle(row: Pick<LeadMentorMockPracticeItem, 'feedbackRating' | 'status' | 'completedHours'>) {
   const rating = normalizeScore(row.feedbackRating)
   if (rating >= 5) {
-    return '优秀'
+    return t('excellent')
   }
   if (rating >= 4) {
-    return '良好'
+    return t('good')
   }
   if (rating >= 3) {
-    return '待改进'
+    return t('needs_improvement_2')
   }
   // §D.3 SSOT：兜底走 composable 派生
-  return deriveMockPracticeStatus({ status: row.status, completedHours: row.completedHours }).label || row.status || '待反馈'
+  return deriveMockPracticeStatus({ status: row.status, completedHours: row.completedHours }).label || row.status || t('pending_feedback')
 }
 
 function resolveFeedbackTone(rating?: number) {
@@ -857,9 +859,9 @@ function buildRecommendation(detail: LeadMentorMockPracticeItem) {
     return detail.note
   }
   if (normalizeScore(detail.feedbackRating) >= 4) {
-    return '导师建议继续推进下一阶段训练'
+    return t('mentor_recommends_proceeding_to_the_next')
   }
-  return '建议先补一轮针对性训练后再继续推进'
+  return t('recommended_to_complete_a_targeted_train')
 }
 
 function splitSuggestions(note?: string) {
@@ -872,12 +874,12 @@ function splitSuggestions(note?: string) {
     return items
   }
 
-  return ['结合导师反馈继续补充高频题训练']
+  return [t('continue_high_frequency_question_trainin')]
 }
 
 function formatMentorDemand(count?: number) {
   const resolved = Number(count ?? 0)
-  return resolved > 0 ? `期望${resolved}位导师` : '待确认导师人数'
+  return resolved > 0 ? `期望${resolved}位导师` : t('pending_mentor_confirmation_count')
 }
 
 function toDateTimeInputValue(value?: string) {
@@ -1091,3 +1093,4 @@ function buildMentorCode(name?: string) {
   gap: 2px;
 }
 </style>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <OverlaySurfaceModal
     :open="visible"
     :surface-id="surfaceId"
@@ -9,7 +9,7 @@
     <template #title>
       <span class="renew-contract-modal__header-title">
         <span class="mdi mdi-file-document-plus renew-contract-modal__header-icon" aria-hidden="true"></span>
-        <span>续费/新增合同</span>
+        <span>{{ $t('renew_add_contract') }}</span>
       </span>
     </template>
 
@@ -24,7 +24,7 @@
         <a-form-item>
           <template #label>
             <span class="renew-contract-modal__label">
-              学员 Student
+              {{ $t('student') }} Student
               <span class="renew-contract-modal__required">*</span>
             </span>
           </template>
@@ -33,11 +33,11 @@
               <div class="renew-contract-modal__avatar">{{ studentInitials }}</div>
               <div class="renew-contract-modal__student-info">
                 <div class="renew-contract-modal__student-name">{{ presetContract.studentName }}</div>
-                <div class="renew-contract-modal__student-meta">ID: {{ presetContract.studentId }} · 剩余 {{ presetContract.remainingHours ?? 0 }}h</div>
+                <div class="renew-contract-modal__student-meta">ID: {{ presetContract.studentId }} · {{ $t('remaining') }} {{ presetContract.remainingHours ?? 0 }}h</div>
               </div>
             </div>
           </template>
-          <a-select v-else v-model:value="form.studentId" placeholder="请选择学员">
+          <a-select v-else v-model:value="form.studentId" :placeholder="$t('please_select_a_student')">
             <a-select-option v-for="option in studentOptions" :key="option.studentId" :value="String(option.studentId)">
               {{ option.studentName }} · ID {{ option.studentId }}
             </a-select-option>
@@ -49,9 +49,9 @@
       <div class="renew-contract-modal__part-title">
         <div class="renew-contract-modal__part-title-heading">
           <i class="mdi mdi-cash-multiple" aria-hidden="true"></i>
-          <strong>合同金额</strong>
+          <strong>{{ $t('contract_amount') }}</strong>
         </div>
-        <p>选择币种并填写金额信息</p>
+        <p>{{ $t('select_currency_and_enter_amount') }}</p>
       </div>
 
       <div class="renew-contract-modal__section">
@@ -59,20 +59,20 @@
           <a-form-item class="renew-contract-modal__field--wide">
             <template #label>
               <span class="renew-contract-modal__label">
-                币种
+                {{ $t('currency') }}
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
             <a-radio-group v-model:value="form.currency" class="renew-contract-modal__radio-group">
-              <a-radio-button value="USD">美元 (USD)</a-radio-button>
-              <a-radio-button value="GBP">英镑 (GBP)</a-radio-button>
+              <a-radio-button value="USD">{{ $t('usd') }} (USD)</a-radio-button>
+              <a-radio-button value="GBP">{{ $t('gbp') }} (GBP)</a-radio-button>
             </a-radio-group>
           </a-form-item>
 
           <a-form-item v-if="form.currency === 'GBP'">
             <template #label>
               <span class="renew-contract-modal__label">
-                英镑金额
+                {{ $t('gbp_amount') }}
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
@@ -82,14 +82,14 @@
               :min="0"
               :precision="2"
               :controls="false"
-              placeholder="£ 请输入英镑金额"
+              :placeholder="`£ ${$t('please_enter_gbp_amount')}`"
             />
           </a-form-item>
 
           <a-form-item>
             <template #label>
               <span class="renew-contract-modal__label">
-                {{ form.currency === 'GBP' ? '美元等值金额' : '金额 Amount' }}
+                {{ form.currency === 'GBP' ? $t('usd_equivalent_amount') : `${$t('amount')} Amount` }}
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
@@ -99,14 +99,14 @@
               :min="0"
               :precision="2"
               :controls="false"
-              :placeholder="form.currency === 'GBP' ? '$ 请输入美元等值金额' : '$ 请输入美元金额'"
+              :placeholder="form.currency === 'GBP' ? `$ ${$t('please_enter_usd_equivalent_amount')}` : `$ ${$t('please_enter_usd_amount')}`"
             />
           </a-form-item>
 
           <a-form-item>
             <template #label>
               <span class="renew-contract-modal__label">
-                新增课时 / New Hours
+                {{ $t('add_class_hours') }} / New Hours
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
@@ -116,7 +116,7 @@
               :min="1"
               :precision="0"
               :controls="false"
-              placeholder="如 50（本次新增课时数）"
+              :placeholder="`${$t('e_g_50_hours_to_add_this_time')}）`"
             />
           </a-form-item>
         </div>
@@ -126,9 +126,9 @@
       <div class="renew-contract-modal__part-title">
         <div class="renew-contract-modal__part-title-heading">
           <i class="mdi mdi-calendar-range" aria-hidden="true"></i>
-          <strong>合同期限与原因</strong>
+          <strong>{{ $t('contract_period_and_reason') }}</strong>
         </div>
-        <p>设置合同有效期和续签原因</p>
+        <p>{{ $t('set_contract_validity_period_and_renewal') }}</p>
       </div>
 
       <div class="renew-contract-modal__section">
@@ -136,7 +136,7 @@
           <a-form-item>
             <template #label>
               <span class="renew-contract-modal__label">
-                开始日期
+                {{ $t('start_date_2') }}
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
@@ -146,7 +146,7 @@
           <a-form-item>
             <template #label>
               <span class="renew-contract-modal__label">
-                结束日期
+                {{ $t('end_date_2') }}
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
@@ -156,11 +156,11 @@
           <a-form-item class="renew-contract-modal__field--wide">
             <template #label>
               <span class="renew-contract-modal__label">
-                续签原因
+                {{ $t('renewal_reason') }}
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
-            <a-select v-model:value="form.renewalReason" placeholder="请选择续签原因">
+            <a-select v-model:value="form.renewalReason" :placeholder="$t('please_select_a_renewal_reason')">
               <a-select-option v-for="option in renewalReasonOptions" :key="option.dictValue" :value="option.dictValue">{{ option.dictLabel }}</a-select-option>
             </a-select>
           </a-form-item>
@@ -168,11 +168,11 @@
           <a-form-item v-if="requiresOtherReason" class="renew-contract-modal__field--wide">
             <template #label>
               <span class="renew-contract-modal__label">
-                其他原因说明
+                {{ $t('other_reason_details') }}
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
-            <a-input v-model:value="form.otherReason" placeholder="请输入补充说明" allow-clear />
+            <a-input v-model:value="form.otherReason" :placeholder="$t('please_enter_additional_notes')" allow-clear />
           </a-form-item>
         </div>
       </div>
@@ -183,7 +183,7 @@
           <a-form-item class="renew-contract-modal__field--wide">
             <template #label>
               <span class="renew-contract-modal__label">
-                合同附件
+                {{ $t('contract_attachment') }}
                 <span class="renew-contract-modal__required">*</span>
               </span>
             </template>
@@ -199,18 +199,18 @@
               <p class="ant-upload-drag-icon">
                 <i class="mdi mdi-cloud-upload" style="font-size: 28px; color: #4f74ff"></i>
               </p>
-              <p class="ant-upload-text">点击或拖拽上传 PDF</p>
-              <p class="ant-upload-hint">合同附件为必填项</p>
+              <p class="ant-upload-text">{{ $t('click_or_drag_to_upload') }} PDF</p>
+              <p class="ant-upload-hint">{{ $t('contract_attachment_is_required') }}</p>
             </a-upload-dragger>
           </a-form-item>
 
           <a-form-item class="renew-contract-modal__field--wide">
             <template #label>
-              <span class="renew-contract-modal__label">备注</span>
+              <span class="renew-contract-modal__label">{{ $t('remarks') }}</span>
             </template>
             <a-textarea
               v-model:value="form.remark"
-              placeholder="选填，可填写特殊约定等"
+              :placeholder="$t('optional_e_g_special_terms')"
               :rows="2"
               allow-clear
             />
@@ -220,10 +220,10 @@
     </a-form>
 
     <template #footer>
-      <a-button :disabled="submitting" @click="handleClose">取消</a-button>
+      <a-button :disabled="submitting" @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button type="primary" :loading="submitting" @click="handleSubmit">
         <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px"></span>
-        {{ presetContract ? '保存续签合同' : '创建合同' }}
+        {{ presetContract ? $t('save_renewed_contract') : $t('create_contract') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -241,7 +241,9 @@ import {
 } from '@osg/shared/api/admin/contract'
 import { getToken } from '@osg/shared/utils/storage'
 import { getAdminDictOptions, type AdminDictListRow } from '@/api/adminDict'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 interface StudentOption {
   studentId: number
   studentName: string
@@ -329,10 +331,10 @@ const handleUploadChange = (info: UploadChangeParam) => {
     const res = info.file.response
     if (res?.data?.attachmentPath) {
       form.attachmentPath = res.data.attachmentPath
-      message.success('合同附件上传成功')
+      message.success(t('contract_attachment_uploaded_successfull'))
     }
   } else if (info.file.status === 'error') {
-    message.error('附件上传失败')
+    message.error(t('attachment_upload_failed'))
   }
 }
 
@@ -343,31 +345,31 @@ const handleClose = () => {
 const handleSubmit = async () => {
   const studentId = Number(form.studentId)
   if (!studentId) {
-    message.error('请选择学员')
+    message.error(t('please_select_a_student'))
     return
   }
   if (!form.amountUsd) {
-    message.error(form.currency === 'GBP' ? '请输入美元等值金额' : '请输入美元金额')
+    message.error(form.currency === 'GBP' ? t('please_enter_usd_equivalent_amount') : t('please_enter_usd_amount'))
     return
   }
   if (form.currency === 'GBP' && !form.amountGbp) {
-    message.error('请输入英镑金额')
+    message.error(t('please_enter_gbp_amount'))
     return
   }
   if (!form.startDate || !form.endDate) {
-    message.error('请选择合同起止日期')
+    message.error(t('please_select_contract_start_and_end_dat'))
     return
   }
   if (!form.renewalReason) {
-    message.error('请选择续签原因')
+    message.error(t('please_select_a_renewal_reason'))
     return
   }
   if (requiresOtherReason.value && !form.otherReason.trim()) {
-    message.error('请填写其他原因说明')
+    message.error(t('please_fill_in_details_for_other_reason'))
     return
   }
   if (!form.attachmentPath) {
-    message.error('请上传合同附件')
+    message.error(t('please_upload_contract_attachment'))
     return
   }
 
@@ -390,7 +392,7 @@ const handleSubmit = async () => {
       attachmentPath: form.attachmentPath || undefined,
       remark: form.remark.trim() || undefined,
     })
-    message.success('续签合同成功')
+    message.success(t('contract_renewed_successfully'))
     emit('submitted')
     emit('update:visible', false)
   } finally {
@@ -597,3 +599,4 @@ watch(() => props.visible, (visible) => {
 
 }
 </style>
+

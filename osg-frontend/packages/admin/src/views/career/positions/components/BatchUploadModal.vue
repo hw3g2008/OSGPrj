@@ -9,7 +9,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-upload" aria-hidden="true"></span>
-        <span>批量上传岗位</span>
+        <span>{{ $t('upload_jobs_in_batches') }}</span>
       </span>
     </template>
 
@@ -23,20 +23,20 @@
           @change="handleFileSelect"
         />
         <span class="mdi mdi-cloud-upload batch-upload-modal__icon" aria-hidden="true"></span>
-        <strong>{{ selectedFile?.name || '拖拽文件到此处，或点击选择文件' }}</strong>
-        <p>支持 Excel 文件上传，导入后会直接刷新岗位列表</p>
+        <strong>{{ selectedFile?.name || $t('drag_and_drop_files_here_or_click_to_sel') }}</strong>
+        <p>{{ $t('supports_excel_file_upload_and_the_job_l') }}</p>
         <a-button @click.stop="fileInputRef?.click()">
-          <span class="mdi mdi-file-excel" aria-hidden="true" style="margin-right:4px"></span>选择Excel文件
+          <span class="mdi mdi-file-excel" aria-hidden="true" style="margin-right:4px"></span>{{ $t('select_excel_file') }}
         </a-button>
       </div>
 
       <div class="batch-upload-modal__rule">
         <span class="mdi mdi-information" aria-hidden="true"></span>
-        <p><strong>排重规则：</strong>{{ uploadRuleCopy }}</p>
+        <p><strong>{{ $t('deduplication_rules') }}：</strong>{{ uploadRuleCopy }}</p>
       </div>
 
       <div class="batch-upload-modal__steps">
-        <p>操作步骤：</p>
+        <p>{{ $t('steps') }}：</p>
         <ol>
           <li v-for="step in uploadSteps" :key="step">{{ step }}</li>
         </ol>
@@ -44,9 +44,9 @@
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
       <a-button type="primary" :disabled="!selectedFile" @click="handleSubmit">
-        <span class="mdi mdi-upload" aria-hidden="true" style="margin-right:4px"></span>上传文件
+        <span class="mdi mdi-upload" aria-hidden="true" style="margin-right:4px"></span>{{ $t('upload_file') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -56,7 +56,9 @@
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 withDefaults(defineProps<{
   visible: boolean
   uploadRuleCopy?: string
@@ -89,7 +91,7 @@ const handleFileSelect = (event: Event) => {
     return
   }
   if (!/\.xlsx?$/.test(file.name.toLowerCase())) {
-    message.error('请上传 Excel 文件')
+    message.error(t('please_upload_an_excel_file'))
     return
   }
   selectedFile.value = file
@@ -97,7 +99,7 @@ const handleFileSelect = (event: Event) => {
 
 const handleSubmit = () => {
   if (!selectedFile.value) {
-    message.error('请先选择 Excel 文件')
+    message.error(t('please_select_an_excel_file_first'))
     return
   }
   emit('submit', selectedFile.value)

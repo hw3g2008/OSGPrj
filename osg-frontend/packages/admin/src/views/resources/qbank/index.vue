@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="题库管理" title-en="Question Bank" description="组织和分发题库文件夹，支持授权和过期时间">
+    <PageHeader :title-zh="$t('question_bank_management')" title-en="Question Bank" :description="$t('organize_and_distribute_question_bank_fo')">
       <template #actions>
         <a-button type="primary" @click="openCreateModal">
           <template #icon><FolderAddOutlined /></template>
-          新建文件夹
+          {{ $t('new_folder') }}
         </a-button>
       </template>
     </PageHeader>
@@ -12,17 +12,17 @@
     <a-card :bordered="false">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索文件名" allow-clear style="width: 200px" @press-enter="loadRows" />
+          <a-input v-model:value="keyword" :placeholder="$t('search_file_name')" allow-clear style="width: 200px" @press-enter="loadRows" />
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadRows">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ $t('search') }}
           </a-button>
         </a-form-item>
       </a-form>
 
-      <a-table :columns="qbankColumns" :data-source="rows" :row-key="(r: QbankFolderRow) => r.fileId" :pagination="false" :locale="{ emptyText: '暂无题库文件夹' }" :scroll="{ x: 800 }">
+      <a-table :columns="qbankColumns" :data-source="rows" :row-key="(r: QbankFolderRow) => r.fileId" :pagination="false" :locale="{ emptyText: $t('no_question_bank_folders') }" :scroll="{ x: 800 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'fileName'">
             <div style="display: flex; align-items: center; gap: 10px">
@@ -34,16 +34,16 @@
             {{ record.fileSize || '--' }}
           </template>
           <template v-else-if="column.dataIndex === 'authorizedTo'">
-            {{ record.authorizedTo || '全部用户' }}
+            {{ record.authorizedTo || $t('all_users') }}
           </template>
           <template v-else-if="column.dataIndex === 'expiryAt'">
-            {{ record.expiryAt || '未设置' }}
+            {{ record.expiryAt || $t('not_set') }}
           </template>
           <template v-else-if="column.dataIndex === 'createTime'">
             {{ formatTime(record.createTime) }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="openEditModal(record)">编辑 + 授权</a-button>
+            <a-button type="link" size="small" @click="openEditModal(record)">{{ $t('edit_authorize') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -72,15 +72,17 @@ import {
   updateQbankExpiry,
   type QbankFolderRow
 } from '@osg/shared/api/admin/qbank'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const qbankColumns = [
   { title: 'ID', dataIndex: 'fileId', key: 'fileId', width: 80, customRender: ({ text }: { text: number }) => `#${text}` },
-  { title: '名称', dataIndex: 'fileName', key: 'fileName', width: 200 },
-  { title: '大小', dataIndex: 'fileSize', key: 'fileSize', width: 100 },
-  { title: '授权对象', dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
-  { title: '过期时间', dataIndex: 'expiryAt', key: 'expiryAt', width: 130 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 140 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 100 },
+  { title: t('name_2'), dataIndex: 'fileName', key: 'fileName', width: 200 },
+  { title: t('size'), dataIndex: 'fileSize', key: 'fileSize', width: 100 },
+  { title: t('authorized_target'), dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
+  { title: t('expiration_date'), dataIndex: 'expiryAt', key: 'expiryAt', width: 130 },
+  { title: t('created_at'), dataIndex: 'createTime', key: 'createTime', width: 140 },
+  { title: t('operation'), dataIndex: 'action', key: 'action', width: 100 },
 ]
 
 const rows = ref<QbankFolderRow[]>([])
@@ -95,7 +97,7 @@ const loadRows = async () => {
     const response = await getQbankList(keyword.value || undefined)
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('题库列表加载失败')
+    message.error(t('failed_to_load_question_bank_list'))
   }
 }
 
@@ -146,7 +148,7 @@ const handleConfirm = async (payload: {
     }
 
     showModal.value = false
-    message.success(modalMode.value === 'create' ? '题库文件夹创建成功' : '题库文件夹已更新')
+    message.success(modalMode.value === 'create' ? t('question_bank_folder_created_successfull') : t('question_bank_folder_updated'))
     await loadRows()
   } catch (_error) {
     // request helper handles messages

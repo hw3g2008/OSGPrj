@@ -23,6 +23,7 @@
  * - 倒计时 onBeforeUnmount 自动清理（调用方需挂载到组件 lifecycle）
  */
 import { computed, onBeforeUnmount, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import {
   getForgotPasswordResendMeta,
@@ -80,6 +81,7 @@ export interface UseForgotPasswordFlowOptions {
  * 忘记密码流程状态机 + 表单
  */
 export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
+  const { t } = useI18n()
   const { endpoints, countdownSeconds = 60 } = options
 
   // ── State ──
@@ -115,7 +117,7 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
     if (countdown.value > 0) {
       return `${countdown.value}秒后可重新发送`
     }
-    return '验证码已过期，可重新发送'
+    return t('verification_code_expired_resend_availab')
   })
 
   // ── Internals ──
@@ -176,20 +178,20 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
     emailError.value = ''
 
     if (!validateForgotPasswordEmail(step1Form.email)) {
-      emailError.value = '请输入有效的邮箱地址'
+      emailError.value = t('please_enter_a_valid_email_address')
       return
     }
 
     sendingCode.value = true
     try {
       await endpoints.sendCode({ email: step1Form.email.trim() })
-      successMessage.value = '我们会往您的注册邮箱发送验证码，请查收'
+      successMessage.value = t('we_will_send_a_verification_code_to_your')
       step2Form.code = ''
       currentStep.value = 2
       startCountdown()
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : '发送失败，请重试'
+        error instanceof Error ? error.message : t('send_failed_please_try_again')
     } finally {
       sendingCode.value = false
     }
@@ -204,11 +206,11 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
     sendingCode.value = true
     try {
       await endpoints.sendCode({ email: step1Form.email.trim() })
-      successMessage.value = '验证码已重新发送'
+      successMessage.value = t('verification_code_resent')
       startCountdown()
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : '重新发送失败，请重试'
+        error instanceof Error ? error.message : t('resend_failed_please_try_again')
     } finally {
       sendingCode.value = false
     }
@@ -233,7 +235,7 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
       currentStep.value = 3
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : '验证失败'
+        error instanceof Error ? error.message : t('authentication_failed')
     } finally {
       verifying.value = false
     }
@@ -268,7 +270,7 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
       currentStep.value = 4
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : '重置失败，请重试'
+        error instanceof Error ? error.message : t('reset_failed_please_try_again')
     } finally {
       resetting.value = false
     }

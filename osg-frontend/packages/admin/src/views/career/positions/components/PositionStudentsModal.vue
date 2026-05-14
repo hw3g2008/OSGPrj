@@ -9,29 +9,29 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-group" aria-hidden="true"></span>
-        <span>{{ companyName }} - {{ positionName }} 申请学员</span>
+        <span>{{ companyName }} - {{ positionName }} {{ $t('applicant_students') }}</span>
       </span>
     </template>
 
     <div class="position-students-modal__tip">
       <span class="mdi mdi-information" aria-hidden="true"></span>
-      <span>以下为该岗位的申请学员列表，求职状态由学员自行更新</span>
+      <span>{{ $t('the_list_below_shows_students_who_applie') }}</span>
     </div>
 
     <div v-if="loading" class="position-students-modal__loading">
       <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-      <span>正在加载申请学员...</span>
+      <span>{{ $t('loading_applicant_students') }}...</span>
     </div>
 
     <div v-else-if="rows.length" class="position-students-modal__table-wrap">
       <table class="position-students-modal__table">
         <thead>
           <tr>
-            <th>学生ID</th>
-            <th>姓名</th>
-            <th>岗位</th>
-            <th>状态</th>
-            <th>已上课时</th>
+            <th>{{ $t('student_2') }}ID</th>
+            <th>{{ $t('name') }}</th>
+            <th>{{ $t('position') }}</th>
+            <th>{{ $t('status') }}</th>
+            <th>{{ $t('already_in_class') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -51,11 +51,11 @@
     </div>
 
     <div v-else class="position-students-modal__empty">
-      当前岗位还没有可展示的申请学员数据。
+      {{ $t('no_applicant_data_available_for_this_pos') }}。
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ $t('close') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>

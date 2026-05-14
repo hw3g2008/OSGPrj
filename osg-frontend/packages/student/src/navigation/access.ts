@@ -1,4 +1,6 @@
-export const COMING_SOON_TOAST = '敬请期待'
+import { i18n } from '@osg/shared'
+
+export const COMING_SOON_TOAST = i18n.global.t('stay_tuned')
 
 export const STUDENT_AVAILABLE_PATHS = [
   '/dashboard',

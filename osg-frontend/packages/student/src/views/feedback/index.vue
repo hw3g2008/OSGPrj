@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">课程反馈 <span>Feedback</span></h1>
+            <h1 class="page-title">{{ $t('course_feedback') }} <span>Feedback</span></h1>
           </div>
         </div>
       </template>

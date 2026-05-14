@@ -14,7 +14,7 @@
           :class="isEdit ? 'mdi-key-change' : 'mdi-key-plus'"
           aria-hidden="true"
         />
-        <span>{{ isEdit ? '编辑角色' : '新增角色' }}</span>
+        <span>{{ isEdit ? $t('edit_role') : $t('add_role') }}</span>
       </span>
     </template>
 
@@ -26,30 +26,30 @@
       layout="vertical"
       :required-mark="false"
     >
-      <a-form-item name="roleName" data-field-name="角色名称">
+      <a-form-item name="roleName" :data-field-name="$t('role_name')">
         <template #label>
-          <span class="role-modal__label">角色名称<span class="role-modal__required">*</span></span>
+          <span class="role-modal__label">{{ $t('role_name') }}<span class="role-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.roleName" placeholder="请输入角色名称，如：运营专员" />
+        <a-input v-model:value="formState.roleName" :placeholder="$t('enter_role_name_e_g_operations_specialis')" />
       </a-form-item>
 
-      <a-form-item name="remark" data-field-name="角色描述">
+      <a-form-item name="remark" :data-field-name="$t('role_description')">
         <template #label>
-          <span class="role-modal__label">角色描述</span>
+          <span class="role-modal__label">{{ $t('role_description') }}</span>
         </template>
         <a-textarea
           v-model:value="formState.remark"
-          placeholder="请输入角色描述，最多200字"
+          :placeholder="$t('enter_role_description_max_200_character')"
           :rows="2"
           :maxlength="200"
         />
       </a-form-item>
 
-      <a-form-item name="menuIds" data-field-name="权限模块">
+      <a-form-item name="menuIds" :data-field-name="$t('permission_modules')">
         <template #label>
-          <span class="role-modal__label">权限模块<span class="role-modal__required">*</span></span>
+          <span class="role-modal__label">{{ $t('permission_modules') }}<span class="role-modal__required">*</span></span>
         </template>
-        <p class="role-modal__tip" data-content-part="supporting-text">勾选该角色可访问的功能模块，点击分组名称可全选/取消该分组</p>
+        <p class="role-modal__tip" data-content-part="supporting-text">{{ $t('select_the_functional_modules_this_role_') }}</p>
         <div class="role-modal__perm-panel">
           <section
             v-for="group in permissionGroups"
@@ -86,8 +86,8 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="loading" @click="handleSubmit">保存</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" :loading="loading" @click="handleSubmit">{{ $t('save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -97,10 +97,14 @@ import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { addRole, getRoleMenuIds, updateRole } from '@/api/role'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { resolveMenuDisplayName } from '@osg/shared/utils/menuI18n'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 type MenuNode = {
   id: number
   label: string
+  i18nKey?: string
   children?: MenuNode[]
 }
 
@@ -138,8 +142,8 @@ const formState = reactive({
 })
 
 const rules = {
-  roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
-  menuIds: [{ required: true, message: '请选择权限模块', trigger: 'change', type: 'array' }],
+  roleName: [{ required: true, message: t('please_enter_role_name'), trigger: 'blur' }],
+  menuIds: [{ required: true, message: t('please_select_permission_modules'), trigger: 'change', type: 'array' }],
 }
 
 function collectLeafItems(nodes: MenuNode[] = []): Array<{ id: number; label: string }> {
@@ -149,22 +153,35 @@ function collectLeafItems(nodes: MenuNode[] = []): Array<{ id: number; label: st
       node.children.forEach(visit)
       return
     }
-    items.push({ id: node.id, label: node.label })
+    items.push({
+      id: node.id,
+      label: resolveMenuDisplayName({ menuName: node.label, i18nKey: node.i18nKey }, t),
+    })
   }
   nodes.forEach(visit)
   return Array.from(new Map(items.map((item) => [item.id, item])).values())
 }
 
-function inferGroupIcon(label: string): string {
-  if (label.includes('首页')) return 'mdi-home'
-  if (label.includes('权限')) return 'mdi-shield-key'
-  if (label.includes('用户')) return 'mdi-account-group'
-  if (label.includes('教学')) return 'mdi-book-open-variant'
-  if (label.includes('求职')) return 'mdi-briefcase'
-  if (label.includes('财务')) return 'mdi-cash'
-  if (label.includes('资源')) return 'mdi-folder'
-  if (label.includes('个人')) return 'mdi-account-circle'
-  if (label.includes('系统')) return 'mdi-cog'
+// Stable icon map dispatching on i18nKey (locale-independent).
+// Top-level group menu i18n keys are stable identifiers; raw `label` may be in any locale.
+const GROUP_ICON_BY_I18N_KEY: Record<string, string> = {
+  home_page: 'mdi-home',
+  permission_management: 'mdi-shield-key',
+  permission_configuration: 'mdi-shield-key',
+  user_center: 'mdi-account-group',
+  backend_user_management: 'mdi-account-group',
+  job_search_center: 'mdi-briefcase',
+  teaching_center: 'mdi-book-open-variant',
+  financial_center: 'mdi-cash',
+  resource_center: 'mdi-folder',
+  personal_center: 'mdi-account-circle',
+}
+
+function inferGroupIcon(node: MenuNode): string {
+  const key = node.i18nKey?.trim()
+  if (key && GROUP_ICON_BY_I18N_KEY[key]) {
+    return GROUP_ICON_BY_I18N_KEY[key]
+  }
   return 'mdi-circle-small'
 }
 
@@ -172,8 +189,8 @@ const permissionGroups = computed<PermissionGroup[]>(() => {
   return (props.menuTree || [])
     .map((group) => ({
       id: group.id,
-      label: group.label,
-      icon: inferGroupIcon(group.label),
+      label: resolveMenuDisplayName({ menuName: group.label, i18nKey: group.i18nKey }, t),
+      icon: inferGroupIcon(group),
       items: collectLeafItems(group.children?.length ? group.children : [group]),
     }))
     .filter((group) => group.items.length > 0)
@@ -233,23 +250,23 @@ const handleClose = () => {
 }
 
 const resolveRoleSubmitErrorMessage = (rawMessage: string | undefined, roleName: string, editMode: boolean) => {
-  const normalizedRoleName = roleName.trim() || '该角色'
-  const actionLabel = editMode ? '保存' : '新增'
+  const normalizedRoleName = roleName.trim() || t('this_role')
+  const actionLabel = editMode ? t('save') : t('add')
   const messageText = rawMessage || ''
 
-  if (messageText.includes('角色名称已存在')) {
-    return `角色"${normalizedRoleName}"已存在，请换一个角色名称后重试`
+  if (messageText.includes(t('role_name_already_exists'))) {
+    return t('role_name_exists_with_name', { name: normalizedRoleName })
   }
 
-  if (messageText.includes('角色权限已存在')) {
-    return `角色"${normalizedRoleName}"的权限标识已存在，请修改角色名称后重试`
+  if (messageText.includes(t('role_permission_already_exists'))) {
+    return t('role_permission_exists_with_name', { name: normalizedRoleName })
   }
 
   if (messageText) {
-    return `${actionLabel}角色"${normalizedRoleName}"失败：${messageText}`
+    return t('role_action_failed_with_message', { action: actionLabel, name: normalizedRoleName, message: messageText })
   }
 
-  return `${actionLabel}角色失败，请稍后重试`
+  return t('role_action_failed', { action: actionLabel })
 }
 
 const handleSubmit = async () => {
@@ -267,12 +284,12 @@ const handleSubmit = async () => {
       await updateRole(payload as any, {
         skipErrorMessage: true,
       })
-      message.success('角色修改成功')
+      message.success(t('role_updated_successfully'))
     } else {
       await addRole(payload, {
         skipErrorMessage: true,
       })
-      message.success('角色新增成功')
+      message.success(t('role_added_successfully'))
     }
 
     emit('success')

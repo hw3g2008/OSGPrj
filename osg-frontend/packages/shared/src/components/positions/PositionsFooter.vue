@@ -3,7 +3,7 @@
     <span class="osg-positions-footer__total">
       共
       <strong>{{ total }}</strong>
-      个岗位
+      {{ $t('positions') }}
     </span>
     <span class="osg-positions-footer__indicator osg-positions-footer__indicator--open">
       <i class="mdi mdi-circle-small" aria-hidden="true" />

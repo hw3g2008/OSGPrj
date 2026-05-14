@@ -9,7 +9,7 @@
     <template #title>
       <span class="student-blacklist-modal__title">
         <span class="mdi mdi-account-cancel student-blacklist-modal__title-icon" aria-hidden="true"></span>
-        <span>加入黑名单</span>
+        <span>{{ $t('add_to_blacklist') }}</span>
       </span>
     </template>
 
@@ -17,10 +17,10 @@
       <span class="mdi mdi-alert-circle-outline student-blacklist-modal__intro-icon" aria-hidden="true"></span>
       <div class="student-blacklist-modal__intro-copy">
         <h3 class="student-blacklist-modal__heading">
-          确定将 <strong>{{ studentName || '当前学员' }}</strong> 加入黑名单？
+          {{ $t('confirm_student_blacklist', { name: studentName || $t('current_student_2') }) }}
         </h3>
         <p class="student-blacklist-modal__desc">
-          加入黑名单后，该学员将<strong>无法查看“求职中心”模块</strong>（包括岗位信息、面试准备等功能）。
+          {{ $t('student_blacklist_description') }}
         </p>
       </div>
     </div>
@@ -33,51 +33,51 @@
         layout="vertical"
         :required-mark="false"
       >
-        <a-form-item name="reason" data-field-name="黑名单原因">
+        <a-form-item name="reason" :data-field-name="$t('blacklist_reason')">
           <template #label>
             <span class="student-blacklist-modal__label">
-              黑名单原因
+              {{ $t('blacklist_reason') }}
               <span class="student-blacklist-modal__required">*</span>
             </span>
           </template>
           <a-select
             v-model:value="formState.reason"
-            placeholder="请选择原因"
+            :placeholder="$t('please_select_a_reason')"
             :options="reasonOptions"
             @change="handleReasonChange"
           />
         </a-form-item>
 
-        <a-form-item v-if="showOtherInput" name="otherReason" data-field-name="其他原因说明">
+        <a-form-item v-if="showOtherInput" name="otherReason" :data-field-name="$t('other_reason_details')">
           <template #label>
             <span class="student-blacklist-modal__label">
-              其他原因说明
+              {{ $t('other_reason_details') }}
               <span class="student-blacklist-modal__required">*</span>
             </span>
           </template>
           <a-input
             v-model:value="formState.otherReason"
-            placeholder="请输入具体原因"
+            :placeholder="$t('please_enter_a_specific_reason')"
           />
         </a-form-item>
 
-        <a-form-item name="remark" data-field-name="备注说明">
+        <a-form-item name="remark" :data-field-name="$t('remarks_2')">
           <template #label>
-            <span class="student-blacklist-modal__label">备注说明</span>
+            <span class="student-blacklist-modal__label">{{ $t('remarks_2') }}</span>
           </template>
           <a-textarea
             v-model:value="formState.remark"
             :rows="2"
             :maxlength="200"
-            placeholder="选填，可填写详细说明"
+            :placeholder="$t('optional_additional_details_can_be_added')"
           />
         </a-form-item>
       </a-form>
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" danger @click="handleSubmit">确认加入黑名单</a-button>
+      <a-button @click="handleClose">{{ $t('cancel') }}</a-button>
+      <a-button type="primary" danger @click="handleSubmit">{{ $t('confirm_blacklist') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -85,7 +85,9 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import OverlaySurfaceModal from '@/components/OverlaySurfaceModal.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{
   visible: boolean
   studentName?: string
@@ -104,19 +106,19 @@ const formState = reactive({
 })
 
 const reasonOptions = [
-  { label: '违反服务协议', value: '违反服务协议' },
-  { label: '恶意投诉', value: '恶意投诉' },
-  { label: '不配合辅导', value: '不配合辅导' },
-  { label: '态度恶劣', value: '态度恶劣' },
-  { label: '其他原因', value: 'other' }
+  { label: t('violation_of_service_agreement'), value: t('violation_of_service_agreement') },
+  { label: t('malicious_complaint'), value: t('malicious_complaint') },
+  { label: t('uncooperative_with_coaching'), value: t('uncooperative_with_coaching') },
+  { label: t('poor_attitude'), value: t('poor_attitude') },
+  { label: t('other_reasons'), value: 'other' }
 ]
 
 const showOtherInput = computed(() => formState.reason === 'other')
 
 const rules = computed(() => ({
-  reason: [{ required: true, message: '请选择原因', trigger: 'change' }],
+  reason: [{ required: true, message: t('please_select_a_reason'), trigger: 'change' }],
   otherReason: showOtherInput.value
-    ? [{ required: true, message: '请输入具体原因', trigger: 'blur' }]
+    ? [{ required: true, message: t('please_enter_a_specific_reason'), trigger: 'blur' }]
     : []
 }))
 

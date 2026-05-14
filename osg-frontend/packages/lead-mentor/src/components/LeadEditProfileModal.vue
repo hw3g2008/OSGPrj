@@ -8,7 +8,7 @@
       type="button"
       class="lead-edit-profile-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭编辑个人信息弹层"
+      :aria-label="$t('close_edit_profile_modal')"
       @click="closeModal"
     />
 
@@ -22,13 +22,13 @@
       <div class="lead-edit-profile-header modal-header" data-surface-part="header">
         <span :id="titleId" class="lead-edit-profile-title modal-title">
           <i class="mdi mdi-account-edit" aria-hidden="true" />
-          编辑个人信息
+          {{ $t('edit_personal_information') }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭编辑个人信息弹层"
+          :aria-label="$t('close_edit_profile_modal')"
           @click="closeModal"
         >
           ×
@@ -39,8 +39,8 @@
         <div class="lead-edit-profile-note">
           <i class="mdi mdi-information" aria-hidden="true" />
           <div>
-            修改信息后，后台文员将收到提醒通知。<br />
-            <span class="lead-edit-profile-note__warning">注意：主攻方向、二级方向和课单价不可自行修改。</span>
+            {{ $t('after_updating_your_information_the_back') }}。<br />
+            <span class="lead-edit-profile-note__warning">{{ $t('note_primary_focus_secondary_focus_and_s') }}。</span>
           </div>
         </div>
 
@@ -48,24 +48,24 @@
           <div class="editable-card__head">
             <span class="editable-card__pill">
               <i class="mdi mdi-pencil" aria-hidden="true" />
-              可修改信息
+              {{ $t('editable_information') }}
             </span>
           </div>
 
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label">
-                英文名 <span class="required-mark">*</span>
+                {{ $t('english_name') }} <span class="required-mark">*</span>
               </label>
               <input v-model="formState.englishName" class="form-input" :disabled="submitting" />
             </div>
 
             <div class="form-group">
               <label class="form-label">
-                性别 <span class="required-mark">*</span>
+                {{ $t('gender') }} <span class="required-mark">*</span>
               </label>
               <select v-model="formState.genderLabel" class="form-select" :disabled="submitting">
-                <option value="">请选择</option>
+                <option value="">{{ $t('please_select') }}</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
@@ -73,47 +73,47 @@
 
             <div class="form-group">
               <label class="form-label">
-                手机号 <span class="required-mark">*</span>
+                {{ $t('phone_number') }} <span class="required-mark">*</span>
               </label>
               <input v-model="formState.phone" class="form-input" :disabled="submitting" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">微信号</label>
+              <label class="form-label">{{ $t('wechat_id') }}</label>
               <input
                 v-model="formState.wechatId"
                 class="form-input"
                 :disabled="submitting"
-                placeholder="待提交变更申请补充"
+                :placeholder="$t('pending_change_request_submission')"
               />
             </div>
 
             <div class="form-group">
               <label class="form-label">
-                邮箱 <span class="required-mark">*</span>
+                {{ $t('email') }} <span class="required-mark">*</span>
               </label>
               <input v-model="formState.email" class="form-input" type="email" :disabled="submitting" />
             </div>
 
             <div class="form-group">
               <label class="form-label">
-                所属地区 <span class="required-mark">*</span>
+                {{ $t('region_3') }} <span class="required-mark">*</span>
               </label>
               <div class="region-row">
                 <select v-model="formState.regionArea" class="form-select" :disabled="submitting">
-                  <option value="">选择大区</option>
-                  <option value="北美">🌎 北美</option>
-                  <option value="欧洲">🌍 欧洲</option>
-                  <option value="亚太">🌏 亚太</option>
-                  <option value="中国大陆">🇨🇳 中国大陆</option>
+                  <option value="">{{ $t('select_region') }}</option>
+                  <option value="北美">🌎 {{ $t('north_america') }}</option>
+                  <option value="欧洲">🌍 {{ $t('europe') }}</option>
+                  <option value="亚太">🌏 {{ $t('asia_pacific') }}</option>
+                  <option value="中国大陆">🇨🇳 {{ $t('mainland_china') }}</option>
                 </select>
                 <select v-model="formState.regionCity" class="form-select" :disabled="submitting">
-                  <option value="">选择城市</option>
-                  <option value="New York 纽约">New York 纽约</option>
-                  <option value="London 伦敦">London 伦敦</option>
-                  <option value="Singapore 新加坡">Singapore 新加坡</option>
-                  <option value="Shanghai 上海">Shanghai 上海</option>
-                  <option value="Beijing 北京">Beijing 北京</option>
+                  <option value="">{{ $t('select_city') }}</option>
+                  <option value="New York 纽约">New York {{ $t('new_york') }}</option>
+                  <option value="London 伦敦">London {{ $t('london') }}</option>
+                  <option value="Singapore 新加坡">Singapore {{ $t('singapore') }}</option>
+                  <option value="Shanghai 上海">Shanghai {{ $t('shanghai') }}</option>
+                  <option value="Beijing 北京">Beijing {{ $t('beijing') }}</option>
                 </select>
               </div>
             </div>
@@ -122,10 +122,10 @@
       </div>
 
       <div class="lead-edit-profile-footer modal-footer">
-        <button type="button" class="btn btn-outline" :disabled="submitting" @click="closeModal">取消</button>
+        <button type="button" class="btn btn-outline" :disabled="submitting" @click="closeModal">{{ $t('cancel') }}</button>
         <button type="button" class="btn btn-primary" :disabled="submitting" @click="requestSave">
           <i class="mdi mdi-check" aria-hidden="true" />
-          {{ submitting ? '提交中...' : '保存修改' }}
+          {{ submitting ? '提交中...' : $t('save_changes') }}
         </button>
       </div>
     </div>

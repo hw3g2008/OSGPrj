@@ -12,7 +12,7 @@
           class="placeholder-path"
         />
         <p class="placeholder-note">
-          当前页面会在后续需求中逐步开放，本次先保留导航与路由承接，避免误入未交付功能。
+          {{ $t('this_page_will_be_gradually_opened_in_fu') }}。
         </p>
       </a-card>
     </OsgPageContainer>
