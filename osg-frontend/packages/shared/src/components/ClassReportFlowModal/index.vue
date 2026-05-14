@@ -6,6 +6,7 @@
     :mask-closable="false"
     :body-style="{ maxHeight: '85vh', overflowY: 'auto' }"
     :body-class="loading ? 'class-report-flow-modal__body osg-modal-form osg-modal-form--submitting' : 'class-report-flow-modal__body osg-modal-form'"
+    wrap-class-name="class-report-flow-modal-wrap"
     title="上报课程记录"
     @update:open="onVisibleChange"
     @cancel="onCancel"
@@ -436,17 +437,25 @@ onMounted(() => {
 .class-report-flow-modal {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
-/* §C3: 单屏版 section 分隔（取代旧的 step 进度条 + skip 提示） */
+/* §C3 + P2-5: 单屏版 section 卡片化，轻立体感取代单线分隔 */
 .class-report-flow-modal__section {
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 18px 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.class-report-flow-modal__section:last-of-type {
-  border-bottom: none;
-  padding-bottom: 0;
+.class-report-flow-modal__section:hover {
+  border-color: #d4d8de;
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.06),
+    0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 .class-report-flow-modal__error {
@@ -455,30 +464,83 @@ onMounted(() => {
 
 /* T-414 评分区 */
 .rate-group {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .form-label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: #1f2937;
+  letter-spacing: 0.01em;
 }
 
 .required {
   color: #ef4444;
-  margin-left: 2px;
+  margin-left: 4px;
+  font-weight: 700;
 }
 
 .rate-error {
   font-size: 12px;
   color: #ef4444;
+}
+</style>
+
+<!-- P2-5: modal 整体立体感 + 头部层级。走 Teleport，scoped + :deep 穿不透，必须 unscoped + wrap-class-name 限定作用域 -->
+<style lang="scss">
+.class-report-flow-modal-wrap {
+  /* 外层 modal 容器：加重阴影 + 略大圆角，告别"扁平贴图"观感 */
+  .ant-modal-content {
+    border-radius: 12px;
+    box-shadow:
+      0 20px 60px -10px rgba(15, 23, 42, 0.25),
+      0 8px 24px -4px rgba(15, 23, 42, 0.12),
+      0 1px 3px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    padding: 0;
+  }
+
+  /* header：白底 + 显眼标题 + 底部细线，与下方灰底 body 形成对比 */
+  .ant-modal-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 18px 24px;
+    margin: 0;
+    border-radius: 12px 12px 0 0;
+  }
+  .ant-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
+  }
+  .ant-modal-close {
+    top: 14px;
+    right: 16px;
+  }
+
+  /* body：浅灰底，让 section 白卡浮起来 */
+  .ant-modal-body {
+    background: #f5f7fa;
+    padding: 20px 24px;
+  }
+
+  /* footer：白底 + 顶部细线，与 body 灰底分隔 */
+  .ant-modal-footer {
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 24px;
+    margin: 0;
+    border-radius: 0 0 12px 12px;
+  }
 }
 </style>
