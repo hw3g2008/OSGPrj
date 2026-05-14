@@ -72,18 +72,7 @@
             <span style="font-weight:600;color:#1E40AF">{{ record.lessonReported ?? 0 }}</span>
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-space :size="4">
-              <a-button
-                v-if="record.status === 'new'"
-                type="primary"
-                size="small"
-                class="btn-confirm"
-                @click="confirmMock(record)"
-              >
-                <i class="mdi mdi-check" style="margin-right:4px" />确认
-              </a-button>
-              <a-button type="link" size="small" @click="openReportModalFor(record)">上报课消</a-button>
-            </a-space>
+            <a-button type="link" size="small" @click="openReportModalFor(record)">上报课消</a-button>
           </template>
         </template>
       </a-table>
@@ -203,18 +192,6 @@ function syncRowAnchors(records: any[]) {
   rowAnchors.value = nextAnchors
 }
 
-async function confirmMock(r: any) {
-  const practiceId = r.practiceId ?? r.id
-  const rowId = Number(practiceId)
-  if (Number.isFinite(rowId) && !rowAnchors.value.get(rowId)) {
-    const newCount = Array.from(rowAnchors.value.values()).filter((value) => value.startsWith('mock-new-')).length
-    rowAnchors.value.set(rowId, `mock-new-${newCount + 1}`)
-  }
-  try { await http.put(`/mentor/mock-practice/${practiceId}/confirm`); r.status = 'pending' } catch {}
-  syncRowAnchors(list.value)
-  try { await mentorNavBadges?.refreshMockBadge?.() } catch {}
-}
-
 function resolveReportReferenceType(practiceType: string | undefined): ReferenceType | undefined {
   // 1:1 映射 DB osg_mock_practice.practice_type，禁止跨值改写
   if (practiceType === 'mock_interview' || practiceType === '模拟面试') return 'mock_interview'
@@ -272,8 +249,6 @@ onMounted(() => {
 :deep(.row-new) > td{background:linear-gradient(90deg,#FEE2E2,#FEF2F2) !important}
 :deep(.row-new) > td:first-child{border-left:4px solid #EF4444}
 :deep(.row-midterm) > td{background:#F3E8FF !important}
-.btn-confirm{background:#22C55E !important;border-color:#22C55E !important}
-.btn-confirm:hover{background:#16A34A !important;border-color:#16A34A !important}
 .text-muted{color:#94A3B8}
 .text-sm{font-size:11px}
 </style>

@@ -63,12 +63,25 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
             return Collections.emptyList();
         }
 
+        // FIX-1（Bug 1 根因）：必须调 selectMentorMockPracticeList mapper（其 SQL 含 FIND_IN_SET(currentMentorId, mentor_ids)），
+        // 不能用通用 selectMockPracticeList — PageHelper 在 controller 层先分页，会切掉 daoshi58 这种早期 submitted_at
+        // 的记录，Java 端 stream filter 已经拿不到全量。直接走 SQL 层 mentor_ids 过滤后再分页，避免数据丢失。
+        // 同步删 hasAssistantOwnership fallback：mentor 端按需求文档 §2.4 只看 mentor_ids 含自己的记录，
+        // 通过 assistantId 反查 student 出现的"assistant fallback"是历史遗留语义，不在 mentor 范围。
         String requestedVisibleStatus = normalizeMentorVisibleStatus(query == null ? null : query.getStatus());
         OsgMockPractice mapperQuery = buildMentorListQuery(query, requestedVisibleStatus);
-        List<OsgMockPractice> rows = mockPracticeMapper.selectMockPracticeList(mapperQuery);
-        return (rows == null ? Collections.<OsgMockPractice>emptyList() : rows).stream()
-            .filter(row -> hasMentorRelation(row, currentUserId) || hasAssistantOwnership(row, currentUserId))
-            .filter(row -> requestedVisibleStatus == null || Objects.equals(normalizeMentorVisibleStatus(row.getStatus()), requestedVisibleStatus))
+        mapperQuery.setCurrentMentorId(currentUserId);
+        List<OsgMockPractice> rows = mockPracticeMapper.selectMentorMockPracticeList(mapperQuery);
+        if (rows == null || rows.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        if (requestedVisibleStatus == null)
+        {
+            return rows;
+        }
+        return rows.stream()
+            .filter(row -> Objects.equals(normalizeMentorVisibleStatus(row.getStatus()), requestedVisibleStatus))
             .toList();
     }
 

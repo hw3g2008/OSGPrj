@@ -380,6 +380,10 @@ public class StudentMockPracticeServiceImpl implements IStudentMockPracticeServi
             record.put("content", defaultString(row.getRequestContent(), "-"));
             record.put("appliedAt", row.getSubmittedAt() == null ? "" : new java.text.SimpleDateFormat("MM/dd HH:mm").format(row.getSubmittedAt()));
             record.put("submittedAtValue", row.getSubmittedAt() == null ? "" : new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(row.getSubmittedAt()));
+            // FIX-2: scheduled_at 是 admin/LM 排课后的预约时间。previously dropped — student
+            // 端详情弹窗永远显示「待安排」，列表也拿不到该字段。补投影为 ISO 字符串。
+            record.put("scheduledAt", row.getScheduledAt() == null ? null
+                : new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(row.getScheduledAt()));
             record.put("mentor", defaultString(row.getMentorNames(), "待分配"));
             record.put("mentorMeta", defaultString(row.getMentorBackgrounds(), "班主任分配中"));
             record.put("hours", row.getCompletedHours() == null || row.getCompletedHours() == 0 ? "-" : String.valueOf(row.getCompletedHours()));

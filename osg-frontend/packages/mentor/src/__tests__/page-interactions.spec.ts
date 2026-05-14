@@ -121,9 +121,9 @@ describe('mentor page interactions', () => {
   // FIX-E: mentor 端 job overview 改为只读 5 列；fallback 名称 / 无确认按钮 由
   // src/__tests__/job-overview.behavior.spec.ts 的源码契约覆盖。
 
-  it('confirms mock practice with practiceId via PUT API', async () => {
-    // §baseline: mock-practice 列已删除「状态」列与"查看详情"按钮（RULE-B 定稿仅保留
-    //   操作=上报课消 + new 行额外的"确认"按钮）。原断言 '待进行' / '学员求职详情' 失效。
+  it('renders mock-practice list without 确认 button (FIX-1 per requirement §2.3)', async () => {
+    // 2026-05-15 FIX-1: 需求 04-mock-practice-management §2.3 明确「操作列只有上报课消」，
+    // mentor 端不再有"确认"按钮。原断言期望按钮存在并触发 PUT 已不成立，改为 negative 断言。
     vi.mocked(http.get).mockResolvedValue({
       rows: [createMockPracticeRow()]
     })
@@ -132,15 +132,11 @@ describe('mentor page interactions', () => {
     const wrapper = mount(MockPracticePage, { global: { plugins: [Antd] } })
     await flushPromises()
 
-    const matchText = (text: string, label: string) =>
-      text.replace(/\s/g, '').includes(label.replace(/\s/g, ''))
-
-    const confirmButton = wrapper.findAll('button').find((button) => matchText(button.text(), '确认'))
-    expect(confirmButton).toBeTruthy()
-    await confirmButton!.trigger('click')
-    await flushPromises()
-
-    expect(http.put).toHaveBeenCalledWith('/mentor/mock-practice/42/confirm')
+    const confirmButton = wrapper.findAll('button').find((button) => button.text().trim() === '确认')
+    expect(confirmButton).toBeUndefined()
+    expect(http.put).not.toHaveBeenCalledWith(
+      expect.stringMatching(/\/mentor\/mock-practice\/\d+\/confirm/),
+    )
 
     // 列表仍展示该行核心信息：学员姓名 + 类型
     expect(wrapper.text()).toContain('Curl Student')

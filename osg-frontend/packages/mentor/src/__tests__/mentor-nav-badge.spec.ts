@@ -84,7 +84,11 @@ describe('mentor nav badge state', () => {
     vi.clearAllMocks()
   })
 
-  it('decrements the mock badge after confirming a mock practice row', async () => {
+  it('shows mock badge with the count of new rows (FIX-1: no more 确认 click path)', async () => {
+    // 2026-05-15 FIX-1: 需求 04-mock-practice-management §2.3 删除 mentor 端"确认"按钮，
+    // 原 spec 通过"点击确认 → status new→pending → badge -1"路径不再存在。
+    // badge 显示逻辑（MainLayout.fetchMockBadge）仍按 status='new' 计数，由 admin/LM 端的
+    // 排课接口推进状态。本 spec 改为：只断言初始 badge 计数正确。
     const mockRows = [
       {
         practiceId: 42,
@@ -110,22 +114,18 @@ describe('mentor nav badge state', () => {
       }
       return { rows: [] }
     })
-    vi.mocked(http.put).mockImplementation(async (url: string) => {
-      if (url === '/mentor/mock-practice/42/confirm') {
-        mockRows[0].status = 'pending'
-      }
-      return {}
-    })
 
     const wrapper = await mountAt('/mock-practice')
 
     const mockNavItem = findNavItem(wrapper, 'Mock Practice')
     expect(mockNavItem.find('.nav-badge').text()).toBe('2')
 
-    await wrapper.findAll('tbody tr').find((row) => row.text().includes('Mock Student A'))?.get('button').trigger('click')
-    await flushPromises()
-
-    expect(mockNavItem.find('.nav-badge').text()).toBe('1')
+    // negative：列表已无"确认"按钮可点
+    const confirmBtn = wrapper.findAll('button').find((b) => b.text().trim() === '确认')
+    expect(confirmBtn).toBeUndefined()
+    expect(http.put).not.toHaveBeenCalledWith(
+      expect.stringMatching(/\/mentor\/mock-practice\/\d+\/confirm/),
+    )
   })
 
   // FIX-E：mentor 端 Job Overview 已改为只读 5 列，无"确认"按钮，

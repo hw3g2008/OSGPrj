@@ -17,7 +17,3 @@ export interface MockPractice {
 export function listMockPractice(query?: any) {
   return http.get<{ rows: MockPractice[]; total: number }>('/mentor/mock-practice/list', { params: query })
 }
-
-export function confirmMockPractice(id: number) {
-  return http.put(`/mentor/mock-practice/${id}/confirm`)
-}

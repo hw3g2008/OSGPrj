@@ -116,6 +116,8 @@ class StudentMockPracticeServiceImplTest
         assertEquals("模拟面试", practiceRecords.get(0).get("type"));
         assertEquals("coaching", practiceRecords.get(0).get("statusValue"));
         assertEquals("Jerry Li", practiceRecords.get(0).get("mentor"));
+        // FIX-2: scheduledAt must be projected so student frontend shows real schedule
+        assertEquals("2026-03-26 09:30", practiceRecords.get(0).get("scheduledAt"));
         verify(osgMockPracticeMapper).selectStudentPracticeList(12766L);
         verify(studentMockPracticeMapper).selectClassRequestList(838L);
         verify(studentMockPracticeMapper, never()).selectPracticeList(any());

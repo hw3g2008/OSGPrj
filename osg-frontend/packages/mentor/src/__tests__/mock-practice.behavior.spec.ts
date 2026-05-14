@@ -138,7 +138,11 @@ describe('mentor mock-practice behavior (Step3-F4 strict)', () => {
     wrapper.unmount()
   })
 
-  it('preserves 确认 flow for new rows (PUT /mentor/mock-practice/{id}/confirm)', async () => {
+  // 2026-05-15 FIX-1: 按需求文档 04-mock-practice-management §2.3「操作列只有上报课消」，
+  // 删除 mentor 端"确认"按钮 + 关联 confirmMock 调用。原 spec 期望确认按钮存在并调
+  // PUT /mentor/mock-practice/{id}/confirm — 与新需求矛盾，改为 negative 断言：
+  // 列表里 new 行不再渲染"确认"按钮。
+  it('does not render 确认 button on new rows (FIX-1 per requirement §2.3)', async () => {
     vi.mocked(http.get).mockImplementationOnce(async (url: string) => {
       if (url.includes('/mentor/mock-practice/list')) {
         return {
@@ -150,11 +154,11 @@ describe('mentor mock-practice behavior (Step3-F4 strict)', () => {
     })
     const wrapper = mount(MockPracticePage, mountOptions)
     await flushPromises()
-    const confirmBtn = wrapper.findAll('button').find((b) => b.text().includes('确认'))
-    expect(confirmBtn, 'expected to find 确认 button on new row').toBeTruthy()
-    await confirmBtn!.trigger('click')
-    await flushPromises()
-    expect(http.put).toHaveBeenCalledWith('/mentor/mock-practice/5105/confirm')
+    const confirmBtn = wrapper.findAll('button').find((b) => b.text().trim() === '确认')
+    expect(confirmBtn, 'expected NO 确认 button on the mock-practice list').toBeUndefined()
+    expect(http.put).not.toHaveBeenCalledWith(
+      expect.stringMatching(/\/mentor\/mock-practice\/\d+\/confirm/),
+    )
   })
 
   it('does not render the deprecated 学员求职详情 modal anywhere on the page', async () => {

@@ -49,33 +49,49 @@ class OsgMockPracticeServiceImplTest
     private OsgClassRecordMapper classRecordMapper;
 
     @Test
-    void selectMentorMockPracticeListShouldIncludeAssistantOwnedPractice()
+    void selectMentorMockPracticeListUsesMentorIdsMapperWithCurrentMentorId()
     {
+        // 2026-05-15 FIX-1: 按需求 04-mock-practice-management §2.4「导师端只展示
+        // mentor_ids 包含当前导师的记录」，service 改为调 selectMentorMockPracticeList
+        // mapper（SQL 含 FIND_IN_SET(currentMentorId, mentor_ids)）；
+        // 删除原 Java 端 stream filter + hasAssistantOwnership fallback，避免
+        // controller startPage() 先分页再 Java filter 把 daoshi58 早期 submitted_at
+        // 的记录切掉。
         OsgMockPractice query = new OsgMockPractice();
         query.setCurrentMentorId(920L);
 
         OsgMockPractice practice = new OsgMockPractice();
         practice.setPracticeId(9001L);
         practice.setStudentId(3001L);
+        practice.setMentorIds("920");
         practice.setStatus("pending");
 
-        OsgStudent student = new OsgStudent();
-        student.setStudentId(3001L);
-        student.setAssistantId(920L);
-
-        when(mockPracticeMapper.selectMockPracticeList(any(OsgMockPractice.class))).thenReturn(List.of(practice));
-        when(studentMapper.selectStudentByStudentId(3001L)).thenReturn(student);
+        when(mockPracticeMapper.selectMentorMockPracticeList(any(OsgMockPractice.class))).thenReturn(List.of(practice));
 
         List<OsgMockPractice> rows = service.selectMentorMockPracticeList(query);
 
         assertEquals(1, rows.size());
         assertEquals(9001L, rows.get(0).getPracticeId());
-        verify(mockPracticeMapper).selectMockPracticeList(argThat(actual ->
-            actual != null
-                && Objects.equals(actual.getCurrentMentorId(), 920L)
-                && actual.getPracticeType() == null
-                && actual.getStatus() == null
+        verify(mockPracticeMapper).selectMentorMockPracticeList(argThat(actual ->
+            actual != null && Objects.equals(actual.getCurrentMentorId(), 920L)
         ));
+    }
+
+    @Test
+    void selectMentorMockPracticeListNoLongerFallsBackToAssistantOwnership()
+    {
+        // 删除 assistant fallback：student.assistantId == currentMentorId 但
+        // mock_practice.mentor_ids 不含该 user 时，mentor 端不应看到该记录。
+        OsgMockPractice query = new OsgMockPractice();
+        query.setCurrentMentorId(920L);
+
+        // SQL 层 FIND_IN_SET 已过滤，mapper 不会返回 mentor_ids 不含 920 的记录
+        when(mockPracticeMapper.selectMentorMockPracticeList(any(OsgMockPractice.class)))
+            .thenReturn(List.of());
+
+        List<OsgMockPractice> rows = service.selectMentorMockPracticeList(query);
+
+        assertEquals(0, rows.size());
     }
 
     @Test
