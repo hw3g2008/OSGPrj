@@ -454,6 +454,7 @@ WHERE (s.student_name LIKE CONCAT('%', #{studentName}, '%')
 | 2026-05-13 | **本地端到端验证完成**：B1/B2/B3/B4 后端代码 + 前端代码 + 单测 + UI 实测全部 PASS。Step 1（学生 hw01 申请 Morgan Stanley 辅导 → admin UI 看到 2 条 coaching）+ Step 2（admin 编辑 hw01 班主任 → §3.1.2 sync 触发 → 3 条 application.lead_mentor_id 同步刷新 → lead-mentor 端 yanyabanzhuren 看到 3 条 hw01 申请）+ Step 3（班主任分配 e2e_mt → coaching #5220 status=assigned）全部端到端贯通 |
 | 2026-05-13 | **新发现 B5 / 撤回伪 bug**：见 §8 |
 | 2026-05-14 | **新发现 B6 + B7（mentor 端）**：B6 mentor 列表样式与 LM 不一致；B7 mentor `/mentor/class-records/*` 全部 404，根因 controller mapping 带 `/api/` 前缀 + vite proxy passthrough 未生效（详见 §8.3 / §8.4） |
+| 2026-05-14 | **§9 闭环合并**：B5/B6/B7 + C 弹窗类型映射 + D 简历类型合并 + E enum 修正一起落地（commit `145c9dcf`）；P2-4 死分支清理（`390c20ca`）+ P2-5 弹窗视觉打磨（`7cfef7c7`）。详见 §9 |
 
 ---
 
@@ -656,4 +657,107 @@ expect(proxy['/api/mentor'].rewrite?.('/api/mentor/profile') ?? '/api/mentor/pro
 - **多班主任限制**：osg_student.lead_mentor_id 只存第一个 user_id；osg_job_application.lead_mentor_id 列也只有一个。一个学生绑 2 个班主任时，只有"主班主任"能看到流转，副班主任看不到（见 §6.1）。本期不修，需单独立 ticket。
 - **lead-mentor 端 "我辅导的学员" 操作列 "上报课消"**：与本次 4 个 bug 无关，但流转链路下一步要走（mentor / lead-mentor 分配后上报课消 → 学生看到）。属 RULE-C 范围。
 - **mentor 端"操作"列定稿名称澄清**：定稿 RULE-A（08-master-bug-spec §2）明确 mentor 端是「上报课消」按钮，不是旧 PRD_LeadMentor 里的「确认」按钮。**这不是 bug**，是产品迭代后的结果，仅记录消除认知混淆。
+
+---
+
+## 9. 后续闭环合并（2026-05-14）
+
+§8 完成后又集中处理一批衍生问题，合并入 commit `145c9dcf` 一次落地，后续两条 chore/style commit 收尾。
+
+### 9.1 B5 / B6 / B7 — §8 三条悬挂 bug 实际修复
+
+| Bug | 方案 | 落地点 |
+|---|---|---|
+| B5 lead-mentor "提交时间" 字段未切 coaching 维度 | 新增 `resolveOverviewSubmittedAt(application, coaching)` 工具方法，三栏统一调用 | `OsgUserJobOverviewServiceImpl.java` |
+| B6 mentor 列表样式与 LM 不一致 | 抹平 mentor `/job-overview` row CSS，使用与 lead-mentor 一致的中性表格行 | `osg-frontend/packages/mentor/src/views/job-overview/index.vue` |
+| B7 mentor `/api/mentor/class-records/*` 404 | 走 **方案 A**：后端去掉 `/api/` 前缀；前端 spec mock URL + vite proxy passthrough 同步清理 | 13 处 controller mapping + 32 处 spec + mentor/assistant `vite.config.ts` |
+
+**验收**：mentor 端 "上报课消" 弹窗能正常调 `/mentor/class-records/reference-candidates`，关联申请下拉列出 hw01 #5220 / 5221；提交一条课消写入 `osg_class_record(reference_id=5220)`。
+
+---
+
+### 9.2 §C 课消上报弹窗 — 关联类型 label 字典化 + reference 候选 + 单屏滚动版
+
+**C1 label 字典化**：弹窗 "关联类型 / 关联申请" 下拉 label 从硬编码 enum value 切到 `osg_interview_stage` / `osg_coaching_status` / `osg_practice_type` / `osg_mock_practice_status` 4 个字典。字典初始化 SQL 落 `docs/plans/stage-coaching-request/11-class-report-label-dict.sql`（详见 §E 修正历史）。
+
+**C3 单屏滚动版**：`ClassReportFlowModal` 从 step wizard 改造为 5 个 section 并列 + 单屏滚动（废弃 currentStep 切换逻辑）。
+
+**C8 视觉打磨**（2026-05-14，commit `7cfef7c7`）：
+- modal 外框：border-radius 12px + 多层阴影，告别"扁平贴图"
+- header / body / footer 三段分层（白 / `#f5f7fa` 浅灰 / 白）
+- 5 个 section 卡片化（白底 + border + 轻 shadow + 圆角）
+- 标题层级：modal title 18px / 600；field label 13px / 500
+- 走 `wrap-class-name="class-report-flow-modal-wrap"` 限定全局 style 作用域
+
+---
+
+### 9.3 §D 简历类型合并
+
+**问题**：原 BASE_CATEGORY 有 `new_resume`（写新简历）+ `resume_update`（改简历）两个一级类目，UI 上学员选一级 + 二级体验割裂。
+
+**方案**：
+- 前端：一级类目合并为 `resume`，新增二级 radio `resumeSubType ∈ { 'new', 'update' }`
+- 提交时按 `resumeSubType` 派生为后端 enum：`new` → `new_resume`，`update` → `resume_update`
+- DB enum / 后端 service 0 改动，纯 UI 层适配
+
+**落地点**：
+- `osg-frontend/packages/shared/src/components/ClassReportFlowModal/index.vue:349-359`（submit 派生）
+- `BaseCourseFeedback.vue` UI 调整 + `BaseCourseTopicPicker` 联动
+
+---
+
+### 9.4 §E enum 修正 — `mock_interview / communication_test / midterm_exam` 三态对齐 DB
+
+**根因**：mentor 端 `resolveReportReferenceType` 历史错映射 `midterm_exam` → `communication_test`，导致期中考试上报拉不到 reference 候选。
+
+**DB 实际 enum 现实**（修正后）：
+| value | 学生卡片 | label |
+|---|---|---|
+| `mock_interview` | mock | 模拟面试 |
+| `communication_test` | networking | 人际关系测试 |
+| `midterm_exam` | midterm | 期中考试 |
+
+> `relation_test` 是历史虚构 enum，DB 永不出现。
+
+**修复点**：
+- 前端 `mentor/views/mock-practice/index.vue:218-224` `resolveReportReferenceType` 改 1:1 映射，删 `relation_test` 错映射
+- `shared/types/classReport.ts` ReferenceType 加 `midterm_exam`
+- 后端 `OsgClassReportConstants.java` 加 `REFERENCE_TYPE_MIDTERM_EXAM`
+- 后端 `OsgClassRecordServiceImpl.java:361-367` `listReferenceCandidates` switch 新增 `midterm_exam` 分支（之前默认空分支吞掉）
+- `OsgClassReportConstantsTest.java` 加常量断言
+
+**E2E 验收**：mentor 端三种 referenceType + 两种负向（`relation_test` / 未知）API 全 PASS。
+
+---
+
+### 9.5 P2-4 死分支清理（commit `390c20ca`）
+
+**对象**：`StepReference.vue` 中 `relation_test` 三处死分支（3-4 行）：注释列举、`isReferenceBranch` computed OR 分支、`referenceTypeOptions` switch case。
+
+**约束 scope**：仅这一个文件；其余 37 处 `relation_test` 引用（backend constants / types / tests / docs / SQL seed）保留，后续统一清理。
+
+**验证**：shared package 中 3 个 relation_test 直接相关的 spec（`classReport-constants`, `class-report-flow-modal-prefill`, `classReport-types`）全 PASS（150 测试通过）。其余 18 个 spec 因 pre-existing `@vue/server-renderer` 缺失而 fail，与本改动无关。
+
+---
+
+### 9.6 P2-5 弹窗视觉打磨（commit `7cfef7c7`）
+
+见 §9.2 末段。
+
+---
+
+### 9.7 P0 配套核对
+
+- **P0-1 字典 SQL 上库**：`11-class-report-label-dict.sql` 已由别处会话于 2026-05-14 15:52:57 写入共享 DB（4 dict_type + 20 dict_data，含 §E 修正后的 `osg_practice_type`）。**实际行数 20**，原文件头注释"21 data"为笔误。所有 label/value 与 spec 逐行一致。无需重跑。
+- **P0-2 daoshi58 密码**：当前 hash 与 hw01 (admin123) **完全一致**，无需重置。但 backend 检测 `pwd_update_date IS NULL` 触发"修改默认密码"强制弹窗 — 在 mentor 端走一次密码修改（新密码仍设 admin123），同步 `pwd_update_date = NOW()` 即可消除弹窗（已于 P2-5 视觉打磨前操作）。
+
+---
+
+### 9.8 已知遗留（不本期处理）
+
+- **B1 §3.1.1 历史 NULL 回填**：跑 Step 2 sync 后 hw01 三条 application.lead_mentor_id 已自然回填。**仍剩 1 条其它学生 application.lead_mentor_id=NULL**（fixture 漏填）。因 §3.1.2 sync 代码已上线，新数据自愈；该学生不活跃就 0 影响。回填 SQL 可选，未跑。
+- **assistant 8 个占位符页面**（`communication / settlement / expense / files / online-test-bank / interview-bank / notice / faq`）：当前是占位符路由，需按需求补实页面。
+- **`relation_test` 其余 37 处引用**：backend constants / types / tests / docs / SQL seed，待集中清理。
+- **`StepReference.vue` `communication_test` label 与 DB 字典口径**：StepReference switch 给 `communication_test` 标 "沟通测评"；DB 字典 `osg_practice_type` 中 `communication_test` label 是 "人际关系测试"。前后端 label 当前矛盾，下次清理 `relation_test` 残留时统一对齐。
+
 
