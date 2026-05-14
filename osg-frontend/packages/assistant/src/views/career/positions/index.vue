@@ -128,12 +128,13 @@
       </a-spin>
     </a-card>
 
-    <a-modal
-      v-model:open="studentModal.visible"
-      wrap-class-name="osg-modal-form"
-      :footer="null"
-      width="720px"
+    <OverlaySurfaceModal
+      :open="studentModal.visible"
+      surface-id="assistant-position-students"
       :title="studentModalTitle"
+      width="720px"
+      :show-footer="false"
+      :body-class="['assistant-position-students__body', 'osg-modal-form']"
       @cancel="closeStudents"
     >
       <a-spin :spinning="studentModal.loading" tip="正在读取关联学员...">
@@ -166,13 +167,14 @@
           </template>
         </a-table>
       </a-spin>
-    </a-modal>
+    </OverlaySurfaceModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { OverlaySurfaceModal } from '@osg/shared/components'
 import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
 import {
   getAssistantPositionList,

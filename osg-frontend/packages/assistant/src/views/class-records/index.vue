@@ -221,12 +221,13 @@
       </a-table>
     </a-card>
 
-    <a-modal
-      v-model:open="detailVisible"
-      wrap-class-name="osg-modal-form"
+    <OverlaySurfaceModal
+      :open="detailVisible"
+      surface-id="assistant-class-record-detail"
       :title="selectedRecord?.status === 'rejected' ? '驳回原因' : '课程记录详情'"
-      :footer="null"
       :width="720"
+      :show-footer="false"
+      :body-class="['assistant-class-record-detail__body', 'osg-modal-form']"
       @cancel="closeDetail"
     >
       <a-descriptions v-if="selectedRecord" :column="2" bordered size="small">
@@ -285,7 +286,7 @@
           {{ selectedRecord.reviewRemark || '暂无反馈摘要' }}
         </a-descriptions-item>
       </a-descriptions>
-    </a-modal>
+    </OverlaySurfaceModal>
 
     <AssistantClassReportFlowModal
       v-model:visible="reportModalOpen"
@@ -299,7 +300,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { ClassRecordStatusTag, StatCard } from '@osg/shared/components'
+import { ClassRecordStatusTag, OverlaySurfaceModal, StatCard } from '@osg/shared/components'
 import AssistantClassReportFlowModal from './AssistantClassReportFlowModal.vue'
 import {
   getAssistantClassRecordList,

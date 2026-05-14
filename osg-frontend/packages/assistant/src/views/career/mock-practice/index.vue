@@ -71,13 +71,14 @@
     </a-card>
 
     <!-- 详情弹窗：暂仅展示行内字段；按 practiceId 拉多条课消反馈待后端 detail 端点（Step4-F3）-->
-    <a-modal
-      v-model:open="detailModal.visible"
-      wrap-class-name="osg-modal-form"
+    <OverlaySurfaceModal
+      :open="detailModal.visible"
+      surface-id="assistant-mock-practice-detail"
       :title="detailModal.record ? `模拟应聘详情 · ${detailModal.record.studentName || '-'}` : '模拟应聘详情'"
-      :footer="null"
       width="720px"
-      :after-close="onDetailClosed"
+      :show-footer="false"
+      :body-class="['assistant-mock-practice-detail__body', 'osg-modal-form']"
+      @cancel="closeDetail"
     >
       <template v-if="detailModal.record">
         <a-descriptions :column="2" size="small" bordered>
@@ -101,7 +102,7 @@
           message="导师上报的多条课消反馈待后端详情接口接入后展示"
         />
       </template>
-    </a-modal>
+    </OverlaySurfaceModal>
   </div>
 </template>
 
@@ -109,7 +110,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { PracticeTypeTag, StudentAvatarCell } from '@osg/shared/components'
+import { OverlaySurfaceModal, PracticeTypeTag, StudentAvatarCell } from '@osg/shared/components'
 import {
   getAssistantMockPracticeList,
   type AssistantMockPracticeRecord,
@@ -195,7 +196,8 @@ function openDetail(record: AssistantMockPracticeRecord) {
   detailModal.visible = true
 }
 
-function onDetailClosed() {
+function closeDetail() {
+  detailModal.visible = false
   detailModal.record = null
 }
 

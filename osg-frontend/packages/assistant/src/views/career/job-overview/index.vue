@@ -132,7 +132,7 @@
       width="880px"
       max-height="78vh"
       variant="default"
-      body-class="ajo-detail-body"
+      :body-class="['ajo-detail-body', 'osg-modal-form']"
       @close="detailOpen = false"
     >
       <template #title>
