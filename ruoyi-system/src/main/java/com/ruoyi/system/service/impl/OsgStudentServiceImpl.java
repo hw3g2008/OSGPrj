@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.OsgIdGenerator;
@@ -33,7 +34,6 @@ import com.ruoyi.system.service.IOsgStudentService;
 @Service
 public class OsgStudentServiceImpl implements IOsgStudentService
 {
-    private static final String DEFAULT_STUDENT_PASSWORD = "Osg@2026";
     private static final int SYS_USER_NICKNAME_MAX_LENGTH = 30;
 
     private static final String DEFAULT_CONTRACT_TYPE = "initial";
@@ -234,7 +234,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         result.put("contractId", contract.getContractId());
         result.put("contractNo", contract.getContractNo());
         result.put("loginAccount", student.getEmail());
-        result.put("defaultPassword", DEFAULT_STUDENT_PASSWORD);
+        result.put("defaultPassword", UserConstants.DEFAULT_PASSWORD);
         result.put("firstLoginRequired", true);
         return result;
     }
@@ -296,7 +296,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         }
 
         SysUser account = ensureStudentAccount(student, operator);
-        if (sysUserService.resetUserPwd(account.getUserId(), SecurityUtils.encryptPassword(DEFAULT_STUDENT_PASSWORD)) <= 0)
+        if (sysUserService.resetUserPwd(account.getUserId(), SecurityUtils.encryptPassword(UserConstants.DEFAULT_PASSWORD)) <= 0)
         {
             throw new ServiceException("学员密码重置失败");
         }
@@ -304,7 +304,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("studentId", studentId);
         result.put("loginAccount", student.getEmail());
-        result.put("defaultPassword", DEFAULT_STUDENT_PASSWORD);
+        result.put("defaultPassword", UserConstants.DEFAULT_PASSWORD);
         return result;
     }
 
@@ -520,7 +520,7 @@ public class OsgStudentServiceImpl implements IOsgStudentService
         user.setNickName(normalizeAccountNickname(student.getStudentName(), "新学员"));
         user.setEmail(student.getEmail());
         user.setSex(normalizeUserSex(student.getGender()));
-        user.setPassword(SecurityUtils.encryptPassword(DEFAULT_STUDENT_PASSWORD));
+        user.setPassword(SecurityUtils.encryptPassword(UserConstants.DEFAULT_PASSWORD));
         user.setStatus("0");
         user.setCreateBy(operator);
         user.setRemark("OSG student auto-created account");

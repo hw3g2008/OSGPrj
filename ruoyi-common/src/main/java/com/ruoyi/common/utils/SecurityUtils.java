@@ -9,6 +9,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.util.PatternMatchUtils;
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.constant.HttpStatus;
+import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.exception.ServiceException;
@@ -112,6 +113,23 @@ public class SecurityUtils
     {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         return passwordEncoder.matches(rawPassword, encodedPassword);
+    }
+
+    /**
+     * 判断账号当前密码是否仍为系统默认密码（{@link UserConstants#DEFAULT_PASSWORD}）。
+     * 命中即视为「必须强制改密」，作为 mustChangePassword 单一真源，
+     * 不再依赖 sys_user.first_login flag（admin 重置场景下 flag 不会回写，导致漏判）。
+     *
+     * @param encodedPassword DB 中 sys_user.password 加密后字符
+     * @return 是默认密码则 true
+     */
+    public static boolean isUsingDefaultPassword(String encodedPassword)
+    {
+        if (encodedPassword == null || encodedPassword.isEmpty())
+        {
+            return false;
+        }
+        return matchesPassword(UserConstants.DEFAULT_PASSWORD, encodedPassword);
     }
 
     /**

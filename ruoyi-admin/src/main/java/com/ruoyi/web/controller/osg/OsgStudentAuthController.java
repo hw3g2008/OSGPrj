@@ -19,6 +19,7 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.framework.web.service.SysLoginService;
 import com.ruoyi.system.domain.OsgStudent;
 import com.ruoyi.system.mapper.OsgStudentMapper;
+import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.impl.OsgStudentServiceImpl;
 
 /**
@@ -36,6 +37,9 @@ public class OsgStudentAuthController
 
     @Autowired
     private OsgStudentServiceImpl osgStudentService;
+
+    @Autowired
+    private ISysUserService userService;
 
     @PostMapping("/login")
     public AjaxResult login(@RequestBody LoginBody loginBody)
@@ -67,7 +71,7 @@ public class OsgStudentAuthController
         ajax.put("user", user);
         ajax.put("roles", Collections.singleton("student"));
         ajax.put("permissions", Collections.emptySet());
-        ajax.put("mustChangePassword", "1".equals(user.getFirstLogin()));
+        ajax.put("mustChangePassword", userService.isUserUsingDefaultPassword(user.getUserId()));
 
         OsgStudent student = osgStudentMapper.selectStudentByEmail(user.getUserName());
         String accountStatus = "0";

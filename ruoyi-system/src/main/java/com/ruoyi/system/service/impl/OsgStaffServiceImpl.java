@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.OsgIdGenerator;
@@ -27,7 +28,6 @@ import com.ruoyi.system.service.IOsgStaffService;
 @Service
 public class OsgStaffServiceImpl implements IOsgStaffService
 {
-    private static final String DEFAULT_STAFF_PASSWORD = "Osg@2026";
     private static final int SYS_USER_NICKNAME_MAX_LENGTH = 30;
 
     @Autowired
@@ -422,7 +422,7 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         }
 
         SysUser account = ensureStaffAccount(staff, operator);
-        if (sysUserService.resetUserPwd(account.getUserId(), SecurityUtils.encryptPassword(DEFAULT_STAFF_PASSWORD)) <= 0)
+        if (sysUserService.resetUserPwd(account.getUserId(), SecurityUtils.encryptPassword(UserConstants.DEFAULT_PASSWORD)) <= 0)
         {
             throw new ServiceException("导师密码重置失败");
         }
@@ -430,7 +430,7 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("staffId", staffId);
         result.put("loginAccount", staff.getEmail());
-        result.put("defaultPassword", DEFAULT_STAFF_PASSWORD);
+        result.put("defaultPassword", UserConstants.DEFAULT_PASSWORD);
         return result;
     }
 
@@ -463,7 +463,7 @@ public class OsgStaffServiceImpl implements IOsgStaffService
         user.setNickName(normalizeAccountNickname(staff.getStaffName(), "导师"));
         user.setEmail(staff.getEmail());
         user.setPhonenumber(staff.getPhone());
-        user.setPassword(SecurityUtils.encryptPassword(DEFAULT_STAFF_PASSWORD));
+        user.setPassword(SecurityUtils.encryptPassword(UserConstants.DEFAULT_PASSWORD));
         user.setStatus(toSysUserStatus(staff.getAccountStatus()));
         user.setCreateBy(operator);
         user.setRemark("OSG staff auto-created account");

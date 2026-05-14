@@ -119,7 +119,7 @@ public class SysUserServiceImpl implements ISysUserService
 
     /**
      * 通过用户ID查询用户
-     * 
+     *
      * @param userId 用户ID
      * @return 用户对象信息
      */
@@ -127,6 +127,26 @@ public class SysUserServiceImpl implements ISysUserService
     public SysUser selectUserById(Long userId)
     {
         return userMapper.selectUserById(userId);
+    }
+
+    /**
+     * 判断指定用户当前密码是否仍为系统默认密码 {@link UserConstants#DEFAULT_PASSWORD}。
+     * 直接从 DB 读取 sys_user.password，避免 Redis 缓存的 LoginUser 因 SysUser.password
+     * 上 @JsonProperty(access=WRITE_ONLY) 在反序列化时丢字段。
+     */
+    @Override
+    public boolean isUserUsingDefaultPassword(Long userId)
+    {
+        if (userId == null)
+        {
+            return false;
+        }
+        SysUser user = userMapper.selectUserById(userId);
+        if (user == null)
+        {
+            return false;
+        }
+        return SecurityUtils.isUsingDefaultPassword(user.getPassword());
     }
 
     /**

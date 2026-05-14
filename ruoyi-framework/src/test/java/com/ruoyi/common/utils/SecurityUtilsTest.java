@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.ruoyi.common.constant.Constants;
+import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginUser;
@@ -22,6 +23,32 @@ class SecurityUtilsTest
     void clearContext()
     {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void isUsingDefaultPasswordShouldReturnTrueWhenEncodedMatchesDefault()
+    {
+        String encoded = SecurityUtils.encryptPassword(UserConstants.DEFAULT_PASSWORD);
+        assertTrue(SecurityUtils.isUsingDefaultPassword(encoded));
+    }
+
+    @Test
+    void isUsingDefaultPasswordShouldReturnFalseWhenEncodedIsCustomPassword()
+    {
+        String encoded = SecurityUtils.encryptPassword("MyStrong#Pass1");
+        assertFalse(SecurityUtils.isUsingDefaultPassword(encoded));
+    }
+
+    @Test
+    void isUsingDefaultPasswordShouldReturnFalseWhenEncodedIsNull()
+    {
+        assertFalse(SecurityUtils.isUsingDefaultPassword(null));
+    }
+
+    @Test
+    void isUsingDefaultPasswordShouldReturnFalseWhenEncodedIsEmpty()
+    {
+        assertFalse(SecurityUtils.isUsingDefaultPassword(""));
     }
 
     @Test

@@ -19,6 +19,7 @@ import com.ruoyi.common.exception.user.UserException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.web.service.SysLoginService;
+import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.impl.OsgMentorAccessService;
 
 /**
@@ -33,6 +34,9 @@ public class OsgMentorAuthController
 
     @Autowired
     private OsgMentorAccessService mentorAccessService;
+
+    @Autowired
+    private ISysUserService userService;
 
     @PostMapping("/login")
     public AjaxResult login(@RequestBody LoginBody loginBody)
@@ -80,7 +84,7 @@ public class OsgMentorAuthController
         ajax.put("user", user);
         ajax.put("roles", mentorAccessService.buildPortalRoles(user));
         ajax.put("permissions", Collections.emptySet());
-        ajax.put("mustChangePassword", "1".equals(user.getFirstLogin()));
+        ajax.put("mustChangePassword", userService.isUserUsingDefaultPassword(user.getUserId()));
         return ajax;
     }
 

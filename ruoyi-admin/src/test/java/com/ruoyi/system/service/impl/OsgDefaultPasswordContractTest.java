@@ -2,29 +2,22 @@ package com.ruoyi.system.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
-import com.ruoyi.system.service.impl.OsgStaffServiceImpl;
-import com.ruoyi.system.service.impl.OsgStudentServiceImpl;
+import com.ruoyi.common.constant.UserConstants;
 
+/**
+ * 默认密码契约测试 — 验证 student / staff / admin 共享同一真源 {@link UserConstants#DEFAULT_PASSWORD}，
+ * 不再各自维护私有 DEFAULT_*_PASSWORD 常量。
+ *
+ * 配套：5 端 getInfo 通过 {@code SecurityUtils.isUsingDefaultPassword(encodedPwd)} 判定
+ * 是否需要强制改密，不再读取 sys_user.first_login flag（admin 重置场景下 flag 不会回写，
+ * 导致漏判 / 误判）。
+ */
 class OsgDefaultPasswordContractTest
 {
     @Test
-    void studentDefaultPasswordShouldUseUnifiedValue() throws Exception
+    void defaultPasswordSingleSourceOfTruth()
     {
-        assertEquals("Osg@2026", readConstant(OsgStudentServiceImpl.class, "DEFAULT_STUDENT_PASSWORD"));
-    }
-
-    @Test
-    void staffDefaultPasswordShouldUseUnifiedValue() throws Exception
-    {
-        assertEquals("Osg@2026", readConstant(OsgStaffServiceImpl.class, "DEFAULT_STAFF_PASSWORD"));
-    }
-
-    private String readConstant(Class<?> targetClass, String fieldName) throws Exception
-    {
-        Field field = targetClass.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        return (String) field.get(null);
+        assertEquals("Osg@2026", UserConstants.DEFAULT_PASSWORD);
     }
 }

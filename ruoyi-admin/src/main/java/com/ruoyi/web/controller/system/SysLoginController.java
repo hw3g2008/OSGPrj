@@ -23,6 +23,7 @@ import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ISysMenuService;
+import com.ruoyi.system.service.ISysUserService;
 
 /**
  * 登录验证
@@ -46,6 +47,9 @@ public class SysLoginController
 
     @Autowired
     private ISysConfigService configService;
+
+    @Autowired
+    private ISysUserService userService;
 
     /**
      * 登录方法
@@ -90,8 +94,9 @@ public class SysLoginController
         ajax.put("permissions", permissions);
         ajax.put("isDefaultModifyPwd", initPasswordIsModify(user.getPwdUpdateDate()));
         ajax.put("isPasswordExpired", passwordIsExpiration(user.getPwdUpdateDate()));
-        ajax.put("firstLogin", "1".equals(user.getFirstLogin()));
-        ajax.put("mustChangePassword", "1".equals(user.getFirstLogin()));
+        boolean usingDefaultPwd = userService.isUserUsingDefaultPassword(user.getUserId());
+        ajax.put("firstLogin", usingDefaultPwd);
+        ajax.put("mustChangePassword", usingDefaultPwd);
         return ajax;
     }
 

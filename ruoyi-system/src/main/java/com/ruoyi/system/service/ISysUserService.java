@@ -45,11 +45,21 @@ public interface ISysUserService
 
     /**
      * 通过用户ID查询用户
-     * 
+     *
      * @param userId 用户ID
      * @return 用户对象信息
      */
     public SysUser selectUserById(Long userId);
+
+    /**
+     * 判断指定用户当前密码是否仍为系统默认密码（UserConstants.DEFAULT_PASSWORD）。
+     * 直接从 DB 读取最新 sys_user.password，避免 Redis 缓存的 LoginUser
+     * 因 SysUser.password 上 @JsonProperty(access=WRITE_ONLY) 而丢失 password 字段。
+     *
+     * @param userId 用户ID
+     * @return 是默认密码则 true
+     */
+    public boolean isUserUsingDefaultPassword(Long userId);
 
     /**
      * 根据用户ID查询用户所属角色组
