@@ -1,6 +1,6 @@
 <template>
   <div class="step-reference osg-modal-form" data-step="reference">
-    <!-- 关联申请分支：job_coaching / mock_interview / relation_test / communication_test -->
+    <!-- 关联申请分支：job_coaching / mock_interview / communication_test -->
     <template v-if="isReferenceBranch">
       <div class="form-group">
         <label class="form-label">关联类型</label>
@@ -108,7 +108,6 @@ const isReadonlyReference = computed(() =>
 const isReferenceBranch = computed(() =>
   props.courseType === 'job_coaching' ||
   props.courseType === 'mock_interview' ||
-  props.courseType === 'relation_test' ||
   props.courseType === 'communication_test',
 )
 
@@ -119,8 +118,6 @@ const referenceTypeOptions = computed<{ value: ReferenceType; label: string }[]>
       return [{ value: 'job_coaching', label: '求职辅导申请' }]
     case 'mock_interview':
       return [{ value: 'mock_interview', label: '模拟面试' }]
-    case 'relation_test':
-      return [{ value: 'relation_test', label: '人际关系测评' }]
     case 'communication_test':
       return [{ value: 'communication_test', label: '沟通测评' }]
     default:
