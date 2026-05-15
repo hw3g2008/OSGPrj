@@ -1,152 +1,125 @@
-# 5 端串联手测用例 — 求职辅导 + 模拟应聘双主线
+# 5 端串联手测用例 v3 — 按业务状态流转设计
 
 - **日期**：2026-05-15
-- **基线 commit**：`844cd739`（含 FIX-1/2/3 + 全部 deps + 5 端验证）
-- **测试主体**：单人手测，浏览器实测
-- **估时**：完整跑 60–90 分钟（一次性）。重跑只验关键 TC 约 20 分钟
-- **总用例**：11 个 TC（5 端 × 求职辅导 + 6 步 × 模拟应聘）
+- **基线 commit**：`3acf955c`
+- **设计理念**：**每一次状态变化（state transition）都要在所有相关端验证一遍**。1 端 OK 不代表系统 OK，必须 4-5 端都通才算通。
+- **估时**：完整跑约 90-120 分钟
+- **结构**：2 条主线 (Flow A 求职辅导 / Flow B 模拟应聘)，每条主线划分 6-8 个 Stage（状态节点），每个 Stage 含 1 个驱动 Action + 多端验证清单
 
 ---
 
 ## §0 跑测前必读
 
-### 0.1 失败处理流程
+### 0.1 v3 vs v2 区别
 
-任何 TC 失败：
-1. 当前页 F12 → DevTools 截屏（保留 Network/Console panel）
-2. 在 TC 表里写实测现象（什么不符预期、API status code、报错弹窗文字）
-3. 如果环境异常（白屏/404/502），先验 §1 环境准备清单，重启对应服务后再判断
-4. 不要往下跑下一个 TC — 上游断了下游必然失败
+v2 按"端"组织（每端一个 TC，验该端能看到啥）—— 漏掉**状态流转的跨端一致性**。
+v3 按"状态机"组织（每个 Stage = 一个动作 + 状态变化）—— 一次 Action 必须在**所有相关端**都验过才算通过。
 
-### 0.2 跑测顺序约束
+例如：LM 给 hw01 分配 daoshi58 这一动作，会同时影响：
+- 学生端「我的求职」该行的 mentor 字段
+- mentor 端「学员求职总览」新增该学生
+- assistant 端「学员求职总览」mentor 名更新
+- admin 端「全部学员」可见 mentor 名 + 「待分配」不再有该条
+- LM 端「我管理学员」mentor 字段更新 + 「待分配」不再有该条
 
-- §1 → §2 → 主线 A（A1→A5 任意顺序）→ 主线 B（**B1→B2→B3→B4→B5→B6 严格顺序**，B 链上下游依赖）
-- 同主线内 TC 互不依赖，可乱序
+必须 5 端都验，缺一端不算 Pass。
+
+### 0.2 失败处理流程
+
+任一 Stage 失败：
+1. 截屏 + 抓 Network response（F12 → Network → 失败请求 → Response）
+2. 在 Stage 表里写哪端、哪步、什么现象
+3. **不要往下跑** — 状态机断了下游必然连锁失败
+4. 把 fail 现象贴给我或 review
+
+### 0.3 时间预算
+
+| Section | 估时 |
+|---|---|
+| §1 环境准备 | 15 min（一次性，跑过可跳） |
+| Flow A（7 Stage） | 50 min |
+| Flow B（6 Stage） | 40 min |
+| §5 清理 | 5 min |
+| **总计** | **~110 min** |
 
 ---
 
-## §1 环境准备（一次性，约 15 分钟）
+## §1 环境准备（一次性）
 
-### 1.1 检查并启动 backend
+> 已跑过 v2 的可跳到 §2。
+
+### 1.1 backend health
 
 ```powershell
-# 1) 端口检测
-Get-NetTCPConnection -State Listen -LocalPort 28080 -ErrorAction SilentlyContinue
-
-# 2) health 探测
 try { (Invoke-WebRequest -Uri "http://127.0.0.1:28080/actuator/health" -UseBasicParsing -TimeoutSec 5).Content }
 catch { Write-Output "backend DOWN" }
 ```
 
-**预期**：返回 `{"status":"UP"}` 等含 UP 字样。
+未就绪则 git-bash 跑 `bash bin/run-backend-dev.sh deploy/.env.dev`，等 60-120s 看到 `Started RuoYiApplication`。
 
-如未启动：
-```bash
-# Git Bash 里跑（脚本是 bash 不是 PowerShell）
-bash bin/run-backend-dev.sh deploy/.env.dev
-# 等 60-120 秒，看日志 "Started RuoYiApplication"
-```
-
-### 1.2 启动 5 个前端
+### 1.2 5 前端
 
 ```powershell
-# 端口表
-$ports = @{
-  student = 3001; mentor = 3002; 'lead-mentor' = 3003
-  assistant = 3004; admin = 3005
-}
+$ports = @{ student = 3001; mentor = 3002; 'lead-mentor' = 3003; assistant = 3004; admin = 3005 }
 foreach ($app in $ports.Keys) {
   $port = $ports[$app]
   $c = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue
-  if ($c) { Write-Output "OK   $app on $port" } else { Write-Output "DOWN $app on $port" }
+  if ($c) { "OK   $app on $port" } else { "DOWN $app on $port" }
 }
 ```
 
-如 DOWN 的端口，启动方式（**串行，并发会触发 npm cache 冲突**）：
+未就绪逐个启（**串行，并发会触发 npm cache 冲突**）：
 
 ```powershell
-# 每端一行，等上一行 vite ready（看到 "Local:   http://localhost:xxxx/"）再开下一个
-# 用 cmd 包一层让 vite 在后台不占当前 shell
 $env:NPM_CONFIG_CACHE = "$env:TEMP\npm-cache-student"
 cmd /c "cd /d H:\workspace\java\OSGPrj\osg-frontend\packages\student && start /b pnpm exec vite --port 3001 > H:\workspace\java\OSGPrj\logs\student-dev.log 2>&1"
-
-$env:NPM_CONFIG_CACHE = "$env:TEMP\npm-cache-mentor"
-cmd /c "cd /d H:\workspace\java\OSGPrj\osg-frontend\packages\mentor && start /b pnpm exec vite --port 3002 > H:\workspace\java\OSGPrj\logs\mentor-dev.log 2>&1"
-
-$env:NPM_CONFIG_CACHE = "$env:TEMP\npm-cache-lm"
-cmd /c "cd /d H:\workspace\java\OSGPrj\osg-frontend\packages\lead-mentor && start /b pnpm exec vite --port 3003 > H:\workspace\java\OSGPrj\logs\lm-dev.log 2>&1"
-
-$env:NPM_CONFIG_CACHE = "$env:TEMP\npm-cache-assistant"
-cmd /c "cd /d H:\workspace\java\OSGPrj\osg-frontend\packages\assistant && start /b pnpm exec vite --port 3004 > H:\workspace\java\OSGPrj\logs\assistant-dev.log 2>&1"
-
-$env:NPM_CONFIG_CACHE = "$env:TEMP\npm-cache-admin"
-cmd /c "cd /d H:\workspace\java\OSGPrj\osg-frontend\packages\admin && start /b pnpm exec vite --port 3005 > H:\workspace\java\OSGPrj\logs\admin-dev.log 2>&1"
+# 其余 mentor/lead-mentor/assistant/admin 同模式，npm cache 各自独立目录
 ```
 
-启动后再跑 1.2 端口表确认全 OK。
-
-### 1.3 浏览器准备
-
-**推荐 Chrome（独立 profile，避免和日常 Chrome 冲突）**：
+### 1.3 Chrome 调试浏览器
 
 ```powershell
 Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" `
   -ArgumentList '--remote-debugging-port=9222', "--user-data-dir=$env:TEMP\chrome-cdp-profile"
 ```
 
-启动后在地址栏分别试访问 5 个 URL 确认能加载页面（不需要登录）：
-- http://127.0.0.1:3001 → 学生端登录页
-- http://127.0.0.1:3002 → 导师端登录页
-- http://127.0.0.1:3003 → 班主任端登录页
-- http://127.0.0.1:3004 → 助教端登录页
-- http://127.0.0.1:3005 → 后台登录页
-
-### 1.4 DB fixture 一次性核对 + 补齐
-
-打开 PowerShell，跑 fixture 校验 SQL：
+### 1.4 DB fixture 校验 + 自动补齐
 
 ```powershell
 $env:MYSQL_PWD='app123456'
 $mysql = "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe"
 
-# 1) hw01 主链 IDs
+# 一次性校验
 & $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' --default-character-set=utf8mb4 -e @"
-SELECT 'hw01 关系链' AS section;
-SELECT student_id, student_name, lead_mentor_id, lead_mentor_ids, assistant_ids
-  FROM osg_student WHERE student_id=25112;
+SELECT 'A: 主线 A 当前状态' AS section;
+SELECT
+  (SELECT COUNT(*) FROM osg_job_application WHERE student_id=25112) AS hw01_applications,
+  (SELECT COUNT(*) FROM osg_coaching WHERE student_id=25112) AS hw01_coachings,
+  (SELECT mentor_ids FROM osg_coaching WHERE coaching_id=5220) AS coaching_5220_mentors,
+  (SELECT status FROM osg_coaching WHERE coaching_id=5221) AS coaching_5221_status;
 
-SELECT 'hw01 求职申请' AS section;
-SELECT application_id, position_id, current_stage, lead_mentor_id, submitted_at
-  FROM osg_job_application WHERE student_id=25112 ORDER BY application_id DESC;
-
-SELECT 'hw01 阶段辅导' AS section;
-SELECT coaching_id, application_id, interview_stage, mentor_ids, status
-  FROM osg_coaching WHERE student_id=25112 ORDER BY coaching_id DESC;
-
-SELECT '5 账号密码状态' AS section;
-SELECT user_name, first_login,
+SELECT 'B: 密码状态' AS section;
+SELECT user_name,
        password = (SELECT password FROM sys_user WHERE user_name='hwyellow222@126.com') AS pwd_is_admin123
   FROM sys_user
   WHERE user_name IN ('admin', 'hwyellow222@126.com', '525086@qq.com', 'daoshi58@qq.com', 'zhujiao58@qq.com');
 "@
 ```
 
-**预期**：
+**期望**：
+- A 部分：hw01_applications=3, hw01_coachings=2, coaching_5220_mentors=`13067,12866`, coaching_5221_status=`pending`
+- B 部分：5 账号 pwd_is_admin123 全部 = 1
 
-| 表 | 行 | 字段 | 期望 |
-|---|---|---|---|
-| osg_student | 1 | lead_mentor_id / lead_mentor_ids / assistant_ids | 12858 / `12858` / `12813,12867` |
-| osg_job_application | 3 | application_id / current_stage / lead_mentor_id | 300 first 12858 / 301 second 12858 / 302 hirevue 12858 |
-| osg_coaching | 2 | coaching_id / mentor_ids / status | 5221 NULL pending / 5220 `13067,12866` assigned |
-| sys_user | 5 | pwd_is_admin123 | 5 个账号全部 1（true） |
-
-**如缺失，补齐 SQL**：
+**不符合则跑补齐 SQL**：
 
 ```sql
--- coaching 5220 加 daoshi58 (12866)（如 mentor_ids 不含）
-UPDATE osg_coaching SET mentor_ids='13067,12866',
-       update_time=NOW(), update_by='手测_fixture_5220'
+-- 修 coaching 5220 mentor_ids 含 daoshi58 (12866)
+UPDATE osg_coaching SET mentor_ids='13067,12866', update_time=NOW(), update_by='手测_fixture_5220'
   WHERE coaching_id=5220 AND NOT FIND_IN_SET('12866', mentor_ids);
+
+-- 修 coaching 5221 回到 pending（如 v2 测试中分配过）
+UPDATE osg_coaching SET mentor_ids=NULL, status='pending', update_time=NOW(), update_by='手测_fixture_5221'
+  WHERE coaching_id=5221;
 
 -- 重置 5 账号密码到 admin123（复制 hw01 hash）
 UPDATE sys_user SET
@@ -158,474 +131,581 @@ WHERE user_name IN ('admin', '525086@qq.com', 'daoshi58@qq.com', 'zhujiao58@qq.c
 
 ---
 
-## §2 账号矩阵 + 切换法
+## §2 账号矩阵 + 切换
 
-### 2.1 5 账号详情
+### 2.1 5 账号
 
-| 角色 | 端口 | 登录账号 | 密码 | user_id | 关联 |
+| 角色 | 端口 | 账号 | 密码 | user_id | 实体 |
 |---|---|---|---|---|---|
 | **Student** | 3001 | `hwyellow222@126.com` | `admin123` | 12878 | hw01 / student_id=25112 |
 | **Mentor** | 3002 | `daoshi58@qq.com` | `admin123` | 12866 | daoshi58 / staff_id=98187 |
-| **Lead-mentor** | 3003 | `525086@qq.com` | `admin123` | 12858 | yanyabanzhuren / 培训主管 |
+| **Lead-mentor** | 3003 | `525086@qq.com` | `admin123` | 12858 | yanyabanzhuren |
 | **Assistant** | 3004 | `zhujiao58@qq.com` | `admin123` | 12867 | zhujiao58 |
 | **Admin** | 3005 | `admin` | `admin123` | 1 | 超级管理员 |
 
-### 2.2 端切换法（推荐：5 端 5 个浏览器 tab 同时开）
+### 2.2 推荐：5 端 5 tab 同时开
 
-**5 端独立 tab，互不影响**：
-1. Chrome 新建 5 个 tab
-2. 各 tab 分别访问 5 端登录 URL（§2.1 端口列）
-3. 5 端走各自的 localStorage（同源策略），登录互不干扰
-4. 测试时直接在 tab 间切换，无需重复登录
+Chrome 开 5 个 tab，分别访问 5 端 URL，分别登录。每端 localStorage 独立。**跨端验证时直接切 tab，无需重登**。
 
-**优点**：跑 A 主线时所有 5 端账号已就位，TC 之间秒切。
+### 2.3 Admin captcha
 
-### 2.3 单 tab 切换（如 Chrome 资源紧张）
+Admin 登录页有图形验证码。**只能人眼读图**。识别不清可临时禁：
 
-```text
-当前端 → 点用户头像 → 退出登录 → 跳登录页 → 输新账号 → 提交
+```sql
+UPDATE sys_config SET config_value='false'
+  WHERE config_key='sys.account.captchaEnabled';
+-- 测完恢复 'true'
 ```
 
-如登录后跳到上一个用户的页面（cache），按 F12 → Application → Local Storage → 清当前 origin 的 `osg_token`/`osg_user`/`osg_must_change_pwd`，再硬刷（Ctrl+Shift+R）。
+### 2.4 密码弹窗规则
 
-### 2.4 Admin 端 captcha 处理
-
-Admin 登录页有图形验证码（4 位数字/字母）。**必须人眼识别**，没有自动绕过。如刷新验证码图，URL 是 `/api/captchaImage`（GET 一次拿新图 + uuid）。
-
-如果验证码反复看不清，可临时禁用 captcha：DB 改 `sys_config WHERE config_key='sys.account.captchaEnabled'` 的值改 'false'，重启 backend 或重新登录即可。**测完记得改回 'true'**。
-
-### 2.5 关于「请修改默认密码」弹窗
-
-修复后规则：**当前 sys_user.password 的 bcrypt hash 是否 match "Osg@2026"** → 是则弹。
-
-已重置 admin123 的 5 个账号都不会弹。如果跑测过程中弹了，说明：
-- 账号被改回 Osg@2026（admin 端误重置）
-- 或 backend 缓存过期前请稍等
-
-跑 §1.4 验 `pwd_is_admin123 = 1`。
+Fix 后规则：**当前 password hash matches "Osg@2026"** → 弹「请修改默认密码」。
+5 账号已重置 admin123，理应不弹。如果弹了说明密码被改回 Osg@2026 → 回 §1.4 重置。
 
 ---
 
-## §3 主线 A — 求职辅导申请（学员求职总览）
+## §3 Flow A — 求职辅导申请全生命周期
 
-**数据流**：student 端 hw01 已有 3 条申请 → coaching 5220 已分配 mentor (13067 + 12866) → coaching 5221 second round 待分配。
-**估时**：5 个 TC 共约 20 分钟。
+**实体追踪**：
+- application 300（hw01 / Goldman Sachs）→ coaching 5220（first round, 已分配 mentor）
+- application 301（hw01 / Morgan Stanley）→ coaching 5221（**second round, 待分配 — Flow A 主测对象**）
 
----
-
-### TC-A1 学生端「我的求职」列表 + 详情
-
-**估时**：3 min  
-**端**：Student / 3001  
-**账号**：`hwyellow222@126.com`  
-**密码**：`admin123`
-
-#### 登录步骤
-1. 浏览器开 http://127.0.0.1:3001
-2. 在「邮箱」框输 `hwyellow222@126.com`
-3. 在「密码」框输 `admin123`
-4. 点「登录」按钮
-5. **预期**：toast `登录成功`，跳到 `/positions` 岗位信息页
-
-#### 测试步骤
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航点「我的求职 My Applications」 | URL 跳 `/job-tracking`，页面标题"我的求职 My Applications" |
-| 2 | 顶部 4 个 Tab | 全部(3) / 已投递(0) / 面试中(3) / 已结束(0) |
-| 3 | 列表渲染 3 行 | 行 1: Summer Analyst - IB / Goldman Sachs<br>行 2: Spring Insight / Morgan Stanley<br>行 3: Off-cycle Analyst / JPMorgan |
-| 4 | 各行操作列「申请辅导」按钮 | 可点击 |
-| 5 | 点行 1 左侧 `+` 图标展开 | 展开行显示 application 300 详情：first round / 5/14 19:23 / coaching 5220 / mentor `e2e_mt_mp2mda0y54s` |
-
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
-
-#### 清理 / 切换准备
-不需要登出，保留 tab 给后续 TC 用（如 TC-B2 仍用 hw01）。
+**核心思想**：本次手测把 **coaching 5221 从 pending → assigned → 课消上报 → 审核 → 驳回 → 重提交** 整个状态机跑完，每个 stage 验 5 端。
 
 ---
 
-### TC-A2 班主任端「学员求职总览-我管理学员」
+### Stage A0 — 初始状态快照（baseline 验证）
 
-**估时**：4 min  
-**端**：Lead-mentor / 3003  
-**账号**：`525086@qq.com`  
-**密码**：`admin123`
+**驱动 Action**：无（仅快照）  
+**估时**：5 min
 
-#### 登录步骤
-1. 浏览器开 http://127.0.0.1:3003 （新 tab 或切端）
-2. 在「邮箱」框输 `525086@qq.com`
-3. 在「密码」框输 `admin123`
-4. 点「登 录」按钮
-5. **预期**：跳到 `/career/positions`（默认页），左下显示 `YA yanyabanzhuren 培训主管`
-
-#### 测试步骤
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航点「学员求职总览 Job Overview」 | URL 跳 `/career/job-overview` |
-| 2 | 顶部「学员面试安排」日历区，看到 5 月视图 | 5/13、5/16 两个日期单元格显示红色徽标 + 文本 "hw01" |
-| 3 | 中部 3 个 Tab，默认选中「我管理的学员 4」 | 3 Tab: 我管理的学员(4) / 我辅导的学员(1) / 待分配导师(2) |
-| 4 | 列表渲染 4 行 | hw01 三条（Goldman/Morgan/JPMorgan）+ yanyan 一条 |
-| 5 | hw01 / Goldman Sachs 行 | 面试阶段 `first` / 时间 `2026-05-14 19:23` / 导师 `e2e_mt_mp2mda0y54s` / 最近评分 `8/10` |
-| 6 | hw01 / Morgan Stanley 行 | 面试阶段 `second` / 时间 `2026-05-16 10:00` / 导师 `待分配` |
-| 7 | 点 hw01 / Goldman 行「查看详情」 | 弹出详情面板，显示 coaching 5220、已上报课消 1 条记录 |
-| 8 | 关闭详情弹窗 → 切 Tab「待分配导师 2」 | 列表显示 2 条 second/pending 待分配的 coaching（其中应有 hw01 Morgan）|
-
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
-
-#### 清理 / 切换准备
-不需要登出。保留 tab。
-
----
-
-### TC-A3 助教端「学员求职总览」
-
-**估时**：3 min  
-**端**：Assistant / 3004  
-**账号**：`zhujiao58@qq.com`  
-**密码**：`admin123`
-
-#### 登录步骤
-1. 浏览器开 http://127.0.0.1:3004
-2. 输 `zhujiao58@qq.com` / `admin123`
-3. 点「登录」
-4. **预期**：跳到 `/career/positions`，左下角 `ZH zhujiao58 Assistant`
-
-#### 测试步骤
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航点「学员求职总览 Job Overview」 | URL 跳 `/career/job-overview` |
-| 2 | 顶部「学员面试安排」日历 + "我管理的学员 Managed Students 7" 标题 | 单 Tab 模式 |
-| 3 | 列表渲染 7 行 | hw01 三条 + 其他 4 个学生 |
-| 4 | hw01 / Goldman 行 | mentor `e2e_mt_mp2mda0y54s` + 评分 `8/10` |
-| 5 | 点 hw01 / Goldman 行「查看详情」 | 跟进详情弹窗打开，**圆角白底 modal**（OverlaySurfaceModal 公共基线），标题 `跟进详情 hw01 · ID: 25112` |
-| 6 | 弹窗内容 | 显示岗位/公司/城市/面试阶段/面试时间/导师 + 总课时/平均评分/课消条数 + 课消记录列表 |
-| 7 | 点右上 × 或 ESC | 弹窗干净关闭，无遗留遮罩 |
-
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
-
-#### 清理 / 切换准备
-保留 tab。
-
----
-
-### TC-A4 导师端「学员求职总览」
-
-**估时**：3 min  
-**端**：Mentor / 3002  
-**账号**：`daoshi58@qq.com`  
-**密码**：`admin123`
-
-#### 登录步骤
-1. 浏览器开 http://127.0.0.1:3002
-2. 输 `daoshi58@qq.com` / `admin123`
-3. 点「登录」
-4. **预期**：跳到 `/courses`（默认课程记录页），左下角 `DA daoshi58 导师`
-
-#### 测试步骤
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航点「学员求职总览 Job Overview 5」（徽标显示 5）| URL 跳 `/job-overview` |
-| 2 | 列表渲染 5 行 | hw01 / Goldman Sachs 在内 + 其他 4 个学员 |
-| 3 | hw01 / Goldman 行 | first / 5/14 19:23 / **已上报课消数 1** / 操作列只有「上报课消」按钮 |
-| 4 | 点 hw01 / Goldman 行「上报课消」 | shared `ClassReportFlowModal` 弹出 — section 卡片化（白底+轻阴影）、外圆角 12px + 多层阴影（C8 视觉打磨） |
-| 5 | 弹窗内字段 prefilled | 学员=hw01 / 关联类型=求职辅导申请 / 关联申请=coaching 5220 first round |
-| 6 | 点右上 × 或按 ESC | 弹窗关闭，不残留 |
-
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
-
-#### 清理 / 切换准备
-保留 tab — 后续 TC-B3/B4/B6 会再用 daoshi58。
-
----
-
-### TC-A5 后台「学员求职总览」
-
-**估时**：5 min（含 captcha）  
-**端**：Admin / 3005  
-**账号**：`admin`  
-**密码**：`admin123`
-
-#### 登录步骤
-1. 浏览器开 http://127.0.0.1:3005
-2. 输用户名 `admin` / 密码 `admin123`
-3. 看「请输入验证码」框边的图片（4 位字符），人眼识别后填入
-4. 点「登录」
-5. **预期**：跳 `/dashboard`，看到「欢迎回来，管理员」标题
-6. **不应弹**「请修改默认密码」窗（如弹，说明 §1.4 fixture 步骤没生效）
-
-#### 测试步骤
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航「求职中心 CAREER → 学员求职总览」按钮 | URL 跳 `/career/job-overview` |
-| 2 | 顶部 KPI 区 | 52 已投递 / 2 面试中 / 0 已获 Offer / 求职转化漏斗 |
-| 3 | 中部 2 个 Tab，默认「待分配导师 21」 | 共 21 条待分配 coaching |
-| 4 | 列表第一条 | hw01 / Morgan Stanley / Spring Insight / second / 待安排 / 1 位需求 / 暂无意向导师 / 3 天前 — 对应 **coaching 5221** |
-| 5 | 点 hw01 行「分配导师」 | 分配导师弹窗打开，多选下拉里搜得到 daoshi58 / e2e_mt_xxx 等 mentor |
-| 6 | 不勾任何 mentor，点取消 | 弹窗关闭，不写库（**重要：不要点确认，否则会影响 TC-A2 数据**） |
-| 7 | 切 Tab「全部学员 52」 | 应含 hw01 全部 3 条 application 300/301/302 |
-
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
-
-#### 清理 / 切换准备
-保留 tab — TC-B5 / B6 仍用 admin。
-
----
-
-## §4 主线 B — 模拟应聘 + 课消上报
-
-**数据流**：DB 直插一条 mock_practice 给 hw01 → student 端看 → mentor 端上报课消 → admin 审核 → 驳回 → mentor 重提交。
-**估时**：6 个 TC 共约 30 分钟。
-**严格顺序**：B1 → B2 → B3 → B4 → B5 → B6。
-
----
-
-### TC-B1 DB 插入 hw01 模拟面试 fixture
-
-**估时**：2 min  
-**执行端**：PowerShell + MySQL（不需要登录任何前端）
-
-#### 步骤
+#### A0.1 DB 状态快照
 
 ```powershell
-$env:MYSQL_PWD='app123456'
-$mysql = "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe"
+& $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' --default-character-set=utf8mb4 -e @"
+SELECT 'A0 coaching 5221 baseline' AS section;
+SELECT coaching_id, application_id, interview_stage, mentor_ids, status, requested_mentor_count, interview_time
+  FROM osg_coaching WHERE coaching_id=5221;
+SELECT 'A0 application 301 baseline' AS section;
+SELECT application_id, lead_mentor_id, current_stage
+  FROM osg_job_application WHERE application_id=301;
+"@
+```
 
+**预期**：
+- coaching 5221: mentor_ids=NULL, status=pending, requested_mentor_count=1, interview_time=2026-05-16 10:00:00
+- application 301: lead_mentor_id=12858, current_stage=second
+
+#### A0.2 跨端 baseline 验证
+
+| 端 | URL | 操作 | 预期 |
+|---|---|---|---|
+| **Student** | http://127.0.0.1:3001/job-tracking 登 hw01 | 我的求职列表行 Spring Insight / Morgan Stanley | 状态显示「面试中」/「待分配导师」字样 |
+| **LM** | http://127.0.0.1:3003/career/job-overview 登 525086@qq.com | 「待分配导师」Tab | 应含 hw01 / Morgan Stanley 行 |
+| **Mentor** | http://127.0.0.1:3002/job-overview 登 daoshi58 | 学员求职总览 | **不应**含 hw01 / Morgan Stanley 行（mentor 没被分配） |
+| **Assistant** | http://127.0.0.1:3004/career/job-overview 登 zhujiao58 | 学员求职总览-我管理学员 | 应含 hw01 / Morgan Stanley 行，导师列显示 "-" 或「待分配」|
+| **Admin** | http://127.0.0.1:3005/career/job-overview 登 admin | 「待分配导师」Tab | 应含 hw01 / Morgan Stanley 第一行（按申请时间排序） |
+
+#### A0 实测勾选
+
+- ☐ DB 快照符合预期
+- ☐ Student 端 baseline OK
+- ☐ LM 端 baseline OK
+- ☐ Mentor 端 baseline OK（验证 mentor 不该看见）
+- ☐ Assistant 端 baseline OK
+- ☐ Admin 端 baseline OK
+
+**5 端全过才进 A1**。如有端不符（如 mentor 已能看到 5221），说明 fixture 被污染，回 §1.4 重置 coaching 5221。
+
+---
+
+### Stage A1 — [LM] 给 coaching 5221 分配 mentor=daoshi58
+
+**驱动端**：Lead-mentor / `525086@qq.com` / `admin123`  
+**估时**：5 min  
+**状态变化**：
+- DB: `osg_coaching.mentor_ids` NULL → `12866` (daoshi58 user_id)
+- DB: `osg_coaching.status` pending → assigned
+- 业务态：待分配导师 → 已分配
+
+#### A1.1 Action — LM 端分配
+
+| # | 操作 | 预期 |
+|---|---|---|
+| 1 | LM tab 切到 `/career/job-overview` | URL 仍是该路径 |
+| 2 | Tab 切「待分配导师 2」 | 列表含 hw01 / Morgan / second 行 |
+| 3 | 点该行「分配导师」 | 分配 mentor 弹窗打开（多选下拉 + 可搜索）|
+| 4 | 下拉搜「daoshi58」→ 勾选 | 已选 1 位，确认按钮亮起 |
+| 5 | 点「确认分配」 | toast `分配成功`，弹窗关闭 |
+| 6 | 切「我管理的学员」Tab | hw01 / Morgan 行出现，导师列显示「daoshi58」|
+
+#### A1.2 DB 验证
+
+```powershell
+& $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' -e "SELECT coaching_id, mentor_ids, status FROM osg_coaching WHERE coaching_id=5221;"
+```
+**预期**：mentor_ids=`12866`, status=`assigned`
+
+#### A1.3 跨端验证（关键 — 5 端必须全过）
+
+| 端 | 切 tab + 刷新 | 验证点 |
+|---|---|---|
+| **Student** | `/job-tracking` 列表 Spring Insight / Morgan 行 | 导师字段从「-」变为「daoshi58」；状态显示「已分配导师」/「面试中」|
+| **LM** | `/career/job-overview` 我管理 Tab | hw01 / Morgan 行导师 = daoshi58；「待分配」Tab 不再有该条 |
+| **Mentor** (daoshi58) | `/job-overview` | **新增** hw01 / Morgan / second 行；导师徽标数 +1 |
+| **Assistant** (zhujiao58) | `/career/job-overview` | hw01 / Morgan 行导师列从「-」变为「daoshi58」|
+| **Admin** | `/career/job-overview` 待分配 Tab | hw01 / Morgan 不再出现；切「全部学员」Tab 应能找到，导师=daoshi58 |
+
+#### A1 实测勾选
+
+- ☐ LM 端 Action 成功
+- ☐ DB 状态变化符合
+- ☐ Student 端跨端验证 Pass
+- ☐ LM 端跨端验证 Pass（待分配 Tab 不再含该条）
+- ☐ Mentor 端跨端验证 Pass（新增可见）
+- ☐ Assistant 端跨端验证 Pass
+- ☐ Admin 端跨端验证 Pass
+
+---
+
+### Stage A2 — [Mentor] 安排面试时间（如需调整 interview_time）
+
+**驱动端**：Mentor / `daoshi58@qq.com`  
+**估时**：3 min  
+**状态变化**：DB `osg_coaching.interview_time` 已有值（baseline 2026-05-16 10:00），mentor 端可能可调整。**如需求文档未明确 mentor 端调整入口，此 Stage 跳过**，直接进 A3。
+
+#### A2 实测勾选
+
+- ☐ 跳过（需求未提供调整入口）/  ☐ 调整成功跨端验证
+
+---
+
+### Stage A3 — [Mentor] 上报课消（coaching 5221 - first 课时）
+
+**驱动端**：Mentor / `daoshi58@qq.com`  
+**估时**：8 min  
+**状态变化**：
+- DB: 新增 `osg_class_record` 行 (student_id=25112, mentor_id=12866, reference_type=`job_coaching`, reference_id=5221, status=pending)
+- 业务态：无课消 → 已上报课消（待审）
+
+#### A3.1 Action — mentor 上报
+
+| # | 操作 | 预期 |
+|---|---|---|
+| 1 | Mentor tab → `/courses` 课程记录 | 默认 Tab「我的申报」加载 |
+| 2 | 右上「+ 上报课程记录」点击 | `ClassReportFlowModal` 打开（单屏滚动版，section 卡片化）|
+| 3 | 学员下拉 → 选「hw01 (25112)」 | 学员选中，关联申请下拉加载 |
+| 4 | 课程类型 = 岗位辅导 | radio 选中 |
+| 5 | 关联类型 = 求职辅导申请 / 关联申请下拉 | 应出现 coaching 5221 选项（second round / Morgan Stanley / 5/16 10:00 / assigned）|
+| 6 | 选 coaching 5221 | 关联申请已选 |
+| 7 | 上课日期 = today / 课时 = 1 / 状态 = 正常上课 / 反馈摘要 = `手测 A3 课消反馈` / 评分 = 8 | 字段已填，「提 交」按钮亮起 |
+| 8 | 点「提 交」 | toast `上报成功`，弹窗关闭 |
+| 9 | 列表刷新 → 新行 status=待审核 出现 | 行可见 |
+| 10 | **记下 record_id**（看行内 CR-XXX 或行末 ID） | record_id = **___________** |
+
+#### A3.2 DB 验证
+
+```powershell
+& $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' -e @"
+SELECT record_id, mentor_id, student_id, reference_type, reference_id, course_type, class_date, status, feedback_summary
+  FROM osg_class_record
+  WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221
+  ORDER BY record_id DESC LIMIT 1;
+"@
+```
+
+**预期**：1 行，reference_type=`job_coaching`, reference_id=5221, status=`pending`, feedback_summary=`手测 A3 课消反馈`
+
+#### A3.3 跨端验证
+
+| 端 | 操作 | 预期 |
+|---|---|---|
+| **Student** | `/courses` 学生课程记录 | 列表新增该课消行，status=「待审核」 |
+| **LM** (yanyabanzhuren) | `/teaching/class-records`（如有） | 列表可见该课消（hw01 学生） |
+| **Mentor** (daoshi58) | `/courses` Tab「待审核 1」 | 徽标数 +1，列表含该行 |
+| **Assistant** (zhujiao58) | `/class-records` 助教课程记录 | 「我管理的学员」Tab 应可见该课消 |
+| **Admin** | `/teaching/class-records` + dashboard | dashboard 「待审课时」+1，课程记录 Tab「待审核」含该行 |
+
+#### A3 实测勾选
+
+- ☐ Mentor 上报 Action 成功
+- ☐ DB 状态正确
+- ☐ Student 端验证 Pass
+- ☐ LM 端验证 Pass
+- ☐ Mentor 自端「待审核」Tab Pass
+- ☐ Assistant 端验证 Pass
+- ☐ Admin 端 dashboard 待审 +1 Pass
+- ☐ Admin 端课程记录列表 Pass
+
+---
+
+### Stage A4 — [Admin] 审核通过 A3 课消
+
+**驱动端**：Admin / `admin` / `admin123`  
+**估时**：5 min  
+**状态变化**：
+- DB: 该 `osg_class_record.status` pending → approved
+- 业务态：待审核 → 已通过
+
+#### A4.1 Action — admin 审核
+
+| # | 操作 | 预期 |
+|---|---|---|
+| 1 | Admin tab → 左导航「教学中心 → 课程记录」 | URL `/teaching/class-records` |
+| 2 | 顶部 Tab「待审核」 | A3 那条课消可见 |
+| 3 | 点行末「审核」/「通过」 | 审核操作弹窗或下拉 |
+| 4 | 选「通过」（如需备注填「手测 A4 通过」）→ 确认 | toast `审核成功`，行状态变「已通过」|
+
+#### A4.2 DB 验证
+
+```powershell
+& $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' -e "SELECT record_id, status, review_remark FROM osg_class_record WHERE record_id=__A3.1.10__;"
+```
+**预期**：status=`approved`
+
+#### A4.3 跨端验证
+
+| 端 | 操作 | 预期 |
+|---|---|---|
+| **Student** | `/courses` 课程记录 | 该课消行 status=「已通过」，反馈摘要可见 |
+| **LM** | 课程记录页 | status=「已通过」 |
+| **Mentor** | `/courses` Tab「已通过」 | A3 那条迁移到「已通过」Tab；学员求职总览-hw01 行「已上报课消数」+1 |
+| **Assistant** | 课程记录页 | status=「已通过」 |
+| **Admin** | dashboard | 「待审课时」-1 |
+
+#### A4 实测勾选
+
+- ☐ Admin Action 成功
+- ☐ DB status=approved
+- ☐ Student 端 status 变更 Pass
+- ☐ LM 端 status 变更 Pass
+- ☐ Mentor 端 Tab 迁移 + 课消数 +1 Pass
+- ☐ Assistant 端 status 变更 Pass
+- ☐ Admin dashboard 待审 -1 Pass
+
+---
+
+### Stage A5 — [Mentor] 再上报一条课消（为驳回流程铺垫）
+
+**估时**：4 min  
+按 A3 流程**再上报 1 条** coaching 5221 课消（反馈摘要写「手测 A5 课消反馈（备驳回）」），快速完成。
+
+跨端验证：参考 A3 验 5 端。
+
+#### A5 实测勾选
+
+- ☐ 上报 Action 成功（新 record_id = **___________**）
+- ☐ 5 端各端 pending 状态可见
+
+---
+
+### Stage A6 — [Admin] 驳回 A5 课消
+
+**驱动端**：Admin  
+**估时**：4 min  
+**状态变化**：DB A5 record.status pending → rejected
+
+#### A6.1 Action
+
+| # | 操作 | 预期 |
+|---|---|---|
+| 1 | Admin 课程记录 Tab「待审核」 → A5 行 | 可见 |
+| 2 | 点行末「审核」/「驳回」 | 驳回弹窗 |
+| 3 | 驳回原因 = `时长信息错误（手测_A6）` → 确认 | toast `驳回成功` |
+
+#### A6.2 跨端验证
+
+| 端 | 操作 | 预期 |
+|---|---|---|
+| **Student** | 课程记录列表 | A5 课消 status=「已驳回」，反馈摘要含驳回原因 |
+| **Mentor** | `/courses` Tab「已驳回」 | A5 课消行可见，操作=「查看原因」按钮 |
+| **Admin** | dashboard 待审 | -1 |
+| **LM** / **Assistant** | 课程记录页 | A5 status=「已驳回」 |
+
+#### A6 实测勾选
+
+- ☐ Admin 驳回 Action 成功
+- ☐ Student 端 Pass
+- ☐ Mentor 端「已驳回」Tab Pass
+- ☐ LM/Asst 端 Pass
+- ☐ Admin 端 Pass
+
+---
+
+### Stage A7 — [Mentor] 重提交（🔴 FIX-3 关键验证）
+
+**驱动端**：Mentor  
+**估时**：5 min  
+**状态变化**：新增 `osg_class_record` 行，prefilled from A5 record，status=pending
+
+#### A7.1 Action
+
+| # | 操作 | 预期 |
+|---|---|---|
+| 1 | Mentor `/courses` Tab「已驳回」→ A5 课消行 | 操作列「查看原因」 |
+| 2 | 点「查看原因」 | 驳回原因 modal 弹出，含「关闭 / 重新提交」按钮 |
+| 3 | **🔴 关键**：点「重新提交」 | **shared `ClassReportFlowModal` 弹出**（标题「上报课程记录」，5 个 section 卡片）<br>**不应**出现旧 inline confirm modal（标题「确认课程并填写反馈」，含 `#confirm-class-type` 等 ID） |
+| 4 | 弹窗 prefilled 字段验证 | 学员=hw01 / 关联类型=求职辅导申请 / 关联申请=coaching 5221 / 反馈/评分等保留 |
+| 5 | 修改时长 1 → 1.5 / 修改反馈摘要 = `手测 A7 重提交` | 字段值更新 |
+| 6 | 点「提 交」 | toast `上报成功`，**无 400 错误**（修复前裸 POST 缺 referenceType 触发 400） |
+
+#### A7.2 DB 验证
+
+```powershell
+& $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' -e @"
+SELECT record_id, status, duration_hours, reference_type, reference_id, feedback_summary
+  FROM osg_class_record
+  WHERE student_id=25112 AND mentor_id=12866 AND feedback_summary LIKE '%A7 重提交%'
+  ORDER BY record_id DESC LIMIT 1;
+"@
+```
+**预期**：新行 status=`pending`, duration_hours=1.5, reference_type=`job_coaching`, reference_id=5221
+
+#### A7.3 跨端验证
+
+| 端 | 验证点 |
+|---|---|
+| **Student** | 课程记录列表新增 status=「待审核」的 A7 行 |
+| **Mentor** | `/courses` Tab「待审核」+1，A7 行可见 |
+| **Admin** | dashboard 待审课时 +1 |
+| LM/Asst | 同 student |
+
+#### A7 实测勾选 — 🔴 FIX-3 关键
+
+- ☐ 点「重新提交」打开 **shared ClassReportFlowModal**（非 inline confirm modal）
+- ☐ Prefilled 字段正确
+- ☐ 提交 200 + 无 400 错误
+- ☐ DB 新行 reference_type/reference_id 正确
+- ☐ Student 端可见
+- ☐ Mentor 端「待审核」+1
+- ☐ Admin 端 dashboard +1
+- ☐ LM / Asst 端可见
+
+---
+
+## §4 Flow B — 模拟应聘申请全生命周期
+
+**实体追踪**：DB 直插一条 mock_practice 给 hw01（模拟「student 申请 mock interview」状态），然后跑完状态机。
+
+---
+
+### Stage B0 — 初始数据 fixture
+
+**驱动**：DB 直插（模拟 student 已提交申请，LM 已排课）  
+**估时**：2 min  
+**状态变化**：osg_mock_practice 新增 1 行 status=scheduled
+
+#### B0.1 Action — DB 插入
+
+```powershell
 & $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' --default-character-set=utf8mb4 -e @"
 INSERT INTO osg_mock_practice
   (student_id, student_name, practice_type, request_content, status,
    mentor_ids, mentor_names, scheduled_at, submitted_at, del_flag)
 VALUES
-  (25112, 'hw01', 'mock_interview', '手测 mock interview', 'scheduled',
+  (25112, 'hw01', 'mock_interview', '手测 B-Flow mock practice', 'scheduled',
    '12866', 'daoshi58', '2026-05-21 10:00:00', NOW(), '0');
 
 SELECT practice_id, student_id, mentor_ids, scheduled_at, status
   FROM osg_mock_practice
-  WHERE student_id=25112 AND request_content='手测 mock interview';
+  WHERE request_content='手测 B-Flow mock practice';
 "@
 ```
 
-#### 预期
+**预期**：返回新行 practice_id（5177 或新分配），scheduled_at=`2026-05-21 10:00:00`，status=`scheduled`，mentor_ids=`12866`。
+**记下 practice_id** = **___________**
 
-返回 1 行：practice_id 是新分配（5177 或类似），student_id=25112，mentor_ids='12866'，scheduled_at='2026-05-21 10:00:00'，status='scheduled'。
+#### B0.2 跨端 baseline 验证（5 端必查）
 
-**记下 practice_id**，后续 TC 会用到：practice_id = **___________**
+| 端 | URL/操作 | 预期 |
+|---|---|---|
+| **Student** | `/mock-practice` | 「我的模拟应聘记录」列表新增「手测 B-Flow mock practice」行，导师=daoshi58，状态=已分配 |
+| **LM** | `/career/mock-practice` | 「我管理的学员」Tab 含该行 |
+| **Mentor** (daoshi58) | `/mock-practice` | 列表含 hw01 行（mentor_ids 含 12866）— **🔴 FIX-1 验证点：列表非空** |
+| **Assistant** (zhujiao58) | `/career/mock-practice` | 「我管理的学员」Tab 含该行 |
+| **Admin** | `/career/mock-practice` | 全部记录列表含该行 |
 
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
+#### B0 实测勾选
+
+- ☐ DB 插入成功
+- ☐ Student 端 baseline Pass
+- ☐ LM 端 baseline Pass
+- ☐ **Mentor 端 baseline Pass（FIX-1 验证）**
+- ☐ Assistant 端 baseline Pass
+- ☐ Admin 端 baseline Pass
 
 ---
 
-### TC-B2 学生端「模拟应聘」详情显示预约时间 — 🔴 FIX-2 验证
+### Stage B1 — [Student] 验证排课时间显示（🔴 FIX-2 关键验证）
 
-**估时**：3 min  
-**端**：Student / 3001  
-**账号**：`hwyellow222@126.com`  
-**密码**：`admin123`
+**驱动端**：Student  
+**估时**：3 min
 
-#### 登录步骤
-如 TC-A1 tab 还在则切到该 tab；否则按 TC-A1 §登录步骤重新登录。
-
-#### 测试步骤
+#### B1.1 Action — Student 查看详情
 
 | # | 操作 | 预期 |
 |---|---|---|
-| 1 | 左导航点「模拟应聘 Mock Practice」 | URL 跳 `/mock-practice` |
-| 2 | 顶部 3 个发起卡片：「模拟面试 / 人际关系测试 / 期中考试」可见 | 「我的模拟应聘记录」标题下有列表 |
-| 3 | 列表含 B1 插入的「手测 mock interview」行 | 类型=`模拟面试` / 申请时间=B1 提交时刻 / 导师=`daoshi58` / 已上课时=`-` / 操作列「查看申请」按钮 |
-| 4 | 点该行「查看申请」 | 详情弹窗打开（OverlaySurfaceModal） |
-| 5 | **关键断言**：弹窗内「预约时间」字段值 | 显示 **`2026-05-21 10:00`**（**非「待安排」**） |
-| 6 | 关闭弹窗 → 列表保留 | 列表不变 |
+| 1 | Student tab → `/mock-practice` → 列表找到 B0 那行 | 行可见 |
+| 2 | 点「查看申请」 | 详情弹窗打开 |
+| 3 | **🔴 关键**：弹窗内「预约时间」字段值 | 显示 **`2026-05-21 10:00`**（修复前永远显示「待安排」）|
+| 4 | 其它字段 | 学员=hw01 / 类型=模拟面试 / 导师=daoshi58 / 申请内容=手测 B-Flow mock practice |
+| 5 | 关闭弹窗 | modal 干净关闭 |
 
-**🔴 FIX-2 验收**：第 5 步预约时间必须是真实值，不能是「待安排」。修复前因 `StudentMockPracticeServiceImpl.projectPracticeRecords` 漏 put `scheduledAt`，前端总是兜底显示「待安排」。
+#### B1 实测勾选 — 🔴 FIX-2 关键
 
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
-
-#### 清理 / 切换准备
-保留 student tab。
+- ☐ 预约时间显示真实值 `2026-05-21 10:00`（非「待安排」）
 
 ---
 
-### TC-B3 导师端「模拟应聘管理」列表 — 🔴 FIX-1 验证
+### Stage B2 — [Mentor] 模拟应聘列表 + 操作列（🔴 FIX-1 验证）
 
+**驱动端**：Mentor  
+**估时**：3 min
+
+#### B2.1 Action — Mentor 查看列表
+
+| # | 操作 | 预期 |
+|---|---|---|
+| 1 | Mentor tab → `/mock-practice` | 列表加载 |
+| 2 | 顶部筛选区 | 4 个筛选（公司/面试阶段/面试时间/是否上报课消），**无统计卡片** |
+| 3 | **🔴 关键**：列表非空 | 至少 4 行：B0 的 hw01 一行 + xuesheng58 三行（practice 5158/5159/5160） |
+| 4 | hw01 行操作列 | **只有「上报课消」蓝色 link**（**无「确认」绿色 button**） |
+
+#### B2 实测勾选 — 🔴 FIX-1 关键
+
+- ☐ 列表非空（4+ 行）
+- ☐ 操作列无确认按钮
+
+---
+
+### Stage B3 — [Mentor] 上报 mock_practice 课消
+
+**驱动端**：Mentor  
+**估时**：8 min  
+**状态变化**：新增 `osg_class_record` 行（reference_type=mock_interview, reference_id=B0 practice_id, status=pending）
+
+#### B3.1 Action — mentor 从 mock-practice 入口上报
+
+| # | 操作 | 预期 |
+|---|---|---|
+| 1 | Mentor `/mock-practice` → hw01 行点「上报课消」 | `ClassReportFlowModal` 打开，prefilled 学员=hw01 + 关联类型=模拟面试 + 关联申请=B0 practice |
+| 2 | 课程类型 → 选「模拟面试」radio | radio 选中 |
+| 3 | 上课日期 = today / 课时 = 1 / 状态 = 正常上课 | 字段已填 |
+| 4 | 反馈表单（模拟面试 feedback） | 按 modal 引导填关键字段 |
+| 5 | 反馈摘要 = `手测 B3 mock 课消` / 评分 = 7 | 填入 |
+| 6 | 点「提 交」 | toast `上报成功` |
+| 7 | 记 record_id = **___________** | |
+
+#### B3.2 DB 验证
+
+```powershell
+& $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' -e @"
+SELECT record_id, mentor_id, student_id, reference_type, reference_id, course_type, status
+  FROM osg_class_record
+  WHERE student_id=25112 AND feedback_summary LIKE '%B3 mock%'
+  ORDER BY record_id DESC LIMIT 1;
+"@
+```
+**预期**：reference_type=`mock_interview`, reference_id=B0 practice_id, course_type=`mock_interview`, status=`pending`
+
+#### B3.3 跨端验证
+
+| 端 | 验证点 |
+|---|---|
+| **Student** | `/mock-practice` B0 那行「已上报课消数」从 0 → 1；`/courses` 列表新增该课消行 status=待审核 |
+| **Mentor** | `/courses` 待审核 +1；`/mock-practice` B0 行「已上报课消数」+1 |
+| **LM** | 课程记录 + 模拟应聘管理两处都能看到 |
+| **Assistant** | 同上 |
+| **Admin** | dashboard 待审 +1 |
+
+#### B3 实测勾选
+
+- ☐ Mentor 上报 Action 成功
+- ☐ DB reference_type/reference_id 正确
+- ☐ Student 端两处（模拟应聘 + 课程记录）都更新
+- ☐ Mentor 端两处更新
+- ☐ LM 端验证 Pass
+- ☐ Assistant 端验证 Pass
+- ☐ Admin dashboard Pass
+
+---
+
+### Stage B4 — [Admin] 审核通过 B3 课消
+
+**驱动端**：Admin  
 **估时**：4 min  
-**端**：Mentor / 3002  
-**账号**：`daoshi58@qq.com`  
-**密码**：`admin123`
+**状态变化**：B3 record.status pending → approved
 
-#### 登录步骤
-如 TC-A4 tab 还在则切到该 tab；否则按 TC-A4 §登录步骤重新登录。
+#### B4.1 Action
 
-#### 测试步骤
+参照 A4 流程：Admin → 课程记录 → 待审核 → B3 那条 → 通过
 
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航「模拟应聘管理 Mock Practice」 | URL 跳 `/mock-practice` |
-| 2 | 顶部筛选区 | 4 个筛选项：公司 / 面试阶段 / 面试时间 / 是否上报课消（**无任何统计卡片**） |
-| 3 | **关键断言**：列表至少 4 行 | xuesheng58 三条（practice 5158/5159/5160）+ hw01 一条（B1 新插入） |
-| 4 | hw01 行内容 | 学生 ID `25112` / 类型 `模拟面试` / 分配时间=B1 时间戳 / 已上报课消数 `0` |
-| 5 | **关键断言**：hw01 行操作列 | **只有「上报课消」蓝色 link 按钮**（无「确认」绿色 button） |
-| 6 | 点 hw01 行「上报课消」 | `ClassReportFlowModal` 弹出 — section 卡片化（C8 视觉打磨）|
-| 7 | 弹窗 prefilled 字段 | 学员=hw01 / 课程类型 radio 默认岗位辅导（如未 prefilled mock_interview 是已知 UX 改进点）/ 关联类型=模拟面试 prefilled / 关联申请=`模拟面试 / [B1 时间] / scheduled` |
-| 8 | 关闭弹窗 → 不提交 | 弹窗干净关闭 |
+#### B4.2 跨端验证（5 端必查）
 
-**🔴 FIX-1 验收**：
-- 第 3 步：daoshi58 必须看到 mentor_ids 含 user_id 12866 的全部记录。修复前 service 调错 mapper + PageHelper 先分页再 Java filter，返回 0 条。
-- 第 5 步：操作列**无确认按钮**。修复前有 `<a-button v-if="status==='new'">确认</a-button>` 但 normalizeMentorVisibleStatus 永远不输出 'new'，按钮永远不显示——按需求 §2.3 已删按钮 + confirmMock + .btn-confirm css。
+| 端 | 预期 |
+|---|---|
+| **Student** | 模拟应聘 + 课程记录两处状态更新 |
+| **Mentor** | Tab 迁移到「已通过」/ mock-practice 列表「已上报课消数」依然 1（不增不减） |
+| **LM** / **Assistant** | 状态更新 |
+| **Admin** | dashboard -1 |
 
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
+#### B4 实测勾选
 
-#### 清理 / 切换准备
-保留 mentor tab。
+- ☐ Admin Action 成功
+- ☐ DB approved
+- ☐ Student/Mentor/LM/Asst/Admin 5 端验证 Pass
 
 ---
 
-### TC-B4 导师端「课程记录」上报课消完整流程
+### Stage B5 — [Admin → Mentor] 驳回 + 重提交（🔴 FIX-3 关键，mock_practice 路径）
 
-**估时**：5 min  
-**端**：Mentor / 3002  
-**账号**：`daoshi58@qq.com`  
-**密码**：`admin123`
+**估时**：8 min  
+按 A5+A6+A7 同模式：
 
-#### 登录步骤
-保持 TC-B3 mentor tab，无需重登。
+1. **B5.1 mentor 再上报 1 条 mock_practice 课消**（反馈摘要 `手测 B5 课消（备驳回）`）
+2. **B5.2 admin 驳回该条**（驳回原因 `手测_B5 驳回`）
+3. **B5.3 mentor 走「重新提交」→ shared ClassReportFlowModal 弹出 → 修改 → 提交**
 
-#### 测试步骤
+#### B5 实测勾选 — 🔴 FIX-3 mock_practice path
 
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航「课程记录 Class Records」 → 切 Tab「我管理的学员」 | 显示 8 条左右历史课消 |
-| 2 | 右上方点「+ 上报课程记录」 | `ClassReportFlowModal` 打开 — 单屏滚动版（C3 改造）、5 个 section 卡片化、modal 圆角 12px + 多层外阴影（C8） |
-| 3 | 「学员」下拉框点开 | **下拉应包含 hw01(25112) + xuesheng58(38849) + 其他 daoshi58 管理的学员** |
-| 4 | 选学员 = hw01 | 学员框显示 `hw01`，关联申请下拉自动加载 |
-| 5 | 填字段（自上而下）：<br>- 学员：hw01<br>- 上课日期：today<br>- 课时时长：1<br>- 学员状态：正常上课<br>- 课程类型：模拟面试<br>- 关联类型：模拟面试<br>- 关联申请：选 B1 插入的 practice<br>- 反馈摘要：「手测课消反馈 B4」<br>- 评分：8 | 各字段填入后，「提交」按钮亮起 |
-| 6 | 点「提 交」 | toast `上报成功`，弹窗关闭 |
-| 7 | DB 验证 | PowerShell 跑：<br>`SELECT record_id, mentor_id, reference_type, reference_id, course_type, status FROM osg_class_record WHERE student_id=25112 AND mentor_id=12866 ORDER BY record_id DESC LIMIT 1;`<br>**预期**：返回最新行，reference_type=`mock_interview`，reference_id=B1 practice_id，course_type=`mock_interview`，status=`pending`（待审核） |
-| 8 | 课程记录列表 Tab「我的申报」刷新（或 F5） | 新课消行 status=`待审核` 出现 |
-| 9 | 记下新 record_id | record_id = **___________**（B5/B6 要用）|
-
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
-
-#### 清理 / 切换准备
-保留 mentor tab。
-
----
-
-### TC-B5 admin 端审核课消 + student 端看反馈
-
-**估时**：4 min  
-**前置**：TC-B4 已产生 1 条 status=pending 的课消。
-
-#### Step 5.1 admin 审核通过
-
-**端**：Admin / 3005 | 账号 `admin` | 密码 `admin123`
-
-切到 TC-A5 admin tab，或按 TC-A5 §登录步骤重新登录。
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航「教学中心 TEACHING → 课程记录」 | URL 跳 `/teaching/class-records` |
-| 2 | 顶部 Tab 切「待审核」 | 看到 TC-B4 产生的新课消行（record_id 同 B4 §9） |
-| 3 | 点该行「审核」/「通过」操作 | 审核弹窗打开 |
-| 4 | 选「通过」/ 填备注（可空）→ 确认 | toast `审核成功`，行 status 改为 `已通过` |
-| 5 | DB 验证 | `SELECT status FROM osg_class_record WHERE record_id=__(B4 §9)__;` 返回 `approved` |
-
-#### Step 5.2 student 看反馈
-
-**端**：Student / 3001 | 账号 `hwyellow222@126.com` | 密码 `admin123`
-
-切到 TC-A1 student tab。
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航「课程记录 Class Records」 | URL 跳 `/courses` |
-| 2 | 列表含 B4 新课消行 | status=`已通过` / 含反馈摘要「手测课消反馈 B4」 |
-| 3 | 切「模拟应聘 Mock Practice」 | 列表 B1 那条「手测 mock interview」行 |
-| 4 | 该行字段 | 已上课时=`1` / 已上报课消数=`1`（或显示 1 条课消明细）|
-
-**实测结果**（Step 5.1 + 5.2 都过才算 Pass）：☐ Pass / ☐ Fail（fail 记现象：________________）
-
-#### 清理 / 切换准备
-保留所有 tab。
-
----
-
-### TC-B6 驳回后重提交走 ClassReportFlowModal — 🔴 FIX-3 验证
-
-**估时**：5 min  
-**前置**：TC-B5 完成（B4 那条已 approved，需要先驳回它）。
-
-#### Step 6.1 admin 驳回 B4 的课消
-
-**端**：Admin / 3005 | 账号 `admin` | 密码 `admin123`
-
-> ⚠️ 已 approved 的不能直接驳回。建议 TC-B6 跑前**重新走一次 TC-B4**（再插一条新课消 status=pending），然后 admin 在 §6.1 把这条新课消「驳回」。
->
-> 或直接 DB 模拟驳回（更快）：
->
-> ```sql
-> UPDATE osg_class_record
-> SET status='rejected', review_remark='时长信息错误（手测_B6）',
->     update_time=NOW()
-> WHERE record_id=__(B4 §9)__;
-> ```
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | admin 课程记录 → Tab「已驳回」 | 出现 B4 那条课消 |
-| 2 | DB 验证 status='rejected' | OK |
-
-#### Step 6.2 mentor 端「重新提交」
-
-**端**：Mentor / 3002 | 账号 `daoshi58@qq.com` | 密码 `admin123`
-
-切到 TC-A4/B3/B4 mentor tab。
-
-| # | 操作 | 预期 |
-|---|---|---|
-| 1 | 左导航「课程记录 Class Records」 | URL 跳 `/courses` |
-| 2 | 顶部 Tab 切「已驳回」 | B4 课消行出现，操作列「查看原因」按钮 |
-| 3 | 点「查看原因」 | 驳回原因 modal 弹出，内容 `时长信息错误（手测_B6）`，底部「关闭 / 重新提交」按钮 |
-| 4 | **关键断言**：点「重新提交」 | **shared `ClassReportFlowModal` 弹出**（标题「上报课程记录」，5 个 section 卡片）<br>**不应**出现旧的 inline confirm modal（标题「确认课程并填写反馈」，含 `#confirm-class-type` 自定义 select、`#confirm-feedback` textarea） |
-| 5 | 弹窗字段 prefilled | 学员=hw01 / 关联类型=模拟面试 / 关联申请=B1 practice |
-| 6 | 修改时长字段：1 → 1.5 | 字段值变化 |
-| 7 | 点「提 交」 | toast `上报成功`，**无 400 错误** |
-| 8 | DB 验证新行 | `SELECT record_id, status, duration_hours FROM osg_class_record WHERE student_id=25112 AND mentor_id=12866 ORDER BY record_id DESC LIMIT 1;` 返回 duration_hours=1.5，status=pending |
-
-**🔴 FIX-3 验收**：
-- 第 4 步：「重新提交」打开 **shared `ClassReportFlowModal`**。修复前是自定义 inline modal（HTML 含 `#confirm-class-type` `#confirm-feedback` 等 ID）。
-- 第 7 步：提交走 modal 内部 validator。修复前裸 POST `/mentor/class-records` 缺 referenceType/Id → validator 抛 400「课程类型非法」「reference 不一致」。
-
-**实测结果**：☐ Pass / ☐ Fail（fail 记现象：________________）
+- ☐ B5.1 mentor 上报 + 5 端验证
+- ☐ B5.2 admin 驳回 + 5 端验证
+- ☐ B5.3 点「重新提交」打开 **shared ClassReportFlowModal**（mock_practice prefilled）
+- ☐ B5.3 提交 200 + 无 400
+- ☐ B5.3 新 record reference_type/Id 正确 + 5 端验证
 
 ---
 
 ## §5 测试数据清理（手测完成后）
 
-跑完所有 TC 后，**如果不想保留 fixture**，清理 SQL：
+跑完所有 Stage 后，**如果不想保留 fixture**：
 
 ```powershell
 $env:MYSQL_PWD='app123456'
 $mysql = "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe"
 
 & $mysql -h 47.94.213.128 -P 23306 -u ruoyi -D 'ry-vue' --default-character-set=utf8mb4 -e @"
--- 删 B1 fixture
-DELETE FROM osg_mock_practice WHERE request_content = '手测 mock interview';
+-- 删 B0 fixture
+DELETE FROM osg_mock_practice WHERE request_content = '手测 B-Flow mock practice';
 
--- 删 B4 + B6 产生的 class_record（按反馈关键词或操作人）
+-- 删 A3/A5/A7 + B3/B5 产生的 class_record
 DELETE FROM osg_class_record
   WHERE student_id = 25112
     AND mentor_id = 12866
-    AND (feedback_summary LIKE '%手测课消%' OR review_remark LIKE '%手测_B6%');
+    AND (feedback_summary LIKE '%手测 A%' OR feedback_summary LIKE '%手测 B%');
 
--- coaching 5220 mentor_ids 是否保留 12866 由你决定：
--- (如要恢复原状) UPDATE osg_coaching SET mentor_ids='13067' WHERE coaching_id=5220;
+-- coaching 5221 恢复 baseline（如 A1 改过）
+UPDATE osg_coaching SET mentor_ids=NULL, status='pending', update_time=NOW(),
+       update_by='手测_cleanup_5221'
+  WHERE coaching_id=5221;
 
 -- 验证清理结果
-SELECT COUNT(*) AS remaining_mock FROM osg_mock_practice WHERE student_id=25112;
-SELECT COUNT(*) AS remaining_class FROM osg_class_record WHERE student_id=25112 AND mentor_id=12866;
+SELECT 'remaining class_record' AS section,
+       COUNT(*) AS cnt
+  FROM osg_class_record
+  WHERE student_id=25112 AND feedback_summary LIKE '%手测%';
+SELECT 'coaching 5221 status' AS section, status, mentor_ids
+  FROM osg_coaching WHERE coaching_id=5221;
 "@
 ```
 
@@ -633,34 +713,87 @@ SELECT COUNT(*) AS remaining_class FROM osg_class_record WHERE student_id=25112 
 
 ## §6 附录
 
-### 6.1 已修复 Bug 速查
+### 6.1 状态机总览
 
-| Bug | FIX | TC 验证点 | 关键断言 |
+#### Flow A — 求职辅导
+
+```
+[Student/admin 创建 app] → application=submitted
+        ↓
+[Student 申请辅导] → coaching=pending（待分配导师）       ← 本次 A0 起点（用 5221 模拟）
+        ↓
+[LM/admin 分配 mentor] → coaching.mentor_ids 写入 + status=assigned   ← A1
+        ↓
+[Mentor 安排面试] → coaching.interview_time 写入 / 学生看到面试时间   ← A2（如有入口）
+        ↓
+[Mentor 上报课消] → class_record=pending                  ← A3
+        ↓
+[Admin 审核] → class_record=approved / rejected           ← A4 / A6
+        ↓ (rejected)
+[Mentor 重新提交] → 新 class_record=pending                ← A7（FIX-3）
+        ↓ (approved)
+继续累积课消，最终学员 stage 推进（offer/rejected/...）
+```
+
+#### Flow B — 模拟应聘
+
+```
+[Student/admin 创建 mock_practice] → status=pending（待分配导师）
+        ↓
+[LM/admin 分配 mentor + 排课] → mentor_ids + scheduled_at 写入 + status=scheduled  ← B0 起点
+        ↓
+[Mentor 上报课消] → class_record(reference_type=mock_interview) pending           ← B3
+        ↓
+[Admin 审核] → class_record=approved / rejected                                   ← B4
+        ↓ (rejected)
+[Mentor 重新提交] → 新 class_record=pending                                       ← B5（FIX-3 mock path）
+        ↓
+完成 mock_practice.status=completed（如有完结流程）
+```
+
+### 6.2 跨端可见性矩阵
+
+> 一条 application/coaching/class_record 在 5 端的可见性规则。
+
+| 实体 | Student | LM | Mentor | Asst | Admin |
+|---|---|---|---|---|---|
+| application (该 student 的) | ✓ | ✓（如是该生 lead_mentor） | ✗（应用本身无 mentor 概念）| ✓（如是该生 assistant） | ✓ 全部 |
+| coaching pending（待分配）| ✓ | ✓（lead_mentor 匹配）| ✗ | ✓（assistant 匹配）| ✓ |
+| coaching assigned（mentor_ids 含 X） | ✓ | ✓ | ✓（X 是 mentor 才看见）| ✓ | ✓ |
+| mock_practice scheduled | ✓ | ✓ | ✓（mentor_ids 匹配）| ✓ | ✓ |
+| class_record pending（mentor=X 上报）| ✓ | ✓（学生归属）| ✓（X 自己） | ✓（学生归属）| ✓ |
+| class_record approved | ✓ | ✓ | ✓ | ✓ | ✓ |
+| class_record rejected | ✓ | ✓ | ✓（自己的）| ✓ | ✓ |
+
+### 6.3 已修复 Bug 速查
+
+| Bug | FIX | Stage 验证点 | 关键断言 |
 |---|---|---|---|
-| 1 mentor 模拟应聘列表空 | FIX-1 (commit `fdcadc79`) | TC-B3 §3, §5 | daoshi58 看到 mentor_ids 含 12866 的全部记录 + 无确认按钮 |
-| 2 排课后学生端无更新 | FIX-2 (commit `fdcadc79`) | TC-B2 §5 | 预约时间显示 `2026-05-21 10:00` 非「待安排」 |
-| 3 mentor 无法 log 课时（reject 重提交） | FIX-3 (commit `fe71c077`) | TC-B6 §4, §7 | reject 重提交走 shared `ClassReportFlowModal` + 无 400 |
-| 4 未加学生 list 的导师无法 log | placeholder | TC-B4 §3 | 学员下拉聚合 coaching/mock_practice mentor_ids |
-| A 密码弹窗误弹 | FIX-1 auth (commit `9a1fd0e0`) | 各端登录后 | admin/admin123 不再弹（前提是 password 不是 Osg@2026） |
-| Audit B - assistant 4 modal 迁移 | refactor (commit `008c43ed`) | TC-A3 §5 | assistant 跟进详情用 OverlaySurfaceModal |
-| C8 弹窗视觉打磨 | style (commit `7cfef7c7`) | TC-A4 §4, TC-B4 §2 | section 卡片化 + modal 多层外阴影 + 圆角 12px |
+| 1 mentor 模拟应聘列表空 | FIX-1 (`fdcadc79`) | B0/B2 | mentor 列表非空 + 操作列无确认按钮 |
+| 2 排课后学生端无更新 | FIX-2 (`fdcadc79`) | B1 §3 | 学生端预约时间显示真实值 |
+| 3 mentor reject 重提交失败 | FIX-3 (`fe71c077`) | A7 §3 + B5 §B5.3 | 点重新提交走 shared ClassReportFlowModal + 无 400 |
+| 4 未加学生 list 的导师无法 log | placeholder | A3 §3 + B3 §1 | 学员下拉聚合 coaching/mock_practice mentor_ids |
+| A 密码弹窗误弹 | FIX auth (`9a1fd0e0`) | §1.4 fixture | 5 账号密码 admin123 时不弹 |
+| Audit B - assistant 4 modal | refactor (`008c43ed`) | A0 asst 端 + B0 asst 端 | OverlaySurfaceModal + osg-modal-form |
+| C8 弹窗视觉打磨 | style (`7cfef7c7`) | A3/B3 mentor 上报 | section 卡片化 + 多层阴影 |
 
-### 6.2 通用排错
+### 6.4 通用排错
 
-| 现象 | 排查方向 |
+| 现象 | 排查 |
 |---|---|
-| 登录后白屏 | F12 Console 看 JS 错；Network 看 `/getInfo` 返回 |
-| 登录提示「用户不存在/密码错误」 | DB 验密码 hash（§1.4 SQL）+ 重置 |
-| 「请修改默认密码」弹窗反复弹 | DB 该账号 password 当前 hash matches "Osg@2026" → §2.5 + §1.4 重置 |
-| 表格空 / 永远 loading | F12 Network 看对应 API 状态码 / response body |
-| Modal 关不掉 | F12 → DOM 看是否多个 modal 嵌套；ESC 或强刷 |
-| 后端 500 | backend log 看 stacktrace（控制台或 `logs/backend-dev-*.log`） |
-| 5 端某端启不来 | 看 `logs/<app>-dev.log`；如 `EADDRINUSE` 清端口 |
-| Captcha 看不清 | 刷新登录页或临时禁 captcha（§2.4） |
+| 登录后白屏 | F12 Console 看 JS / Network 看 `/getInfo` |
+| 「用户不存在/密码错误」 | §1.4 验密码 hash + 重置 |
+| 「请修改默认密码」反复弹 | DB 该账号 hash matches Osg@2026 → §1.4 重置 |
+| 表格永远 loading | F12 Network 看对应 API 状态码 |
+| Modal 关不掉 | F12 → DOM 看是否多个嵌套；ESC 或强刷 |
+| backend 500 | logs/backend-dev-*.log 看 stacktrace |
+| 端口启不来 | logs/<app>-dev.log；EADDRINUSE 清端口 |
+| Captcha 看不清 | §2.3 临时禁 captcha |
 
-### 6.3 修改历史
+### 6.5 修改历史
 
 | 日期 | 修改 |
 |---|---|
-| 2026-05-15 | 首版，11 个 TC（A1~A5 + B1~B6）覆盖 5 端 + 双主线 |
-| 2026-05-15 | 完善版（v2）：每个 TC 顶部加 端口/账号/密码/登录步骤；新增 §0/1/2/5 含环境准备 + 账号矩阵 + 切换法 + Captcha + 数据清理；通用排错 + Bug 速查 |
+| 2026-05-15 | v1 首版 11 个 TC（5 端 × 2 主线） |
+| 2026-05-15 | v2 补环境/账号/切换/排错 |
+| 2026-05-15 | **v3 重构按状态机** — 每个 Stage = 1 个 Action + 多端验证清单。Flow A 7 个 Stage，Flow B 6 个 Stage，每 Stage 显式列出 5 端可见性变化。新增 §6.1 状态机图 + §6.2 跨端可见性矩阵 |
