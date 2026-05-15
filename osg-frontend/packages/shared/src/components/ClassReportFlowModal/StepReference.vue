@@ -190,6 +190,21 @@ watch(
   },
   { immediate: true },
 )
+
+// radio 用 referenceTypeFromCourse 做 fallback 显示「已选」，但 formState.referenceType 不会被 set，
+// 后端 referenceType=null + courseType=job_coaching 触发「课程类型与关联类型不一致」。
+// courseType 变化时若 referenceType 未填，自动派生填入，与 UI radio 显示对齐。
+watch(
+  () => [props.courseType, isReferenceBranch.value],
+  () => {
+    if (!isReferenceBranch.value) return
+    if (props.modelValue.referenceType) return
+    const derived = referenceTypeFromCourse.value
+    if (!derived) return
+    emit('update:modelValue', { ...props.modelValue, referenceType: derived })
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped lang="scss">

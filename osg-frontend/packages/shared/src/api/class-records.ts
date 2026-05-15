@@ -272,7 +272,15 @@ export function submitClassReport(
   payload: ClassReportPayload,
 ): Promise<{ recordId: number }> {
   const prefix = resolveClassReportEndPrefix(end)
-  return http.post<{ recordId: number }>(prefix, payload, {
+  // backend OsgClassRecord.feedbackContent 是 String（DB LONGTEXT）；
+  // ClassReportPayload 用对象便于类型化构造，在 wire 边界统一转 JSON 字符串。
+  const fc = payload.feedbackContent
+  const wirePayload = {
+    ...payload,
+    feedbackContent:
+      fc != null && typeof fc === 'object' ? JSON.stringify(fc) : fc,
+  }
+  return http.post<{ recordId: number }>(prefix, wirePayload, {
     skipErrorMessage: true,
   })
 }
