@@ -398,6 +398,8 @@ stages:
       - description: '重新提交按钮打开 shared ClassReportFlowModal（非旧 inline confirm modal）'
         page: mentor
         url: /courses
+        # clickViewRejectReason 是语义字段，spec 实现按「已驳回」行 + 操作列 "查看原因" 按钮 click
+        # （mentor /courses 表格操作列实际文案是「查看原因」/「查看详情」，非「查看驳回原因」）
         clickViewRejectReason: A5_record_id
         clickResubmit: true
         expectModalTitle: '上报课程记录'

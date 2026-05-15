@@ -476,10 +476,12 @@ test.describe('5 端 13 Stage 状态机门禁', () => {
         }
         if (item.clickViewRejectReason !== undefined) {
           const rid = ctx.vars[String(item.clickViewRejectReason)] ?? item.clickViewRejectReason
-          await targetPage.locator(`tr:has-text("${rid}"), tr:has-text("课时时长有误")`).first()
-            .locator('button:has-text("查看驳回原因"), a:has-text("查看驳回原因"), button:has-text("驳回原因")').first()
+          // mentor /courses 驳回行的操作列实际文案：「查看原因」（不是「查看驳回原因」）
+          // 选第一个含 "已驳回" 文本的行的「查看原因」按钮
+          const rejectedRow = targetPage.locator('tr:has-text("已驳回")').first()
+          await rejectedRow.locator('a:has-text("查看原因"), button:has-text("查看原因"), a:has-text("查看驳回原因"), button:has-text("查看驳回原因")').first()
             .click({ timeout: 5_000 }).catch(() => {})
-          await targetPage.waitForTimeout(500)
+          await targetPage.waitForTimeout(800)
         }
         if (item.clickResubmit) {
           await targetPage.locator('button:has-text("重新提交"), a:has-text("重新提交")').first()
