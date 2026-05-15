@@ -23,11 +23,13 @@
     "test:e2e:ui-visual": "playwright test --grep @ui-visual",
     "test:e2e:api": "playwright test --grep @api",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:gate": "E2E_MODULE=state-machine-gate playwright test state-machine-gate"
   },
   "devDependencies": {
     "@ant-design/icons-vue": "^7.0.1",
     "@playwright/test": "^1.58.2",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
@@ -35,6 +37,8 @@
     "@vue/server-renderer": "^3.5.27",
     "eslint": "^8.54.0",
     "eslint-plugin-vue": "^9.18.0",
+    "js-yaml": "^4.1.1",
+    "mysql2": "^3.22.3",
     "prettier": "^3.1.0",
     "typescript": "5.3.3",
     "vite": "^5.0.0",

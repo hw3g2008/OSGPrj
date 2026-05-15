@@ -1,0 +1,124 @@
+name: State Machine 13-Stage Gate
+
+# 5 端 13 stage 门禁。在 PR 触发；失败 block merge。
+# Evidence (DB query results + screenshots) 作为 artifact 上传 review 用。
+
+on:
+  pull_request:
+    paths:
+      - 'osg-frontend/**'
+      - 'ruoyi-admin/src/main/java/com/ruoyi/web/controller/osg/**'
+      - 'ruoyi-system/src/main/java/com/ruoyi/system/**'
+      - 'ruoyi-system/src/main/resources/mapper/system/**'
+      - 'osg-frontend/tests/e2e/state-machine-gate.e2e.spec.ts'
+      - 'osg-frontend/tests/e2e/baselines/state-machine.yaml'
+      - 'osg-frontend/tests/e2e/support/db.ts'
+      - 'osg-frontend/tests/e2e/support/gate-helpers.ts'
+  workflow_dispatch: {}
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # 数据库连接 — 走 CI secret 注入
+      GATE_DB_HOST: ${{ secrets.GATE_DB_HOST }}
+      GATE_DB_PORT: ${{ secrets.GATE_DB_PORT }}
+      GATE_DB_USER: ${{ secrets.GATE_DB_USER }}
+      GATE_DB_PASSWORD: ${{ secrets.GATE_DB_PASSWORD }}
+      GATE_DB_NAME: ${{ secrets.GATE_DB_NAME }}
+      # backend / frontend base URL — 走 CI runner 启的 service
+      BACKEND_BASE_URL: http://127.0.0.1:28080
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install frontend deps
+        working-directory: osg-frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build backend
+        run: mvn -f pom.xml -pl ruoyi-admin -am -DskipTests package -q
+
+      - name: Start backend
+        run: |
+          nohup bash bin/run-backend-dev.sh deploy/.env.dev > backend.log 2>&1 &
+          # wait UP
+          for i in {1..60}; do
+            if curl -sf http://127.0.0.1:28080/actuator/health | grep -q UP; then
+              echo "backend UP"; exit 0
+            fi
+            sleep 5
+          done
+          echo "backend failed to start"
+          tail -200 backend.log
+          exit 1
+
+      - name: Start 5 frontends
+        working-directory: osg-frontend
+        run: |
+          for pkg in student mentor lead-mentor assistant admin; do
+            port=$(case "$pkg" in
+              student) echo 3001 ;;
+              mentor) echo 3002 ;;
+              lead-mentor) echo 3003 ;;
+              assistant) echo 3004 ;;
+              admin) echo 3005 ;;
+            esac)
+            nohup pnpm --filter "@osg/$pkg" exec vite --port $port --host 127.0.0.1 > $pkg.log 2>&1 &
+          done
+          # 等所有 5 个起来
+          for port in 3001 3002 3003 3004 3005; do
+            for i in {1..30}; do
+              if curl -sf "http://127.0.0.1:$port" >/dev/null; then
+                echo "port $port up"; break
+              fi
+              sleep 2
+            done
+          done
+
+      - name: Install playwright browsers
+        working-directory: osg-frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run state-machine-gate
+        working-directory: osg-frontend
+        env:
+          E2E_MODULE: state-machine-gate
+        run: |
+          pnpm test:e2e -- state-machine-gate 2>&1 | tee gate.log
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: state-machine-gate-evidence
+          path: |
+            osg-frontend/tests/e2e/evidence/
+            osg-frontend/playwright-report/
+            osg-frontend/test-results/
+          retention-days: 14
+
+      - name: Upload backend log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: backend.log
+          retention-days: 7

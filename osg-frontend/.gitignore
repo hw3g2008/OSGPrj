@@ -18,6 +18,9 @@ pnpm-debug.log*
 
 # OS
 .DS_Store
+
+# State-machine gate evidence (CI uploads as artifact, local cleanup OK)
+tests/e2e/evidence/
 Thumbs.db
 
 # Env

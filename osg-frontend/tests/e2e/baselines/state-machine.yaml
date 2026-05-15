@@ -1,0 +1,610 @@
+# 5 端 13 Stage 状态机门禁基线 — 单一可信源
+#
+# 防糊弄设计：
+# 1. 此文件是 spec 唯一 expect 源。spec 中禁止 inline 数值/字符串期望。
+# 2. PR 改此文件需要人工 review（baseline 升级需独立 commit + 理由）。
+# 3. invariants 即使 pre/post 值都改了仍能 catch 语义错（比如 post 必须 = pre - 1）。
+# 4. dbAssert 字段是 SQL 直查，绕过任何前端 / API filter 层伪造。
+# 5. crossEndCheck 强制每个 stage 至少检查 N 个端 UI 可见性。
+
+config:
+  baseUrls:
+    student: http://127.0.0.1:3001
+    mentor: http://127.0.0.1:3002
+    leadMentor: http://127.0.0.1:3003
+    assistant: http://127.0.0.1:3004
+    admin: http://127.0.0.1:3005
+  accounts:
+    student:
+      email: hwyellow222@126.com
+      userId: 12878
+      studentId: 25112
+      name: hw01
+    mentor:
+      email: daoshi58@qq.com
+      userId: 12866
+      staffId: 98187
+      name: daoshi58
+    leadMentor:
+      email: 525086@qq.com
+      userId: 12858
+      name: yanyabanzhuren
+    assistant:
+      email: zhujiao58@qq.com
+      userId: 12867
+      name: zhujiao58
+    admin:
+      username: admin
+      password: admin123
+  passwordAll: admin123
+  fixtures:
+    coachingId: 5221
+    coachingFirstId: 5220
+    applicationId: 301
+
+# 跑测前 fixture 必须为此状态。runner 自动校验+修正。
+preFixture:
+  coaching_5221:
+    mentor_ids: null
+    mentor_name: null
+    mentor_names: null
+    status: pending
+    interview_time: '2026-05-16 10:00:00'
+  coaching_5220:
+    mentor_ids: '13067,12866'
+  mock_practice_b0:
+    # B0 stage 才会 insert，预跑前必须不存在
+    exists_with_content: '手测 B-Flow mock practice'
+    expected_count_before_b0: 0
+  class_records_hw01_5221:
+    expected_count_before_a3: 0
+
+stages:
+  # ============================================================================
+  # Stage A0: baseline snapshot
+  # ============================================================================
+  A0:
+    name: 初始状态快照
+    driverEnd: none
+    action: snapshot_only
+    pre:
+      coaching_5221_mentor_ids: null
+      coaching_5221_status: pending
+    post:
+      coaching_5221_mentor_ids: null
+      coaching_5221_status: pending
+    dbAssert:
+      query: |
+        SELECT mentor_ids, mentor_name, status FROM osg_coaching WHERE coaching_id=5221
+      expect:
+        mentor_ids: null
+        mentor_name: null
+        status: pending
+    crossEndCheck:
+      - end: student
+        url: /job-tracking
+        expectVisible:
+          - 'Spring Insight'
+          - 'Morgan Stanley'
+          - '面试中'
+        expectNotVisible:
+          - '辅导导师 daoshi58'
+      - end: leadMentor
+        url: /career/job-overview
+        expectVisible:
+          - '待分配导师 2'
+          - 'hw01'
+      - end: mentor
+        url: /job-overview
+        expectVisible:
+          - '学员求职总览 5'
+        expectNotVisibleInTable:
+          studentName: hw01
+          companyName: Morgan Stanley
+      - end: assistant
+        url: /career/job-overview
+        expectVisible:
+          - 'hw01'
+          - 'Morgan Stanley'
+      - end: admin
+        url: /career/job-overview
+        expectVisible:
+          - '待分配导师 21'
+          - 'Morgan Stanley'
+
+  # ============================================================================
+  # Stage A1: LM 分配 daoshi58 给 coaching 5221
+  # ============================================================================
+  A1:
+    name: LM 分配 mentor
+    driverEnd: leadMentor
+    action:
+      type: api
+      helper: leadMentorAssignCoachingMentor
+      args:
+        coachingId: 5221
+        mentorUserIds: [12866]
+    pre:
+      coaching_5221_mentor_ids: null
+      coaching_5221_status: pending
+      mentor_badge: 5
+      admin_pending_tab: 21
+      leadmentor_pending_tab: 2
+    post:
+      coaching_5221_mentor_ids: '12866'
+      coaching_5221_mentor_name: daoshi58
+      coaching_5221_status: assigned
+      mentor_badge: 6
+      admin_pending_tab: 20
+      leadmentor_pending_tab: 1
+    invariants:
+      - 'post.mentor_badge === pre.mentor_badge + 1'
+      - 'post.admin_pending_tab === pre.admin_pending_tab - 1'
+      - 'post.leadmentor_pending_tab === pre.leadmentor_pending_tab - 1'
+    dbAssert:
+      query: |
+        SELECT mentor_ids, mentor_name, status FROM osg_coaching WHERE coaching_id=5221
+      expect:
+        mentor_ids: '12866'
+        mentor_name: daoshi58
+        status: assigned
+    crossEndCheck:
+      - end: student
+        url: /job-tracking
+        action:
+          expandRow: 'Morgan Stanley'
+        expectVisible:
+          - '辅导导师'
+          - 'daoshi58'
+      - end: leadMentor
+        url: /career/job-overview
+        expectVisible:
+          - '待分配导师 1'
+      - end: mentor
+        url: /job-overview
+        expectVisible:
+          - '学员求职总览 6'
+          - 'Morgan Stanley'
+      - end: assistant
+        url: /career/job-overview
+        expectVisible:
+          - 'hw01'
+          - 'Morgan Stanley'
+          - 'daoshi58'
+      - end: admin
+        url: /career/job-overview
+        expectVisible:
+          - '待分配导师 20'
+        expectNotVisibleInTable:
+          studentName: hw01
+          companyName: Morgan Stanley
+
+  # ============================================================================
+  # Stage A3: Mentor 上报课消（FIX-X 关键: feedbackContent stringify）
+  # ============================================================================
+  A3:
+    name: Mentor 上报 A3 课消
+    driverEnd: mentor
+    action:
+      type: api
+      helper: mentorSubmitJobCoachingReportRaw
+      args:
+        studentId: 25112
+        referenceId: 5221
+        referenceType: job_coaching
+        courseType: job_coaching
+        classDate: today
+        durationHours: 1
+        rate: '8'
+        feedbackContentJson:
+          schemaVersion: 1
+          purpose: 'gate A3 feedback purpose'
+          concepts: 'STAR'
+          improvements: 'logic'
+          performanceLevel: great
+          narrative: 'gate A3 narrative'
+    pre:
+      class_records_hw01_5221_count: 0
+      admin_dashboard_pending_review: 14
+    post:
+      class_records_hw01_5221_count: 1
+      latest_record_status: pending
+      latest_record_reference_type: job_coaching
+      latest_record_reference_id: 5221
+      mentor_pending_tab_count: 2  # baseline 1 + 1
+      admin_dashboard_pending_review: 15
+    invariants:
+      - 'post.class_records_hw01_5221_count === pre.class_records_hw01_5221_count + 1'
+      - 'post.admin_dashboard_pending_review === pre.admin_dashboard_pending_review + 1'
+    dbAssert:
+      query: |
+        SELECT status, reference_type, reference_id FROM osg_class_record
+        WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221
+        ORDER BY record_id DESC LIMIT 1
+      expect:
+        status: pending
+        reference_type: job_coaching
+        reference_id: 5221
+    saveRecordIdAs: A3_record_id
+    crossEndCheck:
+      - end: student
+        url: /class-records
+        expectVisible:
+          - 'gate A3'
+          - '待审核'
+      - end: mentor
+        url: /courses
+        expectVisible:
+          - 'hw01'
+          - '待审核'
+      - end: admin
+        url: /teaching/class-records
+        action: { searchKeyword: hw01 }
+        expectVisible:
+          - 'daoshi58'
+          - '待审核'
+
+  # ============================================================================
+  # Stage A4: Admin 审核通过 A3
+  # ============================================================================
+  A4:
+    name: Admin 通过 A3
+    driverEnd: admin
+    action:
+      type: api
+      helper: adminApproveLatestClassRecordForCoaching
+      args:
+        coachingId: 5221
+    pre:
+      latest_record_status: pending
+    post:
+      latest_record_status: approved
+      mentor_pending_tab_count: 1   # baseline 1
+      admin_dashboard_pending_review: 14
+    invariants:
+      - 'post.admin_dashboard_pending_review === pre.admin_dashboard_pending_review - 1'
+    dbAssert:
+      query: |
+        SELECT status, reviewed_at FROM osg_class_record
+        WHERE record_id=$A3_record_id
+      expect:
+        status: approved
+        reviewed_at_not_null: true
+    crossEndCheck:
+      - end: student
+        url: /class-records
+        expectVisible:
+          - '已通过'
+      - end: mentor
+        url: /job-overview
+        action: { findRow: { studentName: hw01, companyName: Morgan Stanley } }
+        expectVisible:
+          - '已上报课消'
+          - '1'
+
+  # ============================================================================
+  # Stage A5: Mentor 上报第 2 条 课消（备驳回）
+  # ============================================================================
+  A5:
+    name: Mentor 再上报（备驳回）
+    driverEnd: mentor
+    action:
+      type: api
+      helper: mentorSubmitJobCoachingReportRaw
+      args:
+        studentId: 25112
+        referenceId: 5221
+        referenceType: job_coaching
+        courseType: job_coaching
+        classDate: today
+        durationHours: 1
+        rate: '7'
+        feedbackContentJson:
+          schemaVersion: 1
+          purpose: 'gate A5 ready-to-reject'
+          performanceLevel: great
+          narrative: 'gate A5 narrative'
+    pre:
+      class_records_hw01_5221_count: 1
+    post:
+      class_records_hw01_5221_count: 2
+      latest_record_status: pending
+    invariants:
+      - 'post.class_records_hw01_5221_count === pre.class_records_hw01_5221_count + 1'
+    dbAssert:
+      query: |
+        SELECT status FROM osg_class_record WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221 ORDER BY record_id DESC LIMIT 1
+      expect:
+        status: pending
+    saveRecordIdAs: A5_record_id
+
+  # ============================================================================
+  # Stage A6: Admin 驳回 A5
+  # ============================================================================
+  A6:
+    name: Admin 驳回 A5
+    driverEnd: admin
+    action:
+      type: api
+      helper: adminRejectClassRecord  # 新建
+      args:
+        recordIdVar: A5_record_id
+        rejectReason: '课时时长有误'
+        rejectRemark: 'gate A6 reject'
+    pre:
+      latest_record_status: pending
+    post:
+      latest_record_status: rejected
+    dbAssert:
+      query: |
+        SELECT status, review_remark FROM osg_class_record WHERE record_id=$A5_record_id
+      expect:
+        status: rejected
+        review_remark_contains: '课时时长有误'
+
+  # ============================================================================
+  # Stage A7: Mentor 重提交（FIX-3 关键 - job_coaching path）
+  # ============================================================================
+  A7:
+    name: Mentor 重提交 (FIX-3)
+    driverEnd: mentor
+    action:
+      type: api
+      helper: mentorSubmitJobCoachingReportRaw
+      args:
+        studentId: 25112
+        referenceId: 5221
+        referenceType: job_coaching
+        courseType: job_coaching
+        classDate: today
+        durationHours: 1
+        rate: '8'
+        feedbackContentJson:
+          schemaVersion: 1
+          purpose: 'gate A7 resubmit FIX-3'
+          performanceLevel: great
+          narrative: 'gate A7 narrative'
+    pre:
+      class_records_hw01_5221_count: 2
+    post:
+      class_records_hw01_5221_count: 3
+      latest_record_status: pending
+    fix3Assert:
+      - 'POST /api/mentor/class-records 返回 200'
+      - '不出现 "JSON parse error" 字样'
+      - '不出现 "课程类型与关联类型不一致" 字样'
+    invariants:
+      - 'post.class_records_hw01_5221_count === pre.class_records_hw01_5221_count + 1'
+    dbAssert:
+      query: |
+        SELECT status, reference_type FROM osg_class_record WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221 ORDER BY record_id DESC LIMIT 1
+      expect:
+        status: pending
+        reference_type: job_coaching
+    saveRecordIdAs: A7_record_id
+    uiAssert:
+      - description: '重新提交按钮打开 shared ClassReportFlowModal（非旧 inline confirm modal）'
+        page: mentor
+        url: /courses
+        clickViewRejectReason: A5_record_id
+        clickResubmit: true
+        expectModalTitle: '上报课程记录'
+        expectNotModalSelector: '#confirm-class-type'  # 旧 modal 特征 ID
+
+  # ============================================================================
+  # Flow B
+  # ============================================================================
+
+  # ============================================================================
+  # Stage B0: DB 插入 mock_practice fixture
+  # ============================================================================
+  B0:
+    name: 插入 B0 mock_practice
+    driverEnd: db
+    action:
+      type: sql
+      sql: |
+        INSERT INTO osg_mock_practice
+          (student_id, student_name, practice_type, request_content, status,
+           mentor_ids, mentor_names, scheduled_at, submitted_at, del_flag)
+        VALUES (25112, 'hw01', 'mock_interview', 'gate B-Flow mock practice',
+                'scheduled', '12866', 'daoshi58', '2026-05-21 10:00:00', NOW(), '0')
+    pre:
+      mock_practice_count_for_hw01_b: 0
+    post:
+      mock_practice_count_for_hw01_b: 1
+      mock_practice_scheduled_at: '2026-05-21 10:00:00'
+    dbAssert:
+      query: |
+        SELECT practice_id, status, mentor_ids, scheduled_at FROM osg_mock_practice
+        WHERE request_content='gate B-Flow mock practice'
+      expect:
+        status: scheduled
+        mentor_ids: '12866'
+        scheduled_at_iso: '2026-05-21T02:00:00.000Z'   # UTC for 10:00 +08:00
+    savePracticeIdAs: B0_practice_id
+    crossEndCheck:
+      - end: student
+        url: /mock-practice
+        expectVisible:
+          - 'gate B-Flow mock practice'
+          - 'daoshi58'
+      - end: leadMentor
+        url: /career/mock-practice
+        expectVisible:
+          - 'hw01'
+          - '模拟面试'
+      - end: mentor
+        url: /mock-practice
+        # FIX-1 关键
+        expectVisible:
+          - 'hw01'
+          - '上报课消'
+        expectNotVisible:
+          - '确认'
+      - end: assistant
+        url: /career/mock-practice
+        # Bug Y 修复后必须可见
+        expectVisible:
+          - 'hw01'
+      - end: admin
+        url: /career/mock-practice
+        expectVisible:
+          - 'hw01'
+          - '已安排'
+
+  # ============================================================================
+  # Stage B1: Student 端验证预约时间（FIX-2 关键）
+  # ============================================================================
+  B1:
+    name: Student 查看预约时间 (FIX-2)
+    driverEnd: student
+    action:
+      type: ui
+      page: student
+      url: /mock-practice
+      clickViewApplication: B0_practice_id
+    fix2Assert:
+      - description: '预约时间字段显示真实值 "2026-05-21 10:00"，非"待安排"'
+        selector: 'text=预约时间'
+        nearbyText: '2026-05-21 10:00'
+        forbidden: ['待安排']
+
+  # ============================================================================
+  # Stage B2: Mentor 模拟应聘列表（FIX-1 关键，已在 B0 验证，此 stage 重断言）
+  # ============================================================================
+  B2:
+    name: Mentor mock-practice 列表 (FIX-1)
+    driverEnd: mentor
+    action:
+      type: ui
+      page: mentor
+      url: /mock-practice
+    fix1Assert:
+      - description: '列表非空，hw01 行可见'
+        expectVisible: ['hw01']
+      - description: 'hw01 行操作列只有"上报课消" link，无"确认"按钮'
+        forbiddenInRow:
+          studentName: hw01
+          forbidden: ['确认']
+      - description: '筛选区无统计卡片'
+        forbiddenSelectors: ['.osg-stats-card']
+
+  # ============================================================================
+  # Stage B3: Mentor 上报 mock 课消
+  # ============================================================================
+  B3:
+    name: Mentor 上报 B3 mock 课消
+    driverEnd: mentor
+    action:
+      type: api
+      helper: mentorSubmitJobCoachingReportRaw
+      args:
+        studentId: 25112
+        referenceIdVar: B0_practice_id
+        referenceType: mock_interview
+        courseType: mock_interview
+        classDate: today
+        durationHours: 1
+        rate: '7'
+        feedbackContentJson:
+          schemaVersion: 1
+          purpose: 'gate B3 mock'
+          performanceLevel: great
+          narrative: 'gate B3 narrative'
+    pre:
+      class_records_for_practice_b_count: 0
+    post:
+      class_records_for_practice_b_count: 1
+      latest_record_status: pending
+      latest_record_course_type: mock_interview
+    dbAssert:
+      query: |
+        SELECT status, reference_type, course_type FROM osg_class_record
+        WHERE student_id=25112 AND reference_type='mock_interview'
+        AND reference_id=$B0_practice_id ORDER BY record_id DESC LIMIT 1
+      expect:
+        status: pending
+        reference_type: mock_interview
+        course_type: mock_interview
+    saveRecordIdAs: B3_record_id
+
+  # ============================================================================
+  # Stage B4: Admin 通过 B3
+  # ============================================================================
+  B4:
+    name: Admin 通过 B3
+    driverEnd: admin
+    action:
+      type: api
+      helper: adminApproveClassRecord  # 新建
+      args:
+        recordIdVar: B3_record_id
+    pre:
+      latest_record_status: pending
+    post:
+      latest_record_status: approved
+    dbAssert:
+      query: |
+        SELECT status FROM osg_class_record WHERE record_id=$B3_record_id
+      expect:
+        status: approved
+
+  # ============================================================================
+  # Stage B5: 驳回 + FIX-3 mock path 重提交
+  # ============================================================================
+  B5:
+    name: B5 mock 驳回+重提交 (FIX-3)
+    driverEnd: chain
+    steps:
+      - id: B5.1
+        type: api
+        helper: mentorSubmitJobCoachingReportRaw
+        args:
+          studentId: 25112
+          referenceIdVar: B0_practice_id
+          referenceType: mock_interview
+          courseType: mock_interview
+          classDate: today
+          durationHours: 1
+          rate: '6'
+          feedbackContentJson:
+            schemaVersion: 1
+            purpose: 'gate B5.1 ready-to-reject'
+            performanceLevel: great
+        saveRecordIdAs: B5_1_record_id
+      - id: B5.2
+        type: api
+        helper: adminRejectClassRecord
+        args:
+          recordIdVar: B5_1_record_id
+          rejectReason: '课程类型选择错误'
+      - id: B5.3
+        type: api
+        helper: mentorSubmitJobCoachingReportRaw
+        args:
+          studentId: 25112
+          referenceIdVar: B0_practice_id
+          referenceType: mock_interview
+          courseType: mock_interview
+          classDate: today
+          durationHours: 1
+          rate: '8'
+          feedbackContentJson:
+            schemaVersion: 1
+            purpose: 'gate B5.3 resubmit FIX-3 mock path'
+            performanceLevel: great
+            narrative: 'B5.3 narrative'
+        saveRecordIdAs: B5_3_record_id
+        fix3Assert:
+          - 'POST /api/mentor/class-records 返回 200'
+          - '不出现 "JSON parse error"'
+    finalDbAssert:
+      query: |
+        SELECT record_id, status FROM osg_class_record
+        WHERE student_id=25112 AND reference_id=$B0_practice_id AND reference_type='mock_interview'
+        ORDER BY record_id DESC LIMIT 3
+      expect_rows:
+        - { status: pending }    # B5.3 newest
+        - { status: rejected }   # B5.1
+        - { status: approved }   # B3
