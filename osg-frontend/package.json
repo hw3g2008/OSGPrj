@@ -26,6 +26,7 @@
     "test:e2e:report": "playwright show-report"
   },
   "devDependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
     "@playwright/test": "^1.58.2",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
