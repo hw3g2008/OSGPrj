@@ -10,6 +10,13 @@
  *  Layer 3 invariants: pre/post 数字关系（如 post = pre - 1）写在 baseline,
  *                      runtime 反向校验。糊弄需同步改 pre+post+invariant 三处。
  *
+ *  Layer 3 真验实现:
+ *    - 对有 invariants 的 stage，按 stage.preSource / postSource 实时 snapshot pre/post
+ *    - UI source: 5 端 page goto + selector + extract → number
+ *    - DB source: dbQueryOne → number
+ *    - 每条 invariant 调 evalInvariant({pre, post}) 真 eval
+ *    - 任一 invariant fail，stage RED；evidence 落 invariants.json 含实测值+逐条结果
+ *
  * 跑测命令：
  *   E2E_MODULE=state-machine-gate pnpm --dir osg-frontend test:e2e state-machine-gate
  * 前置：
@@ -34,8 +41,11 @@ import {
   adminApproveClassRecordById,
   adminRejectClassRecordById,
   evalInvariant,
+  extractLastNumber,
   loginViaApi,
   mentorPostClassRecord,
+  snapshotFieldFromUi,
+  type UiSource,
 } from './support/gate-helpers'
 
 const MOD = process.env.E2E_MODULE || ''
@@ -136,6 +146,57 @@ test.describe('5 端 13 Stage 状态机门禁', () => {
   })
 
   /**
+   * 实时从 5 端 UI / DB snapshot 一组字段 → { fieldName: number, ... }.
+   *
+   * sourceMap 形如:
+   *   {
+   *     mentor_badge: { end: 'mentor', url: '/job-overview', selector: '...', extract: '...' },
+   *     class_records_hw01_5221_count: { db: true, sql: 'SELECT COUNT(*) AS c FROM ...' },
+   *   }
+   *
+   * 找不到字段 → 返回值为 NaN。invariants 直接对 NaN 比较会 false 失败，落 evidence 后 stage RED。
+   */
+  async function snapshotState(
+    sourceMap: Record<string, any>,
+  ): Promise<Record<string, number>> {
+    const result: Record<string, number> = {}
+    for (const [field, source] of Object.entries(sourceMap)) {
+      if (source && typeof source === 'object' && (source as any).db === true) {
+        // DB source
+        const sql = String((source as any).sql)
+        try {
+          const row = await dbQueryOne<Record<string, any>>(sql)
+          // 取第一列值（无论列名）
+          if (row && typeof row === 'object') {
+            const firstKey = Object.keys(row)[0]
+            const v = row[firstKey]
+            result[field] = typeof v === 'number' ? v : parseInt(String(v ?? 'NaN'), 10)
+          } else {
+            result[field] = NaN
+          }
+        } catch (e) {
+          result[field] = NaN
+        }
+      } else if (source && typeof source === 'object' && (source as any).end) {
+        const uiSrc = source as UiSource
+        const page = ctx.pages[uiSrc.end]
+        if (!page) {
+          result[field] = NaN
+          continue
+        }
+        try {
+          result[field] = await snapshotFieldFromUi(page, uiSrc)
+        } catch (e) {
+          result[field] = NaN
+        }
+      } else {
+        result[field] = NaN
+      }
+    }
+    return result
+  }
+
+  /**
    * Stage 通用执行器。
    * 每个 stage:
    *   1) pre snapshot — DB + UI 数字（如 badge / pending tab count）
@@ -153,9 +214,23 @@ test.describe('5 端 13 Stage 状态机门禁', () => {
     const stageEvidenceDir = path.join(EVIDENCE_DIR, stageId)
     fs.mkdirSync(stageEvidenceDir, { recursive: true })
 
+    // === 0) negative path: expectStatus + expectErrorContains 校验后端 contract 拒绝路径
+    // 在 driveAction 之前判定；如 stage.expectStatus 存在则改走 negative driver（不抛错，验 body code/msg）
+    const isNegative = stage.expectStatus !== undefined
+
+    // === 0b) pre snapshot for invariants（只对 happy path + 有 invariants & preSource 的 stage 做）
+    let preSnapshot: Record<string, number> | null = null
+    let postSnapshot: Record<string, number> | null = null
+    const hasInvariants = Array.isArray(stage.invariants) && stage.invariants.length > 0
+    const hasPreSource = stage.preSource && typeof stage.preSource === 'object'
+    const runInvariantEval = !isNegative && hasInvariants && hasPreSource
+    if (runInvariantEval) {
+      preSnapshot = await snapshotState(stage.preSource)
+    }
+
     // === 1) drive action ===
     if (stage.action?.type === 'api') {
-      await driveAction(stage, stageEvidenceDir)
+      await driveAction(stage, stageEvidenceDir, isNegative)
     } else if (stage.action?.type === 'sql') {
       await dbExec(stage.action.sql)
     } else if (stage.action?.type === 'ui') {
@@ -199,6 +274,45 @@ test.describe('5 端 13 Stage 状态机门禁', () => {
     // === 1b) fix*Assert / uiAssert ===
     await runFixAsserts(stage, stageEvidenceDir, stageId)
 
+    // === 1c) post snapshot + invariant eval（happy path 才跑）
+    if (runInvariantEval) {
+      const postSrc = stage.postSource === 'same_as_pre' ? stage.preSource : stage.postSource
+      postSnapshot = await snapshotState(postSrc ?? stage.preSource)
+      const invariantResults: Array<{ expr: string; passed: boolean; error?: string }> = []
+      for (const expr of stage.invariants as string[]) {
+        let passed = false
+        let errMsg: string | undefined
+        try {
+          passed = evalInvariant(expr, { pre: preSnapshot!, post: postSnapshot! })
+        } catch (e) {
+          passed = false
+          errMsg = (e as Error).message
+        }
+        invariantResults.push({ expr, passed, error: errMsg })
+      }
+      fs.writeFileSync(
+        path.join(stageEvidenceDir, 'invariants.json'),
+        JSON.stringify(
+          {
+            stage: stageId,
+            pre: preSnapshot,
+            post: postSnapshot,
+            invariants: invariantResults,
+            timestamp: new Date().toISOString(),
+          },
+          null,
+          2,
+        ),
+      )
+      // 任一 invariant fail → stage RED
+      for (const r of invariantResults) {
+        expect(
+          r.passed,
+          `${stageId} invariant FAIL: "${r.expr}" pre=${JSON.stringify(preSnapshot)} post=${JSON.stringify(postSnapshot)}${r.error ? ' err=' + r.error : ''}`,
+        ).toBe(true)
+      }
+    }
+
     // === 2) DB assert ===
     if (stage.dbAssert) {
       const sql = resolveTemplate(stage.dbAssert.query)
@@ -234,15 +348,39 @@ test.describe('5 端 13 Stage 状态机门禁', () => {
   }
 
   // —— action dispatcher (按 helper 名 routing) ——
-  async function driveAction(stage: any, evidenceDir: string) {
+  async function driveAction(stage: any, evidenceDir: string, isNegative = false) {
     const args = resolveArgs(stage.action.args)
-    const result = await callHelper(stage.action.helper, args)
+    let result: any = null
+    let thrownErr: any = null
+    try {
+      result = await callHelper(stage.action.helper, args)
+    } catch (e: any) {
+      thrownErr = { message: e.message }
+    }
     fs.writeFileSync(
       path.join(evidenceDir, 'action-result.json'),
-      JSON.stringify({ helper: stage.action.helper, args, result }, null, 2),
+      JSON.stringify({ helper: stage.action.helper, args, result, thrownErr, isNegative }, null, 2),
     )
     if (stage.saveRecordIdAs && result?.recordId) {
       ctx.vars[stage.saveRecordIdAs] = result.recordId
+    }
+    // negative path 真验证：result.code 必须等于 expectStatus，且 msg 含 expectErrorContains
+    if (isNegative) {
+      // helper 抛错 = backend 返非 2xx HTTP status → 视为 backend 拒绝；可接受
+      // helper 不抛 = backend 返 HTTP 200 + body code（AjaxResult 包装错误）→ 验 result.code
+      // helper throw 时 message 格式 "X failed: <status> ..."，用 "failed: NNN" 精确 parse
+      const observedCode = thrownErr
+        ? parseInt((thrownErr.message.match(/failed:\s*(\d{3})\b/) || [, '0'])[1], 10)
+        : result?.code
+      const observedMsg = thrownErr ? thrownErr.message : (result?.msg ?? '')
+      expect(observedCode, `${stage.name ?? ''}: expectStatus mismatch`).toBe(stage.expectStatus)
+      if (stage.expectErrorContains) {
+        expect(String(observedMsg), `${stage.name ?? ''}: expectErrorContains "${stage.expectErrorContains}"`)
+          .toContain(stage.expectErrorContains)
+      }
+    } else if (thrownErr) {
+      // happy path 但 helper 抛错 = 真错，重抛
+      throw new Error(thrownErr.message)
     }
   }
 
@@ -303,21 +441,22 @@ test.describe('5 端 13 Stage 状态机门禁', () => {
       }
 
       case 'adminApproveClassRecord': {
-        await adminApproveClassRecordById(
+        const body = await adminApproveClassRecordById(
           { token: ctx.adminToken, request: ctx.pages.admin.request, baseURL: adminBase },
           args.recordId,
         )
-        return { recordId: args.recordId }
+        // negative path 需要 body.code；happy path 用 recordId
+        return { ...(body || {}), recordId: args.recordId }
       }
 
       case 'adminRejectClassRecord': {
-        await adminRejectClassRecordById(
+        const body = await adminRejectClassRecordById(
           { token: ctx.adminToken, request: ctx.pages.admin.request, baseURL: adminBase },
           args.recordId,
           args.rejectReason,
           args.rejectRemark ?? '',
         )
-        return { recordId: args.recordId }
+        return { ...(body || {}), recordId: args.recordId }
       }
 
       default:
@@ -525,10 +664,13 @@ test.describe('5 端 13 Stage 状态机门禁', () => {
           JSON.stringify({ contextId, key, index: i, item, result, bodyTextSample: bodyText.slice(0, 1500), timestamp: new Date().toISOString() }, null, 2),
         )
         await targetPage.screenshot({ path: path.join(evidenceDir, `${key}-${i}-${item.page}.png`), fullPage: true }).catch(() => {})
-        // fix*Assert 是辅助 UI 验证（非核心 dbAssert），失败仅写 evidence 不 mark test failed，避免 serial mode 阻塞后续 stage
-        // evidence 文件 result.passed=false + failures[] 是 RED 真凭实据，最终报告按 evidence 汇总，不糊弄
+        // 门禁卡死：fix*Assert / uiAssert 失败必须让 test RED（不再 evidence-only false-pass）
+        // 例外：item.soft === true 时仍只落 evidence 不阻塞（保留逃生口给未交付页面占位类）
         if (!result.passed) {
           fs.appendFileSync(path.join(evidenceDir, `${key}-FAILURES.log`), `[${contextId} #${i}] ${item.description ?? ''}\n  - ${result.failures.join('\n  - ')}\n`)
+          if (!item.soft) {
+            expect(result.failures, `${contextId} ${key}#${i} ${item.description ?? ''}`).toEqual([])
+          }
         }
       }
     }
@@ -549,4 +691,9 @@ test.describe('5 端 13 Stage 状态机门禁', () => {
   test('B3 mentor mock report', async () => { await runStage('B3') })
   test('B4 admin approve B3', async () => { await runStage('B4') })
   test('B5 reject+resubmit (FIX-3 mock_practice path)', async () => { await runStage('B5') })
+  // —— Negative path stages ——
+  test('NA1 empty mentorIds → 400', async () => { await runStage('NA1_empty_mentors') })
+  test('NA2 unknown staffId → 400', async () => { await runStage('NA2_unknown_staff') })
+  test('NA3 unknown studentId → 500', async () => { await runStage('NA3_unknown_student') })
+  test('NA5 unknown recordId approve → 500', async () => { await runStage('NA5_unknown_record') })
 })

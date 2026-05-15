@@ -147,6 +147,12 @@ stages:
       - 'post.mentor_badge === pre.mentor_badge + 1'
       - 'post.admin_pending_tab === pre.admin_pending_tab - 1'
       - 'post.leadmentor_pending_tab === pre.leadmentor_pending_tab - 1'
+    # pre/post 数据采集源：spec runner 改造后从 5 端 UI 实时取
+    preSource:
+      mentor_badge: { end: mentor, url: /job-overview, selector: 'aside a:has-text("学员求职总览")', extract: 'badgeNumberAfterLabel' }
+      admin_pending_tab: { end: admin, url: /career/job-overview, selector: 'button:has-text("待分配导师")', extract: 'numberAfterLabel' }
+      leadmentor_pending_tab: { end: leadMentor, url: /career/job-overview, selector: '[role="tab"]:has-text("待分配导师")', extract: 'numberAfterLabel' }
+    postSource: same_as_pre
     dbAssert:
       query: |
         SELECT mentor_ids, mentor_name, status FROM osg_coaching WHERE coaching_id=5221
@@ -222,6 +228,18 @@ stages:
       latest_record_reference_id: 5221
       mentor_pending_tab_count: 2  # baseline 1 + 1
       admin_dashboard_pending_review: 15
+    # pre/post 真采源：DB 实查（A1 UI 源 + 这里 DB 源 = 全 5 stage invariants 真跑）
+    preSource:
+      class_records_hw01_5221_count:
+        db: true
+        sql: |
+          SELECT COUNT(*) AS c FROM osg_class_record
+          WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221
+          AND reference_type='job_coaching'
+      admin_dashboard_pending_review:
+        db: true
+        sql: SELECT COUNT(*) AS c FROM osg_class_record WHERE status='pending'
+    postSource: same_as_pre
     invariants:
       - 'post.class_records_hw01_5221_count === pre.class_records_hw01_5221_count + 1'
       - 'post.admin_dashboard_pending_review === pre.admin_dashboard_pending_review + 1'
@@ -271,6 +289,11 @@ stages:
       latest_record_status: approved
       mentor_pending_tab_count: 1   # baseline 1
       admin_dashboard_pending_review: 14
+    preSource:
+      admin_dashboard_pending_review:
+        db: true
+        sql: SELECT COUNT(*) AS c FROM osg_class_record WHERE status='pending'
+    postSource: same_as_pre
     invariants:
       - 'post.admin_dashboard_pending_review === pre.admin_dashboard_pending_review - 1'
     dbAssert:
@@ -321,6 +344,14 @@ stages:
     post:
       class_records_hw01_5221_count: 2
       latest_record_status: pending
+    preSource:
+      class_records_hw01_5221_count:
+        db: true
+        sql: |
+          SELECT COUNT(*) AS c FROM osg_class_record
+          WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221
+          AND reference_type='job_coaching'
+    postSource: same_as_pre
     invariants:
       - 'post.class_records_hw01_5221_count === pre.class_records_hw01_5221_count + 1'
     dbAssert:
@@ -385,6 +416,14 @@ stages:
       - 'POST /api/mentor/class-records 返回 200'
       - '不出现 "JSON parse error" 字样'
       - '不出现 "课程类型与关联类型不一致" 字样'
+    preSource:
+      class_records_hw01_5221_count:
+        db: true
+        sql: |
+          SELECT COUNT(*) AS c FROM osg_class_record
+          WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221
+          AND reference_type='job_coaching'
+    postSource: same_as_pre
     invariants:
       - 'post.class_records_hw01_5221_count === pre.class_records_hw01_5221_count + 1'
     dbAssert:
@@ -626,3 +665,84 @@ stages:
         - { status: pending }    # B5.3 newest
         - { status: rejected }   # B5.1
         - { status: approved }   # B3
+
+  # ============================================================================
+  # Negative path stages — 验证 backend contract 拒绝路径
+  # 跑测顺序：13 happy stage 之后，DB 状态此时 coaching 5221 已 assigned + 多个 record
+  # 设计：每个 NA 只发一次错请求，验证 backend 返预期 error，并且不修改 DB
+  # ============================================================================
+
+  NA1_empty_mentors:
+    name: LM 试 assign 空 mentorIds 应 400
+    driverEnd: leadMentor
+    action:
+      type: api
+      helper: leadMentorAssignCoachingMentor
+      args:
+        coachingId: 5221
+        mentorStaffIds: []
+    expectStatus: 400
+    expectErrorContains: '请至少选择'
+    # 验证 DB 未变（coaching 5221 仍是 happy A1 后的 assigned 状态）
+    dbAssert:
+      query: |
+        SELECT mentor_ids, status FROM osg_coaching WHERE coaching_id=5221
+      expect:
+        mentor_ids: '12866'
+        status: assigned
+
+  NA2_unknown_staff:
+    name: LM 试 assign 不存在的 staffId 应 400
+    driverEnd: leadMentor
+    action:
+      type: api
+      helper: leadMentorAssignCoachingMentor
+      args:
+        coachingId: 5221
+        mentorStaffIds: [99999999]
+    expectStatus: 400
+    expectErrorContains: '员工主数据不存在'
+    dbAssert:
+      query: |
+        SELECT mentor_ids, status FROM osg_coaching WHERE coaching_id=5221
+      expect:
+        mentor_ids: '12866'
+        status: assigned
+
+  NA3_unknown_student:
+    name: Mentor 试给不存在 student 提交课消应 500
+    driverEnd: mentor
+    action:
+      type: api
+      helper: mentorSubmitJobCoachingReportRaw
+      args:
+        studentId: 99999999
+        referenceId: 5221
+        referenceType: job_coaching
+        courseType: job_coaching
+        classDate: today
+        durationHours: 1
+        rate: '7'
+        feedbackContentJson:
+          schemaVersion: 1
+          purpose: 'NA3 unknown student'
+          performanceLevel: great
+    expectStatus: 500
+    expectErrorContains: '学员不存在'
+    # 验证 DB 没新增 student_id=99999999 的 record
+    dbAssert:
+      query: |
+        SELECT COUNT(*) AS c FROM osg_class_record WHERE student_id=99999999 AND mentor_id=12866
+      expect:
+        c: 0
+
+  NA5_unknown_record:
+    name: Admin approve 不存在的 record_id 应 500
+    driverEnd: admin
+    action:
+      type: api
+      helper: adminApproveClassRecord
+      args:
+        recordId: 9999999
+    expectStatus: 500
+    expectErrorContains: '课时记录不存在'
