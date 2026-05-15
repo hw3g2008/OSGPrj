@@ -1,8 +1,19 @@
-# 状态机门禁手工测试用例
+# 状态机门禁手工测试用例（v2，57 子用例）
 
-> 求职辅导 + 模拟应聘双主线，5 端联动验证。
-> 17 个用例（13 正向流 + 4 负向校验），每个独立可手测。
-> 业务方/测试工程师可按本文档逐条执行。
+> 求职辅导 + 模拟应聘双主线，5 端联动 + Layer 3 不变量 + 负向校验
+> **17 个父用例 / 57 个子断言点**，每条独立可勾选
+> 业务方 / QA 可按本文档逐条执行
+
+---
+
+## 总览数据
+
+| 类别 | 父用例 | 子用例 | 说明 |
+|---|---|---|---|
+| A 主流程（求职辅导） | 7 (A0/A1/A3-A7) | 35 | 含 dbAssert / 跨端 / invariants / FIX 断言 |
+| B 主流程（模拟应聘） | 6 (B0-B5) | 15 | 含 fix1/fix2/fix3Assert + multi-step + finalDbAssert |
+| NA 负向（拒绝路径） | 4 (NA1/2/3/5) | 7 | expectStatus + expectErrorContains + dbAssert |
+| **总计** | **17** | **57** | |
 
 ---
 
@@ -18,7 +29,7 @@
 | LeadMentor | http://127.0.0.1:3003 |
 | Assistant | http://127.0.0.1:3004 |
 | Admin | http://127.0.0.1:3005 |
-| DB | 47.94.213.128:23306 ry-vue (账号 ruoyi / app123456) |
+| DB | 47.94.213.128:23306 ry-vue (ruoyi/app123456) |
 
 ### 账号矩阵
 
@@ -34,474 +45,251 @@
 
 | 实体 | ID | 备注 |
 |---|---|---|
-| hw01 student_id | 25112 | 学生数据 |
-| daoshi58 user_id | 12866 | 导师 sys_user ID |
-| daoshi58 staff_id | 98187 | 导师 osg_staff ID（分配接口入参用这个） |
+| hw01 student_id | 25112 | osg_student.student_id |
+| daoshi58 user_id | 12866 | sys_user.user_id |
+| daoshi58 staff_id | 98187 | osg_staff.staff_id（分配接口入参用 staff_id） |
 | coaching_id | 5221 | 测试用辅导申请 |
 | application_id | 301 | 关联 application |
 
-### 每轮测试前数据 reset（必须做）
+### 每轮测试前 SQL reset（必须做）
 
 ```sql
-UPDATE sys_config SET config_value='false'
-  WHERE config_key='sys.account.captchaEnabled';
-
-DELETE FROM osg_mock_practice
-  WHERE request_content IN ('gate B-Flow mock practice', '手测 B-Flow mock practice');
-
-DELETE FROM osg_class_record
-  WHERE student_id=25112 AND mentor_id=12866
-    AND (reference_id=5221
-         OR reference_id IN (SELECT practice_id FROM osg_mock_practice
-                             WHERE student_id=25112 AND request_content LIKE '%gate%'));
-
-UPDATE osg_coaching
-  SET mentor_ids=NULL, mentor_name=NULL, mentor_names=NULL, status='pending'
+UPDATE sys_config SET config_value='false' WHERE config_key='sys.account.captchaEnabled';
+DELETE FROM osg_mock_practice WHERE request_content IN ('gate B-Flow mock practice','手测 B-Flow mock practice');
+DELETE FROM osg_class_record WHERE student_id=25112 AND mentor_id=12866
+  AND (reference_id=5221 OR reference_id IN
+       (SELECT practice_id FROM osg_mock_practice WHERE student_id=25112 AND request_content LIKE '%gate%'));
+UPDATE osg_coaching SET mentor_ids=NULL, mentor_name=NULL, mentor_names=NULL, status='pending'
   WHERE coaching_id=5221;
 ```
 
-> 注：captchaEnabled 改完后需重启 backend 让 Redis cache 刷新，否则登录仍要验证码。
+> ⚠️ captchaEnabled 改完后需重启 backend 让 Redis cache 刷新，否则登录仍报「验证码失效」
 
 ---
 
 ## A 主流程：求职辅导（job_coaching）
 
-### A0 — 初始状态快照
+### TC-A0 初始状态快照（6 子用例）
 
-**目的**：确认 5 端在 mentor 未分配状态下的初始显示
+**操作端**：5 端只读 / 前置：DB reset 完成
 
-**操作端**：5 端只读
-
-**前置**：DB reset 完成（coaching 5221 mentor_ids=NULL）
-
-**步骤**：
-1. 在 Student 端登录 hw01，进入「我的求职 My Applications」(`/job-tracking`)
-2. 在 Mentor 端登录 daoshi58，进入「学员求职总览」(`/job-overview`)
-3. 在 LeadMentor 端登录，进入「求职总览」(`/career/job-overview`)
-4. 在 Assistant 端登录，进入「求职总览」(`/career/job-overview`)
-5. 在 Admin 端登录，进入「求职总览」(`/career/job-overview`)
-
-**预期结果**：
-
-| 端 | 期望可见 | 期望不可见 |
-|---|---|---|
-| Student | 表格行: Spring Insight / Morgan Stanley / 面试中 | "辅导导师 daoshi58" |
-| LeadMentor | sidebar「待分配导师 2」、表格有 hw01 | — |
-| Mentor | sidebar「学员求职总览 5」、表格里没有 hw01/Morgan Stanley | hw01 + Morgan Stanley 同一行 |
-| Assistant | hw01、Morgan Stanley | — |
-| Admin | sidebar「待分配导师 21」、Morgan Stanley | hw01 + Morgan Stanley 同一行 |
-
-**SQL 校验**：
-```sql
-SELECT mentor_ids, mentor_name, status FROM osg_coaching WHERE coaching_id=5221;
--- 期望: mentor_ids=NULL, mentor_name=NULL, status=pending
-```
+| 编号 | 验证点 | 操作 | 期望 | 通过 |
+|---|---|---|---|---|
+| **TC-A0.1** | DB coaching_5221 初始状态 | SQL: `SELECT mentor_ids, mentor_name, status FROM osg_coaching WHERE coaching_id=5221` | mentor_ids=NULL, mentor_name=NULL, status=pending | ☐ |
+| **TC-A0.2** | Student 端 `/job-tracking` 表格 | 登录 hw01 → 我的求职 | 可见: Spring Insight / Morgan Stanley / 面试中；**不可见**: 辅导导师 daoshi58 | ☐ |
+| **TC-A0.3** | LeadMentor 端 `/career/job-overview` | 登录 LM | 可见 sidebar「**待分配导师 2**」（标签 + 数字分开 DOM）+ 表格有 hw01 | ☐ |
+| **TC-A0.4** | Mentor 端 `/job-overview` | 登录 daoshi58 | 可见 sidebar「**学员求职总览 5**」；表格里**不含** hw01+Morgan Stanley 行 | ☐ |
+| **TC-A0.5** | Assistant 端 `/career/job-overview` | 登录 zhujiao58 | 可见 hw01、Morgan Stanley | ☐ |
+| **TC-A0.6** | Admin 端 `/career/job-overview` | 登录 admin | 可见 sidebar「**待分配导师 21**」、Morgan Stanley；表格**不含** hw01+Morgan Stanley 行 | ☐ |
 
 ---
 
-### A1 — LeadMentor 分配 daoshi58 给 coaching 5221
+### TC-A1 LeadMentor 分配 daoshi58 给 coaching 5221（10 子用例）
 
-**目的**：验证「分配导师」流程及 5 端实时联动
+**操作端**：LeadMentor / 前置：A0 通过
 
-**操作端**：LeadMentor (3003)
+**操作**：LM `/career/job-overview` → hw01/Morgan Stanley 待分配行 → 点「分配导师」→ 选 daoshi58 → 确认
 
-**前置**：A0 通过
-
-**步骤**：
-1. LeadMentor 进入「求职总览」(`/career/job-overview`)
-2. 找到 hw01 / Morgan Stanley 的「待分配导师」行
-3. 点击「分配导师」按钮
-4. 在弹窗中选择 daoshi58（**注意**：勾选时传给后端的是 osg_staff.staff_id=98187，非 user_id）
-5. 填写分配备注 → 确认
-
-**API 请求**（如直接测接口）：
+**等价 API**：
 ```http
-POST http://127.0.0.1:28080/lead-mentor/job-overview/coaching/5221/assign-mentor
-Authorization: Bearer <leadMentor token>
-Content-Type: application/json
-
-{ "mentorIds": [98187], "note": "test assign" }
+POST /lead-mentor/job-overview/coaching/5221/assign-mentor
+Authorization: Bearer <LM token>
+{ "mentorIds": [98187], "note": "test" }
 ```
 
-**预期 backend 响应**：
-```json
-{ "code": 200, "msg": "操作成功", "data": {
-  "coachingId": 5221, "coachingStatus": "assigned",
-  "mentorIds": [12866], "mentorNames": "daoshi58"
-}}
-```
-
-**SQL 校验**：
-```sql
-SELECT mentor_ids, mentor_name, status FROM osg_coaching WHERE coaching_id=5221;
--- 期望: mentor_ids='12866', mentor_name='daoshi58', status='assigned'
-```
-
-**5 端联动校验**：
-
-| 端 | 期望变化 |
-|---|---|
-| Student | `/job-tracking` 展开 Morgan Stanley 行后可见「辅导导师 daoshi58」 |
-| LeadMentor | 「待分配导师」徽标从 2 → 1 |
-| Mentor | 「学员求职总览」徽标从 5 → 6，表格新增 Morgan Stanley 行 |
-| Assistant | 该 application 行新增 mentor 字段 daoshi58 |
-| Admin | 「待分配导师」徽标从 21 → 20，表格中该 hw01/Morgan Stanley 行消失 |
-
-**关系不变量**（应同时成立）：
-- mentor 徽标增量 = +1
-- admin 待分配数增量 = -1
-- leadMentor 待分配数增量 = -1
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-A1.1** | backend response | `code=200, msg=操作成功, data.mentorIds=[12866], data.mentorNames="daoshi58"` | ☐ |
+| **TC-A1.2** | DB coaching_5221 | `SELECT...` → mentor_ids='12866', mentor_name='daoshi58', status='assigned' | ☐ |
+| **TC-A1.3** | 不变量：mentor 徽标增量 | mentor「学员求职总览」徽标实测 post=pre+1（5→6） | ☐ |
+| **TC-A1.4** | 不变量：admin 待分配数减量 | admin「待分配导师」徽标实测 post=pre-1（21→20） | ☐ |
+| **TC-A1.5** | 不变量：LM 待分配数减量 | LM「待分配导师」徽标实测 post=pre-1（2→1） | ☐ |
+| **TC-A1.6** | Student `/job-tracking` 跨端 | 展开 Morgan Stanley 行 → 可见「辅导导师 daoshi58」 | ☐ |
+| **TC-A1.7** | LeadMentor 跨端 | 「待分配导师 1」 | ☐ |
+| **TC-A1.8** | Mentor 跨端 | sidebar「学员求职总览 6」+ 表格出现 Morgan Stanley | ☐ |
+| **TC-A1.9** | Assistant 跨端 | 该行出现 hw01 + Morgan Stanley + daoshi58 | ☐ |
+| **TC-A1.10** | Admin 跨端 | 「待分配导师 20」+ 表格中该行消失（已分配） | ☐ |
 
 ---
 
-### A2 — （文档约定 SKIP，无须测）
-
-> A2 编号保留位，本次跑测设计不覆盖。
+### TC-A2 —（baseline 文档约定 SKIP，无须测）
 
 ---
 
-### A3 — Mentor 上报 5221 第一笔课消
+### TC-A3 Mentor 上报第一笔课消（6 子用例，FIX Bug X — feedbackContent JSON 序列化）
 
-**目的**：验证课消提交流程 + Bug X (feedbackContent JSON 序列化) 修复
+**操作端**：Mentor / 前置：A1 通过
 
-**操作端**：Mentor (3002)
+**操作**：daoshi58 进「学员求职总览」找 hw01/Morgan Stanley → 「上报课消」→ 填表提交
 
-**前置**：A1 通过（coaching 5221 已 assigned）
+**填写内容**：课程类型=岗位辅导，关联=5221，日期=今天，时长=1，评分=8，反馈结构化（目的 `gate A3 feedback purpose`、概念 STAR、改进点 logic、表现 great、叙述 `gate A3 narrative`）
 
-**步骤**：
-1. Mentor 进入「学员求职总览」找 hw01 / Morgan Stanley 行
-2. 点「上报课消」按钮
-3. 弹窗填表：
-   - 课程类型：岗位辅导
-   - 关联辅导：选当前 coaching 5221
-   - 上课日期：今天
-   - 时长：1 小时
-   - 评分：8
-   - 反馈内容（结构化）：
-     - 目的：`gate A3 feedback purpose`
-     - 涉及概念：`STAR`
-     - 改进点：`logic`
-     - 整体表现：优秀（great）
-     - 详细叙述：`gate A3 narrative`
-4. 提交
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-A3.1** | backend response | `code=200, msg=操作成功, recordId=<新 int>` | ☐ |
+| **TC-A3.2** | DB latest record | status=pending, reference_type=job_coaching, reference_id=5221 | ☐ |
+| **TC-A3.3** | 不变量：课消数+1 | SQL count 实测 post=pre+1（0→1） | ☐ |
+| **TC-A3.4** | 不变量：admin 待审核数+1 | SQL count 实测 post=pre+1 | ☐ |
+| **TC-A3.5** | Mentor 跨端 | `/courses` 可见 hw01 + 「待审核」 | ☐ |
+| **TC-A3.6** | Admin 跨端 | `/teaching/class-records` 搜 hw01 → 可见 daoshi58 + 「待审核」 | ☐ |
 
-**API 请求**：
-```http
-POST http://127.0.0.1:28080/mentor/class-records
-Authorization: Bearer <mentor token>
-Content-Type: application/json
-
-{
-  "studentId": 25112, "classDate": "<today>", "durationHours": 1,
-  "courseType": "job_coaching", "referenceType": "job_coaching",
-  "referenceId": 5221, "rate": "8", "memberStatus": "normal",
-  "feedbackContent": "{\"schemaVersion\":1,\"purpose\":\"gate A3 feedback purpose\",\"concepts\":\"STAR\",\"improvements\":\"logic\",\"performanceLevel\":\"great\",\"narrative\":\"gate A3 narrative\"}"
-}
-```
-
-**预期 backend 响应**：
-```json
-{ "code": 200, "msg": "操作成功", "recordId": <新的 record_id> }
-```
-
-**SQL 校验**：
-```sql
-SELECT status, reference_type, reference_id FROM osg_class_record
-WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221
-ORDER BY record_id DESC LIMIT 1;
--- 期望: status='pending', reference_type='job_coaching', reference_id=5221
-```
-
-**跨端校验**：
-
-| 端 | 期望 |
-|---|---|
-| Student | `/class-records` 显示「敬请期待」占位（学员端课程记录页未交付，此项验占位文案） |
-| Mentor | `/courses` 看到 hw01 + 「待审核」 |
-| Admin | `/teaching/class-records` 搜「hw01」可见 daoshi58 + 「待审核」 |
-
-**不变量**：
-- 该 coaching 课消条数 = 上一笔 + 1
-- admin 待审核总数 = 上一笔 + 1
+> 注：Student `/class-records` 此时显示「敬请期待」占位（页面未交付）— 不作硬验
 
 ---
 
-### A4 — Admin 审核通过 A3 提交的课消
+### TC-A4 Admin 审核通过 A3（4 子用例）
 
-**操作端**：Admin (3005)
+**操作端**：Admin / 前置：A3 通过
 
-**前置**：A3 通过（有一条 status=pending 的 record）
+**操作**：Admin `/teaching/class-records` 搜 hw01 → A3 那条 pending → 「通过」
 
-**步骤**：
-1. Admin 进入「课消管理 / 教学中心 - 课程记录」(`/teaching/class-records`)
-2. 搜「hw01」找到 A3 提交的 pending 记录
-3. 点击「通过」
-
-**API**：
-```http
-PUT http://127.0.0.1:28080/admin/report/<A3_record_id>/approve
-Authorization: Bearer <admin token>
-Content-Type: application/json
-{ "remark": "ok" }
-```
-
-**预期响应**：`{code:200, msg:"操作成功"}`
-
-**SQL 校验**：
-```sql
-SELECT status, reviewed_at FROM osg_class_record WHERE record_id=<A3_record_id>;
--- 期望: status='approved', reviewed_at 非 NULL
-```
-
-**跨端校验**：
-
-| 端 | 期望 |
-|---|---|
-| Student | `/class-records` 占位（同 A3） |
-| Mentor | `/job-overview` 找 hw01/Morgan Stanley 行 — 「已上报课消」+「1」 |
-
-**不变量**：
-- admin 待审核总数 = 上一笔 - 1
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-A4.1** | backend response | code=200 | ☐ |
+| **TC-A4.2** | DB record | status=approved，reviewed_at 非 NULL | ☐ |
+| **TC-A4.3** | 不变量：admin 待审核数-1 | post=pre-1 | ☐ |
+| **TC-A4.4** | Mentor 跨端 | `/job-overview` 找 hw01/Morgan Stanley 行 → 「已上报课消 1」 | ☐ |
 
 ---
 
-### A5 — Mentor 再上报一笔课消（备 A6 驳回用）
+### TC-A5 Mentor 再上报第二笔（备 A6 驳回用，2 子用例）
 
-**操作端**：Mentor
+**操作端**：Mentor / 前置：A4 通过
 
-**前置**：A4 通过
+**操作**：同 A3，反馈目的改 `gate A5 ready-to-reject`，评分 7
 
-**步骤**：同 A3，但反馈目的写为 `gate A5 ready-to-reject`，评分 7。
-
-**SQL 校验**：
-```sql
-SELECT status FROM osg_class_record WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221
-ORDER BY record_id DESC LIMIT 1;
--- 期望: status='pending'
-```
-
-**不变量**：该 coaching 课消条数 = 上一笔 + 1（A3 1 笔 → A5 后 2 笔）
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-A5.1** | DB latest record | status=pending | ☐ |
+| **TC-A5.2** | 不变量：课消数+1 | post=pre+1（1→2） | ☐ |
 
 ---
 
-### A6 — Admin 驳回 A5 的课消
+### TC-A6 Admin 驳回 A5（1 子用例）
 
-**操作端**：Admin
+**操作端**：Admin / 前置：A5 通过
 
-**前置**：A5 通过
+**操作**：Admin 找 A5 pending → 「驳回」→ 原因「课时时长有误」、备注「gate A6 reject」
 
-**步骤**：
-1. Admin 进「课程记录」，找 A5 这条 pending
-2. 点「驳回」
-3. 驳回原因填：`课时时长有误`
-4. 备注填：`gate A6 reject`
-5. 提交
-
-**API**：
-```http
-PUT http://127.0.0.1:28080/admin/report/<A5_record_id>/reject
-{ "remark": "课时时长有误；gate A6 reject" }
-```
-
-**SQL 校验**：
-```sql
-SELECT status, review_remark FROM osg_class_record WHERE record_id=<A5_record_id>;
--- 期望: status='rejected', review_remark 含 '课时时长有误'
-```
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-A6.1** | DB record | status=rejected，review_remark 含「课时时长有误」 | ☐ |
 
 ---
 
-### A7 — Mentor 重新提交被驳回的课消（FIX-3 关键）
+### TC-A7 Mentor 重新提交（6 子用例，FIX-3 关键 — 验「重新提交」按钮打开 shared modal 非旧 confirm）
 
-**目的**：验证「重新提交」按钮打开的是统一的「上报课程记录」弹窗，不是旧的 inline 确认弹窗
+**操作端**：Mentor / 前置：A6 通过
 
-**操作端**：Mentor
+**操作**：
+1. Mentor `/courses` 找「已驳回」行 → 操作列「**查看原因**」（不是「查看驳回原因」）
+2. 驳回详情面板点「**重新提交**」按钮
+3. 在打开的弹窗中确认标题 + 修正后提交
 
-**前置**：A6 通过（有一条 rejected record）
-
-**步骤**：
-1. Mentor 进「课程记录」(`/courses`)
-2. 找到「已驳回」行，操作列点「查看原因」
-3. 在驳回详情面板点「重新提交」按钮
-4. 在打开的弹窗中确认：
-   - **弹窗标题应该是 `上报课程记录`**（不是「确认课程类型」）
-   - **页面不应该出现 `#confirm-class-type` 选择器对应的旧 modal**
-5. 修正内容后提交（评分 8，反馈目的 `gate A7 resubmit FIX-3`）
-
-**预期 backend 响应**：`{code:200, recordId: <new int>}`
-
-**SQL 校验**：
-```sql
-SELECT status, reference_type FROM osg_class_record WHERE student_id=25112 AND mentor_id=12866 AND reference_id=5221
-ORDER BY record_id DESC LIMIT 1;
--- 期望: status='pending', reference_type='job_coaching'
-```
-
-**回归断言**：
-- response body 不含 `JSON parse error` 字串
-- response body 不含 `课程类型与关联类型不一致` 字串
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-A7.1** | backend response | code=200, recordId 非 NULL | ☐ |
+| **TC-A7.2** | DB latest record | status=pending, reference_type=job_coaching | ☐ |
+| **TC-A7.3** | 不变量：课消数+1 | post=pre+1 | ☐ |
+| **TC-A7.4** | FIX-3 regression: 不出现 JSON parse error | response body 不含「JSON parse error」 | ☐ |
+| **TC-A7.5** | FIX-3 regression: 不出现类型不一致 | response body 不含「课程类型与关联类型不一致」 | ☐ |
+| **TC-A7.6** | uiAssert: modal 是 shared ClassReportFlowModal | 弹窗标题=「上报课程记录」，**不出现** `#confirm-class-type` 旧 modal 选择器 | ☐ |
 
 ---
 
 ## B 主流程：模拟应聘（mock_practice）
 
-### B0 — 准备 mock_practice 数据
+### TC-B0 准备 mock_practice 数据 + 5 端可见性（6 子用例）
 
-**操作端**：DB 直接 insert（业务上对应「学员申请模拟应聘 + LM 安排导师」整链）
+**操作端**：DB insert / 前置：mock_practice 表无 'gate B-Flow' 行
 
-**步骤**：执行 SQL
+**操作**：执行 SQL
 ```sql
-INSERT INTO osg_mock_practice
-  (student_id, student_name, practice_type, request_content, status,
-   mentor_ids, mentor_names, scheduled_at, submitted_at, del_flag)
-VALUES (25112, 'hw01', 'mock_interview', 'gate B-Flow mock practice',
-        'scheduled', '12866', 'daoshi58', '2026-05-21 10:00:00', NOW(), '0');
+INSERT INTO osg_mock_practice (student_id, student_name, practice_type, request_content, status,
+  mentor_ids, mentor_names, scheduled_at, submitted_at, del_flag)
+VALUES (25112,'hw01','mock_interview','gate B-Flow mock practice','scheduled',
+        '12866','daoshi58','2026-05-21 10:00:00', NOW(), '0');
 ```
 
-**SQL 校验**：
-```sql
-SELECT practice_id, status, mentor_ids, scheduled_at FROM osg_mock_practice
-WHERE request_content='gate B-Flow mock practice';
--- 期望: status='scheduled', mentor_ids='12866', scheduled_at = '2026-05-21 10:00:00'
--- 记下 practice_id 备 B1 用
-```
-
-**5 端校验**：
-
-| 端 | 期望可见 |
-|---|---|
-| Student `/mock-practice` | "gate B-Flow mock practice" 行 + 「daoshi58」 |
-| LeadMentor `/career/mock-practice` | hw01 行 + 「模拟面试」 |
-| Mentor `/mock-practice` | hw01 行 + 操作列「上报课消」（**不应有「确认」按钮** — FIX-1 修复点） |
-| Assistant `/career/mock-practice` | hw01 行（Bug Y 修复后必须可见） |
-| Admin `/career/mock-practice` | 切「全部记录」tab — hw01 + 「已安排」 |
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-B0.1** | DB | practice_id 新建，status=scheduled, mentor_ids='12866', scheduled_at='2026-05-21 10:00:00' | ☐ |
+| **TC-B0.2** | Student `/mock-practice` | 可见 'gate B-Flow mock practice' + 'daoshi58' | ☐ |
+| **TC-B0.3** | LeadMentor `/career/mock-practice` | 可见 hw01 + 模拟面试 | ☐ |
+| **TC-B0.4** | Mentor `/mock-practice` | 可见 hw01 + 「上报课消」；**不可见**「确认」按钮（FIX-1） | ☐ |
+| **TC-B0.5** | Assistant `/career/mock-practice` | 可见 hw01（Bug Y 修复后必须可见） | ☐ |
+| **TC-B0.6** | Admin `/career/mock-practice` | 切「**全部记录**」tab → 可见 hw01 + 「已安排」 | ☐ |
 
 ---
 
-### B1 — Student 查看模拟应聘预约时间（FIX-2 关键）
+### TC-B1 Student 查看模拟应聘预约时间（1 子用例，FIX-2）
 
-**目的**：验证 student 端详情显示真实预约时间，不是「待安排」
+**操作端**：Student / 前置：B0 通过
 
-**操作端**：Student
+**操作**：student `/mock-practice` → 找「gate B-Flow mock practice」→ 点「查看」详情
 
-**前置**：B0 完成
-
-**步骤**：
-1. Student 进「模拟应聘 Mock Practice」(`/mock-practice`)
-2. 找到「gate B-Flow mock practice」行
-3. 点「查看」详情
-
-**预期**：详情面板中「预约时间」字段显示 `2026-05-21 10:00`（不是「待安排」）
-
-**禁止文案**：页面中不应出现「待安排」字串
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-B1.1** | FIX-2 预约时间字段 | 详情面板「预约时间」显示 `2026-05-21 10:00`，**不出现** 「待安排」字串 | ☐ |
 
 ---
 
-### B2 — Mentor 模拟应聘列表（FIX-1 关键）
+### TC-B2 Mentor 模拟应聘列表（1 子用例，FIX-1）
 
-**目的**：验证 mentor 端列表非空，操作列只有「上报课消」无「确认」
+**操作端**：Mentor / 前置：B0 通过
 
-**操作端**：Mentor
+**操作**：mentor `/mock-practice`
 
-**前置**：B0 完成
-
-**步骤**：进入 `/mock-practice`
-
-**预期**：
-- 列表非空，hw01 行可见
-- hw01 这行操作列：**有**「上报课消」link，**无**「确认」按钮
-- 筛选区**没有**统计卡片（`.osg-stats-card` 选择器找不到）
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-B2.1** | FIX-1 列表 + 操作列 | 列表非空，hw01 可见；hw01 行操作列**有**「上报课消」link、**无**「确认」按钮；筛选区**无** `.osg-stats-card` 统计卡片 | ☐ |
 
 ---
 
-### B3 — Mentor 上报 mock_practice 课消
+### TC-B3 Mentor 上报 mock 课消（1 子用例）
 
-**操作端**：Mentor
+**操作端**：Mentor / 前置：B0 完成
 
-**前置**：B0 完成（mock_practice 已 scheduled）
+**操作**：在 `/mock-practice` 点 hw01 行「上报课消」→ 填表（课程类型=模拟面试，关联类型=模拟面试，关联 ID=B0_practice_id，时长 1h，评分 7，反馈目的 `gate B3 mock`）→ 提交
 
-**步骤**：
-1. Mentor 在 `/mock-practice` 找到 hw01 行
-2. 点「上报课消」
-3. 填表：
-   - 课程类型：模拟面试 (mock_interview)
-   - 关联类型：模拟面试 (mock_interview)
-   - 关联 ID：B0 的 practice_id
-   - 上课日期：今天
-   - 时长：1 小时
-   - 评分：7
-   - 反馈：目的 `gate B3 mock`，表现 great，叙述 `gate B3 narrative`
-4. 提交
-
-**API**：
-```http
-POST /mentor/class-records
-{
-  "studentId": 25112, "courseType": "mock_interview",
-  "referenceType": "mock_interview", "referenceId": <B0_practice_id>,
-  ...
-}
-```
-
-**预期响应**：`{code:200, recordId:<new>}`
-
-**SQL 校验**：
-```sql
-SELECT status, reference_type, course_type FROM osg_class_record
-WHERE student_id=25112 AND reference_type='mock_interview'
-AND reference_id=<B0_practice_id> ORDER BY record_id DESC LIMIT 1;
--- 期望: status='pending', reference_type='mock_interview', course_type='mock_interview'
-```
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-B3.1** | DB latest record | status=pending, reference_type='mock_interview', course_type='mock_interview', reference_id=B0_practice_id | ☐ |
 
 ---
 
-### B4 — Admin 通过 B3 提交的课消
+### TC-B4 Admin 审核通过 B3（1 子用例）
 
-**操作端**：Admin
+**操作端**：Admin / 前置：B3 通过
 
-**步骤**：admin 进课消管理，找 B3 那条 pending，点「通过」
-
-**SQL 校验**：
-```sql
-SELECT status FROM osg_class_record WHERE record_id=<B3_record_id>;
--- 期望: status='approved'
-```
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-B4.1** | DB record | status=approved | ☐ |
 
 ---
 
-### B5 — 驳回 + 重提交（FIX-3 mock_practice path）
+### TC-B5 驳回 + 重提（5 子用例，FIX-3 mock_practice path 链）
 
-**操作端**：Mentor → Admin → Mentor（3 步链）
+**操作端**：Mentor → Admin → Mentor / 前置：B4 通过
 
-**前置**：B4 完成（B0 practice 上已有 1 条 approved）
+**操作链**：
+- B5.1 Mentor 再上报 mock（评分 6，目的 `gate B5.1 ready-to-reject`）
+- B5.2 Admin 驳回 B5.1，原因「课程类型选择错误」
+- B5.3 Mentor `/courses` 找驳回行 → 查看原因 → 重新提交（评分 8，目的 `gate B5.3 resubmit FIX-3 mock path`）
 
-**步骤**：
-1. **B5.1** Mentor 再上报 1 条 mock 课消（评分 6，反馈目的 `gate B5.1 ready-to-reject`）
-2. **B5.2** Admin 驳回 B5.1，原因「课程类型选择错误」
-3. **B5.3** Mentor 找到驳回行 → 点「查看原因」→ 点「重新提交」→ 修正后提交（评分 8，反馈目的 `gate B5.3 resubmit FIX-3 mock path`）
-
-**SQL 终态校验**：
-```sql
-SELECT record_id, status FROM osg_class_record
-WHERE student_id=25112 AND reference_id=<B0_practice_id>
-AND reference_type='mock_interview' ORDER BY record_id DESC LIMIT 3;
--- 期望（按 record_id 倒序）:
---   row 0: status='pending'    (B5.3)
---   row 1: status='rejected'   (B5.1)
---   row 2: status='approved'   (B3)
-```
-
-**回归断言**（B5.3 提交时）：
-- response code=200
-- response body 不含「JSON parse error」
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-B5.1** | step B5.1 提交 | code=200, recordId 非 NULL；DB 新增一条 status=pending | ☐ |
+| **TC-B5.2** | step B5.2 驳回 | DB 该 record status=rejected | ☐ |
+| **TC-B5.3** | step B5.3 重提 | code=200; response **不含** `JSON parse error` | ☐ |
+| **TC-B5.4** | FIX-3 regression（B5.3） | response body 不含 `JSON parse error` 字串 | ☐ |
+| **TC-B5.5** | finalDbAssert 3 行终态 | SQL 倒序 LIMIT 3 → row0 pending(B5.3), row1 rejected(B5.1), row2 approved(B3) | ☐ |
 
 ---
 
-## 负向测试（NA）— 校验后端拒绝路径
+## NA 负向：后端拒绝路径（7 子用例）
 
-### NA1 — LeadMentor 提交空 mentorIds 应被拒
-
-**操作端**：API 直接测（或 LM 弹窗不选任何 mentor 强行提交）
+### TC-NA1 LeadMentor 提交空 mentorIds → 400（2 子用例）
 
 **API**：
 ```http
@@ -509,20 +297,14 @@ POST /lead-mentor/job-overview/coaching/5221/assign-mentor
 { "mentorIds": [], "note": "empty" }
 ```
 
-**预期响应**：
-```json
-{ "msg": "请至少选择1位导师", "code": 400 }
-```
-
-**SQL 校验（DB 未变）**：
-```sql
-SELECT mentor_ids, status FROM osg_coaching WHERE coaching_id=5221;
--- 期望: mentor_ids='12866', status='assigned'（保持 A1 后的状态）
-```
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-NA1.1** | backend response | code=400，msg 含「请至少选择」 | ☐ |
+| **TC-NA1.2** | DB 未变 | coaching_5221 仍是 A1 后的 assigned 状态（mentor_ids='12866'） | ☐ |
 
 ---
 
-### NA2 — LeadMentor 提交不存在的 staffId 应被拒
+### TC-NA2 LeadMentor 提交未知 staffId → 400（2 子用例）
 
 **API**：
 ```http
@@ -530,16 +312,14 @@ POST /lead-mentor/job-overview/coaching/5221/assign-mentor
 { "mentorIds": [99999999], "note": "unknown" }
 ```
 
-**预期响应**：
-```json
-{ "msg": "员工主数据不存在，无法完成导师分配", "code": 400 }
-```
-
-**SQL 校验**：同 NA1，DB 未变。
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-NA2.1** | backend response | code=400，msg 含「员工主数据不存在」 | ☐ |
+| **TC-NA2.2** | DB 未变 | coaching_5221 仍是 assigned 状态 | ☐ |
 
 ---
 
-### NA3 — Mentor 给不存在的 student 提交课消应被拒
+### TC-NA3 Mentor 提交不存在的 student → 500（2 子用例）
 
 **API**：
 ```http
@@ -547,20 +327,14 @@ POST /mentor/class-records
 { "studentId": 99999999, "referenceId": 5221, "referenceType": "job_coaching", ... }
 ```
 
-**预期响应**：
-```json
-{ "msg": "学员不存在", "code": 500 }
-```
-
-**SQL 校验（DB 未新增 99999999 的 record）**：
-```sql
-SELECT COUNT(*) FROM osg_class_record WHERE student_id=99999999 AND mentor_id=12866;
--- 期望: 0
-```
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-NA3.1** | backend response | code=500，msg 含「学员不存在」 | ☐ |
+| **TC-NA3.2** | DB 未新增 99999999 record | SELECT COUNT(*) WHERE student_id=99999999 → 0 | ☐ |
 
 ---
 
-### NA5 — Admin 审批不存在的 record_id 应被拒
+### TC-NA5 Admin 审批不存在的 record → 500（1 子用例）
 
 **API**：
 ```http
@@ -568,74 +342,174 @@ PUT /admin/report/9999999/approve
 { "remark": "x" }
 ```
 
-**预期响应**：
-```json
-{ "msg": "课时记录不存在", "code": 500 }
-```
-
----
-
-## 用例总览表
-
-| 用例 | 操作端 | 主要验证 | DB 校验 | UI 跨端校验数 |
-|------|--------|---------|---------|--------------|
-| A0 | 5 端（只读） | 初始状态 | osg_coaching | 5 |
-| A1 | LeadMentor | 分配导师 | osg_coaching | 5 + 不变量 3 条 |
-| A3 | Mentor | 上报课消 | osg_class_record | 3 + 不变量 2 条 |
-| A4 | Admin | 审核通过 | osg_class_record | 2 + 不变量 1 条 |
-| A5 | Mentor | 再上报 | osg_class_record | — |
-| A6 | Admin | 驳回 | osg_class_record | — |
-| A7 | Mentor | 重提交 + FIX-3 弹窗验证 | osg_class_record | UI 断言 4 条 |
-| B0 | DB | 准备 mock | osg_mock_practice | 5 |
-| B1 | Student | 预约时间显示 (FIX-2) | — | UI 断言 2 条 |
-| B2 | Mentor | mock 列表 (FIX-1) | — | UI 断言 3 条 |
-| B3 | Mentor | mock 上报 | osg_class_record | — |
-| B4 | Admin | mock 通过 | osg_class_record | — |
-| B5 | Mentor→Admin→Mentor | 驳回+重提 | osg_class_record (3 行终态) | — |
-| NA1 | API | 空 mentorIds | DB 未变 | — |
-| NA2 | API | 未知 staffId | DB 未变 | — |
-| NA3 | API | 未知 student | DB 未变 | — |
-| NA5 | API | 未知 record | — | — |
-
-**总计 17 个用例。**
+| 编号 | 验证点 | 期望 | 通过 |
+|---|---|---|---|
+| **TC-NA5.1** | backend response | code=500，msg 含「课时记录不存在」 | ☐ |
 
 ---
 
 ## 跑测策略
 
-1. **逐条单跑**：每条用例独立，但 A 系列有顺序依赖（A3 需 A1 完成，A4 需 A3...）。建议按编号顺序跑。
-2. **每轮 reset**：跑完一轮后回到「每轮测试前数据 reset」执行 SQL，再跑下一轮。
-3. **失败排查**：
-   - DB 数据没变 → 查 backend 日志、看 response 是否有 code != 200
-   - UI 没显示 → 看 vite dev server 是否就绪 / token 是否注入 / page 路由是否正确
-   - 验证码失效 → 确认 `sys_config.sys.account.captchaEnabled = 'false'` + backend 已重启读取
-4. **记录 evidence**：每个用例完成后保留：
-   - DB 查询结果截图或 JSON
-   - 跨端 UI 截图（建议每端 fullPage）
-   - 失败时的 backend response body
+### 顺序
+
+A 系列有顺序依赖：A0 → A1 → A3 → A4 → A5 → A6 → A7
+B 系列也有：B0 → B1/B2（可并）→ B3 → B4 → B5
+NA 必须在 A1 之后跑（NA1/NA2 期望 DB 已 assigned 状态作为「未变」基线）
+
+### 每轮 reset
+
+跑完一整轮（57 子用例）后回到「每轮 reset SQL」执行，再跑下一轮
+
+### 失败排查
+
+| 现象 | 排查 |
+|---|---|
+| 登录验证码失效 | 确认 `sys_config.captchaEnabled='false'` + backend 已重启 |
+| Student 端 page 空白 | 看 vite 控制台是否 i18n 500（`packages/shared` 缺 vue-i18n） |
+| Mentor `/job-overview` 0 行 | 看 mentor token 是否 inject + page.goto URL 是否对 |
+| DB 数据没变 | 看 backend response.code 是否真 200 |
+
+### Evidence 留存（推荐）
+
+每个子用例通过/失败留：
+- DB 查询结果截图或 JSON 导出
+- 跨端 UI 截图（每端 fullPage）
+- 失败时 backend response body 完整 JSON
 
 ---
 
-## 已知设计偏差（非 bug，但需告知）
+## 已知设计偏差（非 bug，QA 不必再 raise）
 
 | 偏差 | 解释 |
 |---|---|
-| Student `/class-records` 显示「敬请期待」 | 学员端课程记录页面未交付，A3/A4 期望此占位（待页面交付后改回验真实记录） |
-| A0/A1 sidebar 「标签 + 数字」拆开显示 | 标签和数字分两个 DOM 节点（badge 样式），用例用 `expectVisible` 时按两个独立 token 分别验 |
-| 后端 AjaxResult 错误包装 HTTP 200 + body code 非 200 | NA3/NA5 预期 HTTP 仍是 200，看 body 里 `code` 字段判定真实错误 |
+| Student `/class-records` 显示「敬请期待」 | 学员端课程记录页面未交付，A3/A4 期望此占位 |
+| Sidebar「标签 + 数字」分两个节点 | 用例期望两个独立 token 都可见（如「待分配导师」+「2」） |
+| Backend AjaxResult 包装错误：HTTP 200 + body code 非 200 | NA3/NA5 期望 HTTP 仍是 200，看 body 里 `code` 字段判定 |
+| LM 端 `mentorIds` 入参用 staff_id 不是 user_id | A1/NA2 期望传 staff_id（osg_staff.staff_id），backend 内部转 user_id 写 DB |
 
 ---
 
-## 附录：API 端口快速 curl 模板
+## 附录 A：完整 57 子用例总览
 
-获取 token：
+| ID | 父用例 | 类型 | 操作端 | 主要验证点 |
+|---|---|---|---|---|
+| TC-A0.1 | A0 | dbAssert | DB | coaching_5221 初始 |
+| TC-A0.2 | A0 | crossEnd | Student | /job-tracking 表格 |
+| TC-A0.3 | A0 | crossEnd | LeadMentor | sidebar 待分配 2 |
+| TC-A0.4 | A0 | crossEnd | Mentor | sidebar 总览 5 |
+| TC-A0.5 | A0 | crossEnd | Assistant | 表格可见 |
+| TC-A0.6 | A0 | crossEnd | Admin | 待分配 21 |
+| TC-A1.1 | A1 | API response | LM | code=200 + mentorIds |
+| TC-A1.2 | A1 | dbAssert | DB | coaching status=assigned |
+| TC-A1.3 | A1 | invariant | UI | mentor 徽标 +1 |
+| TC-A1.4 | A1 | invariant | UI | admin 待分配 -1 |
+| TC-A1.5 | A1 | invariant | UI | LM 待分配 -1 |
+| TC-A1.6 | A1 | crossEnd | Student | 辅导导师 daoshi58 |
+| TC-A1.7 | A1 | crossEnd | LeadMentor | 待分配 1 |
+| TC-A1.8 | A1 | crossEnd | Mentor | 总览 6 + Morgan Stanley |
+| TC-A1.9 | A1 | crossEnd | Assistant | daoshi58 显示 |
+| TC-A1.10 | A1 | crossEnd | Admin | 待分配 20 |
+| TC-A3.1 | A3 | API response | Mentor | code=200 + recordId |
+| TC-A3.2 | A3 | dbAssert | DB | record pending/job_coaching |
+| TC-A3.3 | A3 | invariant | DB | 课消数 +1 |
+| TC-A3.4 | A3 | invariant | DB | 待审核 +1 |
+| TC-A3.5 | A3 | crossEnd | Mentor | 待审核可见 |
+| TC-A3.6 | A3 | crossEnd | Admin | 搜 hw01 待审核 |
+| TC-A4.1 | A4 | API response | Admin | code=200 |
+| TC-A4.2 | A4 | dbAssert | DB | status=approved |
+| TC-A4.3 | A4 | invariant | DB | 待审核 -1 |
+| TC-A4.4 | A4 | crossEnd | Mentor | 已上报课消 1 |
+| TC-A5.1 | A5 | dbAssert | DB | record pending |
+| TC-A5.2 | A5 | invariant | DB | 课消数 +1 |
+| TC-A6.1 | A6 | dbAssert | DB | status=rejected + remark |
+| TC-A7.1 | A7 | API response | Mentor | code=200 + recordId |
+| TC-A7.2 | A7 | dbAssert | DB | status=pending |
+| TC-A7.3 | A7 | invariant | DB | 课消数 +1 |
+| TC-A7.4 | A7 | FIX-3 regression | API | 无 JSON parse error |
+| TC-A7.5 | A7 | FIX-3 regression | API | 无类型不一致 |
+| TC-A7.6 | A7 | uiAssert | Mentor | 重提 modal 是 shared |
+| TC-B0.1 | B0 | dbAssert | DB | mock_practice scheduled |
+| TC-B0.2 | B0 | crossEnd | Student | gate B-Flow + daoshi58 |
+| TC-B0.3 | B0 | crossEnd | LeadMentor | hw01 + 模拟面试 |
+| TC-B0.4 | B0 | crossEnd | Mentor (FIX-1) | 上报课消 + 无确认按钮 |
+| TC-B0.5 | B0 | crossEnd | Assistant | hw01 可见 |
+| TC-B0.6 | B0 | crossEnd | Admin | 全部记录 tab hw01 |
+| TC-B1.1 | B1 | fix2Assert | Student | 预约时间真实值 |
+| TC-B2.1 | B2 | fix1Assert | Mentor | 列表 + 无确认 + 无 stats card |
+| TC-B3.1 | B3 | dbAssert | DB | mock record pending |
+| TC-B4.1 | B4 | dbAssert | DB | mock record approved |
+| TC-B5.1 | B5 | step submit | Mentor | B5.1 pending |
+| TC-B5.2 | B5 | step reject | Admin | B5.1 → rejected |
+| TC-B5.3 | B5 | step resubmit | Mentor | B5.3 code=200 |
+| TC-B5.4 | B5 | FIX-3 regression | API | 无 JSON parse error |
+| TC-B5.5 | B5 | finalDbAssert | DB | 3 行终态 pending/rejected/approved |
+| TC-NA1.1 | NA1 | API response | API | code=400 + msg |
+| TC-NA1.2 | NA1 | dbAssert | DB | coaching 未变 |
+| TC-NA2.1 | NA2 | API response | API | code=400 + 员工主数据 |
+| TC-NA2.2 | NA2 | dbAssert | DB | coaching 未变 |
+| TC-NA3.1 | NA3 | API response | API | code=500 + 学员不存在 |
+| TC-NA3.2 | NA3 | dbAssert | DB | 0 行新增 |
+| TC-NA5.1 | NA5 | API response | API | code=500 + 课时记录不存在 |
+
+**共 57 子用例**：6+10+6+4+2+1+6+6+1+1+1+1+5+2+2+2+1 = 57 ✓
+
+---
+
+## 附录 B：API curl 模板
+
 ```bash
+# 拿 token
 curl -X POST http://127.0.0.1:28080/login \
   -H 'Content-Type: application/json' \
   -d '{"username":"admin","password":"admin123"}'
+
+# 后续请求：
+# Authorization: Bearer <token>
 ```
 
-后续请求带：
-```http
-Authorization: Bearer <从上面拿到的 token>
-```
+---
+
+## 附录 C：两批工作 → 回归用例溯源（人工校验用）
+
+> 本节供 QA 校验「两批改造」每项回归点都被用例覆盖到。
+> 跑测时按 ID 勾选完，即可证明该批工作的所有改动有用例兜底。
+
+### 第 1 批：5 个 CASE 修复
+
+| 批次 ID | 修复内容 | 验证用例 ID | 期望结果（核心） |
+|---|---|---|---|
+| **CASE-1** | LM assign-mentor 后端接 staff_id（前端 frontend 也传 staffId） | TC-A1.1, TC-A1.2, TC-NA2.1 | 传 staffId=98187 → 200; 传 unknown staffId → 400「员工主数据不存在」 |
+| **CASE-2** | Admin `/career/mock-practice` 需切「全部记录」tab 才能看到已 scheduled 行 | TC-B0.6 | 切「全部记录」tab → hw01 + 「已安排」可见 |
+| **CASE-3** | POST `/mentor/class-records` 后端返 recordId（之前 `toAjax(int)` 丢失） | TC-A3.1, TC-A7.1, TC-B5.1, TC-B5.3 | response 含 `recordId` 字段（非 NULL） |
+| **CASE-4** | spec runner 处理 ui action + fix*Assert / uiAssert（之前 false-pass） | TC-A7.6, TC-B1.1, TC-B2.1 | A7 modal 标题=「上报课程记录」；B1 预约时间真实值；B2 列表无确认按钮 |
+| **CASE-5** | Sidebar badge「标签 + 数字」拆 token 验证 | TC-A0.3, TC-A0.4, TC-A0.6, TC-A1.7, TC-A1.8, TC-A1.10 | 「待分配导师」+「2」、「学员求职总览」+「5」分别可见 |
+
+### 第 2 批：Layer 3 invariants 真 eval + 负向路径 + 门禁卡死
+
+| 批次 ID | 改造内容 | 验证用例 ID | 期望结果（核心） |
+|---|---|---|---|
+| **LAYER3-A1** | A1 不变量真验（3 条）：UI 实时取 mentor/admin/LM 徽标数 | TC-A1.3, TC-A1.4, TC-A1.5 | post=pre+1 (mentor) / pre-1 (admin) / pre-1 (LM) |
+| **LAYER3-A3** | A3 不变量真验（2 条）：DB 实时 count | TC-A3.3, TC-A3.4 | 课消数+1，待审核数+1 |
+| **LAYER3-A4** | A4 不变量真验（1 条） | TC-A4.3 | 待审核数-1 |
+| **LAYER3-A5** | A5 不变量真验（1 条） | TC-A5.2 | 课消数+1 |
+| **LAYER3-A7** | A7 不变量真验（1 条） | TC-A7.3 | 课消数+1 |
+| **NEG-NA1** | LM 提交空 mentorIds 应 400 | TC-NA1.1, TC-NA1.2 | code=400「请至少选择」，DB 未变 |
+| **NEG-NA2** | LM 提交未知 staffId 应 400 | TC-NA2.1, TC-NA2.2 | code=400「员工主数据不存在」，DB 未变 |
+| **NEG-NA3** | Mentor 提交未知 studentId 应 500 | TC-NA3.1, TC-NA3.2 | code=500「学员不存在」，DB 0 新增 |
+| **NEG-NA5** | Admin 审批未知 recordId 应 500 | TC-NA5.1 | code=500「课时记录不存在」 |
+| **STRICT-A7** | fix*Assert / uiAssert 失败硬 RED（不再 evidence-only false-pass） | TC-A7.4, TC-A7.5, TC-A7.6 | 不出现 JSON parse error / 类型不一致 / 旧 modal selector |
+| **STRICT-B5** | FIX-3 regression strict | TC-B5.4 | B5.3 response 不含 JSON parse error |
+| **FIX3-AjaxResult** | Backend AjaxResult 包装错误时（HTTP 200 + body code != 200）spec 真验 body.code | TC-NA1.1, TC-NA2.1, TC-NA3.1, TC-NA5.1 | code 字段被 spec 取出且比对 |
+
+### 跨批次工作合计
+
+- **第 1 批**: 5 CASE → 覆盖 14 个子用例编号（去重后）
+- **第 2 批**: 12 个改造点 → 覆盖 22 个子用例编号
+- **两批合计**：36 个子用例直接覆盖回归点；其余 21 个子用例（dbAssert / 跨端可见性等）是基础流程验证，不依赖 fix 但门禁必须过
+
+### 校验策略
+
+QA 跑完所有 57 子用例后：
+1. 看附录 C 表，每个「批次 ID」对应的「验证用例 ID」是否**全部勾选通过**
+2. 任一批次 ID 下有任何用例未通过 → 该 fix 可能有 regression，需排查
+3. CASE-1 / NEG-NA2 同时验证 staff_id contract（正反两侧），互为兜底
