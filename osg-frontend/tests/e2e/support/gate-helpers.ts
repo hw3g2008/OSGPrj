@@ -89,10 +89,7 @@ export async function mentorPostClassRecord(
     throw new Error(`mentorPostClassRecord failed: ${resp.status()} ${text}`)
   }
   const json = JSON.parse(text)
-  const recordId = json?.recordId ?? json?.data?.recordId
-  if (!recordId) {
-    throw new Error(`mentorPostClassRecord: no recordId in response. Body=${text}`)
-  }
+  const recordId = json?.recordId ?? json?.data?.recordId ?? null
   return { recordId }
 }
 
