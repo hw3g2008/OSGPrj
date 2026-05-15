@@ -151,6 +151,21 @@ pnpm test -- packages/admin/src/__tests__/dict-data-i18n
 pnpm test -- packages/admin/src/__tests__/role-name-i18n
 ```
 
+### P0.4b 生成 check-glossary.mjs（worker 自决质量护栏）
+
+写 `osg-frontend/scripts/check-glossary.mjs`：
+
+- 入参：`--staged`（扫 git staged 文件）或 `--all`（全工程 locale）
+- 逻辑：
+  1. 读 `scripts/terms.glossary.json`（强制术语字典）
+  2. 扫目标文件中 `t('key')` 调用对应 locale 值
+  3. 若 locale 值含 glossary 禁用译法（如"Tutor / Course"等），exit 1 + 列出违规
+  4. 若 locale 值译"导师"等中文键时未用 glossary 强制译法，exit 1
+- worker 每 commit 前必跑 `node scripts/check-glossary.mjs --staged`
+- CI 也接入这工具（Phase 2 §6.P2.3）
+
+无此工具，worker 自决会跑偏 — Phase 0 必做。
+
 ### P0.5 Commit 1
 
 ```
@@ -242,12 +257,36 @@ key 走 `common.shared.*`。**严格遵守 `i18n-glossary.md`**。
 10. git push origin main（push 失败因 race，goto 1）
 ```
 
-#### 阻塞 / 退出条件
-- 同模块测试连挂 2 次 → 标 TODO 跳过
-- 必改业务逻辑才能 i18n → 标 TODO 跳过
-- 需改 shared 组件 → 停下输出 `BLOCKED: <reason>`
-- 同名 common.* key 冲突 → 停下输出 `BLOCKED`
-- 该端所有模块完成 → 输出完成报告，退出
+#### 自决与跳过条件（一路干到底，禁止停摆等仲裁）
+
+worker 不允许因下列情况停摆等 orchestrator。一律 **TODO 跳过该模块、继续下一个**，记录到端级日志 `osg-frontend/docs/i18n-todo-<END>.md`：
+
+| 触发 | worker 自决动作 | 跳过粒度 |
+|---|---|---|
+| 同模块测试连挂 2 次 | 标 `// TODO(i18n-retry)` + 日志 | 模块 |
+| 必改业务逻辑才能 i18n（字符串判断 / form 校验分支等） | 标 `// TODO(i18n-refactor)` + 日志 | 文件 |
+| 需改 shared/src/ 下非 locales 文件 | 标 `// TODO(i18n-shared)` + 日志 | 模块 |
+| 同名 `common.*` key 想新增但已存在不同含义 | **自动换名**：改用 `common.<end-prefix>.*` 或 `<END>.action.*`，加 NOTE 日志 | key |
+| 术语翻译有歧义（glossary 没覆盖）| 暂用 glossary 最近义项 + 日志「待人审」 | key |
+
+**红线（worker 不可自决放宽）**：
+- ❌ 违反 `i18n-glossary.md` 强制术语（"导师" 翻 Tutor 直接错）
+- ❌ 测试红的代码 commit（标 TODO 跳模块可以，但不许带红 commit）
+- ❌ 修改业务逻辑（标 TODO 而非强行改）
+- ❌ 单 commit > 30 文件
+
+**质量护栏（worker 每 commit 前自检）**：
+```bash
+node osg-frontend/scripts/check-glossary.mjs --staged    # 术语合规（Phase 0 生成）
+pnpm test -- packages/<END>/src/views/<module>           # 测试绿
+node osg-frontend/scripts/extract-i18n.mjs --check <path># 0 硬编码或仅 TODO
+```
+
+任一未过 → 不许 commit，回 SOP 第 3-7 步重做。
+
+**退出条件**：
+- 该端所有模块走完一遍（含 TODO 跳过的）→ 输出完成报告（≤ 500 字），退出
+- 完成报告必须列出所有 TODO 条目 + 端级日志路径
 
 #### 进度记录
 每完成一模块在本文档末尾「进度跟踪」追加：
@@ -257,12 +296,10 @@ key 走 `common.shared.*`。**严格遵守 `i18n-glossary.md`**。
 
 ### orchestrator 在 worker 并行期间做的事
 
-- **不亲自改 view 代码**（除非 worker 全挂）
-- 每 30 min `git log --oneline -20` 查 worker 进度
-- 监听 `BLOCKED` 输出，及时仲裁：
-  - common.json key 冲突 → 决定归属，通知双方
-  - shared 改动 → 停所有 worker → 自己改 shared → commit + push → 重启 worker
-  - 术语争议 → 以 glossary 为准，强制驳回违规
+- **不亲自改 view 代码**（worker 自决，一路干到底）
+- 每 30 min `git log --oneline -20` 查进度（**不用 `--stat`** 省 token）
+- worker 已自决跳过，orchestrator 期间不仲裁
+- 5 worker 全部完成 → 进 Phase 2，先收 TODO 兜底（见 §11）
 
 ### Worker DoD（每端）
 
@@ -354,18 +391,118 @@ key 走 `common.shared.*`。**严格遵守 `i18n-glossary.md`**。
 
 | 风险 | 影响 | 缓解 |
 |---|---|---|
-| worker 违反术语表 | 翻译质量差，需返工 | CI 加 `check-glossary.mjs` 拦截；orchestrator 监听强制驳回 |
-| worker 改业务逻辑 | bug 风险 | SOP 明禁；review 时关注 diff |
-| `common.json` 同名 key 冲突 | worker 阻塞 | worker BLOCKED → orchestrator 仲裁；必要时拆 `common.<sub>.json` |
-| shared 组件需改 | 全 worker 停摆 | orchestrator 处理后立即重启；尽量 Phase 0 一次到位 |
-| 业务字符串判断（`if (msg === '失败')`）t() 化破坏分支 | 功能损坏 | SOP 明禁；标 TODO 待重构成 errorCode |
+| worker 违反术语表 | 翻译质量差 | worker commit 前自跑 `check-glossary.mjs --staged` 自检；P2 CI lint 兜底 |
+| worker 改业务逻辑 | bug 风险 | SOP 明禁；改业务必标 TODO 跳过；Phase 2 review TODO 时统一处理 |
+| `common.json` 同名 key 冲突 | 写入歧义 | worker 自决换名（加 `<end-prefix>.` 或挪到 `<END>.*`），加日志记录 |
+| shared 组件需改 | 该模块卡住 | worker 标 `TODO(i18n-shared)` 跳过，写 `i18n-todo-<END>.md`；Phase 2 orchestrator 批处理 |
+| 业务字符串判断（`if (msg === '失败')`）t() 化破坏分支 | 功能损坏 | worker 标 `TODO(i18n-refactor)` 跳过文件；Phase 2 重构后再 i18n |
 | 翻译质量（机翻不准） | 用户体验差 | review-list 132 条人审；P2 全流程手测兜底 |
 | push race（5 worker 同时 push） | push 失败需 pull-rebase | SOP 第 10 步明示 retry |
-| 时间超预算 | 任务拖延 | 单端连挂 2 次硬跳过，不死磕；Phase 2 可拆 ticket 分发 |
+| 时间超预算 | 任务拖延 | 单端连挂 2 次硬跳过，TODO 兜底；orchestrator 不阻塞 |
+| **worker 自决跑偏（红线放宽）** | **质量崩** | check-glossary 必跑 + 测试必绿 + commit ≤ 30 文件三道护栏；任一失守 commit 拒绝 |
+| **orchestrator 上下文撑爆** | 任务中断 | 见 §11 token 预算条款 |
 
 ---
 
-## 10. 回滚
+## 10. token 预算与节约（5 agent 并行下的瓶颈）
+
+每个 sub-agent 有独立 200K 上下文，互不影响 orchestrator。**真正的瓶颈是 orchestrator 自己**。约束：
+
+### orchestrator 必守
+
+| 场景 | 节约策略 |
+|---|---|
+| Phase 0 改 shared 组件 | 扫一个 → 改一个 → commit 一个，不批量 read |
+| 仲裁 TODO 时 read 冲突文件 | 用 `Read(offset, limit)` 只读 ±20 行邻域，不够再扩 |
+| Phase 1 期间查 worker 进度 | `git log --oneline -10`，**禁用** `--stat` / `-p` |
+| 读 locale 文件 | 必须 offset/limit，全文几千行别整读 |
+| 收 worker 完成报告 | 强制 `Final report ≤ 500 words` |
+| Phase 2 review-list 132 条 | 分批处理，每批 ≤ 20 条 |
+
+### worker 必守
+
+| 场景 | 节约策略 |
+|---|---|
+| 扫硬编码 | `extract-i18n.mjs` 输出按模块切片，不全量 |
+| 翻译查表 | 查 `terms.glossary.json` 直接取 key，不批量 read csv |
+| 写 locale | Edit 局部追加，不 Write 整文件覆盖 |
+| 完成报告 | ≤ 500 字，列 commit 数 / 文件数 / TODO 数 / 端级日志路径 |
+
+### 报警阈值
+
+- orchestrator 上下文 > 150K → 主动 `/compress`（或重启会话延续 plan）
+- 任一 worker 跑偏 token > 100K → 强制让其退出并交接给新 worker
+
+---
+
+## 11. Worker 自决与 TODO 兜底机制
+
+### 核心原则
+
+worker 一路干到底，**不停摆等仲裁**。所有阻塞情况自决跳过 + 记录到端级 TODO 日志。Phase 2 orchestrator 集中清理。
+
+### 端级 TODO 日志结构
+
+每个 worker 维护：`osg-frontend/docs/i18n-todo-<END>.md`
+
+格式：
+```markdown
+# i18n TODO — <END>
+
+## i18n-retry（测试连挂跳过）
+- [ ] packages/<END>/src/views/<module>/<file>.vue  原因：<具体测试名>挂 2 次
+
+## i18n-refactor（业务逻辑依赖）
+- [ ] packages/<END>/src/views/<module>/<file>.vue  原因：if (msg === '失败') 字符串判断需先重构成 errorCode
+
+## i18n-shared（需改 shared）
+- [ ] packages/<END>/src/views/<module>/<file>.vue  原因：依赖 shared/<component> 文案，shared 该组件未完成 t() 化
+
+## i18n-glossary-gap（术语表未覆盖）
+- [ ] key: `<END>.foo.bar`  zh: "xxx"  暂用译法："yyy"  原因：glossary 无定义，待人审
+
+## key-rename（common.* 冲突自决改名）
+- [ ] 原想用 `common.action.submit`，已有不同含义；改用 `<END>.action.submit`
+```
+
+### Phase 2 TODO 兜底流程（orchestrator 串行）
+
+按以下顺序清理：
+
+1. **i18n-shared**（最优先）：orchestrator 改 shared 组件 → 各端 worker 标记的模块重新 t() 化（orchestrator 自己批处理，不再开 worker）
+2. **i18n-refactor**：评估是否重构字符串判断 → 重构则 i18n 化，不重构则保留 TODO 至代码生命周期末
+3. **i18n-retry**：单独 debug 测试，修后 i18n 化
+4. **i18n-glossary-gap**：补 glossary → 更新 terms.glossary.json → 修对应 locale
+5. **key-rename**：复审是否需要规整 key 命名
+
+### 自决红线（worker 不可触碰）
+
+```
+✅ 可自决：跳过模块、换 key 名、暂用译法、加 TODO 注释
+❌ 不可自决：放宽术语表、commit 红测试、改业务代码、超 30 文件
+```
+
+每 commit 前三道护栏自检：
+
+```bash
+# 1. 术语合规
+node osg-frontend/scripts/check-glossary.mjs --staged
+[[ $? -eq 0 ]] || exit 1
+
+# 2. 测试绿
+pnpm test -- packages/<END>/src/views/<module>
+[[ $? -eq 0 ]] || exit 1
+
+# 3. 0 硬编码（或仅 TODO 标注）
+node osg-frontend/scripts/extract-i18n.mjs --check packages/<END>/src/views/<module>
+[[ $? -eq 0 ]] || exit 1
+```
+
+任一失守 → 不许 commit，回 SOP 重做。
+
+---
+
+## 12. 回滚
 
 每 commit 都是 atomic。回滚方式：
 - 单 commit 回滚：`git revert <sha>`
@@ -376,10 +513,11 @@ key 走 `common.shared.*`。**严格遵守 `i18n-glossary.md`**。
 
 ---
 
-## 11. 完成定义（总任务 DoD）
+## 13. 完成定义（总任务 DoD）
 
 - [ ] Phase 0 完成检查清单全勾
 - [ ] 5 端 worker DoD 全通过
+- [ ] 5 端 `i18n-todo-<END>.md` 已批处理（§11 兜底流程跑完，余下条目仅"长期保留"项）
 - [ ] LangSwitcher 上线
 - [ ] antd + dayjs locale 联动
 - [ ] CI i18n lint 上线
@@ -391,7 +529,7 @@ key 走 `common.shared.*`。**严格遵守 `i18n-glossary.md`**。
 
 ---
 
-## 12. 进度跟踪
+## 14. 进度跟踪
 
 > Worker 每完成一模块在此追加一行。Orchestrator 阶段切换时打 milestone。
 
@@ -436,3 +574,4 @@ key 走 `common.shared.*`。**严格遵守 `i18n-glossary.md`**。
 |---|---|---|
 | 2026-04~05 | v1 | 旧版（已弃用），保留在 `i18n-execution-plan-v1.md` |
 | 2026-05-15 | v2 | 重写。架构改 locale 模块化、直接 main、5 worker 并行、强制术语表、运行时切换 |
+| 2026-05-16 | v2.1 | worker 自决与 TODO 兜底机制（不停摆等仲裁）+ token 预算与节约 + 质量护栏三道线 + check-glossary.mjs（Phase 0 P0.4b 新增）+ DoD 加 TODO 批处理条款 + 章节重编号 §10-§14 |
