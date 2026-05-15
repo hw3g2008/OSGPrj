@@ -149,10 +149,22 @@ describe('mentor courses behavior', () => {
     expect(wrapper.text()).toContain('重新提交')
   })
 
-  it('opens the confirm modal after resubmitting from the reject modal', async () => {
+  // 2026-05-15 FIX-3: 驳回后"重新提交"改走 shared ClassReportFlowModal（经 ReportModal 包装），
+  // 不再渲染 mentor 端自有的 inline confirm modal。原 spec 期望 #confirm-class-type 等内嵌字段
+  // 已不存在 — 改为断言点击「重新提交」后 ReportModal 出现，prefilled 字段透传到下层。
+  it('opens shared ReportModal with prefilled fields after resubmitting from reject modal', async () => {
     vi.mocked(http.get).mockImplementation(async (url: string) => {
       if (url === '/mentor/class-records/list') {
-        return { rows: [createCourseRow({ status: 'rejected', reviewRemark: '课程时长与学员反馈不符' })] }
+        return {
+          rows: [
+            createCourseRow({
+              status: 'rejected',
+              reviewRemark: '课程时长与学员反馈不符',
+              referenceType: 'mock_interview',
+              referenceId: 7001,
+            }),
+          ],
+        }
       }
       return { rows: [] }
     })
@@ -160,8 +172,7 @@ describe('mentor courses behavior', () => {
     const wrapper = mount(CoursesPage, mountOptions)
     await flushPromises()
 
-    const rejectButton = findButton(wrapper, '查看原因')
-    await rejectButton!.trigger('click')
+    await findButton(wrapper, '查看原因')!.trigger('click')
     await flushPromises()
 
     const resubmitButton = findButton(wrapper, '重新提交')
@@ -170,53 +181,20 @@ describe('mentor courses behavior', () => {
     await resubmitButton!.trigger('click')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('确认课程并填写反馈')
-    expect(wrapper.text()).toContain('请先选择课程类型，将显示对应的反馈表单')
-    expect(wrapper.find('#confirm-class-type').exists()).toBe(true)
-  })
+    // 旧 inline confirm modal 已删除
+    expect(wrapper.find('#confirm-class-type').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('确认课程并填写反馈')
 
-  it('submits a real resubmit payload from the confirm modal', async () => {
-    vi.mocked(http.get).mockImplementation(async (url: string) => {
-      if (url === '/mentor/class-records/list') {
-        return { rows: [createCourseRow({ status: 'rejected', reviewRemark: '课程时长与学员反馈不符' })] }
-      }
-      return { rows: [] }
-    })
-    vi.mocked(http.post).mockResolvedValue({ code: 200 })
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
+    // shared ClassReportFlowModal（经 ReportModal 包装）应出现
+    const flowModalRoot = document.querySelector('[data-surface-id="shared-class-report-flow-modal"]')
+        || document.querySelector('.class-report-flow-modal')
+    expect(flowModalRoot, 'expected shared ClassReportFlowModal to render').toBeTruthy()
 
-    const wrapper = mount(CoursesPage, mountOptions)
-    await flushPromises()
-
-    await findButton(wrapper, '查看原因')!.trigger('click')
-    await flushPromises()
-    await findButton(wrapper, '重新提交')!.trigger('click')
-    await flushPromises()
-
-    await wrapper.get('#confirm-class-type').setValue('mock_interview')
-    await wrapper.get('#confirm-class-date').setValue('2026-03-21')
-    await wrapper.get('#confirm-class-duration').setValue('1.5')
-    await wrapper.get('#confirm-student-performance').setValue('优秀')
-    await wrapper.get('#confirm-company-position').setValue('Goldman Sachs / IB Analyst')
-    await wrapper.get('#confirm-feedback').setValue('重新提交后的真实反馈')
-    await flushPromises()
-
-    await findButton(wrapper, '确认并提交反馈')!.trigger('click')
-    await flushPromises()
-
-    expect(http.post).toHaveBeenCalledWith('/mentor/class-records', expect.objectContaining({
-      studentId: 843,
-      studentName: 'Course Student',
-      classDate: '2026-03-21',
-      durationHours: 1.5,
-      courseType: 'mock_interview',
-      classStatus: 'mock_interview',
-      companyOrPosition: 'Goldman Sachs / IB Analyst',
-      feedbackContent: '重新提交后的真实反馈',
-    }))
-    expect(alertSpy).toHaveBeenCalled()
-
-    alertSpy.mockRestore()
+    // 旧 inline POST 路径已不存在 — 提交逻辑下沉到 ClassReportFlowModal 内部
+    expect(http.post).not.toHaveBeenCalledWith(
+      '/mentor/class-records',
+      expect.objectContaining({ feedbackContent: expect.any(String) }),
+    )
   })
 
   // 删：mentor ReportModal 已重构为 shared ClassReportFlowModal 的薄封装，

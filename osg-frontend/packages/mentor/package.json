@@ -12,9 +12,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@osg/shared": "workspace:*",
     "@ant-design/icons-vue": "^7.0.0",
     "@mdi/font": "^7.4.47",
+    "@osg/shared": "workspace:*",
     "ant-design-vue": "^4.0.0",
     "dayjs": "^1.11.0",
     "pinia": "^2.1.0",
@@ -24,6 +24,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.0",
     "@vitest/coverage-v8": "^1.0.0",
+    "@vue/server-renderer": "^3.5.27",
     "@vue/test-utils": "^2.4.0",
     "jsdom": "^22.1.0",
     "sass": "^1.69.0",

@@ -101,8 +101,15 @@
       </a-table>
     </a-card>
 
-    <!-- 上报弹窗 -->
-    <ReportModal v-if="showReportModal" @close="showReportModal = false" @submitted="onReportSubmitted" />
+    <!-- 上报弹窗（同时承载新建上报 + 驳回后重新提交，复用 shared ClassReportFlowModal） -->
+    <ReportModal
+      v-if="showReportModal"
+      :prefilled-student-id="reportPrefill.studentId"
+      :prefilled-reference-type="reportPrefill.referenceType"
+      :prefilled-reference-id="reportPrefill.referenceId"
+      @close="closeReportModal"
+      @submitted="onReportSubmitted"
+    />
 
     <a-modal
       v-model:open="detailModal.visible"
@@ -201,173 +208,11 @@
         </div>
         <div class="modal-footer">
           <a-button @click="closeRejectModal">关闭</a-button>
-          <a-button type="primary" style="margin-left:8px" @click="openConfirmModalFromReject">重新提交</a-button>
+          <a-button type="primary" style="margin-left:8px" @click="openReportModalFromReject">重新提交</a-button>
         </div>
       </div>
     </a-modal>
 
-    <a-modal
-      v-model:open="showConfirmModal"
-      wrap-class-name="osg-modal-form"
-      :width="750"
-      :footer="null"
-      :title="null"
-      :closable="false"
-      :body-style="{ padding: 0 }"
-      :get-container="false"
-      :destroy-on-close="true"
-      @cancel="closeConfirmModal"
-    >
-      <div id="modal-class-confirm">
-        <div class="modal-header modal-header--confirm">
-          <span class="modal-title"><i class="mdi mdi-check-circle" /> 确认课程并填写反馈</span>
-          <button class="modal-close" type="button" @click="closeConfirmModal">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="confirm-meta">
-            <div>
-              <span class="confirm-meta-label">学员</span>
-              <div class="confirm-meta-value">{{ confirmRecord?.studentName || '张三' }} ({{ confirmRecord?.studentId || '12766' }})</div>
-            </div>
-            <div>
-              <span class="confirm-meta-label">预约时间</span>
-              <div class="confirm-meta-value">{{ confirmRecord?.classDate ? formatDate(confirmRecord.classDate) : '12/18/2025 14:00' }}</div>
-            </div>
-            <div>
-              <span class="confirm-meta-label">公司/岗位</span>
-              <div class="confirm-meta-value">{{ confirmRecord?.contentType || 'Goldman Sachs / IB' }}</div>
-            </div>
-          </div>
-
-          <div class="form-grid confirm-grid">
-            <div class="form-group">
-              <label class="form-label">课程类型<span class="req">*</span></label>
-              <select
-                id="confirm-class-type"
-                v-model="confirmClassType"
-                class="form-select"
-                @change="switchConfirmFeedbackForm(confirmClassType)"
-              >
-                <option value="">请选择课程类型</option>
-                <option value="mock_interview">模拟面试</option>
-                <option value="mock_midterm">模拟期中考试</option>
-                <option value="networking">人际关系期中考试</option>
-                <option value="written_test">笔试辅导</option>
-                <option value="resume_update">简历更新</option>
-                <option value="basic">基础课程</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">实际上课日期<span class="req">*</span></label>
-              <input id="confirm-class-date" v-model="confirmDate" type="date" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">实际上课时长（小时）<span class="req">*</span></label>
-              <input id="confirm-class-duration" v-model.number="confirmDuration" type="number" class="form-input" step="0.5" min="0.5" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">学员表现<span class="req">*</span></label>
-              <select id="confirm-student-performance" v-model="confirmPerformance" class="form-select">
-                <option value="">请选择</option>
-                <option>优秀</option>
-                <option>良好</option>
-                <option>一般</option>
-                <option>需改进</option>
-              </select>
-            </div>
-          </div>
-
-          <hr class="confirm-divider" />
-
-          <h4 class="confirm-feedback-title"><i class="mdi mdi-comment-text" /> 课程反馈</h4>
-
-          <div v-if="!confirmClassType" id="feedback-default" class="confirm-feedback-default">
-            <i class="mdi mdi-file-document-outline confirm-feedback-icon" />
-            <p>请先选择课程类型，将显示对应的反馈表单</p>
-          </div>
-
-          <div v-else-if="confirmFeedbackView === 'mock'" id="feedback-mock" class="confirm-feedback-panel">
-            <div class="confirm-feedback-banner confirm-feedback-banner--mock">入职面试辅导反馈</div>
-            <div class="form-group">
-              <label class="form-label">面试公司/岗位<span class="req">*</span></label>
-              <a-input
-                id="confirm-company-position"
-                v-model:value="confirmCompanyOrPosition"
-                placeholder="如:Goldman Sachs / IB Analyst"
-              />
-            </div>
-            <div class="form-group">
-              <label class="form-label">辅导内容<span class="req">*</span></label>
-              <a-textarea
-                id="confirm-feedback"
-                v-model:value="confirmFeedback"
-                :rows="3"
-                placeholder="请描述本次辅导的主要内容"
-              />
-            </div>
-          </div>
-
-          <div v-else-if="confirmFeedbackView === 'regular'" id="feedback-regular" class="confirm-feedback-panel">
-            <div class="confirm-feedback-banner confirm-feedback-banner--regular">笔试辅导反馈</div>
-            <div class="form-group">
-              <label class="form-label">笔试公司/岗位<span class="req">*</span></label>
-              <a-input
-                id="confirm-company-position"
-                v-model:value="confirmCompanyOrPosition"
-                placeholder="如:McKinsey / Business Analyst"
-              />
-            </div>
-            <div class="form-group">
-              <label class="form-label">辅导内容<span class="req">*</span></label>
-              <a-textarea
-                id="confirm-feedback"
-                v-model:value="confirmFeedback"
-                :rows="3"
-                placeholder="请描述本次辅导的主要内容"
-              />
-            </div>
-          </div>
-
-          <div v-else-if="confirmFeedbackView === 'networking'" id="feedback-networking" class="confirm-feedback-panel">
-            <div class="confirm-feedback-banner confirm-feedback-banner--networking">人脉拓展反馈模板</div>
-            <div class="form-group">
-              <label class="form-label">拓展情况<span class="req">*</span></label>
-              <a-textarea
-                id="confirm-feedback"
-                v-model:value="confirmFeedback"
-                :rows="3"
-                placeholder="请描述本次人脉拓展的情况"
-              />
-            </div>
-          </div>
-
-          <div v-else id="feedback-resume" class="confirm-feedback-panel">
-            <div class="confirm-feedback-banner confirm-feedback-banner--resume">简历修改反馈模板</div>
-            <div class="form-group">
-              <label class="form-label">修改要点<span class="req">*</span></label>
-              <a-textarea
-                id="confirm-feedback"
-                v-model:value="confirmFeedback"
-                :rows="3"
-                placeholder="请描述本次简历修改的主要内容"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer modal-footer--confirm">
-          <a-button @click="closeConfirmModal">取消</a-button>
-          <a-button
-            type="primary"
-            style="margin-left:8px"
-            :loading="confirmSubmitting"
-            :disabled="!confirmCanSubmit || confirmSubmitting"
-            @click="submitConfirm"
-          >
-            {{ confirmSubmitting ? '提交中...' : '确认并提交反馈' }}
-          </a-button>
-        </div>
-      </div>
-    </a-modal>
   </div>
 </template>
 
@@ -376,55 +221,19 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { ClassRecordStatusTag } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
+import type { ReferenceType } from '@osg/shared/types/classReport'
 import ReportModal from './components/ReportModal.vue'
 
 const activeTab = ref('all')
 const showReportModal = ref(false)
-const showConfirmModal = ref(false)
 const records = ref<any[]>([])
 const summaryRecords = ref<any[]>([])
 const detailModal = ref<{ visible: boolean; record: any | null }>({ visible: false, record: null })
 const rejectModal = ref<{ visible: boolean; reason: string; record: any | null }>({ visible: false, reason: '', record: null })
-const confirmRecord = ref<any | null>(null)
+const reportPrefill = ref<{ studentId?: number; referenceType?: ReferenceType; referenceId?: number }>({})
 const filters = ref({ keyword: '', coachingType: '', contentType: '', timeRange: '' })
 const fullListParams = { pageNum: 1, pageSize: 1000 }
 const contentTypes = ['新简历', '简历更新', 'Case准备', '模拟面试', '人际关系期中考试', '模拟期中考试', 'Behavioral', 'Technical', '其他']
-const confirmClassType = ref('')
-const confirmDate = ref('')
-const confirmDuration = ref(1.5)
-const confirmPerformance = ref('')
-const confirmCompanyOrPosition = ref('')
-const confirmFeedback = ref('')
-const confirmScore = ref('')
-const confirmProgress = ref('')
-const confirmSubmitting = ref(false)
-const confirmFeedbackView = computed(() => {
-  if (!confirmClassType.value) {
-    return 'default'
-  }
-  if (confirmClassType.value === 'mock_interview') {
-    return 'mock'
-  }
-  if (confirmClassType.value === 'networking') {
-    return 'networking'
-  }
-  if (confirmClassType.value === 'resume_update') {
-    return 'resume'
-  }
-  return 'regular'
-})
-const confirmCanSubmit = computed(() => {
-  if (!confirmClassType.value || !confirmDate.value || Number(confirmDuration.value) <= 0 || !confirmPerformance.value) {
-    return false
-  }
-  if (confirmFeedbackView.value === 'mock' || confirmFeedbackView.value === 'regular') {
-    return Boolean(confirmCompanyOrPosition.value && confirmFeedback.value)
-  }
-  if (confirmFeedbackView.value === 'networking') {
-    return Boolean(confirmFeedback.value)
-  }
-  return Boolean(confirmFeedback.value)
-})
 
 const tabs = computed(() => {
   const pending = summaryRecords.value.filter(r => r.reviewStatus === 'pending').length
@@ -647,84 +456,23 @@ function closeRejectModal() {
   rejectModal.value = { visible: false, reason: '', record: null }
 }
 
-function openConfirmModalFromReject() {
-  confirmRecord.value = rejectModal.value.record
-  showConfirmModal.value = true
-  resetConfirmForm()
+// FIX-3 (2026-05-15): 驳回后"重新提交"改走 shared ClassReportFlowModal（经 ReportModal 包装），
+// 不再裸 POST /mentor/class-records 绕过 validator。原 inline confirm modal 含 courseType
+// 映射不全 + classStatus / referenceType / referenceId 缺失，触发 backend validator 400。
+function openReportModalFromReject() {
+  const record = rejectModal.value.record
+  reportPrefill.value = {
+    studentId: record?.studentId ?? undefined,
+    referenceType: (record?.referenceType ?? undefined) as ReferenceType | undefined,
+    referenceId: record?.referenceId ?? undefined,
+  }
+  showReportModal.value = true
   closeRejectModal()
 }
 
-function closeConfirmModal() {
-  showConfirmModal.value = false
-  confirmRecord.value = null
-  resetConfirmForm()
-}
-
-function switchConfirmFeedbackForm(value: string) {
-  confirmClassType.value = value
-  confirmCompanyOrPosition.value = ''
-  confirmFeedback.value = ''
-  confirmScore.value = ''
-  confirmProgress.value = ''
-}
-
-function resetConfirmForm() {
-  confirmClassType.value = ''
-  confirmDate.value = confirmRecord.value?.classDate ? String(confirmRecord.value.classDate).slice(0, 10) : new Date().toISOString().slice(0, 10)
-  confirmDuration.value = Number(confirmRecord.value?.durationHours ?? 1.5)
-  confirmPerformance.value = ''
-  confirmCompanyOrPosition.value = ''
-  confirmFeedback.value = ''
-  confirmScore.value = ''
-  confirmProgress.value = ''
-  confirmSubmitting.value = false
-}
-
-function mapConfirmClassStatus(value: string) {
-  return {
-    mock_interview: 'mock_interview',
-    mock_midterm: 'mock_midterm',
-    networking: 'networking_midterm',
-    written_test: 'written_test',
-    resume_update: 'resume_update',
-    basic: 'basic',
-  }[value] || value
-}
-
-async function submitConfirm() {
-  if (!confirmRecord.value) {
-    return
-  }
-
-  confirmSubmitting.value = true
-  try {
-    const duration = Number(confirmDuration.value)
-    const rate = Number(confirmRecord.value.rate ?? 600) || 600
-    const classStatus = mapConfirmClassStatus(confirmClassType.value)
-    await http.post('/mentor/class-records', {
-      studentId: confirmRecord.value.studentId,
-      studentName: confirmRecord.value.studentName,
-      classDate: confirmDate.value,
-      durationHours: duration,
-      weeklyHours: duration,
-      courseType: confirmClassType.value,
-      courseSource: 'mentor',
-      classStatus,
-      feedback: confirmFeedback.value,
-      feedbackContent: confirmFeedback.value,
-      companyOrPosition: confirmCompanyOrPosition.value,
-      score: confirmScore.value,
-      progress: confirmProgress.value,
-      rate: String(rate),
-      totalFee: duration * rate,
-    })
-    window.alert('提交成功！\n\n课程已确认，反馈已提交。')
-    closeConfirmModal()
-    await fetchSummaryRecords()
-    await fetchRecords()
-  } finally {
-    confirmSubmitting.value = false
-  }
+function closeReportModal() {
+  showReportModal.value = false
+  reportPrefill.value = {}
 }
 
 async function showDetail(record: any) {
@@ -774,7 +522,7 @@ async function fetchSummaryRecords() {
 }
 
 async function onReportSubmitted() {
-  showReportModal.value = false
+  closeReportModal()
   await fetchSummaryRecords()
   await fetchRecords()
 }
