@@ -1,77 +1,153 @@
 /**
- * Extract all Chinese strings from .vue / .ts / .tsx source files.
- * Output: scripts/i18n-map.csv  (columns: key, zh, en, file, line)
+ * Extract / detect Chinese strings from .vue / .ts / .tsx source files.
  *
- * Usage:  node scripts/extract-i18n.mjs
+ * Usage:
+ *   node scripts/extract-i18n.mjs                          # default: scan all packages, write i18n-map.csv
+ *   node scripts/extract-i18n.mjs --module <path>          # scan a single package / directory
+ *   node scripts/extract-i18n.mjs --check [<path>]         # report-only mode; exit 1 if hardcoded zh found (excluding TODO-marked lines)
+ *   node scripts/extract-i18n.mjs --module <path> --check  # combined
  */
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PKG_DIR = path.resolve(__dirname, '../packages');
-const OUT_CSV = path.resolve(__dirname, 'i18n-map.csv');
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const ROOT_PKG = path.resolve(__dirname, '../packages')
+const DEFAULT_OUT = path.resolve(__dirname, 'i18n-map.csv')
 
-// Matches a Chinese "phrase": starts and ends with CJK, allows mixed chars in between
-const ZH_RE = /[一-龥]/;
-const PHRASE_RE = /[一-龥][一-龥\w\s，。！？、：；""''（）【】《》\-\/\+\.\?\!,\(\)·]*[一-龥]/g;
+const argv = process.argv.slice(2)
+let MODULE = null
+let CHECK = false
+let positional = []
+for (let i = 0; i < argv.length; i++) {
+  const a = argv[i]
+  if (a === '--module') { MODULE = argv[++i]; continue }
+  if (a === '--check') { CHECK = true; continue }
+  positional.push(a)
+}
+if (CHECK && !MODULE && positional[0]) MODULE = positional[0]
+
+const SCAN_DIR = MODULE ? path.resolve(process.cwd(), MODULE) : ROOT_PKG
+
+const ZH_RE = /[一-鿿]/
+const PHRASE_RE = /[一-鿿][一-鿿\w\s，。！？、：；""''（）【】《》\-\/\+\.\?\!,\(\)·]*[一-鿿]/g
+
+const TODO_MARKERS = [
+  'TODO(i18n)',
+  'TODO(i18n-retry)',
+  'TODO(i18n-refactor)',
+  'TODO(i18n-shared)',
+  'TODO(i18n-backend)',
+  'TODO(i18n-glossary-gap)',
+]
+
+const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '.turbo', 'playwright-report'])
 
 function* walkFiles(dir) {
+  if (!fs.existsSync(dir)) return
+  const stat = fs.statSync(dir)
+  if (stat.isFile()) {
+    if (/\.(vue|ts|tsx)$/.test(dir)) yield dir
+    return
+  }
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
-      yield* walkFiles(path.join(dir, entry.name));
+      if (SKIP_DIRS.has(entry.name) || entry.name.startsWith('.')) continue
+      yield* walkFiles(path.join(dir, entry.name))
     } else if (/\.(vue|ts|tsx)$/.test(entry.name)) {
-      yield path.join(dir, entry.name);
+      yield path.join(dir, entry.name)
     }
   }
 }
 
 function slugify(text) {
-  // Build a snake_case key from the first few Chinese chars (pinyin would be better but requires a dep)
-  return 'zh_' + Buffer.from(text.slice(0, 12)).toString('hex').slice(0, 16);
+  return 'zh_' + Buffer.from(text.slice(0, 12)).toString('hex').slice(0, 16)
 }
 
-function isComment(line) {
-  const t = line.trimStart();
-  return t.startsWith('//') || t.startsWith('*') || t.startsWith('<!--');
+function isCommentLike(line) {
+  const t = line.trimStart()
+  return t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('<!--')
 }
 
-const seen = new Map(); // zh text → { key, file, line }
-let total = 0;
+function hasTodoMarker(line) {
+  return TODO_MARKERS.some((m) => line.includes(m))
+}
 
-for (const filePath of walkFiles(PKG_DIR)) {
-  const rel = path.relative(PKG_DIR, filePath).replace(/\\/g, '/');
-  const lines = fs.readFileSync(filePath, 'utf8').split('\n');
+const seen = new Map()
+let total = 0
+const violations = []
+
+for (const filePath of walkFiles(SCAN_DIR)) {
+  const rel = path.relative(process.cwd(), filePath).replace(/\\/g, '/')
+  const lines = fs.readFileSync(filePath, 'utf8').split('\n')
+
+  // Track block-comment state for .ts files (simple, conservative)
+  let inBlockComment = false
 
   lines.forEach((raw, idx) => {
-    if (!ZH_RE.test(raw)) return;
-    if (isComment(raw)) return;
-
-    const matches = raw.match(PHRASE_RE) ?? [];
-    for (const m of matches) {
-      const phrase = m.trim();
-      if (phrase.length < 2) continue;
-      total++;
-      if (!seen.has(phrase)) {
-        seen.set(phrase, { key: slugify(phrase), file: rel, line: idx + 1 });
+    // Crude block-comment tracking
+    let line = raw
+    if (inBlockComment) {
+      const end = line.indexOf('*/')
+      if (end === -1) return
+      line = line.slice(end + 2)
+      inBlockComment = false
+    }
+    const blockStart = line.indexOf('/*')
+    if (blockStart !== -1) {
+      const blockEnd = line.indexOf('*/', blockStart + 2)
+      if (blockEnd === -1) {
+        line = line.slice(0, blockStart)
+        inBlockComment = true
+      } else {
+        line = line.slice(0, blockStart) + line.slice(blockEnd + 2)
       }
     }
-  });
+    if (!ZH_RE.test(line)) return
+    if (isCommentLike(line)) return
+    if (hasTodoMarker(raw)) return
+
+    const matches = line.match(PHRASE_RE) ?? []
+    for (const m of matches) {
+      const phrase = m.trim()
+      if (phrase.length < 2) continue
+      total++
+      if (!seen.has(phrase)) {
+        seen.set(phrase, { key: slugify(phrase), file: rel, line: idx + 1 })
+      }
+      violations.push({ file: rel, line: idx + 1, phrase })
+    }
+  })
 }
 
-// Write CSV
-const header = 'key,zh,en,file,line\n';
+if (CHECK) {
+  if (violations.length === 0) {
+    console.error(`extract-i18n --check: 0 hardcoded zh in ${path.relative(process.cwd(), SCAN_DIR) || '.'}`)
+    process.exit(0)
+  }
+  console.error(`extract-i18n --check: ${violations.length} hardcoded zh occurrence(s) in ${path.relative(process.cwd(), SCAN_DIR) || '.'} (${seen.size} unique)`)
+  const sample = violations.slice(0, 50)
+  for (const v of sample) console.error(`  ${v.file}:${v.line}  ${v.phrase}`)
+  if (violations.length > sample.length) console.error(`  ... (${violations.length - sample.length} more)`)
+  process.exit(1)
+}
+
+// Default mode: write CSV
+const header = 'key,zh,en,file,line\n'
 const rows = [...seen.entries()]
   .map(([zh, { key, file, line }]) => {
-    const safe = (s) => `"${String(s).replace(/"/g, '""')}"`;
-    return [safe(key), safe(zh), '""', safe(file), line].join(',');
+    const safe = (s) => `"${String(s).replace(/"/g, '""')}"`
+    return [safe(key), safe(zh), '""', safe(file), line].join(',')
   })
-  .join('\n');
+  .join('\n')
 
-fs.writeFileSync(OUT_CSV, header + rows, 'utf8');
+const outPath = MODULE
+  ? path.resolve(__dirname, `i18n-map-${path.basename(SCAN_DIR)}.csv`)
+  : DEFAULT_OUT
+fs.writeFileSync(outPath, header + rows, 'utf8')
 
-console.log(`\n✓ Extraction complete`);
-console.log(`  Total occurrences : ${total}`);
-console.log(`  Unique phrases    : ${seen.size}`);
-console.log(`  Output            : ${OUT_CSV}\n`);
+console.log(`\n✓ Extraction complete`)
+console.log(`  Scanned dir       : ${path.relative(process.cwd(), SCAN_DIR) || '.'}`)
+console.log(`  Total occurrences : ${total}`)
+console.log(`  Unique phrases    : ${seen.size}`)
+console.log(`  Output            : ${outPath}\n`)

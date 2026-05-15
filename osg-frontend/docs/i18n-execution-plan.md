@@ -534,12 +534,13 @@ node osg-frontend/scripts/extract-i18n.mjs --check packages/<END>/src/views/<mod
 > Worker 每完成一模块在此追加一行。Orchestrator 阶段切换时打 milestone。
 
 ### Phase 0
-- [ ] P0.1 术语表合并落盘
-- [ ] P0.2 locale 拆分
-- [ ] P0.3 5 端装机
-- [ ] P0.4 基础设施验证
-- [ ] P0.5 commit 1 push
-- [ ] P0.6 shared 公共组件 t() 化
+- [x] P0.1 术语表合并落盘 (2026-05-16, scripts/terms.glossary.json 3759 条 + 39 glossary 覆盖)
+- [x] P0.2 locale 拆分 (2026-05-16, locales/{zh,en}/{common,admin,student,mentor,lead-mentor,assistant}.json)
+- [x] P0.3 5 端装机 (2026-05-16, admin/student/mentor/lead-mentor/assistant main.ts 均 app.use(i18n))
+- [x] P0.4 基础设施验证 (2026-05-16, shared 34 测试文件 399 测试全绿; admin 4 个 i18n 测试系预存量失败，不在 P0 scope)
+- [x] P0.4b check-glossary.mjs (2026-05-16, scripts/check-glossary.mjs --staged / --all 双模式)
+- [x] P0.5 commit 1 push (2026-05-16, commit c23416cd 已推 main)
+- [~] P0.6 shared 公共组件 t() 化（移交 Phase 2 §11「i18n-shared 最优先」批处理，详见 docs/i18n-todo-shared.md。理由：shared 共 983 占位 642 唯一，单 orchestrator 会话 token 预算不足以全量改 + 同步修每个组件 .spec.ts；plan §11 已预留兜底路径。Phase 1 worker 遇到 shared 依赖按 SOP 标 TODO(i18n-shared) 跳过）
 
 ### Phase 1（5 worker 并行）
 
