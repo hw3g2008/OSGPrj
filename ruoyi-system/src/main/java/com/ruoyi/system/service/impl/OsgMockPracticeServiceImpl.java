@@ -86,6 +86,71 @@ public class OsgMockPracticeServiceImpl implements IOsgMockPracticeService
     }
 
     @Override
+    public List<OsgMockPractice> selectAssistantMockPracticeList(OsgMockPractice query)
+    {
+        // currentMentorId 字段复用为 currentUserId 载体（asst 端 controller 传入 SecurityUtils.getUserId()）
+        Long currentUserId = query == null ? null : query.getCurrentMentorId();
+        if (currentUserId == null)
+        {
+            return Collections.emptyList();
+        }
+
+        OsgMockPractice mapperQuery = new OsgMockPractice();
+        if (query != null)
+        {
+            mapperQuery.setKeyword(query.getKeyword());
+            mapperQuery.setPracticeType(query.getPracticeType());
+            mapperQuery.setStatus(query.getStatus());
+        }
+        List<OsgMockPractice> rows = mockPracticeMapper.selectMockPracticeList(mapperQuery);
+        if (rows == null || rows.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        List<Long> studentIds = rows.stream()
+            .map(OsgMockPractice::getStudentId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+        if (studentIds.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        Map<Long, OsgStudent> studentMap = new LinkedHashMap<>();
+        for (OsgStudent s : studentMapper.selectStudentByStudentIds(studentIds))
+        {
+            if (s != null && s.getStudentId() != null)
+            {
+                studentMap.put(s.getStudentId(), s);
+            }
+        }
+
+        String currentUserToken = String.valueOf(currentUserId);
+        return rows.stream()
+            .filter(row -> {
+                OsgStudent student = studentMap.get(row.getStudentId());
+                if (student == null)
+                {
+                    return false;
+                }
+                if (currentUserId.equals(student.getAssistantId()))
+                {
+                    return true;
+                }
+                String ids = student.getAssistantIds();
+                if (ids == null || ids.isBlank())
+                {
+                    return false;
+                }
+                return java.util.Arrays.stream(ids.split(","))
+                    .map(String::trim)
+                    .anyMatch(currentUserToken::equals);
+            })
+            .toList();
+    }
+
+    @Override
     public OsgMockPractice selectMentorMockPracticeById(Long id)
     {
         return mockPracticeMapper.selectMentorMockPracticeById(id);

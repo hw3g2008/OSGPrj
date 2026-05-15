@@ -44,7 +44,7 @@ public class OsgAssistantMockPracticeController extends BaseController
         }
         startPage();
         query.setCurrentMentorId(SecurityUtils.getUserId());
-        return getDataTable(mockPracticeService.selectMentorMockPracticeList(query));
+        return getDataTable(mockPracticeService.selectAssistantMockPracticeList(query));
     }
 
     /**

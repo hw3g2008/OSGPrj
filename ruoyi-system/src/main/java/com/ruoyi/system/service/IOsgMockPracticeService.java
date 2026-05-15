@@ -14,6 +14,12 @@ public interface IOsgMockPracticeService
 
     List<OsgMockPractice> selectMentorMockPracticeList(OsgMockPractice query);
 
+    /**
+     * Asst 端 mock-practice 列表：按 student.assistantId / student.assistantIds 过滤可见性，
+     * 不走 mentor 端 mentor_ids 路径。query.currentMentorId 复用为 currentUserId 载体。
+     */
+    List<OsgMockPractice> selectAssistantMockPracticeList(OsgMockPractice query);
+
     OsgMockPractice selectMentorMockPracticeById(Long id);
 
     int confirmMentorMockPractice(OsgMockPractice record);
