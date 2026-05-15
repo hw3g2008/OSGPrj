@@ -175,7 +175,15 @@ public class OsgClassRecordController extends BaseController
         record.setMentorId(SecurityUtils.getUserId());
         record.setMentorName(SecurityUtils.getUsername());
         record.setCreateBy(SecurityUtils.getUsername());
-        return toAjax(classRecordService.createMentorClassRecord(record));
+        int rows = classRecordService.createMentorClassRecord(record);
+        if (rows <= 0)
+        {
+            return AjaxResult.error("课程记录提交失败");
+        }
+        // mapper useGeneratedKeys 已把新 record_id 回填到 record 对象，response 显式返出供调用方拿到资源 id
+        AjaxResult ok = AjaxResult.success();
+        ok.put("recordId", record.getRecordId());
+        return ok;
     }
 
     @GetMapping("/mentor/class-records/reportable-students")
