@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="报销管理" title-en="Expense Management">
+    <PageHeader :title-zh="t('admin.finance.expense.pageTitle')" title-en="Expense Management">
       <template #actions>
         <a-button type="primary" @click="showNewExpenseModal = true">
           <template #icon><PlusOutlined /></template>
-          新建报销
+          {{ t('admin.finance.expense.createExpense') }}
         </a-button>
       </template>
     </PageHeader>
@@ -21,12 +21,12 @@
 
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索导师 / 说明" allow-clear style="width: 200px" @press-enter="loadExpenses" />
+          <a-input v-model:value="keyword" :placeholder="t('admin.finance.expense.searchPlaceholder')" allow-clear style="width: 200px" @press-enter="loadExpenses" />
         </a-form-item>
         <a-form-item>
           <a-button @click="loadExpenses">
             <template #icon><ReloadOutlined /></template>
-            刷新
+            {{ t('admin.finance.expense.refresh') }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -35,13 +35,13 @@
         <a-tag v-for="type in expenseTypes" :key="type" color="orange">{{ type }}</a-tag>
       </div>
 
-      <a-table :columns="expenseColumns" :data-source="visibleRows" :row-key="(r: ExpenseRow) => r.expenseId" :pagination="false" :locale="{ emptyText: '暂无报销记录' }" :scroll="{ x: 1100 }">
+      <a-table :columns="expenseColumns" :data-source="visibleRows" :row-key="(r: ExpenseRow) => r.expenseId" :pagination="false" :locale="{ emptyText: t('admin.finance.expense.empty') }" :scroll="{ x: 1100 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'expenseAmount'">
             {{ formatFee(record.expenseAmount) }}
           </template>
           <template v-else-if="column.dataIndex === 'attachmentUrl'">
-            <a v-if="record.attachmentUrl" :href="record.attachmentUrl" target="_blank" rel="noreferrer">附件</a>
+            <a v-if="record.attachmentUrl" :href="record.attachmentUrl" target="_blank" rel="noreferrer">{{ t('admin.finance.expense.attachment') }}</a>
             <span v-else>—</span>
           </template>
           <template v-else-if="column.dataIndex === 'status'">
@@ -52,10 +52,10 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space v-if="record.status === 'processing'">
-              <a-button type="link" size="small" style="color: #059669" @click="handleReview(record.expenseId, 'approved')">通过</a-button>
-              <a-button type="link" size="small" danger @click="handleReview(record.expenseId, 'denied')">拒绝</a-button>
+              <a-button type="link" size="small" style="color: #059669" @click="handleReview(record.expenseId, 'approved')">{{ t('admin.finance.expense.action.approve') }}</a-button>
+              <a-button type="link" size="small" danger @click="handleReview(record.expenseId, 'denied')">{{ t('admin.finance.expense.action.deny') }}</a-button>
             </a-space>
-            <span v-else style="color: #94a3b8">已处理</span>
+            <span v-else style="color: #94a3b8">{{ t('admin.finance.expense.action.processed') }}</span>
           </template>
         </template>
       </a-table>
@@ -71,6 +71,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -84,6 +85,8 @@ import {
   type ExpenseTab,
   type ExpenseType
 } from '@osg/shared/api/admin/expense'
+
+const { t } = useI18n()
 
 const expenseTypes: ExpenseType[] = [
   'Mentor Referral',
@@ -105,18 +108,18 @@ const statusColorMap: Record<ExpenseRow['status'], string> = {
   denied: 'red'
 }
 
-const expenseColumns = [
+const expenseColumns = computed(() => [
   { title: 'ID', dataIndex: 'expenseId', key: 'expenseId', width: 70, customRender: ({ text }: { text: number }) => `#${text}`, fixed: 'left' as const },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
-  { title: '报销类型', dataIndex: 'expenseType', key: 'expenseType', width: 120 },
-  { title: '金额', dataIndex: 'expenseAmount', key: 'expenseAmount', width: 90 },
-  { title: '日期', dataIndex: 'expenseDate', key: 'expenseDate', width: 100 },
-  { title: '说明', dataIndex: 'description', key: 'description', width: 150 },
-  { title: '附件', dataIndex: 'attachmentUrl', key: 'attachmentUrl', width: 70 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '审核备注', dataIndex: 'reviewComment', key: 'reviewComment', width: 120 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
-]
+  { title: t('admin.finance.expense.columns.mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: t('admin.finance.expense.columns.type'), dataIndex: 'expenseType', key: 'expenseType', width: 120 },
+  { title: t('admin.finance.expense.columns.amount'), dataIndex: 'expenseAmount', key: 'expenseAmount', width: 90 },
+  { title: t('admin.finance.expense.columns.date'), dataIndex: 'expenseDate', key: 'expenseDate', width: 100 },
+  { title: t('admin.finance.expense.columns.description'), dataIndex: 'description', key: 'description', width: 150 },
+  { title: t('admin.finance.expense.columns.attachment'), dataIndex: 'attachmentUrl', key: 'attachmentUrl', width: 70 },
+  { title: t('admin.finance.expense.columns.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('admin.finance.expense.columns.reviewComment'), dataIndex: 'reviewComment', key: 'reviewComment', width: 120 },
+  { title: t('admin.finance.expense.columns.action'), dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const },
+])
 
 const rows = ref<ExpenseRow[]>([])
 const activeTab = ref<ExpenseTab>('all')
@@ -161,7 +164,7 @@ const loadExpenses = async () => {
     const response = await getExpenseList({ tab: 'all' })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('报销列表加载失败')
+    message.error(t('admin.finance.expense.messages.loadError'))
   }
 }
 
@@ -170,7 +173,7 @@ const handleCreateExpense = async (payload: CreateExpensePayload) => {
   try {
     await createExpense(payload)
     showNewExpenseModal.value = false
-    message.success('报销创建成功')
+    message.success(t('admin.finance.expense.messages.createSuccess'))
     await loadExpenses()
   } catch (_error) {
     // request util handles error message
@@ -183,9 +186,9 @@ const handleReview = async (expenseId: number, status: 'approved' | 'denied') =>
   try {
     await reviewExpense(expenseId, {
       status,
-      reviewComment: status === 'approved' ? '审核通过' : '审核驳回'
+      reviewComment: status === 'approved' ? '审核通过' : '审核驳回' // i18n-skip-line: system-generated backend comment
     })
-    message.success(status === 'approved' ? '报销已通过' : '报销已拒绝')
+    message.success(status === 'approved' ? t('admin.finance.expense.messages.approveSuccess') : t('admin.finance.expense.messages.denySuccess'))
     await loadExpenses()
   } catch (_error) {
     // request util handles error message
