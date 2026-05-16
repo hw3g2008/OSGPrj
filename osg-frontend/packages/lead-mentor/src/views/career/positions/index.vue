@@ -1,16 +1,16 @@
 <template>
   <div id="page-positions" class="page-positions">
     <PageHeader
-      title-zh="岗位信息"
+      :title-zh="t('leadMentor.positions.k3')"
       title-en="Job Tracker"
     >
       <template #actions>
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
           <a-radio-button value="list" id="lead-view-list">
-            <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px" aria-hidden="true" />列表视图
+            <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px" aria-hidden="true" />{{ t('leadMentor.positions.k1') }}
           </a-radio-button>
           <a-radio-button value="drilldown" id="lead-view-drilldown">
-            <i class="mdi mdi-file-tree" style="margin-right: 4px" aria-hidden="true" />下钻视图
+            <i class="mdi mdi-file-tree" style="margin-right: 4px" aria-hidden="true" />{{ t('leadMentor.positions.k2') }}
           </a-radio-button>
         </a-radio-group>
       </template>
@@ -21,7 +21,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.positionCategory"
-            placeholder="全部分类"
+            :placeholder="t('leadMentor.positions.k9')"
             allow-clear
             style="width: 140px"
             :disabled="isLoading"
@@ -33,7 +33,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.industry"
-            placeholder="全部行业"
+            :placeholder="t('leadMentor.positions.k10')"
             allow-clear
             show-search
             option-filter-prop="label"
@@ -47,7 +47,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.companyName"
-            placeholder="全部公司"
+            :placeholder="t('leadMentor.positions.k11')"
             allow-clear
             show-search
             option-filter-prop="label"
@@ -61,7 +61,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.region"
-            placeholder="全部地区"
+            :placeholder="t('leadMentor.positions.k12')"
             allow-clear
             style="width: 140px"
             :disabled="isLoading"
@@ -73,7 +73,7 @@
         <a-form-item>
           <a-input
             v-model:value="filters.keyword"
-            placeholder="搜索岗位名称..."
+            :placeholder="t('leadMentor.positions.k13')"
             allow-clear
             style="width: 200px"
             :disabled="isLoading"
@@ -85,7 +85,7 @@
         </a-form-item>
       </a-form>
 
-      <a-spin :spinning="isLoading" tip="正在加载岗位数据...">
+      <a-spin :spinning="isLoading" :tip="t('leadMentor.positions.k14')">
         <div
           id="lead-position-drilldown"
           v-show="viewMode === 'drilldown'"
@@ -137,6 +137,7 @@ import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   getLeadMentorPositionList,
   getLeadMentorPositionMeta,
@@ -162,6 +163,8 @@ import PositionMyStudentsModal, {
   type PositionMyStudentsPreview,
   type PositionStudentStatusTone,
 } from '@/components/PositionMyStudentsModal.vue'
+
+const { t } = useI18n()
 
 type ViewMode = 'drilldown' | 'list'
 type DeadlineTone = 'normal' | 'urgent' | 'closed'
@@ -237,7 +240,7 @@ interface FilterOptions {
 const FALLBACK_INDUSTRY_META = {
   tone: 'slate',
   icon: 'mdi-briefcase',
-  label: '未归类',
+  label: t('leadMentor.positions.k4'),
 } as const
 
 const COMPANY_COLORS: Record<string, string> = {
@@ -404,9 +407,9 @@ const categories = computed<PositionCategory[]>(() => {
       label: industryGroup.meta.label,
       tone: industryGroup.meta.tone,
       icon: industryGroup.meta.icon,
-      companySummary: `${companies.length} 家公司`,
-      positionSummary: `${positionCount} 个岗位`,
-      studentSummary: `我的学员: ${studentCount}人`,
+      companySummary: t('leadMentor.positions.k15', { n: companies.length }),
+      positionSummary: t('leadMentor.positions.k16', { n: positionCount }),
+      studentSummary: t('leadMentor.positions.k17', { n: studentCount }),
       companies,
     }
   })
@@ -492,7 +495,7 @@ const tablePagination = reactive({
   showSizeChanger: true,
   showQuickJumper: true,
   pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (total: number) => `共 ${total} 条`,
+  showTotal: (total: number) => `共 ${total} 条`, // TODO(i18n-complex)
 })
 
 watch(
@@ -646,7 +649,7 @@ const loadPositionMeta = async () => {
     positionMeta.value = await getLeadMentorPositionMeta()
   } catch (_error) {
     positionMeta.value = null
-    message.error('岗位筛选项加载失败')
+    message.error(t('leadMentor.positions.k5'))
   }
 }
 
@@ -660,7 +663,7 @@ const loadPositions = async () => {
     positionRows.value = []
     activeStudentsPreview.value = null
     isMyStudentsModalOpen.value = false
-    message.error('岗位列表加载失败')
+    message.error(t('leadMentor.positions.k6'))
   } finally {
     isLoading.value = false
   }
@@ -699,7 +702,7 @@ const openJobStudentsModal = async (job: PositionJob) => {
   } catch (_error) {
     activeStudentsPreview.value = null
     isMyStudentsModalOpen.value = false
-    message.error('我的学员申请加载失败')
+    message.error(t('leadMentor.positions.k7'))
   } finally {
     isStudentsLoading.value = false
   }
@@ -838,7 +841,7 @@ function toMyStudentRecord(
     studentId: String(row.studentId),
     studentName: row.studentName || '-',
     jobTitle: row.positionName || fallbackJobTitle,
-    statusLabel: row.currentStage || row.status || row.statusRemark || '未申请',
+    statusLabel: row.currentStage || row.status || row.statusRemark || t('leadMentor.positions.k8'),
     statusTone: mapStudentTone(row.statusTone),
     lessonHours: `${row.usedHours ?? 0}h`,
   }

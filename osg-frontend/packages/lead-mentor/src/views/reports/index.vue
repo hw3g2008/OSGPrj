@@ -1,11 +1,13 @@
 <template>
   <div class="reports-page">
-    <OsgPageContainer title="学情报告">
-      <a-empty description="学情报告功能开发中" />
+    <OsgPageContainer :title="t('leadMentor.reports.k1')">
+      <a-empty :description="t('leadMentor.reports.k2')" />
     </OsgPageContainer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { OsgPageContainer } from '@osg/shared/components'
-</script>
+
+
+const { t } = useI18n()</script>

@@ -1,1 +1,636 @@
-{}
+{
+  "login": {
+    "platformTitle": "OSG Platform",
+    "platformSubtitle": "职业培训一站式平台，学生与导师共同成长",
+    "feature1": "学生端：一对一导师辅导",
+    "feature2": "导师端：高效课程管理",
+    "feature3": "实时岗位信息共享",
+    "feature4": "完善的学习资料库",
+    "brand": "OSG Lead Mentor",
+    "welcome": "欢迎回来",
+    "subtitle": "使用邮箱登录（主导师/班主任）",
+    "emailLabel": "邮箱",
+    "emailPlaceholder": "请输入邮箱",
+    "passwordLabel": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "passwordHide": "隐藏密码",
+    "passwordShow": "显示密码",
+    "loading": "登录中...",
+    "submit": "登 录",
+    "forgotPasswordHint": "忘记密码？",
+    "forgotPasswordCta": "点击重置",
+    "errorEmpty": "请输入邮箱和密码",
+    "errorNoAccess": "该账号无班主任端访问权限",
+    "errorInvalid": "邮箱或密码错误",
+    "success": "登录成功"
+  },
+  "home": {
+    "greetingAfternoon": "下午好，{name}",
+    "summary": {
+      "pendingScheduling": "待排课程",
+      "pendingSchedulingUnit": "个",
+      "pendingSchedulingFooter": "去分配导师",
+      "pendingConfirm": "待确认课程",
+      "pendingConfirmUnit": "节",
+      "pendingConfirmFooter": "去确认反馈",
+      "weeklyIncome": "本周收入（已结算）",
+      "weeklyIncomeFooter": "待结算 {amount}",
+      "weeklyHours": "本周课时",
+      "weeklyHoursUnit": "h",
+      "weeklyHoursFooter": "已完成 {done}节 · 待审核 {pending}节"
+    },
+    "stats": {
+      "myStudents": "我的学员",
+      "unitPerson": "人",
+      "weeklySchedule": "本周排期",
+      "weeklyScheduleFilled": "已填写",
+      "availableHours": "可用时间",
+      "unitHour": "h",
+      "availableDays": "可用天数",
+      "unitDay": "天",
+      "availableMentors": "可用导师"
+    },
+    "quickEntries": {
+      "title": "快捷入口",
+      "positionApply": "岗位申请",
+      "positionApplyMeta": "{count}待处理",
+      "scheduleManage": "排课管理",
+      "myClasses": "我的课程",
+      "myStudents": "我的学员",
+      "mySchedule": "我的排期",
+      "reimbursement": "报销管理"
+    }
+  },
+  "layout": {
+    "roleLabel": "培训主管",
+    "comingSoon": "敬请期待",
+    "nav": {
+      "career": {
+        "title": "求职中心",
+        "positions": "岗位信息",
+        "jobOverview": "学员求职总览",
+        "mockPractice": "模拟应聘管理"
+      },
+      "studentCenter": {
+        "title": "学员中心",
+        "studentList": "学员列表"
+      },
+      "teaching": {
+        "title": "教学中心",
+        "classRecords": "课程记录",
+        "communicationRecords": "人际关系沟通记录"
+      },
+      "finance": {
+        "title": "财务中心",
+        "settlement": "课时结算",
+        "expense": "报销管理"
+      },
+      "resources": {
+        "title": "资源中心",
+        "files": "文件",
+        "onlineTests": "在线测试题库",
+        "interviewBank": "真人面试题库"
+      },
+      "profile": {
+        "title": "个人中心",
+        "basic": "基本信息",
+        "schedule": "课程排期",
+        "notice": "消息",
+        "faq": "常见问题"
+      }
+    }
+  },
+  "jobOverview": {
+    "pageTitle": "学员求职总览",
+    "tab": {
+      "managed": "我管理的学员",
+      "coaching": "我辅导的学员",
+      "pending": "待分配导师"
+    },
+    "filter": {
+      "allCompanies": "全部公司",
+      "allStages": "全部状态",
+      "interviewStart": "面试开始",
+      "interviewEnd": "面试结束",
+      "lessonReported": "是否上报课消",
+      "yes": "是",
+      "no": "否"
+    },
+    "actions": {
+      "export": "导出",
+      "search": "搜索",
+      "viewDetail": "查看详情",
+      "acknowledge": "确认",
+      "reportLesson": "上报课消",
+      "assignMentor": "分配导师"
+    },
+    "alert": {
+      "managed": "查看管理学员的求职进度，已确认状态刷新后保持一致",
+      "pending": "以下学员申请了辅导，需要您分配导师"
+    },
+    "col": {
+      "studentId": "学生ID",
+      "studentName": "姓名",
+      "position": "岗位",
+      "company": "公司",
+      "city": "城市",
+      "interviewStage": "面试阶段",
+      "interviewTime": "面试时间",
+      "submittedAt": "提交时间",
+      "actions": "操作",
+      "lessonCount": "已上报课消数",
+      "mentor": "导师",
+      "latestRating": "最近评分"
+    },
+    "status": {
+      "coaching": "辅导中",
+      "stageUpdated": "阶段更新"
+    },
+    "placeholder": {
+      "leadMentor": "待分配班主任",
+      "mentor": "待分配",
+      "interviewTime": "待定",
+      "date": "待更新"
+    },
+    "mentorDemand": {
+      "unit": " 位",
+      "needHelp": "需协助"
+    },
+    "countdown": {
+      "ended": "已结束",
+      "today": "今天",
+      "daysLeft": "还剩{days}天"
+    },
+    "notes": {
+      "defaultNote": "{studentName} 当前处于 {stage} 阶段",
+      "thisStudent": "该学员"
+    },
+    "messages": {
+      "lessonSubmitted": "课消记录已提交",
+      "loadFailed": "求职总览加载失败",
+      "detailLoadFailed": "求职详情加载失败",
+      "lessonDetailLoadFailed": "课消详情加载失败",
+      "assignContextLost": "导师匹配上下文丢失",
+      "assignSelectMentor": "请至少选择1位导师",
+      "assignCountMismatch": "导师数量必须等于申请导师数量",
+      "assignSuccess": "导师匹配已保存",
+      "assignFailed": "导师匹配保存失败",
+      "acknowledgeSuccess": "阶段更新已确认",
+      "acknowledgeFailed": "阶段确认失败"
+    }
+  },
+  "classRecords": {
+    "pageTitle": "课程记录",
+    "scope": {
+      "mine": "我的课程",
+      "managed": "管理课程"
+    },
+    "filter": {
+      "searchPlaceholder": "搜索学员姓名/ID",
+      "coachingType": "辅导类型",
+      "courseContent": "课程内容",
+      "timeRange": "时间范围",
+      "reporter": "上报导师",
+      "thisWeek": "本周",
+      "lastWeek": "上周",
+      "thisMonth": "本月",
+      "reset": "重置"
+    },
+    "coaching": {
+      "mockPractice": "模拟应聘",
+      "jobCoaching": "岗位辅导"
+    },
+    "course": {
+      "resumeRevision": "简历初修",
+      "resumeUpdate": "简历更新",
+      "casePrep": "案例准备",
+      "mockInterview": "模拟面试",
+      "networkingMidterm": "人脉拓展中期",
+      "mockMidterm": "模拟中期",
+      "behavioral": "行为面试",
+      "technical": "技术面试",
+      "other": "其他"
+    },
+    "table": {
+      "recordId": "记录ID",
+      "student": "学员",
+      "reporter": "上报导师",
+      "mentor": "导师",
+      "coachingType": "辅导类型",
+      "courseContent": "课程内容",
+      "classDate": "上课时间",
+      "duration": "时长",
+      "reviewStatus": "审核状态",
+      "studentRating": "学员评分",
+      "actions": "操作"
+    },
+    "status": {
+      "all": "全部",
+      "pending": "待审核",
+      "approved": "已通过",
+      "rejected": "已驳回"
+    },
+    "actions": {
+      "report": "上报课程记录",
+      "viewDetail": "查看详情",
+      "viewReason": "查看原因"
+    },
+    "studentStatus": {
+      "frozen": "（冻结，不可申报）",
+      "refunded": "（已退费，不可申报）",
+      "ended": "（已结束）",
+      "defaultName": "学员 {id}"
+    },
+    "error": {
+      "loadFailed": "加载课程记录失败"
+    },
+    "messages": {
+      "submitSuccess": "已提交课程记录 {id}，等待审核"
+    },
+    "detail": {
+      "mock": {
+        "title": "模拟面试反馈详情",
+        "sectionTitle": "模拟面试反馈",
+        "performanceLabel": "面试表现",
+        "overallLabel": "综合评分",
+        "interviewTypeLabel": "面试类型",
+        "suggestionLabel": "改进建议"
+      },
+      "resume": {
+        "title": "简历修改反馈详情",
+        "sectionTitle": "简历修改反馈",
+        "changeLabel": "修改要点",
+        "completionLabel": "完成度评估",
+        "suggestionLabel": "后续建议"
+      },
+      "networking": {
+        "title": "人脉拓展反馈详情",
+        "sectionTitle": "人脉拓展反馈",
+        "progressLabel": "拓展情况",
+        "contactNameLabel": "联系人姓名",
+        "contactRoleLabel": "联系人公司/职位",
+        "followUpLabel": "后续跟进计划"
+      },
+      "regular": {
+        "title": "常规辅导反馈详情",
+        "sectionTitle": "常规辅导反馈",
+        "lessonLabel": "上课内容",
+        "performanceLabel": "学生表现",
+        "nextPlanLabel": "下次课程计划"
+      },
+      "reject": {
+        "title": "课程审核驳回",
+        "courseTypeLabel": "课程类型",
+        "classTimeLabel": "上课时间",
+        "submittedDurationLabel": "提交时长",
+        "reasonTitle": "驳回原因"
+      }
+    }
+  },
+  "dashboard": {
+    "stats": {
+      "classes": "管理班级",
+      "classesUnit": "个",
+      "students": "学员总数",
+      "studentsUnit": "人",
+      "mentors": "在职导师",
+      "mentorsUnit": "人",
+      "weekCourses": "本周课程",
+      "weekCoursesUnit": "节"
+    },
+    "classProgress": {
+      "title": "班级学习进度"
+    },
+    "todos": {
+      "title": "待办事项",
+      "typeSchedule": "排课",
+      "typeFeedback": "反馈",
+      "typeSettlement": "结算",
+      "sampleSchedule": "张同学本周缺少排课",
+      "sampleFeedback": "3 位学员待学情评估",
+      "sampleSettlement": "2 月导师课时待确认"
+    },
+    "mock": {
+      "classJava1": "Java 就业班 01 期",
+      "classJava2": "Java 就业班 02 期",
+      "classFrontend1": "前端就业班 01 期"
+    }
+  },
+  "assignMentorModal": {
+    "title": "为学员匹配辅导导师",
+    "closeAriaLabel": "关闭导师匹配弹层",
+    "interviewStage": "面试阶段",
+    "interviewTime": "面试时间",
+    "mentorDemand": "需求导师",
+    "preferredMentor": "意向导师",
+    "excludedMentor": "排除导师",
+    "filterMentor": "筛选导师",
+    "allScheduleStatus": "全部排期状态",
+    "allMajorDirection": "全部主攻方向",
+    "allSubDirection": "全部子方向",
+    "searchMentorName": "搜索导师姓名...",
+    "foundCount": "共找到 {count} 位导师",
+    "selectMentor": "选择导师",
+    "multiSelect": "可多选",
+    "noMentors": "暂无符合条件的导师",
+    "studentCount": "学员 {count} 人",
+    "selectedCount": "已选择 {count} 位导师",
+    "note": "备注",
+    "optional": "选填",
+    "notePlaceholder": "给导师的特别说明，如学员背景、重点辅导内容等...",
+    "cancel": "取消",
+    "confirmMatch": "确认匹配",
+    "loadFailed": "导师列表加载失败",
+    "errorSelectAtLeastOne": "请至少选择1位导师",
+    "errorCountMismatch": "导师数量必须等于申请导师数量",
+    "directionTbd": "方向待补充",
+    "locationTbd": "所在地待补充",
+    "unknown": "未知"
+  },
+  "assignMockModal": {
+    "title": "处理模拟应聘申请",
+    "closeAriaLabel": "关闭处理模拟应聘申请弹层",
+    "assignMentor": "分配导师",
+    "scheduledTime": "预约时间",
+    "note": "备注说明",
+    "optional": "选填",
+    "notePlaceholder": "如有其他说明，请在此填写...",
+    "cancel": "取消",
+    "confirm": "确认安排"
+  },
+  "jobDetailModal": {
+    "title": "学员求职详情",
+    "closeAriaLabel": "关闭学员求职详情弹层",
+    "studentInfo": "学员信息",
+    "leadMentor": "班主任",
+    "appliedPosition": "申请岗位",
+    "recruitmentCycle": "招聘周期",
+    "jobProgress": "求职进度",
+    "interviewTime": "面试时间",
+    "coachingInfo": "辅导信息",
+    "coachingStatus": "辅导状态",
+    "assignedMentor": "分配导师",
+    "lessonHours": "已上课时",
+    "applyTime": "申请时间",
+    "recentRecords": "课程记录 (最近3条)",
+    "viewAll": "查看全部",
+    "studentNotes": "学员备注",
+    "close": "关闭",
+    "changeMentor": "更换导师",
+    "step": {
+      "submitted": "已投递",
+      "current": "当前"
+    },
+    "record": {
+      "mockInterview": "模拟面试",
+      "technical": "技术讲解",
+      "resumeRevision": "简历修改",
+      "summary1": "表现优秀，建议加强Valuation部分",
+      "summary2": "掌握DCF基础，需巩固LBO",
+      "summary3": "完成简历优化，突出实习经历",
+      "gradeExcellent": "优秀",
+      "gradeGood": "良好",
+      "gradeDone": "完成"
+    }
+  },
+  "leadEditProfileModal": {
+    "title": "编辑个人信息",
+    "closeAriaLabel": "关闭编辑个人信息弹层",
+    "noteInfo": "修改信息后，后台文员将收到提醒通知。",
+    "noteWarning": "注意：主攻方向、二级方向和课单价不可自行修改。",
+    "editableFields": "可修改信息",
+    "englishName": "英文名",
+    "gender": "性别",
+    "pleaseSelect": "请选择",
+    "phone": "手机号",
+    "wechat": "微信号",
+    "wechatPlaceholder": "待提交变更申请补充",
+    "email": "邮箱",
+    "region": "所属地区",
+    "selectRegion": "选择大区",
+    "regionNorthAmerica": "北美",
+    "regionEurope": "欧洲",
+    "regionAsiaPacific": "亚太",
+    "regionMainlandChina": "中国大陆",
+    "selectCity": "选择城市",
+    "cityNewYork": "纽约",
+    "cityLondon": "伦敦",
+    "citySingapore": "新加坡",
+    "cityShanghai": "上海",
+    "cityBeijing": "北京",
+    "cancel": "取消",
+    "submitting": "提交中...",
+    "save": "保存修改"
+  },
+  "leadForceScheduleModal": {
+    "closeAriaLabel": "关闭强制填写排期弹层",
+    "title": "强制填写排期",
+    "alertMessage": "当前尚未提交下周排期，请立即补全可用时间",
+    "weekPeriod": "填写周期",
+    "weeklyHours": "下周可上课时长",
+    "hours": "小时",
+    "dailyTime": "每天可上课时间",
+    "pleaseSelect": "请选择",
+    "submit": "确认提交排期",
+    "slotMorning": "上午 9-12",
+    "slotAfternoon": "下午 14-18",
+    "slotEvening": "晚上 19-22"
+  },
+  "classDetailModal": {
+    "closeAriaLabel": "关闭课程详情弹层",
+    "student": "学员",
+    "mentor": "导师",
+    "submittedAt": "提交时间",
+    "close": "关闭"
+  },
+  "classRejectModal": {
+    "closeAriaLabel": "关闭课程审核驳回弹层",
+    "student": "学员",
+    "reviewer": "审核人：",
+    "rejectedAt": "驳回时间：",
+    "close": "关闭",
+    "resubmit": "重新提交"
+  },
+  "mockFeedbackModal": {
+    "closeAriaLabel": "关闭模拟反馈弹层",
+    "title": "查看模拟反馈",
+    "mentor": "导师",
+    "scoreUnit": "/ 5 分",
+    "actualDuration": "实际时长",
+    "detailedFeedback": "详细反馈",
+    "classRecordFeedback": "课消反馈",
+    "suggestions": "改进建议",
+    "close": "关闭"
+  },
+  "positionMyStudentsModal": {
+    "closeAriaLabel": "关闭我的学员申请弹层",
+    "title": "{company} - {job} 我的学员申请",
+    "note": "仅显示您管理的学员，您可以修改学员的求职状态",
+    "colStudentId": "学生ID",
+    "colName": "姓名",
+    "colPosition": "岗位",
+    "colStatus": "状态",
+    "colLessonHours": "已上课时",
+    "close": "关闭",
+    "saveChanges": "保存修改"
+  },
+  "positions": {
+    "k1": "列表视图",
+    "k2": "下钻视图",
+    "k3": "岗位信息",
+    "k4": "未归类",
+    "k5": "岗位筛选项加载失败",
+    "k6": "岗位列表加载失败",
+    "k7": "我的学员申请加载失败",
+    "k8": "未申请",
+    "k9": "全部分类",
+    "k10": "全部行业",
+    "k11": "全部公司",
+    "k12": "全部地区",
+    "k13": "搜索岗位名称...",
+    "k14": "正在加载岗位数据...",
+    "k15": "{n}家公司",
+    "k16": "{n}个岗位",
+    "k17": "我的学员: {n}人"
+  },
+  "mentors": {
+    "k1": "导师管理",
+    "k2": "姓名",
+    "k3": "专长",
+    "k4": "带教学员数",
+    "k5": "本月课时",
+    "k6": "评分",
+    "k7": "王老师",
+    "k8": "张老师",
+    "k9": "Java/微服务"
+  },
+  "basic": {
+    "k1": "编辑信息",
+    "k2": "基本信息",
+    "k3": "待完善",
+    "k4": "班主任",
+    "k5": "锁定字段，由后台维护",
+    "k6": "班主任资料加载失败",
+    "k7": "正在同步班主任资料...",
+    "k8": "核心信息",
+    "k9": "英文名",
+    "k10": "性别",
+    "k11": "类型",
+    "k12": "邮箱",
+    "k13": "联系方式",
+    "k14": "手机号",
+    "k15": "微信号",
+    "k16": "所属地区",
+    "k17": "专业方向",
+    "k18": "如需修改请联系后台文员",
+    "k19": "主攻方向",
+    "k20": "二级方向",
+    "k21": "课程信息",
+    "k22": "可授课程类型",
+    "k23": "以后台配置为准",
+    "k24": "课单价",
+    "k25": "(不可修改)",
+    "k26": "已提交 {count} 条待审核变更申请，后台文员审核后才会更新主资料。",
+    "k27": "最近一条：{field} -> {value}",
+    "k28": "已提交 {count} 条变更申请"
+  },
+  "profile": {
+    "k1": "个人中心",
+    "k2": "基本信息",
+    "k3": "用户名",
+    "k4": "昵称",
+    "k5": "手机号",
+    "k6": "邮箱"
+  },
+  "schedule": {
+    "k1": "请在周日前更新下周排期",
+    "k2": "按真实状态更新",
+    "k3": "本周可用",
+    "k4": "可用天数",
+    "k5": "排期状态",
+    "k6": "本周排期",
+    "k7": "只读视图",
+    "k8": "可用时长",
+    "k9": "已设置的可用时间",
+    "k10": "(只读)",
+    "k11": "下周排期",
+    "k12": "下周可上课时长",
+    "k13": "小时",
+    "k14": "每天可上课时间",
+    "k15": "（可多选）",
+    "k16": "绿色背景表示周末，红色背景表示节假日。每天可选择多个时间段。",
+    "k17": "备注（可选）",
+    "k18": "保存下周排期",
+    "k19": "重置",
+    "k20": "请在周日前完成填写",
+    "k21": "我的排期",
+    "k22": "如有特殊情况请在此说明，例如：节假日安排",
+    "k23": "周一",
+    "k24": "周二",
+    "k25": "周三",
+    "k26": "周四",
+    "k27": "周五",
+    "k28": "周六",
+    "k29": "周日",
+    "k30": "上午 9-12",
+    "k31": "下午 14-18",
+    "k32": "晚上 19-22",
+    "k33": "当前登录班主任",
+    "k34": "本周",
+    "k35": "下周",
+    "k36": "未填写排期将无法被安排课程，系统将发送邮件提醒",
+    "k37": "待同步",
+    "k38": "待填写",
+    "k39": "未填写",
+    "k40": "排期加载失败",
+    "k41": "下周排期已按真实状态保存",
+    "k42": "排期保存失败",
+    "k43": "排课总览",
+    "k44": "排期提醒",
+    "k45": "当前登录班主任 · ID: {id}",
+    "k46": "{range} (本周)",
+    "k47": "{range} (下周)",
+    "k48": "已提交"
+  },
+  "reports": {
+    "k1": "学情报告",
+    "k2": "学情报告功能开发中"
+  },
+  "students": {
+    "k1": "学员管理",
+    "k2": "姓名",
+    "k3": "班级",
+    "k4": "导师",
+    "k5": "已完成课时",
+    "k6": "学习状态",
+    "k7": "张同学",
+    "k8": "Java 就业班 01 期",
+    "k9": "王老师",
+    "k10": "正常",
+    "k11": "李同学",
+    "k12": "张老师",
+    "k13": "学员类型",
+    "k14": "学校",
+    "k15": "主攻方向",
+    "k16": "搜索",
+    "k17": "重置",
+    "k18": "英文姓名",
+    "k19": "邮箱",
+    "k20": "关系",
+    "k21": "投递",
+    "k22": "面试",
+    "k23": "剩余课时",
+    "k24": "账号状态",
+    "k25": "操作",
+    "k26": "查看求职",
+    "k27": "暂无可查看学员",
+    "k28": "上一页",
+    "k29": "下一页",
+    "k30": "学员列表",
+    "k31": "搜索姓名",
+    "k32": "学员列表加载失败",
+    "k33": "班主任为我",
+    "k34": "科技",
+    "k35": "共 {count} 条记录"
+  }
+}

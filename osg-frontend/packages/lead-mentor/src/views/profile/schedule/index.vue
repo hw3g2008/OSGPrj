@@ -1,22 +1,22 @@
 <template>
   <div id="page-schedule" class="page-schedule" data-page="profile-schedule">
     <PageHeader
-      title-zh="我的排期"
+      :title-zh="t('leadMentor.schedule.k21')"
       title-en="My Schedule"
     />
 
-    <section class="schedule-banner" aria-label="排期提醒">
+    <section class="schedule-banner" :aria-label="t('leadMentor.schedule.k44')">
       <div class="schedule-banner__icon">
         <i class="mdi mdi-calendar-alert" aria-hidden="true" />
       </div>
       <div class="schedule-banner__content">
         <div class="schedule-banner__title">
           <i class="mdi mdi-alert" aria-hidden="true" />
-          请在周日前更新下周排期
+          {{ t('leadMentor.schedule.k1') }}
         </div>
         <div class="schedule-banner__sub">{{ bannerDetail }}</div>
       </div>
-      <span class="schedule-banner__tag">按真实状态更新</span>
+      <span class="schedule-banner__tag">{{ t('leadMentor.schedule.k2') }}</span>
     </section>
 
     <section class="card">
@@ -26,21 +26,21 @@
             <div class="user-avatar">{{ mentorInitial }}</div>
             <div>
               <div class="mentor-name">{{ displayName }}</div>
-              <div class="mentor-meta">当前登录班主任 · ID: {{ userIdLabel }}</div>
+              <div class="mentor-meta">{{ t('leadMentor.schedule.k45', { id: userIdLabel }) }}</div>
             </div>
           </div>
           <div class="status-metrics">
             <div class="status-metric">
               <div class="status-metric__value status-metric__value--hours">{{ currentWeekHoursLabel }}</div>
-              <div class="status-metric__label">本周可用</div>
+              <div class="status-metric__label">{{ t('leadMentor.schedule.k3') }}</div>
             </div>
             <div class="status-metric">
               <div class="status-metric__value status-metric__value--days">{{ currentWeekAvailableDaysLabel }}</div>
-              <div class="status-metric__label">可用天数</div>
+              <div class="status-metric__label">{{ t('leadMentor.schedule.k4') }}</div>
             </div>
             <div class="status-metric">
               <div class="status-metric__value status-metric__value--pending">{{ scheduleStatusLabel }}</div>
-              <div class="status-metric__label">排期状态</div>
+              <div class="status-metric__label">{{ t('leadMentor.schedule.k5') }}</div>
             </div>
           </div>
         </div>
@@ -51,28 +51,28 @@
       <div class="card-header">
         <span class="card-title">
           <i class="mdi mdi-calendar-week" aria-hidden="true" />
-          本周排期
+          {{ t('leadMentor.schedule.k6') }}
         </span>
-        <span class="card-tag">只读视图</span>
+        <span class="card-tag">{{ t('leadMentor.schedule.k7') }}</span>
         <span class="card-range">{{ currentWeekRange }}</span>
       </div>
       <div class="card-body">
         <div class="schedule-stats">
           <div class="schedule-stat">
             <div class="schedule-stat__value">{{ currentWeekHoursLabel }}</div>
-            <div class="schedule-stat__label">可用时长</div>
+            <div class="schedule-stat__label">{{ t('leadMentor.schedule.k8') }}</div>
           </div>
           <div class="schedule-stat">
             <div class="schedule-stat__value schedule-stat__value--success">{{ currentWeekAvailableDaysLabel }}</div>
-            <div class="schedule-stat__label">可用天数</div>
+            <div class="schedule-stat__label">{{ t('leadMentor.schedule.k4') }}</div>
           </div>
         </div>
 
         <div class="readonly-block">
           <label class="form-label">
             <i class="mdi mdi-calendar-check" aria-hidden="true" />
-            已设置的可用时间
-            <span class="form-label-note">(只读)</span>
+            {{ t('leadMentor.schedule.k9') }}
+            <span class="form-label-note">{{ t('leadMentor.schedule.k10') }}</span>
           </label>
           <div class="readonly-grid">
             <article
@@ -94,7 +94,7 @@
       <div class="card-header card-header--warning">
         <span class="card-title card-title--warning">
           <i class="mdi mdi-calendar-arrow-right" aria-hidden="true" />
-          下周排期
+          {{ t('leadMentor.schedule.k11') }}
         </span>
         <span class="card-range card-range--warning">
           {{ nextWeekRange }}
@@ -105,7 +105,7 @@
         <div class="form-group">
           <label class="form-label form-label--large">
             <i class="mdi mdi-clock-outline" aria-hidden="true" />
-            下周可上课时长
+            {{ t('leadMentor.schedule.k12') }}
             <span class="required-mark">*</span>
           </label>
           <div class="hours-row">
@@ -118,7 +118,7 @@
               class="form-input form-input--hours"
               placeholder="?"
             />
-            <span class="hours-unit">小时</span>
+            <span class="hours-unit">{{ t('leadMentor.schedule.k13') }}</span>
             <div class="hours-quick-actions">
               <button
                 v-for="option in quickHourOptions"
@@ -136,9 +136,9 @@
         <div class="form-group">
           <label class="form-label form-label--large">
             <i class="mdi mdi-calendar-check" aria-hidden="true" />
-            每天可上课时间
+            {{ t('leadMentor.schedule.k14') }}
             <span class="required-mark">*</span>
-            <span class="form-label-note">（可多选）</span>
+            <span class="form-label-note">{{ t('leadMentor.schedule.k15') }}</span>
           </label>
           <div class="editable-grid">
             <article
@@ -163,32 +163,32 @@
           </div>
           <div class="editable-note">
             <i class="mdi mdi-information-outline" aria-hidden="true" />
-            绿色背景表示周末，红色背景表示节假日。每天可选择多个时间段。
+            {{ t('leadMentor.schedule.k16') }}
           </div>
         </div>
 
         <div class="form-group">
           <label class="form-label form-label--large">
             <i class="mdi mdi-note-text" aria-hidden="true" />
-            备注（可选）
+            {{ t('leadMentor.schedule.k17') }}
           </label>
           <textarea
             v-model="note"
             class="form-textarea"
             rows="2"
-            placeholder="如有特殊情况请在此说明，例如：节假日安排"
+            :placeholder="t('leadMentor.schedule.k22')"
           />
         </div>
 
         <div class="form-footer">
           <button type="button" class="btn btn-primary btn-primary--warning" @click="saveNextSchedule()">
             <i class="mdi mdi-check" aria-hidden="true" />
-            保存下周排期
+            {{ t('leadMentor.schedule.k18') }}
           </button>
-          <button type="button" class="btn btn-outline" @click="resetDraft">重置</button>
+          <button type="button" class="btn btn-outline" @click="resetDraft">{{ t('leadMentor.schedule.k19') }}</button>
           <div class="form-footer__warning">
             <i class="mdi mdi-alert" aria-hidden="true" />
-            请在周日前完成填写
+            {{ t('leadMentor.schedule.k20') }}
           </div>
         </div>
       </div>
@@ -207,6 +207,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { message } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -224,6 +225,8 @@ import LeadForceScheduleModal, {
   type ForceScheduleDraft,
 } from '@/components/LeadForceScheduleModal.vue'
 
+const { t } = useI18n()
+
 interface WeekDayCard {
   key: string
   label: string
@@ -236,12 +239,12 @@ interface TimeSlotOption {
   label: string
 }
 
-const WEEKDAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+const WEEKDAY_LABELS = [t('leadMentor.schedule.k23'), t('leadMentor.schedule.k24'), t('leadMentor.schedule.k25'), t('leadMentor.schedule.k26'), t('leadMentor.schedule.k27'), t('leadMentor.schedule.k28'), t('leadMentor.schedule.k29')]
 const quickHourOptions = [5, 10, 15, 20]
 const timeSlots: TimeSlotOption[] = [
-  { id: 'morning', label: '上午 9-12' },
-  { id: 'afternoon', label: '下午 14-18' },
-  { id: 'evening', label: '晚上 19-22' },
+  { id: 'morning', label: t('leadMentor.schedule.k30') },
+  { id: 'afternoon', label: t('leadMentor.schedule.k31') },
+  { id: 'evening', label: t('leadMentor.schedule.k32') },
 ]
 
 const route = useRoute()
@@ -291,7 +294,7 @@ const nextWeekSelections = reactive<Record<string, string[]>>(
 )
 
 const displayName = computed(() => {
-  return userInfo.value?.nickName?.trim() || userInfo.value?.userName?.trim() || '当前登录班主任'
+  return userInfo.value?.nickName?.trim() || userInfo.value?.userName?.trim() || t('leadMentor.schedule.k33')
 })
 
 const mentorInitial = computed(() => {
@@ -303,21 +306,21 @@ const userIdLabel = computed(() => {
   return String(userInfo.value?.userId ?? '--')
 })
 
-const localCurrentWeekRange = buildWeekRange(currentWeekDays, '本周')
-const localNextWeekRange = buildWeekRange(nextWeekDays, '下周')
+const localCurrentWeekRange = buildWeekRange(currentWeekDays, t('leadMentor.schedule.k34'))
+const localNextWeekRange = buildWeekRange(nextWeekDays, t('leadMentor.schedule.k35'))
 const bannerDetail = computed(() => {
-  return statusView.value?.bannerDetail || '未填写排期将无法被安排课程，系统将发送邮件提醒'
+  return statusView.value?.bannerDetail || t('leadMentor.schedule.k36')
 })
 const currentWeekHoursLabel = computed(() => formatHours(currentSchedule.value?.availableHours))
 const currentWeekAvailableDaysLabel = computed(() => formatCount(currentSchedule.value?.availableDayCount))
-const scheduleStatusLabel = computed(() => statusView.value?.scheduleStatus || '待同步')
+const scheduleStatusLabel = computed(() => statusView.value?.scheduleStatus || t('leadMentor.schedule.k37'))
 const currentWeekRange = computed(() => {
-  return currentSchedule.value?.weekRange ? `${currentSchedule.value.weekRange} (本周)` : localCurrentWeekRange
+  return currentSchedule.value?.weekRange ? t('leadMentor.schedule.k46', { range: currentSchedule.value.weekRange }) : localCurrentWeekRange
 })
 const nextWeekRange = computed(() => {
-  return nextSchedule.value?.weekRange ? `${nextSchedule.value.weekRange} (下周)` : localNextWeekRange
+  return nextSchedule.value?.weekRange ? t('leadMentor.schedule.k47', { range: nextSchedule.value.weekRange }) : localNextWeekRange
 })
-const nextWeekStatusLabel = computed(() => (statusView.value?.nextWeekFilled ? '已提交' : '待填写'))
+const nextWeekStatusLabel = computed(() => (statusView.value?.nextWeekFilled ? t('leadMentor.schedule.k48') : t('leadMentor.schedule.k38')))
 const forceScheduleDraft = computed<ForceScheduleDraft>(() => ({
   weeklyHours: weeklyHours.value,
   dailySlots: Object.fromEntries(
@@ -369,9 +372,9 @@ function resetDraft() {
 function currentWeekDayValue(dayKey: string) {
   const backendDay = currentSchedule.value?.days.find((day) => String(day.weekday) === dayKey)
   if (!backendDay) {
-    return '待同步'
+    return t('leadMentor.schedule.k37')
   }
-  return backendDay.selectedSlotLabels.length > 0 ? backendDay.selectedSlotLabels.join(' / ') : '未填写'
+  return backendDay.selectedSlotLabels.length > 0 ? backendDay.selectedSlotLabels.join(' / ') : t('leadMentor.schedule.k39')
 }
 
 function closeForceScheduleModal() {
@@ -427,7 +430,7 @@ async function loadScheduleViews(preserveDraft = false) {
       forceScheduleDismissed.value = false
     }
   } catch (error) {
-    message.error(extractErrorMessage(error, '排期加载失败'))
+    message.error(extractErrorMessage(error, t('leadMentor.schedule.k40')))
   }
 }
 
@@ -439,9 +442,9 @@ async function saveNextSchedule() {
       note: note.value.trim(),
     })
     await loadScheduleViews()
-    message.success('下周排期已按真实状态保存')
+    message.success(t('leadMentor.schedule.k41'))
   } catch (error) {
-    message.error(extractErrorMessage(error, '排期保存失败'))
+    message.error(extractErrorMessage(error, t('leadMentor.schedule.k42')))
   }
 }
 

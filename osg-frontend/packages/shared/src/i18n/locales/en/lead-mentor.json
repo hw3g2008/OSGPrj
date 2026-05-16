@@ -1,1 +1,636 @@
-{}
+{
+  "login": {
+    "platformTitle": "OSG Platform",
+    "platformSubtitle": "One-stop vocational training platform — students and mentors grow together",
+    "feature1": "Student: one-on-one mentoring",
+    "feature2": "Mentor: efficient session management",
+    "feature3": "Real-time position information sharing",
+    "feature4": "Comprehensive learning resource library",
+    "brand": "OSG Lead Mentor",
+    "welcome": "Welcome back",
+    "subtitle": "Sign in with email (Mentor / Lead Mentor)",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "passwordHide": "Hide password",
+    "passwordShow": "Show password",
+    "loading": "Signing in...",
+    "submit": "Sign In",
+    "forgotPasswordHint": "Forgot password?",
+    "forgotPasswordCta": "Reset",
+    "errorEmpty": "Please enter email and password",
+    "errorNoAccess": "This account does not have access to the Lead Mentor portal",
+    "errorInvalid": "Incorrect email or password",
+    "success": "Signed in successfully"
+  },
+  "home": {
+    "greetingAfternoon": "Good afternoon, {name}",
+    "summary": {
+      "pendingScheduling": "Sessions to schedule",
+      "pendingSchedulingUnit": "",
+      "pendingSchedulingFooter": "Assign Mentor",
+      "pendingConfirm": "Sessions to confirm",
+      "pendingConfirmUnit": "",
+      "pendingConfirmFooter": "Confirm feedback",
+      "weeklyIncome": "Weekly income (settled)",
+      "weeklyIncomeFooter": "Pending settlement {amount}",
+      "weeklyHours": "Weekly hours",
+      "weeklyHoursUnit": "h",
+      "weeklyHoursFooter": "{done} done · {pending} pending review"
+    },
+    "stats": {
+      "myStudents": "My Students",
+      "unitPerson": "",
+      "weeklySchedule": "Weekly schedule",
+      "weeklyScheduleFilled": "Submitted",
+      "availableHours": "Available hours",
+      "unitHour": "h",
+      "availableDays": "Available days",
+      "unitDay": "d",
+      "availableMentors": "Available mentors"
+    },
+    "quickEntries": {
+      "title": "Quick Entry",
+      "positionApply": "Position Applications",
+      "positionApplyMeta": "{count} pending",
+      "scheduleManage": "Session Scheduling",
+      "myClasses": "My Sessions",
+      "myStudents": "My Students",
+      "mySchedule": "My Schedule",
+      "reimbursement": "Reimbursement"
+    }
+  },
+  "layout": {
+    "roleLabel": "Lead Mentor",
+    "comingSoon": "Coming soon",
+    "nav": {
+      "career": {
+        "title": "Career",
+        "positions": "Positions",
+        "jobOverview": "Job Overview",
+        "mockPractice": "Mock Practice"
+      },
+      "studentCenter": {
+        "title": "Student Center",
+        "studentList": "Student List"
+      },
+      "teaching": {
+        "title": "Teaching",
+        "classRecords": "Class Records",
+        "communicationRecords": "Communication Records"
+      },
+      "finance": {
+        "title": "Finance",
+        "settlement": "Settlement",
+        "expense": "Expense"
+      },
+      "resources": {
+        "title": "Resources",
+        "files": "Files",
+        "onlineTests": "Online Tests",
+        "interviewBank": "Interview Bank"
+      },
+      "profile": {
+        "title": "Profile",
+        "basic": "Basic Info",
+        "schedule": "Schedule",
+        "notice": "Notice",
+        "faq": "FAQ"
+      }
+    }
+  },
+  "jobOverview": {
+    "pageTitle": "Job Overview",
+    "tab": {
+      "managed": "My Students",
+      "coaching": "Students I Coach",
+      "pending": "Pending Mentor Assignment"
+    },
+    "filter": {
+      "allCompanies": "All Companies",
+      "allStages": "All Stages",
+      "interviewStart": "Interview Start",
+      "interviewEnd": "Interview End",
+      "lessonReported": "Lesson Reported",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "actions": {
+      "export": "Export",
+      "search": "Search",
+      "viewDetail": "View Detail",
+      "acknowledge": "Confirm",
+      "reportLesson": "Submit Lesson",
+      "assignMentor": "Assign Mentor"
+    },
+    "alert": {
+      "managed": "Track your students' job search progress. Confirmed statuses persist after refresh.",
+      "pending": "The following students have requested coaching and need a mentor assigned."
+    },
+    "col": {
+      "studentId": "Student ID",
+      "studentName": "Name",
+      "position": "Position",
+      "company": "Company",
+      "city": "City",
+      "interviewStage": "Interview Stage",
+      "interviewTime": "Interview Time",
+      "submittedAt": "Submitted At",
+      "actions": "Actions",
+      "lessonCount": "Lessons Reported",
+      "mentor": "Mentor",
+      "latestRating": "Latest Rating"
+    },
+    "status": {
+      "coaching": "Coaching",
+      "stageUpdated": "Stage Updated"
+    },
+    "placeholder": {
+      "leadMentor": "Lead Mentor TBD",
+      "mentor": "Unassigned",
+      "interviewTime": "TBD",
+      "date": "Pending"
+    },
+    "mentorDemand": {
+      "unit": " mentor(s)",
+      "needHelp": "Needs help"
+    },
+    "countdown": {
+      "ended": "Ended",
+      "today": "Today",
+      "daysLeft": "{days} days left"
+    },
+    "notes": {
+      "defaultNote": "{studentName} is currently at {stage} stage",
+      "thisStudent": "This student"
+    },
+    "messages": {
+      "lessonSubmitted": "Lesson record submitted",
+      "loadFailed": "Failed to load job overview",
+      "detailLoadFailed": "Failed to load job detail",
+      "lessonDetailLoadFailed": "Failed to load lesson detail",
+      "assignContextLost": "Mentor assignment context lost",
+      "assignSelectMentor": "Please select at least 1 mentor",
+      "assignCountMismatch": "Mentor count must match the requested number",
+      "assignSuccess": "Mentor assignment saved",
+      "assignFailed": "Failed to save mentor assignment",
+      "acknowledgeSuccess": "Stage update confirmed",
+      "acknowledgeFailed": "Failed to confirm stage update"
+    }
+  },
+  "classRecords": {
+    "pageTitle": "Class Records",
+    "scope": {
+      "mine": "My Sessions",
+      "managed": "Managed Sessions"
+    },
+    "filter": {
+      "searchPlaceholder": "Search student name / ID",
+      "coachingType": "Coaching Type",
+      "courseContent": "Course Content",
+      "timeRange": "Time Range",
+      "reporter": "Reporter",
+      "thisWeek": "This Week",
+      "lastWeek": "Last Week",
+      "thisMonth": "This Month",
+      "reset": "Reset"
+    },
+    "coaching": {
+      "mockPractice": "Mock Practice",
+      "jobCoaching": "Job Coaching"
+    },
+    "course": {
+      "resumeRevision": "Resume Revision",
+      "resumeUpdate": "Resume Update",
+      "casePrep": "Case Prep",
+      "mockInterview": "Mock Interview",
+      "networkingMidterm": "Networking Midterm",
+      "mockMidterm": "Mock Midterm",
+      "behavioral": "Behavioral",
+      "technical": "Technical",
+      "other": "Other"
+    },
+    "table": {
+      "recordId": "Record ID",
+      "student": "Student",
+      "reporter": "Reporter",
+      "mentor": "Mentor",
+      "coachingType": "Coaching Type",
+      "courseContent": "Course Content",
+      "classDate": "Date",
+      "duration": "Duration",
+      "reviewStatus": "Status",
+      "studentRating": "Rating",
+      "actions": "Actions"
+    },
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "actions": {
+      "report": "Submit Record",
+      "viewDetail": "View Detail",
+      "viewReason": "View Reason"
+    },
+    "studentStatus": {
+      "frozen": " (Frozen — cannot submit)",
+      "refunded": " (Refunded — cannot submit)",
+      "ended": " (Ended)",
+      "defaultName": "Student {id}"
+    },
+    "error": {
+      "loadFailed": "Failed to load class records"
+    },
+    "messages": {
+      "submitSuccess": "Record #{id} submitted and pending review"
+    },
+    "detail": {
+      "mock": {
+        "title": "Mock Interview Feedback",
+        "sectionTitle": "Interview Feedback",
+        "performanceLabel": "Performance",
+        "overallLabel": "Overall Score",
+        "interviewTypeLabel": "Interview Type",
+        "suggestionLabel": "Suggestions"
+      },
+      "resume": {
+        "title": "Resume Review Feedback",
+        "sectionTitle": "Resume Feedback",
+        "changeLabel": "Key Changes",
+        "completionLabel": "Completion",
+        "suggestionLabel": "Next Steps"
+      },
+      "networking": {
+        "title": "Networking Session Feedback",
+        "sectionTitle": "Networking Feedback",
+        "progressLabel": "Progress",
+        "contactNameLabel": "Contact Name",
+        "contactRoleLabel": "Company / Role",
+        "followUpLabel": "Follow-up Plan"
+      },
+      "regular": {
+        "title": "Regular Session Feedback",
+        "sectionTitle": "Session Feedback",
+        "lessonLabel": "Topics Covered",
+        "performanceLabel": "Student Performance",
+        "nextPlanLabel": "Next Session Plan"
+      },
+      "reject": {
+        "title": "Record Rejected",
+        "courseTypeLabel": "Course Type",
+        "classTimeLabel": "Class Time",
+        "submittedDurationLabel": "Submitted Duration",
+        "reasonTitle": "Rejection Reason"
+      }
+    }
+  },
+  "dashboard": {
+    "stats": {
+      "classes": "Managed classes",
+      "classesUnit": "",
+      "students": "Total students",
+      "studentsUnit": "",
+      "mentors": "Active mentors",
+      "mentorsUnit": "",
+      "weekCourses": "Weekly sessions",
+      "weekCoursesUnit": ""
+    },
+    "classProgress": {
+      "title": "Class learning progress"
+    },
+    "todos": {
+      "title": "To-do",
+      "typeSchedule": "Scheduling",
+      "typeFeedback": "Feedback",
+      "typeSettlement": "Settlement",
+      "sampleSchedule": "Student Zhang has no schedule this week",
+      "sampleFeedback": "3 students await progress evaluation",
+      "sampleSettlement": "Feb mentor hours pending confirmation"
+    },
+    "mock": {
+      "classJava1": "Java Career Class 01",
+      "classJava2": "Java Career Class 02",
+      "classFrontend1": "Frontend Career Class 01"
+    }
+  },
+  "assignMentorModal": {
+    "title": "Match Mentor for Student",
+    "closeAriaLabel": "Close mentor matching dialog",
+    "interviewStage": "Interview Stage",
+    "interviewTime": "Interview Time",
+    "mentorDemand": "Required Mentors",
+    "preferredMentor": "Preferred Mentor",
+    "excludedMentor": "Excluded Mentor",
+    "filterMentor": "Filter Mentors",
+    "allScheduleStatus": "All Schedule Status",
+    "allMajorDirection": "All Major Directions",
+    "allSubDirection": "All Sub Directions",
+    "searchMentorName": "Search mentor name...",
+    "foundCount": "Found {count} mentor(s)",
+    "selectMentor": "Select Mentor",
+    "multiSelect": "multi-select",
+    "noMentors": "No mentors match the criteria",
+    "studentCount": "{count} student(s)",
+    "selectedCount": "{count} mentor(s) selected",
+    "note": "Note",
+    "optional": "optional",
+    "notePlaceholder": "Special notes for mentor, e.g. student background, focus areas...",
+    "cancel": "Cancel",
+    "confirmMatch": "Confirm Match",
+    "loadFailed": "Failed to load mentor list",
+    "errorSelectAtLeastOne": "Please select at least 1 mentor",
+    "errorCountMismatch": "Mentor count must match the requested number",
+    "directionTbd": "Direction TBD",
+    "locationTbd": "Location TBD",
+    "unknown": "Unknown"
+  },
+  "assignMockModal": {
+    "title": "Handle Mock Application",
+    "closeAriaLabel": "Close mock application dialog",
+    "assignMentor": "Assign Mentor",
+    "scheduledTime": "Scheduled Time",
+    "note": "Note",
+    "optional": "optional",
+    "notePlaceholder": "Any additional notes...",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "jobDetailModal": {
+    "title": "Student Job Detail",
+    "closeAriaLabel": "Close student job detail dialog",
+    "studentInfo": "Student Info",
+    "leadMentor": "Lead Mentor",
+    "appliedPosition": "Applied Position",
+    "recruitmentCycle": "Recruitment Cycle",
+    "jobProgress": "Job Progress",
+    "interviewTime": "Interview Time",
+    "coachingInfo": "Coaching Info",
+    "coachingStatus": "Coaching Status",
+    "assignedMentor": "Assigned Mentor",
+    "lessonHours": "Lesson Hours",
+    "applyTime": "Apply Time",
+    "recentRecords": "Course Records (Latest 3)",
+    "viewAll": "View All",
+    "studentNotes": "Student Notes",
+    "close": "Close",
+    "changeMentor": "Change Mentor",
+    "step": {
+      "submitted": "Submitted",
+      "current": "Current"
+    },
+    "record": {
+      "mockInterview": "Mock Interview",
+      "technical": "Technical Session",
+      "resumeRevision": "Resume Revision",
+      "summary1": "Excellent performance, recommend strengthening Valuation",
+      "summary2": "Mastered DCF basics, needs to consolidate LBO",
+      "summary3": "Resume optimization complete, highlighted internship experience",
+      "gradeExcellent": "Excellent",
+      "gradeGood": "Good",
+      "gradeDone": "Done"
+    }
+  },
+  "leadEditProfileModal": {
+    "title": "Edit Profile",
+    "closeAriaLabel": "Close edit profile dialog",
+    "noteInfo": "After updating, the admin staff will be notified.",
+    "noteWarning": "Note: Major direction, sub direction and course rate cannot be changed by yourself.",
+    "editableFields": "Editable Fields",
+    "englishName": "English Name",
+    "gender": "Gender",
+    "pleaseSelect": "Please select",
+    "phone": "Phone",
+    "wechat": "WeChat ID",
+    "wechatPlaceholder": "To be filled via change request",
+    "email": "Email",
+    "region": "Region",
+    "selectRegion": "Select region",
+    "regionNorthAmerica": "North America",
+    "regionEurope": "Europe",
+    "regionAsiaPacific": "Asia Pacific",
+    "regionMainlandChina": "Mainland China",
+    "selectCity": "Select city",
+    "cityNewYork": "New York",
+    "cityLondon": "London",
+    "citySingapore": "Singapore",
+    "cityShanghai": "Shanghai",
+    "cityBeijing": "Beijing",
+    "cancel": "Cancel",
+    "submitting": "Submitting...",
+    "save": "Save Changes"
+  },
+  "leadForceScheduleModal": {
+    "closeAriaLabel": "Close schedule form dialog",
+    "title": "Schedule Required",
+    "alertMessage": "Next week schedule not submitted. Please fill in your available time now.",
+    "weekPeriod": "Week Period",
+    "weeklyHours": "Available hours next week",
+    "hours": "hours",
+    "dailyTime": "Daily available time",
+    "pleaseSelect": "Please select",
+    "submit": "Submit Schedule",
+    "slotMorning": "Morning 9-12",
+    "slotAfternoon": "Afternoon 14-18",
+    "slotEvening": "Evening 19-22"
+  },
+  "classDetailModal": {
+    "closeAriaLabel": "Close class detail dialog",
+    "student": "Student",
+    "mentor": "Mentor",
+    "submittedAt": "Submitted At",
+    "close": "Close"
+  },
+  "classRejectModal": {
+    "closeAriaLabel": "Close class rejection dialog",
+    "student": "Student",
+    "reviewer": "Reviewer: ",
+    "rejectedAt": "Rejected At: ",
+    "close": "Close",
+    "resubmit": "Resubmit"
+  },
+  "mockFeedbackModal": {
+    "closeAriaLabel": "Close mock feedback dialog",
+    "title": "View Mock Feedback",
+    "mentor": "Mentor",
+    "scoreUnit": "/ 5",
+    "actualDuration": "Actual Duration",
+    "detailedFeedback": "Detailed Feedback",
+    "classRecordFeedback": "Class Record Feedback",
+    "suggestions": "Suggestions",
+    "close": "Close"
+  },
+  "positionMyStudentsModal": {
+    "closeAriaLabel": "Close my students application dialog",
+    "title": "{company} - {job} My Student Applications",
+    "note": "Only showing students you manage. You can update their job application status.",
+    "colStudentId": "Student ID",
+    "colName": "Name",
+    "colPosition": "Position",
+    "colStatus": "Status",
+    "colLessonHours": "Lesson Hours",
+    "close": "Close",
+    "saveChanges": "Save Changes"
+  },
+  "positions": {
+    "k1": "列表视图",
+    "k2": "下钻视图",
+    "k3": "岗位信息",
+    "k4": "未归类",
+    "k5": "岗位筛选项加载失败",
+    "k6": "岗位列表加载失败",
+    "k7": "我的学员申请加载失败",
+    "k8": "未申请",
+    "k9": "全部分类",
+    "k10": "全部行业",
+    "k11": "全部公司",
+    "k12": "全部地区",
+    "k13": "搜索岗位名称...",
+    "k14": "正在加载岗位数据...",
+    "k15": "{n} Companies",
+    "k16": "{n} Positions",
+    "k17": "My Students: {n}"
+  },
+  "mentors": {
+    "k1": "导师管理",
+    "k2": "姓名",
+    "k3": "专长",
+    "k4": "带教学员数",
+    "k5": "本月课时",
+    "k6": "评分",
+    "k7": "王老师",
+    "k8": "张老师",
+    "k9": "Java/微服务"
+  },
+  "basic": {
+    "k1": "编辑信息",
+    "k2": "基本信息",
+    "k3": "待完善",
+    "k4": "班主任",
+    "k5": "锁定字段，由后台维护",
+    "k6": "班主任资料加载失败",
+    "k7": "正在同步班主任资料...",
+    "k8": "核心信息",
+    "k9": "英文名",
+    "k10": "性别",
+    "k11": "类型",
+    "k12": "邮箱",
+    "k13": "联系方式",
+    "k14": "手机号",
+    "k15": "微信号",
+    "k16": "所属地区",
+    "k17": "专业方向",
+    "k18": "如需修改请联系后台文员",
+    "k19": "主攻方向",
+    "k20": "二级方向",
+    "k21": "课程信息",
+    "k22": "可授课程类型",
+    "k23": "以后台配置为准",
+    "k24": "课单价",
+    "k25": "(不可修改)",
+    "k26": "You have submitted {count} pending change request(s). Profile will be updated after review.",
+    "k27": "Latest: {field} -> {value}",
+    "k28": "Submitted {count} change request(s)"
+  },
+  "profile": {
+    "k1": "个人中心",
+    "k2": "基本信息",
+    "k3": "用户名",
+    "k4": "昵称",
+    "k5": "手机号",
+    "k6": "邮箱"
+  },
+  "schedule": {
+    "k1": "请在周日前更新下周排期",
+    "k2": "按真实状态更新",
+    "k3": "本周可用",
+    "k4": "可用天数",
+    "k5": "排期状态",
+    "k6": "本周排期",
+    "k7": "只读视图",
+    "k8": "可用时长",
+    "k9": "已设置的可用时间",
+    "k10": "(只读)",
+    "k11": "下周排期",
+    "k12": "下周可上课时长",
+    "k13": "小时",
+    "k14": "每天可上课时间",
+    "k15": "（可多选）",
+    "k16": "绿色背景表示周末，红色背景表示节假日。每天可选择多个时间段。",
+    "k17": "备注（可选）",
+    "k18": "保存下周排期",
+    "k19": "重置",
+    "k20": "请在周日前完成填写",
+    "k21": "我的排期",
+    "k22": "如有特殊情况请在此说明，例如：节假日安排",
+    "k23": "周一",
+    "k24": "周二",
+    "k25": "周三",
+    "k26": "周四",
+    "k27": "周五",
+    "k28": "周六",
+    "k29": "周日",
+    "k30": "上午 9-12",
+    "k31": "下午 14-18",
+    "k32": "晚上 19-22",
+    "k33": "当前登录班主任",
+    "k34": "本周",
+    "k35": "下周",
+    "k36": "未填写排期将无法被安排课程，系统将发送邮件提醒",
+    "k37": "待同步",
+    "k38": "待填写",
+    "k39": "未填写",
+    "k40": "排期加载失败",
+    "k41": "下周排期已按真实状态保存",
+    "k42": "排期保存失败",
+    "k43": "排课总览",
+    "k44": "Schedule Reminder",
+    "k45": "Current Lead Mentor · ID: {id}",
+    "k46": "{range} (This Week)",
+    "k47": "{range} (Next Week)",
+    "k48": "Submitted"
+  },
+  "reports": {
+    "k1": "学情报告",
+    "k2": "学情报告功能开发中"
+  },
+  "students": {
+    "k1": "学员管理",
+    "k2": "姓名",
+    "k3": "班级",
+    "k4": "导师",
+    "k5": "已完成课时",
+    "k6": "学习状态",
+    "k7": "张同学",
+    "k8": "Java 就业班 01 期",
+    "k9": "王老师",
+    "k10": "正常",
+    "k11": "李同学",
+    "k12": "张老师",
+    "k13": "学员类型",
+    "k14": "学校",
+    "k15": "主攻方向",
+    "k16": "搜索",
+    "k17": "重置",
+    "k18": "英文姓名",
+    "k19": "邮箱",
+    "k20": "关系",
+    "k21": "投递",
+    "k22": "面试",
+    "k23": "剩余课时",
+    "k24": "账号状态",
+    "k25": "操作",
+    "k26": "查看求职",
+    "k27": "暂无可查看学员",
+    "k28": "上一页",
+    "k29": "下一页",
+    "k30": "学员列表",
+    "k31": "搜索姓名",
+    "k32": "学员列表加载失败",
+    "k33": "班主任为我",
+    "k34": "科技",
+    "k35": "{count} records total"
+  }
+}

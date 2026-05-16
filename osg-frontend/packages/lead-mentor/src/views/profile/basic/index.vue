@@ -1,7 +1,7 @@
 <template>
   <div id="page-profile" class="page-profile" data-page="profile-basic">
     <PageHeader
-      title-zh="基本信息"
+      :title-zh="t('leadMentor.basic.k2')"
       title-en="Profile"
     >
       <template #actions>
@@ -13,14 +13,14 @@
           @click="openEditModal"
         >
           <i class="mdi mdi-pencil" aria-hidden="true" />
-          编辑信息
+          {{ t('leadMentor.basic.k1') }}
         </button>
       </template>
     </PageHeader>
 
     <div v-if="isLoading" class="page-feedback">
       <i class="mdi mdi-loading mdi-spin" aria-hidden="true" />
-      正在同步班主任资料...
+      {{ t('leadMentor.basic.k7') }}
     </div>
 
     <div v-else-if="loadError" class="page-feedback page-feedback--error">
@@ -31,34 +31,34 @@
     <div v-else-if="pendingCount > 0" class="page-feedback page-feedback--info">
       <i class="mdi mdi-timeline-clock-outline" aria-hidden="true" />
       <div>
-        已提交 {{ pendingCount }} 条待审核变更申请，后台文员审核后才会更新主资料。
+        {{ t('leadMentor.basic.k26', { count: pendingCount }) }}
         <span v-if="latestPendingChange" class="page-feedback__detail">
-          最近一条：{{ latestPendingChange.fieldLabel }} -> {{ latestPendingChange.afterValue }}
+          {{ t('leadMentor.basic.k27', { field: latestPendingChange.fieldLabel, value: latestPendingChange.afterValue }) }}
         </span>
       </div>
     </div>
 
     <section class="card card--core">
       <div class="card-head">
-        <span class="section-pill section-pill--primary">核心信息</span>
+        <span class="section-pill section-pill--primary">{{ t('leadMentor.basic.k8') }}</span>
       </div>
       <div class="info-grid info-grid--four">
         <article class="info-item">
-          <span class="info-label">英文名</span>
+          <span class="info-label">{{ t('leadMentor.basic.k9') }}</span>
           <div class="info-value info-value--strong">{{ displayName }}</div>
         </article>
         <article class="info-item">
-          <span class="info-label">性别</span>
+          <span class="info-label">{{ t('leadMentor.basic.k10') }}</span>
           <div class="info-value">{{ genderLabel }}</div>
         </article>
         <article class="info-item">
-          <span class="info-label">类型</span>
+          <span class="info-label">{{ t('leadMentor.basic.k11') }}</span>
           <div class="info-value">
             <span class="type-tag">{{ typeLabel }}</span>
           </div>
         </article>
         <article class="info-item">
-          <span class="info-label">邮箱</span>
+          <span class="info-label">{{ t('leadMentor.basic.k12') }}</span>
           <div class="info-value">{{ emailValue }}</div>
         </article>
       </div>
@@ -68,20 +68,20 @@
       <div class="card-head">
         <span class="section-pill section-pill--success">
           <i class="mdi mdi-phone" aria-hidden="true" />
-          联系方式
+          {{ t('leadMentor.basic.k13') }}
         </span>
       </div>
       <div class="info-grid info-grid--three">
         <article class="info-item">
-          <span class="info-label">手机号</span>
+          <span class="info-label">{{ t('leadMentor.basic.k14') }}</span>
           <div class="info-value">{{ phoneValue }}</div>
         </article>
         <article class="info-item">
-          <span class="info-label">微信号</span>
+          <span class="info-label">{{ t('leadMentor.basic.k15') }}</span>
           <div class="info-value">{{ wechatValue }}</div>
         </article>
         <article class="info-item">
-          <span class="info-label">所属地区</span>
+          <span class="info-label">{{ t('leadMentor.basic.k16') }}</span>
           <div class="info-value">{{ regionValue }}</div>
         </article>
       </div>
@@ -91,20 +91,20 @@
       <div class="card-head card-head--between">
         <span class="section-pill section-pill--warning">
           <i class="mdi mdi-target" aria-hidden="true" />
-          专业方向
+          {{ t('leadMentor.basic.k17') }}
         </span>
         <span class="locked-tip">
           <i class="mdi mdi-lock" aria-hidden="true" />
-          如需修改请联系后台文员
+          {{ t('leadMentor.basic.k18') }}
         </span>
       </div>
       <div class="info-grid info-grid--two">
         <article class="info-item info-item--locked">
-          <span class="info-label info-label--accent">主攻方向</span>
+          <span class="info-label info-label--accent">{{ t('leadMentor.basic.k19') }}</span>
           <div class="info-value">{{ majorDirectionValue }}</div>
         </article>
         <article class="info-item info-item--locked">
-          <span class="info-label info-label--accent">二级方向</span>
+          <span class="info-label info-label--accent">{{ t('leadMentor.basic.k20') }}</span>
           <div class="info-value">{{ subDirectionValue }}</div>
         </article>
       </div>
@@ -114,20 +114,20 @@
       <div class="card-head">
         <span class="section-pill section-pill--info">
           <i class="mdi mdi-book-open-variant" aria-hidden="true" />
-          课程信息
+          {{ t('leadMentor.basic.k21') }}
         </span>
       </div>
       <div class="info-grid info-grid--two">
         <article class="info-item">
-          <span class="info-label">可授课程类型</span>
+          <span class="info-label">{{ t('leadMentor.basic.k22') }}</span>
           <div class="course-tags">
-            <span class="course-tag">以后台配置为准</span>
+            <span class="course-tag">{{ t('leadMentor.basic.k23') }}</span>
           </div>
         </article>
         <article class="info-item">
           <span class="info-label">
-            课单价
-            <span class="info-label-note">(不可修改)</span>
+            {{ t('leadMentor.basic.k24') }}
+            <span class="info-label-note">{{ t('leadMentor.basic.k25') }}</span>
           </span>
           <div class="info-value info-value--locked">{{ hourlyRateValue }}</div>
         </article>
@@ -147,6 +147,7 @@
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { message } from 'ant-design-vue'
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   getLeadMentorProfile,
   submitLeadMentorProfileChangeRequest,
@@ -156,6 +157,8 @@ import {
 } from '@osg/shared/api'
 import LeadEditProfileModal, { type LeadEditProfileDraft } from '@/components/LeadEditProfileModal.vue'
 
+
+const { t } = useI18n()
 const isEditProfileModalOpen = ref(false)
 const profileView = ref<LeadMentorProfileView | null>(null)
 const isLoading = ref(true)
@@ -169,16 +172,16 @@ const latestPendingChange = computed(() => pendingChanges.value[0] ?? null)
 
 const displayText = (value: string | number | null | undefined) => {
   if (value === null || value === undefined) {
-    return '待完善'
+    return t('leadMentor.basic.k3')
   }
 
   const text = String(value).trim()
-  return text === '' || text === '-' ? '待完善' : text
+  return text === '' || text === '-' ? t('leadMentor.basic.k3') : text
 }
 
 const displayName = computed(() => displayText(profile.value?.englishName))
 const genderLabel = computed(() => displayText(profile.value?.genderLabel))
-const typeLabel = computed(() => displayText(profile.value?.typeLabel || '班主任'))
+const typeLabel = computed(() => displayText(profile.value?.typeLabel || t('leadMentor.basic.k4')))
 const emailValue = computed(() => displayText(profile.value?.email))
 const phoneValue = computed(() => displayText(profile.value?.phone))
 const wechatValue = computed(() => displayText(profile.value?.wechatId))
@@ -187,7 +190,7 @@ const majorDirectionValue = computed(() => displayText(profile.value?.majorDirec
 const subDirectionValue = computed(() => displayText(profile.value?.subDirection))
 const hourlyRateValue = computed(() => {
   if (profile.value?.hourlyRate === null || profile.value?.hourlyRate === undefined) {
-    return '锁定字段，由后台维护'
+    return t('leadMentor.basic.k5')
   }
   return `¥${profile.value.hourlyRate}/h`
 })
@@ -215,7 +218,7 @@ const loadProfile = async () => {
   try {
     profileView.value = await getLeadMentorProfile()
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : '班主任资料加载失败'
+    loadError.value = error instanceof Error ? error.message : t('leadMentor.basic.k6')
   } finally {
     isLoading.value = false
   }
@@ -242,7 +245,7 @@ const handleProfileSave = async (draft: LeadEditProfileDraft) => {
     })
     profileView.value = result
     isEditProfileModalOpen.value = false
-    message.success(`已提交 ${result.createdCount} 条变更申请`)
+    message.success(t('leadMentor.basic.k28', { count: result.createdCount }))
   } catch {
     // Request utility already surfaces the backend error message.
   } finally {

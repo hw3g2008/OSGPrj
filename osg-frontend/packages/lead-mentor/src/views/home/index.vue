@@ -1,7 +1,7 @@
 <template>
   <div id="page-home" class="page-home">
     <div class="home-heading">
-      <h1>下午好，Jess</h1>
+      <h1>{{ t('leadMentor.home.greetingAfternoon', { name: 'Jess' }) }}</h1>
     </div>
 
     <section class="summary-grid">
@@ -38,7 +38,7 @@
 
     <section class="card">
       <div class="card-header">
-        <span class="card-title">快捷入口</span>
+        <span class="card-title">{{ t('leadMentor.home.quickEntries.title') }}</span>
       </div>
       <div class="card-body">
         <div class="quick-grid">
@@ -62,7 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 interface SummaryCard {
   label: string
@@ -90,112 +91,113 @@ interface QuickEntry {
   urgent?: boolean
 }
 
+const { t } = useI18n()
 const showUpcomingToast = inject<() => void>('showUpcomingToast', () => {})
 
-const summaryCards: SummaryCard[] = [
+const summaryCards = computed<SummaryCard[]>(() => [
   {
-    label: '待排课程',
+    label: t('leadMentor.home.summary.pendingScheduling'),
     value: '5',
-    unit: '个',
-    footerText: '去分配导师',
+    unit: t('leadMentor.home.summary.pendingSchedulingUnit'),
+    footerText: t('leadMentor.home.summary.pendingSchedulingFooter'),
     footerIcon: 'mdi-arrow-right',
     tone: 'summary-card--amber'
   },
   {
-    label: '待确认课程',
+    label: t('leadMentor.home.summary.pendingConfirm'),
     value: '3',
-    unit: '节',
-    footerText: '去确认反馈',
+    unit: t('leadMentor.home.summary.pendingConfirmUnit'),
+    footerText: t('leadMentor.home.summary.pendingConfirmFooter'),
     footerIcon: 'mdi-arrow-right',
     tone: 'summary-card--rose'
   },
   {
-    label: '本周收入（已结算）',
+    label: t('leadMentor.home.summary.weeklyIncome'),
     value: '$1,250',
-    footerText: '待结算 $320',
+    footerText: t('leadMentor.home.summary.weeklyIncomeFooter', { amount: '$320' }),
     tone: 'summary-card--green'
   },
   {
-    label: '本周课时',
+    label: t('leadMentor.home.summary.weeklyHours'),
     value: '12.5',
-    unit: 'h',
-    footerText: '已完成 8节 · 待审核 2节',
+    unit: t('leadMentor.home.summary.weeklyHoursUnit'),
+    footerText: t('leadMentor.home.summary.weeklyHoursFooter', { done: 8, pending: 2 }),
     tone: 'summary-card--blue'
   }
-]
+])
 
-const statCards: StatCard[] = [
+const statCards = computed<StatCard[]>(() => [
   {
-    label: '我的学员',
+    label: t('leadMentor.home.stats.myStudents'),
     value: '15',
-    unit: '人',
+    unit: t('leadMentor.home.stats.unitPerson'),
     iconClass: 'mdi-account-multiple',
     tone: 'purple'
   },
   {
-    label: '本周排期',
-    value: '已填写',
+    label: t('leadMentor.home.stats.weeklySchedule'),
+    value: t('leadMentor.home.stats.weeklyScheduleFilled'),
     iconClass: 'mdi-calendar-check',
     tone: 'green',
     compactValue: true
   },
   {
-    label: '可用时间',
+    label: t('leadMentor.home.stats.availableHours'),
     value: '10',
-    unit: 'h',
+    unit: t('leadMentor.home.stats.unitHour'),
     iconClass: 'mdi-clock-outline',
     tone: 'blue'
   },
   {
-    label: '可用天数',
+    label: t('leadMentor.home.stats.availableDays'),
     value: '4',
-    unit: '天',
+    unit: t('leadMentor.home.stats.unitDay'),
     iconClass: 'mdi-calendar',
     tone: 'orange'
   },
   {
-    label: '可用导师',
+    label: t('leadMentor.home.stats.availableMentors'),
     value: '8',
-    unit: '人',
+    unit: t('leadMentor.home.stats.unitPerson'),
     iconClass: 'mdi-account-group',
     tone: 'purple'
   }
-]
+])
 
-const quickEntries: QuickEntry[] = [
+const quickEntries = computed<QuickEntry[]>(() => [
   {
-    label: '岗位申请',
-    meta: '8待处理',
+    label: t('leadMentor.home.quickEntries.positionApply'),
+    meta: t('leadMentor.home.quickEntries.positionApplyMeta', { count: 8 }),
     iconClass: 'mdi-briefcase-plus',
     tone: 'red',
     urgent: true
   },
   {
-    label: '排课管理',
+    label: t('leadMentor.home.quickEntries.scheduleManage'),
     iconClass: 'mdi-clipboard-list',
     tone: 'amber'
   },
   {
-    label: '我的课程',
+    label: t('leadMentor.home.quickEntries.myClasses'),
     iconClass: 'mdi-book-open-variant',
     tone: 'purple'
   },
   {
-    label: '我的学员',
+    label: t('leadMentor.home.quickEntries.myStudents'),
     iconClass: 'mdi-account-multiple',
     tone: 'blue'
   },
   {
-    label: '我的排期',
+    label: t('leadMentor.home.quickEntries.mySchedule'),
     iconClass: 'mdi-calendar-clock',
     tone: 'green'
   },
   {
-    label: '报销管理',
+    label: t('leadMentor.home.quickEntries.reimbursement'),
     iconClass: 'mdi-receipt',
     tone: 'orange'
   }
-]
+])
 
 const handleQuickEntryClick = () => {
   showUpcomingToast()

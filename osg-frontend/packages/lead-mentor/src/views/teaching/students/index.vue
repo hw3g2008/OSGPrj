@@ -1,7 +1,7 @@
 <template>
   <div id="page-student-list" class="page-student-list">
     <PageHeader
-      title-zh="学员列表"
+      :title-zh="t('leadMentor.students.k30')"
       title-en="Student List"
     />
 
@@ -10,10 +10,10 @@
         v-model="filters.keyword"
         class="form-input"
         type="text"
-        placeholder="搜索姓名"
+        :placeholder="t('leadMentor.students.k31')"
       />
       <select v-model="filters.relation" class="form-select">
-        <option value="">学员类型</option>
+        <option value="">{{ t('leadMentor.students.k13') }}</option>
         <option
           v-for="option in meta.relationOptions"
           :key="option.value"
@@ -23,7 +23,7 @@
         </option>
       </select>
       <select v-model="filters.school" class="form-select">
-        <option value="">学校</option>
+        <option value="">{{ t('leadMentor.students.k14') }}</option>
         <option
           v-for="option in mergedSchoolOptions"
           :key="option.value"
@@ -33,7 +33,7 @@
         </option>
       </select>
       <select v-model="filters.direction" class="form-select">
-        <option value="">主攻方向</option>
+        <option value="">{{ t('leadMentor.students.k15') }}</option>
         <option
           v-for="option in mergedMajorDirectionOptions"
           :key="option.value"
@@ -44,11 +44,11 @@
       </select>
       <button type="button" class="btn" @click="handleSearch">
         <i class="mdi mdi-magnify" aria-hidden="true" />
-        搜索
+        {{ t('leadMentor.students.k16') }}
       </button>
       <button type="button" class="btn btn-text" @click="handleReset">
         <i class="mdi mdi-refresh" aria-hidden="true" />
-        重置
+        {{ t('leadMentor.students.k17') }}
       </button>
     </section>
 
@@ -59,17 +59,17 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>英文姓名</th>
-                <th>邮箱</th>
-                <th>关系</th>
-                <th>学校</th>
-                <th>主攻方向</th>
-                <th>投递</th>
-                <th>面试</th>
+                <th>{{ t('leadMentor.students.k18') }}</th>
+                <th>{{ t('leadMentor.students.k19') }}</th>
+                <th>{{ t('leadMentor.students.k20') }}</th>
+                <th>{{ t('leadMentor.students.k14') }}</th>
+                <th>{{ t('leadMentor.students.k15') }}</th>
+                <th>{{ t('leadMentor.students.k21') }}</th>
+                <th>{{ t('leadMentor.students.k22') }}</th>
                 <th>OFFER</th>
-                <th>剩余课时</th>
-                <th>账号状态</th>
-                <th>操作</th>
+                <th>{{ t('leadMentor.students.k23') }}</th>
+                <th>{{ t('leadMentor.students.k24') }}</th>
+                <th>{{ t('leadMentor.students.k25') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -114,12 +114,12 @@
                     data-action="view-job-overview"
                     @click="handleViewJob(row)"
                   >
-                    查看求职
+                    {{ t('leadMentor.students.k26') }}
                   </button>
                 </td>
               </tr>
               <tr v-if="studentRows.length === 0">
-                <td colspan="12" class="empty-state">暂无可查看学员</td>
+                <td colspan="12" class="empty-state">{{ t('leadMentor.students.k27') }}</td>
               </tr>
             </tbody>
           </table>
@@ -128,11 +128,11 @@
     </section>
 
     <div class="page-footer">
-      <span class="page-total">共 {{ studentRows.length }} 条记录</span>
+      <span class="page-total">{{ t('leadMentor.students.k35', { count: studentRows.length }) }}</span>
       <div class="pagination">
-        <button type="button" class="pager-btn" disabled>上一页</button>
+        <button type="button" class="pager-btn" disabled>{{ t('leadMentor.students.k28') }}</button>
         <button type="button" class="pager-btn pager-btn--active">1</button>
-        <button type="button" class="pager-btn" disabled>下一页</button>
+        <button type="button" class="pager-btn" disabled>{{ t('leadMentor.students.k29') }}</button>
       </div>
     </div>
   </div>
@@ -140,6 +140,7 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { StudentStatusTag, RemainingHoursCell } from '@osg/shared/components'
 import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
@@ -152,6 +153,8 @@ import {
   type LeadMentorStudentListParams,
   type LeadMentorStudentMeta,
 } from '@osg/shared/api'
+
+const { t } = useI18n()
 
 interface RelationTag {
   value: string
@@ -272,7 +275,7 @@ const loadPage = async () => {
     await Promise.all([loadMeta(), loadRows()])
   } catch (_error) {
     rows.value = []
-    message.error('学员列表加载失败')
+    message.error(t('leadMentor.students.k32'))
   }
 }
 
@@ -305,7 +308,7 @@ onMounted(() => {
 
 function normalizeRelations(relations?: LeadMentorStudentListItem['relations']) {
   if (!Array.isArray(relations) || relations.length === 0) {
-    return [{ value: 'managed', label: '班主任为我', tone: 'relation-tag--warning' }]
+    return [{ value: 'managed', label: t('leadMentor.students.k33'), tone: 'relation-tag--warning' }]
   }
 
   return relations.map((relation) => ({
@@ -331,7 +334,7 @@ function resolveRelationTone(value?: string, tone?: string) {
 
 function resolveDirectionTone(direction?: string) {
   const normalized = (direction || '').toLowerCase()
-  if (normalized.includes('tech') || normalized.includes('科技')) {
+  if (normalized.includes('tech') || normalized.includes(t('leadMentor.students.k34'))) {
     return 'direction-tag--tech'
   }
   return 'direction-tag--finance'

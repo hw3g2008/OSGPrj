@@ -1,18 +1,18 @@
 <template>
   <div id="page-mock-practice" class="page-mock-practice osg-page">
     <PageHeader
-      title-zh="模拟应聘管理"
+      :title-zh="t('leadMentor.mockPractice.pageTitle')"
       title-en="Mock Practice"
     />
 
     <a-card :bordered="false" :body-style="{ padding: 0 }" class="mock-tab-card">
       <a-tabs v-model:active-key="activeTab" type="card" class="mock-tabs">
-        <!-- mymanage tab：我管理的学员 -->
+        <!-- mymanage tab -->
         <a-tab-pane key="mymanage" force-render>
           <template #tab>
             <span id="mock-tab-mymanage" class="mock-tab-label mock-tab-label--managed">
               <TeamOutlined />
-              我管理的学员
+              {{ t('leadMentor.mockPractice.tab.managed') }}
               <span class="tab-count tab-count--managed">{{ managedRows.length }}</span>
             </span>
           </template>
@@ -20,15 +20,15 @@
             <a-alert
               type="success"
               show-icon
-              message="以下是您管理的学员的模拟应聘记录（由其他导师辅导）"
+              :message="t('leadMentor.mockPractice.alert.managed')"
               style="margin-bottom: 12px;"
             />
 
             <a-form layout="inline" class="mock-filters">
-              <a-form-item label="类型">
+              <a-form-item :label="t('leadMentor.mockPractice.filter.type')">
                 <a-select
                   v-model:value="managedFilters.practiceType"
-                  placeholder="全部类型"
+                  :placeholder="t('leadMentor.mockPractice.filter.allTypes')"
                   allow-clear
                   style="width: 140px"
                   :options="practiceTypeOptions"
@@ -37,13 +37,13 @@
               <a-form-item>
                 <a-button type="primary" @click="handleSearch('managed')">
                   <template #icon><SearchOutlined /></template>
-                  筛选
+                  {{ t('leadMentor.mockPractice.filter.search') }}
                 </a-button>
               </a-form-item>
               <a-form-item>
                 <a-button type="text" @click="handleReset('managed')">
                   <template #icon><ReloadOutlined /></template>
-                  重置
+                  {{ t('leadMentor.mockPractice.filter.reset') }}
                 </a-button>
               </a-form-item>
             </a-form>
@@ -56,7 +56,7 @@
               :loading="loading.managed"
               :scroll="{ x: 1200 }"
               :row-class-name="(record: PracticeRow) => record.rowTone || ''"
-              :locale="{ emptyText: '当前暂无管理学员的模拟应聘记录' }"
+              :locale="{ emptyText: t('leadMentor.mockPractice.empty.managed') }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
@@ -106,12 +106,12 @@
             </a-table>
           </div>
         </a-tab-pane>
-        <!-- mycoaching tab：我辅导的学员 -->
+        <!-- mycoaching tab -->
         <a-tab-pane key="mycoaching" force-render>
           <template #tab>
             <span id="mock-tab-mycoaching" class="mock-tab-label mock-tab-label--coaching">
               <BookOutlined />
-              我辅导的学员
+              {{ t('leadMentor.mockPractice.tab.coaching') }}
               <span class="tab-count">{{ coachingRows.length }}</span>
             </span>
           </template>
@@ -119,15 +119,15 @@
             <a-alert
               type="info"
               show-icon
-              message="以下是由您亲自辅导的学员模拟应聘记录"
+              :message="t('leadMentor.mockPractice.alert.coaching')"
               style="margin-bottom: 12px;"
             />
 
             <a-form layout="inline" class="mock-filters">
-              <a-form-item label="类型">
+              <a-form-item :label="t('leadMentor.mockPractice.filter.type')">
                 <a-select
                   v-model:value="coachingFilters.practiceType"
-                  placeholder="全部类型"
+                  :placeholder="t('leadMentor.mockPractice.filter.allTypes')"
                   allow-clear
                   style="width: 140px"
                   :options="practiceTypeOptions"
@@ -136,13 +136,13 @@
               <a-form-item>
                 <a-button type="primary" @click="handleSearch('coaching')">
                   <template #icon><SearchOutlined /></template>
-                  筛选
+                  {{ t('leadMentor.mockPractice.filter.search') }}
                 </a-button>
               </a-form-item>
               <a-form-item>
                 <a-button type="text" @click="handleReset('coaching')">
                   <template #icon><ReloadOutlined /></template>
-                  重置
+                  {{ t('leadMentor.mockPractice.filter.reset') }}
                 </a-button>
               </a-form-item>
             </a-form>
@@ -155,7 +155,7 @@
               :loading="loading.coaching"
               :scroll="{ x: 1100 }"
               :row-class-name="(record: PracticeRow) => record.rowTone || ''"
-              :locale="{ emptyText: '当前暂无辅导的模拟应聘记录' }"
+              :locale="{ emptyText: t('leadMentor.mockPractice.empty.coaching') }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
@@ -205,7 +205,7 @@
                       </div>
                     </button>
                     <a-button size="small" @click="openClassReportFromPractice(record)">
-                      上报课消
+                      {{ t('leadMentor.mockPractice.actions.reportLesson') }}
                     </a-button>
                   </div>
                 </template>
@@ -214,12 +214,12 @@
           </div>
         </a-tab-pane>
 
-        <!-- pending tab：LM 独有「待分配导师」 -->
+        <!-- pending tab -->
         <a-tab-pane key="pending" force-render>
           <template #tab>
             <span id="mock-tab-pending" class="mock-tab-label mock-tab-label--pending">
               <ClockCircleOutlined />
-              待分配导师
+              {{ t('leadMentor.mockPractice.tab.pending') }}
               <span class="tab-count">{{ pendingRows.length }}</span>
             </span>
           </template>
@@ -227,15 +227,15 @@
             <a-alert
               type="warning"
               show-icon
-              message="以下学员申请了模拟应聘，需要分配导师"
+              :message="t('leadMentor.mockPractice.alert.pending')"
               style="margin-bottom: 12px;"
             />
 
             <a-form layout="inline" class="mock-filters">
-              <a-form-item label="类型">
+              <a-form-item :label="t('leadMentor.mockPractice.filter.type')">
                 <a-select
                   v-model:value="pendingFilters.practiceType"
-                  placeholder="全部类型"
+                  :placeholder="t('leadMentor.mockPractice.filter.allTypes')"
                   allow-clear
                   style="width: 140px"
                   :options="practiceTypeOptions"
@@ -244,13 +244,13 @@
               <a-form-item>
                 <a-button type="primary" @click="handleSearch('pending')">
                   <template #icon><SearchOutlined /></template>
-                  筛选
+                  {{ t('leadMentor.mockPractice.filter.search') }}
                 </a-button>
               </a-form-item>
               <a-form-item>
                 <a-button type="text" @click="handleReset('pending')">
                   <template #icon><ReloadOutlined /></template>
-                  重置
+                  {{ t('leadMentor.mockPractice.filter.reset') }}
                 </a-button>
               </a-form-item>
             </a-form>
@@ -263,7 +263,7 @@
               :loading="loading.pending"
               :scroll="{ x: 700 }"
               :row-class-name="(record: PracticeRow) => record.rowTone || ''"
-              :locale="{ emptyText: '暂无待分配的模拟应聘记录' }"
+              :locale="{ emptyText: t('leadMentor.mockPractice.empty.pending') }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'student'">
@@ -287,7 +287,7 @@
                     @click="openAssignMock(record.practiceId)"
                   >
                     <template #icon><UserAddOutlined /></template>
-                    分配导师
+                    {{ t('leadMentor.mockPractice.actions.assignMentor') }}
                   </a-button>
                 </template>
               </template>
@@ -334,6 +334,7 @@ import {
   UserAddOutlined,
 } from '@ant-design/icons-vue'
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   acknowledgeLeadMentorMockPractice,
   assignLeadMentorMockPractice,
@@ -342,15 +343,22 @@ import {
   type LeadMentorMockPracticeItem,
   type LeadMentorMockPracticeScope,
 } from '@osg/shared/api'
-// §D.2 LM mock-practice 状态显示接入 SSOT composable
+// §D.2 LM mock-practice 状态显示接入 SSOT composable // i18n-skip-line: code comment
 import { deriveMockPracticeStatus } from '@osg/shared/composables'
 import type { ReferenceType } from '@osg/shared/types/classReport'
 import AssignMockModal, { type AssignMockPreview } from '@/components/AssignMockModal.vue'
 import LeadMockFeedbackModal, { type MockFeedbackPreview } from '@/components/LeadMockFeedbackModal.vue'
 import LeadMentorClassReportFlowModal from '../../teaching/class-records/LeadMentorClassReportFlowModal.vue'
 
+const { t } = useI18n()
+
 type MockTab = 'pending' | 'mycoaching' | 'mymanage'
 type ScopeKey = LeadMentorMockPracticeScope
+
+// Backend data values — must match API enum values; not translated
+const PRACTICE_TYPE_MOCK = '模拟面试' // i18n-skip-line: backend data comparison
+const PRACTICE_TYPE_RELATION = '人际关系测试' // i18n-skip-line: backend data comparison
+const PRACTICE_TYPE_MIDTERM = '期中考试' // i18n-skip-line: backend data comparison
 
 interface PracticeRow {
   practiceId: number
@@ -416,37 +424,37 @@ const pendingFilters = reactive<ScopeFilters>({})
 const coachingFilters = reactive<ScopeFilters>({})
 const managedFilters = reactive<ScopeFilters>({})
 
-const practiceTypeOptions = [
-  { value: '模拟面试', label: '模拟面试' },
-  { value: '人际关系测试', label: '人际关系测试' },
-  { value: '期中考试', label: '期中考试' },
-]
+const practiceTypeOptions = computed(() => [
+  { value: PRACTICE_TYPE_MOCK, label: t('leadMentor.mockPractice.practiceType.mockInterview') },
+  { value: PRACTICE_TYPE_RELATION, label: t('leadMentor.mockPractice.practiceType.relationTest') },
+  { value: PRACTICE_TYPE_MIDTERM, label: t('leadMentor.mockPractice.practiceType.midterm') },
+])
 
-const pendingColumns = [
-  { title: '学员', key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
-  { title: '类型', key: 'practiceType', dataIndex: 'practiceType', width: 160 },
-  { title: '申请时间', key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
-  { title: '操作', key: 'action', width: 140, fixed: 'right' as const },
-]
+const pendingColumns = computed(() => [
+  { title: t('leadMentor.mockPractice.col.student'), key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
+  { title: t('leadMentor.mockPractice.col.type'), key: 'practiceType', dataIndex: 'practiceType', width: 160 },
+  { title: t('leadMentor.mockPractice.col.appliedAt'), key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
+  { title: t('leadMentor.mockPractice.col.actions'), key: 'action', width: 140, fixed: 'right' as const },
+])
 
-const coachingColumns = [
-  { title: '学员', key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
-  { title: '类型', key: 'practiceType', dataIndex: 'practiceType', width: 160 },
-  { title: '申请时间', key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
-  { title: '状态', key: 'status', dataIndex: 'status', width: 130 },
-  { title: '已上课时', key: 'hours', dataIndex: 'hours', width: 110, align: 'center' as const },
-  { title: '课程反馈', key: 'feedback', dataIndex: 'feedback', width: 220 },
-]
+const coachingColumns = computed(() => [
+  { title: t('leadMentor.mockPractice.col.student'), key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
+  { title: t('leadMentor.mockPractice.col.type'), key: 'practiceType', dataIndex: 'practiceType', width: 160 },
+  { title: t('leadMentor.mockPractice.col.appliedAt'), key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
+  { title: t('leadMentor.mockPractice.col.status'), key: 'status', dataIndex: 'status', width: 130 },
+  { title: t('leadMentor.mockPractice.col.lessonHours'), key: 'hours', dataIndex: 'hours', width: 110, align: 'center' as const },
+  { title: t('leadMentor.mockPractice.col.feedback'), key: 'feedback', dataIndex: 'feedback', width: 220 },
+])
 
-const managedColumns = [
-  { title: '学员', key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
-  { title: '类型', key: 'practiceType', dataIndex: 'practiceType', width: 160 },
-  { title: '申请时间', key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
-  { title: '状态', key: 'status', dataIndex: 'status', width: 110 },
-  { title: '辅导导师', key: 'mentor', dataIndex: 'mentor', width: 180 },
-  { title: '已上课时', key: 'hours', dataIndex: 'hours', width: 110, align: 'center' as const },
-  { title: '课程反馈', key: 'feedback', dataIndex: 'feedback', width: 220 },
-]
+const managedColumns = computed(() => [
+  { title: t('leadMentor.mockPractice.col.student'), key: 'student', dataIndex: 'studentName', width: 200, fixed: 'left' as const },
+  { title: t('leadMentor.mockPractice.col.type'), key: 'practiceType', dataIndex: 'practiceType', width: 160 },
+  { title: t('leadMentor.mockPractice.col.appliedAt'), key: 'appliedAt', dataIndex: 'appliedAt', width: 140 },
+  { title: t('leadMentor.mockPractice.col.status'), key: 'status', dataIndex: 'status', width: 110 },
+  { title: t('leadMentor.mockPractice.col.mentor'), key: 'mentor', dataIndex: 'mentor', width: 180 },
+  { title: t('leadMentor.mockPractice.col.lessonHours'), key: 'hours', dataIndex: 'hours', width: 110, align: 'center' as const },
+  { title: t('leadMentor.mockPractice.col.feedback'), key: 'feedback', dataIndex: 'feedback', width: 220 },
+])
 
 const pendingRows = computed<PracticeRow[]>(() =>
   scopeRows.value.pending.map((row) => toPracticeRow(row, 'pending')),
@@ -497,7 +505,7 @@ const loadAllScopes = async () => {
     activeAssignDetail.value = null
     isFeedbackModalOpen.value = false
     selectedFeedback.value = null
-    message.error('模拟应聘数据加载失败')
+    message.error(t('leadMentor.mockPractice.messages.loadFailed'))
   }
 }
 
@@ -506,7 +514,7 @@ async function handleSearch(scope: ScopeKey) {
     const rows = await loadScope(scope)
     scopeRows.value = { ...scopeRows.value, [scope]: rows }
   } catch (_error) {
-    message.error('筛选失败，请稍后重试')
+    message.error(t('leadMentor.mockPractice.messages.searchFailed'))
   }
 }
 
@@ -524,7 +532,7 @@ const openMockFeedback = async (practiceId: number) => {
   } catch (_error) {
     selectedFeedback.value = null
     isFeedbackModalOpen.value = false
-    message.error('模拟反馈加载失败')
+    message.error(t('leadMentor.mockPractice.messages.feedbackLoadFailed'))
   }
 }
 
@@ -540,7 +548,7 @@ const openAssignMock = async (practiceId: number) => {
     activeAssignDetail.value = null
     selectedAssignPreview.value = null
     isAssignMockModalOpen.value = false
-    message.error('模拟应聘详情加载失败')
+    message.error(t('leadMentor.mockPractice.messages.detailLoadFailed'))
   }
 }
 
@@ -562,46 +570,46 @@ const handleClassReportSubmitted = () => {
 
 const handleAssignMockConfirm = async () => {
   if (!activeAssignPracticeId.value || !activeAssignDetail.value) {
-    message.error('分配上下文丢失')
+    message.error(t('leadMentor.mockPractice.messages.assignContextLost'))
     return
   }
 
   const payload = collectAssignPayload(activeAssignDetail.value)
   if (!payload.mentorIds.length) {
-    message.error('请至少选择1位导师')
+    message.error(t('leadMentor.mockPractice.messages.assignSelectMentor'))
     return
   }
   if (!payload.scheduledAt) {
-    message.error('预约时间不能为空')
+    message.error(t('leadMentor.mockPractice.messages.scheduledTimeRequired'))
     return
   }
   const requestedMentorCount = Number(activeAssignDetail.value.requestedMentorCount ?? 0)
   if (requestedMentorCount > 0 && payload.mentorIds.length !== requestedMentorCount) {
-    message.error('分配导师数量必须等于申请导师数量')
+    message.error(t('leadMentor.mockPractice.messages.assignCountMismatch'))
     return
   }
 
   try {
     await assignLeadMentorMockPractice(activeAssignPracticeId.value, payload)
     isAssignMockModalOpen.value = false
-    message.success('导师分配已保存')
+    message.success(t('leadMentor.mockPractice.messages.assignSuccess'))
     await nextTick()
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error('导师分配保存失败')
+    message.error(t('leadMentor.mockPractice.messages.assignFailed'))
   }
 }
 
 const handleAcknowledgeAssignment = async (practiceId: number) => {
   try {
     await acknowledgeLeadMentorMockPractice(practiceId)
-    message.success('分配确认已保存')
+    message.success(t('leadMentor.mockPractice.messages.acknowledgeSuccess'))
     await nextTick()
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error('分配确认失败')
+    message.error(t('leadMentor.mockPractice.messages.acknowledgeFailed'))
   }
 }
 
@@ -627,19 +635,18 @@ function toPracticeRow(row: LeadMentorMockPracticeItem, scope: ScopeKey): Practi
     typeIcon: typeUi.typeIcon,
     appliedAt: formatDateTime(row.submittedAt, 'MM/DD HH:mm'),
     rowTone: typeUi.rowTone,
-    // §D.3 SSOT：通过 deriveMockPracticeStatus 派生 label，不再读后端 statusLabel
     status: deriveMockPracticeStatus({ status: row.status, completedHours: row.completedHours }).label || row.status || '-',
     statusTone: statusUi.statusTone,
     statusIcon: statusUi.statusIcon,
     hours: scope === 'managed' ? (row.completedHoursLabel || '-') : (row.completedHoursLabel || ''),
-    actionLabel: scope === 'coaching' && row.isNewAssignment ? '确认' : undefined,
+    actionLabel: scope === 'coaching' && row.isNewAssignment ? t('leadMentor.mockPractice.actions.confirm') : undefined,
     actionTone: scope === 'coaching' && row.isNewAssignment ? 'btn btn-sm btn-success' : undefined,
     actionIcon: scope === 'coaching' && row.isNewAssignment ? 'mdi-check' : undefined,
     mentorName: row.mentorNames || '-',
     mentorMeta: row.mentorBackgrounds || '-',
     feedbackTitle,
     feedbackTone,
-    feedbackSummary: row.feedbackSummary || (row.isNewAssignment ? '等待导师确认' : '等待导师补充反馈'),
+    feedbackSummary: row.feedbackSummary || (row.isNewAssignment ? t('leadMentor.mockPractice.feedback.waitingConfirm') : t('leadMentor.mockPractice.feedback.waitingFeedback')),
     hasFeedback,
   }
 }
@@ -664,7 +671,7 @@ function buildAssignPreview(detail: LeadMentorMockPracticeItem): AssignMockPrevi
 }
 
 function buildFeedbackPreview(detail: LeadMentorMockPracticeItem): MockFeedbackPreview {
-  const feedbackSummary = detail.feedbackSummary || detail.note || '暂无反馈'
+  const feedbackSummary = detail.feedbackSummary || detail.note || t('leadMentor.mockPractice.feedback.noFeedback')
   const suggestions = splitSuggestions(detail.note)
 
   return {
@@ -673,7 +680,6 @@ function buildFeedbackPreview(detail: LeadMentorMockPracticeItem): MockFeedbackP
     companyName: detail.requestContent || '-',
     sessionTime: formatDateTime(detail.scheduledAt || detail.submittedAt, 'YYYY-MM-DD HH:mm'),
     mentorName: detail.mentorNames || '-',
-    // §D.3 SSOT：详情 status 走 composable 派生
     status: deriveMockPracticeStatus({ status: detail.status, completedHours: detail.completedHours }).label || detail.status || '-',
     score: normalizeScore(detail.feedbackRating),
     scoreLabel: resolveFeedbackTitle(detail),
@@ -717,24 +723,18 @@ function collectAssignPayload(detail: LeadMentorMockPracticeItem) {
 
 function resolveTypeUi(practiceType?: string) {
   const normalized = (practiceType || '').trim()
-  if (normalized === '模拟面试') {
+  if (normalized === PRACTICE_TYPE_MOCK) { // i18n-skip-line: backend data comparison
     return { typeTone: 'tag--info', typeIcon: 'mdi-account-voice', rowTone: 'mock-row--blue' }
   }
-  if (normalized === '人际关系测试') {
+  if (normalized === PRACTICE_TYPE_RELATION) { // i18n-skip-line: backend data comparison
     return { typeTone: 'tag--warning', typeIcon: 'mdi-account-group', rowTone: 'mock-row--amber' }
   }
-  if (normalized === '期中考试') {
+  if (normalized === PRACTICE_TYPE_MIDTERM) { // i18n-skip-line: backend data comparison
     return { typeTone: 'tag--purple', typeIcon: 'mdi-file-document-edit', rowTone: 'mock-row--purple' }
   }
   return { typeTone: 'tag--info', typeIcon: 'mdi-clipboard-text', rowTone: 'mock-row--blue' }
 }
 
-/**
- * §D.2 LM mock-practice 状态显示派生（接入 SSOT composable）
- *
- * tone 映射：composable 5 态 → LM 现有 tag 类名（tag--success/info/warning/danger/muted）
- * 保留 isNewAssignment 高亮分支（业务特有，覆盖 SSOT 派生）
- */
 function resolveStatusUi(row: LeadMentorMockPracticeItem) {
   if (row.isNewAssignment) {
     return { statusTone: 'tag--danger', statusIcon: 'mdi-bell-ring' }
@@ -743,10 +743,8 @@ function resolveStatusUi(row: LeadMentorMockPracticeItem) {
   const display = deriveMockPracticeStatus({
     status: row.status,
     completedHours: row.completedHours,
-    // plannedHours 未出现于 LeadMentorMockPracticeItem，留空让 composable 兑底
   })
 
-  // tone 映射 composable → LM tag class
   const toneClassMap: Record<'success' | 'info' | 'warning' | 'danger' | 'default', string> = {
     success: 'tag--success',
     info: 'tag--info',
@@ -756,7 +754,6 @@ function resolveStatusUi(row: LeadMentorMockPracticeItem) {
   }
   const toneClass = toneClassMap[display.tone]
 
-  // icon 派生：基于 5 态
   const iconMap: Record<'pending' | 'assigned' | 'coaching' | 'completed' | 'cancelled', string> = {
     completed: 'mdi-check-circle',
     coaching: 'mdi-check-decagram',
@@ -771,16 +768,15 @@ function resolveStatusUi(row: LeadMentorMockPracticeItem) {
 function resolveFeedbackTitle(row: Pick<LeadMentorMockPracticeItem, 'feedbackRating' | 'status' | 'completedHours'>) {
   const rating = normalizeScore(row.feedbackRating)
   if (rating >= 5) {
-    return '优秀'
+    return t('leadMentor.mockPractice.feedback.excellent')
   }
   if (rating >= 4) {
-    return '良好'
+    return t('leadMentor.mockPractice.feedback.good')
   }
   if (rating >= 3) {
-    return '待改进'
+    return t('leadMentor.mockPractice.feedback.needsImprovement')
   }
-  // §D.3 SSOT：兜底走 composable 派生
-  return deriveMockPracticeStatus({ status: row.status, completedHours: row.completedHours }).label || row.status || '待反馈'
+  return deriveMockPracticeStatus({ status: row.status, completedHours: row.completedHours }).label || row.status || t('leadMentor.mockPractice.feedback.pending')
 }
 
 function resolveFeedbackTone(rating?: number) {
@@ -799,9 +795,9 @@ function buildRecommendation(detail: LeadMentorMockPracticeItem) {
     return detail.note
   }
   if (normalizeScore(detail.feedbackRating) >= 4) {
-    return '导师建议继续推进下一阶段训练'
+    return t('leadMentor.mockPractice.recommendation.continueNext')
   }
-  return '建议先补一轮针对性训练后再继续推进'
+  return t('leadMentor.mockPractice.recommendation.needMoreTraining')
 }
 
 function splitSuggestions(note?: string) {
@@ -814,12 +810,12 @@ function splitSuggestions(note?: string) {
     return items
   }
 
-  return ['结合导师反馈继续补充高频题训练']
+  return [t('leadMentor.mockPractice.feedback.defaultSuggestion')]
 }
 
 function formatMentorDemand(count?: number) {
   const resolved = Number(count ?? 0)
-  return resolved > 0 ? `期望${resolved}位导师` : '待确认导师人数'
+  return resolved > 0 ? t('leadMentor.mockPractice.mentorDemand.count', { count: resolved }) : t('leadMentor.mockPractice.mentorDemand.tbd')
 }
 
 function toDateTimeInputValue(value?: string) {
@@ -873,10 +869,10 @@ function formatDuration(value?: number) {
 
 function resolveReferenceType(practiceType?: string): ReferenceType {
   const normalized = (practiceType || '').trim()
-  if (normalized === '模拟面试' || normalized === 'mock_interview') {
+  if (normalized === PRACTICE_TYPE_MOCK || normalized === 'mock_interview') { // i18n-skip-line: backend data comparison
     return 'mock_interview'
   }
-  if (normalized === '人际关系测试' || normalized === 'relation_test') {
+  if (normalized === PRACTICE_TYPE_RELATION || normalized === 'relation_test') { // i18n-skip-line: backend data comparison
     return 'relation_test'
   }
   return 'communication_test'
@@ -919,14 +915,14 @@ function buildMentorCode(name?: string) {
 </script>
 
 <style scoped>
-/* ---- 顶层布局 ---- */
+/* ---- top layout ---- */
 .page-mock-practice {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* ---- Stats 卡片：色 tone ---- */
+/* ---- Stats card: color tone ---- */
 .stats-card__value {
   font-size: 28px;
   font-weight: 700;
@@ -942,7 +938,7 @@ function buildMentorCode(name?: string) {
   font-size: 12px;
 }
 
-/* ---- Tab 卡 ---- */
+/* ---- Tab card ---- */
 .mock-tab-card { margin-bottom: 0; }
 .mock-tabs :deep(.ant-tabs-tab) { padding: 8px 16px; }
 .mock-tab-label {
@@ -980,7 +976,7 @@ function buildMentorCode(name?: string) {
   margin-bottom: 8px;
 }
 
-/* ---- 行 tone（按 practiceType / isNewAssignment） ---- */
+/* ---- Row tone (by practiceType / isNewAssignment) ---- */
 :deep(.mock-row--blue)   { background: #F0F9FF; }
 :deep(.mock-row--amber)  { background: #FFFBEB; }
 :deep(.mock-row--purple) { background: #F3E8FF; }
@@ -989,7 +985,7 @@ function buildMentorCode(name?: string) {
   box-shadow: inset 4px 0 0 #EF4444;
 }
 
-/* ---- mentor-stack 在其他 cell 还用 ---- */
+/* ---- mentor-stack ---- */
 .mentor-stack__name {
   color: var(--text);
   font-weight: 600;
@@ -998,7 +994,7 @@ function buildMentorCode(name?: string) {
   font-size: 12px;
 }
 
-/* ---- 业务 tag tone（type / status） ---- */
+/* ---- Business tag tone (type / status) ---- */
 .tag {
   display: inline-flex;
   align-items: center;
@@ -1023,7 +1019,7 @@ function buildMentorCode(name?: string) {
   color: var(--muted);
 }
 
-/* ---- 反馈栈（trigger 包裹） ---- */
+/* ---- Feedback stack (trigger wrapper) ---- */
 .feedback-stack {
   display: flex;
   flex-direction: column;

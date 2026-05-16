@@ -1,11 +1,11 @@
 <template>
   <div class="profile-page">
-    <OsgPageContainer title="个人中心">
-      <a-descriptions title="基本信息" :column="2">
-        <a-descriptions-item label="用户名">{{ userInfo?.userName }}</a-descriptions-item>
-        <a-descriptions-item label="昵称">{{ userInfo?.nickName }}</a-descriptions-item>
-        <a-descriptions-item label="手机号">{{ userInfo?.phonenumber || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="邮箱">{{ userInfo?.email || '-' }}</a-descriptions-item>
+    <OsgPageContainer :title="t('leadMentor.profile.k1')">
+      <a-descriptions :title="t('leadMentor.profile.k2')" :column="2">
+        <a-descriptions-item :label="t('leadMentor.profile.k3')">{{ userInfo?.userName }}</a-descriptions-item>
+        <a-descriptions-item :label="t('leadMentor.profile.k4')">{{ userInfo?.nickName }}</a-descriptions-item>
+        <a-descriptions-item :label="t('leadMentor.profile.k5')">{{ userInfo?.phonenumber || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('leadMentor.profile.k6')">{{ userInfo?.email || '-' }}</a-descriptions-item>
       </a-descriptions>
     </OsgPageContainer>
   </div>
@@ -13,9 +13,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
 import { getUser } from '@osg/shared/utils'
 import type { UserInfo } from '@osg/shared/types'
 const userInfo = ref<UserInfo | null>(null)
+
+const { t } = useI18n()
 onMounted(() => { userInfo.value = getUser() })
 </script>

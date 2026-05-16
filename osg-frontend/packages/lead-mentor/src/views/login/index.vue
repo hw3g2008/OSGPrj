@@ -6,7 +6,7 @@
 
     <section class="login-left">
       <h1 class="platform-title">OSG Platform</h1>
-      <p class="platform-subtitle">职业培训一站式平台，学生与导师共同成长</p>
+      <p class="platform-subtitle">{{ t('leadMentor.login.platformSubtitle') }}</p>
 
       <div class="login-features">
         <div v-for="feature in featureTexts" :key="feature" class="login-feature">
@@ -25,8 +25,8 @@
           <span class="login-logo-text">OSG Lead Mentor</span>
         </div>
 
-        <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用邮箱登录（主导师/班主任）</p>
+        <h2 class="login-title">{{ t('leadMentor.login.welcome') }}</h2>
+        <p class="login-subtitle">{{ t('leadMentor.login.subtitle') }}</p>
 
         <div v-if="errorMessage" class="login-error" role="alert">
           <span class="mdi mdi-alert-circle error-icon" aria-hidden="true"></span>
@@ -35,30 +35,30 @@
 
         <form class="login-form" @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="login-username">邮箱</label>
+            <label for="login-username">{{ t('leadMentor.login.emailLabel') }}</label>
             <input
               id="login-username"
               v-model.trim="formState.username"
               type="email"
-              placeholder="请输入邮箱"
+              :placeholder="t('leadMentor.login.emailPlaceholder')"
               autocomplete="email"
             />
           </div>
 
           <div class="form-group">
-            <label for="login-password">密码</label>
+            <label for="login-password">{{ t('leadMentor.login.passwordLabel') }}</label>
             <div class="password-field">
               <input
                 id="login-password"
                 v-model="formState.password"
                 :type="passwordVisible ? 'text' : 'password'"
-                placeholder="请输入密码"
+                :placeholder="t('leadMentor.login.passwordPlaceholder')"
                 autocomplete="current-password"
               />
               <button
                 type="button"
                 class="visibility-toggle"
-                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                :aria-label="passwordVisible ? t('leadMentor.login.passwordHide') : t('leadMentor.login.passwordShow')"
                 @click="passwordVisible = !passwordVisible"
               >
                 <span id="pwd-eye" class="mdi mdi-eye toggle-icon" aria-hidden="true"></span>
@@ -68,19 +68,19 @@
 
           <button class="login-btn" type="submit" :disabled="loading">
             <span class="mdi mdi-login button-icon" aria-hidden="true"></span>
-            <span>{{ loading ? '登录中...' : '登 录' }}</span>
+            <span>{{ loading ? t('leadMentor.login.loading') : t('leadMentor.login.submit') }}</span>
           </button>
         </form>
 
         <div class="login-links">
-          忘记密码？
+          {{ t('leadMentor.login.forgotPasswordHint') }}
           <a
             href="javascript:void(0)"
             class="link-anchor"
             data-surface-trigger="modal-forgot-password"
             @click.prevent="openForgotPassword"
           >
-            点击重置
+            {{ t('leadMentor.login.forgotPasswordCta') }}
           </a>
         </div>
       </div>
@@ -95,6 +95,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -108,13 +109,15 @@ import { clearAuth, setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
 import { useMustChangePassword } from '@osg/shared/composables'
 
+
+const { t } = useI18n()
 const { setMustChangePassword } = useMustChangePassword()
 
 const featureTexts = [
-  '学生端：一对一导师辅导',
-  '导师端：高效课程管理',
-  '实时岗位信息共享',
-  '完善的学习资料库',
+  t('leadMentor.login.feature1'),
+  t('leadMentor.login.feature2'),
+  t('leadMentor.login.feature3'),
+  t('leadMentor.login.feature4'),
 ]
 
 const router = useRouter()
@@ -141,7 +144,7 @@ const openForgotPassword = () => {
 const handleLogin = async () => {
   errorMessage.value = ''
   if (!formState.username || !formState.password) {
-    message.error('请输入邮箱和密码')
+    message.error(t('leadMentor.login.errorEmpty'))
     return
   }
 
@@ -155,7 +158,7 @@ const handleLogin = async () => {
     const userInfo = await getLeadMentorInfo()
     if (!userInfo.roles?.includes('lead-mentor') && !userInfo.roles?.includes('admin')) {
       clearAuth()
-      errorMessage.value = '该账号无班主任端访问权限'
+      errorMessage.value = t('leadMentor.login.errorNoAccess')
       return
     }
     setUser({
@@ -164,11 +167,11 @@ const handleLogin = async () => {
       permissions: userInfo.permissions,
     })
     setMustChangePassword(Boolean(userInfo.mustChangePassword))
-    message.success('登录成功')
+    message.success(t('leadMentor.login.success'))
     router.push((route.query.redirect as string) || '/')
   } catch (error: any) {
     clearAuth()
-    errorMessage.value = error?.message || '邮箱或密码错误'
+    errorMessage.value = error?.message || t('leadMentor.login.errorInvalid')
   } finally {
     loading.value = false
   }

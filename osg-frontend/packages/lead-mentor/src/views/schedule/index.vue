@@ -1,6 +1,6 @@
 <template>
   <div class="schedule-page">
-    <OsgPageContainer title="排课总览">
+    <OsgPageContainer :title="t('leadMentor.schedule.k43')">
       <a-calendar />
     </OsgPageContainer>
   </div>
@@ -8,4 +8,6 @@
 
 <script setup lang="ts">
 import { OsgPageContainer } from '@osg/shared/components'
-</script>
+
+
+const { t } = useI18n()</script>

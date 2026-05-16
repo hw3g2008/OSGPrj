@@ -1,10 +1,13 @@
 <template>
   <div class="classes-page">
-    <OsgPageContainer title="班级管理">
+    <OsgPageContainer :title="t('leadMentor.classes.pageTitle')">
       <a-table :columns="columns" :data-source="classes" :loading="loading" row-key="id">
         <template #bodyCell="{ column }">
           <template v-if="column.key === 'action'">
-            <a-space><a-button type="link" size="small">查看</a-button><a-button type="link" size="small">编辑</a-button></a-space>
+            <a-space>
+              <a-button type="link" size="small">{{ t('leadMentor.classes.actions.view') }}</a-button>
+              <a-button type="link" size="small">{{ t('leadMentor.classes.actions.edit') }}</a-button>
+            </a-space>
           </template>
         </template>
       </a-table>
@@ -13,19 +16,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
+
 const loading = ref(false)
-const columns = [
-  { title: '班级名称', dataIndex: 'name', key: 'name' },
-  { title: '学员数', dataIndex: 'studentCount', key: 'studentCount' },
-  { title: '开班日期', dataIndex: 'startDate', key: 'startDate' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '操作', key: 'action' }
-]
-const classes = ref([
-  { id: 1, name: 'Java 就业班 01 期', studentCount: 18, startDate: '2025-09-01', status: '进行中' },
-  { id: 2, name: 'Java 就业班 02 期', studentCount: 15, startDate: '2025-11-01', status: '进行中' },
-  { id: 3, name: '前端就业班 01 期', studentCount: 12, startDate: '2025-10-15', status: '进行中' }
+const columns = computed(() => [
+  { title: t('leadMentor.classes.col.name'), dataIndex: 'name', key: 'name' },
+  { title: t('leadMentor.classes.col.studentCount'), dataIndex: 'studentCount', key: 'studentCount' },
+  { title: t('leadMentor.classes.col.startDate'), dataIndex: 'startDate', key: 'startDate' },
+  { title: t('leadMentor.classes.col.status'), dataIndex: 'status', key: 'status' },
+  { title: t('leadMentor.classes.col.actions'), key: 'action' }
+])
+const classes = computed(() => [
+  { id: 1, name: t('leadMentor.dashboard.mock.classJava1'), studentCount: 18, startDate: '2025-09-01', status: t('leadMentor.classes.status.inProgress') },
+  { id: 2, name: t('leadMentor.dashboard.mock.classJava2'), studentCount: 15, startDate: '2025-11-01', status: t('leadMentor.classes.status.inProgress') },
+  { id: 3, name: t('leadMentor.dashboard.mock.classFrontend1'), studentCount: 12, startDate: '2025-10-15', status: t('leadMentor.classes.status.inProgress') }
 ])
 </script>
