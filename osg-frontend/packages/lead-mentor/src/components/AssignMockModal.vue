@@ -8,7 +8,7 @@
       type="button"
       class="assign-mock-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭处理模拟应聘申请弹层"
+      :aria-label="t('leadMentor.assignMockModal.closeAriaLabel')"
       @click="closeModal"
     />
 
@@ -22,13 +22,13 @@
       <div class="assign-mock-header modal-header" data-surface-part="header">
         <span :id="titleId" class="assign-mock-title modal-title">
           <i class="mdi mdi-clipboard-check" aria-hidden="true" />
-          处理模拟应聘申请
+          {{ t('leadMentor.assignMockModal.title') }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭处理模拟应聘申请弹层"
+          :aria-label="t('leadMentor.assignMockModal.closeAriaLabel')"
           @click="closeModal"
         >
           ×
@@ -48,7 +48,7 @@
         </section>
 
         <section class="form-group">
-          <label class="form-label">分配导师 <span class="req">*</span></label>
+          <label class="form-label">{{ t('leadMentor.assignMockModal.assignMentor') }} <span class="req">*</span></label>
           <div class="mentor-list">
             <label
               v-for="mentor in preview.mentorOptions"
@@ -67,28 +67,28 @@
         </section>
 
         <section class="form-group">
-          <label class="form-label">预约时间 <span class="req">*</span></label>
+          <label class="form-label">{{ t('leadMentor.assignMockModal.scheduledTime') }} <span class="req">*</span></label>
           <input class="form-input" type="datetime-local" :value="preview.scheduledAt" />
         </section>
 
         <section class="form-group form-group--last">
           <label class="form-label">
-            备注说明
-            <span class="form-label__hint">(选填)</span>
+            {{ t('leadMentor.assignMockModal.note') }}
+            <span class="form-label__hint">({{ t('leadMentor.assignMockModal.optional') }})</span>
           </label>
           <textarea
             class="form-input form-input--textarea"
             rows="2"
-            placeholder="如有其他说明，请在此填写..."
+            :placeholder="t('leadMentor.assignMockModal.notePlaceholder')"
           >{{ preview.note }}</textarea>
         </section>
       </div>
 
       <div class="assign-mock-footer modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeModal">取消</button>
+        <button type="button" class="btn btn-outline" @click="closeModal">{{ t('leadMentor.assignMockModal.cancel') }}</button>
         <button type="button" class="btn btn-primary" @click="emit('request-confirm')">
           <i class="mdi mdi-check" aria-hidden="true" />
-          确认安排
+          {{ t('leadMentor.assignMockModal.confirm') }}
         </button>
       </div>
     </div>
@@ -96,6 +96,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 export interface AssignMockMentorOption {
   code: string
   name: string

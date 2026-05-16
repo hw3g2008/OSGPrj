@@ -611,13 +611,13 @@ const foundationProgress = computed(() => {
     {
       label: t('student.dashboard.k72'),
       iconClass: 'mdi-account-voice',
-      progressText: `${practiceRecords.value.length + pendingClassCount.value} 条`, // TODO(i18n-complex)
+      progressText: t('student.dashboard.k86', { n: practiceRecords.value.length + pendingClassCount.value }),
       width: `${Math.min(100, (practiceRecords.value.length + pendingClassCount.value) * 20)}%`,
     },
     {
       label: t('student.dashboard.k73'),
       iconClass: 'mdi-star-outline',
-      progressText: `${favoritesCount} 个`, // TODO(i18n-complex)
+      progressText: t('student.dashboard.k87', { n: favoritesCount }),
       width: `${Math.min(100, favoritesCount * 15)}%`,
     },
   ]

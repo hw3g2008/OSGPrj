@@ -1,7 +1,8 @@
-import fs from 'node:fs'
+﻿import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createApp, nextTick, ref } from 'vue'
+import { i18n } from '@osg/shared'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import Antd from 'ant-design-vue'
 
@@ -199,6 +200,8 @@ async function mountPositionsPage(initialPath = '/career/positions') {
   const app = createApp(RouterView)
   app.use(router)
   app.use(Antd)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 
@@ -235,6 +238,8 @@ async function mountModal() {
   })
 
   app.use(Antd)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

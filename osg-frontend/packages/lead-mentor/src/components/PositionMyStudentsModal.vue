@@ -8,7 +8,7 @@
       type="button"
       class="position-students-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭我的学员申请弹层"
+      :aria-label="t('leadMentor.positionMyStudentsModal.closeAriaLabel')"
       @click="closeModal"
     />
 
@@ -22,13 +22,13 @@
       <div class="position-students-header modal-header" data-surface-part="header">
         <span :id="titleId" class="position-students-title modal-title">
           <i class="mdi mdi-account-group" aria-hidden="true" />
-          {{ preview.companyName }} - {{ preview.jobTitle }} 我的学员申请
+          {{ t('leadMentor.positionMyStudentsModal.title', { company: preview.companyName, job: preview.jobTitle }) }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭我的学员申请弹层"
+          :aria-label="t('leadMentor.positionMyStudentsModal.closeAriaLabel')"
           @click="closeModal"
         >
           ×
@@ -38,18 +38,18 @@
       <div class="position-students-body modal-body" data-surface-part="body">
         <div class="position-students-note">
           <i class="mdi mdi-information" aria-hidden="true" />
-          仅显示您管理的学员，您可以修改学员的求职状态
+          {{ t('leadMentor.positionMyStudentsModal.note') }}
         </div>
 
         <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
-                <th>学生ID</th>
-                <th>姓名</th>
-                <th>岗位</th>
-                <th>状态</th>
-                <th>已上课时</th>
+                <th>{{ t('leadMentor.positionMyStudentsModal.colStudentId') }}</th>
+                <th>{{ t('leadMentor.positionMyStudentsModal.colName') }}</th>
+                <th>{{ t('leadMentor.positionMyStudentsModal.colPosition') }}</th>
+                <th>{{ t('leadMentor.positionMyStudentsModal.colStatus') }}</th>
+                <th>{{ t('leadMentor.positionMyStudentsModal.colLessonHours') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -72,10 +72,10 @@
       </div>
 
       <div class="position-students-footer modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeModal">关闭</button>
+        <button type="button" class="btn btn-outline" @click="closeModal">{{ t('leadMentor.positionMyStudentsModal.close') }}</button>
         <button type="button" class="btn btn-primary" @click="closeModal">
           <i class="mdi mdi-check" aria-hidden="true" />
-          保存修改
+          {{ t('leadMentor.positionMyStudentsModal.saveChanges') }}
         </button>
       </div>
     </div>
@@ -83,6 +83,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 export type PositionStudentStatusTone = 'interviewing' | 'applied' | 'offer'
 
 export interface PositionMyStudentRecord {

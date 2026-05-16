@@ -183,7 +183,8 @@
     "k37": "Welcome back, {name}",
     "k38": "Account: {email} · Available hours this week: {hours}h · Pending tasks: {count}",
     "k39": "Student {id}",
-    "k40": "{days} days available"
+    "k40": "{days} days available",
+    "k41": "{n} days"
   },
   "jobOverview": {
     "k1": "导出",

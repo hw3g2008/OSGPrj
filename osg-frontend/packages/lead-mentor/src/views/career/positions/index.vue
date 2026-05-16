@@ -495,7 +495,7 @@ const tablePagination = reactive({
   showSizeChanger: true,
   showQuickJumper: true,
   pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (total: number) => `共 ${total} 条`, // TODO(i18n-complex)
+  showTotal: (total: number) => t('leadMentor.positions.k18', { n: total }),
 })
 
 watch(

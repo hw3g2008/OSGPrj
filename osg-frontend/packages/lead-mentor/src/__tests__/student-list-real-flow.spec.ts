@@ -1,4 +1,5 @@
-import { createApp, nextTick } from 'vue'
+﻿import { createApp, nextTick } from 'vue'
+import { i18n } from '@osg/shared'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import Antd from 'ant-design-vue'
@@ -138,6 +139,8 @@ async function mountPages(initialPath = '/teaching/students') {
   const app = createApp(RouterView)
   app.use(router)
   app.use(Antd)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

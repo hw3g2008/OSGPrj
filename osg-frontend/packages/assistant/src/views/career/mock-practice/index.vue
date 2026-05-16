@@ -160,7 +160,7 @@ const tablePagination = computed(() => ({
   total: filteredRecords.value.length,
   pageSize: 10,
   showSizeChanger: true,
-  showTotal: (t: number) => `共 ${t} 条`, // TODO(i18n-complex)
+  showTotal: (count: number) => t('assistant.mockPractice.k25', { n: count }),
 }))
 
 function practiceTypeLabel(value?: string) {

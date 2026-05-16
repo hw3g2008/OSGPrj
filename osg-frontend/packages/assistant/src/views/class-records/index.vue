@@ -483,7 +483,7 @@ const tablePagination = computed<TablePaginationConfig>(() => ({
   pageSize: pagination.pageSize,
   total: filteredRecords.value.length,
   showSizeChanger: true,
-  showTotal: (total: number) => `共 ${total} 条`, // TODO(i18n-complex)
+  showTotal: (total: number) => t('assistant.classRecords.k59', { n: total }),
   pageSizeOptions: ['10', '20', '50'],
 }))
 

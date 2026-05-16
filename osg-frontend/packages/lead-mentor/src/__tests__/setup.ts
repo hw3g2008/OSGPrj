@@ -7,10 +7,11 @@
 // - jsdom 不实现 IntersectionObserver（部分 antd 组件可能用到）
 // - Node v22+ 内置的空壳 localStorage 会压过 jsdom 的实现，
 //   导致 `localStorage.getItem is not a function`
+// - vue-i18n 需在 mount 前 install plugin，否则 useI18n() 抛
+//   "Need to install with `app.use` function"。
 //
-// 本文件给出最小化 polyfill，让 jsdom 下的测试不会因为找不到
-// 这些全局 API 而崩溃。注意：polyfill 只满足"能被调用"，并不
-// 保证语义 100% 一致（测试尽量避免依赖这些 API 的副作用）。
+// 本文件与 shared / mentor 端 __tests__/setup.ts 等价，统一给
+// jsdom 下的 antd + vue-i18n 测试提供最小化 polyfill。
 // ============================================================
 
 import { afterEach } from 'vitest'
@@ -107,4 +108,18 @@ if (typeof window !== 'undefined') {
     ;(globalThis as any).IntersectionObserver = IntersectionObserverStub
     ;(window as any).IntersectionObserver = IntersectionObserverStub
   }
+}
+
+// vue-i18n: 全局注入 plugin，让 mount() 自动 pick up；锁定 zh 以匹配
+// 现存断言（参见 `i18n-glossary.md` §4「测试用例 expect 描述保中文方便看」）。
+// 仅 jsdom 环境（挂载 Vue 组件）才需要；node 环境（vite-proxy-entry）跳过，
+// 避免触发 shared barrel 的 Directory import (require) 错误。
+if (typeof window !== 'undefined') {
+  const [{ config }, sharedMod] = await Promise.all([
+    import('@vue/test-utils'),
+    import('@osg/shared'),
+  ])
+  const { i18n } = sharedMod as { i18n: any }
+  i18n.global.locale.value = 'zh'
+  config.global.plugins = [...((config.global.plugins as unknown[]) || []), i18n]
 }

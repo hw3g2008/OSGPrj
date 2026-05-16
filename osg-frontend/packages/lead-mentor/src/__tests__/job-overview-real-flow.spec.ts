@@ -1,5 +1,6 @@
-import { createApp, nextTick } from 'vue'
+﻿import { createApp, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
+import { i18n } from '@osg/shared'
 import type { LeadMentorJobOverviewListItem } from '@osg/shared/api'
 
 import Antd from 'ant-design-vue'
@@ -232,6 +233,8 @@ async function mountJobOverviewPage(initialPath = '/career/job-overview') {
   const app = createApp(RouterView)
   app.use(router)
   app.use(Antd)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

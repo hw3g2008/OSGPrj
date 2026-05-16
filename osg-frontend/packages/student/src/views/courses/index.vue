@@ -524,7 +524,7 @@ const ratingDescriptionText = computed(() => {
     return ''
   }
   const desc = ratingDescriptions[rateForm.value.rating]
-  return desc ? `分 · ${desc}` : '分' // TODO(i18n-complex)
+  return desc ? t('student.courses.k29', { desc }) : t('student.courses.k30')
 })
 
 // ============================================================
@@ -568,7 +568,7 @@ const detailRatingSummary = computed(() => {
     return t('student.courses.k22')
   }
 
-  return `${score}分 · ${currentCourse.value.ratingLabel}` // TODO(i18n-complex)
+  return t('student.courses.k31', { score, label: currentCourse.value.ratingLabel })
 })
 
 // 课程详细 section 是否有任何可见内容（避免空 section）

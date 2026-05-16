@@ -4,27 +4,27 @@ import MainLayout from '@/layouts/MainLayout.vue'
 import { getToken } from '@osg/shared/utils'
 
 const routes: RouteRecordRaw[] = [
-  { path: '/login', name: 'Login', component: () => import('@/views/login/index.vue'), meta: { title: '登录', public: true } },
+  { path: '/login', name: 'Login', component: () => import('@/views/login/index.vue'), meta: { title: '登录', public: true } }, // i18n-skip-line: route meta title
   {
     path: '/',
     component: MainLayout,
     redirect: '/career/positions',
     children: [
-      { path: 'home', name: 'Home', component: () => import('@/views/home/index.vue'), meta: { title: '首页' } },
-      { path: 'career/positions', name: 'CareerPositions', component: () => import('@/views/career/positions/index.vue'), meta: { title: '岗位信息' } },
-      { path: 'career/job-overview', name: 'CareerJobOverview', component: () => import('@/views/career/job-overview/index.vue'), meta: { title: '学员求职总览' } },
-      { path: 'career/mock-practice', name: 'CareerMockPractice', component: () => import('@/views/career/mock-practice/index.vue'), meta: { title: '模拟应聘管理' } },
-      { path: 'teaching/students', name: 'TeachingStudents', component: () => import('@/views/teaching/students/index.vue'), meta: { title: '学员列表' } },
-      { path: 'teaching/class-records', name: 'TeachingClassRecords', component: () => import('@/views/teaching/class-records/index.vue'), meta: { title: '课程记录' } },
+      { path: 'home', name: 'Home', component: () => import('@/views/home/index.vue'), meta: { title: '首页' } }, // i18n-skip-line: route meta title
+      { path: 'career/positions', name: 'CareerPositions', component: () => import('@/views/career/positions/index.vue'), meta: { title: '岗位信息' } }, // i18n-skip-line: route meta title
+      { path: 'career/job-overview', name: 'CareerJobOverview', component: () => import('@/views/career/job-overview/index.vue'), meta: { title: '学员求职总览' } }, // i18n-skip-line: route meta title
+      { path: 'career/mock-practice', name: 'CareerMockPractice', component: () => import('@/views/career/mock-practice/index.vue'), meta: { title: '模拟应聘管理' } }, // i18n-skip-line: route meta title
+      { path: 'teaching/students', name: 'TeachingStudents', component: () => import('@/views/teaching/students/index.vue'), meta: { title: '学员列表' } }, // i18n-skip-line: route meta title
+      { path: 'teaching/class-records', name: 'TeachingClassRecords', component: () => import('@/views/teaching/class-records/index.vue'), meta: { title: '课程记录' } }, // i18n-skip-line: route meta title
       { path: 'dashboard', redirect: '/career/positions' },
-      { path: 'classes', name: 'Classes', component: () => import('@/views/classes/index.vue'), meta: { title: '班级管理' } },
+      { path: 'classes', name: 'Classes', component: () => import('@/views/classes/index.vue'), meta: { title: '班级管理' } }, // i18n-skip-line: route meta title
       { path: 'students', redirect: '/teaching/students' },
-      { path: 'mentors', name: 'Mentors', component: () => import('@/views/mentors/index.vue'), meta: { title: '导师管理' } },
+      { path: 'mentors', name: 'Mentors', component: () => import('@/views/mentors/index.vue'), meta: { title: '导师管理' } }, // i18n-skip-line: route meta title
       { path: 'schedule', redirect: '/profile/schedule' },
-      { path: 'reports', name: 'Reports', component: () => import('@/views/reports/index.vue'), meta: { title: '学情报告' } },
+      { path: 'reports', name: 'Reports', component: () => import('@/views/reports/index.vue'), meta: { title: '学情报告' } }, // i18n-skip-line: route meta title
       { path: 'profile', redirect: '/profile/basic' },
-      { path: 'profile/basic', name: 'ProfileBasic', component: () => import('@/views/profile/basic/index.vue'), meta: { title: '基本信息' } },
-      { path: 'profile/schedule', name: 'ProfileSchedule', component: () => import('@/views/profile/schedule/index.vue'), meta: { title: '课程排期' } }
+      { path: 'profile/basic', name: 'ProfileBasic', component: () => import('@/views/profile/basic/index.vue'), meta: { title: '基本信息' } }, // i18n-skip-line: route meta title
+      { path: 'profile/schedule', name: 'ProfileSchedule', component: () => import('@/views/profile/schedule/index.vue'), meta: { title: '课程排期' } } // i18n-skip-line: route meta title
     ]
   }
 ]

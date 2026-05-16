@@ -1,4 +1,4 @@
-import { createApp, nextTick } from 'vue'
+﻿import { createApp, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import LoginPage from '../views/login/index.vue'
@@ -27,6 +27,7 @@ vi.mock('ant-design-vue', () => ({
   },
 }))
 
+import { i18n } from '@osg/shared'
 import { getLeadMentorInfo, leadMentorLogin } from '@osg/shared/api'
 import { clearAuth, setToken, setUser } from '@osg/shared/utils'
 
@@ -57,6 +58,8 @@ async function mountLoginPage(initialPath = '/login') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(i18n)
+
   app.mount(container)
   await nextTick()
 

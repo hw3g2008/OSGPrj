@@ -318,7 +318,7 @@ const tablePagination = computed(() => ({
   total: filteredRecords.value.length,
   pageSize: 10,
   showSizeChanger: true,
-  showTotal: (total: number) => `共 ${total} 条`, // TODO(i18n-complex)
+  showTotal: (total: number) => t('assistant.jobOverview.k48', { n: total }),
 }))
 
 const companyOptions = computed(() =>

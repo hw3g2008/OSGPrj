@@ -1,4 +1,5 @@
-import { createApp, nextTick } from 'vue'
+﻿import { createApp, nextTick } from 'vue'
+import { i18n } from '@osg/shared'
 import Antd from 'ant-design-vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
@@ -239,6 +240,8 @@ async function mountStoryPage(initialPath = '/career/mock-practice') {
   const app = createApp(RouterView)
   app.use(router)
   app.use(Antd)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

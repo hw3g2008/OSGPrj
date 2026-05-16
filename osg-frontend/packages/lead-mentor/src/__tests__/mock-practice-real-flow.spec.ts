@@ -1,6 +1,7 @@
-import { createApp, defineComponent, h, nextTick } from 'vue'
+﻿import { createApp, defineComponent, h, nextTick } from 'vue'
 import Antd from 'ant-design-vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
+import { i18n } from '@osg/shared'
 import type { LeadMentorMockPracticeItem } from '@osg/shared/api'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -260,6 +261,8 @@ async function mountMockPracticePage(initialPath = '/career/mock-practice') {
   const app = createApp(RouterView)
   app.use(router)
   app.use(Antd)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

@@ -1,4 +1,4 @@
-import { createApp, nextTick } from 'vue'
+﻿import { createApp, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -26,6 +26,7 @@ vi.mock('ant-design-vue', () => ({
 }))
 
 import { message } from 'ant-design-vue'
+import { i18n } from '@osg/shared'
 import { clearAuth } from '@osg/shared/utils'
 
 function createTestRouter() {
@@ -60,6 +61,8 @@ async function mountStoryPage(initialPath = '/home') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

@@ -9,7 +9,7 @@
       type="button"
       class="job-detail-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭学员求职详情弹层"
+      :aria-label="t('leadMentor.jobDetailModal.closeAriaLabel')"
       @click="closeModal"
     />
 
@@ -23,13 +23,13 @@
       <div class="job-detail-header modal-header" data-surface-part="header">
         <span :id="titleId" class="job-detail-title modal-title">
           <i class="mdi mdi-briefcase-search" aria-hidden="true" />
-          学员求职详情
+          {{ t('leadMentor.jobDetailModal.title') }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭学员求职详情弹层"
+          :aria-label="t('leadMentor.jobDetailModal.closeAriaLabel')"
           @click="closeModal"
         >
           ×
@@ -42,7 +42,7 @@
             <div class="hero-card hero-card--student">
               <div class="hero-label">
                 <i class="mdi mdi-account" aria-hidden="true" />
-                学员信息
+                {{ t('leadMentor.jobDetailModal.studentInfo') }}
               </div>
               <div class="hero-student">
                 <a-avatar
@@ -59,7 +59,7 @@
                   </div>
                   <div class="hero-meta">
                     ID: <span id="jd-student-id">{{ preview.studentId }}</span>
-                    · 班主任: <span id="jd-lead-mentor">{{ preview.leadMentorName }}</span>
+                    · {{ t('leadMentor.jobDetailModal.leadMentor') }}: <span id="jd-lead-mentor">{{ preview.leadMentorName }}</span>
                   </div>
                 </div>
               </div>
@@ -70,14 +70,14 @@
             <div class="hero-card hero-card--position">
               <div class="hero-label">
                 <i class="mdi mdi-domain" aria-hidden="true" />
-                申请岗位
+                {{ t('leadMentor.jobDetailModal.appliedPosition') }}
               </div>
               <div id="jd-company" class="hero-value hero-value--brand" :title="preview.companyName">
                 {{ preview.companyName }}
               </div>
               <div id="jd-position" class="hero-meta hero-meta--body">{{ preview.positionName }}</div>
               <div class="hero-meta hero-meta--body">
-                招聘周期: <span id="jd-cycle">{{ preview.recruitmentCycle }}</span>
+                {{ t('leadMentor.jobDetailModal.recruitmentCycle') }}: <span id="jd-cycle">{{ preview.recruitmentCycle }}</span>
               </div>
             </div>
           </a-col>
@@ -86,7 +86,7 @@
         <section class="modal-section">
           <div class="section-title">
             <i class="mdi mdi-timeline-clock" aria-hidden="true" />
-            求职进度
+            {{ t('leadMentor.jobDetailModal.jobProgress') }}
           </div>
 
           <a-steps
@@ -101,7 +101,7 @@
             <i class="mdi mdi-calendar-clock" aria-hidden="true" />
             <div class="interview-card__body">
               <div class="interview-card__title">
-                面试时间: <span id="jd-interview-time">{{ preview.interviewTime }}</span>
+                {{ t('leadMentor.jobDetailModal.interviewTime') }}: <span id="jd-interview-time">{{ preview.interviewTime }}</span>
               </div>
               <div id="jd-countdown" class="interview-card__meta">{{ preview.countdownText }}</div>
             </div>
@@ -111,13 +111,13 @@
         <section class="modal-section">
           <div class="section-title section-title--purple">
             <i class="mdi mdi-school" aria-hidden="true" />
-            辅导信息
+            {{ t('leadMentor.jobDetailModal.coachingInfo') }}
           </div>
 
           <a-row :gutter="[12, 12]" class="coaching-row">
             <a-col :xs="12" :sm="6">
               <div class="coaching-card">
-                <div class="coaching-card__label">辅导状态</div>
+                <div class="coaching-card__label">{{ t('leadMentor.jobDetailModal.coachingStatus') }}</div>
                 <strong id="jd-coaching-status" class="coaching-card__value">
                   {{ preview.coachingStatus }}
                 </strong>
@@ -125,19 +125,19 @@
             </a-col>
             <a-col :xs="12" :sm="6">
               <div class="coaching-card">
-                <div class="coaching-card__label">分配导师</div>
+                <div class="coaching-card__label">{{ t('leadMentor.jobDetailModal.assignedMentor') }}</div>
                 <strong id="jd-mentor" class="coaching-card__value">{{ preview.mentorName }}</strong>
               </div>
             </a-col>
             <a-col :xs="12" :sm="6">
               <div class="coaching-card">
-                <div class="coaching-card__label">已上课时</div>
+                <div class="coaching-card__label">{{ t('leadMentor.jobDetailModal.lessonHours') }}</div>
                 <strong id="jd-hours" class="coaching-card__value">{{ preview.lessonHours }}</strong>
               </div>
             </a-col>
             <a-col :xs="12" :sm="6">
               <div class="coaching-card">
-                <div class="coaching-card__label">申请时间</div>
+                <div class="coaching-card__label">{{ t('leadMentor.jobDetailModal.applyTime') }}</div>
                 <strong id="jd-apply-time" class="coaching-card__value">{{ preview.applyTime }}</strong>
               </div>
             </a-col>
@@ -148,11 +148,11 @@
           <div class="section-head">
             <div class="section-title section-title--green">
               <i class="mdi mdi-book-open-variant" aria-hidden="true" />
-              课程记录 (最近3条)
+              {{ t('leadMentor.jobDetailModal.recentRecords') }}
             </div>
 
             <a-button type="link" size="small" class="view-all-btn" @click="emit('request-view-all')">
-              查看全部
+              {{ t('leadMentor.jobDetailModal.viewAll') }}
               <i class="mdi mdi-arrow-right" aria-hidden="true" />
             </a-button>
           </div>
@@ -180,14 +180,14 @@
         <section class="modal-section modal-section--notes">
           <div class="section-title section-title--amber">
             <i class="mdi mdi-note-text" aria-hidden="true" />
-            学员备注
+            {{ t('leadMentor.jobDetailModal.studentNotes') }}
           </div>
           <div id="jd-notes" class="notes-card">{{ preview.notes }}</div>
         </section>
       </div>
 
       <div class="job-detail-footer modal-footer">
-        <a-button class="footer-btn" @click="closeModal">关闭</a-button>
+        <a-button class="footer-btn" @click="closeModal">{{ t('leadMentor.jobDetailModal.close') }}</a-button>
         <a-button
           type="primary"
           class="footer-btn job-detail-action"
@@ -197,7 +197,7 @@
           <template #icon>
             <i class="mdi mdi-account-switch" aria-hidden="true" />
           </template>
-          更换导师
+          {{ t('leadMentor.jobDetailModal.changeMentor') }}
         </a-button>
       </div>
     </div>
@@ -207,6 +207,9 @@
 
 <script setup lang="ts">
 import { computed, h } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 export interface JobDetailPreview {
   studentName: string
@@ -267,7 +270,7 @@ const stepIcon = (cls: string) =>
 
 const stepItems = computed(() => [
   {
-    title: '已投递',
+    title: t('leadMentor.jobDetailModal.step.submitted'),
     description: '01/05',
     icon: stepIcon('mdi-check'),
   },
@@ -278,7 +281,7 @@ const stepItems = computed(() => [
   },
   {
     title: props.preview?.currentStage || '-',
-    description: '当前',
+    description: t('leadMentor.jobDetailModal.step.current'),
     icon: stepIcon('mdi-clock'),
   },
   {
@@ -291,35 +294,35 @@ const stepItems = computed(() => [
   },
 ])
 
-const records: CourseRecord[] = [
+const records = computed<CourseRecord[]>(() => [
   {
     date: '01/15',
-    label: '模拟面试',
+    label: t('leadMentor.jobDetailModal.record.mockInterview'),
     hours: '2h',
-    summary: '表现优秀，建议加强Valuation部分',
-    grade: '优秀',
+    summary: t('leadMentor.jobDetailModal.record.summary1'),
+    grade: t('leadMentor.jobDetailModal.record.gradeExcellent'),
     tone: 'record-item--green',
     tagTone: 'record-tag--green',
   },
   {
     date: '01/12',
-    label: '技术讲解',
+    label: t('leadMentor.jobDetailModal.record.technical'),
     hours: '2h',
-    summary: '掌握DCF基础，需巩固LBO',
-    grade: '良好',
+    summary: t('leadMentor.jobDetailModal.record.summary2'),
+    grade: t('leadMentor.jobDetailModal.record.gradeGood'),
     tone: 'record-item--blue',
     tagTone: 'record-tag--blue',
   },
   {
     date: '01/10',
-    label: '简历修改',
+    label: t('leadMentor.jobDetailModal.record.resumeRevision'),
     hours: '1h',
-    summary: '完成简历优化，突出实习经历',
-    grade: '完成',
+    summary: t('leadMentor.jobDetailModal.record.summary3'),
+    grade: t('leadMentor.jobDetailModal.record.gradeDone'),
     tone: 'record-item--purple',
     tagTone: 'record-tag--purple',
   },
-]
+])
 
 const closeModal = () => {
   emit('update:modelValue', false)

@@ -649,7 +649,8 @@
     "k19": "关联学员",
     "k20": "岗位列表暂时无法加载，请稍后重试。",
     "k21": "关联学员暂时无法加载。",
-    "k22": "Related Students · {position} · {company}"
+    "k22": "Related Students · {position} · {company}",
+    "k23": "{n} total"
   },
   "jobOverview": {
     "title": "Job Overview",
@@ -785,7 +786,8 @@
     "k44": "Absent",
     "k45": "Present",
     "k46": "{n} day(s) left",
-    "k47": "Job Overview"
+    "k47": "Job Overview",
+    "k48": "{n} total"
   },
   "mockPractice": {
     "title": "Mock Practice",
@@ -862,7 +864,8 @@
     "k21": "模拟应聘记录暂时无法加载，请稍后重试。",
     "k22": "Pending Assignment",
     "k23": "Info Pending",
-    "k24": "No application content"
+    "k24": "No application content",
+    "k25": "{n} total"
   },
   "classRecords": {
     "title": "Session Record",
@@ -1022,7 +1025,8 @@
     "k55": "View Details",
     "k56": "Not filled",
     "k57": "(No rejection reason)",
-    "k58": "No feedback summary"
+    "k58": "No feedback summary",
+    "k59": "{n} total"
   },
   "assistantClassReportPayload": {
     "k1": "学员状态: 正常上课"

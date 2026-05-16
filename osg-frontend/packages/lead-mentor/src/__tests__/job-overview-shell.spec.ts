@@ -1,7 +1,8 @@
-import fs from 'node:fs'
+﻿import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createApp, defineComponent, h, nextTick } from 'vue'
+import { i18n } from '@osg/shared'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import Antd from 'ant-design-vue'
@@ -157,6 +158,8 @@ async function mountJobOverviewPage(initialPath = '/career/job-overview') {
   const app = createApp(RouterView)
   app.use(router)
   app.use(Antd)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

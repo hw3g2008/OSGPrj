@@ -813,7 +813,7 @@ const selectedInterviewModalTime = computed(() => {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return app.interviewAt
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}` // TODO(i18n-complex)
+  return t('student.applications.k102', { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate(), hh: pad(d.getHours()), mm: pad(d.getMinutes()) })
 })
 
 const interviewModalWrapClass = computed(() => {
@@ -860,7 +860,7 @@ const tablePagination = reactive<TablePaginationConfig>({
   showSizeChanger: true,
   showQuickJumper: true,
   pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (total: number) => `共 ${total} 条` // TODO(i18n-complex)
+  showTotal: (total: number) => t('student.applications.k103', { n: total })
 })
 
 watch(
@@ -1214,28 +1214,28 @@ function resolveStageLabel(stage: string) {
 }
 
 function buildStageNote(form: ApplyStageForm) {
-  const lines: string[] = [`阶段：${resolveStageLabel(form.stage)}`] // TODO(i18n-complex)
+  const lines: string[] = [`阶段：${resolveStageLabel(form.stage)}`] // i18n-skip-line: backend payload format
 
   if (form.stage === 'hirevue') {
     if (form.hirevueType) {
-      lines.push(`类型：${form.hirevueType === 'vi' ? 'VI' : 'OT'}`) // TODO(i18n-complex)
+      lines.push(`类型：${form.hirevueType === 'vi' ? 'VI' : 'OT'}`) // i18n-skip-line: backend payload format
     }
     if (form.hirevueType === 'vi' && form.viLink.trim()) {
-      lines.push(`VI链接：${form.viLink.trim()}`) // TODO(i18n-complex)
+      lines.push(`VI链接：${form.viLink.trim()}`) // i18n-skip-line: backend payload format
     }
     if (form.hirevueType === 'ot') {
       if (form.otLink.trim()) {
-        lines.push(`OT链接：${form.otLink.trim()}`) // TODO(i18n-complex)
+        lines.push(`OT链接：${form.otLink.trim()}`) // i18n-skip-line: backend payload format
       }
       if (form.otAccount.trim()) {
-        lines.push(`OT账号：${form.otAccount.trim()}`) // TODO(i18n-complex)
+        lines.push(`OT账号：${form.otAccount.trim()}`) // i18n-skip-line: backend payload format
       }
       if (form.otPassword.trim()) {
-        lines.push(`OT密码：${form.otPassword.trim()}`) // TODO(i18n-complex)
+        lines.push(`OT密码：${form.otPassword.trim()}`) // i18n-skip-line: backend payload format
       }
     }
     if (form.hirevueDeadline) {
-      lines.push(`截止时间：${form.hirevueDeadline}`) // TODO(i18n-complex)
+      lines.push(`截止时间：${form.hirevueDeadline}`) // i18n-skip-line: backend payload format
     }
     if (form.inviteScreenshotName) {
       lines.push(`inviteScreenshot=${form.inviteScreenshotName}`)
@@ -1247,21 +1247,21 @@ function buildStageNote(form: ApplyStageForm) {
     if (form.interviewTimeUndetermined) {
       lines.push(t('student.applications.k92'))
     } else if (form.interviewTime) {
-      lines.push(`面试时间：${form.interviewTime}`) // TODO(i18n-complex)
+      lines.push(`面试时间：${form.interviewTime}`) // i18n-skip-line: backend payload format
     }
     if (form.mentorCount) {
-      lines.push(`导师数量：${form.mentorCount}`) // TODO(i18n-complex)
+      lines.push(`导师数量：${form.mentorCount}`) // i18n-skip-line: backend payload format
     }
     if (form.preferMentor.trim()) {
-      lines.push(`意向导师：${form.preferMentor.trim()}`) // TODO(i18n-complex)
+      lines.push(`意向导师：${form.preferMentor.trim()}`) // i18n-skip-line: backend payload format
     }
     if (form.excludeMentor.trim()) {
-      lines.push(`排除导师：${form.excludeMentor.trim()}`) // TODO(i18n-complex)
+      lines.push(`排除导师：${form.excludeMentor.trim()}`) // i18n-skip-line: backend payload format
     }
   }
 
   if (form.note.trim()) {
-    lines.push(`备注：${form.note.trim()}`) // TODO(i18n-complex)
+    lines.push(`备注：${form.note.trim()}`) // i18n-skip-line: backend payload format
   }
 
   return lines.join('\n')

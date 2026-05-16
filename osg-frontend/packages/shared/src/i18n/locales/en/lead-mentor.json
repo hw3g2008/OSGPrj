@@ -491,7 +491,8 @@
     "k14": "正在加载岗位数据...",
     "k15": "{n} Companies",
     "k16": "{n} Positions",
-    "k17": "My Students: {n}"
+    "k17": "My Students: {n}",
+    "k18": "{n} total"
   },
   "mentors": {
     "k1": "导师管理",

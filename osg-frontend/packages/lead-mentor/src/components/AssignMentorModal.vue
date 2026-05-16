@@ -23,13 +23,13 @@
         <header class="assign-mentor-header" data-surface-part="header">
           <span :id="titleId" class="assign-mentor-title">
             <i class="mdi mdi-account-star" aria-hidden="true" />
-            为学员匹配辅导导师
+            {{ t('leadMentor.assignMentorModal.title') }}
           </span>
           <a-button
             type="text"
             class="assign-mentor-close"
             data-surface-part="close-control"
-            aria-label="关闭导师匹配弹层"
+            :aria-label="t('leadMentor.assignMentorModal.closeAriaLabel')"
             @click="closeModal"
           >
             <template #icon><CloseOutlined /></template>
@@ -59,35 +59,35 @@
 
             <a-row :gutter="[16, 12]" class="student-grid">
               <a-col :xs="24" :sm="8">
-                <span class="student-grid__label">面试阶段</span>
+                <span class="student-grid__label">{{ t('leadMentor.assignMentorModal.interviewStage') }}</span>
                 <strong>{{ preview.interviewStage }}</strong>
               </a-col>
               <a-col :xs="24" :sm="8">
-                <span class="student-grid__label">面试时间</span>
+                <span class="student-grid__label">{{ t('leadMentor.assignMentorModal.interviewTime') }}</span>
                 <strong>{{ preview.interviewTime }}</strong>
               </a-col>
               <a-col :xs="24" :sm="8">
-                <span class="student-grid__label">需求导师</span>
+                <span class="student-grid__label">{{ t('leadMentor.assignMentorModal.mentorDemand') }}</span>
                 <strong class="student-grid__accent">{{ preview.mentorDemand }}</strong>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <span class="student-grid__label">意向导师</span>
+                <span class="student-grid__label">{{ t('leadMentor.assignMentorModal.preferredMentor') }}</span>
                 <strong class="student-grid__success">{{ preview.preferredMentor }}</strong>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <span class="student-grid__label">排除导师</span>
+                <span class="student-grid__label">{{ t('leadMentor.assignMentorModal.excludedMentor') }}</span>
                 <strong class="student-grid__danger">{{ preview.excludedMentor }}</strong>
               </a-col>
             </a-row>
           </a-card>
 
           <div class="form-group">
-            <div class="form-label">筛选导师</div>
+            <div class="form-label">{{ t('leadMentor.assignMentorModal.filterMentor') }}</div>
             <a-row :gutter="[12, 12]" class="filter-row">
               <a-col :xs="24" :sm="12" :md="6">
                 <a-select
                   v-model:value="filters.scheduleStatus"
-                  placeholder="全部排期状态"
+                  :placeholder="t('leadMentor.assignMentorModal.allScheduleStatus')"
                   allow-clear
                   style="width: 100%;"
                   :options="scheduleStatusOptions"
@@ -96,7 +96,7 @@
               <a-col :xs="24" :sm="12" :md="6">
                 <a-select
                   v-model:value="filters.majorDirection"
-                  placeholder="全部主攻方向"
+                  :placeholder="t('leadMentor.assignMentorModal.allMajorDirection')"
                   allow-clear
                   style="width: 100%;"
                   :options="majorDirectionOptions"
@@ -106,7 +106,7 @@
               <a-col :xs="24" :sm="12" :md="6">
                 <a-select
                   v-model:value="filters.subDirection"
-                  placeholder="全部子方向"
+                  :placeholder="t('leadMentor.assignMentorModal.allSubDirection')"
                   allow-clear
                   style="width: 100%;"
                   :options="filteredSubDirectionOptions"
@@ -115,7 +115,7 @@
               <a-col :xs="24" :sm="12" :md="6">
                 <a-input
                   v-model:value="filters.keyword"
-                  placeholder="搜索导师姓名..."
+                  :placeholder="t('leadMentor.assignMentorModal.searchMentorName')"
                   allow-clear
                 >
                   <template #prefix><SearchOutlined /></template>
@@ -124,20 +124,20 @@
             </a-row>
             <div class="filter-hint">
               <FilterOutlined />
-              共找到 <strong>{{ filteredMentors.length }}</strong> 位导师
+              {{ t('leadMentor.assignMentorModal.foundCount', { count: filteredMentors.length }) }}
             </div>
           </div>
 
           <div class="form-group">
             <div class="form-label">
-              选择导师
-              <span class="form-label__meta">(可多选)</span>
+              {{ t('leadMentor.assignMentorModal.selectMentor') }}
+              <span class="form-label__meta">({{ t('leadMentor.assignMentorModal.multiSelect') }})</span>
             </div>
 
             <a-spin :spinning="loadingMentors">
               <a-empty
                 v-if="filteredMentors.length === 0 && !loadingMentors"
-                description="暂无符合条件的导师"
+                :description="t('leadMentor.assignMentorModal.noMentors')"
                 class="mentor-empty"
               />
               <a-list v-else class="mentor-list" :data-source="filteredMentors" :split="false">
@@ -172,7 +172,7 @@
                         <a-tag :color="scheduleTone(item.scheduleStatus)">
                           {{ scheduleLabel(item.scheduleStatus) }}
                         </a-tag>
-                        <div class="mentor-item__hours">学员 {{ item.studentCount ?? 0 }} 人</div>
+                        <div class="mentor-item__hours">{{ t('leadMentor.assignMentorModal.studentCount', { count: item.studentCount ?? 0 }) }}</div>
                       </div>
                     </div>
                   </a-list-item>
@@ -182,28 +182,28 @@
 
             <div class="selection-hint">
               <InfoCircleOutlined />
-              已选择 <strong>{{ selected.length }}</strong> 位导师
+              {{ t('leadMentor.assignMentorModal.selectedCount', { count: selected.length }) }}
             </div>
           </div>
 
           <div class="form-group form-group--last">
             <div class="form-label">
-              备注
-              <span class="form-label__meta">(选填)</span>
+              {{ t('leadMentor.assignMentorModal.note') }}
+              <span class="form-label__meta">({{ t('leadMentor.assignMentorModal.optional') }})</span>
             </div>
             <a-textarea
               v-model:value="assignNote"
               :rows="2"
-              placeholder="给导师的特别说明，如学员背景、重点辅导内容等..."
+              :placeholder="t('leadMentor.assignMentorModal.notePlaceholder')"
             />
           </div>
         </section>
 
         <footer class="assign-mentor-footer">
-          <a-button @click="closeModal">取消</a-button>
+          <a-button @click="closeModal">{{ t('leadMentor.assignMentorModal.cancel') }}</a-button>
           <a-button type="primary" class="assign-mentor-action" @click="handleConfirm">
             <template #icon><CheckOutlined /></template>
-            确认匹配
+            {{ t('leadMentor.assignMentorModal.confirmMatch') }}
           </a-button>
         </footer>
       </div>
@@ -213,6 +213,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Avatar as AAvatar,
   Button as AButton,
@@ -245,6 +246,8 @@ import {
   type LeadMentorMentorOption,
 } from '@osg/shared/api'
 import { useDictFacade } from '@osg/shared/composables'
+
+const { t } = useI18n()
 
 export interface AssignMentorPreview {
   studentName: string
@@ -330,7 +333,7 @@ const fetchMentors = async () => {
     mentors.value = Array.isArray(response?.rows) ? response.rows : []
   } catch (_error) {
     mentors.value = []
-    message.error('导师列表加载失败')
+    message.error(t('leadMentor.assignMentorModal.loadFailed'))
   } finally {
     loadingMentors.value = false
   }
@@ -381,11 +384,11 @@ const closeModal = () => {
 
 const handleConfirm = () => {
   if (selected.value.length === 0) {
-    message.error('请至少选择1位导师')
+    message.error(t('leadMentor.assignMentorModal.errorSelectAtLeastOne'))
     return
   }
   if (props.requiredMentorCount && props.requiredMentorCount > 0 && selected.value.length !== props.requiredMentorCount) {
-    message.error('导师数量必须等于申请导师数量')
+    message.error(t('leadMentor.assignMentorModal.errorCountMismatch'))
     return
   }
   emit('confirm-match', {
@@ -411,13 +414,13 @@ const formatDirection = (mentor: LeadMentorMentorOption) => {
   const major = lookupLabel(majorDirectionDictOptions.value, mentor.majorDirection)
   const sub = lookupLabel(subDirectionDictOptions.value, mentor.subDirection)
   if (major && sub) return `${major} · ${sub}`
-  return major || sub || '方向待补充'
+  return major || sub || t('leadMentor.assignMentorModal.directionTbd')
 }
 
 const formatLocation = (mentor: LeadMentorMentorOption) => {
   const parts = [mentor.region, mentor.city].filter(Boolean)
   if (parts.length === 0) {
-    return '所在地待补充'
+    return t('leadMentor.assignMentorModal.locationTbd')
   }
   return parts.join(' · ')
 }
@@ -432,7 +435,7 @@ const lookupLabel = (
 }
 
 const scheduleLabel = (status?: string) => {
-  if (!status) return '未知'
+  if (!status) return t('leadMentor.assignMentorModal.unknown')
   const found = scheduleDictOptions.value.find((item) => item.value === status)
   return found?.label || '-'
 }

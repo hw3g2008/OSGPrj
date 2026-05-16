@@ -1,4 +1,5 @@
-import { createApp, nextTick } from 'vue'
+﻿import { createApp, nextTick } from 'vue'
+import { i18n } from '@osg/shared'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -91,6 +92,8 @@ async function mountStory(initialPath = '/profile/basic') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

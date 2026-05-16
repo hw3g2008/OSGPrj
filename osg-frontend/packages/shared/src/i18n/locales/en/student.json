@@ -309,7 +309,9 @@
     "k98": "请填写 HireVue / OT 截止时间",
     "k99": "请上传邀请邮件截图",
     "k100": "请填写该阶段的面试时间，或勾选\"未确定\"",
-    "k101": "Request Coaching"
+    "k101": "Request Coaching",
+    "k102": "{y}-{m}-{d} {hh}:{mm}",
+    "k103": "{n} total"
   },
   "career": {
     "k1": "求职意向：",
@@ -401,7 +403,10 @@
     "k25": "评价提交成功！",
     "k26": "Close",
     "k27": "No detailed feedback yet. Will appear here once submitted.",
-    "k28": "{n} tag(s) selected"
+    "k28": "{n} tag(s) selected",
+    "k29": "pts · {desc}",
+    "k30": "pts",
+    "k31": "{score}pts · {label}"
   },
   "dashboard": {
     "k1": "学员信息 Student Profile",
@@ -488,7 +493,9 @@
     "k82": "{count} ongoing applications. Suggest prioritizing the next round for {company}.",
     "k83": "{count} class records pending review. Completing them helps the team plan follow-ups.",
     "k84": "{records} mock practice records and {positions} positions in pool. Keep the pace.",
-    "k85": "priority position"
+    "k85": "priority position",
+    "k86": "{n} records",
+    "k87": "{n} items"
   },
   "faq": {
     "k1": "常见问题",

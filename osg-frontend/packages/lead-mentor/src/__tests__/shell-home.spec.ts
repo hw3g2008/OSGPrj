@@ -28,25 +28,26 @@ describe('lead-mentor shell and home source contract', () => {
   it('keeps the prototype navigation groups and wording for S-040', () => {
     // M0.4 Step 4.4: '首页 Home' removed per Step 4.1 product decision (home entry not in V1).
     // '退出登录' moved to @osg/shared AppSidebar; verified via AppSidebar reference in case 1.
-    const expectedLabels = [
-      '求职中心 Career',
-      '岗位信息 Positions',
-      '学员求职总览 Job Overview',
-      '模拟应聘管理 Mock Practice',
-      '学员中心 Student Center',
-      '学员列表 Student List',
-      '教学中心 Teaching',
-      '课程记录 Class Records',
-      '财务中心 Finance',
-      '报销管理 Expense',
-      '资源中心 Resources',
-      '在线测试题库 Online Tests',
-      '个人中心 Profile',
-      '课程排期 Schedule'
+    // After i18n-ization, labels are referenced via t() keys; check for key presence in source.
+    const expectedKeys = [
+      "leadMentor.layout.nav.career.title",
+      "leadMentor.layout.nav.career.positions",
+      "leadMentor.layout.nav.career.jobOverview",
+      "leadMentor.layout.nav.career.mockPractice",
+      "leadMentor.layout.nav.studentCenter.title",
+      "leadMentor.layout.nav.studentCenter.studentList",
+      "leadMentor.layout.nav.teaching.title",
+      "leadMentor.layout.nav.teaching.classRecords",
+      "leadMentor.layout.nav.finance.title",
+      "leadMentor.layout.nav.finance.expense",
+      "leadMentor.layout.nav.resources.title",
+      "leadMentor.layout.nav.resources.onlineTests",
+      "leadMentor.layout.nav.profile.title",
+      "leadMentor.layout.nav.profile.schedule",
     ]
 
-    for (const label of expectedLabels) {
-      expect(layoutSource).toContain(label)
+    for (const key of expectedKeys) {
+      expect(layoutSource).toContain(key)
     }
   })
 
@@ -57,18 +58,19 @@ describe('lead-mentor shell and home source contract', () => {
 
   it('restores the prototype home file with greeting, summary cards, and quick entry icons', () => {
     expect(homeExists).toBe(true)
-    expect(homeSource).toContain('下午好，Jess')
-    expect(homeSource).toContain('待排课程')
-    expect(homeSource).toContain('待确认课程')
-    expect(homeSource).toContain('本周收入（已结算）')
-    expect(homeSource).toContain('本周课时')
-    expect(homeSource).toContain('快捷入口')
-    expect(homeSource).toContain('岗位申请')
-    expect(homeSource).toContain('排课管理')
-    expect(homeSource).toContain('我的课程')
-    expect(homeSource).toContain('我的学员')
-    expect(homeSource).toContain('我的排期')
-    expect(homeSource).toContain('报销管理')
+    // After i18n-ization, Chinese strings replaced by t() key references; check key presence.
+    expect(homeSource).toContain("leadMentor.home.greetingAfternoon")
+    expect(homeSource).toContain("leadMentor.home.summary.pendingScheduling")
+    expect(homeSource).toContain("leadMentor.home.summary.pendingConfirm")
+    expect(homeSource).toContain("leadMentor.home.summary.weeklyIncome")
+    expect(homeSource).toContain("leadMentor.home.summary.weeklyHours")
+    expect(homeSource).toContain("leadMentor.home.quickEntries.title")
+    expect(homeSource).toContain("leadMentor.home.quickEntries.positionApply")
+    expect(homeSource).toContain("leadMentor.home.quickEntries.scheduleManage")
+    expect(homeSource).toContain("leadMentor.home.quickEntries.myClasses")
+    expect(homeSource).toContain("leadMentor.home.quickEntries.myStudents")
+    expect(homeSource).toContain("leadMentor.home.quickEntries.mySchedule")
+    expect(homeSource).toContain("leadMentor.home.quickEntries.reimbursement")
 
     const expectedIcons = [
       'mdi-arrow-right',
@@ -91,11 +93,10 @@ describe('lead-mentor shell and home source contract', () => {
 
   it('keeps the sidebar footer user affordance for logout', () => {
     // M0.4 Step 4.4: '点击展开' / '退出登录' template moved to @osg/shared AppSidebar;
-    // wrapper now passes role-label '培训主管' and logo-title 'OSG Lead Mentor' as props,
-    // and clearAuth still owned by handleLogout in this layout.
+    // wrapper passes role-label via i18n key and logo-title 'OSG Lead Mentor' as props.
     expect(layoutSource).toContain('Jess (Lead Mentor)')
     expect(layoutSource).toContain('OSG Lead Mentor')
-    expect(layoutSource).toContain('培训主管')
+    expect(layoutSource).toContain("leadMentor.layout.roleLabel")
     expect(layoutSource).toContain('clearAuth')
   })
 })

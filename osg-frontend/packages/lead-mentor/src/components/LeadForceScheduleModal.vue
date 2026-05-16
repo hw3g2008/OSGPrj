@@ -8,7 +8,7 @@
       type="button"
       class="lead-force-schedule-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭强制填写排期弹层"
+      :aria-label="t('leadMentor.leadForceScheduleModal.closeAriaLabel')"
       @click="closeModal"
     />
 
@@ -23,25 +23,25 @@
         <div>
           <span :id="titleId" class="lead-force-schedule-title modal-title">
             <i class="mdi mdi-calendar-alert" aria-hidden="true" />
-            强制填写排期
+            {{ t('leadMentor.leadForceScheduleModal.title') }}
           </span>
           <div class="lead-force-schedule-alert">
             <i class="mdi mdi-alert" aria-hidden="true" />
-            当前尚未提交下周排期，请立即补全可用时间
+            {{ t('leadMentor.leadForceScheduleModal.alertMessage') }}
           </div>
         </div>
       </div>
 
       <div class="lead-force-schedule-body modal-body" data-surface-part="body">
         <div class="lead-force-schedule-range">
-          <span class="lead-force-schedule-range__label">填写周期</span>
+          <span class="lead-force-schedule-range__label">{{ t('leadMentor.leadForceScheduleModal.weekPeriod') }}</span>
           <strong>{{ weekRange }}</strong>
         </div>
 
         <div class="form-group">
           <label class="form-label">
             <i class="mdi mdi-clock-outline" aria-hidden="true" />
-            下周可上课时长 <span class="required-mark">*</span>
+            {{ t('leadMentor.leadForceScheduleModal.weeklyHours') }} <span class="required-mark">*</span>
           </label>
           <div class="force-hours-row">
             <input
@@ -52,12 +52,12 @@
               class="form-input"
               placeholder="10"
             />
-            <span class="force-hours-unit">小时</span>
+            <span class="force-hours-unit">{{ t('leadMentor.leadForceScheduleModal.hours') }}</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">每天可上课时间 <span class="required-mark">*</span></label>
+          <label class="form-label">{{ t('leadMentor.leadForceScheduleModal.dailyTime') }} <span class="required-mark">*</span></label>
           <div class="force-day-grid">
             <article
               v-for="day in days"
@@ -70,9 +70,9 @@
                 <span class="force-day-card__date">{{ day.date }}</span>
               </div>
               <select v-model="formState.dailySlots[day.key]" class="form-select">
-                <option value="">请选择</option>
+                <option value="">{{ t('leadMentor.leadForceScheduleModal.pleaseSelect') }}</option>
                 <option
-                  v-for="slot in SLOT_OPTIONS"
+                  v-for="slot in slotOptions"
                   :key="`${day.key}-${slot.id}`"
                   :value="slot.id"
                 >
@@ -87,7 +87,7 @@
       <div class="lead-force-schedule-footer modal-footer">
         <button type="button" class="btn btn-primary" @click="submitDraft">
           <i class="mdi mdi-check" aria-hidden="true" />
-          确认提交排期
+          {{ t('leadMentor.leadForceScheduleModal.submit') }}
         </button>
       </div>
     </div>
@@ -95,7 +95,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 export interface ForceScheduleDayOption {
   key: string
@@ -114,11 +117,11 @@ interface SlotOption {
   label: string
 }
 
-const SLOT_OPTIONS: SlotOption[] = [
-  { id: 'morning', label: '上午 9-12' },
-  { id: 'afternoon', label: '下午 14-18' },
-  { id: 'evening', label: '晚上 19-22' },
-]
+const slotOptions = computed<SlotOption[]>(() => [
+  { id: 'morning', label: t('leadMentor.leadForceScheduleModal.slotMorning') },
+  { id: 'afternoon', label: t('leadMentor.leadForceScheduleModal.slotAfternoon') },
+  { id: 'evening', label: t('leadMentor.leadForceScheduleModal.slotEvening') },
+])
 
 const props = defineProps<{
   modelValue: boolean

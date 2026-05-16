@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 
 import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
@@ -29,7 +30,6 @@ import { clearAuth, getUser } from '@osg/shared/utils'
 
 const FALLBACK_USER_NAME = 'Jess (Lead Mentor)'
 const FALLBACK_USER_INITIALS = 'JL'
-const FALLBACK_ROLE = '培训主管'
 
 const AVAILABLE_NAVIGATION_PATHS = new Set([
   '/career/positions',
@@ -41,59 +41,59 @@ const AVAILABLE_NAVIGATION_PATHS = new Set([
   '/profile/schedule',
 ])
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
-// 五端共享：无操作 60 分钟自动退出，活动节流 ping 续期
 useIdleLogout()
 
-const navigationGroups: NavigationGroup[] = [
+const navigationGroups = computed<NavigationGroup[]>(() => [
   {
-    title: '求职中心 Career',
+    title: t('leadMentor.layout.nav.career.title'),
     items: [
       {
         path: '/career/positions',
-        label: '岗位信息 Positions',
+        label: t('leadMentor.layout.nav.career.positions'),
         iconClass: 'mdi-briefcase-search',
         activePaths: ['/career/positions'],
       },
       {
         path: '/career/job-overview',
-        label: '学员求职总览 Job Overview',
+        label: t('leadMentor.layout.nav.career.jobOverview'),
         iconClass: 'mdi-briefcase-eye',
         activePaths: ['/career/job-overview'],
       },
       {
         path: '/career/mock-practice',
-        label: '模拟应聘管理 Mock Practice',
+        label: t('leadMentor.layout.nav.career.mockPractice'),
         iconClass: 'mdi-account-voice',
         activePaths: ['/career/mock-practice'],
       },
     ],
   },
   {
-    title: '学员中心 Student Center',
+    title: t('leadMentor.layout.nav.studentCenter.title'),
     items: [
       {
         path: '/teaching/students',
-        label: '学员列表 Student List',
+        label: t('leadMentor.layout.nav.studentCenter.studentList'),
         iconClass: 'mdi-account-group',
         activePaths: ['/teaching/students'],
       },
     ],
   },
   {
-    title: '教学中心 Teaching',
+    title: t('leadMentor.layout.nav.teaching.title'),
     items: [
       {
         path: '/teaching/class-records',
-        label: '课程记录 Class Records',
+        label: t('leadMentor.layout.nav.teaching.classRecords'),
         iconClass: 'mdi-book-open-variant',
         activePaths: ['/teaching/class-records'],
       },
       {
         path: '/teaching/communication',
-        label: '人际关系沟通记录 Records',
+        label: t('leadMentor.layout.nav.teaching.communicationRecords'),
         iconClass: 'mdi-message-text-clock',
         activePaths: ['/teaching/communication'],
         hidden: true,
@@ -101,18 +101,18 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    title: '财务中心 Finance',
+    title: t('leadMentor.layout.nav.finance.title'),
     items: [
       {
         path: '/finance/settlement',
-        label: '课时结算 Settlement',
+        label: t('leadMentor.layout.nav.finance.settlement'),
         iconClass: 'mdi-cash-check',
         activePaths: ['/finance/settlement'],
         hidden: true,
       },
       {
         path: '/finance/expense',
-        label: '报销管理 Expense',
+        label: t('leadMentor.layout.nav.finance.expense'),
         iconClass: 'mdi-receipt',
         activePaths: ['/finance/expense'],
         hidden: true,
@@ -120,25 +120,25 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    title: '资源中心 Resources',
+    title: t('leadMentor.layout.nav.resources.title'),
     items: [
       {
         path: '/resources/files',
-        label: '文件 Files',
+        label: t('leadMentor.layout.nav.resources.files'),
         iconClass: 'mdi-folder-multiple',
         activePaths: ['/resources/files'],
         hidden: true,
       },
       {
         path: '/resources/online-tests',
-        label: '在线测试题库 Online Tests',
+        label: t('leadMentor.layout.nav.resources.onlineTests'),
         iconClass: 'mdi-clipboard-list',
         activePaths: ['/resources/online-tests'],
         hidden: true,
       },
       {
         path: '/resources/interview-bank',
-        label: '真人面试题库 Interview Bank',
+        label: t('leadMentor.layout.nav.resources.interviewBank'),
         iconClass: 'mdi-account-question',
         activePaths: ['/resources/interview-bank'],
         hidden: true,
@@ -146,43 +146,43 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    title: '个人中心 Profile',
+    title: t('leadMentor.layout.nav.profile.title'),
     items: [
       {
         path: '/profile/basic',
-        label: '基本信息 Profile',
+        label: t('leadMentor.layout.nav.profile.basic'),
         iconClass: 'mdi-account',
         activePaths: ['/profile/basic', '/profile'],
       },
       {
         path: '/profile/schedule',
-        label: '课程排期 Schedule',
+        label: t('leadMentor.layout.nav.profile.schedule'),
         iconClass: 'mdi-calendar-clock',
         activePaths: ['/profile/schedule', '/schedule'],
       },
       {
         path: '/profile/notice',
-        label: '消息 Notice',
+        label: t('leadMentor.layout.nav.profile.notice'),
         iconClass: 'mdi-bell',
         activePaths: ['/profile/notice'],
         hidden: true,
       },
       {
         path: '/profile/faq',
-        label: '常见问题 FAQ',
+        label: t('leadMentor.layout.nav.profile.faq'),
         iconClass: 'mdi-help-circle',
         activePaths: ['/profile/faq'],
         hidden: true,
       },
     ],
   },
-]
+])
 
 const userInfo = computed(() => getUser<{ nickName?: string; userName?: string }>())
 const displayName = computed(
   () => userInfo.value?.nickName || userInfo.value?.userName || FALLBACK_USER_NAME,
 )
-const roleLabel = computed(() => FALLBACK_ROLE)
+const roleLabel = computed(() => t('leadMentor.layout.roleLabel'))
 const userInitials = computed(() => {
   const name = displayName.value.trim()
   if (!name || name === FALLBACK_USER_NAME) {
@@ -200,9 +200,8 @@ const userInitials = computed(() => {
     .join('')
 })
 
-// LM 端特有：子视图通过 inject 复用统一的"敬请期待" toast
 const showUpcomingToast = () => {
-  message.info('敬请期待')
+  message.info(t('leadMentor.layout.comingSoon'))
 }
 provide('showUpcomingToast', showUpcomingToast)
 
@@ -211,13 +210,11 @@ function handleNavClick(path: string) {
     if (path !== route.path) void router.push(path)
     return
   }
-  // 未在白名单的路径统一走"敬请期待" toast（保留 LM 拦截语义）
-  message.info('敬请期待')
+  message.info(t('leadMentor.layout.comingSoon'))
 }
 
 function handleProfileClick() {
-  // LM 个人设置本期未实现，统一走"敬请期待" toast（沿用旧 handleSettingsClick 意图）
-  message.info('敬请期待')
+  message.info(t('leadMentor.layout.comingSoon'))
 }
 
 function handleLogout() {

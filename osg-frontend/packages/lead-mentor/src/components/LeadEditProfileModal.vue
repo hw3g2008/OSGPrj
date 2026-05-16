@@ -8,7 +8,7 @@
       type="button"
       class="lead-edit-profile-backdrop"
       data-surface-part="backdrop"
-      aria-label="关闭编辑个人信息弹层"
+      :aria-label="t('leadMentor.leadEditProfileModal.closeAriaLabel')"
       @click="closeModal"
     />
 
@@ -22,13 +22,13 @@
       <div class="lead-edit-profile-header modal-header" data-surface-part="header">
         <span :id="titleId" class="lead-edit-profile-title modal-title">
           <i class="mdi mdi-account-edit" aria-hidden="true" />
-          编辑个人信息
+          {{ t('leadMentor.leadEditProfileModal.title') }}
         </span>
         <button
           type="button"
           class="modal-close"
           data-surface-part="close-control"
-          aria-label="关闭编辑个人信息弹层"
+          :aria-label="t('leadMentor.leadEditProfileModal.closeAriaLabel')"
           @click="closeModal"
         >
           ×
@@ -39,8 +39,8 @@
         <div class="lead-edit-profile-note">
           <i class="mdi mdi-information" aria-hidden="true" />
           <div>
-            修改信息后，后台文员将收到提醒通知。<br />
-            <span class="lead-edit-profile-note__warning">注意：主攻方向、二级方向和课单价不可自行修改。</span>
+            {{ t('leadMentor.leadEditProfileModal.noteInfo') }}<br />
+            <span class="lead-edit-profile-note__warning">{{ t('leadMentor.leadEditProfileModal.noteWarning') }}</span>
           </div>
         </div>
 
@@ -48,24 +48,24 @@
           <div class="editable-card__head">
             <span class="editable-card__pill">
               <i class="mdi mdi-pencil" aria-hidden="true" />
-              可修改信息
+              {{ t('leadMentor.leadEditProfileModal.editableFields') }}
             </span>
           </div>
 
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label">
-                英文名 <span class="required-mark">*</span>
+                {{ t('leadMentor.leadEditProfileModal.englishName') }} <span class="required-mark">*</span>
               </label>
               <input v-model="formState.englishName" class="form-input" :disabled="submitting" />
             </div>
 
             <div class="form-group">
               <label class="form-label">
-                性别 <span class="required-mark">*</span>
+                {{ t('leadMentor.leadEditProfileModal.gender') }} <span class="required-mark">*</span>
               </label>
               <select v-model="formState.genderLabel" class="form-select" :disabled="submitting">
-                <option value="">请选择</option>
+                <option value="">{{ t('leadMentor.leadEditProfileModal.pleaseSelect') }}</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
@@ -73,47 +73,48 @@
 
             <div class="form-group">
               <label class="form-label">
-                手机号 <span class="required-mark">*</span>
+                {{ t('leadMentor.leadEditProfileModal.phone') }} <span class="required-mark">*</span>
               </label>
               <input v-model="formState.phone" class="form-input" :disabled="submitting" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">微信号</label>
+              <label class="form-label">{{ t('leadMentor.leadEditProfileModal.wechat') }}</label>
               <input
                 v-model="formState.wechatId"
                 class="form-input"
                 :disabled="submitting"
-                placeholder="待提交变更申请补充"
+                :placeholder="t('leadMentor.leadEditProfileModal.wechatPlaceholder')"
               />
             </div>
 
             <div class="form-group">
               <label class="form-label">
-                邮箱 <span class="required-mark">*</span>
+                {{ t('leadMentor.leadEditProfileModal.email') }} <span class="required-mark">*</span>
               </label>
               <input v-model="formState.email" class="form-input" type="email" :disabled="submitting" />
             </div>
 
             <div class="form-group">
               <label class="form-label">
-                所属地区 <span class="required-mark">*</span>
+                {{ t('leadMentor.leadEditProfileModal.region') }} <span class="required-mark">*</span>
               </label>
               <div class="region-row">
                 <select v-model="formState.regionArea" class="form-select" :disabled="submitting">
-                  <option value="">选择大区</option>
-                  <option value="北美">🌎 北美</option>
-                  <option value="欧洲">🌍 欧洲</option>
-                  <option value="亚太">🌏 亚太</option>
-                  <option value="中国大陆">🇨🇳 中国大陆</option>
+                  <option value="">{{ t('leadMentor.leadEditProfileModal.selectRegion') }}</option>
+                  <option
+                    v-for="area in regionAreaOptions"
+                    :key="area.value"
+                    :value="area.value"
+                  >{{ area.label }}</option>
                 </select>
                 <select v-model="formState.regionCity" class="form-select" :disabled="submitting">
-                  <option value="">选择城市</option>
-                  <option value="New York 纽约">New York 纽约</option>
-                  <option value="London 伦敦">London 伦敦</option>
-                  <option value="Singapore 新加坡">Singapore 新加坡</option>
-                  <option value="Shanghai 上海">Shanghai 上海</option>
-                  <option value="Beijing 北京">Beijing 北京</option>
+                  <option value="">{{ t('leadMentor.leadEditProfileModal.selectCity') }}</option>
+                  <option
+                    v-for="city in regionCityOptions"
+                    :key="city.value"
+                    :value="city.value"
+                  >{{ city.label }}</option>
                 </select>
               </div>
             </div>
@@ -122,10 +123,10 @@
       </div>
 
       <div class="lead-edit-profile-footer modal-footer">
-        <button type="button" class="btn btn-outline" :disabled="submitting" @click="closeModal">取消</button>
+        <button type="button" class="btn btn-outline" :disabled="submitting" @click="closeModal">{{ t('leadMentor.leadEditProfileModal.cancel') }}</button>
         <button type="button" class="btn btn-primary" :disabled="submitting" @click="requestSave">
           <i class="mdi mdi-check" aria-hidden="true" />
-          {{ submitting ? '提交中...' : '保存修改' }}
+          {{ submitting ? t('leadMentor.leadEditProfileModal.submitting') : t('leadMentor.leadEditProfileModal.save') }}
         </button>
       </div>
     </div>
@@ -133,7 +134,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 export interface LeadEditProfileDraft {
   englishName: string
@@ -155,6 +159,25 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   'save-request': [payload: LeadEditProfileDraft]
 }>()
+
+// Backend data values — do not translate these; they are stored as-is in the backend
+const REGION_AREA_VALUES = ['北美', '欧洲', '亚太', '中国大陆'] // i18n-skip-line: backend data comparison
+const REGION_CITY_VALUES = ['New York 纽约', 'London 伦敦', 'Singapore 新加坡', 'Shanghai 上海', 'Beijing 北京'] // i18n-skip-line: backend data comparison
+
+const regionAreaOptions = computed(() => [
+  { value: REGION_AREA_VALUES[0], label: `🌎 ${t('leadMentor.leadEditProfileModal.regionNorthAmerica')}` },
+  { value: REGION_AREA_VALUES[1], label: `🌍 ${t('leadMentor.leadEditProfileModal.regionEurope')}` },
+  { value: REGION_AREA_VALUES[2], label: `🌏 ${t('leadMentor.leadEditProfileModal.regionAsiaPacific')}` },
+  { value: REGION_AREA_VALUES[3], label: `🇨🇳 ${t('leadMentor.leadEditProfileModal.regionMainlandChina')}` },
+])
+
+const regionCityOptions = computed(() => [
+  { value: REGION_CITY_VALUES[0], label: `New York ${t('leadMentor.leadEditProfileModal.cityNewYork')}` },
+  { value: REGION_CITY_VALUES[1], label: `London ${t('leadMentor.leadEditProfileModal.cityLondon')}` },
+  { value: REGION_CITY_VALUES[2], label: `Singapore ${t('leadMentor.leadEditProfileModal.citySingapore')}` },
+  { value: REGION_CITY_VALUES[3], label: `Shanghai ${t('leadMentor.leadEditProfileModal.cityShanghai')}` },
+  { value: REGION_CITY_VALUES[4], label: `Beijing ${t('leadMentor.leadEditProfileModal.cityBeijing')}` },
+])
 
 const formState = reactive<LeadEditProfileDraft>({
   englishName: '',

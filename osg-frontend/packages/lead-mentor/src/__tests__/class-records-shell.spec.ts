@@ -1,7 +1,8 @@
-import fs from 'node:fs'
+﻿import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createApp, nextTick } from 'vue'
+import { i18n } from '@osg/shared'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -73,6 +74,8 @@ async function mountClassRecordsPage(initialPath = '/teaching/class-records') {
 
   const app = createApp(RouterView)
   app.use(router)
+  app.use(i18n)
+
   app.mount(container)
   await flushUi()
 

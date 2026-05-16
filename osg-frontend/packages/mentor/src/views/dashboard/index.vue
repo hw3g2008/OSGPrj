@@ -235,7 +235,7 @@ const scheduleRows = computed(() => {
     },
     {
       label: t('mentor.dashboard.k36'),
-      value: `${activeScheduleDays.value} 天`, // TODO(i18n-complex)
+      value: t('mentor.dashboard.k41', { n: activeScheduleDays.value }),
     },
   ]
 })
