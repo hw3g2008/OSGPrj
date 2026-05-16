@@ -1,26 +1,26 @@
 <template>
   <div class="osg-positions-footer">
-    <span class="osg-positions-footer__total">
-      共
-      <strong>{{ total }}</strong>
-      个岗位
-    </span>
+    <i18n-t keypath="common.shared.positions.footer.total" tag="span" class="osg-positions-footer__total">
+      <template #count><strong>{{ total }}</strong></template>
+    </i18n-t>
     <span class="osg-positions-footer__indicator osg-positions-footer__indicator--open">
       <i class="mdi mdi-circle-small" aria-hidden="true" />
-      开放中 {{ open }}
+      {{ t('common.shared.positions.footer.open', { n: open }) }}
     </span>
     <span class="osg-positions-footer__indicator osg-positions-footer__indicator--closed">
       <i class="mdi mdi-circle-small" aria-hidden="true" />
-      已关闭 {{ closed }}
+      {{ t('common.shared.positions.footer.closed', { n: closed }) }}
     </span>
     <span class="osg-positions-footer__indicator osg-positions-footer__indicator--students">
       <i class="mdi mdi-circle-small" aria-hidden="true" />
-      我的学员 {{ students }}人
+      {{ t('common.shared.positions.footer.students', { n: students }) }}
     </span>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 /**
  * PositionsFooter — 岗位页面底部 4 项统计行（LM / Assistant 共用）
  *
@@ -44,6 +44,8 @@ defineProps<{
   /** 我的学员数量 */
   students: number
 }>()
+
+const { t } = useI18n()
 </script>
 
 <style scoped lang="scss">

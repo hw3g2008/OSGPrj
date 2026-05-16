@@ -54,7 +54,7 @@
         >
           {{ record.industry }}
         </span>
-        <span v-else class="osg-positions-list-table__muted">未归类</span>
+        <span v-else class="osg-positions-list-table__muted">{{ t('common.shared.positions.uncategorized') }}</span>
       </template>
 
       <template v-else-if="column.dataIndex === 'positionCategory' || column.key === 'positionCategory'">
@@ -89,9 +89,9 @@
           size="small"
           @click="emit('openStudents', record)"
         >
-          {{ record.studentCount }}人
+          {{ t('common.shared.positions.drilldown.peopleCount', { n: record.studentCount }) }}
         </a-button>
-        <span v-else class="osg-positions-list-table__muted">0人</span>
+        <span v-else class="osg-positions-list-table__muted">{{ t('common.shared.positions.drilldown.peopleCount', { n: 0 }) }}</span>
       </template>
 
       <template v-else-if="column.dataIndex === 'targetMajors' || column.key === 'targetMajors'">
@@ -108,9 +108,9 @@
           size="small"
           @click="emit('openStudents', record)"
         >
-          {{ record.myStudentCount }}人
+          {{ t('common.shared.positions.drilldown.peopleCount', { n: record.myStudentCount }) }}
         </a-button>
-        <span v-else class="osg-positions-list-table__muted">0人</span>
+        <span v-else class="osg-positions-list-table__muted">{{ t('common.shared.positions.drilldown.peopleCount', { n: 0 }) }}</span>
       </template>
 
       <!-- 其他列：优先父组件 slot 透传；没有 slot 时回退为 record[dataIndex] 文本 -->
@@ -125,6 +125,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { TablePaginationConfig } from 'ant-design-vue'
 import type { PositionTableRow } from './types'
 import {
@@ -195,20 +196,22 @@ const emit = defineEmits<{
   openStudents: [row: PositionTableRow]
 }>()
 
-const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { title: '岗位名称', key: 'positionName', dataIndex: 'positionName', width: 240, fixed: 'left' },
-  { title: '公司', key: 'companyName', dataIndex: 'companyName', width: 200 },
-  { title: '行业', key: 'industry', dataIndex: 'industry', width: 130 },
-  { title: '岗位分类', key: 'positionCategory', dataIndex: 'positionCategory', width: 110 },
-  { title: '地区', key: 'location', dataIndex: 'location', width: 130 },
-  { title: '招聘周期', key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
-  { title: '主攻方向', key: 'targetMajors', dataIndex: 'targetMajors', width: 140 },
-  { title: '发布时间', key: 'publishTime', dataIndex: 'publishTime', width: 110 },
-  { title: '截止时间', key: 'deadline', dataIndex: 'deadline', width: 110 },
-  { title: '我的学员', key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
-]
+const { t } = useI18n()
 
-const effectiveColumns = computed<ColumnConfig[]>(() => props.columns ?? DEFAULT_COLUMNS)
+const DEFAULT_COLUMNS = computed<ColumnConfig[]>(() => [
+  { title: t('common.shared.positions.col.positionName'), key: 'positionName', dataIndex: 'positionName', width: 240, fixed: 'left' },
+  { title: t('common.shared.positions.col.companyName'), key: 'companyName', dataIndex: 'companyName', width: 200 },
+  { title: t('common.shared.positions.col.industry'), key: 'industry', dataIndex: 'industry', width: 130 },
+  { title: t('common.shared.positions.col.positionCategory'), key: 'positionCategory', dataIndex: 'positionCategory', width: 110 },
+  { title: t('common.shared.positions.col.location'), key: 'location', dataIndex: 'location', width: 130 },
+  { title: t('common.shared.positions.col.recruitmentCycle'), key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
+  { title: t('common.shared.positions.col.targetMajors'), key: 'targetMajors', dataIndex: 'targetMajors', width: 140 },
+  { title: t('common.shared.positions.col.publishTime'), key: 'publishTime', dataIndex: 'publishTime', width: 110 },
+  { title: t('common.shared.positions.col.deadline'), key: 'deadline', dataIndex: 'deadline', width: 110 },
+  { title: t('common.shared.positions.col.myStudents'), key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
+])
+
+const effectiveColumns = computed<ColumnConfig[]>(() => props.columns ?? DEFAULT_COLUMNS.value)
 
 function handleChange(
   pagination: TablePaginationConfig,

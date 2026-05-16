@@ -40,7 +40,7 @@
               fontSize: '11px',
             }"
           >
-            {{ industry.companyCount }} 家公司
+            {{ t('common.shared.positions.drilldown.companyCount', { n: industry.companyCount }) }}
           </span>
           <span
             :style="{
@@ -51,7 +51,7 @@
               fontSize: '11px',
             }"
           >
-            {{ industry.positionCount }} 个岗位
+            {{ t('common.shared.positions.drilldown.positionCount', { n: industry.positionCount }) }}
           </span>
         </div>
         <span
@@ -60,7 +60,7 @@
             color: toneTextColor(industry.tone),
           }"
         >
-          我的学员: {{ industry.studentCount }}人
+          {{ t('common.shared.positions.drilldown.myStudents', { n: industry.studentCount }) }}
         </span>
       </button>
 
@@ -102,19 +102,18 @@
               </div>
             </button>
             <a-space :size="12">
-              <span style="font-size: 12px">
-                <strong style="color: #6b6ef7">{{ company.positionCount }}</strong>
-                个岗位
-              </span>
+              <i18n-t keypath="common.shared.positions.drilldown.companyPositionCount" tag="span" style="font-size: 12px">
+                <template #count><strong style="color: #6b6ef7">{{ company.positionCount }}</strong></template>
+              </i18n-t>
               <a-button
                 v-if="company.studentCount > 0"
                 type="link"
                 size="small"
                 @click="emit('openCompanyStudents', company)"
               >
-                {{ company.studentCount }}人
+                {{ t('common.shared.positions.drilldown.peopleCount', { n: company.studentCount }) }}
               </a-button>
-              <span v-else style="color: #94a3b8; font-size: 12px">0人</span>
+              <span v-else style="color: #94a3b8; font-size: 12px">{{ t('common.shared.positions.drilldown.peopleCount', { n: 0 }) }}</span>
               <a
                 v-if="company.officialUrl"
                 :href="company.officialUrl"
@@ -123,7 +122,7 @@
                 class="osg-positions-drilldown__official-link"
                 @click.stop
               >
-                <i class="mdi mdi-web" aria-hidden="true" /> 官网
+                <i class="mdi mdi-web" aria-hidden="true" /> {{ t('common.shared.positions.drilldown.officialSite') }}
               </a>
             </a-space>
           </div>
@@ -142,11 +141,13 @@
       </div>
     </section>
 
-    <a-empty v-if="!industries.length" description="当前筛选条件下暂无岗位数据" />
+    <a-empty v-if="!industries.length" :description="t('common.shared.positions.drilldown.emptyDescription')" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import PositionsListTable from './PositionsListTable.vue'
 import {
   INDUSTRY_TONE_TEXT_COLOR,
@@ -200,17 +201,19 @@ const emit = defineEmits<{
   openPositionStudents: [row: PositionTableRow]
 }>()
 
+const { t } = useI18n()
+
 /** drilldown 嵌套表 8 列定义（与原型一致：去掉 list 视图的"公司"和"行业"列） */
-const DRILLDOWN_COLUMNS: ColumnConfig[] = [
-  { title: '岗位名称', key: 'positionName', dataIndex: 'positionName', width: 240, fixed: 'left' },
-  { title: '岗位分类', key: 'positionCategory', dataIndex: 'positionCategory', width: 100 },
-  { title: '部门', key: 'department', dataIndex: 'department', width: 100 },
-  { title: '地区', key: 'location', dataIndex: 'location', width: 110 },
-  { title: '招聘周期', key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
-  { title: '发布时间', key: 'publishTime', dataIndex: 'publishTime', width: 100 },
-  { title: '截止时间', key: 'deadline', dataIndex: 'deadline', width: 100 },
-  { title: '我的学员', key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
-]
+const DRILLDOWN_COLUMNS = computed<ColumnConfig[]>(() => [
+  { title: t('common.shared.positions.col.positionName'), key: 'positionName', dataIndex: 'positionName', width: 240, fixed: 'left' },
+  { title: t('common.shared.positions.col.positionCategory'), key: 'positionCategory', dataIndex: 'positionCategory', width: 100 },
+  { title: t('common.shared.positions.col.department'), key: 'department', dataIndex: 'department', width: 100 },
+  { title: t('common.shared.positions.col.location'), key: 'location', dataIndex: 'location', width: 110 },
+  { title: t('common.shared.positions.col.recruitmentCycle'), key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
+  { title: t('common.shared.positions.col.publishTime'), key: 'publishTime', dataIndex: 'publishTime', width: 100 },
+  { title: t('common.shared.positions.col.deadline'), key: 'deadline', dataIndex: 'deadline', width: 100 },
+  { title: t('common.shared.positions.col.myStudents'), key: 'studentCount', dataIndex: 'studentCount', width: 100, fixed: 'right' },
+])
 
 function isIndustryExpanded(industryId: string): boolean {
   return props.expandedIndustries.has(industryId)

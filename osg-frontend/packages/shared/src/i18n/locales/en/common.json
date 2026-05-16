@@ -144,6 +144,37 @@
         "baseCourse": "Base session"
       }
     },
+    "positions": {
+      "uncategorized": "Uncategorized",
+      "col": {
+        "positionName": "Position name",
+        "companyName": "Company",
+        "industry": "Industry",
+        "positionCategory": "Position category",
+        "department": "Department",
+        "location": "Location",
+        "recruitmentCycle": "Recruitment cycle",
+        "targetMajors": "Track",
+        "publishTime": "Posted",
+        "deadline": "Deadline",
+        "myStudents": "My students"
+      },
+      "drilldown": {
+        "companyCount": "{n} companies",
+        "positionCount": "{n} positions",
+        "myStudents": "My students: {n}",
+        "companyPositionCount": "{count} positions",
+        "peopleCount": "{n}",
+        "officialSite": "Site",
+        "emptyDescription": "No positions match the current filters"
+      },
+      "footer": {
+        "total": "{count} positions",
+        "open": "Open {n}",
+        "closed": "Closed {n}",
+        "students": "My students {n}"
+      }
+    },
     "calendar": {
       "titleDefault": "Student interviews",
       "monthLabel": "{month}/",

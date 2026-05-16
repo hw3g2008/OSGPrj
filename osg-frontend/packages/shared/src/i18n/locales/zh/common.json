@@ -144,6 +144,37 @@
         "baseCourse": "基础课程"
       }
     },
+    "positions": {
+      "uncategorized": "未归类",
+      "col": {
+        "positionName": "岗位名称",
+        "companyName": "公司",
+        "industry": "行业",
+        "positionCategory": "岗位分类",
+        "department": "部门",
+        "location": "地区",
+        "recruitmentCycle": "招聘周期",
+        "targetMajors": "主攻方向",
+        "publishTime": "发布时间",
+        "deadline": "截止时间",
+        "myStudents": "我的学员"
+      },
+      "drilldown": {
+        "companyCount": "{n} 家公司",
+        "positionCount": "{n} 个岗位",
+        "myStudents": "我的学员: {n}人",
+        "companyPositionCount": "{count} 个岗位",
+        "peopleCount": "{n}人",
+        "officialSite": "官网",
+        "emptyDescription": "当前筛选条件下暂无岗位数据"
+      },
+      "footer": {
+        "total": "共 {count} 个岗位",
+        "open": "开放中 {n}",
+        "closed": "已关闭 {n}",
+        "students": "我的学员 {n}人"
+      }
+    },
     "calendar": {
       "titleDefault": "学员面试安排",
       "monthLabel": "{month}月",
