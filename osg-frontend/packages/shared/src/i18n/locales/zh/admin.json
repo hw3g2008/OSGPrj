@@ -1746,6 +1746,438 @@
         "exportTodo": "导出功能将在后续版本中接入",
         "detailTodo": "详情功能将在后续版本中接入"
       }
+    },
+    "allClasses": {
+      "pageTitle": "全部课程",
+      "export": "导出",
+      "alert": {
+        "message": "课程审核与支付流程",
+        "step1": "① 导师/班主任/助教提交",
+        "step2": "② 待审核",
+        "step3": "③ 未支付",
+        "step4": "④ 已支付"
+      },
+      "tabs": {
+        "all": "全部",
+        "pending": "待审核",
+        "unpaid": "未支付",
+        "paid": "已支付",
+        "rejected": "已驳回"
+      },
+      "filter": {
+        "searchPlaceholder": "搜索学员/导师姓名...",
+        "courseTypePlaceholder": "全部课程类型",
+        "courseTypes": {
+          "onboarding_interview": "入职面试",
+          "mock_interview": "模拟面试",
+          "written_test": "笔试辅导",
+          "midterm_exam": "模拟期中考试",
+          "communication_midterm": "人际关系期中考试",
+          "qbank_request": "题库申请"
+        },
+        "sourcePlaceholder": "全部来源",
+        "sources": {
+          "mentor": "导师端",
+          "headteacher": "班主任端",
+          "assistant": "助教端"
+        },
+        "dateStart": "开始日期",
+        "dateEnd": "结束日期",
+        "search": "搜索",
+        "reset": "重置"
+      },
+      "columns": {
+        "classId": "课程ID",
+        "student": "学员",
+        "mentor": "导师",
+        "courseType": "课程类型",
+        "duration": "时长",
+        "date": "日期",
+        "source": "来源",
+        "status": "状态",
+        "rate": "评价",
+        "action": "操作"
+      },
+      "empty": "当前筛选下暂无课程记录",
+      "pagination": {
+        "total": "共 {total} 条记录"
+      },
+      "action": {
+        "review": "审核",
+        "view": "查看"
+      },
+      "messages": {
+        "loadError": "全部课程加载失败",
+        "detailError": "课程详情加载失败",
+        "approveSuccess": "已通过审核",
+        "rejectSuccess": "已驳回",
+        "exportInfo": "导出功能将在后续版本中接入"
+      },
+      "modal": {
+        "classId": "课程ID",
+        "source": "提交来源",
+        "status": "状态",
+        "mentor": "导师",
+        "student": "学员",
+        "courseType": "课程类型",
+        "date": "上课日期",
+        "duration": "课时",
+        "durationValue": "{hours} 小时",
+        "fee": "课时费",
+        "topics": "课程主题",
+        "mockFeedback": "面试辅导反馈",
+        "performance": "学员表现",
+        "rate": "评分",
+        "purpose": "本次课程目的",
+        "knowledge": "本次课程涉及的知识点",
+        "improvement": "学员需要改进的地方",
+        "suggestion": "后续建议",
+        "entryFeedback": "入职培训反馈",
+        "midtermFeedback": "模拟期中考试反馈",
+        "examScore": "考试分数",
+        "assessmentTopic": "考核题目",
+        "detailFeedback": "详细反馈",
+        "networkingFeedback": "人际关系考核反馈",
+        "emailQuality": "邮件质量",
+        "emailEtiquette": "邮件礼仪",
+        "callQuality": "通话质量",
+        "selfIntro": "自我介绍",
+        "thankYou": "感谢邮件",
+        "recommend": "是否推荐",
+        "recommendYes": "是",
+        "recommendNo": "否",
+        "additionalNotes": "补充说明",
+        "paid": "已支付",
+        "paidDate": "支付日期：{date}",
+        "writtenFeedback": "笔试辅导反馈",
+        "rejectedReason": "驳回原因",
+        "noRejectedReason": "暂无驳回原因",
+        "rejectedMeta": "驳回时间：{time} | 审核人：{name}",
+        "reviewNote": "审核备注",
+        "reviewNotePlaceholder": "输入审核备注（可选）",
+        "close": "关闭",
+        "reject": "驳回",
+        "approve": "通过",
+        "headerTitle": {
+          "mock": "课程详情 - 模拟面试",
+          "entry": "课程审核 - 入职面试",
+          "midterm": "课程详情 - 模拟期中考试",
+          "networking": "课程详情 - 人际关系期中考试",
+          "written": "课程审核 - 笔试辅导",
+          "rejected": "课程详情 - 已驳回",
+          "default": "课程详情",
+          "reviewEntry": "课程审核 - 入职面试",
+          "reviewWritten": "课程审核 - 笔试辅导"
+        }
+      }
+    },
+    "classRecords": {
+      "pageTitle": "课程记录",
+      "export": "导出",
+      "exporting": "导出中...",
+      "alert": {
+        "message": "课程记录流程",
+        "step1": "① 学员申请岗位/模拟应聘",
+        "step2": "② 班主任分配导师",
+        "step3": "③ 导师上课并申报记录",
+        "step4": "④ 后台审核",
+        "step5": "⑤ 结算中心转账"
+      },
+      "tabs": {
+        "all": "全部",
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回"
+      },
+      "statCards": {
+        "total": "总记录数",
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回",
+        "pendingSettlement": "待结算金额"
+      },
+      "filter": {
+        "searchPlaceholder": "搜索学员/申报人...",
+        "coachingTypePlaceholder": "辅导类型",
+        "courseContentPlaceholder": "课程内容",
+        "reporterRolePlaceholder": "申报人角色",
+        "dateLabel": "上课日期",
+        "dateStart": "开始日期",
+        "dateEnd": "结束日期",
+        "search": "搜索",
+        "coachingTypes": {
+          "position": "岗位辅导",
+          "mock": "模拟应聘"
+        },
+        "courseContents": {
+          "new_resume": "新简历",
+          "resume_update": "简历更新",
+          "case_prep": "Case准备",
+          "mock_interview": "模拟面试",
+          "communication_midterm": "人际关系期中考试",
+          "midterm_exam": "模拟期中考试",
+          "other": "其他"
+        },
+        "sources": {
+          "mentor": "导师",
+          "headteacher": "班主任",
+          "assistant": "助教"
+        }
+      },
+      "columns": {
+        "recordId": "记录ID",
+        "student": "学员",
+        "reporter": "申报人",
+        "coachingType": "辅导内容",
+        "courseContent": "课程内容",
+        "classDate": "上课日期",
+        "duration": "时长",
+        "fee": "课时费",
+        "studentRating": "学员评价",
+        "status": "审核状态",
+        "action": "操作"
+      },
+      "empty": "暂无课程记录",
+      "action": {
+        "review": "课程审核",
+        "detail": "详情"
+      },
+      "messages": {
+        "loadError": "课程记录加载失败",
+        "detailError": "课程记录详情加载失败",
+        "approveSuccess": "课时审核已通过",
+        "approveFail": "课时审核通过失败",
+        "rejectSuccess": "课时审核已驳回",
+        "rejectFail": "课时审核驳回失败",
+        "exportSuccess": "课程记录导出成功",
+        "exportFail": "课程记录导出失败"
+      },
+      "status": {
+        "approved": "已通过",
+        "rejected": "已驳回",
+        "pending": "待审核"
+      },
+      "courseTypes": {
+        "mock": "模拟应聘",
+        "position": "岗位辅导"
+      },
+      "sources": {
+        "mentor": "导师",
+        "headteacher": "班主任",
+        "assistant": "助教"
+      },
+      "fields": {
+        "student": "学员",
+        "reporter": "申报人",
+        "coachingContent": "辅导内容",
+        "courseContent": "课程内容",
+        "classDate": "上课日期",
+        "duration": "时长",
+        "durationValue": "{hours}小时",
+        "fee": "课时费",
+        "submitTime": "提交时间",
+        "feedback": "课程反馈",
+        "attachments": "附件",
+        "unnamedFile": "未命名文件",
+        "noAttachments": "暂无附件",
+        "reviewResult": "审核结果",
+        "noReviewRemark": "暂无审核备注",
+        "studentRating": "学员评价"
+      },
+      "detailModal": {
+        "title": "课程记录详情",
+        "loading": "正在加载课程记录详情...",
+        "close": "关闭"
+      },
+      "reviewModal": {
+        "title": "课程记录审核",
+        "loading": "正在加载课程记录...",
+        "rejectReasonLabel": "驳回原因 *",
+        "rejectReasonPlaceholder": "请选择驳回原因",
+        "missingRejectReason": "请选择驳回原因",
+        "rejectRemarkLabel": "驳回说明",
+        "rejectRemarkPlaceholder": "补充本次驳回说明",
+        "reviewRemarkLabel": "审核备注",
+        "reviewRemarkPlaceholder": "输入审核备注（可选）",
+        "approveBtn": "通过",
+        "rejectBtn": "驳回",
+        "cancelBtn": "取消",
+        "submitApprove": "确认通过",
+        "submitReject": "确认驳回",
+        "submitting": "提交中...",
+        "rejectReasons": {
+          "r1": "课时时长有误",
+          "r2": "课程内容描述不清",
+          "r3": "课程类型选择错误",
+          "r4": "缺少必要附件",
+          "r5": "重复提交",
+          "r6": "其他原因"
+        }
+      }
+    },
+    "feedback": {
+      "pageTitle": "课程反馈",
+      "export": "导出",
+      "statCards": {
+        "total": "全部反馈"
+      },
+      "alert": {
+        "prep": "Prep Feedback 包含：入职面试、模拟面试、笔试辅导 等课程类型的反馈",
+        "networking": "Networking 包含：人际关系期中考试 等课程类型的反馈",
+        "mockMidterm": "Mock Midterm 包含：模拟期中考试 等课程类型的反馈"
+      },
+      "filter": {
+        "searchPlaceholder": "搜索学员...",
+        "mentorPlaceholder": "全部导师",
+        "performancePlaceholder": "学员表现",
+        "sourcePlaceholder": "提交来源",
+        "sources": {
+          "mentor": "导师端",
+          "headteacher": "班主任端",
+          "assistant": "助教端"
+        },
+        "dateStart": "开始日期",
+        "dateEnd": "结束日期",
+        "search": "搜索",
+        "perf": {
+          "excellent": "优秀",
+          "good": "良好",
+          "average": "一般",
+          "needsImprovement": "需改进"
+        }
+      },
+      "prepColumns": {
+        "mentor": "导师",
+        "student": "学员",
+        "courseType": "课程类型",
+        "companyPosition": "公司/岗位",
+        "performance": "学员表现",
+        "date": "日期",
+        "source": "来源",
+        "updatedAt": "更新时间",
+        "action": "操作"
+      },
+      "networkingColumns": {
+        "mentor": "导师",
+        "student": "学员",
+        "headTeacher": "班主任",
+        "emailQuality": "邮件质量",
+        "emailEtiquette": "邮件礼仪",
+        "callQuality": "通话质量",
+        "recommended": "是否推荐",
+        "date": "日期",
+        "source": "来源",
+        "action": "操作"
+      },
+      "mockColumns": {
+        "mentor": "导师",
+        "student": "学员",
+        "performance": "学员表现",
+        "score": "评分",
+        "assessmentTopic": "考核题目",
+        "date": "日期",
+        "source": "来源",
+        "updatedAt": "更新时间",
+        "action": "操作"
+      },
+      "empty": "暂无课程反馈",
+      "action": {
+        "view": "查看"
+      },
+      "messages": {
+        "loadError": "课程反馈加载失败",
+        "exportInfo": "导出功能将在后续版本中接入",
+        "viewInfo": "查看详情功能将在后续版本中接入"
+      }
+    },
+    "reports": {
+      "pageTitle": "课时审核",
+      "export": "导出",
+      "alert": {
+        "overtime": "超时提醒：以下导师本周上课时间超过6小时",
+        "viewDetail": "查看详情"
+      },
+      "filter": {
+        "searchPlaceholder": "搜索导师/学员...",
+        "courseTypePlaceholder": "课程类型",
+        "courseSourcePlaceholder": "课程来源",
+        "dateStart": "开始日期",
+        "dateEnd": "结束日期",
+        "search": "搜索"
+      },
+      "tabs": {
+        "all": "全部",
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回"
+      },
+      "courseTypes": {
+        "onboarding_interview": "入职面试",
+        "mock_interview": "模拟面试",
+        "written_test": "笔试辅导",
+        "midterm_exam": "模拟期中考试",
+        "communication_midterm": "人际关系期中",
+        "resume_revision": "简历修改",
+        "technical_coaching": "技术辅导"
+      },
+      "courseSource": {
+        "student_request": "学生申请",
+        "mentor_report": "导师申报"
+      },
+      "status": {
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回"
+      },
+      "columns": {
+        "mentor": "导师",
+        "student": "学员",
+        "courseType": "课程类型",
+        "source": "来源",
+        "date": "日期",
+        "duration": "时长",
+        "weeklyTotal": "本周累计",
+        "status": "状态",
+        "action": "操作"
+      },
+      "batchOp": {
+        "approve": "批量通过",
+        "reject": "批量驳回",
+        "selected": "已选择 {count} 条"
+      },
+      "empty": "当前筛选条件下暂无课时审核记录",
+      "overtime": {
+        "thisWeek": "本周{hours}h",
+        "over30days": "超过30天"
+      },
+      "action": {
+        "approve": "通过",
+        "reject": "驳回",
+        "detail": "详情"
+      },
+      "messages": {
+        "approveSuccess": "课时审核已通过",
+        "rejectSuccess": "课时审核已驳回",
+        "batchApproveSuccess": "批量通过完成",
+        "batchRejectSuccess": "批量驳回完成",
+        "exportInfo": "导出功能将在后续版本中接入"
+      },
+      "modal": {
+        "title": "课程反馈详情",
+        "mentor": "导师",
+        "student": "学员",
+        "status": "状态",
+        "courseType": "课程类型",
+        "date": "日期",
+        "duration": "学习时长",
+        "feedbackLabel": "课程反馈内容",
+        "noFeedback": "暂无课程反馈内容",
+        "reviewNote": "审核备注",
+        "reviewNotePlaceholder": "输入审核备注（可选）",
+        "close": "关闭",
+        "reject": "驳回",
+        "approve": "通过"
+      }
     }
   },
   "finance": {

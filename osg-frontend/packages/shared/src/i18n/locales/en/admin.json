@@ -1745,6 +1745,438 @@
         "exportTodo": "Export will be available in a future version",
         "detailTodo": "Detail view will be available in a future version"
       }
+    },
+    "allClasses": {
+      "pageTitle": "All Classes",
+      "export": "Export",
+      "alert": {
+        "message": "Class Review & Payment Flow",
+        "step1": "① Mentor/Head Teacher/Assistant Submit",
+        "step2": "② Pending Review",
+        "step3": "③ Unpaid",
+        "step4": "④ Paid"
+      },
+      "tabs": {
+        "all": "All",
+        "pending": "Pending",
+        "unpaid": "Unpaid",
+        "paid": "Paid",
+        "rejected": "Rejected"
+      },
+      "filter": {
+        "searchPlaceholder": "Search student/mentor...",
+        "courseTypePlaceholder": "All Types",
+        "courseTypes": {
+          "onboarding_interview": "Onboarding Interview",
+          "mock_interview": "Mock Interview",
+          "written_test": "Written Test",
+          "midterm_exam": "Mock Midterm",
+          "communication_midterm": "Networking Midterm",
+          "qbank_request": "Q-Bank Request"
+        },
+        "sourcePlaceholder": "All Sources",
+        "sources": {
+          "mentor": "Mentor",
+          "headteacher": "Head Teacher",
+          "assistant": "Assistant"
+        },
+        "dateStart": "Start Date",
+        "dateEnd": "End Date",
+        "search": "Search",
+        "reset": "Reset"
+      },
+      "columns": {
+        "classId": "Class ID",
+        "student": "Student",
+        "mentor": "Mentor",
+        "courseType": "Type",
+        "duration": "Duration",
+        "date": "Date",
+        "source": "Source",
+        "status": "Status",
+        "rate": "Rating",
+        "action": "Action"
+      },
+      "empty": "No class records found",
+      "pagination": {
+        "total": "Total {total} records"
+      },
+      "action": {
+        "review": "Review",
+        "view": "View"
+      },
+      "messages": {
+        "loadError": "Failed to load classes",
+        "detailError": "Failed to load class detail",
+        "approveSuccess": "Approved",
+        "rejectSuccess": "Rejected",
+        "exportInfo": "Export will be available in a future version"
+      },
+      "modal": {
+        "classId": "Class ID",
+        "source": "Source",
+        "status": "Status",
+        "mentor": "Mentor",
+        "student": "Student",
+        "courseType": "Course Type",
+        "date": "Class Date",
+        "duration": "Hours",
+        "durationValue": "{hours} hrs",
+        "fee": "Course Fee",
+        "topics": "Topics",
+        "mockFeedback": "Mock Interview Feedback",
+        "performance": "Performance",
+        "rate": "Rating",
+        "purpose": "Session Purpose",
+        "knowledge": "Topics Covered",
+        "improvement": "Areas to Improve",
+        "suggestion": "Follow-up Suggestions",
+        "entryFeedback": "Onboarding Feedback",
+        "midtermFeedback": "Mock Midterm Feedback",
+        "examScore": "Exam Score",
+        "assessmentTopic": "Assessment Topic",
+        "detailFeedback": "Detailed Feedback",
+        "networkingFeedback": "Networking Assessment Feedback",
+        "emailQuality": "Email Quality",
+        "emailEtiquette": "Email Etiquette",
+        "callQuality": "Call Quality",
+        "selfIntro": "Self Introduction",
+        "thankYou": "Thank-you Email",
+        "recommend": "Recommend",
+        "recommendYes": "Yes",
+        "recommendNo": "No",
+        "additionalNotes": "Additional Notes",
+        "paid": "Paid",
+        "paidDate": "Paid on: {date}",
+        "writtenFeedback": "Written Test Feedback",
+        "rejectedReason": "Rejection Reason",
+        "noRejectedReason": "No rejection reason provided",
+        "rejectedMeta": "Rejected at: {time} | Reviewer: {name}",
+        "reviewNote": "Review Note",
+        "reviewNotePlaceholder": "Enter review note (optional)",
+        "close": "Close",
+        "reject": "Reject",
+        "approve": "Approve",
+        "headerTitle": {
+          "mock": "Class Detail - Mock Interview",
+          "entry": "Class Review - Onboarding Interview",
+          "midterm": "Class Detail - Mock Midterm",
+          "networking": "Class Detail - Networking Midterm",
+          "written": "Class Review - Written Test",
+          "rejected": "Class Detail - Rejected",
+          "default": "Class Detail",
+          "reviewEntry": "Class Review - Onboarding Interview",
+          "reviewWritten": "Class Review - Written Test"
+        }
+      }
+    },
+    "classRecords": {
+      "pageTitle": "Class Records",
+      "export": "Export",
+      "exporting": "Exporting...",
+      "alert": {
+        "message": "Class Record Flow",
+        "step1": "① Student applies / Mock Interview",
+        "step2": "② Head Teacher assigns mentor",
+        "step3": "③ Mentor teaches & submits record",
+        "step4": "④ Admin review",
+        "step5": "⑤ Settlement center transfers"
+      },
+      "tabs": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "statCards": {
+        "total": "Total",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "pendingSettlement": "Pending Settlement"
+      },
+      "filter": {
+        "searchPlaceholder": "Search student/reporter...",
+        "coachingTypePlaceholder": "Coaching Type",
+        "courseContentPlaceholder": "Course Content",
+        "reporterRolePlaceholder": "Reporter Role",
+        "dateLabel": "Class Date",
+        "dateStart": "Start Date",
+        "dateEnd": "End Date",
+        "search": "Search",
+        "coachingTypes": {
+          "position": "Position Coaching",
+          "mock": "Mock Application"
+        },
+        "courseContents": {
+          "new_resume": "New Resume",
+          "resume_update": "Resume Update",
+          "case_prep": "Case Prep",
+          "mock_interview": "Mock Interview",
+          "communication_midterm": "Networking Midterm",
+          "midterm_exam": "Mock Midterm",
+          "other": "Other"
+        },
+        "sources": {
+          "mentor": "Mentor",
+          "headteacher": "Head Teacher",
+          "assistant": "Assistant"
+        }
+      },
+      "columns": {
+        "recordId": "Record ID",
+        "student": "Student",
+        "reporter": "Reporter",
+        "coachingType": "Coaching Type",
+        "courseContent": "Content",
+        "classDate": "Class Date",
+        "duration": "Duration",
+        "fee": "Fee",
+        "studentRating": "Rating",
+        "status": "Status",
+        "action": "Action"
+      },
+      "empty": "No class records found",
+      "action": {
+        "review": "Review",
+        "detail": "Detail"
+      },
+      "messages": {
+        "loadError": "Failed to load class records",
+        "detailError": "Failed to load record detail",
+        "approveSuccess": "Class record approved",
+        "approveFail": "Failed to approve class record",
+        "rejectSuccess": "Class record rejected",
+        "rejectFail": "Failed to reject class record",
+        "exportSuccess": "Export successful",
+        "exportFail": "Export failed"
+      },
+      "status": {
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "pending": "Pending"
+      },
+      "courseTypes": {
+        "mock": "Mock Application",
+        "position": "Position Coaching"
+      },
+      "sources": {
+        "mentor": "Mentor",
+        "headteacher": "Head Teacher",
+        "assistant": "Assistant"
+      },
+      "fields": {
+        "student": "Student",
+        "reporter": "Reporter",
+        "coachingContent": "Coaching Content",
+        "courseContent": "Course Content",
+        "classDate": "Class Date",
+        "duration": "Duration",
+        "durationValue": "{hours}h",
+        "fee": "Course Fee",
+        "submitTime": "Submitted At",
+        "feedback": "Feedback",
+        "attachments": "Attachments",
+        "unnamedFile": "Unnamed file",
+        "noAttachments": "No attachments",
+        "reviewResult": "Review Result",
+        "noReviewRemark": "No review note",
+        "studentRating": "Student Rating"
+      },
+      "detailModal": {
+        "title": "Class Record Detail",
+        "loading": "Loading class record detail...",
+        "close": "Close"
+      },
+      "reviewModal": {
+        "title": "Class Record Review",
+        "loading": "Loading class record...",
+        "rejectReasonLabel": "Rejection Reason *",
+        "rejectReasonPlaceholder": "Select rejection reason",
+        "missingRejectReason": "Please select a rejection reason",
+        "rejectRemarkLabel": "Rejection Notes",
+        "rejectRemarkPlaceholder": "Add notes for this rejection",
+        "reviewRemarkLabel": "Review Note",
+        "reviewRemarkPlaceholder": "Enter review note (optional)",
+        "approveBtn": "Approve",
+        "rejectBtn": "Reject",
+        "cancelBtn": "Cancel",
+        "submitApprove": "Confirm Approve",
+        "submitReject": "Confirm Reject",
+        "submitting": "Submitting...",
+        "rejectReasons": {
+          "r1": "Incorrect hours",
+          "r2": "Content description unclear",
+          "r3": "Wrong course type",
+          "r4": "Missing required attachment",
+          "r5": "Duplicate submission",
+          "r6": "Other reason"
+        }
+      }
+    },
+    "feedback": {
+      "pageTitle": "Course Feedback",
+      "export": "Export",
+      "statCards": {
+        "total": "All Feedback"
+      },
+      "alert": {
+        "prep": "Prep Feedback includes: Onboarding Interview, Mock Interview, Written Test, etc.",
+        "networking": "Networking includes: Networking Midterm, etc.",
+        "mockMidterm": "Mock Midterm includes: Mock Midterm Exam, etc."
+      },
+      "filter": {
+        "searchPlaceholder": "Search student...",
+        "mentorPlaceholder": "All Mentors",
+        "performancePlaceholder": "Performance",
+        "sourcePlaceholder": "Source",
+        "sources": {
+          "mentor": "Mentor",
+          "headteacher": "Head Teacher",
+          "assistant": "Assistant"
+        },
+        "dateStart": "Start Date",
+        "dateEnd": "End Date",
+        "search": "Search",
+        "perf": {
+          "excellent": "Excellent",
+          "good": "Good",
+          "average": "Average",
+          "needsImprovement": "Needs Improvement"
+        }
+      },
+      "prepColumns": {
+        "mentor": "Mentor",
+        "student": "Student",
+        "courseType": "Course Type",
+        "companyPosition": "Company/Position",
+        "performance": "Performance",
+        "date": "Date",
+        "source": "Source",
+        "updatedAt": "Updated At",
+        "action": "Action"
+      },
+      "networkingColumns": {
+        "mentor": "Mentor",
+        "student": "Student",
+        "headTeacher": "Head Teacher",
+        "emailQuality": "Email Quality",
+        "emailEtiquette": "Email Etiquette",
+        "callQuality": "Call Quality",
+        "recommended": "Recommend",
+        "date": "Date",
+        "source": "Source",
+        "action": "Action"
+      },
+      "mockColumns": {
+        "mentor": "Mentor",
+        "student": "Student",
+        "performance": "Performance",
+        "score": "Score",
+        "assessmentTopic": "Assessment Topic",
+        "date": "Date",
+        "source": "Source",
+        "updatedAt": "Updated At",
+        "action": "Action"
+      },
+      "empty": "No feedback found",
+      "action": {
+        "view": "View"
+      },
+      "messages": {
+        "loadError": "Failed to load feedback",
+        "exportInfo": "Export will be available in a future version",
+        "viewInfo": "Detail view will be available in a future version"
+      }
+    },
+    "reports": {
+      "pageTitle": "Report Review",
+      "export": "Export",
+      "alert": {
+        "overtime": "Overtime Alert: The following mentors have exceeded 6 hours this week",
+        "viewDetail": "View Detail"
+      },
+      "filter": {
+        "searchPlaceholder": "Search mentor/student...",
+        "courseTypePlaceholder": "Course Type",
+        "courseSourcePlaceholder": "Source",
+        "dateStart": "Start Date",
+        "dateEnd": "End Date",
+        "search": "Search"
+      },
+      "tabs": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "courseTypes": {
+        "onboarding_interview": "Onboarding Interview",
+        "mock_interview": "Mock Interview",
+        "written_test": "Written Test",
+        "midterm_exam": "Mock Midterm",
+        "communication_midterm": "Networking Midterm",
+        "resume_revision": "Resume Revision",
+        "technical_coaching": "Technical Coaching"
+      },
+      "courseSource": {
+        "student_request": "Student Request",
+        "mentor_report": "Mentor Report"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "columns": {
+        "mentor": "Mentor",
+        "student": "Student",
+        "courseType": "Course Type",
+        "source": "Source",
+        "date": "Date",
+        "duration": "Duration",
+        "weeklyTotal": "Weekly Total",
+        "status": "Status",
+        "action": "Action"
+      },
+      "batchOp": {
+        "approve": "Batch Approve",
+        "reject": "Batch Reject",
+        "selected": "{count} selected"
+      },
+      "empty": "No review records found",
+      "overtime": {
+        "thisWeek": "This week {hours}h",
+        "over30days": ">30 days"
+      },
+      "action": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "detail": "Detail"
+      },
+      "messages": {
+        "approveSuccess": "Report approved",
+        "rejectSuccess": "Report rejected",
+        "batchApproveSuccess": "Batch approve done",
+        "batchRejectSuccess": "Batch reject done",
+        "exportInfo": "Export will be available in a future version"
+      },
+      "modal": {
+        "title": "Course Feedback Detail",
+        "mentor": "Mentor",
+        "student": "Student",
+        "status": "Status",
+        "courseType": "Course Type",
+        "date": "Date",
+        "duration": "Duration",
+        "feedbackLabel": "Feedback Content",
+        "noFeedback": "No feedback content",
+        "reviewNote": "Review Note",
+        "reviewNotePlaceholder": "Enter review note (optional)",
+        "close": "Close",
+        "reject": "Reject",
+        "approve": "Approve"
+      }
     }
   },
   "finance": {

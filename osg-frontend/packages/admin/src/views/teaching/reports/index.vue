@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="课时审核" title-en="Reports">
+    <PageHeader :title-zh="t('admin.teaching.reports.pageTitle')" title-en="Reports">
       <template #actions>
         <a-button @click="handleExportPlaceholder">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ t('admin.teaching.reports.export') }}
         </a-button>
       </template>
     </PageHeader>
@@ -12,12 +12,12 @@
     <!-- 超时提醒横幅 -->
     <a-alert v-if="summary.overtimeMentors.length" type="error" show-icon banner style="border-radius: 12px">
       <template #message>
-        <strong>超时提醒：以下导师本周上课时间超过6小时</strong>
+        <strong>{{ t('admin.teaching.reports.alert.overtime') }}</strong>
       </template>
       <template #description>
         <div style="display: flex; align-items: center; gap: 12px">
           <span>{{ overtimeMentorSummary }}</span>
-          <a-button size="small" danger @click="scrollToOvertime">查看详情</a-button>
+          <a-button size="small" danger @click="scrollToOvertime">{{ t('admin.teaching.reports.alert.viewDetail') }}</a-button>
         </div>
       </template>
     </a-alert>
@@ -26,36 +26,36 @@
       <!-- 筛选条件 -->
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="filters.keyword" placeholder="搜索导师/学员..." allow-clear style="width: 180px" @press-enter="handleSearch" />
+          <a-input v-model:value="filters.keyword" :placeholder="t('admin.teaching.reports.filter.searchPlaceholder')" allow-clear style="width: 180px" @press-enter="handleSearch" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.courseType" placeholder="课程类型" allow-clear style="width: 130px">
+          <a-select v-model:value="filters.courseType" :placeholder="t('admin.teaching.reports.filter.courseTypePlaceholder')" allow-clear style="width: 130px">
             <a-select-option v-for="option in courseTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.courseSource" placeholder="课程来源" allow-clear style="width: 130px">
+          <a-select v-model:value="filters.courseSource" :placeholder="t('admin.teaching.reports.filter.courseSourcePlaceholder')" allow-clear style="width: 130px">
             <a-select-option v-for="option in courseSourceOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-date-picker v-model:value="filters.dateStart" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+            <a-date-picker v-model:value="filters.dateStart" :placeholder="t('admin.teaching.reports.filter.dateStart')" value-format="YYYY-MM-DD" style="width: 130px" />
             <span>~</span>
-            <a-date-picker v-model:value="filters.dateEnd" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+            <a-date-picker v-model:value="filters.dateEnd" :placeholder="t('admin.teaching.reports.filter.dateEnd')" value-format="YYYY-MM-DD" style="width: 130px" />
           </a-space>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="handleSearch">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ t('admin.teaching.reports.filter.search') }}
           </a-button>
         </a-form-item>
       </a-form>
 
       <!-- Tab 切换 -->
       <a-tabs v-model:activeKey="activeTab" @change="(key: string) => switchTab(key)">
-        <a-tab-pane v-for="tab in reportTabs" :key="tab.key">
+        <a-tab-pane v-for="tab in tabs" :key="tab.key">
           <template #tab>
             {{ tab.label }}
             <a-badge v-if="tab.key === 'pending' && summary.pendingCount" :count="summary.pendingCount" :number-style="{ backgroundColor: '#faad14' }" style="margin-left: 4px" />
@@ -67,13 +67,13 @@
       <a-space v-if="activeTab === 'pending'" style="margin-bottom: 12px">
         <a-button type="primary" size="small" :disabled="!selectedRowKeys.length" @click="handleBatchApprove">
           <template #icon><CheckOutlined /></template>
-          批量通过
+          {{ t('admin.teaching.reports.batchOp.approve') }}
         </a-button>
         <a-button danger size="small" :disabled="!selectedRowKeys.length" @click="handleBatchReject">
           <template #icon><CloseOutlined /></template>
-          批量驳回
+          {{ t('admin.teaching.reports.batchOp.reject') }}
         </a-button>
-        <span style="color: #64748b; font-size: 13px">已选择 <strong>{{ selectedRowKeys.length }}</strong> 条</span>
+        <span style="color: #64748b; font-size: 13px">{{ t('admin.teaching.reports.batchOp.selected', { count: selectedRowKeys.length }) }}</span>
       </a-space>
 
       <!-- 课时审核表格 -->
@@ -84,7 +84,7 @@
         :row-selection="activeTab === 'pending' ? { selectedRowKeys, onChange: onSelectChange, getCheckboxProps: (record: ReportRow) => ({ disabled: record.status !== 'pending' }) } : undefined"
         :pagination="false"
         :loading="loading"
-        :locale="{ emptyText: '当前筛选条件下暂无课时审核记录' }"
+        :locale="{ emptyText: t('admin.teaching.reports.empty') }"
         :scroll="{ x: 1200 }"
         :row-class-name="(record: ReportRow) => rowClassName(record)"
       >
@@ -92,8 +92,8 @@
           <template v-if="column.dataIndex === 'mentorName'">
             <div>
               <strong>{{ record.mentorName }}</strong>
-              <div v-if="record.weeklyHours && record.weeklyHours > 6" style="color: #dc2626; font-size: 11px">⚠ 本周{{ record.weeklyHours }}h</div>
-              <div v-else-if="record.pendingDays && record.pendingDays > 30" style="color: #be185d; font-size: 11px">⏰ 超过30天</div>
+              <div v-if="record.weeklyHours && record.weeklyHours > 6" style="color: #dc2626; font-size: 11px">⚠ {{ t('admin.teaching.reports.overtime.thisWeek', { hours: record.weeklyHours }) }}</div>
+              <div v-else-if="record.pendingDays && record.pendingDays > 30" style="color: #be185d; font-size: 11px">⏰ {{ t('admin.teaching.reports.overtime.over30days') }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'studentName'">
@@ -123,10 +123,10 @@
           <template v-else-if="column.dataIndex === 'action'">
             <a-space :size="4">
               <template v-if="record.status === 'pending'">
-                <a-button type="link" size="small" style="color: #22c55e" @click="handleQuickApprove(record)">通过</a-button>
-                <a-button type="link" size="small" danger @click="openReviewDetail(record)">驳回</a-button>
+                <a-button type="link" size="small" style="color: #22c55e" @click="handleQuickApprove(record)">{{ t('admin.teaching.reports.action.approve') }}</a-button>
+                <a-button type="link" size="small" danger @click="openReviewDetail(record)">{{ t('admin.teaching.reports.action.reject') }}</a-button>
               </template>
-              <a-button type="link" size="small" @click="openReviewDetail(record)">详情</a-button>
+              <a-button type="link" size="small" @click="openReviewDetail(record)">{{ t('admin.teaching.reports.action.detail') }}</a-button>
             </a-space>
           </template>
         </template>
@@ -146,6 +146,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { CheckOutlined, CloseOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -163,22 +164,47 @@ import {
 import {
   courseSourceMeta,
   courseTypeMeta,
-  reportTabs,
   statusMeta
 } from './columns'
 
-const reportColumns = [
+const { t } = useI18n()
+
+const BATCH_APPROVE_REMARK = '批量通过' // i18n-skip-line: backend remark
+const BATCH_REJECT_REMARK = '批量驳回' // i18n-skip-line: backend remark
+
+const tabs = computed(() => [
+  { key: 'all', label: t('admin.teaching.reports.tabs.all') },
+  { key: 'pending', label: t('admin.teaching.reports.tabs.pending') },
+  { key: 'approved', label: t('admin.teaching.reports.tabs.approved') },
+  { key: 'rejected', label: t('admin.teaching.reports.tabs.rejected') },
+])
+
+const courseTypeOptions = computed(() =>
+  Object.entries(courseTypeMeta).map(([value]) => ({
+    value,
+    label: t(`admin.teaching.reports.courseTypes.${value}` as never)
+  }))
+)
+
+const courseSourceOptions = computed(() =>
+  Object.entries(courseSourceMeta).map(([value]) => ({
+    value,
+    label: t(`admin.teaching.reports.courseSource.${value}` as never)
+  }))
+)
+
+const reportColumns = computed(() => [
   { title: 'ID', dataIndex: 'recordId', key: 'recordId', width: 70, fixed: 'left' as const },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 130 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType', width: 120 },
-  { title: '来源', dataIndex: 'courseSource', key: 'courseSource', width: 100 },
-  { title: '日期', dataIndex: 'classDate', key: 'classDate', width: 110 },
-  { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '本周累计', dataIndex: 'weeklyHours', key: 'weeklyHours', width: 90 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
-]
+  { title: t('admin.teaching.reports.columns.mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 130 },
+  { title: t('admin.teaching.reports.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: t('admin.teaching.reports.columns.courseType'), dataIndex: 'courseType', key: 'courseType', width: 120 },
+  { title: t('admin.teaching.reports.columns.source'), dataIndex: 'courseSource', key: 'courseSource', width: 100 },
+  { title: t('admin.teaching.reports.columns.date'), dataIndex: 'classDate', key: 'classDate', width: 110 },
+  { title: t('admin.teaching.reports.columns.duration'), dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: t('admin.teaching.reports.columns.weeklyTotal'), dataIndex: 'weeklyHours', key: 'weeklyHours', width: 90 },
+  { title: t('admin.teaching.reports.columns.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('admin.teaching.reports.columns.action'), dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
+])
 
 type TabKey = 'all' | 'pending' | 'approved' | 'rejected'
 
@@ -208,16 +234,13 @@ const selectedRowKeys = ref<number[]>([])
 const reviewDetailVisible = ref(false)
 const currentDetail = ref<ReportRow | null>(null)
 
-const courseTypeOptions = Object.entries(courseTypeMeta).map(([value, meta]) => ({ value, label: meta.label }))
-const courseSourceOptions = Object.entries(courseSourceMeta).map(([value, meta]) => ({ value, label: meta.label }))
-
 const onSelectChange = (keys: number[]) => {
   selectedRowKeys.value = keys
 }
 
 const overtimeMentorSummary = computed(() => summary.value.overtimeMentors
   .map((item) => `${item.mentorName} (${item.weeklyHours}h)`)
-  .join(' \u00B7 '))
+  .join(' · '))
 
 const handleSearch = async () => {
   await loadReports()
@@ -264,7 +287,7 @@ const handleApprove = async (payload: { remark?: string }) => {
   submitting.value = true
   try {
     await approveReport(currentDetail.value.recordId, payload)
-    message.success('课时审核已通过')
+    message.success(t('admin.teaching.reports.messages.approveSuccess'))
     reviewDetailVisible.value = false
     await loadReports()
   } finally {
@@ -277,7 +300,7 @@ const handleReject = async (payload: { remark?: string }) => {
   submitting.value = true
   try {
     await rejectReport(currentDetail.value.recordId, payload)
-    message.success('课时审核已驳回')
+    message.success(t('admin.teaching.reports.messages.rejectSuccess'))
     reviewDetailVisible.value = false
     await loadReports()
   } finally {
@@ -289,7 +312,7 @@ const handleQuickApprove = async (row: ReportRow) => {
   submitting.value = true
   try {
     await approveReport(row.recordId, {})
-    message.success('课时审核已通过')
+    message.success(t('admin.teaching.reports.messages.approveSuccess'))
     await loadReports()
   } finally {
     submitting.value = false
@@ -300,8 +323,8 @@ const handleBatchApprove = async () => {
   if (!selectedRowKeys.value.length) return
   submitting.value = true
   try {
-    await batchApproveReport({ recordIds: selectedRowKeys.value, remark: '批量通过' })
-    message.success('批量通过完成')
+    await batchApproveReport({ recordIds: selectedRowKeys.value, remark: BATCH_APPROVE_REMARK })
+    message.success(t('admin.teaching.reports.messages.batchApproveSuccess'))
     selectedRowKeys.value = []
     await loadReports()
   } finally {
@@ -313,8 +336,8 @@ const handleBatchReject = async () => {
   if (!selectedRowKeys.value.length) return
   submitting.value = true
   try {
-    await batchRejectReport({ recordIds: selectedRowKeys.value, remark: '批量驳回' })
-    message.success('批量驳回完成')
+    await batchRejectReport({ recordIds: selectedRowKeys.value, remark: BATCH_REJECT_REMARK })
+    message.success(t('admin.teaching.reports.messages.batchRejectSuccess'))
     selectedRowKeys.value = []
     await loadReports()
   } finally {
@@ -329,9 +352,12 @@ const rowClassName = (row: ReportRow) => {
   return ''
 }
 
-const formatCourseType = (value: string) => courseTypeMeta[value]?.label || value
-const formatCourseSource = (value: string) => courseSourceMeta[value]?.label || value
-const formatStatus = (value: string) => statusMeta[value]?.label || value
+const formatCourseType = (value: string) =>
+  courseTypeMeta[value] ? t(`admin.teaching.reports.courseTypes.${value}` as never) : value
+const formatCourseSource = (value: string) =>
+  courseSourceMeta[value] ? t(`admin.teaching.reports.courseSource.${value}` as never) : value
+const formatStatus = (value: string) =>
+  statusMeta[value] ? t(`admin.teaching.reports.status.${value}` as never) : value
 const courseTypeTone = (value: string) => courseTypeMeta[value]?.tone || 'info'
 const courseSourceTone = (value: string) => courseSourceMeta[value]?.tone || 'info'
 const statusTone = (value: string) => statusMeta[value]?.tone || 'info'
@@ -353,7 +379,7 @@ const toneToColor = (tone: string): string => {
 }
 
 const handleExportPlaceholder = () => {
-  message.info('导出功能将在后续版本中接入')
+  message.info(t('admin.teaching.reports.messages.exportInfo'))
 }
 
 const scrollToOvertime = () => {

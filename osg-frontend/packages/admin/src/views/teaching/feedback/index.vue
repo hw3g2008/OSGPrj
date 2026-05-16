@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="课程反馈" title-en="Feedback">
+    <PageHeader :title-zh="t('admin.teaching.feedback.pageTitle')" title-en="Feedback">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ t('admin.teaching.feedback.export') }}
         </a-button>
       </template>
     </PageHeader>
@@ -13,7 +13,7 @@
     <a-row :gutter="16">
       <a-col :span="6">
         <a-card :bordered="false" :body-style="{ textAlign: 'center', background: '#eff6ff', borderRadius: '12px' }">
-          <a-statistic title="全部反馈" :value="stats.totalCount" :value-style="{ color: '#3b82f6', fontWeight: 700 }" />
+          <a-statistic :title="t('admin.teaching.feedback.statCards.total')" :value="stats.totalCount" :value-style="{ color: '#3b82f6', fontWeight: 700 }" />
         </a-card>
       </a-col>
       <a-col :span="6">
@@ -44,52 +44,47 @@
       </a-tabs>
 
       <!-- Tab hint -->
-      <a-alert v-if="activeTab === 'prep'" type="success" show-icon message="Prep Feedback 包含：入职面试、模拟面试、笔试辅导 等课程类型的反馈" style="margin-bottom: 16px; border-radius: 8px" />
-      <a-alert v-else-if="activeTab === 'networking'" type="info" show-icon message="Networking 包含：人际关系期中考试 等课程类型的反馈" style="margin-bottom: 16px; border-radius: 8px; background: #f3e8ff; border-color: #d8b4fe" />
-      <a-alert v-else-if="activeTab === 'mock_midterm'" type="warning" show-icon message="Mock Midterm 包含：模拟期中考试 等课程类型的反馈" style="margin-bottom: 16px; border-radius: 8px" />
+      <a-alert v-if="activeTab === 'prep'" type="success" show-icon :message="t('admin.teaching.feedback.alert.prep')" style="margin-bottom: 16px; border-radius: 8px" />
+      <a-alert v-else-if="activeTab === 'networking'" type="info" show-icon :message="t('admin.teaching.feedback.alert.networking')" style="margin-bottom: 16px; border-radius: 8px; background: #f3e8ff; border-color: #d8b4fe" />
+      <a-alert v-else-if="activeTab === 'mock_midterm'" type="warning" show-icon :message="t('admin.teaching.feedback.alert.mockMidterm')" style="margin-bottom: 16px; border-radius: 8px" />
 
       <!-- 通用筛选 -->
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索学员..." allow-clear style="width: 150px" />
+          <a-input v-model:value="keyword" :placeholder="t('admin.teaching.feedback.filter.searchPlaceholder')" allow-clear style="width: 150px" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterMentor" placeholder="全部导师" allow-clear style="width: 120px">
+          <a-select v-model:value="filterMentor" :placeholder="t('admin.teaching.feedback.filter.mentorPlaceholder')" allow-clear style="width: 120px">
             <a-select-option v-for="m in mentorOptions" :key="m" :value="m">{{ m }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item v-if="activeTab !== 'networking'">
-          <a-select v-model:value="filterPerformance" placeholder="学员表现" allow-clear style="width: 120px">
-            <a-select-option value="优秀">优秀</a-select-option>
-            <a-select-option value="良好">良好</a-select-option>
-            <a-select-option value="一般">一般</a-select-option>
-            <a-select-option value="需改进">需改进</a-select-option>
+          <a-select v-model:value="filterPerformance" :placeholder="t('admin.teaching.feedback.filter.performancePlaceholder')" allow-clear style="width: 120px">
+            <a-select-option v-for="p in perfOptions" :key="p.value" :value="p.value">{{ p.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterSource" placeholder="提交来源" allow-clear style="width: 120px">
-            <a-select-option value="mentor">导师端</a-select-option>
-            <a-select-option value="headteacher">班主任端</a-select-option>
-            <a-select-option value="assistant">助教端</a-select-option>
+          <a-select v-model:value="filterSource" :placeholder="t('admin.teaching.feedback.filter.sourcePlaceholder')" allow-clear style="width: 120px">
+            <a-select-option v-for="s in sourceOptions" :key="s.value" :value="s.value">{{ s.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-date-picker v-model:value="filterDateStart" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+            <a-date-picker v-model:value="filterDateStart" :placeholder="t('admin.teaching.feedback.filter.dateStart')" value-format="YYYY-MM-DD" style="width: 130px" />
             <span>~</span>
-            <a-date-picker v-model:value="filterDateEnd" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+            <a-date-picker v-model:value="filterDateEnd" :placeholder="t('admin.teaching.feedback.filter.dateEnd')" value-format="YYYY-MM-DD" style="width: 130px" />
           </a-space>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadData">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ t('admin.teaching.feedback.filter.search') }}
           </a-button>
         </a-form-item>
       </a-form>
 
       <!-- Prep Feedback 表格 -->
-      <a-table v-if="activeTab === 'prep'" :columns="prepColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: '暂无课程反馈' }" :scroll="{ x: 1100 }">
+      <a-table v-if="activeTab === 'prep'" :columns="prepColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: t('admin.teaching.feedback.empty') }" :scroll="{ x: 1100 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'mentorName'"><strong>{{ record.mentorName }}</strong></template>
           <template v-else-if="column.dataIndex === 'studentName'"><strong>{{ record.studentName }}</strong></template>
@@ -103,13 +98,13 @@
             <a-tag :color="sourceColor(record.source)">{{ record.sourceLabel }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
+            <a-button type="link" size="small" @click="handleView(record)">{{ t('admin.teaching.feedback.action.view') }}</a-button>
           </template>
         </template>
       </a-table>
 
       <!-- Networking 表格 -->
-      <a-table v-else-if="activeTab === 'networking'" :columns="networkingColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: '暂无课程反馈' }" :scroll="{ x: 1100 }">
+      <a-table v-else-if="activeTab === 'networking'" :columns="networkingColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: t('admin.teaching.feedback.empty') }" :scroll="{ x: 1100 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'mentorName'"><strong>{{ record.mentorName }}</strong></template>
           <template v-else-if="column.dataIndex === 'studentName'"><strong>{{ record.studentName }}</strong></template>
@@ -117,19 +112,19 @@
           <template v-else-if="column.dataIndex === 'etiquetteScore'">{{ formatScore(record.etiquetteScore, 5) }}</template>
           <template v-else-if="column.dataIndex === 'callQuality'">{{ formatScore(record.callQuality, 10) }}</template>
           <template v-else-if="column.dataIndex === 'recommendedLabel'">
-            <a-tag :color="record.recommendedLabel === '是' ? 'green' : 'orange'">{{ record.recommendedLabel || '--' }}</a-tag>
+            <a-tag :color="record.recommendedLabel === RECOMMENDED_YES ? 'green' : 'orange'">{{ record.recommendedLabel || '--' }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'source'">
             <a-tag :color="sourceColor(record.source)">{{ record.sourceLabel }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
+            <a-button type="link" size="small" @click="handleView(record)">{{ t('admin.teaching.feedback.action.view') }}</a-button>
           </template>
         </template>
       </a-table>
 
       <!-- Mock Midterm 表格 -->
-      <a-table v-else :columns="mockColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: '暂无课程反馈' }" :scroll="{ x: 1100 }">
+      <a-table v-else :columns="mockColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: t('admin.teaching.feedback.empty') }" :scroll="{ x: 1100 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'mentorName'"><strong>{{ record.mentorName }}</strong></template>
           <template v-else-if="column.dataIndex === 'studentName'"><strong>{{ record.studentName }}</strong></template>
@@ -140,7 +135,7 @@
             <a-tag :color="sourceColor(record.source)">{{ record.sourceLabel }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
+            <a-button type="link" size="small" @click="handleView(record)">{{ t('admin.teaching.feedback.action.view') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -150,50 +145,71 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { getFeedbackList, type FeedbackRow, type FeedbackStats, type FeedbackTab } from '@osg/shared/api/admin/feedback'
 
-const prepColumns = [
-  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70, fixed: 'left' as const },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType', width: 110 },
-  { title: '公司/岗位', dataIndex: 'companyPosition', key: 'companyPosition', width: 140 },
-  { title: '学员表现', dataIndex: 'performanceLabel', key: 'performanceLabel', width: 100 },
-  { title: '日期', dataIndex: 'feedbackDate', key: 'feedbackDate', width: 100 },
-  { title: '来源', dataIndex: 'source', key: 'source', width: 90 },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 120 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
-]
+const { t } = useI18n()
 
-const networkingColumns = [
-  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70, fixed: 'left' as const },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
-  { title: '班主任', dataIndex: 'headTeacherName', key: 'headTeacherName', width: 100 },
-  { title: '邮件质量', dataIndex: 'emailQuality', key: 'emailQuality', width: 90 },
-  { title: '邮件礼仪', dataIndex: 'etiquetteScore', key: 'etiquetteScore', width: 90 },
-  { title: '通话质量', dataIndex: 'callQuality', key: 'callQuality', width: 90 },
-  { title: '是否推荐', dataIndex: 'recommendedLabel', key: 'recommendedLabel', width: 90 },
-  { title: '日期', dataIndex: 'feedbackDate', key: 'feedbackDate', width: 100 },
-  { title: '来源', dataIndex: 'source', key: 'source', width: 90 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
-]
+const PERF_VALUES = ['优秀', '良好', '一般', '需改进'] as const // i18n-skip-line: backend values
+const PERF_GOOD_VALS: string[] = ['优秀', '良好'] // i18n-skip-line: backend values
+const PERF_AVG_VAL = '一般' // i18n-skip-line: backend value
+const RECOMMENDED_YES = '是' // i18n-skip-line: backend value
 
-const mockColumns = [
+const perfOptions = computed(() => [
+  { value: PERF_VALUES[0], label: t('admin.teaching.feedback.filter.perf.excellent') },
+  { value: PERF_VALUES[1], label: t('admin.teaching.feedback.filter.perf.good') },
+  { value: PERF_VALUES[2], label: t('admin.teaching.feedback.filter.perf.average') },
+  { value: PERF_VALUES[3], label: t('admin.teaching.feedback.filter.perf.needsImprovement') },
+])
+
+const sourceOptions = computed(() => [
+  { value: 'mentor', label: t('admin.teaching.feedback.filter.sources.mentor') },
+  { value: 'headteacher', label: t('admin.teaching.feedback.filter.sources.headteacher') },
+  { value: 'assistant', label: t('admin.teaching.feedback.filter.sources.assistant') },
+])
+
+const prepColumns = computed(() => [
   { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70, fixed: 'left' as const },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 100 },
-  { title: '学员表现', dataIndex: 'performanceLabel', key: 'performanceLabel', width: 100 },
-  { title: '评分', dataIndex: 'score', key: 'score', width: 80 },
-  { title: '考核题目', dataIndex: 'assessmentTopic', key: 'assessmentTopic', width: 150 },
-  { title: '日期', dataIndex: 'feedbackDate', key: 'feedbackDate', width: 100 },
-  { title: '来源', dataIndex: 'source', key: 'source', width: 90 },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 120 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
-]
+  { title: t('admin.teaching.feedback.prepColumns.mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: t('admin.teaching.feedback.prepColumns.student'), dataIndex: 'studentName', key: 'studentName', width: 100 },
+  { title: t('admin.teaching.feedback.prepColumns.courseType'), dataIndex: 'courseType', key: 'courseType', width: 110 },
+  { title: t('admin.teaching.feedback.prepColumns.companyPosition'), dataIndex: 'companyPosition', key: 'companyPosition', width: 140 },
+  { title: t('admin.teaching.feedback.prepColumns.performance'), dataIndex: 'performanceLabel', key: 'performanceLabel', width: 100 },
+  { title: t('admin.teaching.feedback.prepColumns.date'), dataIndex: 'feedbackDate', key: 'feedbackDate', width: 100 },
+  { title: t('admin.teaching.feedback.prepColumns.source'), dataIndex: 'source', key: 'source', width: 90 },
+  { title: t('admin.teaching.feedback.prepColumns.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 120 },
+  { title: t('admin.teaching.feedback.prepColumns.action'), dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
+])
+
+const networkingColumns = computed(() => [
+  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70, fixed: 'left' as const },
+  { title: t('admin.teaching.feedback.networkingColumns.mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: t('admin.teaching.feedback.networkingColumns.student'), dataIndex: 'studentName', key: 'studentName', width: 100 },
+  { title: t('admin.teaching.feedback.networkingColumns.headTeacher'), dataIndex: 'headTeacherName', key: 'headTeacherName', width: 100 },
+  { title: t('admin.teaching.feedback.networkingColumns.emailQuality'), dataIndex: 'emailQuality', key: 'emailQuality', width: 90 },
+  { title: t('admin.teaching.feedback.networkingColumns.emailEtiquette'), dataIndex: 'etiquetteScore', key: 'etiquetteScore', width: 90 },
+  { title: t('admin.teaching.feedback.networkingColumns.callQuality'), dataIndex: 'callQuality', key: 'callQuality', width: 90 },
+  { title: t('admin.teaching.feedback.networkingColumns.recommended'), dataIndex: 'recommendedLabel', key: 'recommendedLabel', width: 90 },
+  { title: t('admin.teaching.feedback.networkingColumns.date'), dataIndex: 'feedbackDate', key: 'feedbackDate', width: 100 },
+  { title: t('admin.teaching.feedback.networkingColumns.source'), dataIndex: 'source', key: 'source', width: 90 },
+  { title: t('admin.teaching.feedback.networkingColumns.action'), dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
+])
+
+const mockColumns = computed(() => [
+  { title: 'ID', dataIndex: 'feedbackId', key: 'feedbackId', width: 70, fixed: 'left' as const },
+  { title: t('admin.teaching.feedback.mockColumns.mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: t('admin.teaching.feedback.mockColumns.student'), dataIndex: 'studentName', key: 'studentName', width: 100 },
+  { title: t('admin.teaching.feedback.mockColumns.performance'), dataIndex: 'performanceLabel', key: 'performanceLabel', width: 100 },
+  { title: t('admin.teaching.feedback.mockColumns.score'), dataIndex: 'score', key: 'score', width: 80 },
+  { title: t('admin.teaching.feedback.mockColumns.assessmentTopic'), dataIndex: 'assessmentTopic', key: 'assessmentTopic', width: 150 },
+  { title: t('admin.teaching.feedback.mockColumns.date'), dataIndex: 'feedbackDate', key: 'feedbackDate', width: 100 },
+  { title: t('admin.teaching.feedback.mockColumns.source'), dataIndex: 'source', key: 'source', width: 90 },
+  { title: t('admin.teaching.feedback.mockColumns.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 120 },
+  { title: t('admin.teaching.feedback.mockColumns.action'), dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
+])
 
 const keyword = ref('')
 const filterMentor = ref('')
@@ -228,14 +244,13 @@ const loadData = async () => {
     rows.value = response.rows ?? []
     stats.value = response.stats ?? stats.value
 
-    // Extract unique mentor names for filter options
     const mentors = new Set<string>()
     rows.value.forEach((row) => {
       if (row.mentorName) mentors.add(row.mentorName)
     })
     mentorOptions.value = Array.from(mentors)
   } catch (_error) {
-    message.error('课程反馈加载失败')
+    message.error(t('admin.teaching.feedback.messages.loadError'))
   }
 }
 
@@ -251,11 +266,11 @@ const switchTab = (tab: FeedbackTab) => {
 }
 
 const handleExport = () => {
-  message.info('导出功能将在后续版本中接入')
+  message.info(t('admin.teaching.feedback.messages.exportInfo'))
 }
 
 const handleView = (_row: FeedbackRow) => {
-  message.info('查看详情功能将在后续版本中接入')
+  message.info(t('admin.teaching.feedback.messages.viewInfo'))
 }
 
 const formatScore = (value?: number | null, base = 5) => {
@@ -263,8 +278,9 @@ const formatScore = (value?: number | null, base = 5) => {
 }
 
 const performanceColor = (value?: string | null) => {
-  if (value === '优秀' || value === '良好') return 'green'
-  if (value === '一般') return 'orange'
+  if (!value) return 'red'
+  if (PERF_GOOD_VALS.includes(value)) return 'green'
+  if (value === PERF_AVG_VAL) return 'orange'
   return 'red'
 }
 

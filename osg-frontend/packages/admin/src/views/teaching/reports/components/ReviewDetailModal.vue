@@ -9,7 +9,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-file-document" aria-hidden="true" />
-        <span>课程反馈详情</span>
+        <span>{{ t('admin.teaching.reports.modal.title') }}</span>
         <span class="modal-title-sub">Report #{{ detail?.recordId || '--' }}</span>
       </span>
     </template>
@@ -17,15 +17,15 @@
     <!-- 基本信息 3x3 网格 -->
     <section class="info-grid">
       <div class="info-cell">
-        <span class="info-label">导师</span>
+        <span class="info-label">{{ t('admin.teaching.reports.modal.mentor') }}</span>
         <div class="info-value">{{ detail?.mentorName || '--' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">学员</span>
+        <span class="info-label">{{ t('admin.teaching.reports.modal.student') }}</span>
         <div class="info-value">{{ detail?.studentName || '--' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">状态</span>
+        <span class="info-label">{{ t('admin.teaching.reports.modal.status') }}</span>
         <div>
           <span :class="['status-tag', `status-tag--${statusTone(detail?.status)}`]">
             {{ formatStatus(detail?.status) }}
@@ -33,15 +33,15 @@
         </div>
       </div>
       <div class="info-cell">
-        <span class="info-label">课程类型</span>
+        <span class="info-label">{{ t('admin.teaching.reports.modal.courseType') }}</span>
         <div>{{ detail?.courseType || '--' }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">日期</span>
+        <span class="info-label">{{ t('admin.teaching.reports.modal.date') }}</span>
         <div>{{ formatDate(detail?.classDate) }}</div>
       </div>
       <div class="info-cell">
-        <span class="info-label">学习时长</span>
+        <span class="info-label">{{ t('admin.teaching.reports.modal.duration') }}</span>
         <div>{{ formatHours(detail?.durationHours) }}</div>
       </div>
       <div class="info-cell">
@@ -74,27 +74,27 @@
 
     <!-- 课程反馈内容 -->
     <section class="detail-section">
-      <label class="section-label">课程反馈内容</label>
-      <div class="section-content section-content--tall">{{ detail?.feedbackContent || '暂无课程反馈内容' }}</div>
+      <label class="section-label">{{ t('admin.teaching.reports.modal.feedbackLabel') }}</label>
+      <div class="section-content section-content--tall">{{ detail?.feedbackContent || t('admin.teaching.reports.modal.noFeedback') }}</div>
     </section>
 
     <!-- 审核备注 -->
     <section class="detail-section">
-      <label class="section-label">审核备注</label>
+      <label class="section-label">{{ t('admin.teaching.reports.modal.reviewNote') }}</label>
       <a-textarea
         v-model:value="remark"
         :rows="3"
-        placeholder="输入审核备注（可选）"
+        :placeholder="t('admin.teaching.reports.modal.reviewNotePlaceholder')"
       />
     </section>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ t('admin.teaching.reports.modal.close') }}</a-button>
       <a-button danger :disabled="submitting" @click="handleReject">
-        <span class="mdi mdi-close" aria-hidden="true" style="margin-right:4px" />驳回
+        <span class="mdi mdi-close" aria-hidden="true" style="margin-right:4px" />{{ t('admin.teaching.reports.modal.reject') }}
       </a-button>
       <a-button type="primary" :disabled="submitting" @click="handleApprove">
-        <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px" />通过
+        <span class="mdi mdi-check" aria-hidden="true" style="margin-right:4px" />{{ t('admin.teaching.reports.modal.approve') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -102,8 +102,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { ReportRow } from '@osg/shared/api/admin/report'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -160,12 +163,9 @@ const formatHours = (value?: number | null) => {
 
 const formatStatus = (value?: string | null) => {
   if (!value) return '--'
-  const map: Record<string, string> = {
-    pending: 'Processing',
-    approved: 'Approved',
-    rejected: 'Rejected'
-  }
-  return map[value] || value
+  if (value === 'approved') return t('admin.teaching.reports.status.approved')
+  if (value === 'rejected') return t('admin.teaching.reports.status.rejected')
+  return t('admin.teaching.reports.status.pending')
 }
 
 const statusTone = (value?: string | null) => {
