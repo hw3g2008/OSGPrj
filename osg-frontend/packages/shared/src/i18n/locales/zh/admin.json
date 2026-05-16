@@ -1508,7 +1508,9 @@
         "empty": "当前筛选条件下暂无岗位数据",
         "units": {
           "company": "{count} 家公司",
-          "position": "{count} 个岗位"
+          "position": "{count} 个岗位",
+          "trafficViews": "总浏览 {count} 次",
+          "students": "{count}人"
         },
         "status": {
           "open": "{count} 开放",
@@ -1558,6 +1560,40 @@
           "templateDownloadFailed": "模板下载失败",
           "exportFailed": "岗位导出失败",
           "failedDetails": "失败明细"
+        },
+        "columns": {
+          "positionName": "岗位名称",
+          "companyName": "公司",
+          "companyType": "公司类别",
+          "department": "部门",
+          "positionCategory": "岗位分类",
+          "city": "地区",
+          "recruitmentCycle": "招聘周期",
+          "targetMajors": "主攻方向",
+          "displayStartTime": "展示起始",
+          "deadline": "截止时间",
+          "deadlineDisplay": "截止时间",
+          "displayStatus": "状态",
+          "studentCount": "投递学员",
+          "createBy": "添加人",
+          "createTime": "添加日期",
+          "action": "操作"
+        }
+      },
+      "positionStudentsModal": {
+        "title": "{company} - {position} 申请学员",
+        "tip": "以下为该岗位的申请学员列表，求职状态由学员自行更新",
+        "loading": "正在加载申请学员...",
+        "empty": "当前岗位还没有可展示的申请学员数据。",
+        "columns": {
+          "studentId": "学生ID",
+          "name": "姓名",
+          "position": "岗位",
+          "status": "状态",
+          "usedHours": "已上课时"
+        },
+        "footer": {
+          "close": "关闭"
         }
       }
     },

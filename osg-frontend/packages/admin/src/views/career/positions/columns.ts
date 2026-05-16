@@ -5,14 +5,14 @@ export interface PositionColumn {
 }
 
 export const positionColumns: PositionColumn[] = [
-  { key: 'positionName', label: '岗位名称' },
-  { key: 'companyIndustry', label: '公司行业' },
-  { key: 'positionCategory', label: '岗位分类' },
-  { key: 'city', label: '地区' },
-  { key: 'recruitmentCycle', label: '招聘周期' },
-  { key: 'displayStartTime', label: '展示起始', sortable: true },
-  { key: 'deadlineDisplay', label: '截止时间' },
-  { key: 'displayStatus', label: '状态' },
-  { key: 'studentCount', label: '投递学员' },
-  { key: 'actions', label: '操作' }
+  { key: 'positionName', label: 'Position' },
+  { key: 'companyIndustry', label: 'Industry' },
+  { key: 'positionCategory', label: 'Category' },
+  { key: 'city', label: 'Region' },
+  { key: 'recruitmentCycle', label: 'Cycle' },
+  { key: 'displayStartTime', label: 'Publish Start', sortable: true },
+  { key: 'deadlineDisplay', label: 'Deadline' },
+  { key: 'displayStatus', label: 'Status' },
+  { key: 'studentCount', label: 'Applicants' },
+  { key: 'actions', label: 'Action' }
 ]

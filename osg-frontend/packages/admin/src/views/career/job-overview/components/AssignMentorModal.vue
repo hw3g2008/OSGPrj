@@ -9,7 +9,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-plus-outline" aria-hidden="true"></span>
-        <span>分配导师</span>
+        <span>{{ t('admin.career.jobOverview.assignMentor.title') }}</span>
       </span>
     </template>
 
@@ -25,7 +25,7 @@
         </a-col>
         <a-col flex="auto">
           <div class="student-card__name">
-            {{ row?.studentName || '待分配学员' }}
+            {{ row?.studentName || t('admin.career.jobOverview.assignMentor.unassigned') }}
             <span class="student-card__meta">(ID: {{ row?.studentId || '--' }})</span>
           </div>
           <div class="student-card__sub">
@@ -38,18 +38,18 @@
 
       <a-row :gutter="[16, 12]" class="student-grid">
         <a-col :xs="24" :sm="12">
-          <span class="student-grid__label">建议分配</span>
-          <strong class="student-grid__accent">{{ requestedCount }} 位导师</strong>
+          <span class="student-grid__label">{{ t('admin.career.jobOverview.assignMentor.suggested') }}</span>
+          <strong class="student-grid__accent">{{ t('admin.career.jobOverview.assignMentor.mentorsUnit', { count: requestedCount }) }}</strong>
         </a-col>
         <a-col :xs="24" :sm="12">
-          <span class="student-grid__label">意向导师</span>
+          <span class="student-grid__label">{{ t('admin.career.jobOverview.assignMentor.preferredMentor') }}</span>
           <strong class="student-grid__success">{{ preferredMentorLabel }}</strong>
         </a-col>
       </a-row>
     </a-card>
 
     <div class="form-group">
-      <div class="form-label">筛选导师</div>
+      <div class="form-label">{{ t('admin.career.jobOverview.assignMentor.filterMentors') }}</div>
       <a-row
         :gutter="[12, 12]"
         class="job-overview-assign-modal__filters filter-row"
@@ -57,32 +57,32 @@
         <a-col :xs="24" :sm="12" :md="8">
           <a-select
             v-model:value="scope"
-            placeholder="全部范围"
+            :placeholder="t('admin.career.jobOverview.assignMentor.allScopes')"
             allow-clear
             style="width:100%"
             :options="scopeOptions"
-            data-field-name="排期状态筛选"
-            data-field-name-alias="分配导师弹窗排期状态筛选"
+            data-field-name="排期状态筛选" <!-- i18n-skip-line: playwright selector -->
+            data-field-name-alias="分配导师弹窗排期状态筛选" <!-- i18n-skip-line: playwright selector -->
           />
         </a-col>
         <a-col :xs="24" :sm="12" :md="8">
           <a-select
             v-model:value="majorDirection"
-            placeholder="全部主攻方向"
+            :placeholder="t('admin.career.jobOverview.assignMentor.allDirections')"
             allow-clear
             style="width:100%"
             :options="majorDirectionOptions"
-            data-field-name="主攻方向筛选"
-            data-field-name-alias="分配导师弹窗主攻方向筛选"
+            data-field-name="主攻方向筛选" <!-- i18n-skip-line: playwright selector -->
+            data-field-name-alias="分配导师弹窗主攻方向筛选" <!-- i18n-skip-line: playwright selector -->
           />
         </a-col>
         <a-col :xs="24" :sm="24" :md="8">
           <a-input
             v-model:value="keyword"
-            placeholder="搜索导师姓名..."
+            :placeholder="t('admin.career.jobOverview.assignMentor.searchMentor')"
             allow-clear
-            data-field-name="导师搜索"
-            data-field-name-alias="分配导师弹窗导师搜索"
+            data-field-name="导师搜索" <!-- i18n-skip-line: playwright selector -->
+            data-field-name-alias="分配导师弹窗导师搜索" <!-- i18n-skip-line: playwright selector -->
           >
             <template #prefix><SearchOutlined /></template>
           </a-input>
@@ -90,18 +90,18 @@
       </a-row>
       <div class="filter-hint">
         <FilterOutlined />
-        共找到 <strong>{{ filteredMentorOptions.length }}</strong> 位导师
+        {{ t('admin.career.jobOverview.assignMentor.foundMentors', { count: filteredMentorOptions.length }) }}
       </div>
     </div>
 
     <div class="form-group">
       <div class="form-label">
-        选择导师
-        <span class="form-label__meta">(可多选)</span>
+        {{ t('admin.career.jobOverview.assignMentor.selectMentors') }}
+        <span class="form-label__meta">({{ t('admin.career.jobOverview.assignMentor.multiSelect') }})</span>
       </div>
       <a-empty
         v-if="!filteredMentorOptions.length"
-        description="当前没有可直接分配的导师候选"
+        :description="t('admin.career.jobOverview.assignMentor.noMentors')"
         class="job-overview-assign-modal__empty assign-mentor-modal__empty mentor-empty"
       />
       <a-list
@@ -123,7 +123,7 @@
               <a-checkbox
                 :checked="selectedMentorIds.includes(item.mentorId)"
                 :data-field-name="item.mentorName"
-                :data-field-name-alias="`分配导师弹窗${item.mentorName}`"
+                :data-field-name-alias="`分配导师弹窗${item.mentorName}`" <!-- i18n-skip-line: playwright selector -->
                 @click.stop
                 @change="toggleMentor(item.mentorId)"
               />
@@ -135,9 +135,9 @@
                     v-if="item.preferred"
                     color="blue"
                     class="mentor-item__badge"
-                  >意向导师</a-tag>
+                  >{{ t('admin.career.jobOverview.assignMentor.preferredMentor') }}</a-tag>
                 </div>
-                <div class="mentor-item__sub">{{ item.hint || '可分配导师' }}</div>
+                <div class="mentor-item__sub">{{ item.hint || t('admin.career.jobOverview.assignMentor.available') }}</div>
               </div>
             </div>
           </a-list-item>
@@ -145,26 +145,26 @@
       </a-list>
       <div class="selection-hint">
         <InfoCircleOutlined />
-        已选择 <strong>{{ selectedMentorIds.length }}</strong> 位导师
+        {{ t('admin.career.jobOverview.assignMentor.selectedMentors', { count: selectedMentorIds.length }) }}
       </div>
     </div>
 
     <div
       class="form-group form-group--last job-overview-assign-modal__note-field"
-      data-field-name="备注"
-      data-field-name-alias="分配导师弹窗备注"
+      data-field-name="备注" <!-- i18n-skip-line: playwright selector -->
+      data-field-name-alias="分配导师弹窗备注" <!-- i18n-skip-line: playwright selector -->
     >
       <div class="form-label">
-        备注
-        <span class="form-label__meta">(选填)</span>
+        {{ t('admin.career.jobOverview.assignMentor.note') }}
+        <span class="form-label__meta">({{ t('admin.career.jobOverview.assignMentor.optional') }})</span>
       </div>
       <a-textarea
         v-model:value="assignNote"
-        data-field-name="备注"
-        data-field-name-alias="分配导师弹窗备注"
+        data-field-name="备注" <!-- i18n-skip-line: playwright selector -->
+        data-field-name-alias="分配导师弹窗备注" <!-- i18n-skip-line: playwright selector -->
         :rows="3"
         :maxlength="160"
-        placeholder="给导师的特别说明，如学员背景、重点辅导内容等..."
+        :placeholder="t('admin.career.jobOverview.assignMentor.notePlaceholder')"
       />
       <div class="job-overview-assign-modal__note-meta assign-mentor-modal__note-meta">
         <span>{{ assignNote.length }}/160</span>
@@ -172,13 +172,13 @@
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ t('admin.career.jobOverview.assignMentor.cancel') }}</a-button>
       <a-button
         type="primary"
         :disabled="submitting || !selectedMentorIds.length"
         @click="handleSubmit"
       >
-        {{ submitting ? '提交中...' : '确认分配' }}
+        {{ submitting ? t('admin.career.jobOverview.assignMentor.submitting') : t('admin.career.jobOverview.assignMentor.confirm') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -192,8 +192,14 @@ import {
   InfoCircleOutlined,
   SearchOutlined
 } from '@ant-design/icons-vue'
+import { i18n } from '@osg/shared'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { UnassignedJobOverviewRow, UnassignedCoachingRow } from '@osg/shared/api/admin/jobOverview'
+
+const t = (key: string, named?: Record<string, unknown>) =>
+  named
+    ? (i18n.global.t as unknown as (k: string, n: Record<string, unknown>) => string)(key, named)
+    : (i18n.global.t as unknown as (k: string) => string)(key)
 
 interface AssignMentorOption {
   mentorId: number
@@ -225,8 +231,8 @@ const selectedMentorIds = ref<number[]>([])
 const assignNote = ref('')
 
 const scopeOptions = [
-  { value: 'preferred', label: '意向导师' },
-  { value: 'recommended', label: '班主任推荐' }
+  { value: 'preferred', label: t('admin.career.jobOverview.assignMentor.preferredMentor') },
+  { value: 'recommended', label: t('admin.career.jobOverview.assignMentor.recommended') }
 ] as const
 
 const majorDirectionOptions = computed(() => {
@@ -244,12 +250,12 @@ const majorDirectionOptions = computed(() => {
 })
 
 const studentInitials = computed(() => {
-  const value = props.row?.studentName || '学员'
+  const value = props.row?.studentName || t('admin.career.jobOverview.assignMentor.student')
   return value.slice(0, 2).toUpperCase()
 })
 
 const requestedCount = computed(() => props.row?.requestedMentorCount || 1)
-const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || '暂无学员意向导师')
+const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || t('admin.career.jobOverview.assignMentor.noPreferredMentor'))
 
 const filteredMentorOptions = computed(() => {
   const normalizedKeyword = keyword.value.trim().toLowerCase()
@@ -257,7 +263,7 @@ const filteredMentorOptions = computed(() => {
     if (scope.value === 'preferred' && !option.preferred) {
       return false
     }
-    if (scope.value === 'recommended' && option.hint !== '班主任推荐') {
+    if (scope.value === 'recommended' && option.hint !== t('admin.career.jobOverview.assignMentor.recommended')) {
       return false
     }
     if (majorDirection.value && resolveMajorDirection(option) !== majorDirection.value) {
@@ -310,7 +316,7 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!selectedMentorIds.value.length) {
-    message.warning('请至少选择1位导师')
+    message.warning(t('admin.career.jobOverview.assignMentor.selectAtLeastOne'))
     return
   }
 

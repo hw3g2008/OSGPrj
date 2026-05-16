@@ -9,29 +9,29 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-group" aria-hidden="true"></span>
-        <span>{{ companyName }} - {{ positionName }} 申请学员</span>
+        <span>{{ t('admin.career.positions.positionStudentsModal.title', { company: companyName, position: positionName }) }}</span>
       </span>
     </template>
 
     <div class="position-students-modal__tip">
       <span class="mdi mdi-information" aria-hidden="true"></span>
-      <span>以下为该岗位的申请学员列表，求职状态由学员自行更新</span>
+      <span>{{ t('admin.career.positions.positionStudentsModal.tip') }}</span>
     </div>
 
     <div v-if="loading" class="position-students-modal__loading">
       <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-      <span>正在加载申请学员...</span>
+      <span>{{ t('admin.career.positions.positionStudentsModal.loading') }}</span>
     </div>
 
     <div v-else-if="rows.length" class="position-students-modal__table-wrap">
       <table class="position-students-modal__table">
         <thead>
           <tr>
-            <th>学生ID</th>
-            <th>姓名</th>
-            <th>岗位</th>
-            <th>状态</th>
-            <th>已上课时</th>
+            <th>{{ t('admin.career.positions.positionStudentsModal.columns.studentId') }}</th>
+            <th>{{ t('admin.career.positions.positionStudentsModal.columns.name') }}</th>
+            <th>{{ t('admin.career.positions.positionStudentsModal.columns.position') }}</th>
+            <th>{{ t('admin.career.positions.positionStudentsModal.columns.status') }}</th>
+            <th>{{ t('admin.career.positions.positionStudentsModal.columns.usedHours') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -51,17 +51,20 @@
     </div>
 
     <div v-else class="position-students-modal__empty">
-      当前岗位还没有可展示的申请学员数据。
+      {{ t('admin.career.positions.positionStudentsModal.empty') }}
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ t('admin.career.positions.positionStudentsModal.footer.close') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 interface PositionStudentRow {
   studentId: number

@@ -9,7 +9,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-upload" aria-hidden="true"></span>
-        <span>批量上传岗位</span>
+        <span>{{ t('admin.career.positions.batchUpload.title') }}</span>
       </span>
     </template>
 
@@ -23,20 +23,20 @@
           @change="handleFileSelect"
         />
         <span class="mdi mdi-cloud-upload batch-upload-modal__icon" aria-hidden="true"></span>
-        <strong>{{ selectedFile?.name || '拖拽文件到此处，或点击选择文件' }}</strong>
-        <p>支持 Excel 文件上传，导入后会直接刷新岗位列表</p>
+        <strong>{{ selectedFile?.name || t('admin.career.positions.batchUpload.dropzone') }}</strong>
+        <p>{{ t('admin.career.positions.batchUpload.hint') }}</p>
         <a-button @click.stop="fileInputRef?.click()">
-          <span class="mdi mdi-file-excel" aria-hidden="true" style="margin-right:4px"></span>选择Excel文件
+          <span class="mdi mdi-file-excel" aria-hidden="true" style="margin-right:4px"></span>{{ t('admin.career.positions.batchUpload.selectFile') }}
         </a-button>
       </div>
 
       <div class="batch-upload-modal__rule">
         <span class="mdi mdi-information" aria-hidden="true"></span>
-        <p><strong>排重规则：</strong>{{ uploadRuleCopy }}</p>
+        <p><strong>{{ t('admin.career.positions.batchUpload.rule') }}</strong>{{ uploadRuleCopy }}</p>
       </div>
 
       <div class="batch-upload-modal__steps">
-        <p>操作步骤：</p>
+        <p>{{ t('admin.career.positions.batchUpload.steps') }}</p>
         <ol>
           <li v-for="step in uploadSteps" :key="step">{{ step }}</li>
         </ol>
@@ -44,9 +44,9 @@
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ t('admin.career.positions.batchUpload.actions.cancel') }}</a-button>
       <a-button type="primary" :disabled="!selectedFile" @click="handleSubmit">
-        <span class="mdi mdi-upload" aria-hidden="true" style="margin-right:4px"></span>上传文件
+        <span class="mdi mdi-upload" aria-hidden="true" style="margin-right:4px"></span>{{ t('admin.career.positions.batchUpload.actions.upload') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -55,7 +55,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { i18n } from '@osg/shared'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const t = (key: string) => (i18n.global.t as unknown as (k: string) => string)(key)
 
 withDefaults(defineProps<{
   visible: boolean
@@ -89,7 +92,7 @@ const handleFileSelect = (event: Event) => {
     return
   }
   if (!/\.xlsx?$/.test(file.name.toLowerCase())) {
-    message.error('请上传 Excel 文件')
+    message.error(t('admin.career.positions.batchUpload.validation.invalidFormat'))
     return
   }
   selectedFile.value = file
@@ -97,7 +100,7 @@ const handleFileSelect = (event: Event) => {
 
 const handleSubmit = () => {
   if (!selectedFile.value) {
-    message.error('请先选择 Excel 文件')
+    message.error(t('admin.career.positions.batchUpload.validation.noFile'))
     return
   }
   emit('submit', selectedFile.value)

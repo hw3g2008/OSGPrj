@@ -1508,7 +1508,9 @@
         "empty": "No position data for current filters",
         "units": {
           "company": "{count} companies",
-          "position": "{count} positions"
+          "position": "{count} positions",
+          "trafficViews": "Total Views: {count}",
+          "students": "{count}"
         },
         "status": {
           "open": "{count} Open",
@@ -1558,6 +1560,40 @@
           "templateDownloadFailed": "Template download failed",
           "exportFailed": "Position export failed",
           "failedDetails": "Failure Details"
+        },
+        "columns": {
+          "positionName": "Position",
+          "companyName": "Company",
+          "companyType": "Company Type",
+          "department": "Department",
+          "positionCategory": "Category",
+          "city": "Region",
+          "recruitmentCycle": "Cycle",
+          "targetMajors": "Major Direction",
+          "displayStartTime": "Publish Start",
+          "deadline": "Deadline",
+          "deadlineDisplay": "Deadline",
+          "displayStatus": "Status",
+          "studentCount": "Applicants",
+          "createBy": "Added By",
+          "createTime": "Added Date",
+          "action": "Action"
+        }
+      },
+      "positionStudentsModal": {
+        "title": "{company} - {position} Applicants",
+        "tip": "Student applicants for this position. Job status is updated by students themselves.",
+        "loading": "Loading applicants...",
+        "empty": "No applicant data available for this position.",
+        "columns": {
+          "studentId": "Student ID",
+          "name": "Name",
+          "position": "Position",
+          "status": "Status",
+          "usedHours": "Hours Used"
+        },
+        "footer": {
+          "close": "Close"
         }
       }
     },

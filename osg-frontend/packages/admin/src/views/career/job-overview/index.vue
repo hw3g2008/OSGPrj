@@ -9,9 +9,9 @@
       </template>
     </PageHeader>
 
-    <!-- 关键指标 + 转化漏斗（左右两栏） -->
+    <!-- Key Metrics + Conversion Funnel (two columns) -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-      <!-- 左侧：本月关键指标 -->
+      <!-- Left: monthly key metrics -->
       <a-card :bordered="false" style="margin: 0;">
         <template #title>
           <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-chart-box" style="color: var(--primary); margin-right: 6px;"></i>{{ t('admin.career.jobOverview.index.statsTitle') }}</span>
@@ -28,7 +28,7 @@
         </div>
       </a-card>
 
-      <!-- 右侧：求职转化漏斗 -->
+      <!-- Right: job conversion funnel -->
       <a-card :bordered="false" style="margin: 0;">
         <template #title>
           <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-filter-variant" style="color: var(--primary); margin-right: 6px;"></i>{{ t('admin.career.jobOverview.index.funnelTitle') }}</span>
@@ -47,7 +47,7 @@
       </a-card>
     </div>
 
-    <!-- 筛选条件 -->
+    <!-- Filters -->
     <a-card :bordered="false">
       <div style="display: flex; gap: var(--osg-space-3); flex-wrap: wrap;">
         <a-input v-model:value="filters.studentName" :placeholder="t('admin.career.jobOverview.index.filter.studentPlaceholder')" allow-clear style="width: 220px;" @press-enter="handleSearch" />
@@ -67,7 +67,7 @@
       </div>
     </a-card>
 
-    <!-- 学员求职列表 -->
+    <!-- Student job application list -->
     <a-card :bordered="false">
       <template #title>
         <div style="display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 6px; width: fit-content;">
@@ -82,7 +82,7 @@
         </div>
       </template>
 
-      <!-- 待分配导师表格 -->
+      <!-- Pending assignment table -->
       <template v-if="activeTab === 'pending'">
         <a-alert type="warning" show-icon style="margin-bottom: 12px; border-radius: 8px;">
           <template #message>{{ t('admin.career.jobOverview.index.pendingAlert') }}</template>
@@ -120,7 +120,7 @@
         </a-table>
       </template>
 
-      <!-- 全部学员表格 -->
+      <!-- All students table -->
       <template v-else>
         <a-alert type="info" show-icon style="margin-bottom: 12px; border-radius: 8px;">
           <template #message>{{ t('admin.career.jobOverview.index.allAlert') }}</template>
@@ -200,14 +200,14 @@ import {
 } from '@osg/shared/api/admin/jobOverview'
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 import { useStandardClientPagination } from '@osg/shared'
-// §D.3 admin job-overview 接入 SSOT composable 派生辅导状态展示
+// i18n-skip-line: dev comment — §D.3 admin job-overview 接入 SSOT composable 派生辅导状态展示
 import { deriveApplicationStatus } from '@osg/shared/composables'
 
 type ActiveTab = 'pending' | 'all'
 
 const { t } = useI18n()
 
-// §B3: 待分配 Tab 切到 coaching 维度，阶段字段用 interviewStage、提交时间用 coaching.create_time
+// i18n-skip-line: dev comment — §B3: 待分配 Tab 切到 coaching 维度，阶段字段用 interviewStage、提交时间用 coaching.create_time
 const pendingColumns = computed(() => [
   { title: t('admin.career.jobOverview.index.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
   { title: t('admin.career.jobOverview.index.columns.companyPosition'), dataIndex: 'companyName', key: 'companyName', width: 200 },
@@ -352,7 +352,7 @@ async function loadDashboard() {
       getJobOverviewStats(requestFilters.value),
       getJobOverviewFunnel(requestFilters.value),
       getJobOverviewList(requestFilters.value),
-      // §B3: 后台「待分配」Tab 切到 coaching 维度，按 osg_coaching 行展示
+      // i18n-skip-line: dev comment — §B3: 后台「待分配」Tab 切到 coaching 维度，按 osg_coaching 行展示
       getUnassignedCoachingList({
         studentName: requestFilters.value.studentName,
         companyName: requestFilters.value.companyName,
@@ -416,7 +416,7 @@ async function handleAssignMentorSubmit(payload: AssignMentorSubmitPayload) {
 
   assignSubmitting.value = true
   try {
-    // §B3: 按 coachingId 精确分配，避免一个 application 多条 coaching 时分错对象
+    // i18n-skip-line: dev comment — §B3: 按 coachingId 精确分配，避免一个 application 多条 coaching 时分错对象
     await assignMentorsByCoaching(selectedAssignmentRow.value.coachingId, {
       mentorIds: payload.mentorIds,
       mentorNames: payload.mentorNames,
@@ -464,7 +464,7 @@ function stageColor(stage?: string): string {
   }
 }
 
-// §D.3 admin job-overview 改用 SSOT composable，删除本地硬编码 coachingColor 函数
+// i18n-skip-line: dev comment — §D.3 admin job-overview 改用 SSOT composable，删除本地硬编码 coachingColor 函数
 function resolveCoachingTagColor(status?: string): string {
   const display = deriveApplicationStatus({ coachingStatus: status })
   switch (display.tone) {
@@ -477,7 +477,7 @@ function resolveCoachingTagColor(status?: string): string {
 }
 
 function resolveCoachingTagLabel(status?: string): string {
-  // none / 未填 → 未申请，其他走 composable 派生
+  // i18n-skip-line: dev comment — none / 未填 → 未申请，其他走 composable 派生
   if (!status || status === 'none') return t('admin.career.jobOverview.index.coachingNotApplied')
   return deriveApplicationStatus({ coachingStatus: status }).label || t('admin.career.jobOverview.index.coachingNotApplied')
 }

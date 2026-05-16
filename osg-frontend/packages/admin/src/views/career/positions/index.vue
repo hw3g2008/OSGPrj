@@ -1,35 +1,35 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="岗位管理" title-en="Job Tracker">
+    <PageHeader :title-zh="t('admin.career.positions.index.title')" title-en="Job Tracker">
       <template #actions>
         <div style="display: flex; flex-direction: column; gap: var(--osg-toolbar-gap); align-items: flex-end">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
             <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
               <a-radio-button value="list">
-                <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px"></i>列表视图
+                <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px"></i>{{ t('admin.career.positions.index.viewModes.list') }}
               </a-radio-button>
               <a-radio-button value="drilldown">
-                <i class="mdi mdi-file-tree" style="margin-right: 4px"></i>下钻视图
+                <i class="mdi mdi-file-tree" style="margin-right: 4px"></i>{{ t('admin.career.positions.index.viewModes.drilldown') }}
               </a-radio-button>
             </a-radio-group>
-            <span v-if="meta.trafficSummary" style="color: var(--osg-text-muted); font-size: var(--osg-font-size-sm)">总浏览 {{ meta.trafficSummary.totalViews.toLocaleString('en-US') }} 次</span>
+            <span v-if="meta.trafficSummary" style="color: var(--osg-text-muted); font-size: var(--osg-font-size-sm)">{{ t('admin.career.positions.index.units.trafficViews', { count: meta.trafficSummary.totalViews.toLocaleString('en-US') }) }}</span>
           </div>
           <a-space wrap>
             <a-button :loading="downloading" @click="handleExport(false)">
               <template #icon><ExportOutlined /></template>
-              导出
+              {{ t('admin.career.positions.index.actions.export') }}
             </a-button>
             <a-button @click="batchVisible = true">
               <template #icon><UploadOutlined /></template>
-              批量上传
+              {{ t('admin.career.positions.index.actions.batchUpload') }}
             </a-button>
             <a-button :loading="downloading" @click="handleExport(true)">
               <template #icon><DownloadOutlined /></template>
-              下载模板
+              {{ t('admin.career.positions.index.actions.downloadTemplate') }}
             </a-button>
             <a-button type="primary" @click="openCreateModal()">
               <template #icon><PlusOutlined /></template>
-              新增岗位
+              {{ t('admin.career.positions.index.actions.addPosition') }}
             </a-button>
           </a-space>
         </div>
@@ -47,72 +47,72 @@
     <a-card :bordered="false">
       <a-form layout="inline" style="gap: var(--osg-toolbar-gap); flex-wrap: wrap">
         <a-form-item>
-          <a-select v-model:value="filters.positionCategory" placeholder="全部分类" allow-clear style="width: 120px">
+          <a-select v-model:value="filters.positionCategory" :placeholder="t('admin.career.positions.index.filters.allCategories')" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.categories" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.industry" placeholder="公司类别" allow-clear style="width: 120px">
+          <a-select v-model:value="filters.industry" :placeholder="t('admin.career.positions.index.filters.companyType')" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.industries" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px" show-search>
+          <a-select v-model:value="filters.companyName" :placeholder="t('admin.career.positions.index.filters.allCompanies')" allow-clear style="width: 140px" show-search>
             <a-select-option v-for="option in companyOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.region" placeholder="全部地区" allow-clear style="width: 120px">
+          <a-select v-model:value="filters.region" :placeholder="t('admin.career.positions.index.filters.allRegions')" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.regions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.city" placeholder="全部城市" allow-clear style="width: 120px">
+          <a-select v-model:value="filters.city" :placeholder="t('admin.career.positions.index.filters.allCities')" allow-clear style="width: 120px">
             <a-select-option v-for="option in cityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.displayStatus" placeholder="全部状态" allow-clear style="width: 120px">
+          <a-select v-model:value="filters.displayStatus" :placeholder="t('admin.career.positions.index.filters.allStatuses')" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.displayStatuses" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.recruitmentCycle" placeholder="招聘周期" allow-clear style="width: 120px">
+          <a-select v-model:value="filters.recruitmentCycle" :placeholder="t('admin.career.positions.index.filters.recruitmentCycle')" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.recruitmentCycles" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <MultiSelect
             v-model:value="targetMajorsFilter"
-            placeholder="主攻方向"
+            :placeholder="t('admin.career.positions.index.filters.targetMajors')"
             style="width: 180px"
             :options="meta.majorDirections"
           />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="publishPreset" placeholder="展示起始" allow-clear style="width: 120px">
+          <a-select v-model:value="publishPreset" :placeholder="t('admin.career.positions.index.filters.publishPreset')" allow-clear style="width: 120px">
             <a-select-option v-for="option in meta.publishPresets" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-input v-model:value="filters.keyword" placeholder="搜索岗位名称..." allow-clear style="width: 180px" @press-enter="handleSearch" />
+          <a-input v-model:value="filters.keyword" :placeholder="t('admin.career.positions.index.filters.searchKeyword')" allow-clear style="width: 180px" @press-enter="handleSearch" />
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ t('admin.career.positions.index.actions.search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ t('admin.career.positions.index.actions.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
     </a-card>
 
     <a-card :bordered="false">
-      <a-spin :spinning="loading" tip="正在加载岗位数据...">
+      <a-spin :spinning="loading" :tip="t('admin.career.positions.index.loading')">
         <template v-if="viewMode === 'drilldown'">
-          <a-empty v-if="!loading && !drillDownRows.length" description="当前筛选条件下暂无岗位数据" />
+          <a-empty v-if="!loading && !drillDownRows.length" :description="t('admin.career.positions.index.empty')" />
 
           <div v-else class="positions-drilldown">
             <section v-for="industry in drillDownRows" :key="industry.industry" class="positions-drilldown__industry">
@@ -128,14 +128,14 @@
                   <i :class="['mdi', expandedIndustries.has(industry.industry) ? 'mdi-chevron-down' : 'mdi-chevron-right']" :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" aria-hidden="true"></i>
                   <i :class="['mdi', getIndustryIcon(industry.industry)]" :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" aria-hidden="true"></i>
                   <strong :style="{ color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }">{{ formatIndustry(industry.industry) }}</strong>
-                  <span :style="{ background: toneTextColor[getIndustryTone(industry.industry) || 'slate'], color: '#fff', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }">{{ industry.companyCount }} 家公司</span>
-                  <a-tag color="purple">{{ industry.positionCount }} 个岗位</a-tag>
+                  <span :style="{ background: toneTextColor[getIndustryTone(industry.industry) || 'slate'], color: '#fff', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }">{{ t('admin.career.positions.index.units.company', { count: industry.companyCount }) }}</span>
+                  <a-tag color="purple">{{ t('admin.career.positions.index.units.position', { count: industry.positionCount }) }}</a-tag>
                 </button>
                 <div style="display: flex; align-items: center; gap: 8px">
-                  <a-tag class="positions-drilldown__filter-tag" color="green" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'open')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'open')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'open')">{{ getIndustryStatusCount(industry, 'open') }} 开放</a-tag>
-                  <a-tag v-if="getIndustryStatusCount(industry, 'not_started') > 0" class="positions-drilldown__filter-tag" color="blue" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'not_started')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'not_started')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'not_started')">{{ getIndustryStatusCount(industry, 'not_started') }} 未开始</a-tag>
-                  <a-tag v-if="getIndustryStatusCount(industry, 'closed') > 0" class="positions-drilldown__filter-tag" color="default" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'closed')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'closed')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'closed')">{{ getIndustryStatusCount(industry, 'closed') }} 已关闭</a-tag>
-                  <span class="positions-drilldown__filter-tag" :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'has_students')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'has_students')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'has_students')">{{ industry.studentCount }} 投递学员</span>
+                  <a-tag class="positions-drilldown__filter-tag" color="green" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'open')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'open')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'open')">{{ t('admin.career.positions.index.status.open', { count: getIndustryStatusCount(industry, 'open') }) }}</a-tag>
+                  <a-tag v-if="getIndustryStatusCount(industry, 'not_started') > 0" class="positions-drilldown__filter-tag" color="blue" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'not_started')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'not_started')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'not_started')">{{ t('admin.career.positions.index.status.notStarted', { count: getIndustryStatusCount(industry, 'not_started') }) }}</a-tag>
+                  <a-tag v-if="getIndustryStatusCount(industry, 'closed') > 0" class="positions-drilldown__filter-tag" color="default" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'closed')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'closed')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'closed')">{{ t('admin.career.positions.index.status.closed', { count: getIndustryStatusCount(industry, 'closed') }) }}</a-tag>
+                  <span class="positions-drilldown__filter-tag" :style="{ fontSize: '12px', fontWeight: 700, color: toneTextColor[getIndustryTone(industry.industry) || 'slate'] }" role="button" tabindex="0" @click.stop="applyIndustryFilter(industry.industry, 'has_students')" @keydown.enter.stop.prevent="applyIndustryFilter(industry.industry, 'has_students')" @keydown.space.stop.prevent="applyIndustryFilter(industry.industry, 'has_students')">{{ t('admin.career.positions.index.status.hasStudents', { count: industry.studentCount }) }}</span>
                 </div>
               </div>
 
@@ -154,15 +154,15 @@
                       </div>
                       <div>
                         <strong>{{ company.companyName }}</strong>
-                        <span>{{ getVisibleCompanyPositions(industry.industry, company).length }} 个岗位</span>
+                        <span>{{ t('admin.career.positions.index.units.position', { count: getVisibleCompanyPositions(industry.industry, company).length }) }}</span>
                       </div>
                     </button>
                     <a-space>
-                      <a-tag>{{ getVisibleCompanyPositions(industry.industry, company).length }} 个岗位</a-tag>
-                      <a-tag color="green">{{ getVisibleCompanyStatusCount(industry.industry, company, 'open') }} 开放</a-tag>
-                      <a-button type="link" size="small" @click="openStudentsModal(company.positions[0])">{{ company.studentCount }}人</a-button>
+                      <a-tag>{{ t('admin.career.positions.index.units.position', { count: getVisibleCompanyPositions(industry.industry, company).length }) }}</a-tag>
+                      <a-tag color="green">{{ t('admin.career.positions.index.status.open', { count: getVisibleCompanyStatusCount(industry.industry, company, 'open') }) }}</a-tag>
+                      <a-button type="link" size="small" @click="openStudentsModal(company.positions[0])">{{ t('admin.career.positions.index.units.students', { count: company.studentCount }) }}</a-button>
                       <a v-if="company.companyWebsite" :href="company.companyWebsite" target="_blank" rel="noreferrer" style="font-size: var(--osg-font-size-sm)">
-                        <i class="mdi mdi-web" aria-hidden="true" /> {{ company.companyName }} 官网
+                        <i class="mdi mdi-web" aria-hidden="true" /> {{ company.companyName }} {{ t('admin.career.positions.index.companyWebsite') }}
                       </a>
                     </a-space>
                   </div>
@@ -209,10 +209,10 @@
                           <a-tag :color="statusToneToColor[getStatusTone(position.displayStatus)] || 'green'">{{ formatStatus(position.displayStatus) }}</a-tag>
                         </template>
                         <template v-else-if="column.dataIndex === 'studentCount'">
-                          <a-button type="link" size="small" @click="openStudentsModal(position)">{{ position.studentCount || 0 }}人</a-button>
+                          <a-button type="link" size="small" @click="openStudentsModal(position)">{{ t('admin.career.positions.index.units.students', { count: position.studentCount || 0 }) }}</a-button>
                         </template>
                         <template v-else-if="column.dataIndex === 'action'">
-                          <a-button type="link" size="small" @click="openEditModal(position)">编辑</a-button>
+                          <a-button type="link" size="small" @click="openEditModal(position)">{{ t('admin.career.positions.index.actions.edit') }}</a-button>
                         </template>
                       </template>
                     </a-table>
@@ -220,7 +220,7 @@
                     <div style="display: flex; justify-content: flex-end; padding: 6px 10px">
                       <a-button size="small" @click="openCreateModal(industry, company)">
                         <template #icon><PlusOutlined /></template>
-                        {{ company.companyName }} 添加岗位
+                        {{ t('admin.career.positions.index.actions.addPositionToCompany', { company: company.companyName }) }}
                       </a-button>
                     </div>
                   </div>
@@ -231,7 +231,7 @@
         </template>
 
         <template v-else>
-          <a-table class="positions-list-table" :columns="listColumns" :data-source="sortedListRows" :row-key="(r: PositionListItem) => r.positionId" :pagination="tablePagination" :locale="{ emptyText: '当前筛选条件下暂无岗位数据' }" :scroll="{ x: 1400 }" @change="handleTableChange">
+          <a-table class="positions-list-table" :columns="listColumns" :data-source="sortedListRows" :row-key="(r: PositionListItem) => r.positionId" :pagination="tablePagination" :locale="{ emptyText: t('admin.career.positions.index.empty') }" :scroll="{ x: 1400 }" @change="handleTableChange">
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'positionName'">
                 <a-tooltip :title="record.positionName || '-'">
@@ -317,7 +317,7 @@
                 <a-tag :color="statusToneToColor[getStatusTone(record.displayStatus)] || 'green'">{{ formatStatus(record.displayStatus) }}</a-tag>
               </template>
               <template v-else-if="column.dataIndex === 'studentCount'">
-                <a-button type="link" size="small" @click="openStudentsModal(record)">{{ record.studentCount || 0 }}人</a-button>
+                <a-button type="link" size="small" @click="openStudentsModal(record)">{{ t('admin.career.positions.index.units.students', { count: record.studentCount || 0 }) }}</a-button>
               </template>
               <template v-else-if="column.dataIndex === 'createBy'">
                 <a-tooltip :title="record.createBy || '-'">
@@ -325,19 +325,19 @@
                 </a-tooltip>
               </template>
               <template v-else-if="column.dataIndex === 'action'">
-                <a-button type="link" size="small" @click="openEditModal(record)">编辑</a-button>
+                <a-button type="link" size="small" @click="openEditModal(record)">{{ t('admin.career.positions.index.actions.edit') }}</a-button>
               </template>
             </template>
           </a-table>
         </template>
 
         <div style="display: flex; align-items: center; gap: var(--osg-toolbar-gap); padding: 8px 0; color: #6e80a4; font-size: 13px; font-weight: 600">
-          <span>共 {{ summary.companyCount }} 家公司</span>
+          <span>{{ t('admin.career.positions.index.summary.companies', { count: summary.companyCount }) }}</span>
           <span style="color: #c1cad9">|</span>
-          <span style="color: #6b6ef7">● {{ summary.positionCount }} 个岗位</span>
-          <span style="color: #22c55e">● {{ drilldownStatusSummary.openPositions }} 开放中</span>
-          <span v-if="drilldownStatusSummary.notStartedPositions > 0" style="color: #3b82f6">● {{ drilldownStatusSummary.notStartedPositions }} 未开始</span>
-          <span style="color: #94a3b8">● {{ drilldownStatusSummary.closedPositions }} 已关闭</span>
+          <span style="color: #6b6ef7">{{ t('admin.career.positions.index.summary.positions', { count: summary.positionCount }) }}</span>
+          <span style="color: #22c55e">{{ t('admin.career.positions.index.summary.open', { count: drilldownStatusSummary.openPositions }) }}</span>
+          <span v-if="drilldownStatusSummary.notStartedPositions > 0" style="color: #3b82f6">{{ t('admin.career.positions.index.summary.notStarted', { count: drilldownStatusSummary.notStartedPositions }) }}</span>
+          <span style="color: #94a3b8">{{ t('admin.career.positions.index.summary.closed', { count: drilldownStatusSummary.closedPositions }) }}</span>
         </div>
       </a-spin>
     </a-card>
@@ -358,8 +358,8 @@
     />
     <PositionStudentsModal
       v-model:visible="studentsVisible"
-      :company-name="selectedPosition?.companyName || '公司'"
-      :position-name="selectedPosition?.positionName || '岗位'"
+      :company-name="selectedPosition?.companyName || t('admin.career.positions.index.defaults.company')"
+      :position-name="selectedPosition?.positionName || t('admin.career.positions.index.defaults.position')"
       :loading="studentsLoading"
       :rows="studentRows"
     />
@@ -370,6 +370,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { DownloadOutlined, ExportOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons-vue'
+import { i18n } from '@osg/shared'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { MultiSelect } from '@osg/shared/components'
 import { getToken } from '@osg/shared/utils'
@@ -398,6 +399,11 @@ import BatchUploadModal from './components/BatchUploadModal.vue'
 import PositionFormModal from './components/PositionFormModal.vue'
 import PositionStudentsModal from './components/PositionStudentsModal.vue'
 
+const t = (key: string, named?: Record<string, unknown>) =>
+  named
+    ? (i18n.global.t as unknown as (k: string, n: Record<string, unknown>) => string)(key, named)
+    : (i18n.global.t as unknown as (k: string) => string)(key)
+
 const statColorMap: Record<string, string> = {
   primary: '#6b6ef7',
   success: '#22c55e',
@@ -424,21 +430,21 @@ const toneTextColor: Record<string, string> = {
 }
 
 
-const drilldownColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false, fixed: 'left' as const },
-  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
-  { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
-  { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
-  { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
-  { title: '主攻方向', dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
-  { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
-  { title: '截止时间', dataIndex: 'deadline', key: 'deadline', width: 80 },
-  { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
-  { title: '投递学员', dataIndex: 'studentCount', key: 'studentCount', width: 80 },
-  { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
-  { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 60, fixed: 'right' as const },
-]
+const drilldownColumns = computed(() => [
+  { title: t('admin.career.positions.index.columns.positionName'), dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false, fixed: 'left' as const },
+  { title: t('admin.career.positions.index.columns.positionCategory'), dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
+  { title: t('admin.career.positions.index.columns.department'), dataIndex: 'department', key: 'department', width: 80 },
+  { title: t('admin.career.positions.index.columns.city'), dataIndex: 'city', key: 'city', width: 70 },
+  { title: t('admin.career.positions.index.columns.recruitmentCycle'), dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
+  { title: t('admin.career.positions.index.columns.targetMajors'), dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
+  { title: t('admin.career.positions.index.columns.displayStartTime'), dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
+  { title: t('admin.career.positions.index.columns.deadline'), dataIndex: 'deadline', key: 'deadline', width: 80 },
+  { title: t('admin.career.positions.index.columns.displayStatus'), dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
+  { title: t('admin.career.positions.index.columns.studentCount'), dataIndex: 'studentCount', key: 'studentCount', width: 80 },
+  { title: t('admin.career.positions.index.columns.createBy'), dataIndex: 'createBy', key: 'createBy', width: 90 },
+  { title: t('admin.career.positions.index.columns.createTime'), dataIndex: 'createTime', key: 'createTime', width: 90 },
+  { title: t('admin.career.positions.index.columns.action'), dataIndex: 'action', key: 'action', width: 60, fixed: 'right' as const },
+])
 
 const formatDrilldownColumnTitle = (title: string) => {
   if (title.length === 4) {
@@ -447,23 +453,23 @@ const formatDrilldownColumnTitle = (title: string) => {
   return [title]
 }
 
-const listColumns = [
-  { title: '岗位名称', dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false, fixed: 'left' as const },
-  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 160 },
-  { title: '公司类别', dataIndex: 'companyType', key: 'companyType', width: 100 },
-  { title: '部门', dataIndex: 'department', key: 'department', width: 80 },
-  { title: '岗位分类', dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
-  { title: '地区', dataIndex: 'city', key: 'city', width: 70 },
-  { title: '招聘周期', dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
-  { title: '主攻方向', dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
-  { title: '展示起始', dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
-  { title: '截止时间', dataIndex: 'deadlineDisplay', key: 'deadlineDisplay', width: 100 },
-  { title: '状态', dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
-  { title: '投递学员', dataIndex: 'studentCount', key: 'studentCount', width: 80 },
-  { title: '添加人', dataIndex: 'createBy', key: 'createBy', width: 90 },
-  { title: '添加日期', dataIndex: 'createTime', key: 'createTime', width: 90 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 60, fixed: 'right' as const },
-]
+const listColumns = computed(() => [
+  { title: t('admin.career.positions.index.columns.positionName'), dataIndex: 'positionName', key: 'positionName', width: 280, ellipsis: false, fixed: 'left' as const },
+  { title: t('admin.career.positions.index.columns.companyName'), dataIndex: 'companyName', key: 'companyName', width: 160 },
+  { title: t('admin.career.positions.index.columns.companyType'), dataIndex: 'companyType', key: 'companyType', width: 100 },
+  { title: t('admin.career.positions.index.columns.department'), dataIndex: 'department', key: 'department', width: 80 },
+  { title: t('admin.career.positions.index.columns.positionCategory'), dataIndex: 'positionCategory', key: 'positionCategory', width: 90 },
+  { title: t('admin.career.positions.index.columns.city'), dataIndex: 'city', key: 'city', width: 70 },
+  { title: t('admin.career.positions.index.columns.recruitmentCycle'), dataIndex: 'recruitmentCycle', key: 'recruitmentCycle', width: 100 },
+  { title: t('admin.career.positions.index.columns.targetMajors'), dataIndex: 'targetMajors', key: 'targetMajors', width: 140 },
+  { title: t('admin.career.positions.index.columns.displayStartTime'), dataIndex: 'displayStartTime', key: 'displayStartTime', width: 80 },
+  { title: t('admin.career.positions.index.columns.deadlineDisplay'), dataIndex: 'deadlineDisplay', key: 'deadlineDisplay', width: 100 },
+  { title: t('admin.career.positions.index.columns.displayStatus'), dataIndex: 'displayStatus', key: 'displayStatus', width: 80 },
+  { title: t('admin.career.positions.index.columns.studentCount'), dataIndex: 'studentCount', key: 'studentCount', width: 80 },
+  { title: t('admin.career.positions.index.columns.createBy'), dataIndex: 'createBy', key: 'createBy', width: 90 },
+  { title: t('admin.career.positions.index.columns.createTime'), dataIndex: 'createTime', key: 'createTime', width: 90 },
+  { title: t('admin.career.positions.index.columns.action'), dataIndex: 'action', key: 'action', width: 60, fixed: 'right' as const },
+])
 
 type DrilldownFilter = 'all' | 'open' | 'not_started' | 'closed' | 'has_students'
 
@@ -534,7 +540,7 @@ const tablePagination = computed(() => ({
   pageSize: filters.pageSize,
   total: total.value,
   showSizeChanger: false,
-  showTotal: (value: number) => `共 ${value} 条记录`
+  showTotal: (value: number) => t('admin.career.positions.index.pagination.total', { count: value })
 }))
 
 const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
@@ -544,12 +550,12 @@ const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
 }
 
 const statsCards = computed(() => [
-  { key: 'total', label: '总岗位数', value: summary.value.positionCount, tone: 'primary' },
-  { key: 'open', label: '开放中', value: drilldownStatusSummary.value.openPositions, tone: 'success' },
-  { key: 'closing', label: '即将截止', value: stats.value.closingSoonPositions, tone: 'warning' },
-  { key: 'not-started', label: '未开始', value: drilldownStatusSummary.value.notStartedPositions, tone: 'info' },
-  { key: 'closed', label: '已关闭', value: drilldownStatusSummary.value.closedPositions, tone: 'muted' },
-  { key: 'students', label: '投递学员', value: stats.value.studentApplications, tone: 'info' }
+  { key: 'total', label: t('admin.career.positions.index.stats.total'), value: summary.value.positionCount, tone: 'primary' },
+  { key: 'open', label: t('admin.career.positions.index.stats.open'), value: drilldownStatusSummary.value.openPositions, tone: 'success' },
+  { key: 'closing', label: t('admin.career.positions.index.stats.closing'), value: stats.value.closingSoonPositions, tone: 'warning' },
+  { key: 'not-started', label: t('admin.career.positions.index.stats.notStarted'), value: drilldownStatusSummary.value.notStartedPositions, tone: 'info' },
+  { key: 'closed', label: t('admin.career.positions.index.stats.closed'), value: drilldownStatusSummary.value.closedPositions, tone: 'muted' },
+  { key: 'students', label: t('admin.career.positions.index.stats.students'), value: stats.value.studentApplications, tone: 'info' }
 ])
 
 const cityOptions = computed<PositionMetaOption[]>(() => {
@@ -721,7 +727,7 @@ const loadPage = async () => {
     drillDownRows.value = drillRes || []
     syncExpandedState(drillDownRows.value)
   } catch (_error) {
-    message.error('加载岗位数据失败')
+    message.error(t('admin.career.positions.index.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -775,7 +781,7 @@ const openStudentsModal = async (record: PositionListItem) => {
   try {
     studentRows.value = await getPositionStudents(record.positionId)
   } catch (_error) {
-    message.error('加载岗位申请学员失败')
+    message.error(t('admin.career.positions.index.messages.loadStudentsFailed'))
   } finally {
     studentsLoading.value = false
   }
@@ -785,16 +791,16 @@ const handleSavePosition = async (payload: PositionPayload) => {
   try {
     if (payload.positionId) {
       await updatePosition(payload)
-      message.success('岗位已更新')
+      message.success(t('admin.career.positions.index.messages.updated'))
     } else {
       await createPosition(payload)
-      message.success('岗位已新增')
+      message.success(t('admin.career.positions.index.messages.created'))
     }
     formVisible.value = false
     createDefaults.value = null
     await Promise.all([loadReferenceData(), loadPage()])
   } catch (_error) {
-    message.error(payload.positionId ? '岗位更新失败' : '岗位新增失败')
+    message.error(payload.positionId ? t('admin.career.positions.index.messages.updateFailed') : t('admin.career.positions.index.messages.createFailed'))
   }
 }
 
@@ -805,19 +811,19 @@ const handleBatchUpload = async (file: File) => {
     await Promise.all([loadReferenceData(), loadPage()])
 
     const parts: string[] = []
-    if (result.successCount > 0) parts.push(`成功导入 ${result.successCount} 条`)
-    if (result.duplicateCount > 0) parts.push(`重复跳过 ${result.duplicateCount} 条`)
+    if (result.successCount > 0) parts.push(t('admin.career.positions.index.messages.importSuccess', { count: result.successCount }))
+    if (result.duplicateCount > 0) parts.push(t('admin.career.positions.index.messages.importDuplicates', { count: result.duplicateCount }))
     if (result.failedCount > 0) {
       const reasons = result.failedRows.map((f) => f.reason).join('\n')
-      parts.push(`失败 ${result.failedCount} 条`)
-      message.warning(parts.join('，') + '\n\n失败明细:\n' + reasons, 10)
+      parts.push(t('admin.career.positions.index.messages.importFailed', { count: result.failedCount }))
+      message.warning(parts.join('，') + '\n\n' + t('admin.career.positions.index.messages.failedDetails') + ':\n' + reasons, 10)
     } else if (result.duplicateCount > 0) {
       message.warning(parts.join('，'))
     } else {
-      message.success(parts.join('，') || `成功导入 ${result.successCount} 条岗位`)
+      message.success(parts.join('，') || t('admin.career.positions.index.messages.importSuccessDetail', { count: result.successCount }))
     }
   } catch (_error) {
-    message.error('岗位批量上传失败')
+    message.error(t('admin.career.positions.index.messages.batchUploadFailed'))
   }
 }
 
@@ -860,7 +866,7 @@ const handleExport = async (template: boolean) => {
     const contentType = response.headers.get('content-type') || ''
     if (contentType.includes('application/json')) {
       const errJson = await response.json().catch(() => null)
-      throw new Error(errJson?.msg || '导出请求未通过认证，请重新登录')
+      throw new Error(errJson?.msg || t('admin.career.positions.index.messages.exportAuthFailed'))
     }
 
     const blob = await response.blob()
@@ -874,12 +880,12 @@ const handleExport = async (template: boolean) => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    message.success(template ? '模板下载成功' : '岗位导出成功')
+    message.success(template ? t('admin.career.positions.index.messages.templateDownloadSuccess') : t('admin.career.positions.index.messages.exportSuccess'))
   } catch (error) {
     const reason = error instanceof Error && error.message && !['export failed'].includes(error.message)
       ? error.message
       : ''
-    message.error((template ? '模板下载失败' : '岗位导出失败') + (reason ? `：${reason}` : ''))
+    message.error((template ? t('admin.career.positions.index.messages.templateDownloadFailed') : t('admin.career.positions.index.messages.exportFailed')) + (reason ? `：${reason}` : ''))
   } finally {
     downloading.value = false
   }
@@ -987,7 +993,7 @@ const formatCategory = (value?: string) => categoryMap.value.get(value || '')?.l
 
 const formatDepartment = (value?: string) => departmentMap.value.get(value || '')?.label || value || '-'
 
-const formatStatus = (value?: string) => statusMap.value.get(value || '')?.label || value || '展示中'
+const formatStatus = (value?: string) => statusMap.value.get(value || '')?.label || value || t('admin.career.positions.index.status.visible')
 
 const getStatusTone = (value?: string) => statusMap.value.get(value || '')?.tone || 'success'
 
