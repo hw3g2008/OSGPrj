@@ -1,10 +1,10 @@
 <template>
   <section class="osg-page">
-    <PageHeader title-zh="邮件作业" title-en="Mail Job">
+    <PageHeader :title-zh="t('admin.profile.mailjob.title')" title-en="Mail Job">
       <template #actions>
         <a-button type="primary" @click="showNewMailJobModal = true">
           <template #icon><MailOutlined /></template>
-          新建任务
+          {{ t('admin.profile.mailjob.createBtn') }}
         </a-button>
       </template>
     </PageHeader>
@@ -57,7 +57,7 @@
                 {{ record.createTime }}
               </template>
               <template v-else-if="column.dataIndex === 'action'">
-                <a-button type="link" size="small">查看</a-button>
+                <a-button type="link" size="small">{{ t('admin.profile.mailjob.action.view') }}</a-button>
               </template>
             </template>
           </a-table>
@@ -95,8 +95,8 @@
                 </a-tag>
               </template>
               <template v-else-if="column.dataIndex === 'action'">
-                <a-button type="link" size="small">编辑</a-button>
-                <a-button type="link" size="small">测试</a-button>
+                <a-button type="link" size="small">{{ t('admin.profile.mailjob.action.edit') }}</a-button>
+                <a-button type="link" size="small">{{ t('admin.profile.mailjob.action.test') }}</a-button>
               </template>
             </template>
           </a-table>
@@ -114,7 +114,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { MailOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -128,6 +129,7 @@ import {
   type SmtpServerRow
 } from '@osg/shared/api/admin/mailjob'
 
+const { t } = useI18n()
 const activeTab = ref<string>('jobList')
 const rows = ref<MailJobRow[]>([])
 const smtpServers = ref<SmtpServerRow[]>([])
@@ -136,24 +138,24 @@ const showNewMailJobModal = ref(false)
 const keyword = ref('')
 const dateRange = ref<[Dayjs, Dayjs] | null>(null)
 
-const jobColumns = [
+const jobColumns = computed(() => [
   { title: 'ID', dataIndex: 'jobId', key: 'jobId', width: 120, fixed: 'left' as const },
   { title: 'Title', dataIndex: 'jobTitle', key: 'jobTitle' },
   { title: 'Total | Pending | Success | Fail', dataIndex: 'stats', key: 'stats' },
   { title: 'Action By', dataIndex: 'actionBy', key: 'actionBy' },
   { title: 'Create Time', dataIndex: 'createTime', key: 'createTime' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
-]
+  { title: t('admin.profile.mailjob.columns.action'), dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
+])
 
-const smtpColumns = [
+const smtpColumns = computed(() => [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 120, fixed: 'left' as const },
   { title: 'Server Name', dataIndex: 'serverName', key: 'serverName' },
   { title: 'Host', dataIndex: 'host', key: 'host' },
   { title: 'Port', dataIndex: 'port', key: 'port' },
   { title: 'Username', dataIndex: 'username', key: 'username' },
   { title: 'Status', dataIndex: 'status', key: 'status' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
-]
+  { title: t('admin.profile.mailjob.columns.action'), dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
+])
 
 const loadMailJobs = async () => {
   try {
@@ -161,7 +163,7 @@ const loadMailJobs = async () => {
     rows.value = response.rows ?? []
     smtpServers.value = response.smtpServers ?? []
   } catch (_error) {
-    message.error('邮件作业列表加载失败')
+    message.error(t('admin.profile.mailjob.messages.loadFailed'))
   }
 }
 
@@ -170,7 +172,7 @@ const handleCreateMailJob = async (payload: CreateMailJobPayload) => {
   try {
     await createMailJob(payload)
     showNewMailJobModal.value = false
-    message.success('邮件任务创建成功')
+    message.success(t('admin.profile.mailjob.messages.createSuccess'))
     await loadMailJobs()
   } catch (_error) {
     // request util handles error message

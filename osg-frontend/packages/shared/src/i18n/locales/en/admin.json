@@ -1045,5 +1045,149 @@
         "relativeDaysAgo": "{days} days ago"
       }
     }
+  },
+  "profile": {
+    "complaints": {
+      "title": "Complaints & Suggestions",
+      "filter": {
+        "searchPlaceholder": "Search student / content...",
+        "statusPlaceholder": "All statuses",
+        "typePlaceholder": "All types",
+        "search": "Search"
+      },
+      "status": {
+        "all": "All statuses",
+        "pending": "Pending",
+        "processing": "Processing",
+        "completed": "Completed"
+      },
+      "type": {
+        "all": "All types",
+        "complaint": "Complaint",
+        "suggestion": "Suggestion"
+      },
+      "columns": {
+        "student": "Student",
+        "type": "Type",
+        "title": "Title",
+        "submitTime": "Submitted At",
+        "status": "Status",
+        "action": "Action"
+      },
+      "action": {
+        "process": "Process",
+        "view": "View"
+      },
+      "messages": {
+        "loadFailed": "Failed to load complaints list",
+        "updateSuccess": "Status updated"
+      }
+    },
+    "logs": {
+      "title": "Operation Logs",
+      "description": "View system operation records",
+      "exportBtn": "Export Logs",
+      "filter": {
+        "searchPlaceholder": "Search operator / content...",
+        "typePlaceholder": "All types",
+        "search": "Search"
+      },
+      "operationType": {
+        "all": "All types",
+        "login": "Login",
+        "create": "Create",
+        "update": "Update",
+        "delete": "Delete"
+      },
+      "columns": {
+        "time": "Time",
+        "operator": "Operator",
+        "role": "Role",
+        "operationType": "Operation",
+        "content": "Content",
+        "ip": "IP Address"
+      },
+      "total": "{total} records",
+      "empty": "No operation logs",
+      "messages": {
+        "loadFailed": "Failed to load operation logs",
+        "exportSuccess": "Logs exported successfully",
+        "exportFailed": "Failed to export logs"
+      }
+    },
+    "mailjob": {
+      "title": "Mail Job",
+      "createBtn": "New Task",
+      "columns": {
+        "action": "Action"
+      },
+      "action": {
+        "view": "View",
+        "edit": "Edit",
+        "test": "Test"
+      },
+      "messages": {
+        "loadFailed": "Failed to load mail job list",
+        "createSuccess": "Mail task created successfully"
+      },
+      "modal": {
+        "title": "New Mail Task",
+        "jobTitle": "Task Title",
+        "jobTitlePlaceholder": "Enter task title",
+        "recipients": "Recipients",
+        "recipientsPlaceholder": "Select recipient group...",
+        "emailSubject": "Email Subject",
+        "emailSubjectPlaceholder": "Enter email subject",
+        "emailContent": "Email Content",
+        "emailContentPlaceholder": "Enter email content",
+        "smtpServer": "SMTP Server",
+        "cancel": "Cancel",
+        "createAndSend": "Create & Send",
+        "recipientGroup": {
+          "allStudents": "All Students",
+          "allMentors": "All Mentors",
+          "specificClass": "Specific Class"
+        }
+      }
+    },
+    "notice": {
+      "title": "Notice Management",
+      "sendBtn": "Send Notice",
+      "filter": {
+        "searchPlaceholder": "Title / Recipient",
+        "typePlaceholder": "Type",
+        "search": "Search"
+      },
+      "columns": {
+        "receiver": "Recipient",
+        "type": "Type",
+        "title": "Title",
+        "createTime": "Updated At",
+        "action": "Action"
+      },
+      "action": {
+        "view": "View"
+      },
+      "messages": {
+        "loadFailed": "Failed to load notice list",
+        "sendSuccess": "Notice sent successfully"
+      },
+      "modal": {
+        "title": "Send Notice",
+        "receiverTypeLabel": "Recipient Type",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Enter notice title",
+        "contentLabel": "Content",
+        "contentPlaceholder": "Enter notice content",
+        "cancel": "Cancel",
+        "send": "Send",
+        "receiverType": {
+          "allMentor": "All Mentors",
+          "targetMentor": "Specific Mentors",
+          "allStudent": "All Students",
+          "targetStudent": "Specific Students"
+        }
+      }
+    }
   }
 }

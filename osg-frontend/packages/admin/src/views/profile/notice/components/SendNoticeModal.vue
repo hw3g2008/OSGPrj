@@ -8,36 +8,39 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-bell-outline" aria-hidden="true" />
-        <span>发送通知</span>
+        <span>{{ t('admin.profile.notice.modal.title') }}</span>
       </span>
     </template>
     <a-form :label-col="{ span: 24 }" layout="vertical">
-      <a-form-item label="接收人类型" required>
+      <a-form-item :label="t('admin.profile.notice.modal.receiverTypeLabel')" required>
         <a-select v-model:value="form.receiverType">
-          <a-select-option value="all_mentor">全部导师</a-select-option>
-          <a-select-option value="target_mentor">指定导师</a-select-option>
-          <a-select-option value="all_student">全部学员</a-select-option>
-          <a-select-option value="target_student">指定学员</a-select-option>
+          <a-select-option value="all_mentor">{{ t('admin.profile.notice.modal.receiverType.allMentor') }}</a-select-option>
+          <a-select-option value="target_mentor">{{ t('admin.profile.notice.modal.receiverType.targetMentor') }}</a-select-option>
+          <a-select-option value="all_student">{{ t('admin.profile.notice.modal.receiverType.allStudent') }}</a-select-option>
+          <a-select-option value="target_student">{{ t('admin.profile.notice.modal.receiverType.targetStudent') }}</a-select-option>
         </a-select>
       </a-form-item>
-      <a-form-item label="标题" required>
-        <a-input v-model:value="form.noticeTitle" placeholder="输入通知标题" />
+      <a-form-item :label="t('admin.profile.notice.modal.titleLabel')" required>
+        <a-input v-model:value="form.noticeTitle" :placeholder="t('admin.profile.notice.modal.titlePlaceholder')" />
       </a-form-item>
-      <a-form-item label="内容" required>
-        <a-textarea v-model:value="form.noticeContent" :rows="4" placeholder="输入通知内容" />
+      <a-form-item :label="t('admin.profile.notice.modal.contentLabel')" required>
+        <a-textarea v-model:value="form.noticeContent" :rows="4" :placeholder="t('admin.profile.notice.modal.contentPlaceholder')" />
       </a-form-item>
     </a-form>
     <template #footer>
-      <a-button @click="$emit('update:modelValue', false)">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="handleConfirm">发送</a-button>
+      <a-button @click="$emit('update:modelValue', false)">{{ t('admin.profile.notice.modal.cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleConfirm">{{ t('admin.profile.notice.modal.send') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { NoticeReceiverType } from '@osg/shared/api/admin/notice'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
@@ -72,13 +75,13 @@ watch(
 )
 
 const defaultReceiverLabel = (receiverType: NoticeReceiverType) => {
-  const map: Record<string, string> = {
-    all_mentor: '全部导师',
-    target_mentor: '指定导师',
-    all_student: '全部学员',
-    target_student: '指定学员'
+  const map: Record<string, () => string> = {
+    all_mentor: () => t('admin.profile.notice.modal.receiverType.allMentor'),
+    target_mentor: () => t('admin.profile.notice.modal.receiverType.targetMentor'),
+    all_student: () => t('admin.profile.notice.modal.receiverType.allStudent'),
+    target_student: () => t('admin.profile.notice.modal.receiverType.targetStudent')
   }
-  return map[receiverType] ?? ''
+  return map[receiverType]?.() ?? ''
 }
 
 const handleConfirm = () => {

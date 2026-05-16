@@ -1,21 +1,21 @@
 <template>
   <section class="osg-page">
-    <PageHeader title-zh="通知管理">
+    <PageHeader :title-zh="t('admin.profile.notice.title')">
       <template #actions>
         <a-button type="primary" @click="showSendNoticeModal = true">
           <template #icon><BellOutlined /></template>
-          发送通知
+          {{ t('admin.profile.notice.sendBtn') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
       <a-form-item>
-        <a-input v-model:value="keyword" placeholder="标题 / 接收人" allow-clear style="width: 200px" />
+        <a-input v-model:value="keyword" :placeholder="t('admin.profile.notice.filter.searchPlaceholder')" allow-clear style="width: 200px" />
       </a-form-item>
       <a-form-item>
-        <a-select v-model:value="receiverType" placeholder="类型" allow-clear style="width: 120px">
-          <a-select-option value="">类型</a-select-option>
+        <a-select v-model:value="receiverType" :placeholder="t('admin.profile.notice.filter.typePlaceholder')" allow-clear style="width: 120px">
+          <a-select-option value="">{{ t('admin.profile.notice.filter.typePlaceholder') }}</a-select-option>
           <a-select-option value="Lead">Lead</a-select-option>
           <a-select-option value="Mentor">Mentor</a-select-option>
           <a-select-option value="Student">Student</a-select-option>
@@ -27,7 +27,7 @@
       <a-form-item>
         <a-button type="primary" @click="loadNotices">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ t('admin.profile.notice.filter.search') }}
         </a-button>
       </a-form-item>
     </a-form>
@@ -65,7 +65,7 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-button type="link" size="small" @click="activeNotice = record">
-              查看
+              {{ t('admin.profile.notice.action.view') }}
             </a-button>
           </template>
         </template>
@@ -81,7 +81,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { BellOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -94,6 +95,7 @@ import {
   type SendNoticePayload
 } from '@osg/shared/api/admin/notice'
 
+const { t } = useI18n()
 const rows = ref<NoticeRow[]>([])
 const keyword = ref('')
 const receiverType = ref<string>('')
@@ -102,15 +104,15 @@ const submitting = ref(false)
 const showSendNoticeModal = ref(false)
 const activeNotice = ref<NoticeRow | null>(null)
 
-const columns = [
+const columns = computed(() => [
   { title: 'ID', dataIndex: 'noticeId', key: 'noticeId', width: 120, fixed: 'left' as const },
-  { title: '接收人', dataIndex: 'receiverLabel', key: 'receiverLabel' },
-  { title: '类型', dataIndex: 'receiverType', key: 'receiverType' },
+  { title: t('admin.profile.notice.columns.receiver'), dataIndex: 'receiverLabel', key: 'receiverLabel' },
+  { title: t('admin.profile.notice.columns.type'), dataIndex: 'receiverType', key: 'receiverType' },
   { title: 'Tag', dataIndex: 'tag', key: 'tag' },
-  { title: '标题', dataIndex: 'noticeTitle', key: 'noticeTitle' },
-  { title: '更新时间', dataIndex: 'createTime', key: 'createTime' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
-]
+  { title: t('admin.profile.notice.columns.title'), dataIndex: 'noticeTitle', key: 'noticeTitle' },
+  { title: t('admin.profile.notice.columns.createTime'), dataIndex: 'createTime', key: 'createTime' },
+  { title: t('admin.profile.notice.columns.action'), dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
+])
 
 const loadNotices = async () => {
   try {
@@ -120,7 +122,7 @@ const loadNotices = async () => {
     })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('通知列表加载失败')
+    message.error(t('admin.profile.notice.messages.loadFailed'))
   }
 }
 
@@ -129,7 +131,7 @@ const handleSendNotice = async (payload: SendNoticePayload) => {
   try {
     await sendNotice(payload)
     showSendNoticeModal.value = false
-    message.success('通知发送成功')
+    message.success(t('admin.profile.notice.messages.sendSuccess'))
     await loadNotices()
   } catch (_error) {
     // request util handles error message

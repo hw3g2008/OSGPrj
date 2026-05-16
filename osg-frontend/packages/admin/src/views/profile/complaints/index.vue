@@ -1,30 +1,30 @@
 <template>
   <section class="osg-page">
-    <PageHeader title-zh="投诉建议" />
+    <PageHeader :title-zh="t('admin.profile.complaints.title')" />
 
     <a-form layout="inline" style="gap: 12px; flex-wrap: wrap">
       <a-form-item>
-        <a-input v-model:value="keyword" placeholder="搜索学员/内容..." allow-clear style="width: 200px" />
+        <a-input v-model:value="keyword" :placeholder="t('admin.profile.complaints.filter.searchPlaceholder')" allow-clear style="width: 200px" />
       </a-form-item>
       <a-form-item>
-        <a-select v-model:value="statusFilter" placeholder="全部状态" allow-clear style="width: 120px">
-          <a-select-option value="">全部状态</a-select-option>
-          <a-select-option value="pending">待处理</a-select-option>
-          <a-select-option value="processing">处理中</a-select-option>
-          <a-select-option value="completed">已完成</a-select-option>
+        <a-select v-model:value="statusFilter" :placeholder="t('admin.profile.complaints.filter.statusPlaceholder')" allow-clear style="width: 120px">
+          <a-select-option value="">{{ t('admin.profile.complaints.status.all') }}</a-select-option>
+          <a-select-option value="pending">{{ t('admin.profile.complaints.status.pending') }}</a-select-option>
+          <a-select-option value="processing">{{ t('admin.profile.complaints.status.processing') }}</a-select-option>
+          <a-select-option value="completed">{{ t('admin.profile.complaints.status.completed') }}</a-select-option>
         </a-select>
       </a-form-item>
       <a-form-item>
-        <a-select v-model:value="typeFilter" placeholder="全部类型" allow-clear style="width: 120px">
-          <a-select-option value="">全部类型</a-select-option>
-          <a-select-option value="complaint">投诉</a-select-option>
-          <a-select-option value="suggestion">建议</a-select-option>
+        <a-select v-model:value="typeFilter" :placeholder="t('admin.profile.complaints.filter.typePlaceholder')" allow-clear style="width: 120px">
+          <a-select-option value="">{{ t('admin.profile.complaints.type.all') }}</a-select-option>
+          <a-select-option value="complaint">{{ t('admin.profile.complaints.type.complaint') }}</a-select-option>
+          <a-select-option value="suggestion">{{ t('admin.profile.complaints.type.suggestion') }}</a-select-option>
         </a-select>
       </a-form-item>
       <a-form-item>
         <a-button type="primary" @click="loadComplaints">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ t('admin.profile.complaints.filter.search') }}
         </a-button>
       </a-form-item>
     </a-form>
@@ -67,7 +67,7 @@
               size="small"
               @click="handleProcess(record)"
             >
-              处理
+              {{ t('admin.profile.complaints.action.process') }}
             </a-button>
             <a-button
               v-else
@@ -75,7 +75,7 @@
               size="small"
               @click="handleView(record)"
             >
-              查看
+              {{ t('admin.profile.complaints.action.view') }}
             </a-button>
           </template>
         </template>
@@ -85,7 +85,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -95,36 +96,37 @@ import {
   type ComplaintRow
 } from '@osg/shared/api/admin/complaint'
 
+const { t } = useI18n()
 const rows = ref<ComplaintRow[]>([])
 const keyword = ref('')
 const statusFilter = ref<string>('')
 const typeFilter = ref<string>('')
 
-const columns = [
+const columns = computed(() => [
   { title: 'ID', dataIndex: 'complaintId', key: 'complaintId', width: 120, fixed: 'left' as const },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName' },
-  { title: '类型', dataIndex: 'complaintType', key: 'complaintType' },
-  { title: '标题', dataIndex: 'complaintTitle', key: 'complaintTitle' },
-  { title: '提交时间', dataIndex: 'submitTime', key: 'submitTime' },
-  { title: '状态', dataIndex: 'processStatus', key: 'processStatus' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
-]
+  { title: t('admin.profile.complaints.columns.student'), dataIndex: 'studentName', key: 'studentName' },
+  { title: t('admin.profile.complaints.columns.type'), dataIndex: 'complaintType', key: 'complaintType' },
+  { title: t('admin.profile.complaints.columns.title'), dataIndex: 'complaintTitle', key: 'complaintTitle' },
+  { title: t('admin.profile.complaints.columns.submitTime'), dataIndex: 'submitTime', key: 'submitTime' },
+  { title: t('admin.profile.complaints.columns.status'), dataIndex: 'processStatus', key: 'processStatus' },
+  { title: t('admin.profile.complaints.columns.action'), dataIndex: 'action', key: 'action', width: 120, fixed: 'right' as const }
+])
 
-const typeLabelMap: Record<string, string> = {
-  complaint: '投诉',
-  suggestion: '建议'
-}
+const typeLabelMap = computed<Record<string, string>>(() => ({
+  complaint: t('admin.profile.complaints.type.complaint'),
+  suggestion: t('admin.profile.complaints.type.suggestion')
+}))
 
 const typeColorMap: Record<string, string> = {
   complaint: 'error',
   suggestion: 'processing'
 }
 
-const statusLabelMap: Record<string, string> = {
-  pending: '待处理',
-  processing: '处理中',
-  completed: '已完成'
-}
+const statusLabelMap = computed<Record<string, string>>(() => ({
+  pending: t('admin.profile.complaints.status.pending'),
+  processing: t('admin.profile.complaints.status.processing'),
+  completed: t('admin.profile.complaints.status.completed')
+}))
 
 const statusColorMap: Record<string, string> = {
   pending: 'warning',
@@ -137,7 +139,7 @@ const loadComplaints = async () => {
     const response = await getComplaintList()
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('投诉建议列表加载失败')
+    message.error(t('admin.profile.complaints.messages.loadFailed'))
   }
 }
 
@@ -145,7 +147,7 @@ const handleProcess = async (row: ComplaintRow) => {
   try {
     const nextStatus = row.processStatus === 'pending' ? 'processing' : 'completed'
     await updateComplaintStatus(row.complaintId, nextStatus)
-    message.success('状态更新成功')
+    message.success(t('admin.profile.complaints.messages.updateSuccess'))
     await loadComplaints()
   } catch (_error) {
     // request util handles message
