@@ -540,7 +540,7 @@ node osg-frontend/scripts/extract-i18n.mjs --check packages/<END>/src/views/<mod
 - [x] P0.4 基础设施验证 (2026-05-16, shared 34 测试文件 399 测试全绿; admin 4 个 i18n 测试系预存量失败，不在 P0 scope)
 - [x] P0.4b check-glossary.mjs (2026-05-16, scripts/check-glossary.mjs --staged / --all 双模式)
 - [x] P0.5 commit 1 push (2026-05-16, commit c23416cd 已推 main)
-- [~] P0.6 shared 公共组件 t() 化（移交 Phase 2 §11「i18n-shared 最优先」批处理，详见 docs/i18n-todo-shared.md。理由：shared 共 983 占位 642 唯一，单 orchestrator 会话 token 预算不足以全量改 + 同步修每个组件 .spec.ts；plan §11 已预留兜底路径。Phase 1 worker 遇到 shared 依赖按 SOP 标 TODO(i18n-shared) 跳过）
+- [x] P0.6 shared 公共组件 t() 化 (2026-05-16, 5 个 commit + 1 tools commit；shared 60+ 文件 t() 化；user-facing 文案 0 硬编码；test/类型注释/模式匹配字符串通过 i18n-skip-file pragma 或 TODO(i18n) 标注豁免；shared 全套 400 测试通过)
 
 ### Phase 1（5 worker 并行）
 
