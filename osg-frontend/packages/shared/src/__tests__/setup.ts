@@ -15,6 +15,16 @@
 // ============================================================
 
 import { afterEach } from 'vitest'
+import { config } from '@vue/test-utils'
+import { i18n } from '../i18n'
+
+// vue-i18n: install plugin globally so every mount() picks it up; lock locale to zh because
+// existing assertions (and shared specs going forward) check Chinese text directly per
+// `i18n-glossary.md` §4 ("测试用例的 expect 描述保中文方便看"). Set the locale value
+// directly rather than via setLocale() to avoid touching localStorage before our storage
+// polyfill (below) is installed.
+i18n.global.locale.value = 'zh'
+config.global.plugins = [...((config.global.plugins as unknown[]) || []), i18n as never]
 
 class MemoryStorage implements Storage {
   private store = new Map<string, string>()

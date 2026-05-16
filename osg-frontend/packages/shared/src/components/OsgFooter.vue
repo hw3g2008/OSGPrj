@@ -1,12 +1,15 @@
 <template>
   <footer class="osg-footer">
     <slot>
-      <p>© {{ year }} OSG 职业培训平台</p>
+      <p>{{ t('common.shared.footer.copyright', { year }) }}</p>
     </slot>
   </footer>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const year = new Date().getFullYear()
 </script>
 

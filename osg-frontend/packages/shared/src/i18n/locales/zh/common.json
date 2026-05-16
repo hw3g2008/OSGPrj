@@ -1,10 +1,127 @@
 {
-  "action": {},
+  "action": {
+    "ok": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "submit": "提交",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "close": "关闭",
+    "search": "搜索",
+    "reset": "重置",
+    "back": "返回",
+    "next": "下一步",
+    "prev": "上一步"
+  },
   "message": {},
   "field": {},
   "validation": {},
   "tip": {},
-  "shared": {},
+  "shared": {
+    "sidebar": {
+      "home": "首页",
+      "profile": "个人设置",
+      "logout": "退出登录",
+      "logoutConfirmTitle": "确定要退出登录吗？"
+    },
+    "footer": {
+      "copyright": "© {year} OSG 职业培训平台"
+    },
+    "stage": {
+      "fallback": "未更新"
+    },
+    "coachingStatus": {
+      "new": "新申请",
+      "coaching": "辅导中"
+    },
+    "companyPosition": {
+      "locationFallback": "地区待补充"
+    },
+    "multiSelect": {
+      "placeholder": "请选择"
+    },
+    "forgotPassword": {
+      "title": "找回密码",
+      "step1": {
+        "prompt": "请输入您的注册邮箱，我们将发送验证码",
+        "emailLabel": "邮箱地址",
+        "emailPlaceholder": "请输入注册邮箱",
+        "sendCode": "发送验证码"
+      },
+      "step2": {
+        "sentTo": "验证码已发送至",
+        "codeLabel": "验证码",
+        "codePlaceholder": "请输入 6 位验证码",
+        "verify": "验证"
+      },
+      "step3": {
+        "prompt": "请设置您的新密码",
+        "newPasswordLabel": "新密码",
+        "newPasswordPlaceholder": "8-20 位，包含字母和数字",
+        "confirmLabel": "确认密码",
+        "confirmPlaceholder": "请再次输入新密码",
+        "resetButton": "重置密码"
+      },
+      "step4": {
+        "title": "密码重置成功",
+        "prompt": "您的密码已成功重置，请使用新密码登录",
+        "backToLogin": "返回登录"
+      },
+      "steps": {
+        "1": "请输入您注册时使用的邮箱，我们将发送验证码",
+        "2": "请输入验证码",
+        "3": "请设置新密码"
+      },
+      "resend": "重新发送",
+      "strength": {
+        "placeholder": "密码强度",
+        "weak": "弱",
+        "medium": "中",
+        "strong": "强"
+      },
+      "errors": {
+        "codeLength6": "请输入 6 位验证码",
+        "confirmMismatch": "两次输入的密码不一致",
+        "newPasswordEmpty": "请输入新密码",
+        "passwordLength": "密码长度需为 8-20 字符",
+        "passwordNeedLetters": "密码需包含字母",
+        "passwordNeedDigits": "密码需包含数字",
+        "invalidEmail": "请输入有效的邮箱地址",
+        "sendFailed": "发送失败，请重试",
+        "resendFailed": "重新发送失败，请重试",
+        "verifyFailed": "验证失败",
+        "resetFailed": "重置失败，请重试"
+      },
+      "success": {
+        "codeSent": "我们会往您的注册邮箱发送验证码，请查收",
+        "codeResent": "验证码已重新发送"
+      },
+      "countdown": {
+        "willResend": "{n}秒后可重新发送",
+        "expired": "验证码已过期，可重新发送"
+      }
+    },
+    "forceChangePassword": {
+      "title": "请修改默认密码",
+      "intro": "您的账号正在使用系统默认密码，出于安全考虑，请先修改密码后再继续使用。",
+      "newPasswordLabel": "新密码",
+      "newPasswordPlaceholder": "8-20 位，须含字母和数字",
+      "confirmLabel": "确认新密码",
+      "confirmPlaceholder": "请再次输入新密码",
+      "submitButton": "修改并继续",
+      "successMessage": "密码修改成功",
+      "errors": {
+        "newPasswordRequired": "请输入新密码",
+        "passwordLength": "密码长度 8-20 位",
+        "needLetter": "密码必须包含字母",
+        "needDigit": "密码必须包含数字",
+        "notDefault": "新密码不能与系统默认密码相同",
+        "confirmRequired": "请再次输入新密码",
+        "confirmMismatch": "两次输入不一致"
+      }
+    }
+  },
   "legacy": {
     "statistics_card_data": "统计卡片数据",
     "to_do_items": "待处理事项",

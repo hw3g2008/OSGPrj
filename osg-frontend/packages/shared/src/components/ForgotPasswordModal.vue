@@ -13,7 +13,7 @@
     <template #title>
       <span class="osg-fp-title" data-surface-part="header">
         <i class="mdi mdi-key" aria-hidden="true"></i>
-        <span>找回密码</span>
+        <span>{{ t('common.shared.forgotPassword.title') }}</span>
       </span>
     </template>
 
@@ -59,10 +59,10 @@
 
       <!-- Step 1: 邮箱 -->
       <div v-if="currentStep === 1" id="fp-step-1" class="osg-fp-step">
-        <p class="osg-fp-step-text">请输入您的注册邮箱，我们将发送验证码</p>
+        <p class="osg-fp-step-text">{{ t('common.shared.forgotPassword.step1.prompt') }}</p>
         <a-form layout="vertical" @submit.prevent="handleSendCode">
           <a-form-item
-            label="邮箱地址"
+            :label="t('common.shared.forgotPassword.step1.emailLabel')"
             :validate-status="emailError ? 'error' : ''"
             :help="emailError || undefined"
             required
@@ -71,7 +71,7 @@
               id="fp-email"
               v-model:value="step1Form.email"
               type="email"
-              placeholder="请输入注册邮箱"
+              :placeholder="t('common.shared.forgotPassword.step1.emailPlaceholder')"
               autocomplete="email"
               size="large"
               :disabled="sendingCode"
@@ -88,18 +88,18 @@
             <template v-if="!sendingCode" #icon>
               <i class="mdi mdi-email-fast" aria-hidden="true"></i>
             </template>
-            发送验证码
+            {{ t('common.shared.forgotPassword.step1.sendCode') }}
           </a-button>
         </a-form>
       </div>
 
       <!-- Step 2: 验证码 -->
       <div v-else-if="currentStep === 2" id="fp-step-2" class="osg-fp-step">
-        <p class="osg-fp-step-text osg-fp-step-text--compact">验证码已发送至</p>
+        <p class="osg-fp-step-text osg-fp-step-text--compact">{{ t('common.shared.forgotPassword.step2.sentTo') }}</p>
         <p class="osg-fp-masked-email">{{ maskedEmail }}</p>
         <a-form layout="vertical" @submit.prevent="handleVerifyCode">
           <a-form-item
-            label="验证码"
+            :label="t('common.shared.forgotPassword.step2.codeLabel')"
             :validate-status="codeError ? 'error' : ''"
             :help="codeError || undefined"
             required
@@ -109,7 +109,7 @@
                 id="fp-code"
                 v-model:value="step2Form.code"
                 type="text"
-                placeholder="请输入 6 位验证码"
+                :placeholder="t('common.shared.forgotPassword.step2.codePlaceholder')"
                 :maxlength="6"
                 size="large"
                 :disabled="verifying"
@@ -137,27 +137,27 @@
             <template v-if="!verifying" #icon>
               <i class="mdi mdi-check" aria-hidden="true"></i>
             </template>
-            验证
+            {{ t('common.shared.forgotPassword.step2.verify') }}
           </a-button>
         </a-form>
       </div>
 
       <!-- Step 3: 新密码 + 确认密码 -->
       <div v-else-if="currentStep === 3" id="fp-step-3" class="osg-fp-step">
-        <p class="osg-fp-step-text">请设置您的新密码</p>
+        <p class="osg-fp-step-text">{{ t('common.shared.forgotPassword.step3.prompt') }}</p>
         <a-form layout="vertical" @submit.prevent="handleResetPassword">
-          <a-form-item label="新密码" required>
+          <a-form-item :label="t('common.shared.forgotPassword.step3.newPasswordLabel')" required>
             <a-input-password
               id="fp-new-pwd"
               v-model:value="step3Form.newPassword"
-              placeholder="8-20 位，包含字母和数字"
+              :placeholder="t('common.shared.forgotPassword.step3.newPasswordPlaceholder')"
               size="large"
               autocomplete="new-password"
               :disabled="resetting"
             />
           </a-form-item>
           <a-form-item
-            label="确认密码"
+            :label="t('common.shared.forgotPassword.step3.confirmLabel')"
             :validate-status="confirmError ? 'error' : ''"
             :help="confirmError || undefined"
             required
@@ -165,7 +165,7 @@
             <a-input-password
               id="fp-confirm-pwd"
               v-model:value="step3Form.confirmPassword"
-              placeholder="请再次输入新密码"
+              :placeholder="t('common.shared.forgotPassword.step3.confirmPlaceholder')"
               size="large"
               autocomplete="new-password"
               :disabled="resetting"
@@ -182,7 +182,7 @@
             <template v-if="!resetting" #icon>
               <i class="mdi mdi-lock-reset" aria-hidden="true"></i>
             </template>
-            重置密码
+            {{ t('common.shared.forgotPassword.step3.resetButton') }}
           </a-button>
         </a-form>
       </div>
@@ -196,10 +196,10 @@
         <div class="osg-fp-success-icon-wrap">
           <i class="mdi mdi-check-circle" aria-hidden="true"></i>
         </div>
-        <h3 class="osg-fp-success-title">密码重置成功</h3>
-        <p class="osg-fp-step-text">您的密码已成功重置，请使用新密码登录</p>
+        <h3 class="osg-fp-success-title">{{ t('common.shared.forgotPassword.step4.title') }}</h3>
+        <p class="osg-fp-step-text">{{ t('common.shared.forgotPassword.step4.prompt') }}</p>
         <a-button type="primary" block size="large" @click="closeModal">
-          返回登录
+          {{ t('common.shared.forgotPassword.step4.backToLogin') }}
         </a-button>
       </div>
     </div>
@@ -208,10 +208,13 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   useForgotPasswordFlow,
   type ForgotPasswordEndpoints,
 } from '../composables/useForgotPasswordFlow'
+
+const { t } = useI18n()
 
 interface Props {
   /** 是否打开 modal（v-model:open） */

@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 /**
  * 公司 + 岗位 + 地点 cell（三端共用）
@@ -55,13 +56,15 @@ const props = withDefaults(
     location: '',
     role: '',
     companyFallback: '-',
-    locationFallback: '地区待补充',
+    locationFallback: '',
     metaSeparator: ' · ',
     metaMode: 'position-location',
     highlight: false,
     toneClass: '',
   },
 )
+
+const { t } = useI18n()
 
 const displayCompany = computed(() => {
   const raw = String(props.company ?? '').trim()
@@ -74,7 +77,7 @@ const metaText = computed(() => {
   }
   // position-location mode
   const pos = String(props.position ?? '').trim() || '-'
-  const loc = String(props.location ?? '').trim() || props.locationFallback
+  const loc = String(props.location ?? '').trim() || props.locationFallback || t('common.shared.companyPosition.locationFallback')
   return `${pos}${props.metaSeparator}${loc}`
 })
 </script>

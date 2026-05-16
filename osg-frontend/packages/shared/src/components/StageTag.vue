@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { resolveStageColor } from '../utils/jobOverviewTone'
 
 /**
@@ -19,19 +20,22 @@ const props = withDefaults(
   defineProps<{
     /** 面试阶段字符串（如 "First Round" / "offer" / "投递" 等） */
     stage?: string | null
-    /** 空值时展示的文本，默认 "未更新" */
+    /** 空值时展示的文本；省略时取 t('common.shared.stage.fallback') */
     fallback?: string
   }>(),
   {
     stage: '',
-    fallback: '未更新',
+    fallback: '',
   },
 )
+
+const { t } = useI18n()
 
 const color = computed(() => resolveStageColor(props.stage))
 
 const displayText = computed(() => {
   const raw = String(props.stage ?? '').trim()
-  return raw || props.fallback
+  if (raw) return raw
+  return props.fallback || t('common.shared.stage.fallback')
 })
 </script>

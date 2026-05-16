@@ -23,8 +23,10 @@
  * - 倒计时 onBeforeUnmount 自动清理（调用方需挂载到组件 lifecycle）
  */
 import { computed, onBeforeUnmount, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import {
+  FORGOT_PASSWORD_I18N,
   getForgotPasswordResendMeta,
   getForgotPasswordStepDescription,
   getPasswordStrengthMeta,
@@ -34,6 +36,15 @@ import {
   validateForgotPasswordEmail,
   validateForgotPasswordPassword,
 } from '../utils/forgotPasswordHelpers'
+
+const COUNTDOWN_NUMERIC = /^\d+s$/
+
+/** Translate helper return: if it's an i18n key, run t(); if it's a numeric "30s" literal or '', return as-is. */
+function translateHelperLabel(value: string, t: (key: string) => string): string {
+  if (!value) return ''
+  if (COUNTDOWN_NUMERIC.test(value)) return value
+  return t(value)
+}
 
 /** 发送验证码 API 入参 */
 export interface SendCodePayload {
@@ -81,6 +92,7 @@ export interface UseForgotPasswordFlowOptions {
  */
 export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
   const { endpoints, countdownSeconds = 60 } = options
+  const { t } = useI18n()
 
   // ── State ──
   const currentStep = ref<1 | 2 | 3 | 4>(1)
@@ -104,18 +116,23 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
 
   // ── Computed ──
   const maskedEmail = computed(() => maskForgotPasswordEmail(step1Form.email))
-  const stepDescription = computed(() =>
-    getForgotPasswordStepDescription(currentStep.value),
-  )
-  const passwordStrength = computed(() =>
-    getPasswordStrengthMeta(step3Form.newPassword),
-  )
-  const resendMeta = computed(() => getForgotPasswordResendMeta(countdown.value))
+  const stepDescription = computed(() => {
+    const key = getForgotPasswordStepDescription(currentStep.value)
+    return key ? t(key) : ''
+  })
+  const passwordStrength = computed(() => {
+    const raw = getPasswordStrengthMeta(step3Form.newPassword)
+    return { className: raw.className, text: t(raw.text) }
+  })
+  const resendMeta = computed(() => {
+    const raw = getForgotPasswordResendMeta(countdown.value)
+    return { disabled: raw.disabled, label: translateHelperLabel(raw.label, t) }
+  })
   const countdownText = computed(() => {
     if (countdown.value > 0) {
-      return `${countdown.value}秒后可重新发送`
+      return t('common.shared.forgotPassword.countdown.willResend', { n: countdown.value })
     }
-    return '验证码已过期，可重新发送'
+    return t('common.shared.forgotPassword.countdown.expired')
   })
 
   // ── Internals ──
@@ -176,20 +193,20 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
     emailError.value = ''
 
     if (!validateForgotPasswordEmail(step1Form.email)) {
-      emailError.value = '请输入有效的邮箱地址'
+      emailError.value = t('common.shared.forgotPassword.errors.invalidEmail')
       return
     }
 
     sendingCode.value = true
     try {
       await endpoints.sendCode({ email: step1Form.email.trim() })
-      successMessage.value = '我们会往您的注册邮箱发送验证码，请查收'
+      successMessage.value = t('common.shared.forgotPassword.success.codeSent')
       step2Form.code = ''
       currentStep.value = 2
       startCountdown()
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : '发送失败，请重试'
+        error instanceof Error ? error.message : t('common.shared.forgotPassword.errors.sendFailed')
     } finally {
       sendingCode.value = false
     }
@@ -204,11 +221,11 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
     sendingCode.value = true
     try {
       await endpoints.sendCode({ email: step1Form.email.trim() })
-      successMessage.value = '验证码已重新发送'
+      successMessage.value = t('common.shared.forgotPassword.success.codeResent')
       startCountdown()
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : '重新发送失败，请重试'
+        error instanceof Error ? error.message : t('common.shared.forgotPassword.errors.resendFailed')
     } finally {
       sendingCode.value = false
     }
@@ -217,9 +234,9 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
   const handleVerifyCode = async () => {
     resetMessages()
     codeError.value = ''
-    const nextCodeError = validateForgotPasswordCode(step2Form.code)
-    if (nextCodeError) {
-      codeError.value = nextCodeError
+    const nextCodeErrorKey = validateForgotPasswordCode(step2Form.code)
+    if (nextCodeErrorKey) {
+      codeError.value = t(nextCodeErrorKey)
       return
     }
 
@@ -233,7 +250,7 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
       currentStep.value = 3
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : '验证失败'
+        error instanceof Error ? error.message : t('common.shared.forgotPassword.errors.verifyFailed')
     } finally {
       verifying.value = false
     }
@@ -243,18 +260,18 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
     resetMessages()
     confirmError.value = ''
 
-    const mismatchError = validateForgotPasswordConfirmation(
+    const mismatchErrorKey = validateForgotPasswordConfirmation(
       step3Form.newPassword,
       step3Form.confirmPassword,
     )
-    if (mismatchError) {
-      confirmError.value = mismatchError
+    if (mismatchErrorKey) {
+      confirmError.value = t(mismatchErrorKey)
       return
     }
 
-    const passwordError = validateForgotPasswordPassword(step3Form.newPassword)
-    if (passwordError) {
-      errorMessage.value = passwordError
+    const passwordErrorKey = validateForgotPasswordPassword(step3Form.newPassword)
+    if (passwordErrorKey) {
+      errorMessage.value = t(passwordErrorKey)
       return
     }
 
@@ -268,7 +285,7 @@ export function useForgotPasswordFlow(options: UseForgotPasswordFlowOptions) {
       currentStep.value = 4
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : '重置失败，请重试'
+        error instanceof Error ? error.message : t('common.shared.forgotPassword.errors.resetFailed')
     } finally {
       resetting.value = false
     }

@@ -10,6 +10,7 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { resolveCoachingStatusColor } from '../utils/jobOverviewTone'
 
 /**
@@ -46,6 +47,8 @@ const props = withDefaults(
 
 useSlots()
 
+const { t } = useI18n()
+
 const isEmpty = computed(() => {
   const raw = String(props.status ?? '').trim()
   return !raw
@@ -56,8 +59,8 @@ const color = computed(() => resolveCoachingStatusColor(props.status))
 const displayText = computed(() => {
   const raw = String(props.status ?? '').trim()
   if (props.textMode === 'normalized') {
-    if (raw === 'new') return '新申请'
-    if (raw === 'coaching') return '辅导中'
+    if (raw === 'new') return t('common.shared.coachingStatus.new')
+    if (raw === 'coaching') return t('common.shared.coachingStatus.coaching')
   }
   return raw
 })

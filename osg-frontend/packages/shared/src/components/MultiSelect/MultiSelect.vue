@@ -4,7 +4,7 @@
     mode="multiple"
     :options="options"
     :field-names="fieldNames"
-    :placeholder="placeholder"
+    :placeholder="resolvedPlaceholder"
     :disabled="disabled"
     show-search
     allow-clear
@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 type MultiValue = (string | number)[]
 
@@ -25,10 +26,13 @@ const props = withDefaults(defineProps<{
 }>(), {
   value: () => [],
   options: () => [],
-  placeholder: '请选择',
+  placeholder: '',
   disabled: false,
   fieldNames: () => ({ label: 'label', value: 'value' })
 })
+
+const { t } = useI18n()
+const resolvedPlaceholder = computed(() => props.placeholder || t('common.shared.multiSelect.placeholder'))
 
 const emit = defineEmits<{
   'update:value': [value: MultiValue]

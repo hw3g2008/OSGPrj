@@ -2,10 +2,14 @@
  * forgotPasswordHelpers unit tests
  *
  * SSOT：迁移自 assistant/src/views/forgot-password/forgot-password-workflow.ts 业务逻辑
+ *
+ * i18n: helpers now return i18n keys; tests assert keys directly per glossary §4
+ * ("测试用例的 expect 描述保中文方便看")
  */
 import { describe, expect, it } from 'vitest'
 
 import {
+  FORGOT_PASSWORD_I18N,
   getForgotPasswordResendMeta,
   getForgotPasswordStepDescription,
   getPasswordStrengthMeta,
@@ -51,18 +55,16 @@ describe('maskForgotPasswordEmail', () => {
 })
 
 describe('getForgotPasswordStepDescription', () => {
-  it('9. step=1 → 输入邮箱引导', () => {
-    expect(getForgotPasswordStepDescription(1)).toBe(
-      '请输入您注册时使用的邮箱，我们将发送验证码',
-    )
+  it('9. step=1 → step1 i18n key', () => {
+    expect(getForgotPasswordStepDescription(1)).toBe(FORGOT_PASSWORD_I18N.steps[1])
   })
 
-  it('10. step=2 → 输入验证码', () => {
-    expect(getForgotPasswordStepDescription(2)).toBe('请输入验证码')
+  it('10. step=2 → step2 i18n key', () => {
+    expect(getForgotPasswordStepDescription(2)).toBe(FORGOT_PASSWORD_I18N.steps[2])
   })
 
-  it('11. step=3 → 设置新密码', () => {
-    expect(getForgotPasswordStepDescription(3)).toBe('请设置新密码')
+  it('11. step=3 → step3 i18n key', () => {
+    expect(getForgotPasswordStepDescription(3)).toBe(FORGOT_PASSWORD_I18N.steps[3])
   })
 
   it('12. step=4 → 空', () => {
@@ -86,61 +88,61 @@ describe('getForgotPasswordResendMeta', () => {
     })
   })
 
-  it('15. countdown=0 → enabled + 重新发送', () => {
+  it('15. countdown=0 → enabled + resend i18n key', () => {
     expect(getForgotPasswordResendMeta(0)).toEqual({
       disabled: false,
-      label: '重新发送',
+      label: FORGOT_PASSWORD_I18N.resend,
     })
   })
 
-  it('16. countdown<0 (异常) → enabled + 重新发送', () => {
+  it('16. countdown<0 (异常) → enabled + resend i18n key', () => {
     expect(getForgotPasswordResendMeta(-1)).toEqual({
       disabled: false,
-      label: '重新发送',
+      label: FORGOT_PASSWORD_I18N.resend,
     })
   })
 })
 
 describe('getPasswordStrengthMeta', () => {
-  it('17. 空 → 默认提示（无 className）', () => {
+  it('17. 空 → 默认提示 i18n key（无 className）', () => {
     expect(getPasswordStrengthMeta('')).toEqual({
       className: '',
-      text: '密码强度',
+      text: FORGOT_PASSWORD_I18N.strength.placeholder,
     })
   })
 
   it('18. 仅长度（无字母无数字）→ 弱', () => {
     expect(getPasswordStrengthMeta('!!!!!!!!')).toEqual({
       className: 'strength-weak',
-      text: '弱',
+      text: FORGOT_PASSWORD_I18N.strength.weak,
     })
   })
 
   it('19. 长度+字母（无数字）→ 中', () => {
     expect(getPasswordStrengthMeta('abcdefgh')).toEqual({
       className: 'strength-medium',
-      text: '中',
+      text: FORGOT_PASSWORD_I18N.strength.medium,
     })
   })
 
   it('20. 长度+字母+数字 → 强', () => {
     expect(getPasswordStrengthMeta('abc12345')).toEqual({
       className: 'strength-strong',
-      text: '强',
+      text: FORGOT_PASSWORD_I18N.strength.strong,
     })
   })
 
   it('21. 短密码 + 字母（score=1）→ 弱', () => {
     expect(getPasswordStrengthMeta('abc')).toEqual({
       className: 'strength-weak',
-      text: '弱',
+      text: FORGOT_PASSWORD_I18N.strength.weak,
     })
   })
 
   it('22. 短密码 + 字母 + 数字（score=2）→ 中', () => {
     expect(getPasswordStrengthMeta('a1')).toEqual({
       className: 'strength-medium',
-      text: '中',
+      text: FORGOT_PASSWORD_I18N.strength.medium,
     })
   })
 })
@@ -154,16 +156,16 @@ describe('validateForgotPasswordCode', () => {
     expect(validateForgotPasswordCode('  123456  ')).toBe('')
   })
 
-  it('25. 5 位 → 错误', () => {
-    expect(validateForgotPasswordCode('12345')).toBe('请输入 6 位验证码')
+  it('25. 5 位 → 错误 i18n key', () => {
+    expect(validateForgotPasswordCode('12345')).toBe(FORGOT_PASSWORD_I18N.errors.codeLength6)
   })
 
-  it('26. 7 位 → 错误', () => {
-    expect(validateForgotPasswordCode('1234567')).toBe('请输入 6 位验证码')
+  it('26. 7 位 → 错误 i18n key', () => {
+    expect(validateForgotPasswordCode('1234567')).toBe(FORGOT_PASSWORD_I18N.errors.codeLength6)
   })
 
-  it('27. 空 → 错误', () => {
-    expect(validateForgotPasswordCode('')).toBe('请输入 6 位验证码')
+  it('27. 空 → 错误 i18n key', () => {
+    expect(validateForgotPasswordCode('')).toBe(FORGOT_PASSWORD_I18N.errors.codeLength6)
   })
 })
 
@@ -172,9 +174,9 @@ describe('validateForgotPasswordConfirmation', () => {
     expect(validateForgotPasswordConfirmation('abc123XX', 'abc123XX')).toBe('')
   })
 
-  it('29. 不一致 → 错误', () => {
+  it('29. 不一致 → 错误 i18n key', () => {
     expect(validateForgotPasswordConfirmation('abc123', 'xyz789')).toBe(
-      '两次输入的密码不一致',
+      FORGOT_PASSWORD_I18N.errors.confirmMismatch,
     )
   })
 
@@ -184,26 +186,30 @@ describe('validateForgotPasswordConfirmation', () => {
 })
 
 describe('validateForgotPasswordPassword', () => {
-  it('31. 空 → 请输入新密码', () => {
-    expect(validateForgotPasswordPassword('')).toBe('请输入新密码')
+  it('31. 空 → newPasswordEmpty key', () => {
+    expect(validateForgotPasswordPassword('')).toBe(FORGOT_PASSWORD_I18N.errors.newPasswordEmpty)
   })
 
-  it('32. 长度<8 → 长度错误', () => {
-    expect(validateForgotPasswordPassword('abc12')).toBe('密码长度需为 8-20 字符')
+  it('32. 长度<8 → passwordLength key', () => {
+    expect(validateForgotPasswordPassword('abc12')).toBe(FORGOT_PASSWORD_I18N.errors.passwordLength)
   })
 
-  it('33. 长度>20 → 长度错误', () => {
+  it('33. 长度>20 → passwordLength key', () => {
     expect(validateForgotPasswordPassword('a'.repeat(21))).toBe(
-      '密码长度需为 8-20 字符',
+      FORGOT_PASSWORD_I18N.errors.passwordLength,
     )
   })
 
-  it('34. 无字母 → 字母错误', () => {
-    expect(validateForgotPasswordPassword('12345678')).toBe('密码需包含字母')
+  it('34. 无字母 → passwordNeedLetters key', () => {
+    expect(validateForgotPasswordPassword('12345678')).toBe(
+      FORGOT_PASSWORD_I18N.errors.passwordNeedLetters,
+    )
   })
 
-  it('35. 无数字 → 数字错误', () => {
-    expect(validateForgotPasswordPassword('abcdefgh')).toBe('密码需包含数字')
+  it('35. 无数字 → passwordNeedDigits key', () => {
+    expect(validateForgotPasswordPassword('abcdefgh')).toBe(
+      FORGOT_PASSWORD_I18N.errors.passwordNeedDigits,
+    )
   })
 
   it('36. 长度+字母+数字 → 通过', () => {

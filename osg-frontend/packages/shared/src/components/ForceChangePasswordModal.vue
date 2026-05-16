@@ -12,12 +12,12 @@
     <template #title>
       <span class="force-pwd__title">
         <span class="mdi mdi-lock-alert" aria-hidden="true" />
-        <span>请修改默认密码</span>
+        <span>{{ t('common.shared.forceChangePassword.title') }}</span>
       </span>
     </template>
 
     <p class="force-pwd__intro">
-      您的账号正在使用系统默认密码，出于安全考虑，请先修改密码后再继续使用。
+      {{ t('common.shared.forceChangePassword.intro') }}
     </p>
 
     <a-form
@@ -27,30 +27,30 @@
       layout="vertical"
       :required-mark="false"
     >
-      <a-form-item name="newPassword" label="新密码">
+      <a-form-item name="newPassword" :label="t('common.shared.forceChangePassword.newPasswordLabel')">
         <a-input-password
           v-model:value="formState.newPassword"
-          placeholder="8-20 位，须含字母和数字"
+          :placeholder="t('common.shared.forceChangePassword.newPasswordPlaceholder')"
           autocomplete="new-password"
         />
       </a-form-item>
-      <a-form-item name="confirmPassword" label="确认新密码">
+      <a-form-item name="confirmPassword" :label="t('common.shared.forceChangePassword.confirmLabel')">
         <a-input-password
           v-model:value="formState.confirmPassword"
-          placeholder="请再次输入新密码"
+          :placeholder="t('common.shared.forceChangePassword.confirmPlaceholder')"
           autocomplete="new-password"
         />
       </a-form-item>
     </a-form>
 
     <div class="force-pwd__actions">
-      <a-button @click="handleLogout">退出登录</a-button>
+      <a-button @click="handleLogout">{{ t('common.shared.sidebar.logout') }}</a-button>
       <a-button
         type="primary"
         :loading="loading"
         @click="handleSubmit"
       >
-        修改并继续
+        {{ t('common.shared.forceChangePassword.submitButton') }}
       </a-button>
     </div>
   </a-modal>
@@ -59,6 +59,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { updateFirstLoginPwd } from '../api/user'
 
 const props = defineProps<{
@@ -70,6 +71,7 @@ const emit = defineEmits<{
   logout: []
 }>()
 
+const { t } = useI18n()
 const formRef = ref()
 const loading = ref(false)
 
@@ -79,17 +81,17 @@ const formState = reactive({
 })
 
 const validateNewPassword = (_rule: any, value: string) => {
-  if (!value) return Promise.reject('请输入新密码')
-  if (value.length < 8 || value.length > 20) return Promise.reject('密码长度 8-20 位')
-  if (!/[a-zA-Z]/.test(value)) return Promise.reject('密码必须包含字母')
-  if (!/\d/.test(value)) return Promise.reject('密码必须包含数字')
-  if (value === 'Osg@2026') return Promise.reject('新密码不能与系统默认密码相同')
+  if (!value) return Promise.reject(t('common.shared.forceChangePassword.errors.newPasswordRequired'))
+  if (value.length < 8 || value.length > 20) return Promise.reject(t('common.shared.forceChangePassword.errors.passwordLength'))
+  if (!/[a-zA-Z]/.test(value)) return Promise.reject(t('common.shared.forceChangePassword.errors.needLetter'))
+  if (!/\d/.test(value)) return Promise.reject(t('common.shared.forceChangePassword.errors.needDigit'))
+  if (value === 'Osg@2026') return Promise.reject(t('common.shared.forceChangePassword.errors.notDefault'))
   return Promise.resolve()
 }
 
 const validateConfirm = (_rule: any, value: string) => {
-  if (!value) return Promise.reject('请再次输入新密码')
-  if (value !== formState.newPassword) return Promise.reject('两次输入不一致')
+  if (!value) return Promise.reject(t('common.shared.forceChangePassword.errors.confirmRequired'))
+  if (value !== formState.newPassword) return Promise.reject(t('common.shared.forceChangePassword.errors.confirmMismatch'))
   return Promise.resolve()
 }
 
@@ -113,7 +115,7 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     loading.value = true
     await updateFirstLoginPwd(formState.newPassword)
-    message.success('密码修改成功')
+    message.success(t('common.shared.forceChangePassword.successMessage'))
     emit('success')
   } catch (error: any) {
     if (error?.errorFields) return

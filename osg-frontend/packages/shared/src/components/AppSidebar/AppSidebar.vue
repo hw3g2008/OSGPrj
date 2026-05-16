@@ -16,7 +16,7 @@
       <!-- v1: 首页入口暂时隐藏，二期恢复（用 v-if 让 DOM 不渲染，避免被 .nav-item 选择器误中） -->
       <a v-if="false" href="#" class="nav-item" @click.prevent="emit('nav', homePath)">
         <i class="mdi mdi-home" aria-hidden="true" />
-        <span>首页 Home</span>
+        <span>{{ t('common.shared.sidebar.home') }}</span>
       </a>
 
       <template v-for="group in filteredNavigationGroups" :key="group.title">
@@ -54,7 +54,7 @@
       <div v-if="showUserMenu" class="user-menu" role="menu">
         <a class="user-menu-item" role="menuitem" @click="handleProfileClick">
           <i class="mdi mdi-account-cog" aria-hidden="true" />
-          个人设置 Profile
+          {{ t('common.shared.sidebar.profile') }}
         </a>
         <a
           class="user-menu-item user-menu-item--danger"
@@ -62,7 +62,7 @@
           @click="handleLogoutClick"
         >
           <i class="mdi mdi-logout" aria-hidden="true" />
-          退出登录 Logout
+          {{ t('common.shared.sidebar.logout') }}
         </a>
       </div>
     </div>
@@ -72,6 +72,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 
 import OsgEllipsisText from '../OsgEllipsisText/OsgEllipsisText.vue'
 import type { AppSidebarEmits, NavigationGroup, NavigationItem } from './types'
@@ -99,6 +100,8 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<AppSidebarEmits>()
+
+const { t } = useI18n()
 
 // ====== 内部状态 ======
 
@@ -146,9 +149,9 @@ function handleProfileClick() {
 function handleLogoutClick() {
   closeUserMenu()
   Modal.confirm({
-    title: '确定要退出登录吗？',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('common.shared.sidebar.logoutConfirmTitle'),
+    okText: t('common.action.ok'),
+    cancelText: t('common.action.cancel'),
     onOk: () => emit('logout'),
   })
 }

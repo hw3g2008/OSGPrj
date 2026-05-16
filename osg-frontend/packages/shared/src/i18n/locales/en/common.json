@@ -1,10 +1,127 @@
 {
-  "action": {},
+  "action": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "reset": "Reset",
+    "back": "Back",
+    "next": "Next",
+    "prev": "Previous"
+  },
   "message": {},
   "field": {},
   "validation": {},
   "tip": {},
-  "shared": {},
+  "shared": {
+    "sidebar": {
+      "home": "Home",
+      "profile": "Profile",
+      "logout": "Logout",
+      "logoutConfirmTitle": "Sign out?"
+    },
+    "footer": {
+      "copyright": "© {year} OSG Career Training Platform"
+    },
+    "stage": {
+      "fallback": "Not updated"
+    },
+    "coachingStatus": {
+      "new": "New application",
+      "coaching": "Coaching"
+    },
+    "companyPosition": {
+      "locationFallback": "Location TBD"
+    },
+    "multiSelect": {
+      "placeholder": "Please select"
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "step1": {
+        "prompt": "Enter your registered email and we will send a verification code",
+        "emailLabel": "Email",
+        "emailPlaceholder": "Enter your registered email",
+        "sendCode": "Send code"
+      },
+      "step2": {
+        "sentTo": "Verification code sent to",
+        "codeLabel": "Verification code",
+        "codePlaceholder": "Enter the 6-digit code",
+        "verify": "Verify"
+      },
+      "step3": {
+        "prompt": "Set your new password",
+        "newPasswordLabel": "New password",
+        "newPasswordPlaceholder": "8-20 chars, letters and digits",
+        "confirmLabel": "Confirm password",
+        "confirmPlaceholder": "Re-enter new password",
+        "resetButton": "Reset password"
+      },
+      "step4": {
+        "title": "Password reset",
+        "prompt": "Your password has been reset. Please log in with the new password.",
+        "backToLogin": "Back to login"
+      },
+      "steps": {
+        "1": "Enter the email you registered with; we will send a verification code",
+        "2": "Enter the verification code",
+        "3": "Set a new password"
+      },
+      "resend": "Resend",
+      "strength": {
+        "placeholder": "Password strength",
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong"
+      },
+      "errors": {
+        "codeLength6": "Please enter the 6-digit code",
+        "confirmMismatch": "The two passwords do not match",
+        "newPasswordEmpty": "Please enter a new password",
+        "passwordLength": "Password must be 8-20 characters",
+        "passwordNeedLetters": "Password must contain letters",
+        "passwordNeedDigits": "Password must contain digits",
+        "invalidEmail": "Please enter a valid email",
+        "sendFailed": "Send failed, please retry",
+        "resendFailed": "Resend failed, please retry",
+        "verifyFailed": "Verification failed",
+        "resetFailed": "Reset failed, please retry"
+      },
+      "success": {
+        "codeSent": "A verification code has been sent to your registered email",
+        "codeResent": "Verification code has been resent"
+      },
+      "countdown": {
+        "willResend": "Resend available in {n}s",
+        "expired": "Code expired, you can resend"
+      }
+    },
+    "forceChangePassword": {
+      "title": "Change default password",
+      "intro": "Your account is still using the system default password. For security, please change it before continuing.",
+      "newPasswordLabel": "New password",
+      "newPasswordPlaceholder": "8-20 chars, letters and digits",
+      "confirmLabel": "Confirm new password",
+      "confirmPlaceholder": "Re-enter new password",
+      "submitButton": "Change and continue",
+      "successMessage": "Password changed",
+      "errors": {
+        "newPasswordRequired": "Please enter a new password",
+        "passwordLength": "Password must be 8-20 characters",
+        "needLetter": "Password must contain letters",
+        "needDigit": "Password must contain digits",
+        "notDefault": "New password must differ from the system default",
+        "confirmRequired": "Please re-enter the new password",
+        "confirmMismatch": "Passwords do not match"
+      }
+    }
+  },
   "legacy": {
     "statistics_card_data": "Statistics card data",
     "to_do_items": "To-do items",
