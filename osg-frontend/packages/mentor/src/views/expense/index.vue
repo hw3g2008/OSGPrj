@@ -1,7 +1,9 @@
 <template>
-  <PlaceholderPage title="报销管理 Expense" />
+  <PlaceholderPage :title="t('mentor.placeholderView.expense')" />
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import PlaceholderPage from '@/components/PlaceholderPage.vue'
+const { t } = useI18n()
 </script>

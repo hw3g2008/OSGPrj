@@ -7,24 +7,24 @@
 
     <!-- 左侧品牌区 -->
     <div class="login-left">
-      <h1 class="login-left__title">OSG Platform</h1>
-      <p class="login-left__desc">职业培训一站式平台，学生与导师共同成长</p>
+      <h1 class="login-left__title">{{ t('mentor.login.brand.title') }}</h1>
+      <p class="login-left__desc">{{ t('mentor.login.brand.desc') }}</p>
       <div class="login-features">
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>学生端：一对一导师辅导</span>
+          <span>{{ t('mentor.login.brand.feature1') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>导师端：高效课程管理</span>
+          <span>{{ t('mentor.login.brand.feature2') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>学员求职进度追踪</span>
+          <span>{{ t('mentor.login.brand.feature3') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>完善的学习资料库</span>
+          <span>{{ t('mentor.login.brand.feature4') }}</span>
         </div>
       </div>
     </div>
@@ -37,11 +37,11 @@
           <div class="login-logo__icon">
             <i class="mdi mdi-school" />
           </div>
-          <span class="login-logo__text">OSG Mentor Center</span>
+          <span class="login-logo__text">{{ t('mentor.login.logoText') }}</span>
         </div>
 
-        <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用邮箱登录（导师）</p>
+        <h2 class="login-title">{{ t('mentor.login.welcome') }}</h2>
+        <p class="login-subtitle">{{ t('mentor.login.subtitle') }}</p>
 
         <!-- 错误横幅 -->
         <div v-if="errorMsg" class="login-error">
@@ -52,11 +52,11 @@
         <!-- 登录表单 -->
         <div class="login-form">
           <div class="form-group">
-            <label>邮箱</label>
+            <label>{{ t('mentor.login.emailLabel') }}</label>
             <input
               v-model="formState.username"
               type="email"
-              placeholder="请输入邮箱"
+              :placeholder="t('mentor.login.emailPlaceholder')"
               autocomplete="email"
               :class="{ error: errors.username }"
               @input="errors.username = ''"
@@ -66,12 +66,12 @@
           </div>
 
           <div class="form-group">
-            <label>密码</label>
+            <label>{{ t('mentor.login.passwordLabel') }}</label>
             <div class="pwd-wrapper">
               <input
                 v-model="formState.password"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="请输入密码"
+                :placeholder="t('mentor.login.passwordPlaceholder')"
                 autocomplete="current-password"
                 :class="{ error: errors.password }"
                 @input="errors.password = ''"
@@ -90,19 +90,19 @@
 
           <button type="button" class="login-btn" :disabled="loading" @click="handleLogin">
             <i v-if="!loading" class="mdi mdi-login" />
-            {{ loading ? '登录中...' : '登 录' }}
+            {{ loading ? t('mentor.login.submitting') : t('mentor.login.submit') }}
           </button>
         </div>
 
         <div class="login-links">
-          忘记密码？
+          {{ t('mentor.login.forgotHint') }}
           <a
             href="javascript:void(0)"
             class="link-anchor"
             data-surface-trigger="modal-forgot-password"
             @click.prevent="openForgotPassword"
           >
-            点击重置
+            {{ t('mentor.login.forgotAction') }}
           </a>
         </div>
       </div>
@@ -118,6 +118,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   login,
   getInfo,
@@ -129,6 +130,7 @@ import { setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
 import { useMustChangePassword } from '@osg/shared/composables'
 
+const { t } = useI18n()
 const { setMustChangePassword } = useMustChangePassword()
 
 const router = useRouter()
@@ -173,12 +175,12 @@ const handleLogin = async () => {
 
   const trimmed = formState.username.trim()
   if (!trimmed) {
-    errors.username = '请输入邮箱'
+    errors.username = t('mentor.login.validation.emailRequired')
   } else if (!EMAIL_RE.test(trimmed)) {
-    errors.username = '邮箱格式不正确'
+    errors.username = t('mentor.login.validation.emailInvalid')
   }
   if (!formState.password) {
-    errors.password = '请输入密码'
+    errors.password = t('mentor.login.validation.passwordRequired')
   }
   if (errors.username || errors.password) return
 
@@ -191,7 +193,7 @@ const handleLogin = async () => {
     setToken(token)
     const info = await getInfo()
     if (!info.roles?.includes('mentor') && !info.roles?.includes('admin')) {
-      errorMsg.value = '该账号无导师端访问权限'
+      errorMsg.value = t('mentor.login.error.notMentor')
       loading.value = false
       return
     }
@@ -199,7 +201,7 @@ const handleLogin = async () => {
     setMustChangePassword(Boolean(info.mustChangePassword))
     router.push((route.query.redirect as string) || '/')
   } catch (e: any) {
-    errorMsg.value = e?.message || '邮箱或密码错误'
+    errorMsg.value = e?.message || t('mentor.login.error.credential')
   } finally {
     loading.value = false
   }

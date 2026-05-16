@@ -6,7 +6,7 @@
       :user-initials="userInitials"
       :role-label="roleLabel"
       :current-path="route.path"
-      logo-title="OSG Mentor"
+      :logo-title="t('mentor.layout.logoTitle')"
       @nav="handleNavClick"
       @profile-click="handleProfileClick"
       @logout="handleLogout"
@@ -21,11 +21,14 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
 import { useIdleLogout } from '@osg/shared/composables'
 import { http } from '@osg/shared/utils/request'
 import { clearAuth, getUser } from '@osg/shared/utils'
+
+const { t } = useI18n()
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
@@ -57,24 +60,24 @@ const userInitials = computed(() => {
   const compact = source.replace(/\s+/g, '')
   return compact.slice(0, 2).toUpperCase()
 })
-const roleLabel = computed(() => '导师')
+const roleLabel = computed(() => t('mentor.layout.role'))
 
 // 动态 badge 通过 computed 依赖 jobBadge.value / mockBadge.value，
 // 响应式自动生效（badge 刷新后 navigationGroups 会重新计算）。
 // AppSidebar 内部按 badge > 0 渲染（hasBadge），因此 0 / undefined 自然不显示。
 const navigationGroups = computed<NavigationGroup[]>(() => [
   {
-    title: '教学中心 TEACHING',
+    title: t('mentor.layout.groups.teaching'),
     items: [
       {
         path: '/courses',
-        label: '课程记录 Class Records',
+        label: t('mentor.layout.nav.courses'),
         iconClass: 'mdi-book-open-variant',
         activePaths: ['/courses'],
       },
       {
         path: '/communication',
-        label: '人际关系沟通记录 Records',
+        label: t('mentor.layout.nav.communication'),
         iconClass: 'mdi-message-text-clock',
         activePaths: ['/communication'],
         hidden: true,
@@ -82,18 +85,18 @@ const navigationGroups = computed<NavigationGroup[]>(() => [
     ],
   },
   {
-    title: '求职中心 JOB CENTER',
+    title: t('mentor.layout.groups.jobCenter'),
     items: [
       {
         path: '/job-overview',
-        label: '学员求职总览 Job Overview',
+        label: t('mentor.layout.nav.jobOverview'),
         iconClass: 'mdi-briefcase-search',
         activePaths: ['/job-overview'],
         badge: jobBadge.value > 0 ? jobBadge.value : undefined,
       },
       {
         path: '/mock-practice',
-        label: '模拟应聘管理 Mock Practice',
+        label: t('mentor.layout.nav.mockPractice'),
         iconClass: 'mdi-account-voice',
         activePaths: ['/mock-practice'],
         badge: mockBadge.value > 0 ? mockBadge.value : undefined,
@@ -101,18 +104,18 @@ const navigationGroups = computed<NavigationGroup[]>(() => [
     ],
   },
   {
-    title: '财务中心 FINANCE',
+    title: t('mentor.layout.groups.finance'),
     items: [
       {
         path: '/settlement',
-        label: '课时结算 Settlement',
+        label: t('mentor.layout.nav.settlement'),
         iconClass: 'mdi-cash-check',
         activePaths: ['/settlement'],
         hidden: true,
       },
       {
         path: '/expense',
-        label: '报销管理 Expense',
+        label: t('mentor.layout.nav.expense'),
         iconClass: 'mdi-receipt',
         activePaths: ['/expense'],
         hidden: true,
@@ -120,30 +123,30 @@ const navigationGroups = computed<NavigationGroup[]>(() => [
     ],
   },
   {
-    title: '个人中心 PROFILE',
+    title: t('mentor.layout.groups.profile'),
     items: [
       {
         path: '/profile',
-        label: '基本信息 Profile',
+        label: t('mentor.layout.nav.profile'),
         iconClass: 'mdi-account',
         activePaths: ['/profile'],
       },
       {
         path: '/schedule',
-        label: '课程排期 Schedule',
+        label: t('mentor.layout.nav.schedule'),
         iconClass: 'mdi-calendar-clock',
         activePaths: ['/schedule'],
       },
       {
         path: '/notice',
-        label: '消息 Notice',
+        label: t('mentor.layout.nav.notice'),
         iconClass: 'mdi-bell',
         activePaths: ['/notice'],
         hidden: true,
       },
       {
         path: '/faq',
-        label: '常见问题 FAQ',
+        label: t('mentor.layout.nav.faq'),
         iconClass: 'mdi-help-circle',
         activePaths: ['/faq'],
         hidden: true,

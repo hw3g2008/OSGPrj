@@ -1,1 +1,86 @@
-{}
+{
+  "login": {
+    "brand": {
+      "title": "OSG Platform",
+      "desc": "职业培训一站式平台，学生与导师共同成长",
+      "feature1": "学生端：一对一导师辅导",
+      "feature2": "导师端：高效课程管理",
+      "feature3": "学员求职进度追踪",
+      "feature4": "完善的学习资料库"
+    },
+    "logoText": "OSG Mentor Center",
+    "welcome": "欢迎回来",
+    "subtitle": "使用邮箱登录（导师）",
+    "emailLabel": "邮箱",
+    "emailPlaceholder": "请输入邮箱",
+    "passwordLabel": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "submit": "登 录",
+    "submitting": "登录中...",
+    "forgotHint": "忘记密码？",
+    "forgotAction": "点击重置",
+    "validation": {
+      "emailRequired": "请输入邮箱",
+      "emailInvalid": "邮箱格式不正确",
+      "passwordRequired": "请输入密码"
+    },
+    "error": {
+      "notMentor": "该账号无导师端访问权限",
+      "credential": "邮箱或密码错误"
+    }
+  },
+  "placeholder": {
+    "title": "敬请期待",
+    "subtitle": "Coming Soon",
+    "desc": "功能正在开发中，请稍后再来"
+  },
+  "layout": {
+    "logoTitle": "OSG Mentor",
+    "role": "导师",
+    "groups": {
+      "teaching": "教学中心 TEACHING",
+      "jobCenter": "求职中心 JOB CENTER",
+      "finance": "财务中心 FINANCE",
+      "profile": "个人中心 PROFILE"
+    },
+    "nav": {
+      "courses": "课程记录 Class Records",
+      "communication": "人际关系沟通记录 Records",
+      "jobOverview": "学员求职总览 Job Overview",
+      "mockPractice": "模拟应聘管理 Mock Practice",
+      "settlement": "课时结算 Settlement",
+      "expense": "报销管理 Expense",
+      "profile": "基本信息 Profile",
+      "schedule": "课程排期 Schedule",
+      "notice": "消息 Notice",
+      "faq": "常见问题 FAQ"
+    }
+  },
+  "route": {
+    "login": "登录",
+    "dashboard": "首页",
+    "courses": "课程记录",
+    "communication": "人际关系沟通记录",
+    "jobOverview": "学员求职总览",
+    "mockPractice": "模拟应聘管理",
+    "settlement": "课时结算",
+    "expense": "报销管理",
+    "profile": "基本信息",
+    "schedule": "课程排期",
+    "notice": "消息",
+    "faq": "常见问题",
+    "students": "我的学员",
+    "jobTracking": "学员岗位追踪"
+  },
+  "placeholderView": {
+    "communication": "人际关系沟通记录 Records",
+    "expense": "报销管理 Expense",
+    "faq": "常见问题 FAQ",
+    "files": "学习资料库 Files",
+    "jobTracking": "学员岗位追踪 Application Progress",
+    "notice": "消息 Notice",
+    "qbank": "题库 Question Bank",
+    "settlement": "课时结算 Settlement",
+    "students": "我的学员 My Students"
+  }
+}

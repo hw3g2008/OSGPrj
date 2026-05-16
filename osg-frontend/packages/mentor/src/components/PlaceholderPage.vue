@@ -3,17 +3,19 @@
     <PageHeader :title-zh="title" />
     <div class="placeholder-card">
       <i class="mdi mdi-clock-outline placeholder-icon" />
-      <h2 class="placeholder-title">敬请期待</h2>
-      <p class="placeholder-en">Coming Soon</p>
-      <p class="placeholder-desc">功能正在开发中，请稍后再来</p>
+      <h2 class="placeholder-title">{{ t('mentor.placeholder.title') }}</h2>
+      <p class="placeholder-en">{{ t('mentor.placeholder.subtitle') }}</p>
+      <p class="placeholder-desc">{{ t('mentor.placeholder.desc') }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 
 defineProps<{ title: string }>()
+const { t } = useI18n()
 </script>
 
 <style scoped>

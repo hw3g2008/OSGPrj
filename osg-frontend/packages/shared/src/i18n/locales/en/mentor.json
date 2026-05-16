@@ -1,1 +1,86 @@
-{}
+{
+  "login": {
+    "brand": {
+      "title": "OSG Platform",
+      "desc": "One-stop vocational training platform where students and mentors grow together",
+      "feature1": "Student: One-on-one mentor coaching",
+      "feature2": "Mentor: Efficient session management",
+      "feature3": "Student job search progress tracking",
+      "feature4": "Comprehensive learning resource library"
+    },
+    "logoText": "OSG Mentor Center",
+    "welcome": "Welcome back",
+    "subtitle": "Sign in with email (Mentor)",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Please enter email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Please enter password",
+    "submit": "Sign In",
+    "submitting": "Signing in...",
+    "forgotHint": "Forgot password?",
+    "forgotAction": "Click to reset",
+    "validation": {
+      "emailRequired": "Please enter email",
+      "emailInvalid": "Invalid email format",
+      "passwordRequired": "Please enter password"
+    },
+    "error": {
+      "notMentor": "This account has no Mentor Center access",
+      "credential": "Incorrect email or password"
+    }
+  },
+  "placeholder": {
+    "title": "Coming Soon",
+    "subtitle": "Coming Soon",
+    "desc": "This feature is under development, please check back later"
+  },
+  "layout": {
+    "logoTitle": "OSG Mentor",
+    "role": "Mentor",
+    "groups": {
+      "teaching": "Teaching Center",
+      "jobCenter": "Job Search Center",
+      "finance": "Financial Center",
+      "profile": "Personal Center"
+    },
+    "nav": {
+      "courses": "Session Record",
+      "communication": "Communication Record",
+      "jobOverview": "Student Job Overview",
+      "mockPractice": "Mock Practice",
+      "settlement": "Session Settlement",
+      "expense": "Reimbursement",
+      "profile": "Profile",
+      "schedule": "Session Schedule",
+      "notice": "Notice",
+      "faq": "FAQ"
+    }
+  },
+  "route": {
+    "login": "Sign In",
+    "dashboard": "Home",
+    "courses": "Session Record",
+    "communication": "Communication Record",
+    "jobOverview": "Student Job Overview",
+    "mockPractice": "Mock Practice",
+    "settlement": "Session Settlement",
+    "expense": "Reimbursement",
+    "profile": "Profile",
+    "schedule": "Session Schedule",
+    "notice": "Notice",
+    "faq": "FAQ",
+    "students": "My Students",
+    "jobTracking": "Application Progress"
+  },
+  "placeholderView": {
+    "communication": "Communication Record",
+    "expense": "Reimbursement",
+    "faq": "FAQ",
+    "files": "Files",
+    "jobTracking": "Application Progress",
+    "notice": "Notice",
+    "qbank": "Question Bank",
+    "settlement": "Session Settlement",
+    "students": "My Students"
+  }
+}

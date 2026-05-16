@@ -1,7 +1,9 @@
 <template>
-  <PlaceholderPage title="我的学员 My Students" />
+  <PlaceholderPage :title="t('mentor.placeholderView.students')" />
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import PlaceholderPage from '@/components/PlaceholderPage.vue'
+const { t } = useI18n()
 </script>

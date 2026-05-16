@@ -1,7 +1,9 @@
 <template>
-  <PlaceholderPage title="学员岗位追踪 Job Tracking" />
+  <PlaceholderPage :title="t('mentor.placeholderView.jobTracking')" />
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import PlaceholderPage from '@/components/PlaceholderPage.vue'
+const { t } = useI18n()
 </script>
