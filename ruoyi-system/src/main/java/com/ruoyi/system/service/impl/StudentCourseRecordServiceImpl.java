@@ -160,26 +160,28 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
             if (coachingMeta != null)
             {
                 record.put("coachingTagColor", defaultString(coachingMeta.getCssClass(), "blue"));
+                record.put("coachingTypeI18nKey", coachingMeta.getI18nKey());
             }
 
             SysDictData contentMeta = contentTypeDict.get(courseContent);
             if (contentMeta != null)
             {
                 record.put("contentTagColor", defaultString(contentMeta.getCssClass(), "default"));
+                record.put("courseContentI18nKey", contentMeta.getI18nKey());
             }
 
-            record.put("ratingLabel", rated ? "⭐ " + ratingScoreValue : dictLabel(pageCopy, "pendingRatingLabel", "待评价"));
+            // ratingLabel: only emit the rated score (pure data, no translation).
+            // For pending state, frontend renders <DictText type="course_rating" value="pending"/> based on actionKind.
+            record.put("ratingLabel", rated ? "⭐ " + ratingScoreValue : "");
             record.put("ratingColor", rated ? "green" : "orange");
-            record.put("actionLabel", rated
-                    ? dictLabel(pageCopy, "detailActionLabel", "查看详情")
-                    : dictLabel(pageCopy, "rateActionLabel", "评价"));
             record.put("actionKind", rated ? "detail" : "rate");
+            // actionLabel / newBadgeLabel are no longer emitted as Chinese strings;
+            // frontend resolves via <DictText type="course_action"/> and <DictText type="course_badge"/>.
             record.put("detailTitle", resolveDetailTitle(rated, contentMeta, pageCopy));
             record.put("detailKind", resolveDetailKind(courseContent));
             record.put("mentorFeedback", defaultString(stringValue(record.get("feedbackContent")),
                     defaultString(stringValue(record.get("ratingFeedback")), "")));
             record.put("tab", rated ? "evaluated" : "pending");
-            record.put("newBadgeLabel", dictLabel(pageCopy, "newBadgeLabel", "NEW"));
         }
         return records;
     }
@@ -352,7 +354,7 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
             record.put("coachingDetail", defaultString(stringValue(row.get("coachingDetail")), ""));
             record.put("courseContent", defaultString(stringValue(row.get("courseContent")), ""));
             record.put("mentor", defaultString(stringValue(row.get("mentor")), "-"));
-            record.put("mentorRole", defaultString(stringValue(row.get("mentorRole")), "导师"));
+            record.put("mentorRole", normalizeMentorRole(stringValue(row.get("mentorRole"))));
             record.put("classDate", defaultString(stringValue(row.get("classDate")), ""));
             record.put("classDateRaw", defaultString(stringValue(row.get("classDateRaw")), ""));
             record.put("isNew", row.get("isNew"));
@@ -388,7 +390,7 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
     {
         if (!StringUtils.hasText(classStatus))
         {
-            return "其他";
+            return "";
         }
         return switch (classStatus.trim().toLowerCase()) {
             case "resume_revision" -> "新简历";
@@ -402,16 +404,40 @@ public class StudentCourseRecordServiceImpl implements IStudentCourseRecordServi
         };
     }
 
+    /**
+     * Normalize a possibly-Chinese legacy mentorRole value into a stable enum key.
+     * Keys must align with shared/i18n/locales/<lang>/dictText.json#mentor_role.
+     */
+    private String normalizeMentorRole(String value)
+    {
+        if (!StringUtils.hasText(value))
+        {
+            return "mentor";
+        }
+        String v = value.trim();
+        return switch (v) {
+            case "助教", "assistant" -> "assistant";
+            case "班主任", "lead_mentor" -> "lead_mentor";
+            case "导师", "mentor" -> "mentor";
+            default -> v;
+        };
+    }
+
+    /**
+     * Resolve mentorRole as a stable enum key, NOT a translated label.
+     * Frontend translates via <DictText type="mentor_role" value="..."/>.
+     * Keys must align with shared/i18n/locales/<lang>/dictText.json#mentor_role.
+     */
     private String toReporterRoleLabel(String courseSource)
     {
         if (!StringUtils.hasText(courseSource))
         {
-            return "导师";
+            return "mentor";
         }
         return switch (courseSource.trim().toLowerCase()) {
-            case "assistant" -> "助教";
-            case "clerk" -> "班主任";
-            default -> "导师";
+            case "assistant" -> "assistant";
+            case "clerk" -> "lead_mentor";
+            default -> "mentor";
         };
     }
 

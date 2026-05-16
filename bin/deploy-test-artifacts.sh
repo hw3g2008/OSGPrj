@@ -32,7 +32,7 @@ ALL_FRONTEND_APPS=(admin student mentor lead-mentor assistant)
 TARGET_FRONTEND_APPS=("${ALL_FRONTEND_APPS[@]}")
 
 TMP_DIR=""
-NODE_BIN_DIR=""
+NODE_BIN_DIR="${NODE_BIN_DIR:-}"
 
 usage() {
   cat <<'EOF'
@@ -257,6 +257,7 @@ detect_node_platform() {
   case "${os}" in
     Darwin) os="darwin" ;;
     Linux) os="linux" ;;
+    MINGW*|MSYS*|CYGWIN*) os="win" ;;
     *) fail "unsupported OS for local Node runtime bootstrap: ${os}" ;;
   esac
 
@@ -270,7 +271,7 @@ detect_node_platform() {
 }
 
 ensure_frontend_node_runtime() {
-  local platform archive_name archive_path install_parent install_dir shasums_url download_url
+  local platform archive_ext archive_name archive_path install_parent install_dir shasums_url download_url node_bin_path
 
   if [[ -n "${NODE_BIN_DIR}" ]]; then
     return 0
@@ -280,14 +281,22 @@ ensure_frontend_node_runtime() {
   install_parent="${ROOT_DIR}/.local/tools"
   install_dir="${install_parent}/node-v20-${platform}"
 
-  if [[ -x "${install_dir}/bin/node" ]]; then
-    NODE_BIN_DIR="${install_dir}/bin"
+  if [[ "${platform}" == win-* ]]; then
+    archive_ext="zip"
+    node_bin_path="${install_dir}"
+  else
+    archive_ext="tar.xz"
+    node_bin_path="${install_dir}/bin"
+  fi
+
+  if [[ -x "${node_bin_path}/node" || -f "${node_bin_path}/node.exe" ]]; then
+    NODE_BIN_DIR="${node_bin_path}"
     return 0
   fi
 
   mkdir -p "${install_parent}"
   shasums_url="https://nodejs.org/dist/${NODE_CHANNEL}/SHASUMS256.txt"
-  archive_name="$(curl -fsSL "${shasums_url}" | awk "/node-v20\\..*-${platform}\\.tar\\.xz$/ {print \$2; exit}")"
+  archive_name="$(curl -fsSL "${shasums_url}" | awk "/node-v20\\..*-${platform}\\.${archive_ext}$/ {print \$2; exit}")"
   if [[ -z "${archive_name}" ]]; then
     fail "could not resolve Node 20 archive for ${platform} from ${shasums_url}"
   fi
@@ -298,9 +307,19 @@ ensure_frontend_node_runtime() {
   curl -fsSL "${download_url}" -o "${archive_path}"
 
   rm -rf "${install_dir}"
-  tar -xJf "${archive_path}" -C "${install_parent}"
-  mv "${install_parent}/${archive_name%.tar.xz}" "${install_dir}"
-  NODE_BIN_DIR="${install_dir}/bin"
+  if [[ "${archive_ext}" == "zip" ]]; then
+    local win_archive_path win_install_parent
+    win_archive_path="$(cygpath -w "${archive_path}")"
+    win_install_parent="$(cygpath -w "${install_parent}")"
+    powershell.exe -NoProfile -NonInteractive -Command \
+      "Expand-Archive -LiteralPath '${win_archive_path}' -DestinationPath '${win_install_parent}' -Force" \
+      >/dev/null
+    mv "${install_parent}/${archive_name%.zip}" "${install_dir}"
+  else
+    tar -xJf "${archive_path}" -C "${install_parent}"
+    mv "${install_parent}/${archive_name%.tar.xz}" "${install_dir}"
+  fi
+  NODE_BIN_DIR="${node_bin_path}"
 }
 
 run_frontend_builder() {
@@ -314,6 +333,14 @@ run_frontend_builder() {
     set -a
     source "${ROOT_DIR}/deploy/.env.test"
     set +a
+    # On Git Bash / MSYS, env values starting with a single slash (e.g.
+    # VITE_API_BASE_URL=/api) get auto-converted to Windows paths like
+    # "C:/Program Files/Git/api" when spawning node.exe, which then leaks into
+    # the Vite build as the axios baseURL. MSYS2_ENV_CONV_EXCL tells the MSYS
+    # runtime to leave the listed env vars verbatim when invoking native
+    # binaries. We scope this strictly to Vite-related vars so PATH and friends
+    # still get converted normally.
+    export MSYS2_ENV_CONV_EXCL="VITE_API_BASE_URL;VITE_API_PROXY_TARGET"
     eval "${inner_cmd}"
   )
 }
@@ -666,7 +693,7 @@ main() {
     echo "INFO: build backend jar"
     (
       cd "${ROOT_DIR}"
-      mvn -DskipTests package
+      mvn -Dmaven.test.skip=true package
     )
   fi
 
@@ -691,12 +718,17 @@ main() {
   if (( SKIP_UPLOAD == 0 )); then
     BUNDLE_ARCHIVE="${TMP_DIR}/artifact-bundle.tar.gz"
     echo "INFO: pack artifact bundle"
-    COPYFILE_DISABLE=1 COPY_EXTENDED_ATTRIBUTES_DISABLE=1 tar \
-      --disable-copyfile \
-      --no-xattrs \
-      --no-mac-metadata \
-      -C "${ARTIFACT_DIR}" \
-      -czf "${BUNDLE_ARCHIVE}" .
+    # macOS BSD tar 专属 flags 在 GNU tar (Linux/Windows-git-bash) 上不识别
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+      COPYFILE_DISABLE=1 COPY_EXTENDED_ATTRIBUTES_DISABLE=1 tar \
+        --disable-copyfile \
+        --no-xattrs \
+        --no-mac-metadata \
+        -C "${ARTIFACT_DIR}" \
+        -czf "${BUNDLE_ARCHIVE}" .
+    else
+      tar -C "${ARTIFACT_DIR}" -czf "${BUNDLE_ARCHIVE}" .
+    fi
 
     echo "INFO: upload artifact bundle => ${REMOTE_ARTIFACT_DIR}"
     "${SSH_CMD[@]}" "mkdir -p '${REMOTE_ARTIFACT_DIR}'"

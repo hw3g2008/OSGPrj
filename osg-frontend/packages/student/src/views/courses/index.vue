@@ -3,8 +3,8 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">
-          <span class="page-title__zh">{{ classRecordsMeta.pageSummary.titleZh }}</span>
-          <span class="page-title__en">{{ classRecordsMeta.pageSummary.titleEn }}</span>
+          <span class="page-title__zh">{{ t('student.courses.pageTitleZh') }}</span>
+          <span class="page-title__en">{{ t('student.courses.pageTitleEn') }}</span>
         </h1>
       </div>
     </div>
@@ -21,17 +21,17 @@
       closable
       class="reminder-banner"
     >
-      <template #message><strong>{{ classRecordsMeta.reminderBanner.title }}</strong></template>
+      <template #message><strong>{{ t('student.courses.reminderBanner.title') }}</strong></template>
       <template #description>
-        {{ classRecordsMeta.reminderBanner.leadText }}
+        {{ t('student.courses.reminderBanner.leadText') }}
         <strong>{{ firstNewRecordMentor }}</strong>
-        {{ classRecordsMeta.reminderBanner.middleText }}
+        {{ t('student.courses.reminderBanner.middleText') }}
         <strong>{{ newRecordCount }}</strong>
-        {{ classRecordsMeta.reminderBanner.suffixText }}
+        {{ t('student.courses.reminderBanner.suffixText') }}
       </template>
       <template #action>
         <a-button type="primary" size="small" @click="goToEvaluate">
-          {{ classRecordsMeta.reminderBanner.ctaLabel }}
+          {{ t('student.courses.reminderBanner.ctaLabel') }}
         </a-button>
       </template>
     </a-alert>
@@ -42,7 +42,7 @@
         :key="tab.key"
       >
         <template #tab>
-          {{ tab.label || tab.displayLabel }}
+          {{ te(`student.courses.tabs.${tab.key}`) ? t(`student.courses.tabs.${tab.key}`) : (tab.label || tab.displayLabel) }}
           <a-badge
             v-if="tab.key === 'pending' && tab.count > 0"
             :count="tab.count"
@@ -57,12 +57,12 @@
       <a-space :size="12" wrap>
         <a-input
           v-model:value="filters.keyword"
-          :placeholder="classRecordsMeta.filters.keywordPlaceholder"
+          :placeholder="t('student.courses.filterKeywordPlaceholder')"
           class="filters-row__search"
         />
         <a-select
           v-model:value="filters.coachingType"
-          :placeholder="classRecordsMeta.filters.coachingTypePlaceholder"
+          :placeholder="t('student.courses.filterCoachingTypePlaceholder')"
           allow-clear
           class="filters-row__select"
         >
@@ -76,7 +76,7 @@
         </a-select>
         <a-select
           v-model:value="filters.courseContent"
-          :placeholder="classRecordsMeta.filters.courseContentPlaceholder"
+          :placeholder="t('student.courses.filterCourseContentPlaceholder')"
           allow-clear
           class="filters-row__select"
         >
@@ -90,7 +90,7 @@
         </a-select>
         <a-select
           v-model:value="filters.timeRange"
-          :placeholder="classRecordsMeta.filters.timeRangePlaceholder"
+          :placeholder="t('student.courses.filterTimeRangePlaceholder')"
           allow-clear
           class="filters-row__select"
         >
@@ -104,7 +104,7 @@
         </a-select>
         <a-button class="filters-row__reset" @click="resetFilters">
           <template #icon><FilterOutlined /></template>
-          {{ classRecordsMeta.filters.resetLabel }}
+          {{ t('student.courses.filterResetLabel') }}
         </a-button>
       </a-space>
     </a-card>
@@ -123,7 +123,7 @@
           <template v-if="column.key === 'coachingDetail'">
             <div class="coaching-cell">
               <span class="record-tag" :class="mapTagTone(record.coachingTagColor)">
-                {{ record.coachingType }}
+                {{ tDict(record, 'coachingType') || record.coachingType }}
               </span>
               <span>{{ record.coachingDetail }}</span>
             </div>
@@ -131,14 +131,14 @@
 
           <template v-else-if="column.dataIndex === 'courseContent'">
             <span class="record-tag" :class="mapTagTone(record.contentTagColor)">
-              {{ record.courseContent }}
+              {{ tDict(record, 'courseContent') || record.courseContent || '-' }}
             </span>
           </template>
 
           <template v-else-if="column.dataIndex === 'mentor'">
             <div class="mentor-cell">
               <div>{{ formatMentorDisplay(record.mentor) }}</div>
-              <span>{{ record.mentorRole }}</span>
+              <span><DictText type="mentor_role" :value="record.mentorRole" /></span>
             </div>
           </template>
 
@@ -149,14 +149,15 @@
                 v-if="record.isNew"
                 class="record-tag record-tag--success record-tag--tiny"
               >
-                {{ record.newBadgeLabel }}
+                <DictText type="course_badge" value="new" />
               </span>
             </div>
           </template>
 
           <template v-else-if="column.dataIndex === 'ratingLabel'">
             <span class="record-tag" :class="mapTagTone(record.ratingColor)">
-              {{ record.ratingLabel }}
+              <template v-if="record.ratingLabel">{{ record.ratingLabel }}</template>
+              <DictText v-else type="course_rating" value="pending" />
             </span>
           </template>
 
@@ -166,7 +167,7 @@
               :type="record.actionKind === 'rate' ? 'primary' : 'default'"
               @click="openCourseAction(record)"
             >
-              {{ record.actionLabel }}
+              <DictText type="course_action" :value="record.actionKind === 'rate' ? 'rate' : 'view'" />
             </a-button>
           </template>
         </template>
@@ -185,9 +186,9 @@
         <div class="course-log__top">
           <span class="course-log__rec-id">{{ currentCourse.recordId }}</span>
           <span class="course-log__top-sep">·</span>
-          <span class="course-log__top-tag">{{ currentCourse.coachingType }}</span>
+          <span class="course-log__top-tag">{{ tDict(currentCourse, 'coachingType') || currentCourse.coachingType }}</span>
           <span class="course-log__top-sep">·</span>
-          <span class="course-log__top-tag course-log__top-tag--muted">{{ currentCourse.courseContent }}</span>
+          <span class="course-log__top-tag course-log__top-tag--muted">{{ tDict(currentCourse, 'courseContent') || currentCourse.courseContent || '-' }}</span>
           <button
             class="course-log__close"
             type="button"
@@ -199,7 +200,7 @@
         </div>
         <h2 class="course-log__mentor">{{ formatMentorDisplay(currentCourse.mentor) }}</h2>
         <p class="course-log__meta">
-          <span>{{ currentCourse.mentorRole }}</span>
+          <span><DictText type="mentor_role" :value="currentCourse.mentorRole" /></span>
           <span class="course-log__meta-dot">·</span>
           <span>{{ currentCourse.classDate }}</span>
           <span class="course-log__meta-dot">·</span>
@@ -217,27 +218,27 @@
           <div class="course-log__section-label">{{ t('student.courses.k1') }}</div>
           <dl class="course-log__deflist">
             <div class="course-log__deflist-row">
-              <dt>{{ classRecordsMeta.detailDialog.fields.recordId }}</dt>
+              <dt>{{ t('student.courses.detailDialog.fields.recordId') }}</dt>
               <dd class="course-log__deflist-mono">{{ currentCourse.recordId }}</dd>
             </div>
             <div class="course-log__deflist-row">
-              <dt>{{ classRecordsMeta.detailDialog.fields.coachingDetail }}</dt>
+              <dt>{{ t('student.courses.detailDialog.fields.coachingDetail') }}</dt>
               <dd>{{ currentCourse.coachingDetail }}</dd>
             </div>
             <div class="course-log__deflist-row">
-              <dt>{{ classRecordsMeta.detailDialog.fields.courseContent }}</dt>
-              <dd>{{ currentCourse.courseContent }}</dd>
+              <dt>{{ t('student.courses.detailDialog.fields.courseContent') }}</dt>
+              <dd>{{ tDict(currentCourse, 'courseContent') || currentCourse.courseContent || '-' }}</dd>
             </div>
             <div class="course-log__deflist-row">
-              <dt>{{ classRecordsMeta.detailDialog.fields.mentor }}</dt>
-              <dd>{{ formatMentorDisplay(currentCourse.mentor) }} · {{ currentCourse.mentorRole }}</dd>
+              <dt>{{ t('student.courses.detailDialog.fields.mentor') }}</dt>
+              <dd>{{ formatMentorDisplay(currentCourse.mentor) }} · <DictText type="mentor_role" :value="currentCourse.mentorRole" /></dd>
             </div>
             <div class="course-log__deflist-row">
-              <dt>{{ classRecordsMeta.detailDialog.fields.classDate }}</dt>
+              <dt>{{ t('student.courses.detailDialog.fields.classDate') }}</dt>
               <dd>{{ currentCourse.classDate }}</dd>
             </div>
             <div class="course-log__deflist-row">
-              <dt>{{ classRecordsMeta.detailDialog.fields.duration }}</dt>
+              <dt>{{ t('student.courses.detailDialog.fields.duration') }}</dt>
               <dd>{{ currentCourse.duration }}</dd>
             </div>
             <div class="course-log__deflist-row">
@@ -336,14 +337,14 @@
 
       <footer class="course-log__footer">
         <a-button class="course-log__btn course-log__btn--ghost" @click="detailVisible = false">
-          {{ classRecordsMeta.detailDialog.closeLabel }}
+          {{ t('student.courses.detailDialog.closeLabel') }}
         </a-button>
         <a-button
           type="primary"
           class="course-log__btn course-log__btn--primary"
           @click="handleDetailConfirm"
         >
-          {{ classRecordsMeta.detailDialog.confirmLabel }}
+          {{ t('student.courses.detailDialog.confirmLabel') }}
         </a-button>
       </footer>
     </a-modal>
@@ -361,7 +362,7 @@
         <div class="course-log__top">
           <span class="course-log__rec-id">{{ currentCourse.recordId }}</span>
           <span class="course-log__top-sep">·</span>
-          <span class="course-log__top-tag">{{ classRecordsMeta.ratingDialog.title }}</span>
+          <span class="course-log__top-tag">{{ t('student.courses.ratingDialog.title') }}</span>
           <button
             class="course-log__close"
             type="button"
@@ -373,13 +374,13 @@
         </div>
         <h2 class="course-log__mentor">{{ formatMentorDisplay(currentCourse.mentor) }}</h2>
         <p class="course-log__meta">
-          <span>{{ currentCourse.mentorRole }}</span>
+          <span><DictText type="mentor_role" :value="currentCourse.mentorRole" /></span>
           <span class="course-log__meta-dot">·</span>
           <span>{{ currentCourse.classDate }}</span>
           <span class="course-log__meta-dot">·</span>
           <span>{{ currentCourse.duration }}</span>
           <span>·</span>
-          <span>{{ currentCourse.coachingType }} / {{ currentCourse.courseContent }}</span>
+          <span>{{ tDict(currentCourse, 'coachingType') || currentCourse.coachingType }} / {{ tDict(currentCourse, 'courseContent') || currentCourse.courseContent || '-' }}</span>
         </p>
       </header>
 
@@ -395,7 +396,7 @@
                 type="button"
                 class="course-log__star"
                 :class="{ 'course-log__star--active': rateForm.rating !== null && score <= rateForm.rating }"
-                :aria-label="`${score} 星`"
+                :aria-label="`${score} ${t('student.courses.starsLabel')}`"
                 @click="setRating(score)"
               >
                 <i class="mdi mdi-star" aria-hidden="true"></i>
@@ -426,7 +427,7 @@
           <div class="course-log__chip-hint">
             {{ rateForm.tags.length > 0
               ? t('student.courses.k28', { n: rateForm.tags.length })
-              : classRecordsMeta.ratingDialog.tagPlaceholder }}
+              : t('student.courses.ratingDialog.tagPlaceholder') }}
           </div>
         </div>
 
@@ -437,7 +438,7 @@
             <a-textarea
               v-model:value="rateForm.feedback"
               :rows="4"
-              :placeholder="classRecordsMeta.ratingDialog.feedbackPlaceholder"
+              :placeholder="t('student.courses.ratingDialog.feedbackPlaceholder')"
             />
           </div>
         </div>
@@ -445,14 +446,14 @@
 
       <footer class="course-log__footer">
         <a-button class="course-log__btn course-log__btn--ghost" @click="rateVisible = false">
-          {{ classRecordsMeta.ratingDialog.cancelLabel }}
+          {{ t('student.courses.ratingDialog.cancelLabel') }}
         </a-button>
         <a-button
           type="primary"
           class="course-log__btn course-log__btn--primary"
           @click="submitRate"
         >
-          {{ classRecordsMeta.ratingDialog.submitLabel }}
+          {{ t('student.courses.ratingDialog.submitLabel') }}
         </a-button>
       </footer>
     </a-modal>
@@ -471,18 +472,20 @@ import {
   type StudentClassRecord,
   type StudentClassRecordsMeta
 } from '@osg/shared/api'
+import { useI18nDict, DictText } from '@osg/shared'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
+const { tDict } = useI18nDict('admin.dict')
 
 const courseColumns = computed(() => [
-  { title: classRecordsMeta.value.tableHeaders.recordId, dataIndex: 'recordId', width: 80 },
-  { title: classRecordsMeta.value.tableHeaders.coachingDetail, dataIndex: 'coachingDetail', key: 'coachingDetail', width: 160 },
-  { title: classRecordsMeta.value.tableHeaders.courseContent, dataIndex: 'courseContent', width: 160 },
-  { title: classRecordsMeta.value.tableHeaders.mentor, dataIndex: 'mentor', width: 120 },
-  { title: classRecordsMeta.value.tableHeaders.classDate, dataIndex: 'classDate', width: 140 },
-  { title: classRecordsMeta.value.tableHeaders.duration, dataIndex: 'duration', width: 80 },
-  { title: classRecordsMeta.value.tableHeaders.rating, dataIndex: 'ratingLabel', width: 100 },
-  { title: classRecordsMeta.value.tableHeaders.action, key: 'action', width: 180, fixed: 'right' }
+  { title: t('student.courses.tableHeaders.recordId'), dataIndex: 'recordId', width: 80 },
+  { title: t('student.courses.tableHeaders.coachingDetail'), dataIndex: 'coachingDetail', key: 'coachingDetail', width: 160 },
+  { title: t('student.courses.tableHeaders.courseContent'), dataIndex: 'courseContent', width: 160 },
+  { title: t('student.courses.tableHeaders.mentor'), dataIndex: 'mentor', width: 120 },
+  { title: t('student.courses.tableHeaders.classDate'), dataIndex: 'classDate', width: 140 },
+  { title: t('student.courses.tableHeaders.duration'), dataIndex: 'duration', width: 80 },
+  { title: t('student.courses.tableHeaders.rating'), dataIndex: 'ratingLabel', width: 100 },
+  { title: t('student.courses.tableHeaders.action'), key: 'action', width: 180, fixed: 'right' }
 ])
 
 const activeTab = ref<'all' | 'pending' | 'evaluated'>('all')
