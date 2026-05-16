@@ -1120,6 +1120,104 @@
         "updateSuccess": "Position tracking updated",
         "updateFailed": "Failed to update position tracking"
       }
+    },
+    "mockPractice": {
+      "pageTitle": "Mock Practice Management",
+      "filter": {
+        "searchPlaceholder": "Search student name...",
+        "typePlaceholder": "All Types",
+        "statusPlaceholder": "All Status",
+        "search": "Search",
+        "reset": "Reset"
+      },
+      "type": {
+        "mockInterview": "Mock Interview",
+        "communicationTest": "Communication Test",
+        "midtermExam": "Midterm Exam",
+        "default": "Mock Practice"
+      },
+      "status": {
+        "pending": "Pending",
+        "scheduled": "Scheduled",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "unknown": "Unknown"
+      },
+      "tab": {
+        "pending": "Pending Assignment",
+        "all": "All Records"
+      },
+      "statCard": {
+        "pending": "Pending",
+        "scheduled": "Scheduled",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "columns": {
+        "student": "Student",
+        "type": "Type",
+        "requestContent": "Request",
+        "submittedAt": "Submitted At",
+        "action": "Action",
+        "mentor": "Mentor",
+        "status": "Status",
+        "completedHours": "Hours Done",
+        "feedbackRating": "Feedback"
+      },
+      "pendingAlert": "The following students have applied for mock practice and need a mentor assigned",
+      "pendingEmpty": "No pending mentor assignment applications match the current filters",
+      "allEmpty": "No mock practice records match the current filters",
+      "unnamedStudent": "Unnamed Student",
+      "noPreferredMentor": "No preferred mentor",
+      "pendingAssign": "Pending",
+      "noFeedback": "No feedback",
+      "studentFallback": "Student",
+      "assignMentorFallback": "Available Mentor",
+      "relativeJustNow": "Just now",
+      "relativeHoursAgo": "{hours} hrs ago",
+      "relativeDaysAgo": "{days} days ago",
+      "action": {
+        "assign": "Assign Mentor",
+        "viewFeedback": "View Feedback"
+      },
+      "messages": {
+        "assignSuccess": "Mock practice mentor assignment complete"
+      },
+      "assignModal": {
+        "title": "Handle Mock Practice Application",
+        "pendingStudent": "Pending Student",
+        "requestedCount": "Suggested {count} mentor(s)",
+        "mentorPoolTitle": "Mentor Pool",
+        "mentorPoolDesc": "Preferred mentors are pre-selected; you may add more.",
+        "multiMentorBadge": "Multi-mentor",
+        "noMentor": "No assignable mentors. Please add mentors to the directory first.",
+        "scheduledAt": "Scheduled Time",
+        "scheduledAtPlaceholder": "Select scheduled time",
+        "notePlaceholder": "e.g. Start with behavioral mock, then technical drill next time.",
+        "note": "Notes",
+        "cancel": "Cancel",
+        "submit": "Confirm",
+        "submitting": "Submitting...",
+        "preferredFlag": "Preferred",
+        "warnSelectMentor": "Please select at least 1 mentor",
+        "warnSelectTime": "Please select a scheduled time"
+      },
+      "feedbackModal": {
+        "title": "View Mock Feedback",
+        "pendingStudent": "Pending Student",
+        "noRating": "No rating",
+        "pending": "Pending",
+        "noFeedback": "No feedback content.",
+        "fields": {
+          "mentor": "Mentor",
+          "mentorBackground": "Mentor Background",
+          "completedHours": "Hours Done",
+          "scheduledAt": "Scheduled At"
+        },
+        "feedbackLabel": "Feedback Summary",
+        "noteLabel": "Notes",
+        "close": "Close"
+      }
     }
   },
   "profile": {

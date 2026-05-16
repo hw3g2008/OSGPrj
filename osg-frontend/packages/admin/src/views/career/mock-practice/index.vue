@@ -1,7 +1,7 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title-zh="模拟应聘管理"
+      :title-zh="t('admin.career.mockPractice.pageTitle')"
       title-en="Mock Practice"
     />
 
@@ -14,23 +14,23 @@
 
     <a-card :bordered="false">
       <div style="display: flex; gap: var(--osg-space-3); flex-wrap: wrap; align-items: center;">
-        <a-input v-model:value="filters.keyword" placeholder="搜索学员姓名..." allow-clear style="width: 200px" @press-enter="handleSearch" />
-        <a-select v-model:value="filters.practiceType" placeholder="全部类型" allow-clear style="width: 140px">
-          <a-select-option value="mock_interview">模拟面试</a-select-option>
-          <a-select-option value="communication_test">人际关系测试</a-select-option>
-          <a-select-option value="midterm_exam">期中考试</a-select-option>
+        <a-input v-model:value="filters.keyword" :placeholder="t('admin.career.mockPractice.filter.searchPlaceholder')" allow-clear style="width: 200px" @press-enter="handleSearch" />
+        <a-select v-model:value="filters.practiceType" :placeholder="t('admin.career.mockPractice.filter.typePlaceholder')" allow-clear style="width: 140px">
+          <a-select-option value="mock_interview">{{ t('admin.career.mockPractice.type.mockInterview') }}</a-select-option>
+          <a-select-option value="communication_test">{{ t('admin.career.mockPractice.type.communicationTest') }}</a-select-option>
+          <a-select-option value="midterm_exam">{{ t('admin.career.mockPractice.type.midtermExam') }}</a-select-option>
         </a-select>
-        <a-select v-model:value="filters.status" placeholder="全部状态" allow-clear style="width: 120px">
-          <a-select-option value="pending">待处理</a-select-option>
-          <a-select-option value="scheduled">已安排</a-select-option>
-          <a-select-option value="completed">已完成</a-select-option>
-          <a-select-option value="cancelled">已取消</a-select-option>
+        <a-select v-model:value="filters.status" :placeholder="t('admin.career.mockPractice.filter.statusPlaceholder')" allow-clear style="width: 120px">
+          <a-select-option value="pending">{{ t('admin.career.mockPractice.status.pending') }}</a-select-option>
+          <a-select-option value="scheduled">{{ t('admin.career.mockPractice.status.scheduled') }}</a-select-option>
+          <a-select-option value="completed">{{ t('admin.career.mockPractice.status.completed') }}</a-select-option>
+          <a-select-option value="cancelled">{{ t('admin.career.mockPractice.status.cancelled') }}</a-select-option>
         </a-select>
         <a-button type="primary" @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ t('admin.career.mockPractice.filter.search') }}
         </a-button>
-        <a-button @click="handleReset">重置</a-button>
+        <a-button @click="handleReset">{{ t('admin.career.mockPractice.filter.reset') }}</a-button>
       </div>
     </a-card>
 
@@ -38,11 +38,11 @@
       <template #title>
         <div class="mock-practice__tabs">
           <button :class="['mock-tab', activeTab === 'pending' ? 'mock-tab--active mock-tab--pending' : '']" @click="switchTab('pending')">
-            <i class="mdi mdi-account-clock" style="margin-right: 4px;"></i>待分配导师
+            <i class="mdi mdi-account-clock" style="margin-right: 4px;"></i>{{ t('admin.career.mockPractice.tab.pending') }}
             <span class="mock-tab__badge">{{ stats.pendingCount }}</span>
           </button>
           <button :class="['mock-tab', activeTab === 'all' ? 'mock-tab--active mock-tab--all' : '']" @click="switchTab('all')">
-            <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px;"></i>全部记录
+            <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px;"></i>{{ t('admin.career.mockPractice.tab.all') }}
             <span class="mock-tab__badge">{{ stats.totalCount }}</span>
           </button>
         </div>
@@ -51,7 +51,7 @@
       <!-- 待分配导师表格 -->
       <template v-if="activeTab === 'pending'">
         <a-alert type="error" show-icon style="margin-bottom: 12px; border-radius: 8px;">
-          <template #message>以下学员申请了模拟应聘，需要分配导师</template>
+          <template #message>{{ t('admin.career.mockPractice.pendingAlert') }}</template>
         </a-alert>
         <a-table
           :columns="pendingColumns"
@@ -59,7 +59,7 @@
           :row-key="(r: MockPracticeListItem) => r.practiceId"
           :pagination="pendingPagination"
           :loading="loading"
-          :locale="{ emptyText: '当前筛选条件下暂无待分配导师的申请' }"
+          :locale="{ emptyText: t('admin.career.mockPractice.pendingEmpty') }"
           :scroll="{ x: 'max-content' }"
         >
         <template #bodyCell="{ column, record }">
@@ -67,7 +67,7 @@
             <div class="osg-student-cell">
               <div class="osg-student-avatar" :style="{ background: studentAvatarColor(record.studentId) }">{{ studentInitials(record.studentName) }}</div>
               <div>
-                <div style="font-weight: 600;">{{ record.studentName || '未命名学员' }}</div>
+                <div style="font-weight: 600;">{{ record.studentName || t('admin.career.mockPractice.unnamedStudent') }}</div>
                 <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID: {{ record.studentId }}</div>
               </div>
             </div>
@@ -80,7 +80,7 @@
           <template v-else-if="column.dataIndex === 'requestContent'">
             <div>
               <strong>{{ record.requestContent }}</strong>
-              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.preferredMentorNames || '暂无意向导师' }}</div>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.preferredMentorNames || t('admin.career.mockPractice.noPreferredMentor') }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'submittedAt'">
@@ -92,7 +92,7 @@
           <template v-else-if="column.dataIndex === 'action'">
             <a-button type="primary" size="small" @click="openAssignModal(record)">
               <template #icon><i class="mdi mdi-account-plus"></i></template>
-              分配导师
+              {{ t('admin.career.mockPractice.action.assign') }}
             </a-button>
           </template>
         </template>
@@ -107,7 +107,7 @@
         :row-key="(r: MockPracticeListItem) => r.practiceId"
         :pagination="allPagination"
         :loading="loading"
-        :locale="{ emptyText: '当前筛选条件下暂无模拟应聘记录' }"
+        :locale="{ emptyText: t('admin.career.mockPractice.allEmpty') }"
         :scroll="{ x: 'max-content' }"
       >
         <template #bodyCell="{ column, record }">
@@ -115,7 +115,7 @@
             <div class="osg-student-cell">
               <div class="osg-student-avatar" :style="{ background: studentAvatarColor(record.studentId) }">{{ studentInitials(record.studentName) }}</div>
               <div>
-                <div style="font-weight: 600;">{{ record.studentName || '未命名学员' }}</div>
+                <div style="font-weight: 600;">{{ record.studentName || t('admin.career.mockPractice.unnamedStudent') }}</div>
                 <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">ID: {{ record.studentId }}</div>
               </div>
             </div>
@@ -139,7 +139,7 @@
           </template>
           <template v-else-if="column.dataIndex === 'mentorNames'">
             <div>
-              <strong>{{ record.mentorNames || '待分配' }}</strong>
+              <strong>{{ record.mentorNames || t('admin.career.mockPractice.pendingAssign') }}</strong>
               <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.mentorBackgrounds || '—' }}</div>
             </div>
           </template>
@@ -147,13 +147,13 @@
             <a-tag :color="statusColor(record.status)">{{ formatStatus(record.status) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'completedHours'">
-            {{ record.completedHours ?? 0 }} 小时
+            {{ record.completedHours ?? 0 }} hrs
           </template>
           <template v-else-if="column.dataIndex === 'feedbackRating'">
             <div>
               <strong>{{ record.feedbackRating ? `${record.feedbackRating}/5` : '—' }}</strong>
-              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.feedbackSummary || '暂无反馈' }}</div>
-              <a-button v-if="record.feedbackSummary || record.feedbackRating" type="link" size="small" style="padding: 0" @click="openFeedbackModal(record)">查看反馈</a-button>
+              <div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.feedbackSummary || t('admin.career.mockPractice.noFeedback') }}</div>
+              <a-button v-if="record.feedbackSummary || record.feedbackRating" type="link" size="small" style="padding: 0" @click="openFeedbackModal(record)">{{ t('admin.career.mockPractice.action.viewFeedback') }}</a-button>
             </div>
           </template>
         </template>
@@ -179,6 +179,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -196,26 +197,28 @@ import {
 import { getStaffList, type StaffListItem } from '@osg/shared/api/admin/staff'
 import { useStandardClientPagination } from '@osg/shared'
 
+const { t } = useI18n()
+
 type ActiveTab = 'pending' | 'all'
 
-const pendingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 150, fixed: 'left' as const },
-  { title: '类型', dataIndex: 'practiceType', key: 'practiceType', width: 120 },
-  { title: '申请内容', dataIndex: 'requestContent', key: 'requestContent', width: 200 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 140 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
-]
+const pendingColumns = computed(() => [
+  { title: t('admin.career.mockPractice.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 150, fixed: 'left' as const },
+  { title: t('admin.career.mockPractice.columns.type'), dataIndex: 'practiceType', key: 'practiceType', width: 120 },
+  { title: t('admin.career.mockPractice.columns.requestContent'), dataIndex: 'requestContent', key: 'requestContent', width: 200 },
+  { title: t('admin.career.mockPractice.columns.submittedAt'), dataIndex: 'submittedAt', key: 'submittedAt', width: 140 },
+  { title: t('admin.career.mockPractice.columns.action'), dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
+])
 
-const allColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 150, fixed: 'left' as const },
-  { title: '类型', dataIndex: 'practiceType', key: 'practiceType', width: 120 },
-  { title: '申请内容', dataIndex: 'requestContent', key: 'requestContent', width: 180 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
-  { title: '导师', dataIndex: 'mentorNames', key: 'mentorNames', width: 140 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '已上课时', dataIndex: 'completedHours', key: 'completedHours', width: 90 },
-  { title: '课程反馈', dataIndex: 'feedbackRating', key: 'feedbackRating', width: 150 },
-]
+const allColumns = computed(() => [
+  { title: t('admin.career.mockPractice.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 150, fixed: 'left' as const },
+  { title: t('admin.career.mockPractice.columns.type'), dataIndex: 'practiceType', key: 'practiceType', width: 120 },
+  { title: t('admin.career.mockPractice.columns.requestContent'), dataIndex: 'requestContent', key: 'requestContent', width: 180 },
+  { title: t('admin.career.mockPractice.columns.submittedAt'), dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
+  { title: t('admin.career.mockPractice.columns.mentor'), dataIndex: 'mentorNames', key: 'mentorNames', width: 140 },
+  { title: t('admin.career.mockPractice.columns.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('admin.career.mockPractice.columns.completedHours'), dataIndex: 'completedHours', key: 'completedHours', width: 90 },
+  { title: t('admin.career.mockPractice.columns.feedbackRating'), dataIndex: 'feedbackRating', key: 'feedbackRating', width: 150 },
+])
 
 interface MentorOption {
   mentorId: number
@@ -256,10 +259,10 @@ const requestFilters = computed<MockPracticeFilters>(() => ({
 }))
 
 const statCards = computed(() => [
-  { key: 'pending', label: '待处理', value: stats.value.pendingCount, color: '#F59E0B' },
-  { key: 'scheduled', label: '已安排', value: stats.value.scheduledCount, color: '#3B82F6' },
-  { key: 'completed', label: '已完成', value: stats.value.completedCount, color: '#22C55E' },
-  { key: 'cancelled', label: '已取消', value: stats.value.cancelledCount, color: '#94A3B8' }
+  { key: 'pending', label: t('admin.career.mockPractice.statCard.pending'), value: stats.value.pendingCount, color: '#F59E0B' },
+  { key: 'scheduled', label: t('admin.career.mockPractice.statCard.scheduled'), value: stats.value.scheduledCount, color: '#3B82F6' },
+  { key: 'completed', label: t('admin.career.mockPractice.statCard.completed'), value: stats.value.completedCount, color: '#22C55E' },
+  { key: 'cancelled', label: t('admin.career.mockPractice.statCard.cancelled'), value: stats.value.cancelledCount, color: '#94A3B8' }
 ])
 
 const pendingRows = computed(() => rows.value.filter((row) => row.status === 'pending'))
@@ -272,7 +275,7 @@ const assignMentorOptions = computed<MentorOption[]>(() => {
   return assignableMentors.value.map((mentor) => ({
     mentorId: mentor.staffId,
     mentorName: mentor.staffName,
-    mentorBackground: [mentor.majorDirection, mentor.city].filter(Boolean).join(' / ') || '可分配导师',
+    mentorBackground: [mentor.majorDirection, mentor.city].filter(Boolean).join(' / ') || t('admin.career.mockPractice.assignMentorFallback'),
     preferred: preferredNames.includes(mentor.staffName)
   }))
 })
@@ -346,7 +349,7 @@ const handleAssignSubmit = async (payload: Omit<AssignMockPracticePayload, 'prac
       practiceId: selectedRow.value.practiceId,
       ...payload
     })
-    message.success('模拟应聘导师分配已完成')
+    message.success(t('admin.career.mockPractice.messages.assignSuccess'))
     assignVisible.value = false
     selectedRow.value = null
     await loadData()
@@ -368,10 +371,10 @@ const handleFeedbackVisibleChange = (value: boolean) => {
 }
 
 function formatType(value: string) {
-  if (value === 'mock_interview') return '模拟面试'
-  if (value === 'communication_test') return '人际关系测试'
-  if (value === 'midterm_exam') return '期中考试'
-  return '模拟应聘'
+  if (value === 'mock_interview') return t('admin.career.mockPractice.type.mockInterview')
+  if (value === 'communication_test') return t('admin.career.mockPractice.type.communicationTest')
+  if (value === 'midterm_exam') return t('admin.career.mockPractice.type.midtermExam')
+  return t('admin.career.mockPractice.type.default')
 }
 
 function typeColor(value: string): string {
@@ -398,7 +401,7 @@ function studentAvatarColor(id?: number | string) {
 
 function studentInitials(name?: string | null) {
   const value = (name || '').trim()
-  if (!value) return '学员'
+  if (!value) return t('admin.career.mockPractice.studentFallback')
   return value.slice(0, 2)
 }
 
@@ -411,11 +414,11 @@ function statusColor(value?: string): string {
 }
 
 function formatStatus(value?: string) {
-  if (value === 'pending') return '待处理'
-  if (value === 'scheduled') return '已安排'
-  if (value === 'completed') return '已完成'
-  if (value === 'cancelled') return '已取消'
-  return '未知'
+  if (value === 'pending') return t('admin.career.mockPractice.status.pending')
+  if (value === 'scheduled') return t('admin.career.mockPractice.status.scheduled')
+  if (value === 'completed') return t('admin.career.mockPractice.status.completed')
+  if (value === 'cancelled') return t('admin.career.mockPractice.status.cancelled')
+  return t('admin.career.mockPractice.status.unknown')
 }
 
 function splitMentorNames(value?: string | null) {
@@ -439,13 +442,13 @@ function formatDateTime(value?: string | null) {
 }
 
 function formatRelativeTime(value?: string | null) {
-  if (!value) return '刚刚'
+  if (!value) return t('admin.career.mockPractice.relativeJustNow')
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '刚刚'
+  if (Number.isNaN(date.getTime())) return t('admin.career.mockPractice.relativeJustNow')
   const diffHours = Math.max(1, Math.round((Date.now() - date.getTime()) / 36e5))
-  if (diffHours < 24) return `${diffHours} 小时前`
+  if (diffHours < 24) return t('admin.career.mockPractice.relativeHoursAgo', { hours: diffHours })
   const diffDays = Math.round(diffHours / 24)
-  return `${diffDays} 天前`
+  return t('admin.career.mockPractice.relativeDaysAgo', { days: diffDays })
 }
 </script>
 

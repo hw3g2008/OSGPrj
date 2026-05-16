@@ -9,19 +9,19 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-voice-outline" aria-hidden="true"></span>
-        <span>处理模拟应聘申请</span>
+        <span>{{ t('admin.career.mockPractice.assignModal.title') }}</span>
       </span>
     </template>
 
     <section class="mock-practice-assign-modal__hero assign-mock-modal__hero">
       <div class="mock-practice-assign-modal__avatar assign-mock-modal__avatar">{{ studentInitials }}</div>
       <div class="mock-practice-assign-modal__summary assign-mock-modal__summary">
-        <strong>{{ row?.studentName || '待分配学员' }}</strong>
+        <strong>{{ row?.studentName || t('admin.career.mockPractice.assignModal.pendingStudent') }}</strong>
         <span>ID {{ row?.studentId || '--' }}</span>
         <span>{{ practiceTypeLabel }}</span>
       </div>
       <div class="mock-practice-assign-modal__meta assign-mock-modal__meta">
-        <span class="mock-practice-assign-modal__meta-chip assign-mock-modal__meta-chip">建议导师 {{ requestedCount }} 位</span>
+        <span class="mock-practice-assign-modal__meta-chip assign-mock-modal__meta-chip">{{ t('admin.career.mockPractice.assignModal.requestedCount', { count: requestedCount }) }}</span>
         <span class="mock-practice-assign-modal__meta-chip mock-practice-assign-modal__meta-chip--accent assign-mock-modal__meta-chip assign-mock-modal__meta-chip--accent">
           {{ preferredMentorLabel }}
         </span>
@@ -31,10 +31,10 @@
     <section class="mock-practice-assign-modal__panel">
       <header class="mock-practice-assign-modal__section-head">
         <div>
-          <h3>导师候选池</h3>
-          <p>意向导师优先默认勾选，可继续补充分配导师。</p>
+          <h3>{{ t('admin.career.mockPractice.assignModal.mentorPoolTitle') }}</h3>
+          <p>{{ t('admin.career.mockPractice.assignModal.mentorPoolDesc') }}</p>
         </div>
-        <span class="mock-practice-assign-modal__badge">支持多导师</span>
+        <span class="mock-practice-assign-modal__badge">{{ t('admin.career.mockPractice.assignModal.multiMentorBadge') }}</span>
       </header>
 
       <div v-if="mentorOptions.length" class="mock-practice-assign-modal__mentor-list assign-mock-modal__mentor-list">
@@ -58,40 +58,40 @@
             <strong>{{ option.mentorName }}</strong>
             <span>{{ option.mentorBackground }}</span>
           </div>
-          <span v-if="option.preferred" class="mock-practice-assign-modal__mentor-flag assign-mock-modal__preferred-flag">意向导师</span>
+          <span v-if="option.preferred" class="mock-practice-assign-modal__mentor-flag assign-mock-modal__preferred-flag">{{ t('admin.career.mockPractice.assignModal.preferredFlag') }}</span>
         </label>
       </div>
-      <div v-else class="mock-practice-assign-modal__empty assign-mock-modal__empty">当前没有可分配导师，请先补充导师目录。</div>
+      <div v-else class="mock-practice-assign-modal__empty assign-mock-modal__empty">{{ t('admin.career.mockPractice.assignModal.noMentor') }}</div>
     </section>
 
     <section class="mock-practice-assign-modal__schedule-grid">
       <label class="mock-practice-assign-modal__field">
-        <span>预约时间</span>
+        <span>{{ t('admin.career.mockPractice.assignModal.scheduledAt') }}</span>
         <a-date-picker
           v-model:value="scheduledAt"
           show-time
           format="YYYY-MM-DD HH:mm"
           value-format="YYYY-MM-DDTHH:mm"
-          placeholder="选择预约时间"
+          :placeholder="t('admin.career.mockPractice.assignModal.scheduledAtPlaceholder')"
           style="width: 100%"
         />
       </label>
 
       <label class="mock-practice-assign-modal__field">
-        <span>备注说明</span>
+        <span>{{ t('admin.career.mockPractice.assignModal.note') }}</span>
         <a-textarea
           v-model:value="note"
           :rows="4"
           :maxlength="160"
-          placeholder="例如：先安排行为面模拟，下一次补 technical drill。"
+          :placeholder="t('admin.career.mockPractice.assignModal.notePlaceholder')"
         />
       </label>
     </section>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ t('admin.career.mockPractice.assignModal.cancel') }}</a-button>
       <a-button type="primary" :disabled="submitting" @click="handleSubmit">
-        {{ submitting ? '提交中...' : '确认安排' }}
+        {{ submitting ? t('admin.career.mockPractice.assignModal.submitting') : t('admin.career.mockPractice.assignModal.submit') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -99,9 +99,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { MockPracticeListItem } from '@osg/shared/api/admin/mockPractice'
+
+const { t } = useI18n()
 
 interface MentorOption {
   mentorId: number
@@ -136,12 +139,12 @@ const scheduledAt = ref('')
 const note = ref('')
 
 const studentInitials = computed(() => {
-  const value = props.row?.studentName || '学员'
+  const value = props.row?.studentName || t('admin.career.mockPractice.studentFallback')
   return value.slice(0, 2).toUpperCase()
 })
 
 const requestedCount = computed(() => props.row?.requestedMentorCount || 1)
-const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || '暂无意向导师')
+const preferredMentorLabel = computed(() => props.row?.preferredMentorNames || t('admin.career.mockPractice.noPreferredMentor'))
 const practiceTypeLabel = computed(() => formatPracticeType(props.row?.practiceType))
 
 watch(
@@ -179,11 +182,11 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!selectedMentorIds.value.length) {
-    message.warning('请至少选择1位导师')
+    message.warning(t('admin.career.mockPractice.assignModal.warnSelectMentor'))
     return
   }
   if (!scheduledAt.value) {
-    message.warning('请选择预约时间')
+    message.warning(t('admin.career.mockPractice.assignModal.warnSelectTime'))
     return
   }
 
@@ -198,10 +201,10 @@ const handleSubmit = () => {
 }
 
 function formatPracticeType(value?: string) {
-  if (value === 'mock_interview') return '模拟面试'
-  if (value === 'communication_test') return '人际关系测试'
-  if (value === 'midterm_exam') return '期中考试'
-  return '模拟应聘'
+  if (value === 'mock_interview') return t('admin.career.mockPractice.type.mockInterview')
+  if (value === 'communication_test') return t('admin.career.mockPractice.type.communicationTest')
+  if (value === 'midterm_exam') return t('admin.career.mockPractice.type.midtermExam')
+  return t('admin.career.mockPractice.type.default')
 }
 
 const getMentorInitials = (value: string) => value.slice(0, 2).toUpperCase()

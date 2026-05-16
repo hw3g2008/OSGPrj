@@ -9,14 +9,14 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-message-text-outline" aria-hidden="true"></span>
-        <span>查看模拟反馈</span>
+        <span>{{ t('admin.career.mockPractice.feedbackModal.title') }}</span>
       </span>
     </template>
 
     <section class="mock-practice-feedback-modal__hero">
       <div class="mock-practice-feedback-modal__avatar">{{ studentInitials }}</div>
       <div class="mock-practice-feedback-modal__hero-copy">
-        <strong>{{ row?.studentName || '待查看学员' }}</strong>
+        <strong>{{ row?.studentName || t('admin.career.mockPractice.feedbackModal.pendingStudent') }}</strong>
         <span>ID {{ row?.studentId || '--' }}</span>
         <span>{{ practiceTypeLabel }}</span>
       </div>
@@ -28,45 +28,48 @@
 
     <section class="mock-practice-feedback-modal__summary-grid">
       <article class="mock-practice-feedback-modal__metric">
-        <span>导师</span>
-        <strong>{{ row?.mentorNames || '待补充' }}</strong>
+        <span>{{ t('admin.career.mockPractice.feedbackModal.fields.mentor') }}</span>
+        <strong>{{ row?.mentorNames || t('admin.career.mockPractice.feedbackModal.pending') }}</strong>
       </article>
       <article class="mock-practice-feedback-modal__metric">
-        <span>导师背景</span>
+        <span>{{ t('admin.career.mockPractice.feedbackModal.fields.mentorBackground') }}</span>
         <strong>{{ row?.mentorBackgrounds || '—' }}</strong>
       </article>
       <article class="mock-practice-feedback-modal__metric">
-        <span>已上课时</span>
-        <strong>{{ row?.completedHours ?? 0 }} 小时</strong>
+        <span>{{ t('admin.career.mockPractice.feedbackModal.fields.completedHours') }}</span>
+        <strong>{{ row?.completedHours ?? 0 }} hrs</strong>
       </article>
       <article class="mock-practice-feedback-modal__metric">
-        <span>预约时间</span>
+        <span>{{ t('admin.career.mockPractice.feedbackModal.fields.scheduledAt') }}</span>
         <strong>{{ scheduledAtLabel }}</strong>
       </article>
     </section>
 
     <section class="mock-practice-feedback-modal__section">
-      <label class="mock-practice-feedback-modal__label">反馈摘要</label>
-      <div class="mock-practice-feedback-modal__panel">{{ row?.feedbackSummary || '暂无反馈内容。' }}</div>
+      <label class="mock-practice-feedback-modal__label">{{ t('admin.career.mockPractice.feedbackModal.feedbackLabel') }}</label>
+      <div class="mock-practice-feedback-modal__panel">{{ row?.feedbackSummary || t('admin.career.mockPractice.feedbackModal.noFeedback') }}</div>
     </section>
 
     <section v-if="row?.note" class="mock-practice-feedback-modal__section">
-      <label class="mock-practice-feedback-modal__label">备注</label>
+      <label class="mock-practice-feedback-modal__label">{{ t('admin.career.mockPractice.feedbackModal.noteLabel') }}</label>
       <div class="mock-practice-feedback-modal__panel mock-practice-feedback-modal__panel--muted">{{ row.note }}</div>
     </section>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ t('admin.career.mockPractice.feedbackModal.close') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { MockPracticeListItem } from '@osg/shared/api/admin/mockPractice'
 // §D.2 admin mock-practice 反馈模态状态显示接入 SSOT composable
 import { deriveMockPracticeStatus } from '@osg/shared/composables'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -80,32 +83,32 @@ const emit = defineEmits<{
 }>()
 
 const studentInitials = computed(() => {
-  const value = props.row?.studentName || '学员'
+  const value = props.row?.studentName || t('admin.career.mockPractice.studentFallback')
   return value.slice(0, 2).toUpperCase()
 })
 
 const practiceTypeLabel = computed(() => {
   const value = props.row?.practiceType
-  if (value === 'mock_interview') return '模拟面试'
-  if (value === 'communication_test') return '人际关系测试'
-  if (value === 'midterm_exam') return '期中考试'
-  return '模拟应聘'
+  if (value === 'mock_interview') return t('admin.career.mockPractice.type.mockInterview')
+  if (value === 'communication_test') return t('admin.career.mockPractice.type.communicationTest')
+  if (value === 'midterm_exam') return t('admin.career.mockPractice.type.midtermExam')
+  return t('admin.career.mockPractice.type.default')
 })
 
 /** §D.2 接入 deriveMockPracticeStatus（保留 'scheduled' → '已安排' 兼容映射） */
 const statusLabel = computed(() => {
   const value = props.row?.status
-  if (value === 'scheduled') return '已安排'
+  if (value === 'scheduled') return t('admin.career.mockPractice.status.scheduled')
   const display = deriveMockPracticeStatus({
     status: value,
     completedHours: props.row?.completedHours,
   })
-  return display.label || '待处理'
+  return display.label || t('admin.career.mockPractice.status.pending')
 })
 
 const feedbackRatingLabel = computed(() => {
   const feedbackRating = props.row?.feedbackRating
-  return feedbackRating ? `${feedbackRating}/5` : '暂无评分'
+  return feedbackRating ? `${feedbackRating}/5` : t('admin.career.mockPractice.feedbackModal.noRating')
 })
 
 const scheduledAtLabel = computed(() => formatDateTime(props.row?.scheduledAt))
