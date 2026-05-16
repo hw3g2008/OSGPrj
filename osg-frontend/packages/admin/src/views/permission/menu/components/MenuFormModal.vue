@@ -10,53 +10,53 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-file-tree" aria-hidden="true" />
-        <span>菜单项配置</span>
+        <span>{{ t('admin.permission.menu.modal.title') }}</span>
       </span>
     </template>
 
-    <a-alert type="info" show-icon :message="'菜单类型决定字段联动：目录仅维护显示结构；菜单维护路由与组件；按钮仅维护权限标识。'" style="margin-bottom: 16px" />
+    <a-alert type="info" show-icon :message="t('admin.permission.menu.modal.infoAlert')" style="margin-bottom: 16px" />
 
     <a-form layout="vertical">
-      <a-form-item label="菜单类型" required>
+      <a-form-item :label="t('admin.permission.menu.modal.typeLabel')" required>
         <a-select v-model:value="formState.menuType" :disabled="!!formState.menuId">
-          <a-select-option value="M">目录 M</a-select-option>
-          <a-select-option value="C">菜单 C</a-select-option>
-          <a-select-option value="F">按钮 F</a-select-option>
+          <a-select-option value="M">{{ t('admin.permission.menu.modal.typeDir') }}</a-select-option>
+          <a-select-option value="C">{{ t('admin.permission.menu.modal.typeMenu') }}</a-select-option>
+          <a-select-option value="F">{{ t('admin.permission.menu.modal.typeButton') }}</a-select-option>
         </a-select>
       </a-form-item>
-      <a-form-item v-if="formState.menuType === 'C'" label="所属目录">
-        <a-select v-model:value="formState.parentId" placeholder="请选择所属目录">
+      <a-form-item v-if="formState.menuType === 'C'" :label="t('admin.permission.menu.modal.parentDirLabel')">
+        <a-select v-model:value="formState.parentId" :placeholder="t('admin.permission.menu.modal.parentDirPlaceholder')">
           <a-select-option v-for="item in parentDirOptions" :key="item.menuId" :value="item.menuId">{{ item.menuName }}</a-select-option>
         </a-select>
       </a-form-item>
-      <a-form-item v-if="formState.menuType === 'F'" label="所属菜单">
-        <a-select v-model:value="formState.parentId" placeholder="请选择所属菜单">
+      <a-form-item v-if="formState.menuType === 'F'" :label="t('admin.permission.menu.modal.parentMenuLabel')">
+        <a-select v-model:value="formState.parentId" :placeholder="t('admin.permission.menu.modal.parentMenuPlaceholder')">
           <a-select-option v-for="item in parentMenuOptions" :key="item.menuId" :value="item.menuId">{{ item.menuName }}</a-select-option>
         </a-select>
       </a-form-item>
-      <a-form-item label="菜单名称" required>
-        <a-input v-model:value="formState.menuName" placeholder="请输入菜单名称" />
+      <a-form-item :label="t('admin.permission.menu.modal.nameLabel')" required>
+        <a-input v-model:value="formState.menuName" :placeholder="t('admin.permission.menu.modal.namePlaceholder')" />
       </a-form-item>
-      <a-form-item v-if="formState.menuType === 'C'" label="路由地址">
+      <a-form-item v-if="formState.menuType === 'C'" :label="t('admin.permission.menu.modal.pathLabel')">
         <a-input v-model:value="formState.path" placeholder="如：permission/menu" />
       </a-form-item>
-      <a-form-item v-if="formState.menuType === 'C'" label="组件路径">
+      <a-form-item v-if="formState.menuType === 'C'" :label="t('admin.permission.menu.modal.componentLabel')">
         <a-input v-model:value="formState.component" placeholder="如：permission/menu/index" />
       </a-form-item>
-      <a-form-item v-if="formState.menuType === 'F'" label="权限标识" required>
+      <a-form-item v-if="formState.menuType === 'F'" :label="t('admin.permission.menu.modal.permsLabel')" required>
         <a-input v-model:value="formState.perms" placeholder="如：system:menu:list" />
       </a-form-item>
       <a-row :gutter="16">
         <a-col :span="12">
-          <a-form-item label="显示排序">
+          <a-form-item :label="t('admin.permission.menu.modal.orderNumLabel')">
             <a-input-number v-model:value="formState.orderNum" size="middle" style="width: 100%" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="状态">
+          <a-form-item :label="t('admin.permission.menu.modal.statusLabel')">
             <a-select v-model:value="formState.status">
-              <a-select-option value="0">启用</a-select-option>
-              <a-select-option value="1">停用</a-select-option>
+              <a-select-option value="0">{{ t('admin.permission.menu.status.enabled') }}</a-select-option>
+              <a-select-option value="1">{{ t('admin.permission.menu.status.disabled') }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -64,16 +64,19 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" @click="handleSubmit">保存</a-button>
+      <a-button @click="handleClose">{{ t('admin.permission.menu.modal.cancel') }}</a-button>
+      <a-button type="primary" @click="handleSubmit">{{ t('admin.permission.menu.modal.save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import { getAdminMenuList, type MenuListItem, type MenuMutationPayload } from '@osg/shared/api/admin/menu'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -86,8 +89,8 @@ const emit = defineEmits<{
 }>()
 
 // 动态获取上级菜单选项
-const parentDirOptions = ref<MenuListItem[]>([])   // 目录列表，供菜单 C 选择上级
-const parentMenuOptions = ref<MenuListItem[]>([])  // 菜单列表，供按钮 F 选择上级
+const parentDirOptions = ref<MenuListItem[]>([])   // dir list for menu-C parent
+const parentMenuOptions = ref<MenuListItem[]>([])  // menu list for button-F parent
 const loadParentMenus = async () => {
   try {
     const list = await getAdminMenuList()

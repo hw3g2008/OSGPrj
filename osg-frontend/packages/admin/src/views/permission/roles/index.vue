@@ -1,7 +1,7 @@
 <template>
   <div id="page-roles" class="osg-page">
     <PageHeader
-      title-zh="权限配置"
+      :title-zh="t('admin.permission.roles.pageTitle')"
       title-en="Roles & Permissions"
     >
       <template #actions>
@@ -12,7 +12,7 @@
           @click="handleAdd"
         >
           <template #icon><PlusOutlined /></template>
-          新增角色
+          {{ t('admin.permission.roles.addButton') }}
         </a-button>
       </template>
     </PageHeader>
@@ -21,12 +21,12 @@
       type="info"
       show-icon
       banner
-      message="操作提示"
+      :message="t('admin.permission.roles.infoTitle')"
       style="border-radius: 12px"
     >
       <template #description>
         <p style="margin: 0">
-          点击「编辑」修改角色名称、描述及可访问的功能模块。员工数为 0 的角色可删除。
+          {{ t('admin.permission.roles.infoDesc') }}
         </p>
       </template>
     </a-alert>
@@ -41,7 +41,7 @@
           current: pagination.current,
           pageSize: pagination.pageSize,
           total: pagination.total,
-          showTotal: (total: number) => `共 ${total} 条记录`,
+          showTotal: (total: number) => t('admin.permission.roles.totalRecords', { total }),
           onChange: onPageChange,
         }"
         :loading="loading"
@@ -55,7 +55,7 @@
           </template>
           <template v-else-if="column.dataIndex === 'menuNames'">
             <template v-if="record.roleKey === 'super_admin'">
-              <span :style="pillStyle('purple')">全部权限</span>
+              <span :style="pillStyle('purple')">{{ t('admin.permission.roles.allPerms') }}</span>
             </template>
             <template v-else>
               <span
@@ -71,14 +71,14 @@
             </template>
           </template>
           <template v-else-if="column.dataIndex === 'userCount'">
-            {{ record.userCount || 0 }}人
+            {{ t('admin.permission.roles.userCount', { count: record.userCount || 0 }) }}
           </template>
           <template v-else-if="column.dataIndex === 'updateTime'">
             {{ formatDate(record.updateTime) }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <template v-if="record.roleKey === 'super_admin'">
-              <span style="color: var(--muted); font-size: 12px">系统角色</span>
+              <span style="color: var(--muted); font-size: 12px">{{ t('admin.permission.roles.systemRole') }}</span>
             </template>
             <template v-else>
               <a-button
@@ -90,7 +90,7 @@
                 :data-surface-sample-key="record.roleKey"
                 @click="handleEdit(record)"
               >
-                编辑
+                {{ t('admin.permission.roles.action.edit') }}
               </a-button>
               <a-button
                 v-if="!record.userCount"
@@ -101,7 +101,7 @@
                 data-surface-part="delete-control"
                 @click="handleDelete(record)"
               >
-                删除
+                {{ t('admin.permission.roles.action.delete') }}
               </a-button>
             </template>
           </template>
@@ -119,7 +119,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { getRoleList, getMenuTree, deleteRole, getRoleMenuIds } from '@/api/role'
 import { getPermissionColor, getPermissionColorConfig } from '@osg/shared/utils/permissionColors'
@@ -130,15 +131,17 @@ import { PlusOutlined } from '@ant-design/icons-vue'
 import { normalizeMenuTree } from './menuTree'
 import dayjs from 'dayjs'
 
-const roleColumns = [
+const { t } = useI18n()
+
+const roleColumns = computed(() => [
   { title: 'ID', dataIndex: 'roleId', key: 'roleId', width: 80, fixed: 'left' as const },
-  { title: '角色名称', dataIndex: 'roleName', key: 'roleName' },
-  { title: '角色描述', dataIndex: 'remark', key: 'remark' },
-  { title: '权限模块', dataIndex: 'menuNames', key: 'menuNames', width: 300 },
-  { title: '员工数', dataIndex: 'userCount', key: 'userCount', width: 80 },
-  { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 220, fixed: 'right' as const },
-]
+  { title: t('admin.permission.roles.columns.name'), dataIndex: 'roleName', key: 'roleName' },
+  { title: t('admin.permission.roles.columns.desc'), dataIndex: 'remark', key: 'remark' },
+  { title: t('admin.permission.roles.columns.perms'), dataIndex: 'menuNames', key: 'menuNames', width: 300 },
+  { title: t('admin.permission.roles.columns.userCount'), dataIndex: 'userCount', key: 'userCount', width: 80 },
+  { title: t('admin.permission.roles.columns.updateTime'), dataIndex: 'updateTime', key: 'updateTime' },
+  { title: t('admin.permission.roles.columns.action'), dataIndex: 'action', key: 'action', width: 220, fixed: 'right' as const },
+])
 
 const pillStyle = (colorType: PermissionColorType) => {
   const cfg = getPermissionColorConfig(colorType)
@@ -184,7 +187,7 @@ const loadRoleList = async () => {
     })
     const roles = res.rows || []
     pagination.total = res.total || 0
-    
+
     // 为每个角色加载权限信息
     const rolesWithMenus = await Promise.all(
       roles.map(async (role) => {
@@ -192,14 +195,14 @@ const loadRoleList = async () => {
           // 超级管理员显示全部权限
           return {
             ...role,
-            menuNames: ['全部权限']
+            menuNames: [t('admin.permission.roles.allPerms')]
           }
         }
-        
+
         try {
           const menuRes = await getRoleMenuIds(role.roleId)
           const checkedSet = new Set(menuRes.checkedKeys || [])
-          
+
           // 收集被选中叶子所属的二级菜单名称（去重）
           const secondLevelNames: string[] = []
           const menus = menuRes.menus || []
@@ -218,23 +221,23 @@ const loadRoleList = async () => {
             }
           }
           const menuNames = secondLevelNames
-          
+
           return {
             ...role,
-            menuNames: menuNames.length > 0 ? menuNames : ['未分配权限']
+            menuNames: menuNames.length > 0 ? menuNames : [t('admin.permission.roles.noPerms')]
           }
         } catch {
           return {
             ...role,
-            menuNames: ['权限加载失败']
+            menuNames: [t('admin.permission.roles.permsError')]
           }
         }
       })
     )
-    
+
     roleList.value = rolesWithMenus
   } catch (error) {
-    message.error('加载角色列表失败')
+    message.error(t('admin.permission.roles.messages.loadError'))
   } finally {
     loading.value = false
   }
@@ -245,7 +248,7 @@ const loadMenuTree = async () => {
     const res = await getMenuTree()
     menuTree.value = normalizeMenuTree(res || [])
   } catch (error) {
-    console.error('加载菜单树失败', error)
+    console.error('Failed to load menu tree', error)
   }
 }
 
@@ -261,17 +264,17 @@ const handleEdit = (record: any) => {
 
 const handleDelete = (record: any) => {
   Modal.confirm({
-    title: '确认删除',
-    content: '确定要删除该角色吗？删除后不可恢复。',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('admin.permission.roles.messages.deleteConfirmTitle'),
+    content: t('admin.permission.roles.messages.deleteConfirmContent'),
+    okText: t('admin.permission.roles.messages.confirmOk'),
+    cancelText: t('admin.permission.roles.messages.confirmCancel'),
     onOk: async () => {
       try {
         await deleteRole(record.roleId)
-        message.success('角色删除成功')
+        message.success(t('admin.permission.roles.messages.deleteSuccess'))
         loadRoleList()
       } catch (error) {
-        message.error('删除失败')
+        message.error(t('admin.permission.roles.messages.deleteError'))
       }
     }
   })

@@ -13,7 +13,7 @@
           :class="isEdit ? 'mdi-database-edit' : 'mdi-database-plus'"
           aria-hidden="true"
         />
-        <span>{{ isEdit ? `编辑${tabLabel}` : `新增${tabLabel}` }}</span>
+        <span>{{ isEdit ? t('admin.permission.dicts.modal.titleEdit', { label: tabLabel }) : t('admin.permission.dicts.modal.titleCreate', { label: tabLabel }) }}</span>
       </span>
     </template>
 
@@ -29,14 +29,14 @@
         <template #label>
           <span class="base-data-modal__label">{{ nameFieldLabel }}<span class="base-data-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.dictLabel" :placeholder="`请输入${nameFieldLabel}`" />
+        <a-input v-model:value="formState.dictLabel" :placeholder="t('admin.permission.dicts.modal.nameInputPlaceholder', { field: nameFieldLabel })" />
       </a-form-item>
 
-      <a-form-item name="dictValue" data-field-name="字典键值">
+      <a-form-item name="dictValue" data-field-name="字典键值"><!-- i18n-skip-line: playwright selector -->
         <template #label>
-          <span class="base-data-modal__label">字典键值<span class="base-data-modal__required">*</span></span>
+          <span class="base-data-modal__label">{{ t('admin.permission.dicts.modal.dictValueLabel') }}<span class="base-data-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.dictValue" placeholder="请输入字典键值（仅限英文/数字/下划线，以字母开头）" />
+        <a-input v-model:value="formState.dictValue" :placeholder="t('admin.permission.dicts.modal.dictValuePlaceholder')" />
       </a-form-item>
 
       <a-form-item v-if="parentTabInfo" name="parentValue" :data-field-name="parentFieldLabel">
@@ -45,7 +45,7 @@
         </template>
         <a-select
           v-model:value="formState.parentValue"
-          :placeholder="`请选择${parentFieldLabel}`"
+          :placeholder="t('admin.permission.dicts.modal.parentSelectPlaceholder', { field: parentFieldLabel })"
           allow-clear
         >
           <a-select-option
@@ -62,22 +62,20 @@
       <a-form-item
         v-if="props.tab === 'osg_company_name'"
         name="website"
-        data-field-name="官网地址"
-        label="官网地址"
-      >
-        <a-input v-model:value="formState.website" placeholder="请输入官网地址（选填）" />
+        :label="t('admin.permission.dicts.modal.websiteLabel')"
+        data-field-name="官网地址"><!-- i18n-skip-line: playwright selector -->
+        <a-input v-model:value="formState.website" :placeholder="t('admin.permission.dicts.modal.websitePlaceholder')" />
       </a-form-item>
 
       <!-- 国家/地区字段，school Tab 特有，下拉来自 osg_region 字典 -->
       <a-form-item
         v-if="props.tab === 'osg_school'"
         name="country"
-        data-field-name="国家/地区"
-        label="国家/地区"
-      >
+        :label="t('admin.permission.dicts.modal.countryLabel')"
+        data-field-name="国家/地区"><!-- i18n-skip-line: playwright selector -->
         <a-select
           v-model:value="formState.country"
-          placeholder="请选择国家/地区"
+          :placeholder="t('admin.permission.dicts.modal.countryPlaceholder')"
           allow-clear
           :options="regionOptions"
         />
@@ -87,35 +85,34 @@
       <a-form-item
         v-if="props.tab === 'osg_country_code'"
         name="callingCode"
-        data-field-name="国际区号"
-      >
+        data-field-name="国际区号"><!-- i18n-skip-line: playwright selector -->
         <template #label>
-          <span class="base-data-modal__label">国际区号<span class="base-data-modal__required">*</span></span>
+          <span class="base-data-modal__label">{{ t('admin.permission.dicts.modal.callingCodeLabel') }}<span class="base-data-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.callingCode" placeholder="例如 +86，必须以 + 开头加 1-4 位数字" />
+        <a-input v-model:value="formState.callingCode" :placeholder="t('admin.permission.dicts.modal.callingCodePlaceholder')" />
       </a-form-item>
 
-      <a-form-item label="排序" name="dictSort" data-field-name="排序">
+      <a-form-item :label="t('admin.permission.dicts.modal.sortLabel')" name="dictSort" data-field-name="排序"><!-- i18n-skip-line: playwright selector -->
         <a-input-number
           v-model:value="formState.dictSort"
           :min="0"
-          placeholder="数字越大越靠前"
+          :placeholder="t('admin.permission.dicts.modal.sortPlaceholder')"
           style="width: 100%"
         />
       </a-form-item>
 
-      <a-form-item label="状态" name="status" data-field-name="状态">
+      <a-form-item :label="t('admin.permission.dicts.modal.statusLabel')" name="status" data-field-name="状态"><!-- i18n-skip-line: playwright selector -->
         <a-switch
           v-model:checked="statusChecked"
-          checked-children="启用"
-          un-checked-children="禁用"
+          :checked-children="t('admin.permission.dicts.modal.statusEnabled')"
+          :un-checked-children="t('admin.permission.dicts.modal.statusDisabled')"
         />
       </a-form-item>
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="loading" @click="handleSubmit">保存</a-button>
+      <a-button @click="handleClose">{{ t('admin.permission.dicts.modal.cancel') }}</a-button>
+      <a-button type="primary" :loading="loading" @click="handleSubmit">{{ t('admin.permission.dicts.modal.save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
@@ -123,8 +120,11 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { createAdminDictItem, getAdminDictOptions, updateAdminDictItem } from '@/api/adminDict'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t, te } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -149,24 +149,6 @@ const surfaceIdMap: Record<string, { create: string; edit: string }> = {
   osg_major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
   osg_sub_direction: { create: 'modal-new-sub-direction', edit: 'modal-edit-sub-direction' },
 }
-const nameFieldLabelMap: Record<string, string> = {
-  osg_job_category: '分类名称',
-  osg_company_name: '公司/银行名称',
-  osg_region: '大区名称',
-  osg_city: '地区/城市名称',
-  osg_recruit_cycle: '周期名称',
-  osg_school: '学校名称',
-  osg_major_direction: '方向名称',
-  osg_sub_direction: '子方向名称',
-  osg_course_type: '课程类型名称',
-  osg_expense_type: '报销类型名称',
-  osg_country_code: '国家/地区',
-}
-const parentFieldLabelMap: Record<string, string> = {
-  osg_company_name: '所属公司/银行类别',
-  osg_city: '所属大区',
-  osg_sub_direction: '所属主攻方向',
-}
 
 const isEdit = computed(() => !!props.record)
 const normalizedTab = computed(() => props.tab.replace(/_/g, '-'))
@@ -187,10 +169,15 @@ const parentTabInfo = computed(() => {
   return parentTab ? { key: cfg.parentTab, label: parentTab.label } : null
 })
 
-const nameFieldLabel = computed(() => nameFieldLabelMap[props.tab] ?? `${props.tabLabel}名称`)
+const nameFieldLabel = computed(() => {
+  const key = `admin.permission.dicts.modal.nameLabelMap.${props.tab}`
+  return te(key) ? t(key as never) : t('admin.permission.dicts.modal.nameFallback', { label: props.tabLabel })
+})
+
 const parentFieldLabel = computed(() => {
   if (!parentTabInfo.value) return ''
-  return parentFieldLabelMap[props.tab] ?? `所属${parentTabInfo.value.label}`
+  const key = `admin.permission.dicts.modal.parentLabelMap.${props.tab}`
+  return te(key) ? t(key as never) : t('admin.permission.dicts.modal.parentFallback', { label: parentTabInfo.value.label })
 })
 
 const formState = reactive({
@@ -212,25 +199,25 @@ const statusChecked = computed({
 })
 
 const rules = computed(() => ({
-  dictLabel: [{ required: true, message: `请输入${nameFieldLabel.value}`, trigger: 'blur' }],
+  dictLabel: [{ required: true, message: t('admin.permission.dicts.modal.validNameRequired', { field: nameFieldLabel.value }), trigger: 'blur' }],
   // 字典键值是机器标识符，与后端 SQL 类型及代码 switch 联动；需严格限制为标识符格式
   dictValue: [
-    { required: true, message: '请输入字典键值', trigger: 'blur' },
+    { required: true, message: t('admin.permission.dicts.modal.validDictValueRequired'), trigger: 'blur' },
     {
       pattern: /^[A-Za-z][A-Za-z0-9_]*$/,
-      message: '字典键值只能是英文、数字或下划线，并以字母开头',
+      message: t('admin.permission.dicts.modal.validDictValuePattern'),
       trigger: 'blur',
     },
   ],
   parentValue: parentTabInfo.value
-    ? [{ required: true, message: `请选择${parentFieldLabel.value}`, trigger: 'change' }]
+    ? [{ required: true, message: t('admin.permission.dicts.modal.validParentRequired', { field: parentFieldLabel.value }), trigger: 'change' }]
     : [],
   callingCode: props.tab === 'osg_country_code'
     ? [
-        { required: true, message: '请输入国际区号', trigger: 'blur' },
+        { required: true, message: t('admin.permission.dicts.modal.validCallingCodeRequired'), trigger: 'blur' },
         {
           pattern: /^\+\d{1,4}$/,
-          message: '区号必须以 + 开头，加 1-4 位数字（例如 +86）',
+          message: t('admin.permission.dicts.modal.validCallingCodePattern'),
           trigger: 'blur',
         },
       ]
@@ -331,9 +318,9 @@ const handleSubmit = async () => {
         status: formState.status,
         remark,
       }, {
-        customErrorMessage: '字典项修改失败，请检查输入信息'
+        customErrorMessage: t('admin.permission.dicts.modal.updateError')
       })
-      message.success('修改成功')
+      message.success(t('admin.permission.dicts.modal.updateSuccess'))
     } else {
       await createAdminDictItem({
         dictType: props.tab,
@@ -343,9 +330,9 @@ const handleSubmit = async () => {
         status: formState.status,
         remark,
       }, {
-        customErrorMessage: '字典项新增失败，请检查输入信息'
+        customErrorMessage: t('admin.permission.dicts.modal.createError')
       })
-      message.success('新增成功')
+      message.success(t('admin.permission.dicts.modal.createSuccess'))
     }
 
     emit('success')

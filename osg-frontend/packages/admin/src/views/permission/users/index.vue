@@ -1,73 +1,70 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title-zh="后台用户管理"
+      :title-zh="t('admin.permission.users.pageTitle')"
       title-en="Admin Users"
     >
       <template #actions>
-        <a-statistic title="当前受管账号" :value="pagination.total" style="margin-right: 16px" />
+        <a-statistic :title="t('admin.permission.users.managedAccountTitle')" :value="pagination.total" style="margin-right: 16px" />
         <a-button
           type="primary"
           data-surface-trigger="modal-add-admin"
           @click="handleAdd"
         >
           <template #icon><PlusOutlined /></template>
-          新增用户
+          {{ t('admin.permission.users.addButton') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" data-field-name="后台用户管理页">
-        <a-form-item label="关键词">
+      <a-form layout="inline" data-field-name="后台用户管理页"><!-- i18n-skip-line: playwright selector -->
+        <a-form-item :label="t('admin.permission.users.filterKeywordLabel')">
           <a-input
             v-model:value="searchParams.userName"
-            data-field-name="搜索框"
-            placeholder="搜索用户名 / 姓名"
+            :placeholder="t('admin.permission.users.filterKeywordPlaceholder')"
             allow-clear
             style="width: 200px"
             @pressEnter="handleSearch"
-          />
+            data-field-name="搜索框" /><!-- i18n-skip-line: playwright selector -->
         </a-form-item>
-        <a-form-item label="角色">
+        <a-form-item :label="t('admin.permission.users.filterRoleLabel')">
           <a-select
             v-model:value="searchParams.roleId"
-            data-field-name="角色"
-            placeholder="全部角色"
+            :placeholder="t('admin.permission.users.filterRolePlaceholder')"
             allow-clear
             style="width: 160px"
-          >
+            data-field-name="角色"><!-- i18n-skip-line: playwright selector -->
             <a-select-option v-for="role in roleOptions" :key="role.roleId" :value="role.roleId">
               {{ role.roleName }}
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="状态">
+        <a-form-item :label="t('admin.permission.users.filterStatusLabel')">
           <a-select
             v-model:value="searchParams.status"
-            data-field-name="状态"
-            placeholder="全部状态"
+            :placeholder="t('admin.permission.users.filterStatusPlaceholder')"
             allow-clear
             style="width: 120px"
-          >
-            <a-select-option value="0">启用</a-select-option>
-            <a-select-option value="1">禁用</a-select-option>
+            data-field-name="状态"><!-- i18n-skip-line: playwright selector -->
+            <a-select-option value="0">{{ t('admin.permission.users.filterStatusEnabled') }}</a-select-option>
+            <a-select-option value="1">{{ t('admin.permission.users.filterStatusDisabled') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="handleSearch">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ t('admin.permission.users.filterSearch') }}
           </a-button>
         </a-form-item>
       </a-form>
     </a-card>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <template #title>账号治理台账</template>
+      <template #title>{{ t('admin.permission.users.cardTitle') }}</template>
       <template #extra>
         <a-space>
-          <a-tag>第 {{ pagination.current }} / {{ totalPages }} 页</a-tag>
+          <a-tag>{{ t('admin.permission.users.pageInfo', { current: pagination.current, total: totalPages }) }}</a-tag>
         </a-space>
       </template>
       <a-table
@@ -80,11 +77,11 @@
           pageSize: pagination.pageSize,
           total: pagination.total,
           simple: false,
-          showTotal: (total: number) => `共 ${total} 条记录`,
+          showTotal: (total: number) => t('admin.permission.users.totalRecords', { total }),
           onChange: onPageChange,
         }"
         :row-class-name="(record: any) => (record.status === '1' ? 'row-disabled' : '')"
-        :locale="{ emptyText: '当前筛选条件下暂无后台用户' }"
+        :locale="{ emptyText: t('admin.permission.users.empty') }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'userId'">
@@ -105,13 +102,13 @@
               <div>
                 <div><strong>{{ record.nickName }}</strong></div>
                 <div style="font-size: 12px; color: var(--muted)">@{{ record.userName }}</div>
-                <div style="font-size: 11px; color: var(--primary)">{{ record.admin ? '系统账号' : '自定义账号' }}</div>
+                <div style="font-size: 11px; color: var(--primary)">{{ record.admin ? t('admin.permission.users.systemAccount') : t('admin.permission.users.customAccount') }}</div>
               </div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'contact'">
             <div>{{ record.email || '-' }}</div>
-            <div style="font-size: 12px; color: var(--muted)">{{ record.phonenumber || '未填写手机号' }}</div>
+            <div style="font-size: 12px; color: var(--muted)">{{ record.phonenumber || t('admin.permission.users.noPhone') }}</div>
           </template>
           <template v-else-if="column.dataIndex === 'roles'">
             <a-tag
@@ -121,16 +118,16 @@
             >
               {{ role.roleName }}
             </a-tag>
-            <a-tag v-if="!record.roles?.length" color="default">未绑定角色</a-tag>
+            <a-tag v-if="!record.roles?.length" color="default">{{ t('admin.permission.users.noRole') }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'status'">
             <a-tag :color="record.status === '0' ? 'success' : 'error'">
-              {{ record.status === '0' ? '启用' : '禁用' }}
+              {{ record.status === '0' ? t('admin.permission.users.status.enabled') : t('admin.permission.users.status.disabled') }}
             </a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'activity'">
-            <div>最后登录：{{ formatLogin(record.loginDate) }}</div>
-            <div>最近更新：{{ formatUpdate(record.updateTime) }}</div>
+            <div>{{ t('admin.permission.users.lastLogin', { time: formatLogin(record.loginDate) }) }}</div>
+            <div>{{ t('admin.permission.users.lastUpdate', { time: formatUpdate(record.updateTime) }) }}</div>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-button
@@ -141,7 +138,7 @@
               :data-surface-sample-key="record.userName"
               @click="handleEdit(record)"
             >
-              编辑
+              {{ t('admin.permission.users.action.edit') }}
             </a-button>
             <a-button
               v-if="record.status === '0' && !record.admin"
@@ -152,7 +149,7 @@
               :data-surface-sample-key="record.userName"
               @click="handleResetPwd(record)"
             >
-              重置密码
+              {{ t('admin.permission.users.action.resetPwd') }}
             </a-button>
             <a-button
               v-if="record.status === '0' && !record.admin"
@@ -161,7 +158,7 @@
               danger
               @click="handleDisable(record)"
             >
-              禁用
+              {{ t('admin.permission.users.action.disable') }}
             </a-button>
             <a-button
               v-if="record.status === '1'"
@@ -169,7 +166,7 @@
               size="small"
               @click="handleEnable(record)"
             >
-              启用
+              {{ t('admin.permission.users.action.enable') }}
             </a-button>
           </template>
         </template>
@@ -193,6 +190,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { getUserList, getUserDetail, changeUserStatus, getRoleOptions as fetchRoleOptions } from '@/api/user'
 import UserModal from './components/UserModal.vue'
@@ -201,15 +199,17 @@ import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 
-const userColumns = [
-  { title: 'ID', dataIndex: 'userId', key: 'userId', width: 80, fixed: 'left' as const },
-  { title: '账号身份', dataIndex: 'identity', key: 'identity' },
-  { title: '联系方式', dataIndex: 'contact', key: 'contact' },
-  { title: '角色矩阵', dataIndex: 'roles', key: 'roles' },
-  { title: '账户状态', dataIndex: 'status', key: 'status', width: 120 },
-  { title: '活跃记录', dataIndex: 'activity', key: 'activity' },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 200, fixed: 'right' as const },
-]
+const { t } = useI18n()
+
+const userColumns = computed(() => [
+  { title: t('admin.permission.users.columns.id'), dataIndex: 'userId', key: 'userId', width: 80, fixed: 'left' as const },
+  { title: t('admin.permission.users.columns.identity'), dataIndex: 'identity', key: 'identity' },
+  { title: t('admin.permission.users.columns.contact'), dataIndex: 'contact', key: 'contact' },
+  { title: t('admin.permission.users.columns.roles'), dataIndex: 'roles', key: 'roles' },
+  { title: t('admin.permission.users.columns.status'), dataIndex: 'status', key: 'status', width: 120 },
+  { title: t('admin.permission.users.columns.activity'), dataIndex: 'activity', key: 'activity' },
+  { title: t('admin.permission.users.columns.action'), dataIndex: 'action', key: 'action', width: 200, fixed: 'right' as const },
+])
 
 const userList = ref<any[]>([])
 const roleOptions = ref<any[]>([])
@@ -248,11 +248,11 @@ const getUserInitials = (record: any) => {
 }
 
 const formatLogin = (value?: string) => {
-  return value ? dayjs(value).format('MM/DD/YYYY HH:mm') : '从未登录'
+  return value ? dayjs(value).format('MM/DD/YYYY HH:mm') : t('admin.permission.users.neverLogin')
 }
 
 const formatUpdate = (value?: string) => {
-  return value ? dayjs(value).format('MM/DD/YYYY') : '暂无变更'
+  return value ? dayjs(value).format('MM/DD/YYYY') : t('admin.permission.users.noUpdate')
 }
 
 const loadUserList = async () => {
@@ -283,7 +283,7 @@ const loadUserList = async () => {
 
     userList.value = usersWithRoles
   } catch (_error) {
-    message.error('加载用户列表失败')
+    message.error(t('admin.permission.users.messages.loadError'))
   }
 }
 
@@ -292,7 +292,7 @@ const loadRoleOptions = async () => {
     const res = await fetchRoleOptions()
     roleOptions.value = res || []
   } catch (error) {
-    console.error('加载角色选项失败', error)
+    console.error('Failed to load role options', error)
   }
 }
 
@@ -323,16 +323,16 @@ const handleResetPwd = (record: any) => {
 
 const handleDisable = (record: any) => {
   Modal.confirm({
-    title: '确认禁用',
-    content: '确定要禁用该用户吗？禁用后该用户将无法登录系统。',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('admin.permission.users.messages.disableConfirmTitle'),
+    content: t('admin.permission.users.messages.disableConfirmContent'),
+    okText: t('admin.permission.users.messages.confirmOk'),
+    cancelText: t('admin.permission.users.messages.confirmCancel'),
     onOk: async () => {
       try {
         await changeUserStatus({ userId: record.userId, status: '1' }, {
-          customErrorMessage: '用户禁用失败，请重试'
+          customErrorMessage: t('admin.permission.users.messages.disableError')
         })
-        message.success('用户已禁用')
+        message.success(t('admin.permission.users.messages.disabledSuccess'))
         loadUserList()
       } catch (_error) {
         // 交给拦截器处理
@@ -344,9 +344,9 @@ const handleDisable = (record: any) => {
 const handleEnable = async (record: any) => {
   try {
     await changeUserStatus({ userId: record.userId, status: '0' }, {
-      customErrorMessage: '用户启用失败，请重试'
+      customErrorMessage: t('admin.permission.users.messages.enableError')
     })
-    message.success('用户已启用')
+    message.success(t('admin.permission.users.messages.enabledSuccess'))
     loadUserList()
   } catch (_error) {
     // 交给拦截器处理

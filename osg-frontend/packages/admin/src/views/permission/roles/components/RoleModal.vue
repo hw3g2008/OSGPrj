@@ -14,7 +14,7 @@
           :class="isEdit ? 'mdi-key-change' : 'mdi-key-plus'"
           aria-hidden="true"
         />
-        <span>{{ isEdit ? '编辑角色' : '新增角色' }}</span>
+        <span>{{ isEdit ? t('admin.permission.roles.modal.titleEdit') : t('admin.permission.roles.modal.titleCreate') }}</span>
       </span>
     </template>
 
@@ -26,30 +26,30 @@
       layout="vertical"
       :required-mark="false"
     >
-      <a-form-item name="roleName" data-field-name="角色名称">
+      <a-form-item name="roleName" data-field-name="角色名称"> <!-- i18n-skip-line: playwright selector -->
         <template #label>
-          <span class="role-modal__label">角色名称<span class="role-modal__required">*</span></span>
+          <span class="role-modal__label">{{ t('admin.permission.roles.modal.nameLabel') }}<span class="role-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.roleName" placeholder="请输入角色名称，如：运营专员" />
+        <a-input v-model:value="formState.roleName" :placeholder="t('admin.permission.roles.modal.namePlaceholder')" />
       </a-form-item>
 
-      <a-form-item name="remark" data-field-name="角色描述">
+      <a-form-item name="remark" data-field-name="角色描述"> <!-- i18n-skip-line: playwright selector -->
         <template #label>
-          <span class="role-modal__label">角色描述</span>
+          <span class="role-modal__label">{{ t('admin.permission.roles.modal.descLabel') }}</span>
         </template>
         <a-textarea
           v-model:value="formState.remark"
-          placeholder="请输入角色描述，最多200字"
+          :placeholder="t('admin.permission.roles.modal.descPlaceholder')"
           :rows="2"
           :maxlength="200"
         />
       </a-form-item>
 
-      <a-form-item name="menuIds" data-field-name="权限模块">
+      <a-form-item name="menuIds" data-field-name="权限模块"> <!-- i18n-skip-line: playwright selector -->
         <template #label>
-          <span class="role-modal__label">权限模块<span class="role-modal__required">*</span></span>
+          <span class="role-modal__label">{{ t('admin.permission.roles.modal.permsLabel') }}<span class="role-modal__required">*</span></span>
         </template>
-        <p class="role-modal__tip" data-content-part="supporting-text">勾选该角色可访问的功能模块，点击分组名称可全选/取消该分组</p>
+        <p class="role-modal__tip" data-content-part="supporting-text">{{ t('admin.permission.roles.modal.permsTip') }}</p>
         <div class="role-modal__perm-panel">
           <section
             v-for="group in permissionGroups"
@@ -86,17 +86,20 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="loading" @click="handleSubmit">保存</a-button>
+      <a-button @click="handleClose">{{ t('admin.permission.roles.modal.cancel') }}</a-button>
+      <a-button type="primary" :loading="loading" @click="handleSubmit">{{ t('admin.permission.roles.modal.save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { addRole, getRoleMenuIds, updateRole } from '@/api/role'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 type MenuNode = {
   id: number
@@ -137,10 +140,10 @@ const formState = reactive({
   menuIds: [] as number[],
 })
 
-const rules = {
-  roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
-  menuIds: [{ required: true, message: '请选择权限模块', trigger: 'change', type: 'array' }],
-}
+const rules = computed(() => ({
+  roleName: [{ required: true, message: t('admin.permission.roles.modal.validNameRequired'), trigger: 'blur' }],
+  menuIds: [{ required: true, message: t('admin.permission.roles.modal.validPermsRequired'), trigger: 'change', type: 'array' }],
+}))
 
 function collectLeafItems(nodes: MenuNode[] = []): Array<{ id: number; label: string }> {
   const items: Array<{ id: number; label: string }> = []
@@ -156,15 +159,15 @@ function collectLeafItems(nodes: MenuNode[] = []): Array<{ id: number; label: st
 }
 
 function inferGroupIcon(label: string): string {
-  if (label.includes('首页')) return 'mdi-home'
-  if (label.includes('权限')) return 'mdi-shield-key'
-  if (label.includes('用户')) return 'mdi-account-group'
-  if (label.includes('教学')) return 'mdi-book-open-variant'
-  if (label.includes('求职')) return 'mdi-briefcase'
-  if (label.includes('财务')) return 'mdi-cash'
-  if (label.includes('资源')) return 'mdi-folder'
-  if (label.includes('个人')) return 'mdi-account-circle'
-  if (label.includes('系统')) return 'mdi-cog'
+  if (label.includes('首页')) return 'mdi-home' // i18n-skip-line: backend menu label
+  if (label.includes('权限')) return 'mdi-shield-key' // i18n-skip-line: backend menu label
+  if (label.includes('用户')) return 'mdi-account-group' // i18n-skip-line: backend menu label
+  if (label.includes('教学')) return 'mdi-book-open-variant' // i18n-skip-line: backend menu label
+  if (label.includes('求职')) return 'mdi-briefcase' // i18n-skip-line: backend menu label
+  if (label.includes('财务')) return 'mdi-cash' // i18n-skip-line: backend menu label
+  if (label.includes('资源')) return 'mdi-folder' // i18n-skip-line: backend menu label
+  if (label.includes('个人')) return 'mdi-account-circle' // i18n-skip-line: backend menu label
+  if (label.includes('系统')) return 'mdi-cog' // i18n-skip-line: backend menu label
   return 'mdi-circle-small'
 }
 
@@ -232,24 +235,24 @@ const handleClose = () => {
   emit('update:visible', false)
 }
 
-const resolveRoleSubmitErrorMessage = (rawMessage: string | undefined, roleName: string, editMode: boolean) => {
-  const normalizedRoleName = roleName.trim() || '该角色'
-  const actionLabel = editMode ? '保存' : '新增'
+const resolveRoleSubmitErrorMessage = (rawMessage: string | undefined, roleName: string, editMode: boolean): string => {
+  const normalizedRoleName = roleName.trim() || t('admin.permission.roles.modal.defaultRoleName')
+  const actionLabel = editMode ? t('admin.permission.roles.modal.actionSave') : t('admin.permission.roles.modal.actionCreate')
   const messageText = rawMessage || ''
 
-  if (messageText.includes('角色名称已存在')) {
-    return `角色"${normalizedRoleName}"已存在，请换一个角色名称后重试`
+  if (messageText.includes('角色名称已存在')) { // i18n-skip-line: backend error message comparison
+    return t('admin.permission.roles.modal.errorNameExists', { name: normalizedRoleName })
   }
 
-  if (messageText.includes('角色权限已存在')) {
-    return `角色"${normalizedRoleName}"的权限标识已存在，请修改角色名称后重试`
+  if (messageText.includes('角色权限已存在')) { // i18n-skip-line: backend error message comparison
+    return t('admin.permission.roles.modal.errorPermExists', { name: normalizedRoleName })
   }
 
   if (messageText) {
-    return `${actionLabel}角色"${normalizedRoleName}"失败：${messageText}`
+    return t('admin.permission.roles.modal.errorWithMsg', { action: actionLabel, name: normalizedRoleName, msg: messageText })
   }
 
-  return `${actionLabel}角色失败，请稍后重试`
+  return t('admin.permission.roles.modal.errorFallback', { action: actionLabel })
 }
 
 const handleSubmit = async () => {
@@ -267,12 +270,12 @@ const handleSubmit = async () => {
       await updateRole(payload as any, {
         skipErrorMessage: true,
       })
-      message.success('角色修改成功')
+      message.success(t('admin.permission.roles.modal.updateSuccess'))
     } else {
       await addRole(payload, {
         skipErrorMessage: true,
       })
-      message.success('角色新增成功')
+      message.success(t('admin.permission.roles.modal.createSuccess'))
     }
 
     emit('success')

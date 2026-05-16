@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="字典管理" />
+    <PageHeader :title-zh="t('admin.permission.dicts.pageTitle')" />
 
     <div class="category-cards">
       <a-button
@@ -35,29 +35,27 @@
       </a-button>
     </div>
 
-    <div class="content-toolbar" data-field-name="基础数据页筛选区">
+    <div class="content-toolbar" data-field-name="基础数据页筛选区"><!-- i18n-skip-line: playwright selector -->
       <div class="content-toolbar__search">
         <a-input
           v-model:value="searchName"
           style="width: 200px"
-          :data-field-name="`${currentTabLabel}搜索`"
-          :placeholder="`搜索${currentTabLabel}...`"
+          :placeholder="t('admin.permission.dicts.searchPlaceholder', { label: currentTabLabel })"
           allow-clear
           @pressEnter="handleSearch"
-        />
+          :data-field-name="`${currentTabLabel}搜索`"/><!-- i18n-skip-line: playwright selector -->
         <a-button @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ t('admin.permission.dicts.search') }}
         </a-button>
       </div>
       <a-button
         type="primary"
         :data-surface-trigger="currentAddSurfaceId"
-        :aria-label="`新增${currentAddLabel}`"
         @click="handleAdd"
-      >
+        :aria-label="`新增${currentAddLabel}`"><!-- i18n-skip-line: a11y dynamic label -->
         <template #icon><PlusOutlined /></template>
-        新增{{ currentAddLabel }}
+        {{ t('admin.permission.dicts.addButton', { label: currentAddLabel }) }}
       </a-button>
     </div>
 
@@ -68,7 +66,7 @@
         :scroll="{ x: 'max-content' }"
         :row-key="(record: AdminDictListRow) => record.dictCode"
         :pagination="tablePagination"
-        :locale="{ emptyText: '暂无数据' }"
+        :locale="{ emptyText: t('admin.permission.dicts.empty') }"
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
@@ -77,7 +75,7 @@
           </template>
           <template v-else-if="column.dataIndex === 'status'">
             <a-tag :color="record.status === '0' ? 'success' : 'error'">
-              {{ record.status === '0' ? '启用' : '禁用' }}
+              {{ record.status === '0' ? t('admin.permission.dicts.status.enabled') : t('admin.permission.dicts.status.disabled') }}
             </a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'parentLabel'">
@@ -120,7 +118,7 @@
               :data-surface-sample-key="record.dictLabel"
               @click="handleEdit(record)"
             >
-              编辑
+              {{ t('admin.permission.dicts.actionEdit') }}
             </a-button>
             <a-button
               v-if="record.status === '0'"
@@ -129,7 +127,7 @@
               danger
               @click="handleDisable(record)"
             >
-              禁用
+              {{ t('admin.permission.dicts.actionDisable') }}
             </a-button>
             <a-button
               v-if="record.status === '1'"
@@ -137,7 +135,7 @@
               size="small"
               @click="handleEnable(record)"
             >
-              启用
+              {{ t('admin.permission.dicts.actionEnable') }}
             </a-button>
           </template>
         </template>
@@ -159,6 +157,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   getAdminDictRegistry,
   getAdminDictList,
@@ -171,6 +170,8 @@ import BaseDataModal from './components/BaseDataModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
+
+const { t, te } = useI18n()
 
 const dataList = ref<AdminDictListRow[]>([])
 const modalVisible = ref(false)
@@ -189,7 +190,7 @@ const tablePagination = computed(() => ({
   total: pagination.total,
   simple: false,
   showSizeChanger: false,
-  showTotal: (total: number) => `共 ${total} 条记录`,
+  showTotal: (total: number) => t('admin.permission.dicts.totalRecords', { total }),
 }))
 
 const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
@@ -200,23 +201,13 @@ const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
 
 const registryGroups = ref<AdminDictRegistryGroup[]>([])
 
-const tabPresentationMap: Record<string, { createLabel: string; nameHeader: string }> = {
-  osg_job_category: { createLabel: '岗位分类', nameHeader: '分类名称' },
-  osg_company_name: { createLabel: '公司/银行名称', nameHeader: '公司名称' },
-  osg_company_type: { createLabel: '公司/银行类别', nameHeader: '类别名称' },
-  osg_position_department: { createLabel: '部门', nameHeader: '部门名称' },
-  osg_region: { createLabel: '大区', nameHeader: '大区名称' },
-  osg_city: { createLabel: '地区/城市', nameHeader: '城市名称' },
-  osg_recruit_cycle: { createLabel: '招聘周期', nameHeader: '周期名称' },
-  osg_school: { createLabel: '学校', nameHeader: '学校名称' },
-  osg_major_direction: { createLabel: '方向', nameHeader: '方向名称' },
-  osg_sub_direction: { createLabel: '子方向', nameHeader: '子方向名称' },
-  osg_visa_status: { createLabel: '签证状态', nameHeader: '签证状态' },
-  osg_course_type: { createLabel: '课程类型', nameHeader: '课程类型' },
-  osg_expense_type: { createLabel: '报销类型', nameHeader: '报销类型' },
-  osg_specialty: { createLabel: '擅长', nameHeader: '擅长名称' },
-  osg_rating: { createLabel: '评级', nameHeader: '评级名称' },
-  osg_country_code: { createLabel: '国家/地区', nameHeader: '国家/地区' },
+const getTabPresentation = (dictType: string, dictName: string): { createLabel: string; nameHeader: string } => {
+  const createKey = `admin.permission.dicts.tabCreateLabel.${dictType}`
+  const nameKey = `admin.permission.dicts.tabNameHeader.${dictType}`
+  return {
+    createLabel: te(createKey) ? t(createKey as never) : dictName,
+    nameHeader: te(nameKey) ? t(nameKey as never) : t('admin.permission.dicts.nameHeaderFallback', { label: dictName }),
+  }
 }
 
 const categories = computed(() => {
@@ -230,10 +221,7 @@ const categories = computed(() => {
       iconBg: group.icon_bg,
       iconColor: group.icon_color,
       tabs: group.dict_types.map(item => {
-        const presentation = tabPresentationMap[item.dict_type] ?? {
-          createLabel: item.dict_name,
-          nameHeader: `${item.dict_name}名称`,
-        }
+        const presentation = getTabPresentation(item.dict_type, item.dict_name)
         return {
           key: item.dict_type,
           label: item.dict_name,
@@ -313,22 +301,22 @@ const dictColumns = computed(() => {
     { title: currentNameHeader.value, dataIndex: 'dictLabel', key: 'dictLabel' },
   ]
   if (selectedTab.value === 'osg_company_name') {
-    base.push({ title: '公司类别', dataIndex: 'parentLabel', key: 'parentLabel', width: 150 })
-    base.push({ title: '官网地址', dataIndex: 'website', key: 'website', width: 220 })
+    base.push({ title: t('admin.permission.dicts.columns.companyType'), dataIndex: 'parentLabel', key: 'parentLabel', width: 150 })
+    base.push({ title: t('admin.permission.dicts.columns.website'), dataIndex: 'website', key: 'website', width: 220 })
   } else if (selectedTab.value === 'osg_country_code') {
-    base.push({ title: '键值', dataIndex: 'dictValue', key: 'dictValue', width: 100 })
-    base.push({ title: '国际区号', dataIndex: 'callingCode', key: 'callingCode', width: 120 })
+    base.push({ title: t('admin.permission.dicts.columns.dictValue'), dataIndex: 'dictValue', key: 'dictValue', width: 100 })
+    base.push({ title: t('admin.permission.dicts.columns.callingCode'), dataIndex: 'callingCode', key: 'callingCode', width: 120 })
   } else if (selectedTab.value === 'osg_school') {
-    base.push({ title: '键值', dataIndex: 'dictValue', key: 'dictValue' })
-    base.push({ title: '国家/地区', dataIndex: 'country', key: 'country', width: 140 })
+    base.push({ title: t('admin.permission.dicts.columns.dictValue'), dataIndex: 'dictValue', key: 'dictValue' })
+    base.push({ title: t('admin.permission.dicts.columns.country'), dataIndex: 'country', key: 'country', width: 140 })
   } else {
-    base.push({ title: '键值', dataIndex: 'dictValue', key: 'dictValue' })
+    base.push({ title: t('admin.permission.dicts.columns.dictValue'), dataIndex: 'dictValue', key: 'dictValue' })
   }
   base.push(
-    { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-    { title: '排序', dataIndex: 'dictSort', key: 'dictSort', width: 80 },
-    { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
-    { title: '操作', dataIndex: 'action', key: 'action', width: 180, fixed: 'right' },
+    { title: t('admin.permission.dicts.columns.status'), dataIndex: 'status', key: 'status', width: 80 },
+    { title: t('admin.permission.dicts.columns.sort'), dataIndex: 'dictSort', key: 'dictSort', width: 80 },
+    { title: t('admin.permission.dicts.columns.updateTime'), dataIndex: 'updateTime', key: 'updateTime' },
+    { title: t('admin.permission.dicts.columns.action'), dataIndex: 'action', key: 'action', width: 180, fixed: 'right' },
   )
   return base
 })
@@ -344,7 +332,7 @@ const currentTabConfig = computed(() => {
 
 const currentTabLabel = computed(() => currentTabConfig.value?.label ?? '')
 const currentAddLabel = computed(() => currentTabConfig.value?.createLabel ?? currentTabLabel.value)
-const currentNameHeader = computed(() => currentTabConfig.value?.nameHeader ?? '名称')
+const currentNameHeader = computed(() => currentTabConfig.value?.nameHeader ?? t('admin.permission.dicts.columns.defaultName'))
 const surfaceIdMap: Record<string, { create: string; edit: string }> = {
   osg_recruit_cycle: { create: 'modal-new-program', edit: 'modal-edit-program' },
   osg_major_direction: { create: 'modal-new-direction', edit: 'modal-edit-direction' },
@@ -393,7 +381,7 @@ const loadRegistry = async () => {
     }
   } catch (error) {
     registryGroups.value = []
-    message.error('加载字典分类失败')
+    message.error(t('admin.permission.dicts.messages.loadCategoryError'))
   }
 }
 
@@ -409,7 +397,7 @@ const loadDataList = async () => {
     dataList.value = res.rows || []
     pagination.total = res.total || 0
   } catch (error) {
-    message.error('加载数据失败')
+    message.error(t('admin.permission.dicts.messages.loadDataError'))
   }
 }
 
@@ -430,10 +418,10 @@ const handleEdit = (record: AdminDictListRow) => {
 
 const handleDisable = (record: AdminDictListRow) => {
   Modal.confirm({
-    title: '确认禁用',
-    content: `确定要禁用「${record.dictLabel}」吗？`,
-    okText: '确定',
-    cancelText: '取消',
+    title: t('admin.permission.dicts.messages.disableConfirmTitle'),
+    content: t('admin.permission.dicts.messages.disableConfirmContent', { label: record.dictLabel }),
+    okText: t('admin.permission.dicts.messages.confirmOk'),
+    cancelText: t('admin.permission.dicts.messages.confirmCancel'),
     onOk: async () => {
       try {
         await updateAdminDictItem({
@@ -445,9 +433,9 @@ const handleDisable = (record: AdminDictListRow) => {
           status: '1',
           remark: record.remark,
         }, {
-          customErrorMessage: '禁用基础数据失败，请重试'
+          customErrorMessage: t('admin.permission.dicts.messages.disableError')
         })
-        message.success('已禁用')
+        message.success(t('admin.permission.dicts.messages.disabledSuccess'))
         loadDataList()
       } catch (error) {
         // 移除组件内的错误提示，让拦截器处理
@@ -467,9 +455,9 @@ const handleEnable = async (record: AdminDictListRow) => {
       status: '0',
       remark: record.remark,
     }, {
-      customErrorMessage: '启用基础数据失败，请重试'
+      customErrorMessage: t('admin.permission.dicts.messages.enableError')
     })
-    message.success('已启用')
+    message.success(t('admin.permission.dicts.messages.enabledSuccess'))
     loadDataList()
   } catch (error) {
     // 移除组件内的错误提示，让拦截器处理

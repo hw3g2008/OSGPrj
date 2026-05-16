@@ -9,21 +9,20 @@
     <template #title>
       <span class="reset-pwd-modal__title">
         <span class="mdi mdi-lock-reset reset-pwd-modal__title-icon" aria-hidden="true" />
-        <span>重置密码</span>
+        <span>{{ t('admin.permission.users.resetPwdModal.title') }}</span>
       </span>
     </template>
 
     <div class="reset-pwd-modal__warning" data-content-part="status-banner">
       <span class="mdi mdi-alert" aria-hidden="true" />
       <p data-content-part="supporting-text">
-        重置后该用户密码将恢复为系统默认密码 <strong>{{ DEFAULT_PASSWORD }}</strong>，
-        下次登录时必须修改密码后才能继续使用。
+        {{ t('admin.permission.users.resetPwdModal.warningPrefix') }}<strong>{{ DEFAULT_PASSWORD }}</strong>{{ t('admin.permission.users.resetPwdModal.warningSuffix') }}
       </p>
     </div>
 
     <div class="reset-pwd-modal__identity">
       <span class="reset-pwd-modal__identity-name">
-        {{ props.user?.nickName || props.user?.userName || '未选择用户' }}
+        {{ props.user?.nickName || props.user?.userName || t('admin.permission.users.resetPwdModal.noUser') }}
       </span>
       <span class="reset-pwd-modal__identity-account">@{{ props.user?.userName || 'unknown' }}</span>
     </div>
@@ -31,7 +30,7 @@
     <template #footer>
       <div data-content-part="action-row" class="reset-pwd-modal__actions">
         <a-button class="reset-pwd-modal__cancel-btn" data-surface-part="cancel-control" @click="handleClose">
-          <span>取消</span>
+          <span>{{ t('admin.permission.users.resetPwdModal.cancel') }}</span>
         </a-button>
         <a-button
           type="primary"
@@ -40,7 +39,7 @@
           @click="handleSubmit"
         >
           <span class="mdi mdi-check" aria-hidden="true" />
-          <span>确认重置</span>
+          <span>{{ t('admin.permission.users.resetPwdModal.confirm') }}</span>
         </a-button>
       </div>
     </template>
@@ -49,9 +48,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { resetUserPwd } from '@/api/user'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const DEFAULT_PASSWORD = 'Osg@2026'
 
@@ -79,9 +81,9 @@ const handleSubmit = async () => {
       userId: props.user.userId,
       password: DEFAULT_PASSWORD,
     }, {
-      customErrorMessage: '密码重置失败，请稍后重试',
+      customErrorMessage: t('admin.permission.users.resetPwdModal.resetError'),
     })
-    message.success(`密码已重置为默认密码 ${DEFAULT_PASSWORD}`)
+    message.success(t('admin.permission.users.resetPwdModal.resetSuccess', { password: DEFAULT_PASSWORD }))
     emit('success')
     handleClose()
   } catch (_error) {
@@ -93,6 +95,7 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped lang="scss">
+/* (keep all styles unchanged) */
 .reset-pwd-modal__title {
   display: inline-flex;
   align-items: center;
