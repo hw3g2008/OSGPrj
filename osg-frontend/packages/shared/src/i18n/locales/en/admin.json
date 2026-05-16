@@ -901,10 +901,10 @@
         },
         "summary": {
           "companies": "{count} companies total",
-          "positions": "\u25cf {count} positions",
-          "open": "\u25cf {count} open",
-          "notStarted": "\u25cf {count} not started",
-          "closed": "\u25cf {count} closed"
+          "positions": "● {count} positions",
+          "open": "● {count} open",
+          "notStarted": "● {count} not started",
+          "closed": "● {count} closed"
         },
         "stats": {
           "total": "Total Positions",
@@ -1043,6 +1043,82 @@
         "relativeJustNow": "Just now",
         "relativeHoursAgo": "{hours}h ago",
         "relativeDaysAgo": "{days} days ago"
+      }
+    },
+    "jobTracking": {
+      "pageTitle": "All Students Position Tracking",
+      "headerStats": "{total} position records · {interviewing} interviewing",
+      "unassigned": "Unassigned",
+      "noPreferredMentor": "No preferred mentor",
+      "empty": "No position tracking records match the current filters",
+      "filters": {
+        "studentName": "Student Name",
+        "studentPlaceholder": "Search student",
+        "leadMentor": "Lead Mentor",
+        "leadMentorPlaceholder": "e.g. Jess / Amy",
+        "status": "Status",
+        "statusAll": "All",
+        "company": "Company",
+        "companyPlaceholder": "Search company",
+        "location": "Location",
+        "locationPlaceholder": "Search city / region",
+        "search": "Search",
+        "reset": "Reset"
+      },
+      "status": {
+        "tracking": "Tracking",
+        "applied": "Applied",
+        "interviewing": "Interviewing",
+        "offer": "Offer Received",
+        "rejected": "Rejected",
+        "notApplied": "Not Applied"
+      },
+      "columns": {
+        "student": "Student",
+        "mentor": "Mentor",
+        "company": "Company",
+        "position": "Position",
+        "location": "Location",
+        "status": "Status",
+        "interviewTime": "Interview Time",
+        "action": "Action"
+      },
+      "stats": {
+        "totalStudents": "All Students",
+        "tracking": "Tracking",
+        "interviewing": "Interviewing",
+        "offer": "Offer Received",
+        "rejected": "Rejected"
+      },
+      "statsMeta": {
+        "totalStudents": "Unique student count",
+        "tracking": "Applied, pending progress",
+        "interviewing": "Needs scheduling follow-up",
+        "offer": "Conversion complete",
+        "rejected": "Pending review"
+      },
+      "action": {
+        "edit": "Edit"
+      },
+      "modal": {
+        "title": "Update Status · {name} · {company}",
+        "save": "Save Update",
+        "cancel": "Cancel",
+        "currentStatus": "Current Status",
+        "interviewStage": "Interview Stage",
+        "interviewTime": "Interview Time",
+        "interviewTimePlaceholder": "Select interview time",
+        "preferredMentor": "Preferred Mentor",
+        "mentorPlaceholder": "e.g. Jess",
+        "excludedMentor": "Excluded Mentor",
+        "excludedMentorPlaceholder": "e.g. Amy",
+        "note": "Notes",
+        "notePlaceholder": "Add follow-up notes"
+      },
+      "messages": {
+        "loadFailed": "Failed to load position tracking",
+        "updateSuccess": "Position tracking updated",
+        "updateFailed": "Failed to update position tracking"
       }
     }
   },

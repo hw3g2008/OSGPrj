@@ -1,8 +1,8 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="所有学员的岗位追踪" title-en="Job Tracking">
+    <PageHeader :title-zh="t('admin.career.jobTracking.pageTitle')" title-en="Job Tracking">
       <template #actions>
-        <span style="color: #64748b; font-size: 13px">{{ rows.length }} 条岗位记录 · {{ stats.interviewingCount }} 条面试中</span>
+        <span style="color: #64748b; font-size: 13px">{{ t('admin.career.jobTracking.headerStats', { total: rows.length, interviewing: stats.interviewingCount }) }}</span>
       </template>
     </PageHeader>
 
@@ -17,34 +17,34 @@
 
     <a-card :bordered="false">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
-        <a-form-item label="学员姓名">
-          <a-input v-model:value="filters.studentName" placeholder="搜索学员" allow-clear style="width: 140px" />
+        <a-form-item :label="t('admin.career.jobTracking.filters.studentName')">
+          <a-input v-model:value="filters.studentName" :placeholder="t('admin.career.jobTracking.filters.studentPlaceholder')" allow-clear style="width: 140px" />
         </a-form-item>
-        <a-form-item label="班主任">
-          <a-input v-model:value="filters.leadMentorName" placeholder="如 Jess / Amy" allow-clear style="width: 140px" />
+        <a-form-item :label="t('admin.career.jobTracking.filters.leadMentor')">
+          <a-input v-model:value="filters.leadMentorName" :placeholder="t('admin.career.jobTracking.filters.leadMentorPlaceholder')" allow-clear style="width: 140px" />
         </a-form-item>
-        <a-form-item label="状态">
-          <a-select v-model:value="filters.trackingStatus" placeholder="全部" allow-clear style="width: 120px">
-            <a-select-option value="tracking">追踪中</a-select-option>
-            <a-select-option value="applied">已申请</a-select-option>
-            <a-select-option value="interviewing">面试中</a-select-option>
-            <a-select-option value="offer">已获Offer</a-select-option>
-            <a-select-option value="rejected">已拒绝</a-select-option>
+        <a-form-item :label="t('admin.career.jobTracking.filters.status')">
+          <a-select v-model:value="filters.trackingStatus" :placeholder="t('admin.career.jobTracking.filters.statusAll')" allow-clear style="width: 120px">
+            <a-select-option value="tracking">{{ t('admin.career.jobTracking.status.tracking') }}</a-select-option>
+            <a-select-option value="applied">{{ t('admin.career.jobTracking.status.applied') }}</a-select-option>
+            <a-select-option value="interviewing">{{ t('admin.career.jobTracking.status.interviewing') }}</a-select-option>
+            <a-select-option value="offer">{{ t('admin.career.jobTracking.status.offer') }}</a-select-option>
+            <a-select-option value="rejected">{{ t('admin.career.jobTracking.status.rejected') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="公司">
-          <a-input v-model:value="filters.companyName" placeholder="搜索公司" allow-clear style="width: 140px" />
+        <a-form-item :label="t('admin.career.jobTracking.filters.company')">
+          <a-input v-model:value="filters.companyName" :placeholder="t('admin.career.jobTracking.filters.companyPlaceholder')" allow-clear style="width: 140px" />
         </a-form-item>
-        <a-form-item label="地点">
-          <a-input v-model:value="filters.location" placeholder="搜索城市 / 地区" allow-clear style="width: 150px" />
+        <a-form-item :label="t('admin.career.jobTracking.filters.location')">
+          <a-input v-model:value="filters.location" :placeholder="t('admin.career.jobTracking.filters.locationPlaceholder')" allow-clear style="width: 150px" />
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="loadTrackingBoard">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ t('admin.career.jobTracking.filters.search') }}
             </a-button>
-            <a-button @click="resetFilters">重置</a-button>
+            <a-button @click="resetFilters">{{ t('admin.career.jobTracking.filters.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -57,7 +57,7 @@
         :row-key="(record: JobTrackingRow) => record.applicationId"
         :pagination="false"
         :loading="loading"
-        :locale="{ emptyText: '当前筛选条件下暂无岗位追踪记录' }"
+        :locale="{ emptyText: t('admin.career.jobTracking.empty') }"
         :scroll="{ x: 1100 }"
       >
         <template #bodyCell="{ column, record }">
@@ -68,7 +68,7 @@
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'mentorName'">
-            {{ record.mentorName || '未分配' }}
+            {{ record.mentorName || t('admin.career.jobTracking.unassigned') }}
           </template>
           <template v-else-if="column.dataIndex === 'location'">
             {{ record.location || '-' }}
@@ -82,11 +82,11 @@
           <template v-else-if="column.dataIndex === 'interviewTime'">
             <div>
               <strong>{{ formatDateTime(record.interviewTime) }}</strong>
-              <div style="color: #9ca3af; font-size: 12px">{{ record.preferredMentor || '意向导师未填' }}</div>
+              <div style="color: #9ca3af; font-size: 12px">{{ record.preferredMentor || t('admin.career.jobTracking.noPreferredMentor') }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="openEditor(record)">编辑</a-button>
+            <a-button type="link" size="small" @click="openEditor(record)">{{ t('admin.career.jobTracking.action.edit') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -94,47 +94,47 @@
 
     <a-modal
       v-model:open="editingVisible"
-      :title="`更新求职状态 · ${editingRow?.studentName} · ${editingRow?.companyName}`"
+      :title="t('admin.career.jobTracking.modal.title', { name: editingRow?.studentName, company: editingRow?.companyName })"
       :confirm-loading="submitting"
-      ok-text="保存更新"
-      cancel-text="取消"
+      :ok-text="t('admin.career.jobTracking.modal.save')"
+      :cancel-text="t('admin.career.jobTracking.modal.cancel')"
       :width="600"
       @ok="submitUpdate"
       @cancel="closeEditor"
     >
       <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" style="margin-top: 16px">
-        <a-form-item label="当前状态">
+        <a-form-item :label="t('admin.career.jobTracking.modal.currentStatus')">
           <a-select v-model:value="form.trackingStatus">
-            <a-select-option value="not-applied">未申请</a-select-option>
-            <a-select-option value="applied">已申请</a-select-option>
-            <a-select-option value="tracking">追踪中</a-select-option>
-            <a-select-option value="interviewing">面试中</a-select-option>
-            <a-select-option value="offer">已获Offer</a-select-option>
-            <a-select-option value="rejected">已拒绝</a-select-option>
+            <a-select-option value="not-applied">{{ t('admin.career.jobTracking.status.notApplied') }}</a-select-option>
+            <a-select-option value="applied">{{ t('admin.career.jobTracking.status.applied') }}</a-select-option>
+            <a-select-option value="tracking">{{ t('admin.career.jobTracking.status.tracking') }}</a-select-option>
+            <a-select-option value="interviewing">{{ t('admin.career.jobTracking.status.interviewing') }}</a-select-option>
+            <a-select-option value="offer">{{ t('admin.career.jobTracking.status.offer') }}</a-select-option>
+            <a-select-option value="rejected">{{ t('admin.career.jobTracking.status.rejected') }}</a-select-option>
           </a-select>
         </a-form-item>
 
         <template v-if="form.trackingStatus === 'interviewing'">
-          <a-form-item label="面试阶段">
+          <a-form-item :label="t('admin.career.jobTracking.modal.interviewStage')">
             <a-select v-model:value="form.interviewStage">
               <a-select-option v-for="option in interviewStageOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="面试时间">
-            <a-date-picker v-model:value="form.interviewTime" show-time placeholder="选择面试时间" value-format="YYYY-MM-DDTHH:mm" style="width: 100%" />
+          <a-form-item :label="t('admin.career.jobTracking.modal.interviewTime')">
+            <a-date-picker v-model:value="form.interviewTime" show-time :placeholder="t('admin.career.jobTracking.modal.interviewTimePlaceholder')" value-format="YYYY-MM-DDTHH:mm" style="width: 100%" />
           </a-form-item>
-          <a-form-item label="意向导师">
-            <a-input v-model:value="form.preferredMentor" placeholder="如 Jess" />
+          <a-form-item :label="t('admin.career.jobTracking.modal.preferredMentor')">
+            <a-input v-model:value="form.preferredMentor" :placeholder="t('admin.career.jobTracking.modal.mentorPlaceholder')" />
           </a-form-item>
-          <a-form-item label="排除导师">
-            <a-input v-model:value="form.excludedMentor" placeholder="如 Amy" />
+          <a-form-item :label="t('admin.career.jobTracking.modal.excludedMentor')">
+            <a-input v-model:value="form.excludedMentor" :placeholder="t('admin.career.jobTracking.modal.excludedMentorPlaceholder')" />
           </a-form-item>
         </template>
 
-        <a-form-item label="备注">
-          <a-textarea v-model:value="form.note" :rows="4" placeholder="补充跟进说明" />
+        <a-form-item :label="t('admin.career.jobTracking.modal.note')">
+          <a-textarea v-model:value="form.note" :rows="4" :placeholder="t('admin.career.jobTracking.modal.notePlaceholder')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -143,6 +143,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -154,16 +155,18 @@ import {
   type JobTrackingStats
 } from '@osg/shared/api/admin/jobTracking'
 
-const trackingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
-  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 140 },
-  { title: '岗位', dataIndex: 'positionName', key: 'positionName', width: 160 },
-  { title: '地点', dataIndex: 'location', key: 'location', width: 100 },
-  { title: '状态', dataIndex: 'trackingStatus', key: 'trackingStatus', width: 120 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 180 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
-]
+const { t } = useI18n()
+
+const trackingColumns = computed(() => [
+  { title: t('admin.career.jobTracking.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
+  { title: t('admin.career.jobTracking.columns.mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: t('admin.career.jobTracking.columns.company'), dataIndex: 'companyName', key: 'companyName', width: 140 },
+  { title: t('admin.career.jobTracking.columns.position'), dataIndex: 'positionName', key: 'positionName', width: 160 },
+  { title: t('admin.career.jobTracking.columns.location'), dataIndex: 'location', key: 'location', width: 100 },
+  { title: t('admin.career.jobTracking.columns.status'), dataIndex: 'trackingStatus', key: 'trackingStatus', width: 120 },
+  { title: t('admin.career.jobTracking.columns.interviewTime'), dataIndex: 'interviewTime', key: 'interviewTime', width: 180 },
+  { title: t('admin.career.jobTracking.columns.action'), dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
+])
 
 const defaultStats: JobTrackingStats = {
   totalStudentCount: 0,
@@ -212,11 +215,11 @@ const requestFilters = computed<JobTrackingFilters>(() => ({
 }))
 
 const statCards = computed(() => [
-  { key: 'totalStudentCount', label: '全部学员', value: stats.value.totalStudentCount, meta: '唯一学员数', tone: 'blue', bg: '#eff6ff' },
-  { key: 'trackingCount', label: '追踪中', value: stats.value.trackingCount, meta: '已投递待推进', tone: 'slate', bg: '#f1f5f9' },
-  { key: 'interviewingCount', label: '面试中', value: stats.value.interviewingCount, meta: '需跟进排期', tone: 'amber', bg: '#fffbeb' },
-  { key: 'offerCount', label: '已获Offer', value: stats.value.offerCount, meta: '转化完成', tone: 'green', bg: '#f0fdf4' },
-  { key: 'rejectedCount', label: '已拒绝', value: stats.value.rejectedCount, meta: '待复盘', tone: 'red', bg: '#fef2f2' }
+  { key: 'totalStudentCount', label: t('admin.career.jobTracking.stats.totalStudents'), value: stats.value.totalStudentCount, meta: t('admin.career.jobTracking.statsMeta.totalStudents'), tone: 'blue', bg: '#eff6ff' },
+  { key: 'trackingCount', label: t('admin.career.jobTracking.stats.tracking'), value: stats.value.trackingCount, meta: t('admin.career.jobTracking.statsMeta.tracking'), tone: 'slate', bg: '#f1f5f9' },
+  { key: 'interviewingCount', label: t('admin.career.jobTracking.stats.interviewing'), value: stats.value.interviewingCount, meta: t('admin.career.jobTracking.statsMeta.interviewing'), tone: 'amber', bg: '#fffbeb' },
+  { key: 'offerCount', label: t('admin.career.jobTracking.stats.offer'), value: stats.value.offerCount, meta: t('admin.career.jobTracking.statsMeta.offer'), tone: 'green', bg: '#f0fdf4' },
+  { key: 'rejectedCount', label: t('admin.career.jobTracking.stats.rejected'), value: stats.value.rejectedCount, meta: t('admin.career.jobTracking.statsMeta.rejected'), tone: 'red', bg: '#fef2f2' }
 ])
 
 async function loadTrackingBoard() {
@@ -227,7 +230,7 @@ async function loadTrackingBoard() {
     rows.value = response.rows ?? []
   } catch (error) {
     console.error(error)
-    message.error('岗位追踪加载失败')
+    message.error(t('admin.career.jobTracking.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -273,12 +276,12 @@ async function submitUpdate() {
       excludedMentor: form.trackingStatus === 'interviewing' ? form.excludedMentor : undefined,
       note: form.note || undefined
     })
-    message.success('岗位追踪已更新')
+    message.success(t('admin.career.jobTracking.messages.updateSuccess'))
     closeEditor()
     await loadTrackingBoard()
   } catch (error) {
     console.error(error)
-    message.error('岗位追踪更新失败')
+    message.error(t('admin.career.jobTracking.messages.updateFailed'))
   } finally {
     submitting.value = false
   }
@@ -287,15 +290,15 @@ async function submitUpdate() {
 function labelOf(status?: string) {
   switch (status) {
     case 'applied':
-      return '已申请'
+      return t('admin.career.jobTracking.status.applied')
     case 'interviewing':
-      return '面试中'
+      return t('admin.career.jobTracking.status.interviewing')
     case 'offer':
-      return '已获Offer'
+      return t('admin.career.jobTracking.status.offer')
     case 'rejected':
-      return '已拒绝'
+      return t('admin.career.jobTracking.status.rejected')
     default:
-      return '追踪中'
+      return t('admin.career.jobTracking.status.tracking')
   }
 }
 

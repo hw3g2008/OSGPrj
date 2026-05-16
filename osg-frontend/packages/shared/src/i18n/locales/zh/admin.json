@@ -1045,6 +1045,82 @@
         "relativeHoursAgo": "{hours} 小时前",
         "relativeDaysAgo": "{days} 天前"
       }
+    },
+    "jobTracking": {
+      "pageTitle": "所有学员的岗位追踪",
+      "headerStats": "{total} 条岗位记录 · {interviewing} 条面试中",
+      "unassigned": "未分配",
+      "noPreferredMentor": "意向导师未填",
+      "empty": "当前筛选条件下暂无岗位追踪记录",
+      "filters": {
+        "studentName": "学员姓名",
+        "studentPlaceholder": "搜索学员",
+        "leadMentor": "班主任",
+        "leadMentorPlaceholder": "如 Jess / Amy",
+        "status": "状态",
+        "statusAll": "全部",
+        "company": "公司",
+        "companyPlaceholder": "搜索公司",
+        "location": "地点",
+        "locationPlaceholder": "搜索城市 / 地区",
+        "search": "搜索",
+        "reset": "重置"
+      },
+      "status": {
+        "tracking": "追踪中",
+        "applied": "已申请",
+        "interviewing": "面试中",
+        "offer": "已获Offer",
+        "rejected": "已拒绝",
+        "notApplied": "未申请"
+      },
+      "columns": {
+        "student": "学员",
+        "mentor": "导师",
+        "company": "公司",
+        "position": "岗位",
+        "location": "地点",
+        "status": "状态",
+        "interviewTime": "面试时间",
+        "action": "操作"
+      },
+      "stats": {
+        "totalStudents": "全部学员",
+        "tracking": "追踪中",
+        "interviewing": "面试中",
+        "offer": "已获Offer",
+        "rejected": "已拒绝"
+      },
+      "statsMeta": {
+        "totalStudents": "唯一学员数",
+        "tracking": "已投递待推进",
+        "interviewing": "需跟进排期",
+        "offer": "转化完成",
+        "rejected": "待复盘"
+      },
+      "action": {
+        "edit": "编辑"
+      },
+      "modal": {
+        "title": "更新求职状态 · {name} · {company}",
+        "save": "保存更新",
+        "cancel": "取消",
+        "currentStatus": "当前状态",
+        "interviewStage": "面试阶段",
+        "interviewTime": "面试时间",
+        "interviewTimePlaceholder": "选择面试时间",
+        "preferredMentor": "意向导师",
+        "mentorPlaceholder": "如 Jess",
+        "excludedMentor": "排除导师",
+        "excludedMentorPlaceholder": "如 Amy",
+        "note": "备注",
+        "notePlaceholder": "补充跟进说明"
+      },
+      "messages": {
+        "loadFailed": "岗位追踪加载失败",
+        "updateSuccess": "岗位追踪已更新",
+        "updateFailed": "岗位追踪更新失败"
+      }
     }
   },
   "profile": {
