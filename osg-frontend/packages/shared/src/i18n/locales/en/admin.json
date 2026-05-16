@@ -590,6 +590,150 @@
         "cancel": "Cancel",
         "create": "Create Folder"
       }
+    },
+    "interviewBank": {
+      "pageTitle": "Interview Bank",
+      "createBank": "New Bank",
+      "pendingAlert": "{count} student application(s) pending assignment",
+      "pendingAlertDesc": "Please handle interview bank applications transferred from head teachers first.",
+      "viewApplications": "View Applications",
+      "tabs": {
+        "banks": "Banks",
+        "applications": "Student Applications"
+      },
+      "filter": {
+        "bankSearchPlaceholder": "Search bank / industry",
+        "appSearchPlaceholder": "Search student / position",
+        "stagePlaceholder": "All Stages",
+        "typePlaceholder": "All Types",
+        "industryPlaceholder": "All Industries",
+        "search": "Search",
+        "reset": "Reset"
+      },
+      "bankColumns": {
+        "name": "Bank Name",
+        "stage": "Stage",
+        "type": "Type",
+        "industry": "Industry",
+        "questionCount": "Questions",
+        "status": "Status",
+        "updatedAt": "Updated At",
+        "action": "Action"
+      },
+      "appColumns": {
+        "appCode": "App ID",
+        "student": "Student",
+        "position": "Applied Position",
+        "stage": "Stage",
+        "time": "Applied At",
+        "source": "Source",
+        "action": "Action"
+      },
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "sourceFallback": "Head Teacher Transfer",
+      "empty": "No interview banks found",
+      "appEmpty": "No student applications found",
+      "action": {
+        "edit": "Edit",
+        "assign": "Assign Bank"
+      },
+      "messages": {
+        "bankLoadError": "Failed to load interview banks",
+        "appLoadError": "Failed to load student applications",
+        "updateSuccess": "Interview bank updated",
+        "createSuccess": "Interview bank created"
+      },
+      "modal": {
+        "titleEdit": "Edit Bank",
+        "titleCreate": "New Bank",
+        "nameLabel": "Bank Name",
+        "namePlaceholder": "Bank name",
+        "stageLabel": "Interview Stage",
+        "typeLabel": "Type",
+        "industryLabel": "Industry",
+        "countLabel": "Question Count",
+        "countPlaceholder": "Count",
+        "statusLabel": "Status",
+        "statusEnabled": "Enabled",
+        "statusDisabled": "Disabled",
+        "cancel": "Cancel",
+        "save": "Save Changes",
+        "create": "Create Bank"
+      }
+    },
+    "onlineTestBank": {
+      "pageTitle": "Online Test Bank",
+      "createBank": "New Bank",
+      "pendingAlert": "{count} student application(s) pending assignment",
+      "pendingAlertDesc": "Please handle online test applications transferred from head teachers first.",
+      "viewApplications": "View Applications",
+      "tabs": {
+        "banks": "Banks",
+        "applications": "Student Applications"
+      },
+      "filter": {
+        "bankSearchPlaceholder": "Search bank / company",
+        "appSearchPlaceholder": "Search student / position",
+        "companyPlaceholder": "All Companies",
+        "typePlaceholder": "All Types",
+        "search": "Search",
+        "reset": "Reset"
+      },
+      "bankColumns": {
+        "name": "Bank Name",
+        "company": "Company",
+        "type": "Type",
+        "questionCount": "Questions",
+        "status": "Status",
+        "updatedAt": "Updated At",
+        "action": "Action"
+      },
+      "appColumns": {
+        "appCode": "App ID",
+        "student": "Student",
+        "position": "Applied Position",
+        "testType": "Test Type",
+        "time": "Applied At",
+        "source": "Source",
+        "action": "Action"
+      },
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "sourceFallback": "Head Teacher Transfer",
+      "empty": "No test banks found",
+      "appEmpty": "No student applications found",
+      "action": {
+        "edit": "Edit",
+        "assign": "Assign Bank"
+      },
+      "messages": {
+        "bankLoadError": "Failed to load test banks",
+        "appLoadError": "Failed to load student applications",
+        "updateSuccess": "Test bank updated",
+        "createSuccess": "Test bank created"
+      },
+      "modal": {
+        "titleEdit": "Edit Bank",
+        "titleCreate": "New Bank",
+        "nameLabel": "Bank Name",
+        "namePlaceholder": "Bank name",
+        "companyLabel": "Company",
+        "companyPlaceholder": "Company name",
+        "typeLabel": "Type",
+        "countLabel": "Question Count",
+        "countPlaceholder": "Count",
+        "statusLabel": "Status",
+        "statusEnabled": "Enabled",
+        "statusDisabled": "Disabled",
+        "cancel": "Cancel",
+        "save": "Save Changes",
+        "create": "Create Bank"
+      }
     }
   },
   "students": {

@@ -8,39 +8,39 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-clipboard-text-outline" aria-hidden="true" />
-        <span>{{ mode === 'edit' ? '编辑题库' : '新增题库' }}</span>
+        <span>{{ mode === 'edit' ? t('admin.resources.onlineTestBank.modal.titleEdit') : t('admin.resources.onlineTestBank.modal.titleCreate') }}</span>
       </span>
     </template>
 
     <a-form layout="vertical">
       <a-row :gutter="16">
         <a-col :span="12">
-          <a-form-item label="题库名称">
-            <a-input v-model:value="form.testBankName" placeholder="题库名称" />
+          <a-form-item :label="t('admin.resources.onlineTestBank.modal.nameLabel')">
+            <a-input v-model:value="form.testBankName" :placeholder="t('admin.resources.onlineTestBank.modal.namePlaceholder')" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="公司">
-            <a-input v-model:value="form.companyName" placeholder="公司" />
+          <a-form-item :label="t('admin.resources.onlineTestBank.modal.companyLabel')">
+            <a-input v-model:value="form.companyName" :placeholder="t('admin.resources.onlineTestBank.modal.companyPlaceholder')" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="类型">
+          <a-form-item :label="t('admin.resources.onlineTestBank.modal.typeLabel')">
             <a-select v-model:value="form.testType">
               <a-select-option v-for="option in testTypeOptions" :key="option" :value="option">{{ option }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="题目数">
-            <a-input-number v-model:value="form.questionCount" :min="1" placeholder="题目数" style="width:100%" />
+          <a-form-item :label="t('admin.resources.onlineTestBank.modal.countLabel')">
+            <a-input-number v-model:value="form.questionCount" :min="1" :placeholder="t('admin.resources.onlineTestBank.modal.countPlaceholder')" style="width:100%" />
           </a-form-item>
         </a-col>
         <a-col :span="24">
-          <a-form-item label="状态">
+          <a-form-item :label="t('admin.resources.onlineTestBank.modal.statusLabel')">
             <a-select v-model:value="form.status">
-              <a-select-option value="enabled">启用</a-select-option>
-              <a-select-option value="disabled">禁用</a-select-option>
+              <a-select-option value="enabled">{{ t('admin.resources.onlineTestBank.modal.statusEnabled') }}</a-select-option>
+              <a-select-option value="disabled">{{ t('admin.resources.onlineTestBank.modal.statusDisabled') }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -48,9 +48,9 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="close">取消</a-button>
+      <a-button @click="close">{{ t('admin.resources.onlineTestBank.modal.cancel') }}</a-button>
       <a-button type="primary" :loading="submitting" @click="submit">
-        {{ mode === 'edit' ? '保存修改' : '创建题库' }}
+        {{ mode === 'edit' ? t('admin.resources.onlineTestBank.modal.save') : t('admin.resources.onlineTestBank.modal.create') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -58,8 +58,11 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { SaveTestBankPayload, TestBankRow, TestBankType } from '@osg/shared/api/admin/testBank'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const testTypeOptions: TestBankType[] = ['HireVue', 'Pymetrics', 'SHL']
 

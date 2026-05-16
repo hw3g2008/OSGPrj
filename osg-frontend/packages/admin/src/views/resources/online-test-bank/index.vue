@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="在线测试题库" title-en="Online Test Bank">
+    <PageHeader :title-zh="t('admin.resources.onlineTestBank.pageTitle')" title-en="Online Test Bank">
       <template #actions>
         <a-button v-if="activeTab === 'banks'" type="primary" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>
-          新增题库
+          {{ t('admin.resources.onlineTestBank.createBank') }}
         </a-button>
       </template>
     </PageHeader>
@@ -13,22 +13,22 @@
       v-if="pendingCount > 0"
       type="info"
       show-icon
-      :message="`有 ${pendingCount} 个学员题库申请待分配`"
-      description="请优先处理班主任流转过来的在线测试申请。"
+      :message="t('admin.resources.onlineTestBank.pendingAlert', { count: pendingCount })"
+      :description="t('admin.resources.onlineTestBank.pendingAlertDesc')"
     >
       <template #action>
-        <a-button size="small" @click="activeTab = 'applications'">查看申请</a-button>
+        <a-button size="small" @click="activeTab = 'applications'">{{ t('admin.resources.onlineTestBank.viewApplications') }}</a-button>
       </template>
     </a-alert>
 
     <a-card :bordered="false">
       <a-tabs v-model:activeKey="activeTab" style="margin-bottom: 16px">
         <a-tab-pane key="banks">
-          <template #tab>题库列表</template>
+          <template #tab>{{ t('admin.resources.onlineTestBank.tabs.banks') }}</template>
         </a-tab-pane>
         <a-tab-pane key="applications">
           <template #tab>
-            学员申请
+            {{ t('admin.resources.onlineTestBank.tabs.applications') }}
             <a-badge :count="pendingCount" :number-style="{ backgroundColor: '#faad14' }" style="margin-left: 4px" />
           </template>
         </a-tab-pane>
@@ -36,16 +36,16 @@
 
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="filters.keyword" :placeholder="activeTab === 'banks' ? '搜索题库 / 公司' : '搜索学员 / 岗位'" allow-clear style="width: 180px" @press-enter="loadRows" />
+          <a-input v-model:value="filters.keyword" :placeholder="activeTab === 'banks' ? t('admin.resources.onlineTestBank.filter.bankSearchPlaceholder') : t('admin.resources.onlineTestBank.filter.appSearchPlaceholder')" allow-clear style="width: 180px" @press-enter="loadRows" />
         </a-form-item>
         <template v-if="activeTab === 'banks'">
           <a-form-item>
-            <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px">
+            <a-select v-model:value="filters.companyName" :placeholder="t('admin.resources.onlineTestBank.filter.companyPlaceholder')" allow-clear style="width: 140px">
               <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
             </a-select>
           </a-form-item>
           <a-form-item>
-            <a-select v-model:value="filters.testType" placeholder="全部类型" allow-clear style="width: 120px">
+            <a-select v-model:value="filters.testType" :placeholder="t('admin.resources.onlineTestBank.filter.typePlaceholder')" allow-clear style="width: 120px">
               <a-select-option v-for="option in testTypeOptions" :key="option" :value="option">{{ option }}</a-select-option>
             </a-select>
           </a-form-item>
@@ -54,14 +54,14 @@
           <a-space>
             <a-button type="primary" @click="loadRows">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ t('admin.resources.onlineTestBank.filter.search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ t('admin.resources.onlineTestBank.filter.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
 
-      <a-table v-if="activeTab === 'banks'" :columns="bankColumns" :data-source="rows" :row-key="(r: TestBankRow) => r.bankId" :pagination="false" :locale="{ emptyText: '暂无题库记录' }" :scroll="{ x: 1000 }">
+      <a-table v-if="activeTab === 'banks'" :columns="bankColumns" :data-source="rows" :row-key="(r: TestBankRow) => r.bankId" :pagination="false" :locale="{ emptyText: t('admin.resources.onlineTestBank.empty') }" :scroll="{ x: 1000 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'testBankName'">
             <div style="display: flex; align-items: center; gap: 10px">
@@ -79,12 +79,12 @@
             {{ formatTime(record.updatedAt) }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="openEditModal(record)">编辑</a-button>
+            <a-button type="link" size="small" @click="openEditModal(record)">{{ t('admin.resources.onlineTestBank.action.edit') }}</a-button>
           </template>
         </template>
       </a-table>
 
-      <a-table v-else :columns="applicationColumns" :data-source="rows" :row-key="(r: TestBankRow) => r.applicationCode" :pagination="false" :locale="{ emptyText: '暂无学员申请' }" :scroll="{ x: 900 }">
+      <a-table v-else :columns="applicationColumns" :data-source="rows" :row-key="(r: TestBankRow) => r.applicationCode" :pagination="false" :locale="{ emptyText: t('admin.resources.onlineTestBank.appEmpty') }" :scroll="{ x: 900 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'applicationCode'">
             <span style="font-family: monospace; color: #64748b">{{ record.applicationCode }}</span>
@@ -96,10 +96,10 @@
             {{ formatTime(record.applicationTime) }}
           </template>
           <template v-else-if="column.dataIndex === 'applicationSource'">
-            <a-tag color="blue">{{ record.applicationSource || '班主任流转' }}</a-tag>
+            <a-tag color="blue">{{ record.applicationSource || t('admin.resources.onlineTestBank.sourceFallback') }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'appAction'">
-            <a-button type="primary" size="small">分配题库</a-button>
+            <a-button type="primary" size="small">{{ t('admin.resources.onlineTestBank.action.assign') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -117,6 +117,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -132,31 +133,13 @@ import {
   type TestBankType
 } from '@osg/shared/api/admin/testBank'
 
+const { t } = useI18n()
+
 const typeColorMap: Record<string, string> = {
   HireVue: 'red',
   Pymetrics: 'purple',
   SHL: 'blue'
 }
-
-const bankColumns = [
-  { title: '题库名称', dataIndex: 'testBankName', key: 'testBankName', width: 200, fixed: 'left' as const },
-  { title: '公司', dataIndex: 'companyName', key: 'companyName', width: 130 },
-  { title: '类型', dataIndex: 'testType', key: 'testType', width: 100 },
-  { title: '题目数', dataIndex: 'questionCount', key: 'questionCount', width: 80 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 130 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
-]
-
-const applicationColumns = [
-  { title: '申请ID', dataIndex: 'applicationCode', key: 'applicationCode', width: 120, fixed: 'left' as const },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
-  { title: '申请岗位', dataIndex: 'appliedPosition', key: 'appliedPosition', width: 150 },
-  { title: '测试类型', dataIndex: 'testType', key: 'testType', width: 100 },
-  { title: '申请时间', dataIndex: 'applicationTime', key: 'applicationTime', width: 130 },
-  { title: '来源', dataIndex: 'applicationSource', key: 'applicationSource', width: 110 },
-  { title: '操作', dataIndex: 'appAction', key: 'appAction', width: 100, fixed: 'right' as const },
-]
 
 const testTypeOptions: TestBankType[] = ['HireVue', 'Pymetrics', 'SHL']
 
@@ -172,10 +155,30 @@ const testTypeColorMap: Record<TestBankType, string> = {
   SHL: '#2563eb'
 }
 
-const statusLabelMap: Record<TestBankStatus, string> = {
-  enabled: '启用',
-  disabled: '禁用'
-}
+const statusLabelMap = computed<Record<TestBankStatus, string>>(() => ({
+  enabled: t('admin.resources.onlineTestBank.status.enabled'),
+  disabled: t('admin.resources.onlineTestBank.status.disabled')
+}))
+
+const bankColumns = computed(() => [
+  { title: t('admin.resources.onlineTestBank.bankColumns.name'), dataIndex: 'testBankName', key: 'testBankName', width: 200, fixed: 'left' as const },
+  { title: t('admin.resources.onlineTestBank.bankColumns.company'), dataIndex: 'companyName', key: 'companyName', width: 130 },
+  { title: t('admin.resources.onlineTestBank.bankColumns.type'), dataIndex: 'testType', key: 'testType', width: 100 },
+  { title: t('admin.resources.onlineTestBank.bankColumns.questionCount'), dataIndex: 'questionCount', key: 'questionCount', width: 80 },
+  { title: t('admin.resources.onlineTestBank.bankColumns.status'), dataIndex: 'status', key: 'status', width: 80 },
+  { title: t('admin.resources.onlineTestBank.bankColumns.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 130 },
+  { title: t('admin.resources.onlineTestBank.bankColumns.action'), dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
+])
+
+const applicationColumns = computed(() => [
+  { title: t('admin.resources.onlineTestBank.appColumns.appCode'), dataIndex: 'applicationCode', key: 'applicationCode', width: 120, fixed: 'left' as const },
+  { title: t('admin.resources.onlineTestBank.appColumns.student'), dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: t('admin.resources.onlineTestBank.appColumns.position'), dataIndex: 'appliedPosition', key: 'appliedPosition', width: 150 },
+  { title: t('admin.resources.onlineTestBank.appColumns.testType'), dataIndex: 'testType', key: 'testType', width: 100 },
+  { title: t('admin.resources.onlineTestBank.appColumns.time'), dataIndex: 'applicationTime', key: 'applicationTime', width: 130 },
+  { title: t('admin.resources.onlineTestBank.appColumns.source'), dataIndex: 'applicationSource', key: 'applicationSource', width: 110 },
+  { title: t('admin.resources.onlineTestBank.appColumns.action'), dataIndex: 'appAction', key: 'appAction', width: 100, fixed: 'right' as const },
+])
 
 const activeTab = ref<TestBankTab>('banks')
 const rows = ref<TestBankRow[]>([])
@@ -214,7 +217,7 @@ const loadRows = async () => {
       )
     }
   } catch (_error) {
-    message.error(activeTab.value === 'banks' ? '题库列表加载失败' : '学员申请加载失败')
+    message.error(activeTab.value === 'banks' ? t('admin.resources.onlineTestBank.messages.bankLoadError') : t('admin.resources.onlineTestBank.messages.appLoadError'))
   }
 }
 
@@ -247,10 +250,10 @@ const handleSubmit = async (payload: SaveTestBankPayload) => {
         bankId: editingRow.value.bankId,
         ...payload
       })
-      message.success('题库更新成功')
+      message.success(t('admin.resources.onlineTestBank.messages.updateSuccess'))
     } else {
       await createTestBank(payload)
-      message.success('题库创建成功')
+      message.success(t('admin.resources.onlineTestBank.messages.createSuccess'))
     }
     showFormModal.value = false
     await loadRows()

@@ -8,48 +8,48 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-frequently-asked-questions" aria-hidden="true" />
-        <span>{{ mode === 'edit' ? '编辑题库' : '新增题库' }}</span>
+        <span>{{ mode === 'edit' ? t('admin.resources.interviewBank.modal.titleEdit') : t('admin.resources.interviewBank.modal.titleCreate') }}</span>
       </span>
     </template>
 
     <a-form layout="vertical">
       <a-row :gutter="16">
         <a-col :span="12">
-          <a-form-item label="题库名称">
-            <a-input v-model:value="form.interviewBankName" placeholder="题库名称" />
+          <a-form-item :label="t('admin.resources.interviewBank.modal.nameLabel')">
+            <a-input v-model:value="form.interviewBankName" :placeholder="t('admin.resources.interviewBank.modal.namePlaceholder')" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="面试阶段">
+          <a-form-item :label="t('admin.resources.interviewBank.modal.stageLabel')">
             <a-select v-model:value="form.interviewStage">
               <a-select-option v-for="option in interviewStageOptions" :key="option" :value="option">{{ option }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="类型">
+          <a-form-item :label="t('admin.resources.interviewBank.modal.typeLabel')">
             <a-select v-model:value="form.interviewType">
               <a-select-option v-for="option in interviewTypeOptions" :key="option" :value="option">{{ option }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="行业">
+          <a-form-item :label="t('admin.resources.interviewBank.modal.industryLabel')">
             <a-select v-model:value="form.industryName">
               <a-select-option v-for="option in industryOptions" :key="option" :value="option">{{ option }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="题目数">
-            <a-input-number v-model:value="form.questionCount" :min="1" placeholder="题目数" style="width:100%" />
+          <a-form-item :label="t('admin.resources.interviewBank.modal.countLabel')">
+            <a-input-number v-model:value="form.questionCount" :min="1" :placeholder="t('admin.resources.interviewBank.modal.countPlaceholder')" style="width:100%" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="状态">
+          <a-form-item :label="t('admin.resources.interviewBank.modal.statusLabel')">
             <a-select v-model:value="form.status">
-              <a-select-option value="enabled">启用</a-select-option>
-              <a-select-option value="disabled">禁用</a-select-option>
+              <a-select-option value="enabled">{{ t('admin.resources.interviewBank.modal.statusEnabled') }}</a-select-option>
+              <a-select-option value="disabled">{{ t('admin.resources.interviewBank.modal.statusDisabled') }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -57,9 +57,9 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="close">取消</a-button>
+      <a-button @click="close">{{ t('admin.resources.interviewBank.modal.cancel') }}</a-button>
       <a-button type="primary" :loading="submitting" @click="submit">
-        {{ mode === 'edit' ? '保存修改' : '创建题库' }}
+        {{ mode === 'edit' ? t('admin.resources.interviewBank.modal.save') : t('admin.resources.interviewBank.modal.create') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type {
   InterviewBankRow,
   InterviewIndustry,
@@ -75,6 +76,8 @@ import type {
   SaveInterviewBankPayload
 } from '@osg/shared/api/admin/interviewBank'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const interviewStageOptions: InterviewStage[] = ['Screening Call', 'First Round', 'Second Round', 'Superday']
 const interviewTypeOptions: InterviewType[] = ['Behavioral', 'Technical', 'Case']
