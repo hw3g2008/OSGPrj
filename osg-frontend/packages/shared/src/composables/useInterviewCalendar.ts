@@ -20,6 +20,7 @@
  *   default - 普通日（灰，ant ''）
  */
 import { computed, ref, toValue, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
+import { i18n } from '../i18n'
 import type {
   CalendarItemView,
   CalendarTone,
@@ -29,8 +30,32 @@ import type {
   SummaryEventView,
 } from '../types/interviewCalendar'
 
-const WEEKDAYS_CN = ['日', '一', '二', '三', '四', '五', '六']
-const WEEKDAYS_FULL = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+type TFunc = (key: string, named?: Record<string, unknown>) => string
+
+const WEEKDAY_SHORT_KEYS = [
+  'common.shared.calendar.weekdayShort.sun',
+  'common.shared.calendar.weekdayShort.mon',
+  'common.shared.calendar.weekdayShort.tue',
+  'common.shared.calendar.weekdayShort.wed',
+  'common.shared.calendar.weekdayShort.thu',
+  'common.shared.calendar.weekdayShort.fri',
+  'common.shared.calendar.weekdayShort.sat',
+] as const
+
+const WEEKDAY_FULL_KEYS = [
+  'common.shared.calendar.weekdayFull.sun',
+  'common.shared.calendar.weekdayFull.mon',
+  'common.shared.calendar.weekdayFull.tue',
+  'common.shared.calendar.weekdayFull.wed',
+  'common.shared.calendar.weekdayFull.thu',
+  'common.shared.calendar.weekdayFull.fri',
+  'common.shared.calendar.weekdayFull.sat',
+] as const
+
+function defaultT(): TFunc {
+  return ((key, named) =>
+    named ? (i18n.global.t as unknown as TFunc)(key, named) : (i18n.global.t as unknown as TFunc)(key))
+}
 
 export type CalendarViewMode = 'month' | 'week'
 
@@ -87,6 +112,11 @@ function formatMonthDay(value?: string): string {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
 }
 
+export interface UseInterviewCalendarOptions {
+  /** Optional translate function; defaults to i18n.global.t (works in any context, incl. tests). */
+  t?: TFunc
+}
+
 export interface UseInterviewCalendarReturn {
   /** 视图模式：'month' | 'week' */
   viewMode: Ref<CalendarViewMode>
@@ -120,7 +150,9 @@ export interface UseInterviewCalendarReturn {
 
 export function useInterviewCalendar(
   events: MaybeRefOrGetter<InterviewEvent[]>,
+  options: UseInterviewCalendarOptions = {},
 ): UseInterviewCalendarReturn {
+  const t: TFunc = options.t ?? defaultT()
   const viewMode = ref<CalendarViewMode>('month')
   const monthOffset = ref(0)
   const weekOffset = ref(0)
@@ -180,13 +212,20 @@ export function useInterviewCalendar(
     return end
   })
 
-  const currentMonthLabel = computed(() => `${currentMonthDate.value.getMonth() + 1}月`)
+  const currentMonthLabel = computed(() =>
+    t('common.shared.calendar.monthLabel', { month: currentMonthDate.value.getMonth() + 1 }),
+  )
 
   const currentWeekLabel = computed(() => {
     const start = weekStartDate.value
     const end = new Date(start)
     end.setDate(start.getDate() + 6)
-    return `${start.getMonth() + 1}月${start.getDate()}日 ~ ${end.getMonth() + 1}月${end.getDate()}日`
+    return t('common.shared.calendar.weekRangeLabel', {
+      m1: start.getMonth() + 1,
+      d1: start.getDate(),
+      m2: end.getMonth() + 1,
+      d2: end.getDate(),
+    })
   })
 
   const currentRangeLabel = computed(() =>
@@ -231,7 +270,7 @@ export function useInterviewCalendar(
 
       return {
         key: `day-${iso}`,
-        weekday: WEEKDAYS_CN[day.getDay()],
+        weekday: t(WEEKDAY_SHORT_KEYS[day.getDay()]),
         date: String(day.getDate()),
         tagColor,
         tagStyle,
@@ -327,15 +366,15 @@ export function useInterviewCalendar(
         let tone: CalendarTone
         const coaching = isCoachingStatus(r.coachingStatus)
         if (daysDiff < 0) {
-          tag = '已过'
+          tag = t('common.shared.calendar.relativeDay.past')
           tone = 'default'
         } else if (daysDiff === 0) {
-          tag = '今天'
+          tag = t('common.shared.calendar.relativeDay.today')
           tone = 'today'
         } else {
-          if (daysDiff === 1) tag = '明天'
-          else if (daysDiff === 2) tag = '后天'
-          else tag = `${daysDiff}天后`
+          if (daysDiff === 1) tag = t('common.shared.calendar.relativeDay.tomorrow')
+          else if (daysDiff === 2) tag = t('common.shared.calendar.relativeDay.dayAfter')
+          else tag = t('common.shared.calendar.relativeDay.nDaysLater', { n: daysDiff })
           tone = coaching ? 'info' : 'danger'
         }
 
@@ -353,7 +392,7 @@ export function useInterviewCalendar(
           tone,
           tag,
           tagColor,
-          weekday: WEEKDAYS_FULL[d.getDay()],
+          weekday: t(WEEKDAY_FULL_KEYS[d.getDay()]),
           dateNum: String(d.getDate()),
         }
       })

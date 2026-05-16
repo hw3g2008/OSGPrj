@@ -4,13 +4,13 @@
     <div class="osg-ic__toolbar">
       <div class="osg-ic__title-group">
         <i class="mdi mdi-calendar-month osg-ic__title-icon" />
-        <span class="osg-ic__title">{{ title }}</span>
+        <span class="osg-ic__title">{{ effectiveTitle }}</span>
         <div v-if="showMonthNav" class="osg-ic__month-nav">
           <a-button
             type="text"
             size="small"
             class="osg-ic__month-arrow"
-            :aria-label="viewMode === 'week' ? '上一周' : '上一月'"
+            :aria-label="viewMode === 'week' ? t('common.shared.calendar.aria.prevWeek') : t('common.shared.calendar.aria.prevMonth')"
             @click="onShift(-1)"
           >
             <i class="mdi mdi-chevron-left" />
@@ -20,7 +20,7 @@
             type="text"
             size="small"
             class="osg-ic__month-arrow"
-            :aria-label="viewMode === 'week' ? '下一周' : '下一月'"
+            :aria-label="viewMode === 'week' ? t('common.shared.calendar.aria.nextWeek') : t('common.shared.calendar.aria.nextMonth')"
             @click="onShift(1)"
           >
             <i class="mdi mdi-chevron-right" />
@@ -29,7 +29,7 @@
         <span v-else class="osg-ic__month osg-ic__month--static">{{ currentRangeLabel }}</span>
 
         <!-- 月/星期 切换 tab -->
-        <div class="osg-ic__view-switch" role="tablist" aria-label="日历视图切换">
+        <div class="osg-ic__view-switch" role="tablist" :aria-label="t('common.shared.calendar.aria.viewSwitch')">
           <button
             type="button"
             class="osg-ic__view-tab"
@@ -37,7 +37,7 @@
             role="tab"
             :aria-selected="viewMode === 'month'"
             @click="onViewModeChange('month')"
-          >月</button>
+          >{{ t('common.shared.calendar.view.month') }}</button>
           <button
             type="button"
             class="osg-ic__view-tab"
@@ -45,7 +45,7 @@
             role="tab"
             :aria-selected="viewMode === 'week'"
             @click="onViewModeChange('week')"
-          >星期</button>
+          >{{ t('common.shared.calendar.view.week') }}</button>
         </div>
       </div>
 
@@ -93,7 +93,7 @@
           class="mdi"
           :class="expanded ? 'mdi-calendar-collapse-horizontal' : 'mdi-calendar-expand-horizontal'"
         />
-        {{ expanded ? '收起' : '展开' }}
+        {{ expanded ? t('common.shared.calendar.toggle.collapse') : t('common.shared.calendar.toggle.expand') }}
       </a-button>
     </div>
 
@@ -101,19 +101,19 @@
     <div v-if="expanded" class="osg-ic__month-view">
       <div class="osg-ic__legend">
         <span class="osg-ic__legend-item">
-          <span class="osg-ic__legend-dot" style="background: #EF4444" />面试
+          <span class="osg-ic__legend-dot" style="background: #EF4444" />{{ t('common.shared.calendar.legend.interview') }}
         </span>
         <span class="osg-ic__legend-item">
-          <span class="osg-ic__legend-dot" style="background: #3B82F6" />辅导课
+          <span class="osg-ic__legend-dot" style="background: #3B82F6" />{{ t('common.shared.calendar.legend.coaching') }}
         </span>
         <span class="osg-ic__legend-item">
-          <span class="osg-ic__legend-dot" style="background: var(--primary)" />今天
+          <span class="osg-ic__legend-dot" style="background: var(--primary)" />{{ t('common.shared.calendar.legend.today') }}
         </span>
       </div>
 
       <div class="osg-ic__month-grid">
         <span
-          v-for="weekday in WEEKDAYS_CN"
+          v-for="weekday in WEEKDAYS_LOCALIZED"
           :key="weekday"
           class="osg-ic__month-heading"
         >{{ weekday }}</span>
@@ -138,10 +138,10 @@
       <div class="osg-ic__week-schedule">
         <div class="osg-ic__week-title">
           <i class="mdi mdi-calendar-clock" aria-hidden="true" />
-          本周学员面试安排
+          {{ t('common.shared.calendar.weekScheduleTitle') }}
         </div>
         <slot v-if="!calendarItems.length" name="empty">
-          <div class="osg-ic__week-empty">本周暂无面试或辅导安排</div>
+          <div class="osg-ic__week-empty">{{ t('common.shared.calendar.weekScheduleEmpty') }}</div>
         </slot>
         <div
           v-for="item in calendarItems"
@@ -174,9 +174,12 @@
 
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useInterviewCalendar } from '../composables/useInterviewCalendar'
 import type { CalendarRange, CalendarViewMode } from '../composables/useInterviewCalendar'
 import type { InterviewEvent } from '../types/interviewCalendar'
+
+const { t } = useI18n()
 
 interface Props {
   events: InterviewEvent[]
@@ -191,8 +194,10 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   showMonthNav: true,
   defaultExpanded: false,
-  title: '学员面试安排',
+  title: '',
 })
+
+const effectiveTitle = computed(() => props.title || t('common.shared.calendar.titleDefault'))
 
 const emit = defineEmits<{
   (e: 'event-click', event: InterviewEvent): void
@@ -201,7 +206,15 @@ const emit = defineEmits<{
   (e: 'range-change', range: CalendarRange): void
 }>()
 
-const WEEKDAYS_CN = ['日', '一', '二', '三', '四', '五', '六']
+const WEEKDAYS_LOCALIZED = computed(() => [
+  t('common.shared.calendar.weekdayShort.sun'),
+  t('common.shared.calendar.weekdayShort.mon'),
+  t('common.shared.calendar.weekdayShort.tue'),
+  t('common.shared.calendar.weekdayShort.wed'),
+  t('common.shared.calendar.weekdayShort.thu'),
+  t('common.shared.calendar.weekdayShort.fri'),
+  t('common.shared.calendar.weekdayShort.sat'),
+])
 
 const eventsRef = toRef(props, 'events')
 

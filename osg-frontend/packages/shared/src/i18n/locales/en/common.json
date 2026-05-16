@@ -120,6 +120,81 @@
         "confirmRequired": "Please re-enter the new password",
         "confirmMismatch": "Passwords do not match"
       }
+    },
+    "classRecordDrawer": {
+      "title": "Session record details",
+      "empty": "No session records",
+      "totalHours": "{hours}h total",
+      "avgRating": "avg {rating}",
+      "absent": "Absent",
+      "present": "Present",
+      "col": {
+        "classDate": "Class date",
+        "courseType": "Session type",
+        "status": "Status",
+        "durationHours": "Duration (h)",
+        "rate": "Rating",
+        "feedbackSummary": "Feedback summary"
+      },
+      "courseType": {
+        "jobCoaching": "Position Coaching",
+        "mockInterview": "Mock Interview",
+        "relation": "Interpersonal",
+        "midterm": "Midterm",
+        "baseCourse": "Base session"
+      }
+    },
+    "calendar": {
+      "titleDefault": "Student interviews",
+      "monthLabel": "{month}/",
+      "weekRangeLabel": "{m1}/{d1} ~ {m2}/{d2}",
+      "weekdayShort": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "weekdayFull": {
+        "sun": "Sunday",
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday"
+      },
+      "aria": {
+        "prevWeek": "Previous week",
+        "prevMonth": "Previous month",
+        "nextWeek": "Next week",
+        "nextMonth": "Next month",
+        "viewSwitch": "Calendar view switch"
+      },
+      "view": {
+        "month": "Month",
+        "week": "Week"
+      },
+      "legend": {
+        "interview": "Interview",
+        "coaching": "Coaching",
+        "today": "Today"
+      },
+      "weekScheduleTitle": "This week's student interviews",
+      "weekScheduleEmpty": "No interviews or coaching this week",
+      "toggle": {
+        "collapse": "Collapse",
+        "expand": "Expand"
+      },
+      "relativeDay": {
+        "past": "Past",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "dayAfter": "Day after",
+        "nDaysLater": "In {n} days"
+      }
     }
   },
   "legacy": {

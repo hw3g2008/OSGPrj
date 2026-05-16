@@ -1,7 +1,7 @@
 <template>
   <a-drawer
     :open="visible"
-    title="课消记录详情"
+    :title="t('common.shared.classRecordDrawer.title')"
     width="640"
     placement="right"
     :body-style="{ padding: '16px' }"
@@ -9,14 +9,14 @@
   >
     <a-spin :spinning="loading">
       <div v-if="!groups || groups.length === 0" style="text-align:center;color:#999;padding:40px 0;">
-        暂无课消记录
+        {{ t('common.shared.classRecordDrawer.empty') }}
       </div>
       <div v-for="group in groups" :key="group.mentorId" class="crd-mentor-group">
         <div class="crd-mentor-header">
           <span class="crd-mentor-name">{{ group.mentorName }}</span>
           <span class="crd-mentor-stats">
-            共 {{ group.totalHours }}h
-            <template v-if="group.avgRating">· 平均 {{ group.avgRating }}</template>
+            {{ t('common.shared.classRecordDrawer.totalHours', { hours: group.totalHours }) }}
+            <template v-if="group.avgRating">· {{ t('common.shared.classRecordDrawer.avgRating', { rating: group.avgRating }) }}</template>
           </span>
         </div>
         <a-table
@@ -36,7 +36,7 @@
             </template>
             <template v-else-if="column.key === 'memberStatus'">
               <a-tag :color="record.memberStatus === 'absent' ? 'red' : 'green'">
-                {{ record.memberStatus === 'absent' ? '旷课' : '出席' }}
+                {{ record.memberStatus === 'absent' ? t('common.shared.classRecordDrawer.absent') : t('common.shared.classRecordDrawer.present') }}
               </a-tag>
             </template>
             <template v-else-if="column.key === 'rate'">
@@ -53,6 +53,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { LeadMentorClassRecordDetailItem, LeadMentorClassRecordMentorGroup } from '../api/jobOverview'
 
 defineProps<{
@@ -66,14 +68,16 @@ defineEmits<{
   'update:visible': [value: boolean]
 }>()
 
-const recordColumns = [
-  { title: '上课日期', dataIndex: 'classDate', key: 'classDate', width: 110 },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType', width: 100 },
-  { title: '状态', dataIndex: 'memberStatus', key: 'memberStatus', width: 70 },
-  { title: '时长(h)', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '评分', dataIndex: 'rate', key: 'rate', width: 70 },
-  { title: '反馈摘要', dataIndex: 'feedbackSummary', key: 'feedbackSummary', width: 160 },
-]
+const { t } = useI18n()
+
+const recordColumns = computed(() => [
+  { title: t('common.shared.classRecordDrawer.col.classDate'), dataIndex: 'classDate', key: 'classDate', width: 110 },
+  { title: t('common.shared.classRecordDrawer.col.courseType'), dataIndex: 'courseType', key: 'courseType', width: 100 },
+  { title: t('common.shared.classRecordDrawer.col.status'), dataIndex: 'memberStatus', key: 'memberStatus', width: 70 },
+  { title: t('common.shared.classRecordDrawer.col.durationHours'), dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: t('common.shared.classRecordDrawer.col.rate'), dataIndex: 'rate', key: 'rate', width: 70 },
+  { title: t('common.shared.classRecordDrawer.col.feedbackSummary'), dataIndex: 'feedbackSummary', key: 'feedbackSummary', width: 160 },
+])
 
 function sortedRecords(records: LeadMentorClassRecordDetailItem[]) {
   return [...records].sort((a, b) => {
@@ -91,20 +95,21 @@ function formatDateOnly(value?: string): string {
   return value.slice(0, 10)
 }
 
-// 课程类型字典 value → 中文 label
-const COURSE_TYPE_LABEL_MAP: Record<string, string> = {
-  job_coaching: '岗位辅导',
-  mock_interview: '面试测试',
-  relation_test: '人际关系',
-  communication_test: '人际关系',
-  midterm: '期中考试',
-  midterm_test: '期中考试',
-  base_course: '基础课程',
+// 课程类型字典 value → i18n key（运行时 t() 译）
+const COURSE_TYPE_I18N_KEY: Record<string, string> = {
+  job_coaching: 'common.shared.classRecordDrawer.courseType.jobCoaching',
+  mock_interview: 'common.shared.classRecordDrawer.courseType.mockInterview',
+  relation_test: 'common.shared.classRecordDrawer.courseType.relation',
+  communication_test: 'common.shared.classRecordDrawer.courseType.relation',
+  midterm: 'common.shared.classRecordDrawer.courseType.midterm',
+  midterm_test: 'common.shared.classRecordDrawer.courseType.midterm',
+  base_course: 'common.shared.classRecordDrawer.courseType.baseCourse',
 }
 
 function courseTypeLabel(value?: string): string {
   if (!value) return '-'
-  return COURSE_TYPE_LABEL_MAP[value] || value
+  const key = COURSE_TYPE_I18N_KEY[value]
+  return key ? t(key) : value
 }
 
 /**

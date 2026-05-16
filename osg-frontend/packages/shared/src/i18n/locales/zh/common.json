@@ -120,6 +120,81 @@
         "confirmRequired": "请再次输入新密码",
         "confirmMismatch": "两次输入不一致"
       }
+    },
+    "classRecordDrawer": {
+      "title": "课消记录详情",
+      "empty": "暂无课消记录",
+      "totalHours": "共 {hours}h",
+      "avgRating": "平均 {rating}",
+      "absent": "旷课",
+      "present": "出席",
+      "col": {
+        "classDate": "上课日期",
+        "courseType": "课程类型",
+        "status": "状态",
+        "durationHours": "时长(h)",
+        "rate": "评分",
+        "feedbackSummary": "反馈摘要"
+      },
+      "courseType": {
+        "jobCoaching": "岗位辅导",
+        "mockInterview": "面试测试",
+        "relation": "人际关系",
+        "midterm": "期中考试",
+        "baseCourse": "基础课程"
+      }
+    },
+    "calendar": {
+      "titleDefault": "学员面试安排",
+      "monthLabel": "{month}月",
+      "weekRangeLabel": "{m1}月{d1}日 ~ {m2}月{d2}日",
+      "weekdayShort": {
+        "sun": "日",
+        "mon": "一",
+        "tue": "二",
+        "wed": "三",
+        "thu": "四",
+        "fri": "五",
+        "sat": "六"
+      },
+      "weekdayFull": {
+        "sun": "周日",
+        "mon": "周一",
+        "tue": "周二",
+        "wed": "周三",
+        "thu": "周四",
+        "fri": "周五",
+        "sat": "周六"
+      },
+      "aria": {
+        "prevWeek": "上一周",
+        "prevMonth": "上一月",
+        "nextWeek": "下一周",
+        "nextMonth": "下一月",
+        "viewSwitch": "日历视图切换"
+      },
+      "view": {
+        "month": "月",
+        "week": "星期"
+      },
+      "legend": {
+        "interview": "面试",
+        "coaching": "辅导课",
+        "today": "今天"
+      },
+      "weekScheduleTitle": "本周学员面试安排",
+      "weekScheduleEmpty": "本周暂无面试或辅导安排",
+      "toggle": {
+        "collapse": "收起",
+        "expand": "展开"
+      },
+      "relativeDay": {
+        "past": "已过",
+        "today": "今天",
+        "tomorrow": "明天",
+        "dayAfter": "后天",
+        "nDaysLater": "{n}天后"
+      }
     }
   },
   "legacy": {
